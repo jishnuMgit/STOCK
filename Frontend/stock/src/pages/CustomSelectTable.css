@@ -1,0 +1,267 @@
+/* =====================================================
+   PAGE
+===================================================== */
+
+.receipt-page {
+  width: 1050px;
+
+  margin: 20px;
+
+  font-family: Tahoma, Arial, sans-serif;
+
+  font-size: 12px;
+
+  color: #111;
+
+  background: #e9ebf0;
+}
+
+
+.receipt-title {
+  margin: 0 0 8px 0;
+
+  font-size: 14px;
+  font-weight: normal;
+}
+
+
+/* =====================================================
+   GRID
+===================================================== */
+
+.receipt-grid-wrapper {
+  width: 100%;
+
+  overflow: visible;
+
+  border: 1px solid #9daac3;
+
+  background: white;
+}
+
+
+.erp-table {
+  width: 100%;
+
+  border-collapse: collapse;
+
+  table-layout: fixed;
+
+  background: #ffffff;
+}
+
+
+/* =====================================================
+   HEADER
+===================================================== */
+
+.erp-table th {
+  height: 24px;
+
+  box-sizing: border-box;
+
+  padding: 2px 5px;
+
+  border-right: 1px solid #aab4ca;
+  border-bottom: 1px solid #aab4ca;
+
+  background: #f1f1f1;
+
+  font-weight: normal;
+
+  text-align: left;
+
+  white-space: nowrap;
+}
+
+
+/* =====================================================
+   CELLS
+===================================================== */
+
+.erp-table td {
+  height: 25px;
+
+  box-sizing: border-box;
+
+  padding: 0;
+
+  border-right: 1px solid #6f91e8;
+  border-bottom: 1px solid #6f91e8;
+
+  background: #ffffff;
+}
+
+
+/* =====================================================
+   COLUMN WIDTHS
+===================================================== */
+
+.sl-column {
+  width: 50px;
+}
+
+.account-id-column {
+  width: 110px;
+}
+
+.account-name-column {
+  width: 520px;
+}
+
+.cc-column {
+  width: 70px;
+}
+
+.year-column {
+  width: 70px;
+}
+
+.si-column {
+  width: 110px;
+}
+
+.amount-column {
+  width: 130px;
+
+  text-align: right !important;
+}
+
+
+/* =====================================================
+   SL
+===================================================== */
+
+.sl-cell {
+  text-align: center;
+}
+
+
+/* =====================================================
+   INPUTS
+===================================================== */
+
+.grid-input {
+  width: 100%;
+  height: 25px;
+
+  box-sizing: border-box;
+
+  padding: 1px 4px;
+
+  border: none;
+
+  outline: none;
+
+  background: transparent;
+
+  font-family: Tahoma, Arial, sans-serif;
+
+  font-size: 12px;
+}
+
+
+.grid-input:focus {
+  outline: 1px dotted #222;
+
+  outline-offset: -2px;
+}
+
+
+/* =====================================================
+   AMOUNT
+===================================================== */
+
+.amount-input {
+  text-align: right;
+
+  padding-right: 5px;
+}
+
+
+/* =====================================================
+   ACCOUNT SELECT CELL
+===================================================== */
+
+.account-name-cell {
+  overflow: visible !important;
+
+  position: relative;
+}
+
+
+/* Important so dropdown can escape table */
+
+.erp-table,
+.erp-table tbody,
+.erp-table tr {
+  overflow: visible;
+}
+
+
+/* =====================================================
+   DESCRIPTION / NOTE
+===================================================== */
+
+.form-row {
+  display: flex;
+
+  align-items: flex-start;
+
+  margin-top: 7px;
+}
+
+
+.form-row label {
+  width: 90px;
+
+  padding-top: 4px;
+
+  text-align: right;
+
+  margin-right: 5px;
+}
+
+
+.description-input {
+  width: 550px;
+
+  height: 24px;
+
+  box-sizing: border-box;
+
+  border: 1px solid #c0c5cf;
+}
+
+
+.note-input {
+  width: 550px;
+
+  height: 55px;
+
+  box-sizing: border-box;
+
+  resize: none;
+
+  border: 1px solid #c0c5cf;
+}
+
+
+/* =====================================================
+   DEBUG
+===================================================== */
+
+.debug-section {
+  margin-top: 30px;
+
+  padding: 10px;
+
+  background: white;
+
+  border: 1px solid #ccc;
+}
+
+
+.debug-section pre {
+  font-size: 11px;
+}

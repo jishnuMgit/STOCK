@@ -1,0 +1,224 @@
+/* =========================================================
+   CUSTOM SELECT MENU
+========================================================= */
+
+.custom-select-menu {
+  position: absolute;
+
+  top: 27px;
+  left: 0;
+
+  width: 555px;
+  min-width: 555px;
+  max-width: 555px;
+
+  box-sizing: border-box;
+
+  background: #ffffff;
+
+  border: 1px solid #9aaed0;
+
+  box-shadow:
+    2px 2px 5px rgba(0, 0, 0, 0.25);
+
+  z-index: 999999;
+}
+
+
+/* =========================================================
+   HEADER
+========================================================= */
+
+.custom-select-header {
+  display: flex;
+
+  width: 555px;
+  min-width: 555px;
+  max-width: 555px;
+
+  height: 25px;
+
+  box-sizing: border-box;
+
+  background: #eeeeee;
+
+  border-bottom: 1px solid #c8c8c8;
+
+  font-family: Tahoma, Arial, sans-serif;
+
+  font-size: 12px;
+
+  line-height: 24px;
+
+  overflow: hidden;
+}
+
+
+/* =========================================================
+   ACCOUNT ID
+   105px
+========================================================= */
+
+.custom-id-column {
+  flex: 0 0 105px;
+
+  width: 105px;
+  min-width: 105px;
+  max-width: 105px;
+
+  height: 25px;
+
+  box-sizing: border-box;
+
+  padding: 0 6px;
+
+  border-right: 1px solid #cccccc;
+
+  overflow: hidden;
+
+  white-space: nowrap;
+
+  text-overflow: ellipsis;
+}
+
+
+/* =========================================================
+   ACCOUNT NAME
+   450px
+========================================================= */
+
+.custom-name-column {
+  flex: 0 0 450px;
+
+  width: 450px;
+  min-width: 450px;
+  max-width: 450px;
+
+  height: 25px;
+
+  box-sizing: border-box;
+
+  padding: 0 6px;
+
+  overflow: hidden;
+
+  white-space: nowrap;
+
+  text-overflow: ellipsis;
+}
+
+
+/* =========================================================
+   NORMAL SELECT
+========================================================= */
+
+.custom-normal-column {
+  flex: 1;
+
+  min-width: 0;
+
+  padding: 0 6px;
+
+  overflow: hidden;
+
+  white-space: nowrap;
+
+  text-overflow: ellipsis;
+}
+
+
+/* =========================================================
+   LIST
+========================================================= */
+
+.custom-select-list {
+  width: 555px;
+  min-width: 555px;
+  max-width: 555px;
+
+  height: 280px;
+
+  box-sizing: border-box;
+
+  overflow-x: hidden;
+  overflow-y: auto;
+
+  background: #ffffff;
+}
+
+
+/* =========================================================
+   ROW
+========================================================= */
+
+.custom-select-row {
+  display: flex;
+
+  width: 555px;
+  min-width: 555px;
+  max-width: 555px;
+
+  height: 25px;
+
+  box-sizing: border-box;
+
+  margin: 0;
+  padding: 0;
+
+  background: #ffffff;
+
+  color: #163b76;
+
+  font-family: Tahoma, Arial, sans-serif;
+
+  font-size: 12px;
+
+  line-height: 25px;
+
+  white-space: nowrap;
+
+  overflow: hidden;
+}
+
+
+/* =========================================================
+   HIGHLIGHT
+========================================================= */
+
+.custom-select-row.highlighted {
+  background: #d9e7ff;
+}
+
+
+/* =========================================================
+   SELECTED
+========================================================= */
+
+.custom-select-row.selected {
+  color: #163b76;
+}
+
+
+/* =========================================================
+   FOOTER
+========================================================= */
+
+.custom-select-footer {
+  width: 555px;
+
+  height: 21px;
+
+  display: flex;
+
+  align-items: center;
+
+  justify-content: space-between;
+
+  box-sizing: border-box;
+
+  padding: 0 4px 0 7px;
+
+  background: #eeeeee;
+
+  border-top: 1px solid #cccccc;
+}

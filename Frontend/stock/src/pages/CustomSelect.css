@@ -1,0 +1,729 @@
+/* =====================================================
+   CUSTOM LOOKUP
+===================================================== */
+
+.winform-select {
+  position: relative;
+
+  width: 100%;
+  height: 25px;
+
+  box-sizing: border-box;
+
+  font-family: Tahoma, Arial, sans-serif;
+  font-size: 12px;
+}
+
+
+/* =====================================================
+   MAIN CONTROL
+===================================================== */
+
+.winform-select-control {
+  width: 100%;
+  height: 25px;
+
+  display: flex;
+
+  box-sizing: border-box;
+
+  background: #ffffff;
+}
+
+
+/* =====================================================
+   INPUT
+===================================================== */
+
+.winform-select-input {
+  flex: 1;
+
+  width: 100%;
+  min-width: 0;
+
+  height: 25px;
+
+  box-sizing: border-box;
+
+  border: none;
+  outline: none;
+
+  padding: 2px 5px;
+
+  background: #ffffff;
+
+  color: #111111;
+
+  font-family: Tahoma, Arial, sans-serif;
+  font-size: 12px;
+}
+
+
+/* =====================================================
+   ARROW
+===================================================== */
+
+.winform-select-button {
+  width: 19px;
+  height: 25px;
+
+  flex-shrink: 0;
+
+  padding: 0;
+
+  border: none;
+  border-left: 1px solid #9daac3;
+
+  background: #e9edf3;
+
+  color: #111;
+
+  font-size: 8px;
+
+  cursor: pointer;
+}
+
+.winform-select-button:hover {
+  background: #dce4ef;
+}
+
+
+/* =====================================================
+   LOOKUP WINDOW
+===================================================== */
+
+.winform-dropdown {
+  position: absolute;
+
+  top: 25px;
+  left: 0;
+
+  width: 620px;
+
+  box-sizing: border-box;
+
+  background: #ffffff;
+
+  border: 1px solid #9daac3;
+
+  box-shadow:
+    2px 3px 5px rgba(0, 0, 0, 0.25);
+
+  z-index: 999999;
+}
+
+
+/* =====================================================
+   HEADER
+===================================================== */
+
+.winform-dropdown-header {
+  display: flex;
+
+  height: 25px;
+
+  box-sizing: border-box;
+
+  background: #f0f0f0;
+
+  border-bottom: 1px solid #b6becd;
+
+  color: #111;
+}
+
+
+/* ID header */
+
+.winform-id-header {
+  width: 110px;
+
+  flex-shrink: 0;
+
+  box-sizing: border-box;
+
+  padding: 4px 6px;
+
+  border-right: 1px solid #c7c7c7;
+}
+
+
+/* Name header */
+
+.winform-name-header {
+  flex: 1;
+
+  box-sizing: border-box;
+
+  padding: 4px 6px;
+}
+
+
+/* =====================================================
+   BODY
+===================================================== */
+
+.winform-dropdown-body {
+  height: 280px;
+
+  overflow-x: hidden;
+  overflow-y: auto;
+
+  background: #ffffff;
+}
+
+
+/* =====================================================
+   ROW
+===================================================== */
+
+.winform-dropdown-row {
+  display: flex;
+
+  width: 100%;
+  height: 25px;
+
+  box-sizing: border-box;
+
+  background: white;
+
+  color: #162f65;
+
+  cursor: default;
+
+  line-height: 25px;
+
+  white-space: nowrap;
+}
+
+
+/* Keyboard / mouse selected row */
+
+.winform-dropdown-row.highlighted {
+  background: #d8e6ff;
+}
+
+
+/* =====================================================
+   ACCOUNT ID
+===================================================== */
+
+.winform-id {
+  width: 110px;
+
+  flex-shrink: 0;
+
+  box-sizing: border-box;
+
+  padding: 0 6px;
+
+  overflow: hidden;
+
+  text-overflow: ellipsis;
+
+  border-right: 1px solid #eeeeee;
+}
+
+
+/* =====================================================
+   ACCOUNT NAME
+===================================================== */
+
+.winform-name {
+  flex: 1;
+
+  min-width: 0;
+
+  box-sizing: border-box;
+
+  padding: 0 6px;
+
+  overflow: hidden;
+
+  text-overflow: ellipsis;
+}
+
+
+/* =====================================================
+   NO DATA
+===================================================== */
+
+.winform-no-data {
+  height: 30px;
+
+  display: flex;
+  align-items: center;
+
+  padding-left: 7px;
+
+  color: #777;
+}
+
+
+/* =====================================================
+   FOOTER
+===================================================== */
+
+.winform-dropdown-footer {
+  height: 22px;
+
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+
+  box-sizing: border-box;
+
+  background: #eeeeee;
+
+  border-top: 1px solid #cccccc;
+}
+
+
+/* Close X */
+
+.winform-close {
+  width: 24px;
+
+  border: none;
+
+  background: transparent;
+
+  font-size: 16px;
+  font-weight: bold;
+
+  cursor: pointer;
+}
+
+
+/* Resize appearance */
+
+.resize-grip {
+  margin-right: 3px;
+
+  color: #888;
+
+  font-size: 11px;
+}
+
+
+/* =====================================================
+   SCROLL BAR
+===================================================== */
+
+.winform-dropdown-body::-webkit-scrollbar {
+  width: 10px;
+  border-radius: 100%;
+}
+
+.winform-dropdown-body::-webkit-scrollbar-track {
+  background: #eeeeee;
+}
+
+.winform-dropdown-body::-webkit-scrollbar-thumb {
+  background: #c0c0c0;
+
+  border: 1px solid #999;
+}
+
+/* =====================================================
+   MAIN
+===================================================== */
+
+.custom-select {
+  position: relative;
+
+  width: 100%;
+
+  height: 27px;
+
+  box-sizing: border-box;
+
+  font-family:
+    Tahoma,
+    Arial,
+    sans-serif;
+
+  font-size: 12px;
+}
+
+
+/* =====================================================
+   CONTROL
+===================================================== */
+
+.custom-select-control {
+  width: 100%;
+
+  height: 27px;
+
+  display: flex;
+
+  box-sizing: border-box;
+
+  background: #ffffff;
+
+  border: 1px solid #9aaed0;
+}
+
+
+/* =====================================================
+   INPUT
+===================================================== */
+
+.custom-select-input {
+  flex: 1;
+
+  min-width: 0;
+
+  height: 25px;
+
+  box-sizing: border-box;
+
+  padding: 2px 5px;
+
+  border: none;
+
+  outline: none;
+
+  background: #ffffff;
+
+  color: #111111;
+
+  font-family:
+    Tahoma,
+    Arial,
+    sans-serif;
+
+  font-size: 12px;
+}
+
+
+/* =====================================================
+   ARROW
+===================================================== */
+
+.custom-select-arrow {
+  width: 19px;
+
+  height: 25px;
+
+  flex-shrink: 0;
+
+  padding: 0;
+
+  border: none;
+
+  border-left: 1px solid #9aaed0;
+
+  background: #eeeeee;
+
+  color: #222222;
+
+  font-size: 8px;
+
+  cursor: pointer;
+}
+
+.custom-select-arrow:hover {
+  background: #dddddd;
+}
+
+
+/* =====================================================
+   DROPDOWN
+===================================================== */
+
+.custom-select-menu {
+  position: absolute;
+
+  top: 27px;
+
+  left: 0;
+
+  /*
+    This is wider than the Account ID cell,
+    just like your old WinForms lookup.
+  */
+
+  width: 530px;
+
+  background: #ffffff;
+
+  border: 1px solid #9aaed0;
+
+  box-sizing: border-box;
+
+  box-shadow:
+    2px 2px 5px
+    rgba(0, 0, 0, 0.25);
+
+  z-index: 999999;
+}
+
+
+/* =====================================================
+   HEADER
+===================================================== */
+
+.custom-select-header {
+  display: flex;
+
+  width: 100%;
+
+  height: 25px;
+
+  box-sizing: border-box;
+
+  background: #eeeeee;
+
+  border-bottom:
+    1px solid #b5b5b5;
+
+  color: #222222;
+}
+
+
+/* =====================================================
+   ID COLUMN
+===================================================== */
+
+.custom-id-column {
+  width: 110px;
+
+  flex-shrink: 0;
+
+  box-sizing: border-box;
+
+  padding: 4px 6px;
+
+  border-right:
+    1px solid #cccccc;
+
+  white-space: nowrap;
+
+  overflow: hidden;
+
+  text-overflow: ellipsis;
+}
+
+
+/* =====================================================
+   NAME COLUMN
+===================================================== */
+
+.custom-name-column {
+  flex: 1;
+
+  min-width: 0;
+
+  box-sizing: border-box;
+
+  padding: 4px 6px;
+
+  white-space: nowrap;
+
+  overflow: hidden;
+
+  text-overflow: ellipsis;
+}
+
+
+/* =====================================================
+   LIST
+===================================================== */
+
+.custom-select-list {
+  height: 290px;
+
+  overflow-y: auto;
+
+  overflow-x: hidden;
+
+  background: #ffffff;
+}
+
+
+/* =====================================================
+   ROW
+===================================================== */
+
+.custom-select-row {
+  display: flex;
+
+  width: 100%;
+
+  height: 25px;
+
+  box-sizing: border-box;
+
+  color: #163b76;
+
+  background: #ffffff;
+
+  cursor: default;
+
+  line-height: 25px;
+
+  white-space: nowrap;
+}
+
+
+/* =====================================================
+   HIGHLIGHT
+===================================================== */
+
+.custom-select-row.highlighted {
+  background: #d9e7ff;
+}
+
+
+/* =====================================================
+   SELECTED
+===================================================== */
+
+.custom-select-row.selected {
+  color: #163b76;
+}
+
+
+/* =====================================================
+   NO RESULT
+===================================================== */
+
+.custom-no-result {
+  height: 30px;
+
+  display: flex;
+
+  align-items: center;
+
+  padding-left: 7px;
+
+  color: #777777;
+}
+
+
+/* =====================================================
+   FOOTER
+===================================================== */
+
+.custom-select-footer {
+  height: 21px;
+
+  display: flex;
+
+  align-items: center;
+
+  justify-content: space-between;
+
+  padding: 0 4px 0 7px;
+
+  box-sizing: border-box;
+
+  background: #eeeeee;
+
+  border-top:
+    1px solid #cccccc;
+
+  color: #222222;
+
+  font-weight: bold;
+}
+
+
+/* =====================================================
+   SCROLLBAR
+===================================================== */
+
+.custom-select-list::-webkit-scrollbar {
+  width: 15px;
+}
+
+.custom-select-list::-webkit-scrollbar-track {
+  background: #eeeeee;
+}
+
+.custom-select-list::-webkit-scrollbar-thumb {
+  background: #c0c0c0;
+
+  border:
+    1px solid #999999;
+}
+
+.custom-select-list::-webkit-scrollbar-thumb:hover {
+  background: #aaaaaa;
+}
+
+.custom-select-options {
+  width: 100%;
+}
+
+.custom-select-option {
+  display: grid;
+  grid-template-columns: 110px 1fr;
+
+  width: 100%;
+  min-height: 28px;
+  height: 28px;
+
+  box-sizing: border-box;
+
+  font-size: 12px;
+  line-height: 28px;
+
+  color: #333;
+  background: #fff;
+
+  cursor: pointer;
+}
+
+.custom-select-option:hover {
+  background: #dbe8fb;
+}
+
+.custom-select-option.selected {
+  background: #cfe0fa;
+}
+
+.custom-select-id {
+  padding: 0 7px;
+  box-sizing: border-box;
+
+  border-right: 1px solid #d0d0d0;
+
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.custom-select-name {
+  padding: 0 7px;
+  box-sizing: border-box;
+
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.custom-select-header {
+  display: grid;
+  grid-template-columns: 110px 1fr;
+
+  height: 25px;
+  line-height: 25px;
+
+  background: #f1f1f1;
+  border-bottom: 1px solid #c8c8c8;
+
+  font-size: 12px;
+  font-weight: 600;
+  color: #333;
+}
+
+.custom-select-header-id {
+  padding: 0 7px;
+  border-right: 1px solid #c8c8c8;
+}
+
+.custom-select-header-name {
+  padding: 0 7px;
+}
