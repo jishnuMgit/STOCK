@@ -21,7 +21,6 @@ import MatchTable, {
    BOTTOM FORM
 ========================================================= */
 
-import ReceiptBottomForm from "../../../components/Transaction/Receipt/save/ReceiptBottomForm";
 
 /* =========================================================
    ACTIONS
@@ -41,6 +40,9 @@ import MatchHeaderForm, {
   type SelectOption,
 } from "../../../components/Transaction/Match/MatchHeaderForm";
 import MatchAction from "../../../components/Transaction/Match/MatchAction";
+import UnMatchTable from "../../../components/Transaction/UnMatch/UnMatchTable";
+import UnMatchHeaderForm from "../../../components/Transaction/UnMatch/UnMatchHeaderForm";
+import UnMatchHeader from "../../../components/Transaction/UnMatch/UnMatchHeader";
 
 /* =========================================================
    CREATE INITIAL ROWS
@@ -139,7 +141,7 @@ interface ReceiptsResponse {
    MATCHING
 ========================================================= */
 
-const Matching: React.FC = () => {
+const UnMatch: React.FC = () => {
   /* =======================================================
      HEADER STATE
   ======================================================= */
@@ -1166,13 +1168,13 @@ const [creditAmount, setCreditAmount] = useState(0);
             HEADER TITLE
         ================================================= */}
 
-        <MatchHeader />
+        <UnMatchHeader />
 
         {/* =================================================
             MATCH HEADER FORM
         ================================================= */}
 
-        <MatchHeaderForm
+        <UnMatchHeaderForm
           /* =============================================
              CUSTOMER
           ============================================= */
@@ -1379,7 +1381,7 @@ const [creditAmount, setCreditAmount] = useState(0);
             Next Row Br.ID
         ================================================= */}
 
-        <MatchTable
+        <UnMatchTable
           ref={
             receiptTableRef
           }
@@ -1413,41 +1415,20 @@ const [creditAmount, setCreditAmount] = useState(0);
       Doc Amt. | Debit | Credit
   ===================================================== */}
 
-  <div className="ml-auto grid w-82.5 grid-cols-3 gap-0 mr-3">
+  <div className="ml-auto grid w-82.5 grid-cols-3 gap-0 -mr-24">
 
     {/* DOC AMOUNT */}
-    <div className="flex justify-end mr-16">
-      <input
-        value={docAmount.toFixed(2)}
-        readOnly
-        className="
-          box-border
-          h-7.5
-          w-25
-          border
-                    rounded-md
-
-          border-[#c7c7c7]
-          bg-[#f7f7f7]
-          px-2
-          text-right
-          text-[13px]
-          font-semibold
-          text-red-600
-          outline-none
-        "
-      />
-    </div>
+ 
 
     {/* DEBIT */}
-    <div className="flex justify-end mr-16">
+    <div className="flex justify-end ">
       <input
         value={debitAmount.toFixed(2)}
         readOnly
         className="
           box-border
           h-7.5
-          w-25
+          w-23.75
                     rounded-md
 
           border
@@ -1471,7 +1452,7 @@ const [creditAmount, setCreditAmount] = useState(0);
         className="
           box-border
           h-7.5
-          w-28.75
+          w-23.75
                     rounded-md
 
           border
@@ -1496,47 +1477,7 @@ const [creditAmount, setCreditAmount] = useState(0);
       Positioned under the right-side amount columns
   ===================================================== */}
 
-  <div className="ml-auto mt-2 flex w-82.5 justify-end mr-3">
 
-    <div className="flex items-center gap-2">
-
-      <label
-        className="
-          whitespace-nowrap
-          text-[13px]
-          text-slate-700
-        "
-      >
-        Diff. Amt. :
-      </label>
-
-      <input
-        value={(
-          docAmount -
-          debitAmount -
-          creditAmount
-        ).toFixed(2)}
-        readOnly
-        className="
-          box-border
-          rounded-md
-          h-7.5
-          w-28.75
-          border
-          border-[#c7c7c7]
-          bg-[#f7f7f7]
-          px-2
-          text-right
-          text-[16px]
-          font-semibold
-          text-red-600
-          outline-none
-        "
-      />
-
-    </div>
-
-  </div>
 
 </div>
         {/* =================================================
@@ -1599,4 +1540,4 @@ const [creditAmount, setCreditAmount] = useState(0);
   );
 };
 
-export default Matching;
+export default UnMatch;

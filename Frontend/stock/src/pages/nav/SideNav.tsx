@@ -63,44 +63,53 @@ const menuItems: MenuItem[] = [
     children: [
       {
         label: "Receipt Voucher",
-        path: "/receipt",
+        path: "/Transaction/receipt",
       },
        {
         label: "Payment Voucher",
-        path: "/payment",
+        path: "/Transaction/payment",
       },
       {
         label: "Journal Voucher",
-        path: "/journal",
+        path: "/Transaction/journal",
       },
       {
+        label: "Matching ",
+        path: "/Transaction/Transaction-matching",
+      },
+      {
+        label: "UnMatching ",
+        path: "/Transaction/Transaction-unmatching",
+      },
+      {
+
         label: "Debit Note",
-        path: "/debit-note",
+        path: "/Transaction/debit-note",
       },
       {
         label: "Credit Note",
-        path: "/credit-note",
+        path: "/Transaction/credit-note",
       },
 
        {
         label: "Document Print",
-        path: "/document-print",
+        path: "/Transaction/document-print",
       },
        {
         label: "Document post",
-        path: "/document-post",
+        path: "/Transaction/document-post",
       },
        {
         label: "Document Un-Post",
-        path: "/document-unpost",
+        path: "/Transaction/document-unpost",
       },
        {
         label: "Bank Reconciliation",
-        path: "/bank-reconciliation",
+        path: "/Transaction/bank-reconciliation",
       },
        {
         label: "Beginning Balance",
-        path: "/beginning-balance",
+        path: "/Transaction/beginning-balance",
       },
     
     ],

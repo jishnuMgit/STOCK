@@ -1,17 +1,12 @@
 import {
   BrowserRouter,
-  Routes,
-  Route,
-  Navigate,
   useLocation,
   useNavigate,
 } from "react-router-dom";
 
-import Journalpage from "./pages/Transaction/Journal/Journalpage";
-import Receipt from "./pages/Transaction/Receipt/Receipt";
-// import CustomSelectTable from "./pages/CustomSelectTable";
-
 import SideNav from "./pages/nav/SideNav";
+
+import AppRoutes from "./routes/AppRoutes";
 
 import "./App.css";
 
@@ -26,42 +21,27 @@ function AppLayout() {
   return (
     <div className="app-layout">
 
+      {/* =================================================
+          SIDE NAVIGATION
+      ================================================= */}
+
       <SideNav
         activePath={location.pathname}
         onNavigate={navigate}
       />
 
+      {/* =================================================
+          PAGE CONTENT
+      ================================================= */}
+
       <main className="app-content">
-        <Routes>
-
-          <Route
-            path="/"
-            element={
-              <Navigate
-                to="/receipt"
-                replace
-              />
-            }
-          />
-
-          <Route
-            path="/receipt"
-            element={<Receipt />}
-          />
-
-          
-
-          <Route
-            path="/journal"
-            element={<Journalpage />}
-          />
-
-        </Routes>
+        <AppRoutes />
       </main>
 
     </div>
   );
 }
+
 /* =========================================================
    APP
 ========================================================= */
