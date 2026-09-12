@@ -1,0 +1,1064 @@
+.gray-select-arrow {
+  appearance: none;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'%3E%3Cpath d='M1 1l4 4 4-4' fill='none' stroke='%23aeb8c2' stroke-width='1.2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+
+  background-repeat: no-repeat;
+  background-position: right 5px center;
+  background-size: 9px 6px;
+
+  padding-right: 18px;
+}
+
+/* =========================
+   RECEIPT TABLE SCROLLBAR
+========================= */
+
+.receipt-table-scroll {
+  scrollbar-width: auto;
+  scrollbar-color: #9fdfbc #f5f5f5;
+}
+
+/* Chrome / Edge / Safari */
+.receipt-table-scroll::-webkit-scrollbar {
+  width: 14px;
+}
+
+/* Scrollbar background */
+.receipt-table-scroll::-webkit-scrollbar-track {
+  background: #f5f5f5;
+  border-left: 1px solid #e5e7eb;
+}
+
+/* Scrollbar thumb */
+.receipt-table-scroll::-webkit-scrollbar-thumb {
+  background: #9fdfbc;
+  border-radius: 8px;
+  border: 3px solid #f5f5f5;
+}
+
+/* Hover */
+.receipt-table-scroll::-webkit-scrollbar-thumb:hover {
+  background: #82d1aa;
+}
+
+/* Top/bottom arrow buttons */
+.receipt-table-scroll::-webkit-scrollbar-button {
+  height: 14px;
+  background-color: #f5f5f5;
+}
+
+/* Optional: make the arrows gray */
+.receipt-table-scroll::-webkit-scrollbar-button:single-button:vertical:decrement {
+  background:
+    linear-gradient(135deg, transparent 50%, #808080 50%) 50% 60% / 7px 7px no-repeat;
+}
+
+.receipt-table-scroll::-webkit-scrollbar-button:single-button:vertical:increment {
+  background:
+    linear-gradient(315deg, transparent 50%, #808080 50%) 50% 40% / 7px 7px no-repeat;
+}
+
+.receipt-table-scroll::-webkit-scrollbar {
+  width: 12px;
+}
+
+.receipt-table-scroll::-webkit-scrollbar-track {
+  background: #ffffff;
+}
+
+.receipt-table-scroll::-webkit-scrollbar-thumb {
+  background: #9fdfbc;
+  border-radius: 10px;
+  border: 2px solid #ffffff;
+}
+
+.receipt-table-scroll::-webkit-scrollbar-thumb:hover {
+  background: #82d1aa;
+}
+
+.receipt-table-scroll::-webkit-scrollbar-button {
+  height: 14px;
+  background-color: #ffffff;
+}
+
+/* =========================================================
+   RECEIPT TABLE
+   DESKTOP ERP STYLE
+========================================================= */
+/* =========================================================
+   TABLE WRAPPER
+========================================================= */
+
+.receipt-table-wrapper {
+  position: relative;
+
+  margin-left: 12px;
+  margin-right: 12px;
+
+  width: calc(100% - 24px);
+
+  height: auto;
+
+  overflow: visible;
+
+  border: 1px solid #b7ecd0;
+
+  background: #ffffff;
+
+  box-sizing: border-box;
+}
+
+
+/* =========================================================
+   TABLE
+========================================================= */
+
+.receipt-table {
+  width: 100%;
+
+  table-layout: fixed;
+
+  border-collapse: collapse;
+
+  border-spacing: 0;
+
+  margin: 0;
+
+  padding: 0;
+
+  font-size: 12px;
+
+  color: #344054;
+
+  background: #ffffff;
+}
+
+
+/* =========================================================
+   HEADER
+========================================================= */
+
+.receipt-table thead {
+  position: sticky;
+
+  top: 0;
+
+  z-index: 20;
+}
+
+
+.receipt-table thead tr {
+  height: 28px;
+}
+
+
+.receipt-table th {
+  height: 28px;
+
+  min-height: 28px;
+
+  padding: 3px 6px;
+
+  margin: 0;
+
+  border: 1px solid #b7ecd0;
+
+  background: #eefbf4;
+
+  font-size: 12px;
+
+  font-weight: 500;
+
+  line-height: 20px;
+
+  white-space: nowrap;
+
+  text-align: left;
+
+  vertical-align: middle;
+
+  color: #344054;
+
+  user-select: none;
+}
+
+
+.receipt-table th.text-center {
+  text-align: center;
+}
+
+
+.receipt-table th.text-right {
+  text-align: right;
+}
+
+
+/* =========================================================
+   BODY ROW
+========================================================= */
+
+.receipt-table tbody tr {
+  height: 28px;
+
+  min-height: 28px;
+}
+
+
+/* =========================================================
+   BODY CELL
+========================================================= */
+
+.receipt-table td {
+  height: 28px;
+
+  min-height: 28px;
+
+  padding: 0;
+
+  margin: 0;
+
+  border: 1px solid #b7ecd0;
+
+  background: #ffffff;
+
+  font-size: 12px;
+
+  line-height: 27px;
+
+  vertical-align: middle;
+
+  overflow: hidden;
+}
+
+
+/* =========================================================
+   SELECTED ROW
+========================================================= */
+
+.receipt-table tbody tr.receipt-row-selected td {
+  background: #f9fffc;
+}
+
+
+.receipt-row-selected td {
+  background: #f9fffc;
+}
+
+
+/* =========================================================
+   SERIAL NUMBER
+========================================================= */
+
+.serial-cell {
+  text-align: center;
+
+  font-size: 11px !important;
+
+  color: #444;
+}
+
+
+/* =========================================================
+   REACT SELECT CONTAINER
+========================================================= */
+
+.receipt-table .css-b62m3t-container {
+  width: 100%;
+}
+
+
+/* =========================================================
+   REACT SELECT CONTROL
+========================================================= */
+
+.receipt-table .react-select__control {
+  min-height: 27px;
+}
+
+
+/* =========================================================
+   DROPDOWN ARROW
+========================================================= */
+
+.receipt-dropdown-arrow {
+  display: block;
+
+  font-size: 8px;
+
+  line-height: 8px;
+
+  color: #999999;
+
+  transform: translateY(1px);
+}
+
+
+/* =========================================================
+   =========================================================
+   ACCOUNT DROPDOWN
+   TOTAL WIDTH:
+   
+   ACCOUNT ID   = 118px
+   ACCOUNT NAME = 258px
+   ---------------------
+   TOTAL        = 376px
+   =========================================================
+========================================================= */
+
+
+/* =========================================================
+   DROPDOWN HEADER
+========================================================= */
+
+.account-dropdown-header {
+  width: 376px;
+
+  height: 27px;
+
+  min-height: 27px;
+
+  display: flex;
+
+  box-sizing: border-box;
+
+  background: #eefbf4;
+
+  border-bottom: 1px solid #b7ecd0;
+
+  font-size: 12px;
+
+  font-weight: 500;
+
+  color: #344054;
+}
+
+
+/* =========================================================
+   HEADER - ACCOUNT ID
+========================================================= */
+
+.account-dropdown-header-id {
+  width: 118px;
+
+  min-width: 118px;
+
+  max-width: 118px;
+
+  height: 27px;
+
+  box-sizing: border-box;
+
+  display: flex;
+
+  align-items: center;
+
+  padding: 0 7px;
+
+  border-right: 1px solid #b7ecd0;
+
+  white-space: nowrap;
+}
+
+
+/* =========================================================
+   HEADER - ACCOUNT NAME
+========================================================= */
+
+.account-dropdown-header-name {
+  width: 258px;
+
+  min-width: 258px;
+
+  max-width: 258px;
+
+  height: 27px;
+
+  box-sizing: border-box;
+
+  display: flex;
+
+  align-items: center;
+
+  padding: 0 7px;
+
+  white-space: nowrap;
+}
+
+
+/* =========================================================
+   SCROLL AREA
+========================================================= */
+
+.account-dropdown-options {
+  width: 376px;
+
+  max-height: 223px;
+
+  overflow-y: auto;
+
+  overflow-x: hidden;
+
+  box-sizing: border-box;
+}
+
+
+/* =========================================================
+   SCROLLBAR
+========================================================= */
+
+.account-dropdown-options::-webkit-scrollbar {
+  width: 8px;
+}
+
+
+.account-dropdown-options::-webkit-scrollbar-track {
+  background: #f1f1f1;
+}
+
+
+.account-dropdown-options::-webkit-scrollbar-thumb {
+  background: #b5b5b5;
+
+  border-radius: 2px;
+}
+
+
+.account-dropdown-options::-webkit-scrollbar-thumb:hover {
+  background: #999999;
+}
+
+
+/* =========================================================
+   ACCOUNT DROPDOWN ROW
+========================================================= */
+
+.account-dropdown-row {
+  width: 376px;
+
+  height: 27px;
+
+  min-height: 27px;
+
+  display: flex;
+
+  align-items: center;
+
+  box-sizing: border-box;
+
+  font-size: 12px;
+
+  line-height: 27px;
+
+  white-space: nowrap;
+}
+
+
+/* =========================================================
+   ACCOUNT ID COLUMN
+========================================================= */
+
+.account-dropdown-id {
+  width: 118px;
+
+  min-width: 118px;
+
+  max-width: 118px;
+
+  height: 27px;
+
+  box-sizing: border-box;
+
+  display: flex;
+
+  align-items: center;
+
+  padding: 0 7px;
+
+  border-right: 1px solid #e3f2ea;
+
+  overflow: hidden;
+
+  text-overflow: ellipsis;
+
+  white-space: nowrap;
+}
+
+
+/* =========================================================
+   ACCOUNT NAME COLUMN
+========================================================= */
+
+.account-dropdown-name {
+  width: 258px;
+
+  min-width: 258px;
+
+  max-width: 258px;
+
+  height: 27px;
+
+  box-sizing: border-box;
+
+  display: flex;
+
+  align-items: center;
+
+  padding: 0 7px;
+
+  overflow: hidden;
+
+  text-overflow: ellipsis;
+
+  white-space: nowrap;
+}
+
+
+/* =========================================================
+   INPUT INSIDE GRID
+========================================================= */
+
+.receipt-grid-input {
+  display: block;
+
+  width: 100%;
+
+  height: 27px;
+
+  min-height: 27px;
+
+  box-sizing: border-box;
+
+  margin: 0;
+
+  padding: 0 6px;
+
+  border: none;
+
+  border-radius: 0;
+
+  outline: none;
+
+  background: transparent;
+
+  color: #344054;
+
+  font-family: inherit;
+
+  font-size: 12px;
+
+  line-height: 27px;
+
+  text-align: right;
+}
+
+
+/* =========================================================
+   INPUT FOCUS
+========================================================= */
+
+.receipt-grid-input:focus {
+  outline: none;
+
+  background: #eefbf4;
+}
+
+
+/* =========================================================
+   REMOVE NUMBER INPUT ARROWS
+========================================================= */
+
+.receipt-grid-input::-webkit-inner-spin-button,
+.receipt-grid-input::-webkit-outer-spin-button {
+  margin: 0;
+
+  -webkit-appearance: none;
+}
+
+
+.receipt-grid-input[type="number"] {
+  -moz-appearance: textfield;
+}
+
+
+/* =========================================================
+   CHECKBOX CELL
+========================================================= */
+
+.receipt-checkbox-wrapper {
+  width: 100%;
+
+  height: 27px;
+
+  display: flex;
+
+  align-items: center;
+
+  justify-content: center;
+
+  line-height: normal;
+}
+
+
+/* =========================================================
+   CHECKBOX
+========================================================= */
+
+.receipt-checkbox-wrapper input {
+  width: 13px;
+
+  height: 13px;
+
+  margin: 0;
+
+  padding: 0;
+
+  cursor: pointer;
+
+  accent-color: #9fdfbc;
+}
+
+
+/* =========================================================
+   VIEW BUTTON
+========================================================= */
+
+.receipt-view-button {
+  display: flex;
+
+  align-items: center;
+
+  justify-content: center;
+
+  width: 100%;
+
+  height: 27px;
+
+  min-height: 27px;
+
+  margin: 0;
+
+  padding: 0;
+
+  border: none;
+
+  border-radius: 0;
+
+  outline: none;
+
+  background: transparent;
+
+  color: #555555;
+
+  font-size: 13px;
+
+  line-height: 27px;
+
+  cursor: pointer;
+}
+
+
+/* =========================================================
+   VIEW BUTTON HOVER
+========================================================= */
+
+.receipt-view-button:hover {
+  background: rgba(0, 0, 0, 0.03);
+}
+
+
+/* =========================================================
+   VIEW BUTTON FOCUS
+========================================================= */
+
+.receipt-view-button:focus {
+  outline: none;
+
+  box-shadow: none;
+}
+
+.account-lookup {
+  position: relative;
+  width: 100%;
+  min-width: 0;
+}
+
+/* =========================================================
+   INPUT / TRIGGER
+========================================================= */
+
+.account-lookup__input {
+  width: 100%;
+  height: 27px;
+  min-height: 27px;
+
+  box-sizing: border-box;
+
+  font: inherit;
+  font-size: 12px;
+
+  padding: 0 5px;
+
+  background: #fff;
+
+  border: none;
+
+  color: #344054;
+
+  outline: none;
+
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.account-lookup__input:focus {
+  outline: none;
+}
+
+.account-lookup__input:focus-visible {
+  outline: none;
+}
+
+
+/* =========================================================
+   POPUP
+========================================================= */
+
+.account-lookup__popup {
+  position: absolute;
+
+  top: 100%;
+  left: 0;
+
+  z-index: 999999;
+
+  /*
+    Desktop:
+      popup can be wider than the input.
+
+    Mobile:
+      popup will never exceed the viewport.
+  */
+  width: var(--lookup-popup-width, 530px);
+
+  max-width: calc(100vw - 20px);
+
+  box-sizing: border-box;
+
+  background: #fff;
+
+  border: 1px solid #9aa9b8;
+
+  border-radius: 0;
+
+  box-shadow:
+    2px 2px 5px rgba(0, 0, 0, 0.18);
+
+  max-height: 310px;
+
+  overflow: hidden;
+
+  display: flex;
+  flex-direction: column;
+}
+
+
+/* =========================================================
+   HEADER + ROW
+========================================================= */
+
+.account-lookup__row {
+  display: grid;
+
+  /*
+    The second column automatically takes remaining space.
+  */
+  grid-template-columns:
+    var(--lookup-id-width, 115px)
+    minmax(0, 1fr);
+
+  width: 100%;
+
+  min-width: 0;
+
+  height: 27px;
+  min-height: 27px;
+
+  box-sizing: border-box;
+
+  align-items: center;
+
+  padding: 0;
+
+  font-size: 12px;
+
+  line-height: 27px;
+
+  color: #344054;
+
+  cursor: default;
+}
+
+
+/* =========================================================
+   HEADER
+========================================================= */
+
+.account-lookup__row--head {
+  flex-shrink: 0;
+
+  height: 27px;
+  min-height: 27px;
+
+  background: #f1f1f1;
+
+  border-bottom: 1px solid #c5c5c5;
+
+  color: #222;
+
+  font-size: 12px;
+
+  font-weight: 400;
+
+  text-transform: none;
+
+  letter-spacing: normal;
+
+  position: sticky;
+
+  top: 0;
+
+  z-index: 2;
+}
+
+
+/* =========================================================
+   DATA ROW
+========================================================= */
+
+.account-lookup__row--data {
+  background: #fff;
+
+  cursor: pointer;
+}
+
+.account-lookup__row--data:hover {
+  background: #eef4fb;
+}
+
+.account-lookup__row--active {
+  background: #eef4fb;
+}
+
+.account-lookup__row--active:hover {
+  background: #e5effb;
+}
+
+
+/* =========================================================
+   CELLS
+========================================================= */
+
+.account-lookup__id {
+  min-width: 0;
+
+  height: 27px;
+
+  display: flex;
+  align-items: center;
+
+  box-sizing: border-box;
+
+  padding: 0 6px;
+
+  overflow: hidden;
+
+  white-space: nowrap;
+
+  text-overflow: ellipsis;
+
+  color: #172b4d;
+
+  /*
+    Optional:
+    account numbers look cleaner in a normal UI font.
+    Remove this if you prefer the old monospace appearance.
+  */
+  font-family: Arial, sans-serif;
+}
+
+.account-lookup__name {
+  min-width: 0;
+
+  height: 27px;
+
+  display: flex;
+  align-items: center;
+
+  box-sizing: border-box;
+
+  padding: 0 6px;
+
+  overflow: hidden;
+
+  white-space: nowrap;
+
+  text-overflow: ellipsis;
+
+  color: #172b4d;
+}
+
+
+/* =========================================================
+   HEADER CELLS
+========================================================= */
+
+.account-lookup__row--head .account-lookup__id,
+.account-lookup__row--head .account-lookup__name {
+  color: #222;
+
+  font-family: Arial, sans-serif;
+
+  overflow: hidden;
+
+  white-space: nowrap;
+
+  text-overflow: ellipsis;
+}
+
+
+/* =========================================================
+   VERTICAL SEPARATOR
+========================================================= */
+
+.account-lookup__row--head .account-lookup__id,
+.account-lookup__row--data .account-lookup__id {
+  border-right: 1px solid #d5d5d5;
+}
+
+
+/* =========================================================
+   LIST
+========================================================= */
+
+.account-lookup__list {
+  width: 100%;
+
+  min-width: 0;
+
+  overflow-x: hidden;
+
+  overflow-y: auto;
+
+  max-height: 283px;
+
+  box-sizing: border-box;
+}
+
+
+/* =========================================================
+   SCROLLBAR
+========================================================= */
+
+.account-lookup__list::-webkit-scrollbar {
+  width: 14px;
+}
+
+.account-lookup__list::-webkit-scrollbar-track {
+  background: #f1f1f1;
+
+  border-left: 1px solid #d0d0d0;
+}
+
+.account-lookup__list::-webkit-scrollbar-thumb {
+  background: #c3c7ca;
+
+  border: 2px solid #f1f1f1;
+
+  border-radius: 2px;
+}
+
+.account-lookup__list::-webkit-scrollbar-thumb:hover {
+  background: #aeb4b8;
+}
+
+
+/* =========================================================
+   EMPTY
+========================================================= */
+
+.account-lookup__empty {
+  height: 27px;
+
+  display: flex;
+  align-items: center;
+
+  padding: 0 6px;
+
+  box-sizing: border-box;
+
+  font-size: 12px;
+
+  color: #777;
+
+  background: #fff;
+}
+
+
+
+/* =========================================================
+   RESPONSIVE
+========================================================= */
+
+@media (max-width: 768px) {
+  .account-lookup__popup {
+    width: min(
+      var(--lookup-popup-width, 530px),
+      calc(100vw - 20px)
+    );
+  }
+}
+
+
+@media (max-width: 480px) {
+  .account-lookup__popup {
+    width: calc(100vw - 20px);
+
+    max-width: calc(100vw - 20px);
+  }
+
+  .account-lookup__row {
+    grid-template-columns:
+      100px
+      minmax(0, 1fr);
+  }
+
+  .account-lookup__id,
+  .account-lookup__name {
+    font-size: 11px;
+  }
+}
+/* =========================================================
+   MOBILE
+========================================================= */
+
+@media (max-width: 900px) {
+
+  .receipt-table-wrapper {
+    margin-left: 8px;
+
+    margin-right: 8px;
+
+    width: calc(100% - 16px);
+
+    overflow: visible;
+  }
+
+  .receipt-table {
+    min-width: 760px;
+  }
+
+}
