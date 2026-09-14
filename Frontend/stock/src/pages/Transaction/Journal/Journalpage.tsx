@@ -49,6 +49,8 @@ const createRows = (): JournalRow[] =>
 
       accountName: "",
 
+      fgcs: "",
+
       division: "",
 
       ccId: "",
@@ -771,6 +773,9 @@ const JournalPage: React.FC = () => {
 
                   accountName:
                     row.accountName,
+
+                  fgcs:
+                    row.fgcs,
 
                   division:
                     row.division,

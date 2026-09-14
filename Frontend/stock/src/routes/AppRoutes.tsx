@@ -4,6 +4,7 @@ import {
   Route,
   Navigate,
 } from "react-router-dom";
+// import ModifyReceipt from "../pages/Transaction/Receipt/ModifyReceipt";
 
 /* =========================================================
    LAZY LOAD PAGES
@@ -81,6 +82,7 @@ const AppRoutes = () => {
             />
           }
         />
+        
 
         {/* =================================================
             TRANSACTION
@@ -90,6 +92,10 @@ const AppRoutes = () => {
           path="/Transaction/receipt"
           element={<Receipt />}
         />
+         {/* <Route
+          path="/Transaction/receipt/save"
+          element={<ModifyReceipt />}
+        /> */}
 
         <Route
           path="/Transaction/journal"

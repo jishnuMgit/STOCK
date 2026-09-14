@@ -39,6 +39,7 @@ const createRows = (): ReceiptRow[] =>
     id: index + 1,
     accountId: "",
     accountName: "",
+    fgcs:'',
     division: "",
     ccId: "",
     creditAmount: "",
@@ -83,6 +84,58 @@ interface ReceiptsResponse {
   receiptNo: string | null;
 }
 
+interface ModifyReceiptResponse {
+  exists: boolean;
+  header: {
+    branch?: string;
+    docType?: string;
+    docNo?: string;
+    receiptDate?: string;
+    cashBank?: string;
+    cashBankCcId?: string;
+    receivedFrom?: string;
+    reference?: string;
+    note?: string;
+  } | null;
+  rows: Array<{
+    id?: number;
+    accountId?: string;
+    accountName?: string;
+    fgcs?: string;
+    division?: string;
+    ccId?: string;
+    creditAmount?: string | number;
+    match?: boolean | string | number;
+    description?: string;
+  }>;
+  total?: number;
+  message?: string;
+}
+
+const toDocumentType = (value: string) => {
+  const normalized = value.trim().toUpperCase();
+  return normalized === "B"
+    ? "BR"
+    : normalized === "C"
+    ? "CR"
+    : normalized;
+};
+
+const formatReceiptDate = (value?: string) => {
+  if (!value) {
+    return "";
+  }
+
+  const datePart = value.slice(0, 10);
+
+  if (/^\d{4}-\d{2}-\d{2}$/.test(datePart)) {
+    const [year, month, day] = datePart.split("-");
+    return `${day}/${month}/${year}`;
+  }
+
+  return value;
+};
+
 
 /* =========================================================
    RECEIPT
@@ -99,6 +152,7 @@ const Receipt: React.FC = () => {
   const [type, setType] = useState("B");
 
   const [cashBank, setCashBank] = useState("");
+  const [cashBankCcId, setCashBankCcId] = useState("");
 
   const [reference, setReference] = useState("");
 
@@ -144,6 +198,15 @@ const Receipt: React.FC = () => {
 
   const [note, setNote] =
     useState("");
+
+  const [isModifyMode, setIsModifyMode] =
+    useState(false);
+
+  const [receiptMessage, setReceiptMessage] =
+    useState("");
+
+  const lastLookupKeyRef =
+    useRef("");
 
 
   /* =======================================================
@@ -444,6 +507,118 @@ const Receipt: React.FC = () => {
 
   }, []);
 
+  const loadReceiptForModify =
+    useCallback(
+      async () => {
+        const documentNo = receiptNo.trim();
+
+        if (!branch || !documentNo) {
+          return;
+        }
+
+        const lookupKey = `${branch}|${toDocumentType(type)}|${documentNo}`;
+
+        if (lastLookupKeyRef.current === lookupKey) {
+          return;
+        }
+
+        lastLookupKeyRef.current = lookupKey;
+        setReceiptMessage("");
+
+        try {
+          const query = new URLSearchParams({
+            branch,
+            docType: toDocumentType(type),
+            docNo: documentNo,
+          });
+
+          const response = await fetch(
+            `http://localhost:5000/api/get/data?${query.toString()}`
+          );
+
+          const result =
+            (await response.json()) as ModifyReceiptResponse;
+
+          if (!response.ok || !result.exists || !result.header) {
+            setIsModifyMode(false);
+            setReceiptMessage(
+              result.message || "Receipt not found. New receipt mode remains active."
+            );
+            return;
+          }
+
+          const loadedRows = createRows();
+
+          result.rows
+            .slice(0, loadedRows.length)
+            .forEach((loadedRow, index) => {
+              const account = accountOptions.find(
+                (option) =>
+                  option.faccountid === loadedRow.accountId
+              );
+
+              loadedRows[index] = {
+                id: index + 1,
+                accountId: loadedRow.accountId || "",
+                accountName:
+                  loadedRow.accountName ||
+                  account?.faccountname ||
+                  "",
+                fgcs:
+                  loadedRow.fgcs ||
+                  account?.fgcs ||
+                  "",
+                division: loadedRow.division || "",
+                ccId: loadedRow.ccId || "",
+                creditAmount:
+                  loadedRow.creditAmount === undefined ||
+                  loadedRow.creditAmount === null
+                    ? ""
+                    : String(loadedRow.creditAmount),
+                match:
+                  loadedRow.match === true ||
+                  loadedRow.match === 1 ||
+                  loadedRow.match === "1" ||
+                  loadedRow.match === "true",
+                description: loadedRow.description || "",
+              };
+            });
+
+          setBranch(result.header.branch || branch);
+          setType(
+            result.header.docType === "CR" ||
+              result.header.docType === "C"
+              ? "C"
+              : "B"
+          );
+          setReceiptNo(result.header.docNo || documentNo);
+          setReceiptDate(
+            formatReceiptDate(result.header.receiptDate)
+          );
+          setCashBank(result.header.cashBank || "");
+          setCashBankCcId(result.header.cashBankCcId || "");
+          setReceivedFrom(result.header.receivedFrom || "");
+          setReference(result.header.reference || "");
+          setNote(result.header.note || "");
+          setRows(loadedRows);
+          setDescriptionValue("");
+          setActiveDescriptionRow(null);
+          setIsModifyMode(true);
+          setReceiptMessage("Receipt loaded successfully.");
+          alert('Receipt loaded successfully.')
+        } catch (error) {
+          lastLookupKeyRef.current = "";
+          setIsModifyMode(false);
+          setReceiptMessage(
+            error instanceof Error
+              ? error.message
+              : "Unable to load receipt."
+          );
+        }
+      },
+      [accountOptions, branch, receiptNo, type]
+    );
+
 
   /* =======================================================
      BRANCH SELECT OPTIONS
@@ -618,16 +793,9 @@ const Receipt: React.FC = () => {
            *     old description remains.
            */
 
-          if (
-            row &&
-            row.description &&
-            row.description.trim() !== ""
-          ) {
-
-            setDescriptionValue(
-              row.description
-            );
-          }
+          setDescriptionValue(
+            row?.description || ""
+          );
 
 
           /*
@@ -1005,6 +1173,7 @@ const Receipt: React.FC = () => {
             type,
 
             cashBank,
+            cbCcId: cashBankCcId,
 
             receiptNo,
 
@@ -1030,6 +1199,7 @@ const Receipt: React.FC = () => {
 
                     id:
                       row.id,
+                      // fgcs:row.fgcs,
 
                     slNo:
                       index + 1,
@@ -1039,6 +1209,8 @@ const Receipt: React.FC = () => {
 
                     accountName:
                       row.accountName,
+                      
+                      fgcs:row.fgcs,
 
                     division:
                       row.division,
@@ -1182,6 +1354,7 @@ const Receipt: React.FC = () => {
               result.message ||
                 `Save failed. Status: ${response.status}`
             );
+            // window.location.reload()
 
             return;
           }
@@ -1191,6 +1364,8 @@ const Receipt: React.FC = () => {
             result.message ||
               "Receipt saved successfully"
           );
+                      window.location.reload()
+
 
         } catch (error) {
 
@@ -1210,12 +1385,105 @@ const Receipt: React.FC = () => {
         branch,
         type,
         cashBank,
+        cashBankCcId,
         receiptNo,
         receiptDate,
         receivedFrom,
         reference,
         rows,
         note,
+      ]
+    );
+
+  const handleModify =
+    useCallback(
+      async () => {
+        const validRows = rows.filter(
+          (row) =>
+            row.accountId &&
+            row.accountId.trim() !== ""
+        );
+
+        if (
+          !branch ||
+          !type ||
+          !receiptNo.trim() ||
+          !receiptDate ||
+          !cashBank ||
+          validRows.length === 0
+        ) {
+          setReceiptMessage(
+            "Branch, type, receipt number, date, cash/bank, and one account row are required."
+          );
+          return;
+        }
+
+        try {
+          const response = await fetch(
+            "http://localhost:5000/api/updateReceipt",
+            {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+              },
+              body: JSON.stringify({
+                branch,
+                type: toDocumentType(type),
+                cashBank,
+                cbCcId: cashBankCcId,
+                receiptNo: receiptNo.trim(),
+                receiptDate,
+                receivedFrom,
+                reference,
+                note,
+                rows: validRows.map((row, index) => ({
+                  ...row,
+                  slNo: index + 1,
+                  creditAmount:
+                    Number(row.creditAmount) || 0,
+                })),
+                total,
+              }),
+            }
+          );
+
+          const result = await response.json() as {
+            success?: boolean;
+            message?: string;
+          };
+
+          if (!response.ok || !result.success) {
+            throw new Error(
+              result.message ||
+                "Receipt could not be modified."
+            );
+          }
+
+          setReceiptMessage(
+            result.message ||
+              "Receipt modified successfully."
+          );
+          alert( "Receipt modified successfully.")
+        } catch (error) {
+          setReceiptMessage(
+            error instanceof Error
+              ? error.message
+              : "Receipt could not be modified."
+          );
+        }
+      },
+      [
+        branch,
+        cashBank,
+        cashBankCcId,
+        note,
+        receiptDate,
+        receiptNo,
+        receivedFrom,
+        reference,
+        rows,
+        total,
+        type,
       ]
     );
 
@@ -1232,12 +1500,19 @@ const Receipt: React.FC = () => {
       setType("B");
 
       setCashBank("");
+  setCashBankCcId("");
 
       setReference("");
 
       setReceivedFrom("");
 
       setNote("");
+
+      setIsModifyMode(false);
+
+      setReceiptMessage("");
+
+      lastLookupKeyRef.current = "";
 
 
       /*
@@ -1464,6 +1739,20 @@ const Receipt: React.FC = () => {
             financialParameters
           }
 
+          isModifyMode={
+            isModifyMode
+          }
+
+          receiptNoEditable
+
+          onReceiptNoLookup={
+            loadReceiptForModify
+          }
+
+          preserveCashBankOnLoad={
+            isModifyMode
+          }
+
         />
 
 
@@ -1473,6 +1762,8 @@ const Receipt: React.FC = () => {
 
         <ReceiptTable
 
+         url={`${import.meta.env.VITE_BASE_URL}/getReceipts`}
+
           ref={
             receiptTableRef
           }
@@ -1480,7 +1771,6 @@ const Receipt: React.FC = () => {
           rows={
             rows
           }
-
           handleRowChange={
             handleRowChange
           }
@@ -1532,6 +1822,7 @@ const Receipt: React.FC = () => {
             value={
               total.toFixed(2)
             }
+            id="txtTotAmount"
 
             readOnly
 
@@ -1590,6 +1881,12 @@ const Receipt: React.FC = () => {
           }
 
         />
+{/* 
+        {receiptMessage && (
+          <div className="px-5 text-center text-xs text-slate-600">
+            {receiptMessage}
+          </div>
+        )} */}
 
 
         {/* =================================================
@@ -1607,9 +1904,20 @@ const Receipt: React.FC = () => {
           }
 
           onSave={
-            handleSave
+            isModifyMode
+              ? handleModify
+              : handleSave
           }
 
+          saveLabel={
+            isModifyMode
+              ? "Modify"
+              : "Save"
+          }
+
+          preventSearchNavigation
+
+          
         />
 
       </div>

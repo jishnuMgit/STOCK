@@ -88,6 +88,14 @@ interface ReceiptFormProps {
   branchOptions: SelectOption[];
 
   financialParameters: FinancialParameter[];
+
+  isModifyMode?: boolean;
+
+  onReceiptNoLookup?: () => void;
+
+  preserveCashBankOnLoad?: boolean;
+
+  receiptNoEditable?: boolean;
 }
 
 /* =========================================================
@@ -248,6 +256,14 @@ const ReceiptForm: React.FC<ReceiptFormProps> = ({
   focusFirstAccountId,
 
   branchOptions,
+
+  isModifyMode = false,
+
+  onReceiptNoLookup,
+
+  preserveCashBankOnLoad = false,
+
+  receiptNoEditable = false,
 }) => {
   /* =======================================================
      STATE
@@ -440,7 +456,9 @@ const ReceiptForm: React.FC<ReceiptFormProps> = ({
       );
 
       setCashBankAccounts([]);
-      setCashBank("");
+      if (!preserveCashBankOnLoad) {
+        setCashBank("");
+      }
 
       return;
     }
@@ -495,7 +513,9 @@ const ReceiptForm: React.FC<ReceiptFormProps> = ({
           all B/C accounts.
         */
 
-        setCashBank("");
+        if (!preserveCashBankOnLoad) {
+          setCashBank("");
+        }
       } else {
         console.error(
           "Cash/Bank accounts not returned:",
@@ -503,7 +523,9 @@ const ReceiptForm: React.FC<ReceiptFormProps> = ({
         );
 
         setCashBankAccounts([]);
-        setCashBank("");
+        if (!preserveCashBankOnLoad) {
+          setCashBank("");
+        }
       }
     } catch (error) {
       console.error(
@@ -512,7 +534,9 @@ const ReceiptForm: React.FC<ReceiptFormProps> = ({
       );
 
       setCashBankAccounts([]);
-      setCashBank("");
+      if (!preserveCashBankOnLoad) {
+        setCashBank("");
+      }
     } finally {
       setAccountsLoading(false);
     }
@@ -555,7 +579,7 @@ const ReceiptForm: React.FC<ReceiptFormProps> = ({
       C -> CR
     */
 
-    if (branch) {
+    if (branch && !isModifyMode) {
       getReceiptDocNumber(
         branch,
         defaultType
@@ -576,20 +600,32 @@ const ReceiptForm: React.FC<ReceiptFormProps> = ({
 
   useEffect(() => {
     if (!branch) {
-      setReceiptNo("");
+      if (!isModifyMode) {
+        setReceiptNo("");
+      }
       return;
     }
 
     const currentType =
       type || "B";
 
-    getReceiptDocNumber(
-      branch,
-      currentType
-    );
+    if (!isModifyMode) {
+      getReceiptDocNumber(
+        branch,
+        currentType
+      );
+    }
 
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [branch]);
+  }, [branch, isModifyMode]);
+
+  useEffect(() => {
+    if (isModifyMode) {
+      loadAccounts(type || "B");
+    }
+
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isModifyMode, type]);
 
   /* =======================================================
      SELECT ENTER HANDLER
@@ -901,7 +937,7 @@ const ReceiptForm: React.FC<ReceiptFormProps> = ({
 
           <Select<SelectOption, false>
             ref={branchRef}
-
+id="lkpBranch"
             value={
               selectedBranch
             }
@@ -947,10 +983,12 @@ const ReceiptForm: React.FC<ReceiptFormProps> = ({
                 C -> CR
               */
 
-              getReceiptDocNumber(
-                selectedBranch,
-                type || "B"
-              );
+              if (!isModifyMode) {
+                getReceiptDocNumber(
+                  selectedBranch,
+                  type || "B"
+                );
+              }
             }}
 
             options={
@@ -1091,7 +1129,7 @@ const ReceiptForm: React.FC<ReceiptFormProps> = ({
                 C -> CR
               */
 
-              if (branch) {
+              if (branch && !isModifyMode) {
                 getReceiptDocNumber(
                   branch,
                   selectedType
@@ -1175,6 +1213,8 @@ const ReceiptForm: React.FC<ReceiptFormProps> = ({
           </label>
 
           <input
+
+          id="txtDocNo"
             ref={
               receiptNoRef
             }
@@ -1185,15 +1225,37 @@ const ReceiptForm: React.FC<ReceiptFormProps> = ({
                 : receiptNo
             }
 
-            readOnly
+            readOnly={!receiptNoEditable}
 
-            onKeyDown={(event) =>
+            onChange={(event) => {
+              if (receiptNoEditable) {
+                setReceiptNo(event.target.value);
+              }
+            }}
+
+            onBlur={() => {
+              if (receiptNoEditable) {
+                onReceiptNoLookup?.();
+              }
+            }}
+
+            onKeyDown={(event) => {
+              if (
+                receiptNoEditable &&
+                event.key === "Enter"
+              ) {
+                event.preventDefault();
+                onReceiptNoLookup?.();
+                cashBankRef.current?.focus();
+                return;
+              }
+
               handleInputKeyDown(
                 event,
                 () =>
                   cashBankRef.current?.focus()
-              )
-            }
+              );
+            }}
 
             className={`${inputClass} w-37.5`}
           />
@@ -1222,7 +1284,7 @@ const ReceiptForm: React.FC<ReceiptFormProps> = ({
             ref={
               cashBankRef
             }
-
+             id="lkpCBAccount"
             value={
               selectedCashBank
             }
@@ -1532,7 +1594,7 @@ const ReceiptForm: React.FC<ReceiptFormProps> = ({
             ref={
               receivedFromRef
             }
-
+id='txtReceivedForm'
             value={
               receivedFrom
             }
@@ -1570,6 +1632,7 @@ const ReceiptForm: React.FC<ReceiptFormProps> = ({
             ref={
               referenceRef
             }
+            id="txtReference"
 
             value={
               reference
