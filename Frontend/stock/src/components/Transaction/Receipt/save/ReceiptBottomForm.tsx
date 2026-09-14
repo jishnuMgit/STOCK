@@ -74,6 +74,7 @@ const ReceiptBottomForm: React.FC<Props> = ({
         </label>
 
         <input
+        id="fDescription "
           ref={descriptionRef}
           type="text"
           value={description}

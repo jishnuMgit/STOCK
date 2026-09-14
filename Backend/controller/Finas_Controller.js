@@ -1,5 +1,9 @@
 import pool from "../DB/db.js";
-import { saveReceiptService } from "../services/receiptService.js";
+import {
+  saveReceiptService,
+  updateReceiptService,
+} from "../services/receiptService.js";
+import {GetData} from "../services/GetData.js"
 
 export const ReceiptsControllers = async (req, res) => {
   try {
@@ -528,6 +532,27 @@ export const saveReceipt = async (req, res) => {
   }
 };
 
+export const updateReceipt = async (req, res) => {
+  try {
+    const result = await updateReceiptService(req.body);
+
+    return res.status(200).json({
+      success: true,
+      message: result.message,
+      data: result.data,
+    });
+  } catch (error) {
+    console.error("updateReceipt error:", error);
+
+    return res.status(400).json({
+      success: false,
+      message:
+        error.message ||
+        "Receipt could not be modified",
+    });
+  }
+};
+
 export const testget = async (req, res) => {
   try {
     return res.status(200).json({
@@ -537,4 +562,223 @@ export const testget = async (req, res) => {
   } catch (error) {
     console.error("testget error:", error);
   }
+}
+
+
+
+
+/* =========================================================
+   GET RECEIPT FOR MODIFY
+========================================================= */
+
+export async function GetDatas(
+  req,
+  res
+) {
+
+  try {
+
+    /* =====================================================
+       QUERY PARAMETERS
+    ===================================================== */
+
+    const {
+      branch,
+      docType,
+      docNo,
+    } = req.query;
+
+
+    console.log(
+      "\n======================================"
+    );
+
+    console.log(
+      "GET RECEIPT FOR MODIFY"
+    );
+
+    console.log(
+      "Branch:",
+      JSON.stringify(branch)
+    );
+
+    console.log(
+      "Doc Type:",
+      JSON.stringify(docType)
+    );
+
+    console.log(
+      "Doc No:",
+      JSON.stringify(docNo)
+    );
+
+    console.log(
+      "======================================"
+    );
+
+
+    /* =====================================================
+       VALIDATION
+    ===================================================== */
+
+    if (
+      branch === undefined ||
+      branch === null ||
+      String(branch).trim() === ""
+    ) {
+
+      return res.status(400).json({
+
+        exists: false,
+
+        header: null,
+
+        rows: [],
+
+        message:
+          "Branch is required",
+
+      });
+
+    }
+
+
+    if (
+      docType === undefined ||
+      docType === null ||
+      String(docType).trim() === ""
+    ) {
+
+      return res.status(400).json({
+
+        exists: false,
+
+        header: null,
+
+        rows: [],
+
+        message:
+          "Receipt type is required",
+
+      });
+
+    }
+
+
+    if (
+      docNo === undefined ||
+      docNo === null ||
+      String(docNo).trim() === ""
+    ) {
+
+      return res.status(400).json({
+
+        exists: false,
+
+        header: null,
+
+        rows: [],
+
+        message:
+          "Receipt number is required",
+
+      });
+
+    }
+
+
+    /* =====================================================
+       CALL GetData
+
+       IMPORTANT:
+
+       Service expects:
+
+       strbranch
+       strdocType
+       strdocNo
+    ===================================================== */
+
+    console.log(
+      "Calling GetData..."
+    );
+
+
+    const result =
+      await GetData({
+
+        strbranch:
+          branch,
+
+        strdocType:
+          docType,
+
+        strdocNo:
+          docNo,
+
+      });
+
+
+    /* =====================================================
+       NOT FOUND
+    ===================================================== */
+
+    if (
+      !result ||
+      result.exists === false
+    ) {
+
+      return res.status(404).json(
+
+        result || {
+
+          exists: false,
+
+          header: null,
+
+          rows: [],
+
+          message:
+            "Receipt not found",
+
+        }
+
+      );
+
+    }
+
+
+    /* =====================================================
+       SUCCESS
+    ===================================================== */
+
+    return res.status(200).json(
+      result
+    );
+
+
+  } catch (error) {
+
+    console.error(
+      "GetDatas error:",
+      error
+    );
+
+
+    return res.status(500).json({
+
+      exists: false,
+
+      header: null,
+
+      rows: [],
+
+      message:
+        error.message ||
+        "Failed to load receipt",
+
+    });
+
+  }
+
 }

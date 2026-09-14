@@ -5,6 +5,7 @@ import React, {
   useRef,
   useState,
 } from "react";
+import { Link } from "react-router-dom";
 
 /* =========================================================
    REF
@@ -21,54 +22,75 @@ export interface ReceiptActionsRef {
 interface Props {
   clearForm: () => void;
   onSave: () => void;
+
+  onSearch?: () => void;
+  onDelete?: () => void;
+  onPrint?: () => void;
+  onPost?: () => void;
+  onAttach?: () => void;
+
+  saveLabel?: string;
+
+  preventSearchNavigation?: boolean;
 }
 
 /* =========================================================
    RECEIPT ACTIONS
 ========================================================= */
 
-const ReceiptActions = forwardRef<
-  ReceiptActionsRef,
-  Props
->(({ clearForm, onSave }, ref) => {
-  /* =======================================================
-     BUTTON REFS
-  ======================================================= */
+const ReceiptActions = forwardRef<ReceiptActionsRef, Props>(
+  (
+    {
+      clearForm,
+      onSave,
+      onSearch,
+      onDelete,
+      onPrint,
+      onPost,
+      onAttach,
+      saveLabel = "Save",
+      preventSearchNavigation = false,
+    },
+    ref
+  ) => {
+    /* =======================================================
+       BUTTON REFS
+    ======================================================= */
 
-  const buttonRefs =
-    useRef<(HTMLButtonElement | null)[]>(
-      []
-    );
+    const saveRef = useRef<HTMLButtonElement | null>(null);
+    const searchRef = useRef<HTMLButtonElement | null>(null);
+    const deleteRef = useRef<HTMLButtonElement | null>(null);
+    const printRef = useRef<HTMLButtonElement | null>(null);
+    const postRef = useRef<HTMLButtonElement | null>(null);
+    const attachRef = useRef<HTMLButtonElement | null>(null);
+    const clearRef = useRef<HTMLButtonElement | null>(null);
 
-  /* =======================================================
-     ACTIVE BUTTON
-  ======================================================= */
+    /* =======================================================
+       ACTIVE BUTTON
+    ======================================================= */
 
-  const [activeIndex, setActiveIndex] =
-    useState(0);
+    const [activeIndex, setActiveIndex] = useState(0);
 
-  /* =======================================================
-     BUTTON LIST
-  ======================================================= */
+    /* =======================================================
+       BUTTON LIST FOR NAVIGATION ONLY
+    ======================================================= */
 
-  const buttons = [
-    "Save",
-    "Search",
-    "Delete",
-    "Print",
-    "Post",
-    "Attach",
-    "Clear",
-  ];
+    const buttonRefs = [
+      saveRef,
+      searchRef,
+      deleteRef,
+      printRef,
+      postRef,
+      attachRef,
+      clearRef,
+    ];
 
-  /* =======================================================
-     FOCUS BUTTON
-  ======================================================= */
+    /* =======================================================
+       FOCUS BUTTON
+    ======================================================= */
 
-  const focusButton = useCallback(
-    (index: number) => {
-      const button =
-        buttonRefs.current[index];
+    const focusButton = useCallback((index: number) => {
+      const button = buttonRefs[index]?.current;
 
       if (!button) {
         return;
@@ -79,114 +101,27 @@ const ReceiptActions = forwardRef<
       requestAnimationFrame(() => {
         button.focus();
       });
-    },
-    []
-  );
+    }, []);
 
-  /* =======================================================
-     EXPOSE TO PARENT
-  ======================================================= */
+    /* =======================================================
+       EXPOSE TO PARENT
+    ======================================================= */
 
-  useImperativeHandle(
-    ref,
-    () => ({
-      focusSave: () => {
-        focusButton(0);
-      },
-    }),
-    [focusButton]
-  );
-
-  /* =======================================================
-     EXECUTE BUTTON
-  ======================================================= */
-
-  const executeButton =
-    useCallback(
-      (index: number) => {
-        switch (index) {
-          /* ===============================================
-             SAVE
-          =============================================== */
-
-          case 0:
-            onSave();
-            break;
-
-          /* ===============================================
-             SEARCH
-          =============================================== */
-
-          case 1:
-            console.log(
-              "Search clicked"
-            );
-            break;
-
-          /* ===============================================
-             DELETE
-          =============================================== */
-
-          case 2:
-            console.log(
-              "Delete clicked"
-            );
-            break;
-
-          /* ===============================================
-             PRINT
-          =============================================== */
-
-          case 3:
-            console.log(
-              "Print clicked"
-            );
-            break;
-
-          /* ===============================================
-             POST
-          =============================================== */
-
-          case 4:
-            console.log(
-              "Post clicked"
-            );
-            break;
-
-          /* ===============================================
-             ATTACH
-          =============================================== */
-
-          case 5:
-            console.log(
-              "Attach clicked"
-            );
-            break;
-
-          /* ===============================================
-             CLEAR
-          =============================================== */
-
-          case 6:
-            clearForm();
-            break;
-
-          default:
-            break;
-        }
-      },
-      [
-        clearForm,
-        onSave,
-      ]
+    useImperativeHandle(
+      ref,
+      () => ({
+        focusSave: () => {
+          focusButton(0);
+        },
+      }),
+      [focusButton]
     );
 
-  /* =======================================================
-     KEYBOARD NAVIGATION
-  ======================================================= */
+    /* =======================================================
+       KEYBOARD NAVIGATION
+    ======================================================= */
 
-  const handleKeyDown =
-    useCallback(
+    const handleKeyDown = useCallback(
       (
         event: React.KeyboardEvent<HTMLButtonElement>
       ) => {
@@ -201,14 +136,11 @@ const ReceiptActions = forwardRef<
             event.stopPropagation();
 
             const nextIndex =
-              activeIndex <
-              buttons.length - 1
+              activeIndex < buttonRefs.length - 1
                 ? activeIndex + 1
                 : 0;
 
-            focusButton(
-              nextIndex
-            );
+            focusButton(nextIndex);
 
             break;
           }
@@ -225,11 +157,9 @@ const ReceiptActions = forwardRef<
             const previousIndex =
               activeIndex > 0
                 ? activeIndex - 1
-                : buttons.length - 1;
+                : buttonRefs.length - 1;
 
-            focusButton(
-              previousIndex
-            );
+            focusButton(previousIndex);
 
             break;
           }
@@ -242,9 +172,7 @@ const ReceiptActions = forwardRef<
             event.preventDefault();
             event.stopPropagation();
 
-            executeButton(
-              activeIndex
-            );
+            event.currentTarget.click();
 
             break;
           }
@@ -253,80 +181,72 @@ const ReceiptActions = forwardRef<
             break;
         }
       },
-      [
-        activeIndex,
-        executeButton,
-        focusButton,
-      ]
+      [activeIndex, focusButton]
     );
 
-  /* =======================================================
-     KEEP ACTIVE INDEX IN SYNC
-  ======================================================= */
+    /* =======================================================
+       BUTTON FOCUS
+    ======================================================= */
 
-  const handleFocus = (
-    index: number
-  ) => {
-    setActiveIndex(index);
-  };
+    const handleFocus = (index: number) => {
+      setActiveIndex(index);
+    };
 
-  /* =======================================================
-     BUTTON STYLE
-  ======================================================= */
+    /* =======================================================
+       BUTTON STYLE
+    ======================================================= */
 
- const buttonClass =
-  `
-    min-w-[120px]
-    h-[40px]
-    rounded-[4px]
+    const buttonClass = `
+      min-w-[120px]
+      h-[40px]
+      rounded-[4px]
 
-    border-l
-    border-r
-    border-b
-    border-[#9db8d4]
+      border-l
+      border-r
+      border-b
+      border-[#9db8d4]
 
-    border-t-0
+      border-t-0
 
-bg-gradient-to-b
-    from-[#ffffff]
-    to-[#e7eef5]
+      bg-gradient-to-b
+      from-[#ffffff]
+      to-[#e7eef5]
 
-    px-4
+      px-4
 
-    text-[15px]
+      text-[15px]
 
-    shadow-[inset_0_1px_0_rgba(255,255,255,0.8)]
+      shadow-[inset_0_1px_0_rgba(255,255,255,0.8)]
 
-    transition-colors
-    duration-100
+      transition-colors
+      duration-100
 
-    hover:border-l-[#7f9fbd]
-    hover:border-r-[#7f9fbd]
-    hover:border-b-[#7f9fbd]
+      hover:border-l-[#7f9fbd]
+      hover:border-r-[#7f9fbd]
+      hover:border-b-[#7f9fbd]
 
-    hover:bg-gradient-to-b
-    hover:from-[#ffffff]
-    hover:to-[#dce8f1]
+      hover:bg-gradient-to-b
+      hover:from-[#ffffff]
+      hover:to-[#dce8f1]
 
-    focus:border-l-[#20884e]
-    focus:border-r-[#20884e]
-    focus:border-b-[#20884e]
-    focus:border-t-0
+      focus:border-l-[#20884e]
+      focus:border-r-[#20884e]
+      focus:border-b-[#20884e]
+      focus:border-t-0
 
-    focus:bg-gradient-to-b
-    focus:from-[#ffffff]
-    focus:to-[#dcefe5]
+      focus:bg-gradient-to-b
+      focus:from-[#ffffff]
+      focus:to-[#dcefe5]
 
-    focus:outline-none
-    focus:ring-0
-  `;
+      focus:outline-none
+      focus:ring-0
+    `;
 
-  /* =======================================================
-     TEXT STYLE
-  ======================================================= */
+    /* =======================================================
+       TEXT STYLE
+    ======================================================= */
 
-  const textClass =
-    `
+    const textClass = `
       bg-gradient-to-b
       from-[#145c34]
       via-[#20884e]
@@ -338,78 +258,171 @@ bg-gradient-to-b
       font-medium
     `;
 
-  /* =======================================================
-     RETURN
-  ======================================================= */
+    /* =======================================================
+       RETURN
+    ======================================================= */
 
-  return (
-    <div
-      className="
-        my-5
-        flex
-        w-full
-        flex-wrap
-        items-center
-        justify-center
-        gap-2.75
-      "
-    >
-      {buttons.map(
-        (
-          label,
-          index
-        ) => (
-          <button
-            key={label}
+    return (
+      <div
+        className="
+          my-5
+          flex
+          w-full
+          flex-wrap
+          items-center
+          justify-center
+          gap-2.75
+        "
+      >
 
-            ref={(element) => {
-              buttonRefs.current[
-                index
-              ] = element;
-            }}
+        {/* =================================================
+            SAVE
+        ================================================= */}
 
-            type="button"
-
-            className={
-              buttonClass
-            }
-
-            onFocus={() =>
-              handleFocus(
-                index
-              )
-            }
-
-            onKeyDown={
-              handleKeyDown
-            }
-
-            onClick={() =>
-              executeButton(
-                index
-              )
-            }
-          >
-            <span className={textClass}>
-              {["Save", "Delete", "Clear"].includes(label) ? (
-                <>
-                  <span className="underline decoration-2 underline-offset-1">
-  {label.charAt(0)}
-</span>
-                  {label.slice(1)}
-                </>
-              ) : (
-                label
-              )}
+        <button
+          ref={saveRef}
+          type="button"
+          className={buttonClass}
+          onFocus={() => handleFocus(0)}
+          onKeyDown={handleKeyDown}
+          onClick={onSave}
+          id="Savebtn"
+        >
+          <span className={textClass}>
+            <span className="underline decoration-2 underline-offset-1">
+              {saveLabel === "Save" ? "S" : "M"}
             </span>
-          </button>
-        )
-      )}
-    </div>
-  );
-});
+            {saveLabel.slice(1)}
+          </span>
+        </button>
 
-ReceiptActions.displayName =
-  "ReceiptActions";
+        {/* =================================================
+            SEARCH
+        ================================================= */}
+<Link to={'/Transaction/receipt/modify'}>
+
+
+        <button
+          ref={searchRef}
+          type="button"
+          className={buttonClass}
+          onFocus={() => handleFocus(1)}
+          onKeyDown={handleKeyDown}
+          onClick={(event) => {
+            if (preventSearchNavigation) {
+              event.preventDefault();
+            }
+            onSearch?.();
+          }}
+          id="Searchbtn"
+        >
+          <span className={textClass}>
+            Search
+          </span>
+        </button>
+        </Link>
+
+        {/* =================================================
+            DELETE
+        ================================================= */}
+
+        <button
+          ref={deleteRef}
+          type="button"
+          className={buttonClass}
+          onFocus={() => handleFocus(2)}
+          onKeyDown={handleKeyDown}
+          onClick={onDelete}
+          id="Deletebtn"
+        >
+          <span className={textClass}>
+            <span className="underline decoration-2 underline-offset-1">
+              D
+            </span>
+            elete
+          </span>
+        </button>
+
+        {/* =================================================
+            PRINT
+        ================================================= */}
+
+        <button
+          ref={printRef}
+          type="button"
+          className={buttonClass}
+          onFocus={() => handleFocus(3)}
+          onKeyDown={handleKeyDown}
+          onClick={onPrint}
+          id="Printbtn"
+        >
+          <span className={textClass}>
+            Print
+          </span>
+        </button>
+
+        {/* =================================================
+            POST
+        ================================================= */}
+
+        <button
+          ref={postRef}
+          type="button"
+          className={buttonClass}
+          onFocus={() => handleFocus(4)}
+          onKeyDown={handleKeyDown}
+          onClick={onPost}
+          id="Printbtn"
+        >
+          <span className={textClass}>
+            Post
+          </span>
+        </button>
+
+        {/* =================================================
+            ATTACH
+        ================================================= */}
+
+        <button
+          ref={attachRef}
+          type="button"
+          className={buttonClass}
+          onFocus={() => handleFocus(5)}
+          onKeyDown={handleKeyDown}
+          onClick={onAttach}
+          id="Attachbtn"
+        >
+          <span className={textClass}>
+            Attach
+          </span>
+        </button>
+
+        {/* =================================================
+            CLEAR
+        ================================================= */}
+
+        <button
+          ref={clearRef}
+          type="button"
+          className={buttonClass}
+          onFocus={() => handleFocus(6)}
+          onKeyDown={handleKeyDown}
+          onClick={clearForm}
+          id="Clearbtn"
+        >
+          <span className={textClass}>
+            <span className="underline decoration-2 underline-offset-1">
+              C
+            </span>
+            lear
+          </span>
+        </button>
+
+      </div>
+    );
+  }
+);
+
+ReceiptActions.displayName = "ReceiptActions";
 
 export default ReceiptActions;

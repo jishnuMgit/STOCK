@@ -22,10 +22,9 @@ import Select, {
 import {
   selectStyles,
   accountDropdownStyles,
-} from '../Receipt/save/ReactSelectStyles';
+} from "../Receipt/save/ReactSelectStyles";
 
 import "../Receipt/save/commanReceipt.css";
-
 
 /* =========================================================
    JOURNAL ROW
@@ -37,6 +36,12 @@ export interface JournalRow {
   accountId: string;
 
   accountName: string;
+
+  /* =======================================================
+     FGCS
+  ======================================================= */
+
+  fgcs: string;
 
   division: string;
 
@@ -51,7 +56,6 @@ export interface JournalRow {
   description?: string;
 }
 
-
 /* =========================================================
    COST CENTER
 ========================================================= */
@@ -64,7 +68,6 @@ export interface CostCenter {
   fpositionno: number;
 }
 
-
 /* =========================================================
    CUSTOMER DIVISION
 ========================================================= */
@@ -74,7 +77,6 @@ export interface CustomerDivision {
 
   fdivname: string;
 }
-
 
 /* =========================================================
    TABLE FIELD
@@ -89,7 +91,6 @@ export type TableField =
   | "creditAmount"
   | "match"
   | "view";
-
 
 /* =========================================================
    ACCOUNT DATA
@@ -109,7 +110,6 @@ export interface AccountData {
   faccountname: string;
 }
 
-
 /* =========================================================
    SELECT OPTIONS
 ========================================================= */
@@ -122,8 +122,13 @@ interface AccountOption {
   accountId: string;
 
   accountName: string;
-}
 
+  /* =======================================================
+     FGCS
+  ======================================================= */
+
+  fgcs: string;
+}
 
 interface SelectOption {
   value: string;
@@ -131,11 +136,10 @@ interface SelectOption {
   label: string;
 }
 
-
 /* =========================================================
    CUSTOMER DIVISION API RESPONSE
 ========================================================= */
-//@ts-ignore
+
 interface CustomerDivisionResponse {
   success: boolean;
 
@@ -143,7 +147,6 @@ interface CustomerDivisionResponse {
 
   data: CustomerDivision[];
 }
-
 
 /* =========================================================
    TABLE PROPS
@@ -170,7 +173,6 @@ interface JournalTableProps {
   costCenters?: CostCenter[];
 }
 
-
 /* =========================================================
    TABLE REF
 ========================================================= */
@@ -184,7 +186,6 @@ export interface JournalTableRef {
   ) => void;
 }
 
-
 /* =========================================================
    DROPDOWN INDICATOR
 ========================================================= */
@@ -194,11 +195,9 @@ interface CustomDropdownIndicatorProps
   showArrow: boolean;
 }
 
-
 const CustomDropdownIndicator = (
   props: CustomDropdownIndicatorProps
 ) => {
-
   if (!props.showArrow) {
     return null;
   }
@@ -212,7 +211,6 @@ const CustomDropdownIndicator = (
   );
 };
 
-
 /* =========================================================
    ACCOUNT DROPDOWN OPTION
 ========================================================= */
@@ -222,15 +220,12 @@ interface AccountOptionProps
   displayMode: "id" | "name";
 }
 
-
 const AccountDropdownOption = ({
   displayMode,
   ...props
 }: AccountOptionProps) => {
-
   return (
     <components.Option {...props}>
-
       <div className="account-dropdown-row">
 
         {displayMode === "id" ? (
@@ -256,11 +251,9 @@ const AccountDropdownOption = ({
         )}
 
       </div>
-
     </components.Option>
   );
 };
-
 
 /* =========================================================
    ACCOUNT MENU LIST
@@ -271,12 +264,10 @@ interface AccountMenuListProps
   displayMode: "id" | "name";
 }
 
-
 const AccountDropdownMenuList = ({
   displayMode,
   ...props
 }: AccountMenuListProps) => {
-
   return (
     <components.MenuList {...props}>
 
@@ -306,7 +297,6 @@ const AccountDropdownMenuList = ({
 
       </div>
 
-
       <div className="account-dropdown-options">
         {props.children}
       </div>
@@ -314,7 +304,6 @@ const AccountDropdownMenuList = ({
     </components.MenuList>
   );
 };
-
 
 /* =========================================================
    ACCOUNT FILTER
@@ -331,17 +320,14 @@ const accountFilterOption = (
 
   inputValue: string
 ) => {
-
   const search =
     inputValue
       .toLowerCase()
       .trim();
 
-
   if (!search) {
     return true;
   }
-
 
   return (
     option.data.accountId
@@ -353,7 +339,6 @@ const accountFilterOption = (
       .includes(search)
   );
 };
-
 
 /* =========================================================
    NORMAL FILTER
@@ -370,17 +355,14 @@ const selectFilterOption = (
 
   inputValue: string
 ) => {
-
   const search =
     inputValue
       .toLowerCase()
       .trim();
 
-
   if (!search) {
     return true;
   }
-
 
   return (
     option.data.label
@@ -393,7 +375,6 @@ const selectFilterOption = (
   );
 };
 
-
 /* =========================================================
    ROW REF
 ========================================================= */
@@ -405,11 +386,9 @@ type RowRefValue =
   | HTMLButtonElement
   | null;
 
-
 type RowRefs = Partial<
   Record<TableField, RowRefValue>
 >;
-
 
 /* =========================================================
    JOURNAL ROW PROPS
@@ -450,7 +429,6 @@ interface JournalRowProps {
   onTableEscape: () => void;
 }
 
-
 /* =========================================================
    JOURNAL ROW
 ========================================================= */
@@ -485,11 +463,8 @@ const JournalRow = memo(
     const ccIdMenuOpenRef =
       useRef(false);
 
-
     /* =====================================================
        DIVISION STATE
-
-       Dummy/local data for now.
     ===================================================== */
 
     const [divisions] =
@@ -508,9 +483,7 @@ const JournalRow = memo(
         },
       ]);
 
-
     const divisionLoading = false;
-
 
     /* =====================================================
        DIVISION OPTIONS
@@ -528,10 +501,8 @@ const JournalRow = memo(
                 division.fdivname,
             })
           ),
-
         [divisions]
       );
-
 
     /* =====================================================
        SELECTED ACCOUNT
@@ -545,13 +516,11 @@ const JournalRow = memo(
               account.accountId ===
               row.accountId
           ) || null,
-
         [
           realAccountOptions,
           row.accountId,
         ]
       );
-
 
     /* =====================================================
        ACCOUNT ID
@@ -559,7 +528,6 @@ const JournalRow = memo(
 
     const selectedAccountId =
       selectedAccount;
-
 
     /* =====================================================
        ACCOUNT NAME
@@ -584,10 +552,16 @@ const JournalRow = memo(
 
           accountName:
             selectedAccount.accountName,
+
+          /* =============================================
+             FGCS
+          ============================================= */
+
+          fgcs:
+            selectedAccount.fgcs,
         };
 
       }, [selectedAccount]);
-
 
     /* =====================================================
        SELECTED DIVISION
@@ -601,13 +575,11 @@ const JournalRow = memo(
               option.value ===
               row.division
           ) || null,
-
         [
           divisionOptions,
           row.division,
         ]
       );
-
 
     /* =====================================================
        SELECTED CC
@@ -621,13 +593,11 @@ const JournalRow = memo(
               option.value ===
               row.ccId
           ) || null,
-
         [
           ccIdOptions,
           row.ccId,
         ]
       );
-
 
     /* =====================================================
        ACCOUNT CHANGE
@@ -645,11 +615,52 @@ const JournalRow = memo(
           const accountName =
             option.accountName;
 
+          /* =============================================
+             GET FGCS
+          ============================================= */
+
+          const fgcs =
+            option.fgcs;
+
+          console.log(
+            "================================="
+          );
+
+          console.log(
+            "ACCOUNT SELECTED"
+          );
+
+          console.log(
+            "ROW ID:",
+            row.id
+          );
+
+          console.log(
+            "ACCOUNT ID:",
+            accountId
+          );
+
+          console.log(
+            "ACCOUNT NAME:",
+            accountName
+          );
+
+          console.log(
+            "FGCS:",
+            fgcs
+          );
+
+          console.log(
+            "================================="
+          );
 
           setSelectedRowId(
             row.id
           );
 
+          /* =============================================
+             ACCOUNT ID
+          ============================================= */
 
           handleRowChange(
             row.id,
@@ -657,6 +668,9 @@ const JournalRow = memo(
             accountId
           );
 
+          /* =============================================
+             ACCOUNT NAME
+          ============================================= */
 
           handleRowChange(
             row.id,
@@ -664,6 +678,19 @@ const JournalRow = memo(
             accountName
           );
 
+          /* =============================================
+             FGCS
+          ============================================= */
+
+          handleRowChange(
+            row.id,
+            "fgcs",
+            fgcs
+          );
+
+          /* =============================================
+             CLEAR DIVISION
+          ============================================= */
 
           handleRowChange(
             row.id,
@@ -679,7 +706,6 @@ const JournalRow = memo(
         ]
       );
 
-
     /* =====================================================
        SELECT KEY DOWN
     ===================================================== */
@@ -693,13 +719,12 @@ const JournalRow = memo(
             React.MutableRefObject<boolean>
         ) => {
 
-          /* ===============================================
+          /* =============================================
              ESC
-          =============================================== */
+          ============================================= */
 
           if (
-            event.key ===
-            "Escape"
+            event.key === "Escape"
           ) {
 
             if (
@@ -707,7 +732,6 @@ const JournalRow = memo(
             ) {
               return;
             }
-
 
             event.preventDefault();
 
@@ -718,18 +742,15 @@ const JournalRow = memo(
             return;
           }
 
-
-          /* ===============================================
+          /* =============================================
              ENTER
-          =============================================== */
+          ============================================= */
 
           if (
-            event.key !==
-            "Enter"
+            event.key !== "Enter"
           ) {
             return;
           }
-
 
           if (
             menuOpenRef.current
@@ -737,11 +758,9 @@ const JournalRow = memo(
             return;
           }
 
-
           event.preventDefault();
 
           event.stopPropagation();
-
 
           onFieldEnter(
             index,
@@ -755,7 +774,6 @@ const JournalRow = memo(
           onTableEscape,
         ]
       );
-
 
     /* =====================================================
        NORMAL INPUT KEY DOWN
@@ -769,8 +787,7 @@ const JournalRow = memo(
         ) => {
 
           if (
-            event.key ===
-            "Escape"
+            event.key === "Escape"
           ) {
 
             event.preventDefault();
@@ -782,19 +799,15 @@ const JournalRow = memo(
             return;
           }
 
-
           if (
-            event.key !==
-            "Enter"
+            event.key !== "Enter"
           ) {
             return;
           }
 
-
           event.preventDefault();
 
           event.stopPropagation();
-
 
           onFieldEnter(
             index,
@@ -808,7 +821,6 @@ const JournalRow = memo(
           onTableEscape,
         ]
       );
-
 
     /* =====================================================
        ROW CLICK
@@ -825,7 +837,6 @@ const JournalRow = memo(
         row.id,
         setSelectedRowId,
       ]);
-
 
     /* =====================================================
        ACCOUNT ID MENU
@@ -846,7 +857,6 @@ const JournalRow = memo(
         setSelectedRowId,
       ]);
 
-
     const handleAccountIdMenuClose =
       useCallback(() => {
 
@@ -854,7 +864,6 @@ const JournalRow = memo(
           false;
 
       }, []);
-
 
     /* =====================================================
        ACCOUNT NAME MENU
@@ -875,7 +884,6 @@ const JournalRow = memo(
         setSelectedRowId,
       ]);
 
-
     const handleAccountNameMenuClose =
       useCallback(() => {
 
@@ -883,7 +891,6 @@ const JournalRow = memo(
           false;
 
       }, []);
-
 
     /* =====================================================
        DIVISION MENU
@@ -904,7 +911,6 @@ const JournalRow = memo(
         setSelectedRowId,
       ]);
 
-
     const handleDivisionMenuClose =
       useCallback(() => {
 
@@ -912,7 +918,6 @@ const JournalRow = memo(
           false;
 
       }, []);
-
 
     /* =====================================================
        CC MENU
@@ -933,7 +938,6 @@ const JournalRow = memo(
         setSelectedRowId,
       ]);
 
-
     const handleCcMenuClose =
       useCallback(() => {
 
@@ -941,7 +945,6 @@ const JournalRow = memo(
           false;
 
       }, []);
-
 
     /* =====================================================
        ACCOUNT ID INDICATOR
@@ -967,7 +970,6 @@ const JournalRow = memo(
         [isSelected]
       );
 
-
     /* =====================================================
        ACCOUNT NAME INDICATOR
     ===================================================== */
@@ -991,7 +993,6 @@ const JournalRow = memo(
         ),
         [isSelected]
       );
-
 
     /* =====================================================
        NORMAL INDICATOR
@@ -1020,7 +1021,6 @@ const JournalRow = memo(
         []
       );
 
-
     /* =====================================================
        RETURN
     ===================================================== */
@@ -1044,11 +1044,8 @@ const JournalRow = memo(
         ================================================= */}
 
         <td className="receipt-cell serial-cell">
-
           {index + 1}
-
         </td>
-
 
         {/* =================================================
             ACCOUNT ID
@@ -1170,7 +1167,6 @@ const JournalRow = memo(
 
         </td>
 
-
         {/* =================================================
             ACCOUNT NAME
         ================================================= */}
@@ -1291,7 +1287,6 @@ const JournalRow = memo(
 
         </td>
 
-
         {/* =================================================
             DIVISION
         ================================================= */}
@@ -1408,7 +1403,6 @@ const JournalRow = memo(
 
         </td>
 
-
         {/* =================================================
             CC ID
         ================================================= */}
@@ -1510,7 +1504,6 @@ const JournalRow = memo(
 
         </td>
 
-
         {/* =================================================
             DEBIT AMOUNT
         ================================================= */}
@@ -1561,14 +1554,10 @@ const JournalRow = memo(
               )
             }
 
-            className="
-              receipt-grid-input
-            "
-
+            className="receipt-grid-input"
           />
 
         </td>
-
 
         {/* =================================================
             CREDIT AMOUNT
@@ -1620,14 +1609,10 @@ const JournalRow = memo(
               )
             }
 
-            className="
-              receipt-grid-input
-            "
-
+            className="receipt-grid-input"
           />
 
         </td>
-
 
         {/* =================================================
             MATCH
@@ -1678,7 +1663,6 @@ const JournalRow = memo(
           </div>
 
         </td>
-
 
         {/* =================================================
             VIEW
@@ -1732,10 +1716,8 @@ const JournalRow = memo(
   }
 );
 
-
 JournalRow.displayName =
   "JournalRow";
-
 
 /* =========================================================
    MAIN JOURNAL TABLE
@@ -1769,14 +1751,12 @@ const JournalTable = forwardRef<
       null
     );
 
-
     /* =====================================================
        ROW REFS
     ===================================================== */
 
     const rowRefs =
       useRef<RowRefs[]>([]);
-
 
     /* =====================================================
        SET SELECTED ROW
@@ -1793,7 +1773,6 @@ const JournalTable = forwardRef<
         },
         []
       );
-
 
     /* =====================================================
        SET ROW REF
@@ -1819,7 +1798,6 @@ const JournalTable = forwardRef<
 
           }
 
-
           if (value) {
 
             rowRefs.current[
@@ -1838,7 +1816,6 @@ const JournalTable = forwardRef<
         []
       );
 
-
     /* =====================================================
        ACCOUNT OPTIONS
     ===================================================== */
@@ -1855,7 +1832,6 @@ const JournalTable = forwardRef<
             return [];
           }
 
-
           return accountOptions
             .filter(
               (account) =>
@@ -1864,7 +1840,6 @@ const JournalTable = forwardRef<
                   account.faccountid
                 )
             )
-
             .map(
               (account) => ({
 
@@ -1881,6 +1856,13 @@ const JournalTable = forwardRef<
                   account.faccountname ||
                   "",
 
+                /* =========================================
+                   FGCS
+                ========================================= */
+
+                fgcs:
+                  account.fgcs || "",
+
               })
             );
 
@@ -1888,7 +1870,6 @@ const JournalTable = forwardRef<
 
         [accountOptions]
       );
-
 
     /* =====================================================
        COST CENTER OPTIONS
@@ -1905,7 +1886,6 @@ const JournalTable = forwardRef<
           ) {
             return [];
           }
-
 
           return [
             ...costCenters,
@@ -1937,7 +1917,6 @@ const JournalTable = forwardRef<
         [costCenters]
       );
 
-
     /* =====================================================
        FOCUS FIELD
     ===================================================== */
@@ -1954,7 +1933,6 @@ const JournalTable = forwardRef<
               rowIndex
             ]?.[field];
 
-
           if (!element) {
 
             console.warn(
@@ -1968,12 +1946,10 @@ const JournalTable = forwardRef<
             return;
           }
 
-
           requestAnimationFrame(
             () => {
 
               element.focus();
-
 
               if (
                 element instanceof
@@ -1999,7 +1975,6 @@ const JournalTable = forwardRef<
         []
       );
 
-
     /* =====================================================
        IMPERATIVE HANDLE
     ===================================================== */
@@ -2018,14 +1993,12 @@ const JournalTable = forwardRef<
 
         },
 
-
         focusField,
 
       }),
 
       [focusField]
     );
-
 
     /* =====================================================
        RETURN
@@ -2107,7 +2080,6 @@ const JournalTable = forwardRef<
 
           </colgroup>
 
-
           {/* =================================================
               HEADER
           ================================================= */}
@@ -2128,11 +2100,11 @@ const JournalTable = forwardRef<
                 Account Name
               </th>
 
-              <th>
+              <th id="lkpDivID">
                 Division
               </th>
 
-              <th>
+              <th id="lkpCCID">
                 CC. ID
               </th>
 
@@ -2140,22 +2112,21 @@ const JournalTable = forwardRef<
                 Debit Amount
               </th>
 
-              <th className="text-right">
+              <th id="txtCreditAmount" className="text-right">
                 Credit Amount
               </th>
 
-              <th className="text-center">
+              <th id="chkMatch" className="text-center">
                 Match
               </th>
 
-              <th className="text-center">
+              <th id="Viewbtn" className="text-center">
                 View
               </th>
 
             </tr>
 
           </thead>
-
 
           {/* =================================================
               BODY
@@ -2170,6 +2141,7 @@ const JournalTable = forwardRef<
               ) => (
 
                 <JournalRow
+
                   key={
                     row.id
                   }
@@ -2229,9 +2201,7 @@ const JournalTable = forwardRef<
   }
 );
 
-
 JournalTable.displayName =
   "JournalTable";
-
 
 export default JournalTable;
