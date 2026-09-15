@@ -4,7 +4,6 @@ import {
   Route,
   Navigate,
 } from "react-router-dom";
-// import ModifyReceipt from "../pages/Transaction/Receipt/ModifyReceipt";
 
 /* =========================================================
    LAZY LOAD PAGES
@@ -37,6 +36,10 @@ const UnMatch = lazy(
       "../pages/Transaction/Unmatch/UnMatch"
     )
 );
+
+const StatementOfAccountMain=lazy(()=>import(
+  "../pages/Reports/StatementOfAccount/StatementOfAccountMain1"
+))
 
 /* =========================================================
    PAGE LOADER
@@ -119,6 +122,17 @@ const AppRoutes = () => {
         <Route
           path="/Transaction/Transaction-unmatching"
           element={<UnMatch />}
+        />
+
+
+
+        {/*=====================================
+                         REPORTS
+        ========================================*/}
+
+        <Route
+        path="/reports/soa"
+        element={<StatementOfAccountMain/>}
         />
 
       </Routes>

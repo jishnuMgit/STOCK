@@ -286,7 +286,7 @@ const ReceiptActions = forwardRef<ReceiptActionsRef, Props>(
           onFocus={() => handleFocus(0)}
           onKeyDown={handleKeyDown}
           onClick={onSave}
-          id="Savebtn"
+          id={saveLabel === "Modify" ? "btnModify" : "btnSave"}
         >
           <span className={textClass}>
             <span className="underline decoration-2 underline-offset-1">
@@ -314,7 +314,7 @@ const ReceiptActions = forwardRef<ReceiptActionsRef, Props>(
             }
             onSearch?.();
           }}
-          id="Searchbtn"
+          id="btnSearch"
         >
           <span className={textClass}>
             Search
@@ -333,7 +333,7 @@ const ReceiptActions = forwardRef<ReceiptActionsRef, Props>(
           onFocus={() => handleFocus(2)}
           onKeyDown={handleKeyDown}
           onClick={onDelete}
-          id="Deletebtn"
+          id="btnDelete"
         >
           <span className={textClass}>
             <span className="underline decoration-2 underline-offset-1">
@@ -354,7 +354,7 @@ const ReceiptActions = forwardRef<ReceiptActionsRef, Props>(
           onFocus={() => handleFocus(3)}
           onKeyDown={handleKeyDown}
           onClick={onPrint}
-          id="Printbtn"
+          id="btnPrint"
         >
           <span className={textClass}>
             Print
@@ -372,7 +372,7 @@ const ReceiptActions = forwardRef<ReceiptActionsRef, Props>(
           onFocus={() => handleFocus(4)}
           onKeyDown={handleKeyDown}
           onClick={onPost}
-          id="Printbtn"
+          id="btnPost"
         >
           <span className={textClass}>
             Post
@@ -390,7 +390,7 @@ const ReceiptActions = forwardRef<ReceiptActionsRef, Props>(
           onFocus={() => handleFocus(5)}
           onKeyDown={handleKeyDown}
           onClick={onAttach}
-          id="Attachbtn"
+          id="btnAttach"
         >
           <span className={textClass}>
             Attach
@@ -408,7 +408,7 @@ const ReceiptActions = forwardRef<ReceiptActionsRef, Props>(
           onFocus={() => handleFocus(6)}
           onKeyDown={handleKeyDown}
           onClick={clearForm}
-          id="Clearbtn"
+          id="btnClear"
         >
           <span className={textClass}>
             <span className="underline decoration-2 underline-offset-1">

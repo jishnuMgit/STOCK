@@ -92,6 +92,13 @@ export const ReceiptsControllers = async (req, res) => {
       ]
     );
 
+
+  const LkpType = await pool.query(
+  'SELECT * FROM dbo.fillfinparam()'
+);
+
+console.log(LkpType.rows);
+
     console.log(
       "defaultBranchResult:",
       defaultBranchResult
@@ -256,6 +263,7 @@ export const ReceiptsControllers = async (req, res) => {
       receiptNo,
 
       receiptType,
+      LkpType
     });
 
   } catch (error) {
@@ -583,9 +591,9 @@ export async function GetDatas(
     ===================================================== */
 
     const {
-      branch,
-      docType,
-      docNo,
+      strbranch,
+      strdocType,
+      strdocNo,
     } = req.query;
 
 
@@ -599,17 +607,17 @@ export async function GetDatas(
 
     console.log(
       "Branch:",
-      JSON.stringify(branch)
+      JSON.stringify(strbranch)
     );
 
     console.log(
       "Doc Type:",
-      JSON.stringify(docType)
+      JSON.stringify(strdocType)
     );
 
     console.log(
       "Doc No:",
-      JSON.stringify(docNo)
+      JSON.stringify(strdocNo)
     );
 
     console.log(
@@ -622,9 +630,9 @@ export async function GetDatas(
     ===================================================== */
 
     if (
-      branch === undefined ||
-      branch === null ||
-      String(branch).trim() === ""
+      strbranch === undefined ||
+      strbranch === null ||
+      String(strbranch).trim() === ""
     ) {
 
       return res.status(400).json({
@@ -644,9 +652,9 @@ export async function GetDatas(
 
 
     if (
-      docType === undefined ||
-      docType === null ||
-      String(docType).trim() === ""
+      strdocType === undefined ||
+      strdocType === null ||
+      String(strdocType).trim() === ""
     ) {
 
       return res.status(400).json({
@@ -666,9 +674,9 @@ export async function GetDatas(
 
 
     if (
-      docNo === undefined ||
-      docNo === null ||
-      String(docNo).trim() === ""
+      strdocNo === undefined ||
+      strdocNo === null ||
+      String(strdocNo).trim() === ""
     ) {
 
       return res.status(400).json({
@@ -707,14 +715,11 @@ export async function GetDatas(
     const result =
       await GetData({
 
-        strbranch:
-          branch,
+        strbranch,
 
-        strdocType:
-          docType,
+        strdocType,
 
-        strdocNo:
-          docNo,
+        strdocNo,
 
       });
 

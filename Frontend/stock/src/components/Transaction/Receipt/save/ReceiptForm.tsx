@@ -49,8 +49,8 @@ interface ReceiptFormProps {
   receivedFrom: string;
   setReceivedFrom: (value: string) => void;
 
-  receiptNo: string;
-  setReceiptNo: (value: string) => void;
+  documentNo: string;
+  setDocumentNo: (value: string) => void;
 
   receiptDate: string;
   setReceiptDate: (value: string) => void;
@@ -63,7 +63,7 @@ interface ReceiptFormProps {
     SelectInstance<SelectOption, false> | null
   >;
 
-  receiptNoRef: React.RefObject<
+  documentNoRef: React.RefObject<
     HTMLInputElement | null
   >;
 
@@ -91,11 +91,11 @@ interface ReceiptFormProps {
 
   isModifyMode?: boolean;
 
-  onReceiptNoLookup?: () => void;
+  onDocumentNoLookup?: () => void;
 
   preserveCashBankOnLoad?: boolean;
 
-  receiptNoEditable?: boolean;
+  documentNoEditable?: boolean;
 }
 
 /* =========================================================
@@ -239,15 +239,15 @@ const ReceiptForm: React.FC<ReceiptFormProps> = ({
   receivedFrom,
   setReceivedFrom,
 
-  receiptNo,
-  setReceiptNo,
+  documentNo,
+  setDocumentNo,
 
   receiptDate,
   setReceiptDate,
 
   branchRef,
   typeRef,
-  receiptNoRef,
+  documentNoRef,
   cashBankRef,
   dateRef,
   receivedFromRef,
@@ -257,13 +257,15 @@ const ReceiptForm: React.FC<ReceiptFormProps> = ({
 
   branchOptions,
 
+  financialParameters,
+
   isModifyMode = false,
 
-  onReceiptNoLookup,
+  onDocumentNoLookup,
 
   preserveCashBankOnLoad = false,
 
-  receiptNoEditable = false,
+  documentNoEditable = false,
 }) => {
   /* =======================================================
      STATE
@@ -282,8 +284,8 @@ const ReceiptForm: React.FC<ReceiptFormProps> = ({
   ] = useState(false);
 
   const [
-    receiptNoLoading,
-    setReceiptNoLoading,
+    documentNoLoading,
+    setDocumentNoLoading,
   ] = useState(false);
 
   const [
@@ -302,17 +304,23 @@ const ReceiptForm: React.FC<ReceiptFormProps> = ({
 
   const typeOptions: SelectOption[] =
     useMemo(
-      () => [
-        {
-          value: "B",
-          label: "B",
-        },
-        {
-          value: "C",
-          label: "C",
-        },
-      ],
-      []
+      () => {
+        const apiTypeOptions = financialParameters
+          .filter((parameter) => parameter.fptype === "RTP")
+          .sort((first, second) => first.fpositionno - second.fpositionno)
+          .map((parameter) => ({
+            value:parameter.fpname ,
+            label: parameter.fpid,
+          }));
+
+        return apiTypeOptions.length > 0
+          ? apiTypeOptions
+          : [
+              { value: "B", label: "B" },
+              { value: "C", label: "C" },
+            ];
+      },
+      [financialParameters]
     );
 
   /* =======================================================
@@ -327,7 +335,7 @@ const ReceiptForm: React.FC<ReceiptFormProps> = ({
     typeId: string
   ) => {
     if (!fbrid) {
-      setReceiptNo("");
+      setDocumentNo("");
       return;
     }
 
@@ -344,7 +352,7 @@ const ReceiptForm: React.FC<ReceiptFormProps> = ({
         : "BR";
 
     try {
-      setReceiptNoLoading(true);
+      setDocumentNoLoading(true);
 
       console.log(
         "Getting receipt number:",
@@ -400,16 +408,16 @@ const ReceiptForm: React.FC<ReceiptFormProps> = ({
         Array.isArray(result.data) &&
         result.data.length > 0
       ) {
-        const newReceiptNo =
+        const newDocumentNo =
           result.data[0]?.getnextdocno;
 
         console.log(
           "New Receipt Number:",
-          newReceiptNo
+          newDocumentNo
         );
 
-        setReceiptNo(
-          newReceiptNo || ""
+        setDocumentNo(
+          newDocumentNo || ""
         );
       } else {
         console.error(
@@ -417,7 +425,7 @@ const ReceiptForm: React.FC<ReceiptFormProps> = ({
           result
         );
 
-        setReceiptNo("");
+        setDocumentNo("");
       }
     } catch (error) {
       console.error(
@@ -425,9 +433,9 @@ const ReceiptForm: React.FC<ReceiptFormProps> = ({
         error
       );
 
-      setReceiptNo("");
+      setDocumentNo("");
     } finally {
-      setReceiptNoLoading(false);
+      setDocumentNoLoading(false);
     }
   };
 
@@ -441,18 +449,25 @@ const ReceiptForm: React.FC<ReceiptFormProps> = ({
   const loadAccounts = async (
     cashorbank: string
   ) => {
+    const cashBankType =
+      financialParameters.find(
+        (parameter) =>
+          parameter.fpid === cashorbank ||
+          parameter.fpname === cashorbank
+      )?.fpid || cashorbank;
+
     console.log(
       "Loading Cash/Bank accounts for:",
-      cashorbank
+      cashBankType
     );
 
     if (
-      cashorbank !== "B" &&
-      cashorbank !== "C"
+      cashBankType !== "B" &&
+      cashBankType !== "C"
     ) {
       console.warn(
         "Invalid Cash/Bank value:",
-        cashorbank
+        cashBankType
       );
 
       setCashBankAccounts([]);
@@ -478,7 +493,7 @@ const ReceiptForm: React.FC<ReceiptFormProps> = ({
             },
 
             body: JSON.stringify({
-              cashorbank,
+              cashorbank: cashBankType,
             }),
           }
         );
@@ -564,14 +579,6 @@ const ReceiptForm: React.FC<ReceiptFormProps> = ({
     }
 
     /*
-      Load B accounts by default.
-    */
-
-    loadAccounts(
-      defaultType
-    );
-
-    /*
       If branch is already available,
       load receipt number.
 
@@ -589,6 +596,28 @@ const ReceiptForm: React.FC<ReceiptFormProps> = ({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  useEffect(() => {
+    const defaultType =
+      financialParameters.find(
+        (parameter) =>
+          parameter.fptype === "RTP" &&
+          (parameter.fpid === type || parameter.fpname === type)
+      )?.fpid ||
+      financialParameters.find(
+        (parameter) => parameter.fptype === "RTP"
+      )?.fpid ||
+      type ||
+      "B";
+
+    if (type !== defaultType) {
+      setType(defaultType);
+    }
+
+    loadAccounts(defaultType);
+
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [financialParameters]);
+
   /* =======================================================
      BRANCH CHANGE
 
@@ -601,7 +630,7 @@ const ReceiptForm: React.FC<ReceiptFormProps> = ({
   useEffect(() => {
     if (!branch) {
       if (!isModifyMode) {
-        setReceiptNo("");
+        setDocumentNo("");
       }
       return;
     }
@@ -621,7 +650,7 @@ const ReceiptForm: React.FC<ReceiptFormProps> = ({
 
   useEffect(() => {
     if (isModifyMode) {
-      loadAccounts(type || "B");
+      loadAccounts(type );
     }
 
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -898,8 +927,8 @@ const ReceiptForm: React.FC<ReceiptFormProps> = ({
   const selectedType =
     typeOptions.find(
       (option) =>
-        option.value ===
-        (type || "B")
+        option.label === (type || "B") ||
+        option.value === (type || "B")
     ) || null;
 
   /* =======================================================
@@ -937,7 +966,7 @@ const ReceiptForm: React.FC<ReceiptFormProps> = ({
 
           <Select<SelectOption, false>
             ref={branchRef}
-id="lkpBranch"
+            id="ddlBranch"
             value={
               selectedBranch
             }
@@ -1069,6 +1098,8 @@ id="lkpBranch"
           <Select<SelectOption, false>
             ref={typeRef}
 
+            inputId="ddlType"
+
             value={
               selectedType
             }
@@ -1078,7 +1109,7 @@ id="lkpBranch"
                 event,
                 "type",
                 () =>
-                  receiptNoRef.current?.focus()
+                  documentNoRef.current?.focus()
               )
             }
 
@@ -1096,7 +1127,7 @@ id="lkpBranch"
 
             onChange={(option) => {
               const selectedType =
-                option?.value || "B";
+                option?.label || option?.value || "B";
 
               console.log(
                 "Selected Type:",
@@ -1167,7 +1198,7 @@ id="lkpBranch"
                   "28px",
 
                 width:
-                  "120px",
+                  "70px",
 
                 borderColor:
                   "#d7dee7",
@@ -1214,38 +1245,38 @@ id="lkpBranch"
 
           <input
 
-          id="txtDocNo"
+          id="txtReceiptNo"
             ref={
-              receiptNoRef
+              documentNoRef
             }
 
             value={
-              receiptNoLoading
+              documentNoLoading
                 ? "Loading..."
-                : receiptNo
+                : documentNo
             }
 
-            readOnly={!receiptNoEditable}
+            readOnly={!documentNoEditable}
 
             onChange={(event) => {
-              if (receiptNoEditable) {
-                setReceiptNo(event.target.value);
+              if (documentNoEditable) {
+                setDocumentNo(event.target.value);
               }
             }}
 
             onBlur={() => {
-              if (receiptNoEditable) {
-                onReceiptNoLookup?.();
+              if (documentNoEditable) {
+                onDocumentNoLookup?.();
               }
             }}
 
             onKeyDown={(event) => {
               if (
-                receiptNoEditable &&
+                documentNoEditable &&
                 event.key === "Enter"
               ) {
                 event.preventDefault();
-                onReceiptNoLookup?.();
+                onDocumentNoLookup?.();
                 cashBankRef.current?.focus();
                 return;
               }
@@ -1442,6 +1473,7 @@ id="lkpBranch"
 
               slotProps={{
                 textField: {
+                  id: "dtpDate",
                   onKeyDown: (
                     event
                   ) =>
@@ -1451,7 +1483,6 @@ id="lkpBranch"
                         receivedFromRef.current?.focus()
                     ),
                 },
-
                 openPickerButton: {
                   sx: {
                     padding: "2px",
@@ -1594,7 +1625,7 @@ id="lkpBranch"
             ref={
               receivedFromRef
             }
-id='txtReceivedForm'
+            id="txtReceivedFromPaidTo"
             value={
               receivedFrom
             }
@@ -1632,7 +1663,7 @@ id='txtReceivedForm'
             ref={
               referenceRef
             }
-            id="txtReference"
+            id="txtRefNo"
 
             value={
               reference
