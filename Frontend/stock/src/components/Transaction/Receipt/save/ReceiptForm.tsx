@@ -40,8 +40,8 @@ interface ReceiptFormProps {
   type: string;
   setType: (value: string) => void;
 
-  cashBank: string;
-  setCashBank: (value: string) => void;
+  cbAccount: string;
+  setCbAccount: (value: string) => void;
 
   reference: string;
   setReference: (value: string) => void;
@@ -52,8 +52,8 @@ interface ReceiptFormProps {
   documentNo: string;
   setDocumentNo: (value: string) => void;
 
-  receiptDate: string;
-  setReceiptDate: (value: string) => void;
+  date: string;
+  setDate: (value: string) => void;
 
   branchRef: React.RefObject<
     SelectInstance<SelectOption, false> | null
@@ -67,7 +67,7 @@ interface ReceiptFormProps {
     HTMLInputElement | null
   >;
 
-  cashBankRef: React.RefObject<
+  cbAccountRef: React.RefObject<
     SelectInstance<SelectOption, false> | null
   >;
 
@@ -93,7 +93,7 @@ interface ReceiptFormProps {
 
   onDocumentNoLookup?: () => void;
 
-  preserveCashBankOnLoad?: boolean;
+  preserveCbAccountOnLoad?: boolean;
 
   documentNoEditable?: boolean;
 }
@@ -131,7 +131,7 @@ export interface FinancialParameter {
    CASH / BANK ACCOUNT
 ========================================================= */
 
-interface CashBankAccount {
+interface CbAccount {
   fcoid: string;
   faccountid: string;
   faccountgroupid?: string;
@@ -148,7 +148,7 @@ interface AccountResponse {
   message?: string;
   success: boolean;
   cashorbank: string;
-  data: CashBankAccount[];
+  data: CbAccount[];
 }
 
 /* =========================================================
@@ -230,8 +230,8 @@ const ReceiptForm: React.FC<ReceiptFormProps> = ({
   type,
   setType,
 
-  cashBank,
-  setCashBank,
+  cbAccount,
+  setCbAccount,
 
   reference,
   setReference,
@@ -242,13 +242,13 @@ const ReceiptForm: React.FC<ReceiptFormProps> = ({
   documentNo,
   setDocumentNo,
 
-  receiptDate,
-  setReceiptDate,
+  date,
+  setDate,
 
   branchRef,
   typeRef,
   documentNoRef,
-  cashBankRef,
+  cbAccountRef,
   dateRef,
   receivedFromRef,
   referenceRef,
@@ -263,7 +263,7 @@ const ReceiptForm: React.FC<ReceiptFormProps> = ({
 
   onDocumentNoLookup,
 
-  preserveCashBankOnLoad = false,
+  preserveCbAccountOnLoad = false,
 
   documentNoEditable = false,
 }) => {
@@ -275,7 +275,7 @@ const ReceiptForm: React.FC<ReceiptFormProps> = ({
     openSelect,
     setOpenSelect,
   ] = useState<
-    "branch" | "type" | "cashBank" | null
+    "branch" | "type" | "cbAccount" | null
   >(null);
 
   const [
@@ -289,9 +289,9 @@ const ReceiptForm: React.FC<ReceiptFormProps> = ({
   ] = useState(false);
 
   const [
-    cashBankAccounts,
-    setCashBankAccounts,
-  ] = useState<CashBankAccount[]>([]);
+    cbAccounts,
+    setCbAccounts,
+  ] = useState<CbAccount[]>([]);
 
   /* =======================================================
      TYPE OPTIONS
@@ -447,32 +447,32 @@ const ReceiptForm: React.FC<ReceiptFormProps> = ({
   ======================================================= */
 
   const loadAccounts = async (
-    cashorbank: string
+    requestedCbType: string
   ) => {
-    const cashBankType =
+    const cbType =
       financialParameters.find(
         (parameter) =>
-          parameter.fpid === cashorbank ||
-          parameter.fpname === cashorbank
-      )?.fpid || cashorbank;
+          parameter.fpid === requestedCbType ||
+          parameter.fpname === requestedCbType
+      )?.fpid || requestedCbType;
 
     console.log(
       "Loading Cash/Bank accounts for:",
-      cashBankType
+      cbType
     );
 
     if (
-      cashBankType !== "B" &&
-      cashBankType !== "C"
+      cbType !== "B" &&
+      cbType !== "C"
     ) {
       console.warn(
         "Invalid Cash/Bank value:",
-        cashBankType
+        cbType
       );
 
-      setCashBankAccounts([]);
-      if (!preserveCashBankOnLoad) {
-        setCashBank("");
+      setCbAccounts([]);
+      if (!preserveCbAccountOnLoad) {
+        setCbAccount("");
       }
 
       return;
@@ -493,7 +493,7 @@ const ReceiptForm: React.FC<ReceiptFormProps> = ({
             },
 
             body: JSON.stringify({
-              cashorbank: cashBankType,
+              cashorbank: cbType,
             }),
           }
         );
@@ -516,7 +516,7 @@ const ReceiptForm: React.FC<ReceiptFormProps> = ({
         result.success &&
         Array.isArray(result.data)
       ) {
-        setCashBankAccounts(
+        setCbAccounts(
           result.data
         );
 
@@ -528,8 +528,8 @@ const ReceiptForm: React.FC<ReceiptFormProps> = ({
           all B/C accounts.
         */
 
-        if (!preserveCashBankOnLoad) {
-          setCashBank("");
+        if (!preserveCbAccountOnLoad) {
+          setCbAccount("");
         }
       } else {
         console.error(
@@ -537,9 +537,9 @@ const ReceiptForm: React.FC<ReceiptFormProps> = ({
           result
         );
 
-        setCashBankAccounts([]);
-        if (!preserveCashBankOnLoad) {
-          setCashBank("");
+        setCbAccounts([]);
+        if (!preserveCbAccountOnLoad) {
+          setCbAccount("");
         }
       }
     } catch (error) {
@@ -548,9 +548,9 @@ const ReceiptForm: React.FC<ReceiptFormProps> = ({
         error
       );
 
-      setCashBankAccounts([]);
-      if (!preserveCashBankOnLoad) {
-        setCashBank("");
+      setCbAccounts([]);
+      if (!preserveCbAccountOnLoad) {
+        setCbAccount("");
       }
     } finally {
       setAccountsLoading(false);
@@ -665,7 +665,7 @@ const ReceiptForm: React.FC<ReceiptFormProps> = ({
     selectName:
       | "branch"
       | "type"
-      | "cashBank",
+      | "cbAccount",
     focusNext: () => void
   ) => {
     if (event.key !== "Enter") {
@@ -891,11 +891,11 @@ const ReceiptForm: React.FC<ReceiptFormProps> = ({
      CASH / BANK OPTIONS
   ======================================================= */
 
-  const cashBankOptions:
+  const cbAccountOptions:
     SelectOption[] =
     useMemo(
       () =>
-        cashBankAccounts.map(
+        cbAccounts.map(
           (account) => ({
             value:
               account.faccountid,
@@ -905,7 +905,7 @@ const ReceiptForm: React.FC<ReceiptFormProps> = ({
           })
         ),
 
-      [cashBankAccounts]
+      [cbAccounts]
     );
 
   /* =======================================================
@@ -935,10 +935,10 @@ const ReceiptForm: React.FC<ReceiptFormProps> = ({
      SELECTED CASH / BANK
   ======================================================= */
 
-  const selectedCashBank =
-    cashBankOptions.find(
+  const selectedCbAccount =
+    cbAccountOptions.find(
       (option) =>
-        option.value === cashBank
+        option.value === cbAccount
     ) || null;
 
   /* =======================================================
@@ -966,7 +966,7 @@ const ReceiptForm: React.FC<ReceiptFormProps> = ({
 
           <Select<SelectOption, false>
             ref={branchRef}
-            id="ddlBranch"
+            id="lkpBranch"
             value={
               selectedBranch
             }
@@ -1098,7 +1098,7 @@ const ReceiptForm: React.FC<ReceiptFormProps> = ({
           <Select<SelectOption, false>
             ref={typeRef}
 
-            inputId="ddlType"
+            inputId="lkpType"
 
             value={
               selectedType
@@ -1277,14 +1277,14 @@ const ReceiptForm: React.FC<ReceiptFormProps> = ({
               ) {
                 event.preventDefault();
                 onDocumentNoLookup?.();
-                cashBankRef.current?.focus();
+                  cbAccountRef.current?.focus();
                 return;
               }
 
               handleInputKeyDown(
                 event,
                 () =>
-                  cashBankRef.current?.focus()
+                  cbAccountRef.current?.focus()
               );
             }}
 
@@ -1313,17 +1313,17 @@ const ReceiptForm: React.FC<ReceiptFormProps> = ({
 
           <Select<SelectOption, false>
             ref={
-              cashBankRef
+              cbAccountRef
             }
-             id="lkpCBAccount"
+             id="lkpCbAccount"
             value={
-              selectedCashBank
+              selectedCbAccount
             }
 
             onKeyDown={(event) =>
               handleSelectKeyDown(
                 event,
-                "cashBank",
+                "cbAccount",
                 () =>
                   dateRef.current?.focus()
               )
@@ -1331,7 +1331,7 @@ const ReceiptForm: React.FC<ReceiptFormProps> = ({
 
             onMenuOpen={() =>
               setOpenSelect(
-                "cashBank"
+                "cbAccount"
               )
             }
 
@@ -1342,21 +1342,21 @@ const ReceiptForm: React.FC<ReceiptFormProps> = ({
             }
 
             onChange={(option) => {
-              const selectedCashBank =
+              const selectedCbAccount =
                 option?.value || "";
 
               console.log(
                 "Selected Cash/Bank:",
-                selectedCashBank
+                selectedCbAccount
               );
 
-              setCashBank(
-                selectedCashBank
+              setCbAccount(
+                selectedCbAccount
               );
             }}
 
             options={
-              cashBankOptions
+              cbAccountOptions
             }
 
             placeholder={
@@ -1419,7 +1419,7 @@ const ReceiptForm: React.FC<ReceiptFormProps> = ({
 
             isDisabled={
               accountsLoading ||
-              cashBankOptions.length ===
+              cbAccountOptions.length ===
                 0
             }
 
@@ -1445,9 +1445,9 @@ const ReceiptForm: React.FC<ReceiptFormProps> = ({
           >
             <DatePicker
               value={
-                receiptDate
+                    date
                   ? dayjs(
-                      receiptDate,
+                      date,
                       "DD/MM/YYYY"
                     )
                   : null
@@ -1457,13 +1457,13 @@ const ReceiptForm: React.FC<ReceiptFormProps> = ({
                 if (
                   newValue?.isValid()
                 ) {
-                  setReceiptDate(
+                  setDate(
                     newValue.format(
                       "DD/MM/YYYY"
                     )
                   );
                 } else {
-                  setReceiptDate("");
+                  setDate("");
                 }
               }}
 
@@ -1625,7 +1625,7 @@ const ReceiptForm: React.FC<ReceiptFormProps> = ({
             ref={
               receivedFromRef
             }
-            id="txtReceivedFromPaidTo"
+            id="txtReceivedFrom"
             value={
               receivedFrom
             }
@@ -1663,7 +1663,7 @@ const ReceiptForm: React.FC<ReceiptFormProps> = ({
             ref={
               referenceRef
             }
-            id="txtRefNo"
+            id="txtReference"
 
             value={
               reference

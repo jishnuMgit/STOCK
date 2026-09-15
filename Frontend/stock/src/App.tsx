@@ -7,7 +7,7 @@ import {
 import SideNav from "./pages/nav/SideNav";
 
 import AppRoutes from "./routes/AppRoutes";
-
+import {ToastContainer} from 'react-toastify'
 import "./App.css";
 
 /* =========================================================
@@ -37,6 +37,8 @@ function AppLayout() {
       <main className="app-content">
         <AppRoutes />
       </main>
+
+      <ToastContainer/>
 
     </div>
   );

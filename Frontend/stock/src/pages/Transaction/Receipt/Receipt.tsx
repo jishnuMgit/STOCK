@@ -21,6 +21,7 @@ import ReceiptTable, {
   type AccountData,
   type ReceiptRow,
   type CostCenter,
+  type SortField,
 } from "../../../components/Transaction/Receipt/save/ReceiptTable";
 
 import ReceiptBottomForm from "../../../components/Transaction/Receipt/save/ReceiptBottomForm";
@@ -40,6 +41,8 @@ const createRows = (): ReceiptRow[] =>
     accountId: "",
     accountName: "",
     fgcs:'',
+    haveCc: false,
+    hasDivision: false,
     division: "",
     ccId: "",
     creditAmount: "",
@@ -58,8 +61,6 @@ const tableFieldOrder: TableField[] = [
   "division",
   "ccId",
   "creditAmount",
-  "match",
-  "view",
 ];
 
 
@@ -156,7 +157,7 @@ change the name of useState()
 
   const [type, setType] = useState("");
 
-  const [cashBank, setCashBank] = useState("");
+  const [cbAccount, setCbAccount] = useState("");
   
 
 
@@ -164,7 +165,7 @@ change the name of useState()
   const [reference, setReference] = useState("");
 
 
-  const [cashBankCcId, setCashBankCcId] = useState("");
+  const [cbCcId, setCbCcId] = useState("");
   /* =======================================================
      RECEIPT NUMBER
   ======================================================= */
@@ -176,7 +177,7 @@ change the name of useState()
      RECEIPT DATE
   ======================================================= */
 
-  const [receiptDate, setReceiptDate] =
+  const [date, setDate] =
     useState(() => {
 
       const today = new Date();
@@ -206,7 +207,7 @@ change the name of useState()
   const [isModifyMode, setIsModifyMode] =
     useState(false);
 
-  const [receiptMessage, setReceiptMessage] =
+  const [, setReceiptMessage] =
     useState("");
 
   const lastLookupKeyRef =
@@ -252,7 +253,7 @@ change the name of useState()
      COST CENTERS
   ======================================================= */
 
-  const [accountCCID, setAccountCCID] =
+  const [costCenters, setCostCenters] =
     useState<CostCenter[]>([]);
 
 
@@ -294,8 +295,8 @@ change the name of useState()
   ======================================================= */
 
   const [
-    descriptionValue,
-    setDescriptionValue,
+    description,
+    setDescription,
   ] =
     useState("");
 
@@ -332,7 +333,7 @@ change the name of useState()
     useRef<HTMLInputElement>(null);
 
 
-  const cashBankRef =
+  const cbAccountRef =
     useRef<
       SelectInstance<
         {
@@ -457,7 +458,7 @@ change the name of useState()
            COST CENTERS
         ============================================= */
 
-        setAccountCCID(
+        setCostCenters(
           result.costCenters || []
         );
 
@@ -572,6 +573,8 @@ change the name of useState()
                   loadedRow.fgcs ||
                   account?.fgcs ||
                   "",
+                haveCc: account?.fhavecc === true,
+                hasDivision: false,
                 division: loadedRow.division || "",
                 ccId: loadedRow.ccId || "",
                 creditAmount:
@@ -596,16 +599,16 @@ change the name of useState()
               : "B"
           );
           setDocumentNo(result.header.docNo || requestedDocumentNo);
-          setReceiptDate(
+          setDate(
             formatReceiptDate(result.header.receiptDate)
           );
-          setCashBank(result.header.cashBank || "");
-          setCashBankCcId(result.header.cashBankCcId || "");
+          setCbAccount(result.header.cashBank || "");
+          setCbCcId(result.header.cashBankCcId || "");
           setReceivedFrom(result.header.receivedFrom || "");
           setReference(result.header.reference || "");
           setNote(result.header.note || "");
           setRows(loadedRows);
-          setDescriptionValue("");
+          setDescription("");
           setActiveDescriptionRow(null);
           setIsModifyMode(true);
           setReceiptMessage("Receipt loaded successfully.");
@@ -627,11 +630,11 @@ change the name of useState()
     useCallback(
       async () => {
         setRows(createRows());
-        setCashBank("");
+        setCbAccount("");
         setReceivedFrom("");
         setReference("");
         setNote("");
-        setDescriptionValue("");
+        setDescription("");
         setActiveDescriptionRow(null);
         setIsModifyMode(false);
         lastLookupKeyRef.current = "";
@@ -710,6 +713,85 @@ change the name of useState()
       []
     );
 
+  const handleClearRow =
+    useCallback(
+      (id: number) => {
+        setRows((currentRows) =>
+          currentRows.map((row) =>
+            row.id === id
+              ? {
+                  ...row,
+                  accountId: "",
+                  accountName: "",
+                  fgcs: "",
+                  haveCc: false,
+                  hasDivision: false,
+                  division: "",
+                  ccId: "",
+                  creditAmount: "",
+                  match: false,
+                  description: "",
+                }
+              : row
+          )
+        );
+
+        if (
+          activeDescriptionRow !== null &&
+          rows[activeDescriptionRow]?.id === id
+        ) {
+          setDescription("");
+          setActiveDescriptionRow(null);
+        }
+      },
+      [activeDescriptionRow, rows]
+    );
+
+  const handleClearDescriptionRow =
+    useCallback(() => {
+      if (activeDescriptionRow === null) {
+        return;
+      }
+
+      const row = rows[activeDescriptionRow];
+      if (row) {
+        handleClearRow(row.id);
+      }
+    }, [activeDescriptionRow, handleClearRow, rows]);
+
+  const handleSortRows =
+    useCallback(
+      (
+        field: SortField,
+        direction: "asc" | "desc"
+      ) => {
+        setRows((currentRows) =>
+          [...currentRows].sort((first, second) => {
+            const firstValue =
+              field === "accountId"
+                ? first.accountId
+                : first.accountName;
+            const secondValue =
+              field === "accountId"
+                ? second.accountId
+                : second.accountName;
+            const result =
+              field === "accountId"
+                ? firstValue.localeCompare(secondValue, undefined, {
+                    numeric: true,
+                    sensitivity: "base",
+                  })
+                : firstValue.localeCompare(secondValue, undefined, {
+                    sensitivity: "base",
+                  });
+
+            return direction === "asc" ? result : -result;
+          })
+        );
+      },
+      []
+    );
+
 
   /* =======================================================
      ROW CHANGE
@@ -753,7 +835,7 @@ change the name of useState()
        * We are leaving the table.
        *
        * IMPORTANT:
-       * Do NOT clear descriptionValue.
+      * Do NOT clear description.
        *
        * This is what allows the old description to remain
        * available when Description is reached again.
@@ -808,112 +890,50 @@ change the name of useState()
         field: TableField
       ) => {
 
-        /* ===============================================
-           VIEW -> DESCRIPTION
-        =============================================== */
+        const row = rows[rowIndex];
 
         if (
-          field === "view"
+          field === "accountId" &&
+          !row?.accountId.trim()
         ) {
-
-          /*
-           * Remember which row is being viewed.
-           */
-
-          setActiveDescriptionRow(
-            rowIndex
-          );
-
-
-          /*
-           * Get the row.
-           */
-
-          const row =
-            rows[rowIndex];
-
-
-          /*
-           * IMPORTANT:
-           *
-           * If this row already has a description,
-           * load it.
-           *
-           * If this row has NO description,
-           * DO NOT clear descriptionValue.
-           *
-           * This is the requested behavior:
-           *
-           *     old description remains.
-           */
-
-          setDescriptionValue(
-            row?.description || ""
-          );
-
-
-          /*
-           * Focus happens AFTER React has updated
-           * the description state.
-           */
-
-          requestAnimationFrame(() => {
-
-            const input =
-              descriptionRef.current;
-
-
-            if (!input) {
-              return;
-            }
-
-
-            input.focus();
-
-
-            /*
-             * IMPORTANT:
-             *
-             * Do NOT use:
-             *
-             * input.select();
-             *
-             * because that selects the complete
-             * description.
-             *
-             * Put cursor at the end instead.
-             */
-
-            const position =
-              input.value.length;
-
-
-            input.setSelectionRange(
-              position,
-              position
-            );
-
-          });
-
-
+          alert("Account ID is required.");
+          focusTableField(rowIndex, "accountId");
           return;
         }
 
+        if (
+          field === "creditAmount" &&
+          !row?.creditAmount.trim()
+        ) {
+          alert("Credit Amount is required.");
+          focusTableField(rowIndex, "creditAmount");
+          return;
+        }
 
-        /* ===============================================
-           NEXT FIELD
-        =============================================== */
+        if (field === "creditAmount") {
+          setActiveDescriptionRow(rowIndex);
+          setDescription(row?.description || "");
+          requestAnimationFrame(() => {
+            const input = descriptionRef.current;
+            if (!input) {
+              return;
+            }
+            input.focus();
+            input.setSelectionRange(input.value.length, input.value.length);
+          });
+          return;
+        }
 
-        const fieldIndex =
-          tableFieldOrder.indexOf(
-            field
-          );
+        const availableFields = tableFieldOrder.filter(
+          (nextField) =>
+            nextField !== "division" || row?.hasDivision
+        ).filter(
+          (nextField) =>
+            nextField !== "ccId" || row?.haveCc
+        );
 
-
-        const nextField =
-          tableFieldOrder[
-            fieldIndex + 1
-          ];
+        const fieldIndex = availableFields.indexOf(field);
+        const nextField = availableFields[fieldIndex + 1];
 
 
         if (nextField) {
@@ -937,7 +957,7 @@ change the name of useState()
 
      Every character typed into the Description field:
 
-     1. Updates descriptionValue.
+    1. Updates description.
      2. Updates the active row.
 
      Therefore modification is preserved.
@@ -952,7 +972,7 @@ change the name of useState()
          * Description input.
          */
 
-        setDescriptionValue(
+        setDescription(
           value
         );
 
@@ -1040,7 +1060,7 @@ change the name of useState()
          *
          * We DO NOT clear:
          *
-         *     descriptionValue
+         *     description
          *
          * The description remains.
          */
@@ -1088,7 +1108,7 @@ change the name of useState()
           /*
            * We leave the Description field.
            *
-           * Keep descriptionValue.
+           * Keep description.
            *
            * Only remove the row association.
            */
@@ -1226,12 +1246,12 @@ change the name of useState()
 
             type,
 
-            cashBank,
-            cbCcId: cashBankCcId,
+            cashBank: cbAccount,
+            cbCcId: cbCcId,
 
             receiptNo: documentNo,
 
-            receiptDate,
+            receiptDate: date,
 
             receivedFrom,
 
@@ -1438,10 +1458,10 @@ change the name of useState()
       [
         branch,
         type,
-        cashBank,
-        cashBankCcId,
+        cbAccount,
+        cbCcId,
         documentNo,
-        receiptDate,
+        date,
         receivedFrom,
         reference,
         rows,
@@ -1463,8 +1483,8 @@ change the name of useState()
           !branch ||
           !type ||
           !documentNo.trim() ||
-          !receiptDate ||
-          !cashBank ||
+          !date ||
+          !cbAccount ||
           validRows.length === 0
         ) {
           setReceiptMessage(
@@ -1484,10 +1504,10 @@ change the name of useState()
               body: JSON.stringify({
                 branch,
                 type: toDocumentType(type),
-                cashBank,
-                cbCcId: cashBankCcId,
+                cashBank: cbAccount,
+                cbCcId: cbCcId,
                 docNo: documentNo.trim(),
-                receiptDate,
+                receiptDate: date,
                 receivedFrom,
                 reference,
                 note,
@@ -1530,10 +1550,10 @@ change the name of useState()
       },
       [
         branch,
-        cashBank,
-        cashBankCcId,
+        cbAccount,
+        cbCcId,
         note,
-        receiptDate,
+        date,
         documentNo,
         receivedFrom,
         reference,
@@ -1555,8 +1575,8 @@ change the name of useState()
       
       
 
-      setCashBank("");
-      setCashBankCcId("");
+      setCbAccount("");
+      setCbCcId("");
 
       setReference("");
 
@@ -1576,7 +1596,7 @@ change the name of useState()
        * is explicitly cleared.
        */
 
-      setDescriptionValue("");
+      setDescription("");
 
 
       setActiveDescriptionRow(
@@ -1584,7 +1604,7 @@ change the name of useState()
       );
 
 
-      setReceiptDate(() => {
+      setDate(() => {
 
         const today =
           new Date();
@@ -1704,12 +1724,12 @@ change the name of useState()
           }
 
 
-          cashBank={
-            cashBank
+          cbAccount={
+            cbAccount
           }
 
-          setCashBank={
-            setCashBank
+          setCbAccount={
+            setCbAccount
           }
 
 
@@ -1740,12 +1760,12 @@ change the name of useState()
           }
 
 
-          receiptDate={
-            receiptDate
+          date={
+            date
           }
 
-          setReceiptDate={
-            setReceiptDate
+          setDate={
+            setDate
           }
 
 
@@ -1761,8 +1781,8 @@ change the name of useState()
             documentNoRef
           }
 
-          cashBankRef={
-            cashBankRef
+          cbAccountRef={
+            cbAccountRef
           }
 
           dateRef={
@@ -1805,7 +1825,7 @@ change the name of useState()
             loadReceiptForModify
           }
 
-          preserveCashBankOnLoad={
+          preserveCbAccountOnLoad={
             isModifyMode
           }
 
@@ -1818,7 +1838,7 @@ change the name of useState()
 
         <ReceiptTable
 
-         url={`${import.meta.env.VITE_BASE_URL}/getReceipts`}
+         url={`${import.meta.env.BASE_URL}/getCustomerDivisions`}
 
           ref={
             receiptTableRef
@@ -1839,12 +1859,20 @@ change the name of useState()
             handleTableEscape
           }
 
+          onClearRow={
+            handleClearRow
+          }
+
+          onSortRows={
+            handleSortRows
+          }
+
           accountOptions={
             accountOptions
           }
 
           costCenters={
-            accountCCID
+            costCenters
           }
 
         />
@@ -1878,7 +1906,7 @@ change the name of useState()
             value={
               total.toFixed(2)
             }
-            id="txtTotal"
+            id="txtTotCreditAmt"
 
             readOnly
 
@@ -1905,7 +1933,7 @@ change the name of useState()
         <ReceiptBottomForm
 
           description={
-            descriptionValue
+            description
           }
 
           setDescription={
@@ -1934,6 +1962,10 @@ change the name of useState()
 
           onDescriptionEnter={
             handleDescriptionEnter
+          }
+
+          onDescriptionClear={
+            handleClearDescriptionRow
           }
 
         />

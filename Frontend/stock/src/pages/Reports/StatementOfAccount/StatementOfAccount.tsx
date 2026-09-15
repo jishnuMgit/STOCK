@@ -186,7 +186,7 @@ const StatementOfAccount: React.FC<StatementOfAccountProps> = ({
 
         <button
           type="button"
-          id="Printbtn"
+          id="btnPrint"
           className="soa-print-button"
           onClick={handlePrint}
         >

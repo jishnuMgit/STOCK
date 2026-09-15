@@ -45,8 +45,8 @@ interface MatchHeaderFormProps {
   customerNameOptions: SelectOption[];
 
   /* Division */
-  division: string;
-  setDivision: (value: string) => void;
+  divisionId: string;
+  setDivisionId: (value: string) => void;
 
   divisionOptions: SelectOption[];
 
@@ -176,8 +176,8 @@ const UnMatchHeaderForm: React.FC<MatchHeaderFormProps> = ({
   customerIdOptions,
   customerNameOptions,
 
-  division,
-  setDivision,
+  divisionId: division,
+  setDivisionId,
 
   divisionOptions,
 
@@ -473,7 +473,7 @@ return (
               leading-6.75
               text-slate-700
             "
-            id="lkpCustomerID"
+            id="lkpCustomerId"
           >
             Customer :
           </label>
@@ -481,7 +481,7 @@ return (
 
           {/* CUSTOMER ID */}
 
-          <div className="w-21.25 shrink-0" id="lkpCustomerID">
+          <div className="w-21.25 shrink-0" id="lkpCustomerId">
 
             <Select<SelectOption, false>
               ref={customerIdRef}
@@ -677,7 +677,7 @@ return (
               }
 
               onChange={(option) => {
-                setDivision(
+                setDivisionId(
                   option?.value || ""
                 );
               }}

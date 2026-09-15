@@ -38,7 +38,7 @@ const UnMatch = lazy(
 );
 
 const StatementOfAccountMain=lazy(()=>import(
-  "../pages/Reports/StatementOfAccount/StatementOfAccountMain1"
+  "../pages/Reports/StatementOfAccount/StatementOfAccountMain"
 ))
 
 /* =========================================================

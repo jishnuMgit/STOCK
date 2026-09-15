@@ -1,4 +1,7 @@
-import React, { useEffect, useState } from "react";
+import React, {
+  useEffect,
+  useState,
+} from "react";
 
 import StatementOfAccount, {
   type SOATransaction,
@@ -10,16 +13,18 @@ import StatementOfAccount, {
    TYPES
 ============================================================ */
 
-type ReportType = "Customer" | "Supplier";
-
-type BranchMode =
-  | "One Branch"
-  | "All Branch";
+type ReportType =
+  | "Customer"
+  | "Supplier";
 
 type AccountMode =
   | "One Account"
   | "Range Account"
   | "All Account";
+
+type BranchMode =
+  | "One Branch"
+  | "All Branch";
 
 type DivisionMode =
   | "One Division"
@@ -38,17 +43,34 @@ type PostStatus =
   | "Posted"
   | "Unposted";
 
+type PrintZeroBalance =
+  | "Yes"
+  | "No";
+
 /* ============================================================
-   DUMMY DATA
+   DUMMY OPTIONS
 ============================================================ */
 
-const branches = [
-  { id: "RYD", name: "Riyadh" },
-  { id: "JED", name: "Jeddah" },
-  { id: "DMM", name: "Dammam" },
+const branchOptions = [
+  {
+    id: "RYD",
+    name: "Riyadh",
+  },
+  {
+    id: "JED",
+    name: "Jeddah",
+  },
+  {
+    id: "DMM",
+    name: "Dammam",
+  },
+  {
+    id: "MED",
+    name: "Madinah",
+  },
 ];
 
-const customers = [
+const customerOptions = [
   {
     id: "1001",
     name: "AL RAJHI TRADING COMPANY",
@@ -56,6 +78,10 @@ const customers = [
   {
     id: "1002",
     name: "SAUDI AIRLINES",
+  },
+  {
+    id: "1003",
+    name: "AL FARAJ COMPANY",
   },
   {
     id: "1007",
@@ -67,7 +93,7 @@ const customers = [
   },
 ];
 
-const suppliers = [
+const supplierOptions = [
   {
     id: "2001",
     name: "SAUDI TRAVEL SERVICES",
@@ -82,7 +108,11 @@ const suppliers = [
   },
 ];
 
-const divisions = [
+const divisionOptions = [
+  {
+    id: "ALL",
+    name: "All Division",
+  },
   {
     id: "TRAVEL",
     name: "Travel",
@@ -92,13 +122,13 @@ const divisions = [
     name: "Tours",
   },
   {
-    id: "CORPORATE",
+    id: "CORP",
     name: "Corporate",
   },
 ];
 
 /* ============================================================
-   DUMMY REPORT DATA
+   DUMMY SOA DATA
 ============================================================ */
 
 const dummyTransactions: SOATransaction[] = [
@@ -113,6 +143,7 @@ const dummyTransactions: SOATransaction[] = [
     credit: 0,
     balance: 17457.1,
   },
+
   {
     date: "13-Jul-26",
     branchId: "JD",
@@ -126,32 +157,45 @@ const dummyTransactions: SOATransaction[] = [
   },
 ];
 
+/* ============================================================
+   DUMMY AGEING
+============================================================ */
+
 const dummyAgeing: SOAAgeing[] = [
   {
     label: "0 - 30 Days",
     amount: 0,
   },
+
   {
     label: "31 - 60 Days",
     amount: 0,
   },
+
   {
     label: "61 - 90 Days",
     amount: 24554.25,
   },
+
   {
     label: "91 - 120 Days",
     amount: 0,
   },
+
   {
     label: "121 - 180 Days",
     amount: 0,
   },
+
   {
     label: "181 - 365 Days",
     amount: 0,
   },
 ];
+
+/* ============================================================
+   DUMMY BANK DETAILS
+============================================================ */
 
 const dummyBankDetails: SOABankDetails = {
   accountName:
@@ -176,17 +220,25 @@ const dummyBankDetails: SOABankDetails = {
 
 const StatementOfAccountMain: React.FC = () => {
   /* ==========================================================
-     STATE
+     REPORT TYPE
   ========================================================== */
 
   const [reportType, setReportType] =
     useState<ReportType>("Customer");
+
+  /* ==========================================================
+     BRANCH
+  ========================================================== */
 
   const [branchMode, setBranchMode] =
     useState<BranchMode>("All Branch");
 
   const [selectedBranch, setSelectedBranch] =
     useState("RYD");
+
+  /* ==========================================================
+     ACCOUNT
+  ========================================================== */
 
   const [accountMode, setAccountMode] =
     useState<AccountMode>("All Account");
@@ -200,14 +252,19 @@ const StatementOfAccountMain: React.FC = () => {
   const [accountTo, setAccountTo] =
     useState("1010");
 
+  /* ==========================================================
+     DIVISION
+  ========================================================== */
+
   const [divisionMode, setDivisionMode] =
     useState<DivisionMode>("All Division");
 
   const [selectedDivision, setSelectedDivision] =
-    useState("TRAVEL");
+    useState("ALL");
 
-  const [status, setStatus] =
-    useState<StatusMode>("Outstanding");
+  /* ==========================================================
+     PERIOD
+  ========================================================== */
 
   const [periodFrom, setPeriodFrom] =
     useState("2026-09-01");
@@ -215,45 +272,62 @@ const StatementOfAccountMain: React.FC = () => {
   const [periodTo, setPeriodTo] =
     useState("2026-09-30");
 
+  /* ==========================================================
+     AGEING
+  ========================================================== */
+
   const [ageing, setAgeing] =
-    useState<AgeingMode>("Without Ageing");
+    useState<AgeingMode>(
+      "Without Ageing"
+    );
 
   const [ageingMode, setAgeingMode] =
     useState("Days");
 
+  /* ==========================================================
+     POST STATUS
+  ========================================================== */
+
   const [postStatus, setPostStatus] =
     useState<PostStatus>("All");
 
+  /* ==========================================================
+     ZERO BALANCE
+  ========================================================== */
+
   const [printZeroBalance, setPrintZeroBalance] =
-    useState<"Yes" | "No">("Yes");
+    useState<PrintZeroBalance>("Yes");
+
+  /* ==========================================================
+     STATUS
+  ========================================================== */
+
+  const [status, setStatus] =
+    useState<StatusMode>(
+      "Outstanding"
+    );
+
+  /* ==========================================================
+     PRINT STATE
+  ========================================================== */
 
   const [isPrinting, setIsPrinting] =
     useState(false);
 
   /* ==========================================================
-     ACCOUNT OPTIONS
+     GET ACCOUNT OPTIONS
   ========================================================== */
 
   const accountOptions =
     reportType === "Customer"
-      ? customers
-      : suppliers;
+      ? customerOptions
+      : supplierOptions;
 
   /* ==========================================================
-     SELECTED ACCOUNT
+     FORMAT DATE
   ========================================================== */
 
-  const selectedAccountData =
-    accountOptions.find(
-      (item) =>
-        item.id === selectedAccount
-    );
-
-  /* ==========================================================
-     DATE FORMAT
-  ========================================================== */
-
-  const formatDate = (
+  const formatReportDate = (
     value: string
   ) => {
     if (!value) {
@@ -263,11 +337,13 @@ const StatementOfAccountMain: React.FC = () => {
     const [year, month, day] =
       value.split("-");
 
-    return new Date(
+    const date = new Date(
       Number(year),
       Number(month) - 1,
       Number(day)
-    ).toLocaleDateString(
+    );
+
+    return date.toLocaleDateString(
       "en-GB",
       {
         day: "2-digit",
@@ -278,21 +354,34 @@ const StatementOfAccountMain: React.FC = () => {
   };
 
   /* ==========================================================
+     CUSTOMER DETAILS
+  ========================================================== */
+
+  const selectedAccountObject =
+    accountOptions.find(
+      (item) =>
+        item.id === selectedAccount
+    );
+
+  const selectedCustomerName =
+    selectedAccountObject?.name ||
+    "E. A. JUFFALI & BROS H.O.";
+
+  /* ==========================================================
      SOA DATA
   ========================================================== */
 
   const soaData = {
     customerId:
-      selectedAccount,
+      selectedAccount || "1007",
 
     customerName:
-      selectedAccountData?.name ||
-      "E. A. JUFFALI & BROS H.O.",
+      selectedCustomerName,
 
     division:
-      divisionMode === "All Division"
+      selectedDivision === "ALL"
         ? ""
-        : divisions.find(
+        : divisionOptions.find(
             (item) =>
               item.id === selectedDivision
           )?.name || "",
@@ -307,10 +396,10 @@ const StatementOfAccountMain: React.FC = () => {
       "SAR",
 
     periodFrom:
-      formatDate(periodFrom),
+      formatReportDate(periodFrom),
 
     periodTo:
-      formatDate(periodTo),
+      formatReportDate(periodTo),
 
     vatNumber:
       "300220164600003",
@@ -345,6 +434,10 @@ const StatementOfAccountMain: React.FC = () => {
     setIsPrinting(true);
   };
 
+  /* ==========================================================
+     AFTER PRINT LAYER IS RENDERED
+  ========================================================== */
+
   useEffect(() => {
     if (!isPrinting) {
       return;
@@ -353,27 +446,31 @@ const StatementOfAccountMain: React.FC = () => {
     const timer =
       window.setTimeout(() => {
         window.print();
-      }, 150);
+      }, 100);
 
     return () => {
       window.clearTimeout(timer);
     };
   }, [isPrinting]);
 
+  /* ==========================================================
+     RESET PRINT STATE
+  ========================================================== */
+
   useEffect(() => {
-    const afterPrint = () => {
+    const handleAfterPrint = () => {
       setIsPrinting(false);
     };
 
     window.addEventListener(
       "afterprint",
-      afterPrint
+      handleAfterPrint
     );
 
     return () => {
       window.removeEventListener(
         "afterprint",
-        afterPrint
+        handleAfterPrint
       );
     };
   }, []);
@@ -383,39 +480,15 @@ const StatementOfAccountMain: React.FC = () => {
   ========================================================== */
 
   const handleClose = () => {
+    console.log(
+      "Close Statement Of Account"
+    );
+
+    // Replace with your navigation:
+    // navigate("/");
+
     window.history.back();
   };
-
-  /* ==========================================================
-     RADIO COMPONENT
-  ========================================================== */
-
-  const Radio = ({
-    name,
-    checked,
-    onChange,
-    children,
-  }: {
-    name: string;
-    checked: boolean;
-    onChange: () => void;
-    children: React.ReactNode;
-  }) => (
-    <label className="soa-radio">
-      <input
-        type="radio"
-        name={name}
-        checked={checked}
-        onChange={onChange}
-      />
-
-      <span className="soa-radio-circle" />
-
-      <span>
-        {children}
-      </span>
-    </label>
-  );
 
   /* ==========================================================
      RENDER
@@ -427,55 +500,82 @@ const StatementOfAccountMain: React.FC = () => {
           MAIN SCREEN
       ====================================================== */}
 
-      <main className="soa-main">
+      <div className="soa-main-page">
 
-        <div className="soa-panel">
+        <div className="soa-report-container">
 
           {/* ==================================================
               HEADER
           ================================================== */}
 
-          <header className="soa-header">
+          <header className="soa-modern-header">
+
+            <div className="soa-header-icon">
+              <span>
+                $
+              </span>
+            </div>
 
             <div>
-
               <h1>
                 Statement of Account
               </h1>
 
               <p>
-                Generate and print account
-                statements
+                Generate customer and supplier
+                account statements
               </p>
-
             </div>
 
           </header>
 
           {/* ==================================================
-              STATEMENT TYPE
+              REPORT TYPE
           ================================================== */}
 
-          <section className="soa-section">
+          <section className="soa-card"  id="rdgcustorsupp">
 
-            <div className="soa-section-title">
-              Statement For
+            <div className="soa-section-heading">
+
+              <div className="soa-section-icon">
+                <span>
+                  ◉
+                </span>
+              </div>
+
+              <div>
+                <h2>
+                  Statement Type
+                </h2>
+
+                <p>
+                  Select the type of account
+                  statement
+                </p>
+              </div>
+
             </div>
 
-            <div className="soa-type-buttons">
+            <div className="soa-segment">
 
               <button
                 type="button"
+                id=""
                 className={
                   reportType === "Customer"
-                    ? "soa-type active"
-                    : "soa-type"
+                    ? "soa-segment-button active"
+                    : "soa-segment-button"
                 }
                 onClick={() =>
-                  setReportType("Customer")
+                  setReportType(
+                    "Customer"
+                  )
                 }
               >
-                <span className="soa-type-radio" />
+                <span>
+                  👤
+                </span>
+
                 Customer
               </button>
 
@@ -483,14 +583,19 @@ const StatementOfAccountMain: React.FC = () => {
                 type="button"
                 className={
                   reportType === "Supplier"
-                    ? "soa-type active"
-                    : "soa-type"
+                    ? "soa-segment-button active"
+                    : "soa-segment-button"
                 }
                 onClick={() =>
-                  setReportType("Supplier")
+                  setReportType(
+                    "Supplier"
+                  )
                 }
               >
-                <span className="soa-type-radio" />
+                <span>
+                  🏢
+                </span>
+
                 Supplier
               </button>
 
@@ -502,51 +607,89 @@ const StatementOfAccountMain: React.FC = () => {
               FILTER GRID
           ================================================== */}
 
-          <div className="soa-grid">
+          <div className="soa-filter-grid">
 
             {/* =================================================
-                BRANCH
+                BRANCH CARD
             ================================================= */}
 
-            <section className="soa-section">
+            <section className="soa-card" id="rdgbranch">
 
-              <div className="soa-section-title">
-                Branch
+              <div className="soa-section-heading">
+
+                <div className="soa-section-icon">
+                  <span>
+                    ⌖
+                  </span>
+                </div>
+
+                <div>
+                  <h2>
+                    Branch
+                  </h2>
+
+                  <p>
+                    Choose branch scope
+                  </p>
+                </div>
+
               </div>
 
-              <Radio
-                name="branch"
-                checked={
-                  branchMode ===
-                  "All Branch"
-                }
-                onChange={() =>
-                  setBranchMode(
-                    "All Branch"
-                  )
-                }
-              >
-                All Branches
-              </Radio>
+              <div className="soa-radio-list">
 
-              <Radio
-                name="branch"
-                checked={
-                  branchMode ===
-                  "One Branch"
-                }
-                onChange={() =>
-                  setBranchMode(
-                    "One Branch"
-                  )
-                }
-              >
-                One Branch
-              </Radio>
+                <label className="soa-radio-option">
+
+                  <input
+                    type="radio"
+                    name="branchMode"
+                    checked={
+                      branchMode ===
+                      "All Branch"
+                    }
+                    onChange={() =>
+                      setBranchMode(
+                        "All Branch"
+                      )
+                    }
+                  />
+
+                  <span>
+                    All Branches
+                  </span>
+
+                </label>
+
+                <label className="soa-radio-option">
+
+                  <input
+                    type="radio"
+                    name="branchMode"
+                    checked={
+                      branchMode ===
+                      "One Branch"
+                    }
+                    onChange={() =>
+                      setBranchMode(
+                        "One Branch"
+                      )
+                    }
+                  />
+
+                  <span>
+                    One Branch
+                  </span>
+
+                </label>
+
+              </div>
 
               {branchMode ===
                 "One Branch" && (
-                <div className="soa-inline-field">
+                <div className="soa-field animated-field">
+
+                  <label>
+                    Branch
+                  </label>
 
                   <select
                     value={selectedBranch}
@@ -557,7 +700,7 @@ const StatementOfAccountMain: React.FC = () => {
                     }
                   >
 
-                    {branches.map(
+                    {branchOptions.map(
                       (branch) => (
                         <option
                           key={branch.id}
@@ -576,63 +719,112 @@ const StatementOfAccountMain: React.FC = () => {
             </section>
 
             {/* =================================================
-                ACCOUNT
+                ACCOUNT CARD
             ================================================= */}
 
-            <section className="soa-section">
+            <section className="soa-card" id="rdgaccount">
 
-              <div className="soa-section-title">
-                Account
+              <div className="soa-section-heading">
+
+                <div className="soa-section-icon">
+                  <span>
+                    #
+                  </span>
+                </div>
+
+                <div>
+                  <h2>
+                    Account
+                  </h2>
+
+                  <p>
+                    Select account range
+                  </p>
+                </div>
+
               </div>
 
-              <Radio
-                name="account"
-                checked={
-                  accountMode ===
-                  "All Account"
-                }
-                onChange={() =>
-                  setAccountMode(
-                    "All Account"
-                  )
-                }
-              >
-                All Accounts
-              </Radio>
+              <div className="soa-radio-list">
 
-              <Radio
-                name="account"
-                checked={
-                  accountMode ===
-                  "One Account"
-                }
-                onChange={() =>
-                  setAccountMode(
-                    "One Account"
-                  )
-                }
-              >
-                One Account
-              </Radio>
+                <label className="soa-radio-option">
 
-              <Radio
-                name="account"
-                checked={
-                  accountMode ===
-                  "Range Account"
-                }
-                onChange={() =>
-                  setAccountMode(
-                    "Range Account"
-                  )
-                }
-              >
-                Account Range
-              </Radio>
+                  <input
+                    type="radio"
+                    name="accountMode"
+                    checked={
+                      accountMode ===
+                      "All Account"
+                    }
+                    onChange={() =>
+                      setAccountMode(
+                        "All Account"
+                      )
+                    }
+                  />
+
+                  <span>
+                    All Accounts
+                  </span>
+
+                </label>
+
+                <label className="soa-radio-option">
+
+                  <input
+                    type="radio"
+                    name="accountMode"
+                    checked={
+                      accountMode ===
+                      "One Account"
+                    }
+                    onChange={() =>
+                      setAccountMode(
+                        "One Account"
+                      )
+                    }
+                  />
+
+                  <span>
+                    One Account
+                  </span>
+
+                </label>
+
+                <label className="soa-radio-option">
+
+                  <input
+                    type="radio"
+                    name="accountMode"
+                    checked={
+                      accountMode ===
+                      "Range Account"
+                    }
+                    onChange={() =>
+                      setAccountMode(
+                        "Range Account"
+                      )
+                    }
+                  />
+
+                  <span>
+                    Account Range
+                  </span>
+
+                </label>
+
+              </div>
+
+              {/* ==============================================
+                  ONE ACCOUNT
+              ============================================== */}
 
               {accountMode ===
                 "One Account" && (
-                <div className="soa-inline-field">
+                <div className="soa-field animated-field">
+
+                  <label>
+                    Account
+                  </label>
 
                   <select
                     value={selectedAccount}
@@ -660,57 +852,79 @@ const StatementOfAccountMain: React.FC = () => {
                 </div>
               )}
 
+              {/* ==============================================
+                  ACCOUNT RANGE
+              ============================================== */}
+
               {accountMode ===
                 "Range Account" && (
-                <div className="soa-range">
+                <div className="soa-range-fields animated-field">
 
-                  <select
-                    value={accountFrom}
-                    onChange={(e) =>
-                      setAccountFrom(
-                        e.target.value
-                      )
-                    }
-                  >
+                  <div className="soa-field">
 
-                    {accountOptions.map(
-                      (account) => (
-                        <option
-                          key={account.id}
-                          value={account.id}
-                        >
-                          {account.id}
-                        </option>
-                      )
-                    )}
+                    <label>
+                      From Account
+                    </label>
 
-                  </select>
+                    <select
+                      value={accountFrom}
+                      onChange={(e) =>
+                        setAccountFrom(
+                          e.target.value
+                        )
+                      }
+                    >
 
-                  <span>
-                    to
-                  </span>
+                      {accountOptions.map(
+                        (account) => (
+                          <option
+                            key={account.id}
+                            value={account.id}
+                          >
+                            {account.id} -{" "}
+                            {account.name}
+                          </option>
+                        )
+                      )}
 
-                  <select
-                    value={accountTo}
-                    onChange={(e) =>
-                      setAccountTo(
-                        e.target.value
-                      )
-                    }
-                  >
+                    </select>
 
-                    {accountOptions.map(
-                      (account) => (
-                        <option
-                          key={account.id}
-                          value={account.id}
-                        >
-                          {account.id}
-                        </option>
-                      )
-                    )}
+                  </div>
 
-                  </select>
+                  <div className="soa-range-arrow">
+                    →
+                  </div>
+
+                  <div className="soa-field">
+
+                    <label>
+                      To Account
+                    </label>
+
+                    <select
+                      value={accountTo}
+                      onChange={(e) =>
+                        setAccountTo(
+                          e.target.value
+                        )
+                      }
+                    >
+
+                      {accountOptions.map(
+                        (account) => (
+                          <option
+                            key={account.id}
+                            value={account.id}
+                          >
+                            {account.id} -{" "}
+                            {account.name}
+                          </option>
+                        )
+                      )}
+
+                    </select>
+
+                  </div>
 
                 </div>
               )}
@@ -718,48 +932,86 @@ const StatementOfAccountMain: React.FC = () => {
             </section>
 
             {/* =================================================
-                DIVISION
+                DIVISION CARD
             ================================================= */}
 
-            <section className="soa-section">
+            <section className="soa-card" id="rdgdivision">
 
-              <div className="soa-section-title">
-                Division
+              <div className="soa-section-heading">
+
+                <div className="soa-section-icon">
+                  <span>
+                    ◇
+                  </span>
+                </div>
+
+                <div>
+                  <h2>
+                    Division
+                  </h2>
+
+                  <p>
+                    Filter by division
+                  </p>
+                </div>
+
               </div>
 
-              <Radio
-                name="division"
-                checked={
-                  divisionMode ===
-                  "All Division"
-                }
-                onChange={() =>
-                  setDivisionMode(
-                    "All Division"
-                  )
-                }
-              >
-                All Divisions
-              </Radio>
+              <div className="soa-radio-list">
 
-              <Radio
-                name="division"
-                checked={
-                  divisionMode ===
-                  "One Division"
-                }
-                onChange={() =>
-                  setDivisionMode(
-                    "One Division"
-                  )
-                }
-              >
-                One Division
-              </Radio>
+                <label className="soa-radio-option">
+
+                  <input
+                    type="radio"
+                    name="divisionMode"
+                    checked={
+                      divisionMode ===
+                      "All Division"
+                    }
+                    onChange={() =>
+                      setDivisionMode(
+                        "All Division"
+                      )
+                    }
+                  />
+
+                  <span>
+                    All Divisions
+                  </span>
+
+                </label>
+
+                <label className="soa-radio-option">
+
+                  <input
+                    type="radio"
+                    name="divisionMode"
+                    checked={
+                      divisionMode ===
+                      "One Division"
+                    }
+                    onChange={() =>
+                      setDivisionMode(
+                        "One Division"
+                      )
+                    }
+                  />
+
+                  <span>
+                    One Division
+                  </span>
+
+                </label>
+
+              </div>
 
               {divisionMode ===
                 "One Division" && (
-                <div className="soa-inline-field">
+                <div className="soa-field animated-field">
+
+                  <label>
+                    Division
+                  </label>
 
                   <select
                     value={selectedDivision}
@@ -770,16 +1022,22 @@ const StatementOfAccountMain: React.FC = () => {
                     }
                   >
 
-                    {divisions.map(
-                      (division) => (
-                        <option
-                          key={division.id}
-                          value={division.id}
-                        >
-                          {division.name}
-                        </option>
+                    {divisionOptions
+                      .filter(
+                        (division) =>
+                          division.id !==
+                          "ALL"
                       )
-                    )}
+                      .map(
+                        (division) => (
+                          <option
+                            key={division.id}
+                            value={division.id}
+                          >
+                            {division.name}
+                          </option>
+                        )
+                      )}
 
                   </select>
 
@@ -789,57 +1047,129 @@ const StatementOfAccountMain: React.FC = () => {
             </section>
 
             {/* =================================================
-                STATUS
+                STATUS CARD
             ================================================= */}
 
-            <section className="soa-section">
+            <section className="soa-card" id="rdgstatus">
 
-              <div className="soa-section-title">
-                Status
+              <div className="soa-section-heading">
+
+                <div className="soa-section-icon">
+                  <span>
+                    ✓
+                  </span>
+                </div>
+
+                <div>
+                  <h2>
+                    Status
+                  </h2>
+
+                  <p>
+                    Select statement status
+                  </p>
+                </div>
+
               </div>
 
-              <Radio
-                name="status"
-                checked={
-                  status ===
-                  "Outstanding"
-                }
-                onChange={() =>
-                  setStatus(
-                    "Outstanding"
-                  )
-                }
-              >
-                Outstanding
-              </Radio>
+              <div className="soa-status-options">
 
-              <Radio
-                name="status"
-                checked={
-                  status === "All"
-                }
-                onChange={() =>
-                  setStatus("All")
-                }
-              >
-                All Transactions
-              </Radio>
+                <label
+                  className={
+                    status ===
+                    "Outstanding"
+                      ? "soa-status-option active"
+                      : "soa-status-option"
+                  }
+                >
+
+                  <input
+                    type="radio"
+                    name="status"
+                    checked={
+                      status ===
+                      "Outstanding"
+                    }
+                    onChange={() =>
+                      setStatus(
+                        "Outstanding"
+                      )
+                    }
+                  />
+
+                  <span className="status-dot outstanding" />
+
+                  <span>
+                    Outstanding
+                  </span>
+
+                </label>
+
+                <label
+                  className={
+                    status === "All"
+                      ? "soa-status-option active"
+                      : "soa-status-option"
+                  }
+                >
+
+                  <input
+                    type="radio"
+                    name="status"
+                    checked={
+                      status === "All"
+                    }
+                    onChange={() =>
+                      setStatus("All")
+                    }
+                  />
+
+                  <span className="status-dot all" />
+
+                  <span>
+                    All Transactions
+                  </span>
+
+                </label>
+
+              </div>
 
             </section>
 
           </div>
 
           {/* ==================================================
-              REPORT OPTIONS
+              PERIOD + OPTIONS
           ================================================== */}
 
-          <section className="soa-section soa-options">
+          <section className="soa-card">
 
-            <div className="soa-section-title">
-              Report Options
+            <div className="soa-section-heading">
+
+              <div className="soa-section-icon">
+                <span>
+                  ◷
+                </span>
+              </div>
+
+              <div>
+                <h2>
+                  Report Period & Options
+                </h2>
+
+                <p>
+                  Configure the statement
+                  generation options
+                </p>
+              </div>
+
             </div>
 
             <div className="soa-options-grid">
+
+              {/* =============================================
+                  FROM DATE
+              ============================================= */}
 
               <div className="soa-field">
 
@@ -848,6 +1178,7 @@ const StatementOfAccountMain: React.FC = () => {
                 </label>
 
                 <input
+                id="dtpFromDate"
                   type="date"
                   value={periodFrom}
                   onChange={(e) =>
@@ -859,6 +1190,10 @@ const StatementOfAccountMain: React.FC = () => {
 
               </div>
 
+              {/* =============================================
+                  TO DATE
+              ============================================= */}
+
               <div className="soa-field">
 
                 <label>
@@ -866,6 +1201,7 @@ const StatementOfAccountMain: React.FC = () => {
                 </label>
 
                 <input
+                id="dtpToDate"
                   type="date"
                   value={periodTo}
                   onChange={(e) =>
@@ -877,6 +1213,10 @@ const StatementOfAccountMain: React.FC = () => {
 
               </div>
 
+              {/* =============================================
+                  AGEING
+              ============================================= */}
+
               <div className="soa-field">
 
                 <label>
@@ -884,6 +1224,7 @@ const StatementOfAccountMain: React.FC = () => {
                 </label>
 
                 <select
+                id="lkpAgeing"
                   value={ageing}
                   onChange={(e) =>
                     setAgeing(
@@ -904,6 +1245,10 @@ const StatementOfAccountMain: React.FC = () => {
 
               </div>
 
+              {/* =============================================
+                  AGEING MODE
+              ============================================= */}
+
               <div className="soa-field">
 
                 <label>
@@ -911,6 +1256,7 @@ const StatementOfAccountMain: React.FC = () => {
                 </label>
 
                 <select
+                id="lkpAgeingMode"
                   value={ageingMode}
                   onChange={(e) =>
                     setAgeingMode(
@@ -931,6 +1277,10 @@ const StatementOfAccountMain: React.FC = () => {
 
               </div>
 
+              {/* =============================================
+                  POST STATUS
+              ============================================= */}
+
               <div className="soa-field">
 
                 <label>
@@ -938,6 +1288,7 @@ const StatementOfAccountMain: React.FC = () => {
                 </label>
 
                 <select
+                id="lkpPostStatus"
                   value={postStatus}
                   onChange={(e) =>
                     setPostStatus(
@@ -962,19 +1313,22 @@ const StatementOfAccountMain: React.FC = () => {
 
               </div>
 
+              {/* =============================================
+                  ZERO BALANCE
+              ============================================= */}
+
               <div className="soa-field">
 
                 <label>
-                  Print 0 Balance
+                  Print Zero Balance
                 </label>
 
                 <select
+                id="lkpPrintZeroBalance"
                   value={printZeroBalance}
                   onChange={(e) =>
                     setPrintZeroBalance(
-                      e.target.value as
-                        | "Yes"
-                        | "No"
+                      e.target.value as PrintZeroBalance
                     )
                   }
                 >
@@ -996,47 +1350,120 @@ const StatementOfAccountMain: React.FC = () => {
           </section>
 
           {/* ==================================================
-              FOOTER ACTIONS
+              SUMMARY
           ================================================== */}
 
-          <footer className="soa-footer">
+          <div className="soa-summary">
+
+            <div className="soa-summary-item">
+
+              <span>
+                Statement
+              </span>
+
+              <strong>
+                {reportType}
+              </strong>
+
+            </div>
+
+            <div className="soa-summary-divider" />
+
+            <div className="soa-summary-item">
+
+              <span>
+                Period
+              </span>
+
+              <strong>
+                {formatReportDate(
+                  periodFrom
+                )}{" "}
+                →{" "}
+                {formatReportDate(
+                  periodTo
+                )}
+              </strong>
+
+            </div>
+
+            <div className="soa-summary-divider" />
+
+            <div className="soa-summary-item">
+
+              <span>
+                Status
+              </span>
+
+              <strong>
+                {status}
+              </strong>
+
+            </div>
+
+          </div>
+
+          {/* ==================================================
+              ACTIONS
+          ================================================== */}
+
+          <div className="soa-actions">
 
             <button
               type="button"
-              className="soa-btn cancel"
+              id="btnClose"
+              className="soa-button secondary"
               onClick={handleClose}
             >
+              <span>
+                ×
+              </span>
+
               Close
             </button>
 
             <button
+            id="btnPdfExport"
               type="button"
-              className="soa-btn pdf"
+              className="soa-button secondary"
               onClick={handlePrint}
             >
+              <span>
+                ⇩
+              </span>
+
               PDF Export
             </button>
 
             <button
+            id="btnPrint"
               type="button"
-              className="soa-btn print"
+              className="soa-button primary"
               onClick={handlePrint}
             >
+              <span>
+                ⎙
+              </span>
+
               Print Statement
             </button>
 
-          </footer>
+          </div>
 
         </div>
 
-      </main>
+      </div>
 
       {/* ======================================================
-          PRINT-ONLY SOA
+          PRINT ONLY LAYER
+
+          IMPORTANT:
+          This component NEVER appears on the frontend.
+          It becomes visible only while printing.
       ====================================================== */}
 
       {isPrinting && (
-        <div className="soa-print-only">
+        <div className="soa-print-root">
 
           <StatementOfAccount
             {...soaData}
@@ -1046,7 +1473,7 @@ const StatementOfAccountMain: React.FC = () => {
       )}
 
       {/* ======================================================
-          STYLES
+          SCREEN STYLES
       ====================================================== */}
 
       <style>{`
@@ -1055,378 +1482,306 @@ const StatementOfAccountMain: React.FC = () => {
           box-sizing: border-box;
         }
 
+        body {
+          margin: 0;
+        }
+
         /* ====================================================
-           PAGE
+           MAIN BACKGROUND
         ==================================================== */
 
-        .soa-main {
+        .soa-main-page {
           min-height: 100vh;
 
-          padding: 35px 20px;
+          padding: 35px 20px 50px;
 
-          background: #f3f5f6;
+          background:
+            linear-gradient(
+              135deg,
+              #f3f7f6 0%,
+              #edf3f5 50%,
+              #f7f9fa 100%
+            );
 
           font-family:
+            "Inter",
             "Segoe UI",
             Arial,
             sans-serif;
 
-          color: #25343d;
+          color: #20313d;
         }
 
         /* ====================================================
-           PANEL
+           CONTAINER
         ==================================================== */
 
-        .soa-panel {
-          width: 720px;
-
-          max-width: 100%;
+        .soa-report-container {
+          width: min(
+            100%,
+            1050px
+          );
 
           margin: 0 auto;
-
-          background: #ffffff;
-
-          border:
-            1px solid #d8e0dd;
-
-          border-radius: 6px;
-
-          box-shadow:
-            0 3px 12px
-            rgba(31, 52, 45, 0.08);
-
-          overflow: hidden;
         }
 
         /* ====================================================
            HEADER
         ==================================================== */
 
-        .soa-header {
-          padding:
-            19px 24px;
-
-          border-bottom:
-            1px solid #dfe6e3;
-
-          background: #ffffff;
-        }
-
-        .soa-header h1 {
-          margin: 0;
-
-          font-size: 20px;
-
-          font-weight: 600;
-
-          color: #1f4537;
-        }
-
-        .soa-header p {
-          margin:
-            4px 0 0;
-
-          font-size: 12px;
-
-          color: #7a898f;
-        }
-
-        /* ====================================================
-           SECTION
-        ==================================================== */
-
-        .soa-section {
-          padding:
-            17px 24px;
-
-          border-bottom:
-            1px solid #e5ebe8;
-        }
-
-        .soa-section-title {
-          margin-bottom: 12px;
-
-          font-size: 12px;
-
-          font-weight: 600;
-
-          color: #365248;
-
-          text-transform: uppercase;
-
-          letter-spacing:
-            0.3px;
-        }
-
-        /* ====================================================
-           TYPE
-        ==================================================== */
-
-        .soa-type-buttons {
-          display: flex;
-
-          gap: 10px;
-        }
-
-        .soa-type {
-          height: 38px;
-
-          min-width: 145px;
-
-          padding:
-            0 15px;
-
+        .soa-modern-header {
           display: flex;
 
           align-items: center;
 
-          gap: 9px;
+          gap: 15px;
 
-          border:
-            1px solid #d6dfdb;
-
-          border-radius: 5px;
-
-          background: #ffffff;
-
-          color: #596a70;
-
-          font-size: 12px;
-
-          cursor: pointer;
+          margin-bottom: 25px;
         }
 
-        .soa-type.active {
-          border-color: #68ad8a;
+        .soa-header-icon {
+          width: 48px;
+          height: 48px;
 
-          background: #eff8f3;
+          display: flex;
 
-          color: #246347;
+          align-items: center;
+          justify-content: center;
+
+          border-radius: 12px;
+
+          background:
+            linear-gradient(
+              135deg,
+              #198754,
+              #43b581
+            );
+
+          color: #ffffff;
+
+          font-size: 21px;
+
+          box-shadow:
+            0 5px 15px
+            rgba(25, 135, 84, 0.20);
         }
 
-        .soa-type-radio {
-          width: 12px;
-          height: 12px;
+        .soa-modern-header h1 {
+          margin: 0;
 
-          border:
-            1px solid #aebbb5;
+          font-size: 25px;
 
-          border-radius: 50%;
+          font-weight: 700;
 
-          position: relative;
+          letter-spacing: -0.4px;
+
+          color: #183c31;
         }
 
-        .soa-type.active
-        .soa-type-radio {
-          border-color: #23875a;
-        }
+        .soa-modern-header p {
+          margin: 4px 0 0;
 
-        .soa-type.active
-        .soa-type-radio::after {
-          content: "";
+          font-size: 13px;
 
-          position: absolute;
-
-          width: 6px;
-          height: 6px;
-
-          left: 2px;
-          top: 2px;
-
-          border-radius: 50%;
-
-          background: #23875a;
+          color: #70818b;
         }
 
         /* ====================================================
-           GRID
+           CARD
         ==================================================== */
 
-        .soa-grid {
+        .soa-card {
+          background: #ffffff;
+
+          border: 1px solid #dfe8e5;
+
+          border-radius: 10px;
+
+          padding: 20px;
+
+          margin-bottom: 17px;
+
+          box-shadow:
+            0 3px 12px
+            rgba(31, 56, 49, 0.05);
+        }
+
+        .soa-section-heading {
+          display: flex;
+
+          align-items: center;
+
+          gap: 11px;
+
+          margin-bottom: 17px;
+        }
+
+        .soa-section-icon {
+          width: 35px;
+          height: 35px;
+
+          display: flex;
+
+          align-items: center;
+          justify-content: center;
+
+          flex-shrink: 0;
+
+          border-radius: 8px;
+
+          background: #e8f6ef;
+
+          color: #168252;
+
+          font-size: 16px;
+
+          font-weight: 600;
+        }
+
+        .soa-section-heading h2 {
+          margin: 0;
+
+          font-size: 15px;
+
+          font-weight: 650;
+
+          color: #253b46;
+        }
+
+        .soa-section-heading p {
+          margin: 3px 0 0;
+
+          font-size: 11.5px;
+
+          color: #87959d;
+        }
+
+        /* ====================================================
+           SEGMENT
+        ==================================================== */
+
+        .soa-segment {
+          display: grid;
+
+          grid-template-columns: 1fr 1fr;
+
+          gap: 10px;
+
+          max-width: 550px;
+        }
+
+        .soa-segment-button {
+          height: 48px;
+
+          border: 1px solid #d6e1dc;
+
+          border-radius: 8px;
+
+          background: #f8faf9;
+
+          color: #53666f;
+
+          font-size: 13px;
+
+          font-weight: 550;
+
+          cursor: pointer;
+
+          transition:
+            border-color 0.15s,
+            background 0.15s,
+            color 0.15s,
+            transform 0.15s;
+
+          display: flex;
+
+          align-items: center;
+          justify-content: center;
+
+          gap: 8px;
+        }
+
+        .soa-segment-button:hover {
+          border-color: #8bc9aa;
+
+          background: #f2faf6;
+        }
+
+        .soa-segment-button.active {
+          border-color: #37a875;
+
+          background: #e9f8f0;
+
+          color: #167549;
+
+          box-shadow:
+            0 0 0 2px
+            rgba(55, 168, 117, 0.08);
+        }
+
+        /* ====================================================
+           FILTER GRID
+        ==================================================== */
+
+        .soa-filter-grid {
           display: grid;
 
           grid-template-columns:
-            1fr
-            1fr;
+            repeat(2, minmax(0, 1fr));
+
+          gap: 17px;
         }
 
-        .soa-grid .soa-section {
-          min-height: 190px;
-        }
+        .soa-filter-grid .soa-card {
+          margin-bottom: 0;
 
-        .soa-grid .soa-section:nth-child(
-          odd
-        ) {
-          border-right:
-            1px solid #e5ebe8;
+          min-height: 235px;
         }
 
         /* ====================================================
            RADIO
         ==================================================== */
 
-        .soa-radio {
+        .soa-radio-list {
           display: flex;
 
-          align-items: center;
+          flex-wrap: wrap;
 
-          gap: 8px;
+          gap: 9px 17px;
 
-          min-height: 29px;
-
-          font-size: 12px;
-
-          color: #52636b;
-
-          cursor: pointer;
+          margin-bottom: 15px;
         }
 
-        .soa-radio input {
-          display: none;
-        }
-
-        .soa-radio-circle {
-          width: 14px;
-          height: 14px;
-
-          border:
-            1px solid #b6c2bd;
-
-          border-radius: 50%;
-
-          position: relative;
-
-          flex-shrink: 0;
-        }
-
-        .soa-radio input:checked
-        + .soa-radio-circle {
-          border-color: #26885b;
-        }
-
-        .soa-radio input:checked
-        + .soa-radio-circle::after {
-          content: "";
-
-          position: absolute;
-
-          width: 7px;
-          height: 7px;
-
-          left: 2px;
-          top: 2px;
-
-          border-radius: 50%;
-
-          background: #26885b;
-        }
-
-        /* ====================================================
-           SELECT
-        ==================================================== */
-
-        .soa-inline-field {
-          margin-top: 8px;
-
-          padding-left: 22px;
-        }
-
-        .soa-inline-field select {
-          width: 100%;
-
-          height: 34px;
-
-          padding:
-            0 9px;
-
-          border:
-            1px solid #d1dbd7;
-
-          border-radius: 4px;
-
-          background: #ffffff;
-
-          color: #30444d;
-
-          font-size: 12px;
-
-          outline: none;
-        }
-
-        .soa-inline-field select:focus {
-          border-color: #5ca983;
-
-          box-shadow:
-            0 0 0 2px
-            rgba(92, 169, 131, 0.10);
-        }
-
-        /* ====================================================
-           RANGE
-        ==================================================== */
-
-        .soa-range {
-          display: grid;
-
-          grid-template-columns:
-            1fr
-            auto
-            1fr;
+        .soa-radio-option {
+          display: flex;
 
           align-items: center;
 
           gap: 7px;
 
-          padding-left: 22px;
+          font-size: 12.5px;
 
-          margin-top: 8px;
+          color: #52646e;
+
+          cursor: pointer;
         }
 
-        .soa-range select {
-          height: 34px;
+        .soa-radio-option input {
+          width: 15px;
+          height: 15px;
 
-          min-width: 0;
+          margin: 0;
 
-          padding:
-            0 8px;
-
-          border:
-            1px solid #d1dbd7;
-
-          border-radius: 4px;
-
-          background: #ffffff;
-
-          font-size: 12px;
-
-          color: #30444d;
-
-          outline: none;
+          accent-color: #22915f;
         }
 
-        .soa-range span {
-          font-size: 11px;
-
-          color: #87938f;
+        .soa-radio-option:hover {
+          color: #1e6e4b;
         }
 
         /* ====================================================
-           OPTIONS
+           FIELD
         ==================================================== */
-
-        .soa-options {
-          border-bottom: none;
-        }
-
-        .soa-options-grid {
-          display: grid;
-
-          grid-template-columns:
-            repeat(3, 1fr);
-
-          gap: 15px;
-        }
 
         .soa-field {
           display: flex;
@@ -1437,135 +1792,422 @@ const StatementOfAccountMain: React.FC = () => {
         }
 
         .soa-field label {
-          font-size: 11px;
+          font-size: 11.5px;
 
-          color: #697a80;
+          font-weight: 600;
 
-          font-weight: 500;
+          color: #52656f;
         }
 
-        .soa-field input,
-        .soa-field select {
+        .soa-field select,
+        .soa-field input {
           width: 100%;
 
-          height: 35px;
+          height: 38px;
 
           padding:
-            0 9px;
+            0 11px;
 
-          border:
-            1px solid #d1dbd7;
+          border: 1px solid #d2deda;
 
-          border-radius: 4px;
+          border-radius: 6px;
 
           background: #ffffff;
 
-          color: #30444d;
+          color: #263b46;
+
+          font-family: inherit;
 
           font-size: 12px;
 
           outline: none;
+
+          transition:
+            border-color 0.15s,
+            box-shadow 0.15s;
         }
 
-        .soa-field input:focus,
-        .soa-field select:focus {
-          border-color: #5ca983;
+        .soa-field select:hover,
+        .soa-field input:hover {
+          border-color: #a8c8b9;
+        }
+
+        .soa-field select:focus,
+        .soa-field input:focus {
+          border-color: #43a878;
 
           box-shadow:
-            0 0 0 2px
-            rgba(92, 169, 131, 0.10);
+            0 0 0 3px
+            rgba(67, 168, 120, 0.10);
         }
 
         /* ====================================================
-           FOOTER
+           RANGE
         ==================================================== */
 
-        .soa-footer {
+        .soa-range-fields {
+          display: grid;
+
+          grid-template-columns:
+            1fr
+            25px
+            1fr;
+
+          align-items: end;
+
+          gap: 7px;
+        }
+
+        .soa-range-arrow {
+          height: 38px;
+
+          display: flex;
+
+          align-items: center;
+          justify-content: center;
+
+          color: #7a8d96;
+
+          font-size: 17px;
+        }
+
+        /* ====================================================
+           ANIMATION
+        ==================================================== */
+
+        .animated-field {
+          animation:
+            soaFieldIn
+            0.18s
+            ease-out;
+        }
+
+        @keyframes soaFieldIn {
+
+          from {
+            opacity: 0;
+
+            transform:
+              translateY(-4px);
+          }
+
+          to {
+            opacity: 1;
+
+            transform:
+              translateY(0);
+          }
+
+        }
+
+        /* ====================================================
+           STATUS
+        ==================================================== */
+
+        .soa-status-options {
+          display: grid;
+
+          gap: 9px;
+        }
+
+        .soa-status-option {
+          min-height: 47px;
+
+          display: flex;
+
+          align-items: center;
+
+          gap: 9px;
+
+          padding:
+            0 12px;
+
+          border: 1px solid #e0e7e4;
+
+          border-radius: 7px;
+
+          background: #fbfcfc;
+
+          font-size: 12px;
+
+          color: #60717a;
+
+          cursor: pointer;
+        }
+
+        .soa-status-option.active {
+          border-color: #9bd1b5;
+
+          background: #f1faf5;
+
+          color: #267451;
+        }
+
+        .soa-status-option input {
+          display: none;
+        }
+
+        .status-dot {
+          width: 9px;
+          height: 9px;
+
+          border-radius: 50%;
+
+          border: 2px solid
+            #b9c5c0;
+
+          background: transparent;
+        }
+
+        .soa-status-option.active
+        .status-dot {
+          border-color: #24955f;
+
+          background: #24955f;
+
+          box-shadow:
+            0 0 0 3px
+            rgba(36, 149, 95, 0.10);
+        }
+
+        /* ====================================================
+           OPTIONS
+        ==================================================== */
+
+        .soa-options-grid {
+          display: grid;
+
+          grid-template-columns:
+            repeat(3, 1fr);
+
+          gap: 17px;
+        }
+
+        /* ====================================================
+           SUMMARY
+        ==================================================== */
+
+        .soa-summary {
+          min-height: 62px;
+
+          display: flex;
+
+          align-items: center;
+
+          padding:
+            0 18px;
+
+          margin-bottom: 17px;
+
+          border:
+            1px solid #cde6d9;
+
+          border-radius: 9px;
+
+          background:
+            linear-gradient(
+              90deg,
+              #effaf4,
+              #f7fbf9
+            );
+        }
+
+        .soa-summary-item {
+          flex: 1;
+
+          display: flex;
+
+          flex-direction: column;
+
+          gap: 4px;
+        }
+
+        .soa-summary-item span {
+          font-size: 10.5px;
+
+          color: #789087;
+        }
+
+        .soa-summary-item strong {
+          font-size: 12.5px;
+
+          color: #256046;
+        }
+
+        .soa-summary-divider {
+          width: 1px;
+
+          height: 30px;
+
+          background: #d4e7dd;
+
+          margin:
+            0 18px;
+        }
+
+        /* ====================================================
+           ACTIONS
+        ==================================================== */
+
+        .soa-actions {
           display: flex;
 
           justify-content: flex-end;
 
           align-items: center;
 
-          gap: 8px;
-
-          padding:
-            14px 24px;
-
-          border-top:
-            1px solid #e1e8e5;
-
-          background: #fafcfc;
+          gap: 10px;
         }
 
-        .soa-btn {
-          height: 36px;
+        .soa-button {
+          height: 42px;
 
           padding:
-            0 17px;
+            0 18px;
 
-          border-radius: 4px;
+          display: flex;
 
-          font-size: 12px;
+          align-items: center;
+          justify-content: center;
 
-          font-weight: 500;
+          gap: 7px;
+
+          border-radius: 7px;
+
+          font-family: inherit;
+
+          font-size: 12.5px;
+
+          font-weight: 600;
 
           cursor: pointer;
 
           transition:
-            0.15s ease;
+            transform 0.12s,
+            box-shadow 0.12s,
+            background 0.12s;
         }
 
-        .soa-btn.cancel {
-          border:
-            1px solid #d2dbd7;
-
-          background: #ffffff;
-
-          color: #68777d;
-        }
-
-        .soa-btn.pdf {
-          border:
-            1px solid #9ebfb0;
-
-          background: #ffffff;
-
-          color: #287051;
-        }
-
-        .soa-btn.print {
-          border:
-            1px solid #238459;
-
-          background: #238459;
-
-          color: #ffffff;
-        }
-
-        .soa-btn:hover {
+        .soa-button:hover {
           transform:
             translateY(-1px);
         }
 
-        .soa-btn.cancel:hover {
-          background: #f5f7f6;
+        .soa-button:active {
+          transform:
+            translateY(0);
         }
 
-        .soa-btn.pdf:hover {
-          background: #eff8f3;
+        .soa-button.secondary {
+          border: 1px solid #d3dfda;
+
+          background: #ffffff;
+
+          color: #536870;
         }
 
-        .soa-btn.print:hover {
-          background: #1c754e;
+        .soa-button.secondary:hover {
+          background: #f6faf8;
+
+          border-color: #abc7b9;
+        }
+
+        .soa-button.primary {
+          border: 1px solid #168354;
+
+          background:
+            linear-gradient(
+              135deg,
+              #168354,
+              #2da66e
+            );
+
+          color: #ffffff;
+
+          box-shadow:
+            0 5px 12px
+            rgba(22, 131, 84, 0.18);
+        }
+
+        .soa-button.primary:hover {
+          box-shadow:
+            0 7px 16px
+            rgba(22, 131, 84, 0.25);
         }
 
         /* ====================================================
-           PRINT LAYER
+           PRINT ROOT
         ==================================================== */
 
-        .soa-print-only {
+        .soa-print-root {
           display: none;
+        }
+
+        /* ====================================================
+           RESPONSIVE
+        ==================================================== */
+
+        @media (max-width: 800px) {
+
+          .soa-filter-grid {
+            grid-template-columns: 1fr;
+          }
+
+          .soa-options-grid {
+            grid-template-columns:
+              repeat(2, 1fr);
+          }
+
+        }
+
+        @media (max-width: 550px) {
+
+          .soa-main-page {
+            padding:
+              20px 12px;
+          }
+
+          .soa-card {
+            padding: 15px;
+          }
+
+          .soa-options-grid {
+            grid-template-columns: 1fr;
+          }
+
+          .soa-summary {
+            flex-direction: column;
+
+            align-items: flex-start;
+
+            padding:
+              13px 15px;
+
+            gap: 10px;
+          }
+
+          .soa-summary-divider {
+            display: none;
+          }
+
+          .soa-actions {
+            flex-direction: column-reverse;
+
+            align-items: stretch;
+          }
+
+          .soa-button {
+            width: 100%;
+          }
+
+          .soa-range-fields {
+            grid-template-columns: 1fr;
+          }
+
+          .soa-range-arrow {
+            display: none;
+          }
+
         }
 
         /* ====================================================
@@ -1575,7 +2217,7 @@ const StatementOfAccountMain: React.FC = () => {
         @media print {
 
           /*
-             Hide the entire application.
+             Hide EVERYTHING from the application.
           */
 
           body > * {
@@ -1583,52 +2225,52 @@ const StatementOfAccountMain: React.FC = () => {
           }
 
           /*
-             Show only the print layer.
+             Show ONLY SOA print root.
           */
 
-          .soa-print-only {
+          .soa-print-root {
             display: block !important;
 
             visibility: visible !important;
 
             position: absolute !important;
 
-            top: 0 !important;
             left: 0 !important;
+            top: 0 !important;
 
             width: 100% !important;
 
             margin: 0 !important;
             padding: 0 !important;
-          }
-
-          .soa-print-only,
-          .soa-print-only * {
-            visibility: visible !important;
-          }
-
-          /*
-             Remove screen-only SOA styling.
-          */
-
-          .soa-print-only
-          .soa-page-wrapper {
-            margin: 0 !important;
-
-            padding: 0 !important;
-
-            min-height: 0 !important;
 
             background: #ffffff !important;
           }
 
-          .soa-print-only
-          .soa-toolbar {
+          .soa-print-root,
+          .soa-print-root * {
+            visibility: visible !important;
+          }
+
+          /*
+             Important:
+             remove screen page styling from print root.
+          */
+
+          .soa-print-root .soa-page-wrapper {
+            min-height: 0 !important;
+
+            padding: 0 !important;
+
+            margin: 0 !important;
+
+            background: #ffffff !important;
+          }
+
+          .soa-print-root .soa-toolbar {
             display: none !important;
           }
 
-          .soa-print-only
-          .soa-document {
+          .soa-print-root .soa-document {
             margin: 0 auto !important;
 
             box-shadow: none !important;
@@ -1640,48 +2282,6 @@ const StatementOfAccountMain: React.FC = () => {
             size: A4 portrait;
 
             margin: 8mm;
-          }
-
-        }
-
-        /* ====================================================
-           MOBILE
-        ==================================================== */
-
-        @media (
-          max-width: 650px
-        ) {
-
-          .soa-main {
-            padding:
-              15px 10px;
-          }
-
-          .soa-grid {
-            grid-template-columns:
-              1fr;
-          }
-
-          .soa-grid
-          .soa-section {
-            border-right: none !important;
-          }
-
-          .soa-options-grid {
-            grid-template-columns:
-              1fr;
-          }
-
-          .soa-footer {
-            flex-direction:
-              column-reverse;
-
-            align-items:
-              stretch;
-          }
-
-          .soa-btn {
-            width: 100%;
           }
 
         }
