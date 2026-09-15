@@ -1167,6 +1167,8 @@ const ReceiptRow = memo(
             false
           >
 
+            inputId={`ddlAccountId-${row.id}`}
+
             ref={(instance) =>
               setRowRef(
                 index,
@@ -1280,6 +1282,8 @@ const ReceiptRow = memo(
             false
           >
 
+            inputId={`ddlAccountName-${row.id}`}
+
             ref={(instance) =>
               setRowRef(
                 index,
@@ -1392,6 +1396,8 @@ const ReceiptRow = memo(
             SelectOption,
             false
           >
+
+            inputId={`ddlDivision-${row.id}`}
 
             ref={(instance) =>
               setRowRef(
@@ -1516,6 +1522,8 @@ const ReceiptRow = memo(
             false
           >
 
+            inputId={`ddlCCId-${row.id}`}
+
             ref={(instance) =>
               setRowRef(
                 index,
@@ -1611,6 +1619,7 @@ const ReceiptRow = memo(
         <td className="receipt-cell">
 
           <input
+            id={`txtCreditAmount-${row.id}`}
             ref={(element) =>
               setRowRef(
                 index,
@@ -1668,6 +1677,7 @@ const ReceiptRow = memo(
           <div className="receipt-checkbox-wrapper">
 
             <input
+              id={`chkMatch-${row.id}`}
               ref={(element) =>
                 setRowRef(
                   index,
@@ -1715,6 +1725,7 @@ const ReceiptRow = memo(
         <td className="receipt-cell">
 
           <button
+            id={`btnView-${row.id}`}
             ref={(element) =>
               setRowRef(
                 index,
@@ -2037,7 +2048,7 @@ const ReceiptTable = forwardRef<
     return (
       <div className="receipt-table-wrapper">
 
-        <table className="receipt-table">
+        <table id="tblReceipt" className="receipt-table">
 
           {/* =================================================
               COLUMN WIDTHS

@@ -82,7 +82,7 @@ function toSmallInt(
    DOCUMENT TYPE
 ========================================================= */
 
-function normalizeDocType(value) {
+function toDocumentType(value) {
   if (isEmpty(value)) {
     return null;
   }
@@ -486,7 +486,7 @@ export async function getReceiptHeader({
           branch,
 
           docType:
-            normalizeDocType(docType),
+            toDocumentType(docType),
 
           docNo,
 
@@ -557,7 +557,7 @@ export async function getReceiptLines({
           branch,
 
           docType:
-            normalizeDocType(docType),
+            toDocumentType(docType),
 
           docNo,
 
@@ -950,7 +950,7 @@ export async function saveReceiptService(
     ===================================================== */
 
     const finalDocType =
-      normalizeDocType(type);
+      toDocumentType(type);
 
 
     /* =====================================================
@@ -1369,7 +1369,7 @@ export async function deleteReceiptService({
     ===================================================== */
 
     const finalDocType =
-      normalizeDocType(type);
+      toDocumentType(type);
 
 
     /* =====================================================
@@ -1475,7 +1475,7 @@ export async function updateReceiptService(receipt) {
   const {
     branch,
     type,
-    receiptNo,
+    docNo,
   } = receipt || {};
 
   const client = await pool.connect();
@@ -1483,16 +1483,19 @@ export async function updateReceiptService(receipt) {
   try {
     await client.query("BEGIN");
 
-    const finalDocType = normalizeDocType(type);
+    const finalDocType = toDocumentType(type);
 
     await deleteReceiptInternal(client, {
       branch,
       docType: finalDocType,
-      docNo: receiptNo,
+      docNo,
     });
 
     const result = await saveReceiptService(
-      receipt,
+      {
+        ...receipt,
+        receiptNo: docNo,
+      },
       client,
       false
     );

@@ -145,27 +145,31 @@ const Receipt: React.FC = () => {
 
   /* =======================================================
      HEADER FORM STATE
-  ======================================================= */
+
+
+change the name of useState()
+     
+
+======================================================= */
 
   const [branch, setBranch] = useState("");
 
-  const [type, setType] = useState("B");
+  const [type, setType] = useState("");
 
   const [cashBank, setCashBank] = useState("");
-  const [cashBankCcId, setCashBankCcId] = useState("");
+  
 
+
+  const [receivedFrom, setReceivedFrom] =useState("");
   const [reference, setReference] = useState("");
 
-  const [receivedFrom, setReceivedFrom] =
-    useState("");
 
-
+  const [cashBankCcId, setCashBankCcId] = useState("");
   /* =======================================================
      RECEIPT NUMBER
   ======================================================= */
 
-  const [receiptNo, setReceiptNo] =
-    useState("");
+  const [documentNo, setDocumentNo] = useState("");
 
 
   /* =======================================================
@@ -324,7 +328,7 @@ const Receipt: React.FC = () => {
     >(null);
 
 
-  const receiptNoRef =
+  const documentNoRef =
     useRef<HTMLInputElement>(null);
 
 
@@ -476,7 +480,7 @@ const Receipt: React.FC = () => {
 
         if (result.receiptNo) {
 
-          setReceiptNo(
+          setDocumentNo(
             result.receiptNo
           );
         }
@@ -510,13 +514,13 @@ const Receipt: React.FC = () => {
   const loadReceiptForModify =
     useCallback(
       async () => {
-        const documentNo = receiptNo.trim();
+        const requestedDocumentNo = documentNo.trim();
 
-        if (!branch || !documentNo) {
+        if (!branch || !requestedDocumentNo) {
           return;
         }
 
-        const lookupKey = `${branch}|${toDocumentType(type)}|${documentNo}`;
+        const lookupKey = `${branch}|${toDocumentType(type)}|${requestedDocumentNo}`;
 
         if (lastLookupKeyRef.current === lookupKey) {
           return;
@@ -527,9 +531,9 @@ const Receipt: React.FC = () => {
 
         try {
           const query = new URLSearchParams({
-            branch,
-            docType: toDocumentType(type),
-            docNo: documentNo,
+            strbranch: branch,
+            strdocType: toDocumentType(type),
+            strdocNo: requestedDocumentNo,
           });
 
           const response = await fetch(
@@ -591,7 +595,7 @@ const Receipt: React.FC = () => {
               ? "C"
               : "B"
           );
-          setReceiptNo(result.header.docNo || documentNo);
+          setDocumentNo(result.header.docNo || requestedDocumentNo);
           setReceiptDate(
             formatReceiptDate(result.header.receiptDate)
           );
@@ -616,7 +620,57 @@ const Receipt: React.FC = () => {
           );
         }
       },
-      [accountOptions, branch, receiptNo, type]
+      [accountOptions, branch, documentNo, type]
+    );
+
+  const resetTableAndLoadNextReceiptNumber =
+    useCallback(
+      async () => {
+        setRows(createRows());
+        setCashBank("");
+        setReceivedFrom("");
+        setReference("");
+        setNote("");
+        setDescriptionValue("");
+        setActiveDescriptionRow(null);
+        setIsModifyMode(false);
+        lastLookupKeyRef.current = "";
+
+        try {
+          const response = await fetch(
+            "http://localhost:5000/api/getReceiptDocNumber",
+            {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+              },
+              body: JSON.stringify({
+                fbrid: branch,
+                fptype: toDocumentType(type),
+              }),
+            }
+          );
+
+          const result = await response.json() as {
+            success?: boolean;
+            data?: Array<{
+              getnextdocno?: string;
+            }>;
+          };
+
+          if (!response.ok || !result.success) {
+            throw new Error("Receipt number could not be reloaded.");
+          }
+
+          setDocumentNo(result.data?.[0]?.getnextdocno || "");
+        } catch (error) {
+          console.error("Receipt number reload error:", error);
+          setReceiptMessage(
+            "Receipt saved, but the next receipt number could not be loaded."
+          );
+        }
+      },
+      [branch, type]
     );
 
 
@@ -1175,7 +1229,7 @@ const Receipt: React.FC = () => {
             cashBank,
             cbCcId: cashBankCcId,
 
-            receiptNo,
+            receiptNo: documentNo,
 
             receiptDate,
 
@@ -1364,7 +1418,7 @@ const Receipt: React.FC = () => {
             result.message ||
               "Receipt saved successfully"
           );
-                      window.location.reload()
+          await resetTableAndLoadNextReceiptNumber();
 
 
         } catch (error) {
@@ -1386,12 +1440,13 @@ const Receipt: React.FC = () => {
         type,
         cashBank,
         cashBankCcId,
-        receiptNo,
+        documentNo,
         receiptDate,
         receivedFrom,
         reference,
         rows,
         note,
+        resetTableAndLoadNextReceiptNumber,
       ]
     );
 
@@ -1407,7 +1462,7 @@ const Receipt: React.FC = () => {
         if (
           !branch ||
           !type ||
-          !receiptNo.trim() ||
+          !documentNo.trim() ||
           !receiptDate ||
           !cashBank ||
           validRows.length === 0
@@ -1431,7 +1486,7 @@ const Receipt: React.FC = () => {
                 type: toDocumentType(type),
                 cashBank,
                 cbCcId: cashBankCcId,
-                receiptNo: receiptNo.trim(),
+                docNo: documentNo.trim(),
                 receiptDate,
                 receivedFrom,
                 reference,
@@ -1463,7 +1518,8 @@ const Receipt: React.FC = () => {
             result.message ||
               "Receipt modified successfully."
           );
-          alert( "Receipt modified successfully.")
+          alert("Receipt modified successfully.");
+          await resetTableAndLoadNextReceiptNumber();
         } catch (error) {
           setReceiptMessage(
             error instanceof Error
@@ -1478,12 +1534,13 @@ const Receipt: React.FC = () => {
         cashBankCcId,
         note,
         receiptDate,
-        receiptNo,
+        documentNo,
         receivedFrom,
         reference,
         rows,
         total,
         type,
+        resetTableAndLoadNextReceiptNumber,
       ]
     );
 
@@ -1495,12 +1552,11 @@ const Receipt: React.FC = () => {
   const clearForm =
     useCallback(() => {
 
-      setBranch("");
-
-      setType("B");
+      
+      
 
       setCashBank("");
-  setCashBankCcId("");
+      setCashBankCcId("");
 
       setReference("");
 
@@ -1675,12 +1731,12 @@ const Receipt: React.FC = () => {
           }
 
 
-          receiptNo={
-            receiptNo
+          documentNo={
+            documentNo
           }
 
-          setReceiptNo={
-            setReceiptNo
+          setDocumentNo={
+            setDocumentNo
           }
 
 
@@ -1701,8 +1757,8 @@ const Receipt: React.FC = () => {
             typeRef
           }
 
-          receiptNoRef={
-            receiptNoRef
+          documentNoRef={
+            documentNoRef
           }
 
           cashBankRef={
@@ -1743,9 +1799,9 @@ const Receipt: React.FC = () => {
             isModifyMode
           }
 
-          receiptNoEditable
+          documentNoEditable
 
-          onReceiptNoLookup={
+          onDocumentNoLookup={
             loadReceiptForModify
           }
 
@@ -1822,7 +1878,7 @@ const Receipt: React.FC = () => {
             value={
               total.toFixed(2)
             }
-            id="txtTotAmount"
+            id="txtTotal"
 
             readOnly
 

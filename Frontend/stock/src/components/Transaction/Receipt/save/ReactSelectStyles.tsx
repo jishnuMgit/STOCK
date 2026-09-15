@@ -338,11 +338,11 @@ const accountDropdownStyles = {
   menu: (base: any) => ({
     ...selectStyles.menu(base),
 
-    width: "600px",
+    width: "740px",
 
-    minWidth: "600px",
+    minWidth: "740px",
 
-    maxWidth: "600px",
+    maxWidth: "740px",
 
     overflow: "hidden",
 

@@ -208,8 +208,8 @@ const menuItems: MenuItem[] = [
     icon: <BarChart3 size={18} />,
     children: [
       {
-        label: "Day Book",
-        path: "/day-book",
+        label: "Statement Of Account",
+        path: "/reports/soa",
       },
       {
         label: "General Ledger",

@@ -473,6 +473,7 @@ return (
               leading-6.75
               text-slate-700
             "
+            id="lkpCustomerID"
           >
             Customer :
           </label>
@@ -480,7 +481,7 @@ return (
 
           {/* CUSTOMER ID */}
 
-          <div className="w-21.25 shrink-0">
+          <div className="w-21.25 shrink-0" id="lkpCustomerID">
 
             <Select<SelectOption, false>
               ref={customerIdRef}
@@ -553,7 +554,7 @@ return (
 
           {/* CUSTOMER NAME */}
 
-          <div className="w-87.5 shrink-0">
+          <div className="w-87.5 shrink-0" id="lkpCustomerName">
 
             <Select<SelectOption, false>
               ref={customerNameRef}
@@ -647,7 +648,7 @@ return (
           </label>
 
 
-          <div className="w-50 shrink-0">
+          <div className="w-50 shrink-0" id="lkpDivision">
 
             <Select<SelectOption, false>
               ref={divisionRef}
@@ -1307,6 +1308,7 @@ return (
           font-semibold
           text-green-600
         "
+        id="txtDocumentAmount"
       >
         {formatAmount(docAmount)}
       </span>
@@ -1375,6 +1377,7 @@ return (
         px-2
         box-border
       "
+      
     >
 
       <span
@@ -1383,6 +1386,8 @@ return (
           font-semibold
           text-green-600
         "
+              id="txtMatchAmount"
+
       >
         {formatAmount(matchAmount)}
       </span>
@@ -1430,6 +1435,8 @@ return (
         text-[12px]
         text-slate-700
       "
+            id="txtBalanceAmount"
+
     >
       Balance :
     </span>

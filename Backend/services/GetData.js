@@ -58,7 +58,7 @@ function toBoolean(value) {
    DOCUMENT TYPE
 ========================================================= */
 
-function StrDocType(value) {
+function toDocumentType(value) {
 
   if (isEmpty(value)) {
     return null;
@@ -360,7 +360,7 @@ export async function GetDataTL({
       clean(strbranch);
 
     const docType =
-      StrDocType(strdocType);
+      toDocumentType(strdocType);
 
     const docNo =
       clean(strdocNo);
@@ -525,7 +525,7 @@ export async function GetDataHD({
       clean(strbranch);
 
     const docType =
-      StrDocType(strdocType);
+      toDocumentType(strdocType);
 
     const docNo =
       clean(strdocNo);
@@ -698,7 +698,7 @@ export async function GetData({
     clean(strbranch);
 
   const docType =
-    StrDocType(strdocType);
+    toDocumentType(strdocType);
 
   const docNo =
     clean(strdocNo);
