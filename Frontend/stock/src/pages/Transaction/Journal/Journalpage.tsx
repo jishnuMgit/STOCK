@@ -158,8 +158,8 @@ const JournalPage: React.FC = () => {
   ======================================================= */
 
   const [
-    descriptionValue,
-    setDescriptionValue,
+    description,
+    setDescription,
   ] = useState("");
 
   /* =======================================================
@@ -261,7 +261,7 @@ const JournalPage: React.FC = () => {
      DUMMY COST CENTERS
   ======================================================= */
 
-  const accountCCID =
+  const costCenters =
     useMemo<CostCenter[]>(
       () => [
         {
@@ -445,7 +445,7 @@ const JournalPage: React.FC = () => {
             row.description &&
             row.description.trim() !== ""
           ) {
-            setDescriptionValue(
+            setDescription(
               row.description
             );
           }
@@ -524,7 +524,7 @@ const JournalPage: React.FC = () => {
   const handleDescriptionChange =
     useCallback(
       (value: string) => {
-        setDescriptionValue(
+        setDescription(
           value
         );
 
@@ -829,9 +829,9 @@ const JournalPage: React.FC = () => {
           "================================"
         );
 
-        alert(
-          "Dummy Journal Save"
-        );
+        // alert(
+        //   "Dummy Journal Save"
+        // );
       },
       [
         branch,
@@ -887,7 +887,7 @@ const JournalPage: React.FC = () => {
 
       setNote("");
 
-      setDescriptionValue("");
+      setDescription("");
 
       setActiveDescriptionRow(
         null
@@ -1006,7 +1006,7 @@ const JournalPage: React.FC = () => {
           }
 
           costCenters={
-            accountCCID
+            costCenters
           }
         />
 
@@ -1130,7 +1130,7 @@ const JournalPage: React.FC = () => {
 
         <ReceiptBottomForm
           description={
-            descriptionValue
+            description
           }
 
           setDescription={

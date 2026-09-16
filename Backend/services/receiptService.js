@@ -1,4 +1,6 @@
+
 import pool from "../DB/db.js";
+
 
 /* =========================================================
    ENVIRONMENT
@@ -88,7 +90,9 @@ function toDocumentType(value) {
   }
 
   const type =
-    String(value).trim().toUpperCase();
+    String(value)
+      .trim()
+      .toUpperCase();
 
   if (type === "B") {
     return "BR";
@@ -106,31 +110,102 @@ function toDocumentType(value) {
    DATE NORMALIZATION
 ========================================================= */
 
+/*
+   PostgreSQL SP expects:
+
+      DD/MM/YYYY
+
+   Frontend may send:
+
+      YYYY-MM-DD
+
+   or:
+
+      DD/MM/YYYY
+
+   or:
+
+      YYYY-MM-DDTHH:mm:ss...
+*/
+
 function normalizeDate(value) {
+
   if (isEmpty(value)) {
     return null;
   }
 
+
   const dateString =
     String(value).trim();
 
-  /*
+
+  /* -------------------------------------------------------
+     YYYY-MM-DD
+  ------------------------------------------------------- */
+
+  if (
+    /^\d{4}-\d{2}-\d{2}$/.test(
+      dateString
+    )
+  ) {
+
+    const [
+      year,
+      month,
+      day,
+    ] =
+      dateString.split("-");
+
+
+    return `${day}/${month}/${year}`;
+  }
+
+
+  /* -------------------------------------------------------
      DD/MM/YYYY
-  */
+  ------------------------------------------------------- */
 
   if (
     /^\d{2}\/\d{2}\/\d{4}$/.test(
       dateString
     )
   ) {
-    const [
-      day,
-      month,
-      year,
-    ] = dateString.split("/");
 
-    return `${year}-${month}-${day}`;
+    return dateString;
   }
+
+
+  /* -------------------------------------------------------
+     ISO TIMESTAMP
+     
+     Example:
+     2026-09-15T00:00:00.000Z
+  ------------------------------------------------------- */
+
+  if (
+    /^\d{4}-\d{2}-\d{2}T/.test(
+      dateString
+    )
+  ) {
+
+    const datePart =
+      dateString.substring(
+        0,
+        10
+      );
+
+
+    const [
+      year,
+      month,
+      day,
+    ] =
+      datePart.split("-");
+
+
+    return `${day}/${month}/${year}`;
+  }
+
 
   return dateString;
 }
@@ -141,32 +216,12 @@ function normalizeDate(value) {
 ========================================================= */
 
 function normalizeCreatedDate(value) {
+
   if (isEmpty(value)) {
     return null;
   }
 
-  const dateString =
-    String(value).trim();
-
-  /*
-     DD/MM/YYYY
-  */
-
-  if (
-    /^\d{2}\/\d{2}\/\d{4}$/.test(
-      dateString
-    )
-  ) {
-    const [
-      day,
-      month,
-      year,
-    ] = dateString.split("/");
-
-    return `${year}-${month}-${day}`;
-  }
-
-  return dateString;
+  return String(value).trim();
 }
 
 
@@ -175,35 +230,45 @@ function normalizeCreatedDate(value) {
 ========================================================= */
 
 /*
-  dbo.sp_pagesReceipt
+  ACTUAL POSTGRESQL PROCEDURE
 
-  EXACT PARAMETER ORDER
+  dbo.sp_pagesreceipt_det(
 
-   1  p_strmode
-   2  p_pstrcoid
-   3  p_pstryear
-   4  p_strbrid
-   5  p_strdoctype
-   6  p_strdocno
-   7  p_intslno
-   8  p_dtpdate
-   9  p_strcbaccountid
-  10  p_strreceivedfrompaidto
-  11  p_strref
-  12  p_straccountid
-  13  p_strgcs
-  14  p_strdivid
-  15  p_strccid
-  16  p_numdebit
-  17  p_numcredit
-  18  p_strdescription
-  19  p_strnote
-  20  p_blnmatch
-  21  p_pstruserid
-  22  p_struserdate
-  23  p_strcbccid
-  24  p_strcuserid
-  25  p_result_cursor
+      1   p_strmode varchar
+      2   p_pstrcoid varchar
+      3   p_pstryear varchar
+      4   p_strbrid varchar
+      5   p_strdoctype varchar
+      6   p_strdocno varchar
+      7   p_intslno smallint
+      8   p_dtpdate varchar
+      9   p_strcbaccountid varchar
+      10  p_strreceivedfrompaidto varchar
+      11  p_strref varchar
+      12  p_straccountid varchar
+      13  p_strgcs varchar
+      14  p_strdivid varchar
+      15  p_strccid varchar
+      16  p_numdebit numeric
+      17  p_numcredit numeric
+      18  p_strdescription varchar
+      19  p_strnote varchar
+      20  p_blnmatch boolean
+      21  p_pstruserid varchar
+      22  p_struserdate varchar
+      23  p_strdetails jsonb
+      24  p_result_cursor refcursor
+
+  )
+
+  IMPORTANT:
+
+  The current SP DOES NOT have:
+
+      p_strcbccid
+      p_strcuserid
+
+  Therefore they are not passed here.
 */
 
 
@@ -250,20 +315,37 @@ async function callReceiptProcedure(
 
     userDate = null,
 
-    cbCcId = null,
+    details = null,
 
-    cUserId = null,
   }
 ) {
 
   /* =======================================================
-     CURSOR
+     CURSOR NAME
   ======================================================= */
 
   const cursorName =
     `cur_receipt_${Date.now()}_${Math.floor(
       Math.random() * 100000
     )}`;
+
+
+  /* =======================================================
+     DETAILS JSON
+  ======================================================= */
+
+  let jsonDetails = null;
+
+
+  if (
+    details !== null &&
+    details !== undefined
+  ) {
+
+    jsonDetails =
+      JSON.stringify(details);
+
+  }
 
 
   /* =======================================================
@@ -298,7 +380,7 @@ async function callReceiptProcedure(
 
     clean(gcs),                            // $13
 
-    clean(division),                       // $14
+    clean(division),                      // $14
 
     clean(ccId),                           // $15
 
@@ -314,9 +396,12 @@ async function callReceiptProcedure(
 
     clean(userId),                         // $21
 
-    normalizeCreatedDate(userDate),        // $22                   
+    normalizeCreatedDate(userDate),        // $22
 
-    cursorName                             // $23
+    jsonDetails,                           // $23
+
+    cursorName,                            // $24
+
   ];
 
 
@@ -325,7 +410,7 @@ async function callReceiptProcedure(
   ======================================================= */
 
   const sql = `
-    CALL dbo.sp_pagesReceipt(
+    CALL dbo.sp_pagesreceipt_det(
 
       $1::varchar,
 
@@ -371,9 +456,9 @@ async function callReceiptProcedure(
 
       $22::varchar,
 
-  
+      $23::jsonb,
 
-      $23::refcursor
+      $24::refcursor
 
     )
   `;
@@ -388,7 +473,7 @@ async function callReceiptProcedure(
   );
 
   console.log(
-    "sp_pagesReceipt"
+    "sp_pagesreceipt_det"
   );
 
   console.log(
@@ -422,6 +507,26 @@ async function callReceiptProcedure(
   );
 
   console.log(
+    "Sl No:",
+    slNo
+  );
+
+  console.log(
+    "Receipt Date:",
+    normalizeDate(receiptDate)
+  );
+
+  console.log(
+    "Details:",
+    jsonDetails
+  );
+
+  console.log(
+    "Cursor:",
+    cursorName
+  );
+
+  console.log(
     "Values:",
     values
   );
@@ -442,16 +547,44 @@ async function callReceiptProcedure(
 
 
   /* =======================================================
-     FETCH CURSOR
+     FETCH CURSOR ONLY FOR GET MODES
   ======================================================= */
 
-  const result =
-    await client.query(
-      `FETCH ALL FROM "${cursorName}"`
-    );
+  const cursorModes = [
+    "GETHD",
+    "GETTL",
+  ];
 
 
-  return result.rows;
+  if (
+    cursorModes.includes(
+      String(mode).toUpperCase()
+    )
+  ) {
+
+    const result =
+      await client.query(
+        `FETCH ALL FROM "${cursorName}"`
+      );
+
+
+    return result.rows;
+  }
+
+
+  /*
+     S
+     SC
+     D
+     M
+
+     These modes do not OPEN p_result_cursor
+     in the current stored procedure.
+
+     Therefore DO NOT FETCH.
+  */
+
+  return [];
 }
 
 
@@ -491,6 +624,10 @@ export async function getReceiptHeader({
           docNo,
 
           slNo: 0,
+
+          receiptDate: null,
+
+          details: null,
 
         }
       );
@@ -563,6 +700,10 @@ export async function getReceiptLines({
 
           slNo: 0,
 
+          receiptDate: null,
+
+          details: null,
+
         }
       );
 
@@ -620,8 +761,6 @@ async function saveReceiptLine(
 
     cbAccountId,
 
-    cbCcId,
-
     accountId,
 
     gcs,
@@ -640,9 +779,8 @@ async function saveReceiptLine(
 
     match,
 
-    createdUserId,
-
     createdUserDate,
+
   }
 ) {
 
@@ -692,10 +830,11 @@ async function saveReceiptLine(
       userDate:
         createdUserDate,
 
-      cbCcId,
+      /*
+         S mode does not use details.
+      */
 
-      cUserId:
-        createdUserId,
+      details: null,
 
     }
   );
@@ -723,10 +862,6 @@ async function saveGeneratedEntry(
 
     cbAccountId,
 
-    cbCcId,
-
-    accountId,
-
     gcs,
 
     ccId,
@@ -741,9 +876,8 @@ async function saveGeneratedEntry(
 
     match,
 
-    createdUserId,
-
     createdUserDate,
+
   }
 ) {
 
@@ -760,7 +894,7 @@ async function saveGeneratedEntry(
       docNo,
 
       /*
-         SC uses fslno = 0
+         SC always uses fslno = 0.
       */
 
       slNo: 0,
@@ -773,7 +907,20 @@ async function saveGeneratedEntry(
 
       reference,
 
-      accountId,
+      /*
+         The SP itself uses:
+
+             faccountid =
+                 p_strcbaccountid
+
+         for SC.
+
+         Therefore accountId does not need
+         to be supplied separately.
+      */
+
+      accountId:
+        cbAccountId,
 
       gcs,
 
@@ -797,10 +944,7 @@ async function saveGeneratedEntry(
       userDate:
         createdUserDate,
 
-      cbCcId,
-
-      cUserId:
-        createdUserId,
+      details: null,
 
     }
   );
@@ -819,6 +963,7 @@ async function deleteReceiptInternal(
     docType,
 
     docNo,
+
   }
 ) {
 
@@ -836,6 +981,8 @@ async function deleteReceiptInternal(
 
       slNo: 0,
 
+      details: null,
+
     }
   );
 }
@@ -847,8 +994,11 @@ async function deleteReceiptInternal(
 
 export async function saveReceiptService(
   receipt,
+
   existingClient = null,
+
   manageTransaction = true
+
 ) {
 
   const client =
@@ -884,14 +1034,17 @@ export async function saveReceiptService(
 
       rows = [],
 
-    } = receipt || {};
+    } =
+      receipt || {};
 
 
     /* =====================================================
        VALIDATION
     ===================================================== */
 
-    if (isEmpty(branch)) {
+    if (
+      isEmpty(branch)
+    ) {
 
       throw new Error(
         "Branch is required"
@@ -900,7 +1053,9 @@ export async function saveReceiptService(
     }
 
 
-    if (isEmpty(type)) {
+    if (
+      isEmpty(type)
+    ) {
 
       throw new Error(
         "Receipt type is required"
@@ -909,7 +1064,9 @@ export async function saveReceiptService(
     }
 
 
-    if (isEmpty(receiptNo)) {
+    if (
+      isEmpty(receiptNo)
+    ) {
 
       throw new Error(
         "Receipt number is required"
@@ -918,7 +1075,9 @@ export async function saveReceiptService(
     }
 
 
-    if (isEmpty(receiptDate)) {
+    if (
+      isEmpty(receiptDate)
+    ) {
 
       throw new Error(
         "Receipt date is required"
@@ -927,7 +1086,9 @@ export async function saveReceiptService(
     }
 
 
-    if (isEmpty(cashBank)) {
+    if (
+      isEmpty(cashBank)
+    ) {
 
       throw new Error(
         "Cash/Bank account is required"
@@ -936,7 +1097,9 @@ export async function saveReceiptService(
     }
 
 
-    if (!Array.isArray(rows)) {
+    if (
+      !Array.isArray(rows)
+    ) {
 
       throw new Error(
         "Receipt rows are invalid"
@@ -961,7 +1124,9 @@ export async function saveReceiptService(
       rows.filter(
         (row) =>
           row &&
-          !isEmpty(row.accountId)
+          !isEmpty(
+            row.accountId
+          )
       );
 
 
@@ -992,7 +1157,9 @@ export async function saveReceiptService(
           );
 
         },
+
         0
+
       );
 
 
@@ -1006,20 +1173,26 @@ export async function saveReceiptService(
        BEGIN TRANSACTION
     ===================================================== */
 
-    if (manageTransaction) {
+    if (
+      manageTransaction
+    ) {
+
       await client.query(
         "BEGIN"
       );
+
     }
 
 
     /* =====================================================
-       SAVE RECEIPT LINES
+       SAVE RECEIPT DETAIL LINES
     ===================================================== */
 
     for (
       let index = 0;
+
       index < validRows.length;
+
       index++
     ) {
 
@@ -1046,30 +1219,20 @@ export async function saveReceiptService(
 
           slNo,
 
-
           receiptDate,
 
           receivedFrom,
 
           reference,
 
-
           cbAccountId:
             cashBank,
-
-
-          cbCcId:
-            cbCcId ||
-            receipt.cashBankCcId ||
-            "",
-
 
           accountId:
             row.accountId,
 
-
           /*
-             fgcs from React row
+             GCS
           */
 
           gcs:
@@ -1077,47 +1240,45 @@ export async function saveReceiptService(
             row.fgcs ||
             "",
 
+          /*
+             Cost Center
+          */
 
           ccId:
             row.ccId ||
             "",
 
+          /*
+             Receipt detail:
+             debit = 0
+             credit = entered amount
+          */
 
           debit:
             0,
-
 
           credit:
             toNumber(
               row.creditAmount
             ),
 
-
           description:
             row.description ||
             "",
 
-
           note:
             note ||
             "",
-
 
           division:
             row.division ||
             row.divId ||
             "",
 
-
           match:
             toBoolean(
               row.match
             ),
-
-
-          createdUserId:
-            PstrUserID,
-
 
           createdUserDate:
             new Date().toISOString(),
@@ -1129,7 +1290,7 @@ export async function saveReceiptService(
 
 
     /* =====================================================
-       GENERATED SC ENTRY
+       GENERATED CONTROL ENTRY
     ===================================================== */
 
     const firstRow =
@@ -1141,12 +1302,15 @@ export async function saveReceiptService(
         reference,
 
         receivedFrom,
+
       ]
         .filter(
           (value) =>
             !isEmpty(value)
         )
-        .join(" - ");
+        .join(
+          " - "
+        );
 
 
     await saveGeneratedEntry(
@@ -1161,67 +1325,43 @@ export async function saveReceiptService(
         docNo:
           receiptNo,
 
-
         receiptDate,
 
         receivedFrom,
 
         reference,
 
-
         cbAccountId:
           cashBank,
-
-
-        cbCcId:
-          cbCcId ||
-          receipt.cashBankCcId ||
-          "",
-
-
-        accountId:
-          firstRow.accountId,
-
 
         gcs:
           firstRow.gcs ||
           firstRow.fgcs ||
           "",
 
-
         ccId:
           firstRow.ccId ||
           "",
 
-
         credit:
           finalTotal,
-
 
         description:
           generatedDescription,
 
-
         note:
           note ||
           "",
-
 
         division:
           firstRow.division ||
           firstRow.divId ||
           "",
 
-
         match:
           toBoolean(
             firstRow.match
           ),
-
-
-        createdUserId:
-          PstrUserID,
-
 
         createdUserDate:
           new Date().toISOString(),
@@ -1234,10 +1374,14 @@ export async function saveReceiptService(
        COMMIT
     ===================================================== */
 
-    if (manageTransaction) {
+    if (
+      manageTransaction
+    ) {
+
       await client.query(
         "COMMIT"
       );
+
     }
 
 
@@ -1283,17 +1427,27 @@ export async function saveReceiptService(
        ROLLBACK
     ===================================================== */
 
-    if (manageTransaction) {
+    if (
+      manageTransaction
+    ) {
+
       try {
+
         await client.query(
           "ROLLBACK"
         );
-      } catch (rollbackError) {
+
+      } catch (
+        rollbackError
+      ) {
+
         console.error(
           "Receipt rollback error:",
           rollbackError
         );
+
       }
+
     }
 
 
@@ -1307,8 +1461,12 @@ export async function saveReceiptService(
 
   } finally {
 
-    if (!existingClient) {
+    if (
+      !existingClient
+    ) {
+
       client.release();
+
     }
 
   }
@@ -1325,6 +1483,7 @@ export async function deleteReceiptService({
   type,
 
   receiptNo,
+
 }) {
 
   const client =
@@ -1337,7 +1496,9 @@ export async function deleteReceiptService({
        VALIDATION
     ===================================================== */
 
-    if (isEmpty(branch)) {
+    if (
+      isEmpty(branch)
+    ) {
 
       throw new Error(
         "Branch is required"
@@ -1346,7 +1507,9 @@ export async function deleteReceiptService({
     }
 
 
-    if (isEmpty(type)) {
+    if (
+      isEmpty(type)
+    ) {
 
       throw new Error(
         "Receipt type is required"
@@ -1355,7 +1518,9 @@ export async function deleteReceiptService({
     }
 
 
-    if (isEmpty(receiptNo)) {
+    if (
+      isEmpty(receiptNo)
+    ) {
 
       throw new Error(
         "Receipt number is required"
@@ -1446,7 +1611,9 @@ export async function deleteReceiptService({
         "ROLLBACK"
       );
 
-    } catch (rollbackError) {
+    } catch (
+      rollbackError
+    ) {
 
       console.error(
         "Delete rollback error:",
@@ -1471,45 +1638,144 @@ export async function deleteReceiptService({
   }
 }
 
-export async function updateReceiptService(receipt) {
-  const {
-    branch,
-    type,
-    docNo,
-  } = receipt || {};
 
-  const client = await pool.connect();
+/* =========================================================
+   UPDATE RECEIPT
+========================================================= */
+
+export async function updateReceiptService(
+  receipt
+) {
+
+  const {
+
+    branch,
+
+    type,
+
+    docNo,
+
+  } =
+    receipt || {};
+
+
+  const client =
+    await pool.connect();
+
 
   try {
-    await client.query("BEGIN");
 
-    const finalDocType = toDocumentType(type);
+    /* =====================================================
+       BEGIN
+    ===================================================== */
 
-    await deleteReceiptInternal(client, {
-      branch,
-      docType: finalDocType,
-      docNo,
-    });
-
-    const result = await saveReceiptService(
-      {
-        ...receipt,
-        receiptNo: docNo,
-      },
-      client,
-      false
+    await client.query(
+      "BEGIN"
     );
 
-    await client.query("COMMIT");
+
+    /* =====================================================
+       DOCUMENT TYPE
+    ===================================================== */
+
+    const finalDocType =
+      toDocumentType(type);
+
+
+    /* =====================================================
+       DELETE OLD RECEIPT
+    ===================================================== */
+
+    await deleteReceiptInternal(
+      client,
+      {
+
+        branch,
+
+        docType:
+          finalDocType,
+
+        docNo,
+
+      }
+    );
+
+
+    /* =====================================================
+       SAVE UPDATED RECEIPT
+    ===================================================== */
+
+    const result =
+      await saveReceiptService(
+        {
+
+          ...receipt,
+
+          receiptNo:
+            docNo,
+
+        },
+
+        client,
+
+        false
+
+      );
+
+
+    /* =====================================================
+       COMMIT
+    ===================================================== */
+
+    await client.query(
+      "COMMIT"
+    );
+
+
+    /* =====================================================
+       RESPONSE
+    ===================================================== */
 
     return {
+
       ...result,
-      message: "Receipt modified successfully",
+
+      message:
+        "Receipt modified successfully",
+
     };
+
   } catch (error) {
-    await client.query("ROLLBACK");
+
+    try {
+
+      await client.query(
+        "ROLLBACK"
+      );
+
+    } catch (
+      rollbackError
+    ) {
+
+      console.error(
+        "Update rollback error:",
+        rollbackError
+      );
+
+    }
+
+
+    console.error(
+      "updateReceiptService error:",
+      error
+    );
+
+
     throw error;
+
   } finally {
+
     client.release();
+
   }
 }

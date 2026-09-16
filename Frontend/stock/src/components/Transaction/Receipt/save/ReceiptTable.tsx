@@ -32,13 +32,24 @@ import "./commanReceipt.css";
 
 export interface ReceiptRow {
   id: number;
+
   accountId: string;
   accountName: string;
-    fgcs: string;
+
+  fgcs: string;
+
+  haveCc: boolean;
+
+  hasDivision: boolean;
+
   division: string;
+
   ccId: string;
+
   creditAmount: string;
+
   match: boolean;
+
   description?: string;
 }
 
@@ -74,6 +85,10 @@ export type TableField =
   | "match"
   | "view";
 
+export type SortField =
+  | "accountId"
+  | "accountName";
+
 /* =========================================================
    ACCOUNT DATA
 ========================================================= */
@@ -85,10 +100,11 @@ export interface AccountData {
   fgph: string;
   fgcs: string;
   faccountname: string;
+  fhavecc: boolean;
 }
 
 /* =========================================================
-   SELECT OPTIONS
+   ACCOUNT OPTION
 ========================================================= */
 
 interface AccountOption {
@@ -98,9 +114,14 @@ interface AccountOption {
   accountId: string;
   accountName: string;
 
-  // Added FGCS
   fgcs: string;
+
+  haveCc: boolean;
 }
+
+/* =========================================================
+   SELECT OPTION
+========================================================= */
 
 interface SelectOption {
   value: string;
@@ -108,7 +129,7 @@ interface SelectOption {
 }
 
 /* =========================================================
-   CUSTOMER DIVISION API RESPONSE
+   CUSTOMER DIVISION RESPONSE
 ========================================================= */
 
 interface CustomerDivisionResponse {
@@ -132,12 +153,25 @@ interface ReceiptTableProps {
     value: string | boolean
   ) => void;
 
+  /*
+   * Parent owns navigation.
+   * This avoids focus loops.
+   */
   onFieldEnter: (
     rowIndex: number,
     field: TableField
   ) => void;
 
   onTableEscape: () => void;
+
+  onClearRow: (
+    id: number
+  ) => void;
+
+  onSortRows: (
+    field: SortField,
+    direction: "asc" | "desc"
+  ) => void;
 
   accountOptions?: AccountData[];
 
@@ -162,13 +196,17 @@ export interface ReceiptTableRef {
 ========================================================= */
 
 interface CustomDropdownIndicatorProps
-  extends DropdownIndicatorProps<AccountOption, false> {
+  extends DropdownIndicatorProps<
+    AccountOption,
+    false
+  > {
   showArrow: boolean;
 }
 
 const CustomDropdownIndicator = (
   props: CustomDropdownIndicatorProps
 ) => {
+
   if (!props.showArrow) {
     return null;
   }
@@ -183,21 +221,29 @@ const CustomDropdownIndicator = (
 };
 
 /* =========================================================
-   ACCOUNT DROPDOWN OPTION
+   ACCOUNT OPTION
 ========================================================= */
 
 interface AccountOptionProps
-  extends OptionProps<AccountOption, false> {
-  displayMode: "id" | "name";
+  extends OptionProps<
+    AccountOption,
+    false
+  > {
+  displayMode:
+    | "id"
+    | "name";
 }
 
 const AccountDropdownOption = ({
   displayMode,
   ...props
 }: AccountOptionProps) => {
+
   return (
     <components.Option {...props}>
+
       <div className="account-dropdown-row">
+
         {displayMode === "id" ? (
           <>
             <div className="account-dropdown-id">
@@ -219,27 +265,37 @@ const AccountDropdownOption = ({
             </div>
           </>
         )}
+
       </div>
+
     </components.Option>
   );
 };
 
 /* =========================================================
-   ACCOUNT MENU LIST
+   ACCOUNT MENU
 ========================================================= */
 
 interface AccountMenuListProps
-  extends MenuListProps<AccountOption, false> {
-  displayMode: "id" | "name";
+  extends MenuListProps<
+    AccountOption,
+    false
+  > {
+  displayMode:
+    | "id"
+    | "name";
 }
 
 const AccountDropdownMenuList = ({
   displayMode,
   ...props
 }: AccountMenuListProps) => {
+
   return (
     <components.MenuList {...props}>
+
       <div className="account-dropdown-header">
+
         {displayMode === "id" ? (
           <>
             <div className="account-dropdown-header-id">
@@ -261,15 +317,16 @@ const AccountDropdownMenuList = ({
             </div>
           </>
         )}
+
       </div>
 
       <div className="account-dropdown-options">
         {props.children}
       </div>
+
     </components.MenuList>
   );
 };
-
 
 /* =========================================================
    ACCOUNT FILTER
@@ -283,9 +340,11 @@ const accountFilterOption = (
   },
   inputValue: string
 ) => {
-  const search = inputValue
-    .toLowerCase()
-    .trim();
+
+  const search =
+    inputValue
+      .toLowerCase()
+      .trim();
 
   if (!search) {
     return true;
@@ -313,9 +372,11 @@ const selectFilterOption = (
   },
   inputValue: string
 ) => {
-  const search = inputValue
-    .toLowerCase()
-    .trim();
+
+  const search =
+    inputValue
+      .toLowerCase()
+      .trim();
 
   if (!search) {
     return true;
@@ -336,18 +397,27 @@ const selectFilterOption = (
 ========================================================= */
 
 type RowRefValue =
-  | SelectInstance<AccountOption, false>
-  | SelectInstance<SelectOption, false>
+  | SelectInstance<
+      AccountOption,
+      false
+    >
+  | SelectInstance<
+      SelectOption,
+      false
+    >
   | HTMLInputElement
   | HTMLButtonElement
   | null;
 
 type RowRefs = Partial<
-  Record<TableField, RowRefValue>
+  Record<
+    TableField,
+    RowRefValue
+  >
 >;
 
 /* =========================================================
-   RECEIPT ROW PROPS
+   ROW PROPS
 ========================================================= */
 
 interface ReceiptRowProps {
@@ -385,6 +455,10 @@ interface ReceiptRowProps {
   ) => void;
 
   onTableEscape: () => void;
+
+  onClearRow: (
+    id: number
+  ) => void;
 }
 
 /* =========================================================
@@ -404,10 +478,11 @@ const ReceiptRow = memo(
     handleRowChange,
     onFieldEnter,
     onTableEscape,
+    onClearRow,
   }: ReceiptRowProps) => {
 
     /* =====================================================
-       MENU OPEN REFS
+       MENU REFS
     ===================================================== */
 
     const accountIdMenuOpenRef =
@@ -423,13 +498,15 @@ const ReceiptRow = memo(
       useRef(false);
 
     /* =====================================================
-       DIVISION STATE
+       DIVISIONS
     ===================================================== */
 
     const [
       divisions,
       setDivisions,
-    ] = useState<CustomerDivision[]>([]);
+    ] = useState<
+      CustomerDivision[]
+    >([]);
 
     const [
       divisionLoading,
@@ -437,171 +514,130 @@ const ReceiptRow = memo(
     ] = useState(false);
 
     /* =====================================================
-       FETCH CUSTOMER DIVISIONS
+       GET DIVISIONS
     ===================================================== */
 
-    const fetchDivisions = useCallback(
-      async (accountId: string) => {
+    const fetchDivisions =
+      useCallback(
+        async (
+          accountId: string
+        ) => {
 
-        if (!accountId) {
+          if (!accountId) {
 
-          setDivisions([]);
+            setDivisions([]);
 
-          setDivisionLoading(false);
+            setDivisionLoading(false);
 
-          handleRowChange(
-            row.id,
-            "division",
-            ""
-          );
-
-          return;
-        }
-
-        console.log(
-          "================================="
-        );
-
-        console.log(
-          "GET CUSTOMER DIVISIONS"
-        );
-
-        console.log(
-          "ROW ID:",
-          row.id
-        );
-
-        console.log(
-          "CUSTOMER ID:",
-          accountId
-        );
-
-        console.log(
-          "URL:",
-          url
-        );
-
-        console.log(
-          "================================="
-        );
-
-        setDivisionLoading(true);
-
-        setDivisions([]);
-
-        try {
-
-          const response =
-            await fetch(
-              url,
-              {
-                method: "POST",
-
-                headers: {
-                  "Content-Type":
-                    "application/json",
-                },
-
-                body: JSON.stringify({
-                  customerid:
-                    accountId,
-                }),
-              }
+            handleRowChange(
+              row.id,
+              "division",
+              ""
             );
 
-          console.log(
-            "Division API Status:",
-            response.status
-          );
-
-          if (!response.ok) {
-            throw new Error(
-              `HTTP Error: ${response.status}`
+            handleRowChange(
+              row.id,
+              "hasDivision",
+              false
             );
+
+            return;
           }
 
-          const result =
-            (await response.json()) as CustomerDivisionResponse;
-
-          console.log(
-            "Division API Response:",
-            result
+          setDivisionLoading(
+            true
           );
 
-          /* ===============================================
-             SUCCESS
-          =============================================== */
+          try {
 
-          if (
-            result.success &&
-            Array.isArray(result.data)
-          ) {
+            const response =
+              await fetch(
+                "http://localhost:5000/api/getCustomerDivisions",
+                {
+                  method: "POST",
 
-            console.log(
-              "Divisions:",
-              result.data
-            );
+                  headers: {
+                    "Content-Type":
+                      "application/json",
+                  },
 
-            setDivisions(
-              result.data
-            );
+                  body: JSON.stringify({
+                    customerid:
+                      accountId,
+                  }),
+                }
+              );
 
-            /* =============================================
-               ONE DIVISION
-            ============================================= */
+            if (!response.ok) {
+              throw new Error(
+                `HTTP Error: ${response.status}`
+              );
+            }
+
+            const result =
+              (await response.json()) as
+                CustomerDivisionResponse;
 
             if (
-              result.data.length === 1
+              result.success &&
+              Array.isArray(
+                result.data
+              )
             ) {
 
-              const firstDivision =
-                result.data[0];
-
-              console.log(
-                "Auto selecting division:",
-                firstDivision
+              setDivisions(
+                result.data
               );
 
               handleRowChange(
                 row.id,
-                "division",
-                firstDivision.fdivid
+                "hasDivision",
+                result.data.length > 0
               );
-            }
 
-            /* =============================================
-               MULTIPLE DIVISIONS
-            ============================================= */
+              if (
+                result.data.length === 1
+              ) {
 
-            else if (
-              result.data.length > 1
-            ) {
+                handleRowChange(
+                  row.id,
+                  "division",
+                  result.data[0].fdivid
+                );
+
+              } else {
+
+                handleRowChange(
+                  row.id,
+                  "division",
+                  ""
+                );
+
+              }
+
+            } else {
+
+              setDivisions([]);
 
               handleRowChange(
                 row.id,
                 "division",
                 ""
               );
-            }
-
-            /* =============================================
-               ZERO DIVISIONS
-            ============================================= */
-
-            else {
 
               handleRowChange(
                 row.id,
-                "division",
-                ""
+                "hasDivision",
+                false
               );
+
             }
 
-          } else {
+          } catch (error) {
 
-            console.warn(
-              "Invalid division response:",
-              result
+            console.error(
+              "Get Customer Divisions Error:",
+              error
             );
 
             setDivisions([]);
@@ -611,46 +647,41 @@ const ReceiptRow = memo(
               "division",
               ""
             );
+
+            handleRowChange(
+              row.id,
+              "hasDivision",
+              false
+            );
+
+          } finally {
+
+            setDivisionLoading(
+              false
+            );
+
           }
 
-        } catch (error) {
-
-          console.error(
-            "Get Customer Divisions API Error:",
-            error
-          );
-
-          setDivisions([]);
-
-          handleRowChange(
-            row.id,
-            "division",
-            ""
-          );
-
-        } finally {
-
-          setDivisionLoading(
-            false
-          );
-        }
-      },
-      [
-        row.id,
-        url,
-        handleRowChange,
-      ]
-    );
+        },
+        [
+          row.id,
+          handleRowChange,
+        ]
+      );
 
     /* =====================================================
        DIVISION OPTIONS
     ===================================================== */
 
     const divisionOptions =
-      useMemo<SelectOption[]>(
+      useMemo<
+        SelectOption[]
+      >(
         () =>
           divisions.map(
-            (division) => ({
+            (
+              division
+            ) => ({
               value:
                 division.fdivid,
 
@@ -669,7 +700,9 @@ const ReceiptRow = memo(
       useMemo(
         () =>
           realAccountOptions.find(
-            (account) =>
+            (
+              account
+            ) =>
               account.accountId ===
               row.accountId
           ) || null,
@@ -680,14 +713,7 @@ const ReceiptRow = memo(
       );
 
     /* =====================================================
-       ACCOUNT ID VALUE
-    ===================================================== */
-
-    const selectedAccountId =
-      selectedAccount;
-
-    /* =====================================================
-       ACCOUNT NAME VALUE
+       ACCOUNT NAME
     ===================================================== */
 
     const selectedAccountName =
@@ -710,12 +736,16 @@ const ReceiptRow = memo(
           accountName:
             selectedAccount.accountName,
 
-          // FGCS passed into selected option
           fgcs:
             selectedAccount.fgcs,
+
+          haveCc:
+            selectedAccount.haveCc,
         };
 
-      }, [selectedAccount]);
+      }, [
+        selectedAccount,
+      ]);
 
     /* =====================================================
        SELECTED DIVISION
@@ -725,7 +755,9 @@ const ReceiptRow = memo(
       useMemo(
         () =>
           divisionOptions.find(
-            (option) =>
+            (
+              option
+            ) =>
               option.value ===
               row.division
           ) || null,
@@ -736,14 +768,16 @@ const ReceiptRow = memo(
       );
 
     /* =====================================================
-       SELECTED CC ID
+       SELECTED CC
     ===================================================== */
 
     const selectedCcId =
       useMemo(
         () =>
           ccIdOptions.find(
-            (option) =>
+            (
+              option
+            ) =>
               option.value ===
               row.ccId
           ) || null,
@@ -755,6 +789,8 @@ const ReceiptRow = memo(
 
     /* =====================================================
        ACCOUNT CHANGE
+       
+       NO DUPLICATE VALIDATION.
     ===================================================== */
 
     const handleAccountChange =
@@ -763,77 +799,69 @@ const ReceiptRow = memo(
           option: AccountOption
         ) => {
 
-          const accountId =
-            option.accountId;
-
-          const accountName =
-            option.accountName;
-
-          const fgcs =
-            option.fgcs;
-
-          console.log(
-            "================================="
-          );
-
-          console.log(
-            "ACCOUNT SELECTED"
-          );
-
-          console.log(
-            "ROW ID:",
-            row.id
-          );
-
-          console.log(
-            "ACCOUNT ID:",
-            accountId
-          );
-
-          console.log(
-            "ACCOUNT NAME:",
-            accountName
-          );
-
-          console.log(
-            "FGCS:",
-            fgcs
-          );
-
-          console.log(
-            "================================="
-          );
-
           setSelectedRowId(
             row.id
           );
 
+          /*
+           * Account ID
+           */
           handleRowChange(
             row.id,
             "accountId",
-            accountId
+            option.accountId
           );
 
+          /*
+           * Account Name
+           */
           handleRowChange(
             row.id,
             "accountName",
-            accountName
+            option.accountName
           );
 
+          /*
+           * FGCS
+           */
           handleRowChange(
             row.id,
             "fgcs",
-            fgcs
+            option.fgcs
           );
 
+          /*
+           * fhavecc
+           */
+          handleRowChange(
+            row.id,
+            "haveCc",
+            option.haveCc
+          );
+
+          /*
+           * Clear old division.
+           */
           handleRowChange(
             row.id,
             "division",
             ""
           );
 
+          /*
+           * Clear old CC.
+           */
+          handleRowChange(
+            row.id,
+            "ccId",
+            ""
+          );
+
+          /*
+           * Load divisions.
+           */
           await fetchDivisions(
-            accountId
+            option.accountId
           );
 
         },
@@ -858,6 +886,27 @@ const ReceiptRow = memo(
             React.MutableRefObject<boolean>
         ) => {
 
+          /*
+           * CTRL + DELETE
+           */
+          if (
+            event.key === "Delete" &&
+            event.ctrlKey
+          ) {
+
+            event.preventDefault();
+            event.stopPropagation();
+
+            onClearRow(
+              row.id
+            );
+
+            return;
+          }
+
+          /*
+           * ESC
+           */
           if (
             event.key === "Escape"
           ) {
@@ -876,12 +925,20 @@ const ReceiptRow = memo(
             return;
           }
 
+          /*
+           * Only Enter and Tab.
+           */
           if (
-            event.key !== "Enter"
+            event.key !== "Enter" &&
+            event.key !== "Tab"
           ) {
             return;
           }
 
+          /*
+           * Menu open:
+           * react-select handles selection.
+           */
           if (
             menuOpenRef.current
           ) {
@@ -891,15 +948,23 @@ const ReceiptRow = memo(
           event.preventDefault();
           event.stopPropagation();
 
+          /*
+           * DIRECT PARENT CALLBACK.
+           *
+           * No document event.
+           */
           onFieldEnter(
             index,
             field
           );
+
         },
         [
           index,
+          row.id,
           onFieldEnter,
           onTableEscape,
+          onClearRow,
         ]
       );
 
@@ -914,6 +979,27 @@ const ReceiptRow = memo(
           field: TableField
         ) => {
 
+          /*
+           * CTRL + DELETE
+           */
+          if (
+            event.key === "Delete" &&
+            event.ctrlKey
+          ) {
+
+            event.preventDefault();
+            event.stopPropagation();
+
+            onClearRow(
+              row.id
+            );
+
+            return;
+          }
+
+          /*
+           * ESC
+           */
           if (
             event.key === "Escape"
           ) {
@@ -926,8 +1012,12 @@ const ReceiptRow = memo(
             return;
           }
 
+          /*
+           * ENTER / TAB
+           */
           if (
-            event.key !== "Enter"
+            event.key !== "Enter" &&
+            event.key !== "Tab"
           ) {
             return;
           }
@@ -939,32 +1029,19 @@ const ReceiptRow = memo(
             index,
             field
           );
+
         },
         [
           index,
+          row.id,
           onFieldEnter,
           onTableEscape,
+          onClearRow,
         ]
       );
 
     /* =====================================================
-       ROW CLICK
-    ===================================================== */
-
-    const handleRowClick =
-      useCallback(() => {
-
-        setSelectedRowId(
-          row.id
-        );
-
-      }, [
-        row.id,
-        setSelectedRowId,
-      ]);
-
-    /* =====================================================
-       ACCOUNT ID MENU
+       MENU OPEN/CLOSE
     ===================================================== */
 
     const handleAccountIdMenuOpen =
@@ -990,10 +1067,6 @@ const ReceiptRow = memo(
 
       }, []);
 
-    /* =====================================================
-       ACCOUNT NAME MENU
-    ===================================================== */
-
     const handleAccountNameMenuOpen =
       useCallback(() => {
 
@@ -1017,10 +1090,6 @@ const ReceiptRow = memo(
 
       }, []);
 
-    /* =====================================================
-       DIVISION MENU
-    ===================================================== */
-
     const handleDivisionMenuOpen =
       useCallback(() => {
 
@@ -1043,10 +1112,6 @@ const ReceiptRow = memo(
           false;
 
       }, []);
-
-    /* =====================================================
-       CC MENU
-    ===================================================== */
 
     const handleCcMenuOpen =
       useCallback(() => {
@@ -1085,7 +1150,9 @@ const ReceiptRow = memo(
         ) => (
           <CustomDropdownIndicator
             {...props}
-            showArrow={isSelected}
+            showArrow={
+              isSelected
+            }
           />
         ),
         [isSelected]
@@ -1105,7 +1172,9 @@ const ReceiptRow = memo(
         ) => (
           <CustomDropdownIndicator
             {...props}
-            showArrow={isSelected}
+            showArrow={
+              isSelected
+            }
           />
         ),
         [isSelected]
@@ -1135,21 +1204,26 @@ const ReceiptRow = memo(
       );
 
     /* =====================================================
-       RETURN ROW
+       ROW
     ===================================================== */
 
     return (
+
       <tr
-        onClick={handleRowClick}
         className={
           isSelected
             ? "receipt-row-selected"
             : ""
         }
+        onClick={() =>
+          setSelectedRowId(
+            row.id
+          )
+        }
       >
 
         {/* =================================================
-            SERIAL NUMBER
+            SL
         ================================================= */}
 
         <td className="receipt-cell serial-cell">
@@ -1167,7 +1241,9 @@ const ReceiptRow = memo(
             false
           >
 
-            inputId={`ddlAccountId-${row.id}`}
+            inputId={
+              `lkpAccountId-${row.id}`
+            }
 
             ref={(instance) =>
               setRowRef(
@@ -1178,7 +1254,7 @@ const ReceiptRow = memo(
             }
 
             value={
-              selectedAccountId
+              selectedAccount
             }
 
             onKeyDown={(event) =>
@@ -1198,7 +1274,9 @@ const ReceiptRow = memo(
             }
 
             onChange={(
-              option: SingleValue<AccountOption>
+              option: SingleValue<
+                AccountOption
+              >
             ) => {
 
               if (!option) {
@@ -1208,6 +1286,7 @@ const ReceiptRow = memo(
               handleAccountChange(
                 option
               );
+
             }}
 
             options={
@@ -1221,22 +1300,28 @@ const ReceiptRow = memo(
             }
 
             components={{
+
               DropdownIndicator:
                 RowAccountIdIndicator,
 
-              Option: (props) => (
+              Option: (
+                props
+              ) => (
                 <AccountDropdownOption
                   {...props}
                   displayMode="id"
                 />
               ),
 
-              MenuList: (props) => (
+              MenuList: (
+                props
+              ) => (
                 <AccountDropdownMenuList
                   {...props}
                   displayMode="id"
                 />
               ),
+
             }}
 
             filterOption={
@@ -1282,7 +1367,9 @@ const ReceiptRow = memo(
             false
           >
 
-            inputId={`ddlAccountName-${row.id}`}
+            inputId={
+              `lkpAccountName-${row.id}`
+            }
 
             ref={(instance) =>
               setRowRef(
@@ -1313,7 +1400,9 @@ const ReceiptRow = memo(
             }
 
             onChange={(
-              option: SingleValue<AccountOption>
+              option: SingleValue<
+                AccountOption
+              >
             ) => {
 
               if (!option) {
@@ -1323,6 +1412,7 @@ const ReceiptRow = memo(
               handleAccountChange(
                 option
               );
+
             }}
 
             options={
@@ -1336,22 +1426,28 @@ const ReceiptRow = memo(
             }
 
             components={{
+
               DropdownIndicator:
                 RowAccountNameIndicator,
 
-              Option: (props) => (
+              Option: (
+                props
+              ) => (
                 <AccountDropdownOption
                   {...props}
                   displayMode="name"
                 />
               ),
 
-              MenuList: (props) => (
+              MenuList: (
+                props
+              ) => (
                 <AccountDropdownMenuList
                   {...props}
                   displayMode="name"
                 />
               ),
+
             }}
 
             filterOption={
@@ -1361,6 +1457,12 @@ const ReceiptRow = memo(
             isSearchable
 
             isClearable={false}
+
+            /*
+             * NEVER disable Account Name
+             * based on fhavecc.
+             */
+            isDisabled={false}
 
             menuPlacement="auto"
 
@@ -1397,7 +1499,9 @@ const ReceiptRow = memo(
             false
           >
 
-            inputId={`ddlDivision-${row.id}`}
+            inputId={
+              `lkpDivision-${row.id}`
+            }
 
             ref={(instance) =>
               setRowRef(
@@ -1428,26 +1532,15 @@ const ReceiptRow = memo(
             }
 
             onChange={(
-              option: SingleValue<SelectOption>
+              option: SingleValue<
+                SelectOption
+              >
             ) => {
-
-              const divisionId =
-                option?.value || "";
-
-              console.log(
-                "DIVISION SELECTED",
-                {
-                  rowId: row.id,
-                  divisionId,
-                  divisionName:
-                    option?.label,
-                }
-              );
 
               handleRowChange(
                 row.id,
                 "division",
-                divisionId
+                option?.value || ""
               );
 
               setSelectedRowId(
@@ -1462,7 +1555,9 @@ const ReceiptRow = memo(
 
             placeholder=""
 
-            styles={selectStyles}
+            styles={
+              selectStyles
+            }
 
             components={{
               DropdownIndicator:
@@ -1475,7 +1570,9 @@ const ReceiptRow = memo(
 
             isDisabled={
               !row.accountId ||
-              divisionLoading
+              divisionLoading ||
+              !row.hasDivision ||
+              divisionOptions.length === 0
             }
 
             menuPlacement="auto"
@@ -1494,18 +1591,9 @@ const ReceiptRow = memo(
               selectFilterOption
             }
 
-            noOptionsMessage={() => {
-
-              if (!row.accountId) {
-                return "Select Account First";
-              }
-
-              if (divisionLoading) {
-                return "Loading Divisions...";
-              }
-
-              return "No Division Found";
-            }}
+            noOptionsMessage={() =>
+              "No Division Found"
+            }
 
           />
 
@@ -1522,7 +1610,9 @@ const ReceiptRow = memo(
             false
           >
 
-            inputId={`ddlCCId-${row.id}`}
+            inputId={
+              `lkpCCId-${row.id}`
+            }
 
             ref={(instance) =>
               setRowRef(
@@ -1553,16 +1643,15 @@ const ReceiptRow = memo(
             }
 
             onChange={(
-              option: SingleValue<SelectOption>
+              option: SingleValue<
+                SelectOption
+              >
             ) => {
-
-              const ccId =
-                option?.value || "";
 
               handleRowChange(
                 row.id,
                 "ccId",
-                ccId
+                option?.value || ""
               );
 
               setSelectedRowId(
@@ -1577,7 +1666,9 @@ const ReceiptRow = memo(
 
             placeholder=""
 
-            styles={selectStyles}
+            styles={
+              selectStyles
+            }
 
             components={{
               DropdownIndicator:
@@ -1587,6 +1678,17 @@ const ReceiptRow = memo(
             isSearchable
 
             isClearable={false}
+
+            /*
+             * fhavecc === true:
+             *     CC ID enabled
+             *
+             * fhavecc === false:
+             *     CC ID disabled
+             */
+            isDisabled={
+              !row.haveCc
+            }
 
             menuPlacement="auto"
 
@@ -1619,7 +1721,11 @@ const ReceiptRow = memo(
         <td className="receipt-cell">
 
           <input
-            id={`txtCreditAmount-${row.id}`}
+
+            id={
+              `txtCreditAmt-${row.id}`
+            }
+
             ref={(element) =>
               setRowRef(
                 index,
@@ -1638,23 +1744,19 @@ const ReceiptRow = memo(
               row.creditAmount
             }
 
-            onChange={(event) => {
-
+            onChange={(event) =>
               handleRowChange(
                 row.id,
                 "creditAmount",
                 event.target.value
-              );
+              )
+            }
 
-            }}
-
-            onFocus={() => {
-
+            onFocus={() =>
               setSelectedRowId(
                 row.id
-              );
-
-            }}
+              )
+            }
 
             onKeyDown={(event) =>
               handleControlKeyDown(
@@ -1664,6 +1766,7 @@ const ReceiptRow = memo(
             }
 
             className="receipt-grid-input"
+
           />
 
         </td>
@@ -1677,7 +1780,11 @@ const ReceiptRow = memo(
           <div className="receipt-checkbox-wrapper">
 
             <input
-              id={`chkMatch-${row.id}`}
+
+              id={
+                `chkMatch-${row.id}`
+              }
+
               ref={(element) =>
                 setRowRef(
                   index,
@@ -1706,12 +1813,6 @@ const ReceiptRow = memo(
 
               }}
 
-              onKeyDown={(event) =>
-                handleControlKeyDown(
-                  event,
-                  "match"
-                )
-              }
             />
 
           </div>
@@ -1725,7 +1826,11 @@ const ReceiptRow = memo(
         <td className="receipt-cell">
 
           <button
-            id={`btnView-${row.id}`}
+
+            id={
+              `btnView-${row.id}`
+            }
+
             ref={(element) =>
               setRowRef(
                 index,
@@ -1746,16 +1851,10 @@ const ReceiptRow = memo(
 
             }}
 
-            onKeyDown={(event) =>
-              handleControlKeyDown(
-                event,
-                "view"
-              )
-            }
-
             className="receipt-view-button"
 
             tabIndex={0}
+
           >
 
             <FaEye size={12} />
@@ -1773,405 +1872,492 @@ ReceiptRow.displayName =
   "ReceiptRow";
 
 /* =========================================================
-   MAIN RECEIPT TABLE
+   MAIN TABLE
 ========================================================= */
 
-const ReceiptTable = forwardRef<
-  ReceiptTableRef,
-  ReceiptTableProps
->(
-  (
-    {
-      rows,
-      url,
-      handleRowChange,
-      onFieldEnter,
-      onTableEscape,
-      accountOptions = [],
-      costCenters = [],
-    },
-    ref
-  ) => {
+const ReceiptTable =
+  forwardRef<
+    ReceiptTableRef,
+    ReceiptTableProps
+  >(
+    (
+      {
+        rows,
+        url,
+        handleRowChange,
+        onFieldEnter,
+        onTableEscape,
+        onClearRow,
+        onSortRows,
+        accountOptions = [],
+        costCenters = [],
+      },
+      ref
+    ) => {
 
-    /* =====================================================
-       SELECTED ROW
-    ===================================================== */
+      /* =====================================================
+         SELECTED ROW
+      ===================================================== */
 
-    const [
-      selectedRowId,
-      setSelectedRowIdState,
-    ] = useState<number | null>(
-      null
-    );
+      const [
+        selectedRowId,
+        setSelectedRowIdState,
+      ] =
+        useState<
+          number | null
+        >(null);
 
-    /* =====================================================
-       ROW REFS
-    ===================================================== */
+      /* =====================================================
+         SORT
+      ===================================================== */
 
-    const rowRefs =
-      useRef<RowRefs[]>([]);
+      const [
+        sortField,
+        setSortField,
+      ] =
+        useState<
+          SortField | null
+        >(null);
 
-    /* =====================================================
-       SET SELECTED ROW
-    ===================================================== */
+      const [
+        sortDirection,
+        setSortDirection,
+      ] =
+        useState<
+          "asc" | "desc"
+        >("asc");
 
-    const setSelectedRowId =
-      useCallback(
-        (id: number) => {
+      const handleSort =
+        useCallback(
+          (
+            field: SortField
+          ) => {
 
-          setSelectedRowIdState(
-            id
-          );
+            const nextDirection =
+              sortField === field &&
+              sortDirection === "asc"
+                ? "desc"
+                : "asc";
 
-        },
-        []
-      );
-
-    /* =====================================================
-       SET ROW REF
-    ===================================================== */
-
-    const setRowRef =
-      useCallback(
-        (
-          rowIndex: number,
-          field: TableField,
-          value: RowRefValue
-        ) => {
-
-          if (
-            !rowRefs.current[
-              rowIndex
-            ]
-          ) {
-
-            rowRefs.current[
-              rowIndex
-            ] = {};
-
-          }
-
-          if (value) {
-
-            rowRefs.current[
-              rowIndex
-            ][field] = value;
-
-          } else {
-
-            delete rowRefs.current[
-              rowIndex
-            ][field];
-
-          }
-
-        },
-        []
-      );
-
-    /* =====================================================
-       ACCOUNT OPTIONS
-    ===================================================== */
-
-    const realAccountOptions =
-      useMemo<AccountOption[]>(
-        () => {
-
-          if (
-            !Array.isArray(
-              accountOptions
-            )
-          ) {
-            return [];
-          }
-
-          return accountOptions
-            .filter(
-              (account) =>
-                Boolean(
-                  account &&
-                  account.faccountid
-                )
-            )
-            .map(
-              (account) => ({
-
-                value:
-                  account.faccountid,
-
-                label:
-                  account.faccountid,
-
-                accountId:
-                  account.faccountid,
-
-                accountName:
-                  account.faccountname ||
-                  "",
-
-                /* =========================================
-                   FGCS
-                ========================================= */
-
-                fgcs:
-                  account.fgcs || "",
-
-              })
+            setSortField(
+              field
             );
 
-        },
-        [accountOptions]
-      );
-
-    /* =====================================================
-       COST CENTER OPTIONS
-    ===================================================== */
-
-    const ccIdOptions =
-      useMemo<SelectOption[]>(
-        () => {
-
-          if (
-            !Array.isArray(
-              costCenters
-            )
-          ) {
-            return [];
-          }
-
-          return [...costCenters]
-            .sort(
-              (
-                first,
-                second
-              ) =>
-                first.fpositionno -
-                second.fpositionno
-            )
-            .map(
-              (costCenter) => ({
-
-                value:
-                  costCenter.fccid,
-
-                label:
-                  costCenter.fccid,
-
-              })
+            setSortDirection(
+              nextDirection
             );
 
-        },
-        [costCenters]
-      );
-
-    /* =====================================================
-       FOCUS FIELD
-    ===================================================== */
-
-    const focusField =
-      useCallback(
-        (
-          rowIndex: number,
-          field: TableField
-        ) => {
-
-          const element =
-            rowRefs.current[
-              rowIndex
-            ]?.[field];
-
-          if (!element) {
-
-            console.warn(
-              "ReceiptTable: field not found:",
-              {
-                rowIndex,
-                field,
-              }
+            onSortRows(
+              field,
+              nextDirection
             );
 
-            return;
-          }
+          },
+          [
+            onSortRows,
+            sortDirection,
+            sortField,
+          ]
+        );
 
-          requestAnimationFrame(() => {
+      /* =====================================================
+         ROW REFS
+      ===================================================== */
 
-            element.focus();
+      const rowRefs =
+        useRef<RowRefs[]>([]);
+
+      /* =====================================================
+         SELECTED ROW
+      ===================================================== */
+
+      const setSelectedRowId =
+        useCallback(
+          (
+            id: number
+          ) => {
+
+            setSelectedRowIdState(
+              id
+            );
+
+          },
+          []
+        );
+
+      /* =====================================================
+         SET REF
+      ===================================================== */
+
+      const setRowRef =
+        useCallback(
+          (
+            rowIndex: number,
+            field: TableField,
+            value: RowRefValue
+          ) => {
 
             if (
-              element instanceof
-              HTMLInputElement
+              !rowRefs.current[
+                rowIndex
+              ]
             ) {
 
-              if (
-                element.type !==
-                "checkbox"
-              ) {
+              rowRefs.current[
+                rowIndex
+              ] = {};
 
-                element.select();
-
-              }
             }
 
-          });
+            if (value) {
 
-        },
-        []
+              rowRefs.current[
+                rowIndex
+              ][field] = value;
+
+            } else {
+
+              delete rowRefs.current[
+                rowIndex
+              ][field];
+
+            }
+
+          },
+          []
+        );
+
+      /* =====================================================
+         ACCOUNT OPTIONS
+      ===================================================== */
+
+      const realAccountOptions =
+        useMemo<
+          AccountOption[]
+        >(
+          () => {
+
+            if (
+              !Array.isArray(
+                accountOptions
+              )
+            ) {
+              return [];
+            }
+
+            return accountOptions
+              .filter(
+                (
+                  account
+                ) =>
+                  Boolean(
+                    account &&
+                    account.faccountid
+                  )
+              )
+              .map(
+                (
+                  account
+                ) => ({
+
+                  value:
+                    account.faccountid,
+
+                  label:
+                    account.faccountid,
+
+                  accountId:
+                    account.faccountid,
+
+                  accountName:
+                    account.faccountname ||
+                    "",
+
+                  fgcs:
+                    account.fgcs ||
+                    "",
+
+                  haveCc:
+                    account.fhavecc ===
+                    true,
+
+                })
+              );
+
+          },
+          [
+            accountOptions,
+          ]
+        );
+
+      /* =====================================================
+         CC OPTIONS
+      ===================================================== */
+
+      const ccIdOptions =
+        useMemo<
+          SelectOption[]
+        >(
+          () => {
+
+            if (
+              !Array.isArray(
+                costCenters
+              )
+            ) {
+              return [];
+            }
+
+            return [...costCenters]
+              .sort(
+                (
+                  first,
+                  second
+                ) =>
+                  first.fpositionno -
+                  second.fpositionno
+              )
+              .map(
+                (
+                  costCenter
+                ) => ({
+
+                  value:
+                    costCenter.fccid,
+
+                  label:
+                    costCenter.fccid,
+
+                })
+              );
+
+          },
+          [
+            costCenters,
+          ]
+        );
+
+      /* =====================================================
+         FOCUS FIELD
+      ===================================================== */
+
+      const focusField =
+        useCallback(
+          (
+            rowIndex: number,
+            field: TableField
+          ) => {
+
+            const element =
+              rowRefs.current[
+                rowIndex
+              ]?.[field];
+
+            if (!element) {
+
+              console.warn(
+                "ReceiptTable field not found:",
+                rowIndex,
+                field
+              );
+
+              return;
+            }
+
+            requestAnimationFrame(
+              () => {
+
+                element.focus();
+
+                if (
+                  element instanceof
+                  HTMLInputElement
+                ) {
+
+                  if (
+                    element.type !==
+                    "checkbox"
+                  ) {
+
+                    element.select();
+
+                  }
+
+                }
+
+              }
+            );
+
+          },
+          []
+        );
+
+      /* =====================================================
+         IMPERATIVE HANDLE
+      ===================================================== */
+
+      useImperativeHandle(
+        ref,
+        () => ({
+
+          focusFirstAccountId:
+            () => {
+
+              focusField(
+                0,
+                "accountId"
+              );
+
+            },
+
+          focusField,
+
+        }),
+        [
+          focusField,
+        ]
       );
 
-    /* =====================================================
-       IMPERATIVE HANDLE
-    ===================================================== */
+      /* =====================================================
+         RETURN
+      ===================================================== */
 
-    useImperativeHandle(
-      ref,
-      () => ({
+      return (
 
-        focusFirstAccountId: () => {
+        <div className="receipt-table-wrapper">
 
-          focusField(
-            0,
-            "accountId"
-          );
+          <table
+            id="tblReceipt"
+            className="receipt-table"
+          >
 
-        },
+            <colgroup>
 
-        focusField,
+              <col
+                style={{
+                  width: "38px",
+                }}
+              />
 
-      }),
-      [focusField]
-    );
+              <col
+                style={{
+                  width: "105px",
+                }}
+              />
 
-    /* =====================================================
-       RETURN
-    ===================================================== */
+              <col
+                style={{
+                  width: "auto",
+                }}
+              />
 
-    return (
-      <div className="receipt-table-wrapper">
+              <col
+                style={{
+                  width: "75px",
+                }}
+              />
 
-        <table id="tblReceipt" className="receipt-table">
+              <col
+                style={{
+                  width: "75px",
+                }}
+              />
 
-          {/* =================================================
-              COLUMN WIDTHS
-          ================================================= */}
+              <col
+                style={{
+                  width: "100px",
+                }}
+              />
 
-          <colgroup>
+              <col
+                style={{
+                  width: "60px",
+                }}
+              />
 
-            <col
-              style={{
-                width: "38px",
-              }}
-            />
+              <col
+                style={{
+                  width: "60px",
+                }}
+              />
 
-            <col
-              style={{
-                width: "105px",
-              }}
-            />
+            </colgroup>
 
-            <col
-              style={{
-                width: "auto",
-              }}
-            />
+            <thead>
 
-            <col
-              style={{
-                width: "75px",
-              }}
-            />
+              <tr>
 
-            <col
-              style={{
-                width: "75px",
-              }}
-            />
+                <th>
+                  Sl.
+                </th>
 
-            <col
-              style={{
-                width: "100px",
-              }}
-            />
+                <th>
 
-            <col
-              style={{
-                width: "60px",
-              }}
-            />
+                  <button
+                    type="button"
+                    onClick={() =>
+                      handleSort(
+                        "accountId"
+                      )
+                    }
+                  >
+                    Account ID
+                  </button>
 
-            <col
-              style={{
-                width: "60px",
-              }}
-            />
+                </th>
 
-          </colgroup>
+                <th>
 
-          {/* =================================================
-              HEADER
-          ================================================= */}
+                  <button
+                    type="button"
+                    onClick={() =>
+                      handleSort(
+                        "accountName"
+                      )
+                    }
+                  >
+                    Account Name
+                  </button>
 
-          <thead>
+                </th>
 
-            <tr>
+                <th>
+                  Division
+                </th>
 
-              <th className="text-right">
-                Sl.
-              </th>
+                <th>
+                  CC. ID
+                </th>
 
-              <th>
-                Account ID
-              </th>
+                <th className="text-right">
+                  Credit Amt.
+                </th>
 
-              <th>
-                Account Name
-              </th>
+                <th className="text-center">
+                  Match
+                </th>
 
-              <th>
-                Division
-              </th>
+                <th className="text-center">
+                  View
+                </th>
 
-              <th>
-                CC. ID
-              </th>
+              </tr>
 
-              <th className="text-right">
-                Credit Amount
-              </th>
+            </thead>
 
-              <th className="text-center">
-                Match
-              </th>
+            <tbody>
 
-              <th className="text-center">
-                View
-              </th>
+              {rows.map(
+                (
+                  row,
+                  index
+                ) => (
 
-            </tr>
-
-          </thead>
-
-          {/* =================================================
-              BODY
-          ================================================= */}
-
-          <tbody>
-
-            {rows.map(
-              (
-                row,
-                index
-              ) => {
-
-                return (
                   <ReceiptRow
 
                     key={
                       row.id
                     }
-
-                    /* =========================================
-                       URL
-                    ========================================= */
 
                     url={
                       url
@@ -2218,19 +2404,25 @@ const ReceiptTable = forwardRef<
                       onTableEscape
                     }
 
+                    onClearRow={
+                      onClearRow
+                    }
+
                   />
-                );
-              }
-            )}
 
-          </tbody>
+                )
+              )}
 
-        </table>
+            </tbody>
 
-      </div>
-    );
-  }
-);
+          </table>
+
+        </div>
+
+      );
+
+    }
+  );
 
 ReceiptTable.displayName =
   "ReceiptTable";

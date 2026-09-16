@@ -20,11 +20,13 @@ const PstrUserID =
 ========================================================= */
 
 function isEmpty(value) {
+
   return (
     value === null ||
     value === undefined ||
     String(value).trim() === ""
   );
+
 }
 
 
@@ -35,6 +37,7 @@ function clean(value) {
   }
 
   return String(value).trim();
+
 }
 
 
@@ -51,6 +54,7 @@ function toBoolean(value) {
     value === "true" ||
     value === "TRUE"
   );
+
 }
 
 
@@ -91,6 +95,7 @@ function toDocumentType(value) {
 
 
   return type;
+
 }
 
 
@@ -110,9 +115,7 @@ async function callReceiptProcedure(
 ) {
 
   /* =======================================================
-     IMPORTANT
-
-     PostgreSQL procedure signature:
+     PostgreSQL procedure signature
 
      1  p_strmode
      2  p_pstrcoid
@@ -136,13 +139,12 @@ async function callReceiptProcedure(
      20 p_blnmatch
      21 p_pstruserid
      22 p_struserdate
-     23 p_strcbccid
-     24 p_strcuserid
-     25 p_result_cursor
+     23 p_result_cursor
   ======================================================= */
 
+
   const sql = `
-    CALL dbo.sp_pagesreceipt(
+    CALL dbo.sp_pagesreceipt_det(
 
       $1::varchar,
       $2::varchar,
@@ -171,10 +173,8 @@ async function callReceiptProcedure(
 
       $21::varchar,
       $22::varchar,
-      $23::varchar,
-      $24::varchar,
-
-      $25::refcursor
+      $23::jsonb,
+      $24::refcursor
 
     )
   `;
@@ -182,83 +182,176 @@ async function callReceiptProcedure(
 
   const values = [
 
-    /* 1 - p_strmode */
+    /* =====================================================
+       1 - p_strmode
+    ===================================================== */
+
     mode,
 
-    /* 2 - p_pstrcoid */
+
+    /* =====================================================
+       2 - p_pstrcoid
+    ===================================================== */
+
     PstrCoID,
 
-    /* 3 - p_pstryear */
+
+    /* =====================================================
+       3 - p_pstryear
+    ===================================================== */
+
     PstrYear,
 
-    /* 4 - p_strbrid */
+
+    /* =====================================================
+       4 - p_strbrid
+    ===================================================== */
+
     clean(branch),
 
-    /* 5 - p_strdoctype */
+
+    /* =====================================================
+       5 - p_strdoctype
+    ===================================================== */
+
     clean(docType),
 
-    /* 6 - p_strdocno */
+
+    /* =====================================================
+       6 - p_strdocno
+    ===================================================== */
+
     clean(docNo),
 
-    /* 7 - p_intslno */
+
+    /* =====================================================
+       7 - p_intslno
+    ===================================================== */
+
     0,
 
-    /* 8 - p_dtpdate */
+
+    /* =====================================================
+       8 - p_dtpdate
+    ===================================================== */
+
     null,
 
-    /* 9 - p_strcbaccountid */
+
+    /* =====================================================
+       9 - p_strcbaccountid
+    ===================================================== */
+
     null,
 
-    /* 10 - p_strreceivedfrompaidto */
+
+    /* =====================================================
+       10 - p_strreceivedfrompaidto
+    ===================================================== */
+
     null,
 
-    /* 11 - p_strref */
+
+    /* =====================================================
+       11 - p_strref
+    ===================================================== */
+
     null,
 
-    /* 12 - p_straccountid */
+
+    /* =====================================================
+       12 - p_straccountid
+    ===================================================== */
+
     null,
 
-    /* 13 - p_strgcs */
+
+    /* =====================================================
+       13 - p_strgcs
+    ===================================================== */
+
     null,
 
-    /* 14 - p_strdivid */
+
+    /* =====================================================
+       14 - p_strdivid
+    ===================================================== */
+
     null,
 
-    /* 15 - p_strccid */
+
+    /* =====================================================
+       15 - p_strccid
+    ===================================================== */
+
     null,
 
-    /* 16 - p_numdebit */
+
+    /* =====================================================
+       16 - p_numdebit
+    ===================================================== */
+
     0,
 
-    /* 17 - p_numcredit */
+
+    /* =====================================================
+       17 - p_numcredit
+    ===================================================== */
+
     0,
 
-    /* 18 - p_strdescription */
+
+    /* =====================================================
+       18 - p_strdescription
+    ===================================================== */
+
     null,
 
-    /* 19 - p_strnote */
+
+    /* =====================================================
+       19 - p_strnote
+    ===================================================== */
+
     null,
 
-    /* 20 - p_blnmatch */
+
+    /* =====================================================
+       20 - p_blnmatch
+    ===================================================== */
+
     false,
 
-    /* 21 - p_pstruserid */
+
+    /* =====================================================
+       21 - p_pstruserid
+    ===================================================== */
+
     PstrUserID,
 
-    /* 22 - p_struserdate */
+
+    /* =====================================================
+       22 - p_struserdate
+    ===================================================== */
+
     null,
 
-    /* 23 - p_strcbccid */
-    null,
+        /* =====================================================
+       24 - jsonB
+    ===================================================== */
+null,
 
-    /* 24 - p_strcuserid */
-    null,
+    /* =====================================================
+       24 - p_result_cursor
+    ===================================================== */
 
-    /* 25 - p_result_cursor */
     cursorName,
 
   ];
 
+
+  /* =======================================================
+     DEBUG
+  ======================================================= */
 
   console.log(
     "======================================"
@@ -272,28 +365,46 @@ async function callReceiptProcedure(
 
     mode,
 
-    companyId: PstrCoID,
+    companyId:
+      PstrCoID,
 
-    year: PstrYear,
+    year:
+      PstrYear,
 
-    branch: clean(branch),
+    branch:
+      clean(branch),
 
-    docType: clean(docType),
+    docType:
+      clean(docType),
 
-    docNo: clean(docNo),
+    docNo:
+      clean(docNo),
 
   });
+
+  console.log(
+    "Procedure parameter count:",
+    values.length
+  );
 
   console.log(
     "======================================"
   );
 
 
+  /* =======================================================
+     CALL PROCEDURE
+  ======================================================= */
+
   await client.query(
     sql,
     values
   );
 
+
+  /* =======================================================
+     FETCH CURSOR
+  ======================================================= */
 
   const result =
     await client.query(
@@ -302,6 +413,7 @@ async function callReceiptProcedure(
 
 
   return result.rows;
+
 }
 
 
@@ -356,41 +468,65 @@ export async function GetDataTL({
 
   try {
 
+    /* =====================================================
+       NORMALIZE
+    ===================================================== */
+
     const branch =
       clean(strbranch);
 
+
     const docType =
       toDocumentType(strdocType);
+
 
     const docNo =
       clean(strdocNo);
 
 
+    /* =====================================================
+       VALIDATION
+    ===================================================== */
+
     if (isEmpty(branch)) {
+
       throw new Error(
         "Branch is required"
       );
+
     }
 
 
     if (isEmpty(docType)) {
+
       throw new Error(
         "Receipt type is required"
       );
+
     }
 
 
     if (isEmpty(docNo)) {
+
       throw new Error(
         "Receipt number is required"
       );
+
     }
 
+
+    /* =====================================================
+       BEGIN TRANSACTION
+    ===================================================== */
 
     await client.query(
       "BEGIN"
     );
 
+
+    /* =====================================================
+       CURSOR NAME
+    ===================================================== */
 
     const cursorName =
       `cur_receipt_tl_${Date.now()}_${Math.floor(
@@ -398,11 +534,17 @@ export async function GetDataTL({
       )}`;
 
 
+    /* =====================================================
+       CALL PROCEDURE
+    ===================================================== */
+
     const rows =
       await callReceiptProcedure(
         client,
         {
-          mode: "GETTL",
+
+          mode:
+            "GETTL",
 
           branch,
 
@@ -411,9 +553,14 @@ export async function GetDataTL({
           docNo,
 
           cursorName,
+
         }
       );
 
+
+    /* =====================================================
+       DEBUG
+    ===================================================== */
 
     console.log(
       "GETTL row count:",
@@ -427,6 +574,10 @@ export async function GetDataTL({
     );
 
 
+    /* =====================================================
+       COMMIT
+    ===================================================== */
+
     await client.query(
       "COMMIT"
     );
@@ -436,6 +587,10 @@ export async function GetDataTL({
 
 
   } catch (error) {
+
+    /* =====================================================
+       ROLLBACK
+    ===================================================== */
 
     try {
 
@@ -467,6 +622,7 @@ export async function GetDataTL({
     client.release();
 
   }
+
 }
 
 
@@ -521,41 +677,65 @@ export async function GetDataHD({
 
   try {
 
+    /* =====================================================
+       NORMALIZE
+    ===================================================== */
+
     const branch =
       clean(strbranch);
 
+
     const docType =
       toDocumentType(strdocType);
+
 
     const docNo =
       clean(strdocNo);
 
 
+    /* =====================================================
+       VALIDATION
+    ===================================================== */
+
     if (isEmpty(branch)) {
+
       throw new Error(
         "Branch is required"
       );
+
     }
 
 
     if (isEmpty(docType)) {
+
       throw new Error(
         "Receipt type is required"
       );
+
     }
 
 
     if (isEmpty(docNo)) {
+
       throw new Error(
         "Receipt number is required"
       );
+
     }
 
+
+    /* =====================================================
+       BEGIN TRANSACTION
+    ===================================================== */
 
     await client.query(
       "BEGIN"
     );
 
+
+    /* =====================================================
+       CURSOR NAME
+    ===================================================== */
 
     const cursorName =
       `cur_receipt_hd_${Date.now()}_${Math.floor(
@@ -563,11 +743,17 @@ export async function GetDataHD({
       )}`;
 
 
+    /* =====================================================
+       CALL PROCEDURE
+    ===================================================== */
+
     const rows =
       await callReceiptProcedure(
         client,
         {
-          mode: "GETHD",
+
+          mode:
+            "GETHD",
 
           branch,
 
@@ -576,9 +762,14 @@ export async function GetDataHD({
           docNo,
 
           cursorName,
+
         }
       );
 
+
+    /* =====================================================
+       DEBUG
+    ===================================================== */
 
     console.log(
       "GETHD row count:",
@@ -592,6 +783,10 @@ export async function GetDataHD({
     );
 
 
+    /* =====================================================
+       COMMIT
+    ===================================================== */
+
     await client.query(
       "COMMIT"
     );
@@ -601,6 +796,10 @@ export async function GetDataHD({
 
 
   } catch (error) {
+
+    /* =====================================================
+       ROLLBACK
+    ===================================================== */
 
     try {
 
@@ -632,6 +831,7 @@ export async function GetDataHD({
     client.release();
 
   }
+
 }
 
 
@@ -697,8 +897,10 @@ export async function GetData({
   const branch =
     clean(strbranch);
 
+
   const docType =
     toDocumentType(strdocType);
+
 
   const docNo =
     clean(strdocNo);
@@ -712,11 +914,14 @@ export async function GetData({
 
     return {
 
-      exists: false,
+      exists:
+        false,
 
-      header: null,
+      header:
+        null,
 
-      rows: [],
+      rows:
+        [],
 
       message:
         "Branch is required",
@@ -730,11 +935,14 @@ export async function GetData({
 
     return {
 
-      exists: false,
+      exists:
+        false,
 
-      header: null,
+      header:
+        null,
 
-      rows: [],
+      rows:
+        [],
 
       message:
         "Receipt type is required",
@@ -748,11 +956,14 @@ export async function GetData({
 
     return {
 
-      exists: false,
+      exists:
+        false,
 
-      header: null,
+      header:
+        null,
 
-      rows: [],
+      rows:
+        [],
 
       message:
         "Receipt number is required",
@@ -762,27 +973,27 @@ export async function GetData({
   }
 
 
+  /* =======================================================
+     NORMALIZED DATA
+  ======================================================= */
+
   console.log(
     "Normalized GetData:",
     {
+
       branch,
+
       docType,
+
       docNo,
+
     }
   );
 
 
   /* =======================================================
      GET DETAIL FIRST
-
-     VB:
-
-     dtRVS = objDoc.GetDataTL(
-         strBrID,
-         strDocType,
-         strDocNo
-     )
-  ======================================================= */
+    ======================================================= */
 
   console.log(
     "Calling GetDataTL..."
@@ -812,14 +1023,6 @@ export async function GetData({
 
   /* =======================================================
      GET HEADER
-
-     VB:
-
-     dr = objDoc.GetDataHD(
-         strBrID,
-         strDocType,
-         strDocNo
-     )
   ======================================================= */
 
   console.log(
@@ -864,11 +1067,14 @@ export async function GetData({
 
     return {
 
-      exists: false,
+      exists:
+        false,
 
-      header: null,
+      header:
+        null,
 
-      rows: [],
+      rows:
+        [],
 
       message:
         "Receipt not found",
@@ -879,12 +1085,16 @@ export async function GetData({
 
 
   /* =======================================================
-     HEADER
+     DATABASE HEADER
   ======================================================= */
 
   const dbHeader =
     headerRows[0];
 
+
+  /* =======================================================
+     HEADER
+  ======================================================= */
 
   const header = {
 
@@ -918,44 +1128,63 @@ export async function GetData({
       null,
 
 
-    cashBank:
+    /* =====================================================
+       CASH / BANK ACCOUNT
+    ===================================================== */
+
+    cbAccount:
       dbHeader.fcbaccountid ??
       "",
 
 
-    /*
-       Your current GETHD procedure returns:
+    /* =====================================================
+       COST CENTER
+    ===================================================== */
 
-       MAX(fccid) AS fccid
-
-       So use fccid here.
-    */
-
-    cashBankCcId:
-      dbHeader.fcbccid ??
+    ccId:
       dbHeader.fccid ??
       "",
 
+
+    /* =====================================================
+       RECEIVED FROM / PAID TO
+    ===================================================== */
 
     receivedFrom:
       dbHeader.freceivedfrompaidto ??
       "",
 
 
+    /* =====================================================
+       REFERENCE
+    ===================================================== */
+
     reference:
       dbHeader.fref ??
       "",
 
+
+    /* =====================================================
+       NOTE
+    ===================================================== */
 
     note:
       dbHeader.fnote ??
       "",
 
 
+    /* =====================================================
+       DIVISION
+    ===================================================== */
+
     division:
       dbHeader.fdivid ??
       "",
 
+
+    /* =====================================================
+       TOTAL CREDIT
+    ===================================================== */
 
     totalCredit:
       Number(
@@ -976,73 +1205,107 @@ export async function GetData({
           Number(row.fslno) > 0
       )
       .map(
-      (row, index) => {
+        (row, index) => {
 
-        return {
+          return {
 
-          id:
-            Number(row.fslno) ||
-            index + 1,
+            /* =================================================
+               ROW ID
+            ================================================= */
 
-
-          accountId:
-            row.faccountid ??
-            "",
-
-
-          /*
-             Current GETTL procedure does not
-             return faccountname.
-
-             Therefore Account Name will need
-             a JOIN in PostgreSQL if required.
-          */
-
-          accountName:
-            row.faccountname ??
-            "",
+            id:
+              Number(row.fslno) ||
+              index + 1,
 
 
-          fgcs:
-            row.fgcs ??
-            "",
+            /* =================================================
+               ACCOUNT
+            ================================================= */
+
+            accountId:
+              row.faccountid ??
+              "",
 
 
-          division:
-            row.fdivid ??
-            "",
+            /* =================================================
+               ACCOUNT NAME
+
+               GETTL currently does not return
+               faccountname.
+
+               If required, add JOIN in PostgreSQL.
+            ================================================= */
+
+            accountName:
+              row.faccountname ??
+              "",
 
 
-          ccId:
-            row.fccid ??
-            "",
+            /* =================================================
+               G / CS
+            ================================================= */
+
+            fgcs:
+              row.fgcs ??
+              "",
 
 
-          creditAmount:
-            row.fcredit !== null &&
-            row.fcredit !== undefined
+            /* =================================================
+               DIVISION
+            ================================================= */
 
-              ? String(
-                  row.fcredit
-                )
-
-              : "",
+            division:
+              row.fdivid ??
+              "",
 
 
-          match:
-            toBoolean(
-              row.fmatch
-            ),
+            /* =================================================
+               COST CENTER
+            ================================================= */
+
+            ccId:
+              row.fccid ??
+              "",
 
 
-          description:
-            row.fdescription ??
-            "",
+            /* =================================================
+               CREDIT AMOUNT
+            ================================================= */
 
-        };
+            creditAmount:
 
-      }
-    );
+              row.fcredit !== null &&
+              row.fcredit !== undefined
+
+                ? String(
+                    row.fcredit
+                  )
+
+                : "",
+
+
+            /* =================================================
+               MATCH
+            ================================================= */
+
+            match:
+              toBoolean(
+                row.fmatch
+              ),
+
+
+            /* =================================================
+               DESCRIPTION
+            ================================================= */
+
+            description:
+              row.fdescription ??
+              "",
+
+          };
+
+        }
+      );
 
 
   /* =======================================================
@@ -1079,7 +1342,8 @@ export async function GetData({
 
   const result = {
 
-    exists: true,
+    exists:
+      true,
 
     header,
 
@@ -1095,6 +1359,10 @@ export async function GetData({
 
   };
 
+
+  /* =======================================================
+     DEBUG
+  ======================================================= */
 
   console.log(
     "\n======================================"

@@ -8,27 +8,24 @@ import React, {
 
 import type { SelectInstance } from "react-select";
 
-import ReceiptHeader from "../../../components/Transaction/Receipt/save/ReceiptHeader";
-
-import ReceiptForm, {
+import {
+  ReceiptHeader,
+  ReceiptForm,
+  ReceiptTable,
+  ReceiptBottomForm,
+  ReceiptActions,
+  type SelectOption,
   type Branch,
   type FinancialParameter,
-} from "../../../components/Transaction/Receipt/save/ReceiptForm";
-
-import ReceiptTable, {
   type TableField,
   type ReceiptTableRef,
   type AccountData,
   type ReceiptRow,
   type CostCenter,
-} from "../../../components/Transaction/Receipt/save/ReceiptTable";
-
-import ReceiptBottomForm from "../../../components/Transaction/Receipt/save/ReceiptBottomForm";
-
-import ReceiptActions, {
+  type SortField,
   type ReceiptActionsRef,
-} from "../../../components/Transaction/Receipt/save/ReceiptActions";
-
+} from "../../../components/Transaction/Receipt/save/ReceitComp";
+import { toast } from "react-toastify";
 
 /* =========================================================
    CREATE INITIAL ROWS
@@ -39,14 +36,15 @@ const createRows = (): ReceiptRow[] =>
     id: index + 1,
     accountId: "",
     accountName: "",
-    fgcs:'',
+    fgcs: "",
+    haveCc: false,
+    hasDivision: false,
     division: "",
     ccId: "",
     creditAmount: "",
     match: false,
     description: "",
   }));
-
 
 /* =========================================================
    TABLE FIELD ORDER
@@ -58,45 +56,42 @@ const tableFieldOrder: TableField[] = [
   "division",
   "ccId",
   "creditAmount",
-  "match",
-  "view",
 ];
 
-
 /* =========================================================
-   API RESPONSE
+   INITIAL API RESPONSE
 ========================================================= */
 
 interface ReceiptsResponse {
   success: boolean;
   message: string;
-
   data: Branch[];
-
   finparam: FinancialParameter[];
-
   accounts: AccountData[];
-
   costCenters: CostCenter[];
-
   defaultBranch: string | null;
-
   receiptNo: string | null;
 }
 
+/* =========================================================
+   MODIFY LOOKUP RESPONSE
+========================================================= */
+
 interface ModifyReceiptResponse {
   exists: boolean;
+
   header: {
     branch?: string;
     docType?: string;
     docNo?: string;
     receiptDate?: string;
-    cashBank?: string;
-    cashBankCcId?: string;
+    cbAccount ?: string;
+    ccId ?: string;
     receivedFrom?: string;
     reference?: string;
     note?: string;
   } | null;
+
   rows: Array<{
     id?: number;
     accountId?: string;
@@ -108,18 +103,38 @@ interface ModifyReceiptResponse {
     match?: boolean | string | number;
     description?: string;
   }>;
+
   total?: number;
+
   message?: string;
 }
 
+/* =========================================================
+   DOCUMENT TYPE
+
+   B -> BR
+   C -> CR
+========================================================= */
+
 const toDocumentType = (value: string) => {
   const normalized = value.trim().toUpperCase();
-  return normalized === "B"
-    ? "BR"
-    : normalized === "C"
-    ? "CR"
-    : normalized;
+
+  if (normalized === "B") {
+    return "BR";
+  }
+
+  if (normalized === "C") {
+    return "CR";
+  }
+
+  return normalized;
 };
+
+/* =========================================================
+   DATE FORMAT
+
+   YYYY-MM-DD -> DD/MM/YYYY
+========================================================= */
 
 const formatReceiptDate = (value?: string) => {
   if (!value) {
@@ -130,106 +145,80 @@ const formatReceiptDate = (value?: string) => {
 
   if (/^\d{4}-\d{2}-\d{2}$/.test(datePart)) {
     const [year, month, day] = datePart.split("-");
+
     return `${day}/${month}/${year}`;
   }
 
   return value;
 };
 
+/* =========================================================
+   TODAY DATE
+========================================================= */
+
+const getTodayDate = () => {
+  const today = new Date();
+
+  const day = String(today.getDate()).padStart(2, "0");
+
+  const month = String(today.getMonth() + 1).padStart(2, "0");
+
+  const year = today.getFullYear();
+
+  return `${day}/${month}/${year}`;
+};
 
 /* =========================================================
    RECEIPT
 ========================================================= */
 
 const Receipt: React.FC = () => {
-
   /* =======================================================
      HEADER FORM STATE
-
-
-change the name of useState()
-     
-
-======================================================= */
+  ======================================================= */
 
   const [branch, setBranch] = useState("");
 
   const [type, setType] = useState("");
 
-  const [cashBank, setCashBank] = useState("");
-  
+  const [cbAccount, setCbAccount] = useState("");
 
+  const [receivedFrom, setReceivedFrom] = useState("");
 
-  const [receivedFrom, setReceivedFrom] =useState("");
   const [reference, setReference] = useState("");
 
-
-  const [cashBankCcId, setCashBankCcId] = useState("");
-  /* =======================================================
-     RECEIPT NUMBER
-  ======================================================= */
+  const [cbCcId, setCbCcId] = useState("");
 
   const [documentNo, setDocumentNo] = useState("");
 
-
-  /* =======================================================
-     RECEIPT DATE
-  ======================================================= */
-
-  const [receiptDate, setReceiptDate] =
-    useState(() => {
-
-      const today = new Date();
-
-      const day = String(
-        today.getDate()
-      ).padStart(2, "0");
-
-      const month = String(
-        today.getMonth() + 1
-      ).padStart(2, "0");
-
-      const year =
-        today.getFullYear();
-
-      return `${day}/${month}/${year}`;
-    });
-
+  const [date, setDate] = useState(getTodayDate);
 
   /* =======================================================
      NOTE
   ======================================================= */
 
-  const [note, setNote] =
-    useState("");
+  const [note, setNote] = useState("");
 
-  const [isModifyMode, setIsModifyMode] =
-    useState(false);
+  /* =======================================================
+     MODE
+  ======================================================= */
 
-  const [receiptMessage, setReceiptMessage] =
-    useState("");
+  const [isModifyMode, setIsModifyMode] = useState(false);
 
-  const lastLookupKeyRef =
-    useRef("");
+  const [, setReceiptMessage] = useState("");
 
+  /* =======================================================
+     MODIFY LOOKUP TRACKING
+  ======================================================= */
+
+  const lastLookupKeyRef = useRef("");
 
   /* =======================================================
      TABLE ROWS
-
-     Description is still stored in each row.
-
-     Example:
-
-       Row 1 -> description
-       Row 2 -> description
-       Row 3 -> description
   ======================================================= */
 
   const [rows, setRows] =
-    useState<ReceiptRow[]>(
-      createRows
-    );
-
+    useState<ReceiptRow[]>(createRows);
 
   /* =======================================================
      API OPTIONS
@@ -244,179 +233,96 @@ change the name of useState()
   const [
     financialParameters,
     setFinancialParameters,
-  ] =
-    useState<FinancialParameter[]>([]);
+  ] = useState<FinancialParameter[]>([]);
 
-
-  /* =======================================================
-     COST CENTERS
-  ======================================================= */
-
-  const [accountCCID, setAccountCCID] =
+  const [costCenters, setCostCenters] =
     useState<CostCenter[]>([]);
-
 
   /* =======================================================
      ACTIVE DESCRIPTION ROW
-
-     This is the row currently associated with the
-     Description field.
-
-     IMPORTANT:
-
-     We don't clear this just because Enter is pressed.
   ======================================================= */
 
   const [
     activeDescriptionRow,
     setActiveDescriptionRow,
-  ] =
-    useState<number | null>(null);
-
+  ] = useState<number | null>(null);
 
   /* =======================================================
-     DESCRIPTION DISPLAY VALUE
-
-     This is the important part.
-
-     The Description box remembers its previous value.
-
-     Example:
-
-       Row 3 -> "row 3"
-
-       navigation happens
-
-       Description box -> "row 3"
-
-     It does NOT become empty simply because another
-     navigation event occurs.
+     DESCRIPTION
   ======================================================= */
 
-  const [
-    descriptionValue,
-    setDescriptionValue,
-  ] =
+  const [description, setDescription] =
     useState("");
-
 
   /* =======================================================
      REFS
   ======================================================= */
 
   const branchRef =
-    useRef<
-      SelectInstance<
-        {
-          value: string;
-          label: string;
-        },
-        false
-      >
-    >(null);
-
+    useRef<SelectInstance<SelectOption, false>>(null);
 
   const typeRef =
-    useRef<
-      SelectInstance<
-        {
-          value: string;
-          label: string;
-        },
-        false
-      >
-    >(null);
-
+    useRef<SelectInstance<SelectOption, false>>(null);
 
   const documentNoRef =
     useRef<HTMLInputElement>(null);
 
-
-  const cashBankRef =
-    useRef<
-      SelectInstance<
-        {
-          value: string;
-          label: string;
-        },
-        false
-      >
-    >(null);
-
+  const cbAccountRef =
+    useRef<SelectInstance<SelectOption, false>>(null);
 
   const dateRef =
     useRef<HTMLInputElement>(null);
 
-
   const receivedFromRef =
     useRef<HTMLInputElement>(null);
-
 
   const referenceRef =
     useRef<HTMLInputElement>(null);
 
-
   const receiptTableRef =
     useRef<ReceiptTableRef>(null);
-
-
-  const noteRef =
-    useRef<HTMLTextAreaElement>(null);
-
 
   const descriptionRef =
     useRef<HTMLInputElement>(null);
 
+  const noteRef =
+    useRef<HTMLTextAreaElement>(null);
 
   const actionsRef =
     useRef<ReceiptActionsRef>(null);
-
 
   /* =======================================================
      LOAD RECEIPT DATA
   ======================================================= */
 
   useEffect(() => {
+    const controller = new AbortController();
 
-    const controller =
-      new AbortController();
-
-
-    const handleApi = async () => {
-
+    const loadReceiptData = async () => {
       try {
-
-        const response =
-          await fetch(
-            "http://localhost:5000/api/getReceipts",
-            {
-              method: "GET",
-              signal:
-                controller.signal,
-            }
-          );
-
+        const response = await fetch(
+          "http://localhost:5000/api/Receipt/getReceipt",
+          {
+            method: "GET",
+            signal: controller.signal,
+          }
+        );
 
         if (!response.ok) {
-
           throw new Error(
             `HTTP Error: ${response.status}`
           );
         }
 
-
         const result =
           (await response.json()) as ReceiptsResponse;
-
 
         console.log(
           "Receipt Response:",
           result
         );
 
-
         if (!result.success) {
-
           console.error(
             "Receipt API failed:",
             result.message
@@ -424,76 +330,42 @@ change the name of useState()
 
           return;
         }
-
-
-        /* =============================================
-           BRANCHES
-        ============================================= */
-
-        setBranchOptions(
-          result.data || []
-        );
-
-
-        /* =============================================
-           FINANCIAL PARAMETERS
-        ============================================= */
-
-        setFinancialParameters(
-          result.finparam || []
-        );
-
-
-        /* =============================================
-           ACCOUNTS
-        ============================================= */
-
-        setAccountOptions(
-          result.accounts || []
-        );
-
-
-        /* =============================================
-           COST CENTERS
-        ============================================= */
-
-        setAccountCCID(
-          result.costCenters || []
-        );
-
-
-        /* =============================================
-           DEFAULT BRANCH
-        ============================================= */
-
-        if (result.defaultBranch) {
-
+         if (result.defaultBranch) {
           setBranch(
             result.defaultBranch
           );
         }
 
+        setBranchOptions(
+          result.data || []
+        );
 
-        /* =============================================
-           INITIAL RECEIPT NUMBER
-        ============================================= */
+        setFinancialParameters(
+          result.finparam || []
+        );
+
+        setAccountOptions(
+          result.accounts || []
+        );
+
+        setCostCenters(
+          result.costCenters || []
+        );
+
+       
 
         if (result.receiptNo) {
-
           setDocumentNo(
             result.receiptNo
           );
         }
-
       } catch (error) {
-
         if (
           error instanceof DOMException &&
           error.name === "AbortError"
         ) {
           return;
         }
-
 
         console.error(
           "Receipt API Error:",
@@ -502,117 +374,301 @@ change the name of useState()
       }
     };
 
+    loadReceiptData();
 
-    handleApi();
-
-
-    return () =>
+    return () => {
       controller.abort();
-
+    };
   }, []);
 
-  const loadReceiptForModify =
+  /* =======================================================
+     LOAD RECEIPT FOR MODIFY
+  ======================================================= */
+
+  const getReceipt =
     useCallback(
       async () => {
-        const requestedDocumentNo = documentNo.trim();
+        const requestedDocumentNo =
+          documentNo.trim();
 
-        if (!branch || !requestedDocumentNo) {
+        if (
+          !branch ||
+          !requestedDocumentNo
+        ) {
+          console.log(
+            "Modify lookup skipped:",
+            {
+              branch,
+              requestedDocumentNo,
+            }
+          );
+
           return;
         }
 
-        const lookupKey = `${branch}|${toDocumentType(type)}|${requestedDocumentNo}`;
+        const lookupKey =
+          `${branch}|${toDocumentType(
+            type
+          )}|${requestedDocumentNo}`;
 
-        if (lastLookupKeyRef.current === lookupKey) {
+        if (
+          lastLookupKeyRef.current ===
+          lookupKey
+        ) {
           return;
         }
 
-        lastLookupKeyRef.current = lookupKey;
+        lastLookupKeyRef.current =
+          lookupKey;
+
         setReceiptMessage("");
 
         try {
-          const query = new URLSearchParams({
-            strbranch: branch,
-            strdocType: toDocumentType(type),
-            strdocNo: requestedDocumentNo,
-          });
+          const query =
+            new URLSearchParams({
+              strbranch: branch,
+              strdocType:
+                toDocumentType(type),
+              strdocNo:
+                requestedDocumentNo,
+            });
 
-          const response = await fetch(
-            `http://localhost:5000/api/get/data?${query.toString()}`
+          const url =
+            `http://localhost:5000/api/Receipt/get/data?${query.toString()}`;
+
+          console.log(
+            "MODIFY LOOKUP URL:",
+            url
           );
 
-          const result =
-            (await response.json()) as ModifyReceiptResponse;
+          const response =
+            await fetch(url);
 
-          if (!response.ok || !result.exists || !result.header) {
-            setIsModifyMode(false);
-            setReceiptMessage(
-              result.message || "Receipt not found. New receipt mode remains active."
+          const responseText =
+            await response.text();
+
+          console.log(
+            "MODIFY LOOKUP STATUS:",
+            response.status
+          );
+
+          console.log(
+            "MODIFY LOOKUP RESPONSE:",
+            responseText
+          );
+
+          let result: ModifyReceiptResponse;
+
+          try {
+            result =
+              JSON.parse(
+                responseText
+              ) as ModifyReceiptResponse;
+          } catch {
+            throw new Error(
+              responseText ||
+                "Invalid response from receipt lookup API."
             );
+          }
+
+          if (
+            !response.ok ||
+            !result.exists ||
+            !result.header
+          ) {
+            setIsModifyMode(false);
+
+            setReceiptMessage(
+              result.message ||
+                "Receipt not found. New receipt mode remains active."
+            );
+
             return;
           }
 
-          const loadedRows = createRows();
+          const loadedRows =
+            createRows();
 
           result.rows
-            .slice(0, loadedRows.length)
-            .forEach((loadedRow, index) => {
-              const account = accountOptions.find(
-                (option) =>
-                  option.faccountid === loadedRow.accountId
-              );
+            .slice(
+              0,
+              loadedRows.length
+            )
+            .forEach(
+              (
+                loadedRow,
+                index
+              ) => {
+                const account =
+                  accountOptions.find(
+                    (option) =>
+                      option.faccountid ===
+                      loadedRow.accountId
+                  );
 
-              loadedRows[index] = {
-                id: index + 1,
-                accountId: loadedRow.accountId || "",
-                accountName:
-                  loadedRow.accountName ||
-                  account?.faccountname ||
-                  "",
-                fgcs:
-                  loadedRow.fgcs ||
-                  account?.fgcs ||
-                  "",
-                division: loadedRow.division || "",
-                ccId: loadedRow.ccId || "",
-                creditAmount:
-                  loadedRow.creditAmount === undefined ||
-                  loadedRow.creditAmount === null
-                    ? ""
-                    : String(loadedRow.creditAmount),
-                match:
-                  loadedRow.match === true ||
-                  loadedRow.match === 1 ||
-                  loadedRow.match === "1" ||
-                  loadedRow.match === "true",
-                description: loadedRow.description || "",
-              };
-            });
+                loadedRows[index] = {
+                  id: index + 1,
 
-          setBranch(result.header.branch || branch);
+                  accountId:
+                    loadedRow.accountId ||
+                    "",
+
+                  accountName:
+                    loadedRow.accountName ||
+                    account?.faccountname ||
+                    "",
+
+                  fgcs:
+                    loadedRow.fgcs ||
+                    account?.fgcs ||
+                    "",
+
+                  haveCc:
+                    account?.fhavecc ===
+                    true,
+
+                  hasDivision:
+                    Boolean(
+                      loadedRow.division
+                    ),
+
+                  division:
+                    loadedRow.division ||
+                    "",
+
+                  ccId:
+                    loadedRow.ccId ||
+                    "",
+
+                  creditAmount:
+                    loadedRow.creditAmount ===
+                      undefined ||
+                    loadedRow.creditAmount ===
+                      null
+                      ? ""
+                      : String(
+                          loadedRow.creditAmount
+                        ),
+
+                  match:
+                    loadedRow.match ===
+                      true ||
+                    loadedRow.match ===
+                      1 ||
+                    loadedRow.match ===
+                      "1" ||
+                    loadedRow.match ===
+                      "true",
+
+                  description:
+                    loadedRow.description ||
+                    "",
+                };
+              }
+            );
+
+          /* ===============================================
+             HEADER
+          =============================================== */
+
+          setBranch(
+            result.header.branch ||
+              branch
+          );
+
           setType(
-            result.header.docType === "CR" ||
-              result.header.docType === "C"
+            result.header.docType ===
+              "CR" ||
+              result.header.docType ===
+              "C"
               ? "C"
               : "B"
           );
-          setDocumentNo(result.header.docNo || requestedDocumentNo);
-          setReceiptDate(
-            formatReceiptDate(result.header.receiptDate)
+
+          setDocumentNo(
+            result.header.docNo ||
+              requestedDocumentNo
           );
-          setCashBank(result.header.cashBank || "");
-          setCashBankCcId(result.header.cashBankCcId || "");
-          setReceivedFrom(result.header.receivedFrom || "");
-          setReference(result.header.reference || "");
-          setNote(result.header.note || "");
-          setRows(loadedRows);
-          setDescriptionValue("");
-          setActiveDescriptionRow(null);
+
+          setDate(
+            formatReceiptDate(
+              result.header.receiptDate
+            )
+          );
+
+          setCbAccount(
+            result.header.cbAccount  ||
+              ""
+          );
+
+          setCbCcId(
+            result.header.ccId  ||
+              ""
+          );
+
+          setReceivedFrom(
+            result.header.receivedFrom ||
+              ""
+          );
+
+          setReference(
+            result.header.reference ||
+              ""
+          );
+
+          setNote(
+            result.header.note ||
+              ""
+          );
+
+          setRows(
+            loadedRows
+          );
+
+          setDescription("");
+
+          setActiveDescriptionRow(
+            null
+          );
+
+          /* ===============================================
+             MODIFY MODE
+          =============================================== */
+
           setIsModifyMode(true);
-          setReceiptMessage("Receipt loaded successfully.");
-          alert('Receipt loaded successfully.')
+
+          setReceiptMessage(
+            "Receipt loaded successfully."
+          );
+
+          console.log(
+            "✅ RECEIPT LOADED FOR MODIFY"
+          );
+
+          console.log(
+            "LOADED HEADER:",
+            result.header
+          );
+
+          console.log(
+            "LOADED ROWS:",
+            loadedRows
+          );
+
+          toast.success(
+            "Receipt loaded successfully."
+          );
         } catch (error) {
-          lastLookupKeyRef.current = "";
+          lastLookupKeyRef.current =
+            "";
+
           setIsModifyMode(false);
+
+          console.error(
+            "MODIFY LOOKUP ERROR:",
+            error
+          );
+
           setReceiptMessage(
             error instanceof Error
               ? error.message
@@ -620,66 +676,113 @@ change the name of useState()
           );
         }
       },
-      [accountOptions, branch, documentNo, type]
+      [
+        accountOptions,
+        branch,
+        documentNo,
+        type,
+      ]
     );
+
+  /* =======================================================
+     RESET TABLE + LOAD NEXT DOCUMENT NUMBER
+  ======================================================= */
 
   const resetTableAndLoadNextReceiptNumber =
     useCallback(
       async () => {
-        setRows(createRows());
-        setCashBank("");
+        setRows(
+          createRows()
+        );
+
+        setCbAccount("");
+
+        setCbCcId("");
+
         setReceivedFrom("");
+
         setReference("");
+
         setNote("");
-        setDescriptionValue("");
-        setActiveDescriptionRow(null);
-        setIsModifyMode(false);
-        lastLookupKeyRef.current = "";
+
+        setDescription("");
+
+        setActiveDescriptionRow(
+          null
+        );
+
+        setIsModifyMode(
+          false
+        );
+
+        lastLookupKeyRef.current =
+          "";
 
         try {
-          const response = await fetch(
-            "http://localhost:5000/api/getReceiptDocNumber",
-            {
-              method: "POST",
-              headers: {
-                "Content-Type": "application/json",
-              },
-              body: JSON.stringify({
-                fbrid: branch,
-                fptype: toDocumentType(type),
-              }),
-            }
-          );
+          const response =
+            await fetch(
+              "http://localhost:5000/api/Receipt/getDocNo",
+              {
+                method: "POST",
 
-          const result = await response.json() as {
-            success?: boolean;
-            data?: Array<{
-              getnextdocno?: string;
-            }>;
-          };
+                headers: {
+                  "Content-Type":
+                    "application/json",
+                },
 
-          if (!response.ok || !result.success) {
-            throw new Error("Receipt number could not be reloaded.");
+                body: JSON.stringify({
+                  fbrid: branch,
+                  fptype:
+                    toDocumentType(type),
+                }),
+              }
+            );
+
+          const result =
+            (await response.json()) as {
+              success?: boolean;
+
+              data?: Array<{
+                getnextdocno?: string;
+              }>;
+            };
+
+          if (
+            !response.ok ||
+            !result.success
+          ) {
+            throw new Error(
+              "Receipt number could not be reloaded."
+            );
           }
 
-          setDocumentNo(result.data?.[0]?.getnextdocno || "");
+          setDocumentNo(
+            result.data?.[0]
+              ?.getnextdocno || ""
+          );
         } catch (error) {
-          console.error("Receipt number reload error:", error);
+          console.error(
+            "Receipt number reload error:",
+            error
+          );
+
           setReceiptMessage(
             "Receipt saved, but the next receipt number could not be loaded."
           );
         }
       },
-      [branch, type]
+      [
+        branch,
+        type,
+      ]
     );
-
 
   /* =======================================================
      BRANCH SELECT OPTIONS
   ======================================================= */
 
   const branchSelectOptions =
-    useMemo(
+    useMemo<SelectOption[]>(
       () =>
         branchOptions.map(
           (item) => ({
@@ -689,7 +792,6 @@ change the name of useState()
         ),
       [branchOptions]
     );
-
 
   /* =======================================================
      FOCUS TABLE FIELD
@@ -701,7 +803,6 @@ change the name of useState()
         rowIndex: number,
         field: TableField
       ) => {
-
         receiptTableRef.current?.focusField(
           rowIndex,
           field
@@ -710,6 +811,147 @@ change the name of useState()
       []
     );
 
+  /* =======================================================
+     CLEAR ROW
+  ======================================================= */
+
+  const handleClearRow =
+    useCallback(
+      (id: number) => {
+        setRows(
+          (currentRows) =>
+            currentRows.map(
+              (row) =>
+                row.id === id
+                  ? {
+                      ...row,
+                      accountId: "",
+                      accountName: "",
+                      fgcs: "",
+                      haveCc: false,
+                      hasDivision: false,
+                      division: "",
+                      ccId: "",
+                      creditAmount: "",
+                      match: false,
+                      description: "",
+                    }
+                  : row
+            )
+        );
+
+        if (
+          activeDescriptionRow !==
+            null &&
+          rows[
+            activeDescriptionRow
+          ]?.id === id
+        ) {
+          setDescription("");
+
+          setActiveDescriptionRow(
+            null
+          );
+        }
+      },
+      [
+        activeDescriptionRow,
+        rows,
+      ]
+    );
+
+  /* =======================================================
+     CLEAR DESCRIPTION ROW
+  ======================================================= */
+
+  const handleClearDescriptionRow =
+    useCallback(
+      () => {
+        if (
+          activeDescriptionRow ===
+          null
+        ) {
+          return;
+        }
+
+        const row =
+          rows[
+            activeDescriptionRow
+          ];
+
+        if (row) {
+          handleClearRow(
+            row.id
+          );
+        }
+      },
+      [
+        activeDescriptionRow,
+        handleClearRow,
+        rows,
+      ]
+    );
+
+  /* =======================================================
+     SORT ROWS
+  ======================================================= */
+
+  const handleSortRows =
+    useCallback(
+      (
+        field: SortField,
+        direction: "asc" | "desc"
+      ) => {
+        setRows(
+          (currentRows) =>
+            [...currentRows].sort(
+              (
+                first,
+                second
+              ) => {
+                const firstValue =
+                  field ===
+                  "accountId"
+                    ? first.accountId
+                    : first.accountName;
+
+                const secondValue =
+                  field ===
+                  "accountId"
+                    ? second.accountId
+                    : second.accountName;
+
+                const result =
+                  field ===
+                  "accountId"
+                    ? firstValue.localeCompare(
+                        secondValue,
+                        undefined,
+                        {
+                          numeric: true,
+                          sensitivity:
+                            "base",
+                        }
+                      )
+                    : firstValue.localeCompare(
+                        secondValue,
+                        undefined,
+                        {
+                          sensitivity:
+                            "base",
+                        }
+                      );
+
+                return direction ===
+                  "asc"
+                  ? result
+                  : -result;
+              }
+            )
+        );
+      },
+      []
+    );
 
   /* =======================================================
      ROW CHANGE
@@ -722,7 +964,6 @@ change the name of useState()
         field: keyof ReceiptRow,
         value: string | boolean
       ) => {
-
         setRows(
           (currentRows) =>
             currentRows.map(
@@ -736,66 +977,41 @@ change the name of useState()
                   : row
             )
         );
-
       },
       []
     );
 
-
   /* =======================================================
-     ESC FROM TABLE -> NOTE
+     TABLE ESCAPE -> NOTE
   ======================================================= */
 
   const handleTableEscape =
     useCallback(() => {
-
-      /*
-       * We are leaving the table.
-       *
-       * IMPORTANT:
-       * Do NOT clear descriptionValue.
-       *
-       * This is what allows the old description to remain
-       * available when Description is reached again.
-       */
-
       setActiveDescriptionRow(
         null
       );
 
+      requestAnimationFrame(
+        () => {
+          const note =
+            noteRef.current;
 
-      requestAnimationFrame(() => {
+          if (!note) {
+            return;
+          }
 
-        const note =
-          noteRef.current;
+          note.focus();
 
+          const position =
+            note.value.length;
 
-        if (!note) {
-          return;
+          note.setSelectionRange(
+            position,
+            position
+          );
         }
-
-
-        note.focus();
-
-
-        /*
-         * Put cursor at the end.
-         * Do not select all text.
-         */
-
-        const position =
-          note.value.length;
-
-
-        note.setSelectionRange(
-          position,
-          position
-        );
-
-      });
-
+      );
     }, []);
-
 
   /* =======================================================
      TABLE ENTER
@@ -807,123 +1023,123 @@ change the name of useState()
         rowIndex: number,
         field: TableField
       ) => {
+        const row =
+          rows[rowIndex];
 
         /* ===============================================
-           VIEW -> DESCRIPTION
+           ACCOUNT ID REQUIRED
         =============================================== */
 
         if (
-          field === "view"
+          field ===
+            "accountId" &&
+          !row?.accountId.trim()
         ) {
-
-          /*
-           * Remember which row is being viewed.
-           */
-
-          setActiveDescriptionRow(
-            rowIndex
+          toast.warning(
+            "Account ID is required."
           );
 
-
-          /*
-           * Get the row.
-           */
-
-          const row =
-            rows[rowIndex];
-
-
-          /*
-           * IMPORTANT:
-           *
-           * If this row already has a description,
-           * load it.
-           *
-           * If this row has NO description,
-           * DO NOT clear descriptionValue.
-           *
-           * This is the requested behavior:
-           *
-           *     old description remains.
-           */
-
-          setDescriptionValue(
-            row?.description || ""
+          focusTableField(
+            rowIndex,
+            "accountId"
           );
-
-
-          /*
-           * Focus happens AFTER React has updated
-           * the description state.
-           */
-
-          requestAnimationFrame(() => {
-
-            const input =
-              descriptionRef.current;
-
-
-            if (!input) {
-              return;
-            }
-
-
-            input.focus();
-
-
-            /*
-             * IMPORTANT:
-             *
-             * Do NOT use:
-             *
-             * input.select();
-             *
-             * because that selects the complete
-             * description.
-             *
-             * Put cursor at the end instead.
-             */
-
-            const position =
-              input.value.length;
-
-
-            input.setSelectionRange(
-              position,
-              position
-            );
-
-          });
-
 
           return;
         }
 
-
         /* ===============================================
-           NEXT FIELD
+           CREDIT REQUIRED
         =============================================== */
 
+        if (
+          field ===
+            "creditAmount" &&
+          !row?.creditAmount.trim()
+        ) {
+          toast.warning(
+            "Credit Amount is required."
+          );
+
+          focusTableField(
+            rowIndex,
+            "creditAmount"
+          );
+
+          return;
+        }
+
+        /* ===============================================
+           CREDIT -> DESCRIPTION
+        =============================================== */
+
+        if (
+          field ===
+          "creditAmount"
+        ) {
+          setActiveDescriptionRow(
+            rowIndex
+          );
+
+          setDescription(
+            row?.description || ""
+          );
+
+          requestAnimationFrame(
+            () => {
+              const input =
+                descriptionRef.current;
+
+              if (!input) {
+                return;
+              }
+
+              input.focus();
+
+              input.setSelectionRange(
+                input.value.length,
+                input.value.length
+              );
+            }
+          );
+
+          return;
+        }
+
+        /* ===============================================
+           AVAILABLE FIELDS
+        =============================================== */
+
+        const availableFields =
+          tableFieldOrder
+            .filter(
+              (nextField) =>
+                nextField !==
+                  "division" ||
+                row?.hasDivision
+            )
+            .filter(
+              (nextField) =>
+                nextField !==
+                  "ccId" ||
+                row?.haveCc
+            );
+
         const fieldIndex =
-          tableFieldOrder.indexOf(
+          availableFields.indexOf(
             field
           );
 
-
         const nextField =
-          tableFieldOrder[
+          availableFields[
             fieldIndex + 1
           ];
 
-
         if (nextField) {
-
           focusTableField(
             rowIndex,
             nextField
           );
         }
-
       },
       [
         focusTableField,
@@ -931,35 +1147,16 @@ change the name of useState()
       ]
     );
 
-
   /* =======================================================
      DESCRIPTION CHANGE
 
-     Every character typed into the Description field:
-
-     1. Updates descriptionValue.
-     2. Updates the active row.
-
-     Therefore modification is preserved.
+     Description is stored inside the active row.
   ======================================================= */
 
   const handleDescriptionChange =
     useCallback(
       (value: string) => {
-
-        /*
-         * Always keep the value displayed in the
-         * Description input.
-         */
-
-        setDescriptionValue(
-          value
-        );
-
-
-        /*
-         * No row selected.
-         */
+        setDescription(value);
 
         if (
           activeDescriptionRow ===
@@ -968,26 +1165,17 @@ change the name of useState()
           return;
         }
 
-
         const activeRow =
           rows[
             activeDescriptionRow
           ];
 
-
         if (!activeRow) {
           return;
         }
 
-
         const activeRowId =
           activeRow.id;
-
-
-        /*
-         * Save the modified description
-         * into the correct row.
-         */
 
         setRows(
           (currentRows) =>
@@ -997,21 +1185,18 @@ change the name of useState()
                 activeRowId
                   ? {
                       ...row,
-
                       description:
                         value,
                     }
                   : row
             )
         );
-
       },
       [
         activeDescriptionRow,
         rows,
       ]
     );
-
 
   /* =======================================================
      DESCRIPTION ENTER
@@ -1022,39 +1207,24 @@ change the name of useState()
       (
         event: React.KeyboardEvent<HTMLInputElement>
       ) => {
-
         if (
-          event.key !== "Enter"
+          event.key !==
+          "Enter"
         ) {
           return;
         }
 
-
         event.preventDefault();
-
         event.stopPropagation();
 
-
-        /*
-         * IMPORTANT:
-         *
-         * We DO NOT clear:
-         *
-         *     descriptionValue
-         *
-         * The description remains.
-         */
-
-
         /* ===============================================
-           NO ACTIVE DESCRIPTION ROW
+           NO ACTIVE ROW
         =============================================== */
 
         if (
           activeDescriptionRow ===
           null
         ) {
-
           focusTableField(
             0,
             "accountId"
@@ -1063,18 +1233,12 @@ change the name of useState()
           return;
         }
 
-
         /* ===============================================
-           CURRENT ROW
+           NEXT ROW
         =============================================== */
 
-        const currentRow =
-          activeDescriptionRow;
-
-
         const nextRow =
-          currentRow + 1;
-
+          activeDescriptionRow + 1;
 
         /* ===============================================
            LAST ROW -> NOTE
@@ -1084,65 +1248,42 @@ change the name of useState()
           nextRow >=
           rows.length
         ) {
-
-          /*
-           * We leave the Description field.
-           *
-           * Keep descriptionValue.
-           *
-           * Only remove the row association.
-           */
-
           setActiveDescriptionRow(
             null
           );
 
+          requestAnimationFrame(
+            () => {
+              const note =
+                noteRef.current;
 
-          requestAnimationFrame(() => {
+              if (!note) {
+                return;
+              }
 
-            const note =
-              noteRef.current;
+              note.focus();
 
+              const position =
+                note.value.length;
 
-            if (!note) {
-              return;
+              note.setSelectionRange(
+                position,
+                position
+              );
             }
-
-
-            note.focus();
-
-
-            const position =
-              note.value.length;
-
-
-            note.setSelectionRange(
-              position,
-              position
-            );
-
-          });
-
+          );
 
           return;
         }
 
-
         /* ===============================================
-           NEXT ROW -> ACCOUNT ID
-
-           IMPORTANT:
-
-           DO NOT CLEAR DESCRIPTION.
-
-           The previous description stays available.
+           NEXT ROW ACCOUNT ID
         =============================================== */
 
         focusTableField(
           nextRow,
           "accountId"
         );
-
       },
       [
         activeDescriptionRow,
@@ -1151,9 +1292,8 @@ change the name of useState()
       ]
     );
 
-
   /* =======================================================
-     NOTE ENTER -> SAVE
+     NOTE ENTER -> SAVE / MODIFY
   ======================================================= */
 
   const handleNoteEnter =
@@ -1161,54 +1301,45 @@ change the name of useState()
       (
         event: React.KeyboardEvent<HTMLTextAreaElement>
       ) => {
-
         if (
-          event.key !== "Enter" ||
+          event.key !==
+            "Enter" ||
           event.shiftKey
         ) {
           return;
         }
 
-
         event.preventDefault();
-
         event.stopPropagation();
 
-
-        requestAnimationFrame(() => {
-
-          actionsRef.current?.focusSave();
-
-        });
-
+        requestAnimationFrame(
+          () => {
+            actionsRef.current?.focusSave();
+          }
+        );
       },
       []
     );
-
 
   /* =======================================================
      TOTAL
   ======================================================= */
 
-  const total =
-    useMemo(
-      () =>
-        rows.reduce(
-          (
-            sum,
-            row
-          ) =>
-            sum +
-            (
-              Number(
-                row.creditAmount
-              ) || 0
-            ),
-          0
-        ),
-      [rows]
-    );
-
+  const total = useMemo(
+    () =>
+      rows.reduce(
+        (
+          sum,
+          row
+        ) =>
+          sum +
+          (Number(
+            row.creditAmount
+          ) || 0),
+        0
+      ),
+    [rows]
+  );
 
   /* =======================================================
      SAVE RECEIPT
@@ -1217,99 +1348,78 @@ change the name of useState()
   const handleSave =
     useCallback(
       async () => {
-
         try {
+          const validRows =
+            rows.filter(
+              (row) =>
+                row.accountId &&
+                row.accountId.trim() !==
+                  ""
+            );
 
           const receiptData = {
-
             branch,
 
             type,
 
-            cashBank,
-            cbCcId: cashBankCcId,
+            cashBank:
+              cbAccount,
 
-            receiptNo: documentNo,
+            cbCcId,
 
-            receiptDate,
+            receiptNo:
+              documentNo,
+
+            receiptDate:
+              date,
 
             receivedFrom,
 
             reference,
 
+            rows: validRows.map(
+              (
+                row,
+                index
+              ) => ({
+                id: row.id,
 
-            rows:
-              rows
-                .filter(
-                  (row) =>
-                    row.accountId &&
-                    row.accountId.trim() !== ""
-                )
-                .map(
-                  (
-                    row,
-                    index
-                  ) => ({
+                slNo:
+                  index + 1,
 
-                    id:
-                      row.id,
-                      // fgcs:row.fgcs,
+                accountId:
+                  row.accountId,
 
-                    slNo:
-                      index + 1,
+                accountName:
+                  row.accountName,
 
-                    accountId:
-                      row.accountId,
+                fgcs:
+                  row.fgcs,
 
-                    accountName:
-                      row.accountName,
-                      
-                      fgcs:row.fgcs,
+                division:
+                  row.division,
 
-                    division:
-                      row.division,
+                ccId:
+                  row.ccId,
 
-                    ccId:
-                      row.ccId,
+                creditAmount:
+                  Number(
+                    row.creditAmount
+                  ) || 0,
 
-                    creditAmount:
-                      Number(
-                        row.creditAmount
-                      ) || 0,
+                match:
+                  row.match,
 
-                    match:
-                      row.match,
+                description:
+                  row.description ||
+                  "",
+              })
+            ),
 
-                    description:
-                      row.description || "",
-                  })
-                ),
-
-
-            total:
-              rows.reduce(
-                (
-                  sum,
-                  row
-                ) =>
-                  sum +
-                  (
-                    Number(
-                      row.creditAmount
-                    ) || 0
-                  ),
-                0
-              ),
-
+            total,
 
             note,
           };
-
-
-          /* =============================================
-             B -> BR
-             C -> CR
-          ============================================= */
 
           const saveType =
             type === "B"
@@ -1318,28 +1428,336 @@ change the name of useState()
               ? "CR"
               : type;
 
+          console.log(
+            "========== SAVE RECEIPT =========="
+          );
 
           console.log(
             "RECEIPT TYPE:",
             type
           );
 
-
           console.log(
             "SAVE TYPE:",
             saveType
           );
-
 
           console.log(
             "SENDING RECEIPT:",
             receiptData
           );
 
+          const response =
+            await fetch(
+              "http://localhost:5000/api/Receipt/saveReceipt",
+              {
+                method: "POST",
+
+                headers: {
+                  "Content-Type":
+                    "application/json",
+                },
+
+                body: JSON.stringify({
+                  ...receiptData,
+
+                  type:
+                    saveType,
+                }),
+              }
+            );
+
+          const text =
+            await response.text();
+
+          console.log(
+            "SAVE STATUS:",
+            response.status
+          );
+
+          console.log(
+            "SAVE RAW RESPONSE:",
+            text
+          );
+
+          let result: {
+            success?: boolean;
+            message?: string;
+          };
+
+          try {
+            result =
+              JSON.parse(
+                text
+              );
+          } catch {
+            result = {
+              success: false,
+              message: text,
+            };
+          }
+
+          console.log(
+            "SAVE API RESPONSE:",
+            result
+          );
+
+          if (!response.ok) {
+            toast.error(
+              result.message ||
+                `Save failed. Status: ${response.status}`
+            );
+
+            return;
+          }
+
+          toast.success(
+            result.message ||
+              "Receipt saved successfully."
+          );
+
+          await resetTableAndLoadNextReceiptNumber();
+        } catch (error) {
+          console.error(
+            "SAVE ERROR:",
+            error
+          );
+
+          toast.error(
+            error instanceof Error
+              ? error.message
+              : "Cannot connect to Receipt API."
+          );
+        }
+      },
+      [
+        branch,
+        type,
+        cbAccount,
+        cbCcId,
+        documentNo,
+        date,
+        receivedFrom,
+        reference,
+        rows,
+        total,
+        note,
+        resetTableAndLoadNextReceiptNumber,
+      ]
+    );
+
+  /* =======================================================
+     MODIFY RECEIPT
+  ======================================================= */
+
+  const handleModify =
+    useCallback(
+      async () => {
+        /* ===============================================
+           THIS MUST APPEAR IMMEDIATELY WHEN BUTTON IS CLICKED
+        =============================================== */
+
+        console.log(
+          "========================================"
+        );
+
+        console.log(
+          "🔥 MODIFY FUNCTION CALLED"
+        );
+
+        console.log(
+          "========================================"
+        );
+
+        /* ===============================================
+           FILTER VALID ROWS
+        =============================================== */
+
+        const validRows =
+          rows.filter(
+            (row) =>
+              row.accountId &&
+              row.accountId.trim() !==
+                ""
+          );
+
+        console.log(
+          "MODIFY CURRENT VALUES:",
+          {
+            branch,
+            type,
+            cbAccount,
+            cbCcId,
+            documentNo,
+            date,
+            receivedFrom,
+            reference,
+            note,
+          }
+        );
+
+        console.log(
+          "MODIFY VALID ROWS:",
+          validRows
+        );
+
+        /* ===============================================
+           VALIDATION
+        =============================================== */
+
+        const validationFailed =
+          !branch ||
+          !type ||
+          !documentNo.trim() ||
+          !date ||
+          !cbAccount ||
+          validRows.length === 0;
+
+        if (validationFailed) {
+          console.error(
+            "❌ MODIFY STOPPED BY VALIDATION"
+          );
+
+          console.error(
+            "Validation values:",
+            {
+              branch: !!branch,
+              type: !!type,
+              documentNo: !!documentNo.trim(),
+              date: !!date,
+              cbAccount: !!cbAccount,
+              validRows:
+                validRows.length,
+            }
+          );
+
+          const validationMessage =
+            "Branch, type, receipt number, date, cash/bank, and one account row are required.";
+
+          setReceiptMessage(
+            validationMessage
+          );
+
+          toast.warning(
+            validationMessage
+          );
+
+          return;
+        }
+
+        /* ===============================================
+           CREATE MODIFY PAYLOAD
+        =============================================== */
+
+        const modifyPayload = {
+          branch,
+
+          type:
+            toDocumentType(type),
+
+          cashBank:
+            cbAccount,
+
+          cbCcId,
+
+          /* IMPORTANT:
+             Keep the loaded receipt number.
+             Do NOT generate a new number.
+          */
+          docNo:
+            documentNo.trim(),
+
+          receiptDate:
+            date,
+
+          receivedFrom,
+
+          reference,
+
+          note,
+
+          rows: validRows.map(
+            (
+              row,
+              index
+            ) => ({
+              id:
+                row.id,
+
+              slNo:
+                index + 1,
+
+              accountId:
+                row.accountId,
+
+              accountName:
+                row.accountName,
+
+              fgcs:
+                row.fgcs,
+
+              division:
+                row.division,
+
+              ccId:
+                row.ccId,
+
+              creditAmount:
+                Number(
+                  row.creditAmount
+                ) || 0,
+
+              match:
+                row.match,
+
+              description:
+                row.description ||
+                "",
+            })
+          ),
+
+          total,
+        };
+
+        /* ===============================================
+           DEBUG PAYLOAD
+        =============================================== */
+
+        console.log(
+          "🔥 MODIFY PAYLOAD:"
+        );
+
+        console.log(
+          JSON.stringify(
+            modifyPayload,
+            null,
+            2
+          )
+        );
+
+        console.log(
+          "MODIFY DOC TYPE:",
+          modifyPayload.type
+        );
+
+        console.log(
+          "MODIFY DOC NO:",
+          modifyPayload.docNo
+        );
+
+        /* ===============================================
+           CALL API
+        =============================================== */
+
+        try {
+          console.log(
+            "🔥 CALLING:",
+            "http://localhost:5000/api/updateReceipt"
+          );
 
           const response =
             await fetch(
-              "http://localhost:5000/api/saveReceipt",
+              "http://localhost:5000/api/Receipt/modifyReceipt",
               {
                 method: "POST",
 
@@ -1349,201 +1767,142 @@ change the name of useState()
                 },
 
                 body:
-                  JSON.stringify({
-                    ...receiptData,
-
-                    type:
-                      saveType,
-                  }),
+                  JSON.stringify(
+                    modifyPayload
+                  ),
               }
             );
 
-
-          const text =
-            await response.text();
-
-
           console.log(
-            "STATUS:",
+            "🔥 MODIFY API STATUS:",
             response.status
           );
 
-
           console.log(
-            "RAW RESPONSE:",
-            text
+            "🔥 MODIFY API OK:",
+            response.ok
           );
 
+          /* =============================================
+             READ RESPONSE AS TEXT FIRST
+          ============================================= */
 
-          let result;
+          const responseText =
+            await response.text();
 
+          console.log(
+            "🔥 MODIFY RAW RESPONSE:"
+          );
+
+          console.log(
+            responseText
+          );
+
+          let result: {
+            success?: boolean;
+            message?: string;
+            data?: unknown;
+          };
 
           try {
-
             result =
-              JSON.parse(text);
-
+              JSON.parse(
+                responseText
+              ) as {
+                success?: boolean;
+                message?: string;
+                data?: unknown;
+              };
           } catch {
-
             result = {
-
               success:
-                false,
-
+                response.ok,
               message:
-                text,
+                responseText,
             };
           }
 
-
           console.log(
-            "API RESPONSE:",
+            "🔥 MODIFY PARSED RESPONSE:",
             result
           );
 
+          /* =============================================
+             HTTP ERROR
+          ============================================= */
 
           if (!response.ok) {
-
-            alert(
-              result.message ||
-                `Save failed. Status: ${response.status}`
-            );
-            // window.location.reload()
-
-            return;
-          }
-
-
-          alert(
-            result.message ||
-              "Receipt saved successfully"
-          );
-          await resetTableAndLoadNextReceiptNumber();
-
-
-        } catch (error) {
-
-          console.error(
-            "SAVE ERROR:",
-            error
-          );
-
-
-          alert(
-            "Cannot connect to Receipt API"
-          );
-        }
-
-      },
-      [
-        branch,
-        type,
-        cashBank,
-        cashBankCcId,
-        documentNo,
-        receiptDate,
-        receivedFrom,
-        reference,
-        rows,
-        note,
-        resetTableAndLoadNextReceiptNumber,
-      ]
-    );
-
-  const handleModify =
-    useCallback(
-      async () => {
-        const validRows = rows.filter(
-          (row) =>
-            row.accountId &&
-            row.accountId.trim() !== ""
-        );
-
-        if (
-          !branch ||
-          !type ||
-          !documentNo.trim() ||
-          !receiptDate ||
-          !cashBank ||
-          validRows.length === 0
-        ) {
-          setReceiptMessage(
-            "Branch, type, receipt number, date, cash/bank, and one account row are required."
-          );
-          return;
-        }
-
-        try {
-          const response = await fetch(
-            "http://localhost:5000/api/updateReceipt",
-            {
-              method: "POST",
-              headers: {
-                "Content-Type": "application/json",
-              },
-              body: JSON.stringify({
-                branch,
-                type: toDocumentType(type),
-                cashBank,
-                cbCcId: cashBankCcId,
-                docNo: documentNo.trim(),
-                receiptDate,
-                receivedFrom,
-                reference,
-                note,
-                rows: validRows.map((row, index) => ({
-                  ...row,
-                  slNo: index + 1,
-                  creditAmount:
-                    Number(row.creditAmount) || 0,
-                })),
-                total,
-              }),
-            }
-          );
-
-          const result = await response.json() as {
-            success?: boolean;
-            message?: string;
-          };
-
-          if (!response.ok || !result.success) {
             throw new Error(
               result.message ||
-                "Receipt could not be modified."
+                `Receipt could not be modified. HTTP ${response.status}`
             );
           }
+
+          /* =============================================
+             SUCCESS
+             
+             DO NOT CHECK:
+               result.success !== true
+
+             because the backend response currently
+             returns message/data without necessarily
+             returning success:true.
+          ============================================= */
+
+          console.log(
+            "✅ MODIFY API SUCCESS"
+          );
 
           setReceiptMessage(
             result.message ||
               "Receipt modified successfully."
           );
-          alert("Receipt modified successfully.");
+
+          toast.success(
+            result.message ||
+              "Receipt modified successfully."
+          );
+
+          /* =============================================
+             RESET + NEW RECEIPT NUMBER
+          ============================================= */
+
           await resetTableAndLoadNextReceiptNumber();
         } catch (error) {
-          setReceiptMessage(
+          console.error(
+            "🔥 MODIFY ERROR:",
+            error
+          );
+
+          const errorMessage =
             error instanceof Error
               ? error.message
-              : "Receipt could not be modified."
+              : "Receipt could not be modified.";
+
+          setReceiptMessage(
+            errorMessage
+          );
+
+          toast.error(
+            errorMessage
           );
         }
       },
       [
         branch,
-        cashBank,
-        cashBankCcId,
-        note,
-        receiptDate,
+        type,
+        cbAccount,
+        cbCcId,
         documentNo,
+        date,
         receivedFrom,
         reference,
+        note,
         rows,
         total,
-        type,
         resetTableAndLoadNextReceiptNumber,
       ]
     );
-
 
   /* =======================================================
      CLEAR FORM
@@ -1551,12 +1910,9 @@ change the name of useState()
 
   const clearForm =
     useCallback(() => {
+      setCbAccount("");
 
-      
-      
-
-      setCashBank("");
-      setCashBankCcId("");
+      setCbCcId("");
 
       setReference("");
 
@@ -1564,88 +1920,49 @@ change the name of useState()
 
       setNote("");
 
-      setIsModifyMode(false);
+      setIsModifyMode(
+        false
+      );
 
       setReceiptMessage("");
 
-      lastLookupKeyRef.current = "";
+      lastLookupKeyRef.current =
+        "";
 
-
-      /*
-       * Clear description only when the entire form
-       * is explicitly cleared.
-       */
-
-      setDescriptionValue("");
-
+      setDescription("");
 
       setActiveDescriptionRow(
         null
       );
 
-
-      setReceiptDate(() => {
-
-        const today =
-          new Date();
-
-
-        const day =
-          String(
-            today.getDate()
-          ).padStart(
-            2,
-            "0"
-          );
-
-
-        const month =
-          String(
-            today.getMonth() + 1
-          ).padStart(
-            2,
-            "0"
-          );
-
-
-        const year =
-          today.getFullYear();
-
-
-        return `${day}/${month}/${year}`;
-
-      });
-
+      setDate(
+        getTodayDate
+      );
 
       setRows(
         createRows()
       );
 
-
-      /*
-       * Receipt number remains unchanged.
-       */
-
+      /* Keep document number unchanged. */
     }, []);
-
 
   /* =======================================================
      INITIAL FOCUS
   ======================================================= */
 
   useEffect(() => {
-
-    branchRef.current?.focus();
-
+    requestAnimationFrame(
+      () => {
+        branchRef.current?.focus();
+      }
+    );
   }, []);
-
 
   /* =======================================================
      RETURN
   ======================================================= */
 
   return (
-
     <div
       className="
         min-h-screen
@@ -1659,7 +1976,6 @@ change the name of useState()
         gap-2.5
       "
     >
-
       <div
         className="
           mx-auto
@@ -1672,82 +1988,47 @@ change the name of useState()
           bg-white
         "
       >
-
         {/* =================================================
             HEADER
         ================================================= */}
 
         <ReceiptHeader />
 
-
         {/* =================================================
             HEADER FORM
         ================================================= */}
 
         <ReceiptForm
+          branch={branch}
+          setBranch={setBranch}
 
-          branch={
-            branch
-          }
+          type={type}
+          setType={setType}
 
-          setBranch={
-            setBranch
-          }
+          cbAccount={cbAccount}
+          setCbAccount={setCbAccount}
 
-
-          type={
-            type
-          }
-
-          setType={
-            setType
-          }
-
-
-          cashBank={
-            cashBank
-          }
-
-          setCashBank={
-            setCashBank
-          }
-
-
-          reference={
-            reference
-          }
-
+          reference={reference}
           setReference={
             setReference
           }
 
-
           receivedFrom={
             receivedFrom
           }
-
           setReceivedFrom={
             setReceivedFrom
           }
 
-
           documentNo={
             documentNo
           }
-
           setDocumentNo={
             setDocumentNo
           }
 
-
-          receiptDate={
-            receiptDate
-          }
-
-          setReceiptDate={
-            setReceiptDate
-          }
-
+          date={date}
+          setDate={setDate}
 
           branchRef={
             branchRef
@@ -1761,8 +2042,8 @@ change the name of useState()
             documentNoRef
           }
 
-          cashBankRef={
-            cashBankRef
+          cbAccountRef={
+            cbAccountRef
           }
 
           dateRef={
@@ -1777,7 +2058,6 @@ change the name of useState()
             referenceRef
           }
 
-
           focusFirstAccountId={() =>
             focusTableField(
               0,
@@ -1785,11 +2065,9 @@ change the name of useState()
             )
           }
 
-
           branchOptions={
             branchSelectOptions
           }
-
 
           financialParameters={
             financialParameters
@@ -1801,32 +2079,28 @@ change the name of useState()
 
           documentNoEditable
 
-          onDocumentNoLookup={
-            loadReceiptForModify
+          txtDocNo={
+            getReceipt
           }
 
-          preserveCashBankOnLoad={
+          preserveCbAccountOnLoad={
             isModifyMode
           }
-
         />
-
 
         {/* =================================================
             TABLE
         ================================================= */}
 
         <ReceiptTable
-
-         url={`${import.meta.env.VITE_BASE_URL}/getReceipts`}
-
           ref={
             receiptTableRef
           }
 
-          rows={
-            rows
-          }
+          url={`${import.meta.env.BASE_URL}/Receipt/getDivID`}
+
+          rows={rows}
+
           handleRowChange={
             handleRowChange
           }
@@ -1839,16 +2113,22 @@ change the name of useState()
             handleTableEscape
           }
 
+          onClearRow={
+            handleClearRow
+          }
+
+          onSortRows={
+            handleSortRows
+          }
+
           accountOptions={
             accountOptions
           }
 
           costCenters={
-            accountCCID
+            costCenters
           }
-
         />
-
 
         {/* =================================================
             TOTAL
@@ -1866,22 +2146,14 @@ change the name of useState()
             text-xs
           "
         >
-
-          <label
-            className="whitespace-nowrap"
-          >
+          <label className="whitespace-nowrap">
             Total :
           </label>
 
-
           <input
-            value={
-              total.toFixed(2)
-            }
-            id="txtTotal"
-
+            id="txtTotCreditAmt"
+            value={total.toFixed(2)}
             readOnly
-
             className="
               ml-3
               h-6.5
@@ -1894,27 +2166,22 @@ change the name of useState()
               outline-none
             "
           />
-
         </div>
-
 
         {/* =================================================
             BOTTOM FORM
         ================================================= */}
 
         <ReceiptBottomForm
-
           description={
-            descriptionValue
+            description
           }
 
           setDescription={
             handleDescriptionChange
           }
 
-          note={
-            note
-          }
+          note={note}
 
           setNote={
             setNote
@@ -1936,21 +2203,16 @@ change the name of useState()
             handleDescriptionEnter
           }
 
+          onDescriptionClear={
+            handleClearDescriptionRow
+          }
         />
-{/* 
-        {receiptMessage && (
-          <div className="px-5 text-center text-xs text-slate-600">
-            {receiptMessage}
-          </div>
-        )} */}
-
 
         {/* =================================================
             ACTIONS
         ================================================= */}
 
         <ReceiptActions
-
           ref={
             actionsRef
           }
@@ -1972,15 +2234,10 @@ change the name of useState()
           }
 
           preventSearchNavigation
-
-          
         />
-
       </div>
-
     </div>
   );
 };
-
 
 export default Receipt;

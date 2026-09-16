@@ -1,7 +1,7 @@
 import express from 'express'
 const app = express();
 import dotenv from "dotenv";
-import Finas_Router from './routes/Finas_Router.js'
+import ReceiptRouter from './routes/ReceiptRouter.js'
 import cors from 'cors'
 dotenv.config();
 import pool from './DB/db.js'
@@ -26,7 +26,7 @@ app.get("/test-db", async (req, res) => {
     });
   }
 });
-app.use("/api", Finas_Router);
+app.use("/api/Receipt", ReceiptRouter);
 
 
 app.listen(5000, () => {

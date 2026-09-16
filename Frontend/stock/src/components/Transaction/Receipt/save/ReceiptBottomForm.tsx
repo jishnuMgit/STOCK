@@ -24,6 +24,8 @@ interface Props {
     event: React.KeyboardEvent<HTMLInputElement>
   ) => void;
 
+  onDescriptionClear?: () => void;
+
   /* =========================================================
      NOTE
      Note is common for the whole receipt.
@@ -47,6 +49,7 @@ const ReceiptBottomForm: React.FC<Props> = ({
   setDescription,
   descriptionRef,
   onDescriptionEnter,
+  onDescriptionClear = () => {},
 
   note,
   setNote,
@@ -84,6 +87,13 @@ const ReceiptBottomForm: React.FC<Props> = ({
           }}
 
           onKeyDown={(event) => {
+            if (event.key === "Delete" && event.ctrlKey) {
+              event.preventDefault();
+              event.stopPropagation();
+              onDescriptionClear();
+              return;
+            }
+
             if (event.key === "Enter") {
               event.preventDefault();
               event.stopPropagation();

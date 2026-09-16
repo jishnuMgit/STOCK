@@ -146,24 +146,13 @@ const UnMatch: React.FC = () => {
      HEADER STATE
   ======================================================= */
 
-  const [customerId, setCustomerId] =
-    useState("");
-    const [debitAmount, setDebitAmount] = useState(0);
-const [creditAmount, setCreditAmount] = useState(0);
-
-  const [customerName, setCustomerName] =
-    useState("");
-
-  const [division, setDivision] =
+  const [branch, setBranch] =
     useState("");
 
   const [type, setType] =
     useState("BR");
 
   const [receiptNo, setReceiptNo] =
-    useState("");
-
-  const [branch, setBranch] =
     useState("");
 
   const [receiptDate, setReceiptDate] =
@@ -184,15 +173,23 @@ const [creditAmount, setCreditAmount] = useState(0);
       return `${day}/${month}/${year}`;
     });
 
-  /* =======================================================
-     OLD RECEIPT VALUES
-
-     Kept because the existing save/bottom components
-     still expect these values.
-  ======================================================= */
-
-  const [cashBank, setCashBank] =
+  const [cbAccount, setCbAccount] =
     useState("");
+
+  const [customerId, setCustomerId] =
+    useState("");
+
+  const [customerName, setCustomerName] =
+    useState("");
+
+  const [divisionId, setDivisionId] =
+    useState("");
+
+  const [debitAmount, setDebitAmount] =
+    useState(0);
+
+  const [creditAmount, setCreditAmount] =
+    useState(0);
 
   const [reference, setReference] =
     useState("");
@@ -241,8 +238,8 @@ const [creditAmount, setCreditAmount] = useState(0);
   ======================================================= */
 
   const [
-    descriptionValue,
-    setDescriptionValue,
+    description,
+    setDescription,
   ] =
     useState("");
 
@@ -737,7 +734,7 @@ const [creditAmount, setCreditAmount] = useState(0);
       (
         value: string
       ) => {
-        setDescriptionValue(
+        setDescription(
           value
         );
       },
@@ -883,7 +880,7 @@ const [creditAmount, setCreditAmount] = useState(0);
         {
           customerId,
           customerName,
-          division,
+          division: divisionId,
           type,
           receiptNo,
           branch,
@@ -901,7 +898,7 @@ const [creditAmount, setCreditAmount] = useState(0);
     }, [
       customerId,
       customerName,
-      division,
+      divisionId,
       type,
       receiptNo,
       branch,
@@ -921,7 +918,7 @@ const [creditAmount, setCreditAmount] = useState(0);
 
             customerName,
 
-            division,
+            division: divisionId,
 
             type,
 
@@ -1038,7 +1035,7 @@ const [creditAmount, setCreditAmount] = useState(0);
       [
         customerId,
         customerName,
-        division,
+        divisionId,
         type,
         receiptNo,
         branch,
@@ -1061,7 +1058,7 @@ const [creditAmount, setCreditAmount] = useState(0);
 
       setCustomerName("");
 
-      setDivision("");
+      setDivisionId("");
 
       setType("BR");
 
@@ -1069,7 +1066,7 @@ const [creditAmount, setCreditAmount] = useState(0);
 
       setBranch("");
 
-      setCashBank("");
+      setCbAccount("");
 
       setReference("");
 
@@ -1077,7 +1074,7 @@ const [creditAmount, setCreditAmount] = useState(0);
 
       setNote("");
 
-      setDescriptionValue("");
+      setDescription("");
 
       setDocAmount(0);
 
@@ -1207,12 +1204,12 @@ const [creditAmount, setCreditAmount] = useState(0);
              DIVISION
           ============================================= */
 
-          division={
-            division
+          divisionId={
+            divisionId
           }
 
-          setDivision={
-            setDivision
+          setDivisionId={
+            setDivisionId
           }
 
           divisionOptions={
@@ -1486,7 +1483,7 @@ const [creditAmount, setCreditAmount] = useState(0);
 
         {/* <ReceiptBottomForm
           description={
-            descriptionValue
+            description
           }
 
           setDescription={
