@@ -829,9 +829,9 @@ const JournalPage: React.FC = () => {
           "================================"
         );
 
-        alert(
-          "Dummy Journal Save"
-        );
+        // alert(
+        //   "Dummy Journal Save"
+        // );
       },
       [
         branch,

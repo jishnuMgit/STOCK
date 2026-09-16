@@ -36,6 +36,8 @@ import {
 import { selectStyles, accountDropdownStyles } from "./ReactSelectStyles";
 
 import "./commanReceipt.css";
+import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
+import { toast } from "react-toastify";
 
 dayjs.extend(customParseFormat);
 
@@ -198,7 +200,7 @@ interface ReceiptFormProps {
 
   isModifyMode?: boolean;
 
-  onDocumentNoLookup?: () => void;
+  txtDocNo?: () => void;
 
   preserveCbAccountOnLoad?: boolean;
 
@@ -225,7 +227,8 @@ interface ReceiptDocNumberResponse {
   success: boolean;
 
   data: {
-    getnextdocno: string;
+    fdocno: string;
+    fdocnolen:number
   }[];
 
   message?: string;
@@ -309,7 +312,7 @@ export const ReceiptForm: React.FC<ReceiptFormProps> = ({
 
   isModifyMode = false,
 
-  onDocumentNoLookup,
+  txtDocNo,
 
   preserveCbAccountOnLoad = false,
 
@@ -323,7 +326,7 @@ export const ReceiptForm: React.FC<ReceiptFormProps> = ({
 
   const [documentNoLoading, setDocumentNoLoading] =
     useState(false);
-
+const [docnolen, setdocnolen] = useState<number>(0);
   const [cbAccounts, setCbAccounts] = useState<CbAccount[]>([]);
 
   const typeOptions: SelectOption[] = useMemo(() => {
@@ -341,8 +344,8 @@ export const ReceiptForm: React.FC<ReceiptFormProps> = ({
     return apiTypeOptions.length > 0
       ? apiTypeOptions
       : [
-          { value: "B", label: "B" },
-          { value: "C", label: "C" },
+          { value: "Bank", label: "B" },
+          { value: "Cash", label: "C" },
         ];
   }, [financialParameters]);
 
@@ -362,7 +365,7 @@ export const ReceiptForm: React.FC<ReceiptFormProps> = ({
       setDocumentNoLoading(true);
 
       const response = await fetch(
-        "http://localhost:5000/api/getReceiptDocNumber",
+        "http://localhost:5000/api/Receipt/getDocNo",
         {
           method: "POST",
           headers: {
@@ -389,9 +392,12 @@ export const ReceiptForm: React.FC<ReceiptFormProps> = ({
         Array.isArray(result.data) &&
         result.data.length > 0
       ) {
-        setDocumentNo(
-          result.data[0]?.getnextdocno || ""
-        );
+        const docData = result.data[0];
+        setDocumentNo(docData?.fdocno || "");
+        setdocnolen(
+        Number(docData?.fdocnolen) || 0
+      );
+      
       } else {
         setDocumentNo("");
       }
@@ -431,7 +437,7 @@ export const ReceiptForm: React.FC<ReceiptFormProps> = ({
       setAccountsLoading(true);
 
       const response = await fetch(
-        "http://localhost:5000/api/getReceiptCashORBank",
+        "http://localhost:5000/api/Receipt/getReceiptType",
         {
           method: "POST",
           headers: {
@@ -696,7 +702,7 @@ export const ReceiptForm: React.FC<ReceiptFormProps> = ({
       },
     }),
   };
-
+  
   const cbAccountOptions: SelectOption[] =
     useMemo(
       () =>
@@ -724,6 +730,9 @@ export const ReceiptForm: React.FC<ReceiptFormProps> = ({
       (option) =>
         option.value === cbAccount
     ) || null;
+
+
+      console.log("selectedType",selectedType)
 
   return (
     <div className="px-5 pt-3 pb-2">
@@ -874,6 +883,8 @@ export const ReceiptForm: React.FC<ReceiptFormProps> = ({
           </label>
 
           <input
+          maxLength={docnolen}
+          // minLength={11}
             id="txtReceiptNo"
             ref={documentNoRef}
             value={
@@ -889,9 +900,16 @@ export const ReceiptForm: React.FC<ReceiptFormProps> = ({
                 );
               }
             }}
-            onBlur={() => {
+            onBlur={(e) => {
+
+
+              if(docnolen != e.target.value.length){
+toast.warning(`Receipt No. width must be   ${docnolen} `)
+return
+              }
+
               if (documentNoEditable) {
-                onDocumentNoLookup?.();
+                txtDocNo?.();
               }
             }}
             onKeyDown={(event) => {
@@ -901,12 +919,14 @@ export const ReceiptForm: React.FC<ReceiptFormProps> = ({
               ) {
                 event.preventDefault();
 
-                onDocumentNoLookup?.();
+                txtDocNo?.();
 
                 cbAccountRef.current?.focus();
 
                 return;
               }
+
+              
 
               handleInputKeyDown(
                 event,
@@ -915,6 +935,7 @@ export const ReceiptForm: React.FC<ReceiptFormProps> = ({
               );
             }}
             className={`${inputClass} w-37.5`}
+
           />
         </div>
       </div>
@@ -922,13 +943,13 @@ export const ReceiptForm: React.FC<ReceiptFormProps> = ({
       <div className="mb-2 flex items-center justify-between gap-8">
 
         <div className="flex items-center gap-2">
-          <label className="w-22.5 text-right text-xs whitespace-nowrap">
-            Cash/Bank :
+          <label className="w-22.5 text-right text-xs whitespace-nowrap" id="lblCBAccountName">
+            {selectedType?.value} :
           </label>
 
           <Select<SelectOption, false>
             ref={cbAccountRef}
-            id="lkpCbAccount"
+            id="lkpCBAccountName"
             value={selectedCbAccount}
             onKeyDown={(event) =>
               handleSelectKeyDown(
@@ -1500,7 +1521,7 @@ const ReceiptRow = memo(
           try {
             const response =
               await fetch(
-                "http://localhost:5000/api/getCustomerDivisions",
+                "http://localhost:5000/api/Receipt/getDivID",
                 {
                   method: "POST",
                   headers: {
@@ -1792,6 +1813,29 @@ const ReceiptRow = memo(
           onClearRow,
         ]
       );
+      /* =========================================================
+   CREDIT AMOUNT - HALALA FORMAT
+========================================================= */
+
+const formatCreditAmount = (
+  value: string
+): string => {
+  if (
+    value === "" ||
+    value === null ||
+    value === undefined
+  ) {
+    return "";
+  }
+
+  const numberValue = Number(value);
+
+  if (!Number.isFinite(numberValue)) {
+    return "";
+  }
+
+  return numberValue.toFixed(2);
+};
 
     const handleControlKeyDown =
       useCallback(
@@ -2293,43 +2337,67 @@ const ReceiptRow = memo(
         </td>
 
         <td className="receipt-cell">
-          <input
-            id={
-              `txtCreditAmt-${row.id}`
-            }
-            ref={(element) =>
-              setRowRef(
-                index,
-                "creditAmount",
-                element
-              )
-            }
-            type="number"
-            min="0"
-            step="0.01"
-            value={
-              row.creditAmount
-            }
-            onChange={(event) =>
-              handleRowChange(
-                row.id,
-                "creditAmount",
-                event.target.value
-              )
-            }
-            onFocus={() =>
-              setSelectedRowId(
-                row.id
-              )
-            }
-            onKeyDown={(event) =>
-              handleControlKeyDown(
-                event,
-                "creditAmount"
-              )
-            }
-            className="receipt-grid-input"
-          />
+        <input
+  id={`txtCreditAmt-${row.id}`}
+  ref={(element) =>
+    setRowRef(
+      index,
+      "creditAmount",
+      element
+    )
+  }
+  placeholder="0.00"
+  type="text"
+  inputMode="decimal"
+  value={row.creditAmount}
+  onChange={(event) => {
+    const inputValue =
+      event.target.value;
+
+    /* Allow only numbers with
+       maximum 2 decimal places */
+
+    if (
+      /^\d*\.?\d{0,2}$/.test(
+        inputValue
+      )
+    ) {
+      handleRowChange(
+        row.id,
+        "creditAmount",
+        inputValue
+      );
+    }
+  }}
+  onFocus={() =>
+    setSelectedRowId(
+      row.id
+    )
+  }
+  onBlur={() => {
+    if (
+      row.creditAmount
+    ) {
+      handleRowChange(
+        row.id,
+        "creditAmount",
+        formatCreditAmount(
+          row.creditAmount
+        )
+      );
+    }
+  }}
+  onKeyDown={(event) =>
+    handleControlKeyDown(
+      event,
+      "creditAmount"
+    )
+  }
+  className="
+    receipt-grid-input
+    text-right
+  "
+/>
         </td>
 
         <td className="receipt-cell">
@@ -2907,7 +2975,9 @@ interface ReceiptActionsProps {
 
   preventSearchNavigation?: boolean;
 }
-
+// const Test=()=>{
+//   alert()
+// }
 export const ReceiptActions = forwardRef<
   ReceiptActionsRef,
   ReceiptActionsProps

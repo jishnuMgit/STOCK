@@ -5,7 +5,7 @@ import {
 } from "../services/receiptService.js";
 import {GetData} from "../services/GetData.js"
 
-export const ReceiptsControllers = async (req, res) => {
+export const getReceipt = async (req, res) => {
   try {
     const PstrCoID = process.env.PstrCoID;
     const PstrUserID = process.env.PstrUserID;
@@ -52,12 +52,14 @@ export const ReceiptsControllers = async (req, res) => {
        C = CR
     ===================================================== */
 
-    const receiptType =
+    const receiptType = 
       req.body?.type === "B"
         ? "BR"
         : req.body?.type === "C"
         ? "CR"
         : req.body?.type || "BR";
+
+        // req.body?.type+"R"
 
     console.log("UI TYPE:", req.body?.type);
     console.log("DB RECEIPT TYPE:", receiptType);
@@ -132,12 +134,23 @@ console.log(LkpType.rows);
     const accountsResult = await pool.query(
       `
       SELECT *
-      FROM dbo.fillaccountheads($1)
+      FROM dbo.filllookupaccountname($1)
       `,
       [
         PstrCoID,
       ]
     );
+
+    const accountsidResult = await pool.query(
+      `
+      SELECT *
+      FROM dbo.filllookupaccountid($1)
+      `,
+      [
+        PstrCoID,
+      ]
+    );
+
 
     /* =====================================================
        COST CENTERS
@@ -255,7 +268,7 @@ console.log(LkpType.rows);
 
       accounts:
         accountsResult.rows || [],
-
+accountsortbyId:accountsidResult.rows|| [],
       costCenters,
 
       defaultBranch,
@@ -288,39 +301,39 @@ console.log(LkpType.rows);
   }
 };
 
-export const GetReceiptCashORBank = async (req, res) => {
+export const getReceiptType = async (req, res) => {
   try {
     const PstrCoID = process.env.PstrCoID;
-    const { cashorbank } = req.body;
+    const { cashorbank:type } = req.body;
     const {fptype} = req.body;
 
-    if (!cashorbank) {
+    if (!type) {
       return res.status(400).json({
         success: false,
         message: "cashorbank parameter is required",
       });
     }
 
-    if (cashorbank !== "C" && cashorbank !== "B") {
+    if (type !== "C" && type !== "B") {
       return res.status(400).json({
         success: false,
         message: "cashorbank parameter must be either 'C' or 'B'",
       });
     }
 
-    const functionName =
-      cashorbank === "C"
-        ? "dbo.fillcashaccounts"
-        : "dbo.fillbankaccounts";
+    // const functionName =
+    //   cashorbank === "C"
+    //     ? "dbo.fillcashaccounts"
+    //     : "dbo.fillbankaccounts";
 
     const result = await pool.query(
-      `SELECT * FROM ${functionName}($1)`,
-      [PstrCoID]
+      `SELECT * FROM dbo.filllookupcbaccountname($1,$2)`,
+      [PstrCoID,type]
     );
 
     return res.status(200).json({
       success: true,
-      cashorbank,
+      type,
       data: result.rows,
     });
   } catch (error) {
@@ -334,7 +347,7 @@ export const GetReceiptCashORBank = async (req, res) => {
   }
 };
 
-export const GetReceiptDocNumber = async (req, res) => {
+export const getDocNo = async (req, res) => {
   try {
     const PstrCoID = process.env.PstrCoID;
     const PstrYear = Number(process.env.PstrYear);
@@ -419,7 +432,7 @@ export const GetReceiptDocNumber = async (req, res) => {
   }
 };
 
-export const GetCustomerDivisions = async (
+export const getDivID = async (
   req,
   res
 ) => {
@@ -540,7 +553,7 @@ export const saveReceipt = async (req, res) => {
   }
 };
 
-export const updateReceipt = async (req, res) => {
+export const modifyReceipt = async (req, res) => {
   try {
     const result = await updateReceiptService(req.body);
 

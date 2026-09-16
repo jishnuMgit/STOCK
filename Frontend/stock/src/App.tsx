@@ -4,10 +4,11 @@ import {
   useNavigate,
 } from "react-router-dom";
 
-import SideNav from "./pages/nav/SideNav";
+import { ToastContainer } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
 
+import SideNav from "./pages/nav/SideNav";
 import AppRoutes from "./routes/AppRoutes";
-import {ToastContainer} from 'react-toastify'
 import "./App.css";
 
 /* =========================================================
@@ -38,7 +39,19 @@ function AppLayout() {
         <AppRoutes />
       </main>
 
-      <ToastContainer/>
+      {/* =================================================
+          NOTIFICATIONS
+      ================================================= */}
+
+      <ToastContainer
+        position="top-right"
+        autoClose={5000}
+        hideProgressBar={false}
+        newestOnTop
+        closeOnClick
+        pauseOnHover
+        draggable
+      />
 
     </div>
   );

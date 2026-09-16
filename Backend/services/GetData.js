@@ -144,7 +144,7 @@ async function callReceiptProcedure(
 
 
   const sql = `
-    CALL dbo.sp_pagesreceipt(
+    CALL dbo.sp_pagesreceipt_det(
 
       $1::varchar,
       $2::varchar,
@@ -173,8 +173,8 @@ async function callReceiptProcedure(
 
       $21::varchar,
       $22::varchar,
-
-      $23::refcursor
+      $23::jsonb,
+      $24::refcursor
 
     )
   `;
@@ -335,9 +335,13 @@ async function callReceiptProcedure(
 
     null,
 
+        /* =====================================================
+       24 - jsonB
+    ===================================================== */
+null,
 
     /* =====================================================
-       23 - p_result_cursor
+       24 - p_result_cursor
     ===================================================== */
 
     cursorName,
