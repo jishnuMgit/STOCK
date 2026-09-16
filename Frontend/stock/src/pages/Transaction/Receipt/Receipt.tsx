@@ -26,7 +26,7 @@ import {
   type ReceiptActionsRef,
 } from "../../../components/Transaction/Receipt/save/ReceitComp";
 import { toast } from "react-toastify";
-
+import ReceiptPrint from "../../../components/Transaction/Receipt/save/Receipt.print";
 /* =========================================================
    CREATE INITIAL ROWS
 ========================================================= */
@@ -68,11 +68,12 @@ interface ReceiptsResponse {
   data: Branch[];
   finparam: FinancialParameter[];
   accounts: AccountData[];
+  accountsortbyId: AccountData[];
   costCenters: CostCenter[];
   defaultBranch: string | null;
   receiptNo: string | null;
+  receiptType?: string | null;
 }
-
 /* =========================================================
    MODIFY LOOKUP RESPONSE
 ========================================================= */
@@ -156,6 +157,13 @@ const formatReceiptDate = (value?: string) => {
    TODAY DATE
 ========================================================= */
 
+
+
+
+/* =========================================================
+   TODAY DATE
+========================================================= */
+
 const getTodayDate = () => {
   const today = new Date();
 
@@ -176,7 +184,7 @@ const Receipt: React.FC = () => {
   /* =======================================================
      HEADER FORM STATE
   ======================================================= */
-
+const [isPrint,setIsPrint]=useState(false)
   const [branch, setBranch] = useState("");
 
   const [type, setType] = useState("");
@@ -229,7 +237,9 @@ const Receipt: React.FC = () => {
 
   const [accountOptions, setAccountOptions] =
     useState<AccountData[]>([]);
-
+    
+    const [accountSortByIdOptions, setAccountSortByIdOptions] =
+  useState<AccountData[]>([]);
   const [
     financialParameters,
     setFinancialParameters,
@@ -347,6 +357,9 @@ const Receipt: React.FC = () => {
         setAccountOptions(
           result.accounts || []
         );
+        setAccountSortByIdOptions(
+  result.accountsortbyId || []
+);
 
         setCostCenters(
           result.costCenters || []
@@ -381,9 +394,52 @@ const Receipt: React.FC = () => {
     };
   }, []);
 
+
+ const handlePrint = useCallback(() => {
+  console.log("🖨️ PRINT BUTTON CLICKED");
+
+  setIsPrint(true);
+}, []);
   /* =======================================================
      LOAD RECEIPT FOR MODIFY
   ======================================================= */
+useEffect(() => {
+  if (!isPrint) {
+    return;
+  }
+
+  const printTimer = setTimeout(() => {
+    console.log("🖨️ OPENING PRINT DIALOG");
+
+    window.print();
+  }, 100);
+
+  return () => {
+    clearTimeout(printTimer);
+  };
+}, [isPrint]);
+
+useEffect(() => {
+  const handleAfterPrint = () => {
+    console.log("🖨️ PRINT COMPLETED");
+
+    setIsPrint(false);
+  };
+
+  window.addEventListener(
+    "afterprint",
+    handleAfterPrint
+  );
+
+  return () => {
+    window.removeEventListener(
+      "afterprint",
+      handleAfterPrint
+    );
+  };
+}, []);
+
+
 
   const getReceipt =
     useCallback(
@@ -691,91 +747,121 @@ const Receipt: React.FC = () => {
   const resetTableAndLoadNextReceiptNumber =
     useCallback(
       async () => {
-        setRows(
-          createRows()
-        );
+        /* =====================================================
+           CLEAR ALL FORM DATA
+        ===================================================== */
+
+        setRows(createRows());
 
         setCbAccount("");
-
         setCbCcId("");
-
         setReceivedFrom("");
-
         setReference("");
-
         setNote("");
-
         setDescription("");
+        setActiveDescriptionRow(null);
 
-        setActiveDescriptionRow(
-          null
-        );
+        setDate(getTodayDate());
 
-        setIsModifyMode(
-          false
-        );
+        setIsModifyMode(false);
+        setReceiptMessage("");
 
-        lastLookupKeyRef.current =
-          "";
+        lastLookupKeyRef.current = "";
+
+        /* =====================================================
+           RELOAD DEFAULT BRANCH / TYPE / RECEIPT NUMBER
+
+           The backend already returns the default branch,
+           receipt type and next receipt number from getReceipt.
+        ===================================================== */
 
         try {
-          const response =
-            await fetch(
-              "http://localhost:5000/api/Receipt/getDocNo",
-              {
-                method: "POST",
+          const response = await fetch(
+            "http://localhost:5000/api/Receipt/getReceipt"
+          );
 
-                headers: {
-                  "Content-Type":
-                    "application/json",
-                },
-
-                body: JSON.stringify({
-                  fbrid: branch,
-                  fptype:
-                    toDocumentType(type),
-                }),
-              }
-            );
-
-          const result =
-            (await response.json()) as {
-              success?: boolean;
-
-              data?: Array<{
-                getnextdocno?: string;
-              }>;
-            };
-
-          if (
-            !response.ok ||
-            !result.success
-          ) {
+          if (!response.ok) {
             throw new Error(
-              "Receipt number could not be reloaded."
+              `Receipt defaults could not be reloaded. Status: ${response.status}`
             );
           }
 
-          setDocumentNo(
-            result.data?.[0]
-              ?.getnextdocno || ""
+          const result =
+            (await response.json()) as ReceiptsResponse;
+
+          if (!result.success) {
+            throw new Error(
+              result.message ||
+                "Receipt defaults could not be reloaded."
+            );
+          }
+
+          /* Keep the existing option lists in sync. */
+          setBranchOptions(result.data || []);
+          setFinancialParameters(result.finparam || []);
+          setAccountOptions(result.accounts || []);
+          setAccountSortByIdOptions(
+            result.accountsortbyId || []
           );
+          setCostCenters(result.costCenters || []);
+
+          /* Restore backend default branch. */
+          const defaultBranch =
+            result.defaultBranch ||
+            result.data?.[0]?.fbrid ||
+            "";
+
+          if (defaultBranch) {
+            setBranch(defaultBranch);
+          } else {
+            setBranch("");
+          }
+
+          /* Restore backend default type when supplied. */
+          const defaultReceiptType =
+            result.receiptType || "";
+
+          if (defaultReceiptType) {
+            const normalizedType =
+              defaultReceiptType
+                .trim()
+                .toUpperCase();
+
+            setType(
+              normalizedType === "BR"
+                ? "B"
+                : normalizedType === "CR"
+                ? "C"
+                : normalizedType
+            );
+          }
+
+          /* Load the fresh receipt number returned by backend. */
+          if (result.receiptNo) {
+            setDocumentNo(result.receiptNo);
+          } else {
+            setDocumentNo("");
+          }
+
+          /* Return focus to the beginning of the form. */
+          requestAnimationFrame(() => {
+            branchRef.current?.focus();
+          });
         } catch (error) {
           console.error(
-            "Receipt number reload error:",
+            "Receipt defaults reload error:",
             error
           );
 
           setReceiptMessage(
-            "Receipt saved, but the next receipt number could not be loaded."
+            error instanceof Error
+              ? error.message
+              : "Receipt saved, but the default receipt form could not be reloaded."
           );
         }
       },
-      [
-        branch,
-        type,
-      ]
-    );
+      []
+    )
 
   /* =======================================================
      BRANCH SELECT OPTIONS
@@ -1345,564 +1431,635 @@ const Receipt: React.FC = () => {
      SAVE RECEIPT
   ======================================================= */
 
-  const handleSave =
-    useCallback(
-      async () => {
-        try {
-          const validRows =
-            rows.filter(
-              (row) =>
-                row.accountId &&
-                row.accountId.trim() !==
-                  ""
-            );
-
-          const receiptData = {
-            branch,
-
-            type,
-
-            cashBank:
-              cbAccount,
-
-            cbCcId,
-
-            receiptNo:
-              documentNo,
-
-            receiptDate:
-              date,
-
-            receivedFrom,
-
-            reference,
-
-            rows: validRows.map(
-              (
-                row,
-                index
-              ) => ({
-                id: row.id,
-
-                slNo:
-                  index + 1,
-
-                accountId:
-                  row.accountId,
-
-                accountName:
-                  row.accountName,
-
-                fgcs:
-                  row.fgcs,
-
-                division:
-                  row.division,
-
-                ccId:
-                  row.ccId,
-
-                creditAmount:
-                  Number(
-                    row.creditAmount
-                  ) || 0,
-
-                match:
-                  row.match,
-
-                description:
-                  row.description ||
-                  "",
-              })
-            ),
-
-            total,
-
-            note,
-          };
-
-          const saveType =
-            type === "B"
-              ? "BR"
-              : type === "C"
-              ? "CR"
-              : type;
-
-          console.log(
-            "========== SAVE RECEIPT =========="
-          );
-
-          console.log(
-            "RECEIPT TYPE:",
-            type
-          );
-
-          console.log(
-            "SAVE TYPE:",
-            saveType
-          );
-
-          console.log(
-            "SENDING RECEIPT:",
-            receiptData
-          );
-
-          const response =
-            await fetch(
-              "http://localhost:5000/api/Receipt/saveReceipt",
-              {
-                method: "POST",
-
-                headers: {
-                  "Content-Type":
-                    "application/json",
-                },
-
-                body: JSON.stringify({
-                  ...receiptData,
-
-                  type:
-                    saveType,
-                }),
-              }
-            );
-
-          const text =
-            await response.text();
-
-          console.log(
-            "SAVE STATUS:",
-            response.status
-          );
-
-          console.log(
-            "SAVE RAW RESPONSE:",
-            text
-          );
-
-          let result: {
-            success?: boolean;
-            message?: string;
-          };
-
-          try {
-            result =
-              JSON.parse(
-                text
-              );
-          } catch {
-            result = {
-              success: false,
-              message: text,
-            };
-          }
-
-          console.log(
-            "SAVE API RESPONSE:",
-            result
-          );
-
-          if (!response.ok) {
-            toast.error(
-              result.message ||
-                `Save failed. Status: ${response.status}`
-            );
-
-            return;
-          }
-
-          toast.success(
-            result.message ||
-              "Receipt saved successfully."
-          );
-
-          await resetTableAndLoadNextReceiptNumber();
-        } catch (error) {
-          console.error(
-            "SAVE ERROR:",
-            error
-          );
-
-          toast.error(
-            error instanceof Error
-              ? error.message
-              : "Cannot connect to Receipt API."
-          );
-        }
-      },
-      [
-        branch,
-        type,
-        cbAccount,
-        cbCcId,
-        documentNo,
-        date,
-        receivedFrom,
-        reference,
-        rows,
-        total,
-        note,
-        resetTableAndLoadNextReceiptNumber,
-      ]
+ const handleSave = useCallback(async () => {
+  try {
+    const validRows = rows.filter(
+      (row) =>
+        row.accountId &&
+        row.accountId.trim() !== ""
     );
+
+    /* ===============================================
+       VALIDATION
+    =============================================== */
+
+    const validationFailed =
+      !branch ||
+      !type ||
+      !documentNo.trim() ||
+      !date ||
+      !cbAccount ||
+      validRows.length === 0;
+
+    if (validationFailed) {
+      const validationMessage =
+        "Branch, type, receipt number, date, cash/bank, and one account row are required.";
+
+      toast.warning(validationMessage);
+      return;
+    }
+
+    /* ===============================================
+       SUBMIT CONFIRMATION (BEFORE API CALL)
+
+       NO  -> No API call, continue editing.
+       YES -> Continue Save API.
+    =============================================== */
+
+    const shouldSubmit = window.confirm(
+      "Do you want to submit?"
+    );
+
+    if (!shouldSubmit) {
+      console.log("❌ SAVE CANCELLED BY USER");
+      console.log("❌ NO API CALL WAS MADE");
+      return;
+    }
+
+    /* ===============================================
+       CREATE SAVE PAYLOAD
+    =============================================== */
+
+    const receiptData = {
+      branch,
+
+      type,
+
+      cashBank: cbAccount,
+
+      cbCcId,
+
+      receiptNo: documentNo,
+
+      receiptDate: date,
+
+      receivedFrom,
+
+      reference,
+
+      rows: validRows.map(
+        (row, index) => ({
+          id: row.id,
+
+          slNo: index + 1,
+
+          accountId: row.accountId,
+
+          accountName: row.accountName,
+
+          fgcs: row.fgcs,
+
+          division: row.division,
+
+          ccId: row.ccId,
+
+          creditAmount:
+            Number(row.creditAmount) || 0,
+
+          match: row.match,
+
+          description:
+            row.description || "",
+        })
+      ),
+
+      total,
+
+      note,
+    };
+
+    const saveType =
+      type === "B"
+        ? "BR"
+        : type === "C"
+        ? "CR"
+        : type;
+
+    console.log(
+      "========== SAVE RECEIPT =========="
+    );
+
+    console.log("RECEIPT TYPE:", type);
+
+    console.log("SAVE TYPE:", saveType);
+
+    console.log(
+      "SENDING RECEIPT:",
+      receiptData
+    );
+
+    /* ===============================================
+       SAVE API
+    =============================================== */
+
+    const response = await fetch(
+      "http://localhost:5000/api/Receipt/saveReceipt",
+      {
+        method: "POST",
+
+        headers: {
+          "Content-Type":
+            "application/json",
+        },
+
+        body: JSON.stringify({
+          ...receiptData,
+
+          type: saveType,
+        }),
+      }
+    );
+
+    const text = await response.text();
+
+    console.log(
+      "SAVE STATUS:",
+      response.status
+    );
+
+    console.log(
+      "SAVE RAW RESPONSE:",
+      text
+    );
+
+    let result: {
+      success?: boolean;
+      message?: string;
+    };
+
+    try {
+      result = JSON.parse(text);
+    } catch {
+      result = {
+        success: false,
+        message: text,
+      };
+    }
+
+    console.log(
+      "SAVE API RESPONSE:",
+      result
+    );
+
+    if (!response.ok) {
+      toast.error(
+        result.message ||
+          `Save failed. Status: ${response.status}`
+      );
+      return;
+    }
+
+    /* ===============================================
+       SUCCESS
+    =============================================== */
+
+    toast.success(
+      result.message ||
+        "Receipt saved successfully."
+    );
+
+    /* ===============================================
+       CLEAR FORM + RECALL DEFAULT BRANCH / TYPE /
+       NEW RECEIPT NUMBER
+    =============================================== */
+
+    await resetTableAndLoadNextReceiptNumber();
+
+  } catch (error) {
+    console.error(
+      "SAVE ERROR:",
+      error
+    );
+
+    toast.error(
+      error instanceof Error
+        ? error.message
+        : "Cannot connect to Receipt API."
+    );
+  }
+}, [
+  branch,
+  type,
+  cbAccount,
+  cbCcId,
+  documentNo,
+  date,
+  receivedFrom,
+  reference,
+  rows,
+  total,
+  note,
+  resetTableAndLoadNextReceiptNumber,
+]);
 
   /* =======================================================
      MODIFY RECEIPT
   ======================================================= */
 
-  const handleModify =
-    useCallback(
-      async () => {
-        /* ===============================================
-           THIS MUST APPEAR IMMEDIATELY WHEN BUTTON IS CLICKED
-        =============================================== */
+ const handleModify =
+  useCallback(
+    async () => {
+      /* ===============================================
+         THIS MUST APPEAR IMMEDIATELY WHEN BUTTON IS CLICKED
+      =============================================== */
 
-        console.log(
-          "========================================"
+      console.log(
+        "========================================"
+      );
+
+      console.log(
+        "🔥 MODIFY FUNCTION CALLED"
+      );
+
+      console.log(
+        "========================================"
+      );
+
+      /* ===============================================
+         FILTER VALID ROWS
+      =============================================== */
+
+      const validRows =
+        rows.filter(
+          (row) =>
+            row.accountId &&
+            row.accountId.trim() !== ""
         );
 
-        console.log(
-          "🔥 MODIFY FUNCTION CALLED"
+      console.log(
+        "MODIFY CURRENT VALUES:",
+        {
+          branch,
+          type,
+          cbAccount,
+          cbCcId,
+          documentNo,
+          date,
+          receivedFrom,
+          reference,
+          note,
+        }
+      );
+
+      console.log(
+        "MODIFY VALID ROWS:",
+        validRows
+      );
+
+      /* ===============================================
+         VALIDATION
+      =============================================== */
+
+      const validationFailed =
+        !branch ||
+        !type ||
+        !documentNo.trim() ||
+        !date ||
+        !cbAccount ||
+        validRows.length === 0;
+
+      if (validationFailed) {
+        console.error(
+          "❌ MODIFY STOPPED BY VALIDATION"
         );
 
-        console.log(
-          "========================================"
-        );
-
-        /* ===============================================
-           FILTER VALID ROWS
-        =============================================== */
-
-        const validRows =
-          rows.filter(
-            (row) =>
-              row.accountId &&
-              row.accountId.trim() !==
-                ""
-          );
-
-        console.log(
-          "MODIFY CURRENT VALUES:",
+        console.error(
+          "Validation values:",
           {
-            branch,
-            type,
-            cbAccount,
-            cbCcId,
-            documentNo,
-            date,
-            receivedFrom,
-            reference,
-            note,
+            branch: !!branch,
+            type: !!type,
+            documentNo:
+              !!documentNo.trim(),
+            date: !!date,
+            cbAccount: !!cbAccount,
+            validRows:
+              validRows.length,
           }
         );
 
-        console.log(
-          "MODIFY VALID ROWS:",
-          validRows
+        const validationMessage =
+          "Branch, type, receipt number, date, cash/bank, and one account row are required.";
+
+        setReceiptMessage(
+          validationMessage
         );
 
-        /* ===============================================
-           VALIDATION
-        =============================================== */
+        toast.warning(
+          validationMessage
+        );
 
-        const validationFailed =
-          !branch ||
-          !type ||
-          !documentNo.trim() ||
-          !date ||
-          !cbAccount ||
-          validRows.length === 0;
+        return;
+      }
 
-        if (validationFailed) {
-          console.error(
-            "❌ MODIFY STOPPED BY VALIDATION"
-          );
+      /* ===============================================
+         SUBMIT CONFIRMATION
 
-          console.error(
-            "Validation values:",
+         IMPORTANT:
+         This happens BEFORE the API call.
+
+         NO  → no API call, no reset, stay in edit mode.
+         YES → continue to API.
+      =============================================== */
+
+      const shouldSubmit =
+        window.confirm(
+          "Do you want to submit?"
+        );
+
+      if (!shouldSubmit) {
+        console.log(
+          "❌ MODIFY CANCELLED BY USER"
+        );
+
+        console.log(
+          "❌ NO API CALL WAS MADE"
+        );
+
+        return;
+      }
+
+      console.log(
+        "✅ MODIFY SUBMISSION CONFIRMED"
+      );
+
+      /* ===============================================
+         CREATE MODIFY PAYLOAD
+      =============================================== */
+
+      const modifyPayload = {
+        branch,
+
+        type:
+          toDocumentType(type),
+
+        cashBank:
+          cbAccount,
+
+        cbCcId,
+
+        /* IMPORTANT:
+           Keep the loaded receipt number.
+           Do NOT generate a new number.
+        */
+        docNo:
+          documentNo.trim(),
+
+        receiptDate:
+          date,
+
+        receivedFrom,
+
+        reference,
+
+        note,
+
+        rows: validRows.map(
+          (
+            row,
+            index
+          ) => ({
+            id:
+              row.id,
+
+            slNo:
+              index + 1,
+
+            accountId:
+              row.accountId,
+
+            accountName:
+              row.accountName,
+
+            fgcs:
+              row.fgcs,
+
+            division:
+              row.division,
+
+            ccId:
+              row.ccId,
+
+            creditAmount:
+              Number(
+                row.creditAmount
+              ) || 0,
+
+            match:
+              row.match,
+
+            description:
+              row.description ||
+              "",
+          })
+        ),
+
+        total,
+      };
+
+      /* ===============================================
+         DEBUG PAYLOAD
+      =============================================== */
+
+      console.log(
+        "🔥 MODIFY PAYLOAD:"
+      );
+
+      console.log(
+        JSON.stringify(
+          modifyPayload,
+          null,
+          2
+        )
+      );
+
+      console.log(
+        "MODIFY DOC TYPE:",
+        modifyPayload.type
+      );
+
+      console.log(
+        "MODIFY DOC NO:",
+        modifyPayload.docNo
+      );
+
+      /* ===============================================
+         CALL API
+
+         This is reached ONLY when user selected YES.
+      =============================================== */
+
+      try {
+        console.log(
+          "🔥 CALLING:",
+          "http://localhost:5000/api/Receipt/modifyReceipt"
+        );
+
+        const response =
+          await fetch(
+            "http://localhost:5000/api/Receipt/modifyReceipt",
             {
-              branch: !!branch,
-              type: !!type,
-              documentNo: !!documentNo.trim(),
-              date: !!date,
-              cbAccount: !!cbAccount,
-              validRows:
-                validRows.length,
+              method: "POST",
+
+              headers: {
+                "Content-Type":
+                  "application/json",
+              },
+
+              body:
+                JSON.stringify(
+                  modifyPayload
+                ),
             }
           );
 
-          const validationMessage =
-            "Branch, type, receipt number, date, cash/bank, and one account row are required.";
+        console.log(
+          "🔥 MODIFY API STATUS:",
+          response.status
+        );
 
-          setReceiptMessage(
-            validationMessage
-          );
+        console.log(
+          "🔥 MODIFY API OK:",
+          response.ok
+        );
 
-          toast.warning(
-            validationMessage
-          );
+        /* =============================================
+           READ RESPONSE AS TEXT FIRST
+        ============================================= */
 
-          return;
-        }
+        const responseText =
+          await response.text();
 
-        /* ===============================================
-           CREATE MODIFY PAYLOAD
-        =============================================== */
+        console.log(
+          "🔥 MODIFY RAW RESPONSE:"
+        );
 
-        const modifyPayload = {
-          branch,
+        console.log(
+          responseText
+        );
 
-          type:
-            toDocumentType(type),
-
-          cashBank:
-            cbAccount,
-
-          cbCcId,
-
-          /* IMPORTANT:
-             Keep the loaded receipt number.
-             Do NOT generate a new number.
-          */
-          docNo:
-            documentNo.trim(),
-
-          receiptDate:
-            date,
-
-          receivedFrom,
-
-          reference,
-
-          note,
-
-          rows: validRows.map(
-            (
-              row,
-              index
-            ) => ({
-              id:
-                row.id,
-
-              slNo:
-                index + 1,
-
-              accountId:
-                row.accountId,
-
-              accountName:
-                row.accountName,
-
-              fgcs:
-                row.fgcs,
-
-              division:
-                row.division,
-
-              ccId:
-                row.ccId,
-
-              creditAmount:
-                Number(
-                  row.creditAmount
-                ) || 0,
-
-              match:
-                row.match,
-
-              description:
-                row.description ||
-                "",
-            })
-          ),
-
-          total,
+        let result: {
+          success?: boolean;
+          message?: string;
+          data?: unknown;
         };
 
-        /* ===============================================
-           DEBUG PAYLOAD
-        =============================================== */
-
-        console.log(
-          "🔥 MODIFY PAYLOAD:"
-        );
-
-        console.log(
-          JSON.stringify(
-            modifyPayload,
-            null,
-            2
-          )
-        );
-
-        console.log(
-          "MODIFY DOC TYPE:",
-          modifyPayload.type
-        );
-
-        console.log(
-          "MODIFY DOC NO:",
-          modifyPayload.docNo
-        );
-
-        /* ===============================================
-           CALL API
-        =============================================== */
-
         try {
-          console.log(
-            "🔥 CALLING:",
-            "http://localhost:5000/api/updateReceipt"
-          );
-
-          const response =
-            await fetch(
-              "http://localhost:5000/api/Receipt/modifyReceipt",
-              {
-                method: "POST",
-
-                headers: {
-                  "Content-Type":
-                    "application/json",
-                },
-
-                body:
-                  JSON.stringify(
-                    modifyPayload
-                  ),
-              }
-            );
-
-          console.log(
-            "🔥 MODIFY API STATUS:",
-            response.status
-          );
-
-          console.log(
-            "🔥 MODIFY API OK:",
-            response.ok
-          );
-
-          /* =============================================
-             READ RESPONSE AS TEXT FIRST
-          ============================================= */
-
-          const responseText =
-            await response.text();
-
-          console.log(
-            "🔥 MODIFY RAW RESPONSE:"
-          );
-
-          console.log(
-            responseText
-          );
-
-          let result: {
-            success?: boolean;
-            message?: string;
-            data?: unknown;
-          };
-
-          try {
-            result =
-              JSON.parse(
-                responseText
-              ) as {
-                success?: boolean;
-                message?: string;
-                data?: unknown;
-              };
-          } catch {
-            result = {
-              success:
-                response.ok,
-              message:
-                responseText,
+          result =
+            JSON.parse(
+              responseText
+            ) as {
+              success?: boolean;
+              message?: string;
+              data?: unknown;
             };
-          }
+        } catch {
+          result = {
+            success:
+              response.ok,
+            message:
+              responseText,
+          };
+        }
 
-          console.log(
-            "🔥 MODIFY PARSED RESPONSE:",
-            result
-          );
+        console.log(
+          "🔥 MODIFY PARSED RESPONSE:",
+          result
+        );
 
-          /* =============================================
-             HTTP ERROR
-          ============================================= */
+        /* =============================================
+           HTTP ERROR
+        ============================================= */
 
-          if (!response.ok) {
-            throw new Error(
-              result.message ||
-                `Receipt could not be modified. HTTP ${response.status}`
-            );
-          }
-
-          /* =============================================
-             SUCCESS
-             
-             DO NOT CHECK:
-               result.success !== true
-
-             because the backend response currently
-             returns message/data without necessarily
-             returning success:true.
-          ============================================= */
-
-          console.log(
-            "✅ MODIFY API SUCCESS"
-          );
-
-          setReceiptMessage(
+        if (!response.ok) {
+          throw new Error(
             result.message ||
-              "Receipt modified successfully."
-          );
-
-          toast.success(
-            result.message ||
-              "Receipt modified successfully."
-          );
-
-          /* =============================================
-             RESET + NEW RECEIPT NUMBER
-          ============================================= */
-
-          await resetTableAndLoadNextReceiptNumber();
-        } catch (error) {
-          console.error(
-            "🔥 MODIFY ERROR:",
-            error
-          );
-
-          const errorMessage =
-            error instanceof Error
-              ? error.message
-              : "Receipt could not be modified.";
-
-          setReceiptMessage(
-            errorMessage
-          );
-
-          toast.error(
-            errorMessage
+              `Receipt could not be modified. HTTP ${response.status}`
           );
         }
-      },
-      [
-        branch,
-        type,
-        cbAccount,
-        cbCcId,
-        documentNo,
-        date,
-        receivedFrom,
-        reference,
-        note,
-        rows,
-        total,
-        resetTableAndLoadNextReceiptNumber,
-      ]
-    );
+
+        /* =============================================
+           SUCCESS
+
+           DO NOT CHECK:
+             result.success !== true
+
+           because the backend response currently
+           returns message/data without necessarily
+           returning success:true.
+        ============================================= */
+
+        console.log(
+          "✅ MODIFY API SUCCESS"
+        );
+
+        setReceiptMessage(
+          result.message ||
+            "Receipt modified successfully."
+        );
+
+        toast.success(
+          result.message ||
+            "Receipt modified successfully."
+        );
+
+        /* =============================================
+           CLEAR FORM + RECALL RECEIPT DATA
+
+           This happens ONLY after successful Modify.
+
+           It will:
+           - clear table data
+           - clear Received From
+           - clear Reference
+           - clear Description
+           - clear Note
+           - load default Branch
+           - load default Type
+           - fetch a NEW Receipt No
+           - exit modify mode
+        ============================================= */
+
+        await resetTableAndLoadNextReceiptNumber();
+
+      } catch (error) {
+        /* =============================================
+           MODIFY ERROR
+        ============================================= */
+
+        console.error(
+          "🔥 MODIFY ERROR:",
+          error
+        );
+
+        const errorMessage =
+          error instanceof Error
+            ? error.message
+            : "Receipt could not be modified.";
+
+        setReceiptMessage(
+          errorMessage
+        );
+
+        toast.error(
+          errorMessage
+        );
+      }
+    },
+    [
+      branch,
+      type,
+      cbAccount,
+      cbCcId,
+      documentNo,
+      date,
+      receivedFrom,
+      reference,
+      note,
+      rows,
+      total,
+      resetTableAndLoadNextReceiptNumber,
+    ]
+  );
 
   /* =======================================================
      CLEAR FORM
@@ -1910,41 +2067,12 @@ const Receipt: React.FC = () => {
 
   const clearForm =
     useCallback(() => {
-      setCbAccount("");
-
-      setCbCcId("");
-
-      setReference("");
-
-      setReceivedFrom("");
-
-      setNote("");
-
-      setIsModifyMode(
-        false
-      );
-
-      setReceiptMessage("");
-
-      lastLookupKeyRef.current =
-        "";
-
-      setDescription("");
-
-      setActiveDescriptionRow(
-        null
-      );
-
-      setDate(
-        getTodayDate
-      );
-
-      setRows(
-        createRows()
-      );
-
-      /* Keep document number unchanged. */
-    }, []);
+      /*
+       * Clear uses the exact same reset path as the
+       * post-Save / post-Modify confirmation.
+       */
+      void resetTableAndLoadNextReceiptNumber();
+    }, [resetTableAndLoadNextReceiptNumber]);
 
   /* =======================================================
      INITIAL FOCUS
@@ -2124,6 +2252,9 @@ const Receipt: React.FC = () => {
           accountOptions={
             accountOptions
           }
+          accountSortByIdOptions={
+  accountSortByIdOptions
+}
 
           costCenters={
             costCenters
@@ -2208,6 +2339,57 @@ const Receipt: React.FC = () => {
           }
         />
 
+        {isPrint &&(<div>
+
+          <ReceiptPrint
+  receivedFrom={receivedFrom}
+  receiptNo={documentNo}
+  date={date}
+  reference={reference}
+  fop={cbAccount}
+  currency="SAR"
+  amountInFigures={total}
+  amountInWords=""
+  description={
+    rows
+      .filter(
+        (row) =>
+          row.accountId &&
+          row.accountId.trim() !== ""
+      )
+      .map(
+        (row) =>
+          row.description || ""
+      )
+      .filter(Boolean)
+      .join(" ")
+  }
+  transactions={rows
+    .filter(
+      (row) =>
+        row.accountId &&
+        row.accountId.trim() !== ""
+    )
+    .map((row) => ({
+      accountId:
+        row.accountId,
+
+      accountName:
+        row.accountName,
+
+      description:
+        row.description || "",
+
+      creditAmount:
+        Number(
+          row.creditAmount
+        ) || 0,
+    }))}
+  preparedBy="MOHAMMED"
+  preparedDate="16/09/2026 16:29"
+/>
+        </div>) }
+
         {/* =================================================
             ACTIONS
         ================================================= */}
@@ -2220,6 +2402,8 @@ const Receipt: React.FC = () => {
           clearForm={
             clearForm
           }
+            onPrint={handlePrint}
+
 
           onSave={
             isModifyMode

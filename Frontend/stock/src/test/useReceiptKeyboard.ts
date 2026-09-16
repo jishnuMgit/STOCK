@@ -1,7 +1,10 @@
+
 import { useCallback } from "react";
+import type { RefObject } from "react";
 import type { SelectInstance } from "react-select";
 
 import type { TableField } from "../components/Transaction/Receipt/save/ReceiptTable";
+
 
 /* =========================================================
    HEADER FIELDS
@@ -16,6 +19,7 @@ export type HeaderField =
   | "receivedFrom"
   | "reference";
 
+
 /* =========================================================
    BOTTOM FIELDS
 ========================================================= */
@@ -23,6 +27,7 @@ export type HeaderField =
 export type BottomField =
   | "description"
   | "note";
+
 
 /* =========================================================
    ACTION FIELDS
@@ -37,51 +42,54 @@ export type ActionField =
   | "attach"
   | "clear";
 
+
 /* =========================================================
    REF TYPES
 ========================================================= */
 
 interface UseReceiptKeyboardProps {
-  branchRef: React.RefObject<
+
+  branchRef: RefObject<
     SelectInstance<any, false> | null
   >;
 
-  typeRef: React.RefObject<
+  typeRef: RefObject<
     SelectInstance<any, false> | null
   >;
 
-  documentNoRef: React.RefObject<
+  documentNoRef: RefObject<
     HTMLInputElement | null
   >;
 
-  cbAccountRef: React.RefObject<
+  cbAccountRef: RefObject<
     SelectInstance<any, false> | null
   >;
 
-  dateRef: React.RefObject<
+  dateRef: RefObject<
     HTMLInputElement | null
   >;
 
-  receivedFromRef: React.RefObject<
+  receivedFromRef: RefObject<
     HTMLInputElement | null
   >;
 
-  referenceRef: React.RefObject<
+  referenceRef: RefObject<
     HTMLInputElement | null
   >;
 
-  descriptionRef: React.RefObject<
+  descriptionRef: RefObject<
     HTMLInputElement | null
   >;
 
-  noteRef: React.RefObject<
+  noteRef: RefObject<
     HTMLTextAreaElement | null
   >;
 
-  receiptTableRef: React.RefObject<any>;
+  receiptTableRef: RefObject<any>;
 
-  actionsRef: React.RefObject<any>;
+  actionsRef: RefObject<any>;
 }
+
 
 /* =========================================================
    HOOK
@@ -101,6 +109,7 @@ const useReceiptKeyboard = ({
   actionsRef,
 }: UseReceiptKeyboardProps) => {
 
+
   /* =======================================================
      1. FOCUS ELEMENT
   ======================================================= */
@@ -110,71 +119,251 @@ const useReceiptKeyboard = ({
       element: HTMLElement | null,
       selectText = false
     ) => {
+
       if (!element) {
         return;
       }
 
+
+      /*
+         First focus after the current render.
+      */
+
       requestAnimationFrame(() => {
-        element.focus();
+
+        if (!element) {
+          return;
+        }
+
+
+        try {
+
+          element.focus();
+
+        } catch {
+          return;
+        }
+
+
+        /*
+           Select text only for native inputs.
+
+           IMPORTANT:
+           react-select is not an HTMLInputElement
+           from the ref perspective, so never call
+           .select() on it here.
+        */
 
         if (
           selectText &&
           element instanceof HTMLInputElement &&
           element.type !== "checkbox"
         ) {
-          element.select();
+
+          try {
+
+            element.select();
+
+          } catch {
+            /*
+               Ignore selection errors.
+            */
+
+          }
+
         }
+
       });
+
     },
     []
   );
 
+
   /* =======================================================
-     2. FOCUS HEADER FIELD
+     2. FOCUS REACT-SELECT
+  ======================================================= */
+
+  const focusSelect = useCallback(
+    (
+      selectRef: RefObject<
+        SelectInstance<any, false> | null
+      >
+    ) => {
+
+      /*
+         react-select exposes focus()
+         through SelectInstance.
+      */
+
+      const select =
+        selectRef.current;
+
+
+      if (!select) {
+        return;
+      }
+
+
+      /*
+         Focus immediately if possible.
+      */
+
+      try {
+
+        select.focus();
+
+      } catch {
+        /*
+           Select may currently be
+           re-rendering.
+        */
+
+      }
+
+
+      /*
+         Retry after React has completed
+         the next render.
+
+         This helps when Account ID /
+         Account Name selection causes
+         the table row to update.
+      */
+
+      requestAnimationFrame(() => {
+
+        const currentSelect =
+          selectRef.current;
+
+
+        if (!currentSelect) {
+          return;
+        }
+
+
+        try {
+
+          currentSelect.focus();
+
+        } catch {
+          /*
+             Ignore temporary focus errors.
+          */
+
+        }
+
+      });
+
+    },
+    []
+  );
+
+
+  /* =======================================================
+     3. FOCUS HEADER FIELD
   ======================================================= */
 
   const focusHeaderField = useCallback(
     (field: HeaderField) => {
+
       switch (field) {
+
+        /* -------------------------------------------------
+           BRANCH
+        ------------------------------------------------- */
+
         case "branch":
-          focusElement(branchRef.current);
+
+          focusSelect(
+            branchRef
+          );
+
           break;
+
+
+        /* -------------------------------------------------
+           TYPE
+        ------------------------------------------------- */
 
         case "type":
-          focusElement(typeRef.current);
+
+          focusSelect(
+            typeRef
+          );
+
           break;
 
+
+        /* -------------------------------------------------
+           DOCUMENT NUMBER
+        ------------------------------------------------- */
+
         case "documentNo":
+
           focusElement(
             documentNoRef.current,
             true
           );
+
           break;
+
+
+        /* -------------------------------------------------
+           CASH / BANK ACCOUNT
+        ------------------------------------------------- */
 
         case "cbAccount":
-          focusElement(
-            cbAccountRef.current
+
+          focusSelect(
+            cbAccountRef
           );
+
           break;
+
+
+        /* -------------------------------------------------
+           DATE
+        ------------------------------------------------- */
 
         case "date":
-          focusElement(dateRef.current);
+
+          focusElement(
+            dateRef.current
+          );
+
           break;
 
+
+        /* -------------------------------------------------
+           RECEIVED FROM
+        ------------------------------------------------- */
+
         case "receivedFrom":
+
           focusElement(
             receivedFromRef.current,
             true
           );
+
           break;
 
+
+        /* -------------------------------------------------
+           REFERENCE
+        ------------------------------------------------- */
+
         case "reference":
+
           focusElement(
             referenceRef.current,
             true
           );
+
           break;
+
       }
+
     },
     [
       branchRef,
@@ -185,11 +374,13 @@ const useReceiptKeyboard = ({
       receivedFromRef,
       referenceRef,
       focusElement,
+      focusSelect,
     ]
   );
 
+
   /* =======================================================
-     3. FOCUS TABLE FIELD
+     4. FOCUS TABLE FIELD
   ======================================================= */
 
   const focusTableField = useCallback(
@@ -197,34 +388,70 @@ const useReceiptKeyboard = ({
       rowIndex: number,
       field: TableField
     ) => {
-      receiptTableRef.current?.focusField(
-        rowIndex,
-        field
-      );
+
+      /*
+         IMPORTANT:
+
+         Keep the existing ReceiptTable
+         keyboard flow unchanged.
+
+         ReceiptTable itself owns the
+         Account ID / Account Name refs.
+      */
+
+      requestAnimationFrame(() => {
+
+        receiptTableRef.current?.focusField(
+          rowIndex,
+          field
+        );
+
+      });
+
     },
-    [receiptTableRef]
+    [
+      receiptTableRef,
+    ]
   );
 
+
   /* =======================================================
-     4. FOCUS BOTTOM FIELD
+     5. FOCUS BOTTOM FIELD
   ======================================================= */
 
   const focusBottomField = useCallback(
     (field: BottomField) => {
+
       switch (field) {
+
+        /* -------------------------------------------------
+           DESCRIPTION
+        ------------------------------------------------- */
+
         case "description":
+
           focusElement(
             descriptionRef.current,
             true
           );
+
           break;
 
+
+        /* -------------------------------------------------
+           NOTE
+        ------------------------------------------------- */
+
         case "note":
+
           focusElement(
             noteRef.current
           );
+
           break;
+
       }
+
     },
     [
       descriptionRef,
@@ -233,56 +460,148 @@ const useReceiptKeyboard = ({
     ]
   );
 
+
   /* =======================================================
-     5. FOCUS ACTION BUTTON
+     6. FOCUS ACTION BUTTON
   ======================================================= */
 
   const focusActionButton = useCallback(
     (field: ActionField) => {
+
       switch (field) {
+
+        /* -------------------------------------------------
+           SAVE
+        ------------------------------------------------- */
+
         case "save":
-          actionsRef.current?.focusSave();
+
+          requestAnimationFrame(() => {
+
+            actionsRef.current?.focusSave?.();
+
+          });
+
           break;
+
+
+        /* -------------------------------------------------
+           SEARCH
+        ------------------------------------------------- */
 
         case "search":
-          actionsRef.current?.focusSearch?.();
+
+          requestAnimationFrame(() => {
+
+            actionsRef.current?.focusSearch?.();
+
+          });
+
           break;
+
+
+        /* -------------------------------------------------
+           DELETE
+        ------------------------------------------------- */
 
         case "delete":
-          actionsRef.current?.focusDelete?.();
+
+          requestAnimationFrame(() => {
+
+            actionsRef.current?.focusDelete?.();
+
+          });
+
           break;
+
+
+        /* -------------------------------------------------
+           PRINT
+        ------------------------------------------------- */
 
         case "print":
-          actionsRef.current?.focusPrint?.();
+
+          requestAnimationFrame(() => {
+
+            actionsRef.current?.focusPrint?.();
+
+          });
+
           break;
+
+
+        /* -------------------------------------------------
+           POST
+        ------------------------------------------------- */
 
         case "post":
-          actionsRef.current?.focusPost?.();
+
+          requestAnimationFrame(() => {
+
+            actionsRef.current?.focusPost?.();
+
+          });
+
           break;
+
+
+        /* -------------------------------------------------
+           ATTACH
+        ------------------------------------------------- */
 
         case "attach":
-          actionsRef.current?.focusAttach?.();
+
+          requestAnimationFrame(() => {
+
+            actionsRef.current?.focusAttach?.();
+
+          });
+
           break;
 
+
+        /* -------------------------------------------------
+           CLEAR
+        ------------------------------------------------- */
+
         case "clear":
-          actionsRef.current?.focusClear?.();
+
+          requestAnimationFrame(() => {
+
+            actionsRef.current?.focusClear?.();
+
+          });
+
           break;
+
       }
+
     },
-    [actionsRef]
+    [
+      actionsRef,
+    ]
   );
+
 
   /* =======================================================
      RETURN
   ======================================================= */
 
   return {
+
     focusElement,
+
     focusHeaderField,
+
     focusTableField,
+
     focusBottomField,
+
     focusActionButton,
+
   };
+
 };
+
 
 export default useReceiptKeyboard;

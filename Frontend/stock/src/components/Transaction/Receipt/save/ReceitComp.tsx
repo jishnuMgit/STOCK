@@ -228,7 +228,7 @@ interface ReceiptDocNumberResponse {
 
   data: {
     fdocno: string;
-    fdocnolen:number
+    fdocnolen: number
   }[];
 
   message?: string;
@@ -903,9 +903,15 @@ const [docnolen, setdocnolen] = useState<number>(0);
             onBlur={(e) => {
 
 
-              if(docnolen != e.target.value.length){
-toast.warning(`Receipt No. width must be   ${docnolen} `)
-return
+              if (
+                documentNoEditable &&
+                docnolen > 0 &&
+                e.target.value.length !== docnolen
+              ) {
+                toast.warning(
+                  `Receipt No. width must be ${docnolen}`
+                );
+                return;
               }
 
               if (documentNoEditable) {
@@ -1240,6 +1246,7 @@ interface ReceiptTableProps {
   ) => void;
 
   accountOptions?: AccountData[];
+accountSortByIdOptions?: AccountData[];
 
   costCenters?: CostCenter[];
 }
@@ -1374,10 +1381,10 @@ const accountFilterOption = (
   }
 
   return (
-    option.data.accountId
+    String(option.data.accountId || "")
       .toLowerCase()
       .includes(search) ||
-    option.data.accountName
+    String(option.data.accountName || "")
       .toLowerCase()
       .includes(search)
   );
@@ -1430,6 +1437,8 @@ interface ReceiptRowProps {
 
   realAccountOptions: AccountOption[];
 
+  accountIdOptions: AccountOption[];
+
   ccIdOptions: SelectOption[];
 
   setSelectedRowId: (
@@ -1467,6 +1476,7 @@ const ReceiptRow = memo(
     index,
     isSelected,
     realAccountOptions,
+    accountIdOptions,
     ccIdOptions,
     setSelectedRowId,
     setRowRef,
@@ -2069,9 +2079,7 @@ const formatCreditAmount = (
                 option
               );
             }}
-            options={
-              realAccountOptions
-            }
+           options={accountIdOptions}
             placeholder=""
             styles={accountDropdownStyles}
             components={{
@@ -2475,15 +2483,16 @@ export const ReceiptTable =
   >(
     (
       {
-        rows,
-        handleRowChange,
-        onFieldEnter,
-        onTableEscape,
-        onClearRow,
-        onSortRows,
-        accountOptions = [],
-        costCenters = [],
-      },
+  rows,
+  handleRowChange,
+  onFieldEnter,
+  onTableEscape,
+  onClearRow,
+  onSortRows,
+  accountOptions = [],
+  accountSortByIdOptions = [],
+  costCenters = [],
+},
       ref
     ) => {
       const [
@@ -2606,6 +2615,40 @@ export const ReceiptTable =
           },
           [accountOptions]
         );
+
+        const accountIdOptions =
+  useMemo<AccountOption[]>(() => {
+    if (!Array.isArray(accountSortByIdOptions)) {
+      return [];
+    }
+
+    return accountSortByIdOptions
+      .filter(
+        (account) =>
+          Boolean(
+            account &&
+            account.faccountid
+          )
+      )
+      .map(
+        (account) => ({
+          value: account.faccountid,
+          label: account.faccountid,
+
+          accountId:
+            account.faccountid,
+
+          accountName:
+            account.faccountname || "",
+
+          fgcs:
+            account.fgcs || "",
+
+          haveCc:
+            account.fhavecc === true,
+        })
+      );
+  }, [accountSortByIdOptions]);
 
       const ccIdOptions =
         useMemo<SelectOption[]>(
@@ -2769,6 +2812,9 @@ export const ReceiptTable =
                     }
                     realAccountOptions={
                       realAccountOptions
+                    }
+                    accountIdOptions={
+                      accountIdOptions
                     }
                     ccIdOptions={
                       ccIdOptions

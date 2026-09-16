@@ -1160,9 +1160,8 @@ export async function GetData({
     ===================================================== */
 
     reference:
-      dbHeader.fref ??
-      "",
-
+  dbHeader.freference ??
+  "",
 
     /* =====================================================
        NOTE
