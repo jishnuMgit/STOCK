@@ -17,11 +17,11 @@ import JournalTable, {
   type CostCenter,
 } from "../../../components/Transaction/Journal/JournalTable";
 
-import ReceiptBottomForm from "../../../components/Transaction/Receipt/save/ReceiptBottomForm";
+import ReceiptBottomForm from "../../../test/ReceiptBottomForm";
 
 import ReceiptActions, {
   type ReceiptActionsRef,
-} from "../../../components/Transaction/Receipt/save/ReceiptActions";
+} from "../../../test/ReceiptActions";
 
 import JournalForm from "../../../components/Transaction/Journal/JournalForm";
 import JournalHeader from "../../../components/Transaction/Journal/JournalHeader";

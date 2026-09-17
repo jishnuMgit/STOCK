@@ -1,12 +1,18 @@
-import express from 'express'
-const app = express();
+import express from "express";
 import dotenv from "dotenv";
-import ReceiptRouter from './routes/ReceiptRouter.js'
-import cors from 'cors'
+import cors from 'cors';
+
+import ReceiptRouter from "./routes/ReceiptRouter.js";
+import MatchRouter from './routes/MatchRouter.js'
+import pool from "./DB/db.js";
+
 dotenv.config();
-import pool from './DB/db.js'
+
+const app = express();
+
 app.use(express.json());
-app.use(cors())
+app.use(cors());
+
 app.get("/test-db", async (req, res) => {
   try {
     const result = await pool.query("SELECT NOW()");
@@ -16,17 +22,19 @@ app.get("/test-db", async (req, res) => {
       message: "PostgreSQL connected",
       time: result.rows[0].now,
     });
-  } catch (error) {
+  } catch (error: unknown) {
     console.error(error);
 
     res.status(500).json({
       success: false,
       message: "Database connection failed",
-      error: error.message,
+      error: error instanceof Error ? error.message : "Unknown error",
     });
   }
 });
+
 app.use("/api/Receipt", ReceiptRouter);
+app.use('/api/Match',MatchRouter)
 
 
 app.listen(5000, () => {

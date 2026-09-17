@@ -58,3 +58,30 @@
   transition:
     width 0.2s ease;
 }
+
+/* =========================================
+   PRINT
+========================================= */
+
+.print-only {
+  display: none;
+}
+
+@media print {
+  body * {
+    visibility: hidden;
+  }
+
+  .print-only,
+  .print-only * {
+    visibility: visible;
+  }
+
+  .print-only {
+    display: block;
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 100%;
+  }
+}

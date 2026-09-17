@@ -45,66 +45,8 @@ dayjs.extend(customParseFormat);
    COMMON TYPES
 ========================================================= */
 
-export interface SelectOption {
-  value: string;
-  label: string;
-}
+import  {type SelectOption,type ReceiptDocNumberResponse,type AccountResponse,type CustomerDivision,type FinancialParameter,type CostCenter,  type ReceiptRow,type AccountData,type CbAccount } from '../../../../types/receiptypes';
 
-export interface Branch {
-  fbrid: string;
-  fbrname: string;
-}
-
-export interface FinancialParameter {
-  fptype: string;
-  fpid: string;
-  fpname: string;
-  fpositionno: number;
-}
-
-export interface CostCenter {
-  fccid: string;
-  fccname: string;
-  fpositionno: number;
-}
-
-export interface AccountData {
-  fcoid: string;
-  faccountid: string;
-  faccountgroupid?: string;
-  fgph: string;
-  fgcs: string;
-  faccountname: string;
-  fhavecc: boolean;
-}
-
-export interface ReceiptRow {
-  id: number;
-
-  accountId: string;
-  accountName: string;
-
-  fgcs: string;
-
-  haveCc: boolean;
-
-  hasDivision: boolean;
-
-  division: string;
-
-  ccId: string;
-
-  creditAmount: string;
-
-  match: boolean;
-
-  description?: string;
-}
-
-export interface CustomerDivision {
-  fdivid: string;
-  fdivname: string;
-}
 
 export type TableField =
   | "accountId"
@@ -207,32 +149,6 @@ interface ReceiptFormProps {
   documentNoEditable?: boolean;
 }
 
-interface CbAccount {
-  fcoid: string;
-  faccountid: string;
-  faccountgroupid?: string;
-  fgph: string;
-  fgcs: string;
-  faccountname: string;
-}
-
-interface AccountResponse {
-  message?: string;
-  success: boolean;
-  cashorbank: string;
-  data: CbAccount[];
-}
-
-interface ReceiptDocNumberResponse {
-  success: boolean;
-
-  data: {
-    fdocno: string;
-    fdocnolen:number
-  }[];
-
-  message?: string;
-}
 
 const CustomOption = (
   props: OptionProps<SelectOption, false>
@@ -903,9 +819,15 @@ const [docnolen, setdocnolen] = useState<number>(0);
             onBlur={(e) => {
 
 
-              if(docnolen != e.target.value.length){
-toast.warning(`Receipt No. width must be   ${docnolen} `)
-return
+              if (
+                documentNoEditable &&
+                docnolen > 0 &&
+                e.target.value.length !== docnolen
+              ) {
+                toast.warning(
+                  `Receipt No. width must be ${docnolen}`
+                );
+                return;
               }
 
               if (documentNoEditable) {
@@ -1240,6 +1162,7 @@ interface ReceiptTableProps {
   ) => void;
 
   accountOptions?: AccountData[];
+accountSortByIdOptions?: AccountData[];
 
   costCenters?: CostCenter[];
 }
@@ -1374,10 +1297,10 @@ const accountFilterOption = (
   }
 
   return (
-    option.data.accountId
+    String(option.data.accountId || "")
       .toLowerCase()
       .includes(search) ||
-    option.data.accountName
+    String(option.data.accountName || "")
       .toLowerCase()
       .includes(search)
   );
@@ -1430,6 +1353,8 @@ interface ReceiptRowProps {
 
   realAccountOptions: AccountOption[];
 
+  accountIdOptions: AccountOption[];
+
   ccIdOptions: SelectOption[];
 
   setSelectedRowId: (
@@ -1467,6 +1392,7 @@ const ReceiptRow = memo(
     index,
     isSelected,
     realAccountOptions,
+    accountIdOptions,
     ccIdOptions,
     setSelectedRowId,
     setRowRef,
@@ -2069,9 +1995,7 @@ const formatCreditAmount = (
                 option
               );
             }}
-            options={
-              realAccountOptions
-            }
+           options={accountIdOptions}
             placeholder=""
             styles={accountDropdownStyles}
             components={{
@@ -2475,15 +2399,16 @@ export const ReceiptTable =
   >(
     (
       {
-        rows,
-        handleRowChange,
-        onFieldEnter,
-        onTableEscape,
-        onClearRow,
-        onSortRows,
-        accountOptions = [],
-        costCenters = [],
-      },
+  rows,
+  handleRowChange,
+  onFieldEnter,
+  onTableEscape,
+  onClearRow,
+  onSortRows,
+  accountOptions = [],
+  accountSortByIdOptions = [],
+  costCenters = [],
+},
       ref
     ) => {
       const [
@@ -2606,6 +2531,40 @@ export const ReceiptTable =
           },
           [accountOptions]
         );
+
+        const accountIdOptions =
+  useMemo<AccountOption[]>(() => {
+    if (!Array.isArray(accountSortByIdOptions)) {
+      return [];
+    }
+
+    return accountSortByIdOptions
+      .filter(
+        (account) =>
+          Boolean(
+            account &&
+            account.faccountid
+          )
+      )
+      .map(
+        (account) => ({
+          value: account.faccountid,
+          label: account.faccountid,
+
+          accountId:
+            account.faccountid,
+
+          accountName:
+            account.faccountname || "",
+
+          fgcs:
+            account.fgcs || "",
+
+          haveCc:
+            account.fhavecc === true,
+        })
+      );
+  }, [accountSortByIdOptions]);
 
       const ccIdOptions =
         useMemo<SelectOption[]>(
@@ -2769,6 +2728,9 @@ export const ReceiptTable =
                     }
                     realAccountOptions={
                       realAccountOptions
+                    }
+                    accountIdOptions={
+                      accountIdOptions
                     }
                     ccIdOptions={
                       ccIdOptions
@@ -2975,9 +2937,7 @@ interface ReceiptActionsProps {
 
   preventSearchNavigation?: boolean;
 }
-// const Test=()=>{
-//   alert()
-// }
+
 export const ReceiptActions = forwardRef<
   ReceiptActionsRef,
   ReceiptActionsProps
