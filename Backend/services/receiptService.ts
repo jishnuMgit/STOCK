@@ -1,6 +1,127 @@
 
+import type { PoolClient } from "pg";
 import pool from "../DB/db.js";
 
+
+
+/* =========================================================
+   TYPES
+========================================================= */
+
+type DbValue = unknown;
+type DbRow = Record<string, any>;
+
+interface ReceiptProcedureParams {
+  mode: string;
+  branch?: DbValue;
+  docType?: DbValue;
+  docNo?: DbValue;
+  slNo?: DbValue;
+  receiptDate?: DbValue;
+  cbAccountId?: DbValue;
+  receivedFrom?: DbValue;
+  reference?: DbValue;
+  accountId?: DbValue;
+  gcs?: DbValue;
+  division?: DbValue;
+  ccId?: DbValue;
+  debit?: DbValue;
+  credit?: DbValue;
+  description?: DbValue;
+  note?: DbValue;
+  match?: DbValue;
+  userId?: DbValue;
+  userDate?: DbValue;
+  details?: DbValue;
+}
+
+interface ReceiptRow {
+  id?: number;
+  slNo?: number | string;
+  accountId?: string;
+  accountName?: string;
+  gcs?: string;
+  fgcs?: string;
+  ccId?: string;
+  division?: string;
+  divId?: string;
+  creditAmount?: string | number;
+  debit?: string | number;
+  credit?: string | number;
+  description?: string;
+  note?: string;
+  match?: boolean | string | number;
+}
+
+interface ReceiptData {
+  branch?: DbValue;
+  type?: DbValue;
+  cashBank?: DbValue;
+  receiptNo?: DbValue;
+  receiptDate?: DbValue;
+  receivedFrom?: DbValue;
+  reference?: DbValue;
+  note?: DbValue;
+  docNo?:DbValue;
+  cbCcId?: DbValue;
+  rows?: ReceiptRow[];
+}
+
+interface ReceiptHeaderParams {
+  branch?: DbValue;
+  docType?: DbValue;
+  docNo?: DbValue;
+}
+
+interface ReceiptDocumentParams {
+  branch?: DbValue;
+  type?: DbValue;
+  receiptNo?: DbValue;
+}
+
+interface SaveReceiptLineParams {
+  branch?: DbValue;
+  docType?: DbValue;
+  docNo?: DbValue;
+  slNo?: DbValue;
+  receiptDate?: DbValue;
+  receivedFrom?: DbValue;
+  reference?: DbValue;
+  cbAccountId?: DbValue;
+  accountId?: DbValue;
+  gcs?: DbValue;
+  ccId?: DbValue;
+  debit?: DbValue;
+  credit?: DbValue;
+  description?: DbValue;
+  note?: DbValue;
+  division?: DbValue;
+  match?: DbValue;
+  createdUserDate?: DbValue;
+}
+
+interface SaveGeneratedEntryParams {
+  branch?: DbValue;
+  docType?: DbValue;
+  docNo?: DbValue;
+  receiptDate?: DbValue;
+  receivedFrom?: DbValue;
+  reference?: DbValue;
+  cbAccountId?: DbValue;
+  gcs?: DbValue;
+  ccId?: DbValue;
+  credit?: DbValue;
+  description?: DbValue;
+  note?: DbValue;
+  division?: DbValue;
+  match?: DbValue;
+  createdUserDate?: DbValue;
+}
+
+interface ServiceResult {
+  message: string;
+  data?: DbRow;
+}
 
 /* =========================================================
    ENVIRONMENT
@@ -20,7 +141,7 @@ const PstrUserID =
    HELPERS
 ========================================================= */
 
-function isEmpty(value) {
+function isEmpty(value: DbValue): boolean {
   return (
     value === null ||
     value === undefined ||
@@ -29,7 +150,7 @@ function isEmpty(value) {
 }
 
 
-function clean(value) {
+function clean(value: DbValue): string | null {
   if (isEmpty(value)) {
     return null;
   }
@@ -38,7 +159,7 @@ function clean(value) {
 }
 
 
-function toNumber(value) {
+function toNumber(value: DbValue): number {
   if (isEmpty(value)) {
     return 0;
   }
@@ -51,7 +172,7 @@ function toNumber(value) {
 }
 
 
-function toBoolean(value) {
+function toBoolean(value: DbValue): boolean {
   if (typeof value === "boolean") {
     return value;
   }
@@ -66,10 +187,7 @@ function toBoolean(value) {
 }
 
 
-function toSmallInt(
-  value,
-  defaultValue = 0
-) {
+function toSmallInt(value: DbValue, defaultValue: number = 0): number {
   const number = Number(value);
 
   if (!Number.isInteger(number)) {
@@ -84,7 +202,7 @@ function toSmallInt(
    DOCUMENT TYPE
 ========================================================= */
 
-function toDocumentType(value) {
+function toDocumentType(value: DbValue): string | null {
   if (isEmpty(value)) {
     return null;
   }
@@ -128,7 +246,7 @@ function toDocumentType(value) {
       YYYY-MM-DDTHH:mm:ss...
 */
 
-function normalizeDate(value) {
+function normalizeDate(value: DbValue): string | null {
 
   if (isEmpty(value)) {
     return null;
@@ -215,7 +333,7 @@ function normalizeDate(value) {
    CREATED DATE
 ========================================================= */
 
-function normalizeCreatedDate(value) {
+function normalizeCreatedDate(value: DbValue): string | null {
 
   if (isEmpty(value)) {
     return null;
@@ -273,7 +391,7 @@ function normalizeCreatedDate(value) {
 
 
 async function callReceiptProcedure(
-  client,
+  client: PoolClient,
   {
     mode,
 
@@ -318,7 +436,8 @@ async function callReceiptProcedure(
     details = null,
 
   }
-) {
+: ReceiptProcedureParams
+) : Promise<any[]> {
 
   /* =======================================================
      CURSOR NAME
@@ -596,7 +715,7 @@ export async function getReceiptHeader({
   branch,
   docType,
   docNo,
-}) {
+}: ReceiptHeaderParams): Promise<any[]> {
 
   const client =
     await pool.connect();
@@ -640,7 +759,7 @@ export async function getReceiptHeader({
 
     return rows;
 
-  } catch (error) {
+  } catch (error: unknown) {
 
     await client.query(
       "ROLLBACK"
@@ -671,7 +790,7 @@ export async function getReceiptLines({
   branch,
   docType,
   docNo,
-}) {
+}: ReceiptHeaderParams): Promise<any[]> {
 
   const client =
     await pool.connect();
@@ -715,7 +834,7 @@ export async function getReceiptLines({
 
     return rows;
 
-  } catch (error) {
+  } catch (error: unknown) {
 
     await client.query(
       "ROLLBACK"
@@ -743,7 +862,7 @@ export async function getReceiptLines({
 ========================================================= */
 
 async function saveReceiptLine(
-  client,
+  client: PoolClient,
   {
     branch,
 
@@ -781,8 +900,8 @@ async function saveReceiptLine(
 
     createdUserDate,
 
-  }
-) {
+  }: SaveReceiptLineParams
+): Promise<any[]> {
 
   return callReceiptProcedure(
     client,
@@ -846,7 +965,7 @@ async function saveReceiptLine(
 ========================================================= */
 
 async function saveGeneratedEntry(
-  client,
+  client: PoolClient,
   {
     branch,
 
@@ -878,8 +997,8 @@ async function saveGeneratedEntry(
 
     createdUserDate,
 
-  }
-) {
+  }: SaveGeneratedEntryParams
+): Promise<any[]> {
 
   return callReceiptProcedure(
     client,
@@ -956,7 +1075,7 @@ async function saveGeneratedEntry(
 ========================================================= */
 
 async function deleteReceiptInternal(
-  client,
+  client: PoolClient,
   {
     branch,
 
@@ -964,8 +1083,8 @@ async function deleteReceiptInternal(
 
     docNo,
 
-  }
-) {
+  }: ReceiptHeaderParams
+): Promise<any[]> {
 
   return callReceiptProcedure(
     client,
@@ -993,15 +1112,12 @@ async function deleteReceiptInternal(
 ========================================================= */
 
 export async function saveReceiptService(
-  receipt,
+  receipt: ReceiptData,
+  existingClient: PoolClient | null = null,
+  manageTransaction: boolean = true
+): Promise<ServiceResult> {
 
-  existingClient = null,
-
-  manageTransaction = true
-
-) {
-
-  const client =
+  const client: PoolClient =
     existingClient ||
     await pool.connect();
 
@@ -1034,8 +1150,7 @@ export async function saveReceiptService(
 
       rows = [],
 
-    } =
-      receipt || {};
+    } = receipt;
 
 
     /* =====================================================
@@ -1120,9 +1235,9 @@ export async function saveReceiptService(
        VALID ROWS
     ===================================================== */
 
-    const validRows =
+    const validRows: ReceiptRow[] =
       rows.filter(
-        (row) =>
+        (row: ReceiptRow): boolean =>
           row &&
           !isEmpty(
             row.accountId
@@ -1147,7 +1262,7 @@ export async function saveReceiptService(
 
     const finalTotal =
       validRows.reduce(
-        (sum, row) => {
+        (sum: number, row: ReceiptRow): number => {
 
           return (
             sum +
@@ -1421,7 +1536,7 @@ export async function saveReceiptService(
 
     };
 
-  } catch (error) {
+  } catch (error: unknown) {
 
     /* =====================================================
        ROLLBACK
@@ -1437,9 +1552,7 @@ export async function saveReceiptService(
           "ROLLBACK"
         );
 
-      } catch (
-        rollbackError
-      ) {
+      } catch (rollbackError: unknown) {
 
         console.error(
           "Receipt rollback error:",
@@ -1479,12 +1592,9 @@ export async function saveReceiptService(
 
 export async function deleteReceiptService({
   branch,
-
   type,
-
   receiptNo,
-
-}) {
+}: ReceiptDocumentParams): Promise<ServiceResult> {
 
   const client =
     await pool.connect();
@@ -1603,7 +1713,7 @@ export async function deleteReceiptService({
 
     };
 
-  } catch (error) {
+  } catch (error: unknown) {
 
     try {
 
@@ -1611,9 +1721,7 @@ export async function deleteReceiptService({
         "ROLLBACK"
       );
 
-    } catch (
-      rollbackError
-    ) {
+    } catch (rollbackError: unknown) {
 
       console.error(
         "Delete rollback error:",
@@ -1644,8 +1752,8 @@ export async function deleteReceiptService({
 ========================================================= */
 
 export async function updateReceiptService(
-  receipt
-) {
+  receipt: ReceiptData
+): Promise<ServiceResult> {
 
   const {
 
@@ -1655,8 +1763,7 @@ export async function updateReceiptService(
 
     docNo,
 
-  } =
-    receipt || {};
+  } = receipt;
 
 
   const client =
@@ -1745,7 +1852,7 @@ export async function updateReceiptService(
 
     };
 
-  } catch (error) {
+  } catch (error: unknown) {
 
     try {
 
@@ -1753,9 +1860,7 @@ export async function updateReceiptService(
         "ROLLBACK"
       );
 
-    } catch (
-      rollbackError
-    ) {
+    } catch (rollbackError: unknown) {
 
       console.error(
         "Update rollback error:",

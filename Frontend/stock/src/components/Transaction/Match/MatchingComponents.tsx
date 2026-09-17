@@ -6,7 +6,11 @@ import React, {
   useState,
 } from "react";
 
-import Select from "react-select";
+import Select, {
+  components,
+  type OptionProps,
+  type StylesConfig,
+} from "react-select";
 
 import {
   handleKeyboardAction,
@@ -156,6 +160,135 @@ interface Props {
 }
 
 /* =========================================================
+   RESPONSIVE LINKED SELECT
+========================================================= */
+
+interface ResponsiveSelectProps {
+  id: string;
+  value: string;
+  options: SelectOption[];
+  onChange: (value: string) => void;
+  next: () => void;
+  selectRef: React.RefObject<HTMLDivElement | null>;
+  reverseDropdown?: boolean;
+  styles: StylesConfig<SelectOption, false>;
+}
+
+const ResponsiveSelect = ({
+  id,
+  value,
+  options,
+  onChange,
+  next,
+  selectRef,
+  reverseDropdown = false,
+  styles,
+}: ResponsiveSelectProps) => {
+  const wrapperRef = useRef<HTMLDivElement | null>(null);
+  const [selectWidth, setSelectWidth] = useState("100%");
+
+  React.useEffect(() => {
+    const element = wrapperRef.current;
+
+    if (!element) return;
+
+    const updateWidth = () => {
+      const width = element.getBoundingClientRect().width;
+
+      if (width > 0) {
+        setSelectWidth(`${width}px`);
+      }
+    };
+
+    updateWidth();
+
+    const resizeObserver = new ResizeObserver(updateWidth);
+    resizeObserver.observe(element);
+
+    return () => resizeObserver.disconnect();
+  }, []);
+
+  const selected =
+    options.find((option) => option.value === value) ?? null;
+
+  const CustomOption = (props: OptionProps<SelectOption, false>) => {
+    const { data } = props;
+
+    return (
+      <components.Option {...props}>
+        <div
+          style={{
+            display: "grid",
+            gridTemplateColumns:
+              "var(--select-width, minmax(0, 1fr)) minmax(0, 1fr)",
+            width: "100%",
+            minWidth: 0,
+            alignItems: "center",
+          }}
+        >
+          {/* FIRST COLUMN */}
+          <div
+            style={{
+              minWidth: 0,
+              paddingRight: "8px",
+              overflow: "hidden",
+              whiteSpace: "nowrap",
+              textOverflow: "ellipsis",
+            }}
+          >
+            {reverseDropdown ? data.label : data.value}
+          </div>
+
+          {/* SECOND COLUMN */}
+          <div
+            style={{
+              minWidth: 0,
+              borderLeft: "1px solid #d5dce3",
+              paddingLeft: "10px",
+              overflow: "hidden",
+              whiteSpace: "nowrap",
+              textOverflow: "ellipsis",
+            }}
+          >
+            {reverseDropdown ? data.value : data.label}
+          </div>
+        </div>
+      </components.Option>
+    );
+  };
+
+  return (
+    <div
+      id={id}
+      ref={(element) => {
+        wrapperRef.current = element;
+        selectRef.current = element;
+      }}
+      tabIndex={0}
+      onKeyDown={(event) =>
+        handleKeyboardAction(event, {
+          onEnter: next,
+        })
+      }
+      style={
+        {
+          "--select-width": selectWidth,
+        } as React.CSSProperties
+      }
+    >
+      <Select<SelectOption, false>
+        value={selected}
+        components={{ Option: CustomOption }}
+        options={options}
+        styles={styles}
+        isSearchable
+        onChange={(option) => onChange(option?.value ?? "")}
+      />
+    </div>
+  );
+};
+
+/* =========================================================
    COMPONENT
 ========================================================= */
 
@@ -279,75 +412,66 @@ const MatchingComponents =
          SELECT STYLES
       ===================================================== */
 
-      const selectStyles = {
+      const selectStyles: StylesConfig<SelectOption, false> = {
         control: (base: any) => ({
           ...base,
-
           minHeight: "29px",
-
           height: "29px",
-
+          // IMPORTANT: no width here; your existing Select width is preserved.
           borderRadius: "3px",
-
-          borderColor:
-            "#b7c7d7",
-
+          borderColor: "#b7c7d7",
           boxShadow: "none",
-
           fontSize: "13px",
-
-          backgroundColor:
-            "#ffffff",
+          backgroundColor: "#ffffff",
         }),
 
-        valueContainer: (
-          base: any
-        ) => ({
+        valueContainer: (base: any) => ({
           ...base,
-
           height: "29px",
-
           padding: "0 8px",
         }),
 
-        indicatorsContainer: (
-          base: any
-        ) => ({
+        indicatorsContainer: (base: any) => ({
           ...base,
-
           height: "29px",
         }),
 
-        dropdownIndicator: (
-          base: any
-        ) => ({
+        dropdownIndicator: (base: any) => ({
           ...base,
-
           padding: "4px",
         }),
 
-        clearIndicator: (
-          base: any
-        ) => ({
+        clearIndicator: (base: any) => ({
           ...base,
-
           padding: "4px",
         }),
 
         menu: (base: any) => ({
           ...base,
-
-          zIndex: 100,
-
+          zIndex: 9999,
           fontSize: "13px",
+
+          // Wider than the Select, but constrained to the viewport.
+          width: "min(520px, calc(100vw - 24px))",
+          minWidth: "min(360px, calc(100vw - 24px))",
+          maxWidth: "calc(100vw - 24px)",
+          left: 0,
         }),
 
-        option: (base: any) => ({
+        menuList: (base: any) => ({
           ...base,
+          padding: 0,
+          maxWidth: "100%",
+          overflowX: "hidden",
+        }),
 
+        option: (base: any, state: any) => ({
+          ...base,
           fontSize: "13px",
-
           padding: "6px 8px",
+          backgroundColor: state.isFocused ? "#dbeafe" : "#ffffff",
+          color: "#222",
+          cursor: "pointer",
         }),
       };
 
@@ -507,6 +631,44 @@ const MatchingComponents =
         );
 
       /* =====================================================
+         LINK CUSTOMER ID <-> CUSTOMER NAME
+      ===================================================== */
+
+      const linkedCustomerNameOptions: SelectOption[] =
+        customerOptions.map((option) => ({
+          value: option.label,
+          label: option.value,
+        }));
+
+      const handleCustomerIdChange = useCallback(
+        (id: string) => {
+          setCustomerId(id);
+
+          const customer = customerOptions.find(
+            (option) => option.value === id
+          );
+
+          setCustomerName(customer?.label ?? "");
+        },
+        [customerOptions, setCustomerId, setCustomerName]
+      );
+
+      const handleCustomerNameChange = useCallback(
+        (name: string) => {
+          setCustomerName(name);
+
+          const customer = customerOptions.find(
+            (option) => option.label === name
+          );
+
+          if (customer) {
+            setCustomerId(customer.value);
+          }
+        },
+        [customerOptions, setCustomerId, setCustomerName]
+      );
+
+      /* =====================================================
          SELECT HELPER
       ===================================================== */
 
@@ -514,48 +676,22 @@ const MatchingComponents =
         id: string,
         value: string,
         options: SelectOption[],
-        onChange: (
-          value: string
-        ) => void,
+        onChange: (value: string) => void,
         next: () => void,
-        selectRef: React.RefObject<
-          HTMLDivElement | null
-        >
-      ) => {
-        const selected =
-          options.find(
-            (option) =>
-              option.value === value
-          ) ?? null;
-
-        return (
-          <div
-            id={id}
-            ref={selectRef}
-            tabIndex={0}
-            onKeyDown={(event) =>
-              handleKeyboardAction(
-                event,
-                {
-                  onEnter: next,
-                }
-              )
-            }
-          >
-            <Select
-              value={selected}
-              options={options}
-              styles={selectStyles}
-              isSearchable
-              onChange={(option) =>
-                onChange(
-                  option?.value ?? ""
-                )
-              }
-            />
-          </div>
-        );
-      };
+        selectRef: React.RefObject<HTMLDivElement | null>,
+        reverseDropdown = false
+      ) => (
+        <ResponsiveSelect
+          id={id}
+          value={value}
+          options={options}
+          onChange={onChange}
+          next={next}
+          selectRef={selectRef}
+          reverseDropdown={reverseDropdown}
+          styles={selectStyles}
+        />
+      );
 
       /* =====================================================
          TABLE KEYBOARD
@@ -587,7 +723,7 @@ const MatchingComponents =
 
       const buttons = [
         "Save",
-        "Delete",
+        
         "Clear",
       ];
 
@@ -782,7 +918,7 @@ event: React.KeyboardEvent<HTMLButtonElement>, p0: () => any        ) => {
             id="03q9ys"
             className="
               flex
-              h-[35px]
+              h-8.75
               items-center
               justify-center
               bg-[#9fdfbc]
@@ -800,9 +936,9 @@ event: React.KeyboardEvent<HTMLButtonElement>, p0: () => any        ) => {
 
           <div
             className="
-              px-[27px]
-              pt-[9px]
-              pb-[7px]
+              px-6.75
+              pt-2.25
+              pb-1.75
             "
           >
 
@@ -813,10 +949,14 @@ event: React.KeyboardEvent<HTMLButtonElement>, p0: () => any        ) => {
             <div
               className="
                 grid
-                grid-cols-[68px_174px_430px_1fr]
+                grid-cols-[100px_154px_520px_1fr]
                 items-center
                 gap-x-2.75
                 mb-1.25
+                max-[1200px]:grid-cols-[100px_minmax(154px,1fr)_minmax(300px,1fr)]
+                max-[1200px]:gap-x-2
+                max-[900px]:grid-cols-1
+                max-[900px]:gap-y-1.5
               "
             >
 
@@ -830,7 +970,7 @@ event: React.KeyboardEvent<HTMLButtonElement>, p0: () => any        ) => {
                 "lkpCustomerID",
                 customerId,
                 customerOptions,
-                setCustomerId,
+                handleCustomerIdChange,
                 () =>
                   customerNameRef.current?.focus(),
                 customerIdRef
@@ -841,11 +981,12 @@ event: React.KeyboardEvent<HTMLButtonElement>, p0: () => any        ) => {
               {renderSelect(
                 "lkpCustomerName",
                 customerName,
-                customerNameOptions,
-                setCustomerName,
+                linkedCustomerNameOptions,
+                handleCustomerNameChange,
                 () =>
                   divisionRef.current?.focus(),
-                customerNameRef
+                customerNameRef,
+                true
               )}
 
               {/* DOCUMENT AMOUNT */}
@@ -859,23 +1000,23 @@ event: React.KeyboardEvent<HTMLButtonElement>, p0: () => any        ) => {
                 "
               >
                 <label className="whitespace-nowrap">
-                  Doc. Amt. :
+                  Document Amt. :
                 </label>
 
                 <div
                   id="txtDocumentAmount"
                   className="
                     flex
-                    h-[29px]
-                    w-[115px]
+                    h-7.25
+                    w-28.75
                     shrink-0
                     items-center
                     justify-end
-                    rounded-[2px]
+                    rounded-xs
                     border
                     border-[#aebdca]
                     bg-white
-                    px-[8px]
+                    px-2
                     text-[13px]
                     text-[#00a83b]
                   "
@@ -898,10 +1039,14 @@ event: React.KeyboardEvent<HTMLButtonElement>, p0: () => any        ) => {
             <div
               className="
                 grid
-                grid-cols-[68px_250px_125px_140px_75px_1fr]
+                grid-cols-[100px_300px_145px_140px_75px_1fr]
                 items-center
-                gap-x-[9px]
-                mb-[5px]
+                gap-x-2.25
+                mb-1.25
+                max-[1200px]:grid-cols-[100px_minmax(180px,1fr)_120px_140px_75px_minmax(220px,1fr)]
+                max-[1200px]:gap-x-2
+                max-[900px]:grid-cols-1
+                max-[900px]:gap-y-1.5
               "
             >
 
@@ -911,7 +1056,8 @@ event: React.KeyboardEvent<HTMLButtonElement>, p0: () => any        ) => {
                 Division :
               </label>
 
-              {renderSelect(
+              <div className="ml-0.5">
+                {renderSelect(
                 "lkpDivision",
                 divisionId,
                 divisionOptions,
@@ -920,15 +1066,16 @@ event: React.KeyboardEvent<HTMLButtonElement>, p0: () => any        ) => {
                   creditDocumentRef.current?.focus(),
                 divisionRef
               )}
+              </div>
 
               {/* CREDIT DOCUMENT */}
 
               <label className="whitespace-nowrap text-right">
-                Doc Type :
+                Document Type :
               </label>
 
               {renderSelect(
-                "lkpCreditDocument",
+                "lkpDocumentType",
                 type,
                 [
                   {
@@ -952,14 +1099,14 @@ event: React.KeyboardEvent<HTMLButtonElement>, p0: () => any        ) => {
                 id="Searchbtn"
                 type="button"
                 className="
-                  h-[29px]
+                  h-7.25
                   rounded-[3px]
                   border
                   border-[#b7c7d7]
-                  bg-gradient-to-b
+                  bg-linear-to-b
                   from-white
                   to-[#e7eef5]
-                  px-[14px]
+                  px-3.5
                   text-[13px]
                   text-slate-700
                   hover:from-white
@@ -986,10 +1133,12 @@ event: React.KeyboardEvent<HTMLButtonElement>, p0: () => any        ) => {
 
               <div
                 className="
+                
                   flex
                   items-center
                   justify-end
-                  gap-[8px]
+                  gap-2
+                  
                 "
               >
                 <label className="whitespace-nowrap">
@@ -1000,16 +1149,16 @@ event: React.KeyboardEvent<HTMLButtonElement>, p0: () => any        ) => {
                   id="txtMatchAmt"
                   className="
                     flex
-                    h-[29px]
-                    w-[115px]
+                    h-7.25
+                    w-28.75
                     shrink-0
                     items-center
                     justify-end
-                    rounded-[2px]
+                    rounded-xs
                     border
                     border-[#aebdca]
                     bg-white
-                    px-[8px]
+                    px-2
                     text-[13px]
                     text-[#00a83b]
                   "
@@ -1020,7 +1169,7 @@ event: React.KeyboardEvent<HTMLButtonElement>, p0: () => any        ) => {
                 </div>
 
                 <span className="text-[#00a83b]">
-                  Dr.
+                  Cr.
                 </span>
               </div>
             </div>
@@ -1032,19 +1181,24 @@ event: React.KeyboardEvent<HTMLButtonElement>, p0: () => any        ) => {
             <div
               className="
                 grid
-                grid-cols-[68px_252px_120px_140px_1fr_235px]
+                grid-cols-[100px_300px_142px_140px_1fr_235px]
                 items-center
-                gap-x-[10px]
+                gap-x-2.5
+                max-[1200px]:grid-cols-[100px_minmax(180px,1fr)_120px_140px_minmax(180px,1fr)]
+                max-[1200px]:gap-x-2
+                max-[900px]:grid-cols-1
+                max-[900px]:gap-y-1.5
               "
             >
 
               {/* DOCUMENT NO */}
 
-              <label className="text-right">
-                Doc. No. :
+              <label className="text-right whitespace-nowrap">
+                Document No. :
               </label>
 
-              {renderSelect(
+              <div className="ml-px">
+                {renderSelect(
                 "lkpDocumentNo.",
                 receiptNo,
                 documentOptions,
@@ -1053,6 +1207,7 @@ event: React.KeyboardEvent<HTMLButtonElement>, p0: () => any        ) => {
                   dateRef.current?.focus(),
                 documentNoRef
               )}
+              </div>
 
               {/* MATCH APPLY DATE */}
 
@@ -1060,136 +1215,154 @@ event: React.KeyboardEvent<HTMLButtonElement>, p0: () => any        ) => {
   Match Apply Date :
 </label>
 
-                 <LocalizationProvider
-                          dateAdapter={AdapterDayjs}
-                        >
-                          <DatePicker
-                            value={
-                              receiptDate
-                                ? dayjs(
-                                    receiptDate,
-                                    "DD/MM/YYYY",
-                                    true
-                                  )
-                                : null
-                            }
-                            onChange={(newValue) => {
-                              if (newValue?.isValid()) {
-                                setReceiptDate(
-                                  newValue.format(
-                                    "DD/MM/YYYY"
-                                  )
-                                );
-                              } else {
-                                setReceiptDate("");
-                              }
-                            }}
-                            format="DD/MM/YYYY"
-                            inputRef={dateRef}
-                            slotProps={{
-                              textField: {
-                                id: "dtpDate",
-              
-                            //     onKeyDown: (event) =>
-                            //       handleActionKeyDown(
-                            //         event,
-                            //         () =>
-                            //           receivedFromRef.current?.focus()
-                            //       ),
-                              },
-              
-                              openPickerButton: {
-                                sx: {
-                                  padding: "2px",
-                                  margin: 0,
-                                },
-                              },
-              
-                              inputAdornment: {
-                                sx: {
-                                  margin: 0,
-                                  padding: 0,
-                                },
-                              },
-                            }}
-                            sx={{
-  width: "150px",
+              <LocalizationProvider dateAdapter={AdapterDayjs}>
+  <DatePicker
+    value={
+      receiptDate
+        ? dayjs(receiptDate, "DD-MM-YYYY", true)
+        : null
+    }
+    onChange={(newValue) => {
+      if (newValue?.isValid()) {
+        setReceiptDate(
+          newValue.format("DD-MM-YYYY")
+        );
+      } else {
+        setReceiptDate("");
+      }
+    }}
+    format="DD-MM-YYYY"
+    inputRef={dateRef}
+    slotProps={{
+      textField: {
+        id: "dtpDate",
+      },
 
-  "& .MuiPickersTextField-root": {
-    width: "150px",
-  },
+      openPickerButton: {
+        sx: {
+          padding: "2px",
+          margin: 0,
+        },
+      },
 
-  "& .MuiPickersInputBase-root": {
-    width: "150px",
-    height: "28px",
-    minHeight: "28px",
-    boxSizing: "border-box",
-    borderRadius: "4px",
-    backgroundColor: "#ffffff",
-    fontSize: "12px",
-    padding: 0,
-    overflow: "hidden",
-  },
+      inputAdornment: {
+        sx: {
+          margin: 0,
+          padding: 0,
+        },
+      },
+    }}
+    sx={{
+      width: "150px",
 
-  "& .MuiPickersInputBase-sectionContainer": {
-    minWidth: 0,
-    padding: "0 0 0 8px",
-    overflow: "hidden",
-  },
+      "& .MuiPickersTextField-root": {
+        width: "120px",
+      },
 
-  "& .MuiPickersInputBase-input": {
-    minWidth: 0,
-    width: "100%",
-    fontSize: "12px",
-    padding: 0,
-    height: "28px",
-    boxSizing: "border-box",
-  },
+      /* =========================================
+         MAIN INPUT
+      ========================================= */
+      "& .MuiPickersInputBase-root": {
+        width: "140px",
+        height: "28px",
+        minHeight: "28px",
+        boxSizing: "border-box",
+        borderRadius: "4px",
+        backgroundColor: "#ffffff",
+        fontSize: "12px",
+        padding: 0,
+        overflow: "hidden",
+      },
 
-  "& .MuiInputAdornment-root": {
-    margin: 0,
-    padding: 0,
-  },
+      /* =========================================
+         DATE TEXT CONTAINER
+         THIS IS THE IMPORTANT PART
+      ========================================= */
+      "& .MuiPickersInputBase-sectionsContainer": {
+        paddingLeft: "10px !important",
+        paddingRight: "0px !important",
+        marginBottom:"-5px !important",
+        marginLeft: "0px !important",
+        boxSizing: "border-box",
+        overflow: "hidden",
+      },
 
-  "& .MuiIconButton-root": {
-    width: "24px",
-    height: "24px",
-    padding: "2px",
-    margin: 0,
-  },
+      /* =========================================
+         INDIVIDUAL DATE SECTIONS
+      ========================================= */
+      "& .MuiPickersInputBase-sectionContent": {
+        fontSize: "12px",
+      },
 
-  "& .MuiSvgIcon-root": {
-    fontSize: "16px",
-  },
+      /* =========================================
+         INPUT
+      ========================================= */
+      "& .MuiPickersInputBase-input": {
+        minWidth: 0,
+        width: "100%",
+        fontSize: "12px",
+        padding: 0,
+        height: "28px",
+        boxSizing: "border-box",
+      },
 
-  /* BORDER */
-  "& .MuiPickersOutlinedInput-notchedOutline": {
-    borderColor: "#B7C7D7 !important",
-  },
+      /* =========================================
+         INPUT ADORNMENT
+      ========================================= */
+      "& .MuiInputAdornment-root": {
+        margin: 0,
+        padding: 0,
+      },
 
-  "& .MuiPickersInputBase-root:hover .MuiPickersOutlinedInput-notchedOutline": {
-    borderColor: "#B7C7D7 !important",
-  },
+      /* =========================================
+         CALENDAR BUTTON
+      ========================================= */
+      "& .MuiIconButton-root": {
+        width: "24px",
+        height: "24px",
+        padding: "2px",
+        margin: 0,
+      },
 
-  "& .MuiPickersInputBase-root.Mui-focused .MuiPickersOutlinedInput-notchedOutline": {
-    borderColor: "#B7C7D7 !important",
-    borderWidth: "1px",
-  },
+      "& .MuiSvgIcon-root": {
+        fontSize: "16px",
+      },
 
-  "& .MuiPickersInputBase-root.Mui-error .MuiPickersOutlinedInput-notchedOutline": {
-    borderColor: "#B7C7D7 !important",
-  },
+      /* =========================================
+         BORDER
+      ========================================= */
+      "& .MuiPickersOutlinedInput-notchedOutline": {
+        borderColor: "#B7C7D7 !important",
+      },
 
-  "& .MuiPickersInputBase-root.Mui-error:hover .MuiPickersOutlinedInput-notchedOutline": {
-    borderColor: "#B7C7D7 !important",
-  },
+      "& .MuiPickersInputBase-root:hover .MuiPickersOutlinedInput-notchedOutline":
+        {
+          borderColor: "#B7C7D7 !important",
+        },
 
-  "& .MuiPickersInputBase-root.Mui-error.Mui-focused .MuiPickersOutlinedInput-notchedOutline": {
-    borderColor: "#B7C7D7 !important",
-  },
-}}
-                          />
-                        </LocalizationProvider>
+      "& .MuiPickersInputBase-root.Mui-focused .MuiPickersOutlinedInput-notchedOutline":
+        {
+          borderColor: "#B7C7D7 !important",
+          borderWidth: "1px",
+        },
+
+      "& .MuiPickersInputBase-root.Mui-error .MuiPickersOutlinedInput-notchedOutline":
+        {
+          borderColor: "#B7C7D7 !important",
+        },
+
+      "& .MuiPickersInputBase-root.Mui-error:hover .MuiPickersOutlinedInput-notchedOutline":
+        {
+          borderColor: "#B7C7D7 !important",
+        },
+
+      "& .MuiPickersInputBase-root.Mui-error.Mui-focused .MuiPickersOutlinedInput-notchedOutline":
+        {
+          borderColor: "#B7C7D7 !important",
+        },
+    }}
+  />
+</LocalizationProvider>
 
               <div />
 
@@ -1200,7 +1373,7 @@ event: React.KeyboardEvent<HTMLButtonElement>, p0: () => any        ) => {
                   flex
                   items-center
                   justify-end
-                  gap-[8px]
+                  gap-2
                 "
               >
                 <label className="whitespace-nowrap">
@@ -1211,16 +1384,16 @@ event: React.KeyboardEvent<HTMLButtonElement>, p0: () => any        ) => {
                   id="txtBalanceAmount"
                   className="
                     flex
-                    h-[29px]
-                    w-[115px]
+                    h-7.25
+                    w-28.75
                     shrink-0
                     items-center
                     justify-end
-                    rounded-[2px]
+                    rounded-xs
                     border
                     border-[#aebdca]
                     bg-white
-                    px-[8px]
+                    px-2
                     text-[13px]
                     text-[#ff0000]
                   "
@@ -1241,9 +1414,10 @@ event: React.KeyboardEvent<HTMLButtonElement>, p0: () => any        ) => {
 
           <div
             className="
-              mx-[27px]
+              mx-6.75
               border
               border-[#bce8d2]
+              max-[900px]:mx-2
             "
           >
             <table
@@ -1267,9 +1441,10 @@ event: React.KeyboardEvent<HTMLButtonElement>, p0: () => any        ) => {
                       border-[#bce8d2]
                       px-1
                       text-left
-                      py-[5px]
+                      py-1.25
                       font-normal
                     "
+                    id="txtBrID"
                   >
                     Br. ID
                   </th>
@@ -1281,9 +1456,10 @@ event: React.KeyboardEvent<HTMLButtonElement>, p0: () => any        ) => {
                       border
                       border-[#bce8d2]
                       px-1
-                      py-[5px]
+                      py-1.25
                       font-normal
                     "
+                    id="dtpDate"
                   >
                     Date
                   </th>
@@ -1295,11 +1471,12 @@ event: React.KeyboardEvent<HTMLButtonElement>, p0: () => any        ) => {
                       border
                       border-[#bce8d2]
                       px-1
-                      py-[5px]
+                      py-1.25
                       font-normal
                     "
+                    id="txtDocumentNo"
                   >
-                     Doc. No.
+                     Document No.
                   </th>
 
                   <th
@@ -1309,9 +1486,10 @@ event: React.KeyboardEvent<HTMLButtonElement>, p0: () => any        ) => {
                       border
                       border-[#bce8d2]
                       px-1
-                      py-[5px]
+                      py-1.25
                       font-normal
                     "
+                    id="txtDescription"
                   >
                     Description
                   </th>
@@ -1323,11 +1501,12 @@ event: React.KeyboardEvent<HTMLButtonElement>, p0: () => any        ) => {
                       border
                       border-[#bce8d2]
                       px-1
-                      py-[5px]
+                      py-1.25
                       font-normal
                     "
+                    id="txtDocumenAmount"
                   >
-                    Doc. Amt.
+                    Document Amt.
                   </th>
 
                   <th
@@ -1337,9 +1516,10 @@ event: React.KeyboardEvent<HTMLButtonElement>, p0: () => any        ) => {
                       border
                       border-[#bce8d2]
                       px-1
-                      py-[5px]
+                      py-1.25
                       font-normal
                     "
+                    id="txtDebit"
                   >
                     Debit
                   </th>
@@ -1352,9 +1532,10 @@ event: React.KeyboardEvent<HTMLButtonElement>, p0: () => any        ) => {
                       border
                       border-[#bce8d2]
                       px-1
-                      py-[5px]
+                      py-1.25
                       font-normal
                     "
+                    id="txtCredit"
                   >
                     Credit
                   </th>
@@ -1367,10 +1548,11 @@ event: React.KeyboardEvent<HTMLButtonElement>, p0: () => any        ) => {
 
                       border-[#bce8d2]
                       px-1
-                      py-[5px]
+                      py-1.25
                       font-normal
                     "
-                  >
+id="chkMatch"
+>
                     Match
                   </th>
 
@@ -1380,11 +1562,13 @@ event: React.KeyboardEvent<HTMLButtonElement>, p0: () => any        ) => {
                       border
                       border-[#bce8d2]
                       px-1
-                      py-[5px]
+                      py-1.25
                       font-normal
                       text-right
 
-                    "
+
+                      "
+                      id="txtMatchAmt"
                   >
                     Match Amt
                   </th>
@@ -1400,7 +1584,7 @@ event: React.KeyboardEvent<HTMLButtonElement>, p0: () => any        ) => {
                   ) => (
                     <tr
                       key={row.id}
-                      className="h-[27px]"
+                      className="h-6.75"
                     >
 
                       {/* BR ID */}
@@ -1707,8 +1891,8 @@ event: React.KeyboardEvent<HTMLButtonElement>, p0: () => any        ) => {
                             )
                           }
                           className="
-                            h-[15px]
-                            w-[15px]
+                            h-3.75
+                            w-3.75
                             accent-[#72c99a]
                           "
                         />
@@ -1769,8 +1953,11 @@ event: React.KeyboardEvent<HTMLButtonElement>, p0: () => any        ) => {
             className="
               flex
               items-center
-              px-[27px]
-              pt-[10px]
+              px-6.75
+              pt-2.5
+              gap-3
+              max-[900px]:flex-wrap
+              max-[900px]:px-2
             "
           >
 
@@ -1781,7 +1968,10 @@ event: React.KeyboardEvent<HTMLButtonElement>, p0: () => any        ) => {
                 flex
                 flex-1
                 items-center
-                gap-[14px]
+                gap-3.5
+                min-w-0
+                max-[900px]:w-full
+                max-[900px]:flex-none
               "
             >
               <label>
@@ -1792,8 +1982,9 @@ event: React.KeyboardEvent<HTMLButtonElement>, p0: () => any        ) => {
                 id="txtNote"
                 ref={noteRef}
                 className="
-                  h-[26px]
-                  w-[528px]
+                  h-6.5
+                  w-132
+                  max-w-full
                   rounded-[3px]
                   border
                   border-[#b7c7d7]
@@ -1822,15 +2013,16 @@ event: React.KeyboardEvent<HTMLButtonElement>, p0: () => any        ) => {
                 flex
                 items-center
                 
-                gap-[7px]
+                gap-1.75
               "
             >
              <div className="flex items-center gap-2  ">
                  <div
                 className="
+                mr-1
                   flex
-                  h-[26px]
-                  w-[74px]
+                  h-6.5
+                  w-25
                   items-center
                   justify-center
                   border
@@ -1843,11 +2035,12 @@ event: React.KeyboardEvent<HTMLButtonElement>, p0: () => any        ) => {
               <div
                 className="
                   flex
-                  h-[26px]
-                  w-[96px]
+                  h-6.5
+                  w-25
                   items-center
                   justify-end
                   border
+                  -ml-0.5
                   border-[#c8c8c8]
                   px-2
                 "
@@ -1860,10 +2053,10 @@ event: React.KeyboardEvent<HTMLButtonElement>, p0: () => any        ) => {
               <div
                 className="
                   flex
-                  h-[26px]
-                  w-[96px]
-                  ml-[8px]
+                  h-6.5
+                  w-25
                   items-center
+                  
                   justify-end
                   border
                   border-[#c8c8c8]
@@ -1879,9 +2072,9 @@ event: React.KeyboardEvent<HTMLButtonElement>, p0: () => any        ) => {
               <div
                 className="
                   flex
-                  ml-[55px]
-                  h-[26px]
-                  w-[110px]
+                  ml-14.5
+                  h-6.5
+                  w-27.5
                   items-center
                   justify-end
                   border
@@ -1901,13 +2094,16 @@ event: React.KeyboardEvent<HTMLButtonElement>, p0: () => any        ) => {
 <div
   className="
     ml-auto
-    mr-[-17px]
+    -mr-4.25
     flex
     items-center
     justify-end
-    gap-[8px]
-    px-[43px]
-    pt-[8px]
+    gap-2
+    px-10.75
+    pt-2
+    max-[900px]:mr-0
+    max-[900px]:px-2
+    max-[900px]:w-full
   "
 >
   <label>
@@ -1917,8 +2113,8 @@ event: React.KeyboardEvent<HTMLButtonElement>, p0: () => any        ) => {
   <div
     className="
       flex
-      h-[25px]
-      w-[110px]
+      h-6.25
+      w-27.5
       items-center
       justify-end
       border
@@ -1939,9 +2135,11 @@ event: React.KeyboardEvent<HTMLButtonElement>, p0: () => any        ) => {
               flex
               items-center
               justify-center
-              gap-[13px]
-              pt-[9px]
-              pb-[18px]
+              gap-3.25
+              pt-2.25
+              pb-4.5
+              flex-wrap
+              px-2
             "
           >
             {buttons.map(
@@ -1967,15 +2165,15 @@ event: React.KeyboardEvent<HTMLButtonElement>, p0: () => any        ) => {
                   }}
                   type="button"
                   className="
-                    h-[40px]
-                    min-w-[108px]
-                    rounded-[4px]
+                    h-10
+                    min-w-27
+                    rounded-sm
                     border-l
                     border-r
                     border-b
                     border-[#9db8d4]
                     border-t-0
-                    bg-gradient-to-b
+                    bg-linear-to-b
                     from-white
                     to-[#e7eef5]
                     px-4
@@ -2007,7 +2205,7 @@ event: React.KeyboardEvent<HTMLButtonElement>, p0: () => any        ) => {
                 >
                   <span
                     className="
-                      bg-gradient-to-b
+                      bg-linear-to-b
                       from-[#145c34]
                       via-[#20884e]
                       to-[#8fd9ad]

@@ -12,6 +12,15 @@ import MatchingComponents, {
 } from "../../../components/Transaction/Match/MatchingComponents";
 
 /* =========================================================
+   CUSTOMER ACCOUNT TYPE
+========================================================= */
+
+interface CustomerAccount {
+  fcsaccountid: string;
+  fcsaccountname: string;
+}
+
+/* =========================================================
    CREATE ROWS
 ========================================================= */
 
@@ -40,15 +49,20 @@ const Matching: React.FC = () => {
      HEADER STATE
   ======================================================= */
 
-  const [branch, setBranch] = useState("");
+  const [branch, setBranch] =
+    useState("");
 
-  const [type, setType] = useState("BR");
+  const [type, setType] =
+    useState("BR");
 
-  const [receiptNo, setReceiptNo] = useState("");
+  const [receiptNo, setReceiptNo] =
+    useState("");
 
-  const [receiptDate, setReceiptDate] = useState("");
+  const [receiptDate, setReceiptDate] =
+    useState("");
 
-  const [customerId, setCustomerId] = useState("");
+  const [customerId, setCustomerId] =
+    useState("");
 
   const [customerName, setCustomerName] =
     useState("");
@@ -72,11 +86,15 @@ const Matching: React.FC = () => {
   const [branchOptions, setBranchOptions] =
     useState<SelectOption[]>([]);
 
-  const [customerOptions] =
-    useState<SelectOption[]>([]);
+  const [
+    customerOptions,
+    setCustomerOptions,
+  ] = useState<SelectOption[]>([]);
 
-  const [customerNameOptions] =
-    useState<SelectOption[]>([]);
+  const [
+    customerNameOptions,
+    setCustomerNameOptions,
+  ] = useState<SelectOption[]>([]);
 
   const [divisionOptions] =
     useState<SelectOption[]>([]);
@@ -128,53 +146,174 @@ const Matching: React.FC = () => {
      LOAD DATA
   ======================================================= */
 
-  useEffect(() => {
-    const loadData = async () => {
-      try {
-        const response =
-          await fetch(
-            "/api/getReceipts"
-          );
+useEffect(() => {
+  const loadMatchData = async () => {
+    try {
+      /* ===============================================
+         LOAD MATCH DATA
+      =============================================== */
 
-        if (!response.ok) {
-          throw new Error(
-            "Failed to load matching data"
-          );
-        }
+      const response = await fetch(
+        "http://localhost:5000/api/Match/getCSAccounts"
+      );
 
-        const data =
-          await response.json();
-
-        if (
-          Array.isArray(
-            data?.branchOptions
-          )
-        ) {
-          setBranchOptions(
-            data.branchOptions
-          );
-        }
-
-        if (data?.branch) {
-          setBranch(data.branch);
-        }
-
-        if (data?.receiptNo) {
-          setReceiptNo(
-            data.receiptNo
-          );
-        }
-      } catch (error) {
-        console.error(
-          "Matching load error:",
-          error
+      if (!response.ok) {
+        throw new Error(
+          "Failed to load matching data"
         );
       }
-    };
 
-    loadData();
-  }, []);
+      const data =
+        await response.json();
 
+      /* ===============================================
+         BRANCH OPTIONS
+      =============================================== */
+
+      if (
+        Array.isArray(
+          data?.branchOptions
+        )
+      ) {
+        setBranchOptions(
+          data.branchOptions
+        );
+      }
+
+      /* ===============================================
+         HEADER DEFAULT VALUES
+      =============================================== */
+
+      if (data?.branch) {
+        setBranch(
+          data.branch
+        );
+      }
+
+      if (data?.receiptNo) {
+        setReceiptNo(
+          data.receiptNo
+        );
+      }
+
+      /* ===============================================
+         LOAD CUSTOMER ACCOUNTS
+      =============================================== */
+
+      const accountResponse =
+        await fetch(
+          "http://localhost:5000/api/Match/getCSAccounts"
+        );
+
+      if (!accountResponse.ok) {
+        throw new Error(
+          "Failed to load customer accounts"
+        );
+      }
+
+      const accountData =
+        await accountResponse.json();
+
+      /* ===============================================
+         CUSTOMER ID
+
+         API:
+         AccountID
+
+         LABEL:
+         ID + NAME
+
+         SORT:
+         ID
+      =============================================== */
+
+      if (
+        Array.isArray(
+          accountData?.AccountID
+        )
+      ) {
+        const customerIdOptions: SelectOption[] =
+          (
+            accountData.AccountID as CustomerAccount[]
+          )
+            .map((account) => ({
+              value:
+                account.fcsaccountid,
+
+              label:
+                `${account.fcsaccountid}  ${account.fcsaccountname}`,
+            }))
+            .sort((a, b) =>
+              a.value.localeCompare(
+                b.value,
+                undefined,
+                {
+                  numeric: true,
+                  sensitivity:
+                    "base",
+                }
+              )
+            );
+
+        setCustomerOptions(
+          customerIdOptions
+        );
+      }
+
+      /* ===============================================
+         CUSTOMER NAME
+
+         API:
+         AccountName
+
+         LABEL:
+         NAME + ID
+
+         SORT:
+         NAME
+      =============================================== */
+
+      if (
+        Array.isArray(
+          accountData?.AccountName
+        )
+      ) {
+        const customerNameOptionsData: SelectOption[] =
+          (
+            accountData.AccountName as CustomerAccount[]
+          )
+            .map((account) => ({
+              value:
+                account.fcsaccountid,
+
+              label:
+                `${account.fcsaccountname}  ${account.fcsaccountid}`,
+            }))
+            .sort((a, b) =>
+              a.label.localeCompare(
+                b.label,
+                undefined,
+                {
+                  sensitivity:
+                    "base",
+                }
+              )
+            );
+
+        setCustomerNameOptions(
+          customerNameOptionsData
+        );
+      }
+    } catch (error) {
+      console.error(
+        "Matching data load error:",
+        error
+      );
+    }
+  };
+
+  loadMatchData();
+}, []);
   /* =======================================================
      SEARCH
   ======================================================= */
@@ -220,14 +359,24 @@ const Matching: React.FC = () => {
 
       const matchingData = {
         branch,
-        docType: type,
-        docNo: receiptNo,
+
+        docType:
+          type,
+
+        docNo:
+          receiptNo,
+
         customerId,
+
         customerName,
+
         divisionId,
+
         matchApplyDate:
           receiptDate,
-        rows: validRows,
+
+        rows:
+          validRows,
       };
 
       console.log(
@@ -269,12 +418,16 @@ const Matching: React.FC = () => {
 
       setDivisionId("");
 
-      setRows(createRows());
+      setRows(
+        createRows()
+      );
 
-      requestAnimationFrame(() => {
-        matchingRef.current
-          ?.focusCustomerId();
-      });
+      requestAnimationFrame(
+        () => {
+          matchingRef.current
+            ?.focusCustomerId();
+        }
+      );
     }, []);
 
   /* =======================================================
@@ -282,10 +435,12 @@ const Matching: React.FC = () => {
   ======================================================= */
 
   useEffect(() => {
-    requestAnimationFrame(() => {
-      matchingRef.current
-        ?.focusCustomerId();
-    });
+    requestAnimationFrame(
+      () => {
+        matchingRef.current
+          ?.focusCustomerId();
+      }
+    );
   }, []);
 
   /* =======================================================
@@ -359,29 +514,50 @@ const Matching: React.FC = () => {
         "
       >
         <MatchingComponents
-          ref={matchingRef}
+          ref={
+            matchingRef
+          }
 
           /* ===============================================
              HEADER
           =============================================== */
 
-          branch={branch}
-          setBranch={setBranch}
+          branch={
+            branch
+          }
 
-          type={type}
-          setType={setType}
+          setBranch={
+            setBranch
+          }
 
-          receiptNo={receiptNo}
+          type={
+            type
+          }
+
+          setType={
+            setType
+          }
+
+          receiptNo={
+            receiptNo
+          }
+
           setReceiptNo={
             setReceiptNo
           }
 
-          receiptDate={receiptDate}
+          receiptDate={
+            receiptDate
+          }
+
           setReceiptDate={
             setReceiptDate
           }
 
-          customerId={customerId}
+          customerId={
+            customerId
+          }
+
           setCustomerId={
             setCustomerId
           }
@@ -389,11 +565,15 @@ const Matching: React.FC = () => {
           customerName={
             customerName
           }
+
           setCustomerName={
             setCustomerName
           }
 
-          divisionId={divisionId}
+          divisionId={
+            divisionId
+          }
+
           setDivisionId={
             setDivisionId
           }
@@ -402,7 +582,9 @@ const Matching: React.FC = () => {
              TABLE
           =============================================== */
 
-          rows={rows}
+          rows={
+            rows
+          }
 
           handleRowChange={
             handleRowChange
@@ -412,11 +594,17 @@ const Matching: React.FC = () => {
              ACTIONS
           =============================================== */
 
-          onSave={handleSave}
+          onSave={
+            handleSave
+          }
 
-          clearForm={clearForm}
+          clearForm={
+            clearForm
+          }
 
-          onSearch={handleSearch}
+          onSearch={
+            handleSearch
+          }
 
           /* ===============================================
              OPTIONS
@@ -454,7 +642,9 @@ const Matching: React.FC = () => {
             totalMatchAmount
           }
 
-          balance={balance}
+          balance={
+            balance
+          }
         />
       </div>
     </div>

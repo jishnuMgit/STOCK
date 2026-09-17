@@ -1,11 +1,22 @@
+import { Request, Response } from "express";
+
 import pool from "../DB/db.js";
+
 import {
   saveReceiptService,
   updateReceiptService,
 } from "../services/receiptService.js";
-import {GetData} from "../services/GetData.js"
 
-export const getReceipt = async (req, res) => {
+import { GetData } from "../services/GetData.js";
+
+/* =========================================================
+   GET RECEIPT INITIAL DATA
+========================================================= */
+
+export const getReceipt = async (
+  req: Request,
+  res: Response
+): Promise<Response> => {
   try {
     const PstrCoID = process.env.PstrCoID;
     const PstrUserID = process.env.PstrUserID;
@@ -42,7 +53,7 @@ export const getReceipt = async (req, res) => {
 
     /* =====================================================
        RECEIPT TYPE
-
+       
        UI:
        B = Bank
        C = Cash
@@ -52,14 +63,12 @@ export const getReceipt = async (req, res) => {
        C = CR
     ===================================================== */
 
-    const receiptType = 
+    const receiptType =
       req.body?.type === "B"
         ? "BR"
         : req.body?.type === "C"
         ? "CR"
         : req.body?.type || "BR";
-
-        // req.body?.type+"R"
 
     console.log("UI TYPE:", req.body?.type);
     console.log("DB RECEIPT TYPE:", receiptType);
@@ -73,10 +82,7 @@ export const getReceipt = async (req, res) => {
       SELECT *
       FROM dbo.filluserbranch($1, $2)
       `,
-      [
-        PstrCoID,
-        PstrUserID,
-      ]
+      [PstrCoID, PstrUserID]
     );
 
     /* =====================================================
@@ -88,18 +94,14 @@ export const getReceipt = async (req, res) => {
       SELECT *
       FROM dbo.filldefaultbranch($1, $2)
       `,
-      [
-        PstrCoID,
-        PstrUserID,
-      ]
+      [PstrCoID, PstrUserID]
     );
 
+    const LkpType = await pool.query(
+      "SELECT * FROM dbo.fillfinparam()"
+    );
 
-  const LkpType = await pool.query(
-  'SELECT * FROM dbo.fillfinparam()'
-);
-
-console.log(LkpType.rows);
+    console.log(LkpType.rows);
 
     console.log(
       "defaultBranchResult:",
@@ -136,9 +138,7 @@ console.log(LkpType.rows);
       SELECT *
       FROM dbo.filllookupaccountname($1)
       `,
-      [
-        PstrCoID,
-      ]
+      [PstrCoID]
     );
 
     const accountsidResult = await pool.query(
@@ -146,17 +146,14 @@ console.log(LkpType.rows);
       SELECT *
       FROM dbo.filllookupaccountid($1)
       `,
-      [
-        PstrCoID,
-      ]
+      [PstrCoID]
     );
-
 
     /* =====================================================
        COST CENTERS
     ===================================================== */
 
-    let costCenters = [];
+    let costCenters: any[] = [];
 
     try {
       const costCenterResult = await pool.query(
@@ -164,18 +161,16 @@ console.log(LkpType.rows);
         SELECT *
         FROM dbo.fillcostcenters($1)
         `,
-        [
-          PstrCoID,
-        ]
+        [PstrCoID]
       );
 
       costCenters = costCenterResult.rows;
-
-    } catch (error) {
-
+    } catch (error: unknown) {
       console.warn(
         "Cost center loading failed:",
-        error.message
+        error instanceof Error
+          ? error.message
+          : String(error)
       );
 
       costCenters = [];
@@ -192,10 +187,9 @@ console.log(LkpType.rows);
        CR = Cash Receipt
     ===================================================== */
 
-    let receiptNo = null;
+    let receiptNo: string | number | null = null;
 
     if (defaultBranch) {
-
       console.log(
         "Calling getnextdocno with:",
         {
@@ -207,26 +201,25 @@ console.log(LkpType.rows);
         }
       );
 
-      const receiptNoResult =
-        await pool.query(
-          `
-          SELECT *
-          FROM dbo.getnextdocno(
-            $1,
-            $2,
-            $3,
-            $4,
-            $5
-          )
-          `,
-          [
-            PstrCoID,
-            PstrYear,
-            defaultBranch,
-            receiptType,
-            "dbo.tblfintrans",
-          ]
-        );
+      const receiptNoResult = await pool.query(
+        `
+        SELECT *
+        FROM dbo.getnextdocno(
+          $1,
+          $2,
+          $3,
+          $4,
+          $5
+        )
+        `,
+        [
+          PstrCoID,
+          PstrYear,
+          defaultBranch,
+          receiptType,
+          "dbo.tblfintrans",
+        ]
+      );
 
       console.log(
         "receiptNoResult:",
@@ -234,16 +227,11 @@ console.log(LkpType.rows);
       );
 
       receiptNo =
-        receiptNoResult.rows[0]
-          ?.getnextdocno ||
-        receiptNoResult.rows[0]
-          ?.fdocno ||
-        receiptNoResult.rows[0]
-          ?.docno ||
+        receiptNoResult.rows[0]?.getnextdocno ||
+        receiptNoResult.rows[0]?.fdocno ||
+        receiptNoResult.rows[0]?.docno ||
         null;
-
     } else {
-
       console.warn(
         "Default branch not found. Receipt number was not generated."
       );
@@ -254,7 +242,6 @@ console.log(LkpType.rows);
     ===================================================== */
 
     return res.status(200).json({
-
       success: true,
 
       message:
@@ -268,7 +255,10 @@ console.log(LkpType.rows);
 
       accounts:
         accountsResult.rows || [],
-accountsortbyId:accountsidResult.rows|| [],
+
+      accountsortbyId:
+        accountsidResult.rows || [],
+
       costCenters,
 
       defaultBranch,
@@ -276,18 +266,16 @@ accountsortbyId:accountsidResult.rows|| [],
       receiptNo,
 
       receiptType,
-      LkpType
+
+      LkpType,
     });
-
-  } catch (error) {
-
+  } catch (error: unknown) {
     console.error(
       "ReceiptsControllers error:",
       error
     );
 
     return res.status(500).json({
-
       success: false,
 
       message:
@@ -301,34 +289,42 @@ accountsortbyId:accountsidResult.rows|| [],
   }
 };
 
-export const getReceiptType = async (req, res) => {
+/* =========================================================
+   GET RECEIPT TYPE
+========================================================= */
+
+export const getReceiptType = async (
+  req: Request,
+  res: Response
+): Promise<Response> => {
   try {
     const PstrCoID = process.env.PstrCoID;
-    const { cashorbank:type } = req.body;
-    const {fptype} = req.body;
+
+    const { cashorbank: type } = req.body;
+    const { fptype } = req.body;
 
     if (!type) {
       return res.status(400).json({
         success: false,
-        message: "cashorbank parameter is required",
+        message:
+          "cashorbank parameter is required",
       });
     }
 
     if (type !== "C" && type !== "B") {
       return res.status(400).json({
         success: false,
-        message: "cashorbank parameter must be either 'C' or 'B'",
+        message:
+          "cashorbank parameter must be either 'C' or 'B'",
       });
     }
 
-    // const functionName =
-    //   cashorbank === "C"
-    //     ? "dbo.fillcashaccounts"
-    //     : "dbo.fillbankaccounts";
-
     const result = await pool.query(
-      `SELECT * FROM dbo.filllookupcbaccountname($1,$2)`,
-      [PstrCoID,type]
+      `
+      SELECT *
+      FROM dbo.filllookupcbaccountname($1,$2)
+      `,
+      [PstrCoID, type]
     );
 
     return res.status(200).json({
@@ -336,26 +332,46 @@ export const getReceiptType = async (req, res) => {
       type,
       data: result.rows,
     });
-  } catch (error) {
-    console.error("GetReceiptCashORBank error:", error);
+  } catch (error: unknown) {
+    console.error(
+      "GetReceiptCashORBank error:",
+      error
+    );
 
     return res.status(500).json({
       success: false,
-      message: "Failed to load cash/bank accounts",
-      error: error.message,
+      message:
+        "Failed to load cash/bank accounts",
+
+      error:
+        error instanceof Error
+          ? error.message
+          : String(error),
     });
   }
 };
 
-export const getDocNo = async (req, res) => {
+/* =========================================================
+   GET DOCUMENT NUMBER
+========================================================= */
+
+export const getDocNo = async (
+  req: Request,
+  res: Response
+): Promise<Response> => {
   try {
     const PstrCoID = process.env.PstrCoID;
     const PstrYear = Number(process.env.PstrYear);
-    const { fptype,fbrid } = req.body;
 
+    const {
+      fptype,
+      fbrid,
+    } = req.body;
 
-    console.log("================fptype=================",fptype
-);
+    console.log(
+      "================fptype=================",
+      fptype
+    );
 
     /* =========================================
        VALIDATION
@@ -364,44 +380,46 @@ export const getDocNo = async (req, res) => {
     if (!PstrCoID) {
       return res.status(400).json({
         success: false,
-        message: "Company ID is not configured",
+        message:
+          "Company ID is not configured",
       });
     }
 
     if (!PstrYear) {
       return res.status(400).json({
         success: false,
-        message: "Financial year is not configured",
+        message:
+          "Financial year is not configured",
       });
     }
 
     if (!fptype) {
       return res.status(400).json({
         success: false,
-        message: "Document type is required",
+        message:
+          "Document type is required",
       });
     }
 
     /* =========================================
        GET NEXT RECEIPT DOCUMENT NUMBER
-       
+
        RV = Receipt Voucher
     ========================================= */
 
-
-    console.log("fbrid",)
+    console.log("fbrid");
 
     const result = await pool.query(
       `
       SELECT *
-      FROM dbo.getnextdocno($1, $2, $3, $4,$5)
+      FROM dbo.getnextdocno($1, $2, $3, $4, $5)
       `,
       [
         PstrCoID,
         PstrYear,
         fbrid,
         fptype,
-        "dbo.tblfintrans"
+        "dbo.tblfintrans",
       ]
     );
 
@@ -413,8 +431,7 @@ export const getDocNo = async (req, res) => {
       success: true,
       data: result.rows,
     });
-
-  } catch (error) {
+  } catch (error: unknown) {
     console.error(
       "GetReceiptDocNumber error:",
       error
@@ -422,8 +439,10 @@ export const getDocNo = async (req, res) => {
 
     return res.status(500).json({
       success: false,
+
       message:
         "Failed to generate receipt document number",
+
       error:
         error instanceof Error
           ? error.message
@@ -432,10 +451,14 @@ export const getDocNo = async (req, res) => {
   }
 };
 
+/* =========================================================
+   GET CUSTOMER DIVISION
+========================================================= */
+
 export const getDivID = async (
-  req,
-  res
-) => {
+  req: Request,
+  res: Response
+): Promise<Response> => {
   try {
     const PstrCoID =
       process.env.PstrCoID;
@@ -510,7 +533,7 @@ export const getDivID = async (
       data:
         result.rows || [],
     });
-  } catch (error) {
+  } catch (error: unknown) {
     console.error(
       "GetCustomerDivisions error:",
       error
@@ -530,75 +553,110 @@ export const getDivID = async (
   }
 };
 
+/* =========================================================
+   SAVE RECEIPT
+========================================================= */
 
-
-export const saveReceipt = async (req, res) => {
+export const saveReceipt = async (
+  req: Request,
+  res: Response
+): Promise<Response> => {
   try {
-    const result = await saveReceiptService(req.body);
+    const result =
+      await saveReceiptService(req.body);
 
-  
-    console.log("saveReceipt request body:", req.body);
-    return res.status(200).json({
-      success: true,
-      message: result.message,
-      data: result.data,
-    });
-  } catch (error) {
-    console.error("ReceiptsControllers error:", error);
-
-    return res.status(400).json({
-      success: false,
-      message: error.message || "Receipt could not be saved",
-    });
-  }
-};
-
-export const modifyReceipt = async (req, res) => {
-  try {
-    const result = await updateReceiptService(req.body);
+    console.log(
+      "saveReceipt request body:",
+      req.body
+    );
 
     return res.status(200).json({
       success: true,
       message: result.message,
       data: result.data,
     });
-  } catch (error) {
-    console.error("updateReceipt error:", error);
+  } catch (error: unknown) {
+    console.error(
+      "ReceiptsControllers error:",
+      error
+    );
 
     return res.status(400).json({
       success: false,
+
       message:
-        error.message ||
-        "Receipt could not be modified",
+        error instanceof Error
+          ? error.message
+          : "Receipt could not be saved",
     });
   }
 };
 
-export const testget = async (req, res) => {
+/* =========================================================
+   MODIFY RECEIPT
+========================================================= */
+
+export const modifyReceipt = async (
+  req: Request,
+  res: Response
+): Promise<Response> => {
+  try {
+    const result =
+      await updateReceiptService(req.body);
+
+    return res.status(200).json({
+      success: true,
+      message: result.message,
+      data: result.data,
+    });
+  } catch (error: unknown) {
+    console.error(
+      "updateReceipt error:",
+      error
+    );
+
+    return res.status(400).json({
+      success: false,
+
+      message:
+        error instanceof Error
+          ? error.message
+          : "Receipt could not be modified",
+    });
+  }
+};
+
+/* =========================================================
+   TEST GET
+========================================================= */
+
+export const testget = async (
+  req: Request,
+  res: Response
+): Promise<Response | void> => {
   try {
     return res.status(200).json({
       success: true,
-      message: "Test GET endpoint is working",
+      message:
+        "Test GET endpoint is working",
     });
-  } catch (error) {
-    console.error("testget error:", error);
+  } catch (error: unknown) {
+    console.error(
+      "testget error:",
+      error
+    );
   }
-}
-
-
-
+};
 
 /* =========================================================
    GET RECEIPT FOR MODIFY
 ========================================================= */
 
 export async function GetDatas(
-  req,
-  res
-) {
-
+  req: Request,
+  res: Response
+): Promise<Response> {
   try {
-
     /* =====================================================
        QUERY PARAMETERS
     ===================================================== */
@@ -608,7 +666,6 @@ export async function GetDatas(
       strdocType,
       strdocNo,
     } = req.query;
-
 
     console.log(
       "\n======================================"
@@ -637,7 +694,6 @@ export async function GetDatas(
       "======================================"
     );
 
-
     /* =====================================================
        VALIDATION
     ===================================================== */
@@ -647,66 +703,42 @@ export async function GetDatas(
       strbranch === null ||
       String(strbranch).trim() === ""
     ) {
-
       return res.status(400).json({
-
         exists: false,
-
         header: null,
-
         rows: [],
-
         message:
           "Branch is required",
-
       });
-
     }
-
 
     if (
       strdocType === undefined ||
       strdocType === null ||
       String(strdocType).trim() === ""
     ) {
-
       return res.status(400).json({
-
         exists: false,
-
         header: null,
-
         rows: [],
-
         message:
           "Receipt type is required",
-
       });
-
     }
-
 
     if (
       strdocNo === undefined ||
       strdocNo === null ||
       String(strdocNo).trim() === ""
     ) {
-
       return res.status(400).json({
-
         exists: false,
-
         header: null,
-
         rows: [],
-
         message:
           "Receipt number is required",
-
       });
-
     }
-
 
     /* =====================================================
        CALL GetData
@@ -724,18 +756,12 @@ export async function GetDatas(
       "Calling GetData..."
     );
 
-
     const result =
       await GetData({
-
         strbranch,
-
         strdocType,
-
         strdocNo,
-
       });
-
 
     /* =====================================================
        NOT FOUND
@@ -745,26 +771,16 @@ export async function GetDatas(
       !result ||
       result.exists === false
     ) {
-
       return res.status(404).json(
-
         result || {
-
           exists: false,
-
           header: null,
-
           rows: [],
-
           message:
             "Receipt not found",
-
         }
-
       );
-
     }
-
 
     /* =====================================================
        SUCCESS
@@ -773,30 +789,20 @@ export async function GetDatas(
     return res.status(200).json(
       result
     );
-
-
-  } catch (error) {
-
+  } catch (error: unknown) {
     console.error(
       "GetDatas error:",
       error
     );
 
-
     return res.status(500).json({
-
       exists: false,
-
       header: null,
-
       rows: [],
-
       message:
-        error.message ||
-        "Failed to load receipt",
-
+        error instanceof Error
+          ? error.message
+          : "Failed to load receipt",
     });
-
   }
-
 }
