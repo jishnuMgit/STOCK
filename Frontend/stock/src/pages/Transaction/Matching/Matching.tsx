@@ -1,139 +1,35 @@
 import React, {
   useCallback,
   useEffect,
-  useMemo,
   useRef,
   useState,
 } from "react";
 
-import type { SelectInstance } from "react-select";
-
-/* =========================================================
-   MATCH TABLE
-========================================================= */
-
-import MatchTable, {
-  type TableField,
+import MatchingComponents, {
+  type MatchingComponentsRef,
   type ReceiptRow,
-} from "../../../components/Transaction/Match/MatchTable";
-
-/* =========================================================
-   BOTTOM FORM
-========================================================= */
-
-import ReceiptBottomForm from "../../../components/Transaction/Receipt/save/ReceiptBottomForm";
-
-/* =========================================================
-   ACTIONS
-========================================================= */
-
-import ReceiptActions, {
-  type ReceiptActionsRef,
-} from "../../../components/Transaction/Receipt/save/ReceiptActions";
-
-/* =========================================================
-   MATCH HEADER
-========================================================= */
-
-import MatchHeader from "../../../components/Transaction/Match/MatchHeader";
-
-import MatchHeaderForm, {
   type SelectOption,
-} from "../../../components/Transaction/Match/MatchHeaderForm";
-import MatchAction from "../../../components/Transaction/Match/MatchAction";
+} from "../../../components/Transaction/Match/MatchingComponents";
 
 /* =========================================================
-   CREATE INITIAL ROWS
+   CREATE ROWS
 ========================================================= */
 
-const createRows = (): ReceiptRow[] =>
-  Array.from(
-    { length: 11 },
-    (_, index) => ({
-      id: index + 1,
-
-      brId: "",
-
-      date: "",
-
-      type: "",
-
-      docNo: "",
-
-      description: "",
-
-      docAmount: "",
-
-      debit: "",
-
-      credit: "",
-
-      match: false,
-
-      matchAmount: "",
-    })
-  );
-
-/* =========================================================
-   TABLE FIELD ORDER
-
-   IMPORTANT:
-   This controls ENTER navigation.
-
-   Br. ID
-      ↓
-   Date
-      ↓
-   Type
-      ↓
-   Doc. No.
-      ↓
-   Description
-      ↓
-   Doc. Amt.
-      ↓
-   Debit
-      ↓
-   Credit
-      ↓
-   Match
-      ↓
-   Match Amt.
-      ↓
-   Next Row Br. ID
-========================================================= */
-
-const tableFieldOrder: TableField[] = [
-  "brId",
-  "date",
-  "type",
-  "docNo",
-  "description",
-  "docAmount",
-  "debit",
-  "credit",
-  "match",
-  "matchAmount",
-];
-
-/* =========================================================
-   API RESPONSE
-========================================================= */
-
-interface ReceiptsResponse {
-  success: boolean;
-
-  message: string;
-
-  data: {
-    fbrid: string;
-    fbrname: string;
-  }[];
-
-  defaultBranch: string | null;
-
-  receiptNo: string | null;
-}
+const createRows = (): ReceiptRow[] => {
+  return Array.from({ length: 11 }, (_, index) => ({
+    id: index + 1,
+    brId: "",
+    date: "",
+    type: "",
+    docNo: "",
+    description: "",
+    docAmount: 0,
+    debit: 0,
+    credit: 0,
+    match: false,
+    matchAmount: 0,
+  }));
+};
 
 /* =========================================================
    MATCHING
@@ -144,38 +40,15 @@ const Matching: React.FC = () => {
      HEADER STATE
   ======================================================= */
 
-  const [branch, setBranch] =
-    useState("");
+  const [branch, setBranch] = useState("");
 
-  const [type, setType] =
-    useState("BR");
+  const [type, setType] = useState("BR");
 
-  const [receiptNo, setReceiptNo] =
-    useState("");
+  const [receiptNo, setReceiptNo] = useState("");
 
-  const [receiptDate, setReceiptDate] =
-    useState(() => {
-      const today = new Date();
+  const [receiptDate, setReceiptDate] = useState("");
 
-      const day = String(
-        today.getDate()
-      ).padStart(2, "0");
-
-      const month = String(
-        today.getMonth() + 1
-      ).padStart(2, "0");
-
-      const year =
-        today.getFullYear();
-
-      return `${day}/${month}/${year}`;
-    });
-
-  const [cbAccount, setCbAccount] =
-    useState("");
-
-  const [customerId, setCustomerId] =
-    useState("");
+  const [customerId, setCustomerId] = useState("");
 
   const [customerName, setCustomerName] =
     useState("");
@@ -183,689 +56,124 @@ const Matching: React.FC = () => {
   const [divisionId, setDivisionId] =
     useState("");
 
-  const [debitAmount, setDebitAmount] =
-    useState(0);
-
-  const [creditAmount, setCreditAmount] =
-    useState(0);
-
-  const [reference, setReference] =
-    useState("");
-
-  const [receivedFrom, setReceivedFrom] =
-    useState("");
-
   /* =======================================================
-     NOTE
-  ======================================================= */
-
-  const [note, setNote] =
-    useState("");
-
-  /* =======================================================
-     TABLE ROWS
+     ROW STATE
   ======================================================= */
 
   const [rows, setRows] =
     useState<ReceiptRow[]>(
-      createRows
+      createRows()
     );
 
   /* =======================================================
-     BRANCH OPTIONS
+     OPTIONS
   ======================================================= */
 
-  const [
-    branchOptions,
-    setBranchOptions,
-  ] =
-    useState<
-      {
-        fbrid: string;
-        fbrname: string;
-      }[]
-    >([]);
+  const [branchOptions, setBranchOptions] =
+    useState<SelectOption[]>([]);
+
+  const [customerOptions] =
+    useState<SelectOption[]>([]);
+
+  const [customerNameOptions] =
+    useState<SelectOption[]>([]);
+
+  const [divisionOptions] =
+    useState<SelectOption[]>([]);
+
+  const [documentOptions] =
+    useState<SelectOption[]>([]);
 
   /* =======================================================
-     DESCRIPTION
-
-     Kept for the existing bottom form.
-
-     The actual grid Description field is handled
-     directly by MatchTable.
+     COMPONENT REF
   ======================================================= */
 
-  const [
-    description,
-    setDescription,
-  ] =
-    useState("");
-
-  /* =======================================================
-     MATCH AMOUNTS
-  ======================================================= */
-
-  const [
-    docAmount,
-    setDocAmount,
-  ] =
-    useState(0);
-
-  const [
-    matchAmount,
-    setMatchAmount,
-  ] =
-    useState(0);
-
-  const balance =
-    docAmount -
-    matchAmount;
-
-  /* =======================================================
-     HEADER REFS
-  ======================================================= */
-
-  const customerIdRef =
-    useRef<
-      SelectInstance<
-        SelectOption,
-        false
-      >
-    >(null);
-
-  const customerNameRef =
-    useRef<
-      SelectInstance<
-        SelectOption,
-        false
-      >
-    >(null);
-
-  const divisionRef =
-    useRef<
-      SelectInstance<
-        SelectOption,
-        false
-      >
-    >(null);
-
-  const typeRef =
-    useRef<
-      SelectInstance<
-        SelectOption,
-        false
-      >
-    >(null);
-
-  const receiptNoRef =
-    useRef<HTMLInputElement>(
-      null
-    );
-
-  const branchRef =
-    useRef<
-      SelectInstance<
-        SelectOption,
-        false
-      >
-    >(null);
-
-  const dateRef =
-    useRef<HTMLInputElement>(
+  const matchingRef =
+    useRef<MatchingComponentsRef | null>(
       null
     );
 
   /* =======================================================
-     MATCH TABLE REF
+     UPDATE TABLE ROW
   ======================================================= */
 
-  const receiptTableRef =
-    useRef<React.ComponentRef<typeof MatchTable>>(
-      null
-    );
-
-  /* =======================================================
-     BOTTOM FORM REFS
-  ======================================================= */
-
-  const noteRef =
-    useRef<HTMLTextAreaElement>(
-      null
-    );
-
-  const descriptionRef =
-    useRef<HTMLInputElement>(
-      null
-    );
-
-  /* =======================================================
-     ACTION REF
-  ======================================================= */
-
-  const actionsRef =
-    useRef<ReceiptActionsRef>(
-      null
-    );
-
-  /* =======================================================
-     LOAD INITIAL DATA
-  ======================================================= */
-
-  useEffect(() => {
-    const controller =
-      new AbortController();
-
-    const handleApi =
-      async () => {
-        try {
-          const response =
-            await fetch(
-              "http://localhost:5000/api/getReceipts",
-              {
-                method: "GET",
-                signal:
-                  controller.signal,
-              }
-            );
-
-          if (!response.ok) {
-            throw new Error(
-              `HTTP Error: ${response.status}`
-            );
-          }
-
-          const result =
-            (await response.json()) as ReceiptsResponse;
-
-          console.log(
-            "Matching API Response:",
-            result
-          );
-
-          if (
-            !result.success
-          ) {
-            console.error(
-              "Matching API failed:",
-              result.message
-            );
-
-            return;
-          }
-
-          /* =============================================
-             BRANCHES
-          ============================================= */
-
-          setBranchOptions(
-            result.data || []
-          );
-
-          /* =============================================
-             DEFAULT BRANCH
-          ============================================= */
-
-          if (
-            result.defaultBranch
-          ) {
-            setBranch(
-              result.defaultBranch
-            );
-          }
-
-          /* =============================================
-             RECEIPT / DOCUMENT NUMBER
-          ============================================= */
-
-          if (
-            result.receiptNo
-          ) {
-            setReceiptNo(
-              result.receiptNo
-            );
-          }
-        } catch (
-          error
-        ) {
-          if (
-            error instanceof DOMException &&
-            error.name ===
-              "AbortError"
-          ) {
-            return;
-          }
-
-          console.error(
-            "Matching API Error:",
-            error
-          );
-        }
-      };
-
-    handleApi();
-
-    return () =>
-      controller.abort();
-  }, []);
-
-  /* =======================================================
-     BRANCH SELECT OPTIONS
-  ======================================================= */
-
-  const branchSelectOptions =
-    useMemo<SelectOption[]>(
-      () =>
-        branchOptions.map(
-          (item) => ({
-            value:
-              item.fbrid,
-
-            label:
-              item.fbrname,
-          })
-        ),
-      [branchOptions]
-    );
-
-  /* =======================================================
-     CUSTOMER ID OPTIONS
-  ======================================================= */
-
-  const customerIdOptions =
-    useMemo<SelectOption[]>(
-      () => [],
-      []
-    );
-
-  /* =======================================================
-     CUSTOMER NAME OPTIONS
-  ======================================================= */
-
-  const customerNameOptions =
-    useMemo<SelectOption[]>(
-      () => [],
-      []
-    );
-
-  /* =======================================================
-     DIVISION OPTIONS
-  ======================================================= */
-
-  const divisionOptions =
-    useMemo<SelectOption[]>(
-      () => [],
-      []
-    );
-
-  /* =======================================================
-     DOCUMENT TYPE OPTIONS
-  ======================================================= */
-
-  const typeOptions =
-    useMemo<SelectOption[]>(
-      () => [
-        {
-          value: "BR",
-          label: "BR",
-        },
-        {
-          value: "CR",
-          label: "CR",
-        },
-      ],
-      []
-    );
-
-  /* =======================================================
-     FOCUS TABLE FIELD
-
-     This is the main connection between the header
-     and MatchTable.
-  ======================================================= */
-
-  const focusTableField =
-    useCallback(
-      (
-        rowIndex: number,
-        field: TableField
-      ) => {
-        receiptTableRef.current?.focusField(
-          rowIndex,
-          field
-        );
-      },
-      []
-    );
-
-  /* =======================================================
-     ROW CHANGE
-  ======================================================= */
-
-  const handleRowChange =
-    useCallback(
-      (
-        id: number,
-        field: keyof ReceiptRow,
-        value: string | boolean
-      ) => {
-        setRows(
-          (currentRows) =>
-            currentRows.map(
-              (row) =>
-                row.id === id
-                  ? {
-                      ...row,
-                      [field]:
-                        value,
-                    }
-                  : row
-            )
-        );
-      },
-      []
-    );
-
-  /* =======================================================
-     ESC FROM TABLE -> NOTE
-  ======================================================= */
-
-  const handleTableEscape =
-    useCallback(() => {
-      requestAnimationFrame(
-        () => {
-          const note =
-            noteRef.current;
-
-          if (!note) {
-            return;
-          }
-
-          note.focus();
-
-          const position =
-            note.value.length;
-
-          note.setSelectionRange(
-            position,
-            position
-          );
-        }
-      );
-    }, []);
-
-  /* =======================================================
-     TABLE ENTER NAVIGATION
-
-     IMPORTANT:
-
-     MatchTable calls this every time ENTER is
-     pressed on a table field.
-
-     Current row:
-
-     Br.ID
-       ↓
-     Date
-       ↓
-     Type
-       ↓
-     Doc.No
-       ↓
-     Description
-       ↓
-     Doc.Amount
-       ↓
-     Debit
-       ↓
-     Credit
-       ↓
-     Match
-       ↓
-     Match Amount
-
-     Then next row Br.ID.
-  ======================================================= */
-
-  const handleTableEnter =
-    useCallback(
-      (
-        rowIndex: number,
-        field: TableField
-      ) => {
-        /* ===============================================
-           CURRENT FIELD INDEX
-        =============================================== */
-
-        const fieldIndex =
-          tableFieldOrder.indexOf(
-            field
-          );
-
-        /* ===============================================
-           NEXT FIELD
-        =============================================== */
-
-        const nextField =
-          tableFieldOrder[
-            fieldIndex + 1
-          ];
-
-        /* ===============================================
-           NEXT FIELD IN SAME ROW
-        =============================================== */
-
-        if (nextField) {
-          focusTableField(
-            rowIndex,
-            nextField
-          );
-
-          return;
-        }
-
-        /* ===============================================
-           CURRENT ROW IS COMPLETE
-
-           MOVE TO NEXT ROW
-        =============================================== */
-
-        const nextRow =
-          rowIndex + 1;
-
-        if (
-          nextRow <
-          rows.length
-        ) {
-          focusTableField(
-            nextRow,
-            "brId"
-          );
-
-          return;
-        }
-
-        /* ===============================================
-           LAST FIELD OF LAST ROW
-
-           GO TO NOTE
-        =============================================== */
-
-        requestAnimationFrame(
-          () => {
-            const note =
-              noteRef.current;
-
-            if (!note) {
-              return;
+  const handleRowChange = useCallback(
+    (
+      rowIndex: number,
+      field: keyof ReceiptRow,
+      value:
+        | string
+        | number
+        | boolean
+    ) => {
+      setRows((previousRows) =>
+        previousRows.map(
+          (row, index) => {
+            if (index !== rowIndex) {
+              return row;
             }
 
-            note.focus();
-
-            const position =
-              note.value.length;
-
-            note.setSelectionRange(
-              position,
-              position
-            );
+            return {
+              ...row,
+              [field]: value,
+            };
           }
-        );
-      },
-      [
-        focusTableField,
-        rows.length,
-      ]
-    );
+        )
+      );
+    },
+    []
+  );
 
   /* =======================================================
-     DESCRIPTION CHANGE
-
-     This is only for the bottom Description component
-     if it is still displayed.
-
-     The MatchTable Description column has its own
-     row value.
-  ======================================================= */
-
-  const handleDescriptionChange =
-    useCallback(
-      (
-        value: string
-      ) => {
-        setDescription(
-          value
-        );
-      },
-      []
-    );
-
-  /* =======================================================
-     DESCRIPTION ENTER
-
-     Bottom description -> first table Br.ID.
-
-     The grid Description field itself is handled by
-     MatchTable -> handleTableEnter.
-  ======================================================= */
-
-  const handleDescriptionEnter =
-    useCallback(
-      (
-        event:
-          React.KeyboardEvent<HTMLInputElement>
-      ) => {
-        if (
-          event.key !==
-          "Enter"
-        ) {
-          return;
-        }
-
-        event.preventDefault();
-
-        event.stopPropagation();
-
-        focusTableField(
-          0,
-          "brId"
-        );
-      },
-      [focusTableField]
-    );
-
-  /* =======================================================
-     NOTE ENTER -> SAVE
-  ======================================================= */
-
-  const handleNoteEnter =
-    useCallback(
-      (
-        event:
-          React.KeyboardEvent<HTMLTextAreaElement>
-      ) => {
-        if (
-          event.key !==
-            "Enter" ||
-          event.shiftKey
-        ) {
-          return;
-        }
-
-        event.preventDefault();
-
-        event.stopPropagation();
-
-        requestAnimationFrame(
-          () => {
-            actionsRef.current?.focusSave();
-          }
-        );
-      },
-      []
-    );
-
-  /* =======================================================
-     CALCULATE DOCUMENT AMOUNT
-
-     Uses Doc. Amt. column.
+     LOAD DATA
   ======================================================= */
 
   useEffect(() => {
-    const amount =
-      rows.reduce(
-        (
-          sum,
-          row
-        ) =>
-          sum +
-          (
-            Number(
-              row.docAmount
-            ) || 0
-          ),
-        0
-      );
+    const loadData = async () => {
+      try {
+        const response =
+          await fetch(
+            "/api/getReceipts"
+          );
 
-    setDocAmount(
-      amount
-    );
-  }, [rows]);
+        if (!response.ok) {
+          throw new Error(
+            "Failed to load matching data"
+          );
+        }
 
-  /* =======================================================
-     CALCULATE MATCH AMOUNT
+        const data =
+          await response.json();
 
-     Only checked rows are included.
-  ======================================================= */
+        if (
+          Array.isArray(
+            data?.branchOptions
+          )
+        ) {
+          setBranchOptions(
+            data.branchOptions
+          );
+        }
 
-  useEffect(() => {
-    const amount =
-      rows.reduce(
-        (
-          sum,
-          row
-        ) => {
-          if (
-            row.match
-          ) {
-            return (
-              sum +
-              (
-                Number(
-                  row.matchAmount
-                ) || 0
-              )
-            );
-          }
+        if (data?.branch) {
+          setBranch(data.branch);
+        }
 
-          return sum;
-        },
-        0
-      );
+        if (data?.receiptNo) {
+          setReceiptNo(
+            data.receiptNo
+          );
+        }
+      } catch (error) {
+        console.error(
+          "Matching load error:",
+          error
+        );
+      }
+    };
 
-    setMatchAmount(
-      amount
-    );
-  }, [rows]);
+    loadData();
+  }, []);
 
   /* =======================================================
      SEARCH
@@ -873,182 +181,73 @@ const Matching: React.FC = () => {
 
   const handleSearch =
     useCallback(() => {
-      console.log(
-        "MATCH SEARCH",
-        {
-          customerId,
-          customerName,
-          division: divisionId,
-          type,
-          receiptNo,
-          branch,
-          receiptDate,
-        }
-      );
-
-      /*
-        Connect your matching API here.
-
-        Example:
-
-        POST /api/searchMatching
-      */
-    }, [
-      customerId,
-      customerName,
-      divisionId,
-      type,
-      receiptNo,
-      branch,
-      receiptDate,
-    ]);
-
-  /* =======================================================
-
-    SAVE MATCHING DATA
-
-     ======================================================= */
-
-  const handleSave =
-    useCallback(
-      async () => {
-        try {
-          const matchingData = {
-
-             branch,
-
-             type,
-
-
-             receiptNo,
-
-            customerId,
-
-            customerName,
-
-            division: divisionId,
-
-            receiptDate,
-
-            rows:
-              rows.map(
-                (
-                  row,
-                  index
-                ) => ({
-                  id:
-                    row.id,
-
-                  slNo:
-                    index + 1,
-
-                  brId:
-                    row.brId,
-
-                  date:
-                    row.date,
-
-                  type:
-                    row.type,
-
-                  docNo:
-                    row.docNo,
-
-                  description:
-                    row.description ||
-                    "",
-
-                  docAmount:
-                    Number(
-                      row.docAmount
-                    ) || 0,
-
-                  debit:
-                    Number(
-                      row.debit
-                    ) || 0,
-
-                  credit:
-                    Number(
-                      row.credit
-                    ) || 0,
-
-                  match:
-                    row.match,
-
-                  matchAmount:
-                    Number(
-                      row.matchAmount
-                    ) || 0,
-                })
-              ),
-
-            docAmount,
-
-            matchAmount,
-
-            balance,
-
-            note,
-          };
-
-          console.log(
-            "MATCHING DATA:",
-            matchingData
-          );
-
-          /*
-            Connect your matching save API here.
-
-            Example:
-
-            const response = await fetch(
-              "http://localhost:5000/api/saveMatching",
-              {
-                method: "POST",
-                headers: {
-                  "Content-Type":
-                    "application/json",
-                },
-                body:
-                  JSON.stringify(
-                    matchingData
-                  ),
-              }
-            );
-          */
-
-          alert(
-            "Matching data prepared successfully"
-          );
-        } catch (
-          error
-        ) {
-          console.error(
-            "MATCH SAVE ERROR:",
-            error
-          );
-
-          alert(
-            "Cannot save matching data"
-          );
-        }
-      },
-      [
+      const searchData = {
+        branch,
+        type,
+        receiptNo,
+        receiptDate,
         customerId,
         customerName,
         divisionId,
-        type,
-        receiptNo,
+      };
+
+      console.log(
+        "Matching Search:",
+        searchData
+      );
+    }, [
+      branch,
+      type,
+      receiptNo,
+      receiptDate,
+      customerId,
+      customerName,
+      divisionId,
+    ]);
+
+  /* =======================================================
+     SAVE
+  ======================================================= */
+
+  const handleSave =
+    useCallback(() => {
+      const validRows =
+        rows.filter(
+          (row) =>
+            row.brId &&
+            row.brId.trim() !== ""
+        );
+
+      const matchingData = {
         branch,
-        receiptDate,
-        rows,
-        docAmount,
-        matchAmount,
-        balance,
-        note,
-      ]
-    );
+        docType: type,
+        docNo: receiptNo,
+        customerId,
+        customerName,
+        divisionId,
+        matchApplyDate:
+          receiptDate,
+        rows: validRows,
+      };
+
+      console.log(
+        "Matching Save:",
+        matchingData
+      );
+
+      alert(
+        "Matching saved successfully"
+      );
+    }, [
+      rows,
+      branch,
+      type,
+      receiptNo,
+      customerId,
+      customerName,
+      divisionId,
+      receiptDate,
+    ]);
 
   /* =======================================================
      CLEAR FORM
@@ -1056,40 +255,13 @@ const Matching: React.FC = () => {
 
   const clearForm =
     useCallback(() => {
+      setBranch("");
 
-    setCbAccount("");
+      setType("BR");
 
-      setReceiptDate(
-        () => {
-          const today =
-            new Date();
+      setReceiptNo("");
 
-          const day =
-            String(
-              today.getDate()
-            ).padStart(
-              2,
-              "0"
-            );
-
-          const month =
-            String(
-              today.getMonth() + 1
-            ).padStart(
-              2,
-              "0"
-            );
-
-          const year =
-            today.getFullYear();
-
-          return `${day}/${month}/${year}`;
-        }
-      );
-
-      setReceivedFrom("");
-
-      setReference("");
+      setReceiptDate("");
 
       setCustomerId("");
 
@@ -1097,36 +269,67 @@ const Matching: React.FC = () => {
 
       setDivisionId("");
 
-      setDocAmount(0);
+      setRows(createRows());
 
-
-      setDescription("");
-
-      setNote("");
-
-
-      setMatchAmount(0);
-
-
-
-      setRows(
-        createRows()
-      );
+      requestAnimationFrame(() => {
+        matchingRef.current
+          ?.focusCustomerId();
+      });
     }, []);
 
   /* =======================================================
      INITIAL FOCUS
-
-     Header first field = Customer ID.
   ======================================================= */
 
   useEffect(() => {
-    requestAnimationFrame(
-      () => {
-        customerIdRef.current?.focus();
-      }
-    );
+    requestAnimationFrame(() => {
+      matchingRef.current
+        ?.focusCustomerId();
+    });
   }, []);
+
+  /* =======================================================
+     DOCUMENT AMOUNT
+  ======================================================= */
+
+  const documentAmount =
+    rows.reduce(
+      (total, row) =>
+        total +
+        Number(
+          row.docAmount || 0
+        ),
+      0
+    );
+
+  /* =======================================================
+     MATCH AMOUNT
+  ======================================================= */
+
+  const totalMatchAmount =
+    rows.reduce(
+      (total, row) => {
+        if (!row.match) {
+          return total;
+        }
+
+        return (
+          total +
+          Number(
+            row.matchAmount || 0
+          )
+        );
+      },
+      0
+    );
+
+  /* =======================================================
+     BALANCE
+  ======================================================= */
+
+  const balance =
+    documentAmount -
+    totalMatchAmount;
 
   /* =======================================================
      RETURN
@@ -1136,51 +339,49 @@ const Matching: React.FC = () => {
     <div
       className="
         min-h-screen
+        w-full
         bg-slate-100
-        px-5
+        px-2
         py-2
         flex
-        flex-col
-        justify-center
         items-center
-        gap-2.5
+        justify-center
       "
     >
-      {/* =================================================
-          MAIN FORM CONTAINER
-      ================================================= */}
-
       <div
         className="
-          mx-auto
-          lg:w-280
-          md:w-[55%]
-          max-w-362.5
-          min-w-212.5
+          w-full
+          max-w-287.5
+          min-w-0
           border
           border-gray-400
           bg-white
         "
       >
-        {/* =================================================
-            HEADER TITLE
-        ================================================= */}
+        <MatchingComponents
+          ref={matchingRef}
 
-        <MatchHeader />
+          /* ===============================================
+             HEADER
+          =============================================== */
 
-        {/* =================================================
-            MATCH HEADER FORM
-        ================================================= */}
+          branch={branch}
+          setBranch={setBranch}
 
-        <MatchHeaderForm
-          /* =============================================
-             CUSTOMER
-          ============================================= */
+          type={type}
+          setType={setType}
 
-          customerId={
-            customerId
+          receiptNo={receiptNo}
+          setReceiptNo={
+            setReceiptNo
           }
 
+          receiptDate={receiptDate}
+          setReceiptDate={
+            setReceiptDate
+          }
+
+          customerId={customerId}
           setCustomerId={
             setCustomerId
           }
@@ -1188,411 +389,72 @@ const Matching: React.FC = () => {
           customerName={
             customerName
           }
-
           setCustomerName={
             setCustomerName
           }
 
-          customerIdOptions={
-            customerIdOptions
+          divisionId={divisionId}
+          setDivisionId={
+            setDivisionId
+          }
+
+          /* ===============================================
+             TABLE
+          =============================================== */
+
+          rows={rows}
+
+          handleRowChange={
+            handleRowChange
+          }
+
+          /* ===============================================
+             ACTIONS
+          =============================================== */
+
+          onSave={handleSave}
+
+          clearForm={clearForm}
+
+          onSearch={handleSearch}
+
+          /* ===============================================
+             OPTIONS
+          =============================================== */
+
+          branchOptions={
+            branchOptions
+          }
+
+          customerOptions={
+            customerOptions
           }
 
           customerNameOptions={
             customerNameOptions
           }
 
-          /* =============================================
-             DIVISION
-          ============================================= */
-
-          divisionId={
-            divisionId
-          }
-
-          setDivisionId={
-            setDivisionId
-          }
-
           divisionOptions={
             divisionOptions
           }
 
-          /* =============================================
-             DOCUMENT TYPE
-          ============================================= */
-
-          type={
-            type
+          documentOptions={
+            documentOptions
           }
 
-          setType={
-            setType
+          /* ===============================================
+             TOTALS
+          =============================================== */
+
+          documentAmount={
+            documentAmount
           }
 
-          typeOptions={
-            typeOptions
+          totalMatchAmount={
+            totalMatchAmount
           }
 
-          /* =============================================
-             DOCUMENT NUMBER
-          ============================================= */
-
-          receiptNo={
-            receiptNo
-          }
-
-          setReceiptNo={
-            setReceiptNo
-          }
-
-          /* =============================================
-             BRANCH
-          ============================================= */
-
-          branch={
-            branch
-          }
-
-          setBranch={
-            setBranch
-          }
-
-          branchOptions={
-            branchSelectOptions
-          }
-
-          /* =============================================
-             DATE
-          ============================================= */
-
-          receiptDate={
-            receiptDate
-          }
-
-          setReceiptDate={
-            setReceiptDate
-          }
-
-          /* =============================================
-             AMOUNTS
-          ============================================= */
-
-          docAmount={
-            docAmount
-          }
-
-          matchAmount={
-            matchAmount
-          }
-
-          balance={
-            balance
-          }
-
-          /* =============================================
-             SEARCH
-          ============================================= */
-
-          onSearch={
-            handleSearch
-          }
-
-          /* =============================================
-             REFS
-          ============================================= */
-
-          customerIdRef={
-            customerIdRef
-          }
-
-          customerNameRef={
-            customerNameRef
-          }
-
-          divisionRef={
-            divisionRef
-          }
-
-          typeRef={
-            typeRef
-          }
-
-          /* IMPORTANT:
-             This was incorrectly passed as:
-
-             receiptNo={receiptNoRef}
-
-             It must be:
-
-             receiptNoRef={receiptNoRef}
-          */
-//@ts-ignore
-          receiptNoRef={
-            receiptNoRef
-          }
-
-          branchRef={
-            branchRef
-          }
-
-          dateRef={
-            dateRef
-          }
-
-          /* =============================================
-             TABLE FOCUS
-          ============================================= */
-
-          focusFirstAccountId={() =>
-            focusTableField(
-              0,
-              "brId"
-            )
-          }
-        />
-
-        {/* =================================================
-            MATCH TABLE
-
-            ENTER NAVIGATION:
-
-            Br.ID
-            ↓
-            Date
-            ↓
-            Type
-            ↓
-            Doc.No.
-            ↓
-            Description
-            ↓
-            Doc.Amount
-            ↓
-            Debit
-            ↓
-            Credit
-            ↓
-            Match
-            ↓
-            Match Amount
-            ↓
-            Next Row Br.ID
-        ================================================= */}
-
-        <MatchTable
-          ref={
-            receiptTableRef
-          }
-
-          rows={
-            rows
-          }
-
-          handleRowChange={
-            handleRowChange
-          }
-
-          onFieldEnter={
-            handleTableEnter
-          }
-
-          onTableEscape={
-            handleTableEscape
-          }
-        />
-
-        {/* =================================================
-            TOTAL
-        ================================================= */}
-
-<div className="mt-2 w-full ">
-
-  {/* =====================================================
-      TOTAL ROW
-      Aligns exactly with:
-      Doc Amt. | Debit | Credit
-  ===================================================== */}
-
-  <div className="ml-auto grid w-82.5 grid-cols-3 gap-0 mr-3">
-
-    {/* DOC AMOUNT */}
-    <div className="flex justify-end mr-16">
-      <input
-        value={docAmount.toFixed(2)}
-        readOnly
-        className="
-          box-border
-          h-7.5
-          w-25
-          border
-                    rounded-md
-
-          border-[#c7c7c7]
-          bg-[#f7f7f7]
-          px-2
-          text-right
-          text-[13px]
-          font-semibold
-          text-red-600
-          outline-none
-        "
-      />
-    </div>
-
-    {/* DEBIT */}
-    <div className="flex justify-end mr-16">
-      <input
-        value={debitAmount.toFixed(2)}
-        readOnly
-        className="
-          box-border
-          h-7.5
-          w-25
-                    rounded-md
-
-          border
-          border-[#c7c7c7]
-          bg-[#f7f7f7]
-          px-2
-          text-right
-          text-[13px]
-          font-semibold
-          text-red-600
-          outline-none
-        "
-      />
-    </div>
-
-    {/* CREDIT */}
-    <div className="flex justify-end ">
-      <input
-        value={creditAmount.toFixed(2)}
-        readOnly
-        className="
-          box-border
-          h-7.5
-          w-28.75
-                    rounded-md
-
-          border
-          border-[#c7c7c7]
-          bg-[#f7f7f7]
-          px-2
-          text-right
-          z-100
-          text-[13px]
-          font-semibold
-          text-red-600
-          outline-none
-        "
-      />
-    </div>
-
-  </div>
-
-
-  {/* =====================================================
-      DIFFERENCE AMOUNT
-      Positioned under the right-side amount columns
-  ===================================================== */}
-
-  <div className="ml-auto mt-2 flex w-82.5 justify-end mr-3">
-
-    <div className="flex items-center gap-2">
-
-      <label
-        className="
-          whitespace-nowrap
-          text-[13px]
-          text-slate-700
-        "
-      >
-        Diff. Amt. :
-      </label>
-
-      <input
-        value={(
-          docAmount -
-          debitAmount -
-          creditAmount
-        ).toFixed(2)}
-        readOnly
-        className="
-          box-border
-          rounded-md
-          h-7.5
-          w-28.75
-          border
-          border-[#c7c7c7]
-          bg-[#f7f7f7]
-          px-2
-          text-right
-          text-[16px]
-          font-semibold
-          text-red-600
-          outline-none
-        "
-      />
-
-    </div>
-
-  </div>
-
-</div>
-        {/* =================================================
-            BOTTOM FORM
-        ================================================= */}
-
-        {/* <ReceiptBottomForm
-          description={
-            description
-          }
-
-          setDescription={
-            handleDescriptionChange
-          }
-
-          note={
-            note
-          }
-
-          setNote={
-            setNote
-          }
-
-          noteRef={
-            noteRef
-          }
-
-          descriptionRef={
-            descriptionRef
-          }
-
-          onNoteEnter={
-            handleNoteEnter
-          }
-
-          onDescriptionEnter={
-            handleDescriptionEnter
-          }
-        /> */}
-
-        {/* =================================================
-            ACTIONS
-        ================================================= */}
-
-        <MatchAction
-          ref={
-            actionsRef
-          }
-
-          clearForm={
-            clearForm
-          }
-
-          onSave={
-            handleSave
-          }
+          balance={balance}
         />
       </div>
     </div>

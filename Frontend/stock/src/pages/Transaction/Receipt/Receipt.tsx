@@ -14,17 +14,17 @@ import {
   ReceiptTable,
   ReceiptBottomForm,
   ReceiptActions,
-  type SelectOption,
-  type Branch,
-  type FinancialParameter,
+
+  
+  
   type TableField,
   type ReceiptTableRef,
-  type AccountData,
-  type ReceiptRow,
-  type CostCenter,
   type SortField,
   type ReceiptActionsRef,
 } from "../../../components/Transaction/Receipt/save/ReceitComp";
+
+
+import  {type SelectOption,type Branch,type FinancialParameter,type CostCenter,  type ReceiptRow,type AccountData, } from '../../../types/receiptypes';
 import { toast } from "react-toastify";
 import ReceiptPrint from "../../../components/Transaction/Receipt/save/Receipt.print";
 /* =========================================================
@@ -2339,56 +2339,47 @@ useEffect(() => {
           }
         />
 
-        {isPrint &&(<div>
-
-          <ReceiptPrint
-  receivedFrom={receivedFrom}
-  receiptNo={documentNo}
-  date={date}
-  reference={reference}
-  fop={cbAccount}
-  currency="SAR"
-  amountInFigures={total}
-  amountInWords=""
-  description={
-    rows
-      .filter(
-        (row) =>
-          row.accountId &&
-          row.accountId.trim() !== ""
-      )
-      .map(
-        (row) =>
-          row.description || ""
-      )
-      .filter(Boolean)
-      .join(" ")
-  }
-  transactions={rows
-    .filter(
-      (row) =>
-        row.accountId &&
-        row.accountId.trim() !== ""
-    )
-    .map((row) => ({
-      accountId:
-        row.accountId,
-
-      accountName:
-        row.accountName,
-
-      description:
-        row.description || "",
-
-      creditAmount:
-        Number(
-          row.creditAmount
-        ) || 0,
-    }))}
-  preparedBy="MOHAMMED"
-  preparedDate="16/09/2026 16:29"
-/>
-        </div>) }
+        {isPrint && (
+  <div className="print-only">
+    <ReceiptPrint
+      receivedFrom={receivedFrom}
+      receiptNo={documentNo}
+      date={date}
+      reference={reference}
+      fop={cbAccount}
+      currency="SAR"
+      amountInFigures={total}
+      amountInWords=""
+      description={rows
+        .filter(
+          (row) =>
+            row.accountId &&
+            row.accountId.trim() !== ""
+        )
+        .map(
+          (row) =>
+            row.description || ""
+        )
+        .filter(Boolean)
+        .join(" ")}
+      transactions={rows
+        .filter(
+          (row) =>
+            row.accountId &&
+            row.accountId.trim() !== ""
+        )
+        .map((row) => ({
+          accountId: row.accountId,
+          accountName: row.accountName,
+          description: row.description || "",
+          creditAmount:
+            Number(row.creditAmount) || 0,
+        }))}
+      preparedBy="MOHAMMED"
+      preparedDate="16/09/2026 16:29"
+    />
+  </div>
+)}
 
         {/* =================================================
             ACTIONS

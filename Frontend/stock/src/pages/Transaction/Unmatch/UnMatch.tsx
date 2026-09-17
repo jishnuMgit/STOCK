@@ -28,7 +28,7 @@ import MatchTable, {
 
 import ReceiptActions, {
   type ReceiptActionsRef,
-} from "../../../components/Transaction/Receipt/save/ReceiptActions";
+} from "../../../test/ReceiptActions";
 
 /* =========================================================
    MATCH HEADER

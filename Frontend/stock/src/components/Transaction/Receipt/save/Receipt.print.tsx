@@ -1,5 +1,7 @@
 import React from "react";
 
+import logo from './global-network.png'
+
 /* =========================================================
    TYPES
 ========================================================= */
@@ -157,7 +159,7 @@ const ReceiptPrint: React.FC<
           <div className="receipt-company-logo">
 
             <img
-              src="/images/caravan-logo.png"
+              src={logo}
               alt="Caravan Logo"
               className="receipt-logo"
             />
