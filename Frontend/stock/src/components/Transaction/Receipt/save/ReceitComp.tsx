@@ -46,7 +46,10 @@ dayjs.extend(customParseFormat);
    COMMON TYPES
 ========================================================= */
 
-import  {type SelectOption,type ReceiptDocNumberResponse,type AccountResponse,type CustomerDivision,type FinancialParameter,type CostCenter,  type ReceiptRow,type AccountData,type CbAccount } from '../../../../types/receiptypes';
+import  {type SelectOption,type ReceiptDocNumberResponse,
+  type AccountResponse,type CustomerDivision,type FinancialParameter,
+  type CostCenter,  type ReceiptRow,type AccountData,type CbAccount,
+  type AccountOption ,type AccountOptionProps} from '../../../../types/receiptypes';
 
 
 export type TableField =
@@ -934,122 +937,168 @@ const [docnolen, setdocnolen] = useState<number>(0);
             Date :
           </label>
 
-          <LocalizationProvider
-            dateAdapter={AdapterDayjs}
-          >
-            <DatePicker
-              value={
-                date
-                  ? dayjs(
-                      date,
-                      "DD/MM/YYYY"
-                    )
-                  : null
-              }
-              onChange={(newValue) => {
-                if (newValue?.isValid()) {
-                  setDate(
-                    newValue.format(
-                      "DD/MM/YYYY"
-                    )
-                  );
-                } else {
-                  setDate("");
-                }
-              }}
-              format="DD/MM/YYYY"
-              inputRef={dateRef}
-              slotProps={{
-                textField: {
-                  id: "dtpDate",
+      <LocalizationProvider
+  dateAdapter={AdapterDayjs}
+>
+  <DatePicker
+    value={
+      date
+        ? dayjs(
+            date,
+            "DD-MM-YYYY"
+          )
+        : null
+    }
+    onChange={(newValue) => {
+      if (newValue?.isValid()) {
+        setDate(
+          newValue.format(
+            "DD-MM-YYYY"
+          )
+        );
+      } else {
+        setDate("");
+      }
+    }}
+    format="DD-MM-YYYY"
+    inputRef={dateRef}
+    slotProps={{
+      textField: {
+        id: "dtpDate",
 
-                  onKeyDown: (event) =>
-                    handleInputKeyDown(
-                      event,
-                      () =>
-                        receivedFromRef.current?.focus()
-                    ),
-                },
+        onKeyDown: (event) =>
+          handleInputKeyDown(
+            event,
+            () =>
+              receivedFromRef.current?.focus()
+          ),
+      },
 
-                openPickerButton: {
-                  sx: {
-                    padding: "2px",
-                    margin: 0,
-                  },
-                },
+      openPickerButton: {
+        sx: {
+          padding: "2px",
+          margin: 0,
+        },
+      },
 
-                inputAdornment: {
-                  sx: {
-                    margin: 0,
-                    padding: 0,
-                  },
-                },
-              }}
-              sx={{
-                width: "150px",
+      inputAdornment: {
+        sx: {
+          margin: 0,
+          padding: 0,
+        },
+      },
+    }}
+    sx={{
+      width: "150px",
 
-                "& .MuiPickersTextField-root": {
-                  width: "150px",
-                },
+      "& .MuiPickersTextField-root": {
+        width: "120px",
+      },
 
-                "& .MuiPickersInputBase-root": {
-                  width: "150px",
-                  height: "28px",
-                  minHeight: "28px",
-                  boxSizing: "border-box",
-                  borderRadius: "4px",
-                  backgroundColor: "#ffffff",
-                  fontSize: "12px",
-                  padding: 0,
-                  overflow: "hidden",
-                },
+      /* =========================================
+         MAIN INPUT
+      ========================================= */
+      "& .MuiPickersInputBase-root": {
+        width: "150px",
+        height: "28px",
+        minHeight: "28px",
+        boxSizing: "border-box",
+        borderRadius: "4px",
+        backgroundColor: "#ffffff",
+        fontSize: "12px",
+        padding: 0,
+        overflow: "hidden",
+      },
 
-                "& .MuiPickersInputBase-sectionContainer": {
-                  minWidth: 0,
-                  padding: "0 0 0 8px",
-                  overflow: "hidden",
-                },
+      /* =========================================
+         DATE TEXT CONTAINER
+         THIS IS THE IMPORTANT PART
+      ========================================= */
+      "& .MuiPickersInputBase-sectionsContainer": {
+        paddingLeft: "10px !important",
+        paddingRight: "0px !important",
+        marginBottom:"-5px !important",
+        marginLeft: "0px !important",
+        boxSizing: "border-box",
+        overflow: "hidden",
+      },
 
-                "& .MuiPickersInputBase-input": {
-                  minWidth: 0,
-                  width: "100%",
-                  fontSize: "12px",
-                  padding: 0,
-                  height: "28px",
-                  boxSizing: "border-box",
-                },
+      /* =========================================
+         INDIVIDUAL DATE SECTIONS
+      ========================================= */
+      "& .MuiPickersInputBase-sectionContent": {
+        fontSize: "12px",
+      },
 
-                "& .MuiInputAdornment-root": {
-                  margin: 0,
-                  padding: 0,
-                },
+      /* =========================================
+         INPUT
+      ========================================= */
+      "& .MuiPickersInputBase-input": {
+        minWidth: 0,
+        width: "100%",
+        fontSize: "12px",
+        padding: 0,
+        height: "28px",
+        boxSizing: "border-box",
+      },
 
-                "& .MuiIconButton-root": {
-                  width: "24px",
-                  height: "24px",
-                  padding: "2px",
-                  margin: 0,
-                },
+      /* =========================================
+         INPUT ADORNMENT
+      ========================================= */
+      "& .MuiInputAdornment-root": {
+        margin: 0,
+        padding: 0,
+      },
 
-                "& .MuiSvgIcon-root": {
-                  fontSize: "16px",
-                },
+      /* =========================================
+         CALENDAR BUTTON
+      ========================================= */
+      "& .MuiIconButton-root": {
+        width: "24px",
+        height: "24px",
+        padding: "2px",
+        margin: 0,
+      },
 
-                "& .MuiPickersOutlinedInput-notchedOutline": {
-                  borderColor: "#d7dee7",
-                },
+      "& .MuiSvgIcon-root": {
+        fontSize: "16px",
+      },
 
-                "& .MuiPickersInputBase-root:hover .MuiPickersOutlinedInput-notchedOutline": {
-                  borderColor: "#9fdfbc",
-                },
+      /* =========================================
+         BORDER
+      ========================================= */
+      "& .MuiPickersOutlinedInput-notchedOutline": {
+        borderColor: "#B7C7D7 !important",
+      },
 
-                "& .MuiPickersInputBase-root.Mui-focused .MuiPickersOutlinedInput-notchedOutline": {
-                  borderColor: "#9fdfbc",
-                  borderWidth: "1px",
-                },
-              }}
-            />
-          </LocalizationProvider>
+      "& .MuiPickersInputBase-root:hover .MuiPickersOutlinedInput-notchedOutline":
+        {
+          borderColor: "#B7C7D7 !important",
+        },
+
+      "& .MuiPickersInputBase-root.Mui-focused .MuiPickersOutlinedInput-notchedOutline":
+        {
+          borderColor: "#B7C7D7 !important",
+          borderWidth: "1px",
+        },
+
+      "& .MuiPickersInputBase-root.Mui-error .MuiPickersOutlinedInput-notchedOutline":
+        {
+          borderColor: "#B7C7D7 !important",
+        },
+
+      "& .MuiPickersInputBase-root.Mui-error:hover .MuiPickersOutlinedInput-notchedOutline":
+        {
+          borderColor: "#B7C7D7 !important",
+        },
+
+      "& .MuiPickersInputBase-root.Mui-error.Mui-focused .MuiPickersOutlinedInput-notchedOutline":
+        {
+          borderColor: "#B7C7D7 !important",
+        },
+    }}
+  />
+</LocalizationProvider>
         </div>
       </div>
 
@@ -1114,17 +1163,7 @@ const [docnolen, setdocnolen] = useState<number>(0);
    =========================================================
 ========================================================= */
 
-interface AccountOption {
-  value: string;
-  label: string;
 
-  accountId: string;
-  accountName: string;
-
-  fgcs: string;
-
-  haveCc: boolean;
-}
 
 interface CustomerDivisionResponse {
   success: boolean;
@@ -1214,10 +1253,7 @@ const CustomDropdownIndicator = (
   );
 };
 
-interface AccountOptionProps
-  extends OptionProps<AccountOption, false> {
-  displayMode: "id" | "name";
-}
+
 
 const AccountDropdownOption = ({
   displayMode,
@@ -1566,6 +1602,7 @@ const handleEditableSelectBackspace = (
   currentLabel: string,
   searchText: string,
   setSearchText: (value: string) => void,
+  setIsEditing: (value: boolean) => void,
   selectRef: React.RefObject<SelectInstance<any, any> | null>
 ): boolean => {
   if (event.key !== "Backspace") {
@@ -1575,6 +1612,10 @@ const handleEditableSelectBackspace = (
   event.preventDefault();
   event.stopPropagation();
 
+  // Keep the Select in editing mode even when the text becomes empty.
+  // This prevents the selected option's label from reappearing.
+  setIsEditing(true);
+
   const nextSearchText =
     searchText !== ""
       ? searchText.slice(0, -1)
@@ -1582,8 +1623,8 @@ const handleEditableSelectBackspace = (
 
   setSearchText(nextSearchText);
 
+  // Open the options without manually restoring focus.
   requestAnimationFrame(() => {
-    selectRef.current?.focus();
     selectRef.current?.openMenu("first");
   });
 
@@ -1724,6 +1765,20 @@ const ReceiptRow = memo(
       ccIdSearchText,
       setCcIdSearchText,
     ] = useState("");
+
+    // Prevent react-select from restoring the selected label while
+    // the user is editing it character-by-character.
+    const [isAccountIdEditing, setIsAccountIdEditing] =
+      useState(false);
+
+    const [isAccountNameEditing, setIsAccountNameEditing] =
+      useState(false);
+
+    const [isDivisionEditing, setIsDivisionEditing] =
+      useState(false);
+
+    const [isCcIdEditing, setIsCcIdEditing] =
+      useState(false);
 
     const [divisions, setDivisions] =
       useState<CustomerDivision[]>([]);
@@ -2292,7 +2347,11 @@ const formatCreditAmount = (
                 instance
               );
             }}
-            value={selectedAccount}
+            value={
+              isAccountIdEditing
+                ? null
+                : selectedAccount
+            }
             inputValue={
               accountIdSearchText
             }
@@ -2307,6 +2366,7 @@ const formatCreditAmount = (
                 setAccountIdSearchText(
                   newValue
                 );
+                setIsAccountIdEditing(true);
               }
 
               return newValue;
@@ -2322,6 +2382,7 @@ const formatCreditAmount = (
                     "",
                   accountIdSearchText,
                   setAccountIdSearchText,
+                  setIsAccountIdEditing,
                   accountIdSelectRef
                 );
 
@@ -2341,6 +2402,7 @@ const formatCreditAmount = (
             onMenuClose={() => {
               handleAccountIdMenuClose();
               setAccountIdSearchText("");
+              setIsAccountIdEditing(false);
             }}
             onChange={(
               option: SingleValue<AccountOption>
@@ -2348,6 +2410,9 @@ const formatCreditAmount = (
               if (!option) {
                 return;
               }
+
+              setIsAccountIdEditing(false);
+              setAccountIdSearchText("");
 
               void handleAccountChange(option);
             }}
@@ -2417,7 +2482,9 @@ const formatCreditAmount = (
               );
             }}
             value={
-              selectedAccountName
+              isAccountNameEditing
+                ? null
+                : selectedAccountName
             }
             inputValue={
               accountNameSearchText
@@ -2433,6 +2500,7 @@ const formatCreditAmount = (
                 setAccountNameSearchText(
                   newValue
                 );
+                setIsAccountNameEditing(true);
               }
 
               return newValue;
@@ -2448,6 +2516,7 @@ const formatCreditAmount = (
                     "",
                   accountNameSearchText,
                   setAccountNameSearchText,
+                  setIsAccountNameEditing,
                   accountNameSelectRef
                 );
 
@@ -2467,6 +2536,7 @@ const formatCreditAmount = (
             onMenuClose={() => {
               handleAccountNameMenuClose();
               setAccountNameSearchText("");
+              setIsAccountNameEditing(false);
             }}
             onChange={(
               option: SingleValue<AccountOption>
@@ -2474,6 +2544,9 @@ const formatCreditAmount = (
               if (!option) {
                 return;
               }
+
+              setIsAccountNameEditing(false);
+              setAccountNameSearchText("");
 
               void handleAccountChange(option);
             }}
@@ -2545,7 +2618,11 @@ const formatCreditAmount = (
                 instance
               );
             }}
-            value={selectedDivision}
+            value={
+              isDivisionEditing
+                ? null
+                : selectedDivision
+            }
             inputValue={
               divisionSearchText
             }
@@ -2560,6 +2637,7 @@ const formatCreditAmount = (
                 setDivisionSearchText(
                   newValue
                 );
+                setIsDivisionEditing(true);
               }
 
               return newValue;
@@ -2575,6 +2653,7 @@ const formatCreditAmount = (
                     "",
                   divisionSearchText,
                   setDivisionSearchText,
+                  setIsDivisionEditing,
                   divisionSelectRef
                 );
 
@@ -2594,6 +2673,7 @@ const formatCreditAmount = (
             onMenuClose={() => {
               handleDivisionMenuClose();
               setDivisionSearchText("");
+              setIsDivisionEditing(false);
             }}
             onChange={(
               option: SingleValue<SelectOption>
@@ -2605,6 +2685,7 @@ const formatCreditAmount = (
               );
 
               setDivisionSearchText("");
+              setIsDivisionEditing(false);
 
               setSelectedRowId(row.id);
             }}
@@ -2689,7 +2770,11 @@ const formatCreditAmount = (
                 instance
               );
             }}
-            value={selectedCcId}
+            value={
+              isCcIdEditing
+                ? null
+                : selectedCcId
+            }
             inputValue={ccIdSearchText}
             onInputChange={(
               newValue,
@@ -2702,6 +2787,7 @@ const formatCreditAmount = (
                 setCcIdSearchText(
                   newValue
                 );
+                setIsCcIdEditing(true);
               }
 
               return newValue;
@@ -2717,6 +2803,7 @@ const formatCreditAmount = (
                     "",
                   ccIdSearchText,
                   setCcIdSearchText,
+                  setIsCcIdEditing,
                   ccIdSelectRef
                 );
 
@@ -2736,6 +2823,7 @@ const formatCreditAmount = (
             onMenuClose={() => {
               handleCcMenuClose();
               setCcIdSearchText("");
+              setIsCcIdEditing(false);
             }}
             onChange={(
               option: SingleValue<SelectOption>
@@ -2747,6 +2835,7 @@ const formatCreditAmount = (
               );
 
               setCcIdSearchText("");
+              setIsCcIdEditing(false);
 
               setSelectedRowId(row.id);
             }}

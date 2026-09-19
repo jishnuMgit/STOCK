@@ -1,3 +1,4 @@
+import type { OptionProps } from "react-select";
 
 export interface SelectOption {
   value: string;
@@ -94,7 +95,7 @@ export interface ReceiptDocNumberResponse {
 
 
 
-interface AccountOption {
+export interface AccountOption {
   value: string;
   label: string;
 
@@ -106,3 +107,9 @@ interface AccountOption {
   haveCc: boolean;
 }
 
+
+
+export interface AccountOptionProps
+  extends OptionProps<AccountOption, false> {
+  displayMode: "id" | "name";
+}
