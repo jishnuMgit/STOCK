@@ -1,6 +1,10 @@
+import {
+  useCallback,
+  useEffect,
+} from "react";
 
-import { useCallback } from "react";
 import type { RefObject } from "react";
+
 import type { SelectInstance } from "react-select";
 
 import type { TableField } from "../test/ReceiptTable";
@@ -34,8 +38,10 @@ export type BottomField =
 ========================================================= */
 
 export type ActionField =
+  | "reload"
   | "save"
   | "search"
+  | "modify"
   | "delete"
   | "print"
   | "post"
@@ -111,6 +117,26 @@ const useReceiptKeyboard = ({
 
 
   /* =======================================================
+     0. DEFAULT FOCUS
+     
+     Receipt screen opens with focus on
+     Receipt No.
+  ======================================================= */
+
+  useEffect(() => {
+
+    requestAnimationFrame(() => {
+
+      documentNoRef.current?.focus();
+
+    });
+
+  }, [
+    documentNoRef,
+  ]);
+
+
+  /* =======================================================
      1. FOCUS ELEMENT
   ======================================================= */
 
@@ -125,10 +151,6 @@ const useReceiptKeyboard = ({
       }
 
 
-      /*
-         First focus after the current render.
-      */
-
       requestAnimationFrame(() => {
 
         if (!element) {
@@ -141,17 +163,14 @@ const useReceiptKeyboard = ({
           element.focus();
 
         } catch {
+
           return;
+
         }
 
 
         /*
            Select text only for native inputs.
-
-           IMPORTANT:
-           react-select is not an HTMLInputElement
-           from the ref perspective, so never call
-           .select() on it here.
         */
 
         if (
@@ -165,9 +184,8 @@ const useReceiptKeyboard = ({
             element.select();
 
           } catch {
-            /*
-               Ignore selection errors.
-            */
+
+            // Ignore selection errors
 
           }
 
@@ -191,11 +209,6 @@ const useReceiptKeyboard = ({
       >
     ) => {
 
-      /*
-         react-select exposes focus()
-         through SelectInstance.
-      */
-
       const select =
         selectRef.current;
 
@@ -205,55 +218,15 @@ const useReceiptKeyboard = ({
       }
 
 
-      /*
-         Focus immediately if possible.
-      */
-
       try {
 
         select.focus();
 
       } catch {
-        /*
-           Select may currently be
-           re-rendering.
-        */
+
+        // Ignore temporary focus errors
 
       }
-
-
-      /*
-         Retry after React has completed
-         the next render.
-
-         This helps when Account ID /
-         Account Name selection causes
-         the table row to update.
-      */
-
-      requestAnimationFrame(() => {
-
-        const currentSelect =
-          selectRef.current;
-
-
-        if (!currentSelect) {
-          return;
-        }
-
-
-        try {
-
-          currentSelect.focus();
-
-        } catch {
-          /*
-             Ignore temporary focus errors.
-          */
-
-        }
-
-      });
 
     },
     []
@@ -389,16 +362,6 @@ const useReceiptKeyboard = ({
       field: TableField
     ) => {
 
-      /*
-         IMPORTANT:
-
-         Keep the existing ReceiptTable
-         keyboard flow unchanged.
-
-         ReceiptTable itself owns the
-         Account ID / Account Name refs.
-      */
-
       requestAnimationFrame(() => {
 
         receiptTableRef.current?.focusField(
@@ -468,113 +431,111 @@ const useReceiptKeyboard = ({
   const focusActionButton = useCallback(
     (field: ActionField) => {
 
-      switch (field) {
+      requestAnimationFrame(() => {
 
-        /* -------------------------------------------------
-           SAVE
-        ------------------------------------------------- */
+        switch (field) {
 
-        case "save":
+          /* -------------------------------------------------
+             RELOAD
+          ------------------------------------------------- */
 
-          requestAnimationFrame(() => {
+          case "reload":
+
+            actionsRef.current?.focusReload?.();
+
+            break;
+
+
+          /* -------------------------------------------------
+             SAVE
+          ------------------------------------------------- */
+
+          case "save":
 
             actionsRef.current?.focusSave?.();
 
-          });
-
-          break;
+            break;
 
 
-        /* -------------------------------------------------
-           SEARCH
-        ------------------------------------------------- */
+          /* -------------------------------------------------
+             SEARCH
+          ------------------------------------------------- */
 
-        case "search":
-
-          requestAnimationFrame(() => {
+          case "search":
 
             actionsRef.current?.focusSearch?.();
 
-          });
-
-          break;
+            break;
 
 
-        /* -------------------------------------------------
-           DELETE
-        ------------------------------------------------- */
+          /* -------------------------------------------------
+             MODIFY
+          ------------------------------------------------- */
 
-        case "delete":
+          case "modify":
 
-          requestAnimationFrame(() => {
+            actionsRef.current?.focusModify?.();
+
+            break;
+
+
+          /* -------------------------------------------------
+             DELETE
+          ------------------------------------------------- */
+
+          case "delete":
 
             actionsRef.current?.focusDelete?.();
 
-          });
-
-          break;
+            break;
 
 
-        /* -------------------------------------------------
-           PRINT
-        ------------------------------------------------- */
+          /* -------------------------------------------------
+             PRINT
+          ------------------------------------------------- */
 
-        case "print":
-
-          requestAnimationFrame(() => {
+          case "print":
 
             actionsRef.current?.focusPrint?.();
 
-          });
-
-          break;
+            break;
 
 
-        /* -------------------------------------------------
-           POST
-        ------------------------------------------------- */
+          /* -------------------------------------------------
+             POST
+          ------------------------------------------------- */
 
-        case "post":
-
-          requestAnimationFrame(() => {
+          case "post":
 
             actionsRef.current?.focusPost?.();
 
-          });
-
-          break;
+            break;
 
 
-        /* -------------------------------------------------
-           ATTACH
-        ------------------------------------------------- */
+          /* -------------------------------------------------
+             ATTACH
+          ------------------------------------------------- */
 
-        case "attach":
-
-          requestAnimationFrame(() => {
+          case "attach":
 
             actionsRef.current?.focusAttach?.();
 
-          });
-
-          break;
+            break;
 
 
-        /* -------------------------------------------------
-           CLEAR
-        ------------------------------------------------- */
+          /* -------------------------------------------------
+             CLEAR
+          ------------------------------------------------- */
 
-        case "clear":
-
-          requestAnimationFrame(() => {
+          case "clear":
 
             actionsRef.current?.focusClear?.();
 
-          });
+            break;
 
-          break;
+        }
 
-      }
+      });
 
     },
     [
@@ -584,20 +545,58 @@ const useReceiptKeyboard = ({
 
 
   /* =======================================================
+     7. DEFAULT FOCUS FUNCTION
+     
+     Can also be called manually after Reload/Clear
+     if you want Receipt No. to become the starting field.
+  ======================================================= */
+
+  const focusDefault = useCallback(() => {
+
+    focusElement(
+      documentNoRef.current,
+      true
+    );
+
+  }, [
+    documentNoRef,
+    focusElement,
+  ]);
+
+
+  /* =======================================================
      RETURN
   ======================================================= */
 
   return {
 
-    focusElement,
+    /* Header */
 
     focusHeaderField,
 
+
+    /* Table */
+
     focusTableField,
+
+
+    /* Bottom */
 
     focusBottomField,
 
+
+    /* Actions */
+
     focusActionButton,
+
+
+    /* Individual focus helpers */
+
+    focusElement,
+
+    focusSelect,
+
+    focusDefault,
 
   };
 

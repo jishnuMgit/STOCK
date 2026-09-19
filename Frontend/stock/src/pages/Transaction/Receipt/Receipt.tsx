@@ -711,9 +711,9 @@ useEffect(() => {
             loadedRows
           );
 
-          toast.success(
-            "Receipt loaded successfully." 
-          );
+          // toast.success(
+          //   "Receipt loaded successfully." 
+          // );
         } catch (error) {
           lastLookupKeyRef.current =
             "";

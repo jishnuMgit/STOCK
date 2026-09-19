@@ -1751,18 +1751,161 @@ export async function deleteReceiptService({
    UPDATE RECEIPT
 ========================================================= */
 
+// export async function updateReceiptService(
+//   receipt: ReceiptData
+// ): Promise<ServiceResult> {
+
+//   const {
+
+//     branch,
+
+//     type,
+
+//     docNo,
+
+//   } = receipt;
+
+
+//   const client =
+//     await pool.connect();
+
+
+//   try {
+
+//     /* =====================================================
+//        BEGIN
+//     ===================================================== */
+
+//     await client.query(
+//       "BEGIN"
+//     );
+
+
+//     /* =====================================================
+//        DOCUMENT TYPE
+//     ===================================================== */
+
+//     const finalDocType =
+//       toDocumentType(type);
+
+
+//     /* =====================================================
+//        DELETE OLD RECEIPT
+//     ===================================================== */
+
+//     await deleteReceiptInternal(
+//       client,
+//       {
+
+//         branch,
+
+//         docType:
+//           finalDocType,
+
+//         docNo,
+
+//       }
+//     );
+
+
+//     /* =====================================================
+//        SAVE UPDATED RECEIPT
+//     ===================================================== */
+
+//     const result =
+//       await saveReceiptService(
+//         {
+
+//           ...receipt,
+
+//           receiptNo:
+//             docNo,
+
+//         },
+
+//         client,
+
+//         false
+
+//       );
+
+
+//     /* =====================================================
+//        COMMIT
+//     ===================================================== */
+
+//     await client.query(
+//       "COMMIT"
+//     );
+
+
+//     /* =====================================================
+//        RESPONSE
+//     ===================================================== */
+
+//     return {
+
+//       ...result,
+
+//       message:
+//         "modified successfully",
+
+//     };
+
+//   } catch (error: unknown) {
+
+//     try {
+
+//       await client.query(
+//         "ROLLBACK"
+//       );
+
+//     } catch (rollbackError: unknown) {
+
+//       console.error(
+//         "Update rollback error:",
+//         rollbackError
+//       );
+
+//     }
+
+
+//     console.error(
+//       "updateReceiptService error:",
+//       error
+//     );
+
+
+//     throw error;
+
+//   } finally {
+
+//     client.release();
+
+//   }
+// }
+
+
+/* =========================================================
+   UPDATE RECEIPT
+   TRUE MODIFY USING MODE : M
+========================================================= */
+
 export async function updateReceiptService(
   receipt: ReceiptData
 ): Promise<ServiceResult> {
 
   const {
-
     branch,
-
     type,
-
     docNo,
-
+    receiptDate,
+    receivedFrom,
+    reference,
+    cashBank,
+    note,
+    cbCcId,
+    rows = [],
   } = receipt;
 
 
@@ -1773,12 +1916,73 @@ export async function updateReceiptService(
   try {
 
     /* =====================================================
-       BEGIN
+       VALIDATION
     ===================================================== */
 
-    await client.query(
-      "BEGIN"
-    );
+    if (
+      isEmpty(branch)
+    ) {
+
+      throw new Error(
+        "Branch is required"
+      );
+
+    }
+
+
+    if (
+      isEmpty(type)
+    ) {
+
+      throw new Error(
+        "Receipt type is required"
+      );
+
+    }
+
+
+    if (
+      isEmpty(docNo)
+    ) {
+
+      throw new Error(
+        "Receipt number is required"
+      );
+
+    }
+
+
+    if (
+      isEmpty(receiptDate)
+    ) {
+
+      throw new Error(
+        "Receipt date is required"
+      );
+
+    }
+
+
+    if (
+      isEmpty(cashBank)
+    ) {
+
+      throw new Error(
+        "Cash/Bank account is required"
+      );
+
+    }
+
+
+    if (
+      !Array.isArray(rows)
+    ) {
+
+      throw new Error(
+        "Receipt rows are invalid"
+      );
+
+    }
 
 
     /* =====================================================
@@ -1790,12 +1994,82 @@ export async function updateReceiptService(
 
 
     /* =====================================================
-       DELETE OLD RECEIPT
+       VALID ROWS
     ===================================================== */
 
-    await deleteReceiptInternal(
+    const validRows: ReceiptRow[] =
+      rows.filter(
+        (
+          row: ReceiptRow
+        ): boolean =>
+          row &&
+          !isEmpty(
+            row.accountId
+          )
+      );
+
+
+    if (
+      validRows.length === 0
+    ) {
+
+      throw new Error(
+        "There is no information for modifying."
+      );
+
+    }
+
+
+    /* =====================================================
+       TOTAL
+    ===================================================== */
+
+    const finalTotal =
+      validRows.reduce(
+        (
+          sum: number,
+          row: ReceiptRow
+        ): number => {
+
+          return (
+            sum +
+            toNumber(
+              row.creditAmount
+            )
+          );
+
+        },
+        0
+      );
+
+
+    /* =====================================================
+       BEGIN TRANSACTION
+    ===================================================== */
+
+    await client.query(
+      "BEGIN"
+    );
+
+
+    /* =====================================================
+       1. MODIFY CONTROL ENTRY
+       
+       M + slNo = 0
+       
+       This updates:
+       tblfintrans
+       fslno = 0
+
+       NO DELETE.
+       NO INSERT.
+    ===================================================== */
+
+    await callReceiptProcedure(
       client,
       {
+
+        mode: "M",
 
         branch,
 
@@ -1804,34 +2078,267 @@ export async function updateReceiptService(
 
         docNo,
 
+        slNo: 0,
+
+        receiptDate,
+
+        cbAccountId:
+          cashBank,
+
+        receivedFrom,
+
+        reference,
+
+        /*
+           Control account is the
+           Cash/Bank account.
+        */
+
+        accountId:
+          cashBank,
+
+        gcs:
+          validRows[0]?.gcs ||
+          validRows[0]?.fgcs ||
+          "",
+
+        division:
+          validRows[0]?.division ||
+          validRows[0]?.divId ||
+          "",
+
+        ccId:
+          validRows[0]?.ccId ||
+          cbCcId ||
+          "",
+
+        /*
+           M control uses p_numcredit
+           and internally sets:
+
+           fdebit = p_numcredit
+           fcredit = 0
+        */
+
+        debit: 0,
+
+        credit:
+          finalTotal,
+
+        description:
+          [
+            reference,
+            receivedFrom,
+          ]
+            .filter(
+              (
+                value
+              ) =>
+                !isEmpty(value)
+            )
+            .join(" - "),
+
+        note:
+          note || "",
+
+        match:
+          toBoolean(
+            validRows[0]?.match
+          ),
+
+        userId:
+          PstrUserID,
+
+        userDate:
+          new Date().toISOString(),
+
+        details:
+          null,
+
       }
     );
 
 
     /* =====================================================
-       SAVE UPDATED RECEIPT
+       2. BUILD DETAILS FOR M MODE
+       
+       IMPORTANT:
+
+       These property names MUST match
+       jsonb_to_recordset() in PostgreSQL:
+
+       slno
+       dtpdate
+       cbaccountid
+       receivedfrompaidto
+       ref
+       accountid
+       gcs
+       divid
+       ccid
+       debit
+       credit
+       description
+       note
+       match
     ===================================================== */
 
-    const result =
-      await saveReceiptService(
-        {
+    const details =
+      validRows.map(
+        (
+          row: ReceiptRow,
+          index: number
+        ) => {
 
-          ...receipt,
+          return {
 
-          receiptNo:
-            docNo,
+            slno:
+              Number(row.slNo) ||
+              index + 1,
 
-        },
+            dtpdate:
+              normalizeDate(
+                receiptDate
+              ),
 
-        client,
+            cbaccountid:
+              cashBank || "",
 
-        false
+            receivedfrompaidto:
+              receivedFrom || "",
 
+            ref:
+              reference || "",
+
+            accountid:
+              row.accountId || "",
+
+            gcs:
+              row.gcs ||
+              row.fgcs ||
+              "",
+
+            divid:
+              row.division ||
+              row.divId ||
+              "",
+
+            ccid:
+              row.ccId ||
+              "",
+
+            debit:
+              toNumber(
+                row.debit
+              ),
+
+            credit:
+              toNumber(
+                row.creditAmount
+              ),
+
+            description:
+              row.description ||
+              "",
+
+            note:
+              note ||
+              "",
+
+            match:
+              toBoolean(
+                row.match
+              ),
+
+          };
+
+        }
       );
 
 
     /* =====================================================
-       COMMIT
+       3. MODIFY ALL DETAIL ROWS
+       
+       M + details JSON
+
+       PostgreSQL procedure will:
+
+       - update existing rows
+       - remove database detail rows that no longer
+         exist in frontend
+       - NOT delete the entire receipt
+       - NOT insert the receipt again
+    ===================================================== */
+
+    await callReceiptProcedure(
+      client,
+      {
+
+        mode: "M",
+
+        branch,
+
+        docType:
+          finalDocType,
+
+        docNo,
+
+        /*
+           Any non-zero value is enough
+           to enter the bulk-details branch
+           because p_strdetails is supplied.
+        */
+
+        slNo: 1,
+
+        receiptDate,
+
+        cbAccountId:
+          cashBank,
+
+        receivedFrom,
+
+        reference,
+
+        accountId:
+          null,
+
+        gcs:
+          null,
+
+        division:
+          null,
+
+        ccId:
+          null,
+
+        debit: 0,
+
+        credit: 0,
+
+        description:
+          null,
+
+        note:
+          null,
+
+        match:
+          false,
+
+        userId:
+          PstrUserID,
+
+        userDate:
+          new Date().toISOString(),
+
+        details,
+
+      }
+    );
+
+
+    /* =====================================================
+       4. COMMIT
     ===================================================== */
 
     await client.query(
@@ -1845,14 +2352,43 @@ export async function updateReceiptService(
 
     return {
 
-      ...result,
-
       message:
-        "modified successfully",
+        "Receipt modified successfully",
+
+      data: {
+
+        companyId:
+          PstrCoID,
+
+        year:
+          PstrYear,
+
+        branch,
+
+        docType:
+          finalDocType,
+
+        receiptNo:
+          docNo,
+
+        total:
+          finalTotal,
+
+        cashBank,
+
+        rowCount:
+          validRows.length,
+
+      },
 
     };
 
+
   } catch (error: unknown) {
+
+    /* =====================================================
+       ROLLBACK
+    ===================================================== */
 
     try {
 
@@ -1860,10 +2396,12 @@ export async function updateReceiptService(
         "ROLLBACK"
       );
 
-    } catch (rollbackError: unknown) {
+    } catch (
+      rollbackError: unknown
+    ) {
 
       console.error(
-        "Update rollback error:",
+        "Receipt modify rollback error:",
         rollbackError
       );
 
@@ -1877,6 +2415,7 @@ export async function updateReceiptService(
 
 
     throw error;
+
 
   } finally {
 

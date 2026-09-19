@@ -549,7 +549,7 @@ const ReceiptPrint: React.FC<
             min-height: 115px;
 
             border-top:
-              1px solid #b5b5b5;
+              0.5px solid #b5b5b5;
 
             padding:
               6px
@@ -636,7 +636,7 @@ const ReceiptPrint: React.FC<
             min-height: 215px;
 
             border:
-              1px solid #000000;
+              0.5px solid #000000;
 
             display: grid;
 
@@ -715,7 +715,7 @@ const ReceiptPrint: React.FC<
           .receipt-transaction-table th,
           .receipt-transaction-table td {
             border:
-              1px solid #000000;
+              0.5px solid #000000;
 
             padding:
               4px
@@ -749,7 +749,7 @@ const ReceiptPrint: React.FC<
           }
 
           .receipt-transaction-row {
-            height: 205px;
+            height: 50px;
           }
 
           .receipt-account-id {
