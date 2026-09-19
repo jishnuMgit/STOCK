@@ -16,6 +16,7 @@ import { FaEye } from "react-icons/fa";
 import Select, {
   components,
   type SingleValue,
+  type SingleValueProps,
   type DropdownIndicatorProps,
   type OptionProps,
   type MenuListProps,
@@ -647,9 +648,6 @@ const [docnolen, setdocnolen] = useState<number>(0);
         option.value === cbAccount
     ) || null;
 
-
-      console.log("selectedType",selectedType)
-
   return (
     <div className="px-5 pt-3 pb-2">
 
@@ -1151,7 +1149,6 @@ interface ReceiptTableProps {
   ) => void;
 
   onTableEscape: () => void;
-
   onClearRow: (
     id: number
   ) => void;
@@ -1165,7 +1162,27 @@ interface ReceiptTableProps {
 accountSortByIdOptions?: AccountData[];
 
   costCenters?: CostCenter[];
+
+  /* Fired whenever a row becomes the "active" row - clicking
+     any cell in the row, focusing any of its fields, opening
+     any of its dropdowns, etc. The parent should use this to
+     show/edit that specific row's own description (e.g. in
+     ReceiptBottomForm) instead of a single shared field. */
+  onRowSelect?: (
+    id: number,
+    row: ReceiptRow
+  ) => void;
 }
+
+const CcIdSingleValue = (
+  props: SingleValueProps<SelectOption, false>
+) => {
+  return (
+    <components.SingleValue {...props}>
+      {props.data.value}
+    </components.SingleValue>
+  );
+};
 
 export interface ReceiptTableRef {
   focusFirstAccountId: () => void;
@@ -1208,7 +1225,10 @@ const AccountDropdownOption = ({
 }: AccountOptionProps) => {
   return (
     <components.Option {...props}>
-      <div className="account-dropdown-row">
+      <div
+        className="account-dropdown-row"
+        title={`${props.data.accountId} - ${props.data.accountName}`}
+      >
 
         {displayMode === "id" ? (
           <>
@@ -1281,6 +1301,199 @@ const AccountDropdownMenuList = ({
   );
 };
 
+interface LabeledOptionProps
+  extends OptionProps<SelectOption, false> {
+  idHeader: string;
+  nameHeader: string;
+}
+
+/* Generic two-column option row (value / label) used by
+   Division and CC.ID dropdowns so the user can see both
+   the code and its description while picking. */
+const LabeledDropdownOption = ({
+  idHeader,
+  nameHeader,
+  ...props
+}: LabeledOptionProps) => {
+  const optionId = String(
+    props.data.value ?? ""
+  );
+
+  const optionName = String(
+    props.data.label ?? ""
+  );
+
+  return (
+    <components.Option {...props}>
+      <div
+        className="account-dropdown-row"
+        title={`${optionId} - ${optionName}`}
+        style={{
+          display: "grid",
+          gridTemplateColumns: "80px 1fr",
+          width: "260px",
+          minWidth: "260px",
+          gap: "8px",
+          alignItems: "center",
+        }}
+      >
+        <div
+          className="account-dropdown-id"
+          title={optionId}
+          style={{
+            overflow: "hidden",
+            textOverflow: "ellipsis",
+            whiteSpace: "nowrap",
+          }}
+        >
+          {optionId}
+        </div>
+
+        <div
+          className="account-dropdown-name"
+          title={optionName}
+          style={{
+            overflow: "hidden",
+            textOverflow: "ellipsis",
+            whiteSpace: "nowrap",
+          }}
+        >
+          {optionName}
+        </div>
+      </div>
+    </components.Option>
+  );
+};
+
+interface LabeledMenuListProps
+  extends MenuListProps<SelectOption, false> {
+  idHeader: string;
+  nameHeader: string;
+}
+
+const LabeledDropdownMenuList = ({
+  idHeader,
+  nameHeader,
+  ...props
+}: LabeledMenuListProps) => {
+  return (
+    <components.MenuList
+      {...props}
+      innerProps={{
+        ...props.innerProps,
+        style: {
+          ...props.innerProps.style,
+          minWidth: "260px",
+          width: "260px",
+        },
+      }}
+    >
+     <div
+  className="account-dropdown-header"
+  style={{
+    display: "grid",
+    gridTemplateColumns: "80px 1fr",
+    width: "260px",
+    minWidth: "260px",
+    gap: "8px",
+    alignItems: "center",
+  }}
+>
+  <div className="account-dropdown-header-id">
+    {idHeader}
+  </div>
+
+  <div
+    className="account-dropdown-header-name"
+    style={{
+      position: "relative",
+    }}
+  >
+    <span
+      style={{
+        height:'35px',
+        position: "absolute",
+        left: "-14px",
+        top: "-10px",
+        bottom: "-10px",
+        borderLeft: "2px solid #d0d0d0",
+      }}
+    />
+
+    {nameHeader}
+  </div>
+</div>
+
+      <div
+        className="account-dropdown-options"
+        style={{
+          width: "260px",
+          minWidth: "260px",
+        }}
+      >
+        {props.children}
+      </div>
+    </components.MenuList>
+  );
+};
+
+interface AccountSingleValueProps
+  extends SingleValueProps<AccountOption, false> {
+  displayMode: "id" | "name";
+}
+
+const AccountDropdownSingleValue = ({
+  displayMode,
+  ...props
+}: AccountSingleValueProps) => {
+  const data = props.data as AccountOption;
+
+  return (
+    <components.SingleValue {...props}>
+      <span
+        title={`${data.accountId} - ${data.accountName}`}
+      >
+        {displayMode === "id"
+          ? data.accountId
+          : data.accountName}
+      </span>
+    </components.SingleValue>
+  );
+};
+
+type LabeledSingleValueProps =
+  SingleValueProps<SelectOption, false>;
+
+const LabeledDropdownSingleValue = (
+  props: LabeledSingleValueProps
+) => {
+  const data = props.data as SelectOption;
+
+  const value = String(
+    data.value ?? ""
+  );
+
+  const label = String(
+    data.label ?? ""
+  );
+
+  return (
+    <components.SingleValue {...props}>
+      <span
+        title={`${value} - ${label}`}
+        style={{
+          display: "block",
+          overflow: "hidden",
+          textOverflow: "ellipsis",
+          whiteSpace: "nowrap",
+        }}
+      >
+        {value}
+      </span>
+    </components.SingleValue>
+  );
+};
+
 const accountFilterOption = (
   option: {
     label: string;
@@ -1329,6 +1542,52 @@ const selectFilterOption = (
       .toLowerCase()
       .includes(search)
   );
+};
+
+/* =========================================================
+   EDITABLE-SEARCH BACKSPACE FIX (applies to every Select
+   in the table row: Account ID, Account Name, Division,
+   CC.ID)
+
+   Default react-select behaviour: once a value is selected,
+   the text input is empty, so the FIRST Backspace press just
+   clears the whole selection instead of letting the user
+   delete the label one character at a time to search for a
+   different value. This helper intercepts Backspace when the
+   controlled search text is empty and there is a selected
+   value: it seeds the search text with the current label
+   minus its last character and re-opens the menu, so every
+   further Backspace keeps trimming one character at a time
+   and the (now visible) input value drives normal filtering.
+========================================================= */
+
+const handleEditableSelectBackspace = (
+  event: React.KeyboardEvent,
+  currentLabel: string,
+  searchText: string,
+  setSearchText: (value: string) => void,
+  selectRef: React.RefObject<SelectInstance<any, any> | null>
+): boolean => {
+  if (event.key !== "Backspace") {
+    return false;
+  }
+
+  event.preventDefault();
+  event.stopPropagation();
+
+  const nextSearchText =
+    searchText !== ""
+      ? searchText.slice(0, -1)
+      : currentLabel.slice(0, -1);
+
+  setSearchText(nextSearchText);
+
+  requestAnimationFrame(() => {
+    selectRef.current?.focus();
+    selectRef.current?.openMenu("first");
+  });
+
+  return true;
 };
 
 type RowRefValue =
@@ -1383,6 +1642,10 @@ interface ReceiptRowProps {
   onClearRow: (
     id: number
   ) => void;
+   onRowSelect?: (
+    id: number,
+    row: ReceiptRow
+  ) => void;
 }
 
 const ReceiptRow = memo(
@@ -1400,6 +1663,7 @@ const ReceiptRow = memo(
     onFieldEnter,
     onTableEscape,
     onClearRow,
+    onRowSelect,
   }: ReceiptRowProps) => {
 
     const accountIdMenuOpenRef =
@@ -1413,6 +1677,53 @@ const ReceiptRow = memo(
 
     const ccIdMenuOpenRef =
       useRef(false);
+
+    /* Local instance refs + controlled search text per field,
+       used only for the "edit selected value via Backspace"
+       fix. See handleEditableSelectBackspace above. */
+    const accountIdSelectRef =
+      useRef<SelectInstance<
+        AccountOption,
+        false
+      > | null>(null);
+
+    const accountNameSelectRef =
+      useRef<SelectInstance<
+        AccountOption,
+        false
+      > | null>(null);
+
+    const divisionSelectRef =
+      useRef<SelectInstance<
+        SelectOption,
+        false
+      > | null>(null);
+
+    const ccIdSelectRef =
+      useRef<SelectInstance<
+        SelectOption,
+        false
+      > | null>(null);
+
+    const [
+      accountIdSearchText,
+      setAccountIdSearchText,
+    ] = useState("");
+
+    const [
+      accountNameSearchText,
+      setAccountNameSearchText,
+    ] = useState("");
+
+    const [
+      divisionSearchText,
+      setDivisionSearchText,
+    ] = useState("");
+
+    const [
+      ccIdSearchText,
+      setCcIdSearchText,
+    ] = useState("");
 
     const [divisions, setDivisions] =
       useState<CustomerDivision[]>([]);
@@ -1546,6 +1857,7 @@ const ReceiptRow = memo(
             (division) => ({
               value: division.fdivid,
               label: division.fdivname,
+              
             })
           ),
         [divisions]
@@ -1628,6 +1940,9 @@ const ReceiptRow = memo(
           setSelectedRowId(
             row.id
           );
+
+          setAccountIdSearchText("");
+          setAccountNameSearchText("");
 
           handleRowChange(
             row.id,
@@ -1950,9 +2265,13 @@ const formatCreditAmount = (
             ? "receipt-row-selected"
             : ""
         }
-        onClick={() =>
-          setSelectedRowId(row.id)
-        }
+       
+     onClick={() => {
+  setSelectedRowId(row.id);
+  //@ts-ignore
+  onRowSelect?.(row.id, row);
+}}
+        
       >
         <td className="receipt-cell serial-cell">
           {index + 1}
@@ -1963,27 +2282,66 @@ const formatCreditAmount = (
             inputId={
               `lkpAccountId-${row.id}`
             }
-            ref={(instance) =>
+            ref={(instance) => {
+              accountIdSelectRef.current =
+                instance;
+
               setRowRef(
                 index,
                 "accountId",
                 instance
-              )
-            }
+              );
+            }}
             value={selectedAccount}
-            onKeyDown={(event) =>
+            inputValue={
+              accountIdSearchText
+            }
+            onInputChange={(
+              newValue,
+              actionMeta
+            ) => {
+              if (
+                actionMeta.action ===
+                "input-change"
+              ) {
+                setAccountIdSearchText(
+                  newValue
+                );
+              }
+
+              return newValue;
+            }}
+            backspaceRemovesValue={
+              false
+            }
+            onKeyDown={(event) => {
+              const handled =
+                handleEditableSelectBackspace(
+                  event,
+                  selectedAccount?.label ??
+                    "",
+                  accountIdSearchText,
+                  setAccountIdSearchText,
+                  accountIdSelectRef
+                );
+
+              if (handled) {
+                return;
+              }
+
               handleSelectKeyDown(
                 event,
                 "accountId",
                 accountIdMenuOpenRef
-              )
-            }
+              );
+            }}
             onMenuOpen={
               handleAccountIdMenuOpen
             }
-            onMenuClose={
-              handleAccountIdMenuClose
-            }
+            onMenuClose={() => {
+              handleAccountIdMenuClose();
+              setAccountIdSearchText("");
+            }}
             onChange={(
               option: SingleValue<AccountOption>
             ) => {
@@ -1991,9 +2349,7 @@ const formatCreditAmount = (
                 return;
               }
 
-              handleAccountChange(
-                option
-              );
+              void handleAccountChange(option);
             }}
            options={accountIdOptions}
             placeholder=""
@@ -2001,6 +2357,13 @@ const formatCreditAmount = (
             components={{
               DropdownIndicator:
                 RowAccountIdIndicator,
+
+              SingleValue: (props) => (
+                <AccountDropdownSingleValue
+                  {...props}
+                  displayMode="id"
+                />
+              ),
 
               Option: (props) => (
                 <AccountDropdownOption
@@ -2030,6 +2393,7 @@ const formatCreditAmount = (
               false
             }
             closeMenuOnSelect
+            blurInputOnSelect={false}
             tabSelectsValue={false}
             noOptionsMessage={() =>
               "No Account Found"
@@ -2042,29 +2406,68 @@ const formatCreditAmount = (
             inputId={
               `lkpAccountName-${row.id}`
             }
-            ref={(instance) =>
+            ref={(instance) => {
+              accountNameSelectRef.current =
+                instance;
+
               setRowRef(
                 index,
                 "accountName",
                 instance
-              )
-            }
+              );
+            }}
             value={
               selectedAccountName
             }
-            onKeyDown={(event) =>
+            inputValue={
+              accountNameSearchText
+            }
+            onInputChange={(
+              newValue,
+              actionMeta
+            ) => {
+              if (
+                actionMeta.action ===
+                "input-change"
+              ) {
+                setAccountNameSearchText(
+                  newValue
+                );
+              }
+
+              return newValue;
+            }}
+            backspaceRemovesValue={
+              false
+            }
+            onKeyDown={(event) => {
+              const handled =
+                handleEditableSelectBackspace(
+                  event,
+                  selectedAccountName?.label ??
+                    "",
+                  accountNameSearchText,
+                  setAccountNameSearchText,
+                  accountNameSelectRef
+                );
+
+              if (handled) {
+                return;
+              }
+
               handleSelectKeyDown(
                 event,
                 "accountName",
                 accountNameMenuOpenRef
-              )
-            }
+              );
+            }}
             onMenuOpen={
               handleAccountNameMenuOpen
             }
-            onMenuClose={
-              handleAccountNameMenuClose
-            }
+            onMenuClose={() => {
+              handleAccountNameMenuClose();
+              setAccountNameSearchText("");
+            }}
             onChange={(
               option: SingleValue<AccountOption>
             ) => {
@@ -2072,9 +2475,7 @@ const formatCreditAmount = (
                 return;
               }
 
-              handleAccountChange(
-                option
-              );
+              void handleAccountChange(option);
             }}
             options={
               realAccountOptions
@@ -2084,6 +2485,13 @@ const formatCreditAmount = (
             components={{
               DropdownIndicator:
                 RowAccountNameIndicator,
+
+              SingleValue: (props) => (
+                <AccountDropdownSingleValue
+                  {...props}
+                  displayMode="name"
+                />
+              ),
 
               Option: (props) => (
                 <AccountDropdownOption
@@ -2114,6 +2522,7 @@ const formatCreditAmount = (
               false
             }
             closeMenuOnSelect
+            blurInputOnSelect={false}
             tabSelectsValue={false}
             noOptionsMessage={() =>
               "No Account Found"
@@ -2126,27 +2535,66 @@ const formatCreditAmount = (
             inputId={
               `lkpDivision-${row.id}`
             }
-            ref={(instance) =>
+            ref={(instance) => {
+              divisionSelectRef.current =
+                instance;
+
               setRowRef(
                 index,
                 "division",
                 instance
-              )
-            }
+              );
+            }}
             value={selectedDivision}
-            onKeyDown={(event) =>
+            inputValue={
+              divisionSearchText
+            }
+            onInputChange={(
+              newValue,
+              actionMeta
+            ) => {
+              if (
+                actionMeta.action ===
+                "input-change"
+              ) {
+                setDivisionSearchText(
+                  newValue
+                );
+              }
+
+              return newValue;
+            }}
+            backspaceRemovesValue={
+              false
+            }
+            onKeyDown={(event) => {
+              const handled =
+                handleEditableSelectBackspace(
+                  event,
+                  selectedDivision?.label ??
+                    "",
+                  divisionSearchText,
+                  setDivisionSearchText,
+                  divisionSelectRef
+                );
+
+              if (handled) {
+                return;
+              }
+
               handleSelectKeyDown(
                 event,
                 "division",
                 divisionMenuOpenRef
-              )
-            }
+              );
+            }}
             onMenuOpen={
               handleDivisionMenuOpen
             }
-            onMenuClose={
-              handleDivisionMenuClose
-            }
+            onMenuClose={() => {
+              handleDivisionMenuClose();
+              setDivisionSearchText("");
+            }}
             onChange={(
               option: SingleValue<SelectOption>
             ) => {
@@ -2156,16 +2604,50 @@ const formatCreditAmount = (
                 option?.value || ""
               );
 
-              setSelectedRowId(
-                row.id
-              );
+              setDivisionSearchText("");
+
+              setSelectedRowId(row.id);
             }}
+            blurInputOnSelect={false}
             options={divisionOptions}
             placeholder=""
-            styles={selectStyles}
+            styles={{
+              ...selectStyles,
+              menu: (base: any) => ({
+                ...base,
+                minWidth: "260px",
+                width: "260px",
+              }),
+              menuList: (base: any) => ({
+                ...base,
+                minWidth: "260px",
+                width: "260px",
+                overflowX: "hidden",
+              }),
+            }}
             components={{
               DropdownIndicator:
                 RowNormalDropdownIndicator,
+
+              SingleValue: (props) => (
+                <LabeledDropdownSingleValue {...props} />
+              ),
+
+              Option: (props) => (
+                <LabeledDropdownOption
+                  {...props}
+                  idHeader="ID"
+                  nameHeader="Division"
+                />
+              ),
+
+              MenuList: (props) => (
+                <LabeledDropdownMenuList
+                  {...props}
+                  idHeader="ID"
+                  nameHeader="Division"
+                />
+              ),
             }}
             isSearchable
             isClearable={false}
@@ -2197,27 +2679,64 @@ const formatCreditAmount = (
             inputId={
               `lkpCCId-${row.id}`
             }
-            ref={(instance) =>
+            ref={(instance) => {
+              ccIdSelectRef.current =
+                instance;
+
               setRowRef(
                 index,
                 "ccId",
                 instance
-              )
-            }
+              );
+            }}
             value={selectedCcId}
-            onKeyDown={(event) =>
+            inputValue={ccIdSearchText}
+            onInputChange={(
+              newValue,
+              actionMeta
+            ) => {
+              if (
+                actionMeta.action ===
+                "input-change"
+              ) {
+                setCcIdSearchText(
+                  newValue
+                );
+              }
+
+              return newValue;
+            }}
+            backspaceRemovesValue={
+              false
+            }
+            onKeyDown={(event) => {
+              const handled =
+                handleEditableSelectBackspace(
+                  event,
+                  selectedCcId?.label ??
+                    "",
+                  ccIdSearchText,
+                  setCcIdSearchText,
+                  ccIdSelectRef
+                );
+
+              if (handled) {
+                return;
+              }
+
               handleSelectKeyDown(
                 event,
                 "ccId",
                 ccIdMenuOpenRef
-              )
-            }
+              );
+            }}
             onMenuOpen={
               handleCcMenuOpen
             }
-            onMenuClose={
-              handleCcMenuClose
-            }
+            onMenuClose={() => {
+              handleCcMenuClose();
+              setCcIdSearchText("");
+            }}
             onChange={(
               option: SingleValue<SelectOption>
             ) => {
@@ -2227,21 +2746,52 @@ const formatCreditAmount = (
                 option?.value || ""
               );
 
-              setSelectedRowId(
-                row.id
-              );
+              setCcIdSearchText("");
+
+              setSelectedRowId(row.id);
             }}
+            blurInputOnSelect={false}
             options={ccIdOptions}
             placeholder=""
-            styles={selectStyles}
-            components={{
-              DropdownIndicator:
-                RowNormalDropdownIndicator,
+            styles={{
+              ...selectStyles,
+              menu: (base: any) => ({
+                ...base,
+                minWidth: "260px",
+                width: "260px",
+              }),
+              menuList: (base: any) => ({
+                ...base,
+                minWidth: "260px",
+                width: "260px",
+                overflowX: "hidden",
+              }),
             }}
+          components={{
+  DropdownIndicator: RowNormalDropdownIndicator,
+  SingleValue: CcIdSingleValue,
+
+  Option: (props) => (
+    <LabeledDropdownOption
+      {...props}
+      idHeader="ID"
+      nameHeader="Cost Center"
+    />
+  ),
+
+  MenuList: (props) => (
+    <LabeledDropdownMenuList
+      {...props}
+      idHeader="ID"
+      nameHeader="Cost Center"
+    />
+  ),
+}}
             isSearchable
             isClearable={false}
             isDisabled={
-              !row.haveCc
+              !row.haveCc ||
+              ccIdOptions.length === 0
             }
             menuPlacement="auto"
             menuPosition="fixed"
@@ -2408,6 +2958,7 @@ export const ReceiptTable =
   accountOptions = [],
   accountSortByIdOptions = [],
   costCenters = [],
+  onRowSelect,
 },
       ref
     ) => {
@@ -2461,8 +3012,20 @@ export const ReceiptTable =
         useCallback(
           (id: number) => {
             setSelectedRowIdState(id);
+
+            const activeRow = rows.find(
+              (currentRow) =>
+                currentRow.id === id
+            );
+
+            if (activeRow) {
+              onRowSelect?.(
+                id,
+                activeRow
+              );
+            }
           },
-          []
+          [rows, onRowSelect]
         );
 
       const setRowRef =
@@ -2588,7 +3151,12 @@ export const ReceiptTable =
                   value:
                     costCenter.fccid,
 
+                  /* Falls back to the id when the cost center
+                     has no separate name field so the column
+                     never renders blank. */
                   label:
+                    (costCenter as any)
+                      .fccname ||
                     costCenter.fccid,
                 })
               );
@@ -2696,7 +3264,7 @@ export const ReceiptTable =
                   </button>
                 </th>
 
-                <th>Division</th>
+                <th>Div ID</th>
 
                 <th>CC. ID</th>
 

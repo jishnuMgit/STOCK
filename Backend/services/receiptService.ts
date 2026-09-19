@@ -1507,7 +1507,7 @@ export async function saveReceiptService(
     return {
 
       message:
-        "Receipt saved successfully",
+        "saved ",
 
       data: {
 
@@ -1848,7 +1848,7 @@ export async function updateReceiptService(
       ...result,
 
       message:
-        "Receipt modified successfully",
+        "modified successfully",
 
     };
 

@@ -712,7 +712,7 @@ useEffect(() => {
           );
 
           toast.success(
-            "Receipt loaded successfully."
+            "Receipt loaded successfully." 
           );
         } catch (error) {
           lastLookupKeyRef.current =
@@ -1466,9 +1466,10 @@ useEffect(() => {
        YES -> Continue Save API.
     =============================================== */
 
-    const shouldSubmit = window.confirm(
-      "Do you want to submit?"
-    );
+    // const shouldSubmit = window.confirm(
+    //   "Do you want to submit?"
+    // );
+    const shouldSubmit=true
 
     if (!shouldSubmit) {
       console.log("❌ SAVE CANCELLED BY USER");
@@ -1615,7 +1616,7 @@ useEffect(() => {
 
     toast.success(
       result.message ||
-        "Receipt saved successfully."
+        "saved "
     );
 
     /* ===============================================
@@ -1761,10 +1762,10 @@ useEffect(() => {
          YES → continue to API.
       =============================================== */
 
-      const shouldSubmit =
-        window.confirm(
-          "Do you want to submit?"
-        );
+      const shouldSubmit =true
+        // window.confirm(
+        //   "Do you want to submit?"
+        // );
 
       if (!shouldSubmit) {
         console.log(
@@ -1994,12 +1995,12 @@ useEffect(() => {
 
         setReceiptMessage(
           result.message ||
-            "Receipt modified successfully."
+            "modified successfully."
         );
 
         toast.success(
           result.message ||
-            "Receipt modified successfully."
+            "modified"
         );
 
         /* =============================================
@@ -2255,6 +2256,18 @@ useEffect(() => {
           accountSortByIdOptions={
   accountSortByIdOptions
 }
+onRowSelect={(id, row) => {
+  const rowIndex = rows.findIndex(
+    (item) => item.id === id
+  );
+
+  if (rowIndex === -1) {
+    return;
+  }
+
+  setActiveDescriptionRow(rowIndex);
+  setDescription(row.description || "");
+}}
 
           costCenters={
             costCenters

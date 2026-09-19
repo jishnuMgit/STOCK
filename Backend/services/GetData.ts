@@ -1270,7 +1270,7 @@ export async function GetData({
       rows.length,
 
     message:
-      "Receipt loaded successfully",
+      `${header?.docNo} loaded`,
 
   };
 
