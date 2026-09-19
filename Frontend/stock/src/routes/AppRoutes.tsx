@@ -92,7 +92,7 @@ const AppRoutes = () => {
         ================================================= */}
 
         <Route
-          path="/Transaction/receipt"
+          path="/Transaction/Receipt"
           element={<Receipt />}
         />
          {/* <Route
