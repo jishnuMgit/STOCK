@@ -20,6 +20,12 @@ interface CustomerAccount {
   fcsaccountname: string;
 }
 
+
+interface DocType {
+  fdocname: string;
+  fdoctype: string;
+}
+
 /* =========================================================
    CREATE ROWS
 ========================================================= */
@@ -52,8 +58,8 @@ const Matching: React.FC = () => {
   const [branch, setBranch] =
     useState("");
 
-  const [type, setType] =
-    useState("BR");
+  const [doctype, setDocType] =
+    useState("");
 
   const [receiptNo, setReceiptNo] =
     useState("");
@@ -99,8 +105,10 @@ const Matching: React.FC = () => {
   const [divisionOptions] =
     useState<SelectOption[]>([]);
 
-  const [documentOptions] =
-    useState<SelectOption[]>([]);
+const [
+  documentOptions,
+  setDocumentOptions,
+] = useState<SelectOption[]>([]);
 
   /* =======================================================
      COMPONENT REF
@@ -220,90 +228,99 @@ useEffect(() => {
          API:
          AccountID
 
+         VALUE:
+         ID
+
          LABEL:
-         ID + NAME
+         NAME
 
          SORT:
          ID
       =============================================== */
 
-      if (
-        Array.isArray(
-          accountData?.AccountID
+      /* =========================================================
+   CUSTOMER ID OPTIONS
+========================================================= */
+
+if (
+  Array.isArray(accountData?.AccountID)
+) {
+  const customerIdOptions: SelectOption[] =
+    (
+      accountData.AccountID as CustomerAccount[]
+    )
+      .map((account) => ({
+        value: account.fcsaccountid,
+        label: account.fcsaccountname,
+      }))
+      .sort((a, b) =>
+        a.value.localeCompare(
+          b.value,
+          undefined,
+          {
+            numeric: true,
+            sensitivity: "base",
+          }
         )
-      ) {
-        const customerIdOptions: SelectOption[] =
-          (
-            accountData.AccountID as CustomerAccount[]
-          )
-            .map((account) => ({
-              value:
-                account.fcsaccountid,
+      );
 
-              label:
-                `${account.fcsaccountid}  ${account.fcsaccountname}`,
-            }))
-            .sort((a, b) =>
-              a.value.localeCompare(
-                b.value,
-                undefined,
-                {
-                  numeric: true,
-                  sensitivity:
-                    "base",
-                }
-              )
-            );
+  setCustomerOptions(
+    customerIdOptions
+  );
+}
 
-        setCustomerOptions(
-          customerIdOptions
-        );
-      }
 
-      /* ===============================================
-         CUSTOMER NAME
+/* =========================================================
+   CUSTOMER NAME OPTIONS
+========================================================= */
 
-         API:
-         AccountName
-
-         LABEL:
-         NAME + ID
-
-         SORT:
-         NAME
-      =============================================== */
-
-      if (
-        Array.isArray(
-          accountData?.AccountName
+if (
+  Array.isArray(accountData?.AccountName)
+) {
+  const customerNameOptionsData: SelectOption[] =
+    (
+      accountData.AccountName as CustomerAccount[]
+    )
+      .map((account) => ({
+        value: account.fcsaccountname,
+        label: account.fcsaccountid,
+      }))
+      .sort((a, b) =>
+        a.value.localeCompare(
+          b.value,
+          undefined,
+          {
+            sensitivity: "base",
+          }
         )
-      ) {
-        const customerNameOptionsData: SelectOption[] =
-          (
-            accountData.AccountName as CustomerAccount[]
-          )
-            .map((account) => ({
-              value:
-                account.fcsaccountid,
+      );
 
-              label:
-                `${account.fcsaccountname}  ${account.fcsaccountid}`,
-            }))
-            .sort((a, b) =>
-              a.label.localeCompare(
-                b.label,
-                undefined,
-                {
-                  sensitivity:
-                    "base",
-                }
-              )
-            );
+  setCustomerNameOptions(
+    customerNameOptionsData
+  );
+}
 
-        setCustomerNameOptions(
-          customerNameOptionsData
-        );
-      }
+
+/* =========================================================
+   DOCUMENT TYPE OPTIONS
+========================================================= */
+
+if (
+  Array.isArray(accountData?.DocType)
+) {
+  const DocTypeOptions: SelectOption[] =
+    (
+      accountData.DocType as DocType[]
+    )
+      .map((account) => ({
+        value: account.fdoctype,
+        label: account.fdocname,
+      }));
+
+  setDocumentOptions(
+    DocTypeOptions
+  );
+}
     } catch (error) {
       console.error(
         "Matching data load error:",
@@ -322,7 +339,7 @@ useEffect(() => {
     useCallback(() => {
       const searchData = {
         branch,
-        type,
+        doctype,
         receiptNo,
         receiptDate,
         customerId,
@@ -336,7 +353,7 @@ useEffect(() => {
       );
     }, [
       branch,
-      type,
+      doctype,
       receiptNo,
       receiptDate,
       customerId,
@@ -361,7 +378,7 @@ useEffect(() => {
         branch,
 
         docType:
-          type,
+          doctype,
 
         docNo:
           receiptNo,
@@ -390,7 +407,7 @@ useEffect(() => {
     }, [
       rows,
       branch,
-      type,
+      doctype,
       receiptNo,
       customerId,
       customerName,
@@ -406,7 +423,7 @@ useEffect(() => {
     useCallback(() => {
       setBranch("");
 
-      setType("BR");
+      setDocType("");
 
       setReceiptNo("");
 
@@ -531,11 +548,11 @@ useEffect(() => {
           }
 
           type={
-            type
+            doctype
           }
 
-          setType={
-            setType
+          setDocType={
+            setDocType
           }
 
           receiptNo={

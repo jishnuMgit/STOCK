@@ -12,10 +12,15 @@ import Select, {
   type StylesConfig,
 } from "react-select";
 
+
+
+import {customerNameSelectStyles,customerIdSelectStyles,docSelectStyles,DivisionSelectStyles,DocumnetNoSelectStyles} from './CustomSelectStyle'
+
 import {
   handleKeyboardAction,
   focusElement,
 } from "../../../hooks/useMatchKeyboard";
+import useMatching from "../../../hooks/useMatching";
 import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
 import {
   DatePicker,
@@ -61,6 +66,16 @@ export interface SelectOption {
   label: string;
 }
 
+export interface DocumentOption extends SelectOption {
+  brId: string;
+  date: string;
+  docType: string;
+  docNo: string;
+  debit: string;
+  credit: string;
+  description: string;
+}
+
 /* =========================================================
    REF
 ========================================================= */
@@ -91,7 +106,7 @@ interface Props {
 
   type: string;
 
-  setType: React.Dispatch<
+  setDocType: React.Dispatch<
     React.SetStateAction<string>
   >;
 
@@ -140,7 +155,9 @@ interface Props {
 
   clearForm: () => void;
 
-  onSearch: () => void;
+  onSearch: (data?: any[]) => void;
+
+  gstrCoID?: string;
 
   branchOptions: SelectOption[];
 
@@ -160,7 +177,7 @@ interface Props {
 }
 
 /* =========================================================
-   RESPONSIVE LINKED SELECT
+   INDEPENDENT LINKED SELECT
 ========================================================= */
 
 interface ResponsiveSelectProps {
@@ -170,10 +187,19 @@ interface ResponsiveSelectProps {
   onChange: (value: string) => void;
   next: () => void;
   selectRef: React.RefObject<HTMLDivElement | null>;
-  reverseDropdown?: boolean;
-  styles: StylesConfig<SelectOption, false>;
-}
 
+  styles: StylesConfig<SelectOption, false>;
+
+  reverseDropdown?: boolean;
+
+  columnHeaders?: [string, string];
+  disabled?: boolean;
+  documentMode?: boolean;
+  swapColumns?: boolean;
+  customOption?: React.ComponentType<
+    OptionProps<SelectOption, false>
+  >;
+}
 const ResponsiveSelect = ({
   id,
   value,
@@ -181,8 +207,13 @@ const ResponsiveSelect = ({
   onChange,
   next,
   selectRef,
-  reverseDropdown = false,
   styles,
+  reverseDropdown = false,
+  columnHeaders,
+  disabled = false,
+  documentMode = false,
+  swapColumns = false,
+  customOption,
 }: ResponsiveSelectProps) => {
   const wrapperRef = useRef<HTMLDivElement | null>(null);
   const [selectWidth, setSelectWidth] = useState("100%");
@@ -208,41 +239,115 @@ const ResponsiveSelect = ({
     return () => resizeObserver.disconnect();
   }, []);
 
-  const selected =
-    options.find((option) => option.value === value) ?? null;
+  /*
+    IMPORTANT:
+    React Select normally displays option.label as the selected value.
 
-  const CustomOption = (props: OptionProps<SelectOption, false>) => {
-    const { data } = props;
+    We intentionally display option.value instead.
+
+    First customer select:
+      value = Account ID
+      label = Account Name
+      selected display = Account ID
+
+    Second customer select:
+      value = Account Name
+      label = Account ID
+      selected display = Account Name
+  */
+  const CustomSingleValue = (props: any) => {
+    return (
+      <components.SingleValue {...props}>
+        {documentMode || swapColumns
+          ? props.data.label
+          : props.data.value}
+      </components.SingleValue>
+    );
+  };
+
+  const CustomOption = (
+    props: OptionProps<SelectOption, false>
+  ) => {
+    const data = props.data as SelectOption & Partial<DocumentOption>;
+
+    if (documentMode) {
+      return (
+        <components.Option {...props}>
+          <div
+            style={{
+              display: "grid",
+              gridTemplateColumns: "52px 105px 70px 105px 75px 85px minmax(0, 1fr)",
+              width: "100%",
+              minWidth: 0,
+              alignItems: "center",
+              fontSize: "12px",
+            }}
+          >
+            <div>{data.brId ?? ""}</div>
+            <div>{data.date ?? ""}</div>
+            <div>{data.docType ?? ""}</div>
+            <div>{data.docNo ?? data.value ?? ""}</div>
+            <div style={{ textAlign: "right", paddingRight: "8px" }}>{data.debit ?? ""}</div>
+            <div style={{ textAlign: "right", paddingRight: "8px" }}>{data.credit ?? ""}</div>
+            <div style={{ overflow: "hidden", whiteSpace: "nowrap", textOverflow: "ellipsis" }}>{data.description ?? ""}</div>
+          </div>
+        </components.Option>
+      );
+    }
+
+    if (!columnHeaders) {
+      return (
+        <components.Option {...props}>
+          <div
+            style={{
+              whiteSpace: "nowrap",
+              overflow: "hidden",
+              textOverflow: "ellipsis",
+              width: "100%",
+            }}
+          >
+            {data.value}
+          </div>
+        </components.Option>
+      );
+    }
+
+    const firstColumn = swapColumns
+      ? data.label
+      : data.value;
+
+    const secondColumn = swapColumns
+      ? data.value
+      : data.label;
 
     return (
       <components.Option {...props}>
         <div
           style={{
-            display: "grid",
-            gridTemplateColumns:
-              "var(--select-width, minmax(0, 1fr)) minmax(0, 1fr)",
+            display: "flex",
+            justifyContent: "space-between",
+            alignItems: "center",
             width: "100%",
             minWidth: 0,
-            alignItems: "center",
           }}
         >
-          {/* FIRST COLUMN */}
           <div
             style={{
               minWidth: 0,
-              paddingRight: "8px",
+              flex: 1,
+              paddingRight: "12px",
               overflow: "hidden",
               whiteSpace: "nowrap",
               textOverflow: "ellipsis",
             }}
           >
-            {reverseDropdown ? data.label : data.value}
+            {firstColumn}
           </div>
 
-          {/* SECOND COLUMN */}
           <div
             style={{
-              minWidth: 0,
+              flex: "0 0 145px",
+              minWidth: "145px",
               borderLeft: "1px solid #d5dce3",
               paddingLeft: "10px",
               overflow: "hidden",
@@ -250,12 +355,178 @@ const ResponsiveSelect = ({
               textOverflow: "ellipsis",
             }}
           >
-            {reverseDropdown ? data.value : data.label}
+            {secondColumn}
           </div>
         </div>
       </components.Option>
     );
   };
+
+
+  const CustomOption1 = (
+  props: OptionProps<SelectOption, false>
+) => {
+  const data = props.data as SelectOption;
+
+  const firstColumn = swapColumns
+    ? data.label
+    : data.value;
+
+  const secondColumn = swapColumns
+    ? data.value
+    : data.label;
+
+  return (
+    <components.Option {...props}>
+      <div
+        style={{
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "center",
+          width: "100%",
+          minWidth: 0,
+        }}
+      >
+        {/* First column */}
+        <div
+          style={{
+            minWidth: 0,
+            flex: 1,
+            paddingRight: "12px",
+            overflow: "hidden",
+            whiteSpace: "nowrap",
+            textOverflow: "ellipsis",
+          }}
+        >
+          {firstColumn}
+        </div>
+
+        {/* Second column */}
+        <div
+          style={{
+            flex: "0 0 210px",
+            minWidth: "210px",
+            borderLeft: "1px solid #d5dce3",
+            paddingLeft: "10px",
+            overflow: "hidden",
+            whiteSpace: "nowrap",
+            textOverflow: "ellipsis",
+          }}
+        >
+          {secondColumn}
+        </div>
+      </div>
+    </components.Option>
+  );
+};
+  const CustomMenuList = (props: any) => {
+    if (documentMode) {
+      const headers = [
+        "BrID",
+        "Date",
+        "Doc. Type",
+        "Doc. No.",
+        "Debit",
+        "Credit",
+        "Description",
+      ];
+
+      return (
+        <components.MenuList {...props}>
+          <div
+            style={{
+              display: "grid",
+              gridTemplateColumns: "52px 105px 70px 105px 75px 85px minmax(0, 1fr)",
+              width: "100%",
+              minWidth: 0,
+              alignItems: "center",
+              height: "28px",
+              boxSizing: "border-box",
+              backgroundColor: "#eeeeee",
+              borderBottom: "1px solid #c8c8c8",
+              color: "#222",
+              fontSize: "12px",
+              fontWeight: 400,
+            }}
+          >
+            {headers.map((header, index) => (
+              <div
+                key={header}
+                style={{
+                  minWidth: 0,
+                  paddingLeft: "6px",
+                  paddingRight: "4px",
+                  borderLeft: index === 0 ? "none" : "1px solid #c8c8c8",
+                  textAlign: index === 4 || index === 5 ? "right" : "left",
+                  overflow: "hidden",
+                  whiteSpace: "nowrap",
+                  textOverflow: "ellipsis",
+                }}
+              >
+                {header}
+              </div>
+            ))}
+          </div>
+          {props.children}
+        </components.MenuList>
+      );
+    }
+
+    return (
+      <components.MenuList {...props}>
+        {columnHeaders && (
+          <div
+            style={{
+              display: "flex",
+              justifyContent: "space-between",
+              alignItems: "center",
+              width: "100%",
+              minWidth: 0,
+              height: "28px",
+              boxSizing: "border-box",
+              backgroundColor: "#eeeeee",
+              borderBottom: "1px solid #c8c8c8",
+              color: "#222",
+              fontSize: "13px",
+              fontWeight: 400,
+            }}
+          >
+            <div
+              style={{
+                minWidth: 0,
+                flex: 1,
+                paddingLeft: "8px",
+                paddingRight: "12px",
+                overflow: "hidden",
+                whiteSpace: "nowrap",
+                textOverflow: "ellipsis",
+              }}
+            >
+              {columnHeaders[0]}
+            </div>
+
+            <div
+              style={{
+                flex: "0 0 145px",
+                minWidth: "145px",
+                borderLeft: "1px solid #c8c8c8",
+                paddingLeft: "10px",
+                overflow: "hidden",
+                whiteSpace: "nowrap",
+                textOverflow: "ellipsis",
+              }}
+            >
+              {columnHeaders[1]}
+            </div>
+          </div>
+        )}
+        {props.children}
+      </components.MenuList>
+    );
+  };
+
+  const selected =
+    options.find((option) => option.value === value) ?? null;
 
   return (
     <div
@@ -278,10 +549,17 @@ const ResponsiveSelect = ({
     >
       <Select<SelectOption, false>
         value={selected}
-        components={{ Option: CustomOption }}
+        components={{
+          Option: CustomOption,
+          SingleValue: CustomSingleValue,
+          ...(columnHeaders || documentMode
+            ? { MenuList: CustomMenuList }
+            : {}),
+        }}
         options={options}
         styles={styles}
-        isSearchable
+        isSearchable={!disabled}
+        isDisabled={disabled}
         onChange={(option) => onChange(option?.value ?? "")}
       />
     </div>
@@ -291,6 +569,9 @@ const ResponsiveSelect = ({
 /* =========================================================
    COMPONENT
 ========================================================= */
+
+
+
 
 const MatchingComponents =
   forwardRef<
@@ -303,7 +584,7 @@ const MatchingComponents =
         setBranch,
 
         type,
-        setType,
+        setDocType,
 
         receiptNo,
         setReceiptNo,
@@ -326,6 +607,8 @@ const MatchingComponents =
         onSave,
         clearForm,
         onSearch,
+
+        gstrCoID = import.meta.env.VITE_CO_ID ?? "",
 
         branchOptions,
         customerOptions,
@@ -392,6 +675,20 @@ const MatchingComponents =
         >({});
 
       /* =====================================================
+         COMMON MATCHING API HOOK
+      ===================================================== */
+
+      const {
+        divisionOptionsLocal,
+        divisionLoading,
+        getDiv,
+        getMatchAccounts,
+      } = useMatching();
+
+      const [documentNoOptions, setDocumentNoOptions] =
+        useState<DocumentOption[]>([]);
+
+      /* =====================================================
          TABLE FIELD ORDER
       ===================================================== */
 
@@ -412,6 +709,7 @@ const MatchingComponents =
          SELECT STYLES
       ===================================================== */
 
+      console.log("  display: grid",customerNameOptions,customerOptions)
       const selectStyles: StylesConfig<SelectOption, false> = {
         control: (base: any) => ({
           ...base,
@@ -632,16 +930,19 @@ const MatchingComponents =
 
       /* =====================================================
          LINK CUSTOMER ID <-> CUSTOMER NAME
+
+         IMPORTANT:
+         - customerOptions is already sorted by Account ID.
+           value = Account ID, label = Account Name
+         - customerNameOptions is already sorted by Account Name.
+           value = Account Name, label = Account ID
+
+         Do NOT rebuild the second array from customerOptions.
+         Both arrays are intentionally kept separate.
       ===================================================== */
 
-      const linkedCustomerNameOptions: SelectOption[] =
-        customerOptions.map((option) => ({
-          value: option.label,
-          label: option.value,
-        }));
-
       const handleCustomerIdChange = useCallback(
-        (id: string) => {
+        async (id: string) => {
           setCustomerId(id);
 
           const customer = customerOptions.find(
@@ -649,51 +950,154 @@ const MatchingComponents =
           );
 
           setCustomerName(customer?.label ?? "");
+
+          /* First API: get divisions */
+          await getDiv(id);
         },
-        [customerOptions, setCustomerId, setCustomerName]
+        [
+          customerOptions,
+          setCustomerId,
+          setCustomerName,
+          getDiv,
+        ]
       );
 
       const handleCustomerNameChange = useCallback(
-        (name: string) => {
+        async (name: string) => {
           setCustomerName(name);
 
-          const customer = customerOptions.find(
-            (option) => option.label === name
+          const customer = customerNameOptions.find(
+            (option) => option.value === name
           );
 
-          if (customer) {
-            setCustomerId(customer.value);
-          }
+          const strCSAccountID =
+            customer?.label ?? "";
+
+          setCustomerId(strCSAccountID);
+
+          /* First API: get divisions */
+          await getDiv(strCSAccountID);
         },
-        [customerOptions, setCustomerId, setCustomerName]
+        [
+          customerNameOptions,
+          setCustomerId,
+          setCustomerName,
+          getDiv,
+        ]
+      );
+
+      /* =====================================================
+         SEARCH
+
+         The second API is called only after the required
+         Customer + Division + Document Type are available.
+      ===================================================== */
+
+      const handleSearch = useCallback(
+        async () => {
+          if (!type || type.trim() === "") {
+            console.warn("Please input 'Document Type'");
+            return;
+          }
+
+          if (
+            !customerId ||
+            customerId.trim() === ""
+          ) {
+            console.warn("Please select 'Customer'");
+            return;
+          }
+
+          if (
+            !divisionId ||
+            divisionId.trim() === ""
+          ) {
+            console.warn("Please select 'Division'");
+            return;
+          }
+
+          /* Second API: get match accounts */
+          const data = await getMatchAccounts({
+            strDocType: type,
+            strCSAccountID: customerId,
+            strDivID: divisionId,
+            gstrCoID,
+          });
+
+
+         
+
+          /* Keep parent callback so the existing parent
+             can put the returned data into its rows state. */
+          onSearch(data);
+
+          const options: DocumentOption[] = data
+            .filter(
+              (item: any) =>
+                item.fdocno &&
+                String(item.fdocno).trim() !== ""
+            )
+            .map((item: any) => ({
+              // value = Document No. sent/stored in state
+              // label = Description/Name shown in the select
+              value: String(item.fdocno ?? ""),
+              label: String(
+                item.fdocno  ?? ""
+              ),
+              brId: String(item.fbrid ?? ""),
+              date: String(item.fdate ?? ""),
+              docType: String(item.fdoctype ?? ""),
+              docNo: String(item.fdocno ?? ""),
+              debit: String(item.fdebit ?? "0.00"),
+              credit: String(item.fcredit ?? "0.00"),
+              description: String(item.fdescription ?? ""),
+            }));
+
+          setDocumentNoOptions(options);
+        },
+        [
+          type,
+          customerId,
+          divisionId,
+          gstrCoID,
+          getMatchAccounts,
+          onSearch,
+        ]
       );
 
       /* =====================================================
          SELECT HELPER
       ===================================================== */
 
-      const renderSelect = (
-        id: string,
-        value: string,
-        options: SelectOption[],
-        onChange: (value: string) => void,
-        next: () => void,
-        selectRef: React.RefObject<HTMLDivElement | null>,
-        reverseDropdown = false
-      ) => (
-        <ResponsiveSelect
-          id={id}
-          value={value}
-          options={options}
-          onChange={onChange}
-          next={next}
-          selectRef={selectRef}
-          reverseDropdown={reverseDropdown}
-          styles={selectStyles}
-        />
-      );
-
-      /* =====================================================
+  const renderSelect = (
+  id: string,
+  value: string,
+  options: SelectOption[],
+  onChange: (value: string) => void,
+  next: () => void,
+  selectRef: React.RefObject<HTMLDivElement | null>,
+  reverseDropdown = false,
+  columnHeaders?: [string, string],
+  customStyles?: StylesConfig<SelectOption, false>,
+  disabled = false,
+  documentMode = false,
+  swapColumns = false
+) => (
+  <ResponsiveSelect
+    id={id}
+    value={value}
+    options={options}
+    onChange={onChange}
+    next={next}
+    selectRef={selectRef}
+    styles={customStyles ?? selectStyles}
+    reverseDropdown={reverseDropdown}
+    columnHeaders={columnHeaders}
+    disabled={disabled}
+    documentMode={documentMode}
+    swapColumns={swapColumns}
+  />
+);    /* =====================================================
          TABLE KEYBOARD
       ===================================================== */
 
@@ -722,7 +1126,7 @@ const MatchingComponents =
       ===================================================== */
 
       const buttons = [
-        "Save",
+        "Apply",
         
         "Clear",
       ];
@@ -739,6 +1143,10 @@ const MatchingComponents =
             | null
           )[]
         >([]);
+
+
+
+ 
 
       /* =====================================================
          FOCUS ACTION BUTTON
@@ -971,9 +1379,14 @@ event: React.KeyboardEvent<HTMLButtonElement>, p0: () => any        ) => {
                 customerId,
                 customerOptions,
                 handleCustomerIdChange,
+                
                 () =>
                   customerNameRef.current?.focus(),
-                customerIdRef
+                customerIdRef,
+                false,
+                //@ts-ignore
+                ["Account ID", "Account Name"],
+                customerIdSelectStyles
               )}
 
               {/* CUSTOMER NAME */}
@@ -981,12 +1394,15 @@ event: React.KeyboardEvent<HTMLButtonElement>, p0: () => any        ) => {
               {renderSelect(
                 "lkpCustomerName",
                 customerName,
-                linkedCustomerNameOptions,
+                customerNameOptions,
                 handleCustomerNameChange,
                 () =>
                   divisionRef.current?.focus(),
                 customerNameRef,
-                true
+                true,
+                //@ts-ignore
+                ["Account Name", "Account ID"],
+                customerNameSelectStyles
               )}
 
               {/* DOCUMENT AMOUNT */}
@@ -1004,7 +1420,7 @@ event: React.KeyboardEvent<HTMLButtonElement>, p0: () => any        ) => {
                 </label>
 
                 <div
-                  id="txtDocumentAmount"
+                  id="txtDocumentAmt"
                   className="
                     flex
                     h-7.25
@@ -1057,15 +1473,23 @@ event: React.KeyboardEvent<HTMLButtonElement>, p0: () => any        ) => {
               </label>
 
               <div className="ml-0.5">
-                {renderSelect(
-                "lkpDivision",
-                divisionId,
-                divisionOptions,
-                setDivisionId,
-                () =>
-                  creditDocumentRef.current?.focus(),
-                divisionRef
-              )}
+               {renderSelect(
+  "lkpDivision",
+  divisionId,
+  divisionOptionsLocal,
+  setDivisionId,
+  () =>
+    creditDocumentRef.current?.focus(),
+  divisionRef,
+  true,
+  ["Division Name", "Division ID"],
+  DivisionSelectStyles,
+  !customerId ||
+    divisionLoading ||
+    divisionOptionsLocal.length === 0,
+  false, // documentMode
+  true   // swapColumns: show Division Name | Division ID
+)}
               </div>
 
               {/* CREDIT DOCUMENT */}
@@ -1074,24 +1498,18 @@ event: React.KeyboardEvent<HTMLButtonElement>, p0: () => any        ) => {
                 Document Type :
               </label>
 
-              {renderSelect(
-                "lkpDocumentType",
-                type,
-                [
-                  {
-                    value: "BR",
-                    label: "BR",
-                  },
-                  {
-                    value: "CR",
-                    label: "CR",
-                  },
-                ],
-                setType,
-                () =>
-                  documentNoRef.current?.focus(),
-                creditDocumentRef
-              )}
+             {renderSelect(
+  "lkpDocumentType",
+  type,
+  documentOptions,
+  setDocType,
+  () =>
+    documentNoRef.current?.focus(),
+  creditDocumentRef,
+   true,
+                  ["DocumentType ID", "DocumentType Name"],
+                docSelectStyles
+)}
 
               {/* SEARCH */}
 
@@ -1115,7 +1533,7 @@ event: React.KeyboardEvent<HTMLButtonElement>, p0: () => any        ) => {
                   focus:outline-none
                   focus:ring-0
                 "
-                onClick={onSearch}
+                onClick={handleSearch}
                 onKeyDown={(event) =>
                   handleKeyboardAction(
                     event,
@@ -1198,15 +1616,19 @@ event: React.KeyboardEvent<HTMLButtonElement>, p0: () => any        ) => {
               </label>
 
               <div className="ml-px">
-                {renderSelect(
-                "lkpDocumentNo.",
-                receiptNo,
-                documentOptions,
-                setReceiptNo,
-                () =>
-                  dateRef.current?.focus(),
-                documentNoRef
-              )}
+        {renderSelect(
+  "lkpDocumentNo.",
+  receiptNo,
+  documentNoOptions,
+  setReceiptNo,
+  () => dateRef.current?.focus(),
+  documentNoRef,
+  false,                  // reverseDropdown
+  undefined,              // columnHeaders
+  DocumnetNoSelectStyles,   // customStyles
+  false,                  // disabled
+  true                    // documentMode
+)}
               </div>
 
               {/* MATCH APPLY DATE */}
@@ -1381,7 +1803,7 @@ event: React.KeyboardEvent<HTMLButtonElement>, p0: () => any        ) => {
                 </label>
 
                 <div
-                  id="txtBalanceAmount"
+                  id="txtBalanceAmt"
                   className="
                     flex
                     h-7.25
@@ -1421,6 +1843,7 @@ event: React.KeyboardEvent<HTMLButtonElement>, p0: () => any        ) => {
             "
           >
             <table
+            id="tblMatch"
               className="
                 w-full
                 table-fixed

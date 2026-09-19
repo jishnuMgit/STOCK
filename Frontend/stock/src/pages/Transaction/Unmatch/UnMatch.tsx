@@ -15,7 +15,7 @@ import type { SelectInstance } from "react-select";
 import MatchTable, {
   type TableField,
   type ReceiptRow,
-} from "../../../components/Transaction/Match/MatchTable";
+} from "../../../test/MatchTable";
 
 /* =========================================================
    BOTTOM FORM
@@ -34,12 +34,12 @@ import ReceiptActions, {
    MATCH HEADER
 ========================================================= */
 
-import MatchHeader from "../../../components/Transaction/Match/MatchHeader";
+import MatchHeader from "../../../test/MatchHeader";
 
 import MatchHeaderForm, {
   type SelectOption,
-} from "../../../components/Transaction/Match/MatchHeaderForm";
-import MatchAction from "../../../components/Transaction/Match/MatchAction";
+} from "../../../test/MatchHeaderForm";
+import MatchAction from "../../../test/MatchAction";
 import UnMatchTable from "../../../components/Transaction/UnMatch/UnMatchTable";
 import UnMatchHeaderForm from "../../../components/Transaction/UnMatch/UnMatchHeaderForm";
 import UnMatchHeader from "../../../components/Transaction/UnMatch/UnMatchHeader";

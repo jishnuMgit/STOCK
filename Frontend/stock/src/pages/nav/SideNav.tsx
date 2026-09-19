@@ -63,7 +63,7 @@ const menuItems: MenuItem[] = [
     children: [
       {
         label: "Receipt Voucher",
-        path: "/Transaction/receipt",
+        path: "/Transaction/Receipt",
       },
        {
         label: "Payment Voucher",
