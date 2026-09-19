@@ -6,6 +6,7 @@ import {
   saveReceiptService,
   updateReceiptService,
 } from "../services/receiptService.js";
+import {cleanReceiptPayload,CheckISdividISccid} from '../utils/helper.js'
 
 import { GetData } from "../services/GetData.js";
 
@@ -553,7 +554,7 @@ export const getDivID = async (
   }
 };
 
-/* =========================================================
+/* ========================================================
    SAVE RECEIPT
 ========================================================= */
 
@@ -561,13 +562,35 @@ export const saveReceipt = async (
   req: Request,
   res: Response
 ): Promise<Response> => {
+
+  console.log("===============================");
+  console.log(req.body);
+  console.log("===============================");
+
   try {
-    const result =
-      await saveReceiptService(req.body);
+    const payload = cleanReceiptPayload(req.body);
+
+    console.log(payload);
+
+    const PstrCoID = process.env.PstrCoID;
+
+    if (!PstrCoID) {
+      throw new Error("Company ID is not configured");
+    }
+
+    // CHECK CC ID AND DIVISION BEFORE SAVE
+    await CheckISdividISccid(
+      payload,
+      pool,
+      PstrCoID
+    );
+
+    // ONLY SAVE IF VALIDATION PASSED
+    const result = await saveReceiptService(payload);
 
     console.log(
       "saveReceipt request body:",
-      req.body
+      payload
     );
 
     return res.status(200).json({
@@ -575,7 +598,9 @@ export const saveReceipt = async (
       message: result.message,
       data: result.data,
     });
+
   } catch (error: unknown) {
+
     console.error(
       "ReceiptsControllers error:",
       error
@@ -583,7 +608,6 @@ export const saveReceipt = async (
 
     return res.status(400).json({
       success: false,
-
       message:
         error instanceof Error
           ? error.message
@@ -601,8 +625,22 @@ export const modifyReceipt = async (
   res: Response
 ): Promise<Response> => {
   try {
-    const result =
-      await updateReceiptService(req.body);
+    const payload = cleanReceiptPayload(req.body);
+
+    const PstrCoID = process.env.PstrCoID;
+
+    if (!PstrCoID) {
+      throw new Error("Company ID is not configured");
+    }
+
+    // CHECK CC ID AND DIVISION BEFORE SAVE
+    await CheckISdividISccid(
+      payload,
+      pool,
+      PstrCoID
+    );
+
+    const result = await updateReceiptService(payload);
 
     return res.status(200).json({
       success: true,
@@ -610,14 +648,10 @@ export const modifyReceipt = async (
       data: result.data,
     });
   } catch (error: unknown) {
-    console.error(
-      "updateReceipt error:",
-      error
-    );
+    console.error("updateReceipt error:", error);
 
     return res.status(400).json({
       success: false,
-
       message:
         error instanceof Error
           ? error.message

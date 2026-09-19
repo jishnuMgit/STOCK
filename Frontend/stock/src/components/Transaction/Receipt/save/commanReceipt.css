@@ -357,7 +357,7 @@
 
   padding: 0 7px;
 
-  border-right: 1px solid #b7ecd0;
+  /* border-right: 1px solid #b7ecd0; */
 
   white-space: nowrap;
 }
