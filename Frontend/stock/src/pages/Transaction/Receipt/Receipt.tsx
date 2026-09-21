@@ -5,7 +5,6 @@ import React, {
   useRef,
   useState,
 } from "react";
-
 import type { SelectInstance } from "react-select";
 
 import {
@@ -61,6 +60,7 @@ const tableFieldOrder: TableField[] = [
 /* =========================================================
    INITIAL API RESPONSE
 ========================================================= */
+
 
 interface ReceiptsResponse {
   success: boolean;
@@ -403,43 +403,6 @@ const [isPrint,setIsPrint]=useState(false)
   /* =======================================================
      LOAD RECEIPT FOR MODIFY
   ======================================================= */
-useEffect(() => {
-  if (!isPrint) {
-    return;
-  }
-
-  const printTimer = setTimeout(() => {
-    console.log("🖨️ OPENING PRINT DIALOG");
-
-    window.print();
-  }, 100);
-
-  return () => {
-    clearTimeout(printTimer);
-  };
-}, [isPrint]);
-
-useEffect(() => {
-  const handleAfterPrint = () => {
-    console.log("🖨️ PRINT COMPLETED");
-
-    setIsPrint(false);
-  };
-
-  window.addEventListener(
-    "afterprint",
-    handleAfterPrint
-  );
-
-  return () => {
-    window.removeEventListener(
-      "afterprint",
-      handleAfterPrint
-    );
-  };
-}, []);
-
-
 
   const getReceipt =
     useCallback(
@@ -843,9 +806,17 @@ useEffect(() => {
             setDocumentNo("");
           }
 
-          /* Return focus to the beginning of the form. */
+          /* Return focus to Receipt No. */
           requestAnimationFrame(() => {
-            branchRef.current?.focus();
+            documentNoRef.current?.focus();
+
+            const value =
+              documentNoRef.current?.value ?? "";
+
+            documentNoRef.current?.setSelectionRange(
+              value.length,
+              value.length
+            );
           });
         } catch (error) {
           console.error(
@@ -901,51 +872,49 @@ useEffect(() => {
      CLEAR ROW
   ======================================================= */
 
-  const handleClearRow =
-    useCallback(
-      (id: number) => {
-        setRows(
-          (currentRows) =>
-            currentRows.map(
-              (row) =>
-                row.id === id
-                  ? {
-                      ...row,
-                      accountId: "",
-                      accountName: "",
-                      fgcs: "",
-                      haveCc: false,
-                      hasDivision: false,
-                      division: "",
-                      ccId: "",
-                      creditAmount: "",
-                      match: false,
-                      description: "",
-                    }
-                  : row
-            )
-        );
+  const handleClearRow = useCallback(
+    (id: number) => {
+      setRows((currentRows) => {
+        const remainingRows = currentRows
+          .filter((row) => row.id !== id)
+          .map((row, index) => ({
+            ...row,
+            id: index + 1,
+          }));
 
-        if (
-          activeDescriptionRow !==
-            null &&
-          rows[
-            activeDescriptionRow
-          ]?.id === id
-        ) {
-          setDescription("");
+        const emptyRow: ReceiptRow = {
+          id: remainingRows.length + 1,
+          accountId: "",
+          accountName: "",
+          fgcs: "",
+          haveCc: false,
+          hasDivision: false,
+          division: "",
+          ccId: "",
+          creditAmount: "",
+          match: false,
+          description: "",
+        };
 
-          setActiveDescriptionRow(
-            null
-          );
-        }
-      },
-      [
-        activeDescriptionRow,
-        rows,
-      ]
-    );
+        return [
+          ...remainingRows,
+          emptyRow,
+        ];
+      });
 
+      if (
+        activeDescriptionRow !== null &&
+        rows[activeDescriptionRow]?.id === id
+      ) {
+        setDescription("");
+        setActiveDescriptionRow(null);
+      }
+    },
+    [
+      activeDescriptionRow,
+      rows,
+    ]
+  );
   /* =======================================================
      CLEAR DESCRIPTION ROW
   ======================================================= */
@@ -2062,6 +2031,165 @@ useEffect(() => {
     ]
   );
 
+ /* =======================================================
+     Delete RECEIPT
+  ======================================================= */
+
+
+const handledelete = useCallback(async () => {
+  try {
+    /* ===============================================
+       VALIDATION
+    =============================================== */
+
+    const validationFailed =
+      !branch ||
+      !type ||
+      !documentNo.trim();
+
+    if (validationFailed) {
+      toast.warning(
+        "Branch, type, and receipt number are required."
+      );
+      return;
+    }
+
+    /* ===============================================
+       DELETE CONFIRMATION
+    =============================================== */
+
+     const shouldDelete =
+        window.confirm(
+          "Do you want to Delete?"
+        );
+
+      if (!shouldDelete) {
+        console.log(
+          "❌ MODIFY CANCELLED BY USER"
+        );
+
+        console.log(
+          "❌ NO API CALL WAS MADE"
+        );
+
+        return;
+      }
+
+    /* ===============================================
+       CREATE DELETE PAYLOAD
+    =============================================== */
+
+    const receiptData = {
+      branch,
+      type: type + "R",
+      receiptNo: documentNo.trim(),
+    };
+
+    console.log(
+      "DELETE RECEIPT:",
+      receiptData
+    );
+
+    /* ===============================================
+       DELETE API
+    =============================================== */
+
+    const response = await fetch(
+      "http://localhost:5000/api/Receipt/delete",
+      {
+        method: "DELETE",
+
+        headers: {
+          "Content-Type":
+            "application/json",
+        },
+
+        body: JSON.stringify(
+          receiptData
+        ),
+      }
+    );
+
+    const text =
+      await response.text();
+
+    console.log(
+      "DELETE STATUS:",
+      response.status
+    );
+
+    console.log(
+      "DELETE RAW RESPONSE:",
+      text
+    );
+
+    let result: {
+      success?: boolean;
+      message?: string;
+    };
+
+    try {
+      result = JSON.parse(text);
+    } catch {
+      result = {
+        success: false,
+        message: text,
+      };
+    }
+
+    console.log(
+      "DELETE API RESPONSE:",
+      result
+    );
+
+    /* ===============================================
+       API ERROR
+    =============================================== */
+
+    if (!response.ok) {
+      toast.error(
+        result.message ||
+          `Delete failed. Status: ${response.status}`
+      );
+
+      return;
+    }
+
+    /* ===============================================
+       SUCCESS
+    =============================================== */
+
+    toast.success(
+      result.message ||
+        "Receipt deleted successfully"
+    );
+
+    /* ===============================================
+       CLEAR FORM + LOAD NEXT RECEIPT
+    =============================================== */
+
+    await resetTableAndLoadNextReceiptNumber();
+
+  } catch (error) {
+    console.error(
+      "DELETE ERROR:",
+      error
+    );
+
+    toast.error(
+      error instanceof Error
+        ? error.message
+        : "Cannot connect to Receipt API."
+    );
+  }
+}, [
+  branch,
+  type,
+  documentNo,
+  resetTableAndLoadNextReceiptNumber,
+]);
+
+
   /* =======================================================
      CLEAR FORM
   ======================================================= */
@@ -2080,11 +2208,21 @@ useEffect(() => {
   ======================================================= */
 
   useEffect(() => {
-    requestAnimationFrame(
-      () => {
-        branchRef.current?.focus();
-      }
-    );
+    const frame = requestAnimationFrame(() => {
+      documentNoRef.current?.focus();
+
+      const value =
+        documentNoRef.current?.value ?? "";
+
+      documentNoRef.current?.setSelectionRange(
+        value.length,
+        value.length
+      );
+    });
+
+    return () => {
+      cancelAnimationFrame(frame);
+    };
   }, []);
 
   /* =======================================================
@@ -2308,6 +2446,7 @@ onRowSelect={(id, row) => {
               px-2
               text-right
               outline-none
+               text-[#344054]
             "
           />
         </div>
@@ -2352,46 +2491,46 @@ onRowSelect={(id, row) => {
           }
         />
 
-        {isPrint && (
-  <div className="print-only">
-    <ReceiptPrint
-      receivedFrom={receivedFrom}
-      receiptNo={documentNo}
-      date={date}
-      reference={reference}
-      fop={cbAccount}
-      currency="SAR"
-      amountInFigures={total}
-      amountInWords=""
-      description={rows
-        .filter(
-          (row) =>
-            row.accountId &&
-            row.accountId.trim() !== ""
-        )
-        .map(
-          (row) =>
-            row.description || ""
-        )
-        .filter(Boolean)
-        .join(" ")}
-      transactions={rows
-        .filter(
-          (row) =>
-            row.accountId &&
-            row.accountId.trim() !== ""
-        )
-        .map((row) => ({
-          accountId: row.accountId,
-          accountName: row.accountName,
-          description: row.description || "",
-          creditAmount:
-            Number(row.creditAmount) || 0,
-        }))}
-      preparedBy="MOHAMMED"
-      preparedDate="16/09/2026 16:29"
-    />
-  </div>
+{isPrint && (
+  <ReceiptPrint
+    receivedFrom={receivedFrom}
+    receiptNo={documentNo}
+    date={date}
+    reference={reference}
+    fop={cbAccount}
+    currency="SAR"
+    amountInFigures={total}
+    amountInWords=""
+    description={rows
+      .filter(
+        (row) =>
+          row.accountId &&
+          row.accountId.trim() !== ""
+      )
+      .map(
+        (row) =>
+          row.description || ""
+      )
+      .filter(Boolean)
+      .join(" ")}
+    transactions={rows
+      .filter(
+        (row) =>
+          row.accountId &&
+          row.accountId.trim() !== ""
+      )
+      .map((row) => ({
+        accountId: row.accountId,
+        accountName: row.accountName,
+        description: row.description || "",
+        creditAmount:
+          Number(row.creditAmount) || 0,
+      }))}
+    preparedBy="MOHAMMED"
+    preparedDate="16/09/2026 16:29"
+    autoPrint
+    onPrintComplete={() => setIsPrint(false)}
+  />
 )}
 
         {/* =================================================
@@ -2413,6 +2552,10 @@ onRowSelect={(id, row) => {
             isModifyMode
               ? handleModify
               : handleSave
+          }
+
+          onDelete={
+           handledelete
           }
 
           saveLabel={

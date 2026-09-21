@@ -8,6 +8,7 @@ import {
   saveReceipt,
   modifyReceipt,
   testget,
+  DeleteReceipt,
   GetDatas,
 } from "../controller/ReceiptController.js";
 
@@ -30,5 +31,6 @@ router.post("/modifyReceipt", modifyReceipt);
 router.post("/get/data", GetDatas);
 
 router.get("/get/data", GetDatas);
+router.delete('/delete',DeleteReceipt)
 
 export default router;

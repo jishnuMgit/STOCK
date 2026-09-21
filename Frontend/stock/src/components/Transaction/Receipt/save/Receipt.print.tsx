@@ -1,6 +1,58 @@
-import React from "react";
+import React, { useEffect, useMemo, useState } from "react";
+import pdfMake from "pdfmake/build/pdfmake";
+import pdfFonts from "pdfmake/build/vfs_fonts";
+import type {
+  TDocumentDefinitions,
+  Content,
+  TableCell,
+} from "pdfmake/interfaces";
+import logo from "./global-network.png";
 
-import logo from './global-network.png'
+/* =========================================================
+   ARABIC FONTS
+   ========================================================= */
+
+const arabicRegularFontUrl = new URL(
+  "../../../../assets/fonts/NotoNaskhArabic-Regular.ttf",
+  import.meta.url
+).href;
+
+const arabicMediumFontUrl = new URL(
+  "../../../../assets/fonts/NotoNaskhArabic-Medium.ttf",
+  import.meta.url
+).href;
+
+const arabicSemiBoldFontUrl = new URL(
+  "../../../../assets/fonts/NotoNaskhArabic-SemiBold.ttf",
+  import.meta.url
+).href;
+
+const arabicBoldFontUrl = new URL(
+  "../../../../assets/fonts/NotoNaskhArabic-Bold.ttf",
+  import.meta.url
+).href;
+
+pdfMake.addVirtualFileSystem(pdfFonts);
+
+pdfMake.addFonts({
+  Roboto: {
+    normal:
+      "https://unpkg.com/pdfmake@0.3/build/fonts/Roboto/Roboto-Regular.ttf",
+    bold:
+      "https://unpkg.com/pdfmake@0.3/build/fonts/Roboto/Roboto-Medium.ttf",
+    italics:
+      "https://unpkg.com/pdfmake@0.3/build/fonts/Roboto/Roboto-Italic.ttf",
+    bolditalics:
+      "https://unpkg.com/pdfmake@0.3/build/fonts/Roboto/Roboto-MediumItalic.ttf",
+  },
+
+  ArabicFont: {
+    normal: arabicRegularFontUrl,
+    bold: arabicBoldFontUrl,
+    italics: arabicMediumFontUrl,
+    bolditalics: arabicSemiBoldFontUrl,
+  },
+});
 
 /* =========================================================
    TYPES
@@ -28,877 +80,969 @@ interface ReceiptPrintProps {
   preparedDate?: string;
   checkedBy?: string;
   approvedBy?: string;
+  autoPrint?: boolean;
+  onPrintComplete?: () => void;
 }
 
 /* =========================================================
-   DUMMY DATA
+   HELPERS
 ========================================================= */
 
-const dummyTransactions: ReceiptTransaction[] = [
-  {
-    accountId: "21001",
-    accountName: "CASH SALES",
-    description:
-      "INV-2026-0045 PAYMENT RECEIVED FROM ALI HASSAN AHMED",
-    creditAmount: 1250,
-  },
-];
+const formatAmount = (value?: number) =>
+  Number(value || 0).toLocaleString("en-US", {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  });
+
+const imageToDataUrl = async (src: string): Promise<string> => {
+  const response = await fetch(src);
+
+  if (!response.ok) {
+    throw new Error(`Unable to load receipt logo. HTTP ${response.status}`);
+  }
+
+  const blob = await response.blob();
+
+  return new Promise<string>((resolve, reject) => {
+    const reader = new FileReader();
+
+    reader.onloadend = () => {
+      if (typeof reader.result === "string") {
+        resolve(reader.result);
+      } else {
+        reject(new Error("Unable to convert receipt logo to data URL."));
+      }
+    };
+
+    reader.onerror = () => {
+      reject(reader.error || new Error("Unable to read receipt logo."));
+    };
+
+    reader.readAsDataURL(blob);
+  });
+};
 
 /* =========================================================
-   RECEIPT PRINT
+   DOCUMENT BUILDER
 ========================================================= */
 
-const ReceiptPrint: React.FC<
-  ReceiptPrintProps
-> = ({
-  receivedFrom = "ALI HASSAN AHMED",
+const buildReceiptDocument = async (
+  props: ReceiptPrintProps
+): Promise<TDocumentDefinitions> => {
+  const {
+    receivedFrom = "",
+    receiptNo = "",
+    date = "",
+    reference = "",
+    fop = "",
+    currency = "SAR",
+    amountInFigures = 0,
+    amountInWords = "",
+    description = "",
+    transactions = [],
+    preparedBy = "",
+    preparedDate = "",
+    checkedBy = "",
+    approvedBy = "",
+  } = props;
 
-  receiptNo = "RC202600145",
+  /* =========================================================
+     LOGO
+  ========================================================= */
 
-  date = "16-Sep-2026",
+  let logoDataUrl = "";
 
-  reference = "REF/2026/0916/045",
+  try {
+    logoDataUrl = await imageToDataUrl(logo);
+  } catch (error) {
+    console.warn(
+      "Receipt logo could not be loaded. PDF will be generated without the logo.",
+      error
+    );
+  }
 
-  fop = "SAUDI NATIONAL BANK - SNB",
+  /* =========================================================
+     RECEIPT INFORMATION HELPERS
+  ========================================================= */
 
-  currency = "SAR",
+  const createInfoRow = (
+    label: string,
+    value: string,
+    bold = false,
+    margin: [number, number, number, number] = [0, 0, 0, 5]
+  ): Content => ({
+    columns: [
+      {
+        text: label,
+        width: 108,
+        fontSize: 8,
+        noWrap: true,
+      },
+      {
+        text: ":",
+        width: 7,
+        alignment: "center",
+        fontSize: 8,
+      },
+      {
+        text: value,
+        width: 175,
+        fontSize: 8,
+        bold,
+        noWrap: false,
+      },
+    ],
+    margin,
+  });
 
-  amountInFigures = 1250,
+  const createRightInfoRow = (
+    label: string,
+    value: string,
+    bold = false
+  ): Content => ({
+    columns: [
+      {
+        text: label,
+        width: 63,
+        fontSize: 8,
+        noWrap: true,
+      },
+      {
+        text: ":",
+        width: 7,
+        alignment: "center",
+        fontSize: 8,
+      },
+      {
+        text: value,
+        width: 145,
+        fontSize: 8,
+        bold,
+        noWrap: false,
+      },
+    ],
+    margin: [0, 0, 0, 5],
+  });
 
-  amountInWords =
-    "SAR: ONE THOUSAND TWO HUNDRED FIFTY ONLY",
+  /* =========================================================
+     COMPANY HEADER
+     This is used as the PDF header, so it repeats on every page.
+  ========================================================= */
 
-  description =
-    "PAYMENT AGAINST INVOICE INV-2026-0045",
+  const logoContent: Content = logoDataUrl
+    ? {
+        image: logoDataUrl,
+        width: 75,
+        alignment: "center",
+        margin: [0, 0, 0, 0],
+      }
+    : {
+        text: "CARAVAN",
+        alignment: "center",
+        bold: true,
+        fontSize: 13,
+        margin: [0, 10, 0, 10],
+      };
 
-  transactions = dummyTransactions,
+ const companyHeader: Content = {
+  table: {
+    // Total = 555pt, matching the A4 content width
+    widths: [230, 95, 220],
 
-  preparedBy = "MOHAMMED",
+    heights: () => 108,
 
-  preparedDate = "16/09/2026 16:29",
+    body: [
+      [
+        // =====================================================
+        // ENGLISH SIDE
+        // =====================================================
+        {
+          stack: [
+            {
+              text: "CARAVAN TOURS & TRAVEL COMPANY",
+              bold: true,
+              fontSize: 10.5,
+              noWrap: true,
+              margin: [0, 0, 0, 4],
+            },
+            {
+              text: "8442 , AL MADINAH AL MUNAWARAH ROAD",
+              fontSize: 7.2,
+              noWrap: true,
+              margin: [0, 0, 0, 2],
+            },
+            {
+              text: "Postal Code : 23526 , AL NMAI DISTRICT , JEDDAH",
+              fontSize: 7.2,
+              noWrap: true,
+              margin: [0, 0, 0, 2],
+            },
+            {
+              text: "KINGDOM OF SAUDI ARABIA - CR No. 4030130099",
+              fontSize: 7.2,
+              noWrap: true,
+              margin: [0, 0, 0, 2],
+            },
+            {
+              text: "VAT Number : 300220164600003",
+              fontSize: 7.2,
+              noWrap: true,
+              margin: [0, 0, 0, 2],
+            },
+            {
+              text: "Telephone : +966 126060018",
+              fontSize: 7.2,
+              noWrap: true,
+            },
+          ],
 
-  checkedBy = "",
+          margin: [10, 7, 0, 0],
+        },
 
-  approvedBy = "",
-}) => {
-  /* =======================================================
+        // =====================================================
+        // LOGO
+        // =====================================================
+        {
+          stack: [logoContent],
+          alignment: "center",
+          margin: [0, 8, 0, 0],
+        },
+
+        // =====================================================
+        // ARABIC SIDE
+        // =====================================================
+        {
+          stack: [
+            {
+              text: "شركة القافلة للسياحة والسفر",
+              font: "ArabicFont",
+              alignment: "right",
+              fontSize: 12.5,
+              noWrap: true,
+              margin: [0, 0, 0, 4],
+              marginRight:10,
+            },
+            {
+              text: "طريق المدينة المنورة 8442",
+              font: "ArabicFont",
+              alignment: "right",
+              fontSize: 7.2,
+              noWrap: true,
+              margin: [0, 0, 0, 2],
+            },
+            {
+              text: "جدة - حي النعيم - الرمز البريدي 23526",
+              font: "ArabicFont",
+              alignment: "right",
+              fontSize: 7.2,
+              noWrap: true,
+              margin: [0, 0, 0, 2],
+            },
+            {
+              text: "المملكة العربية السعودية - سجل تجاري : 4030130099",
+              font: "ArabicFont",
+              alignment: "right",
+              fontSize: 7.2,
+              noWrap: true,
+              margin: [0, 0, 0, 2],
+            },
+            {
+              text: "الرقم الضريبي : 300220164600003",
+              font: "ArabicFont",
+              alignment: "right",
+              fontSize: 7.2,
+              noWrap: true,
+              margin: [0, 0, 0, 2],
+            },
+            {
+              text: "هاتف : 00966126060018",
+              font: "ArabicFont",
+              alignment: "right",
+              fontSize: 7.2,
+              noWrap: true,
+            },
+          ],
+
+          marginRight:17,
+        },
+      ],
+    ],
+  },
+
+  layout: "noBorders",
+
+  margin: [0, 0, 0, 4],
+};
+
+  const title: Content = {
+    text: "BANK RECEIPT",
+    alignment: "center",
+    bold: false,
+    fontSize: 12,
+    margin: [0, 0, 0, 14],
+  };
+
+  /* =========================================================
+     RECEIPT INFORMATION
+     No vertical divider between left/right sections.
+  ========================================================= */
+
+  const leftInfoStack: Content[] = [
+    createInfoRow("Received With thanks From", receivedFrom, true),
+    createInfoRow("Currency", currency),
+    createInfoRow("Amount In Figures", formatAmount(amountInFigures)),
+    createInfoRow(
+      "Amount In Words",
+      amountInWords ? `( ${amountInWords} )` : ""
+    ),
+    createInfoRow("Description", description, false, [0, 0, 0, 0]),
+  ];
+
+  const rightInfoStack: Content[] = [
+    createRightInfoRow("Receipt No.", receiptNo, true),
+    createRightInfoRow("Date", date),
+    createRightInfoRow("Reference", reference),
+    createRightInfoRow("FOP", fop),
+  ];
+
+  const receiptInfo: Content = {
+    table: {
+      widths: [312, 223],
+      heights: () => 213,
+      body: [
+        [
+          {
+            stack: leftInfoStack,
+            margin: [7, 7, 7, 5],
+          },
+          {
+            stack: rightInfoStack,
+            margin: [7, 7, 7, 5],
+          },
+        ],
+      ],
+    },
+
+    layout: {
+      // Outer top/bottom border only.
+      hLineWidth: () => 0.8,
+
+      // Keep outer left/right borders, remove center divider.
+      vLineWidth: (i: number, node: any) => {
+        if (i === 0 || i === node.table.widths.length) {
+          return 0.8;
+        }
+
+        return 0;
+      },
+
+      hLineColor: () => "#333333",
+      vLineColor: () => "#333333",
+
+      paddingLeft: () => 0,
+      paddingRight: () => 0,
+      paddingTop: () => 0,
+      paddingBottom: () => 0,
+    },
+
+    margin: [0, 0, 0, 0],
+  };
+
+  /* =========================================================
      TOTAL
-  ======================================================= */
+  ========================================================= */
 
-  const total = transactions.reduce(
+  const transactionTotal = transactions.reduce(
     (sum, transaction) =>
-      sum +
-      Number(
-        transaction.creditAmount
-      || 0),
+      sum + (Number(transaction.creditAmount) || 0),
     0
   );
 
-  /* =======================================================
-     FORMAT AMOUNT
-  ======================================================= */
+  /* =========================================================
+     TRANSACTION TABLE
 
-  const formatAmount = (
-    amount: number
-  ) => {
-    return Number(amount || 0).toLocaleString(
-      "en-US",
-      {
-        minimumFractionDigits: 2,
-        maximumFractionDigits: 2,
-      }
-    );
+     - 7 rows maximum per page.
+     - No horizontal lines between transaction data rows.
+     - Vertical column lines remain.
+     - Header line remains.
+     - Total is added only on the final transaction page.
+  ========================================================= */
+
+  const createTransactionTable = (
+    chunk: ReceiptTransaction[],
+    includeTotal: boolean
+  ): Content => {
+    const body: TableCell[][] = [
+      [
+        {
+          text: "Account ID",
+          fontSize: 8,
+          alignment: "left",
+        },
+        {
+          text: "Account Name / Description",
+          fontSize: 8,
+          alignment: "left",
+        },
+        {
+          text: "Credit Amount",
+          fontSize: 8,
+          alignment: "right",
+        },
+      ],
+    ];
+
+    chunk.forEach((transaction) => {
+  body.push([
+    {
+      text: transaction.accountId || "",
+      fontSize: 8,
+      alignment: "left",
+    },
+
+    {
+      stack: [
+        {
+          text: transaction.accountName || "",
+          fontSize: 8,
+          noWrap: false,
+        },
+
+        ...(transaction.description
+          ? [
+              {
+                text: transaction.description,
+                fontSize: 8,
+                noWrap: false,
+                margin: [0, 4, 0, 0] as [
+                  number,
+                  number,
+                  number,
+                  number
+                ],
+              },
+            ]
+          : []),
+      ],
+    },
+
+    {
+      text: formatAmount(transaction.creditAmount),
+      fontSize: 8,
+      alignment: "right",
+    },
+  ]);
+});
+
+    if (includeTotal) {
+      body.push([
+        {
+          text: "Total :",
+          colSpan: 2,
+          fontSize: 8,
+          alignment: "right",
+        },
+        {},
+        {
+          text: formatAmount(transactionTotal),
+          fontSize: 8,
+          alignment: "right",
+        },
+      ]);
+    }
+
+    return {
+    table: {
+  headerRows: 1,
+  widths: [94, 330, 80],
+
+  heights: (rowIndex: number) => {
+    // Header
+    if (rowIndex === 0) {
+      return 20;
+    }
+
+    // Every transaction row
+    return 30;
+  },
+
+  body,
+},
+
+      layout: {
+        /*
+         * Horizontal lines:
+         *
+         * 0   = top border
+         * 1   = header/data separator
+         * data rows = NO horizontal lines
+         * last = bottom border
+         */
+        hLineWidth: (i: number, node: any) => {
+          if (i === 0) {
+            return 0.7;
+          }
+
+          if (i === 1) {
+            return 0.7;
+          }
+
+          if (i === node.table.body.length) {
+            return 0.7;
+          }
+
+          return 0;
+        },
+
+        // Keep all vertical column borders.
+        vLineWidth: () => 0.7,
+
+        hLineColor: () => "#333333",
+        vLineColor: () => "#333333",
+
+        paddingLeft: () => 5,
+        paddingRight: () => 5,
+        paddingTop: () => 4,
+        paddingBottom: () => 4,
+      },
+
+      margin: [0, 0, 0, 0],
+    };
   };
 
-  /* =======================================================
-     RENDER
-  ======================================================= */
+  /* =========================================================
+     SPLIT TRANSACTIONS
+
+     7 rows per page:
+
+     Page 1:
+       1 - 7
+
+     Page 2:
+       8 - 14
+
+     etc.
+  ========================================================= */
+
+  const TRANSACTIONS_PER_PAGE = 7;
+
+  const transactionChunks: ReceiptTransaction[][] = [];
+
+  for (
+    let i = 0;
+    i < transactions.length;
+    i += TRANSACTIONS_PER_PAGE
+  ) {
+    transactionChunks.push(
+      transactions.slice(i, i + TRANSACTIONS_PER_PAGE)
+    );
+  }
+
+  /* =========================================================
+     APPROVAL FOOTER
+
+     Only appears after the final transaction page.
+  ========================================================= */
+
+  const approvalFooter: Content = {
+    table: {
+      widths: [215, 160, 160],
+      heights: () => 72,
+
+      body: [
+        [
+          {
+            stack: [
+              {
+                text: "Prepared By :",
+                fontSize: 8,
+              },
+              {
+                text: preparedBy,
+                fontSize: 8,
+                margin: [0, 10, 0, 0],
+              },
+              {
+                text: preparedDate,
+                fontSize: 7.5,
+                margin: [0, 2, 0, 0],
+              },
+            ],
+            margin: [6, 25, 6, 5],
+          },
+
+          {
+            stack: [
+              {
+                text: "Checked By :",
+                fontSize: 8,
+              },
+              {
+                text: checkedBy,
+                fontSize: 8,
+                margin: [0, 10, 0, 0],
+              },
+            ],
+            margin: [6, 25, 6, 5],
+          },
+
+          {
+            stack: [
+              {
+                text: "Approved By :",
+                fontSize: 8,
+              },
+              {
+                text: approvedBy,
+                fontSize: 8,
+                margin: [0, 10, 0, 0],
+              },
+            ],
+            margin: [6, 25, 6, 5],
+          },
+        ],
+      ],
+    },
+
+    layout: {
+      // hLineWidth: () => 0.7,
+      vLineWidth: () => 0.7,
+      hLineColor: () => "#333333",
+      vLineColor: () => "#333333",
+
+      paddingLeft: () => 0,
+      paddingRight: () => 0,
+      paddingTop: () => 0,
+      paddingBottom: () => 0,
+    },
+
+    margin: [0, 0, 0, 0],
+  };
+
+  /* =========================================================
+     CONTENT
+
+     First page:
+       Receipt information
+       Transactions 1-7
+
+     Second page:
+       Transactions 8-14
+
+     etc.
+
+     Header is repeated automatically by pdfmake.
+  ========================================================= */
+
+  const content: Content[] = [];
+
+  // Receipt information appears only once.
+  content.push(receiptInfo);
+
+  /*
+   * If there are no transactions, still show an empty
+   * transaction table and the approval footer.
+   */
+  if (transactionChunks.length === 0) {
+    content.push(createTransactionTable([], true));
+
+    content.push({
+      text: "",
+      margin: [0, 5, 0, 0],
+    });
+
+    content.push(approvalFooter);
+  } else {
+    transactionChunks.forEach((chunk, index) => {
+      const isLastPage =
+        index === transactionChunks.length - 1;
+
+      /*
+       * Every transaction page after page 1 starts
+       * on a new PDF page.
+       */
+      if (index > 0) {
+        content.push({
+          text: "",
+          pageBreak: "before",
+        });
+      }
+
+      content.push(
+        createTransactionTable(
+          chunk,
+          isLastPage
+        )
+      );
+
+      /*
+       * Approval footer only belongs to the final page.
+       */
+      if (isLastPage) {
+        content.push({
+          text: "",
+          margin: [0, 5, 0, 0],
+        });
+
+        content.push(approvalFooter);
+      }
+    });
+  }
+
+  /* =========================================================
+     FINAL DOCUMENT
+  ========================================================= */
+
+  const docDefinition: TDocumentDefinitions = {
+    pageSize: "A4",
+    pageOrientation: "portrait",
+
+    /*
+     * Header is approximately 120-125pt high.
+     * Give content enough top space so it doesn't overlap.
+     */
+    pageMargins: [30, 145, 20, 24],
+
+    defaultStyle: {
+      font: "Roboto",
+      fontSize: 8,
+    },
+
+    /*
+     * COMMON HEADER
+     *
+     * This repeats automatically on every page.
+     */
+    header: {
+      stack: [
+        companyHeader,
+        title,
+      ],
+      margin: [20, 20, 20, 0],
+    },
+
+    content,
+
+    info: {
+      title: `Bank Receipt ${receiptNo}`,
+      subject: "Bank Receipt",
+      author: "Stock",
+      creator: "Stock",
+    },
+  };
+
+  return docDefinition;
+};
+
+/* =========================================================
+   COMPONENT
+========================================================= */
+
+const ReceiptPrint: React.FC<ReceiptPrintProps> = ({
+  receivedFrom = "",
+  receiptNo = "",
+  date = "",
+  reference = "",
+  fop = "",
+  currency = "SAR",
+  amountInFigures = 0,
+  amountInWords = "",
+  description = "",
+  transactions = [],
+  preparedBy = "",
+  preparedDate = "",
+  checkedBy = "",
+  approvedBy = "",
+  autoPrint = false,
+  onPrintComplete,
+}) => {
+  const [isGenerating, setIsGenerating] =
+    useState(false);
+
+  const receiptProps = useMemo(
+    () => ({
+      receivedFrom,
+      receiptNo,
+      date,
+      reference,
+      fop,
+      currency,
+      amountInFigures,
+      amountInWords,
+      description,
+      transactions,
+      preparedBy,
+      preparedDate,
+      checkedBy,
+      approvedBy,
+    }),
+    [
+      receivedFrom,
+      receiptNo,
+      date,
+      reference,
+      fop,
+      currency,
+      amountInFigures,
+      amountInWords,
+      description,
+      transactions,
+      preparedBy,
+      preparedDate,
+      checkedBy,
+      approvedBy,
+    ]
+  );
+
+  /* =========================================================
+     AUTO PRINT
+  ========================================================= */
+
+  useEffect(() => {
+    if (!autoPrint) {
+      return;
+    }
+
+    let cancelled = false;
+
+    const printTimer = window.setTimeout(
+      async () => {
+        try {
+          setIsGenerating(true);
+
+          console.log(
+            "🖨️ OPENING PDF PRINT"
+          );
+
+          const docDefinition =
+            await buildReceiptDocument(
+              receiptProps
+            );
+
+          if (cancelled) {
+            return;
+          }
+
+          console.log(
+            "✅ PDF DOC DEFINITION CREATED",
+            docDefinition
+          );
+
+          await pdfMake
+            .createPdf(docDefinition)
+            .print();
+
+          console.log(
+            "✅ PDF PRINT COMPLETED"
+          );
+        } catch (error) {
+          console.error(
+            "❌ PDF PRINT ERROR:",
+            error
+          );
+        } finally {
+          if (!cancelled) {
+            setIsGenerating(false);
+            onPrintComplete?.();
+          }
+        }
+      },
+      100
+    );
+
+    return () => {
+      cancelled = true;
+      window.clearTimeout(printTimer);
+    };
+  }, [
+    autoPrint,
+    receiptProps,
+    onPrintComplete,
+  ]);
+
+  /* =========================================================
+     OPEN PDF
+  ========================================================= */
+
+  const openPdf = async () => {
+    try {
+      setIsGenerating(true);
+
+      const docDefinition =
+        await buildReceiptDocument(
+          receiptProps
+        );
+
+      await pdfMake
+        .createPdf(docDefinition)
+        .open();
+    } catch (error) {
+      console.error(
+        "❌ PDF OPEN ERROR:",
+        error
+      );
+    } finally {
+      setIsGenerating(false);
+    }
+  };
+
+  /* =========================================================
+     DOWNLOAD PDF
+  ========================================================= */
+
+  const downloadPdf = async () => {
+    try {
+      setIsGenerating(true);
+
+      const docDefinition =
+        await buildReceiptDocument(
+          receiptProps
+        );
+
+      await pdfMake
+        .createPdf(docDefinition)
+        .download(
+          `Receipt-${receiptNo || "Receipt"}.pdf`
+        );
+    } catch (error) {
+      console.error(
+        "❌ PDF DOWNLOAD ERROR:",
+        error
+      );
+    } finally {
+      setIsGenerating(false);
+    }
+  };
+
+  /* =========================================================
+     HIDDEN AUTO PRINT COMPONENT
+  ========================================================= */
+
+  if (autoPrint) {
+    return null;
+  }
 
   return (
-    <div className="receipt-print-page">
-      {/* =================================================
-          PRINT CONTAINER
-      ================================================= */}
-
-      <div className="receipt-print-container">
-
-        {/* =================================================
-            COMPANY HEADER
-        ================================================= */}
-
-        <div className="receipt-company-header">
-
-          {/* LEFT */}
-          <div className="receipt-company-left">
-            <div className="receipt-company-name">
-              CARAVAN TOURS &amp; TRAVEL COMPANY
-            </div>
-
-            <div>
-              8442, AL MADINAH AL MUNAWARAH ROAD
-            </div>
-
-            <div>
-              Postal Code : 23526, AL MINA DISTRICT, JEDDAH
-            </div>
-
-            <div>
-              KINGDOM OF SAUDI ARABIA - CR No: 4030130099
-            </div>
-
-            <div>
-              VAT Number: 500021746600003
-            </div>
-
-            <div>
-              Telephone: +966 126060018
-            </div>
-          </div>
-
-          {/* CENTER LOGO */}
-          <div className="receipt-company-logo">
-
-            <img
-              src={logo}
-              alt="Caravan Logo"
-              className="receipt-logo"
-            />
-
-            <div className="receipt-logo-text">
-              CARAVAN
-            </div>
-
-            <div className="receipt-logo-subtext">
-              TOURS &amp; TRAVEL
-            </div>
-
-          </div>
-
-          {/* RIGHT */}
-          <div className="receipt-company-right">
-
-            <div className="receipt-arabic-company">
-              شركة القافلة للسياحة والسفر (سفريات القافلة)
-            </div>
-
-            <div>
-              طريق المدينة المنورة، جدة 23526
-            </div>
-
-            <div>
-              السجل التجاري: 4030130099
-            </div>
-
-            <div>
-              الرقم الضريبي: 500021746600003
-            </div>
-
-            <div>
-              هاتف: 00966126060018
-            </div>
-
-          </div>
-
-        </div>
-
-        {/* =================================================
-            TITLE
-        ================================================= */}
-
-        <div className="receipt-title">
-          BANK RECEIPT
-        </div>
-
-        {/* =================================================
-            RECEIPT INFORMATION
-        ================================================= */}
-
-        <div className="receipt-info-box">
-
-          {/* LEFT SIDE */}
-          <div className="receipt-info-left">
-
-            <div className="receipt-info-row">
-              <span className="receipt-label">
-                Received With thanks From
-              </span>
-
-              <span className="receipt-colon">
-                :
-              </span>
-
-              <strong>
-                {receivedFrom}
-              </strong>
-            </div>
-
-            <div className="receipt-info-row">
-              <span className="receipt-label">
-                Currency
-              </span>
-
-              <span className="receipt-colon">
-                :
-              </span>
-
-              <span>
-                {currency}
-              </span>
-            </div>
-
-            <div className="receipt-info-row">
-              <span className="receipt-label">
-                Amount In Figures
-              </span>
-
-              <span className="receipt-colon">
-                :
-              </span>
-
-              <span>
-                {formatAmount(
-                  amountInFigures
-                )}
-              </span>
-            </div>
-
-            <div className="receipt-info-row">
-              <span className="receipt-label">
-                Amount In Words
-              </span>
-
-              <span className="receipt-colon">
-                :
-              </span>
-
-              <span>
-                ({currency}:{" "}
-                {amountInWords})
-              </span>
-            </div>
-
-            <div className="receipt-info-row receipt-description-row">
-              <span className="receipt-label">
-                Description
-              </span>
-
-              <span className="receipt-colon">
-                :
-              </span>
-
-              <span>
-                {description}
-              </span>
-            </div>
-
-          </div>
-
-          {/* RIGHT SIDE */}
-          <div className="receipt-info-right">
-
-            <div className="receipt-info-row">
-              <span className="receipt-label">
-                Receipt No.
-              </span>
-
-              <span className="receipt-colon">
-                :
-              </span>
-
-              <span>
-                {receiptNo}
-              </span>
-            </div>
-
-            <div className="receipt-info-row">
-              <span className="receipt-label">
-                Date
-              </span>
-
-              <span className="receipt-colon">
-                :
-              </span>
-
-              <span>
-                {date}
-              </span>
-            </div>
-
-            <div className="receipt-info-row">
-              <span className="receipt-label">
-                Reference
-              </span>
-
-              <span className="receipt-colon">
-                :
-              </span>
-
-              <span>
-                {reference}
-              </span>
-            </div>
-
-            <div className="receipt-info-row">
-              <span className="receipt-label">
-                FOP
-              </span>
-
-              <span className="receipt-colon">
-                :
-              </span>
-
-              <span>
-                {fop}
-                <br />
-                &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-                CVN
-              </span>
-            </div>
-
-          </div>
-
-        </div>
-
-        {/* =================================================
-            TRANSACTION TABLE
-        ================================================= */}
-
-        <table className="receipt-transaction-table">
-
-          <colgroup>
-            <col className="receipt-account-id-column" />
-            <col className="receipt-account-name-column" />
-            <col className="receipt-credit-column" />
-          </colgroup>
-
-          <thead>
-            <tr>
-              <th>
-                Account ID
-              </th>
-
-              <th>
-                Account Name / Description
-              </th>
-
-              <th>
-                Credit Amount
-              </th>
-            </tr>
-          </thead>
-
-          <tbody>
-
-            {transactions.map(
-              (
-                transaction,
-                index
-              ) => (
-                <tr
-                  key={`${transaction.accountId}-${index}`}
-                  className="receipt-transaction-row"
-                >
-
-                  {/* ACCOUNT ID */}
-                  <td className="receipt-account-id">
-                    {transaction.accountId}
-                  </td>
-
-                  {/* ACCOUNT NAME + DESCRIPTION */}
-                  <td className="receipt-account-description">
-
-                    <div className="receipt-account-name">
-                      {transaction.accountName}
-                    </div>
-
-                    <div className="receipt-line-description">
-                      {transaction.description}
-                    </div>
-
-                  </td>
-
-                  {/* CREDIT */}
-                  <td className="receipt-credit-amount">
-                    {formatAmount(
-                      transaction.creditAmount
-                    )}
-                  </td>
-
-                </tr>
-              )
-            )}
-
-          </tbody>
-
-          {/* TOTAL */}
-          <tfoot>
-
-            <tr>
-
-              <td
-                colSpan={2}
-                className="receipt-total-label"
-              >
-                Total :
-              </td>
-
-              <td className="receipt-total-amount">
-                {formatAmount(total)}
-              </td>
-
-            </tr>
-
-          </tfoot>
-
-        </table>
-
-        {/* =================================================
-            APPROVAL / SIGNATURE AREA
-        ================================================= */}
-
-        <div className="receipt-footer">
-
-          <div className="receipt-footer-column">
-
-            <div>
-              Prepared By :
-              <span className="receipt-footer-value">
-                {preparedBy}
-              </span>
-            </div>
-
-            <div className="receipt-prepared-date">
-              {preparedDate}
-            </div>
-
-          </div>
-
-          <div className="receipt-footer-column">
-            <div>
-              Checked By :
-              <span className="receipt-footer-value">
-                {checkedBy}
-              </span>
-            </div>
-          </div>
-
-          <div className="receipt-footer-column">
-            <div>
-              Approved By :
-              <span className="receipt-footer-value">
-                {approvedBy}
-              </span>
-            </div>
-          </div>
-
-        </div>
-
-      </div>
-
-      {/* ===================================================
-          PRINT CSS
-      =================================================== */}
-
-      <style>
-        {`
-
-          /* ===============================================
-             PAGE
-          =============================================== */
-
-          @page {
-            size: A4;
-            margin: 10mm;
-          }
-
-          * {
-            box-sizing: border-box;
-          }
-
-          .receipt-print-page {
-            width: 100%;
-            min-height: 100vh;
-            background: #ffffff;
-            color: #000000;
-            font-family:
-              Arial,
-              Helvetica,
-              sans-serif;
-            font-size: 10px;
-          }
-
-          .receipt-print-container {
-            width: 100%;
-            max-width: 760px;
-            margin: 0 auto;
-            background: #ffffff;
-          }
-
-          /* ===============================================
-             COMPANY HEADER
-          =============================================== */
-
-          .receipt-company-header {
-            width: 100%;
-            display: grid;
-            grid-template-columns:
-              1fr
-              145px
-              1fr;
-
-            min-height: 115px;
-
-            border-top:
-              0.5px solid #b5b5b5;
-
-            padding:
-              6px
-              4px
-              4px
-              4px;
-
-            font-size: 8px;
-            line-height: 12px;
-
-            align-items: start;
-          }
-
-          .receipt-company-left {
-            text-align: left;
-          }
-
-          .receipt-company-name {
-            font-size: 13px;
-            line-height: 16px;
-            margin-bottom: 2px;
-          }
-
-          .receipt-company-logo {
-            text-align: center;
-            min-height: 100px;
-            padding-top: 2px;
-          }
-
-          .receipt-logo {
-            width: 72px;
-            height: 72px;
-            object-fit: contain;
-            display: block;
-            margin:
-              0 auto
-              2px;
-          }
-
-          .receipt-logo-text {
-            font-size: 10px;
-            font-weight: bold;
-            line-height: 10px;
-          }
-
-          .receipt-logo-subtext {
-            font-size: 6px;
-            line-height: 8px;
-          }
-
-          .receipt-company-right {
-            text-align: right;
-            direction: rtl;
-          }
-
-          .receipt-arabic-company {
-            font-size: 11px;
-            line-height: 15px;
-            margin-bottom: 2px;
-          }
-
-          /* ===============================================
-             TITLE
-          =============================================== */
-
-          .receipt-title {
-            width: 100%;
-            text-align: center;
-
-            font-size: 16px;
-            font-weight: normal;
-
-            margin-top: 4px;
-            margin-bottom: 18px;
-          }
-
-          /* ===============================================
-             RECEIPT INFO
-          =============================================== */
-
-          .receipt-info-box {
-            width: 100%;
-
-            min-height: 215px;
-
-            border:
-              0.5px solid #000000;
-
-            display: grid;
-
-            grid-template-columns:
-              58%
-              42%;
-
-            padding:
-              7px
-              7px
-              10px
-              7px;
-
-            font-size: 8.5px;
-            line-height: 13px;
-          }
-
-          .receipt-info-left,
-          .receipt-info-right {
-            min-width: 0;
-          }
-
-          .receipt-info-right {
-            padding-left: 4px;
-          }
-
-          .receipt-info-row {
-            display: grid;
-
-            grid-template-columns:
-              112px
-              8px
-              1fr;
-
-            min-height: 18px;
-
-            align-items: start;
-          }
-
-          .receipt-info-right
-          .receipt-info-row {
-            grid-template-columns:
-              60px
-              8px
-              1fr;
-          }
-
-          .receipt-label {
-            white-space: nowrap;
-          }
-
-          .receipt-colon {
-            text-align: center;
-          }
-
-          .receipt-description-row {
-            margin-top: 4px;
-          }
-
-          /* ===============================================
-             TRANSACTION TABLE
-          =============================================== */
-
-          .receipt-transaction-table {
-            width: 100%;
-
-            border-collapse:
-              collapse;
-
-            table-layout:
-              fixed;
-
-            font-size: 8.5px;
-          }
-
-          .receipt-transaction-table th,
-          .receipt-transaction-table td {
-            border:
-              0.5px solid #000000;
-
-            padding:
-              4px
-              5px;
-
-            vertical-align: top;
-          }
-
-          .receipt-transaction-table th {
-            height: 25px;
-
-            font-weight: normal;
-
-            text-align: left;
-          }
-
-          .receipt-transaction-table th:last-child {
-            text-align: right;
-          }
-
-          .receipt-account-id-column {
-            width: 17%;
-          }
-
-          .receipt-account-name-column {
-            width: 63%;
-          }
-
-          .receipt-credit-column {
-            width: 20%;
-          }
-
-          .receipt-transaction-row {
-            height: 50px;
-          }
-
-          .receipt-account-id {
-            vertical-align: top;
-          }
-
-          .receipt-account-description {
-            vertical-align: top;
-          }
-
-          .receipt-account-name {
-            font-weight: normal;
-            margin-bottom: 12px;
-          }
-
-          .receipt-line-description {
-            line-height: 13px;
-          }
-
-          .receipt-credit-amount {
-            text-align: right;
-            font-weight: normal;
-          }
-
-          /* ===============================================
-             TOTAL
-          =============================================== */
-
-          .receipt-transaction-table tfoot tr {
-            height: 24px;
-          }
-
-          .receipt-total-label {
-            text-align: right;
-
-            vertical-align: middle !important;
-
-            padding-right: 6px !important;
-          }
-
-          .receipt-total-amount {
-            text-align: right;
-
-            vertical-align: middle !important;
-
-            font-weight: normal;
-          }
-
-          /* ===============================================
-             FOOTER
-          =============================================== */
-
-          .receipt-footer {
-            width: 100%;
-
-            height: 75px;
-
-            border:
-              1px solid #000000;
-
-            border-top:
-              0;
-
-            display: grid;
-
-            grid-template-columns:
-              1.4fr
-              1fr
-              1fr;
-
-            padding:
-              24px
-              7px
-              5px
-              7px;
-
-            font-size: 8.5px;
-          }
-
-          .receipt-footer-column {
-            text-align: left;
-          }
-
-          .receipt-footer-value {
-            margin-left: 4px;
-          }
-
-          .receipt-prepared-date {
-            margin-top: 8px;
-            margin-left: 58px;
-          }
-
-          /* ===============================================
-             PRINT
-          =============================================== */
-
-          @media print {
-
-            html,
-            body {
-              width: 210mm;
-              min-height: 297mm;
-
-              margin: 0;
-              padding: 0;
-
-              background:
-                #ffffff;
-            }
-
-            .receipt-print-page {
-              width: 100%;
-              min-height: auto;
-
-              background:
-                #ffffff;
-            }
-
-            .receipt-print-container {
-              width: 100%;
-              max-width: none;
-
-              margin: 0;
-            }
-
-            .receipt-company-header {
-              break-inside:
-                avoid;
-            }
-
-            .receipt-info-box {
-              break-inside:
-                avoid;
-            }
-
-            .receipt-transaction-table {
-              break-inside:
-                avoid;
-            }
-
-            .receipt-footer {
-              break-inside:
-                avoid;
-            }
-
-          }
-
-        `}
-      </style>
+    <div className="flex items-center gap-2">
+      <button
+        type="button"
+        onClick={openPdf}
+        disabled={isGenerating}
+        className="rounded border border-gray-300 bg-white px-3 py-1.5 text-xs"
+      >
+        {isGenerating
+          ? "Generating..."
+          : "Open PDF"}
+      </button>
+
+      <button
+        type="button"
+        onClick={downloadPdf}
+        disabled={isGenerating}
+        className="rounded border border-gray-300 bg-white px-3 py-1.5 text-xs"
+      >
+        Download PDF
+      </button>
     </div>
   );
 };

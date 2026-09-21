@@ -1,15 +1,12 @@
 import type { PoolClient } from "pg";
 import pool from "../DB/db.js";
 
+import {GetDataParams} from '../types/types.js'
 /* =========================================================
    TYPES
 ========================================================= */
 
-interface GetDataParams {
-  strbranch: unknown;
-  strdocType: unknown;
-  strdocNo: unknown;
-}
+
 
 interface ReceiptProcedureParams {
   mode: string;

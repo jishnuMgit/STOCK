@@ -2,7 +2,8 @@
 import type { PoolClient } from "pg";
 import pool from "../DB/db.js";
 
-
+import {ReceiptProcedureParams,ReceiptData,ReceiptRow,ReceiptHeaderParams,
+  ReceiptDocumentParams,SaveReceiptLineParams,SaveGeneratedEntryParams,DeleteReceiptData} from '../types/types.js'
 
 /* =========================================================
    TYPES
@@ -11,112 +12,11 @@ import pool from "../DB/db.js";
 type DbValue = unknown;
 type DbRow = Record<string, any>;
 
-interface ReceiptProcedureParams {
-  mode: string;
-  branch?: DbValue;
-  docType?: DbValue;
-  docNo?: DbValue;
-  slNo?: DbValue;
-  receiptDate?: DbValue;
-  cbAccountId?: DbValue;
-  receivedFrom?: DbValue;
-  reference?: DbValue;
-  accountId?: DbValue;
-  gcs?: DbValue;
-  division?: DbValue;
-  ccId?: DbValue;
-  debit?: DbValue;
-  credit?: DbValue;
-  description?: DbValue;
-  note?: DbValue;
-  match?: DbValue;
-  userId?: DbValue;
-  userDate?: DbValue;
-  details?: DbValue;
-}
 
-interface ReceiptRow {
-  id?: number;
-  slNo?: number | string;
-  accountId?: string;
-  accountName?: string;
-  gcs?: string;
-  fgcs?: string;
-  ccId?: string;
-  division?: string;
-  divId?: string;
-  creditAmount?: string | number;
-  debit?: string | number;
-  credit?: string | number;
-  description?: string;
-  note?: string;
-  match?: boolean | string | number;
-}
 
-interface ReceiptData {
-  branch?: DbValue;
-  type?: DbValue;
-  cashBank?: DbValue;
-  receiptNo?: DbValue;
-  receiptDate?: DbValue;
-  receivedFrom?: DbValue;
-  reference?: DbValue;
-  note?: DbValue;
-  docNo?:DbValue;
-  cbCcId?: DbValue;
-  rows?: ReceiptRow[];
-}
 
-interface ReceiptHeaderParams {
-  branch?: DbValue;
-  docType?: DbValue;
-  docNo?: DbValue;
-}
 
-interface ReceiptDocumentParams {
-  branch?: DbValue;
-  type?: DbValue;
-  receiptNo?: DbValue;
-}
 
-interface SaveReceiptLineParams {
-  branch?: DbValue;
-  docType?: DbValue;
-  docNo?: DbValue;
-  slNo?: DbValue;
-  receiptDate?: DbValue;
-  receivedFrom?: DbValue;
-  reference?: DbValue;
-  cbAccountId?: DbValue;
-  accountId?: DbValue;
-  gcs?: DbValue;
-  ccId?: DbValue;
-  debit?: DbValue;
-  credit?: DbValue;
-  description?: DbValue;
-  note?: DbValue;
-  division?: DbValue;
-  match?: DbValue;
-  createdUserDate?: DbValue;
-}
-
-interface SaveGeneratedEntryParams {
-  branch?: DbValue;
-  docType?: DbValue;
-  docNo?: DbValue;
-  receiptDate?: DbValue;
-  receivedFrom?: DbValue;
-  reference?: DbValue;
-  cbAccountId?: DbValue;
-  gcs?: DbValue;
-  ccId?: DbValue;
-  credit?: DbValue;
-  description?: DbValue;
-  note?: DbValue;
-  division?: DbValue;
-  match?: DbValue;
-  createdUserDate?: DbValue;
-}
 
 interface ServiceResult {
   message: string;
@@ -2423,3 +2323,4 @@ export async function updateReceiptService(
 
   }
 }
+
