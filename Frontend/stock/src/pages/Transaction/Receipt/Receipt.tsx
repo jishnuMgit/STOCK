@@ -20,10 +20,11 @@ import {
   type ReceiptTableRef,
   type SortField,
   type ReceiptActionsRef,
+  
 } from "../../../components/Transaction/Receipt/save/ReceitComp";
 
 
-import  {type SelectOption,type Branch,type FinancialParameter,type CostCenter,  type ReceiptRow,type AccountData, } from '../../../types/receiptypes';
+import  {type SelectOption,type Branch,type FinancialParameter,type CostCenter,  type ReceiptRow,type AccountData,type ReceiptPrintData } from '../../../types/receiptypes';
 import { toast } from "react-toastify";
 import ReceiptPrint from "../../../components/Transaction/Receipt/save/Receipt.print";
 /* =========================================================
@@ -31,19 +32,21 @@ import ReceiptPrint from "../../../components/Transaction/Receipt/save/Receipt.p
 ========================================================= */
 
 const createRows = (): ReceiptRow[] =>
-  Array.from({ length: 11 }, (_, index) => ({
-    id: index + 1,
-    accountId: "",
-    accountName: "",
-    fgcs: "",
-    haveCc: false,
-    hasDivision: false,
-    division: "",
-    ccId: "",
-    creditAmount: "",
-    match: false,
-    description: "",
-  }));
+Array.from({ length: 11 }, (_, index) => ({
+  id: index + 1,
+  slNo: index + 1,
+  accountId: "",
+  accountName: "",
+  fgcs: "",
+  haveCc: false,
+  hasDivision: false,
+  division: "",
+  ccId: "",
+  creditAmount: "",
+  amount: 0,
+  match: false,
+  description: "",
+}));
 
 /* =========================================================
    TABLE FIELD ORDER
@@ -184,7 +187,9 @@ const Receipt: React.FC = () => {
   /* =======================================================
      HEADER FORM STATE
   ======================================================= */
-const [isPrint,setIsPrint]=useState(false)
+const [isPrint, setIsPrint] = useState(false);
+const [printData, setPrintData] =
+  useState<ReceiptPrintData | null>(null);
   const [branch, setBranch] = useState("");
 
   const [type, setType] = useState("");
@@ -395,11 +400,28 @@ const [isPrint,setIsPrint]=useState(false)
   }, []);
 
 
- const handlePrint = useCallback(() => {
-  console.log("🖨️ PRINT BUTTON CLICKED");
+ const handlePrint = async () => {
+  try {
+    const response = await fetch(
+      `http://localhost:5000/api/Receipt/print?strbranch=${branch}&strdocType=${type}&strdocNo=${documentNo}`
+    );
 
-  setIsPrint(true);
-}, []);
+    if (!response.ok) {
+      throw new Error("Failed to fetch receipt print data");
+    }
+
+    const result = await response.json();
+
+    if (!result.success || !result.data) {
+      throw new Error("Invalid receipt print response");
+    }
+
+    setPrintData(result.data);
+    setIsPrint(true);
+  } catch (error) {
+    console.error("Print data fetch error:", error);
+  }
+};
   /* =======================================================
      LOAD RECEIPT FOR MODIFY
   ======================================================= */
@@ -526,7 +548,8 @@ const [isPrint,setIsPrint]=useState(false)
                   );
 
                 loadedRows[index] = {
-                  id: index + 1,
+                  id: index + 1,        
+                    slNo: index + 1,        
 
                   accountId:
                     loadedRow.accountId ||
@@ -568,6 +591,11 @@ const [isPrint,setIsPrint]=useState(false)
                       : String(
                           loadedRow.creditAmount
                         ),
+
+                  amount:
+                    Number(
+                      loadedRow.creditAmount
+                    ) || 0,
 
                   match:
                     loadedRow.match ===
@@ -884,6 +912,7 @@ const [isPrint,setIsPrint]=useState(false)
 
         const emptyRow: ReceiptRow = {
           id: remainingRows.length + 1,
+          slNo: remainingRows.length + 1,
           accountId: "",
           accountName: "",
           fgcs: "",
@@ -892,6 +921,7 @@ const [isPrint,setIsPrint]=useState(false)
           division: "",
           ccId: "",
           creditAmount: "",
+          amount: 0,
           match: false,
           description: "",
         };
@@ -2245,6 +2275,7 @@ const handledelete = useCallback(async () => {
     >
       <div
         className="
+          receipt-screen
           mx-auto
           lg:w-275
           md:w-[55%]
@@ -2491,47 +2522,7 @@ onRowSelect={(id, row) => {
           }
         />
 
-{isPrint && (
-  <ReceiptPrint
-    receivedFrom={receivedFrom}
-    receiptNo={documentNo}
-    date={date}
-    reference={reference}
-    fop={cbAccount}
-    currency="SAR"
-    amountInFigures={total}
-    amountInWords=""
-    description={rows
-      .filter(
-        (row) =>
-          row.accountId &&
-          row.accountId.trim() !== ""
-      )
-      .map(
-        (row) =>
-          row.description || ""
-      )
-      .filter(Boolean)
-      .join(" ")}
-    transactions={rows
-      .filter(
-        (row) =>
-          row.accountId &&
-          row.accountId.trim() !== ""
-      )
-      .map((row) => ({
-        accountId: row.accountId,
-        accountName: row.accountName,
-        description: row.description || "",
-        creditAmount:
-          Number(row.creditAmount) || 0,
-      }))}
-    preparedBy="MOHAMMED"
-    preparedDate="16/09/2026 16:29"
-    autoPrint
-    onPrintComplete={() => setIsPrint(false)}
-  />
-)}
+
 
         {/* =================================================
             ACTIONS
@@ -2567,6 +2558,18 @@ onRowSelect={(id, row) => {
           preventSearchNavigation
         />
       </div>
+
+    {isPrint && printData && (
+  <div className="receipt-print-root">
+    <ReceiptPrint
+      data={printData}
+      onPrintComplete={() => {
+        setIsPrint(false);
+        setPrintData(null);
+      }}
+    />
+  </div>
+)}
     </div>
   );
 };

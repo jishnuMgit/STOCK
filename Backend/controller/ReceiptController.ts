@@ -8,7 +8,7 @@ import {
   updateReceiptService,
 } from "../services/receiptService.js";
 import {cleanReceiptPayload,CheckISdividISccid} from '../utils/helper.js'
-
+import {getReceiptPrintData}from '../services/receiptPrintService.js'
 import { GetData } from "../services/GetDataService.js";
 
 /* =========================================================
@@ -904,6 +904,71 @@ export const DeleteReceipt = async (
         error instanceof Error
           ? error.message
           : "Receipt could not be deleted",
+    });
+  }
+};
+
+
+export const getReceiptPrint = async (
+  req: Request,
+  res: Response
+): Promise<Response> => {
+  try {
+    const PstrCoID = process.env.PstrCoID;
+    const PstrYear = process.env.PstrYear;
+
+    if (!PstrCoID || !PstrYear) {
+      return res.status(400).json({
+        success: false,
+        message:
+          "Company ID / financial year is not configured",
+      });
+    }
+
+    const asText = (value: unknown): string =>
+      typeof value === "string" ? value.trim() : "";
+
+    const strbranch = asText(req.query.strbranch);
+    const strdocType = asText(req.query.strdocType);
+    const strdocNo = asText(req.query.strdocNo);
+
+    if (!strbranch || !strdocType || !strdocNo) {
+      return res.status(400).json({
+        success: false,
+        message:
+          "Branch, receipt type and receipt number are required",
+      });
+    }
+
+    const data = await getReceiptPrintData({
+      coId: PstrCoID,
+      year: PstrYear,
+      branch: strbranch,
+      docType: strdocType,
+      docNo: strdocNo,
+    });
+
+    if (!data) {
+      return res.status(404).json({
+        success: false,
+        message:
+          "Receipt not found. Save the receipt before printing.",
+      });
+    }
+
+    return res.status(200).json({
+      success: true,
+      data,
+    });
+  } catch (error: unknown) {
+    console.error("getReceiptPrint error:", error);
+
+    return res.status(500).json({
+      success: false,
+      message:
+        error instanceof Error
+          ? error.message
+          : "Failed to load receipt for printing",
     });
   }
 };

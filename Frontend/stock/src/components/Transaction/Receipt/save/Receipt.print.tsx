@@ -1,1049 +1,871 @@
-import React, { useEffect, useMemo, useState } from "react";
-import pdfMake from "pdfmake/build/pdfmake";
-import pdfFonts from "pdfmake/build/vfs_fonts";
-import type {
-  TDocumentDefinitions,
-  Content,
-  TableCell,
-} from "pdfmake/interfaces";
+import React, { useEffect, useState } from "react";
+import { createPortal } from "react-dom";
 import logo from "./global-network.png";
 
-/* =========================================================
-   ARABIC FONTS
-   ========================================================= */
+import type {
+ ReceiptPrintData,
+   ReceiptPrintRow,
+} from "../../../../types/receiptypes";
 
-const arabicRegularFontUrl = new URL(
-  "../../../../assets/fonts/NotoNaskhArabic-Regular.ttf",
-  import.meta.url
-).href;
+const FIRST_PAGE_ROWS = 7;
+const NEXT_PAGE_ROWS = 13;
+const ROW_HEIGHT_MM = 12.7;
 
-const arabicMediumFontUrl = new URL(
-  "../../../../assets/fonts/NotoNaskhArabic-Medium.ttf",
-  import.meta.url
-).href;
-
-const arabicSemiBoldFontUrl = new URL(
-  "../../../../assets/fonts/NotoNaskhArabic-SemiBold.ttf",
-  import.meta.url
-).href;
-
-const arabicBoldFontUrl = new URL(
-  "../../../../assets/fonts/NotoNaskhArabic-Bold.ttf",
-  import.meta.url
-).href;
-
-pdfMake.addVirtualFileSystem(pdfFonts);
-
-pdfMake.addFonts({
-  Roboto: {
-    normal:
-      "https://unpkg.com/pdfmake@0.3/build/fonts/Roboto/Roboto-Regular.ttf",
-    bold:
-      "https://unpkg.com/pdfmake@0.3/build/fonts/Roboto/Roboto-Medium.ttf",
-    italics:
-      "https://unpkg.com/pdfmake@0.3/build/fonts/Roboto/Roboto-Italic.ttf",
-    bolditalics:
-      "https://unpkg.com/pdfmake@0.3/build/fonts/Roboto/Roboto-MediumItalic.ttf",
-  },
-
-  ArabicFont: {
-    normal: arabicRegularFontUrl,
-    bold: arabicBoldFontUrl,
-    italics: arabicMediumFontUrl,
-    bolditalics: arabicSemiBoldFontUrl,
-  },
-});
-
-/* =========================================================
-   TYPES
-========================================================= */
-
-interface ReceiptTransaction {
-  accountId: string;
-  accountName: string;
-  description: string;
-  creditAmount: number;
-}
-
-interface ReceiptPrintProps {
-  receivedFrom?: string;
-  receiptNo?: string;
-  date?: string;
-  reference?: string;
-  fop?: string;
-  currency?: string;
-  amountInFigures?: number;
-  amountInWords?: string;
-  description?: string;
-  transactions?: ReceiptTransaction[];
-  preparedBy?: string;
-  preparedDate?: string;
-  checkedBy?: string;
-  approvedBy?: string;
-  autoPrint?: boolean;
-  onPrintComplete?: () => void;
-}
-
-/* =========================================================
-   HELPERS
-========================================================= */
-
-const formatAmount = (value?: number) =>
-  Number(value || 0).toLocaleString("en-US", {
+const formatAmount = (amount: number) =>
+  Number(amount || 0).toLocaleString("en-US", {
     minimumFractionDigits: 2,
     maximumFractionDigits: 2,
   });
 
-const imageToDataUrl = async (src: string): Promise<string> => {
-  const response = await fetch(src);
-
-  if (!response.ok) {
-    throw new Error(`Unable to load receipt logo. HTTP ${response.status}`);
-  }
-
-  const blob = await response.blob();
-
-  return new Promise<string>((resolve, reject) => {
-    const reader = new FileReader();
-
-    reader.onloadend = () => {
-      if (typeof reader.result === "string") {
-        resolve(reader.result);
-      } else {
-        reject(new Error("Unable to convert receipt logo to data URL."));
-      }
-    };
-
-    reader.onerror = () => {
-      reject(reader.error || new Error("Unable to read receipt logo."));
-    };
-
-    reader.readAsDataURL(blob);
-  });
-};
-
-/* =========================================================
-   DOCUMENT BUILDER
-========================================================= */
-
-const buildReceiptDocument = async (
-  props: ReceiptPrintProps
-): Promise<TDocumentDefinitions> => {
-  const {
-    receivedFrom = "",
-    receiptNo = "",
-    date = "",
-    reference = "",
-    fop = "",
-    currency = "SAR",
-    amountInFigures = 0,
-    amountInWords = "",
-    description = "",
-    transactions = [],
-    preparedBy = "",
-    preparedDate = "",
-    checkedBy = "",
-    approvedBy = "",
-  } = props;
-
-  /* =========================================================
-     LOGO
-  ========================================================= */
-
-  let logoDataUrl = "";
-
-  try {
-    logoDataUrl = await imageToDataUrl(logo);
-  } catch (error) {
-    console.warn(
-      "Receipt logo could not be loaded. PDF will be generated without the logo.",
-      error
-    );
-  }
-
-  /* =========================================================
-     RECEIPT INFORMATION HELPERS
-  ========================================================= */
-
-  const createInfoRow = (
-    label: string,
-    value: string,
-    bold = false,
-    margin: [number, number, number, number] = [0, 0, 0, 5]
-  ): Content => ({
-    columns: [
-      {
-        text: label,
-        width: 108,
-        fontSize: 8,
-        noWrap: true,
-      },
-      {
-        text: ":",
-        width: 7,
-        alignment: "center",
-        fontSize: 8,
-      },
-      {
-        text: value,
-        width: 175,
-        fontSize: 8,
-        bold,
-        noWrap: false,
-      },
-    ],
-    margin,
-  });
-
-  const createRightInfoRow = (
-    label: string,
-    value: string,
-    bold = false
-  ): Content => ({
-    columns: [
-      {
-        text: label,
-        width: 63,
-        fontSize: 8,
-        noWrap: true,
-      },
-      {
-        text: ":",
-        width: 7,
-        alignment: "center",
-        fontSize: 8,
-      },
-      {
-        text: value,
-        width: 145,
-        fontSize: 8,
-        bold,
-        noWrap: false,
-      },
-    ],
-    margin: [0, 0, 0, 5],
-  });
-
-  /* =========================================================
-     COMPANY HEADER
-     This is used as the PDF header, so it repeats on every page.
-  ========================================================= */
-
-  const logoContent: Content = logoDataUrl
-    ? {
-        image: logoDataUrl,
-        width: 75,
-        alignment: "center",
-        margin: [0, 0, 0, 0],
-      }
-    : {
-        text: "CARAVAN",
-        alignment: "center",
-        bold: true,
-        fontSize: 13,
-        margin: [0, 10, 0, 10],
-      };
-
- const companyHeader: Content = {
-  table: {
-    // Total = 555pt, matching the A4 content width
-    widths: [230, 95, 220],
-
-    heights: () => 108,
-
-    body: [
-      [
-        // =====================================================
-        // ENGLISH SIDE
-        // =====================================================
-        {
-          stack: [
-            {
-              text: "CARAVAN TOURS & TRAVEL COMPANY",
-              bold: true,
-              fontSize: 10.5,
-              noWrap: true,
-              margin: [0, 0, 0, 4],
-            },
-            {
-              text: "8442 , AL MADINAH AL MUNAWARAH ROAD",
-              fontSize: 7.2,
-              noWrap: true,
-              margin: [0, 0, 0, 2],
-            },
-            {
-              text: "Postal Code : 23526 , AL NMAI DISTRICT , JEDDAH",
-              fontSize: 7.2,
-              noWrap: true,
-              margin: [0, 0, 0, 2],
-            },
-            {
-              text: "KINGDOM OF SAUDI ARABIA - CR No. 4030130099",
-              fontSize: 7.2,
-              noWrap: true,
-              margin: [0, 0, 0, 2],
-            },
-            {
-              text: "VAT Number : 300220164600003",
-              fontSize: 7.2,
-              noWrap: true,
-              margin: [0, 0, 0, 2],
-            },
-            {
-              text: "Telephone : +966 126060018",
-              fontSize: 7.2,
-              noWrap: true,
-            },
-          ],
-
-          margin: [10, 7, 0, 0],
-        },
-
-        // =====================================================
-        // LOGO
-        // =====================================================
-        {
-          stack: [logoContent],
-          alignment: "center",
-          margin: [0, 8, 0, 0],
-        },
-
-        // =====================================================
-        // ARABIC SIDE
-        // =====================================================
-        {
-          stack: [
-            {
-              text: "شركة القافلة للسياحة والسفر",
-              font: "ArabicFont",
-              alignment: "right",
-              fontSize: 12.5,
-              noWrap: true,
-              margin: [0, 0, 0, 4],
-              marginRight:10,
-            },
-            {
-              text: "طريق المدينة المنورة 8442",
-              font: "ArabicFont",
-              alignment: "right",
-              fontSize: 7.2,
-              noWrap: true,
-              margin: [0, 0, 0, 2],
-            },
-            {
-              text: "جدة - حي النعيم - الرمز البريدي 23526",
-              font: "ArabicFont",
-              alignment: "right",
-              fontSize: 7.2,
-              noWrap: true,
-              margin: [0, 0, 0, 2],
-            },
-            {
-              text: "المملكة العربية السعودية - سجل تجاري : 4030130099",
-              font: "ArabicFont",
-              alignment: "right",
-              fontSize: 7.2,
-              noWrap: true,
-              margin: [0, 0, 0, 2],
-            },
-            {
-              text: "الرقم الضريبي : 300220164600003",
-              font: "ArabicFont",
-              alignment: "right",
-              fontSize: 7.2,
-              noWrap: true,
-              margin: [0, 0, 0, 2],
-            },
-            {
-              text: "هاتف : 00966126060018",
-              font: "ArabicFont",
-              alignment: "right",
-              fontSize: 7.2,
-              noWrap: true,
-            },
-          ],
-
-          marginRight:17,
-        },
-      ],
-    ],
-  },
-
-  layout: "noBorders",
-
-  margin: [0, 0, 0, 4],
-};
-
-  const title: Content = {
-    text: "BANK RECEIPT",
-    alignment: "center",
-    bold: false,
-    fontSize: 12,
-    margin: [0, 0, 0, 14],
-  };
-
-  /* =========================================================
-     RECEIPT INFORMATION
-     No vertical divider between left/right sections.
-  ========================================================= */
-
-  const leftInfoStack: Content[] = [
-    createInfoRow("Received With thanks From", receivedFrom, true),
-    createInfoRow("Currency", currency),
-    createInfoRow("Amount In Figures", formatAmount(amountInFigures)),
-    createInfoRow(
-      "Amount In Words",
-      amountInWords ? `( ${amountInWords} )` : ""
-    ),
-    createInfoRow("Description", description, false, [0, 0, 0, 0]),
+const splitIntoPages = (
+  rows: ReceiptPrintRow[]
+): ReceiptPrintRow[][] => {
+  const pages: ReceiptPrintRow[][] = [
+    rows.slice(0, FIRST_PAGE_ROWS),
   ];
-
-  const rightInfoStack: Content[] = [
-    createRightInfoRow("Receipt No.", receiptNo, true),
-    createRightInfoRow("Date", date),
-    createRightInfoRow("Reference", reference),
-    createRightInfoRow("FOP", fop),
-  ];
-
-  const receiptInfo: Content = {
-    table: {
-      widths: [312, 223],
-      heights: () => 213,
-      body: [
-        [
-          {
-            stack: leftInfoStack,
-            margin: [7, 7, 7, 5],
-          },
-          {
-            stack: rightInfoStack,
-            margin: [7, 7, 7, 5],
-          },
-        ],
-      ],
-    },
-
-    layout: {
-      // Outer top/bottom border only.
-      hLineWidth: () => 0.8,
-
-      // Keep outer left/right borders, remove center divider.
-      vLineWidth: (i: number, node: any) => {
-        if (i === 0 || i === node.table.widths.length) {
-          return 0.8;
-        }
-
-        return 0;
-      },
-
-      hLineColor: () => "#333333",
-      vLineColor: () => "#333333",
-
-      paddingLeft: () => 0,
-      paddingRight: () => 0,
-      paddingTop: () => 0,
-      paddingBottom: () => 0,
-    },
-
-    margin: [0, 0, 0, 0],
-  };
-
-  /* =========================================================
-     TOTAL
-  ========================================================= */
-
-  const transactionTotal = transactions.reduce(
-    (sum, transaction) =>
-      sum + (Number(transaction.creditAmount) || 0),
-    0
-  );
-
-  /* =========================================================
-     TRANSACTION TABLE
-
-     - 7 rows maximum per page.
-     - No horizontal lines between transaction data rows.
-     - Vertical column lines remain.
-     - Header line remains.
-     - Total is added only on the final transaction page.
-  ========================================================= */
-
-  const createTransactionTable = (
-    chunk: ReceiptTransaction[],
-    includeTotal: boolean
-  ): Content => {
-    const body: TableCell[][] = [
-      [
-        {
-          text: "Account ID",
-          fontSize: 8,
-          alignment: "left",
-        },
-        {
-          text: "Account Name / Description",
-          fontSize: 8,
-          alignment: "left",
-        },
-        {
-          text: "Credit Amount",
-          fontSize: 8,
-          alignment: "right",
-        },
-      ],
-    ];
-
-    chunk.forEach((transaction) => {
-  body.push([
-    {
-      text: transaction.accountId || "",
-      fontSize: 8,
-      alignment: "left",
-    },
-
-    {
-      stack: [
-        {
-          text: transaction.accountName || "",
-          fontSize: 8,
-          noWrap: false,
-        },
-
-        ...(transaction.description
-          ? [
-              {
-                text: transaction.description,
-                fontSize: 8,
-                noWrap: false,
-                margin: [0, 4, 0, 0] as [
-                  number,
-                  number,
-                  number,
-                  number
-                ],
-              },
-            ]
-          : []),
-      ],
-    },
-
-    {
-      text: formatAmount(transaction.creditAmount),
-      fontSize: 8,
-      alignment: "right",
-    },
-  ]);
-});
-
-    if (includeTotal) {
-      body.push([
-        {
-          text: "Total :",
-          colSpan: 2,
-          fontSize: 8,
-          alignment: "right",
-        },
-        {},
-        {
-          text: formatAmount(transactionTotal),
-          fontSize: 8,
-          alignment: "right",
-        },
-      ]);
-    }
-
-    return {
-    table: {
-  headerRows: 1,
-  widths: [94, 330, 80],
-
-  heights: (rowIndex: number) => {
-    // Header
-    if (rowIndex === 0) {
-      return 20;
-    }
-
-    // Every transaction row
-    return 30;
-  },
-
-  body,
-},
-
-      layout: {
-        /*
-         * Horizontal lines:
-         *
-         * 0   = top border
-         * 1   = header/data separator
-         * data rows = NO horizontal lines
-         * last = bottom border
-         */
-        hLineWidth: (i: number, node: any) => {
-          if (i === 0) {
-            return 0.7;
-          }
-
-          if (i === 1) {
-            return 0.7;
-          }
-
-          if (i === node.table.body.length) {
-            return 0.7;
-          }
-
-          return 0;
-        },
-
-        // Keep all vertical column borders.
-        vLineWidth: () => 0.7,
-
-        hLineColor: () => "#333333",
-        vLineColor: () => "#333333",
-
-        paddingLeft: () => 5,
-        paddingRight: () => 5,
-        paddingTop: () => 4,
-        paddingBottom: () => 4,
-      },
-
-      margin: [0, 0, 0, 0],
-    };
-  };
-
-  /* =========================================================
-     SPLIT TRANSACTIONS
-
-     7 rows per page:
-
-     Page 1:
-       1 - 7
-
-     Page 2:
-       8 - 14
-
-     etc.
-  ========================================================= */
-
-  const TRANSACTIONS_PER_PAGE = 7;
-
-  const transactionChunks: ReceiptTransaction[][] = [];
 
   for (
-    let i = 0;
-    i < transactions.length;
-    i += TRANSACTIONS_PER_PAGE
+    let index = FIRST_PAGE_ROWS;
+    index < rows.length;
+    index += NEXT_PAGE_ROWS
   ) {
-    transactionChunks.push(
-      transactions.slice(i, i + TRANSACTIONS_PER_PAGE)
-    );
+    pages.push(rows.slice(index, index + NEXT_PAGE_ROWS));
   }
 
-  /* =========================================================
-     APPROVAL FOOTER
-
-     Only appears after the final transaction page.
-  ========================================================= */
-
-  const approvalFooter: Content = {
-    table: {
-      widths: [215, 160, 160],
-      heights: () => 72,
-
-      body: [
-        [
-          {
-            stack: [
-              {
-                text: "Prepared By :",
-                fontSize: 8,
-              },
-              {
-                text: preparedBy,
-                fontSize: 8,
-                margin: [0, 10, 0, 0],
-              },
-              {
-                text: preparedDate,
-                fontSize: 7.5,
-                margin: [0, 2, 0, 0],
-              },
-            ],
-            margin: [6, 25, 6, 5],
-          },
-
-          {
-            stack: [
-              {
-                text: "Checked By :",
-                fontSize: 8,
-              },
-              {
-                text: checkedBy,
-                fontSize: 8,
-                margin: [0, 10, 0, 0],
-              },
-            ],
-            margin: [6, 25, 6, 5],
-          },
-
-          {
-            stack: [
-              {
-                text: "Approved By :",
-                fontSize: 8,
-              },
-              {
-                text: approvedBy,
-                fontSize: 8,
-                margin: [0, 10, 0, 0],
-              },
-            ],
-            margin: [6, 25, 6, 5],
-          },
-        ],
-      ],
-    },
-
-    layout: {
-      // hLineWidth: () => 0.7,
-      vLineWidth: () => 0.7,
-      hLineColor: () => "#333333",
-      vLineColor: () => "#333333",
-
-      paddingLeft: () => 0,
-      paddingRight: () => 0,
-      paddingTop: () => 0,
-      paddingBottom: () => 0,
-    },
-
-    margin: [0, 0, 0, 0],
-  };
-
-  /* =========================================================
-     CONTENT
-
-     First page:
-       Receipt information
-       Transactions 1-7
-
-     Second page:
-       Transactions 8-14
-
-     etc.
-
-     Header is repeated automatically by pdfmake.
-  ========================================================= */
-
-  const content: Content[] = [];
-
-  // Receipt information appears only once.
-  content.push(receiptInfo);
-
-  /*
-   * If there are no transactions, still show an empty
-   * transaction table and the approval footer.
-   */
-  if (transactionChunks.length === 0) {
-    content.push(createTransactionTable([], true));
-
-    content.push({
-      text: "",
-      margin: [0, 5, 0, 0],
-    });
-
-    content.push(approvalFooter);
-  } else {
-    transactionChunks.forEach((chunk, index) => {
-      const isLastPage =
-        index === transactionChunks.length - 1;
-
-      /*
-       * Every transaction page after page 1 starts
-       * on a new PDF page.
-       */
-      if (index > 0) {
-        content.push({
-          text: "",
-          pageBreak: "before",
-        });
-      }
-
-      content.push(
-        createTransactionTable(
-          chunk,
-          isLastPage
-        )
-      );
-
-      /*
-       * Approval footer only belongs to the final page.
-       */
-      if (isLastPage) {
-        content.push({
-          text: "",
-          margin: [0, 5, 0, 0],
-        });
-
-        content.push(approvalFooter);
-      }
-    });
-  }
-
-  /* =========================================================
-     FINAL DOCUMENT
-  ========================================================= */
-
-  const docDefinition: TDocumentDefinitions = {
-    pageSize: "A4",
-    pageOrientation: "portrait",
-
-    /*
-     * Header is approximately 120-125pt high.
-     * Give content enough top space so it doesn't overlap.
-     */
-    pageMargins: [30, 145, 20, 24],
-
-    defaultStyle: {
-      font: "Roboto",
-      fontSize: 8,
-    },
-
-    /*
-     * COMMON HEADER
-     *
-     * This repeats automatically on every page.
-     */
-    header: {
-      stack: [
-        companyHeader,
-        title,
-      ],
-      margin: [20, 20, 20, 0],
-    },
-
-    content,
-
-    info: {
-      title: `Bank Receipt ${receiptNo}`,
-      subject: "Bank Receipt",
-      author: "Stock",
-      creator: "Stock",
-    },
-  };
-
-  return docDefinition;
+  return pages.length ? pages : [[]];
 };
 
-/* =========================================================
-   COMPONENT
-========================================================= */
+const getFillerHeightMm = (rowsOnPage: number) => {
+  const units =
+    rowsOnPage >= 1 && rowsOnPage <= 4
+      ? (5 - rowsOnPage) * 50 + 10
+      : 10;
 
-const ReceiptPrint: React.FC<ReceiptPrintProps> = ({
-  receivedFrom = "",
-  receiptNo = "",
-  date = "",
-  reference = "",
-  fop = "",
-  currency = "SAR",
-  amountInFigures = 0,
-  amountInWords = "",
-  description = "",
-  transactions = [],
-  preparedBy = "",
-  preparedDate = "",
-  checkedBy = "",
-  approvedBy = "",
-  autoPrint = false,
-  onPrintComplete,
-}) => {
-  const [isGenerating, setIsGenerating] =
-    useState(false);
+  return units * 0.254;
+};
 
-  const receiptProps = useMemo(
-    () => ({
-      receivedFrom,
-      receiptNo,
-      date,
-      reference,
-      fop,
-      currency,
-      amountInFigures,
-      amountInWords,
-      description,
-      transactions,
-      preparedBy,
-      preparedDate,
-      checkedBy,
-      approvedBy,
-    }),
-    [
-      receivedFrom,
-      receiptNo,
-      date,
-      reference,
-      fop,
-      currency,
-      amountInFigures,
-      amountInWords,
-      description,
-      transactions,
-      preparedBy,
-      preparedDate,
-      checkedBy,
-      approvedBy,
-    ]
-  );
+const assetUrl = (fileName: string) =>
+  `${import.meta.env.BASE_URL}images/${fileName}`;
 
-  /* =========================================================
-     AUTO PRINT
-  ========================================================= */
+const probeImage = (src: string) =>
+  new Promise<boolean>((resolve) => {
+    const image = new Image();
+
+    image.onload = () => resolve(true);
+    image.onerror = () => resolve(false);
+    image.src = src;
+  });
+
+const OptionalImage: React.FC<{
+  sources: string[];
+  className: string;
+}> = ({ sources, className }) => {
+  const [resolved, setResolved] =
+    useState<string | null | undefined>(undefined);
+
+  const sourceKey = sources.join("|");
 
   useEffect(() => {
-    if (!autoPrint) {
-      return;
-    }
-
     let cancelled = false;
 
-    const printTimer = window.setTimeout(
-      async () => {
-        try {
-          setIsGenerating(true);
-
-          console.log(
-            "🖨️ OPENING PDF PRINT"
-          );
-
-          const docDefinition =
-            await buildReceiptDocument(
-              receiptProps
-            );
-
-          if (cancelled) {
-            return;
-          }
-
-          console.log(
-            "✅ PDF DOC DEFINITION CREATED",
-            docDefinition
-          );
-
-          await pdfMake
-            .createPdf(docDefinition)
-            .print();
-
-          console.log(
-            "✅ PDF PRINT COMPLETED"
-          );
-        } catch (error) {
-          console.error(
-            "❌ PDF PRINT ERROR:",
-            error
-          );
-        } finally {
+    const resolveSource = async () => {
+      for (const source of sourceKey.split("|")) {
+        if (await probeImage(source)) {
           if (!cancelled) {
-            setIsGenerating(false);
-            onPrintComplete?.();
+            setResolved(source);
           }
+          return;
         }
-      },
-      100
-    );
+      }
+
+      if (!cancelled) {
+        setResolved(null);
+      }
+    };
+
+    void resolveSource();
 
     return () => {
       cancelled = true;
-      window.clearTimeout(printTimer);
     };
-  }, [
-    autoPrint,
-    receiptProps,
-    onPrintComplete,
-  ]);
+  }, [sourceKey]);
 
-  /* =========================================================
-     OPEN PDF
-  ========================================================= */
+  if (resolved === undefined) {
+    return <span data-image-pending="true" />;
+  }
 
-  const openPdf = async () => {
-    try {
-      setIsGenerating(true);
-
-      const docDefinition =
-        await buildReceiptDocument(
-          receiptProps
-        );
-
-      await pdfMake
-        .createPdf(docDefinition)
-        .open();
-    } catch (error) {
-      console.error(
-        "❌ PDF OPEN ERROR:",
-        error
-      );
-    } finally {
-      setIsGenerating(false);
-    }
-  };
-
-  /* =========================================================
-     DOWNLOAD PDF
-  ========================================================= */
-
-  const downloadPdf = async () => {
-    try {
-      setIsGenerating(true);
-
-      const docDefinition =
-        await buildReceiptDocument(
-          receiptProps
-        );
-
-      await pdfMake
-        .createPdf(docDefinition)
-        .download(
-          `Receipt-${receiptNo || "Receipt"}.pdf`
-        );
-    } catch (error) {
-      console.error(
-        "❌ PDF DOWNLOAD ERROR:",
-        error
-      );
-    } finally {
-      setIsGenerating(false);
-    }
-  };
-
-  /* =========================================================
-     HIDDEN AUTO PRINT COMPONENT
-  ========================================================= */
-
-  if (autoPrint) {
+  if (resolved === null) {
     return null;
   }
 
   return (
-    <div className="flex items-center gap-2">
-      <button
-        type="button"
-        onClick={openPdf}
-        disabled={isGenerating}
-        className="rounded border border-gray-300 bg-white px-3 py-1.5 text-xs"
-      >
-        {isGenerating
-          ? "Generating..."
-          : "Open PDF"}
-      </button>
+    <img
+      src={resolved}
+      alt=""
+      className={className}
+    />
+  );
+};
 
-      <button
-        type="button"
-        onClick={downloadPdf}
-        disabled={isGenerating}
-        className="rounded border border-gray-300 bg-white px-3 py-1.5 text-xs"
-      >
-        Download PDF
-      </button>
+/* =========================================================
+   PAGE HEADER
+========================================================= */
+
+const PageHeader: React.FC<{
+  data: ReceiptPrintData;
+}> = ({ data }) => (
+  <>
+    <div className="receipt-company-header">
+      <div className="receipt-company-left">
+        <div className="receipt-company-name">
+          {data.company.nameEn}
+        </div>
+
+        {data.company.addressEn.map(
+          (line: string | number | bigint | boolean | React.ReactElement<unknown, string | React.JSXElementConstructor<any>> | Iterable<React.ReactNode> | React.ReactPortal | Promise<string | number | bigint | boolean | React.ReactPortal | React.ReactElement<unknown, string | React.JSXElementConstructor<any>> | Iterable<React.ReactNode> | null | undefined> | null | undefined, index: React.Key | null | undefined) => (
+            <div key={index}>{line}</div>
+          )
+        )}
+      </div>
+
+      <div className="receipt-company-logo">
+        <OptionalImage
+          sources={[
+            assetUrl(`Header_${data.coId}.jpg`),
+            logo,
+          ]}
+          className="receipt-logo"
+        />
+      </div>
+
+      <div className="receipt-company-right">
+        <div className="receipt-company-name">
+          {data.company.nameAr}
+        </div>
+
+        {data.company.addressAr.map(
+          (line: string | number | bigint | boolean | React.ReactElement<unknown, string | React.JSXElementConstructor<any>> | Iterable<React.ReactNode> | React.ReactPortal | Promise<string | number | bigint | boolean | React.ReactPortal | React.ReactElement<unknown, string | React.JSXElementConstructor<any>> | Iterable<React.ReactNode> | null | undefined> | null | undefined, index: React.Key | null | undefined) => (
+            <div key={index}>{line}</div>
+          )
+        )}
+      </div>
     </div>
+
+    <div className="receipt-title">
+      {data.heading}
+    </div>
+  </>
+);
+
+/* =========================================================
+   RECEIPT DETAILS BOX
+========================================================= */
+
+const InfoBox: React.FC<{
+  data: ReceiptPrintData;
+}> = ({ data }) => (
+  <div className="receipt-info">
+    <div className="receipt-info-top">
+      <div className="receipt-info-left">
+        <div className="receipt-info-row">
+          <span className="receipt-label">
+            Received With thanks From
+          </span>
+
+          <span className="receipt-colon">:</span>
+
+          <strong>
+            {data.receivedFrom}
+          </strong>
+        </div>
+      </div>
+
+      <div className="receipt-info-right">
+        <div className="receipt-info-row">
+          <span className="receipt-label">
+            Receipt No.
+          </span>
+
+          <span className="receipt-colon">:</span>
+
+          <span className="receipt-docno">
+            {data.docNo}
+          </span>
+        </div>
+
+        <div className="receipt-info-row">
+          <span className="receipt-label">
+            Date
+          </span>
+
+          <span className="receipt-colon">:</span>
+
+          <span>{data.date}</span>
+        </div>
+
+        <div className="receipt-info-row">
+          <span className="receipt-label">
+            Reference
+          </span>
+
+          <span className="receipt-colon">:</span>
+
+          <span>{data.reference}</span>
+        </div>
+
+        <div className="receipt-info-row">
+          <span className="receipt-label">
+            FOP
+          </span>
+
+          <span className="receipt-colon">:</span>
+
+          <span>{data.fop}</span>
+        </div>
+      </div>
+    </div>
+
+    <div className="receipt-info-bottom">
+      <div className="receipt-info-row receipt-info-row-wide">
+        <span className="receipt-label">
+          Currency
+        </span>
+
+        <span className="receipt-colon">:</span>
+
+        <span>{data.currency}</span>
+      </div>
+
+      <div className="receipt-info-row receipt-info-row-wide">
+        <span className="receipt-label">
+          Amount In Figures
+        </span>
+
+        <span className="receipt-colon">:</span>
+
+        <span>
+          {formatAmount(data.total)}
+        </span>
+      </div>
+
+      <div className="receipt-info-row receipt-info-row-wide">
+        <span className="receipt-label">
+          Amount In Words
+        </span>
+
+        <span className="receipt-colon">:</span>
+
+        <span>
+          ({data.currency} :{" "}
+          {data.amountInWords})
+        </span>
+      </div>
+
+      <div className="receipt-info-row receipt-info-row-wide receipt-info-description">
+        <span className="receipt-label">
+          Description
+        </span>
+
+        <span className="receipt-colon">:</span>
+
+        <span>{data.note}</span>
+      </div>
+    </div>
+  </div>
+);
+
+/* =========================================================
+   RECEIPT PRINT
+========================================================= */
+
+interface ReceiptPrintProps {
+  data: ReceiptPrintData;
+  onPrintComplete?: () => void;
+}
+
+const ReceiptPrint: React.FC<
+  ReceiptPrintProps
+> = ({ data, onPrintComplete }) => {
+  const pages = splitIntoPages(data.rows);
+
+  /*
+   * Browser HTML printing.
+   * The receipt component is rendered as a sibling of the
+   * normal application screen, so only the receipt is printed.
+   */
+  useEffect(() => {
+    const printTimer = window.setTimeout(() => {
+      window.print();
+    }, 350);
+
+    const handleAfterPrint = () => {
+      onPrintComplete?.();
+    };
+
+    window.addEventListener(
+      "afterprint",
+      handleAfterPrint
+    );
+
+    return () => {
+      window.clearTimeout(printTimer);
+      window.removeEventListener(
+        "afterprint",
+        handleAfterPrint
+      );
+    };
+  }, [onPrintComplete]);
+
+  if (typeof document === "undefined") {
+    return null;
+  }
+
+  return createPortal(
+    <div className="receipt-print-root">
+      <div className="receipt-doc">
+        {pages.map(
+          (pageRows, pageIndex) => {
+            const isFirstPage =
+              pageIndex === 0;
+
+            const isLastPage =
+              pageIndex === pages.length - 1;
+
+            return (
+              <section
+                className="receipt-page"
+                key={pageIndex}
+              >
+                <PageHeader data={data} />
+
+                {isFirstPage && (
+                  <InfoBox data={data} />
+                )}
+
+                <table
+                  className={
+                    isFirstPage
+                      ? "receipt-lines receipt-lines-first"
+                      : "receipt-lines"
+                  }
+                >
+                  <colgroup>
+                    <col
+                      style={{
+                        width: "17.6%",
+                      }}
+                    />
+
+                    <col
+                      style={{
+                        width: "62.9%",
+                      }}
+                    />
+
+                    <col
+                      style={{
+                        width: "19.5%",
+                      }}
+                    />
+                  </colgroup>
+
+                  {isFirstPage && (
+                    <thead>
+                      <tr>
+                        <th>Account ID</th>
+
+                        <th>
+                          Account Name / Description
+                        </th>
+
+                        <th className="receipt-right">
+                          Credit Amount
+                        </th>
+                      </tr>
+                    </thead>
+                  )}
+
+                  <tbody>
+                    {pageRows.map(
+                      (row, index) => (
+                        <tr
+                          className="receipt-row"
+                          key={`${row.slNo}-${index}`}
+                          style={{
+                            height: `${ROW_HEIGHT_MM}mm`,
+                          }}
+                        >
+                          <td>
+                            {row.accountId}
+                          </td>
+
+                          <td>
+                            <div className="receipt-account-name">
+                              {row.accountName}
+                            </div>
+
+                            {row.description && (
+                              <div className="receipt-line-description">
+                                {row.description}
+                              </div>
+                            )}
+                          </td>
+
+                          <td className="receipt-right">
+                            {formatAmount(
+                              row.amount
+                            )}
+                          </td>
+                        </tr>
+                      )
+                    )}
+
+                    {isLastPage && (
+                      <tr
+                        className="receipt-filler"
+                        style={{
+                          height: `${getFillerHeightMm(
+                            pageRows.length
+                          )}mm`,
+                        }}
+                      >
+                        <td />
+                        <td />
+                        <td />
+                      </tr>
+                    )}
+                  </tbody>
+
+                  {isLastPage && (
+                    <tfoot>
+                      <tr>
+                        <td
+                          colSpan={2}
+                          className="receipt-right receipt-total-cell"
+                        >
+                          Total :
+                        </td>
+
+                        <td className="receipt-right receipt-total-cell">
+                          {formatAmount(
+                            data.total
+                          )}
+                        </td>
+                      </tr>
+                    </tfoot>
+                  )}
+                </table>
+
+                {isLastPage && (
+                  <div className="receipt-signoff">
+                    <div>
+                      <div>
+                        Prepared By :{" "}
+                        <span>
+                          {data.preparedBy}
+                        </span>
+                      </div>
+
+                      <div className="receipt-prepared-date">
+                        {data.preparedDate}
+                      </div>
+                    </div>
+
+                    <div>
+                      Checked By :
+                    </div>
+
+                    <div>
+                      Approved By :
+                    </div>
+                  </div>
+                )}
+
+                <OptionalImage
+                  sources={[
+                    assetUrl("Footer.jpg"),
+                  ]}
+                  className="receipt-footer-image"
+                />
+              </section>
+            );
+          }
+        )}
+      </div>
+
+      <style>{`
+        /* =================================================
+           BROWSER PAGE
+        ================================================= */
+
+        @page {
+          size: A4;
+          margin: 5mm 7.5mm 0 12mm;
+        }
+
+        @media screen {
+          .receipt-print-root {
+            position: fixed;
+            inset: 0;
+            z-index: 99999;
+            overflow: auto;
+            background: #ffffff;
+          }
+
+          .receipt-doc {
+            margin: 0 auto;
+          }
+        }
+
+        @media print {
+          html,
+          body {
+            margin: 0 !important;
+            padding: 0 !important;
+            width: 100% !important;
+            min-height: 0 !important;
+            background: #ffffff !important;
+          }
+
+          /* Hide the normal receipt-entry screen. */
+          .receipt-screen {
+            display: none !important;
+          }
+
+          /*
+           * The print component is a sibling of .receipt-screen.
+           * Force it out of the application's flex layout and make
+           * it the printable page itself.
+           */
+          .receipt-print-root {
+            display: block !important;
+            position: absolute !important;
+            left: 0 !important;
+            top: 0 !important;
+            width: 100% !important;
+            min-width: 0 !important;
+            height: auto !important;
+            margin: 0 !important;
+            padding: 0 !important;
+            overflow: visible !important;
+            visibility: visible !important;
+            background: #ffffff !important;
+            z-index: 2147483647 !important;
+          }
+
+          .receipt-print-root * {
+            visibility: visible !important;
+          }
+
+          .receipt-doc {
+            display: block !important;
+            width: 190.5mm !important;
+            margin: 0 auto !important;
+          }
+        }
+
+        /* =================================================
+           RECEIPT DOCUMENT
+        ================================================= */
+
+        .receipt-doc {
+          width: 190.5mm;
+          color: #000000;
+          background: #ffffff;
+          font-family: "Times New Roman",
+            Times, serif;
+          font-size: 10pt;
+          line-height: 1.3;
+        }
+
+        .receipt-doc * {
+          box-sizing: border-box;
+        }
+
+        .receipt-page {
+          position: relative;
+          width: 190.5mm;
+          min-height: 288mm;
+          break-after: page;
+          page-break-after: always;
+        }
+
+        .receipt-page:last-of-type {
+          break-after: auto;
+          page-break-after: auto;
+        }
+
+        /* =================================================
+           COMPANY HEADER
+        ================================================= */
+
+        .receipt-company-header {
+          display: grid;
+          grid-template-columns:
+            minmax(0, 1fr)
+            39mm
+            minmax(0, 1fr);
+
+          column-gap: 2mm;
+
+          min-height: 47mm;
+
+          padding: 2mm 0 0;
+
+          border-top: 0.5pt solid #b5b5b5;
+
+          font-family:
+            "Segoe UI",
+            Tahoma,
+            Arial,
+            sans-serif;
+
+          font-size: 8.75pt;
+          line-height: 1.45;
+
+          white-space: nowrap;
+        }
+
+        .receipt-company-name {
+          font-size: 12.5pt;
+          line-height: 1.3;
+          white-space: nowrap;
+        }
+
+        .receipt-company-right {
+          direction: rtl;
+          text-align: right;
+        }
+
+        .receipt-company-logo {
+          display: flex;
+          justify-content: center;
+          align-items: flex-start;
+          padding-top: 6mm;
+        }
+
+        .receipt-logo {
+          width: 39mm;
+          height: 35.6mm;
+          object-fit: contain;
+        }
+
+        /* =================================================
+           HEADING
+        ================================================= */
+
+        .receipt-title {
+          height: 17.8mm;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          font-size: 15pt;
+        }
+
+        /* =================================================
+           DETAILS BOX
+        ================================================= */
+
+        .receipt-info {
+          min-height: 78mm;
+          padding: 1.5mm 2mm;
+          border: 0.75pt solid #000000;
+          border-bottom: 0;
+        }
+
+        .receipt-info-top {
+          display: grid;
+          grid-template-columns: 1fr 40%;
+          min-height: 29mm;
+        }
+
+        .receipt-info-row {
+          display: grid;
+          grid-template-columns:
+            42mm 4mm 1fr;
+
+          min-height: 6.35mm;
+          align-items: start;
+          line-height: 1.3;
+        }
+
+        .receipt-info-right
+          .receipt-info-row {
+          grid-template-columns:
+            21mm 4mm 1fr;
+        }
+
+        .receipt-info-bottom {
+          padding-top: 1.5mm;
+        }
+
+        .receipt-info-bottom
+          .receipt-info-row {
+          min-height: 7.5mm;
+        }
+
+        .receipt-info-description {
+          min-height: 27mm;
+        }
+
+        .receipt-label {
+          white-space: nowrap;
+        }
+
+        .receipt-colon {
+          text-align: center;
+        }
+
+        .receipt-docno {
+          font-size: 13pt;
+          line-height: 1.1;
+        }
+
+        .receipt-info-row > span:last-child,
+        .receipt-info-row > strong {
+          min-width: 0;
+          overflow-wrap: anywhere;
+        }
+
+        /* =================================================
+           TRANSACTION TABLE
+
+           IMPORTANT:
+           No horizontal border is applied to data rows.
+           Only the outside border, header separator and
+           total separator are shown.
+        ================================================= */
+
+        .receipt-lines {
+          width: 100%;
+          border-collapse: collapse;
+          table-layout: fixed;
+          border: 0.75pt solid #000000;
+        }
+
+        .receipt-lines th,
+        .receipt-lines td {
+          padding: 0.6mm 2mm 0;
+          vertical-align: top;
+          overflow-wrap: anywhere;
+        }
+
+        .receipt-lines th + th,
+        .receipt-lines td + td {
+          border-left: 0.5pt solid #000000;
+        }
+
+        .receipt-lines th {
+          height: 7mm;
+          font-weight: normal;
+          text-align: left;
+          vertical-align: middle;
+          border-bottom: 0.5pt solid #000000;
+        }
+
+        /*
+         * Data rows:
+         * no horizontal border between rows.
+         */
+        .receipt-lines tbody tr.receipt-row td {
+          border-top: 0 !important;
+          border-bottom: 0 !important;
+        }
+
+        .receipt-right {
+          text-align: right !important;
+        }
+
+        .receipt-account-name,
+        .receipt-line-description {
+          min-height: 6.35mm;
+          line-height: 1.3;
+        }
+
+        .receipt-line-description {
+          margin-top: 0;
+        }
+
+        .receipt-lines tfoot td {
+          height: 7mm;
+          vertical-align: middle;
+          border-top: 0.5pt solid #000000;
+          font-family:
+            "Segoe UI",
+            Tahoma,
+            Arial,
+            sans-serif;
+          font-size: 10pt;
+        }
+
+        .receipt-total-cell {
+          padding-top: 0 !important;
+          padding-bottom: 0 !important;
+        }
+
+        /* =================================================
+           PREPARED / CHECKED / APPROVED
+        ================================================= */
+
+        .receipt-signoff {
+          display: grid;
+          grid-template-columns:
+            1fr 1fr 1fr;
+
+          min-height: 21mm;
+
+          padding:
+            8mm 2mm 2mm;
+
+          border: 0.75pt solid #000000;
+          border-top: 0;
+
+          font-family:
+            "Segoe UI",
+            Tahoma,
+            Arial,
+            sans-serif;
+
+          font-size: 9pt;
+        }
+
+        .receipt-prepared-date {
+          margin-top: 2.5mm;
+          padding-left: 0;
+        }
+
+        /* =================================================
+           FOOTER IMAGE
+        ================================================= */
+
+        .receipt-footer-image {
+          position: absolute;
+          left: 0;
+          bottom: 0;
+          width: 190.5mm;
+          height: 11.85mm;
+          object-fit: contain;
+        }
+
+        /* =================================================
+           PRINT SAFETY
+        ================================================= */
+
+        @media print {
+          .receipt-page {
+            break-inside: avoid;
+          }
+
+          .receipt-company-header,
+          .receipt-info,
+          .receipt-lines,
+          .receipt-signoff {
+            break-inside: avoid;
+          }
+        }
+      `}</style>
+    </div>,
+    document.body
   );
 };
 

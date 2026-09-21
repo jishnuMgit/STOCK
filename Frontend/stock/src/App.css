@@ -85,3 +85,14 @@
     width: 100%;
   }
 }
+
+
+.receipt-print-root {
+  display: none !important;
+}
+
+@media print {
+  .receipt-print-root {
+    display: block !important;
+  }
+}
