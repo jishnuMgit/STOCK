@@ -10,6 +10,7 @@ import {
   testget,
   DeleteReceipt,
   GetDatas,
+  getReceiptPrint
 } from "../controller/ReceiptController.js";
 
 const router = express.Router();
@@ -32,5 +33,7 @@ router.post("/get/data", GetDatas);
 
 router.get("/get/data", GetDatas);
 router.delete('/delete',DeleteReceipt)
+
+router.get("/print", getReceiptPrint);
 
 export default router;

@@ -37,25 +37,18 @@ export interface AccountData {
 }
 
 export interface ReceiptRow {
+  amount: number;
+  slNo: number;
   id: number;
-
   accountId: string;
   accountName: string;
-
   fgcs: string;
-
   haveCc: boolean;
-
   hasDivision: boolean;
-
   division: string;
-
   ccId: string;
-
   creditAmount: string;
-
   match: boolean;
-
   description?: string;
 }
 
@@ -112,4 +105,52 @@ export interface AccountOption {
 export interface AccountOptionProps
   extends OptionProps<AccountOption, false> {
   displayMode: "id" | "name";
+}
+
+
+
+export interface ReceiptPrintRow {
+  slNo: number;
+  accountId: string;
+  accountName: string;
+  description: string;
+  amount: number;
+}
+
+export interface ReceiptPrintData {
+  coId: string;
+
+  docType: string;
+  heading: string;
+
+  branchId: string;
+  docNo: string;
+  date: string;
+
+  receivedFrom: string;
+  reference: string;
+  fop: string;
+  note: string;
+
+  currency: string;
+  total: number;
+  amountInWords: string;
+
+  preparedBy: string;
+  preparedDate: string;
+
+  company: {
+    nameEn: string;
+    nameAr: string;
+    addressEn: string[];
+    addressAr: string[];
+  };
+
+  rows: ReceiptPrintRow[];
+}
+
+export interface ReceiptPrintResponse {
+  success: boolean;
+  message?: string;
+  data?: ReceiptPrintData;
 }
