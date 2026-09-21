@@ -1028,6 +1028,7 @@ const [docnolen, setdocnolen] = useState<number>(0);
       ========================================= */
       "& .MuiPickersInputBase-sectionContent": {
         fontSize: "12px",
+        color:'#344054'
       },
 
       /* =========================================
@@ -1110,6 +1111,7 @@ const [docnolen, setdocnolen] = useState<number>(0);
           </label>
 
           <input
+          maxLength={100}
             ref={receivedFromRef}
             id="txtReceivedFrom"
             value={receivedFrom}
@@ -1135,6 +1137,7 @@ const [docnolen, setdocnolen] = useState<number>(0);
           </label>
 
           <input
+          maxLength={20}
             ref={referenceRef}
             id="txtReference"
             value={reference}
@@ -1786,124 +1789,170 @@ const ReceiptRow = memo(
     const [divisionLoading, setDivisionLoading] =
       useState(false);
 
-    const fetchDivisions =
-      useCallback(
-        async (accountId: string) => {
-          if (!accountId) {
-            setDivisions([]);
-            setDivisionLoading(false);
+   const fetchDivisions =
+  useCallback(
+    async (
+      accountId: string,
+      existingDivision: string = ""
+    ) => {
+      if (!accountId) {
+        setDivisions([]);
+        setDivisionLoading(false);
 
-            handleRowChange(
-              row.id,
-              "division",
-              ""
-            );
+        handleRowChange(
+          row.id,
+          "division",
+          ""
+        );
 
-            handleRowChange(
-              row.id,
-              "hasDivision",
-              false
-            );
+        handleRowChange(
+          row.id,
+          "hasDivision",
+          false
+        );
+
+        return;
+      }
+
+      setDivisionLoading(true);
+
+      try {
+        const response =
+          await fetch(
+            "http://localhost:5000/api/Receipt/getDivID",
+            {
+              method: "POST",
+              headers: {
+                "Content-Type":
+                  "application/json",
+              },
+              body: JSON.stringify({
+                customerid:
+                  accountId,
+              }),
+            }
+          );
+
+        if (!response.ok) {
+          throw new Error(
+            `HTTP Error: ${response.status}`
+          );
+        }
+
+        const result =
+          (await response.json()) as CustomerDivisionResponse;
+
+        if (
+          result.success &&
+          Array.isArray(result.data)
+        ) {
+          setDivisions(result.data);
+
+          handleRowChange(
+            row.id,
+            "hasDivision",
+            result.data.length > 0
+          );
+
+          /*
+           * IMPORTANT:
+           * When loading an existing receipt,
+           * keep its already saved division.
+           */
+          if (existingDivision) {
+            const savedDivisionExists =
+              result.data.some(
+                (division) =>
+                  String(
+                    division.fdivid
+                  ) ===
+                  String(
+                    existingDivision
+                  )
+              );
+
+            if (savedDivisionExists) {
+              handleRowChange(
+                row.id,
+                "division",
+                existingDivision
+              );
+            } else if (
+              result.data.length === 1
+            ) {
+              handleRowChange(
+                row.id,
+                "division",
+                String(
+                  result.data[0].fdivid
+                )
+              );
+            }
 
             return;
           }
 
-          setDivisionLoading(true);
-
-          try {
-            const response =
-              await fetch(
-                "http://localhost:5000/api/Receipt/getDivID",
-                {
-                  method: "POST",
-                  headers: {
-                    "Content-Type":
-                      "application/json",
-                  },
-                  body: JSON.stringify({
-                    customerid:
-                      accountId,
-                  }),
-                }
-              );
-
-            if (!response.ok) {
-              throw new Error(
-                `HTTP Error: ${response.status}`
-              );
-            }
-
-            const result =
-              (await response.json()) as CustomerDivisionResponse;
-
-            if (
-              result.success &&
-              Array.isArray(result.data)
-            ) {
-              setDivisions(result.data);
-
-              handleRowChange(
-                row.id,
-                "hasDivision",
-                result.data.length > 0
-              );
-
-              if (result.data.length === 1) {
-                handleRowChange(
-                  row.id,
-                  "division",
-                  result.data[0].fdivid
-                );
-              } else {
-                handleRowChange(
-                  row.id,
-                  "division",
-                  ""
-                );
-              }
-            } else {
-              setDivisions([]);
-
-              handleRowChange(
-                row.id,
-                "division",
-                ""
-              );
-
-              handleRowChange(
-                row.id,
-                "hasDivision",
-                false
-              );
-            }
-          } catch (error) {
-            console.error(
-              "Get Customer Divisions Error:",
-              error
+          /*
+           * Normal new account selection.
+           */
+          if (result.data.length === 1) {
+            handleRowChange(
+              row.id,
+              "division",
+              String(
+                result.data[0].fdivid
+              )
             );
-
-            setDivisions([]);
-
+          } else {
             handleRowChange(
               row.id,
               "division",
               ""
             );
-
-            handleRowChange(
-              row.id,
-              "hasDivision",
-              false
-            );
-          } finally {
-            setDivisionLoading(false);
           }
-        },
-        [
+        } else {
+          setDivisions([]);
+
+          handleRowChange(
+            row.id,
+            "division",
+            ""
+          );
+
+          handleRowChange(
+            row.id,
+            "hasDivision",
+            false
+          );
+        }
+      } catch (error) {
+        console.error(
+          "Get Customer Divisions Error:",
+          error
+        );
+
+        setDivisions([]);
+
+        handleRowChange(
           row.id,
-          handleRowChange,
-        ]
-      );
+          "division",
+          ""
+        );
+
+        handleRowChange(
+          row.id,
+          "hasDivision",
+          false
+        );
+      } finally {
+        setDivisionLoading(false);
+      }
+    },
+    [
+      row.id,
+      handleRowChange,
+    ]
+  );
 
     const divisionOptions =
       useMemo<SelectOption[]>(
@@ -1959,19 +2008,19 @@ const ReceiptRow = memo(
         };
       }, [selectedAccount]);
 
-    const selectedDivision =
-      useMemo(
-        () =>
-          divisionOptions.find(
-            (option) =>
-              option.value ===
-              row.division
-          ) || null,
-        [
-          divisionOptions,
-          row.division,
-        ]
-      );
+   const selectedDivision =
+  useMemo(
+    () =>
+      divisionOptions.find(
+        (option) =>
+          String(option.value) ===
+          String(row.division)
+      ) || null,
+    [
+      divisionOptions,
+      row.division,
+    ]
+  );
 
     const selectedCcId =
       useMemo(
@@ -2046,6 +2095,20 @@ const ReceiptRow = memo(
           fetchDivisions,
         ]
       );
+
+useEffect(() => {
+  if (!row.accountId) {
+    return;
+  }
+
+  void fetchDivisions(
+    row.accountId,
+    row.division || ""
+  );
+}, [
+  row.accountId,
+  fetchDivisions,
+]);
 
     const handleSelectKeyDown =
       useCallback(
@@ -3483,6 +3546,7 @@ export const ReceiptBottomForm: React.FC<
         </label>
 
         <input
+        maxLength={250}
           id="txtDescription"
           ref={descriptionRef}
           type="text"
@@ -3527,6 +3591,7 @@ export const ReceiptBottomForm: React.FC<
             focus:border-[#9fdfbc]
             focus:ring-1
             focus:ring-[#9fdfbc]
+            text-[#344054]
           "
         />
       </div>
@@ -3537,6 +3602,7 @@ export const ReceiptBottomForm: React.FC<
         </label>
 
         <textarea
+        maxLength={800}
           id="txtNote"
           ref={noteRef}
           value={note}
@@ -3558,6 +3624,7 @@ export const ReceiptBottomForm: React.FC<
             focus:border-[#9fdfbc]
             focus:ring-1
             focus:ring-[#9fdfbc]
+             text-[#344054]
           "
         />
       </div>

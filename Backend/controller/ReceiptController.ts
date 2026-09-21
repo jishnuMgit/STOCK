@@ -3,12 +3,13 @@ import { Request, Response } from "express";
 import pool from "../DB/db.js";
 
 import {
+  deleteReceiptService,
   saveReceiptService,
   updateReceiptService,
 } from "../services/receiptService.js";
 import {cleanReceiptPayload,CheckISdividISccid} from '../utils/helper.js'
 
-import { GetData } from "../services/GetData.js";
+import { GetData } from "../services/GetDataService.js";
 
 /* =========================================================
    GET RECEIPT INITIAL DATA
@@ -840,3 +841,69 @@ export async function GetDatas(
     });
   }
 }
+
+
+export const DeleteReceipt = async (
+  req: Request,
+  res: Response
+): Promise<Response> => {
+  try {
+    const PstrCoID = process.env.PstrCoID;
+
+    if (!PstrCoID) {
+      throw new Error(
+        "Company ID is not configured"
+      );
+    }
+
+    const {
+      branch,
+      type,
+      receiptNo,
+    } = req.body;
+
+    if (!branch) {
+      return res.status(400).json({
+        message: "branch is required",
+      });
+    }
+
+    if (!type) {
+      return res.status(400).json({
+        message: "type is required",
+      });
+    }
+
+    if (!receiptNo) {
+      return res.status(400).json({
+        message: "Doc.No is required",
+      });
+    }
+
+    const result =
+      await deleteReceiptService({
+        branch,
+        type,
+        receiptNo,
+      });
+
+    return res.status(200).json({
+      success: true,
+      message: result.message,
+      data: result.data,
+    });
+  } catch (error: unknown) {
+    console.error(
+      "DeleteReceipt error:",
+      error
+    );
+
+    return res.status(400).json({
+      success: false,
+      message:
+        error instanceof Error
+          ? error.message
+          : "Receipt could not be deleted",
+    });
+  }
+};
