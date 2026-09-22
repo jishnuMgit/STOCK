@@ -34,7 +34,7 @@ import {
   DatePicker,
 } from "@mui/x-date-pickers/DatePicker";
 
-import { selectStyles, accountDropdownStyles } from "./ReactSelectStyles";
+import { selectStyles, accountDropdownStyles, BranchOption, BranchMenuList, TypeOption, TypeMenuList ,BankCashMenuList, BankCashOption} from "./ReactSelectStyles";
 
 import "./commanReceipt.css";
 import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
@@ -151,6 +151,8 @@ interface ReceiptFormProps {
   preserveCbAccountOnLoad?: boolean;
 
   documentNoEditable?: boolean;
+
+  focusReceiptNoAfterClear?: number;
 }
 
 
@@ -237,24 +239,137 @@ export const ReceiptForm: React.FC<ReceiptFormProps> = ({
   preserveCbAccountOnLoad = false,
 
   documentNoEditable = false,
+
+  focusReceiptNoAfterClear = 0,
+  
 }) => {
   const [openSelect, setOpenSelect] = useState<
     "branch" | "type" | "cbAccount" | null
   >(null);
 
-  const [accountsLoading, setAccountsLoading] = useState(false);
+  /*
+   * =========================================================
+   * BRANCH FOCUS CONTROL
+   * =========================================================
+   *
+   * When keyboard navigation moves to Branch, Branch gets focus.
+   *
+   * If Branch value changes immediately after that, React Select
+   * can lose its internal input focus because the controlled
+   * `value` changes and the component re-renders.
+   *
+   * This ref tells us:
+   *
+   * "Branch was focused by keyboard navigation and should keep
+   * focus when its value changes."
+   *
+   * It is reset when Enter moves from Branch -> Type.
+   */
+  const keepBranchFocus = useRef(false);
+
+  /*
+   * This function is used when keyboard navigation moves TO
+   * the Branch select.
+   */
+  const focusBranch = useCallback(() => {
+    keepBranchFocus.current = true;
+
+    requestAnimationFrame(() => {
+      branchRef.current?.focus();
+    });
+  }, [branchRef]);
+
+  /*
+   * =========================================================
+   * CASH / BANK FOCUS CONTROL
+   * =========================================================
+   *
+   * Same problem as Branch, but worse: the Cash/Bank select is
+   * also `isDisabled` while its options are loading
+   * (accountsLoading === true). A disabled control cannot hold
+   * DOM focus, so the moment loadAccounts() fires after the user
+   * tabs/enters into this field, the browser forcibly blurs it -
+   * even though we already called cbAccountRef.current?.focus().
+   *
+   * This ref tells us:
+   *
+   * "The user intentionally navigated to Cash/Bank and, once it
+   * becomes enabled again (loading finished), focus should be
+   * restored to it."
+   *
+   * It is cleared as soon as the user leaves the field (Enter/Tab)
+   * or picks a value.
+   */
+  const keepCbAccountFocus = useRef(false);
+
+  const [accountsLoading, setAccountsLoading] =
+    useState(false);
 
   const [documentNoLoading, setDocumentNoLoading] =
     useState(false);
-const [docnolen, setdocnolen] = useState<number>(0);
-  const [cbAccounts, setCbAccounts] = useState<CbAccount[]>([]);
 
+useEffect(() => {
+  if (focusReceiptNoAfterClear === 0) return;
+  if (documentNoLoading) return;
+
+  // IMPORTANT:
+  // We are intentionally focusing Receipt No now.
+  // Do not allow the old Cash/Bank focus request
+  // to steal focus.
+  keepCbAccountFocus.current = false;
+
+  const focusReceiptNo = () => {
+    const input = documentNoRef.current;
+
+    if (!input) return;
+
+    input.focus();
+
+    const position = input.value.length;
+
+    input.setSelectionRange(
+      position,
+      position
+    );
+  };
+
+  const frame = requestAnimationFrame(() => {
+    focusReceiptNo();
+
+    setTimeout(() => {
+      focusReceiptNo();
+    }, 100);
+  });
+
+  return () => {
+    cancelAnimationFrame(frame);
+  };
+}, [
+  focusReceiptNoAfterClear,
+  documentNoLoading,
+]);
+
+  const [docnolen, setdocnolen] =
+    useState<number>(0);
+
+  const [cbAccounts, setCbAccounts] =
+    useState<CbAccount[]>([]);
+
+  /*
+   * =========================================================
+   * TYPE OPTIONS
+   * =========================================================
+   */
   const typeOptions: SelectOption[] = useMemo(() => {
     const apiTypeOptions = financialParameters
-      .filter((parameter) => parameter.fptype === "RTP")
+      .filter(
+        (parameter) =>
+          parameter.fptype === "RTP"
+      )
       .sort(
         (first, second) =>
-          first.fpositionno - second.fpositionno
+          first.fpositionno -
+          second.fpositionno
       )
       .map((parameter) => ({
         value: parameter.fpname,
@@ -264,11 +379,22 @@ const [docnolen, setdocnolen] = useState<number>(0);
     return apiTypeOptions.length > 0
       ? apiTypeOptions
       : [
-          { value: "Bank", label: "B" },
-          { value: "Cash", label: "C" },
+          {
+            value: "Bank",
+            label: "B",
+          },
+          {
+            value: "Cash",
+            label: "C",
+          },
         ];
   }, [financialParameters]);
 
+  /*
+   * =========================================================
+   * GET RECEIPT DOCUMENT NUMBER
+   * =========================================================
+   */
   const getReceiptDocNumber = async (
     fbrid: string,
     typeId: string
@@ -279,7 +405,8 @@ const [docnolen, setdocnolen] = useState<number>(0);
     }
 
     const documentType =
-      typeId === "C" ? "CR" : "BR";
+      typeId === "C"        ? "CR"
+        : "BR";
 
     try {
       setDocumentNoLoading(true);
@@ -289,7 +416,8 @@ const [docnolen, setdocnolen] = useState<number>(0);
         {
           method: "POST",
           headers: {
-            "Content-Type": "application/json",
+            "Content-Type":
+              "application/json",
           },
           body: JSON.stringify({
             fbrid,
@@ -312,12 +440,16 @@ const [docnolen, setdocnolen] = useState<number>(0);
         Array.isArray(result.data) &&
         result.data.length > 0
       ) {
-        const docData = result.data[0];
-        setDocumentNo(docData?.fdocno || "");
+        const docData =
+          result.data[0];
+
+        setDocumentNo(
+          docData?.fdocno || ""
+        );
+
         setdocnolen(
-        Number(docData?.fdocnolen) || 0
-      );
-      
+          Number(docData?.fdocnolen) || 0
+        );
       } else {
         setDocumentNo("");
       }
@@ -333,20 +465,33 @@ const [docnolen, setdocnolen] = useState<number>(0);
     }
   };
 
+  /*
+   * =========================================================
+   * LOAD CASH / BANK ACCOUNTS
+   * =========================================================
+   */
   const loadAccounts = async (
     requestedCbType: string
   ) => {
     const cbType =
       financialParameters.find(
         (parameter) =>
-          parameter.fpid === requestedCbType ||
-          parameter.fpname === requestedCbType
-      )?.fpid || requestedCbType;
+          parameter.fpid ===
+            requestedCbType ||
+          parameter.fpname ===
+            requestedCbType
+      )?.fpid ||
+      requestedCbType;
 
-    if (cbType !== "B" && cbType !== "C") {
+    if (
+      cbType !== "B" &&
+      cbType !== "C"
+    ) {
       setCbAccounts([]);
 
-      if (!preserveCbAccountOnLoad) {
+      if (
+        !preserveCbAccountOnLoad
+      ) {
         setCbAccount("");
       }
 
@@ -361,7 +506,8 @@ const [docnolen, setdocnolen] = useState<number>(0);
         {
           method: "POST",
           headers: {
-            "Content-Type": "application/json",
+            "Content-Type":
+              "application/json",
           },
           body: JSON.stringify({
             cashorbank: cbType,
@@ -384,13 +530,17 @@ const [docnolen, setdocnolen] = useState<number>(0);
       ) {
         setCbAccounts(result.data);
 
-        if (!preserveCbAccountOnLoad) {
+        if (
+          !preserveCbAccountOnLoad
+        ) {
           setCbAccount("");
         }
       } else {
         setCbAccounts([]);
 
-        if (!preserveCbAccountOnLoad) {
+        if (
+          !preserveCbAccountOnLoad
+        ) {
           setCbAccount("");
         }
       }
@@ -402,7 +552,9 @@ const [docnolen, setdocnolen] = useState<number>(0);
 
       setCbAccounts([]);
 
-      if (!preserveCbAccountOnLoad) {
+      if (
+        !preserveCbAccountOnLoad
+      ) {
         setCbAccount("");
       }
     } finally {
@@ -410,14 +562,23 @@ const [docnolen, setdocnolen] = useState<number>(0);
     }
   };
 
+  /*
+   * =========================================================
+   * INITIAL LOAD
+   * =========================================================
+   */
   useEffect(() => {
-    const defaultType = type || "B";
+    const defaultType =
+      type || "B";
 
     if (!type) {
       setType("B");
     }
 
-    if (branch && !isModifyMode) {
+    if (
+      branch &&
+      !isModifyMode
+    ) {
       getReceiptDocNumber(
         branch,
         defaultType
@@ -427,6 +588,11 @@ const [docnolen, setdocnolen] = useState<number>(0);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  /*
+   * =========================================================
+   * FINANCIAL PARAMETERS
+   * =========================================================
+   */
   useEffect(() => {
     const defaultType =
       financialParameters.find(
@@ -453,6 +619,11 @@ const [docnolen, setdocnolen] = useState<number>(0);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [financialParameters]);
 
+  /*
+   * =========================================================
+   * BRANCH CHANGE
+   * =========================================================
+   */
   useEffect(() => {
     if (!branch) {
       if (!isModifyMode) {
@@ -475,6 +646,11 @@ const [docnolen, setdocnolen] = useState<number>(0);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [branch, isModifyMode]);
 
+  /*
+   * =========================================================
+   * MODIFY MODE
+   * =========================================================
+   */
   useEffect(() => {
     if (isModifyMode) {
       loadAccounts(type);
@@ -483,6 +659,11 @@ const [docnolen, setdocnolen] = useState<number>(0);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isModifyMode, type]);
 
+  /*
+   * =========================================================
+   * ENTER NAVIGATION FOR SELECT
+   * =========================================================
+   */
   const handleSelectKeyDown = (
     event: React.KeyboardEvent,
     selectName:
@@ -495,15 +676,51 @@ const [docnolen, setdocnolen] = useState<number>(0);
       return;
     }
 
+    /*
+     * If dropdown is currently open, allow react-select
+     * to handle Enter and select the highlighted option.
+     */
     if (openSelect === selectName) {
       return;
     }
 
     event.preventDefault();
+    event.stopPropagation();
 
-    focusNext();
+    /*
+     * VERY IMPORTANT:
+     *
+     * We are leaving Branch now.
+     * Therefore Branch should no longer be refocused
+     * after its value changes.
+     */
+    if (selectName === "branch") {
+      keepBranchFocus.current = false;
+    }
+
+    /*
+     * We are leaving Cash/Bank now.
+     * Therefore Cash/Bank should no longer be refocused
+     * after its loading state changes.
+     */
+    if (selectName === "cbAccount") {
+      keepCbAccountFocus.current = false;
+    }
+
+    /*
+     * Wait until the current React Select keyboard event
+     * has finished before moving focus.
+     */
+    requestAnimationFrame(() => {
+      focusNext();
+    });
   };
 
+  /*
+   * =========================================================
+   * NORMAL INPUT ENTER NAVIGATION
+   * =========================================================
+   */
   const handleInputKeyDown = (
     event: Pick<
       React.KeyboardEvent,
@@ -523,6 +740,11 @@ const [docnolen, setdocnolen] = useState<number>(0);
   const inputClass =
     "h-7 rounded border border-[#d7dee7] bg-white px-2 text-xs text-slate-700 outline-none focus:border-[#9fdfbc] focus:ring-1 focus:ring-[#9fdfbc]";
 
+  /*
+   * =========================================================
+   * SELECT STYLES
+   * =========================================================
+   */
   const selectStylesLocal = {
     control: (base: any) => ({
       ...base,
@@ -533,6 +755,7 @@ const [docnolen, setdocnolen] = useState<number>(0);
       boxShadow: "none",
       fontSize: "12px",
       cursor: "text",
+
       "&:hover": {
         borderColor: "#9fdfbc",
       },
@@ -573,6 +796,7 @@ const [docnolen, setdocnolen] = useState<number>(0);
       ...base,
       color: "#aeb8c2",
       padding: "4px",
+
       "&:hover": {
         color: "#808080",
       },
@@ -586,6 +810,7 @@ const [docnolen, setdocnolen] = useState<number>(0);
       ...base,
       color: "#aeb8c2",
       padding: "4px",
+
       "&:hover": {
         color: "#808080",
       },
@@ -607,42 +832,68 @@ const [docnolen, setdocnolen] = useState<number>(0);
       overflowY: "auto",
     }),
 
-    option: (base: any, state: any) => ({
+    option: (
+      base: any,
+      state: any
+    ) => ({
       ...base,
       fontSize: "12px",
       cursor: "pointer",
+
       backgroundColor:
-        state.isSelected || state.isFocused
+        state.isSelected ||
+        state.isFocused
           ? "#eefbf4"
           : "#ffffff",
+
       color: "#344054",
+
       padding: "7px 10px",
+
       "&:active": {
-        backgroundColor: "#dff5e9",
+        backgroundColor:
+          "#dff5e9",
       },
     }),
   };
-  
+
+  /*
+   * =========================================================
+   * CASH / BANK OPTIONS
+   * =========================================================
+   */
   const cbAccountOptions: SelectOption[] =
     useMemo(
       () =>
-        cbAccounts.map((account) => ({
-          value: account.faccountid,
-          label: account.faccountname,
-        })),
+        cbAccounts.map(
+          (account) => ({
+            value:
+              account.faccountid,
+            label:
+              account.faccountname,
+          })
+        ),
       [cbAccounts]
     );
 
+  /*
+   * =========================================================
+   * SELECTED VALUES
+   * =========================================================
+   */
   const selectedBranch =
     branchOptions.find(
-      (option) => option.value === branch
+      (option) =>
+        option.value === branch
     ) || null;
 
   const selectedType =
     typeOptions.find(
       (option) =>
-        option.label === (type || "B") ||
-        option.value === (type || "B")
+        option.label ===
+          (type || "B") ||
+        option.value ===
+          (type || "B")
     ) || null;
 
   const selectedCbAccount =
@@ -651,17 +902,93 @@ const [docnolen, setdocnolen] = useState<number>(0);
         option.value === cbAccount
     ) || null;
 
+  /*
+   * =========================================================
+   * IMPORTANT BRANCH FOCUS FIX
+   * =========================================================
+   *
+   * This MUST be AFTER selectedBranch is declared.
+   *
+   * When Branch gets focus and its value is updated,
+   * React Select can temporarily lose focus.
+   *
+   * We restore focus only if keyboard navigation told us
+   * to keep Branch focused.
+   */
+  useEffect(() => {
+    if (!keepBranchFocus.current) {
+      return;
+    }
+
+    if (!selectedBranch) {
+      return;
+    }
+
+    requestAnimationFrame(() => {
+      if (!keepBranchFocus.current) {
+        return;
+      }
+
+      branchRef.current?.focus();
+    });
+  }, [selectedBranch]);
+
+  /*
+   * =========================================================
+   * IMPORTANT CASH / BANK FOCUS FIX
+   * =========================================================
+   *
+   * The Cash/Bank select is `isDisabled` while
+   * `accountsLoading` is true. A disabled control can't hold
+   * DOM focus, so when the user navigates here (Enter from
+   * Receipt No, or Tab) and a reload of accounts kicks off
+   * right after, the browser blurs the field out from under
+   * them - the cursor/highlight just disappears.
+   *
+   * Once loading finishes (accountsLoading becomes false),
+   * the control becomes focusable again. If the user had
+   * intentionally navigated here (keepCbAccountFocus.current
+   * is true) and hasn't since left the field, we hand focus
+   * back to it.
+   */
+  useEffect(() => {
+    if (!keepCbAccountFocus.current) {
+      return;
+    }
+
+    if (accountsLoading) {
+      // Still disabled - can't take focus yet, wait for it
+      // to finish loading.
+      return;
+    }
+
+    requestAnimationFrame(() => {
+      if (!keepCbAccountFocus.current) {
+        return;
+      }
+
+      cbAccountRef.current?.focus();
+    });
+  }, [accountsLoading]);
+
   return (
     <div className="px-5 pt-3 pb-2">
 
+      {/* =====================================================
+          FIRST ROW
+      ===================================================== */}
+
       <div className="mb-2 flex items-center justify-between gap-8">
 
+        {/* ================= BRANCH ================= */}
+
         <div className="flex items-center gap-2">
+
           <label className="w-22.5 text-right text-xs whitespace-nowrap">
             Branch :
           </label>
 
-          <Select<SelectOption, false>
+           <Select<SelectOption, false>
             ref={branchRef}
             id="lkpBranch"
             value={selectedBranch}
@@ -693,148 +1020,288 @@ const [docnolen, setdocnolen] = useState<number>(0);
             }}
             options={branchOptions}
             placeholder="Select Branch"
-            components={{
-              Option: CustomOption,
+             components={{
+              Option: BranchOption,
+              MenuList:BranchMenuList,
             }}
-            filterOption={filterOption}
-            styles={{
+
+            filterOption={
+              filterOption
+            }
+              styles={{
               ...selectStylesLocal,
 
               control: (base: any) => ({
                 ...base,
+
                 minHeight: "28px",
                 height: "28px",
+
                 width: "200px",
-                borderColor: "#d7dee7",
+
+                borderColor:
+                  "#d7dee7",
+
                 borderRadius: "4px",
+
                 boxShadow: "none",
+
                 fontSize: "12px",
+
                 cursor: "text",
+
                 "&:hover": {
-                  borderColor: "#9fdfbc",
+                  borderColor:
+                    "#9fdfbc",
                 },
               }),
+
+              menu: (base: any) => ({
+                ...base,
+
+                width: "250px",
+
+                zIndex: 99999,
+              }),
+
+              menuPortal: (base: any) => ({
+                ...base,
+
+                zIndex: 99999,
+              }),
+
+              option: (
+                base: any,
+                state: any
+              ) => ({
+                ...base,
+
+                padding: "6px 10px",
+
+                fontSize: "12px",
+
+                backgroundColor:
+                  state.isFocused
+                    ? "#eef8f3"
+                    : "#fff",
+
+                color: "#222",
+
+                cursor: "pointer",
+              }),
             }}
+
             isSearchable
             isClearable={false}
             noOptionsMessage={() =>
               "No Branch Found"
             }
           />
+
+
         </div>
 
+        {/* ================= TYPE ================= */}
+
         <div className="flex items-center gap-2">
+
           <label className="text-right text-xs whitespace-nowrap">
             Type :
           </label>
 
           <Select<SelectOption, false>
             ref={typeRef}
+
             inputId="lkpType"
+
             value={selectedType}
+
             onKeyDown={(event) =>
               handleSelectKeyDown(
                 event,
                 "type",
-                () => documentNoRef.current?.focus()
+                () =>
+                  documentNoRef.current?.focus()
               )
             }
+
             onMenuOpen={() =>
               setOpenSelect("type")
             }
+
             onMenuClose={() =>
               setOpenSelect(null)
             }
+
             onChange={(option) => {
               const selectedType =
                 option?.label ||
                 option?.value ||
                 "B";
 
-              setType(selectedType);
+              setType(
+                selectedType
+              );
 
-              loadAccounts(selectedType);
+              loadAccounts(
+                selectedType
+              );
 
-              if (branch && !isModifyMode) {
+              if (
+                branch &&
+                !isModifyMode
+              ) {
                 getReceiptDocNumber(
                   branch,
                   selectedType
                 );
               }
             }}
+
             options={typeOptions}
+
             placeholder="Select"
+
             components={{
-              Option: CustomOption,
+              Option: TypeOption,
+              MenuList: TypeMenuList,
             }}
-            filterOption={filterOption}
+
+            filterOption={
+              filterOption
+            }
+
             styles={{
               ...selectStylesLocal,
 
               control: (base: any) => ({
                 ...base,
+
                 minHeight: "28px",
                 height: "28px",
-                width: "70px",
-                borderColor: "#d7dee7",
+
+                width: "80px",
+
+                borderColor:
+                  "#d7dee7",
+
                 borderRadius: "4px",
+
                 boxShadow: "none",
+
                 fontSize: "12px",
+
                 cursor: "text",
+
                 "&:hover": {
-                  borderColor: "#9fdfbc",
+                  borderColor:
+                    "#9fdfbc",
                 },
               }),
+
+              menu: (base: any) => ({
+                ...base,
+
+                width: "120px",
+
+                zIndex: 99999,
+              }),
+
+              menuPortal: (base: any) => ({
+                ...base,
+
+                zIndex: 99999,
+              }),
+
+              option: (
+                base: any,
+                state: any
+              ) => ({
+                ...base,
+
+                padding: "6px 10px",
+
+                fontSize: "12px",
+
+                backgroundColor:
+                  state.isFocused
+                    ? "#eef8f3"
+                    : "#fff",
+
+                color: "#222",
+
+                cursor: "pointer",
+              }),
             }}
+
             isSearchable
+
             isClearable={false}
+
             noOptionsMessage={() =>
               "No Type Found"
             }
           />
+
         </div>
 
+        {/* ================= RECEIPT NO ================= */}
+
         <div className="flex items-center gap-2">
+
           <label className="text-right text-xs whitespace-nowrap">
             Receipt No. :
           </label>
 
           <input
-          maxLength={docnolen}
-          // minLength={11}
+            maxLength={docnolen}
+
             id="txtReceiptNo"
+
             ref={documentNoRef}
+
             value={
               documentNoLoading
                 ? "Loading..."
                 : documentNo
             }
-            readOnly={!documentNoEditable}
+
+            readOnly={
+              !documentNoEditable
+            }
+
             onChange={(event) => {
-              if (documentNoEditable) {
+              if (
+                documentNoEditable
+              ) {
                 setDocumentNo(
                   event.target.value
                 );
               }
             }}
+
             onBlur={(e) => {
-
-
               if (
                 documentNoEditable &&
                 docnolen > 0 &&
-                e.target.value.length !== docnolen
+                e.target.value
+                  .length !==
+                  docnolen
               ) {
                 toast.warning(
                   `Receipt No. width must be ${docnolen}`
                 );
+
                 return;
               }
 
-              if (documentNoEditable) {
+              if (
+                documentNoEditable
+              ) {
                 txtDocNo?.();
               }
             }}
+
             onKeyDown={(event) => {
               if (
                 documentNoEditable &&
@@ -844,282 +1311,433 @@ const [docnolen, setdocnolen] = useState<number>(0);
 
                 txtDocNo?.();
 
-                cbAccountRef.current?.focus();
+                /*
+                 * We are intentionally moving into Cash/Bank.
+                 * If a reload of its options happens right
+                 * after this (branch/type change effects),
+                 * the field will be temporarily disabled and
+                 * lose focus - this flag tells the effect
+                 * above to hand focus back once loading ends.
+                 */
+                keepCbAccountFocus.current = true;
+
+                requestAnimationFrame(() => {
+                  cbAccountRef.current?.focus();
+                });
 
                 return;
               }
 
-              
-
               handleInputKeyDown(
                 event,
-                () =>
-                  cbAccountRef.current?.focus()
+                () => {
+                  keepCbAccountFocus.current = true;
+                  cbAccountRef.current?.focus();
+                }
               );
             }}
-            className={`${inputClass} w-37.5`}
 
+            className={`${inputClass} w-37.5`}
           />
+
         </div>
+
       </div>
+
+      {/* =====================================================
+          SECOND ROW
+      ===================================================== */}
 
       <div className="mb-2 flex items-center justify-between gap-8">
 
+        {/* ================= CASH / BANK ================= */}
+
         <div className="flex items-center gap-2">
-          <label className="w-22.5 text-right text-xs whitespace-nowrap" id="lblCBAccountName">
+
+          <label
+            className="w-22.5 text-right text-xs whitespace-nowrap"
+            id="lblCBAccountName"
+          >
             {selectedType?.value} :
           </label>
 
           <Select<SelectOption, false>
             ref={cbAccountRef}
+
             id="lkpCBAccountName"
+
             value={selectedCbAccount}
+
             onKeyDown={(event) =>
               handleSelectKeyDown(
                 event,
                 "cbAccount",
-                () => dateRef.current?.focus()
+                () =>
+                  dateRef.current?.focus()
               )
             }
+
             onMenuOpen={() =>
-              setOpenSelect("cbAccount")
+              setOpenSelect(
+                "cbAccount"
+              )
             }
+
             onMenuClose={() =>
               setOpenSelect(null)
             }
+
             onChange={(option) => {
               setCbAccount(
                 option?.value || ""
               );
+
+              /*
+               * A value was picked - the user is done with
+               * this field, so stop trying to refocus it on
+               * future loading-state changes.
+               */
+              keepCbAccountFocus.current = false;
             }}
-            options={cbAccountOptions}
+
+            options={
+              cbAccountOptions
+            }
+
             placeholder={
               accountsLoading
                 ? "Loading..."
                 : "Select"
             }
+
             components={{
-              Option: CustomOption,
+              Option:
+                BankCashOption,
+
+              MenuList:
+                BankCashMenuList,
             }}
-            filterOption={filterOption}
+
+            filterOption={
+              filterOption
+            }
+
             styles={{
               ...selectStylesLocal,
 
               control: (base: any) => ({
                 ...base,
+
                 minHeight: "28px",
                 height: "28px",
+
                 width: "400px",
-                borderColor: "#d7dee7",
+
+                borderColor:
+                  "#d7dee7",
+
                 borderRadius: "4px",
+
                 boxShadow: "none",
+
                 fontSize: "12px",
+
                 cursor: "text",
+
                 "&:hover": {
-                  borderColor: "#9fdfbc",
+                  borderColor:
+                    "#9fdfbc",
                 },
               }),
+
+              menu: (base: any) => ({
+                ...base,
+
+                width: "480px",
+
+                zIndex: 99999,
+              }),
+
+              menuPortal: (base: any) => ({
+                ...base,
+
+                zIndex: 99999,
+              }),
+
+              option: (
+                base: any,
+                state: any
+              ) => ({
+                ...base,
+
+                padding: "6px 10px",
+
+                fontSize: "12px",
+
+                backgroundColor:
+                  state.isFocused
+                    ? "#eef8f3"
+                    : "#fff",
+
+                color: "#222",
+
+                cursor: "pointer",
+              }),
+
+              menuList: (
+                base: any
+              ) => ({
+                ...base,
+
+                maxHeight:
+                  "600px",
+              }),
             }}
+
             isSearchable
+
             isClearable={false}
+
             isDisabled={
               accountsLoading ||
-              cbAccountOptions.length === 0
+              cbAccountOptions.length ===
+                0
             }
+
             noOptionsMessage={() =>
               "No Cash/Bank Found"
             }
           />
+
         </div>
 
+        {/* ================= DATE ================= */}
+
         <div className="flex items-center gap-2">
+
           <label className="text-right text-xs whitespace-nowrap">
             Date :
           </label>
 
-      <LocalizationProvider
-  dateAdapter={AdapterDayjs}
->
-  <DatePicker
-    value={
-      date
-        ? dayjs(
-            date,
-            "DD-MM-YYYY"
-          )
-        : null
-    }
-    onChange={(newValue) => {
-      if (newValue?.isValid()) {
-        setDate(
-          newValue.format(
-            "DD-MM-YYYY"
-          )
-        );
-      } else {
-        setDate("");
-      }
-    }}
-    format="DD-MM-YYYY"
-    inputRef={dateRef}
-    slotProps={{
-      textField: {
-        id: "dtpDate",
+          <LocalizationProvider
+            dateAdapter={
+              AdapterDayjs
+            }
+          >
+            <DatePicker
+              value={
+                date
+                  ? dayjs(
+                      date,
+                      "DD-MM-YYYY"
+                    )
+                  : null
+              }
 
-        onKeyDown: (event) =>
-          handleInputKeyDown(
-            event,
-            () =>
-              receivedFromRef.current?.focus()
-          ),
-      },
+              onChange={(newValue) => {
+                if (
+                  newValue?.isValid()
+                ) {
+                  setDate(
+                    newValue.format(
+                      "DD-MM-YYYY"
+                    )
+                  );
+                } else {
+                  setDate("");
+                }
+              }}
 
-      openPickerButton: {
-        sx: {
-          padding: "2px",
-          margin: 0,
-        },
-      },
+              format="DD-MM-YYYY"
 
-      inputAdornment: {
-        sx: {
-          margin: 0,
-          padding: 0,
-        },
-      },
-    }}
-    sx={{
-      width: "150px",
+              inputRef={dateRef}
 
-      "& .MuiPickersTextField-root": {
-        width: "120px",
-      },
+              slotProps={{
+                textField: {
+                  id: "dtpDate",
 
-      /* =========================================
-         MAIN INPUT
-      ========================================= */
-      "& .MuiPickersInputBase-root": {
-        width: "150px",
-        height: "28px",
-        minHeight: "28px",
-        boxSizing: "border-box",
-        borderRadius: "4px",
-        backgroundColor: "#ffffff",
-        fontSize: "12px",
-        padding: 0,
-        overflow: "hidden",
-      },
+                  onKeyDown: (
+                    event
+                  ) =>
+                    handleInputKeyDown(
+                      event,
+                      () =>
+                        receivedFromRef.current?.focus()
+                    ),
+                },
 
-      /* =========================================
-         DATE TEXT CONTAINER
-         THIS IS THE IMPORTANT PART
-      ========================================= */
-      "& .MuiPickersInputBase-sectionsContainer": {
-        paddingLeft: "10px !important",
-        paddingRight: "0px !important",
-        marginBottom:"-5px !important",
-        marginLeft: "0px !important",
-        boxSizing: "border-box",
-        overflow: "hidden",
-      },
+                openPickerButton: {
+                  sx: {
+                    padding: "2px",
+                    margin: 0,
+                  },
+                },
 
-      /* =========================================
-         INDIVIDUAL DATE SECTIONS
-      ========================================= */
-      "& .MuiPickersInputBase-sectionContent": {
-        fontSize: "12px",
-        color:'#344054'
-      },
+                inputAdornment: {
+                  sx: {
+                    margin: 0,
+                    padding: 0,
+                  },
+                },
+              }}
 
-      /* =========================================
-         INPUT
-      ========================================= */
-      "& .MuiPickersInputBase-input": {
-        minWidth: 0,
-        width: "100%",
-        fontSize: "12px",
-        padding: 0,
-        height: "28px",
-        boxSizing: "border-box",
-      },
+              sx={{
+                width: "150px",
 
-      /* =========================================
-         INPUT ADORNMENT
-      ========================================= */
-      "& .MuiInputAdornment-root": {
-        margin: 0,
-        padding: 0,
-      },
+                "& .MuiPickersTextField-root":
+                  {
+                    width: "120px",
+                  },
 
-      /* =========================================
-         CALENDAR BUTTON
-      ========================================= */
-      "& .MuiIconButton-root": {
-        width: "24px",
-        height: "24px",
-        padding: "2px",
-        margin: 0,
-      },
+                "& .MuiPickersInputBase-root":
+                  {
+                    width: "150px",
+                    height: "28px",
+                    minHeight: "28px",
+                    boxSizing:
+                      "border-box",
+                    borderRadius: "4px",
+                    backgroundColor:
+                      "#ffffff",
+                    fontSize: "12px",
+                    padding: 0,
+                    overflow:
+                      "hidden",
+                  },
 
-      "& .MuiSvgIcon-root": {
-        fontSize: "16px",
-      },
+                "& .MuiPickersInputBase-sectionsContainer":
+                  {
+                    paddingLeft:
+                      "10px !important",
 
-      /* =========================================
-         BORDER
-      ========================================= */
-      "& .MuiPickersOutlinedInput-notchedOutline": {
-        borderColor: "#B7C7D7 !important",
-      },
+                    paddingRight:
+                      "0px !important",
 
-      "& .MuiPickersInputBase-root:hover .MuiPickersOutlinedInput-notchedOutline":
-        {
-          borderColor: "#B7C7D7 !important",
-        },
+                    marginBottom:
+                      "-5px !important",
 
-      "& .MuiPickersInputBase-root.Mui-focused .MuiPickersOutlinedInput-notchedOutline":
-        {
-          borderColor: "#B7C7D7 !important",
-          borderWidth: "1px",
-        },
+                    marginLeft:
+                      "0px !important",
 
-      "& .MuiPickersInputBase-root.Mui-error .MuiPickersOutlinedInput-notchedOutline":
-        {
-          borderColor: "#B7C7D7 !important",
-        },
+                    boxSizing:
+                      "border-box",
 
-      "& .MuiPickersInputBase-root.Mui-error:hover .MuiPickersOutlinedInput-notchedOutline":
-        {
-          borderColor: "#B7C7D7 !important",
-        },
+                    overflow:
+                      "hidden",
+                  },
 
-      "& .MuiPickersInputBase-root.Mui-error.Mui-focused .MuiPickersOutlinedInput-notchedOutline":
-        {
-          borderColor: "#B7C7D7 !important",
-        },
-    }}
-  />
-</LocalizationProvider>
+                "& .MuiPickersInputBase-sectionContent":
+                  {
+                    fontSize: "12px",
+                    color:
+                      "#344054",
+                  },
+
+                "& .MuiPickersInputBase-input":
+                  {
+                    minWidth: 0,
+                    width: "100%",
+                    fontSize: "12px",
+                    padding: 0,
+                    height: "28px",
+                    boxSizing:
+                      "border-box",
+                  },
+
+                "& .MuiInputAdornment-root":
+                  {
+                    margin: 0,
+                    padding: 0,
+                  },
+
+                "& .MuiIconButton-root":
+                  {
+                    width: "24px",
+                    height: "24px",
+                    padding: "2px",
+                    margin: 0,
+                  },
+
+                "& .MuiSvgIcon-root":
+                  {
+                    fontSize: "16px",
+                  },
+
+                "& .MuiPickersOutlinedInput-notchedOutline":
+                  {
+                    borderColor:
+                      "#B7C7D7 !important",
+                  },
+
+                "& .MuiPickersInputBase-root:hover .MuiPickersOutlinedInput-notchedOutline":
+                  {
+                    borderColor:
+                      "#B7C7D7 !important",
+                  },
+
+                "& .MuiPickersInputBase-root.Mui-focused .MuiPickersOutlinedInput-notchedOutline":
+                  {
+                    borderColor:
+                      "#B7C7D7 !important",
+
+                    borderWidth:
+                      "1px",
+                  },
+
+                "& .MuiPickersInputBase-root.Mui-error .MuiPickersOutlinedInput-notchedOutline":
+                  {
+                    borderColor:
+                      "#B7C7D7 !important",
+                  },
+
+                "& .MuiPickersInputBase-root.Mui-error:hover .MuiPickersOutlinedInput-notchedOutline":
+                  {
+                    borderColor:
+                      "#B7C7D7 !important",
+                  },
+
+                "& .MuiPickersInputBase-root.Mui-error.Mui-focused .MuiPickersOutlinedInput-notchedOutline":
+                  {
+                    borderColor:
+                      "#B7C7D7 !important",
+                  },
+              }}
+            />
+          </LocalizationProvider>
+
         </div>
+
       </div>
+
+      {/* =====================================================
+          THIRD ROW
+      ===================================================== */}
 
       <div className="flex items-center justify-between gap-8">
 
+        {/* ================= RECEIVED FROM ================= */}
+
         <div className="flex items-center gap-2">
+
           <label className="w-22.5 text-right text-xs whitespace-nowrap">
             Received From :
           </label>
 
           <input
-          maxLength={100}
+            maxLength={100}
+
             ref={receivedFromRef}
+
             id="txtReceivedFrom"
+
             value={receivedFrom}
+
             onChange={(event) =>
               setReceivedFrom(
                 event.target.value
               )
             }
+
             onKeyDown={(event) =>
               handleInputKeyDown(
                 event,
@@ -1127,35 +1745,49 @@ const [docnolen, setdocnolen] = useState<number>(0);
                   referenceRef.current?.focus()
               )
             }
+
             className={`${inputClass} w-100`}
           />
+
         </div>
 
+        {/* ================= REFERENCE ================= */}
+
         <div className="flex items-center gap-2">
+
           <label className="text-right text-xs whitespace-nowrap">
             Reference :
           </label>
 
           <input
-          maxLength={20}
+            maxLength={20}
+
             ref={referenceRef}
+
             id="txtReference"
+
             value={reference}
+
             onChange={(event) =>
               setReference(
                 event.target.value
               )
             }
+
             onKeyDown={(event) =>
               handleInputKeyDown(
                 event,
                 focusFirstAccountId
               )
             }
+
             className={`${inputClass} w-50`}
           />
+
         </div>
+
       </div>
+
     </div>
   );
 };
@@ -1725,7 +2357,9 @@ const ReceiptRow = memo(
     /* Local instance refs + controlled search text per field,
        used only for the "edit selected value via Backspace"
        fix. See handleEditableSelectBackspace above. */
-    const accountIdSelectRef =
+  
+    
+       const accountIdSelectRef =
       useRef<SelectInstance<
         AccountOption,
         false
@@ -3203,6 +3837,51 @@ export const ReceiptTable =
           },
           []
         );
+
+      /*
+       * =========================================================
+       * AUTO-SELECT / RE-SYNC SELECTED ROW ON LOAD
+       * =========================================================
+       *
+       * onRowSelect (which the parent uses to populate the
+       * bottom Description/Note fields) was previously only
+       * fired by a user action - clicking a row, focusing one
+       * of its fields, etc. That left the description box
+       * empty right after data loaded, until the user clicked
+       * a row themselves.
+       *
+       * It's not enough to select the first row only when its
+       * id is missing: a row commonly exists (e.g. id 1) from
+       * the very first render, and its real description/data
+       * arrives slightly later from an API call while keeping
+       * the SAME id. Checking "does this id still exist" says
+       * yes both times, so onRowSelect never re-fires with the
+       * freshly loaded data.
+       *
+       * Instead, every time `rows` changes we resolve the
+       * current target row (the previously selected id if it's
+       * still present, otherwise the first row) and push it
+       * through setSelectedRowId again. setSelectedRowId always
+       * calls onRowSelect with whatever that row's latest data
+       * is, so the bottom form keeps in sync as data loads -
+       * including on the very first load.
+       */
+      useEffect(() => {
+        if (rows.length === 0) {
+          return;
+        }
+
+        const targetRow =
+          rows.find(
+            (currentRow) =>
+              currentRow.id ===
+              selectedRowId
+          ) || rows[0];
+
+        setSelectedRowId(targetRow.id);
+
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+      }, [rows]);
 
       const realAccountOptions =
         useMemo<AccountOption[]>(

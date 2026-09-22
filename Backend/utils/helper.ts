@@ -1,3 +1,4 @@
+import pool from '../DB/db.js';
 import {MatchRow,GetDataMatchParams,MatchTotalParams} from '../types/types.js'
 
 
@@ -157,4 +158,18 @@ export const CheckISdividISccid = async (
       );
     }
   }
+};
+
+
+
+
+export const isActivePeriod = async (strBrID: any, dtpDate: any, coId: any) => {
+  const result = await pool.query(
+    `
+      SELECT dbo.isactiveperiod($1, $2, $3) AS is_active
+    `,
+    [coId, strBrID, dtpDate]
+  );
+
+  return result.rows[0]?.is_active === true;
 };

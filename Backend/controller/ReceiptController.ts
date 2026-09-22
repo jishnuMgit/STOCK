@@ -7,7 +7,7 @@ import {
   saveReceiptService,
   updateReceiptService,
 } from "../services/receiptService.js";
-import {cleanReceiptPayload,CheckISdividISccid} from '../utils/helper.js'
+import {cleanReceiptPayload,CheckISdividISccid, isActivePeriod} from '../utils/helper.js'
 import {getReceiptPrintData}from '../services/receiptPrintService.js'
 import { GetData } from "../services/GetDataService.js";
 
@@ -564,14 +564,19 @@ export const saveReceipt = async (
   res: Response
 ): Promise<Response> => {
 
-  console.log("===============================");
-  console.log(req.body);
-  console.log("===============================");
+  // console.log("===============================");
+  // console.log(req.body);
+  // console.log("===============================");
 
   try {
     const payload = cleanReceiptPayload(req.body);
 
+    console.log("++++++++++++++++++++++++++++++++")
+
     console.log(payload);
+    
+    console.log("++++++++++++++++++++++++++++++++")
+
 
     const PstrCoID = process.env.PstrCoID;
 
@@ -585,6 +590,21 @@ export const saveReceipt = async (
       pool,
       PstrCoID
     );
+
+
+    const active = await isActivePeriod(
+  payload?.branch,
+  payload?.receiptDate,
+  PstrCoID
+
+);
+
+if (!active) {
+  return res.status(400).json({
+    success: false,
+    message: "'Date' must be within the Active Period"
+  });
+}
 
     // ONLY SAVE IF VALIDATION PASSED
     const result = await saveReceiptService(payload);
