@@ -805,8 +805,171 @@ const accountDropdownStyles = {
 /* =========================================================
    EXPORT
 ========================================================= */
+import { components } from "react-select";
 
+const BranchMenuList = (props: any) => {
+  return (
+    <components.MenuList {...props}>
+      {/* Header */}
+      <div
+        style={{
+          display: "grid",
+          gridTemplateColumns: "1fr 40px",
+          padding: "6px 10px",
+          backgroundColor: "#f5f7fa",
+          borderBottom: "1px solid #d7dee7",
+          fontSize: "11px",
+          fontWeight: 600,
+          color: "#555",
+          position: "sticky",
+          top: 0,
+          zIndex: 99999,
+        }}
+      >
+        <div>Branch </div>
+        <div> ID</div>
+      </div>
+
+      {props.children}
+    </components.MenuList>
+  );
+};
+
+const BranchOption = (props: any) => {
+  const { data } = props;
+
+  return (
+    <components.Option {...props}>
+      <div
+        style={{
+          display: "grid",
+          gridTemplateColumns: "1fr 40px",
+          width: "100%",
+          alignItems: "center",
+          fontSize: "12px",
+        }}
+      >
+        <div>{data.label}</div>
+
+        <div style={{ color: "#555" }}>
+          {data.value}
+        </div>
+      </div>
+    </components.Option>
+  );
+};
+
+
+const TypeMenuList = (props: any) => {
+  return (
+    <components.MenuList {...props}>
+      {/* Header */}
+      <div
+        style={{
+          display: "grid",
+          gridTemplateColumns: "1fr 10px",
+          padding: "6px 10px",
+          backgroundColor: "#f5f7fa",
+          borderBottom: "1px solid #d7dee7",
+          fontSize: "11px",
+          fontWeight: 600,
+          color: "#555",
+          position: "sticky",
+          top: 0,
+          zIndex: 99999,
+        }}
+      >
+        <div>Type</div>
+        <div> ID</div>
+      </div>
+
+      {props.children}
+    </components.MenuList>
+  );
+};
+
+const TypeOption = (props: any) => {
+  const { data } = props;
+
+  return (
+    <components.Option {...props}>
+      <div
+        style={{
+          display: "grid",
+          gridTemplateColumns: "1fr 20px",
+          width: "100%",
+          alignItems: "center",
+          fontSize: "12px",
+        }}
+      >
+        <div>{data.label}</div>
+
+        <div style={{ color: "#555" }}>
+          {data.value}
+        </div>
+      </div>
+    </components.Option>
+  );
+};
+
+const BankCashMenuList = (props: any) => {
+  return (
+    <components.MenuList {...props}>
+      {/* Header */}
+      <div
+        style={{
+          display: "grid",
+          gridTemplateColumns: "1fr 60px",
+          padding: "6px 10px",
+          backgroundColor: "#f5f7fa",
+          borderBottom: "1px solid #d7dee7",
+          fontSize: "11px",
+          fontWeight: 600,
+          color: "#555",
+          position: "sticky",
+          top: 0,
+          zIndex: 99999,
+        }}
+      >
+        <div>Account Name</div>
+        <div>Account ID</div>
+      </div>
+
+      {props.children}
+    </components.MenuList>
+  );
+};
+
+const BankCashOption = (props: any) => {
+  const { data } = props;
+
+  return (
+    <components.Option {...props}>
+      <div
+        style={{
+          display: "grid",
+          gridTemplateColumns: "1fr 60px",
+          width: "100%",
+          alignItems: "center",
+          fontSize: "12px",
+        }}
+      >
+        <div>{data.label}</div>
+
+        <div style={{ color: "#555" }}>
+          {data.value}
+        </div>
+      </div>
+    </components.Option>
+  );
+};
 export {
   selectStyles,
   accountDropdownStyles,
+  BranchMenuList,
+  BranchOption,
+  TypeMenuList,
+  TypeOption,
+  BankCashMenuList,
+  BankCashOption
 };

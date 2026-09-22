@@ -1,6 +1,6 @@
 import type { Request, Response } from "express";
 import pool from "../DB/db.js";
-import {getDocumentsToMatch} from '../services/matchService.js'
+import { getDocumentsToMatch } from '../services/matchService.js'
 
 
 
@@ -62,17 +62,17 @@ export const getCSaccounts = async (
         [PstrCoID]
       ),
 
- pool.query(  `
+      pool.query(`
         SELECT *
         FROM dbo.getdoctype($1,$2)
         `,
-        [PstrCoID,"FIN"]
+        [PstrCoID, "FIN"]
       ),
 
     ]);
 
 
-    
+
 
 
 
@@ -91,7 +91,7 @@ export const getCSaccounts = async (
       AccountName:
         AccountName.rows,
 
-        DocType:DocType.rows,
+      DocType: DocType.rows,
 
       message:
         "Receipt data loaded successfully",
@@ -125,7 +125,7 @@ export const GetData = async (
   const client = await pool.connect();
 
   try {
-    
+
 
 
 
@@ -138,7 +138,7 @@ export const GetData = async (
 
     const strCoID = process.env.PstrCoID;
     const strYear = process.env.PstrYear;
-const {
+    const {
       strDocType,
       strCSAccountID,
       strDivID,

@@ -13,25 +13,25 @@ const app = express();
 app.use(express.json());
 app.use(cors());
 
-app.get("/test-db", async (req, res) => {
-  try {
-    const result = await pool.query("SELECT NOW()");
+// app.get("/test-db", async (req, res) => {
+//   try {
+//     const result = await pool.query("SELECT NOW()");
 
-    res.json({
-      success: true,
-      message: "PostgreSQL connected",
-      time: result.rows[0].now,
-    });
-  } catch (error: unknown) {
-    console.error(error);
+//     res.json({
+//       success: true,
+//       message: "PostgreSQL connected",
+//       time: result.rows[0].now,
+//     });
+//   } catch (error: unknown) {
+//     console.error(error);
 
-    res.status(500).json({
-      success: false,
-      message: "Database connection failed",
-      error: error instanceof Error ? error.message : "Unknown error",
-    });
-  }
-});
+//     res.status(500).json({
+//       success: false,
+//       message: "Database connection failed",
+//       error: error instanceof Error ? error.message : "Unknown error",
+//     });
+//   }
+// });
 
 app.use("/api/Receipt", ReceiptRouter);
 app.use('/api/Match',MatchRouter)
