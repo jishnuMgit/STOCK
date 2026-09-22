@@ -37,6 +37,13 @@ const UnMatch = lazy(
     )
 );
 
+const Login = lazy(
+  () =>
+    import(
+      "../pages/Auth/LoginPage"
+    )
+);
+
 const StatementOfAccountMain=lazy(()=>import(
   "../pages/Reports/StatementOfAccount/StatementOfAccountMain"
 ))
@@ -122,6 +129,11 @@ const AppRoutes = () => {
         <Route
           path="/Transaction/Transaction-unmatching"
           element={<UnMatch />}
+        />
+
+        <Route
+          path="/login"
+          element={<Login />}
         />
 
 

@@ -26,10 +26,12 @@ function AppLayout() {
           SIDE NAVIGATION
       ================================================= */}
 
-      <SideNav
-        activePath={location.pathname}
-        onNavigate={navigate}
-      />
+      {location.pathname !== "/login" && (
+        <SideNav
+          activePath={location.pathname}
+          onNavigate={navigate}
+        />
+      )}
 
       {/* =================================================
           PAGE CONTENT
