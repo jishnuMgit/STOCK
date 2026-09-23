@@ -45,7 +45,7 @@ const getFillerHeightMm = (rowsOnPage: number) => {
 };
 
 const assetUrl = (fileName: string) =>
-  `${import.meta.env.BASE_URL}images/${fileName}`;
+  `${import.meta.env.VITE_API_URL}images/${fileName}`;
 
 const probeImage = (src: string) =>
   new Promise<boolean>((resolve) => {
