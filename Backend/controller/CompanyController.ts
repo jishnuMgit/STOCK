@@ -6,11 +6,6 @@ export const getCompanies = async (
   res: Response,
 ): Promise<Response> => {
   try {
-    const dbCheck = await pool.query(
-      "SELECT current_database(), current_schema();",
-    );
-    console.log("Connected to:", dbCheck.rows);
-
     const result = await pool.query(`
       SELECT
         fcoid AS "fCoID",
@@ -26,8 +21,6 @@ export const getCompanies = async (
       FROM dbo.tblcompany
       ORDER BY fpositionno, fcoid
     `);
-
-    console.log("Row count:", result.rowCount);
 
     return res.status(200).json({
       success: true,
