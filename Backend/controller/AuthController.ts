@@ -75,10 +75,10 @@ export const login = async (req: Request, res: Response): Promise<Response> => {
       year,
       userId,
       password,
-      language,
-      changePassword,
-      newPassword,
-      confirmPassword,
+      // language,
+      // changePassword,
+      // newPassword,
+      // confirmPassword,
     } = req.body;
 
     /* =====================================================
@@ -101,35 +101,26 @@ export const login = async (req: Request, res: Response): Promise<Response> => {
 
     /* =====================================================
        COMPANY USER / ADMIN LOGIN
-       
-       Old VB logic:
-
-       If UserID and Password empty
-       AND ChangePassword checked
-       AND NewPassword = CompanyPassword
-
-       Then:
-          UserID = ADMIN
-          blnCoUser = True
+       (Disabled for now — depends on changePassword flow)
     ===================================================== */
 
-    if (!userId && !password && changePassword === true) {
-      const companyPassword = process.env.COMPANY_PASSWORD;
-
-      if (companyPassword && newPassword === companyPassword) {
-        return res.status(200).json({
-          success: true,
-          message: "Login successful",
-          user: {
-            userId: "ADMIN",
-            companyId,
-            year,
-            language: language || null,
-            isCompanyUser: true,
-          },
-        });
-      }
-    }
+    // if (!userId && !password && changePassword === true) {
+    //   const companyPassword = process.env.COMPANY_PASSWORD;
+    //
+    //   if (companyPassword && newPassword === companyPassword) {
+    //     return res.status(200).json({
+    //       success: true,
+    //       message: "Login successful",
+    //       user: {
+    //         userId: "ADMIN",
+    //         companyId,
+    //         year,
+    //         language: language || null,
+    //         isCompanyUser: true,
+    //       },
+    //     });
+    //   }
+    // }
 
     /* =====================================================
        USER ID
@@ -155,21 +146,18 @@ export const login = async (req: Request, res: Response): Promise<Response> => {
 
     /* =====================================================
        LANGUAGE
+       (Disabled for now)
     ===================================================== */
 
-    if (!language) {
-      return res.status(400).json({
-        success: false,
-        message: "Please select Language",
-      });
-    }
+    // if (!language) {
+    //   return res.status(400).json({
+    //     success: false,
+    //     message: "Please select Language",
+    //   });
+    // }
 
     /* =====================================================
        GET USER PASSWORD
-       
-       Equivalent to:
-
-       objLogin.GetUserPwd(Me.txtUserID.Text)
     ===================================================== */
 
     const userPasswordResult = await pool.query(
@@ -203,16 +191,6 @@ export const login = async (req: Request, res: Response): Promise<Response> => {
       });
     }
 
-    /* =====================================================
-       USER PASSWORD SEED
-
-       Replace this with your actual old
-       gUserPwdSeed value.
-
-       Example:
-       USER_PWD_SEED=123
-    ===================================================== */
-
     const userPwdSeed = Number(process.env.USER_PWD_SEED);
 
     if (!Number.isFinite(userPwdSeed)) {
@@ -222,22 +200,7 @@ export const login = async (req: Request, res: Response): Promise<Response> => {
       });
     }
 
-    /* =====================================================
-       DECRYPT OLD PASSWORD
-    ===================================================== */
-
     const decryptedPassword = decryptPwd(encryptedPassword, userPwdSeed);
-
-    /* =====================================================
-       CHECK PASSWORD
-       
-       Old VB:
-
-       If Not String.Equals(
-           strUserPwd,
-           Me.txtUserPwd.Text
-       )
-    ===================================================== */
 
     if (decryptedPassword !== password) {
       return res.status(401).json({
@@ -248,10 +211,6 @@ export const login = async (req: Request, res: Response): Promise<Response> => {
 
     /* =====================================================
        USER STATUS
-       
-       Equivalent to:
-
-       objLogin.GetUserStatus(Me.txtUserID.Text)
     ===================================================== */
 
     const userStatusResult = await pool.query(
@@ -276,13 +235,6 @@ export const login = async (req: Request, res: Response): Promise<Response> => {
 
     /* =====================================================
        COMPANY ACCESS
-       
-       Equivalent to:
-
-       objCommon.HasCoRight(
-           companyID,
-           userID
-       )
     ===================================================== */
 
     const companyRightResult = await pool.query(
@@ -307,72 +259,48 @@ export const login = async (req: Request, res: Response): Promise<Response> => {
 
     /* =====================================================
        CHANGE PASSWORD
-       
-       Equivalent to VB:
-
-       If chkChangePwd.Checked Then
+       (Disabled for now)
     ===================================================== */
 
-    if (changePassword === true) {
-      if (!newPassword) {
-        return res.status(400).json({
-          success: false,
-          message: "Please input Password",
-        });
-      }
-
-      if (!confirmPassword) {
-        return res.status(400).json({
-          success: false,
-          message: "Please input the Confirm Password",
-        });
-      }
-
-      if (newPassword !== confirmPassword) {
-        return res.status(400).json({
-          success: false,
-          message: "Please input the Confirm Password correctly",
-        });
-      }
-
-      /* ===================================================
-         OLD:
-
-         objCommon.CheckPwdLength(
-             Me.txtNewPwd.Text
-         )
-
-         Add your actual password-length rule here.
-      =================================================== */
-
-      if (newPassword.length < 6) {
-        return res.status(400).json({
-          success: false,
-          message: "Password must be at least 6 characters",
-        });
-      }
-
-      /* ===================================================
-         ENCRYPT NEW PASSWORD USING OLD ALGORITHM
-      =================================================== */
-
-      const encryptedNewPassword = encryptPwd(newPassword, userPwdSeed);
-
-      /* ===================================================
-         UPDATE PASSWORD
-         
-         Replace function/table with your actual DB
-         implementation.
-      =================================================== */
-
-      await pool.query(
-        `
-        SELECT *
-        FROM dbo.updateuserpassword($1, $2)
-        `,
-        [userId, encryptedNewPassword],
-      );
-    }
+    // if (changePassword === true) {
+    //   if (!newPassword) {
+    //     return res.status(400).json({
+    //       success: false,
+    //       message: "Please input Password",
+    //     });
+    //   }
+    //
+    //   if (!confirmPassword) {
+    //     return res.status(400).json({
+    //       success: false,
+    //       message: "Please input the Confirm Password",
+    //     });
+    //   }
+    //
+    //   if (newPassword !== confirmPassword) {
+    //     return res.status(400).json({
+    //       success: false,
+    //       message: "Please input the Confirm Password correctly",
+    //     });
+    //   }
+    //
+    //   if (newPassword.length < 6) {
+    //     return res.status(400).json({
+    //       success: false,
+    //       message: "Password must be at least 6 characters",
+    //     });
+    //   }
+    //
+    //   const encryptedNewPassword = encryptPwd(newPassword, userPwdSeed);
+    //
+    //   await pool.query(
+    //     `
+    //     SELECT *
+    //     FROM dbo.updateuserpassword($1, $2)
+    //     `,
+    //     [userId, encryptedNewPassword],
+    //   );
+    // }
 
     /* =====================================================
        SUCCESS
@@ -386,7 +314,7 @@ export const login = async (req: Request, res: Response): Promise<Response> => {
         userId,
         companyId,
         year,
-        language,
+        // language,
       },
     });
   } catch (error: unknown) {

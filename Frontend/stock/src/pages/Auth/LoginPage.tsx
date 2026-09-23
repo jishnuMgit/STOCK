@@ -9,38 +9,55 @@ import {
   EyeOff,
   Eye,
 } from "lucide-react";
+import { useCompanies } from "../../hooks/useCompanies";
+import { useLogin } from "../../hooks/useLogin";
+import { toast } from "react-toastify";
 
 const currentYear = new Date().getFullYear();
 
 const years = Array.from({ length: 17 }, (_, index) => currentYear - index);
 
 const LoginPage: React.FC = () => {
+  const {
+    companies,
+    loading: companiesLoading,
+    error: companiesError,
+  } = useCompanies();
+
+  const { login, loading: loginLoading, error: loginError } = useLogin();
+
+  const [companyId, setCompanyId] = useState("");
   const [userId, setUserId] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
-  const [company, setCompany] = useState("CARAVAN TRAVEL");
-  const [year, setYear] = useState("2026");
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  const [language, setLanguage] = useState("English");
-  const [changePassword, setChangePassword] = useState(false);
+  const [year, setYear] = useState(currentYear.toString());
 
   const userIdRef = useRef<HTMLInputElement>(null);
   const passwordRef = useRef<HTMLInputElement>(null);
   const companyRef = useRef<HTMLSelectElement>(null);
   const yearRef = useRef<HTMLSelectElement>(null);
-  const changePasswordRef = useRef<HTMLInputElement>(null);
 
-  const handleLogin = (e: React.FormEvent<HTMLFormElement>) => {
+  const handleLogin = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
 
-    console.log({
+    const result = await login({
+      companyId,
+      year,
       userId,
       password,
-      company,
-      year,
-      language,
-      changePassword,
+      // language: "English",
+      // changePassword: false,
     });
+
+    if (!result) {
+      return;
+    }
+
+    toast.success(result.message || "Login successful");
+
+    console.log("Login successful:", result);
+
+    // Navigate to dashboard here
   };
 
   return (
@@ -62,12 +79,8 @@ const LoginPage: React.FC = () => {
         <div className="p-8 md:p-10">
           {/* Form Header */}
           <div className="mb-8 rounded-xl bg-linear-to-r from-emerald-100 to-emerald-50 px-7 py-6">
-            <h1 className="text-3xl font-bold tracking-tight uppercase text-slate-900">
-              Stock
-            </h1>
-
             <p className="mt-2 text-sm font-medium tracking-[0.28em] text-slate-600">
-              PLEASE LOGIN TO CONTINUE
+              Please login to connect
             </p>
           </div>
 
@@ -88,6 +101,8 @@ const LoginPage: React.FC = () => {
                   ref={userIdRef}
                   type="text"
                   value={userId}
+                  name="userId"
+                  maxLength={30}
                   onChange={(e) => setUserId(e.target.value)}
                   onKeyDown={(e) => {
                     if (e.key === "Enter") {
@@ -118,6 +133,7 @@ const LoginPage: React.FC = () => {
                   ref={passwordRef}
                   type={showPassword ? "text" : "password"}
                   value={password}
+                  name="password"
                   onChange={(e) => setPassword(e.target.value)}
                   onKeyDown={(e) => {
                     if (e.key === "Enter") {
@@ -153,13 +169,22 @@ const LoginPage: React.FC = () => {
 
                   <select
                     ref={companyRef}
-                    value={company}
-                    onChange={(e) => setCompany(e.target.value)}
+                    value={companyId || companies[0]?.fCoID || ""}
+                    name="company"
+                    onChange={(e) => setCompanyId(e.target.value)}
                     className="h-full w-full cursor-pointer appearance-none bg-white px-4 pr-10 text-sm text-slate-800 outline-none"
                     required
+                    disabled={companiesLoading}
                   >
-                    <option value="CARAVAN TRAVEL">CARAVAN TRAVEL</option>
-                    <option value="CARAVAN TOURS">CARAVAN TOURS</option>
+                    {companiesLoading ? (
+                      <option value="">Loading companies...</option>
+                    ) : (
+                      companies.map((company) => (
+                        <option key={company.fCoID} value={company.fCoID}>
+                          {company.fCoName_Short || company.fCoName}
+                        </option>
+                      ))
+                    )}
                   </select>
 
                   <ChevronDown
@@ -182,6 +207,7 @@ const LoginPage: React.FC = () => {
                   <select
                     ref={yearRef}
                     value={year}
+                    name="year"
                     onChange={(e) => setYear(e.target.value)}
                     className="h-full w-full cursor-pointer appearance-none bg-white px-4 pr-10 text-sm text-slate-800 outline-none"
                     required
@@ -199,70 +225,25 @@ const LoginPage: React.FC = () => {
                 </div>
               </div>
             </div>
-            {/* Language */}
-            {/* <div className="grid grid-cols-[120px_1fr] items-center gap-4">
-
-              <label className="text-right text-base font-medium text-slate-800">
-                Language :
-              </label>
-
-              <div className="relative w-64">
-
-                <div className="flex h-12 overflow-hidden rounded-lg border border-slate-300 bg-white">
-
-                  <div className="flex w-14 items-center justify-center border-r border-slate-200 bg-slate-50">
-                    <Globe2
-                      size={19}
-                      className="text-slate-500"
-                    />
-                  </div>
-
-                  <select
-                    value={language}
-                    onChange={(e) =>
-                      setLanguage(e.target.value)
-                    }
-                    className="w-full appearance-none bg-white px-4 pr-10 text-sm text-slate-800 outline-none"
-                  >
-                    <option value="English">
-                      English
-                    </option>
-
-                    <option value="Arabic">
-                      Arabic
-                    </option>
-                  </select>
-
-                  <ChevronDown
-                    size={19}
-                    className="pointer-events-none absolute right-4 top-1/2 -translate-y-1/2 text-slate-500"
-                  />
-
-                </div>
+            {loginError && (
+              <div className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-600">
+                {loginError}
               </div>
-            </div> */}
-            {/* Change Password */}
-            <div className="grid grid-cols-[120px_1fr] items-center gap-4 pt-1">
-              <div />
-
-              <label className="flex cursor-pointer items-center gap-3 text-sm font-medium text-slate-700">
-                <input
-                  ref={changePasswordRef}
-                  type="checkbox"
-                  checked={changePassword}
-                  onChange={(e) => setChangePassword(e.target.checked)}
-                  className="h-5 w-5 rounded border-slate-300 accent-emerald-500"
-                />
-                Change Password
-              </label>
-            </div>
+            )}
+            {companiesError && (
+              <div className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-600">
+                {companiesError}
+              </div>
+            )}
             {/* Buttons */}
             <button
               type="submit"
-              className="flex h-13 w-full cursor-pointer items-center justify-center gap-3 rounded-lg bg-emerald-500 px-6 py-3.5 text-base font-semibold text-white shadow-md transition hover:bg-emerald-600 hover:shadow-lg active:scale-[0.99]"
+              disabled={loginLoading || companiesLoading}
+              className="flex h-13 w-full cursor-pointer items-center justify-center gap-3 rounded-lg bg-emerald-500 px-6 py-3.5 text-lg font-semibold text-white shadow-md transition hover:bg-emerald-600 hover:shadow-lg active:scale-[0.99] disabled:cursor-not-allowed disabled:opacity-60"
             >
               <LogIn size={21} />
-              Login
+
+              {loginLoading ? "Logging in..." : "Login"}
             </button>
             {/* Bottom Information */}
             <div className="mt-7 border-t border-slate-200 pt-5 text-center">

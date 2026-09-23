@@ -5,6 +5,7 @@ import cors from "cors";
 import ReceiptRouter from "./routes/ReceiptRouter.js";
 import MatchRouter from "./routes/MatchRouter.js";
 import LoginRouter from "./routes/AuthRouter.js";
+import CompanyRouter from "./routes/CompanyRouter.js";
 import pool from "./DB/db.js";
 
 dotenv.config();
@@ -36,7 +37,8 @@ app.use(cors());
 
 app.use("/api/Receipt", ReceiptRouter);
 app.use("/api/Match", MatchRouter);
-app.use("/api/login", LoginRouter);
+app.use("/api/auth", LoginRouter);
+app.use("/api/companies", CompanyRouter);
 
 app.listen(5000, () => {
   console.log("Server running on http://localhost:5000");
