@@ -10,12 +10,10 @@ import {
   Eye,
 } from "lucide-react";
 import { useCompanies } from "../../hooks/useCompanies";
+import { useYears } from "../../hooks/useYears";
 import { useLogin } from "../../hooks/useLogin";
 import { toast } from "react-toastify";
-
-const currentYear = new Date().getFullYear();
-
-const years = Array.from({ length: 17 }, (_, index) => currentYear - index);
+import { useNavigate } from "react-router-dom";
 
 const LoginPage: React.FC = () => {
   const {
@@ -30,23 +28,38 @@ const LoginPage: React.FC = () => {
   const [userId, setUserId] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
-  const [year, setYear] = useState(currentYear.toString());
+  const [year, setYear] = useState("");
+
+  const selectedCompanyId = companyId || companies[0]?.fCoID || "";
+
+  const {
+    years,
+    loading: yearsLoading,
+    error: yearsError,
+  } = useYears(companyId || companies[0]?.fCoID || "");
+
+  // Derived value — no effect needed, mirrors the companyId fallback pattern
+  const selectedYear = years.some((y) => y.fYear.toString() === year)
+    ? year
+    : years[0]?.fYear.toString() || "";
 
   const userIdRef = useRef<HTMLInputElement>(null);
   const passwordRef = useRef<HTMLInputElement>(null);
   const companyRef = useRef<HTMLSelectElement>(null);
   const yearRef = useRef<HTMLSelectElement>(null);
 
+  const navigate = useNavigate();
+
+  // Default year selection once years load (mirrors old VB ItemIndex = 0 behavior)
+
   const handleLogin = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
 
     const result = await login({
-      companyId,
-      year,
+      companyId: selectedCompanyId,
+      year: selectedYear,
       userId,
       password,
-      // language: "English",
-      // changePassword: false,
     });
 
     if (!result) {
@@ -55,9 +68,7 @@ const LoginPage: React.FC = () => {
 
     toast.success(result.message || "Login successful");
 
-    console.log("Login successful:", result);
-
-    // Navigate to dashboard here
+    navigate("/");
   };
 
   return (
@@ -169,7 +180,7 @@ const LoginPage: React.FC = () => {
 
                   <select
                     ref={companyRef}
-                    value={companyId || companies[0]?.fCoID || ""}
+                    value={selectedCompanyId}
                     name="company"
                     onChange={(e) => setCompanyId(e.target.value)}
                     className="h-full w-full cursor-pointer appearance-none bg-white px-4 pr-10 text-sm text-slate-800 outline-none"
@@ -206,17 +217,26 @@ const LoginPage: React.FC = () => {
                   </div>
                   <select
                     ref={yearRef}
-                    value={year}
+                    value={selectedYear}
                     name="year"
                     onChange={(e) => setYear(e.target.value)}
                     className="h-full w-full cursor-pointer appearance-none bg-white px-4 pr-10 text-sm text-slate-800 outline-none"
                     required
+                    disabled={
+                      yearsLoading || (!companyId && !companies[0]?.fCoID)
+                    }
                   >
-                    {years.map((yearValue) => (
-                      <option key={yearValue} value={yearValue}>
-                        {yearValue}
-                      </option>
-                    ))}
+                    {yearsLoading ? (
+                      <option value="">Loading years...</option>
+                    ) : years.length === 0 ? (
+                      <option value="">No years found</option>
+                    ) : (
+                      years.map((y) => (
+                        <option key={y.fYear} value={y.fYear}>
+                          {y.fYear}
+                        </option>
+                      ))
+                    )}
                   </select>
                   <ChevronDown
                     size={18}
@@ -233,6 +253,11 @@ const LoginPage: React.FC = () => {
             {companiesError && (
               <div className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-600">
                 {companiesError}
+              </div>
+            )}
+            {yearsError && (
+              <div className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-600">
+                {yearsError}
               </div>
             )}
             {/* Buttons */}
