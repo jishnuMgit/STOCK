@@ -6,7 +6,7 @@ const pool = new Pool({
   port: 5432,
   database: "STOCK",
   user: "postgres",
-  password: "password1234",
+  password: "password123",
 });
 
 pool.on("connect", () => {
