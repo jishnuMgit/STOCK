@@ -1491,14 +1491,12 @@ export async function saveReceiptService(
 ========================================================= */
 
 export async function deleteReceiptService({
-  branch,
-  type,
-  receiptNo,
+  lkpBranch,
+  Type,
+  txtReceiptNo,
 }: ReceiptDocumentParams): Promise<ServiceResult> {
 
-  const client =
-    await pool.connect();
-
+  const client = await pool.connect();
 
   try {
 
@@ -1506,36 +1504,16 @@ export async function deleteReceiptService({
        VALIDATION
     ===================================================== */
 
-    if (
-      isEmpty(branch)
-    ) {
-
-      throw new Error(
-        "Branch is required"
-      );
-
+    if (isEmpty(lkpBranch)) {
+      throw new Error("Branch is required");
     }
 
-
-    if (
-      isEmpty(type)
-    ) {
-
-      throw new Error(
-        "Receipt type is required"
-      );
-
+    if (isEmpty(Type)) {
+      throw new Error("Receipt type is required");
     }
 
-
-    if (
-      isEmpty(receiptNo)
-    ) {
-
-      throw new Error(
-        "Receipt number is required"
-      );
-
+    if (isEmpty(txtReceiptNo)) {
+      throw new Error("Receipt number is required");
     }
 
 
@@ -1543,17 +1521,14 @@ export async function deleteReceiptService({
        DOCUMENT TYPE
     ===================================================== */
 
-    const finalDocType =
-      toDocumentType(type);
+    const finalDocType = toDocumentType(Type);
 
 
     /* =====================================================
        BEGIN
     ===================================================== */
 
-    await client.query(
-      "BEGIN"
-    );
+    await client.query("BEGIN");
 
 
     /* =====================================================
@@ -1563,15 +1538,9 @@ export async function deleteReceiptService({
     await deleteReceiptInternal(
       client,
       {
-
-        branch,
-
-        docType:
-          finalDocType,
-
-        docNo:
-          receiptNo,
-
+        branch: lkpBranch,
+        docType: finalDocType,
+        docNo: txtReceiptNo,
       }
     );
 
@@ -1580,9 +1549,7 @@ export async function deleteReceiptService({
        COMMIT
     ===================================================== */
 
-    await client.query(
-      "COMMIT"
-    );
+    await client.query("COMMIT");
 
 
     /* =====================================================
@@ -1591,23 +1558,18 @@ export async function deleteReceiptService({
 
     return {
 
-      message:
-        "Receipt deleted successfully",
+      message: "Receipt deleted successfully",
 
       data: {
 
-        companyId:
-          PstrCoID,
+        companyId: PstrCoID,
+        year: PstrYear,
 
-        year:
-          PstrYear,
+        lkpBranch,
 
-        branch,
+        type: finalDocType,
 
-        docType:
-          finalDocType,
-
-        receiptNo,
+        txtReceiptNo,
 
       },
 
@@ -1616,26 +1578,18 @@ export async function deleteReceiptService({
   } catch (error: unknown) {
 
     try {
-
-      await client.query(
-        "ROLLBACK"
-      );
-
+      await client.query("ROLLBACK");
     } catch (rollbackError: unknown) {
-
       console.error(
         "Delete rollback error:",
         rollbackError
       );
-
     }
-
 
     console.error(
       "deleteReceiptService error:",
       error
     );
-
 
     throw error;
 

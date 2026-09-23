@@ -183,7 +183,7 @@ const getTodayDate = () => {
    RECEIPT
 ========================================================= */
 
-const Receipt: React.FC = () => {
+const ReceiptPage: React.FC = () => {
   /* =======================================================
      HEADER FORM STATE
   ======================================================= */
@@ -493,10 +493,10 @@ const Receipt: React.FC = () => {
         try {
           const query =
             new URLSearchParams({
-              strbranch: branch,
-              strdocType:
+              lkpBranch: branch,
+              type:
                 toDocumentType(type),
-              strdocNo:
+              txtReceiptNo:
                 requestedDocumentNo,
             });
 
@@ -2152,9 +2152,9 @@ setFocusReceiptNoAfterClear(
       =============================================== */
 
       const receiptData = {
-        branch,
-        type: type + "R",
-        receiptNo: documentNo.trim(),
+       lkpBranch: branch,
+        Type: type + "R",
+        txtReceiptNo: documentNo.trim(),
       };
 
       console.log(
@@ -2632,4 +2632,4 @@ const clearForm = useCallback(async () => {
   );
 };
 
-export default Receipt;
+export default ReceiptPage;

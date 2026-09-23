@@ -445,9 +445,9 @@ async function callReceiptProcedure(
 ========================================================= */
 
 export async function GetDataTL({
-  strbranch,
-  strdocType,
-  strdocNo,
+  lkpBranch,
+  Type,
+  txtReceiptNo,
 }: GetDataParams): Promise<DbRow[]> {
 
   console.log(
@@ -460,25 +460,24 @@ export async function GetDataTL({
 
   console.log(
     "Branch:",
-    JSON.stringify(strbranch)
+    JSON.stringify(lkpBranch)
   );
 
   console.log(
     "Doc Type:",
-    JSON.stringify(strdocType)
+    JSON.stringify(Type)
   );
 
   console.log(
     "Doc No:",
-    JSON.stringify(strdocNo)
+    JSON.stringify(txtReceiptNo)
   );
 
   console.log(
     "======================================"
   );
 
-  const client =
-    await pool.connect();
+  const client = await pool.connect();
 
   try {
 
@@ -486,14 +485,12 @@ export async function GetDataTL({
        NORMALIZE
     ===================================================== */
 
-    const branch =
-      clean(strbranch);
+    const branch = clean(lkpBranch);
 
-    const docType =
-      toDocumentType(strdocType);
+    const docType = toDocumentType(Type);
 
-    const docNo =
-      clean(strdocNo);
+    const docNo = clean(txtReceiptNo);
+
 
     /* =====================================================
        VALIDATION
@@ -523,6 +520,7 @@ export async function GetDataTL({
 
     }
 
+
     /* =====================================================
        BEGIN TRANSACTION
     ===================================================== */
@@ -530,6 +528,7 @@ export async function GetDataTL({
     await client.query(
       "BEGIN"
     );
+
 
     /* =====================================================
        CURSOR NAME
@@ -540,6 +539,7 @@ export async function GetDataTL({
         Math.random() * 100000
       )}`;
 
+
     /* =====================================================
        CALL PROCEDURE
     ===================================================== */
@@ -548,8 +548,7 @@ export async function GetDataTL({
       await callReceiptProcedure(
         client,
         {
-          mode:
-            "GETTL",
+          mode: "GETTL",
 
           branch,
 
@@ -560,6 +559,7 @@ export async function GetDataTL({
           cursorName,
         }
       );
+
 
     /* =====================================================
        DEBUG
@@ -574,6 +574,7 @@ export async function GetDataTL({
       "GETTL rows:",
       rows
     );
+
 
     /* =====================================================
        COMMIT
@@ -629,9 +630,9 @@ export async function GetDataTL({
 ========================================================= */
 
 export async function GetDataHD({
-  strbranch,
-  strdocType,
-  strdocNo,
+  lkpBranch,
+  Type,
+  txtReceiptNo,
 }: GetDataParams): Promise<DbRow[]> {
 
   console.log(
@@ -644,25 +645,24 @@ export async function GetDataHD({
 
   console.log(
     "Branch:",
-    JSON.stringify(strbranch)
+    JSON.stringify(lkpBranch)
   );
 
   console.log(
     "Doc Type:",
-    JSON.stringify(strdocType)
+    JSON.stringify(Type)
   );
 
   console.log(
     "Doc No:",
-    JSON.stringify(strdocNo)
+    JSON.stringify(txtReceiptNo)
   );
 
   console.log(
     "======================================"
   );
 
-  const client =
-    await pool.connect();
+  const client = await pool.connect();
 
   try {
 
@@ -671,13 +671,14 @@ export async function GetDataHD({
     ===================================================== */
 
     const branch =
-      clean(strbranch);
+      clean(lkpBranch);
 
     const docType =
-      toDocumentType(strdocType);
+      toDocumentType(Type);
 
     const docNo =
-      clean(strdocNo);
+      clean(txtReceiptNo);
+
 
     /* =====================================================
        VALIDATION
@@ -707,6 +708,7 @@ export async function GetDataHD({
 
     }
 
+
     /* =====================================================
        BEGIN TRANSACTION
     ===================================================== */
@@ -714,6 +716,7 @@ export async function GetDataHD({
     await client.query(
       "BEGIN"
     );
+
 
     /* =====================================================
        CURSOR NAME
@@ -724,6 +727,7 @@ export async function GetDataHD({
         Math.random() * 100000
       )}`;
 
+
     /* =====================================================
        CALL PROCEDURE
     ===================================================== */
@@ -732,8 +736,7 @@ export async function GetDataHD({
       await callReceiptProcedure(
         client,
         {
-          mode:
-            "GETHD",
+          mode: "GETHD",
 
           branch,
 
@@ -744,6 +747,7 @@ export async function GetDataHD({
           cursorName,
         }
       );
+
 
     /* =====================================================
        DEBUG
@@ -758,6 +762,7 @@ export async function GetDataHD({
       "GETHD rows:",
       rows
     );
+
 
     /* =====================================================
        COMMIT
@@ -824,9 +829,9 @@ export async function GetDataHD({
 ========================================================= */
 
 export async function GetData({
-  strbranch,
-  strdocType,
-  strdocNo,
+  lkpBranch,
+  Type,
+  txtReceiptNo,
 }: GetDataParams): Promise<GetDataResult> {
 
   console.log(
@@ -839,51 +844,50 @@ export async function GetData({
 
   console.log(
     "Branch:",
-    JSON.stringify(strbranch)
+    JSON.stringify(lkpBranch)
   );
 
   console.log(
     "Doc Type:",
-    JSON.stringify(strdocType)
+    JSON.stringify(Type)
   );
 
   console.log(
     "Doc No:",
-    JSON.stringify(strdocNo)
+    JSON.stringify(txtReceiptNo)
   );
 
   console.log(
     "======================================"
   );
 
+
   /* =======================================================
      NORMALIZE
   ======================================================= */
 
   const branch =
-    clean(strbranch);
+    clean(lkpBranch);
 
   const docType =
-    toDocumentType(strdocType);
+    toDocumentType(Type);
 
   const docNo =
-    clean(strdocNo);
+    clean(txtReceiptNo);
+
 
   /* =======================================================
      VALIDATION
   ======================================================= */
 
-  if (isEmpty(branch)) {
+  if (isEmpty(lkpBranch)) {
 
     return {
-      exists:
-        false,
+      exists: false,
 
-      header:
-        null,
+      header: null,
 
-      rows:
-        [],
+      rows: [],
 
       message:
         "Branch is required",
@@ -891,17 +895,15 @@ export async function GetData({
 
   }
 
-  if (isEmpty(docType)) {
+
+  if (isEmpty(Type)) {
 
     return {
-      exists:
-        false,
+      exists: false,
 
-      header:
-        null,
+      header: null,
 
-      rows:
-        [],
+      rows: [],
 
       message:
         "Receipt type is required",
@@ -909,23 +911,22 @@ export async function GetData({
 
   }
 
+
   if (isEmpty(docNo)) {
 
     return {
-      exists:
-        false,
+      exists: false,
 
-      header:
-        null,
+      header: null,
 
-      rows:
-        [],
+      rows: [],
 
       message:
         "Receipt number is required",
     };
 
   }
+
 
   /* =======================================================
      NORMALIZED DATA
@@ -940,6 +941,7 @@ export async function GetData({
     }
   );
 
+
   /* =======================================================
      GET DETAIL FIRST
   ======================================================= */
@@ -950,20 +952,16 @@ export async function GetData({
 
   const detailRows =
     await GetDataTL({
-      strbranch:
-        branch,
-
-      strdocType:
-        docType,
-
-      strdocNo:
-        docNo,
+      lkpBranch: branch,
+      Type: docType,
+      txtReceiptNo: docNo,
     });
 
   console.log(
     "GetDataTL returned:",
     detailRows.length
   );
+
 
   /* =======================================================
      GET HEADER
@@ -975,20 +973,16 @@ export async function GetData({
 
   const headerRows =
     await GetDataHD({
-      strbranch:
-        branch,
-
-      strdocType:
-        docType,
-
-      strdocNo:
-        docNo,
+      lkpBranch: branch,
+      Type: docType,
+      txtReceiptNo: docNo,
     });
 
   console.log(
     "GetDataHD returned:",
     headerRows.length
   );
+
 
   /* =======================================================
      CHECK RECEIPT
@@ -1004,14 +998,11 @@ export async function GetData({
     );
 
     return {
-      exists:
-        false,
+      exists: false,
 
-      header:
-        null,
+      header: null,
 
-      rows:
-        [],
+      rows: [],
 
       message:
         "Receipt not found",
@@ -1019,12 +1010,14 @@ export async function GetData({
 
   }
 
+
   /* =======================================================
      DATABASE HEADER
   ======================================================= */
 
   const dbHeader =
     headerRows[0];
+
 
   /* =======================================================
      HEADER
@@ -1056,6 +1049,7 @@ export async function GetData({
       dbHeader.fdate ??
       null,
 
+
     /* =====================================================
        CASH / BANK ACCOUNT
     ===================================================== */
@@ -1063,6 +1057,7 @@ export async function GetData({
     cbAccount:
       dbHeader.fcbaccountid ??
       "",
+
 
     /* =====================================================
        COST CENTER
@@ -1072,6 +1067,7 @@ export async function GetData({
       dbHeader.fccid ??
       "",
 
+
     /* =====================================================
        RECEIVED FROM / PAID TO
     ===================================================== */
@@ -1079,6 +1075,7 @@ export async function GetData({
     receivedFrom:
       dbHeader.freceivedfrompaidto ??
       "",
+
 
     /* =====================================================
        REFERENCE
@@ -1088,6 +1085,7 @@ export async function GetData({
       dbHeader.freference ??
       "",
 
+
     /* =====================================================
        NOTE
     ===================================================== */
@@ -1096,6 +1094,7 @@ export async function GetData({
       dbHeader.fnote ??
       "",
 
+
     /* =====================================================
        DIVISION
     ===================================================== */
@@ -1103,6 +1102,7 @@ export async function GetData({
     division:
       dbHeader.fdivid ??
       "",
+
 
     /* =====================================================
        TOTAL CREDIT
@@ -1114,6 +1114,7 @@ export async function GetData({
       ) || 0,
 
   };
+
 
   /* =======================================================
      DETAIL ROWS
@@ -1141,6 +1142,7 @@ export async function GetData({
               Number(row.fslno) ||
               index + 1,
 
+
             /* =================================================
                ACCOUNT
             ================================================= */
@@ -1149,18 +1151,15 @@ export async function GetData({
               row.faccountid ??
               "",
 
+
             /* =================================================
                ACCOUNT NAME
-
-               GETTL currently does not return
-               faccountname.
-
-               If required, add JOIN in PostgreSQL.
             ================================================= */
 
             accountName:
               row.faccountname ??
               "",
+
 
             /* =================================================
                G / CS
@@ -1170,6 +1169,7 @@ export async function GetData({
               row.fgcs ??
               "",
 
+
             /* =================================================
                DIVISION
             ================================================= */
@@ -1178,6 +1178,7 @@ export async function GetData({
               row.fdivid ??
               "",
 
+
             /* =================================================
                COST CENTER
             ================================================= */
@@ -1185,6 +1186,7 @@ export async function GetData({
             ccId:
               row.fccid ??
               "",
+
 
             /* =================================================
                CREDIT AMOUNT
@@ -1201,6 +1203,7 @@ export async function GetData({
 
                 : "",
 
+
             /* =================================================
                MATCH
             ================================================= */
@@ -1209,6 +1212,7 @@ export async function GetData({
               toBoolean(
                 row.fmatch
               ),
+
 
             /* =================================================
                DESCRIPTION
@@ -1222,6 +1226,7 @@ export async function GetData({
 
         }
       );
+
 
   /* =======================================================
      TOTAL
@@ -1248,14 +1253,14 @@ export async function GetData({
       0
     );
 
+
   /* =======================================================
      FINAL RESULT
   ======================================================= */
 
   const result: GetDataResult = {
 
-    exists:
-      true,
+    exists: true,
 
     header,
 
@@ -1270,6 +1275,7 @@ export async function GetData({
       `${header?.docNo} loaded`,
 
   };
+
 
   /* =======================================================
      DEBUG
@@ -1294,6 +1300,7 @@ export async function GetData({
   console.log(
     "======================================"
   );
+
 
   return result;
 }

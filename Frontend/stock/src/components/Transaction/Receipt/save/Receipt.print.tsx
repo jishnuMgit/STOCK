@@ -263,7 +263,7 @@ const InfoBox: React.FC<{
 
       <div className="receipt-info-row receipt-info-row-wide receipt-info-description">
         <span className="receipt-label">
-          Description
+          Note
         </span>
 
         <span className="receipt-colon">:</span>
@@ -669,7 +669,7 @@ const ReceiptPrint: React.FC<
         .receipt-info {
           min-height: 78mm;
           padding: 1.5mm 2mm;
-          border: 0.75pt solid #000000;
+          border: 0.25pt solid #000000;
           border-bottom: 0;
         }
 
@@ -740,7 +740,7 @@ const ReceiptPrint: React.FC<
           width: 100%;
           border-collapse: collapse;
           table-layout: fixed;
-          border: 0.75pt solid #000000;
+          border: 0.25pt solid #000000;
         }
 
         .receipt-lines th,
@@ -752,7 +752,7 @@ const ReceiptPrint: React.FC<
 
         .receipt-lines th + th,
         .receipt-lines td + td {
-          border-left: 0.5pt solid #000000;
+          border-left: 0.25pt solid #000000;
         }
 
         .receipt-lines th {
@@ -760,7 +760,7 @@ const ReceiptPrint: React.FC<
           font-weight: normal;
           text-align: left;
           vertical-align: middle;
-          border-bottom: 0.5pt solid #000000;
+          border-bottom: 0.25pt solid #000000;
         }
 
         /*
@@ -789,7 +789,7 @@ const ReceiptPrint: React.FC<
         .receipt-lines tfoot td {
           height: 7mm;
           vertical-align: middle;
-          border-top: 0.5pt solid #000000;
+          border-top: 0.25pt solid #000000;
           font-family:
             "Segoe UI",
             Tahoma,
@@ -817,7 +817,7 @@ const ReceiptPrint: React.FC<
           padding:
             8mm 2mm 2mm;
 
-          border: 0.75pt solid #000000;
+          border: 0.25pt solid #000000;
           border-top: 0;
 
           font-family:

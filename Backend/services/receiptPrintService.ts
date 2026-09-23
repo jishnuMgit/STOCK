@@ -133,7 +133,7 @@ const normalizeDocType = (value: string): string => {
    FILTER
 
    Same filter the VB form builds in GeneratePrintFilter.
-   sp_rptbankdetprint appends it to its WHERE clause, so every
+   sp_receiptprint appends it to its WHERE clause, so every
    value is validated and quoted here.
 ========================================================= */
 
@@ -167,7 +167,7 @@ const buildPrintFilter = ({
 };
 
 /* =========================================================
-   CALL sp_rptbankdetprint
+   CALL sp_receiptprint
 ========================================================= */
 
 async function runPrintProcedure(
@@ -185,7 +185,7 @@ async function runPrintProcedure(
 
     await client.query(
       `
-      CALL dbo.sp_rptbankdetprint(
+      CALL dbo.sp_receiptprint(
         $1::varchar,
         $2::varchar,
         $3::refcursor

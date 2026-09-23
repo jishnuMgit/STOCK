@@ -43,7 +43,7 @@ const LoginPage: React.FC = () => {
         <div className="flex h-14 items-center justify-between border-b border-slate-200 bg-white px-6">
 
           <div className="flex items-center gap-3">
-            <div className="flex h-8 w-8 items-center justify-center rounded-full bg-gradient-to-br from-emerald-400 to-emerald-600">
+            <div className="flex h-8 w-8 items-center justify-center rounded-full bg-linear-to-br from-emerald-400 to-emerald-600">
               <span className="text-sm font-bold text-white">
                 C
               </span>
@@ -83,7 +83,7 @@ const LoginPage: React.FC = () => {
         <div className="p-8 md:p-10">
 
           {/* Form Header */}
-          <div className="mb-8 rounded-xl bg-gradient-to-r from-emerald-100 to-emerald-50 px-7 py-6">
+          <div className="mb-8 rounded-xl bg-linear-to-r from-emerald-100 to-emerald-50 px-7 py-6">
 
             <h1 className="text-3xl font-bold tracking-tight uppercase text-slate-900">
               Stock

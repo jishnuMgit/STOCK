@@ -510,7 +510,7 @@ useEffect(() => {
               "application/json",
           },
           body: JSON.stringify({
-            cashorbank: cbType,
+             Type:cbType,
           }),
         }
       );

@@ -10,6 +10,7 @@ import {
 import {cleanReceiptPayload,CheckISdividISccid, isActivePeriod} from '../utils/helper.js'
 import {getReceiptPrintData}from '../services/receiptPrintService.js'
 import { GetData } from "../services/GetDataService.js";
+import { UserAudit } from "../utils/UserAudit.js";
 
 /* =========================================================
    GET RECEIPT INITIAL DATA
@@ -302,18 +303,19 @@ export const getReceiptType = async (
   try {
     const PstrCoID = process.env.PstrCoID;
 
-    const { cashorbank: type } = req.body;
+    const {  Type } = req.body;
     const { fptype } = req.body;
+    console.log(req.body)
 
-    if (!type) {
+    if (!Type) {
       return res.status(400).json({
         success: false,
         message:
-          "cashorbank parameter is required",
+          "Type parameter is required",
       });
     }
 
-    if (type !== "C" && type !== "B") {
+    if (Type !== "C" && Type !== "B") {
       return res.status(400).json({
         success: false,
         message:
@@ -326,12 +328,12 @@ export const getReceiptType = async (
       SELECT *
       FROM dbo.filllookupcbaccountname($1,$2)
       `,
-      [PstrCoID, type]
+      [PstrCoID, Type]
     );
 
     return res.status(200).json({
       success: true,
-      type,
+      Type,
       data: result.rows,
     });
   } catch (error: unknown) {
@@ -661,6 +663,20 @@ export const modifyReceipt = async (
       PstrCoID
     );
 
+     const active = await isActivePeriod(
+  payload?.branch,
+  payload?.receiptDate,
+  PstrCoID
+
+);
+
+if (!active) {
+  return res.status(400).json({
+    success: false,
+    message: "'Date' must be within the Active Period"
+  });
+}
+
     const result = await updateReceiptService(payload);
 
     return res.status(200).json({
@@ -712,15 +728,17 @@ export async function GetDatas(
   res: Response
 ): Promise<Response> {
   try {
+
     /* =====================================================
        QUERY PARAMETERS
     ===================================================== */
 
     const {
-      strbranch,
-      strdocType,
-      strdocNo,
+      lkpBranch,
+      type,
+      txtReceiptNo,
     } = req.query;
+
 
     console.log(
       "\n======================================"
@@ -732,79 +750,72 @@ export async function GetDatas(
 
     console.log(
       "Branch:",
-      JSON.stringify(strbranch)
+      JSON.stringify(lkpBranch)
     );
 
     console.log(
       "Doc Type:",
-      JSON.stringify(strdocType)
+      JSON.stringify(type)
     );
 
     console.log(
       "Doc No:",
-      JSON.stringify(strdocNo)
+      JSON.stringify(txtReceiptNo)
     );
 
     console.log(
       "======================================"
     );
 
+
     /* =====================================================
        VALIDATION
     ===================================================== */
 
     if (
-      strbranch === undefined ||
-      strbranch === null ||
-      String(strbranch).trim() === ""
+      lkpBranch === undefined ||
+      lkpBranch === null ||
+      String(lkpBranch).trim() === ""
     ) {
       return res.status(400).json({
         exists: false,
         header: null,
         rows: [],
-        message:
-          "Branch is required",
+        message: "Branch is required",
       });
     }
 
+
     if (
-      strdocType === undefined ||
-      strdocType === null ||
-      String(strdocType).trim() === ""
+      type === undefined ||
+      type === null ||
+      String(type).trim() === ""
     ) {
       return res.status(400).json({
         exists: false,
         header: null,
         rows: [],
-        message:
-          "Receipt type is required",
+        message: "Receipt type is required",
       });
     }
 
+
     if (
-      strdocNo === undefined ||
-      strdocNo === null ||
-      String(strdocNo).trim() === ""
+      txtReceiptNo === undefined ||
+      txtReceiptNo === null ||
+      String(txtReceiptNo).trim() === ""
     ) {
       return res.status(400).json({
         exists: false,
         header: null,
         rows: [],
-        message:
-          "Receipt number is required",
+        message: "Receipt number is required",
       });
     }
+
 
     /* =====================================================
        CALL GetData
-
-       IMPORTANT:
-
-       Service expects:
-
-       strbranch
-       strdocType
-       strdocNo
     ===================================================== */
 
     console.log(
@@ -813,10 +824,17 @@ export async function GetDatas(
 
     const result =
       await GetData({
-        strbranch,
-        strdocType,
-        strdocNo,
+        lkpBranch: String(lkpBranch),
+        Type: String(type),
+        txtReceiptNo: String(txtReceiptNo),
       });
+
+
+    console.log(
+      "Calling GetData...",
+      result?.header
+    );
+
 
     /* =====================================================
        NOT FOUND
@@ -831,11 +849,11 @@ export async function GetDatas(
           exists: false,
           header: null,
           rows: [],
-          message:
-            "Receipt not found",
+          message: "Receipt not found",
         }
       );
     }
+
 
     /* =====================================================
        SUCCESS
@@ -844,7 +862,9 @@ export async function GetDatas(
     return res.status(200).json(
       result
     );
+
   } catch (error: unknown) {
+
     console.error(
       "GetDatas error:",
       error
@@ -859,9 +879,9 @@ export async function GetDatas(
           ? error.message
           : "Failed to load receipt",
     });
+
   }
 }
-
 
 export const DeleteReceipt = async (
   req: Request,
@@ -869,54 +889,111 @@ export const DeleteReceipt = async (
 ): Promise<Response> => {
   try {
     const PstrCoID = process.env.PstrCoID;
+    const PstrYear = process.env.PstrYear;
+    const PstrUserID = process.env.PstrUserID;
 
     if (!PstrCoID) {
-      throw new Error(
-        "Company ID is not configured"
-      );
+      throw new Error("Company ID is not configured");
+    }
+
+    if (!PstrYear) {
+      throw new Error("Year is not configured");
+    }
+
+    if (!PstrUserID) {
+      throw new Error("User ID is not configured");
     }
 
     const {
-      branch,
-      type,
-      receiptNo,
+      lkpBranch,
+      Type,
+      txtReceiptNo,
     } = req.body;
 
-    if (!branch) {
+    if (!lkpBranch) {
       return res.status(400).json({
         message: "branch is required",
       });
     }
 
-    if (!type) {
+    if (!Type) {
       return res.status(400).json({
         message: "type is required",
       });
     }
 
-    if (!receiptNo) {
+    if (!txtReceiptNo) {
       return res.status(400).json({
         message: "Doc.No is required",
       });
     }
 
-    const result =
-      await deleteReceiptService({
-        branch,
-        type,
-        receiptNo,
-      });
+    // =====================================================
+    // GET EXISTING RECEIPT BEFORE DELETE
+    // =====================================================
+
+    const receiptData = await GetData({
+      lkpBranch,
+      Type,
+      txtReceiptNo,
+    });
+
+    console.log("Receipt Before Delete:", receiptData);
+
+    // =====================================================
+    // GET DATA REQUIRED FOR AUDIT
+    // =====================================================
+
+    // Adjust these property names according to your GetData response
+    const receiptDate = receiptData?.header?.receiptDate ?? "";
+    const cbAccountName = receiptData?.header?.cbAccount ?? "";
+    const receivedFrom = receiptData?.header?.receivedFrom ?? "";
+    const totalCredit = Number(receiptData?.total ?? 0);
+
+    // =====================================================
+    // USER AUDIT
+    // =====================================================
+
+    const auditResult = await UserAudit(
+      PstrCoID,
+      PstrYear,
+      lkpBranch,
+      Type,
+      txtReceiptNo,
+      "Receipt",
+      "D",
+      PstrUserID,
+      receiptDate,
+      cbAccountName,
+      receivedFrom,
+      totalCredit
+    );
+
+    console.log("User Audit:", auditResult);
+
+    // =====================================================
+    // DELETE RECEIPT
+    // =====================================================
+
+    const result = await deleteReceiptService({
+      lkpBranch,
+      Type,
+      txtReceiptNo,
+    });
+
+    // =====================================================
+    // RETURN
+    // =====================================================
 
     return res.status(200).json({
       success: true,
       message: result.message,
       data: result.data,
+      audit: auditResult,
     });
+
   } catch (error: unknown) {
-    console.error(
-      "DeleteReceipt error:",
-      error
-    );
+    console.error("DeleteReceipt error:", error);
 
     return res.status(400).json({
       success: false,

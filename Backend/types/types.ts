@@ -123,9 +123,9 @@ export interface ReceiptHeaderParams {
 }
 
 export interface ReceiptDocumentParams {
-  branch?: DbValue;
-  type?: DbValue;
-  receiptNo?: DbValue;
+  lkpBranch?: DbValue;
+  Type?: DbValue;
+  txtReceiptNo?: DbValue;
 }
 
 export interface SaveReceiptLineParams {
@@ -168,7 +168,7 @@ export interface SaveGeneratedEntryParams {
 }
 
 export interface GetDataParams {
-  strbranch: unknown;
-  strdocType: unknown;
-  strdocNo: unknown;
+  lkpBranch: unknown;
+  Type: unknown;
+  txtReceiptNo: unknown;
 }
