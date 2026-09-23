@@ -97,11 +97,11 @@ export const ReceiptHeader: React.FC = () => {
 ========================================================= */
 
 interface ReceiptFormProps {
-  branch: string;
-  setBranch: (value: string) => void;
+  lkpBranch: string;
+  setLkpBranch: (value: string) => void;
 
-  type: string;
-  setType: (value: string) => void;
+  lkpType: string;
+  setLkpType: (value: string) => void;
 
   cbAccount: string;
   setCbAccount: (value: string) => void;
@@ -197,11 +197,10 @@ const filterOption = (
 };
 
 export const ReceiptForm: React.FC<ReceiptFormProps> = ({
-  branch,
-  setBranch,
-
-  type,
-  setType,
+  lkpBranch,
+  setLkpBranch,
+  lkpType,
+  setLkpType,
 
   cbAccount,
   setCbAccount,
@@ -510,7 +509,7 @@ useEffect(() => {
               "application/json",
           },
           body: JSON.stringify({
-             Type:cbType,
+             lkpType:cbType,
           }),
         }
       );
@@ -569,18 +568,18 @@ useEffect(() => {
    */
   useEffect(() => {
     const defaultType =
-      type || "B";
+      lkpType || "B";
 
-    if (!type) {
-      setType("B");
+    if (!lkpType) {
+      setLkpType("B");
     }
 
     if (
-      branch &&
+      lkpBranch &&
       !isModifyMode
     ) {
       getReceiptDocNumber(
-        branch,
+        lkpBranch,
         defaultType
       );
     }
@@ -599,19 +598,19 @@ useEffect(() => {
         (parameter) =>
           parameter.fptype === "RTP" &&
           (
-            parameter.fpid === type ||
-            parameter.fpname === type
+            parameter.fpid === lkpType ||
+            parameter.fpname === lkpType
           )
       )?.fpid ||
       financialParameters.find(
         (parameter) =>
           parameter.fptype === "RTP"
       )?.fpid ||
-      type ||
+      lkpType ||
       "B";
 
-    if (type !== defaultType) {
-      setType(defaultType);
+    if (lkpType !== defaultType) {
+      setLkpType(defaultType);
     }
 
     loadAccounts(defaultType);
@@ -621,11 +620,11 @@ useEffect(() => {
 
   /*
    * =========================================================
-   * BRANCH CHANGE
+   * lkpBranch CHANGE
    * =========================================================
    */
   useEffect(() => {
-    if (!branch) {
+    if (!lkpBranch) {
       if (!isModifyMode) {
         setDocumentNo("");
       }
@@ -634,17 +633,17 @@ useEffect(() => {
     }
 
     const currentType =
-      type || "B";
+      lkpType || "B";
 
     if (!isModifyMode) {
       getReceiptDocNumber(
-        branch,
+        lkpBranch,
         currentType
       );
     }
 
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [branch, isModifyMode]);
+  }, [lkpBranch, isModifyMode]);
 
   /*
    * =========================================================
@@ -653,11 +652,11 @@ useEffect(() => {
    */
   useEffect(() => {
     if (isModifyMode) {
-      loadAccounts(type);
+      loadAccounts(lkpType);
     }
 
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isModifyMode, type]);
+  }, [isModifyMode, lkpType]);
 
   /*
    * =========================================================
@@ -884,16 +883,16 @@ useEffect(() => {
   const selectedBranch =
     branchOptions.find(
       (option) =>
-        option.value === branch
+        option.value === lkpBranch
     ) || null;
 
   const selectedType =
     typeOptions.find(
       (option) =>
         option.label ===
-          (type || "B") ||
+          (lkpType || "B") ||
         option.value ===
-          (type || "B")
+          (lkpType || "B")
     ) || null;
 
   const selectedCbAccount =
@@ -1009,12 +1008,12 @@ useEffect(() => {
               const selectedBranch =
                 option?.value || "";
 
-              setBranch(selectedBranch);
+              setLkpBranch(selectedBranch);
 
               if (!isModifyMode) {
                 getReceiptDocNumber(
                   selectedBranch,
-                  type || "B"
+                  lkpType || "B"
                 );
               }
             }}
@@ -1139,7 +1138,7 @@ useEffect(() => {
                 option?.value ||
                 "B";
 
-              setType(
+              setLkpType(
                 selectedType
               );
 
@@ -1148,11 +1147,11 @@ useEffect(() => {
               );
 
               if (
-                branch &&
+                lkpBranch &&
                 !isModifyMode
               ) {
                 getReceiptDocNumber(
-                  branch,
+                  lkpBranch,
                   selectedType
                 );
               }

@@ -295,7 +295,7 @@ async function callReceiptProcedure(
   {
     mode,
 
-    branch,
+    lkpBranch,
 
     docType,
 
@@ -379,7 +379,7 @@ async function callReceiptProcedure(
 
     PstrYear,                              // $3
 
-    clean(branch),                         // $4
+    clean(lkpBranch),                         // $4
 
     clean(docType),                        // $5
 
@@ -512,7 +512,7 @@ async function callReceiptProcedure(
 
   console.log(
     "Branch:",
-    branch
+    lkpBranch
   );
 
   console.log(
@@ -612,7 +612,7 @@ async function callReceiptProcedure(
 ========================================================= */
 
 export async function getReceiptHeader({
-  branch,
+  lkpBranch,
   docType,
   docNo,
 }: ReceiptHeaderParams): Promise<any[]> {
@@ -635,7 +635,7 @@ export async function getReceiptHeader({
 
           mode: "GETHD",
 
-          branch,
+          lkpBranch,
 
           docType:
             toDocumentType(docType),
@@ -687,7 +687,7 @@ export async function getReceiptHeader({
 ========================================================= */
 
 export async function getReceiptLines({
-  branch,
+  lkpBranch,
   docType,
   docNo,
 }: ReceiptHeaderParams): Promise<any[]> {
@@ -710,7 +710,7 @@ export async function getReceiptLines({
 
           mode: "GETTL",
 
-          branch,
+          lkpBranch,
 
           docType:
             toDocumentType(docType),
@@ -764,7 +764,7 @@ export async function getReceiptLines({
 async function saveReceiptLine(
   client: PoolClient,
   {
-    branch,
+    lkpBranch,
 
     docType,
 
@@ -809,7 +809,7 @@ async function saveReceiptLine(
 
       mode: "S",
 
-      branch,
+      lkpBranch,
 
       docType,
 
@@ -867,7 +867,7 @@ async function saveReceiptLine(
 async function saveGeneratedEntry(
   client: PoolClient,
   {
-    branch,
+    lkpBranch,
 
     docType,
 
@@ -906,7 +906,7 @@ async function saveGeneratedEntry(
 
       mode: "SC",
 
-      branch,
+      lkpBranch,
 
       docType,
 
@@ -977,7 +977,7 @@ async function saveGeneratedEntry(
 async function deleteReceiptInternal(
   client: PoolClient,
   {
-    branch,
+    lkpBranch,
 
     docType,
 
@@ -992,7 +992,7 @@ async function deleteReceiptInternal(
 
       mode: "D",
 
-      branch,
+      lkpBranch,
 
       docType,
 
@@ -1030,13 +1030,13 @@ export async function saveReceiptService(
 
     const {
 
-      branch,
+      lkpBranch,
 
-      type,
+      lkpType,
 
       cashBank,
 
-      receiptNo,
+      txtReceiptNo,
 
       receiptDate,
 
@@ -1058,7 +1058,7 @@ export async function saveReceiptService(
     ===================================================== */
 
     if (
-      isEmpty(branch)
+      isEmpty(lkpBranch)
     ) {
 
       throw new Error(
@@ -1069,7 +1069,7 @@ export async function saveReceiptService(
 
 
     if (
-      isEmpty(type)
+      isEmpty(lkpType)
     ) {
 
       throw new Error(
@@ -1080,7 +1080,7 @@ export async function saveReceiptService(
 
 
     if (
-      isEmpty(receiptNo)
+      isEmpty(txtReceiptNo)
     ) {
 
       throw new Error(
@@ -1128,7 +1128,7 @@ export async function saveReceiptService(
     ===================================================== */
 
     const finalDocType =
-      toDocumentType(type);
+      toDocumentType(lkpType);
 
 
     /* =====================================================
@@ -1224,13 +1224,13 @@ export async function saveReceiptService(
         client,
         {
 
-          branch,
+          lkpBranch,
 
           docType:
             finalDocType,
 
           docNo:
-            receiptNo,
+            txtReceiptNo,
 
           slNo,
 
@@ -1332,13 +1332,13 @@ export async function saveReceiptService(
       client,
       {
 
-        branch,
+        lkpBranch,
 
         docType:
           finalDocType,
 
         docNo:
-          receiptNo,
+          txtReceiptNo,
 
         receiptDate,
 
@@ -1417,12 +1417,12 @@ export async function saveReceiptService(
         year:
           PstrYear,
 
-        branch,
+        lkpBranch,
 
         docType:
           finalDocType,
 
-        receiptNo,
+        txtReceiptNo,
 
         total:
           finalTotal,
@@ -1492,7 +1492,7 @@ export async function saveReceiptService(
 
 export async function deleteReceiptService({
   lkpBranch,
-  Type,
+  lkpType,
   txtReceiptNo,
 }: ReceiptDocumentParams): Promise<ServiceResult> {
 
@@ -1508,7 +1508,7 @@ export async function deleteReceiptService({
       throw new Error("Branch is required");
     }
 
-    if (isEmpty(Type)) {
+    if (isEmpty(lkpType)) {
       throw new Error("Receipt type is required");
     }
 
@@ -1521,7 +1521,7 @@ export async function deleteReceiptService({
        DOCUMENT TYPE
     ===================================================== */
 
-    const finalDocType = toDocumentType(Type);
+    const finalDocType = toDocumentType(lkpType);
 
 
     /* =====================================================
@@ -1538,7 +1538,7 @@ export async function deleteReceiptService({
     await deleteReceiptInternal(
       client,
       {
-        branch: lkpBranch,
+        lkpBranch: lkpBranch,
         docType: finalDocType,
         docNo: txtReceiptNo,
       }
@@ -1750,8 +1750,8 @@ export async function updateReceiptService(
 ): Promise<ServiceResult> {
 
   const {
-    branch,
-    type,
+    lkpBranch,
+    lkpType,
     docNo,
     receiptDate,
     receivedFrom,
@@ -1774,7 +1774,7 @@ export async function updateReceiptService(
     ===================================================== */
 
     if (
-      isEmpty(branch)
+      isEmpty(lkpBranch)
     ) {
 
       throw new Error(
@@ -1785,7 +1785,7 @@ export async function updateReceiptService(
 
 
     if (
-      isEmpty(type)
+      isEmpty(lkpType)
     ) {
 
       throw new Error(
@@ -1844,7 +1844,7 @@ export async function updateReceiptService(
     ===================================================== */
 
     const finalDocType =
-      toDocumentType(type);
+      toDocumentType(lkpType);
 
 
     /* =====================================================
@@ -1925,7 +1925,7 @@ export async function updateReceiptService(
 
         mode: "M",
 
-        branch,
+        lkpBranch,
 
         docType:
           finalDocType,
@@ -2130,7 +2130,7 @@ export async function updateReceiptService(
 
         mode: "M",
 
-        branch,
+        lkpBranch,
 
         docType:
           finalDocType,
@@ -2217,12 +2217,12 @@ export async function updateReceiptService(
         year:
           PstrYear,
 
-        branch,
+        lkpBranch,
 
         docType:
           finalDocType,
 
-        receiptNo:
+        txtReceiptNo:
           docNo,
 
         total:

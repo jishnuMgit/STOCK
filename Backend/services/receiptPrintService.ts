@@ -9,7 +9,7 @@ export interface ReceiptPrintParams {
   coId: string;
   year: string;
   branch: string;
-  docType: string;
+  lkpType: string;
   docNo: string;
 }
 
@@ -24,7 +24,7 @@ export interface ReceiptPrintRow {
 export interface ReceiptPrintData {
   coId: string;
 
-  docType: string;
+  lkpType: string;
   heading: string;
 
   branchId: string;
@@ -141,14 +141,14 @@ const buildPrintFilter = ({
   coId,
   year,
   branch,
-  docType,
+  lkpType,
   docNo,
 }: ReceiptPrintParams): string => {
   for (const [name, value] of Object.entries({
     coId,
     year,
     branch,
-    docType,
+    lkpType,
     docNo,
   })) {
     if (!SAFE_TOKEN.test(value)) {
@@ -160,7 +160,7 @@ const buildPrintFilter = ({
     `fcoid=${sqlLiteral(coId)}`,
     `fyear=${sqlLiteral(year)}`,
     `fbrid=${sqlLiteral(branch)}`,
-    `fdoctype=${sqlLiteral(docType)}`,
+    `fdoctype=${sqlLiteral(lkpType)}`,
     `fdocno=${sqlLiteral(docNo)}`,
     `forigin <> 'UIG'`,
   ].join(" AND ");
@@ -219,12 +219,9 @@ async function runPrintProcedure(
 export async function getReceiptPrintData(
   params: ReceiptPrintParams
 ): Promise<ReceiptPrintData | null> {
-  const docType = normalizeDocType(params.docType);
+  const docType = normalizeDocType(params.lkpType);
 
-  const filter = buildPrintFilter({
-    ...params,
-    docType,
-  });
+  const filter = buildPrintFilter(params);
 
   const dbRows = await runPrintProcedure(docType, filter);
 
@@ -239,8 +236,6 @@ export async function getReceiptPrintData(
     accountId: text(row.faccountid),
     accountName: text(row.faccountname),
     description: text(row.fdescription),
-    /* fdebitcredit comes from the corrected SP; fcredit keeps
-       older versions of the SP working for receipts. */
     amount: toNumber(row.fdebitcredit ?? row.fcredit),
   }));
 
@@ -255,7 +250,7 @@ export async function getReceiptPrintData(
   return {
     coId: text(first.fcoid) || params.coId,
 
-    docType,
+    lkpType: params.lkpType,
     heading: docType === "BR" ? "BANK RECEIPT" : "CASH RECEIPT",
 
     branchId: text(first.fbrid) || params.branch,
@@ -272,11 +267,14 @@ export async function getReceiptPrintData(
     amountInWords: amountToWords(total),
 
     preparedBy: text(first.fuserid ?? first.fcuserid),
-    preparedDate: formatDateTime(first.fuserdate ?? first.fcuserdate),
+    preparedDate: formatDateTime(
+      first.fuserdate ?? first.fcuserdate
+    ),
 
     company: {
       nameEn: text(first.fconame),
       nameAr: text(first.fconame_ar),
+
       addressEn: lines(
         first.fcombinedaddress1,
         first.fcombinedaddress2,
@@ -284,6 +282,7 @@ export async function getReceiptPrintData(
         first.fcombinedaddress3,
         first.fcombinedtelephone
       ),
+
       addressAr: lines(
         first.fcombinedaddress1_a,
         first.fcombinedaddress2_a,

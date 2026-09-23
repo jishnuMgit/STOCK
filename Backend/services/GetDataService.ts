@@ -11,7 +11,7 @@ import {GetDataParams} from '../types/types.js'
 interface ReceiptProcedureParams {
   mode: string;
   branch: string | null;
-  docType: string | null;
+  lkpType: string | null;
   docNo: string | null;
   cursorName: string;
 }
@@ -26,10 +26,10 @@ interface ReceiptHeader {
   companyId: any;
   year: any;
   branch: any;
-  docType: any;
+  lkpType: any;
   docNo: any;
   receiptDate: any;
-  cbAccount: any;
+  cbAccountName: any;
   ccId: any;
   receivedFrom: any;
   reference: any;
@@ -158,7 +158,7 @@ async function callReceiptProcedure(
   {
     mode,
     branch,
-    docType,
+    lkpType,
     docNo,
     cursorName,
   }: ReceiptProcedureParams
@@ -258,7 +258,7 @@ async function callReceiptProcedure(
        5 - p_strdoctype
     ===================================================== */
 
-    clean(docType),
+    clean(lkpType),
 
     /* =====================================================
        6 - p_strdocno
@@ -400,8 +400,8 @@ async function callReceiptProcedure(
     branch:
       clean(branch),
 
-    docType:
-      clean(docType),
+    lkpType:
+      clean(lkpType),
 
     docNo:
       clean(docNo),
@@ -446,7 +446,7 @@ async function callReceiptProcedure(
 
 export async function GetDataTL({
   lkpBranch,
-  Type,
+  lkpType,
   txtReceiptNo,
 }: GetDataParams): Promise<DbRow[]> {
 
@@ -464,8 +464,8 @@ export async function GetDataTL({
   );
 
   console.log(
-    "Doc Type:",
-    JSON.stringify(Type)
+    "Doc lkpType:",
+    JSON.stringify(lkpType)
   );
 
   console.log(
@@ -487,7 +487,7 @@ export async function GetDataTL({
 
     const branch = clean(lkpBranch);
 
-    const docType = toDocumentType(Type);
+    const docType = toDocumentType(lkpType);
 
     const docNo = clean(txtReceiptNo);
 
@@ -552,7 +552,7 @@ export async function GetDataTL({
 
           branch,
 
-          docType,
+         lkpType: docType,
 
           docNo,
 
@@ -631,7 +631,7 @@ export async function GetDataTL({
 
 export async function GetDataHD({
   lkpBranch,
-  Type,
+  lkpType,
   txtReceiptNo,
 }: GetDataParams): Promise<DbRow[]> {
 
@@ -649,8 +649,8 @@ export async function GetDataHD({
   );
 
   console.log(
-    "Doc Type:",
-    JSON.stringify(Type)
+    "Doc lkpType:",
+    JSON.stringify(lkpType)
   );
 
   console.log(
@@ -674,7 +674,7 @@ export async function GetDataHD({
       clean(lkpBranch);
 
     const docType =
-      toDocumentType(Type);
+      toDocumentType(lkpType);
 
     const docNo =
       clean(txtReceiptNo);
@@ -740,7 +740,7 @@ export async function GetDataHD({
 
           branch,
 
-          docType,
+        lkpType:docType,
 
           docNo,
 
@@ -830,7 +830,7 @@ export async function GetDataHD({
 
 export async function GetData({
   lkpBranch,
-  Type,
+  lkpType,
   txtReceiptNo,
 }: GetDataParams): Promise<GetDataResult> {
 
@@ -848,8 +848,8 @@ export async function GetData({
   );
 
   console.log(
-    "Doc Type:",
-    JSON.stringify(Type)
+    "Doc lkpType:",
+    JSON.stringify(lkpType)
   );
 
   console.log(
@@ -870,7 +870,7 @@ export async function GetData({
     clean(lkpBranch);
 
   const docType =
-    toDocumentType(Type);
+    toDocumentType(lkpType);
 
   const docNo =
     clean(txtReceiptNo);
@@ -896,7 +896,7 @@ export async function GetData({
   }
 
 
-  if (isEmpty(Type)) {
+  if (isEmpty(lkpType)) {
 
     return {
       exists: false,
@@ -953,7 +953,7 @@ export async function GetData({
   const detailRows =
     await GetDataTL({
       lkpBranch: branch,
-      Type: docType,
+      lkpType: docType,
       txtReceiptNo: docNo,
     });
 
@@ -974,7 +974,7 @@ export async function GetData({
   const headerRows =
     await GetDataHD({
       lkpBranch: branch,
-      Type: docType,
+      lkpType: docType,
       txtReceiptNo: docNo,
     });
 
@@ -1037,7 +1037,7 @@ export async function GetData({
       dbHeader.fbrid ??
       branch,
 
-    docType:
+    lkpType:
       dbHeader.fdoctype ??
       docType,
 
@@ -1054,7 +1054,7 @@ export async function GetData({
        CASH / BANK ACCOUNT
     ===================================================== */
 
-    cbAccount:
+    cbAccountName:
       dbHeader.fcbaccountid ??
       "",
 

@@ -74,7 +74,7 @@ interface ReceiptsResponse {
   accountsortbyId: AccountData[];
   costCenters: CostCenter[];
   defaultBranch: string | null;
-  receiptNo: string | null;
+  txtReceiptNo: string | null;
   receiptType?: string | null;
 }
 /* =========================================================
@@ -85,11 +85,12 @@ interface ModifyReceiptResponse {
   exists: boolean;
 
   header: {
-    branch?: string;
-    docType?: string;
+    lkpBranch?: string;
+    lkpType?: string;
     docNo?: string;
     receiptDate?: string;
-    cbAccount?: string;
+    // cbAccount?: string;
+    cbAccountName?:string,
     ccId?: string;
     receivedFrom?: string;
     reference?: string;
@@ -190,9 +191,9 @@ const ReceiptPage: React.FC = () => {
   const [isPrint, setIsPrint] = useState(false);
   const [printData, setPrintData] =
     useState<ReceiptPrintData | null>(null);
-  const [branch, setBranch] = useState("");
+  const [lkpBranch, setLkpBranch] = useState("");
 
-  const [type, setType] = useState("");
+  const [lkpType, setLkpType] = useState("");
 
   const [cbAccount, setCbAccount] = useState("");
 
@@ -349,7 +350,7 @@ const ReceiptPage: React.FC = () => {
           return;
         }
         if (result.defaultBranch) {
-          setBranch(
+          setLkpBranch(
             result.defaultBranch
           );
         }
@@ -375,9 +376,9 @@ const ReceiptPage: React.FC = () => {
 
 
 
-        if (result.receiptNo) {
+        if (result.txtReceiptNo) {
           setDocumentNo(
-            result.receiptNo
+            result.txtReceiptNo
           );
         }
 
@@ -429,7 +430,7 @@ const ReceiptPage: React.FC = () => {
   const handlePrint = async () => {
     try {
       const response = await fetch(
-        `http://localhost:5000/api/Receipt/print?strbranch=${branch}&strdocType=${type}&strdocNo=${documentNo}`
+        `http://localhost:5000/api/Receipt/print?lkpBranch=${lkpBranch}&lkpType=${lkpType}&txtReceiptNo=${documentNo}`
       );
 
       if (!response.ok) {
@@ -459,13 +460,13 @@ const ReceiptPage: React.FC = () => {
           documentNo.trim();
 
         if (
-          !branch ||
+          !lkpBranch ||
           !requestedDocumentNo
         ) {
           console.log(
             "Modify lookup skipped:",
             {
-              branch,
+              lkpBranch,
               requestedDocumentNo,
             }
           );
@@ -474,8 +475,8 @@ const ReceiptPage: React.FC = () => {
         }
 
         const lookupKey =
-          `${branch}|${toDocumentType(
-            type
+          `${lkpBranch}|${toDocumentType(
+            lkpType
           )}|${requestedDocumentNo}`;
 
         if (
@@ -493,9 +494,9 @@ const ReceiptPage: React.FC = () => {
         try {
           const query =
             new URLSearchParams({
-              lkpBranch: branch,
-              type:
-                toDocumentType(type),
+              lkpBranch: lkpBranch,
+              lkpType:
+                toDocumentType(lkpType),
               txtReceiptNo:
                 requestedDocumentNo,
             });
@@ -644,15 +645,15 @@ const ReceiptPage: React.FC = () => {
              HEADER
           =============================================== */
 
-          setBranch(
-            result.header.branch ||
-            branch
+          setLkpBranch(
+            result.header.lkpBranch ||
+            lkpBranch
           );
 
-          setType(
-            result.header.docType ===
+          setLkpType(
+            result.header.lkpType ===
               "CR" ||
-              result.header.docType ===
+              result.header.lkpType ===
               "C"
               ? "C"
               : "B"
@@ -670,7 +671,7 @@ const ReceiptPage: React.FC = () => {
           );
 
           setCbAccount(
-            result.header.cbAccount ||
+            result.header.cbAccountName ||
             ""
           );
 
@@ -751,9 +752,9 @@ const ReceiptPage: React.FC = () => {
       },
       [
         accountOptions,
-        branch,
+        lkpBranch,
         documentNo,
-        type,
+        lkpType,
       ]
     );
 
@@ -829,9 +830,9 @@ const ReceiptPage: React.FC = () => {
             "";
 
           if (defaultBranch) {
-            setBranch(defaultBranch);
+            setLkpBranch(defaultBranch);
           } else {
-            setBranch("");
+            setLkpBranch("");
           }
 
           /* Restore backend default type when supplied. */
@@ -844,7 +845,7 @@ const ReceiptPage: React.FC = () => {
                 .trim()
                 .toUpperCase();
 
-            setType(
+            setLkpType(
               normalizedType === "BR"
                 ? "B"
                 : normalizedType === "CR"
@@ -854,8 +855,8 @@ const ReceiptPage: React.FC = () => {
           }
 
           /* Load the fresh receipt number returned by backend. */
-          if (result.receiptNo) {
-            setDocumentNo(result.receiptNo);
+          if (result.txtReceiptNo) {
+            setDocumentNo(result.txtReceiptNo);
           } else {
             setDocumentNo("");
           }
@@ -1477,8 +1478,8 @@ const ReceiptPage: React.FC = () => {
       =============================================== */
 
       const validationFailed =
-        !branch ||
-        !type ||
+        !lkpBranch ||
+        !lkpType ||
         !documentNo.trim() ||
         !date ||
         !cbAccount ||
@@ -1515,15 +1516,15 @@ const ReceiptPage: React.FC = () => {
       =============================================== */
 
       const receiptData = {
-        branch,
+        lkpBranch,
 
-        type,
+        lkpType,
 
         cashBank: cbAccount,
 
         cbCcId,
 
-        receiptNo: documentNo,
+        txtReceiptNo: documentNo,
 
         receiptDate: date,
 
@@ -1563,17 +1564,17 @@ const ReceiptPage: React.FC = () => {
       };
 
       const saveType =
-        type === "B"
+        lkpType === "B"
           ? "BR"
-          : type === "C"
+          : lkpType === "C"
             ? "CR"
-            : type;
+            : lkpType;
 
       console.log(
         "========== SAVE RECEIPT =========="
       );
 
-      console.log("RECEIPT TYPE:", type);
+      console.log("RECEIPT lkpType:", lkpType);
 
       console.log("SAVE TYPE:", saveType);
 
@@ -1599,7 +1600,7 @@ const ReceiptPage: React.FC = () => {
           body: JSON.stringify({
             ...receiptData,
 
-            type: saveType,
+            lkpType: saveType,
           }),
         }
       );
@@ -1676,8 +1677,8 @@ setFocusReceiptNoAfterClear(
       );
     }
   }, [
-    branch,
-    type,
+    lkpBranch,
+    lkpType,
     cbAccount,
     cbCcId,
     documentNo,
@@ -1727,8 +1728,8 @@ setFocusReceiptNoAfterClear(
         console.log(
           "MODIFY CURRENT VALUES:",
           {
-            branch,
-            type,
+            lkpBranch,
+            lkpType,
             cbAccount,
             cbCcId,
             documentNo,
@@ -1749,8 +1750,8 @@ setFocusReceiptNoAfterClear(
         =============================================== */
 
         const validationFailed =
-          !branch ||
-          !type ||
+          !lkpBranch ||
+          !lkpType ||
           !documentNo.trim() ||
           !date ||
           !cbAccount ||
@@ -1764,8 +1765,8 @@ setFocusReceiptNoAfterClear(
           console.error(
             "Validation values:",
             {
-              branch: !!branch,
-              type: !!type,
+              lkpBranch: !!lkpBranch,
+              lkpType: !!lkpType,
               documentNo:
                 !!documentNo.trim(),
               date: !!date,
@@ -1825,10 +1826,10 @@ setFocusReceiptNoAfterClear(
         =============================================== */
 
         const modifyPayload = {
-          branch,
+          lkpBranch,
 
-          type:
-            toDocumentType(type),
+          lkpType:
+            toDocumentType(lkpType),
 
           cashBank:
             cbAccount,
@@ -1912,7 +1913,7 @@ setFocusReceiptNoAfterClear(
 
         console.log(
           "MODIFY DOC TYPE:",
-          modifyPayload.type
+          modifyPayload.lkpType
         );
 
         console.log(
@@ -2088,8 +2089,8 @@ setFocusReceiptNoAfterClear(
         }
       },
       [
-        branch,
-        type,
+        lkpBranch,
+        lkpType,
         cbAccount,
         cbCcId,
         documentNo,
@@ -2115,8 +2116,8 @@ setFocusReceiptNoAfterClear(
       =============================================== */
 
       const validationFailed =
-        !branch ||
-        !type ||
+        !lkpBranch ||
+        !lkpType ||
         !documentNo.trim();
 
       if (validationFailed) {
@@ -2152,8 +2153,8 @@ setFocusReceiptNoAfterClear(
       =============================================== */
 
       const receiptData = {
-       lkpBranch: branch,
-        Type: type + "R",
+       lkpBranch: lkpBranch,
+        lkpType: lkpType + "R",
         txtReceiptNo: documentNo.trim(),
       };
 
@@ -2258,8 +2259,8 @@ setFocusReceiptNoAfterClear(
       );
     }
   }, [
-    branch,
-    type,
+    lkpBranch,
+    lkpType,
     documentNo,
     resetTableAndLoadNextReceiptNumber,
   ]);
@@ -2340,11 +2341,11 @@ const clearForm = useCallback(async () => {
         ================================================= */}
 
         <ReceiptForm
-          branch={branch}
-          setBranch={setBranch}
+          lkpBranch={lkpBranch}
+          setLkpBranch={setLkpBranch}
 
-          type={type}
-          setType={setType}
+          lkpType={lkpType}
+          setLkpType={setLkpType}
 
           cbAccount={cbAccount}
           setCbAccount={setCbAccount}

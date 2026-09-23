@@ -4,6 +4,7 @@ import cors from 'cors';
 
 import ReceiptRouter from "./routes/ReceiptRouter.js";
 import MatchRouter from './routes/MatchRouter.js'
+import CompanyInfoRouter from "./routes/SetcompanyinfoRouter.js";
 import pool from "./DB/db.js";
 
 dotenv.config();
@@ -35,6 +36,7 @@ app.use(cors());
 
 app.use("/api/Receipt", ReceiptRouter);
 app.use('/api/Match',MatchRouter)
+app.use("/api/CompanyInfo", CompanyInfoRouter);
 
 
 app.listen(5000, () => {
