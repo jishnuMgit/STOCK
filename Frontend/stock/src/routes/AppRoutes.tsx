@@ -1,4 +1,4 @@
-import React, { lazy, Suspense } from "react";
+import { lazy, Suspense } from "react";
 import {
   Routes,
   Route,
@@ -9,10 +9,10 @@ import {
    LAZY LOAD PAGES
 ========================================================= */
 
-const Receipt = lazy(
+const ReceiptPage = lazy(
   () =>
     import(
-      "../pages/Transaction/Receipt/Receipt"
+      "../pages/Transaction/Receipt/ReceiptPage"
     )
 );
 
@@ -48,6 +48,9 @@ const StatementOfAccountMain=lazy(()=>import(
   "../pages/Reports/StatementOfAccount/StatementOfAccountMain"
 ))
 
+const SetCompanyInfo =lazy(()=>import(
+  "../pages/Settings/SetCompanyInfoPage"
+))
 /* =========================================================
    PAGE LOADER
 ========================================================= */
@@ -100,7 +103,7 @@ const AppRoutes = () => {
 
         <Route
           path="/Transaction/Receipt"
-          element={<Receipt />}
+          element={<ReceiptPage />}
         />
          {/* <Route
           path="/Transaction/receipt/save"
@@ -136,6 +139,11 @@ const AppRoutes = () => {
           element={<Login />}
         />
 
+
+<Route
+path="/Settings/SetCompanyInfo"
+element={<SetCompanyInfo/>}
+/>
 
 
         {/*=====================================

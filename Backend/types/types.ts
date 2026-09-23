@@ -55,7 +55,7 @@ export interface MatchTotalParams {
 
 export interface ReceiptProcedureParams {
   mode: string;
-  branch?: DbValue;
+  lkpBranch?: DbValue;
   docType?: DbValue;
   docNo?: DbValue;
   slNo?: DbValue;
@@ -96,10 +96,10 @@ export interface ReceiptRow {
 }
 
 export interface ReceiptData {
-  branch?: DbValue;
-  type?: DbValue;
+  lkpBranch?: DbValue;
+  lkpType?: DbValue;
   cashBank?: DbValue;
-  receiptNo?: DbValue;
+  txtReceiptNo?: DbValue;
   receiptDate?: DbValue;
   receivedFrom?: DbValue;
   reference?: DbValue;
@@ -110,26 +110,26 @@ export interface ReceiptData {
 }
 
 export interface DeleteReceiptData{
-   branch?: DbValue;
+   lkpBranch?: DbValue;
   type?: DbValue;
     receiptNo?: DbValue;
 
 }
 
 export interface ReceiptHeaderParams {
-  branch?: DbValue;
+  lkpBranch?: DbValue;
   docType?: DbValue;
   docNo?: DbValue;
 }
 
 export interface ReceiptDocumentParams {
-  branch?: DbValue;
-  type?: DbValue;
-  receiptNo?: DbValue;
+  lkpBranch?: DbValue;
+  lkpType?: DbValue;
+  txtReceiptNo?: DbValue;
 }
 
 export interface SaveReceiptLineParams {
-  branch?: DbValue;
+  lkpBranch?: DbValue;
   docType?: DbValue;
   docNo?: DbValue;
   slNo?: DbValue;
@@ -150,7 +150,7 @@ export interface SaveReceiptLineParams {
 }
 
 export interface SaveGeneratedEntryParams {
-  branch?: DbValue;
+  lkpBranch?: DbValue;
   docType?: DbValue;
   docNo?: DbValue;
   receiptDate?: DbValue;
@@ -168,7 +168,7 @@ export interface SaveGeneratedEntryParams {
 }
 
 export interface GetDataParams {
-  strbranch: unknown;
-  strdocType: unknown;
-  strdocNo: unknown;
+  lkpBranch: unknown;
+  lkpType: unknown;
+  txtReceiptNo: unknown;
 }
