@@ -1,12 +1,12 @@
-
 import { Pool } from "pg";
-
+import dotenv from "dotenv";
+dotenv.config();
 const pool = new Pool({
-  host: "localhost",
-  port: 5432,
-  database: "stock",
+  host: process.env.DBHOST,
+  port: Number(process.env.DBPORT),
+  database: process.env.DATABASE,
   user: "postgres",
-  password: "password123",
+  password: process.env.PASSWORD,
 });
 
 pool.on("connect", () => {
@@ -17,4 +17,4 @@ pool.on("error", (err) => {
   console.error("PostgreSQL pool error:", err);
 });
 
-export default pool
+export default pool;
