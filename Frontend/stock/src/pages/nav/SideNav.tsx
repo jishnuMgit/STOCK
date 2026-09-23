@@ -62,24 +62,24 @@ const menuItems: MenuItem[] = [
     icon: <Receipt size={18} />,
     children: [
       {
-        label: "Receipt Voucher",
+        label: "Receipt ",
         path: "/Transaction/Receipt",
       },
        {
-        label: "Payment Voucher",
+        label: "Payment ",
         path: "/Transaction/payment",
       },
       {
-        label: "Journal Voucher",
+        label: "Journal ",
         path: "/Transaction/journal",
       },
       {
-        label: "Matching ",
-        path: "/Transaction/Transaction-matching",
+        label: "Match ",
+        path: "/Transaction/Transaction-match",
       },
       {
-        label: "UnMatching ",
-        path: "/Transaction/Transaction-unmatching",
+        label: "Un-Match ",
+        path: "/Transaction/Transaction-Un-match",
       },
       {
 
@@ -111,6 +111,8 @@ const menuItems: MenuItem[] = [
         label: "Beginning Balance",
         path: "/Transaction/beginning-balance",
       },
+
+
     
     ],
   },
@@ -252,7 +254,12 @@ const menuItems: MenuItem[] = [
   {
     label: "Settings",
     icon: <Settings size={18} />,
-    path: "/settings",
+     children: [
+      {
+        label: "Set Company Info",
+        path: "/Settings/SetCompanyInfo",
+      }
+    ],
   },
 ];
 
