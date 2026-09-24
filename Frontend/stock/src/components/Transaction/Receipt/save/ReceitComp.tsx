@@ -411,7 +411,7 @@ useEffect(() => {
       setDocumentNoLoading(true);
 
       const response = await fetch(
-        "http://localhost:5000/api/Receipt/getDocNo",
+        `${import.meta.env.VITE_API_URL}/Receipt/getDocNo`,
         {
           method: "POST",
           headers: {
@@ -501,7 +501,7 @@ useEffect(() => {
       setAccountsLoading(true);
 
       const response = await fetch(
-        "http://localhost:5000/api/Receipt/getReceiptType",
+        `${import.meta.env.VITE_API_URL}/Receipt/getReceiptType`,
         {
           method: "POST",
           headers: {
@@ -2452,7 +2452,7 @@ const ReceiptRow = memo(
       try {
         const response =
           await fetch(
-            "http://localhost:5000/api/Receipt/getDivID",
+            `${import.meta.env.VITE_API_URL}/Receipt/getDivID`,
             {
               method: "POST",
               headers: {

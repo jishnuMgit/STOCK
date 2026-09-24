@@ -362,7 +362,7 @@ const UnMatch: React.FC = () => {
         try {
           const response =
             await fetch(
-              "http://localhost:5000/api/getReceipts",
+              `${import.meta.env.VITE_API_URL}/getReceipts`,
               {
                 method: "GET",
                 signal:
@@ -1001,7 +1001,7 @@ const UnMatch: React.FC = () => {
             Example:
 
             const response = await fetch(
-              "http://localhost:5000/api/saveMatching",
+              `${import.meta.env.VITE_API_URL}/saveMatching``,
               {
                 method: "POST",
                 headers: {

@@ -320,7 +320,7 @@ const ReceiptPage: React.FC = () => {
     const loadReceiptData = async () => {
       try {
         const response = await fetch(
-          "http://localhost:5000/api/Receipt/getReceipt",
+          `${import.meta.env.VITE_API_URL}/Receipt/getReceipt`,
           {
             method: "GET",
             signal: controller.signal,
@@ -430,7 +430,7 @@ const ReceiptPage: React.FC = () => {
   const handlePrint = async () => {
     try {
       const response = await fetch(
-        `http://localhost:5000/api/Receipt/print?lkpBranch=${lkpBranch}&lkpType=${lkpType}&txtReceiptNo=${documentNo}`
+        `${import.meta.env.VITE_API_URL}/Receipt/print?lkpBranch=${lkpBranch}&lkpType=${lkpType}&txtReceiptNo=${documentNo}`
       );
 
       if (!response.ok) {
@@ -502,7 +502,7 @@ const ReceiptPage: React.FC = () => {
             });
 
           const url =
-            `http://localhost:5000/api/Receipt/get/data?${query.toString()}`;
+            `${import.meta.env.VITE_API_URL}/Receipt/get/data?${query.toString()}`;
 
           console.log(
             "MODIFY LOOKUP URL:",
@@ -795,7 +795,7 @@ const ReceiptPage: React.FC = () => {
 
         try {
           const response = await fetch(
-            "http://localhost:5000/api/Receipt/getReceipt"
+            `${import.meta.env.VITE_API_URL}/Receipt/getReceipt`
           );
 
           if (!response.ok) {
@@ -1588,7 +1588,7 @@ const ReceiptPage: React.FC = () => {
       =============================================== */
 
       const response = await fetch(
-        "http://localhost:5000/api/Receipt/saveReceipt",
+        `${import.meta.env.VITE_API_URL}/Receipt/saveReceipt`,
         {
           method: "POST",
 
@@ -1930,12 +1930,12 @@ setFocusReceiptNoAfterClear(
         try {
           console.log(
             "🔥 CALLING:",
-            "http://localhost:5000/api/Receipt/modifyReceipt"
+            `${import.meta.env.VITE_API_URL}i/Receipt/modifyReceipt`
           );
 
           const response =
             await fetch(
-              "http://localhost:5000/api/Receipt/modifyReceipt",
+              `${import.meta.env.VITE_API_URL}/Receipt/modifyReceipt`,
               {
                 method: "POST",
 
@@ -2168,7 +2168,7 @@ setFocusReceiptNoAfterClear(
       =============================================== */
 
       const response = await fetch(
-        "http://localhost:5000/api/Receipt/delete",
+        `${import.meta.env.VITE_API_URL}/Receipt/delete`,
         {
           method: "DELETE",
 
