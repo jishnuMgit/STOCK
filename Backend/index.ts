@@ -8,6 +8,7 @@ import MatchRouter from "./routes/MatchRouter.js";
 import LoginRouter from "./routes/AuthRouter.js";
 import CompanyRouter from "./routes/CompanyRouter.js";
 import YearRouter from "./routes/YearRouter.js";
+import CompanyInfoRouter from "./routes/SetcompanyinfoRouter.js";
 import menuRoutes from "./routes/MenuRoute.js";
 
 import pool from "./DB/db.js";
@@ -50,6 +51,7 @@ app.use("/api/Match", MatchRouter);
 app.use("/api/auth", LoginRouter);
 app.use("/api/companies", CompanyRouter);
 app.use("/api/years", YearRouter);
+app.use("/api/CompanyInfo", CompanyInfoRouter);
 app.use("/api/menu", menuRoutes);
 
 app.listen(5000, () => {

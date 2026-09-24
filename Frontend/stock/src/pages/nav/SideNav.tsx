@@ -166,8 +166,8 @@ const menuItems: MenuItem[] = [
     icon: <Users size={18} />,
     children: [
       {
-        label: "Customer List",
-        path: "/customers",
+        label: "Customer",
+        path: "/Transaction/CustomerPage",
       },
       {
         label: "Customer Ledger",

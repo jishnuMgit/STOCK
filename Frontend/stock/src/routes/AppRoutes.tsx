@@ -30,6 +30,10 @@ const SetCompanyInfo = lazy(
   () => import("../pages/Settings/SetCompanyInfoPage"),
 );
 
+
+const CustomerPage=lazy(()=>import(
+  "../pages/Transaction/Setup/CustomerPage"
+))
 /* =========================================================
    PAGE LOADER
 ========================================================= */
@@ -100,10 +104,12 @@ const AppRoutes = () => {
             element={<Matching />}
           />
 
-          <Route
-            path="/Transaction/debit-note"
-            element={<div>Debit Note Page</div>}
-          />
+        <Route
+          path="/Transaction/CustomerPage"
+          element=
+           {<CustomerPage/>}
+          
+        />
 
           <Route
             path="/Transaction/Transaction-unmatching"
