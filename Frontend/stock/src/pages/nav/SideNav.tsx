@@ -258,6 +258,10 @@ const menuItems: MenuItem[] = [
       {
         label: "Set Company Info",
         path: "/Settings/SetCompanyInfo",
+      },
+       {
+        label: "Set Document No",
+        path: "/Settings/SetDocumentNo",
       }
     ],
   },

@@ -4,6 +4,7 @@ import {
   Route,
   Navigate,
 } from "react-router-dom";
+import SetDocumentNo from "../pages/Settings/setDocumentNoPage";
 
 /* =========================================================
    LAZY LOAD PAGES
@@ -144,7 +145,10 @@ const AppRoutes = () => {
 path="/Settings/SetCompanyInfo"
 element={<SetCompanyInfo/>}
 />
-
+<Route
+path="/Settings/SetDocumentNo"
+element={<SetDocumentNo/>}
+/>
 
         {/*=====================================
                          REPORTS
