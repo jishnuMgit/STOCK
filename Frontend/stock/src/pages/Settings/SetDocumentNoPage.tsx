@@ -611,6 +611,7 @@ const SetDocumentNo: React.FC = () => {
           sm:w-[70%]
           lg:w-[75%]
           xl:w-[65%]
+          md:w-[100%]
         "
       >
 
@@ -1393,7 +1394,6 @@ const SetDocumentNo: React.FC = () => {
 
         <div
           className="
-            relative
             flex
             flex-col
             items-center
@@ -1492,11 +1492,6 @@ const SetDocumentNo: React.FC = () => {
               text-green-600
               shadow-sm
               hover:bg-slate-50
-
-              sm:ml-4
-
-              lg:absolute
-              lg:right-10
             "
           >
             Copy To Next Year
