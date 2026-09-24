@@ -1,10 +1,137 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { toast } from "react-toastify";
+import Select from "react-select";
+import type { SelectOption } from "../../types/receiptypes";
 
 interface CompanyOption {
   fcoid: string;
   fconame: string;
 }
+
+/* =========================================================
+   SELECT STYLING — same look as the Branch select on
+   Transaction/Receipt (ReceitComp.tsx selectStylesLocal)
+========================================================= */
+
+const companySelectStyles = {
+  control: (base: any) => ({
+    ...base,
+    minHeight: "28px",
+    height: "28px",
+    borderColor: "#d7dee7",
+    borderRadius: "4px",
+    boxShadow: "none",
+    fontSize: "12px",
+    cursor: "text",
+
+    "&:hover": {
+      borderColor: "#9fdfbc",
+    },
+  }),
+
+  valueContainer: (base: any) => ({
+    ...base,
+    height: "28px",
+    padding: "0 8px",
+  }),
+
+  singleValue: (base: any) => ({
+    ...base,
+    color: "#344054",
+    fontSize: "12px",
+  }),
+
+  placeholder: (base: any) => ({
+    ...base,
+    color: "#808080",
+    fontSize: "12px",
+  }),
+
+  input: (base: any) => ({
+    ...base,
+    margin: 0,
+    padding: 0,
+    fontSize: "12px",
+    color: "#344054",
+  }),
+
+  indicatorsContainer: (base: any) => ({
+    ...base,
+    height: "28px",
+  }),
+
+  dropdownIndicator: (base: any) => ({
+    ...base,
+    color: "#aeb8c2",
+    padding: "4px",
+
+    "&:hover": {
+      color: "#808080",
+    },
+  }),
+
+  indicatorSeparator: () => ({
+    display: "none",
+  }),
+
+  clearIndicator: (base: any) => ({
+    ...base,
+    color: "#aeb8c2",
+    padding: "4px",
+
+    "&:hover": {
+      color: "#808080",
+    },
+  }),
+
+  menu: (base: any) => ({
+    ...base,
+    fontSize: "12px",
+    zIndex: 100,
+    marginTop: "2px",
+    borderRadius: "4px",
+    overflow: "hidden",
+  }),
+
+  menuList: (base: any) => ({
+    ...base,
+    padding: "3px 0",
+    maxHeight: "200px",
+    overflowY: "auto",
+  }),
+
+  option: (base: any, state: any) => ({
+    ...base,
+    fontSize: "12px",
+    cursor: "pointer",
+
+    backgroundColor:
+      state.isSelected || state.isFocused ? "#eefbf4" : "#ffffff",
+
+    color: "#344054",
+    padding: "7px 10px",
+
+    "&:active": {
+      backgroundColor: "#dff5e9",
+    },
+  }),
+};
+
+const companyFilterOption = (
+  option: { label: string; value: string; data: SelectOption },
+  inputValue: string
+) => {
+  const search = inputValue.toLowerCase().trim();
+
+  if (!search) {
+    return true;
+  }
+
+  return (
+    option.data.label.toLowerCase().includes(search) ||
+    option.data.value.toLowerCase().includes(search)
+  );
+};
 
 interface CompanyFormData {
   txtCoName_AR: string;
@@ -43,6 +170,20 @@ const SetCompanyInfo = () => {
   const [lkpCoName, setLkpCoName] = useState("");
   const [formData, setFormData] = useState<CompanyFormData>(emptyFormData);
 
+  const companySelectOptions = useMemo<SelectOption[]>(
+    () =>
+      companyOptions.map((company) => ({
+        value: company.fcoid,
+        label: `${company.fcoid} - ${company.fconame}`,
+      })),
+    [companyOptions]
+  );
+
+  const selectedCompanyOption =
+    companySelectOptions.find(
+      (option) => option.value === lkpCoName
+    ) || null;
+
   const handleFieldChange = (
     field: keyof CompanyFormData,
     value: string
@@ -61,7 +202,7 @@ const SetCompanyInfo = () => {
     const loadCompanyList = async () => {
       try {
         const response = await fetch(
-          "http://localhost:5000/api/CompanyInfo/getCompanyList"
+          `${import.meta.env.VITE_API_URL}/CompanyInfo/getCompanyList`
         );
 
         if (!response.ok) {
@@ -76,10 +217,6 @@ const SetCompanyInfo = () => {
         }
 
         setCompanyOptions(result.data || []);
-
-        if (result.data?.length > 0) {
-          setLkpCoName(result.data[0].fcoid);
-        }
       } catch (error) {
         console.error("getCompanyList error:", error);
       }
@@ -101,7 +238,7 @@ const SetCompanyInfo = () => {
     const loadCompanyDetails = async () => {
       try {
         const response = await fetch(
-          "http://localhost:5000/api/CompanyInfo/getCompanyDetails",
+          `${import.meta.env.VITE_API_URL}/CompanyInfo/getCompanyDetails`,
           {
             method: "POST",
             headers: { "Content-Type": "application/json" },
@@ -159,7 +296,7 @@ const SetCompanyInfo = () => {
 
     try {
       const response = await fetch(
-        "http://localhost:5000/api/CompanyInfo/saveCompanyDetails",
+        `${import.meta.env.VITE_API_URL}/CompanyInfo/saveCompanyDetails`,
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -217,21 +354,19 @@ const SetCompanyInfo = () => {
             </label>
 
             <div className="relative">
-              <select
-                id="lkpCoName"
+              <Select<SelectOption, false>
+                inputId="lkpCoName"
                 name="lkpCoName"
-                value={lkpCoName}
-                onChange={(event) => setLkpCoName(event.target.value)}
-                className="w-full h-[23px] border border-gray-300 rounded-sm px-2 text-[11px] outline-none"
-              >
-                  <option value="">-- Select Company --</option>
-                {companyOptions.map((company) => (
-                  
-                  <option key={company.fcoid} value={company.fcoid}>
-                    {company.fconame}
-                  </option>
-                ))}
-              </select>
+                value={selectedCompanyOption}
+                onChange={(option) => setLkpCoName(option?.value || "")}
+                options={companySelectOptions}
+                filterOption={companyFilterOption}
+                styles={companySelectStyles}
+                placeholder="Select"
+                isSearchable
+                isClearable={false}
+                noOptionsMessage={() => "No Company Found"}
+              />
             </div>
           </div>
 
