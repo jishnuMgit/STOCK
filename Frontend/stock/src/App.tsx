@@ -1,13 +1,9 @@
-import {
-  BrowserRouter,
-  useLocation,
-  useNavigate,
-} from "react-router-dom";
+import { BrowserRouter, useLocation } from "react-router-dom";
 
 import { ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 
-import SideNav from "./pages/nav/SideNav";
+import NavShell from "./components/NavShell/NavShell";
 import AppRoutes from "./routes/AppRoutes";
 import "./App.css";
 
@@ -17,33 +13,17 @@ import "./App.css";
 
 function AppLayout() {
   const location = useLocation();
-  const navigate = useNavigate();
+  const isLogin = location.pathname === "/login";
 
   return (
-    <div className="app-layout">
-
-      {/* =================================================
-          SIDE NAVIGATION
-      ================================================= */}
-
-      {location.pathname !== "/login" && (
-        <SideNav
-          activePath={location.pathname}
-          onNavigate={navigate}
-        />
-      )}
-
-      {/* =================================================
-          PAGE CONTENT
-      ================================================= */}
-
-      <main className="app-content">
+    <>
+      {isLogin ? (
         <AppRoutes />
-      </main>
-
-      {/* =================================================
-          NOTIFICATIONS
-      ================================================= */}
+      ) : (
+        <NavShell>
+          <AppRoutes />
+        </NavShell>
+      )}
 
       <ToastContainer
         position="top-right"
@@ -54,8 +34,7 @@ function AppLayout() {
         pauseOnHover
         draggable
       />
-
-    </div>
+    </>
   );
 }
 

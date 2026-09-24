@@ -1,0 +1,140 @@
+.app-shell {
+    display: flex;
+    flex-direction: column;
+    height: 100vh;
+}
+
+.app-shell-body {
+    display: flex;
+    flex: 1;
+    min-height: 0;
+    /* lets children scroll */
+}
+
+.app-shell-main {
+    flex: 1;
+    min-width: 0;
+    overflow: auto;
+}
+
+/* the sidebar now sits in a flex row under the top bar */
+.app-shell-body>.side-nav {
+    position: static;
+    height: 100%;
+    flex-shrink: 0;
+}
+
+.top-nav {
+    display: flex;
+    align-items: center;
+    gap: 24px;
+    height: 56px;
+    padding: 0 16px;
+    background: #fff;
+    border-bottom: 1px solid #e2e8f0;
+    position: relative;
+    z-index: 30;
+}
+
+.top-nav-brand {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.top-nav-menu {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    flex: 1;
+}
+
+.top-nav-item {
+    position: relative;
+}
+
+.top-nav-button {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 12px;
+    border: 0;
+    border-radius: 8px;
+    background: transparent;
+    color: #334155;
+    font-size: 13px;
+    font-weight: 500;
+    cursor: pointer;
+}
+
+.top-nav-button:hover,
+.top-nav-button-open {
+    background: #f1f5f9;
+}
+
+.top-nav-button-active {
+    color: #2563eb;
+    background: #eff6ff;
+}
+
+.top-nav-icon {
+    display: inline-flex;
+}
+
+.top-nav-dropdown {
+    position: absolute;
+    top: calc(100% + 6px);
+    left: 0;
+    min-width: 220px;
+    padding: 6px;
+    background: #fff;
+    border: 1px solid #e2e8f0;
+    border-radius: 10px;
+    box-shadow: 0 10px 24px rgba(15, 23, 42, 0.12);
+}
+
+.top-nav-dropdown-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    width: 100%;
+    padding: 8px 10px;
+    border: 0;
+    border-radius: 6px;
+    background: transparent;
+    color: #334155;
+    font-size: 13px;
+    text-align: left;
+    cursor: pointer;
+}
+
+.top-nav-dropdown-item:hover {
+    background: #f1f5f9;
+}
+
+.top-nav-dropdown-item-active,
+.top-nav-dropdown-item-selected {
+    color: #2563eb;
+    background: #eff6ff;
+}
+
+.top-nav-dropdown-item-disabled {
+    color: #94a3b8;
+    cursor: not-allowed;
+}
+
+.top-nav-status {
+    font-size: 13px;
+    color: #64748b;
+}
+
+.top-nav-status-error {
+    color: #dc2626;
+}
+
+.top-nav-user {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
