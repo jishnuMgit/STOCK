@@ -19,7 +19,7 @@ interface DocumentRow {
   document: string;
 
   lkpMode: string;
-  txtPrefix: string;
+  txtDocPrefix: string;
   txtStartSeqNo: string;
 
   chkStrictSerial: boolean;
@@ -44,6 +44,7 @@ const selectStyles: StylesConfig<SelectOption, false> = {
     fontSize: "13px",
     backgroundColor: "#ffffff",
     cursor: "pointer",
+
     "&:hover": {
       borderColor: "#94a3b8",
     },
@@ -105,11 +106,13 @@ const selectStyles: StylesConfig<SelectOption, false> = {
     minHeight: "30px",
     padding: "6px 10px",
     fontSize: "13px",
+
     backgroundColor: state.isSelected
       ? "#dbeafe"
       : state.isFocused
       ? "#eff6ff"
       : "#ffffff",
+
     color: "#475569",
     cursor: "pointer",
   }),
@@ -125,7 +128,8 @@ const tableSelectStyles: StylesConfig<SelectOption, false> = {
   control: (base) => ({
     ...base,
     minHeight: "32px",
-    height: "32px",
+    height: "36px",
+    width: "100%",
     border: "none",
     borderRadius: 0,
     boxShadow: "none",
@@ -139,21 +143,56 @@ const tableSelectStyles: StylesConfig<SelectOption, false> = {
 
   valueContainer: (base) => ({
     ...base,
-    height: "32px",
-    padding: "0 8px",
+    height: "26px",
+    minWidth: 0,
+    padding: "0 3px",
+    overflow: "hidden",
+  }),
+
+  singleValue: (base) => ({
+    ...base,
+    color: "#475569",
+    fontSize: "11px",
+    maxWidth: "100%",
+    overflow: "hidden",
+    textOverflow: "ellipsis",
+    whiteSpace: "nowrap",
   }),
 
   indicatorsContainer: (base) => ({
     ...base,
-    height: "32px",
+    height: "26px",
+    flexShrink: 0,
   }),
 
   dropdownIndicator: (base) => ({
     ...base,
-    padding: "3px 5px",
+    padding: "2px 3px",
+  }),
+
+  indicatorSeparator: () => ({
+    display: "none",
+  }),
+
+  menu: (base) => ({
+    ...base,
+    zIndex: 9999,
+    fontSize: "11px",
+  }),
+
+  option: (base, state) => ({
+    ...base,
+    minHeight: "26px",
+    padding: "5px 6px",
+    fontSize: "11px",
+    backgroundColor: state.isSelected
+      ? "#dbeafe"
+      : state.isFocused
+      ? "#eff6ff"
+      : "#ffffff",
+    color: "#475569",
   }),
 };
-
 // ============================================================
 // OPTIONS
 // ============================================================
@@ -187,20 +226,62 @@ const resetOptions: SelectOption[] = [
 ];
 
 const documentOptions: SelectOption[] = [
-  { value: "Purchase Order", label: "Purchase Order" },
-  { value: "Purchase Invoice", label: "Purchase Invoice" },
-  { value: "Purchase Return", label: "Purchase Return" },
-  { value: "Quotation", label: "Quotation" },
-  { value: "Sales Invoice (Cash)", label: "Sales Invoice (Cash)" },
-  { value: "Sales Invoice (Credit)", label: "Sales Invoice (Credit)" },
-  { value: "Sales Return (Cash)", label: "Sales Return (Cash)" },
-  { value: "Sales Return (Credit)", label: "Sales Return (Credit)" },
-  { value: "Stock Transfer", label: "Stock Transfer" },
-  { value: "Damage", label: "Damage" },
-  { value: "Stock Adjustment", label: "Stock Adjustment" },
-  { value: "Item Conversion", label: "Item Conversion" },
-  { value: "Delivery Note", label: "Delivery Note" },
-  { value: "Delivery Note Return", label: "Delivery Note Return" },
+  {
+    value: "Purchase Order",
+    label: "Purchase Order",
+  },
+  {
+    value: "Purchase Invoice",
+    label: "Purchase Invoice",
+  },
+  {
+    value: "Purchase Return",
+    label: "Purchase Return",
+  },
+  {
+    value: "Quotation",
+    label: "Quotation",
+  },
+  {
+    value: "Sales Invoice (Cash)",
+    label: "Sales Invoice (Cash)",
+  },
+  {
+    value: "Sales Invoice (Credit)",
+    label: "Sales Invoice (Credit)",
+  },
+  {
+    value: "Sales Return (Cash)",
+    label: "Sales Return (Cash)",
+  },
+  {
+    value: "Sales Return (Credit)",
+    label: "Sales Return (Credit)",
+  },
+  {
+    value: "Stock Transfer",
+    label: "Stock Transfer",
+  },
+  {
+    value: "Damage",
+    label: "Damage",
+  },
+  {
+    value: "Stock Adjustment",
+    label: "Stock Adjustment",
+  },
+  {
+    value: "Item Conversion",
+    label: "Item Conversion",
+  },
+  {
+    value: "Delivery Note",
+    label: "Delivery Note",
+  },
+  {
+    value: "Delivery Note Return",
+    label: "Delivery Note Return",
+  },
 ];
 
 // ============================================================
@@ -226,11 +307,14 @@ const SetDocumentNo: React.FC = () => {
   // HEADER STATES
   // ==========================================================
 
-  const [lkpYear, setLkpYear] = useState<string>("2026");
+  const [lkpYear, setLkpYear] =
+    useState<string>("2026");
 
-  const [lkpBranch, setLkpBranch] = useState<string>("");
+  const [lkpBranch, setLkpBranch] =
+    useState<string>("");
 
-  const [lkpModule, setLkpModule] = useState<string>("");
+  const [lkpModule, setLkpModule] =
+    useState<string>("");
 
   // ==========================================================
   // TABLE STATES
@@ -241,152 +325,165 @@ const SetDocumentNo: React.FC = () => {
       id: 1,
       document: "Purchase Order",
       lkpMode: "Auto",
-      txtPrefix: "JD-26",
+      txtDocPrefix: "JD-26",
       txtStartSeqNo: "O",
-      chkStrictSerial: true,
+      chkStrictSerial: false,
       lkpResetNo: "Never",
       chkPrintAfterSave: false,
       txtPositionNo: 1,
     },
+
     {
       id: 2,
       document: "Purchase Invoice",
       lkpMode: "Auto",
-      txtPrefix: "JD-26",
+      txtDocPrefix: "JD-26",
       txtStartSeqNo: "O",
-      chkStrictSerial: true,
+      chkStrictSerial: false,
       lkpResetNo: "Never",
       chkPrintAfterSave: false,
       txtPositionNo: 2,
     },
+
     {
       id: 3,
       document: "Purchase Return",
       lkpMode: "Auto",
-      txtPrefix: "JD-26",
+      txtDocPrefix: "JD-26",
       txtStartSeqNo: "O",
-      chkStrictSerial: true,
+      chkStrictSerial: false,
       lkpResetNo: "Never",
       chkPrintAfterSave: false,
       txtPositionNo: 3,
     },
+
     {
       id: 4,
       document: "Quotation",
       lkpMode: "Auto",
-      txtPrefix: "JD-26",
+      txtDocPrefix: "JD-26",
       txtStartSeqNo: "O",
-      chkStrictSerial: true,
+      chkStrictSerial: false,
       lkpResetNo: "Never",
       chkPrintAfterSave: false,
       txtPositionNo: 4,
     },
+
     {
       id: 5,
       document: "Sales Invoice (Cash)",
       lkpMode: "Auto",
-      txtPrefix: "JD-26",
+      txtDocPrefix: "JD-26",
       txtStartSeqNo: "OC",
-      chkStrictSerial: true,
+      chkStrictSerial: false,
       lkpResetNo: "Never",
       chkPrintAfterSave: false,
       txtPositionNo: 5,
     },
+
     {
       id: 6,
       document: "Sales Invoice (Credit)",
       lkpMode: "Auto",
-      txtPrefix: "JD-26",
+      txtDocPrefix: "JD-26",
       txtStartSeqNo: "OR",
-      chkStrictSerial: true,
+      chkStrictSerial: false,
       lkpResetNo: "Never",
       chkPrintAfterSave: false,
       txtPositionNo: 6,
     },
+
     {
       id: 7,
       document: "Sales Return (Cash)",
       lkpMode: "Auto",
-      txtPrefix: "JD-26",
+      txtDocPrefix: "JD-26",
       txtStartSeqNo: "OH",
-      chkStrictSerial: true,
+      chkStrictSerial: false,
       lkpResetNo: "Never",
       chkPrintAfterSave: false,
       txtPositionNo: 7,
     },
+
     {
       id: 8,
       document: "Sales Return (Credit)",
       lkpMode: "Auto",
-      txtPrefix: "JD-26",
+      txtDocPrefix: "JD-26",
       txtStartSeqNo: "OD",
-      chkStrictSerial: true,
+      chkStrictSerial: false,
       lkpResetNo: "Never",
       chkPrintAfterSave: false,
       txtPositionNo: 8,
     },
+
     {
       id: 9,
       document: "Stock Transfer",
       lkpMode: "Auto",
-      txtPrefix: "JD-26",
+      txtDocPrefix: "JD-26",
       txtStartSeqNo: "O",
-      chkStrictSerial: true,
+      chkStrictSerial: false,
       lkpResetNo: "Never",
       chkPrintAfterSave: false,
       txtPositionNo: 9,
     },
+
     {
       id: 10,
       document: "Damage",
       lkpMode: "Auto",
-      txtPrefix: "JD-26",
+      txtDocPrefix: "JD-26",
       txtStartSeqNo: "O",
-      chkStrictSerial: true,
+      chkStrictSerial: false,
       lkpResetNo: "Never",
       chkPrintAfterSave: false,
       txtPositionNo: 10,
     },
+
     {
       id: 11,
       document: "Stock Adjustment",
       lkpMode: "Auto",
-      txtPrefix: "JD-26",
+      txtDocPrefix: "JD-26",
       txtStartSeqNo: "O",
-      chkStrictSerial: true,
+      chkStrictSerial: false,
       lkpResetNo: "Never",
       chkPrintAfterSave: false,
       txtPositionNo: 11,
     },
+
     {
       id: 12,
       document: "Item Conversion",
       lkpMode: "Auto",
-      txtPrefix: "JD-26",
+      txtDocPrefix: "JD-26",
       txtStartSeqNo: "O",
-      chkStrictSerial: true,
+      chkStrictSerial: false,
       lkpResetNo: "Never",
       chkPrintAfterSave: false,
       txtPositionNo: 12,
     },
+
     {
       id: 13,
       document: "Delivery Note",
       lkpMode: "Auto",
-      txtPrefix: "JD-26",
+      txtDocPrefix: "JD-26",
       txtStartSeqNo: "O",
-      chkStrictSerial: true,
+      chkStrictSerial: false,
       lkpResetNo: "Never",
       chkPrintAfterSave: false,
       txtPositionNo: 13,
     },
+
     {
       id: 14,
       document: "Delivery Note Return",
       lkpMode: "Auto",
-      txtPrefix: "JD-26",
+      txtDocPrefix: "JD-26",
       txtStartSeqNo: "OR",
-      chkStrictSerial: true,
+      chkStrictSerial: false,
       lkpResetNo: "Never",
       chkPrintAfterSave: false,
       txtPositionNo: 14,
@@ -397,14 +494,18 @@ const SetDocumentNo: React.FC = () => {
   // BUTTON STATE
   // ==========================================================
 
-  const [CopyToNextYearbtn, setCopyToNextYearbtn] =
-    useState<boolean>(false);
+  const [
+    CopyToNextYearbtn,
+    setCopyToNextYearbtn,
+  ] = useState<boolean>(false);
 
   // ==========================================================
   // UPDATE ROW
   // ==========================================================
 
-  const handleRowChange = <K extends keyof DocumentRow>(
+  const handleRowChange = <
+    K extends keyof DocumentRow
+  >(
     id: number,
     field: K,
     value: DocumentRow[K]
@@ -450,7 +551,7 @@ const SetDocumentNo: React.FC = () => {
       previousRows.map((row) => ({
         ...row,
         lkpMode: "Auto",
-        chkStrictSerial: true,
+        chkStrictSerial: false,
         lkpResetNo: "Never",
         chkPrintAfterSave: false,
       }))
@@ -485,8 +586,8 @@ const SetDocumentNo: React.FC = () => {
         min-h-screen
         w-full
         flex-col
-        justify-center
         items-center
+        justify-center
         bg-white
         p-1
         text-[13px]
@@ -507,9 +608,9 @@ const SetDocumentNo: React.FC = () => {
           bg-white
           shadow-sm
 
-          sm:w-[95%]
-          lg:w-[90%]
-          xl:w-[80%]
+          sm:w-[70%]
+          lg:w-[75%]
+          xl:w-[65%]
         "
       >
 
@@ -527,7 +628,14 @@ const SetDocumentNo: React.FC = () => {
             bg-[#a3dfc0]
           "
         >
-          <h1 className="ml-1.5 text-[17px] font-semibold text-slate-700">
+          <h1
+            className="
+              ml-1.5
+              text-[17px]
+              font-semibold
+              text-slate-700
+            "
+          >
             Set Document No.
           </h1>
         </div>
@@ -621,12 +729,21 @@ const SetDocumentNo: React.FC = () => {
 
             <label
               htmlFor="lkpBranch"
-              className="shrink-0 font-semibold"
+              className="
+                shrink-0
+                font-semibold
+              "
             >
               Branch :
             </label>
 
-            <div className="w-full sm:w-[280px] lg:w-[312px]">
+            <div
+              className="
+                w-full
+                sm:w-[180px]
+                lg:w-[212px]
+              "
+            >
 
               <Select
                 inputId="lkpBranch"
@@ -674,12 +791,21 @@ const SetDocumentNo: React.FC = () => {
 
             <label
               htmlFor="lkpModule"
-              className="shrink-0 font-semibold"
+              className="
+                shrink-0
+                font-semibold
+              "
             >
               Module :
             </label>
 
-            <div className="w-full sm:w-[220px] lg:w-[240px]">
+            <div
+              className="
+                w-full
+                sm:w-[120px]
+                lg:w-[150px]
+              "
+            >
 
               <Select
                 inputId="lkpModule"
@@ -713,11 +839,14 @@ const SetDocumentNo: React.FC = () => {
 
         </div>
 
-        {/* =====================================================
-            TABLE
-        ====================================================== */}
-
-        <div className="px-2 sm:px-5 lg:px-10">
+       
+        <div
+          className="
+            px-2
+            sm:px-5
+            lg:px-10
+          "
+        >
 
           <div
             className="
@@ -734,7 +863,8 @@ const SetDocumentNo: React.FC = () => {
             <table
               className="
                 w-full
-                min-w-[1050px]
+                min-w-[150px]
+                max-w-[100%]
                 table-fixed
                 border-collapse
               "
@@ -752,61 +882,135 @@ const SetDocumentNo: React.FC = () => {
                     bg-slate-50
                     text-left
                     text-[13px]
-                    font-bold
+                    font-semibold
                     text-slate-600
                   "
                 >
 
                   {/* ARROW */}
 
-                  <th className="w-[25px] border-r border-slate-200">
-                  </th>
+                  {/* <th
+                    className="
+                      w-[20px]
+                      border-r
+                      border-slate-200
+                    "
+                  >
+                  </th> */}
 
                   {/* DOCUMENT */}
 
-                  <th className="w-[255px] border-r border-slate-200 px-4">
+                  <th
+                    className="
+                      w-[50px]
+                      border-r
+                      border-slate-200
+                      px-1
+                      font-semibold
+                    "
+                  >
                     Document
                   </th>
 
                   {/* PREFIX */}
 
-                  <th className="w-[105px] border-r border-slate-200 px-4">
+                  <th
+                    className="
+                      w-[25px]
+                      border-r
+                      border-slate-200
+                      px-1
+                      font-semibold
+                    "
+                  >
                     Prefix
                   </th>
 
                   {/* START SEQ */}
 
-                  <th className="w-[115px] border-r border-slate-200 px-4">
+                  <th
+                    className="
+                      w-[25px]
+                      border-r
+                      border-slate-200
+                      px-1
+                      whitespace-nowrap
+                      font-semibold
+                    "
+                  >
                     Start Seq. No.
                   </th>
 
                   {/* STRICT SERIAL */}
 
-                  <th className="w-[115px] border-r border-slate-200 px-4 text-center">
+                  <th
+                    className="
+                      w-[25px]
+                      border-r
+                      border-slate-200
+                      px-1
+                      text-center
+                      font-semibold
+                    "
+                  >
                     Strict Serial
                   </th>
 
-                  {/* + MODE */}
+                  {/* MODE */}
 
-                  <th className="w-[100px] border-r border-slate-200 px-4">
+                  <th
+                    className="
+                      w-[25px]
+                      border-r
+                      border-slate-200
+                      px-1
+                      font-semibold
+                    "
+                  >
                     + Mode
                   </th>
 
                   {/* RESET */}
 
-                  <th className="w-[115px] border-r border-slate-200 px-4">
+                  <th
+                    className="
+                      w-[25px]
+                      border-r
+                      border-slate-200
+                      px-1
+                      font-semibold
+                    "
+                  >
                     Reset No.
                   </th>
 
                   {/* PRINT */}
 
-                  <th className="w-[140px] border-r border-slate-200 px-4 text-center">
+                  <th
+                    className="
+                      w-[30px]
+                      border-r
+                      border-slate-200
+                      px-1
+                      text-center
+                      whitespace-nowrap
+                      font-semibold
+                    "
+                  >
                     Print After Save
                   </th>
 
                   {/* POSITION */}
 
-                  <th className="w-[110px] px-4 text-center">
+                  <th
+                    className="
+                      w-[30px]
+                      px-1
+                      text-center
+                      whitespace-nowrap
+                      font-semibold
+                    "
+                  >
                     Position No.
                   </th>
 
@@ -837,9 +1041,9 @@ const SetDocumentNo: React.FC = () => {
 
                     {/* =================================================
                         ARROW
-                    ================================================== */}
+                    ================================================= */}
 
-                    <td
+                    {/* <td
                       className="
                         border-r
                         border-t
@@ -847,11 +1051,11 @@ const SetDocumentNo: React.FC = () => {
                         text-center
                       "
                     >
-                    </td>
+                    </td> */}
 
                     {/* =================================================
                         DOCUMENT
-                    ================================================== */}
+                    ================================================= */}
 
                     <td
                       className="
@@ -896,32 +1100,33 @@ const SetDocumentNo: React.FC = () => {
 
                     {/* =================================================
                         PREFIX
-                    ================================================== */}
+                    ================================================= */}
 
                     <td
                       className="
                         border-r
                         border-t
                         border-slate-200
-                        px-3
+                        px-1
                       "
                     >
 
                       <input
-                        id={`txtPrefix_${row.id}`}
-                        name="txtPrefix"
+                        id={`txtDocPrefix_${row.id}`}
+                        name="txtDocPrefix"
                         type="text"
-                        value={row.txtPrefix}
+                        value={row.txtDocPrefix}
                         onChange={(e) =>
                           handleRowChange(
                             row.id,
-                            "txtPrefix",
+                            "txtDocPrefix",
                             e.target.value
                           )
                         }
                         className="
                           w-full
                           bg-transparent
+                          text-left
                           text-[13px]
                           text-slate-600
                           outline-none
@@ -932,14 +1137,14 @@ const SetDocumentNo: React.FC = () => {
 
                     {/* =================================================
                         START SEQ NO
-                    ================================================== */}
+                    ================================================= */}
 
                     <td
                       className="
                         border-r
                         border-t
                         border-slate-200
-                        px-3
+                        px-1
                       "
                     >
 
@@ -958,6 +1163,7 @@ const SetDocumentNo: React.FC = () => {
                         className="
                           w-full
                           bg-transparent
+                          text-center
                           text-[13px]
                           text-slate-600
                           outline-none
@@ -968,7 +1174,7 @@ const SetDocumentNo: React.FC = () => {
 
                     {/* =================================================
                         STRICT SERIAL
-                    ================================================== */}
+                    ================================================= */}
 
                     <td
                       className="
@@ -1005,7 +1211,7 @@ const SetDocumentNo: React.FC = () => {
 
                     {/* =================================================
                         + MODE
-                    ================================================== */}
+                    ================================================= */}
 
                     <td
                       className="
@@ -1050,7 +1256,7 @@ const SetDocumentNo: React.FC = () => {
 
                     {/* =================================================
                         RESET NO
-                    ================================================== */}
+                    ================================================= */}
 
                     <td
                       className="
@@ -1095,7 +1301,7 @@ const SetDocumentNo: React.FC = () => {
 
                     {/* =================================================
                         PRINT AFTER SAVE
-                    ================================================== */}
+                    ================================================= */}
 
                     <td
                       className="
@@ -1132,13 +1338,13 @@ const SetDocumentNo: React.FC = () => {
 
                     {/* =================================================
                         POSITION NO
-                    ================================================== */}
+                    ================================================= */}
 
                     <td
                       className="
                         border-t
                         border-slate-200
-                        px-3
+                        px-1
                         text-center
                       "
                     >
@@ -1160,7 +1366,7 @@ const SetDocumentNo: React.FC = () => {
                         className="
                           w-full
                           bg-transparent
-                          text-center
+                          text-right
                           text-[13px]
                           text-slate-600
                           outline-none

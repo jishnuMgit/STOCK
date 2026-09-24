@@ -4,7 +4,7 @@ import {
   Route,
   Navigate,
 } from "react-router-dom";
-import SetDocumentNo from "../pages/Settings/setDocumentNoPage";
+import SetDocumentNo from '../pages/Settings/SetDocumentNoPage';
 
 /* =========================================================
    LAZY LOAD PAGES
@@ -51,6 +51,10 @@ const StatementOfAccountMain=lazy(()=>import(
 
 const SetCompanyInfo =lazy(()=>import(
   "../pages/Settings/SetCompanyInfoPage"
+))
+
+const CustomerPage=lazy(()=>import(
+  "../pages/Transaction/Setup/CustomerPage"
 ))
 /* =========================================================
    PAGE LOADER
@@ -122,12 +126,10 @@ const AppRoutes = () => {
         />
 
         <Route
-          path="/Transaction/debit-note"
-          element={
-            <div>
-              Debit Note Page
-            </div>
-          }
+          path="/Transaction/CustomerPage"
+          element=
+           {<CustomerPage/>}
+          
         />
 
         <Route
