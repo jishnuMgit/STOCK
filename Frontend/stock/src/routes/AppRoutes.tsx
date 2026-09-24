@@ -1,57 +1,35 @@
 import { lazy, Suspense } from "react";
-import {
-  Routes,
-  Route,
-  Navigate,
-} from "react-router-dom";
-import SetDocumentNo from "../pages/Settings/setDocumentNoPage";
+import { Routes, Route, Navigate } from "react-router-dom";
+
+import SetDocumentNo from "../pages/Settings/SetDocumentNoPage";
+import ProtectedRoute from "./ProtectedRoutes";
 
 /* =========================================================
    LAZY LOAD PAGES
 ========================================================= */
 
 const ReceiptPage = lazy(
-  () =>
-    import(
-      "../pages/Transaction/Receipt/ReceiptPage"
-    )
+  () => import("../pages/Transaction/Receipt/ReceiptPage"),
 );
 
 const Journalpage = lazy(
-  () =>
-    import(
-      "../pages/Transaction/Journal/Journalpage"
-    )
+  () => import("../pages/Transaction/Journal/Journalpage"),
 );
 
-const Matching = lazy(
-  () =>
-    import(
-      "../pages/Transaction/Matching/Matching"
-    )
+const Matching = lazy(() => import("../pages/Transaction/Matching/Matching"));
+
+const UnMatch = lazy(() => import("../pages/Transaction/Unmatch/UnMatch"));
+
+const Login = lazy(() => import("../pages/Auth/LoginPage"));
+
+const StatementOfAccountMain = lazy(
+  () => import("../pages/Reports/StatementOfAccount/StatementOfAccountMain"),
 );
 
-const UnMatch = lazy(
-  () =>
-    import(
-      "../pages/Transaction/Unmatch/UnMatch"
-    )
+const SetCompanyInfo = lazy(
+  () => import("../pages/Settings/SetCompanyInfoPage"),
 );
 
-const Login = lazy(
-  () =>
-    import(
-      "../pages/Auth/LoginPage"
-    )
-);
-
-const StatementOfAccountMain=lazy(()=>import(
-  "../pages/Reports/StatementOfAccount/StatementOfAccountMain"
-))
-
-const SetCompanyInfo =lazy(()=>import(
-  "../pages/Settings/SetCompanyInfoPage"
-))
 /* =========================================================
    PAGE LOADER
 ========================================================= */
@@ -82,83 +60,70 @@ const AppRoutes = () => {
   return (
     <Suspense fallback={<PageLoader />}>
       <Routes>
-
         {/* =================================================
-            DEFAULT
+            PUBLIC ROUTES
         ================================================= */}
 
-        <Route
-          path="/"
-          element={
-            <Navigate
-              to="/Transaction/receipt"
-              replace
-            />
-          }
-        />
-        
+        <Route path="/login" element={<Login />} />
 
         {/* =================================================
-            TRANSACTION
+            PROTECTED ROUTES
         ================================================= */}
 
-        <Route
-          path="/Transaction/Receipt"
-          element={<ReceiptPage />}
-        />
-         {/* <Route
-          path="/Transaction/receipt/save"
-          element={<ModifyReceipt />}
-        /> */}
+        <Route element={<ProtectedRoute />}>
+          {/* =================================================
+              DEFAULT
+          ================================================= */}
 
-        <Route
-          path="/Transaction/journal"
-          element={<Journalpage />}
-        />
+          <Route
+            path="/"
+            element={<Navigate to="/Transaction/receipt" replace />}
+          />
 
-        <Route
-          path="/Transaction/Transaction-matching"
-          element={<Matching />}
-        />
+          {/* =================================================
+              TRANSACTION
+          ================================================= */}
 
-        <Route
-          path="/Transaction/debit-note"
-          element={
-            <div>
-              Debit Note Page
-            </div>
-          }
-        />
+          <Route path="/Transaction/Receipt" element={<ReceiptPage />} />
 
-        <Route
-          path="/Transaction/Transaction-unmatching"
-          element={<UnMatch />}
-        />
+          {/*
+          <Route
+            path="/Transaction/receipt/save"
+            element={<ModifyReceipt />}
+          />
+          */}
 
-        <Route
-          path="/login"
-          element={<Login />}
-        />
+          <Route path="/Transaction/journal" element={<Journalpage />} />
 
+          <Route
+            path="/Transaction/Transaction-matching"
+            element={<Matching />}
+          />
 
-<Route
-path="/Settings/SetCompanyInfo"
-element={<SetCompanyInfo/>}
-/>
-<Route
-path="/Settings/SetDocumentNo"
-element={<SetDocumentNo/>}
-/>
+          <Route
+            path="/Transaction/debit-note"
+            element={<div>Debit Note Page</div>}
+          />
 
-        {/*=====================================
-                         REPORTS
-        ========================================*/}
+          <Route
+            path="/Transaction/Transaction-unmatching"
+            element={<UnMatch />}
+          />
 
-        <Route
-        path="/reports/soa"
-        element={<StatementOfAccountMain/>}
-        />
+          {/* =================================================
+              SETTINGS
+          ================================================= */}
 
+          <Route path="/Settings/SetCompanyInfo" element={<SetCompanyInfo />} />
+
+          <Route path="/Settings/SetDocumentNo" element={<SetDocumentNo />} />
+
+          {/* =================================================
+              REPORTS
+          ================================================= */}
+
+          <Route path="/reports/soa" element={<StatementOfAccountMain />} />
+        </Route>
       </Routes>
     </Suspense>
   );

@@ -20,6 +20,8 @@ import {
 } from "lucide-react";
 
 import "./SideNav.css";
+import { useLogout } from "../../hooks/useLogout";
+import { toast } from "react-toastify";
 
 /* =========================================================
    TYPES
@@ -65,7 +67,7 @@ const menuItems: MenuItem[] = [
         label: "Receipt ",
         path: "/Transaction/Receipt",
       },
-       {
+      {
         label: "Payment ",
         path: "/Transaction/payment",
       },
@@ -82,7 +84,6 @@ const menuItems: MenuItem[] = [
         path: "/Transaction/Transaction-Un-match",
       },
       {
-
         label: "Debit Note",
         path: "/Transaction/debit-note",
       },
@@ -91,29 +92,26 @@ const menuItems: MenuItem[] = [
         path: "/Transaction/credit-note",
       },
 
-       {
+      {
         label: "Document Print",
         path: "/Transaction/document-print",
       },
-       {
+      {
         label: "Document post",
         path: "/Transaction/document-post",
       },
-       {
+      {
         label: "Document Un-Post",
         path: "/Transaction/document-unpost",
       },
-       {
+      {
         label: "Bank Reconciliation",
         path: "/Transaction/bank-reconciliation",
       },
-       {
+      {
         label: "Beginning Balance",
         path: "/Transaction/beginning-balance",
       },
-
-
-    
     ],
   },
 
@@ -254,15 +252,15 @@ const menuItems: MenuItem[] = [
   {
     label: "Settings",
     icon: <Settings size={18} />,
-     children: [
+    children: [
       {
         label: "Set Company Info",
         path: "/Settings/SetCompanyInfo",
       },
-       {
+      {
         label: "Set Document No",
         path: "/Settings/SetDocumentNo",
-      }
+      },
     ],
   },
 ];
@@ -275,14 +273,14 @@ export default function SideNav({
   activePath = "/receipt",
   onNavigate,
 }: SideNavProps) {
+  const { logout, loading: logoutLoading } = useLogout();
   const navigate = useNavigate();
 
   /* =====================================================
      SIDEBAR STATE
   ===================================================== */
 
-  const [collapsed, setCollapsed] =
-    useState(false);
+  const [collapsed, setCollapsed] = useState(false);
 
   /* =====================================================
      OPEN MENUS
@@ -290,17 +288,13 @@ export default function SideNav({
      Transactions is open initially.
   ===================================================== */
 
-  const [openMenus, setOpenMenus] =
-    useState<string[]>([
-      "Transactions",
-    ]);
+  const [openMenus, setOpenMenus] = useState<string[]>(["Transactions"]);
 
   /* =====================================================
      SEARCH
   ===================================================== */
 
-  const [searchText, setSearchText] =
-    useState("");
+  const [searchText, setSearchText] = useState("");
 
   /* =====================================================
      TOGGLE MENU
@@ -312,15 +306,10 @@ export default function SideNav({
   const toggleMenu = (label: string) => {
     setOpenMenus((current) => {
       if (current.includes(label)) {
-        return current.filter(
-          (item) => item !== label
-        );
+        return current.filter((item) => item !== label);
       }
 
-      return [
-        ...current,
-        label,
-      ];
+      return [...current, label];
     });
   };
 
@@ -328,9 +317,7 @@ export default function SideNav({
      NAVIGATION
   ===================================================== */
 
-  const handleNavigate = (
-    path: string
-  ) => {
+  const handleNavigate = (path: string) => {
     if (onNavigate) {
       onNavigate(path);
       return;
@@ -343,17 +330,12 @@ export default function SideNav({
      CHECK PARENT ACTIVE
   ===================================================== */
 
-  const isParentActive = (
-    item: MenuItem
-  ) => {
+  const isParentActive = (item: MenuItem) => {
     if (item.path) {
       return item.path === activePath;
     }
 
-    return item.children?.some(
-      (child) =>
-        child.path === activePath
-    );
+    return item.children?.some((child) => child.path === activePath);
   };
 
   /* =====================================================
@@ -363,41 +345,28 @@ export default function SideNav({
   ===================================================== */
 
   <button
-            type="button"
-            className="collapse-button collapsed-menu-button cursor-pointer"
-            onClick={() =>
-              setCollapsed(false)
-            }
-            title="Expand menu"
-          >
-            <Menu size={18} />
-          </button>
-  const filteredMenuItems =
-    menuItems.filter((item) => {
-      const search =
-        searchText
-          .trim()
-          .toLowerCase();
+    type="button"
+    className="collapse-button collapsed-menu-button cursor-pointer"
+    onClick={() => setCollapsed(false)}
+    title="Expand menu"
+  >
+    <Menu size={18} />
+  </button>;
+  const filteredMenuItems = menuItems.filter((item) => {
+    const search = searchText.trim().toLowerCase();
 
-      if (!search) {
-        return true;
-      }
+    if (!search) {
+      return true;
+    }
 
-      if (
-        item.label
-          .toLowerCase()
-          .includes(search)
-      ) {
-        return true;
-      }
+    if (item.label.toLowerCase().includes(search)) {
+      return true;
+    }
 
-      return item.children?.some(
-        (child) =>
-          child.label
-            .toLowerCase()
-            .includes(search)
-      );
-    });
+    return item.children?.some((child) =>
+      child.label.toLowerCase().includes(search),
+    );
+  });
 
   /* =====================================================
      AUTO OPEN SEARCH MATCH
@@ -408,29 +377,16 @@ export default function SideNav({
       return;
     }
 
-    const matchingParents =
-      menuItems
-        .filter((item) =>
-          item.children?.some(
-            (child) =>
-              child.label
-                .toLowerCase()
-                .includes(
-                  searchText
-                    .trim()
-                    .toLowerCase()
-                )
-          )
-        )
-        .map((item) => item.label);
+    const matchingParents = menuItems
+      .filter((item) =>
+        item.children?.some((child) =>
+          child.label.toLowerCase().includes(searchText.trim().toLowerCase()),
+        ),
+      )
+      .map((item) => item.label);
 
     if (matchingParents.length) {
-      setOpenMenus((current) => [
-        ...new Set([
-          ...current,
-          ...matchingParents,
-        ]),
-      ]);
+      setOpenMenus((current) => [...new Set([...current, ...matchingParents])]);
     }
   }, [searchText]);
 
@@ -439,32 +395,20 @@ export default function SideNav({
   ===================================================== */
 
   return (
-    <aside
-      className={`side-nav ${
-        collapsed
-          ? "side-nav-collapsed"
-          : ""
-      }`}
-    >
+    <aside className={`side-nav ${collapsed ? "side-nav-collapsed" : ""}`}>
       {/* =================================================
           HEADER
       ================================================= */}
 
       <div className="side-nav-header">
         <div className="brand">
-          <div className="brand-logo">
-            A
-          </div>
+          <div className="brand-logo">A</div>
 
           {!collapsed && (
             <div className="brand-text">
-              <div className="brand-name">
-                Accounts
-              </div>
+              <div className="brand-name">Accounts</div>
 
-              <div className="brand-subtitle">
-                Finance System
-              </div>
+              <div className="brand-subtitle">Finance System</div>
             </div>
           )}
         </div>
@@ -473,9 +417,7 @@ export default function SideNav({
           <button
             type="button"
             className="collapse-button"
-            onClick={() =>
-              setCollapsed(true)
-            }
+            onClick={() => setCollapsed(true)}
             title="Collapse menu"
           >
             <X size={18} />
@@ -486,17 +428,13 @@ export default function SideNav({
           <button
             type="button"
             className="collapse-button collapsed-menu-button cursor-pointer"
-            onClick={() =>
-              setCollapsed(false)
-            }
+            onClick={() => setCollapsed(false)}
             title="Expand menu"
           >
             <Menu size={18} />
           </button>
         )}
       </div>
-
-    
 
       {/* =================================================
           SEARCH
@@ -509,11 +447,7 @@ export default function SideNav({
           <input
             type="text"
             value={searchText}
-            onChange={(event) =>
-              setSearchText(
-                event.target.value
-              )
-            }
+            onChange={(event) => setSearchText(event.target.value)}
             placeholder="Search menu..."
           />
 
@@ -521,17 +455,13 @@ export default function SideNav({
             <button
               type="button"
               className="search-clear"
-              onClick={() =>
-                setSearchText("")
-              }
+              onClick={() => setSearchText("")}
             >
               ×
             </button>
           )}
 
-          {!searchText && (
-            <span>⌘ K</span>
-          )}
+          {!searchText && <span>⌘ K</span>}
         </div>
       )}
 
@@ -540,135 +470,81 @@ export default function SideNav({
       ================================================= */}
 
       <nav className="side-nav-menu">
-        {!collapsed && (
-          <div className="menu-section-title">
-            MAIN MENU
-          </div>
-        )}
+        {!collapsed && <div className="menu-section-title">MAIN MENU</div>}
 
-        {filteredMenuItems.map(
-          (item) => {
-            const hasChildren =
-              !!item.children?.length;
+        {filteredMenuItems.map((item) => {
+          const hasChildren = !!item.children?.length;
 
-            const isOpen =
-              openMenus.includes(
-                item.label
-              );
+          const isOpen = openMenus.includes(item.label);
 
-            const isActive =
-              isParentActive(item);
+          const isActive = isParentActive(item);
 
-            return (
-              <div
-                className="menu-group"
-                key={item.label}
-              >
-                {/* =========================================
+          return (
+            <div className="menu-group" key={item.label}>
+              {/* =========================================
                     PARENT ITEM
                 ========================================= */}
 
-                <button
-                  type="button"
-                  className={`menu-item ${
-                    isActive
-                      ? "menu-item-active"
-                      : ""
-                  }`}
-                  onClick={() => {
-                    if (hasChildren) {
-                      toggleMenu(
-                        item.label
-                      );
-                    } else if (
-                      item.path
-                    ) {
-                      handleNavigate(
-                        item.path
-                      );
-                    }
-                  }}
-                  title={
-                    collapsed
-                      ? item.label
-                      : undefined
+              <button
+                type="button"
+                className={`menu-item ${isActive ? "menu-item-active" : ""}`}
+                onClick={() => {
+                  if (hasChildren) {
+                    toggleMenu(item.label);
+                  } else if (item.path) {
+                    handleNavigate(item.path);
                   }
-                >
-                  <span className="menu-icon">
-                    {item.icon}
-                  </span>
+                }}
+                title={collapsed ? item.label : undefined}
+              >
+                <span className="menu-icon">{item.icon}</span>
 
-                  {!collapsed && (
-                    <>
-                      <span className="menu-label">
-                        {item.label}
+                {!collapsed && (
+                  <>
+                    <span className="menu-label">{item.label}</span>
+
+                    {hasChildren && (
+                      <span className="menu-arrow">
+                        {isOpen ? (
+                          <ChevronDown size={15} />
+                        ) : (
+                          <ChevronRight size={15} />
+                        )}
                       </span>
+                    )}
+                  </>
+                )}
+              </button>
 
-                      {hasChildren && (
-                        <span className="menu-arrow">
-                          {isOpen ? (
-                            <ChevronDown
-                              size={15}
-                            />
-                          ) : (
-                            <ChevronRight
-                              size={15}
-                            />
-                          )}
-                        </span>
-                      )}
-                    </>
-                  )}
-                </button>
-
-                {/* =========================================
+              {/* =========================================
                     CHILDREN
                 ========================================= */}
 
-                {!collapsed &&
-                  hasChildren &&
-                  isOpen && (
-                    <div className="submenu">
-                      {item.children!.map(
-                        (child) => {
-                          const childActive =
-                            activePath ===
-                            child.path;
+              {!collapsed && hasChildren && isOpen && (
+                <div className="submenu">
+                  {item.children!.map((child) => {
+                    const childActive = activePath === child.path;
 
-                          return (
-                            <button
-                              type="button"
-                              key={
-                                child.path
-                              }
-                              className={`submenu-item ${
-                                childActive
-                                  ? "submenu-item-active"
-                                  : ""
-                              }`}
-                              onClick={() =>
-                                handleNavigate(
-                                  child.path
-                                )
-                              }
-                            >
-                              <span className="submenu-line" />
+                    return (
+                      <button
+                        type="button"
+                        key={child.path}
+                        className={`submenu-item ${
+                          childActive ? "submenu-item-active" : ""
+                        }`}
+                        onClick={() => handleNavigate(child.path)}
+                      >
+                        <span className="submenu-line" />
 
-                              <span className="submenu-label">
-                                {
-                                  child.label
-                                }
-                              </span>
-                            </button>
-                          );
-                        }
-                      )}
-                    </div>
-                  )}
-              </div>
-            );
-          }
-        )}
+                        <span className="submenu-label">{child.label}</span>
+                      </button>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+          );
+        })}
       </nav>
 
       {/* =================================================
@@ -678,28 +554,29 @@ export default function SideNav({
       <div className="side-nav-footer">
         {!collapsed && (
           <div className="user-profile">
-            <div className="user-avatar">
-              AD
-            </div>
+            <div className="user-avatar">AD</div>
 
             <div className="user-info">
-              <div className="user-name">
-                Administrator
-              </div>
+              <div className="user-name">Administrator</div>
 
-              <div className="user-role">
-                System User
-              </div>
+              <div className="user-role">System User</div>
             </div>
 
             <button
               type="button"
               className="logout-button"
               title="Logout"
-              onClick={() => {
-                console.log(
-                  "Logout clicked"
-                );
+              disabled={logoutLoading}
+              onClick={async () => {
+                const success = await logout();
+
+                if (!success) {
+                  toast.error("Logout failed");
+                  return;
+                }
+
+                toast.success("Logged out successfully");
+                navigate("/login", { replace: true });
               }}
             >
               <LogOut size={16} />
@@ -713,9 +590,7 @@ export default function SideNav({
             className="collapsed-logout"
             title="Logout"
             onClick={() => {
-              console.log(
-                "Logout clicked"
-              );
+              console.log("Logout clicked");
             }}
           >
             <LogOut size={18} />

@@ -14,18 +14,11 @@ interface LoginData {
 interface LoginResponse {
   success: boolean;
   message: string;
-  user?: {
-    userId: string;
-    companyId: string;
-    year: string;
-    language?: string | null;
-    isCompanyUser?: boolean;
-  };
   data?: {
     userId: string;
     companyId: string;
     year: string;
-    language?: string;
+    userType: string;
   };
 }
 
@@ -45,6 +38,11 @@ export const useLogin = () => {
         headers: {
           "Content-Type": "application/json",
         },
+
+        // IMPORTANT:
+        // Allows browser to receive/store/send HTTP-only session cookie
+        credentials: "include",
+
         body: JSON.stringify(loginData),
       });
 
@@ -52,6 +50,24 @@ export const useLogin = () => {
 
       if (!response.ok || !data.success) {
         throw new Error(data.message || "Login failed");
+      }
+
+      // Store only what frontend needs for UI.
+      // DO NOT store sessionToken.
+      if (data.data?.userId) {
+        localStorage.setItem("userId", data.data.userId);
+      }
+
+      if (data.data?.companyId) {
+        localStorage.setItem("companyId", data.data.companyId);
+      }
+
+      if (data.data?.year) {
+        localStorage.setItem("year", data.data.year);
+      }
+
+      if (data.data?.userType) {
+        localStorage.setItem("userType", data.data.userType);
       }
 
       return data;
