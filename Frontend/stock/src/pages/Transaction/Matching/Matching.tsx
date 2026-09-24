@@ -162,7 +162,7 @@ useEffect(() => {
       =============================================== */
 
       const response = await fetch(
-        "http://localhost:5000/api/Match/getCSAccounts"
+        `${import.meta.env.VITE_API_URL}/Match/getCSAccounts`
       );
 
       if (!response.ok) {
@@ -210,7 +210,7 @@ useEffect(() => {
 
       const accountResponse =
         await fetch(
-          "http://localhost:5000/api/Match/getCSAccounts"
+          "${import.meta.env.VITE_API_URL}/Match/getCSAccounts"
         );
 
       if (!accountResponse.ok) {
