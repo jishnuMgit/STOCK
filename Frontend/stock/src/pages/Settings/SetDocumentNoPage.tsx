@@ -479,24 +479,55 @@ const SetDocumentNo: React.FC = () => {
   // ==========================================================
 
   return (
-    <div className="min-h-screen bg-white p-1 text-[13px] text-slate-700  flex
+    <div
+      className="
+        flex
+        min-h-screen
+        w-full
         flex-col
         justify-center
-        items-center">
+        items-center
+        bg-white
+        p-1
+        text-[13px]
+        text-slate-700
+      "
+    >
 
       {/* =====================================================
           MAIN CONTAINER
-          80% WIDTH + CENTERED
       ====================================================== */}
 
-      <div className="mx-auto w-[80%] border border-slate-300 bg-white shadow-sm">
+      <div
+        className="
+          mx-auto
+          w-full
+          border
+          border-slate-300
+          bg-white
+          shadow-sm
+
+          sm:w-[95%]
+          lg:w-[90%]
+          xl:w-[80%]
+        "
+      >
 
         {/* =====================================================
             TITLE
         ====================================================== */}
 
-        <div className="flex h-[30px] items-center border-b border-slate-300 bg-[#a3dfc0]">
-          <h1 className="text-[17px] font-semibold text-slate-700 ml-1.25">
+        <div
+          className="
+            flex
+            h-[30px]
+            items-center
+            border-b
+            border-slate-300
+            bg-[#a3dfc0]
+          "
+        >
+          <h1 className="ml-1.5 text-[17px] font-semibold text-slate-700">
             Set Document No.
           </h1>
         </div>
@@ -505,20 +536,45 @@ const SetDocumentNo: React.FC = () => {
             HEADER
         ====================================================== */}
 
-        <div className="grid grid-cols-[220px_1fr_1fr] items-center gap-4 border-b border-slate-200 px-10 py-3">
+        <div
+          className="
+            grid
+            grid-cols-1
+            gap-3
+            border-b
+            border-slate-200
+            px-3
+            py-3
 
-          {/* YEAR */}
+            sm:grid-cols-2
+            sm:px-5
 
-          <div className="flex items-center gap-2">
+            lg:grid-cols-[200px_1fr_1fr]
+            lg:items-center
+            lg:gap-4
+            lg:px-10
+          "
+        >
+
+          {/* ===================================================
+              YEAR
+          ==================================================== */}
+
+          <div className="flex w-full items-center gap-2">
 
             <label
               htmlFor="lkpYear"
-              className="w-[40px] text-right font-semibold"
+              className="
+                w-[40px]
+                shrink-0
+                text-right
+                font-semibold
+              "
             >
               Year :
             </label>
 
-            <div className="w-[108px]">
+            <div className="w-[108px] shrink-0">
 
               <Select
                 inputId="lkpYear"
@@ -549,18 +605,28 @@ const SetDocumentNo: React.FC = () => {
 
           </div>
 
-          {/* BRANCH */}
+          {/* ===================================================
+              BRANCH
+          ==================================================== */}
 
-          <div className="flex items-center justify-center gap-2">
+          <div
+            className="
+              flex
+              w-full
+              items-center
+              gap-2
+              sm:justify-center
+            "
+          >
 
             <label
               htmlFor="lkpBranch"
-              className="font-semibold"
+              className="shrink-0 font-semibold"
             >
               Branch :
             </label>
 
-            <div className="w-[312px]">
+            <div className="w-full sm:w-[280px] lg:w-[312px]">
 
               <Select
                 inputId="lkpBranch"
@@ -592,18 +658,28 @@ const SetDocumentNo: React.FC = () => {
 
           </div>
 
-          {/* MODULE */}
+          {/* ===================================================
+              MODULE
+          ==================================================== */}
 
-          <div className="flex items-center justify-center gap-2">
+          <div
+            className="
+              flex
+              w-full
+              items-center
+              gap-2
+              sm:justify-center
+            "
+          >
 
             <label
               htmlFor="lkpModule"
-              className="font-semibold"
+              className="shrink-0 font-semibold"
             >
               Module :
             </label>
 
-            <div className="w-[240px]">
+            <div className="w-full sm:w-[220px] lg:w-[240px]">
 
               <Select
                 inputId="lkpModule"
@@ -641,19 +717,50 @@ const SetDocumentNo: React.FC = () => {
             TABLE
         ====================================================== */}
 
-        <div className="px-10">
+        <div className="px-2 sm:px-5 lg:px-10">
 
-          <div className="overflow-visible border-l border-r border-b border-slate-200">
+          <div
+            className="
+              w-full
+              overflow-x-auto
+              overflow-y-visible
+              border-l
+              border-r
+              border-b
+              border-slate-200
+            "
+          >
 
-            <table className="w-full table-fixed border-collapse">
+            <table
+              className="
+                w-full
+                min-w-[1050px]
+                table-fixed
+                border-collapse
+              "
+            >
+
+              {/* =================================================
+                  TABLE HEADER
+              ================================================== */}
 
               <thead>
 
-                <tr className="h-9 bg-slate-50 text-left text-[13px] font-bold text-slate-600">
+                <tr
+                  className="
+                    h-9
+                    bg-slate-50
+                    text-left
+                    text-[13px]
+                    font-bold
+                    text-slate-600
+                  "
+                >
 
                   {/* ARROW */}
 
-                  <th className="w-[25px] border-r border-slate-200"></th>
+                  <th className="w-[25px] border-r border-slate-200">
+                  </th>
 
                   {/* DOCUMENT */}
 
@@ -707,31 +814,53 @@ const SetDocumentNo: React.FC = () => {
 
               </thead>
 
+              {/* =================================================
+                  TABLE BODY
+              ================================================== */}
+
               <tbody>
 
                 {rows.map((row, index) => (
 
                   <tr
                     key={row.id}
-                    className={`h-[34px] ${
-                      index === 0
-                        ? "bg-[#edf4fc]"
-                        : "bg-white"
-                    } hover:bg-slate-50`}
+                    className={`
+                      h-[34px]
+                      ${
+                        index === 0
+                          ? "bg-[#edf4fc]"
+                          : "bg-white"
+                      }
+                      hover:bg-slate-50
+                    `}
                   >
 
                     {/* =================================================
                         ARROW
                     ================================================== */}
 
-                    <td className="border-r border-t border-slate-200 text-center">
+                    <td
+                      className="
+                        border-r
+                        border-t
+                        border-slate-200
+                        text-center
+                      "
+                    >
                     </td>
 
                     {/* =================================================
                         DOCUMENT
                     ================================================== */}
 
-                    <td className="border-r border-t border-slate-200 p-0">
+                    <td
+                      className="
+                        border-r
+                        border-t
+                        border-slate-200
+                        p-0
+                      "
+                    >
 
                       <Select
                         inputId={`lkpDocument_${row.id}`}
@@ -769,7 +898,14 @@ const SetDocumentNo: React.FC = () => {
                         PREFIX
                     ================================================== */}
 
-                    <td className="border-r border-t border-slate-200 px-3">
+                    <td
+                      className="
+                        border-r
+                        border-t
+                        border-slate-200
+                        px-3
+                      "
+                    >
 
                       <input
                         id={`txtPrefix_${row.id}`}
@@ -783,7 +919,13 @@ const SetDocumentNo: React.FC = () => {
                             e.target.value
                           )
                         }
-                        className="w-full bg-transparent text-[13px] text-slate-600 outline-none"
+                        className="
+                          w-full
+                          bg-transparent
+                          text-[13px]
+                          text-slate-600
+                          outline-none
+                        "
                       />
 
                     </td>
@@ -792,7 +934,14 @@ const SetDocumentNo: React.FC = () => {
                         START SEQ NO
                     ================================================== */}
 
-                    <td className="border-r border-t border-slate-200 px-3">
+                    <td
+                      className="
+                        border-r
+                        border-t
+                        border-slate-200
+                        px-3
+                      "
+                    >
 
                       <input
                         id={`txtStartSeqNo_${row.id}`}
@@ -806,7 +955,13 @@ const SetDocumentNo: React.FC = () => {
                             e.target.value
                           )
                         }
-                        className="w-full bg-transparent text-[13px] text-slate-600 outline-none"
+                        className="
+                          w-full
+                          bg-transparent
+                          text-[13px]
+                          text-slate-600
+                          outline-none
+                        "
                       />
 
                     </td>
@@ -815,7 +970,14 @@ const SetDocumentNo: React.FC = () => {
                         STRICT SERIAL
                     ================================================== */}
 
-                    <td className="border-r border-t border-slate-200 text-center">
+                    <td
+                      className="
+                        border-r
+                        border-t
+                        border-slate-200
+                        text-center
+                      "
+                    >
 
                       <input
                         id={`chkStrictSerial_${row.id}`}
@@ -831,7 +993,12 @@ const SetDocumentNo: React.FC = () => {
                             e.target.checked
                           )
                         }
-                        className="h-[16px] w-[16px] cursor-pointer accent-blue-600"
+                        className="
+                          h-[16px]
+                          w-[16px]
+                          cursor-pointer
+                          accent-blue-600
+                        "
                       />
 
                     </td>
@@ -840,7 +1007,14 @@ const SetDocumentNo: React.FC = () => {
                         + MODE
                     ================================================== */}
 
-                    <td className="border-r border-t border-slate-200 p-0">
+                    <td
+                      className="
+                        border-r
+                        border-t
+                        border-slate-200
+                        p-0
+                      "
+                    >
 
                       <Select
                         inputId={`lkpMode_${row.id}`}
@@ -878,7 +1052,14 @@ const SetDocumentNo: React.FC = () => {
                         RESET NO
                     ================================================== */}
 
-                    <td className="border-r border-t border-slate-200 p-0">
+                    <td
+                      className="
+                        border-r
+                        border-t
+                        border-slate-200
+                        p-0
+                      "
+                    >
 
                       <Select
                         inputId={`lkpResetNo_${row.id}`}
@@ -916,7 +1097,14 @@ const SetDocumentNo: React.FC = () => {
                         PRINT AFTER SAVE
                     ================================================== */}
 
-                    <td className="border-r border-t border-slate-200 text-center">
+                    <td
+                      className="
+                        border-r
+                        border-t
+                        border-slate-200
+                        text-center
+                      "
+                    >
 
                       <input
                         id={`chkPrintAfterSave_${row.id}`}
@@ -932,7 +1120,12 @@ const SetDocumentNo: React.FC = () => {
                             e.target.checked
                           )
                         }
-                        className="h-[16px] w-[16px] cursor-pointer accent-blue-600"
+                        className="
+                          h-[16px]
+                          w-[16px]
+                          cursor-pointer
+                          accent-blue-600
+                        "
                       />
 
                     </td>
@@ -941,7 +1134,14 @@ const SetDocumentNo: React.FC = () => {
                         POSITION NO
                     ================================================== */}
 
-                    <td className="border-t border-slate-200 px-3 text-center">
+                    <td
+                      className="
+                        border-t
+                        border-slate-200
+                        px-3
+                        text-center
+                      "
+                    >
 
                       <input
                         id={`txtPositionNo_${row.id}`}
@@ -957,7 +1157,14 @@ const SetDocumentNo: React.FC = () => {
                             )
                           )
                         }
-                        className="w-full bg-transparent text-center text-[13px] text-slate-600 outline-none"
+                        className="
+                          w-full
+                          bg-transparent
+                          text-center
+                          text-[13px]
+                          text-slate-600
+                          outline-none
+                        "
                       />
 
                     </td>
@@ -978,9 +1185,30 @@ const SetDocumentNo: React.FC = () => {
             BUTTONS
         ====================================================== */}
 
-        <div className="relative flex items-center justify-center gap-4 px-10 pb-1 pt-12">
+        <div
+          className="
+            relative
+            flex
+            flex-col
+            items-center
+            justify-center
+            gap-3
+            px-3
+            pb-3
+            pt-8
 
-          {/* SAVE */}
+            sm:flex-row
+            sm:gap-4
+            sm:px-5
+
+            lg:px-10
+            lg:pt-12
+          "
+        >
+
+          {/* =================================================
+              SAVE
+          ================================================== */}
 
           <button
             id="Save"
@@ -1005,7 +1233,9 @@ const SetDocumentNo: React.FC = () => {
             Save
           </button>
 
-          {/* CLEAR */}
+          {/* =================================================
+              CLEAR
+          ================================================== */}
 
           <button
             id="Clear"
@@ -1030,7 +1260,9 @@ const SetDocumentNo: React.FC = () => {
             Clear
           </button>
 
-          {/* COPY TO NEXT YEAR */}
+          {/* =================================================
+              COPY TO NEXT YEAR
+          ================================================== */}
 
           <button
             id="CopyToNextYearbtn"
@@ -1042,9 +1274,7 @@ const SetDocumentNo: React.FC = () => {
               )
             }
             className="
-              absolute
-              right-10
-             h-[47px]
+              h-[47px]
               w-[225px]
               rounded
               border
@@ -1056,6 +1286,11 @@ const SetDocumentNo: React.FC = () => {
               text-green-600
               shadow-sm
               hover:bg-slate-50
+
+              sm:ml-4
+
+              lg:absolute
+              lg:right-10
             "
           >
             Copy To Next Year
@@ -1064,6 +1299,7 @@ const SetDocumentNo: React.FC = () => {
         </div>
 
       </div>
+
     </div>
   );
 };
