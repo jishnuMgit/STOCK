@@ -22,7 +22,11 @@ import {
   collectIds,
   findAncestorIds,
 } from "../../utils/buildMenuTree";
-import { getMenuIcon, getMenuRoute } from "../../config/menuConfig";
+import {
+  ADMINISTRATION_NODE,
+  getMenuIcon,
+  getMenuRoute,
+} from "../../config/menuConfig";
 
 /* =========================================================
    TYPES
@@ -78,9 +82,27 @@ export default function SideNav({
 
   /* =====================================================
      BUILD TREE FROM API ROWS
+
+     Settings is a real tblmenu branch (fmenuid "91") and
+     needs no special handling — it just comes through with
+     everything else. Only "Administration" is injected
+     client-side, and only for AU users. Hiding it here is a
+     UX nicety only — the route itself (see AdminRoute) is
+     what actually blocks non-admins from reaching it
+     directly.
   ===================================================== */
 
-  const menuTree = useMemo(() => buildMenuTree(menus), [menus]);
+  const userType = useMemo(() => localStorage.getItem("userType"), []);
+
+  const menuTree = useMemo(() => {
+    const tree = buildMenuTree(menus);
+
+    if (userType === "AU") {
+      tree.push(ADMINISTRATION_NODE);
+    }
+
+    return tree;
+  }, [menus, userType]);
 
   const filteredTree = useMemo(
     () => filterMenuTree(menuTree, searchText),
@@ -319,7 +341,7 @@ export default function SideNav({
             </button>
           )}
 
-          {!searchText && <span>⌘</span>}
+          {!searchText && <span>⌘ K</span>}
         </div>
       )}
 
