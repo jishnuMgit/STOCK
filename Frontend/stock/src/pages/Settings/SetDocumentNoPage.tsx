@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import Select, {
   components,
   type SingleValue,
@@ -16,7 +16,7 @@ interface SelectOption {
 
 interface DocumentRow {
   id: number;
-  document: string;
+  lkpDocument: string;
 
   lkpMode: string;
   txtDocPrefix: string;
@@ -197,23 +197,6 @@ const tableSelectStyles: StylesConfig<SelectOption, false> = {
 // OPTIONS
 // ============================================================
 
-const yearOptions: SelectOption[] = [
-  { value: "2026", label: "2026" },
-  { value: "2027", label: "2027" },
-  { value: "2028", label: "2028" },
-];
-
-const branchOptions: SelectOption[] = [
-  { value: "JD", label: "JD" },
-  { value: "BR", label: "BR" },
-];
-
-const moduleOptions: SelectOption[] = [
-  { value: "Purchase", label: "Purchase" },
-  { value: "Sales", label: "Sales" },
-  { value: "Stock", label: "Stock" },
-];
-
 const modeOptions: SelectOption[] = [
   { value: "Auto", label: "Auto" },
   { value: "Manual", label: "Manual" },
@@ -308,13 +291,136 @@ const SetDocumentNo: React.FC = () => {
   // ==========================================================
 
   const [lkpYear, setLkpYear] =
-    useState<string>("2026");
+    useState<string>("");
+
+  const [yearOptions, setYearOptions] =
+    useState<SelectOption[]>([]);
 
   const [lkpBranch, setLkpBranch] =
     useState<string>("");
 
+  const [branchOptions, setBranchOptions] =
+    useState<SelectOption[]>([]);
+
   const [lkpModule, setLkpModule] =
     useState<string>("");
+
+  const [moduleOptions, setModuleOptions] =
+    useState<SelectOption[]>([]);
+
+  /* =======================================================
+     LOAD YEAR LIST (lkpYear dropdown)
+  ======================================================= */
+
+  useEffect(() => {
+    const loadYearList = async () => {
+      try {
+        const response = await fetch(
+          `${import.meta.env.VITE_API_URL}/DocumentNo/getYearList`
+        );
+
+        if (!response.ok) {
+          throw new Error(`HTTP Error: ${response.status}`);
+        }
+
+        const result = await response.json();
+
+        if (!result.success) {
+          console.error("getYearList failed:", result.message);
+          return;
+        }
+
+        const options: SelectOption[] = (result.data || []).map(
+          (row: { fyear: number }) => ({
+            value: String(row.fyear),
+            label: String(row.fyear),
+          })
+        );
+
+        setYearOptions(options);
+      } catch (error) {
+        console.error("getYearList error:", error);
+      }
+    };
+
+    loadYearList();
+  }, []);
+
+  /* =======================================================
+     LOAD BRANCH LIST (lkpBranch dropdown)
+  ======================================================= */
+
+  useEffect(() => {
+    const loadBranchList = async () => {
+      try {
+        const response = await fetch(
+          `${import.meta.env.VITE_API_URL}/DocumentNo/getBranchList`
+        );
+
+        if (!response.ok) {
+          throw new Error(`HTTP Error: ${response.status}`);
+        }
+
+        const result = await response.json();
+
+        if (!result.success) {
+          console.error("getBranchList failed:", result.message);
+          return;
+        }
+
+        const options: SelectOption[] = (result.data || []).map(
+          (row: { fbrid: string; fbrname: string }) => ({
+            value: row.fbrid,
+            label: row.fbrname,
+          })
+        );
+
+        setBranchOptions(options);
+      } catch (error) {
+        console.error("getBranchList error:", error);
+      }
+    };
+
+    loadBranchList();
+  }, []);
+
+  /* =======================================================
+     LOAD MODULE LIST (lkpModule dropdown)
+  ======================================================= */
+
+  useEffect(() => {
+    const loadModuleList = async () => {
+      try {
+        const response = await fetch(
+          `${import.meta.env.VITE_API_URL}/DocumentNo/getModuleList`
+        );
+
+        if (!response.ok) {
+          throw new Error(`HTTP Error: ${response.status}`);
+        }
+
+        const result = await response.json();
+
+        if (!result.success) {
+          console.error("getModuleList failed:", result.message);
+          return;
+        }
+
+        const options: SelectOption[] = (result.data || []).map(
+          (row: { fmoduleid: string; fmodulename: string }) => ({
+            value: row.fmoduleid,
+            label: row.fmodulename,
+          })
+        );
+
+        setModuleOptions(options);
+      } catch (error) {
+        console.error("getModuleList error:", error);
+      }
+    };
+
+    loadModuleList();
+  }, []);
 
   // ==========================================================
   // TABLE STATES
@@ -323,7 +429,7 @@ const SetDocumentNo: React.FC = () => {
   const [rows, setRows] = useState<DocumentRow[]>([
     {
       id: 1,
-      document: "Purchase Order",
+      lkpDocument: "Purchase Order",
       lkpMode: "Auto",
       txtDocPrefix: "JD-26",
       txtStartSeqNo: "O",
@@ -335,7 +441,7 @@ const SetDocumentNo: React.FC = () => {
 
     {
       id: 2,
-      document: "Purchase Invoice",
+      lkpDocument: "Purchase Invoice",
       lkpMode: "Auto",
       txtDocPrefix: "JD-26",
       txtStartSeqNo: "O",
@@ -347,7 +453,7 @@ const SetDocumentNo: React.FC = () => {
 
     {
       id: 3,
-      document: "Purchase Return",
+      lkpDocument: "Purchase Return",
       lkpMode: "Auto",
       txtDocPrefix: "JD-26",
       txtStartSeqNo: "O",
@@ -359,7 +465,7 @@ const SetDocumentNo: React.FC = () => {
 
     {
       id: 4,
-      document: "Quotation",
+      lkpDocument: "Quotation",
       lkpMode: "Auto",
       txtDocPrefix: "JD-26",
       txtStartSeqNo: "O",
@@ -371,7 +477,7 @@ const SetDocumentNo: React.FC = () => {
 
     {
       id: 5,
-      document: "Sales Invoice (Cash)",
+      lkpDocument: "Sales Invoice (Cash)",
       lkpMode: "Auto",
       txtDocPrefix: "JD-26",
       txtStartSeqNo: "OC",
@@ -383,7 +489,7 @@ const SetDocumentNo: React.FC = () => {
 
     {
       id: 6,
-      document: "Sales Invoice (Credit)",
+      lkpDocument: "Sales Invoice (Credit)",
       lkpMode: "Auto",
       txtDocPrefix: "JD-26",
       txtStartSeqNo: "OR",
@@ -395,7 +501,7 @@ const SetDocumentNo: React.FC = () => {
 
     {
       id: 7,
-      document: "Sales Return (Cash)",
+      lkpDocument: "Sales Return (Cash)",
       lkpMode: "Auto",
       txtDocPrefix: "JD-26",
       txtStartSeqNo: "OH",
@@ -407,7 +513,7 @@ const SetDocumentNo: React.FC = () => {
 
     {
       id: 8,
-      document: "Sales Return (Credit)",
+      lkpDocument: "Sales Return (Credit)",
       lkpMode: "Auto",
       txtDocPrefix: "JD-26",
       txtStartSeqNo: "OD",
@@ -419,7 +525,7 @@ const SetDocumentNo: React.FC = () => {
 
     {
       id: 9,
-      document: "Stock Transfer",
+      lkpDocument: "Stock Transfer",
       lkpMode: "Auto",
       txtDocPrefix: "JD-26",
       txtStartSeqNo: "O",
@@ -431,7 +537,7 @@ const SetDocumentNo: React.FC = () => {
 
     {
       id: 10,
-      document: "Damage",
+      lkpDocument: "Damage",
       lkpMode: "Auto",
       txtDocPrefix: "JD-26",
       txtStartSeqNo: "O",
@@ -443,7 +549,7 @@ const SetDocumentNo: React.FC = () => {
 
     {
       id: 11,
-      document: "Stock Adjustment",
+      lkpDocument: "Stock Adjustment",
       lkpMode: "Auto",
       txtDocPrefix: "JD-26",
       txtStartSeqNo: "O",
@@ -455,7 +561,7 @@ const SetDocumentNo: React.FC = () => {
 
     {
       id: 12,
-      document: "Item Conversion",
+      lkpDocument: "Item Conversion",
       lkpMode: "Auto",
       txtDocPrefix: "JD-26",
       txtStartSeqNo: "O",
@@ -467,7 +573,7 @@ const SetDocumentNo: React.FC = () => {
 
     {
       id: 13,
-      document: "Delivery Note",
+      lkpDocument: "Delivery Note",
       lkpMode: "Auto",
       txtDocPrefix: "JD-26",
       txtStartSeqNo: "O",
@@ -479,7 +585,7 @@ const SetDocumentNo: React.FC = () => {
 
     {
       id: 14,
-      document: "Delivery Note Return",
+      lkpDocument: "Delivery Note Return",
       lkpMode: "Auto",
       txtDocPrefix: "JD-26",
       txtStartSeqNo: "OR",
@@ -543,7 +649,7 @@ const SetDocumentNo: React.FC = () => {
   // ==========================================================
 
   const handleClear = () => {
-    setLkpYear("2026");
+    setLkpYear("");
     setLkpBranch("");
     setLkpModule("");
 
@@ -768,7 +874,6 @@ const SetDocumentNo: React.FC = () => {
                     CustomDropdownIndicator,
                 }}
                 isSearchable={false}
-                placeholder=""
                 menuPlacement="auto"
               />
 
@@ -830,7 +935,6 @@ const SetDocumentNo: React.FC = () => {
                     CustomDropdownIndicator,
                 }}
                 isSearchable={false}
-                placeholder=""
                 menuPlacement="auto"
               />
 
@@ -1074,14 +1178,14 @@ const SetDocumentNo: React.FC = () => {
                         options={documentOptions}
                         value={getOption(
                           documentOptions,
-                          row.document
+                          row.lkpDocument
                         )}
                         onChange={(
                           option: SingleValue<SelectOption>
                         ) =>
                           handleRowChange(
                             row.id,
-                            "document",
+                            "lkpDocument",
                             option?.value ?? ""
                           )
                         }
