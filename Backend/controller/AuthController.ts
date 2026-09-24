@@ -1,5 +1,7 @@
 import { Request, Response } from "express";
+import { v4 as uuidv4 } from "uuid";
 import pool from "../DB/db.js";
+import { AuthenticatedRequest } from "../middleware/authMiddleware.js";
 
 /* =========================================================
    PASSWORD DECRYPT
@@ -98,10 +100,14 @@ export const login = async (req: Request, res: Response): Promise<Response> => {
 
     const userResult = await pool.query(
       `
-      SELECT fuserpwd, fuserstatus
-      FROM dbo.tbluserlogin
-      WHERE fuserid = $1
-      `,
+  SELECT
+    fuserid,
+    fuserpwd,
+    fuserstatus,
+    fusertype
+  FROM dbo.tbluserlogin
+  WHERE fuserid = $1
+  `,
       [userId],
     );
 
@@ -111,6 +117,8 @@ export const login = async (req: Request, res: Response): Promise<Response> => {
         message: "User does not exist",
       });
     }
+
+    const user = userResult.rows[0];
 
     const encryptedPassword = userResult.rows[0]?.fuserpwd;
 
@@ -183,6 +191,54 @@ export const login = async (req: Request, res: Response): Promise<Response> => {
     }
 
     /* =====================================================
+   CHECK ACTIVE SESSION
+===================================================== */
+
+    const existingSession = await pool.query(
+      `
+  SELECT fsessionid
+  FROM dbo.tblusersession
+  WHERE fuserid = $1
+  `,
+      [userId],
+    );
+
+    if (existingSession.rows.length > 0) {
+      return res.status(409).json({
+        success: false,
+        message: "This user is already logged in on another device",
+      });
+    }
+
+    /* =====================================================
+   CREATE SESSION
+===================================================== */
+
+    const sessionToken = uuidv4();
+
+    await pool.query(
+      `
+  INSERT INTO dbo.tblusersession (
+    fuserid,
+    fsessiontoken
+  )
+  VALUES ($1, $2)
+  `,
+      [userId, sessionToken],
+    );
+
+    /* =====================================================
+   SET SESSION COOKIE
+===================================================== */
+
+    res.cookie("sessionToken", sessionToken, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      sameSite: "lax",
+      maxAge: 24 * 60 * 60 * 1000,
+    });
+
+    /* =====================================================
        SUCCESS
     ===================================================== */
 
@@ -191,9 +247,10 @@ export const login = async (req: Request, res: Response): Promise<Response> => {
       message: "Login successful",
 
       data: {
-        userId,
+        userId: user.fuserid,
         companyId,
         year,
+        userType: user.fusertype,
       },
     });
   } catch (error: unknown) {
@@ -203,6 +260,73 @@ export const login = async (req: Request, res: Response): Promise<Response> => {
       success: false,
       message: "Login failed",
       error: error instanceof Error ? error.message : String(error),
+    });
+  }
+};
+
+export const getMe = async (
+  req: AuthenticatedRequest,
+  res: Response,
+): Promise<Response> => {
+  try {
+    if (!req.user) {
+      return res.status(401).json({
+        success: false,
+        message: "Authentication required",
+      });
+    }
+
+    return res.status(200).json({
+      success: true,
+      data: {
+        userId: req.user.userId,
+        userType: req.user.userType,
+      },
+    });
+  } catch (error: unknown) {
+    console.error("Get current user error:", error);
+
+    return res.status(500).json({
+      success: false,
+      message: "Failed to get current user",
+    });
+  }
+};
+
+export const logout = async (
+  req: Request,
+  res: Response,
+): Promise<Response> => {
+  try {
+    const sessionToken = req.cookies?.sessionToken;
+
+    if (!sessionToken) {
+      return res.status(200).json({
+        success: true,
+        message: "Logout successful",
+      });
+    }
+
+    await pool.query(
+      `
+      DELETE FROM dbo.tblusersession
+      WHERE fsessiontoken = $1
+      `,
+      [sessionToken],
+    );
+
+    res.clearCookie("sessionToken");
+
+    return res.status(200).json({
+      success: true,
+      message: "Logout successful",
+    });
+  } catch (error: unknown) {
+    console.error("Logout error:", error);
+
+    return res.status(500).json({
+      success: false,
+      message: "Logout failed",
     });
   }
 };

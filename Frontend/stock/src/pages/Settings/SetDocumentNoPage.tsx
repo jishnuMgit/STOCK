@@ -288,6 +288,7 @@ const documentOptions: SelectOption[] = [
 // CUSTOM DROPDOWN INDICATOR
 // ============================================================
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 const CustomDropdownIndicator = (props: any) => {
   return (
     <components.DropdownIndicator {...props}>
