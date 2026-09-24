@@ -98,6 +98,7 @@ export const saveCompanyDetails = async (
 
     const {
       lkpCoName,
+      txtCoName,
       txtCoName_AR,
       txtCoName_QR,
       txtCoName_Short,
@@ -111,6 +112,7 @@ export const saveCompanyDetails = async (
       txtCoAddress2_AR,
       txtCoAddress3_AR,
       txtCoAddress4_AR,
+      txtCoStatus,
     } = req.body;
 
     if (!lkpCoName) {
@@ -122,6 +124,7 @@ export const saveCompanyDetails = async (
 
     await updateCompanyInfoService({
       coId: lkpCoName,
+      coName: txtCoName || null,
       coNameAr: txtCoName_AR || null,
       coNameQr: txtCoName_QR || null,
       coNameShort: txtCoName_Short || null,
@@ -135,6 +138,7 @@ export const saveCompanyDetails = async (
       coAddress2Ar: txtCoAddress2_AR || null,
       coAddress3Ar: txtCoAddress3_AR || null,
       coAddress4Ar: txtCoAddress4_AR || null,
+      coStatus: txtCoStatus || null,
       userId: PstrUserID,
     });
 
