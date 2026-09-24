@@ -260,6 +260,7 @@ const CustomDropdownIndicator = (props: any) => {
 const inputClass = `
   h-[30px]
   w-full
+  md:w-[70%]
   rounded-none
   border
   border-slate-400
@@ -427,6 +428,7 @@ const CustomerMiddle: React.FC<CustomerMiddleProps> = ({
                   setTxtCustomerName(e.target.value)
                 }
                 className={inputClass}
+                style={{width:'100%'}}
               />
             </div>
 
@@ -450,6 +452,7 @@ const CustomerMiddle: React.FC<CustomerMiddleProps> = ({
                   setTxtLegalName(e.target.value)
                 }
                 className={inputClass}
+                 style={{width:'100%'}}
               />
             </div>
 
@@ -473,7 +476,7 @@ const CustomerMiddle: React.FC<CustomerMiddleProps> = ({
                   setTxtBuildingNo(e.target.value)
                 }
                 className={inputClass}
-                style={{width:"70%"}}
+                
               />
             </div>
 
@@ -497,7 +500,7 @@ const CustomerMiddle: React.FC<CustomerMiddleProps> = ({
                   setTxtStreetName(e.target.value)
                 }
                 className={inputClass}
-                style={{width:"70%"}}
+                
               />
             </div>
 
@@ -521,7 +524,7 @@ const CustomerMiddle: React.FC<CustomerMiddleProps> = ({
                   setTxtDistrict(e.target.value)
                 }
                 className={inputClass}
-                style={{width:"70%"}}
+                
               />
             </div>
 
@@ -545,7 +548,7 @@ const CustomerMiddle: React.FC<CustomerMiddleProps> = ({
                   setTxtCity(e.target.value)
                 }
                 className={inputClass}
-                style={{width:"70%"}}
+                
               />
             </div>
 
@@ -604,7 +607,7 @@ const CustomerMiddle: React.FC<CustomerMiddleProps> = ({
                   setTxtPostalCode(e.target.value)
                 }
                 className={inputClass}
-                style={{width:"70%"}}
+                
               />
             </div>
 
@@ -627,7 +630,7 @@ const CustomerMiddle: React.FC<CustomerMiddleProps> = ({
                   setTxtAdditionalNo(e.target.value)
                 }
                 className={inputClass}
-                style={{width:"70%"}}
+                
               />
             </div>
 
@@ -650,7 +653,7 @@ const CustomerMiddle: React.FC<CustomerMiddleProps> = ({
                   setTxtCRNo(e.target.value)
                 }
                 className={inputClass}
-                style={{width:"70%"}}
+                
               />
             </div>
 
@@ -674,7 +677,7 @@ const CustomerMiddle: React.FC<CustomerMiddleProps> = ({
                   setTxtVATNo(e.target.value)
                 }
                 className={inputClass}
-                style={{width:"70%"}}
+                
               />
             </div>
 
@@ -724,6 +727,7 @@ const CustomerMiddle: React.FC<CustomerMiddleProps> = ({
         }
         dir="rtl"
         className={arabicInputClass}
+         style={{width:'100%'}}
       />
 
     </div>
@@ -752,6 +756,7 @@ const CustomerMiddle: React.FC<CustomerMiddleProps> = ({
         }
         dir="rtl"
         className={arabicInputClass}
+         style={{width:'100%'}}
       />
 
     </div>
@@ -780,7 +785,7 @@ const CustomerMiddle: React.FC<CustomerMiddleProps> = ({
         }
         dir="rtl"
         className={arabicInputClass}
-        style={{width:"70%"}}
+        
       />
 
     </div>
@@ -809,7 +814,7 @@ const CustomerMiddle: React.FC<CustomerMiddleProps> = ({
         }
         dir="rtl"
         className={arabicInputClass}
-        style={{width:"70%"}}
+        
       />
 
     </div>
@@ -838,7 +843,7 @@ const CustomerMiddle: React.FC<CustomerMiddleProps> = ({
         }
         dir="rtl"
         className={arabicInputClass}
-        style={{width:"70%"}}
+        
       />
 
     </div>
@@ -867,7 +872,7 @@ const CustomerMiddle: React.FC<CustomerMiddleProps> = ({
         }
         dir="rtl"
         className={arabicInputClass}
-        style={{width:"70%"}}
+        
       />
 
     </div>
@@ -985,7 +990,7 @@ const CustomerMiddle: React.FC<CustomerMiddleProps> = ({
         }
         dir="rtl"
         className={arabicInputClass}
-        style={{width:"70%"}}
+        
       />
 
     </div>
@@ -1013,7 +1018,7 @@ const CustomerMiddle: React.FC<CustomerMiddleProps> = ({
         }
         dir="rtl"
         className={arabicInputClass}
-        style={{width:"70%"}}
+        
       />
 
     </div>
@@ -1041,7 +1046,7 @@ const CustomerMiddle: React.FC<CustomerMiddleProps> = ({
         }
         dir="rtl"
         className={arabicInputClass}
-        style={{width:"70%"}}
+        
       />
 
     </div>
@@ -1070,13 +1075,13 @@ const CustomerMiddle: React.FC<CustomerMiddleProps> = ({
         }
         dir="rtl"
         className={arabicInputClass}
-        style={{width:"70%"}}
+        
       />
 
     </div>
 
   </div>
-</div>
+        </div>
       </div>
 
       {/* =====================================================
@@ -1084,226 +1089,231 @@ const CustomerMiddle: React.FC<CustomerMiddleProps> = ({
       ===================================================== */}
 
       <div className="p-3">
+  <div
+  className="
+    grid
+    grid-cols-1
+    gap-x-2
+    gap-y-1.5
+    md:grid-cols-2
+    lg:grid-cols-4
+    mr-[8.3%]
+  "
+>
 
-        {/* <div className="mb-2 border-b border-slate-300 pb-1">
-          <h3 className="text-[12px] font-semibold text-green-700">
-            Other Customer Details
-          </h3>
-        </div> */}
+  {/* =================================================
+      CREDIT LIMIT
+  ================================================= */}
 
-        <div
-          className="
-            grid
-            grid-cols-1
-            gap-x-4
-            gap-y-1.5
-            md:grid-cols-2
-            lg:grid-cols-[1fr_130px_1fr_1fr]
-            mr-[7%]
-          "
-        >
+  <div className="grid grid-cols-[92px_minmax(0,1fr)] items-center gap-2">
+    <label
+      htmlFor="txtCreditLimit"
+      className="text-[11px] text-slate-600"
+    >
+      Credit Limit
+    </label>
 
-          {/* =================================================
-              CREDIT LIMIT
-          ================================================= */}
+    <input
+      id="txtCreditLimit"
+      name="txtCreditLimit"
+      type="text"
+      value={txtCreditLimit}
+      onChange={(e) =>
+        setTxtCreditLimit(e.target.value)
+      }
+      className={inputClass}
+      style={{ width: "70%" }}
+    />
+  </div>
 
-          <div className="grid grid-cols-[92px_minmax(0,1fr)] items-center gap-2 ">
+  {/* =================================================
+      CREDIT DAYS
+  ================================================= */}
 
-            <label
-              htmlFor="txtCreditLimit"
-              className="text-[11px] text-slate-600"
-            >
-              Credit Limit
-            </label>
+  <div className="grid grid-cols-[92px_minmax(0,1fr)] items-center gap-2">
+    <label
+      htmlFor="txtCreditDays"
+      className="text-[11px] text-slate-600"
+    >
+      Credit Days
+    </label>
 
-            <input
-              id="txtCreditLimit"
-              name="txtCreditLimit"
-              type="text"
-              value={txtCreditLimit}
-              onChange={(e) =>
-                setTxtCreditLimit(e.target.value)
-              }
-              className={inputClass}
-              style={{width:'50%'}}
-            />
+    <input
+      id="txtCreditDays"
+      name="txtCreditDays"
+      type="text"
+      value={txtCreditDays}
+      onChange={(e) =>
+        setTxtCreditDays(e.target.value)
+      }
+      className={inputClass}
+      style={{ width: "50%" }}
+    />
+  </div>
 
-          </div>
+  {/* =================================================
+      SHORT NAME
+  ================================================= */}
 
-          {/* =================================================
-              CREDIT DAYS
-          ================================================= */}
+  <div className="grid grid-cols-[60px_minmax(0,1fr)] items-center gap-2">
+    <label
+      htmlFor="txtShortName"
+      className="text-[11px] text-slate-600"
+    >
+      Short Name
+    </label>
 
-          <div className="grid grid-cols-[92px_minmax(0,1fr)] items-center gap-2">
+    <input
+      id="txtShortName"
+      name="txtShortName"
+      type="text"
+      value={txtShortName}
+      onChange={(e) =>
+        setTxtShortName(e.target.value)
+      }
+      className={inputClass}
+      style={{ width: "70%" }}
+    />
+  </div>
 
-            <label
-              htmlFor="txtCreditDays"
-              className="text-[11px] text-slate-600"
-            >
-              Credit Days
-            </label>
+  {/* =================================================
+      STAFF
+  ================================================= */}
 
-            <input
-              id="txtCreditDays"
-              name="txtCreditDays"
-              type="text"
-              value={txtCreditDays}
-              onChange={(e) =>
-                setTxtCreditDays(e.target.value)
-              }
-              className={inputClass}
-              width={'400px'}
-            />
+  <div className="grid grid-cols-[25px_minmax(0,1fr)] items-center gap-2">
+    <label
+      htmlFor="lkpStaff"
+      className="text-[11px] text-slate-600"
+    >
+      Staff
+    </label>
 
-          </div>
+    <div className="w-full min-w-0">
+      <Select
+        inputId="lkpStaff"
+        name="lkpStaff"
+        options={staffOptions}
+        value={
+          staffOptions.find(
+            (option) => option.value === lkpStaff
+          ) || null
+        }
+        onChange={(selected) =>
+          setLkpStaff(selected?.value || "")
+        }
+        styles={selectStyles}
+        components={{
+          DropdownIndicator:
+            CustomDropdownIndicator,
+        }}
+        menuPortalTarget={document.body}
+        menuPosition="fixed"
+        isSearchable
+      />
+    </div>
+  </div>
 
-          {/* =================================================
-              SHORT NAME
-          ================================================= */}
+  {/* =================================================
+      CONTACT - FULL WIDTH
+  ================================================= */}
 
-          <div className="grid grid-cols-[92px_minmax(0,1fr)] items-center gap-2">
+  <div
+    className="
+      lg:col-span-4
+      grid
+      grid-cols-[92px_minmax(0,1fr)]
+      items-center
+      gap-2
+    "
+  >
+    <label
+      htmlFor="txtContact"
+      className="text-[11px] text-slate-600"
+    >
+      Contact
+    </label>
 
-            <label
-              htmlFor="txtShortName"
-              className="text-[11px] text-slate-600"
-            >
-              Short Name
-            </label>
+    <input
+      id="txtContact"
+      name="txtContact"
+      type="text"
+      value={txtContact}
+      onChange={(e) =>
+        setTxtContact(e.target.value)
+      }
+      className={inputClass}
+      style={{ width: "100%" }}
+    />
+  </div>
 
-            <input
-              id="txtShortName"
-              name="txtShortName"
-              type="text"
-              value={txtShortName}
-              onChange={(e) =>
-                setTxtShortName(e.target.value)
-              }
-              className={inputClass}
-              style={{width:'70%'}}
-            />
+  {/* =================================================
+      E-MAIL - FULL WIDTH
+  ================================================= */}
 
-          </div>
+  <div
+    className="
+      lg:col-span-4
+      grid
+      grid-cols-[92px_minmax(0,1fr)]
+      items-center
+      gap-2
+    "
+  >
+    <label
+      htmlFor="txtEMail"
+      className="text-[11px] text-slate-600"
+    >
+      E-Mail
+    </label>
 
-          {/* =================================================
-              STAFF
-          ================================================= */}
+    <input
+      id="txtEMail"
+      name="txtEMail"
+      type="text"
+      value={txtEMail}
+      onChange={(e) =>
+        setTxtEMail(e.target.value)
+      }
+      className={inputClass}
+      style={{ width: "100%" }}
+    />
+  </div>
 
-          <div className="grid grid-cols-[92px_minmax(0,1fr)] items-center gap-2">
+  {/* =================================================
+      PHONE - FULL WIDTH
+  ================================================= */}
 
-            <label
-              htmlFor="lkpStaff"
-              className="text-[11px] text-slate-600"
-            >
-              Staff
-            </label>
+  <div
+    className="
+      lg:col-span-4
+      grid
+      grid-cols-[92px_minmax(0,1fr)]
+      items-center
+      gap-2
+    "
+  >
+    <label
+      htmlFor="txtPhone"
+      className="text-[11px] text-slate-600"
+    >
+      Phone
+    </label>
 
-            <Select
-              inputId="lkpStaff"
-              name="lkpStaff"
-              options={staffOptions}
-              value={
-                staffOptions.find(
-                  (option) =>
-                    option.value === lkpStaff
-                ) || null
-              }
-              onChange={(selected) =>
-                setLkpStaff(
-                  selected?.value || ""
-                )
-              }
-              styles={selectStyles}
-              components={{
-                DropdownIndicator:
-                  CustomDropdownIndicator,
-              }}
-              menuPortalTarget={document.body}
-              menuPosition="fixed"
-              isSearchable
-            />
+    <input
+      id="txtPhone"
+      name="txtPhone"
+      type="text"
+      value={txtPhone}
+      onChange={(e) =>
+        setTxtPhone(e.target.value)
+      }
+      className={inputClass}
+      style={{ width: "100%" }}
+    />
+  </div>
 
-          </div>
-
-          {/* =================================================
-              CONTACT
-          ================================================= */}
-
-          <div className=" items-center gap-2">
-
-            <label
-              htmlFor="txtContact"
-              className="text-[11px] text-slate-600"
-            >
-              Contact
-            </label>
-
-            <input
-              id="txtContact"
-              name="txtContact"
-              type="text"
-              value={txtContact}
-              onChange={(e) =>
-                setTxtContact(e.target.value)
-              }
-              className={inputClass}
-            />
-
-          </div>
-
-          {/* =================================================
-              E-MAIL
-          ================================================= */}
-
-          <div className="grid grid-cols-[92px_minmax(0,1fr)] items-center gap-2">
-
-            <label
-              htmlFor="txtEMail"
-              className="text-[11px] text-slate-600"
-            >
-              E-Mail
-            </label>
-
-            <input
-              id="txtEMail"
-              name="txtEMail"
-              type="text"
-              value={txtEMail}
-              onChange={(e) =>
-                setTxtEMail(e.target.value)
-              }
-              className={inputClass}
-            />
-
-          </div>
-
-          {/* =================================================
-              PHONE
-          ================================================= */}
-
-          <div className="grid grid-cols-[92px_minmax(0,1fr)] items-center gap-2">
-
-            <label
-              htmlFor="txtPhone"
-              className="text-[11px] text-slate-600"
-            >
-              Phone
-            </label>
-
-            <input
-              id="txtPhone"
-              name="txtPhone"
-              type="text"
-              value={txtPhone}
-              onChange={(e) =>
-                setTxtPhone(e.target.value)
-              }
-              className={inputClass}
-            />
-
-          </div>
-
-        </div>
-      </div>
+</div>
+</div>
     </div>
   );
 };
