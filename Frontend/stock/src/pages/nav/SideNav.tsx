@@ -1,16 +1,7 @@
-import React, { useState } from "react";
+import React, { useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 
 import {
-  LayoutDashboard,
-  Receipt,
-  FileText,
-  Wallet,
-  Landmark,
-  Users,
-  Package,
-  BarChart3,
-  Settings,
   ChevronDown,
   ChevronRight,
   Menu,
@@ -21,23 +12,21 @@ import {
 
 import "./SideNav.css";
 import { useLogout } from "../../hooks/useLogout";
+import { useMenus } from "../../hooks/useMenus";
 import { toast } from "react-toastify";
+
+import type { MenuNode } from "../../types/menu";
+import {
+  buildMenuTree,
+  filterMenuTree,
+  collectIds,
+  findAncestorIds,
+} from "../../utils/buildMenuTree";
+import { getMenuIcon, getMenuRoute } from "../../config/menuConfig";
 
 /* =========================================================
    TYPES
 ========================================================= */
-
-interface MenuChild {
-  label: string;
-  path: string;
-}
-
-interface MenuItem {
-  label: string;
-  icon: React.ReactNode;
-  path?: string;
-  children?: MenuChild[];
-}
 
 interface SideNavProps {
   activePath?: string;
@@ -45,350 +34,220 @@ interface SideNavProps {
 }
 
 /* =========================================================
-   MENU ITEMS
-========================================================= */
-
-const menuItems: MenuItem[] = [
-  {
-    label: "Dashboard",
-    icon: <LayoutDashboard size={18} />,
-    path: "/dashboard",
-  },
-
-  /* =====================================================
-     TRANSACTIONS
-  ===================================================== */
-
-  {
-    label: "Transactions",
-    icon: <Receipt size={18} />,
-    children: [
-      {
-        label: "Receipt ",
-        path: "/Transaction/Receipt",
-      },
-      {
-        label: "Payment ",
-        path: "/Transaction/payment",
-      },
-      {
-        label: "Journal ",
-        path: "/Transaction/journal",
-      },
-      {
-        label: "Match ",
-        path: "/Transaction/Transaction-match",
-      },
-      {
-        label: "Un-Match ",
-        path: "/Transaction/Transaction-Un-match",
-      },
-      {
-        label: "Debit Note",
-        path: "/Transaction/debit-note",
-      },
-      {
-        label: "Credit Note",
-        path: "/Transaction/credit-note",
-      },
-
-      {
-        label: "Document Print",
-        path: "/Transaction/document-print",
-      },
-      {
-        label: "Document post",
-        path: "/Transaction/document-post",
-      },
-      {
-        label: "Document Un-Post",
-        path: "/Transaction/document-unpost",
-      },
-      {
-        label: "Bank Reconciliation",
-        path: "/Transaction/bank-reconciliation",
-      },
-      {
-        label: "Beginning Balance",
-        path: "/Transaction/beginning-balance",
-      },
-    ],
-  },
-
-  /* =====================================================
-     ACCOUNTS
-  ===================================================== */
-
-  {
-    label: "Accounts",
-    icon: <Wallet size={18} />,
-    children: [
-      {
-        label: "Account Heads",
-        path: "/accounts",
-      },
-      {
-        label: "Ledger",
-        path: "/ledger",
-      },
-      {
-        label: "Trial Balance",
-        path: "/trial-balance",
-      },
-    ],
-  },
-
-  /* =====================================================
-     BANKING
-  ===================================================== */
-
-  {
-    label: "Banking",
-    icon: <Landmark size={18} />,
-    children: [
-      {
-        label: "Bank Accounts",
-        path: "/bank-accounts",
-      },
-      {
-        label: "Bank Reconciliation",
-        path: "/bank-reconciliation",
-      },
-    ],
-  },
-
-  /* =====================================================
-     CUSTOMERS
-  ===================================================== */
-
-  {
-    label: "Customers",
-    icon: <Users size={18} />,
-    children: [
-      {
-        label: "Customer",
-        path: "/Transaction/CustomerPage",
-      },
-      {
-        label: "Customer Ledger",
-        path: "/customer-ledger",
-      },
-    ],
-  },
-
-  /* =====================================================
-     INVENTORY
-  ===================================================== */
-
-  {
-    label: "Inventory",
-    icon: <Package size={18} />,
-    children: [
-      {
-        label: "Items",
-        path: "/items",
-      },
-      {
-        label: "Stock",
-        path: "/stock",
-      },
-      {
-        label: "Stock Ledger",
-        path: "/stock-ledger",
-      },
-    ],
-  },
-
-  /* =====================================================
-     REPORTS
-  ===================================================== */
-
-  {
-    label: "Reports",
-    icon: <BarChart3 size={18} />,
-    children: [
-      {
-        label: "Statement Of Account",
-        path: "/reports/soa",
-      },
-      {
-        label: "General Ledger",
-        path: "/general-ledger",
-      },
-      {
-        label: "Profit & Loss",
-        path: "/profit-loss",
-      },
-      {
-        label: "Balance Sheet",
-        path: "/balance-sheet",
-      },
-    ],
-  },
-
-  /* =====================================================
-     DOCUMENTS
-  ===================================================== */
-
-  {
-    label: "Documents",
-    icon: <FileText size={18} />,
-    children: [
-      {
-        label: "Documents",
-        path: "/documents",
-      },
-      {
-        label: "Attachments",
-        path: "/attachments",
-      },
-    ],
-  },
-
-  /* =====================================================
-     SETTINGS
-  ===================================================== */
-
-  {
-    label: "Settings",
-    icon: <Settings size={18} />,
-    children: [
-      {
-        label: "Set Company Info",
-        path: "/Settings/SetCompanyInfo",
-      },
-      {
-        label: "Set Document No",
-        path: "/Settings/SetDocumentNo",
-      },
-    ],
-  },
-];
-
-/* =========================================================
    COMPONENT
 ========================================================= */
 
 export default function SideNav({
-  activePath = "/receipt",
+  activePath = "/dashboard",
   onNavigate,
 }: SideNavProps) {
   const { logout, loading: logoutLoading } = useLogout();
   const navigate = useNavigate();
+  const { menus, loading: menusLoading, error: menusError } = useMenus();
 
   /* =====================================================
      SIDEBAR STATE
   ===================================================== */
 
   const [collapsed, setCollapsed] = useState(false);
-
-  /* =====================================================
-     OPEN MENUS
-
-     Transactions is open initially.
-  ===================================================== */
-
-  const [openMenus, setOpenMenus] = useState<string[]>(["Transactions"]);
-
-  /* =====================================================
-     SEARCH
-  ===================================================== */
-
   const [searchText, setSearchText] = useState("");
+
+  /* =====================================================
+     MANUAL OPEN/CLOSE OVERRIDES
+
+     Branches auto-open (active page, search matches) are
+     derived below with useMemo, not stored in state — a
+     useEffect that calls setState just to mirror other
+     state triggers an extra cascading render.
+
+     These two sets hold only the user's own clicks, and
+     win over the derived auto-open state either way:
+     `manuallyOpened` forces a branch open even if nothing
+     else would open it, `manuallyClosed` forces one shut
+     even if it would otherwise auto-open (e.g. collapsing
+     the active branch, or a search match you don't want
+     expanded).
+  ===================================================== */
+
+  const [manuallyOpened, setManuallyOpened] = useState<Set<string>>(
+    () => new Set(),
+  );
+  const [manuallyClosed, setManuallyClosed] = useState<Set<string>>(
+    () => new Set(),
+  );
+
+  /* =====================================================
+     BUILD TREE FROM API ROWS
+  ===================================================== */
+
+  const menuTree = useMemo(() => buildMenuTree(menus), [menus]);
+
+  const filteredTree = useMemo(
+    () => filterMenuTree(menuTree, searchText),
+    [menuTree, searchText],
+  );
+
+  /* =====================================================
+     DERIVED AUTO-OPEN IDS
+
+     - Ancestors of whichever node matches activePath, so
+       the sidebar opens already showing where you are.
+     - Every branch that survived the search filter, so
+       matches at deep levels are visible without a click.
+  ===================================================== */
+
+  const activeAncestorIds = useMemo(
+    () =>
+      findAncestorIds(menuTree, (node) => getMenuRoute(node) === activePath),
+    [menuTree, activePath],
+  );
+
+  const searchOpenIds = useMemo(
+    () => (searchText.trim() ? collectIds(filteredTree) : []),
+    [searchText, filteredTree],
+  );
+
+  const effectiveOpenIds = useMemo(() => {
+    const ids = new Set([
+      ...activeAncestorIds,
+      ...searchOpenIds,
+      ...manuallyOpened,
+    ]);
+
+    manuallyClosed.forEach((id) => ids.delete(id));
+
+    return ids;
+  }, [activeAncestorIds, searchOpenIds, manuallyOpened, manuallyClosed]);
 
   /* =====================================================
      TOGGLE MENU
 
-     OPEN  -> CLOSE
-     CLOSE -> OPEN
+     Flips against the CURRENT effective state (which may
+     be open only because it auto-opened), recording the
+     result as an explicit override.
   ===================================================== */
 
-  const toggleMenu = (label: string) => {
-    setOpenMenus((current) => {
-      if (current.includes(label)) {
-        return current.filter((item) => item !== label);
-      }
+  const toggleMenu = (id: string) => {
+    const isCurrentlyOpen = effectiveOpenIds.has(id);
 
-      return [...current, label];
-    });
+    if (isCurrentlyOpen) {
+      setManuallyClosed((current) => new Set(current).add(id));
+      setManuallyOpened((current) => {
+        const next = new Set(current);
+        next.delete(id);
+        return next;
+      });
+    } else {
+      setManuallyOpened((current) => new Set(current).add(id));
+      setManuallyClosed((current) => {
+        const next = new Set(current);
+        next.delete(id);
+        return next;
+      });
+    }
   };
 
   /* =====================================================
      NAVIGATION
   ===================================================== */
 
-  const handleNavigate = (path: string) => {
+  const handleNavigate = (node: MenuNode) => {
+    const route = getMenuRoute(node);
+
+    if (!route) {
+      toast.info(`"${node.fmenucaption}" isn't available yet`);
+      return;
+    }
+
     if (onNavigate) {
-      onNavigate(path);
+      onNavigate(route);
       return;
     }
 
-    navigate(path);
+    navigate(route);
   };
 
   /* =====================================================
-     CHECK PARENT ACTIVE
+     CHECK ACTIVE (SELF OR ANY DESCENDANT)
   ===================================================== */
 
-  const isParentActive = (item: MenuItem) => {
-    if (item.path) {
-      return item.path === activePath;
+  const isNodeActive = (node: MenuNode): boolean => {
+    if (getMenuRoute(node) === activePath) {
+      return true;
     }
 
-    return item.children?.some((child) => child.path === activePath);
+    return node.children.some(isNodeActive);
   };
 
   /* =====================================================
-     FILTER MENU
+     RENDER A SINGLE MENU NODE (RECURSIVE)
 
-     Search parent and child names.
+     depth 0 -> top-level category, gets an icon
+     depth 1+ -> nested rows, indented per depth
   ===================================================== */
 
-  <button
-    type="button"
-    className="collapse-button collapsed-menu-button cursor-pointer"
-    onClick={() => setCollapsed(false)}
-    title="Expand menu"
-  >
-    <Menu size={18} />
-  </button>;
-  const filteredMenuItems = menuItems.filter((item) => {
-    const search = searchText.trim().toLowerCase();
+  const renderNode = (node: MenuNode, depth: number) => {
+    const hasChildren = node.children.length > 0;
+    const isOpen = effectiveOpenIds.has(node.fmenuid);
+    const isActive = isNodeActive(node);
+    const route = getMenuRoute(node);
+    const isDisabled = !hasChildren && !route;
 
-    if (!search) {
-      return true;
-    }
+    const rowClassName =
+      depth === 0
+        ? `menu-item ${isActive ? "menu-item-active" : ""}`
+        : `submenu-item ${isActive ? "submenu-item-active" : ""} ${
+            isDisabled ? "submenu-item-disabled" : ""
+          }`;
 
-    if (item.label.toLowerCase().includes(search)) {
-      return true;
-    }
+    return (
+      <div className="menu-group" key={node.fmenuid}>
+        <button
+          type="button"
+          className={rowClassName}
+          style={depth > 0 ? { paddingLeft: 16 + depth * 16 } : undefined}
+          onClick={() => {
+            if (hasChildren) {
+              toggleMenu(node.fmenuid);
+            } else {
+              handleNavigate(node);
+            }
+          }}
+          title={collapsed && depth === 0 ? node.fmenucaption : undefined}
+        >
+          {depth === 0 && (
+            <span className="menu-icon">{getMenuIcon(node, depth)}</span>
+          )}
 
-    return item.children?.some((child) =>
-      child.label.toLowerCase().includes(search),
+          {depth > 0 && <span className="submenu-line" />}
+
+          {(!collapsed || depth > 0) && (
+            <>
+              <span className={depth === 0 ? "menu-label" : "submenu-label"}>
+                {node.fmenucaption}
+              </span>
+
+              {hasChildren && !collapsed && (
+                <span className="menu-arrow">
+                  {isOpen ? (
+                    <ChevronDown size={15} />
+                  ) : (
+                    <ChevronRight size={15} />
+                  )}
+                </span>
+              )}
+            </>
+          )}
+        </button>
+
+        {!collapsed && hasChildren && isOpen && (
+          <div className="submenu">
+            {node.children.map((child) => renderNode(child, depth + 1))}
+          </div>
+        )}
+      </div>
     );
-  });
-
-  /* =====================================================
-     AUTO OPEN SEARCH MATCH
-  ===================================================== */
-
-  React.useEffect(() => {
-    if (!searchText.trim()) {
-      return;
-    }
-
-    const matchingParents = menuItems
-      .filter((item) =>
-        item.children?.some((child) =>
-          child.label.toLowerCase().includes(searchText.trim().toLowerCase()),
-        ),
-      )
-      .map((item) => item.label);
-
-    if (matchingParents.length) {
-      setOpenMenus((current) => [...new Set([...current, ...matchingParents])]);
-    }
-  }, [searchText]);
+  };
 
   /* =====================================================
      RENDER
@@ -407,7 +266,6 @@ export default function SideNav({
           {!collapsed && (
             <div className="brand-text">
               <div className="brand-name">Accounts</div>
-
               <div className="brand-subtitle">Finance System</div>
             </div>
           )}
@@ -461,7 +319,7 @@ export default function SideNav({
             </button>
           )}
 
-          {!searchText && <span>⌘ K</span>}
+          {!searchText && <span>⌘</span>}
         </div>
       )}
 
@@ -472,79 +330,21 @@ export default function SideNav({
       <nav className="side-nav-menu">
         {!collapsed && <div className="menu-section-title">MAIN MENU</div>}
 
-        {filteredMenuItems.map((item) => {
-          const hasChildren = !!item.children?.length;
+        {menusLoading && !collapsed && (
+          <div className="menu-status">Loading menu...</div>
+        )}
 
-          const isOpen = openMenus.includes(item.label);
+        {!menusLoading && menusError && !collapsed && (
+          <div className="menu-status menu-status-error">{menusError}</div>
+        )}
 
-          const isActive = isParentActive(item);
+        {!menusLoading &&
+          !menusError &&
+          filteredTree.map((node) => renderNode(node, 0))}
 
-          return (
-            <div className="menu-group" key={item.label}>
-              {/* =========================================
-                    PARENT ITEM
-                ========================================= */}
-
-              <button
-                type="button"
-                className={`menu-item ${isActive ? "menu-item-active" : ""}`}
-                onClick={() => {
-                  if (hasChildren) {
-                    toggleMenu(item.label);
-                  } else if (item.path) {
-                    handleNavigate(item.path);
-                  }
-                }}
-                title={collapsed ? item.label : undefined}
-              >
-                <span className="menu-icon">{item.icon}</span>
-
-                {!collapsed && (
-                  <>
-                    <span className="menu-label">{item.label}</span>
-
-                    {hasChildren && (
-                      <span className="menu-arrow">
-                        {isOpen ? (
-                          <ChevronDown size={15} />
-                        ) : (
-                          <ChevronRight size={15} />
-                        )}
-                      </span>
-                    )}
-                  </>
-                )}
-              </button>
-
-              {/* =========================================
-                    CHILDREN
-                ========================================= */}
-
-              {!collapsed && hasChildren && isOpen && (
-                <div className="submenu">
-                  {item.children!.map((child) => {
-                    const childActive = activePath === child.path;
-
-                    return (
-                      <button
-                        type="button"
-                        key={child.path}
-                        className={`submenu-item ${
-                          childActive ? "submenu-item-active" : ""
-                        }`}
-                        onClick={() => handleNavigate(child.path)}
-                      >
-                        <span className="submenu-line" />
-
-                        <span className="submenu-label">{child.label}</span>
-                      </button>
-                    );
-                  })}
-                </div>
-              )}
-            </div>
-          );
-        })}
+        {!menusLoading && !menusError && !filteredTree.length && !collapsed && (
+          <div className="menu-status">No menu items</div>
+        )}
       </nav>
 
       {/* =================================================
@@ -554,12 +354,21 @@ export default function SideNav({
       <div className="side-nav-footer">
         {!collapsed && (
           <div className="user-profile">
-            <div className="user-avatar">AD</div>
+            <div className="user-avatar">
+              {(localStorage.getItem("userId") ?? "AD")
+                .slice(0, 2)
+                .toUpperCase()}
+            </div>
 
             <div className="user-info">
-              <div className="user-name">Administrator</div>
-
-              <div className="user-role">System User</div>
+              <div className="user-name">
+                {localStorage.getItem("userId") ?? "Administrator"}
+              </div>
+              <div className="user-role">
+                {localStorage.getItem("userType") === "AU"
+                  ? "Administrator"
+                  : "System User"}
+              </div>
             </div>
 
             <button
@@ -589,8 +398,16 @@ export default function SideNav({
             type="button"
             className="collapsed-logout"
             title="Logout"
-            onClick={() => {
-              console.log("Logout clicked");
+            onClick={async () => {
+              const success = await logout();
+
+              if (!success) {
+                toast.error("Logout failed");
+                return;
+              }
+
+              toast.success("Logged out successfully");
+              navigate("/login", { replace: true });
             }}
           >
             <LogOut size={18} />
