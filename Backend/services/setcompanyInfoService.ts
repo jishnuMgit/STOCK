@@ -37,12 +37,15 @@ export async function getCompanyInfoService(
         $14::varchar,
         $15::varchar,
         $16::varchar,
-        $17::refcursor
+        $17::varchar,
+        $18::varchar,
+        $19::refcursor
       )
       `,
       [
         "G",       // p_strmode
         coId,      // p_pstrcoid
+        null,      // p_strconame
         null,      // p_strconame_ar
         null,      // p_strconame_qr
         null,      // p_strconame_short
@@ -56,6 +59,7 @@ export async function getCompanyInfoService(
         null,      // p_strcoaddress2_ar
         null,      // p_strcoaddress3_ar
         null,      // p_strcoaddress4_ar
+        null,      // p_strcostatus
         null,      // p_pstruserid
         cursorName // p_result_cursor
       ]
@@ -84,6 +88,7 @@ export async function getCompanyInfoService(
 export async function updateCompanyInfoService(
   payload: {
     coId: string;
+    coName: string | null;
     coNameAr: string | null;
     coNameQr: string | null;
     coNameShort: string | null;
@@ -97,6 +102,7 @@ export async function updateCompanyInfoService(
     coAddress2Ar: string | null;
     coAddress3Ar: string | null;
     coAddress4Ar: string | null;
+    coStatus: string | null;
     userId: string;
   }
 ): Promise<void> {
@@ -129,12 +135,15 @@ export async function updateCompanyInfoService(
         $14::varchar,
         $15::varchar,
         $16::varchar,
-        $17::refcursor
+        $17::varchar,
+        $18::varchar,
+        $19::refcursor
       )
       `,
       [
         "M",
         payload.coId,
+        payload.coName,
         payload.coNameAr,
         payload.coNameQr,
         payload.coNameShort,
@@ -148,6 +157,7 @@ export async function updateCompanyInfoService(
         payload.coAddress2Ar,
         payload.coAddress3Ar,
         payload.coAddress4Ar,
+        payload.coStatus,
         payload.userId,
         cursorName
       ]
