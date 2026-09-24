@@ -271,7 +271,7 @@ const CustomerPage: React.FC = () => {
 
   return (
  <div className="min-h-screen flex items-center justify-center">
-      <div className="lg:w-[90%]  bg-white border-gray-500 border-[0.2px]">
+      <div className="lg:w-[75%]  bg-white border-gray-500 border-[0.2px]">
 
         {/* HEADER */}
         <CustomerHeader
