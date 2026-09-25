@@ -1,7 +1,6 @@
 import { Request, Response } from "express";
 
 import pool from "../DB/db.js";
-import { AuthenticatedRequest } from "../middleware/authMiddleware.js";
 import {
   getDocumentNoListService,
   saveDocumentNoListService,
@@ -58,7 +57,7 @@ export const getYearList = async (
 ========================================================= */
 
 export const getBranchList = async (
-  req: AuthenticatedRequest,
+  req: Request,
   res: Response
 ): Promise<Response> => {
   try {
@@ -71,30 +70,13 @@ export const getBranchList = async (
       });
     }
 
-    if (!req.user) {
-      return res.status(401).json({
-        success: false,
-        message: "Authentication required",
-      });
-    }
-
-    const { userId, userType } = req.user;
-
-    /* =====================================================
-       AU → ALL BRANCHES
-       RU → ONLY PERMITTED BRANCHES
-    ===================================================== */
-
-    const result =
-      userType === "AU"
-        ? await pool.query(
-            `SELECT * FROM dbo.fillbranch($1)`,
-            [PstrCoID]
-          )
-        : await pool.query(
-            `SELECT * FROM dbo.fillbranchbyuser($1, $2)`,
-            [PstrCoID, userId]
-          );
+    const result = await pool.query(
+      `
+      SELECT *
+      FROM dbo.fillbranch($1)
+      `,
+      [PstrCoID]
+    );
 
     return res.status(200).json({
       success: true,
@@ -390,6 +372,55 @@ export const deleteDocumentNoRow = async (
         error instanceof Error
           ? error.message
           : "Document numbering row could not be deleted",
+    });
+  }
+};
+
+/* =========================================================
+   GET DEFAULT BRANCH (lkpBranch pre-select, live lookup)
+========================================================= */
+
+export const getDefaultBranch = async (
+  req: Request,
+  res: Response
+): Promise<Response> => {
+  try {
+    const PstrCoID = process.env.PstrCoID;
+    const { userId } = req.query;
+
+    if (!PstrCoID) {
+      return res.status(400).json({
+        success: false,
+        message: "Company ID is not configured",
+      });
+    }
+
+    if (!userId) {
+      return res.status(400).json({
+        success: false,
+        message: "User ID is required",
+      });
+    }
+
+    const result = await pool.query(
+      `SELECT dbo.getuserdefbranch($1, $2) AS "defBranch"`,
+      [PstrCoID, userId]
+    );
+
+    return res.status(200).json({
+      success: true,
+      data: result.rows[0]?.defBranch || "",
+    });
+  } catch (error: unknown) {
+    console.error("getDefaultBranch error:", error);
+
+    return res.status(500).json({
+      success: false,
+      message: "Failed to load default branch",
+      error:
+        error instanceof Error
+          ? error.message
+          : String(error),
     });
   }
 };

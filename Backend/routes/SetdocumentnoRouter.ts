@@ -8,13 +8,14 @@ import {
   getDocumentNoList,
   saveDocumentNo,
   deleteDocumentNoRow,
+  getDefaultBranch,
 } from "../controller/SetdocumentnoController.js";
-import { authenticate } from "../middleware/authMiddleware.js";
 
 const router = express.Router();
 
 router.get("/getYearList", getYearList);
-router.get("/getBranchList", authenticate, getBranchList);
+router.get("/getBranchList", getBranchList);
+router.get("/getDefaultBranch", getDefaultBranch);
 router.get("/getModuleList", getModuleList);
 router.get("/getDocumentList", getDocumentList);
 router.get("/getDocumentNoList", getDocumentNoList);

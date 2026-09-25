@@ -244,9 +244,7 @@ const SetDocumentNo: React.FC = () => {
     useState<SelectOption[]>([]);
 
   const [lkpBranch, setLkpBranch] =
-    useState<string>(
-      () => localStorage.getItem("branchId") || ""
-    );
+    useState<string>("");
 
   const [branchOptions, setBranchOptions] =
     useState<SelectOption[]>([]);
@@ -296,6 +294,46 @@ const SetDocumentNo: React.FC = () => {
   }, []);
 
   /* =======================================================
+     LOAD DEFAULT BRANCH (lkpBranch pre-select, live lookup
+     via dbo.getuserdefbranch — not localStorage)
+  ======================================================= */
+
+  useEffect(() => {
+    const loadDefaultBranch = async () => {
+      try {
+        const userId = localStorage.getItem("userId");
+
+        if (!userId) {
+          return;
+        }
+
+        const response = await fetch(
+          `${import.meta.env.VITE_API_URL}/DocumentNo/getDefaultBranch?userId=${userId}`
+        );
+
+        if (!response.ok) {
+          throw new Error(`HTTP Error: ${response.status}`);
+        }
+
+        const result = await response.json();
+
+        if (!result.success) {
+          console.error("getDefaultBranch failed:", result.message);
+          return;
+        }
+
+        if (result.data) {
+          setLkpBranch(result.data);
+        }
+      } catch (error) {
+        console.error("getDefaultBranch error:", error);
+      }
+    };
+
+    loadDefaultBranch();
+  }, []);
+
+  /* =======================================================
      LOAD BRANCH LIST (lkpBranch dropdown)
   ======================================================= */
 
@@ -303,8 +341,7 @@ const SetDocumentNo: React.FC = () => {
     const loadBranchList = async () => {
       try {
         const response = await fetch(
-          `${import.meta.env.VITE_API_URL}/DocumentNo/getBranchList`,
-          { credentials: "include" }
+          `${import.meta.env.VITE_API_URL}/DocumentNo/getBranchList`
         );
 
         if (!response.ok) {
