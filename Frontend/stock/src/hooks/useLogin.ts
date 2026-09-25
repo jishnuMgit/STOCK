@@ -54,7 +54,7 @@ export const useLogin = () => {
       }
 
       // Store only what frontend needs for UI.
-      // DO NOT store sessionToken.
+      // DO NOT store sessionToken or password.
       if (data.data?.userId) {
         localStorage.setItem("userID", data.data.userId);
       }
