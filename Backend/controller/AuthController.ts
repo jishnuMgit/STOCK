@@ -191,14 +191,20 @@ export const login = async (req: Request, res: Response): Promise<Response> => {
     }
 
     /* =====================================================
-   CHECK ACTIVE SESSION
+   CHECK ACTIVE SESSION (only count non-expired ones)
 ===================================================== */
+
+    // Opportunistically clean up any expired session for this user first
+    await pool.query(
+      `DELETE FROM dbo.tblusersession WHERE fuserid = $1 AND fexpiresat <= now()`,
+      [userId],
+    );
 
     const existingSession = await pool.query(
       `
   SELECT fsessionid
   FROM dbo.tblusersession
-  WHERE fuserid = $1
+  WHERE fuserid = $1 AND fexpiresat > now()
   `,
       [userId],
     );
@@ -218,11 +224,8 @@ export const login = async (req: Request, res: Response): Promise<Response> => {
 
     await pool.query(
       `
-  INSERT INTO dbo.tblusersession (
-    fuserid,
-    fsessiontoken
-  )
-  VALUES ($1, $2)
+  INSERT INTO dbo.tblusersession (fuserid, fsessiontoken, fexpiresat)
+  VALUES ($1, $2, now() + interval '24 hours')
   `,
       [userId, sessionToken],
     );
@@ -298,35 +301,19 @@ export const logout = async (
   res: Response,
 ): Promise<Response> => {
   try {
-    const sessionToken = req.cookies?.sessionToken;
+    const { sessionToken } = req.cookies;
 
-    if (!sessionToken) {
-      return res.status(200).json({
-        success: true,
-        message: "Logout successful",
-      });
+    if (sessionToken) {
+      await pool.query(
+        `DELETE FROM dbo.tblusersession WHERE fsessiontoken = $1`,
+        [sessionToken],
+      );
     }
 
-    await pool.query(
-      `
-      DELETE FROM dbo.tblusersession
-      WHERE fsessiontoken = $1
-      `,
-      [sessionToken],
-    );
-
     res.clearCookie("sessionToken");
-
-    return res.status(200).json({
-      success: true,
-      message: "Logout successful",
-    });
+    return res.status(200).json({ success: true, message: "Logged out" });
   } catch (error: unknown) {
-    console.error("Logout error:", error);
-
-    return res.status(500).json({
-      success: false,
-      message: "Logout failed",
-    });
+    console.error("Logout controller error:", error);
+    return res.status(500).json({ success: false, message: "Logout failed" });
   }
 };
