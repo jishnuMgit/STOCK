@@ -235,13 +235,17 @@ const SetDocumentNo: React.FC = () => {
   // ==========================================================
 
   const [lkpYear, setLkpYear] =
-    useState<string>("");
+    useState<string>(
+      () => localStorage.getItem("year") || ""
+    );
 
   const [yearOptions, setYearOptions] =
     useState<SelectOption[]>([]);
 
   const [lkpBranch, setLkpBranch] =
-    useState<string>("");
+    useState<string>(
+      () => localStorage.getItem("branchId") || ""
+    );
 
   const [branchOptions, setBranchOptions] =
     useState<SelectOption[]>([]);
