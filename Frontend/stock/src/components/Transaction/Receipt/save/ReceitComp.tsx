@@ -93,7 +93,7 @@ export const ReceiptHeader: React.FC = () => {
         pl-2.5
         bg-[#9fdfbc]
         text-[18px]
-        font-bold
+        font-semi-bold
         text-slate-700
       "
     >
