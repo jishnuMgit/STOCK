@@ -31,16 +31,56 @@ import type { MenuNode } from "../types/menu";
 ========================================================= */
 
 export const menuRouteMap: Record<string, string> = {
-  // Finance (fmenuid 11)
-  mnuReceipt: "/Transaction/Receipt",
-  mnuJournal: "/Transaction/journal",
-  mnuCustomer: "/Transaction/CustomerPage",
-  mnuRptSOA: "/reports/soa",
 
-  // Setting (fmenuid 91)
-  mnuSetDocumentNo: "/Settings/SetDocumentNo",
+  /* =========================================================
+     PURCHASE
+  ========================================================= */
 
-  mnuAdministration: "/Administration",
+  mnuItem:
+    "/Purchase/Setup/ItemPage",
+
+
+  /* =========================================================
+     FINANCE - TRANSACTION
+  ========================================================= */
+
+  mnuReceipt:
+    "/Finance/Transaction/Receipt",
+
+  mnuJournal:
+    "/Finance/Transaction/journal",
+
+
+  /* =========================================================
+     FINANCE - SETUP
+  ========================================================= */
+
+  mnuCustomer:
+    "/Finance/Setup/CustomerPage",
+
+
+  /* =========================================================
+     FINANCE - REPORTS
+  ========================================================= */
+
+  mnuRptSOA:
+    "/Finace/Reports/rptStatementoOfAccount",
+
+
+  /* =========================================================
+     SETTINGS
+  ========================================================= */
+
+  mnuSetDocumentNo:
+    "/Settings/SetDocumentNo",
+
+
+  /* =========================================================
+     ADMINISTRATION
+  ========================================================= */
+
+  mnuAdministration:
+    "/Administration",
 };
 
 /* =========================================================

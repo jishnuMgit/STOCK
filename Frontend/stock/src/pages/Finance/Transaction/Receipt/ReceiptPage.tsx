@@ -21,12 +21,12 @@ import {
   type SortField,
   type ReceiptActionsRef,
 
-} from "../../../components/Transaction/Receipt/save/ReceitComp";
+} from "../../../../components/Transaction/Receipt/save/ReceitComp";
 
 
-import { type SelectOption, type Branch, type FinancialParameter, type CostCenter, type ReceiptRow, type AccountData, type ReceiptPrintData } from '../../../types/receiptypes';
+import { type SelectOption, type Branch, type FinancialParameter, type CostCenter, type ReceiptRow, type AccountData, type ReceiptPrintData } from '../../../../types/receiptypes';
 import { toast } from "react-toastify";
-import ReceiptPrint from "../../../components/Transaction/Receipt/save/Receipt.print";
+import ReceiptPrint from "../../../../components/Transaction/Receipt/save/Receipt.print";
 /* =========================================================
    CREATE INITIAL ROWS
 ========================================================= */
@@ -74,7 +74,8 @@ interface ReceiptsResponse {
   accountsortbyId: AccountData[];
   costCenters: CostCenter[];
   defaultBranch: string | null;
-  txtReceiptNo: string | null;
+  txtReceiptNo: string ;
+  receiptNo:string ;
   receiptType?: string | null;
 }
 /* =========================================================
@@ -376,9 +377,9 @@ const ReceiptPage: React.FC = () => {
 
 
 
-        if (result.txtReceiptNo) {
+        if (result.txtReceiptNo || result.receiptNo) {
           setDocumentNo(
-            result.txtReceiptNo
+            result.txtReceiptNo || result.receiptNo
           );
         }
 
@@ -762,132 +763,272 @@ const ReceiptPage: React.FC = () => {
      RESET TABLE + LOAD NEXT DOCUMENT NUMBER
   ======================================================= */
 
-  const resetTableAndLoadNextReceiptNumber =
-    useCallback(
-      async () => {
-        /* =====================================================
-           CLEAR ALL FORM DATA
-        ===================================================== */
+/* =======================================================
+   RESET TABLE + LOAD NEXT DOCUMENT NUMBER
+======================================================= */
 
-        setRows(createRows());
+const resetTableAndLoadNextReceiptNumber =
+  useCallback(async () => {
+    /* =====================================================
+       CLEAR ALL FORM DATA
+    ===================================================== */
 
-        setCbAccount("");
-        setCbCcId("");
-        setReceivedFrom("");
-        setReference("");
-        setNote("");
-        setDescription("");
-        setActiveDescriptionRow(null);
+    setRows(createRows());
 
-        setDate(getTodayDate());
+    setCbAccount("");
+    setCbCcId("");
+    setReceivedFrom("");
+    setReference("");
+    setNote("");
+    setDescription("");
+    setActiveDescriptionRow(null);
 
-        setIsModifyMode(false);
-        setReceiptMessage("");
+    setDate(getTodayDate());
 
-        lastLookupKeyRef.current = "";
+    setIsModifyMode(false);
+    setReceiptMessage("");
 
-        /* =====================================================
-           RELOAD DEFAULT BRANCH / TYPE / RECEIPT NUMBER
+    lastLookupKeyRef.current = "";
 
-           The backend already returns the default branch,
-           receipt type and next receipt number from getReceipt.
-        ===================================================== */
+    /*
+     * IMPORTANT:
+     * Clear the old receipt number immediately.
+     *
+     * This prevents the previously saved/modified/deleted
+     * receipt number from remaining visible while the
+     * new receipt number is being requested.
+     */
+    setDocumentNo("");
 
-        try {
-          const response = await fetch(
-            `${import.meta.env.VITE_API_URL}/Receipt/getReceipt`
-          );
+    try {
+      /* =====================================================
+         GET NEW RECEIPT DEFAULTS
+      ===================================================== */
 
-          if (!response.ok) {
-            throw new Error(
-              `Receipt defaults could not be reloaded. Status: ${response.status}`
-            );
-          }
-
-          const result =
-            (await response.json()) as ReceiptsResponse;
-
-          if (!result.success) {
-            throw new Error(
-              result.message ||
-              "Receipt defaults could not be reloaded."
-            );
-          }
-
-          /* Keep the existing option lists in sync. */
-          setBranchOptions(result.data || []);
-          setFinancialParameters(result.finparam || []);
-          setAccountOptions(result.accounts || []);
-          setAccountSortByIdOptions(
-            result.accountsortbyId || []
-          );
-          setCostCenters(result.costCenters || []);
-
-          /* Restore backend default branch. */
-          const defaultBranch =
-            result.defaultBranch ||
-            result.data?.[0]?.fbrid ||
-            "";
-
-          if (defaultBranch) {
-            setLkpBranch(defaultBranch);
-          } else {
-            setLkpBranch("");
-          }
-
-          /* Restore backend default type when supplied. */
-          const defaultReceiptType =
-            result.receiptType || "";
-
-          if (defaultReceiptType) {
-            const normalizedType =
-              defaultReceiptType
-                .trim()
-                .toUpperCase();
-
-            setLkpType(
-              normalizedType === "BR"
-                ? "B"
-                : normalizedType === "CR"
-                  ? "C"
-                  : normalizedType
-            );
-          }
-
-          /* Load the fresh receipt number returned by backend. */
-          if (result.txtReceiptNo) {
-            setDocumentNo(result.txtReceiptNo);
-          } else {
-            setDocumentNo("");
-          }
-
-          /* Return focus to Receipt No. */
-          // requestAnimationFrame(() => {
-          //   documentNoRef.current?.focus();
-
-          //   const value =
-          //     documentNoRef.current?.value ?? "";
-
-          //   documentNoRef.current?.setSelectionRange(
-          //     value.length,
-          //     value.length
-          //   );
-          // });
-        } catch (error) {
-          console.error(
-            "Receipt defaults reload error:",
-            error
-          );
-
-          setReceiptMessage(
-            error instanceof Error
-              ? error.message
-              : "Receipt saved, but the default receipt form could not be reloaded."
-          );
+      const response = await fetch(
+        `${import.meta.env.VITE_API_URL}/Receipt/getReceipt`,
+        {
+          method: "GET",
         }
-      },
-      []
-    )
+      );
+
+      if (!response.ok) {
+        throw new Error(
+          `Receipt defaults could not be reloaded. Status: ${response.status}`
+        );
+      }
+
+      const result =
+        (await response.json()) as ReceiptsResponse;
+
+      console.log(
+        "========================================"
+      );
+
+      console.log(
+        "GET RECEIPT AFTER RESET"
+      );
+
+      console.log(
+        "GET RECEIPT RESPONSE:",
+        result
+      );
+
+      console.log(
+        "API txtReceiptNo:",
+        result.txtReceiptNo
+      );
+
+      console.log(
+        "API receiptNo:",
+        result.receiptNo
+      );
+
+      console.log(
+        "========================================"
+      );
+
+      if (!result.success) {
+        throw new Error(
+          result.message ||
+            "Receipt defaults could not be reloaded."
+        );
+      }
+
+      /* =====================================================
+         RESTORE API OPTIONS
+      ===================================================== */
+
+      setBranchOptions(
+        result.data || []
+      );
+
+      setFinancialParameters(
+        result.finparam || []
+      );
+
+      setAccountOptions(
+        result.accounts || []
+      );
+
+      setAccountSortByIdOptions(
+        result.accountsortbyId || []
+      );
+
+      setCostCenters(
+        result.costCenters || []
+      );
+
+      /* =====================================================
+         DEFAULT BRANCH
+      ===================================================== */
+
+      const defaultBranch =
+        result.defaultBranch ||
+        result.data?.[0]?.fbrid ||
+        "";
+
+      setLkpBranch(
+        defaultBranch
+      );
+
+      /* =====================================================
+         DEFAULT RECEIPT TYPE
+      ===================================================== */
+
+      const defaultReceiptType =
+        result.receiptType || "";
+
+      if (defaultReceiptType) {
+        const normalizedType =
+          defaultReceiptType
+            .trim()
+            .toUpperCase();
+
+        const uiReceiptType =
+          normalizedType === "BR"
+            ? "B"
+            : normalizedType === "CR"
+              ? "C"
+              : normalizedType;
+
+        setLkpType(
+          uiReceiptType
+        );
+      }
+
+      /* =====================================================
+         GET NEW RECEIPT NUMBER
+      ===================================================== */
+
+      /*
+       * IMPORTANT:
+       *
+       * Your API response can return:
+       *
+       *     receiptNo
+       *
+       * or:
+       *
+       *     txtReceiptNo
+       *
+       * So check BOTH.
+       */
+
+      const newReceiptNo =
+        result.receiptNo ||
+        result.txtReceiptNo ||
+        "";
+
+      console.log(
+        "NEW RECEIPT NUMBER:",
+        newReceiptNo
+      );
+
+      /* =====================================================
+         SET NEW RECEIPT NUMBER
+      ===================================================== */
+
+      if (newReceiptNo) {
+        setDocumentNo(
+          newReceiptNo
+        );
+      } else {
+        console.error(
+          "❌ NEW RECEIPT NUMBER WAS NOT RETURNED BY API"
+        );
+
+        setDocumentNo("");
+      }
+
+      /* =====================================================
+         FOCUS RECEIPT NO AFTER REACT RENDER
+      ===================================================== */
+
+      requestAnimationFrame(() => {
+        requestAnimationFrame(() => {
+          const input =
+            documentNoRef.current;
+
+          if (!input) {
+            console.warn(
+              "Receipt No input not found"
+            );
+
+            return;
+          }
+
+          input.focus();
+
+          /*
+           * Do NOT manually assign:
+           *
+           * input.value = newReceiptNo
+           *
+           * because documentNo is a controlled
+           * React state value.
+           */
+
+          const value =
+            input.value || "";
+
+          input.setSelectionRange(
+            value.length,
+            value.length
+          );
+
+          console.log(
+            "RECEIPT NO AFTER RESET:",
+            input.value
+          );
+
+          console.log(
+            "RECEIPT NO FOCUSED:",
+            document.activeElement === input
+          );
+        });
+      });
+
+    } catch (error) {
+      console.error(
+        "Receipt defaults reload error:",
+        error
+      );
+
+      /*
+       * Keep Receipt No empty if the new number
+       * could not be loaded.
+       */
+
+      setDocumentNo("");
+
+      setReceiptMessage(
+        error instanceof Error
+          ? error.message
+          : "Receipt defaults could not be reloaded."
+      );
+    }
+  }, []);
 
 
   /* =======================================================
@@ -1465,129 +1606,157 @@ const ReceiptPage: React.FC = () => {
      SAVE RECEIPT
   ======================================================= */
 
-  const handleSave = useCallback(async () => {
-    try {
-      const validRows = rows.filter(
-        (row) =>
-          row.accountId &&
-          row.accountId.trim() !== ""
+ /* =======================================================
+   SAVE RECEIPT
+======================================================= */
+
+const handleSave = useCallback(async () => {
+  try {
+    /* =====================================================
+       GET VALID ROWS
+    ===================================================== */
+
+    const validRows = rows.filter(
+      (row) =>
+        row.accountId &&
+        row.accountId.trim() !== ""
+    );
+
+    /* =====================================================
+       VALIDATION
+    ===================================================== */
+
+    const validationFailed =
+      !lkpBranch ||
+      !lkpType ||
+      !documentNo.trim() ||
+      !date ||
+      !cbAccount ||
+      validRows.length === 0;
+
+    if (validationFailed) {
+      toast.warning(
+        "Branch, type, receipt number, date, cash/bank, and one account row are required."
       );
 
-      /* ===============================================
-         VALIDATION
-      =============================================== */
+      return;
+    }
 
-      const validationFailed =
-        !lkpBranch ||
-        !lkpType ||
-        !documentNo.trim() ||
-        !date ||
-        !cbAccount ||
-        validRows.length === 0;
+    /* =====================================================
+       SUBMIT CONFIRMATION
+    ===================================================== */
 
-      if (validationFailed) {
-        const validationMessage =
-          "Branch, type, receipt number, date, cash/bank, and one account row are required.";
+    const shouldSubmit = true;
 
-        toast.warning(validationMessage);
-        return;
-      }
-
-      /* ===============================================
-         SUBMIT CONFIRMATION (BEFORE API CALL)
-  
-         NO  -> No API call, continue editing.
-         YES -> Continue Save API.
-      =============================================== */
-
-      // const shouldSubmit = window.confirm(
-      //   "Do you want to submit?"
-      // );
-      const shouldSubmit = true
-
-      if (!shouldSubmit) {
-        console.log("❌ SAVE CANCELLED BY USER");
-        console.log("❌ NO API CALL WAS MADE");
-        return;
-      }
-
-      /* ===============================================
-         CREATE SAVE PAYLOAD
-      =============================================== */
-
-      const receiptData = {
-        lkpBranch,
-
-        lkpType,
-
-        cashBank: cbAccount,
-
-        cbCcId,
-
-        txtReceiptNo: documentNo,
-
-        receiptDate: date,
-
-        receivedFrom,
-
-        reference,
-
-        rows: validRows.map(
-          (row, index) => ({
-            id: row.id,
-
-            slNo: index + 1,
-
-            accountId: row.accountId,
-
-            accountName: row.accountName,
-
-            fgcs: row.fgcs,
-
-            division: row.division,
-
-            ccId: row.ccId,
-
-            creditAmount:
-              Number(row.creditAmount) || 0,
-
-            match: row.match,
-
-            description:
-              row.description || "",
-          })
-        ),
-
-        total,
-
-        note,
-      };
-
-      const saveType =
-        lkpType === "B"
-          ? "BR"
-          : lkpType === "C"
-            ? "CR"
-            : lkpType;
-
+    if (!shouldSubmit) {
       console.log(
-        "========== SAVE RECEIPT =========="
+        "❌ SAVE CANCELLED BY USER"
       );
 
-      console.log("RECEIPT lkpType:", lkpType);
+      return;
+    }
 
-      console.log("SAVE TYPE:", saveType);
+    /* =====================================================
+       CREATE SAVE PAYLOAD
+    ===================================================== */
 
-      console.log(
-        "SENDING RECEIPT:",
-        receiptData
-      );
+    const receiptData = {
+      lkpBranch,
 
-      /* ===============================================
-         SAVE API
-      =============================================== */
+      lkpType,
 
-      const response = await fetch(
+      cashBank:
+        cbAccount,
+
+      cbCcId,
+
+      txtReceiptNo:
+        documentNo,
+
+      receiptDate:
+        date,
+
+      receivedFrom,
+
+      reference,
+
+      rows: validRows.map(
+        (row, index) => ({
+          id:
+            row.id,
+
+          slNo:
+            index + 1,
+
+          accountId:
+            row.accountId,
+
+          accountName:
+            row.accountName,
+
+          fgcs:
+            row.fgcs,
+
+          division:
+            row.division,
+
+          ccId:
+            row.ccId,
+
+          creditAmount:
+            Number(
+              row.creditAmount
+            ) || 0,
+
+          match:
+            row.match,
+
+          description:
+            row.description || "",
+        })
+      ),
+
+      total,
+
+      note,
+    };
+
+    /* =====================================================
+       CONVERT UI TYPE TO DATABASE TYPE
+    ===================================================== */
+
+    const saveType =
+      lkpType === "B"
+        ? "BR"
+        : lkpType === "C"
+          ? "CR"
+          : lkpType;
+
+    console.log(
+      "========== SAVE RECEIPT =========="
+    );
+
+    console.log(
+      "OLD RECEIPT NUMBER:",
+      documentNo
+    );
+
+    console.log(
+      "SAVE TYPE:",
+      saveType
+    );
+
+    console.log(
+      "SENDING RECEIPT:",
+      receiptData
+    );
+
+    /* =====================================================
+       SAVE API
+    ===================================================== */
+
+    const response =
+      await fetch(
         `${import.meta.env.VITE_API_URL}/Receipt/saveReceipt`,
         {
           method: "POST",
@@ -1597,100 +1766,120 @@ const ReceiptPage: React.FC = () => {
               "application/json",
           },
 
-          body: JSON.stringify({
-            ...receiptData,
+          body:
+            JSON.stringify({
+              ...receiptData,
 
-            lkpType: saveType,
-          }),
+              lkpType:
+                saveType,
+            }),
         }
       );
 
-      const text = await response.text();
+    /* =====================================================
+       READ RESPONSE
+    ===================================================== */
 
-      console.log(
-        "SAVE STATUS:",
-        response.status
-      );
+    const text =
+      await response.text();
 
-      console.log(
-        "SAVE RAW RESPONSE:",
-        text
-      );
+    console.log(
+      "SAVE STATUS:",
+      response.status
+    );
 
-      let result: {
-        success?: boolean;
-        message?: string;
+    console.log(
+      "SAVE RAW RESPONSE:",
+      text
+    );
+
+    let result: {
+      success?: boolean;
+      message?: string;
+    };
+
+    try {
+      result =
+        JSON.parse(text);
+    } catch {
+      result = {
+        success: false,
+        message: text,
       };
-
-      try {
-        result = JSON.parse(text);
-      } catch {
-        result = {
-          success: false,
-          message: text,
-        };
-      }
-
-      console.log(
-        "SAVE API RESPONSE:",
-        result
-      );
-
-      if (!response.ok) {
-        toast.error(
-          result.message ||
-          `Save failed. Status: ${response.status}`
-        );
-        return;
-      }
-
-      /* ===============================================
-         SUCCESS
-      =============================================== */
-
-      toast.success(
-        result.message ||
-        "saved "
-      );
-
-      /* ===============================================
-         CLEAR FORM + RECALL DEFAULT BRANCH / TYPE /
-         NEW RECEIPT NUMBER
-      =============================================== */
-
-      await resetTableAndLoadNextReceiptNumber();
-
-setFocusReceiptNoAfterClear(
-  (current) => current + 1
-);
-
-    } catch (error) {
-      console.error(
-        "SAVE ERROR:",
-        error
-      );
-
-      toast.error(
-        error instanceof Error
-          ? error.message
-          : "Cannot connect to Receipt API."
-      );
     }
-  }, [
-    lkpBranch,
-    lkpType,
-    cbAccount,
-    cbCcId,
-    documentNo,
-    date,
-    receivedFrom,
-    reference,
-    rows,
-    total,
-    note,
-    resetTableAndLoadNextReceiptNumber,
-  ]);
 
+    console.log(
+      "SAVE API RESPONSE:",
+      result
+    );
+
+    /* =====================================================
+       SAVE ERROR
+    ===================================================== */
+
+    if (!response.ok) {
+      toast.error(
+        result.message ||
+          `Save failed. Status: ${response.status}`
+      );
+
+      return;
+    }
+
+    /* =====================================================
+       SAVE SUCCESS
+    ===================================================== */
+
+    toast.success(
+      result.message ||
+        "Saved successfully"
+    );
+
+    console.log(
+      "✅ SAVE SUCCESS"
+    );
+
+    console.log(
+      "OLD SAVED RECEIPT:",
+      documentNo
+    );
+
+    /* =====================================================
+       CLEAR + LOAD COMPLETELY NEW RECEIPT NUMBER
+    ===================================================== */
+
+    await resetTableAndLoadNextReceiptNumber();
+
+    console.log(
+      "✅ RESET COMPLETED AFTER SAVE"
+    );
+
+  } catch (error) {
+    console.error(
+      "SAVE ERROR:",
+      error
+    );
+
+    toast.error(
+      error instanceof Error
+        ? error.message
+        : "Cannot connect to Receipt API."
+    );
+  }
+}, [
+  lkpBranch,
+  lkpType,
+  cbAccount,
+  cbCcId,
+  documentNo,
+  date,
+  receivedFrom,
+  reference,
+  rows,
+  total,
+  note,
+  resetTableAndLoadNextReceiptNumber,
+]);
   /* =======================================================
      MODIFY RECEIPT
   ======================================================= */

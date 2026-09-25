@@ -83,7 +83,8 @@ const CustomerFooter: React.FC<CustomerFooterProps> = ({
           py-3
 
           sm:px-5
-          lg:px-6
+          lg:px-12
+          lg:ml-[65px]
         "
       >
         <div
