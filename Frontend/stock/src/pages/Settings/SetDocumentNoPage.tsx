@@ -5,6 +5,7 @@ import Select, {
   type StylesConfig,
 } from "react-select";
 import { toast } from "react-toastify";
+import { X } from "lucide-react";
 
 // ============================================================
 // TYPES
@@ -235,7 +236,9 @@ const SetDocumentNo: React.FC = () => {
   // ==========================================================
 
   const [lkpYear, setLkpYear] =
-    useState<string>("");
+    useState<string>(
+      () => localStorage.getItem("year") || ""
+    );
 
   const [yearOptions, setYearOptions] =
     useState<SelectOption[]>([]);
@@ -288,6 +291,46 @@ const SetDocumentNo: React.FC = () => {
     };
 
     loadYearList();
+  }, []);
+
+  /* =======================================================
+     LOAD DEFAULT BRANCH (lkpBranch pre-select, live lookup
+     via dbo.getuserdefbranch — not localStorage)
+  ======================================================= */
+
+  useEffect(() => {
+    const loadDefaultBranch = async () => {
+      try {
+        const userId = localStorage.getItem("userId");
+
+        if (!userId) {
+          return;
+        }
+
+        const response = await fetch(
+          `${import.meta.env.VITE_API_URL}/DocumentNo/getDefaultBranch?userId=${userId}`
+        );
+
+        if (!response.ok) {
+          throw new Error(`HTTP Error: ${response.status}`);
+        }
+
+        const result = await response.json();
+
+        if (!result.success) {
+          console.error("getDefaultBranch failed:", result.message);
+          return;
+        }
+
+        if (result.data) {
+          setLkpBranch(result.data);
+        }
+      } catch (error) {
+        console.error("getDefaultBranch error:", error);
+      }
+    };
+
+    loadDefaultBranch();
   }, []);
 
   /* =======================================================
@@ -358,6 +401,11 @@ const SetDocumentNo: React.FC = () => {
         );
 
         setModuleOptions(options);
+
+        // Auto-select the first module so the grid isn't empty on load
+        if (options.length > 0) {
+          setLkpModule((current) => current || options[0].value);
+        }
       } catch (error) {
         console.error("getModuleList error:", error);
       }
@@ -527,14 +575,14 @@ const SetDocumentNo: React.FC = () => {
             lkpBranch,
             lkpModule,
             rows: validRows.map((row) => ({
-              docType: row.lkpDocument,
-              docNoPrefix: row.txtDocPrefix || null,
-              startSeqNo: row.txtStartSeqNo || null,
-              strictSerialSeqNo: row.chkStrictSerial,
-              seqNoIncrementMode: row.lkpMode || null,
-              seqNoResetMode: row.lkpResetNo || null,
-              printAfterSave: row.chkPrintAfterSave ? 1 : 0,
-              positionNo: row.txtPositionNo,
+              lkpDocument: row.lkpDocument,
+              txtDocPrefix: row.txtDocPrefix || null,
+              txtStartSeqNo: row.txtStartSeqNo || null,
+              chkStrictSerial: row.chkStrictSerial,
+              lkpMode: row.lkpMode || null,
+              lkpResetNo: row.lkpResetNo || null,
+              chkPrintAfterSave: row.chkPrintAfterSave ? 1 : 0,
+              txtPositionNo: row.txtPositionNo,
             })),
           }),
         }
@@ -565,6 +613,69 @@ const SetDocumentNo: React.FC = () => {
     setRows([]);
 
     setCopyToNextYearbtn(false);
+  };
+
+  // ==========================================================
+  // DELETE ONE ROW
+  // ==========================================================
+
+  const handleDeleteRow = async (row: DocumentRow) => {
+    if (!lkpYear || !lkpBranch || !lkpModule) {
+      toast.warning("Year, Branch and Module are required.");
+      return;
+    }
+
+    const shouldDelete = window.confirm(
+      "Are you sure you want to delete this?"
+    );
+
+    if (!shouldDelete) {
+      return;
+    }
+
+    try {
+      const response = await fetch(
+        `${import.meta.env.VITE_API_URL}/DocumentNo/deleteDocumentNoRow`,
+        {
+          method: "DELETE",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            lkpYear,
+            lkpBranch,
+            lkpModule,
+            lkpDocument: row.lkpDocument,
+          }),
+        }
+      );
+
+      const result = await response.json();
+
+      if (!response.ok || !result.success) {
+        toast.error(result.message || "Row could not be deleted.");
+        return;
+      }
+
+      toast.success(result.message || "Row deleted successfully.");
+
+      setRows((previousRows) =>
+        previousRows.map((r) =>
+          r.id === row.id
+            ? {
+                ...r,
+                lkpMode: "Auto",
+                txtDocPrefix: "",
+                txtStartSeqNo: "",
+                chkStrictSerial: false,
+                lkpResetNo: "Never",
+                chkPrintAfterSave: false,
+              }
+            : r
+        )
+      );
+    } catch (error) {
+      console.error("deleteDocumentNoRow error:", error);
+      toast.error("Cannot connect to Document No API.");
+    }
   };
 
   // ==========================================================
@@ -893,17 +1004,6 @@ const SetDocumentNo: React.FC = () => {
                   "
                 >
 
-                  {/* ARROW */}
-
-                  {/* <th
-                    className="
-                      w-[20px]
-                      border-r
-                      border-slate-200
-                    "
-                  >
-                  </th> */}
-
                   {/* DOCUMENT */}
 
                   <th
@@ -1046,20 +1146,6 @@ const SetDocumentNo: React.FC = () => {
                   >
 
                     {/* =================================================
-                        ARROW
-                    ================================================= */}
-
-                    {/* <td
-                      className="
-                        border-r
-                        border-t
-                        border-slate-200
-                        text-center
-                      "
-                    >
-                    </td> */}
-
-                    {/* =================================================
                         DOCUMENT
                     ================================================= */}
 
@@ -1072,35 +1158,62 @@ const SetDocumentNo: React.FC = () => {
                       "
                     >
 
-                      <Select
-                        inputId={`lkpDocument_${row.id}`}
-                        instanceId={`lkpDocument_${row.id}`}
-                        name="lkpDocument"
-                        options={documentOptions}
-                        value={getOption(
-                          documentOptions,
-                          row.lkpDocument
-                        )}
-                        onChange={(
-                          option: SingleValue<SelectOption>
-                        ) =>
-                          handleRowChange(
-                            row.id,
-                            "lkpDocument",
-                            option?.value ?? ""
-                          )
-                        }
-                        styles={tableSelectStyles}
-                        components={{
-                          DropdownIndicator:
-                            CustomDropdownIndicator,
-                        }}
-                        isSearchable={false}
-                        menuPortalTarget={
-                          document.body
-                        }
-                        menuPosition="fixed"
-                      />
+                      <div className="flex h-[36px] items-stretch">
+
+                        <div className="min-w-0 flex-1 overflow-hidden">
+                          <Select
+                            inputId={`lkpDocument_${row.id}`}
+                            instanceId={`lkpDocument_${row.id}`}
+                            name="lkpDocument"
+                            options={documentOptions}
+                            value={getOption(
+                              documentOptions,
+                              row.lkpDocument
+                            )}
+                            onChange={(
+                              option: SingleValue<SelectOption>
+                            ) =>
+                              handleRowChange(
+                                row.id,
+                                "lkpDocument",
+                                option?.value ?? ""
+                              )
+                            }
+                            styles={tableSelectStyles}
+                            components={{
+                              DropdownIndicator:
+                                CustomDropdownIndicator,
+                            }}
+                            isSearchable={false}
+                            menuPortalTarget={
+                              document.body
+                            }
+                            menuPosition="fixed"
+                          />
+                        </div>
+
+                        <button
+                          type="button"
+                          onClick={() => handleDeleteRow(row)}
+                          className="
+                            inline-flex
+                            h-full
+                            w-[20px]
+                            shrink-0
+                            items-center
+                            justify-center
+                            self-stretch
+                            rounded
+                            text-slate-400
+                            hover:bg-red-50
+                            hover:text-red-600
+                          "
+                          aria-label={`Delete ${row.lkpDocument}`}
+                        >
+                          <X size={14} />
+                        </button>
+
+                      </div>
 
                     </td>
 

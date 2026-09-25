@@ -4,6 +4,7 @@ import pool from "../DB/db.js";
 import {
   getDocumentNoListService,
   saveDocumentNoListService,
+  deleteDocumentNoRowService,
   type DocumentNoRowPayload,
 } from "../services/setdocumentnoService.js";
 
@@ -312,3 +313,115 @@ export const saveDocumentNo = async (
     });
   }
 };
+
+/* =========================================================
+   DELETE ONE DOCUMENT NO ROW (mode 'D1')
+========================================================= */
+
+export const deleteDocumentNoRow = async (
+  req: Request,
+  res: Response
+): Promise<Response> => {
+  try {
+    const PstrCoID = process.env.PstrCoID;
+
+    const {
+      lkpYear,
+      lkpBranch,
+      lkpModule,
+      lkpDocument,
+    }: {
+      lkpYear: string;
+      lkpBranch: string;
+      lkpModule: string;
+      lkpDocument: string;
+    } = req.body;
+
+    if (!PstrCoID) {
+      return res.status(400).json({
+        success: false,
+        message: "Company ID is not configured",
+      });
+    }
+
+    if (!lkpYear || !lkpBranch || !lkpModule || !lkpDocument) {
+      return res.status(400).json({
+        success: false,
+        message: "Year, Branch, Module and Document Type are required",
+      });
+    }
+
+    await deleteDocumentNoRowService(
+      PstrCoID,
+      lkpYear,
+      lkpBranch,
+      lkpModule,
+      lkpDocument
+    );
+
+    return res.status(200).json({
+      success: true,
+      message: "Document numbering row deleted successfully",
+    });
+  } catch (error: unknown) {
+    console.error("deleteDocumentNoRow error:", error);
+
+    return res.status(400).json({
+      success: false,
+      message:
+        error instanceof Error
+          ? error.message
+          : "Document numbering row could not be deleted",
+    });
+  }
+};
+
+/* =========================================================
+   GET DEFAULT BRANCH (lkpBranch pre-select, live lookup)
+========================================================= */
+
+export const getDefaultBranch = async (
+  req: Request,
+  res: Response
+): Promise<Response> => {
+  try {
+    const PstrCoID = process.env.PstrCoID;
+    const { userId } = req.query;
+
+    if (!PstrCoID) {
+      return res.status(400).json({
+        success: false,
+        message: "Company ID is not configured",
+      });
+    }
+
+    if (!userId) {
+      return res.status(400).json({
+        success: false,
+        message: "User ID is required",
+      });
+    }
+
+    const result = await pool.query(
+      `SELECT dbo.getuserdefbranch($1, $2) AS "defBranch"`,
+      [PstrCoID, userId]
+    );
+
+    return res.status(200).json({
+      success: true,
+      data: result.rows[0]?.defBranch || "",
+    });
+  } catch (error: unknown) {
+    console.error("getDefaultBranch error:", error);
+
+    return res.status(500).json({
+      success: false,
+      message: "Failed to load default branch",
+      error:
+        error instanceof Error
+          ? error.message
+          : String(error),
+    });
+  }
+};
+

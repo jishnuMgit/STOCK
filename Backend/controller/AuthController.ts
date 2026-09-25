@@ -268,7 +268,7 @@ export const login = async (req: Request, res: Response): Promise<Response> => {
         companyId,
         year,
         userType: user.fusertype,
-        branchId: defaultBranchId,
+        //branchId: defaultBranchId,
       },
     });
   } catch (error: unknown) {
