@@ -76,16 +76,19 @@ export const ReceiptHeader: React.FC = () => {
     <header
       className="
         flex
-        h-6.5
-        items-center
-        justify-center
+        
+       items-center
+       h-7.5
+
         bg-[#9fdfbc]
         text-[18px]
-        font-bold
+        font-semibold
+        left-0
+        
         text-slate-700
       "
     >
-      Receipt
+     <span className="ml-[5px]">Receipt</span> 
     </header>
   );
 };
