@@ -361,7 +361,7 @@ const CustomerHeader: React.FC<CustomerHeaderProps> = ({
           text-slate-600
         "
       >
-        New Customer ID
+         New Customer ID
       </label>
 
       <div
@@ -532,7 +532,7 @@ const CustomerHeader: React.FC<CustomerHeaderProps> = ({
 
       {/* PARENT ACCOUNT NAME */}
 
-      <div className="w-full">
+      <div className="w-[100%]">
         <label
           htmlFor="lkpParentAccountName"
           className="
@@ -579,91 +579,95 @@ const CustomerHeader: React.FC<CustomerHeaderProps> = ({
         HAVE DIVISION
     ================================================== */}
 
-    <div className="w-[100%]">
-      <label
-        htmlFor="lkpHaveDivision"
-        className="
-          mb-1
-          block
-          whitespace-nowrap
-          text-[11px]
-          text-slate-600
-        "
-      >
-        Have Division
-      </label>
-
-      <Select
-        inputId="lkpHaveDivision"
-        instanceId="lkpHaveDivision"
-        name="lkpHaveDivision"
-        options={haveDivisionOptions}
-        value={getOption(
-          haveDivisionOptions,
-          lkpHaveDivision
-        )}
-        onChange={(
-          option: SingleValue<SelectOption>
-        ) =>
-          setLkpHaveDivision(
-            option?.value ?? ""
-          )
-        }
-        styles={selectStyles}
-        components={{
-          DropdownIndicator:
-            CustomDropdownIndicator,
-        }}
-        isSearchable={false}
-        menuPortalTarget={document.body}
-        menuPosition="fixed"
-      />
-    </div>
-
     {/* ==================================================
-        BUSINESS TYPE
-    ================================================== */}
+    HAVE DIVISION
+================================================== */}
 
-    <div className="w-[50%]">
-      <label
-        htmlFor="lkpBusinessType"
-        className="
-          mb-1
-          block
-          whitespace-nowrap
-          text-[11px]
-          text-slate-600
-        "
-      >
-        Business Type
-      </label>
+<div className="relative -left-[5px] w-[100%]">
+  <label
+    htmlFor="lkpHaveDivision"
+    className="
+      mb-1
+      block
+      whitespace-nowrap
+      text-[11px]
+      text-slate-600
+    "
+  >
+     Division
+  </label>
 
-      <Select
-        inputId="lkpBusinessType"
-        instanceId="lkpBusinessType"
-        name="lkpBusinessType"
-        options={businessTypeOptions}
-        value={getOption(
-          businessTypeOptions,
-          lkpBusinessType
-        )}
-        onChange={(
-          option: SingleValue<SelectOption>
-        ) =>
-          setLkpBusinessType(
-            option?.value ?? ""
-          )
-        }
-        styles={selectStyles}
-        components={{
-          DropdownIndicator:
-            CustomDropdownIndicator,
-        }}
-        isSearchable={false}
-        menuPortalTarget={document.body}
-        menuPosition="fixed"
-      />
-    </div>
+  <Select
+    inputId="lkpHaveDivision"
+    instanceId="lkpHaveDivision"
+    name="lkpHaveDivision"
+    options={haveDivisionOptions}
+    value={getOption(
+      haveDivisionOptions,
+      lkpHaveDivision
+    )}
+    onChange={(
+      option: SingleValue<SelectOption>
+    ) =>
+      setLkpHaveDivision(
+        option?.value ?? ""
+      )
+    }
+    styles={selectStyles}
+    components={{
+      DropdownIndicator:
+        CustomDropdownIndicator,
+    }}
+    isSearchable={false}
+    menuPortalTarget={document.body}
+    menuPosition="fixed"
+  />
+</div>
+
+{/* ==================================================
+    BUSINESS TYPE
+================================================== */}
+
+<div className="relative -left-[13px] w-[50%]">
+  <label
+    htmlFor="lkpBusinessType"
+    className="
+      mb-1
+      block
+      whitespace-nowrap
+      text-[11px]
+      text-slate-600
+    "
+  >
+    Business Type
+  </label>
+
+  <Select
+    inputId="lkpBusinessType"
+    instanceId="lkpBusinessType"
+    name="lkpBusinessType"
+    options={businessTypeOptions}
+    value={getOption(
+      businessTypeOptions,
+      lkpBusinessType
+    )}
+    onChange={(
+      option: SingleValue<SelectOption>
+    ) =>
+      setLkpBusinessType(
+        option?.value ?? ""
+      )
+    }
+    styles={selectStyles}
+    components={{
+      DropdownIndicator:
+        CustomDropdownIndicator,
+    }}
+    isSearchable={false}
+    menuPortalTarget={document.body}
+    menuPosition="fixed"
+  />
+</div>
 
   </div>
 </div>

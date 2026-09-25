@@ -89,7 +89,7 @@ const LoginPage: React.FC = () => {
         {/* Form Area */}
         <div className="p-8 md:p-10">
           {/* Form Header */}
-          <div className="mb-8 rounded-xl bg-linear-to-r from-emerald-100 to-emerald-50 px-7 py-6">
+          <div className="mb-8 rounded-xl bg-linear-to-r from-emerald-100 to-emerald-50 px-7 h-13 py-2">
             <p className="mt-2 text-sm font-medium tracking-[0.28em] text-slate-600">
               Please login to connect
             </p>

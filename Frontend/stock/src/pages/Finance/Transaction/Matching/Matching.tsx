@@ -9,7 +9,7 @@ import MatchingComponents, {
   type MatchingComponentsRef,
   type ReceiptRow,
   type SelectOption,
-} from "../../../components/Transaction/Match/MatchingComponents";
+} from "../../../../components/Transaction/Match/MatchingComponents";
 
 /* =========================================================
    CUSTOMER ACCOUNT TYPE

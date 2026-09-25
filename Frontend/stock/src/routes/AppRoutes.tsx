@@ -1,5 +1,9 @@
 import { lazy, Suspense } from "react";
-import { Routes, Route, Navigate } from "react-router-dom";
+import {
+  Routes,
+  Route,
+  Navigate,
+} from "react-router-dom";
 
 import SetDocumentNo from "../pages/Settings/SetDocumentNoPage";
 import ProtectedRoute from "./ProtectedRoutes";
@@ -8,32 +12,96 @@ import ProtectedRoute from "./ProtectedRoutes";
    LAZY LOAD PAGES
 ========================================================= */
 
+// =========================================================
+// AUTH
+// =========================================================
+
+const Login = lazy(
+  () => import("../pages/Auth/LoginPage"),
+);
+
+
+// =========================================================
+// FINANCE - TRANSACTIONS
+// =========================================================
+
 const ReceiptPage = lazy(
-  () => import("../pages/Transaction/Receipt/ReceiptPage"),
+  () =>
+    import(
+      "../pages/Finance/Transaction/Receipt/ReceiptPage"
+    ),
 );
 
 const Journalpage = lazy(
-  () => import("../pages/Transaction/Journal/Journalpage"),
+  () =>
+    import(
+      "../pages/Finance/Transaction/Journal/Journalpage"
+    ),
 );
 
-const Matching = lazy(() => import("../pages/Transaction/Matching/Matching"));
-
-const UnMatch = lazy(() => import("../pages/Transaction/Unmatch/UnMatch"));
-
-const Login = lazy(() => import("../pages/Auth/LoginPage"));
-
-const StatementOfAccountMain = lazy(
-  () => import("../pages/Reports/StatementOfAccount/StatementOfAccountMain"),
+const Matching = lazy(
+  () =>
+    import(
+      "../pages/Finance/Transaction/Matching/Matching"
+    ),
 );
+
+const UnMatch = lazy(
+  () =>
+    import(
+      "../pages/Finance/Transaction/Unmatch/UnMatch"
+    ),
+);
+
+
+// =========================================================
+// FINANCE - SETUP
+// =========================================================
+
+const CustomerPage = lazy(
+  () =>
+    import(
+      "../pages/Finance/Setup/CustomerPage"
+    ),
+);
+
+
+// =========================================================
+// PURCHASE - SETUP
+// =========================================================
+
+const ItemPage = lazy(
+  () =>
+    import(
+      "../pages/Purchase/Setup/ItemPage"
+    ),
+);
+
+
+// =========================================================
+// SETTINGS
+// =========================================================
 
 const SetCompanyInfo = lazy(
-  () => import("../pages/Settings/SetCompanyInfoPage"),
+  () =>
+    import(
+      "../pages/Settings/SetCompanyInfoPage"
+    ),
 );
 
 
-const CustomerPage=lazy(()=>import(
-  "../pages/Transaction/Setup/CustomerPage"
-))
+// =========================================================
+// FINANCE - REPORTS
+// =========================================================
+
+const StatementOfAccountMain = lazy(
+  () =>
+    import(
+      "../pages/Finance/Report/StatementOfAccount/StatementOfAccountMain"
+    ),
+);
+
+
 /* =========================================================
    PAGE LOADER
 ========================================================= */
@@ -56,6 +124,7 @@ const PageLoader = () => {
   );
 };
 
+
 /* =========================================================
    APP ROUTES
 ========================================================= */
@@ -64,71 +133,133 @@ const AppRoutes = () => {
   return (
     <Suspense fallback={<PageLoader />}>
       <Routes>
+
         {/* =================================================
             PUBLIC ROUTES
         ================================================= */}
 
-        <Route path="/login" element={<Login />} />
+        {/* ================= AUTH ================= */}
+
+        <Route
+          path="/login"
+          element={<Login />}
+        />
+
 
         {/* =================================================
             PROTECTED ROUTES
         ================================================= */}
 
-        <Route element={<ProtectedRoute />}>
+        <Route
+          element={<ProtectedRoute />}
+        >
+
           {/* =================================================
               DEFAULT
           ================================================= */}
 
           <Route
             path="/"
-            element={<Navigate to="/Transaction/receipt" replace />}
+            element={
+              <Navigate
+                to="/Finance/Transaction/Receipt"
+                replace
+              />
+            }
           />
+
 
           {/* =================================================
-              TRANSACTION
+              FINANCE - TRANSACTIONS
           ================================================= */}
 
-          <Route path="/Transaction/Receipt" element={<ReceiptPage />} />
+          {/* ================= RECEIPT ================= */}
 
-          {/*
           <Route
-            path="/Transaction/receipt/save"
-            element={<ModifyReceipt />}
+            path="/Finance/Transaction/Receipt"
+            element={<ReceiptPage />}
           />
-          */}
 
-          <Route path="/Transaction/journal" element={<Journalpage />} />
+
+          {/* ================= JOURNAL ================= */}
 
           <Route
-            path="/Transaction/Transaction-matching"
+            path="/Finance/Transaction/journal"
+            element={<Journalpage />}
+          />
+
+
+          {/* ================= MATCHING ================= */}
+
+          <Route
+            path="/Finance/Transaction/Transaction-matching"
             element={<Matching />}
           />
 
-        <Route
-          path="/Transaction/CustomerPage"
-          element=
-           {<CustomerPage/>}
-          
-        />
+
+          {/* ================= UNMATCHING ================= */}
 
           <Route
-            path="/Transaction/Transaction-unmatching"
+            path="/Finance/Transaction/Transaction-unmatching"
             element={<UnMatch />}
           />
+
+
+          {/* =================================================
+              FINANCE - SETUP
+          ================================================= */}
+
+          {/* ================= CUSTOMER ================= */}
+
+          <Route
+            path="/Finance/Setup/CustomerPage"
+            element={<CustomerPage />}
+          />
+
+
+          {/* =================================================
+              PURCHASE - SETUP
+          ================================================= */}
+
+          {/* ================= ITEM ================= */}
+
+          <Route
+            path="/Purchase/Setup/ItemPage"
+            element={<ItemPage />}
+          />
+
 
           {/* =================================================
               SETTINGS
           ================================================= */}
 
-          <Route path="/Settings/SetCompanyInfo" element={<SetCompanyInfo />} />
+          {/* ================= COMPANY INFO ================= */}
 
-          <Route path="/Settings/SetDocumentNo" element={<SetDocumentNo />} />
+          <Route
+            path="/Settings/SetCompanyInfo"
+            element={<SetCompanyInfo />}
+          />
+
+
+          {/* ================= DOCUMENT NUMBER ================= */}
+
+          <Route
+            path="/Settings/SetDocumentNo"
+            element={<SetDocumentNo />}
+          />
+
 
           {/* =================================================
-              REPORTS
+              FINANCE - REPORTS
           ================================================= */}
 
-          <Route path="/reports/soa" element={<StatementOfAccountMain />} />
+          {/* ================= STATEMENT OF ACCOUNT ================= */}
+
+          <Route
+            path="/Finance/Reports/rptStatementoOfAccount"
+            element={<StatementOfAccountMain />}
+          />
+
         </Route>
       </Routes>
     </Suspense>

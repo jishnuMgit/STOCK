@@ -424,6 +424,7 @@ const CustomerMiddle: React.FC<CustomerMiddleProps> = ({
                 name="txtCustomerName"
                 type="text"
                 value={txtCustomerName}
+                maxLength={100}
                 onChange={(e) =>
                   setTxtCustomerName(e.target.value)
                 }
@@ -448,6 +449,7 @@ const CustomerMiddle: React.FC<CustomerMiddleProps> = ({
                 name="txtLegalName"
                 type="text"
                 value={txtLegalName}
+                 maxLength={100}
                 onChange={(e) =>
                   setTxtLegalName(e.target.value)
                 }
@@ -472,6 +474,7 @@ const CustomerMiddle: React.FC<CustomerMiddleProps> = ({
                 name="txtBuildingNo"
                 type="text"
                 value={txtBuildingNo}
+                maxLength={6}
                 onChange={(e) =>
                   setTxtBuildingNo(e.target.value)
                 }
@@ -499,6 +502,7 @@ const CustomerMiddle: React.FC<CustomerMiddleProps> = ({
                 onChange={(e) =>
                   setTxtStreetName(e.target.value)
                 }
+                maxLength={40}
                 className={inputClass}
                 
               />
@@ -523,6 +527,7 @@ const CustomerMiddle: React.FC<CustomerMiddleProps> = ({
                 onChange={(e) =>
                   setTxtDistrict(e.target.value)
                 }
+                maxLength={40}
                 className={inputClass}
                 
               />
@@ -540,6 +545,7 @@ const CustomerMiddle: React.FC<CustomerMiddleProps> = ({
               </label>
 
               <input
+              maxLength={40}
                 id="txtCity"
                 name="txtCity"
                 type="text"
@@ -599,6 +605,7 @@ const CustomerMiddle: React.FC<CustomerMiddleProps> = ({
               </label>
 
               <input
+              maxLength={7}
                 id="txtPostalCode"
                 name="txtPostalCode"
                 type="text"
@@ -622,6 +629,7 @@ const CustomerMiddle: React.FC<CustomerMiddleProps> = ({
               </label>
 
               <input
+              maxLength={6}
                 id="txtAdditionalNo"
                 name="txtAdditionalNo"
                 type="text"
@@ -645,6 +653,7 @@ const CustomerMiddle: React.FC<CustomerMiddleProps> = ({
               </label>
 
               <input
+              maxLength={20}
                 id="txtCRNo"
                 name="txtCRNo"
                 type="text"
@@ -669,6 +678,7 @@ const CustomerMiddle: React.FC<CustomerMiddleProps> = ({
               </label>
 
               <input
+              maxLength={15}
                 id="txtVATNo"
                 name="txtVATNo"
                 type="text"
@@ -721,6 +731,7 @@ const CustomerMiddle: React.FC<CustomerMiddleProps> = ({
         id="txtCustomerName_AR"
         name="txtCustomerName_AR"
         type="text"
+        maxLength={100}
         value={txtCustomerName_AR}
         onChange={(e) =>
           setTxtCustomerName_AR(e.target.value)
@@ -754,6 +765,7 @@ const CustomerMiddle: React.FC<CustomerMiddleProps> = ({
         onChange={(e) =>
           setTxtLegalName_AR(e.target.value)
         }
+         maxLength={100}
         dir="rtl"
         className={arabicInputClass}
          style={{width:'100%'}}
@@ -783,6 +795,7 @@ const CustomerMiddle: React.FC<CustomerMiddleProps> = ({
         onChange={(e) =>
           setTxtBuildingNo_AR(e.target.value)
         }
+         maxLength={6}
         dir="rtl"
         className={arabicInputClass}
         
@@ -812,6 +825,7 @@ const CustomerMiddle: React.FC<CustomerMiddleProps> = ({
         onChange={(e) =>
           setTxtStreetName_AR(e.target.value)
         }
+         maxLength={40}
         dir="rtl"
         className={arabicInputClass}
         
@@ -841,6 +855,7 @@ const CustomerMiddle: React.FC<CustomerMiddleProps> = ({
         onChange={(e) =>
           setTxtDistrict_AR(e.target.value)
         }
+        maxLength={40}
         dir="rtl"
         className={arabicInputClass}
         
@@ -870,6 +885,7 @@ const CustomerMiddle: React.FC<CustomerMiddleProps> = ({
         onChange={(e) =>
           setTxtCity_AR(e.target.value)
         }
+        maxLength={40}
         dir="rtl"
         className={arabicInputClass}
         
@@ -988,6 +1004,7 @@ const CustomerMiddle: React.FC<CustomerMiddleProps> = ({
         onChange={(e) =>
           setTxtPostalCode_AR(e.target.value)
         }
+        maxLength={7}
         dir="rtl"
         className={arabicInputClass}
         
@@ -1016,6 +1033,7 @@ const CustomerMiddle: React.FC<CustomerMiddleProps> = ({
         onChange={(e) =>
           setTxtAdditionalNo_AR(e.target.value)
         }
+        maxLength={6}
         dir="rtl"
         className={arabicInputClass}
         
@@ -1037,6 +1055,7 @@ const CustomerMiddle: React.FC<CustomerMiddleProps> = ({
       </label>
 
       <input
+      maxLength={20}
         id="txtCRNo_AR"
         name="txtCRNo_AR"
         type="text"
@@ -1066,6 +1085,7 @@ const CustomerMiddle: React.FC<CustomerMiddleProps> = ({
       </label>
 
       <input
+      maxLength={15}
         id="txtVATNo_AR"
         name="txtVATNo_AR"
         type="text"
@@ -1097,7 +1117,8 @@ const CustomerMiddle: React.FC<CustomerMiddleProps> = ({
     gap-y-1.5
     md:grid-cols-2
     lg:grid-cols-4
-    mr-[8.3%]
+    md:mr-[8%]
+    lg:mr-[8.3%]
   "
 >
 
@@ -1130,10 +1151,10 @@ const CustomerMiddle: React.FC<CustomerMiddleProps> = ({
       CREDIT DAYS
   ================================================= */}
 
-  <div className="grid grid-cols-[92px_minmax(0,1fr)] items-center gap-2">
+  <div className="grid grid-cols-[55px_minmax(0,1fr)] items-center gap-2">
     <label
       htmlFor="txtCreditDays"
-      className="text-[11px] text-slate-600"
+      className="text-[11px] text-slate-600 whitespace-nowrap"
     >
       Credit Days
     </label>
@@ -1155,26 +1176,27 @@ const CustomerMiddle: React.FC<CustomerMiddleProps> = ({
       SHORT NAME
   ================================================= */}
 
-  <div className="grid grid-cols-[60px_minmax(0,1fr)] items-center gap-2">
-    <label
-      htmlFor="txtShortName"
-      className="text-[11px] text-slate-600"
-    >
-      Short Name
-    </label>
+<div className="relative -left-[65px] grid grid-cols-[60px_minmax(0,1fr)] items-center gap-2">
+  <label
+    htmlFor="txtShortName"
+    className="text-[11px] text-slate-600"
+  >
+    Short Name
+  </label>
 
-    <input
-      id="txtShortName"
-      name="txtShortName"
-      type="text"
-      value={txtShortName}
-      onChange={(e) =>
-        setTxtShortName(e.target.value)
-      }
-      className={inputClass}
-      style={{ width: "70%" }}
-    />
-  </div>
+  <input
+    id="txtShortName"
+    name="txtShortName"
+    type="text"
+    value={txtShortName}
+    onChange={(e) =>
+      setTxtShortName(e.target.value)
+    }
+    maxLength={30}
+    className={inputClass}
+    style={{ width: "100%" }}
+  />
+</div>
 
   {/* =================================================
       STAFF
@@ -1234,6 +1256,7 @@ const CustomerMiddle: React.FC<CustomerMiddleProps> = ({
     </label>
 
     <input
+    maxLength={80}
       id="txtContact"
       name="txtContact"
       type="text"
@@ -1267,6 +1290,7 @@ const CustomerMiddle: React.FC<CustomerMiddleProps> = ({
     </label>
 
     <input
+    maxLength={120}
       id="txtEMail"
       name="txtEMail"
       type="text"
@@ -1300,6 +1324,7 @@ const CustomerMiddle: React.FC<CustomerMiddleProps> = ({
     </label>
 
     <input
+    maxLength={60}
       id="txtPhone"
       name="txtPhone"
       type="text"
