@@ -895,6 +895,7 @@ const ItemPage: React.FC = () => {
               <label
                 htmlFor="txtSupplierItemID"
                 className={labelClass}
+                style={{marginLeft:"-10px"}}
               >
                 Supplier Item ID :
               </label>
