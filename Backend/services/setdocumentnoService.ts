@@ -144,3 +144,58 @@ export async function saveDocumentNoListService(
     client.release();
   }
 }
+
+/* =========================================================
+   DELETE ONE ROW (mode 'D1' — a single document type)
+========================================================= */
+
+export async function deleteDocumentNoRowService(
+  coId: string,
+  year: string,
+  brId: string,
+  moduleId: string,
+  docType: string
+): Promise<void> {
+  const client: PoolClient = await pool.connect();
+
+  const cursorName =
+    `cur_documentno_${Date.now()}_${Math.floor(
+      Math.random() * 100000
+    )}`;
+
+  try {
+    await client.query("BEGIN");
+
+    await client.query(
+      `
+      CALL dbo.sp_setdocumentno(
+        $1::varchar, $2::varchar, $3::varchar, $4::varchar, $5::varchar,
+        $6::varchar, $7::varchar, $8::varchar, $9::boolean, $10::varchar,
+        $11::varchar, $12::smallint, $13::smallint, $14::varchar,
+        $15::varchar, $16::refcursor
+      )
+      `,
+      [
+        "D1",
+        coId,
+        year,
+        brId,
+        moduleId,
+        null, null, null, null, null,
+        null, null, null,
+        docType,
+        null,
+        cursorName,
+      ]
+    );
+
+    await client.query("COMMIT");
+  } catch (error: unknown) {
+    await client.query("ROLLBACK");
+    console.error("deleteDocumentNoRowService error:", error);
+    throw error;
+  } finally {
+    client.release();
+  }
+}
+

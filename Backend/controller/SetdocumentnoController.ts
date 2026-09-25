@@ -1,9 +1,11 @@
 import { Request, Response } from "express";
 
 import pool from "../DB/db.js";
+import { AuthenticatedRequest } from "../middleware/authMiddleware.js";
 import {
   getDocumentNoListService,
   saveDocumentNoListService,
+  deleteDocumentNoRowService,
   type DocumentNoRowPayload,
 } from "../services/setdocumentnoService.js";
 
@@ -56,7 +58,7 @@ export const getYearList = async (
 ========================================================= */
 
 export const getBranchList = async (
-  req: Request,
+  req: AuthenticatedRequest,
   res: Response
 ): Promise<Response> => {
   try {
@@ -69,13 +71,30 @@ export const getBranchList = async (
       });
     }
 
-    const result = await pool.query(
-      `
-      SELECT *
-      FROM dbo.fillbranch($1)
-      `,
-      [PstrCoID]
-    );
+    if (!req.user) {
+      return res.status(401).json({
+        success: false,
+        message: "Authentication required",
+      });
+    }
+
+    const { userId, userType } = req.user;
+
+    /* =====================================================
+       AU → ALL BRANCHES
+       RU → ONLY PERMITTED BRANCHES
+    ===================================================== */
+
+    const result =
+      userType === "AU"
+        ? await pool.query(
+            `SELECT * FROM dbo.fillbranch($1)`,
+            [PstrCoID]
+          )
+        : await pool.query(
+            `SELECT * FROM dbo.fillbranchbyuser($1, $2)`,
+            [PstrCoID, userId]
+          );
 
     return res.status(200).json({
       success: true,
@@ -312,3 +331,66 @@ export const saveDocumentNo = async (
     });
   }
 };
+
+/* =========================================================
+   DELETE ONE DOCUMENT NO ROW (mode 'D1')
+========================================================= */
+
+export const deleteDocumentNoRow = async (
+  req: Request,
+  res: Response
+): Promise<Response> => {
+  try {
+    const PstrCoID = process.env.PstrCoID;
+
+    const {
+      lkpYear,
+      lkpBranch,
+      lkpModule,
+      docType,
+    }: {
+      lkpYear: string;
+      lkpBranch: string;
+      lkpModule: string;
+      docType: string;
+    } = req.body;
+
+    if (!PstrCoID) {
+      return res.status(400).json({
+        success: false,
+        message: "Company ID is not configured",
+      });
+    }
+
+    if (!lkpYear || !lkpBranch || !lkpModule || !docType) {
+      return res.status(400).json({
+        success: false,
+        message: "Year, Branch, Module and Document Type are required",
+      });
+    }
+
+    await deleteDocumentNoRowService(
+      PstrCoID,
+      lkpYear,
+      lkpBranch,
+      lkpModule,
+      docType
+    );
+
+    return res.status(200).json({
+      success: true,
+      message: "Document numbering row deleted successfully",
+    });
+  } catch (error: unknown) {
+    console.error("deleteDocumentNoRow error:", error);
+
+    return res.status(400).json({
+      success: false,
+      message:
+        error instanceof Error
+          ? error.message
+          : "Document numbering row could not be deleted",
+    });
+  }
+};
+
