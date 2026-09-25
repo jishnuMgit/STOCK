@@ -6,10 +6,10 @@ import pool from "../DB/db.js";
 ========================================================= */
 
 export async function getDocumentNoListService(
-  coId: string,
-  year: string,
-  brId: string,
-  moduleId: string
+  PstrCoID: string,
+  lkpYear: string,
+  lkpBranch: string,
+  lkpModule: string
 ): Promise<any[]> {
   const client: PoolClient = await pool.connect();
 
@@ -32,10 +32,10 @@ export async function getDocumentNoListService(
       `,
       [
         "G",
-        coId,
-        year,
-        brId,
-        moduleId,
+        PstrCoID,
+        lkpYear,
+        lkpBranch,
+        lkpModule,
         null, null, null, null, null,
         null, null, null, null,
         null,
@@ -65,22 +65,22 @@ export async function getDocumentNoListService(
 ========================================================= */
 
 export interface DocumentNoRowPayload {
-  docType: string;
-  docNoPrefix: string | null;
-  startSeqNo: string | null;
-  strictSerialSeqNo: boolean;
-  seqNoIncrementMode: string | null;
-  seqNoResetMode: string | null;
-  printAfterSave: number;
-  positionNo: number;
+  lkpDocument: string;
+  txtDocPrefix: string | null;
+  txtStartSeqNo: string | null;
+  chkStrictSerial: boolean;
+  lkpMode: string | null;
+  lkpResetNo: string | null;
+  chkPrintAfterSave: number;
+  txtPositionNo: number;
 }
 
 export async function saveDocumentNoListService(
-  coId: string,
-  year: string,
-  brId: string,
-  moduleId: string,
-  userId: string,
+  PstrCoID: string,
+  lkpYear: string,
+  lkpBranch: string,
+  lkpModule: string,
+  PstrUserID: string,
   rows: DocumentNoRowPayload[]
 ): Promise<void> {
   const client: PoolClient = await pool.connect();
@@ -95,7 +95,7 @@ export async function saveDocumentNoListService(
         WHERE fcoid = $1 AND fyear = $2 AND fbrid = $3
           AND fmoduleid = $4 AND fdoctype = $5
         `,
-        [coId, year, brId, moduleId, row.docType]
+        [PstrCoID, lkpYear, lkpBranch, lkpModule, row.lkpDocument]
       );
 
       const mode = existing.rows.length > 0 ? "M" : "S";
@@ -116,20 +116,20 @@ export async function saveDocumentNoListService(
         `,
         [
           mode,
-          coId,
-          year,
-          brId,
-          moduleId,
-          row.docType,
-          row.docNoPrefix,
-          row.startSeqNo,
-          row.strictSerialSeqNo,
-          row.seqNoIncrementMode,
-          row.seqNoResetMode,
-          row.printAfterSave,
-          row.positionNo,
-          mode === "M" ? row.docType : null,
-          userId,
+          PstrCoID,
+          lkpYear,
+          lkpBranch,
+          lkpModule,
+          row.lkpDocument,
+          row.txtDocPrefix,
+          row.txtStartSeqNo,
+          row.chkStrictSerial,
+          row.lkpMode,
+          row.lkpResetNo,
+          row.chkPrintAfterSave,
+          row.txtPositionNo,
+          mode === "M" ? row.lkpDocument : null,
+          PstrUserID,
           cursorName,
         ]
       );
@@ -150,11 +150,11 @@ export async function saveDocumentNoListService(
 ========================================================= */
 
 export async function deleteDocumentNoRowService(
-  coId: string,
-  year: string,
-  brId: string,
-  moduleId: string,
-  docType: string
+  PstrCoID: string,
+  lkpYear: string,
+  lkpBranch: string,
+  lkpModule: string,
+  lkpDocument: string
 ): Promise<void> {
   const client: PoolClient = await pool.connect();
 
@@ -177,13 +177,13 @@ export async function deleteDocumentNoRowService(
       `,
       [
         "D1",
-        coId,
-        year,
-        brId,
-        moduleId,
+        PstrCoID,
+        lkpYear,
+        lkpBranch,
+        lkpModule,
         null, null, null, null, null,
         null, null, null,
-        docType,
+        lkpDocument,
         null,
         cursorName,
       ]
@@ -198,4 +198,3 @@ export async function deleteDocumentNoRowService(
     client.release();
   }
 }
-

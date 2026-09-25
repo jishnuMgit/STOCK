@@ -575,14 +575,14 @@ const SetDocumentNo: React.FC = () => {
             lkpBranch,
             lkpModule,
             rows: validRows.map((row) => ({
-              docType: row.lkpDocument,
-              docNoPrefix: row.txtDocPrefix || null,
-              startSeqNo: row.txtStartSeqNo || null,
-              strictSerialSeqNo: row.chkStrictSerial,
-              seqNoIncrementMode: row.lkpMode || null,
-              seqNoResetMode: row.lkpResetNo || null,
-              printAfterSave: row.chkPrintAfterSave ? 1 : 0,
-              positionNo: row.txtPositionNo,
+              lkpDocument: row.lkpDocument,
+              txtDocPrefix: row.txtDocPrefix || null,
+              txtStartSeqNo: row.txtStartSeqNo || null,
+              chkStrictSerial: row.chkStrictSerial,
+              lkpMode: row.lkpMode || null,
+              lkpResetNo: row.lkpResetNo || null,
+              chkPrintAfterSave: row.chkPrintAfterSave ? 1 : 0,
+              txtPositionNo: row.txtPositionNo,
             })),
           }),
         }
@@ -643,7 +643,7 @@ const SetDocumentNo: React.FC = () => {
             lkpYear,
             lkpBranch,
             lkpModule,
-            docType: row.lkpDocument,
+            lkpDocument: row.lkpDocument,
           }),
         }
       );

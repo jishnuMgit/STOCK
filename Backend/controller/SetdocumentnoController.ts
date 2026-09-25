@@ -329,12 +329,12 @@ export const deleteDocumentNoRow = async (
       lkpYear,
       lkpBranch,
       lkpModule,
-      docType,
+      lkpDocument,
     }: {
       lkpYear: string;
       lkpBranch: string;
       lkpModule: string;
-      docType: string;
+      lkpDocument: string;
     } = req.body;
 
     if (!PstrCoID) {
@@ -344,7 +344,7 @@ export const deleteDocumentNoRow = async (
       });
     }
 
-    if (!lkpYear || !lkpBranch || !lkpModule || !docType) {
+    if (!lkpYear || !lkpBranch || !lkpModule || !lkpDocument) {
       return res.status(400).json({
         success: false,
         message: "Year, Branch, Module and Document Type are required",
@@ -356,7 +356,7 @@ export const deleteDocumentNoRow = async (
       lkpYear,
       lkpBranch,
       lkpModule,
-      docType
+      lkpDocument
     );
 
     return res.status(200).json({
