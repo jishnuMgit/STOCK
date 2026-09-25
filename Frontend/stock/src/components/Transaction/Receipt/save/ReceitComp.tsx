@@ -77,35 +77,19 @@ export type TableField =
 export type SortField = "accountId" | "accountName";
 
 /* =========================================================
-   =========================================================
    RECEIPT HEADER
-   =========================================================
 ========================================================= */
 
 export const ReceiptHeader: React.FC = () => {
   return (
-    <header
-      className="
-        flex
-        h-6.5
-        items-center
-        justify-start
-        pl-2.5
-        bg-[#9fdfbc]
-        text-[18px]
-        font-semi-bold
-        text-slate-700
-      "
-    >
+    <header className="flex h-6.5 items-center justify-start pl-2.5 bg-[#9fdfbc] text-[18px] font-semi-bold text-slate-700">
       Receipt
     </header>
   );
 };
 
 /* =========================================================
-   =========================================================
    RECEIPT FORM
-   =========================================================
 ========================================================= */
 
 interface ReceiptFormProps {
@@ -131,17 +115,11 @@ interface ReceiptFormProps {
   setDate: (value: string) => void;
 
   branchRef: React.RefObject<SelectInstance<SelectOption, false> | null>;
-
   typeRef: React.RefObject<SelectInstance<SelectOption, false> | null>;
-
   documentNoRef: React.RefObject<HTMLInputElement | null>;
-
   cbAccountRef: React.RefObject<SelectInstance<SelectOption, false> | null>;
-
   dateRef: React.RefObject<HTMLInputElement | null>;
-
   receivedFromRef: React.RefObject<HTMLInputElement | null>;
-
   referenceRef: React.RefObject<HTMLInputElement | null>;
 
   focusFirstAccountId: () => void;
