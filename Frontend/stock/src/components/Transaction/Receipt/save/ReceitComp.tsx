@@ -26,15 +26,20 @@ import Select, {
 import dayjs from "dayjs";
 import customParseFormat from "dayjs/plugin/customParseFormat";
 
-import {
-  LocalizationProvider,
-} from "@mui/x-date-pickers/LocalizationProvider";
+import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
+
+import { DatePicker } from "@mui/x-date-pickers/DatePicker";
 
 import {
-  DatePicker,
-} from "@mui/x-date-pickers/DatePicker";
-
-import { selectStyles, accountDropdownStyles, BranchOption, BranchMenuList, TypeOption, TypeMenuList ,BankCashMenuList, BankCashOption} from "./ReactSelectStyles";
+  selectStyles,
+  accountDropdownStyles,
+  BranchOption,
+  BranchMenuList,
+  TypeOption,
+  TypeMenuList,
+  BankCashMenuList,
+  BankCashOption,
+} from "./ReactSelectStyles";
 
 import "./commanReceipt.css";
 import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
@@ -46,11 +51,19 @@ dayjs.extend(customParseFormat);
    COMMON TYPES
 ========================================================= */
 
-import  {type SelectOption,type ReceiptDocNumberResponse,
-  type AccountResponse,type CustomerDivision,type FinancialParameter,
-  type CostCenter,  type ReceiptRow,type AccountData,type CbAccount,
-  type AccountOption ,type AccountOptionProps} from '../../../../types/receiptypes';
-
+import {
+  type SelectOption,
+  type ReceiptDocNumberResponse,
+  type AccountResponse,
+  type CustomerDivision,
+  type FinancialParameter,
+  type CostCenter,
+  type ReceiptRow,
+  type AccountData,
+  type CbAccount,
+  type AccountOption,
+  type AccountOptionProps,
+} from "../../../../types/receiptypes";
 
 export type TableField =
   | "accountId"
@@ -61,42 +74,22 @@ export type TableField =
   | "match"
   | "view";
 
-export type SortField =
-  | "accountId"
-  | "accountName";
+export type SortField = "accountId" | "accountName";
 
 /* =========================================================
-   =========================================================
    RECEIPT HEADER
-   =========================================================
 ========================================================= */
 
 export const ReceiptHeader: React.FC = () => {
   return (
-    <header
-      className="
-        flex
-        
-       items-center
-       h-7.5
-
-        bg-[#9fdfbc]
-        text-[18px]
-        font-semibold
-        left-0
-        
-        text-slate-700
-      "
-    >
-     <span className="ml-[5px]">Receipt</span> 
+    <header className="flex h-6.5 items-center justify-start pl-2.5 bg-[#9fdfbc] text-[18px] font-semi-bold text-slate-700">
+      Receipt
     </header>
   );
 };
 
 /* =========================================================
-   =========================================================
    RECEIPT FORM
-   =========================================================
 ========================================================= */
 
 interface ReceiptFormProps {
@@ -121,24 +114,12 @@ interface ReceiptFormProps {
   date: string;
   setDate: (value: string) => void;
 
-  branchRef: React.RefObject<
-    SelectInstance<SelectOption, false> | null
-  >;
-
-  typeRef: React.RefObject<
-    SelectInstance<SelectOption, false> | null
-  >;
-
+  branchRef: React.RefObject<SelectInstance<SelectOption, false> | null>;
+  typeRef: React.RefObject<SelectInstance<SelectOption, false> | null>;
   documentNoRef: React.RefObject<HTMLInputElement | null>;
-
-  cbAccountRef: React.RefObject<
-    SelectInstance<SelectOption, false> | null
-  >;
-
+  cbAccountRef: React.RefObject<SelectInstance<SelectOption, false> | null>;
   dateRef: React.RefObject<HTMLInputElement | null>;
-
   receivedFromRef: React.RefObject<HTMLInputElement | null>;
-
   referenceRef: React.RefObject<HTMLInputElement | null>;
 
   focusFirstAccountId: () => void;
@@ -158,22 +139,15 @@ interface ReceiptFormProps {
   focusReceiptNoAfterClear?: number;
 }
 
-
-const CustomOption = (
-  props: OptionProps<SelectOption, false>
-) => {
+const CustomOption = (props: OptionProps<SelectOption, false>) => {
   const { data } = props;
 
   return (
     <components.Option {...props}>
       <div className="flex w-full items-center justify-between">
-        <span className="text-xs text-slate-700">
-          {data.label}
-        </span>
+        <span className="text-xs text-slate-700">{data.label}</span>
 
-        <span className="text-[11px] text-gray-400">
-          {data.value}
-        </span>
+        <span className="text-[11px] text-gray-400">{data.value}</span>
       </div>
     </components.Option>
   );
@@ -185,7 +159,7 @@ const filterOption = (
     value: string;
     data: SelectOption;
   },
-  inputValue: string
+  inputValue: string,
 ) => {
   const search = inputValue.toLowerCase().trim();
 
@@ -243,7 +217,6 @@ export const ReceiptForm: React.FC<ReceiptFormProps> = ({
   documentNoEditable = false,
 
   focusReceiptNoAfterClear = 0,
-  
 }) => {
   const [openSelect, setOpenSelect] = useState<
     "branch" | "type" | "cbAccount" | null
@@ -304,58 +277,48 @@ export const ReceiptForm: React.FC<ReceiptFormProps> = ({
    */
   const keepCbAccountFocus = useRef(false);
 
-  const [accountsLoading, setAccountsLoading] =
-    useState(false);
+  const [accountsLoading, setAccountsLoading] = useState(false);
 
-  const [documentNoLoading, setDocumentNoLoading] =
-    useState(false);
+  const [documentNoLoading, setDocumentNoLoading] = useState(false);
 
-useEffect(() => {
-  if (focusReceiptNoAfterClear === 0) return;
-  if (documentNoLoading) return;
+  useEffect(() => {
+    if (focusReceiptNoAfterClear === 0) return;
+    if (documentNoLoading) return;
 
-  // IMPORTANT:
-  // We are intentionally focusing Receipt No now.
-  // Do not allow the old Cash/Bank focus request
-  // to steal focus.
-  keepCbAccountFocus.current = false;
+    // IMPORTANT:
+    // We are intentionally focusing Receipt No now.
+    // Do not allow the old Cash/Bank focus request
+    // to steal focus.
+    keepCbAccountFocus.current = false;
 
-  const focusReceiptNo = () => {
-    const input = documentNoRef.current;
+    const focusReceiptNo = () => {
+      const input = documentNoRef.current;
 
-    if (!input) return;
+      if (!input) return;
 
-    input.focus();
+      input.focus();
 
-    const position = input.value.length;
+      const position = input.value.length;
 
-    input.setSelectionRange(
-      position,
-      position
-    );
-  };
+      input.setSelectionRange(position, position);
+    };
 
-  const frame = requestAnimationFrame(() => {
-    focusReceiptNo();
-
-    setTimeout(() => {
+    const frame = requestAnimationFrame(() => {
       focusReceiptNo();
-    }, 100);
-  });
 
-  return () => {
-    cancelAnimationFrame(frame);
-  };
-}, [
-  focusReceiptNoAfterClear,
-  documentNoLoading,
-]);
+      setTimeout(() => {
+        focusReceiptNo();
+      }, 100);
+    });
 
-  const [docnolen, setdocnolen] =
-    useState<number>(0);
+    return () => {
+      cancelAnimationFrame(frame);
+    };
+  }, [focusReceiptNoAfterClear, documentNoLoading]);
 
-  const [cbAccounts, setCbAccounts] =
-    useState<CbAccount[]>([]);
+  const [docnolen, setdocnolen] = useState<number>(0);
+
+  const [cbAccounts, setCbAccounts] = useState<CbAccount[]>([]);
 
   /*
    * =========================================================
@@ -364,15 +327,8 @@ useEffect(() => {
    */
   const typeOptions: SelectOption[] = useMemo(() => {
     const apiTypeOptions = financialParameters
-      .filter(
-        (parameter) =>
-          parameter.fptype === "RTP"
-      )
-      .sort(
-        (first, second) =>
-          first.fpositionno -
-          second.fpositionno
-      )
+      .filter((parameter) => parameter.fptype === "RTP")
+      .sort((first, second) => first.fpositionno - second.fpositionno)
       .map((parameter) => ({
         value: parameter.fpname,
         label: parameter.fpid,
@@ -397,18 +353,13 @@ useEffect(() => {
    * GET RECEIPT DOCUMENT NUMBER
    * =========================================================
    */
-  const getReceiptDocNumber = async (
-    fbrid: string,
-    typeId: string
-  ) => {
+  const getReceiptDocNumber = async (fbrid: string, typeId: string) => {
     if (!fbrid) {
       setDocumentNo("");
       return;
     }
 
-    const documentType =
-      typeId === "C"        ? "CR"
-        : "BR";
+    const documentType = typeId === "C" ? "CR" : "BR";
 
     try {
       setDocumentNoLoading(true);
@@ -418,48 +369,36 @@ useEffect(() => {
         {
           method: "POST",
           headers: {
-            "Content-Type":
-              "application/json",
+            "Content-Type": "application/json",
           },
           body: JSON.stringify({
             fbrid,
             fptype: documentType,
           }),
-        }
+        },
       );
 
       if (!response.ok) {
-        throw new Error(
-          `HTTP Error: ${response.status}`
-        );
+        throw new Error(`HTTP Error: ${response.status}`);
       }
 
-      const result =
-        (await response.json()) as ReceiptDocNumberResponse;
+      const result = (await response.json()) as ReceiptDocNumberResponse;
 
       if (
         result.success &&
         Array.isArray(result.data) &&
         result.data.length > 0
       ) {
-        const docData =
-          result.data[0];
+        const docData = result.data[0];
 
-        setDocumentNo(
-          docData?.fdocno || ""
-        );
+        setDocumentNo(docData?.fdocno || "");
 
-        setdocnolen(
-          Number(docData?.fdocnolen) || 0
-        );
+        setdocnolen(Number(docData?.fdocnolen) || 0);
       } else {
         setDocumentNo("");
       }
     } catch (error) {
-      console.error(
-        "Receipt Document Number API Error:",
-        error
-      );
+      console.error("Receipt Document Number API Error:", error);
 
       setDocumentNo("");
     } finally {
@@ -472,28 +411,18 @@ useEffect(() => {
    * LOAD CASH / BANK ACCOUNTS
    * =========================================================
    */
-  const loadAccounts = async (
-    requestedCbType: string
-  ) => {
+  const loadAccounts = async (requestedCbType: string) => {
     const cbType =
       financialParameters.find(
         (parameter) =>
-          parameter.fpid ===
-            requestedCbType ||
-          parameter.fpname ===
-            requestedCbType
-      )?.fpid ||
-      requestedCbType;
+          parameter.fpid === requestedCbType ||
+          parameter.fpname === requestedCbType,
+      )?.fpid || requestedCbType;
 
-    if (
-      cbType !== "B" &&
-      cbType !== "C"
-    ) {
+    if (cbType !== "B" && cbType !== "C") {
       setCbAccounts([]);
 
-      if (
-        !preserveCbAccountOnLoad
-      ) {
+      if (!preserveCbAccountOnLoad) {
         setCbAccount("");
       }
 
@@ -508,55 +437,39 @@ useEffect(() => {
         {
           method: "POST",
           headers: {
-            "Content-Type":
-              "application/json",
+            "Content-Type": "application/json",
           },
           body: JSON.stringify({
-             lkpType:cbType,
+            lkpType: cbType,
           }),
-        }
+        },
       );
 
       if (!response.ok) {
-        throw new Error(
-          `HTTP Error: ${response.status}`
-        );
+        throw new Error(`HTTP Error: ${response.status}`);
       }
 
-      const result =
-        (await response.json()) as AccountResponse;
+      const result = (await response.json()) as AccountResponse;
 
-      if (
-        result.success &&
-        Array.isArray(result.data)
-      ) {
+      if (result.success && Array.isArray(result.data)) {
         setCbAccounts(result.data);
 
-        if (
-          !preserveCbAccountOnLoad
-        ) {
+        if (!preserveCbAccountOnLoad) {
           setCbAccount("");
         }
       } else {
         setCbAccounts([]);
 
-        if (
-          !preserveCbAccountOnLoad
-        ) {
+        if (!preserveCbAccountOnLoad) {
           setCbAccount("");
         }
       }
     } catch (error) {
-      console.error(
-        "Cash/Bank Account API Error:",
-        error
-      );
+      console.error("Cash/Bank Account API Error:", error);
 
       setCbAccounts([]);
 
-      if (
-        !preserveCbAccountOnLoad
-      ) {
+      if (!preserveCbAccountOnLoad) {
         setCbAccount("");
       }
     } finally {
@@ -570,21 +483,14 @@ useEffect(() => {
    * =========================================================
    */
   useEffect(() => {
-    const defaultType =
-      lkpType || "B";
+    const defaultType = lkpType || "B";
 
     if (!lkpType) {
       setLkpType("B");
     }
 
-    if (
-      lkpBranch &&
-      !isModifyMode
-    ) {
-      getReceiptDocNumber(
-        lkpBranch,
-        defaultType
-      );
+    if (lkpBranch && !isModifyMode) {
+      getReceiptDocNumber(lkpBranch, defaultType);
     }
 
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -600,15 +506,10 @@ useEffect(() => {
       financialParameters.find(
         (parameter) =>
           parameter.fptype === "RTP" &&
-          (
-            parameter.fpid === lkpType ||
-            parameter.fpname === lkpType
-          )
+          (parameter.fpid === lkpType || parameter.fpname === lkpType),
       )?.fpid ||
-      financialParameters.find(
-        (parameter) =>
-          parameter.fptype === "RTP"
-      )?.fpid ||
+      financialParameters.find((parameter) => parameter.fptype === "RTP")
+        ?.fpid ||
       lkpType ||
       "B";
 
@@ -635,14 +536,10 @@ useEffect(() => {
       return;
     }
 
-    const currentType =
-      lkpType || "B";
+    const currentType = lkpType || "B";
 
     if (!isModifyMode) {
-      getReceiptDocNumber(
-        lkpBranch,
-        currentType
-      );
+      getReceiptDocNumber(lkpBranch, currentType);
     }
 
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -668,11 +565,8 @@ useEffect(() => {
    */
   const handleSelectKeyDown = (
     event: React.KeyboardEvent,
-    selectName:
-      | "branch"
-      | "type"
-      | "cbAccount",
-    focusNext: () => void
+    selectName: "branch" | "type" | "cbAccount",
+    focusNext: () => void,
   ) => {
     if (event.key !== "Enter") {
       return;
@@ -724,11 +618,8 @@ useEffect(() => {
    * =========================================================
    */
   const handleInputKeyDown = (
-    event: Pick<
-      React.KeyboardEvent,
-      "key" | "preventDefault"
-    >,
-    focusNext: () => void
+    event: Pick<React.KeyboardEvent, "key" | "preventDefault">,
+    focusNext: () => void,
   ) => {
     if (event.key !== "Enter") {
       return;
@@ -834,27 +725,20 @@ useEffect(() => {
       overflowY: "auto",
     }),
 
-    option: (
-      base: any,
-      state: any
-    ) => ({
+    option: (base: any, state: any) => ({
       ...base,
       fontSize: "12px",
       cursor: "pointer",
 
       backgroundColor:
-        state.isSelected ||
-        state.isFocused
-          ? "#eefbf4"
-          : "#ffffff",
+        state.isSelected || state.isFocused ? "#eefbf4" : "#ffffff",
 
       color: "#344054",
 
       padding: "7px 10px",
 
       "&:active": {
-        backgroundColor:
-          "#dff5e9",
+        backgroundColor: "#dff5e9",
       },
     }),
   };
@@ -864,19 +748,14 @@ useEffect(() => {
    * CASH / BANK OPTIONS
    * =========================================================
    */
-  const cbAccountOptions: SelectOption[] =
-    useMemo(
-      () =>
-        cbAccounts.map(
-          (account) => ({
-            value:
-              account.faccountid,
-            label:
-              account.faccountname,
-          })
-        ),
-      [cbAccounts]
-    );
+  const cbAccountOptions: SelectOption[] = useMemo(
+    () =>
+      cbAccounts.map((account) => ({
+        value: account.faccountid,
+        label: account.faccountname,
+      })),
+    [cbAccounts],
+  );
 
   /*
    * =========================================================
@@ -884,25 +763,16 @@ useEffect(() => {
    * =========================================================
    */
   const selectedBranch =
-    branchOptions.find(
-      (option) =>
-        option.value === lkpBranch
-    ) || null;
+    branchOptions.find((option) => option.value === lkpBranch) || null;
 
   const selectedType =
     typeOptions.find(
       (option) =>
-        option.label ===
-          (lkpType || "B") ||
-        option.value ===
-          (lkpType || "B")
+        option.label === (lkpType || "B") || option.value === (lkpType || "B"),
     ) || null;
 
   const selectedCbAccount =
-    cbAccountOptions.find(
-      (option) =>
-        option.value === cbAccount
-    ) || null;
+    cbAccountOptions.find((option) => option.value === cbAccount) || null;
 
   /*
    * =========================================================
@@ -975,62 +845,46 @@ useEffect(() => {
 
   return (
     <div className="px-5 pt-3 pb-2">
-
       {/* =====================================================
           FIRST ROW
       ===================================================== */}
 
       <div className="mb-2 flex items-center justify-between gap-8">
-
         {/* ================= BRANCH ================= */}
 
         <div className="flex items-center gap-2">
-
           <label className="w-22.5 text-right text-xs whitespace-nowrap">
             Branch :
           </label>
 
-           <Select<SelectOption, false>
+          <Select<SelectOption, false>
             ref={branchRef}
             id="lkpBranch"
             value={selectedBranch}
             onKeyDown={(event) =>
-              handleSelectKeyDown(
-                event,
-                "branch",
-                () => typeRef.current?.focus()
+              handleSelectKeyDown(event, "branch", () =>
+                typeRef.current?.focus(),
               )
             }
-            onMenuOpen={() =>
-              setOpenSelect("branch")
-            }
-            onMenuClose={() =>
-              setOpenSelect(null)
-            }
+            onMenuOpen={() => setOpenSelect("branch")}
+            onMenuClose={() => setOpenSelect(null)}
             onChange={(option) => {
-              const selectedBranch =
-                option?.value || "";
+              const selectedBranch = option?.value || "";
 
               setLkpBranch(selectedBranch);
 
               if (!isModifyMode) {
-                getReceiptDocNumber(
-                  selectedBranch,
-                  lkpType || "B"
-                );
+                getReceiptDocNumber(selectedBranch, lkpType || "B");
               }
             }}
             options={branchOptions}
             placeholder="Select Branch"
-             components={{
+            components={{
               Option: BranchOption,
-              MenuList:BranchMenuList,
+              MenuList: BranchMenuList,
             }}
-
-            filterOption={
-              filterOption
-            }
-              styles={{
+            filterOption={filterOption}
+            styles={{
               ...selectStylesLocal,
 
               control: (base: any) => ({
@@ -1041,8 +895,7 @@ useEffect(() => {
 
                 width: "200px",
 
-                borderColor:
-                  "#d7dee7",
+                borderColor: "#d7dee7",
 
                 borderRadius: "4px",
 
@@ -1053,8 +906,7 @@ useEffect(() => {
                 cursor: "text",
 
                 "&:hover": {
-                  borderColor:
-                    "#9fdfbc",
+                  borderColor: "#9fdfbc",
                 },
               }),
 
@@ -1072,107 +924,60 @@ useEffect(() => {
                 zIndex: 99999,
               }),
 
-              option: (
-                base: any,
-                state: any
-              ) => ({
+              option: (base: any, state: any) => ({
                 ...base,
 
                 padding: "6px 10px",
 
                 fontSize: "12px",
 
-                backgroundColor:
-                  state.isFocused
-                    ? "#eef8f3"
-                    : "#fff",
+                backgroundColor: state.isFocused ? "#eef8f3" : "#fff",
 
                 color: "#222",
 
                 cursor: "pointer",
               }),
             }}
-
             isSearchable
             isClearable={false}
-            noOptionsMessage={() =>
-              "No Branch Found"
-            }
+            noOptionsMessage={() => "No Branch Found"}
           />
-
-
         </div>
 
         {/* ================= TYPE ================= */}
 
         <div className="flex items-center gap-2">
-
-          <label className="text-right text-xs whitespace-nowrap">
-            Type :
-          </label>
+          <label className="text-right text-xs whitespace-nowrap">Type :</label>
 
           <Select<SelectOption, false>
             ref={typeRef}
-
             inputId="lkpType"
-
             value={selectedType}
-
             onKeyDown={(event) =>
-              handleSelectKeyDown(
-                event,
-                "type",
-                () =>
-                  documentNoRef.current?.focus()
+              handleSelectKeyDown(event, "type", () =>
+                documentNoRef.current?.focus(),
               )
             }
-
-            onMenuOpen={() =>
-              setOpenSelect("type")
-            }
-
-            onMenuClose={() =>
-              setOpenSelect(null)
-            }
-
+            onMenuOpen={() => setOpenSelect("type")}
+            onMenuClose={() => setOpenSelect(null)}
             onChange={(option) => {
-              const selectedType =
-                option?.label ||
-                option?.value ||
-                "B";
+              const selectedType = option?.label || option?.value || "B";
 
-              setLkpType(
-                selectedType
-              );
+              setLkpType(selectedType);
 
-              loadAccounts(
-                selectedType
-              );
+              loadAccounts(selectedType);
 
-              if (
-                lkpBranch &&
-                !isModifyMode
-              ) {
-                getReceiptDocNumber(
-                  lkpBranch,
-                  selectedType
-                );
+              if (lkpBranch && !isModifyMode) {
+                getReceiptDocNumber(lkpBranch, selectedType);
               }
             }}
-
             options={typeOptions}
-
             placeholder="Select"
-
             components={{
               Option: TypeOption,
               MenuList: TypeMenuList,
             }}
-
-            filterOption={
-              filterOption
-            }
-
+            filterOption={filterOption}
             styles={{
               ...selectStylesLocal,
 
@@ -1184,8 +989,7 @@ useEffect(() => {
 
                 width: "80px",
 
-                borderColor:
-                  "#d7dee7",
+                borderColor: "#d7dee7",
 
                 borderRadius: "4px",
 
@@ -1196,8 +1000,7 @@ useEffect(() => {
                 cursor: "text",
 
                 "&:hover": {
-                  borderColor:
-                    "#9fdfbc",
+                  borderColor: "#9fdfbc",
                 },
               }),
 
@@ -1215,100 +1018,61 @@ useEffect(() => {
                 zIndex: 99999,
               }),
 
-              option: (
-                base: any,
-                state: any
-              ) => ({
+              option: (base: any, state: any) => ({
                 ...base,
 
                 padding: "6px 10px",
 
                 fontSize: "12px",
 
-                backgroundColor:
-                  state.isFocused
-                    ? "#eef8f3"
-                    : "#fff",
+                backgroundColor: state.isFocused ? "#eef8f3" : "#fff",
 
                 color: "#222",
 
                 cursor: "pointer",
               }),
             }}
-
             isSearchable
-
             isClearable={false}
-
-            noOptionsMessage={() =>
-              "No Type Found"
-            }
+            noOptionsMessage={() => "No Type Found"}
           />
-
         </div>
 
         {/* ================= RECEIPT NO ================= */}
 
         <div className="flex items-center gap-2">
-
           <label className="text-right text-xs whitespace-nowrap">
             Receipt No. :
           </label>
 
           <input
             maxLength={docnolen}
-
             id="txtReceiptNo"
-
             ref={documentNoRef}
-
-            value={
-              documentNoLoading
-                ? "Loading..."
-                : documentNo
-            }
-
-            readOnly={
-              !documentNoEditable
-            }
-
+            value={documentNoLoading ? "Loading..." : documentNo}
+            readOnly={!documentNoEditable}
             onChange={(event) => {
-              if (
-                documentNoEditable
-              ) {
-                setDocumentNo(
-                  event.target.value
-                );
+              if (documentNoEditable) {
+                setDocumentNo(event.target.value);
               }
             }}
-
             onBlur={(e) => {
               if (
                 documentNoEditable &&
                 docnolen > 0 &&
-                e.target.value
-                  .length !==
-                  docnolen
+                e.target.value.length !== docnolen
               ) {
-                toast.warning(
-                  `Receipt No. width must be ${docnolen}`
-                );
+                toast.warning(`Receipt No. width must be ${docnolen}`);
 
                 return;
               }
 
-              if (
-                documentNoEditable
-              ) {
+              if (documentNoEditable) {
                 txtDocNo?.();
               }
             }}
-
             onKeyDown={(event) => {
-              if (
-                documentNoEditable &&
-                event.key === "Enter"
-              ) {
+              if (documentNoEditable && event.key === "Enter") {
                 event.preventDefault();
 
                 txtDocNo?.();
@@ -1330,20 +1094,14 @@ useEffect(() => {
                 return;
               }
 
-              handleInputKeyDown(
-                event,
-                () => {
-                  keepCbAccountFocus.current = true;
-                  cbAccountRef.current?.focus();
-                }
-              );
+              handleInputKeyDown(event, () => {
+                keepCbAccountFocus.current = true;
+                cbAccountRef.current?.focus();
+              });
             }}
-
             className={`${inputClass} w-37.5`}
           />
-
         </div>
-
       </div>
 
       {/* =====================================================
@@ -1351,11 +1109,9 @@ useEffect(() => {
       ===================================================== */}
 
       <div className="mb-2 flex items-center justify-between gap-8">
-
         {/* ================= CASH / BANK ================= */}
 
         <div className="flex items-center gap-2">
-
           <label
             className="w-22.5 text-right text-xs whitespace-nowrap"
             id="lblCBAccountName"
@@ -1365,34 +1121,17 @@ useEffect(() => {
 
           <Select<SelectOption, false>
             ref={cbAccountRef}
-
             id="lkpCBAccountName"
-
             value={selectedCbAccount}
-
             onKeyDown={(event) =>
-              handleSelectKeyDown(
-                event,
-                "cbAccount",
-                () =>
-                  dateRef.current?.focus()
+              handleSelectKeyDown(event, "cbAccount", () =>
+                dateRef.current?.focus(),
               )
             }
-
-            onMenuOpen={() =>
-              setOpenSelect(
-                "cbAccount"
-              )
-            }
-
-            onMenuClose={() =>
-              setOpenSelect(null)
-            }
-
+            onMenuOpen={() => setOpenSelect("cbAccount")}
+            onMenuClose={() => setOpenSelect(null)}
             onChange={(option) => {
-              setCbAccount(
-                option?.value || ""
-              );
+              setCbAccount(option?.value || "");
 
               /*
                * A value was picked - the user is done with
@@ -1401,29 +1140,14 @@ useEffect(() => {
                */
               keepCbAccountFocus.current = false;
             }}
-
-            options={
-              cbAccountOptions
-            }
-
-            placeholder={
-              accountsLoading
-                ? "Loading..."
-                : "Select"
-            }
-
+            options={cbAccountOptions}
+            placeholder={accountsLoading ? "Loading..." : "Select"}
             components={{
-              Option:
-                BankCashOption,
+              Option: BankCashOption,
 
-              MenuList:
-                BankCashMenuList,
+              MenuList: BankCashMenuList,
             }}
-
-            filterOption={
-              filterOption
-            }
-
+            filterOption={filterOption}
             styles={{
               ...selectStylesLocal,
 
@@ -1435,8 +1159,7 @@ useEffect(() => {
 
                 width: "400px",
 
-                borderColor:
-                  "#d7dee7",
+                borderColor: "#d7dee7",
 
                 borderRadius: "4px",
 
@@ -1447,8 +1170,7 @@ useEffect(() => {
                 cursor: "text",
 
                 "&:hover": {
-                  borderColor:
-                    "#9fdfbc",
+                  borderColor: "#9fdfbc",
                 },
               }),
 
@@ -1466,105 +1188,57 @@ useEffect(() => {
                 zIndex: 99999,
               }),
 
-              option: (
-                base: any,
-                state: any
-              ) => ({
+              option: (base: any, state: any) => ({
                 ...base,
 
                 padding: "6px 10px",
 
                 fontSize: "12px",
 
-                backgroundColor:
-                  state.isFocused
-                    ? "#eef8f3"
-                    : "#fff",
+                backgroundColor: state.isFocused ? "#eef8f3" : "#fff",
 
                 color: "#222",
 
                 cursor: "pointer",
               }),
 
-              menuList: (
-                base: any
-              ) => ({
+              menuList: (base: any) => ({
                 ...base,
 
-                maxHeight:
-                  "600px",
+                maxHeight: "600px",
               }),
             }}
-
             isSearchable
-
             isClearable={false}
-
-            isDisabled={
-              accountsLoading ||
-              cbAccountOptions.length ===
-                0
-            }
-
-            noOptionsMessage={() =>
-              "No Cash/Bank Found"
-            }
+            isDisabled={accountsLoading || cbAccountOptions.length === 0}
+            noOptionsMessage={() => "No Cash/Bank Found"}
           />
-
         </div>
 
         {/* ================= DATE ================= */}
 
         <div className="flex items-center gap-2">
+          <label className="text-right text-xs whitespace-nowrap">Date :</label>
 
-          <label className="text-right text-xs whitespace-nowrap">
-            Date :
-          </label>
-
-          <LocalizationProvider
-            dateAdapter={
-              AdapterDayjs
-            }
-          >
+          <LocalizationProvider dateAdapter={AdapterDayjs}>
             <DatePicker
-              value={
-                date
-                  ? dayjs(
-                      date,
-                      "DD-MM-YYYY"
-                    )
-                  : null
-              }
-
+              value={date ? dayjs(date, "DD-MM-YYYY") : null}
               onChange={(newValue) => {
-                if (
-                  newValue?.isValid()
-                ) {
-                  setDate(
-                    newValue.format(
-                      "DD-MM-YYYY"
-                    )
-                  );
+                if (newValue?.isValid()) {
+                  setDate(newValue.format("DD-MM-YYYY"));
                 } else {
                   setDate("");
                 }
               }}
-
               format="DD-MM-YYYY"
-
               inputRef={dateRef}
-
               slotProps={{
                 textField: {
                   id: "dtpDate",
 
-                  onKeyDown: (
-                    event
-                  ) =>
-                    handleInputKeyDown(
-                      event,
-                      () =>
-                        receivedFromRef.current?.focus()
+                  onKeyDown: (event) =>
+                    handleInputKeyDown(event, () =>
+                      receivedFromRef.current?.focus(),
                     ),
                 },
 
@@ -1582,133 +1256,103 @@ useEffect(() => {
                   },
                 },
               }}
-
               sx={{
                 width: "150px",
 
-                "& .MuiPickersTextField-root":
-                  {
-                    width: "120px",
-                  },
+                "& .MuiPickersTextField-root": {
+                  width: "120px",
+                },
 
-                "& .MuiPickersInputBase-root":
-                  {
-                    width: "150px",
-                    height: "28px",
-                    minHeight: "28px",
-                    boxSizing:
-                      "border-box",
-                    borderRadius: "4px",
-                    backgroundColor:
-                      "#ffffff",
-                    fontSize: "12px",
-                    padding: 0,
-                    overflow:
-                      "hidden",
-                  },
+                "& .MuiPickersInputBase-root": {
+                  width: "150px",
+                  height: "28px",
+                  minHeight: "28px",
+                  boxSizing: "border-box",
+                  borderRadius: "4px",
+                  backgroundColor: "#ffffff",
+                  fontSize: "12px",
+                  padding: 0,
+                  overflow: "hidden",
+                },
 
-                "& .MuiPickersInputBase-sectionsContainer":
-                  {
-                    paddingLeft:
-                      "10px !important",
+                "& .MuiPickersInputBase-sectionsContainer": {
+                  paddingLeft: "10px !important",
 
-                    paddingRight:
-                      "0px !important",
+                  paddingRight: "0px !important",
 
-                    marginBottom:
-                      "-5px !important",
+                  marginBottom: "-5px !important",
 
-                    marginLeft:
-                      "0px !important",
+                  marginLeft: "0px !important",
 
-                    boxSizing:
-                      "border-box",
+                  boxSizing: "border-box",
 
-                    overflow:
-                      "hidden",
-                  },
+                  overflow: "hidden",
+                },
 
-                "& .MuiPickersInputBase-sectionContent":
-                  {
-                    fontSize: "12px",
-                    color:
-                      "#344054",
-                  },
+                "& .MuiPickersInputBase-sectionContent": {
+                  fontSize: "12px",
+                  color: "#344054",
+                },
 
-                "& .MuiPickersInputBase-input":
-                  {
-                    minWidth: 0,
-                    width: "100%",
-                    fontSize: "12px",
-                    padding: 0,
-                    height: "28px",
-                    boxSizing:
-                      "border-box",
-                  },
+                "& .MuiPickersInputBase-input": {
+                  minWidth: 0,
+                  width: "100%",
+                  fontSize: "12px",
+                  padding: 0,
+                  height: "28px",
+                  boxSizing: "border-box",
+                },
 
-                "& .MuiInputAdornment-root":
-                  {
-                    margin: 0,
-                    padding: 0,
-                  },
+                "& .MuiInputAdornment-root": {
+                  margin: 0,
+                  padding: 0,
+                },
 
-                "& .MuiIconButton-root":
-                  {
-                    width: "24px",
-                    height: "24px",
-                    padding: "2px",
-                    margin: 0,
-                  },
+                "& .MuiIconButton-root": {
+                  width: "24px",
+                  height: "24px",
+                  padding: "2px",
+                  margin: 0,
+                },
 
-                "& .MuiSvgIcon-root":
-                  {
-                    fontSize: "16px",
-                  },
+                "& .MuiSvgIcon-root": {
+                  fontSize: "16px",
+                },
 
-                "& .MuiPickersOutlinedInput-notchedOutline":
-                  {
-                    borderColor:
-                      "#B7C7D7 !important",
-                  },
+                "& .MuiPickersOutlinedInput-notchedOutline": {
+                  borderColor: "#B7C7D7 !important",
+                },
 
                 "& .MuiPickersInputBase-root:hover .MuiPickersOutlinedInput-notchedOutline":
                   {
-                    borderColor:
-                      "#B7C7D7 !important",
+                    borderColor: "#B7C7D7 !important",
                   },
 
                 "& .MuiPickersInputBase-root.Mui-focused .MuiPickersOutlinedInput-notchedOutline":
                   {
-                    borderColor:
-                      "#B7C7D7 !important",
+                    borderColor: "#B7C7D7 !important",
 
-                    borderWidth:
-                      "1px",
+                    borderWidth: "1px",
                   },
 
                 "& .MuiPickersInputBase-root.Mui-error .MuiPickersOutlinedInput-notchedOutline":
                   {
-                    borderColor:
-                      "#B7C7D7 !important",
+                    borderColor: "#B7C7D7 !important",
                   },
 
                 "& .MuiPickersInputBase-root.Mui-error:hover .MuiPickersOutlinedInput-notchedOutline":
                   {
-                    borderColor:
-                      "#B7C7D7 !important",
+                    borderColor: "#B7C7D7 !important",
                   },
 
                 "& .MuiPickersInputBase-root.Mui-error.Mui-focused .MuiPickersOutlinedInput-notchedOutline":
                   {
-                    borderColor:
-                      "#B7C7D7 !important",
+                    borderColor: "#B7C7D7 !important",
                   },
               }}
             />
           </LocalizationProvider>
-
         </div>
-
       </div>
 
       {/* =====================================================
@@ -1716,80 +1360,46 @@ useEffect(() => {
       ===================================================== */}
 
       <div className="flex items-center justify-between gap-8">
-
         {/* ================= RECEIVED FROM ================= */}
 
         <div className="flex items-center gap-2">
-
           <label className="w-22.5 text-right text-xs whitespace-nowrap">
             Received From :
           </label>
 
           <input
             maxLength={100}
-
             ref={receivedFromRef}
-
             id="txtReceivedFrom"
-
             value={receivedFrom}
-
-            onChange={(event) =>
-              setReceivedFrom(
-                event.target.value
-              )
-            }
-
+            onChange={(event) => setReceivedFrom(event.target.value)}
             onKeyDown={(event) =>
-              handleInputKeyDown(
-                event,
-                () =>
-                  referenceRef.current?.focus()
-              )
+              handleInputKeyDown(event, () => referenceRef.current?.focus())
             }
-
             className={`${inputClass} w-100`}
           />
-
         </div>
 
         {/* ================= REFERENCE ================= */}
 
         <div className="flex items-center gap-2">
-
           <label className="text-right text-xs whitespace-nowrap">
             Reference :
           </label>
 
           <input
             maxLength={20}
-
             ref={referenceRef}
-
             id="txtReference"
-
             value={reference}
-
-            onChange={(event) =>
-              setReference(
-                event.target.value
-              )
-            }
-
+            onChange={(event) => setReference(event.target.value)}
             onKeyDown={(event) =>
-              handleInputKeyDown(
-                event,
-                focusFirstAccountId
-              )
+              handleInputKeyDown(event, focusFirstAccountId)
             }
-
             className={`${inputClass} w-50`}
           />
-
         </div>
-
       </div>
-
     </div>
   );
 };
@@ -1799,8 +1409,6 @@ useEffect(() => {
    RECEIPT TABLE
    =========================================================
 ========================================================= */
-
-
 
 interface CustomerDivisionResponse {
   success: boolean;
@@ -1816,26 +1424,18 @@ interface ReceiptTableProps {
   handleRowChange: (
     id: number,
     field: keyof ReceiptRow,
-    value: string | boolean
+    value: string | boolean,
   ) => void;
 
-  onFieldEnter: (
-    rowIndex: number,
-    field: TableField
-  ) => void;
+  onFieldEnter: (rowIndex: number, field: TableField) => void;
 
   onTableEscape: () => void;
-  onClearRow: (
-    id: number
-  ) => void;
+  onClearRow: (id: number) => void;
 
-  onSortRows: (
-    field: SortField,
-    direction: "asc" | "desc"
-  ) => void;
+  onSortRows: (field: SortField, direction: "asc" | "desc") => void;
 
   accountOptions?: AccountData[];
-accountSortByIdOptions?: AccountData[];
+  accountSortByIdOptions?: AccountData[];
 
   costCenters?: CostCenter[];
 
@@ -1844,15 +1444,10 @@ accountSortByIdOptions?: AccountData[];
      any of its dropdowns, etc. The parent should use this to
      show/edit that specific row's own description (e.g. in
      ReceiptBottomForm) instead of a single shared field. */
-  onRowSelect?: (
-    id: number,
-    row: ReceiptRow
-  ) => void;
+  onRowSelect?: (id: number, row: ReceiptRow) => void;
 }
 
-const CcIdSingleValue = (
-  props: SingleValueProps<SelectOption, false>
-) => {
+const CcIdSingleValue = (props: SingleValueProps<SelectOption, false>) => {
   return (
     <components.SingleValue {...props}>
       {props.data.value}
@@ -1863,34 +1458,27 @@ const CcIdSingleValue = (
 export interface ReceiptTableRef {
   focusFirstAccountId: () => void;
 
-  focusField: (
-    rowIndex: number,
-    field: TableField
-  ) => void;
+  focusField: (rowIndex: number, field: TableField) => void;
 }
 
-interface CustomDropdownIndicatorProps
-  extends DropdownIndicatorProps<AccountOption, false> {
+interface CustomDropdownIndicatorProps extends DropdownIndicatorProps<
+  AccountOption,
+  false
+> {
   showArrow: boolean;
 }
 
-const CustomDropdownIndicator = (
-  props: CustomDropdownIndicatorProps
-) => {
+const CustomDropdownIndicator = (props: CustomDropdownIndicatorProps) => {
   if (!props.showArrow) {
     return null;
   }
 
   return (
     <components.DropdownIndicator {...props}>
-      <span className="receipt-dropdown-arrow">
-        ▼
-      </span>
+      <span className="receipt-dropdown-arrow">▼</span>
     </components.DropdownIndicator>
   );
 };
-
-
 
 const AccountDropdownOption = ({
   displayMode,
@@ -1902,12 +1490,9 @@ const AccountDropdownOption = ({
         className="account-dropdown-row"
         title={`${props.data.accountId} - ${props.data.accountName}`}
       >
-
         {displayMode === "id" ? (
           <>
-            <div className="account-dropdown-id">
-              {props.data.accountId}
-            </div>
+            <div className="account-dropdown-id">{props.data.accountId}</div>
 
             <div className="account-dropdown-name">
               {props.data.accountName}
@@ -1919,19 +1504,15 @@ const AccountDropdownOption = ({
               {props.data.accountName}
             </div>
 
-            <div className="account-dropdown-id">
-              {props.data.accountId}
-            </div>
+            <div className="account-dropdown-id">{props.data.accountId}</div>
           </>
         )}
-
       </div>
     </components.Option>
   );
 };
 
-interface AccountMenuListProps
-  extends MenuListProps<AccountOption, false> {
+interface AccountMenuListProps extends MenuListProps<AccountOption, false> {
   displayMode: "id" | "name";
 }
 
@@ -1942,40 +1523,27 @@ const AccountDropdownMenuList = ({
   return (
     <components.MenuList {...props}>
       <div className="account-dropdown-header">
-
         {displayMode === "id" ? (
           <>
-            <div className="account-dropdown-header-id">
-              Account ID
-            </div>
+            <div className="account-dropdown-header-id">Account ID</div>
 
-            <div className="account-dropdown-header-name">
-              Account Name
-            </div>
+            <div className="account-dropdown-header-name">Account Name</div>
           </>
         ) : (
           <>
-            <div className="account-dropdown-header-name">
-              Account Name
-            </div>
+            <div className="account-dropdown-header-name">Account Name</div>
 
-            <div className="account-dropdown-header-id">
-              Account ID
-            </div>
+            <div className="account-dropdown-header-id">Account ID</div>
           </>
         )}
-
       </div>
 
-      <div className="account-dropdown-options">
-        {props.children}
-      </div>
+      <div className="account-dropdown-options">{props.children}</div>
     </components.MenuList>
   );
 };
 
-interface LabeledOptionProps
-  extends OptionProps<SelectOption, false> {
+interface LabeledOptionProps extends OptionProps<SelectOption, false> {
   idHeader: string;
   nameHeader: string;
 }
@@ -1988,13 +1556,9 @@ const LabeledDropdownOption = ({
   nameHeader,
   ...props
 }: LabeledOptionProps) => {
-  const optionId = String(
-    props.data.value ?? ""
-  );
+  const optionId = String(props.data.value ?? "");
 
-  const optionName = String(
-    props.data.label ?? ""
-  );
+  const optionName = String(props.data.label ?? "");
 
   return (
     <components.Option {...props}>
@@ -2038,8 +1602,7 @@ const LabeledDropdownOption = ({
   );
 };
 
-interface LabeledMenuListProps
-  extends MenuListProps<SelectOption, false> {
+interface LabeledMenuListProps extends MenuListProps<SelectOption, false> {
   idHeader: string;
   nameHeader: string;
 }
@@ -2061,41 +1624,39 @@ const LabeledDropdownMenuList = ({
         },
       }}
     >
-     <div
-  className="account-dropdown-header"
-  style={{
-    display: "grid",
-    gridTemplateColumns: "80px 1fr",
-    width: "260px",
-    minWidth: "260px",
-    gap: "8px",
-    alignItems: "center",
-  }}
->
-  <div className="account-dropdown-header-id">
-    {idHeader}
-  </div>
+      <div
+        className="account-dropdown-header"
+        style={{
+          display: "grid",
+          gridTemplateColumns: "80px 1fr",
+          width: "260px",
+          minWidth: "260px",
+          gap: "8px",
+          alignItems: "center",
+        }}
+      >
+        <div className="account-dropdown-header-id">{idHeader}</div>
 
-  <div
-    className="account-dropdown-header-name"
-    style={{
-      position: "relative",
-    }}
-  >
-    <span
-      style={{
-        height:'35px',
-        position: "absolute",
-        left: "-14px",
-        top: "-10px",
-        bottom: "-10px",
-        borderLeft: "2px solid #d0d0d0",
-      }}
-    />
+        <div
+          className="account-dropdown-header-name"
+          style={{
+            position: "relative",
+          }}
+        >
+          <span
+            style={{
+              height: "35px",
+              position: "absolute",
+              left: "-14px",
+              top: "-10px",
+              bottom: "-10px",
+              borderLeft: "2px solid #d0d0d0",
+            }}
+          />
 
-    {nameHeader}
-  </div>
-</div>
+          {nameHeader}
+        </div>
+      </div>
 
       <div
         className="account-dropdown-options"
@@ -2110,8 +1671,10 @@ const LabeledDropdownMenuList = ({
   );
 };
 
-interface AccountSingleValueProps
-  extends SingleValueProps<AccountOption, false> {
+interface AccountSingleValueProps extends SingleValueProps<
+  AccountOption,
+  false
+> {
   displayMode: "id" | "name";
 }
 
@@ -2123,32 +1686,21 @@ const AccountDropdownSingleValue = ({
 
   return (
     <components.SingleValue {...props}>
-      <span
-        title={`${data.accountId} - ${data.accountName}`}
-      >
-        {displayMode === "id"
-          ? data.accountId
-          : data.accountName}
+      <span title={`${data.accountId} - ${data.accountName}`}>
+        {displayMode === "id" ? data.accountId : data.accountName}
       </span>
     </components.SingleValue>
   );
 };
 
-type LabeledSingleValueProps =
-  SingleValueProps<SelectOption, false>;
+type LabeledSingleValueProps = SingleValueProps<SelectOption, false>;
 
-const LabeledDropdownSingleValue = (
-  props: LabeledSingleValueProps
-) => {
+const LabeledDropdownSingleValue = (props: LabeledSingleValueProps) => {
   const data = props.data as SelectOption;
 
-  const value = String(
-    data.value ?? ""
-  );
+  const value = String(data.value ?? "");
 
-  const label = String(
-    data.label ?? ""
-  );
+  const label = String(data.label ?? "");
 
   return (
     <components.SingleValue {...props}>
@@ -2173,10 +1725,9 @@ const accountFilterOption = (
     value: string;
     data: AccountOption;
   },
-  inputValue: string
+  inputValue: string,
 ) => {
-  const search =
-    inputValue.toLowerCase().trim();
+  const search = inputValue.toLowerCase().trim();
 
   if (!search) {
     return true;
@@ -2198,22 +1749,17 @@ const selectFilterOption = (
     value: string;
     data: SelectOption;
   },
-  inputValue: string
+  inputValue: string,
 ) => {
-  const search =
-    inputValue.toLowerCase().trim();
+  const search = inputValue.toLowerCase().trim();
 
   if (!search) {
     return true;
   }
 
   return (
-    option.data.label
-      .toLowerCase()
-      .includes(search) ||
-    option.data.value
-      .toLowerCase()
-      .includes(search)
+    option.data.label.toLowerCase().includes(search) ||
+    option.data.value.toLowerCase().includes(search)
   );
 };
 
@@ -2240,7 +1786,7 @@ const handleEditableSelectBackspace = (
   searchText: string,
   setSearchText: (value: string) => void,
   setIsEditing: (value: boolean) => void,
-  selectRef: React.RefObject<SelectInstance<any, any> | null>
+  selectRef: React.RefObject<SelectInstance<any, any> | null>,
 ): boolean => {
   if (event.key !== "Backspace") {
     return false;
@@ -2254,9 +1800,7 @@ const handleEditableSelectBackspace = (
   setIsEditing(true);
 
   const nextSearchText =
-    searchText !== ""
-      ? searchText.slice(0, -1)
-      : currentLabel.slice(0, -1);
+    searchText !== "" ? searchText.slice(0, -1) : currentLabel.slice(0, -1);
 
   setSearchText(nextSearchText);
 
@@ -2275,9 +1819,7 @@ type RowRefValue =
   | HTMLButtonElement
   | null;
 
-type RowRefs = Partial<
-  Record<TableField, RowRefValue>
->;
+type RowRefs = Partial<Record<TableField, RowRefValue>>;
 
 interface ReceiptRowProps {
   url: string;
@@ -2294,36 +1836,22 @@ interface ReceiptRowProps {
 
   ccIdOptions: SelectOption[];
 
-  setSelectedRowId: (
-    id: number
-  ) => void;
+  setSelectedRowId: (id: number) => void;
 
-  setRowRef: (
-    rowIndex: number,
-    field: TableField,
-    value: RowRefValue
-  ) => void;
+  setRowRef: (rowIndex: number, field: TableField, value: RowRefValue) => void;
 
   handleRowChange: (
     id: number,
     field: keyof ReceiptRow,
-    value: string | boolean
+    value: string | boolean,
   ) => void;
 
-  onFieldEnter: (
-    rowIndex: number,
-    field: TableField
-  ) => void;
+  onFieldEnter: (rowIndex: number, field: TableField) => void;
 
   onTableEscape: () => void;
 
-  onClearRow: (
-    id: number
-  ) => void;
-   onRowSelect?: (
-    id: number,
-    row: ReceiptRow
-  ) => void;
+  onClearRow: (id: number) => void;
+  onRowSelect?: (id: number, row: ReceiptRow) => void;
 }
 
 const ReceiptRow = memo(
@@ -2343,451 +1871,255 @@ const ReceiptRow = memo(
     onClearRow,
     onRowSelect,
   }: ReceiptRowProps) => {
+    const accountIdMenuOpenRef = useRef(false);
 
-    const accountIdMenuOpenRef =
-      useRef(false);
+    const accountNameMenuOpenRef = useRef(false);
 
-    const accountNameMenuOpenRef =
-      useRef(false);
+    const divisionMenuOpenRef = useRef(false);
 
-    const divisionMenuOpenRef =
-      useRef(false);
-
-    const ccIdMenuOpenRef =
-      useRef(false);
+    const ccIdMenuOpenRef = useRef(false);
 
     /* Local instance refs + controlled search text per field,
        used only for the "edit selected value via Backspace"
        fix. See handleEditableSelectBackspace above. */
-  
-    
-       const accountIdSelectRef =
-      useRef<SelectInstance<
-        AccountOption,
-        false
-      > | null>(null);
 
-    const accountNameSelectRef =
-      useRef<SelectInstance<
-        AccountOption,
-        false
-      > | null>(null);
+    const accountIdSelectRef = useRef<SelectInstance<
+      AccountOption,
+      false
+    > | null>(null);
 
-    const divisionSelectRef =
-      useRef<SelectInstance<
-        SelectOption,
-        false
-      > | null>(null);
+    const accountNameSelectRef = useRef<SelectInstance<
+      AccountOption,
+      false
+    > | null>(null);
 
-    const ccIdSelectRef =
-      useRef<SelectInstance<
-        SelectOption,
-        false
-      > | null>(null);
+    const divisionSelectRef = useRef<SelectInstance<
+      SelectOption,
+      false
+    > | null>(null);
 
-    const [
-      accountIdSearchText,
-      setAccountIdSearchText,
-    ] = useState("");
+    const ccIdSelectRef = useRef<SelectInstance<SelectOption, false> | null>(
+      null,
+    );
 
-    const [
-      accountNameSearchText,
-      setAccountNameSearchText,
-    ] = useState("");
+    const [accountIdSearchText, setAccountIdSearchText] = useState("");
 
-    const [
-      divisionSearchText,
-      setDivisionSearchText,
-    ] = useState("");
+    const [accountNameSearchText, setAccountNameSearchText] = useState("");
 
-    const [
-      ccIdSearchText,
-      setCcIdSearchText,
-    ] = useState("");
+    const [divisionSearchText, setDivisionSearchText] = useState("");
+
+    const [ccIdSearchText, setCcIdSearchText] = useState("");
 
     // Prevent react-select from restoring the selected label while
     // the user is editing it character-by-character.
-    const [isAccountIdEditing, setIsAccountIdEditing] =
-      useState(false);
+    const [isAccountIdEditing, setIsAccountIdEditing] = useState(false);
 
-    const [isAccountNameEditing, setIsAccountNameEditing] =
-      useState(false);
+    const [isAccountNameEditing, setIsAccountNameEditing] = useState(false);
 
-    const [isDivisionEditing, setIsDivisionEditing] =
-      useState(false);
+    const [isDivisionEditing, setIsDivisionEditing] = useState(false);
 
-    const [isCcIdEditing, setIsCcIdEditing] =
-      useState(false);
+    const [isCcIdEditing, setIsCcIdEditing] = useState(false);
 
-    const [divisions, setDivisions] =
-      useState<CustomerDivision[]>([]);
+    const [divisions, setDivisions] = useState<CustomerDivision[]>([]);
 
-    const [divisionLoading, setDivisionLoading] =
-      useState(false);
+    const [divisionLoading, setDivisionLoading] = useState(false);
 
-   const fetchDivisions =
-  useCallback(
-    async (
-      accountId: string,
-      existingDivision: string = ""
-    ) => {
-      if (!accountId) {
-        setDivisions([]);
-        setDivisionLoading(false);
+    const fetchDivisions = useCallback(
+      async (accountId: string, existingDivision: string = "") => {
+        if (!accountId) {
+          setDivisions([]);
+          setDivisionLoading(false);
 
-        handleRowChange(
-          row.id,
-          "division",
-          ""
-        );
+          handleRowChange(row.id, "division", "");
 
-        handleRowChange(
-          row.id,
-          "hasDivision",
-          false
-        );
+          handleRowChange(row.id, "hasDivision", false);
 
-        return;
-      }
+          return;
+        }
 
-      setDivisionLoading(true);
+        setDivisionLoading(true);
 
-      try {
-        const response =
-          await fetch(
+        try {
+          const response = await fetch(
             `${import.meta.env.VITE_API_URL}/Receipt/getDivID`,
             {
               method: "POST",
               headers: {
-                "Content-Type":
-                  "application/json",
+                "Content-Type": "application/json",
               },
               body: JSON.stringify({
-                customerid:
-                  accountId,
+                customerid: accountId,
               }),
-            }
+            },
           );
 
-        if (!response.ok) {
-          throw new Error(
-            `HTTP Error: ${response.status}`
-          );
-        }
+          if (!response.ok) {
+            throw new Error(`HTTP Error: ${response.status}`);
+          }
 
-        const result =
-          (await response.json()) as CustomerDivisionResponse;
+          const result = (await response.json()) as CustomerDivisionResponse;
 
-        if (
-          result.success &&
-          Array.isArray(result.data)
-        ) {
-          setDivisions(result.data);
+          if (result.success && Array.isArray(result.data)) {
+            setDivisions(result.data);
 
-          handleRowChange(
-            row.id,
-            "hasDivision",
-            result.data.length > 0
-          );
+            handleRowChange(row.id, "hasDivision", result.data.length > 0);
 
-          /*
-           * IMPORTANT:
-           * When loading an existing receipt,
-           * keep its already saved division.
-           */
-          if (existingDivision) {
-            const savedDivisionExists =
-              result.data.some(
+            /*
+             * IMPORTANT:
+             * When loading an existing receipt,
+             * keep its already saved division.
+             */
+            if (existingDivision) {
+              const savedDivisionExists = result.data.some(
                 (division) =>
-                  String(
-                    division.fdivid
-                  ) ===
-                  String(
-                    existingDivision
-                  )
+                  String(division.fdivid) === String(existingDivision),
               );
 
-            if (savedDivisionExists) {
-              handleRowChange(
-                row.id,
-                "division",
-                existingDivision
-              );
-            } else if (
-              result.data.length === 1
-            ) {
-              handleRowChange(
-                row.id,
-                "division",
-                String(
-                  result.data[0].fdivid
-                )
-              );
-            }
+              if (savedDivisionExists) {
+                handleRowChange(row.id, "division", existingDivision);
+              } else if (result.data.length === 1) {
+                handleRowChange(
+                  row.id,
+                  "division",
+                  String(result.data[0].fdivid),
+                );
+              }
 
-            return;
-          }
-
-          /*
-           * Normal new account selection.
-           */
-          if (result.data.length === 1) {
-            handleRowChange(
-              row.id,
-              "division",
-              String(
-                result.data[0].fdivid
-              )
-            );
-          } else {
-            handleRowChange(
-              row.id,
-              "division",
-              ""
-            );
-          }
-        } else {
-          setDivisions([]);
-
-          handleRowChange(
-            row.id,
-            "division",
-            ""
-          );
-
-          handleRowChange(
-            row.id,
-            "hasDivision",
-            false
-          );
-        }
-      } catch (error) {
-        console.error(
-          "Get Customer Divisions Error:",
-          error
-        );
-
-        setDivisions([]);
-
-        handleRowChange(
-          row.id,
-          "division",
-          ""
-        );
-
-        handleRowChange(
-          row.id,
-          "hasDivision",
-          false
-        );
-      } finally {
-        setDivisionLoading(false);
-      }
-    },
-    [
-      row.id,
-      handleRowChange,
-    ]
-  );
-
-    const divisionOptions =
-      useMemo<SelectOption[]>(
-        () =>
-          divisions.map(
-            (division) => ({
-              value: division.fdivid,
-              label: division.fdivname,
-              
-            })
-          ),
-        [divisions]
-      );
-
-    const selectedAccount =
-      useMemo(
-        () =>
-          realAccountOptions.find(
-            (account) =>
-              account.accountId ===
-              row.accountId
-          ) || null,
-        [
-          realAccountOptions,
-          row.accountId,
-        ]
-      );
-
-    const selectedAccountName =
-      useMemo(() => {
-        if (!selectedAccount) {
-          return null;
-        }
-
-        return {
-          value:
-            selectedAccount.accountId,
-
-          label:
-            selectedAccount.accountName,
-
-          accountId:
-            selectedAccount.accountId,
-
-          accountName:
-            selectedAccount.accountName,
-
-          fgcs:
-            selectedAccount.fgcs,
-
-          haveCc:
-            selectedAccount.haveCc,
-        };
-      }, [selectedAccount]);
-
-   const selectedDivision =
-  useMemo(
-    () =>
-      divisionOptions.find(
-        (option) =>
-          String(option.value) ===
-          String(row.division)
-      ) || null,
-    [
-      divisionOptions,
-      row.division,
-    ]
-  );
-
-    const selectedCcId =
-      useMemo(
-        () =>
-          ccIdOptions.find(
-            (option) =>
-              option.value ===
-              row.ccId
-          ) || null,
-        [
-          ccIdOptions,
-          row.ccId,
-        ]
-      );
-
-    const handleAccountChange =
-      useCallback(
-        async (
-          option: AccountOption
-        ) => {
-          setSelectedRowId(
-            row.id
-          );
-
-          setAccountIdSearchText("");
-          setAccountNameSearchText("");
-
-          handleRowChange(
-            row.id,
-            "accountId",
-            option.accountId
-          );
-
-          handleRowChange(
-            row.id,
-            "accountName",
-            option.accountName
-          );
-
-          handleRowChange(
-            row.id,
-            "fgcs",
-            option.fgcs
-          );
-
-          handleRowChange(
-            row.id,
-            "haveCc",
-            option.haveCc
-          );
-
-          handleRowChange(
-            row.id,
-            "division",
-            ""
-          );
-
-          handleRowChange(
-            row.id,
-            "ccId",
-            ""
-          );
-
-          await fetchDivisions(
-            option.accountId
-          );
-        },
-        [
-          row.id,
-          setSelectedRowId,
-          handleRowChange,
-          fetchDivisions,
-        ]
-      );
-
-useEffect(() => {
-  if (!row.accountId) {
-    return;
-  }
-
-  void fetchDivisions(
-    row.accountId,
-    row.division || ""
-  );
-}, [
-  row.accountId,
-  fetchDivisions,
-]);
-
-    const handleSelectKeyDown =
-      useCallback(
-        (
-          event: React.KeyboardEvent,
-          field: TableField,
-          menuOpenRef:
-            React.MutableRefObject<boolean>
-        ) => {
-          if (
-            event.key === "Delete" &&
-            event.ctrlKey
-          ) {
-            event.preventDefault();
-            event.stopPropagation();
-
-            onClearRow(row.id);
-
-            return;
-          }
-
-          if (
-            event.key === "Escape"
-          ) {
-            if (menuOpenRef.current) {
               return;
             }
 
-            event.preventDefault();
-            event.stopPropagation();
+            /*
+             * Normal new account selection.
+             */
+            if (result.data.length === 1) {
+              handleRowChange(
+                row.id,
+                "division",
+                String(result.data[0].fdivid),
+              );
+            } else {
+              handleRowChange(row.id, "division", "");
+            }
+          } else {
+            setDivisions([]);
 
-            onTableEscape();
+            handleRowChange(row.id, "division", "");
 
-            return;
+            handleRowChange(row.id, "hasDivision", false);
           }
+        } catch (error) {
+          console.error("Get Customer Divisions Error:", error);
 
-          if (
-            event.key !== "Enter" &&
-            event.key !== "Tab"
-          ) {
-            return;
-          }
+          setDivisions([]);
 
+          handleRowChange(row.id, "division", "");
+
+          handleRowChange(row.id, "hasDivision", false);
+        } finally {
+          setDivisionLoading(false);
+        }
+      },
+      [row.id, handleRowChange],
+    );
+
+    const divisionOptions = useMemo<SelectOption[]>(
+      () =>
+        divisions.map((division) => ({
+          value: division.fdivid,
+          label: division.fdivname,
+        })),
+      [divisions],
+    );
+
+    const selectedAccount = useMemo(
+      () =>
+        realAccountOptions.find(
+          (account) => account.accountId === row.accountId,
+        ) || null,
+      [realAccountOptions, row.accountId],
+    );
+
+    const selectedAccountName = useMemo(() => {
+      if (!selectedAccount) {
+        return null;
+      }
+
+      return {
+        value: selectedAccount.accountId,
+
+        label: selectedAccount.accountName,
+
+        accountId: selectedAccount.accountId,
+
+        accountName: selectedAccount.accountName,
+
+        fgcs: selectedAccount.fgcs,
+
+        haveCc: selectedAccount.haveCc,
+      };
+    }, [selectedAccount]);
+
+    const selectedDivision = useMemo(
+      () =>
+        divisionOptions.find(
+          (option) => String(option.value) === String(row.division),
+        ) || null,
+      [divisionOptions, row.division],
+    );
+
+    const selectedCcId = useMemo(
+      () => ccIdOptions.find((option) => option.value === row.ccId) || null,
+      [ccIdOptions, row.ccId],
+    );
+
+    const handleAccountChange = useCallback(
+      async (option: AccountOption) => {
+        setSelectedRowId(row.id);
+
+        setAccountIdSearchText("");
+        setAccountNameSearchText("");
+
+        handleRowChange(row.id, "accountId", option.accountId);
+
+        handleRowChange(row.id, "accountName", option.accountName);
+
+        handleRowChange(row.id, "fgcs", option.fgcs);
+
+        handleRowChange(row.id, "haveCc", option.haveCc);
+
+        handleRowChange(row.id, "division", "");
+
+        handleRowChange(row.id, "ccId", "");
+
+        await fetchDivisions(option.accountId);
+      },
+      [row.id, setSelectedRowId, handleRowChange, fetchDivisions],
+    );
+
+    useEffect(() => {
+      if (!row.accountId) {
+        return;
+      }
+
+      void fetchDivisions(row.accountId, row.division || "");
+    }, [row.accountId, fetchDivisions]);
+
+    const handleSelectKeyDown = useCallback(
+      (
+        event: React.KeyboardEvent,
+        field: TableField,
+        menuOpenRef: React.MutableRefObject<boolean>,
+      ) => {
+        if (event.key === "Delete" && event.ctrlKey) {
+          event.preventDefault();
+          event.stopPropagation();
+
+          onClearRow(row.id);
+
+          return;
+        }
+
+        if (event.key === "Escape") {
           if (menuOpenRef.current) {
             return;
           }
@@ -2795,317 +2127,192 @@ useEffect(() => {
           event.preventDefault();
           event.stopPropagation();
 
-          onFieldEnter(
-            index,
-            field
-          );
-        },
-        [
-          index,
-          row.id,
-          onFieldEnter,
-          onTableEscape,
-          onClearRow,
-        ]
-      );
-      /* =========================================================
+          onTableEscape();
+
+          return;
+        }
+
+        if (event.key !== "Enter" && event.key !== "Tab") {
+          return;
+        }
+
+        if (menuOpenRef.current) {
+          return;
+        }
+
+        event.preventDefault();
+        event.stopPropagation();
+
+        onFieldEnter(index, field);
+      },
+      [index, row.id, onFieldEnter, onTableEscape, onClearRow],
+    );
+    /* =========================================================
    CREDIT AMOUNT - HALALA FORMAT
 ========================================================= */
 
-const formatCreditAmount = (
-  value: string
-): string => {
-  if (
-    value === "" ||
-    value === null ||
-    value === undefined
-  ) {
-    return "";
-  }
+    const formatCreditAmount = (value: string): string => {
+      if (value === "" || value === null || value === undefined) {
+        return "";
+      }
 
-  const numberValue = Number(value);
+      const numberValue = Number(value);
 
-  if (!Number.isFinite(numberValue)) {
-    return "";
-  }
+      if (!Number.isFinite(numberValue)) {
+        return "";
+      }
 
-  return numberValue.toFixed(2);
-};
+      return numberValue.toFixed(2);
+    };
 
-    const handleControlKeyDown =
-      useCallback(
-        (
-          event: React.KeyboardEvent,
-          field: TableField
-        ) => {
-          if (
-            event.key === "Delete" &&
-            event.ctrlKey
-          ) {
-            event.preventDefault();
-            event.stopPropagation();
-
-            onClearRow(row.id);
-
-            return;
-          }
-
-          if (
-            event.key === "Escape"
-          ) {
-            event.preventDefault();
-            event.stopPropagation();
-
-            onTableEscape();
-
-            return;
-          }
-
-          if (
-            event.key !== "Enter" &&
-            event.key !== "Tab"
-          ) {
-            return;
-          }
-
+    const handleControlKeyDown = useCallback(
+      (event: React.KeyboardEvent, field: TableField) => {
+        if (event.key === "Delete" && event.ctrlKey) {
           event.preventDefault();
           event.stopPropagation();
 
-          onFieldEnter(
-            index,
-            field
-          );
-        },
-        [
-          index,
-          row.id,
-          onFieldEnter,
-          onTableEscape,
-          onClearRow,
-        ]
-      );
+          onClearRow(row.id);
 
-    const handleAccountIdMenuOpen =
-      useCallback(() => {
-        accountIdMenuOpenRef.current =
-          true;
+          return;
+        }
 
-        setSelectedRowId(
-          row.id
-        );
-      }, [
-        row.id,
-        setSelectedRowId,
-      ]);
+        if (event.key === "Escape") {
+          event.preventDefault();
+          event.stopPropagation();
 
-    const handleAccountIdMenuClose =
-      useCallback(() => {
-        accountIdMenuOpenRef.current =
-          false;
-      }, []);
+          onTableEscape();
 
-    const handleAccountNameMenuOpen =
-      useCallback(() => {
-        accountNameMenuOpenRef.current =
-          true;
+          return;
+        }
 
-        setSelectedRowId(
-          row.id
-        );
-      }, [
-        row.id,
-        setSelectedRowId,
-      ]);
+        if (event.key !== "Enter" && event.key !== "Tab") {
+          return;
+        }
 
-    const handleAccountNameMenuClose =
-      useCallback(() => {
-        accountNameMenuOpenRef.current =
-          false;
-      }, []);
+        event.preventDefault();
+        event.stopPropagation();
 
-    const handleDivisionMenuOpen =
-      useCallback(() => {
-        divisionMenuOpenRef.current =
-          true;
+        onFieldEnter(index, field);
+      },
+      [index, row.id, onFieldEnter, onTableEscape, onClearRow],
+    );
 
-        setSelectedRowId(
-          row.id
-        );
-      }, [
-        row.id,
-        setSelectedRowId,
-      ]);
+    const handleAccountIdMenuOpen = useCallback(() => {
+      accountIdMenuOpenRef.current = true;
 
-    const handleDivisionMenuClose =
-      useCallback(() => {
-        divisionMenuOpenRef.current =
-          false;
-      }, []);
+      setSelectedRowId(row.id);
+    }, [row.id, setSelectedRowId]);
 
-    const handleCcMenuOpen =
-      useCallback(() => {
-        ccIdMenuOpenRef.current =
-          true;
+    const handleAccountIdMenuClose = useCallback(() => {
+      accountIdMenuOpenRef.current = false;
+    }, []);
 
-        setSelectedRowId(
-          row.id
-        );
-      }, [
-        row.id,
-        setSelectedRowId,
-      ]);
+    const handleAccountNameMenuOpen = useCallback(() => {
+      accountNameMenuOpenRef.current = true;
 
-    const handleCcMenuClose =
-      useCallback(() => {
-        ccIdMenuOpenRef.current =
-          false;
-      }, []);
+      setSelectedRowId(row.id);
+    }, [row.id, setSelectedRowId]);
 
-    const RowAccountIdIndicator =
-      useCallback(
-        (
-          props: DropdownIndicatorProps<
-            AccountOption,
-            false
-          >
-        ) => (
-          <CustomDropdownIndicator
-            {...props}
-            showArrow={isSelected}
-          />
-        ),
-        [isSelected]
-      );
+    const handleAccountNameMenuClose = useCallback(() => {
+      accountNameMenuOpenRef.current = false;
+    }, []);
 
-    const RowAccountNameIndicator =
-      useCallback(
-        (
-          props: DropdownIndicatorProps<
-            AccountOption,
-            false
-          >
-        ) => (
-          <CustomDropdownIndicator
-            {...props}
-            showArrow={isSelected}
-          />
-        ),
-        [isSelected]
-      );
+    const handleDivisionMenuOpen = useCallback(() => {
+      divisionMenuOpenRef.current = true;
 
-    const RowNormalDropdownIndicator =
-      useCallback(
-        (
-          props: DropdownIndicatorProps<
-            SelectOption,
-            false
-          >
-        ) => (
-          <components.DropdownIndicator
-            {...props}
-          >
-            <span className="receipt-dropdown-arrow">
-              ▼
-            </span>
-          </components.DropdownIndicator>
-        ),
-        []
-      );
+      setSelectedRowId(row.id);
+    }, [row.id, setSelectedRowId]);
+
+    const handleDivisionMenuClose = useCallback(() => {
+      divisionMenuOpenRef.current = false;
+    }, []);
+
+    const handleCcMenuOpen = useCallback(() => {
+      ccIdMenuOpenRef.current = true;
+
+      setSelectedRowId(row.id);
+    }, [row.id, setSelectedRowId]);
+
+    const handleCcMenuClose = useCallback(() => {
+      ccIdMenuOpenRef.current = false;
+    }, []);
+
+    const RowAccountIdIndicator = useCallback(
+      (props: DropdownIndicatorProps<AccountOption, false>) => (
+        <CustomDropdownIndicator {...props} showArrow={isSelected} />
+      ),
+      [isSelected],
+    );
+
+    const RowAccountNameIndicator = useCallback(
+      (props: DropdownIndicatorProps<AccountOption, false>) => (
+        <CustomDropdownIndicator {...props} showArrow={isSelected} />
+      ),
+      [isSelected],
+    );
+
+    const RowNormalDropdownIndicator = useCallback(
+      (props: DropdownIndicatorProps<SelectOption, false>) => (
+        <components.DropdownIndicator {...props}>
+          <span className="receipt-dropdown-arrow">▼</span>
+        </components.DropdownIndicator>
+      ),
+      [],
+    );
 
     return (
       <tr
-        className={
-          isSelected
-            ? "receipt-row-selected"
-            : ""
-        }
-       
-     onClick={() => {
-  setSelectedRowId(row.id);
-  //@ts-ignore
-  onRowSelect?.(row.id, row);
-}}
-        
+        className={isSelected ? "receipt-row-selected" : ""}
+        onClick={() => {
+          setSelectedRowId(row.id);
+          //@ts-ignore
+          onRowSelect?.(row.id, row);
+        }}
       >
-        <td className="receipt-cell serial-cell">
-          {index + 1}
-        </td>
+        <td className="receipt-cell serial-cell">{index + 1}</td>
 
         <td className="receipt-cell">
           <Select<AccountOption, false>
-            inputId={
-              `lkpAccountId-${row.id}`
-            }
+            inputId={`lkpAccountId-${row.id}`}
             ref={(instance) => {
-              accountIdSelectRef.current =
-                instance;
+              accountIdSelectRef.current = instance;
 
-              setRowRef(
-                index,
-                "accountId",
-                instance
-              );
+              setRowRef(index, "accountId", instance);
             }}
-            value={
-              isAccountIdEditing
-                ? null
-                : selectedAccount
-            }
-            inputValue={
-              accountIdSearchText
-            }
-            onInputChange={(
-              newValue,
-              actionMeta
-            ) => {
-              if (
-                actionMeta.action ===
-                "input-change"
-              ) {
-                setAccountIdSearchText(
-                  newValue
-                );
+            value={isAccountIdEditing ? null : selectedAccount}
+            inputValue={accountIdSearchText}
+            onInputChange={(newValue, actionMeta) => {
+              if (actionMeta.action === "input-change") {
+                setAccountIdSearchText(newValue);
                 setIsAccountIdEditing(true);
               }
 
               return newValue;
             }}
-            backspaceRemovesValue={
-              false
-            }
+            backspaceRemovesValue={false}
             onKeyDown={(event) => {
-              const handled =
-                handleEditableSelectBackspace(
-                  event,
-                  selectedAccount?.label ??
-                    "",
-                  accountIdSearchText,
-                  setAccountIdSearchText,
-                  setIsAccountIdEditing,
-                  accountIdSelectRef
-                );
+              const handled = handleEditableSelectBackspace(
+                event,
+                selectedAccount?.label ?? "",
+                accountIdSearchText,
+                setAccountIdSearchText,
+                setIsAccountIdEditing,
+                accountIdSelectRef,
+              );
 
               if (handled) {
                 return;
               }
 
-              handleSelectKeyDown(
-                event,
-                "accountId",
-                accountIdMenuOpenRef
-              );
+              handleSelectKeyDown(event, "accountId", accountIdMenuOpenRef);
             }}
-            onMenuOpen={
-              handleAccountIdMenuOpen
-            }
+            onMenuOpen={handleAccountIdMenuOpen}
             onMenuClose={() => {
               handleAccountIdMenuClose();
               setAccountIdSearchText("");
               setIsAccountIdEditing(false);
             }}
-            onChange={(
-              option: SingleValue<AccountOption>
-            ) => {
+            onChange={(option: SingleValue<AccountOption>) => {
               if (!option) {
                 return;
               }
@@ -3115,131 +2322,80 @@ const formatCreditAmount = (
 
               void handleAccountChange(option);
             }}
-           options={accountIdOptions}
+            options={accountIdOptions}
             placeholder=""
             styles={accountDropdownStyles}
             components={{
-              DropdownIndicator:
-                RowAccountIdIndicator,
+              DropdownIndicator: RowAccountIdIndicator,
 
               SingleValue: (props) => (
-                <AccountDropdownSingleValue
-                  {...props}
-                  displayMode="id"
-                />
+                <AccountDropdownSingleValue {...props} displayMode="id" />
               ),
 
               Option: (props) => (
-                <AccountDropdownOption
-                  {...props}
-                  displayMode="id"
-                />
+                <AccountDropdownOption {...props} displayMode="id" />
               ),
 
               MenuList: (props) => (
-                <AccountDropdownMenuList
-                  {...props}
-                  displayMode="id"
-                />
+                <AccountDropdownMenuList {...props} displayMode="id" />
               ),
             }}
-            filterOption={
-              accountFilterOption
-            }
+            filterOption={accountFilterOption}
             isSearchable
             isClearable={false}
             menuPlacement="auto"
             menuPosition="fixed"
-            menuPortalTarget={
-              document.body
-            }
-            menuShouldScrollIntoView={
-              false
-            }
+            menuPortalTarget={document.body}
+            menuShouldScrollIntoView={false}
             closeMenuOnSelect
             blurInputOnSelect={false}
             tabSelectsValue={false}
-            noOptionsMessage={() =>
-              "No Account Found"
-            }
+            noOptionsMessage={() => "No Account Found"}
           />
         </td>
 
         <td className="receipt-cell">
           <Select<AccountOption, false>
-            inputId={
-              `lkpAccountName-${row.id}`
-            }
+            inputId={`lkpAccountName-${row.id}`}
             ref={(instance) => {
-              accountNameSelectRef.current =
-                instance;
+              accountNameSelectRef.current = instance;
 
-              setRowRef(
-                index,
-                "accountName",
-                instance
-              );
+              setRowRef(index, "accountName", instance);
             }}
-            value={
-              isAccountNameEditing
-                ? null
-                : selectedAccountName
-            }
-            inputValue={
-              accountNameSearchText
-            }
-            onInputChange={(
-              newValue,
-              actionMeta
-            ) => {
-              if (
-                actionMeta.action ===
-                "input-change"
-              ) {
-                setAccountNameSearchText(
-                  newValue
-                );
+            value={isAccountNameEditing ? null : selectedAccountName}
+            inputValue={accountNameSearchText}
+            onInputChange={(newValue, actionMeta) => {
+              if (actionMeta.action === "input-change") {
+                setAccountNameSearchText(newValue);
                 setIsAccountNameEditing(true);
               }
 
               return newValue;
             }}
-            backspaceRemovesValue={
-              false
-            }
+            backspaceRemovesValue={false}
             onKeyDown={(event) => {
-              const handled =
-                handleEditableSelectBackspace(
-                  event,
-                  selectedAccountName?.label ??
-                    "",
-                  accountNameSearchText,
-                  setAccountNameSearchText,
-                  setIsAccountNameEditing,
-                  accountNameSelectRef
-                );
+              const handled = handleEditableSelectBackspace(
+                event,
+                selectedAccountName?.label ?? "",
+                accountNameSearchText,
+                setAccountNameSearchText,
+                setIsAccountNameEditing,
+                accountNameSelectRef,
+              );
 
               if (handled) {
                 return;
               }
 
-              handleSelectKeyDown(
-                event,
-                "accountName",
-                accountNameMenuOpenRef
-              );
+              handleSelectKeyDown(event, "accountName", accountNameMenuOpenRef);
             }}
-            onMenuOpen={
-              handleAccountNameMenuOpen
-            }
+            onMenuOpen={handleAccountNameMenuOpen}
             onMenuClose={() => {
               handleAccountNameMenuClose();
               setAccountNameSearchText("");
               setIsAccountNameEditing(false);
             }}
-            onChange={(
-              option: SingleValue<AccountOption>
-            ) => {
+            onChange={(option: SingleValue<AccountOption>) => {
               if (!option) {
                 return;
               }
@@ -3249,139 +2405,82 @@ const formatCreditAmount = (
 
               void handleAccountChange(option);
             }}
-            options={
-              realAccountOptions
-            }
+            options={realAccountOptions}
             placeholder=""
             styles={accountDropdownStyles}
             components={{
-              DropdownIndicator:
-                RowAccountNameIndicator,
+              DropdownIndicator: RowAccountNameIndicator,
 
               SingleValue: (props) => (
-                <AccountDropdownSingleValue
-                  {...props}
-                  displayMode="name"
-                />
+                <AccountDropdownSingleValue {...props} displayMode="name" />
               ),
 
               Option: (props) => (
-                <AccountDropdownOption
-                  {...props}
-                  displayMode="name"
-                />
+                <AccountDropdownOption {...props} displayMode="name" />
               ),
 
               MenuList: (props) => (
-                <AccountDropdownMenuList
-                  {...props}
-                  displayMode="name"
-                />
+                <AccountDropdownMenuList {...props} displayMode="name" />
               ),
             }}
-            filterOption={
-              accountFilterOption
-            }
+            filterOption={accountFilterOption}
             isSearchable
             isClearable={false}
             isDisabled={false}
             menuPlacement="auto"
             menuPosition="fixed"
-            menuPortalTarget={
-              document.body
-            }
-            menuShouldScrollIntoView={
-              false
-            }
+            menuPortalTarget={document.body}
+            menuShouldScrollIntoView={false}
             closeMenuOnSelect
             blurInputOnSelect={false}
             tabSelectsValue={false}
-            noOptionsMessage={() =>
-              "No Account Found"
-            }
+            noOptionsMessage={() => "No Account Found"}
           />
         </td>
 
         <td className="receipt-cell">
           <Select<SelectOption, false>
-            inputId={
-              `lkpDivision-${row.id}`
-            }
+            inputId={`lkpDivision-${row.id}`}
             ref={(instance) => {
-              divisionSelectRef.current =
-                instance;
+              divisionSelectRef.current = instance;
 
-              setRowRef(
-                index,
-                "division",
-                instance
-              );
+              setRowRef(index, "division", instance);
             }}
-            value={
-              isDivisionEditing
-                ? null
-                : selectedDivision
-            }
-            inputValue={
-              divisionSearchText
-            }
-            onInputChange={(
-              newValue,
-              actionMeta
-            ) => {
-              if (
-                actionMeta.action ===
-                "input-change"
-              ) {
-                setDivisionSearchText(
-                  newValue
-                );
+            value={isDivisionEditing ? null : selectedDivision}
+            inputValue={divisionSearchText}
+            onInputChange={(newValue, actionMeta) => {
+              if (actionMeta.action === "input-change") {
+                setDivisionSearchText(newValue);
                 setIsDivisionEditing(true);
               }
 
               return newValue;
             }}
-            backspaceRemovesValue={
-              false
-            }
+            backspaceRemovesValue={false}
             onKeyDown={(event) => {
-              const handled =
-                handleEditableSelectBackspace(
-                  event,
-                  selectedDivision?.label ??
-                    "",
-                  divisionSearchText,
-                  setDivisionSearchText,
-                  setIsDivisionEditing,
-                  divisionSelectRef
-                );
+              const handled = handleEditableSelectBackspace(
+                event,
+                selectedDivision?.label ?? "",
+                divisionSearchText,
+                setDivisionSearchText,
+                setIsDivisionEditing,
+                divisionSelectRef,
+              );
 
               if (handled) {
                 return;
               }
 
-              handleSelectKeyDown(
-                event,
-                "division",
-                divisionMenuOpenRef
-              );
+              handleSelectKeyDown(event, "division", divisionMenuOpenRef);
             }}
-            onMenuOpen={
-              handleDivisionMenuOpen
-            }
+            onMenuOpen={handleDivisionMenuOpen}
             onMenuClose={() => {
               handleDivisionMenuClose();
               setDivisionSearchText("");
               setIsDivisionEditing(false);
             }}
-            onChange={(
-              option: SingleValue<SelectOption>
-            ) => {
-              handleRowChange(
-                row.id,
-                "division",
-                option?.value || ""
-              );
+            onChange={(option: SingleValue<SelectOption>) => {
+              handleRowChange(row.id, "division", option?.value || "");
 
               setDivisionSearchText("");
               setIsDivisionEditing(false);
@@ -3406,12 +2505,9 @@ const formatCreditAmount = (
               }),
             }}
             components={{
-              DropdownIndicator:
-                RowNormalDropdownIndicator,
+              DropdownIndicator: RowNormalDropdownIndicator,
 
-              SingleValue: (props) => (
-                <LabeledDropdownSingleValue {...props} />
-              ),
+              SingleValue: (props) => <LabeledDropdownSingleValue {...props} />,
 
               Option: (props) => (
                 <LabeledDropdownOption
@@ -3439,99 +2535,56 @@ const formatCreditAmount = (
             }
             menuPlacement="auto"
             menuPosition="fixed"
-            menuPortalTarget={
-              document.body
-            }
-            menuShouldScrollIntoView={
-              false
-            }
-            filterOption={
-              selectFilterOption
-            }
-            noOptionsMessage={() =>
-              "No Division Found"
-            }
+            menuPortalTarget={document.body}
+            menuShouldScrollIntoView={false}
+            filterOption={selectFilterOption}
+            noOptionsMessage={() => "No Division Found"}
           />
         </td>
 
         <td className="receipt-cell">
           <Select<SelectOption, false>
-            inputId={
-              `lkpCCId-${row.id}`
-            }
+            inputId={`lkpCCId-${row.id}`}
             ref={(instance) => {
-              ccIdSelectRef.current =
-                instance;
+              ccIdSelectRef.current = instance;
 
-              setRowRef(
-                index,
-                "ccId",
-                instance
-              );
+              setRowRef(index, "ccId", instance);
             }}
-            value={
-              isCcIdEditing
-                ? null
-                : selectedCcId
-            }
+            value={isCcIdEditing ? null : selectedCcId}
             inputValue={ccIdSearchText}
-            onInputChange={(
-              newValue,
-              actionMeta
-            ) => {
-              if (
-                actionMeta.action ===
-                "input-change"
-              ) {
-                setCcIdSearchText(
-                  newValue
-                );
+            onInputChange={(newValue, actionMeta) => {
+              if (actionMeta.action === "input-change") {
+                setCcIdSearchText(newValue);
                 setIsCcIdEditing(true);
               }
 
               return newValue;
             }}
-            backspaceRemovesValue={
-              false
-            }
+            backspaceRemovesValue={false}
             onKeyDown={(event) => {
-              const handled =
-                handleEditableSelectBackspace(
-                  event,
-                  selectedCcId?.label ??
-                    "",
-                  ccIdSearchText,
-                  setCcIdSearchText,
-                  setIsCcIdEditing,
-                  ccIdSelectRef
-                );
+              const handled = handleEditableSelectBackspace(
+                event,
+                selectedCcId?.label ?? "",
+                ccIdSearchText,
+                setCcIdSearchText,
+                setIsCcIdEditing,
+                ccIdSelectRef,
+              );
 
               if (handled) {
                 return;
               }
 
-              handleSelectKeyDown(
-                event,
-                "ccId",
-                ccIdMenuOpenRef
-              );
+              handleSelectKeyDown(event, "ccId", ccIdMenuOpenRef);
             }}
-            onMenuOpen={
-              handleCcMenuOpen
-            }
+            onMenuOpen={handleCcMenuOpen}
             onMenuClose={() => {
               handleCcMenuClose();
               setCcIdSearchText("");
               setIsCcIdEditing(false);
             }}
-            onChange={(
-              option: SingleValue<SelectOption>
-            ) => {
-              handleRowChange(
-                row.id,
-                "ccId",
-                option?.value || ""
-              );
+            onChange={(option: SingleValue<SelectOption>) => {
+              handleRowChange(row.id, "ccId", option?.value || "");
 
               setCcIdSearchText("");
               setIsCcIdEditing(false);
@@ -3555,138 +2608,85 @@ const formatCreditAmount = (
                 overflowX: "hidden",
               }),
             }}
-          components={{
-  DropdownIndicator: RowNormalDropdownIndicator,
-  SingleValue: CcIdSingleValue,
+            components={{
+              DropdownIndicator: RowNormalDropdownIndicator,
+              SingleValue: CcIdSingleValue,
 
-  Option: (props) => (
-    <LabeledDropdownOption
-      {...props}
-      idHeader="ID"
-      nameHeader="Cost Center"
-    />
-  ),
+              Option: (props) => (
+                <LabeledDropdownOption
+                  {...props}
+                  idHeader="ID"
+                  nameHeader="Cost Center"
+                />
+              ),
 
-  MenuList: (props) => (
-    <LabeledDropdownMenuList
-      {...props}
-      idHeader="ID"
-      nameHeader="Cost Center"
-    />
-  ),
-}}
+              MenuList: (props) => (
+                <LabeledDropdownMenuList
+                  {...props}
+                  idHeader="ID"
+                  nameHeader="Cost Center"
+                />
+              ),
+            }}
             isSearchable
             isClearable={false}
-            isDisabled={
-              !row.haveCc ||
-              ccIdOptions.length === 0
-            }
+            isDisabled={!row.haveCc || ccIdOptions.length === 0}
             menuPlacement="auto"
             menuPosition="fixed"
-            menuPortalTarget={
-              document.body
-            }
-            menuShouldScrollIntoView={
-              false
-            }
-            filterOption={
-              selectFilterOption
-            }
-            noOptionsMessage={() =>
-              "No CC ID Found"
-            }
+            menuPortalTarget={document.body}
+            menuShouldScrollIntoView={false}
+            filterOption={selectFilterOption}
+            noOptionsMessage={() => "No CC ID Found"}
           />
         </td>
 
         <td className="receipt-cell">
-        <input
-  id={`txtCreditAmt-${row.id}`}
-  ref={(element) =>
-    setRowRef(
-      index,
-      "creditAmount",
-      element
-    )
-  }
-  placeholder="0.00"
-  type="text"
-  inputMode="decimal"
-  value={row.creditAmount}
-  onChange={(event) => {
-    const inputValue =
-      event.target.value;
+          <input
+            id={`txtCreditAmt-${row.id}`}
+            ref={(element) => setRowRef(index, "creditAmount", element)}
+            placeholder="0.00"
+            type="text"
+            inputMode="decimal"
+            value={row.creditAmount}
+            onChange={(event) => {
+              const inputValue = event.target.value;
 
-    /* Allow only numbers with
+              /* Allow only numbers with
        maximum 2 decimal places */
 
-    if (
-      /^\d*\.?\d{0,2}$/.test(
-        inputValue
-      )
-    ) {
-      handleRowChange(
-        row.id,
-        "creditAmount",
-        inputValue
-      );
-    }
-  }}
-  onFocus={() =>
-    setSelectedRowId(
-      row.id
-    )
-  }
-  onBlur={() => {
-    if (
-      row.creditAmount
-    ) {
-      handleRowChange(
-        row.id,
-        "creditAmount",
-        formatCreditAmount(
-          row.creditAmount
-        )
-      );
-    }
-  }}
-  onKeyDown={(event) =>
-    handleControlKeyDown(
-      event,
-      "creditAmount"
-    )
-  }
-  className="
+              if (/^\d*\.?\d{0,2}$/.test(inputValue)) {
+                handleRowChange(row.id, "creditAmount", inputValue);
+              }
+            }}
+            onFocus={() => setSelectedRowId(row.id)}
+            onBlur={() => {
+              if (row.creditAmount) {
+                handleRowChange(
+                  row.id,
+                  "creditAmount",
+                  formatCreditAmount(row.creditAmount),
+                );
+              }
+            }}
+            onKeyDown={(event) => handleControlKeyDown(event, "creditAmount")}
+            className="
     receipt-grid-input
     text-right
   "
-/>
+          />
         </td>
 
         <td className="receipt-cell">
           <div className="receipt-checkbox-wrapper">
             <input
-              id={
-                `chkMatch-${row.id}`
-              }
-              ref={(element) =>
-                setRowRef(
-                  index,
-                  "match",
-                  element
-                )
-              }
+              id={`chkMatch-${row.id}`}
+              ref={(element) => setRowRef(index, "match", element)}
               type="checkbox"
               checked={row.match}
               onChange={(event) => {
-                setSelectedRowId(
-                  row.id
-                );
+                setSelectedRowId(row.id);
 
-                handleRowChange(
-                  row.id,
-                  "match",
-                  event.target.checked
-                );
+                handleRowChange(row.id, "match", event.target.checked);
               }}
             />
           </div>
@@ -3694,23 +2694,13 @@ const formatCreditAmount = (
 
         <td className="receipt-cell">
           <button
-            id={
-              `btnView-${row.id}`
-            }
-            ref={(element) =>
-              setRowRef(
-                index,
-                "view",
-                element
-              )
-            }
+            id={`btnView-${row.id}`}
+            ref={(element) => setRowRef(index, "view", element)}
             type="button"
             onClick={(event) => {
               event.stopPropagation();
 
-              setSelectedRowId(
-                row.id
-              );
+              setSelectedRowId(row.id);
             }}
             className="receipt-view-button"
             tabIndex={0}
@@ -3720,452 +2710,284 @@ const formatCreditAmount = (
         </td>
       </tr>
     );
-  }
+  },
 );
 
-ReceiptRow.displayName =
-  "ReceiptRow";
+ReceiptRow.displayName = "ReceiptRow";
 
 /* =========================================================
    MAIN TABLE
 ========================================================= */
 
-export const ReceiptTable =
-  forwardRef<
-    ReceiptTableRef,
-    ReceiptTableProps
-  >(
-    (
-      {
-  rows,
-  handleRowChange,
-  onFieldEnter,
-  onTableEscape,
-  onClearRow,
-  onSortRows,
-  accountOptions = [],
-  accountSortByIdOptions = [],
-  costCenters = [],
-  onRowSelect,
-},
-      ref
-    ) => {
-      const [
-        selectedRowId,
-        setSelectedRowIdState,
-      ] = useState<number | null>(null);
+export const ReceiptTable = forwardRef<ReceiptTableRef, ReceiptTableProps>(
+  (
+    {
+      rows,
+      handleRowChange,
+      onFieldEnter,
+      onTableEscape,
+      onClearRow,
+      onSortRows,
+      accountOptions = [],
+      accountSortByIdOptions = [],
+      costCenters = [],
+      onRowSelect,
+    },
+    ref,
+  ) => {
+    const [selectedRowId, setSelectedRowIdState] = useState<number | null>(
+      null,
+    );
 
-      const [
-        sortField,
-        setSortField,
-      ] = useState<SortField | null>(null);
+    const [sortField, setSortField] = useState<SortField | null>(null);
 
-      const [
-        sortDirection,
-        setSortDirection,
-      ] = useState<"asc" | "desc">("asc");
+    const [sortDirection, setSortDirection] = useState<"asc" | "desc">("asc");
 
-      const handleSort =
-        useCallback(
-          (
-            field: SortField
-          ) => {
-            const nextDirection =
-              sortField === field &&
-              sortDirection === "asc"
-                ? "desc"
-                : "asc";
+    const handleSort = useCallback(
+      (field: SortField) => {
+        const nextDirection =
+          sortField === field && sortDirection === "asc" ? "desc" : "asc";
 
-            setSortField(field);
-            setSortDirection(
-              nextDirection
-            );
+        setSortField(field);
+        setSortDirection(nextDirection);
 
-            onSortRows(
-              field,
-              nextDirection
-            );
-          },
-          [
-            onSortRows,
-            sortDirection,
-            sortField,
-          ]
-        );
+        onSortRows(field, nextDirection);
+      },
+      [onSortRows, sortDirection, sortField],
+    );
 
-      const rowRefs =
-        useRef<RowRefs[]>([]);
+    const rowRefs = useRef<RowRefs[]>([]);
 
-      const setSelectedRowId =
-        useCallback(
-          (id: number) => {
-            setSelectedRowIdState(id);
+    const setSelectedRowId = useCallback(
+      (id: number) => {
+        setSelectedRowIdState(id);
 
-            const activeRow = rows.find(
-              (currentRow) =>
-                currentRow.id === id
-            );
+        const activeRow = rows.find((currentRow) => currentRow.id === id);
 
-            if (activeRow) {
-              onRowSelect?.(
-                id,
-                activeRow
-              );
-            }
-          },
-          [rows, onRowSelect]
-        );
+        if (activeRow) {
+          onRowSelect?.(id, activeRow);
+        }
+      },
+      [rows, onRowSelect],
+    );
 
-      const setRowRef =
-        useCallback(
-          (
-            rowIndex: number,
-            field: TableField,
-            value: RowRefValue
-          ) => {
-            if (
-              !rowRefs.current[rowIndex]
-            ) {
-              rowRefs.current[rowIndex] =
-                {};
-            }
-
-            if (value) {
-              rowRefs.current[rowIndex][field] =
-                value;
-            } else {
-              delete rowRefs.current[rowIndex][field];
-            }
-          },
-          []
-        );
-
-      /*
-       * =========================================================
-       * AUTO-SELECT / RE-SYNC SELECTED ROW ON LOAD
-       * =========================================================
-       *
-       * onRowSelect (which the parent uses to populate the
-       * bottom Description/Note fields) was previously only
-       * fired by a user action - clicking a row, focusing one
-       * of its fields, etc. That left the description box
-       * empty right after data loaded, until the user clicked
-       * a row themselves.
-       *
-       * It's not enough to select the first row only when its
-       * id is missing: a row commonly exists (e.g. id 1) from
-       * the very first render, and its real description/data
-       * arrives slightly later from an API call while keeping
-       * the SAME id. Checking "does this id still exist" says
-       * yes both times, so onRowSelect never re-fires with the
-       * freshly loaded data.
-       *
-       * Instead, every time `rows` changes we resolve the
-       * current target row (the previously selected id if it's
-       * still present, otherwise the first row) and push it
-       * through setSelectedRowId again. setSelectedRowId always
-       * calls onRowSelect with whatever that row's latest data
-       * is, so the bottom form keeps in sync as data loads -
-       * including on the very first load.
-       */
-      useEffect(() => {
-        if (rows.length === 0) {
-          return;
+    const setRowRef = useCallback(
+      (rowIndex: number, field: TableField, value: RowRefValue) => {
+        if (!rowRefs.current[rowIndex]) {
+          rowRefs.current[rowIndex] = {};
         }
 
-        const targetRow =
-          rows.find(
-            (currentRow) =>
-              currentRow.id ===
-              selectedRowId
-          ) || rows[0];
+        if (value) {
+          rowRefs.current[rowIndex][field] = value;
+        } else {
+          delete rowRefs.current[rowIndex][field];
+        }
+      },
+      [],
+    );
 
-        setSelectedRowId(targetRow.id);
+    /*
+     * =========================================================
+     * AUTO-SELECT / RE-SYNC SELECTED ROW ON LOAD
+     * =========================================================
+     *
+     * onRowSelect (which the parent uses to populate the
+     * bottom Description/Note fields) was previously only
+     * fired by a user action - clicking a row, focusing one
+     * of its fields, etc. That left the description box
+     * empty right after data loaded, until the user clicked
+     * a row themselves.
+     *
+     * It's not enough to select the first row only when its
+     * id is missing: a row commonly exists (e.g. id 1) from
+     * the very first render, and its real description/data
+     * arrives slightly later from an API call while keeping
+     * the SAME id. Checking "does this id still exist" says
+     * yes both times, so onRowSelect never re-fires with the
+     * freshly loaded data.
+     *
+     * Instead, every time `rows` changes we resolve the
+     * current target row (the previously selected id if it's
+     * still present, otherwise the first row) and push it
+     * through setSelectedRowId again. setSelectedRowId always
+     * calls onRowSelect with whatever that row's latest data
+     * is, so the bottom form keeps in sync as data loads -
+     * including on the very first load.
+     */
+    useEffect(() => {
+      if (rows.length === 0) {
+        return;
+      }
 
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-      }, [rows]);
+      const targetRow =
+        rows.find((currentRow) => currentRow.id === selectedRowId) || rows[0];
 
-      const realAccountOptions =
-        useMemo<AccountOption[]>(
-          () => {
-            if (!Array.isArray(accountOptions)) {
-              return [];
-            }
+      setSelectedRowId(targetRow.id);
 
-            return accountOptions
-              .filter(
-                (account) =>
-                  Boolean(
-                    account &&
-                    account.faccountid
-                  )
-              )
-              .map(
-                (account) => ({
-                  value:
-                    account.faccountid,
+      // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [rows]);
 
-                  label:
-                    account.faccountid,
+    const realAccountOptions = useMemo<AccountOption[]>(() => {
+      if (!Array.isArray(accountOptions)) {
+        return [];
+      }
 
-                  accountId:
-                    account.faccountid,
+      return accountOptions
+        .filter((account) => Boolean(account && account.faccountid))
+        .map((account) => ({
+          value: account.faccountid,
 
-                  accountName:
-                    account.faccountname ||
-                    "",
+          label: account.faccountid,
 
-                  fgcs:
-                    account.fgcs ||
-                    "",
+          accountId: account.faccountid,
 
-                  haveCc:
-                    account.fhavecc ===
-                    true,
-                })
-              );
-          },
-          [accountOptions]
-        );
+          accountName: account.faccountname || "",
 
-        const accountIdOptions =
-  useMemo<AccountOption[]>(() => {
-    if (!Array.isArray(accountSortByIdOptions)) {
-      return [];
-    }
+          fgcs: account.fgcs || "",
 
-    return accountSortByIdOptions
-      .filter(
-        (account) =>
-          Boolean(
-            account &&
-            account.faccountid
-          )
-      )
-      .map(
-        (account) => ({
+          haveCc: account.fhavecc === true,
+        }));
+    }, [accountOptions]);
+
+    const accountIdOptions = useMemo<AccountOption[]>(() => {
+      if (!Array.isArray(accountSortByIdOptions)) {
+        return [];
+      }
+
+      return accountSortByIdOptions
+        .filter((account) => Boolean(account && account.faccountid))
+        .map((account) => ({
           value: account.faccountid,
           label: account.faccountid,
 
-          accountId:
-            account.faccountid,
+          accountId: account.faccountid,
 
-          accountName:
-            account.faccountname || "",
+          accountName: account.faccountname || "",
 
-          fgcs:
-            account.fgcs || "",
+          fgcs: account.fgcs || "",
 
-          haveCc:
-            account.fhavecc === true,
-        })
-      );
-  }, [accountSortByIdOptions]);
+          haveCc: account.fhavecc === true,
+        }));
+    }, [accountSortByIdOptions]);
 
-      const ccIdOptions =
-        useMemo<SelectOption[]>(
-          () => {
-            if (
-              !Array.isArray(
-                costCenters
-              )
-            ) {
-              return [];
-            }
+    const ccIdOptions = useMemo<SelectOption[]>(() => {
+      if (!Array.isArray(costCenters)) {
+        return [];
+      }
 
-            return [...costCenters]
-              .sort(
-                (first, second) =>
-                  first.fpositionno -
-                  second.fpositionno
-              )
-              .map(
-                (costCenter) => ({
-                  value:
-                    costCenter.fccid,
+      return [...costCenters]
+        .sort((first, second) => first.fpositionno - second.fpositionno)
+        .map((costCenter) => ({
+          value: costCenter.fccid,
 
-                  /* Falls back to the id when the cost center
+          /* Falls back to the id when the cost center
                      has no separate name field so the column
                      never renders blank. */
-                  label:
-                    (costCenter as any)
-                      .fccname ||
-                    costCenter.fccid,
-                })
-              );
-          },
-          [costCenters]
-        );
+          label: (costCenter as any).fccname || costCenter.fccid,
+        }));
+    }, [costCenters]);
 
-      const focusField =
-        useCallback(
-          (
-            rowIndex: number,
-            field: TableField
-          ) => {
-            const element =
-              rowRefs.current[rowIndex]?.[field];
+    const focusField = useCallback((rowIndex: number, field: TableField) => {
+      const element = rowRefs.current[rowIndex]?.[field];
 
-            if (!element) {
-              console.warn(
-                "ReceiptTable field not found:",
-                rowIndex,
-                field
-              );
+      if (!element) {
+        console.warn("ReceiptTable field not found:", rowIndex, field);
 
-              return;
-            }
+        return;
+      }
 
-            requestAnimationFrame(() => {
-              element.focus();
+      requestAnimationFrame(() => {
+        element.focus();
 
-              if (
-                element instanceof
-                HTMLInputElement
-              ) {
-                if (
-                  element.type !==
-                  "checkbox"
-                ) {
-                  element.select();
-                }
-              }
-            });
-          },
-          []
-        );
+        if (element instanceof HTMLInputElement) {
+          if (element.type !== "checkbox") {
+            element.select();
+          }
+        }
+      });
+    }, []);
 
-      useImperativeHandle(
-        ref,
-        () => ({
-          focusFirstAccountId: () => {
-            focusField(
-              0,
-              "accountId"
-            );
-          },
+    useImperativeHandle(
+      ref,
+      () => ({
+        focusFirstAccountId: () => {
+          focusField(0, "accountId");
+        },
 
-          focusField,
-        }),
-        [focusField]
-      );
+        focusField,
+      }),
+      [focusField],
+    );
 
-      return (
-        <div className="receipt-table-wrapper">
-          <table
-            id="tblReceipt"
-            className="receipt-table"
-          >
-            <colgroup>
-              <col style={{ width: "38px" }} />
-              <col style={{ width: "105px" }} />
-              <col style={{ width: "auto" }} />
-              <col style={{ width: "75px" }} />
-              <col style={{ width: "75px" }} />
-              <col style={{ width: "100px" }} />
-              <col style={{ width: "60px" }} />
-              <col style={{ width: "60px" }} />
-            </colgroup>
+    return (
+      <div className="receipt-table-wrapper">
+        <table id="tblReceipt" className="receipt-table">
+          <colgroup>
+            <col style={{ width: "38px" }} />
+            <col style={{ width: "105px" }} />
+            <col style={{ width: "auto" }} />
+            <col style={{ width: "75px" }} />
+            <col style={{ width: "75px" }} />
+            <col style={{ width: "100px" }} />
+            <col style={{ width: "60px" }} />
+            <col style={{ width: "60px" }} />
+          </colgroup>
 
-            <thead>
-              <tr>
-                <th>Sl.</th>
+          <thead>
+            <tr>
+              <th>Sl.</th>
 
-                <th>
-                  <button
-                    type="button"
-                    onClick={() =>
-                      handleSort(
-                        "accountId"
-                      )
-                    }
-                  >
-                    Account ID
-                  </button>
-                </th>
+              <th>
+                <button type="button" onClick={() => handleSort("accountId")}>
+                  Account ID
+                </button>
+              </th>
 
-                <th>
-                  <button
-                    type="button"
-                    onClick={() =>
-                      handleSort(
-                        "accountName"
-                      )
-                    }
-                  >
-                    Account Name
-                  </button>
-                </th>
+              <th>
+                <button type="button" onClick={() => handleSort("accountName")}>
+                  Account Name
+                </button>
+              </th>
 
-                <th>Div ID</th>
+              <th>Div ID</th>
 
-                <th>CC. ID</th>
+              <th>CC. ID</th>
 
-                <th className="text-right">
-                  Credit Amt.
-                </th>
+              <th className="text-right">Credit Amt.</th>
 
-                <th className="text-center">
-                  Match
-                </th>
+              <th className="text-center">Match</th>
 
-                <th className="text-center">
-                  View
-                </th>
-              </tr>
-            </thead>
+              <th className="text-center">View</th>
+            </tr>
+          </thead>
 
-            <tbody>
-              {rows.map(
-                (row, index) => (
-                  <ReceiptRow
-                    key={row.id}
-                    url=""
-                    row={row}
-                    index={index}
-                    isSelected={
-                      selectedRowId ===
-                      row.id
-                    }
-                    realAccountOptions={
-                      realAccountOptions
-                    }
-                    accountIdOptions={
-                      accountIdOptions
-                    }
-                    ccIdOptions={
-                      ccIdOptions
-                    }
-                    setSelectedRowId={
-                      setSelectedRowId
-                    }
-                    setRowRef={
-                      setRowRef
-                    }
-                    handleRowChange={
-                      handleRowChange
-                    }
-                    onFieldEnter={
-                      onFieldEnter
-                    }
-                    onTableEscape={
-                      onTableEscape
-                    }
-                    onClearRow={
-                      onClearRow
-                    }
-                  />
-                )
-              )}
-            </tbody>
-          </table>
-        </div>
-      );
-    }
-  );
+          <tbody>
+            {rows.map((row, index) => (
+              <ReceiptRow
+                key={row.id}
+                url=""
+                row={row}
+                index={index}
+                isSelected={selectedRowId === row.id}
+                realAccountOptions={realAccountOptions}
+                accountIdOptions={accountIdOptions}
+                ccIdOptions={ccIdOptions}
+                setSelectedRowId={setSelectedRowId}
+                setRowRef={setRowRef}
+                handleRowChange={handleRowChange}
+                onFieldEnter={onFieldEnter}
+                onTableEscape={onTableEscape}
+                onClearRow={onClearRow}
+              />
+            ))}
+          </tbody>
+        </table>
+      </div>
+    );
+  },
+);
 
-ReceiptTable.displayName =
-  "ReceiptTable";
+ReceiptTable.displayName = "ReceiptTable";
 
 /* =========================================================
    =========================================================
@@ -4176,38 +2998,24 @@ ReceiptTable.displayName =
 interface ReceiptBottomFormProps {
   description: string;
 
-  setDescription: (
-    value: string
-  ) => void;
+  setDescription: (value: string) => void;
 
-  descriptionRef: React.RefObject<
-    HTMLInputElement | null
-  >;
+  descriptionRef: React.RefObject<HTMLInputElement | null>;
 
-  onDescriptionEnter: (
-    event: React.KeyboardEvent<HTMLInputElement>
-  ) => void;
+  onDescriptionEnter: (event: React.KeyboardEvent<HTMLInputElement>) => void;
 
   onDescriptionClear?: () => void;
 
   note: string;
 
-  setNote: (
-    value: string
-  ) => void;
+  setNote: (value: string) => void;
 
-  noteRef: React.RefObject<
-    HTMLTextAreaElement | null
-  >;
+  noteRef: React.RefObject<HTMLTextAreaElement | null>;
 
-  onNoteEnter: (
-    event: React.KeyboardEvent<HTMLTextAreaElement>
-  ) => void;
+  onNoteEnter: (event: React.KeyboardEvent<HTMLTextAreaElement>) => void;
 }
 
-export const ReceiptBottomForm: React.FC<
-  ReceiptBottomFormProps
-> = ({
+export const ReceiptBottomForm: React.FC<ReceiptBottomFormProps> = ({
   description,
   setDescription,
   descriptionRef,
@@ -4220,28 +3028,20 @@ export const ReceiptBottomForm: React.FC<
 }) => {
   return (
     <div className="-mt-4 ml-10 w-[76%]">
-
       <div className="mb-2 flex w-[60%] items-center gap-2">
         <label className="w-20.5 shrink-0 text-right text-xs">
           Description :
         </label>
 
         <input
-        maxLength={250}
+          maxLength={250}
           id="txtDescription"
           ref={descriptionRef}
           type="text"
           value={description}
-          onChange={(event) =>
-            setDescription(
-              event.target.value
-            )
-          }
+          onChange={(event) => setDescription(event.target.value)}
           onKeyDown={(event) => {
-            if (
-              event.key === "Delete" &&
-              event.ctrlKey
-            ) {
+            if (event.key === "Delete" && event.ctrlKey) {
               event.preventDefault();
               event.stopPropagation();
 
@@ -4250,9 +3050,7 @@ export const ReceiptBottomForm: React.FC<
               return;
             }
 
-            if (
-              event.key === "Enter"
-            ) {
+            if (event.key === "Enter") {
               event.preventDefault();
               event.stopPropagation();
             }
@@ -4283,13 +3081,11 @@ export const ReceiptBottomForm: React.FC<
         </label>
 
         <textarea
-        maxLength={800}
+          maxLength={800}
           id="txtNote"
           ref={noteRef}
           value={note}
-          onChange={(event) =>
-            setNote(event.target.value)
-          }
+          onChange={(event) => setNote(event.target.value)}
           onKeyDown={onNoteEnter}
           className="
             h-10.75
@@ -4359,47 +3155,23 @@ export const ReceiptActions = forwardRef<
       saveLabel = "Save",
       preventSearchNavigation = false,
     },
-    ref
+    ref,
   ) => {
-    const saveRef =
-      useRef<HTMLButtonElement | null>(
-        null
-      );
+    const saveRef = useRef<HTMLButtonElement | null>(null);
 
-    const searchRef =
-      useRef<HTMLButtonElement | null>(
-        null
-      );
+    const searchRef = useRef<HTMLButtonElement | null>(null);
 
-    const deleteRef =
-      useRef<HTMLButtonElement | null>(
-        null
-      );
+    const deleteRef = useRef<HTMLButtonElement | null>(null);
 
-    const printRef =
-      useRef<HTMLButtonElement | null>(
-        null
-      );
+    const printRef = useRef<HTMLButtonElement | null>(null);
 
-    const postRef =
-      useRef<HTMLButtonElement | null>(
-        null
-      );
+    const postRef = useRef<HTMLButtonElement | null>(null);
 
-    const attachRef =
-      useRef<HTMLButtonElement | null>(
-        null
-      );
+    const attachRef = useRef<HTMLButtonElement | null>(null);
 
-    const clearRef =
-      useRef<HTMLButtonElement | null>(
-        null
-      );
+    const clearRef = useRef<HTMLButtonElement | null>(null);
 
-    const [
-      activeIndex,
-      setActiveIndex,
-    ] = useState(0);
+    const [activeIndex, setActiveIndex] = useState(0);
 
     const buttonRefs = [
       saveRef,
@@ -4411,24 +3183,19 @@ export const ReceiptActions = forwardRef<
       clearRef,
     ];
 
-    const focusButton =
-      useCallback(
-        (index: number) => {
-          const button =
-            buttonRefs[index]?.current;
+    const focusButton = useCallback((index: number) => {
+      const button = buttonRefs[index]?.current;
 
-          if (!button) {
-            return;
-          }
+      if (!button) {
+        return;
+      }
 
-          setActiveIndex(index);
+      setActiveIndex(index);
 
-          requestAnimationFrame(() => {
-            button.focus();
-          });
-        },
-        []
-      );
+      requestAnimationFrame(() => {
+        button.focus();
+      });
+    }, []);
 
     useImperativeHandle(
       ref,
@@ -4437,75 +3204,57 @@ export const ReceiptActions = forwardRef<
           focusButton(0);
         },
       }),
-      [focusButton]
+      [focusButton],
     );
 
-    const handleKeyDown =
-      useCallback(
-        (
-          event: React.KeyboardEvent<HTMLButtonElement>
-        ) => {
-          switch (
-            event.key
-          ) {
-            case "ArrowRight":
-            case "ArrowDown": {
-              event.preventDefault();
-              event.stopPropagation();
+    const handleKeyDown = useCallback(
+      (event: React.KeyboardEvent<HTMLButtonElement>) => {
+        switch (event.key) {
+          case "ArrowRight":
+          case "ArrowDown": {
+            event.preventDefault();
+            event.stopPropagation();
 
-              const nextIndex =
-                activeIndex <
-                buttonRefs.length - 1
-                  ? activeIndex + 1
-                  : 0;
+            const nextIndex =
+              activeIndex < buttonRefs.length - 1 ? activeIndex + 1 : 0;
 
-              focusButton(
-                nextIndex
-              );
+            focusButton(nextIndex);
 
-              break;
-            }
-
-            case "ArrowLeft":
-            case "ArrowUp": {
-              event.preventDefault();
-              event.stopPropagation();
-
-              const previousIndex =
-                activeIndex > 0
-                  ? activeIndex - 1
-                  : buttonRefs.length - 1;
-
-              focusButton(
-                previousIndex
-              );
-
-              break;
-            }
-
-            case "Enter": {
-              event.preventDefault();
-              event.stopPropagation();
-
-              event.currentTarget.click();
-
-              break;
-            }
-
-            default:
-              break;
+            break;
           }
-        },
-        [
-          activeIndex,
-          focusButton,
-        ]
-      );
 
-    const handleFocus =
-      (index: number) => {
-        setActiveIndex(index);
-      };
+          case "ArrowLeft":
+          case "ArrowUp": {
+            event.preventDefault();
+            event.stopPropagation();
+
+            const previousIndex =
+              activeIndex > 0 ? activeIndex - 1 : buttonRefs.length - 1;
+
+            focusButton(previousIndex);
+
+            break;
+          }
+
+          case "Enter": {
+            event.preventDefault();
+            event.stopPropagation();
+
+            event.currentTarget.click();
+
+            break;
+          }
+
+          default:
+            break;
+        }
+      },
+      [activeIndex, focusButton],
+    );
+
+    const handleFocus = (index: number) => {
+      setActiveIndex(index);
+    };
 
     const buttonClass = `
       min-w-[120px]
@@ -4567,24 +3316,14 @@ export const ReceiptActions = forwardRef<
           ref={saveRef}
           type="button"
           className={buttonClass}
-          onFocus={() =>
-            handleFocus(0)
-          }
-          onKeyDown={
-            handleKeyDown
-          }
+          onFocus={() => handleFocus(0)}
+          onKeyDown={handleKeyDown}
           onClick={onSave}
-          id={
-            saveLabel === "Modify"
-              ? "btnModify"
-              : "btnSave"
-          }
+          id={saveLabel === "Modify" ? "btnModify" : "btnSave"}
         >
           <span className={textClass}>
             <span className="underline decoration-2 underline-offset-1">
-              {saveLabel === "Save"
-                ? "S"
-                : "M"}
+              {saveLabel === "Save" ? "S" : "M"}
             </span>
 
             {saveLabel.slice(1)}
@@ -4596,16 +3335,10 @@ export const ReceiptActions = forwardRef<
             ref={searchRef}
             type="button"
             className={buttonClass}
-            onFocus={() =>
-              handleFocus(1)
-            }
-            onKeyDown={
-              handleKeyDown
-            }
+            onFocus={() => handleFocus(1)}
+            onKeyDown={handleKeyDown}
             onClick={(event) => {
-              if (
-                preventSearchNavigation
-              ) {
+              if (preventSearchNavigation) {
                 event.preventDefault();
               }
 
@@ -4613,9 +3346,7 @@ export const ReceiptActions = forwardRef<
             }}
             id="btnSearch"
           >
-            <span className={textClass}>
-              Search
-            </span>
+            <span className={textClass}>Search</span>
           </button>
         </Link>
 
@@ -4623,19 +3354,13 @@ export const ReceiptActions = forwardRef<
           ref={deleteRef}
           type="button"
           className={buttonClass}
-          onFocus={() =>
-            handleFocus(2)
-          }
-          onKeyDown={
-            handleKeyDown
-          }
+          onFocus={() => handleFocus(2)}
+          onKeyDown={handleKeyDown}
           onClick={onDelete}
           id="btnDelete"
         >
           <span className={textClass}>
-            <span className="underline decoration-2 underline-offset-1">
-              D
-            </span>
+            <span className="underline decoration-2 underline-offset-1">D</span>
             elete
           </span>
         </button>
@@ -4644,80 +3369,55 @@ export const ReceiptActions = forwardRef<
           ref={printRef}
           type="button"
           className={buttonClass}
-          onFocus={() =>
-            handleFocus(3)
-          }
-          onKeyDown={
-            handleKeyDown
-          }
+          onFocus={() => handleFocus(3)}
+          onKeyDown={handleKeyDown}
           onClick={onPrint}
           id="btnPrint"
         >
-          <span className={textClass}>
-            Print
-          </span>
+          <span className={textClass}>Print</span>
         </button>
 
         <button
           ref={postRef}
           type="button"
           className={buttonClass}
-          onFocus={() =>
-            handleFocus(4)
-          }
-          onKeyDown={
-            handleKeyDown
-          }
+          onFocus={() => handleFocus(4)}
+          onKeyDown={handleKeyDown}
           onClick={onPost}
           id="btnPost"
         >
-          <span className={textClass}>
-            Post
-          </span>
+          <span className={textClass}>Post</span>
         </button>
 
         <button
           ref={attachRef}
           type="button"
           className={buttonClass}
-          onFocus={() =>
-            handleFocus(5)
-          }
-          onKeyDown={
-            handleKeyDown
-          }
+          onFocus={() => handleFocus(5)}
+          onKeyDown={handleKeyDown}
           onClick={onAttach}
           id="btnAttach"
         >
-          <span className={textClass}>
-            Attach
-          </span>
+          <span className={textClass}>Attach</span>
         </button>
 
         <button
           ref={clearRef}
           type="button"
           className={buttonClass}
-          onFocus={() =>
-            handleFocus(6)
-          }
-          onKeyDown={
-            handleKeyDown
-          }
+          onFocus={() => handleFocus(6)}
+          onKeyDown={handleKeyDown}
           onClick={clearForm}
           id="btnClear"
         >
           <span className={textClass}>
-            <span className="underline decoration-2 underline-offset-1">
-              C
-            </span>
+            <span className="underline decoration-2 underline-offset-1">C</span>
             lear
           </span>
         </button>
       </div>
     );
-  }
+  },
 );
 
-ReceiptActions.displayName =
-  "ReceiptActions";
+ReceiptActions.displayName = "ReceiptActions";
