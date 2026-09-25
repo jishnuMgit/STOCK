@@ -88,14 +88,6 @@ export default function TopNav({
 
   return (
     <header className="top-nav">
-      <div className="top-nav-brand">
-        <div className="brand-logo">A</div>
-        <div className="brand-text">
-          <div className="brand-name">Accounts</div>
-          <div className="brand-subtitle">Finance System</div>
-        </div>
-      </div>
-
       <nav className="top-nav-menu" ref={navRef}>
         {loading && <span className="top-nav-status">Loading menu...</span>}
         {!loading && error && (

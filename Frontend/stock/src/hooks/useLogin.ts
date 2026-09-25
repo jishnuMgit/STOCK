@@ -19,6 +19,7 @@ interface LoginResponse {
     companyId: string;
     year: string;
     userType: string;
+    branchId: string;
   };
 }
 
@@ -68,6 +69,10 @@ export const useLogin = () => {
 
       if (data.data?.userType) {
         localStorage.setItem("userType", data.data.userType);
+      }
+
+      if (data.data?.branchId) {
+        localStorage.setItem("branchId", data.data.branchId);
       }
 
       return data;

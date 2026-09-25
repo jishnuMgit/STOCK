@@ -162,21 +162,13 @@ export const login = async (req: Request, res: Response): Promise<Response> => {
 
     /* =====================================================
        COMPANY ACCESS
-
-       Old VB: ADMIN always has access; other users are
-       checked against dbo.HasCoRight(coId, userId), a
-       SQL Server scalar function not yet migrated to
-       Postgres. TODO: recreate dbo.hascoright() here once
-       we have the SQL Server function definition.
     ===================================================== */
 
     let hasCompanyRight = true;
 
     if (userId !== "ADMIN") {
       const companyRightResult = await pool.query(
-        `
-        SELECT dbo.hascoright($1, $2) AS "hasCoRight"
-        `,
+        `SELECT dbo.hascoright($1, $2) AS "hasCoRight"`,
         [companyId, userId],
       );
 
@@ -191,14 +183,39 @@ export const login = async (req: Request, res: Response): Promise<Response> => {
     }
 
     /* =====================================================
-   CHECK ACTIVE SESSION
-===================================================== */
+       DEFAULT BRANCH
+    ===================================================== */
+
+    const defaultBranchResult = await pool.query(
+      `SELECT dbo.getuserdefbranch($1, $2) AS "defBranch"`,
+      [companyId, userId],
+    );
+
+    const defaultBranchId: string =
+      defaultBranchResult.rows[0]?.defBranch ?? "";
+
+    if (userId !== "ADMIN" && !defaultBranchId) {
+      return res.status(403).json({
+        success: false,
+        message: `User '${userId}' has no branch assigned for the selected Company`,
+      });
+    }
+
+    /* =====================================================
+       CHECK ACTIVE SESSION (only count non-expired ones)
+    ===================================================== */
+
+    // Opportunistically clean up any expired session for this user first
+    await pool.query(
+      `DELETE FROM dbo.tblusersession WHERE fuserid = $1 AND fexpiresat <= now()`,
+      [userId],
+    );
 
     const existingSession = await pool.query(
       `
   SELECT fsessionid
   FROM dbo.tblusersession
-  WHERE fuserid = $1
+  WHERE fuserid = $1 AND fexpiresat > now()
   `,
       [userId],
     );
@@ -211,8 +228,8 @@ export const login = async (req: Request, res: Response): Promise<Response> => {
     }
 
     /* =====================================================
-   CREATE SESSION
-===================================================== */
+       CREATE SESSION
+    ===================================================== */
 
     const sessionToken = uuidv4();
 
@@ -220,16 +237,17 @@ export const login = async (req: Request, res: Response): Promise<Response> => {
       `
   INSERT INTO dbo.tblusersession (
     fuserid,
-    fsessiontoken
+    fsessiontoken,
+    fbranchid
   )
-  VALUES ($1, $2)
+  VALUES ($1, $2, $3)
   `,
-      [userId, sessionToken],
+      [userId, sessionToken, defaultBranchId],
     );
 
     /* =====================================================
-   SET SESSION COOKIE
-===================================================== */
+       SET SESSION COOKIE
+    ===================================================== */
 
     res.cookie("sessionToken", sessionToken, {
       httpOnly: true,
@@ -245,12 +263,12 @@ export const login = async (req: Request, res: Response): Promise<Response> => {
     return res.status(200).json({
       success: true,
       message: "Login successful",
-
       data: {
         userId: user.fuserid,
         companyId,
         year,
         userType: user.fusertype,
+        branchId: defaultBranchId,
       },
     });
   } catch (error: unknown) {
@@ -298,35 +316,19 @@ export const logout = async (
   res: Response,
 ): Promise<Response> => {
   try {
-    const sessionToken = req.cookies?.sessionToken;
+    const { sessionToken } = req.cookies;
 
-    if (!sessionToken) {
-      return res.status(200).json({
-        success: true,
-        message: "Logout successful",
-      });
+    if (sessionToken) {
+      await pool.query(
+        `DELETE FROM dbo.tblusersession WHERE fsessiontoken = $1`,
+        [sessionToken],
+      );
     }
 
-    await pool.query(
-      `
-      DELETE FROM dbo.tblusersession
-      WHERE fsessiontoken = $1
-      `,
-      [sessionToken],
-    );
-
     res.clearCookie("sessionToken");
-
-    return res.status(200).json({
-      success: true,
-      message: "Logout successful",
-    });
+    return res.status(200).json({ success: true, message: "Logged out" });
   } catch (error: unknown) {
-    console.error("Logout error:", error);
-
-    return res.status(500).json({
-      success: false,
-      message: "Logout failed",
-    });
+    console.error("Logout controller error:", error);
+    return res.status(500).json({ success: false, message: "Logout failed" });
   }
 };
