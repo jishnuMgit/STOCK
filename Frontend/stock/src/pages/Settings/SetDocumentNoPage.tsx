@@ -1,9 +1,10 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import Select, {
   components,
   type SingleValue,
   type StylesConfig,
 } from "react-select";
+import { toast } from "react-toastify";
 
 // ============================================================
 // TYPES
@@ -16,7 +17,7 @@ interface SelectOption {
 
 interface DocumentRow {
   id: number;
-  document: string;
+  lkpDocument: string;
 
   lkpMode: string;
   txtDocPrefix: string;
@@ -197,23 +198,6 @@ const tableSelectStyles: StylesConfig<SelectOption, false> = {
 // OPTIONS
 // ============================================================
 
-const yearOptions: SelectOption[] = [
-  { value: "2026", label: "2026" },
-  { value: "2027", label: "2027" },
-  { value: "2028", label: "2028" },
-];
-
-const branchOptions: SelectOption[] = [
-  { value: "JD", label: "JD" },
-  { value: "BR", label: "BR" },
-];
-
-const moduleOptions: SelectOption[] = [
-  { value: "Purchase", label: "Purchase" },
-  { value: "Sales", label: "Sales" },
-  { value: "Stock", label: "Stock" },
-];
-
 const modeOptions: SelectOption[] = [
   { value: "Auto", label: "Auto" },
   { value: "Manual", label: "Manual" },
@@ -225,64 +209,6 @@ const resetOptions: SelectOption[] = [
   { value: "Monthly", label: "Monthly" },
 ];
 
-const documentOptions: SelectOption[] = [
-  {
-    value: "Purchase Order",
-    label: "Purchase Order",
-  },
-  {
-    value: "Purchase Invoice",
-    label: "Purchase Invoice",
-  },
-  {
-    value: "Purchase Return",
-    label: "Purchase Return",
-  },
-  {
-    value: "Quotation",
-    label: "Quotation",
-  },
-  {
-    value: "Sales Invoice (Cash)",
-    label: "Sales Invoice (Cash)",
-  },
-  {
-    value: "Sales Invoice (Credit)",
-    label: "Sales Invoice (Credit)",
-  },
-  {
-    value: "Sales Return (Cash)",
-    label: "Sales Return (Cash)",
-  },
-  {
-    value: "Sales Return (Credit)",
-    label: "Sales Return (Credit)",
-  },
-  {
-    value: "Stock Transfer",
-    label: "Stock Transfer",
-  },
-  {
-    value: "Damage",
-    label: "Damage",
-  },
-  {
-    value: "Stock Adjustment",
-    label: "Stock Adjustment",
-  },
-  {
-    value: "Item Conversion",
-    label: "Item Conversion",
-  },
-  {
-    value: "Delivery Note",
-    label: "Delivery Note",
-  },
-  {
-    value: "Delivery Note Return",
-    label: "Delivery Note Return",
-  },
-];
 
 // ============================================================
 // CUSTOM DROPDOWN INDICATOR
@@ -309,187 +235,235 @@ const SetDocumentNo: React.FC = () => {
   // ==========================================================
 
   const [lkpYear, setLkpYear] =
-    useState<string>("2026");
+    useState<string>("");
+
+  const [yearOptions, setYearOptions] =
+    useState<SelectOption[]>([]);
 
   const [lkpBranch, setLkpBranch] =
     useState<string>("");
 
+  const [branchOptions, setBranchOptions] =
+    useState<SelectOption[]>([]);
+
   const [lkpModule, setLkpModule] =
     useState<string>("");
+
+  const [moduleOptions, setModuleOptions] =
+    useState<SelectOption[]>([]);
+
+  /* =======================================================
+     LOAD YEAR LIST (lkpYear dropdown)
+  ======================================================= */
+
+  useEffect(() => {
+    const loadYearList = async () => {
+      try {
+        const response = await fetch(
+          `${import.meta.env.VITE_API_URL}/DocumentNo/getYearList`
+        );
+
+        if (!response.ok) {
+          throw new Error(`HTTP Error: ${response.status}`);
+        }
+
+        const result = await response.json();
+
+        if (!result.success) {
+          console.error("getYearList failed:", result.message);
+          return;
+        }
+
+        const options: SelectOption[] = (result.data || []).map(
+          (row: { fyear: number }) => ({
+            value: String(row.fyear),
+            label: String(row.fyear),
+          })
+        );
+
+        setYearOptions(options);
+      } catch (error) {
+        console.error("getYearList error:", error);
+      }
+    };
+
+    loadYearList();
+  }, []);
+
+  /* =======================================================
+     LOAD BRANCH LIST (lkpBranch dropdown)
+  ======================================================= */
+
+  useEffect(() => {
+    const loadBranchList = async () => {
+      try {
+        const response = await fetch(
+          `${import.meta.env.VITE_API_URL}/DocumentNo/getBranchList`
+        );
+
+        if (!response.ok) {
+          throw new Error(`HTTP Error: ${response.status}`);
+        }
+
+        const result = await response.json();
+
+        if (!result.success) {
+          console.error("getBranchList failed:", result.message);
+          return;
+        }
+
+        const options: SelectOption[] = (result.data || []).map(
+          (row: { fbrid: string; fbrname: string }) => ({
+            value: row.fbrid,
+            label: row.fbrname,
+          })
+        );
+
+        setBranchOptions(options);
+      } catch (error) {
+        console.error("getBranchList error:", error);
+      }
+    };
+
+    loadBranchList();
+  }, []);
+
+  /* =======================================================
+     LOAD MODULE LIST (lkpModule dropdown)
+  ======================================================= */
+
+  useEffect(() => {
+    const loadModuleList = async () => {
+      try {
+        const response = await fetch(
+          `${import.meta.env.VITE_API_URL}/DocumentNo/getModuleList`
+        );
+
+        if (!response.ok) {
+          throw new Error(`HTTP Error: ${response.status}`);
+        }
+
+        const result = await response.json();
+
+        if (!result.success) {
+          console.error("getModuleList failed:", result.message);
+          return;
+        }
+
+        const options: SelectOption[] = (result.data || []).map(
+          (row: { fmoduleid: string; fmodulename: string }) => ({
+            value: row.fmoduleid,
+            label: row.fmodulename,
+          })
+        );
+
+        setModuleOptions(options);
+      } catch (error) {
+        console.error("getModuleList error:", error);
+      }
+    };
+
+    loadModuleList();
+  }, []);
 
   // ==========================================================
   // TABLE STATES
   // ==========================================================
 
-  const [rows, setRows] = useState<DocumentRow[]>([
-    {
-      id: 1,
-      document: "Purchase Order",
-      lkpMode: "Auto",
-      txtDocPrefix: "JD-26",
-      txtStartSeqNo: "O",
-      chkStrictSerial: false,
-      lkpResetNo: "Never",
-      chkPrintAfterSave: false,
-      txtPositionNo: 1,
-    },
+  const [rows, setRows] = useState<DocumentRow[]>([]);
 
-    {
-      id: 2,
-      document: "Purchase Invoice",
-      lkpMode: "Auto",
-      txtDocPrefix: "JD-26",
-      txtStartSeqNo: "O",
-      chkStrictSerial: false,
-      lkpResetNo: "Never",
-      chkPrintAfterSave: false,
-      txtPositionNo: 2,
-    },
+  const [documentOptions, setDocumentOptions] =
+    useState<SelectOption[]>([]);
 
-    {
-      id: 3,
-      document: "Purchase Return",
-      lkpMode: "Auto",
-      txtDocPrefix: "JD-26",
-      txtStartSeqNo: "O",
-      chkStrictSerial: false,
-      lkpResetNo: "Never",
-      chkPrintAfterSave: false,
-      txtPositionNo: 3,
-    },
+  /* =======================================================
+     LOAD DOCUMENT LIST (per Module) + existing saved rules
+     (per Year/Branch/Module) — merged into the grid rows
+  ======================================================= */
 
-    {
-      id: 4,
-      document: "Quotation",
-      lkpMode: "Auto",
-      txtDocPrefix: "JD-26",
-      txtStartSeqNo: "O",
-      chkStrictSerial: false,
-      lkpResetNo: "Never",
-      chkPrintAfterSave: false,
-      txtPositionNo: 4,
-    },
+  useEffect(() => {
+    if (!lkpModule) {
+      setDocumentOptions([]);
+      setRows([]);
+      return;
+    }
 
-    {
-      id: 5,
-      document: "Sales Invoice (Cash)",
-      lkpMode: "Auto",
-      txtDocPrefix: "JD-26",
-      txtStartSeqNo: "OC",
-      chkStrictSerial: false,
-      lkpResetNo: "Never",
-      chkPrintAfterSave: false,
-      txtPositionNo: 5,
-    },
+    const loadDocumentGrid = async () => {
+      try {
+        const docListResponse = await fetch(
+          `${import.meta.env.VITE_API_URL}/DocumentNo/getDocumentList?lkpModule=${lkpModule}`
+        );
 
-    {
-      id: 6,
-      document: "Sales Invoice (Credit)",
-      lkpMode: "Auto",
-      txtDocPrefix: "JD-26",
-      txtStartSeqNo: "OR",
-      chkStrictSerial: false,
-      lkpResetNo: "Never",
-      chkPrintAfterSave: false,
-      txtPositionNo: 6,
-    },
+        if (!docListResponse.ok) {
+          throw new Error(`HTTP Error: ${docListResponse.status}`);
+        }
 
-    {
-      id: 7,
-      document: "Sales Return (Cash)",
-      lkpMode: "Auto",
-      txtDocPrefix: "JD-26",
-      txtStartSeqNo: "OH",
-      chkStrictSerial: false,
-      lkpResetNo: "Never",
-      chkPrintAfterSave: false,
-      txtPositionNo: 7,
-    },
+        const docListResult = await docListResponse.json();
 
-    {
-      id: 8,
-      document: "Sales Return (Credit)",
-      lkpMode: "Auto",
-      txtDocPrefix: "JD-26",
-      txtStartSeqNo: "OD",
-      chkStrictSerial: false,
-      lkpResetNo: "Never",
-      chkPrintAfterSave: false,
-      txtPositionNo: 8,
-    },
+        if (!docListResult.success) {
+          console.error("getDocumentList failed:", docListResult.message);
+          return;
+        }
 
-    {
-      id: 9,
-      document: "Stock Transfer",
-      lkpMode: "Auto",
-      txtDocPrefix: "JD-26",
-      txtStartSeqNo: "O",
-      chkStrictSerial: false,
-      lkpResetNo: "Never",
-      chkPrintAfterSave: false,
-      txtPositionNo: 9,
-    },
+        const documentRows: {
+          fdoctype: string;
+          fdocname: string;
+        }[] = docListResult.data || [];
 
-    {
-      id: 10,
-      document: "Damage",
-      lkpMode: "Auto",
-      txtDocPrefix: "JD-26",
-      txtStartSeqNo: "O",
-      chkStrictSerial: false,
-      lkpResetNo: "Never",
-      chkPrintAfterSave: false,
-      txtPositionNo: 10,
-    },
+        setDocumentOptions(
+          documentRows.map((doc) => ({
+            value: doc.fdoctype,
+            label: doc.fdocname,
+          }))
+        );
 
-    {
-      id: 11,
-      document: "Stock Adjustment",
-      lkpMode: "Auto",
-      txtDocPrefix: "JD-26",
-      txtStartSeqNo: "O",
-      chkStrictSerial: false,
-      lkpResetNo: "Never",
-      chkPrintAfterSave: false,
-      txtPositionNo: 11,
-    },
+        let existingRows: Record<string, any> = {};
 
-    {
-      id: 12,
-      document: "Item Conversion",
-      lkpMode: "Auto",
-      txtDocPrefix: "JD-26",
-      txtStartSeqNo: "O",
-      chkStrictSerial: false,
-      lkpResetNo: "Never",
-      chkPrintAfterSave: false,
-      txtPositionNo: 12,
-    },
+        if (lkpYear && lkpBranch) {
+          const docNoResponse = await fetch(
+            `${import.meta.env.VITE_API_URL}/DocumentNo/getDocumentNoList?lkpYear=${lkpYear}&lkpBranch=${lkpBranch}&lkpModule=${lkpModule}`
+          );
 
-    {
-      id: 13,
-      document: "Delivery Note",
-      lkpMode: "Auto",
-      txtDocPrefix: "JD-26",
-      txtStartSeqNo: "O",
-      chkStrictSerial: false,
-      lkpResetNo: "Never",
-      chkPrintAfterSave: false,
-      txtPositionNo: 13,
-    },
+          if (docNoResponse.ok) {
+            const docNoResult = await docNoResponse.json();
 
-    {
-      id: 14,
-      document: "Delivery Note Return",
-      lkpMode: "Auto",
-      txtDocPrefix: "JD-26",
-      txtStartSeqNo: "OR",
-      chkStrictSerial: false,
-      lkpResetNo: "Never",
-      chkPrintAfterSave: false,
-      txtPositionNo: 14,
-    },
-  ]);
+            if (docNoResult.success) {
+              existingRows = (docNoResult.data || []).reduce(
+                (accumulator: Record<string, any>, row: any) => {
+                  accumulator[row.fdoctype] = row;
+                  return accumulator;
+                },
+                {}
+              );
+            }
+          }
+        }
+
+        setRows(
+          documentRows.map((doc, index) => {
+            const existing = existingRows[doc.fdoctype];
+
+            return {
+              id: index + 1,
+              lkpDocument: doc.fdoctype,
+              lkpMode: existing?.fseqnoincrementmode || "Auto",
+              txtDocPrefix: existing?.fdocnoprefix || "",
+              txtStartSeqNo: existing?.fstartseqno || "",
+              chkStrictSerial: existing?.fstrictserialseqno ?? false,
+              lkpResetNo: existing?.fseqnoresetmode || "Never",
+              chkPrintAfterSave:
+                existing?.fprintaftersave === 1 ||
+                existing?.fprintaftersave === true,
+              txtPositionNo: index + 1,
+            };
+          })
+        );
+      } catch (error) {
+        console.error("loadDocumentGrid error:", error);
+      }
+    };
+
+    loadDocumentGrid();
+  }, [lkpYear, lkpBranch, lkpModule]);
 
   // ==========================================================
   // BUTTON STATE
@@ -527,16 +501,57 @@ const SetDocumentNo: React.FC = () => {
   // SAVE
   // ==========================================================
 
-  const handleSave = () => {
-    const data = {
-      lkpYear,
-      lkpBranch,
-      lkpModule,
-      rows,
-      CopyToNextYearbtn,
-    };
+  const handleSave = async () => {
+    if (!lkpYear || !lkpBranch || !lkpModule) {
+      toast.warning("Year, Branch and Module are required.");
+      return;
+    }
 
-    console.log("SAVE DATA:", data);
+    const validRows = rows.filter(
+      (row) => row.txtDocPrefix.trim() !== "" || row.txtStartSeqNo.trim() !== ""
+    );
+
+    if (validRows.length === 0) {
+      toast.warning("There is no information for saving.");
+      return;
+    }
+
+    try {
+      const response = await fetch(
+        `${import.meta.env.VITE_API_URL}/DocumentNo/saveDocumentNo`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            lkpYear,
+            lkpBranch,
+            lkpModule,
+            rows: validRows.map((row) => ({
+              docType: row.lkpDocument,
+              docNoPrefix: row.txtDocPrefix || null,
+              startSeqNo: row.txtStartSeqNo || null,
+              strictSerialSeqNo: row.chkStrictSerial,
+              seqNoIncrementMode: row.lkpMode || null,
+              seqNoResetMode: row.lkpResetNo || null,
+              printAfterSave: row.chkPrintAfterSave ? 1 : 0,
+              positionNo: row.txtPositionNo,
+            })),
+          }),
+        }
+      );
+
+      const result = await response.json();
+
+      if (!response.ok || !result.success) {
+        toast.error(result.message || "Document numbering could not be saved.");
+        return;
+      }
+
+      toast.success(result.message || "Document numbering saved successfully.");
+    } catch (error) {
+      console.error("saveDocumentNo error:", error);
+      toast.error("Cannot connect to Document No API.");
+    }
   };
 
   // ==========================================================
@@ -544,19 +559,10 @@ const SetDocumentNo: React.FC = () => {
   // ==========================================================
 
   const handleClear = () => {
-    setLkpYear("2026");
+    setLkpYear("");
     setLkpBranch("");
     setLkpModule("");
-
-    setRows((previousRows) =>
-      previousRows.map((row) => ({
-        ...row,
-        lkpMode: "Auto",
-        chkStrictSerial: false,
-        lkpResetNo: "Never",
-        chkPrintAfterSave: false,
-      }))
-    );
+    setRows([]);
 
     setCopyToNextYearbtn(false);
   };
@@ -612,6 +618,7 @@ const SetDocumentNo: React.FC = () => {
           sm:w-[70%]
           lg:w-[75%]
           xl:w-[65%]
+          md:w-[100%]
         "
       >
 
@@ -768,7 +775,6 @@ const SetDocumentNo: React.FC = () => {
                     CustomDropdownIndicator,
                 }}
                 isSearchable={false}
-                placeholder=""
                 menuPlacement="auto"
               />
 
@@ -830,7 +836,6 @@ const SetDocumentNo: React.FC = () => {
                     CustomDropdownIndicator,
                 }}
                 isSearchable={false}
-                placeholder=""
                 menuPlacement="auto"
               />
 
@@ -1074,14 +1079,14 @@ const SetDocumentNo: React.FC = () => {
                         options={documentOptions}
                         value={getOption(
                           documentOptions,
-                          row.document
+                          row.lkpDocument
                         )}
                         onChange={(
                           option: SingleValue<SelectOption>
                         ) =>
                           handleRowChange(
                             row.id,
-                            "document",
+                            "lkpDocument",
                             option?.value ?? ""
                           )
                         }
@@ -1394,7 +1399,6 @@ const SetDocumentNo: React.FC = () => {
 
         <div
           className="
-            relative
             flex
             flex-col
             items-center
@@ -1493,11 +1497,6 @@ const SetDocumentNo: React.FC = () => {
               text-green-600
               shadow-sm
               hover:bg-slate-50
-
-              sm:ml-4
-
-              lg:absolute
-              lg:right-10
             "
           >
             Copy To Next Year
