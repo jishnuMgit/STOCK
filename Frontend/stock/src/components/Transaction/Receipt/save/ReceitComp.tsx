@@ -1872,11 +1872,8 @@ const ReceiptRow = memo(
     onRowSelect,
   }: ReceiptRowProps) => {
     const accountIdMenuOpenRef = useRef(false);
-
     const accountNameMenuOpenRef = useRef(false);
-
     const divisionMenuOpenRef = useRef(false);
-
     const ccIdMenuOpenRef = useRef(false);
 
     /* Local instance refs + controlled search text per field,
@@ -2347,6 +2344,8 @@ const ReceiptRow = memo(
             menuPosition="fixed"
             menuPortalTarget={document.body}
             menuShouldScrollIntoView={false}
+            captureMenuScroll={false}
+            menuShouldBlockScroll={false}
             closeMenuOnSelect
             blurInputOnSelect={false}
             tabSelectsValue={false}
@@ -2431,6 +2430,8 @@ const ReceiptRow = memo(
             menuPosition="fixed"
             menuPortalTarget={document.body}
             menuShouldScrollIntoView={false}
+            captureMenuScroll={false}
+            menuShouldBlockScroll={false}
             closeMenuOnSelect
             blurInputOnSelect={false}
             tabSelectsValue={false}
@@ -2949,14 +2950,10 @@ export const ReceiptTable = forwardRef<ReceiptTableRef, ReceiptTableProps>(
                 </button>
               </th>
 
-              <th>Div ID</th>
-
+              <th>Div. ID</th>
               <th>CC. ID</th>
-
               <th className="text-right">Credit Amt.</th>
-
               <th className="text-center">Match</th>
-
               <th className="text-center">View</th>
             </tr>
           </thead>
