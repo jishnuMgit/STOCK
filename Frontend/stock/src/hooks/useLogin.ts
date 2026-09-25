@@ -56,11 +56,11 @@ export const useLogin = () => {
       // Store only what frontend needs for UI.
       // DO NOT store sessionToken.
       if (data.data?.userId) {
-        localStorage.setItem("userId", data.data.userId);
+        localStorage.setItem("userID", data.data.userId);
       }
 
       if (data.data?.companyId) {
-        localStorage.setItem("companyId", data.data.companyId);
+        localStorage.setItem("CoID", data.data.companyId);
       }
 
       if (data.data?.year) {
@@ -71,9 +71,9 @@ export const useLogin = () => {
         localStorage.setItem("userType", data.data.userType);
       }
 
-      if (data.data?.branchId) {
-        localStorage.setItem("branchId", data.data.branchId);
-      }
+      // if (data.data?.branchId) {
+      //   localStorage.setItem("branchId", data.data.branchId);
+      // }
 
       return data;
     } catch (error: unknown) {

@@ -1,8 +1,4 @@
-import React, {
-  useEffect,
-  useMemo,
-  useState,
-} from "react";
+import React, { useEffect, useMemo, useState } from "react";
 
 import Select, {
   components,
@@ -13,17 +9,11 @@ import Select, {
 import dayjs from "dayjs";
 import customParseFormat from "dayjs/plugin/customParseFormat";
 
-import {
-  LocalizationProvider,
-} from "@mui/x-date-pickers/LocalizationProvider";
+import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
 
-import {
-  AdapterDayjs,
-} from "@mui/x-date-pickers/AdapterDayjs";
+import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
 
-import {
-  DatePicker,
-} from "@mui/x-date-pickers/DatePicker";
+import { DatePicker } from "@mui/x-date-pickers/DatePicker";
 
 import "./commanReceipt.css";
 
@@ -55,33 +45,19 @@ interface ReceiptFormProps {
   date: string;
   setDate: (value: string) => void;
 
-  branchRef: React.RefObject<
-    SelectInstance<SelectOption, false> | null
-  >;
+  branchRef: React.RefObject<SelectInstance<SelectOption, false> | null>;
 
-  typeRef: React.RefObject<
-    SelectInstance<SelectOption, false> | null
-  >;
+  typeRef: React.RefObject<SelectInstance<SelectOption, false> | null>;
 
-  documentNoRef: React.RefObject<
-    HTMLInputElement | null
-  >;
+  documentNoRef: React.RefObject<HTMLInputElement | null>;
 
-  cbAccountRef: React.RefObject<
-    SelectInstance<SelectOption, false> | null
-  >;
+  cbAccountRef: React.RefObject<SelectInstance<SelectOption, false> | null>;
 
-  dateRef: React.RefObject<
-    HTMLInputElement | null
-  >;
+  dateRef: React.RefObject<HTMLInputElement | null>;
 
-  receivedFromRef: React.RefObject<
-    HTMLInputElement | null
-  >;
+  receivedFromRef: React.RefObject<HTMLInputElement | null>;
 
-  referenceRef: React.RefObject<
-    HTMLInputElement | null
-  >;
+  referenceRef: React.RefObject<HTMLInputElement | null>;
 
   focusFirstAccountId: () => void;
 
@@ -169,21 +145,15 @@ interface ReceiptDocNumberResponse {
    CUSTOM OPTION
 ========================================================= */
 
-const CustomOption = (
-  props: OptionProps<SelectOption, false>
-) => {
+const CustomOption = (props: OptionProps<SelectOption, false>) => {
   const { data } = props;
 
   return (
     <components.Option {...props}>
       <div className="flex w-full items-center justify-between">
-        <span className="text-xs text-slate-700">
-          {data.label}
-        </span>
+        <span className="text-xs text-slate-700">{data.label}</span>
 
-        <span className="text-[11px] text-gray-400">
-          {data.value}
-        </span>
+        <span className="text-[11px] text-gray-400">{data.value}</span>
       </div>
     </components.Option>
   );
@@ -199,23 +169,17 @@ const filterOption = (
     value: string;
     data: SelectOption;
   },
-  inputValue: string
+  inputValue: string,
 ) => {
-  const search = inputValue
-    .toLowerCase()
-    .trim();
+  const search = inputValue.toLowerCase().trim();
 
   if (!search) {
     return true;
   }
 
   return (
-    option.data.label
-      .toLowerCase()
-      .includes(search) ||
-    option.data.value
-      .toLowerCase()
-      .includes(search)
+    option.data.label.toLowerCase().includes(search) ||
+    option.data.value.toLowerCase().includes(search)
   );
 };
 
@@ -271,27 +235,15 @@ const ReceiptForm: React.FC<ReceiptFormProps> = ({
      STATE
   ======================================================= */
 
-  const [
-    openSelect,
-    setOpenSelect,
-  ] = useState<
+  const [openSelect, setOpenSelect] = useState<
     "branch" | "type" | "cbAccount" | null
   >(null);
 
-  const [
-    accountsLoading,
-    setAccountsLoading,
-  ] = useState(false);
+  const [accountsLoading, setAccountsLoading] = useState(false);
 
-  const [
-    documentNoLoading,
-    setDocumentNoLoading,
-  ] = useState(false);
+  const [documentNoLoading, setDocumentNoLoading] = useState(false);
 
-  const [
-    cbAccounts,
-    setCbAccounts,
-  ] = useState<CbAccount[]>([]);
+  const [cbAccounts, setCbAccounts] = useState<CbAccount[]>([]);
 
   /* =======================================================
      TYPE OPTIONS
@@ -302,26 +254,22 @@ const ReceiptForm: React.FC<ReceiptFormProps> = ({
      Display value is B / C
   ======================================================= */
 
-  const typeOptions: SelectOption[] =
-    useMemo(
-      () => {
-        const apiTypeOptions = financialParameters
-          .filter((parameter) => parameter.fptype === "RTP")
-          .sort((first, second) => first.fpositionno - second.fpositionno)
-          .map((parameter) => ({
-            value:parameter.fpname ,
-            label: parameter.fpid,
-          }));
+  const typeOptions: SelectOption[] = useMemo(() => {
+    const apiTypeOptions = financialParameters
+      .filter((parameter) => parameter.fptype === "RTP")
+      .sort((first, second) => first.fpositionno - second.fpositionno)
+      .map((parameter) => ({
+        value: parameter.fpname,
+        label: parameter.fpid,
+      }));
 
-        return apiTypeOptions.length > 0
-          ? apiTypeOptions
-          : [
-              { value: "B", label: "B" },
-              { value: "C", label: "C" },
-            ];
-      },
-      [financialParameters]
-    );
+    return apiTypeOptions.length > 0
+      ? apiTypeOptions
+      : [
+          { value: "B", label: "B" },
+          { value: "C", label: "C" },
+        ];
+  }, [financialParameters]);
 
   /* =======================================================
      GET RECEIPT DOCUMENT NUMBER
@@ -330,10 +278,7 @@ const ReceiptForm: React.FC<ReceiptFormProps> = ({
      C -> CR
   ======================================================= */
 
-  const getReceiptDocNumber = async (
-    fbrid: string,
-    typeId: string
-  ) => {
+  const getReceiptDocNumber = async (fbrid: string, typeId: string) => {
     if (!fbrid) {
       setDocumentNo("");
       return;
@@ -346,92 +291,66 @@ const ReceiptForm: React.FC<ReceiptFormProps> = ({
       C -> CR
     */
 
-    const documentType =
-      typeId === "C"
-        ? "CR"
-        : "BR";
+    const documentType = typeId === "C" ? "CR" : "BR";
 
     try {
       setDocumentNoLoading(true);
 
-      console.log(
-        "Getting receipt number:",
+      console.log("Getting receipt number:", {
+        fbrid,
+        typeId,
+        documentType,
+      });
+
+      const response = await fetch(
+        "http://localhost:5000/api/getReceiptDocNumber",
         {
-          fbrid,
-          typeId,
-          documentType,
-        }
-      );
+          method: "POST",
 
-      const response =
-        await fetch(
-          "http://localhost:5000/api/getReceiptDocNumber",
-          {
-            method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
 
-            headers: {
-              "Content-Type":
-                "application/json",
-            },
+          body: JSON.stringify({
+            fbrid,
 
-            body: JSON.stringify({
-              fbrid,
-
-              /*
+            /*
                 API receives:
 
                 B -> BR
                 C -> CR
               */
 
-              fptype: documentType,
-            }),
-          }
-        );
+            fptype: documentType,
+          }),
+        },
+      );
 
       if (!response.ok) {
-        throw new Error(
-          `HTTP Error: ${response.status}`
-        );
+        throw new Error(`HTTP Error: ${response.status}`);
       }
 
-      const result =
-        (await response.json()) as ReceiptDocNumberResponse;
+      const result = (await response.json()) as ReceiptDocNumberResponse;
 
-      console.log(
-        "Receipt Document Number Response:",
-        result
-      );
+      console.log("Receipt Document Number Response:", result);
 
       if (
         result.success &&
         Array.isArray(result.data) &&
         result.data.length > 0
       ) {
-        const newDocumentNo =
-          result.data[0]?.getnextdocno;
+        const newDocumentNo = result.data[0]?.getnextdocno;
 
-        console.log(
-          "New Receipt Number:",
-          newDocumentNo
-        );
+        console.log("New Receipt Number:", newDocumentNo);
 
-        setDocumentNo(
-          newDocumentNo || ""
-        );
+        setDocumentNo(newDocumentNo || "");
       } else {
-        console.error(
-          "Receipt number was not returned:",
-          result
-        );
+        console.error("Receipt number was not returned:", result);
 
         setDocumentNo("");
       }
     } catch (error) {
-      console.error(
-        "Receipt Document Number API Error:",
-        error
-      );
+      console.error("Receipt Document Number API Error:", error);
 
       setDocumentNo("");
     } finally {
@@ -446,29 +365,18 @@ const ReceiptForm: React.FC<ReceiptFormProps> = ({
      C = Cash
   ======================================================= */
 
-  const loadAccounts = async (
-    requestedCbType: string
-  ) => {
+  const loadAccounts = async (requestedCbType: string) => {
     const cbType =
       financialParameters.find(
         (parameter) =>
           parameter.fpid === requestedCbType ||
-          parameter.fpname === requestedCbType
+          parameter.fpname === requestedCbType,
       )?.fpid || requestedCbType;
 
-    console.log(
-      "Loading Cash/Bank accounts for:",
-      cbType
-    );
+    console.log("Loading Cash/Bank accounts for:", cbType);
 
-    if (
-      cbType !== "B" &&
-      cbType !== "C"
-    ) {
-      console.warn(
-        "Invalid Cash/Bank value:",
-        cbType
-      );
+    if (cbType !== "B" && cbType !== "C") {
+      console.warn("Invalid Cash/Bank value:", cbType);
 
       setCbAccounts([]);
       if (!preserveCbAccountOnLoad) {
@@ -481,44 +389,31 @@ const ReceiptForm: React.FC<ReceiptFormProps> = ({
     try {
       setAccountsLoading(true);
 
-      const response =
-        await fetch(
-          "http://localhost:5000/api/getReceiptCashORBank",
-          {
-            method: "POST",
+      const response = await fetch(
+        "http://localhost:5000/api/getReceiptCashORBank",
+        {
+          method: "POST",
 
-            headers: {
-              "Content-Type":
-                "application/json",
-            },
+          headers: {
+            "Content-Type": "application/json",
+          },
 
-            body: JSON.stringify({
-              cashorbank: cbType,
-            }),
-          }
-        );
-
-      if (!response.ok) {
-        throw new Error(
-          `HTTP Error: ${response.status}`
-        );
-      }
-
-      const result =
-        (await response.json()) as AccountResponse;
-
-      console.log(
-        "Cash/Bank API Response:",
-        result
+          body: JSON.stringify({
+            cashorbank: cbType,
+          }),
+        },
       );
 
-      if (
-        result.success &&
-        Array.isArray(result.data)
-      ) {
-        setCbAccounts(
-          result.data
-        );
+      if (!response.ok) {
+        throw new Error(`HTTP Error: ${response.status}`);
+      }
+
+      const result = (await response.json()) as AccountResponse;
+
+      console.log("Cash/Bank API Response:", result);
+
+      if (result.success && Array.isArray(result.data)) {
+        setCbAccounts(result.data);
 
         /*
           Don't automatically select
@@ -532,10 +427,7 @@ const ReceiptForm: React.FC<ReceiptFormProps> = ({
           setCbAccount("");
         }
       } else {
-        console.error(
-          "Cash/Bank accounts not returned:",
-          result
-        );
+        console.error("Cash/Bank accounts not returned:", result);
 
         setCbAccounts([]);
         if (!preserveCbAccountOnLoad) {
@@ -543,10 +435,7 @@ const ReceiptForm: React.FC<ReceiptFormProps> = ({
         }
       }
     } catch (error) {
-      console.error(
-        "Cash/Bank Account API Error:",
-        error
-      );
+      console.error("Cash/Bank Account API Error:", error);
 
       setCbAccounts([]);
       if (!preserveCbAccountOnLoad) {
@@ -571,8 +460,7 @@ const ReceiptForm: React.FC<ReceiptFormProps> = ({
       make B the default.
     */
 
-    const defaultType =
-      type || "B";
+    const defaultType = type || "B";
 
     if (!type) {
       setType("B");
@@ -587,10 +475,7 @@ const ReceiptForm: React.FC<ReceiptFormProps> = ({
     */
 
     if (branch && !isModifyMode) {
-      getReceiptDocNumber(
-        branch,
-        defaultType
-      );
+      getReceiptDocNumber(branch, defaultType);
     }
 
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -601,11 +486,10 @@ const ReceiptForm: React.FC<ReceiptFormProps> = ({
       financialParameters.find(
         (parameter) =>
           parameter.fptype === "RTP" &&
-          (parameter.fpid === type || parameter.fpname === type)
+          (parameter.fpid === type || parameter.fpname === type),
       )?.fpid ||
-      financialParameters.find(
-        (parameter) => parameter.fptype === "RTP"
-      )?.fpid ||
+      financialParameters.find((parameter) => parameter.fptype === "RTP")
+        ?.fpid ||
       type ||
       "B";
 
@@ -635,14 +519,10 @@ const ReceiptForm: React.FC<ReceiptFormProps> = ({
       return;
     }
 
-    const currentType =
-      type || "B";
+    const currentType = type || "B";
 
     if (!isModifyMode) {
-      getReceiptDocNumber(
-        branch,
-        currentType
-      );
+      getReceiptDocNumber(branch, currentType);
     }
 
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -650,7 +530,7 @@ const ReceiptForm: React.FC<ReceiptFormProps> = ({
 
   useEffect(() => {
     if (isModifyMode) {
-      loadAccounts(type );
+      loadAccounts(type);
     }
 
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -662,11 +542,8 @@ const ReceiptForm: React.FC<ReceiptFormProps> = ({
 
   const handleSelectKeyDown = (
     event: React.KeyboardEvent,
-    selectName:
-      | "branch"
-      | "type"
-      | "cbAccount",
-    focusNext: () => void
+    selectName: "branch" | "type" | "cbAccount",
+    focusNext: () => void,
   ) => {
     if (event.key !== "Enter") {
       return;
@@ -677,9 +554,7 @@ const ReceiptForm: React.FC<ReceiptFormProps> = ({
       to select the highlighted option.
     */
 
-    if (
-      openSelect === selectName
-    ) {
+    if (openSelect === selectName) {
       return;
     }
 
@@ -693,11 +568,8 @@ const ReceiptForm: React.FC<ReceiptFormProps> = ({
   ======================================================= */
 
   const handleInputKeyDown = (
-    event: Pick<
-      React.KeyboardEvent,
-      "key" | "preventDefault"
-    >,
-    focusNext: () => void
+    event: Pick<React.KeyboardEvent, "key" | "preventDefault">,
+    focusNext: () => void,
   ) => {
     if (event.key !== "Enter") {
       return;
@@ -726,30 +598,22 @@ const ReceiptForm: React.FC<ReceiptFormProps> = ({
       minHeight: "28px",
       height: "28px",
 
-      borderColor:
-        "#d7dee7",
+      borderColor: "#d7dee7",
 
-      borderRadius:
-        "4px",
+      borderRadius: "4px",
 
-      boxShadow:
-        "none",
+      boxShadow: "none",
 
-      fontSize:
-        "12px",
+      fontSize: "12px",
 
-      cursor:
-        "text",
+      cursor: "text",
 
       "&:hover": {
-        borderColor:
-          "#9fdfbc",
+        borderColor: "#9fdfbc",
       },
     }),
 
-    valueContainer: (
-      base: any
-    ) => ({
+    valueContainer: (base: any) => ({
       ...base,
 
       height: "28px",
@@ -757,9 +621,7 @@ const ReceiptForm: React.FC<ReceiptFormProps> = ({
       padding: "0 8px",
     }),
 
-    singleValue: (
-      base: any
-    ) => ({
+    singleValue: (base: any) => ({
       ...base,
 
       color: "#344054",
@@ -767,9 +629,7 @@ const ReceiptForm: React.FC<ReceiptFormProps> = ({
       fontSize: "12px",
     }),
 
-    placeholder: (
-      base: any
-    ) => ({
+    placeholder: (base: any) => ({
       ...base,
 
       color: "#808080",
@@ -777,9 +637,7 @@ const ReceiptForm: React.FC<ReceiptFormProps> = ({
       fontSize: "12px",
     }),
 
-    input: (
-      base: any
-    ) => ({
+    input: (base: any) => ({
       ...base,
 
       margin: 0,
@@ -791,17 +649,13 @@ const ReceiptForm: React.FC<ReceiptFormProps> = ({
       color: "#344054",
     }),
 
-    indicatorsContainer: (
-      base: any
-    ) => ({
+    indicatorsContainer: (base: any) => ({
       ...base,
 
       height: "28px",
     }),
 
-    dropdownIndicator: (
-      base: any
-    ) => ({
+    dropdownIndicator: (base: any) => ({
       ...base,
 
       color: "#aeb8c2",
@@ -817,9 +671,7 @@ const ReceiptForm: React.FC<ReceiptFormProps> = ({
       display: "none",
     }),
 
-    clearIndicator: (
-      base: any
-    ) => ({
+    clearIndicator: (base: any) => ({
       ...base,
 
       color: "#aeb8c2",
@@ -831,9 +683,7 @@ const ReceiptForm: React.FC<ReceiptFormProps> = ({
       },
     }),
 
-    menu: (
-      base: any
-    ) => ({
+    menu: (base: any) => ({
       ...base,
 
       fontSize: "12px",
@@ -847,9 +697,7 @@ const ReceiptForm: React.FC<ReceiptFormProps> = ({
       overflow: "hidden",
     }),
 
-    menuList: (
-      base: any
-    ) => ({
+    menuList: (base: any) => ({
       ...base,
 
       padding: "3px 0",
@@ -859,20 +707,16 @@ const ReceiptForm: React.FC<ReceiptFormProps> = ({
       overflowY: "auto",
     }),
 
-    option: (
-      base: any,
-      state: any
-    ) => ({
+    option: (base: any, state: any) => ({
       ...base,
 
       fontSize: "12px",
 
       cursor: "pointer",
 
-      backgroundColor:
-        state.isSelected
-          ? "#eefbf4"
-          : state.isFocused
+      backgroundColor: state.isSelected
+        ? "#eefbf4"
+        : state.isFocused
           ? "#eefbf4"
           : "#ffffff",
 
@@ -881,8 +725,7 @@ const ReceiptForm: React.FC<ReceiptFormProps> = ({
       padding: "7px 10px",
 
       "&:active": {
-        backgroundColor:
-          "#dff5e9",
+        backgroundColor: "#dff5e9",
       },
     }),
   };
@@ -891,32 +734,23 @@ const ReceiptForm: React.FC<ReceiptFormProps> = ({
      CASH / BANK OPTIONS
   ======================================================= */
 
-  const cbAccountOptions:
-    SelectOption[] =
-    useMemo(
-      () =>
-        cbAccounts.map(
-          (account) => ({
-            value:
-              account.faccountid,
+  const cbAccountOptions: SelectOption[] = useMemo(
+    () =>
+      cbAccounts.map((account) => ({
+        value: account.faccountid,
 
-            label:
-              account.faccountname,
-          })
-        ),
+        label: account.faccountname,
+      })),
 
-      [cbAccounts]
-    );
+    [cbAccounts],
+  );
 
   /* =======================================================
      SELECTED BRANCH
   ======================================================= */
 
   const selectedBranch =
-    branchOptions.find(
-      (option) =>
-        option.value === branch
-    ) || null;
+    branchOptions.find((option) => option.value === branch) || null;
 
   /* =======================================================
      SELECTED TYPE
@@ -927,8 +761,7 @@ const ReceiptForm: React.FC<ReceiptFormProps> = ({
   const selectedType =
     typeOptions.find(
       (option) =>
-        option.label === (type || "B") ||
-        option.value === (type || "B")
+        option.label === (type || "B") || option.value === (type || "B"),
     ) || null;
 
   /* =======================================================
@@ -936,10 +769,7 @@ const ReceiptForm: React.FC<ReceiptFormProps> = ({
   ======================================================= */
 
   const selectedCbAccount =
-    cbAccountOptions.find(
-      (option) =>
-        option.value === cbAccount
-    ) || null;
+    cbAccountOptions.find((option) => option.value === cbAccount) || null;
 
   /* =======================================================
      RETURN
@@ -947,19 +777,16 @@ const ReceiptForm: React.FC<ReceiptFormProps> = ({
 
   return (
     <div className="px-5 pt-3 pb-2">
-
       {/* ==================================================
           ROW 1
       ================================================== */}
 
       <div className="mb-2 flex items-center justify-between gap-8">
-
         {/* =========================
             BRANCH
         ========================= */}
 
         <div className="flex items-center gap-2">
-
           <label className="w-22.5 text-right text-xs whitespace-nowrap">
             Branch :
           </label>
@@ -967,43 +794,20 @@ const ReceiptForm: React.FC<ReceiptFormProps> = ({
           <Select<SelectOption, false>
             ref={branchRef}
             id="lkpBranch"
-            value={
-              selectedBranch
-            }
-
+            value={selectedBranch}
             onKeyDown={(event) =>
-              handleSelectKeyDown(
-                event,
-                "branch",
-                () =>
-                  typeRef.current?.focus()
+              handleSelectKeyDown(event, "branch", () =>
+                typeRef.current?.focus(),
               )
             }
-
-            onMenuOpen={() =>
-              setOpenSelect(
-                "branch"
-              )
-            }
-
-            onMenuClose={() =>
-              setOpenSelect(
-                null
-              )
-            }
-
+            onMenuOpen={() => setOpenSelect("branch")}
+            onMenuClose={() => setOpenSelect(null)}
             onChange={(option) => {
-              const selectedBranch =
-                option?.value || "";
+              const selectedBranch = option?.value || "";
 
-              console.log(
-                "Selected Branch:",
-                selectedBranch
-              );
+              console.log("Selected Branch:", selectedBranch);
 
-              setBranch(
-                selectedBranch
-              );
+              setBranch(selectedBranch);
 
               /*
                 Use current type.
@@ -1013,76 +817,46 @@ const ReceiptForm: React.FC<ReceiptFormProps> = ({
               */
 
               if (!isModifyMode) {
-                getReceiptDocNumber(
-                  selectedBranch,
-                  type || "B"
-                );
+                getReceiptDocNumber(selectedBranch, type || "B");
               }
             }}
-
-            options={
-              branchOptions
-            }
-
+            options={branchOptions}
             placeholder="Select Branch"
-
             components={{
-              Option:
-                CustomOption,
+              Option: CustomOption,
             }}
-
-            filterOption={
-              filterOption
-            }
-
+            filterOption={filterOption}
             styles={{
               ...selectStyles,
 
-              control: (
-                base: any
-              ) => ({
+              control: (base: any) => ({
                 ...base,
 
-                minHeight:
-                  "28px",
+                minHeight: "28px",
 
-                height:
-                  "28px",
+                height: "28px",
 
-                width:
-                  "200px",
+                width: "200px",
 
-                borderColor:
-                  "#d7dee7",
+                borderColor: "#d7dee7",
 
-                borderRadius:
-                  "4px",
+                borderRadius: "4px",
 
-                boxShadow:
-                  "none",
+                boxShadow: "none",
 
-                fontSize:
-                  "12px",
+                fontSize: "12px",
 
-                cursor:
-                  "text",
+                cursor: "text",
 
                 "&:hover": {
-                  borderColor:
-                    "#9fdfbc",
+                  borderColor: "#9fdfbc",
                 },
               }),
             }}
-
             isSearchable
-
             isClearable={false}
-
-            noOptionsMessage={() =>
-              "No Branch Found"
-            }
+            noOptionsMessage={() => "No Branch Found"}
           />
-
         </div>
 
         {/* =========================
@@ -1090,49 +864,23 @@ const ReceiptForm: React.FC<ReceiptFormProps> = ({
         ========================= */}
 
         <div className="flex items-center gap-2">
-
-          <label className="text-right text-xs whitespace-nowrap">
-            Type :
-          </label>
+          <label className="text-right text-xs whitespace-nowrap">Type :</label>
 
           <Select<SelectOption, false>
             ref={typeRef}
-
             inputId="lkpType"
-
-            value={
-              selectedType
-            }
-
+            value={selectedType}
             onKeyDown={(event) =>
-              handleSelectKeyDown(
-                event,
-                "type",
-                () =>
-                  documentNoRef.current?.focus()
+              handleSelectKeyDown(event, "type", () =>
+                documentNoRef.current?.focus(),
               )
             }
-
-            onMenuOpen={() =>
-              setOpenSelect(
-                "type"
-              )
-            }
-
-            onMenuClose={() =>
-              setOpenSelect(
-                null
-              )
-            }
-
+            onMenuOpen={() => setOpenSelect("type")}
+            onMenuClose={() => setOpenSelect(null)}
             onChange={(option) => {
-              const selectedType =
-                option?.label || option?.value || "B";
+              const selectedType = option?.label || option?.value || "B";
 
-              console.log(
-                "Selected Type:",
-                selectedType
-              );
+              console.log("Selected Type:", selectedType);
 
               /*
                 Update parent Type.
@@ -1141,17 +889,13 @@ const ReceiptForm: React.FC<ReceiptFormProps> = ({
                 C = Cash
               */
 
-              setType(
-                selectedType
-              );
+              setType(selectedType);
 
               /*
                 Reload Cash/Bank accounts.
               */
 
-              loadAccounts(
-                selectedType
-              );
+              loadAccounts(selectedType);
 
               /*
                 Reload document number.
@@ -1161,76 +905,46 @@ const ReceiptForm: React.FC<ReceiptFormProps> = ({
               */
 
               if (branch && !isModifyMode) {
-                getReceiptDocNumber(
-                  branch,
-                  selectedType
-                );
+                getReceiptDocNumber(branch, selectedType);
               }
             }}
-
-            options={
-              typeOptions
-            }
-
+            options={typeOptions}
             placeholder="Select"
-
             components={{
-              Option:
-                CustomOption,
+              Option: CustomOption,
             }}
-
-            filterOption={
-              filterOption
-            }
-
+            filterOption={filterOption}
             styles={{
               ...selectStyles,
 
-              control: (
-                base: any
-              ) => ({
+              control: (base: any) => ({
                 ...base,
 
-                minHeight:
-                  "28px",
+                minHeight: "28px",
 
-                height:
-                  "28px",
+                height: "28px",
 
-                width:
-                  "70px",
+                width: "70px",
 
-                borderColor:
-                  "#d7dee7",
+                borderColor: "#d7dee7",
 
-                borderRadius:
-                  "4px",
+                borderRadius: "4px",
 
-                boxShadow:
-                  "none",
+                boxShadow: "none",
 
-                fontSize:
-                  "12px",
+                fontSize: "12px",
 
-                cursor:
-                  "text",
+                cursor: "text",
 
                 "&:hover": {
-                  borderColor:
-                    "#9fdfbc",
+                  borderColor: "#9fdfbc",
                 },
               }),
             }}
-
             isSearchable
-
             isClearable={false}
-
-            noOptionsMessage={() =>
-              "No Type Found"
-            }
+            noOptionsMessage={() => "No Type Found"}
           />
-
         </div>
 
         {/* =========================
@@ -1238,61 +952,38 @@ const ReceiptForm: React.FC<ReceiptFormProps> = ({
         ========================= */}
 
         <div className="flex items-center gap-2">
-
           <label className="text-right text-xs whitespace-nowrap">
             Receipt No. :
           </label>
 
           <input
-
-          id="txtReceiptNo"
-            ref={
-              documentNoRef
-            }
-
-            value={
-              documentNoLoading
-                ? "Loading..."
-                : documentNo
-            }
-
+            id="txtReceiptNo"
+            ref={documentNoRef}
+            value={documentNoLoading ? "Loading..." : documentNo}
             readOnly={!documentNoEditable}
-
             onChange={(event) => {
               if (documentNoEditable) {
                 setDocumentNo(event.target.value);
               }
             }}
-
             onBlur={() => {
               if (documentNoEditable) {
                 onDocumentNoLookup?.();
               }
             }}
-
             onKeyDown={(event) => {
-              if (
-                documentNoEditable &&
-                event.key === "Enter"
-              ) {
+              if (documentNoEditable && event.key === "Enter") {
                 event.preventDefault();
                 onDocumentNoLookup?.();
-                  cbAccountRef.current?.focus();
+                cbAccountRef.current?.focus();
                 return;
               }
 
-              handleInputKeyDown(
-                event,
-                () =>
-                  cbAccountRef.current?.focus()
-              );
+              handleInputKeyDown(event, () => cbAccountRef.current?.focus());
             }}
-
             className={`${inputClass} w-37.5`}
           />
-
         </div>
-
       </div>
 
       {/* ==================================================
@@ -1300,134 +991,71 @@ const ReceiptForm: React.FC<ReceiptFormProps> = ({
       ================================================== */}
 
       <div className="mb-2 flex items-center justify-between gap-8">
-
         {/* =========================
             CASH / BANK
         ========================= */}
 
         <div className="flex items-center gap-2">
-
           <label className="w-22.5 text-right text-xs whitespace-nowrap">
             Cash/Bank :
           </label>
 
           <Select<SelectOption, false>
-            ref={
-              cbAccountRef
-            }
-             id="lkpCbAccount"
-            value={
-              selectedCbAccount
-            }
-
+            ref={cbAccountRef}
+            id="lkpCbAccount"
+            value={selectedCbAccount}
             onKeyDown={(event) =>
-              handleSelectKeyDown(
-                event,
-                "cbAccount",
-                () =>
-                  dateRef.current?.focus()
+              handleSelectKeyDown(event, "cbAccount", () =>
+                dateRef.current?.focus(),
               )
             }
-
-            onMenuOpen={() =>
-              setOpenSelect(
-                "cbAccount"
-              )
-            }
-
-            onMenuClose={() =>
-              setOpenSelect(
-                null
-              )
-            }
-
+            onMenuOpen={() => setOpenSelect("cbAccount")}
+            onMenuClose={() => setOpenSelect(null)}
             onChange={(option) => {
-              const selectedCbAccount =
-                option?.value || "";
+              const selectedCbAccount = option?.value || "";
 
-              console.log(
-                "Selected Cash/Bank:",
-                selectedCbAccount
-              );
+              console.log("Selected Cash/Bank:", selectedCbAccount);
 
-              setCbAccount(
-                selectedCbAccount
-              );
+              setCbAccount(selectedCbAccount);
             }}
-
-            options={
-              cbAccountOptions
-            }
-
-            placeholder={
-              accountsLoading
-                ? "Loading..."
-                : "Select"
-            }
-
+            options={cbAccountOptions}
+            placeholder={accountsLoading ? "Loading..." : "Select"}
             components={{
-              Option:
-                CustomOption,
+              Option: CustomOption,
             }}
-
-            filterOption={
-              filterOption
-            }
-
+            filterOption={filterOption}
             styles={{
               ...selectStyles,
 
-              control: (
-                base: any
-              ) => ({
+              control: (base: any) => ({
                 ...base,
 
-                minHeight:
-                  "28px",
+                minHeight: "28px",
 
-                height:
-                  "28px",
+                height: "28px",
 
-                width:
-                  "400px",
+                width: "400px",
 
-                borderColor:
-                  "#d7dee7",
+                borderColor: "#d7dee7",
 
-                borderRadius:
-                  "4px",
+                borderRadius: "4px",
 
-                boxShadow:
-                  "none",
+                boxShadow: "none",
 
-                fontSize:
-                  "12px",
+                fontSize: "12px",
 
-                cursor:
-                  "text",
+                cursor: "text",
 
                 "&:hover": {
-                  borderColor:
-                    "#9fdfbc",
+                  borderColor: "#9fdfbc",
                 },
               }),
             }}
-
             isSearchable
-
             isClearable={false}
-
-            isDisabled={
-              accountsLoading ||
-              cbAccountOptions.length ===
-                0
-            }
-
-            noOptionsMessage={() =>
-              "No Cash/Bank Found"
-            }
+            isDisabled={accountsLoading || cbAccountOptions.length === 0}
+            noOptionsMessage={() => "No Cash/Bank Found"}
           />
-
         </div>
 
         {/* =========================
@@ -1435,52 +1063,26 @@ const ReceiptForm: React.FC<ReceiptFormProps> = ({
         ========================= */}
 
         <div className="flex items-center gap-2">
+          <label className="text-right text-xs whitespace-nowrap">Date :</label>
 
-          <label className="text-right text-xs whitespace-nowrap">
-            Date :
-          </label>
-
-          <LocalizationProvider
-            dateAdapter={AdapterDayjs}
-          >
+          <LocalizationProvider dateAdapter={AdapterDayjs}>
             <DatePicker
-              value={
-                    date
-                  ? dayjs(
-                      date,
-                      "DD/MM/YYYY"
-                    )
-                  : null
-              }
-
+              value={date ? dayjs(date, "DD/MM/YYYY") : null}
               onChange={(newValue) => {
-                if (
-                  newValue?.isValid()
-                ) {
-                  setDate(
-                    newValue.format(
-                      "DD/MM/YYYY"
-                    )
-                  );
+                if (newValue?.isValid()) {
+                  setDate(newValue.format("DD/MM/YYYY"));
                 } else {
                   setDate("");
                 }
               }}
-
               format="DD/MM/YYYY"
-
               inputRef={dateRef}
-
               slotProps={{
                 textField: {
                   id: "dtpDate",
-                  onKeyDown: (
-                    event
-                  ) =>
-                    handleInputKeyDown(
-                      event,
-                      () =>
-                        receivedFromRef.current?.focus()
+                  onKeyDown: (event) =>
+                    handleInputKeyDown(event, () =>
+                      receivedFromRef.current?.focus(),
                     ),
                 },
                 openPickerButton: {
@@ -1497,112 +1099,93 @@ const ReceiptForm: React.FC<ReceiptFormProps> = ({
                   },
                 },
               }}
-
               sx={{
                 width: "150px",
 
-                "& .MuiPickersTextField-root":
-                  {
-                    width: "150px",
-                  },
+                "& .MuiPickersTextField-root": {
+                  width: "150px",
+                },
 
-                "& .MuiPickersInputBase-root":
-                  {
-                    width: "150px",
+                "& .MuiPickersInputBase-root": {
+                  width: "150px",
 
-                    height: "28px",
+                  height: "28px",
 
-                    minHeight: "28px",
+                  minHeight: "28px",
 
-                    boxSizing:
-                      "border-box",
+                  boxSizing: "border-box",
 
-                    borderRadius:
-                      "4px",
+                  borderRadius: "4px",
 
-                    backgroundColor:
-                      "#ffffff",
+                  backgroundColor: "#ffffff",
 
-                    fontSize: "12px",
+                  fontSize: "12px",
 
-                    padding: 0,
+                  padding: 0,
 
-                    overflow: "hidden",
-                  },
+                  overflow: "hidden",
+                },
 
-                "& .MuiPickersInputBase-sectionContainer":
-                  {
-                    minWidth: 0,
+                "& .MuiPickersInputBase-sectionContainer": {
+                  minWidth: 0,
 
-                    padding:
-                      "0 0 0 8px",
+                  padding: "0 0 0 8px",
 
-                    overflow: "hidden",
-                  },
+                  overflow: "hidden",
+                },
 
-                "& .MuiPickersInputBase-input":
-                  {
-                    minWidth: 0,
+                "& .MuiPickersInputBase-input": {
+                  minWidth: 0,
 
-                    width: "100%",
+                  width: "100%",
 
-                    fontSize: "12px",
+                  fontSize: "12px",
 
-                    padding: 0,
+                  padding: 0,
 
-                    height: "28px",
+                  height: "28px",
 
-                    boxSizing:
-                      "border-box",
-                  },
+                  boxSizing: "border-box",
+                },
 
-                "& .MuiInputAdornment-root":
-                  {
-                    margin: 0,
-                    padding: 0,
-                  },
+                "& .MuiInputAdornment-root": {
+                  margin: 0,
+                  padding: 0,
+                },
 
-                "& .MuiIconButton-root":
-                  {
-                    width: "24px",
+                "& .MuiIconButton-root": {
+                  width: "24px",
 
-                    height: "24px",
+                  height: "24px",
 
-                    padding: "2px",
+                  padding: "2px",
 
-                    margin: 0,
-                  },
+                  margin: 0,
+                },
 
-                "& .MuiSvgIcon-root":
-                  {
-                    fontSize: "16px",
-                  },
+                "& .MuiSvgIcon-root": {
+                  fontSize: "16px",
+                },
 
-                "& .MuiPickersOutlinedInput-notchedOutline":
-                  {
-                    borderColor:
-                      "#d7dee7",
-                  },
+                "& .MuiPickersOutlinedInput-notchedOutline": {
+                  borderColor: "#d7dee7",
+                },
 
                 "& .MuiPickersInputBase-root:hover .MuiPickersOutlinedInput-notchedOutline":
                   {
-                    borderColor:
-                      "#9fdfbc",
+                    borderColor: "#9fdfbc",
                   },
 
                 "& .MuiPickersInputBase-root.Mui-focused .MuiPickersOutlinedInput-notchedOutline":
                   {
-                    borderColor:
-                      "#9fdfbc",
+                    borderColor: "#9fdfbc",
 
                     borderWidth: "1px",
                   },
               }}
             />
           </LocalizationProvider>
-
         </div>
-
       </div>
 
       {/* ==================================================
@@ -1610,43 +1193,25 @@ const ReceiptForm: React.FC<ReceiptFormProps> = ({
       ================================================== */}
 
       <div className="flex items-center justify-between gap-8">
-
         {/* =========================
             RECEIVED FROM
         ========================= */}
 
         <div className="flex items-center gap-2">
-
           <label className="w-22.5 text-right text-xs whitespace-nowrap">
             Received From :
           </label>
 
           <input
-            ref={
-              receivedFromRef
-            }
+            ref={receivedFromRef}
             id="txtReceivedFrom"
-            value={
-              receivedFrom
-            }
-
-            onChange={(event) =>
-              setReceivedFrom(
-                event.target.value
-              )
-            }
-
+            value={receivedFrom}
+            onChange={(event) => setReceivedFrom(event.target.value)}
             onKeyDown={(event) =>
-              handleInputKeyDown(
-                event,
-                () =>
-                  referenceRef.current?.focus()
-              )
+              handleInputKeyDown(event, () => referenceRef.current?.focus())
             }
-
             className={`${inputClass} w-100`}
           />
-
         </div>
 
         {/* =========================
@@ -1654,41 +1219,22 @@ const ReceiptForm: React.FC<ReceiptFormProps> = ({
         ========================= */}
 
         <div className="flex items-center gap-2">
-
           <label className="text-right text-xs whitespace-nowrap">
             Reference :
           </label>
 
           <input
-            ref={
-              referenceRef
-            }
+            ref={referenceRef}
             id="txtReference"
-
-            value={
-              reference
-            }
-
-            onChange={(event) =>
-              setReference(
-                event.target.value
-              )
-            }
-
+            value={reference}
+            onChange={(event) => setReference(event.target.value)}
             onKeyDown={(event) =>
-              handleInputKeyDown(
-                event,
-                focusFirstAccountId
-              )
+              handleInputKeyDown(event, focusFirstAccountId)
             }
-
             className={`${inputClass} w-50`}
           />
-
         </div>
-
       </div>
-
     </div>
   );
 };
