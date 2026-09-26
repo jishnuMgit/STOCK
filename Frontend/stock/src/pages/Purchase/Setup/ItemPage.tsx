@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import Select, { type StylesConfig } from "react-select";
 import { toast } from "react-toastify";
+import { X } from "lucide-react";
 
 /* =========================================================
    TYPES
@@ -319,20 +320,55 @@ const ItemPage: React.FC = () => {
     })
   );
 
-  const branchOptions: SelectOption[] = [
-    {
-      value: "JD",
-      label: "JD",
-    },
-    {
-      value: "DXB",
-      label: "DXB",
-    },
-    {
-      value: "AUH",
-      label: "AUH",
-    },
-  ];
+  /* =========================================================
+     LOAD BRANCH LIST (lkpBranch dropdown, grid rows)
+  ========================================================= */
+
+  const [branchOptions, setBranchOptions] = useState<SelectOption[]>([]);
+
+  useEffect(() => {
+    const loadBranchList = async () => {
+      try {
+        const CoID = localStorage.getItem("CoID");
+        const userId = localStorage.getItem("userID");
+
+        if (!CoID || !userId) {
+          toast.error("getBranchList: no CoID/userId in localStorage");
+          return;
+        }
+
+        const response = await fetch(
+          `${import.meta.env.VITE_API_URL}/Item/getBranchList?CoID=${CoID}&userId=${userId}`
+        );
+
+        if (!response.ok) {
+          throw new Error(`HTTP Error: ${response.status}`);
+        }
+
+        const result = await response.json();
+
+        if (!result.success) {
+          console.error("getBranchList failed:", result.message);
+          toast.error(`getBranchList failed: ${result.message}`);
+          return;
+        }
+
+        const options: SelectOption[] = (result.data || []).map(
+          (row: { fbrid: string; fbrname: string }) => ({
+            value: row.fbrid,
+            label: row.fbrname,
+          })
+        );
+
+        setBranchOptions(options);
+      } catch (error) {
+        console.error("getBranchList error:", error);
+        toast.error(`getBranchList error: ${error instanceof Error ? error.message : String(error)}`);
+      }
+    };
+
+    loadBranchList();
+  }, []);
 
   /* =========================================================
      UPDATE TABLE ROW
@@ -359,32 +395,261 @@ const ItemPage: React.FC = () => {
      BUTTON HANDLERS
   ========================================================= */
 
-  const handleSave = () => {
-    console.log("Save", {
-      txtItemID,
-      txtItemName,
-      txtItemDescription,
-      lkpUnit,
-      txtPacking,
-      txtCBM,
-      lkpItemGroupID,
-      lkpItemGroupName,
-      lkpSupplierID,
-      lkpSupplierName,
-      txtSupplierItemID,
-      txtReorderLevel,
-      txtReorderQty,
-      chkAllBranches,
-      rows,
-    });
+  const handleSave = async () => {
+    if (!txtItemID || !txtItemName || !lkpUnit || !lkpItemGroupID || !txtSupplierItemID) {
+      toast.warning("Item ID, Item Name, Unit, Item Group and Supplier Item ID are required.");
+      return;
+    }
+
+    const validRows = rows.filter((row) => row.lkpBranch);
+
+    if (validRows.length === 0) {
+      toast.warning("At least one Branch row is required.");
+      return;
+    }
+
+    const CoID = localStorage.getItem("CoID");
+    const userId = localStorage.getItem("userID");
+
+    if (!CoID || !userId) {
+      toast.error("Company ID / User ID not found. Please log in again.");
+      return;
+    }
+
+    try {
+      const response = await fetch(
+        `${import.meta.env.VITE_API_URL}/Item/saveItem`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            CoID,
+            userId,
+            txtItemID,
+            txtItemName,
+            txtItemDescription: txtItemDescription || null,
+            lkpUnit,
+            txtPacking,
+            txtCBM,
+            lkpItemGroupID,
+            lkpSupplierID: lkpSupplierID || null,
+            txtSupplierItemID,
+            txtReorderLevel,
+            txtReorderQty,
+            rows: validRows.map((row) => ({
+              lkpBranch: row.lkpBranch,
+              txtItemLocation: row.txtItemLocation || null,
+              chkAllowSaleBelowCost: row.chkAllowSaleBelowCost,
+              chkInactive: row.chkInactive,
+            })),
+          }),
+        }
+      );
+
+      const result = await response.json();
+
+      if (!response.ok || !result.success) {
+        toast.error(result.message || "Item could not be saved.");
+        return;
+      }
+
+      toast.success(result.message || "Item saved successfully.");
+    } catch (error) {
+      console.error("saveItem error:", error);
+      toast.error("Cannot connect to Item API.");
+    }
   };
 
-  const handleFind = () => {
-    console.log("Find");
+  const handleFind = async () => {
+    if (!txtItemID) {
+      toast.warning("Item ID is required.");
+      return;
+    }
+
+    const CoID = localStorage.getItem("CoID");
+
+    if (!CoID) {
+      toast.error("Company ID not found. Please log in again.");
+      return;
+    }
+
+    try {
+      const response = await fetch(
+        `${import.meta.env.VITE_API_URL}/Item/getItem?CoID=${CoID}&txtItemID=${txtItemID}`
+      );
+
+      const result = await response.json();
+
+      if (!response.ok || !result.success) {
+        toast.error(result.message || "Item not found.");
+        return;
+      }
+
+      const header = result.header;
+
+      setTxtItemName(header.fitemname || "");
+      setTxtItemDescription(header.fitemdescription || "");
+      setLkpUnit(header.funit || "");
+      setTxtPacking(String(header.fpacking ?? "0"));
+      setTxtCBM(String(header.fcbm ?? "0.0000"));
+
+      setLkpItemGroupID(header.fitemgroupid || "");
+      setLkpItemGroupName(
+        itemGroupList.find((group) => group.fitemgroupid === header.fitemgroupid)
+          ?.fitemgroupname || ""
+      );
+
+      setLkpSupplierID(header.fsupplierid || "");
+      setLkpSupplierName(
+        supplierList.find((supplier) => supplier.fcsaccountid === header.fsupplierid)
+          ?.fcsaccountname || ""
+      );
+
+      setTxtSupplierItemID(header.fsupplieritemid || "");
+      setTxtReorderLevel(String(header.freorderlevel ?? "0"));
+      setTxtReorderQty(String(header.freorderqty ?? "0"));
+
+      const foundRows: BranchRow[] = (result.rows || []).map(
+        (row: {
+          fbrid: string;
+          fitemlocation: string | null;
+          fallowsalebelowcost: boolean;
+          finactive: boolean;
+        }, index: number) => ({
+          id: index + 1,
+          lkpBranch: row.fbrid,
+          txtItemLocation: row.fitemlocation || "",
+          chkAllowSaleBelowCost: row.fallowsalebelowcost,
+          chkInactive: row.finactive,
+        })
+      );
+
+      const blankRowsNeeded = Math.max(0, 5 - foundRows.length);
+      const blankRows: BranchRow[] = Array.from(
+        { length: blankRowsNeeded },
+        (_, index) => ({
+          id: foundRows.length + index + 1,
+          lkpBranch: "",
+          txtItemLocation: "",
+          chkInactive: false,
+          chkAllowSaleBelowCost: false,
+        })
+      );
+
+      setRows([...foundRows, ...blankRows]);
+
+      toast.success("Item loaded.");
+    } catch (error) {
+      console.error("getItem error:", error);
+      toast.error("Cannot connect to Item API.");
+    }
   };
 
-  const handleDelete = () => {
-    console.log("Delete");
+  const handleDelete = async () => {
+    if (!txtItemID) {
+      toast.warning("Item ID is required.");
+      return;
+    }
+
+    const shouldDelete = window.confirm(
+      "Are you sure you want to delete this item?"
+    );
+
+    if (!shouldDelete) {
+      return;
+    }
+
+    const CoID = localStorage.getItem("CoID");
+    const userId = localStorage.getItem("userID");
+
+    if (!CoID || !userId) {
+      toast.error("Company ID / User ID not found. Please log in again.");
+      return;
+    }
+
+    try {
+      const response = await fetch(
+        `${import.meta.env.VITE_API_URL}/Item/deleteItem`,
+        {
+          method: "DELETE",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ CoID, userId, txtItemID }),
+        }
+      );
+
+      const result = await response.json();
+
+      if (!response.ok || !result.success) {
+        toast.error(result.message || "Item could not be deleted.");
+        return;
+      }
+
+      toast.success(result.message || "Item deleted successfully.");
+      handleClear();
+    } catch (error) {
+      console.error("deleteItem error:", error);
+      toast.error("Cannot connect to Item API.");
+    }
+  };
+
+  const handleDeleteBranchRow = async (row: BranchRow) => {
+    if (!txtItemID) {
+      toast.warning("Item ID is required.");
+      return;
+    }
+
+    if (!row.lkpBranch) {
+      return;
+    }
+
+    const shouldDelete = window.confirm(
+      "Are you sure you want to delete this branch row?"
+    );
+
+    if (!shouldDelete) {
+      return;
+    }
+
+    const CoID = localStorage.getItem("CoID");
+    const userId = localStorage.getItem("userID");
+
+    if (!CoID || !userId) {
+      toast.error("Company ID / User ID not found. Please log in again.");
+      return;
+    }
+
+    try {
+      const response = await fetch(
+        `${import.meta.env.VITE_API_URL}/Item/deleteItemBranchRow`,
+        {
+          method: "DELETE",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            CoID,
+            userId,
+            txtItemID,
+            lkpBranch: row.lkpBranch,
+          }),
+        }
+      );
+
+      const result = await response.json();
+
+      if (!response.ok || !result.success) {
+        toast.error(result.message || "Branch row could not be deleted.");
+        return;
+      }
+
+      toast.success(result.message || "Branch row deleted successfully.");
+
+      updateRow(row.id, "lkpBranch", "");
+      updateRow(row.id, "txtItemLocation", "");
+      updateRow(row.id, "chkAllowSaleBelowCost", false);
+      updateRow(row.id, "chkInactive", false);
+    } catch (error) {
+      console.error("deleteItemBranchRow error:", error);
+      toast.error("Cannot connect to Item API.");
+    }
   };
 
   const handleClear = () => {
@@ -1120,6 +1385,7 @@ const ItemPage: React.FC = () => {
                   marginLeft: "-10px",
                 }}
               >
+                {requiredDot}
                 Supplier Item ID :
               </label>
 
@@ -1391,31 +1657,55 @@ const ItemPage: React.FC = () => {
                           p-0
                         "
                       >
-                        <Select
-                          inputId={`lkpBranch_${row.id}`}
-                          name={`lkpBranch_${row.id}`}
-                          options={branchOptions}
-                          value={
-                            branchOptions.find(
-                              (option) =>
-                                option.value ===
-                                row.lkpBranch,
-                            ) || null
-                          }
-                          onChange={(option) =>
-                            updateRow(
-                              row.id,
-                              "lkpBranch",
-                              option?.value || "",
-                            )
-                          }
-                          styles={tableSelectStyles}
-                          isClearable
-                          menuPortalTarget={
-                            document.body
-                          }
-                          menuPosition="fixed"
-                        />
+                        <div className="flex h-[32px] items-stretch">
+                          <div className="flex-1 overflow-hidden">
+                            <Select
+                              inputId={`lkpBranch_${row.id}`}
+                              name={`lkpBranch_${row.id}`}
+                              options={branchOptions}
+                              value={
+                                branchOptions.find(
+                                  (option) =>
+                                    option.value ===
+                                    row.lkpBranch,
+                                ) || null
+                              }
+                              onChange={(option) =>
+                                updateRow(
+                                  row.id,
+                                  "lkpBranch",
+                                  option?.value || "",
+                                )
+                              }
+                              styles={tableSelectStyles}
+                              menuPortalTarget={
+                                document.body
+                              }
+                              menuPosition="fixed"
+                            />
+                          </div>
+
+                          {row.lkpBranch && (
+                            <button
+                              type="button"
+                              onClick={() =>
+                                handleDeleteBranchRow(row)
+                              }
+                              className="
+                                h-full
+                                w-[20px]
+                                self-stretch
+                                flex
+                                items-center
+                                justify-center
+                                text-slate-400
+                                hover:text-red-500
+                              "
+                            >
+                              <X size={12} />
+                            </button>
+                          )}
+                        </div>
                       </td>
 
                       {/* =====================================
@@ -1576,9 +1866,9 @@ const ItemPage: React.FC = () => {
             >
               <span className={textClass}>
                 <span className="underline decoration-2 underline-offset-1">
-                  F
+                  S
                 </span>
-                ind
+                earch
               </span>
             </button>
 
