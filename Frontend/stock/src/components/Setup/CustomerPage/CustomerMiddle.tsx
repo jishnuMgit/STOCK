@@ -1179,7 +1179,7 @@ const CustomerMiddle: React.FC<CustomerMiddleProps> = ({
 <div className="relative -left-[65px] grid grid-cols-[60px_minmax(0,1fr)] items-center gap-2">
   <label
     htmlFor="txtShortName"
-    className="text-[11px] text-slate-600"
+    className="text-[11px] text-slate-600 whitespace-nowrap"
   >
     Short Name
   </label>
