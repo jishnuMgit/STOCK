@@ -979,7 +979,7 @@ const CustomerMiddle: React.FC<CustomerMiddleProps> = ({
       ===================================================== */}
 
       <div className="p-3">
-        <div className="grid grid-cols-1 gap-x-2 gap-y-1.5 md:grid-cols-2 lg:grid-cols-4 md:mr-[8%] lg:mr-[9%]">
+        <div className="grid grid-cols-1 gap-x-2 gap-y-1.5 md:grid-cols-2 lg:grid-cols-4 mr-[6.2rem]">
           {/* =================================================
            CREDIT LIMIT
           ================================================= */}
