@@ -16,34 +16,22 @@ interface SelectOption {
 
 interface CustomerHeaderProps {
   txtCustomerID: string;
-  setTxtCustomerID: React.Dispatch<
-    React.SetStateAction<string>
-  >;
+  setTxtCustomerID: React.Dispatch<React.SetStateAction<string>>;
 
   optNewCustomerID: string;
-  setOptNewCustomerID: React.Dispatch<
-    React.SetStateAction<string>
-  >;
+  setOptNewCustomerID: React.Dispatch<React.SetStateAction<string>>;
 
   lkpParentAccountID: string;
-  setLkpParentAccountID: React.Dispatch<
-    React.SetStateAction<string>
-  >;
+  setLkpParentAccountID: React.Dispatch<React.SetStateAction<string>>;
 
   lkpParentAccountName: string;
-  setLkpParentAccountName: React.Dispatch<
-    React.SetStateAction<string>
-  >;
+  setLkpParentAccountName: React.Dispatch<React.SetStateAction<string>>;
 
   lkpHaveDivision: string;
-  setLkpHaveDivision: React.Dispatch<
-    React.SetStateAction<string>
-  >;
+  setLkpHaveDivision: React.Dispatch<React.SetStateAction<string>>;
 
   lkpBusinessType: string;
-  setLkpBusinessType: React.Dispatch<
-    React.SetStateAction<string>
-  >;
+  setLkpBusinessType: React.Dispatch<React.SetStateAction<string>>;
 }
 
 // ============================================================
@@ -111,9 +99,7 @@ const selectStyles: StylesConfig<SelectOption, false> = {
 
     borderRadius: "3px",
 
-    borderColor: state.isFocused
-      ? "#64748b"
-      : "#aeb7c2",
+    borderColor: state.isFocused ? "#64748b" : "#aeb7c2",
 
     boxShadow: "none",
 
@@ -203,8 +189,8 @@ const selectStyles: StylesConfig<SelectOption, false> = {
     backgroundColor: state.isSelected
       ? "#dbeafe"
       : state.isFocused
-      ? "#eff6ff"
-      : "#ffffff",
+        ? "#eff6ff"
+        : "#ffffff",
 
     color: "#334155",
 
@@ -219,9 +205,7 @@ const selectStyles: StylesConfig<SelectOption, false> = {
 const CustomDropdownIndicator = (props: any) => {
   return (
     <components.DropdownIndicator {...props}>
-      <span className="text-[9px] text-slate-500">
-        ▼
-      </span>
+      <span className="text-[9px] text-slate-500">▼</span>
     </components.DropdownIndicator>
   );
 };
@@ -255,13 +239,9 @@ const CustomerHeader: React.FC<CustomerHeaderProps> = ({
 
   const getOption = (
     options: SelectOption[],
-    value: string
+    value: string,
   ): SelectOption | null => {
-    return (
-      options.find(
-        (item) => item.value === value
-      ) ?? null
-    );
+    return options.find((item) => item.value === value) ?? null;
   };
 
   // ==========================================================
@@ -323,10 +303,8 @@ const CustomerHeader: React.FC<CustomerHeaderProps> = ({
           HEADER CONTROLS
       ====================================================== */}
 
-   
-
-<div
-  className="
+      <div
+        className="
     border-b
     border-slate-200
     px-3
@@ -334,9 +312,9 @@ const CustomerHeader: React.FC<CustomerHeaderProps> = ({
     sm:px-5
     lg:px-6
   "
->
-  <div
-    className="
+      >
+        <div
+          className="
       grid
       grid-cols-1
       gap-3
@@ -345,27 +323,26 @@ const CustomerHeader: React.FC<CustomerHeaderProps> = ({
       lg:items-end
       lg:gap-4
     "
-  >
-
-    {/* ==================================================
+        >
+          {/* ==================================================
         NEW CUSTOMER ID
     ================================================== */}
 
-    <div className="w-full">
-      <label
-        htmlFor="optNewCustomerID_Auto"
-        className="
+          <div className="w-full">
+            <label
+              htmlFor="optNewCustomerID_Auto"
+              className="
           mb-1
           block
           text-[11px]
           text-slate-600
         "
-      >
-         New Customer ID
-      </label>
+            >
+              New Customer ID
+            </label>
 
-      <div
-        className="
+            <div
+              className="
           flex
           h-[28px]
           items-center
@@ -375,109 +352,99 @@ const CustomerHeader: React.FC<CustomerHeaderProps> = ({
           border-slate-200
           px-2
         "
-      >
-        {/* AUTO */}
+            >
+              {/* AUTO */}
 
-        <label
-          htmlFor="optNewCustomerID_Auto"
-          className="
+              <label
+                htmlFor="optNewCustomerID_Auto"
+                className="
             flex
             cursor-pointer
             items-center
             gap-1
             whitespace-nowrap
           "
-        >
-          <input
-            id="optNewCustomerID_Auto"
-            name="optNewCustomerID"
-            type="radio"
-            value="Auto"
-            checked={optNewCustomerID === "Auto"}
-            onChange={(e) =>
-              setOptNewCustomerID(e.target.value)
-            }
-            className="
+              >
+                <input
+                  id="optNewCustomerID_Auto"
+                  name="optNewCustomerID"
+                  type="radio"
+                  value="Auto"
+                  checked={optNewCustomerID === "Auto"}
+                  onChange={(e) => setOptNewCustomerID(e.target.value)}
+                  className="
               h-[13px]
               w-[13px]
               accent-blue-600
             "
-          />
+                />
 
-          <span className="text-[12px]">
-            Auto
-          </span>
-        </label>
+                <span className="text-[12px]">Auto</span>
+              </label>
 
-        {/* MANUAL */}
+              {/* MANUAL */}
 
-        <label
-          htmlFor="optNewCustomerID_Manual"
-          className="
+              <label
+                htmlFor="optNewCustomerID_Manual"
+                className="
             flex
             cursor-pointer
             items-center
             gap-1
             whitespace-nowrap
           "
-        >
-          <input
-            id="optNewCustomerID_Manual"
-            name="optNewCustomerID"
-            type="radio"
-            value="Manual"
-            checked={optNewCustomerID === "Manual"}
-            onChange={(e) =>
-              setOptNewCustomerID(e.target.value)
-            }
-            className="
+              >
+                <input
+                  id="optNewCustomerID_Manual"
+                  name="optNewCustomerID"
+                  type="radio"
+                  value="Manual"
+                  checked={optNewCustomerID === "Manual"}
+                  onChange={(e) => setOptNewCustomerID(e.target.value)}
+                  className="
               h-[13px]
               w-[13px]
               accent-blue-600
             "
-          />
+                />
 
-          <span className="text-[12px]">
-            Manual
-          </span>
-        </label>
-      </div>
-    </div>
+                <span className="text-[12px]">Manual</span>
+              </label>
+            </div>
+          </div>
 
-    {/* ==================================================
+          {/* ==================================================
         CUSTOMER ID
     ================================================== */}
 
-    <div className="w-full">
-      <label
-        htmlFor="txtCustomerID"
-        className="
+          <div className="w-full">
+            <label
+              htmlFor="txtCustomerID"
+              className="
           mb-1
           block
           text-[11px]
           text-slate-600
         "
-      >
-        Customer ID
-      </label>
+            >
+              Customer ID
+            </label>
 
-      <input
-        id="txtCustomerID"
-        name="txtCustomerID"
-        type="text"
-        value={txtCustomerID}
-        onChange={(e) =>
-          setTxtCustomerID(e.target.value)
-        }
-        className={inputClass}
-      />
-    </div>
+            <input
+              id="txtCustomerID"
+              name="txtCustomerID"
+              type="text"
+              value={txtCustomerID}
+              onChange={(e) => setTxtCustomerID(e.target.value)}
+              className={inputClass}
+            />
+          </div>
 
-    {/* ==================================================
+          {/* ==================================================
         PARENT ACCOUNT
     ================================================== */}
-<div
-  className="
+          <div
+            className="
     grid
     grid-cols-[20%_minmax(0,1fr)]
     items-end
@@ -485,192 +452,158 @@ const CustomerHeader: React.FC<CustomerHeaderProps> = ({
     sm:col-span-2
     lg:col-span-1
   "
->
+          >
+            {/* PARENT ACCOUNT ID */}
 
-      {/* PARENT ACCOUNT ID */}
+            <div className="w-full">
+              <label
+                htmlFor="lkpParentAccountID"
+                className="mb-1 block
+            whitespace-nowrap
+            text-[11px]
+            text-slate-600
+          "
+              >
+                Parent Account ID
+              </label>
 
-     <div className="w-full">
-        <label
-          htmlFor="lkpParentAccountID"
-          className="
+              <Select
+                inputId="lkpParentAccountID"
+                instanceId="lkpParentAccountID"
+                name="lkpParentAccountID"
+                options={parentAccountOptions}
+                value={getOption(parentAccountOptions, lkpParentAccountID)}
+                onChange={(option: SingleValue<SelectOption>) =>
+                  setLkpParentAccountID(option?.value ?? "")
+                }
+                styles={selectStyles}
+                components={{
+                  DropdownIndicator: CustomDropdownIndicator,
+                }}
+                isSearchable={false}
+                menuPortalTarget={document.body}
+                menuPosition="fixed"
+              />
+            </div>
+
+            {/* PARENT ACCOUNT NAME */}
+
+            <div className="w-[100%]">
+              <label
+                htmlFor="lkpParentAccountName"
+                className="
             mb-1
             block
             whitespace-nowrap
             text-[11px]
             text-slate-600
           "
-        >
-          Parent Account ID
-        </label>
+              >
+                Parent Account Name
+              </label>
 
-        <Select
-          inputId="lkpParentAccountID"
-          instanceId="lkpParentAccountID"
-          name="lkpParentAccountID"
-          options={parentAccountOptions}
-          value={getOption(
-            parentAccountOptions,
-            lkpParentAccountID
-          )}
-          onChange={(
-            option: SingleValue<SelectOption>
-          ) =>
-            setLkpParentAccountID(
-              option?.value ?? ""
-            )
-          }
-          styles={selectStyles}
-          components={{
-            DropdownIndicator:
-              CustomDropdownIndicator,
-          }}
-          isSearchable={false}
-          menuPortalTarget={document.body}
-          menuPosition="fixed"
-        />
-      </div>
+              <Select
+                inputId="lkpParentAccountName"
+                instanceId="lkpParentAccountName"
+                name="lkpParentAccountName"
+                options={parentAccountNameOptions}
+                value={getOption(
+                  parentAccountNameOptions,
+                  lkpParentAccountName,
+                )}
+                onChange={(option: SingleValue<SelectOption>) =>
+                  setLkpParentAccountName(option?.value ?? "")
+                }
+                styles={selectStyles}
+                components={{
+                  DropdownIndicator: CustomDropdownIndicator,
+                }}
+                isSearchable={false}
+                menuPortalTarget={document.body}
+                menuPosition="fixed"
+              />
+            </div>
+          </div>
 
-      {/* PARENT ACCOUNT NAME */}
-
-      <div className="w-[100%]">
-        <label
-          htmlFor="lkpParentAccountName"
-          className="
-            mb-1
-            block
-            whitespace-nowrap
-            text-[11px]
-            text-slate-600
-          "
-        >
-          Parent Account Name
-        </label>
-
-        <Select
-          inputId="lkpParentAccountName"
-          instanceId="lkpParentAccountName"
-          name="lkpParentAccountName"
-          options={parentAccountNameOptions}
-          value={getOption(
-            parentAccountNameOptions,
-            lkpParentAccountName
-          )}
-          onChange={(
-            option: SingleValue<SelectOption>
-          ) =>
-            setLkpParentAccountName(
-              option?.value ?? ""
-            )
-          }
-          styles={selectStyles}
-          components={{
-            DropdownIndicator:
-              CustomDropdownIndicator,
-          }}
-          isSearchable={false}
-          menuPortalTarget={document.body}
-          menuPosition="fixed"
-        />
-      </div>
-
-    </div>
-
-    {/* ==================================================
+          {/* ==================================================
         HAVE DIVISION
     ================================================== */}
 
-    {/* ==================================================
+          {/* ==================================================
     HAVE DIVISION
 ================================================== */}
 
-<div className="relative -left-[5px] w-[100%]">
-  <label
-    htmlFor="lkpHaveDivision"
-    className="
+          <div className="relative -left-[5px] w-[100%]">
+            <label
+              htmlFor="lkpHaveDivision"
+              className="
       mb-1
       block
       whitespace-nowrap
       text-[11px]
       text-slate-600
     "
-  >
-     Division
-  </label>
+            >
+              Division
+            </label>
 
-  <Select
-    inputId="lkpHaveDivision"
-    instanceId="lkpHaveDivision"
-    name="lkpHaveDivision"
-    options={haveDivisionOptions}
-    value={getOption(
-      haveDivisionOptions,
-      lkpHaveDivision
-    )}
-    onChange={(
-      option: SingleValue<SelectOption>
-    ) =>
-      setLkpHaveDivision(
-        option?.value ?? ""
-      )
-    }
-    styles={selectStyles}
-    components={{
-      DropdownIndicator:
-        CustomDropdownIndicator,
-    }}
-    isSearchable={false}
-    menuPortalTarget={document.body}
-    menuPosition="fixed"
-  />
-</div>
+            <Select
+              inputId="lkpHaveDivision"
+              instanceId="lkpHaveDivision"
+              name="lkpHaveDivision"
+              options={haveDivisionOptions}
+              value={getOption(haveDivisionOptions, lkpHaveDivision)}
+              onChange={(option: SingleValue<SelectOption>) =>
+                setLkpHaveDivision(option?.value ?? "")
+              }
+              styles={selectStyles}
+              components={{
+                DropdownIndicator: CustomDropdownIndicator,
+              }}
+              isSearchable={false}
+              menuPortalTarget={document.body}
+              menuPosition="fixed"
+            />
+          </div>
 
-{/* ==================================================
+          {/* ==================================================
     BUSINESS TYPE
 ================================================== */}
 
-<div className="relative -left-[13px] w-[50%]">
-  <label
-    htmlFor="lkpBusinessType"
-    className="
+          <div className="relative -left-[13px] w-[50%]">
+            <label
+              htmlFor="lkpBusinessType"
+              className="
       mb-1
       block
       whitespace-nowrap
       text-[11px]
       text-slate-600
     "
-  >
-    Business Type
-  </label>
+            >
+              Business Type
+            </label>
 
-  <Select
-    inputId="lkpBusinessType"
-    instanceId="lkpBusinessType"
-    name="lkpBusinessType"
-    options={businessTypeOptions}
-    value={getOption(
-      businessTypeOptions,
-      lkpBusinessType
-    )}
-    onChange={(
-      option: SingleValue<SelectOption>
-    ) =>
-      setLkpBusinessType(
-        option?.value ?? ""
-      )
-    }
-    styles={selectStyles}
-    components={{
-      DropdownIndicator:
-        CustomDropdownIndicator,
-    }}
-    isSearchable={false}
-    menuPortalTarget={document.body}
-    menuPosition="fixed"
-  />
-</div>
-
-  </div>
-</div>
+            <Select
+              inputId="lkpBusinessType"
+              instanceId="lkpBusinessType"
+              name="lkpBusinessType"
+              options={businessTypeOptions}
+              value={getOption(businessTypeOptions, lkpBusinessType)}
+              onChange={(option: SingleValue<SelectOption>) =>
+                setLkpBusinessType(option?.value ?? "")
+              }
+              styles={selectStyles}
+              components={{
+                DropdownIndicator: CustomDropdownIndicator,
+              }}
+              isSearchable={false}
+              menuPortalTarget={document.body}
+              menuPosition="fixed"
+            />
+          </div>
+        </div>
+      </div>
     </>
   );
 };

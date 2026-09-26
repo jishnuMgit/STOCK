@@ -540,6 +540,7 @@ const CustomerMiddle: React.FC<CustomerMiddleProps> = ({
                   styles={selectStyles}
                   components={{
                     DropdownIndicator: CustomDropdownIndicator,
+                    IndicatorSeparator: () => null,
                   }}
                   menuPortalTarget={document.body}
                   menuPosition="fixed"
@@ -865,6 +866,7 @@ const CustomerMiddle: React.FC<CustomerMiddleProps> = ({
                   }}
                   components={{
                     DropdownIndicator: CustomDropdownIndicator,
+                    IndicatorSeparator: () => null,
                   }}
                   menuPortalTarget={document.body}
                   menuPosition="fixed"
@@ -1072,6 +1074,7 @@ const CustomerMiddle: React.FC<CustomerMiddleProps> = ({
                 styles={selectStyles}
                 components={{
                   DropdownIndicator: CustomDropdownIndicator,
+                  IndicatorSeparator: () => null,
                 }}
                 menuPortalTarget={document.body}
                 menuPosition="fixed"
