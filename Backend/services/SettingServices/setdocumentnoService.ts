@@ -1,12 +1,12 @@
 import type { PoolClient } from "pg";
-import pool from "../DB/db.js";
+import pool from "../../DB/db.js";
 
 /* =========================================================
    GET DOCUMENT NO LIST (mode 'G')
 ========================================================= */
 
 export async function getDocumentNoListService(
-  PstrCoID: string,
+  CoID: string,
   lkpYear: string,
   lkpBranch: string,
   lkpModule: string
@@ -32,7 +32,7 @@ export async function getDocumentNoListService(
       `,
       [
         "G",
-        PstrCoID,
+        CoID,
         lkpYear,
         lkpBranch,
         lkpModule,
@@ -76,7 +76,7 @@ export interface DocumentNoRowPayload {
 }
 
 export async function saveDocumentNoListService(
-  PstrCoID: string,
+  CoID: string,
   lkpYear: string,
   lkpBranch: string,
   lkpModule: string,
@@ -95,7 +95,7 @@ export async function saveDocumentNoListService(
         WHERE fcoid = $1 AND fyear = $2 AND fbrid = $3
           AND fmoduleid = $4 AND fdoctype = $5
         `,
-        [PstrCoID, lkpYear, lkpBranch, lkpModule, row.lkpDocument]
+        [CoID, lkpYear, lkpBranch, lkpModule, row.lkpDocument]
       );
 
       const mode = existing.rows.length > 0 ? "M" : "S";
@@ -116,7 +116,7 @@ export async function saveDocumentNoListService(
         `,
         [
           mode,
-          PstrCoID,
+          CoID,
           lkpYear,
           lkpBranch,
           lkpModule,
@@ -150,7 +150,7 @@ export async function saveDocumentNoListService(
 ========================================================= */
 
 export async function deleteDocumentNoRowService(
-  PstrCoID: string,
+  CoID: string,
   lkpYear: string,
   lkpBranch: string,
   lkpModule: string,
@@ -177,7 +177,7 @@ export async function deleteDocumentNoRowService(
       `,
       [
         "D1",
-        PstrCoID,
+        CoID,
         lkpYear,
         lkpBranch,
         lkpModule,

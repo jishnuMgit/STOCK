@@ -1,10 +1,10 @@
 import { Request, Response } from "express";
 
-import pool from "../DB/db.js";
+import pool from "../../DB/db.js";
 import {
   getCompanyInfoService,
   updateCompanyInfoService,
-} from "../services/setcompanyInfoService.js";
+} from "../../services/SettingServices/setcompanyInfoService.js";
 
 /* =========================================================
    GET COMPANY LIST (lkpCoName dropdown)

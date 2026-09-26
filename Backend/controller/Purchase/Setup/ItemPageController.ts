@@ -1,25 +1,26 @@
 import { Request, Response } from "express";
 
-import pool from "../DB/db.js";
+import pool from "../../../DB/db.js";
 import {
-  getDocumentNoListService,
-  saveDocumentNoListService,
-  deleteDocumentNoRowService,
-  type DocumentNoRowPayload,
-} from "../services/setdocumentnoService.js";
+  getItemPageService,
+  saveItemPageService,
+  deleteItemService,
+  deleteItemBranchRowService,
+  type ItemBranchRowPayload,
+} from "../../../services/Purchase/Setup/itemPageService.js";
 
 /* =========================================================
-   GET YEAR LIST (lkpYear dropdown)
+   GET UNIT LIST (lkpUnit dropdown)
 ========================================================= */
 
-export const getYearList = async (
+export const getUnitList = async (
   req: Request,
   res: Response
 ): Promise<Response> => {
   try {
-    const { companyId } = req.query;
+    const { CoID } = req.query;
 
-    if (!companyId) {
+    if (!CoID) {
       return res.status(400).json({
         success: false,
         message: "Company ID is required",
@@ -29,9 +30,9 @@ export const getYearList = async (
     const result = await pool.query(
       `
       SELECT *
-      FROM dbo.fillyear($1)
+      FROM dbo.fillunit($1)
       `,
-      [companyId]
+      [CoID]
     );
 
     return res.status(200).json({
@@ -39,11 +40,11 @@ export const getYearList = async (
       data: result.rows,
     });
   } catch (error: unknown) {
-    console.error("getYearList error:", error);
+    console.error("getUnitList error:", error);
 
     return res.status(500).json({
       success: false,
-      message: "Failed to load year list",
+      message: "Failed to load unit list",
       error:
         error instanceof Error
           ? error.message
@@ -53,7 +54,96 @@ export const getYearList = async (
 };
 
 /* =========================================================
-   GET BRANCH LIST (lkpBranch dropdown)
+   GET ITEM GROUP LIST (lkpItemGroupID dropdown)
+========================================================= */
+
+export const getItemGroupList = async (
+  req: Request,
+  res: Response
+): Promise<Response> => {
+  try {
+    const { CoID } = req.query;
+
+    if (!CoID) {
+      return res.status(400).json({
+        success: false,
+        message: "Company ID is required",
+      });
+    }
+
+    const result = await pool.query(
+      `
+      SELECT *
+      FROM dbo.fillitemgroup($1)
+      `,
+      [CoID]
+    );
+
+    return res.status(200).json({
+      success: true,
+      data: result.rows,
+    });
+  } catch (error: unknown) {
+    console.error("getItemGroupList error:", error);
+
+    return res.status(500).json({
+      success: false,
+      message: "Failed to load item group list",
+      error:
+        error instanceof Error
+          ? error.message
+          : String(error),
+    });
+  }
+};
+
+/* =========================================================
+   GET SUPPLIER LIST (lkpSupplierID dropdown)
+========================================================= */
+
+export const getSupplierList = async (
+  req: Request,
+  res: Response
+): Promise<Response> => {
+  try {
+    const { CoID } = req.query;
+
+    if (!CoID) {
+      return res.status(400).json({
+        success: false,
+        message: "Company ID is required",
+      });
+    }
+
+    const result = await pool.query(
+      `
+      SELECT *
+      FROM dbo.fillsupplier($1)
+      `,
+      [CoID]
+    );
+
+    return res.status(200).json({
+      success: true,
+      data: result.rows,
+    });
+  } catch (error: unknown) {
+    console.error("getSupplierList error:", error);
+
+    return res.status(500).json({
+      success: false,
+      message: "Failed to load supplier list",
+      error:
+        error instanceof Error
+          ? error.message
+          : String(error),
+    });
+  }
+};
+
+/* =========================================================
+   GET BRANCH LIST (lkpBranch dropdown, filtered by
+   dbo.userbranches — same as SetDocumentNo)
 ========================================================= */
 
 export const getBranchList = async (
@@ -61,9 +151,9 @@ export const getBranchList = async (
   res: Response
 ): Promise<Response> => {
   try {
-    const { companyId, userId } = req.query;
+    const { CoID, userId } = req.query;
 
-    if (!companyId) {
+    if (!CoID) {
       return res.status(400).json({
         success: false,
         message: "Company ID is required",
@@ -85,7 +175,7 @@ export const getBranchList = async (
         AND dbo.userbranches($1, fbrid, $2)
       ORDER BY fpositionno, fbrid
       `,
-      [companyId, userId]
+      [CoID, userId]
     );
 
     return res.status(200).json({
@@ -107,41 +197,54 @@ export const getBranchList = async (
 };
 
 /* =========================================================
-   GET MODULE LIST (lkpModule dropdown)
+   GET ITEM (header mode 'GHD', branch rows mode 'GTL')
+   — used by the Find/Search button to prefill the form
 ========================================================= */
 
-export const getModuleList = async (
+export const getItem = async (
   req: Request,
   res: Response
 ): Promise<Response> => {
   try {
-    const { companyId } = req.query;
+    const { CoID, txtItemID } = req.query;
 
-    if (!companyId) {
+    if (!CoID) {
       return res.status(400).json({
         success: false,
         message: "Company ID is required",
       });
     }
 
-    const result = await pool.query(
-      `
-      SELECT *
-      FROM dbo.fillmodule($1)
-      `,
-      [companyId]
+    if (!txtItemID) {
+      return res.status(400).json({
+        success: false,
+        message: "Item ID is required",
+      });
+    }
+
+    const { header, rows } = await getItemPageService(
+      String(CoID),
+      String(txtItemID)
     );
+
+    if (!header) {
+      return res.status(404).json({
+        success: false,
+        message: `Item '${txtItemID}' not found`,
+      });
+    }
 
     return res.status(200).json({
       success: true,
-      data: result.rows,
+      header,
+      rows,
     });
   } catch (error: unknown) {
-    console.error("getModuleList error:", error);
+    console.error("getItem error:", error);
 
     return res.status(500).json({
       success: false,
-      message: "Failed to load module list",
+      message: "Failed to load item",
       error:
         error instanceof Error
           ? error.message
@@ -151,144 +254,50 @@ export const getModuleList = async (
 };
 
 /* =========================================================
-   GET DOCUMENT LIST (grid's Document dropdown, per module)
+   SAVE ITEM (header mode 'SHD'/'MHD', per-row 'STL'/'MTL')
 ========================================================= */
 
-export const getDocumentList = async (
+export const saveItem = async (
   req: Request,
   res: Response
 ): Promise<Response> => {
   try {
-    const { companyId, lkpModule } = req.query;
-
-    if (!companyId) {
-      return res.status(400).json({
-        success: false,
-        message: "Company ID is required",
-      });
-    }
-
-    if (!lkpModule) {
-      return res.status(400).json({
-        success: false,
-        message: "Module is required",
-      });
-    }
-
-    const result = await pool.query(
-      `
-      SELECT *
-      FROM dbo.filldocument($1, $2)
-      `,
-      [companyId, lkpModule]
-    );
-
-    return res.status(200).json({
-      success: true,
-      data: result.rows,
-    });
-  } catch (error: unknown) {
-    console.error("getDocumentList error:", error);
-
-    return res.status(500).json({
-      success: false,
-      message: "Failed to load document list",
-      error:
-        error instanceof Error
-          ? error.message
-          : String(error),
-    });
-  }
-};
-
-/* =========================================================
-   GET DOCUMENT NO LIST (grid data, mode 'G')
-========================================================= */
-
-export const getDocumentNoList = async (
-  req: Request,
-  res: Response
-): Promise<Response> => {
-  try {
-    const { companyId, lkpYear, lkpBranch, lkpModule } = req.query;
-
-    if (!companyId) {
-      return res.status(400).json({
-        success: false,
-        message: "Company ID is required",
-      });
-    }
-
-    if (!lkpYear || !lkpBranch || !lkpModule) {
-      return res.status(400).json({
-        success: false,
-        message: "Year, Branch and Module are required",
-      });
-    }
-
-    const data = await getDocumentNoListService(
-      String(companyId),
-      String(lkpYear),
-      String(lkpBranch),
-      String(lkpModule)
-    );
-
-    return res.status(200).json({
-      success: true,
-      data,
-    });
-  } catch (error: unknown) {
-    console.error("getDocumentNoList error:", error);
-
-    return res.status(500).json({
-      success: false,
-      message: "Failed to load document number list",
-      error:
-        error instanceof Error
-          ? error.message
-          : String(error),
-    });
-  }
-};
-
-/* =========================================================
-   SAVE DOCUMENT NO LIST (mode 'S' or 'M' per row)
-========================================================= */
-
-export const saveDocumentNo = async (
-  req: Request,
-  res: Response
-): Promise<Response> => {
-  try {
-    const PstrUserID = process.env.PstrUserID || "ADMIN";
-
     const {
-      companyId,
-      lkpYear,
-      lkpBranch,
-      lkpModule,
+      CoID,
       userId,
+      txtItemID,
+      txtItemName,
+      txtItemDescription,
+      lkpUnit,
+      txtPacking,
+      txtCBM,
+      lkpItemGroupID,
+      lkpSupplierID,
+      txtSupplierItemID,
+      txtReorderLevel,
+      txtReorderQty,
       rows,
     }: {
-      companyId: string;
-      lkpYear: string;
-      lkpBranch: string;
-      lkpModule: string;
+      CoID: string;
       userId: string;
-      rows: DocumentNoRowPayload[];
+      txtItemID: string;
+      txtItemName: string;
+      txtItemDescription: string | null;
+      lkpUnit: string;
+      txtPacking: string | number;
+      txtCBM: string | number;
+      lkpItemGroupID: string;
+      lkpSupplierID: string;
+      txtSupplierItemID: string;
+      txtReorderLevel: string | number;
+      txtReorderQty: string | number;
+      rows: ItemBranchRowPayload[];
     } = req.body;
 
-    if (!companyId) {
+    if (!CoID) {
       return res.status(400).json({
         success: false,
         message: "Company ID is required",
-      });
-    }
-
-    if (!lkpYear || !lkpBranch || !lkpModule) {
-      return res.status(400).json({
-        success: false,
-        message: "Year, Branch and Module are required",
       });
     }
 
@@ -299,87 +308,71 @@ export const saveDocumentNo = async (
       });
     }
 
-    if (!Array.isArray(rows) || rows.length === 0) {
+    if (!txtItemID || !txtItemName || !lkpUnit || !lkpItemGroupID || !lkpSupplierID || !txtSupplierItemID) {
       return res.status(400).json({
         success: false,
-        message: "There is no information for saving.",
+        message: "Item ID, Item Name, Unit, Item Group, Supplier and Supplier Item ID are required",
       });
     }
 
-    const branchAccessResult = await pool.query(
-      `SELECT dbo.userbranches($1, $2, $3) AS "hasAccess"`,
-      [companyId, lkpBranch, userId]
-    );
+    const branchRows = (rows || []).filter((row) => row.lkpBranch);
 
-    if (!branchAccessResult.rows[0]?.hasAccess) {
-      return res.status(403).json({
+    if (branchRows.length === 0) {
+      return res.status(400).json({
         success: false,
-        message: `User '${userId}' does not have access to Branch '${lkpBranch}'`,
+        message: "At least one Branch row is required",
       });
     }
 
-    await saveDocumentNoListService(
-      companyId,
-      lkpYear,
-      lkpBranch,
-      lkpModule,
-      PstrUserID,
-      rows
-    );
-
-    return res.status(200).json({
-      success: true,
-      message: "Document numbering saved successfully",
-    });
-  } catch (error: unknown) {
-    console.error("saveDocumentNo error:", error);
-
-    return res.status(400).json({
-      success: false,
-      message:
-        error instanceof Error
-          ? error.message
-          : "Document numbering could not be saved",
-    });
-  }
-};
-
-/* =========================================================
-   DELETE ONE DOCUMENT NO ROW (mode 'D1')
-========================================================= */
-
-export const deleteDocumentNoRow = async (
-  req: Request,
-  res: Response
-): Promise<Response> => {
-  try {
-    const {
-      companyId,
-      lkpYear,
-      lkpBranch,
-      lkpModule,
-      lkpDocument,
+    await saveItemPageService(
+      CoID,
+      txtItemID,
+      txtItemName,
+      txtItemDescription || null,
+      lkpUnit,
+      Number(txtPacking) || 0,
+      Number(txtCBM) || 0,
+      lkpItemGroupID,
+      lkpSupplierID || null,
+      txtSupplierItemID,
+      Number(txtReorderLevel) || 0,
+      Number(txtReorderQty) || 0,
       userId,
-    }: {
-      companyId: string;
-      lkpYear: string;
-      lkpBranch: string;
-      lkpModule: string;
-      lkpDocument: string;
-      userId: string;
-    } = req.body;
+      branchRows
+    );
 
-    if (!companyId) {
+    return res.status(200).json({
+      success: true,
+      message: "Item saved successfully",
+    });
+  } catch (error: unknown) {
+    console.error("saveItem error:", error);
+
+    return res.status(400).json({
+      success: false,
+      message:
+        error instanceof Error
+          ? error.message
+          : "Item could not be saved",
+    });
+  }
+};
+
+/* =========================================================
+   DELETE ITEM (mode 'D' — whole item)
+========================================================= */
+
+export const deleteItem = async (
+  req: Request,
+  res: Response
+): Promise<Response> => {
+  try {
+    const { CoID, userId, txtItemID } = req.body;
+
+    if (!CoID) {
       return res.status(400).json({
         success: false,
         message: "Company ID is required",
-      });
-    }
-
-    if (!lkpYear || !lkpBranch || !lkpModule || !lkpDocument) {
-      return res.status(400).json({
-        success: false,
-        message: "Year, Branch, Module and Document Type are required",
       });
     }
 
@@ -390,9 +383,68 @@ export const deleteDocumentNoRow = async (
       });
     }
 
+    if (!txtItemID) {
+      return res.status(400).json({
+        success: false,
+        message: "Item ID is required",
+      });
+    }
+
+    await deleteItemService(CoID, txtItemID);
+
+    return res.status(200).json({
+      success: true,
+      message: "Item deleted successfully",
+    });
+  } catch (error: unknown) {
+    console.error("deleteItem error:", error);
+
+    return res.status(400).json({
+      success: false,
+      message:
+        error instanceof Error
+          ? error.message
+          : "Item could not be deleted",
+    });
+  }
+};
+
+/* =========================================================
+   DELETE ONE BRANCH ROW (mode 'D1', guarded by
+   dbo.userbranches — same pattern as SetDocumentNo)
+========================================================= */
+
+export const deleteItemBranchRow = async (
+  req: Request,
+  res: Response
+): Promise<Response> => {
+  try {
+    const { CoID, userId, txtItemID, lkpBranch } = req.body;
+
+    if (!CoID) {
+      return res.status(400).json({
+        success: false,
+        message: "Company ID is required",
+      });
+    }
+
+    if (!userId) {
+      return res.status(400).json({
+        success: false,
+        message: "User ID is required",
+      });
+    }
+
+    if (!txtItemID || !lkpBranch) {
+      return res.status(400).json({
+        success: false,
+        message: "Item ID and Branch are required",
+      });
+    }
+
     const branchAccessResult = await pool.query(
       `SELECT dbo.userbranches($1, $2, $3) AS "hasAccess"`,
-      [companyId, lkpBranch, userId]
+      [CoID, lkpBranch, userId]
     );
 
     if (!branchAccessResult.rows[0]?.hasAccess) {
@@ -402,75 +454,21 @@ export const deleteDocumentNoRow = async (
       });
     }
 
-    await deleteDocumentNoRowService(
-      companyId,
-      lkpYear,
-      lkpBranch,
-      lkpModule,
-      lkpDocument
-    );
+    await deleteItemBranchRowService(CoID, txtItemID, lkpBranch);
 
     return res.status(200).json({
       success: true,
-      message: "Document numbering row deleted successfully",
+      message: "Branch row deleted successfully",
     });
   } catch (error: unknown) {
-    console.error("deleteDocumentNoRow error:", error);
+    console.error("deleteItemBranchRow error:", error);
 
     return res.status(400).json({
       success: false,
       message:
         error instanceof Error
           ? error.message
-          : "Document numbering row could not be deleted",
-    });
-  }
-};
-
-/* =========================================================
-   GET DEFAULT BRANCH (lkpBranch pre-select, live lookup)
-========================================================= */
-
-export const getDefaultBranch = async (
-  req: Request,
-  res: Response
-): Promise<Response> => {
-  try {
-    const { companyId, userId } = req.query;
-
-    if (!companyId) {
-      return res.status(400).json({
-        success: false,
-        message: "Company ID is required",
-      });
-    }
-
-    if (!userId) {
-      return res.status(400).json({
-        success: false,
-        message: "User ID is required",
-      });
-    }
-
-    const result = await pool.query(
-      `SELECT dbo.getuserdefbranch($1, $2) AS "defBranch"`,
-      [companyId, userId]
-    );
-
-    return res.status(200).json({
-      success: true,
-      data: result.rows[0]?.defBranch || "",
-    });
-  } catch (error: unknown) {
-    console.error("getDefaultBranch error:", error);
-
-    return res.status(500).json({
-      success: false,
-      message: "Failed to load default branch",
-      error:
-        error instanceof Error
-          ? error.message
-          : String(error),
+          : "Branch row could not be deleted",
     });
   }
 };

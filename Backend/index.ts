@@ -8,9 +8,11 @@ import MatchRouter from "./routes/MatchRouter.js";
 import LoginRouter from "./routes/AuthRouter.js";
 import CompanyRouter from "./routes/CompanyRouter.js";
 import YearRouter from "./routes/YearRouter.js";
-import CompanyInfoRouter from "./routes/SetcompanyinfoRouter.js";
-import SetDocumentNoRouter from "./routes/SetdocumentnoRouter.js";
+import CompanyInfoRouter from "./routes/SettingRoutes/SetcompanyinfoRouter.js";
+import SetDocumentNoRouter from "./routes/SettingRoutes/SetdocumentnoRouter.js";
+import SetBranchInfoRouter from "./routes/SettingRoutes/SetBranchInfoRouter.js";
 import menuRoutes from "./routes/MenuRoute.js";
+import ItemPageRouter from "./routes/Purchase/Setup/ItemPageRouter.js";
 
 import pool from "./DB/db.js";
 
@@ -54,7 +56,9 @@ app.use("/api/companies", CompanyRouter);
 app.use("/api/years", YearRouter);
 app.use("/api/CompanyInfo", CompanyInfoRouter);
 app.use("/api/DocumentNo", SetDocumentNoRouter);
+app.use("/api/BranchInfo", SetBranchInfoRouter);
 app.use("/api/menu", menuRoutes);
+app.use("/api/Item", ItemPageRouter);
 
 app.listen(5000, () => {
   console.log("Server running on http://localhost:5000");

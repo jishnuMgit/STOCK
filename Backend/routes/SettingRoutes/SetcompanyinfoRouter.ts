@@ -4,7 +4,7 @@ import {
   getCompanyList,
   getCompanyDetails,
   saveCompanyDetails,
-} from "../controller/SetcompanyinfoController.js";
+} from "../../controller/SettingController/SetcompanyinfoController.js";
 
 const router = express.Router();
 
