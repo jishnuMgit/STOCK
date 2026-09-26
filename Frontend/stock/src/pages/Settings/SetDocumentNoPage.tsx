@@ -138,6 +138,7 @@ const tableSelectStyles: StylesConfig<SelectOption, false> = {
     backgroundColor: "transparent",
     fontSize: "13px",
     cursor: "pointer",
+
     "&:hover": {
       border: "none",
     },
@@ -167,11 +168,7 @@ const tableSelectStyles: StylesConfig<SelectOption, false> = {
     flexShrink: 0,
   }),
 
-  dropdownIndicator: (base) => ({
-    ...base,
-    padding: "2px 3px",
-  }),
-
+  // Keep the default React Select dropdown arrow
   indicatorSeparator: () => ({
     display: "none",
   }),
@@ -190,8 +187,8 @@ const tableSelectStyles: StylesConfig<SelectOption, false> = {
     backgroundColor: state.isSelected
       ? "#dbeafe"
       : state.isFocused
-      ? "#eff6ff"
-      : "#ffffff",
+        ? "#eff6ff"
+        : "#ffffff",
     color: "#475569",
   }),
 };
@@ -262,8 +259,15 @@ const SetDocumentNo: React.FC = () => {
   useEffect(() => {
     const loadYearList = async () => {
       try {
+        const companyId = localStorage.getItem("CoID");
+
+        if (!companyId) {
+          toast.error("getYearList: no companyId in localStorage");
+          return;
+        }
+
         const response = await fetch(
-          `${import.meta.env.VITE_API_URL}/DocumentNo/getYearList`
+          `${import.meta.env.VITE_API_URL}/DocumentNo/getYearList?companyId=${companyId}`
         );
 
         if (!response.ok) {
@@ -301,14 +305,16 @@ const SetDocumentNo: React.FC = () => {
   useEffect(() => {
     const loadDefaultBranch = async () => {
       try {
-        const userId = localStorage.getItem("userId");
+        const companyId = localStorage.getItem("CoID");
+        const userId = localStorage.getItem("userID");
 
-        if (!userId) {
+        if (!companyId || !userId) {
+          toast.error("getDefaultBranch: no companyId/userId in localStorage");
           return;
         }
 
         const response = await fetch(
-          `${import.meta.env.VITE_API_URL}/DocumentNo/getDefaultBranch?userId=${userId}`
+          `${import.meta.env.VITE_API_URL}/DocumentNo/getDefaultBranch?companyId=${companyId}&userId=${userId}`
         );
 
         if (!response.ok) {
@@ -319,6 +325,7 @@ const SetDocumentNo: React.FC = () => {
 
         if (!result.success) {
           console.error("getDefaultBranch failed:", result.message);
+          toast.error(`getDefaultBranch failed: ${result.message}`);
           return;
         }
 
@@ -327,6 +334,7 @@ const SetDocumentNo: React.FC = () => {
         }
       } catch (error) {
         console.error("getDefaultBranch error:", error);
+        toast.error(`getDefaultBranch error: ${error instanceof Error ? error.message : String(error)}`);
       }
     };
 
@@ -340,8 +348,16 @@ const SetDocumentNo: React.FC = () => {
   useEffect(() => {
     const loadBranchList = async () => {
       try {
+        const companyId = localStorage.getItem("CoID");
+        const userId = localStorage.getItem("userID");
+
+        if (!companyId || !userId) {
+          toast.error("getBranchList: no companyId/userId in localStorage");
+          return;
+        }
+
         const response = await fetch(
-          `${import.meta.env.VITE_API_URL}/DocumentNo/getBranchList`
+          `${import.meta.env.VITE_API_URL}/DocumentNo/getBranchList?companyId=${companyId}&userId=${userId}`
         );
 
         if (!response.ok) {
@@ -352,6 +368,7 @@ const SetDocumentNo: React.FC = () => {
 
         if (!result.success) {
           console.error("getBranchList failed:", result.message);
+          toast.error(`getBranchList failed: ${result.message}`);
           return;
         }
 
@@ -365,6 +382,7 @@ const SetDocumentNo: React.FC = () => {
         setBranchOptions(options);
       } catch (error) {
         console.error("getBranchList error:", error);
+        toast.error(`getBranchList error: ${error instanceof Error ? error.message : String(error)}`);
       }
     };
 
@@ -378,8 +396,15 @@ const SetDocumentNo: React.FC = () => {
   useEffect(() => {
     const loadModuleList = async () => {
       try {
+        const companyId = localStorage.getItem("CoID");
+
+        if (!companyId) {
+          toast.error("getModuleList: no companyId in localStorage");
+          return;
+        }
+
         const response = await fetch(
-          `${import.meta.env.VITE_API_URL}/DocumentNo/getModuleList`
+          `${import.meta.env.VITE_API_URL}/DocumentNo/getModuleList?companyId=${companyId}`
         );
 
         if (!response.ok) {
@@ -437,8 +462,15 @@ const SetDocumentNo: React.FC = () => {
 
     const loadDocumentGrid = async () => {
       try {
+        const companyId = localStorage.getItem("CoID");
+
+        if (!companyId) {
+          toast.error("getDocumentList: no companyId in localStorage");
+          return;
+        }
+
         const docListResponse = await fetch(
-          `${import.meta.env.VITE_API_URL}/DocumentNo/getDocumentList?lkpModule=${lkpModule}`
+          `${import.meta.env.VITE_API_URL}/DocumentNo/getDocumentList?companyId=${companyId}&lkpModule=${lkpModule}`
         );
 
         if (!docListResponse.ok) {
@@ -468,7 +500,7 @@ const SetDocumentNo: React.FC = () => {
 
         if (lkpYear && lkpBranch) {
           const docNoResponse = await fetch(
-            `${import.meta.env.VITE_API_URL}/DocumentNo/getDocumentNoList?lkpYear=${lkpYear}&lkpBranch=${lkpBranch}&lkpModule=${lkpModule}`
+            `${import.meta.env.VITE_API_URL}/DocumentNo/getDocumentNoList?companyId=${companyId}&lkpYear=${lkpYear}&lkpBranch=${lkpBranch}&lkpModule=${lkpModule}`
           );
 
           if (docNoResponse.ok) {
@@ -564,6 +596,14 @@ const SetDocumentNo: React.FC = () => {
       return;
     }
 
+    const companyId = localStorage.getItem("CoID");
+    const userId = localStorage.getItem("userID");
+
+    if (!companyId || !userId) {
+      toast.error("Company ID / User ID not found. Please log in again.");
+      return;
+    }
+
     try {
       const response = await fetch(
         `${import.meta.env.VITE_API_URL}/DocumentNo/saveDocumentNo`,
@@ -571,9 +611,11 @@ const SetDocumentNo: React.FC = () => {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
+            companyId,
             lkpYear,
             lkpBranch,
             lkpModule,
+            userId,
             rows: validRows.map((row) => ({
               lkpDocument: row.lkpDocument,
               txtDocPrefix: row.txtDocPrefix || null,
@@ -633,6 +675,14 @@ const SetDocumentNo: React.FC = () => {
       return;
     }
 
+    const companyId = localStorage.getItem("CoID");
+    const userId = localStorage.getItem("userID");
+
+    if (!companyId || !userId) {
+      toast.error("Company ID / User ID not found. Please log in again.");
+      return;
+    }
+
     try {
       const response = await fetch(
         `${import.meta.env.VITE_API_URL}/DocumentNo/deleteDocumentNoRow`,
@@ -640,10 +690,12 @@ const SetDocumentNo: React.FC = () => {
           method: "DELETE",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
+            companyId,
             lkpYear,
             lkpBranch,
             lkpModule,
             lkpDocument: row.lkpDocument,
+            userId,
           }),
         }
       );
@@ -977,530 +1029,550 @@ const SetDocumentNo: React.FC = () => {
             "
           >
 
-            <table
+            {/* =================================================
+    TABLE
+================================================= */}
+
+<div className="mt-2 w-full overflow-x-auto">
+
+  <table
+    className="
+      w-full
+      min-w-[900px]
+      table-fixed
+      border-collapse
+      border
+      border-slate-200
+      text-[11px]
+    "
+  >
+
+    {/* =================================================
+        TABLE HEADER
+    ================================================= */}
+
+    <thead>
+      <tr
+        className="
+          h-9
+          bg-slate-50
+          text-left
+          text-[13px]
+          font-semibold
+          text-slate-600
+        "
+      >
+
+        {/* DOCUMENT */}
+
+        <th
+          className="
+            w-[150px]
+            border-r
+            border-slate-200
+            px-2
+            font-semibold
+            whitespace-nowrap
+          "
+        >
+          Document
+        </th>
+
+        {/* PREFIX */}
+
+        <th
+          className="
+            w-[90px]
+            border-r
+            border-slate-200
+            px-2
+            font-semibold
+            whitespace-nowrap
+          "
+        >
+          Prefix
+        </th>
+
+        {/* START SEQ NO */}
+
+        <th
+          className="
+            w-[120px]
+            border-r
+            border-slate-200
+            px-2
+            text-center
+            font-semibold
+            whitespace-nowrap
+          "
+        >
+          Start Seq. No.
+        </th>
+
+        {/* STRICT SERIAL */}
+
+        <th
+          className="
+            w-[120px]
+            border-r
+            border-slate-200
+            px-2
+            text-center
+            font-semibold
+            whitespace-nowrap
+          "
+        >
+          Strict Serial
+        </th>
+
+        {/* MODE */}
+
+        <th
+          className="
+            w-[100px]
+            border-r
+            border-slate-200
+            px-2
+            text-center
+            font-semibold
+            whitespace-nowrap
+          "
+        >
+          + Mode
+        </th>
+
+        {/* RESET */}
+
+        <th
+          className="
+            w-[100px]
+            border-r
+            border-slate-200
+            px-2
+            text-center
+            font-semibold
+            whitespace-nowrap
+          "
+        >
+          Reset No.
+        </th>
+
+        {/* PRINT AFTER SAVE */}
+
+        <th
+          className="
+            w-[150px]
+            border-r
+            border-slate-200
+            px-2
+            text-center
+            font-semibold
+            whitespace-nowrap
+          "
+        >
+          Print After Save
+        </th>
+
+        {/* POSITION NO */}
+
+        <th
+          className="
+            w-[100px]
+            px-2
+            text-center
+            font-semibold
+            whitespace-nowrap
+          "
+        >
+          Position No.
+        </th>
+
+      </tr>
+    </thead>
+
+
+    {/* =================================================
+        TABLE BODY
+    ================================================= */}
+
+    <tbody>
+
+      {rows.map((row, index) => (
+
+        <tr
+          key={row.id}
+          className={`
+            h-[34px]
+            ${
+              index === 0
+                ? "bg-[#edf4fc]"
+                : "bg-white"
+            }
+            hover:bg-slate-50
+          `}
+        >
+
+          {/* =================================================
+              DOCUMENT
+          ================================================= */}
+
+          <td
+            className="
+              border-r
+              border-t
+              border-slate-200
+              p-0
+            "
+          >
+
+            <div className="flex h-[36px] items-stretch">
+
+              <div className="min-w-0 flex-1 overflow-hidden">
+
+                <Select
+                  inputId={`lkpDocument_${row.id}`}
+                  instanceId={`lkpDocument_${row.id}`}
+                  name="lkpDocument"
+                  options={documentOptions}
+                  value={getOption(
+                    documentOptions,
+                    row.lkpDocument,
+                  )}
+                  onChange={(
+                    option: SingleValue<SelectOption>,
+                  ) =>
+                    handleRowChange(
+                      row.id,
+                      "lkpDocument",
+                      option?.value ?? "",
+                    )
+                  }
+                  styles={tableSelectStyles}
+                  components={{
+                    DropdownIndicator:
+                      CustomDropdownIndicator,
+                  }}
+                  isSearchable={false}
+                  menuPortalTarget={document.body}
+                  menuPosition="fixed"
+                />
+
+              </div>
+
+              {/* DELETE */}
+
+              <button
+                type="button"
+                onClick={() =>
+                  handleDeleteRow(row)
+                }
+                className="
+                  relative
+                  inline-flex
+                  h-full
+                  w-[20px]
+                  shrink-0
+                  items-start
+                  justify-center
+                  self-stretch
+                  rounded
+                  pt-1
+                  text-slate-400
+                  hover:bg-red-50
+                  hover:text-red-600
+                "
+                aria-label={`Delete ${row.lkpDocument}`}
+              >
+                <X size={14} />
+              </button>
+
+            </div>
+
+          </td>
+
+
+          {/* =================================================
+              PREFIX
+          ================================================= */}
+
+          <td
+            className="
+              border-r
+              border-t
+              border-slate-200
+              px-1
+            "
+          >
+
+            <input
+              id={`txtDocPrefix_${row.id}`}
+              name="txtDocPrefix"
+              type="text"
+              value={row.txtDocPrefix}
+              onChange={(e) =>
+                handleRowChange(
+                  row.id,
+                  "txtDocPrefix",
+                  e.target.value,
+                )
+              }
               className="
                 w-full
-                min-w-[150px]
-                max-w-[100%]
-                table-fixed
-                border-collapse
+                bg-transparent
+                text-left
+                text-[13px]
+                text-slate-600
+                outline-none
               "
-            >
-
-              {/* =================================================
-                  TABLE HEADER
-              ================================================== */}
-
-              <thead>
-
-                <tr
-                  className="
-                    h-9
-                    bg-slate-50
-                    text-left
-                    text-[13px]
-                    font-semibold
-                    text-slate-600
-                  "
-                >
-
-                  {/* DOCUMENT */}
-
-                  <th
-                    className="
-                      w-[50px]
-                      border-r
-                      border-slate-200
-                      px-1
-                      font-semibold
-                    "
-                  >
-                    Document
-                  </th>
-
-                  {/* PREFIX */}
-
-                  <th
-                    className="
-                      w-[25px]
-                      border-r
-                      border-slate-200
-                      px-1
-                      font-semibold
-                    "
-                  >
-                    Prefix
-                  </th>
-
-                  {/* START SEQ */}
-
-                  <th
-                    className="
-                      w-[25px]
-                      border-r
-                      border-slate-200
-                      px-1
-                      whitespace-nowrap
-                      font-semibold
-                    "
-                  >
-                    Start Seq. No.
-                  </th>
-
-                  {/* STRICT SERIAL */}
-
-                  <th
-                    className="
-                      w-[25px]
-                      border-r
-                      border-slate-200
-                      px-1
-                      text-center
-                      font-semibold
-                    "
-                  >
-                    Strict Serial
-                  </th>
-
-                  {/* MODE */}
-
-                  <th
-                    className="
-                      w-[25px]
-                      border-r
-                      border-slate-200
-                      px-1
-                      font-semibold
-                    "
-                  >
-                    + Mode
-                  </th>
-
-                  {/* RESET */}
-
-                  <th
-                    className="
-                      w-[25px]
-                      border-r
-                      border-slate-200
-                      px-1
-                      font-semibold
-                    "
-                  >
-                    Reset No.
-                  </th>
-
-                  {/* PRINT */}
-
-                  <th
-                    className="
-                      w-[30px]
-                      border-r
-                      border-slate-200
-                      px-1
-                      text-center
-                      whitespace-nowrap
-                      font-semibold
-                    "
-                  >
-                    Print After Save
-                  </th>
-
-                  {/* POSITION */}
-
-                  <th
-                    className="
-                      w-[30px]
-                      px-1
-                      text-center
-                      whitespace-nowrap
-                      font-semibold
-                    "
-                  >
-                    Position No.
-                  </th>
-
-                </tr>
-
-              </thead>
-
-              {/* =================================================
-                  TABLE BODY
-              ================================================== */}
-
-              <tbody>
-
-                {rows.map((row, index) => (
-
-                  <tr
-                    key={row.id}
-                    className={`
-                      h-[34px]
-                      ${
-                        index === 0
-                          ? "bg-[#edf4fc]"
-                          : "bg-white"
-                      }
-                      hover:bg-slate-50
-                    `}
-                  >
-
-                    {/* =================================================
-                        DOCUMENT
-                    ================================================= */}
-
-                    <td
-                      className="
-                        border-r
-                        border-t
-                        border-slate-200
-                        p-0
-                      "
-                    >
-
-                      <div className="flex h-[36px] items-stretch">
-
-                        <div className="min-w-0 flex-1 overflow-hidden">
-                          <Select
-                            inputId={`lkpDocument_${row.id}`}
-                            instanceId={`lkpDocument_${row.id}`}
-                            name="lkpDocument"
-                            options={documentOptions}
-                            value={getOption(
-                              documentOptions,
-                              row.lkpDocument
-                            )}
-                            onChange={(
-                              option: SingleValue<SelectOption>
-                            ) =>
-                              handleRowChange(
-                                row.id,
-                                "lkpDocument",
-                                option?.value ?? ""
-                              )
-                            }
-                            styles={tableSelectStyles}
-                            components={{
-                              DropdownIndicator:
-                                CustomDropdownIndicator,
-                            }}
-                            isSearchable={false}
-                            menuPortalTarget={
-                              document.body
-                            }
-                            menuPosition="fixed"
-                          />
-                        </div>
-
-                        <button
-                          type="button"
-                          onClick={() => handleDeleteRow(row)}
-                          className="
-                            inline-flex
-                            h-full
-                            w-[20px]
-                            shrink-0
-                            items-center
-                            justify-center
-                            self-stretch
-                            rounded
-                            text-slate-400
-                            hover:bg-red-50
-                            hover:text-red-600
-                          "
-                          aria-label={`Delete ${row.lkpDocument}`}
-                        >
-                          <X size={14} />
-                        </button>
-
-                      </div>
-
-                    </td>
-
-                    {/* =================================================
-                        PREFIX
-                    ================================================= */}
-
-                    <td
-                      className="
-                        border-r
-                        border-t
-                        border-slate-200
-                        px-1
-                      "
-                    >
-
-                      <input
-                        id={`txtDocPrefix_${row.id}`}
-                        name="txtDocPrefix"
-                        type="text"
-                        value={row.txtDocPrefix}
-                        onChange={(e) =>
-                          handleRowChange(
-                            row.id,
-                            "txtDocPrefix",
-                            e.target.value
-                          )
-                        }
-                        className="
-                          w-full
-                          bg-transparent
-                          text-left
-                          text-[13px]
-                          text-slate-600
-                          outline-none
-                        "
-                      />
-
-                    </td>
-
-                    {/* =================================================
-                        START SEQ NO
-                    ================================================= */}
-
-                    <td
-                      className="
-                        border-r
-                        border-t
-                        border-slate-200
-                        px-1
-                      "
-                    >
-
-                      <input
-                        id={`txtStartSeqNo_${row.id}`}
-                        name="txtStartSeqNo"
-                        type="text"
-                        value={row.txtStartSeqNo}
-                        onChange={(e) =>
-                          handleRowChange(
-                            row.id,
-                            "txtStartSeqNo",
-                            e.target.value
-                          )
-                        }
-                        className="
-                          w-full
-                          bg-transparent
-                          text-center
-                          text-[13px]
-                          text-slate-600
-                          outline-none
-                        "
-                      />
-
-                    </td>
-
-                    {/* =================================================
-                        STRICT SERIAL
-                    ================================================= */}
-
-                    <td
-                      className="
-                        border-r
-                        border-t
-                        border-slate-200
-                        text-center
-                      "
-                    >
-
-                      <input
-                        id={`chkStrictSerial_${row.id}`}
-                        name="chkStrictSerial"
-                        type="checkbox"
-                        checked={
-                          row.chkStrictSerial
-                        }
-                        onChange={(e) =>
-                          handleRowChange(
-                            row.id,
-                            "chkStrictSerial",
-                            e.target.checked
-                          )
-                        }
-                        className="
-                          h-[16px]
-                          w-[16px]
-                          cursor-pointer
-                          accent-blue-600
-                        "
-                      />
-
-                    </td>
-
-                    {/* =================================================
-                        + MODE
-                    ================================================= */}
-
-                    <td
-                      className="
-                        border-r
-                        border-t
-                        border-slate-200
-                        p-0
-                      "
-                    >
-
-                      <Select
-                        inputId={`lkpMode_${row.id}`}
-                        instanceId={`lkpMode_${row.id}`}
-                        name="lkpMode"
-                        options={modeOptions}
-                        value={getOption(
-                          modeOptions,
-                          row.lkpMode
-                        )}
-                        onChange={(
-                          option: SingleValue<SelectOption>
-                        ) =>
-                          handleRowChange(
-                            row.id,
-                            "lkpMode",
-                            option?.value ?? ""
-                          )
-                        }
-                        styles={tableSelectStyles}
-                        components={{
-                          DropdownIndicator:
-                            CustomDropdownIndicator,
-                        }}
-                        isSearchable={false}
-                        menuPortalTarget={
-                          document.body
-                        }
-                        menuPosition="fixed"
-                      />
-
-                    </td>
-
-                    {/* =================================================
-                        RESET NO
-                    ================================================= */}
-
-                    <td
-                      className="
-                        border-r
-                        border-t
-                        border-slate-200
-                        p-0
-                      "
-                    >
-
-                      <Select
-                        inputId={`lkpResetNo_${row.id}`}
-                        instanceId={`lkpResetNo_${row.id}`}
-                        name="lkpResetNo"
-                        options={resetOptions}
-                        value={getOption(
-                          resetOptions,
-                          row.lkpResetNo
-                        )}
-                        onChange={(
-                          option: SingleValue<SelectOption>
-                        ) =>
-                          handleRowChange(
-                            row.id,
-                            "lkpResetNo",
-                            option?.value ?? ""
-                          )
-                        }
-                        styles={tableSelectStyles}
-                        components={{
-                          DropdownIndicator:
-                            CustomDropdownIndicator,
-                        }}
-                        isSearchable={false}
-                        menuPortalTarget={
-                          document.body
-                        }
-                        menuPosition="fixed"
-                      />
-
-                    </td>
-
-                    {/* =================================================
-                        PRINT AFTER SAVE
-                    ================================================= */}
-
-                    <td
-                      className="
-                        border-r
-                        border-t
-                        border-slate-200
-                        text-center
-                      "
-                    >
-
-                      <input
-                        id={`chkPrintAfterSave_${row.id}`}
-                        name="chkPrintAfterSave"
-                        type="checkbox"
-                        checked={
-                          row.chkPrintAfterSave
-                        }
-                        onChange={(e) =>
-                          handleRowChange(
-                            row.id,
-                            "chkPrintAfterSave",
-                            e.target.checked
-                          )
-                        }
-                        className="
-                          h-[16px]
-                          w-[16px]
-                          cursor-pointer
-                          accent-blue-600
-                        "
-                      />
-
-                    </td>
-
-                    {/* =================================================
-                        POSITION NO
-                    ================================================= */}
-
-                    <td
-                      className="
-                        border-t
-                        border-slate-200
-                        px-1
-                        text-center
-                      "
-                    >
-
-                      <input
-                        id={`txtPositionNo_${row.id}`}
-                        name="txtPositionNo"
-                        type="number"
-                        value={row.txtPositionNo}
-                        onChange={(e) =>
-                          handleRowChange(
-                            row.id,
-                            "txtPositionNo",
-                            Number(
-                              e.target.value
-                            )
-                          )
-                        }
-                        className="
-                          w-full
-                          bg-transparent
-                          text-right
-                          text-[13px]
-                          text-slate-600
-                          outline-none
-                        "
-                      />
-
-                    </td>
-
-                  </tr>
-
-                ))}
-
-              </tbody>
-
-            </table>
+            />
+
+          </td>
+
+
+          {/* =================================================
+              START SEQ NO
+          ================================================= */}
+
+          <td
+            className="
+              border-r
+              border-t
+              border-slate-200
+              px-1
+            "
+          >
+
+            <input
+              id={`txtStartSeqNo_${row.id}`}
+              name="txtStartSeqNo"
+              type="text"
+              value={row.txtStartSeqNo}
+              onChange={(e) =>
+                handleRowChange(
+                  row.id,
+                  "txtStartSeqNo",
+                  e.target.value,
+                )
+              }
+              className="
+                w-full
+                bg-transparent
+                text-center
+                text-[13px]
+                text-slate-600
+                outline-none
+              "
+            />
+
+          </td>
+
+
+          {/* =================================================
+              STRICT SERIAL
+          ================================================= */}
+
+          <td
+            className="
+              border-r
+              border-t
+              border-slate-200
+              text-center
+            "
+          >
+
+            <input
+              id={`chkStrictSerial_${row.id}`}
+              name="chkStrictSerial"
+              type="checkbox"
+              checked={row.chkStrictSerial}
+              onChange={(e) =>
+                handleRowChange(
+                  row.id,
+                  "chkStrictSerial",
+                  e.target.checked,
+                )
+              }
+              className="
+                h-[16px]
+                w-[16px]
+                cursor-pointer
+                accent-blue-600
+              "
+            />
+
+          </td>
+
+
+          {/* =================================================
+              MODE
+          ================================================= */}
+
+          <td
+            className="
+              border-r
+              border-t
+              border-slate-200
+              p-0
+            "
+          >
+
+            <Select
+              inputId={`lkpMode_${row.id}`}
+              instanceId={`lkpMode_${row.id}`}
+              name="lkpMode"
+              options={modeOptions}
+              value={getOption(
+                modeOptions,
+                row.lkpMode,
+              )}
+              onChange={(
+                option: SingleValue<SelectOption>,
+              ) =>
+                handleRowChange(
+                  row.id,
+                  "lkpMode",
+                  option?.value ?? "",
+                )
+              }
+              styles={tableSelectStyles}
+              components={{
+                DropdownIndicator:
+                  CustomDropdownIndicator,
+              }}
+              isSearchable={false}
+              menuPortalTarget={document.body}
+              menuPosition="fixed"
+            />
+
+          </td>
+
+
+          {/* =================================================
+              RESET NO
+          ================================================= */}
+
+          <td
+            className="
+              border-r
+              border-t
+              border-slate-200
+              p-0
+            "
+          >
+
+            <Select
+              inputId={`lkpResetNo_${row.id}`}
+              instanceId={`lkpResetNo_${row.id}`}
+              name="lkpResetNo"
+              options={resetOptions}
+              value={getOption(
+                resetOptions,
+                row.lkpResetNo,
+              )}
+              onChange={(
+                option: SingleValue<SelectOption>,
+              ) =>
+                handleRowChange(
+                  row.id,
+                  "lkpResetNo",
+                  option?.value ?? "",
+                )
+              }
+              styles={tableSelectStyles}
+              components={{
+                DropdownIndicator:
+                  CustomDropdownIndicator,
+              }}
+              isSearchable={false}
+              menuPortalTarget={document.body}
+              menuPosition="fixed"
+            />
+
+          </td>
+
+
+          {/* =================================================
+              PRINT AFTER SAVE
+          ================================================= */}
+
+          <td
+            className="
+              border-r
+              border-t
+              border-slate-200
+              text-center
+            "
+          >
+
+            <input
+              id={`chkPrintAfterSave_${row.id}`}
+              name="chkPrintAfterSave"
+              type="checkbox"
+              checked={row.chkPrintAfterSave}
+              onChange={(e) =>
+                handleRowChange(
+                  row.id,
+                  "chkPrintAfterSave",
+                  e.target.checked,
+                )
+              }
+              className="
+                h-[16px]
+                w-[16px]
+                cursor-pointer
+                accent-blue-600
+              "
+            />
+
+          </td>
+
+
+          {/* =================================================
+              POSITION NO
+          ================================================= */}
+
+          <td
+            className="
+              border-t
+              border-slate-200
+              px-1
+              text-center
+            "
+          >
+
+            <input
+              id={`txtPositionNo_${row.id}`}
+              name="txtPositionNo"
+              type="number"
+              value={row.txtPositionNo}
+              onChange={(e) =>
+                handleRowChange(
+                  row.id,
+                  "txtPositionNo",
+                  Number(e.target.value),
+                )
+              }
+              className="
+                w-full
+                bg-transparent
+                text-right
+                text-[13px]
+                text-slate-600
+                outline-none
+              "
+            />
+
+          </td>
+
+        </tr>
+
+      ))}
+
+    </tbody>
+
+  </table>
+
+</div>
 
           </div>
 

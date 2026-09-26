@@ -17,12 +17,12 @@ export const getYearList = async (
   res: Response
 ): Promise<Response> => {
   try {
-    const PstrCoID = process.env.PstrCoID;
+    const { companyId } = req.query;
 
-    if (!PstrCoID) {
+    if (!companyId) {
       return res.status(400).json({
         success: false,
-        message: "Company ID is not configured",
+        message: "Company ID is required",
       });
     }
 
@@ -31,7 +31,7 @@ export const getYearList = async (
       SELECT *
       FROM dbo.fillyear($1)
       `,
-      [PstrCoID]
+      [companyId]
     );
 
     return res.status(200).json({
@@ -61,21 +61,31 @@ export const getBranchList = async (
   res: Response
 ): Promise<Response> => {
   try {
-    const PstrCoID = process.env.PstrCoID;
+    const { companyId, userId } = req.query;
 
-    if (!PstrCoID) {
+    if (!companyId) {
       return res.status(400).json({
         success: false,
-        message: "Company ID is not configured",
+        message: "Company ID is required",
+      });
+    }
+
+    if (!userId) {
+      return res.status(400).json({
+        success: false,
+        message: "User ID is required",
       });
     }
 
     const result = await pool.query(
       `
-      SELECT *
-      FROM dbo.fillbranch($1)
+      SELECT fbrid, fbrname
+      FROM dbo.tblbranch
+      WHERE fcoid = $1
+        AND dbo.userbranches($1, fbrid, $2)
+      ORDER BY fpositionno, fbrid
       `,
-      [PstrCoID]
+      [companyId, userId]
     );
 
     return res.status(200).json({
@@ -105,12 +115,12 @@ export const getModuleList = async (
   res: Response
 ): Promise<Response> => {
   try {
-    const PstrCoID = process.env.PstrCoID;
+    const { companyId } = req.query;
 
-    if (!PstrCoID) {
+    if (!companyId) {
       return res.status(400).json({
         success: false,
-        message: "Company ID is not configured",
+        message: "Company ID is required",
       });
     }
 
@@ -119,7 +129,7 @@ export const getModuleList = async (
       SELECT *
       FROM dbo.fillmodule($1)
       `,
-      [PstrCoID]
+      [companyId]
     );
 
     return res.status(200).json({
@@ -149,13 +159,12 @@ export const getDocumentList = async (
   res: Response
 ): Promise<Response> => {
   try {
-    const PstrCoID = process.env.PstrCoID;
-    const { lkpModule } = req.query;
+    const { companyId, lkpModule } = req.query;
 
-    if (!PstrCoID) {
+    if (!companyId) {
       return res.status(400).json({
         success: false,
-        message: "Company ID is not configured",
+        message: "Company ID is required",
       });
     }
 
@@ -171,7 +180,7 @@ export const getDocumentList = async (
       SELECT *
       FROM dbo.filldocument($1, $2)
       `,
-      [PstrCoID, lkpModule]
+      [companyId, lkpModule]
     );
 
     return res.status(200).json({
@@ -201,13 +210,12 @@ export const getDocumentNoList = async (
   res: Response
 ): Promise<Response> => {
   try {
-    const PstrCoID = process.env.PstrCoID;
-    const { lkpYear, lkpBranch, lkpModule } = req.query;
+    const { companyId, lkpYear, lkpBranch, lkpModule } = req.query;
 
-    if (!PstrCoID) {
+    if (!companyId) {
       return res.status(400).json({
         success: false,
-        message: "Company ID is not configured",
+        message: "Company ID is required",
       });
     }
 
@@ -219,7 +227,7 @@ export const getDocumentNoList = async (
     }
 
     const data = await getDocumentNoListService(
-      PstrCoID,
+      String(companyId),
       String(lkpYear),
       String(lkpBranch),
       String(lkpModule)
@@ -252,25 +260,28 @@ export const saveDocumentNo = async (
   res: Response
 ): Promise<Response> => {
   try {
-    const PstrCoID = process.env.PstrCoID;
     const PstrUserID = process.env.PstrUserID || "ADMIN";
 
     const {
+      companyId,
       lkpYear,
       lkpBranch,
       lkpModule,
+      userId,
       rows,
     }: {
+      companyId: string;
       lkpYear: string;
       lkpBranch: string;
       lkpModule: string;
+      userId: string;
       rows: DocumentNoRowPayload[];
     } = req.body;
 
-    if (!PstrCoID) {
+    if (!companyId) {
       return res.status(400).json({
         success: false,
-        message: "Company ID is not configured",
+        message: "Company ID is required",
       });
     }
 
@@ -281,6 +292,13 @@ export const saveDocumentNo = async (
       });
     }
 
+    if (!userId) {
+      return res.status(400).json({
+        success: false,
+        message: "User ID is required",
+      });
+    }
+
     if (!Array.isArray(rows) || rows.length === 0) {
       return res.status(400).json({
         success: false,
@@ -288,8 +306,20 @@ export const saveDocumentNo = async (
       });
     }
 
+    const branchAccessResult = await pool.query(
+      `SELECT dbo.userbranches($1, $2, $3) AS "hasAccess"`,
+      [companyId, lkpBranch, userId]
+    );
+
+    if (!branchAccessResult.rows[0]?.hasAccess) {
+      return res.status(403).json({
+        success: false,
+        message: `User '${userId}' does not have access to Branch '${lkpBranch}'`,
+      });
+    }
+
     await saveDocumentNoListService(
-      PstrCoID,
+      companyId,
       lkpYear,
       lkpBranch,
       lkpModule,
@@ -323,24 +353,26 @@ export const deleteDocumentNoRow = async (
   res: Response
 ): Promise<Response> => {
   try {
-    const PstrCoID = process.env.PstrCoID;
-
     const {
+      companyId,
       lkpYear,
       lkpBranch,
       lkpModule,
       lkpDocument,
+      userId,
     }: {
+      companyId: string;
       lkpYear: string;
       lkpBranch: string;
       lkpModule: string;
       lkpDocument: string;
+      userId: string;
     } = req.body;
 
-    if (!PstrCoID) {
+    if (!companyId) {
       return res.status(400).json({
         success: false,
-        message: "Company ID is not configured",
+        message: "Company ID is required",
       });
     }
 
@@ -351,8 +383,27 @@ export const deleteDocumentNoRow = async (
       });
     }
 
+    if (!userId) {
+      return res.status(400).json({
+        success: false,
+        message: "User ID is required",
+      });
+    }
+
+    const branchAccessResult = await pool.query(
+      `SELECT dbo.userbranches($1, $2, $3) AS "hasAccess"`,
+      [companyId, lkpBranch, userId]
+    );
+
+    if (!branchAccessResult.rows[0]?.hasAccess) {
+      return res.status(403).json({
+        success: false,
+        message: `User '${userId}' does not have access to Branch '${lkpBranch}'`,
+      });
+    }
+
     await deleteDocumentNoRowService(
-      PstrCoID,
+      companyId,
       lkpYear,
       lkpBranch,
       lkpModule,
@@ -385,13 +436,12 @@ export const getDefaultBranch = async (
   res: Response
 ): Promise<Response> => {
   try {
-    const PstrCoID = process.env.PstrCoID;
-    const { userId } = req.query;
+    const { companyId, userId } = req.query;
 
-    if (!PstrCoID) {
+    if (!companyId) {
       return res.status(400).json({
         success: false,
-        message: "Company ID is not configured",
+        message: "Company ID is required",
       });
     }
 
@@ -404,7 +454,7 @@ export const getDefaultBranch = async (
 
     const result = await pool.query(
       `SELECT dbo.getuserdefbranch($1, $2) AS "defBranch"`,
-      [PstrCoID, userId]
+      [companyId, userId]
     );
 
     return res.status(200).json({
@@ -424,4 +474,3 @@ export const getDefaultBranch = async (
     });
   }
 };
-

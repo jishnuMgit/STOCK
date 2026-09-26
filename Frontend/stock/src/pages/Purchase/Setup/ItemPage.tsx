@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import Select from "react-select";
+import Select, { type StylesConfig } from "react-select";
 
 /* =========================================================
    TYPES
@@ -9,7 +9,7 @@ interface BranchRow {
   id: number;
   lkpBranch: string;
   txtItemLocation: string;
-  chkIsActive: boolean;
+  chkInactive: boolean;
   chkAllowSaleBelowCost: boolean;
 }
 
@@ -17,13 +17,49 @@ interface SelectOption {
   value: string;
   label: string;
 }
-const buttonClass = `min-w-[120px] h-[40px] rounded-[4px] border-l border-r border-b border-[#9db8d4] border-t-0 bg-gradient-to-b
-  from-[#ffffff] to-[#e7eef5] px-4 text-[15px] shadow-[inset_0_1px_0_rgba(255,255,255,0.8)] transition-colors duration-100 hover:border-l-[#7f9fbd]
-  hover:border-r-[#7f9fbd] hover:border-b-[#7f9fbd] hover:bg-gradient-to-b hover:from-[#ffffff] hover:to-[#dce8f1]
-  focus:border-l-[#20884e] focus:border-r-[#20884e] focus:border-b-[#20884e] focus:border-t-0 focus:bg-gradient-to-b
-  focus:from-[#ffffff] focus:to-[#dcefe5] focus:outline-none focus:ring-0`;
 
-const textClass = `text-[15px] text-green-600`;
+/* =========================================================
+   BUTTON CLASS
+========================================================= */
+
+const buttonClass = `
+  min-w-[120px]
+      h-[40px]
+      rounded-[4px]
+      border-l
+      border-r
+      border-b
+      border-[#9db8d4]
+      border-t-0
+      bg-gradient-to-b
+      from-[#ffffff]
+      to-[#e7eef5]
+      px-4
+      text-[18px]
+      shadow-[inset_0_1px_0_rgba(255,255,255,0.8)]
+      transition-colors
+      duration-100
+      hover:border-l-[#7f9fbd]
+      hover:border-r-[#7f9fbd]
+      hover:border-b-[#7f9fbd]
+      hover:bg-gradient-to-b
+      hover:from-[#ffffff]
+      hover:to-[#dce8f1]
+      focus:border-l-[#20884e]
+      focus:border-r-[#20884e]
+      focus:border-b-[#20884e]
+      focus:border-t-0
+      focus:bg-gradient-to-b
+      focus:from-[#ffffff]
+      focus:to-[#dcefe5]
+      focus:outline-none
+      focus:ring-0
+`;
+
+const textClass = `
+  text-[18px] text-green-600
+`;
+
 /* =========================================================
    ITEM PAGE
 ========================================================= */
@@ -37,15 +73,34 @@ const ItemPage: React.FC = () => {
   const [txtItemName, setTxtItemName] = useState("");
   const [txtItemDescription, setTxtItemDescription] = useState("");
   const [lkpUnit, setLkpUnit] = useState("");
-  const [txtPacking, setTxtPacking] = useState("0");
-  const [txtCBM, setTxtCBM] = useState("0.0000");
-  const [lkpItemGroupID, setLkpItemGroupID] = useState("");
-  const [lkpItemGroupName, setLkpItemGroupName] = useState("");
-  const [lkpSupplierID, setLkpSupplierID] = useState("");
-  const [lkpSupplierName, setLkpSupplierName] = useState("");
-  const [txtSupplierItemID, setTxtSupplierItemID] = useState("");
-  const [txtReorderLevel, setTxtReorderLevel] = useState("0");
-  const [txtReorderQty, setTxtReorderQty] = useState("0");
+
+  const [txtPacking, setTxtPacking] =
+    useState("0");
+
+  const [txtCBM, setTxtCBM] =
+    useState("0.0000");
+
+  const [lkpItemGroupID, setLkpItemGroupID] =
+    useState("");
+
+  const [lkpItemGroupName, setLkpItemGroupName] =
+    useState("");
+
+  const [lkpSupplierID, setLkpSupplierID] =
+    useState("");
+
+  const [lkpSupplierName, setLkpSupplierName] =
+    useState("");
+
+  const [txtSupplierItemID, setTxtSupplierItemID] =
+    useState("");
+
+  const [txtReorderLevel, setTxtReorderLevel] =
+    useState("0");
+
+  const [txtReorderQty, setTxtReorderQty] =
+    useState("0");
+
   const [chkAllBranches, setChkAllBranches] = useState(false);
 
   /* =========================================================
@@ -57,35 +112,35 @@ const ItemPage: React.FC = () => {
       id: 1,
       lkpBranch: "",
       txtItemLocation: "",
-      chkIsActive: false,
+      chkInactive: false,
       chkAllowSaleBelowCost: false,
     },
     {
       id: 2,
       lkpBranch: "",
       txtItemLocation: "",
-      chkIsActive: false,
+      chkInactive: false,
       chkAllowSaleBelowCost: false,
     },
     {
       id: 3,
       lkpBranch: "",
       txtItemLocation: "",
-      chkIsActive: false,
+      chkInactive: false,
       chkAllowSaleBelowCost: false,
     },
     {
       id: 4,
       lkpBranch: "",
       txtItemLocation: "",
-      chkIsActive: false,
+      chkInactive: false,
       chkAllowSaleBelowCost: false,
     },
     {
       id: 5,
       lkpBranch: "",
       txtItemLocation: "",
-      chkIsActive: false,
+      chkInactive: false,
       chkAllowSaleBelowCost: false,
     },
   ]);
@@ -252,19 +307,19 @@ const ItemPage: React.FC = () => {
 
     setChkAllBranches(false);
 
-    setRows(
-      rows.map((row) => ({
+    setRows((currentRows) =>
+      currentRows.map((row) => ({
         ...row,
         lkpBranch: "",
         txtItemLocation: "",
-        chkIsActive: false,
+        chkInactive: false,
         chkAllowSaleBelowCost: false,
       })),
     );
   };
 
   /* =========================================================
-     COMMON CLASSES
+     COMMON INPUT CLASS
   ========================================================= */
 
   const inputClass = `h-[28px] w-full rounded-none border border-slate-300 bg-white px-2 text-[12px] text-slate-700 outline-none
@@ -274,16 +329,45 @@ const ItemPage: React.FC = () => {
      LABEL CLASS
   ========================================================= */
 
-  const labelClass = `text-[12px] text-slate-700 whitespace-nowrap text-right`;
+  const labelClass = `
+    relative
+    flex
+    items-center
+    justify-end
+    text-right
+    text-[12px]
+    text-slate-700
+    whitespace-nowrap
+  `;
+
+  /* =========================================================
+     REQUIRED RED DOT
+  ========================================================= */
+
+  const requiredDot = (
+    <span
+      className="
+        absolute
+        right-[5px]
+        -top-[3px]
+        h-[4px]
+        w-[4px]
+        rounded-full
+        
+        bg-red-500
+      "
+    />
+  );
 
   /* =========================================================
      REACT SELECT - FORM
-     
-     Same 28px height as normal input.
   ========================================================= */
 
-  const reactSelectStyles = {
-    control: (provided: any) => ({
+  const reactSelectStyles: StylesConfig<
+    SelectOption,
+    false
+  > = {
+    control: (provided) => ({
       ...provided,
       minHeight: "28px",
       height: "28px",
@@ -293,128 +377,181 @@ const ItemPage: React.FC = () => {
       fontSize: "12px",
     }),
 
-    valueContainer: (provided: any) => ({
+    valueContainer: (provided) => ({
       ...provided,
       height: "28px",
       padding: "0 8px",
     }),
 
-    input: (provided: any) => ({
+    input: (provided) => ({
       ...provided,
       margin: "0px",
       padding: "0px",
       fontSize: "12px",
     }),
 
-    singleValue: (provided: any) => ({
+    singleValue: (provided) => ({
       ...provided,
       fontSize: "12px",
       color: "#334155",
     }),
 
-    placeholder: (provided: any) => ({
+    placeholder: (provided) => ({
       ...provided,
       fontSize: "12px",
       color: "#64748b",
     }),
 
-    indicatorsContainer: (provided: any) => ({
+    indicatorsContainer: (provided) => ({
       ...provided,
       height: "28px",
     }),
 
-    dropdownIndicator: (provided: any) => ({
+    dropdownIndicator: (provided) => ({
       ...provided,
       padding: "4px",
     }),
 
-    clearIndicator: (provided: any) => ({
+    clearIndicator: (provided) => ({
       ...provided,
       padding: "4px",
     }),
 
-    menu: (provided: any) => ({
+    indicatorSeparator: () => ({
+      display: "none",
+    }),
+
+    menu: (provided) => ({
       ...provided,
       zIndex: 100,
       fontSize: "12px",
     }),
 
-    option: (provided: any) => ({
+    menuList: (provided) => ({
+      ...provided,
+      padding: "3px 0",
+    }),
+
+    option: (provided, state) => ({
       ...provided,
       fontSize: "12px",
       padding: "6px 8px",
+
+      backgroundColor: state.isSelected
+        ? "#dbeafe"
+        : state.isFocused
+          ? "#eff6ff"
+          : "#ffffff",
+
+      color: "#475569",
+      cursor: "pointer",
     }),
   };
 
   /* =========================================================
      REACT SELECT - TABLE
-     
-     Border completely removed.
-     Same height as table row.
   ========================================================= */
 
-  const tableSelectStyles = {
-    control: (provided: any) => ({
-      ...provided,
-      minHeight: "27px",
-      height: "27px",
+  const tableSelectStyles: StylesConfig<
+    SelectOption,
+    false
+  > = {
+    ...reactSelectStyles,
+
+    control: (base) => ({
+      ...base,
+      minHeight: "28px",
+      height: "28px",
+      width: "100%",
       border: "none",
       borderRadius: "0px",
       boxShadow: "none",
       backgroundColor: "transparent",
-      fontSize: "11px",
+      fontSize: "12px",
+      cursor: "pointer",
+
+      "&:hover": {
+        border: "none",
+      },
     }),
 
-    valueContainer: (provided: any) => ({
-      ...provided,
-      height: "27px",
+    valueContainer: (base) => ({
+      ...base,
+      height: "28px",
+      minWidth: 0,
       padding: "0 8px",
+      overflow: "hidden",
     }),
 
-    input: (provided: any) => ({
-      ...provided,
-      margin: "0px",
-      padding: "0px",
-      fontSize: "11px",
+    input: (base) => ({
+      ...base,
+      margin: 0,
+      padding: 0,
+      fontSize: "12px",
     }),
 
-    singleValue: (provided: any) => ({
-      ...provided,
-      fontSize: "11px",
+    singleValue: (base) => ({
+      ...base,
       color: "#334155",
+      fontSize: "12px",
+      maxWidth: "100%",
+      overflow: "hidden",
+      textOverflow: "ellipsis",
+      whiteSpace: "nowrap",
     }),
 
-    placeholder: (provided: any) => ({
-      ...provided,
-      fontSize: "11px",
+    placeholder: (base) => ({
+      ...base,
+      color: "#64748b",
+      fontSize: "12px",
+    }),
+
+    indicatorsContainer: (base) => ({
+      ...base,
+      height: "28px",
+      flexShrink: 0,
+    }),
+
+    dropdownIndicator: (base) => ({
+      ...base,
+      padding: "4px",
       color: "#64748b",
     }),
 
-    indicatorsContainer: (provided: any) => ({
-      ...provided,
-      height: "27px",
+    clearIndicator: (base) => ({
+      ...base,
+      padding: "4px",
     }),
 
-    dropdownIndicator: (provided: any) => ({
-      ...provided,
-      padding: "3px",
+    indicatorSeparator: () => ({
+      display: "none",
     }),
 
-    clearIndicator: (provided: any) => ({
-      ...provided,
-      padding: "3px",
-    }),
-
-    menu: (provided: any) => ({
-      ...provided,
+    menu: (base) => ({
+      ...base,
       zIndex: 9999,
-      fontSize: "11px",
+      fontSize: "12px",
     }),
 
-    option: (provided: any) => ({
-      ...provided,
-      fontSize: "11px",
-      padding: "5px 8px",
+    menuList: (base) => ({
+      ...base,
+      padding: "3px 0",
+    }),
+
+    option: (base, state) => ({
+      ...base,
+      minHeight: "30px",
+      padding: "6px 8px",
+      fontSize: "12px",
+
+      backgroundColor: state.isSelected
+        ? "#dbeafe"
+        : state.isFocused
+          ? "#eff6ff"
+          : "#ffffff",
+
+      color: "#475569",
+      cursor: "pointer",
     }),
   };
 
@@ -423,13 +560,54 @@ const ItemPage: React.FC = () => {
   ========================================================= */
 
   return (
-    <div className="min-h-screen flex items-center">
-      <div className="mx-auto lg:w-[50%] w-[55%] flex justify-center items-center bg-white p-0">
+    /*
+      IMPORTANT:
+      Do not use mx-auto or percentage width here.
+
+      The Item form is kept at a fixed 960px width so
+      opening/closing the sidebar does not resize or
+      recenter this page.
+    */
+    <div
+      className="
+        min-h-screen
+        w-full
+        overflow-x-auto
+        flex
+        justify-center
+        items-center
+        bg-white
+      "
+    >
+
+      {/* =====================================================
+          FIXED CONTENT WIDTH
+      ====================================================== */}
+
+      <div
+        className="
+          w-[960px]
+          min-w-[960px]
+          max-w-[960px]
+          ml-[4px]
+          mt-[0px]
+          bg-white
+          p-0
+        "
+      >
+
         {/* =====================================================
             MAIN CONTAINER
-        ===================================================== */}
+        ====================================================== */}
 
-        <div className="mx-auto w-full border border-slate-400">
+        <div
+          className="
+            w-full
+            border
+            border-slate-400
+          "
+        >
+
           {/* ===================================================
               HEADER
           =================================================== */}
@@ -439,7 +617,6 @@ const ItemPage: React.FC = () => {
               className="
                 rounded-[3px]
                 px-2
-              
                 text-[18px]
                 font-semibold
                 text-slate-800
@@ -467,11 +644,16 @@ const ItemPage: React.FC = () => {
                 gap-2
               "
             >
-              <label htmlFor="txtItemID" className={labelClass}>
-                <span className="text-red-500">*</span> Item ID :
+              <label
+                htmlFor="txtItemID"
+                className={labelClass}
+              >
+                {requiredDot}
+                Item ID :
               </label>
 
               <input
+                required
                 id="txtItemID"
                 name="txtItemID"
                 type="text"
@@ -503,11 +685,16 @@ const ItemPage: React.FC = () => {
                 gap-2
               "
             >
-              <label htmlFor="txtItemName" className={labelClass}>
-                <span className="text-red-500">*</span> Item Name :
+              <label
+                htmlFor="txtItemName"
+                className={labelClass}
+              >
+                {requiredDot}
+                Item Name :
               </label>
 
               <input
+                required
                 id="txtItemName"
                 name="txtItemName"
                 type="text"
@@ -557,11 +744,16 @@ const ItemPage: React.FC = () => {
                 gap-2
               "
             >
-              <label htmlFor="lkpUnit" className={labelClass}>
-                <span className="text-red-500">*</span> Unit :
+              <label
+                htmlFor="lkpUnit"
+                className={labelClass}
+              >
+                {requiredDot}
+                Unit :
               </label>
 
               <Select
+                required
                 inputId="lkpUnit"
                 name="lkpUnit"
                 options={unitOptions}
@@ -582,7 +774,7 @@ const ItemPage: React.FC = () => {
               className="
                 mb-2
                 grid
-                grid-cols-[85px_155px_65px_90px]
+                grid-cols-[85px_155px_65px_120px]
                 items-center
                 gap-2
               "
@@ -596,7 +788,12 @@ const ItemPage: React.FC = () => {
                 name="txtPacking"
                 type="text"
                 value={txtPacking}
-                onChange={(e) => setTxtPacking(e.target.value)}
+                style={{
+                  textAlign: "right",
+                }}
+                onChange={(e) =>
+                  setTxtPacking(e.target.value)
+                }
                 className={inputClass}
               />
 
@@ -607,9 +804,16 @@ const ItemPage: React.FC = () => {
               <input
                 id="txtCBM"
                 name="txtCBM"
+                
                 type="text"
                 value={txtCBM}
-                onChange={(e) => setTxtCBM(e.target.value)}
+                style={{
+                  textAlign: "right",
+                  width:'85%'
+                }}
+                onChange={(e) =>
+                  setTxtCBM(e.target.value)
+                }
                 className={inputClass}
               />
             </div>
@@ -627,11 +831,16 @@ const ItemPage: React.FC = () => {
                 gap-2
               "
             >
-              <label htmlFor="lkpItemGroupID" className={labelClass}>
-                <span className="text-red-500">*</span> Item Group :
+              <label
+                htmlFor="lkpItemGroupID"
+                className={labelClass}
+              >
+                {requiredDot}
+                Item Group :
               </label>
 
               <Select
+                required
                 inputId="lkpItemGroupID"
                 name="lkpItemGroupID"
                 options={itemGroupIDOptions}
@@ -719,7 +928,13 @@ const ItemPage: React.FC = () => {
                 gap-2
               "
             >
-              <label htmlFor="txtSupplierItemID" className={labelClass}>
+              <label
+                htmlFor="txtSupplierItemID"
+                className={labelClass}
+                style={{
+                  marginLeft: "-10px",
+                }}
+              >
                 Supplier Item ID :
               </label>
 
@@ -799,14 +1014,14 @@ const ItemPage: React.FC = () => {
 
               <div
                 className="
-                  ml-[33px]
+                  ml-[35px]
                   flex
+                  w-[145px]
                   items-center
                   gap-2
+                  border
                   border-gray-300
-                   border
-                   w-[155px]
-                   p-1
+                  p-1
                   whitespace-nowrap
                 "
               >
@@ -827,7 +1042,6 @@ const ItemPage: React.FC = () => {
                   htmlFor="chkAllBranches"
                   className="
                     text-[12px]
-                   
                     text-slate-700
                   "
                 >
@@ -840,7 +1054,8 @@ const ItemPage: React.FC = () => {
                 BRANCH OPTIONS
             ================================================= */}
 
-            <div className="mt-2 ">
+            <div className="mt-2">
+
               <table
                 className="
                   w-full
@@ -852,12 +1067,18 @@ const ItemPage: React.FC = () => {
                 "
               >
                 <thead>
+
                   <tr
                     className="
                       h-[28px]
                       bg-slate-100
                     "
                   >
+
+                    {/* =========================================
+                        BRANCH
+                    ========================================== */}
+
                     <th
                       className="
                         w-[29%]
@@ -868,8 +1089,26 @@ const ItemPage: React.FC = () => {
                         font-normal
                       "
                     >
-                      Branch
+                      <span className="relative inline-block">
+                        Branch
+
+                        <span
+                          className="
+                            absolute
+                            -right-[7px]
+                            -top-[3px]
+                            h-[4px]
+                            w-[4px]
+                            rounded-full
+                            bg-red-500
+                          "
+                        />
+                      </span>
                     </th>
+
+                    {/* =========================================
+                        ITEM LOCATION
+                    ========================================== */}
 
                     <th
                       className="
@@ -883,6 +1122,10 @@ const ItemPage: React.FC = () => {
                     >
                       Item Location
                     </th>
+
+                    {/* =========================================
+                        ALLOW SALE BELOW COST
+                    ========================================== */}
 
                     <th
                       className="
@@ -898,6 +1141,10 @@ const ItemPage: React.FC = () => {
                       Allow Sale Below Cost
                     </th>
 
+                    {/* =========================================
+                        INACTIVE
+                    ========================================== */}
+
                     <th
                       className="
                         w-[14%]
@@ -909,14 +1156,20 @@ const ItemPage: React.FC = () => {
                         whitespace-nowrap
                       "
                     >
-                      Is Active
+                      Inactive
                     </th>
                   </tr>
+
                 </thead>
 
                 <tbody>
                   {rows.map((row) => (
-                    <tr key={row.id} className="h-[32px]">
+
+                    <tr
+                      key={row.id}
+                      className="h-[32px]"
+                    >
+
                       {/* =====================================
                           BRANCH
                       ===================================== */}
@@ -942,6 +1195,10 @@ const ItemPage: React.FC = () => {
                           }
                           styles={tableSelectStyles}
                           isClearable
+                          menuPortalTarget={
+                            document.body
+                          }
+                          menuPosition="fixed"
                         />
                       </td>
 
@@ -990,25 +1247,35 @@ const ItemPage: React.FC = () => {
                       </td>
 
                       {/* =====================================
-                          IS ACTIVE
+                          INACTIVE
                       ===================================== */}
 
                       <td className="border border-slate-300 text-center">
                         <input
-                          id={`chkIsActive_${row.id}`}
-                          name={`chkIsActive_${row.id}`}
+                          id={`chkInactive_${row.id}`}
+                          name={`chkInactive_${row.id}`}
                           type="checkbox"
-                          checked={row.chkIsActive}
+                          checked={
+                            row.chkInactive
+                          }
                           onChange={(e) =>
-                            updateRow(row.id, "chkIsActive", e.target.checked)
+                            updateRow(
+                              row.id,
+                              "chkInactive",
+                              e.target.checked,
+                            )
                           }
                           className="h-3.5 w-3.5 accent-blue-600"
                         />
                       </td>
                     </tr>
+
                   ))}
+
                 </tbody>
+
               </table>
+
             </div>
           </div>
 
@@ -1016,7 +1283,20 @@ const ItemPage: React.FC = () => {
               ACTION BUTTONS
           =================================================== */}
 
-          <div className="my-5 flex w-full flex-wrap items-center justify-center gap-2.75">
+          <div
+            className="
+              my-5
+              flex
+              w-full
+              flex-wrap
+              items-center
+              justify-center
+              gap-2.75
+            "
+          >
+
+            {/* SAVE */}
+
             <button
               type="button"
               className={buttonClass}
@@ -1032,9 +1312,7 @@ const ItemPage: React.FC = () => {
               </span>
             </button>
 
-            {/* =====================================================
-      FIND
-  ===================================================== */}
+            {/* FIND */}
 
             <button
               type="button"
@@ -1051,9 +1329,7 @@ const ItemPage: React.FC = () => {
               </span>
             </button>
 
-            {/* =====================================================
-      DELETE
-  ===================================================== */}
+            {/* DELETE */}
 
             <button
               type="button"
@@ -1070,9 +1346,7 @@ const ItemPage: React.FC = () => {
               </span>
             </button>
 
-            {/* =====================================================
-      CLEAR
-  ===================================================== */}
+            {/* CLEAR */}
 
             <button
               type="button"
@@ -1088,9 +1362,13 @@ const ItemPage: React.FC = () => {
                 lear
               </span>
             </button>
+
           </div>
+
         </div>
+
       </div>
+
     </div>
   );
 };
