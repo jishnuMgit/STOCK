@@ -6,6 +6,7 @@ import Select, {
 } from "react-select";
 import { toast } from "react-toastify";
 import { X } from "lucide-react";
+import { useEnterAsTab } from "../../hooks/useEnterAsTab";
 
 // ============================================================
 // TYPES
@@ -228,6 +229,8 @@ const CustomDropdownIndicator = (props: any) => {
 // ============================================================
 
 const SetDocumentNo: React.FC = () => {
+  const handleEnterAsTab = useEnterAsTab();
+
   // ==========================================================
   // HEADER STATES
   // ==========================================================
@@ -751,6 +754,7 @@ const SetDocumentNo: React.FC = () => {
 
   return (
     <div
+      onKeyDown={handleEnterAsTab}
       className="
         flex
         min-h-screen

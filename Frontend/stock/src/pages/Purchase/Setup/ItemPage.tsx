@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 import Select, { type StylesConfig } from "react-select";
 import { toast } from "react-toastify";
 import { X } from "lucide-react";
+import { useEnterAsTab } from "../../../hooks/useEnterAsTab";
 
 /* =========================================================
    TYPES
@@ -67,6 +68,8 @@ const textClass = `
 ========================================================= */
 
 const ItemPage: React.FC = () => {
+  const handleEnterAsTab = useEnterAsTab();
+
   /* =========================================================
      FORM STATE
   ========================================================= */
@@ -935,6 +938,7 @@ const ItemPage: React.FC = () => {
       recenter this page.
     */
     <div
+      onKeyDown={handleEnterAsTab}
       className="
         min-h-screen
         w-full

@@ -10,6 +10,7 @@ import CompanyRouter from "./routes/CompanyRouter.js";
 import YearRouter from "./routes/YearRouter.js";
 import CompanyInfoRouter from "./routes/SettingRoutes/SetcompanyinfoRouter.js";
 import SetDocumentNoRouter from "./routes/SettingRoutes/SetdocumentnoRouter.js";
+import SetBranchInfoRouter from "./routes/SettingRoutes/SetBranchInfoRouter.js";
 import menuRoutes from "./routes/MenuRoute.js";
 import ItemPageRouter from "./routes/Purchase/Setup/ItemPageRouter.js";
 
@@ -55,6 +56,7 @@ app.use("/api/companies", CompanyRouter);
 app.use("/api/years", YearRouter);
 app.use("/api/CompanyInfo", CompanyInfoRouter);
 app.use("/api/DocumentNo", SetDocumentNoRouter);
+app.use("/api/BranchInfo", SetBranchInfoRouter);
 app.use("/api/menu", menuRoutes);
 app.use("/api/Item", ItemPageRouter);
 
