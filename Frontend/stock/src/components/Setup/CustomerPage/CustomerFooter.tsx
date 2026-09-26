@@ -10,29 +10,19 @@ interface CustomerFooterProps {
   // ==========================================================
 
   chkCustomer: boolean;
-  setChkCustomer: React.Dispatch<
-    React.SetStateAction<boolean>
-  >;
+  setChkCustomer: React.Dispatch<React.SetStateAction<boolean>>;
 
   chkSupplier: boolean;
-  setChkSupplier: React.Dispatch<
-    React.SetStateAction<boolean>
-  >;
+  setChkSupplier: React.Dispatch<React.SetStateAction<boolean>>;
 
   chkInterCompany: boolean;
-  setChkInterCompany: React.Dispatch<
-    React.SetStateAction<boolean>
-  >;
+  setChkInterCompany: React.Dispatch<React.SetStateAction<boolean>>;
 
   chkInactiveCustomer: boolean;
-  setChkInactiveCustomer: React.Dispatch<
-    React.SetStateAction<boolean>
-  >;
+  setChkInactiveCustomer: React.Dispatch<React.SetStateAction<boolean>>;
 
   chkExcludeFromAgeing: boolean;
-  setChkExcludeFromAgeing: React.Dispatch<
-    React.SetStateAction<boolean>
-  >;
+  setChkExcludeFromAgeing: React.Dispatch<React.SetStateAction<boolean>>;
 
   // ==========================================================
   // BUTTONS
@@ -77,216 +67,81 @@ const CustomerFooter: React.FC<CustomerFooterProps> = ({
           CHECKBOX SECTION
       ====================================================== */}
 
-      <div
-        className="
-          px-3
-          py-3
-
-          sm:px-5
-          lg:px-12
-          lg:ml-[65px]
-        "
-      >
-        <div
-          className="
-            grid
-            grid-cols-1
-            gap-3
-
-            sm:grid-cols-2
-
-            lg:grid-cols-5
-            lg:gap-5
-          "
-        >
-          {/* ==================================================
-              CUSTOMER
-          ================================================== */}
-
+      <div className="px-3 py-3 sm:px-5 lg:px-12 lg:ml-[65px]">
+        <div className="flex flex-wrap gap-x-24 gap-y-2">
           <label
             htmlFor="chkCustomer"
-            className="
-              flex
-              cursor-pointer
-              items-center
-              gap-2
-              text-[12px]
-              text-slate-700
-            "
+            className="flex cursor-pointer items-center gap-2 text-[12px] text-slate-700"
           >
             <input
               id="chkCustomer"
               name="chkCustomer"
               type="checkbox"
               checked={chkCustomer}
-              onChange={(e) =>
-                setChkCustomer(
-                  e.target.checked
-                )
-              }
-              className="
-                h-[14px]
-                w-[14px]
-                cursor-pointer
-                accent-blue-600
-              "
+              onChange={(e) => setChkCustomer(e.target.checked)}
+              className="h-[14px] w-[14px] cursor-pointer accent-blue-600"
             />
-
-            <span>
-              Customer
-            </span>
+            <span>Customer</span>
           </label>
-
-          {/* ==================================================
-              SUPPLIER
-          ================================================== */}
 
           <label
             htmlFor="chkSupplier"
-            className="
-              flex
-              cursor-pointer
-              items-center
-              gap-2
-              text-[12px]
-              text-slate-700
-            "
+            className="flex cursor-pointer items-center gap-2 text-[12px] text-slate-700"
           >
             <input
               id="chkSupplier"
               name="chkSupplier"
               type="checkbox"
               checked={chkSupplier}
-              onChange={(e) =>
-                setChkSupplier(
-                  e.target.checked
-                )
-              }
-              className="
-                h-[14px]
-                w-[14px]
-                cursor-pointer
-                accent-blue-600
-              "
+              onChange={(e) => setChkSupplier(e.target.checked)}
+              className="h-[14px] w-[14px] cursor-pointer accent-blue-600"
             />
-
-            <span>
-              Supplier
-            </span>
+            <span>Supplier</span>
           </label>
-
-          {/* ==================================================
-              INTER COMPANY
-          ================================================== */}
 
           <label
             htmlFor="chkInterCompany"
-            className="
-              flex
-              cursor-pointer
-              items-center
-              gap-2
-              text-[12px]
-              text-slate-700
-            "
+            className="flex cursor-pointer items-center gap-2 text-[12px] text-slate-700"
           >
             <input
               id="chkInterCompany"
               name="chkInterCompany"
               type="checkbox"
               checked={chkInterCompany}
-              onChange={(e) =>
-                setChkInterCompany(
-                  e.target.checked
-                )
-              }
-              className="
-                h-[14px]
-                w-[14px]
-                cursor-pointer
-                accent-blue-600
-              "
+              onChange={(e) => setChkInterCompany(e.target.checked)}
+              className="h-[14px] w-[14px] cursor-pointer accent-blue-600"
             />
-
-            <span>
-              Inter Company
-            </span>
+            <span>Inter Company</span>
           </label>
-
-          {/* ==================================================
-              INACTIVE CUSTOMER
-          ================================================== */}
 
           <label
             htmlFor="chkInactiveCustomer"
-            className="
-              flex
-              cursor-pointer
-              items-center
-              gap-2
-              text-[12px]
-              text-slate-700
-            "
+            className="flex cursor-pointer items-center gap-2 text-[12px] text-slate-700"
           >
             <input
               id="chkInactiveCustomer"
               name="chkInactiveCustomer"
               type="checkbox"
               checked={chkInactiveCustomer}
-              onChange={(e) =>
-                setChkInactiveCustomer(
-                  e.target.checked
-                )
-              }
-              className="
-                h-[14px]
-                w-[14px]
-                cursor-pointer
-                accent-blue-600
-              "
+              onChange={(e) => setChkInactiveCustomer(e.target.checked)}
+              className="h-[14px] w-[14px] cursor-pointer accent-blue-600"
             />
-
-            <span>
-              Inactive Customer
-            </span>
+            <span>Inactive Customer</span>
           </label>
-
-          {/* ==================================================
-              EXCLUDE FROM AGEING
-          ================================================== */}
 
           <label
             htmlFor="chkExcludeFromAgeing"
-            className="
-              flex
-              cursor-pointer
-              items-center
-              gap-2
-              text-[12px]
-              text-slate-700
-            "
+            className="flex cursor-pointer items-center gap-2 text-[12px] text-slate-700"
           >
             <input
               id="chkExcludeFromAgeing"
               name="chkExcludeFromAgeing"
               type="checkbox"
               checked={chkExcludeFromAgeing}
-              onChange={(e) =>
-                setChkExcludeFromAgeing(
-                  e.target.checked
-                )
-              }
-              className="
-                h-[14px]
-                w-[14px]
-                cursor-pointer
-                accent-blue-600
-              "
+              onChange={(e) => setChkExcludeFromAgeing(e.target.checked)}
+              className="h-[14px] w-[14px] cursor-pointer accent-blue-600"
             />
-
-            <span>
-              Exclude From Ageing
-            </span>
+            <span>Exclude From Ageing</span>
           </label>
         </div>
       </div>
@@ -295,20 +150,7 @@ const CustomerFooter: React.FC<CustomerFooterProps> = ({
           BUTTON SECTION
       ====================================================== */}
 
-      <div
-        className="
-          flex
-          flex-wrap
-          justify-center
-          gap-2
-          border-t
-          border-slate-200
-          px-3
-          py-3
-
-          sm:gap-3
-        "
-      >
+      <div className="flex flex-wrap justify-center gap-2 border-t border-slate-200 px-3 py-3 sm:gap-3">
         {/* ====================================================
             SAVE
         ==================================================== */}
