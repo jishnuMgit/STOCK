@@ -63,6 +63,55 @@ export const getBranchList = async (
 };
 
 /* =========================================================
+   GET DEFAULT BRANCH (lkpBranch pre-select, live lookup —
+   same as SetDocumentNo)
+========================================================= */
+
+export const getDefaultBranch = async (
+  req: Request,
+  res: Response
+): Promise<Response> => {
+  try {
+    const { CoID, userId } = req.query;
+
+    if (!CoID) {
+      return res.status(400).json({
+        success: false,
+        message: "Company ID is required",
+      });
+    }
+
+    if (!userId) {
+      return res.status(400).json({
+        success: false,
+        message: "User ID is required",
+      });
+    }
+
+    const result = await pool.query(
+      `SELECT dbo.getuserdefbranch($1, $2) AS "defBranch"`,
+      [CoID, userId]
+    );
+
+    return res.status(200).json({
+      success: true,
+      data: result.rows[0]?.defBranch || "",
+    });
+  } catch (error: unknown) {
+    console.error("getDefaultBranch error:", error);
+
+    return res.status(500).json({
+      success: false,
+      message: "Failed to load default branch",
+      error:
+        error instanceof Error
+          ? error.message
+          : String(error),
+    });
+  }
+};
+
+/* =========================================================
    GET BRANCH INFO (mode 'G', prefill on branch select)
 ========================================================= */
 

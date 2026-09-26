@@ -245,6 +245,50 @@ const SetBranchInfo: React.FC = () => {
   }, []);
 
   /* =========================================================
+     LOAD DEFAULT BRANCH (lkpBranch pre-select, live lookup
+     via dbo.getuserdefbranch — same as SetDocumentNo)
+  ========================================================= */
+
+  useEffect(() => {
+    const loadDefaultBranch = async () => {
+      try {
+        const CoID = localStorage.getItem("CoID");
+        const userId = localStorage.getItem("userID");
+
+        if (!CoID || !userId) {
+          toast.error("getDefaultBranch: no CoID/userId in localStorage");
+          return;
+        }
+
+        const response = await fetch(
+          `${import.meta.env.VITE_API_URL}/BranchInfo/getDefaultBranch?CoID=${CoID}&userId=${userId}`
+        );
+
+        if (!response.ok) {
+          throw new Error(`HTTP Error: ${response.status}`);
+        }
+
+        const result = await response.json();
+
+        if (!result.success) {
+          console.error("getDefaultBranch failed:", result.message);
+          toast.error(`getDefaultBranch failed: ${result.message}`);
+          return;
+        }
+
+        if (result.data) {
+          setLkpBranch(result.data);
+        }
+      } catch (error) {
+        console.error("getDefaultBranch error:", error);
+        toast.error(`getDefaultBranch error: ${error instanceof Error ? error.message : String(error)}`);
+      }
+    };
+
+    loadDefaultBranch();
+  }, []);
+
+  /* =========================================================
      PREFILL FORM WHEN A BRANCH IS SELECTED (mode 'G')
   ========================================================= */
 
