@@ -31,41 +31,31 @@ import type { MenuNode } from "../types/menu";
 ========================================================= */
 
 export const menuRouteMap: Record<string, string> = {
-
   /* =========================================================
      PURCHASE
   ========================================================= */
 
-  mnuItem:
-    "/Purchase/Setup/ItemPage",
-
+  mnuItem: "/Purchase/Setup/ItemPage",
 
   /* =========================================================
      FINANCE - TRANSACTION
   ========================================================= */
 
-  mnuReceipt:
-    "/Finance/Transaction/Receipt",
+  mnuReceipt: "/Finance/Transaction/Receipt",
 
-  mnuJournal:
-    "/Finance/Transaction/journal",
-
+  mnuJournal: "/Finance/Transaction/journal",
 
   /* =========================================================
      FINANCE - SETUP
   ========================================================= */
 
-  mnuCustomer:
-    "/Finance/Setup/CustomerPage",
-
+  mnuCustomer: "/Finance/Setup/CustomerPage",
 
   /* =========================================================
      FINANCE - REPORTS
   ========================================================= */
 
-  mnuRptSOA:
-    "/Finace/Reports/rptStatementoOfAccount",
-
+  mnuRptSOA: "/Finace/Reports/rptStatementoOfAccount",
 
   /* =========================================================
      SETTINGS
@@ -76,13 +66,13 @@ export const menuRouteMap: Record<string, string> = {
     mnuSetBranchInfo:
     "/Settings/SetBranchInfo",
 
+  mnuSetCompanyInfo: "/Settings/SetCompanyInfo",
 
   /* =========================================================
      ADMINISTRATION
   ========================================================= */
 
-  mnuAdministration:
-    "/Administration",
+  mnuAdministration: "/Administration",
 };
 
 /* =========================================================
@@ -103,6 +93,27 @@ export const ADMINISTRATION_NODE: MenuNode = {
   fmenuname: "mnuAdministration",
   fmenucaption: "Administration",
   fmenubuttons: "0",
+  children: [],
+};
+
+/* =========================================================
+   SET COMPANY INFO (synthetic node)
+
+   Not a row in tblmenu — hardcoded per manager's decision,
+   since Company Info is a single admin-only settings page
+   and won't get a backend menu row. Injected as a child of
+   Setting (91) at render time, only for userType "AU".
+
+   fmenuid "9199" is out of the real "91xx" id space used by
+   Setting's actual children (9101–9115), chosen so it can
+   never collide with a real menu row.
+========================================================= */
+
+export const SET_COMPANY_INFO_NODE: MenuNode = {
+  fmenuid: "9199",
+  fmenuname: "mnuSetCompanyInfo",
+  fmenucaption: "Set Company Info",
+  fmenubuttons: "SM", // single record: Save/Modify, no Delete
   children: [],
 };
 

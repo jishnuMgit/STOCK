@@ -1,217 +1,83 @@
 import { lazy, Suspense } from "react";
-import {
-  Routes,
-  Route,
-  Navigate,
-} from "react-router-dom";
+import { Routes, Route, Navigate } from "react-router-dom";
 
 import SetDocumentNo from "../pages/Settings/SetDocumentNoPage";
 import ProtectedRoute from "./ProtectedRoutes";
 import SetBranchInfo from "../pages/Settings/SetBranchInfoPage";
+import PublicRoute from "./PublicRoute";
 
-/* =========================================================
-   LAZY LOAD PAGES
-========================================================= */
-
-// =========================================================
-// AUTH
-// =========================================================
-
-const Login = lazy(
-  () => import("../pages/Auth/LoginPage"),
-);
-
-
-// =========================================================
-// FINANCE - TRANSACTIONS
-// =========================================================
-
+const Login = lazy(() => import("../pages/Auth/LoginPage"));
 const ReceiptPage = lazy(
-  () =>
-    import(
-      "../pages/Finance/Transaction/Receipt/ReceiptPage"
-    ),
+  () => import("../pages/Finance/Transaction/Receipt/ReceiptPage"),
 );
-
 const Journalpage = lazy(
-  () =>
-    import(
-      "../pages/Finance/Transaction/Journal/Journalpage"
-    ),
+  () => import("../pages/Finance/Transaction/Journal/Journalpage"),
 );
-
 const Matching = lazy(
-  () =>
-    import(
-      "../pages/Finance/Transaction/Matching/Matching"
-    ),
+  () => import("../pages/Finance/Transaction/Matching/Matching"),
 );
-
 const UnMatch = lazy(
-  () =>
-    import(
-      "../pages/Finance/Transaction/Unmatch/UnMatch"
-    ),
+  () => import("../pages/Finance/Transaction/Unmatch/UnMatch"),
 );
 
+// Finance - Setup
+const CustomerPage = lazy(() => import("../pages/Finance/Setup/CustomerPage"));
 
-// =========================================================
-// FINANCE - SETUP
-// =========================================================
+// Purchase - Setup
+const ItemPage = lazy(() => import("../pages/Purchase/Setup/ItemPage"));
 
-const CustomerPage = lazy(
-  () =>
-    import(
-      "../pages/Finance/Setup/CustomerPage"
-    ),
-);
-
-
-// =========================================================
-// PURCHASE - SETUP
-// =========================================================
-
-const ItemPage = lazy(
-  () =>
-    import(
-      "../pages/Purchase/Setup/ItemPage"
-    ),
-);
-
-
-// =========================================================
-// SETTINGS
-// =========================================================
-
+// Settings
 const SetCompanyInfo = lazy(
-  () =>
-    import(
-      "../pages/Settings/SetCompanyInfoPage"
-    ),
+  () => import("../pages/Settings/SetCompanyInfoPage"),
 );
 
-
-// =========================================================
-// FINANCE - REPORTS
-// =========================================================
-
+// Finance - Reports
 const StatementOfAccountMain = lazy(
   () =>
-    import(
-      "../pages/Finance/Report/StatementOfAccount/StatementOfAccountMain"
-    ),
+    import("../pages/Finance/Report/StatementOfAccount/StatementOfAccountMain"),
 );
 
-
-/* =========================================================
-   PAGE LOADER
-========================================================= */
-
-const PageLoader = () => {
-  return (
-    <div
-      className="
-        flex
-        h-full
-        min-h-75
-        items-center
-        justify-center
-        text-[13px]
-        text-slate-600
-      "
-    >
-      Loading...
-    </div>
-  );
-};
-
-
-/* =========================================================
-   APP ROUTES
-========================================================= */
+const PageLoader = () => (
+  <div className="flex h-full min-h-75 items-center justify-center text-[13px] text-slate-600">
+    Loading...
+  </div>
+);
 
 const AppRoutes = () => {
   return (
     <Suspense fallback={<PageLoader />}>
       <Routes>
+        {/* Public */}
+        <Route element={<PublicRoute />}>
+          <Route path="/login" element={<Login />} />
+        </Route>
 
-        {/* =================================================
-            PUBLIC ROUTES
-        ================================================= */}
-
-        {/* ================= AUTH ================= */}
-
-        <Route
-          path="/login"
-          element={<Login />}
-        />
-
-
-        {/* =================================================
-            PROTECTED ROUTES
-        ================================================= */}
-
-        <Route
-          element={<ProtectedRoute />}
-        >
-
-          {/* =================================================
-              DEFAULT
-          ================================================= */}
-
+        {/* Protected */}
+        <Route element={<ProtectedRoute />}>
           <Route
             path="/"
-            element={
-              <Navigate
-                to="/Finance/Transaction/Receipt"
-                replace
-              />
-            }
+            element={<Navigate to="/Finance/Transaction/Receipt" replace />}
           />
 
-
-          {/* =================================================
-              FINANCE - TRANSACTIONS
-          ================================================= */}
-
-          {/* ================= RECEIPT ================= */}
-
+          {/* Finance - Transactions */}
           <Route
             path="/Finance/Transaction/Receipt"
             element={<ReceiptPage />}
           />
-
-
-          {/* ================= JOURNAL ================= */}
-
           <Route
             path="/Finance/Transaction/journal"
             element={<Journalpage />}
           />
-
-
-          {/* ================= MATCHING ================= */}
-
           <Route
             path="/Finance/Transaction/Transaction-matching"
             element={<Matching />}
           />
-
-
-          {/* ================= UNMATCHING ================= */}
-
           <Route
             path="/Finance/Transaction/Transaction-unmatching"
             element={<UnMatch />}
           />
 
-
-          {/* =================================================
-              FINANCE - SETUP
-          ================================================= */}
-
-          {/* ================= CUSTOMER ================= */}
-
+          {/* Finance - Setup */}
           <Route
             path="/Finance/Setup/CustomerPage"
             element={<CustomerPage />}
@@ -263,7 +129,6 @@ const AppRoutes = () => {
             path="/Finance/Reports/rptStatementoOfAccount"
             element={<StatementOfAccountMain />}
           />
-
         </Route>
       </Routes>
     </Suspense>
