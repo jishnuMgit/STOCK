@@ -259,15 +259,15 @@ const SetDocumentNo: React.FC = () => {
   useEffect(() => {
     const loadYearList = async () => {
       try {
-        const companyId = localStorage.getItem("CoID");
+        const CoID = localStorage.getItem("CoID");
 
-        if (!companyId) {
-          toast.error("getYearList: no companyId in localStorage");
+        if (!CoID) {
+          toast.error("getYearList: no CoID in localStorage");
           return;
         }
 
         const response = await fetch(
-          `${import.meta.env.VITE_API_URL}/DocumentNo/getYearList?companyId=${companyId}`
+          `${import.meta.env.VITE_API_URL}/DocumentNo/getYearList?CoID=${CoID}`
         );
 
         if (!response.ok) {
@@ -305,16 +305,16 @@ const SetDocumentNo: React.FC = () => {
   useEffect(() => {
     const loadDefaultBranch = async () => {
       try {
-        const companyId = localStorage.getItem("CoID");
+        const CoID = localStorage.getItem("CoID");
         const userId = localStorage.getItem("userID");
 
-        if (!companyId || !userId) {
-          toast.error("getDefaultBranch: no companyId/userId in localStorage");
+        if (!CoID || !userId) {
+          toast.error("getDefaultBranch: no CoID/userId in localStorage");
           return;
         }
 
         const response = await fetch(
-          `${import.meta.env.VITE_API_URL}/DocumentNo/getDefaultBranch?companyId=${companyId}&userId=${userId}`
+          `${import.meta.env.VITE_API_URL}/DocumentNo/getDefaultBranch?CoID=${CoID}&userId=${userId}`
         );
 
         if (!response.ok) {
@@ -348,16 +348,16 @@ const SetDocumentNo: React.FC = () => {
   useEffect(() => {
     const loadBranchList = async () => {
       try {
-        const companyId = localStorage.getItem("CoID");
+        const CoID = localStorage.getItem("CoID");
         const userId = localStorage.getItem("userID");
 
-        if (!companyId || !userId) {
-          toast.error("getBranchList: no companyId/userId in localStorage");
+        if (!CoID || !userId) {
+          toast.error("getBranchList: no CoID/userId in localStorage");
           return;
         }
 
         const response = await fetch(
-          `${import.meta.env.VITE_API_URL}/DocumentNo/getBranchList?companyId=${companyId}&userId=${userId}`
+          `${import.meta.env.VITE_API_URL}/DocumentNo/getBranchList?CoID=${CoID}&userId=${userId}`
         );
 
         if (!response.ok) {
@@ -396,15 +396,15 @@ const SetDocumentNo: React.FC = () => {
   useEffect(() => {
     const loadModuleList = async () => {
       try {
-        const companyId = localStorage.getItem("CoID");
+        const CoID = localStorage.getItem("CoID");
 
-        if (!companyId) {
-          toast.error("getModuleList: no companyId in localStorage");
+        if (!CoID) {
+          toast.error("getModuleList: no CoID in localStorage");
           return;
         }
 
         const response = await fetch(
-          `${import.meta.env.VITE_API_URL}/DocumentNo/getModuleList?companyId=${companyId}`
+          `${import.meta.env.VITE_API_URL}/DocumentNo/getModuleList?CoID=${CoID}`
         );
 
         if (!response.ok) {
@@ -462,15 +462,15 @@ const SetDocumentNo: React.FC = () => {
 
     const loadDocumentGrid = async () => {
       try {
-        const companyId = localStorage.getItem("CoID");
+        const CoID = localStorage.getItem("CoID");
 
-        if (!companyId) {
-          toast.error("getDocumentList: no companyId in localStorage");
+        if (!CoID) {
+          toast.error("getDocumentList: no CoID in localStorage");
           return;
         }
 
         const docListResponse = await fetch(
-          `${import.meta.env.VITE_API_URL}/DocumentNo/getDocumentList?companyId=${companyId}&lkpModule=${lkpModule}`
+          `${import.meta.env.VITE_API_URL}/DocumentNo/getDocumentList?CoID=${CoID}&lkpModule=${lkpModule}`
         );
 
         if (!docListResponse.ok) {
@@ -500,7 +500,7 @@ const SetDocumentNo: React.FC = () => {
 
         if (lkpYear && lkpBranch) {
           const docNoResponse = await fetch(
-            `${import.meta.env.VITE_API_URL}/DocumentNo/getDocumentNoList?companyId=${companyId}&lkpYear=${lkpYear}&lkpBranch=${lkpBranch}&lkpModule=${lkpModule}`
+            `${import.meta.env.VITE_API_URL}/DocumentNo/getDocumentNoList?CoID=${CoID}&lkpYear=${lkpYear}&lkpBranch=${lkpBranch}&lkpModule=${lkpModule}`
           );
 
           if (docNoResponse.ok) {
@@ -596,10 +596,10 @@ const SetDocumentNo: React.FC = () => {
       return;
     }
 
-    const companyId = localStorage.getItem("CoID");
+    const CoID = localStorage.getItem("CoID");
     const userId = localStorage.getItem("userID");
 
-    if (!companyId || !userId) {
+    if (!CoID || !userId) {
       toast.error("Company ID / User ID not found. Please log in again.");
       return;
     }
@@ -611,7 +611,7 @@ const SetDocumentNo: React.FC = () => {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
-            companyId,
+            CoID,
             lkpYear,
             lkpBranch,
             lkpModule,
@@ -675,10 +675,10 @@ const SetDocumentNo: React.FC = () => {
       return;
     }
 
-    const companyId = localStorage.getItem("CoID");
+    const CoID = localStorage.getItem("CoID");
     const userId = localStorage.getItem("userID");
 
-    if (!companyId || !userId) {
+    if (!CoID || !userId) {
       toast.error("Company ID / User ID not found. Please log in again.");
       return;
     }
@@ -690,7 +690,7 @@ const SetDocumentNo: React.FC = () => {
           method: "DELETE",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
-            companyId,
+            CoID,
             lkpYear,
             lkpBranch,
             lkpModule,

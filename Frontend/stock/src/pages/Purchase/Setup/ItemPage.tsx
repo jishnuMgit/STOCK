@@ -1,5 +1,6 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import Select from "react-select";
+import { toast } from "react-toastify";
 
 /* =========================================================
    TYPES
@@ -147,72 +148,172 @@ const ItemPage: React.FC = () => {
      SELECT OPTIONS
   ========================================================= */
 
-  const unitOptions: SelectOption[] = [
-    {
-      value: "PCS",
-      label: "PCS",
-    },
-    {
-      value: "KG",
-      label: "KG",
-    },
-    {
-      value: "BOX",
-      label: "BOX",
-    },
-    {
-      value: "LTR",
-      label: "LTR",
-    },
-  ];
+  const [unitOptions, setUnitOptions] = useState<SelectOption[]>([]);
 
-  const itemGroupIDOptions: SelectOption[] = [
-    {
-      value: "01",
-      label: "01",
-    },
-    {
-      value: "02",
-      label: "02",
-    },
-  ];
+  /* =========================================================
+     LOAD UNIT LIST (lkpUnit dropdown)
+  ========================================================= */
 
-  const itemGroupNameOptions: SelectOption[] = [
-    {
-      value: "General",
-      label: "General",
-    },
-    {
-      value: "Food",
-      label: "Food",
-    },
-    {
-      value: "Electronics",
-      label: "Electronics",
-    },
-  ];
+  useEffect(() => {
+    const loadUnitList = async () => {
+      try {
+        const CoID = localStorage.getItem("CoID");
 
-  const supplierIDOptions: SelectOption[] = [
-    {
-      value: "SUP001",
-      label: "SUP001",
-    },
-    {
-      value: "SUP002",
-      label: "SUP002",
-    },
-  ];
+        if (!CoID) {
+          toast.error("getUnitList: no CoID in localStorage");
+          return;
+        }
 
-  const supplierNameOptions: SelectOption[] = [
-    {
-      value: "Supplier One",
-      label: "Supplier One",
-    },
-    {
-      value: "Supplier Two",
-      label: "Supplier Two",
-    },
-  ];
+        const response = await fetch(
+          `${import.meta.env.VITE_API_URL}/Item/getUnitList?CoID=${CoID}`
+        );
+
+        if (!response.ok) {
+          throw new Error(`HTTP Error: ${response.status}`);
+        }
+
+        const result = await response.json();
+
+        if (!result.success) {
+          console.error("getUnitList failed:", result.message);
+          toast.error(`getUnitList failed: ${result.message}`);
+          return;
+        }
+
+        const options: SelectOption[] = (result.data || []).map(
+          (row: { funit: string }) => ({
+            value: row.funit,
+            label: row.funit,
+          })
+        );
+
+        setUnitOptions(options);
+      } catch (error) {
+        console.error("getUnitList error:", error);
+        toast.error(`getUnitList error: ${error instanceof Error ? error.message : String(error)}`);
+      }
+    };
+
+    loadUnitList();
+  }, []);
+
+  /* =========================================================
+     LOAD ITEM GROUP LIST (lkpItemGroupID dropdown; selecting
+     an ID fills lkpItemGroupName automatically)
+  ========================================================= */
+
+  const [itemGroupList, setItemGroupList] = useState<
+    { fitemgroupid: string; fitemgroupname: string }[]
+  >([]);
+
+  useEffect(() => {
+    const loadItemGroupList = async () => {
+      try {
+        const CoID = localStorage.getItem("CoID");
+
+        if (!CoID) {
+          toast.error("getItemGroupList: no CoID in localStorage");
+          return;
+        }
+
+        const response = await fetch(
+          `${import.meta.env.VITE_API_URL}/Item/getItemGroupList?CoID=${CoID}`
+        );
+
+        if (!response.ok) {
+          throw new Error(`HTTP Error: ${response.status}`);
+        }
+
+        const result = await response.json();
+
+        if (!result.success) {
+          console.error("getItemGroupList failed:", result.message);
+          toast.error(`getItemGroupList failed: ${result.message}`);
+          return;
+        }
+
+        setItemGroupList(result.data || []);
+      } catch (error) {
+        console.error("getItemGroupList error:", error);
+        toast.error(`getItemGroupList error: ${error instanceof Error ? error.message : String(error)}`);
+      }
+    };
+
+    loadItemGroupList();
+  }, []);
+
+  const itemGroupIDOptions: SelectOption[] = itemGroupList.map(
+    (group) => ({
+      value: group.fitemgroupid,
+      label: group.fitemgroupid,
+    })
+  );
+
+  const itemGroupNameOptions: SelectOption[] = itemGroupList.map(
+    (group) => ({
+      value: group.fitemgroupname,
+      label: group.fitemgroupname,
+    })
+  );
+
+  /* =========================================================
+     LOAD SUPPLIER LIST (lkpSupplierID dropdown; selecting
+     an ID fills lkpSupplierName automatically)
+  ========================================================= */
+
+  const [supplierList, setSupplierList] = useState<
+    { fcsaccountid: string; fcsaccountname: string }[]
+  >([]);
+
+  useEffect(() => {
+    const loadSupplierList = async () => {
+      try {
+        const CoID = localStorage.getItem("CoID");
+
+        if (!CoID) {
+          toast.error("getSupplierList: no CoID in localStorage");
+          return;
+        }
+
+        const response = await fetch(
+          `${import.meta.env.VITE_API_URL}/Item/getSupplierList?CoID=${CoID}`
+        );
+
+        if (!response.ok) {
+          throw new Error(`HTTP Error: ${response.status}`);
+        }
+
+        const result = await response.json();
+
+        if (!result.success) {
+          console.error("getSupplierList failed:", result.message);
+          toast.error(`getSupplierList failed: ${result.message}`);
+          return;
+        }
+
+        setSupplierList(result.data || []);
+      } catch (error) {
+        console.error("getSupplierList error:", error);
+        toast.error(`getSupplierList error: ${error instanceof Error ? error.message : String(error)}`);
+      }
+    };
+
+    loadSupplierList();
+  }, []);
+
+  const supplierIDOptions: SelectOption[] = supplierList.map(
+    (supplier) => ({
+      value: supplier.fcsaccountid,
+      label: supplier.fcsaccountid,
+    })
+  );
+
+  const supplierNameOptions: SelectOption[] = supplierList.map(
+    (supplier) => ({
+      value: supplier.fcsaccountname,
+      label: supplier.fcsaccountname,
+    })
+  );
 
   const branchOptions: SelectOption[] = [
     {
@@ -788,11 +889,21 @@ const ItemPage: React.FC = () => {
                       lkpItemGroupID,
                   ) || null
                 }
-                onChange={(option) =>
+                onChange={(option) => {
                   setLkpItemGroupID(
                     option?.value || "",
-                  )
-                }
+                  );
+
+                  const matchedGroup = itemGroupList.find(
+                    (group) =>
+                      group.fitemgroupid ===
+                      option?.value,
+                  );
+
+                  setLkpItemGroupName(
+                    matchedGroup?.fitemgroupname || "",
+                  );
+                }}
                 styles={reactSelectStyles}
                 isClearable
               />
@@ -808,13 +919,8 @@ const ItemPage: React.FC = () => {
                       lkpItemGroupName,
                   ) || null
                 }
-                onChange={(option) =>
-                  setLkpItemGroupName(
-                    option?.value || "",
-                  )
-                }
+                isDisabled
                 styles={reactSelectStyles}
-                isClearable
               />
             </div>
 
@@ -849,11 +955,21 @@ const ItemPage: React.FC = () => {
                       lkpSupplierID,
                   ) || null
                 }
-                onChange={(option) =>
+                onChange={(option) => {
                   setLkpSupplierID(
                     option?.value || "",
-                  )
-                }
+                  );
+
+                  const matchedSupplier = supplierList.find(
+                    (supplier) =>
+                      supplier.fcsaccountid ===
+                      option?.value,
+                  );
+
+                  setLkpSupplierName(
+                    matchedSupplier?.fcsaccountname || "",
+                  );
+                }}
                 styles={reactSelectStyles}
                 isClearable
               />
@@ -869,13 +985,8 @@ const ItemPage: React.FC = () => {
                       lkpSupplierName,
                   ) || null
                 }
-                onChange={(option) =>
-                  setLkpSupplierName(
-                    option?.value || "",
-                  )
-                }
+                isDisabled
                 styles={reactSelectStyles}
-                isClearable
               />
             </div>
 

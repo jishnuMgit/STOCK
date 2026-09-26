@@ -17,9 +17,9 @@ export const getYearList = async (
   res: Response
 ): Promise<Response> => {
   try {
-    const { companyId } = req.query;
+    const { CoID } = req.query;
 
-    if (!companyId) {
+    if (!CoID) {
       return res.status(400).json({
         success: false,
         message: "Company ID is required",
@@ -31,7 +31,7 @@ export const getYearList = async (
       SELECT *
       FROM dbo.fillyear($1)
       `,
-      [companyId]
+      [CoID]
     );
 
     return res.status(200).json({
@@ -61,9 +61,9 @@ export const getBranchList = async (
   res: Response
 ): Promise<Response> => {
   try {
-    const { companyId, userId } = req.query;
+    const { CoID, userId } = req.query;
 
-    if (!companyId) {
+    if (!CoID) {
       return res.status(400).json({
         success: false,
         message: "Company ID is required",
@@ -85,7 +85,7 @@ export const getBranchList = async (
         AND dbo.userbranches($1, fbrid, $2)
       ORDER BY fpositionno, fbrid
       `,
-      [companyId, userId]
+      [CoID, userId]
     );
 
     return res.status(200).json({
@@ -115,9 +115,9 @@ export const getModuleList = async (
   res: Response
 ): Promise<Response> => {
   try {
-    const { companyId } = req.query;
+    const { CoID } = req.query;
 
-    if (!companyId) {
+    if (!CoID) {
       return res.status(400).json({
         success: false,
         message: "Company ID is required",
@@ -129,7 +129,7 @@ export const getModuleList = async (
       SELECT *
       FROM dbo.fillmodule($1)
       `,
-      [companyId]
+      [CoID]
     );
 
     return res.status(200).json({
@@ -159,9 +159,9 @@ export const getDocumentList = async (
   res: Response
 ): Promise<Response> => {
   try {
-    const { companyId, lkpModule } = req.query;
+    const { CoID, lkpModule } = req.query;
 
-    if (!companyId) {
+    if (!CoID) {
       return res.status(400).json({
         success: false,
         message: "Company ID is required",
@@ -180,7 +180,7 @@ export const getDocumentList = async (
       SELECT *
       FROM dbo.filldocument($1, $2)
       `,
-      [companyId, lkpModule]
+      [CoID, lkpModule]
     );
 
     return res.status(200).json({
@@ -210,9 +210,9 @@ export const getDocumentNoList = async (
   res: Response
 ): Promise<Response> => {
   try {
-    const { companyId, lkpYear, lkpBranch, lkpModule } = req.query;
+    const { CoID, lkpYear, lkpBranch, lkpModule } = req.query;
 
-    if (!companyId) {
+    if (!CoID) {
       return res.status(400).json({
         success: false,
         message: "Company ID is required",
@@ -227,7 +227,7 @@ export const getDocumentNoList = async (
     }
 
     const data = await getDocumentNoListService(
-      String(companyId),
+      String(CoID),
       String(lkpYear),
       String(lkpBranch),
       String(lkpModule)
@@ -263,14 +263,14 @@ export const saveDocumentNo = async (
     const PstrUserID = process.env.PstrUserID || "ADMIN";
 
     const {
-      companyId,
+      CoID,
       lkpYear,
       lkpBranch,
       lkpModule,
       userId,
       rows,
     }: {
-      companyId: string;
+      CoID: string;
       lkpYear: string;
       lkpBranch: string;
       lkpModule: string;
@@ -278,7 +278,7 @@ export const saveDocumentNo = async (
       rows: DocumentNoRowPayload[];
     } = req.body;
 
-    if (!companyId) {
+    if (!CoID) {
       return res.status(400).json({
         success: false,
         message: "Company ID is required",
@@ -308,7 +308,7 @@ export const saveDocumentNo = async (
 
     const branchAccessResult = await pool.query(
       `SELECT dbo.userbranches($1, $2, $3) AS "hasAccess"`,
-      [companyId, lkpBranch, userId]
+      [CoID, lkpBranch, userId]
     );
 
     if (!branchAccessResult.rows[0]?.hasAccess) {
@@ -319,7 +319,7 @@ export const saveDocumentNo = async (
     }
 
     await saveDocumentNoListService(
-      companyId,
+      CoID,
       lkpYear,
       lkpBranch,
       lkpModule,
@@ -354,14 +354,14 @@ export const deleteDocumentNoRow = async (
 ): Promise<Response> => {
   try {
     const {
-      companyId,
+      CoID,
       lkpYear,
       lkpBranch,
       lkpModule,
       lkpDocument,
       userId,
     }: {
-      companyId: string;
+      CoID: string;
       lkpYear: string;
       lkpBranch: string;
       lkpModule: string;
@@ -369,7 +369,7 @@ export const deleteDocumentNoRow = async (
       userId: string;
     } = req.body;
 
-    if (!companyId) {
+    if (!CoID) {
       return res.status(400).json({
         success: false,
         message: "Company ID is required",
@@ -392,7 +392,7 @@ export const deleteDocumentNoRow = async (
 
     const branchAccessResult = await pool.query(
       `SELECT dbo.userbranches($1, $2, $3) AS "hasAccess"`,
-      [companyId, lkpBranch, userId]
+      [CoID, lkpBranch, userId]
     );
 
     if (!branchAccessResult.rows[0]?.hasAccess) {
@@ -403,7 +403,7 @@ export const deleteDocumentNoRow = async (
     }
 
     await deleteDocumentNoRowService(
-      companyId,
+      CoID,
       lkpYear,
       lkpBranch,
       lkpModule,
@@ -436,9 +436,9 @@ export const getDefaultBranch = async (
   res: Response
 ): Promise<Response> => {
   try {
-    const { companyId, userId } = req.query;
+    const { CoID, userId } = req.query;
 
-    if (!companyId) {
+    if (!CoID) {
       return res.status(400).json({
         success: false,
         message: "Company ID is required",
@@ -454,7 +454,7 @@ export const getDefaultBranch = async (
 
     const result = await pool.query(
       `SELECT dbo.getuserdefbranch($1, $2) AS "defBranch"`,
-      [companyId, userId]
+      [CoID, userId]
     );
 
     return res.status(200).json({

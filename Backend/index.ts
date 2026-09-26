@@ -11,6 +11,7 @@ import YearRouter from "./routes/YearRouter.js";
 import CompanyInfoRouter from "./routes/SettingRoutes/SetcompanyinfoRouter.js";
 import SetDocumentNoRouter from "./routes/SettingRoutes/SetdocumentnoRouter.js";
 import menuRoutes from "./routes/MenuRoute.js";
+import ItemPageRouter from "./routes/Purchase/Setup/ItemPageRouter.js";
 
 import pool from "./DB/db.js";
 
@@ -55,6 +56,7 @@ app.use("/api/years", YearRouter);
 app.use("/api/CompanyInfo", CompanyInfoRouter);
 app.use("/api/DocumentNo", SetDocumentNoRouter);
 app.use("/api/menu", menuRoutes);
+app.use("/api/Item", ItemPageRouter);
 
 app.listen(5000, () => {
   console.log("Server running on http://localhost:5000");
