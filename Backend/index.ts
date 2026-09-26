@@ -8,8 +8,8 @@ import MatchRouter from "./routes/MatchRouter.js";
 import LoginRouter from "./routes/AuthRouter.js";
 import CompanyRouter from "./routes/CompanyRouter.js";
 import YearRouter from "./routes/YearRouter.js";
-import CompanyInfoRouter from "./routes/SetcompanyinfoRouter.js";
-import SetDocumentNoRouter from "./routes/SetdocumentnoRouter.js";
+import CompanyInfoRouter from "./routes/SettingRoutes/SetcompanyinfoRouter.js";
+import SetDocumentNoRouter from "./routes/SettingRoutes/SetdocumentnoRouter.js";
 import menuRoutes from "./routes/MenuRoute.js";
 
 import pool from "./DB/db.js";

@@ -1,5 +1,5 @@
 import type { PoolClient } from "pg";
-import pool from "../DB/db.js";
+import pool from "../../DB/db.js";
 
 /* =========================================================
    GET DOCUMENT NO LIST (mode 'G')

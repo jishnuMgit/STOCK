@@ -1,12 +1,12 @@
 import { Request, Response } from "express";
 
-import pool from "../DB/db.js";
+import pool from "../../DB/db.js";
 import {
   getDocumentNoListService,
   saveDocumentNoListService,
   deleteDocumentNoRowService,
   type DocumentNoRowPayload,
-} from "../services/setdocumentnoService.js";
+} from "../../services/SettingServices/setdocumentnoService.js";
 
 /* =========================================================
    GET YEAR LIST (lkpYear dropdown)

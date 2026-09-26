@@ -9,7 +9,7 @@ import {
   saveDocumentNo,
   deleteDocumentNoRow,
   getDefaultBranch,
-} from "../controller/SetdocumentnoController.js";
+} from "../../controller/SettingController/SetdocumentnoController.js";
 
 const router = express.Router();
 
