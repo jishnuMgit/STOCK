@@ -103,7 +103,7 @@ const LoginPage: React.FC = () => {
                 User ID :
               </label>
 
-              <div className="flex h-12 overflow-hidden rounded-lg border border-slate-300 bg-white transition focus-within:border-emerald-500 focus-within:ring-2 focus-within:ring-emerald-100">
+              <div className="flex h-8 overflow-hidden rounded-lg border border-slate-300 bg-white transition focus-within:border-emerald-500 focus-within:ring-2 focus-within:ring-emerald-100">
                 <div className="flex w-14 items-center justify-center border-r border-slate-200 bg-slate-50">
                   <User size={20} className="text-slate-500" />
                 </div>
@@ -134,7 +134,7 @@ const LoginPage: React.FC = () => {
                 {" "}
                 Password :{" "}
               </label>{" "}
-              <div className="flex h-12 overflow-hidden rounded-lg border border-slate-300 bg-white transition focus-within:border-emerald-500 focus-within:ring-2 focus-within:ring-emerald-100">
+              <div className="flex h-8 overflow-hidden rounded-lg border border-slate-300 bg-white transition focus-within:border-emerald-500 focus-within:ring-2 focus-within:ring-emerald-100">
                 {" "}
                 <div className="flex w-14 items-center justify-center border-r border-slate-200 bg-slate-50">
                   {" "}
@@ -173,7 +173,7 @@ const LoginPage: React.FC = () => {
               </label>
 
               <div className="relative">
-                <div className="flex h-12 overflow-hidden rounded-lg border border-slate-300 bg-white transition focus-within:border-emerald-500 focus-within:ring-2 focus-within:ring-emerald-100">
+                <div className="flex h-8 overflow-hidden rounded-lg border border-slate-300 bg-white transition focus-within:border-emerald-500 focus-within:ring-2 focus-within:ring-emerald-100">
                   <div className="flex w-14 items-center justify-center border-r border-slate-200 bg-slate-50">
                     <Building2 size={20} className="text-slate-500" />
                   </div>
@@ -211,7 +211,7 @@ const LoginPage: React.FC = () => {
                 Year :{" "}
               </label>
               <div className="relative w-64">
-                <div className="flex h-12 overflow-hidden rounded-lg border border-slate-300 bg-white transition focus-within:border-emerald-500 focus-within:ring-2 focus-within:ring-emerald-100">
+                <div className="flex h-8 overflow-hidden rounded-lg border border-slate-300 bg-white transition focus-within:border-emerald-500 focus-within:ring-2 focus-within:ring-emerald-100">
                   <div className="flex w-14 items-center justify-center border-r border-slate-200 bg-slate-50">
                     <CalendarDays size={19} className="text-slate-500" />{" "}
                   </div>
@@ -264,7 +264,7 @@ const LoginPage: React.FC = () => {
             <button
               type="submit"
               disabled={loginLoading || companiesLoading}
-              className="flex h-13 w-full cursor-pointer items-center justify-center gap-3 rounded-lg bg-emerald-500 px-6 py-3.5 text-lg font-semibold text-white shadow-md transition hover:bg-emerald-600 hover:shadow-lg active:scale-[0.99] disabled:cursor-not-allowed disabled:opacity-60"
+              className="flex h-15.5 w-full cursor-pointer items-center justify-center gap-3 rounded-lg bg-emerald-500 px-6 py-3.5 text-lg font-semibold text-white shadow-md transition hover:bg-emerald-600 hover:shadow-lg active:scale-[0.99] disabled:cursor-not-allowed disabled:opacity-60"
             >
               <LogIn size={21} />
 
