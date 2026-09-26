@@ -3,6 +3,7 @@ import { Routes, Route, Navigate } from "react-router-dom";
 
 import SetDocumentNo from "../pages/Settings/SetDocumentNoPage";
 import ProtectedRoute from "./ProtectedRoutes";
+import SetBranchInfo from "../pages/Settings/SetBranchInfoPage";
 import PublicRoute from "./PublicRoute";
 
 const Login = lazy(() => import("../pages/Auth/LoginPage"));
@@ -82,14 +83,48 @@ const AppRoutes = () => {
             element={<CustomerPage />}
           />
 
-          {/* Purchase - Setup */}
-          <Route path="/Purchase/Setup/ItemPage" element={<ItemPage />} />
 
-          {/* Settings */}
-          <Route path="/Settings/SetCompanyInfo" element={<SetCompanyInfo />} />
-          <Route path="/Settings/SetDocumentNo" element={<SetDocumentNo />} />
+          {/* =================================================
+              PURCHASE - SETUP
+          ================================================= */}
 
-          {/* Finance - Reports */}
+          {/* ================= ITEM ================= */}
+
+          <Route
+            path="/Purchase/Setup/ItemPage"
+            element={<ItemPage />}
+          />
+
+
+          {/* =================================================
+              SETTINGS
+          ================================================= */}
+
+          {/* ================= COMPANY INFO ================= */}
+
+          <Route
+            path="/Settings/SetCompanyInfo"
+            element={<SetCompanyInfo />}
+          />
+
+          <Route path="/Settings/SetBranchInfo"
+          element={<SetBranchInfo/>}/>
+
+
+          {/* ================= DOCUMENT NUMBER ================= */}
+
+          <Route
+            path="/Settings/SetDocumentNo"
+            element={<SetDocumentNo />}
+          />
+
+
+          {/* =================================================
+              FINANCE - REPORTS
+          ================================================= */}
+
+          {/* ================= STATEMENT OF ACCOUNT ================= */}
+
           <Route
             path="/Finance/Reports/rptStatementoOfAccount"
             element={<StatementOfAccountMain />}
