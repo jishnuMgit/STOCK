@@ -7,6 +7,7 @@ import {
 
 import SetDocumentNo from "../pages/Settings/SetDocumentNoPage";
 import ProtectedRoute from "./ProtectedRoutes";
+import SetBranchInfo from "../pages/Settings/SetBranchInfoPage";
 
 /* =========================================================
    LAZY LOAD PAGES
@@ -239,6 +240,9 @@ const AppRoutes = () => {
             path="/Settings/SetCompanyInfo"
             element={<SetCompanyInfo />}
           />
+
+          <Route path="/Settings/SetBranchInfo"
+          element={<SetBranchInfo/>}/>
 
 
           {/* ================= DOCUMENT NUMBER ================= */}
