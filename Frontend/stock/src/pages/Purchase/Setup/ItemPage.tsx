@@ -71,9 +71,7 @@ const ItemPage: React.FC = () => {
 
   const [txtItemID, setTxtItemID] = useState("");
   const [txtItemName, setTxtItemName] = useState("");
-  const [txtItemDescription, setTxtItemDescription] =
-    useState("");
-
+  const [txtItemDescription, setTxtItemDescription] = useState("");
   const [lkpUnit, setLkpUnit] = useState("");
 
   const [txtPacking, setTxtPacking] =
@@ -324,19 +322,8 @@ const ItemPage: React.FC = () => {
      COMMON INPUT CLASS
   ========================================================= */
 
-  const inputClass = `
-    h-[28px]
-    w-full
-    rounded-none
-    border
-    border-slate-300
-    bg-white
-    px-2
-    text-[12px]
-    text-slate-700
-    outline-none
-    focus:border-blue-500
-  `;
+  const inputClass = `h-[28px] w-full rounded-none border border-slate-300 bg-white px-2 text-[12px] text-slate-700 outline-none
+    focus:border-blue-500`;
 
   /* =========================================================
      LABEL CLASS
@@ -625,16 +612,7 @@ const ItemPage: React.FC = () => {
               HEADER
           =================================================== */}
 
-          <div
-            className="
-              flex
-              h-[30px]
-              items-center
-              border-b
-              border-slate-400
-              bg-[#a3dfc0]
-            "
-          >
+          <div className="flex h-[30px] items-center border-b border-slate-400 bg-[#a3dfc0]">
             <span
               className="
                 rounded-[3px]
@@ -653,7 +631,6 @@ const ItemPage: React.FC = () => {
           =================================================== */}
 
           <div className="px-5 py-4">
-
             {/* =================================================
                 ITEM ID
             ================================================= */}
@@ -681,9 +658,7 @@ const ItemPage: React.FC = () => {
                 name="txtItemID"
                 type="text"
                 value={txtItemID}
-                onChange={(e) =>
-                  setTxtItemID(e.target.value)
-                }
+                onChange={(e) => setTxtItemID(e.target.value)}
                 className="
                   h-[28px]
                   w-[225px]
@@ -724,9 +699,7 @@ const ItemPage: React.FC = () => {
                 name="txtItemName"
                 type="text"
                 value={txtItemName}
-                onChange={(e) =>
-                  setTxtItemName(e.target.value)
-                }
+                onChange={(e) => setTxtItemName(e.target.value)}
                 className={inputClass}
               />
             </div>
@@ -744,10 +717,7 @@ const ItemPage: React.FC = () => {
                 gap-2
               "
             >
-              <label
-                htmlFor="txtItemDescription"
-                className={labelClass}
-              >
+              <label htmlFor="txtItemDescription" className={labelClass}>
                 Description :
               </label>
 
@@ -756,11 +726,7 @@ const ItemPage: React.FC = () => {
                 name="txtItemDescription"
                 type="text"
                 value={txtItemDescription}
-                onChange={(e) =>
-                  setTxtItemDescription(
-                    e.target.value,
-                  )
-                }
+                onChange={(e) => setTxtItemDescription(e.target.value)}
                 className={inputClass}
               />
             </div>
@@ -792,16 +758,9 @@ const ItemPage: React.FC = () => {
                 name="lkpUnit"
                 options={unitOptions}
                 value={
-                  unitOptions.find(
-                    (option) =>
-                      option.value === lkpUnit,
-                  ) || null
+                  unitOptions.find((option) => option.value === lkpUnit) || null
                 }
-                onChange={(option) =>
-                  setLkpUnit(
-                    option?.value || "",
-                  )
-                }
+                onChange={(option) => setLkpUnit(option?.value || "")}
                 styles={reactSelectStyles}
                 isClearable
               />
@@ -820,10 +779,7 @@ const ItemPage: React.FC = () => {
                 gap-2
               "
             >
-              <label
-                htmlFor="txtPacking"
-                className={labelClass}
-              >
+              <label htmlFor="txtPacking" className={labelClass}>
                 Packing :
               </label>
 
@@ -841,10 +797,7 @@ const ItemPage: React.FC = () => {
                 className={inputClass}
               />
 
-              <label
-                htmlFor="txtCBM"
-                className={labelClass}
-              >
+              <label htmlFor="txtCBM" className={labelClass}>
                 CBM :
               </label>
 
@@ -893,16 +846,10 @@ const ItemPage: React.FC = () => {
                 options={itemGroupIDOptions}
                 value={
                   itemGroupIDOptions.find(
-                    (option) =>
-                      option.value ===
-                      lkpItemGroupID,
+                    (option) => option.value === lkpItemGroupID,
                   ) || null
                 }
-                onChange={(option) =>
-                  setLkpItemGroupID(
-                    option?.value || "",
-                  )
-                }
+                onChange={(option) => setLkpItemGroupID(option?.value || "")}
                 styles={reactSelectStyles}
                 isClearable
               />
@@ -913,16 +860,10 @@ const ItemPage: React.FC = () => {
                 options={itemGroupNameOptions}
                 value={
                   itemGroupNameOptions.find(
-                    (option) =>
-                      option.value ===
-                      lkpItemGroupName,
+                    (option) => option.value === lkpItemGroupName,
                   ) || null
                 }
-                onChange={(option) =>
-                  setLkpItemGroupName(
-                    option?.value || "",
-                  )
-                }
+                onChange={(option) => setLkpItemGroupName(option?.value || "")}
                 styles={reactSelectStyles}
                 isClearable
               />
@@ -941,10 +882,7 @@ const ItemPage: React.FC = () => {
                 gap-2
               "
             >
-              <label
-                htmlFor="lkpSupplierID"
-                className={labelClass}
-              >
+              <label htmlFor="lkpSupplierID" className={labelClass}>
                 Supplier :
               </label>
 
@@ -954,16 +892,10 @@ const ItemPage: React.FC = () => {
                 options={supplierIDOptions}
                 value={
                   supplierIDOptions.find(
-                    (option) =>
-                      option.value ===
-                      lkpSupplierID,
+                    (option) => option.value === lkpSupplierID,
                   ) || null
                 }
-                onChange={(option) =>
-                  setLkpSupplierID(
-                    option?.value || "",
-                  )
-                }
+                onChange={(option) => setLkpSupplierID(option?.value || "")}
                 styles={reactSelectStyles}
                 isClearable
               />
@@ -974,16 +906,10 @@ const ItemPage: React.FC = () => {
                 options={supplierNameOptions}
                 value={
                   supplierNameOptions.find(
-                    (option) =>
-                      option.value ===
-                      lkpSupplierName,
+                    (option) => option.value === lkpSupplierName,
                   ) || null
                 }
-                onChange={(option) =>
-                  setLkpSupplierName(
-                    option?.value || "",
-                  )
-                }
+                onChange={(option) => setLkpSupplierName(option?.value || "")}
                 styles={reactSelectStyles}
                 isClearable
               />
@@ -1017,11 +943,7 @@ const ItemPage: React.FC = () => {
                 name="txtSupplierItemID"
                 type="text"
                 value={txtSupplierItemID}
-                onChange={(e) =>
-                  setTxtSupplierItemID(
-                    e.target.value,
-                  )
-                }
+                onChange={(e) => setTxtSupplierItemID(e.target.value)}
                 className="
                   h-[28px]
                   w-[275px]
@@ -1048,10 +970,7 @@ const ItemPage: React.FC = () => {
                 gap-2
               "
             >
-              <label
-                htmlFor="txtReorderLevel"
-                className={labelClass}
-              >
+              <label htmlFor="txtReorderLevel" className={labelClass}>
                 Reorder Level :
               </label>
 
@@ -1060,11 +979,7 @@ const ItemPage: React.FC = () => {
                 name="txtReorderLevel"
                 type="text"
                 value={txtReorderLevel}
-                onChange={(e) =>
-                  setTxtReorderLevel(
-                    e.target.value,
-                  )
-                }
+                onChange={(e) => setTxtReorderLevel(e.target.value)}
                 className={inputClass}
               />
             </div>
@@ -1082,10 +997,7 @@ const ItemPage: React.FC = () => {
                 gap-2
               "
             >
-              <label
-                htmlFor="txtReoderQty"
-                className={labelClass}
-              >
+              <label htmlFor="txtReoderQty" className={labelClass}>
                 Reorder Qty :
               </label>
 
@@ -1094,11 +1006,7 @@ const ItemPage: React.FC = () => {
                 name="txtReoderQty"
                 type="text"
                 value={txtReorderQty}
-                onChange={(e) =>
-                  setTxtReorderQty(
-                    e.target.value,
-                  )
-                }
+                onChange={(e) => setTxtReorderQty(e.target.value)}
                 className={inputClass}
               />
 
@@ -1122,11 +1030,7 @@ const ItemPage: React.FC = () => {
                   name="chkAllBranches"
                   type="checkbox"
                   checked={chkAllBranches}
-                  onChange={(e) =>
-                    setChkAllBranches(
-                      e.target.checked,
-                    )
-                  }
+                  onChange={(e) => setChkAllBranches(e.target.checked)}
                   className="
                     h-[15px]
                     w-[15px]
@@ -1162,7 +1066,6 @@ const ItemPage: React.FC = () => {
                   text-[11px]
                 "
               >
-
                 <thead>
 
                   <tr
@@ -1255,13 +1158,11 @@ const ItemPage: React.FC = () => {
                     >
                       Inactive
                     </th>
-
                   </tr>
 
                 </thead>
 
                 <tbody>
-
                   {rows.map((row) => (
 
                     <tr
@@ -1286,17 +1187,11 @@ const ItemPage: React.FC = () => {
                           options={branchOptions}
                           value={
                             branchOptions.find(
-                              (option) =>
-                                option.value ===
-                                row.lkpBranch,
+                              (option) => option.value === row.lkpBranch,
                             ) || null
                           }
                           onChange={(option) =>
-                            updateRow(
-                              row.id,
-                              "lkpBranch",
-                              option?.value || "",
-                            )
+                            updateRow(row.id, "lkpBranch", option?.value || "")
                           }
                           styles={tableSelectStyles}
                           isClearable
@@ -1322,24 +1217,11 @@ const ItemPage: React.FC = () => {
                           id={`txtItemLocation_${row.id}`}
                           name={`txtItemLocation_${row.id}`}
                           type="text"
-                          value={
-                            row.txtItemLocation
-                          }
+                          value={row.txtItemLocation}
                           onChange={(e) =>
-                            updateRow(
-                              row.id,
-                              "txtItemLocation",
-                              e.target.value,
-                            )
+                            updateRow(row.id, "txtItemLocation", e.target.value)
                           }
-                          className="
-                            h-[27px]
-                            w-full
-                            border-0
-                            px-2
-                            text-[11px]
-                            outline-none
-                          "
+                          className="h-[27px] w-full border-0 px-2 text-[11px] outline-none"
                         />
                       </td>
 
@@ -1347,20 +1229,12 @@ const ItemPage: React.FC = () => {
                           ALLOW SALE BELOW COST
                       ===================================== */}
 
-                      <td
-                        className="
-                          border
-                          border-slate-300
-                          text-center
-                        "
-                      >
+                      <td className="border border-slate-300 text-center">
                         <input
                           id={`chkAllowSaleBelowCost_${row.id}`}
                           name={`chkAllowSaleBelowCost_${row.id}`}
                           type="checkbox"
-                          checked={
-                            row.chkAllowSaleBelowCost
-                          }
+                          checked={row.chkAllowSaleBelowCost}
                           onChange={(e) =>
                             updateRow(
                               row.id,
@@ -1368,11 +1242,7 @@ const ItemPage: React.FC = () => {
                               e.target.checked,
                             )
                           }
-                          className="
-                            h-[14px]
-                            w-[14px]
-                            accent-blue-600
-                          "
+                          className="h-[14px] w-[14px] accent-blue-600"
                         />
                       </td>
 
@@ -1380,13 +1250,7 @@ const ItemPage: React.FC = () => {
                           INACTIVE
                       ===================================== */}
 
-                      <td
-                        className="
-                          border
-                          border-slate-300
-                          text-center
-                        "
-                      >
+                      <td className="border border-slate-300 text-center">
                         <input
                           id={`chkInactive_${row.id}`}
                           name={`chkInactive_${row.id}`}
@@ -1401,14 +1265,9 @@ const ItemPage: React.FC = () => {
                               e.target.checked,
                             )
                           }
-                          className="
-                            h-[14px]
-                            w-[14px]
-                            accent-blue-600
-                          "
+                          className="h-3.5 w-3.5 accent-blue-600"
                         />
                       </td>
-
                     </tr>
 
                   ))}
@@ -1418,7 +1277,6 @@ const ItemPage: React.FC = () => {
               </table>
 
             </div>
-
           </div>
 
           {/* ===================================================

@@ -594,20 +594,13 @@ const ReceiptForm: React.FC<ReceiptFormProps> = ({
   const selectStyles = {
     control: (base: any) => ({
       ...base,
-
       minHeight: "28px",
       height: "28px",
-
       borderColor: "#d7dee7",
-
       borderRadius: "4px",
-
       boxShadow: "none",
-
       fontSize: "12px",
-
       cursor: "text",
-
       "&:hover": {
         borderColor: "#9fdfbc",
       },
@@ -615,53 +608,39 @@ const ReceiptForm: React.FC<ReceiptFormProps> = ({
 
     valueContainer: (base: any) => ({
       ...base,
-
       height: "28px",
-
       padding: "0 8px",
     }),
 
     singleValue: (base: any) => ({
       ...base,
-
       color: "#344054",
-
       fontSize: "12px",
     }),
 
     placeholder: (base: any) => ({
       ...base,
-
       color: "#808080",
-
       fontSize: "12px",
     }),
 
     input: (base: any) => ({
       ...base,
-
       margin: 0,
-
       padding: 0,
-
       fontSize: "12px",
-
       color: "#344054",
     }),
 
     indicatorsContainer: (base: any) => ({
       ...base,
-
       height: "28px",
     }),
 
     dropdownIndicator: (base: any) => ({
       ...base,
-
       color: "#aeb8c2",
-
       padding: "4px",
-
       "&:hover": {
         color: "#808080",
       },
@@ -673,11 +652,8 @@ const ReceiptForm: React.FC<ReceiptFormProps> = ({
 
     clearIndicator: (base: any) => ({
       ...base,
-
       color: "#aeb8c2",
-
       padding: "4px",
-
       "&:hover": {
         color: "#808080",
       },
@@ -685,35 +661,24 @@ const ReceiptForm: React.FC<ReceiptFormProps> = ({
 
     menu: (base: any) => ({
       ...base,
-
       fontSize: "12px",
-
       zIndex: 100,
-
       marginTop: "2px",
-
       borderRadius: "4px",
-
       overflow: "hidden",
     }),
 
     menuList: (base: any) => ({
       ...base,
-
       padding: "3px 0",
-
       maxHeight: "200px",
-
       overflowY: "auto",
     }),
 
     option: (base: any, state: any) => ({
       ...base,
-
       fontSize: "12px",
-
       cursor: "pointer",
-
       backgroundColor: state.isSelected
         ? "#eefbf4"
         : state.isFocused
@@ -721,9 +686,7 @@ const ReceiptForm: React.FC<ReceiptFormProps> = ({
           : "#ffffff",
 
       color: "#344054",
-
       padding: "7px 10px",
-
       "&:active": {
         backgroundColor: "#dff5e9",
       },
@@ -738,7 +701,6 @@ const ReceiptForm: React.FC<ReceiptFormProps> = ({
     () =>
       cbAccounts.map((account) => ({
         value: account.faccountid,
-
         label: account.faccountname,
       })),
 
@@ -754,8 +716,7 @@ const ReceiptForm: React.FC<ReceiptFormProps> = ({
 
   /* =======================================================
      SELECTED TYPE
-
-     Default = B
+    Default = B
   ======================================================= */
 
   const selectedType =
@@ -831,23 +792,14 @@ const ReceiptForm: React.FC<ReceiptFormProps> = ({
 
               control: (base: any) => ({
                 ...base,
-
                 minHeight: "28px",
-
                 height: "28px",
-
                 width: "200px",
-
                 borderColor: "#d7dee7",
-
                 borderRadius: "4px",
-
                 boxShadow: "none",
-
                 fontSize: "12px",
-
                 cursor: "text",
-
                 "&:hover": {
                   borderColor: "#9fdfbc",
                 },
@@ -919,23 +871,14 @@ const ReceiptForm: React.FC<ReceiptFormProps> = ({
 
               control: (base: any) => ({
                 ...base,
-
                 minHeight: "28px",
-
                 height: "28px",
-
                 width: "70px",
-
                 borderColor: "#d7dee7",
-
                 borderRadius: "4px",
-
                 boxShadow: "none",
-
                 fontSize: "12px",
-
                 cursor: "text",
-
                 "&:hover": {
                   borderColor: "#9fdfbc",
                 },
@@ -1029,23 +972,14 @@ const ReceiptForm: React.FC<ReceiptFormProps> = ({
 
               control: (base: any) => ({
                 ...base,
-
                 minHeight: "28px",
-
                 height: "28px",
-
                 width: "400px",
-
                 borderColor: "#d7dee7",
-
                 borderRadius: "4px",
-
                 boxShadow: "none",
-
                 fontSize: "12px",
-
                 cursor: "text",
-
                 "&:hover": {
                   borderColor: "#9fdfbc",
                 },
@@ -1108,43 +1042,28 @@ const ReceiptForm: React.FC<ReceiptFormProps> = ({
 
                 "& .MuiPickersInputBase-root": {
                   width: "150px",
-
                   height: "28px",
-
                   minHeight: "28px",
-
                   boxSizing: "border-box",
-
                   borderRadius: "4px",
-
                   backgroundColor: "#ffffff",
-
                   fontSize: "12px",
-
                   padding: 0,
-
                   overflow: "hidden",
                 },
 
                 "& .MuiPickersInputBase-sectionContainer": {
                   minWidth: 0,
-
                   padding: "0 0 0 8px",
-
                   overflow: "hidden",
                 },
 
                 "& .MuiPickersInputBase-input": {
                   minWidth: 0,
-
                   width: "100%",
-
                   fontSize: "12px",
-
                   padding: 0,
-
                   height: "28px",
-
                   boxSizing: "border-box",
                 },
 
@@ -1155,11 +1074,8 @@ const ReceiptForm: React.FC<ReceiptFormProps> = ({
 
                 "& .MuiIconButton-root": {
                   width: "24px",
-
                   height: "24px",
-
                   padding: "2px",
-
                   margin: 0,
                 },
 
@@ -1179,7 +1095,6 @@ const ReceiptForm: React.FC<ReceiptFormProps> = ({
                 "& .MuiPickersInputBase-root.Mui-focused .MuiPickersOutlinedInput-notchedOutline":
                   {
                     borderColor: "#9fdfbc",
-
                     borderWidth: "1px",
                   },
               }}
