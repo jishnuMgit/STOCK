@@ -262,8 +262,15 @@ const SetDocumentNo: React.FC = () => {
   useEffect(() => {
     const loadYearList = async () => {
       try {
+        const companyId = localStorage.getItem("CoID");
+
+        if (!companyId) {
+          toast.error("getYearList: no companyId in localStorage");
+          return;
+        }
+
         const response = await fetch(
-          `${import.meta.env.VITE_API_URL}/DocumentNo/getYearList`
+          `${import.meta.env.VITE_API_URL}/DocumentNo/getYearList?companyId=${companyId}`
         );
 
         if (!response.ok) {
@@ -301,14 +308,16 @@ const SetDocumentNo: React.FC = () => {
   useEffect(() => {
     const loadDefaultBranch = async () => {
       try {
-        const userId = localStorage.getItem("userId");
+        const companyId = localStorage.getItem("CoID");
+        const userId = localStorage.getItem("userID");
 
-        if (!userId) {
+        if (!companyId || !userId) {
+          toast.error("getDefaultBranch: no companyId/userId in localStorage");
           return;
         }
 
         const response = await fetch(
-          `${import.meta.env.VITE_API_URL}/DocumentNo/getDefaultBranch?userId=${userId}`
+          `${import.meta.env.VITE_API_URL}/DocumentNo/getDefaultBranch?companyId=${companyId}&userId=${userId}`
         );
 
         if (!response.ok) {
@@ -319,6 +328,7 @@ const SetDocumentNo: React.FC = () => {
 
         if (!result.success) {
           console.error("getDefaultBranch failed:", result.message);
+          toast.error(`getDefaultBranch failed: ${result.message}`);
           return;
         }
 
@@ -327,6 +337,7 @@ const SetDocumentNo: React.FC = () => {
         }
       } catch (error) {
         console.error("getDefaultBranch error:", error);
+        toast.error(`getDefaultBranch error: ${error instanceof Error ? error.message : String(error)}`);
       }
     };
 
@@ -340,8 +351,16 @@ const SetDocumentNo: React.FC = () => {
   useEffect(() => {
     const loadBranchList = async () => {
       try {
+        const companyId = localStorage.getItem("CoID");
+        const userId = localStorage.getItem("userID");
+
+        if (!companyId || !userId) {
+          toast.error("getBranchList: no companyId/userId in localStorage");
+          return;
+        }
+
         const response = await fetch(
-          `${import.meta.env.VITE_API_URL}/DocumentNo/getBranchList`
+          `${import.meta.env.VITE_API_URL}/DocumentNo/getBranchList?companyId=${companyId}&userId=${userId}`
         );
 
         if (!response.ok) {
@@ -352,6 +371,7 @@ const SetDocumentNo: React.FC = () => {
 
         if (!result.success) {
           console.error("getBranchList failed:", result.message);
+          toast.error(`getBranchList failed: ${result.message}`);
           return;
         }
 
@@ -365,6 +385,7 @@ const SetDocumentNo: React.FC = () => {
         setBranchOptions(options);
       } catch (error) {
         console.error("getBranchList error:", error);
+        toast.error(`getBranchList error: ${error instanceof Error ? error.message : String(error)}`);
       }
     };
 
@@ -378,8 +399,15 @@ const SetDocumentNo: React.FC = () => {
   useEffect(() => {
     const loadModuleList = async () => {
       try {
+        const companyId = localStorage.getItem("CoID");
+
+        if (!companyId) {
+          toast.error("getModuleList: no companyId in localStorage");
+          return;
+        }
+
         const response = await fetch(
-          `${import.meta.env.VITE_API_URL}/DocumentNo/getModuleList`
+          `${import.meta.env.VITE_API_URL}/DocumentNo/getModuleList?companyId=${companyId}`
         );
 
         if (!response.ok) {
@@ -437,8 +465,15 @@ const SetDocumentNo: React.FC = () => {
 
     const loadDocumentGrid = async () => {
       try {
+        const companyId = localStorage.getItem("CoID");
+
+        if (!companyId) {
+          toast.error("getDocumentList: no companyId in localStorage");
+          return;
+        }
+
         const docListResponse = await fetch(
-          `${import.meta.env.VITE_API_URL}/DocumentNo/getDocumentList?lkpModule=${lkpModule}`
+          `${import.meta.env.VITE_API_URL}/DocumentNo/getDocumentList?companyId=${companyId}&lkpModule=${lkpModule}`
         );
 
         if (!docListResponse.ok) {
@@ -468,7 +503,7 @@ const SetDocumentNo: React.FC = () => {
 
         if (lkpYear && lkpBranch) {
           const docNoResponse = await fetch(
-            `${import.meta.env.VITE_API_URL}/DocumentNo/getDocumentNoList?lkpYear=${lkpYear}&lkpBranch=${lkpBranch}&lkpModule=${lkpModule}`
+            `${import.meta.env.VITE_API_URL}/DocumentNo/getDocumentNoList?companyId=${companyId}&lkpYear=${lkpYear}&lkpBranch=${lkpBranch}&lkpModule=${lkpModule}`
           );
 
           if (docNoResponse.ok) {
@@ -564,6 +599,14 @@ const SetDocumentNo: React.FC = () => {
       return;
     }
 
+    const companyId = localStorage.getItem("CoID");
+    const userId = localStorage.getItem("userID");
+
+    if (!companyId || !userId) {
+      toast.error("Company ID / User ID not found. Please log in again.");
+      return;
+    }
+
     try {
       const response = await fetch(
         `${import.meta.env.VITE_API_URL}/DocumentNo/saveDocumentNo`,
@@ -571,9 +614,11 @@ const SetDocumentNo: React.FC = () => {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
+            companyId,
             lkpYear,
             lkpBranch,
             lkpModule,
+            userId,
             rows: validRows.map((row) => ({
               lkpDocument: row.lkpDocument,
               txtDocPrefix: row.txtDocPrefix || null,
@@ -633,6 +678,14 @@ const SetDocumentNo: React.FC = () => {
       return;
     }
 
+    const companyId = localStorage.getItem("CoID");
+    const userId = localStorage.getItem("userID");
+
+    if (!companyId || !userId) {
+      toast.error("Company ID / User ID not found. Please log in again.");
+      return;
+    }
+
     try {
       const response = await fetch(
         `${import.meta.env.VITE_API_URL}/DocumentNo/deleteDocumentNoRow`,
@@ -640,10 +693,12 @@ const SetDocumentNo: React.FC = () => {
           method: "DELETE",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
+            companyId,
             lkpYear,
             lkpBranch,
             lkpModule,
             lkpDocument: row.lkpDocument,
+            userId,
           }),
         }
       );

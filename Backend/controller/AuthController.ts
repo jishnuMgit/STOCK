@@ -184,22 +184,19 @@ export const login = async (req: Request, res: Response): Promise<Response> => {
 
     /* =====================================================
        DEFAULT BRANCH
+       Not used anywhere downstream — fbranchid is written but
+       never read (authMiddleware only selects fuserid), and
+       the response's branchId field is commented out below.
+       SetDocumentNo does its own separate live lookup instead.
     ===================================================== */
 
-    const defaultBranchResult = await pool.query(
-      `SELECT dbo.getuserdefbranch($1, $2) AS "defBranch"`,
-      [companyId, userId],
-    );
+    // const defaultBranchResult = await pool.query(
+    //   `SELECT dbo.getuserdefbranch($1, $2) AS "defBranch"`,
+    //   [companyId, userId],
+    // );
 
-    const defaultBranchId: string =
-      defaultBranchResult.rows[0]?.defBranch ?? "";
-
-    if (userId !== "ADMIN" && !defaultBranchId) {
-      return res.status(403).json({
-        success: false,
-        message: `User '${userId}' has no branch assigned for the selected Company`,
-      });
-    }
+    // const defaultBranchId: string =
+    //   defaultBranchResult.rows[0]?.defBranch ?? "";
 
     /* =====================================================
        CHECK ACTIVE SESSION (only count non-expired ones)
@@ -237,12 +234,12 @@ export const login = async (req: Request, res: Response): Promise<Response> => {
       `
   INSERT INTO dbo.tblusersession (
     fuserid,
-    fsessiontoken,
-    fbranchid
+    fsessiontoken
+    -- fbranchid intentionally omitted, see DEFAULT BRANCH note above
   )
-  VALUES ($1, $2, $3)
+  VALUES ($1, $2)
   `,
-      [userId, sessionToken, defaultBranchId],
+      [userId, sessionToken],
     );
 
     /* =====================================================
