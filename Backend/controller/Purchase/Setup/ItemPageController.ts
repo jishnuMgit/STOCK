@@ -287,7 +287,7 @@ export const saveItem = async (
       txtPacking: string | number;
       txtCBM: string | number;
       lkpItemGroupID: string;
-      lkpSupplierID: string | null;
+      lkpSupplierID: string;
       txtSupplierItemID: string;
       txtReorderLevel: string | number;
       txtReorderQty: string | number;
@@ -308,10 +308,10 @@ export const saveItem = async (
       });
     }
 
-    if (!txtItemID || !txtItemName || !lkpUnit || !lkpItemGroupID || !txtSupplierItemID) {
+    if (!txtItemID || !txtItemName || !lkpUnit || !lkpItemGroupID || !lkpSupplierID || !txtSupplierItemID) {
       return res.status(400).json({
         success: false,
-        message: "Item ID, Item Name, Unit, Item Group and Supplier Item ID are required",
+        message: "Item ID, Item Name, Unit, Item Group, Supplier and Supplier Item ID are required",
       });
     }
 

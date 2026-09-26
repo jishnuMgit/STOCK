@@ -394,8 +394,8 @@ const ItemPage: React.FC = () => {
   ========================================================= */
 
   const handleSave = async () => {
-    if (!txtItemID || !txtItemName || !lkpUnit || !lkpItemGroupID || !txtSupplierItemID) {
-      toast.warning("Item ID, Item Name, Unit, Item Group and Supplier Item ID are required.");
+    if (!txtItemID || !txtItemName || !lkpUnit || !lkpItemGroupID || !lkpSupplierID || !txtSupplierItemID) {
+      toast.warning("Item ID, Item Name, Unit, Item Group, Supplier and Supplier Item ID are required.");
       return;
     }
 
@@ -1262,10 +1262,12 @@ const ItemPage: React.FC = () => {
               "
             >
               <label htmlFor="lkpSupplierID" className={labelClass}>
+                {requiredDot}
                 Supplier :
               </label>
 
               <Select
+                required
                 inputId="lkpSupplierID"
                 name="lkpSupplierID"
                 options={supplierIDOptions}
@@ -1423,7 +1425,36 @@ const ItemPage: React.FC = () => {
                   name="chkAllBranches"
                   type="checkbox"
                   checked={chkAllBranches}
-                  onChange={(e) => setChkAllBranches(e.target.checked)}
+                  onChange={(e) => {
+                    const checked = e.target.checked;
+                    setChkAllBranches(checked);
+
+                    if (checked) {
+                      setRows((currentRows) => {
+                        const filledRows: BranchRow[] = branchOptions.map(
+                          (branch, index) => ({
+                            id: currentRows[index]?.id ?? index + 1,
+                            lkpBranch: branch.value,
+                            txtItemLocation: "",
+                            chkAllowSaleBelowCost: false,
+                            chkInactive: false,
+                          })
+                        );
+
+                        const blankRows: BranchRow[] = currentRows
+                          .slice(branchOptions.length)
+                          .map((row) => ({
+                            ...row,
+                            lkpBranch: "",
+                            txtItemLocation: "",
+                            chkAllowSaleBelowCost: false,
+                            chkInactive: false,
+                          }));
+
+                        return [...filledRows, ...blankRows];
+                      });
+                    }
+                  }}
                   className="
                     h-[15px]
                     w-[15px]
