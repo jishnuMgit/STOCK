@@ -16,216 +16,151 @@ interface Customer {
 // ============================================================
 
 const customers: Customer[] = [
-    {
-      lkpCustomerID: "1100",
-      lkpCustomerName: "ARABIAN CHEMICAL CO. (PS) LTD",
-      lkpDivID: "12",
-      lkpBranch: "JEDDAH",
-      lkpGlAccountID: "410001",
-      lkpGlAccountName: "ARABIAN CHEMICAL CO.",
-    },
-    {
-      lkpCustomerID: "1004",
-      lkpCustomerName: "E. A. JUFFALI & BROS H.O.",
-      lkpDivID: "16",
-      lkpBranch: "JEDDAH",
-      lkpGlAccountID: "410002",
-      lkpGlAccountName: "E. A. JUFFALI & BROS",
-    },
-    {
-      lkpCustomerID: "1007",
-      lkpCustomerName: "E. A. JUFFALI & BROS-REAL ESTATE",
-      lkpDivID: "10",
-      lkpBranch: "RIYADH",
-      lkpGlAccountID: "410003",
-      lkpGlAccountName: "JUFFALI REAL ESTATE",
-    },
-    {
-      lkpCustomerID: "1010",
-      lkpCustomerName:
-        "MAINTENANCE OF AIRCONDITIONING CO.LTD",
-      lkpDivID: "14",
-      lkpBranch: "JEDDAH",
-      lkpGlAccountID: "410004",
-      lkpGlAccountName: "MAINTENANCE SERVICES",
-    },
-    {
-      lkpCustomerID: "1020",
-      lkpCustomerName: "JUFFALI CHEMICAL (PU)",
-      lkpDivID: "19",
-      lkpBranch: "JEDDAH",
-      lkpGlAccountID: "410005",
-      lkpGlAccountName: "JUFFALI CHEMICAL",
-    },
-    {
-      lkpCustomerID: "1025",
-      lkpCustomerName: "SAUDI ERICSSON",
-      lkpDivID: "22",
-      lkpBranch: "DAMMAM",
-      lkpGlAccountID: "410006",
-      lkpGlAccountName: "SAUDI ERICSSON",
-    },
-    {
-      lkpCustomerID: "1041",
-      lkpCustomerName: "ARABIAN CHEMICAL CO. (LATEX)",
-      lkpDivID: "17",
-      lkpBranch: "JEDDAH",
-      lkpGlAccountID: "410007",
-      lkpGlAccountName: "ARABIAN CHEMICAL LATEX",
-    },
-    {
-      lkpCustomerID: "1048",
-      lkpCustomerName: "JUFFALI AUTO CO. (JACO)",
-      lkpDivID: "15",
-      lkpBranch: "RIYADH",
-      lkpGlAccountID: "410008",
-      lkpGlAccountName: "JUFFALI AUTO",
-    },
-    {
-      lkpCustomerID: "1052",
-      lkpCustomerName: "SHEIKH ALI JUFFALI FAMILY",
-      lkpDivID: "13",
-      lkpBranch: "JEDDAH",
-      lkpGlAccountID: "410009",
-      lkpGlAccountName: "SHEIKH ALI JUFFALI FAMILY",
-    },
-    {
-      lkpCustomerID: "1052",
-      lkpCustomerName: "SHAIKH ALI A.J. MAINT.",
-      lkpDivID: "18",
-      lkpBranch: "JEDDAH",
-      lkpGlAccountID: "410010",
-      lkpGlAccountName: "SHAIKH ALI MAINTENANCE",
-    },
-    {
-      lkpCustomerID: "1041",
-      lkpCustomerName: "ARABIAN CHEMICAL CO. (LATEX)",
-      lkpDivID: "17",
-      lkpBranch: "JEDDAH",
-      lkpGlAccountID: "410007",
-      lkpGlAccountName: "ARABIAN CHEMICAL LATEX",
-    },
-    {
-      lkpCustomerID: "1048",
-      lkpCustomerName: "JUFFALI AUTO CO. (JACO)",
-      lkpDivID: "15",
-      lkpBranch: "RIYADH",
-      lkpGlAccountID: "410008",
-      lkpGlAccountName: "JUFFALI AUTO",
-    },
-    {
-      lkpCustomerID: "1052",
-      lkpCustomerName: "SHEIKH ALI JUFFALI FAMILY",
-      lkpDivID: "13",
-      lkpBranch: "JEDDAH",
-      lkpGlAccountID: "410009",
-      lkpGlAccountName: "SHEIKH ALI JUFFALI FAMILY",
-    },
-    {
-      lkpCustomerID: "1052",
-      lkpCustomerName: "SHAIKH ALI A.J. MAINT.",
-      lkpDivID: "18",
-      lkpBranch: "JEDDAH",
-      lkpGlAccountID: "410010",
-      lkpGlAccountName: "SHAIKH ALI MAINTENANCE",
-    },
-    {
-      lkpCustomerID: "1041",
-      lkpCustomerName: "ARABIAN CHEMICAL CO. (LATEX)",
-      lkpDivID: "17",
-      lkpBranch: "JEDDAH",
-      lkpGlAccountID: "410007",
-      lkpGlAccountName: "ARABIAN CHEMICAL LATEX",
-    },
-    {
-      lkpCustomerID: "1048",
-      lkpCustomerName: "JUFFALI AUTO CO. (JACO)",
-      lkpDivID: "15",
-      lkpBranch: "RIYADH",
-      lkpGlAccountID: "410008",
-      lkpGlAccountName: "JUFFALI AUTO",
-    },
-    {
-      lkpCustomerID: "1052",
-      lkpCustomerName: "SHEIKH ALI JUFFALI FAMILY",
-      lkpDivID: "13",
-      lkpBranch: "JEDDAH",
-      lkpGlAccountID: "410009",
-      lkpGlAccountName: "SHEIKH ALI JUFFALI FAMILY",
-    },
-    {
-      lkpCustomerID: "1052",
-      lkpCustomerName: "SHAIKH ALI A.J. MAINT.",
-      lkpDivID: "18",
-      lkpBranch: "JEDDAH",
-      lkpGlAccountID: "410010",
-      lkpGlAccountName: "SHAIKH ALI MAINTENANCE",
-    },
-     {
-      lkpCustomerID: "1041",
-      lkpCustomerName: "ARABIAN CHEMICAL CO. (LATEX)",
-      lkpDivID: "17",
-      lkpBranch: "JEDDAH",
-      lkpGlAccountID: "410007",
-      lkpGlAccountName: "ARABIAN CHEMICAL LATEX",
-    },
-    {
-      lkpCustomerID: "1048",
-      lkpCustomerName: "JUFFALI AUTO CO. (JACO)",
-      lkpDivID: "15",
-      lkpBranch: "RIYADH",
-      lkpGlAccountID: "410008",
-      lkpGlAccountName: "JUFFALI AUTO",
-    },
-    {
-      lkpCustomerID: "1052",
-      lkpCustomerName: "SHEIKH ALI JUFFALI FAMILY",
-      lkpDivID: "13",
-      lkpBranch: "JEDDAH",
-      lkpGlAccountID: "410009",
-      lkpGlAccountName: "SHEIKH ALI JUFFALI FAMILY",
-    },
-    {
-      lkpCustomerID: "1052",
-      lkpCustomerName: "SHAIKH ALI A.J. MAINT.",
-      lkpDivID: "18",
-      lkpBranch: "JEDDAH",
-      lkpGlAccountID: "410010",
-      lkpGlAccountName: "SHAIKH ALI MAINTENANCE",
-    },
-     {
-      lkpCustomerID: "1041",
-      lkpCustomerName: "ARABIAN CHEMICAL CO. (LATEX)",
-      lkpDivID: "17",
-      lkpBranch: "JEDDAH",
-      lkpGlAccountID: "410007",
-      lkpGlAccountName: "ARABIAN CHEMICAL LATEX",
-    },
-    {
-      lkpCustomerID: "1048",
-      lkpCustomerName: "JUFFALI AUTO CO. (JACO)",
-      lkpDivID: "15",
-      lkpBranch: "RIYADH",
-      lkpGlAccountID: "410008",
-      lkpGlAccountName: "JUFFALI AUTO",
-    },
-    {
-      lkpCustomerID: "1052",
-      lkpCustomerName: "SHEIKH ALI JUFFALI FAMILY",
-      lkpDivID: "13",
-      lkpBranch: "JEDDAH",
-      lkpGlAccountID: "410009",
-      lkpGlAccountName: "SHEIKH ALI JUFFALI FAMILY",
-    },
-    {
-      lkpCustomerID: "1052",
-      lkpCustomerName: "SHAIKH ALI A.J. MAINT.",
-      lkpDivID: "18",
-      lkpBranch: "JEDDAH",
-      lkpGlAccountID: "410010",
-      lkpGlAccountName: "SHAIKH ALI MAINTENANCE",
-    },
-  ];
+  {
+    lkpCustomerID: "1100",
+    lkpCustomerName: "ARABIAN CHEMICAL CO. (PS) LTD",
+    lkpDivID: "12",
+    lkpBranch: "JEDDAH",
+    lkpGlAccountID: "410001",
+    lkpGlAccountName: "ARABIAN CHEMICAL CO.",
+  },
+  {
+    lkpCustomerID: "1004",
+    lkpCustomerName: "E. A. JUFFALI & BROS H.O.",
+    lkpDivID: "16",
+    lkpBranch: "JEDDAH",
+    lkpGlAccountID: "410002",
+    lkpGlAccountName: "E. A. JUFFALI & BROS",
+  },
+  {
+    lkpCustomerID: "1007",
+    lkpCustomerName: "E. A. JUFFALI & BROS-REAL ESTATE",
+    lkpDivID: "10",
+    lkpBranch: "RIYADH",
+    lkpGlAccountID: "410003",
+    lkpGlAccountName: "JUFFALI REAL ESTATE",
+  },
+  {
+    lkpCustomerID: "1010",
+    lkpCustomerName: "MAINTENANCE OF AIRCONDITIONING CO.LTD",
+    lkpDivID: "14",
+    lkpBranch: "JEDDAH",
+    lkpGlAccountID: "410004",
+    lkpGlAccountName: "MAINTENANCE SERVICES",
+  },
+  {
+    lkpCustomerID: "1020",
+    lkpCustomerName: "JUFFALI CHEMICAL (PU)",
+    lkpDivID: "19",
+    lkpBranch: "JEDDAH",
+    lkpGlAccountID: "410005",
+    lkpGlAccountName: "JUFFALI CHEMICAL",
+  },
+  {
+    lkpCustomerID: "1025",
+    lkpCustomerName: "SAUDI ERICSSON",
+    lkpDivID: "22",
+    lkpBranch: "DAMMAM",
+    lkpGlAccountID: "410006",
+    lkpGlAccountName: "SAUDI ERICSSON",
+  },
+  {
+    lkpCustomerID: "1041",
+    lkpCustomerName: "ARABIAN CHEMICAL CO. (LATEX)",
+    lkpDivID: "17",
+    lkpBranch: "JEDDAH",
+    lkpGlAccountID: "410007",
+    lkpGlAccountName: "ARABIAN CHEMICAL LATEX",
+  },
+  {
+    lkpCustomerID: "1048",
+    lkpCustomerName: "JUFFALI AUTO CO. (JACO)",
+    lkpDivID: "15",
+    lkpBranch: "RIYADH",
+    lkpGlAccountID: "410008",
+    lkpGlAccountName: "JUFFALI AUTO",
+  },
+  {
+    lkpCustomerID: "1052",
+    lkpCustomerName: "SHEIKH ALI JUFFALI FAMILY",
+    lkpDivID: "13",
+    lkpBranch: "JEDDAH",
+    lkpGlAccountID: "410009",
+    lkpGlAccountName: "SHEIKH ALI JUFFALI FAMILY",
+  },
+  {
+    lkpCustomerID: "1052",
+    lkpCustomerName: "SHAIKH ALI A.J. MAINT.",
+    lkpDivID: "18",
+    lkpBranch: "JEDDAH",
+    lkpGlAccountID: "410010",
+    lkpGlAccountName: "SHAIKH ALI MAINTENANCE",
+  },
+  {
+    lkpCustomerID: "1041",
+    lkpCustomerName: "ARABIAN CHEMICAL CO. (LATEX)",
+    lkpDivID: "17",
+    lkpBranch: "JEDDAH",
+    lkpGlAccountID: "410007",
+    lkpGlAccountName: "ARABIAN CHEMICAL LATEX",
+  },
+  {
+    lkpCustomerID: "1048",
+    lkpCustomerName: "JUFFALI AUTO CO. (JACO)",
+    lkpDivID: "15",
+    lkpBranch: "RIYADH",
+    lkpGlAccountID: "410008",
+    lkpGlAccountName: "JUFFALI AUTO",
+  },
+  {
+    lkpCustomerID: "1052",
+    lkpCustomerName: "SHEIKH ALI JUFFALI FAMILY",
+    lkpDivID: "13",
+    lkpBranch: "JEDDAH",
+    lkpGlAccountID: "410009",
+    lkpGlAccountName: "SHEIKH ALI JUFFALI FAMILY",
+  },
+  {
+    lkpCustomerID: "1052",
+    lkpCustomerName: "SHAIKH ALI A.J. MAINT.",
+    lkpDivID: "18",
+    lkpBranch: "JEDDAH",
+    lkpGlAccountID: "410010",
+    lkpGlAccountName: "SHAIKH ALI MAINTENANCE",
+  },
+  {
+    lkpCustomerID: "1041",
+    lkpCustomerName: "ARABIAN CHEMICAL CO. (LATEX)",
+    lkpDivID: "17",
+    lkpBranch: "JEDDAH",
+    lkpGlAccountID: "410007",
+    lkpGlAccountName: "ARABIAN CHEMICAL LATEX",
+  },
+  {
+    lkpCustomerID: "1048",
+    lkpCustomerName: "JUFFALI AUTO CO. (JACO)",
+    lkpDivID: "15",
+    lkpBranch: "RIYADH",
+    lkpGlAccountID: "410008",
+    lkpGlAccountName: "JUFFALI AUTO",
+  },
+  {
+    lkpCustomerID: "1052",
+    lkpCustomerName: "SHEIKH ALI JUFFALI FAMILY",
+    lkpDivID: "13",
+    lkpBranch: "JEDDAH",
+    lkpGlAccountID: "410009",
+    lkpGlAccountName: "SHEIKH ALI JUFFALI FAMILY",
+  },
+  {
+    lkpCustomerID: "1052",
+    lkpCustomerName: "SHAIKH ALI A.J. MAINT.",
+    lkpDivID: "18",
+    lkpBranch: "JEDDAH",
+    lkpGlAccountID: "410010",
+    lkpGlAccountName: "SHAIKH ALI MAINTENANCE",
+  },
+];
 
 // ============================================================
 // COMPONENT
@@ -298,7 +233,7 @@ const CustomerList: React.FC = () => {
           MAIN PAGE
       ============================================================ */}
 
-      <div className="w-305 border border-slate-300 bg-white shadow-sm">
+      <div className="w-screen border border-slate-300 bg-white shadow-sm">
 
         {/* ============================================================
             TITLE
@@ -329,129 +264,157 @@ const CustomerList: React.FC = () => {
 
         {/* ============================================================
             SEARCH AREA
+            SAME WIDTH AS TABLE
         ============================================================ */}
 
-        <div
+       {/* ============================================================
+    SEARCH AREA
+    SEARCH ENDS EXACTLY AT CUSTOMER NAME COLUMN
+============================================================ */}
+
+<div className="mx-auto w-[95%] py-3">
+
+  <div
+    className="
+      grid
+      w-full
+      grid-cols-[80px_minmax(0,1fr)_54px_80px_100px_180px_60px_60px]
+      items-center
+      gap-0
+    "
+  >
+
+    {/* ========================================================
+        SEARCH
+        Spans Customer ID + Customer Name
+    ======================================================== */}
+
+    <div className="col-span-2 ">
+
+      <div className="relative w-full">
+
+        <span
           className="
-            ml-[4%]
-            flex
-            w-[80%]
-            items-center
-            justify-center
-            gap-4
-            px-2.5
-            py-3
+            pointer-events-none
+            absolute
+            left-3
+            top-1/2
+            -translate-y-1/2
+            text-[21px]
+            text-slate-600
           "
         >
-          {/* Search */}
+          ⌕
+        </span>
 
-          <div className="relative w-full">
-            <span
-              className="
-                pointer-events-none
-                absolute
-                left-3
-                top-1/2
-                -translate-y-1/2
-                text-[21px]
-                text-slate-400
-              "
-            >
-              ⌕
-            </span>
+        <input
+          id="txtSearch"
+          type="text"
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          placeholder="Search by Customer ID, Customer Name, GL Account ID, GL Account Name"
+          className="
+            h-8.5
+            w-full
+            rounded-[5px]
+            border
+            border-slate-400
+            bg-white
+            pl-10
+            pr-4
+            text-[12px]
+            text-slate-700
+            outline-none
+            placeholder:text-slate-400
+            focus:border-[#8daac5]
+            focus:ring-0
+          "
+        />
 
-            <input
-              id="txtSearch"
-              type="text"
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              placeholder="Search by Customer ID, Customer Name, GL Account ID, GL Account Name"
-              className="
-                h-8.5
-                w-full
-                rounded-[5px]
-                border
-                border-slate-300
-                bg-white
-                pl-10
-                pr-21.25
-                text-[12px]
-                text-slate-700
-                outline-none
-                placeholder:text-slate-400
-                focus:border-[#8daac5]
-                focus:ring-0
-              "
-            />
-          </div>
+      </div>
 
-          {/* Add Customer */}
+    </div>
 
-          <Link to="/Finance/Setup/Add/Customer">
-            <button
-              id="btnAdd"
-              type="button"
-              onClick={handleAddCustomer}
-              className="
-                flex
-                h-8.5
-                w-25
-                shrink-0
-                items-center
-                justify-center
-                gap-1
-                rounded-sm
-                border
-                border-[#b7c8db]
-                bg-[#e6f0fa]
-                text-[12px]
-                text-green-600
-                shadow-sm
-                hover:bg-[#dceafa]
-                focus:outline-none
-              "
-            >
-              <span
-                className="
-                  flex
-                  h-3.75
-                  w-3.75
-                  items-center
-                  justify-center
-                  rounded-full
-                  bg-green-600
-                  text-[13px]
-                  font-bold
-                  leading-none
-                  text-white
-                "
-              >
-                +
-              </span>
+    {/* ========================================================
+        ADD BUTTON
+    ======================================================== */}
 
-              <span>Add</span>
-            </button>
-          </Link>
-        </div>
+    <div className="col-span-2 flex left-0 ml-4">
+
+      <Link
+        to="/Finance/Setup/Add/Customer"
+        className="shrink-0"
+      >
+
+        <button
+          id="btnAdd"
+          type="button"
+          onClick={handleAddCustomer}
+          className="
+            flex
+            h-8.5
+            w-25
+            items-center
+            justify-center
+            gap-1
+            rounded-sm
+            border
+            border-[#b7c8db]
+            bg-[#e6f0fa]
+            text-[12px]
+            text-green-600
+            shadow-sm
+            hover:bg-[#dceafa]
+            focus:outline-none
+          "
+        >
+
+          <span
+            className="
+              flex
+              h-3.75
+              w-3.75
+              items-center
+              justify-center
+              rounded-full
+              bg-green-600
+              text-[13px]
+              font-bold
+              leading-none
+              text-white
+            "
+          >
+            +
+          </span>
+
+          <span>Add</span>
+
+        </button>
+
+      </Link>
+
+    </div>
+
+  </div>
+
+</div>
 
         {/* ============================================================
             TABLE
-            ONLY TABLE AREA SCROLLS
         ============================================================ */}
 
         <div
           className="
             mx-auto
-            w-[90%]
+            w-[95%]
             overflow-hidden
             border
-            border-slate-300
+            border-slate-400
           "
         >
           <div
             className="
-                customer-table-scroll
-
+              customer-table-scroll
               max-h-[calc(100vh-180px)]
               overflow-y-auto
               overflow-x-hidden
@@ -470,6 +433,7 @@ const CustomerList: React.FC = () => {
               ====================================================== */}
 
               <thead className="sticky top-0 z-10">
+
                 <tr className="h-8 bg-[#f4f8fb]">
 
                   {/* Customer ID */}
@@ -479,13 +443,14 @@ const CustomerList: React.FC = () => {
                       w-20
                       border-b
                       border-r
-                      border-slate-200
+                      border-slate-400
                       bg-[#f4f8fb]
                       px-2
                       text-left
                       text-[11px]
                       font-semibold
                       text-slate-800
+                      whitespace-nowrap
                     "
                   >
                     Customer ID
@@ -495,10 +460,10 @@ const CustomerList: React.FC = () => {
 
                   <th
                     className="
-                      w-87.5
+                      w-auto
                       border-b
                       border-r
-                      border-slate-200
+                      border-slate-400
                       bg-[#f4f8fb]
                       px-2
                       text-left
@@ -514,16 +479,17 @@ const CustomerList: React.FC = () => {
 
                   <th
                     className="
-                      w-10.5
+                      w-13.5
                       border-b
                       border-r
-                      border-slate-200
+                      border-slate-400
                       bg-[#f4f8fb]
                       px-2
                       text-left
                       text-[11px]
                       font-semibold
                       text-slate-800
+                      whitespace-nowrap
                     "
                   >
                     Div. ID
@@ -533,10 +499,10 @@ const CustomerList: React.FC = () => {
 
                   <th
                     className="
-                      w-12.5
+                      w-20
                       border-b
                       border-r
-                      border-slate-200
+                      border-slate-400
                       bg-[#f4f8fb]
                       px-2
                       text-left
@@ -552,11 +518,11 @@ const CustomerList: React.FC = () => {
 
                   <th
                     className="
-                      w-18.5
+                      w-25
                       whitespace-nowrap
                       border-b
                       border-r
-                      border-slate-200
+                      border-slate-400
                       bg-[#f4f8fb]
                       px-2
                       text-left
@@ -576,7 +542,7 @@ const CustomerList: React.FC = () => {
                       whitespace-nowrap
                       border-b
                       border-r
-                      border-slate-200
+                      border-slate-400
                       bg-[#f4f8fb]
                       px-2
                       text-left
@@ -592,24 +558,41 @@ const CustomerList: React.FC = () => {
 
                   <th
                     className="
-                      w-10
+                      w-15
+                      whitespace-nowrap
                       border-b
                       border-r
-                      border-slate-200
+                      border-slate-400
                       bg-[#f4f8fb]
+                      px-2
+                      text-center
+                      text-[11px]
+                      font-semibold
+                      text-slate-800
                     "
-                  />
+                  >
+                    Modify
+                  </th>
 
                   {/* Delete */}
 
                   <th
                     className="
-                      w-10
+                      w-15
+                      whitespace-nowrap
                       border-b
-                      border-slate-200
+                      border-slate-400
                       bg-[#f4f8fb]
+                      px-2
+                      text-center
+                      text-[11px]
+                      font-semibold
+                      text-slate-800
                     "
-                  />
+                  >
+                    Delete
+                  </th>
+
                 </tr>
               </thead>
 
@@ -618,7 +601,9 @@ const CustomerList: React.FC = () => {
               ====================================================== */}
 
               <tbody>
+
                 {filteredCustomers.map((customer, index) => (
+
                   <tr
                     key={`${customer.lkpCustomerID}-${customer.lkpCustomerName}-${index}`}
                     className="
@@ -626,6 +611,7 @@ const CustomerList: React.FC = () => {
                       hover:bg-[#f8fafc]
                     "
                   >
+
                     {/* Customer ID */}
 
                     <td
@@ -635,7 +621,7 @@ const CustomerList: React.FC = () => {
                         whitespace-nowrap
                         border-b
                         border-r
-                        border-slate-200
+                        border-slate-400
                         px-2
                         text-[11px]
                         text-slate-700
@@ -654,7 +640,7 @@ const CustomerList: React.FC = () => {
                         whitespace-nowrap
                         border-b
                         border-r
-                        border-slate-200
+                        border-slate-400
                         px-2
                         text-[11px]
                         text-slate-700
@@ -672,7 +658,7 @@ const CustomerList: React.FC = () => {
                         whitespace-nowrap
                         border-b
                         border-r
-                        border-slate-200
+                        border-slate-400
                         px-2
                         text-[11px]
                         text-slate-700
@@ -690,7 +676,7 @@ const CustomerList: React.FC = () => {
                         whitespace-nowrap
                         border-b
                         border-r
-                        border-slate-200
+                        border-slate-400
                         px-2
                         text-[11px]
                         text-slate-700
@@ -708,7 +694,7 @@ const CustomerList: React.FC = () => {
                         whitespace-nowrap
                         border-b
                         border-r
-                        border-slate-200
+                        border-slate-400
                         px-2
                         text-[11px]
                         text-slate-700
@@ -727,7 +713,7 @@ const CustomerList: React.FC = () => {
                         whitespace-nowrap
                         border-b
                         border-r
-                        border-slate-200
+                        border-slate-400
                         px-2
                         text-[11px]
                         text-slate-700
@@ -744,13 +730,14 @@ const CustomerList: React.FC = () => {
                       className="
                         border-b
                         border-r
-                        border-slate-200
+                        border-slate-400
                         p-0
                         text-center
                         align-middle
                       "
                     >
                       <div className="flex h-full w-full items-center justify-center">
+
                         <button
                           id="btnModify"
                           type="button"
@@ -774,6 +761,7 @@ const CustomerList: React.FC = () => {
                             height={15}
                           />
                         </button>
+
                       </div>
                     </td>
 
@@ -785,12 +773,13 @@ const CustomerList: React.FC = () => {
                       className="
                         h-8
                         border-b
-                        border-slate-200
+                        border-slate-400
                         p-0
                         text-center
                         align-middle
                       "
                     >
+
                       <button
                         id="btnDelete"
                         type="button"
@@ -814,7 +803,9 @@ const CustomerList: React.FC = () => {
                           height={16}
                         />
                       </button>
+
                     </td>
+
                   </tr>
                 ))}
 
@@ -823,7 +814,9 @@ const CustomerList: React.FC = () => {
                 ====================================================== */}
 
                 {filteredCustomers.length === 0 && (
+
                   <tr>
+
                     <td
                       colSpan={8}
                       className="
@@ -835,9 +828,13 @@ const CustomerList: React.FC = () => {
                     >
                       No customers found
                     </td>
+
                   </tr>
+
                 )}
+
               </tbody>
+
             </table>
           </div>
         </div>
@@ -847,6 +844,7 @@ const CustomerList: React.FC = () => {
         ============================================================ */}
 
         <div className="h-2.5" />
+
       </div>
     </div>
   );
