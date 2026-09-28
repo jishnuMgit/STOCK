@@ -268,7 +268,7 @@ const LoginPage: React.FC = () => {
             >
               <LogIn size={21} />
 
-              {loginLoading ? "Logging in.." : "Login"}
+              {loginLoading ? "Logging in..." : "Login"}
             </button>
             {/* Bottom Information */}
             <div className="mt-7 border-t border-slate-200 pt-5 text-center">

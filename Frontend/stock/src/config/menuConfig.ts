@@ -69,6 +69,14 @@ export const menuRouteMap: Record<string, string> = {
 
   mnuSetCompanyInfo: "/Settings/SetCompanyInfo",
 
+
+
+  /* =========================================================
+     SECURITY
+  ========================================================= */
+
+  mnuUserLogin:"/Security/UserLogin",
+
   /* =========================================================
      ADMINISTRATION
   ========================================================= */

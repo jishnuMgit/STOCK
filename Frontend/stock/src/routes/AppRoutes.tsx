@@ -7,6 +7,7 @@ import SetBranchInfo from "../pages/Settings/SetBranchInfoPage";
 import PublicRoute from "./PublicRoute";
 import CustomerList from "../pages/Finance/Setup/CustomerListPage";
 import ChartOfAccountList from "../pages/Finance/Setup/COAListPage";
+import UserLogin from "../pages/Security/UserLogin/UserLogin";
 
 const Login = lazy(() => import("../pages/Auth/LoginPage"));
 const ReceiptPage = lazy(
@@ -141,6 +142,21 @@ const AppRoutes = () => {
             element={<StatementOfAccountMain />}
           />
         </Route>
+
+
+
+        {/*========================================================
+                      SECURITY
+        ===========================================================*/}
+
+        {/*====================User Login==========================*/}
+       <Route path="/Security/UserLogin"
+       element={<UserLogin/>}
+       />
+
+
+
+
       </Routes>
     </Suspense>
   );
