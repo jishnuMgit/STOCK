@@ -319,9 +319,9 @@ const accountDropdownStyles = {
       width: "663px",
       minWidth: "663px",
       maxWidth: "663px",
-      height: "375px",
+      height: "auto", // was "375px"
+      maxHeight: "375px", // upper limit; the component narrows it at runtime
       minHeight: 0,
-      maxHeight: "375px",
       padding: 0,
       margin: 0,
       overflowX: "hidden",
