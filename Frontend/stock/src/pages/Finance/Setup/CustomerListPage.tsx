@@ -18,7 +18,8 @@ interface Customer {
 const customers: Customer[] = [
   {
     lkpCustomerID: "1100",
-    lkpCustomerName: "ARABIAN CHEMICAL CO. (PS) LTD",
+    lkpCustomerName:
+      "1234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890",
     lkpDivID: "12",
     lkpBranch: "JEDDAH",
     lkpGlAccountID: "410001",
@@ -264,140 +265,155 @@ const CustomerList: React.FC = () => {
 
         {/* ============================================================
             SEARCH AREA
-            SAME WIDTH AS TABLE
+
+            IMPORTANT:
+            Customer ID = 7%
+            Customer Name = 50%
+
+            Therefore search spans exactly:
+            7% + 50% = 57%
+
+            This makes the right edge of the search box line up
+            exactly with the right edge of Customer Name.
         ============================================================ */}
 
-       {/* ============================================================
-    SEARCH AREA
-    SEARCH ENDS EXACTLY AT CUSTOMER NAME COLUMN
-============================================================ */}
+        <div className="mx-auto w-[95%] py-3">
 
-<div className="mx-auto w-[95%] py-3">
-
-  <div
-    className="
-      grid
-      w-full
-      grid-cols-[80px_minmax(0,1fr)_54px_80px_100px_180px_60px_60px]
-      items-center
-      gap-0
-    "
-  >
-
-    {/* ========================================================
-        SEARCH
-        Spans Customer ID + Customer Name
-    ======================================================== */}
-
-    <div className="col-span-2 ">
-
-      <div className="relative w-full">
-
-        <span
-          className="
-            pointer-events-none
-            absolute
-            left-3
-            top-1/2
-            -translate-y-1/2
-            text-[21px]
-            text-slate-600
-          "
-        >
-          ⌕
-        </span>
-
-        <input
-          id="txtSearch"
-          type="text"
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-          placeholder="Search by Customer ID, Customer Name, GL Account ID, GL Account Name"
-          className="
-            h-8.5
-            w-full
-            rounded-[5px]
-            border
-            border-slate-400
-            bg-white
-            pl-10
-            pr-4
-            text-[12px]
-            text-slate-700
-            outline-none
-            placeholder:text-slate-400
-            focus:border-[#8daac5]
-            focus:ring-0
-          "
-        />
-
-      </div>
-
-    </div>
-
-    {/* ========================================================
-        ADD BUTTON
-    ======================================================== */}
-
-    <div className="col-span-2 flex left-0 ml-4">
-
-      <Link
-        to="/Finance/Setup/Add/Customer"
-        className="shrink-0"
-      >
-
-        <button
-          id="btnAdd"
-          type="button"
-          onClick={handleAddCustomer}
-          className="
-            flex
-            h-8.5
-            w-25
-            items-center
-            justify-center
-            gap-1
-            rounded-sm
-            border
-            border-[#b7c8db]
-            bg-[#e6f0fa]
-            text-[12px]
-            text-green-600
-            shadow-sm
-            hover:bg-[#dceafa]
-            focus:outline-none
-          "
-        >
-
-          <span
+          <div
             className="
-              flex
-              h-3.75
-              w-3.75
+              grid
+              w-full
+              grid-cols-[7%_50%_1fr]
               items-center
-              justify-center
-              rounded-full
-              bg-green-600
-              text-[13px]
-              font-bold
-              leading-none
-              text-white
             "
           >
-            +
-          </span>
 
-          <span>Add</span>
+            {/* ========================================================
+                SEARCH
+                EXACTLY MATCHES CUSTOMER ID + CUSTOMER NAME
+            ======================================================== */}
 
-        </button>
+            <div className="col-span-2 w-full">
 
-      </Link>
+              <div className="relative w-full">
 
-    </div>
+                {/* SEARCH ICON */}
 
-  </div>
+                <span
+                  className="
+                    pointer-events-none
+                    absolute
+                    left-3
+                    top-1/2
+                    -translate-y-1/2
+                    text-[21px]
+                    text-slate-600
+                  "
+                >
+                  ⌕
+                </span>
 
-</div>
+                {/* SEARCH INPUT */}
+
+                <input
+                  id="txtSearch"
+                  type="text"
+                  value={search}
+                  onChange={(e) => setSearch(e.target.value)}
+                  placeholder="Search by Customer ID, Customer Name, GL Account ID, GL Account Name"
+                  className="
+                    h-8.5
+                    w-full
+                    rounded-[5px]
+                    border
+                    border-slate-400
+                    bg-white
+                    pl-10
+                    pr-4
+                    text-[12px]
+                    text-slate-700
+                    outline-none
+                    placeholder:text-slate-400
+                    focus:border-[#8daac5]
+                    focus:ring-0
+                  "
+                />
+
+              </div>
+
+            </div>
+
+            {/* ========================================================
+                ADD BUTTON
+
+                Starts immediately after Customer Name.
+            ======================================================== */}
+
+            <div
+              className="
+                flex
+                items-center
+                pl-2
+              "
+            >
+
+              <Link
+                to="/Finance/Setup/Add/Customer"
+                className="shrink-0"
+              >
+
+                <button
+                  id="btnAdd"
+                  type="button"
+                  onClick={handleAddCustomer}
+                  className="
+                    flex
+                    h-8.5
+                    w-25
+                    items-center
+                    justify-center
+                    gap-1
+                    rounded-sm
+                    border
+                    border-[#b7c8db]
+                    bg-[#e6f0fa]
+                    text-[12px]
+                    text-green-600
+                    shadow-sm
+                    hover:bg-[#dceafa]
+                    focus:outline-none
+                  "
+                >
+
+                  <span
+                    className="
+                      flex
+                      h-3.75
+                      w-3.75
+                      items-center
+                      justify-center
+                      rounded-full
+                      bg-green-600
+                      text-[13px]
+                      font-bold
+                      leading-none
+                      text-white
+                    "
+                  >
+                    +
+                  </span>
+
+                  <span>Add</span>
+
+                </button>
+
+              </Link>
+
+            </div>
+
+          </div>
+
+        </div>
 
         {/* ============================================================
             TABLE
@@ -412,6 +428,7 @@ const CustomerList: React.FC = () => {
             border-slate-400
           "
         >
+
           <div
             className="
               customer-table-scroll
@@ -420,6 +437,7 @@ const CustomerList: React.FC = () => {
               overflow-x-hidden
             "
           >
+
             <table
               className="
                 mx-auto
@@ -428,19 +446,20 @@ const CustomerList: React.FC = () => {
                 border-collapse
               "
             >
+
               {/* ======================================================
                   HEADER
               ====================================================== */}
 
-              <thead className="sticky top-0 z-10">
+              <thead className="sticky top-0 z-10 ">
 
                 <tr className="h-8 bg-[#f4f8fb]">
 
-                  {/* Customer ID */}
+                  {/* CUSTOMER ID */}
 
                   <th
                     className="
-                      w-20
+                      w-[7%]
                       border-b
                       border-r
                       border-slate-400
@@ -456,11 +475,11 @@ const CustomerList: React.FC = () => {
                     Customer ID
                   </th>
 
-                  {/* Customer Name */}
+                  {/* CUSTOMER NAME */}
 
                   <th
                     className="
-                      w-auto
+                      w-[50%]
                       border-b
                       border-r
                       border-slate-400
@@ -475,11 +494,11 @@ const CustomerList: React.FC = () => {
                     Customer Name
                   </th>
 
-                  {/* Div ID */}
+                  {/* DIV ID */}
 
                   <th
                     className="
-                      w-13.5
+                      w-[5%]
                       border-b
                       border-r
                       border-slate-400
@@ -495,11 +514,11 @@ const CustomerList: React.FC = () => {
                     Div. ID
                   </th>
 
-                  {/* Branch */}
+                  {/* BRANCH */}
 
                   <th
                     className="
-                      w-20
+                      w-[8%]
                       border-b
                       border-r
                       border-slate-400
@@ -514,11 +533,11 @@ const CustomerList: React.FC = () => {
                     Branch
                   </th>
 
-                  {/* GL Account ID */}
+                  {/* GL ACCOUNT ID */}
 
                   <th
                     className="
-                      w-25
+                      w-[8%]
                       whitespace-nowrap
                       border-b
                       border-r
@@ -534,11 +553,11 @@ const CustomerList: React.FC = () => {
                     GL Account ID
                   </th>
 
-                  {/* GL Account Name */}
+                  {/* GL ACCOUNT NAME */}
 
                   <th
                     className="
-                      w-45
+                      w-[12%]
                       whitespace-nowrap
                       border-b
                       border-r
@@ -554,11 +573,11 @@ const CustomerList: React.FC = () => {
                     GL Account Name
                   </th>
 
-                  {/* Modify */}
+                  {/* MODIFY */}
 
                   <th
                     className="
-                      w-15
+                      w-[5%]
                       whitespace-nowrap
                       border-b
                       border-r
@@ -574,11 +593,11 @@ const CustomerList: React.FC = () => {
                     Modify
                   </th>
 
-                  {/* Delete */}
+                  {/* DELETE */}
 
                   <th
                     className="
-                      w-15
+                      w-[5%]
                       whitespace-nowrap
                       border-b
                       border-slate-400
@@ -594,6 +613,7 @@ const CustomerList: React.FC = () => {
                   </th>
 
                 </tr>
+
               </thead>
 
               {/* ======================================================
@@ -612,7 +632,7 @@ const CustomerList: React.FC = () => {
                     "
                   >
 
-                    {/* Customer ID */}
+                    {/* CUSTOMER ID */}
 
                     <td
                       id="lkpCustomerID"
@@ -630,7 +650,7 @@ const CustomerList: React.FC = () => {
                       {customer.lkpCustomerID}
                     </td>
 
-                    {/* Customer Name */}
+                    {/* CUSTOMER NAME */}
 
                     <td
                       id="lkpCustomerName"
@@ -649,7 +669,7 @@ const CustomerList: React.FC = () => {
                       {customer.lkpCustomerName}
                     </td>
 
-                    {/* Div ID */}
+                    {/* DIV ID */}
 
                     <td
                       id="lkpDivID"
@@ -667,7 +687,7 @@ const CustomerList: React.FC = () => {
                       {customer.lkpDivID}
                     </td>
 
-                    {/* Branch */}
+                    {/* BRANCH */}
 
                     <td
                       id="lkpBranch"
@@ -685,7 +705,7 @@ const CustomerList: React.FC = () => {
                       {customer.lkpBranch}
                     </td>
 
-                    {/* GL Account ID */}
+                    {/* GL ACCOUNT ID */}
 
                     <td
                       id="lkpGlAccountID"
@@ -703,7 +723,7 @@ const CustomerList: React.FC = () => {
                       {customer.lkpGlAccountID}
                     </td>
 
-                    {/* GL Account Name */}
+                    {/* GL ACCOUNT NAME */}
 
                     <td
                       id="lkpGlAccountName"
@@ -736,7 +756,16 @@ const CustomerList: React.FC = () => {
                         align-middle
                       "
                     >
-                      <div className="flex h-full w-full items-center justify-center">
+
+                      <div
+                        className="
+                          flex
+                          h-full
+                          w-full
+                          items-center
+                          justify-center
+                        "
+                      >
 
                         <button
                           id="btnModify"
@@ -763,6 +792,7 @@ const CustomerList: React.FC = () => {
                         </button>
 
                       </div>
+
                     </td>
 
                     {/* ==================================================
@@ -807,6 +837,7 @@ const CustomerList: React.FC = () => {
                     </td>
 
                   </tr>
+
                 ))}
 
                 {/* ======================================================
@@ -836,7 +867,9 @@ const CustomerList: React.FC = () => {
               </tbody>
 
             </table>
+
           </div>
+
         </div>
 
         {/* ============================================================
@@ -846,6 +879,7 @@ const CustomerList: React.FC = () => {
         <div className="h-2.5" />
 
       </div>
+
     </div>
   );
 };
