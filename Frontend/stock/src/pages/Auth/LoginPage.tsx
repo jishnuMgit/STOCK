@@ -57,9 +57,9 @@ const LoginPage: React.FC = () => {
 
     const result = await login({
       companyId: selectedCompanyId,
-      year: selectedYear,
-      userId,
-      password,
+      txtYear: selectedYear,
+      txtUserID: userId,
+      txtPwd: password,
     });
 
     if (!result) {
@@ -89,7 +89,7 @@ const LoginPage: React.FC = () => {
         {/* Form Area */}
         <div className="p-8 md:p-10">
           {/* Form Header */}
-          <div className="mb-8 rounded-xl bg-linear-to-r from-emerald-100 to-emerald-50 px-7 h-13 py-2">
+          <div className="mb-8 rounded-lg bg-linear-to-r from-emerald-100 to-emerald-50 px-7 h-10 py-1">
             <p className="mt-2 text-sm font-medium tracking-[0.28em] text-slate-600">
               Please login to connect
             </p>
@@ -103,8 +103,8 @@ const LoginPage: React.FC = () => {
                 User ID :
               </label>
 
-              <div className="flex h-7 overflow-hidden rounded-lg border border-slate-300 bg-white transition focus-within:border-emerald-500 focus-within:ring-2 focus-within:ring-emerald-100">
-                <div className="flex w-14 items-center justify-center border-r border-slate-200 bg-slate-50">
+              <div className="flex h-7 w-[70%] overflow-hidden rounded-lg border border-slate-300 bg-white transition focus-within:border-emerald-500 focus-within:ring-2 focus-within:ring-emerald-100">
+                <div className="flex w-13 items-center justify-center border-r border-slate-200 bg-slate-50">
                   <User size={20} className="text-slate-500" />
                 </div>
 
@@ -134,9 +134,9 @@ const LoginPage: React.FC = () => {
                 {" "}
                 Password :{" "}
               </label>{" "}
-              <div className="flex h-7 overflow-hidden rounded-lg border border-slate-300 bg-white transition focus-within:border-emerald-500 focus-within:ring-2 focus-within:ring-emerald-100">
+              <div className="flex h-7 w-[70%] overflow-hidden rounded-lg border border-slate-300 bg-white transition focus-within:border-emerald-500 focus-within:ring-2 focus-within:ring-emerald-100">
                 {" "}
-                <div className="flex w-14 items-center justify-center border-r border-slate-200 bg-slate-50">
+                <div className="flex w-14.5 items-center justify-center border-r border-slate-200 bg-slate-50">
                   {" "}
                   <Lock size={20} className="text-slate-500" />{" "}
                 </div>{" "}
@@ -172,9 +172,9 @@ const LoginPage: React.FC = () => {
                 Company :
               </label>
 
-              <div className="relative">
+              <div className="relative w-[70%]">
                 <div className="flex h-7 overflow-hidden rounded-lg border border-slate-300 bg-white transition focus-within:border-emerald-500 focus-within:ring-2 focus-within:ring-emerald-100">
-                  <div className="flex w-14 items-center justify-center border-r border-slate-200 bg-slate-50">
+                  <div className="flex w-13 items-center justify-center border-r border-slate-200 bg-slate-50">
                     <Building2 size={20} className="text-slate-500" />
                   </div>
 
@@ -212,7 +212,7 @@ const LoginPage: React.FC = () => {
               </label>
               <div className="relative w-64">
                 <div className="flex h-7 overflow-hidden rounded-lg border border-slate-300 bg-white transition focus-within:border-emerald-500 focus-within:ring-2 focus-within:ring-emerald-100">
-                  <div className="flex w-14 items-center justify-center border-r border-slate-200 bg-slate-50">
+                  <div className="flex w-15 items-center justify-center border-r border-slate-200 bg-slate-50">
                     <CalendarDays size={19} className="text-slate-500" />{" "}
                   </div>
                   <select
@@ -264,11 +264,11 @@ const LoginPage: React.FC = () => {
             <button
               type="submit"
               disabled={loginLoading || companiesLoading}
-              className="flex h-14 w-full cursor-pointer items-center justify-center gap-3 rounded-lg bg-emerald-500 px-6 py-3.5 text-lg font-semibold text-white shadow-md transition hover:bg-emerald-600 hover:shadow-lg active:scale-[0.99] disabled:cursor-not-allowed disabled:opacity-60"
+              className="flex h-12 w-full cursor-pointer items-center justify-center gap-3 rounded-lg bg-emerald-500 px-6 py-3.5 text-lg font-semibold text-white shadow-md transition hover:bg-emerald-600 hover:shadow-lg active:scale-[0.99] disabled:cursor-not-allowed disabled:opacity-60"
             >
               <LogIn size={21} />
 
-              {loginLoading ? "Logging in..." : "Login"}
+              {loginLoading ? "Logging in.." : "Login"}
             </button>
             {/* Bottom Information */}
             <div className="mt-7 border-t border-slate-200 pt-5 text-center">
@@ -277,7 +277,7 @@ const LoginPage: React.FC = () => {
                 <span className="mx-3 text-emerald-400">|</span>
                 RELIABLE RECORDS
                 <span className="mx-3 text-emerald-400">|</span>
-                SMARTER BUSINESS
+                SMART DECISIONS
               </p>
             </div>
           </form>

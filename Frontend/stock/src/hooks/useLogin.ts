@@ -2,9 +2,9 @@ import { useState } from "react";
 
 interface LoginData {
   companyId: string;
-  year: string;
-  userId: string;
-  password: string;
+  txtYear: string;
+  txtUserID: string;
+  txtPwd: string;
   language?: string;
   changePassword?: boolean;
   newPassword?: string;
@@ -15,9 +15,9 @@ interface LoginResponse {
   success: boolean;
   message: string;
   data?: {
-    userId: string;
+    txtUserID: string;
     companyId: string;
-    year: string;
+    txtYear: string;
     userType: string;
     branchId: string;
   };
@@ -55,16 +55,16 @@ export const useLogin = () => {
 
       // Store only what frontend needs for UI.
       // DO NOT store sessionToken or password.
-      if (data.data?.userId) {
-        localStorage.setItem("userID", data.data.userId);
+      if (data.data?.txtUserID) {
+        localStorage.setItem("PstrUserID", data.data.txtUserID);
       }
 
       if (data.data?.companyId) {
-        localStorage.setItem("CoID", data.data.companyId);
+        localStorage.setItem("PstrCoID", data.data.companyId);
       }
 
-      if (data.data?.year) {
-        localStorage.setItem("year", data.data.year);
+      if (data.data?.txtYear) {
+        localStorage.setItem("PstrYear", data.data.txtYear);
       }
 
       if (data.data?.userType) {
