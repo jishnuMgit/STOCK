@@ -7,6 +7,14 @@ import Select, {
 import { toast } from "react-toastify";
 import { X } from "lucide-react";
 import { useEnterAsTab } from "../../hooks/useEnterAsTab";
+import { useConfirm } from "../../hooks/useConfirm";
+import {
+  filterLabelOrValue,
+  BranchMenuList,
+  BranchOption,
+  CustomDropdownIndicator,
+  branchMenuStyles,
+} from "../../components/BranchSelect/branchSelectParts";
 
 // ============================================================
 // TYPES
@@ -210,13 +218,26 @@ const resetOptions: SelectOption[] = [
 
 // ============================================================
 // CUSTOM DROPDOWN INDICATOR
+// (Branch menu / filter / arrow are shared with SetBranchInfo —
+//  see components/BranchSelect/branchSelectParts.tsx)
 // ============================================================
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-const CustomDropdownIndicator = (props: any) => {
+// Same arrow as the Account ID column on Transaction/Receipt
+// (.receipt-dropdown-arrow in commanReceipt.css)
+const ReceiptStyleDropdownIndicator = (props: any) => {
   return (
     <components.DropdownIndicator {...props}>
-      <span className="text-[11px] text-slate-500">▼</span>
+      <span
+        style={{
+          display: "block",
+          fontSize: "8px",
+          lineHeight: "8px",
+          color: "#999999",
+          transform: "translateY(1px)",
+        }}
+      >
+        ▼
+      </span>
     </components.DropdownIndicator>
   );
 };
@@ -227,14 +248,16 @@ const CustomDropdownIndicator = (props: any) => {
 
 const SetDocumentNo: React.FC = () => {
   const handleEnterAsTab = useEnterAsTab();
+  const { confirm, confirmDialog } = useConfirm();
 
   // ==========================================================
   // HEADER STATES
   // ==========================================================
 
-  const [lkpYear, setLkpYear] = useState<string>(
-    () => localStorage.getItem("year") || "",
-  );
+  const [lkpYear, setLkpYear] =
+    useState<string>(
+      () => localStorage.getItem("PstrYear") || ""
+    );
 
   const [yearOptions, setYearOptions] = useState<SelectOption[]>([]);
   const [lkpBranch, setLkpBranch] = useState<string>("");
@@ -249,7 +272,7 @@ const SetDocumentNo: React.FC = () => {
   useEffect(() => {
     const loadYearList = async () => {
       try {
-        const CoID = localStorage.getItem("CoID");
+        const CoID = localStorage.getItem("PstrCoID");
 
         if (!CoID) {
           toast.error("getYearList: no CoID in localStorage");
@@ -295,8 +318,8 @@ const SetDocumentNo: React.FC = () => {
   useEffect(() => {
     const loadDefaultBranch = async () => {
       try {
-        const CoID = localStorage.getItem("CoID");
-        const userId = localStorage.getItem("userID");
+        const CoID = localStorage.getItem("PstrCoID");
+        const userId = localStorage.getItem("PstrUserID");
 
         if (!CoID || !userId) {
           toast.error("getDefaultBranch: no CoID/userId in localStorage");
@@ -340,8 +363,8 @@ const SetDocumentNo: React.FC = () => {
   useEffect(() => {
     const loadBranchList = async () => {
       try {
-        const CoID = localStorage.getItem("CoID");
-        const userId = localStorage.getItem("userID");
+        const CoID = localStorage.getItem("PstrCoID");
+        const userId = localStorage.getItem("PstrUserID");
 
         if (!CoID || !userId) {
           toast.error("getBranchList: no CoID/userId in localStorage");
@@ -390,7 +413,7 @@ const SetDocumentNo: React.FC = () => {
   useEffect(() => {
     const loadModuleList = async () => {
       try {
-        const CoID = localStorage.getItem("CoID");
+        const CoID = localStorage.getItem("PstrCoID");
 
         if (!CoID) {
           toast.error("getModuleList: no CoID in localStorage");
@@ -454,7 +477,7 @@ const SetDocumentNo: React.FC = () => {
 
     const loadDocumentGrid = async () => {
       try {
-        const CoID = localStorage.getItem("CoID");
+        const CoID = localStorage.getItem("PstrCoID");
 
         if (!CoID) {
           toast.error("getDocumentList: no CoID in localStorage");
@@ -584,8 +607,8 @@ const SetDocumentNo: React.FC = () => {
       return;
     }
 
-    const CoID = localStorage.getItem("CoID");
-    const userId = localStorage.getItem("userID");
+    const CoID = localStorage.getItem("PstrCoID");
+    const userId = localStorage.getItem("PstrUserID");
 
     if (!CoID || !userId) {
       toast.error("Company ID / User ID not found. Please log in again.");
@@ -655,16 +678,20 @@ const SetDocumentNo: React.FC = () => {
       return;
     }
 
-    const shouldDelete = window.confirm(
-      "Are you sure you want to delete this?",
+    const documentName =
+      documentOptions.find((option) => option.value === row.lkpDocument)
+        ?.label || row.lkpDocument;
+
+    const shouldDelete = await confirm(
+      "Are you sure you want to delete?"
     );
 
     if (!shouldDelete) {
       return;
     }
 
-    const CoID = localStorage.getItem("CoID");
-    const userId = localStorage.getItem("userID");
+    const CoID = localStorage.getItem("PstrCoID");
+    const userId = localStorage.getItem("PstrUserID");
 
     if (!CoID || !userId) {
       toast.error("Company ID / User ID not found. Please log in again.");
@@ -691,11 +718,14 @@ const SetDocumentNo: React.FC = () => {
       const result = await response.json();
 
       if (!response.ok || !result.success) {
-        toast.error(result.message || "Row could not be deleted.");
+        toast.error(
+          result.message ||
+            `Could not delete the numbering for ${documentName}. Please try again.`
+        );
         return;
       }
 
-      toast.success(result.message || "Row deleted successfully.");
+      toast.success(`Numbering for ${documentName} deleted successfully.`);
 
       setRows((previousRows) =>
         previousRows.map((r) =>
@@ -738,7 +768,7 @@ const SetDocumentNo: React.FC = () => {
       onKeyDown={handleEnterAsTab}
       className="
         flex
-        min-h-screen
+        min-h-full
         w-full
         flex-col
         items-center
@@ -847,7 +877,9 @@ const SetDocumentNo: React.FC = () => {
                 components={{
                   DropdownIndicator: CustomDropdownIndicator,
                 }}
-                isSearchable={false}
+                filterOption={filterLabelOrValue}
+                noOptionsMessage={() => "No Year Found"}
+                isSearchable
                 menuPlacement="auto"
               />
             </div>
@@ -888,15 +920,30 @@ const SetDocumentNo: React.FC = () => {
                 instanceId="lkpBranch"
                 name="lkpBranch"
                 options={branchOptions}
-                value={getOption(branchOptions, lkpBranch)}
-                onChange={(option: SingleValue<SelectOption>) =>
-                  setLkpBranch(option?.value ?? "")
+                value={getOption(
+                  branchOptions,
+                  lkpBranch
+                )}
+                onChange={(
+                  option: SingleValue<SelectOption>
+                ) =>
+                  setLkpBranch(
+                    option?.value ?? ""
+                  )
                 }
-                styles={selectStyles}
-                components={{
-                  DropdownIndicator: CustomDropdownIndicator,
+                styles={{
+                  ...selectStyles,
+                  ...branchMenuStyles,
                 }}
-                isSearchable={false}
+                components={{
+                  DropdownIndicator:
+                    CustomDropdownIndicator,
+                  Option: BranchOption,
+                  MenuList: BranchMenuList,
+                }}
+                filterOption={filterLabelOrValue}
+                noOptionsMessage={() => "No Branch Found"}
+                isSearchable
                 menuPlacement="auto"
               />
             </div>
@@ -960,8 +1007,6 @@ const SetDocumentNo: React.FC = () => {
           <div
             className="
               w-full
-              overflow-x-auto
-              overflow-y-visible
               border-l
               border-r
               border-b
@@ -972,11 +1017,11 @@ const SetDocumentNo: React.FC = () => {
     TABLE
 ================================================= */}
 
-            <div className="mt-2 w-full overflow-x-auto">
-              <table
-                className="
+<div className="mt-2 w-full">
+
+  <table
+    className="
       w-full
-      min-w-[900px]
       table-fixed
       border-collapse
       border
@@ -1001,12 +1046,12 @@ const SetDocumentNo: React.FC = () => {
                   >
                     {/* DOCUMENT */}
 
-                    <th
-                      className="
-            w-[170px]
+        <th
+          className="
+            w-[20%]
             border-r
             border-slate-200
-            px-2
+            px-1
             font-semibold
             whitespace-nowrap
           "
@@ -1016,12 +1061,12 @@ const SetDocumentNo: React.FC = () => {
 
                     {/* PREFIX */}
 
-                    <th
-                      className="
-            w-[75px]
+        <th
+          className="
+            w-[9%]
             border-r
             border-slate-200
-            px-2
+            px-1
             font-semibold
             whitespace-nowrap
           "
@@ -1031,12 +1076,12 @@ const SetDocumentNo: React.FC = () => {
 
                     {/* START SEQ NO */}
 
-                    <th
-                      className="
-            w-[100px]
+        <th
+          className="
+            w-[13%]
             border-r
             border-slate-200
-            px-2
+            px-1
             text-center
             font-semibold
             whitespace-nowrap
@@ -1047,12 +1092,12 @@ const SetDocumentNo: React.FC = () => {
 
                     {/* STRICT SERIAL */}
 
-                    <th
-                      className="
-            w-[90px]
+        <th
+          className="
+            w-[12%]
             border-r
             border-slate-200
-            px-2
+            px-1
             text-center
             font-semibold
             whitespace-nowrap
@@ -1063,12 +1108,12 @@ const SetDocumentNo: React.FC = () => {
 
                     {/* MODE */}
 
-                    <th
-                      className="
-            w-[100px]
+        <th
+          className="
+            w-[10%]
             border-r
             border-slate-200
-            px-2
+            px-1
             text-center
             font-semibold
             whitespace-nowrap
@@ -1079,12 +1124,12 @@ const SetDocumentNo: React.FC = () => {
 
                     {/* RESET */}
 
-                    <th
-                      className="
-            w-[100px]
+        <th
+          className="
+            w-[10%]
             border-r
             border-slate-200
-            px-2
+            px-1
             text-center
             font-semibold
             whitespace-nowrap
@@ -1095,12 +1140,13 @@ const SetDocumentNo: React.FC = () => {
 
                     {/* PRINT AFTER SAVE */}
 
-                    <th
-                      className="
-            w-[90px]
+        <th
+          className="
+            w-[15%]
             border-r
             border-slate-200
-            px-2
+            text-left
+            px-1
             text-center
             font-semibold
             whitespace-nowrap
@@ -1111,10 +1157,10 @@ const SetDocumentNo: React.FC = () => {
 
                     {/* POSITION NO */}
 
-                    <th
-                      className="
-            w-[100px]
-            px-2
+        <th
+          className="
+            w-[13%]
+            px-1
             text-center
             font-semibold
             whitespace-nowrap
@@ -1150,34 +1196,55 @@ const SetDocumentNo: React.FC = () => {
               border-slate-200
               p-0
             "
-                      >
-                        <div className="flex h-[36px] items-stretch">
-                          <div className="min-w-0 flex-1 overflow-hidden">
-                            <Select
-                              inputId={`lkpDocument_${row.id}`}
-                              instanceId={`lkpDocument_${row.id}`}
-                              name="lkpDocument"
-                              options={documentOptions}
-                              value={getOption(
-                                documentOptions,
-                                row.lkpDocument,
-                              )}
-                              onChange={(option: SingleValue<SelectOption>) =>
-                                handleRowChange(
-                                  row.id,
-                                  "lkpDocument",
-                                  option?.value ?? "",
-                                )
-                              }
-                              styles={tableSelectStyles}
-                              components={{
-                                DropdownIndicator: CustomDropdownIndicator,
-                              }}
-                              isSearchable={false}
-                              menuPortalTarget={document.body}
-                              menuPosition="fixed"
-                            />
-                          </div>
+          >
+
+            <div className="flex h-[36px] items-stretch">
+
+              <div className="min-w-0 flex-1 overflow-hidden">
+
+                <Select
+                  inputId={`lkpDocument_${row.id}`}
+                  instanceId={`lkpDocument_${row.id}`}
+                  name="lkpDocument"
+                  options={documentOptions}
+                  value={getOption(
+                    documentOptions,
+                    row.lkpDocument,
+                  )}
+                  onChange={(
+                    option: SingleValue<SelectOption>,
+                  ) =>
+                    handleRowChange(
+                      row.id,
+                      "lkpDocument",
+                      option?.value ?? "",
+                    )
+                  }
+                  styles={{
+                    ...tableSelectStyles,
+                    dropdownIndicator: (base) => ({
+                      ...base,
+                      width: "18px",
+                      height: "26px",
+                      padding: 0,
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      flexShrink: 0,
+                    }),
+                  }}
+                  components={{
+                    DropdownIndicator:
+                      ReceiptStyleDropdownIndicator,
+                  }}
+                  filterOption={filterLabelOrValue}
+                  noOptionsMessage={() => "No Document Found"}
+                  isSearchable
+                  menuPortalTarget={document.body}
+                  menuPosition="fixed"
+                />
+
+              </div>
 
                           {/* DELETE */}
 
@@ -1190,21 +1257,25 @@ const SetDocumentNo: React.FC = () => {
                   h-full
                   w-[20px]
                   shrink-0
-                  items-start
+                  items-center
                   justify-center
                   self-stretch
                   rounded
-                  pt-1
-                  text-slate-400
-                  hover:bg-red-50
+                  text-[#999999]
                   hover:text-red-600
                 "
-                            aria-label={`Delete ${row.lkpDocument}`}
-                          >
-                            <X size={14} />
-                          </button>
-                        </div>
-                      </td>
+                aria-label={`Delete ${row.lkpDocument}`}
+              >
+                <X
+                  size={10}
+                  style={{ transform: "translateY(-3px)" }}
+                />
+              </button>
+
+            </div>
+
+          </td>
+
 
                       {/* =================================================
               PREFIX
@@ -1508,7 +1579,7 @@ const SetDocumentNo: React.FC = () => {
               CLEAR
           ================================================== */}
 
-          <button
+          {/* <button
             id="Clear"
             name="Clear"
             type="button"
@@ -1529,7 +1600,7 @@ const SetDocumentNo: React.FC = () => {
             "
           >
             Clear
-          </button>
+          </button> */}
 
           {/* =================================================
               COPY TO NEXT YEAR
@@ -1559,6 +1630,9 @@ const SetDocumentNo: React.FC = () => {
           </button>
         </div>
       </div>
+
+      {confirmDialog}
+
     </div>
   );
 };
