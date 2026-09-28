@@ -1010,7 +1010,7 @@ const SetDocumentNo: React.FC = () => {
             font-semibold
             whitespace-nowrap
           "
-                    >
+                    >``
                       Document
                     </th>
 
