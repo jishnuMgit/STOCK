@@ -61,69 +61,127 @@ const filterPairOption = (
   );
 };
 
-const makePairComponents = (idHeader: string, nameHeader: string) => ({
-  MenuList: (props: any) => (
-    <components.MenuList {...props}>
-      <div
-        style={{
-          display: "grid",
-          gridTemplateColumns: PAIR_GRID_COLUMNS,
-          padding: "6px 10px",
-          backgroundColor: "#f5f7fa",
-          borderBottom: "1px solid #d7dee7",
-          fontSize: "11px",
-          fontWeight: 600,
-          color: "#555",
-          position: "sticky",
-          top: 0,
-          zIndex: 99999,
-        }}
-      >
-        <div>{idHeader}</div>
-        <div>{nameHeader}</div>
-      </div>
+// Name box's list (same idea as the Branch dropdown): the name column is
+// exactly as wide as the Name box and the ID column sits right after the
+// box's right edge, in the part of the menu that hangs past it
+// (menu width = 100% + 56px; 46px ID column + 10px right padding).
+const PAIR_GRID_COLUMNS_NAME_FIRST = "calc(100% - 100px) 100px";
 
-      {props.children}
-    </components.MenuList>
-  ),
+const ellipsisStyle = {
+  overflow: "hidden",
+  textOverflow: "ellipsis",
+  whiteSpace: "nowrap",
+} as const;
 
-  Option: (props: any) => (
-    <components.Option {...props}>
-      <div
-        style={{
-          display: "grid",
-          gridTemplateColumns: PAIR_GRID_COLUMNS,
-          width: "100%",
-          alignItems: "center",
-          fontSize: "12px",
-        }}
-      >
-        <div>{props.data.id}</div>
+// nameFirst = false -> "ID | Name"  (used by the ID box)
+// nameFirst = true  -> "Name | ID"  (used by the Name box)
+const makePairComponents = (
+  idHeader: string,
+  nameHeader: string,
+  nameFirst: boolean
+) => {
+  const columns = nameFirst
+    ? PAIR_GRID_COLUMNS_NAME_FIRST
+    : PAIR_GRID_COLUMNS;
 
+  return {
+    MenuList: (props: any) => (
+      <components.MenuList {...props}>
         <div
           style={{
-            overflow: "hidden",
-            textOverflow: "ellipsis",
-            whiteSpace: "nowrap",
+            display: "grid",
+            gridTemplateColumns: columns,
+            padding: "6px 10px",
+            backgroundColor: "#f5f7fa",
+            borderBottom: "1px solid #d7dee7",
+            fontSize: "11px",
+            fontWeight: 600,
+            color: "#555",
+            whiteSpace: "nowrap",   
+            position: "sticky",
+            top: 0,
+            zIndex: 99999,
           }}
         >
-          {props.data.name}
+          <div>{nameFirst ? nameHeader : idHeader}</div>
+          <div>{nameFirst ? idHeader : nameHeader}</div>
         </div>
-      </div>
-    </components.Option>
-  ),
-});
+
+        {props.children}
+      </components.MenuList>
+    ),
+
+    Option: (props: any) => (
+      <components.Option {...props}>
+        <div
+          style={{
+            display: "grid",
+            gridTemplateColumns: columns,
+            width: "100%",
+            alignItems: "center",
+            fontSize: "12px",
+          }}
+        >
+          {nameFirst ? (
+            <>
+              <div style={ellipsisStyle}>{props.data.name}</div>
+              <div>{props.data.id}</div>
+            </>
+          ) : (
+            <>
+              <div>{props.data.id}</div>
+              <div style={ellipsisStyle}>{props.data.name}</div>
+            </>
+          )}
+        </div>
+      </components.Option>
+    ),
+  };
+};
 
 // Created once (not inside the component) so react-select doesn't
 // remount the menu on every render.
-const itemGroupPairComponents = makePairComponents(
+const itemGroupIdComponents = makePairComponents(
   "Item Group ID",
-  "Item Group Name"
+  "Item Group Name",
+  false
 );
-const supplierPairComponents = makePairComponents(
+const itemGroupNameComponents = makePairComponents(
+  "Item Group ID",
+  "Item Group Name",
+  true
+);
+const supplierIdComponents = makePairComponents(
   "Supplier ID",
-  "Supplier Name"
+  "Supplier Name",
+  false
 );
+const supplierNameComponents = makePairComponents(
+  "Supplier ID",
+  "Supplier Name",
+  true
+);
+
+// For the Name boxes: menu = Name box width + the ID column.
+const pairNameMenuStyles: Pick<
+  StylesConfig<SelectOption, false>,
+  "menu" | "menuList" | "menuPortal"
+> = {
+  menu: (base) => ({
+    ...base,
+    width: "calc(100% + 110px)",
+    zIndex: 99999,
+    fontSize: "12px",
+  }),
+  menuList: (base) => ({
+    ...base,
+    padding: 0,
+  }),
+  menuPortal: (base) => ({
+    ...base,
+    zIndex: 99999,
+  }),
+};
 
 const pairMenuStyles: Pick<
   StylesConfig<SelectOption, false>,
@@ -1375,7 +1433,7 @@ const ItemPage: React.FC = () => {
                   selectItemGroup(option?.value || "")
                 }
                 styles={{ ...reactSelectStyles, ...pairMenuStyles }}
-                components={itemGroupPairComponents}
+                components={itemGroupIdComponents}
                 filterOption={filterPairOption}
                 noOptionsMessage={() => "No Item Group Found"}
                 menuPortalTarget={document.body}
@@ -1396,8 +1454,8 @@ const ItemPage: React.FC = () => {
                 onChange={(option) =>
                   selectItemGroup(option?.value || "")
                 }
-                styles={{ ...reactSelectStyles, ...pairMenuStyles }}
-                components={itemGroupPairComponents}
+                styles={{ ...reactSelectStyles, ...pairNameMenuStyles }}
+                components={itemGroupNameComponents}
                 filterOption={filterPairOption}
                 noOptionsMessage={() => "No Item Group Found"}
                 menuPortalTarget={document.body}
@@ -1439,7 +1497,7 @@ const ItemPage: React.FC = () => {
                   selectSupplier(option?.value || "")
                 }
                 styles={{ ...reactSelectStyles, ...pairMenuStyles }}
-                components={supplierPairComponents}
+                components={supplierIdComponents}
                 filterOption={filterPairOption}
                 noOptionsMessage={() => "No Supplier Found"}
                 menuPortalTarget={document.body}
@@ -1460,8 +1518,8 @@ const ItemPage: React.FC = () => {
                 onChange={(option) =>
                   selectSupplier(option?.value || "")
                 }
-                styles={{ ...reactSelectStyles, ...pairMenuStyles }}
-                components={supplierPairComponents}
+                styles={{ ...reactSelectStyles, ...pairNameMenuStyles }}
+                components={supplierNameComponents}
                 filterOption={filterPairOption}
                 noOptionsMessage={() => "No Supplier Found"}
                 menuPortalTarget={document.body}

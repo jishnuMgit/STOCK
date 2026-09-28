@@ -37,8 +37,11 @@ export const filterLabelOrValue = (
 const BRANCH_ID_COLUMN = "46px";
 const BRANCH_GRID_COLUMNS = `calc(100% - ${BRANCH_ID_COLUMN}) ${BRANCH_ID_COLUMN}`;
 
-export const BranchMenuList = (props: any) => {
-  return (
+// Builds the "Name | ID" menu parts with a given heading for the name
+// column ("Branch", "Company", ...). Create once at module level so
+// react-select doesn't remount the menu on every render.
+export const makeNameIdMenuComponents = (nameHeader: string) => ({
+  MenuList: (props: any) => (
     <components.MenuList {...props}>
       <div
         style={{
@@ -55,44 +58,49 @@ export const BranchMenuList = (props: any) => {
           zIndex: 99999,
         }}
       >
-        <div>Branch</div>
+        <div>{nameHeader}</div>
         <div>ID</div>
       </div>
 
       {props.children}
     </components.MenuList>
-  );
-};
+  ),
 
-export const BranchOption = (props: any) => {
-  const { data } = props;
+  Option: (props: any) => {
+    const { data } = props;
 
-  return (
-    <components.Option {...props}>
-      <div
-        style={{
-          display: "grid",
-          gridTemplateColumns: BRANCH_GRID_COLUMNS,
-          width: "100%",
-          alignItems: "center",
-          fontSize: "12px",
-        }}
-      >
+    return (
+      <components.Option {...props}>
         <div
           style={{
-            overflow: "hidden",
-            textOverflow: "ellipsis",
-            whiteSpace: "nowrap",
+            display: "grid",
+            gridTemplateColumns: BRANCH_GRID_COLUMNS,
+            width: "100%",
+            alignItems: "center",
+            fontSize: "12px",
           }}
         >
-          {data.label}
-        </div>
+          <div
+            style={{
+              overflow: "hidden",
+              textOverflow: "ellipsis",
+              whiteSpace: "nowrap",
+            }}
+          >
+            {data.label}
+          </div>
 
-        <div style={{ color: "#555" }}>{data.value}</div>
-      </div>
-    </components.Option>
-  );
-};
+          <div style={{ color: "#555" }}>{data.value}</div>
+        </div>
+      </components.Option>
+    );
+  },
+});
+
+const branchMenuComponents = makeNameIdMenuComponents("Branch");
+
+export const BranchMenuList = branchMenuComponents.MenuList;
+export const BranchOption = branchMenuComponents.Option;
 
 export const CustomDropdownIndicator = (props: any) => {
   return (
