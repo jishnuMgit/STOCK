@@ -67,8 +67,8 @@ const CustomerFooter: React.FC<CustomerFooterProps> = ({
           CHECKBOX SECTION
       ====================================================== */}
 
-      <div className="px-3 py-3 sm:px-5 lg:px-12 lg:ml-[65px]">
-        <div className="flex flex-wrap gap-x-24 gap-y-2">
+      <div className="px-3 py-3">
+        <div className="ml-[100px] mr-[6.2rem] flex flex-wrap items-center justify-between gap-x-4 gap-y-2 whitespace-nowrap">
           <label
             htmlFor="chkCustomer"
             className="flex cursor-pointer items-center gap-2 text-[12px] text-slate-700"
