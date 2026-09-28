@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from "react";
+import React, { useEffect, useState } from "react";
 import { createPortal } from "react-dom";
 import logo from "./global-network.png";
 
@@ -11,65 +11,28 @@ const FIRST_PAGE_ROWS = 7;
 const NEXT_PAGE_ROWS = 13;
 const ROW_HEIGHT_MM = 12.7;
 
-/*
- * Pagination works in "text lines". A normal row (account name +
- * one description line) is 2 lines and is exactly ROW_HEIGHT_MM.
- * A row whose text wraps costs more lines, so a page never
- * overflows into a blank/extra page.
- */
-const LINES_PER_ROW = 2;
-const FIRST_PAGE_LINES = FIRST_PAGE_ROWS * LINES_PER_ROW;
-const NEXT_PAGE_LINES = NEXT_PAGE_ROWS * LINES_PER_ROW;
-const LINE_HEIGHT_MM = ROW_HEIGHT_MM / LINES_PER_ROW;
-const CHARS_PER_LINE = 70;
-
 const formatAmount = (amount: number) =>
   Number(amount || 0).toLocaleString("en-US", {
     minimumFractionDigits: 2,
     maximumFractionDigits: 2,
   });
 
-const wrappedLines = (value: string) =>
-  String(value || "")
-    .split(/\r?\n/)
-    .reduce(
-      (sum, part) =>
-        sum + Math.max(1, Math.ceil(part.length / CHARS_PER_LINE)),
-      0
-    );
-
-const rowLines = (row: ReceiptPrintRow) =>
-  Math.max(
-    LINES_PER_ROW,
-    wrappedLines(row.accountName) +
-      (row.description ? wrappedLines(row.description) : 1)
-  );
-
-const rowHeightMm = (row: ReceiptPrintRow) =>
-  rowLines(row) * LINE_HEIGHT_MM;
-
 const splitIntoPages = (
   rows: ReceiptPrintRow[]
 ): ReceiptPrintRow[][] => {
-  const pages: ReceiptPrintRow[][] = [[]];
-  let used = 0;
-  let capacity = FIRST_PAGE_LINES;
+  const pages: ReceiptPrintRow[][] = [
+    rows.slice(0, FIRST_PAGE_ROWS),
+  ];
 
-  for (const row of rows) {
-    const cost = rowLines(row);
-    const current = pages[pages.length - 1];
-
-    if (current.length > 0 && used + cost > capacity) {
-      pages.push([]);
-      used = 0;
-      capacity = NEXT_PAGE_LINES;
-    }
-
-    pages[pages.length - 1].push(row);
-    used += cost;
+  for (
+    let index = FIRST_PAGE_ROWS;
+    index < rows.length;
+    index += NEXT_PAGE_ROWS
+  ) {
+    pages.push(rows.slice(index, index + NEXT_PAGE_ROWS));
   }
 
-  return pages;
+  return pages.length ? pages : [[]];
 };
 
 const getFillerHeightMm = (rowsOnPage: number) => {
@@ -159,7 +122,7 @@ const PageHeader: React.FC<{
         </div>
 
         {data.company.addressEn.map(
-          (line: string, index: number) => (
+          (line: string | number | bigint | boolean | React.ReactElement<unknown, string | React.JSXElementConstructor<any>> | Iterable<React.ReactNode> | React.ReactPortal | Promise<string | number | bigint | boolean | React.ReactPortal | React.ReactElement<unknown, string | React.JSXElementConstructor<any>> | Iterable<React.ReactNode> | null | undefined> | null | undefined, index: React.Key | null | undefined) => (
             <div key={index}>{line}</div>
           )
         )}
@@ -181,7 +144,7 @@ const PageHeader: React.FC<{
         </div>
 
         {data.company.addressAr.map(
-          (line: string, index: number) => (
+          (line: string | number | bigint | boolean | React.ReactElement<unknown, string | React.JSXElementConstructor<any>> | Iterable<React.ReactNode> | React.ReactPortal | Promise<string | number | bigint | boolean | React.ReactPortal | React.ReactElement<unknown, string | React.JSXElementConstructor<any>> | Iterable<React.ReactNode> | null | undefined> | null | undefined, index: React.Key | null | undefined) => (
             <div key={index}>{line}</div>
           )
         )}
@@ -325,118 +288,41 @@ const ReceiptPrint: React.FC<
 > = ({ data, onPrintComplete }) => {
   const pages = splitIntoPages(data.rows);
 
-  const frameRef = useRef<HTMLIFrameElement>(null);
-  const onCompleteRef = useRef(onPrintComplete);
-  onCompleteRef.current = onPrintComplete;
-  const [mountNode, setMountNode] =
-    useState<HTMLElement | null>(null);
-
   /*
-   * The receipt is printed from its own hidden iframe.
-   *
-   * Printing the main window also prints the application
-   * layout (top bar, side bar, 100vh containers, min-widths),
-   * which shrinks the receipt and adds a blank extra page.
-   * An isolated iframe document contains only the receipt, so
-   * the A4 page size and margins below are the only layout.
+   * Browser HTML printing.
+   * The receipt component is rendered as a sibling of the
+   * normal application screen, so only the receipt is printed.
    */
   useEffect(() => {
-    const frame = frameRef.current;
-    const frameDoc = frame?.contentDocument;
+    const printTimer = window.setTimeout(() => {
+      window.print();
+    }, 350);
 
-    if (!frame || !frameDoc) {
-      return;
-    }
+    const handleAfterPrint = () => {
+      onPrintComplete?.();
+    };
 
-    frameDoc.open();
-    frameDoc.write(
-      "<!doctype html><html><head><meta charset=\"utf-8\" />" +
-        "<title>Receipt</title></head><body></body></html>"
+    window.addEventListener(
+      "afterprint",
+      handleAfterPrint
     );
-    frameDoc.close();
-
-    setMountNode(frameDoc.body);
 
     return () => {
-      setMountNode(null);
+      window.clearTimeout(printTimer);
+      window.removeEventListener(
+        "afterprint",
+        handleAfterPrint
+      );
     };
-  }, []);
+  }, [onPrintComplete]);
 
-  useEffect(() => {
-    const frame = frameRef.current;
+  if (typeof document === "undefined") {
+    return null;
+  }
 
-    if (!mountNode || !frame?.contentWindow) {
-      return;
-    }
-
-    const frameWindow = frame.contentWindow;
-    const frameDoc = frameWindow.document;
-
-    let finished = false;
-    let printed = false;
-    let attempts = 0;
-
-    const finish = () => {
-      if (finished) {
-        return;
-      }
-
-      finished = true;
-      onCompleteRef.current?.();
-    };
-
-    /* Wait until logo / footer images are loaded, then print. */
-    const timer = window.setInterval(() => {
-      attempts += 1;
-
-      const pending =
-        frameDoc.querySelector("[data-image-pending]") !== null ||
-        Array.from(frameDoc.images).some(
-          (image) => !image.complete
-        );
-
-      if ((!pending && attempts >= 3) || attempts >= 40) {
-        window.clearInterval(timer);
-        printed = true;
-
-        frameWindow.focus();
-        frameWindow.print();
-
-        /* Fallback when the browser does not fire afterprint. */
-        window.setTimeout(finish, 1000);
-      }
-    }, 100);
-
-    frameWindow.addEventListener("afterprint", finish);
-
-    return () => {
-      window.clearInterval(timer);
-      frameWindow.removeEventListener("afterprint", finish);
-
-      if (!printed) {
-        finished = true;
-      }
-    };
-  }, [mountNode]);
-
-  return (
-    <iframe
-      ref={frameRef}
-      title="receipt-print"
-      aria-hidden="true"
-      style={{
-        position: "fixed",
-        right: 0,
-        bottom: 0,
-        width: 0,
-        height: 0,
-        border: 0,
-      }}
-    >
-      {mountNode &&
-        createPortal(
-          <div className="receipt-print-root">
-            <div className="receipt-doc">
+  return createPortal(
+    <div className="receipt-print-root">
+      <div className="receipt-doc">
         {pages.map(
           (pageRows, pageIndex) => {
             const isFirstPage =
@@ -506,7 +392,7 @@ const ReceiptPrint: React.FC<
                           className="receipt-row"
                           key={`${row.slNo}-${index}`}
                           style={{
-                            height: `${rowHeightMm(row)}mm`,
+                            height: `${ROW_HEIGHT_MM}mm`,
                           }}
                         >
                           <td>
@@ -609,10 +495,7 @@ const ReceiptPrint: React.FC<
 
       <style>{`
         /* =================================================
-           BROWSER PAGE (isolated print iframe)
-
-           A4 = 210 x 297 mm.
-           Printable width = 210 - 12 - 7.5 = 190.5 mm.
+           BROWSER PAGE
         ================================================= */
 
         @page {
@@ -620,18 +503,65 @@ const ReceiptPrint: React.FC<
           margin: 5mm 7.5mm 0 12mm;
         }
 
-        html,
-        body {
-          margin: 0;
-          padding: 0;
-          background: #ffffff;
+        @media screen {
+          .receipt-print-root {
+            position: fixed;
+            inset: 0;
+            z-index: 99999;
+            overflow: auto;
+            background: #ffffff;
+          }
+
+          .receipt-doc {
+            margin: 0 auto;
+          }
         }
 
-        .receipt-print-root {
-          display: block;
-          width: 190.5mm;
-          margin: 0;
-          padding: 0;
+        @media print {
+          html,
+          body {
+            margin: 0 !important;
+            padding: 0 !important;
+            width: 100% !important;
+            min-height: 0 !important;
+            background: #ffffff !important;
+          }
+
+          /* Hide the normal receipt-entry screen. */
+          .receipt-screen {
+            display: none !important;
+          }
+
+          /*
+           * The print component is a sibling of .receipt-screen.
+           * Force it out of the application's flex layout and make
+           * it the printable page itself.
+           */
+          .receipt-print-root {
+            display: block !important;
+            position: absolute !important;
+            left: 0 !important;
+            top: 0 !important;
+            width: 100% !important;
+            min-width: 0 !important;
+            height: auto !important;
+            margin: 0 !important;
+            padding: 0 !important;
+            overflow: visible !important;
+            visibility: visible !important;
+            background: #ffffff !important;
+            z-index: 2147483647 !important;
+          }
+
+          .receipt-print-root * {
+            visibility: visible !important;
+          }
+
+          .receipt-doc {
+            display: block !important;
+            width: 190.5mm !important;
+            margin: 0 auto !important;
+          }
         }
 
         /* =================================================
@@ -935,9 +865,7 @@ const ReceiptPrint: React.FC<
         }
       `}</style>
     </div>,
-          mountNode
-        )}
-    </iframe>
+    document.body
   );
 };
 
