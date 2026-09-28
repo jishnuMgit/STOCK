@@ -157,6 +157,7 @@ const buttonClass = `
   focus:to-[#dcefe5]
   focus:outline-none
   focus:ring-0
+  hover:text-green-800
 `;
 
 // ============================================================
@@ -498,6 +499,7 @@ const UserLogin: React.FC = () => {
                           e.target.value
                         )
                       }
+                      maxLength={30}
                       className={inputClass}
                     />
                   </td>
@@ -526,6 +528,7 @@ const UserLogin: React.FC = () => {
                         )
                       }
                       className={inputClass}
+                      maxLength={60}
                     />
                   </td>
 
@@ -553,6 +556,9 @@ const UserLogin: React.FC = () => {
                         )
                       }
                       className={inputClass}
+                      minLength={6}
+                      maxLength={12}
+
                     />
                   </td>
 
@@ -580,6 +586,8 @@ const UserLogin: React.FC = () => {
                         )
                       }
                       className={inputClass}
+                      minLength={6}
+                      maxLength={12}
                     />
                   </td>
 
@@ -670,19 +678,8 @@ const UserLogin: React.FC = () => {
             ave
           </button>
 
-          {/* DELETE */}
 
-          <button
-            id="btnDelete"
-            type="button"
-            onClick={handleDelete}
-            className={buttonClass}
-          >
-            <span className="underline underline-offset-2">
-              D
-            </span>
-            elete
-          </button>
+         
 
           {/* CLEAR */}
 
