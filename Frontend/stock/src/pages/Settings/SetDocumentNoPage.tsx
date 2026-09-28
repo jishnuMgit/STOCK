@@ -761,10 +761,8 @@ const SetDocumentNo: React.FC = () => {
           border-slate-300
           bg-white
           shadow-sm
-
-          sm:w-[70%]
+          sm:w-[75%]
           lg:w-[75%]
-          xl:w-[75%]
         "
       >
         {/* =====================================================
@@ -1010,7 +1008,7 @@ const SetDocumentNo: React.FC = () => {
             font-semibold
             whitespace-nowrap
           "
-                    >``
+                    >
                       Document
                     </th>
 
