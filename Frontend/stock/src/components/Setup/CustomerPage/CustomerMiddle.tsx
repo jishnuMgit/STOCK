@@ -255,7 +255,7 @@ const CustomDropdownIndicator = (props: any) => {
    INPUT CLASSES
 ========================================================= */
 
-const inputClass = `h-[30px] w-full md:w-[70%] rounded-none border border-slate-400 bg-white px-2 text-[12px] text-slate-700
+const inputClass = `h-[30px] w-full md:w-[80%] rounded-none border border-slate-400 bg-white px-2 text-[12px] text-slate-700
   outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-200`;
 
 const arabicInputClass = `
@@ -373,608 +373,723 @@ const CustomerMiddle: React.FC<CustomerMiddleProps> = ({
           ENGLISH + ARABIC
       ===================================================== */}
 
-      <div className="grid grid-cols-1 gap-4 border-b border-slate-300 p-3 lg:grid-cols-2">
-        {/* ===================================================
-            ENGLISH
-        =================================================== */}
+     <div className="grid grid-cols-1 gap-4 border-b border-slate-300 px-3 pt-1 pb-3 lg:grid-cols-2">
 
-        <div className="min-w-0">
-          <div className="mb-2 border-b border-slate-300 pb-1 flex justify-center items-center">
-            <h3 className="text-[12px] font-semibold text-blue-700">English</h3>
-          </div>
+  {/* ===================================================
+      ENGLISH + ARABIC HEADINGS
+      ONE COMMON BORDER
+  =================================================== */}
 
-          <div className="space-y-1.5">
-            {/* CUSTOMER NAME */}
+  <div className="col-span-1 lg:col-span-2 ">
 
-            <div className="grid grid-cols-[92px_minmax(0,1fr)] items-center gap-2">
-              <label
-                htmlFor="txtCustomerName"
-                className="text-[11px] text-slate-600"
-              >
-                Customer Name
-                <span className="text-red-500">*</span>
-              </label>
+  <div className="grid grid-cols-1 lg:grid-cols-2">
 
-              <input
-                id="txtCustomerName"
-                name="txtCustomerName"
-                type="text"
-                value={txtCustomerName}
-                maxLength={100}
-                onChange={(e) => setTxtCustomerName(e.target.value)}
-                className={inputClass}
-                style={{ width: "100%" }}
-              />
-            </div>
+    <div className="flex items-center justify-center pb-1">
+      <h3 className="text-[12px] font-semibold text-blue-700">
+        English
+      </h3>
+    </div>
 
-            {/* LEGAL NAME */}
+    <div
+      className="flex items-center justify-center pb-1"
+      dir="rtl"
+    >
+      <h3 className="text-[12px] font-semibold text-blue-700">
+        العربية
+      </h3>
+    </div>
 
-            <div className="grid grid-cols-[92px_minmax(0,1fr)] items-center gap-2">
-              <label
-                htmlFor="txtLegalName"
-                className="text-[11px] text-slate-600"
-              >
-                Legal Name
-                <span className="text-red-500">*</span>
-              </label>
+  </div>
 
-              <input
-                id="txtLegalName"
-                name="txtLegalName"
-                type="text"
-                value={txtLegalName}
-                maxLength={100}
-                onChange={(e) => setTxtLegalName(e.target.value)}
-                className={inputClass}
-                style={{ width: "100%" }}
-              />
-            </div>
+  <div className="relative -left-3 w-[calc(100%+24px)] border-b border-slate-200" />
 
-            {/* BUILDING NO */}
+</div>
 
-            <div className="grid grid-cols-[92px_minmax(0,1fr)] items-center gap-2">
-              <label
-                htmlFor="txtBuildingNo"
-                className="text-[11px] text-slate-600"
-              >
-                Building No.
-                <span className="text-red-500">*</span>
-              </label>
 
-              <input
-                id="txtBuildingNo"
-                name="txtBuildingNo"
-                type="text"
-                value={txtBuildingNo}
-                maxLength={6}
-                onChange={(e) => setTxtBuildingNo(e.target.value)}
-                className={inputClass}
-              />
-            </div>
+  {/* ===================================================
+      ENGLISH
+  =================================================== */}
 
-            {/* STREET NAME */}
+  <div className="min-w-0 -mt-2">
 
-            <div className="grid grid-cols-[92px_minmax(0,1fr)] items-center gap-2">
-              <label
-                htmlFor="txtStreetName"
-                className="text-[11px] text-slate-600"
-              >
-                Street Name
-                <span className="text-red-500">*</span>
-              </label>
+    <div className="space-y-1.5">
 
-              <input
-                id="txtStreetName"
-                name="txtStreetName"
-                type="text"
-                value={txtStreetName}
-                onChange={(e) => setTxtStreetName(e.target.value)}
-                maxLength={40}
-                className={inputClass}
-              />
-            </div>
+      {/* CUSTOMER NAME */}
 
-            {/* DISTRICT */}
+      <div className="grid grid-cols-[92px_minmax(0,1fr)] items-center gap-2">
 
-            <div className="grid grid-cols-[92px_minmax(0,1fr)] items-center gap-2">
-              <label
-                htmlFor="txtDistrict"
-                className="text-[11px] text-slate-600"
-              >
-                District
-                <span className="text-red-500">*</span>
-              </label>
+        <label
+          htmlFor="txtCustomerName"
+          className="text-[11px] text-slate-600"
+        >
+          Customer Name
+          <span className="text-red-500">*</span>
+        </label>
 
-              <input
-                id="txtDistrict"
-                name="txtDistrict"
-                type="text"
-                value={txtDistrict}
-                onChange={(e) => setTxtDistrict(e.target.value)}
-                maxLength={40}
-                className={inputClass}
-              />
-            </div>
+        <input
+          id="txtCustomerName"
+          name="txtCustomerName"
+          type="text"
+          value={txtCustomerName}
+          maxLength={100}
+          onChange={(e) => setTxtCustomerName(e.target.value)}
+          className={inputClass}
+          style={{ width: "100%" }}
+        />
 
-            {/* CITY */}
-
-            <div className="grid grid-cols-[92px_minmax(0,1fr)] items-center gap-2">
-              <label htmlFor="txtCity" className="text-[11px] text-slate-600">
-                City
-                <span className="text-red-500">*</span>
-              </label>
-
-              <input
-                maxLength={40}
-                id="txtCity"
-                name="txtCity"
-                type="text"
-                value={txtCity}
-                onChange={(e) => setTxtCity(e.target.value)}
-                className={inputClass}
-              />
-            </div>
-
-            {/* COUNTRY */}
-
-            <div className="grid grid-cols-[92px_minmax(0,1fr)] items-center gap-2">
-              <label
-                htmlFor="lkpCountry"
-                className="text-[11px] text-slate-600"
-              >
-                Country
-                <span className="text-red-500">*</span>
-              </label>
-
-              <div className="w-[70%]">
-                <Select
-                  inputId="lkpCountry"
-                  name="lkpCountry"
-                  options={countryOptions}
-                  value={
-                    countryOptions.find(
-                      (option) => option.value === lkpCountry,
-                    ) || null
-                  }
-                  onChange={(selected) => setLkpCountry(selected?.value || "")}
-                  styles={selectStyles}
-                  components={{
-                    DropdownIndicator: CustomDropdownIndicator,
-                    IndicatorSeparator: () => null,
-                  }}
-                  menuPortalTarget={document.body}
-                  menuPosition="fixed"
-                  isSearchable
-                />
-              </div>
-            </div>
-
-            {/* POSTAL CODE */}
-
-            <div className="grid grid-cols-[92px_minmax(0,1fr)] items-center gap-2">
-              <label
-                htmlFor="txtPostalCode"
-                className="text-[11px] text-slate-600"
-              >
-                Postal Code
-                <span className="text-red-500">*</span>
-              </label>
-
-              <input
-                maxLength={7}
-                id="txtPostalCode"
-                name="txtPostalCode"
-                type="text"
-                value={txtPostalCode}
-                onChange={(e) => setTxtPostalCode(e.target.value)}
-                className={inputClass}
-              />
-            </div>
-
-            {/* ADDITIONAL NO */}
-
-            <div className="grid grid-cols-[92px_minmax(0,1fr)] items-center gap-2">
-              <label
-                htmlFor="txtAdditionalNo"
-                className="text-[11px] text-slate-600"
-              >
-                Additional No.
-              </label>
-
-              <input
-                maxLength={6}
-                id="txtAdditionalNo"
-                name="txtAdditionalNo"
-                type="text"
-                value={txtAdditionalNo}
-                onChange={(e) => setTxtAdditionalNo(e.target.value)}
-                className={inputClass}
-              />
-            </div>
-
-            {/* CR NO */}
-
-            <div className="grid grid-cols-[92px_minmax(0,1fr)] items-center gap-2">
-              <label htmlFor="txtCRNo" className="text-[11px] text-slate-600">
-                CR No.
-              </label>
-
-              <input
-                maxLength={20}
-                id="txtCRNo"
-                name="txtCRNo"
-                type="text"
-                value={txtCRNo}
-                onChange={(e) => setTxtCRNo(e.target.value)}
-                className={inputClass}
-              />
-            </div>
-
-            {/* VAT NO */}
-
-            <div className="grid grid-cols-[92px_minmax(0,1fr)] items-center gap-2">
-              <label htmlFor="txtVATNo" className="text-[11px] text-slate-600">
-                VAT No.
-                <span className="text-red-500">*</span>
-              </label>
-
-              <input
-                maxLength={15}
-                id="txtVATNo"
-                name="txtVATNo"
-                type="text"
-                value={txtVATNo}
-                onChange={(e) => setTxtVATNo(e.target.value)}
-                className={inputClass}
-              />
-            </div>
-          </div>
-        </div>
-
-        {/* ===================================================
-            ARABIC
-        =================================================== */}
-
-        <div className="min-w-0" dir="rtl">
-          <div className="mb-2 border-b border-slate-300 pb-1 flex justify-center items-center">
-            <h3 className="text-[12px] font-semibold text-blue-700 text-left">
-              العربية
-            </h3>
-          </div>
-
-          <div className="space-y-1.5">
-            {/* =================================================
-               CUSTOMER NAME
-               LABEL LEFT | INPUT RIGHT
-               ================================================= */}
-
-            <div className="grid grid-cols-[92px_minmax(0,1fr)] items-center gap-2">
-              {/* LABEL - LEFT */}
-              <label
-                htmlFor="txtCustomerName_AR"
-                className="text-left text-[11px] text-slate-600"
-              >
-                اسم العميل
-                <span className="text-red-500">*</span>
-              </label>
-
-              {/* INPUT - RIGHT */}
-              <input
-                id="txtCustomerName_AR"
-                name="txtCustomerName_AR"
-                type="text"
-                maxLength={100}
-                value={txtCustomerName_AR}
-                onChange={(e) => setTxtCustomerName_AR(e.target.value)}
-                dir="rtl"
-                className={arabicInputClass}
-                style={{ width: "100%" }}
-              />
-            </div>
-
-            {/* =================================================
-               LEGAL NAME
-            ================================================= */}
-
-            <div className="grid grid-cols-[92px_minmax(0,1fr)] items-center gap-2">
-              <label
-                htmlFor="txtLegalName_AR"
-                className="text-left text-[11px] text-slate-600"
-              >
-                الاسم القانوني
-                <span className="text-red-500">*</span>
-              </label>
-
-              <input
-                id="txtLegalName_AR"
-                name="txtLegalName_AR"
-                type="text"
-                value={txtLegalName_AR}
-                onChange={(e) => setTxtLegalName_AR(e.target.value)}
-                maxLength={100}
-                dir="rtl"
-                className={arabicInputClass}
-                style={{ width: "100%" }}
-              />
-            </div>
-
-            {/* =================================================
-               BUILDING NO
-            ================================================= */}
-
-            <div className="grid grid-cols-[92px_minmax(0,1fr)] items-center gap-2">
-              <label
-                htmlFor="txtBuildingNo_AR"
-                className="text-left text-[11px] text-slate-600"
-              >
-                رقم المبنى
-                <span className="text-red-500">*</span>
-              </label>
-
-              <input
-                id="txtBuildingNo_AR"
-                name="txtBuildingNo_AR"
-                type="text"
-                value={txtBuildingNo_AR}
-                onChange={(e) => setTxtBuildingNo_AR(e.target.value)}
-                maxLength={6}
-                dir="rtl"
-                className={arabicInputClass}
-              />
-            </div>
-
-            {/* =================================================
-               STREET NAME
-             ================================================= */}
-
-            <div className="grid grid-cols-[92px_minmax(0,1fr)] items-center gap-2">
-              <label
-                htmlFor="txtStreetName_AR"
-                className="text-left text-[11px] text-slate-600"
-              >
-                اسم الشارع
-                <span className="text-red-500">*</span>
-              </label>
-
-              <input
-                id="txtStreetName_AR"
-                name="txtStreetName_AR"
-                type="text"
-                value={txtStreetName_AR}
-                onChange={(e) => setTxtStreetName_AR(e.target.value)}
-                maxLength={40}
-                dir="rtl"
-                className={arabicInputClass}
-              />
-            </div>
-
-            {/* =================================================
-               DISTRICT
-            ================================================= */}
-
-            <div className="grid grid-cols-[92px_minmax(0,1fr)] items-center gap-2">
-              <label
-                htmlFor="txtDistrict_AR"
-                className="text-left text-[11px] text-slate-600"
-              >
-                الحي
-                <span className="text-red-500">*</span>
-              </label>
-
-              <input
-                id="txtDistrict_AR"
-                name="txtDistrict_AR"
-                type="text"
-                value={txtDistrict_AR}
-                onChange={(e) => setTxtDistrict_AR(e.target.value)}
-                maxLength={40}
-                dir="rtl"
-                className={arabicInputClass}
-              />
-            </div>
-
-            {/* =================================================
-              CITY
-            ================================================= */}
-
-            <div className="grid grid-cols-[92px_minmax(0,1fr)] items-center gap-2">
-              <label
-                htmlFor="txtCity_AR"
-                className="text-left text-[11px] text-slate-600"
-              >
-                المدينة
-                <span className="text-red-500">*</span>
-              </label>
-
-              <input
-                id="txtCity_AR"
-                name="txtCity_AR"
-                type="text"
-                value={txtCity_AR}
-                onChange={(e) => setTxtCity_AR(e.target.value)}
-                maxLength={40}
-                dir="rtl"
-                className={arabicInputClass}
-              />
-            </div>
-
-            {/* =================================================
-               COUNTRY
-               LABEL LEFT | SELECT RIGHT
-            ================================================= */}
-
-            <div className="grid grid-cols-[92px_minmax(0,1fr)] items-center gap-2">
-              {/* LABEL - LEFT */}
-              <label
-                htmlFor="lkpCountry_AR"
-                className="text-left text-[11px] text-slate-600"
-              >
-                الدولة
-                <span className="text-red-500">*</span>
-              </label>
-
-              {/* SELECT - RIGHT */}
-              <div className="w-[70%]">
-                <Select
-                  inputId="lkpCountry_AR"
-                  name="lkpCountry_AR"
-                  options={countryArabicOptions}
-                  value={
-                    countryArabicOptions.find(
-                      (option) => option.value === lkpCountry_AR,
-                    ) || null
-                  }
-                  onChange={(selected) =>
-                    setLkpCountry_AR(selected?.value || "")
-                  }
-                  styles={{
-                    ...selectStyles,
-
-                    singleValue: (base: any) => ({
-                      ...base,
-                      fontSize: "12px",
-                      color: "#334155",
-                      direction: "rtl",
-                      textAlign: "right",
-                    }),
-
-                    placeholder: (base: any) => ({
-                      ...base,
-                      fontSize: "12px",
-                      color: "#94a3b8",
-                      direction: "rtl",
-                      textAlign: "right",
-                    }),
-
-                    input: (base: any) => ({
-                      ...base,
-                      direction: "rtl",
-                      textAlign: "right",
-                      width: "70%",
-                    }),
-
-                    option: (base: any, state: any) => ({
-                      ...base,
-                      fontSize: "12px",
-                      padding: "6px 8px",
-                      backgroundColor: state.isFocused ? "#e2e8f0" : "#ffffff",
-                      color: "#334155",
-                      cursor: "pointer",
-                      direction: "rtl",
-                      textAlign: "right",
-                    }),
-                  }}
-                  components={{
-                    DropdownIndicator: CustomDropdownIndicator,
-                    IndicatorSeparator: () => null,
-                  }}
-                  menuPortalTarget={document.body}
-                  menuPosition="fixed"
-                  isSearchable
-                />
-              </div>
-            </div>
-
-            {/* =================================================
-              POSTAL CODE
-            ================================================= */}
-
-            <div className="grid grid-cols-[92px_minmax(0,1fr)] items-center gap-2">
-              <label
-                htmlFor="txtPostalCode_AR"
-                className="text-left text-[11px] text-slate-600"
-              >
-                الرمز البريدي
-                <span className="text-red-500">*</span>
-              </label>
-
-              <input
-                id="txtPostalCode_AR"
-                name="txtPostalCode_AR"
-                type="text"
-                value={txtPostalCode_AR}
-                onChange={(e) => setTxtPostalCode_AR(e.target.value)}
-                maxLength={7}
-                dir="rtl"
-                className={arabicInputClass}
-              />
-            </div>
-
-            {/* =================================================
-              ADDITIONAL NO
-            ================================================= */}
-
-            <div className="grid grid-cols-[92px_minmax(0,1fr)] items-center gap-2">
-              <label
-                htmlFor="txtAdditionalNo_AR"
-                className="text-left text-[11px] text-slate-600"
-              >
-                الرقم الإضافي
-              </label>
-
-              <input
-                id="txtAdditionalNo_AR"
-                name="txtAdditionalNo_AR"
-                type="text"
-                value={txtAdditionalNo_AR}
-                onChange={(e) => setTxtAdditionalNo_AR(e.target.value)}
-                maxLength={6}
-                dir="rtl"
-                className={arabicInputClass}
-              />
-            </div>
-
-            {/* =================================================
-              CR NO
-            ================================================= */}
-
-            <div className="grid grid-cols-[92px_minmax(0,1fr)] items-center gap-2">
-              <label
-                htmlFor="txtCRNo_AR"
-                className="text-left text-[11px] text-slate-600"
-              >
-                رقم السجل التجاري
-              </label>
-
-              <input
-                maxLength={20}
-                id="txtCRNo_AR"
-                name="txtCRNo_AR"
-                type="text"
-                value={txtCRNo_AR}
-                onChange={(e) => setTxtCRNo_AR(e.target.value)}
-                dir="rtl"
-                className={arabicInputClass}
-              />
-            </div>
-
-            {/* =================================================
-             VAT NO
-            ================================================= */}
-
-            <div className="grid grid-cols-[92px_minmax(0,1fr)] items-center gap-2">
-              <label
-                htmlFor="txtVATNo_AR"
-                className="text-left text-[11px] text-slate-600"
-              >
-                الرقم الضريبي
-                <span className="text-red-500">*</span>
-              </label>
-
-              <input
-                maxLength={15}
-                id="txtVATNo_AR"
-                name="txtVATNo_AR"
-                type="text"
-                value={txtVATNo_AR}
-                onChange={(e) => setTxtVATNo_AR(e.target.value)}
-                dir="rtl"
-                className={arabicInputClass}
-              />
-            </div>
-          </div>
-        </div>
       </div>
+
+
+      {/* LEGAL NAME */}
+
+      <div className="grid grid-cols-[92px_minmax(0,1fr)] items-center gap-2">
+
+        <label
+          htmlFor="txtLegalName"
+          className="text-[11px] text-slate-600"
+        >
+          Legal Name
+          <span className="text-red-500">*</span>
+        </label>
+
+        <input
+          id="txtLegalName"
+          name="txtLegalName"
+          type="text"
+          value={txtLegalName}
+          maxLength={100}
+          onChange={(e) => setTxtLegalName(e.target.value)}
+          className={inputClass}
+          style={{ width: "100%" }}
+        />
+
+      </div>
+
+
+      {/* BUILDING NO */}
+
+      <div className="grid grid-cols-[92px_minmax(0,1fr)] items-center gap-2">
+
+        <label
+          htmlFor="txtBuildingNo"
+          className="text-[11px] text-slate-600"
+        >
+          Building No.
+          <span className="text-red-500">*</span>
+        </label>
+
+        <input
+          id="txtBuildingNo"
+          name="txtBuildingNo"
+          type="text"
+          value={txtBuildingNo}
+          maxLength={6}
+          onChange={(e) => setTxtBuildingNo(e.target.value)}
+          className={inputClass}
+        />
+
+      </div>
+
+
+      {/* STREET NAME */}
+
+      <div className="grid grid-cols-[92px_minmax(0,1fr)] items-center gap-2">
+
+        <label
+          htmlFor="txtStreetName"
+          className="text-[11px] text-slate-600"
+        >
+          Street Name
+          <span className="text-red-500">*</span>
+        </label>
+
+        <input
+          id="txtStreetName"
+          name="txtStreetName"
+          type="text"
+          value={txtStreetName}
+          onChange={(e) => setTxtStreetName(e.target.value)}
+          maxLength={40}
+          className={inputClass}
+        />
+
+      </div>
+
+
+      {/* DISTRICT */}
+
+      <div className="grid grid-cols-[92px_minmax(0,1fr)] items-center gap-2">
+
+        <label
+          htmlFor="txtDistrict"
+          className="text-[11px] text-slate-600"
+        >
+          District
+          <span className="text-red-500">*</span>
+        </label>
+
+        <input
+          id="txtDistrict"
+          name="txtDistrict"
+          type="text"
+          value={txtDistrict}
+          onChange={(e) => setTxtDistrict(e.target.value)}
+          maxLength={40}
+          className={inputClass}
+        />
+
+      </div>
+
+
+      {/* CITY */}
+
+      <div className="grid grid-cols-[92px_minmax(0,1fr)] items-center gap-2">
+
+        <label
+          htmlFor="txtCity"
+          className="text-[11px] text-slate-600"
+        >
+          City
+          <span className="text-red-500">*</span>
+        </label>
+
+        <input
+          maxLength={40}
+          id="txtCity"
+          name="txtCity"
+          type="text"
+          value={txtCity}
+          onChange={(e) => setTxtCity(e.target.value)}
+          className={inputClass}
+        />
+
+      </div>
+
+
+      {/* COUNTRY */}
+
+      <div className="grid grid-cols-[92px_minmax(0,1fr)] items-center gap-2">
+
+        <label
+          htmlFor="lkpCountry"
+          className="text-[11px] text-slate-600"
+        >
+          Country
+          <span className="text-red-500">*</span>
+        </label>
+
+        <div className="w-[80%]">
+
+          <Select
+            inputId="lkpCountry"
+            name="lkpCountry"
+            options={countryOptions}
+            value={
+              countryOptions.find(
+                (option) => option.value === lkpCountry
+              ) || null
+            }
+            onChange={(selected) =>
+              setLkpCountry(selected?.value || "")
+            }
+            styles={selectStyles}
+            components={{
+              DropdownIndicator: CustomDropdownIndicator,
+              IndicatorSeparator: () => null,
+            }}
+            menuPortalTarget={document.body}
+            menuPosition="fixed"
+            isSearchable
+          />
+
+        </div>
+
+      </div>
+
+
+      {/* POSTAL CODE */}
+
+      <div className="grid grid-cols-[92px_minmax(0,1fr)] items-center gap-2">
+
+        <label
+          htmlFor="txtPostalCode"
+          className="text-[11px] text-slate-600"
+        >
+          Postal Code
+          <span className="text-red-500">*</span>
+        </label>
+
+        <input
+          maxLength={7}
+          id="txtPostalCode"
+          name="txtPostalCode"
+          type="text"
+          value={txtPostalCode}
+          onChange={(e) => setTxtPostalCode(e.target.value)}
+          className={inputClass}
+        />
+
+      </div>
+
+
+      {/* ADDITIONAL NO */}
+
+      <div className="grid grid-cols-[92px_minmax(0,1fr)] items-center gap-2">
+
+        <label
+          htmlFor="txtAdditionalNo"
+          className="text-[11px] text-slate-600"
+        >
+          Additional No.
+        </label>
+
+        <input
+          maxLength={6}
+          id="txtAdditionalNo"
+          name="txtAdditionalNo"
+          type="text"
+          value={txtAdditionalNo}
+          onChange={(e) => setTxtAdditionalNo(e.target.value)}
+          className={inputClass}
+        />
+
+      </div>
+
+
+      {/* CR NO */}
+
+      <div className="grid grid-cols-[92px_minmax(0,1fr)] items-center gap-2">
+
+        <label
+          htmlFor="txtCRNo"
+          className="text-[11px] text-slate-600"
+        >
+          CR No.
+        </label>
+
+        <input
+          maxLength={20}
+          id="txtCRNo"
+          name="txtCRNo"
+          type="text"
+          value={txtCRNo}
+          onChange={(e) => setTxtCRNo(e.target.value)}
+          className={inputClass}
+        />
+
+      </div>
+
+
+      {/* VAT NO */}
+
+      <div className="grid grid-cols-[92px_minmax(0,1fr)] items-center gap-2">
+
+        <label
+          htmlFor="txtVATNo"
+          className="text-[11px] text-slate-600"
+        >
+          VAT No.
+          <span className="text-red-500">*</span>
+        </label>
+
+        <input
+          maxLength={15}
+          id="txtVATNo"
+          name="txtVATNo"
+          type="text"
+          value={txtVATNo}
+          onChange={(e) => setTxtVATNo(e.target.value)}
+          className={inputClass}
+        />
+
+      </div>
+
+    </div>
+
+  </div>
+
+
+  {/* ===================================================
+      ARABIC
+  =================================================== */}
+
+  <div
+    className="min-w-0 -mt-2"
+    dir="rtl"
+  >
+
+    <div className="space-y-1.5">
+
+      {/* CUSTOMER NAME */}
+
+      <div className="grid grid-cols-[92px_minmax(0,1fr)] items-center gap-2">
+
+        <label
+          htmlFor="txtCustomerName_AR"
+          className="text-left text-[11px] text-slate-600"
+        >
+          اسم العميل
+          <span className="text-red-500">*</span>
+        </label>
+
+        <input
+          id="txtCustomerName_AR"
+          name="txtCustomerName_AR"
+          type="text"
+          maxLength={100}
+          value={txtCustomerName_AR}
+          onChange={(e) =>
+            setTxtCustomerName_AR(e.target.value)
+          }
+          dir="rtl"
+          className={arabicInputClass}
+          style={{ width: "100%" }}
+        />
+
+      </div>
+
+
+      {/* LEGAL NAME */}
+
+      <div className="grid grid-cols-[92px_minmax(0,1fr)] items-center gap-2">
+
+        <label
+          htmlFor="txtLegalName_AR"
+          className="text-left text-[11px] text-slate-600"
+        >
+          الاسم القانوني
+          <span className="text-red-500">*</span>
+        </label>
+
+        <input
+          id="txtLegalName_AR"
+          name="txtLegalName_AR"
+          type="text"
+          value={txtLegalName_AR}
+          onChange={(e) =>
+            setTxtLegalName_AR(e.target.value)
+          }
+          maxLength={100}
+          dir="rtl"
+          className={arabicInputClass}
+          style={{ width: "100%" }}
+        />
+
+      </div>
+
+
+      {/* BUILDING NO */}
+
+      <div className="grid grid-cols-[92px_minmax(0,1fr)] items-center gap-2">
+
+        <label
+          htmlFor="txtBuildingNo_AR"
+          className="text-left text-[11px] text-slate-600"
+        >
+          رقم المبنى
+          <span className="text-red-500">*</span>
+        </label>
+
+        <input
+          id="txtBuildingNo_AR"
+          name="txtBuildingNo_AR"
+          type="text"
+          value={txtBuildingNo_AR}
+          onChange={(e) =>
+            setTxtBuildingNo_AR(e.target.value)
+          }
+          maxLength={6}
+          dir="rtl"
+          className={arabicInputClass}
+        />
+
+      </div>
+
+
+      {/* STREET NAME */}
+
+      <div className="grid grid-cols-[92px_minmax(0,1fr)] items-center gap-2">
+
+        <label
+          htmlFor="txtStreetName_AR"
+          className="text-left text-[11px] text-slate-600"
+        >
+          اسم الشارع
+          <span className="text-red-500">*</span>
+        </label>
+
+        <input
+          id="txtStreetName_AR"
+          name="txtStreetName_AR"
+          type="text"
+          value={txtStreetName_AR}
+          onChange={(e) =>
+            setTxtStreetName_AR(e.target.value)
+          }
+          maxLength={40}
+          dir="rtl"
+          className={arabicInputClass}
+        />
+
+      </div>
+
+
+      {/* DISTRICT */}
+
+      <div className="grid grid-cols-[92px_minmax(0,1fr)] items-center gap-2">
+
+        <label
+          htmlFor="txtDistrict_AR"
+          className="text-left text-[11px] text-slate-600"
+        >
+          الحي
+          <span className="text-red-500">*</span>
+        </label>
+
+        <input
+          id="txtDistrict_AR"
+          name="txtDistrict_AR"
+          type="text"
+          value={txtDistrict_AR}
+          onChange={(e) =>
+            setTxtDistrict_AR(e.target.value)
+          }
+          maxLength={40}
+          dir="rtl"
+          className={arabicInputClass}
+        />
+
+      </div>
+
+
+      {/* CITY */}
+
+      <div className="grid grid-cols-[92px_minmax(0,1fr)] items-center gap-2">
+
+        <label
+          htmlFor="txtCity_AR"
+          className="text-left text-[11px] text-slate-600"
+        >
+          المدينة
+          <span className="text-red-500">*</span>
+        </label>
+
+        <input
+          id="txtCity_AR"
+          name="txtCity_AR"
+          type="text"
+          value={txtCity_AR}
+          onChange={(e) =>
+            setTxtCity_AR(e.target.value)
+          }
+          maxLength={40}
+          dir="rtl"
+          className={arabicInputClass}
+        />
+
+      </div>
+
+
+      {/* COUNTRY */}
+
+      <div className="grid grid-cols-[92px_minmax(0,1fr)] items-center gap-2">
+
+        <label
+          htmlFor="lkpCountry_AR"
+          className="text-left text-[11px] text-slate-600"
+        >
+          الدولة
+          <span className="text-red-500">*</span>
+        </label>
+
+        <div className="w-[80%]">
+
+          <Select
+            inputId="lkpCountry_AR"
+            name="lkpCountry_AR"
+            options={countryArabicOptions}
+            value={
+              countryArabicOptions.find(
+                (option) =>
+                  option.value === lkpCountry_AR
+              ) || null
+            }
+            onChange={(selected) =>
+              setLkpCountry_AR(
+                selected?.value || ""
+              )
+            }
+            styles={{
+              ...selectStyles,
+
+              singleValue: (base: any) => ({
+                ...base,
+                fontSize: "12px",
+                color: "#334155",
+                direction: "rtl",
+                textAlign: "right",
+              }),
+
+              placeholder: (base: any) => ({
+                ...base,
+                fontSize: "12px",
+                color: "#94a3b8",
+                direction: "rtl",
+                textAlign: "right",
+              }),
+
+              input: (base: any) => ({
+                ...base,
+                direction: "rtl",
+                textAlign: "right",
+                width: "70%",
+              }),
+
+              option: (
+                base: any,
+                state: any
+              ) => ({
+                ...base,
+                fontSize: "12px",
+                padding: "6px 8px",
+                backgroundColor: state.isFocused
+                  ? "#e2e8f0"
+                  : "#ffffff",
+                color: "#334155",
+                cursor: "pointer",
+                direction: "rtl",
+                textAlign: "right",
+              }),
+            }}
+            components={{
+              DropdownIndicator:
+                CustomDropdownIndicator,
+              IndicatorSeparator: () => null,
+            }}
+            menuPortalTarget={document.body}
+            menuPosition="fixed"
+            isSearchable
+          />
+
+        </div>
+
+      </div>
+
+
+      {/* POSTAL CODE */}
+
+      <div className="grid grid-cols-[92px_minmax(0,1fr)] items-center gap-2">
+
+        <label
+          htmlFor="txtPostalCode_AR"
+          className="text-left text-[11px] text-slate-600"
+        >
+          الرمز البريدي
+          <span className="text-red-500">*</span>
+        </label>
+
+        <input
+          id="txtPostalCode_AR"
+          name="txtPostalCode_AR"
+          type="text"
+          value={txtPostalCode_AR}
+          onChange={(e) =>
+            setTxtPostalCode_AR(e.target.value)
+          }
+          maxLength={7}
+          dir="rtl"
+          className={arabicInputClass}
+        />
+
+      </div>
+
+
+      {/* ADDITIONAL NO */}
+
+      <div className="grid grid-cols-[92px_minmax(0,1fr)] items-center gap-2">
+
+        <label
+          htmlFor="txtAdditionalNo_AR"
+          className="text-left text-[11px] text-slate-600"
+        >
+          الرقم الإضافي
+        </label>
+
+        <input
+          id="txtAdditionalNo_AR"
+          name="txtAdditionalNo_AR"
+          type="text"
+          value={txtAdditionalNo_AR}
+          onChange={(e) =>
+            setTxtAdditionalNo_AR(e.target.value)
+          }
+          maxLength={6}
+          dir="rtl"
+          className={arabicInputClass}
+        />
+
+      </div>
+
+
+      {/* CR NO */}
+
+      <div className="grid grid-cols-[92px_minmax(0,1fr)] items-center gap-2">
+
+        <label
+          htmlFor="txtCRNo_AR"
+          className="text-left text-[11px] text-slate-600"
+        >
+          رقم السجل التجاري
+        </label>
+
+        <input
+          maxLength={20}
+          id="txtCRNo_AR"
+          name="txtCRNo_AR"
+          type="text"
+          value={txtCRNo_AR}
+          onChange={(e) =>
+            setTxtCRNo_AR(e.target.value)
+          }
+          dir="rtl"
+          className={arabicInputClass}
+        />
+
+      </div>
+
+
+      {/* VAT NO */}
+
+      <div className="grid grid-cols-[92px_minmax(0,1fr)] items-center gap-2">
+
+        <label
+          htmlFor="txtVATNo_AR"
+          className="text-left text-[11px] text-slate-600"
+        >
+          الرقم الضريبي
+          <span className="text-red-500">*</span>
+        </label>
+
+        <input
+          maxLength={15}
+          id="txtVATNo_AR"
+          name="txtVATNo_AR"
+          type="text"
+          value={txtVATNo_AR}
+          onChange={(e) =>
+            setTxtVATNo_AR(e.target.value)
+          }
+          dir="rtl"
+          className={arabicInputClass}
+        />
+
+      </div>
+
+    </div>
+
+  </div>
+
+</div>
 
       {/* =====================================================
           OTHER CUSTOMER DETAILS
@@ -1019,12 +1134,13 @@ const CustomerMiddle: React.FC<CustomerMiddleProps> = ({
 
             <input
               id="txtCreditDays"
-              name="txtCreditDays"
+              name="txtCreditDays"  
+              maxLength={3}
               type="text"
               value={txtCreditDays}
               onChange={(e) => setTxtCreditDays(e.target.value)}
               className={inputClass}
-              style={{ width: "50%" }}
+              style={{ width: "30%" }}
             />
           </div>
 
@@ -1032,7 +1148,7 @@ const CustomerMiddle: React.FC<CustomerMiddleProps> = ({
             SHORT NAME
           ================================================= */}
 
-          <div className="relative -left-[65px] grid grid-cols-[60px_minmax(0,1fr)] items-center gap-2">
+          <div className="relative -left-[95px] grid grid-cols-[60px_minmax(0,1fr)] items-center gap-2">
             <label
               htmlFor="txtShortName"
               className="text-[11px] text-slate-600 whitespace-nowrap"
@@ -1048,7 +1164,7 @@ const CustomerMiddle: React.FC<CustomerMiddleProps> = ({
               onChange={(e) => setTxtShortName(e.target.value)}
               maxLength={30}
               className={inputClass}
-              style={{ width: "100%" }}
+              style={{ width: "135%" }}
             />
           </div>
 

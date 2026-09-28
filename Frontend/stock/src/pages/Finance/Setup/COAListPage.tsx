@@ -314,18 +314,18 @@ const iconColor =
                   : undefined
               }
             >
-              {hasChildren ? (
+   {hasChildren ? (
   isExpanded ? (
     <ChevronDown
       size={10}
       strokeWidth={2.5}
-      className="text-fuchsia-600"
+      className={iconColor}
     />
   ) : (
     <ChevronRight
       size={10}
       strokeWidth={2.5}
-      className="text-fuchsia-600"
+      className={iconColor}
     />
   )
 ) : (
@@ -396,11 +396,11 @@ const iconColor =
               hover:bg-[#359c4c]
               focus:outline-none
             "
-          >
-            <Plus
+          >{level!==3 && <Plus
               size={11}
               strokeWidth={3}
-            />
+            />}
+           
           </button>
         </div>
 
@@ -505,7 +505,7 @@ const iconColor =
 // MAIN COMPONENT
 // ============================================================
 
-const ChartOfAccountList: React.FC = () => {
+const COAListPage: React.FC = () => {
   const [search, setSearch] = useState("");
 
   // ============================================================
@@ -618,15 +618,17 @@ const ChartOfAccountList: React.FC = () => {
   }, [search, filteredTree]);
 
   return (
-    <div
+    <div className="flex justify-center
+        items-center">
+       <div
       className="
-        flex
+        
         min-h-screen
-        w-full
-        items-start
+        w-[1000px]
+        
         mt-10
-        justify-center
-        bg-white
+        
+        
         px-0
         pt-0
       "
@@ -659,7 +661,7 @@ const ChartOfAccountList: React.FC = () => {
             left-0
             border-b
             border-slate-400
-            bg-[#a5e0c3]
+            bg-[#a3dfc0]
           "
         >
           <h1
@@ -668,7 +670,7 @@ const ChartOfAccountList: React.FC = () => {
               text-[17px]
               font-semibold
               text-slate-700
-              ml-[5px]
+              ml-[10px]
             "
           >
             
@@ -687,7 +689,7 @@ const ChartOfAccountList: React.FC = () => {
             pt-3
           "
         >
-          <div className="relative w-[78%]">
+          <div className="relative w-[74.5%]">
 
             <Search
               size={11}
@@ -893,7 +895,9 @@ const ChartOfAccountList: React.FC = () => {
 
       </div>
     </div>
+    </div>
+   
   );
 };
 
-export default ChartOfAccountList;
+export default COAListPage;
