@@ -345,7 +345,7 @@ const ItemPage: React.FC = () => {
   useEffect(() => {
     const loadUnitList = async () => {
       try {
-        const CoID = localStorage.getItem("CoID");
+        const CoID = localStorage.getItem("PstrCoID");
 
         if (!CoID) {
           toast.error("getUnitList: no CoID in localStorage");
@@ -397,7 +397,7 @@ const ItemPage: React.FC = () => {
   useEffect(() => {
     const loadItemGroupList = async () => {
       try {
-        const CoID = localStorage.getItem("CoID");
+        const CoID = localStorage.getItem("PstrCoID");
 
         if (!CoID) {
           toast.error("getItemGroupList: no CoID in localStorage");
@@ -471,7 +471,7 @@ const ItemPage: React.FC = () => {
   useEffect(() => {
     const loadSupplierList = async () => {
       try {
-        const CoID = localStorage.getItem("CoID");
+        const CoID = localStorage.getItem("PstrCoID");
 
         if (!CoID) {
           toast.error("getSupplierList: no CoID in localStorage");
@@ -540,8 +540,8 @@ const ItemPage: React.FC = () => {
   useEffect(() => {
     const loadBranchList = async () => {
       try {
-        const CoID = localStorage.getItem("CoID");
-        const userId = localStorage.getItem("userID");
+        const CoID = localStorage.getItem("PstrCoID");
+        const userId = localStorage.getItem("PstrUserID");
 
         if (!CoID || !userId) {
           toast.error("getBranchList: no CoID/userId in localStorage");
@@ -619,8 +619,8 @@ const ItemPage: React.FC = () => {
       return;
     }
 
-    const CoID = localStorage.getItem("CoID");
-    const userId = localStorage.getItem("userID");
+    const CoID = localStorage.getItem("PstrCoID");
+    const userId = localStorage.getItem("PstrUserID");
 
     if (!CoID || !userId) {
       toast.error("Company ID / User ID not found. Please log in again.");
@@ -677,7 +677,7 @@ const ItemPage: React.FC = () => {
       return;
     }
 
-    const CoID = localStorage.getItem("CoID");
+    const CoID = localStorage.getItem("PstrCoID");
 
     if (!CoID) {
       toast.error("Company ID not found. Please log in again.");
@@ -770,8 +770,8 @@ const ItemPage: React.FC = () => {
       return;
     }
 
-    const CoID = localStorage.getItem("CoID");
-    const userId = localStorage.getItem("userID");
+    const CoID = localStorage.getItem("PstrCoID");
+    const userId = localStorage.getItem("PstrUserID");
 
     if (!CoID || !userId) {
       toast.error("Company ID / User ID not found. Please log in again.");
@@ -821,8 +821,8 @@ const ItemPage: React.FC = () => {
       return;
     }
 
-    const CoID = localStorage.getItem("CoID");
-    const userId = localStorage.getItem("userID");
+    const CoID = localStorage.getItem("PstrCoID");
+    const userId = localStorage.getItem("PstrUserID");
 
     if (!CoID || !userId) {
       toast.error("Company ID / User ID not found. Please log in again.");

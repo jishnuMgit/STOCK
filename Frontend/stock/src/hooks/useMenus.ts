@@ -20,7 +20,7 @@ interface MenuResponse {
 ========================================================= */
 
 async function fetchMenuRows(): Promise<MenuRow[]> {
-  const companyId = localStorage.getItem("CoID");
+  const companyId = localStorage.getItem("PstrCoID");
 
   if (!companyId) {
     throw new Error("Company ID not found. Please log in again.");

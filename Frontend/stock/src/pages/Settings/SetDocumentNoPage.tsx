@@ -257,7 +257,7 @@ const SetDocumentNo: React.FC = () => {
 
   const [lkpYear, setLkpYear] =
     useState<string>(
-      () => localStorage.getItem("year") || ""
+      () => localStorage.getItem("PstrYear") || ""
     );
 
   const [yearOptions, setYearOptions] =
@@ -282,7 +282,7 @@ const SetDocumentNo: React.FC = () => {
   useEffect(() => {
     const loadYearList = async () => {
       try {
-        const CoID = localStorage.getItem("CoID");
+        const CoID = localStorage.getItem("PstrCoID");
 
         if (!CoID) {
           toast.error("getYearList: no CoID in localStorage");
@@ -328,8 +328,8 @@ const SetDocumentNo: React.FC = () => {
   useEffect(() => {
     const loadDefaultBranch = async () => {
       try {
-        const CoID = localStorage.getItem("CoID");
-        const userId = localStorage.getItem("userID");
+        const CoID = localStorage.getItem("PstrCoID");
+        const userId = localStorage.getItem("PstrUserID");
 
         if (!CoID || !userId) {
           toast.error("getDefaultBranch: no CoID/userId in localStorage");
@@ -371,8 +371,8 @@ const SetDocumentNo: React.FC = () => {
   useEffect(() => {
     const loadBranchList = async () => {
       try {
-        const CoID = localStorage.getItem("CoID");
-        const userId = localStorage.getItem("userID");
+        const CoID = localStorage.getItem("PstrCoID");
+        const userId = localStorage.getItem("PstrUserID");
 
         if (!CoID || !userId) {
           toast.error("getBranchList: no CoID/userId in localStorage");
@@ -419,7 +419,7 @@ const SetDocumentNo: React.FC = () => {
   useEffect(() => {
     const loadModuleList = async () => {
       try {
-        const CoID = localStorage.getItem("CoID");
+        const CoID = localStorage.getItem("PstrCoID");
 
         if (!CoID) {
           toast.error("getModuleList: no CoID in localStorage");
@@ -485,7 +485,7 @@ const SetDocumentNo: React.FC = () => {
 
     const loadDocumentGrid = async () => {
       try {
-        const CoID = localStorage.getItem("CoID");
+        const CoID = localStorage.getItem("PstrCoID");
 
         if (!CoID) {
           toast.error("getDocumentList: no CoID in localStorage");
@@ -619,8 +619,8 @@ const SetDocumentNo: React.FC = () => {
       return;
     }
 
-    const CoID = localStorage.getItem("CoID");
-    const userId = localStorage.getItem("userID");
+    const CoID = localStorage.getItem("PstrCoID");
+    const userId = localStorage.getItem("PstrUserID");
 
     if (!CoID || !userId) {
       toast.error("Company ID / User ID not found. Please log in again.");
@@ -702,8 +702,8 @@ const SetDocumentNo: React.FC = () => {
       return;
     }
 
-    const CoID = localStorage.getItem("CoID");
-    const userId = localStorage.getItem("userID");
+    const CoID = localStorage.getItem("PstrCoID");
+    const userId = localStorage.getItem("PstrUserID");
 
     if (!CoID || !userId) {
       toast.error("Company ID / User ID not found. Please log in again.");
