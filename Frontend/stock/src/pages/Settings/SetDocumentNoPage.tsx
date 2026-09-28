@@ -113,8 +113,8 @@ const selectStyles: StylesConfig<SelectOption, false> = {
     backgroundColor: state.isSelected
       ? "#dbeafe"
       : state.isFocused
-      ? "#eff6ff"
-      : "#ffffff",
+        ? "#eff6ff"
+        : "#ffffff",
 
     color: "#475569",
     cursor: "pointer",
@@ -208,7 +208,6 @@ const resetOptions: SelectOption[] = [
   { value: "Monthly", label: "Monthly" },
 ];
 
-
 // ============================================================
 // CUSTOM DROPDOWN INDICATOR
 // ============================================================
@@ -217,9 +216,7 @@ const resetOptions: SelectOption[] = [
 const CustomDropdownIndicator = (props: any) => {
   return (
     <components.DropdownIndicator {...props}>
-      <span className="text-[11px] text-slate-500">
-        ▼
-      </span>
+      <span className="text-[11px] text-slate-500">▼</span>
     </components.DropdownIndicator>
   );
 };
@@ -235,25 +232,15 @@ const SetDocumentNo: React.FC = () => {
   // HEADER STATES
   // ==========================================================
 
-  const [lkpYear, setLkpYear] =
-    useState<string>(
-      () => localStorage.getItem("year") || ""
-    );
+  const [lkpYear, setLkpYear] = useState<string>(
+    () => localStorage.getItem("year") || "",
+  );
 
-  const [yearOptions, setYearOptions] =
-    useState<SelectOption[]>([]);
-
-  const [lkpBranch, setLkpBranch] =
-    useState<string>("");
-
-  const [branchOptions, setBranchOptions] =
-    useState<SelectOption[]>([]);
-
-  const [lkpModule, setLkpModule] =
-    useState<string>("");
-
-  const [moduleOptions, setModuleOptions] =
-    useState<SelectOption[]>([]);
+  const [yearOptions, setYearOptions] = useState<SelectOption[]>([]);
+  const [lkpBranch, setLkpBranch] = useState<string>("");
+  const [branchOptions, setBranchOptions] = useState<SelectOption[]>([]);
+  const [lkpModule, setLkpModule] = useState<string>("");
+  const [moduleOptions, setModuleOptions] = useState<SelectOption[]>([]);
 
   /* =======================================================
      LOAD YEAR LIST (lkpYear dropdown)
@@ -270,7 +257,7 @@ const SetDocumentNo: React.FC = () => {
         }
 
         const response = await fetch(
-          `${import.meta.env.VITE_API_URL}/DocumentNo/getYearList?CoID=${CoID}`
+          `${import.meta.env.VITE_API_URL}/DocumentNo/getYearList?CoID=${CoID}`,
         );
 
         if (!response.ok) {
@@ -288,7 +275,7 @@ const SetDocumentNo: React.FC = () => {
           (row: { fyear: number }) => ({
             value: String(row.fyear),
             label: String(row.fyear),
-          })
+          }),
         );
 
         setYearOptions(options);
@@ -317,7 +304,7 @@ const SetDocumentNo: React.FC = () => {
         }
 
         const response = await fetch(
-          `${import.meta.env.VITE_API_URL}/DocumentNo/getDefaultBranch?CoID=${CoID}&userId=${userId}`
+          `${import.meta.env.VITE_API_URL}/DocumentNo/getDefaultBranch?CoID=${CoID}&userId=${userId}`,
         );
 
         if (!response.ok) {
@@ -337,7 +324,9 @@ const SetDocumentNo: React.FC = () => {
         }
       } catch (error) {
         console.error("getDefaultBranch error:", error);
-        toast.error(`getDefaultBranch error: ${error instanceof Error ? error.message : String(error)}`);
+        toast.error(
+          `getDefaultBranch error: ${error instanceof Error ? error.message : String(error)}`,
+        );
       }
     };
 
@@ -360,7 +349,7 @@ const SetDocumentNo: React.FC = () => {
         }
 
         const response = await fetch(
-          `${import.meta.env.VITE_API_URL}/DocumentNo/getBranchList?CoID=${CoID}&userId=${userId}`
+          `${import.meta.env.VITE_API_URL}/DocumentNo/getBranchList?CoID=${CoID}&userId=${userId}`,
         );
 
         if (!response.ok) {
@@ -379,13 +368,15 @@ const SetDocumentNo: React.FC = () => {
           (row: { fbrid: string; fbrname: string }) => ({
             value: row.fbrid,
             label: row.fbrname,
-          })
+          }),
         );
 
         setBranchOptions(options);
       } catch (error) {
         console.error("getBranchList error:", error);
-        toast.error(`getBranchList error: ${error instanceof Error ? error.message : String(error)}`);
+        toast.error(
+          `getBranchList error: ${error instanceof Error ? error.message : String(error)}`,
+        );
       }
     };
 
@@ -407,7 +398,7 @@ const SetDocumentNo: React.FC = () => {
         }
 
         const response = await fetch(
-          `${import.meta.env.VITE_API_URL}/DocumentNo/getModuleList?CoID=${CoID}`
+          `${import.meta.env.VITE_API_URL}/DocumentNo/getModuleList?CoID=${CoID}`,
         );
 
         if (!response.ok) {
@@ -425,7 +416,7 @@ const SetDocumentNo: React.FC = () => {
           (row: { fmoduleid: string; fmodulename: string }) => ({
             value: row.fmoduleid,
             label: row.fmodulename,
-          })
+          }),
         );
 
         setModuleOptions(options);
@@ -447,9 +438,7 @@ const SetDocumentNo: React.FC = () => {
   // ==========================================================
 
   const [rows, setRows] = useState<DocumentRow[]>([]);
-
-  const [documentOptions, setDocumentOptions] =
-    useState<SelectOption[]>([]);
+  const [documentOptions, setDocumentOptions] = useState<SelectOption[]>([]);
 
   /* =======================================================
      LOAD DOCUMENT LIST (per Module) + existing saved rules
@@ -473,7 +462,7 @@ const SetDocumentNo: React.FC = () => {
         }
 
         const docListResponse = await fetch(
-          `${import.meta.env.VITE_API_URL}/DocumentNo/getDocumentList?CoID=${CoID}&lkpModule=${lkpModule}`
+          `${import.meta.env.VITE_API_URL}/DocumentNo/getDocumentList?CoID=${CoID}&lkpModule=${lkpModule}`,
         );
 
         if (!docListResponse.ok) {
@@ -496,14 +485,14 @@ const SetDocumentNo: React.FC = () => {
           documentRows.map((doc) => ({
             value: doc.fdoctype,
             label: doc.fdocname,
-          }))
+          })),
         );
 
         let existingRows: Record<string, any> = {};
 
         if (lkpYear && lkpBranch) {
           const docNoResponse = await fetch(
-            `${import.meta.env.VITE_API_URL}/DocumentNo/getDocumentNoList?CoID=${CoID}&lkpYear=${lkpYear}&lkpBranch=${lkpBranch}&lkpModule=${lkpModule}`
+            `${import.meta.env.VITE_API_URL}/DocumentNo/getDocumentNoList?CoID=${CoID}&lkpYear=${lkpYear}&lkpBranch=${lkpBranch}&lkpModule=${lkpModule}`,
           );
 
           if (docNoResponse.ok) {
@@ -515,7 +504,7 @@ const SetDocumentNo: React.FC = () => {
                   accumulator[row.fdoctype] = row;
                   return accumulator;
                 },
-                {}
+                {},
               );
             }
           }
@@ -538,7 +527,7 @@ const SetDocumentNo: React.FC = () => {
                 existing?.fprintaftersave === true,
               txtPositionNo: index + 1,
             };
-          })
+          }),
         );
       } catch (error) {
         console.error("loadDocumentGrid error:", error);
@@ -552,21 +541,16 @@ const SetDocumentNo: React.FC = () => {
   // BUTTON STATE
   // ==========================================================
 
-  const [
-    CopyToNextYearbtn,
-    setCopyToNextYearbtn,
-  ] = useState<boolean>(false);
+  const [CopyToNextYearbtn, setCopyToNextYearbtn] = useState<boolean>(false);
 
   // ==========================================================
   // UPDATE ROW
   // ==========================================================
 
-  const handleRowChange = <
-    K extends keyof DocumentRow
-  >(
+  const handleRowChange = <K extends keyof DocumentRow>(
     id: number,
     field: K,
-    value: DocumentRow[K]
+    value: DocumentRow[K],
   ) => {
     setRows((previousRows) =>
       previousRows.map((row) =>
@@ -575,8 +559,8 @@ const SetDocumentNo: React.FC = () => {
               ...row,
               [field]: value,
             }
-          : row
-      )
+          : row,
+      ),
     );
   };
 
@@ -591,7 +575,8 @@ const SetDocumentNo: React.FC = () => {
     }
 
     const validRows = rows.filter(
-      (row) => row.txtDocPrefix.trim() !== "" || row.txtStartSeqNo.trim() !== ""
+      (row) =>
+        row.txtDocPrefix.trim() !== "" || row.txtStartSeqNo.trim() !== "",
     );
 
     if (validRows.length === 0) {
@@ -630,7 +615,7 @@ const SetDocumentNo: React.FC = () => {
               txtPositionNo: row.txtPositionNo,
             })),
           }),
-        }
+        },
       );
 
       const result = await response.json();
@@ -671,7 +656,7 @@ const SetDocumentNo: React.FC = () => {
     }
 
     const shouldDelete = window.confirm(
-      "Are you sure you want to delete this?"
+      "Are you sure you want to delete this?",
     );
 
     if (!shouldDelete) {
@@ -700,7 +685,7 @@ const SetDocumentNo: React.FC = () => {
             lkpDocument: row.lkpDocument,
             userId,
           }),
-        }
+        },
       );
 
       const result = await response.json();
@@ -724,8 +709,8 @@ const SetDocumentNo: React.FC = () => {
                 lkpResetNo: "Never",
                 chkPrintAfterSave: false,
               }
-            : r
-        )
+            : r,
+        ),
       );
     } catch (error) {
       console.error("deleteDocumentNoRow error:", error);
@@ -739,13 +724,9 @@ const SetDocumentNo: React.FC = () => {
 
   const getOption = (
     options: SelectOption[],
-    value: string
+    value: string,
   ): SelectOption | null => {
-    return (
-      options.find(
-        (item) => item.value === value
-      ) ?? null
-    );
+    return options.find((item) => item.value === value) ?? null;
   };
 
   // ==========================================================
@@ -768,7 +749,6 @@ const SetDocumentNo: React.FC = () => {
         text-slate-700
       "
     >
-
       {/* =====================================================
           MAIN CONTAINER
       ====================================================== */}
@@ -784,11 +764,9 @@ const SetDocumentNo: React.FC = () => {
 
           sm:w-[70%]
           lg:w-[75%]
-          xl:w-[65%]
-          md:w-[100%]
+          xl:w-[75%]
         "
       >
-
         {/* =====================================================
             TITLE
         ====================================================== */}
@@ -805,7 +783,7 @@ const SetDocumentNo: React.FC = () => {
         >
           <h1
             className="
-              ml-1.5
+              ml-3
               text-[17px]
               font-semibold
               text-slate-700
@@ -838,13 +816,11 @@ const SetDocumentNo: React.FC = () => {
             lg:px-10
           "
         >
-
           {/* ===================================================
               YEAR
           ==================================================== */}
 
           <div className="flex w-full items-center gap-2">
-
             <label
               htmlFor="lkpYear"
               className="
@@ -858,34 +834,23 @@ const SetDocumentNo: React.FC = () => {
             </label>
 
             <div className="w-[108px] shrink-0">
-
               <Select
                 inputId="lkpYear"
                 instanceId="lkpYear"
                 name="lkpYear"
                 options={yearOptions}
-                value={getOption(
-                  yearOptions,
-                  lkpYear
-                )}
-                onChange={(
-                  option: SingleValue<SelectOption>
-                ) =>
-                  setLkpYear(
-                    option?.value ?? ""
-                  )
+                value={getOption(yearOptions, lkpYear)}
+                onChange={(option: SingleValue<SelectOption>) =>
+                  setLkpYear(option?.value ?? "")
                 }
                 styles={selectStyles}
                 components={{
-                  DropdownIndicator:
-                    CustomDropdownIndicator,
+                  DropdownIndicator: CustomDropdownIndicator,
                 }}
                 isSearchable={false}
                 menuPlacement="auto"
               />
-
             </div>
-
           </div>
 
           {/* ===================================================
@@ -901,7 +866,6 @@ const SetDocumentNo: React.FC = () => {
               sm:justify-center
             "
           >
-
             <label
               htmlFor="lkpBranch"
               className="
@@ -919,34 +883,23 @@ const SetDocumentNo: React.FC = () => {
                 lg:w-[212px]
               "
             >
-
               <Select
                 inputId="lkpBranch"
                 instanceId="lkpBranch"
                 name="lkpBranch"
                 options={branchOptions}
-                value={getOption(
-                  branchOptions,
-                  lkpBranch
-                )}
-                onChange={(
-                  option: SingleValue<SelectOption>
-                ) =>
-                  setLkpBranch(
-                    option?.value ?? ""
-                  )
+                value={getOption(branchOptions, lkpBranch)}
+                onChange={(option: SingleValue<SelectOption>) =>
+                  setLkpBranch(option?.value ?? "")
                 }
                 styles={selectStyles}
                 components={{
-                  DropdownIndicator:
-                    CustomDropdownIndicator,
+                  DropdownIndicator: CustomDropdownIndicator,
                 }}
                 isSearchable={false}
                 menuPlacement="auto"
               />
-
             </div>
-
           </div>
 
           {/* ===================================================
@@ -962,7 +915,6 @@ const SetDocumentNo: React.FC = () => {
               sm:justify-center
             "
           >
-
             <label
               htmlFor="lkpModule"
               className="
@@ -980,47 +932,31 @@ const SetDocumentNo: React.FC = () => {
                 lg:w-[150px]
               "
             >
-
               <Select
                 inputId="lkpModule"
                 instanceId="lkpModule"
                 name="lkpModule"
                 options={moduleOptions}
-                value={getOption(
-                  moduleOptions,
-                  lkpModule
-                )}
-                onChange={(
-                  option: SingleValue<SelectOption>
-                ) =>
-                  setLkpModule(
-                    option?.value ?? ""
-                  )
+                value={getOption(moduleOptions, lkpModule)}
+                onChange={(option: SingleValue<SelectOption>) =>
+                  setLkpModule(option?.value ?? "")
                 }
                 styles={selectStyles}
                 components={{
-                  DropdownIndicator:
-                    CustomDropdownIndicator,
+                  DropdownIndicator: CustomDropdownIndicator,
                 }}
                 isSearchable={false}
                 menuPlacement="auto"
               />
-
             </div>
-
           </div>
-
         </div>
 
-       
         <div
           className="
-            px-2
-            sm:px-5
-            lg:px-10
+            px-3
           "
         >
-
           <div
             className="
               w-full
@@ -1032,15 +968,13 @@ const SetDocumentNo: React.FC = () => {
               border-slate-200
             "
           >
-
             {/* =================================================
     TABLE
 ================================================= */}
 
-<div className="mt-2 w-full overflow-x-auto">
-
-  <table
-    className="
+            <div className="mt-2 w-full overflow-x-auto">
+              <table
+                className="
       w-full
       min-w-[900px]
       table-fixed
@@ -1049,15 +983,14 @@ const SetDocumentNo: React.FC = () => {
       border-slate-200
       text-[11px]
     "
-  >
-
-    {/* =================================================
+              >
+                {/* =================================================
         TABLE HEADER
     ================================================= */}
 
-    <thead>
-      <tr
-        className="
+                <thead>
+                  <tr
+                    className="
           h-9
           bg-slate-50
           text-left
@@ -1065,74 +998,73 @@ const SetDocumentNo: React.FC = () => {
           font-semibold
           text-slate-600
         "
-      >
+                  >
+                    {/* DOCUMENT */}
 
-        {/* DOCUMENT */}
-
-        <th
-          className="
-            w-[150px]
+                    <th
+                      className="
+            w-[170px]
             border-r
             border-slate-200
             px-2
             font-semibold
             whitespace-nowrap
           "
-        >
-          Document
-        </th>
+                    >
+                      Document
+                    </th>
 
-        {/* PREFIX */}
+                    {/* PREFIX */}
 
-        <th
-          className="
+                    <th
+                      className="
+            w-[75px]
+            border-r
+            border-slate-200
+            px-2
+            font-semibold
+            whitespace-nowrap
+          "
+                    >
+                      Prefix
+                    </th>
+
+                    {/* START SEQ NO */}
+
+                    <th
+                      className="
+            w-[100px]
+            border-r
+            border-slate-200
+            px-2
+            text-center
+            font-semibold
+            whitespace-nowrap
+          "
+                    >
+                      Start Seq. No.
+                    </th>
+
+                    {/* STRICT SERIAL */}
+
+                    <th
+                      className="
             w-[90px]
             border-r
             border-slate-200
             px-2
-            font-semibold
-            whitespace-nowrap
-          "
-        >
-          Prefix
-        </th>
-
-        {/* START SEQ NO */}
-
-        <th
-          className="
-            w-[120px]
-            border-r
-            border-slate-200
-            px-2
             text-center
             font-semibold
             whitespace-nowrap
           "
-        >
-          Start Seq. No.
-        </th>
+                    >
+                      Strict Serial
+                    </th>
 
-        {/* STRICT SERIAL */}
+                    {/* MODE */}
 
-        <th
-          className="
-            w-[120px]
-            border-r
-            border-slate-200
-            px-2
-            text-center
-            font-semibold
-            whitespace-nowrap
-          "
-        >
-          Strict Serial
-        </th>
-
-        {/* MODE */}
-
-        <th
-          className="
+                    <th
+                      className="
             w-[100px]
             border-r
             border-slate-200
@@ -1141,14 +1073,14 @@ const SetDocumentNo: React.FC = () => {
             font-semibold
             whitespace-nowrap
           "
-        >
-          + Mode
-        </th>
+                    >
+                      + Mode
+                    </th>
 
-        {/* RESET */}
+                    {/* RESET */}
 
-        <th
-          className="
+                    <th
+                      className="
             w-[100px]
             border-r
             border-slate-200
@@ -1157,15 +1089,15 @@ const SetDocumentNo: React.FC = () => {
             font-semibold
             whitespace-nowrap
           "
-        >
-          Reset No.
-        </th>
+                    >
+                      Reset No.
+                    </th>
 
-        {/* PRINT AFTER SAVE */}
+                    {/* PRINT AFTER SAVE */}
 
-        <th
-          className="
-            w-[150px]
+                    <th
+                      className="
+            w-[90px]
             border-r
             border-slate-200
             px-2
@@ -1173,104 +1105,86 @@ const SetDocumentNo: React.FC = () => {
             font-semibold
             whitespace-nowrap
           "
-        >
-          Print After Save
-        </th>
+                    >
+                      Print After Save
+                    </th>
 
-        {/* POSITION NO */}
+                    {/* POSITION NO */}
 
-        <th
-          className="
+                    <th
+                      className="
             w-[100px]
             px-2
             text-center
             font-semibold
             whitespace-nowrap
           "
-        >
-          Position No.
-        </th>
+                    >
+                      Position No.
+                    </th>
+                  </tr>
+                </thead>
 
-      </tr>
-    </thead>
-
-
-    {/* =================================================
+                {/* =================================================
         TABLE BODY
     ================================================= */}
 
-    <tbody>
-
-      {rows.map((row, index) => (
-
-        <tr
-          key={row.id}
-          className={`
+                <tbody>
+                  {rows.map((row, index) => (
+                    <tr
+                      key={row.id}
+                      className={`
             h-[34px]
-            ${
-              index === 0
-                ? "bg-[#edf4fc]"
-                : "bg-white"
-            }
+            ${index === 0 ? "bg-[#edf4fc]" : "bg-white"}
             hover:bg-slate-50
           `}
-        >
-
-          {/* =================================================
+                    >
+                      {/* =================================================
               DOCUMENT
           ================================================= */}
 
-          <td
-            className="
+                      <td
+                        className="
               border-r
               border-t
               border-slate-200
               p-0
             "
-          >
+                      >
+                        <div className="flex h-[36px] items-stretch">
+                          <div className="min-w-0 flex-1 overflow-hidden">
+                            <Select
+                              inputId={`lkpDocument_${row.id}`}
+                              instanceId={`lkpDocument_${row.id}`}
+                              name="lkpDocument"
+                              options={documentOptions}
+                              value={getOption(
+                                documentOptions,
+                                row.lkpDocument,
+                              )}
+                              onChange={(option: SingleValue<SelectOption>) =>
+                                handleRowChange(
+                                  row.id,
+                                  "lkpDocument",
+                                  option?.value ?? "",
+                                )
+                              }
+                              styles={tableSelectStyles}
+                              components={{
+                                DropdownIndicator: CustomDropdownIndicator,
+                              }}
+                              isSearchable={false}
+                              menuPortalTarget={document.body}
+                              menuPosition="fixed"
+                            />
+                          </div>
 
-            <div className="flex h-[36px] items-stretch">
+                          {/* DELETE */}
 
-              <div className="min-w-0 flex-1 overflow-hidden">
-
-                <Select
-                  inputId={`lkpDocument_${row.id}`}
-                  instanceId={`lkpDocument_${row.id}`}
-                  name="lkpDocument"
-                  options={documentOptions}
-                  value={getOption(
-                    documentOptions,
-                    row.lkpDocument,
-                  )}
-                  onChange={(
-                    option: SingleValue<SelectOption>,
-                  ) =>
-                    handleRowChange(
-                      row.id,
-                      "lkpDocument",
-                      option?.value ?? "",
-                    )
-                  }
-                  styles={tableSelectStyles}
-                  components={{
-                    DropdownIndicator:
-                      CustomDropdownIndicator,
-                  }}
-                  isSearchable={false}
-                  menuPortalTarget={document.body}
-                  menuPosition="fixed"
-                />
-
-              </div>
-
-              {/* DELETE */}
-
-              <button
-                type="button"
-                onClick={() =>
-                  handleDeleteRow(row)
-                }
-                className="
+                          <button
+                            type="button"
+                            onClick={() => handleDeleteRow(row)}
+                            className="
                   relative
                   inline-flex
                   h-full
@@ -1285,42 +1199,38 @@ const SetDocumentNo: React.FC = () => {
                   hover:bg-red-50
                   hover:text-red-600
                 "
-                aria-label={`Delete ${row.lkpDocument}`}
-              >
-                <X size={14} />
-              </button>
+                            aria-label={`Delete ${row.lkpDocument}`}
+                          >
+                            <X size={14} />
+                          </button>
+                        </div>
+                      </td>
 
-            </div>
-
-          </td>
-
-
-          {/* =================================================
+                      {/* =================================================
               PREFIX
           ================================================= */}
 
-          <td
-            className="
+                      <td
+                        className="
               border-r
               border-t
               border-slate-200
               px-1
             "
-          >
-
-            <input
-              id={`txtDocPrefix_${row.id}`}
-              name="txtDocPrefix"
-              type="text"
-              value={row.txtDocPrefix}
-              onChange={(e) =>
-                handleRowChange(
-                  row.id,
-                  "txtDocPrefix",
-                  e.target.value,
-                )
-              }
-              className="
+                      >
+                        <input
+                          id={`txtDocPrefix_${row.id}`}
+                          name="txtDocPrefix"
+                          type="text"
+                          value={row.txtDocPrefix}
+                          onChange={(e) =>
+                            handleRowChange(
+                              row.id,
+                              "txtDocPrefix",
+                              e.target.value,
+                            )
+                          }
+                          className="
                 w-full
                 bg-transparent
                 text-left
@@ -1328,37 +1238,34 @@ const SetDocumentNo: React.FC = () => {
                 text-slate-600
                 outline-none
               "
-            />
+                        />
+                      </td>
 
-          </td>
-
-
-          {/* =================================================
+                      {/* =================================================
               START SEQ NO
           ================================================= */}
 
-          <td
-            className="
+                      <td
+                        className="
               border-r
               border-t
               border-slate-200
               px-1
             "
-          >
-
-            <input
-              id={`txtStartSeqNo_${row.id}`}
-              name="txtStartSeqNo"
-              type="text"
-              value={row.txtStartSeqNo}
-              onChange={(e) =>
-                handleRowChange(
-                  row.id,
-                  "txtStartSeqNo",
-                  e.target.value,
-                )
-              }
-              className="
+                      >
+                        <input
+                          id={`txtStartSeqNo_${row.id}`}
+                          name="txtStartSeqNo"
+                          type="text"
+                          value={row.txtStartSeqNo}
+                          onChange={(e) =>
+                            handleRowChange(
+                              row.id,
+                              "txtStartSeqNo",
+                              e.target.value,
+                            )
+                          }
+                          className="
                 w-full
                 bg-transparent
                 text-center
@@ -1366,197 +1273,170 @@ const SetDocumentNo: React.FC = () => {
                 text-slate-600
                 outline-none
               "
-            />
+                        />
+                      </td>
 
-          </td>
-
-
-          {/* =================================================
+                      {/* =================================================
               STRICT SERIAL
           ================================================= */}
 
-          <td
-            className="
+                      <td
+                        className="
               border-r
               border-t
               border-slate-200
               text-center
             "
-          >
-
-            <input
-              id={`chkStrictSerial_${row.id}`}
-              name="chkStrictSerial"
-              type="checkbox"
-              checked={row.chkStrictSerial}
-              onChange={(e) =>
-                handleRowChange(
-                  row.id,
-                  "chkStrictSerial",
-                  e.target.checked,
-                )
-              }
-              className="
+                      >
+                        <input
+                          id={`chkStrictSerial_${row.id}`}
+                          name="chkStrictSerial"
+                          type="checkbox"
+                          checked={row.chkStrictSerial}
+                          onChange={(e) =>
+                            handleRowChange(
+                              row.id,
+                              "chkStrictSerial",
+                              e.target.checked,
+                            )
+                          }
+                          className="
                 h-[16px]
                 w-[16px]
                 cursor-pointer
                 accent-blue-600
               "
-            />
+                        />
+                      </td>
 
-          </td>
-
-
-          {/* =================================================
+                      {/* =================================================
               MODE
           ================================================= */}
 
-          <td
-            className="
+                      <td
+                        className="
               border-r
               border-t
               border-slate-200
               p-0
             "
-          >
+                      >
+                        <Select
+                          inputId={`lkpMode_${row.id}`}
+                          instanceId={`lkpMode_${row.id}`}
+                          name="lkpMode"
+                          options={modeOptions}
+                          value={getOption(modeOptions, row.lkpMode)}
+                          onChange={(option: SingleValue<SelectOption>) =>
+                            handleRowChange(
+                              row.id,
+                              "lkpMode",
+                              option?.value ?? "",
+                            )
+                          }
+                          styles={tableSelectStyles}
+                          components={{
+                            DropdownIndicator: CustomDropdownIndicator,
+                          }}
+                          isSearchable={false}
+                          menuPortalTarget={document.body}
+                          menuPosition="fixed"
+                        />
+                      </td>
 
-            <Select
-              inputId={`lkpMode_${row.id}`}
-              instanceId={`lkpMode_${row.id}`}
-              name="lkpMode"
-              options={modeOptions}
-              value={getOption(
-                modeOptions,
-                row.lkpMode,
-              )}
-              onChange={(
-                option: SingleValue<SelectOption>,
-              ) =>
-                handleRowChange(
-                  row.id,
-                  "lkpMode",
-                  option?.value ?? "",
-                )
-              }
-              styles={tableSelectStyles}
-              components={{
-                DropdownIndicator:
-                  CustomDropdownIndicator,
-              }}
-              isSearchable={false}
-              menuPortalTarget={document.body}
-              menuPosition="fixed"
-            />
-
-          </td>
-
-
-          {/* =================================================
+                      {/* =================================================
               RESET NO
           ================================================= */}
 
-          <td
-            className="
+                      <td
+                        className="
               border-r
               border-t
               border-slate-200
               p-0
             "
-          >
+                      >
+                        <Select
+                          inputId={`lkpResetNo_${row.id}`}
+                          instanceId={`lkpResetNo_${row.id}`}
+                          name="lkpResetNo"
+                          options={resetOptions}
+                          value={getOption(resetOptions, row.lkpResetNo)}
+                          onChange={(option: SingleValue<SelectOption>) =>
+                            handleRowChange(
+                              row.id,
+                              "lkpResetNo",
+                              option?.value ?? "",
+                            )
+                          }
+                          styles={tableSelectStyles}
+                          components={{
+                            DropdownIndicator: CustomDropdownIndicator,
+                          }}
+                          isSearchable={false}
+                          menuPortalTarget={document.body}
+                          menuPosition="fixed"
+                        />
+                      </td>
 
-            <Select
-              inputId={`lkpResetNo_${row.id}`}
-              instanceId={`lkpResetNo_${row.id}`}
-              name="lkpResetNo"
-              options={resetOptions}
-              value={getOption(
-                resetOptions,
-                row.lkpResetNo,
-              )}
-              onChange={(
-                option: SingleValue<SelectOption>,
-              ) =>
-                handleRowChange(
-                  row.id,
-                  "lkpResetNo",
-                  option?.value ?? "",
-                )
-              }
-              styles={tableSelectStyles}
-              components={{
-                DropdownIndicator:
-                  CustomDropdownIndicator,
-              }}
-              isSearchable={false}
-              menuPortalTarget={document.body}
-              menuPosition="fixed"
-            />
-
-          </td>
-
-
-          {/* =================================================
+                      {/* =================================================
               PRINT AFTER SAVE
           ================================================= */}
 
-          <td
-            className="
+                      <td
+                        className="
               border-r
               border-t
               border-slate-200
               text-center
             "
-          >
-
-            <input
-              id={`chkPrintAfterSave_${row.id}`}
-              name="chkPrintAfterSave"
-              type="checkbox"
-              checked={row.chkPrintAfterSave}
-              onChange={(e) =>
-                handleRowChange(
-                  row.id,
-                  "chkPrintAfterSave",
-                  e.target.checked,
-                )
-              }
-              className="
+                      >
+                        <input
+                          id={`chkPrintAfterSave_${row.id}`}
+                          name="chkPrintAfterSave"
+                          type="checkbox"
+                          checked={row.chkPrintAfterSave}
+                          onChange={(e) =>
+                            handleRowChange(
+                              row.id,
+                              "chkPrintAfterSave",
+                              e.target.checked,
+                            )
+                          }
+                          className="
                 h-[16px]
                 w-[16px]
                 cursor-pointer
                 accent-blue-600
               "
-            />
+                        />
+                      </td>
 
-          </td>
-
-
-          {/* =================================================
+                      {/* =================================================
               POSITION NO
           ================================================= */}
 
-          <td
-            className="
+                      <td
+                        className="
               border-t
               border-slate-200
               px-1
               text-center
             "
-          >
-
-            <input
-              id={`txtPositionNo_${row.id}`}
-              name="txtPositionNo"
-              type="number"
-              value={row.txtPositionNo}
-              onChange={(e) =>
-                handleRowChange(
-                  row.id,
-                  "txtPositionNo",
-                  Number(e.target.value),
-                )
-              }
-              className="
+                      >
+                        <input
+                          id={`txtPositionNo_${row.id}`}
+                          name="txtPositionNo"
+                          type="number"
+                          value={row.txtPositionNo}
+                          onChange={(e) =>
+                            handleRowChange(
+                              row.id,
+                              "txtPositionNo",
+                              Number(e.target.value),
+                            )
+                          }
+                          className="
                 w-full
                 bg-transparent
                 text-right
@@ -1564,22 +1444,14 @@ const SetDocumentNo: React.FC = () => {
                 text-slate-600
                 outline-none
               "
-            />
-
-          </td>
-
-        </tr>
-
-      ))}
-
-    </tbody>
-
-  </table>
-
-</div>
-
+                        />
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
           </div>
-
         </div>
 
         {/* =====================================================
@@ -1605,7 +1477,6 @@ const SetDocumentNo: React.FC = () => {
             lg:pt-12
           "
         >
-
           {/* =================================================
               SAVE
           ================================================== */}
@@ -1668,11 +1539,7 @@ const SetDocumentNo: React.FC = () => {
             id="CopyToNextYearbtn"
             name="CopyToNextYearbtn"
             type="button"
-            onClick={() =>
-              setCopyToNextYearbtn(
-                !CopyToNextYearbtn
-              )
-            }
+            onClick={() => setCopyToNextYearbtn(!CopyToNextYearbtn)}
             className="
               h-[47px]
               w-[225px]
@@ -1690,11 +1557,8 @@ const SetDocumentNo: React.FC = () => {
           >
             Copy To Next Year
           </button>
-
         </div>
-
       </div>
-
     </div>
   );
 };

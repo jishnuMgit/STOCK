@@ -319,9 +319,9 @@ const accountDropdownStyles = {
       width: "663px",
       minWidth: "663px",
       maxWidth: "663px",
-      height: "220px",
+      height: "auto", // was "375px"
+      maxHeight: "375px", // upper limit; the component narrows it at runtime
       minHeight: 0,
-      maxHeight: "220px",
       padding: 0,
       margin: 0,
       overflowX: "hidden",
@@ -509,6 +509,7 @@ const BranchOption = (props: any) => {
   );
 };
 
+const TYPE_GRID = "80px 1fr";
 const TypeMenuList = (props: any) => {
   return (
     <components.MenuList {...props}>
@@ -516,7 +517,7 @@ const TypeMenuList = (props: any) => {
       <div
         style={{
           display: "grid",
-          gridTemplateColumns: "1fr 10px",
+          gridTemplateColumns: TYPE_GRID,
           padding: "6px 10px",
           backgroundColor: "#f5f7fa",
           borderBottom: "1px solid #d7dee7",
@@ -529,7 +530,7 @@ const TypeMenuList = (props: any) => {
         }}
       >
         <div>Type</div>
-        <div> ID</div>
+        <div>ID</div>
       </div>
 
       {props.children}
@@ -545,14 +546,13 @@ const TypeOption = (props: any) => {
       <div
         style={{
           display: "grid",
-          gridTemplateColumns: "1fr 20px",
+          gridTemplateColumns: TYPE_GRID,
           width: "100%",
           alignItems: "center",
           fontSize: "12px",
         }}
       >
         <div>{data.label}</div>
-
         <div style={{ color: "#555" }}>{data.value}</div>
       </div>
     </components.Option>

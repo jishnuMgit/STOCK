@@ -7,6 +7,7 @@ import React, {
   useMemo,
   useRef,
   useState,
+  useLayoutEffect,
 } from "react";
 
 import { Link } from "react-router-dom";
@@ -988,6 +989,7 @@ export const ReceiptForm: React.FC<ReceiptFormProps> = ({
                 height: "28px",
 
                 width: "80px",
+                minWidth: "80px",
 
                 borderColor: "#d7dee7",
 
@@ -1006,10 +1008,18 @@ export const ReceiptForm: React.FC<ReceiptFormProps> = ({
 
               menu: (base: any) => ({
                 ...base,
-
-                width: "120px",
-
+                width: "150px",
+                minWidth: "150px",
                 zIndex: 99999,
+              }),
+
+              option: (base: any, state: any) => ({
+                ...base,
+                padding: 0, // was "6px 10px"; the cells handle padding now
+                fontSize: "12px",
+                backgroundColor: state.isFocused ? "#eef8f3" : "#fff",
+                color: "#222",
+                cursor: "pointer",
               }),
 
               menuPortal: (base: any) => ({
@@ -1520,25 +1530,35 @@ const AccountDropdownMenuList = ({
   displayMode,
   ...props
 }: AccountMenuListProps) => {
+  const HEADER_HEIGHT = 30;
+
+  const optionsMaxHeight = Math.max(
+    Math.min(375, (props.maxHeight ?? 405) - HEADER_HEIGHT),
+    81,
+  );
+
   return (
     <components.MenuList {...props}>
       <div className="account-dropdown-header">
         {displayMode === "id" ? (
           <>
             <div className="account-dropdown-header-id">Account ID</div>
-
             <div className="account-dropdown-header-name">Account Name</div>
           </>
         ) : (
           <>
             <div className="account-dropdown-header-name">Account Name</div>
-
             <div className="account-dropdown-header-id">Account ID</div>
           </>
         )}
       </div>
 
-      <div className="account-dropdown-options">{props.children}</div>
+      <div
+        className="account-dropdown-options"
+        style={{ maxHeight: optionsMaxHeight }}
+      >
+        {props.children}
+      </div>
     </components.MenuList>
   );
 };
@@ -1854,6 +1874,32 @@ interface ReceiptRowProps {
   onRowSelect?: (id: number, row: ReceiptRow) => void;
 }
 
+type MenuLayout = { placement: "top" | "bottom"; maxHeight: number };
+
+const DEFAULT_MENU_LAYOUT: MenuLayout = { placement: "bottom", maxHeight: 405 };
+
+const getMenuLayout = (inputId: string): MenuLayout => {
+  const element = document.getElementById(inputId);
+
+  if (!element) return DEFAULT_MENU_LAYOUT;
+
+  const rect = element.getBoundingClientRect();
+
+  const below = window.innerHeight - rect.bottom - 12;
+  const above = rect.top - 12;
+
+  // enough room below: open downward
+  if (below >= 405) {
+    return { placement: "bottom", maxHeight: 405 };
+  }
+
+  // not enough room below: open upward (bottom of the menu at the clicked row)
+  return {
+    placement: above > below ? "top" : "bottom",
+    maxHeight: Math.max(Math.min(405, Math.max(above, below)), 120),
+  };
+};
+
 const ReceiptRow = memo(
   ({
     url,
@@ -1920,6 +1966,12 @@ const ReceiptRow = memo(
     const [divisions, setDivisions] = useState<CustomerDivision[]>([]);
 
     const [divisionLoading, setDivisionLoading] = useState(false);
+
+    const [accountIdMenuLayout, setAccountIdMenuLayout] =
+      useState<MenuLayout>(DEFAULT_MENU_LAYOUT);
+
+    const [accountNameMenuLayout, setAccountNameMenuLayout] =
+      useState<MenuLayout>(DEFAULT_MENU_LAYOUT);
 
     const fetchDivisions = useCallback(
       async (accountId: string, existingDivision: string = "") => {
@@ -2303,7 +2355,10 @@ const ReceiptRow = memo(
 
               handleSelectKeyDown(event, "accountId", accountIdMenuOpenRef);
             }}
-            onMenuOpen={handleAccountIdMenuOpen}
+            onMenuOpen={() => {
+              setAccountIdMenuLayout(getMenuLayout(`lkpAccountId-${row.id}`));
+              handleAccountIdMenuOpen();
+            }}
             onMenuClose={() => {
               handleAccountIdMenuClose();
               setAccountIdSearchText("");
@@ -2340,8 +2395,9 @@ const ReceiptRow = memo(
             filterOption={accountFilterOption}
             isSearchable
             isClearable={false}
-            menuPlacement="auto"
+            menuPlacement={accountIdMenuLayout.placement} 
             menuPosition="fixed"
+            maxMenuHeight={accountIdMenuLayout.maxHeight} // 27 header + 375 options + borders
             menuPortalTarget={document.body}
             menuShouldScrollIntoView={false}
             captureMenuScroll={false}
@@ -2388,7 +2444,12 @@ const ReceiptRow = memo(
 
               handleSelectKeyDown(event, "accountName", accountNameMenuOpenRef);
             }}
-            onMenuOpen={handleAccountNameMenuOpen}
+            onMenuOpen={() => {
+              setAccountNameMenuLayout(
+                getMenuLayout(`lkpAccountName-${row.id}`),
+              );
+              handleAccountNameMenuOpen();
+            }}
             onMenuClose={() => {
               handleAccountNameMenuClose();
               setAccountNameSearchText("");
@@ -2426,7 +2487,8 @@ const ReceiptRow = memo(
             isSearchable
             isClearable={false}
             isDisabled={false}
-            menuPlacement="auto"
+            menuPlacement={accountNameMenuLayout.placement}
+            maxMenuHeight={accountNameMenuLayout.maxHeight} 
             menuPosition="fixed"
             menuPortalTarget={document.body}
             menuShouldScrollIntoView={false}
