@@ -50,6 +50,7 @@ export const menuRouteMap: Record<string, string> = {
   ========================================================= */
 
   mnuCustomer: "/Finance/Setup/CustomerPage",
+  mnuChartOfAccount:"/Finance/Setup/ChartOfAccountList",
 
   /* =========================================================
      FINANCE - REPORTS
