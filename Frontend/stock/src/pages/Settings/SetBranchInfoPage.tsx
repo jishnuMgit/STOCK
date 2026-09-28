@@ -5,6 +5,13 @@ import Select, {
 } from "react-select";
 import { toast } from "react-toastify";
 import { useEnterAsTab } from "../../hooks/useEnterAsTab";
+import {
+  filterLabelOrValue,
+  BranchMenuList,
+  BranchOption,
+  CustomDropdownIndicator,
+  branchMenuStyles,
+} from "../../components/BranchSelect/branchSelectParts";
 
 /* =========================================================
    TYPES
@@ -879,10 +886,19 @@ const SetBranchInfo: React.FC = () => {
                     option?.value || "",
                   )
                 }
-                styles={
-                  branchSelectStyles
-                }
-                isSearchable={false}
+                styles={{
+                  ...branchSelectStyles,
+                  ...branchMenuStyles,
+                }}
+                components={{
+                  DropdownIndicator:
+                    CustomDropdownIndicator,
+                  Option: BranchOption,
+                  MenuList: BranchMenuList,
+                }}
+                filterOption={filterLabelOrValue}
+                noOptionsMessage={() => "No Branch Found"}
+                isSearchable
                 placeholder="Select..."
               />
 

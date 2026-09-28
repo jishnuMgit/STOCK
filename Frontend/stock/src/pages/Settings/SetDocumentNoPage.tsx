@@ -7,6 +7,14 @@ import Select, {
 import { toast } from "react-toastify";
 import { X } from "lucide-react";
 import { useEnterAsTab } from "../../hooks/useEnterAsTab";
+import { useConfirm } from "../../hooks/useConfirm";
+import {
+  filterLabelOrValue,
+  BranchMenuList,
+  BranchOption,
+  CustomDropdownIndicator,
+  branchMenuStyles,
+} from "../../components/BranchSelect/branchSelectParts";
 
 // ============================================================
 // TYPES
@@ -211,13 +219,24 @@ const resetOptions: SelectOption[] = [
 
 // ============================================================
 // CUSTOM DROPDOWN INDICATOR
+// (Branch menu / filter / arrow are shared with SetBranchInfo —
+//  see components/BranchSelect/branchSelectParts.tsx)
 // ============================================================
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-const CustomDropdownIndicator = (props: any) => {
+// Same arrow as the Account ID column on Transaction/Receipt
+// (.receipt-dropdown-arrow in commanReceipt.css)
+const ReceiptStyleDropdownIndicator = (props: any) => {
   return (
     <components.DropdownIndicator {...props}>
-      <span className="text-[11px] text-slate-500">
+      <span
+        style={{
+          display: "block",
+          fontSize: "8px",
+          lineHeight: "8px",
+          color: "#999999",
+          transform: "translateY(1px)",
+        }}
+      >
         ▼
       </span>
     </components.DropdownIndicator>
@@ -230,6 +249,7 @@ const CustomDropdownIndicator = (props: any) => {
 
 const SetDocumentNo: React.FC = () => {
   const handleEnterAsTab = useEnterAsTab();
+  const { confirm, confirmDialog } = useConfirm();
 
   // ==========================================================
   // HEADER STATES
@@ -670,8 +690,12 @@ const SetDocumentNo: React.FC = () => {
       return;
     }
 
-    const shouldDelete = window.confirm(
-      "Are you sure you want to delete this?"
+    const documentName =
+      documentOptions.find((option) => option.value === row.lkpDocument)
+        ?.label || row.lkpDocument;
+
+    const shouldDelete = await confirm(
+      "Are you sure you want to delete?"
     );
 
     if (!shouldDelete) {
@@ -706,11 +730,14 @@ const SetDocumentNo: React.FC = () => {
       const result = await response.json();
 
       if (!response.ok || !result.success) {
-        toast.error(result.message || "Row could not be deleted.");
+        toast.error(
+          result.message ||
+            `Could not delete the numbering for ${documentName}. Please try again.`
+        );
         return;
       }
 
-      toast.success(result.message || "Row deleted successfully.");
+      toast.success(`Numbering for ${documentName} deleted successfully.`);
 
       setRows((previousRows) =>
         previousRows.map((r) =>
@@ -757,7 +784,7 @@ const SetDocumentNo: React.FC = () => {
       onKeyDown={handleEnterAsTab}
       className="
         flex
-        min-h-screen
+        min-h-full
         w-full
         flex-col
         items-center
@@ -880,7 +907,9 @@ const SetDocumentNo: React.FC = () => {
                   DropdownIndicator:
                     CustomDropdownIndicator,
                 }}
-                isSearchable={false}
+                filterOption={filterLabelOrValue}
+                noOptionsMessage={() => "No Year Found"}
+                isSearchable
                 menuPlacement="auto"
               />
 
@@ -936,12 +965,19 @@ const SetDocumentNo: React.FC = () => {
                     option?.value ?? ""
                   )
                 }
-                styles={selectStyles}
+                styles={{
+                  ...selectStyles,
+                  ...branchMenuStyles,
+                }}
                 components={{
                   DropdownIndicator:
                     CustomDropdownIndicator,
+                  Option: BranchOption,
+                  MenuList: BranchMenuList,
                 }}
-                isSearchable={false}
+                filterOption={filterLabelOrValue}
+                noOptionsMessage={() => "No Branch Found"}
+                isSearchable
                 menuPlacement="auto"
               />
 
@@ -1024,8 +1060,6 @@ const SetDocumentNo: React.FC = () => {
           <div
             className="
               w-full
-              overflow-x-auto
-              overflow-y-visible
               border-l
               border-r
               border-b
@@ -1037,12 +1071,11 @@ const SetDocumentNo: React.FC = () => {
     TABLE
 ================================================= */}
 
-<div className="mt-2 w-full overflow-x-auto">
+<div className="mt-2 w-full">
 
   <table
     className="
       w-full
-      min-w-[900px]
       table-fixed
       border-collapse
       border
@@ -1071,10 +1104,10 @@ const SetDocumentNo: React.FC = () => {
 
         <th
           className="
-            w-[150px]
+            w-[20%]
             border-r
             border-slate-200
-            px-2
+            px-1
             font-semibold
             whitespace-nowrap
           "
@@ -1086,10 +1119,10 @@ const SetDocumentNo: React.FC = () => {
 
         <th
           className="
-            w-[90px]
+            w-[9%]
             border-r
             border-slate-200
-            px-2
+            px-1
             font-semibold
             whitespace-nowrap
           "
@@ -1101,10 +1134,10 @@ const SetDocumentNo: React.FC = () => {
 
         <th
           className="
-            w-[120px]
+            w-[13%]
             border-r
             border-slate-200
-            px-2
+            px-1
             text-center
             font-semibold
             whitespace-nowrap
@@ -1117,10 +1150,10 @@ const SetDocumentNo: React.FC = () => {
 
         <th
           className="
-            w-[120px]
+            w-[12%]
             border-r
             border-slate-200
-            px-2
+            px-1
             text-center
             font-semibold
             whitespace-nowrap
@@ -1133,10 +1166,10 @@ const SetDocumentNo: React.FC = () => {
 
         <th
           className="
-            w-[100px]
+            w-[10%]
             border-r
             border-slate-200
-            px-2
+            px-1
             text-center
             font-semibold
             whitespace-nowrap
@@ -1149,10 +1182,10 @@ const SetDocumentNo: React.FC = () => {
 
         <th
           className="
-            w-[100px]
+            w-[10%]
             border-r
             border-slate-200
-            px-2
+            px-1
             text-center
             font-semibold
             whitespace-nowrap
@@ -1165,10 +1198,11 @@ const SetDocumentNo: React.FC = () => {
 
         <th
           className="
-            w-[150px]
+            w-[15%]
             border-r
             border-slate-200
-            px-2
+            text-left
+            px-1
             text-center
             font-semibold
             whitespace-nowrap
@@ -1181,8 +1215,8 @@ const SetDocumentNo: React.FC = () => {
 
         <th
           className="
-            w-[100px]
-            px-2
+            w-[13%]
+            px-1
             text-center
             font-semibold
             whitespace-nowrap
@@ -1251,12 +1285,26 @@ const SetDocumentNo: React.FC = () => {
                       option?.value ?? "",
                     )
                   }
-                  styles={tableSelectStyles}
+                  styles={{
+                    ...tableSelectStyles,
+                    dropdownIndicator: (base) => ({
+                      ...base,
+                      width: "18px",
+                      height: "26px",
+                      padding: 0,
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      flexShrink: 0,
+                    }),
+                  }}
                   components={{
                     DropdownIndicator:
-                      CustomDropdownIndicator,
+                      ReceiptStyleDropdownIndicator,
                   }}
-                  isSearchable={false}
+                  filterOption={filterLabelOrValue}
+                  noOptionsMessage={() => "No Document Found"}
+                  isSearchable
                   menuPortalTarget={document.body}
                   menuPosition="fixed"
                 />
@@ -1276,18 +1324,19 @@ const SetDocumentNo: React.FC = () => {
                   h-full
                   w-[20px]
                   shrink-0
-                  items-start
+                  items-center
                   justify-center
                   self-stretch
                   rounded
-                  pt-1
-                  text-slate-400
-                  hover:bg-red-50
+                  text-[#999999]
                   hover:text-red-600
                 "
                 aria-label={`Delete ${row.lkpDocument}`}
               >
-                <X size={14} />
+                <X
+                  size={10}
+                  style={{ transform: "translateY(-3px)" }}
+                />
               </button>
 
             </div>
@@ -1637,7 +1686,7 @@ const SetDocumentNo: React.FC = () => {
               CLEAR
           ================================================== */}
 
-          <button
+          {/* <button
             id="Clear"
             name="Clear"
             type="button"
@@ -1658,7 +1707,7 @@ const SetDocumentNo: React.FC = () => {
             "
           >
             Clear
-          </button>
+          </button> */}
 
           {/* =================================================
               COPY TO NEXT YEAR
@@ -1694,6 +1743,8 @@ const SetDocumentNo: React.FC = () => {
         </div>
 
       </div>
+
+      {confirmDialog}
 
     </div>
   );

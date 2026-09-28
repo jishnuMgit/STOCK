@@ -1,7 +1,7 @@
 CREATE OR REPLACE FUNCTION dbo.userbranches(
     p_pstrcoid   varchar(3),
-    p_strbrid    varchar(3),
-    p_pstruserid varchar(30)
+    p_pstruserid varchar(30),
+    p_strbrid    varchar(3)
 )
 RETURNS boolean
 LANGUAGE plpgsql

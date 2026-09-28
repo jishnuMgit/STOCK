@@ -38,7 +38,7 @@ export const getBranchList = async (
       SELECT fbrid, fbrname
       FROM dbo.tblbranch
       WHERE fcoid = $1
-        AND dbo.userbranches($1, fbrid, $2)
+        AND dbo.userbranches($1, $2, fbrid)
       ORDER BY fpositionno, fbrid
       `,
       [CoID, userId]
@@ -209,7 +209,7 @@ export const saveBranchInfo = async (
 
     const branchAccessResult = await pool.query(
       `SELECT dbo.userbranches($1, $2, $3) AS "hasAccess"`,
-      [CoID, lkpBranch, userId]
+      [CoID, userId, lkpBranch]
     );
 
     if (!branchAccessResult.rows[0]?.hasAccess) {
