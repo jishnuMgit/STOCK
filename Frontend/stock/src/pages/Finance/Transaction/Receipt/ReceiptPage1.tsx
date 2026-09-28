@@ -1969,13 +1969,15 @@ const ReceiptPage: React.FC = () => {
       </div>
 
       {isPrint && printData && (
-        <ReceiptPrint
-          data={printData}
-          onPrintComplete={() => {
-            setIsPrint(false);
-            setPrintData(null);
-          }}
-        />
+        <div className="receipt-print-root">
+          <ReceiptPrint
+            data={printData}
+            onPrintComplete={() => {
+              setIsPrint(false);
+              setPrintData(null);
+            }}
+          />
+        </div>
       )}
     </div>
   );
