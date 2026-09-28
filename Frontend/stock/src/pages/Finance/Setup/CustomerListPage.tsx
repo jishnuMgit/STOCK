@@ -217,6 +217,10 @@ const CustomerList: React.FC = () => {
     console.log("Delete Customer:", customer);
   };
 
+  // ============================================================
+  // RENDER
+  // ============================================================
+
   return (
     <div
       className="
@@ -233,12 +237,6 @@ const CustomerList: React.FC = () => {
     >
       {/* ============================================================
           MAIN PAGE
-
-          IMPORTANT:
-          w-full instead of w-screen
-
-          This makes the page use only the available content area
-          when the sidebar is open.
       ============================================================ */}
 
       <div
@@ -250,7 +248,6 @@ const CustomerList: React.FC = () => {
           shadow-sm
         "
       >
-
         {/* ============================================================
             TITLE
         ============================================================ */}
@@ -280,8 +277,6 @@ const CustomerList: React.FC = () => {
 
         {/* ============================================================
             SEARCH AREA
-
-            FULL AVAILABLE WIDTH
         ============================================================ */}
 
         <div
@@ -291,7 +286,6 @@ const CustomerList: React.FC = () => {
             py-3
           "
         >
-
           <div
             className="
               grid
@@ -300,20 +294,12 @@ const CustomerList: React.FC = () => {
               items-center
             "
           >
-
             {/* ========================================================
                 SEARCH
-
-                Customer ID + Customer Name
-                = 7% + 50%
-
-                Search remains aligned with Customer Name.
             ======================================================== */}
 
-            <div className="col-span-2 w-[94.8%]">
-
+            <div className="col-span-2 w-[93%]">
               <div className="relative w-full">
-
                 {/* SEARCH ICON */}
 
                 <span
@@ -355,9 +341,7 @@ const CustomerList: React.FC = () => {
                     focus:ring-0
                   "
                 />
-
               </div>
-
             </div>
 
             {/* ========================================================
@@ -366,18 +350,16 @@ const CustomerList: React.FC = () => {
 
             <div
               className="
-                -ml-[40px]
+                -ml-[55px]
                 flex
                 items-center
                 pl-2
               "
             >
-
               <Link
                 to="/Finance/Setup/Add/Customer"
                 className="shrink-0"
               >
-
                 <button
                   id="btnAdd"
                   type="button"
@@ -400,7 +382,6 @@ const CustomerList: React.FC = () => {
                     focus:outline-none
                   "
                 >
-
                   <span
                     className="
                       flex
@@ -419,36 +400,26 @@ const CustomerList: React.FC = () => {
                     +
                   </span>
 
-                  <span>
-                    Add
-                  </span>
-
+                  <span>Add</span>
                 </button>
-
               </Link>
-
             </div>
-
           </div>
-
         </div>
 
         {/* ============================================================
             TABLE
-
-            FULL AVAILABLE WIDTH
         ============================================================ */}
 
         <div
           className="
-            w-[98.5%]
             mx-auto
+            w-[98.5%]
             overflow-hidden
             border
             border-slate-400
           "
         >
-
           <div
             className="
               customer-table-scroll
@@ -457,7 +428,6 @@ const CustomerList: React.FC = () => {
               overflow-x-hidden
             "
           >
-
             <table
               className="
                 mx-auto
@@ -466,15 +436,12 @@ const CustomerList: React.FC = () => {
                 border-collapse
               "
             >
-
               {/* ======================================================
                   HEADER
               ====================================================== */}
 
               <thead className="sticky top-0 z-10">
-
                 <tr className="h-8 bg-[#f4f8fb]">
-
                   {/* CUSTOMER ID */}
 
                   <th
@@ -514,24 +481,24 @@ const CustomerList: React.FC = () => {
                     Customer Name
                   </th>
 
-                  {/* DIV ID */}
+                  {/* DIVISION */}
 
                   <th
                     className="
-                      w-[4%]
+                      w-[5%]
+                      whitespace-nowrap
                       border-b
                       border-r
                       border-slate-400
                       bg-[#f4f8fb]
                       px-2
-                      text-left
+                      text-center
                       text-[11px]
                       font-semibold
                       text-slate-800
-                      whitespace-nowrap
                     "
                   >
-                    Div. ID
+                    Division
                   </th>
 
                   {/* BRANCH */}
@@ -631,9 +598,7 @@ const CustomerList: React.FC = () => {
                   >
                     Delete
                   </th>
-
                 </tr>
-
               </thead>
 
               {/* ======================================================
@@ -641,9 +606,7 @@ const CustomerList: React.FC = () => {
               ====================================================== */}
 
               <tbody>
-
                 {filteredCustomers.map((customer, index) => (
-
                   <tr
                     key={`${customer.lkpCustomerID}-${customer.lkpCustomerName}-${index}`}
                     className="
@@ -651,7 +614,6 @@ const CustomerList: React.FC = () => {
                       hover:bg-[#f8fafc]
                     "
                   >
-
                     {/* CUSTOMER ID */}
 
                     <td
@@ -689,22 +651,42 @@ const CustomerList: React.FC = () => {
                       {customer.lkpCustomerName}
                     </td>
 
-                    {/* DIV ID */}
+                    {/* ==================================================
+                        DIVISION CHECKBOX
+                    ================================================== */}
 
                     <td
-                      id="lkpDivID"
                       className="
-                        overflow-hidden
-                        whitespace-nowrap
                         border-b
                         border-r
                         border-slate-400
-                        px-2
-                        text-[11px]
-                        text-slate-700
+                        p-0
+                        text-center
+                        align-middle
                       "
                     >
-                      {customer.lkpDivID}
+                      <div
+                        className="
+                          flex
+                          h-8
+                          w-full
+                          items-center
+                          justify-center
+                        "
+                      >
+                        <input
+                          id={`chkDivision-${index}`}
+                          name="chkDivision"
+                          type="checkbox"
+                          title="Division"
+                          className="
+                            h-3.5
+                            w-3.5
+                            cursor-pointer
+                            accent-blue-600
+                          "
+                        />
+                      </div>
                     </td>
 
                     {/* BRANCH */}
@@ -776,7 +758,6 @@ const CustomerList: React.FC = () => {
                         align-middle
                       "
                     >
-
                       <div
                         className="
                           flex
@@ -786,9 +767,8 @@ const CustomerList: React.FC = () => {
                           justify-center
                         "
                       >
-
                         <button
-                          id="btnModify"
+                          id={`btnModify-${index}`}
                           type="button"
                           title="Modify"
                           onClick={() => handleModify(customer)}
@@ -810,9 +790,7 @@ const CustomerList: React.FC = () => {
                             height={15}
                           />
                         </button>
-
                       </div>
-
                     </td>
 
                     {/* ==================================================
@@ -829,9 +807,8 @@ const CustomerList: React.FC = () => {
                         align-middle
                       "
                     >
-
                       <button
-                        id="btnDelete"
+                        id={`btnDelete-${index}`}
                         type="button"
                         title="Delete"
                         onClick={() => handleDelete(customer)}
@@ -853,11 +830,8 @@ const CustomerList: React.FC = () => {
                           height={16}
                         />
                       </button>
-
                     </td>
-
                   </tr>
-
                 ))}
 
                 {/* ======================================================
@@ -865,9 +839,7 @@ const CustomerList: React.FC = () => {
                 ====================================================== */}
 
                 {filteredCustomers.length === 0 && (
-
                   <tr>
-
                     <td
                       colSpan={8}
                       className="
@@ -879,17 +851,11 @@ const CustomerList: React.FC = () => {
                     >
                       No customers found
                     </td>
-
                   </tr>
-
                 )}
-
               </tbody>
-
             </table>
-
           </div>
-
         </div>
 
         {/* ============================================================
@@ -897,9 +863,7 @@ const CustomerList: React.FC = () => {
         ============================================================ */}
 
         <div className="h-2.5" />
-
       </div>
-
     </div>
   );
 };
