@@ -21,9 +21,9 @@ export const useLogout = () => {
       }
 
       // Remove frontend-only data
-      localStorage.removeItem("userId");
-      localStorage.removeItem("companyId");
-      localStorage.removeItem("year");
+      localStorage.removeItem("PstrUserID");
+      localStorage.removeItem("PstrCoID");
+      localStorage.removeItem("PstrYear");
       localStorage.removeItem("userType");
 
       return true;

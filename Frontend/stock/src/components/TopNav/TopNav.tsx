@@ -84,7 +84,7 @@ export default function TopNav({
     navigate("/login", { replace: true });
   };
 
-  const userId = localStorage.getItem("userID");
+  const userId = localStorage.getItem("PstrUserID");
 
   return (
     <header className="top-nav">

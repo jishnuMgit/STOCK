@@ -3,6 +3,13 @@ import { toast } from "react-toastify";
 import Select from "react-select";
 import type { SelectOption } from "../../types/receiptypes";
 import { useEnterAsTab } from "../../hooks/useEnterAsTab";
+import {
+  makeNameIdMenuComponents,
+  branchMenuStyles,
+} from "../../components/BranchSelect/branchSelectParts";
+
+// Company list: "Company | ID", same layout as the Branch dropdown.
+const companyMenuComponents = makeNameIdMenuComponents("Company");
 
 interface CompanyOption {
   fcoid: string;
@@ -177,7 +184,7 @@ const SetCompanyInfo = () => {
     () =>
       companyOptions.map((company) => ({
         value: company.fcoid,
-        label: `${company.fcoid} - ${company.fconame}`,
+        label: company.fconame,
       })),
     [companyOptions]
   );
@@ -367,7 +374,8 @@ const SetCompanyInfo = () => {
                 onChange={(option) => setLkpCoName(option?.value || "")}
                 options={companySelectOptions}
                 filterOption={companyFilterOption}
-                styles={companySelectStyles}
+                styles={{ ...companySelectStyles, ...branchMenuStyles }}
+                components={companyMenuComponents}
                 placeholder="Select"
                 isSearchable
                 isClearable={false}
@@ -380,8 +388,9 @@ const SetCompanyInfo = () => {
           <div className="grid grid-cols-[145px_1fr] items-center mb-[8px]">
             <label
               htmlFor="txtCoName_AR"
-              className="text-[11px] text-gray-600 text-right pr-3"
+              className="relative text-[11px] text-gray-600 text-right pr-3"
             >
+              <span className="absolute right-[15px] -top-0.5 h-[4px] w-[4px] text-red-500">*</span>
               Company Name (AR) :
             </label>
 
@@ -405,8 +414,9 @@ const SetCompanyInfo = () => {
           <div className="grid grid-cols-[145px_1fr] items-center mb-[8px]">
             <label
               htmlFor="txtCoName_QR"
-              className="text-[11px] text-gray-600 text-right pr-3"
+              className="relative text-[11px] text-gray-600 text-right pr-3"
             >
+              <span className="absolute right-[15px] -top-0.5 h-[4px] w-[4px] text-red-500">*</span>
               Company Name (QR) :
             </label>
 
@@ -430,8 +440,9 @@ const SetCompanyInfo = () => {
           <div className="grid grid-cols-[145px_1fr] items-center mb-[8px]">
             <label
               htmlFor="txtCoName_Short"
-              className="text-[11px] text-gray-600 text-right pr-3"
+              className="relative text-[11px] text-gray-600 text-right pr-3"
             >
+              <span className="absolute right-[15px] -top-0.5 h-[4px] w-[4px] text-red-500">*</span>
               Company Name (Short) :
             </label>
 
