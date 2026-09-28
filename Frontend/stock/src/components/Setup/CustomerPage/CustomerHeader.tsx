@@ -21,11 +21,11 @@ interface CustomerHeaderProps {
   optNewCustomerID: string;
   setOptNewCustomerID: React.Dispatch<React.SetStateAction<string>>;
 
-  lkpParentAccountID: string;
-  setLkpParentAccountID: React.Dispatch<React.SetStateAction<string>>;
+  lkpGAccountID: string;
+  setlkpGAccountID: React.Dispatch<React.SetStateAction<string>>;
 
-  lkpParentAccountName: string;
-  setLkpParentAccountName: React.Dispatch<React.SetStateAction<string>>;
+  lkpGAccountName: string;
+  setlkpGAccountName: React.Dispatch<React.SetStateAction<string>>;
 
   lkpHaveDivision: string;
   setLkpHaveDivision: React.Dispatch<React.SetStateAction<string>>;
@@ -221,11 +221,11 @@ const CustomerHeader: React.FC<CustomerHeaderProps> = ({
   optNewCustomerID,
   setOptNewCustomerID,
 
-  lkpParentAccountID,
-  setLkpParentAccountID,
+  lkpGAccountID,
+  setlkpGAccountID,
 
-  lkpParentAccountName,
-  setLkpParentAccountName,
+  lkpGAccountName,
+  setlkpGAccountName,
 
   lkpHaveDivision,
   setLkpHaveDivision,
@@ -457,24 +457,24 @@ const CustomerHeader: React.FC<CustomerHeaderProps> = ({
 
             <div className="w-full">
               <label
-                htmlFor="lkpParentAccountID"
+                htmlFor="lkpGAccountID"
                 className="mb-1 block
             whitespace-nowrap
             text-[11px]
             text-slate-600
           "
               >
-                Parent Account ID
+                GL. Account ID
               </label>
 
               <Select
-                inputId="lkpParentAccountID"
-                instanceId="lkpParentAccountID"
-                name="lkpParentAccountID"
+                inputId="lkpGAccountID"
+                instanceId="lkpGAccountID"
+                name="lkpGAccountID"
                 options={parentAccountOptions}
-                value={getOption(parentAccountOptions, lkpParentAccountID)}
+                value={getOption(parentAccountOptions, lkpGAccountID)}
                 onChange={(option: SingleValue<SelectOption>) =>
-                  setLkpParentAccountID(option?.value ?? "")
+                  setlkpGAccountID(option?.value ?? "")
                 }
                 styles={selectStyles}
                 components={{
@@ -490,7 +490,7 @@ const CustomerHeader: React.FC<CustomerHeaderProps> = ({
 
             <div className="w-[100%]">
               <label
-                htmlFor="lkpParentAccountName"
+                htmlFor="lkpGAccountName"
                 className="
             mb-1
             block
@@ -499,20 +499,20 @@ const CustomerHeader: React.FC<CustomerHeaderProps> = ({
             text-slate-600
           "
               >
-                Parent Account Name
+                GL. Account Name
               </label>
 
               <Select
-                inputId="lkpParentAccountName"
-                instanceId="lkpParentAccountName"
-                name="lkpParentAccountName"
+                inputId="lkpGAccountName"
+                instanceId="lkpGAccountName"
+                name="lkpGAccountName"
                 options={parentAccountNameOptions}
                 value={getOption(
                   parentAccountNameOptions,
-                  lkpParentAccountName,
+                  lkpGAccountName,
                 )}
                 onChange={(option: SingleValue<SelectOption>) =>
-                  setLkpParentAccountName(option?.value ?? "")
+                  setlkpGAccountName(option?.value ?? "")
                 }
                 styles={selectStyles}
                 components={{

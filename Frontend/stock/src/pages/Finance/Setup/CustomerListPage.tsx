@@ -18,7 +18,8 @@ interface Customer {
 const customers: Customer[] = [
   {
     lkpCustomerID: "1100",
-    lkpCustomerName: "ARABIAN CHEMICAL CO. (PS) LTD",
+    lkpCustomerName:
+      "1234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890",
     lkpDivID: "12",
     lkpBranch: "JEDDAH",
     lkpGlAccountID: "410001",
@@ -216,12 +217,17 @@ const CustomerList: React.FC = () => {
     console.log("Delete Customer:", customer);
   };
 
+  // ============================================================
+  // RENDER
+  // ============================================================
+
   return (
     <div
       className="
         flex
         min-h-screen
-        w-full
+        w-[1500px]
+        mx-auto
         items-start
         justify-center
         bg-white
@@ -233,8 +239,15 @@ const CustomerList: React.FC = () => {
           MAIN PAGE
       ============================================================ */}
 
-      <div className="w-screen border border-slate-300 bg-white shadow-sm">
-
+      <div
+        className="
+          w-full
+          border
+          border-slate-300
+          bg-white
+          shadow-sm
+        "
+      >
         {/* ============================================================
             TITLE
         ============================================================ */}
@@ -252,7 +265,7 @@ const CustomerList: React.FC = () => {
         >
           <h1
             className="
-              ml-1.25
+              ml-[10px]
               text-[17px]
               font-semibold
               text-slate-700
@@ -264,140 +277,135 @@ const CustomerList: React.FC = () => {
 
         {/* ============================================================
             SEARCH AREA
-            SAME WIDTH AS TABLE
         ============================================================ */}
 
-       {/* ============================================================
-    SEARCH AREA
-    SEARCH ENDS EXACTLY AT CUSTOMER NAME COLUMN
-============================================================ */}
-
-<div className="mx-auto w-[95%] py-3">
-
-  <div
-    className="
-      grid
-      w-full
-      grid-cols-[80px_minmax(0,1fr)_54px_80px_100px_180px_60px_60px]
-      items-center
-      gap-0
-    "
-  >
-
-    {/* ========================================================
-        SEARCH
-        Spans Customer ID + Customer Name
-    ======================================================== */}
-
-    <div className="col-span-2 ">
-
-      <div className="relative w-full">
-
-        <span
+        <div
           className="
-            pointer-events-none
-            absolute
-            left-3
-            top-1/2
-            -translate-y-1/2
-            text-[21px]
-            text-slate-600
-          "
-        >
-          ⌕
-        </span>
-
-        <input
-          id="txtSearch"
-          type="text"
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-          placeholder="Search by Customer ID, Customer Name, GL Account ID, GL Account Name"
-          className="
-            h-8.5
             w-full
-            rounded-[5px]
-            border
-            border-slate-400
-            bg-white
-            pl-10
-            pr-4
-            text-[12px]
-            text-slate-700
-            outline-none
-            placeholder:text-slate-400
-            focus:border-[#8daac5]
-            focus:ring-0
-          "
-        />
-
-      </div>
-
-    </div>
-
-    {/* ========================================================
-        ADD BUTTON
-    ======================================================== */}
-
-    <div className="col-span-2 flex left-0 ml-4">
-
-      <Link
-        to="/Finance/Setup/Add/Customer"
-        className="shrink-0"
-      >
-
-        <button
-          id="btnAdd"
-          type="button"
-          onClick={handleAddCustomer}
-          className="
-            flex
-            h-8.5
-            w-25
-            items-center
-            justify-center
-            gap-1
-            rounded-sm
-            border
-            border-[#b7c8db]
-            bg-[#e6f0fa]
-            text-[12px]
-            text-green-600
-            shadow-sm
-            hover:bg-[#dceafa]
-            focus:outline-none
+            px-2.5
+            py-3
           "
         >
-
-          <span
+          <div
             className="
-              flex
-              h-3.75
-              w-3.75
+              grid
+              w-full
+              grid-cols-[7%_50%_1fr]
               items-center
-              justify-center
-              rounded-full
-              bg-green-600
-              text-[13px]
-              font-bold
-              leading-none
-              text-white
             "
           >
-            +
-          </span>
+            {/* ========================================================
+                SEARCH
+            ======================================================== */}
 
-          <span>Add</span>
+            <div className="col-span-2 w-[93%]">
+              <div className="relative w-full">
+                {/* SEARCH ICON */}
 
-        </button>
+                <span
+                  className="
+                    pointer-events-none
+                    absolute
+                    left-3
+                    top-1/2
+                    -translate-y-1/2
+                    text-[21px]
+                    text-slate-600
+                  "
+                >
+                  ⌕
+                </span>
 
-      </Link>
+                {/* SEARCH INPUT */}
 
-    </div>
+                <input
+                  id="txtSearch"
+                  type="text"
+                  value={search}
+                  onChange={(e) => setSearch(e.target.value)}
+                  placeholder="Search by Customer ID, Customer Name, GL Account ID, GL Account Name"
+                  className="
+                    h-8.5
+                    w-full
+                    rounded-[5px]
+                    border
+                    border-slate-400
+                    bg-white
+                    pl-10
+                    pr-4
+                    text-[12px]
+                    text-slate-700
+                    outline-none
+                    placeholder:text-slate-400
+                    focus:border-[#8daac5]
+                    focus:ring-0
+                  "
+                />
+              </div>
+            </div>
 
-  </div>
+            {/* ========================================================
+                ADD BUTTON
+            ======================================================== */}
 
-</div>
+            <div
+              className="
+                -ml-[55px]
+                flex
+                items-center
+                pl-2
+              "
+            >
+              <Link
+                to="/Finance/Setup/Add/Customer"
+                className="shrink-0"
+              >
+                <button
+                  id="btnAdd"
+                  type="button"
+                  onClick={handleAddCustomer}
+                  className="
+                    flex
+                    h-8.5
+                    w-25
+                    items-center
+                    justify-center
+                    gap-1
+                    rounded-sm
+                    border
+                    border-[#b7c8db]
+                    bg-[#e6f0fa]
+                    text-[12px]
+                    text-green-600
+                    shadow-sm
+                    hover:bg-[#dceafa]
+                    focus:outline-none
+                  "
+                >
+                  <span
+                    className="
+                      flex
+                      h-3.75
+                      w-3.75
+                      items-center
+                      justify-center
+                      rounded-full
+                      bg-green-600
+                      text-[13px]
+                      font-bold
+                      leading-none
+                      text-white
+                    "
+                  >
+                    +
+                  </span>
+
+                  <span>Add</span>
+                </button>
+              </Link>
+            </div>
+          </div>
+        </div>
 
         {/* ============================================================
             TABLE
@@ -406,7 +414,7 @@ const CustomerList: React.FC = () => {
         <div
           className="
             mx-auto
-            w-[95%]
+            w-[98.5%]
             overflow-hidden
             border
             border-slate-400
@@ -433,14 +441,12 @@ const CustomerList: React.FC = () => {
               ====================================================== */}
 
               <thead className="sticky top-0 z-10">
-
                 <tr className="h-8 bg-[#f4f8fb]">
-
-                  {/* Customer ID */}
+                  {/* CUSTOMER ID */}
 
                   <th
                     className="
-                      w-20
+                      w-[7%]
                       border-b
                       border-r
                       border-slate-400
@@ -456,7 +462,7 @@ const CustomerList: React.FC = () => {
                     Customer ID
                   </th>
 
-                  {/* Customer Name */}
+                  {/* CUSTOMER NAME */}
 
                   <th
                     className="
@@ -475,31 +481,31 @@ const CustomerList: React.FC = () => {
                     Customer Name
                   </th>
 
-                  {/* Div ID */}
+                  {/* DIVISION */}
 
                   <th
                     className="
-                      w-13.5
+                      w-[5%]
+                      whitespace-nowrap
                       border-b
                       border-r
                       border-slate-400
                       bg-[#f4f8fb]
                       px-2
-                      text-left
+                      text-center
                       text-[11px]
                       font-semibold
                       text-slate-800
-                      whitespace-nowrap
                     "
                   >
-                    Div. ID
+                    Division
                   </th>
 
-                  {/* Branch */}
+                  {/* BRANCH */}
 
                   <th
                     className="
-                      w-20
+                      w-[10%]
                       border-b
                       border-r
                       border-slate-400
@@ -514,11 +520,11 @@ const CustomerList: React.FC = () => {
                     Branch
                   </th>
 
-                  {/* GL Account ID */}
+                  {/* GL ACCOUNT ID */}
 
                   <th
                     className="
-                      w-25
+                      w-[7%]
                       whitespace-nowrap
                       border-b
                       border-r
@@ -531,14 +537,14 @@ const CustomerList: React.FC = () => {
                       text-slate-800
                     "
                   >
-                    GL Account ID
+                    GL. Account ID
                   </th>
 
-                  {/* GL Account Name */}
+                  {/* GL ACCOUNT NAME */}
 
                   <th
                     className="
-                      w-45
+                      w-[15%]
                       whitespace-nowrap
                       border-b
                       border-r
@@ -554,11 +560,11 @@ const CustomerList: React.FC = () => {
                     GL Account Name
                   </th>
 
-                  {/* Modify */}
+                  {/* MODIFY */}
 
                   <th
                     className="
-                      w-15
+                      w-[5%]
                       whitespace-nowrap
                       border-b
                       border-r
@@ -574,11 +580,11 @@ const CustomerList: React.FC = () => {
                     Modify
                   </th>
 
-                  {/* Delete */}
+                  {/* DELETE */}
 
                   <th
                     className="
-                      w-15
+                      w-[5%]
                       whitespace-nowrap
                       border-b
                       border-slate-400
@@ -592,7 +598,6 @@ const CustomerList: React.FC = () => {
                   >
                     Delete
                   </th>
-
                 </tr>
               </thead>
 
@@ -601,9 +606,7 @@ const CustomerList: React.FC = () => {
               ====================================================== */}
 
               <tbody>
-
                 {filteredCustomers.map((customer, index) => (
-
                   <tr
                     key={`${customer.lkpCustomerID}-${customer.lkpCustomerName}-${index}`}
                     className="
@@ -611,8 +614,7 @@ const CustomerList: React.FC = () => {
                       hover:bg-[#f8fafc]
                     "
                   >
-
-                    {/* Customer ID */}
+                    {/* CUSTOMER ID */}
 
                     <td
                       id="lkpCustomerID"
@@ -630,7 +632,7 @@ const CustomerList: React.FC = () => {
                       {customer.lkpCustomerID}
                     </td>
 
-                    {/* Customer Name */}
+                    {/* CUSTOMER NAME */}
 
                     <td
                       id="lkpCustomerName"
@@ -649,25 +651,45 @@ const CustomerList: React.FC = () => {
                       {customer.lkpCustomerName}
                     </td>
 
-                    {/* Div ID */}
+                    {/* ==================================================
+                        DIVISION CHECKBOX
+                    ================================================== */}
 
                     <td
-                      id="lkpDivID"
                       className="
-                        overflow-hidden
-                        whitespace-nowrap
                         border-b
                         border-r
                         border-slate-400
-                        px-2
-                        text-[11px]
-                        text-slate-700
+                        p-0
+                        text-center
+                        align-middle
                       "
                     >
-                      {customer.lkpDivID}
+                      <div
+                        className="
+                          flex
+                          h-8
+                          w-full
+                          items-center
+                          justify-center
+                        "
+                      >
+                        <input
+                          id={`chkDivision-${index}`}
+                          name="chkDivision"
+                          type="checkbox"
+                          title="Division"
+                          className="
+                            h-3.5
+                            w-3.5
+                            cursor-pointer
+                            accent-blue-600
+                          "
+                        />
+                      </div>
                     </td>
 
-                    {/* Branch */}
+                    {/* BRANCH */}
 
                     <td
                       id="lkpBranch"
@@ -685,7 +707,7 @@ const CustomerList: React.FC = () => {
                       {customer.lkpBranch}
                     </td>
 
-                    {/* GL Account ID */}
+                    {/* GL ACCOUNT ID */}
 
                     <td
                       id="lkpGlAccountID"
@@ -703,7 +725,7 @@ const CustomerList: React.FC = () => {
                       {customer.lkpGlAccountID}
                     </td>
 
-                    {/* GL Account Name */}
+                    {/* GL ACCOUNT NAME */}
 
                     <td
                       id="lkpGlAccountName"
@@ -736,10 +758,17 @@ const CustomerList: React.FC = () => {
                         align-middle
                       "
                     >
-                      <div className="flex h-full w-full items-center justify-center">
-
+                      <div
+                        className="
+                          flex
+                          h-full
+                          w-full
+                          items-center
+                          justify-center
+                        "
+                      >
                         <button
-                          id="btnModify"
+                          id={`btnModify-${index}`}
                           type="button"
                           title="Modify"
                           onClick={() => handleModify(customer)}
@@ -761,7 +790,6 @@ const CustomerList: React.FC = () => {
                             height={15}
                           />
                         </button>
-
                       </div>
                     </td>
 
@@ -779,9 +807,8 @@ const CustomerList: React.FC = () => {
                         align-middle
                       "
                     >
-
                       <button
-                        id="btnDelete"
+                        id={`btnDelete-${index}`}
                         type="button"
                         title="Delete"
                         onClick={() => handleDelete(customer)}
@@ -792,7 +819,7 @@ const CustomerList: React.FC = () => {
                           items-center
                           justify-center
                           rounded-full
-                          text-red-500
+                          text-[#FC0005]
                           hover:bg-red-50
                           hover:text-red-600
                           focus:outline-none
@@ -803,9 +830,7 @@ const CustomerList: React.FC = () => {
                           height={16}
                         />
                       </button>
-
                     </td>
-
                   </tr>
                 ))}
 
@@ -814,9 +839,7 @@ const CustomerList: React.FC = () => {
                 ====================================================== */}
 
                 {filteredCustomers.length === 0 && (
-
                   <tr>
-
                     <td
                       colSpan={8}
                       className="
@@ -828,13 +851,9 @@ const CustomerList: React.FC = () => {
                     >
                       No customers found
                     </td>
-
                   </tr>
-
                 )}
-
               </tbody>
-
             </table>
           </div>
         </div>
@@ -844,7 +863,6 @@ const CustomerList: React.FC = () => {
         ============================================================ */}
 
         <div className="h-2.5" />
-
       </div>
     </div>
   );
