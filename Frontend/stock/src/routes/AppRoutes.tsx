@@ -6,6 +6,7 @@ import ProtectedRoute from "./ProtectedRoutes";
 import SetBranchInfo from "../pages/Settings/SetBranchInfoPage";
 import PublicRoute from "./PublicRoute";
 import CustomerList from "../pages/Finance/Setup/CustomerListPage";
+import ChartOfAccountList from "../pages/Finance/Setup/COAListPage";
 
 const Login = lazy(() => import("../pages/Auth/LoginPage"));
 const ReceiptPage = lazy(
@@ -87,6 +88,11 @@ const AppRoutes = () => {
             path="/Finance/Setup/Add/Customer"
             element={<CustomerPage />}
           />
+           <Route
+            path="/Finance/Setup/ChartOfAccountList"
+            element={<ChartOfAccountList />}
+          />
+
 
 
           {/* =================================================

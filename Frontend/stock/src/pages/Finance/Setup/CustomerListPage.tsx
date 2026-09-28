@@ -222,7 +222,8 @@ const CustomerList: React.FC = () => {
       className="
         flex
         min-h-screen
-        w-full
+        w-[1500px]
+        mx-auto
         items-start
         justify-center
         bg-white
@@ -232,9 +233,23 @@ const CustomerList: React.FC = () => {
     >
       {/* ============================================================
           MAIN PAGE
+
+          IMPORTANT:
+          w-full instead of w-screen
+
+          This makes the page use only the available content area
+          when the sidebar is open.
       ============================================================ */}
 
-      <div className="w-screen border border-slate-300 bg-white shadow-sm">
+      <div
+        className="
+          w-full
+          border
+          border-slate-300
+          bg-white
+          shadow-sm
+        "
+      >
 
         {/* ============================================================
             TITLE
@@ -253,7 +268,7 @@ const CustomerList: React.FC = () => {
         >
           <h1
             className="
-              ml-1.25
+              ml-[10px]
               text-[17px]
               font-semibold
               text-slate-700
@@ -266,18 +281,16 @@ const CustomerList: React.FC = () => {
         {/* ============================================================
             SEARCH AREA
 
-            IMPORTANT:
-            Customer ID = 7%
-            Customer Name = 50%
-
-            Therefore search spans exactly:
-            7% + 50% = 57%
-
-            This makes the right edge of the search box line up
-            exactly with the right edge of Customer Name.
+            FULL AVAILABLE WIDTH
         ============================================================ */}
 
-        <div className="mx-auto w-[95%] py-3">
+        <div
+          className="
+            w-full
+            px-2.5
+            py-3
+          "
+        >
 
           <div
             className="
@@ -290,10 +303,14 @@ const CustomerList: React.FC = () => {
 
             {/* ========================================================
                 SEARCH
-                EXACTLY MATCHES CUSTOMER ID + CUSTOMER NAME
+
+                Customer ID + Customer Name
+                = 7% + 50%
+
+                Search remains aligned with Customer Name.
             ======================================================== */}
 
-            <div className="col-span-2 w-full">
+            <div className="col-span-2 w-[94.8%]">
 
               <div className="relative w-full">
 
@@ -345,12 +362,11 @@ const CustomerList: React.FC = () => {
 
             {/* ========================================================
                 ADD BUTTON
-
-                Starts immediately after Customer Name.
             ======================================================== */}
 
             <div
               className="
+                -ml-[40px]
                 flex
                 items-center
                 pl-2
@@ -403,7 +419,9 @@ const CustomerList: React.FC = () => {
                     +
                   </span>
 
-                  <span>Add</span>
+                  <span>
+                    Add
+                  </span>
 
                 </button>
 
@@ -417,12 +435,14 @@ const CustomerList: React.FC = () => {
 
         {/* ============================================================
             TABLE
+
+            FULL AVAILABLE WIDTH
         ============================================================ */}
 
         <div
           className="
+            w-[98.5%]
             mx-auto
-            w-[95%]
             overflow-hidden
             border
             border-slate-400
@@ -451,7 +471,7 @@ const CustomerList: React.FC = () => {
                   HEADER
               ====================================================== */}
 
-              <thead className="sticky top-0 z-10 ">
+              <thead className="sticky top-0 z-10">
 
                 <tr className="h-8 bg-[#f4f8fb]">
 
@@ -479,7 +499,7 @@ const CustomerList: React.FC = () => {
 
                   <th
                     className="
-                      w-[50%]
+                      w-auto
                       border-b
                       border-r
                       border-slate-400
@@ -498,7 +518,7 @@ const CustomerList: React.FC = () => {
 
                   <th
                     className="
-                      w-[5%]
+                      w-[4%]
                       border-b
                       border-r
                       border-slate-400
@@ -518,7 +538,7 @@ const CustomerList: React.FC = () => {
 
                   <th
                     className="
-                      w-[8%]
+                      w-[10%]
                       border-b
                       border-r
                       border-slate-400
@@ -537,7 +557,7 @@ const CustomerList: React.FC = () => {
 
                   <th
                     className="
-                      w-[8%]
+                      w-[7%]
                       whitespace-nowrap
                       border-b
                       border-r
@@ -550,14 +570,14 @@ const CustomerList: React.FC = () => {
                       text-slate-800
                     "
                   >
-                    GL Account ID
+                    GL. Account ID
                   </th>
 
                   {/* GL ACCOUNT NAME */}
 
                   <th
                     className="
-                      w-[12%]
+                      w-[15%]
                       whitespace-nowrap
                       border-b
                       border-r
@@ -822,7 +842,7 @@ const CustomerList: React.FC = () => {
                           items-center
                           justify-center
                           rounded-full
-                          text-red-500
+                          text-[#FC0005]
                           hover:bg-red-50
                           hover:text-red-600
                           focus:outline-none

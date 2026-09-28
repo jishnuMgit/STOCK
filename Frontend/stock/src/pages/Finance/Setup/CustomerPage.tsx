@@ -14,10 +14,10 @@ const CustomerPage: React.FC = () => {
   const [optNewCustomerID, setOptNewCustomerID] =
     useState("Auto");
 
-  const [lkpParentAccountID, setLkpParentAccountID] =
+  const [lkpGAccountID, setLkpGAccountID] =
     useState("1103001");
 
-  const [lkpParentAccountName, setLkpParentAccountName] =
+  const [lkpGAccountName, setLkpGAccountName] =
     useState("CLIENTS RECEIVABLES");
 
   const [lkpHaveDivision, setLkpHaveDivision] =
@@ -153,8 +153,8 @@ const CustomerPage: React.FC = () => {
       txtCustomerID,
       optNewCustomerID,
 
-      lkpParentAccountID,
-      lkpParentAccountName,
+      lkpGAccountID,
+      lkpGAccountName,
 
       lkpHaveDivision,
       lkpBusinessType,
@@ -220,8 +220,8 @@ const CustomerPage: React.FC = () => {
     setTxtCustomerID("1007");
     setOptNewCustomerID("Auto");
 
-    setLkpParentAccountID("1103001");
-    setLkpParentAccountName("CLIENTS RECEIVABLES");
+    setLkpGAccountID("1103001");
+    setLkpGAccountName("CLIENTS RECEIVABLES");
 
     setLkpHaveDivision("No");
     setLkpBusinessType("B2B");
@@ -271,7 +271,7 @@ const CustomerPage: React.FC = () => {
 
   return (
  <div className="min-h-screen flex items-center justify-center">
-      <div className="lg:w-[75%]  bg-white border-gray-500 border-[0.2px]">
+      <div className="lg:w-[65%]  bg-white border-gray-500 border-[0.2px]">
 
         {/* HEADER */}
         <CustomerHeader
@@ -281,11 +281,11 @@ const CustomerPage: React.FC = () => {
           optNewCustomerID={optNewCustomerID}
           setOptNewCustomerID={setOptNewCustomerID}
 
-          lkpParentAccountID={lkpParentAccountID}
-          setLkpParentAccountID={setLkpParentAccountID}
+          lkpGAccountID={lkpGAccountID}
+          setlkpGAccountID={setLkpGAccountID}
 
-          lkpParentAccountName={lkpParentAccountName}
-          setLkpParentAccountName={setLkpParentAccountName}
+          lkpGAccountName={lkpGAccountName}
+          setlkpGAccountName={setLkpGAccountName}
 
           lkpHaveDivision={lkpHaveDivision}
           setLkpHaveDivision={setLkpHaveDivision}

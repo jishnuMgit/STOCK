@@ -718,7 +718,7 @@ const ItemPage: React.FC = () => {
       className="
         absolute
         right-[3px]
-  -top-1
+  -top-0.5
         h-[4px]
         w-[4px]
        text-red-500
@@ -1520,17 +1520,7 @@ const ItemPage: React.FC = () => {
                       <span className="relative inline-block">
                         Branch
 
-                        <span
-                          className="
-                            absolute
-                            -right-[3px]
-                            -top-1
-                            h-[4px]
-                            w-[4px]
-                            
-                            text-red-500
-                          "
-                        >*</span>
+                        <span className="text-red-500">*</span>
                       </span>
                     </th>
 
