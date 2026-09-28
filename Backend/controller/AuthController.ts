@@ -60,7 +60,7 @@ const encryptPwd = (password: string, userPwdSeed: number): string => {
 
 export const login = async (req: Request, res: Response): Promise<Response> => {
   try {
-    const { companyId, year, userId, password } = req.body;
+    const { companyId, txtYear, txtUserID, txtPwd } = req.body;
 
     /* =====================================================
        VALIDATION
@@ -73,21 +73,21 @@ export const login = async (req: Request, res: Response): Promise<Response> => {
       });
     }
 
-    if (!year) {
+    if (!txtYear) {
       return res.status(400).json({
         success: false,
         message: "Please select a Year",
       });
     }
 
-    if (!userId) {
+    if (!txtUserID) {
       return res.status(400).json({
         success: false,
         message: "Please input User ID",
       });
     }
 
-    if (!password) {
+    if (!txtPwd) {
       return res.status(400).json({
         success: false,
         message: "Please input Password",
@@ -108,7 +108,7 @@ export const login = async (req: Request, res: Response): Promise<Response> => {
   FROM dbo.tbluserlogin
   WHERE fuserid = $1
   `,
-      [userId],
+      [txtUserID],
     );
 
     if (userResult.rows.length === 0) {
@@ -140,7 +140,7 @@ export const login = async (req: Request, res: Response): Promise<Response> => {
 
     const decryptedPassword = decryptPwd(encryptedPassword, userPwdSeed);
 
-    if (decryptedPassword !== password) {
+    if (decryptedPassword !== txtPwd) {
       return res.status(401).json({
         success: false,
         message: "Please input the Password correctly",
@@ -166,10 +166,10 @@ export const login = async (req: Request, res: Response): Promise<Response> => {
 
     let hasCompanyRight = true;
 
-    if (userId !== "ADMIN") {
+    if (txtUserID !== "ADMIN") {
       const companyRightResult = await pool.query(
         `SELECT dbo.hascoright($1, $2) AS "hasCoRight"`,
-        [companyId, userId],
+        [companyId, txtUserID],
       );
 
       hasCompanyRight = companyRightResult.rows[0]?.hasCoRight > 0;
@@ -178,7 +178,7 @@ export const login = async (req: Request, res: Response): Promise<Response> => {
     if (!hasCompanyRight) {
       return res.status(403).json({
         success: false,
-        message: `User '${userId}' does not have access to the selected Company`,
+        message: `User '${txtUserID}' does not have access to the selected Company`,
       });
     }
 
@@ -205,7 +205,7 @@ export const login = async (req: Request, res: Response): Promise<Response> => {
     // Opportunistically clean up any expired session for this user first
     await pool.query(
       `DELETE FROM dbo.tblusersession WHERE fuserid = $1 AND fexpiresat <= now()`,
-      [userId],
+      [txtUserID],
     );
 
     const existingSession = await pool.query(
@@ -214,7 +214,7 @@ export const login = async (req: Request, res: Response): Promise<Response> => {
   FROM dbo.tblusersession
   WHERE fuserid = $1 AND fexpiresat > now()
   `,
-      [userId],
+      [txtUserID],
     );
 
     if (existingSession.rows.length > 0) {
@@ -239,7 +239,7 @@ export const login = async (req: Request, res: Response): Promise<Response> => {
   )
   VALUES ($1, $2)
   `,
-      [userId, sessionToken],
+      [txtUserID, sessionToken],
     );
 
     /* =====================================================
@@ -261,9 +261,9 @@ export const login = async (req: Request, res: Response): Promise<Response> => {
       success: true,
       message: "Login successful",
       data: {
-        userId: user.fuserid,
+        txtUserID: user.fuserid,
         companyId,
-        year,
+        txtYear,
         userType: user.fusertype,
         //branchId: defaultBranchId,
       },

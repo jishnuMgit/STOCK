@@ -57,9 +57,9 @@ const LoginPage: React.FC = () => {
 
     const result = await login({
       companyId: selectedCompanyId,
-      year: selectedYear,
-      userId,
-      password,
+      txtYear: selectedYear,
+      txtUserID: userId,
+      txtPwd: password,
     });
 
     if (!result) {
