@@ -61,7 +61,10 @@ export const menuRouteMap: Record<string, string> = {
      SETTINGS
   ========================================================= */
 
-  mnuSetDocumentNo: "/Settings/SetDocumentNo",
+  mnuSetDocumentNo:
+    "/Settings/SetDocumentNo",
+    mnuSetBranchInfo:
+    "/Settings/SetBranchInfo",
 
   mnuSetCompanyInfo: "/Settings/SetCompanyInfo",
 

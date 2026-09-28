@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { toast } from "react-toastify";
 import Select from "react-select";
 import type { SelectOption } from "../../types/receiptypes";
+import { useEnterAsTab } from "../../hooks/useEnterAsTab";
 
 interface CompanyOption {
   fcoid: string;
@@ -166,6 +167,8 @@ const emptyFormData: CompanyFormData = {
 };
 
 const SetCompanyInfo = () => {
+  const handleEnterAsTab = useEnterAsTab();
+
   const [companyOptions, setCompanyOptions] = useState<CompanyOption[]>([]);
   const [lkpCoName, setLkpCoName] = useState("");
   const [formData, setFormData] = useState<CompanyFormData>(emptyFormData);
@@ -331,7 +334,10 @@ const SetCompanyInfo = () => {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center">
+    <div
+      onKeyDown={handleEnterAsTab}
+      className="min-h-screen flex items-center justify-center"
+    >
       <div className="w-[850px]  bg-white border-[0.5px] shadow-md">
 
         {/* Header */}

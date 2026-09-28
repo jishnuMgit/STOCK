@@ -1,5 +1,8 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import Select, { type StylesConfig } from "react-select";
+import { toast } from "react-toastify";
+import { X } from "lucide-react";
+import { useEnterAsTab } from "../../../hooks/useEnterAsTab";
 
 /* =========================================================
    TYPES
@@ -65,6 +68,8 @@ const textClass = `
 ========================================================= */
 
 const ItemPage: React.FC = () => {
+  const handleEnterAsTab = useEnterAsTab();
+
   /* =========================================================
      FORM STATE
   ========================================================= */
@@ -149,87 +154,222 @@ const ItemPage: React.FC = () => {
      SELECT OPTIONS
   ========================================================= */
 
-  const unitOptions: SelectOption[] = [
-    {
-      value: "PCS",
-      label: "PCS",
-    },
-    {
-      value: "KG",
-      label: "KG",
-    },
-    {
-      value: "BOX",
-      label: "BOX",
-    },
-    {
-      value: "LTR",
-      label: "LTR",
-    },
-  ];
+  const [unitOptions, setUnitOptions] = useState<SelectOption[]>([]);
 
-  const itemGroupIDOptions: SelectOption[] = [
-    {
-      value: "01",
-      label: "01",
-    },
-    {
-      value: "02",
-      label: "02",
-    },
-  ];
+  /* =========================================================
+     LOAD UNIT LIST (lkpUnit dropdown)
+  ========================================================= */
 
-  const itemGroupNameOptions: SelectOption[] = [
-    {
-      value: "General",
-      label: "General",
-    },
-    {
-      value: "Food",
-      label: "Food",
-    },
-    {
-      value: "Electronics",
-      label: "Electronics",
-    },
-  ];
+  useEffect(() => {
+    const loadUnitList = async () => {
+      try {
+        const CoID = localStorage.getItem("CoID");
 
-  const supplierIDOptions: SelectOption[] = [
-    {
-      value: "SUP001",
-      label: "SUP001",
-    },
-    {
-      value: "SUP002",
-      label: "SUP002",
-    },
-  ];
+        if (!CoID) {
+          toast.error("getUnitList: no CoID in localStorage");
+          return;
+        }
 
-  const supplierNameOptions: SelectOption[] = [
-    {
-      value: "Supplier One",
-      label: "Supplier One",
-    },
-    {
-      value: "Supplier Two",
-      label: "Supplier Two",
-    },
-  ];
+        const response = await fetch(
+          `${import.meta.env.VITE_API_URL}/Item/getUnitList?CoID=${CoID}`
+        );
 
-  const branchOptions: SelectOption[] = [
-    {
-      value: "JD",
-      label: "JD",
-    },
-    {
-      value: "DXB",
-      label: "DXB",
-    },
-    {
-      value: "AUH",
-      label: "AUH",
-    },
-  ];
+        if (!response.ok) {
+          throw new Error(`HTTP Error: ${response.status}`);
+        }
+
+        const result = await response.json();
+
+        if (!result.success) {
+          console.error("getUnitList failed:", result.message);
+          toast.error(`getUnitList failed: ${result.message}`);
+          return;
+        }
+
+        const options: SelectOption[] = (result.data || []).map(
+          (row: { funit: string }) => ({
+            value: row.funit,
+            label: row.funit,
+          })
+        );
+
+        setUnitOptions(options);
+      } catch (error) {
+        console.error("getUnitList error:", error);
+        toast.error(`getUnitList error: ${error instanceof Error ? error.message : String(error)}`);
+      }
+    };
+
+    loadUnitList();
+  }, []);
+
+  /* =========================================================
+     LOAD ITEM GROUP LIST (lkpItemGroupID dropdown; selecting
+     an ID fills lkpItemGroupName automatically)
+  ========================================================= */
+
+  const [itemGroupList, setItemGroupList] = useState<
+    { fitemgroupid: string; fitemgroupname: string }[]
+  >([]);
+
+  useEffect(() => {
+    const loadItemGroupList = async () => {
+      try {
+        const CoID = localStorage.getItem("CoID");
+
+        if (!CoID) {
+          toast.error("getItemGroupList: no CoID in localStorage");
+          return;
+        }
+
+        const response = await fetch(
+          `${import.meta.env.VITE_API_URL}/Item/getItemGroupList?CoID=${CoID}`
+        );
+
+        if (!response.ok) {
+          throw new Error(`HTTP Error: ${response.status}`);
+        }
+
+        const result = await response.json();
+
+        if (!result.success) {
+          console.error("getItemGroupList failed:", result.message);
+          toast.error(`getItemGroupList failed: ${result.message}`);
+          return;
+        }
+
+        setItemGroupList(result.data || []);
+      } catch (error) {
+        console.error("getItemGroupList error:", error);
+        toast.error(`getItemGroupList error: ${error instanceof Error ? error.message : String(error)}`);
+      }
+    };
+
+    loadItemGroupList();
+  }, []);
+
+  const itemGroupIDOptions: SelectOption[] = itemGroupList.map(
+    (group) => ({
+      value: group.fitemgroupid,
+      label: group.fitemgroupid,
+    })
+  );
+
+  const itemGroupNameOptions: SelectOption[] = itemGroupList.map(
+    (group) => ({
+      value: group.fitemgroupname,
+      label: group.fitemgroupname,
+    })
+  );
+
+  /* =========================================================
+     LOAD SUPPLIER LIST (lkpSupplierID dropdown; selecting
+     an ID fills lkpSupplierName automatically)
+  ========================================================= */
+
+  const [supplierList, setSupplierList] = useState<
+    { fcsaccountid: string; fcsaccountname: string }[]
+  >([]);
+
+  useEffect(() => {
+    const loadSupplierList = async () => {
+      try {
+        const CoID = localStorage.getItem("CoID");
+
+        if (!CoID) {
+          toast.error("getSupplierList: no CoID in localStorage");
+          return;
+        }
+
+        const response = await fetch(
+          `${import.meta.env.VITE_API_URL}/Item/getSupplierList?CoID=${CoID}`
+        );
+
+        if (!response.ok) {
+          throw new Error(`HTTP Error: ${response.status}`);
+        }
+
+        const result = await response.json();
+
+        if (!result.success) {
+          console.error("getSupplierList failed:", result.message);
+          toast.error(`getSupplierList failed: ${result.message}`);
+          return;
+        }
+
+        setSupplierList(result.data || []);
+      } catch (error) {
+        console.error("getSupplierList error:", error);
+        toast.error(`getSupplierList error: ${error instanceof Error ? error.message : String(error)}`);
+      }
+    };
+
+    loadSupplierList();
+  }, []);
+
+  const supplierIDOptions: SelectOption[] = supplierList.map(
+    (supplier) => ({
+      value: supplier.fcsaccountid,
+      label: supplier.fcsaccountid,
+    })
+  );
+
+  const supplierNameOptions: SelectOption[] = supplierList.map(
+    (supplier) => ({
+      value: supplier.fcsaccountname,
+      label: supplier.fcsaccountname,
+    })
+  );
+
+  /* =========================================================
+     LOAD BRANCH LIST (lkpBranch dropdown, grid rows)
+  ========================================================= */
+
+  const [branchOptions, setBranchOptions] = useState<SelectOption[]>([]);
+
+  useEffect(() => {
+    const loadBranchList = async () => {
+      try {
+        const CoID = localStorage.getItem("CoID");
+        const userId = localStorage.getItem("userID");
+
+        if (!CoID || !userId) {
+          toast.error("getBranchList: no CoID/userId in localStorage");
+          return;
+        }
+
+        const response = await fetch(
+          `${import.meta.env.VITE_API_URL}/Item/getBranchList?CoID=${CoID}&userId=${userId}`
+        );
+
+        if (!response.ok) {
+          throw new Error(`HTTP Error: ${response.status}`);
+        }
+
+        const result = await response.json();
+
+        if (!result.success) {
+          console.error("getBranchList failed:", result.message);
+          toast.error(`getBranchList failed: ${result.message}`);
+          return;
+        }
+
+        const options: SelectOption[] = (result.data || []).map(
+          (row: { fbrid: string; fbrname: string }) => ({
+            value: row.fbrid,
+            label: row.fbrname,
+          })
+        );
+
+        setBranchOptions(options);
+      } catch (error) {
+        console.error("getBranchList error:", error);
+        toast.error(`getBranchList error: ${error instanceof Error ? error.message : String(error)}`);
+      }
+    };
+
+    loadBranchList();
+  }, []);
 
   /* =========================================================
      UPDATE TABLE ROW
@@ -256,32 +396,261 @@ const ItemPage: React.FC = () => {
      BUTTON HANDLERS
   ========================================================= */
 
-  const handleSave = () => {
-    console.log("Save", {
-      txtItemID,
-      txtItemName,
-      txtItemDescription,
-      lkpUnit,
-      txtPacking,
-      txtCBM,
-      lkpItemGroupID,
-      lkpItemGroupName,
-      lkpSupplierID,
-      lkpSupplierName,
-      txtSupplierItemID,
-      txtReorderLevel,
-      txtReorderQty,
-      chkAllBranches,
-      rows,
-    });
+  const handleSave = async () => {
+    if (!txtItemID || !txtItemName || !lkpUnit || !lkpItemGroupID || !lkpSupplierID || !txtSupplierItemID) {
+      toast.warning("Item ID, Item Name, Unit, Item Group, Supplier and Supplier Item ID are required.");
+      return;
+    }
+
+    const validRows = rows.filter((row) => row.lkpBranch);
+
+    if (validRows.length === 0) {
+      toast.warning("At least one Branch row is required.");
+      return;
+    }
+
+    const CoID = localStorage.getItem("CoID");
+    const userId = localStorage.getItem("userID");
+
+    if (!CoID || !userId) {
+      toast.error("Company ID / User ID not found. Please log in again.");
+      return;
+    }
+
+    try {
+      const response = await fetch(
+        `${import.meta.env.VITE_API_URL}/Item/saveItem`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            CoID,
+            userId,
+            txtItemID,
+            txtItemName,
+            txtItemDescription: txtItemDescription || null,
+            lkpUnit,
+            txtPacking,
+            txtCBM,
+            lkpItemGroupID,
+            lkpSupplierID: lkpSupplierID || null,
+            txtSupplierItemID,
+            txtReorderLevel,
+            txtReorderQty,
+            rows: validRows.map((row) => ({
+              lkpBranch: row.lkpBranch,
+              txtItemLocation: row.txtItemLocation || null,
+              chkAllowSaleBelowCost: row.chkAllowSaleBelowCost,
+              chkInactive: row.chkInactive,
+            })),
+          }),
+        }
+      );
+
+      const result = await response.json();
+
+      if (!response.ok || !result.success) {
+        toast.error(result.message || "Item could not be saved.");
+        return;
+      }
+
+      toast.success(result.message || "Item saved successfully.");
+    } catch (error) {
+      console.error("saveItem error:", error);
+      toast.error("Cannot connect to Item API.");
+    }
   };
 
-  const handleFind = () => {
-    console.log("Find");
+  const handleFind = async () => {
+    if (!txtItemID) {
+      toast.warning("Item ID is required.");
+      return;
+    }
+
+    const CoID = localStorage.getItem("CoID");
+
+    if (!CoID) {
+      toast.error("Company ID not found. Please log in again.");
+      return;
+    }
+
+    try {
+      const response = await fetch(
+        `${import.meta.env.VITE_API_URL}/Item/getItem?CoID=${CoID}&txtItemID=${txtItemID}`
+      );
+
+      const result = await response.json();
+
+      if (!response.ok || !result.success) {
+        toast.error(result.message || "Item not found.");
+        return;
+      }
+
+      const header = result.header;
+
+      setTxtItemName(header.fitemname || "");
+      setTxtItemDescription(header.fitemdescription || "");
+      setLkpUnit(header.funit || "");
+      setTxtPacking(String(header.fpacking ?? "0"));
+      setTxtCBM(String(header.fcbm ?? "0.0000"));
+
+      setLkpItemGroupID(header.fitemgroupid || "");
+      setLkpItemGroupName(
+        itemGroupList.find((group) => group.fitemgroupid === header.fitemgroupid)
+          ?.fitemgroupname || ""
+      );
+
+      setLkpSupplierID(header.fsupplierid || "");
+      setLkpSupplierName(
+        supplierList.find((supplier) => supplier.fcsaccountid === header.fsupplierid)
+          ?.fcsaccountname || ""
+      );
+
+      setTxtSupplierItemID(header.fsupplieritemid || "");
+      setTxtReorderLevel(String(header.freorderlevel ?? "0"));
+      setTxtReorderQty(String(header.freorderqty ?? "0"));
+
+      const foundRows: BranchRow[] = (result.rows || []).map(
+        (row: {
+          fbrid: string;
+          fitemlocation: string | null;
+          fallowsalebelowcost: boolean;
+          finactive: boolean;
+        }, index: number) => ({
+          id: index + 1,
+          lkpBranch: row.fbrid,
+          txtItemLocation: row.fitemlocation || "",
+          chkAllowSaleBelowCost: row.fallowsalebelowcost,
+          chkInactive: row.finactive,
+        })
+      );
+
+      const blankRowsNeeded = Math.max(0, 5 - foundRows.length);
+      const blankRows: BranchRow[] = Array.from(
+        { length: blankRowsNeeded },
+        (_, index) => ({
+          id: foundRows.length + index + 1,
+          lkpBranch: "",
+          txtItemLocation: "",
+          chkInactive: false,
+          chkAllowSaleBelowCost: false,
+        })
+      );
+
+      setRows([...foundRows, ...blankRows]);
+
+      toast.success("Item loaded.");
+    } catch (error) {
+      console.error("getItem error:", error);
+      toast.error("Cannot connect to Item API.");
+    }
   };
 
-  const handleDelete = () => {
-    console.log("Delete");
+  const handleDelete = async () => {
+    if (!txtItemID) {
+      toast.warning("Item ID is required.");
+      return;
+    }
+
+    const shouldDelete = window.confirm(
+      "Are you sure you want to delete this item?"
+    );
+
+    if (!shouldDelete) {
+      return;
+    }
+
+    const CoID = localStorage.getItem("CoID");
+    const userId = localStorage.getItem("userID");
+
+    if (!CoID || !userId) {
+      toast.error("Company ID / User ID not found. Please log in again.");
+      return;
+    }
+
+    try {
+      const response = await fetch(
+        `${import.meta.env.VITE_API_URL}/Item/deleteItem`,
+        {
+          method: "DELETE",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ CoID, userId, txtItemID }),
+        }
+      );
+
+      const result = await response.json();
+
+      if (!response.ok || !result.success) {
+        toast.error(result.message || "Item could not be deleted.");
+        return;
+      }
+
+      toast.success(result.message || "Item deleted successfully.");
+      handleClear();
+    } catch (error) {
+      console.error("deleteItem error:", error);
+      toast.error("Cannot connect to Item API.");
+    }
+  };
+
+  const handleDeleteBranchRow = async (row: BranchRow) => {
+    if (!txtItemID) {
+      toast.warning("Item ID is required.");
+      return;
+    }
+
+    if (!row.lkpBranch) {
+      return;
+    }
+
+    const shouldDelete = window.confirm(
+      "Are you sure you want to delete this branch row?"
+    );
+
+    if (!shouldDelete) {
+      return;
+    }
+
+    const CoID = localStorage.getItem("CoID");
+    const userId = localStorage.getItem("userID");
+
+    if (!CoID || !userId) {
+      toast.error("Company ID / User ID not found. Please log in again.");
+      return;
+    }
+
+    try {
+      const response = await fetch(
+        `${import.meta.env.VITE_API_URL}/Item/deleteItemBranchRow`,
+        {
+          method: "DELETE",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            CoID,
+            userId,
+            txtItemID,
+            lkpBranch: row.lkpBranch,
+          }),
+        }
+      );
+
+      const result = await response.json();
+
+      if (!response.ok || !result.success) {
+        toast.error(result.message || "Branch row could not be deleted.");
+        return;
+      }
+
+      toast.success(result.message || "Branch row deleted successfully.");
+
+      updateRow(row.id, "lkpBranch", "");
+      updateRow(row.id, "txtItemLocation", "");
+      updateRow(row.id, "chkAllowSaleBelowCost", false);
+      updateRow(row.id, "chkInactive", false);
+    } catch (error) {
+      console.error("deleteItemBranchRow error:", error);
+      toast.error("Cannot connect to Item API.");
+    }
   };
 
   const handleClear = () => {
@@ -569,6 +938,7 @@ const ItemPage: React.FC = () => {
       recenter this page.
     */
     <div
+      onKeyDown={handleEnterAsTab}
       className="
         min-h-screen
         w-full
@@ -849,7 +1219,21 @@ const ItemPage: React.FC = () => {
                     (option) => option.value === lkpItemGroupID,
                   ) || null
                 }
-                onChange={(option) => setLkpItemGroupID(option?.value || "")}
+                onChange={(option) => {
+                  setLkpItemGroupID(
+                    option?.value || "",
+                  );
+
+                  const matchedGroup = itemGroupList.find(
+                    (group) =>
+                      group.fitemgroupid ===
+                      option?.value,
+                  );
+
+                  setLkpItemGroupName(
+                    matchedGroup?.fitemgroupname || "",
+                  );
+                }}
                 styles={reactSelectStyles}
                 isClearable
               />
@@ -863,9 +1247,8 @@ const ItemPage: React.FC = () => {
                     (option) => option.value === lkpItemGroupName,
                   ) || null
                 }
-                onChange={(option) => setLkpItemGroupName(option?.value || "")}
+                isDisabled
                 styles={reactSelectStyles}
-                isClearable
               />
             </div>
 
@@ -883,10 +1266,12 @@ const ItemPage: React.FC = () => {
               "
             >
               <label htmlFor="lkpSupplierID" className={labelClass}>
+                {requiredDot}
                 Supplier :
               </label>
 
               <Select
+                required
                 inputId="lkpSupplierID"
                 name="lkpSupplierID"
                 options={supplierIDOptions}
@@ -895,7 +1280,21 @@ const ItemPage: React.FC = () => {
                     (option) => option.value === lkpSupplierID,
                   ) || null
                 }
-                onChange={(option) => setLkpSupplierID(option?.value || "")}
+                onChange={(option) => {
+                  setLkpSupplierID(
+                    option?.value || "",
+                  );
+
+                  const matchedSupplier = supplierList.find(
+                    (supplier) =>
+                      supplier.fcsaccountid ===
+                      option?.value,
+                  );
+
+                  setLkpSupplierName(
+                    matchedSupplier?.fcsaccountname || "",
+                  );
+                }}
                 styles={reactSelectStyles}
                 isClearable
               />
@@ -909,9 +1308,8 @@ const ItemPage: React.FC = () => {
                     (option) => option.value === lkpSupplierName,
                   ) || null
                 }
-                onChange={(option) => setLkpSupplierName(option?.value || "")}
+                isDisabled
                 styles={reactSelectStyles}
-                isClearable
               />
             </div>
 
@@ -935,6 +1333,7 @@ const ItemPage: React.FC = () => {
                   marginLeft: "-10px",
                 }}
               >
+                {requiredDot}
                 Supplier Item ID :
               </label>
 
@@ -1030,7 +1429,36 @@ const ItemPage: React.FC = () => {
                   name="chkAllBranches"
                   type="checkbox"
                   checked={chkAllBranches}
-                  onChange={(e) => setChkAllBranches(e.target.checked)}
+                  onChange={(e) => {
+                    const checked = e.target.checked;
+                    setChkAllBranches(checked);
+
+                    if (checked) {
+                      setRows((currentRows) => {
+                        const filledRows: BranchRow[] = branchOptions.map(
+                          (branch, index) => ({
+                            id: currentRows[index]?.id ?? index + 1,
+                            lkpBranch: branch.value,
+                            txtItemLocation: "",
+                            chkAllowSaleBelowCost: false,
+                            chkInactive: false,
+                          })
+                        );
+
+                        const blankRows: BranchRow[] = currentRows
+                          .slice(branchOptions.length)
+                          .map((row) => ({
+                            ...row,
+                            lkpBranch: "",
+                            txtItemLocation: "",
+                            chkAllowSaleBelowCost: false,
+                            chkInactive: false,
+                          }));
+
+                        return [...filledRows, ...blankRows];
+                      });
+                    }
+                  }}
                   className="
                     h-[15px]
                     w-[15px]
@@ -1181,25 +1609,55 @@ const ItemPage: React.FC = () => {
                           p-0
                         "
                       >
-                        <Select
-                          inputId={`lkpBranch_${row.id}`}
-                          name={`lkpBranch_${row.id}`}
-                          options={branchOptions}
-                          value={
-                            branchOptions.find(
-                              (option) => option.value === row.lkpBranch,
-                            ) || null
-                          }
-                          onChange={(option) =>
-                            updateRow(row.id, "lkpBranch", option?.value || "")
-                          }
-                          styles={tableSelectStyles}
-                          isClearable
-                          menuPortalTarget={
-                            document.body
-                          }
-                          menuPosition="fixed"
-                        />
+                        <div className="flex h-[32px] items-stretch">
+                          <div className="flex-1 overflow-hidden">
+                            <Select
+                              inputId={`lkpBranch_${row.id}`}
+                              name={`lkpBranch_${row.id}`}
+                              options={branchOptions}
+                              value={
+                                branchOptions.find(
+                                  (option) =>
+                                    option.value ===
+                                    row.lkpBranch,
+                                ) || null
+                              }
+                              onChange={(option) =>
+                                updateRow(
+                                  row.id,
+                                  "lkpBranch",
+                                  option?.value || "",
+                                )
+                              }
+                              styles={tableSelectStyles}
+                              menuPortalTarget={
+                                document.body
+                              }
+                              menuPosition="fixed"
+                            />
+                          </div>
+
+                          {row.lkpBranch && (
+                            <button
+                              type="button"
+                              onClick={() =>
+                                handleDeleteBranchRow(row)
+                              }
+                              className="
+                                h-full
+                                w-[20px]
+                                self-stretch
+                                flex
+                                items-center
+                                justify-center
+                                text-slate-400
+                                hover:text-red-500
+                              "
+                            >
+                              <X size={12} />
+                            </button>
+                          )}
+                        </div>
                       </td>
 
                       {/* =====================================
@@ -1323,9 +1781,9 @@ const ItemPage: React.FC = () => {
             >
               <span className={textClass}>
                 <span className="underline decoration-2 underline-offset-1">
-                  F
+                  S
                 </span>
-                ind
+                earch
               </span>
             </button>
 
