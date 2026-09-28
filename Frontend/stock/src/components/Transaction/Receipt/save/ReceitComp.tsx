@@ -988,6 +988,7 @@ export const ReceiptForm: React.FC<ReceiptFormProps> = ({
                 height: "28px",
 
                 width: "80px",
+                minWidth: "80px",
 
                 borderColor: "#d7dee7",
 
@@ -1006,10 +1007,18 @@ export const ReceiptForm: React.FC<ReceiptFormProps> = ({
 
               menu: (base: any) => ({
                 ...base,
-
-                width: "120px",
-
+                width: "150px",
+                minWidth: "150px",
                 zIndex: 99999,
+              }),
+
+              option: (base: any, state: any) => ({
+                ...base,
+                padding: 0, // was "6px 10px"; the cells handle padding now
+                fontSize: "12px",
+                backgroundColor: state.isFocused ? "#eef8f3" : "#fff",
+                color: "#222",
+                cursor: "pointer",
               }),
 
               menuPortal: (base: any) => ({
