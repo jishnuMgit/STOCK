@@ -13,6 +13,7 @@ import SetDocumentNoRouter from "./routes/SettingRoutes/SetdocumentnoRouter.js";
 import SetBranchInfoRouter from "./routes/SettingRoutes/SetBranchInfoRouter.js";
 import menuRoutes from "./routes/MenuRoute.js";
 import ItemPageRouter from "./routes/Purchase/Setup/ItemPageRouter.js";
+import UserLoginRouter from "./routes/SecurityRoutes/UserLoginRouter.js";
 
 import pool from "./DB/db.js";
 
@@ -59,6 +60,7 @@ app.use("/api/DocumentNo", SetDocumentNoRouter);
 app.use("/api/BranchInfo", SetBranchInfoRouter);
 app.use("/api/menu", menuRoutes);
 app.use("/api/Item", ItemPageRouter);
+app.use("/api/UserLogin", UserLoginRouter);
 
 app.listen(5000, "0.0.0.0", () => {
   console.log(`Server running on port 5000`);
