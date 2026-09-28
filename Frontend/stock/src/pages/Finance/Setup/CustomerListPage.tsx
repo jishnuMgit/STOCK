@@ -298,7 +298,7 @@ const CustomerList: React.FC = () => {
                 SEARCH
             ======================================================== */}
 
-            <div className="col-span-2 w-[94.8%]">
+            <div className="col-span-2 w-[93%]">
               <div className="relative w-full">
                 {/* SEARCH ICON */}
 
@@ -350,7 +350,7 @@ const CustomerList: React.FC = () => {
 
             <div
               className="
-                -ml-[40px]
+                -ml-[55px]
                 flex
                 items-center
                 pl-2
