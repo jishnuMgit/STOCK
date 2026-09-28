@@ -1018,7 +1018,7 @@ const SetDocumentNo: React.FC = () => {
 
                     <th
                       className="
-            w-[90px]
+            w-[75px]
             border-r
             border-slate-200
             px-2
@@ -1033,7 +1033,7 @@ const SetDocumentNo: React.FC = () => {
 
                     <th
                       className="
-            w-[120px]
+            w-[100px]
             border-r
             border-slate-200
             px-2
