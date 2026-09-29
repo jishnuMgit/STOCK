@@ -1,10 +1,27 @@
-
 import React, { useMemo, useState } from "react";
-import { ChevronRight, ChevronDown } from "lucide-react";
+import Select, {
+  components,
+  type MenuListProps,
+  type StylesConfig,
+} from "react-select";
 
 // ============================================================
 // TYPES
 // ============================================================
+
+interface AccountSetting {
+  id: number;
+  parameter: string;
+  accountId: string;
+  accountName: string;
+  groupHead: string;
+}
+
+interface DropdownOption {
+  value: string;
+  label: string;
+  secondary?: string;
+}
 
 interface ParameterOption {
   parameter: string;
@@ -16,119 +33,8 @@ interface AccountOption {
   accountName: string;
 }
 
-interface AccountSetting {
-  id: number;
-  parameter: string;
-  accountId: string;
-  accountName: string;
-  groupHead: string;
-}
-
 // ============================================================
-// SAMPLE PARAMETER DATA
-// Replace with your API data when available.
-// ============================================================
-
-const parameterOptions: ParameterOption[] = [
-  { parameter: "CASH", type: "G" },
-  { parameter: "BANK", type: "G" },
-  { parameter: "Cash Sales", type: "G" },
-  { parameter: "Receivable 1", type: "G" },
-  { parameter: "Payable (Airline)", type: "G" },
-  { parameter: "Payable (Tour)", type: "G" },
-  { parameter: "Profit & Loss", type: "G" },
-];
-
-// ============================================================
-// ACCOUNT DATA
-// ============================================================
-
-const accountOptions: AccountOption[] = [
-  { accountId: "1101001", accountName: "PETTY CASH" },
-  { accountId: "1102001", accountName: "AL RAJHI BANK" },
-  {
-    accountId: "1102002",
-    accountName: "SAUDI NATIONAL BANK - SNB",
-  },
-  {
-    accountId: "1102003",
-    accountName: "SAUDI BRITISH BANK",
-  },
-  {
-    accountId: "1102004",
-    accountName: "BANQUE SAUDI FRANSI - BSF CVN",
-  },
-  {
-    accountId: "1102005",
-    accountName: "BSF- REGION ACCOUNT",
-  },
-  {
-    accountId: "1102006",
-    accountName: "BANQUE SAUDI FRANSI - BSF ACE",
-  },
-  { accountId: "1103002", accountName: "ECL ALLOWANCE" },
-  {
-    accountId: "1104001",
-    accountName: "ACE HEAD OFFICE (INTER COMPANY)",
-  },
-  { accountId: "1105001", accountName: "SKAB GROUP COMPANY" },
-  {
-    accountId: "1105002",
-    accountName: "HERA'A INTERNATIONAL MALL",
-  },
-  { accountId: "1105003", accountName: "NAJRAN WATER" },
-  {
-    accountId: "1105004",
-    accountName: "MOVEINN JEDDAH HOTEL",
-  },
-  {
-    accountId: "1107001",
-    accountName: "COMMISSION RECEIVABLES - SAUDIA",
-  },
-  { accountId: "1202001", accountName: "ACC. AMORTIZING FOR LEASHOLD" },
-  {
-    accountId: "1202006",
-    accountName: "ACC. DEPR. FOR AIR CONDITIONS",
-  },
-  {
-    accountId: "1202009",
-    accountName: "ACC. DEPR. FOR DATA PROCESSING EQUIP",
-  },
-  {
-    accountId: "1202003",
-    accountName: "ACC. DEPR. FOR ELECTRICAL EQUIPMENTS",
-  },
-  {
-    accountId: "1202004",
-    accountName: "ACC. DEPR. FOR FURNITURE AND DECORATION",
-  },
-  {
-    accountId: "1202005",
-    accountName: "ACC. DEPR. FOR IRON SAFES",
-  },
-  {
-    accountId: "1202008",
-    accountName: "ACC. DEPR. FOR MOTOR VEHICLES",
-  },
-  {
-    accountId: "1202007",
-    accountName: "ACC. DEPR. FOR NEON LIGHT FITTINGS",
-  },
-  {
-    accountId: "1202002",
-    accountName: "ACC. DEPR. FOR OFFICE EQUIPMENT",
-  },
-  {
-    accountId: "1202010",
-    accountName: "ACC. DEPR. FOR SOFTWARE",
-  },
-  { accountId: "2103001", accountName: "ACCRUED EXPENSES" },
-  { accountId: "2103002", accountName: "ACCRUED OFFICE RENT" },
-  { accountId: "6001", accountName: "ABC TRADING" },
-];
-
-// ============================================================
-// INITIAL TABLE DATA
+// INITIAL DATA
 // ============================================================
 
 const initialData: AccountSetting[] = [
@@ -156,8 +62,8 @@ const initialData: AccountSetting[] = [
   {
     id: 4,
     parameter: "Receivable 1",
-    accountId: "210201",
-    accountName: "ADVANCE FROM CUSTOMERS",
+    accountId: "110301",
+    accountName: "CLIENTS RECEIVABLES",
     groupHead: "G",
   },
   {
@@ -184,590 +90,767 @@ const initialData: AccountSetting[] = [
 ];
 
 // ============================================================
-// DROPDOWN TYPES
+// PARAMETER OPTIONS
 // ============================================================
 
-interface DropdownProps {
-  value: string;
-  placeholder?: string;
-  options: ParameterOption[] | AccountOption[];
-  kind: "parameter" | "accountId" | "accountName";
-  onSelect: (option: ParameterOption | AccountOption) => void;
-  menuWidth: number | string;
-  firstColumnWidth: number | string;
-}
+const parameterOptions: ParameterOption[] = [
+  { parameter: "CASH", type: "G" },
+  { parameter: "BANK", type: "G" },
+  { parameter: "Cash Sales", type: "G" },
+  { parameter: "Receivable 1", type: "G" },
+  { parameter: "Payable (Airline)", type: "G" },
+  { parameter: "Payable (Tour)", type: "G" },
+  { parameter: "Profit & Loss", type: "G" },
+];
 
 // ============================================================
-// REUSABLE DROPDOWN
+// ACCOUNT OPTIONS
+// Replace this array with your API response when required.
 // ============================================================
 
-const DropdownInput: React.FC<DropdownProps> = ({
-  value,
-  placeholder,
-  options,
-  kind,
-  onSelect,
-  menuWidth,
-  firstColumnWidth,
-}) => {
-  const [open, setOpen] = useState(false);
-  const [query, setQuery] = useState("");
+const accountOptions: AccountOption[] = [
+  { accountId: "110100", accountName: "CASH" },
+  { accountId: "110200", accountName: "BANK" },
+  { accountId: "110400", accountName: "ACE TRAVEL GROUP" },
+  { accountId: "110301", accountName: "CLIENTS RECEIVABLES" },
+  { accountId: "120201", accountName: "ADVANCE FROM CUSTOMERS" },
+  { accountId: "220100", accountName: "PROVISIONS" },
+  { accountId: "220200", accountName: "EOSB - PROVISIONS" },
+  { accountId: "230106", accountName: "CURRENT YEAR EARNINGS" },
+];
 
-  const isParameter = kind === "parameter";
-  const isAccountId = kind === "accountId";
+// ============================================================
+// EMPTY ROW
+// ============================================================
 
-  const filteredOptions = useMemo(() => {
-    const search = query.trim().toLowerCase();
+const blankRow = (id: number): AccountSetting => ({
+  id,
+  parameter: "",
+  accountId: "",
+  accountName: "",
+  groupHead: "",
+});
 
-    if (!search) return options;
+// ============================================================
+// CUSTOM DROPDOWN HEADER
+// secondHeader = null renders a single-column header.
+// ============================================================
 
-    return options.filter((option) => {
-      if ("parameter" in option) {
-        return (
-          option.parameter.toLowerCase().includes(search) ||
-          option.type.toLowerCase().includes(search)
-        );
-      }
-
-      return (
-        option.accountId.toLowerCase().includes(search) ||
-        option.accountName.toLowerCase().includes(search)
-      );
-    });
-  }, [options, query]);
-
-  const handleSelect = (
-    option: ParameterOption | AccountOption
-  ) => {
-    onSelect(option);
-    setOpen(false);
-    setQuery("");
-  };
-
-  return (
-    <div className="relative h-full w-full min-w-0">
-      <input
-        value={open ? query : value}
-        placeholder={placeholder}
-        autoComplete="off"
-        onFocus={() => {
-          setQuery("");
-          setOpen(true);
-        }}
-        onChange={(event) => {
-          setQuery(event.target.value);
-          setOpen(true);
-        }}
-        onKeyDown={(event) => {
-          if (event.key === "Escape") {
-            setOpen(false);
-            setQuery("");
-          }
-
-          if (event.key === "ArrowDown") {
-            event.preventDefault();
-            setOpen(true);
-          }
-        }}
+const createMenuList = (
+  firstHeader: string,
+  secondHeader: string | null,
+  gridColumns: string
+) => {
+  const CustomMenuList = (
+    props: MenuListProps<DropdownOption, false>
+  ) => (
+    <components.MenuList {...props}>
+      <div
         className="
-          h-full
-          w-full
-          min-w-0
-          border-0
-          bg-transparent
-          px-[7px]
-          pr-5
-          text-[11px]
-          text-slate-700
-          outline-none
-          focus:bg-blue-50
+          sticky top-0 z-[2]
+          grid h-[27px]
+          border-b border-slate-300
+          bg-[#eeeeee]
+          text-[12px] font-medium text-slate-800
         "
-      />
-
-      <button
-        type="button"
-        tabIndex={-1}
-        onMouseDown={(event) => event.preventDefault()}
-        onClick={() => {
-          setOpen((previous) => !previous);
-          setQuery("");
-        }}
-        className="
-          absolute
-          right-[3px]
-          top-1/2
-          z-[1]
-          flex
-          -translate-y-1/2
-          items-center
-          justify-center
-          text-[9px]
-          text-slate-500
-        "
-        aria-label="Toggle dropdown"
+        style={{ gridTemplateColumns: gridColumns }}
       >
-        {open ? (
-          <ChevronDown size={10} />
-        ) : (
-          <span>▼</span>
-        )}
-      </button>
+        <div
+          className={`flex min-w-0 items-center px-[7px] ${
+            secondHeader ? "border-r border-slate-300" : ""
+          }`}
+        >
+          {firstHeader}
+        </div>
 
-      {open && (
-        <>
-          <button
-            type="button"
-            aria-label="Close dropdown"
-            className="fixed inset-0 z-[100] cursor-default bg-transparent"
-            onMouseDown={() => {
-              setOpen(false);
-              setQuery("");
-            }}
-          />
-
-          <div
-            className="
-              absolute
-              left-0
-              top-full
-              z-[101]
-              max-h-[390px]
-              overflow-auto
-              border
-              border-slate-400
-              bg-white
-              shadow-[0_4px_8px_rgba(0,0,0,0.20)]
-            "
-            style={{
-              width: menuWidth,
-              minWidth: "100%",
-              maxWidth: "calc(100vw - 28px)",
-            }}
-          >
-            {/* DROPDOWN HEADERS */}
-
-            <div
-              className="sticky top-0 z-[2] grid h-[26px] border-b border-slate-300 bg-[#eeeeee] text-[12px] font-medium text-slate-800"
-              style={{
-                gridTemplateColumns: isParameter
-                  ? `${firstColumnWidth}px minmax(80px, 1fr)`
-                  : isAccountId
-                    ? `${firstColumnWidth}px minmax(180px, 1fr)`
-                    : `minmax(180px, 1fr) ${firstColumnWidth}px`,
-              }}
-            >
-              {isParameter ? (
-                <>
-                  <div className="flex items-center px-[7px]">
-                    Parameter
-                  </div>
-                  <div className="flex items-center px-[7px]">
-                    Type
-                  </div>
-                </>
-              ) : isAccountId ? (
-                <>
-                  <div className="flex items-center px-[7px]">
-                    Account ID
-                  </div>
-                  <div className="flex items-center px-[7px]">
-                    Account Name
-                  </div>
-                </>
-              ) : (
-                <>
-                  <div className="flex items-center px-[7px]">
-                    Account Name
-                  </div>
-                  <div className="flex items-center px-[7px]">
-                    Account ID
-                  </div>
-                </>
-              )}
-            </div>
-
-            {/* DROPDOWN OPTIONS */}
-
-            {filteredOptions.map((option, index) => {
-              if ("parameter" in option) {
-                return (
-                  <button
-                    type="button"
-                    key={`${option.parameter}-${index}`}
-                    onMouseDown={(event) => event.preventDefault()}
-                    onClick={() => handleSelect(option)}
-                    className="
-                      grid
-                      min-h-[27px]
-                      w-full
-                      border-b
-                      border-slate-100
-                      text-left
-                      text-[12px]
-                      text-slate-700
-                      hover:bg-[#e8f7f0]
-                    "
-                    style={{
-                      gridTemplateColumns: `${firstColumnWidth}px minmax(80px, 1fr)`,
-                    }}
-                  >
-                    <span className="truncate px-[7px] py-[5px]">
-                      {option.parameter}
-                    </span>
-                    <span className="truncate px-[7px] py-[5px]">
-                      {option.type}
-                    </span>
-                  </button>
-                );
-              }
-
-              return (
-                <button
-                  type="button"
-                  key={`${option.accountId}-${index}`}
-                  onMouseDown={(event) => event.preventDefault()}
-                  onClick={() => handleSelect(option)}
-                  className="
-                    grid
-                    min-h-[27px]
-                    w-full
-                    border-b
-                    border-slate-100
-                    text-left
-                    text-[12px]
-                    text-slate-700
-                    hover:bg-[#e8f7f0]
-                  "
-                  style={{
-                    gridTemplateColumns: isAccountId
-                      ? `${firstColumnWidth}px minmax(180px, 1fr)`
-                      : `minmax(180px, 1fr) ${firstColumnWidth}px`,
-                  }}
-                >
-                  {isAccountId ? (
-                    <>
-                      <span className="truncate px-[7px] py-[5px]">
-                        {option.accountId}
-                      </span>
-                      <span className="truncate px-[7px] py-[5px]">
-                        {option.accountName}
-                      </span>
-                    </>
-                  ) : (
-                    <>
-                      <span className="truncate px-[7px] py-[5px]">
-                        {option.accountName}
-                      </span>
-                      <span className="truncate px-[7px] py-[5px]">
-                        {option.accountId}
-                      </span>
-                    </>
-                  )}
-                </button>
-              );
-            })}
-
-            {filteredOptions.length === 0 && (
-              <div className="px-3 py-4 text-[11px] text-slate-500">
-                No matching records found
-              </div>
-            )}
+        {secondHeader && (
+          <div className="flex min-w-0 items-center px-[7px]">
+            {secondHeader}
           </div>
-        </>
-      )}
-    </div>
+        )}
+      </div>
+
+      {props.children}
+    </components.MenuList>
   );
+
+  CustomMenuList.displayName = `MenuList-${firstHeader}`;
+
+  return CustomMenuList;
 };
+
+const ParameterMenuList = createMenuList(
+  "Parameter Name",
+  "Type",
+  "266px minmax(120px, 1fr)"
+);
+
+const AccountIdMenuList = createMenuList(
+  "Account ID",
+  "Account Name",
+  "120px minmax(200px, 1fr)"
+);
+
+// Account Name dropdown: name + Account ID shown as a label column
+const AccountNameMenuList = createMenuList(
+  "Account Name",
+  "Account ID",
+  "minmax(0, 1fr) 120px"
+);
+
+// ============================================================
+// REUSABLE REACT SELECT STYLES
+// ============================================================
+
+const createSelectStyles = (
+  menuWidth: number,
+  gridColumns: string
+): StylesConfig<DropdownOption, false> => ({
+  container: (base) => ({
+    ...base,
+    width: "100%",
+    height: "100%",
+    minWidth: 0,
+  }),
+
+  control: (base, state) => ({
+    ...base,
+    minHeight: "30px",
+    height: "30px",
+    width: "100%",
+    border: "none",
+    borderRadius: 0,
+    boxShadow: "none",
+    backgroundColor: "transparent",
+    cursor: "text",
+
+    "&:hover": {
+      border: "none",
+    },
+
+    ...(state.isFocused
+      ? { backgroundColor: "transparent" }
+      : {}),
+  }),
+
+  valueContainer: (base) => ({
+    ...base,
+    height: "30px",
+    minWidth: 0,
+    padding: "0 7px",
+    overflow: "hidden",
+  }),
+
+  input: (base) => ({
+    ...base,
+    margin: 0,
+    padding: 0,
+    color: "#334155",
+    fontSize: "11px",
+  }),
+
+  singleValue: (base) => ({
+    ...base,
+    margin: 0,
+    color: "#334155",
+    fontSize: "11px",
+    lineHeight: "30px",
+  }),
+
+  placeholder: (base) => ({
+    ...base,
+    margin: 0,
+    color: "#94a3b8",
+    fontSize: "11px",
+  }),
+
+  indicatorsContainer: (base) => ({
+    ...base,
+    width: "17px",
+    height: "30px",
+    flexShrink: 0,
+  }),
+
+  dropdownIndicator: (base) => ({
+    ...base,
+    width: "17px",
+    height: "30px",
+    padding: 0,
+    color: "#64748b",
+
+    "&:hover": {
+      color: "#334155",
+    },
+  }),
+
+  indicatorSeparator: () => ({
+    display: "none",
+  }),
+
+  clearIndicator: (base) => ({
+    ...base,
+    display: "none",
+  }),
+
+  menuPortal: (base) => ({
+    ...base,
+    zIndex: 99999,
+  }),
+
+  menu: (base) => ({
+    ...base,
+    width: `${menuWidth}px`,
+    minWidth: `${menuWidth}px`,
+    marginTop: 0,
+    border: "1px solid #94a3b8",
+    borderRadius: 0,
+    boxShadow: "0 5px 12px rgba(0,0,0,0.18)",
+    overflow: "hidden",
+  }),
+
+  menuList: (base) => ({
+    ...base,
+    maxHeight: "300px",
+    padding: 0,
+    overflowX: "hidden",
+    overflowY: "auto",
+  }),
+
+  option: (base, state) => ({
+    ...base,
+    display: "grid",
+    gridTemplateColumns: gridColumns,
+    alignItems: "center",
+    minHeight: "27px",
+    height: "27px",
+    padding: 0,
+    backgroundColor: state.isFocused
+      ? "#eef9f3"
+      : "#ffffff",
+    color: "#334155",
+    fontSize: "12px",
+    cursor: "pointer",
+
+    "&:active": {
+      backgroundColor: "#e0f2e9",
+    },
+  }),
+});
 
 // ============================================================
 // MAIN COMPONENT
 // ============================================================
 
 const COASettings: React.FC = () => {
-  const [rows, setRows] = useState<AccountSetting[]>(initialData);
-  const [selectedRow, setSelectedRow] = useState<number>(1);
+  const [rows, setRows] = useState<AccountSetting[]>(
+    initialData.map((row) => ({ ...row }))
+  );
 
-  const [parameter, setParameter] = useState("CASH");
-  const [accountId, setAccountId] = useState("");
-  const [accountName, setAccountName] = useState("");
-  const [groupHead, setGroupHead] = useState("G");
+  // ==========================================================
+  // OPTIONS FOR REACT SELECT
+  // ==========================================================
 
-  // ----------------------------------------------------------
-  // UPDATE A TABLE ROW
-  // ----------------------------------------------------------
+  const parameterDropdownOptions = useMemo<DropdownOption[]>(
+    () =>
+      parameterOptions.map((option) => ({
+        value: option.parameter,
+        label: option.parameter,
+        secondary: option.type,
+      })),
+    []
+  );
 
-  const updateRow = (
-    id: number,
+  const accountIdDropdownOptions = useMemo<DropdownOption[]>(
+    () =>
+      accountOptions.map((option) => ({
+        value: option.accountId,
+        label: option.accountId,
+        secondary: option.accountName,
+      })),
+    []
+  );
+
+  // secondary keeps the Account ID so selecting a name still
+  // fills the Account ID cell, even though it is not displayed.
+  const accountNameDropdownOptions = useMemo<DropdownOption[]>(
+    () =>
+      accountOptions.map((option) => ({
+        value: option.accountName,
+        label: option.accountName,
+        secondary: option.accountId,
+      })),
+    []
+  );
+
+  // ==========================================================
+  // SELECT STYLES
+  // ==========================================================
+
+  const parameterStyles = useMemo(
+     () => createSelectStyles(350, "minmax(-400px, 1fr) 120px"),
+    []
+  );
+
+  const accountIdStyles = useMemo(
+    () =>
+      createSelectStyles(
+        650,
+        "0px minmax(0px, 1fr)"
+      ),
+    []
+  );
+
+  const accountNameStyles = useMemo(
+    () => createSelectStyles(650, "minmax(-400px, 1fr) 120px"),
+    []
+  );
+
+  // ==========================================================
+  // UPDATE ONE CELL
+  // ==========================================================
+
+  const updateCell = (
+    rowIndex: number,
     field: keyof AccountSetting,
     value: string
   ) => {
-    setRows((previous) =>
-      previous.map((row) =>
-        row.id === id ? { ...row, [field]: value } : row
-      )
+    setRows((previous) => {
+      const next = [...previous];
+
+      while (next.length <= rowIndex) {
+        next.push(blankRow(next.length + 1));
+      }
+
+      next[rowIndex] = {
+        ...next[rowIndex],
+        id: rowIndex + 1,
+        [field]: value,
+      };
+
+      return next;
+    });
+  };
+
+  // ==========================================================
+  // PARAMETER SELECTION
+  // ==========================================================
+
+  const handleSelectParameter = (
+    rowIndex: number,
+    option: DropdownOption | null
+  ) => {
+    updateCell(
+      rowIndex,
+      "parameter",
+      option?.value ?? ""
     );
+
+    if (option) {
+      updateCell(
+        rowIndex,
+        "groupHead",
+        option.secondary ?? ""
+      );
+    }
   };
 
-  // ----------------------------------------------------------
-  // SELECT TABLE ROW
-  // ----------------------------------------------------------
+  // ==========================================================
+  // ACCOUNT ID SELECTION
+  // Selecting an account synchronizes its corresponding name.
+  // ==========================================================
 
-  const handleSelectRow = (row: AccountSetting) => {
-    setSelectedRow(row.id);
-    setParameter(row.parameter);
-    setAccountId(row.accountId);
-    setAccountName(row.accountName);
-    setGroupHead(row.groupHead);
+  const handleSelectAccountId = (
+    rowIndex: number,
+    option: DropdownOption | null
+  ) => {
+    updateCell(
+      rowIndex,
+      "accountId",
+      option?.value ?? ""
+    );
+
+    if (option) {
+      updateCell(
+        rowIndex,
+        "accountName",
+        option.secondary ?? ""
+      );
+    } else {
+      updateCell(rowIndex, "accountName", "");
+    }
   };
 
-  // ----------------------------------------------------------
-  // SELECT PARAMETER
-  // ----------------------------------------------------------
+  // ==========================================================
+  // ACCOUNT NAME SELECTION
+  // Selecting a name synchronizes its corresponding ID.
+  // ==========================================================
 
-  const handleSelectParameter = (option: ParameterOption) => {
-    setParameter(option.parameter);
-    setGroupHead(option.type);
+  const handleSelectAccountName = (
+    rowIndex: number,
+    option: DropdownOption | null
+  ) => {
+    updateCell(
+      rowIndex,
+      "accountName",
+      option?.value ?? ""
+    );
+
+    if (option) {
+      updateCell(
+        rowIndex,
+        "accountId",
+        option.secondary ?? ""
+      );
+    } else {
+      updateCell(rowIndex, "accountId", "");
+    }
   };
 
-  // ----------------------------------------------------------
-  // SELECT ACCOUNT
-  // ----------------------------------------------------------
-
-  const handleSelectAccount = (option: AccountOption) => {
-    setAccountId(option.accountId);
-    setAccountName(option.accountName);
-  };
-
-  // ----------------------------------------------------------
-  // CLEAR FORM
-  // ----------------------------------------------------------
-
-  const handleClear = () => {
-    setSelectedRow(0);
-    setParameter("");
-    setAccountId("");
-    setAccountName("");
-    setGroupHead("G");
-  };
-
-  // ----------------------------------------------------------
+  // ==========================================================
   // SAVE
-  // ----------------------------------------------------------
+  // Replace console.log with your save API when ready.
+  // ==========================================================
 
   const handleSave = () => {
-    if (!parameter.trim()) {
-      alert("Please select a parameter.");
-      return;
-    }
+    const populatedRows = rows.filter(
+      (row) =>
+        row.parameter.trim() ||
+        row.accountId.trim() ||
+        row.accountName.trim() ||
+        row.groupHead.trim()
+    );
 
-    if (selectedRow !== 0) {
-      setRows((previous) =>
-        previous.map((row) =>
-          row.id === selectedRow
-            ? {
-                ...row,
-                parameter,
-                accountId,
-                accountName,
-                groupHead,
-              }
-            : row
-        )
-      );
-
-      alert("Account setting updated.");
-      return;
-    }
-
-    const newId = Math.max(0, ...rows.map((row) => row.id)) + 1;
-
-    const newRow: AccountSetting = {
-      id: newId,
-      parameter,
-      accountId,
-      accountName,
-      groupHead,
-    };
-
-    setRows((previous) => [...previous, newRow]);
-    setSelectedRow(newId);
-
-    alert("Account setting added.");
+    console.log("COA Settings:", populatedRows);
+    alert("COA Settings saved locally.");
   };
 
-  // ----------------------------------------------------------
-  // STYLES
-  // ----------------------------------------------------------
+  // ==========================================================
+  // CLEAR
+  // ==========================================================
 
-  const cellClass = "h-[30px] border-r border-[#c8eadb] p-0";
+  const handleClear = () => {
+    setRows(initialData.map((row) => ({ ...row })));
+  };
 
-  const inputClass =
-    "h-full w-full min-w-0 border-0 bg-transparent px-[7px] text-[11px] text-slate-700 outline-none focus:bg-blue-50";
-
-  // ----------------------------------------------------------
-  // KEEP A MINIMUM OF 10 VISIBLE ROWS
-  // ----------------------------------------------------------
+  // ==========================================================
+  // DISPLAY ROWS
+  // Three blank rows are available for new entries.
+  // No additional entry row is created below the table.
+  // ==========================================================
 
   const displayRows = Array.from(
-    { length: Math.max(10, rows.length) },
-    (_, index) => rows[index] ?? null
+    {
+      length: Math.max(10, rows.length + 3),
+    },
+    (_, index) => rows[index] ?? blankRow(index + 1)
   );
 
-  return (
-    <div className="mx-auto min-h-screen w-full bg-white p-[1px] font-sans text-slate-700">
-      <div className="min-h-[444px] w-full overflow-visible border border-slate-400 bg-white">
-        {/* TITLE */}
+  // ==========================================================
+  // TABLE LAYOUT
+  // ==========================================================
 
-        <div className="flex h-[33px] items-center justify-center border-b border-[#83d8b2] bg-[#9ee0bf]">
-          <h1
-            id="ChartOfAccountSettings"
-            className="text-[20px] font-semibold leading-none tracking-tight"
+  const columns =
+    "18px 34px 266px 120px minmax(180px, 1fr) 98px";
+
+  const headerCellClass =
+    "flex h-[30px] min-w-0 items-center border-r border-[#c8eadb] px-[7px] text-[12px] font-medium text-slate-600";
+
+  const cellClass =
+    "relative h-[30px] min-w-0 border-r border-[#c8eadb] p-0";
+
+  // ==========================================================
+  // RENDER
+  // ==========================================================
+
+  return (
+    <div className="flex min-h-screen w-full items-center justify-center bg-white p-0 font-sans text-slate-700">
+      <div className="w-[1100px] max-w-full border border-slate-400 bg-white">
+        {/* TITLE BAR */}
+
+       <div
+          className="
+            flex
+            h-[36px]
+            items-center
+            border-b
+            border-slate-300
+            bg-[#a3dfc0]
+          "
+        >
+
+          <span
+            className="
+              px-6
+              text-[17px]
+              font-semibold
+              text-slate-700
+            "
           >
-            <span className="rounded-[5px] bg-yellow-300 px-[5px] py-[2px] text-black">
-              Chart
-            </span>
-            <span className="ml-[3px] text-slate-700">
-              Of Account Settings
-            </span>
-          </h1>
+ChartOf Account Settings
+          </span>
+
         </div>
 
         {/* TABLE */}
+        {/* Do not add overflow-hidden here: dropdowns must remain visible. */}
 
-        <div className="mx-[25px] mt-0 overflow-x-auto">
-          <div className="min-w-[760px]">
-            {/* TABLE HEADER */}
+        <div className="mx-[25px] mt-0 mb-0 overflow-visible border border-[#b9e8d2]">
+          <div className="w-full">
+            {/* TABLE HEADINGS */}
 
-            <div className="grid grid-cols-[18px_34px_266px_120px_minmax(180px,1fr)_98px] border-b border-[#b9e8d2] bg-[#eef9f3] text-[12px] font-medium text-slate-600">
+            <div
+              className="grid border-b border-[#b9e8d2] bg-[#eef9f3]"
+              style={{ gridTemplateColumns: columns }}
+            >
               <div className="h-[30px] border-r border-[#c8eadb]" />
 
-              <div className="flex h-[30px] items-center justify-center border-r border-[#c8eadb]">
+              <div className={`${headerCellClass} justify-center`}>
                 Sl.
               </div>
 
-              <div className="flex h-[30px] items-center border-r border-[#c8eadb] px-[7px]">
+              <div className={headerCellClass}>
                 Parameter
               </div>
 
-              <div className="flex h-[30px] items-center border-r border-[#c8eadb] px-[7px]">
+              <div className={headerCellClass}>
                 Account ID
               </div>
 
-              <div className="flex h-[30px] items-center border-r border-[#c8eadb] px-[7px]">
+              <div className={headerCellClass}>
                 Account Name
               </div>
 
-              <div className="flex h-[30px] items-center px-[5px]">
+              <div className="flex h-[30px] min-w-0 items-center px-[5px] text-[12px] font-medium text-slate-600">
                 Group/Head
               </div>
             </div>
 
-            {/* TABLE BODY */}
+            {/* TABLE ROWS */}
 
             {displayRows.map((row, index) => {
-              const isSelected =
-                row !== null && selectedRow === row.id;
+              const parameterValue =
+                parameterDropdownOptions.find(
+                  (option) => option.value === row.parameter
+                ) ??
+                (row.parameter
+                  ? {
+                      value: row.parameter,
+                      label: row.parameter,
+                    }
+                  : null);
+
+              const accountIdValue =
+                accountIdDropdownOptions.find(
+                  (option) => option.value === row.accountId
+                ) ??
+                (row.accountId
+                  ? {
+                      value: row.accountId,
+                      label: row.accountId,
+                      secondary: row.accountName,
+                    }
+                  : null);
+
+              const accountNameValue =
+                accountNameDropdownOptions.find(
+                  (option) => option.value === row.accountName
+                ) ??
+                (row.accountName
+                  ? {
+                      value: row.accountName,
+                      label: row.accountName,
+                      secondary: row.accountId,
+                    }
+                  : null);
 
               return (
                 <div
-                  key={row?.id ?? `empty-${index}`}
-                  onClick={() => row && handleSelectRow(row)}
-                  className={`grid grid-cols-[18px_34px_266px_120px_minmax(180px,1fr)_98px] border-b border-[#b9e8d2] text-[11px] ${
-                    isSelected ? "bg-[#f5fcf8]" : "bg-white"
-                  }`}
+                  key={`coa-row-${index}`}
+                  className="grid border-b border-[#b9e8d2] bg-white text-[11px]"
+                  style={{ gridTemplateColumns: columns }}
                 >
                   {/* ROW SELECTOR */}
 
-                  <div className="flex h-[30px] items-center justify-center border-r border-[#c8eadb]">
-                    {isSelected && (
-                      <ChevronRight
-                        size={11}
-                        strokeWidth={2.5}
-                        className="text-black"
-                      />
-                    )}
-                  </div>
+                  <div className="h-[30px] border-r border-[#c8eadb]" />
 
-                  {/* SERIAL */}
+                  {/* SERIAL NUMBER */}
 
                   <div className="flex h-[30px] items-center justify-center border-r border-[#c8eadb]">
-                    {row?.id ?? ""}
+                    {row.id ? row.id : ""}
                   </div>
 
-                  {/* PARAMETER */}
+                  {/* PARAMETER SELECT */}
 
                   <div className={cellClass}>
-                    {row && (
-                      <input
-                        aria-label={`Parameter ${row.id}`}
-                        value={row.parameter}
-                        onChange={(event) =>
-                          updateRow(
-                            row.id,
-                            "parameter",
-                            event.target.value
-                          )
-                        }
-                        className={inputClass}
-                      />
-                    )}
+                    <Select<DropdownOption, false>
+                      inputId={`lkpParameter-${index}`}
+                      aria-label={`Parameter row ${index + 1}`}
+                      options={parameterDropdownOptions}
+                      value={parameterValue}
+                      onChange={(option) =>
+                        handleSelectParameter(index, option)
+                      }
+                      components={{
+                        MenuList: ParameterMenuList,
+                      }}
+                      formatOptionLabel={(option, { context }) =>
+                        context === "value" ? (
+                          option.label
+                        ) : (
+                          <div
+                            className="grid h-[27px] w-full items-center"
+                            style={{
+                              gridTemplateColumns:
+                                "266px minmax(120px, 1fr)",
+                            }}
+                          >
+                            <span className="flex h-full min-w-0 items-center border-r border-slate-200 px-[7px]">
+                              {option.label}
+                            </span>
+
+                            <span className="flex h-full min-w-0 items-center px-[7px]">
+                              {option.secondary}
+                            </span>
+                          </div>
+                        )
+                      }
+                      styles={parameterStyles}
+                      menuPortalTarget={
+                        typeof document !== "undefined"
+                          ? document.body
+                          : undefined
+                      }
+                      menuPosition="fixed"
+                      menuPlacement="auto"
+                      isClearable={false}
+                      isSearchable
+                      placeholder=""
+                      noOptionsMessage={() => "No results found"}
+                    />
                   </div>
 
-                  {/* ACCOUNT ID */}
+                  {/* ACCOUNT ID SELECT */}
 
                   <div className={cellClass}>
-                    {row && (
-                      <input
-                        aria-label={`Account ID ${row.id}`}
-                        value={row.accountId}
-                        onChange={(event) =>
-                          updateRow(
-                            row.id,
-                            "accountId",
-                            event.target.value
-                          )
-                        }
-                        className={inputClass}
-                      />
-                    )}
+                    <Select<DropdownOption, false>
+                      inputId={`lkpAccountID-${index}`}
+                      aria-label={`Account ID row ${index + 1}`}
+                      options={accountIdDropdownOptions}
+                      value={accountIdValue}
+                      onChange={(option) =>
+                        handleSelectAccountId(index, option)
+                      }
+                      components={{
+                        MenuList: AccountIdMenuList,
+                      }}
+                      formatOptionLabel={(option, { context }) =>
+                        context === "value" ? (
+                          option.label
+                        ) : (
+                          <div
+                            className="grid h-[27px] w-full items-center"
+                            style={{
+                              gridTemplateColumns:
+                                "120px minmax(200px, 1fr)",
+                            }}
+                          >
+                            <span className="flex h-full min-w-0 items-center border-r border-slate-200 px-[7px]">
+                              {option.label}
+                            </span>
+
+                            <span className="flex h-full min-w-0 items-center px-[7px]">
+                              {option.secondary}
+                            </span>
+                          </div>
+                        )
+                      }
+                      styles={accountIdStyles}
+                      menuPortalTarget={
+                        typeof document !== "undefined"
+                          ? document.body
+                          : undefined
+                      }
+                      menuPosition="fixed"
+                      menuPlacement="auto"
+                      isClearable={false}
+                      isSearchable
+                      placeholder=""
+                      noOptionsMessage={() => "No results found"}
+                    />
                   </div>
 
-                  {/* ACCOUNT NAME */}
+                  {/* ACCOUNT NAME SELECT */}
 
                   <div className={cellClass}>
-                    {row && (
-                      <input
-                        aria-label={`Account Name ${row.id}`}
-                        value={row.accountName}
-                        onChange={(event) =>
-                          updateRow(
-                            row.id,
-                            "accountName",
-                            event.target.value
-                          )
-                        }
-                        className={inputClass}
-                      />
-                    )}
+                    <Select<DropdownOption, false>
+                      inputId={`lkpAccountName-${index}`}
+                      aria-label={`Account Name row ${index + 1}`}
+                      options={accountNameDropdownOptions}
+                      value={accountNameValue}
+                      onChange={(option) =>
+                        handleSelectAccountName(index, option)
+                      }
+                      components={{
+                        MenuList: AccountNameMenuList,
+                      }}
+                      formatOptionLabel={(option, { context }) =>
+                        context === "value" ? (
+                          option.label
+                        ) : (
+                          <div
+                            className="grid h-[27px] w-full items-center"
+                            style={{
+                              gridTemplateColumns:
+                                "minmax(0, 1fr) 120px",
+                            }}
+                          >
+                            <span className="flex h-full min-w-0 items-center border-r border-slate-200 px-[7px]">
+                              {option.label}
+                            </span>
+
+                            <span className="flex h-full min-w-0 items-center px-[7px]">
+                              {option.secondary}
+                            </span>
+                          </div>
+                        )
+                      }
+                      styles={accountNameStyles}
+                      menuPortalTarget={
+                        typeof document !== "undefined"
+                          ? document.body
+                          : undefined
+                      }
+                      menuPosition="fixed"
+                      menuPlacement="auto"
+                      isClearable={false}
+                      isSearchable
+                      placeholder=""
+                      noOptionsMessage={() => "No results found"}
+                    />
                   </div>
 
                   {/* GROUP / HEAD */}
 
-                  <div className="h-[30px]">
-                    {row && (
-                      <input
-                        aria-label={`Group Head ${row.id}`}
-                        value={row.groupHead}
-                        onChange={(event) =>
-                          updateRow(
-                            row.id,
-                            "groupHead",
-                            event.target.value
-                          )
-                        }
-                        className={inputClass}
-                      />
-                    )}
+                  <div className="h-[30px] min-w-0">
+                    <input
+                      id={`txtGroupHead-${index}`}
+                      aria-label={`Group Head row ${index + 1}`}
+                      value={row.groupHead}
+                      onChange={(event) =>
+                        updateCell(
+                          index,
+                          "groupHead",
+                          event.target.value
+                        )
+                      }
+                      className="
+                        h-full w-full min-w-0
+                        border-0 bg-transparent
+                        px-[7px] text-[11px] text-slate-700
+                        outline-none
+                        focus:bg-transparent
+                      "
+                    />
                   </div>
                 </div>
               );
@@ -775,107 +858,45 @@ const COASettings: React.FC = () => {
           </div>
         </div>
 
-        {/* BOTTOM ENTRY SECTION */}
+        {/* ACTION BUTTONS */}
 
-        <div className="relative mx-[25px] min-h-[74px] min-w-[760px]">
-          <div className="grid grid-cols-[18px_34px_266px_120px_minmax(180px,1fr)_98px]">
-            <div className="col-span-2" />
+        <div className="flex min-h-[74px] items-start justify-center gap-[12px] pt-[8px]">
+          <button
+            id="btnSave"
+            type="button"
+            onClick={handleSave}
+            className="
+              h-[40px] w-[107px]
+              rounded-[4px] border border-[#9bb7cc]
+              bg-gradient-to-b from-white to-[#e2ebf2]
+              text-[14px] text-green-700 shadow-sm
+              hover:from-[#f4fff7] hover:to-[#d4ebdc]
+              focus:outline-none focus:ring-1 focus:ring-green-400
+            "
+          >
+            <span className="underline underline-offset-[3px]">
+              Save
+            </span>
+          </button>
 
-            {/* PARAMETER DROPDOWN */}
-
-            <div className="relative h-[30px]">
-              <DropdownInput
-                value={parameter}
-                placeholder="(lkpParameter)"
-                kind="parameter"
-                options={parameterOptions}
-                menuWidth="700px"
-                firstColumnWidth={266}
-                onSelect={(option) => {
-                  if ("parameter" in option) {
-                    handleSelectParameter(option);
-                  }
-                }}
-              />
-            </div>
-
-            {/* ACCOUNT ID DROPDOWN */}
-
-            <div className="relative h-[30px]">
-              <DropdownInput
-                value={accountId}
-                placeholder="(lkpAccountID)"
-                kind="accountId"
-                options={accountOptions}
-                menuWidth="660px"
-                firstColumnWidth={120}
-                onSelect={(option) => {
-                  if ("accountId" in option) {
-                    handleSelectAccount(option);
-                  }
-                }}
-              />
-            </div>
-
-            {/* ACCOUNT NAME DROPDOWN */}
-
-            <div className="relative h-[30px]">
-              <DropdownInput
-                value={accountName}
-                placeholder="(lkpAccountName)"
-                kind="accountName"
-                options={accountOptions}
-                menuWidth="660px"
-                firstColumnWidth={120}
-                onSelect={(option) => {
-                  if ("accountId" in option) {
-                    handleSelectAccount(option);
-                  }
-                }}
-              />
-            </div>
-
-            {/* GROUP / HEAD */}
-
-            <div className="h-[30px]">
-              <input
-                id="txtGroupHead"
-                value={groupHead}
-                onChange={(event) => setGroupHead(event.target.value)}
-                placeholder="(txtGroup/Head)"
-                className={`${inputClass} text-[14px] text-red-700 placeholder:text-red-700`}
-              />
-            </div>
-          </div>
-
-          {/* ACTION BUTTONS */}
-
-          <div className="absolute left-1/2 top-[9px] z-[1] flex -translate-x-1/2 gap-[12px]">
-            <button
-              id="btnSave"
-              type="button"
-              onClick={handleSave}
-              className="h-[40px] w-[107px] rounded-[4px] border border-[#9bb7cc] bg-gradient-to-b from-white to-[#e2ebf2] text-[14px] text-green-700 shadow-sm hover:from-[#f4fff7] hover:to-[#d4ebdc] focus:outline-none focus:ring-1 focus:ring-green-400"
-            >
-              <span className="underline underline-offset-[3px]">
-                Save
-              </span>
-            </button>
-
-            <button
-              id="btnClear"
-              type="button"
-              onClick={handleClear}
-              className="h-[40px] w-[107px] rounded-[4px] border border-[#9bb7cc] bg-gradient-to-b from-white to-[#e2ebf2] text-[14px] text-green-700 shadow-sm hover:from-[#f4fff7] hover:to-[#d4ebdc] focus:outline-none focus:ring-1 focus:ring-green-400"
-            >
-              <span className="underline underline-offset-[3px]">
-                Clear
-              </span>
-            </button>
-          </div>
+          <button
+            id="btnClear"
+            type="button"
+            onClick={handleClear}
+            className="
+              h-[40px] w-[107px]
+              rounded-[4px] border border-[#9bb7cc]
+              bg-gradient-to-b from-white to-[#e2ebf2]
+              text-[14px] text-green-700 shadow-sm
+              hover:from-[#f4fff7] hover:to-[#d4ebdc]
+              focus:outline-none focus:ring-1 focus:ring-green-400
+            "
+          >
+            <span className="underline underline-offset-[3px]">
+              Clear
+            </span>
+          </button>
         </div>
-
-        <div className="h-[1px]" />
       </div>
     </div>
   );
