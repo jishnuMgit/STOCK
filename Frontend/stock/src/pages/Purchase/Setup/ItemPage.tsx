@@ -345,15 +345,15 @@ const ItemPage: React.FC = () => {
   useEffect(() => {
     const loadUnitList = async () => {
       try {
-        const CoID = localStorage.getItem("PstrCoID");
+        const PstrCoID = localStorage.getItem("PstrCoID");
 
-        if (!CoID) {
-          toast.error("getUnitList: no CoID in localStorage");
+        if (!PstrCoID) {
+          toast.error("getUnitList: no PstrCoID in localStorage");
           return;
         }
 
         const response = await fetch(
-          `${import.meta.env.VITE_API_URL}/Item/getUnitList?CoID=${CoID}`
+          `${import.meta.env.VITE_API_URL}/Item/getUnitList?PstrCoID=${PstrCoID}`
         );
 
         if (!response.ok) {
@@ -397,15 +397,15 @@ const ItemPage: React.FC = () => {
   useEffect(() => {
     const loadItemGroupList = async () => {
       try {
-        const CoID = localStorage.getItem("PstrCoID");
+        const PstrCoID = localStorage.getItem("PstrCoID");
 
-        if (!CoID) {
-          toast.error("getItemGroupList: no CoID in localStorage");
+        if (!PstrCoID) {
+          toast.error("getItemGroupList: no PstrCoID in localStorage");
           return;
         }
 
         const response = await fetch(
-          `${import.meta.env.VITE_API_URL}/Item/getItemGroupList?CoID=${CoID}`
+          `${import.meta.env.VITE_API_URL}/Item/getItemGroupList?PstrCoID=${PstrCoID}`
         );
 
         if (!response.ok) {
@@ -471,15 +471,15 @@ const ItemPage: React.FC = () => {
   useEffect(() => {
     const loadSupplierList = async () => {
       try {
-        const CoID = localStorage.getItem("PstrCoID");
+        const PstrCoID = localStorage.getItem("PstrCoID");
 
-        if (!CoID) {
-          toast.error("getSupplierList: no CoID in localStorage");
+        if (!PstrCoID) {
+          toast.error("getSupplierList: no PstrCoID in localStorage");
           return;
         }
 
         const response = await fetch(
-          `${import.meta.env.VITE_API_URL}/Item/getSupplierList?CoID=${CoID}`
+          `${import.meta.env.VITE_API_URL}/Item/getSupplierList?PstrCoID=${PstrCoID}`
         );
 
         if (!response.ok) {
@@ -540,16 +540,16 @@ const ItemPage: React.FC = () => {
   useEffect(() => {
     const loadBranchList = async () => {
       try {
-        const CoID = localStorage.getItem("PstrCoID");
-        const userId = localStorage.getItem("PstrUserID");
+        const PstrCoID = localStorage.getItem("PstrCoID");
+        const PstrUserID = localStorage.getItem("PstrUserID");
 
-        if (!CoID || !userId) {
-          toast.error("getBranchList: no CoID/userId in localStorage");
+        if (!PstrCoID || !PstrUserID) {
+          toast.error("getBranchList: no PstrCoID/PstrUserID in localStorage");
           return;
         }
 
         const response = await fetch(
-          `${import.meta.env.VITE_API_URL}/Item/getBranchList?CoID=${CoID}&userId=${userId}`
+          `${import.meta.env.VITE_API_URL}/Item/getBranchList?PstrCoID=${PstrCoID}&PstrUserID=${PstrUserID}`
         );
 
         if (!response.ok) {
@@ -619,10 +619,10 @@ const ItemPage: React.FC = () => {
       return;
     }
 
-    const CoID = localStorage.getItem("PstrCoID");
-    const userId = localStorage.getItem("PstrUserID");
+    const PstrCoID = localStorage.getItem("PstrCoID");
+    const PstrUserID = localStorage.getItem("PstrUserID");
 
-    if (!CoID || !userId) {
+    if (!PstrCoID || !PstrUserID) {
       toast.error("Company ID / User ID not found. Please log in again.");
       return;
     }
@@ -634,8 +634,8 @@ const ItemPage: React.FC = () => {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
-            CoID,
-            userId,
+            PstrCoID,
+            PstrUserID,
             txtItemID,
             txtItemName,
             txtItemDescription: txtItemDescription || null,
@@ -677,16 +677,16 @@ const ItemPage: React.FC = () => {
       return;
     }
 
-    const CoID = localStorage.getItem("PstrCoID");
+    const PstrCoID = localStorage.getItem("PstrCoID");
 
-    if (!CoID) {
+    if (!PstrCoID) {
       toast.error("Company ID not found. Please log in again.");
       return;
     }
 
     try {
       const response = await fetch(
-        `${import.meta.env.VITE_API_URL}/Item/getItem?CoID=${CoID}&txtItemID=${txtItemID}`
+        `${import.meta.env.VITE_API_URL}/Item/getItem?PstrCoID=${PstrCoID}&txtItemID=${txtItemID}`
       );
 
       const result = await response.json();
@@ -770,11 +770,12 @@ const ItemPage: React.FC = () => {
       return;
     }
 
-    const CoID = localStorage.getItem("PstrCoID");
-    const userId = localStorage.getItem("PstrUserID");
+    const PstrCoID = localStorage.getItem("PstrCoID");
+    const PstrYear = localStorage.getItem("PstrYear");
+    const PstrUserID = localStorage.getItem("PstrUserID");
 
-    if (!CoID || !userId) {
-      toast.error("Company ID / User ID not found. Please log in again.");
+    if (!PstrCoID || !PstrYear || !PstrUserID) {
+      toast.error("Company ID / Year / User ID not found. Please log in again.");
       return;
     }
 
@@ -784,7 +785,13 @@ const ItemPage: React.FC = () => {
         {
           method: "DELETE",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ CoID, userId, txtItemID }),
+          body: JSON.stringify({
+            PstrCoID,
+            PstrYear,
+            PstrUserID,
+            txtItemID,
+            txtItemName,
+          }),
         }
       );
 
@@ -821,13 +828,18 @@ const ItemPage: React.FC = () => {
       return;
     }
 
-    const CoID = localStorage.getItem("PstrCoID");
-    const userId = localStorage.getItem("PstrUserID");
+    const PstrCoID = localStorage.getItem("PstrCoID");
+    const PstrYear = localStorage.getItem("PstrYear");
+    const PstrUserID = localStorage.getItem("PstrUserID");
 
-    if (!CoID || !userId) {
-      toast.error("Company ID / User ID not found. Please log in again.");
+    if (!PstrCoID || !PstrYear || !PstrUserID) {
+      toast.error("Company ID / Year / User ID not found. Please log in again.");
       return;
     }
+
+    const branchName =
+      branchOptions.find((option) => option.value === row.lkpBranch)
+        ?.label || row.lkpBranch;
 
     try {
       const response = await fetch(
@@ -836,10 +848,13 @@ const ItemPage: React.FC = () => {
           method: "DELETE",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
-            CoID,
-            userId,
+            PstrCoID,
+            PstrYear,
+            PstrUserID,
             txtItemID,
+            txtItemName,
             lkpBranch: row.lkpBranch,
+            branchName,
           }),
         }
       );

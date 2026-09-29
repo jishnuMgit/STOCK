@@ -83,7 +83,7 @@ async function callSpUserLogin(
 ========================================================= */
 
 export async function getUserLoginListService(
-  CoID: string
+  PstrCoID: string
 ): Promise<UserLoginRow[]> {
   const client: PoolClient = await pool.connect();
 
@@ -92,7 +92,7 @@ export async function getUserLoginListService(
   try {
     await client.query("BEGIN");
 
-    await callSpUserLogin(client, { strmode: "G", coid: CoID, cursorName });
+    await callSpUserLogin(client, { strmode: "G", coid: PstrCoID, cursorName });
 
     const result = await client.query(`FETCH ALL FROM "${cursorName}"`);
 
@@ -121,7 +121,7 @@ export async function getUserLoginListService(
 ========================================================= */
 
 export async function saveUserLoginListService(
-  CoID: string,
+  PstrCoID: string,
   rows: UserLoginRowPayload[]
 ): Promise<void> {
   const userPwdSeed = Number(process.env.USER_PWD_SEED);
@@ -134,8 +134,8 @@ export async function saveUserLoginListService(
 
   try {
     // valid User Type / User Status values come from dbo.tbluserparam
-    const typeList = await client.query(`SELECT fpid FROM dbo.fillusertype($1)`, [CoID]);
-    const statusList = await client.query(`SELECT fpid FROM dbo.filluserstatus($1)`, [CoID]);
+    const typeList = await client.query(`SELECT fpid FROM dbo.fillusertype($1)`, [PstrCoID]);
+    const statusList = await client.query(`SELECT fpid FROM dbo.filluserstatus($1)`, [PstrCoID]);
 
     const validTypes = typeList.rows.map((r) => r.fpid);
     const validStatuses = statusList.rows.map((r) => r.fpid);
@@ -144,44 +144,44 @@ export async function saveUserLoginListService(
     const seen = new Set<string>();
 
     for (const row of rows) {
-      const userId = (row.txtUserID ?? "").trim();
+      const PstrUserID = (row.txtUserID ?? "").trim();
 
-      if (!userId) {
+      if (!PstrUserID) {
         throw new Error("User ID is required");
       }
 
-      if (seen.has(userId.toUpperCase())) {
-        throw new Error(`User ID '${userId}' is entered more than once`);
+      if (seen.has(PstrUserID.toUpperCase())) {
+        throw new Error(`User ID '${PstrUserID}' is entered more than once`);
       }
-      seen.add(userId.toUpperCase());
+      seen.add(PstrUserID.toUpperCase());
 
       if (!(row.txtUserName ?? "").trim()) {
-        throw new Error(`User Name is required for '${userId}'`);
+        throw new Error(`User Name is required for '${PstrUserID}'`);
       }
 
       if (!validTypes.includes(row.lkpUserType)) {
-        throw new Error(`User Type is required for '${userId}'`);
+        throw new Error(`User Type is required for '${PstrUserID}'`);
       }
 
       if (!validStatuses.includes(row.lkpUserStatus)) {
-        throw new Error(`User Status is required for '${userId}'`);
+        throw new Error(`User Status is required for '${PstrUserID}'`);
       }
 
       const isNew = !row.txtOriginal_UserID;
       const pwd = row.txtPwd ?? "";
 
       if (isNew && !pwd) {
-        throw new Error(`Password is required for '${userId}'`);
+        throw new Error(`Password is required for '${PstrUserID}'`);
       }
 
       if (pwd || row.txtConfirmPwd) {
         if (pwd.length < 6 || pwd.length > 12) {
-          throw new Error(`Password for '${userId}' must be 6 to 12 characters`);
+          throw new Error(`Password for '${PstrUserID}' must be 6 to 12 characters`);
         }
 
         if (pwd !== row.txtConfirmPwd) {
           throw new Error(
-            `Password and Confirm Password do not match for '${userId}'`
+            `Password and Confirm Password do not match for '${PstrUserID}'`
           );
         }
       }
@@ -191,16 +191,16 @@ export async function saveUserLoginListService(
     await client.query("BEGIN");
 
     for (const row of rows) {
-      const userId = row.txtUserID.trim();
+      const PstrUserID = row.txtUserID.trim();
       const isNew = !row.txtOriginal_UserID;
 
       const existing = await client.query(
         `SELECT 1 FROM dbo.tbluserlogin WHERE fcoid = $1 AND upper(fuserid) = upper($2)`,
-        [CoID, isNew ? userId : row.txtOriginal_UserID]
+        [PstrCoID, isNew ? PstrUserID : row.txtOriginal_UserID]
       );
 
       if (isNew && existing.rows.length > 0) {
-        throw new Error(`User ID '${userId}' already exists`);
+        throw new Error(`User ID '${PstrUserID}' already exists`);
       }
 
       if (!isNew && existing.rows.length === 0) {
@@ -209,8 +209,8 @@ export async function saveUserLoginListService(
 
       await callSpUserLogin(client, {
         strmode: isNew ? "S" : "M",
-        coid: CoID,
-        userid: userId,
+        coid: PstrCoID,
+        userid: PstrUserID,
         username: row.txtUserName.trim(),
         userpwd: row.txtPwd ? encryptPwd(row.txtPwd, userPwdSeed) : null,
         usertype: row.lkpUserType,
@@ -235,7 +235,7 @@ export async function saveUserLoginListService(
 ========================================================= */
 
 export async function deleteUserLoginRowService(
-  CoID: string,
+  PstrCoID: string,
   txtUserID: string
 ): Promise<void> {
   const client: PoolClient = await pool.connect();
@@ -245,7 +245,7 @@ export async function deleteUserLoginRowService(
 
     await callSpUserLogin(client, {
       strmode: "D1",
-      coid: CoID,
+      coid: PstrCoID,
       original_userid: txtUserID,
     });
 

@@ -6,7 +6,7 @@ import pool from "../../../DB/db.js";
 ========================================================= */
 
 export async function getItemPageService(
-  CoID: string,
+  PstrCoID: string,
   itemId: string
 ): Promise<{ header: any | null; rows: any[] }> {
   const client: PoolClient = await pool.connect();
@@ -28,7 +28,7 @@ export async function getItemPageService(
       )
       `,
       [
-        "GHD", CoID, itemId, null, null,
+        "GHD", PstrCoID, itemId, null, null,
         null, null, null, 0, 0,
         null, null, null, 0, 0,
         null, false, false, null,
@@ -52,7 +52,7 @@ export async function getItemPageService(
       )
       `,
       [
-        "GTL", CoID, itemId, null, null,
+        "GTL", PstrCoID, itemId, null, null,
         null, null, null, 0, 0,
         null, null, null, 0, 0,
         null, false, false, null,
@@ -89,7 +89,7 @@ export interface ItemBranchRowPayload {
 }
 
 export async function saveItemPageService(
-  CoID: string,
+  PstrCoID: string,
   txtItemID: string,
   txtItemName: string,
   txtItemDescription: string | null,
@@ -101,7 +101,7 @@ export async function saveItemPageService(
   txtSupplierItemID: string,
   txtReorderLevel: number,
   txtReorderQty: number,
-  userId: string,
+  PstrUserID: string,
   rows: ItemBranchRowPayload[]
 ): Promise<void> {
   const client: PoolClient = await pool.connect();
@@ -118,14 +118,14 @@ export async function saveItemPageService(
       SELECT 1 FROM dbo.tblitemhd
       WHERE fcoid = $1 AND fitemid = $2
       `,
-      [CoID, txtItemID]
+      [PstrCoID, txtItemID]
     );
 
     const headerMode = existingHeader.rows.length > 0 ? "MHD" : "SHD";
 
     await callSpItemPage(client, {
       strmode: headerMode,
-      coid: CoID,
+      coid: PstrCoID,
       itemid: txtItemID,
       itemname: txtItemName,
       itemdesc: txtItemDescription,
@@ -137,7 +137,7 @@ export async function saveItemPageService(
       supplieritemid: txtSupplierItemID,
       reorderlevel: txtReorderLevel,
       reorderqty: txtReorderQty,
-      userid: userId,
+      userid: PstrUserID,
     });
 
     /* =====================================================
@@ -151,21 +151,21 @@ export async function saveItemPageService(
         SELECT 1 FROM dbo.tblitemtl
         WHERE fcoid = $1 AND fbrid = $2 AND fitemid = $3
         `,
-        [CoID, row.lkpBranch, txtItemID]
+        [PstrCoID, row.lkpBranch, txtItemID]
       );
 
       const rowMode = existingRow.rows.length > 0 ? "MTL" : "STL";
 
       await callSpItemPage(client, {
         strmode: rowMode,
-        coid: CoID,
+        coid: PstrCoID,
         itemid: txtItemID,
         brid: row.lkpBranch,
         origbrid: rowMode === "MTL" ? row.lkpBranch : null,
         itemlocation: row.txtItemLocation,
         allowsale: row.chkAllowSaleBelowCost,
         inactive: row.chkInactive,
-        userid: userId,
+        userid: PstrUserID,
       });
     }
 
@@ -184,7 +184,7 @@ export async function saveItemPageService(
 ========================================================= */
 
 export async function deleteItemService(
-  CoID: string,
+  PstrCoID: string,
   txtItemID: string
 ): Promise<void> {
   const client: PoolClient = await pool.connect();
@@ -194,7 +194,7 @@ export async function deleteItemService(
 
     await callSpItemPage(client, {
       strmode: "D",
-      coid: CoID,
+      coid: PstrCoID,
       itemid: txtItemID,
     });
 
@@ -213,7 +213,7 @@ export async function deleteItemService(
 ========================================================= */
 
 export async function deleteItemBranchRowService(
-  CoID: string,
+  PstrCoID: string,
   txtItemID: string,
   lkpBranch: string
 ): Promise<void> {
@@ -224,7 +224,7 @@ export async function deleteItemBranchRowService(
 
     await callSpItemPage(client, {
       strmode: "D1",
-      coid: CoID,
+      coid: PstrCoID,
       itemid: txtItemID,
       brid: lkpBranch,
     });

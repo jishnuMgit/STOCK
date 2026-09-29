@@ -103,7 +103,7 @@ export async function updateCompanyInfoService(
     coAddress3Ar: string | null;
     coAddress4Ar: string | null;
     coStatus: string | null;
-    userId: string;
+    PstrUserID: string;
   }
 ): Promise<void> {
   const client: PoolClient = await pool.connect();
@@ -158,7 +158,7 @@ export async function updateCompanyInfoService(
         payload.coAddress3Ar,
         payload.coAddress4Ar,
         payload.coStatus,
-        payload.userId,
+        payload.PstrUserID,
         cursorName
       ]
     );
