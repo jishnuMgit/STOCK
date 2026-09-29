@@ -94,10 +94,9 @@ export const saveCompanyDetails = async (
   res: Response
 ): Promise<Response> => {
   try {
-    const PstrUserID = process.env.PstrUserID || "ADMIN";
-
     const {
       lkpCoName,
+      PstrUserID,
       txtCoName,
       txtCoName_AR,
       txtCoName_QR,
@@ -122,6 +121,13 @@ export const saveCompanyDetails = async (
       });
     }
 
+    if (!PstrUserID) {
+      return res.status(400).json({
+        success: false,
+        message: "User ID is required",
+      });
+    }
+
     await updateCompanyInfoService({
       coId: lkpCoName,
       coName: txtCoName || null,
@@ -139,7 +145,7 @@ export const saveCompanyDetails = async (
       coAddress3Ar: txtCoAddress3_AR || null,
       coAddress4Ar: txtCoAddress4_AR || null,
       coStatus: txtCoStatus || null,
-      userId: PstrUserID,
+      PstrUserID,
     });
 
     return res.status(200).json({

@@ -812,6 +812,12 @@ export const DeleteReceipt = async (
     // USER AUDIT
     // =====================================================
 
+    const gstrUserAuditNote =
+      `Date : ${receiptDate}\n` +
+      `Cash/Bank Account Name: ${cbAccountName}\n` +
+      `Received From : ${receivedFrom}\n` +
+      `Amount : ${totalCredit}`;
+
     const auditResult = await UserAudit(
       PstrCoID,
       PstrYear,
@@ -821,10 +827,7 @@ export const DeleteReceipt = async (
       "Receipt",
       "D",
       PstrUserID,
-      receiptDate,
-      cbAccountName,
-      receivedFrom,
-      totalCredit,
+      gstrUserAuditNote,
     );
 
     console.log("User Audit:", auditResult);

@@ -304,6 +304,13 @@ const SetCompanyInfo = () => {
       return;
     }
 
+    const PstrUserID = localStorage.getItem("PstrUserID");
+
+    if (!PstrUserID) {
+      toast.error("User ID not found. Please log in again.");
+      return;
+    }
+
     try {
       const response = await fetch(
         `${import.meta.env.VITE_API_URL}/CompanyInfo/saveCompanyDetails`,
@@ -312,6 +319,7 @@ const SetCompanyInfo = () => {
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
             lkpCoName,
+            PstrUserID,
             ...formData,
           }),
         }
