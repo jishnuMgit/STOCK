@@ -5,6 +5,13 @@ import Select, {
 } from "react-select";
 import { toast } from "react-toastify";
 import { useEnterAsTab } from "../../hooks/useEnterAsTab";
+import {
+  filterLabelOrValue,
+  BranchMenuList,
+  BranchOption,
+  CustomDropdownIndicator,
+  branchMenuStyles,
+} from "../../components/BranchSelect/branchSelectParts";
 
 /* =========================================================
    TYPES
@@ -203,8 +210,8 @@ const SetBranchInfo: React.FC = () => {
   useEffect(() => {
     const loadBranchList = async () => {
       try {
-        const CoID = localStorage.getItem("CoID");
-        const userId = localStorage.getItem("userID");
+        const CoID = localStorage.getItem("PstrCoID");
+        const userId = localStorage.getItem("PstrUserID");
 
         if (!CoID || !userId) {
           toast.error("getBranchList: no CoID/userId in localStorage");
@@ -245,6 +252,50 @@ const SetBranchInfo: React.FC = () => {
   }, []);
 
   /* =========================================================
+     LOAD DEFAULT BRANCH (lkpBranch pre-select, live lookup
+     via dbo.getuserdefbranch — same as SetDocumentNo)
+  ========================================================= */
+
+  useEffect(() => {
+    const loadDefaultBranch = async () => {
+      try {
+        const CoID = localStorage.getItem("PstrCoID");
+        const userId = localStorage.getItem("PstrUserID");
+
+        if (!CoID || !userId) {
+          toast.error("getDefaultBranch: no CoID/userId in localStorage");
+          return;
+        }
+
+        const response = await fetch(
+          `${import.meta.env.VITE_API_URL}/BranchInfo/getDefaultBranch?CoID=${CoID}&userId=${userId}`
+        );
+
+        if (!response.ok) {
+          throw new Error(`HTTP Error: ${response.status}`);
+        }
+
+        const result = await response.json();
+
+        if (!result.success) {
+          console.error("getDefaultBranch failed:", result.message);
+          toast.error(`getDefaultBranch failed: ${result.message}`);
+          return;
+        }
+
+        if (result.data) {
+          setLkpBranch(result.data);
+        }
+      } catch (error) {
+        console.error("getDefaultBranch error:", error);
+        toast.error(`getDefaultBranch error: ${error instanceof Error ? error.message : String(error)}`);
+      }
+    };
+
+    loadDefaultBranch();
+  }, []);
+
+  /* =========================================================
      PREFILL FORM WHEN A BRANCH IS SELECTED (mode 'G')
   ========================================================= */
 
@@ -256,7 +307,7 @@ const SetBranchInfo: React.FC = () => {
 
     const loadBranchInfo = async () => {
       try {
-        const CoID = localStorage.getItem("CoID");
+        const CoID = localStorage.getItem("PstrCoID");
 
         if (!CoID) {
           toast.error("getBranchInfo: no CoID in localStorage");
@@ -600,8 +651,8 @@ const SetBranchInfo: React.FC = () => {
       return;
     }
 
-    const CoID = localStorage.getItem("CoID");
-    const userId = localStorage.getItem("userID");
+    const CoID = localStorage.getItem("PstrCoID");
+    const userId = localStorage.getItem("PstrUserID");
 
     if (!CoID || !userId) {
       toast.error("Company ID / User ID not found. Please log in again.");
@@ -835,10 +886,19 @@ const SetBranchInfo: React.FC = () => {
                     option?.value || "",
                   )
                 }
-                styles={
-                  branchSelectStyles
-                }
-                isSearchable={false}
+                styles={{
+                  ...branchSelectStyles,
+                  ...branchMenuStyles,
+                }}
+                components={{
+                  DropdownIndicator:
+                    CustomDropdownIndicator,
+                  Option: BranchOption,
+                  MenuList: BranchMenuList,
+                }}
+                filterOption={filterLabelOrValue}
+                noOptionsMessage={() => "No Branch Found"}
+                isSearchable
                 placeholder="Select..."
               />
 

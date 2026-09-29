@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import Select, { type SingleValue } from "react-select";
 
 // ============================================================
 // TYPES
@@ -9,8 +10,13 @@ interface UserRow {
   txtUserName: string;
   txtPwd: string;
   txtConfirmPwd: string;
-  txtUserType: string;
+  lkpUserType: string;
   lkpUserStatus: string;
+}
+
+interface SelectOption {
+  value: string;
+  label: string;
 }
 
 // ============================================================
@@ -22,9 +28,43 @@ const createEmptyUser = (): UserRow => ({
   txtUserName: "",
   txtPwd: "",
   txtConfirmPwd: "",
-  txtUserType: "",
+  lkpUserType: "",
   lkpUserStatus: "",
 });
+
+// ============================================================
+// USER TYPE OPTIONS
+// ============================================================
+
+const userTypeOptions: SelectOption[] = [
+  {
+    value: "ADMIN",
+    label: "ADMIN",
+  },
+  {
+    value: "USER",
+    label: "USER",
+  },
+  {
+    value: "SUPERVISOR",
+    label: "SUPERVISOR",
+  },
+];
+
+// ============================================================
+// USER STATUS OPTIONS
+// ============================================================
+
+const userStatusOptions: SelectOption[] = [
+  {
+    value: "Active",
+    label: "Active",
+  },
+  {
+    value: "Inactive",
+    label: "Inactive",
+  },
+];
 
 // ============================================================
 // DUMMY DATA
@@ -36,7 +76,7 @@ const initialUsers: UserRow[] = [
     txtUserName: "1",
     txtPwd: "123",
     txtConfirmPwd: "123",
-    txtUserType: "ADMIN",
+    lkpUserType: "ADMIN",
     lkpUserStatus: "Active",
   },
   {
@@ -44,7 +84,7 @@ const initialUsers: UserRow[] = [
     txtUserName: "123",
     txtPwd: "123456",
     txtConfirmPwd: "123456",
-    txtUserType: "ADMIN",
+    lkpUserType: "ADMIN",
     lkpUserStatus: "Active",
   },
   {
@@ -52,7 +92,7 @@ const initialUsers: UserRow[] = [
     txtUserName: "ABDULAZIZ",
     txtPwd: "123456",
     txtConfirmPwd: "123456",
-    txtUserType: "ADMIN",
+    lkpUserType: "ADMIN",
     lkpUserStatus: "Active",
   },
   {
@@ -60,7 +100,7 @@ const initialUsers: UserRow[] = [
     txtUserName: "ACCOUNTS SUPERVISOR",
     txtPwd: "123456",
     txtConfirmPwd: "123456",
-    txtUserType: "ADMIN",
+    lkpUserType: "ADMIN",
     lkpUserStatus: "Active",
   },
   {
@@ -68,7 +108,7 @@ const initialUsers: UserRow[] = [
     txtUserName: "ACCOUNTS",
     txtPwd: "123",
     txtConfirmPwd: "123",
-    txtUserType: "ADMIN",
+    lkpUserType: "ADMIN",
     lkpUserStatus: "Active",
   },
   {
@@ -76,7 +116,7 @@ const initialUsers: UserRow[] = [
     txtUserName: "ADMIN",
     txtPwd: "123456",
     txtConfirmPwd: "123456",
-    txtUserType: "ADMIN",
+    lkpUserType: "ADMIN",
     lkpUserStatus: "Active",
   },
   {
@@ -84,7 +124,7 @@ const initialUsers: UserRow[] = [
     txtUserName: "AFZAL",
     txtPwd: "123456",
     txtConfirmPwd: "123456",
-    txtUserType: "ADMIN",
+    lkpUserType: "ADMIN",
     lkpUserStatus: "Active",
   },
   {
@@ -92,7 +132,7 @@ const initialUsers: UserRow[] = [
     txtUserName: "AMAAN",
     txtPwd: "123456",
     txtConfirmPwd: "123456",
-    txtUserType: "ADMIN",
+    lkpUserType: "ADMIN",
     lkpUserStatus: "Active",
   },
   {
@@ -100,7 +140,7 @@ const initialUsers: UserRow[] = [
     txtUserName: "CREDIT CONTROL",
     txtPwd: "123456",
     txtConfirmPwd: "123456",
-    txtUserType: "ADMIN",
+    lkpUserType: "ADMIN",
     lkpUserStatus: "Active",
   },
   {
@@ -108,7 +148,7 @@ const initialUsers: UserRow[] = [
     txtUserName: "ACCOUNTANT",
     txtPwd: "123456",
     txtConfirmPwd: "123456",
-    txtUserType: "ADMIN",
+    lkpUserType: "ADMIN",
     lkpUserStatus: "Active",
   },
 ];
@@ -134,20 +174,17 @@ const buttonClass = `
   shadow-[inset_0_1px_0_rgba(255,255,255,0.8)]
   transition-colors
   duration-100
-
   text-transparent
   bg-clip-text
   bg-gradient-to-r
   from-green-800
   to-green-500
-
   hover:border-l-[#7f9fbd]
   hover:border-r-[#7f9fbd]
   hover:border-b-[#7f9fbd]
   hover:bg-gradient-to-b
   hover:from-[#ffffff]
   hover:to-[#dce8f1]
-
   focus:border-l-[#20884e]
   focus:border-r-[#20884e]
   focus:border-b-[#20884e]
@@ -157,7 +194,146 @@ const buttonClass = `
   focus:to-[#dcefe5]
   focus:outline-none
   focus:ring-0
+  hover:text-green-800
 `;
+
+// ============================================================
+// SELECT STYLE
+// ============================================================
+
+const selectStyles = {
+  // ==========================================================
+  // CONTROL
+  // ==========================================================
+
+  control: (base: any) => ({
+    ...base,
+    minHeight: "23px",
+    height: "23px",
+    width: "100%",
+    border: "none",
+    borderRadius: "0px",
+    boxShadow: "none",
+    backgroundColor: "transparent",
+    fontSize: "12px",
+    cursor: "pointer",
+  }),
+
+  // ==========================================================
+  // VALUE CONTAINER
+  // ==========================================================
+
+  valueContainer: (base: any) => ({
+    ...base,
+    height: "23px",
+    padding: "0px",
+  }),
+
+  // ==========================================================
+  // SELECTED VALUE
+  // ==========================================================
+
+  singleValue: (base: any) => ({
+    ...base,
+    fontSize: "12px",
+    color: "#1e293b",
+    margin: "0px",
+  }),
+
+  // ==========================================================
+  // PLACEHOLDER
+  // ==========================================================
+
+  placeholder: (base: any) => ({
+    ...base,
+    fontSize: "12px",
+    color: "#94a3b8",
+    margin: "0px",
+  }),
+
+  // ==========================================================
+  // INPUT
+  // ==========================================================
+
+  input: (base: any) => ({
+    ...base,
+    margin: "0px",
+    padding: "0px",
+    fontSize: "12px",
+  }),
+
+  // ==========================================================
+  // INDICATORS CONTAINER
+  // ==========================================================
+
+  indicatorsContainer: (base: any) => ({
+    ...base,
+    height: "23px",
+  }),
+
+  // ==========================================================
+  // DROPDOWN ARROW
+  // ==========================================================
+
+  dropdownIndicator: (base: any) => ({
+    ...base,
+    padding: "2px",
+  }),
+
+  // ==========================================================
+  // REMOVE X ICON
+  // ==========================================================
+
+  clearIndicator: () => ({
+    display: "none",
+  }),
+
+  // ==========================================================
+  // REMOVE VERTICAL SEPARATOR
+  // ==========================================================
+
+  indicatorSeparator: () => ({
+    display: "none",
+  }),
+
+  // ==========================================================
+  // MENU
+  // ==========================================================
+
+  menu: (base: any) => ({
+    ...base,
+    zIndex: 9999,
+    fontSize: "12px",
+    marginTop: "1px",
+  }),
+
+  // ==========================================================
+  // MENU LIST
+  // ==========================================================
+
+  menuList: (base: any) => ({
+    ...base,
+    padding: "2px 0px",
+    maxHeight: "150px",
+  }),
+
+  // ==========================================================
+  // OPTION
+  // ==========================================================
+
+  option: (base: any, state: any) => ({
+    ...base,
+    fontSize: "12px",
+    padding: "5px 8px",
+    cursor: "pointer",
+    backgroundColor: state.isSelected
+      ? "#dcefe5"
+      : state.isFocused
+        ? "#f0faf5"
+        : "#ffffff",
+    color: "#1e293b",
+  }),
+};
 
 // ============================================================
 // COMPONENT
@@ -174,8 +350,6 @@ const UserLogin: React.FC = () => {
 
   // ============================================================
   // GET DISPLAY ROWS
-  //
-  // Existing users + blank editable rows
   // ============================================================
 
   const displayUsers = Array.from(
@@ -185,9 +359,6 @@ const UserLogin: React.FC = () => {
 
   // ============================================================
   // UPDATE CELL
-  //
-  // This also creates a new row when typing into
-  // an empty row.
   // ============================================================
 
   const handleChange = (
@@ -198,7 +369,6 @@ const UserLogin: React.FC = () => {
     setUsers((previous) => {
       const updatedUsers = [...previous];
 
-      // Create missing rows until the selected row exists
       while (updatedUsers.length <= rowIndex) {
         updatedUsers.push(createEmptyUser());
       }
@@ -213,30 +383,51 @@ const UserLogin: React.FC = () => {
   };
 
   // ============================================================
+  // USER TYPE CHANGE
+  // ============================================================
+
+  const handleUserTypeChange = (
+    rowIndex: number,
+    option: SingleValue<SelectOption>
+  ) => {
+    handleChange(
+      rowIndex,
+      "lkpUserType",
+      option?.value ?? ""
+    );
+  };
+
+  // ============================================================
+  // USER STATUS CHANGE
+  // ============================================================
+
+  const handleUserStatusChange = (
+    rowIndex: number,
+    option: SingleValue<SelectOption>
+  ) => {
+    handleChange(
+      rowIndex,
+      "lkpUserStatus",
+      option?.value ?? ""
+    );
+  };
+
+  // ============================================================
   // SAVE
   // ============================================================
 
   const handleSave = () => {
-    // Only send rows that contain data
     const filledUsers = users.filter(
       (user) =>
         user.txtUserID.trim() !== "" ||
         user.txtUserName.trim() !== "" ||
         user.txtPwd.trim() !== "" ||
         user.txtConfirmPwd.trim() !== "" ||
-        user.txtUserType.trim() !== "" ||
+        user.lkpUserType.trim() !== "" ||
         user.lkpUserStatus.trim() !== ""
     );
 
     console.log("Save Users:", filledUsers);
-  };
-
-  // ============================================================
-  // DELETE
-  // ============================================================
-
-  const handleDelete = () => {
-    console.log("Delete User");
   };
 
   // ============================================================
@@ -349,8 +540,6 @@ const UserLogin: React.FC = () => {
                   bg-[#f0faf5]
                 "
               >
-                {/* USER ID */}
-
                 <th
                   className="
                     w-[23%]
@@ -367,8 +556,6 @@ const UserLogin: React.FC = () => {
                 >
                   User ID
                 </th>
-
-                {/* USER NAME */}
 
                 <th
                   className="
@@ -387,8 +574,6 @@ const UserLogin: React.FC = () => {
                   User Name
                 </th>
 
-                {/* PASSWORD */}
-
                 <th
                   className="
                     w-[15%]
@@ -404,8 +589,6 @@ const UserLogin: React.FC = () => {
                 >
                   Password
                 </th>
-
-                {/* CONFIRM PASSWORD */}
 
                 <th
                   className="
@@ -424,11 +607,9 @@ const UserLogin: React.FC = () => {
                   Confirm Password
                 </th>
 
-                {/* USER TYPE */}
-
                 <th
                   className="
-                    w-[9%]
+                    w-[12%]
                     border-b
                     border-r
                     border-[#b7e8cf]
@@ -443,11 +624,9 @@ const UserLogin: React.FC = () => {
                   User Type
                 </th>
 
-                {/* USER STATUS */}
-
                 <th
                   className="
-                    w-[10%]
+                    w-[12%]
                     border-b
                     border-[#b7e8cf]
                     px-2
@@ -471,13 +650,9 @@ const UserLogin: React.FC = () => {
               {displayUsers.map((user, index) => (
                 <tr
                   key={index}
-                  className="
-                    h-[25px]
-                  "
+                  className="h-[25px]"
                 >
-                  {/* ==================================================
-                      USER ID
-                  ================================================== */}
+                  {/* USER ID */}
 
                   <td
                     className="
@@ -498,13 +673,12 @@ const UserLogin: React.FC = () => {
                           e.target.value
                         )
                       }
+                      maxLength={30}
                       className={inputClass}
                     />
                   </td>
 
-                  {/* ==================================================
-                      USER NAME
-                  ================================================== */}
+                  {/* USER NAME */}
 
                   <td
                     className="
@@ -525,13 +699,12 @@ const UserLogin: React.FC = () => {
                           e.target.value
                         )
                       }
+                      maxLength={60}
                       className={inputClass}
                     />
                   </td>
 
-                  {/* ==================================================
-                      PASSWORD
-                  ================================================== */}
+                  {/* PASSWORD */}
 
                   <td
                     className="
@@ -552,13 +725,13 @@ const UserLogin: React.FC = () => {
                           e.target.value
                         )
                       }
+                      minLength={6}
+                      maxLength={12}
                       className={inputClass}
                     />
                   </td>
 
-                  {/* ==================================================
-                      CONFIRM PASSWORD
-                  ================================================== */}
+                  {/* CONFIRM PASSWORD */}
 
                   <td
                     className="
@@ -579,60 +752,66 @@ const UserLogin: React.FC = () => {
                           e.target.value
                         )
                       }
+                      minLength={6}
+                      maxLength={12}
                       className={inputClass}
                     />
                   </td>
 
-                  {/* ==================================================
-                      USER TYPE
-                  ================================================== */}
+                  {/* USER TYPE */}
 
                   <td
                     className="
                       border-b
                       border-r
                       border-[#b7e8cf]
-                      px-2
+                      p-0
                     "
                   >
-                    <input
-                      id={`txtUserType-${index}`}
-                      type="text"
-                      value={user.txtUserType}
-                      onChange={(e) =>
-                        handleChange(
-                          index,
-                          "txtUserType",
-                          e.target.value
-                        )
+                    <Select
+                      inputId={`lkpUserType-${index}`}
+                      options={userTypeOptions}
+                      value={
+                        userTypeOptions.find(
+                          (option) =>
+                            option.value === user.lkpUserType
+                        ) ?? null
                       }
-                      className={inputClass}
+                      onChange={(option) =>
+                        handleUserTypeChange(index, option)
+                      }
+                      isClearable={false}
+                      isSearchable={false}
+                      placeholder=""
+                      styles={selectStyles}
                     />
                   </td>
 
-                  {/* ==================================================
-                      USER STATUS
-                  ================================================== */}
+                  {/* USER STATUS */}
 
                   <td
                     className="
                       border-b
                       border-[#b7e8cf]
-                      px-2
+                      p-0
                     "
                   >
-                    <input
-                      id={`lkpUserStatus-${index}`}
-                      type="text"
-                      value={user.lkpUserStatus}
-                      onChange={(e) =>
-                        handleChange(
-                          index,
-                          "lkpUserStatus",
-                          e.target.value
-                        )
+                    <Select
+                      inputId={`lkpUserStatus-${index}`}
+                      options={userStatusOptions}
+                      value={
+                        userStatusOptions.find(
+                          (option) =>
+                            option.value === user.lkpUserStatus
+                        ) ?? null
                       }
-                      className={inputClass}
+                      onChange={(option) =>
+                        handleUserStatusChange(index, option)
+                      }
+                      isClearable={false}
+                      isSearchable={false}
+                      placeholder=""
+                      styles={selectStyles}
                     />
                   </td>
                 </tr>
@@ -668,20 +847,6 @@ const UserLogin: React.FC = () => {
               S
             </span>
             ave
-          </button>
-
-          {/* DELETE */}
-
-          <button
-            id="btnDelete"
-            type="button"
-            onClick={handleDelete}
-            className={buttonClass}
-          >
-            <span className="underline underline-offset-2">
-              D
-            </span>
-            elete
           </button>
 
           {/* CLEAR */}

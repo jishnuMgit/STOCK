@@ -1,8 +1,14 @@
 import React, { useEffect, useState } from "react";
-import Select, { type StylesConfig } from "react-select";
+import Select, { components, type StylesConfig } from "react-select";
 import { toast } from "react-toastify";
 import { X } from "lucide-react";
 import { useEnterAsTab } from "../../../hooks/useEnterAsTab";
+import {
+  filterLabelOrValue,
+  BranchMenuList,
+  BranchOption,
+  branchMenuStyles,
+} from "../../../components/BranchSelect/branchSelectParts";
 
 /* =========================================================
    TYPES
@@ -19,7 +25,183 @@ interface BranchRow {
 interface SelectOption {
   value: string;
   label: string;
+  // Only set on the Item Group / Supplier ID + Name selects, which
+  // show both columns in the open list and filter on either.
+  id?: string;
+  name?: string;
 }
+
+/* =========================================================
+   ID | NAME DROPDOWN (Item Group, Supplier)
+
+   Same idea as the legacy desktop form: the ID box and the Name
+   box each open the same two-column "ID | Name" list, both are
+   searchable (type part of the ID or the name), and picking from
+   either one fills both.
+========================================================= */
+
+// The ID box is 155px wide + 8px gap, then the Name box starts and its
+// text is inset ~9px. The row has 10px left padding, so 162px puts the
+// name column directly under the text in the Name box.
+const PAIR_GRID_COLUMNS = "162px 1fr";
+
+const filterPairOption = (
+  option: { label: string; value: string; data: SelectOption },
+  inputValue: string
+) => {
+  const search = inputValue.toLowerCase().trim();
+
+  if (!search) {
+    return true;
+  }
+
+  return (
+    (option.data.id || "").toLowerCase().includes(search) ||
+    (option.data.name || "").toLowerCase().includes(search)
+  );
+};
+
+// Name box's list (same idea as the Branch dropdown): the name column is
+// exactly as wide as the Name box and the ID column sits right after the
+// box's right edge, in the part of the menu that hangs past it
+// (menu width = 100% + 56px; 46px ID column + 10px right padding).
+const PAIR_GRID_COLUMNS_NAME_FIRST = "calc(100% - 100px) 100px";
+
+const ellipsisStyle = {
+  overflow: "hidden",
+  textOverflow: "ellipsis",
+  whiteSpace: "nowrap",
+} as const;
+
+// nameFirst = false -> "ID | Name"  (used by the ID box)
+// nameFirst = true  -> "Name | ID"  (used by the Name box)
+const makePairComponents = (
+  idHeader: string,
+  nameHeader: string,
+  nameFirst: boolean
+) => {
+  const columns = nameFirst
+    ? PAIR_GRID_COLUMNS_NAME_FIRST
+    : PAIR_GRID_COLUMNS;
+
+  return {
+    MenuList: (props: any) => (
+      <components.MenuList {...props}>
+        <div
+          style={{
+            display: "grid",
+            gridTemplateColumns: columns,
+            padding: "6px 10px",
+            backgroundColor: "#f5f7fa",
+            borderBottom: "1px solid #d7dee7",
+            fontSize: "11px",
+            fontWeight: 600,
+            color: "#555",
+            whiteSpace: "nowrap",   
+            position: "sticky",
+            top: 0,
+            zIndex: 99999,
+          }}
+        >
+          <div>{nameFirst ? nameHeader : idHeader}</div>
+          <div>{nameFirst ? idHeader : nameHeader}</div>
+        </div>
+
+        {props.children}
+      </components.MenuList>
+    ),
+
+    Option: (props: any) => (
+      <components.Option {...props}>
+        <div
+          style={{
+            display: "grid",
+            gridTemplateColumns: columns,
+            width: "100%",
+            alignItems: "center",
+            fontSize: "12px",
+          }}
+        >
+          {nameFirst ? (
+            <>
+              <div style={ellipsisStyle}>{props.data.name}</div>
+              <div>{props.data.id}</div>
+            </>
+          ) : (
+            <>
+              <div>{props.data.id}</div>
+              <div style={ellipsisStyle}>{props.data.name}</div>
+            </>
+          )}
+        </div>
+      </components.Option>
+    ),
+  };
+};
+
+// Created once (not inside the component) so react-select doesn't
+// remount the menu on every render.
+const itemGroupIdComponents = makePairComponents(
+  "Item Group ID",
+  "Item Group Name",
+  false
+);
+const itemGroupNameComponents = makePairComponents(
+  "Item Group ID",
+  "Item Group Name",
+  true
+);
+const supplierIdComponents = makePairComponents(
+  "Supplier ID",
+  "Supplier Name",
+  false
+);
+const supplierNameComponents = makePairComponents(
+  "Supplier ID",
+  "Supplier Name",
+  true
+);
+
+// For the Name boxes: menu = Name box width + the ID column.
+const pairNameMenuStyles: Pick<
+  StylesConfig<SelectOption, false>,
+  "menu" | "menuList" | "menuPortal"
+> = {
+  menu: (base) => ({
+    ...base,
+    width: "calc(100% + 110px)",
+    zIndex: 99999,
+    fontSize: "12px",
+  }),
+  menuList: (base) => ({
+    ...base,
+    padding: 0,
+  }),
+  menuPortal: (base) => ({
+    ...base,
+    zIndex: 99999,
+  }),
+};
+
+const pairMenuStyles: Pick<
+  StylesConfig<SelectOption, false>,
+  "menu" | "menuList" | "menuPortal"
+> = {
+  menu: (base) => ({
+    ...base,
+    width: "560px",
+    zIndex: 99999,
+    fontSize: "12px",
+  }),
+  menuList: (base) => ({
+    ...base,
+    padding: 0,
+  }),
+  menuPortal: (base) => ({
+    ...base,
+    zIndex: 99999,
+  }),
+};
 
 /* =========================================================
    BUTTON CLASS
@@ -163,7 +345,7 @@ const ItemPage: React.FC = () => {
   useEffect(() => {
     const loadUnitList = async () => {
       try {
-        const CoID = localStorage.getItem("CoID");
+        const CoID = localStorage.getItem("PstrCoID");
 
         if (!CoID) {
           toast.error("getUnitList: no CoID in localStorage");
@@ -215,7 +397,7 @@ const ItemPage: React.FC = () => {
   useEffect(() => {
     const loadItemGroupList = async () => {
       try {
-        const CoID = localStorage.getItem("CoID");
+        const CoID = localStorage.getItem("PstrCoID");
 
         if (!CoID) {
           toast.error("getItemGroupList: no CoID in localStorage");
@@ -248,19 +430,34 @@ const ItemPage: React.FC = () => {
     loadItemGroupList();
   }, []);
 
+  // Both selects use the ID as their value; only the text shown in
+  // the box differs (ID in the first box, name in the second).
   const itemGroupIDOptions: SelectOption[] = itemGroupList.map(
     (group) => ({
       value: group.fitemgroupid,
       label: group.fitemgroupid,
+      id: group.fitemgroupid,
+      name: group.fitemgroupname,
     })
   );
 
   const itemGroupNameOptions: SelectOption[] = itemGroupList.map(
     (group) => ({
-      value: group.fitemgroupname,
+      value: group.fitemgroupid,
       label: group.fitemgroupname,
+      id: group.fitemgroupid,
+      name: group.fitemgroupname,
     })
   );
+
+  const selectItemGroup = (itemGroupID: string) => {
+    const matchedGroup = itemGroupList.find(
+      (group) => group.fitemgroupid === itemGroupID
+    );
+
+    setLkpItemGroupID(matchedGroup?.fitemgroupid || "");
+    setLkpItemGroupName(matchedGroup?.fitemgroupname || "");
+  };
 
   /* =========================================================
      LOAD SUPPLIER LIST (lkpSupplierID dropdown; selecting
@@ -274,7 +471,7 @@ const ItemPage: React.FC = () => {
   useEffect(() => {
     const loadSupplierList = async () => {
       try {
-        const CoID = localStorage.getItem("CoID");
+        const CoID = localStorage.getItem("PstrCoID");
 
         if (!CoID) {
           toast.error("getSupplierList: no CoID in localStorage");
@@ -311,15 +508,28 @@ const ItemPage: React.FC = () => {
     (supplier) => ({
       value: supplier.fcsaccountid,
       label: supplier.fcsaccountid,
+      id: supplier.fcsaccountid,
+      name: supplier.fcsaccountname,
     })
   );
 
   const supplierNameOptions: SelectOption[] = supplierList.map(
     (supplier) => ({
-      value: supplier.fcsaccountname,
+      value: supplier.fcsaccountid,
       label: supplier.fcsaccountname,
+      id: supplier.fcsaccountid,
+      name: supplier.fcsaccountname,
     })
   );
+
+  const selectSupplier = (supplierID: string) => {
+    const matchedSupplier = supplierList.find(
+      (supplier) => supplier.fcsaccountid === supplierID
+    );
+
+    setLkpSupplierID(matchedSupplier?.fcsaccountid || "");
+    setLkpSupplierName(matchedSupplier?.fcsaccountname || "");
+  };
 
   /* =========================================================
      LOAD BRANCH LIST (lkpBranch dropdown, grid rows)
@@ -330,8 +540,8 @@ const ItemPage: React.FC = () => {
   useEffect(() => {
     const loadBranchList = async () => {
       try {
-        const CoID = localStorage.getItem("CoID");
-        const userId = localStorage.getItem("userID");
+        const CoID = localStorage.getItem("PstrCoID");
+        const userId = localStorage.getItem("PstrUserID");
 
         if (!CoID || !userId) {
           toast.error("getBranchList: no CoID/userId in localStorage");
@@ -409,8 +619,8 @@ const ItemPage: React.FC = () => {
       return;
     }
 
-    const CoID = localStorage.getItem("CoID");
-    const userId = localStorage.getItem("userID");
+    const CoID = localStorage.getItem("PstrCoID");
+    const userId = localStorage.getItem("PstrUserID");
 
     if (!CoID || !userId) {
       toast.error("Company ID / User ID not found. Please log in again.");
@@ -467,7 +677,7 @@ const ItemPage: React.FC = () => {
       return;
     }
 
-    const CoID = localStorage.getItem("CoID");
+    const CoID = localStorage.getItem("PstrCoID");
 
     if (!CoID) {
       toast.error("Company ID not found. Please log in again.");
@@ -560,8 +770,8 @@ const ItemPage: React.FC = () => {
       return;
     }
 
-    const CoID = localStorage.getItem("CoID");
-    const userId = localStorage.getItem("userID");
+    const CoID = localStorage.getItem("PstrCoID");
+    const userId = localStorage.getItem("PstrUserID");
 
     if (!CoID || !userId) {
       toast.error("Company ID / User ID not found. Please log in again.");
@@ -611,8 +821,8 @@ const ItemPage: React.FC = () => {
       return;
     }
 
-    const CoID = localStorage.getItem("CoID");
-    const userId = localStorage.getItem("userID");
+    const CoID = localStorage.getItem("PstrCoID");
+    const userId = localStorage.getItem("PstrUserID");
 
     if (!CoID || !userId) {
       toast.error("Company ID / User ID not found. Please log in again.");
@@ -1219,22 +1429,16 @@ const ItemPage: React.FC = () => {
                     (option) => option.value === lkpItemGroupID,
                   ) || null
                 }
-                onChange={(option) => {
-                  setLkpItemGroupID(
-                    option?.value || "",
-                  );
-
-                  const matchedGroup = itemGroupList.find(
-                    (group) =>
-                      group.fitemgroupid ===
-                      option?.value,
-                  );
-
-                  setLkpItemGroupName(
-                    matchedGroup?.fitemgroupname || "",
-                  );
-                }}
-                styles={reactSelectStyles}
+                onChange={(option) =>
+                  selectItemGroup(option?.value || "")
+                }
+                styles={{ ...reactSelectStyles, ...pairMenuStyles }}
+                components={itemGroupIdComponents}
+                filterOption={filterPairOption}
+                noOptionsMessage={() => "No Item Group Found"}
+                menuPortalTarget={document.body}
+                menuPosition="fixed"
+                isSearchable
                 isClearable
               />
 
@@ -1244,11 +1448,20 @@ const ItemPage: React.FC = () => {
                 options={itemGroupNameOptions}
                 value={
                   itemGroupNameOptions.find(
-                    (option) => option.value === lkpItemGroupName,
+                    (option) => option.value === lkpItemGroupID,
                   ) || null
                 }
-                isDisabled
-                styles={reactSelectStyles}
+                onChange={(option) =>
+                  selectItemGroup(option?.value || "")
+                }
+                styles={{ ...reactSelectStyles, ...pairNameMenuStyles }}
+                components={itemGroupNameComponents}
+                filterOption={filterPairOption}
+                noOptionsMessage={() => "No Item Group Found"}
+                menuPortalTarget={document.body}
+                menuPosition="fixed"
+                isSearchable
+                isClearable
               />
             </div>
 
@@ -1280,22 +1493,16 @@ const ItemPage: React.FC = () => {
                     (option) => option.value === lkpSupplierID,
                   ) || null
                 }
-                onChange={(option) => {
-                  setLkpSupplierID(
-                    option?.value || "",
-                  );
-
-                  const matchedSupplier = supplierList.find(
-                    (supplier) =>
-                      supplier.fcsaccountid ===
-                      option?.value,
-                  );
-
-                  setLkpSupplierName(
-                    matchedSupplier?.fcsaccountname || "",
-                  );
-                }}
-                styles={reactSelectStyles}
+                onChange={(option) =>
+                  selectSupplier(option?.value || "")
+                }
+                styles={{ ...reactSelectStyles, ...pairMenuStyles }}
+                components={supplierIdComponents}
+                filterOption={filterPairOption}
+                noOptionsMessage={() => "No Supplier Found"}
+                menuPortalTarget={document.body}
+                menuPosition="fixed"
+                isSearchable
                 isClearable
               />
 
@@ -1305,11 +1512,20 @@ const ItemPage: React.FC = () => {
                 options={supplierNameOptions}
                 value={
                   supplierNameOptions.find(
-                    (option) => option.value === lkpSupplierName,
+                    (option) => option.value === lkpSupplierID,
                   ) || null
                 }
-                isDisabled
-                styles={reactSelectStyles}
+                onChange={(option) =>
+                  selectSupplier(option?.value || "")
+                }
+                styles={{ ...reactSelectStyles, ...pairNameMenuStyles }}
+                components={supplierNameComponents}
+                filterOption={filterPairOption}
+                noOptionsMessage={() => "No Supplier Found"}
+                menuPortalTarget={document.body}
+                menuPosition="fixed"
+                isSearchable
+                isClearable
               />
             </div>
 
@@ -1619,7 +1835,18 @@ const ItemPage: React.FC = () => {
                                   option?.value || "",
                                 )
                               }
-                              styles={tableSelectStyles}
+                              styles={{
+                                ...tableSelectStyles,
+                                ...branchMenuStyles,
+                              }}
+                              components={{
+                                Option: BranchOption,
+                                MenuList: BranchMenuList,
+                              }}
+                              filterOption={filterLabelOrValue}
+                              noOptionsMessage={() => "No Branch Found"}
+                              isSearchable
+                              minMenuHeight={60}
                               menuPortalTarget={
                                 document.body
                               }
