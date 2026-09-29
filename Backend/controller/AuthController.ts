@@ -12,6 +12,8 @@ export const login = async (req: Request, res: Response): Promise<Response> => {
   try {
     const { companyId, txtYear, txtUserID, txtPwd } = req.body;
 
+    console.log(req.body, "request ====================")
+
     /* =====================================================
        VALIDATION
     ===================================================== */
