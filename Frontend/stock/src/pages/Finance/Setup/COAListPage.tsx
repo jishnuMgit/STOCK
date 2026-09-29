@@ -144,14 +144,20 @@ const accountTree: AccountNode[] = [
             children: [],
           },
         ],
-      },{
-         id: "test-assets",
+      },
+
+      // ========================================================
+      // TEST DATA
+      // ========================================================
+
+      {
+        id: "test-assets",
         name: "CURRENT ASSETS",
         accountId: "1100000",
         color: "text-blue-600",
         bold: true,
         children:[
-              {
+          {
             id: "cash001",
             name: "CASH01",
             accountId: "11010000",
@@ -159,27 +165,70 @@ const accountTree: AccountNode[] = [
             bold: true,
             children: [
               {
-                id: "petty-cash",
+                id: "petty-cash-001",
                 name: "PETTY CASH",
                 accountId: "1101001",
               },
               {
-                id: "main-cash",
+                id: "main-cash-001",
                 name: "MAIN CASH",
                 accountId: "1101002",
               },
               {
-                id: "cash-refund",
+                id: "cash-refund-001",
                 name: "CASH REFUND",
                 accountId: "1101003",
               },
             ],
           },
-        ]
-      }
+        ],
+      },
     ],
   },
 ];
+
+// ============================================================
+// HELPER - GET EXPANDED NODES FOR MINIMUM VISIBLE ROWS
+// ============================================================
+
+const getExpandedForMinimumRows = (
+  nodes: AccountNode[],
+  minimumRows: number
+): Set<string> => {
+  const result = new Set<string>();
+
+  let visibleRows = 0;
+
+  const expandUntilMinimum = (
+    currentNodes: AccountNode[]
+  ): boolean => {
+    for (const node of currentNodes) {
+      // Count current node
+      visibleRows++;
+
+      // We already have enough visible rows
+      if (visibleRows >= minimumRows) {
+        return true;
+      }
+
+      // Expand node if it has children
+      if (node.children && node.children.length > 0) {
+        result.add(node.id);
+
+        // Continue through children
+        if (expandUntilMinimum(node.children)) {
+          return true;
+        }
+      }
+    }
+
+    return false;
+  };
+
+  expandUntilMinimum(nodes);
+
+  return result;
+};
 
 // ============================================================
 // HELPER - FILTER TREE
@@ -244,16 +293,25 @@ const TreeRow: React.FC<TreeRowProps> = ({
   onModify,
   onDelete,
 }) => {
-  const hasChildren = Boolean(node.children && node.children.length > 0);
+  const hasChildren = Boolean(
+    node.children && node.children.length > 0
+  );
+
   const isExpanded = expanded.has(node.id);
-const iconColor =
-  level === 0
-    ? "text-green-600"
-    : level === 1
-      ? "text-blue-600"
-      : level === 2
-        ? "text-fuchsia-600"
-        : "text-slate-500";
+
+  // ============================================================
+  // ICON COLOR BASED ON TREE LEVEL
+  // ============================================================
+
+  const iconColor =
+    level === 0
+      ? "text-green-600"
+      : level === 1
+        ? "text-blue-600"
+        : level === 2
+          ? "text-fuchsia-600"
+          : "text-slate-500";
+
   return (
     <>
       {/* ========================================================
@@ -294,7 +352,9 @@ const iconColor =
 
             <button
               type="button"
-              onClick={() => hasChildren && toggleNode(node.id)}
+              onClick={() =>
+                hasChildren && toggleNode(node.id)
+              }
               className="
                 mr-1
                 flex
@@ -314,23 +374,23 @@ const iconColor =
                   : undefined
               }
             >
-   {hasChildren ? (
-  isExpanded ? (
-    <ChevronDown
-      size={10}
-      strokeWidth={2.5}
-      className={iconColor}
-    />
-  ) : (
-    <ChevronRight
-      size={10}
-      strokeWidth={2.5}
-      className={iconColor}
-    />
-  )
-) : (
-  <span className="block w-2.5" />
-)}
+              {hasChildren ? (
+                isExpanded ? (
+                  <ChevronDown
+                    size={10}
+                    strokeWidth={2.5}
+                    className={iconColor}
+                  />
+                ) : (
+                  <ChevronRight
+                    size={10}
+                    strokeWidth={2.5}
+                    className={iconColor}
+                  />
+                )
+              ) : (
+                <span className="block w-2.5" />
+              )}
             </button>
 
             {/* ACCOUNT NAME */}
@@ -396,11 +456,13 @@ const iconColor =
               hover:bg-[#359c4c]
               focus:outline-none
             "
-          >{level!==3 && <Plus
-              size={11}
-              strokeWidth={3}
-            />}
-           
+          >
+            {level !== 3 && (
+              <Plus
+                size={11}
+                strokeWidth={3}
+              />
+            )}
           </button>
         </div>
 
@@ -510,16 +572,11 @@ const COAListPage: React.FC = () => {
 
   // ============================================================
   // DEFAULT EXPANDED NODES
+  // Automatically expand enough nodes to show 25 rows
   // ============================================================
 
   const [expanded, setExpanded] = useState<Set<string>>(
-    new Set([
-      "assets",
-      "current-assets",
-      "cash",
-      "bank",
-      "receivables",
-    ])
+    () => getExpandedForMinimumRows(accountTree, 25)
   );
 
   // ============================================================
@@ -617,286 +674,277 @@ const COAListPage: React.FC = () => {
     });
   }, [search, filteredTree]);
 
-  return (
-    <div className="flex justify-center
-        items-center">
-       <div
-      className="
-        
-        min-h-screen
-        w-[1000px]
-        
-        mt-10
-        
-        
-        px-0
-        pt-0
-      "
-    >
-      {/* ============================================================
-          MAIN CONTAINER
-      ============================================================ */}
+  // ============================================================
+  // RENDER
+  // ============================================================
 
+  return (
+    <div className="flex items-center justify-center">
       <div
         className="
-          w-full
-          max-w-none
-          overflow-hidden
-          border
-          border-slate-400
-          bg-white
+          min-h-screen
+          w-[1000px]
+          mt-10
+          px-0
+          pt-0
         "
       >
-
-        {/* ============================================================
-            TITLE
-        ============================================================ */}
+        {/* ======================================================
+            MAIN CONTAINER
+        ====================================================== */}
 
         <div
           className="
-            flex
-            h-7
             w-full
-            items-center
-            left-0
-            border-b
+            max-w-none
+            overflow-hidden
+            border
             border-slate-400
-            bg-[#a3dfc0]
+            bg-white
           "
         >
-          <h1
-            id="ChartOfAccount"
+          {/* ====================================================
+              TITLE
+          ==================================================== */}
+
+          <div
             className="
-              text-[17px]
-              font-semibold
-              text-slate-700
-              ml-[10px]
+              flex
+              h-7
+              w-full
+              items-center
+              border-b
+              border-slate-400
+              bg-[#a3dfc0]
             "
           >
-            
-              Chart Of Account List
-          </h1>
-        </div>
-
-        {/* ============================================================
-            SEARCH
-        ============================================================ */}
-
-        <div
-          className="
-            px-3.5
-            pb-2
-            pt-3
-          "
-        >
-          <div className="relative w-[74.5%]">
-
-            <Search
-              size={11}
+            <h1
+              id="ChartOfAccount"
               className="
-                pointer-events-none
-                absolute
-                left-2.5
-                top-1/2
-                -translate-y-1/2
-                text-slate-500
-              "
-            />
-
-            <input
-              id="txtSearch"
-              type="text"
-              value={search}
-              onChange={(event) =>
-                setSearch(event.target.value)
-              }
-              placeholder="Search..."
-              className="
-                h-6
-                w-full
-                rounded-[2px]
-                border
-                border-slate-300
-                bg-white
-                pl-7
-                pr-2
-                text-[10px]
+                ml-[10px]
+                text-[17px]
+                font-semibold
                 text-slate-700
-                outline-none
-                placeholder:text-slate-400
-                focus:border-slate-400
-                focus:ring-0
               "
-            />
-
+            >
+              Chart Of Account List
+            </h1>
           </div>
-        </div>
 
-        {/* ============================================================
-            TABLE HEADER
-        ============================================================ */}
+          {/* ====================================================
+              SEARCH
+          ==================================================== */}
 
-        <div
-          className="
-            mx-3.5
-            grid
-            grid-cols-[minmax(0,1fr)_84px_55px_55px_52px]
-            border
-            border-slate-300
-            bg-[#f4f8fb]
-          "
-        >
+          <div
+            className="
+              px-3.5
+              pb-2
+              pt-3
+            "
+          >
+            <div className="relative w-[74.5%]">
+              <Search
+                size={11}
+                className="
+                  pointer-events-none
+                  absolute
+                  left-2.5
+                  top-1/2
+                  -translate-y-1/2
+                  text-slate-500
+                "
+              />
 
-          {/* ACCOUNT NAME */}
+              <input
+                id="txtSearch"
+                type="text"
+                value={search}
+                onChange={(event) =>
+                  setSearch(event.target.value)
+                }
+                placeholder="Search..."
+                className="
+                  h-6
+                  w-full
+                  rounded-[2px]
+                  border
+                  border-slate-300
+                  bg-white
+                  pl-7
+                  pr-2
+                  text-[10px]
+                  text-slate-700
+                  outline-none
+                  placeholder:text-slate-400
+                  focus:border-slate-400
+                  focus:ring-0
+                "
+              />
+            </div>
+          </div>
+
+          {/* ====================================================
+              TABLE HEADER
+          ==================================================== */}
+
+          <div
+            className="
+              mx-3.5
+              grid
+              grid-cols-[minmax(0,1fr)_84px_55px_55px_52px]
+              border
+              border-slate-300
+              bg-[#f4f8fb]
+            "
+          >
+            {/* ACCOUNT NAME */}
+
+            <div
+              id="trvChartOfAccount"
+              className="
+                flex
+                h-[23px]
+                items-center
+                border-r
+                border-slate-300
+                px-2
+                text-[10px]
+                font-semibold
+                text-slate-700
+              "
+            >
+              Account Name
+            </div>
+
+            {/* ACCOUNT ID */}
+
+            <div
+              className="
+                flex
+                h-[23px]
+                items-center
+                border-r
+                border-slate-300
+                px-2
+                text-[10px]
+                font-semibold
+                text-slate-700
+              "
+            >
+              Account ID
+            </div>
+
+            {/* ADD */}
+
+            <div
+              id="Addbtn"
+              className="
+                flex
+                h-[23px]
+                items-center
+                justify-center
+                border-r
+                border-slate-300
+                text-[10px]
+                font-semibold
+                text-slate-700
+              "
+            >
+              Add
+            </div>
+
+            {/* MODIFY */}
+
+            <div
+              id="Modifybtn"
+              className="
+                flex
+                h-[23px]
+                items-center
+                justify-center
+                border-r
+                border-slate-300
+                text-[10px]
+                font-semibold
+                text-slate-700
+              "
+            >
+              Modify
+            </div>
+
+            {/* DELETE */}
+
+            <div
+              id="Deletebtn"
+              className="
+                flex
+                h-[23px]
+                items-center
+                justify-center
+                text-[10px]
+                font-semibold
+                text-slate-700
+              "
+            >
+              Delete
+            </div>
+          </div>
+
+          {/* ====================================================
+              TREE
+          ==================================================== */}
 
           <div
             id="trvChartOfAccount"
             className="
-              flex
-              h-[23px]
-              items-center
-              border-r
+              mx-3.5
+              overflow-hidden
+              border-x
+              border-b
               border-slate-300
-              px-2
-              text-[10px]
-              font-semibold
-              text-slate-700
             "
           >
-            Account Name
+            {filteredTree.map((node) => (
+              <TreeRow
+                key={node.id}
+                node={node}
+                level={0}
+                expanded={expanded}
+                toggleNode={toggleNode}
+                onAdd={handleAdd}
+                onModify={handleModify}
+                onDelete={handleDelete}
+              />
+            ))}
+
+            {/* ==================================================
+                NO RESULTS
+            ================================================== */}
+
+            {filteredTree.length === 0 && (
+              <div
+                className="
+                  flex
+                  h-12
+                  items-center
+                  justify-center
+                  text-[10px]
+                  text-slate-500
+                "
+              >
+                No accounts found
+              </div>
+            )}
           </div>
 
-          {/* ACCOUNT ID */}
+          {/* ====================================================
+              BOTTOM
+          ==================================================== */}
 
-          <div
-            className="
-              flex
-              h-[23px]
-              items-center
-              border-r
-              border-slate-300
-              px-2
-              text-[10px]
-              font-semibold
-              text-slate-700
-            "
-          >
-            Account ID
-          </div>
-
-          {/* ADD */}
-
-          <div
-            id="Addbtn"
-            className="
-              flex
-              h-[23px]
-              items-center
-              justify-center
-              border-r
-              border-slate-300
-              text-[10px]
-              font-semibold
-              text-slate-700
-            "
-          >
-            Add
-          </div>
-
-          {/* MODIFY */}
-
-          <div
-            id="Modifybtn"
-            className="
-              flex
-              h-[23px]
-              items-center
-              justify-center
-              border-r
-              border-slate-300
-              text-[10px]
-              font-semibold
-              text-slate-700
-            "
-          >
-            Modify
-          </div>
-
-          {/* DELETE */}
-
-          <div
-            id="Deletebtn"
-            className="
-              flex
-              h-[23px]
-              items-center
-              justify-center
-              text-[10px]
-              font-semibold
-              text-slate-700
-            "
-          >
-            Delete
-          </div>
+          <div className="h-7" />
         </div>
-
-        {/* ============================================================
-            TREE
-        ============================================================ */}
-
-        <div
-          id="trvChartOfAccount"
-          className="
-            mx-3.5
-            overflow-hidden
-            border-x
-            border-b
-            border-slate-300
-          "
-        >
-          {filteredTree.map((node) => (
-            <TreeRow
-              key={node.id}
-              node={node}
-              level={0}
-              expanded={expanded}
-              toggleNode={toggleNode}
-              onAdd={handleAdd}
-              onModify={handleModify}
-              onDelete={handleDelete}
-            />
-          ))}
-
-          {/* ========================================================
-              NO RESULTS
-          ======================================================== */}
-
-          {filteredTree.length === 0 && (
-            <div
-              className="
-                flex
-                h-12
-                items-center
-                justify-center
-                text-[10px]
-                text-slate-500
-              "
-            >
-              No accounts found
-            </div>
-          )}
-        </div>
-
-        {/* ============================================================
-            BOTTOM
-        ============================================================ */}
-
-        <div className="h-7" />
-
       </div>
     </div>
-    </div>
-   
   );
 };
 
