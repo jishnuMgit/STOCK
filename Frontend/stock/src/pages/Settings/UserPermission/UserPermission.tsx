@@ -1,4 +1,3 @@
-
 import React, { useCallback, useEffect, useState } from "react";
 
 const API_URL = `${import.meta.env.VITE_API_URL}/user-permission`;
@@ -35,30 +34,75 @@ interface MenuRowProps {
   depth: number;
   expanded: Set<string>;
   onExpand: (menuId: string) => void;
-  onToggle: (menuId: string, checked: boolean) => void;
+  onToggleMenu: (menuId: string, checked: boolean) => void;
+  onToggleButton: (
+    menuId: string,
+    buttonCode: string,
+    checked: boolean
+  ) => void;
 }
+
+// ============================================================
+// BUTTON DEFINITIONS
+// Order matches the original WinForms implementation.
+// ============================================================
+
+const PERMISSION_BUTTONS: Record<string, string> = {
+  S: "Save",
+  M: "Modify",
+  F: "Find",
+  D: "Delete",
+  P: "Print",
+  T: "Post",
+  O: "One Branch",
+  A: "All Branch",
+  N: "Print DN",
+  E: "E-Invoice",
+};
 
 // ============================================================
 // HELPERS
 // ============================================================
 
-function isChecked(node: PermissionNode): boolean {
-  const buttons = String(node.fuserbuttons ?? "0").trim();
-  return buttons !== "" && buttons !== "0";
+function getUserButtons(node: PermissionNode): string {
+  const value = String(node.fuserbuttons ?? "").trim();
+
+  return value === "0" ? "" : value;
 }
 
-// Return the button permissions when a menu is checked.
-function getCheckedButtons(node: PermissionNode): string {
-  const buttons = String(node.fmenubuttons ?? "").trim();
-
-  return buttons !== "" && buttons !== "0" ? buttons : "S";
+function isMenuChecked(node: PermissionNode): boolean {
+  return (
+    Number(node.fright) > 0 ||
+    getUserButtons(node).length > 0
+  );
 }
 
-// Normalize API response into a nested tree.
+function isButtonChecked(
+  node: PermissionNode,
+  buttonCode: string
+): boolean {
+  return getUserButtons(node).includes(buttonCode);
+}
+
+// Only show action checkboxes supported by fmenubuttons.
+function getAvailableButtons(node: PermissionNode): string[] {
+  const available = String(node.fmenubuttons ?? "").trim();
+
+  return Object.keys(PERMISSION_BUTTONS).filter((code) =>
+    available.includes(code)
+  );
+}
+
+// A menu can be expanded if it has child menus or action buttons.
+function isExpandable(node: PermissionNode): boolean {
+  return (
+    node.children.length > 0 ||
+    getAvailableButtons(node).length > 0
+  );
+}
+
 function normalizeTree(data: unknown): PermissionNode[] {
-  if (!Array.isArray(data)) {
-    return [];
-  }
+  if (!Array.isArray(data)) return [];
 
   return data.map((item) => {
     const node = item as Partial<PermissionNode>;
@@ -78,23 +122,31 @@ function normalizeTree(data: unknown): PermissionNode[] {
 }
 
 // ============================================================
-// CHECK / UNCHECK A NODE AND ALL ITS DESCENDANTS
+// UPDATE MENU AND ALL DESCENDANT MENUS
+//
+// Menu checkbox selection cascades to descendant menus.
+// fuserbuttons is populated using each menu's own
+// fmenubuttons definition.
 // ============================================================
 
 function setSubtreeChecked(
   node: PermissionNode,
   checked: boolean
 ): PermissionNode {
+  const buttons = checked
+    ? getAvailableButtons(node).join("")
+    : "";
+
   return {
     ...node,
-    fuserbuttons: checked ? getCheckedButtons(node) : "0",
+    fuserbuttons: buttons || "0",
+    fright: checked ? 1 : 0,
     children: node.children.map((child) =>
       setSubtreeChecked(child, checked)
     ),
   };
 }
 
-// Find a node and apply the selection to its entire subtree.
 function updateSubtree(
   nodes: PermissionNode[],
   menuId: string,
@@ -107,49 +159,108 @@ function updateSubtree(
 
     return {
       ...node,
-      children: updateSubtree(node.children, menuId, checked),
+      children: updateSubtree(
+        node.children,
+        menuId,
+        checked
+      ),
     };
   });
 }
 
 // ============================================================
-// SYNCHRONIZE PARENT CHECKBOXES
+// UPDATE ONE ACTION CHECKBOX
 //
-// If every child is checked, check the parent.
-// If even one child is unchecked, uncheck the parent.
-// The same rule applies recursively to every ancestor.
+// Example:
+// fmenubuttons = "SMDPT"
+// fuserbuttons = "SMP"
+//
+// Unchecking Print changes SMP to SM.
+// Checking Delete changes SMP to SMPD.
+// ============================================================
+
+function updateAction(
+  nodes: PermissionNode[],
+  menuId: string,
+  buttonCode: string,
+  checked: boolean
+): PermissionNode[] {
+  return nodes.map((node) => {
+    if (node.fmenuid === menuId) {
+      const available = getAvailableButtons(node);
+
+      // Never add an action that the menu does not support.
+      if (!available.includes(buttonCode)) {
+        return node;
+      }
+
+      let buttons = getUserButtons(node);
+
+      if (checked) {
+        if (!buttons.includes(buttonCode)) {
+          buttons += buttonCode;
+        }
+      } else {
+        buttons = buttons
+          .split("")
+          .filter((code) => code !== buttonCode)
+          .join("");
+      }
+
+      // Keep selected codes in the original WinForms order.
+      buttons = available
+        .filter((code) => buttons.includes(code))
+        .join("");
+
+      return {
+        ...node,
+        fuserbuttons: buttons || "0",
+        fright: buttons ? 1 : 0,
+      };
+    }
+
+    return {
+      ...node,
+      children: updateAction(
+        node.children,
+        menuId,
+        buttonCode,
+        checked
+      ),
+    };
+  });
+}
+
+// ============================================================
+// SYNC PARENT MENU CHECKBOXES
+//
+// Parent menu checkbox is checked when all its child menus
+// are checked. This does not change the individual action
+// permission strings of those children.
 // ============================================================
 
 function syncParentChecks(
   nodes: PermissionNode[]
 ): PermissionNode[] {
   return nodes.map((node) => {
-    // First synchronize the descendants.
     const children = syncParentChecks(node.children);
 
-    // A leaf keeps its own checkbox state.
     if (children.length === 0) {
-      return {
-        ...node,
-        children,
-      };
+      return { ...node, children };
     }
 
-    // A parent is checked only when all its children are checked.
-    const allChildrenChecked = children.every(isChecked);
+    const allChildrenChecked = children.every(isMenuChecked);
 
     return {
       ...node,
       children,
-      fuserbuttons: allChildrenChecked
-        ? getCheckedButtons(node)
-        : "0",
+      fright: allChildrenChecked ? 1 : 0,
     };
   });
 }
 
 // ============================================================
-// FLATTEN SELECTED PERMISSIONS FOR THE API
+// FLATTEN PERMISSIONS FOR SAVE API
 // ============================================================
 
 function flattenSelected(
@@ -157,10 +268,12 @@ function flattenSelected(
   result: PermissionInput[] = []
 ): PermissionInput[] {
   nodes.forEach((node) => {
-    if (isChecked(node)) {
+    const buttons = getUserButtons(node);
+
+    if (isMenuChecked(node) || buttons.length > 0) {
       result.push({
         menuId: node.fmenuid,
-        buttons: String(node.fuserbuttons),
+        buttons: buttons || "0",
       });
     }
 
@@ -171,13 +284,14 @@ function flattenSelected(
 }
 
 // ============================================================
-// CLEAR ALL CHECKBOXES
+// CLEAR ALL PERMISSIONS
 // ============================================================
 
 function clearTree(nodes: PermissionNode[]): PermissionNode[] {
   return nodes.map((node) => ({
     ...node,
     fuserbuttons: "0",
+    fright: 0,
     children: clearTree(node.children),
   }));
 }
@@ -191,24 +305,29 @@ function MenuRow({
   depth,
   expanded,
   onExpand,
-  onToggle,
+  onToggleMenu,
+  onToggleButton,
 }: MenuRowProps) {
   const hasChildren = node.children.length > 0;
   const isExpanded = expanded.has(node.fmenuid);
+  const availableButtons = getAvailableButtons(node);
+  const expandable = isExpandable(node);
+
+  const menuLabel =
+    node.fmenucaption || node.fmenuname || node.fmenuid;
 
   return (
     <>
+      {/* Main menu row */}
       <div
         role="row"
-        className="grid min-h-[24px] grid-cols-[23px_minmax(250px,1fr)] border-b border-[#b8ebd0]"
+        className="grid min-h-[24px] grid-cols-[23px_minmax(250px,1fr)] border-b border-[#C1F2D7] bg-[#eff7ff]"
       >
-        {/* Left gutter */}
         <div
           role="gridcell"
-          className="border-r border-[#b8ebd0]"
+          className="border-r border-[#C1F2D7]"
         />
 
-        {/* Menu cell */}
         <div
           role="gridcell"
           className="flex min-h-[23px] min-w-0 items-center gap-[5px] py-[2px] pr-2"
@@ -216,8 +335,7 @@ function MenuRow({
             paddingLeft: `${8 + depth * 26}px`,
           }}
         >
-          {/* Expand / collapse */}
-          {hasChildren ? (
+          {expandable ? (
             <button
               type="button"
               aria-label={
@@ -225,10 +343,10 @@ function MenuRow({
               }
               aria-expanded={isExpanded}
               onClick={() => onExpand(node.fmenuid)}
-              className="flex h-[18px] w-[13px] shrink-0 items-center justify-center border-0 bg-transparent p-0 text-[#7891a9] focus-visible:outline-2 focus-visible:outline-blue-400"
+              className="flex h-[18px] w-[13px] shrink-0 items-center justify-center bg-transparent p-0 text-[#7891a9] focus-visible:outline-2 focus-visible:outline-blue-400"
             >
               <span
-                className={`inline-block text-[18px] leading-none transition-transform duration-100 ${
+                className={`inline-block text-[18px] leading-none ${
                   isExpanded ? "rotate-90" : "rotate-0"
                 }`}
               >
@@ -239,27 +357,70 @@ function MenuRow({
             <span className="w-[13px] shrink-0" />
           )}
 
-          {/* Permission checkbox */}
           <input
             type="checkbox"
-            checked={isChecked(node)}
+            checked={isMenuChecked(node)}
             onChange={(event) =>
-              onToggle(node.fmenuid, event.target.checked)
+              onToggleMenu(
+                node.fmenuid,
+                event.target.checked
+              )
             }
-            aria-label={`Permission for ${
-              node.fmenuname ?? node.fmenucaption
-            }`}
-            className="h-[14px] w-[14px] shrink-0 cursor-pointer accent-[#66ce70] focus-visible:outline-2 focus-visible:outline-blue-400"
+            aria-label={`Permission for ${menuLabel}`}
+            className="h-[14px] w-[14px] shrink-0 cursor-pointer accent-emerald-600 focus-visible:outline-2 focus-visible:outline-blue-400"
           />
 
-          {/* Menu caption */}
-          <span className="min-w-0 break-words text-[12px] leading-[18px] text-gray-700">
-            {node.fmenucaption || node.fmenuname}
+          <span className="min-w-0 break-words text-[13px] leading-[18px] text-slate-700">
+            {menuLabel}
           </span>
         </div>
       </div>
 
-      {/* Child menus */}
+      {/* Action checkbox rows (Save, Modify, Delete, Print, ...) */}
+      {isExpanded &&
+        availableButtons.map((buttonCode) => (
+          <div
+            key={`${node.fmenuid}-${buttonCode}`}
+            role="row"
+            className="grid min-h-[24px] grid-cols-[23px_minmax(250px,1fr)] border-b border-[#C1F2D7] bg-[#eff7ff]"
+          >
+            <div
+              role="gridcell"
+              className="border-r border-[#C1F2D7]"
+            />
+
+            <div
+              role="gridcell"
+              className="flex min-h-[23px] items-center gap-[5px] py-[2px] pr-2"
+              style={{
+                paddingLeft: `${8 + (depth + 1) * 26}px`,
+              }}
+            >
+              {/* Align action rows with the menu tree */}
+              <span className="w-[13px] shrink-0" />
+
+              <input
+                type="checkbox"
+                checked={isButtonChecked(node, buttonCode)}
+                onChange={(event) =>
+                  onToggleButton(
+                    node.fmenuid,
+                    buttonCode,
+                    event.target.checked
+                  )
+                }
+                aria-label={`${PERMISSION_BUTTONS[buttonCode]} permission for ${menuLabel}`}
+                className="h-[14px] w-[14px] shrink-0 cursor-pointer accent-emerald-600 focus-visible:outline-2 focus-visible:outline-blue-400"
+              />
+
+              <span className="min-w-0 break-words text-[13px] leading-[18px] text-slate-700">
+                {PERMISSION_BUTTONS[buttonCode]}
+              </span>
+            </div>
+          </div>
+        ))}
+
+      {/* Actual child menus */}
       {hasChildren &&
         isExpanded &&
         node.children.map((child) => (
@@ -269,7 +430,8 @@ function MenuRow({
             depth={depth + 1}
             expanded={expanded}
             onExpand={onExpand}
-            onToggle={onToggle}
+            onToggleMenu={onToggleMenu}
+            onToggleButton={onToggleButton}
           />
         ))}
     </>
@@ -286,14 +448,16 @@ const UserPermission: React.FC = () => {
   );
 
   const [menuTree, setMenuTree] = useState<PermissionNode[]>([]);
-  const [expanded, setExpanded] = useState<Set<string>>(new Set());
+  const [expanded, setExpanded] = useState<Set<string>>(
+    new Set()
+  );
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState("");
   const [error, setError] = useState(false);
 
   // ==========================================================
-  // GET PERMISSIONS
+  // LOAD PERMISSIONS
   // GET /api/user-permission/:userId
   // ==========================================================
 
@@ -322,12 +486,13 @@ const UserPermission: React.FC = () => {
         );
       }
 
-      // Normalize the returned tree and synchronize parent states.
-      const tree = syncParentChecks(normalizeTree(result.data));
+      const tree = syncParentChecks(
+        normalizeTree(result.data)
+      );
 
       setMenuTree(tree);
 
-      // Expand the first level by default.
+      // Expand top-level menus by default.
       setExpanded(
         new Set(
           tree
@@ -337,8 +502,8 @@ const UserPermission: React.FC = () => {
       );
     } catch (err) {
       console.error("Load permissions failed:", err);
-
       setMenuTree([]);
+
       setMessage(
         err instanceof Error
           ? err.message
@@ -373,18 +538,19 @@ const UserPermission: React.FC = () => {
   };
 
   // ==========================================================
-  // CHECKBOX HANDLER
-  //
-  // 1. Toggle the selected node and all descendants.
-  // 2. Recalculate every parent and ancestor.
+  // MENU CHECKBOX
   // ==========================================================
 
-  const handleToggle = (
+  const handleToggleMenu = (
     menuId: string,
     checked: boolean
   ) => {
     setMenuTree((previous) => {
-      const updated = updateSubtree(previous, menuId, checked);
+      const updated = updateSubtree(
+        previous,
+        menuId,
+        checked
+      );
 
       return syncParentChecks(updated);
     });
@@ -394,7 +560,31 @@ const UserPermission: React.FC = () => {
   };
 
   // ==========================================================
-  // SAVE PERMISSIONS
+  // ACTION CHECKBOX
+  // ==========================================================
+
+  const handleToggleButton = (
+    menuId: string,
+    buttonCode: string,
+    checked: boolean
+  ) => {
+    setMenuTree((previous) =>
+      syncParentChecks(
+        updateAction(
+          previous,
+          menuId,
+          buttonCode,
+          checked
+        )
+      )
+    );
+
+    setMessage("");
+    setError(false);
+  };
+
+  // ==========================================================
+  // SAVE
   // PUT /api/user-permission/:userId
   // ==========================================================
 
@@ -449,7 +639,7 @@ const UserPermission: React.FC = () => {
   };
 
   // ==========================================================
-  // DELETE PERMISSIONS
+  // DELETE
   // DELETE /api/user-permission/:userId
   // ==========================================================
 
@@ -460,7 +650,11 @@ const UserPermission: React.FC = () => {
       return;
     }
 
-    if (!window.confirm(`Delete all permissions for ${userId}?`)) {
+    if (
+      !window.confirm(
+        `Delete all permissions for ${userId}?`
+      )
+    ) {
       return;
     }
 
@@ -471,9 +665,7 @@ const UserPermission: React.FC = () => {
     try {
       const response = await fetch(
         `${API_URL}/${encodeURIComponent(userId.trim())}`,
-        {
-          method: "DELETE",
-        }
+        { method: "DELETE" }
       );
 
       const result: ApiResponse = await response.json();
@@ -504,7 +696,7 @@ const UserPermission: React.FC = () => {
   };
 
   // ==========================================================
-  // CLEAR CHECKBOXES WITHOUT SAVING
+  // CLEAR
   // ==========================================================
 
   const handleClear = () => {
@@ -514,34 +706,26 @@ const UserPermission: React.FC = () => {
   };
 
   // ==========================================================
-  // USER INPUT
-  // ==========================================================
-
-  const handleUserSubmit = (
-    event: React.FormEvent<HTMLFormElement>
-  ) => {
-    event.preventDefault();
-    void loadPermissions(userId);
-  };
-
-  // ==========================================================
   // UI
   // ==========================================================
 
   return (
     <div className="flex justify-center">
-      <main className="mb-10 min-h-fit w-[50%] border border-slate-400 bg-white pb-5 font-[Arial,Helvetica,sans-serif] text-[12px] text-gray-700 max-[900px]:w-[95%]">
+      <main className="mb-10 flex min-h-fit w-[calc(100%-32px)] max-w-[1200px] flex-col border border-slate-400 bg-white pb-5 font-[Arial,Helvetica,sans-serif] text-[12px] text-gray-700">
         {/* Title */}
-        <div className="flex h-[36px] items-center border-b border-slate-300 bg-[#a3dfc0]">
-          <span className="px-6 text-[17px] font-semibold text-slate-700">
+        <div className="flex h-[36px] shrink-0 items-center border-b border-slate-300 bg-[#a3dfc0]">
+          <span className="px-5 text-[17px] font-semibold text-slate-700">
             User Permission - Menu
           </span>
         </div>
 
         {/* User ID */}
         <form
-          onSubmit={handleUserSubmit}
-          className="flex min-h-[55px] flex-wrap items-center gap-[15px] px-4 pb-2 pt-[13px]"
+          onSubmit={(event) => {
+            event.preventDefault();
+            void loadPermissions(userId);
+          }}
+          className="flex min-h-[55px] shrink-0 flex-wrap items-center gap-[15px] px-4 pb-2 pt-[13px]"
         >
           <label
             htmlFor="permission-user-id"
@@ -554,27 +738,12 @@ const UserPermission: React.FC = () => {
             id="permission-user-id"
             value={userId}
             onChange={(event) => setUserId(event.target.value)}
-            list="permission-user-options"
             autoComplete="off"
             className="h-[26px] w-[min(340px,55%)] rounded-[2px] border border-slate-300 bg-white px-[10px] py-[3px] text-[12px] text-gray-800 outline-none focus:border-blue-400"
           />
-
-          <datalist id="permission-user-options">
-            <option
-              value={localStorage.getItem("pstrUSerID") || "ADMIN"}
-            />
-          </datalist>
-
-          <button
-            type="submit"
-            disabled={loading || saving}
-            className="h-[26px] rounded-[3px] border border-[#a9c5dd] bg-[#edf3f8] px-3 text-gray-700 hover:bg-blue-50 disabled:cursor-not-allowed disabled:opacity-60"
-          >
-            Load
-          </button>
         </form>
 
-        {/* Status message */}
+        {/* Status */}
         {message && (
           <div
             role="status"
@@ -588,31 +757,23 @@ const UserPermission: React.FC = () => {
           </div>
         )}
 
-        {/* Permission table */}
+        {/* Menu tree */}
         <section
           role="grid"
           aria-label="Menu permissions"
-          className="mx-[17px] w-[calc(100%-34px)] overflow-x-auto border border-[#b8ebd0]"
+          className="mx-[17px] flex max-h-[65vh] min-h-[200px] flex-col overflow-auto border border-[#C1F2D7]"
         >
-          {/* Table header */}
           <div
             role="row"
-            className="grid h-[24px] grid-cols-[23px_minmax(250px,1fr)] border-b border-[#b8ebd0] bg-[#effbf5]"
+            className="sticky top-0 z-10 grid h-[24px] shrink-0 grid-cols-[23px_minmax(250px,1fr)] border-b border-[#C1F2D7] bg-[#eaf5ff]"
           >
-            <div
-              role="columnheader"
-              className="border-r border-[#b8ebd0]"
-            />
+            <div className="border-r border-[#C1F2D7]" />
 
-            <div
-              role="columnheader"
-              className="px-[7px] py-1 text-gray-700"
-            >
+            <div className="px-[7px] py-1 text-gray-700">
               Menu
             </div>
           </div>
 
-          {/* Table body */}
           {loading ? (
             <div className="flex min-h-[70px] items-center justify-center text-slate-500">
               Loading permissions...
@@ -629,45 +790,46 @@ const UserPermission: React.FC = () => {
                 depth={0}
                 expanded={expanded}
                 onExpand={handleExpand}
-                onToggle={handleToggle}
+                onToggleMenu={handleToggleMenu}
+                onToggleButton={handleToggleButton}
               />
             ))
           )}
         </section>
 
         {/* Action buttons */}
-        <footer className="flex items-center justify-center gap-[13px] px-3 pt-[10px] max-[600px]:gap-2">
+        <footer className="flex shrink-0 items-center justify-center gap-[13px] px-3 pt-[10px] max-[600px]:gap-2">
           <button
             type="button"
             onClick={handleSave}
             disabled={saving || loading}
-            className="h-10 w-[108px] rounded-[4px] border border-[#9eb8d2] bg-gradient-to-b from-white to-[#e5edf4] text-[14px] text-green-700 shadow-sm hover:from-[#f8fbff] hover:to-[#d9e7f3] disabled:cursor-not-allowed disabled:opacity-60 max-[600px]:max-w-[108px] max-[600px]:flex-1"
+            className="h-10 w-[108px] rounded-[4px] border border-[#9eb8d2] bg-gradient-to-b from-white to-[#e5edf4] text-[14px] text-green-700 shadow-sm hover:from-[#f8fbff] hover:to-[#d9e7f3] disabled:cursor-not-allowed disabled:opacity-60 max-[600px]:flex-1"
           >
             <span className="underline underline-offset-2">
-              {saving ? "Saving..." : "Save"}
-            </span>
+             S
+            </span>ave
           </button>
 
           <button
             type="button"
             onClick={handleDelete}
             disabled={saving || loading}
-            className="h-10 w-[108px] rounded-[4px] border border-[#9eb8d2] bg-gradient-to-b from-white to-[#e5edf4] text-[14px] text-green-700 shadow-sm hover:from-[#f8fbff] hover:to-[#d9e7f3] disabled:cursor-not-allowed disabled:opacity-60 max-[600px]:max-w-[108px] max-[600px]:flex-1"
+            className="h-10 w-[108px] rounded-[4px] border border-[#9eb8d2] bg-gradient-to-b from-white to-[#e5edf4] text-[14px] text-green-700 shadow-sm hover:from-[#f8fbff] hover:to-[#d9e7f3] disabled:cursor-not-allowed disabled:opacity-60 max-[600px]:flex-1"
           >
             <span className="underline underline-offset-2">
-              Delete
-            </span>
+              D
+            </span>elete
           </button>
 
           <button
             type="button"
             onClick={handleClear}
             disabled={saving || loading}
-            className="h-10 w-[108px] rounded-[4px] border border-[#9eb8d2] bg-gradient-to-b from-white to-[#e5edf4] text-[14px] text-green-700 shadow-sm hover:from-[#f8fbff] hover:to-[#d9e7f3] disabled:cursor-not-allowed disabled:opacity-60 max-[600px]:max-w-[108px] max-[600px]:flex-1"
+            className="h-10 w-[108px] rounded-[4px] border border-[#9eb8d2] bg-gradient-to-b from-white to-[#e5edf4] text-[14px] text-green-700 shadow-sm hover:from-[#f8fbff] hover:to-[#d9e7f3] disabled:cursor-not-allowed disabled:opacity-60 max-[600px]:flex-1"
           >
             <span className="underline underline-offset-2">
-              Clear
-            </span>
+              C
+            </span>lear
           </button>
         </footer>
       </main>
