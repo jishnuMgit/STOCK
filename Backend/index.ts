@@ -11,6 +11,7 @@ import YearRouter from "./routes/YearRouter.js";
 import CompanyInfoRouter from "./routes/SettingRoutes/SetcompanyinfoRouter.js";
 import SetDocumentNoRouter from "./routes/SettingRoutes/SetdocumentnoRouter.js";
 import SetBranchInfoRouter from "./routes/SettingRoutes/SetBranchInfoRouter.js";
+import customerRouter from "./routes/CustomerRoute.js";
 import menuRoutes from "./routes/MenuRoute.js";
 import ItemPageRouter from "./routes/Purchase/Setup/ItemPageRouter.js";
 
@@ -24,9 +25,9 @@ app.use(express.json());
 app.use(cookieParser());
 app.use(
   cors({
-  origin: ["http://localhost:5173", "http://187.127.190.192:5173"],
-  credentials: true,
-}),
+    origin: ["http://localhost:5173", "http://187.127.190.192:5173"],
+    credentials: true,
+  }),
 );
 
 // app.get("/test-db", async (req, res) => {
@@ -59,6 +60,7 @@ app.use("/api/DocumentNo", SetDocumentNoRouter);
 app.use("/api/BranchInfo", SetBranchInfoRouter);
 app.use("/api/menu", menuRoutes);
 app.use("/api/Item", ItemPageRouter);
+app.use("/api/customer", customerRouter);
 
 app.listen(5000, "0.0.0.0", () => {
   console.log(`Server running on port 5000`);
