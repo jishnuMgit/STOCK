@@ -11,6 +11,7 @@ import customerRouter from "./CustomerRoute.js";
 import menuRoutes from "./MenuRoute.js";
 import ItemPageRouter from "./Purchase/Setup/ItemPageRouter.js";
 import UserLoginRouter from "./SecurityRoutes/UserLoginRouter.js";
+import userpermission from "./SettingRoutes/Userpermission.routes.js"
 
 const router = express.Router();
 
@@ -26,5 +27,6 @@ router.use("/menu", menuRoutes);
 router.use("/Item", ItemPageRouter);
 router.use("/customer", customerRouter);
 router.use("/UserLogin", UserLoginRouter);
+router.use("/user-permission",userpermission)
 
 export default router;
