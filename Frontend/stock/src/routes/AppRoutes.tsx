@@ -57,10 +57,10 @@ const AppRoutes = () => {
 
         {/* Protected */}
         <Route element={<ProtectedRoute />}>
-          <Route
+          {/* <Route
             path="/"
             element={<Navigate to="/Finance/Transaction/Receipt" replace />}
-          />
+          /> */}
 
           {/* Finance - Transactions */}
           <Route
