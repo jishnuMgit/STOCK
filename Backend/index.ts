@@ -14,6 +14,7 @@ import SetBranchInfoRouter from "./routes/SettingRoutes/SetBranchInfoRouter.js";
 import customerRouter from "./routes/CustomerRoute.js";
 import menuRoutes from "./routes/MenuRoute.js";
 import ItemPageRouter from "./routes/Purchase/Setup/ItemPageRouter.js";
+import UserLoginRouter from "./routes/SecurityRoutes/UserLoginRouter.js";
 
 import pool from "./DB/db.js";
 
@@ -61,6 +62,7 @@ app.use("/api/BranchInfo", SetBranchInfoRouter);
 app.use("/api/menu", menuRoutes);
 app.use("/api/Item", ItemPageRouter);
 app.use("/api/customer", customerRouter);
+app.use("/api/UserLogin", UserLoginRouter);
 
 app.listen(5000, "0.0.0.0", () => {
   console.log(`Server running on port 5000`);

@@ -1,11 +1,16 @@
-import React, { useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import Select, { type SingleValue } from "react-select";
+import { toast } from "react-toastify";
+import { X } from "lucide-react";
+import { useEnterAsTab } from "../../../hooks/useEnterAsTab";
+import { useConfirm } from "../../../hooks/useConfirm";
 
 // ============================================================
 // TYPES
 // ============================================================
 
 interface UserRow {
+  txtOriginal_UserID: string; // "" = new user, otherwise the saved User ID
   txtUserID: string;
   txtUserName: string;
   txtPwd: string;
@@ -24,6 +29,7 @@ interface SelectOption {
 // ============================================================
 
 const createEmptyUser = (): UserRow => ({
+  txtOriginal_UserID: "",
   txtUserID: "",
   txtUserName: "",
   txtPwd: "",
@@ -31,127 +37,6 @@ const createEmptyUser = (): UserRow => ({
   lkpUserType: "",
   lkpUserStatus: "",
 });
-
-// ============================================================
-// USER TYPE OPTIONS
-// ============================================================
-
-const userTypeOptions: SelectOption[] = [
-  {
-    value: "ADMIN",
-    label: "ADMIN",
-  },
-  {
-    value: "USER",
-    label: "USER",
-  },
-  {
-    value: "SUPERVISOR",
-    label: "SUPERVISOR",
-  },
-];
-
-// ============================================================
-// USER STATUS OPTIONS
-// ============================================================
-
-const userStatusOptions: SelectOption[] = [
-  {
-    value: "Active",
-    label: "Active",
-  },
-  {
-    value: "Inactive",
-    label: "Inactive",
-  },
-];
-
-// ============================================================
-// DUMMY DATA
-// ============================================================
-
-const initialUsers: UserRow[] = [
-  {
-    txtUserID: "1",
-    txtUserName: "1",
-    txtPwd: "123",
-    txtConfirmPwd: "123",
-    lkpUserType: "ADMIN",
-    lkpUserStatus: "Active",
-  },
-  {
-    txtUserID: "123",
-    txtUserName: "123",
-    txtPwd: "123456",
-    txtConfirmPwd: "123456",
-    lkpUserType: "ADMIN",
-    lkpUserStatus: "Active",
-  },
-  {
-    txtUserID: "ABDULAZIZ",
-    txtUserName: "ABDULAZIZ",
-    txtPwd: "123456",
-    txtConfirmPwd: "123456",
-    lkpUserType: "ADMIN",
-    lkpUserStatus: "Active",
-  },
-  {
-    txtUserID: "ADMIN",
-    txtUserName: "ACCOUNTS SUPERVISOR",
-    txtPwd: "123456",
-    txtConfirmPwd: "123456",
-    lkpUserType: "ADMIN",
-    lkpUserStatus: "Active",
-  },
-  {
-    txtUserID: "AFZAL",
-    txtUserName: "ACCOUNTS",
-    txtPwd: "123",
-    txtConfirmPwd: "123",
-    lkpUserType: "ADMIN",
-    lkpUserStatus: "Active",
-  },
-  {
-    txtUserID: "AMAAN",
-    txtUserName: "ADMIN",
-    txtPwd: "123456",
-    txtConfirmPwd: "123456",
-    lkpUserType: "ADMIN",
-    lkpUserStatus: "Active",
-  },
-  {
-    txtUserID: "AFZAL",
-    txtUserName: "AFZAL",
-    txtPwd: "123456",
-    txtConfirmPwd: "123456",
-    lkpUserType: "ADMIN",
-    lkpUserStatus: "Active",
-  },
-  {
-    txtUserID: "AMAAN",
-    txtUserName: "AMAAN",
-    txtPwd: "123456",
-    txtConfirmPwd: "123456",
-    lkpUserType: "ADMIN",
-    lkpUserStatus: "Active",
-  },
-  {
-    txtUserID: "CREDIT",
-    txtUserName: "CREDIT CONTROL",
-    txtPwd: "123456",
-    txtConfirmPwd: "123456",
-    lkpUserType: "ADMIN",
-    lkpUserStatus: "Active",
-  },
-  {
-    txtUserID: "RANDA",
-    txtUserName: "ACCOUNTANT",
-    txtPwd: "123456",
-    txtConfirmPwd: "123456",
-    lkpUserType: "ADMIN",
-    lkpUserStatus: "Active",
-  },
-];
 
 // ============================================================
 // BUTTON CLASS
@@ -340,7 +225,22 @@ const selectStyles = {
 // ============================================================
 
 const UserLogin: React.FC = () => {
-  const [users, setUsers] = useState<UserRow[]>(initialUsers);
+  const [users, setUsers] = useState<UserRow[]>([]);
+  const [userTypeOptions, setUserTypeOptions] = useState<SelectOption[]>([]);
+  const [userStatusOptions, setUserStatusOptions] = useState<SelectOption[]>([]);
+
+  const handleEnterAsTab = useEnterAsTab();
+  const { confirm, confirmDialog } = useConfirm();
+
+  // ============================================================
+  // WHAT EACH SAVED USER LOOKED LIKE WHEN LOADED
+  // (so Save only sends new or changed rows)
+  // ============================================================
+
+  const loadedRowsRef = useRef<Record<string, string>>({});
+
+  const rowSignature = (row: UserRow) =>
+    `${row.txtUserName}|${row.lkpUserType}|${row.lkpUserStatus}`;
 
   // ============================================================
   // TOTAL VISIBLE ROWS
@@ -349,13 +249,114 @@ const UserLogin: React.FC = () => {
   const totalRows = 18;
 
   // ============================================================
-  // GET DISPLAY ROWS
+  // GET DISPLAY ROWS (always at least totalRows, grows with users)
   // ============================================================
 
   const displayUsers = Array.from(
-    { length: totalRows },
+    { length: Math.max(totalRows, users.length) },
     (_, index) => users[index] ?? createEmptyUser()
   );
+
+  // ============================================================
+  // LOAD USER LOGINS (mode 'G')
+  // ============================================================
+
+  const loadUsers = async () => {
+    try {
+      const CoID = localStorage.getItem("PstrCoID");
+      const userId = localStorage.getItem("PstrUserID");
+
+      if (!CoID || !userId) {
+        toast.error("Company ID / User ID not found. Please log in again.");
+        return;
+      }
+
+      const response = await fetch(
+        `${import.meta.env.VITE_API_URL}/UserLogin/getUserLoginList?CoID=${encodeURIComponent(CoID)}&userId=${encodeURIComponent(userId)}`,
+        { method: "GET" }
+      );
+
+      const result = await response.json();
+
+      if (!response.ok || !result.success) {
+        toast.error(result.message || "User logins could not be loaded.");
+        return;
+      }
+
+      const rows: UserRow[] = result.data.map(
+        (row: {
+          txtUserID: string;
+          txtUserName: string;
+          lkpUserType: string;
+          lkpUserStatus: string;
+        }) => ({
+          txtOriginal_UserID: row.txtUserID,
+          txtUserID: row.txtUserID,
+          txtUserName: row.txtUserName,
+          txtPwd: "",
+          txtConfirmPwd: "",
+          lkpUserType: row.lkpUserType,
+          lkpUserStatus: row.lkpUserStatus,
+        })
+      );
+
+      loadedRowsRef.current = Object.fromEntries(
+        rows.map((row) => [row.txtOriginal_UserID, rowSignature(row)])
+      );
+
+      setUsers(rows);
+    } catch (error) {
+      console.error("getUserLoginList error:", error);
+      toast.error("Cannot connect to User Login API.");
+    }
+  };
+
+  // ============================================================
+  // PAGE LOAD - dropdown lists (dbo.tbluserparam) + user logins
+  // ============================================================
+
+  useEffect(() => {
+    const loadPage = async () => {
+      const CoID = localStorage.getItem("PstrCoID");
+
+      if (!CoID) {
+        return;
+      }
+
+      const toOptions = (rows: { fpid: string; fpname: string }[]) =>
+        rows.map((row) => ({ value: row.fpid, label: row.fpname }));
+
+      try {
+        const [typeResponse, statusResponse] = await Promise.all([
+          fetch(
+            `${import.meta.env.VITE_API_URL}/UserLogin/getUserTypeList?CoID=${encodeURIComponent(CoID)}`
+          ),
+          fetch(
+            `${import.meta.env.VITE_API_URL}/UserLogin/getUserStatusList?CoID=${encodeURIComponent(CoID)}`
+          ),
+        ]);
+
+        const typeResult = await typeResponse.json();
+        const statusResult = await statusResponse.json();
+
+        if (typeResult.success) {
+          setUserTypeOptions(toOptions(typeResult.data));
+        }
+
+        if (statusResult.success) {
+          setUserStatusOptions(toOptions(statusResult.data));
+        }
+      } catch (error) {
+        console.error("user type / status list error:", error);
+        toast.error("Cannot connect to User Login API.");
+      }
+
+      await loadUsers();
+    };
+
+    loadPage();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   // ============================================================
   // UPDATE CELL
@@ -413,29 +414,141 @@ const UserLogin: React.FC = () => {
   };
 
   // ============================================================
-  // SAVE
+  // SAVE (mode 'S' new user / 'M' existing user)
   // ============================================================
 
-  const handleSave = () => {
-    const filledUsers = users.filter(
-      (user) =>
-        user.txtUserID.trim() !== "" ||
-        user.txtUserName.trim() !== "" ||
-        user.txtPwd.trim() !== "" ||
-        user.txtConfirmPwd.trim() !== "" ||
-        user.lkpUserType.trim() !== "" ||
-        user.lkpUserStatus.trim() !== ""
-    );
+  const handleSave = async () => {
+    const CoID = localStorage.getItem("PstrCoID");
+    const userId = localStorage.getItem("PstrUserID");
 
-    console.log("Save Users:", filledUsers);
+    if (!CoID || !userId) {
+      toast.error("Company ID / User ID not found. Please log in again.");
+      return;
+    }
+
+    const isFilled = (user: UserRow) =>
+      user.txtUserID.trim() !== "" ||
+      user.txtUserName.trim() !== "" ||
+      user.txtPwd !== "" ||
+      user.txtConfirmPwd !== "" ||
+      user.lkpUserType !== "" ||
+      user.lkpUserStatus !== "";
+
+    // only new users and users that were changed
+    const rows = users.filter((user) => {
+      if (!isFilled(user)) {
+        return false;
+      }
+
+      if (!user.txtOriginal_UserID) {
+        return true;
+      }
+
+      return (
+        user.txtPwd !== "" ||
+        user.txtConfirmPwd !== "" ||
+        loadedRowsRef.current[user.txtOriginal_UserID] !== rowSignature(user)
+      );
+    });
+
+    if (rows.length === 0) {
+      toast.info("There are no changes to save.");
+      return;
+    }
+
+    try {
+      const response = await fetch(
+        `${import.meta.env.VITE_API_URL}/UserLogin/saveUserLoginList`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ CoID, userId, rows }),
+        }
+      );
+
+      const result = await response.json();
+
+      if (!response.ok || !result.success) {
+        toast.error(result.message || "User logins could not be saved.");
+        return;
+      }
+
+      toast.success(result.message || "User logins saved successfully.");
+
+      await loadUsers();
+    } catch (error) {
+      console.error("saveUserLoginList error:", error);
+      toast.error("Cannot connect to User Login API.");
+    }
   };
 
   // ============================================================
-  // CLEAR
+  // DELETE ONE USER (mode 'D1')
+  // ============================================================
+
+  const handleDeleteRow = async (rowIndex: number) => {
+    const row = users[rowIndex];
+
+    if (!row) {
+      return;
+    }
+
+    // never saved - just drop the row
+    if (!row.txtOriginal_UserID) {
+      setUsers((previous) => previous.filter((_, index) => index !== rowIndex));
+      return;
+    }
+
+    const shouldDelete = await confirm("Are you sure you want to delete?");
+
+    if (!shouldDelete) {
+      return;
+    }
+
+    const CoID = localStorage.getItem("PstrCoID");
+    const userId = localStorage.getItem("PstrUserID");
+
+    if (!CoID || !userId) {
+      toast.error("Company ID / User ID not found. Please log in again.");
+      return;
+    }
+
+    try {
+      const response = await fetch(
+        `${import.meta.env.VITE_API_URL}/UserLogin/deleteUserLoginRow`,
+        {
+          method: "DELETE",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            CoID,
+            userId,
+            txtUserID: row.txtOriginal_UserID,
+          }),
+        }
+      );
+
+      const result = await response.json();
+
+      if (!response.ok || !result.success) {
+        toast.error(result.message || "User could not be deleted.");
+        return;
+      }
+
+      toast.success(result.message || "User deleted successfully.");
+
+      await loadUsers();
+    } catch (error) {
+      console.error("deleteUserLoginRow error:", error);
+      toast.error("Cannot connect to User Login API.");
+    }
+  };
+
+  // ============================================================
+  // CLEAR (discard unsaved edits - reload from the database)
   // ============================================================
 
   const handleClear = () => {
-    setUsers([]);
+    loadUsers();
   };
 
   // ============================================================
@@ -459,6 +572,7 @@ const UserLogin: React.FC = () => {
 
   return (
     <div
+      onKeyDown={handleEnterAsTab}
       className="
         min-h-fit
         mx-auto
@@ -559,7 +673,7 @@ const UserLogin: React.FC = () => {
 
                 <th
                   className="
-                    w-[38%]
+                    w-[34%]
                     border-b
                     border-r
                     border-[#b7e8cf]
@@ -609,7 +723,7 @@ const UserLogin: React.FC = () => {
 
                 <th
                   className="
-                    w-[12%]
+                    w-[16%]
                     border-b
                     border-r
                     border-[#b7e8cf]
@@ -662,20 +776,47 @@ const UserLogin: React.FC = () => {
                       px-2
                     "
                   >
-                    <input
-                      id={`txtUserID-${index}`}
-                      type="text"
-                      value={user.txtUserID}
-                      onChange={(e) =>
-                        handleChange(
-                          index,
-                          "txtUserID",
-                          e.target.value
-                        )
-                      }
-                      maxLength={30}
-                      className={inputClass}
-                    />
+                    <div className="flex h-full items-center gap-1">
+                      <input
+                        id={`txtUserID-${index}`}
+                        type="text"
+                        value={user.txtUserID}
+                        onChange={(e) =>
+                          handleChange(
+                            index,
+                            "txtUserID",
+                            e.target.value
+                          )
+                        }
+                        maxLength={30}
+                        readOnly={user.txtOriginal_UserID !== ""}
+                        className={inputClass}
+                      />
+
+                      {user.txtUserID.trim() !== "" && (
+                        <button
+                          type="button"
+                          onClick={() => handleDeleteRow(index)}
+                          className="
+                            inline-flex
+                            h-[23px]
+                            w-[16px]
+                            shrink-0
+                            items-center
+                            justify-center
+                            rounded
+                            text-[#999999]
+                            hover:text-red-600
+                          "
+                          aria-label={`Delete ${user.txtUserID}`}
+                        >
+                          <X
+                            size={10}
+                            style={{ transform: "translateY(-3px)" }}
+                          />
+                        </button>
+                      )}
+                    </div>
                   </td>
 
                   {/* USER NAME */}
@@ -727,6 +868,9 @@ const UserLogin: React.FC = () => {
                       }
                       minLength={6}
                       maxLength={12}
+                      placeholder={
+                        user.txtOriginal_UserID ? "••••••" : ""
+                      }
                       className={inputClass}
                     />
                   </td>
@@ -754,6 +898,9 @@ const UserLogin: React.FC = () => {
                       }
                       minLength={6}
                       maxLength={12}
+                      placeholder={
+                        user.txtOriginal_UserID ? "••••••" : ""
+                      }
                       className={inputClass}
                     />
                   </td>
@@ -864,6 +1011,8 @@ const UserLogin: React.FC = () => {
           </button>
         </div>
       </div>
+
+      {confirmDialog}
     </div>
   );
 };
