@@ -733,7 +733,7 @@ ChartOf Account Settings
 
                   <div className={cellClass}>
                     <Select<DropdownOption, false>
-                      inputId={`lkpAccountID-${index}`}
+                      inputId={`lkpGAccountID-${index}`}
                       aria-label={`Account ID row ${index + 1}`}
                       options={accountIdDropdownOptions}
                       value={accountIdValue}
@@ -783,7 +783,7 @@ ChartOf Account Settings
 
                   <div className={cellClass}>
                     <Select<DropdownOption, false>
-                      inputId={`lkpAccountName-${index}`}
+                      inputId={`lkpGAccountName-${index}`}
                       aria-label={`Account Name row ${index + 1}`}
                       options={accountNameDropdownOptions}
                       value={accountNameValue}
@@ -833,7 +833,7 @@ ChartOf Account Settings
 
                   <div className="h-[30px] min-w-0">
                     <input
-                      id={`txtGroupHead-${index}`}
+                      id={`txtGPH-${index}`}
                       aria-label={`Group Head row ${index + 1}`}
                       value={row.groupHead}
                       onChange={(event) =>
