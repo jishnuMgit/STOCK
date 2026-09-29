@@ -238,11 +238,8 @@ const ReceiptForm: React.FC<ReceiptFormProps> = ({
   const [openSelect, setOpenSelect] = useState<
     "branch" | "type" | "cbAccount" | null
   >(null);
-
   const [accountsLoading, setAccountsLoading] = useState(false);
-
   const [documentNoLoading, setDocumentNoLoading] = useState(false);
-
   const [cbAccounts, setCbAccounts] = useState<CbAccount[]>([]);
 
   /* =======================================================

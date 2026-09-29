@@ -170,13 +170,9 @@ const formatReceiptDate = (value?: string) => {
 
 const getTodayDate = () => {
   const today = new Date();
-
   const day = String(today.getDate()).padStart(2, "0");
-
   const month = String(today.getMonth() + 1).padStart(2, "0");
-
   const year = today.getFullYear();
-
   return `${day}/${month}/${year}`;
 };
 
@@ -191,21 +187,13 @@ const ReceiptPage: React.FC = () => {
   const [isPrint, setIsPrint] = useState(false);
   const [printData, setPrintData] = useState<ReceiptPrintData | null>(null);
   const [lkpBranch, setLkpBranch] = useState("");
-
   const [lkpType, setLkpType] = useState("");
-
   const [cbAccount, setCbAccount] = useState("");
-
   const [receivedFrom, setReceivedFrom] = useState("");
-
   const [reference, setReference] = useState("");
-
   const [cbCcId, setCbCcId] = useState("");
-
   const [documentNo, setDocumentNo] = useState("");
-
   const [focusReceiptNoAfterClear, setFocusReceiptNoAfterClear] = useState(0);
-
   const [date, setDate] = useState(getTodayDate);
 
   /* =======================================================
@@ -219,7 +207,6 @@ const ReceiptPage: React.FC = () => {
   ======================================================= */
 
   const [isModifyMode, setIsModifyMode] = useState(false);
-
   const [, setReceiptMessage] = useState("");
 
   /* =======================================================
@@ -239,16 +226,13 @@ const ReceiptPage: React.FC = () => {
   ======================================================= */
 
   const [branchOptions, setBranchOptions] = useState<Branch[]>([]);
-
   const [accountOptions, setAccountOptions] = useState<AccountData[]>([]);
-
   const [accountSortByIdOptions, setAccountSortByIdOptions] = useState<
     AccountData[]
   >([]);
   const [financialParameters, setFinancialParameters] = useState<
     FinancialParameter[]
   >([]);
-
   const [costCenters, setCostCenters] = useState<CostCenter[]>([]);
 
   /* =======================================================
@@ -270,25 +254,15 @@ const ReceiptPage: React.FC = () => {
   ======================================================= */
 
   const branchRef = useRef<SelectInstance<SelectOption, false>>(null);
-
   const typeRef = useRef<SelectInstance<SelectOption, false>>(null);
-
   const documentNoRef = useRef<HTMLInputElement>(null);
-
   const cbAccountRef = useRef<SelectInstance<SelectOption, false>>(null);
-
   const dateRef = useRef<HTMLInputElement>(null);
-
   const receivedFromRef = useRef<HTMLInputElement>(null);
-
   const referenceRef = useRef<HTMLInputElement>(null);
-
   const receiptTableRef = useRef<ReceiptTableRef>(null);
-
   const descriptionRef = useRef<HTMLInputElement>(null);
-
   const noteRef = useRef<HTMLTextAreaElement>(null);
-
   const actionsRef = useRef<ReceiptActionsRef>(null);
 
   /* =======================================================
@@ -428,17 +402,8 @@ const ReceiptPage: React.FC = () => {
       });
 
       const url = `${import.meta.env.VITE_API_URL}/Receipt/get/data?${query.toString()}`;
-
-      console.log("MODIFY LOOKUP URL:", url);
-
       const response = await fetch(url);
-
       const responseText = await response.text();
-
-      console.log("MODIFY LOOKUP STATUS:", response.status);
-
-      console.log("MODIFY LOOKUP RESPONSE:", responseText);
-
       let result: ModifyReceiptResponse;
 
       try {
@@ -472,33 +437,23 @@ const ReceiptPage: React.FC = () => {
           slNo: index + 1,
 
           accountId: loadedRow.accountId || "",
-
           accountName: loadedRow.accountName || account?.faccountname || "",
-
           fgcs: loadedRow.fgcs || account?.fgcs || "",
-
           haveCc: account?.fhavecc === true,
-
           hasDivision: Boolean(loadedRow.division),
-
           division: loadedRow.division || "",
-
           ccId: loadedRow.ccId || "",
-
           creditAmount:
             loadedRow.creditAmount === undefined ||
             loadedRow.creditAmount === null
               ? ""
               : String(loadedRow.creditAmount),
-
           amount: Number(loadedRow.creditAmount) || 0,
-
           match:
             loadedRow.match === true ||
             loadedRow.match === 1 ||
             loadedRow.match === "1" ||
             loadedRow.match === "true",
-
           description: loadedRow.description || "",
         };
       });
@@ -516,23 +471,14 @@ const ReceiptPage: React.FC = () => {
       );
 
       setDocumentNo(result.header.docNo || requestedDocumentNo);
-
       setDate(formatReceiptDate(result.header.receiptDate));
-
       setCbAccount(result.header.cbAccountName || "");
-
       setCbCcId(result.header.ccId || "");
-
       setReceivedFrom(result.header.receivedFrom || "");
-
       setReference(result.header.reference || "");
-
       setNote(result.header.note || "");
-
       setRows(loadedRows);
-
       setDescription("");
-
       setActiveDescriptionRow(null);
 
       /* ===============================================
@@ -540,13 +486,9 @@ const ReceiptPage: React.FC = () => {
           =============================================== */
 
       setIsModifyMode(true);
-
       setReceiptMessage("Receipt loaded successfully.");
-
       console.log("✅ RECEIPT LOADED FOR MODIFY");
-
       console.log("LOADED HEADER:", result.header);
-
       console.log("LOADED ROWS:", loadedRows);
 
       // toast.success(
@@ -554,11 +496,8 @@ const ReceiptPage: React.FC = () => {
       // );
     } catch (error) {
       lastLookupKeyRef.current = "";
-
       setIsModifyMode(false);
-
       console.error("MODIFY LOOKUP ERROR:", error);
-
       setReceiptMessage(
         error instanceof Error ? error.message : "Unable to load receipt.",
       );
@@ -625,18 +564,6 @@ const ReceiptPage: React.FC = () => {
 
       const result = (await response.json()) as ReceiptsResponse;
 
-      console.log("========================================");
-
-      console.log("GET RECEIPT AFTER RESET");
-
-      console.log("GET RECEIPT RESPONSE:", result);
-
-      console.log("API txtReceiptNo:", result.txtReceiptNo);
-
-      console.log("API receiptNo:", result.receiptNo);
-
-      console.log("========================================");
-
       if (!result.success) {
         throw new Error(
           result.message || "Receipt defaults could not be reloaded.",
@@ -648,13 +575,9 @@ const ReceiptPage: React.FC = () => {
       ===================================================== */
 
       setBranchOptions(result.data || []);
-
       setFinancialParameters(result.finparam || []);
-
       setAccountOptions(result.accounts || []);
-
       setAccountSortByIdOptions(result.accountsortbyId || []);
-
       setCostCenters(result.costCenters || []);
 
       /* =====================================================
@@ -745,12 +668,7 @@ const ReceiptPage: React.FC = () => {
            */
 
           const value = input.value || "";
-
           input.setSelectionRange(value.length, value.length);
-
-          console.log("RECEIPT NO AFTER RESET:", input.value);
-
-          console.log("RECEIPT NO FOCUSED:", document.activeElement === input);
         });
       });
     } catch (error) {
@@ -915,11 +833,8 @@ const ReceiptPage: React.FC = () => {
       if (!note) {
         return;
       }
-
       note.focus();
-
       const position = note.value.length;
-
       note.setSelectionRange(position, position);
     });
   }, []);
@@ -938,9 +853,7 @@ const ReceiptPage: React.FC = () => {
 
       if (field === "accountId" && !row?.accountId.trim()) {
         toast.warning("Account ID is required.");
-
         focusTableField(rowIndex, "accountId");
-
         return;
       }
 
@@ -950,9 +863,7 @@ const ReceiptPage: React.FC = () => {
 
       if (field === "creditAmount" && !row?.creditAmount.trim()) {
         toast.warning("Credit Amount is required.");
-
         focusTableField(rowIndex, "creditAmount");
-
         return;
       }
 
@@ -1189,45 +1100,26 @@ const ReceiptPage: React.FC = () => {
 
       const receiptData = {
         lkpBranch,
-
         lkpType,
-
         cashBank: cbAccount,
-
         cbCcId,
-
         txtReceiptNo: documentNo,
-
         receiptDate: date,
-
         receivedFrom,
-
         reference,
-
         rows: validRows.map((row, index) => ({
           id: row.id,
-
           slNo: index + 1,
-
           accountId: row.accountId,
-
           accountName: row.accountName,
-
           fgcs: row.fgcs,
-
           division: row.division,
-
           ccId: row.ccId,
-
           creditAmount: Number(row.creditAmount) || 0,
-
           match: row.match,
-
           description: row.description || "",
         })),
-
         total,
-
         note,
       };
 
@@ -1237,13 +1129,9 @@ const ReceiptPage: React.FC = () => {
 
       const saveType =
         lkpType === "B" ? "BR" : lkpType === "C" ? "CR" : lkpType;
-
       console.log("========== SAVE RECEIPT ==========");
-
       console.log("OLD RECEIPT NUMBER:", documentNo);
-
       console.log("SAVE TYPE:", saveType);
-
       console.log("SENDING RECEIPT:", receiptData);
 
       /* =====================================================
@@ -1254,14 +1142,11 @@ const ReceiptPage: React.FC = () => {
         `${import.meta.env.VITE_API_URL}/Receipt/saveReceipt`,
         {
           method: "POST",
-
           headers: {
             "Content-Type": "application/json",
           },
-
           body: JSON.stringify({
             ...receiptData,
-
             lkpType: saveType,
           }),
         },
@@ -1273,13 +1158,11 @@ const ReceiptPage: React.FC = () => {
 
       const text = await response.text();
 
-      console.log("SAVE STATUS:", response.status);
-
-      console.log("SAVE RAW RESPONSE:", text);
-
       let result: {
         success?: boolean;
         message?: string;
+        receiptNoChanged?: boolean;
+        newReceiptNo?: string;
       };
 
       try {
@@ -1292,6 +1175,23 @@ const ReceiptPage: React.FC = () => {
       }
 
       console.log("SAVE API RESPONSE:", result);
+
+      // Receipt No was taken by another user: swap in the new one, keep all data
+      if (
+        response.status === 409 &&
+        result.receiptNoChanged &&
+        result.newReceiptNo
+      ) {
+        lastLookupKeyRef.current = ""; // lets the Receipt No lookup run again
+        setDocumentNo(result.newReceiptNo);
+
+        toast.warning(
+          `Receipt No ${documentNo} was already used by another user. Changed to ${result.newReceiptNo}. Please click Save again.`,
+        );
+
+        requestAnimationFrame(() => actionsRef.current?.focusSave());
+        return; // no reset, the form data stays
+      }
 
       /* =====================================================
        SAVE ERROR
@@ -1310,10 +1210,6 @@ const ReceiptPage: React.FC = () => {
     ===================================================== */
 
       toast.success(result.message || "Saved successfully");
-
-      console.log("✅ SAVE SUCCESS");
-
-      console.log("OLD SAVED RECEIPT:", documentNo);
 
       /* =====================================================
        CLEAR + LOAD COMPLETELY NEW RECEIPT NUMBER
@@ -1433,9 +1329,7 @@ const ReceiptPage: React.FC = () => {
 
     if (!shouldSubmit) {
       console.log("❌ MODIFY CANCELLED BY USER");
-
       console.log("❌ NO API CALL WAS MADE");
-
       return;
     }
 
@@ -1447,11 +1341,8 @@ const ReceiptPage: React.FC = () => {
 
     const modifyPayload = {
       lkpBranch,
-
       lkpType: toDocumentType(lkpType),
-
       cashBank: cbAccount,
-
       cbCcId,
 
       /* IMPORTANT:
@@ -1459,34 +1350,20 @@ const ReceiptPage: React.FC = () => {
              Do NOT generate a new number.
           */
       docNo: documentNo.trim(),
-
       receiptDate: date,
-
       receivedFrom,
-
       reference,
-
       note,
-
       rows: validRows.map((row, index) => ({
         id: row.id,
-
         slNo: index + 1,
-
         accountId: row.accountId,
-
         accountName: row.accountName,
-
         fgcs: row.fgcs,
-
         division: row.division,
-
         ccId: row.ccId,
-
         creditAmount: Number(row.creditAmount) || 0,
-
         match: row.match,
-
         description: row.description || "",
       })),
 
@@ -1498,11 +1375,8 @@ const ReceiptPage: React.FC = () => {
         =============================================== */
 
     console.log("🔥 MODIFY PAYLOAD:");
-
     console.log(JSON.stringify(modifyPayload, null, 2));
-
     console.log("MODIFY DOC TYPE:", modifyPayload.lkpType);
-
     console.log("MODIFY DOC NO:", modifyPayload.docNo);
 
     /* ===============================================
@@ -1793,32 +1667,8 @@ const ReceiptPage: React.FC = () => {
   ======================================================= */
 
   return (
-    <div
-      className="
-        min-h-screen
-        bg-slate-100
-        px-5
-        py-2
-        flex
-        flex-col
-        justify-center
-        items-center
-        gap-2.5
-      "
-    >
-      <div
-        className="
-          receipt-screen
-          mx-auto
-          lg:w-275
-          md:w-[55%]
-          max-w-362.5
-          min-w-212.5
-          border
-          border-gray-400
-          bg-white
-        "
-      >
+    <div className="min-h-screen bg-slate-100 px-5 py-2 flex flex-col justify-center items-center gap-2.5">
+      <div className="receipt-screen mx-auto lg:w-275 md:w-[55%] max-w-362.5 min-w-212.5 border border-gray-400 bg-white">
         {/* =================================================
             HEADER
         ================================================= */}
@@ -1905,15 +1755,7 @@ const ReceiptPage: React.FC = () => {
         ================================================= */}
 
         <div
-          className="
-            mt-2
-            mr-16
-            ml-auto
-            flex
-            w-55
-            items-center
-            gap-2
-            text-xs
+          className="mt-2 mr-16 ml-auto flex w-55 items-center gap-2 text-xs
           "
         >
           <label className="whitespace-nowrap">Total :</label>
@@ -1922,18 +1764,7 @@ const ReceiptPage: React.FC = () => {
             id="txtTotCreditAmt"
             value={total.toFixed(2)}
             readOnly
-            className="
-              ml-3
-              h-6.5
-              w-25
-              rounded
-              border
-              border-gray-300
-              px-2
-              text-right
-              outline-none
-               text-[#344054]
-            "
+            className="ml-3 h-6.5 w-25 rounded border border-gray-300 px-2 text-right outline-none text-[#344054]"
           />
         </div>
 
