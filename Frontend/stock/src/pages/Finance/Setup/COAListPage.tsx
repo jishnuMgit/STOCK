@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import {
   ChevronDown,
   ChevronRight,
@@ -6,7 +6,10 @@ import {
   SquarePen,
   Trash2,
   Search,
+  X,
 } from "lucide-react";
+
+import COAPage from "./COAPage";
 
 // ============================================================
 // TYPES
@@ -64,6 +67,7 @@ const accountTree: AccountNode[] = [
               },
             ],
           },
+
           {
             id: "bank",
             name: "BANK",
@@ -103,6 +107,7 @@ const accountTree: AccountNode[] = [
               },
             ],
           },
+
           {
             id: "receivables",
             name: "RECEIVABLES",
@@ -127,6 +132,7 @@ const accountTree: AccountNode[] = [
               },
             ],
           },
+
           {
             id: "ace-travel-group",
             name: "ACE TRAVEL GROUP",
@@ -135,6 +141,7 @@ const accountTree: AccountNode[] = [
             bold: true,
             children: [],
           },
+
           {
             id: "skab-group",
             name: "SKAB GROUP (RELATED PARTY)",
@@ -156,7 +163,7 @@ const accountTree: AccountNode[] = [
         accountId: "1100000",
         color: "text-blue-600",
         bold: true,
-        children:[
+        children: [
           {
             id: "cash001",
             name: "CASH01",
@@ -203,19 +210,15 @@ const getExpandedForMinimumRows = (
     currentNodes: AccountNode[]
   ): boolean => {
     for (const node of currentNodes) {
-      // Count current node
       visibleRows++;
 
-      // We already have enough visible rows
       if (visibleRows >= minimumRows) {
         return true;
       }
 
-      // Expand node if it has children
       if (node.children && node.children.length > 0) {
         result.add(node.id);
 
-        // Continue through children
         if (expandUntilMinimum(node.children)) {
           return true;
         }
@@ -271,7 +274,7 @@ const filterTree = (
 };
 
 // ============================================================
-// TREE ROW
+// TREE ROW PROPS
 // ============================================================
 
 interface TreeRowProps {
@@ -283,6 +286,10 @@ interface TreeRowProps {
   onModify: (node: AccountNode) => void;
   onDelete: (node: AccountNode) => void;
 }
+
+// ============================================================
+// TREE ROW
+// ============================================================
 
 const TreeRow: React.FC<TreeRowProps> = ({
   node,
@@ -300,7 +307,7 @@ const TreeRow: React.FC<TreeRowProps> = ({
   const isExpanded = expanded.has(node.id);
 
   // ============================================================
-  // ICON COLOR BASED ON TREE LEVEL
+  // ICON COLOR
   // ============================================================
 
   const iconColor =
@@ -571,8 +578,13 @@ const COAListPage: React.FC = () => {
   const [search, setSearch] = useState("");
 
   // ============================================================
+  // COA POPUP STATE
+  // ============================================================
+
+  const [showCOAPage, setShowCOAPage] = useState(false);
+
+  // ============================================================
   // DEFAULT EXPANDED NODES
-  // Automatically expand enough nodes to show 25 rows
   // ============================================================
 
   const [expanded, setExpanded] = useState<Set<string>>(
@@ -588,7 +600,7 @@ const COAListPage: React.FC = () => {
   }, [search]);
 
   // ============================================================
-  // TOGGLE
+  // TOGGLE TREE NODE
   // ============================================================
 
   const toggleNode = (id: string) => {
@@ -606,16 +618,27 @@ const COAListPage: React.FC = () => {
   };
 
   // ============================================================
-  // ACTIONS
+  // ADD ACCOUNT
   // ============================================================
 
   const handleAdd = (node: AccountNode) => {
     console.log("Add account under:", node);
+
+    // Open COAPage popup
+    setShowCOAPage(true);
   };
+
+  // ============================================================
+  // MODIFY
+  // ============================================================
 
   const handleModify = (node: AccountNode) => {
     console.log("Modify account:", node);
   };
+
+  // ============================================================
+  // DELETE
+  // ============================================================
 
   const handleDelete = (node: AccountNode) => {
     const confirmed = window.confirm(
@@ -630,10 +653,46 @@ const COAListPage: React.FC = () => {
   };
 
   // ============================================================
+  // CLOSE POPUP
+  // ============================================================
+
+  const closeCOAPage = () => {
+    setShowCOAPage(false);
+  };
+
+  // ============================================================
+  // ESCAPE KEY
+  // ============================================================
+
+  useEffect(() => {
+    if (!showCOAPage) {
+      return;
+    }
+
+    const handleEscape = (event: KeyboardEvent) => {
+      if (event.key === "Escape") {
+        setShowCOAPage(false);
+      }
+    };
+
+    document.addEventListener(
+      "keydown",
+      handleEscape
+    );
+
+    return () => {
+      document.removeEventListener(
+        "keydown",
+        handleEscape
+      );
+    };
+  }, [showCOAPage]);
+
+  // ============================================================
   // SEARCH AUTO EXPAND
   // ============================================================
 
-  React.useEffect(() => {
+  useEffect(() => {
     if (!search.trim()) {
       return;
     }
@@ -661,14 +720,20 @@ const COAListPage: React.FC = () => {
           result.add(node.id);
         }
 
-        expandMatchingParents(node.children, result);
+        expandMatchingParents(
+          node.children,
+          result
+        );
       });
     };
 
     setExpanded((previous) => {
       const next = new Set(previous);
 
-      expandMatchingParents(filteredTree, next);
+      expandMatchingParents(
+        filteredTree,
+        next
+      );
 
       return next;
     });
@@ -679,272 +744,375 @@ const COAListPage: React.FC = () => {
   // ============================================================
 
   return (
-    <div className="flex items-center justify-center">
-      <div
-        className="
-          min-h-screen
-          w-[1000px]
-          mt-10
-          px-0
-          pt-0
-        "
-      >
-        {/* ======================================================
-            MAIN CONTAINER
-        ====================================================== */}
+    <>
+      {/* ========================================================
+          COA LIST PAGE
+          This entire page becomes blurred when popup is open
+      ======================================================== */}
 
+      <div
+        className={`
+          flex
+          items-center
+          justify-center
+          transition-all
+          duration-200
+          ${
+            showCOAPage
+              ? "blur-[3px]"
+              : ""
+          }
+        `}
+      >
         <div
           className="
-            w-full
-            max-w-none
-            overflow-hidden
-            border
-            border-slate-400
-            bg-white
+            min-h-screen
+            w-[1000px]
+            mt-10
+            px-0
+            pt-0
           "
         >
           {/* ====================================================
-              TITLE
+              MAIN CONTAINER
           ==================================================== */}
 
           <div
             className="
-              flex
-              h-7
               w-full
-              items-center
-              border-b
+              max-w-none
+              overflow-hidden
+              border
               border-slate-400
-              bg-[#a3dfc0]
+              bg-white
             "
           >
-            <h1
-              id="ChartOfAccount"
+            {/* ==================================================
+                TITLE
+            ================================================== */}
+
+            <div
               className="
-                ml-[10px]
-                text-[17px]
-                font-semibold
-                text-slate-700
+                flex
+                h-7
+                w-full
+                items-center
+                border-b
+                border-slate-400
+                bg-[#a3dfc0]
               "
             >
-              Chart Of Account List
-            </h1>
-          </div>
-
-          {/* ====================================================
-              SEARCH
-          ==================================================== */}
-
-          <div
-            className="
-              px-3.5
-              pb-2
-              pt-3
-            "
-          >
-            <div className="relative w-[74.5%]">
-              <Search
-                size={11}
+              <h1
+                id="ChartOfAccount"
                 className="
-                  pointer-events-none
-                  absolute
-                  left-2.5
-                  top-1/2
-                  -translate-y-1/2
-                  text-slate-500
-                "
-              />
-
-              <input
-                id="txtSearch"
-                type="text"
-                value={search}
-                onChange={(event) =>
-                  setSearch(event.target.value)
-                }
-                placeholder="Search..."
-                className="
-                  h-6
-                  w-full
-                  rounded-[2px]
-                  border
-                  border-slate-300
-                  bg-white
-                  pl-7
-                  pr-2
-                  text-[10px]
+                  ml-[10px]
+                  text-[17px]
+                  font-semibold
                   text-slate-700
-                  outline-none
-                  placeholder:text-slate-400
-                  focus:border-slate-400
-                  focus:ring-0
                 "
-              />
+              >
+                Chart Of Account List
+              </h1>
             </div>
-          </div>
 
-          {/* ====================================================
-              TABLE HEADER
-          ==================================================== */}
+            {/* ==================================================
+                SEARCH
+            ================================================== */}
 
-          <div
-            className="
-              mx-3.5
-              grid
-              grid-cols-[minmax(0,1fr)_84px_55px_55px_52px]
-              border
-              border-slate-300
-              bg-[#f4f8fb]
-            "
-          >
-            {/* ACCOUNT NAME */}
+            <div
+              className="
+                px-3.5
+                pb-2
+                pt-3
+              "
+            >
+              <div className="relative w-[74.5%]">
+                <Search
+                  size={11}
+                  className="
+                    pointer-events-none
+                    absolute
+                    left-2.5
+                    top-1/2
+                    -translate-y-1/2
+                    text-slate-500
+                  "
+                />
+
+                <input
+                  id="txtSearch"
+                  type="text"
+                  value={search}
+                  onChange={(event) =>
+                    setSearch(
+                      event.target.value
+                    )
+                  }
+                  placeholder="Search..."
+                  className="
+                    h-6
+                    w-full
+                    rounded-[2px]
+                    border
+                    border-slate-300
+                    bg-white
+                    pl-7
+                    pr-2
+                    text-[10px]
+                    text-slate-700
+                    outline-none
+                    placeholder:text-slate-400
+                    focus:border-slate-400
+                    focus:ring-0
+                  "
+                />
+              </div>
+            </div>
+
+            {/* ==================================================
+                TABLE HEADER
+            ================================================== */}
+
+            <div
+              className="
+                mx-3.5
+                grid
+                grid-cols-[minmax(0,1fr)_84px_55px_55px_52px]
+                border
+                border-slate-300
+                bg-[#f4f8fb]
+              "
+            >
+              {/* ACCOUNT NAME */}
+
+              <div
+                id="trvChartOfAccount"
+                className="
+                  flex
+                  h-[23px]
+                  items-center
+                  border-r
+                  border-slate-300
+                  px-2
+                  text-[10px]
+                  font-semibold
+                  text-slate-700
+                "
+              >
+                Account Name
+              </div>
+
+              {/* ACCOUNT ID */}
+
+              <div
+                className="
+                  flex
+                  h-[23px]
+                  items-center
+                  border-r
+                  border-slate-300
+                  px-2
+                  text-[10px]
+                  font-semibold
+                  text-slate-700
+                "
+              >
+                Account ID
+              </div>
+
+              {/* ADD */}
+
+              <div
+                id="Addbtn"
+                className="
+                  flex
+                  h-[23px]
+                  items-center
+                  justify-center
+                  border-r
+                  border-slate-300
+                  text-[10px]
+                  font-semibold
+                  text-slate-700
+                "
+              >
+                Add
+              </div>
+
+              {/* MODIFY */}
+
+              <div
+                id="Modifybtn"
+                className="
+                  flex
+                  h-[23px]
+                  items-center
+                  justify-center
+                  border-r
+                  border-slate-300
+                  text-[10px]
+                  font-semibold
+                  text-slate-700
+                "
+              >
+                Modify
+              </div>
+
+              {/* DELETE */}
+
+              <div
+                id="Deletebtn"
+                className="
+                  flex
+                  h-[23px]
+                  items-center
+                  justify-center
+                  text-[10px]
+                  font-semibold
+                  text-slate-700
+                "
+              >
+                Delete
+              </div>
+            </div>
+
+            {/* ==================================================
+                TREE
+            ================================================== */}
 
             <div
               id="trvChartOfAccount"
               className="
-                flex
-                h-[23px]
-                items-center
-                border-r
+                mx-3.5
+                overflow-hidden
+                border-x
+                border-b
                 border-slate-300
-                px-2
-                text-[10px]
-                font-semibold
-                text-slate-700
               "
             >
-              Account Name
+              {filteredTree.map((node) => (
+                <TreeRow
+                  key={node.id}
+                  node={node}
+                  level={0}
+                  expanded={expanded}
+                  toggleNode={toggleNode}
+                  onAdd={handleAdd}
+                  onModify={handleModify}
+                  onDelete={handleDelete}
+                />
+              ))}
+
+              {/* NO RESULTS */}
+
+              {filteredTree.length === 0 && (
+                <div
+                  className="
+                    flex
+                    h-12
+                    items-center
+                    justify-center
+                    text-[10px]
+                    text-slate-500
+                  "
+                >
+                  No accounts found
+                </div>
+              )}
             </div>
 
-            {/* ACCOUNT ID */}
+            {/* ==================================================
+                BOTTOM
+            ================================================== */}
 
-            <div
-              className="
-                flex
-                h-[23px]
-                items-center
-                border-r
-                border-slate-300
-                px-2
-                text-[10px]
-                font-semibold
-                text-slate-700
-              "
-            >
-              Account ID
-            </div>
-
-            {/* ADD */}
-
-            <div
-              id="Addbtn"
-              className="
-                flex
-                h-[23px]
-                items-center
-                justify-center
-                border-r
-                border-slate-300
-                text-[10px]
-                font-semibold
-                text-slate-700
-              "
-            >
-              Add
-            </div>
-
-            {/* MODIFY */}
-
-            <div
-              id="Modifybtn"
-              className="
-                flex
-                h-[23px]
-                items-center
-                justify-center
-                border-r
-                border-slate-300
-                text-[10px]
-                font-semibold
-                text-slate-700
-              "
-            >
-              Modify
-            </div>
-
-            {/* DELETE */}
-
-            <div
-              id="Deletebtn"
-              className="
-                flex
-                h-[23px]
-                items-center
-                justify-center
-                text-[10px]
-                font-semibold
-                text-slate-700
-              "
-            >
-              Delete
-            </div>
+            <div className="h-7" />
           </div>
+        </div>
+      </div>
 
+      {/* ========================================================
+          COA POPUP OVERLAY
+      ======================================================== */}
+
+      {showCOAPage && (
+        <div
+          className="
+            fixed
+            inset-0
+            z-[9999]
+            flex
+            items-center
+            justify-center
+            bg-slate-800/20
+            
+            backdrop-blur-xs
+            
+          "
+          onMouseDown={closeCOAPage}
+        >
           {/* ====================================================
-              TREE
+              POPUP CONTAINER
           ==================================================== */}
 
           <div
-            id="trvChartOfAccount"
             className="
-              mx-3.5
-              overflow-hidden
-              border-x
-              border-b
-              border-slate-300
+              relative
+              max-h-[95vh]
+              w-[850px]
+              overflow-auto
+              rounded-[3px]
+              border
+              border-slate-400
+              bg-white
+              shadow-[0_20px_60px_rgba(0,0,0,0.30)]
             "
+            onMouseDown={(event) =>
+              event.stopPropagation()
+            }
           >
-            {filteredTree.map((node) => (
-              <TreeRow
-                key={node.id}
-                node={node}
-                level={0}
-                expanded={expanded}
-                toggleNode={toggleNode}
-                onAdd={handleAdd}
-                onModify={handleModify}
-                onDelete={handleDelete}
-              />
-            ))}
-
             {/* ==================================================
-                NO RESULTS
+                CLOSE BUTTON
             ================================================== */}
 
-            {filteredTree.length === 0 && (
-              <div
-                className="
-                  flex
-                  h-12
-                  items-center
-                  justify-center
-                  text-[10px]
-                  text-slate-500
-                "
-              >
-                No accounts found
-              </div>
-            )}
+            <button
+              id="btnCloseCOAPage"
+              type="button"
+              title="Close"
+              onClick={closeCOAPage}
+              className="
+                absolute
+                right-2
+                top-1
+                z-[10000]
+                flex
+                h-6
+                w-6
+                items-center
+                justify-center
+                rounded-full
+                bg-white
+                text-slate-500
+                shadow
+                hover:bg-slate-100
+                hover:text-red-500
+                focus:outline-none
+              "
+            >
+              <X
+                size={15}
+                strokeWidth={2}
+              />
+            </button>
+
+            {/* ==================================================
+                COA PAGE
+            ================================================== */}
+
+            <COAPage />
           </div>
-
-          {/* ====================================================
-              BOTTOM
-          ==================================================== */}
-
-          <div className="h-7" />
         </div>
-      </div>
-    </div>
+      )}
+    </>
   );
 };
 
