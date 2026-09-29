@@ -1,7 +1,8 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
-import { SquarePen, Trash } from "lucide-react";
+import { SquarePen, Trash, X } from "lucide-react";
 import { useCustomer, type Customer } from "../../../hooks/useCustomer";
+import CustomerPage from "./CustomerPage";
 
 // ============================================================
 // STYLES & COLUMNS
@@ -32,6 +33,16 @@ const MESSAGE_ROW = "h-17.5 text-center text-[12px]";
 const CustomerList: React.FC = () => {
   const [search, setSearch] = useState("");
   const { customers, fetchCustomers, loading, error } = useCustomer();
+  const [showAddModal, setShowAddModal] = useState(false);
+
+  useEffect(() => {
+    if (!showAddModal) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") setShowAddModal(false);
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [showAddModal]);
 
   useEffect(() => {
     fetchCustomers();
@@ -98,18 +109,17 @@ const CustomerList: React.FC = () => {
             </div>
 
             <div className="-ml-[55px] flex items-center pl-2">
-              <Link to="/Finance/Setup/Add/Customer" className="shrink-0">
-                <button
-                  id="btnAdd"
-                  type="button"
-                  className="flex h-8.5 w-25 items-center justify-center gap-1 rounded-sm border border-[#b7c8db] bg-[#e6f0fa] text-[12px] text-green-600 shadow-sm hover:bg-[#dceafa] focus:outline-none"
-                >
-                  <span className="flex h-3.75 w-3.75 items-center justify-center rounded-full bg-green-600 text-[13px] font-bold leading-none text-white">
-                    +
-                  </span>
-                  <span>Add</span>
-                </button>
-              </Link>
+              <button
+                id="btnAdd"
+                type="button"
+                onClick={() => setShowAddModal(true)}
+                className="flex h-8.5 w-25 shrink-0 items-center justify-center gap-1 rounded-sm border border-[#b7c8db] bg-[#e6f0fa] text-[12px] text-green-600 shadow-sm hover:bg-[#dceafa] focus:outline-none"
+              >
+                <span className="flex h-3.75 w-3.75 items-center justify-center rounded-full bg-green-600 text-[13px] font-bold leading-none text-white">
+                  +
+                </span>
+                <span>Add</span>
+              </button>
             </div>
           </div>
         </div>
@@ -248,6 +258,14 @@ const CustomerList: React.FC = () => {
 
         <div className="h-2.5" />
       </div>
+
+      {showAddModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/30 p-4 backdrop-blur-sm">
+          <div className="max-h-[92vh] w-[95%] overflow-y-auto border border-slate-400 bg-white shadow-2xl lg:w-[65%]">
+            <CustomerPage onClose={() => setShowAddModal(false)} />
+          </div>
+        </div>
+      )}
     </div>
   );
 };
