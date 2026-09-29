@@ -6,7 +6,7 @@ import pool from "../../DB/db.js";
 ========================================================= */
 
 export async function getDocumentNoListService(
-  CoID: string,
+  PstrCoID: string,
   lkpYear: string,
   lkpBranch: string,
   lkpModule: string
@@ -32,7 +32,7 @@ export async function getDocumentNoListService(
       `,
       [
         "G",
-        CoID,
+        PstrCoID,
         lkpYear,
         lkpBranch,
         lkpModule,
@@ -76,7 +76,7 @@ export interface DocumentNoRowPayload {
 }
 
 export async function saveDocumentNoListService(
-  CoID: string,
+  PstrCoID: string,
   lkpYear: string,
   lkpBranch: string,
   lkpModule: string,
@@ -95,7 +95,7 @@ export async function saveDocumentNoListService(
         WHERE fcoid = $1 AND fyear = $2 AND fbrid = $3
           AND fmoduleid = $4 AND fdoctype = $5
         `,
-        [CoID, lkpYear, lkpBranch, lkpModule, row.lkpDocument]
+        [PstrCoID, lkpYear, lkpBranch, lkpModule, row.lkpDocument]
       );
 
       const mode = existing.rows.length > 0 ? "M" : "S";
@@ -116,7 +116,7 @@ export async function saveDocumentNoListService(
         `,
         [
           mode,
-          CoID,
+          PstrCoID,
           lkpYear,
           lkpBranch,
           lkpModule,
@@ -150,7 +150,7 @@ export async function saveDocumentNoListService(
 ========================================================= */
 
 export async function deleteDocumentNoRowService(
-  CoID: string,
+  PstrCoID: string,
   lkpYear: string,
   lkpBranch: string,
   lkpModule: string,
@@ -177,7 +177,7 @@ export async function deleteDocumentNoRowService(
       `,
       [
         "D1",
-        CoID,
+        PstrCoID,
         lkpYear,
         lkpBranch,
         lkpModule,

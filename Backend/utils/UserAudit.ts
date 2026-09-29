@@ -1,26 +1,30 @@
 import pool from "../DB/db.js";
 
+/* =========================================================
+   USER AUDIT
+   Writes one row to dbo.tbluseraudit via dbo.sp_useraudit.
+   Shared by every screen that needs an audit trail entry -
+   the caller builds its own note text (screen-specific) and
+   passes it in as `note`.
+
+   PstrYear / lkpBranch / Type / txtDocNo are only meaningful
+   for document-based screens (e.g. Receipt); pass null for
+   screens with no year/branch/document concept (e.g. User
+   Login) - dbo.sp_useraudit defaults them to NULL / ''.
+========================================================= */
+
 export const UserAudit = async (
   PstrCoID: string,
-  PstrYear: string,
-  lkpBranch: string,
-  Type: string,
-  txtDocNo: string,
+  PstrYear: string | null,
+  lkpBranch: string | null,
+  Type: string | null,
+  txtDocNo: string | null,
   strscreenname: string,
   straction: string,
   PstrUserID: string,
-  receiptDate: string,
-  cbAccountName: string,
-  receivedFrom: string,
-  creditAmount: number
+  note: string
 ) => {
   try {
-    const gstrUserAuditNote =
-      `Date : ${receiptDate}\n` +
-      `Cash/Bank Account Name: ${cbAccountName}\n` +
-      `Received From : ${receivedFrom}\n` +
-      `Amount : ${creditAmount}`;
-
     await pool.query(
       `CALL dbo.sp_useraudit(
         $1, $2, $3, $4, $5,
@@ -32,19 +36,17 @@ export const UserAudit = async (
         lkpBranch,
         Type,
         txtDocNo,
+        txtDocNo,
         strscreenname,
         straction,
-        gstrUserAuditNote,
+        note,
         PstrUserID,
       ]
     );
 
-    console.log("+++++++++++++++++++++++++")
-    console.log("gstrUserAuditNote",gstrUserAuditNote)
-
     return {
       success: true,
-      note: gstrUserAuditNote,
+      note,
     };
   } catch (error) {
     console.error("UserAudit Error:", error);
