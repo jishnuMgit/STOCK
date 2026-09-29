@@ -673,7 +673,7 @@ const UserLogin: React.FC = () => {
 
                 <th
                   className="
-                    w-[38%]
+                    w-[34%]
                     border-b
                     border-r
                     border-[#b7e8cf]
@@ -723,7 +723,7 @@ const UserLogin: React.FC = () => {
 
                 <th
                   className="
-                    w-[12%]
+                    w-[16%]
                     border-b
                     border-r
                     border-[#b7e8cf]

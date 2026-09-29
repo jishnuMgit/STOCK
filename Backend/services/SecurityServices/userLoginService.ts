@@ -22,10 +22,10 @@ export interface UserLoginRowPayload extends UserLoginRow {
 }
 
 /* =========================================================
-   SHARED HELPER - call dbo.sp_frmuserlogin
+   SHARED HELPER - call dbo.sp_userlogin
 ========================================================= */
 
-async function callSpFrmUserLogin(
+async function callSpUserLogin(
   client: PoolClient,
   overrides: Partial<{
     strmode: string;
@@ -50,13 +50,13 @@ async function callSpFrmUserLogin(
     userstatus: null,
     datevalidity: null,
     original_userid: null,
-    cursorName: `cur_frmuserlogin_${Date.now()}_${Math.floor(Math.random() * 100000)}`,
+    cursorName: `cur_userlogin_${Date.now()}_${Math.floor(Math.random() * 100000)}`,
     ...overrides,
   };
 
   await client.query(
     `
-    CALL dbo.sp_frmuserlogin(
+    CALL dbo.sp_userlogin(
       $1::varchar, $2::varchar, $3::varchar, $4::varchar, $5::varchar,
       $6::varchar, $7::varchar, $8::numeric, $9::varchar, $10::varchar,
       $11::refcursor
@@ -87,12 +87,12 @@ export async function getUserLoginListService(
 ): Promise<UserLoginRow[]> {
   const client: PoolClient = await pool.connect();
 
-  const cursorName = `cur_frmuserlogin_${Date.now()}_${Math.floor(Math.random() * 100000)}`;
+  const cursorName = `cur_userlogin_${Date.now()}_${Math.floor(Math.random() * 100000)}`;
 
   try {
     await client.query("BEGIN");
 
-    await callSpFrmUserLogin(client, { strmode: "G", coid: CoID, cursorName });
+    await callSpUserLogin(client, { strmode: "G", coid: CoID, cursorName });
 
     const result = await client.query(`FETCH ALL FROM "${cursorName}"`);
 
@@ -207,7 +207,7 @@ export async function saveUserLoginListService(
         throw new Error(`User '${row.txtOriginal_UserID}' no longer exists`);
       }
 
-      await callSpFrmUserLogin(client, {
+      await callSpUserLogin(client, {
         strmode: isNew ? "S" : "M",
         coid: CoID,
         userid: userId,
@@ -243,7 +243,7 @@ export async function deleteUserLoginRowService(
   try {
     await client.query("BEGIN");
 
-    await callSpFrmUserLogin(client, {
+    await callSpUserLogin(client, {
       strmode: "D1",
       coid: CoID,
       original_userid: txtUserID,

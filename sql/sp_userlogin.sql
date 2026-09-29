@@ -1,5 +1,7 @@
 -- =========================================================
--- dbo.sp_frmuserlogin   (converted from SQL Server SP_frmUserLogin)
+-- dbo.sp_userlogin   (converted from SQL Server SP_frmUserLogin;
+-- renamed to match the page name, Security/UserLogin, same as
+-- sp_setbranchinfo, sp_setcompanyinfo, sp_setdocumentno, sp_itempage)
 --
 -- Modes
 --   G   list all users of a company
@@ -18,7 +20,7 @@
 --     procedure never sees the plain password.
 -- =========================================================
 
-CREATE OR REPLACE PROCEDURE dbo.sp_frmuserlogin(
+CREATE OR REPLACE PROCEDURE dbo.sp_userlogin(
     p_strmode              varchar(2),
     p_pstrcoid             varchar(3)     DEFAULT NULL,
     p_struserid            varchar(30)    DEFAULT NULL,
@@ -29,7 +31,7 @@ CREATE OR REPLACE PROCEDURE dbo.sp_frmuserlogin(
     p_numdatevalidity      numeric(18,2)  DEFAULT 0,
     p_stroriginal_userid   varchar(30)    DEFAULT NULL,
     p_strmenuname          varchar(50)    DEFAULT NULL,
-    p_result_cursor        refcursor      DEFAULT 'cur_frmuserlogin'
+    p_result_cursor        refcursor      DEFAULT 'cur_userlogin'
 )
 LANGUAGE plpgsql
 AS $$
