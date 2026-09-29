@@ -56,7 +56,9 @@ export const menuRouteMap: Record<string, string> = {
      FINANCE - REPORTS
   ========================================================= */
 
-  mnuRptSOA: "/Finace/Reports/rptStatementoOfAccount",
+  mnuRptSOA: "/Finance/Reports/rptSOA",
+
+
 
   /* =========================================================
      SETTINGS
@@ -68,8 +70,7 @@ export const menuRouteMap: Record<string, string> = {
     "/Settings/SetBranchInfo",
 
   mnuSetCompanyInfo: "/Settings/SetCompanyInfo",
-
-
+mnuFinSetting: "/Settings/ChartOfAccountSetting",
 
   /* =========================================================
      SECURITY
@@ -125,6 +126,36 @@ export const SET_COMPANY_INFO_NODE: MenuNode = {
   fmenubuttons: "SM", // single record: Save/Modify, no Delete
   children: [],
 };
+
+/* Rpt Statement of Account (synthetic node)
+   Hardcoded in the frontend, injected as a child of
+   Finance > Report (fmenuid "1103").
+   "110399" is outside the real 1103xx id space (110301–110315). */
+export const RPT_STATEMENT_OF_ACCOUNT_NODE: MenuNode = {
+  fmenuid: "110399",
+  fmenuname: "mnuRptStatementOfAccount",
+  fmenucaption: "Rpt Statement of Account",
+  fmenubuttons: "OA",
+  children: [],
+};
+
+/* Returns a new tree with `child` added under the node whose
+   fmenuid is `parentId`. Does nothing if it's already there. */
+export function injectChild(
+  nodes: MenuNode[],
+  parentId: string,
+  child: MenuNode,
+): MenuNode[] {
+  return nodes.map((node) => {
+    if (node.fmenuid === parentId) {
+      const exists = node.children.some((c) => c.fmenuid === child.fmenuid);
+      return exists
+        ? node
+        : { ...node, children: [...node.children, child] };
+    }
+    return { ...node, children: injectChild(node.children, parentId, child) };
+  });
+}
 
 /* =========================================================
    ICON MAP

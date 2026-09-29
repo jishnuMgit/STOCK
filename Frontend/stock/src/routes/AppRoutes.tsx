@@ -8,6 +8,7 @@ import PublicRoute from "./PublicRoute";
 import CustomerList from "../pages/Finance/Setup/CustomerListPage";
 import ChartOfAccountList from "../pages/Finance/Setup/COAListPage";
 import UserLogin from "../pages/Security/UserLogin/UserLogin";
+import COASettings from "../pages/Settings/COASettingPage";
 
 const Login = lazy(() => import("../pages/Auth/LoginPage"));
 const ReceiptPage = lazy(
@@ -94,6 +95,12 @@ const AppRoutes = () => {
             element={<ChartOfAccountList />}
           />
 
+          {/* Finance - Report */}
+          <Route
+            path="/Finance/Setup/rptSOA"
+            element={<StatementOfAccountMain />}
+          />
+
 
 
           {/* =================================================
@@ -122,6 +129,10 @@ const AppRoutes = () => {
           <Route path="/Settings/SetBranchInfo"
           element={<SetBranchInfo/>}/>
 
+<Route
+path="Settings/ChartOfAccountSetting"
+element={<COASettings/>}
+/>
 
           {/* ================= DOCUMENT NUMBER ================= */}
 
@@ -137,10 +148,7 @@ const AppRoutes = () => {
 
           {/* ================= STATEMENT OF ACCOUNT ================= */}
 
-          <Route
-            path="/Finance/Reports/rptStatementoOfAccount"
-            element={<StatementOfAccountMain />}
-          />
+         <Route path="/Finance/Reports/rptSOA" element={<StatementOfAccountMain />} />
         </Route>
 
 
