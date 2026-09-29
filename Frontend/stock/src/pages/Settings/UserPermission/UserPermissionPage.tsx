@@ -735,7 +735,7 @@ const UserPermission: React.FC = () => {
           </label>
 
           <input
-            id="permission-user-id"
+            id="lkpUserID"
             value={userId}
             onChange={(event) => setUserId(event.target.value)}
             autoComplete="off"
@@ -759,6 +759,7 @@ const UserPermission: React.FC = () => {
 
         {/* Menu tree */}
         <section
+        id="trlMenu"
           role="grid"
           aria-label="Menu permissions"
           className="mx-[17px] flex max-h-[65vh] min-h-[200px] flex-col overflow-auto border border-[#C1F2D7]"
