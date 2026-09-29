@@ -17,16 +17,16 @@ export const getBranchList = async (
   res: Response
 ): Promise<Response> => {
   try {
-    const { CoID, userId } = req.query;
+    const { PstrCoID, PstrUserID } = req.query;
 
-    if (!CoID) {
+    if (!PstrCoID) {
       return res.status(400).json({
         success: false,
         message: "Company ID is required",
       });
     }
 
-    if (!userId) {
+    if (!PstrUserID) {
       return res.status(400).json({
         success: false,
         message: "User ID is required",
@@ -41,7 +41,7 @@ export const getBranchList = async (
         AND dbo.userbranches($1, $2, fbrid)
       ORDER BY fpositionno, fbrid
       `,
-      [CoID, userId]
+      [PstrCoID, PstrUserID]
     );
 
     return res.status(200).json({
@@ -72,16 +72,16 @@ export const getDefaultBranch = async (
   res: Response
 ): Promise<Response> => {
   try {
-    const { CoID, userId } = req.query;
+    const { PstrCoID, PstrUserID } = req.query;
 
-    if (!CoID) {
+    if (!PstrCoID) {
       return res.status(400).json({
         success: false,
         message: "Company ID is required",
       });
     }
 
-    if (!userId) {
+    if (!PstrUserID) {
       return res.status(400).json({
         success: false,
         message: "User ID is required",
@@ -90,7 +90,7 @@ export const getDefaultBranch = async (
 
     const result = await pool.query(
       `SELECT dbo.getuserdefbranch($1, $2) AS "defBranch"`,
-      [CoID, userId]
+      [PstrCoID, PstrUserID]
     );
 
     return res.status(200).json({
@@ -120,9 +120,9 @@ export const getBranchInfo = async (
   res: Response
 ): Promise<Response> => {
   try {
-    const { CoID, lkpBranch } = req.query;
+    const { PstrCoID, lkpBranch } = req.query;
 
-    if (!CoID) {
+    if (!PstrCoID) {
       return res.status(400).json({
         success: false,
         message: "Company ID is required",
@@ -137,7 +137,7 @@ export const getBranchInfo = async (
     }
 
     const data = await getBranchInfoService(
-      String(CoID),
+      String(PstrCoID),
       String(lkpBranch)
     );
 
@@ -176,24 +176,24 @@ export const saveBranchInfo = async (
 ): Promise<Response> => {
   try {
     const {
-      CoID,
-      userId,
+      PstrCoID,
+      PstrUserID,
       lkpBranch,
       ...payload
     }: {
-      CoID: string;
-      userId: string;
+      PstrCoID: string;
+      PstrUserID: string;
       lkpBranch: string;
     } & BranchInfoPayload = req.body;
 
-    if (!CoID) {
+    if (!PstrCoID) {
       return res.status(400).json({
         success: false,
         message: "Company ID is required",
       });
     }
 
-    if (!userId) {
+    if (!PstrUserID) {
       return res.status(400).json({
         success: false,
         message: "User ID is required",
@@ -209,17 +209,17 @@ export const saveBranchInfo = async (
 
     const branchAccessResult = await pool.query(
       `SELECT dbo.userbranches($1, $2, $3) AS "hasAccess"`,
-      [CoID, userId, lkpBranch]
+      [PstrCoID, PstrUserID, lkpBranch]
     );
 
     if (!branchAccessResult.rows[0]?.hasAccess) {
       return res.status(403).json({
         success: false,
-        message: `User '${userId}' does not have access to Branch '${lkpBranch}'`,
+        message: `User '${PstrUserID}' does not have access to Branch '${lkpBranch}'`,
       });
     }
 
-    await saveBranchInfoService(CoID, lkpBranch, payload, userId);
+    await saveBranchInfoService(PstrCoID, lkpBranch, payload, PstrUserID);
 
     return res.status(200).json({
       success: true,

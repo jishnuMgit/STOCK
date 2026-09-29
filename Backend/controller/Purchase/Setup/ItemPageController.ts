@@ -8,6 +8,7 @@ import {
   deleteItemBranchRowService,
   type ItemBranchRowPayload,
 } from "../../../services/Purchase/Setup/itemPageService.js";
+import { UserAudit } from "../../../utils/UserAudit.js";
 
 /* =========================================================
    GET UNIT LIST (lkpUnit dropdown)
@@ -18,9 +19,9 @@ export const getUnitList = async (
   res: Response
 ): Promise<Response> => {
   try {
-    const { CoID } = req.query;
+    const { PstrCoID } = req.query;
 
-    if (!CoID) {
+    if (!PstrCoID) {
       return res.status(400).json({
         success: false,
         message: "Company ID is required",
@@ -32,7 +33,7 @@ export const getUnitList = async (
       SELECT *
       FROM dbo.fillunit($1)
       `,
-      [CoID]
+      [PstrCoID]
     );
 
     return res.status(200).json({
@@ -62,9 +63,9 @@ export const getItemGroupList = async (
   res: Response
 ): Promise<Response> => {
   try {
-    const { CoID } = req.query;
+    const { PstrCoID } = req.query;
 
-    if (!CoID) {
+    if (!PstrCoID) {
       return res.status(400).json({
         success: false,
         message: "Company ID is required",
@@ -76,7 +77,7 @@ export const getItemGroupList = async (
       SELECT *
       FROM dbo.fillitemgroup($1)
       `,
-      [CoID]
+      [PstrCoID]
     );
 
     return res.status(200).json({
@@ -106,9 +107,9 @@ export const getSupplierList = async (
   res: Response
 ): Promise<Response> => {
   try {
-    const { CoID } = req.query;
+    const { PstrCoID } = req.query;
 
-    if (!CoID) {
+    if (!PstrCoID) {
       return res.status(400).json({
         success: false,
         message: "Company ID is required",
@@ -120,7 +121,7 @@ export const getSupplierList = async (
       SELECT *
       FROM dbo.fillsupplier($1)
       `,
-      [CoID]
+      [PstrCoID]
     );
 
     return res.status(200).json({
@@ -151,16 +152,16 @@ export const getBranchList = async (
   res: Response
 ): Promise<Response> => {
   try {
-    const { CoID, userId } = req.query;
+    const { PstrCoID, PstrUserID } = req.query;
 
-    if (!CoID) {
+    if (!PstrCoID) {
       return res.status(400).json({
         success: false,
         message: "Company ID is required",
       });
     }
 
-    if (!userId) {
+    if (!PstrUserID) {
       return res.status(400).json({
         success: false,
         message: "User ID is required",
@@ -175,7 +176,7 @@ export const getBranchList = async (
         AND dbo.userbranches($1, $2, fbrid)
       ORDER BY fpositionno, fbrid
       `,
-      [CoID, userId]
+      [PstrCoID, PstrUserID]
     );
 
     return res.status(200).json({
@@ -206,9 +207,9 @@ export const getItem = async (
   res: Response
 ): Promise<Response> => {
   try {
-    const { CoID, txtItemID } = req.query;
+    const { PstrCoID, txtItemID } = req.query;
 
-    if (!CoID) {
+    if (!PstrCoID) {
       return res.status(400).json({
         success: false,
         message: "Company ID is required",
@@ -223,7 +224,7 @@ export const getItem = async (
     }
 
     const { header, rows } = await getItemPageService(
-      String(CoID),
+      String(PstrCoID),
       String(txtItemID)
     );
 
@@ -263,8 +264,8 @@ export const saveItem = async (
 ): Promise<Response> => {
   try {
     const {
-      CoID,
-      userId,
+      PstrCoID,
+      PstrUserID,
       txtItemID,
       txtItemName,
       txtItemDescription,
@@ -278,8 +279,8 @@ export const saveItem = async (
       txtReorderQty,
       rows,
     }: {
-      CoID: string;
-      userId: string;
+      PstrCoID: string;
+      PstrUserID: string;
       txtItemID: string;
       txtItemName: string;
       txtItemDescription: string | null;
@@ -294,14 +295,14 @@ export const saveItem = async (
       rows: ItemBranchRowPayload[];
     } = req.body;
 
-    if (!CoID) {
+    if (!PstrCoID) {
       return res.status(400).json({
         success: false,
         message: "Company ID is required",
       });
     }
 
-    if (!userId) {
+    if (!PstrUserID) {
       return res.status(400).json({
         success: false,
         message: "User ID is required",
@@ -325,7 +326,7 @@ export const saveItem = async (
     }
 
     await saveItemPageService(
-      CoID,
+      PstrCoID,
       txtItemID,
       txtItemName,
       txtItemDescription || null,
@@ -337,7 +338,7 @@ export const saveItem = async (
       txtSupplierItemID,
       Number(txtReorderLevel) || 0,
       Number(txtReorderQty) || 0,
-      userId,
+      PstrUserID,
       branchRows
     );
 
@@ -367,16 +368,35 @@ export const deleteItem = async (
   res: Response
 ): Promise<Response> => {
   try {
-    const { CoID, userId, txtItemID } = req.body;
+    const {
+      PstrCoID,
+      PstrYear,
+      PstrUserID,
+      txtItemID,
+      txtItemName,
+    }: {
+      PstrCoID: string;
+      PstrYear: string;
+      PstrUserID: string;
+      txtItemID: string;
+      txtItemName: string;
+    } = req.body;
 
-    if (!CoID) {
+    if (!PstrCoID) {
       return res.status(400).json({
         success: false,
         message: "Company ID is required",
       });
     }
 
-    if (!userId) {
+    if (!PstrYear) {
+      return res.status(400).json({
+        success: false,
+        message: "Year is required",
+      });
+    }
+
+    if (!PstrUserID) {
       return res.status(400).json({
         success: false,
         message: "User ID is required",
@@ -390,7 +410,30 @@ export const deleteItem = async (
       });
     }
 
-    await deleteItemService(CoID, txtItemID);
+    await deleteItemService(PstrCoID, txtItemID);
+
+    // =====================================================
+    // USER AUDIT (only after the delete has actually succeeded)
+    // Whole-item delete isn't branch-specific, so fbrid is null.
+    // =====================================================
+
+    try {
+      await UserAudit(
+        PstrCoID,
+        PstrYear,
+        null,
+        null,
+        txtItemID,
+        "Item Page",
+        "D",
+        PstrUserID,
+        `Deleted item '${txtItemID}' (${txtItemName || txtItemID})`
+      );
+    } catch (auditError: unknown) {
+      // the item is already deleted - don't fail the request over
+      // an audit-logging problem, just log it
+      console.error("UserAudit error (deleteItem):", auditError);
+    }
 
     return res.status(200).json({
       success: true,
@@ -419,16 +462,31 @@ export const deleteItemBranchRow = async (
   res: Response
 ): Promise<Response> => {
   try {
-    const { CoID, userId, txtItemID, lkpBranch } = req.body;
+    const {
+      PstrCoID,
+      PstrYear,
+      PstrUserID,
+      txtItemID,
+      txtItemName,
+      lkpBranch,
+      branchName,
+    } = req.body;
 
-    if (!CoID) {
+    if (!PstrCoID) {
       return res.status(400).json({
         success: false,
         message: "Company ID is required",
       });
     }
 
-    if (!userId) {
+    if (!PstrYear) {
+      return res.status(400).json({
+        success: false,
+        message: "Year is required",
+      });
+    }
+
+    if (!PstrUserID) {
       return res.status(400).json({
         success: false,
         message: "User ID is required",
@@ -444,17 +502,39 @@ export const deleteItemBranchRow = async (
 
     const branchAccessResult = await pool.query(
       `SELECT dbo.userbranches($1, $2, $3) AS "hasAccess"`,
-      [CoID, userId, lkpBranch]
+      [PstrCoID, PstrUserID, lkpBranch]
     );
 
     if (!branchAccessResult.rows[0]?.hasAccess) {
       return res.status(403).json({
         success: false,
-        message: `User '${userId}' does not have access to Branch '${lkpBranch}'`,
+        message: `User '${PstrUserID}' does not have access to Branch '${lkpBranch}'`,
       });
     }
 
-    await deleteItemBranchRowService(CoID, txtItemID, lkpBranch);
+    await deleteItemBranchRowService(PstrCoID, txtItemID, lkpBranch);
+
+    // =====================================================
+    // USER AUDIT (only after the delete has actually succeeded)
+    // =====================================================
+
+    try {
+      await UserAudit(
+        PstrCoID,
+        PstrYear,
+        lkpBranch,
+        null,
+        txtItemID,
+        "Item Page",
+        "D",
+        PstrUserID,
+        `Deleted item '${txtItemID}' (${txtItemName || txtItemID}) from branch '${branchName || lkpBranch}'`
+      );
+    } catch (auditError: unknown) {
+      // the branch row is already deleted - don't fail the request over
+      // an audit-logging problem, just log it
+      console.error("UserAudit error (deleteItemBranchRow):", auditError);
+    }
 
     return res.status(200).json({
       success: true,

@@ -7,6 +7,7 @@ import {
   deleteUserLoginRowService,
   type UserLoginRowPayload,
 } from "../../services/SecurityServices/userLoginService.js";
+import { UserAudit } from "../../utils/UserAudit.js";
 
 /* =========================================================
    ADMIN CHECK
@@ -15,12 +16,12 @@ import {
 ========================================================= */
 
 const checkAdminUser = async (
-  CoID: string,
-  userId: string
+  PstrCoID: string,
+  PstrUserID: string
 ): Promise<string | null> => {
   const result = await pool.query(
     `SELECT dbo.getusertype($1, $2) AS "userType"`,
-    [CoID, userId]
+    [PstrCoID, PstrUserID]
   );
 
   return result.rows[0]?.userType === "AU"
@@ -37,16 +38,16 @@ export const getUserTypeList = async (
   res: Response
 ): Promise<Response> => {
   try {
-    const { CoID } = req.query;
+    const { PstrCoID } = req.query;
 
-    if (!CoID) {
+    if (!PstrCoID) {
       return res.status(400).json({
         success: false,
         message: "Company ID is required",
       });
     }
 
-    const result = await pool.query(`SELECT * FROM dbo.fillusertype($1)`, [CoID]);
+    const result = await pool.query(`SELECT * FROM dbo.fillusertype($1)`, [PstrCoID]);
 
     return res.status(200).json({
       success: true,
@@ -72,16 +73,16 @@ export const getUserStatusList = async (
   res: Response
 ): Promise<Response> => {
   try {
-    const { CoID } = req.query;
+    const { PstrCoID } = req.query;
 
-    if (!CoID) {
+    if (!PstrCoID) {
       return res.status(400).json({
         success: false,
         message: "Company ID is required",
       });
     }
 
-    const result = await pool.query(`SELECT * FROM dbo.filluserstatus($1)`, [CoID]);
+    const result = await pool.query(`SELECT * FROM dbo.filluserstatus($1)`, [PstrCoID]);
 
     return res.status(200).json({
       success: true,
@@ -107,29 +108,29 @@ export const getUserLoginList = async (
   res: Response
 ): Promise<Response> => {
   try {
-    const { CoID, userId } = req.query;
+    const { PstrCoID, PstrUserID } = req.query;
 
-    if (!CoID) {
+    if (!PstrCoID) {
       return res.status(400).json({
         success: false,
         message: "Company ID is required",
       });
     }
 
-    if (!userId) {
+    if (!PstrUserID) {
       return res.status(400).json({
         success: false,
         message: "User ID is required",
       });
     }
 
-    const notAllowed = await checkAdminUser(String(CoID), String(userId));
+    const notAllowed = await checkAdminUser(String(PstrCoID), String(PstrUserID));
 
     if (notAllowed) {
       return res.status(403).json({ success: false, message: notAllowed });
     }
 
-    const data = await getUserLoginListService(String(CoID));
+    const data = await getUserLoginListService(String(PstrCoID));
 
     return res.status(200).json({
       success: true,
@@ -156,23 +157,23 @@ export const saveUserLoginList = async (
 ): Promise<Response> => {
   try {
     const {
-      CoID,
-      userId,
+      PstrCoID,
+      PstrUserID,
       rows,
     }: {
-      CoID: string;
-      userId: string;
+      PstrCoID: string;
+      PstrUserID: string;
       rows: UserLoginRowPayload[];
     } = req.body;
 
-    if (!CoID) {
+    if (!PstrCoID) {
       return res.status(400).json({
         success: false,
         message: "Company ID is required",
       });
     }
 
-    if (!userId) {
+    if (!PstrUserID) {
       return res.status(400).json({
         success: false,
         message: "User ID is required",
@@ -186,13 +187,13 @@ export const saveUserLoginList = async (
       });
     }
 
-    const notAllowed = await checkAdminUser(CoID, userId);
+    const notAllowed = await checkAdminUser(PstrCoID, PstrUserID);
 
     if (notAllowed) {
       return res.status(403).json({ success: false, message: notAllowed });
     }
 
-    await saveUserLoginListService(CoID, rows);
+    await saveUserLoginListService(PstrCoID, rows);
 
     return res.status(200).json({
       success: true,
@@ -221,19 +222,32 @@ export const deleteUserLoginRow = async (
 ): Promise<Response> => {
   try {
     const {
-      CoID,
-      userId,
+      PstrCoID,
+      PstrYear,
+      PstrUserID,
       txtUserID,
-    }: { CoID: string; userId: string; txtUserID: string } = req.body;
+    }: {
+      PstrCoID: string;
+      PstrYear: string;
+      PstrUserID: string;
+      txtUserID: string;
+    } = req.body;
 
-    if (!CoID) {
+    if (!PstrCoID) {
       return res.status(400).json({
         success: false,
         message: "Company ID is required",
       });
     }
 
-    if (!userId) {
+    if (!PstrYear) {
+      return res.status(400).json({
+        success: false,
+        message: "Year is required",
+      });
+    }
+
+    if (!PstrUserID) {
       return res.status(400).json({
         success: false,
         message: "User ID is required",
@@ -247,20 +261,42 @@ export const deleteUserLoginRow = async (
       });
     }
 
-    const notAllowed = await checkAdminUser(CoID, userId);
+    const notAllowed = await checkAdminUser(PstrCoID, PstrUserID);
 
     if (notAllowed) {
       return res.status(403).json({ success: false, message: notAllowed });
     }
 
-    if (txtUserID.toUpperCase() === userId.toUpperCase()) {
+    if (txtUserID.toUpperCase() === PstrUserID.toUpperCase()) {
       return res.status(400).json({
         success: false,
         message: "You cannot delete the user you are logged in as",
       });
     }
 
-    await deleteUserLoginRowService(CoID, txtUserID);
+    await deleteUserLoginRowService(PstrCoID, txtUserID);
+
+    // =====================================================
+    // USER AUDIT (only after the delete has actually succeeded)
+    // =====================================================
+
+    try {
+      await UserAudit(
+        PstrCoID,
+        PstrYear,
+        null,
+        null,
+        txtUserID,
+        "User Login",
+        "D",
+        PstrUserID,
+        `Deleted UserID '${txtUserID}'`
+      );
+    } catch (auditError: unknown) {
+      // the user is already deleted - don't fail the request over
+      // an audit-logging problem, just log it
+      console.error("UserAudit error (deleteUserLoginRow):", auditError);
+    }
 
     return res.status(200).json({
       success: true,

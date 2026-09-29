@@ -6,7 +6,7 @@ import pool from "../../DB/db.js";
 ========================================================= */
 
 export async function getBranchInfoService(
-  CoID: string,
+  PstrCoID: string,
   lkpBranch: string
 ): Promise<any | null> {
   const client: PoolClient = await pool.connect();
@@ -19,7 +19,7 @@ export async function getBranchInfoService(
 
     await callSpBranchInfo(client, {
       strmode: "G",
-      coid: CoID,
+      coid: PstrCoID,
       brid: lkpBranch,
       cursorName,
     });
@@ -76,10 +76,10 @@ export interface BranchInfoPayload {
 }
 
 export async function saveBranchInfoService(
-  CoID: string,
+  PstrCoID: string,
   lkpBranch: string,
   payload: BranchInfoPayload,
-  userId: string
+  PstrUserID: string
 ): Promise<void> {
   const client: PoolClient = await pool.connect();
 
@@ -88,7 +88,7 @@ export async function saveBranchInfoService(
 
     await callSpBranchInfo(client, {
       strmode: "M",
-      coid: CoID,
+      coid: PstrCoID,
       brid: lkpBranch,
       brname_ar: payload.txtBrName_AR,
       buildingno: payload.txtBuildingNo,
@@ -120,7 +120,7 @@ export async function saveBranchInfoService(
       braddress3_ar: payload.txtBrAddress3_AR,
       braddress4_ar: payload.txtBrAddress4_AR,
       ho: payload.chkHo,
-      userid: userId,
+      userid: PstrUserID,
     });
 
     await client.query("COMMIT");

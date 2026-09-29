@@ -263,16 +263,16 @@ const UserLogin: React.FC = () => {
 
   const loadUsers = async () => {
     try {
-      const CoID = localStorage.getItem("PstrCoID");
-      const userId = localStorage.getItem("PstrUserID");
+      const PstrCoID = localStorage.getItem("PstrCoID");
+      const PstrUserID = localStorage.getItem("PstrUserID");
 
-      if (!CoID || !userId) {
+      if (!PstrCoID || !PstrUserID) {
         toast.error("Company ID / User ID not found. Please log in again.");
         return;
       }
 
       const response = await fetch(
-        `${import.meta.env.VITE_API_URL}/UserLogin/getUserLoginList?CoID=${encodeURIComponent(CoID)}&userId=${encodeURIComponent(userId)}`,
+        `${import.meta.env.VITE_API_URL}/UserLogin/getUserLoginList?PstrCoID=${encodeURIComponent(PstrCoID)}&PstrUserID=${encodeURIComponent(PstrUserID)}`,
         { method: "GET" }
       );
 
@@ -317,9 +317,9 @@ const UserLogin: React.FC = () => {
 
   useEffect(() => {
     const loadPage = async () => {
-      const CoID = localStorage.getItem("PstrCoID");
+      const PstrCoID = localStorage.getItem("PstrCoID");
 
-      if (!CoID) {
+      if (!PstrCoID) {
         return;
       }
 
@@ -329,10 +329,10 @@ const UserLogin: React.FC = () => {
       try {
         const [typeResponse, statusResponse] = await Promise.all([
           fetch(
-            `${import.meta.env.VITE_API_URL}/UserLogin/getUserTypeList?CoID=${encodeURIComponent(CoID)}`
+            `${import.meta.env.VITE_API_URL}/UserLogin/getUserTypeList?PstrCoID=${encodeURIComponent(PstrCoID)}`
           ),
           fetch(
-            `${import.meta.env.VITE_API_URL}/UserLogin/getUserStatusList?CoID=${encodeURIComponent(CoID)}`
+            `${import.meta.env.VITE_API_URL}/UserLogin/getUserStatusList?PstrCoID=${encodeURIComponent(PstrCoID)}`
           ),
         ]);
 
@@ -418,10 +418,10 @@ const UserLogin: React.FC = () => {
   // ============================================================
 
   const handleSave = async () => {
-    const CoID = localStorage.getItem("PstrCoID");
-    const userId = localStorage.getItem("PstrUserID");
+    const PstrCoID = localStorage.getItem("PstrCoID");
+    const PstrUserID = localStorage.getItem("PstrUserID");
 
-    if (!CoID || !userId) {
+    if (!PstrCoID || !PstrUserID) {
       toast.error("Company ID / User ID not found. Please log in again.");
       return;
     }
@@ -462,7 +462,7 @@ const UserLogin: React.FC = () => {
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ CoID, userId, rows }),
+          body: JSON.stringify({ PstrCoID, PstrUserID, rows }),
         }
       );
 
@@ -505,11 +505,12 @@ const UserLogin: React.FC = () => {
       return;
     }
 
-    const CoID = localStorage.getItem("PstrCoID");
-    const userId = localStorage.getItem("PstrUserID");
+    const PstrCoID = localStorage.getItem("PstrCoID");
+    const PstrYear = localStorage.getItem("PstrYear");
+    const PstrUserID = localStorage.getItem("PstrUserID");
 
-    if (!CoID || !userId) {
-      toast.error("Company ID / User ID not found. Please log in again.");
+    if (!PstrCoID || !PstrYear || !PstrUserID) {
+      toast.error("Company ID / Year / User ID not found. Please log in again.");
       return;
     }
 
@@ -520,8 +521,9 @@ const UserLogin: React.FC = () => {
           method: "DELETE",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
-            CoID,
-            userId,
+            PstrCoID,
+            PstrYear,
+            PstrUserID,
             txtUserID: row.txtOriginal_UserID,
           }),
         }
@@ -912,7 +914,7 @@ const UserLogin: React.FC = () => {
                       border-b
                       border-r
                       border-[#b7e8cf]
-                      p-0
+                      p-1
                     "
                   >
                     <Select
@@ -940,7 +942,7 @@ const UserLogin: React.FC = () => {
                     className="
                       border-b
                       border-[#b7e8cf]
-                      p-0
+                      p-1
                     "
                   >
                     <Select
