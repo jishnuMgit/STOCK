@@ -3,18 +3,7 @@ import dotenv from "dotenv";
 import cors from "cors";
 import cookieParser from "cookie-parser";
 
-import ReceiptRouter from "./routes/ReceiptRouter.js";
-import MatchRouter from "./routes/MatchRouter.js";
-import LoginRouter from "./routes/AuthRouter.js";
-import CompanyRouter from "./routes/CompanyRouter.js";
-import YearRouter from "./routes/YearRouter.js";
-import CompanyInfoRouter from "./routes/SettingRoutes/SetcompanyinfoRouter.js";
-import SetDocumentNoRouter from "./routes/SettingRoutes/SetdocumentnoRouter.js";
-import SetBranchInfoRouter from "./routes/SettingRoutes/SetBranchInfoRouter.js";
-import customerRouter from "./routes/CustomerRoute.js";
-import menuRoutes from "./routes/MenuRoute.js";
-import ItemPageRouter from "./routes/Purchase/Setup/ItemPageRouter.js";
-import UserLoginRouter from "./routes/SecurityRoutes/UserLoginRouter.js";
+import IndexRouter from "./routes/index.js";
 
 import pool from "./DB/db.js";
 
@@ -51,18 +40,7 @@ app.use(
 //   }
 // });
 
-app.use("/api/Receipt", ReceiptRouter);
-app.use("/api/Match", MatchRouter);
-app.use("/api/auth", LoginRouter);
-app.use("/api/companies", CompanyRouter);
-app.use("/api/years", YearRouter);
-app.use("/api/CompanyInfo", CompanyInfoRouter);
-app.use("/api/DocumentNo", SetDocumentNoRouter);
-app.use("/api/BranchInfo", SetBranchInfoRouter);
-app.use("/api/menu", menuRoutes);
-app.use("/api/Item", ItemPageRouter);
-app.use("/api/customer", customerRouter);
-app.use("/api/UserLogin", UserLoginRouter);
+app.use("/api", IndexRouter);
 
 app.listen(5000, "0.0.0.0", () => {
   console.log(`Server running on port 5000`);
