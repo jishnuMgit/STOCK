@@ -2,57 +2,7 @@ import { Request, Response } from "express";
 import { v4 as uuidv4 } from "uuid";
 import pool from "../DB/db.js";
 import { AuthenticatedRequest } from "../middleware/authMiddleware.js";
-
-/* =========================================================
-   PASSWORD DECRYPT
-   Converts old encrypted password back to plain password
-   ========================================================= */
-
-const decryptPwd = (encryptedPwd: string, userPwdSeed: number): string => {
-  if (!encryptedPwd) {
-    return "";
-  }
-
-  let decryptedPwd = "";
-
-  for (let i = 0; i < encryptedPwd.length; i += 5) {
-    const encryptedChar = encryptedPwd.substring(i, i + 4);
-
-    if (encryptedChar.length < 4) {
-      continue;
-    }
-
-    const asciiValue = parseInt(encryptedChar, 10) - userPwdSeed;
-
-    decryptedPwd += String.fromCharCode(asciiValue);
-  }
-
-  return decryptedPwd;
-};
-
-/* =========================================================
-   PASSWORD ENCRYPT
-   (Currently unused — kept for when Change Password is re-enabled)
-   ========================================================= */
-
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
-const encryptPwd = (password: string, userPwdSeed: number): string => {
-  if (!password) {
-    return "";
-  }
-
-  let encryptedPwd = "";
-
-  for (const char of password) {
-    const asciiValue = char.charCodeAt(0);
-    const formattedValue = String(asciiValue + userPwdSeed).padStart(4, "0");
-    const randomNumber = Math.floor(Math.random() * 10);
-
-    encryptedPwd += formattedValue + randomNumber;
-  }
-
-  return encryptedPwd;
-};
+import { decryptPwd } from "../utils/passwordCrypto.js";
 
 /* =========================================================
    LOGIN
