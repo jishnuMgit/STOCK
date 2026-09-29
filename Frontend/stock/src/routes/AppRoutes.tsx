@@ -9,6 +9,7 @@ import CustomerList from "../pages/Finance/Setup/CustomerListPage";
 import ChartOfAccountList from "../pages/Finance/Setup/COAListPage";
 import UserLogin from "../pages/Security/UserLogin/UserLogin";
 import COASettings from "../pages/Settings/COASettingPage";
+import UserPermission from "../pages/Settings/UserPermission/UserPermission";
 
 const Login = lazy(() => import("../pages/Auth/LoginPage"));
 const ReceiptPage = lazy(
@@ -162,6 +163,10 @@ element={<COASettings/>}
        element={<UserLogin/>}
        />
 
+<Route
+path="/Security/UserPermissionMenu"
+element={<UserPermission/>}
+/>
 
 
 
