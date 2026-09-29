@@ -742,7 +742,6 @@ const UserLogin: React.FC = () => {
                   className="
                     w-[12%]
                     border-b
-                    border-r
                     border-[#b7e8cf]
                     px-2
                     text-left
@@ -754,14 +753,6 @@ const UserLogin: React.FC = () => {
                 >
                   User Status
                 </th>
-
-                <th
-                  className="
-                    w-[28px]
-                    border-b
-                    border-[#b7e8cf]
-                  "
-                />
               </tr>
             </thead>
 
@@ -785,21 +776,47 @@ const UserLogin: React.FC = () => {
                       px-2
                     "
                   >
-                    <input
-                      id={`txtUserID-${index}`}
-                      type="text"
-                      value={user.txtUserID}
-                      onChange={(e) =>
-                        handleChange(
-                          index,
-                          "txtUserID",
-                          e.target.value
-                        )
-                      }
-                      maxLength={30}
-                      readOnly={user.txtOriginal_UserID !== ""}
-                      className={inputClass}
-                    />
+                    <div className="flex h-full items-center gap-1">
+                      <input
+                        id={`txtUserID-${index}`}
+                        type="text"
+                        value={user.txtUserID}
+                        onChange={(e) =>
+                          handleChange(
+                            index,
+                            "txtUserID",
+                            e.target.value
+                          )
+                        }
+                        maxLength={30}
+                        readOnly={user.txtOriginal_UserID !== ""}
+                        className={inputClass}
+                      />
+
+                      {user.txtUserID.trim() !== "" && (
+                        <button
+                          type="button"
+                          onClick={() => handleDeleteRow(index)}
+                          className="
+                            inline-flex
+                            h-[23px]
+                            w-[16px]
+                            shrink-0
+                            items-center
+                            justify-center
+                            rounded
+                            text-[#999999]
+                            hover:text-red-600
+                          "
+                          aria-label={`Delete ${user.txtUserID}`}
+                        >
+                          <X
+                            size={10}
+                            style={{ transform: "translateY(-3px)" }}
+                          />
+                        </button>
+                      )}
+                    </div>
                   </td>
 
                   {/* USER NAME */}
@@ -922,7 +939,6 @@ const UserLogin: React.FC = () => {
                   <td
                     className="
                       border-b
-                      border-r
                       border-[#b7e8cf]
                       p-0
                     "
@@ -944,33 +960,6 @@ const UserLogin: React.FC = () => {
                       placeholder=""
                       styles={selectStyles}
                     />
-                  </td>
-
-                  {/* DELETE */}
-
-                  <td className="border-b border-[#b7e8cf] p-0 text-center">
-                    {user.txtUserID.trim() !== "" && (
-                      <button
-                        type="button"
-                        onClick={() => handleDeleteRow(index)}
-                        className="
-                          inline-flex
-                          h-[23px]
-                          w-[20px]
-                          items-center
-                          justify-center
-                          rounded
-                          text-[#999999]
-                          hover:text-red-600
-                        "
-                        aria-label={`Delete ${user.txtUserID}`}
-                      >
-                        <X
-                          size={10}
-                          style={{ transform: "translateY(-3px)" }}
-                        />
-                      </button>
-                    )}
                   </td>
                 </tr>
               ))}
