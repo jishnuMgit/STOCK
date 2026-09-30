@@ -107,6 +107,7 @@ mnuFinSetting: "/Settings/ChartOfAccountSetting",
 
   mnuUserLogin:"/Security/UserLogin",
   mnuUserPermissionMenu:"/Security/UserPermissionMenu",
+  mnuUserPermissionCoBranch:"/Security/UserPermissionCoBranch",
 
   /* =========================================================
      ADMINISTRATION

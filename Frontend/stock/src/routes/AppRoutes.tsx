@@ -11,6 +11,7 @@ import UserLogin from "../pages/Security/UserLogin/UserLogin";
 import COASettings from "../pages/Settings/COASettingPage";
 import UserPermission from "../pages/Settings/UserPermission/UserPermissionPage";
 import BeginningStockPage from "../pages/Purchase/Transaction/BeginningStockPage";
+import UserPermissionCoBranchPage from "../pages/Settings/UserPermission/UserPermissionCoBranchPage";
 
 const Login = lazy(() => import("../pages/Auth/LoginPage"));
 const ReceiptPage = lazy(
@@ -174,6 +175,11 @@ element={<COASettings/>}
 <Route
 path="/Security/UserPermissionMenu"
 element={<UserPermission/>}
+/>
+
+<Route
+path="/Security/UserPermissionCoBranch"
+element={<UserPermissionCoBranchPage/>}
 />
 
 
