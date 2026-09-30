@@ -3,6 +3,7 @@ import Select, { components, type StylesConfig } from "react-select";
 import { toast } from "react-toastify";
 import { X } from "lucide-react";
 import { useEnterAsTab } from "../../../hooks/useEnterAsTab";
+import { useAltShortcuts } from "../../../hooks/useAltShortcuts";
 import {
   filterLabelOrValue,
   BranchMenuList,
@@ -671,9 +672,26 @@ const ItemPage: React.FC = () => {
     }
   };
 
-  const handleFind = async () => {
-    if (!txtItemID) {
-      toast.warning("Item ID is required.");
+  /* =========================================================
+     FIND ITEM (mode 'G')
+
+     `silent` is used for the Item ID onBlur auto-load: leaving
+     the field with an ID that doesn't exist yet is the normal
+     case for a brand-new item, so that path stays quiet (no
+     "required"/"not found" toasts, no success toast either).
+     The explicit Find button always reports what happened.
+  ========================================================= */
+
+  const findItem = async (
+    itemId: string,
+    options: { silent?: boolean } = {}
+  ) => {
+    const { silent = false } = options;
+
+    if (!itemId) {
+      if (!silent) {
+        toast.warning("Item ID is required.");
+      }
       return;
     }
 
@@ -686,13 +704,15 @@ const ItemPage: React.FC = () => {
 
     try {
       const response = await fetch(
-        `${import.meta.env.VITE_API_URL}/Item/getItem?PstrCoID=${PstrCoID}&txtItemID=${txtItemID}`
+        `${import.meta.env.VITE_API_URL}/Item/getItem?PstrCoID=${PstrCoID}&txtItemID=${itemId}`
       );
 
       const result = await response.json();
 
       if (!response.ok || !result.success) {
-        toast.error(result.message || "Item not found.");
+        if (!silent) {
+          toast.error(result.message || "Item not found.");
+        }
         return;
       }
 
@@ -749,12 +769,18 @@ const ItemPage: React.FC = () => {
 
       setRows([...foundRows, ...blankRows]);
 
-      toast.success("Item loaded.");
+      if (!silent) {
+        toast.success("Item loaded.");
+      }
     } catch (error) {
       console.error("getItem error:", error);
       toast.error("Cannot connect to Item API.");
     }
   };
+
+  const handleFind = () => findItem(txtItemID);
+
+  const handleItemIDBlur = () => findItem(txtItemID, { silent: true });
 
   const handleDelete = async () => {
     if (!txtItemID) {
@@ -911,6 +937,18 @@ const ItemPage: React.FC = () => {
       })),
     );
   };
+
+  /* =========================================================
+     KEYBOARD SHORTCUTS
+     Alt+S -> Save, Alt+C -> Clear (matches the underlined
+     accelerator letters on the buttons).
+  ========================================================= */
+
+  useAltShortcuts({
+    s: handleSave,
+    d: handleDelete,
+    c: handleClear,
+  });
 
   /* =========================================================
      COMMON INPUT CLASS
@@ -1254,6 +1292,7 @@ const ItemPage: React.FC = () => {
                 type="text"
                 value={txtItemID}
                 onChange={(e) => setTxtItemID(e.target.value)}
+                onBlur={handleItemIDBlur}
                 className="
                   h-[28px]
                   w-[225px]

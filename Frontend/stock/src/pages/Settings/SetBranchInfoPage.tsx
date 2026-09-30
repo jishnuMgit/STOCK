@@ -5,6 +5,7 @@ import Select, {
 } from "react-select";
 import { toast } from "react-toastify";
 import { useEnterAsTab } from "../../hooks/useEnterAsTab";
+import { useAltShortcuts } from "../../hooks/useAltShortcuts";
 import {
   filterLabelOrValue,
   BranchMenuList,
@@ -774,6 +775,17 @@ const SetBranchInfo: React.FC = () => {
   };
 
   /* =========================================================
+     KEYBOARD SHORTCUTS
+     Alt+S -> Save, Alt+C -> Clear (matches the underlined
+     accelerator letters on the buttons).
+  ========================================================= */
+
+  useAltShortcuts({
+    s: handleSave,
+    c: () => handleClear(true),
+  });
+
+  /* =========================================================
      JSX
   ========================================================= */
 
@@ -1073,7 +1085,7 @@ const SetBranchInfo: React.FC = () => {
             setValueEn={setTxtCRNo}
             valueAr={txtCRNo_AR}
             setValueAr={setTxtCRNo_AR}
-            maxLength={20}
+            maxLength={10}
             inputWidth={WIDTH_NUMBERS}
           />
 

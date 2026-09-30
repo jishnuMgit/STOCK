@@ -3,6 +3,7 @@ import { toast } from "react-toastify";
 import Select from "react-select";
 import type { SelectOption } from "../../types/receiptypes";
 import { useEnterAsTab } from "../../hooks/useEnterAsTab";
+import { useAltShortcuts } from "../../hooks/useAltShortcuts";
 import {
   makeNameIdMenuComponents,
   branchMenuStyles,
@@ -348,6 +349,17 @@ const SetCompanyInfo = () => {
     setFormData(emptyFormData);
   };
 
+  /* =======================================================
+     KEYBOARD SHORTCUTS
+     Alt+S -> Save, Alt+C -> Clear (matches the underlined
+     accelerator letters on the buttons).
+  ======================================================= */
+
+  useAltShortcuts({
+    s: handleSave,
+    c: handleClear,
+  });
+
   return (
     <div
       onKeyDown={handleEnterAsTab}
@@ -542,7 +554,7 @@ const SetCompanyInfo = () => {
                 htmlFor="txtCoAddress1"
                 className="text-[11px] text-gray-600 text-right pr-3"
               >
-                Address  Line 1 :
+                Address-Line 1 :
               </label>
 
               {/* English */}
@@ -581,7 +593,7 @@ const SetCompanyInfo = () => {
                 htmlFor="txtCoAddress2"
                 className="text-[11px] text-gray-600 text-right pr-3"
               >
-                Address  Line 2 :
+                Address-Line 2 :
               </label>
 
               {/* English */}
@@ -620,7 +632,7 @@ const SetCompanyInfo = () => {
                 htmlFor="txtCoAddress3"
                 className="text-[11px] text-gray-600 text-right pr-3"
               >
-                Address  line 3 :
+                Address-line 3 :
               </label>
 
               {/* English */}
@@ -659,7 +671,7 @@ const SetCompanyInfo = () => {
                 htmlFor="txtCoAddress4"
                 className="text-[11px] text-gray-600 text-right pr-3"
               >
-                Address Line 4 :
+                Address-Line 4 :
               </label>
 
               {/* English */}
@@ -712,10 +724,9 @@ const SetCompanyInfo = () => {
                 to-[#e5eef5]
                 text-green-600
                 text-[15px]
-                underline
               "
             >
-              Save
+              <span className="underline underline-offset-2">S</span>ave
             </button>
 
             <button
@@ -734,10 +745,9 @@ const SetCompanyInfo = () => {
                 to-[#e5eef5]
                 text-green-600
                 text-[15px]
-                underline
               "
             >
-              Clear
+              <span className="underline underline-offset-2">C</span>lear
             </button>
 
           </div>
