@@ -923,7 +923,7 @@ const UserLogin: React.FC = () => {
                       border-b
                       border-r
                       border-[#b7e8cf]
-                      p-1
+                      p-2
                     "
                   >
                     <Select
@@ -951,7 +951,7 @@ const UserLogin: React.FC = () => {
                     className="
                       border-b
                       border-[#b7e8cf]
-                      p-1
+                      p-2
                     "
                   >
                     <Select
