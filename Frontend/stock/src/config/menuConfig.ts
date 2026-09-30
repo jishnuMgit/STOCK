@@ -34,9 +34,38 @@ export const menuRouteMap: Record<string, string> = {
   /* =========================================================
      PURCHASE
   ========================================================= */
+  /* =========================================================
+     PURCHASE - TRANSACTION
+  ========================================================= */
+
+mnuBeginningStock:"/Purchase/Transaction/BeginningStockPage",
+
+
+
+
+
+    /* =========================================================
+     PURCHASE - SETUP
+  ========================================================= */
+
+
 
   mnuItem: "/Purchase/Setup/ItemPage",
 
+
+    /* =========================================================
+     PURCHASE - REPORTS
+  ========================================================= */
+
+
+
+
+
+
+
+  /* =========================================================
+     FINANCE 
+  ========================================================= */
   /* =========================================================
      FINANCE - TRANSACTION
   ========================================================= */
@@ -78,6 +107,7 @@ mnuFinSetting: "/Settings/ChartOfAccountSetting",
 
   mnuUserLogin:"/Security/UserLogin",
   mnuUserPermissionMenu:"/Security/UserPermissionMenu",
+  mnuUserPermissionCoBranch:"/Security/UserPermissionCoBranch",
 
   /* =========================================================
      ADMINISTRATION
