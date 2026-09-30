@@ -232,7 +232,55 @@ const BeginningStockPage: React.FC = () => {
       },
     ]);
   };
+const tableSelectStyles: StylesConfig<SelectOption, false> = {
+  ...selectStyles,
 
+  control: (base, state) => ({
+    ...base,
+    minHeight: "26px",
+    height: "26px",
+    border: "none",
+    borderRadius: "0",
+    boxShadow: "none",
+    outline: "none",
+    backgroundColor: "transparent",
+    fontSize: "12px",
+    cursor: "pointer",
+
+    "&:hover": {
+      border: "none",
+    },
+  }),
+
+  valueContainer: (base) => ({
+    ...base,
+    padding: "0 5px",
+    height: "26px",
+  }),
+
+  indicatorsContainer: (base) => ({
+    ...base,
+    height: "26px",
+  }),
+
+  dropdownIndicator: (base) => ({
+    ...base,
+    padding: "3px",
+    color: "#64748b",
+  }),
+
+  clearIndicator: (base) => ({
+    ...base,
+    padding: "3px",
+  }),
+
+  menu: (base) => ({
+    ...base,
+    zIndex: 50,
+    fontSize: "12px",
+    marginTop: "2px",
+  }),
+};
   const clearForm = () => {
     setBranch(branchOptions[0]);
     setDate("2026-06-29");
@@ -295,11 +343,10 @@ const BeginningStockPage: React.FC = () => {
   };
 
   return (
-    <div className="flex h-screen min-h-[500px] w-full flex-col overflow-hidden bg-white text-[12px] text-slate-700">
-      {/* ======================================================
+<div className="mx-auto flex h-screen min-h-[500px] min-w-[900px] w-[60%] flex-col overflow-hidden bg-white text-[12px] text-slate-700">      {/* ======================================================
           TITLE BAR
       ====================================================== */}
-      <header className="relative flex h-[42px] shrink-0 items-center justify-center border-x-4 border-t-4 border-[#333333] bg-[#9bdfbd]">
+      <header className="relative flex h-[42px] shrink-0 items-center justify-center border bg-[#9bdfbd]">
         <h1 className="text-[20px] font-semibold leading-none text-[#263d55]">
           Beginning Stock
         </h1>
@@ -589,7 +636,7 @@ const BeginningStockPage: React.FC = () => {
       {/* ======================================================
           ACTION BUTTONS
       ====================================================== */}
-      <footer className="flex min-h-[94px] shrink-0 flex-col items-center justify-center gap-2 border-x-4 border-b-4 border-[#333333] bg-white px-4 pb-2">
+      <footer className="flex min-h-[94px] shrink-0 flex-col items-center justify-center gap-2  border-[#333333] bg-white px-4 pb-2">
         {message && (
           <p
             role="status"

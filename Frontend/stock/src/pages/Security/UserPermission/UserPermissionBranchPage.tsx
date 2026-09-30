@@ -2,10 +2,12 @@
 import { ChevronDown, ChevronRight } from "lucide-react";
 import React, { useState } from "react";
 import Select, {
+  components,
   type SingleValue,
   type StylesConfig,
+  type MenuListProps,
+  type OptionProps,
 } from "react-select";
-
 // ============================================================
 // TYPES
 // ============================================================
@@ -25,7 +27,39 @@ interface PermissionNode {
 // ============================================================
 // USER OPTIONS
 // ============================================================
+const buttonClass = `
+  min-w-[110px]
+  h-[40px]
+  rounded-[4px]
+  border
+  border-[#9db8d4]
+ 
+  bg-gradient-to-b
+  from-[#ffffff]
+  to-[#e7eef5]
+  px-4
+  text-[18px]
+  shadow-[inset_0_1px_0_rgba(255,255,255,0.8)]
+  transition-colors
+  duration-100
+  text-transparent
+  bg-clip-text
+  bg-gradient-to-r
+  from-green-800
+  to-green-500
+  hover:border-[#7f9fbd]
+ 
+  hover:bg-gradient-to-b
+  
+  focus:border-[#20884e]
+  
+ 
 
+ 
+  focus:outline-none
+  focus:ring-0
+  hover:text-green-800
+`;
 const userOptions: SelectOption[] = [
   { value: "ABDULAZIZ", label: "ABDULAZIZ" },
   { value: "ADMIN", label: "ADMIN" },
@@ -108,7 +142,26 @@ const initialPermissionData: PermissionNode[] = [
 // ============================================================
 // REACT SELECT STYLES
 // ============================================================
+// Dropdown title and label
+const CustomMenuList = (props: MenuListProps<SelectOption, false>) => {
+  return (
+    <components.MenuList {...props}>
+      {/* Dropdown title */}
+      <div className="border-b border-[#b8f0d0] bg-[#ECFAF3] px-3 py-2">
+        <div className="text-[13px] font-semibold text-slate-700">
+          User List
+        </div>
 
+        {/* Column label */}
+        <div className="mt-1 border-t border-[#b8f0d0] pt-1 text-[12px] font-medium text-slate-600">
+          User ID
+        </div>
+      </div>
+
+      {props.children}
+    </components.MenuList>
+  );
+};
 const selectStyles: StylesConfig<SelectOption, false> = {
   control: (base, state) => ({
     ...base,
@@ -136,18 +189,41 @@ const selectStyles: StylesConfig<SelectOption, false> = {
 
   dropdownIndicator: (base) => ({
     ...base,
-    padding: "0 8px",
+    padding: "0 2px",
     color: "#64748b",
   }),
 
-  indicatorSeparator: () => ({
-    display: "none",
-  }),
+//  indicatorsContainer: (base) => ({
+//   ...base,
+//   height: "29px",
+//   gap: "0px", // Controls space between the icons
+// }),
+
+// dropdownIndicator: (base) => ({
+//   ...base,
+//   padding: "0 0px", // Adjust chevron spacing
+//   color: "#64748b",
+// }),
+
+clearIndicator: (base) => ({
+  ...base,
+  padding: "0 0px", // Adjust X spacing
+  color: "#64748b",
+}),
+indicatorSeparator: () => ({
+  display: "none",
+}),
 
   menu: (base) => ({
     ...base,
     zIndex: 50,
     fontSize: "14px",
+  }),
+
+  menuList: (base) => ({
+    ...base,
+    paddingTop: 0,
+    paddingBottom: 0,
   }),
 
   option: (base, state) => ({
@@ -161,12 +237,11 @@ const selectStyles: StylesConfig<SelectOption, false> = {
     color: state.isSelected ? "black" : "#334155",
   }),
 };
-
 // ============================================================
 // MAIN COMPONENT
 // ============================================================
 
-const UserPermissionCoBranchPage: React.FC = () => {
+const UserPermissionBranchPage: React.FC = () => {
   const [userId, setUserId] = useState<SelectOption | null>(
     userOptions[0]
   );
@@ -305,12 +380,12 @@ const UserPermissionCoBranchPage: React.FC = () => {
 
   return (
     <div className="mt-25 flex items-center justify-center">
-      <div className="flex min-h-fit w-200 flex-col overflow-hidden border border-slate-400  bg-white text-slate-700">
+      <div className="mb-10 flex min-h-fit w-[calc(100%-32px)] max-w-[30%] min-w-100 flex-col border border-slate-400 bg-white pb-5 font-[Arial,Helvetica,sans-serif] text-[12px] text-gray-700">
 
         {/* TITLE */}
        <header className="flex h-9 shrink-0 items-center border-b border-slate-300 bg-[#a3dfc0]">
           <span className="px-5 text-[17px] font-semibold text-slate-700">
-            User Permission - Co.&amp; Branch
+            User Permission Branches
 
           </span>
         </header>
@@ -324,7 +399,7 @@ const UserPermissionCoBranchPage: React.FC = () => {
             User ID :
           </label>
 
-          <div className="w-103.75 max-w-[calc(100%-92px)]">
+          <div className="w-[50%] min-w-50 max-w-[calc(100%-92px)]">
             <Select<SelectOption, false>
               inputId="lkpUserID"
               name="lkpUserID"
@@ -344,132 +419,118 @@ const UserPermissionCoBranchPage: React.FC = () => {
         {/* PERMISSION TREE */}
         <main
           className="flex min-h-0 flex-1 flex-col px-4.75"
-          id="trlMenu"
+          id="trlBranches"
         >
           <div className="min-h-65 flex-1 overflow-auto border border-[#b8f0d0]">
             <table className="w-full table-fixed border-collapse">
-              <colgroup>
-                <col className="w-7.25" />
-                <col />
-              </colgroup>
+  <colgroup>
+    <col />
+  </colgroup>
 
-              <thead>
-                <tr className="h-7.5 bg-[#ecfaf3]">
-                  <th className="border-b border-r border-[#b8f0d0]" />
+  <thead>
+    <tr className="h-7.5 bg-[#ecfaf3]">
+      <th className="border-b border-[#b8f0d0] px-2.75 text-left text-[15px] font-normal text-slate-700">
+        Branches
+      </th>
+    </tr>
+  </thead>
 
-                  <th className="border-b border-[#b8f0d0] px-2.75 text-left text-[15px] font-normal text-slate-700">
-                    Company &amp; Branch
-                  </th>
-                </tr>
-              </thead>
+  <tbody>
+    {permissionData.map((parent) => (
+      <React.Fragment key={parent.id}>
+        {/* LEVEL 1: COMPANY */}
+        <tr className="h-7.25">
+          <td className="border-b border-[#b8f0d0] p-0">
+            <div className="flex h-7 items-center gap-2.25 px-2.5">
+              <button
+                type="button"
+                aria-label={
+                  expandedCompanies[parent.id]
+                    ? `Collapse ${parent.name}`
+                    : `Expand ${parent.name}`
+                }
+                aria-expanded={!!expandedCompanies[parent.id]}
+                onClick={() => toggleExpanded(parent.id)}
+                className="flex h-5 w-5 shrink-0 items-center justify-center text-[12px] text-slate-600"
+              >
+                {expandedCompanies[parent.id] ? (
+                  <ChevronDown color="green" />
+                ) : (
+                  <ChevronRight color="green" />
+                )}
+              </button>
 
-              <tbody>
-                {permissionData.map((parent) => (
-                  <React.Fragment key={parent.id}>
+              <input
+                id={`chk${parent.id}`}
+                name={`chk${parent.id}`}
+                type="checkbox"
+                checked={parent.checked}
+                onChange={(event) =>
+                  toggleParent(parent.id, event.target.checked)
+                }
+                className="h-4.25 w-4.25 shrink-0 cursor-pointer accent-[#69d875]"
+              />
 
-                    {/* LEVEL 1: COMPANY */}
-                    <tr className="h-7.25">
-                      <td className="border-b border-r border-[#b8f0d0]" />
+              <label
+                htmlFor={`chk${parent.id}`}
+                className="flex-1 cursor-pointer text-[15px]"
+              >
+                {parent.name}
+              </label>
+            </div>
+          </td>
+        </tr>
 
-                      <td className="border-b border-[#b8f0d0] p-0">
-                        <div className="flex h-7 items-center gap-2.25 px-2.5">
+        {/* LEVEL 2: CHILDREN */}
+        {expandedCompanies[parent.id] &&
+          parent.children?.map((child) => (
+            <tr key={child.id} className="h-7.25">
+              <td className="border-b border-[#b8f0d0] p-0">
+                <div className="ml-10.75 flex h-7 items-center gap-2.25 border-l border-[#b8f0d0] pl-1.5">
+                  <input
+                    id={`chk${child.id}`}
+                    name={`chk${child.id}`}
+                    type="checkbox"
+                    checked={child.checked}
+                    onChange={(event) =>
+                      toggleChild(
+                        parent.id,
+                        child.id,
+                        event.target.checked
+                      )
+                    }
+                    className="h-4.25 w-4.25 shrink-0 cursor-pointer accent-[#69d875]"
+                  />
 
-                          {/* Independent expand/collapse button */}
-                          <button
-                            type="button"
-                            aria-label={
-                              expandedCompanies[parent.id]
-                                ? `Collapse ${parent.name}`
-                                : `Expand ${parent.name}`
-                            }
-                            aria-expanded={
-                              !!expandedCompanies[parent.id]
-                            }
-                            onClick={() => toggleExpanded(parent.id)}
-                            className="flex h-5 w-5 shrink-0 items-center justify-center text-[12px] text-slate-600"
-                          >
-                            {expandedCompanies[parent.id] ? <ChevronDown color="green"/> : <ChevronRight color="green" />}
-                          </button>
-
-                          {/* Parent checkbox */}
-                          <input
-                            id={`chk${parent.id}`}
-                            name={`chk${parent.id}`}
-                            type="checkbox"
-                            checked={parent.checked}
-                            onChange={(event) =>
-                              toggleParent(
-                                parent.id,
-                                event.target.checked
-                              )
-                            }
-                            className="h-[17px] w-4.25 shrink-0 cursor-pointer accent-[#69d875]"
-                          />
-
-                          <label
-                            htmlFor={`chk${parent.id}`}
-                            className="flex-1 cursor-pointer text-[15px]"
-                          >
-                            {parent.name}
-                          </label>
-                        </div>
-                      </td>
-                    </tr>
-
-                    {/* LEVEL 2: CHILDREN */}
-                    {expandedCompanies[parent.id] &&
-                      parent.children?.map((child) => (
-                        <tr key={child.id} className="h-[29px]">
-                          <td className="border-b border-r border-[#b8f0d0]" />
-
-                          <td className="border-b border-[#b8f0d0] p-0">
-                            <div className="ml-[59px] flex h-[28px] items-center gap-[9px] border-l border-[#b8f0d0] pl-[6px]">
-
-                              {/* Child checkbox */}
-                              <input
-                                id={`chk${child.id}`}
-                                name={`chk${child.id}`}
-                                type="checkbox"
-                                checked={child.checked}
-                                onChange={(event) =>
-                                  toggleChild(
-                                    parent.id,
-                                    child.id,
-                                    event.target.checked
-                                  )
-                                }
-                                className="h-[17px] w-[17px] shrink-0 cursor-pointer accent-[#69d875]"
-                              />
-
-                              <label
-                                htmlFor={`chk${child.id}`}
-                                className="flex-1 cursor-pointer text-[15px]"
-                              >
-                                {child.name}
-                              </label>
-                            </div>
-                          </td>
-                        </tr>
-                      ))}
-                  </React.Fragment>
-                ))}
-              </tbody>
+                  <label
+                    htmlFor={`chk${child.id}`}
+                    className="flex-1 cursor-pointer text-[15px]"
+                  >
+                    {child.name}
+                  </label>
+                </div>
+              </td>
+            </tr>
+          ))}
+      </React.Fragment>
+    ))}
+  </tbody>
             </table>
           </div>
         </main>
 
         {/* ACTION BUTTONS */}
-        <footer className="flex min-h-[77px] shrink-0 flex-col items-center justify-center gap-1 px-4 py-2">
-          {message && (
+        <footer className="flex min-h-19.25 -mb-6 shrink-0 flex-col items-center justify-center gap-1 px-4 py-2">
+          {/* {message && (
             <p
               role="status"
               className="text-[11px] text-blue-700"
             >
               {message}
             </p>
-          )}
+          )} */}
 
-          <div className="flex flex-wrap items-center justify-center gap-[15px]">
+          <div className="flex flex-wrap items-center justify-center gap-3.75">
 
             {/* SAVE */}
             <button
@@ -477,8 +538,8 @@ const UserPermissionCoBranchPage: React.FC = () => {
               name="btnSave"
               type="button"
               onClick={handleSave}
-              className="h-[49px] w-[132px] rounded-[5px] border border-[#9aafc7] bg-gradient-to-b from-white to-[#dce5ed] text-[17px] text-green-600 shadow-sm hover:from-[#edf7ff] hover:to-[#d0e1ef] focus:outline-none focus:ring-2 focus:ring-blue-300"
-            >
+className={buttonClass}
+>
               <span className="underline underline-offset-2">
                 S
               </span>ave
@@ -490,8 +551,8 @@ const UserPermissionCoBranchPage: React.FC = () => {
               name="btnDelete"
               type="button"
               onClick={handleDelete}
-              className="h-[49px] w-[132px] rounded-[5px] border border-[#9aafc7] bg-gradient-to-b from-white to-[#dce5ed] text-[17px] text-green-600 shadow-sm hover:from-[#edf7ff] hover:to-[#d0e1ef] focus:outline-none focus:ring-2 focus:ring-blue-300"
-            >
+className={buttonClass}
+>
               <span className="underline underline-offset-2">
                 D
               </span>elete
@@ -503,8 +564,9 @@ const UserPermissionCoBranchPage: React.FC = () => {
               name="btnClear"
               type="button"
               onClick={handleClear}
-              className="h-[49px] w-[132px] rounded-[5px] border border-[#9aafc7] bg-gradient-to-b from-white to-[#dce5ed] text-[17px] text-green-600 shadow-sm hover:from-[#edf7ff] hover:to-[#d0e1ef] focus:outline-none focus:ring-2 focus:ring-blue-300"
-            >
+
+className={buttonClass}
+>
               <span className="underline underline-offset-2">
                 C
               </span>lear
@@ -517,4 +579,4 @@ const UserPermissionCoBranchPage: React.FC = () => {
   );
 };
 
-export default UserPermissionCoBranchPage;
+export default UserPermissionBranchPage;
