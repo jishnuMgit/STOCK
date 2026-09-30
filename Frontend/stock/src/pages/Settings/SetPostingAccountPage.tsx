@@ -379,109 +379,108 @@ const SetPostingAccountPage: React.FC = () => {
   // RENDER
   // ----------------------------------------------------------
 
-  return (
-    <div className="flex min-h-screen items-center justify-center bg-white p-5">
-      <div className="w-[30%] min-w-[750px] max-w-[800px] bg-white p-[3px] font-sans text-[#263449]">
-        <div className="w-full border border-[#d5d5d5]  bg-white">
+  
+return (
+  <div className="flex min-h-screen items-center justify-center bg-white p-4 sm:p-5">
+    <div className="w-full max-w-200 bg-white p-0.75 font-sans text-[#263449]">
+      <div className="w-full border border-[#d5d5d5] bg-white">
 
-          {/* HEADER */}
-          <header className="flex h-9 shrink-0 items-center border-b border-slate-300 bg-[#a3dfc0]">
-          <span className="px-5 text-[17px] font-semibold text-slate-700">
+        {/* HEADER */}
+        <header className="flex h-9 shrink-0 items-center border-b border-slate-300 bg-[#a3dfc0]">
+          <span className="px-5 text-[1.0625rem] font-semibold text-slate-700">
             Set Posting Account
-
           </span>
         </header>
 
-          {/* FORM BODY */}
-          <div className="pr-5 -ml-5 pb-[15px] pt-[14px]">
+        {/* FORM BODY */}
+        <div className="px-3 pb-3.75 pt-3.5 sm:px-5">
 
-            {/* BRANCH */}
-            <div className="mb-[12px] flex items-center">
-              <label
-                htmlFor="lkpBranch"
-                className="w-[185px] shrink-0 text-right text-[11px] font-medium"
-              >
-                Branch :
-              </label>
+          {/* BRANCH */}
+          <div className="mb-3 flex flex-wrap items-center gap-x-2 gap-y-1">
+            <label
+              htmlFor="lkpBranch"
+              className="w-full shrink-0 text-left text-[0.6875rem] font-medium sm:w-46.25 sm:text-right"
+            >
+              Branch :
+            </label>
 
-              <div className="ml-[8px] w-[200px]">
-                <Select<SelectOption, false>
-                  inputId="lkpBranch"
-                  name="lkpBranch"
-                  options={branchOptions}
-                  value={getSelectedOption(
-                    branchOptions,
-                    values.branch,
-                  )}
-                  onChange={(selected) =>
-                    handleChange("branch", selected?.value ?? "")
-                  }
-                  styles={selectStyles}
-                  placeholder=""
-                  isClearable
-                  isSearchable
-                />
-              </div>
+            <div className="w-full min-w-0 sm:w-50">
+              <Select<SelectOption, false>
+                inputId="lkpBranch"
+                name="lkpBranch"
+                options={branchOptions}
+                value={getSelectedOption(branchOptions, values.branch)}
+                onChange={(selected) =>
+                  handleChange("branch", selected?.value ?? "")
+                }
+                styles={selectStyles}
+                placeholder=""
+                isClearable
+                isSearchable
+              />
+            </div>
+          </div>
+
+          {/* CASH SUPPLIER ACCOUNT */}
+          <div className="mb-1.75 grid grid-cols-1 items-center gap-x-2 gap-y-1 sm:grid-cols-[11.5625rem_minmax(0,0.7fr)_minmax(0,1fr)]">
+            <label
+              htmlFor="lkpCashSupplierAccountID"
+              className="text-left text-[0.6875rem] font-medium sm:whitespace-nowrap sm:text-right"
+            >
+              Cash Supplier Account :
+            </label>
+
+            {/* ACCOUNT ID */}
+            <div className="w-full min-w-0">
+              <Select<SelectOption, false>
+                inputId="lkpCashSupplierAccountID"
+                name="lkpCashSupplierAccountID"
+                options={getIdOptions("cashSupplier")}
+                value={getSelectedOption(
+                  getIdOptions("cashSupplier"),
+                  values.cashSupplierId,
+                )}
+                onChange={(selected) =>
+                  handleAccountIdChange("cashSupplier", selected)
+                }
+                styles={selectStyles}
+                placeholder=""
+                isClearable
+                isSearchable
+              />
             </div>
 
-            {/* CASH SUPPLIER ACCOUNT */}
-            {/* CASH CUSTOMER ACCOUNT */}
-<div className="mb-[7px] grid grid-cols-[185px_minmax(120px,10px)_minmax(200px,1fr)] items-center gap-x-[8px]">
-  <label
-    htmlFor="lkpCashCustomerAccountID"
-    className="whitespace-nowrap text-right text-[11px] font-medium"
-  >
-    Cash Customer Account :
-  </label>
+            {/* ACCOUNT NAME */}
+            <div className="w-full min-w-0">
+              <Select<SelectOption, false>
+                inputId="lkpCashSupplierAccountName"
+                name="lkpCashSupplierAccountName"
+                options={getNameOptions("cashSupplier")}
+                value={getSelectedOption(
+                  getNameOptions("cashSupplier"),
+                  values.cashSupplierName,
+                )}
+                onChange={(selected) =>
+                  handleAccountNameChange("cashSupplier", selected)
+                }
+                styles={selectStyles}
+                placeholder=""
+                isClearable
+                isSearchable
+              />
+            </div>
+          </div>
 
-  {/* ACCOUNT ID - 70% WIDTH */}
- 
-    <Select<SelectOption, false>
-      inputId="lkpCashCustomerAccountID"
-      name="lkpCashCustomerAccountID"
-      options={getIdOptions("cashCustomer")}
-      value={getSelectedOption(
-        getIdOptions("cashCustomer"),
-        values.cashCustomerId,
-      )}
-      onChange={(selected) =>
-        handleAccountIdChange("cashCustomer", selected)
-      }
-      styles={selectStyles}
-      placeholder=""
-      isClearable
-      isSearchable
-    />
-  
+          {/* CASH CUSTOMER ACCOUNT */}
+          <div className="mb-1.75 grid grid-cols-1 items-center gap-x-2 gap-y-1 sm:grid-cols-[11.5625rem_minmax(0,0.7fr)_minmax(0,1fr)]">
+            <label
+              htmlFor="lkpCashCustomerAccountID"
+              className="text-left text-[0.6875rem] font-medium sm:whitespace-nowrap sm:text-right"
+            >
+              Cash Customer Account :
+            </label>
 
-  {/* ACCOUNT NAME */}
-  <Select<SelectOption, false>
-    inputId="lkpCashCustomerAccountName"
-    name="lkpCashCustomerAccountName"
-    options={getNameOptions("cashCustomer")}
-    value={getSelectedOption(
-      getNameOptions("cashCustomer"),
-      values.cashCustomerName,
-    )}
-    onChange={(selected) =>
-      handleAccountNameChange("cashCustomer", selected)
-    }
-    styles={selectStyles}
-    placeholder=""
-    isClearable
-    isSearchable
-  />
-</div>
-
-            {/* CASH CUSTOMER ACCOUNT */}
-            <div className="mb-[7px] grid grid-cols-[185px_minmax(120px,10px)_minmax(200px,1fr)] items-center gap-x-[8px]">
-              <label
-                htmlFor="lkpCashCustomerAccountID"
-                className="whitespace-nowrap text-right text-[11px] font-medium"
-              >
-                Cash Customer Account :
-              </label>
-
+            <div className="w-full min-w-0">
               <Select<SelectOption, false>
                 inputId="lkpCashCustomerAccountID"
                 name="lkpCashCustomerAccountID"
@@ -498,7 +497,9 @@ const SetPostingAccountPage: React.FC = () => {
                 isClearable
                 isSearchable
               />
+            </div>
 
+            <div className="w-full min-w-0">
               <Select<SelectOption, false>
                 inputId="lkpCashCustomerAccountName"
                 name="lkpCashCustomerAccountName"
@@ -516,16 +517,18 @@ const SetPostingAccountPage: React.FC = () => {
                 isSearchable
               />
             </div>
+          </div>
 
-            {/* STOCK ACCOUNT */}
-            <div className="mb-[7px] grid grid-cols-[185px_minmax(120px,10px)_minmax(200px,1fr)] items-center gap-x-[8px]">
-              <label
-                htmlFor="lkpStockAccountID"
-                className="whitespace-nowrap text-right text-[11px] font-medium"
-              >
-                Stock Account :
-              </label>
+          {/* STOCK ACCOUNT */}
+          <div className="mb-1.75 grid grid-cols-1 items-center gap-x-2 gap-y-1 sm:grid-cols-[11.5625rem_minmax(0,0.7fr)_minmax(0,1fr)]">
+            <label
+              htmlFor="lkpStockAccountID"
+              className="text-left text-[0.6875rem] font-medium sm:whitespace-nowrap sm:text-right"
+            >
+              Stock Account :
+            </label>
 
+            <div className="w-full min-w-0">
               <Select<SelectOption, false>
                 inputId="lkpStockAccountID"
                 name="lkpStockAccountID"
@@ -542,7 +545,9 @@ const SetPostingAccountPage: React.FC = () => {
                 isClearable
                 isSearchable
               />
+            </div>
 
+            <div className="w-full min-w-0">
               <Select<SelectOption, false>
                 inputId="lkpStockAccountName"
                 name="lkpStockAccountName"
@@ -560,16 +565,18 @@ const SetPostingAccountPage: React.FC = () => {
                 isSearchable
               />
             </div>
+          </div>
 
-            {/* SALES ACCOUNT */}
-            <div className="mb-[7px] grid grid-cols-[185px_minmax(120px,10px)_minmax(200px,1fr)] items-center gap-x-[8px]">
-              <label
-                htmlFor="lkpSalesAccountID"
-                className="whitespace-nowrap text-right text-[11px] font-medium"
-              >
-                Sales Account :
-              </label>
+          {/* SALES ACCOUNT */}
+          <div className="mb-1.75 grid grid-cols-1 items-center gap-x-2 gap-y-1 sm:grid-cols-[11.5625rem_minmax(0,0.7fr)_minmax(0,1fr)]">
+            <label
+              htmlFor="lkpSalesAccountID"
+              className="text-left text-[0.6875rem] font-medium sm:whitespace-nowrap sm:text-right"
+            >
+              Sales Account :
+            </label>
 
+            <div className="w-full min-w-0">
               <Select<SelectOption, false>
                 inputId="lkpSalesAccountID"
                 name="lkpSalesAccountID"
@@ -586,7 +593,9 @@ const SetPostingAccountPage: React.FC = () => {
                 isClearable
                 isSearchable
               />
+            </div>
 
+            <div className="w-full min-w-0">
               <Select<SelectOption, false>
                 inputId="lkpSalesAccountName"
                 name="lkpSalesAccountName"
@@ -604,16 +613,18 @@ const SetPostingAccountPage: React.FC = () => {
                 isSearchable
               />
             </div>
+          </div>
 
-            {/* SALES RETURN ACCOUNT */}
-            <div className="mb-[7px] grid grid-cols-[185px_minmax(120px,10px)_minmax(200px,1fr)] items-center gap-x-[8px]">
-              <label
-                htmlFor="lkpSalesReturnAccountID"
-                className="whitespace-nowrap text-right text-[11px] font-medium"
-              >
-                Sales Return Account :
-              </label>
+          {/* SALES RETURN ACCOUNT */}
+          <div className="mb-1.75 grid grid-cols-1 items-center gap-x-2 gap-y-1 sm:grid-cols-[11.5625rem_minmax(0,0.7fr)_minmax(0,1fr)]">
+            <label
+              htmlFor="lkpSalesReturnAccountID"
+              className="text-left text-[0.6875rem] font-medium sm:whitespace-nowrap sm:text-right"
+            >
+              Sales Return Account :
+            </label>
 
+            <div className="w-full min-w-0">
               <Select<SelectOption, false>
                 inputId="lkpSalesReturnAccountID"
                 name="lkpSalesReturnAccountID"
@@ -630,7 +641,9 @@ const SetPostingAccountPage: React.FC = () => {
                 isClearable
                 isSearchable
               />
+            </div>
 
+            <div className="w-full min-w-0">
               <Select<SelectOption, false>
                 inputId="lkpSalesReturnAccountName"
                 name="lkpSalesReturnAccountName"
@@ -648,16 +661,18 @@ const SetPostingAccountPage: React.FC = () => {
                 isSearchable
               />
             </div>
+          </div>
 
-            {/* COST OF SALES ACCOUNT */}
-            <div className="mb-[7px] grid grid-cols-[185px_minmax(120px,10px)_minmax(200px,1fr)] items-center gap-x-[8px]">
-              <label
-                htmlFor="lkpCostOfSalesAccountID"
-                className="whitespace-nowrap text-right text-[11px] font-medium"
-              >
-                Cost Of Sales Account :
-              </label>
+          {/* COST OF SALES ACCOUNT */}
+          <div className="mb-1.75 grid grid-cols-1 items-center gap-x-2 gap-y-1 sm:grid-cols-[11.5625rem_minmax(0,0.7fr)_minmax(0,1fr)]">
+            <label
+              htmlFor="lkpCostOfSalesAccountID"
+              className="text-left text-[0.6875rem] font-medium sm:whitespace-nowrap sm:text-right"
+            >
+              Cost Of Sales Account :
+            </label>
 
+            <div className="w-full min-w-0">
               <Select<SelectOption, false>
                 inputId="lkpCostOfSalesAccountID"
                 name="lkpCostOfSalesAccountID"
@@ -674,7 +689,9 @@ const SetPostingAccountPage: React.FC = () => {
                 isClearable
                 isSearchable
               />
+            </div>
 
+            <div className="w-full min-w-0">
               <Select<SelectOption, false>
                 inputId="lkpCostOfSalesAccountName"
                 name="lkpCostOfSalesAccountName"
@@ -692,16 +709,18 @@ const SetPostingAccountPage: React.FC = () => {
                 isSearchable
               />
             </div>
+          </div>
 
-            {/* COST OF SALES RETURN ACCOUNT */}
-            <div className="mb-[7px] grid grid-cols-[185px_minmax(120px,10px)_minmax(200px,1fr)] items-center gap-x-[8px]">
-              <label
-                htmlFor="lkpCostOfSalesReturnAccountID"
-                className="whitespace-nowrap text-right text-[11px] font-medium"
-              >
-                Cost Of Sales Return Account :
-              </label>
+          {/* COST OF SALES RETURN ACCOUNT */}
+          <div className="mb-1.75 grid grid-cols-1 items-center gap-x-2 gap-y-1 sm:grid-cols-[11.5625rem_minmax(0,0.7fr)_minmax(0,1fr)]">
+            <label
+              htmlFor="lkpCostOfSalesReturnAccountID"
+              className="text-left text-[0.6875rem] font-medium sm:whitespace-nowrap sm:text-right"
+            >
+              Cost Of Sales Return Account :
+            </label>
 
+            <div className="w-full min-w-0">
               <Select<SelectOption, false>
                 inputId="lkpCostOfSalesReturnAccountID"
                 name="lkpCostOfSalesReturnAccountID"
@@ -718,7 +737,9 @@ const SetPostingAccountPage: React.FC = () => {
                 isClearable
                 isSearchable
               />
+            </div>
 
+            <div className="w-full min-w-0">
               <Select<SelectOption, false>
                 inputId="lkpCostOfSalesReturnAccountName"
                 name="lkpCostOfSalesReturnAccountName"
@@ -736,16 +757,18 @@ const SetPostingAccountPage: React.FC = () => {
                 isSearchable
               />
             </div>
+          </div>
 
-            {/* STOCK ADJUSTMENT ACCOUNT */}
-            <div className="mb-[7px] grid grid-cols-[185px_minmax(120px,10px)_minmax(200px,1fr)] items-center gap-x-[8px]">
-              <label
-                htmlFor="lkpStockAdjustmentAccountID"
-                className="whitespace-nowrap text-right text-[11px] font-medium"
-              >
-                Stock Adjustment Account :
-              </label>
+          {/* STOCK ADJUSTMENT ACCOUNT */}
+          <div className="mb-1.75 grid grid-cols-1 items-center gap-x-2 gap-y-1 sm:grid-cols-[11.5625rem_minmax(0,0.7fr)_minmax(0,1fr)]">
+            <label
+              htmlFor="lkpStockAdjustmentAccountID"
+              className="text-left text-[0.6875rem] font-medium sm:whitespace-nowrap sm:text-right"
+            >
+              Stock Adjustment Account :
+            </label>
 
+            <div className="w-full min-w-0">
               <Select<SelectOption, false>
                 inputId="lkpStockAdjustmentAccountID"
                 name="lkpStockAdjustmentAccountID"
@@ -762,7 +785,9 @@ const SetPostingAccountPage: React.FC = () => {
                 isClearable
                 isSearchable
               />
+            </div>
 
+            <div className="w-full min-w-0">
               <Select<SelectOption, false>
                 inputId="lkpStockAdjustmentAccountName"
                 name="lkpStockAdjustmentAccountName"
@@ -780,16 +805,18 @@ const SetPostingAccountPage: React.FC = () => {
                 isSearchable
               />
             </div>
+          </div>
 
-            {/* INPUT VAT ACCOUNT */}
-            <div className="mb-[7px] grid grid-cols-[185px_minmax(120px,10px)_minmax(200px,1fr)] items-center gap-x-[8px]">
-              <label
-                htmlFor="lkpInputVATAccountID"
-                className="whitespace-nowrap text-right text-[11px] font-medium"
-              >
-                Input VAT Account :
-              </label>
+          {/* INPUT VAT ACCOUNT */}
+          <div className="mb-1.75 grid grid-cols-1 items-center gap-x-2 gap-y-1 sm:grid-cols-[11.5625rem_minmax(0,0.7fr)_minmax(0,1fr)]">
+            <label
+              htmlFor="lkpInputVATAccountID"
+              className="text-left text-[0.6875rem] font-medium sm:whitespace-nowrap sm:text-right"
+            >
+              Input VAT Account :
+            </label>
 
+            <div className="w-full min-w-0">
               <Select<SelectOption, false>
                 inputId="lkpInputVATAccountID"
                 name="lkpInputVATAccountID"
@@ -806,7 +833,9 @@ const SetPostingAccountPage: React.FC = () => {
                 isClearable
                 isSearchable
               />
+            </div>
 
+            <div className="w-full min-w-0">
               <Select<SelectOption, false>
                 inputId="lkpInputVATAccountName"
                 name="lkpInputVATAccountName"
@@ -824,16 +853,18 @@ const SetPostingAccountPage: React.FC = () => {
                 isSearchable
               />
             </div>
+          </div>
 
-            {/* OUTPUT VAT ACCOUNT */}
-            <div className="mb-[7px] grid grid-cols-[185px_minmax(120px,10px)_minmax(200px,1fr)] items-center gap-x-[8px]">
-              <label
-                htmlFor="lkpOutputVATAccountID"
-                className="whitespace-nowrap text-right text-[11px] font-medium"
-              >
-                Output VAT Account :
-              </label>
+          {/* OUTPUT VAT ACCOUNT */}
+          <div className="mb-1.75 grid grid-cols-1 items-center gap-x-2 gap-y-1 sm:grid-cols-[11.5625rem_minmax(0,0.7fr)_minmax(0,1fr)]">
+            <label
+              htmlFor="lkpOutputVATAccountID"
+              className="text-left text-[0.6875rem] font-medium sm:whitespace-nowrap sm:text-right"
+            >
+              Output VAT Account :
+            </label>
 
+            <div className="w-full min-w-0">
               <Select<SelectOption, false>
                 inputId="lkpOutputVATAccountID"
                 name="lkpOutputVATAccountID"
@@ -850,7 +881,9 @@ const SetPostingAccountPage: React.FC = () => {
                 isClearable
                 isSearchable
               />
+            </div>
 
+            <div className="w-full min-w-0">
               <Select<SelectOption, false>
                 inputId="lkpOutputVATAccountName"
                 name="lkpOutputVATAccountName"
@@ -868,16 +901,18 @@ const SetPostingAccountPage: React.FC = () => {
                 isSearchable
               />
             </div>
+          </div>
 
-            {/* ROUND OFF ACCOUNT */}
-            <div className="mb-[7px] grid grid-cols-[185px_minmax(120px,10px)_minmax(200px,1fr)] items-center gap-x-[8px]">
-              <label
-                htmlFor="lkpRoundOffAccountID"
-                className="whitespace-nowrap text-right text-[11px] font-medium"
-              >
-                Round Off Account :
-              </label>
+          {/* ROUND OFF ACCOUNT */}
+          <div className="mb-1.75 grid grid-cols-1 items-center gap-x-2 gap-y-1 sm:grid-cols-[11.5625rem_minmax(0,0.7fr)_minmax(0,1fr)]">
+            <label
+              htmlFor="lkpRoundOffAccountID"
+              className="text-left text-[0.6875rem] font-medium sm:whitespace-nowrap sm:text-right"
+            >
+              Round Off Account :
+            </label>
 
+            <div className="w-full min-w-0">
               <Select<SelectOption, false>
                 inputId="lkpRoundOffAccountID"
                 name="lkpRoundOffAccountID"
@@ -894,7 +929,9 @@ const SetPostingAccountPage: React.FC = () => {
                 isClearable
                 isSearchable
               />
+            </div>
 
+            <div className="w-full min-w-0">
               <Select<SelectOption, false>
                 inputId="lkpRoundOffAccountName"
                 name="lkpRoundOffAccountName"
@@ -912,41 +949,36 @@ const SetPostingAccountPage: React.FC = () => {
                 isSearchable
               />
             </div>
+          </div>
 
-            {/* BUTTONS */}
-           <div className="flex min-h-[74px] -mb-6 items-start justify-center gap-[12px] pt-[8px]">
-          <button
+          {/* BUTTONS */}
+          <div className="flex min-h-18.5 -mb-6 items-start justify-center gap-3 pt-2">
+            <button
               id="btnSave"
               name="btnSave"
               type="button"
               onClick={handleSave}
-className={buttonClass}
->
-              <span className="underline underline-offset-2">
-                S
-              </span>ave
+              className={buttonClass}
+            >
+              <span className="underline underline-offset-2">S</span>ave
             </button>
 
-            {/* CLEAR */}
             <button
               id="btnClear"
               name="btnClear"
               type="button"
               onClick={handleClear}
-
-className={buttonClass}
->
-              <span className="underline underline-offset-2">
-                C
-              </span>lear
+              className={buttonClass}
+            >
+              <span className="underline underline-offset-2">C</span>lear
             </button>
-        </div>
-
           </div>
+
         </div>
       </div>
     </div>
-  );
+  </div>
+);
 };
 
 export default SetPostingAccountPage;
