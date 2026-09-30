@@ -100,6 +100,7 @@ mnuBeginningStock:"/Purchase/Transaction/BeginningStockPage",
 
   mnuSetCompanyInfo: "/Settings/SetCompanyInfo",
 mnuFinSetting: "/Settings/ChartOfAccountSetting",
+mnuSetStockPostingAccount:"/Settings/SetPostingAccount",
 
   /* =========================================================
      SECURITY
