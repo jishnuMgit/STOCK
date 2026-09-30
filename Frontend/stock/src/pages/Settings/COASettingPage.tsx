@@ -550,7 +550,7 @@ const COASettings: React.FC = () => {
   // ==========================================================
 
   const columns =
-    "18px 34px 266px 120px minmax(180px, 1fr) 98px";
+    "18px 34px 266px 120px minmax(180px, 1fr) 58px";
 
   const headerCellClass =
     "flex h-[30px] min-w-0 items-center border-r border-[#c8eadb] px-[7px] text-[12px] font-medium text-slate-600";
@@ -586,7 +586,7 @@ const COASettings: React.FC = () => {
               text-slate-700
             "
           >
-ChartOf Account Settings
+Chart Of Account Settings
           </span>
 
         </div>
@@ -621,7 +621,7 @@ ChartOf Account Settings
               </div>
 
               <div className="flex h-[30px] min-w-0 items-center px-[5px] text-[12px] font-medium text-slate-600">
-                Group/Head
+                G/P/H
               </div>
             </div>
 
@@ -875,8 +875,8 @@ ChartOf Account Settings
             "
           >
             <span className="underline underline-offset-[3px]">
-              Save
-            </span>
+              S
+            </span>ave
           </button>
 
           <button
@@ -893,8 +893,8 @@ ChartOf Account Settings
             "
           >
             <span className="underline underline-offset-[3px]">
-              Clear
-            </span>
+              C
+            </span>lear
           </button>
         </div>
       </div>
