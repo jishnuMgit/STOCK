@@ -81,11 +81,11 @@ const CustomerList: React.FC = () => {
   // ---------------- RENDER ----------------
 
   return (
-    <div className="mx-auto flex min-h-screen w-[1500px] items-start justify-center bg-white px-4 pt-4">
+    <div className="mx-auto flex min-h-screen w-375 items-start justify-center bg-white px-4 pt-4">
       <div className="w-full border border-slate-300 bg-white shadow-sm">
         {/* TITLE */}
         <div className="flex h-7.5 w-full items-center border-b border-slate-300 bg-[#a5e0c3]">
-          <h1 className="ml-[10px] text-[17px] font-semibold text-slate-700">
+          <h1 className="ml-2.5 text-[17px] font-semibold text-slate-700">
             Customer List
           </h1>
         </div>
@@ -109,7 +109,7 @@ const CustomerList: React.FC = () => {
               </div>
             </div>
 
-            <div className="-ml-[55px] flex items-center pl-2">
+            <div className="-ml-13.75 flex items-center pl-2">
               <button
                 id="btnAdd"
                 type="button"
