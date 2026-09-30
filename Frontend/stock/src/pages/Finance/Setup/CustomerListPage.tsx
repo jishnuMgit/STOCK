@@ -14,7 +14,7 @@ const TD =
 
 const COLUMNS = [
   { label: "Customer ID", width: "w-[7%]", align: "text-left" },
-  { label: "Customer Name", width: "w-auto", align: "text-left" },
+  { label: "Customer Name", width: "w-[40%]", align: "text-left" },
   { label: "Division", width: "w-[5%]", align: "text-center" },
   { label: "Branch", width: "w-[10%]", align: "text-left" },
   { label: "GL. Account ID", width: "w-[7%]", align: "text-left" },
@@ -104,7 +104,7 @@ const CustomerList: React.FC = () => {
                   value={search}
                   onChange={(e) => setSearch(e.target.value)}
                   placeholder="Search by Customer ID, Customer Name, GL Account ID, GL Account Name"
-                  className="h-8.5 w-full rounded-[5px] border border-slate-400 bg-white pl-10 pr-4 text-[12px] text-slate-700 outline-none placeholder:text-slate-400 focus:border-[#8daac5] focus:ring-0"
+                  className="h-8.5 w-[94.5%] rounded-[5px] border border-slate-400 bg-white pl-10 pr-4 text-[12px] text-slate-700 outline-none placeholder:text-slate-400 focus:border-[#8daac5] focus:ring-0"
                 />
               </div>
             </div>

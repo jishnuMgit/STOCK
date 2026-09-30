@@ -474,43 +474,25 @@ const CustomerPage: React.FC<CustomerPageProps> = ({
 
   return (
     <div ref={formRef} onKeyDown={handleEnterAsTab} className="w-full bg-white">
-      {/* DELETE BANNER */}
-      {isDelete && (
-        <div className="flex items-center justify-between gap-3 border-b border-red-200 bg-red-50 px-3 py-2 text-[12px] text-red-700">
-          <span>
-            You are about to delete this customer. Review the details, then
-            click Delete to confirm.
-          </span>
-          <button
-            ref={cancelRef}
-            type="button"
-            onClick={onClose}
-            className="shrink-0 rounded-[3px] border border-slate-400 bg-white px-3 py-1 text-slate-700 hover:bg-slate-50"
-          >
-            Cancel
-          </button>
-        </div>
-      )}
-
+      <CustomerHeader
+        txtCustomerID={txtCustomerID}
+        setTxtCustomerID={setTxtCustomerID}
+        optNewCustomerID={optNewCustomerID}
+        setOptNewCustomerID={setOptNewCustomerID}
+        lkpGAccountID={lkpGAccountID}
+        setlkpGAccountID={setLkpGAccountID}
+        lkpGAccountName={lkpGAccountName}
+        setlkpGAccountName={setLkpGAccountName}
+        lkpHaveDivision={lkpHaveDivision}
+        setLkpHaveDivision={setLkpHaveDivision}
+        lkpBusinessType={lkpBusinessType}
+        setLkpBusinessType={setLkpBusinessType}
+        onClose={onClose}
+        parentAccounts={parentAccounts}
+      />
       {/* Header + middle are locked in delete mode */}
       <fieldset disabled={isDelete} className="m-0 min-w-0 border-0 p-0">
         {/* HEADER */}
-        <CustomerHeader
-          txtCustomerID={txtCustomerID}
-          setTxtCustomerID={setTxtCustomerID}
-          optNewCustomerID={optNewCustomerID}
-          setOptNewCustomerID={setOptNewCustomerID}
-          lkpGAccountID={lkpGAccountID}
-          setlkpGAccountID={setLkpGAccountID}
-          lkpGAccountName={lkpGAccountName}
-          setlkpGAccountName={setLkpGAccountName}
-          lkpHaveDivision={lkpHaveDivision}
-          setLkpHaveDivision={setLkpHaveDivision}
-          lkpBusinessType={lkpBusinessType}
-          setLkpBusinessType={setLkpBusinessType}
-          onClose={onClose}
-          parentAccounts={parentAccounts}
-        />
 
         {/* MIDDLE */}
         <CustomerMiddle
