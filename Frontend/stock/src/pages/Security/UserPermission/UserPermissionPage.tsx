@@ -904,7 +904,7 @@ const UserPermission: React.FC = () => {
 
   return (
     <div className="flex justify-center" onKeyDown={handleEnterAsTab}>
-      <main className="mb-10 flex min-h-fit w-[calc(100%-32px)] max-w-[1200px] flex-col border border-slate-400 bg-white pb-5 font-[Arial,Helvetica,sans-serif] text-[12px] text-gray-700">
+      <main className="mb-10 flex min-h-fit w-[calc(100%-32px)] max-w-[1000px] flex-col border border-slate-400 bg-white pb-5 font-[Arial,Helvetica,sans-serif] text-[12px] text-gray-700">
         {/* Title */}
         <div className="flex h-[36px] shrink-0 items-center border-b border-slate-300 bg-[#a3dfc0]">
           <span className="px-5 text-[17px] font-semibold text-slate-700">
@@ -951,7 +951,7 @@ const UserPermission: React.FC = () => {
         id="trlMenu"
           role="grid"
           aria-label="Menu permissions"
-          className="ml-[17px] w-[80%] flex max-h-[65vh] min-h-[200px] flex-col overflow-auto border border-[#C1F2D7]"
+          className="ml-[17px] w-[95%] flex max-h-[65vh] min-h-[200px] flex-col overflow-auto border border-[#C1F2D7]"
         >
           <div
             role="row"
