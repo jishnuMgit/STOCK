@@ -14,7 +14,7 @@ const selectStyles = {
     borderRadius: 0,
     backgroundColor: "transparent",
     boxShadow: "none",
-    fontSize: "12px",
+    fontSize: "14px",
     padding: 0,
     margin: 0,
     cursor: "default",
@@ -54,7 +54,7 @@ const selectStyles = {
     margin: 0,
     padding: 0,
     color: "#344054",
-    fontSize: "12px",
+    fontSize: "14px",
     lineHeight: "27px",
     maxWidth: "100%",
     overflow: "hidden",
@@ -71,7 +71,7 @@ const selectStyles = {
     margin: 0,
     padding: 0,
     color: "#808080",
-    fontSize: "12px",
+    fontSize: "14px",
     lineHeight: "27px",
     overflow: "hidden",
     textOverflow: "ellipsis",
@@ -87,7 +87,7 @@ const selectStyles = {
     margin: 0,
     padding: 0,
     color: "#344054",
-    fontSize: "12px",
+    fontSize: "14px",
     lineHeight: "27px",
     minWidth: 0,
   }),
@@ -155,7 +155,7 @@ const selectStyles = {
     border: "1px solid #aaa",
     boxShadow: "2px 2px 5px rgba(0, 0, 0, 0.18)",
     zIndex: 999999,
-    fontSize: "12px",
+    fontSize: "14px",
     overflow: "hidden",
     width: "100%",
     minWidth: 0,
@@ -199,7 +199,7 @@ const selectStyles = {
     padding: "0 6px",
     display: "flex",
     alignItems: "center",
-    fontSize: "12px",
+    fontSize: "14px",
     lineHeight: "27px",
     cursor: "default",
     backgroundColor: state.isFocused ? "#EEFBF4" : "#ffffff",
@@ -328,7 +328,7 @@ const accountDropdownStyles = {
       overflowY: "auto",
       boxSizing: "border-box",
 
-      "&::-webkit-scrollbar": { width: "12px" },
+      "&::-webkit-scrollbar": { width: "14px" },
       "&::-webkit-scrollbar-track": { background: "#eeeeee" },
       "&::-webkit-scrollbar-thumb": {
         background: "#bdbdbd",
@@ -470,7 +470,7 @@ const BranchMenuList = (props: any) => {
           padding: "6px 10px",
           backgroundColor: "#f5f7fa",
           borderBottom: "1px solid #d7dee7",
-          fontSize: "11px",
+          fontSize: "14px",
           fontWeight: 600,
           color: "#555",
           position: "sticky",
@@ -498,7 +498,7 @@ const BranchOption = (props: any) => {
           gridTemplateColumns: "1fr 40px",
           width: "100%",
           alignItems: "center",
-          fontSize: "12px",
+          fontSize: "14px",
         }}
       >
         <div>{data.label}</div>
@@ -521,7 +521,7 @@ const TypeMenuList = (props: any) => {
           padding: "6px 10px",
           backgroundColor: "#f5f7fa",
           borderBottom: "1px solid #d7dee7",
-          fontSize: "11px",
+          fontSize: "14px",
           fontWeight: 600,
           color: "#555",
           position: "sticky",
@@ -549,7 +549,7 @@ const TypeOption = (props: any) => {
           gridTemplateColumns: TYPE_GRID,
           width: "100%",
           alignItems: "center",
-          fontSize: "12px",
+          fontSize: "14px",
         }}
       >
         <div>{data.label}</div>
@@ -570,7 +570,7 @@ const BankCashMenuList = (props: any) => {
           padding: "6px 10px",
           backgroundColor: "#f5f7fa",
           borderBottom: "1px solid #d7dee7",
-          fontSize: "11px",
+          fontSize: "14px",
           fontWeight: 600,
           color: "#555",
           position: "sticky",
@@ -598,7 +598,7 @@ const BankCashOption = (props: any) => {
           gridTemplateColumns: "1fr 60px",
           width: "100%",
           alignItems: "center",
-          fontSize: "12px",
+          fontSize: "14px",
         }}
       >
         <div>{data.label}</div>

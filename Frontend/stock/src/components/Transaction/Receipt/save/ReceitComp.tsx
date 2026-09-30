@@ -632,7 +632,7 @@ export const ReceiptForm: React.FC<ReceiptFormProps> = ({
   };
 
   const inputClass =
-    "h-7 rounded border border-[#d7dee7] bg-white px-2 text-xs text-slate-700 outline-none focus:border-[#9fdfbc] focus:ring-1 focus:ring-[#9fdfbc]";
+    "h-[30px] rounded border border-[#d7dee7] bg-white px-2 text-[14px] text-slate-700 outline-none focus:border-[#9fdfbc] focus:ring-1 focus:ring-[#9fdfbc]";
 
   /*
    * =========================================================
@@ -642,8 +642,8 @@ export const ReceiptForm: React.FC<ReceiptFormProps> = ({
   const selectStylesLocal = {
     control: (base: any) => ({
       ...base,
-      minHeight: "28px",
-      height: "28px",
+      minHeight: "30px",
+      height: "30px",
       borderColor: "#d7dee7",
       borderRadius: "4px",
       boxShadow: "none",
@@ -657,7 +657,7 @@ export const ReceiptForm: React.FC<ReceiptFormProps> = ({
 
     valueContainer: (base: any) => ({
       ...base,
-      height: "28px",
+      height: "30px",
       padding: "0 8px",
     }),
 
@@ -683,7 +683,7 @@ export const ReceiptForm: React.FC<ReceiptFormProps> = ({
 
     indicatorsContainer: (base: any) => ({
       ...base,
-      height: "28px",
+      height: "30px",
     }),
 
     dropdownIndicator: (base: any) => ({
@@ -854,7 +854,7 @@ export const ReceiptForm: React.FC<ReceiptFormProps> = ({
         {/* ================= BRANCH ================= */}
 
         <div className="flex items-center gap-2">
-          <label className="w-22.5 text-right text-xs whitespace-nowrap">
+          <label className="w-22.5 text-right text-[14px] whitespace-nowrap">
             Branch :
           </label>
 
@@ -948,7 +948,7 @@ export const ReceiptForm: React.FC<ReceiptFormProps> = ({
         {/* ================= TYPE ================= */}
 
         <div className="flex items-center gap-2">
-          <label className="text-right text-xs whitespace-nowrap">Type :</label>
+          <label className="text-right text-[14px] whitespace-nowrap">Type :</label>
 
           <Select<SelectOption, false>
             ref={typeRef}
@@ -985,8 +985,8 @@ export const ReceiptForm: React.FC<ReceiptFormProps> = ({
               control: (base: any) => ({
                 ...base,
 
-                minHeight: "28px",
-                height: "28px",
+                minHeight: "30px",
+                height: "30px",
 
                 width: "80px",
                 minWidth: "80px",
@@ -1051,7 +1051,7 @@ export const ReceiptForm: React.FC<ReceiptFormProps> = ({
         {/* ================= RECEIPT NO ================= */}
 
         <div className="flex items-center gap-2">
-          <label className="text-right text-xs whitespace-nowrap">
+          <label className="text-right text-[14px] whitespace-nowrap">
             Receipt No. :
           </label>
 
@@ -1123,7 +1123,7 @@ export const ReceiptForm: React.FC<ReceiptFormProps> = ({
 
         <div className="flex items-center gap-2">
           <label
-            className="w-22.5 text-right text-xs whitespace-nowrap"
+            className="w-22.5 text-right text-[14px] whitespace-nowrap"
             id="lblCBAccountName"
           >
             {selectedType?.value} :
@@ -1164,8 +1164,8 @@ export const ReceiptForm: React.FC<ReceiptFormProps> = ({
               control: (base: any) => ({
                 ...base,
 
-                minHeight: "28px",
-                height: "28px",
+                minHeight: "30px",
+                height: "30px",
 
                 width: "400px",
 
@@ -1228,7 +1228,7 @@ export const ReceiptForm: React.FC<ReceiptFormProps> = ({
         {/* ================= DATE ================= */}
 
         <div className="flex items-center gap-2">
-          <label className="text-right text-xs whitespace-nowrap">Date :</label>
+          <label className="text-right text-[14px] whitespace-nowrap">Date :</label>
 
           <LocalizationProvider dateAdapter={AdapterDayjs}>
             <DatePicker
@@ -1275,8 +1275,8 @@ export const ReceiptForm: React.FC<ReceiptFormProps> = ({
 
                 "& .MuiPickersInputBase-root": {
                   width: "150px",
-                  height: "28px",
-                  minHeight: "28px",
+                  height: "30px",
+                  minHeight: "30px",
                   boxSizing: "border-box",
                   borderRadius: "4px",
                   backgroundColor: "#ffffff",
@@ -1309,7 +1309,7 @@ export const ReceiptForm: React.FC<ReceiptFormProps> = ({
                   width: "100%",
                   fontSize: "12px",
                   padding: 0,
-                  height: "28px",
+                  height: "30px",
                   boxSizing: "border-box",
                 },
 
@@ -1373,7 +1373,7 @@ export const ReceiptForm: React.FC<ReceiptFormProps> = ({
         {/* ================= RECEIVED FROM ================= */}
 
         <div className="flex items-center gap-2">
-          <label className="w-22.5 text-right text-xs whitespace-nowrap">
+          <label className="w-22.5 text-right text-[14px] whitespace-nowrap">
             Received From :
           </label>
 
@@ -1393,7 +1393,7 @@ export const ReceiptForm: React.FC<ReceiptFormProps> = ({
         {/* ================= REFERENCE ================= */}
 
         <div className="flex items-center gap-2">
-          <label className="text-right text-xs whitespace-nowrap">
+          <label className="text-right text-[14px] whitespace-nowrap">
             Reference :
           </label>
 
@@ -3088,7 +3088,7 @@ export const ReceiptBottomForm: React.FC<ReceiptBottomFormProps> = ({
   return (
     <div className="-mt-4 ml-10 w-[76%]">
       <div className="mb-2 flex w-[60%] items-center gap-2">
-        <label className="w-20.5 shrink-0 text-right text-xs">
+        <label className="w-20.5 shrink-0 text-right text-[14px]">
           Description :
         </label>
 
@@ -3117,14 +3117,14 @@ export const ReceiptBottomForm: React.FC<ReceiptBottomFormProps> = ({
             onDescriptionEnter(event);
           }}
           className="
-            h-6.5
+            h-[30px]
             w-full
             flex-1
             rounded
             border
             border-gray-300
             px-2
-            text-xs
+            text-[14px]
             outline-none
             focus:border-[#9fdfbc]
             focus:ring-1
@@ -3135,7 +3135,7 @@ export const ReceiptBottomForm: React.FC<ReceiptBottomFormProps> = ({
       </div>
 
       <div className="flex w-full items-start gap-2">
-        <label className="w-20.5 shrink-0 pt-1 text-right text-xs">
+        <label className="w-20.5 shrink-0 pt-1 text-right text-[14px]">
           Note :
         </label>
 
@@ -3155,7 +3155,7 @@ export const ReceiptBottomForm: React.FC<ReceiptBottomFormProps> = ({
             border
             border-gray-300
             p-2
-            text-xs
+            text-[14px]
             outline-none
             focus:border-[#9fdfbc]
             focus:ring-1
@@ -3316,15 +3316,12 @@ export const ReceiptActions = forwardRef<
     };
 
     const buttonClass = `
-      min-w-[120px]
-      h-[40px]
+      min-w-[105px]
+      h-[34px]
       rounded-[4px]
-      border-l
-      border-r
-      border-b
+      border
       border-[#9db8d4]
-      border-t-0
-      bg-gradient-to-b
+      bg-gradient-to-r
       from-[#ffffff]
       to-[#e7eef5]
       px-4

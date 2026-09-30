@@ -1758,13 +1758,13 @@ const ReceiptPage: React.FC = () => {
           className="mt-2 mr-16 ml-auto flex w-55 items-center gap-2 text-xs
           "
         >
-          <label className="whitespace-nowrap">Total :</label>
+          <label className="whitespace-nowrap text-[14px]">Total :</label>
 
           <input
             id="txtTotCreditAmt"
             value={total.toFixed(2)}
             readOnly
-            className="ml-3 h-6.5 w-25 rounded border border-gray-300 px-2 text-right outline-none text-[#344054]"
+            className="ml-1 h-[30px] w-25 rounded border border-gray-300 px-2 text-right outline-none text-[#344054]"
           />
         </div>
 
