@@ -1,6 +1,5 @@
 import React, { useEffect, useMemo, useState } from "react";
-import { Link } from "react-router-dom";
-import { SquarePen, Trash, X } from "lucide-react";
+import { SquarePen, Trash } from "lucide-react";
 import { useCustomer, type Customer } from "../../../hooks/useCustomer";
 import CustomerPage from "./CustomerPage";
 
@@ -26,6 +25,9 @@ const COLUMNS = [
 
 const MESSAGE_ROW = "h-17.5 text-center text-[12px]";
 
+// null = closed, {} = Add, { customerId, mode } = Modify / Delete form
+type ModalState = { customerId?: string; mode?: "modify" | "delete" } | null;
+
 // ============================================================
 // COMPONENT
 // ============================================================
@@ -33,16 +35,16 @@ const MESSAGE_ROW = "h-17.5 text-center text-[12px]";
 const CustomerList: React.FC = () => {
   const [search, setSearch] = useState("");
   const { customers, fetchCustomers, loading, error } = useCustomer();
-  const [showAddModal, setShowAddModal] = useState(false);
+  const [modal, setModal] = useState<ModalState>(null);
 
   useEffect(() => {
-    if (!showAddModal) return;
+    if (!modal) return;
     const onKey = (e: KeyboardEvent) => {
-      if (e.key === "Escape") setShowAddModal(false);
+      if (e.key === "Escape") setModal(null);
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [showAddModal]);
+  }, [modal]);
 
   useEffect(() => {
     fetchCustomers();
@@ -68,13 +70,12 @@ const CustomerList: React.FC = () => {
   // ---------------- ACTIONS ----------------
 
   const handleModify = (customer: Customer) => {
-    console.log("Modify Customer:", customer);
+    setModal({ customerId: customer.lkpCustomerID, mode: "modify" });
   };
 
+  // Opens the customer form (loaded, locked); the delete happens from there
   const handleDelete = (customer: Customer) => {
-    if (!window.confirm(`Delete customer "${customer.lkpCustomerName}"?`))
-      return;
-    console.log("Delete Customer:", customer);
+    setModal({ customerId: customer.lkpCustomerID, mode: "delete" });
   };
 
   // ---------------- RENDER ----------------
@@ -112,7 +113,7 @@ const CustomerList: React.FC = () => {
               <button
                 id="btnAdd"
                 type="button"
-                onClick={() => setShowAddModal(true)}
+                onClick={() => setModal({})}
                 className="flex h-8.5 w-25 shrink-0 items-center justify-center gap-1 rounded-sm border border-[#b7c8db] bg-[#e6f0fa] text-[12px] text-green-600 shadow-sm hover:bg-[#dceafa] focus:outline-none"
               >
                 <span className="flex h-3.75 w-3.75 items-center justify-center rounded-full bg-green-600 text-[13px] font-bold leading-none text-white">
@@ -165,7 +166,7 @@ const CustomerList: React.FC = () => {
                       {error}{" "}
                       <button
                         type="button"
-                        onClick={fetchCustomers}
+                        onClick={() => fetchCustomers()}
                         className="ml-2 text-blue-600 underline"
                       >
                         Retry
@@ -259,10 +260,19 @@ const CustomerList: React.FC = () => {
         <div className="h-2.5" />
       </div>
 
-      {showAddModal && (
+      {modal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/30 p-4 backdrop-blur-sm">
           <div className="max-h-[92vh] w-[95%] overflow-y-auto border border-slate-400 bg-white shadow-2xl lg:w-[65%]">
-            <CustomerPage onClose={() => setShowAddModal(false)} />
+            {/* key remounts the form when switching between Add / different customers */}
+            <CustomerPage
+              key={`${modal.mode ?? "add"}-${modal.customerId ?? "new"}`}
+              customerId={modal.customerId}
+              mode={modal.mode}
+              onClose={() => setModal(null)}
+              onSaved={() => {
+                fetchCustomers();
+              }}
+            />
           </div>
         </div>
       )}

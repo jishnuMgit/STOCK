@@ -130,3 +130,331 @@ export const getParentAccountReceivables = async (
       .json({ success: false, message: "Failed to fetch parent accounts" });
   }
 };
+
+// ============================================================
+// dbo.sp_pagecustomer  (modes: G = get, S = save, M = modify, D = delete)
+// ============================================================
+
+// request body key  ->  stored procedure parameter
+const SP_PARAM_MAP: Record<string, string> = {
+  csAccountId: "p_strcsaccountid",
+  gAccountId: "p_strgaccountid",
+  csAccountType: "p_strcsaccounttype",
+  csAccountTypeDet: "p_strcsaccounttypedet",
+  oldCsAccountId: "p_stroldcsaccountid",
+  accountName: "p_straccountname",
+  accountNameA: "p_straccountname_a",
+  legalName: "p_strlegalname",
+  legalNameA: "p_strlegalname_a",
+  buildingNo: "p_strbuildingno",
+  streetName: "p_strstreetname",
+  district: "p_strdistrict",
+  city: "p_strcity",
+  countryId: "p_strcountryid",
+  postalCode: "p_strpostalcode",
+  additionalNo: "p_stradditionalno",
+  crNo: "p_strcrno",
+  buildingNoA: "p_strbuildingno_a",
+  streetNameA: "p_strstreetname_a",
+  districtA: "p_strdistrict_a",
+  cityA: "p_strcity_a",
+  countryIdA: "p_strcountryid_a",
+  postalCodeA: "p_strpostalcode_a",
+  additionalNoA: "p_stradditionalno_a",
+  crNoA: "p_strcrno_a",
+  contact: "p_strcontact",
+  email: "p_stremail",
+  phone: "p_strphone",
+  vatNo: "p_strvatno",
+  vatNoA: "p_strvatno_a",
+  transType: "p_strtranstype",
+  brId: "p_strbrid",
+  invMethod: "p_strinvmethod",
+  rcnMethod: "p_strrcnmethod",
+  businessTypeId: "p_strbusinesstypeid",
+  creditLimit: "p_intcreditlimit",
+  creditDays: "p_intcreditdays",
+  gdsCustomerId: "p_strgdscustomerid",
+  ctaCardType: "p_strctacardtype",
+  ctaCardNo: "p_strctacardno",
+  ctaExpiry: "p_strctaexpiry",
+  calcVatOnDomCanXchg: "p_blncalcvatondomcanxchg",
+  exclFromAgeing: "p_blnexclfromageing",
+  interCompany: "p_blnintercompany",
+  serviceChargePolicy: "p_blnservicechargepolicy",
+  haveDivision: "p_blnhavedivision",
+  shortName: "p_strshortname",
+  csAccountCategoryId: "p_strcsaccountcategoryid",
+  status: "p_blnstatus",
+  doNotRound: "p_blndonotround",
+  menuName: "p_strmenuname",
+};
+
+/**
+ * Calls dbo.sp_pagecustomer using named notation, so only the fields that
+ * were actually sent are passed and the rest keep their SQL DEFAULTs.
+ */
+const callPageCustomer = async (
+  mode: "S" | "M" | "D",
+  companyId: string,
+  userId: string | undefined,
+  fields: Record<string, unknown>,
+) => {
+  const args: string[] = [];
+  const values: unknown[] = [];
+
+  const add = (param: string, value: unknown) => {
+    values.push(value);
+    args.push(`${param} => $${values.length}`);
+  };
+
+  add("p_strmode", mode);
+  add("p_strcoid", companyId);
+  if (userId) add("p_gstruserid", userId);
+
+  for (const [key, param] of Object.entries(SP_PARAM_MAP)) {
+    const value = fields[key];
+    if (value !== undefined && value !== null) add(param, value);
+  }
+
+  await pool.query(`CALL dbo.sp_pagecustomer(${args.join(", ")})`, values);
+};
+
+// Pulls the session values. ADJUST to match your authMiddleware.
+const getSession = (req: AuthenticatedRequest) => ({
+  companyId: req.user?.companyId as string | undefined,
+  userId: (req.user as any)?.userId as string | undefined,
+});
+
+// ------------------------------------------------------------
+// GET /api/customers/:csAccountId   (mode 'G')
+//
+// NOTE: sp_pagecustomer's 'G' branch is a bare SELECT inside a
+// PROCEDURE. PL/pgSQL rejects that ("query has no destination for
+// result data") and a procedure can't return rows via CALL anyway,
+// so this reads the table directly with the same column list.
+// If you'd rather keep it in the DB, move it into a function
+// (RETURNS TABLE) and call that instead.
+// ------------------------------------------------------------
+export const getCustomer = async (req: AuthenticatedRequest, res: Response) => {
+  try {
+    const { companyId } = getSession(req);
+    const csAccountId = String(req.params.csAccountId ?? "").trim();
+
+    if (!companyId) {
+      return res
+        .status(401)
+        .json({ success: false, message: "Company not found in session" });
+    }
+    if (!csAccountId) {
+      return res
+        .status(400)
+        .json({ success: false, message: "csAccountId is required" });
+    }
+
+    const result = await pool.query(
+      `SELECT *
+         FROM dbo.tblaccountcs
+        WHERE fcoid = $1
+          AND fcsaccountid = $2`,
+      [companyId, csAccountId],
+    );
+
+    if (result.rows.length === 0) {
+      return res
+        .status(404)
+        .json({ success: false, message: "Customer not found" });
+    }
+
+    const r = result.rows[0];
+
+    const data = {
+      csAccountType: r.fcs,
+      csAccountTypeDet: r.fcsdet,
+      gAccountId: r.fgaccountid,
+      csAccountId: r.fcsaccountid,
+      accountName: r.faccountname,
+      accountNameA: r.faccountname_a,
+      legalName: r.fleagalaccountname,
+      legalNameA: r.fleagalaccountname_a,
+      vatNo: r.fvatno,
+      vatNoA: r.fvatno_a,
+      contact: r.fcontact,
+      phone: r.fphone,
+      email: r.femail,
+      transType: r.ftranstype,
+      invMethod: r.finvmethod,
+      rcnMethod: r.frcnmethod,
+      businessTypeId: r.fbussinesstypeid,
+      brId: r.fbrid,
+      creditLimit: r.fcreditlimit,
+      creditDays: r.fcreditdays,
+      gdsCustomerId: r.fgdscustomerid,
+      ctaCardType: r.fctacardtype,
+      ctaCardNo: r.fctacardno,
+      ctaExpiry: r.fctaexpiry,
+      serviceChargePolicy: r.fservicechargepolicy,
+      calcVatOnDomCanXchg: r.fcalcvatondomcanxchg,
+      exclFromAgeing: r.fexcludefromageing,
+      custProfitPer: r.fcustprofitper,
+      buildingNo: r.fbuildingno,
+      streetName: r.fstreetname,
+      district: r.fdistrict,
+      city: r.fcity,
+      countryId: r.fcountryid,
+      postalCode: r.fpostalcode,
+      additionalNo: r.fadditionalno,
+      crNo: r.fcrno,
+      buildingNoA: r.fbuildingno_a,
+      streetNameA: r.fstreetname_a,
+      districtA: r.fdistrict_a,
+      cityA: r.fcity_a,
+      countryIdA: r.fcountryid_a,
+      postalCodeA: r.fpostalcode_a,
+      additionalNoA: r.fadditionalno_a,
+      crNoA: r.fcrno_a,
+      haveDivision: r.fhavedivision,
+      status: r.fstatus,
+      interCompany: r.fintercompany,
+      doNotRound: r.fdonotround,
+      shortName: r.fshortname,
+      csAccountCategoryId: r.fcsaccountcategoryid,
+    };
+
+    return res.status(200).json({ success: true, data });
+  } catch (error) {
+    console.error("getCustomer error:", error);
+    return res
+      .status(500)
+      .json({ success: false, message: "Failed to fetch customer" });
+  }
+};
+
+// ------------------------------------------------------------
+// POST /api/customers   (mode 'S')
+// ------------------------------------------------------------
+export const createCustomer = async (
+  req: AuthenticatedRequest,
+  res: Response,
+) => {
+  try {
+    const { companyId, userId } = getSession(req);
+
+    if (!companyId) {
+      return res
+        .status(401)
+        .json({ success: false, message: "Company not found in session" });
+    }
+    if (!req.body?.csAccountId) {
+      return res
+        .status(400)
+        .json({ success: false, message: "csAccountId is required" });
+    }
+
+    await callPageCustomer("S", companyId, userId, req.body);
+
+    return res
+      .status(201)
+      .json({ success: true, message: "Customer saved successfully" });
+  } catch (error: any) {
+    console.error("createCustomer error:", error);
+    // 23505 = unique_violation (duplicate account id)
+    if (error?.code === "23505") {
+      return res
+        .status(409)
+        .json({ success: false, message: "Customer account already exists" });
+    }
+    return res
+      .status(500)
+      .json({ success: false, message: "Failed to save customer" });
+  }
+};
+
+// ------------------------------------------------------------
+// PUT /api/customers/:csAccountId   (mode 'M')
+// :csAccountId is the CURRENT id (p_stroldcsaccountid).
+// body.csAccountId is the (possibly changed) new id.
+// ------------------------------------------------------------
+export const updateCustomer = async (
+  req: AuthenticatedRequest,
+  res: Response,
+) => {
+  try {
+    const { companyId, userId } = getSession(req);
+    const oldCsAccountId = String(req.params.csAccountId ?? "").trim();
+
+    if (!companyId) {
+      return res
+        .status(401)
+        .json({ success: false, message: "Company not found in session" });
+    }
+    if (!oldCsAccountId) {
+      return res
+        .status(400)
+        .json({ success: false, message: "csAccountId is required" });
+    }
+
+    await callPageCustomer("M", companyId, userId, {
+      ...req.body,
+      oldCsAccountId,
+      // if the id wasn't changed, the new id is the same as the old one
+      csAccountId: req.body?.csAccountId ?? oldCsAccountId,
+    });
+
+    return res
+      .status(200)
+      .json({ success: true, message: "Customer updated successfully" });
+  } catch (error: any) {
+    console.error("updateCustomer error:", error);
+    if (error?.code === "23505") {
+      return res
+        .status(409)
+        .json({ success: false, message: "Customer account already exists" });
+    }
+    return res
+      .status(500)
+      .json({ success: false, message: "Failed to update customer" });
+  }
+};
+
+// ------------------------------------------------------------
+// DELETE /api/customers/:csAccountId   (mode 'D')
+// ------------------------------------------------------------
+export const deleteCustomer = async (
+  req: AuthenticatedRequest,
+  res: Response,
+) => {
+  try {
+    const { companyId, userId } = getSession(req);
+    const csAccountId = String(req.params.csAccountId ?? "").trim();
+
+    if (!companyId) {
+      return res
+        .status(401)
+        .json({ success: false, message: "Company not found in session" });
+    }
+    if (!csAccountId) {
+      return res
+        .status(400)
+        .json({ success: false, message: "csAccountId is required" });
+    }
+
+    await callPageCustomer("D", companyId, userId, { csAccountId });
+
+    return res
+      .status(200)
+      .json({ success: true, message: "Customer deleted successfully" });
+  } catch (error: any) {
+    console.error("deleteCustomer error:", error);
+    // 23503 = foreign_key_violation (customer has transactions)
+    if (error?.code === "23503") {
+      return res.status(409).json({
+        success: false,
+        message: "Customer is in use and cannot be deleted",
+      });
+    }
+    return res
+      .status(500)
+      .json({ success: false, message: "Failed to delete customer" });
+  }
+};
