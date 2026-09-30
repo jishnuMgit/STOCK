@@ -792,6 +792,7 @@ const UserLogin: React.FC = () => {
                         }
                         maxLength={30}
                         readOnly={user.txtOriginal_UserID !== ""}
+                        autoComplete="off"
                         className={inputClass}
                       />
 
@@ -873,6 +874,10 @@ const UserLogin: React.FC = () => {
                       placeholder={
                         user.txtOriginal_UserID ? "••••••" : ""
                       }
+                      autoComplete="new-password"
+                      data-lpignore="true"
+                      data-1p-ignore="true"
+                      data-bwignore="true"
                       className={inputClass}
                     />
                   </td>
@@ -900,6 +905,10 @@ const UserLogin: React.FC = () => {
                       }
                       minLength={6}
                       maxLength={12}
+                      autoComplete="new-password"
+                      data-lpignore="true"
+                      data-1p-ignore="true"
+                      data-bwignore="true"
                       placeholder={
                         user.txtOriginal_UserID ? "••••••" : ""
                       }
