@@ -253,10 +253,23 @@ export const saveUserPermissions = async (
     // used below to build a proper "inserted / deleted" audit
     // note instead of just a final count.
     const before = await client.query(
-      `SELECT fmenuid FROM dbo.tbluserpermission WHERE fcoid = $1 AND fuserid = $2`,
+      `SELECT fmenuid, fuserbuttons FROM dbo.tbluserpermission WHERE fcoid = $1 AND fuserid = $2`,
       [PstrCoID, lkpUserID]
     );
-    const oldMenuIds = new Set<string>(before.rows.map((r) => r.fmenuid));
+
+    // Only menus with a real action-button string count as a
+    // meaningful grant for the audit note. Checking a parent
+    // menu (e.g. Purchase) cascades "checked" onto every
+    // container above/below it too, but those containers have
+    // no fmenubuttons of their own, so they're saved with
+    // fuserbuttons = '0' - present in the table (they still
+    // gate menu visibility), but not a real permission grant
+    // worth naming individually in the note.
+    const oldMenuIds = new Set<string>(
+      before.rows
+        .filter((r) => r.fuserbuttons && r.fuserbuttons !== "0")
+        .map((r) => r.fmenuid)
+    );
 
     // Delete existing permissions (for this company).
     await client.query(
@@ -267,12 +280,18 @@ export const saveUserPermissions = async (
     );
 
     // Insert each permission.
+    // Same "meaningful grant" rule as oldMenuIds above - only
+    // menus saved with a real, non-'0' button string.
     const newMenuIds = new Set<string>();
 
     for (const permission of permissions) {
       if (!permission.menuId) continue;
 
-      newMenuIds.add(permission.menuId);
+      const buttons = permission.buttons ?? "0";
+
+      if (buttons !== "0") {
+        newMenuIds.add(permission.menuId);
+      }
 
       await client.query(
         `CALL dbo.sp_pageuserpermission(
