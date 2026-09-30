@@ -10,6 +10,7 @@ import ChartOfAccountList from "../pages/Finance/Setup/COAListPage";
 import UserLogin from "../pages/Security/UserLogin/UserLogin";
 import COASettings from "../pages/Settings/COASettingPage";
 import UserPermission from "../pages/Settings/UserPermission/UserPermissionPage";
+import BeginningStockPage from "../pages/Purchase/Transaction/BeginningStockPage";
 
 const Login = lazy(() => import("../pages/Auth/LoginPage"));
 const ReceiptPage = lazy(
@@ -102,6 +103,13 @@ const AppRoutes = () => {
             element={<StatementOfAccountMain />}
           />
 
+           {/* =================================================
+              PURCHASE - TRANSACTION
+          ================================================= */}
+          <Route
+          path="/Purchase/Transaction/BeginningStockPage"
+          element={<BeginningStockPage/>}
+          />
 
 
           {/* =================================================
