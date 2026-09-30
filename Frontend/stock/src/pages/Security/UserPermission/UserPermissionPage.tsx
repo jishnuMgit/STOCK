@@ -1,10 +1,19 @@
 import React, { useCallback, useEffect, useState } from "react";
+import Select, { type SingleValue, type StylesConfig } from "react-select";
+import { toast } from "react-toastify";
+import { useEnterAsTab } from "../../../hooks/useEnterAsTab";
+import { useAltShortcuts } from "../../../hooks/useAltShortcuts";
 
 const API_URL = `${import.meta.env.VITE_API_URL}/user-permission`;
 
 // ============================================================
 // TYPES
 // ============================================================
+
+interface SelectOption {
+  value: string;
+  label: string;
+}
 
 interface PermissionNode {
   fmenuid: string;
@@ -41,6 +50,121 @@ interface MenuRowProps {
     checked: boolean
   ) => void;
 }
+
+// ============================================================
+// USER ID SELECT STYLE
+// Same box look/placeholder as the Company select on
+// Settings/SetCompanyInfo (companySelectStyles there).
+// ============================================================
+
+const userIdSelectStyles: StylesConfig<SelectOption, false> = {
+  container: (base) => ({
+    ...base,
+    width: "min(340px, 55%)",
+  }),
+
+  control: (base) => ({
+    ...base,
+    minHeight: "28px",
+    height: "28px",
+    borderColor: "#d7dee7",
+    borderRadius: "4px",
+    boxShadow: "none",
+    fontSize: "12px",
+    cursor: "text",
+
+    "&:hover": {
+      borderColor: "#9fdfbc",
+    },
+  }),
+
+  valueContainer: (base) => ({
+    ...base,
+    height: "28px",
+    padding: "0 8px",
+  }),
+
+  singleValue: (base) => ({
+    ...base,
+    color: "#344054",
+    fontSize: "12px",
+  }),
+
+  placeholder: (base) => ({
+    ...base,
+    color: "#808080",
+    fontSize: "12px",
+  }),
+
+  input: (base) => ({
+    ...base,
+    margin: 0,
+    padding: 0,
+    fontSize: "12px",
+    color: "#344054",
+  }),
+
+  indicatorsContainer: (base) => ({
+    ...base,
+    height: "28px",
+  }),
+
+  dropdownIndicator: (base) => ({
+    ...base,
+    color: "#aeb8c2",
+    padding: "4px",
+
+    "&:hover": {
+      color: "#808080",
+    },
+  }),
+
+  indicatorSeparator: () => ({
+    display: "none",
+  }),
+
+  clearIndicator: (base) => ({
+    ...base,
+    color: "#aeb8c2",
+    padding: "4px",
+
+    "&:hover": {
+      color: "#808080",
+    },
+  }),
+
+  menu: (base) => ({
+    ...base,
+    fontSize: "12px",
+    zIndex: 9999,
+    marginTop: "2px",
+    borderRadius: "4px",
+    overflow: "hidden",
+  }),
+
+  menuList: (base) => ({
+    ...base,
+    padding: "3px 0",
+    maxHeight: "200px",
+    overflowY: "auto",
+  }),
+
+  option: (base, state) => ({
+    ...base,
+    fontSize: "12px",
+    cursor: "pointer",
+
+    backgroundColor:
+      state.isSelected || state.isFocused ? "#eefbf4" : "#ffffff",
+
+    color: "#344054",
+    padding: "7px 10px",
+
+    "&:active": {
+      backgroundColor: "#dff5e9",
+    },
+  }),
+};
 
 // ============================================================
 // BUTTON DEFINITIONS
@@ -234,9 +358,9 @@ function updateAction(
 // ============================================================
 // SYNC PARENT MENU CHECKBOXES
 //
-// Parent menu checkbox is checked when all its child menus
-// are checked. This does not change the individual action
-// permission strings of those children.
+// Parent menu checkbox is checked when at least one of its
+// child menus is checked. This does not change the individual
+// action permission strings of those children.
 // ============================================================
 
 function syncParentChecks(
@@ -249,12 +373,12 @@ function syncParentChecks(
       return { ...node, children };
     }
 
-    const allChildrenChecked = children.every(isMenuChecked);
+    const anyChildChecked = children.some(isMenuChecked);
 
     return {
       ...node,
       children,
-      fright: allChildrenChecked ? 1 : 0,
+      fright: anyChildChecked ? 1 : 0,
     };
   });
 }
@@ -330,9 +454,9 @@ function MenuRow({
 
         <div
           role="gridcell"
-          className="flex min-h-[23px] min-w-0 items-center gap-[5px] py-[2px] pr-2"
+          className="flex min-h-[23px] min-w-0 items-center gap-[14px] py-[2px] pr-2"
           style={{
-            paddingLeft: `${8 + depth * 26}px`,
+            paddingLeft: `${28 + depth * 36}px`,
           }}
         >
           {expandable ? (
@@ -391,9 +515,9 @@ function MenuRow({
 
             <div
               role="gridcell"
-              className="flex min-h-[23px] items-center gap-[5px] py-[2px] pr-2"
+              className="flex min-h-[23px] items-center gap-[14px] py-[2px] pr-2"
               style={{
-                paddingLeft: `${8 + (depth + 1) * 26}px`,
+                paddingLeft: `${28 + (depth + 1) * 36}px`,
               }}
             >
               {/* Align action rows with the menu tree */}
@@ -443,9 +567,14 @@ function MenuRow({
 // ============================================================
 
 const UserPermission: React.FC = () => {
-  const [userId, setUserId] = useState(
-    () => localStorage.getItem("pstrUSerID") || "ADMIN"
+  const handleEnterAsTab = useEnterAsTab();
+
+  const [lkpUserID, setLkpUserID] = useState(
+    () => localStorage.getItem("PstrUserID") || "ADMIN"
   );
+
+  const [userIdOptions, setUserIdOptions] = useState<SelectOption[]>([]);
+  const [loadingUserIdOptions, setLoadingUserIdOptions] = useState(true);
 
   const [menuTree, setMenuTree] = useState<PermissionNode[]>([]);
   const [expanded, setExpanded] = useState<Set<string>>(
@@ -453,29 +582,32 @@ const UserPermission: React.FC = () => {
   );
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
-  const [message, setMessage] = useState("");
-  const [error, setError] = useState(false);
 
   // ==========================================================
   // LOAD PERMISSIONS
-  // GET /api/user-permission/:userId
+  // GET /api/user-permission/:lkpUserID
   // ==========================================================
 
   const loadPermissions = useCallback(async (id: string) => {
     if (!id.trim()) {
       setMenuTree([]);
-      setMessage("Please enter a user ID.");
-      setError(true);
+      toast.warning("Please enter a user ID.");
+      return;
+    }
+
+    const PstrCoID = localStorage.getItem("PstrCoID");
+
+    if (!PstrCoID) {
+      setMenuTree([]);
+      toast.error("Company ID not found. Please log in again.");
       return;
     }
 
     setLoading(true);
-    setMessage("");
-    setError(false);
 
     try {
       const response = await fetch(
-        `${API_URL}/${encodeURIComponent(id.trim())}`
+        `${API_URL}/${encodeURIComponent(id.trim())}?PstrCoID=${encodeURIComponent(PstrCoID)}`
       );
 
       const result: ApiResponse = await response.json();
@@ -504,20 +636,63 @@ const UserPermission: React.FC = () => {
       console.error("Load permissions failed:", err);
       setMenuTree([]);
 
-      setMessage(
+      toast.error(
         err instanceof Error
           ? err.message
           : "Failed to load permissions."
       );
-      setError(true);
     } finally {
       setLoading(false);
     }
   }, []);
 
   useEffect(() => {
-    void loadPermissions(userId);
-  }, [loadPermissions, userId]);
+    void loadPermissions(lkpUserID);
+  }, [loadPermissions, lkpUserID]);
+
+  // ==========================================================
+  // LOAD USER ID LIST (lkpUserID dropdown)
+  // GET /api/user-permission/users/list
+  // ==========================================================
+
+  useEffect(() => {
+    const loadUserIdList = async () => {
+      const PstrCoID = localStorage.getItem("PstrCoID");
+
+      if (!PstrCoID) {
+        setLoadingUserIdOptions(false);
+        return;
+      }
+
+      try {
+        const response = await fetch(
+          `${API_URL}/users/list?PstrCoID=${encodeURIComponent(PstrCoID)}`
+        );
+
+        const result: {
+          success: boolean;
+          data?: { fuserid: string }[];
+        } = await response.json();
+
+        if (!response.ok || !result.success) {
+          return;
+        }
+
+        setUserIdOptions(
+          (result.data || []).map((row) => ({
+            value: row.fuserid,
+            label: row.fuserid,
+          }))
+        );
+      } catch (err) {
+        console.error("Load user ID list failed:", err);
+      } finally {
+        setLoadingUserIdOptions(false);
+      }
+    };
+
+    loadUserIdList();
+  }, []);
 
   // ==========================================================
   // EXPAND / COLLAPSE
@@ -554,9 +729,6 @@ const UserPermission: React.FC = () => {
 
       return syncParentChecks(updated);
     });
-
-    setMessage("");
-    setError(false);
   };
 
   // ==========================================================
@@ -578,38 +750,41 @@ const UserPermission: React.FC = () => {
         )
       )
     );
-
-    setMessage("");
-    setError(false);
   };
 
   // ==========================================================
   // SAVE
-  // PUT /api/user-permission/:userId
+  // PUT /api/user-permission/:lkpUserID
   // ==========================================================
 
   const handleSave = async () => {
-    if (!userId.trim()) {
-      setMessage("Please enter a user ID.");
-      setError(true);
+    if (!lkpUserID.trim()) {
+      toast.warning("Please enter a user ID.");
+      return;
+    }
+
+    const PstrCoID = localStorage.getItem("PstrCoID");
+    const PstrYear = localStorage.getItem("PstrYear");
+    const PstrUserID = localStorage.getItem("PstrUserID");
+
+    if (!PstrCoID || !PstrYear || !PstrUserID) {
+      toast.error("Company ID / Year / User ID not found. Please log in again.");
       return;
     }
 
     setSaving(true);
-    setMessage("");
-    setError(false);
 
     try {
       const permissions = flattenSelected(menuTree);
 
       const response = await fetch(
-        `${API_URL}/${encodeURIComponent(userId.trim())}`,
+        `${API_URL}/${encodeURIComponent(lkpUserID.trim())}`,
         {
           method: "PUT",
           headers: {
             "Content-Type": "application/json",
           },
-          body: JSON.stringify({ permissions }),
+          body: JSON.stringify({ PstrCoID, PstrYear, PstrUserID, permissions }),
         }
       );
 
@@ -621,18 +796,17 @@ const UserPermission: React.FC = () => {
         );
       }
 
-      setMessage(
+      toast.success(
         result.message || "Permissions saved successfully."
       );
     } catch (err) {
       console.error("Save permissions failed:", err);
 
-      setMessage(
+      toast.error(
         err instanceof Error
           ? err.message
           : "Failed to save permissions."
       );
-      setError(true);
     } finally {
       setSaving(false);
     }
@@ -640,32 +814,42 @@ const UserPermission: React.FC = () => {
 
   // ==========================================================
   // DELETE
-  // DELETE /api/user-permission/:userId
+  // DELETE /api/user-permission/:lkpUserID
   // ==========================================================
 
   const handleDelete = async () => {
-    if (!userId.trim()) {
-      setMessage("Please enter a user ID.");
-      setError(true);
+    if (!lkpUserID.trim()) {
+      toast.warning("Please enter a user ID.");
+      return;
+    }
+
+    const PstrCoID = localStorage.getItem("PstrCoID");
+    const PstrYear = localStorage.getItem("PstrYear");
+    const PstrUserID = localStorage.getItem("PstrUserID");
+
+    if (!PstrCoID || !PstrYear || !PstrUserID) {
+      toast.error("Company ID / Year / User ID not found. Please log in again.");
       return;
     }
 
     if (
       !window.confirm(
-        `Delete all permissions for ${userId}?`
+        `Delete all permissions for ${lkpUserID}?`
       )
     ) {
       return;
     }
 
     setSaving(true);
-    setMessage("");
-    setError(false);
 
     try {
       const response = await fetch(
-        `${API_URL}/${encodeURIComponent(userId.trim())}`,
-        { method: "DELETE" }
+        `${API_URL}/${encodeURIComponent(lkpUserID.trim())}`,
+        {
+          method: "DELETE",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ PstrCoID, PstrYear, PstrUserID }),
+        }
       );
 
       const result: ApiResponse = await response.json();
@@ -678,18 +862,17 @@ const UserPermission: React.FC = () => {
 
       setMenuTree((previous) => clearTree(previous));
 
-      setMessage(
+      toast.success(
         result.message || "Permissions deleted successfully."
       );
     } catch (err) {
       console.error("Delete permissions failed:", err);
 
-      setMessage(
+      toast.error(
         err instanceof Error
           ? err.message
           : "Failed to delete permissions."
       );
-      setError(true);
     } finally {
       setSaving(false);
     }
@@ -701,16 +884,26 @@ const UserPermission: React.FC = () => {
 
   const handleClear = () => {
     setMenuTree((previous) => clearTree(previous));
-    setMessage("");
-    setError(false);
   };
+
+  // ==========================================================
+  // KEYBOARD SHORTCUTS
+  // Alt+S -> Save, Alt+C -> Clear (matches the underlined
+  // accelerator letters on the buttons).
+  // ==========================================================
+
+  useAltShortcuts({
+    s: handleSave,
+    d: handleDelete,
+    c: handleClear,
+  });
 
   // ==========================================================
   // UI
   // ==========================================================
 
   return (
-    <div className="flex justify-center">
+    <div className="flex justify-center" onKeyDown={handleEnterAsTab}>
       <main className="mb-10 flex min-h-fit w-[calc(100%-32px)] max-w-[1200px] flex-col border border-slate-400 bg-white pb-5 font-[Arial,Helvetica,sans-serif] text-[12px] text-gray-700">
         {/* Title */}
         <div className="flex h-[36px] shrink-0 items-center border-b border-slate-300 bg-[#a3dfc0]">
@@ -723,7 +916,7 @@ const UserPermission: React.FC = () => {
         <form
           onSubmit={(event) => {
             event.preventDefault();
-            void loadPermissions(userId);
+            void loadPermissions(lkpUserID);
           }}
           className="flex min-h-[55px] shrink-0 flex-wrap items-center gap-[15px] px-4 pb-2 pt-[13px]"
         >
@@ -734,35 +927,31 @@ const UserPermission: React.FC = () => {
             User ID :
           </label>
 
-          <input
-            id="lkpUserID"
-            value={userId}
-            onChange={(event) => setUserId(event.target.value)}
-            autoComplete="off"
-            className="h-[26px] w-[min(340px,55%)] rounded-[2px] border border-slate-300 bg-white px-[10px] py-[3px] text-[12px] text-gray-800 outline-none focus:border-blue-400"
+          <Select<SelectOption, false>
+            inputId="lkpUserID"
+            name="lkpUserID"
+            options={userIdOptions}
+            value={
+              userIdOptions.find((option) => option.value === lkpUserID) || null
+            }
+            onChange={(option: SingleValue<SelectOption>) =>
+              setLkpUserID(option?.value || "")
+            }
+            styles={userIdSelectStyles}
+            isSearchable
+            isClearable={false}
+            isLoading={loadingUserIdOptions}
+            placeholder={loadingUserIdOptions ? "Loading..." : "Select"}
+            noOptionsMessage={() => "No User Found"}
           />
         </form>
-
-        {/* Status */}
-        {message && (
-          <div
-            role="status"
-            className={`mx-[17px] mb-2 rounded-[3px] border px-[10px] py-[7px] ${
-              error
-                ? "border-red-200 bg-red-50 text-red-700"
-                : "border-green-200 bg-green-50 text-green-800"
-            }`}
-          >
-            {message}
-          </div>
-        )}
 
         {/* Menu tree */}
         <section
         id="trlMenu"
           role="grid"
           aria-label="Menu permissions"
-          className="mx-[17px] flex max-h-[65vh] min-h-[200px] flex-col overflow-auto border border-[#C1F2D7]"
+          className="ml-[17px] w-[80%] flex max-h-[65vh] min-h-[200px] flex-col overflow-auto border border-[#C1F2D7]"
         >
           <div
             role="row"

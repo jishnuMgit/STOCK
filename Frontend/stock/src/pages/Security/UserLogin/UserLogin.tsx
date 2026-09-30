@@ -3,6 +3,7 @@ import Select, { type SingleValue } from "react-select";
 import { toast } from "react-toastify";
 import { X } from "lucide-react";
 import { useEnterAsTab } from "../../../hooks/useEnterAsTab";
+import { useAltShortcuts } from "../../../hooks/useAltShortcuts";
 import { useConfirm } from "../../../hooks/useConfirm";
 
 // ============================================================
@@ -552,6 +553,17 @@ const UserLogin: React.FC = () => {
   const handleClear = () => {
     loadUsers();
   };
+
+  // ============================================================
+  // KEYBOARD SHORTCUTS
+  // Alt+S -> Save, Alt+C -> Clear (matches the underlined
+  // accelerator letters on the buttons).
+  // ============================================================
+
+  useAltShortcuts({
+    s: handleSave,
+    c: handleClear,
+  });
 
   // ============================================================
   // INPUT CLASS

@@ -8,6 +8,7 @@ import { toast } from "react-toastify";
 import { X } from "lucide-react";
 import { useEnterAsTab } from "../../hooks/useEnterAsTab";
 import { useConfirm } from "../../hooks/useConfirm";
+import { useAltShortcuts } from "../../hooks/useAltShortcuts";
 import {
   filterLabelOrValue,
   BranchMenuList,
@@ -667,6 +668,17 @@ const SetDocumentNo: React.FC = () => {
 
     setCopyToNextYearbtn(false);
   };
+
+  // ==========================================================
+  // KEYBOARD SHORTCUTS
+  // Alt+S -> Save, Alt+C -> Copy To Next Year (matches the
+  // underlined accelerator letters on the buttons).
+  // ==========================================================
+
+  useAltShortcuts({
+    s: handleSave,
+    c: () => setCopyToNextYearbtn((previous) => !previous),
+  });
 
   // ==========================================================
   // DELETE ONE ROW
@@ -1576,7 +1588,7 @@ const SetDocumentNo: React.FC = () => {
               hover:bg-slate-50
             "
           >
-            Save
+            <span className="underline underline-offset-2">S</span>ave
           </button>
 
           {/* =================================================
@@ -1630,7 +1642,7 @@ const SetDocumentNo: React.FC = () => {
               hover:bg-slate-50
             "
           >
-            Copy To Next Year
+            <span className="underline underline-offset-2">C</span>opy To Next Year
           </button>
         </div>
       </div>

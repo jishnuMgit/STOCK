@@ -1,6 +1,7 @@
 
 import { Router } from "express";
 import {
+  getUserIdList,
   getUserPermissions,
   saveUserPermissions,
   deleteUserPermissions,
@@ -8,8 +9,11 @@ import {
 
 const router = Router();
 
-router.get("/:userId", getUserPermissions);
-router.put("/:userId", saveUserPermissions);
-router.delete("/:userId", deleteUserPermissions);
+// must come before /:lkpUserID so "users" isn't read as a lkpUserID
+router.get("/users/list", getUserIdList);
+
+router.get("/:lkpUserID", getUserPermissions);
+router.put("/:lkpUserID", saveUserPermissions);
+router.delete("/:lkpUserID", deleteUserPermissions);
 
 export default router;
