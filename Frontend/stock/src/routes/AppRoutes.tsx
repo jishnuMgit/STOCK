@@ -9,9 +9,9 @@ import CustomerList from "../pages/Finance/Setup/CustomerListPage";
 import ChartOfAccountList from "../pages/Finance/Setup/COAListPage";
 import UserLogin from "../pages/Security/UserLogin/UserLogin";
 import COASettings from "../pages/Settings/COASettingPage";
-import UserPermission from "../pages/Settings/UserPermission/UserPermissionPage";
+import UserPermission from "../pages/Security/UserPermission/UserPermissionPage";
 import BeginningStockPage from "../pages/Purchase/Transaction/BeginningStockPage";
-import UserPermissionCoBranchPage from "../pages/Settings/UserPermission/UserPermissionCoBranchPage";
+import UserPermissionCoBranchPage from "../pages/Security/UserPermission/UserPermissionCoBranchPage";
 
 const Login = lazy(() => import("../pages/Auth/LoginPage"));
 const ReceiptPage = lazy(
