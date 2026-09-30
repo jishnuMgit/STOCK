@@ -389,7 +389,7 @@ const CustomerHeader: React.FC<CustomerHeaderProps> = ({
           {/* ==================================================
         PARENT ACCOUNT
     ================================================== */}
-          <div className="grid grid-cols-[20%_minmax(0,1fr)] items-end gap-2.5 sm:col-span-2 lg:col-span-1">
+          <div className="grid grid-cols-[30%_minmax(0,1fr)] items-end gap-2.5 sm:col-span-2 lg:col-span-1">
             {/* PARENT ACCOUNT ID */}
 
             <div className="w-full">

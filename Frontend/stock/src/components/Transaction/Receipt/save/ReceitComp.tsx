@@ -891,10 +891,10 @@ export const ReceiptForm: React.FC<ReceiptFormProps> = ({
               control: (base: any) => ({
                 ...base,
 
-                minHeight: "28px",
-                height: "28px",
+                minHeight: "30px",
+                height: "30px",
 
-                width: "200px",
+                width: "250px",
 
                 borderColor: "#d7dee7",
 

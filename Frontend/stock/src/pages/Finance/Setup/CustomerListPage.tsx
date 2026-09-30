@@ -109,12 +109,12 @@ const CustomerList: React.FC = () => {
               </div>
             </div>
 
-            <div className="-ml-13.75 flex items-center pl-2">
+            <div className="flex items-center -ml-24 pl-2">
               <button
                 id="btnAdd"
                 type="button"
                 onClick={() => setModal({})}
-                className="flex h-8.5 w-25 shrink-0 items-center justify-center gap-1 rounded-sm border border-[#b7c8db] bg-[#e6f0fa] text-[12px] text-green-600 shadow-sm hover:bg-[#dceafa] focus:outline-none"
+                className="flex h-8.5 w-25 cursor-pointer shrink-0 items-center justify-center gap-1 rounded-sm border border-[#b7c8db] bg-[#e6f0fa] text-[12px] text-green-600 shadow-sm hover:bg-[#dceafa] focus:outline-none"
               >
                 <span className="flex h-3.75 w-3.75 items-center justify-center rounded-full bg-green-600 text-[13px] font-bold leading-none text-white">
                   +
