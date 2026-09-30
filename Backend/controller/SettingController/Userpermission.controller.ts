@@ -1,5 +1,6 @@
 import type { Request, Response } from "express";
 import pool from "../../DB/db.js";
+import { UserAudit } from "../../utils/UserAudit.js";
 
 /* ---------------------------------------------------------
    TYPES
@@ -34,11 +35,20 @@ interface PermissionInput {
 }
 
 interface SaveBody {
+  PstrCoID?: string;
+  PstrYear?: string;
+  PstrUserID?: string;
   permissions?: PermissionInput[];
 }
 
+interface DeleteBody {
+  PstrCoID?: string;
+  PstrYear?: string;
+  PstrUserID?: string;
+}
+
 interface UserParams {
-  userId: string;
+  lkpUserID: string;
 }
 
 /* ---------------------------------------------------------
@@ -87,14 +97,63 @@ function buildTree(rows: PermissionRow[]): PermissionNode[] {
 }
 
 /* ---------------------------------------------------------
-   GET USER PERMISSIONS
-   GET /api/user-permission/:userId
+   GET USER ID LIST (lkpUserID dropdown)
+   GET /api/user-permission/users/list?PstrCoID=...
+--------------------------------------------------------- */
+
+export const getUserIdList = async (
+  req: Request,
+  res: Response
+): Promise<void> => {
+  try {
+    const { PstrCoID } = req.query;
+
+    if (!PstrCoID) {
+      res.status(400).json({
+        success: false,
+        message: "Company ID is required",
+      });
+      return;
+    }
+
+    const result = await pool.query(
+      `SELECT fuserid FROM dbo.tbluserlogin WHERE fcoid = $1 ORDER BY fuserid`,
+      [PstrCoID]
+    );
+
+    res.json({
+      success: true,
+      data: result.rows,
+    });
+  } catch (err) {
+    console.error("GET user-permission users/list failed:", err);
+
+    res.status(500).json({
+      success: false,
+      message: "Failed to load user ID list",
+    });
+  }
+};
+
+/* ---------------------------------------------------------
+   GET USER PERMISSIONS (lkpUserID's own permission tree)
+   GET /api/user-permission/:lkpUserID
 --------------------------------------------------------- */
 
 export const getUserPermissions = async (
   req: Request<UserParams>,
   res: Response
 ): Promise<void> => {
+  const { PstrCoID } = req.query;
+
+  if (!PstrCoID) {
+    res.status(400).json({
+      success: false,
+      message: "Company ID is required",
+    });
+    return;
+  }
+
   const client = await pool.connect();
 
   try {
@@ -103,11 +162,12 @@ export const getUserPermissions = async (
     // Call the stored procedure in GET mode.
     await client.query(
       `CALL dbo.sp_pageuserpermission(
-        $1, $2, $3, $4, $5
+        $1, $2, $3, $4, $5, $6
       )`,
       [
         "G",
-        req.params.userId,
+        PstrCoID,
+        req.params.lkpUserID,
         null,
         null,
         "permission_cursor",
@@ -141,16 +201,40 @@ export const getUserPermissions = async (
 };
 
 /* ---------------------------------------------------------
-   SAVE USER PERMISSIONS
-   PUT /api/user-permission/:userId
+   SAVE USER PERMISSIONS (mode 'S', delete-then-reinsert)
+   PUT /api/user-permission/:lkpUserID
 --------------------------------------------------------- */
 
 export const saveUserPermissions = async (
   req: Request<UserParams, unknown, SaveBody>,
   res: Response
 ): Promise<void> => {
-  const { userId } = req.params;
-  const { permissions } = req.body;
+  const { lkpUserID } = req.params;
+  const { PstrCoID, PstrYear, PstrUserID, permissions } = req.body;
+
+  if (!PstrCoID) {
+    res.status(400).json({
+      success: false,
+      message: "Company ID is required",
+    });
+    return;
+  }
+
+  if (!PstrYear) {
+    res.status(400).json({
+      success: false,
+      message: "Year is required",
+    });
+    return;
+  }
+
+  if (!PstrUserID) {
+    res.status(400).json({
+      success: false,
+      message: "User ID is required",
+    });
+    return;
+  }
 
   if (!Array.isArray(permissions)) {
     res.status(400).json({
@@ -165,25 +249,39 @@ export const saveUserPermissions = async (
   try {
     await client.query("BEGIN");
 
-    // Delete existing permissions.
+    // What this user already had, before we touch anything -
+    // used below to build a proper "inserted / deleted" audit
+    // note instead of just a final count.
+    const before = await client.query(
+      `SELECT fmenuid FROM dbo.tbluserpermission WHERE fcoid = $1 AND fuserid = $2`,
+      [PstrCoID, lkpUserID]
+    );
+    const oldMenuIds = new Set<string>(before.rows.map((r) => r.fmenuid));
+
+    // Delete existing permissions (for this company).
     await client.query(
       `CALL dbo.sp_pageuserpermission(
-        $1, $2, $3, $4, $5
+        $1, $2, $3, $4, $5, $6
       )`,
-      ["D", userId, null, null, "unused_cursor"]
+      ["D", PstrCoID, lkpUserID, null, null, "unused_cursor"]
     );
 
     // Insert each permission.
+    const newMenuIds = new Set<string>();
+
     for (const permission of permissions) {
       if (!permission.menuId) continue;
 
+      newMenuIds.add(permission.menuId);
+
       await client.query(
         `CALL dbo.sp_pageuserpermission(
-          $1, $2, $3, $4, $5
+          $1, $2, $3, $4, $5, $6
         )`,
         [
           "S",
-          userId,
+          PstrCoID,
+          lkpUserID,
           permission.menuId,
           permission.buttons ?? "0",
           "unused_cursor",
@@ -193,9 +291,69 @@ export const saveUserPermissions = async (
 
     await client.query("COMMIT");
 
+    // =====================================================
+    // USER AUDIT (only after the save has actually succeeded)
+    // note describes exactly what changed: which menus were
+    // newly granted vs which were removed, not just a count
+    // =====================================================
+
+    try {
+      const insertedIds = [...newMenuIds].filter((id) => !oldMenuIds.has(id));
+      const deletedIds = [...oldMenuIds].filter((id) => !newMenuIds.has(id));
+
+      let captionById = new Map<string, string>();
+
+      const changedIds = [...insertedIds, ...deletedIds];
+
+      if (changedIds.length > 0) {
+        const captionResult = await pool.query(
+          `SELECT fmenuid, fmenucaption FROM dbo.tblmenu WHERE fmenuid = ANY($1)`,
+          [changedIds]
+        );
+
+        captionById = new Map(
+          captionResult.rows.map((r) => [r.fmenuid, r.fmenucaption])
+        );
+      }
+
+      const describe = (ids: string[]) =>
+        ids.map((id) => captionById.get(id) || id).join(", ");
+
+      const noteParts: string[] = [];
+
+      if (insertedIds.length > 0) {
+        noteParts.push(`Inserted menu(s): ${describe(insertedIds)}`);
+      }
+
+      if (deletedIds.length > 0) {
+        noteParts.push(`Deleted menu(s): ${describe(deletedIds)}`);
+      }
+
+      const note =
+        noteParts.length > 0
+          ? `${noteParts.join(" | ")} for user '${lkpUserID}'`
+          : `Updated permission buttons for user '${lkpUserID}' (no menus added or removed)`;
+
+      await UserAudit(
+        PstrCoID,
+        PstrYear,
+        null,
+        null,
+        lkpUserID,
+        "User Permission - Menu",
+        "S",
+        PstrUserID,
+        note
+      );
+    } catch (auditError: unknown) {
+      // the permissions are already saved - don't fail the request
+      // over an audit-logging problem, just log it
+      console.error("UserAudit error (saveUserPermissions):", auditError);
+    }
+
     res.json({
       success: true,
-      message: "Permissions saved",
+      message: "Permission saved successfully",
     });
   } catch (err) {
     await client.query("ROLLBACK");
@@ -212,27 +370,77 @@ export const saveUserPermissions = async (
 };
 
 /* ---------------------------------------------------------
-   DELETE USER PERMISSIONS
-   DELETE /api/user-permission/:userId
+   DELETE USER PERMISSIONS (mode 'D')
+   DELETE /api/user-permission/:lkpUserID
 --------------------------------------------------------- */
 
 export const deleteUserPermissions = async (
-  req: Request<UserParams>,
+  req: Request<UserParams, unknown, DeleteBody>,
   res: Response
 ): Promise<void> => {
+  const { lkpUserID } = req.params;
+  const { PstrCoID, PstrYear, PstrUserID } = req.body;
+
+  if (!PstrCoID) {
+    res.status(400).json({
+      success: false,
+      message: "Company ID is required",
+    });
+    return;
+  }
+
+  if (!PstrYear) {
+    res.status(400).json({
+      success: false,
+      message: "Year is required",
+    });
+    return;
+  }
+
+  if (!PstrUserID) {
+    res.status(400).json({
+      success: false,
+      message: "User ID is required",
+    });
+    return;
+  }
+
   try {
     await pool.query(
       `CALL dbo.sp_pageuserpermission(
-        $1, $2, $3, $4, $5
+        $1, $2, $3, $4, $5, $6
       )`,
       [
         "D",
-        req.params.userId,
+        PstrCoID,
+        lkpUserID,
         null,
         null,
         "unused_cursor",
       ]
     );
+
+    // =====================================================
+    // USER AUDIT (only after the delete has actually succeeded)
+    // =====================================================
+
+    try {
+      await UserAudit(
+        PstrCoID,
+        PstrYear,
+        null,
+        null,
+        lkpUserID,
+        "User Permission - Menu",
+        "D",
+        PstrUserID,
+        `Deleted all permissions for user '${lkpUserID}'`
+      );
+    } catch (auditError: unknown) {
+      // the permissions are already deleted - don't fail the request
+      // over an audit-logging problem, just log it
+      console.error("UserAudit error (deleteUserPermissions):", auditError);
+    }
 
     res.json({
       success: true,
