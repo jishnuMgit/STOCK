@@ -447,7 +447,7 @@ async function callReceiptProcedure(
 export async function GetDataTL({
   lkpBranch,
   lkpType,
-  txtReceiptNo,
+  txtDocNo,
 }: GetDataParams): Promise<DbRow[]> {
 
   console.log(
@@ -469,8 +469,8 @@ export async function GetDataTL({
   );
 
   console.log(
-    "Doc No:",
-    JSON.stringify(txtReceiptNo)
+    "Doc No 1:",
+    JSON.stringify(txtDocNo)
   );
 
   console.log(
@@ -489,7 +489,7 @@ export async function GetDataTL({
 
     const docType = toDocumentType(lkpType);
 
-    const docNo = clean(txtReceiptNo);
+    const docNo = clean(txtDocNo);
 
 
     /* =====================================================
@@ -632,7 +632,7 @@ export async function GetDataTL({
 export async function GetDataHD({
   lkpBranch,
   lkpType,
-  txtReceiptNo,
+  txtDocNo,
 }: GetDataParams): Promise<DbRow[]> {
 
   console.log(
@@ -655,7 +655,7 @@ export async function GetDataHD({
 
   console.log(
     "Doc No:",
-    JSON.stringify(txtReceiptNo)
+    JSON.stringify(txtDocNo)
   );
 
   console.log(
@@ -677,7 +677,7 @@ export async function GetDataHD({
       toDocumentType(lkpType);
 
     const docNo =
-      clean(txtReceiptNo);
+      clean(txtDocNo);
 
 
     /* =====================================================
@@ -831,7 +831,7 @@ export async function GetDataHD({
 export async function GetData({
   lkpBranch,
   lkpType,
-  txtReceiptNo,
+  txtDocNo,
 }: GetDataParams): Promise<GetDataResult> {
 
   console.log(
@@ -854,7 +854,7 @@ export async function GetData({
 
   console.log(
     "Doc No:",
-    JSON.stringify(txtReceiptNo)
+    JSON.stringify(txtDocNo)
   );
 
   console.log(
@@ -873,7 +873,7 @@ export async function GetData({
     toDocumentType(lkpType);
 
   const docNo =
-    clean(txtReceiptNo);
+    clean(txtDocNo);
 
 
   /* =======================================================
@@ -954,7 +954,7 @@ export async function GetData({
     await GetDataTL({
       lkpBranch: branch,
       lkpType: docType,
-      txtReceiptNo: docNo,
+      txtDocNo: docNo,
     });
 
   console.log(
@@ -975,7 +975,7 @@ export async function GetData({
     await GetDataHD({
       lkpBranch: branch,
       lkpType: docType,
-      txtReceiptNo: docNo,
+      txtDocNo: docNo,
     });
 
   console.log(
