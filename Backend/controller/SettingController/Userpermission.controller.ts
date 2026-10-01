@@ -116,8 +116,11 @@ export const getUserIdList = async (
       return;
     }
 
+    // dbo.filluserid excludes ADMIN, same as the old VB
+    // FillCombos ("...Where fUserID<>'ADMIN'") - shared by
+    // every screen that picks a target user to view/manage.
     const result = await pool.query(
-      `SELECT fuserid FROM dbo.tbluserlogin WHERE fcoid = $1 ORDER BY fuserid`,
+      `SELECT * FROM dbo.filluserid($1)`,
       [PstrCoID]
     );
 

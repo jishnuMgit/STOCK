@@ -3,6 +3,7 @@ import Select, { type SingleValue, type StylesConfig } from "react-select";
 import { toast } from "react-toastify";
 import { useEnterAsTab } from "../../../hooks/useEnterAsTab";
 import { useAltShortcuts } from "../../../hooks/useAltShortcuts";
+import { useButtonPermissions } from "../../../hooks/useButtonPermissions";
 
 const API_URL = `${import.meta.env.VITE_API_URL}/user-permission`;
 
@@ -566,7 +567,11 @@ function MenuRow({
 // MAIN COMPONENT
 // ============================================================
 
+// dbo.tblmenu fmenuid for the User Permission - Menu page.
+const MENU_ID = "9302";
+
 const UserPermission: React.FC = () => {
+  const perms = useButtonPermissions(MENU_ID);
   const handleEnterAsTab = useEnterAsTab();
 
   const [lkpUserID, setLkpUserID] = useState(
@@ -758,6 +763,11 @@ const UserPermission: React.FC = () => {
   // ==========================================================
 
   const handleSave = async () => {
+    if (!perms.save) {
+      toast.error("You do not have permission to Save.");
+      return;
+    }
+
     if (!lkpUserID.trim()) {
       toast.warning("Please enter a user ID.");
       return;
@@ -818,6 +828,11 @@ const UserPermission: React.FC = () => {
   // ==========================================================
 
   const handleDelete = async () => {
+    if (!perms.delete) {
+      toast.error("You do not have permission to Delete.");
+      return;
+    }
+
     if (!lkpUserID.trim()) {
       toast.warning("Please enter a user ID.");
       return;
@@ -992,7 +1007,7 @@ const UserPermission: React.FC = () => {
           <button
             type="button"
             onClick={handleSave}
-            disabled={saving || loading}
+            disabled={saving || loading || !perms.save}
             className="h-10 w-[108px] rounded-[4px] border border-[#9eb8d2] bg-gradient-to-b from-white to-[#e5edf4] text-[14px] text-green-700 shadow-sm hover:from-[#f8fbff] hover:to-[#d9e7f3] disabled:cursor-not-allowed disabled:opacity-60 max-[600px]:flex-1"
           >
             <span className="underline underline-offset-2">
@@ -1003,7 +1018,7 @@ const UserPermission: React.FC = () => {
           <button
             type="button"
             onClick={handleDelete}
-            disabled={saving || loading}
+            disabled={saving || loading || !perms.delete}
             className="h-10 w-[108px] rounded-[4px] border border-[#9eb8d2] bg-gradient-to-b from-white to-[#e5edf4] text-[14px] text-green-700 shadow-sm hover:from-[#f8fbff] hover:to-[#d9e7f3] disabled:cursor-not-allowed disabled:opacity-60 max-[600px]:flex-1"
           >
             <span className="underline underline-offset-2">

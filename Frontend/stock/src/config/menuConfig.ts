@@ -24,7 +24,6 @@ import type { MenuNode } from "../types/menu";
 
    Still unresolved (no obvious counterpart in the real data,
    not guessed):
-     - SetCompanyInfo  (no "Company Info" row exists at all)
      - Transaction-matching / Transaction-unmatching
        (mnuFinDocPost / mnuFinDocUnPost are Document
        Post/UnPost, a different feature)
@@ -138,27 +137,6 @@ export const ADMINISTRATION_NODE: MenuNode = {
   fmenuname: "mnuAdministration",
   fmenucaption: "Administration",
   fmenubuttons: "0",
-  children: [],
-};
-
-/* =========================================================
-   SET COMPANY INFO (synthetic node)
-
-   Not a row in tblmenu — hardcoded per manager's decision,
-   since Company Info is a single admin-only settings page
-   and won't get a backend menu row. Injected as a child of
-   Setting (91) at render time, only for userType "AU".
-
-   fmenuid "9199" is out of the real "91xx" id space used by
-   Setting's actual children (9101–9115), chosen so it can
-   never collide with a real menu row.
-========================================================= */
-
-export const SET_COMPANY_INFO_NODE: MenuNode = {
-  fmenuid: "9199",
-  fmenuname: "mnuSetCompanyInfo",
-  fmenucaption: "Set Company Info",
-  fmenubuttons: "SM", // single record: Save/Modify, no Delete
   children: [],
 };
 

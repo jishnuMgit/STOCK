@@ -11,7 +11,7 @@ import UserLogin from "../pages/Security/UserLogin/UserLogin";
 import COASettings from "../pages/Settings/COASettingPage";
 import UserPermission from "../pages/Security/UserPermission/UserPermissionPage";
 import BeginningStockPage from "../pages/Purchase/Transaction/BeginningStockPage";
-import UserPermissionCoBranchPage from "../pages/Security/UserPermission/UserPermissionBranchPage";
+import UserPermissionCoBranchPage from "../pages/Security/UserPermissionCoBranch/UserPermissionCoBranchPage";
 import SetPostingAccountPage from "../pages/Settings/SetPostingAccountPage";
 import PurchaseInvoicePage from "../pages/Purchase/Transaction/PIPage";
 
