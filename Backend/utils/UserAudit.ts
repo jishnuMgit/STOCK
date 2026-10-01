@@ -36,7 +36,6 @@ export const UserAudit = async (
         lkpBranch,
         Type,
         txtDocNo,
-        txtDocNo,
         strscreenname,
         straction,
         note,

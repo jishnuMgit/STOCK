@@ -329,9 +329,15 @@ export const getDocNo = async (
     const PstrCoID = process.env.PstrCoID;
     const PstrYear = Number(process.env.PstrYear);
 
-    const { fptype, fbrid } = req.body;
+    const {
+      strDocType,
+      lkpBranch,
+    } = req.body;
 
-    console.log("================fptype=================", fptype);
+    console.log(
+      "================fptype=================",
+      req.body
+    );
 
     /* =========================================
        VALIDATION
@@ -351,7 +357,7 @@ export const getDocNo = async (
       });
     }
 
-    if (!fptype) {
+    if (!strDocType) {
       return res.status(400).json({
         success: false,
         message: "Document type is required",
@@ -371,7 +377,13 @@ export const getDocNo = async (
       SELECT *
       FROM dbo.getnextdocno($1, $2, $3, $4, $5)
       `,
-      [PstrCoID, PstrYear, fbrid, fptype, "dbo.tblfintrans"],
+      [
+        PstrCoID,
+        PstrYear,
+        lkpBranch,
+        strDocType,
+        "dbo.tblfintrans",
+      ]
     );
 
     /* =========================================
@@ -406,7 +418,9 @@ export const getDivID = async (
   try {
     const PstrCoID = process.env.PstrCoID;
 
-    const { customerid } = req.body;
+    const { accountId
+ } =
+      req.body;
 
     console.log("=================================");
 
@@ -414,7 +428,11 @@ export const getDivID = async (
 
     console.log("Company ID:", PstrCoID);
 
-    console.log("Customer ID:", customerid);
+    console.log(
+      "Customer ID:",
+      accountId
+
+    );
 
     console.log("=================================");
 
@@ -425,7 +443,8 @@ export const getDivID = async (
       });
     }
 
-    if (!customerid) {
+    if (!accountId
+) {
       return res.status(400).json({
         success: false,
         message: "Customer ID is required",
@@ -440,8 +459,12 @@ export const getDivID = async (
           $2
         )
         `,
-      [PstrCoID, customerid],
-    );
+        [
+          PstrCoID,
+          accountId
+,
+        ]
+      );
 
     console.log("Customer Division Result:", result.rows);
 
@@ -641,7 +664,12 @@ export async function GetDatas(req: Request, res: Response): Promise<Response> {
        QUERY PARAMETERS
     ===================================================== */
 
-    const { lkpBranch, lkpType, txtReceiptNo } = req.query;
+    const {
+      lkpBranch,
+      lkpType,
+      txtDocNo,
+    } = req.query;
+
 
     console.log("\n======================================");
 
@@ -651,7 +679,10 @@ export async function GetDatas(req: Request, res: Response): Promise<Response> {
 
     console.log("Doc lkpType:", JSON.stringify(lkpType));
 
-    console.log("Doc No:", JSON.stringify(txtReceiptNo));
+    console.log(
+      "Doc No 1:",
+      JSON.stringify(txtDocNo)
+    );
 
     console.log("======================================");
 
@@ -685,16 +716,17 @@ export async function GetDatas(req: Request, res: Response): Promise<Response> {
       });
     }
 
+
     if (
-      txtReceiptNo === undefined ||
-      txtReceiptNo === null ||
-      String(txtReceiptNo).trim() === ""
+      txtDocNo === undefined ||
+      txtDocNo === null ||
+      String(txtDocNo).trim() === ""
     ) {
       return res.status(400).json({
         exists: false,
         header: null,
         rows: [],
-        message: "Receipt number is required",
+        message: "Document number is required",
       });
     }
 
@@ -704,11 +736,12 @@ export async function GetDatas(req: Request, res: Response): Promise<Response> {
 
     console.log("Calling GetData...");
 
-    const result = await GetData({
-      lkpBranch: String(lkpBranch),
-      lkpType: String(lkpType),
-      txtReceiptNo: String(txtReceiptNo),
-    });
+    const result =
+      await GetData({
+        lkpBranch: String(lkpBranch),
+        lkpType: String(lkpType),
+        txtDocNo: String(txtDocNo),
+      });
 
     console.log("Calling GetData...", result?.header);
 
@@ -766,7 +799,11 @@ export const DeleteReceipt = async (
       throw new Error("User ID is not configured");
     }
 
-    const { lkpBranch, lkpType, txtReceiptNo } = req.body;
+    const {
+      lkpBranch,
+      lkpType,
+      txtDocNo,
+    } = req.body;
 
     if (!lkpBranch) {
       return res.status(400).json({
@@ -780,7 +817,7 @@ export const DeleteReceipt = async (
       });
     }
 
-    if (!txtReceiptNo) {
+    if (!txtDocNo) {
       return res.status(400).json({
         message: "Doc.No is required",
       });
@@ -793,7 +830,7 @@ export const DeleteReceipt = async (
     const receiptData = await GetData({
       lkpBranch,
       lkpType,
-      txtReceiptNo,
+      txtDocNo,
     });
 
     console.log("Receipt Before Delete:", receiptData);
@@ -823,7 +860,7 @@ export const DeleteReceipt = async (
       PstrYear,
       lkpBranch,
       lkpType,
-      txtReceiptNo,
+      txtDocNo,
       "Receipt",
       "D",
       PstrUserID,
@@ -839,7 +876,7 @@ export const DeleteReceipt = async (
     const result = await deleteReceiptService({
       lkpBranch,
       lkpType,
-      txtReceiptNo,
+      txtDocNo,
     });
 
     // =====================================================
@@ -882,8 +919,10 @@ export const getReceiptPrint = async (
       typeof value === "string" ? value.trim() : "";
 
     const strbranch = asText(req.query.lkpBranch);
-    const lkpType = asText(req.query.lkpType) + "R";
-    const strdocNo = asText(req.query.txtReceiptNo);
+    const lkpType = asText(req.query.lkpType) +  "R"
+    const strdocNo = asText(req.query.txtDocNo);
+
+
 
     if (!strbranch || !lkpType || !strdocNo) {
       return res.status(400).json({
@@ -891,6 +930,15 @@ export const getReceiptPrint = async (
         message: "Branch, receipt type and receipt number are required",
       });
     }
+
+    console.log(
+      "getReceiptPrint parameters:",
+      {
+        strbranch,
+        lkpType,
+        strdocNo,
+      }
+    );
 
     const data = await getReceiptPrintData({
       coId: PstrCoID,

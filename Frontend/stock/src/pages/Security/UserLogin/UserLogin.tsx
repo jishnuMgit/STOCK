@@ -3,6 +3,7 @@ import Select, { type SingleValue } from "react-select";
 import { toast } from "react-toastify";
 import { X } from "lucide-react";
 import { useEnterAsTab } from "../../../hooks/useEnterAsTab";
+import { useAltShortcuts } from "../../../hooks/useAltShortcuts";
 import { useConfirm } from "../../../hooks/useConfirm";
 
 // ============================================================
@@ -554,6 +555,17 @@ const UserLogin: React.FC = () => {
   };
 
   // ============================================================
+  // KEYBOARD SHORTCUTS
+  // Alt+S -> Save, Alt+C -> Clear (matches the underlined
+  // accelerator letters on the buttons).
+  // ============================================================
+
+  useAltShortcuts({
+    s: handleSave,
+    c: handleClear,
+  });
+
+  // ============================================================
   // INPUT CLASS
   // ============================================================
 
@@ -792,6 +804,7 @@ const UserLogin: React.FC = () => {
                         }
                         maxLength={30}
                         readOnly={user.txtOriginal_UserID !== ""}
+                        autoComplete="off"
                         className={inputClass}
                       />
 
@@ -873,6 +886,10 @@ const UserLogin: React.FC = () => {
                       placeholder={
                         user.txtOriginal_UserID ? "••••••" : ""
                       }
+                      autoComplete="new-password"
+                      data-lpignore="true"
+                      data-1p-ignore="true"
+                      data-bwignore="true"
                       className={inputClass}
                     />
                   </td>
@@ -900,6 +917,10 @@ const UserLogin: React.FC = () => {
                       }
                       minLength={6}
                       maxLength={12}
+                      autoComplete="new-password"
+                      data-lpignore="true"
+                      data-1p-ignore="true"
+                      data-bwignore="true"
                       placeholder={
                         user.txtOriginal_UserID ? "••••••" : ""
                       }
@@ -914,7 +935,7 @@ const UserLogin: React.FC = () => {
                       border-b
                       border-r
                       border-[#b7e8cf]
-                      p-1
+                      p-2
                     "
                   >
                     <Select
@@ -942,7 +963,7 @@ const UserLogin: React.FC = () => {
                     className="
                       border-b
                       border-[#b7e8cf]
-                      p-1
+                      p-2
                     "
                   >
                     <Select

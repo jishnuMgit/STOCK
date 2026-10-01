@@ -76,7 +76,7 @@ interface ReceiptsResponse {
   accountsortbyId: AccountData[];
   costCenters: CostCenter[];
   defaultBranch: string | null;
-  txtReceiptNo: string;
+  txtDocNo: string;
   receiptNo: string;
   receiptType?: string | null;
 }
@@ -192,7 +192,9 @@ const ReceiptPage: React.FC = () => {
   const [receivedFrom, setReceivedFrom] = useState("");
   const [reference, setReference] = useState("");
   const [cbCcId, setCbCcId] = useState("");
-  const [documentNo, setDocumentNo] = useState("");
+
+  const [txtDocNo, setTxtDocNo] = useState("");
+
   const [focusReceiptNoAfterClear, setFocusReceiptNoAfterClear] = useState(0);
   const [date, setDate] = useState(getTodayDate);
 
@@ -308,15 +310,15 @@ const ReceiptPage: React.FC = () => {
 
         setCostCenters(result.costCenters || []);
 
-        if (result.txtReceiptNo || result.receiptNo) {
-          setDocumentNo(result.txtReceiptNo || result.receiptNo);
+        if (result.txtDocNo || result.receiptNo) {
+          setTxtDocNo(result.txtDocNo || result.receiptNo);
         }
 
         setTimeout(() => {
           const input = documentNoRef.current;
 
           if (!input) {
-            console.log("Receipt No input not found");
+            console.log("Document No input not found");
             return;
           }
 
@@ -347,7 +349,7 @@ const ReceiptPage: React.FC = () => {
   const handlePrint = async () => {
     try {
       const response = await fetch(
-        `${import.meta.env.VITE_API_URL}/Receipt/print?lkpBranch=${lkpBranch}&lkpType=${lkpType}&txtReceiptNo=${documentNo}`,
+        `${import.meta.env.VITE_API_URL}/Receipt/print?lkpBranch=${lkpBranch}&lkpType=${lkpType}&txtDocNo=${txtDocNo}`,
       );
 
       if (!response.ok) {
@@ -371,7 +373,7 @@ const ReceiptPage: React.FC = () => {
   ======================================================= */
 
   const getReceipt = useCallback(async () => {
-    const requestedDocumentNo = documentNo.trim();
+    const requestedDocumentNo = txtDocNo.trim();
 
     if (!lkpBranch || !requestedDocumentNo) {
       console.log("Modify lookup skipped:", {
@@ -398,7 +400,7 @@ const ReceiptPage: React.FC = () => {
       const query = new URLSearchParams({
         lkpBranch: lkpBranch,
         lkpType: toDocumentType(lkpType),
-        txtReceiptNo: requestedDocumentNo,
+        txtDocNo: requestedDocumentNo,
       });
 
       const url = `${import.meta.env.VITE_API_URL}/Receipt/get/data?${query.toString()}`;
@@ -470,7 +472,8 @@ const ReceiptPage: React.FC = () => {
           : "B",
       );
 
-      setDocumentNo(result.header.docNo || requestedDocumentNo);
+      setTxtDocNo(result.header.docNo || requestedDocumentNo);
+
       setDate(formatReceiptDate(result.header.receiptDate));
       setCbAccount(result.header.cbAccountName || "");
       setCbCcId(result.header.ccId || "");
@@ -502,7 +505,7 @@ const ReceiptPage: React.FC = () => {
         error instanceof Error ? error.message : "Unable to load receipt.",
       );
     }
-  }, [accountOptions, lkpBranch, documentNo, lkpType]);
+  }, [accountOptions, lkpBranch, txtDocNo, lkpType]);
 
   /* =======================================================
      RESET TABLE + LOAD NEXT DOCUMENT NUMBER
@@ -542,7 +545,7 @@ const ReceiptPage: React.FC = () => {
      * receipt number from remaining visible while the
      * new receipt number is being requested.
      */
-    setDocumentNo("");
+    setTxtDocNo("");
 
     try {
       /* =====================================================
@@ -563,6 +566,18 @@ const ReceiptPage: React.FC = () => {
       }
 
       const result = (await response.json()) as ReceiptsResponse;
+
+      console.log("========================================");
+
+      console.log("GET RECEIPT AFTER RESET");
+
+      console.log("GET RECEIPT RESPONSE:", result);
+
+      console.log("API txtDocNo:", result.txtDocNo);
+
+      console.log("API receiptNo:", result.receiptNo);
+
+      console.log("========================================");
 
       if (!result.success) {
         throw new Error(
@@ -626,7 +641,7 @@ const ReceiptPage: React.FC = () => {
        * So check BOTH.
        */
 
-      const newReceiptNo = result.receiptNo || result.txtReceiptNo || "";
+      const newReceiptNo = result.receiptNo || result.txtDocNo || "";
 
       console.log("NEW RECEIPT NUMBER:", newReceiptNo);
 
@@ -635,11 +650,11 @@ const ReceiptPage: React.FC = () => {
       ===================================================== */
 
       if (newReceiptNo) {
-        setDocumentNo(newReceiptNo);
+        setTxtDocNo(newReceiptNo);
       } else {
         console.error("❌ NEW RECEIPT NUMBER WAS NOT RETURNED BY API");
 
-        setDocumentNo("");
+        setTxtDocNo("");
       }
 
       /* =====================================================
@@ -679,7 +694,7 @@ const ReceiptPage: React.FC = () => {
        * could not be loaded.
        */
 
-      setDocumentNo("");
+      setTxtDocNo("");
 
       setReceiptMessage(
         error instanceof Error
@@ -1069,7 +1084,7 @@ const ReceiptPage: React.FC = () => {
       const validationFailed =
         !lkpBranch ||
         !lkpType ||
-        !documentNo.trim() ||
+        !txtDocNo.trim() ||
         !date ||
         !cbAccount ||
         validRows.length === 0;
@@ -1103,7 +1118,9 @@ const ReceiptPage: React.FC = () => {
         lkpType,
         cashBank: cbAccount,
         cbCcId,
-        txtReceiptNo: documentNo,
+
+        txtDocNo,
+
         receiptDate: date,
         receivedFrom,
         reference,
@@ -1130,7 +1147,9 @@ const ReceiptPage: React.FC = () => {
       const saveType =
         lkpType === "B" ? "BR" : lkpType === "C" ? "CR" : lkpType;
       console.log("========== SAVE RECEIPT ==========");
-      console.log("OLD RECEIPT NUMBER:", documentNo);
+
+      console.log("OLD RECEIPT NUMBER:", txtDocNo);
+
       console.log("SAVE TYPE:", saveType);
       console.log("SENDING RECEIPT:", receiptData);
 
@@ -1211,6 +1230,10 @@ const ReceiptPage: React.FC = () => {
 
       toast.success(result.message || "Saved successfully");
 
+      console.log("✅ SAVE SUCCESS");
+
+      console.log("OLD SAVED RECEIPT:", txtDocNo);
+
       /* =====================================================
        CLEAR + LOAD COMPLETELY NEW RECEIPT NUMBER
     ===================================================== */
@@ -1232,7 +1255,7 @@ const ReceiptPage: React.FC = () => {
     lkpType,
     cbAccount,
     cbCcId,
-    documentNo,
+    txtDocNo,
     date,
     receivedFrom,
     reference,
@@ -1269,7 +1292,7 @@ const ReceiptPage: React.FC = () => {
       lkpType,
       cbAccount,
       cbCcId,
-      documentNo,
+      txtDocNo,
       date,
       receivedFrom,
       reference,
@@ -1285,7 +1308,7 @@ const ReceiptPage: React.FC = () => {
     const validationFailed =
       !lkpBranch ||
       !lkpType ||
-      !documentNo.trim() ||
+      !txtDocNo.trim() ||
       !date ||
       !cbAccount ||
       validRows.length === 0;
@@ -1296,7 +1319,7 @@ const ReceiptPage: React.FC = () => {
       console.error("Validation values:", {
         lkpBranch: !!lkpBranch,
         lkpType: !!lkpType,
-        documentNo: !!documentNo.trim(),
+        txtDocNo: !!txtDocNo.trim(),
         date: !!date,
         cbAccount: !!cbAccount,
         validRows: validRows.length,
@@ -1349,7 +1372,8 @@ const ReceiptPage: React.FC = () => {
              Keep the loaded receipt number.
              Do NOT generate a new number.
           */
-      docNo: documentNo.trim(),
+      txtDocNo: txtDocNo.trim(),
+
       receiptDate: date,
       receivedFrom,
       reference,
@@ -1377,7 +1401,8 @@ const ReceiptPage: React.FC = () => {
     console.log("🔥 MODIFY PAYLOAD:");
     console.log(JSON.stringify(modifyPayload, null, 2));
     console.log("MODIFY DOC TYPE:", modifyPayload.lkpType);
-    console.log("MODIFY DOC NO:", modifyPayload.docNo);
+
+    console.log("MODIFY DOC NO:", modifyPayload.txtDocNo);
 
     /* ===============================================
            CALL API
@@ -1508,7 +1533,7 @@ const ReceiptPage: React.FC = () => {
     lkpType,
     cbAccount,
     cbCcId,
-    documentNo,
+    txtDocNo,
     date,
     receivedFrom,
     reference,
@@ -1528,7 +1553,7 @@ const ReceiptPage: React.FC = () => {
          VALIDATION
       =============================================== */
 
-      const validationFailed = !lkpBranch || !lkpType || !documentNo.trim();
+      const validationFailed = !lkpBranch || !lkpType || !txtDocNo.trim();
 
       if (validationFailed) {
         toast.warning("Branch, type, and receipt number are required.");
@@ -1556,7 +1581,7 @@ const ReceiptPage: React.FC = () => {
       const receiptData = {
         lkpBranch: lkpBranch,
         lkpType: lkpType + "R",
-        txtReceiptNo: documentNo.trim(),
+        txtDocNo: txtDocNo.trim(),
       };
 
       console.log("DELETE RECEIPT:", receiptData);
@@ -1633,7 +1658,7 @@ const ReceiptPage: React.FC = () => {
           : "Cannot connect to Receipt API.",
       );
     }
-  }, [lkpBranch, lkpType, documentNo, resetTableAndLoadNextReceiptNumber]);
+  }, [lkpBranch, lkpType, txtDocNo, resetTableAndLoadNextReceiptNumber]);
 
   /* =======================================================
      CLEAR FORM
@@ -1690,8 +1715,8 @@ const ReceiptPage: React.FC = () => {
           setReference={setReference}
           receivedFrom={receivedFrom}
           setReceivedFrom={setReceivedFrom}
-          documentNo={documentNo}
-          setDocumentNo={setDocumentNo}
+          documentNo={txtDocNo}
+          setDocumentNo={setTxtDocNo}
           date={date}
           setDate={setDate}
           branchRef={branchRef}

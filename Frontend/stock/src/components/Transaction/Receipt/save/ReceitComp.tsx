@@ -354,13 +354,13 @@ export const ReceiptForm: React.FC<ReceiptFormProps> = ({
    * GET RECEIPT DOCUMENT NUMBER
    * =========================================================
    */
-  const getReceiptDocNumber = async (fbrid: string, typeId: string) => {
-    if (!fbrid) {
+  const getReceiptDocNumber = async (lkpBranch: string, typeId: string) => {
+    if (!lkpBranch) {
       setDocumentNo("");
       return;
     }
 
-    const documentType = typeId === "C" ? "CR" : "BR";
+    const strDocType = typeId + "R"
 
     try {
       setDocumentNoLoading(true);
@@ -373,8 +373,8 @@ export const ReceiptForm: React.FC<ReceiptFormProps> = ({
             "Content-Type": "application/json",
           },
           body: JSON.stringify({
-            fbrid,
-            fptype: documentType,
+            lkpBranch,
+            strDocType,
           }),
         },
       );
@@ -1015,10 +1015,19 @@ export const ReceiptForm: React.FC<ReceiptFormProps> = ({
 
               option: (base: any, state: any) => ({
                 ...base,
-                padding: 0, // was "6px 10px"; the cells handle padding now
+              // was "6px 10px"; the cells handle padding now
+               
+        
+               
+                
+                  padding: "6px 10px",
+
                 fontSize: "12px",
+
                 backgroundColor: state.isFocused ? "#eef8f3" : "#fff",
+
                 color: "#222",
+
                 cursor: "pointer",
               }),
 
@@ -1028,19 +1037,7 @@ export const ReceiptForm: React.FC<ReceiptFormProps> = ({
                 zIndex: 99999,
               }),
 
-              option: (base: any, state: any) => ({
-                ...base,
-
-                padding: "6px 10px",
-
-                fontSize: "12px",
-
-                backgroundColor: state.isFocused ? "#eef8f3" : "#fff",
-
-                color: "#222",
-
-                cursor: "pointer",
-              }),
+           
             }}
             isSearchable
             isClearable={false}
@@ -1997,7 +1994,7 @@ const ReceiptRow = memo(
                 "Content-Type": "application/json",
               },
               body: JSON.stringify({
-                customerid: accountId,
+                 accountId,
               }),
             },
           );
