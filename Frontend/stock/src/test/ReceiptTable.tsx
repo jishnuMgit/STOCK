@@ -76,9 +76,7 @@ export type TableField =
   | "match"
   | "view";
 
-export type SortField =
-  | "accountId"
-  | "accountName";
+export type SortField = "accountId" | "accountName";
 
 /* =========================================================
    ACCOUNT OPTION
@@ -100,14 +98,9 @@ export interface AccountOption {
    ROW REF TYPES
 ========================================================= */
 
-export type RowRefValue =
-  | HTMLElement
-  | SelectInstance<any>
-  | null;
+export type RowRefValue = HTMLElement | SelectInstance<any> | null;
 
-export type RowRefs = Partial<
-  Record<TableField, HTMLElement>
->;
+export type RowRefs = Partial<Record<TableField, HTMLElement>>;
 
 /* =========================================================
    RECEIPT TABLE REF
@@ -116,10 +109,7 @@ export type RowRefs = Partial<
 export interface ReceiptTableRef {
   focusFirstAccountId: () => void;
 
-  focusField: (
-    rowIndex: number,
-    field: TableField
-  ) => void;
+  focusField: (rowIndex: number, field: TableField) => void;
 }
 
 /* =========================================================
@@ -132,24 +122,16 @@ export interface ReceiptTableProps {
   handleRowChange: (
     rowIndex: number,
     field: keyof ReceiptRow,
-    value: string | number | boolean
+    value: string | number | boolean,
   ) => void;
 
-  onFieldEnter: (
-    rowIndex: number,
-    field: TableField
-  ) => void;
+  onFieldEnter: (rowIndex: number, field: TableField) => void;
 
   onTableEscape: () => void;
 
-  onClearRow: (
-    rowIndex: number
-  ) => void;
+  onClearRow: (rowIndex: number) => void;
 
-  onSortRows: (
-    field: SortField,
-    direction: "asc" | "desc"
-  ) => void;
+  onSortRows: (field: SortField, direction: "asc" | "desc") => void;
 
   accountOptions?: AccountData[];
 
@@ -157,376 +139,218 @@ export interface ReceiptTableProps {
 
   costCenters?: CostCenter[];
 }
-export const ReceiptTable =
-  forwardRef<
-    ReceiptTableRef,
-    ReceiptTableProps
-  >(
-    (
-      {
-  rows,
-  handleRowChange,
-  onFieldEnter,
-  onTableEscape,
-  onClearRow,
-  onSortRows,
-  accountOptions = [],
-  accountSortByIdOptions = [],
-  costCenters = [],
-},
-      ref
-    ) => {
-      const [
-        selectedRowId,
-        setSelectedRowIdState,
-      ] = useState<number | null>(null);
+export const ReceiptTable = forwardRef<ReceiptTableRef, ReceiptTableProps>(
+  (
+    {
+      rows,
+      handleRowChange,
+      onFieldEnter,
+      onTableEscape,
+      onClearRow,
+      onSortRows,
+      accountOptions = [],
+      accountSortByIdOptions = [],
+      costCenters = [],
+    },
+    ref,
+  ) => {
+    const [selectedRowId, setSelectedRowIdState] = useState<number | null>(
+      null,
+    );
 
-      const [
-        sortField,
-        setSortField,
-      ] = useState<SortField | null>(null);
+    const [sortField, setSortField] = useState<SortField | null>(null);
 
-      const [
-        sortDirection,
-        setSortDirection,
-      ] = useState<"asc" | "desc">("asc");
+    const [sortDirection, setSortDirection] = useState<"asc" | "desc">("asc");
 
-      const handleSort =
-        useCallback(
-          (
-            field: SortField
-          ) => {
-            const nextDirection =
-              sortField === field &&
-              sortDirection === "asc"
-                ? "desc"
-                : "asc";
+    const handleSort = useCallback(
+      (field: SortField) => {
+        const nextDirection =
+          sortField === field && sortDirection === "asc" ? "desc" : "asc";
 
-            setSortField(field);
-            setSortDirection(
-              nextDirection
-            );
+        setSortField(field);
+        setSortDirection(nextDirection);
 
-            onSortRows(
-              field,
-              nextDirection
-            );
-          },
-          [
-            onSortRows,
-            sortDirection,
-            sortField,
-          ]
-        );
+        onSortRows(field, nextDirection);
+      },
+      [onSortRows, sortDirection, sortField],
+    );
 
-      const rowRefs =
-        useRef<RowRefs[]>([]);
+    const rowRefs = useRef<RowRefs[]>([]);
 
-      const setSelectedRowId =
-        useCallback(
-          (id: number) => {
-            setSelectedRowIdState(id);
-          },
-          []
-        );
+    const setSelectedRowId = useCallback((id: number) => {
+      setSelectedRowIdState(id);
+    }, []);
 
-      const setRowRef =
-        useCallback(
-          (
-            rowIndex: number,
-            field: TableField,
-            value: RowRefValue
-          ) => {
-            if (
-              !rowRefs.current[rowIndex]
-            ) {
-              rowRefs.current[rowIndex] =
-                {};
-            }
+    const setRowRef = useCallback(
+      (rowIndex: number, field: TableField, value: RowRefValue) => {
+        if (!rowRefs.current[rowIndex]) {
+          rowRefs.current[rowIndex] = {};
+        }
 
-            if (value) {
-              rowRefs.current[rowIndex][field] =
-                value;
-            } else {
-              delete rowRefs.current[rowIndex][field];
-            }
-          },
-          []
-        );
+        if (value) {
+          rowRefs.current[rowIndex][field] = value;
+        } else {
+          delete rowRefs.current[rowIndex][field];
+        }
+      },
+      [],
+    );
 
-      const realAccountOptions =
-        useMemo<AccountOption[]>(
-          () => {
-            if (!Array.isArray(accountOptions)) {
-              return [];
-            }
+    const realAccountOptions = useMemo<AccountOption[]>(() => {
+      if (!Array.isArray(accountOptions)) {
+        return [];
+      }
 
-            return accountOptions
-              .filter(
-                (account) =>
-                  Boolean(
-                    account &&
-                    account.faccountid
-                  )
-              )
-              .map(
-                (account) => ({
-                  value:
-                    account.faccountid,
+      return accountOptions
+        .filter((account) => Boolean(account && account.faccountid))
+        .map((account) => ({
+          value: account.faccountid,
 
-                  label:
-                    account.faccountid,
+          label: account.faccountid,
 
-                  accountId:
-                    account.faccountid,
+          accountId: account.faccountid,
 
-                  accountName:
-                    account.faccountname ||
-                    "",
+          accountName: account.faccountname || "",
 
-                  fgcs:
-                    account.fgcs ||
-                    "",
+          fgcs: account.fgcs || "",
 
-                  haveCc:
-                    account.fhavecc ===
-                    true,
-                })
-              );
-          },
-          [accountOptions]
-        );
+          haveCc: account.fhavecc === true,
+        }));
+    }, [accountOptions]);
 
-        const accountIdOptions =
-  useMemo<AccountOption[]>(() => {
-    if (!Array.isArray(accountSortByIdOptions)) {
-      return [];
-    }
+    const accountIdOptions = useMemo<AccountOption[]>(() => {
+      if (!Array.isArray(accountSortByIdOptions)) {
+        return [];
+      }
 
-    return accountSortByIdOptions
-      .filter(
-        (account) =>
-          Boolean(
-            account &&
-            account.faccountid
-          )
-      )
-      .map(
-        (account) => ({
+      return accountSortByIdOptions
+        .filter((account) => Boolean(account && account.faccountid))
+        .map((account) => ({
           value: account.faccountid,
           label: account.faccountid,
 
-          accountId:
-            account.faccountid,
+          accountId: account.faccountid,
 
-          accountName:
-            account.faccountname || "",
+          accountName: account.faccountname || "",
 
-          fgcs:
-            account.fgcs || "",
+          fgcs: account.fgcs || "",
 
-          haveCc:
-            account.fhavecc === true,
-        })
-      );
-  }, [accountSortByIdOptions]);
+          haveCc: account.fhavecc === true,
+        }));
+    }, [accountSortByIdOptions]);
 
-      const ccIdOptions =
-        useMemo<SelectOption[]>(
-          () => {
-            if (
-              !Array.isArray(
-                costCenters
-              )
-            ) {
-              return [];
-            }
+    const ccIdOptions = useMemo<SelectOption[]>(() => {
+      if (!Array.isArray(costCenters)) {
+        return [];
+      }
 
-            return [...costCenters]
-              .sort(
-                (first, second) =>
-                  first.fpositionno -
-                  second.fpositionno
-              )
-              .map(
-                (costCenter) => ({
-                  value:
-                    costCenter.fccid,
+      return [...costCenters]
+        .sort((first, second) => first.fpositionno - second.fpositionno)
+        .map((costCenter) => ({
+          value: costCenter.fccid,
 
-                  label:
-                    costCenter.fccid,
-                })
-              );
-          },
-          [costCenters]
-        );
+          label: costCenter.fccid,
+        }));
+    }, [costCenters]);
 
-      const focusField =
-        useCallback(
-          (
-            rowIndex: number,
-            field: TableField
-          ) => {
-            const element =
-              rowRefs.current[rowIndex]?.[field];
+    const focusField = useCallback((rowIndex: number, field: TableField) => {
+      const element = rowRefs.current[rowIndex]?.[field];
 
-            if (!element) {
-              console.warn(
-                "ReceiptTable field not found:",
-                rowIndex,
-                field
-              );
+      if (!element) {
+        console.warn("ReceiptTable field not found:", rowIndex, field);
 
-              return;
-            }
+        return;
+      }
 
-            requestAnimationFrame(() => {
-              element.focus();
+      requestAnimationFrame(() => {
+        element.focus();
 
-              if (
-                element instanceof
-                HTMLInputElement
-              ) {
-                if (
-                  element.type !==
-                  "checkbox"
-                ) {
-                  element.select();
-                }
-              }
-            });
-          },
-          []
-        );
+        if (element instanceof HTMLInputElement) {
+          if (element.type !== "checkbox") {
+            element.select();
+          }
+        }
+      });
+    }, []);
 
-      useImperativeHandle(
-        ref,
-        () => ({
-          focusFirstAccountId: () => {
-            focusField(
-              0,
-              "accountId"
-            );
-          },
+    useImperativeHandle(
+      ref,
+      () => ({
+        focusFirstAccountId: () => {
+          focusField(0, "accountId");
+        },
 
-          focusField,
-        }),
-        [focusField]
-      );
+        focusField,
+      }),
+      [focusField],
+    );
 
-      return (
-        <div className="receipt-table-wrapper">
-          <table
-            id="tblReceipt"
-            className="receipt-table"
-          >
-            <colgroup>
-              <col style={{ width: "38px" }} />
-              <col style={{ width: "105px" }} />
-              <col style={{ width: "auto" }} />
-              <col style={{ width: "75px" }} />
-              <col style={{ width: "75px" }} />
-              <col style={{ width: "100px" }} />
-              <col style={{ width: "60px" }} />
-              <col style={{ width: "60px" }} />
-            </colgroup>
+    return (
+      <div className="receipt-table-wrapper">
+        <table id="tblReceipt" className="receipt-table">
+          <colgroup>
+            <col style={{ width: "38px" }} />
+            <col style={{ width: "105px" }} />
+            <col style={{ width: "auto" }} />
+            <col style={{ width: "75px" }} />
+            <col style={{ width: "75px" }} />
+            <col style={{ width: "100px" }} />
+            <col style={{ width: "60px" }} />
+            <col style={{ width: "60px" }} />
+          </colgroup>
 
-            <thead>
-              <tr>
-                <th>Sl.</th>
+          <thead>
+            <tr>
+              <th>Sl.</th>
 
-                <th>
-                  <button
-                    type="button"
-                    onClick={() =>
-                      handleSort(
-                        "accountId"
-                      )
-                    }
-                  >
-                    Account ID
-                  </button>
-                </th>
+              <th>
+                <button type="button" onClick={() => handleSort("accountId")}>
+                  Account ID
+                </button>
+              </th>
 
-                <th>
-                  <button
-                    type="button"
-                    onClick={() =>
-                      handleSort(
-                        "accountName"
-                      )
-                    }
-                  >
-                    Account Name
-                  </button>
-                </th>
+              <th>
+                <button type="button" onClick={() => handleSort("accountName")}>
+                  Account Name
+                </button>
+              </th>
 
-                <th>Division</th>
+              <th>Division</th>
 
-                <th>CC. ID</th>
+              <th>CC. ID</th>
 
-                <th className="text-right">
-                  Credit Amt.
-                </th>
+              <th className="text-right">Credit Amt.</th>
 
-                <th className="text-center">
-                  Match
-                </th>
+              <th className="text-center">Match</th>
 
-                <th className="text-center">
-                  View
-                </th>
-              </tr>
-            </thead>
+              <th className="text-center">View</th>
+            </tr>
+          </thead>
 
-            <tbody>
-              {rows.map(
-                (row, index) => (
-                  <ReceiptRow
-                    key={row.id}
-                    url=""
-                    row={row}
-                    index={index}
-                    isSelected={
-                      selectedRowId ===
-                      row.id
-                    }
-                    realAccountOptions={
-                      realAccountOptions
-                    }
-                    accountIdOptions={
-                      accountIdOptions
-                    }
-                    ccIdOptions={
-                      ccIdOptions
-                    }
-                    setSelectedRowId={
-                      setSelectedRowId
-                    }
-                    setRowRef={
-                      setRowRef
-                    }
-                    handleRowChange={
-                      handleRowChange
-                    }
-                    onFieldEnter={
-                      onFieldEnter
-                    }
-                    onTableEscape={
-                      onTableEscape
-                    }
-                    onClearRow={
-                      onClearRow
-                    }
-                  />
-                )
-              )}
-            </tbody>
-          </table>
-        </div>
-      );
-    }
-  );
+          <tbody>
+            {rows.map((row, index) => (
+              <ReceiptRow
+                key={row.id}
+                url=""
+                row={row}
+                index={index}
+                isSelected={selectedRowId === row.id}
+                realAccountOptions={realAccountOptions}
+                accountIdOptions={accountIdOptions}
+                ccIdOptions={ccIdOptions}
+                setSelectedRowId={setSelectedRowId}
+                setRowRef={setRowRef}
+                handleRowChange={handleRowChange}
+                onFieldEnter={onFieldEnter}
+                onTableEscape={onTableEscape}
+                onClearRow={onClearRow}
+              />
+            ))}
+          </tbody>
+        </table>
+      </div>
+    );
+  },
+);
 
-ReceiptTable.displayName =
-  "ReceiptTable";
+ReceiptTable.displayName = "ReceiptTable";
