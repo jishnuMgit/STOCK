@@ -12,7 +12,7 @@ export const login = async (req: Request, res: Response): Promise<Response> => {
   try {
     const { companyId, txtYear, txtUserID, txtPwd } = req.body;
 
-    console.log(req.body, "request ====================")
+    console.log(req.body, "request ====================");
 
     /* =====================================================
        VALIDATION
@@ -186,12 +186,12 @@ export const login = async (req: Request, res: Response): Promise<Response> => {
       `
   INSERT INTO dbo.tblusersession (
     fuserid,
-    fsessiontoken
-    -- fbranchid intentionally omitted, see DEFAULT BRANCH note above
+    fsessiontoken,
+    fcoid
   )
-  VALUES ($1, $2)
+  VALUES ($1, $2, $3)
   `,
-      [txtUserID, sessionToken],
+      [txtUserID, sessionToken, companyId],
     );
 
     /* =====================================================

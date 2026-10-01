@@ -4,6 +4,8 @@ import Select, {
   type SingleValue,
   type StylesConfig,
 } from "react-select";
+import { X } from "lucide-react";
+import type { ParentAccount } from "../../../hooks/useCustomer";
 
 // ============================================================
 // TYPES
@@ -32,6 +34,8 @@ interface CustomerHeaderProps {
 
   lkpBusinessType: string;
   setLkpBusinessType: React.Dispatch<React.SetStateAction<string>>;
+  parentAccounts: ParentAccount[];
+  onClose?: () => void;
 }
 
 // ============================================================
@@ -96,29 +100,41 @@ const selectStyles: StylesConfig<SelectOption, false> = {
 
     minHeight: "28px",
     height: "28px",
-
     borderRadius: "3px",
-
     borderColor: state.isFocused ? "#64748b" : "#aeb7c2",
-
     boxShadow: "none",
-
     fontSize: "12px",
-
     backgroundColor: "#ffffff",
-
     cursor: "pointer",
-
     "&:hover": {
       borderColor: "#94a3b8",
     },
+  }), // <- control ends here
+
+  // this is what fixes the hidden dropdown
+  menuPortal: (base) => ({
+    ...base,
+    zIndex: 9999,
+  }),
+
+  valueContainer: (base) => ({
+    ...base,
+    height: "28px",
+    padding: "0 8px",
+  }),
+
+  // ...input, singleValue, placeholder, indicatorsContainer,
+  // dropdownIndicator, indicatorSeparator stay as they are...
+
+  menu: (base) => ({
+    ...base,
+    fontSize: "12px",
   }),
 
   valueContainer: (base) => ({
     ...base,
 
     height: "28px",
-
     padding: "0 8px",
   }),
 
@@ -127,7 +143,6 @@ const selectStyles: StylesConfig<SelectOption, false> = {
 
     margin: 0,
     padding: 0,
-
     fontSize: "12px",
   }),
 
@@ -135,7 +150,6 @@ const selectStyles: StylesConfig<SelectOption, false> = {
     ...base,
 
     color: "#334155",
-
     fontSize: "12px",
   }),
 
@@ -143,7 +157,6 @@ const selectStyles: StylesConfig<SelectOption, false> = {
     ...base,
 
     color: "#64748b",
-
     fontSize: "12px",
   }),
 
@@ -157,7 +170,6 @@ const selectStyles: StylesConfig<SelectOption, false> = {
     ...base,
 
     padding: "4px 6px",
-
     color: "#475569",
   }),
 
@@ -169,7 +181,6 @@ const selectStyles: StylesConfig<SelectOption, false> = {
     ...base,
 
     zIndex: 9999,
-
     fontSize: "12px",
   }),
 
@@ -183,9 +194,7 @@ const selectStyles: StylesConfig<SelectOption, false> = {
     ...base,
 
     padding: "6px 9px",
-
     fontSize: "12px",
-
     backgroundColor: state.isSelected
       ? "#dbeafe"
       : state.isFocused
@@ -193,7 +202,6 @@ const selectStyles: StylesConfig<SelectOption, false> = {
         : "#ffffff",
 
     color: "#334155",
-
     cursor: "pointer",
   }),
 };
@@ -232,6 +240,8 @@ const CustomerHeader: React.FC<CustomerHeaderProps> = ({
 
   lkpBusinessType,
   setLkpBusinessType,
+  parentAccounts,
+  onClose,
 }) => {
   // ==========================================================
   // HELPER
@@ -244,29 +254,29 @@ const CustomerHeader: React.FC<CustomerHeaderProps> = ({
     return options.find((item) => item.value === value) ?? null;
   };
 
+  const accountIdOptions: SelectOption[] = parentAccounts.map((a) => ({
+    value: a.accountId,
+    label: a.accountId,
+  }));
+
+  const accountNameOptions: SelectOption[] = parentAccounts.map((a) => ({
+    value: a.accountId,
+    label: a.accountName,
+  }));
+
+  // Selecting either dropdown keeps the ID and name in sync
+  const handleAccountChange = (option: SingleValue<SelectOption>) => {
+    const account = parentAccounts.find((a) => a.accountId === option?.value);
+    setlkpGAccountID(account?.accountId ?? "");
+    setlkpGAccountName(account?.accountName ?? "");
+  };
+
   // ==========================================================
   // INPUT STYLE
   // ==========================================================
 
-  const inputClass = `
-    h-[28px]
-    w-full
-    rounded-[3px]
-    border
-    border-slate-400
-    bg-white
-    px-2
-    text-[12px]
-    text-slate-700
-    outline-none
-    focus:border-blue-500
-    focus:ring-1
-    focus:ring-blue-200
-  `;
-
-  // ==========================================================
-  // JSX
-  // ==========================================================
+  const inputClass = `h-[30px] w-full rounded-[3px] border border-slate-400 bg-white px-2 text-[12px] text-slate-700 outline-none
+    focus:border-blue-500 focus:ring-1 focus:ring-blue-200`;
 
   return (
     <>
@@ -274,55 +284,31 @@ const CustomerHeader: React.FC<CustomerHeaderProps> = ({
           TITLE
       ====================================================== */}
 
-      <div
-        className="
-          flex
-          h-[32px]
-          items-center
-          justify-start
-
-          
-          border-b
-          border-slate-300
-          bg-[#a3dfc0]
-        "
-      >
-        <h1
-          className="
-            text-[17px]
-            ml-1.25
-            font-semibold
-            text-slate-700
-          "
-        >
+      <div className="sticky top-0 z-10 flex h-8 items-center justify-between border-b border-slate-300 bg-[#a3dfc0] pr-1">
+        <h1 className="ml-1.25 text-[17px] font-semibold text-slate-700">
           Customer
         </h1>
+
+        {onClose && (
+          <button
+            type="button"
+            title="Close"
+            onClick={onClose}
+            className="flex h-6 w-6 cursor-pointer items-center justify-center rounded-full text-slate-700 hover:bg-red-100 hover:text-red-600 focus:outline-none"
+          >
+            <X width={16} height={16} />
+          </button>
+        )}
       </div>
 
       {/* ======================================================
           HEADER CONTROLS
       ====================================================== */}
 
-      <div
-        className="
-    border-b
-    border-slate-200
-    px-3
-    py-3
-    sm:px-5
-    lg:px-6
-  "
-      >
+      <div className=" border-b border-slate-200 px-3 py-3 sm:px-5 lg:px-6">
         <div
-          className="
-      grid
-      grid-cols-1
-      gap-3
-      sm:grid-cols-2
-      lg:grid-cols-[130px_100px_minmax(0,1fr)_80px_150px]
-      lg:items-end
-      lg:gap-4
-    "
+          className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-[130px_100px_minmax(0,1fr)_80px_150px]
+      lg:items-end lg:gap-4"
         >
           {/* ==================================================
         NEW CUSTOMER ID
@@ -331,38 +317,17 @@ const CustomerHeader: React.FC<CustomerHeaderProps> = ({
           <div className="w-full">
             <label
               htmlFor="optNewCustomerID_Auto"
-              className="
-          mb-1
-          block
-          text-[11px]
-          text-slate-600
-        "
+              className="mb-1 block text-[11px] text-slate-600"
             >
               New Customer ID
             </label>
 
-            <div
-              className="
-          flex
-          h-[28px]
-          items-center
-          gap-3
-          rounded-[3px]
-          border
-          border-slate-200
-          px-2
-        "
-            >
+            <div className="flex h-7 items-center gap-3 rounded-[3px] border border-slate-200 px-2">
               {/* AUTO */}
 
               <label
                 htmlFor="optNewCustomerID_Auto"
-                className="
-            flex
-            cursor-pointer
-            items-center
-            gap-1
-            whitespace-nowrap
+                className="flex cursor-pointer items-center gap-1 whitespace-nowrap
           "
               >
                 <input
@@ -372,11 +337,7 @@ const CustomerHeader: React.FC<CustomerHeaderProps> = ({
                   value="Auto"
                   checked={optNewCustomerID === "Auto"}
                   onChange={(e) => setOptNewCustomerID(e.target.value)}
-                  className="
-              h-[13px]
-              w-[13px]
-              accent-blue-600
-            "
+                  className="h-3.25 w-3.25 accent-blue-600"
                 />
 
                 <span className="text-[12px]">Auto</span>
@@ -386,13 +347,7 @@ const CustomerHeader: React.FC<CustomerHeaderProps> = ({
 
               <label
                 htmlFor="optNewCustomerID_Manual"
-                className="
-            flex
-            cursor-pointer
-            items-center
-            gap-1
-            whitespace-nowrap
-          "
+                className="flex cursor-pointer items-center gap-1 whitespace-nowrap"
               >
                 <input
                   id="optNewCustomerID_Manual"
@@ -401,11 +356,7 @@ const CustomerHeader: React.FC<CustomerHeaderProps> = ({
                   value="Manual"
                   checked={optNewCustomerID === "Manual"}
                   onChange={(e) => setOptNewCustomerID(e.target.value)}
-                  className="
-              h-[13px]
-              w-[13px]
-              accent-blue-600
-            "
+                  className="h-3.25 w-3.25 accent-blue-600"
                 />
 
                 <span className="text-[12px]">Manual</span>
@@ -420,12 +371,7 @@ const CustomerHeader: React.FC<CustomerHeaderProps> = ({
           <div className="w-full">
             <label
               htmlFor="txtCustomerID"
-              className="
-          mb-1
-          block
-          text-[11px]
-          text-slate-600
-        "
+              className="mb-1 block text-[11px] text-slate-600"
             >
               Customer ID
             </label>
@@ -443,26 +389,13 @@ const CustomerHeader: React.FC<CustomerHeaderProps> = ({
           {/* ==================================================
         PARENT ACCOUNT
     ================================================== */}
-          <div
-            className="
-    grid
-    grid-cols-[20%_minmax(0,1fr)]
-    items-end
-    gap-[10px]
-    sm:col-span-2
-    lg:col-span-1
-  "
-          >
+          <div className="grid grid-cols-[30%_minmax(0,1fr)] items-end gap-2.5 sm:col-span-2 lg:col-span-1">
             {/* PARENT ACCOUNT ID */}
 
             <div className="w-full">
               <label
                 htmlFor="lkpGAccountID"
-                className="mb-1 block
-            whitespace-nowrap
-            text-[11px]
-            text-slate-600
-          "
+                className="mb-1 block whitespace-nowrap text-[11px] text-slate-600"
               >
                 GL. Account ID
               </label>
@@ -471,11 +404,9 @@ const CustomerHeader: React.FC<CustomerHeaderProps> = ({
                 inputId="lkpGAccountID"
                 instanceId="lkpGAccountID"
                 name="lkpGAccountID"
-                options={parentAccountOptions}
-                value={getOption(parentAccountOptions, lkpGAccountID)}
-                onChange={(option: SingleValue<SelectOption>) =>
-                  setlkpGAccountID(option?.value ?? "")
-                }
+                options={accountIdOptions}
+                value={getOption(accountIdOptions, lkpGAccountID)}
+                onChange={handleAccountChange}
                 styles={selectStyles}
                 components={{
                   DropdownIndicator: CustomDropdownIndicator,
@@ -488,16 +419,10 @@ const CustomerHeader: React.FC<CustomerHeaderProps> = ({
 
             {/* PARENT ACCOUNT NAME */}
 
-            <div className="w-[100%]">
+            <div className="w-full">
               <label
                 htmlFor="lkpGAccountName"
-                className="
-            mb-1
-            block
-            whitespace-nowrap
-            text-[11px]
-            text-slate-600
-          "
+                className="mb-1 block whitespace-nowrap text-[11px] text-slate-600"
               >
                 GL. Account Name
               </label>
@@ -506,14 +431,9 @@ const CustomerHeader: React.FC<CustomerHeaderProps> = ({
                 inputId="lkpGAccountName"
                 instanceId="lkpGAccountName"
                 name="lkpGAccountName"
-                options={parentAccountNameOptions}
-                value={getOption(
-                  parentAccountNameOptions,
-                  lkpGAccountName,
-                )}
-                onChange={(option: SingleValue<SelectOption>) =>
-                  setlkpGAccountName(option?.value ?? "")
-                }
+                options={accountNameOptions}
+                value={getOption(accountNameOptions, lkpGAccountID)}
+                onChange={handleAccountChange}
                 styles={selectStyles}
                 components={{
                   DropdownIndicator: CustomDropdownIndicator,
@@ -526,23 +446,13 @@ const CustomerHeader: React.FC<CustomerHeaderProps> = ({
           </div>
 
           {/* ==================================================
-        HAVE DIVISION
-    ================================================== */}
+              HAVE DIVISION
+              ================================================== */}
 
-          {/* ==================================================
-    HAVE DIVISION
-================================================== */}
-
-          <div className="relative -left-[5px] w-[100%]">
+          <div className="relative -left-1.25 w-full">
             <label
               htmlFor="lkpHaveDivision"
-              className="
-      mb-1
-      block
-      whitespace-nowrap
-      text-[11px]
-      text-slate-600
-    "
+              className="mb-1 block whitespace-nowrap text-[11px] text-slate-600"
             >
               Division
             </label>
@@ -570,16 +480,10 @@ const CustomerHeader: React.FC<CustomerHeaderProps> = ({
     BUSINESS TYPE
 ================================================== */}
 
-          <div className="relative -left-[13px] w-[50%]">
+          <div className="relative -left-3.25 w-[50%]">
             <label
               htmlFor="lkpBusinessType"
-              className="
-      mb-1
-      block
-      whitespace-nowrap
-      text-[11px]
-      text-slate-600
-    "
+              className="mb-1 block whitespace-nowrap text-[11px] text-slate-600"
             >
               Business Type
             </label>

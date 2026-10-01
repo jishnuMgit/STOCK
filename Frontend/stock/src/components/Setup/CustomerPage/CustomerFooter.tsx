@@ -23,15 +23,15 @@ interface CustomerFooterProps {
 
   chkExcludeFromAgeing: boolean;
   setChkExcludeFromAgeing: React.Dispatch<React.SetStateAction<boolean>>;
+  saveLabel?: string;
+  saveDisabled?: boolean;
 
   // ==========================================================
   // BUTTONS
   // ==========================================================
 
   onSave: () => void;
-
   onDelete: () => void;
-
   onClear: () => void;
 }
 
@@ -40,6 +40,7 @@ interface CustomerFooterProps {
 // ============================================================
 
 const CustomerFooter: React.FC<CustomerFooterProps> = ({
+  saveLabel = "Save",
   // CHECKBOXES
   chkCustomer,
   setChkCustomer,
@@ -55,6 +56,7 @@ const CustomerFooter: React.FC<CustomerFooterProps> = ({
 
   chkExcludeFromAgeing,
   setChkExcludeFromAgeing,
+  saveDisabled = false,
 
   // BUTTONS
   onSave,
@@ -68,7 +70,7 @@ const CustomerFooter: React.FC<CustomerFooterProps> = ({
       ====================================================== */}
 
       <div className="px-3 py-1">
-        <div className="ml-[100px] mr-[6.2rem] flex flex-wrap items-center justify-between gap-x-4 gap-y-2 whitespace-nowrap">
+        <div className="ml-25 mr-[6.2rem] flex flex-wrap items-center justify-between gap-x-4 gap-y-2 whitespace-nowrap">
           <label
             htmlFor="chkCustomer"
             className="flex cursor-pointer items-center gap-2 text-[12px] text-slate-700"
@@ -79,7 +81,7 @@ const CustomerFooter: React.FC<CustomerFooterProps> = ({
               type="checkbox"
               checked={chkCustomer}
               onChange={(e) => setChkCustomer(e.target.checked)}
-              className="h-[14px] w-[14px] cursor-pointer accent-blue-600"
+              className="h-3.5 w-3.5 cursor-pointer accent-blue-600"
             />
             <span>Customer</span>
           </label>
@@ -94,7 +96,7 @@ const CustomerFooter: React.FC<CustomerFooterProps> = ({
               type="checkbox"
               checked={chkSupplier}
               onChange={(e) => setChkSupplier(e.target.checked)}
-              className="h-[14px] w-[14px] cursor-pointer accent-blue-600"
+              className="h-3.5 w-3.5 cursor-pointer accent-blue-600"
             />
             <span>Supplier</span>
           </label>
@@ -109,7 +111,7 @@ const CustomerFooter: React.FC<CustomerFooterProps> = ({
               type="checkbox"
               checked={chkInterCompany}
               onChange={(e) => setChkInterCompany(e.target.checked)}
-              className="h-[14px] w-[14px] cursor-pointer accent-blue-600"
+              className="h-3.5 w-3.5 cursor-pointer accent-blue-600"
             />
             <span>Inter Company</span>
           </label>
@@ -124,7 +126,7 @@ const CustomerFooter: React.FC<CustomerFooterProps> = ({
               type="checkbox"
               checked={chkInactiveCustomer}
               onChange={(e) => setChkInactiveCustomer(e.target.checked)}
-              className="h-[14px] w-[14px] cursor-pointer accent-blue-600"
+              className="h-3.5 w-3.5 cursor-pointer accent-blue-600"
             />
             <span>Inactive Customer</span>
           </label>
@@ -139,7 +141,7 @@ const CustomerFooter: React.FC<CustomerFooterProps> = ({
               type="checkbox"
               checked={chkExcludeFromAgeing}
               onChange={(e) => setChkExcludeFromAgeing(e.target.checked)}
-              className="h-[14px] w-[14px] cursor-pointer accent-blue-600"
+              className="h-3.5 w-3.5 cursor-pointer accent-blue-600"
             />
             <span>Exclude From Ageing</span>
           </label>
@@ -160,27 +162,11 @@ const CustomerFooter: React.FC<CustomerFooterProps> = ({
           name="Save"
           type="button"
           onClick={onSave}
-          className="
-            h-[36px]
-            w-[95px]
-            rounded-[3px]
-            border
-            border-slate-400
-            bg-gradient-to-b
-            from-white
-            to-slate-100
-            text-[14px]
-            text-green-600
-            shadow-sm
-            transition
-
-            hover:from-slate-50
-            hover:to-slate-100
-
-            active:translate-y-[1px]
-          "
+          disabled={saveDisabled}
+          className="h-9 w-23.75 rounded-[3px] border border-slate-400 bg-linear-to-b from-white to-slate-100 text-[14px]
+            text-green-600 shadow-sm transition hover:from-slate-50 hover:to-slate-100 active:translate-y-px"
         >
-          Save
+          {saveLabel}
         </button>
 
         {/* ====================================================
@@ -192,25 +178,8 @@ const CustomerFooter: React.FC<CustomerFooterProps> = ({
           name="Delete"
           type="button"
           onClick={onDelete}
-          className="
-            h-[36px]
-            w-[95px]
-            rounded-[3px]
-            border
-            border-slate-400
-            bg-gradient-to-b
-            from-white
-            to-slate-100
-            text-[14px]
-            text-green-600
-            shadow-sm
-            transition
-
-            hover:from-slate-50
-            hover:to-slate-100
-
-            active:translate-y-[1px]
-          "
+          className="h-9 w-23.75 rounded-[3px] border border-slate-400 bg-linear-to-b from-white to-slate-100 text-[14px]
+            text-green-600 shadow-sm transition hover:from-slate-50 hover:to-slate-100 active:translate-y-px"
         >
           Delete
         </button>
@@ -224,25 +193,8 @@ const CustomerFooter: React.FC<CustomerFooterProps> = ({
           name="Clear"
           type="button"
           onClick={onClear}
-          className="
-            h-[36px]
-            w-[95px]
-            rounded-[3px]
-            border
-            border-slate-400
-            bg-gradient-to-b
-            from-white
-            to-slate-100
-            text-[14px]
-            text-green-600
-            shadow-sm
-            transition
-
-            hover:from-slate-50
-            hover:to-slate-100
-
-            active:translate-y-[1px]
-          "
+          className="h-9 w-23.75 rounded-[3px] border border-slate-400 bg-linear-to-b from-white to-slate-100 text-[14px]
+            text-green-600 shadow-sm transition hover:from-slate-50 hover:to-slate-100 active:translate-y-px"
         >
           Clear
         </button>

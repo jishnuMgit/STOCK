@@ -238,11 +238,8 @@ const ReceiptForm: React.FC<ReceiptFormProps> = ({
   const [openSelect, setOpenSelect] = useState<
     "branch" | "type" | "cbAccount" | null
   >(null);
-
   const [accountsLoading, setAccountsLoading] = useState(false);
-
   const [documentNoLoading, setDocumentNoLoading] = useState(false);
-
   const [cbAccounts, setCbAccounts] = useState<CbAccount[]>([]);
 
   /* =======================================================
@@ -594,8 +591,8 @@ const ReceiptForm: React.FC<ReceiptFormProps> = ({
   const selectStyles = {
     control: (base: any) => ({
       ...base,
-      minHeight: "28px",
-      height: "28px",
+      minHeight: "30px",
+      height: "30px",
       borderColor: "#d7dee7",
       borderRadius: "4px",
       boxShadow: "none",
@@ -608,7 +605,7 @@ const ReceiptForm: React.FC<ReceiptFormProps> = ({
 
     valueContainer: (base: any) => ({
       ...base,
-      height: "28px",
+      height: "30px",
       padding: "0 8px",
     }),
 
@@ -634,7 +631,7 @@ const ReceiptForm: React.FC<ReceiptFormProps> = ({
 
     indicatorsContainer: (base: any) => ({
       ...base,
-      height: "28px",
+      height: "30px",
     }),
 
     dropdownIndicator: (base: any) => ({
@@ -792,8 +789,8 @@ const ReceiptForm: React.FC<ReceiptFormProps> = ({
 
               control: (base: any) => ({
                 ...base,
-                minHeight: "28px",
-                height: "28px",
+                minHeight: "30px",
+                height: "30px",
                 width: "200px",
                 borderColor: "#d7dee7",
                 borderRadius: "4px",
@@ -871,8 +868,8 @@ const ReceiptForm: React.FC<ReceiptFormProps> = ({
 
               control: (base: any) => ({
                 ...base,
-                minHeight: "28px",
-                height: "28px",
+                minHeight: "30px",
+                height: "30px",
                 width: "70px",
                 borderColor: "#d7dee7",
                 borderRadius: "4px",
@@ -972,8 +969,8 @@ const ReceiptForm: React.FC<ReceiptFormProps> = ({
 
               control: (base: any) => ({
                 ...base,
-                minHeight: "28px",
-                height: "28px",
+                minHeight: "30px",
+                height: "30px",
                 width: "400px",
                 borderColor: "#d7dee7",
                 borderRadius: "4px",
@@ -1042,8 +1039,8 @@ const ReceiptForm: React.FC<ReceiptFormProps> = ({
 
                 "& .MuiPickersInputBase-root": {
                   width: "150px",
-                  height: "28px",
-                  minHeight: "28px",
+                  height: "30px",
+                  minHeight: "30px",
                   boxSizing: "border-box",
                   borderRadius: "4px",
                   backgroundColor: "#ffffff",
@@ -1063,7 +1060,7 @@ const ReceiptForm: React.FC<ReceiptFormProps> = ({
                   width: "100%",
                   fontSize: "12px",
                   padding: 0,
-                  height: "28px",
+                  height: "30px",
                   boxSizing: "border-box",
                 },
 
