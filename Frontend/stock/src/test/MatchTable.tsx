@@ -9,7 +9,7 @@ import React, {
 
 // import { FaEye } from "react-icons/fa";
 
-import "../Receipt/save/commanReceipt.css";
+import "../components/Transaction/Receipt/save/commanReceipt.css";
 
 /* =========================================================
    RECEIPT / MATCH ROW

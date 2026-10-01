@@ -140,13 +140,13 @@ interface SelectOption {
    CUSTOMER DIVISION API RESPONSE
 ========================================================= */
 
-interface CustomerDivisionResponse {
-  success: boolean;
+// interface CustomerDivisionResponse {
+//   success: boolean;
 
-  message?: string;
+//   message?: string;
 
-  data: CustomerDivision[];
-}
+//   data: CustomerDivision[];
+// }
 
 /* =========================================================
    TABLE PROPS

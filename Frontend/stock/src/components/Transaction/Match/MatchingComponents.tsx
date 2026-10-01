@@ -208,11 +208,13 @@ const ResponsiveSelect = ({
   next,
   selectRef,
   styles,
+  //@ts-ignore
   reverseDropdown = false,
   columnHeaders,
   disabled = false,
   documentMode = false,
   swapColumns = false,
+  // @ts-ignore
   customOption,
 }: ResponsiveSelectProps) => {
   const wrapperRef = useRef<HTMLDivElement | null>(null);
@@ -363,62 +365,62 @@ const ResponsiveSelect = ({
   };
 
 
-  const CustomOption1 = (
-  props: OptionProps<SelectOption, false>
-) => {
-  const data = props.data as SelectOption;
+//   const CustomOption1 = (
+//   props: OptionProps<SelectOption, false>
+// ) => {
+//   const data = props.data as SelectOption;
 
-  const firstColumn = swapColumns
-    ? data.label
-    : data.value;
+//   const firstColumn = swapColumns
+//     ? data.label
+//     : data.value;
 
-  const secondColumn = swapColumns
-    ? data.value
-    : data.label;
+//   const secondColumn = swapColumns
+//     ? data.value
+//     : data.label;
 
-  return (
-    <components.Option {...props}>
-      <div
-        style={{
-          display: "flex",
-          justifyContent: "space-between",
-          alignItems: "center",
-          width: "100%",
-          minWidth: 0,
-        }}
-      >
-        {/* First column */}
-        <div
-          style={{
-            minWidth: 0,
-            flex: 1,
-            paddingRight: "12px",
-            overflow: "hidden",
-            whiteSpace: "nowrap",
-            textOverflow: "ellipsis",
-          }}
-        >
-          {firstColumn}
-        </div>
+//   return (
+//     <components.Option {...props}>
+//       <div
+//         style={{
+//           display: "flex",
+//           justifyContent: "space-between",
+//           alignItems: "center",
+//           width: "100%",
+//           minWidth: 0,
+//         }}
+//       >
+//         {/* First column */}
+//         <div
+//           style={{
+//             minWidth: 0,
+//             flex: 1,
+//             paddingRight: "12px",
+//             overflow: "hidden",
+//             whiteSpace: "nowrap",
+//             textOverflow: "ellipsis",
+//           }}
+//         >
+//           {firstColumn}
+//         </div>
 
-        {/* Second column */}
-        <div
-          style={{
-            flex: "0 0 210px",
-            minWidth: "210px",
-            borderLeft: "1px solid #d5dce3",
-            paddingLeft: "10px",
-            overflow: "hidden",
-            whiteSpace: "nowrap",
-            textOverflow: "ellipsis",
-          }}
-        >
-          {secondColumn}
-        </div>
-      </div>
-    </components.Option>
-  );
-};
+//         {/* Second column */}
+//         <div
+//           style={{
+//             flex: "0 0 210px",
+//             minWidth: "210px",
+//             borderLeft: "1px solid #d5dce3",
+//             paddingLeft: "10px",
+//             overflow: "hidden",
+//             whiteSpace: "nowrap",
+//             textOverflow: "ellipsis",
+//           }}
+//         >
+//           {secondColumn}
+//         </div>
+//       </div>
+//     </components.Option>
+//   );
+// };
   const CustomMenuList = (props: any) => {
     if (documentMode) {
       const headers = [
@@ -580,7 +582,9 @@ const MatchingComponents =
   >(
     (
       {
+        //@ts-ignore
         branch,
+ //@ts-ignore
         setBranch,
 
         type,
@@ -609,10 +613,11 @@ const MatchingComponents =
         onSearch,
 
         gstrCoID = import.meta.env.VITE_CO_ID ?? "",
-
+//@ts-ignore
         branchOptions,
         customerOptions,
         customerNameOptions,
+        //@ts-ignore
         divisionOptions,
         documentOptions,
 
@@ -1211,6 +1216,7 @@ const MatchingComponents =
 
       const handleActionKeyDown =
         (
+          //@ts-ignore
 event: React.KeyboardEvent<HTMLButtonElement>, p0: () => any        ) => {
           switch (event.key) {
             case "ArrowRight":
@@ -1268,21 +1274,21 @@ event: React.KeyboardEvent<HTMLButtonElement>, p0: () => any        ) => {
          INPUT STYLE
       ===================================================== */
 
-      const inputClass = `
-        h-[29px]
-        w-full
-        rounded-[3px]
-        border
-        border-[#b7c7d7]
-        bg-white
-        px-2
-        text-[13px]
-        text-slate-700
-        outline-none
-        focus:border-[#20884e]
-        focus:ring-0
-        placeholder:text-slate-400
-      `;
+      // const inputClass = `
+      //   h-[29px]
+      //   w-full
+      //   rounded-[3px]
+      //   border
+      //   border-[#b7c7d7]
+      //   bg-white
+      //   px-2
+      //   text-[13px]
+      //   text-slate-700
+      //   outline-none
+      //   focus:border-[#20884e]
+      //   focus:ring-0
+      //   placeholder:text-slate-400
+      // `;
 
       /* =====================================================
          TABLE INPUT STYLE

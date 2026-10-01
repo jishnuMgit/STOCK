@@ -7,7 +7,7 @@ import type { RefObject } from "react";
 
 import type { SelectInstance } from "react-select";
 
-import type { TableField } from "../test/ReceiptTable";
+import type { TableField } from "../components/Transaction/Receipt/save/ReceitComp";
 
 
 /* =========================================================

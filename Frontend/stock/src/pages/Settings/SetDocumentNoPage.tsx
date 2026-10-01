@@ -669,7 +669,7 @@ const SetDocumentNo: React.FC = () => {
   // ==========================================================
   // CLEAR
   // ==========================================================
-
+//@ts-ignore
   const handleClear = () => {
     setLkpYear("");
     setLkpBranch("");
