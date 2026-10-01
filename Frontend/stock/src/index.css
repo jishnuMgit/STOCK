@@ -12,6 +12,12 @@ body {
   font-family: 'Inter', sans-serif;
 }
 
+.input-style {
+  height: 30px;
+  border-radius: 4px;
+  font-size: 14px;
+}
+
 .btn-style {
   min-width: 105px;
   height: 34px;

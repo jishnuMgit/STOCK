@@ -275,7 +275,7 @@ const CustomerHeader: React.FC<CustomerHeaderProps> = ({
   // INPUT STYLE
   // ==========================================================
 
-  const inputClass = `h-[28px] w-full rounded-[3px] border border-slate-400 bg-white px-2 text-[12px] text-slate-700 outline-none
+  const inputClass = `h-[30px] w-full rounded-[3px] border border-slate-400 bg-white px-2 text-[12px] text-slate-700 outline-none
     focus:border-blue-500 focus:ring-1 focus:ring-blue-200`;
 
   return (
