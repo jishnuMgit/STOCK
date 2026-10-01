@@ -369,13 +369,13 @@ export const getDocNo = async (
     const PstrYear = Number(process.env.PstrYear);
 
     const {
-      fptype,
-      fbrid,
+      strDocType,
+      lkpBranch,
     } = req.body;
 
     console.log(
       "================fptype=================",
-      fptype
+      req.body
     );
 
     /* =========================================
@@ -398,7 +398,7 @@ export const getDocNo = async (
       });
     }
 
-    if (!fptype) {
+    if (!strDocType) {
       return res.status(400).json({
         success: false,
         message:
@@ -422,8 +422,8 @@ export const getDocNo = async (
       [
         PstrCoID,
         PstrYear,
-        fbrid,
-        fptype,
+        lkpBranch,
+        strDocType,
         "dbo.tblfintrans",
       ]
     );
