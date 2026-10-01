@@ -42,31 +42,31 @@ interface CustomerHeaderProps {
 // OPTIONS
 // ============================================================
 
-const parentAccountOptions: SelectOption[] = [
-  {
-    value: "1103001",
-    label: "1103001",
-  },
-  {
-    value: "1103002",
-    label: "1103002",
-  },
-  {
-    value: "1103003",
-    label: "1103003",
-  },
-];
+// const parentAccountOptions: SelectOption[] = [
+//   {
+//     value: "1103001",
+//     label: "1103001",
+//   },
+//   {
+//     value: "1103002",
+//     label: "1103002",
+//   },
+//   {
+//     value: "1103003",
+//     label: "1103003",
+//   },
+// ];
 
-const parentAccountNameOptions: SelectOption[] = [
-  {
-    value: "CLIENTS RECEIVABLES",
-    label: "CLIENTS RECEIVABLES",
-  },
-  {
-    value: "CUSTOMER RECEIVABLES",
-    label: "CUSTOMER RECEIVABLES",
-  },
-];
+// const parentAccountNameOptions: SelectOption[] = [
+//   {
+//     value: "CLIENTS RECEIVABLES",
+//     label: "CLIENTS RECEIVABLES",
+//   },
+//   {
+//     value: "CUSTOMER RECEIVABLES",
+//     label: "CUSTOMER RECEIVABLES",
+//   },
+// ];
 
 const haveDivisionOptions: SelectOption[] = [
   {
@@ -129,14 +129,12 @@ const selectStyles: StylesConfig<SelectOption, false> = {
   menu: (base) => ({
     ...base,
     fontSize: "12px",
+    
+    zIndex: 9999,
+   
   }),
 
-  valueContainer: (base) => ({
-    ...base,
-
-    height: "28px",
-    padding: "0 8px",
-  }),
+ 
 
   input: (base) => ({
     ...base,
@@ -177,12 +175,6 @@ const selectStyles: StylesConfig<SelectOption, false> = {
     display: "none",
   }),
 
-  menu: (base) => ({
-    ...base,
-
-    zIndex: 9999,
-    fontSize: "12px",
-  }),
 
   menuList: (base) => ({
     ...base,
@@ -263,6 +255,7 @@ const CustomerHeader: React.FC<CustomerHeaderProps> = ({
     value: a.accountId,
     label: a.accountName,
   }));
+  console.log("lkpGAccountName", lkpGAccountName);
 
   // Selecting either dropdown keeps the ID and name in sync
   const handleAccountChange = (option: SingleValue<SelectOption>) => {

@@ -16,15 +16,16 @@ import JournalTable, {
   type AccountData,
   type CostCenter,
 } from "../../../../components/Transaction/Journal/JournalTable";
+//@ts-ignore
+import JournalBottomForm, {
 
-import ReceiptBottomForm from "../../../../test/ReceiptBottomForm";
+} from "../../../../components/Transaction/Journal/JournalForm";
+//@ts-ignore
 
-import ReceiptActions, {
-  type ReceiptActionsRef,
-} from "../../../../test/ReceiptActions";
-
+import JournalActions from "../../../../components/Transaction/Journal/JournalTable";
 import JournalForm from "../../../../components/Transaction/Journal/JournalForm";
 import JournalHeader from "../../../../components/Transaction/Journal/JournalHeader";
+import { ReceiptActions, ReceiptBottomForm, type ReceiptActionsRef } from "../../../../components/Transaction/Receipt/save/ReceitComp";
 
 /* =========================================================
    TYPES

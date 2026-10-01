@@ -17,7 +17,7 @@ interface AccountOption {
   id: string;
   name: string;
 }
-
+//@ts-ignore
 interface AccountRow {
   key: string;
   label: string;

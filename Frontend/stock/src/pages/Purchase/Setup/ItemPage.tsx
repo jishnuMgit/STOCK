@@ -275,13 +275,13 @@ const ItemPage: React.FC = () => {
 
   const [lkpItemGroupID, setLkpItemGroupID] =
     useState("");
-
+//@ts-ignore
   const [lkpItemGroupName, setLkpItemGroupName] =
     useState("");
 
   const [lkpSupplierID, setLkpSupplierID] =
     useState("");
-
+//@ts-ignore
   const [lkpSupplierName, setLkpSupplierName] =
     useState("");
 

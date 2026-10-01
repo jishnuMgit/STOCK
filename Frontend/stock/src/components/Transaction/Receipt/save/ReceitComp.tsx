@@ -7,6 +7,7 @@ import React, {
   useMemo,
   useRef,
   useState,
+  //@ts-ignore
   useLayoutEffect,
 } from "react";
 
@@ -139,7 +140,7 @@ interface ReceiptFormProps {
 
   focusReceiptNoAfterClear?: number;
 }
-
+//@ts-ignore
 const CustomOption = (props: OptionProps<SelectOption, false>) => {
   const { data } = props;
 
@@ -247,6 +248,7 @@ export const ReceiptForm: React.FC<ReceiptFormProps> = ({
    * This function is used when keyboard navigation moves TO
    * the Branch select.
    */
+  //@ts-ignore
   const focusBranch = useCallback(() => {
     keepBranchFocus.current = true;
 
@@ -1897,6 +1899,7 @@ const getMenuLayout = (inputId: string): MenuLayout => {
 
 const ReceiptRow = memo(
   ({
+    //@ts-ignore
     url,
     row,
     index,

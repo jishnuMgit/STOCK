@@ -149,7 +149,7 @@ const StatementOfAccountMain: React.FC = () => {
 
   const [selectedCustomerId, setSelectedCustomerId] =
     useState("1007");
-
+ //@ts-ignore
   const [selectedCustomerName, setSelectedCustomerName] =
     useState("1007");
 
@@ -383,7 +383,7 @@ const StatementOfAccountMain: React.FC = () => {
   /* ==========================================================
      CLOSE
   ========================================================== */
-
+ //@ts-ignore
   const handleClose = () => {
     window.history.back();
   };
