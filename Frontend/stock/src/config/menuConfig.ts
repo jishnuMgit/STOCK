@@ -37,6 +37,9 @@ export const menuRouteMap: Record<string, string> = {
      PURCHASE - TRANSACTION
   ========================================================= */
 
+
+  mnuPurchaseInvoice: "/Purchase/Transaction/PurchaseInvoicePage",
+
 mnuBeginningStock:"/Purchase/Transaction/BeginningStockPage",
 
 

@@ -1924,7 +1924,7 @@ const ReceiptPage: React.FC = () => {
             readOnly
             className="
               ml-3
-              h-6.5
+              h-[30px]
               w-25
               rounded
               border

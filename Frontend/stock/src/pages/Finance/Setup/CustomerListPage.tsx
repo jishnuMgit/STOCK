@@ -1,7 +1,7 @@
 import React, { useEffect, useMemo, useState } from "react";
-import { Link } from "react-router-dom";
 import { SquarePen, Trash } from "lucide-react";
 import { useCustomer, type Customer } from "../../../hooks/useCustomer";
+import CustomerPage from "./CustomerPage";
 
 // ============================================================
 // STYLES & COLUMNS
@@ -14,7 +14,7 @@ const TD =
 
 const COLUMNS = [
   { label: "Customer ID", width: "w-[7%]", align: "text-left" },
-  { label: "Customer Name", width: "w-auto", align: "text-left" },
+  { label: "Customer Name", width: "w-[40%]", align: "text-left" },
   { label: "Division", width: "w-[5%]", align: "text-center" },
   { label: "Branch", width: "w-[10%]", align: "text-left" },
   { label: "GL. Account ID", width: "w-[7%]", align: "text-left" },
@@ -25,6 +25,9 @@ const COLUMNS = [
 
 const MESSAGE_ROW = "h-17.5 text-center text-[12px]";
 
+// null = closed, {} = Add, { customerId, mode } = Modify / Delete form
+type ModalState = { customerId?: string; mode?: "modify" | "delete" } | null;
+
 // ============================================================
 // COMPONENT
 // ============================================================
@@ -32,6 +35,16 @@ const MESSAGE_ROW = "h-17.5 text-center text-[12px]";
 const CustomerList: React.FC = () => {
   const [search, setSearch] = useState("");
   const { customers, fetchCustomers, loading, error } = useCustomer();
+  const [modal, setModal] = useState<ModalState>(null);
+
+  useEffect(() => {
+    if (!modal) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") setModal(null);
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [modal]);
 
   useEffect(() => {
     fetchCustomers();
@@ -57,23 +70,22 @@ const CustomerList: React.FC = () => {
   // ---------------- ACTIONS ----------------
 
   const handleModify = (customer: Customer) => {
-    console.log("Modify Customer:", customer);
+    setModal({ customerId: customer.lkpCustomerID, mode: "modify" });
   };
 
+  // Opens the customer form (loaded, locked); the delete happens from there
   const handleDelete = (customer: Customer) => {
-    if (!window.confirm(`Delete customer "${customer.lkpCustomerName}"?`))
-      return;
-    console.log("Delete Customer:", customer);
+    setModal({ customerId: customer.lkpCustomerID, mode: "delete" });
   };
 
   // ---------------- RENDER ----------------
 
   return (
-    <div className="mx-auto flex min-h-screen w-[1500px] items-start justify-center bg-white px-4 pt-4">
+    <div className="mx-auto flex min-h-screen w-375 items-start justify-center bg-white px-4 pt-4">
       <div className="w-full border border-slate-300 bg-white shadow-sm">
         {/* TITLE */}
         <div className="flex h-7.5 w-full items-center border-b border-slate-300 bg-[#a5e0c3]">
-          <h1 className="ml-[10px] text-[17px] font-semibold text-slate-700">
+          <h1 className="ml-2.5 text-[17px] font-semibold text-slate-700">
             Customer List
           </h1>
         </div>
@@ -92,24 +104,23 @@ const CustomerList: React.FC = () => {
                   value={search}
                   onChange={(e) => setSearch(e.target.value)}
                   placeholder="Search by Customer ID, Customer Name, GL Account ID, GL Account Name"
-                  className="h-8.5 w-full rounded-[5px] border border-slate-400 bg-white pl-10 pr-4 text-[12px] text-slate-700 outline-none placeholder:text-slate-400 focus:border-[#8daac5] focus:ring-0"
+                  className="h-8.5 w-[94.5%] rounded-[5px] border border-slate-400 bg-white pl-10 pr-4 text-[12px] text-slate-700 outline-none placeholder:text-slate-400 focus:border-[#8daac5] focus:ring-0"
                 />
               </div>
             </div>
 
-            <div className="-ml-[55px] flex items-center pl-2">
-              <Link to="/Finance/Setup/Add/Customer" className="shrink-0">
-                <button
-                  id="btnAdd"
-                  type="button"
-                  className="flex h-8.5 w-25 items-center justify-center gap-1 rounded-sm border border-[#b7c8db] bg-[#e6f0fa] text-[12px] text-green-600 shadow-sm hover:bg-[#dceafa] focus:outline-none"
-                >
-                  <span className="flex h-3.75 w-3.75 items-center justify-center rounded-full bg-green-600 text-[13px] font-bold leading-none text-white">
-                    +
-                  </span>
-                  <span>Add</span>
-                </button>
-              </Link>
+            <div className="flex items-center -ml-24 pl-2">
+              <button
+                id="btnAdd"
+                type="button"
+                onClick={() => setModal({})}
+                className="flex h-8.5 w-25 cursor-pointer shrink-0 items-center justify-center gap-1 rounded-sm border border-[#b7c8db] bg-[#e6f0fa] text-[12px] text-green-600 shadow-sm hover:bg-[#dceafa] focus:outline-none"
+              >
+                <span className="flex h-3.75 w-3.75 items-center justify-center rounded-full bg-green-600 text-[13px] font-bold leading-none text-white">
+                  +
+                </span>
+                <span>Add</span>
+              </button>
             </div>
           </div>
         </div>
@@ -155,7 +166,7 @@ const CustomerList: React.FC = () => {
                       {error}{" "}
                       <button
                         type="button"
-                        onClick={fetchCustomers}
+                        onClick={() => fetchCustomers()}
                         className="ml-2 text-blue-600 underline"
                       >
                         Retry
@@ -248,6 +259,23 @@ const CustomerList: React.FC = () => {
 
         <div className="h-2.5" />
       </div>
+
+      {modal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/30 p-4 backdrop-blur-sm">
+          <div className="max-h-[92vh] w-[95%] overflow-y-auto border border-slate-400 bg-white shadow-2xl lg:w-[65%]">
+            {/* key remounts the form when switching between Add / different customers */}
+            <CustomerPage
+              key={`${modal.mode ?? "add"}-${modal.customerId ?? "new"}`}
+              customerId={modal.customerId}
+              mode={modal.mode}
+              onClose={() => setModal(null)}
+              onSaved={() => {
+                fetchCustomers();
+              }}
+            />
+          </div>
+        </div>
+      )}
     </div>
   );
 };

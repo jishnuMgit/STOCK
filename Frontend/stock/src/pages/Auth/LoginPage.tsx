@@ -78,10 +78,6 @@ const LoginPage: React.FC = () => {
         {/* Window Header */}
         <div className="flex h-14 items-center justify-between border-b border-slate-200 bg-white px-6">
           <div className="flex items-center gap-3">
-            <div className="flex h-8 w-8 items-center justify-center rounded-full bg-linear-to-br from-emerald-400 to-emerald-600">
-              <span className="text-sm font-bold text-white">C</span>
-            </div>
-
             <span className="text-lg font-semibold text-slate-800">Login</span>
           </div>
         </div>
@@ -90,7 +86,7 @@ const LoginPage: React.FC = () => {
         <div className="p-8 md:p-10">
           {/* Form Header */}
           <div className="mb-8 rounded-lg bg-linear-to-r from-emerald-100 to-emerald-50 px-7 h-10 py-1">
-            <p className="mt-2 text-sm font-medium tracking-[0.28em] text-slate-600">
+            <p className="mt-2 text-[14px] font-medium tracking-[0.28em] text-slate-600">
               Please login to connect
             </p>
           </div>
@@ -103,7 +99,7 @@ const LoginPage: React.FC = () => {
                 User ID :
               </label>
 
-              <div className="flex h-7 w-[70%] overflow-hidden rounded-lg border border-slate-300 bg-white transition focus-within:border-emerald-500 focus-within:ring-2 focus-within:ring-emerald-100">
+              <div className="flex h-[30px] w-[70%] overflow-hidden rounded-lg border border-slate-300 bg-white transition focus-within:border-emerald-500 focus-within:ring-2 focus-within:ring-emerald-100">
                 <div className="flex w-13 items-center justify-center border-r border-slate-200 bg-slate-50">
                   <User size={20} className="text-slate-500" />
                 </div>
@@ -121,7 +117,7 @@ const LoginPage: React.FC = () => {
                       passwordRef.current?.focus();
                     }
                   }}
-                  className="w-full bg-transparent px-4 text-sm text-slate-800 outline-none"
+                  className="w-full bg-transparent px-4 text-[14px] text-slate-800 outline-none"
                   autoFocus
                   required
                 />
@@ -134,9 +130,9 @@ const LoginPage: React.FC = () => {
                 {" "}
                 Password :{" "}
               </label>{" "}
-              <div className="flex h-7 w-[70%] overflow-hidden rounded-lg border border-slate-300 bg-white transition focus-within:border-emerald-500 focus-within:ring-2 focus-within:ring-emerald-100">
+              <div className="flex h-[30px] w-[70%] overflow-hidden rounded-lg border border-slate-300 bg-white transition focus-within:border-emerald-500 focus-within:ring-2 focus-within:ring-emerald-100">
                 {" "}
-                <div className="flex w-14.5 items-center justify-center border-r border-slate-200 bg-slate-50">
+                <div className="flex w-15.5 items-center justify-center border-r border-slate-200 bg-slate-50">
                   {" "}
                   <Lock size={20} className="text-slate-500" />{" "}
                 </div>{" "}
@@ -152,7 +148,7 @@ const LoginPage: React.FC = () => {
                       companyRef.current?.focus();
                     }
                   }}
-                  className="w-full bg-transparent px-4 text-sm text-slate-800 outline-none"
+                  className="w-full bg-transparent px-4 text-[14px] text-slate-800 outline-none"
                   required
                 />
                 <button
@@ -173,7 +169,7 @@ const LoginPage: React.FC = () => {
               </label>
 
               <div className="relative w-[70%]">
-                <div className="flex h-7 overflow-hidden rounded-lg border border-slate-300 bg-white transition focus-within:border-emerald-500 focus-within:ring-2 focus-within:ring-emerald-100">
+                <div className="flex h-[30px] overflow-hidden rounded-lg border border-slate-300 bg-white transition focus-within:border-emerald-500 focus-within:ring-2 focus-within:ring-emerald-100">
                   <div className="flex w-13 items-center justify-center border-r border-slate-200 bg-slate-50">
                     <Building2 size={20} className="text-slate-500" />
                   </div>
@@ -183,7 +179,7 @@ const LoginPage: React.FC = () => {
                     value={selectedCompanyId}
                     name="company"
                     onChange={(e) => setCompanyId(e.target.value)}
-                    className="h-full w-full cursor-pointer appearance-none bg-white px-4 pr-10 text-sm text-slate-800 outline-none"
+                    className="h-full w-full cursor-pointer appearance-none bg-white px-4 pr-10 text-[14px] text-slate-800 outline-none"
                     required
                     disabled={companiesLoading}
                   >
@@ -211,7 +207,7 @@ const LoginPage: React.FC = () => {
                 Year :{" "}
               </label>
               <div className="relative w-64">
-                <div className="flex h-7 overflow-hidden rounded-lg border border-slate-300 bg-white transition focus-within:border-emerald-500 focus-within:ring-2 focus-within:ring-emerald-100">
+                <div className="flex h-[30px] overflow-hidden rounded-lg border border-slate-300 bg-white transition focus-within:border-emerald-500 focus-within:ring-2 focus-within:ring-emerald-100">
                   <div className="flex w-15 items-center justify-center border-r border-slate-200 bg-slate-50">
                     <CalendarDays size={19} className="text-slate-500" />{" "}
                   </div>
@@ -220,7 +216,7 @@ const LoginPage: React.FC = () => {
                     value={selectedYear}
                     name="year"
                     onChange={(e) => setYear(e.target.value)}
-                    className="h-full w-full cursor-pointer appearance-none bg-white px-4 pr-10 text-sm text-slate-800 outline-none"
+                    className="h-full w-full cursor-pointer appearance-none bg-white px-4 pr-10 text-[14px] text-slate-800 outline-none"
                     required
                     disabled={
                       yearsLoading || (!companyId && !companies[0]?.fCoID)
@@ -246,17 +242,17 @@ const LoginPage: React.FC = () => {
               </div>
             </div>
             {loginError && (
-              <div className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-600">
+              <div className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-[14px] text-red-600">
                 {loginError}
               </div>
             )}
             {companiesError && (
-              <div className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-600">
+              <div className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-[14px] text-red-600">
                 {companiesError}
               </div>
             )}
             {yearsError && (
-              <div className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-600">
+              <div className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-[14px] text-red-600">
                 {yearsError}
               </div>
             )}
