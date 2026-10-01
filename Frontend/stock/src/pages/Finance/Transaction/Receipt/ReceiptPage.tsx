@@ -1780,7 +1780,7 @@ const ReceiptPage: React.FC = () => {
         ================================================= */}
 
         <div
-          className="mt-2 mr-16 ml-auto flex w-55 items-center gap-2 text-xs
+          className="mt-2.5 mr-16.5 ml-auto flex w-55 items-center gap-2 text-[13px]
           "
         >
           <label className="whitespace-nowrap text-[14px]">Total :</label>

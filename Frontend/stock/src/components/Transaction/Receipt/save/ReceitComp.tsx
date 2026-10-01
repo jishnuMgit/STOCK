@@ -146,7 +146,7 @@ const CustomOption = (props: OptionProps<SelectOption, false>) => {
   return (
     <components.Option {...props}>
       <div className="flex w-full items-center justify-between">
-        <span className="text-xs text-slate-700">{data.label}</span>
+        <span className="text-[14px] text-slate-700">{data.label}</span>
 
         <span className="text-[11px] text-gray-400">{data.value}</span>
       </div>
@@ -360,7 +360,7 @@ export const ReceiptForm: React.FC<ReceiptFormProps> = ({
       return;
     }
 
-    const strDocType = typeId + "R"
+    const strDocType = typeId + "R";
 
     try {
       setDocumentNoLoading(true);
@@ -853,7 +853,7 @@ export const ReceiptForm: React.FC<ReceiptFormProps> = ({
       <div className="mb-2 flex items-center justify-between gap-8">
         {/* ================= BRANCH ================= */}
 
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 ml-4">
           <label className="w-22.5 text-right text-[14px] whitespace-nowrap">
             Branch :
           </label>
@@ -914,7 +914,7 @@ export const ReceiptForm: React.FC<ReceiptFormProps> = ({
               menu: (base: any) => ({
                 ...base,
 
-                width: "250px",
+                width: "304px",
 
                 zIndex: 99999,
               }),
@@ -948,7 +948,9 @@ export const ReceiptForm: React.FC<ReceiptFormProps> = ({
         {/* ================= TYPE ================= */}
 
         <div className="flex items-center gap-2">
-          <label className="text-right text-[14px] whitespace-nowrap">Type :</label>
+          <label className="text-right text-[14px] whitespace-nowrap">
+            Type :
+          </label>
 
           <Select<SelectOption, false>
             ref={typeRef}
@@ -1015,12 +1017,8 @@ export const ReceiptForm: React.FC<ReceiptFormProps> = ({
 
               option: (base: any, state: any) => ({
                 ...base,
-              // was "6px 10px"; the cells handle padding now
-               
-        
-               
-                
-                  padding: "6px 10px",
+                // was "6px 10px"; the cells handle padding now
+                padding: "6px 10px",
 
                 fontSize: "12px",
 
@@ -1036,8 +1034,6 @@ export const ReceiptForm: React.FC<ReceiptFormProps> = ({
 
                 zIndex: 99999,
               }),
-
-           
             }}
             isSearchable
             isClearable={false}
@@ -1106,7 +1102,7 @@ export const ReceiptForm: React.FC<ReceiptFormProps> = ({
                 cbAccountRef.current?.focus();
               });
             }}
-            className={`${inputClass} w-37.5`}
+            className={`${inputClass} w-[140px]`}
           />
         </div>
       </div>
@@ -1118,7 +1114,7 @@ export const ReceiptForm: React.FC<ReceiptFormProps> = ({
       <div className="mb-2 flex items-center justify-between gap-8">
         {/* ================= CASH / BANK ================= */}
 
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 ml-4">
           <label
             className="w-22.5 text-right text-[14px] whitespace-nowrap"
             id="lblCBAccountName"
@@ -1184,7 +1180,7 @@ export const ReceiptForm: React.FC<ReceiptFormProps> = ({
               menu: (base: any) => ({
                 ...base,
 
-                width: "480px",
+                width: "490px",
 
                 zIndex: 99999,
               }),
@@ -1225,7 +1221,9 @@ export const ReceiptForm: React.FC<ReceiptFormProps> = ({
         {/* ================= DATE ================= */}
 
         <div className="flex items-center gap-2">
-          <label className="text-right text-[14px] whitespace-nowrap">Date :</label>
+          <label className="text-right text-[14px] whitespace-nowrap">
+            Date :
+          </label>
 
           <LocalizationProvider dateAdapter={AdapterDayjs}>
             <DatePicker
@@ -1264,14 +1262,14 @@ export const ReceiptForm: React.FC<ReceiptFormProps> = ({
                 },
               }}
               sx={{
-                width: "150px",
+                width: "140px",
 
                 "& .MuiPickersTextField-root": {
                   width: "120px",
                 },
 
                 "& .MuiPickersInputBase-root": {
-                  width: "150px",
+                  width: "140px",
                   height: "30px",
                   minHeight: "30px",
                   boxSizing: "border-box",
@@ -1383,7 +1381,7 @@ export const ReceiptForm: React.FC<ReceiptFormProps> = ({
             onKeyDown={(event) =>
               handleInputKeyDown(event, () => referenceRef.current?.focus())
             }
-            className={`${inputClass} w-100`}
+            className={`${inputClass} ml-4 w-100`}
           />
         </div>
 
@@ -1994,7 +1992,7 @@ const ReceiptRow = memo(
                 "Content-Type": "application/json",
               },
               body: JSON.stringify({
-                 accountId,
+                accountId,
               }),
             },
           );
@@ -2392,7 +2390,7 @@ const ReceiptRow = memo(
             filterOption={accountFilterOption}
             isSearchable
             isClearable={false}
-            menuPlacement={accountIdMenuLayout.placement} 
+            menuPlacement={accountIdMenuLayout.placement}
             menuPosition="fixed"
             maxMenuHeight={accountIdMenuLayout.maxHeight} // 27 header + 375 options + borders
             menuPortalTarget={document.body}
@@ -2485,7 +2483,7 @@ const ReceiptRow = memo(
             isClearable={false}
             isDisabled={false}
             menuPlacement={accountNameMenuLayout.placement}
-            maxMenuHeight={accountNameMenuLayout.maxHeight} 
+            maxMenuHeight={accountNameMenuLayout.maxHeight}
             menuPosition="fixed"
             menuPortalTarget={document.body}
             menuShouldScrollIntoView={false}
@@ -3084,8 +3082,8 @@ export const ReceiptBottomForm: React.FC<ReceiptBottomFormProps> = ({
 }) => {
   return (
     <div className="-mt-4 ml-10 w-[76%]">
-      <div className="mb-2 flex w-[60%] items-center gap-2">
-        <label className="w-20.5 shrink-0 text-right text-[14px]">
+      <div className="mb-2 flex w-[73%] items-center gap-2">
+        <label className="w-24.5 shrink-0 text-right text-[14px]">
           Description :
         </label>
 
@@ -3131,7 +3129,7 @@ export const ReceiptBottomForm: React.FC<ReceiptBottomFormProps> = ({
         />
       </div>
 
-      <div className="flex w-full items-start gap-2">
+      <div className="flex w-full items-start gap-2 ml-4">
         <label className="w-20.5 shrink-0 pt-1 text-right text-[14px]">
           Note :
         </label>

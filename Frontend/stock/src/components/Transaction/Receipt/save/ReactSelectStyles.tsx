@@ -273,7 +273,7 @@ const accountDropdownStyles = {
       backgroundColor: "#eeeeee",
       borderBottom: "2px solid #c8c8c8",
       border: "1px solid #cccccc",
-      fontSize: "13px",
+      fontSize: "14px",
       lineHeight: "30px",
       position: "relative",
       zIndex: 2,
@@ -292,7 +292,7 @@ const accountDropdownStyles = {
       whiteSpace: "nowrap",
       textOverflow: "ellipsis",
       lineHeight: "30px",
-      fontSize: "13px",
+      fontSize: "14px",
       color: "#222222",
       borderRight: "1px solid #cccccc",
     },
@@ -311,7 +311,7 @@ const accountDropdownStyles = {
       whiteSpace: "nowrap",
       textOverflow: "ellipsis",
       lineHeight: "30px",
-      fontSize: "13px",
+      fontSize: "14px",
       color: "#222222",
     },
 
@@ -348,7 +348,7 @@ const accountDropdownStyles = {
       maxHeight: "30px",
       boxSizing: "border-box",
       overflow: "hidden",
-      fontSize: "13px",
+      fontSize: "14px",
       lineHeight: "30px",
       color: "#344054",
     },
@@ -366,7 +366,7 @@ const accountDropdownStyles = {
       whiteSpace: "nowrap",
       textOverflow: "ellipsis",
       lineHeight: "30px",
-      fontSize: "13px",
+      fontSize: "14px",
       borderRight: "1px solid #eeeeee",
     },
 
@@ -384,7 +384,7 @@ const accountDropdownStyles = {
       whiteSpace: "nowrap",
       textOverflow: "ellipsis",
       lineHeight: "30px",
-      fontSize: "13px",
+      fontSize: "14px",
     },
   }),
 
@@ -402,7 +402,7 @@ const accountDropdownStyles = {
     overflow: "hidden",
     whiteSpace: "nowrap",
     textOverflow: "ellipsis",
-    fontSize: "13px",
+    fontSize: "14px",
     lineHeight: "30px",
 
     "& .account-dropdown-row": {
@@ -415,7 +415,7 @@ const accountDropdownStyles = {
       maxHeight: "30px",
       boxSizing: "border-box",
       overflow: "hidden",
-      fontSize: "13px",
+      fontSize: "14px",
       lineHeight: "30px",
     },
 
@@ -432,7 +432,7 @@ const accountDropdownStyles = {
       whiteSpace: "nowrap",
       textOverflow: "ellipsis",
       lineHeight: "30px",
-      fontSize: "13px",
+      fontSize: "14px",
       borderRight: "1px solid #eeeeee",
     },
 
@@ -450,7 +450,7 @@ const accountDropdownStyles = {
       whiteSpace: "nowrap",
       textOverflow: "ellipsis",
       lineHeight: "30px",
-      fontSize: "13px",
+      fontSize: "14px",
     },
   }),
 };
@@ -566,7 +566,7 @@ const BankCashMenuList = (props: any) => {
       <div
         style={{
           display: "grid",
-          gridTemplateColumns: "1fr 60px",
+          gridTemplateColumns: "1.9fr 75px",
           padding: "6px 10px",
           backgroundColor: "#f5f7fa",
           borderBottom: "1px solid #d7dee7",
@@ -595,7 +595,7 @@ const BankCashOption = (props: any) => {
       <div
         style={{
           display: "grid",
-          gridTemplateColumns: "1fr 60px",
+          gridTemplateColumns: "1.9fr 75px",
           width: "100%",
           alignItems: "center",
           fontSize: "14px",
