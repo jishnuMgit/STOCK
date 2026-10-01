@@ -533,12 +533,12 @@ export const saveReceipt = async (
         message: "'Date' must be within the Active Period",
       });
     }
-    const { lkpBranch, lkpType, txtReceiptNo } = req.body;
+    const { lkpBranch, lkpType, txtDocNo } = req.body;
 
     const existing = await GetData({
       lkpBranch: String(lkpBranch),
       lkpType: String(lkpType), // BR / CR (frontend already converts)
-      txtReceiptNo: String(txtReceiptNo),
+      txtDocNo: String(txtDocNo),
     });
 
     if (existing?.exists) {
@@ -549,16 +549,16 @@ export const saveReceipt = async (
 
       const newReceiptNo = next.rows[0]?.getnextdocno;
 
-      if (!newReceiptNo || String(newReceiptNo) === String(txtReceiptNo)) {
+      if (!newReceiptNo || String(newReceiptNo) === String(txtDocNo)) {
         throw new Error("Unable to generate a new Receipt No");
       }
 
       return res.status(409).json({
         success: false,
         receiptNoChanged: true,
-        oldReceiptNo: txtReceiptNo,
+        oldReceiptNo: txtDocNo,
         newReceiptNo,
-        message: `Receipt No ${txtReceiptNo} is already used`,
+        message: `Receipt No ${txtDocNo} is already used`,
       });
     }
 
