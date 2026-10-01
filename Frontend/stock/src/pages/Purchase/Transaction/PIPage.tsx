@@ -6,17 +6,13 @@ import PurchaseFooter from "../../../components/Transaction/PurchaseInvoice/Purc
 
 const PurchaseInvoicePage: React.FC = () => {
   return (
-    <main className="flex h-screen min-h-[600px] w-full flex-col overflow-hidden bg-white text-[12px] text-slate-800">
+    <main className="flex h-fit w-full max-w-[1100px]   border border-slate-400 mx-auto flex-col overflow-hidden bg-white text-[12px] text-slate-800">
       {/* Page title */}
-      <header className="flex h-[35px] shrink-0 items-center justify-center border border-emerald-200 bg-emerald-200">
-        <h1 className="text-[18px] font-bold text-slate-700">
-          Purchase
-          <span className="rounded-sm bg-yellow-300 underline decoration-green-600 underline-offset-2">
-            I
-          </span>
-          nvoice
+      <div className="flex h-[30px] w-full shrink-0 items-center border-b border-slate-300 bg-[#a5e0c3]">
+        <h1 className="ml-[15px] text-[17px] font-semibold text-slate-700">
+         PurchaseInvoice
         </h1>
-      </header>
+      </div>
 
       {/* Purchase details */}
       <PurchaseForm />
