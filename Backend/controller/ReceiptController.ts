@@ -203,11 +203,10 @@ export const getReceipt = async (
           $1,
           $2,
           $3,
-          $4,
-          $5
+          $4
         )
         `,
-        [PstrCoID, PstrYear, defaultBranch, receiptType, "dbo.tblfintrans"],
+        [PstrCoID, PstrYear, defaultBranch, receiptType],
       );
 
       console.log("receiptNoResult:", receiptNoResult);
@@ -375,14 +374,13 @@ export const getDocNo = async (
     const result = await pool.query(
       `
       SELECT *
-      FROM dbo.getnextdocno($1, $2, $3, $4, $5)
+      FROM dbo.getnextdocno($1, $2, $3, $4)
       `,
       [
         PstrCoID,
         PstrYear,
         lkpBranch,
-        strDocType,
-        "dbo.tblfintrans",
+        strDocType
       ]
     );
 
@@ -533,32 +531,32 @@ export const saveReceipt = async (
         message: "'Date' must be within the Active Period",
       });
     }
-    const { lkpBranch, lkpType, txtReceiptNo } = req.body;
+    const { lkpBranch, lkpType, txtDocNo } = req.body;
 
     const existing = await GetData({
       lkpBranch: String(lkpBranch),
       lkpType: String(lkpType), // BR / CR (frontend already converts)
-      txtReceiptNo: String(txtReceiptNo),
+      txtDocNo: String(txtDocNo),
     });
 
     if (existing?.exists) {
       const next = await pool.query(
-        `SELECT * FROM dbo.getnextdocno($1, $2, $3, $4, $5)`,
-        [PstrCoID, PstrYear, lkpBranch, lkpType, "dbo.tblfintrans"],
+        `SELECT * FROM dbo.getnextdocno($1, $2, $3, $4)`,
+        [PstrCoID, PstrYear, lkpBranch, lkpType],
       );
 
       const newReceiptNo = next.rows[0]?.getnextdocno;
 
-      if (!newReceiptNo || String(newReceiptNo) === String(txtReceiptNo)) {
+      if (!newReceiptNo || String(newReceiptNo) === String(txtDocNo)) {
         throw new Error("Unable to generate a new Receipt No");
       }
 
       return res.status(409).json({
         success: false,
         receiptNoChanged: true,
-        oldReceiptNo: txtReceiptNo,
+        oldReceiptNo: txtDocNo,
         newReceiptNo,
-        message: `Receipt No ${txtReceiptNo} is already used`,
+        message: `Receipt No ${txtDocNo} is already used`,
       });
     }
 

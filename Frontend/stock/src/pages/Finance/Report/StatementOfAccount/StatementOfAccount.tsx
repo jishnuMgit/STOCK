@@ -126,13 +126,13 @@ const StatementOfAccount: React.FC<StatementOfAccountProps> = ({
   vatNumber,
 
   transactions,
-
+ //@ts-ignore
   ageing = defaultAgeing,
 
   bankDetails,
 
   amountInWords = "",
-
+ //@ts-ignore
   logoSrc = logo,
 
   pageNumber = 1,

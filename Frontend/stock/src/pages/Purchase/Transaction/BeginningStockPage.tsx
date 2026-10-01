@@ -144,7 +144,7 @@ const selectStyles: StylesConfig<SelectOption, false> = {
 
 const tableSelectStyles: StylesConfig<SelectOption, false> = {
   ...selectStyles,
-
+//@ts-ignore
   control: (base, state) => ({
     ...base,
     minHeight: "26px",
@@ -230,7 +230,7 @@ const BeginningStockPage: React.FC = () => {
   const [date, setDate] = useState("2026-06-29");
   const [note, setNote] = useState("");
   const [rows, setRows] = useState<StockRow[]>(createInitialRows);
-  const [activeRow, setActiveRow] = useState(0);
+  const [activeRow, setActiveRow] = useState(0);//@ts-ignore
   const [message, setMessage] = useState("");
 
   // ----------------------------------------------------------

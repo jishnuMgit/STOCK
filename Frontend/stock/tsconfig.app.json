@@ -22,5 +22,5 @@
     "erasableSyntaxOnly": true,
     "noFallthroughCasesInSwitch": true
   },
-  "include": ["src", "../../Backend/utils/numberToWords.ts", "../../Backend/services/receiptPrintService.ts"]
+  "include": ["src", "../../Backend/utils/numberToWords.ts", "../../Backend/services/receiptPrintService.ts", "../../sql/test"]
 }
