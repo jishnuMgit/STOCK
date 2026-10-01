@@ -845,7 +845,7 @@ export const ReceiptForm: React.FC<ReceiptFormProps> = ({
   }, [accountsLoading]);
 
   return (
-    <div className="px-5 pt-3 pb-2">
+    <div className="px-5 pt-3 mt-2 pb-2">
       {/* =====================================================
           FIRST ROW
       ===================================================== */}
@@ -1043,7 +1043,7 @@ export const ReceiptForm: React.FC<ReceiptFormProps> = ({
 
         {/* ================= RECEIPT NO ================= */}
 
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 -mr-2">
           <label className="text-right text-[14px] whitespace-nowrap">
             Receipt No. :
           </label>
@@ -1220,7 +1220,7 @@ export const ReceiptForm: React.FC<ReceiptFormProps> = ({
 
         {/* ================= DATE ================= */}
 
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 -mr-2">
           <label className="text-right text-[14px] whitespace-nowrap">
             Date :
           </label>
@@ -1387,7 +1387,7 @@ export const ReceiptForm: React.FC<ReceiptFormProps> = ({
 
         {/* ================= REFERENCE ================= */}
 
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 -mr-2">
           <label className="text-right text-[14px] whitespace-nowrap">
             Reference :
           </label>
@@ -3082,7 +3082,7 @@ export const ReceiptBottomForm: React.FC<ReceiptBottomFormProps> = ({
 }) => {
   return (
     <div className="-mt-4 ml-10 w-[76%]">
-      <div className="mb-2 flex w-[73%] items-center gap-2">
+      <div className="mb-2 flex w-[81%] items-center gap-2">
         <label className="w-24.5 shrink-0 text-right text-[14px]">
           Description :
         </label>
@@ -3129,7 +3129,7 @@ export const ReceiptBottomForm: React.FC<ReceiptBottomFormProps> = ({
         />
       </div>
 
-      <div className="flex w-full items-start gap-2 ml-4">
+      <div className="flex w-[90%] items-start gap-2 ml-4">
         <label className="w-20.5 shrink-0 pt-1 text-right text-[14px]">
           Note :
         </label>
@@ -3312,7 +3312,7 @@ export const ReceiptActions = forwardRef<
 
     const buttonClass = `
       min-w-[105px]
-      h-[34px]
+      h-[40px]
       rounded-[4px]
       border
       border-[#9db8d4]
@@ -3324,20 +3324,14 @@ export const ReceiptActions = forwardRef<
       shadow-[inset_0_1px_0_rgba(255,255,255,0.8)]
       transition-colors
       duration-100
-      hover:border-l-[#7f9fbd]
-      hover:border-r-[#7f9fbd]
-      hover:border-b-[#7f9fbd]
+      hover:border-[#7f9fbd]
       hover:bg-gradient-to-b
       hover:from-[#ffffff]
       hover:to-[#dce8f1]
-      focus:border-l-[#20884e]
-      focus:border-r-[#20884e]
-      focus:border-b-[#20884e]
-      focus:border-t-0
+      focus:border-[#20884e]
       focus:bg-gradient-to-b
       focus:from-[#ffffff]
       focus:to-[#dcefe5]
-      focus:outline-none
       focus:ring-0
     `;
 

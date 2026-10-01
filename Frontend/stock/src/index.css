@@ -40,6 +40,7 @@ body {
   border-left-color: #7f9fbd;
   border-right-color: #7f9fbd;
   border-bottom-color: #7f9fbd;
+  border-top-color: #7f9fbd;
 
   background: linear-gradient(to bottom, #ffffff, #dce8f1);
 }
@@ -48,7 +49,7 @@ body {
   border-left-color: #20884e;
   border-right-color: #20884e;
   border-bottom-color: #20884e;
-  border-top: 0;
+  border-top-color: #20884e;
 
   background: linear-gradient(to bottom, #ffffff, #dcefe5);
 
