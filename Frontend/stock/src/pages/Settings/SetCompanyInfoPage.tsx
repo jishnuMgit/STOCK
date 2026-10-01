@@ -4,6 +4,7 @@ import Select from "react-select";
 import type { SelectOption } from "../../types/receiptypes";
 import { useEnterAsTab } from "../../hooks/useEnterAsTab";
 import { useAltShortcuts } from "../../hooks/useAltShortcuts";
+import { useButtonPermissions } from "../../hooks/useButtonPermissions";
 import {
   makeNameIdMenuComponents,
   branchMenuStyles,
@@ -174,8 +175,12 @@ const emptyFormData: CompanyFormData = {
   txtCoAddress4_AR: "",
 };
 
+// dbo.tblmenu fmenuid for the Set Company Info page.
+const MENU_ID = "9199";
+
 const SetCompanyInfo = () => {
   const handleEnterAsTab = useEnterAsTab();
+  const perms = useButtonPermissions(MENU_ID);
 
   const [companyOptions, setCompanyOptions] = useState<CompanyOption[]>([]);
   const [lkpCoName, setLkpCoName] = useState("");
@@ -300,6 +305,11 @@ const SetCompanyInfo = () => {
   ======================================================= */
 
   const handleSave = async () => {
+    if (!perms.save) {
+      toast.error("You do not have permission to Save.");
+      return;
+    }
+
     if (!lkpCoName) {
       toast.warning("Please select a company first.");
       return;
@@ -713,6 +723,7 @@ const SetCompanyInfo = () => {
               name="btnSave"
               type="button"
               onClick={handleSave}
+              disabled={!perms.save}
               className="
                 w-[105px]
                 h-[34px]
@@ -724,6 +735,8 @@ const SetCompanyInfo = () => {
                 to-[#e5eef5]
                 text-green-600
                 text-[15px]
+                disabled:cursor-not-allowed
+                disabled:opacity-40
               "
             >
               <span className="underline underline-offset-2">S</span>ave

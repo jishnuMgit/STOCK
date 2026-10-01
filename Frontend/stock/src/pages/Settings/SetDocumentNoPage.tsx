@@ -9,6 +9,7 @@ import { X } from "lucide-react";
 import { useEnterAsTab } from "../../hooks/useEnterAsTab";
 import { useConfirm } from "../../hooks/useConfirm";
 import { useAltShortcuts } from "../../hooks/useAltShortcuts";
+import { useButtonPermissions } from "../../hooks/useButtonPermissions";
 import {
   filterLabelOrValue,
   BranchMenuList,
@@ -247,9 +248,13 @@ const ReceiptStyleDropdownIndicator = (props: any) => {
 // COMPONENT
 // ============================================================
 
+// dbo.tblmenu fmenuid for the Set Document No. page.
+const MENU_ID = "9102";
+
 const SetDocumentNo: React.FC = () => {
   const handleEnterAsTab = useEnterAsTab();
   const { confirm, confirmDialog } = useConfirm();
+  const perms = useButtonPermissions(MENU_ID);
 
   // ==========================================================
   // HEADER STATES
@@ -593,6 +598,11 @@ const SetDocumentNo: React.FC = () => {
   // ==========================================================
 
   const handleSave = async () => {
+    if (!perms.save) {
+      toast.error("You do not have permission to Save.");
+      return;
+    }
+
     if (!lkpYear || !lkpBranch || !lkpModule) {
       toast.warning("Year, Branch and Module are required.");
       return;
@@ -1573,6 +1583,7 @@ const SetDocumentNo: React.FC = () => {
             name="Save"
             type="button"
             onClick={handleSave}
+            disabled={!perms.save}
             className="
               h-[47px]
               w-[125px]
@@ -1586,6 +1597,8 @@ const SetDocumentNo: React.FC = () => {
               text-green-600
               shadow-sm
               hover:bg-slate-50
+              disabled:cursor-not-allowed
+              disabled:opacity-40
             "
           >
             <span className="underline underline-offset-2">S</span>ave

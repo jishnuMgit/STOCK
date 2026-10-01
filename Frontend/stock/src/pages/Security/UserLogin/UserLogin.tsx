@@ -4,6 +4,7 @@ import { toast } from "react-toastify";
 import { X } from "lucide-react";
 import { useEnterAsTab } from "../../../hooks/useEnterAsTab";
 import { useAltShortcuts } from "../../../hooks/useAltShortcuts";
+import { useButtonPermissions } from "../../../hooks/useButtonPermissions";
 import { useConfirm } from "../../../hooks/useConfirm";
 
 // ============================================================
@@ -225,7 +226,11 @@ const selectStyles = {
 // COMPONENT
 // ============================================================
 
+// dbo.tblmenu fmenuid for the User Login page.
+const MENU_ID = "9301";
+
 const UserLogin: React.FC = () => {
+  const perms = useButtonPermissions(MENU_ID);
   const [users, setUsers] = useState<UserRow[]>([]);
   const [userTypeOptions, setUserTypeOptions] = useState<SelectOption[]>([]);
   const [userStatusOptions, setUserStatusOptions] = useState<SelectOption[]>([]);
@@ -419,6 +424,11 @@ const UserLogin: React.FC = () => {
   // ============================================================
 
   const handleSave = async () => {
+    if (!perms.save) {
+      toast.error("You do not have permission to Save.");
+      return;
+    }
+
     const PstrCoID = localStorage.getItem("PstrCoID");
     const PstrUserID = localStorage.getItem("PstrUserID");
 
@@ -494,9 +504,15 @@ const UserLogin: React.FC = () => {
       return;
     }
 
-    // never saved - just drop the row
+    // never saved - just drop the row (no server call, so no
+    // permission needed - there's nothing to delete yet)
     if (!row.txtOriginal_UserID) {
       setUsers((previous) => previous.filter((_, index) => index !== rowIndex));
+      return;
+    }
+
+    if (!perms.delete) {
+      toast.error("You do not have permission to Delete.");
       return;
     }
 
@@ -808,7 +824,8 @@ const UserLogin: React.FC = () => {
                         className={inputClass}
                       />
 
-                      {user.txtUserID.trim() !== "" && (
+                      {user.txtUserID.trim() !== "" &&
+                        (user.txtOriginal_UserID === "" || perms.delete) && (
                         <button
                           type="button"
                           onClick={() => handleDeleteRow(index)}
@@ -1011,7 +1028,8 @@ const UserLogin: React.FC = () => {
             id="btnSave"
             type="button"
             onClick={handleSave}
-            className={buttonClass}
+            disabled={!perms.save}
+            className={`${buttonClass} disabled:cursor-not-allowed disabled:opacity-40`}
           >
             <span className="underline underline-offset-2">
               S

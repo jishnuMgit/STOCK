@@ -4,6 +4,7 @@ import { toast } from "react-toastify";
 import { X } from "lucide-react";
 import { useEnterAsTab } from "../../../hooks/useEnterAsTab";
 import { useAltShortcuts } from "../../../hooks/useAltShortcuts";
+import { useButtonPermissions } from "../../../hooks/useButtonPermissions";
 import {
   filterLabelOrValue,
   BranchMenuList,
@@ -250,8 +251,12 @@ const textClass = `
    ITEM PAGE
 ========================================================= */
 
+// dbo.tblmenu fmenuid for the Item page (fmenucaption = "Item").
+const MENU_ID = "010201";
+
 const ItemPage: React.FC = () => {
   const handleEnterAsTab = useEnterAsTab();
+  const perms = useButtonPermissions(MENU_ID);
 
   /* =========================================================
      FORM STATE
@@ -608,6 +613,11 @@ const ItemPage: React.FC = () => {
   ========================================================= */
 
   const handleSave = async () => {
+    if (!perms.save) {
+      toast.error("You do not have permission to Save.");
+      return;
+    }
+
     if (!txtItemID || !txtItemName || !lkpUnit || !lkpItemGroupID || !lkpSupplierID || !txtSupplierItemID) {
       toast.warning("Item ID, Item Name, Unit, Item Group, Supplier and Supplier Item ID are required.");
       return;
@@ -783,6 +793,11 @@ const ItemPage: React.FC = () => {
   const handleItemIDBlur = () => findItem(txtItemID, { silent: true });
 
   const handleDelete = async () => {
+    if (!perms.delete) {
+      toast.error("You do not have permission to Delete.");
+      return;
+    }
+
     if (!txtItemID) {
       toast.warning("Item ID is required.");
       return;
@@ -837,6 +852,11 @@ const ItemPage: React.FC = () => {
   };
 
   const handleDeleteBranchRow = async (row: BranchRow) => {
+    if (!perms.delete) {
+      toast.error("You do not have permission to Delete.");
+      return;
+    }
+
     if (!txtItemID) {
       toast.warning("Item ID is required.");
       return;
@@ -1908,7 +1928,7 @@ const ItemPage: React.FC = () => {
                             />
                           </div>
 
-                          {row.lkpBranch && (
+                          {row.lkpBranch && perms.delete && (
                             <button
                               type="button"
                               onClick={() =>
@@ -2028,8 +2048,9 @@ const ItemPage: React.FC = () => {
 
             <button
               type="button"
-              className={buttonClass}
+              className={`${buttonClass} disabled:cursor-not-allowed disabled:opacity-40`}
               onClick={handleSave}
+              disabled={!perms.save}
               id="Savebtn"
               name="Savebtn"
             >
@@ -2062,8 +2083,9 @@ const ItemPage: React.FC = () => {
 
             <button
               type="button"
-              className={buttonClass}
+              className={`${buttonClass} disabled:cursor-not-allowed disabled:opacity-40`}
               onClick={handleDelete}
+              disabled={!perms.delete}
               id="Deletebtn"
               name="Deletebtn"
             >

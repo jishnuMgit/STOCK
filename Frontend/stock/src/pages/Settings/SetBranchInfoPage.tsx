@@ -6,6 +6,7 @@ import Select, {
 import { toast } from "react-toastify";
 import { useEnterAsTab } from "../../hooks/useEnterAsTab";
 import { useAltShortcuts } from "../../hooks/useAltShortcuts";
+import { useButtonPermissions } from "../../hooks/useButtonPermissions";
 import {
   filterLabelOrValue,
   BranchMenuList,
@@ -147,8 +148,12 @@ const BranchTextRow: React.FC<BranchTextRowProps> = ({
    COMPONENT
 ========================================================= */
 
+// dbo.tblmenu fmenuid for the Set Branch Info page.
+const MENU_ID = "9115";
+
 const SetBranchInfo: React.FC = () => {
   const handleEnterAsTab = useEnterAsTab();
+  const perms = useButtonPermissions(MENU_ID);
 
   /* =========================================================
      STATES
@@ -647,6 +652,11 @@ const SetBranchInfo: React.FC = () => {
   ========================================================= */
 
   const handleSave = async () => {
+    if (!perms.save) {
+      toast.error("You do not have permission to Save.");
+      return;
+    }
+
     if (!lkpBranch) {
       toast.warning("Branch is required.");
       return;
@@ -1276,7 +1286,8 @@ const SetBranchInfo: React.FC = () => {
   <button
     type="button"
     onClick={handleSave}
-    className={buttonClass}
+    disabled={!perms.save}
+    className={`${buttonClass} disabled:cursor-not-allowed disabled:opacity-40`}
   >
      <span className={textClass}>
                 <span className="underline decoration-2 underline-offset-1">
