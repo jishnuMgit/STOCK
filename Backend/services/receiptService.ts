@@ -299,7 +299,7 @@ async function callReceiptProcedure(
 
     docType,
 
-    docNo,
+    txtDocNo,
 
     slNo = 0,
 
@@ -383,7 +383,7 @@ async function callReceiptProcedure(
 
     clean(docType),                        // $5
 
-    clean(docNo),                          // $6
+    clean(txtDocNo),                          // $6
 
     toSmallInt(slNo),                      // $7
 
@@ -522,7 +522,7 @@ async function callReceiptProcedure(
 
   console.log(
     "Doc No:",
-    docNo
+    txtDocNo
   );
 
   console.log(
@@ -614,7 +614,7 @@ async function callReceiptProcedure(
 export async function getReceiptHeader({
   lkpBranch,
   docType,
-  docNo,
+  txtDocNo,
 }: ReceiptHeaderParams): Promise<any[]> {
 
   const client =
@@ -640,7 +640,7 @@ export async function getReceiptHeader({
           docType:
             toDocumentType(docType),
 
-          docNo,
+          txtDocNo,
 
           slNo: 0,
 
@@ -689,7 +689,7 @@ export async function getReceiptHeader({
 export async function getReceiptLines({
   lkpBranch,
   docType,
-  docNo,
+  txtDocNo,
 }: ReceiptHeaderParams): Promise<any[]> {
 
   const client =
@@ -715,7 +715,7 @@ export async function getReceiptLines({
           docType:
             toDocumentType(docType),
 
-          docNo,
+          txtDocNo,
 
           slNo: 0,
 
@@ -768,7 +768,7 @@ async function saveReceiptLine(
 
     docType,
 
-    docNo,
+    txtDocNo,
 
     slNo,
 
@@ -813,7 +813,7 @@ async function saveReceiptLine(
 
       docType,
 
-      docNo,
+      txtDocNo,
 
       slNo,
 
@@ -871,7 +871,7 @@ async function saveGeneratedEntry(
 
     docType,
 
-    docNo,
+    txtDocNo,
 
     receiptDate,
 
@@ -910,7 +910,7 @@ async function saveGeneratedEntry(
 
       docType,
 
-      docNo,
+      txtDocNo,
 
       /*
          SC always uses fslno = 0.
@@ -981,7 +981,7 @@ async function deleteReceiptInternal(
 
     docType,
 
-    docNo,
+    txtDocNo,
 
   }: ReceiptHeaderParams
 ): Promise<any[]> {
@@ -996,7 +996,7 @@ async function deleteReceiptInternal(
 
       docType,
 
-      docNo,
+      txtDocNo,
 
       slNo: 0,
 
@@ -1036,7 +1036,7 @@ export async function saveReceiptService(
 
       cashBank,
 
-      txtReceiptNo,
+      txtDocNo,
 
       receiptDate,
 
@@ -1080,7 +1080,7 @@ export async function saveReceiptService(
 
 
     if (
-      isEmpty(txtReceiptNo)
+      isEmpty(txtDocNo)
     ) {
 
       throw new Error(
@@ -1229,8 +1229,7 @@ export async function saveReceiptService(
           docType:
             finalDocType,
 
-          docNo:
-            txtReceiptNo,
+          txtDocNo,
 
           slNo,
 
@@ -1337,8 +1336,8 @@ export async function saveReceiptService(
         docType:
           finalDocType,
 
-        docNo:
-          txtReceiptNo,
+        txtDocNo:
+          txtDocNo,
 
         receiptDate,
 
@@ -1422,7 +1421,7 @@ export async function saveReceiptService(
         docType:
           finalDocType,
 
-        txtReceiptNo,
+        txtDocNo,
 
         total:
           finalTotal,
@@ -1493,7 +1492,7 @@ export async function saveReceiptService(
 export async function deleteReceiptService({
   lkpBranch,
   lkpType,
-  txtReceiptNo,
+  txtDocNo,
 }: ReceiptDocumentParams): Promise<ServiceResult> {
 
   const client = await pool.connect();
@@ -1512,8 +1511,8 @@ export async function deleteReceiptService({
       throw new Error("Receipt type is required");
     }
 
-    if (isEmpty(txtReceiptNo)) {
-      throw new Error("Receipt number is required");
+    if (isEmpty(txtDocNo)) {
+      throw new Error("Document number is required");
     }
 
 
@@ -1540,7 +1539,7 @@ export async function deleteReceiptService({
       {
         lkpBranch: lkpBranch,
         docType: finalDocType,
-        docNo: txtReceiptNo,
+        txtDocNo: txtDocNo,
       }
     );
 
@@ -1569,7 +1568,7 @@ export async function deleteReceiptService({
 
         type: finalDocType,
 
-        txtReceiptNo,
+        txtDocNo: txtDocNo,
 
       },
 
@@ -1752,7 +1751,7 @@ export async function updateReceiptService(
   const {
     lkpBranch,
     lkpType,
-    docNo,
+    txtDocNo,
     receiptDate,
     receivedFrom,
     reference,
@@ -1796,11 +1795,11 @@ export async function updateReceiptService(
 
 
     if (
-      isEmpty(docNo)
+      isEmpty(txtDocNo)
     ) {
 
       throw new Error(
-        "Receipt number is required"
+        "Document number is required"
       );
 
     }
@@ -1930,7 +1929,7 @@ export async function updateReceiptService(
         docType:
           finalDocType,
 
-        docNo,
+        txtDocNo: clean(txtDocNo),
 
         slNo: 0,
 
@@ -2135,7 +2134,7 @@ export async function updateReceiptService(
         docType:
           finalDocType,
 
-        docNo,
+        txtDocNo: clean(txtDocNo),
 
         /*
            Any non-zero value is enough
@@ -2222,8 +2221,8 @@ export async function updateReceiptService(
         docType:
           finalDocType,
 
-        txtReceiptNo:
-          docNo,
+        txtDocNo:
+          txtDocNo,
 
         total:
           finalTotal,

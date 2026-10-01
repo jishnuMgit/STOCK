@@ -1,6 +1,10 @@
 
+import { Play } from "lucide-react";
 import React, { useMemo, useState } from "react";
-import Select, { type SingleValue, type StylesConfig } from "react-select";
+import Select, {
+  type SingleValue,
+  type StylesConfig,
+} from "react-select";
 
 interface SelectOption {
   value: string;
@@ -44,10 +48,10 @@ const itemNameOptions: SelectOption[] = [
 const selectStyles: StylesConfig<SelectOption, false> = {
   control: (base, state) => ({
     ...base,
-    minHeight: "29px",
-    height: "29px",
-    borderRadius: "0px",
-    borderColor: state.isFocused ? "#80bdff" : "#d5dce5",
+    minHeight: "30px",
+    height: "30px",
+    borderRadius: "5px",
+    borderColor: state.isFocused ? "#80bdff" : "#d5e5ff",
     boxShadow: state.isFocused ? "0 0 0 1px #80bdff" : "none",
     fontSize: "12px",
     backgroundColor: "#ffffff",
@@ -83,7 +87,6 @@ const selectStyles: StylesConfig<SelectOption, false> = {
 
   indicatorsContainer: (base) => ({
     ...base,
-    height: "29px",
   }),
 
   dropdownIndicator: (base) => ({
@@ -94,16 +97,17 @@ const selectStyles: StylesConfig<SelectOption, false> = {
 
   clearIndicator: (base) => ({
     ...base,
-    padding: "3px",
+    display: "none",
   }),
 
   indicatorSeparator: () => ({
     display: "none",
   }),
 
+  // Dropdown menu
   menu: (base) => ({
     ...base,
-    zIndex: 50,
+    zIndex: 99999,
     fontSize: "12px",
     marginTop: "2px",
   }),
@@ -111,6 +115,13 @@ const selectStyles: StylesConfig<SelectOption, false> = {
   menuList: (base) => ({
     ...base,
     maxHeight: "180px",
+    overflowY: "auto",
+  }),
+
+  // IMPORTANT: Render the menu above the table and page.
+  menuPortal: (base) => ({
+    ...base,
+    zIndex: 99999,
   }),
 
   option: (base, state) => ({
@@ -118,120 +129,19 @@ const selectStyles: StylesConfig<SelectOption, false> = {
     padding: "6px 9px",
     fontSize: "12px",
     backgroundColor: state.isSelected
-      ? "#2563eb"
+      ? "#EEF8F3"
       : state.isFocused
         ? "#eff6ff"
         : "#ffffff",
-    color: state.isSelected ? "#ffffff" : "#374151",
+    color: "#374151",
     cursor: "pointer",
   }),
 };
 
 // ============================================================
-// COMPONENT
+// TABLE SELECT STYLES
 // ============================================================
 
-const BeginningStockPage: React.FC = () => {
-  const [branch, setBranch] = useState<SelectOption | null>(
-    branchOptions[0]
-  );
-
-  const [date, setDate] = useState("2026-06-29");
-  const [note, setNote] = useState("");
-
-  const [rows, setRows] = useState<StockRow[]>(
-    Array.from({ length: 15 }, (_, index) => ({
-      id: index + 1,
-      slNo: index + 1,
-      itemId: null,
-      itemName: null,
-      unit: "",
-      qty: "",
-      unitCost: "",
-    }))
-  );
-
-  const [activeRow, setActiveRow] = useState(0);
-  const [message, setMessage] = useState("");
-
-  const updateRow = (
-    rowIndex: number,
-    field: keyof StockRow,
-    value: string | SelectOption | null
-  ) => {
-    setRows((previous) =>
-      previous.map((row, index) => {
-        if (index !== rowIndex) return row;
-
-        const updated = { ...row, [field]: value };
-
-        // Keep Item ID and Item Name synchronized.
-        if (field === "itemId") {
-          const selected = value as SelectOption | null;
-
-          updated.itemName = selected
-            ? itemNameOptions.find(
-                (option) => option.value === selected.value
-              ) ?? null
-            : null;
-        }
-
-        if (field === "itemName") {
-          const selected = value as SelectOption | null;
-
-          updated.itemId = selected
-            ? itemOptions.find(
-                (option) => option.value === selected.value
-              ) ?? null
-            : null;
-        }
-
-        return updated;
-      })
-    );
-  };
-
-  const updateTextField = (
-    rowIndex: number,
-    field: "unit" | "qty" | "unitCost",
-    value: string
-  ) => {
-    updateRow(rowIndex, field, value);
-  };
-
-  const getTotalCost = (row: StockRow) => {
-    const qty = Number(row.qty) || 0;
-    const cost = Number(row.unitCost) || 0;
-    return qty * cost;
-  };
-
-  const total = useMemo(
-    () => rows.reduce((sum, row) => sum + getTotalCost(row), 0),
-    [rows]
-  );
-
-  const formatAmount = (amount: number) =>
-    amount.toLocaleString("en-US", {
-      minimumFractionDigits: 3,
-      maximumFractionDigits: 3,
-    });
-
-  const addRow = () => {
-    setRows((previous) => [
-      ...previous,
-      {
-        id: previous.length
-          ? Math.max(...previous.map((row) => row.id)) + 1
-          : 1,
-        slNo: previous.length + 1,
-        itemId: null,
-        itemName: null,
-        unit: "",
-        qty: "",
-        unitCost: "",
-      },
-    ]);
-  };
 const tableSelectStyles: StylesConfig<SelectOption, false> = {
   ...selectStyles,
 
@@ -276,29 +186,194 @@ const tableSelectStyles: StylesConfig<SelectOption, false> = {
 
   menu: (base) => ({
     ...base,
-    zIndex: 50,
+    zIndex: 99999,
     fontSize: "12px",
     marginTop: "2px",
   }),
+
+  menuList: (base) => ({
+    ...base,
+    maxHeight: "180px",
+    overflowY: "auto",
+  }),
+
+  menuPortal: (base) => ({
+    ...base,
+    zIndex: 99999,
+  }),
 };
-  const clearForm = () => {
-    setBranch(branchOptions[0]);
-    setDate("2026-06-29");
-    setNote("");
-    setRows(
-      Array.from({ length: 15 }, (_, index) => ({
-        id: index + 1,
-        slNo: index + 1,
+
+// ============================================================
+// INITIAL ROWS
+// ============================================================
+
+const createInitialRows = (): StockRow[] =>
+  Array.from({ length: 15 }, (_, index) => ({
+    id: index + 1,
+    slNo: index + 1,
+    itemId: null,
+    itemName: null,
+    unit: "",
+    qty: "",
+    unitCost: "",
+  }));
+
+// ============================================================
+// COMPONENT
+// ============================================================
+
+const BeginningStockPage: React.FC = () => {
+  const [branch, setBranch] = useState<SelectOption | null>(
+    branchOptions[0],
+  );
+
+  const [date, setDate] = useState("2026-06-29");
+  const [note, setNote] = useState("");
+  const [rows, setRows] = useState<StockRow[]>(createInitialRows);
+  const [activeRow, setActiveRow] = useState(0);
+  const [message, setMessage] = useState("");
+
+  // ----------------------------------------------------------
+  // UPDATE ROW
+  // ----------------------------------------------------------
+
+  const updateRow = (
+    rowIndex: number,
+    field: keyof StockRow,
+    value: string | SelectOption | null,
+  ) => {
+    setRows((previous) =>
+      previous.map((row, index) => {
+        if (index !== rowIndex) return row;
+
+        const updated = { ...row, [field]: value };
+
+        // Keep Item ID and Item Name synchronized.
+        if (field === "itemId") {
+          const selected = value as SelectOption | null;
+
+          updated.itemName = selected
+            ? itemNameOptions.find(
+                (option) => option.value === selected.value,
+              ) ?? null
+            : null;
+        }
+
+        if (field === "itemName") {
+          const selected = value as SelectOption | null;
+
+          updated.itemId = selected
+            ? itemOptions.find(
+                (option) => option.value === selected.value,
+              ) ?? null
+            : null;
+        }
+
+        return updated;
+      }),
+    );
+  };
+
+  // ----------------------------------------------------------
+  // UPDATE TEXT FIELDS
+  // ----------------------------------------------------------
+
+  const updateTextField = (
+    rowIndex: number,
+    field: "unit" | "qty" | "unitCost",
+    value: string,
+  ) => {
+    updateRow(rowIndex, field, value);
+  };
+
+  // ----------------------------------------------------------
+  // AMOUNT CALCULATIONS
+  // ----------------------------------------------------------
+
+  const getTotalCost = (row: StockRow) => {
+    const qty = Number(row.qty) || 0;
+    const cost = Number(row.unitCost) || 0;
+
+    return qty * cost;
+  };
+
+  const total = useMemo(
+    () => rows.reduce((sum, row) => sum + getTotalCost(row), 0),
+    [rows],
+  );
+
+  const formatAmount = (amount: number) =>
+    amount.toLocaleString("en-US", {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
+    });
+
+  // ----------------------------------------------------------
+  // ADD ROW
+  // ----------------------------------------------------------
+
+  const addRow = () => {
+    setRows((previous) => [
+      ...previous,
+      {
+        id: previous.length
+          ? Math.max(...previous.map((row) => row.id)) + 1
+          : 1,
+        slNo: previous.length + 1,
         itemId: null,
         itemName: null,
         unit: "",
         qty: "",
         unitCost: "",
-      }))
-    );
+      },
+    ]);
+  };
+
+  // ----------------------------------------------------------
+  // CLEAR FORM
+  // ----------------------------------------------------------
+
+  const clearForm = () => {
+    setBranch(branchOptions[0]);
+    setDate("2026-06-29");
+    setNote("");
+    setRows(createInitialRows());
     setActiveRow(0);
     setMessage("");
   };
+
+  // ----------------------------------------------------------
+  // KEYBOARD NAVIGATION
+  // ----------------------------------------------------------
+
+  const handleTableKeyDown = (
+    event: React.KeyboardEvent<HTMLInputElement>,
+    rowIndex: number,
+    field: "unit" | "qty" | "unitCost",
+  ) => {
+    if (event.key !== "Enter") return;
+
+    event.preventDefault();
+
+    if (field === "unit") {
+      document.getElementById(`txtQty-${rowIndex}`)?.focus();
+    } else if (field === "qty") {
+      document.getElementById(`txtUnitCost-${rowIndex}`)?.focus();
+    } else if (rowIndex < rows.length - 1) {
+      setActiveRow(rowIndex + 1);
+      document.getElementById(`txtSNo-${rowIndex + 1}`)?.focus();
+    } else {
+      addRow();
+
+      window.setTimeout(() => {
+        document.getElementById(`txtSNo-${rowIndex + 1}`)?.focus();
+      }, 0);
+    }
+  };
+
+  // ----------------------------------------------------------
+  // ACTION BUTTONS
+  // ----------------------------------------------------------
 
   const handleAction = (action: string) => {
     if (action === "Clear") {
@@ -318,44 +393,23 @@ const tableSelectStyles: StylesConfig<SelectOption, false> = {
     }
   };
 
-  const handleTableKeyDown = (
-    event: React.KeyboardEvent<HTMLInputElement>,
-    rowIndex: number,
-    field: "unit" | "qty" | "unitCost"
-  ) => {
-    if (event.key !== "Enter") return;
-
-    event.preventDefault();
-
-    if (field === "unit") {
-      document.getElementById(`txtQty-${rowIndex}`)?.focus();
-    } else if (field === "qty") {
-      document.getElementById(`txtUnitCost-${rowIndex}`)?.focus();
-    } else if (rowIndex < rows.length - 1) {
-      setActiveRow(rowIndex + 1);
-      document.getElementById(`txtSNo-${rowIndex + 1}`)?.focus();
-    } else {
-      addRow();
-      window.setTimeout(() => {
-        document.getElementById(`txtSNo-${rowIndex + 1}`)?.focus();
-      }, 0);
-    }
-  };
+  // ==========================================================
+  // JSX
+  // ==========================================================
 
   return (
-<div className="mx-auto flex h-screen min-h-[500px] min-w-[900px] w-[60%] flex-col overflow-hidden bg-white text-[12px] text-slate-700">      {/* ======================================================
-          TITLE BAR
-      ====================================================== */}
-      <header className="relative flex h-[42px] shrink-0 items-center justify-center border bg-[#9bdfbd]">
-        <h1 className="text-[20px] font-semibold leading-none text-[#263d55]">
+    <div className="mx-auto mt-5 flex min-h-[500px] min-w-[800px] h-[90%] max-w-[1200px] flex-col overflow-hidden border border-slate-400 bg-white text-[12px] text-slate-700">
+
+      {/* TITLE BAR */}
+      <div className="flex h-[30px] w-full shrink-0 items-center border-b border-slate-300 bg-[#a5e0c3]">
+        <h1 className="ml-[20px] text-[17px] font-semibold text-slate-700">
           Beginning Stock
         </h1>
-      </header>
+      </div>
 
-      {/* ======================================================
-          HEADER FORM
-      ====================================================== */}
-      <section className="flex h-[66px] shrink-0 items-center justify-between gap-4 px-[22px]">
+      {/* HEADER FORM */}
+      <section className="flex h-[66px]  shrink-0 items-center justify-between gap-4 px-[22px]">
+
         {/* Branch */}
         <div className="flex min-w-0 items-center gap-3">
           <label
@@ -377,6 +431,11 @@ const tableSelectStyles: StylesConfig<SelectOption, false> = {
               styles={selectStyles}
               isClearable
               placeholder="Select Branch"
+
+              // Portal is also enabled for the header dropdown.
+              menuPortalTarget={document.body}
+              menuPosition="fixed"
+              menuPlacement="auto"
             />
           </div>
         </div>
@@ -401,12 +460,10 @@ const tableSelectStyles: StylesConfig<SelectOption, false> = {
         </div>
       </section>
 
-      {/* ======================================================
-          STOCK TABLE
-      ====================================================== */}
-      <main className="flex min-h-0 flex-1 flex-col px-[21px]">
-        <div className="min-h-0 flex-1 overflow-auto border border-[#d5e5ff]">
-          <table className="w-full min-w-[900px] table-fixed border-collapse">
+      {/* STOCK TABLE */}
+  <main className="customer-table-scroll flex min-h-0  flex-1 flex-col px-[21px] ">
+  <div className="customer-table-scroll h-full flex-1 overflow-auto ">
+    <table className="customer-table-scroll w-full min-w-[900px] table-fixed border-collapse border  border-[#d5e5ff]">
             <colgroup>
               <col style={{ width: "17px" }} />
               <col style={{ width: "43px" }} />
@@ -418,8 +475,8 @@ const tableSelectStyles: StylesConfig<SelectOption, false> = {
               <col style={{ width: "9.2%" }} />
             </colgroup>
 
-            <thead className="sticky top-0 z-10 bg-[#f5f8fc]">
-              <tr className="h-[27px] text-left text-[12px] text-slate-600">
+            <thead className="sticky top-0 z-10  bg-[#f5f8fc]">
+              <tr className="h-[30px] text-left text-[12px] text-slate-600">
                 <th className="border border-[#d5e5ff] px-1 font-normal">
                   ▾
                 </th>
@@ -458,14 +515,16 @@ const tableSelectStyles: StylesConfig<SelectOption, false> = {
                       : "bg-white"
                   }`}
                 >
-                  {/* Row selector */}
+                  {/* ROW SELECTOR */}
                   <td className="border border-[#d5e5ff] px-1 text-center">
-                    {activeRow === index ? (
-                      <span className="text-[9px] text-slate-700">▸</span>
-                    ) : null}
+                    {activeRow === index && (
+                      <span className="text-[10px] text-slate-700">
+                        <Play size={10} />
+                      </span>
+                    )}
                   </td>
 
-                  {/* Serial number */}
+                  {/* SERIAL NUMBER */}
                   <td className="border border-[#d5e5ff] p-0">
                     <input
                       id={`txtSNo-${index}`}
@@ -477,7 +536,7 @@ const tableSelectStyles: StylesConfig<SelectOption, false> = {
                     />
                   </td>
 
-                  {/* Item ID - React Select */}
+                  {/* ITEM ID */}
                   <td className="border border-[#d5e5ff] p-0">
                     <Select<SelectOption, false>
                       inputId={`lkpItemID-${index}`}
@@ -487,14 +546,19 @@ const tableSelectStyles: StylesConfig<SelectOption, false> = {
                       onChange={(option: SingleValue<SelectOption>) =>
                         updateRow(index, "itemId", option)
                       }
-                      styles={selectStyles}
+                      styles={tableSelectStyles}
                       isClearable
-                      menuPortalTarget={undefined}
                       placeholder=""
+
+                      // FIX: render outside the scrollable table.
+                      menuPortalTarget={document.body}
+                      menuPosition="fixed"
+                      menuPlacement="auto"
+                      menuShouldScrollIntoView
                     />
                   </td>
 
-                  {/* Item Name - React Select */}
+                  {/* ITEM NAME */}
                   <td className="border border-[#d5e5ff] p-0">
                     <Select<SelectOption, false>
                       inputId={`lkpItemName-${index}`}
@@ -504,13 +568,19 @@ const tableSelectStyles: StylesConfig<SelectOption, false> = {
                       onChange={(option: SingleValue<SelectOption>) =>
                         updateRow(index, "itemName", option)
                       }
-                      styles={selectStyles}
+                      styles={tableSelectStyles}
                       isClearable
                       placeholder=""
+
+                      // FIX: render outside the scrollable table.
+                      menuPortalTarget={document.body}
+                      menuPosition="fixed"
+                      menuPlacement="auto"
+                      menuShouldScrollIntoView
                     />
                   </td>
 
-                  {/* Unit */}
+                  {/* UNIT */}
                   <td className="border border-[#d5e5ff] p-0">
                     <input
                       id={`txtUnit-${index}`}
@@ -526,7 +596,7 @@ const tableSelectStyles: StylesConfig<SelectOption, false> = {
                     />
                   </td>
 
-                  {/* Quantity */}
+                  {/* QUANTITY */}
                   <td className="border border-[#d5e5ff] p-0">
                     <input
                       id={`txtQty-${index}`}
@@ -541,34 +611,34 @@ const tableSelectStyles: StylesConfig<SelectOption, false> = {
                       onKeyDown={(event) =>
                         handleTableKeyDown(event, index, "qty")
                       }
-                      className="h-[26px] w-full bg-transparent px-2 text-right outline-none focus:bg-blue-50"
+                      className="number-no-spinner h-[26px] w-full bg-transparent px-2 text-right outline-none focus:bg-blue-50"
                     />
                   </td>
 
-                  {/* Unit Cost */}
+                  {/* UNIT COST */}
                   <td className="border border-[#d5e5ff] p-0">
                     <input
                       id={`txtUnitCost-${index}`}
                       name="txtUnitCost"
                       type="number"
                       min="0"
-                      step="any"
+                      step="0.01"
                       value={row.unitCost}
                       onChange={(event) =>
                         updateTextField(
                           index,
                           "unitCost",
-                          event.target.value
+                          event.target.value,
                         )
                       }
                       onKeyDown={(event) =>
                         handleTableKeyDown(event, index, "unitCost")
                       }
-                      className="h-[26px] w-full bg-transparent px-2 text-right outline-none focus:bg-blue-50"
+                      className="number-no-spinner h-[26px] w-full bg-transparent px-2 text-right outline-none focus:bg-blue-50"
                     />
                   </td>
 
-                  {/* Total Cost */}
+                  {/* TOTAL COST */}
                   <td className="border border-[#d5e5ff] p-0">
                     <input
                       id={`txtTotalCost-${index}`}
@@ -589,11 +659,10 @@ const tableSelectStyles: StylesConfig<SelectOption, false> = {
         </div>
       </main>
 
-      {/* ======================================================
-          BOTTOM FORM
-      ====================================================== */}
-      <section className="flex h-[70px] shrink-0 items-center gap-3 px-[21px]">
-        {/* Note */}
+      {/* BOTTOM FORM */}
+      <section className="flex h-[70px] -mt-10 shrink-0 items-center gap-3 px-[21px]">
+
+        {/* NOTE */}
         <label
           htmlFor="txtNote"
           className="w-[32px] shrink-0 text-[12px] text-slate-700"
@@ -606,15 +675,15 @@ const tableSelectStyles: StylesConfig<SelectOption, false> = {
           name="txtNote"
           value={note}
           onChange={(event) => setNote(event.target.value)}
-          className="h-[28px] min-w-0 flex-1 border border-slate-300 bg-white px-2 outline-none focus:border-blue-400"
+          className="h-[28px] w-[60%] shrink-0 border border-slate-300 bg-white px-2 outline-none focus:border-blue-400"
         />
 
-        {/* Total label */}
-        <div className="ml-3 flex h-[28px] w-[71px] shrink-0 items-center justify-center rounded border border-slate-300 bg-white text-[12px]">
+        {/* TOTAL LABEL */}
+        <div className="ml-9 flex h-[28px] w-[71px] shrink-0 items-center justify-center rounded border border-slate-300 bg-white text-[12px]">
           Total
         </div>
 
-        {/* Calculated total */}
+        {/* CALCULATED TOTAL */}
         <input
           id="txtGrandTotal"
           name="txtGrandTotal"
@@ -623,7 +692,7 @@ const tableSelectStyles: StylesConfig<SelectOption, false> = {
           className="h-[28px] w-[76px] shrink-0 rounded border border-slate-300 bg-white px-1 text-right text-[14px] outline-none"
         />
 
-        {/* Right-side total display */}
+        {/* RIGHT-SIDE TOTAL DISPLAY */}
         <input
           id="txtTotal"
           name="txtTotal"
@@ -633,15 +702,10 @@ const tableSelectStyles: StylesConfig<SelectOption, false> = {
         />
       </section>
 
-      {/* ======================================================
-          ACTION BUTTONS
-      ====================================================== */}
-      <footer className="flex min-h-[94px] shrink-0 flex-col items-center justify-center gap-2  border-[#333333] bg-white px-4 pb-2">
+      {/* ACTION BUTTONS */}
+      <footer className="flex min-h-[94px] shrink-0 flex-col items-center justify-center gap-2 border-[#333333] bg-white px-4 pb-6">
         {message && (
-          <p
-            role="status"
-            className="text-[11px] text-blue-700"
-          >
+          <p role="status" className="text-[11px] text-blue-700">
             {message}
           </p>
         )}
@@ -661,7 +725,7 @@ const tableSelectStyles: StylesConfig<SelectOption, false> = {
                   {action}
                 </span>
               </button>
-            )
+            ),
           )}
         </div>
       </footer>
