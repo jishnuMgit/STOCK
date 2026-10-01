@@ -2,10 +2,7 @@ import { Request, Response, NextFunction } from "express";
 import pool from "../DB/db.js";
 
 export interface AuthenticatedRequest extends Request {
-  user?: {
-    userId: string;
-    userType: string;
-  };
+  user?: { userId: string; userType: string; companyId: string };
 }
 
 export const authenticate = async (
@@ -30,10 +27,10 @@ export const authenticate = async (
 
     const sessionResult = await pool.query(
       `
-      SELECT fuserid
-      FROM dbo.tblusersession
-      WHERE fsessiontoken = $1
-      `,
+  SELECT fuserid, fcoid
+  FROM dbo.tblusersession
+  WHERE fsessiontoken = $1
+  `,
       [sessionToken],
     );
 
@@ -45,7 +42,7 @@ export const authenticate = async (
       return;
     }
 
-    const userId = sessionResult.rows[0].fuserid;
+    const { fuserid: userId, fcoid: companyId } = sessionResult.rows[0];
 
     /* =====================================================
        GET USER TYPE
@@ -92,6 +89,7 @@ export const authenticate = async (
     req.user = {
       userId: user.fuserid,
       userType: user.fusertype,
+      companyId,
     };
 
     next();
