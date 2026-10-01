@@ -468,7 +468,8 @@ export const getDivID = async (
     const PstrCoID =
       process.env.PstrCoID;
 
-    const { customerid } =
+    const { accountId
+ } =
       req.body;
 
     console.log(
@@ -486,7 +487,8 @@ export const getDivID = async (
 
     console.log(
       "Customer ID:",
-      customerid
+      accountId
+
     );
 
     console.log(
@@ -501,7 +503,8 @@ export const getDivID = async (
       });
     }
 
-    if (!customerid) {
+    if (!accountId
+) {
       return res.status(400).json({
         success: false,
         message:
@@ -520,7 +523,8 @@ export const getDivID = async (
         `,
         [
           PstrCoID,
-          customerid,
+          accountId
+,
         ]
       );
 

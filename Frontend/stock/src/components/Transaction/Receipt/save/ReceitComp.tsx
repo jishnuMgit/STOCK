@@ -1994,7 +1994,7 @@ const ReceiptRow = memo(
                 "Content-Type": "application/json",
               },
               body: JSON.stringify({
-                customerid: accountId,
+                 accountId,
               }),
             },
           );
