@@ -874,16 +874,14 @@ async function getNextValidDocNo(
           $1,
           $2,
           $3,
-          $4,
-          $5
+          $4
         )
         `,
         [
           String(coid),
           Number(year),
           String(branch),
-          String(docType),
-          "dbo.tblfintrans"
+          String(docType)
         ]
       );
 
@@ -1001,16 +999,14 @@ async function getDocumentPrefixLength(
         $1,
         $2,
         $3,
-        $4,
-        $5
+        $4
       )
       `,
       [
         String(coid),
         Number(year),
         String(branch),
-        String(docType),
-        "dbo.tblfintrans"
+        String(docType)
       ]
     );
 
@@ -1382,16 +1378,14 @@ async function incrementDocumentNumber(
       $1,
       $2,
       $3,
-      $4,
-      $5
+      $4
     )
     `,
     [
       String(coid),
       Number(year),
       String(branch),
-      String(docType),
-      "dbo.tblfintrans"
+      String(docType)
     ]
   );
 }

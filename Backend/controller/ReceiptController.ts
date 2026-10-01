@@ -203,11 +203,10 @@ export const getReceipt = async (
           $1,
           $2,
           $3,
-          $4,
-          $5
+          $4
         )
         `,
-        [PstrCoID, PstrYear, defaultBranch, receiptType, "dbo.tblfintrans"],
+        [PstrCoID, PstrYear, defaultBranch, receiptType],
       );
 
       console.log("receiptNoResult:", receiptNoResult);
@@ -375,14 +374,13 @@ export const getDocNo = async (
     const result = await pool.query(
       `
       SELECT *
-      FROM dbo.getnextdocno($1, $2, $3, $4, $5)
+      FROM dbo.getnextdocno($1, $2, $3, $4)
       `,
       [
         PstrCoID,
         PstrYear,
         lkpBranch,
-        strDocType,
-        "dbo.tblfintrans",
+        strDocType
       ]
     );
 
@@ -543,8 +541,8 @@ export const saveReceipt = async (
 
     if (existing?.exists) {
       const next = await pool.query(
-        `SELECT * FROM dbo.getnextdocno($1, $2, $3, $4, $5)`,
-        [PstrCoID, PstrYear, lkpBranch, lkpType, "dbo.tblfintrans"],
+        `SELECT * FROM dbo.getnextdocno($1, $2, $3, $4)`,
+        [PstrCoID, PstrYear, lkpBranch, lkpType],
       );
 
       const newReceiptNo = next.rows[0]?.getnextdocno;
