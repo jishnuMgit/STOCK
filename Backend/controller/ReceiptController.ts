@@ -521,7 +521,7 @@ export const saveReceipt = async (
 
     const active = await isActivePeriod(
       payload?.lkpBranch,
-      payload?.receiptDate,
+      payload?.dtpDate,
       PstrCoID,
     );
 
@@ -603,7 +603,7 @@ export const modifyReceipt = async (
 
     const active = await isActivePeriod(
       payload?.lkpBranch,
-      payload?.receiptDate,
+      payload?.dtpDate,
       PstrCoID,
     );
 
@@ -838,7 +838,7 @@ export const DeleteReceipt = async (
     // =====================================================
 
     // Adjust these property names according to your GetData response
-    const receiptDate = receiptData?.header?.receiptDate ?? "";
+    const dtpDate = receiptData?.header?.dtpDate ?? "";
     const cbAccountName = receiptData?.header?.cbAccountName ?? "";
     const receivedFrom = receiptData?.header?.receivedFrom ?? "";
     const totalCredit = Number(receiptData?.total ?? 0);
@@ -848,7 +848,7 @@ export const DeleteReceipt = async (
     // =====================================================
 
     const gstrUserAuditNote =
-      `Date : ${receiptDate}\n` +
+      `Date : ${dtpDate}\n` +
       `Cash/Bank Account Name: ${cbAccountName}\n` +
       `Received From : ${receivedFrom}\n` +
       `Amount : ${totalCredit}`;

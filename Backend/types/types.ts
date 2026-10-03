@@ -59,7 +59,7 @@ export interface ReceiptProcedureParams {
   docType?: DbValue;
   txtDocNo?: DbValue;
   slNo?: DbValue;
-  receiptDate?: DbValue;
+  dtpDate?: DbValue;
   cbAccountId?: DbValue;
   receivedFrom?: DbValue;
   reference?: DbValue;
@@ -100,7 +100,7 @@ export interface ReceiptData {
   lkpType?: DbValue;
   cashBank?: DbValue;
   txtDocNo?: DbValue;
-  receiptDate?: DbValue;
+  dtpDate?: DbValue;
   receivedFrom?: DbValue;
   reference?: DbValue;
   note?: DbValue;
@@ -133,7 +133,7 @@ export interface SaveReceiptLineParams {
   docType?: DbValue;
   txtDocNo?: DbValue;
   slNo?: DbValue;
-  receiptDate?: DbValue;
+  dtpDate?: DbValue;
   receivedFrom?: DbValue;
   reference?: DbValue;
   cbAccountId?: DbValue;
@@ -153,7 +153,7 @@ export interface SaveGeneratedEntryParams {
   lkpBranch?: DbValue;
   docType?: DbValue;
   txtDocNo?: DbValue;
-  receiptDate?: DbValue;
+  dtpDate?: DbValue;
   receivedFrom?: DbValue;
   reference?: DbValue;
   cbAccountId?: DbValue;

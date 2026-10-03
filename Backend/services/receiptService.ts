@@ -303,7 +303,7 @@ async function callReceiptProcedure(
 
     slNo = 0,
 
-    receiptDate = null,
+    dtpDate = null,
 
     cbAccountId = null,
 
@@ -387,7 +387,7 @@ async function callReceiptProcedure(
 
     toSmallInt(slNo),                      // $7
 
-    normalizeDate(receiptDate),            // $8
+    normalizeDate(dtpDate),            // $8
 
     clean(cbAccountId),                    // $9
 
@@ -531,8 +531,8 @@ async function callReceiptProcedure(
   );
 
   console.log(
-    "Receipt Date:",
-    normalizeDate(receiptDate)
+    " Date:",
+    normalizeDate(dtpDate)
   );
 
   console.log(
@@ -644,7 +644,7 @@ export async function getReceiptHeader({
 
           slNo: 0,
 
-          receiptDate: null,
+          dtpDate: null,
 
           details: null,
 
@@ -719,7 +719,7 @@ export async function getReceiptLines({
 
           slNo: 0,
 
-          receiptDate: null,
+          dtpDate: null,
 
           details: null,
 
@@ -772,7 +772,7 @@ async function saveReceiptLine(
 
     slNo,
 
-    receiptDate,
+    dtpDate,
 
     receivedFrom,
 
@@ -817,7 +817,7 @@ async function saveReceiptLine(
 
       slNo,
 
-      receiptDate,
+      dtpDate,
 
       cbAccountId,
 
@@ -873,7 +873,7 @@ async function saveGeneratedEntry(
 
     txtDocNo,
 
-    receiptDate,
+    dtpDate,
 
     receivedFrom,
 
@@ -918,7 +918,7 @@ async function saveGeneratedEntry(
 
       slNo: 0,
 
-      receiptDate,
+      dtpDate,
 
       cbAccountId,
 
@@ -1038,7 +1038,7 @@ export async function saveReceiptService(
 
       txtDocNo,
 
-      receiptDate,
+      dtpDate,
 
       receivedFrom,
 
@@ -1091,7 +1091,7 @@ export async function saveReceiptService(
 
 
     if (
-      isEmpty(receiptDate)
+      isEmpty(dtpDate)
     ) {
 
       throw new Error(
@@ -1233,7 +1233,7 @@ export async function saveReceiptService(
 
           slNo,
 
-          receiptDate,
+          dtpDate,
 
           receivedFrom,
 
@@ -1339,7 +1339,7 @@ export async function saveReceiptService(
         txtDocNo:
           txtDocNo,
 
-        receiptDate,
+        dtpDate,
 
         receivedFrom,
 
@@ -1752,7 +1752,7 @@ export async function updateReceiptService(
     lkpBranch,
     lkpType,
     txtDocNo,
-    receiptDate,
+    dtpDate,
     receivedFrom,
     reference,
     cashBank,
@@ -1806,7 +1806,7 @@ export async function updateReceiptService(
 
 
     if (
-      isEmpty(receiptDate)
+      isEmpty(dtpDate)
     ) {
 
       throw new Error(
@@ -1933,7 +1933,7 @@ export async function updateReceiptService(
 
         slNo: 0,
 
-        receiptDate,
+        dtpDate,
 
         cbAccountId:
           cashBank,
@@ -2051,7 +2051,7 @@ export async function updateReceiptService(
 
             dtpdate:
               normalizeDate(
-                receiptDate
+                dtpDate
               ),
 
             cbaccountid:
@@ -2144,7 +2144,7 @@ export async function updateReceiptService(
 
         slNo: 1,
 
-        receiptDate,
+        dtpDate,
 
         cbAccountId:
           cashBank,

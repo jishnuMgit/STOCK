@@ -91,7 +91,7 @@ interface ModifyReceiptResponse {
     lkpBranch?: string;
     lkpType?: string;
     docNo?: string;
-    receiptDate?: string;
+    dtpDate?: string;
     // cbAccount?: string;
     cbAccountName?: string;
     ccId?: string;
@@ -196,7 +196,7 @@ const ReceiptPage: React.FC = () => {
   const [txtDocNo, setTxtDocNo] = useState("");
 
   const [focusReceiptNoAfterClear, setFocusReceiptNoAfterClear] = useState(0);
-  const [date, setDate] = useState(getTodayDate);
+  const [dtpDate, setDtpDate] = useState(getTodayDate);
 
   /* =======================================================
      NOTE
@@ -474,7 +474,7 @@ const ReceiptPage: React.FC = () => {
 
       setTxtDocNo(result.header.docNo || requestedDocumentNo);
 
-      setDate(formatReceiptDate(result.header.receiptDate));
+      setDtpDate(formatReceiptDate(result.header.dtpDate) || getTodayDate());
       setCbAccount(result.header.cbAccountName || "");
       setCbCcId(result.header.ccId || "");
       setReceivedFrom(result.header.receivedFrom || "");
@@ -530,7 +530,7 @@ const ReceiptPage: React.FC = () => {
     setDescription("");
     setActiveDescriptionRow(null);
 
-    setDate(getTodayDate());
+    setDtpDate(getTodayDate());
 
     setIsModifyMode(false);
     setReceiptMessage("");
@@ -1085,7 +1085,7 @@ const ReceiptPage: React.FC = () => {
         !lkpBranch ||
         !lkpType ||
         !txtDocNo.trim() ||
-        !date ||
+        !dtpDate ||
         !cbAccount ||
         validRows.length === 0;
 
@@ -1121,7 +1121,7 @@ const ReceiptPage: React.FC = () => {
 
         txtDocNo,
 
-        receiptDate: date,
+        dtpDate,
         receivedFrom,
         reference,
         rows: validRows.map((row, index) => ({
@@ -1256,7 +1256,7 @@ const ReceiptPage: React.FC = () => {
     cbAccount,
     cbCcId,
     txtDocNo,
-    date,
+    dtpDate,
     receivedFrom,
     reference,
     rows,
@@ -1293,7 +1293,7 @@ const ReceiptPage: React.FC = () => {
       cbAccount,
       cbCcId,
       txtDocNo,
-      date,
+      dtpDate,
       receivedFrom,
       reference,
       note,
@@ -1309,7 +1309,7 @@ const ReceiptPage: React.FC = () => {
       !lkpBranch ||
       !lkpType ||
       !txtDocNo.trim() ||
-      !date ||
+      !dtpDate ||
       !cbAccount ||
       validRows.length === 0;
 
@@ -1320,7 +1320,7 @@ const ReceiptPage: React.FC = () => {
         lkpBranch: !!lkpBranch,
         lkpType: !!lkpType,
         txtDocNo: !!txtDocNo.trim(),
-        date: !!date,
+        dtpDate: !!dtpDate,
         cbAccount: !!cbAccount,
         validRows: validRows.length,
       });
@@ -1374,7 +1374,7 @@ const ReceiptPage: React.FC = () => {
           */
       txtDocNo: txtDocNo.trim(),
 
-      receiptDate: date,
+      dtpDate: dtpDate,
       receivedFrom,
       reference,
       note,
@@ -1534,7 +1534,7 @@ const ReceiptPage: React.FC = () => {
     cbAccount,
     cbCcId,
     txtDocNo,
-    date,
+    dtpDate,
     receivedFrom,
     reference,
     note,
@@ -1717,8 +1717,8 @@ const ReceiptPage: React.FC = () => {
           setReceivedFrom={setReceivedFrom}
           documentNo={txtDocNo}
           setDocumentNo={setTxtDocNo}
-          date={date}
-          setDate={setDate}
+          dtpDate={dtpDate}
+          setDtpDate={setDtpDate}
           branchRef={branchRef}
           typeRef={typeRef}
           documentNoRef={documentNoRef}

@@ -31,7 +31,7 @@ export interface ReceiptProcedureParams {
 
   slNo?: number | string;
 
-  receiptDate?: ReceiptValue;
+  dtpDate?: ReceiptValue;
 
   receivedFrom?: ReceiptValue;
   reference?: ReceiptValue;
@@ -121,7 +121,7 @@ export interface ReceiptData {
 
   receiptNo?: string;
 
-  receiptDate?: string | Date;
+  dtpDate?: string | Date;
 
   receivedFrom?: string;
 

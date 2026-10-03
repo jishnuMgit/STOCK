@@ -113,8 +113,8 @@ interface ReceiptFormProps {
   documentNo: string;
   setDocumentNo: (value: string) => void;
 
-  date: string;
-  setDate: (value: string) => void;
+  dtpDate: string;
+  setDtpDate: (value: string) => void;
 
   branchRef: React.RefObject<SelectInstance<SelectOption, false> | null>;
   typeRef: React.RefObject<SelectInstance<SelectOption, false> | null>;
@@ -193,8 +193,8 @@ export const ReceiptForm: React.FC<ReceiptFormProps> = ({
   documentNo,
   setDocumentNo,
 
-  date,
-  setDate,
+  dtpDate,
+  setDtpDate,
 
   branchRef,
   typeRef,
@@ -1229,12 +1229,12 @@ export const ReceiptForm: React.FC<ReceiptFormProps> = ({
 
           <LocalizationProvider dateAdapter={AdapterDayjs}>
             <DatePicker
-              value={date ? dayjs(date, "DD-MM-YYYY") : null}
+              value={dtpDate ? dayjs(dtpDate, "DD-MM-YYYY") : null}
               onChange={(newValue) => {
                 if (newValue?.isValid()) {
-                  setDate(newValue.format("DD-MM-YYYY"));
+                  setDtpDate(newValue.format("DD-MM-YYYY"));
                 } else {
-                  setDate("");
+                  setDtpDate("");
                 }
               }}
               format="DD-MM-YYYY"

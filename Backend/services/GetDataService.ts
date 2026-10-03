@@ -28,7 +28,7 @@ interface ReceiptHeader {
   branch: any;
   lkpType: any;
   docNo: any;
-  receiptDate: any;
+  dtpDate: any;
   cbAccountName: any;
   ccId: any;
   receivedFrom: any;
@@ -1045,7 +1045,7 @@ export async function GetData({
       dbHeader.fdocno ??
       docNo,
 
-    receiptDate:
+    dtpDate:
       dbHeader.fdate ??
       null,
 
