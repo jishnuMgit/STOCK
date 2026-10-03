@@ -4,7 +4,7 @@ import {
   getUserPermissionCoBranch,
   saveUserPermissionCoBranch,
   deleteUserPermissionCoBranch,
-} from "../../controller/SettingController/UserpermissionCoBranch.controller.js";
+} from "../../controller/SecurityController/UserPermissionBranchController.js";
 
 const router = Router();
 

@@ -55,11 +55,12 @@ interface UserParams {
 
 async function fetchCompanyBranchTree(
   client: import("pg").PoolClient,
+  pstrCoID: string,
   grantedSet?: Set<string>
 ): Promise<CompanyNode[]> {
   await client.query(
-    `CALL dbo.sp_pageuserpermissioncobranch($1, $2, $3, $4, $5)`,
-    ["GetCoBr", null, null, null, "cur_cobranch_cobr"]
+    `CALL dbo.sp_pageuserpermissionbranch($1, $2, $3, $4, $5)`,
+    ["GetCoBr", pstrCoID, null, null, "cur_cobranch_cobr"]
   );
 
   const rows = await client.query<{
@@ -135,7 +136,7 @@ export const getCompanyBranchStructure = async (
   try {
     await client.query("BEGIN");
 
-    const tree = await fetchCompanyBranchTree(client);
+    const tree = await fetchCompanyBranchTree(client, String(PstrCoID));
 
     await client.query("COMMIT");
 
@@ -183,7 +184,7 @@ export const getUserPermissionCoBranch = async (
     await client.query("BEGIN");
 
     const granted = await client.query(
-      `SELECT fcoid, fbrid FROM dbo.tbluserpermissioncobranch WHERE fuserid = $1`,
+      `SELECT fcoid, fbrid FROM dbo.tbluserpermissionbranch WHERE fuserid = $1`,
       [lkpUserID]
     );
 
@@ -191,7 +192,7 @@ export const getUserPermissionCoBranch = async (
       granted.rows.map((r) => `${r.fcoid}|${r.fbrid}`)
     );
 
-    const tree = await fetchCompanyBranchTree(client, grantedSet);
+    const tree = await fetchCompanyBranchTree(client, String(PstrCoID), grantedSet);
 
     await client.query("COMMIT");
 
@@ -268,7 +269,7 @@ export const saveUserPermissionCoBranch = async (
     // used below to build a proper "inserted / deleted" audit
     // note instead of just a final count.
     const before = await client.query(
-      `SELECT fcoid, fbrid FROM dbo.tbluserpermissioncobranch WHERE fuserid = $1`,
+      `SELECT fcoid, fbrid FROM dbo.tbluserpermissionbranch WHERE fuserid = $1`,
       [lkpUserID]
     );
     const oldPairs = new Set(before.rows.map((r) => `${r.fcoid}|${r.fbrid}`));
@@ -276,7 +277,7 @@ export const saveUserPermissionCoBranch = async (
     // Delete existing rights (global wipe for this user, same
     // as the original VB Apply(), not scoped to one company).
     await client.query(
-      `CALL dbo.sp_pageuserpermissioncobranch($1, $2, $3, $4, $5)`,
+      `CALL dbo.sp_pageuserpermissionbranch($1, $2, $3, $4, $5)`,
       ["D", null, lkpUserID, null, "cur_cobranch_del"]
     );
 
@@ -289,7 +290,7 @@ export const saveUserPermissionCoBranch = async (
       newPairs.add(`${permission.fcoid}|${permission.fbrid}`);
 
       await client.query(
-        `CALL dbo.sp_pageuserpermissioncobranch($1, $2, $3, $4, $5)`,
+        `CALL dbo.sp_pageuserpermissionbranch($1, $2, $3, $4, $5)`,
         [
           "S",
           permission.fcoid,
@@ -441,7 +442,7 @@ export const deleteUserPermissionCoBranch = async (
 
   try {
     await pool.query(
-      `CALL dbo.sp_pageuserpermissioncobranch($1, $2, $3, $4, $5)`,
+      `CALL dbo.sp_pageuserpermissionbranch($1, $2, $3, $4, $5)`,
       ["D", null, lkpUserID, null, "cur_cobranch_del"]
     );
 

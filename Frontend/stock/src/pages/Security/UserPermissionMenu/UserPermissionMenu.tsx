@@ -146,8 +146,8 @@ const userIdSelectStyles: StylesConfig<SelectOption, false> = {
   menuList: (base) => ({
     ...base,
     padding: "3px 0",
-    maxHeight: "200px",
-    overflowY: "auto",
+    maxHeight: "260px", // ~8 rows visible - always leaves at least one row scrolled off so the thumb stays visible
+    overflowY: "scroll", // always show the scrollbar track, even when everything fits
   }),
 
   option: (base, state) => ({
@@ -953,6 +953,7 @@ const UserPermission: React.FC = () => {
               setLkpUserID(option?.value || "")
             }
             styles={userIdSelectStyles}
+            classNamePrefix="userIdSelect"
             isSearchable
             isClearable={false}
             isLoading={loadingUserIdOptions}
