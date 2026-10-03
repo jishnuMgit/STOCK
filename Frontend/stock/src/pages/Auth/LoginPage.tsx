@@ -56,9 +56,9 @@ const LoginPage: React.FC = () => {
     e.preventDefault();
 
     const result = await login({
-      companyId: selectedCompanyId,
-      txtYear: selectedYear,
-      txtUserID: userId,
+      pstrCOID: selectedCompanyId,
+      PstrYear: selectedYear,
+      PstrUserID: userId,
       txtPwd: password,
     });
 
