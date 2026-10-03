@@ -137,7 +137,7 @@ export const CheckISdividISccid = async (
 
     if (
       haveCC &&
-      (!item.ccId || item.ccId.trim() === "")
+      (!item.CCID || item.CCID.trim() === "")
     ) {
       throw new Error(
         `Account ${accountId} requires a CC ID. Please select the CC ID.`

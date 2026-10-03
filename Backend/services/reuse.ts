@@ -41,7 +41,7 @@ export interface ReceiptProcedureParams {
 
   accountId?: ReceiptValue;
   gcs?: ReceiptValue;
-  ccId?: ReceiptValue;
+  CCID?: ReceiptValue;
 
   forDocNo?: ReceiptValue;
 
@@ -94,7 +94,7 @@ export interface ReceiptRow {
   gcs?: string;
   fgcs?: string;
 
-  ccId?: string;
+  CCID?: string;
   forDocNo?: string;
 
   DivID?: string;

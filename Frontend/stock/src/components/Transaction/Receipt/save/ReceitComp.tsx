@@ -71,7 +71,7 @@ export type TableField =
   | "accountId"
   | "accountName"
   | "DivID"
-  | "ccId"
+  | "CCID"
   | "creditAmount"
   | "match"
   | "view";
@@ -2115,8 +2115,8 @@ const ReceiptRow = memo(
     );
 
     const selectedCcId = useMemo(
-      () => ccIdOptions.find((option) => option.value === row.ccId) || null,
-      [ccIdOptions, row.ccId],
+      () => ccIdOptions.find((option) => option.value === row.CCID) || null,
+      [ccIdOptions, row.CCID],
     );
 
     const handleAccountChange = useCallback(
@@ -2136,7 +2136,7 @@ const ReceiptRow = memo(
 
         handleRowChange(row.id, "DivID", "");
 
-        handleRowChange(row.id, "ccId", "");
+        handleRowChange(row.id, "CCID", "");
 
         await fetchDivisions(option.accountId);
       },
@@ -2609,7 +2609,7 @@ const ReceiptRow = memo(
             ref={(instance) => {
               ccIdSelectRef.current = instance;
 
-              setRowRef(index, "ccId", instance);
+              setRowRef(index, "CCID", instance);
             }}
             value={isCcIdEditing ? null : selectedCcId}
             inputValue={ccIdSearchText}
@@ -2636,7 +2636,7 @@ const ReceiptRow = memo(
                 return;
               }
 
-              handleSelectKeyDown(event, "ccId", ccIdMenuOpenRef);
+              handleSelectKeyDown(event, "CCID", ccIdMenuOpenRef);
             }}
             onMenuOpen={handleCcMenuOpen}
             onMenuClose={() => {
@@ -2645,7 +2645,7 @@ const ReceiptRow = memo(
               setIsCcIdEditing(false);
             }}
             onChange={(option: SingleValue<SelectOption>) => {
-              handleRowChange(row.id, "ccId", option?.value || "");
+              handleRowChange(row.id, "CCID", option?.value || "");
 
               setCcIdSearchText("");
               setIsCcIdEditing(false);

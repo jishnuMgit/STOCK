@@ -44,7 +44,7 @@ const createRows = (): ReceiptRow[] =>
     haveCc: false,
     hasDivision: false,
     DivID: "",
-    ccId: "",
+    CCID: "",
     creditAmount: "",
     amount: 0,
     match: false,
@@ -59,7 +59,7 @@ const tableFieldOrder: TableField[] = [
   "accountId",
   "accountName",
   "DivID",
-  "ccId",
+  "CCID",
   "creditAmount",
 ];
 
@@ -94,7 +94,7 @@ interface ModifyReceiptResponse {
     dtpDate?: string;
     // cbAccount?: string;
     cbAccountName?: string;
-    ccId?: string;
+    CCID?: string;
     receivedFrom?: string;
     reference?: string;
     note?: string;
@@ -106,7 +106,7 @@ interface ModifyReceiptResponse {
     accountName?: string;
     fgcs?: string;
     DivID?: string;
-    ccId?: string;
+    CCID?: string;
     creditAmount?: string | number;
     match?: boolean | string | number;
     description?: string;
@@ -444,7 +444,7 @@ const ReceiptPage: React.FC = () => {
           haveCc: account?.fhavecc === true,
           hasDivision: Boolean(loadedRow.DivID),
           DivID: loadedRow.DivID || "",
-          ccId: loadedRow.ccId || "",
+          CCID: loadedRow.CCID || "",
           creditAmount:
             loadedRow.creditAmount === undefined ||
             loadedRow.creditAmount === null
@@ -476,7 +476,7 @@ const ReceiptPage: React.FC = () => {
 
       setDtpDate(formatReceiptDate(result.header.dtpDate) || getTodayDate());
       setCbAccount(result.header.cbAccountName || "");
-      setCbCcId(result.header.ccId || "");
+      setCbCcId(result.header.CCID || "");
       setReceivedFrom(result.header.receivedFrom || "");
       setReference(result.header.reference || "");
       setNote(result.header.note || "");
@@ -748,7 +748,7 @@ const ReceiptPage: React.FC = () => {
           haveCc: false,
           hasDivision: false,
           DivID: "",
-          ccId: "",
+          CCID: "",
           creditAmount: "",
           amount: 0,
           match: false,
@@ -919,7 +919,7 @@ const ReceiptPage: React.FC = () => {
 
       const availableFields = tableFieldOrder
         .filter((nextField) => nextField !== "DivID" || row?.hasDivision)
-        .filter((nextField) => nextField !== "ccId" || row?.haveCc);
+        .filter((nextField) => nextField !== "CCID" || row?.haveCc);
 
       const fieldIndex = availableFields.indexOf(field);
 
@@ -1131,7 +1131,7 @@ const ReceiptPage: React.FC = () => {
           accountName: row.accountName,
           fgcs: row.fgcs,
           DivID: row.DivID,
-          ccId: row.ccId,
+          CCID: row.CCID,
           creditAmount: Number(row.creditAmount) || 0,
           match: row.match,
           description: row.description || "",
@@ -1385,7 +1385,7 @@ const ReceiptPage: React.FC = () => {
         accountName: row.accountName,
         fgcs: row.fgcs,
         DivID: row.DivID,
-        ccId: row.ccId,
+        CCID: row.CCID,
         creditAmount: Number(row.creditAmount) || 0,
         match: row.match,
         description: row.description || "",

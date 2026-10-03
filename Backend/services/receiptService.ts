@@ -317,7 +317,7 @@ async function callReceiptProcedure(
 
     DivID = null,
 
-    ccId = null,
+    CCID = null,
 
     debit = 0,
 
@@ -401,7 +401,7 @@ async function callReceiptProcedure(
 
     clean(DivID),                      // $14
 
-    clean(ccId),                           // $15
+    clean(CCID),                           // $15
 
     toNumber(debit),                       // $16
 
@@ -784,7 +784,7 @@ async function saveReceiptLine(
 
     gcs,
 
-    ccId,
+    CCID,
 
     debit,
 
@@ -831,7 +831,7 @@ async function saveReceiptLine(
 
       DivID,
 
-      ccId,
+      CCID,
 
       debit,
 
@@ -883,7 +883,7 @@ async function saveGeneratedEntry(
 
     gcs,
 
-    ccId,
+    CCID,
 
     credit,
 
@@ -945,7 +945,7 @@ async function saveGeneratedEntry(
 
       DivID,
 
-      ccId,
+      CCID,
 
       debit: 0,
 
@@ -1258,8 +1258,8 @@ export async function saveReceiptService(
              Cost Center
           */
 
-          ccId:
-            row.ccId ||
+          CCID:
+            row.CCID ||
             "",
 
           /*
@@ -1353,8 +1353,8 @@ export async function saveReceiptService(
           firstRow.fgcs ||
           "",
 
-        ccId:
-          firstRow.ccId ||
+        CCID:
+          firstRow.CCID ||
           "",
 
         credit:
@@ -1918,6 +1918,7 @@ export async function updateReceiptService(
        NO INSERT.
     ===================================================== */
 
+  
     await callReceiptProcedure(
       client,
       {
@@ -1960,8 +1961,8 @@ export async function updateReceiptService(
           validRows[0]?.divId ||
           "",
 
-        ccId:
-          validRows[0]?.ccId ||
+        CCID:
+          validRows[0]?.CCID ||
           cbCcId ||
           "",
 
@@ -2028,7 +2029,7 @@ export async function updateReceiptService(
        accountid
        gcs
        divid
-       ccid
+       CCID
        debit
        credit
        description
@@ -2077,7 +2078,7 @@ export async function updateReceiptService(
               "",
 
             ccid:
-              row.ccId ||
+              row.CCID ||
               "",
 
             debit:
@@ -2162,7 +2163,7 @@ export async function updateReceiptService(
         DivID:
           null,
 
-        ccId:
+        CCID:
           null,
 
         debit: 0,

@@ -30,7 +30,7 @@ interface ReceiptHeader {
   docNo: any;
   dtpDate: any;
   cbAccountName: any;
-  ccId: any;
+  CCID: any;
   receivedFrom: any;
   reference: any;
   note: any;
@@ -44,7 +44,7 @@ interface ReceiptDetailRow {
   accountName: any;
   fgcs: any;
   DivID: any;
-  ccId: any;
+  CCID: any;
   creditAmount: string;
   match: boolean;
   description: any;
@@ -1063,7 +1063,7 @@ export async function GetData({
        COST CENTER
     ===================================================== */
 
-    ccId:
+    CCID:
       dbHeader.fccid ??
       "",
 
@@ -1183,7 +1183,7 @@ export async function GetData({
                COST CENTER
             ================================================= */
 
-            ccId:
+            CCID:
               row.fccid ??
               "",
 
