@@ -35,7 +35,7 @@ import ReceiptPrint from "../../../../components/Transaction/Receipt/save/Receip
 ========================================================= */
 
 const createRows = (): ReceiptRow[] =>
-  Array.from({ length: 11 }, (_, index) => ({
+  Array.from({ length: 9 }, (_, index) => ({
     id: index + 1,
     slNo: index + 1,
     accountId: "",
@@ -90,11 +90,10 @@ interface ModifyReceiptResponse {
   header: {
     lkpBranch?: string;
     lkpType?: string;
-    docNo?: string;
-    receiptDate?: string;
+    txtDocNo?: string;
+    dtpDate?: string;
     // cbAccount?: string;
     cbAccountName?: string;
-    ccId?: string;
     receivedFrom?: string;
     reference?: string;
     note?: string;
@@ -102,12 +101,12 @@ interface ModifyReceiptResponse {
 
   rows: Array<{
     id?: number;
-    accountId?: string;
-    accountName?: string;
+    AccountID?: string;
+    AccountName?: string;
     fgcs?: string;
-    division?: string;
-    ccId?: string;
-    creditAmount?: string | number;
+    DivID?: string;
+    CCID?: string;
+    CreditAmt?: string | number;
     match?: boolean | string | number;
     description?: string;
   }>;
@@ -1692,7 +1691,7 @@ const ReceiptPage: React.FC = () => {
   ======================================================= */
 
   return (
-    <div className="min-h-screen bg-slate-100 px-5 py-2 flex flex-col justify-center items-center gap-2.5">
+    <div className="min-h-fit mt-3 bg-slate-100 px-5 py-2 flex flex-col justify-center items-center gap-2.5">
       <div className="receipt-screen mx-auto lg:w-275 md:w-[55%] max-w-362.5 min-w-212.5 border border-gray-400 bg-white">
         {/* =================================================
             HEADER
