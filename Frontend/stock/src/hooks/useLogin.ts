@@ -1,9 +1,9 @@
 import { useState } from "react";
 
 interface LoginData {
-  companyId: string;
-  txtYear: string;
-  txtUserID: string;
+  pstrCOID: string;
+  PstrYear: string;
+  PstrUserID: string;
   txtPwd: string;
   language?: string;
   changePassword?: boolean;
@@ -16,8 +16,8 @@ interface LoginResponse {
   message: string;
   data?: {
     txtUserID: string;
-    companyId: string;
-    txtYear: string;
+    pstrCOID: string;
+    PstrYear: string;
     userType: string;
     branchId: string;
   };
@@ -59,12 +59,12 @@ export const useLogin = () => {
         localStorage.setItem("PstrUserID", data.data.txtUserID);
       }
 
-      if (data.data?.companyId) {
-        localStorage.setItem("PstrCoID", data.data.companyId);
+      if (data.data?.pstrCOID) {
+        localStorage.setItem("PstrCoID", data.data.pstrCOID);
       }
 
-      if (data.data?.txtYear) {
-        localStorage.setItem("PstrYear", data.data.txtYear);
+      if (data.data?.PstrYear) {
+        localStorage.setItem("PstrYear", data.data.PstrYear);
       }
 
       if (data.data?.userType) {

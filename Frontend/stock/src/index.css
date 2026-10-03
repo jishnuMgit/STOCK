@@ -23,6 +23,7 @@ body {
   height: 34px;
   border-radius: 4px;
   border: 1px solid #9db8d4;
+  cursor: pointer;
 
   background: linear-gradient(to right, #ffffff, #e7eef5);
 
