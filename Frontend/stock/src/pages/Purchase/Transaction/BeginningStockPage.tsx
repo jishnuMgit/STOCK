@@ -408,10 +408,10 @@ const BeginningStockPage: React.FC = () => {
       </div>
 
       {/* HEADER FORM */}
-      <section className="flex h-[66px] bg-white  shrink-0 items-center justify-between gap-4 px-[22px]">
+      <section className="flex h-[66px] bg-white  shrink-0 items-center justify-between gap-4 px-[22px] mt-2">
 
         {/* Branch */}
-        <div className="flex min-w-0 items-center gap-3">
+        <div className="flex min-w-0 items-center gap-3 ">
           <label
             htmlFor="lkpBranch"
             className="shrink-0 text-[14px] font-semibold text-slate-600"
@@ -461,9 +461,9 @@ const BeginningStockPage: React.FC = () => {
       </section>
 
       {/* STOCK TABLE */}
-  <main className="customer-table-scroll flex min-h-0 bg-white    flex-1 flex-col px-[21px] ">
-  <div className="customer-table-scroll h-full flex-1 overflow-auto ">
-    <table className="customer-table-scroll w-full min-w-[900px] table-fixed border-collapse border  border-[#d5e5ff]">
+<main className="customer-table-scroll flex min-h-0 flex-1 flex-col bg-white px-[21px]">
+  <div className="customer-table-scroll min-h-0 flex-1 overflow-auto border border-[#d5e5ff]">
+    <table className="customer-table-scroll w-full min-w-[900px] table-fixed border-collapse border border-[#d5e5ff]">
             <colgroup>
               <col style={{ width: "17px" }} />
               <col style={{ width: "43px" }} />
@@ -660,7 +660,7 @@ const BeginningStockPage: React.FC = () => {
       </main>
 
       {/* BOTTOM FORM */}
-      <section className="flex h-[70px] bg-white  -mt-10 shrink-0 items-center gap-3 px-[21px]">
+      <section className="flex h-[70px] bg-white   shrink-0 items-center gap-3 px-[21px]">
 
         {/* NOTE */}
         <label
@@ -703,7 +703,7 @@ const BeginningStockPage: React.FC = () => {
       </section>
 
       {/* ACTION BUTTONS */}
-      <footer className="flex min-h-[94px] shrink-0 flex-col items-center justify-center gap-2 border-[#333333] bg-white px-4 pb-6">
+      <footer className="flex min-h-[94px] shrink-0 flex-col items-center justify-center gap-2 border-[#333333] bg-white px-4 pb-1">
 
         <div className="flex w-full flex-wrap items-center justify-center gap-[13px]">
           {["Save", "Delete", "Print", "Post", "Clear"].map(
