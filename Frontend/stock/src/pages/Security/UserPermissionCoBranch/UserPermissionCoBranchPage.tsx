@@ -543,7 +543,7 @@ const UserPermissionCoBranchPage: React.FC = () => {
         {/* TITLE */}
         <header className="flex h-9 shrink-0 items-center border-b border-slate-300 bg-[#a3dfc0]">
           <span className="px-5 text-[17px] font-semibold text-slate-700">
-            User Permission - Co Branch
+            User Permission - Branch
           </span>
         </header>
 

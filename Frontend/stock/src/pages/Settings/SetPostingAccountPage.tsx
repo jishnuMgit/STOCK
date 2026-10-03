@@ -109,13 +109,13 @@ const accountOptionsByRow: Record<string, AccountOption[]> = {
 // ============================================================
 // INITIAL FORM VALUES
 // ============================================================
+
 const buttonClass = `
   min-w-[110px]
   h-[40px]
   rounded-[4px]
   border
   border-[#9db8d4]
- 
   bg-gradient-to-b
   from-[#ffffff]
   to-[#e7eef5]
@@ -130,18 +130,13 @@ const buttonClass = `
   from-green-800
   to-green-500
   hover:border-[#7f9fbd]
- 
   hover:bg-gradient-to-b
-  
   focus:border-[#20884e]
-  
- 
-
- 
   focus:outline-none
   focus:ring-0
   hover:text-green-800
 `;
+
 const initialValues: FormValues = {
   branch: "",
   cashSupplierId: "",
@@ -379,606 +374,605 @@ const SetPostingAccountPage: React.FC = () => {
   // RENDER
   // ----------------------------------------------------------
 
-  
-return (
-  <div className="flex min-h-screen items-center justify-center bg-white p-4 sm:p-5">
-    <div className="w-full max-w-200 bg-white p-0.75 font-sans text-[#263449]">
-      <div className="w-full border border-[#d5d5d5] bg-white">
+  return (
+    <div className="flex min-h-screen items-center justify-center bg-white p-4 sm:p-5 ">
+      <div className="w-full max-w-200 bg-white p-0.75 font-sans text-[#263449] ">
+        <div className="w-full border border-[#d5d5d5] bg-white">
 
-        {/* HEADER */}
-        <header className="flex h-9 shrink-0 items-center border-b border-slate-300 bg-[#a3dfc0]">
-          <span className="px-5 text-[1.0625rem] font-semibold text-slate-700">
-            Set Posting Account
-          </span>
-        </header>
+          {/* HEADER */}
+          <header className="flex h-9 shrink-0 items-center border-b border-slate-300 bg-[#a3dfc0]">
+            <span className="px-5 text-[1.0625rem] font-semibold text-slate-700">
+              Set Posting Account
+            </span>
+          </header>
 
-        {/* FORM BODY */}
-        <div className="px-3 pb-3.75 pt-3.5 sm:px-5">
+          {/* FORM BODY */}
+          <div className="pb-3.75 pt-3.5 sm:pr-3 ">
 
-          {/* BRANCH */}
-          <div className="mb-3 flex flex-wrap items-center gap-x-2 gap-y-1">
-            <label
-              htmlFor="lkpBranch"
-              className="w-full shrink-0 text-left text-[0.6875rem] font-medium sm:w-46.25 sm:text-right"
-            >
-              Branch :
-            </label>
+            {/* BRANCH */}
+            <div className="flex flex-wrap items-center gap-x-2 gap-y-0 -ml-4">
+              <label
+                htmlFor="lkpBranch"
+                className="w-full shrink-0 text-left text-[0.6875rem] font-medium sm:w-46.25 sm:text-right"
+              >
+                Branch :
+              </label>
 
-            <div className="w-full min-w-0 sm:w-50">
-              <Select<SelectOption, false>
-                inputId="lkpBranch"
-                name="lkpBranch"
-                options={branchOptions}
-                value={getSelectedOption(branchOptions, values.branch)}
-                onChange={(selected) =>
-                  handleChange("branch", selected?.value ?? "")
-                }
-                styles={selectStyles}
-                placeholder=""
-                isClearable
-                isSearchable
-              />
+              <div className="w-full min-w-0 sm:w-50">
+                <Select<SelectOption, false>
+                  inputId="lkpBranch"
+                  name="lkpBranch"
+                  options={branchOptions}
+                  value={getSelectedOption(branchOptions, values.branch)}
+                  onChange={(selected) =>
+                    handleChange("branch", selected?.value ?? "")
+                  }
+                  styles={selectStyles}
+                  placeholder=""
+                  isClearable
+                  isSearchable
+                />
+              </div>
             </div>
+
+            {/* CASH SUPPLIER ACCOUNT */}
+            <div className="flex gap-2 items-center m-2">
+              <label
+                htmlFor="lkpCashSupplierAccountID"
+                className="w-[160px] shrink-0 text-right text-[0.6875rem] font-medium whitespace-nowrap"
+              >
+                Cash Supplier Account :
+              </label>
+
+              {/* ACCOUNT ID */}
+              <div className="w-[30%] min-w-0">
+                <Select<SelectOption, false>
+                  inputId="lkpCashSupplierAccountID"
+                  name="lkpCashSupplierAccountID"
+                  options={getIdOptions("cashSupplier")}
+                  value={getSelectedOption(
+                    getIdOptions("cashSupplier"),
+                    values.cashSupplierId,
+                  )}
+                  onChange={(selected) =>
+                    handleAccountIdChange("cashSupplier", selected)
+                  }
+                  styles={selectStyles}
+                  placeholder=""
+                  isClearable
+                  isSearchable
+                />
+              </div>
+
+              {/* ACCOUNT NAME */}
+              <div className="w-full min-w-0">
+                <Select<SelectOption, false>
+                  inputId="lkpCashSupplierAccountName"
+                  name="lkpCashSupplierAccountName"
+                  options={getNameOptions("cashSupplier")}
+                  value={getSelectedOption(
+                    getNameOptions("cashSupplier"),
+                    values.cashSupplierName,
+                  )}
+                  onChange={(selected) =>
+                    handleAccountNameChange("cashSupplier", selected)
+                  }
+                  styles={selectStyles}
+                  placeholder=""
+                  isClearable
+                  isSearchable
+                />
+              </div>
+            </div>
+
+            {/* CASH CUSTOMER ACCOUNT */}
+            <div className="flex gap-2 items-center m-2">
+              <label
+                htmlFor="lkpCashCustomerAccountID"
+                className="w-[160px] shrink-0 text-right text-[0.6875rem] font-medium whitespace-nowrap"
+              >
+                Cash Customer Account :
+              </label>
+
+              <div className="w-[30%] min-w-0">
+                <Select<SelectOption, false>
+                  inputId="lkpCashCustomerAccountID"
+                  name="lkpCashCustomerAccountID"
+                  options={getIdOptions("cashCustomer")}
+                  value={getSelectedOption(
+                    getIdOptions("cashCustomer"),
+                    values.cashCustomerId,
+                  )}
+                  onChange={(selected) =>
+                    handleAccountIdChange("cashCustomer", selected)
+                  }
+                  styles={selectStyles}
+                  placeholder=""
+                  isClearable
+                  isSearchable
+                />
+              </div>
+
+              <div className="w-full min-w-0">
+                <Select<SelectOption, false>
+                  inputId="lkpCashCustomerAccountName"
+                  name="lkpCashCustomerAccountName"
+                  options={getNameOptions("cashCustomer")}
+                  value={getSelectedOption(
+                    getNameOptions("cashCustomer"),
+                    values.cashCustomerName,
+                  )}
+                  onChange={(selected) =>
+                    handleAccountNameChange("cashCustomer", selected)
+                  }
+                  styles={selectStyles}
+                  placeholder=""
+                  isClearable
+                  isSearchable
+                />
+              </div>
+            </div>
+
+            {/* STOCK ACCOUNT */}
+            <div className="flex gap-2 items-center m-2">
+              <label
+                htmlFor="lkpStockAccountID"
+                className="w-[160px] shrink-0 text-right text-[0.6875rem] font-medium whitespace-nowrap"
+              >
+                Stock Account :
+              </label>
+
+              <div className="w-[30%] min-w-0">
+                <Select<SelectOption, false>
+                  inputId="lkpStockAccountID"
+                  name="lkpStockAccountID"
+                  options={getIdOptions("stock")}
+                  value={getSelectedOption(
+                    getIdOptions("stock"),
+                    values.stockId,
+                  )}
+                  onChange={(selected) =>
+                    handleAccountIdChange("stock", selected)
+                  }
+                  styles={selectStyles}
+                  placeholder=""
+                  isClearable
+                  isSearchable
+                />
+              </div>
+
+              <div className="w-full min-w-0">
+                <Select<SelectOption, false>
+                  inputId="lkpStockAccountName"
+                  name="lkpStockAccountName"
+                  options={getNameOptions("stock")}
+                  value={getSelectedOption(
+                    getNameOptions("stock"),
+                    values.stockName,
+                  )}
+                  onChange={(selected) =>
+                    handleAccountNameChange("stock", selected)
+                  }
+                  styles={selectStyles}
+                  placeholder=""
+                  isClearable
+                  isSearchable
+                />
+              </div>
+            </div>
+
+            {/* SALES ACCOUNT */}
+            <div className="flex gap-2 items-center m-2">
+              <label
+                htmlFor="lkpSalesAccountID"
+                className="w-[160px] shrink-0 text-right text-[0.6875rem] font-medium whitespace-nowrap"
+              >
+                Sales Account :
+              </label>
+
+              <div className="w-[30%] min-w-0">
+                <Select<SelectOption, false>
+                  inputId="lkpSalesAccountID"
+                  name="lkpSalesAccountID"
+                  options={getIdOptions("sales")}
+                  value={getSelectedOption(
+                    getIdOptions("sales"),
+                    values.salesId,
+                  )}
+                  onChange={(selected) =>
+                    handleAccountIdChange("sales", selected)
+                  }
+                  styles={selectStyles}
+                  placeholder=""
+                  isClearable
+                  isSearchable
+                />
+              </div>
+
+              <div className="w-full min-w-0">
+                <Select<SelectOption, false>
+                  inputId="lkpSalesAccountName"
+                  name="lkpSalesAccountName"
+                  options={getNameOptions("sales")}
+                  value={getSelectedOption(
+                    getNameOptions("sales"),
+                    values.salesName,
+                  )}
+                  onChange={(selected) =>
+                    handleAccountNameChange("sales", selected)
+                  }
+                  styles={selectStyles}
+                  placeholder=""
+                  isClearable
+                  isSearchable
+                />
+              </div>
+            </div>
+
+            {/* SALES RETURN ACCOUNT */}
+            <div className="flex gap-2 items-center m-2">
+              <label
+                htmlFor="lkpSalesReturnAccountID"
+                className="w-[160px] shrink-0 text-right text-[0.6875rem] font-medium whitespace-nowrap"
+              >
+                Sales Return Account :
+              </label>
+
+              <div className="w-[30%] min-w-0">
+                <Select<SelectOption, false>
+                  inputId="lkpSalesReturnAccountID"
+                  name="lkpSalesReturnAccountID"
+                  options={getIdOptions("salesReturn")}
+                  value={getSelectedOption(
+                    getIdOptions("salesReturn"),
+                    values.salesReturnId,
+                  )}
+                  onChange={(selected) =>
+                    handleAccountIdChange("salesReturn", selected)
+                  }
+                  styles={selectStyles}
+                  placeholder=""
+                  isClearable
+                  isSearchable
+                />
+              </div>
+
+              <div className="w-full min-w-0">
+                <Select<SelectOption, false>
+                  inputId="lkpSalesReturnAccountName"
+                  name="lkpSalesReturnAccountName"
+                  options={getNameOptions("salesReturn")}
+                  value={getSelectedOption(
+                    getNameOptions("salesReturn"),
+                    values.salesReturnName,
+                  )}
+                  onChange={(selected) =>
+                    handleAccountNameChange("salesReturn", selected)
+                  }
+                  styles={selectStyles}
+                  placeholder=""
+                  isClearable
+                  isSearchable
+                />
+              </div>
+            </div>
+
+            {/* COST OF SALES ACCOUNT */}
+            <div className="flex gap-2 items-center m-2">
+              <label
+                htmlFor="lkpCostOfSalesAccountID"
+                className="w-[160px] shrink-0 text-right text-[0.6875rem] font-medium whitespace-nowrap"
+              >
+                Cost Of Sales Account :
+              </label>
+
+              <div className="w-[30%] min-w-0">
+                <Select<SelectOption, false>
+                  inputId="lkpCostOfSalesAccountID"
+                  name="lkpCostOfSalesAccountID"
+                  options={getIdOptions("costOfSales")}
+                  value={getSelectedOption(
+                    getIdOptions("costOfSales"),
+                    values.costOfSalesId,
+                  )}
+                  onChange={(selected) =>
+                    handleAccountIdChange("costOfSales", selected)
+                  }
+                  styles={selectStyles}
+                  placeholder=""
+                  isClearable
+                  isSearchable
+                />
+              </div>
+
+              <div className="w-full min-w-0">
+                <Select<SelectOption, false>
+                  inputId="lkpCostOfSalesAccountName"
+                  name="lkpCostOfSalesAccountName"
+                  options={getNameOptions("costOfSales")}
+                  value={getSelectedOption(
+                    getNameOptions("costOfSales"),
+                    values.costOfSalesName,
+                  )}
+                  onChange={(selected) =>
+                    handleAccountNameChange("costOfSales", selected)
+                  }
+                  styles={selectStyles}
+                  placeholder=""
+                  isClearable
+                  isSearchable
+                />
+              </div>
+            </div>
+
+            {/* COST OF SALES RETURN ACCOUNT */}
+            <div className="flex gap-2 items-center m-2">
+              <label
+                htmlFor="lkpCostOfSalesReturnAccountID"
+                className="w-[160px] shrink-0 text-right text-[0.6875rem] font-medium whitespace-nowrap"
+              >
+                Cost Of Sales Return Account :
+              </label>
+
+              <div className="w-[30%] min-w-0">
+                <Select<SelectOption, false>
+                  inputId="lkpCostOfSalesReturnAccountID"
+                  name="lkpCostOfSalesReturnAccountID"
+                  options={getIdOptions("costOfSalesReturn")}
+                  value={getSelectedOption(
+                    getIdOptions("costOfSalesReturn"),
+                    values.costOfSalesReturnId,
+                  )}
+                  onChange={(selected) =>
+                    handleAccountIdChange("costOfSalesReturn", selected)
+                  }
+                  styles={selectStyles}
+                  placeholder=""
+                  isClearable
+                  isSearchable
+                />
+              </div>
+
+              <div className="w-full min-w-0">
+                <Select<SelectOption, false>
+                  inputId="lkpCostOfSalesReturnAccountName"
+                  name="lkpCostOfSalesReturnAccountName"
+                  options={getNameOptions("costOfSalesReturn")}
+                  value={getSelectedOption(
+                    getNameOptions("costOfSalesReturn"),
+                    values.costOfSalesReturnName,
+                  )}
+                  onChange={(selected) =>
+                    handleAccountNameChange("costOfSalesReturn", selected)
+                  }
+                  styles={selectStyles}
+                  placeholder=""
+                  isClearable
+                  isSearchable
+                />
+              </div>
+            </div>
+
+            {/* STOCK ADJUSTMENT ACCOUNT */}
+            <div className="flex gap-2 items-center m-2">
+              <label
+                htmlFor="lkpStockAdjustmentAccountID"
+                className="w-[160px] shrink-0 text-right text-[0.6875rem] font-medium whitespace-nowrap"
+              >
+                Stock Adjustment Account :
+              </label>
+
+              <div className="w-[30%] min-w-0">
+                <Select<SelectOption, false>
+                  inputId="lkpStockAdjustmentAccountID"
+                  name="lkpStockAdjustmentAccountID"
+                  options={getIdOptions("stockAdjustment")}
+                  value={getSelectedOption(
+                    getIdOptions("stockAdjustment"),
+                    values.stockAdjustmentId,
+                  )}
+                  onChange={(selected) =>
+                    handleAccountIdChange("stockAdjustment", selected)
+                  }
+                  styles={selectStyles}
+                  placeholder=""
+                  isClearable
+                  isSearchable
+                />
+              </div>
+
+              <div className="w-full min-w-0">
+                <Select<SelectOption, false>
+                  inputId="lkpStockAdjustmentAccountName"
+                  name="lkpStockAdjustmentAccountName"
+                  options={getNameOptions("stockAdjustment")}
+                  value={getSelectedOption(
+                    getNameOptions("stockAdjustment"),
+                    values.stockAdjustmentName,
+                  )}
+                  onChange={(selected) =>
+                    handleAccountNameChange("stockAdjustment", selected)
+                  }
+                  styles={selectStyles}
+                  placeholder=""
+                  isClearable
+                  isSearchable
+                />
+              </div>
+            </div>
+
+            {/* INPUT VAT ACCOUNT */}
+            <div className="flex gap-2 items-center m-2">
+              <label
+                htmlFor="lkpInputVATAccountID"
+                className="w-[160px] shrink-0 text-right text-[0.6875rem] font-medium whitespace-nowrap"
+              >
+                Input VAT Account :
+              </label>
+
+              <div className="w-[30%] min-w-0">
+                <Select<SelectOption, false>
+                  inputId="lkpInputVATAccountID"
+                  name="lkpInputVATAccountID"
+                  options={getIdOptions("inputVAT")}
+                  value={getSelectedOption(
+                    getIdOptions("inputVAT"),
+                    values.inputVATId,
+                  )}
+                  onChange={(selected) =>
+                    handleAccountIdChange("inputVAT", selected)
+                  }
+                  styles={selectStyles}
+                  placeholder=""
+                  isClearable
+                  isSearchable
+                />
+              </div>
+
+              <div className="w-full min-w-0">
+                <Select<SelectOption, false>
+                  inputId="lkpInputVATAccountName"
+                  name="lkpInputVATAccountName"
+                  options={getNameOptions("inputVAT")}
+                  value={getSelectedOption(
+                    getNameOptions("inputVAT"),
+                    values.inputVATName,
+                  )}
+                  onChange={(selected) =>
+                    handleAccountNameChange("inputVAT", selected)
+                  }
+                  styles={selectStyles}
+                  placeholder=""
+                  isClearable
+                  isSearchable
+                />
+              </div>
+            </div>
+
+            {/* OUTPUT VAT ACCOUNT */}
+            <div className="flex gap-2 items-center m-2">
+              <label
+                htmlFor="lkpOutputVATAccountID"
+                className="w-[160px] shrink-0 text-right text-[0.6875rem] font-medium whitespace-nowrap"
+              >
+                Output VAT Account :
+              </label>
+
+              <div className="w-[30%] min-w-0">
+                <Select<SelectOption, false>
+                  inputId="lkpOutputVATAccountID"
+                  name="lkpOutputVATAccountID"
+                  options={getIdOptions("outputVAT")}
+                  value={getSelectedOption(
+                    getIdOptions("outputVAT"),
+                    values.outputVATId,
+                  )}
+                  onChange={(selected) =>
+                    handleAccountIdChange("outputVAT", selected)
+                  }
+                  styles={selectStyles}
+                  placeholder=""
+                  isClearable
+                  isSearchable
+                />
+              </div>
+
+              <div className="w-full min-w-0">
+                <Select<SelectOption, false>
+                  inputId="lkpOutputVATAccountName"
+                  name="lkpOutputVATAccountName"
+                  options={getNameOptions("outputVAT")}
+                  value={getSelectedOption(
+                    getNameOptions("outputVAT"),
+                    values.outputVATName,
+                  )}
+                  onChange={(selected) =>
+                    handleAccountNameChange("outputVAT", selected)
+                  }
+                  styles={selectStyles}
+                  placeholder=""
+                  isClearable
+                  isSearchable
+                />
+              </div>
+            </div>
+
+            {/* ROUND OFF ACCOUNT */}
+            <div className="flex gap-2 items-center m-2">
+              <label
+                htmlFor="lkpRoundOffAccountID"
+                className="w-[160px] shrink-0 text-right text-[0.6875rem] font-medium whitespace-nowrap"
+              >
+                Round Off Account :
+              </label>
+
+              <div className="w-[30%] min-w-0">
+                <Select<SelectOption, false>
+                  inputId="lkpRoundOffAccountID"
+                  name="lkpRoundOffAccountID"
+                  options={getIdOptions("roundOff")}
+                  value={getSelectedOption(
+                    getIdOptions("roundOff"),
+                    values.roundOffId,
+                  )}
+                  onChange={(selected) =>
+                    handleAccountIdChange("roundOff", selected)
+                  }
+                  styles={selectStyles}
+                  placeholder=""
+                  isClearable
+                  isSearchable
+                />
+              </div>
+
+              <div className="w-full min-w-0">
+                <Select<SelectOption, false>
+                  inputId="lkpRoundOffAccountName"
+                  name="lkpRoundOffAccountName"
+                  options={getNameOptions("roundOff")}
+                  value={getSelectedOption(
+                    getNameOptions("roundOff"),
+                    values.roundOffName,
+                  )}
+                  onChange={(selected) =>
+                    handleAccountNameChange("roundOff", selected)
+                  }
+                  styles={selectStyles}
+                  placeholder=""
+                  isClearable
+                  isSearchable
+                />
+              </div>
+            </div>
+
+            {/* BUTTONS */}
+            <div className="flex min-h-18.5 -mb-6 items-start justify-center gap-3 pt-2">
+              <button
+                id="btnSave"
+                name="btnSave"
+                type="button"
+                onClick={handleSave}
+                className={buttonClass}
+              >
+                <span className="underline underline-offset-2">S</span>ave
+              </button>
+
+              <button
+                id="btnClear"
+                name="btnClear"
+                type="button"
+                onClick={handleClear}
+                className={buttonClass}
+              >
+                <span className="underline underline-offset-2">C</span>lear
+              </button>
+            </div>
+
           </div>
-
-          {/* CASH SUPPLIER ACCOUNT */}
-          <div className="mb-1.75 grid grid-cols-1 items-center gap-x-2 gap-y-1 sm:grid-cols-[11.5625rem_minmax(0,0.7fr)_minmax(0,1fr)]">
-            <label
-              htmlFor="lkpCashSupplierAccountID"
-              className="text-left text-[0.6875rem] font-medium sm:whitespace-nowrap sm:text-right"
-            >
-              Cash Supplier Account :
-            </label>
-
-            {/* ACCOUNT ID */}
-            <div className="w-full min-w-0">
-              <Select<SelectOption, false>
-                inputId="lkpCashSupplierAccountID"
-                name="lkpCashSupplierAccountID"
-                options={getIdOptions("cashSupplier")}
-                value={getSelectedOption(
-                  getIdOptions("cashSupplier"),
-                  values.cashSupplierId,
-                )}
-                onChange={(selected) =>
-                  handleAccountIdChange("cashSupplier", selected)
-                }
-                styles={selectStyles}
-                placeholder=""
-                isClearable
-                isSearchable
-              />
-            </div>
-
-            {/* ACCOUNT NAME */}
-            <div className="w-full min-w-0">
-              <Select<SelectOption, false>
-                inputId="lkpCashSupplierAccountName"
-                name="lkpCashSupplierAccountName"
-                options={getNameOptions("cashSupplier")}
-                value={getSelectedOption(
-                  getNameOptions("cashSupplier"),
-                  values.cashSupplierName,
-                )}
-                onChange={(selected) =>
-                  handleAccountNameChange("cashSupplier", selected)
-                }
-                styles={selectStyles}
-                placeholder=""
-                isClearable
-                isSearchable
-              />
-            </div>
-          </div>
-
-          {/* CASH CUSTOMER ACCOUNT */}
-          <div className="mb-1.75 grid grid-cols-1 items-center gap-x-2 gap-y-1 sm:grid-cols-[11.5625rem_minmax(0,0.7fr)_minmax(0,1fr)]">
-            <label
-              htmlFor="lkpCashCustomerAccountID"
-              className="text-left text-[0.6875rem] font-medium sm:whitespace-nowrap sm:text-right"
-            >
-              Cash Customer Account :
-            </label>
-
-            <div className="w-full min-w-0">
-              <Select<SelectOption, false>
-                inputId="lkpCashCustomerAccountID"
-                name="lkpCashCustomerAccountID"
-                options={getIdOptions("cashCustomer")}
-                value={getSelectedOption(
-                  getIdOptions("cashCustomer"),
-                  values.cashCustomerId,
-                )}
-                onChange={(selected) =>
-                  handleAccountIdChange("cashCustomer", selected)
-                }
-                styles={selectStyles}
-                placeholder=""
-                isClearable
-                isSearchable
-              />
-            </div>
-
-            <div className="w-full min-w-0">
-              <Select<SelectOption, false>
-                inputId="lkpCashCustomerAccountName"
-                name="lkpCashCustomerAccountName"
-                options={getNameOptions("cashCustomer")}
-                value={getSelectedOption(
-                  getNameOptions("cashCustomer"),
-                  values.cashCustomerName,
-                )}
-                onChange={(selected) =>
-                  handleAccountNameChange("cashCustomer", selected)
-                }
-                styles={selectStyles}
-                placeholder=""
-                isClearable
-                isSearchable
-              />
-            </div>
-          </div>
-
-          {/* STOCK ACCOUNT */}
-          <div className="mb-1.75 grid grid-cols-1 items-center gap-x-2 gap-y-1 sm:grid-cols-[11.5625rem_minmax(0,0.7fr)_minmax(0,1fr)]">
-            <label
-              htmlFor="lkpStockAccountID"
-              className="text-left text-[0.6875rem] font-medium sm:whitespace-nowrap sm:text-right"
-            >
-              Stock Account :
-            </label>
-
-            <div className="w-full min-w-0">
-              <Select<SelectOption, false>
-                inputId="lkpStockAccountID"
-                name="lkpStockAccountID"
-                options={getIdOptions("stock")}
-                value={getSelectedOption(
-                  getIdOptions("stock"),
-                  values.stockId,
-                )}
-                onChange={(selected) =>
-                  handleAccountIdChange("stock", selected)
-                }
-                styles={selectStyles}
-                placeholder=""
-                isClearable
-                isSearchable
-              />
-            </div>
-
-            <div className="w-full min-w-0">
-              <Select<SelectOption, false>
-                inputId="lkpStockAccountName"
-                name="lkpStockAccountName"
-                options={getNameOptions("stock")}
-                value={getSelectedOption(
-                  getNameOptions("stock"),
-                  values.stockName,
-                )}
-                onChange={(selected) =>
-                  handleAccountNameChange("stock", selected)
-                }
-                styles={selectStyles}
-                placeholder=""
-                isClearable
-                isSearchable
-              />
-            </div>
-          </div>
-
-          {/* SALES ACCOUNT */}
-          <div className="mb-1.75 grid grid-cols-1 items-center gap-x-2 gap-y-1 sm:grid-cols-[11.5625rem_minmax(0,0.7fr)_minmax(0,1fr)]">
-            <label
-              htmlFor="lkpSalesAccountID"
-              className="text-left text-[0.6875rem] font-medium sm:whitespace-nowrap sm:text-right"
-            >
-              Sales Account :
-            </label>
-
-            <div className="w-full min-w-0">
-              <Select<SelectOption, false>
-                inputId="lkpSalesAccountID"
-                name="lkpSalesAccountID"
-                options={getIdOptions("sales")}
-                value={getSelectedOption(
-                  getIdOptions("sales"),
-                  values.salesId,
-                )}
-                onChange={(selected) =>
-                  handleAccountIdChange("sales", selected)
-                }
-                styles={selectStyles}
-                placeholder=""
-                isClearable
-                isSearchable
-              />
-            </div>
-
-            <div className="w-full min-w-0">
-              <Select<SelectOption, false>
-                inputId="lkpSalesAccountName"
-                name="lkpSalesAccountName"
-                options={getNameOptions("sales")}
-                value={getSelectedOption(
-                  getNameOptions("sales"),
-                  values.salesName,
-                )}
-                onChange={(selected) =>
-                  handleAccountNameChange("sales", selected)
-                }
-                styles={selectStyles}
-                placeholder=""
-                isClearable
-                isSearchable
-              />
-            </div>
-          </div>
-
-          {/* SALES RETURN ACCOUNT */}
-          <div className="mb-1.75 grid grid-cols-1 items-center gap-x-2 gap-y-1 sm:grid-cols-[11.5625rem_minmax(0,0.7fr)_minmax(0,1fr)]">
-            <label
-              htmlFor="lkpSalesReturnAccountID"
-              className="text-left text-[0.6875rem] font-medium sm:whitespace-nowrap sm:text-right"
-            >
-              Sales Return Account :
-            </label>
-
-            <div className="w-full min-w-0">
-              <Select<SelectOption, false>
-                inputId="lkpSalesReturnAccountID"
-                name="lkpSalesReturnAccountID"
-                options={getIdOptions("salesReturn")}
-                value={getSelectedOption(
-                  getIdOptions("salesReturn"),
-                  values.salesReturnId,
-                )}
-                onChange={(selected) =>
-                  handleAccountIdChange("salesReturn", selected)
-                }
-                styles={selectStyles}
-                placeholder=""
-                isClearable
-                isSearchable
-              />
-            </div>
-
-            <div className="w-full min-w-0">
-              <Select<SelectOption, false>
-                inputId="lkpSalesReturnAccountName"
-                name="lkpSalesReturnAccountName"
-                options={getNameOptions("salesReturn")}
-                value={getSelectedOption(
-                  getNameOptions("salesReturn"),
-                  values.salesReturnName,
-                )}
-                onChange={(selected) =>
-                  handleAccountNameChange("salesReturn", selected)
-                }
-                styles={selectStyles}
-                placeholder=""
-                isClearable
-                isSearchable
-              />
-            </div>
-          </div>
-
-          {/* COST OF SALES ACCOUNT */}
-          <div className="mb-1.75 grid grid-cols-1 items-center gap-x-2 gap-y-1 sm:grid-cols-[11.5625rem_minmax(0,0.7fr)_minmax(0,1fr)]">
-            <label
-              htmlFor="lkpCostOfSalesAccountID"
-              className="text-left text-[0.6875rem] font-medium sm:whitespace-nowrap sm:text-right"
-            >
-              Cost Of Sales Account :
-            </label>
-
-            <div className="w-full min-w-0">
-              <Select<SelectOption, false>
-                inputId="lkpCostOfSalesAccountID"
-                name="lkpCostOfSalesAccountID"
-                options={getIdOptions("costOfSales")}
-                value={getSelectedOption(
-                  getIdOptions("costOfSales"),
-                  values.costOfSalesId,
-                )}
-                onChange={(selected) =>
-                  handleAccountIdChange("costOfSales", selected)
-                }
-                styles={selectStyles}
-                placeholder=""
-                isClearable
-                isSearchable
-              />
-            </div>
-
-            <div className="w-full min-w-0">
-              <Select<SelectOption, false>
-                inputId="lkpCostOfSalesAccountName"
-                name="lkpCostOfSalesAccountName"
-                options={getNameOptions("costOfSales")}
-                value={getSelectedOption(
-                  getNameOptions("costOfSales"),
-                  values.costOfSalesName,
-                )}
-                onChange={(selected) =>
-                  handleAccountNameChange("costOfSales", selected)
-                }
-                styles={selectStyles}
-                placeholder=""
-                isClearable
-                isSearchable
-              />
-            </div>
-          </div>
-
-          {/* COST OF SALES RETURN ACCOUNT */}
-          <div className="mb-1.75 grid grid-cols-1 items-center gap-x-2 gap-y-1 sm:grid-cols-[11.5625rem_minmax(0,0.7fr)_minmax(0,1fr)]">
-            <label
-              htmlFor="lkpCostOfSalesReturnAccountID"
-              className="text-left text-[0.6875rem] font-medium sm:whitespace-nowrap sm:text-right"
-            >
-              Cost Of Sales Return Account :
-            </label>
-
-            <div className="w-full min-w-0">
-              <Select<SelectOption, false>
-                inputId="lkpCostOfSalesReturnAccountID"
-                name="lkpCostOfSalesReturnAccountID"
-                options={getIdOptions("costOfSalesReturn")}
-                value={getSelectedOption(
-                  getIdOptions("costOfSalesReturn"),
-                  values.costOfSalesReturnId,
-                )}
-                onChange={(selected) =>
-                  handleAccountIdChange("costOfSalesReturn", selected)
-                }
-                styles={selectStyles}
-                placeholder=""
-                isClearable
-                isSearchable
-              />
-            </div>
-
-            <div className="w-full min-w-0">
-              <Select<SelectOption, false>
-                inputId="lkpCostOfSalesReturnAccountName"
-                name="lkpCostOfSalesReturnAccountName"
-                options={getNameOptions("costOfSalesReturn")}
-                value={getSelectedOption(
-                  getNameOptions("costOfSalesReturn"),
-                  values.costOfSalesReturnName,
-                )}
-                onChange={(selected) =>
-                  handleAccountNameChange("costOfSalesReturn", selected)
-                }
-                styles={selectStyles}
-                placeholder=""
-                isClearable
-                isSearchable
-              />
-            </div>
-          </div>
-
-          {/* STOCK ADJUSTMENT ACCOUNT */}
-          <div className="mb-1.75 grid grid-cols-1 items-center gap-x-2 gap-y-1 sm:grid-cols-[11.5625rem_minmax(0,0.7fr)_minmax(0,1fr)]">
-            <label
-              htmlFor="lkpStockAdjustmentAccountID"
-              className="text-left text-[0.6875rem] font-medium sm:whitespace-nowrap sm:text-right"
-            >
-              Stock Adjustment Account :
-            </label>
-
-            <div className="w-full min-w-0">
-              <Select<SelectOption, false>
-                inputId="lkpStockAdjustmentAccountID"
-                name="lkpStockAdjustmentAccountID"
-                options={getIdOptions("stockAdjustment")}
-                value={getSelectedOption(
-                  getIdOptions("stockAdjustment"),
-                  values.stockAdjustmentId,
-                )}
-                onChange={(selected) =>
-                  handleAccountIdChange("stockAdjustment", selected)
-                }
-                styles={selectStyles}
-                placeholder=""
-                isClearable
-                isSearchable
-              />
-            </div>
-
-            <div className="w-full min-w-0">
-              <Select<SelectOption, false>
-                inputId="lkpStockAdjustmentAccountName"
-                name="lkpStockAdjustmentAccountName"
-                options={getNameOptions("stockAdjustment")}
-                value={getSelectedOption(
-                  getNameOptions("stockAdjustment"),
-                  values.stockAdjustmentName,
-                )}
-                onChange={(selected) =>
-                  handleAccountNameChange("stockAdjustment", selected)
-                }
-                styles={selectStyles}
-                placeholder=""
-                isClearable
-                isSearchable
-              />
-            </div>
-          </div>
-
-          {/* INPUT VAT ACCOUNT */}
-          <div className="mb-1.75 grid grid-cols-1 items-center gap-x-2 gap-y-1 sm:grid-cols-[11.5625rem_minmax(0,0.7fr)_minmax(0,1fr)]">
-            <label
-              htmlFor="lkpInputVATAccountID"
-              className="text-left text-[0.6875rem] font-medium sm:whitespace-nowrap sm:text-right"
-            >
-              Input VAT Account :
-            </label>
-
-            <div className="w-full min-w-0">
-              <Select<SelectOption, false>
-                inputId="lkpInputVATAccountID"
-                name="lkpInputVATAccountID"
-                options={getIdOptions("inputVAT")}
-                value={getSelectedOption(
-                  getIdOptions("inputVAT"),
-                  values.inputVATId,
-                )}
-                onChange={(selected) =>
-                  handleAccountIdChange("inputVAT", selected)
-                }
-                styles={selectStyles}
-                placeholder=""
-                isClearable
-                isSearchable
-              />
-            </div>
-
-            <div className="w-full min-w-0">
-              <Select<SelectOption, false>
-                inputId="lkpInputVATAccountName"
-                name="lkpInputVATAccountName"
-                options={getNameOptions("inputVAT")}
-                value={getSelectedOption(
-                  getNameOptions("inputVAT"),
-                  values.inputVATName,
-                )}
-                onChange={(selected) =>
-                  handleAccountNameChange("inputVAT", selected)
-                }
-                styles={selectStyles}
-                placeholder=""
-                isClearable
-                isSearchable
-              />
-            </div>
-          </div>
-
-          {/* OUTPUT VAT ACCOUNT */}
-          <div className="mb-1.75 grid grid-cols-1 items-center gap-x-2 gap-y-1 sm:grid-cols-[11.5625rem_minmax(0,0.7fr)_minmax(0,1fr)]">
-            <label
-              htmlFor="lkpOutputVATAccountID"
-              className="text-left text-[0.6875rem] font-medium sm:whitespace-nowrap sm:text-right"
-            >
-              Output VAT Account :
-            </label>
-
-            <div className="w-full min-w-0">
-              <Select<SelectOption, false>
-                inputId="lkpOutputVATAccountID"
-                name="lkpOutputVATAccountID"
-                options={getIdOptions("outputVAT")}
-                value={getSelectedOption(
-                  getIdOptions("outputVAT"),
-                  values.outputVATId,
-                )}
-                onChange={(selected) =>
-                  handleAccountIdChange("outputVAT", selected)
-                }
-                styles={selectStyles}
-                placeholder=""
-                isClearable
-                isSearchable
-              />
-            </div>
-
-            <div className="w-full min-w-0">
-              <Select<SelectOption, false>
-                inputId="lkpOutputVATAccountName"
-                name="lkpOutputVATAccountName"
-                options={getNameOptions("outputVAT")}
-                value={getSelectedOption(
-                  getNameOptions("outputVAT"),
-                  values.outputVATName,
-                )}
-                onChange={(selected) =>
-                  handleAccountNameChange("outputVAT", selected)
-                }
-                styles={selectStyles}
-                placeholder=""
-                isClearable
-                isSearchable
-              />
-            </div>
-          </div>
-
-          {/* ROUND OFF ACCOUNT */}
-          <div className="mb-1.75 grid grid-cols-1 items-center gap-x-2 gap-y-1 sm:grid-cols-[11.5625rem_minmax(0,0.7fr)_minmax(0,1fr)]">
-            <label
-              htmlFor="lkpRoundOffAccountID"
-              className="text-left text-[0.6875rem] font-medium sm:whitespace-nowrap sm:text-right"
-            >
-              Round Off Account :
-            </label>
-
-            <div className="w-full min-w-0">
-              <Select<SelectOption, false>
-                inputId="lkpRoundOffAccountID"
-                name="lkpRoundOffAccountID"
-                options={getIdOptions("roundOff")}
-                value={getSelectedOption(
-                  getIdOptions("roundOff"),
-                  values.roundOffId,
-                )}
-                onChange={(selected) =>
-                  handleAccountIdChange("roundOff", selected)
-                }
-                styles={selectStyles}
-                placeholder=""
-                isClearable
-                isSearchable
-              />
-            </div>
-
-            <div className="w-full min-w-0">
-              <Select<SelectOption, false>
-                inputId="lkpRoundOffAccountName"
-                name="lkpRoundOffAccountName"
-                options={getNameOptions("roundOff")}
-                value={getSelectedOption(
-                  getNameOptions("roundOff"),
-                  values.roundOffName,
-                )}
-                onChange={(selected) =>
-                  handleAccountNameChange("roundOff", selected)
-                }
-                styles={selectStyles}
-                placeholder=""
-                isClearable
-                isSearchable
-              />
-            </div>
-          </div>
-
-          {/* BUTTONS */}
-          <div className="flex min-h-18.5 -mb-6 items-start justify-center gap-3 pt-2">
-            <button
-              id="btnSave"
-              name="btnSave"
-              type="button"
-              onClick={handleSave}
-              className={buttonClass}
-            >
-              <span className="underline underline-offset-2">S</span>ave
-            </button>
-
-            <button
-              id="btnClear"
-              name="btnClear"
-              type="button"
-              onClick={handleClear}
-              className={buttonClass}
-            >
-              <span className="underline underline-offset-2">C</span>lear
-            </button>
-          </div>
-
         </div>
       </div>
     </div>
-  </div>
-);
+  );
 };
 
 export default SetPostingAccountPage;
