@@ -303,7 +303,7 @@ async function callReceiptProcedure(
 
     slNo = 0,
 
-    receiptDate = null,
+    dtpDate = null,
 
     cbAccountId = null,
 
@@ -315,9 +315,9 @@ async function callReceiptProcedure(
 
     gcs = null,
 
-    division = null,
+    DivID = null,
 
-    ccId = null,
+    CCID = null,
 
     debit = 0,
 
@@ -387,7 +387,7 @@ async function callReceiptProcedure(
 
     toSmallInt(slNo),                      // $7
 
-    normalizeDate(receiptDate),            // $8
+    normalizeDate(dtpDate),            // $8
 
     clean(cbAccountId),                    // $9
 
@@ -399,9 +399,9 @@ async function callReceiptProcedure(
 
     clean(gcs),                            // $13
 
-    clean(division),                      // $14
+    clean(DivID),                      // $14
 
-    clean(ccId),                           // $15
+    clean(CCID),                           // $15
 
     toNumber(debit),                       // $16
 
@@ -531,8 +531,8 @@ async function callReceiptProcedure(
   );
 
   console.log(
-    "Receipt Date:",
-    normalizeDate(receiptDate)
+    " Date:",
+    normalizeDate(dtpDate)
   );
 
   console.log(
@@ -644,7 +644,7 @@ export async function getReceiptHeader({
 
           slNo: 0,
 
-          receiptDate: null,
+          dtpDate: null,
 
           details: null,
 
@@ -719,7 +719,7 @@ export async function getReceiptLines({
 
           slNo: 0,
 
-          receiptDate: null,
+          dtpDate: null,
 
           details: null,
 
@@ -772,7 +772,7 @@ async function saveReceiptLine(
 
     slNo,
 
-    receiptDate,
+    dtpDate,
 
     receivedFrom,
 
@@ -784,7 +784,7 @@ async function saveReceiptLine(
 
     gcs,
 
-    ccId,
+    CCID,
 
     debit,
 
@@ -794,7 +794,7 @@ async function saveReceiptLine(
 
     note,
 
-    division,
+    DivID,
 
     match,
 
@@ -817,7 +817,7 @@ async function saveReceiptLine(
 
       slNo,
 
-      receiptDate,
+      dtpDate,
 
       cbAccountId,
 
@@ -829,9 +829,9 @@ async function saveReceiptLine(
 
       gcs,
 
-      division,
+      DivID,
 
-      ccId,
+      CCID,
 
       debit,
 
@@ -873,7 +873,7 @@ async function saveGeneratedEntry(
 
     txtDocNo,
 
-    receiptDate,
+    dtpDate,
 
     receivedFrom,
 
@@ -883,7 +883,7 @@ async function saveGeneratedEntry(
 
     gcs,
 
-    ccId,
+    CCID,
 
     credit,
 
@@ -891,7 +891,7 @@ async function saveGeneratedEntry(
 
     note,
 
-    division,
+    DivID,
 
     match,
 
@@ -918,7 +918,7 @@ async function saveGeneratedEntry(
 
       slNo: 0,
 
-      receiptDate,
+      dtpDate,
 
       cbAccountId,
 
@@ -943,9 +943,9 @@ async function saveGeneratedEntry(
 
       gcs,
 
-      division,
+      DivID,
 
-      ccId,
+      CCID,
 
       debit: 0,
 
@@ -1034,11 +1034,11 @@ export async function saveReceiptService(
 
       lkpType,
 
-      cashBank,
+      cbAccountName,
 
       txtDocNo,
 
-      receiptDate,
+      dtpDate,
 
       receivedFrom,
 
@@ -1091,7 +1091,7 @@ export async function saveReceiptService(
 
 
     if (
-      isEmpty(receiptDate)
+      isEmpty(dtpDate)
     ) {
 
       throw new Error(
@@ -1102,7 +1102,7 @@ export async function saveReceiptService(
 
 
     if (
-      isEmpty(cashBank)
+      isEmpty(cbAccountName)
     ) {
 
       throw new Error(
@@ -1167,7 +1167,7 @@ export async function saveReceiptService(
           return (
             sum +
             toNumber(
-              row.creditAmount
+              row.creditAmt
             )
           );
 
@@ -1233,14 +1233,14 @@ export async function saveReceiptService(
 
           slNo,
 
-          receiptDate,
+          dtpDate,
 
           receivedFrom,
 
           reference,
 
           cbAccountId:
-            cashBank,
+            cbAccountName,
 
           accountId:
             row.accountId,
@@ -1258,8 +1258,8 @@ export async function saveReceiptService(
              Cost Center
           */
 
-          ccId:
-            row.ccId ||
+          CCID:
+            row.CCID ||
             "",
 
           /*
@@ -1273,7 +1273,7 @@ export async function saveReceiptService(
 
           credit:
             toNumber(
-              row.creditAmount
+              row.creditAmt
             ),
 
           description:
@@ -1284,8 +1284,8 @@ export async function saveReceiptService(
             note ||
             "",
 
-          division:
-            row.division ||
+          DivID:
+            row.DivID ||
             row.divId ||
             "",
 
@@ -1339,22 +1339,22 @@ export async function saveReceiptService(
         txtDocNo:
           txtDocNo,
 
-        receiptDate,
+        dtpDate,
 
         receivedFrom,
 
         reference,
 
         cbAccountId:
-          cashBank,
+          cbAccountName,
 
         gcs:
           firstRow.gcs ||
           firstRow.fgcs ||
           "",
 
-        ccId:
-          firstRow.ccId ||
+        CCID:
+          firstRow.CCID ||
           "",
 
         credit:
@@ -1367,8 +1367,8 @@ export async function saveReceiptService(
           note ||
           "",
 
-        division:
-          firstRow.division ||
+        DivID:
+          firstRow.DivID ||
           firstRow.divId ||
           "",
 
@@ -1426,7 +1426,7 @@ export async function saveReceiptService(
         total:
           finalTotal,
 
-        cashBank,
+        cbAccountName,
 
         rowCount:
           validRows.length,
@@ -1752,10 +1752,10 @@ export async function updateReceiptService(
     lkpBranch,
     lkpType,
     txtDocNo,
-    receiptDate,
+    dtpDate,
     receivedFrom,
     reference,
-    cashBank,
+    cbAccountName,
     note,
     cbCcId,
     rows = [],
@@ -1806,7 +1806,7 @@ export async function updateReceiptService(
 
 
     if (
-      isEmpty(receiptDate)
+      isEmpty(dtpDate)
     ) {
 
       throw new Error(
@@ -1817,7 +1817,7 @@ export async function updateReceiptService(
 
 
     if (
-      isEmpty(cashBank)
+      isEmpty(cbAccountName)
     ) {
 
       throw new Error(
@@ -1887,7 +1887,7 @@ export async function updateReceiptService(
           return (
             sum +
             toNumber(
-              row.creditAmount
+              row.creditAmt
             )
           );
 
@@ -1918,6 +1918,7 @@ export async function updateReceiptService(
        NO INSERT.
     ===================================================== */
 
+  
     await callReceiptProcedure(
       client,
       {
@@ -1933,10 +1934,10 @@ export async function updateReceiptService(
 
         slNo: 0,
 
-        receiptDate,
+        dtpDate,
 
         cbAccountId:
-          cashBank,
+          cbAccountName,
 
         receivedFrom,
 
@@ -1948,20 +1949,20 @@ export async function updateReceiptService(
         */
 
         accountId:
-          cashBank,
+          cbAccountName,
 
         gcs:
           validRows[0]?.gcs ||
           validRows[0]?.fgcs ||
           "",
 
-        division:
-          validRows[0]?.division ||
+        DivID:
+          validRows[0]?.DivID ||
           validRows[0]?.divId ||
           "",
 
-        ccId:
-          validRows[0]?.ccId ||
+        CCID:
+          validRows[0]?.CCID ||
           cbCcId ||
           "",
 
@@ -2028,7 +2029,7 @@ export async function updateReceiptService(
        accountid
        gcs
        divid
-       ccid
+       CCID
        debit
        credit
        description
@@ -2051,11 +2052,11 @@ export async function updateReceiptService(
 
             dtpdate:
               normalizeDate(
-                receiptDate
+                dtpDate
               ),
 
             cbaccountid:
-              cashBank || "",
+              cbAccountName || "",
 
             receivedfrompaidto:
               receivedFrom || "",
@@ -2072,12 +2073,12 @@ export async function updateReceiptService(
               "",
 
             divid:
-              row.division ||
+              row.DivID ||
               row.divId ||
               "",
 
             ccid:
-              row.ccId ||
+              row.CCID ||
               "",
 
             debit:
@@ -2087,7 +2088,7 @@ export async function updateReceiptService(
 
             credit:
               toNumber(
-                row.creditAmount
+                row.creditAmt
               ),
 
             description:
@@ -2144,10 +2145,10 @@ export async function updateReceiptService(
 
         slNo: 1,
 
-        receiptDate,
+        dtpDate,
 
         cbAccountId:
-          cashBank,
+          cbAccountName,
 
         receivedFrom,
 
@@ -2159,10 +2160,10 @@ export async function updateReceiptService(
         gcs:
           null,
 
-        division:
+        DivID:
           null,
 
-        ccId:
+        CCID:
           null,
 
         debit: 0,
@@ -2227,7 +2228,7 @@ export async function updateReceiptService(
         total:
           finalTotal,
 
-        cashBank,
+        cbAccountName,
 
         rowCount:
           validRows.length,

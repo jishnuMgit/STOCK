@@ -55,14 +55,14 @@ dayjs.extend(customParseFormat);
 
 import {
   type SelectOption,
-  type ReceiptDocNumberResponse,
+  type ReceiptNoResponse,
   type AccountResponse,
   type CustomerDivision,
   type FinancialParameter,
   type CostCenter,
   type ReceiptRow,
   type AccountData,
-  type CbAccount,
+  type CbAccountName,
   type AccountOption,
   type AccountOptionProps,
 } from "../../../../types/receiptypes";
@@ -70,9 +70,9 @@ import {
 export type TableField =
   | "accountId"
   | "accountName"
-  | "division"
-  | "ccId"
-  | "creditAmount"
+  | "DivID"
+  | "CCID"
+  | "creditAmt"
   | "match"
   | "view";
 
@@ -101,8 +101,8 @@ interface ReceiptFormProps {
   lkpType: string;
   setLkpType: (value: string) => void;
 
-  cbAccount: string;
-  setCbAccount: (value: string) => void;
+  cbAccountName: string;
+  setCbAccountName: (value: string) => void;
 
   reference: string;
   setReference: (value: string) => void;
@@ -113,8 +113,8 @@ interface ReceiptFormProps {
   documentNo: string;
   setDocumentNo: (value: string) => void;
 
-  date: string;
-  setDate: (value: string) => void;
+  dtpDate: string;
+  setDtpDate: (value: string) => void;
 
   branchRef: React.RefObject<SelectInstance<SelectOption, false> | null>;
   typeRef: React.RefObject<SelectInstance<SelectOption, false> | null>;
@@ -181,8 +181,8 @@ export const ReceiptForm: React.FC<ReceiptFormProps> = ({
   lkpType,
   setLkpType,
 
-  cbAccount,
-  setCbAccount,
+  cbAccountName,
+  setCbAccountName,
 
   reference,
   setReference,
@@ -193,8 +193,8 @@ export const ReceiptForm: React.FC<ReceiptFormProps> = ({
   documentNo,
   setDocumentNo,
 
-  date,
-  setDate,
+  dtpDate,
+  setDtpDate,
 
   branchRef,
   typeRef,
@@ -321,7 +321,7 @@ export const ReceiptForm: React.FC<ReceiptFormProps> = ({
 
   const [docnolen, setdocnolen] = useState<number>(0);
 
-  const [cbAccounts, setCbAccounts] = useState<CbAccount[]>([]);
+  const [cbAccounts, setCbAccounts] = useState<CbAccountName[]>([]);
 
   /*
    * =========================================================
@@ -385,7 +385,7 @@ export const ReceiptForm: React.FC<ReceiptFormProps> = ({
         throw new Error(`HTTP Error: ${response.status}`);
       }
 
-      const result = (await response.json()) as ReceiptDocNumberResponse;
+      const result = (await response.json()) as ReceiptNoResponse;
 
       if (
         result.success &&
@@ -426,7 +426,7 @@ export const ReceiptForm: React.FC<ReceiptFormProps> = ({
       setCbAccounts([]);
 
       if (!preserveCbAccountOnLoad) {
-        setCbAccount("");
+        setCbAccountName("");
       }
 
       return;
@@ -458,13 +458,13 @@ export const ReceiptForm: React.FC<ReceiptFormProps> = ({
         setCbAccounts(result.data);
 
         if (!preserveCbAccountOnLoad) {
-          setCbAccount("");
+          setCbAccountName("");
         }
       } else {
         setCbAccounts([]);
 
         if (!preserveCbAccountOnLoad) {
-          setCbAccount("");
+          setCbAccountName("");
         }
       }
     } catch (error) {
@@ -473,7 +473,7 @@ export const ReceiptForm: React.FC<ReceiptFormProps> = ({
       setCbAccounts([]);
 
       if (!preserveCbAccountOnLoad) {
-        setCbAccount("");
+        setCbAccountName("");
       }
     } finally {
       setAccountsLoading(false);
@@ -775,7 +775,7 @@ export const ReceiptForm: React.FC<ReceiptFormProps> = ({
     ) || null;
 
   const selectedCbAccount =
-    cbAccountOptions.find((option) => option.value === cbAccount) || null;
+    cbAccountOptions.find((option) => option.value === cbAccountName) || null;
 
   /*
    * =========================================================
@@ -1136,7 +1136,7 @@ export const ReceiptForm: React.FC<ReceiptFormProps> = ({
             onMenuOpen={() => setOpenSelect("cbAccount")}
             onMenuClose={() => setOpenSelect(null)}
             onChange={(option) => {
-              setCbAccount(option?.value || "");
+              setCbAccountName(option?.value || "");
 
               /*
                * A value was picked - the user is done with
@@ -1229,12 +1229,12 @@ export const ReceiptForm: React.FC<ReceiptFormProps> = ({
 
           <LocalizationProvider dateAdapter={AdapterDayjs}>
             <DatePicker
-              value={date ? dayjs(date, "DD-MM-YYYY") : null}
+              value={dtpDate ? dayjs(dtpDate, "DD-MM-YYYY") : null}
               onChange={(newValue) => {
                 if (newValue?.isValid()) {
-                  setDate(newValue.format("DD-MM-YYYY"));
+                  setDtpDate(newValue.format("DD-MM-YYYY"));
                 } else {
-                  setDate("");
+                  setDtpDate("");
                 }
               }}
               format="DD-MM-YYYY"
@@ -1961,7 +1961,7 @@ const ReceiptRow = memo(
 
     const [isCcIdEditing, setIsCcIdEditing] = useState(false);
 
-    const [divisions, setDivisions] = useState<CustomerDivision[]>([]);
+    const [DivID, setDivID] = useState<CustomerDivision[]>([]);
 
     const [divisionLoading, setDivisionLoading] = useState(false);
 
@@ -1974,12 +1974,12 @@ const ReceiptRow = memo(
     const fetchDivisions = useCallback(
       async (accountId: string, existingDivision: string = "") => {
         if (!accountId) {
-          setDivisions([]);
+          setDivID([]);
           setDivisionLoading(false);
 
-          handleRowChange(row.id, "division", "");
+          handleRowChange(row.id, "DivID", "");
 
-          handleRowChange(row.id, "hasDivision", false);
+          handleRowChange(row.id, "haveDivision", false);
 
           return;
         }
@@ -2007,9 +2007,9 @@ const ReceiptRow = memo(
           const result = (await response.json()) as CustomerDivisionResponse;
 
           if (result.success && Array.isArray(result.data)) {
-            setDivisions(result.data);
+            setDivID(result.data);
 
-            handleRowChange(row.id, "hasDivision", result.data.length > 0);
+            handleRowChange(row.id, "haveDivision", result.data.length > 0);
 
             /*
              * IMPORTANT:
@@ -2023,11 +2023,11 @@ const ReceiptRow = memo(
               );
 
               if (savedDivisionExists) {
-                handleRowChange(row.id, "division", existingDivision);
+                handleRowChange(row.id, "DivID", existingDivision);
               } else if (result.data.length === 1) {
                 handleRowChange(
                   row.id,
-                  "division",
+                  "DivID",
                   String(result.data[0].fdivid),
                 );
               }
@@ -2041,27 +2041,27 @@ const ReceiptRow = memo(
             if (result.data.length === 1) {
               handleRowChange(
                 row.id,
-                "division",
+                "DivID",
                 String(result.data[0].fdivid),
               );
             } else {
-              handleRowChange(row.id, "division", "");
+              handleRowChange(row.id, "DivID", "");
             }
           } else {
-            setDivisions([]);
+            setDivID([]);
 
-            handleRowChange(row.id, "division", "");
+            handleRowChange(row.id, "DivID", "");
 
-            handleRowChange(row.id, "hasDivision", false);
+            handleRowChange(row.id, "haveDivision", false);
           }
         } catch (error) {
           console.error("Get Customer Divisions Error:", error);
 
-          setDivisions([]);
+          setDivID([]);
 
-          handleRowChange(row.id, "division", "");
+          handleRowChange(row.id, "DivID", "");
 
-          handleRowChange(row.id, "hasDivision", false);
+          handleRowChange(row.id, "haveDivision", false);
         } finally {
           setDivisionLoading(false);
         }
@@ -2071,11 +2071,11 @@ const ReceiptRow = memo(
 
     const divisionOptions = useMemo<SelectOption[]>(
       () =>
-        divisions.map((division) => ({
+        DivID.map((division) => ({
           value: division.fdivid,
           label: division.fdivname,
         })),
-      [divisions],
+      [DivID],
     );
 
     const selectedAccount = useMemo(
@@ -2109,14 +2109,14 @@ const ReceiptRow = memo(
     const selectedDivision = useMemo(
       () =>
         divisionOptions.find(
-          (option) => String(option.value) === String(row.division),
+          (option) => String(option.value) === String(row.DivID),
         ) || null,
-      [divisionOptions, row.division],
+      [divisionOptions, row.DivID],
     );
 
     const selectedCcId = useMemo(
-      () => ccIdOptions.find((option) => option.value === row.ccId) || null,
-      [ccIdOptions, row.ccId],
+      () => ccIdOptions.find((option) => option.value === row.CCID) || null,
+      [ccIdOptions, row.CCID],
     );
 
     const handleAccountChange = useCallback(
@@ -2134,9 +2134,9 @@ const ReceiptRow = memo(
 
         handleRowChange(row.id, "haveCc", option.haveCc);
 
-        handleRowChange(row.id, "division", "");
+        handleRowChange(row.id, "DivID", "");
 
-        handleRowChange(row.id, "ccId", "");
+        handleRowChange(row.id, "CCID", "");
 
         await fetchDivisions(option.accountId);
       },
@@ -2148,7 +2148,7 @@ const ReceiptRow = memo(
         return;
       }
 
-      void fetchDivisions(row.accountId, row.division || "");
+      void fetchDivisions(row.accountId, row.DivID || "");
     }, [row.accountId, fetchDivisions]);
 
     const handleSelectKeyDown = useCallback(
@@ -2504,7 +2504,7 @@ const ReceiptRow = memo(
             ref={(instance) => {
               divisionSelectRef.current = instance;
 
-              setRowRef(index, "division", instance);
+              setRowRef(index, "DivID", instance);
             }}
             value={isDivisionEditing ? null : selectedDivision}
             inputValue={divisionSearchText}
@@ -2531,7 +2531,7 @@ const ReceiptRow = memo(
                 return;
               }
 
-              handleSelectKeyDown(event, "division", divisionMenuOpenRef);
+              handleSelectKeyDown(event, "DivID", divisionMenuOpenRef);
             }}
             onMenuOpen={handleDivisionMenuOpen}
             onMenuClose={() => {
@@ -2540,7 +2540,7 @@ const ReceiptRow = memo(
               setIsDivisionEditing(false);
             }}
             onChange={(option: SingleValue<SelectOption>) => {
-              handleRowChange(row.id, "division", option?.value || "");
+              handleRowChange(row.id, "DivID", option?.value || "");
 
               setDivisionSearchText("");
               setIsDivisionEditing(false);
@@ -2590,7 +2590,7 @@ const ReceiptRow = memo(
             isDisabled={
               !row.accountId ||
               divisionLoading ||
-              !row.hasDivision ||
+              !row.haveDivision ||
               divisionOptions.length === 0
             }
             menuPlacement="auto"
@@ -2608,7 +2608,7 @@ const ReceiptRow = memo(
             ref={(instance) => {
               ccIdSelectRef.current = instance;
 
-              setRowRef(index, "ccId", instance);
+              setRowRef(index, "CCID", instance);
             }}
             value={isCcIdEditing ? null : selectedCcId}
             inputValue={ccIdSearchText}
@@ -2635,7 +2635,7 @@ const ReceiptRow = memo(
                 return;
               }
 
-              handleSelectKeyDown(event, "ccId", ccIdMenuOpenRef);
+              handleSelectKeyDown(event, "CCID", ccIdMenuOpenRef);
             }}
             onMenuOpen={handleCcMenuOpen}
             onMenuClose={() => {
@@ -2644,7 +2644,7 @@ const ReceiptRow = memo(
               setIsCcIdEditing(false);
             }}
             onChange={(option: SingleValue<SelectOption>) => {
-              handleRowChange(row.id, "ccId", option?.value || "");
+              handleRowChange(row.id, "CCID", option?.value || "");
 
               setCcIdSearchText("");
               setIsCcIdEditing(false);
@@ -2703,11 +2703,11 @@ const ReceiptRow = memo(
         <td className="receipt-cell">
           <input
             id={`txtCreditAmt-${row.id}`}
-            ref={(element) => setRowRef(index, "creditAmount", element)}
+            ref={(element) => setRowRef(index, "creditAmt", element)}
             placeholder="0.00"
             type="text"
             inputMode="decimal"
-            value={row.creditAmount}
+            value={row.creditAmt}
             onChange={(event) => {
               const inputValue = event.target.value;
 
@@ -2715,20 +2715,20 @@ const ReceiptRow = memo(
        maximum 2 decimal places */
 
               if (/^\d*\.?\d{0,2}$/.test(inputValue)) {
-                handleRowChange(row.id, "creditAmount", inputValue);
+                handleRowChange(row.id, "creditAmt", inputValue);
               }
             }}
             onFocus={() => setSelectedRowId(row.id)}
             onBlur={() => {
-              if (row.creditAmount) {
+              if (row.creditAmt) {
                 handleRowChange(
                   row.id,
-                  "creditAmount",
-                  formatCreditAmount(row.creditAmount),
+                  "creditAmt",
+                  formatCreditAmount(row.creditAmt),
                 );
               }
             }}
-            onKeyDown={(event) => handleControlKeyDown(event, "creditAmount")}
+            onKeyDown={(event) => handleControlKeyDown(event, "creditAmt")}
             className="
     receipt-grid-input
     text-right

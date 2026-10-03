@@ -77,12 +77,12 @@ export const cleanReceiptPayload = (body: any) => {
       !(
     
         (row.accountId === "" && row.accountName === "") ||
-        row.creditAmount === 0
+        row.creditAmt === 0
       )
   );
 
   const recalculatedTotal = filteredRows.reduce(
-    (sum: number, row: any) => sum + (Number(row.creditAmount) || 0),
+    (sum: number, row: any) => sum + (Number(row.creditAmt) || 0),
     0
   );
 
@@ -137,7 +137,7 @@ export const CheckISdividISccid = async (
 
     if (
       haveCC &&
-      (!item.ccId || item.ccId.trim() === "")
+      (!item.CCID || item.CCID.trim() === "")
     ) {
       throw new Error(
         `Account ${accountId} requires a CC ID. Please select the CC ID.`
@@ -151,7 +151,7 @@ export const CheckISdividISccid = async (
 
     if (
       haveDivision &&
-      (!item.division || item.division.trim() === "")
+      (!item.DivID || item.DivID.trim() === "")
     ) {
       throw new Error(
         `Account ${accountId} requires a Division. Please select the Division.`

@@ -37,7 +37,7 @@ export interface AccountData {
 }
 
 export interface ReceiptRow {
-  // amount: number;
+  amount: number;
   slNo: number;
   id: number;
   accountId: string;
@@ -47,9 +47,9 @@ export interface ReceiptRow {
   haveDivision: boolean;
   DivID: string;
   CCID: string;
-  CreditAmt: string;
-  Match: boolean;
-  Description?: string;
+  creditAmt: string;
+  match: boolean;
+  description?: string;
 }
 
 export interface CustomerDivision {

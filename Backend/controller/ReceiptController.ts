@@ -497,9 +497,12 @@ export const saveReceipt = async (
     // CHECK CC ID AND DIVISION BEFORE SAVE
     await CheckISdividISccid(payload, pool, PstrCoID);
 
-    let dtpDate = payload?.receiptDate;
-
-    const active = await isActivePeriod(PstrCoID, payload?.lkpBranch, dtpDate);
+    const active = await isActivePeriod(
+      PstrCoID,
+      payload?.lkpBranch,
+      payload?.dtpDate,
+      
+    );
 
     if (!active) {
       return res.status(400).json({
@@ -578,9 +581,10 @@ export const modifyReceipt = async (
     await CheckISdividISccid(payload, pool, PstrCoID);
 
     const active = await isActivePeriod(
-      payload?.lkpBranch,
-      payload?.receiptDate,
       PstrCoID,
+      payload?.lkpBranch,
+      payload?.dtpDate,
+      
     );
 
     if (!active) {
@@ -800,7 +804,7 @@ export const DeleteReceipt = async (
     // =====================================================
 
     // Adjust these property names according to your GetData response
-    const receiptDate = receiptData?.header?.receiptDate ?? "";
+    const dtpDate = receiptData?.header?.dtpDate ?? "";
     const cbAccountName = receiptData?.header?.cbAccountName ?? "";
     const receivedFrom = receiptData?.header?.receivedFrom ?? "";
     const totalCredit = Number(receiptData?.total ?? 0);
@@ -810,7 +814,7 @@ export const DeleteReceipt = async (
     // =====================================================
 
     const gstrUserAuditNote =
-      `Date : ${receiptDate}\n` +
+      `Date : ${dtpDate}\n` +
       `Cash/Bank Account Name: ${cbAccountName}\n` +
       `Received From : ${receivedFrom}\n` +
       `Amount : ${totalCredit}`;

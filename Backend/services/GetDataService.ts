@@ -28,24 +28,24 @@ interface ReceiptHeader {
   branch: any;
   lkpType: any;
   docNo: any;
-  receiptDate: any;
+  dtpDate: any;
   cbAccountName: any;
-  ccId: any;
+  CCID: any;
   receivedFrom: any;
   reference: any;
   note: any;
-  division: any;
+  DivID: any;
   totalCredit: number;
 }
 
 interface ReceiptDetailRow {
   id: number;
-  accountId: any;
-  accountName: any;
+  AccountID: any;
+  AccountName: any;
   fgcs: any;
-  division: any;
-  ccId: any;
-  creditAmount: string;
+  DivID: any;
+  CCID: any;
+  creditAmt: string;
   match: boolean;
   description: any;
 }
@@ -1045,7 +1045,7 @@ export async function GetData({
       dbHeader.fdocno ??
       docNo,
 
-    receiptDate:
+    dtpDate:
       dbHeader.fdate ??
       null,
 
@@ -1063,7 +1063,7 @@ export async function GetData({
        COST CENTER
     ===================================================== */
 
-    ccId:
+    CCID:
       dbHeader.fccid ??
       "",
 
@@ -1099,7 +1099,7 @@ export async function GetData({
        DIVISION
     ===================================================== */
 
-    division:
+    DivID:
       dbHeader.fdivid ??
       "",
 
@@ -1147,7 +1147,7 @@ export async function GetData({
                ACCOUNT
             ================================================= */
 
-            accountId:
+            AccountID:
               row.faccountid ??
               "",
 
@@ -1156,7 +1156,7 @@ export async function GetData({
                ACCOUNT NAME
             ================================================= */
 
-            accountName:
+            AccountName:
               row.faccountname ??
               "",
 
@@ -1174,7 +1174,7 @@ export async function GetData({
                DIVISION
             ================================================= */
 
-            division:
+            DivID:
               row.fdivid ??
               "",
 
@@ -1183,7 +1183,7 @@ export async function GetData({
                COST CENTER
             ================================================= */
 
-            ccId:
+            CCID:
               row.fccid ??
               "",
 
@@ -1192,7 +1192,7 @@ export async function GetData({
                CREDIT AMOUNT
             ================================================= */
 
-            creditAmount:
+            creditAmt:
 
               row.fcredit !== null &&
               row.fcredit !== undefined
@@ -1243,7 +1243,7 @@ export async function GetData({
           sum +
           (
             Number(
-              row.creditAmount
+              row.creditAmt
             ) || 0
           )
         );

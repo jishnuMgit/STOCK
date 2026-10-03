@@ -59,14 +59,14 @@ export interface ReceiptProcedureParams {
   docType?: DbValue;
   txtDocNo?: DbValue;
   slNo?: DbValue;
-  receiptDate?: DbValue;
+  dtpDate?: DbValue;
   cbAccountId?: DbValue;
   receivedFrom?: DbValue;
   reference?: DbValue;
   accountId?: DbValue;
   gcs?: DbValue;
-  division?: DbValue;
-  ccId?: DbValue;
+  DivID?: DbValue;
+  CCID?: DbValue;
   debit?: DbValue;
   credit?: DbValue;
   description?: DbValue;
@@ -84,10 +84,10 @@ export interface ReceiptRow {
   accountName?: string;
   gcs?: string;
   fgcs?: string;
-  ccId?: string;
-  division?: string;
+  CCID?: string;
+  DivID?: string;
   divId?: string;
-  creditAmount?: string | number;
+  creditAmt?: string | number;
   debit?: string | number;
   credit?: string | number;
   description?: string;
@@ -98,9 +98,9 @@ export interface ReceiptRow {
 export interface ReceiptData {
   lkpBranch?: DbValue;
   lkpType?: DbValue;
-  cashBank?: DbValue;
+  cbAccountName?: DbValue;
   txtDocNo?: DbValue;
-  receiptDate?: DbValue;
+  dtpDate?: DbValue;
   receivedFrom?: DbValue;
   reference?: DbValue;
   note?: DbValue;
@@ -133,18 +133,18 @@ export interface SaveReceiptLineParams {
   docType?: DbValue;
   txtDocNo?: DbValue;
   slNo?: DbValue;
-  receiptDate?: DbValue;
+  dtpDate?: DbValue;
   receivedFrom?: DbValue;
   reference?: DbValue;
   cbAccountId?: DbValue;
   accountId?: DbValue;
   gcs?: DbValue;
-  ccId?: DbValue;
+  CCID?: DbValue;
   debit?: DbValue;
   credit?: DbValue;
   description?: DbValue;
   note?: DbValue;
-  division?: DbValue;
+  DivID?: DbValue;
   match?: DbValue;
   createdUserDate?: DbValue;
 }
@@ -153,16 +153,16 @@ export interface SaveGeneratedEntryParams {
   lkpBranch?: DbValue;
   docType?: DbValue;
   txtDocNo?: DbValue;
-  receiptDate?: DbValue;
+  dtpDate?: DbValue;
   receivedFrom?: DbValue;
   reference?: DbValue;
   cbAccountId?: DbValue;
   gcs?: DbValue;
-  ccId?: DbValue;
+  CCID?: DbValue;
   credit?: DbValue;
   description?: DbValue;
   note?: DbValue;
-  division?: DbValue;
+  DivID?: DbValue;
   match?: DbValue;
   createdUserDate?: DbValue;
 }
