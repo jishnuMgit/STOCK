@@ -2312,7 +2312,6 @@ const ReceiptRow = memo(
         className={isSelected ? "receipt-row-selected" : ""}
         onClick={() => {
           setSelectedRowId(row.id);
-          //@ts-ignore
           onRowSelect?.(row.id, row);
         }}
       >

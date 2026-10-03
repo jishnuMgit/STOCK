@@ -90,11 +90,10 @@ interface ModifyReceiptResponse {
   header: {
     lkpBranch?: string;
     lkpType?: string;
-    docNo?: string;
-    receiptDate?: string;
+    txtDocNo?: string;
+    dtpDate?: string;
     // cbAccount?: string;
     cbAccountName?: string;
-    ccId?: string;
     receivedFrom?: string;
     reference?: string;
     note?: string;
@@ -102,12 +101,12 @@ interface ModifyReceiptResponse {
 
   rows: Array<{
     id?: number;
-    accountId?: string;
-    accountName?: string;
+    AccountID?: string;
+    AccountName?: string;
     fgcs?: string;
-    division?: string;
-    ccId?: string;
-    creditAmount?: string | number;
+    DivID?: string;
+    CCID?: string;
+    CreditAmt?: string | number;
     match?: boolean | string | number;
     description?: string;
   }>;
