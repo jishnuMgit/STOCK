@@ -11,8 +11,8 @@ import customerRouter from "./CustomerRoute.js";
 import menuRoutes from "./MenuRoute.js";
 import ItemPageRouter from "./Purchase/Setup/ItemPageRouter.js";
 import UserLoginRouter from "./SecurityRoutes/UserLoginRouter.js";
-import userpermission from "./SettingRoutes/Userpermission.routes.js"
-import userpermissionCoBranch from "./SettingRoutes/UserpermissionCoBranch.routes.js"
+import userpermission from "./SecurityRoutes/UserPermissionMenuRouter.js"
+import userpermissionBranch from "./SecurityRoutes/UserPermissionBranchRouter.js"
 
 const router = express.Router();
 
@@ -29,6 +29,6 @@ router.use("/Item", ItemPageRouter);
 router.use("/customer", customerRouter);
 router.use("/UserLogin", UserLoginRouter);
 router.use("/user-permission",userpermission)
-router.use("/user-permission-cobranch",userpermissionCoBranch)
+router.use("/user-permission-branch",userpermissionBranch)
 
 export default router;

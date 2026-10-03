@@ -9,9 +9,9 @@ import CustomerList from "../pages/Finance/Setup/CustomerListPage";
 import ChartOfAccountList from "../pages/Finance/Setup/COAListPage";
 import UserLogin from "../pages/Security/UserLogin/UserLogin";
 import COASettings from "../pages/Settings/COASettingPage";
-import UserPermission from "../pages/Security/UserPermission/UserPermissionPage";
+import UserPermission from "../pages/Security/UserPermissionMenu/UserPermissionMenu";
 import BeginningStockPage from "../pages/Purchase/Transaction/BeginningStockPage";
-import UserPermissionCoBranchPage from "../pages/Security/UserPermissionCoBranch/UserPermissionCoBranchPage";
+import UserPermissionBranchPage from "../pages/Security/UserPermissionBranch/UserPermissionBranchPage";
 import SetPostingAccountPage from "../pages/Settings/SetPostingAccountPage";
 import PurchaseInvoicePage from "../pages/Purchase/Transaction/PurchaseInvoicePage";
 
@@ -190,8 +190,8 @@ element={<UserPermission/>}
 />
 
 <Route
-path="/Security/UserPermissionCoBranch"
-element={<UserPermissionCoBranchPage/>}
+path="/Security/UserPermissionBranch"
+element={<UserPermissionBranchPage/>}
 />
 
 
