@@ -120,7 +120,7 @@ export const saveReceiptService = async (receipt) => {
       type,
 
       receiptNo,
-      receiptDate,
+      dtpDate,
 
       cashBank,
       cashBankCC = "",
@@ -246,7 +246,7 @@ export const saveReceiptService = async (receipt) => {
       );
     }
 
-    if (isEmpty(receiptDate)) {
+    if (isEmpty(dtpDate)) {
       throw new Error(
         "Please select 'Date'"
       );
@@ -258,7 +258,7 @@ export const saveReceiptService = async (receipt) => {
     ===================================================== */
 
     const parsedDate =
-      parseDateDDMMYYYY(receiptDate);
+      parseDateDDMMYYYY(dtpDate);
 
     if (!parsedDate) {
       throw new Error(
@@ -351,7 +351,7 @@ export const saveReceiptService = async (receipt) => {
         (sum, row) =>
           sum +
           toNumber(
-            row.creditAmount
+            row.creditAmt
           ),
         0
       );
@@ -555,7 +555,7 @@ export const saveReceiptService = async (receipt) => {
           accountId: row.accountId,
           gcs,
           ccId: row.ccId,
-          credit: row.creditAmount,
+          credit: row.creditAmt,
           forDocNo: row.forDocNo,
         }
       );
@@ -576,7 +576,7 @@ export const saveReceiptService = async (receipt) => {
           slNo:
             index + 1,
 
-          receiptDate,
+          dtpDate,
 
           receivedFrom:
             finalReceivedFrom,
@@ -606,7 +606,7 @@ export const saveReceiptService = async (receipt) => {
 
           credit:
             toNumber(
-              row.creditAmount
+              row.creditAmt
             ),
 
           description:
@@ -693,7 +693,7 @@ export const saveReceiptService = async (receipt) => {
 
           slNo: 0,
 
-          receiptDate,
+          dtpDate,
 
           receivedFrom:
             finalReceivedFrom,
@@ -1179,8 +1179,8 @@ async function callReceiptProcedure(
         slNo:
           data.slNo,
 
-        receiptDate:
-          data.receiptDate,
+        dtpDate:
+          data.dtpDate,
 
         receivedFrom:
           data.receivedFrom,
@@ -1219,7 +1219,7 @@ async function callReceiptProcedure(
 
       Number(data.slNo ?? 0),             // $7
 
-      String(data.receiptDate ?? ""),     // $8
+      String(data.dtpDate ?? ""),     // $8
       String(data.receivedFrom ?? ""),    // $9
 
       String(data.cbAccountId ?? ""),     // $10
@@ -1289,7 +1289,7 @@ async function callReceiptProcedure(
 
       Number(data.slNo ?? 0),             // $7
 
-      String(data.receiptDate ?? ""),     // $8
+      String(data.dtpDate ?? ""),     // $8
       String(data.receivedFrom ?? ""),    // $9
 
       String(data.cbAccountId ?? ""),     // $10

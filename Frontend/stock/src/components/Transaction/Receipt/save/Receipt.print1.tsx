@@ -62,7 +62,7 @@ interface ReceiptTransaction {
   accountId: string;
   accountName: string;
   description: string;
-  creditAmount: number;
+  creditAmt: number;
 }
 
 interface ReceiptPrintProps {
@@ -454,7 +454,7 @@ const buildReceiptDocument = async (
 
   const transactionTotal = transactions.reduce(
     (sum, transaction) =>
-      sum + (Number(transaction.creditAmount) || 0),
+      sum + (Number(transaction.creditAmt) || 0),
     0
   );
 
@@ -527,7 +527,7 @@ const buildReceiptDocument = async (
     },
 
     {
-      text: formatAmount(transaction.creditAmount),
+      text: formatAmount(transaction.creditAmt),
       fontSize: 8,
       alignment: "right",
     },

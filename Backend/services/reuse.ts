@@ -31,7 +31,7 @@ export interface ReceiptProcedureParams {
 
   slNo?: number | string;
 
-  receiptDate?: ReceiptValue;
+  dtpDate?: ReceiptValue;
 
   receivedFrom?: ReceiptValue;
   reference?: ReceiptValue;
@@ -41,7 +41,7 @@ export interface ReceiptProcedureParams {
 
   accountId?: ReceiptValue;
   gcs?: ReceiptValue;
-  ccId?: ReceiptValue;
+  CCID?: ReceiptValue;
 
   forDocNo?: ReceiptValue;
 
@@ -50,7 +50,7 @@ export interface ReceiptProcedureParams {
   description?: ReceiptValue;
   note?: ReceiptValue;
 
-  division?: ReceiptValue;
+  DivID?: ReceiptValue;
   match?: ReceiptValue;
 
   userId?: ReceiptValue;
@@ -94,13 +94,13 @@ export interface ReceiptRow {
   gcs?: string;
   fgcs?: string;
 
-  ccId?: string;
+  CCID?: string;
   forDocNo?: string;
 
-  division?: string;
+  DivID?: string;
   divId?: string;
 
-  creditAmount?: string | number;
+  creditAmt?: string | number;
 
   description?: string;
 
@@ -121,7 +121,7 @@ export interface ReceiptData {
 
   receiptNo?: string;
 
-  receiptDate?: string | Date;
+  dtpDate?: string | Date;
 
   receivedFrom?: string;
 

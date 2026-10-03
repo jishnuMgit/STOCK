@@ -42,10 +42,10 @@ const createRows = (): ReceiptRow[] =>
     accountName: "",
     fgcs: "",
     haveCc: false,
-    hasDivision: false,
-    division: "",
-    ccId: "",
-    creditAmount: "",
+    haveDivision: false,
+    DivID: "",
+    CCID: "",
+    creditAmt: "",
     amount: 0,
     match: false,
     description: "",
@@ -58,9 +58,9 @@ const createRows = (): ReceiptRow[] =>
 const tableFieldOrder: TableField[] = [
   "accountId",
   "accountName",
-  "division",
-  "ccId",
-  "creditAmount",
+  "DivID",
+  "CCID",
+  "creditAmt",
 ];
 
 /* =========================================================
@@ -90,10 +90,11 @@ interface ModifyReceiptResponse {
   header: {
     lkpBranch?: string;
     lkpType?: string;
-    txtDocNo?: string;
+    docNo?: string;
     dtpDate?: string;
     // cbAccount?: string;
     cbAccountName?: string;
+    CCID?: string;
     receivedFrom?: string;
     reference?: string;
     note?: string;
@@ -106,7 +107,7 @@ interface ModifyReceiptResponse {
     fgcs?: string;
     DivID?: string;
     CCID?: string;
-    CreditAmt?: string | number;
+    creditAmt?: string | number;
     match?: boolean | string | number;
     description?: string;
   }>;
@@ -187,7 +188,7 @@ const ReceiptPage: React.FC = () => {
   const [printData, setPrintData] = useState<ReceiptPrintData | null>(null);
   const [lkpBranch, setLkpBranch] = useState("");
   const [lkpType, setLkpType] = useState("");
-  const [cbAccount, setCbAccount] = useState("");
+  const [cbAccountName, setCbAccountName] = useState("");
   const [receivedFrom, setReceivedFrom] = useState("");
   const [reference, setReference] = useState("");
   const [cbCcId, setCbCcId] = useState("");
@@ -195,7 +196,7 @@ const ReceiptPage: React.FC = () => {
   const [txtDocNo, setTxtDocNo] = useState("");
 
   const [focusReceiptNoAfterClear, setFocusReceiptNoAfterClear] = useState(0);
-  const [date, setDate] = useState(getTodayDate);
+  const [dtpDate, setDtpDate] = useState(getTodayDate);
 
   /* =======================================================
      NOTE
@@ -430,26 +431,26 @@ const ReceiptPage: React.FC = () => {
 
       result.rows.slice(0, loadedRows.length).forEach((loadedRow, index) => {
         const account = accountOptions.find(
-          (option) => option.faccountid === loadedRow.accountId,
+          (option) => option.faccountid === loadedRow.AccountID,
         );
 
         loadedRows[index] = {
           id: index + 1,
           slNo: index + 1,
 
-          accountId: loadedRow.accountId || "",
-          accountName: loadedRow.accountName || account?.faccountname || "",
+          accountId: loadedRow.AccountID || "",
+          accountName: loadedRow.AccountName || account?.faccountname || "",
           fgcs: loadedRow.fgcs || account?.fgcs || "",
           haveCc: account?.fhavecc === true,
-          hasDivision: Boolean(loadedRow.division),
-          division: loadedRow.division || "",
-          ccId: loadedRow.ccId || "",
-          creditAmount:
-            loadedRow.creditAmount === undefined ||
-            loadedRow.creditAmount === null
+          haveDivision: Boolean(loadedRow.DivID),
+          DivID: loadedRow.DivID || "",
+          CCID: loadedRow.CCID || "",
+          creditAmt:
+            loadedRow.creditAmt === undefined ||
+            loadedRow.creditAmt === null
               ? ""
-              : String(loadedRow.creditAmount),
-          amount: Number(loadedRow.creditAmount) || 0,
+              : String(loadedRow.creditAmt),
+          amount: Number(loadedRow.creditAmt) || 0,
           match:
             loadedRow.match === true ||
             loadedRow.match === 1 ||
@@ -473,9 +474,9 @@ const ReceiptPage: React.FC = () => {
 
       setTxtDocNo(result.header.docNo || requestedDocumentNo);
 
-      setDate(formatReceiptDate(result.header.receiptDate));
-      setCbAccount(result.header.cbAccountName || "");
-      setCbCcId(result.header.ccId || "");
+      setDtpDate(formatReceiptDate(result.header.dtpDate) || getTodayDate());
+      setCbAccountName(result.header.cbAccountName || "");
+      setCbCcId(result.header.CCID || "");
       setReceivedFrom(result.header.receivedFrom || "");
       setReference(result.header.reference || "");
       setNote(result.header.note || "");
@@ -521,7 +522,7 @@ const ReceiptPage: React.FC = () => {
 
     setRows(createRows());
 
-    setCbAccount("");
+    setCbAccountName("");
     setCbCcId("");
     setReceivedFrom("");
     setReference("");
@@ -529,7 +530,7 @@ const ReceiptPage: React.FC = () => {
     setDescription("");
     setActiveDescriptionRow(null);
 
-    setDate(getTodayDate());
+    setDtpDate(getTodayDate());
 
     setIsModifyMode(false);
     setReceiptMessage("");
@@ -745,10 +746,10 @@ const ReceiptPage: React.FC = () => {
           accountName: "",
           fgcs: "",
           haveCc: false,
-          hasDivision: false,
-          division: "",
-          ccId: "",
-          creditAmount: "",
+          haveDivision: false,
+          DivID: "",
+          CCID: "",
+          creditAmt: "",
           amount: 0,
           match: false,
           description: "",
@@ -875,9 +876,9 @@ const ReceiptPage: React.FC = () => {
            CREDIT REQUIRED
         =============================================== */
 
-      if (field === "creditAmount" && !row?.creditAmount.trim()) {
+      if (field === "creditAmt" && !row?.creditAmt.trim()) {
         toast.warning("Credit Amount is required.");
-        focusTableField(rowIndex, "creditAmount");
+        focusTableField(rowIndex, "creditAmt");
         return;
       }
 
@@ -885,7 +886,7 @@ const ReceiptPage: React.FC = () => {
            CREDIT -> DESCRIPTION
         =============================================== */
 
-      if (field === "creditAmount") {
+      if (field === "creditAmt") {
         setActiveDescriptionRow(rowIndex);
 
         // Only load the selected row's description
@@ -917,8 +918,8 @@ const ReceiptPage: React.FC = () => {
         =============================================== */
 
       const availableFields = tableFieldOrder
-        .filter((nextField) => nextField !== "division" || row?.hasDivision)
-        .filter((nextField) => nextField !== "ccId" || row?.haveCc);
+        .filter((nextField) => nextField !== "DivID" || row?.haveDivision)
+        .filter((nextField) => nextField !== "CCID" || row?.haveCc);
 
       const fieldIndex = availableFields.indexOf(field);
 
@@ -1054,7 +1055,7 @@ const ReceiptPage: React.FC = () => {
   ======================================================= */
 
   const total = useMemo(
-    () => rows.reduce((sum, row) => sum + (Number(row.creditAmount) || 0), 0),
+    () => rows.reduce((sum, row) => sum + (Number(row.creditAmt) || 0), 0),
     [rows],
   );
 
@@ -1084,8 +1085,8 @@ const ReceiptPage: React.FC = () => {
         !lkpBranch ||
         !lkpType ||
         !txtDocNo.trim() ||
-        !date ||
-        !cbAccount ||
+        !dtpDate ||
+        !cbAccountName ||
         validRows.length === 0;
 
       if (validationFailed) {
@@ -1115,12 +1116,12 @@ const ReceiptPage: React.FC = () => {
       const receiptData = {
         lkpBranch,
         lkpType,
-        cashBank: cbAccount,
+       cbAccountName,
         cbCcId,
 
         txtDocNo,
 
-        receiptDate: date,
+        dtpDate,
         receivedFrom,
         reference,
         rows: validRows.map((row, index) => ({
@@ -1129,9 +1130,9 @@ const ReceiptPage: React.FC = () => {
           accountId: row.accountId,
           accountName: row.accountName,
           fgcs: row.fgcs,
-          division: row.division,
-          ccId: row.ccId,
-          creditAmount: Number(row.creditAmount) || 0,
+          DivID: row.DivID,
+          CCID: row.CCID,
+          creditAmt: Number(row.creditAmt) || 0,
           match: row.match,
           description: row.description || "",
         })),
@@ -1252,10 +1253,10 @@ const ReceiptPage: React.FC = () => {
   }, [
     lkpBranch,
     lkpType,
-    cbAccount,
+    cbAccountName,
     cbCcId,
     txtDocNo,
-    date,
+    dtpDate,
     receivedFrom,
     reference,
     rows,
@@ -1289,10 +1290,10 @@ const ReceiptPage: React.FC = () => {
     console.log("MODIFY CURRENT VALUES:", {
       lkpBranch,
       lkpType,
-      cbAccount,
+      cbAccountName,
       cbCcId,
       txtDocNo,
-      date,
+      dtpDate,
       receivedFrom,
       reference,
       note,
@@ -1308,8 +1309,8 @@ const ReceiptPage: React.FC = () => {
       !lkpBranch ||
       !lkpType ||
       !txtDocNo.trim() ||
-      !date ||
-      !cbAccount ||
+      !dtpDate ||
+      !cbAccountName ||
       validRows.length === 0;
 
     if (validationFailed) {
@@ -1319,8 +1320,8 @@ const ReceiptPage: React.FC = () => {
         lkpBranch: !!lkpBranch,
         lkpType: !!lkpType,
         txtDocNo: !!txtDocNo.trim(),
-        date: !!date,
-        cbAccount: !!cbAccount,
+        dtpDate: !!dtpDate,
+        cbAccountName: !!cbAccountName,
         validRows: validRows.length,
       });
 
@@ -1364,7 +1365,7 @@ const ReceiptPage: React.FC = () => {
     const modifyPayload = {
       lkpBranch,
       lkpType: toDocumentType(lkpType),
-      cashBank: cbAccount,
+      cbAccountName: cbAccountName,
       cbCcId,
 
       /* IMPORTANT:
@@ -1373,7 +1374,7 @@ const ReceiptPage: React.FC = () => {
           */
       txtDocNo: txtDocNo.trim(),
 
-      receiptDate: date,
+      dtpDate: dtpDate,
       receivedFrom,
       reference,
       note,
@@ -1383,9 +1384,9 @@ const ReceiptPage: React.FC = () => {
         accountId: row.accountId,
         accountName: row.accountName,
         fgcs: row.fgcs,
-        division: row.division,
-        ccId: row.ccId,
-        creditAmount: Number(row.creditAmount) || 0,
+        DivID: row.DivID,
+        CCID: row.CCID,
+        creditAmt: Number(row.creditAmt) || 0,
         match: row.match,
         description: row.description || "",
       })),
@@ -1530,10 +1531,10 @@ const ReceiptPage: React.FC = () => {
   }, [
     lkpBranch,
     lkpType,
-    cbAccount,
+    cbAccountName,
     cbCcId,
     txtDocNo,
-    date,
+    dtpDate,
     receivedFrom,
     reference,
     note,
@@ -1708,16 +1709,16 @@ const ReceiptPage: React.FC = () => {
           setLkpBranch={setLkpBranch}
           lkpType={lkpType}
           setLkpType={setLkpType}
-          cbAccount={cbAccount}
-          setCbAccount={setCbAccount}
+          cbAccountName={cbAccountName}
+          setCbAccountName={setCbAccountName}
           reference={reference}
           setReference={setReference}
           receivedFrom={receivedFrom}
           setReceivedFrom={setReceivedFrom}
           documentNo={txtDocNo}
           setDocumentNo={setTxtDocNo}
-          date={date}
-          setDate={setDate}
+          dtpDate={dtpDate}
+          setDtpDate={setDtpDate}
           branchRef={branchRef}
           typeRef={typeRef}
           documentNoRef={documentNoRef}
