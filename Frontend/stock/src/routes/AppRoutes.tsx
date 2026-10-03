@@ -14,6 +14,7 @@ import BeginningStockPage from "../pages/Purchase/Transaction/BeginningStockPage
 import UserPermissionBranchPage from "../pages/Security/UserPermissionBranch/UserPermissionBranchPage";
 import SetPostingAccountPage from "../pages/Settings/SetPostingAccountPage";
 import PurchaseInvoicePage from "../pages/Purchase/Transaction/PurchaseInvoicePage";
+import PurchaseExpense from "../components/Transaction/PurchaseInvoice/PurchaseInvoiceExpense";
 
 const Login = lazy(() => import("../pages/Auth/LoginPage"));
 const ReceiptPage = lazy(
@@ -192,6 +193,13 @@ element={<UserPermission/>}
 <Route
 path="/Security/UserPermissionBranch"
 element={<UserPermissionBranchPage/>}
+/>
+
+
+
+<Route
+path="/dev/PurchaseExpense"
+element={<PurchaseExpense/>}
 />
 
 
