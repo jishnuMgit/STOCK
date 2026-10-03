@@ -18,20 +18,20 @@ interface PermissionRow {
 }
 
 interface PermissionNode {
-  fmenuid: string;
-  fmenuname: string | null;
-  fmenucaption: string;
-  fmenubuttons: string | null;
-  fuserid: string;
-  fuserbuttons: string;
-  fparentid: string;
-  fright: number;
+  lkpMenuID: string;
+  txtMenuName: string | null;
+  txtMenuCaption: string;
+  txtMenuButtons: string | null;
+  lkpUserID: string;
+  txtUserButtons: string;
+  lkpParentMenuID: string;
+  txtRight: number;
   children: PermissionNode[];
 }
 
 interface PermissionInput {
-  menuId: string;
-  buttons?: string | null;
+  lkpMenuID: string;
+  txtUserButtons?: string | null;
 }
 
 interface SaveBody {
@@ -60,14 +60,14 @@ function buildTree(rows: PermissionRow[]): PermissionNode[] {
 
   rows.forEach((r) => {
     nodes.set(r.fmenuid, {
-      fmenuid: r.fmenuid,
-      fmenuname: r.fmenuname,
-      fmenucaption: r.fmenucaption,
-      fmenubuttons: r.fmenubuttons,
-      fuserid: r.fuserid,
-      fuserbuttons: r.fuserbuttons,
-      fparentid: r.fparentid,
-      fright: Number(r.fright),
+      lkpMenuID: r.fmenuid,
+      txtMenuName: r.fmenuname,
+      txtMenuCaption: r.fmenucaption,
+      txtMenuButtons: r.fmenubuttons,
+      lkpUserID: r.fuserid,
+      txtUserButtons: r.fuserbuttons,
+      lkpParentMenuID: r.fparentid,
+      txtRight: Number(r.fright),
       children: [],
     });
   });
@@ -75,8 +75,8 @@ function buildTree(rows: PermissionRow[]): PermissionNode[] {
   const roots: PermissionNode[] = [];
 
   nodes.forEach((node) => {
-    const parent = node.fparentid
-      ? nodes.get(node.fparentid)
+    const parent = node.lkpParentMenuID
+      ? nodes.get(node.lkpParentMenuID)
       : undefined;
 
     if (parent) {
@@ -87,7 +87,7 @@ function buildTree(rows: PermissionRow[]): PermissionNode[] {
   });
 
   const sortRec = (list: PermissionNode[]): void => {
-    list.sort((a, b) => a.fmenuid.localeCompare(b.fmenuid));
+    list.sort((a, b) => a.lkpMenuID.localeCompare(b.lkpMenuID));
     list.forEach((node) => sortRec(node.children));
   };
 
@@ -126,7 +126,7 @@ export const getUserIdList = async (
 
     res.json({
       success: true,
-      data: result.rows,
+      data: result.rows.map((row) => ({ lkpUserID: row.fuserid })),
     });
   } catch (err) {
     console.error("GET user-permission users/list failed:", err);
@@ -197,6 +197,67 @@ export const getUserPermissions = async (
     res.status(500).json({
       success: false,
       message: "Failed to load permissions",
+    });
+  } finally {
+    client.release();
+  }
+};
+
+/* ---------------------------------------------------------
+   GET MENU STRUCTURE (no specific user)
+   GET /api/user-permission/structure?PstrCoID=...
+
+   Lets the page show the full menu tree the instant it opens,
+   before any user is picked - every box unchecked, since the
+   procedure's mode 'G' left-joins the rights and an empty user
+   id matches none.
+--------------------------------------------------------- */
+
+export const getMenuStructure = async (
+  req: Request,
+  res: Response
+): Promise<void> => {
+  const { PstrCoID } = req.query;
+
+  if (!PstrCoID) {
+    res.status(400).json({
+      success: false,
+      message: "Company ID is required",
+    });
+    return;
+  }
+
+  const client = await pool.connect();
+
+  try {
+    await client.query("BEGIN");
+
+    await client.query(
+      `CALL dbo.sp_pageuserpermissionmenu(
+        $1, $2, $3, $4, $5, $6
+      )`,
+      ["G", PstrCoID, "", null, null, "permission_cursor"]
+    );
+
+    const { rows } = await client.query<PermissionRow>(
+      'FETCH ALL FROM "permission_cursor"'
+    );
+
+    await client.query('CLOSE "permission_cursor"');
+    await client.query("COMMIT");
+
+    res.json({
+      success: true,
+      data: buildTree(rows),
+    });
+  } catch (err) {
+    await client.query("ROLLBACK");
+
+    console.error("GET user-permission structure failed:", err);
+
+    res.status(500).json({
+      success: false,
+      message: "Failed to load menu structure",
     });
   } finally {
     client.release();
@@ -288,12 +349,12 @@ export const saveUserPermissions = async (
     const newMenuIds = new Set<string>();
 
     for (const permission of permissions) {
-      if (!permission.menuId) continue;
+      if (!permission.lkpMenuID) continue;
 
-      const buttons = permission.buttons ?? "0";
+      const buttons = permission.txtUserButtons ?? "0";
 
       if (buttons !== "0") {
-        newMenuIds.add(permission.menuId);
+        newMenuIds.add(permission.lkpMenuID);
       }
 
       await client.query(
@@ -304,8 +365,8 @@ export const saveUserPermissions = async (
           "S",
           PstrCoID,
           lkpUserID,
-          permission.menuId,
-          permission.buttons ?? "0",
+          permission.lkpMenuID,
+          permission.txtUserButtons ?? "0",
           "unused_cursor",
         ]
       );

@@ -14,8 +14,8 @@ import {
 const companyMenuComponents = makeNameIdMenuComponents("Company");
 
 interface CompanyOption {
-  fcoid: string;
-  fconame: string;
+  lkpCoID: string;
+  txtCoName: string;
 }
 
 /* =========================================================
@@ -184,13 +184,15 @@ const SetCompanyInfo = () => {
 
   const [companyOptions, setCompanyOptions] = useState<CompanyOption[]>([]);
   const [lkpCoName, setLkpCoName] = useState("");
+  // forces the company details to be loaded again (used by Clear)
+  const [reloadKey, setReloadKey] = useState(0);
   const [formData, setFormData] = useState<CompanyFormData>(emptyFormData);
 
   const companySelectOptions = useMemo<SelectOption[]>(
     () =>
       companyOptions.map((company) => ({
-        value: company.fcoid,
-        label: company.fconame,
+        value: company.lkpCoID,
+        label: company.txtCoName,
       })),
     [companyOptions]
   );
@@ -245,7 +247,7 @@ const SetCompanyInfo = () => {
 
         // preselect the logged-in company; the details effect below
         // then fills the form
-        if (companies.some((company) => company.fcoid === PstrCoID)) {
+        if (companies.some((company) => company.lkpCoID === PstrCoID)) {
           setLkpCoName(PstrCoID);
         }
       } catch (error) {
@@ -292,19 +294,19 @@ const SetCompanyInfo = () => {
         const data = result.data;
 
         setFormData({
-          txtCoName_AR: data.fconame_ar || "",
-          txtCoName_QR: data.fconame_qr || "",
-          txtCoName_Short: data.fconame_short || "",
-          txtCoVATNo: data.fcovatno || "",
-          txtCoVATNo_AR: data.fcovatno_ar || "",
-          txtCoAddress1: data.fcoaddress1 || "",
-          txtCoAddress2: data.fcoaddress2 || "",
-          txtCoAddress3: data.fcoaddress3 || "",
-          txtCoAddress4: data.fcoaddress4 || "",
-          txtCoAddress1_AR: (data.fcoaddress1_ar || "").trim(),
-          txtCoAddress2_AR: (data.fcoaddress2_ar || "").trim(),
-          txtCoAddress3_AR: (data.fcoaddress3_ar || "").trim(),
-          txtCoAddress4_AR: data.fcoaddress4_ar || "",
+          txtCoName_AR: data.txtCoName_AR || "",
+          txtCoName_QR: data.txtCoName_QR || "",
+          txtCoName_Short: data.txtCoName_Short || "",
+          txtCoVATNo: data.txtCoVATNo || "",
+          txtCoVATNo_AR: data.txtCoVATNo_AR || "",
+          txtCoAddress1: data.txtCoAddress1 || "",
+          txtCoAddress2: data.txtCoAddress2 || "",
+          txtCoAddress3: data.txtCoAddress3 || "",
+          txtCoAddress4: data.txtCoAddress4 || "",
+          txtCoAddress1_AR: (data.txtCoAddress1_AR || "").trim(),
+          txtCoAddress2_AR: (data.txtCoAddress2_AR || "").trim(),
+          txtCoAddress3_AR: (data.txtCoAddress3_AR || "").trim(),
+          txtCoAddress4_AR: data.txtCoAddress4_AR || "",
         });
       } catch (error) {
         console.error("getCompanyDetails error:", error);
@@ -313,7 +315,7 @@ const SetCompanyInfo = () => {
     };
 
     loadCompanyDetails();
-  }, [lkpCoName]);
+  }, [lkpCoName, reloadKey]);
 
   /* =======================================================
      SAVE COMPANY DETAILS (mode 'M')
@@ -370,8 +372,10 @@ const SetCompanyInfo = () => {
   ======================================================= */
 
   const handleClear = () => {
-    setLkpCoName("");
+    // back to the page-open state: the logged-in company, reloaded
+    setLkpCoName(localStorage.getItem("PstrCoID") ?? "");
     setFormData(emptyFormData);
+    setReloadKey((previous) => previous + 1);
   };
 
   /* =======================================================

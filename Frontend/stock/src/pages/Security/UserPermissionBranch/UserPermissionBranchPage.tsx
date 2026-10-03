@@ -19,21 +19,21 @@ interface SelectOption {
 }
 
 interface BranchNode {
-  fbrid: string;
-  fbrname: string;
+  lkpBranch: string;
+  txtBranchName: string;
   checked: boolean;
 }
 
 interface CompanyNode {
-  fcoid: string;
-  fconame: string;
+  lkpCoID: string;
+  txtCoName: string;
   checked: boolean;
   children: BranchNode[];
 }
 
 interface PermissionInput {
-  fcoid: string;
-  fbrid: string;
+  lkpCoID: string;
+  lkpBranch: string;
 }
 
 interface ApiResponse {
@@ -204,7 +204,7 @@ function flattenChecked(nodes: CompanyNode[]): PermissionInput[] {
   nodes.forEach((company) => {
     company.children.forEach((branch) => {
       if (branch.checked) {
-        result.push({ fcoid: company.fcoid, fbrid: branch.fbrid });
+        result.push({ lkpCoID: company.lkpCoID, lkpBranch: branch.lkpBranch });
       }
     });
   });
@@ -255,14 +255,14 @@ const UserPermissionBranchPage: React.FC = () => {
           `${USER_LIST_API_URL}?PstrCoID=${encodeURIComponent(PstrCoID)}`
         );
 
-        const result: { success: boolean; data?: { fuserid: string }[] } =
+        const result: { success: boolean; data?: { lkpUserID: string }[] } =
           await response.json();
 
         if (response.ok && result.success) {
           setUserIdOptions(
             (result.data || []).map((row) => ({
-              value: row.fuserid,
-              label: row.fuserid,
+              value: row.lkpUserID,
+              label: row.lkpUserID,
             }))
           );
         }
@@ -318,7 +318,7 @@ const UserPermissionBranchPage: React.FC = () => {
 
       // Expand every company by default.
       setExpandedCompanies(
-        Object.fromEntries(tree.map((company) => [company.fcoid, true]))
+        Object.fromEntries(tree.map((company) => [company.lkpCoID, true]))
       );
     } catch (err) {
       console.error("Load user-permission-branch failed:", err);
@@ -341,10 +341,10 @@ const UserPermissionBranchPage: React.FC = () => {
   // EXPAND / COLLAPSE INDIVIDUAL COMPANY
   // ==========================================================
 
-  const toggleExpanded = (fcoid: string) => {
+  const toggleExpanded = (lkpCoID: string) => {
     setExpandedCompanies((previous) => ({
       ...previous,
-      [fcoid]: !previous[fcoid],
+      [lkpCoID]: !previous[lkpCoID],
     }));
   };
 
@@ -352,10 +352,10 @@ const UserPermissionBranchPage: React.FC = () => {
   // COMPANY CHECKBOX - check/uncheck it and every branch
   // ==========================================================
 
-  const toggleCompany = (fcoid: string, checked: boolean) => {
+  const toggleCompany = (lkpCoID: string, checked: boolean) => {
     setPermissionData((previous) =>
       previous.map((company) =>
-        company.fcoid !== fcoid
+        company.lkpCoID !== lkpCoID
           ? company
           : {
               ...company,
@@ -374,13 +374,13 @@ const UserPermissionBranchPage: React.FC = () => {
   // branch under it is checked
   // ==========================================================
 
-  const toggleBranch = (fcoid: string, fbrid: string, checked: boolean) => {
+  const toggleBranch = (lkpCoID: string, lkpBranch: string, checked: boolean) => {
     setPermissionData((previous) =>
       previous.map((company) => {
-        if (company.fcoid !== fcoid) return company;
+        if (company.lkpCoID !== lkpCoID) return company;
 
         const updatedChildren = company.children.map((branch) =>
-          branch.fbrid === fbrid ? { ...branch, checked } : branch
+          branch.lkpBranch === lkpBranch ? { ...branch, checked } : branch
         );
 
         return {
@@ -613,7 +613,7 @@ const UserPermissionBranchPage: React.FC = () => {
                   </tr>
                 ) : (
                   permissionData.map((company) => (
-                    <React.Fragment key={company.fcoid}>
+                    <React.Fragment key={company.lkpCoID}>
                       {/* LEVEL 1: COMPANY */}
                       <tr className="h-7.25">
                         <td className="border-b border-[#b8f0d0] p-0">
@@ -621,15 +621,15 @@ const UserPermissionBranchPage: React.FC = () => {
                             <button
                               type="button"
                               aria-label={
-                                expandedCompanies[company.fcoid]
-                                  ? `Collapse ${company.fconame}`
-                                  : `Expand ${company.fconame}`
+                                expandedCompanies[company.lkpCoID]
+                                  ? `Collapse ${company.txtCoName}`
+                                  : `Expand ${company.txtCoName}`
                               }
-                              aria-expanded={!!expandedCompanies[company.fcoid]}
-                              onClick={() => toggleExpanded(company.fcoid)}
+                              aria-expanded={!!expandedCompanies[company.lkpCoID]}
+                              onClick={() => toggleExpanded(company.lkpCoID)}
                               className="flex h-5 w-5 shrink-0 items-center justify-center text-[12px] text-slate-600"
                             >
-                              {expandedCompanies[company.fcoid] ? (
+                              {expandedCompanies[company.lkpCoID] ? (
                                 <ChevronDown color="green" />
                               ) : (
                                 <ChevronRight color="green" />
@@ -637,13 +637,13 @@ const UserPermissionBranchPage: React.FC = () => {
                             </button>
 
                             <input
-                              id={`chk${company.fcoid}`}
-                              name={`chk${company.fcoid}`}
+                              id={`chk${company.lkpCoID}`}
+                              name={`chk${company.lkpCoID}`}
                               type="checkbox"
                               checked={company.checked}
                               onChange={(event) =>
                                 toggleCompany(
-                                  company.fcoid,
+                                  company.lkpCoID,
                                   event.target.checked
                                 )
                               }
@@ -651,30 +651,30 @@ const UserPermissionBranchPage: React.FC = () => {
                             />
 
                             <label
-                              htmlFor={`chk${company.fcoid}`}
+                              htmlFor={`chk${company.lkpCoID}`}
                               className="flex-1 cursor-pointer text-[15px]"
                             >
-                              {company.fconame}
+                              {company.txtCoName}
                             </label>
                           </div>
                         </td>
                       </tr>
 
                       {/* LEVEL 2: BRANCHES */}
-                      {expandedCompanies[company.fcoid] &&
+                      {expandedCompanies[company.lkpCoID] &&
                         company.children.map((branch) => (
-                          <tr key={branch.fbrid} className="h-7.25">
+                          <tr key={branch.lkpBranch} className="h-7.25">
                             <td className="border-b border-[#b8f0d0] p-0">
-                              <div className="ml-12 flex h-7 items-center gap-2.25 border-l border-[#b8f0d0] pl-1.5">
+                              <div className="ml-15 flex h-7 items-center gap-2.25 border-l border-[#b8f0d0] pl-1.5">
                                 <input
-                                  id={`chk${company.fcoid}_${branch.fbrid}`}
-                                  name={`chk${company.fcoid}_${branch.fbrid}`}
+                                  id={`chk${company.lkpCoID}_${branch.lkpBranch}`}
+                                  name={`chk${company.lkpCoID}_${branch.lkpBranch}`}
                                   type="checkbox"
                                   checked={branch.checked}
                                   onChange={(event) =>
                                     toggleBranch(
-                                      company.fcoid,
-                                      branch.fbrid,
+                                      company.lkpCoID,
+                                      branch.lkpBranch,
                                       event.target.checked
                                     )
                                   }
@@ -682,10 +682,10 @@ const UserPermissionBranchPage: React.FC = () => {
                                 />
 
                                 <label
-                                  htmlFor={`chk${company.fcoid}_${branch.fbrid}`}
+                                  htmlFor={`chk${company.lkpCoID}_${branch.lkpBranch}`}
                                   className="flex-1 cursor-pointer text-[15px]"
                                 >
-                                  {branch.fbrname}
+                                  {branch.txtBranchName}
                                 </label>
                               </div>
                             </td>

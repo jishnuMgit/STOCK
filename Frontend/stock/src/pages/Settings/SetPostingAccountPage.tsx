@@ -20,8 +20,8 @@ interface SelectOption {
 }
 
 interface AccountOption {
-  id: string;
-  name: string;
+  lkpAccountID: string;
+  txtAccountName: string;
 }
 //@ts-ignore
 interface AccountRow {
@@ -94,24 +94,24 @@ const initialValues: FormValues = {
 };
 
 // ============================================================
-// FORM FIELD -> dbo.tblsetpostingaccount COLUMN
+// THE 11 ACCOUNT FIELDS THAT ARE SAVED
 // (the Name fields are not stored - they are looked up from the
 // account list)
 // ============================================================
 
-const postingAccountColumns: Record<string, string> = {
-  lkpCashSupplierAccountID: "fcashsupplieraccountid",
-  lkpCashCustomerAccountID: "fcashcustomeraccountid",
-  lkpStockAccountID: "fstockaccountid",
-  lkpSalesAccountID: "fsalesaccountid",
-  lkpSalesReturnAccountID: "fsalesretaccountid",
-  lkpCostOfSalesAccountID: "fsalescostaccountid",
-  lkpCostOfSalesReturnAccountID: "fsalesretcostaccountid",
-  lkpStockAdjustmentAccountID: "fstockadjaccountid",
-  lkpRoundOffAccountID: "froundoffaccountid",
-  lkpInputVATAccountID: "finputvataccountid",
-  lkpOutputVATAccountID: "foutputvataccountid",
-};
+const postingAccountFields: string[] = [
+  "lkpCashSupplierAccountID",
+  "lkpCashCustomerAccountID",
+  "lkpStockAccountID",
+  "lkpSalesAccountID",
+  "lkpSalesReturnAccountID",
+  "lkpCostOfSalesAccountID",
+  "lkpCostOfSalesReturnAccountID",
+  "lkpStockAdjustmentAccountID",
+  "lkpRoundOffAccountID",
+  "lkpInputVATAccountID",
+  "lkpOutputVATAccountID",
+];
 
 // dbo.tblmenu fmenuid for the Set Stock Posting Account page.
 const MENU_ID = "9111";
@@ -235,6 +235,11 @@ const SetPostingAccountPage: React.FC = () => {
 
   const [branchOptions, setBranchOptions] = useState<SelectOption[]>([]);
 
+  // the branch the page opened with, and a counter that forces the
+  // saved accounts to be loaded again (used by Clear)
+  const [defaultBranch, setDefaultBranch] = useState("");
+  const [reloadKey, setReloadKey] = useState(0);
+
   useEffect(() => {
     const loadBranchList = async () => {
       try {
@@ -264,9 +269,9 @@ const SetPostingAccountPage: React.FC = () => {
 
         setBranchOptions(
           (result.data || []).map(
-            (row: { fbrid: string; fbrname: string }) => ({
-              value: row.fbrid,
-              label: row.fbrname,
+            (row: { lkpBranch: string; txtBranchName: string }) => ({
+              value: row.lkpBranch,
+              label: row.txtBranchName,
             }),
           ),
         );
@@ -314,6 +319,7 @@ const SetPostingAccountPage: React.FC = () => {
         }
 
         if (result.data) {
+          setDefaultBranch(result.data);
           setValues((previous) => ({ ...previous, lkpBranch: result.data }));
         }
       } catch (error) {
@@ -360,14 +366,7 @@ const SetPostingAccountPage: React.FC = () => {
           return;
         }
 
-        setAccountList(
-          (result.data || []).map(
-            (row: { faccountid: string; faccountname: string }) => ({
-              id: row.faccountid,
-              name: row.faccountname,
-            }),
-          ),
-        );
+        setAccountList(result.data || []);
       } catch (error) {
         console.error("getAccountList error:", error);
         toast.error(
@@ -390,12 +389,12 @@ const SetPostingAccountPage: React.FC = () => {
     const buildAccountValues = (row: Record<string, string | null> | null) => {
       const accountValues: Record<string, string> = {};
 
-      for (const [field, column] of Object.entries(postingAccountColumns)) {
-        const accountId = row?.[column] ?? "";
-        const account = accountList.find((item) => item.id === accountId);
+      for (const field of postingAccountFields) {
+        const accountId = row?.[field] ?? "";
+        const account = accountList.find((item) => item.lkpAccountID === accountId);
 
-        accountValues[field] = account ? account.id : "";
-        accountValues[field.replace(/ID$/, "Name")] = account?.name ?? "";
+        accountValues[field] = account ? account.lkpAccountID : "";
+        accountValues[field.replace(/ID$/, "Name")] = account?.txtAccountName ?? "";
       }
 
       return accountValues;
@@ -448,7 +447,7 @@ const SetPostingAccountPage: React.FC = () => {
     };
 
     loadPostingAccount();
-  }, [values.lkpBranch, accountList]);
+  }, [values.lkpBranch, accountList, reloadKey]);
 
   // ----------------------------------------------------------
   // GENERAL VALUE HANDLER
@@ -482,15 +481,15 @@ const SetPostingAccountPage: React.FC = () => {
 
   const getIdOptions = (): SelectOption[] => {
     return getAccountOptions().map((account) => ({
-      value: account.id,
-      label: account.id,
+      value: account.lkpAccountID,
+      label: account.lkpAccountID,
     }));
   };
 
   const getNameOptions = (): SelectOption[] => {
     return getAccountOptions().map((account) => ({
-      value: account.name,
-      label: account.name,
+      value: account.txtAccountName,
+      label: account.txtAccountName,
     }));
   };
 
@@ -503,13 +502,13 @@ const SetPostingAccountPage: React.FC = () => {
     selected: SingleValue<SelectOption>,
   ) => {
     const account = getAccountOptions().find(
-      (item) => item.id === (selected?.value ?? ""),
+      (item) => item.lkpAccountID === (selected?.value ?? ""),
     );
 
     setValues((previous) => ({
       ...previous,
-      [`lkp${rowKey}AccountID`]: account?.id ?? "",
-      [`lkp${rowKey}AccountName`]: account?.name ?? "",
+      [`lkp${rowKey}AccountID`]: account?.lkpAccountID ?? "",
+      [`lkp${rowKey}AccountName`]: account?.txtAccountName ?? "",
     }));
   };
 
@@ -522,13 +521,13 @@ const SetPostingAccountPage: React.FC = () => {
     selected: SingleValue<SelectOption>,
   ) => {
     const account = getAccountOptions().find(
-      (item) => item.name === (selected?.value ?? ""),
+      (item) => item.txtAccountName === (selected?.value ?? ""),
     );
 
     setValues((previous) => ({
       ...previous,
-      [`lkp${rowKey}AccountID`]: account?.id ?? "",
-      [`lkp${rowKey}AccountName`]: account?.name ?? "",
+      [`lkp${rowKey}AccountID`]: account?.lkpAccountID ?? "",
+      [`lkp${rowKey}AccountName`]: account?.txtAccountName ?? "",
     }));
   };
 
@@ -537,7 +536,10 @@ const SetPostingAccountPage: React.FC = () => {
   // ----------------------------------------------------------
 
   const handleClear = () => {
-    setValues({ ...initialValues });
+    // back to the page-open state: the default branch, with its
+    // saved accounts loaded again
+    setValues({ ...initialValues, lkpBranch: defaultBranch });
+    setReloadKey((previous) => previous + 1);
   };
 
   // ----------------------------------------------------------
@@ -566,7 +568,7 @@ const SetPostingAccountPage: React.FC = () => {
 
     // only the 11 account ids are stored
     const accountPayload = Object.fromEntries(
-      Object.keys(postingAccountColumns).map((field) => [
+      postingAccountFields.map((field) => [
         field,
         values[field] || null,
       ]),

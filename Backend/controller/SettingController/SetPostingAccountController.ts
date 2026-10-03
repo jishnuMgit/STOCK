@@ -8,6 +8,7 @@ import {
   type PostingAccountPayload,
 } from "../../services/SettingServices/setPostingAccountService.js";
 import { UserAudit } from "../../utils/UserAudit.js";
+import { mapKeys, mapRows, branchListKeys, accountListKeys, postingAccountKeys } from "../../utils/responseKeys.js";
 
 /* =========================================================
    GET BRANCH LIST (lkpBranch dropdown, filtered by
@@ -48,7 +49,7 @@ export const getBranchList = async (
 
     return res.status(200).json({
       success: true,
-      data: result.rows,
+      data: mapRows(result.rows, branchListKeys),
     });
   } catch (error: unknown) {
     console.error("getBranchList error:", error);
@@ -141,7 +142,7 @@ export const getAccountList = async (
 
     return res.status(200).json({
       success: true,
-      data: result.rows,
+      data: mapRows(result.rows, accountListKeys),
     });
   } catch (error: unknown) {
     console.error("getAccountList error:", error);
@@ -190,7 +191,7 @@ export const getPostingAccount = async (
     // a branch that was never saved has no row yet - not an error
     return res.status(200).json({
       success: true,
-      data,
+      data: data ? mapKeys(data, postingAccountKeys) : null,
     });
   } catch (error: unknown) {
     console.error("getPostingAccount error:", error);
