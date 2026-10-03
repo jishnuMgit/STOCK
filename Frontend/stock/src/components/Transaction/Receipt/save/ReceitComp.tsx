@@ -70,7 +70,7 @@ import {
 export type TableField =
   | "accountId"
   | "accountName"
-  | "division"
+  | "DivID"
   | "ccId"
   | "creditAmount"
   | "match"
@@ -1961,7 +1961,7 @@ const ReceiptRow = memo(
 
     const [isCcIdEditing, setIsCcIdEditing] = useState(false);
 
-    const [divisions, setDivisions] = useState<CustomerDivision[]>([]);
+    const [DivID, setDivID] = useState<CustomerDivision[]>([]);
 
     const [divisionLoading, setDivisionLoading] = useState(false);
 
@@ -1974,10 +1974,10 @@ const ReceiptRow = memo(
     const fetchDivisions = useCallback(
       async (accountId: string, existingDivision: string = "") => {
         if (!accountId) {
-          setDivisions([]);
+          setDivID([]);
           setDivisionLoading(false);
 
-          handleRowChange(row.id, "division", "");
+          handleRowChange(row.id, "DivID", "");
 
           handleRowChange(row.id, "hasDivision", false);
 
@@ -2007,7 +2007,7 @@ const ReceiptRow = memo(
           const result = (await response.json()) as CustomerDivisionResponse;
 
           if (result.success && Array.isArray(result.data)) {
-            setDivisions(result.data);
+            setDivID(result.data);
 
             handleRowChange(row.id, "hasDivision", result.data.length > 0);
 
@@ -2023,11 +2023,11 @@ const ReceiptRow = memo(
               );
 
               if (savedDivisionExists) {
-                handleRowChange(row.id, "division", existingDivision);
+                handleRowChange(row.id, "DivID", existingDivision);
               } else if (result.data.length === 1) {
                 handleRowChange(
                   row.id,
-                  "division",
+                  "DivID",
                   String(result.data[0].fdivid),
                 );
               }
@@ -2041,25 +2041,25 @@ const ReceiptRow = memo(
             if (result.data.length === 1) {
               handleRowChange(
                 row.id,
-                "division",
+                "DivID",
                 String(result.data[0].fdivid),
               );
             } else {
-              handleRowChange(row.id, "division", "");
+              handleRowChange(row.id, "DivID", "");
             }
           } else {
-            setDivisions([]);
+            setDivID([]);
 
-            handleRowChange(row.id, "division", "");
+            handleRowChange(row.id, "DivID", "");
 
             handleRowChange(row.id, "hasDivision", false);
           }
         } catch (error) {
           console.error("Get Customer Divisions Error:", error);
 
-          setDivisions([]);
+          setDivID([]);
 
-          handleRowChange(row.id, "division", "");
+          handleRowChange(row.id, "DivID", "");
 
           handleRowChange(row.id, "hasDivision", false);
         } finally {
@@ -2071,11 +2071,11 @@ const ReceiptRow = memo(
 
     const divisionOptions = useMemo<SelectOption[]>(
       () =>
-        divisions.map((division) => ({
+        DivID.map((division) => ({
           value: division.fdivid,
           label: division.fdivname,
         })),
-      [divisions],
+      [DivID],
     );
 
     const selectedAccount = useMemo(
@@ -2109,9 +2109,9 @@ const ReceiptRow = memo(
     const selectedDivision = useMemo(
       () =>
         divisionOptions.find(
-          (option) => String(option.value) === String(row.division),
+          (option) => String(option.value) === String(row.DivID),
         ) || null,
-      [divisionOptions, row.division],
+      [divisionOptions, row.DivID],
     );
 
     const selectedCcId = useMemo(
@@ -2134,7 +2134,7 @@ const ReceiptRow = memo(
 
         handleRowChange(row.id, "haveCc", option.haveCc);
 
-        handleRowChange(row.id, "division", "");
+        handleRowChange(row.id, "DivID", "");
 
         handleRowChange(row.id, "ccId", "");
 
@@ -2148,7 +2148,7 @@ const ReceiptRow = memo(
         return;
       }
 
-      void fetchDivisions(row.accountId, row.division || "");
+      void fetchDivisions(row.accountId, row.DivID || "");
     }, [row.accountId, fetchDivisions]);
 
     const handleSelectKeyDown = useCallback(
@@ -2505,7 +2505,7 @@ const ReceiptRow = memo(
             ref={(instance) => {
               divisionSelectRef.current = instance;
 
-              setRowRef(index, "division", instance);
+              setRowRef(index, "DivID", instance);
             }}
             value={isDivisionEditing ? null : selectedDivision}
             inputValue={divisionSearchText}
@@ -2532,7 +2532,7 @@ const ReceiptRow = memo(
                 return;
               }
 
-              handleSelectKeyDown(event, "division", divisionMenuOpenRef);
+              handleSelectKeyDown(event, "DivID", divisionMenuOpenRef);
             }}
             onMenuOpen={handleDivisionMenuOpen}
             onMenuClose={() => {
@@ -2541,7 +2541,7 @@ const ReceiptRow = memo(
               setIsDivisionEditing(false);
             }}
             onChange={(option: SingleValue<SelectOption>) => {
-              handleRowChange(row.id, "division", option?.value || "");
+              handleRowChange(row.id, "DivID", option?.value || "");
 
               setDivisionSearchText("");
               setIsDivisionEditing(false);

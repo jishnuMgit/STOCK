@@ -43,7 +43,7 @@ const createRows = (): ReceiptRow[] =>
     fgcs: "",
     haveCc: false,
     hasDivision: false,
-    division: "",
+    DivID: "",
     ccId: "",
     creditAmount: "",
     amount: 0,
@@ -58,7 +58,7 @@ const createRows = (): ReceiptRow[] =>
 const tableFieldOrder: TableField[] = [
   "accountId",
   "accountName",
-  "division",
+  "DivID",
   "ccId",
   "creditAmount",
 ];
@@ -105,7 +105,7 @@ interface ModifyReceiptResponse {
     accountId?: string;
     accountName?: string;
     fgcs?: string;
-    division?: string;
+    DivID?: string;
     ccId?: string;
     creditAmount?: string | number;
     match?: boolean | string | number;
@@ -442,8 +442,8 @@ const ReceiptPage: React.FC = () => {
           accountName: loadedRow.accountName || account?.faccountname || "",
           fgcs: loadedRow.fgcs || account?.fgcs || "",
           haveCc: account?.fhavecc === true,
-          hasDivision: Boolean(loadedRow.division),
-          division: loadedRow.division || "",
+          hasDivision: Boolean(loadedRow.DivID),
+          DivID: loadedRow.DivID || "",
           ccId: loadedRow.ccId || "",
           creditAmount:
             loadedRow.creditAmount === undefined ||
@@ -747,7 +747,7 @@ const ReceiptPage: React.FC = () => {
           fgcs: "",
           haveCc: false,
           hasDivision: false,
-          division: "",
+          DivID: "",
           ccId: "",
           creditAmount: "",
           amount: 0,
@@ -918,7 +918,7 @@ const ReceiptPage: React.FC = () => {
         =============================================== */
 
       const availableFields = tableFieldOrder
-        .filter((nextField) => nextField !== "division" || row?.hasDivision)
+        .filter((nextField) => nextField !== "DivID" || row?.hasDivision)
         .filter((nextField) => nextField !== "ccId" || row?.haveCc);
 
       const fieldIndex = availableFields.indexOf(field);
@@ -1130,7 +1130,7 @@ const ReceiptPage: React.FC = () => {
           accountId: row.accountId,
           accountName: row.accountName,
           fgcs: row.fgcs,
-          division: row.division,
+          DivID: row.DivID,
           ccId: row.ccId,
           creditAmount: Number(row.creditAmount) || 0,
           match: row.match,
@@ -1384,7 +1384,7 @@ const ReceiptPage: React.FC = () => {
         accountId: row.accountId,
         accountName: row.accountName,
         fgcs: row.fgcs,
-        division: row.division,
+        DivID: row.DivID,
         ccId: row.ccId,
         creditAmount: Number(row.creditAmount) || 0,
         match: row.match,

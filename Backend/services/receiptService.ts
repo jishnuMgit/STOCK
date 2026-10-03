@@ -315,7 +315,7 @@ async function callReceiptProcedure(
 
     gcs = null,
 
-    division = null,
+    DivID = null,
 
     ccId = null,
 
@@ -399,7 +399,7 @@ async function callReceiptProcedure(
 
     clean(gcs),                            // $13
 
-    clean(division),                      // $14
+    clean(DivID),                      // $14
 
     clean(ccId),                           // $15
 
@@ -794,7 +794,7 @@ async function saveReceiptLine(
 
     note,
 
-    division,
+    DivID,
 
     match,
 
@@ -829,7 +829,7 @@ async function saveReceiptLine(
 
       gcs,
 
-      division,
+      DivID,
 
       ccId,
 
@@ -891,7 +891,7 @@ async function saveGeneratedEntry(
 
     note,
 
-    division,
+    DivID,
 
     match,
 
@@ -943,7 +943,7 @@ async function saveGeneratedEntry(
 
       gcs,
 
-      division,
+      DivID,
 
       ccId,
 
@@ -1284,8 +1284,8 @@ export async function saveReceiptService(
             note ||
             "",
 
-          division:
-            row.division ||
+          DivID:
+            row.DivID ||
             row.divId ||
             "",
 
@@ -1367,8 +1367,8 @@ export async function saveReceiptService(
           note ||
           "",
 
-        division:
-          firstRow.division ||
+        DivID:
+          firstRow.DivID ||
           firstRow.divId ||
           "",
 
@@ -1955,8 +1955,8 @@ export async function updateReceiptService(
           validRows[0]?.fgcs ||
           "",
 
-        division:
-          validRows[0]?.division ||
+        DivID:
+          validRows[0]?.DivID ||
           validRows[0]?.divId ||
           "",
 
@@ -2072,7 +2072,7 @@ export async function updateReceiptService(
               "",
 
             divid:
-              row.division ||
+              row.DivID ||
               row.divId ||
               "",
 
@@ -2159,7 +2159,7 @@ export async function updateReceiptService(
         gcs:
           null,
 
-        division:
+        DivID:
           null,
 
         ccId:

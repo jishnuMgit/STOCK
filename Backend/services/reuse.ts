@@ -50,7 +50,7 @@ export interface ReceiptProcedureParams {
   description?: ReceiptValue;
   note?: ReceiptValue;
 
-  division?: ReceiptValue;
+  DivID?: ReceiptValue;
   match?: ReceiptValue;
 
   userId?: ReceiptValue;
@@ -97,7 +97,7 @@ export interface ReceiptRow {
   ccId?: string;
   forDocNo?: string;
 
-  division?: string;
+  DivID?: string;
   divId?: string;
 
   creditAmount?: string | number;

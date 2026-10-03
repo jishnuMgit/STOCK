@@ -151,7 +151,7 @@ export const CheckISdividISccid = async (
 
     if (
       haveDivision &&
-      (!item.division || item.division.trim() === "")
+      (!item.DivID || item.DivID.trim() === "")
     ) {
       throw new Error(
         `Account ${accountId} requires a Division. Please select the Division.`

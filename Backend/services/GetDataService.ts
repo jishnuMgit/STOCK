@@ -34,7 +34,7 @@ interface ReceiptHeader {
   receivedFrom: any;
   reference: any;
   note: any;
-  division: any;
+  DivID: any;
   totalCredit: number;
 }
 
@@ -43,7 +43,7 @@ interface ReceiptDetailRow {
   accountId: any;
   accountName: any;
   fgcs: any;
-  division: any;
+  DivID: any;
   ccId: any;
   creditAmount: string;
   match: boolean;
@@ -1099,7 +1099,7 @@ export async function GetData({
        DIVISION
     ===================================================== */
 
-    division:
+    DivID:
       dbHeader.fdivid ??
       "",
 
@@ -1174,7 +1174,7 @@ export async function GetData({
                DIVISION
             ================================================= */
 
-            division:
+            DivID:
               row.fdivid ??
               "",
 

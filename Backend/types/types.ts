@@ -65,7 +65,7 @@ export interface ReceiptProcedureParams {
   reference?: DbValue;
   accountId?: DbValue;
   gcs?: DbValue;
-  division?: DbValue;
+  DivID?: DbValue;
   ccId?: DbValue;
   debit?: DbValue;
   credit?: DbValue;
@@ -85,7 +85,7 @@ export interface ReceiptRow {
   gcs?: string;
   fgcs?: string;
   ccId?: string;
-  division?: string;
+  DivID?: string;
   divId?: string;
   creditAmount?: string | number;
   debit?: string | number;
@@ -144,7 +144,7 @@ export interface SaveReceiptLineParams {
   credit?: DbValue;
   description?: DbValue;
   note?: DbValue;
-  division?: DbValue;
+  DivID?: DbValue;
   match?: DbValue;
   createdUserDate?: DbValue;
 }
@@ -162,7 +162,7 @@ export interface SaveGeneratedEntryParams {
   credit?: DbValue;
   description?: DbValue;
   note?: DbValue;
-  division?: DbValue;
+  DivID?: DbValue;
   match?: DbValue;
   createdUserDate?: DbValue;
 }
