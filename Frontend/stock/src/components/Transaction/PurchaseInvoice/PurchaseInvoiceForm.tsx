@@ -30,10 +30,10 @@ const currencyOptions = makeOptions(["SAR"]);
 ========================================================= */
 
 const inputClass =
-  "h-[27px] w-full min-w-0 rounded-[4px] border border-[#d5dce5] bg-white px-2 text-[12px] text-[#263449] outline-none focus:border-blue-400";
+  "h-[30px] w-full min-w-0 rounded-[4px] border border-[#d5dce5] bg-white px-2 text-[12px] text-[#263449] outline-none focus:border-blue-400";
 
 const labelClass =
-  "shrink-0 whitespace-nowrap text-[12px] text-[#263449]";
+  "shrink-0 whitespace-nowrap text-[14px] text-[#263449]";
 
 /* =========================================================
    BASE SELECT STYLES
@@ -43,8 +43,8 @@ const labelClass =
 const baseSelectStyles: StylesConfig<Option, false> = {
   control: (base, state) => ({
     ...base,
-    height: 27,
-    minHeight: 27,
+    height: 30,
+    minHeight: 30,
     width: "100%",
     borderRadius: 4,
     borderColor: state.isFocused ? "#80bdff" : "#d5dce5",
@@ -148,8 +148,8 @@ const branchSelectStyles: StylesConfig<Option, false> = {
   ...baseSelectStyles,
   control: (base, state) => ({
     ...baseSelectStyles.control!(base, state),
-    height: 27,
-    minHeight: 27,
+    height: 30,
+    minHeight: 30,
     borderRadius: 4,
   }),
 };
@@ -159,9 +159,9 @@ const invoiceTypeSelectStyles: StylesConfig<Option, false> = {
   ...baseSelectStyles,
   control: (base, state) => ({
     ...baseSelectStyles.control!(base, state),
-    height: 27,
-    minHeight: 27,
-    fontSize: 12,
+    height: 30,
+    minHeight: 30,
+    fontSize: 14,
   }),
 };
 
@@ -170,8 +170,8 @@ const supplierIdSelectStyles: StylesConfig<Option, false> = {
   ...baseSelectStyles,
   control: (base, state) => ({
     ...baseSelectStyles.control!(base, state),
-    height: 27,
-    minHeight: 27,
+    height: 30,
+    minHeight: 30,
     borderRadius: 4,
   }),
 };
@@ -181,9 +181,9 @@ const supplierNameSelectStyles: StylesConfig<Option, false> = {
   ...baseSelectStyles,
   control: (base, state) => ({
     ...baseSelectStyles.control!(base, state),
-    height: 27,
-    minHeight: 27,
-    fontSize: 12,
+    height: 30,
+    minHeight: 30,
+    fontSize: 14,
   }),
 };
 
@@ -192,8 +192,8 @@ const miscSupplierSelectStyles: StylesConfig<Option, false> = {
   ...baseSelectStyles,
   control: (base, state) => ({
     ...baseSelectStyles.control!(base, state),
-    height: 27,
-    minHeight: 27,
+    height: 30,
+    minHeight: 30,
   }),
 };
 
@@ -202,8 +202,8 @@ const miscSupplierIdSelectStyles: StylesConfig<Option, false> = {
   ...baseSelectStyles,
   control: (base, state) => ({
     ...baseSelectStyles.control!(base, state),
-    height: 27,
-    minHeight: 27,
+    height: 30,
+    minHeight: 30,
   }),
 };
 
@@ -212,8 +212,8 @@ const miscSupplierNameSelectStyles: StylesConfig<Option, false> = {
   ...baseSelectStyles,
   control: (base, state) => ({
     ...baseSelectStyles.control!(base, state),
-    height: 27,
-    minHeight: 27,
+    height: 30,
+    minHeight: 30,
   }),
 };
 
@@ -222,8 +222,8 @@ const currencySelectStyles: StylesConfig<Option, false> = {
   ...baseSelectStyles,
   control: (base, state) => ({
     ...baseSelectStyles.control!(base, state),
-    height: 27,
-    minHeight: 27,
+    height: 30,
+    minHeight: 30,
   }),
 };
 
@@ -332,7 +332,7 @@ const PurchaseForm: React.FC = () => {
   className="flex w-[90%] min-w-0 flex-col gap-[8px] ml-3"
 >
   {/* Entry Number */}
-  <div className="flex min-w-0 items-center gap-3 ">
+  <div className="flex min-w-0 items-center gap-3">
     <label
       htmlFor="txtDocNo"
       className={`${labelClass} w-[74px]`}
@@ -410,7 +410,7 @@ const PurchaseForm: React.FC = () => {
     <button
       id="btnPurchaseExpense"
       type="button"
-      className="h-[27px] w-[120px] whitespace-nowrap rounded-[4px] border border-[#cbd1d9] bg-gradient-to-b from-white to-[#e8e8e8] px-[10px] text-[11px] text-[#222] hover:bg-slate-100"
+      className="h-[30px] w-[120px] whitespace-nowrap rounded-[4px] border border-[#cbd1d9] bg-gradient-to-b from-white to-[#e8e8e8] px-[10px] text-[11px] text-[#222] hover:bg-slate-100"
     >
       Purchase Expense
     </button>
@@ -495,7 +495,7 @@ const PurchaseForm: React.FC = () => {
             id="btnAddMiscSupplier"
             type="button"
             aria-label="Add miscellaneous supplier"
-            className="flex h-[27px] w-[27px] shrink-0 items-center justify-center rounded-full bg-[#28a745] text-[20px] font-bold leading-none text-white hover:bg-green-700"
+            className="flex h-[30px] w-[30px] shrink-0 items-center justify-center rounded-full bg-[#28a745] text-[20px] font-bold leading-none text-white hover:bg-green-700"
           >
             <Plus />
           </button>
@@ -541,7 +541,7 @@ const PurchaseForm: React.FC = () => {
           <button
             id="btnCalculateUnitCost"
             type="button"
-            className="h-[27px] whitespace-nowrap rounded-[4px] w-[120px]  ml-25 border border-[#cbd1d9] bg-gradient-to-b from-white to-[#e8e8e8] px-[10px] text-[11px] text-[#222] hover:bg-slate-100"
+            className="h-[30px] whitespace-nowrap rounded-[4px] w-[120px]  ml-25 border border-[#cbd1d9] bg-gradient-to-b from-white to-[#e8e8e8] px-[10px] text-[11px] text-[#222] hover:bg-slate-100"
           >
             Calculate Unit Cost
           </button>
