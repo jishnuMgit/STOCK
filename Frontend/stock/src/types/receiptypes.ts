@@ -44,7 +44,7 @@ export interface ReceiptRow {
   accountName: string;
   fgcs: string;
   haveCc: boolean;
-  hasDivision: boolean;
+  haveDivision: boolean;
   DivID: string;
   CCID: string;
   creditAmt: string;

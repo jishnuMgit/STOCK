@@ -42,7 +42,7 @@ const createRows = (): ReceiptRow[] =>
     accountName: "",
     fgcs: "",
     haveCc: false,
-    hasDivision: false,
+    haveDivision: false,
     DivID: "",
     CCID: "",
     creditAmt: "",
@@ -442,7 +442,7 @@ const ReceiptPage: React.FC = () => {
           accountName: loadedRow.accountName || account?.faccountname || "",
           fgcs: loadedRow.fgcs || account?.fgcs || "",
           haveCc: account?.fhavecc === true,
-          hasDivision: Boolean(loadedRow.DivID),
+          haveDivision: Boolean(loadedRow.DivID),
           DivID: loadedRow.DivID || "",
           CCID: loadedRow.CCID || "",
           creditAmt:
@@ -746,7 +746,7 @@ const ReceiptPage: React.FC = () => {
           accountName: "",
           fgcs: "",
           haveCc: false,
-          hasDivision: false,
+          haveDivision: false,
           DivID: "",
           CCID: "",
           creditAmt: "",
@@ -918,7 +918,7 @@ const ReceiptPage: React.FC = () => {
         =============================================== */
 
       const availableFields = tableFieldOrder
-        .filter((nextField) => nextField !== "DivID" || row?.hasDivision)
+        .filter((nextField) => nextField !== "DivID" || row?.haveDivision)
         .filter((nextField) => nextField !== "CCID" || row?.haveCc);
 
       const fieldIndex = availableFields.indexOf(field);

@@ -1979,7 +1979,7 @@ const ReceiptRow = memo(
 
           handleRowChange(row.id, "DivID", "");
 
-          handleRowChange(row.id, "hasDivision", false);
+          handleRowChange(row.id, "haveDivision", false);
 
           return;
         }
@@ -2009,7 +2009,7 @@ const ReceiptRow = memo(
           if (result.success && Array.isArray(result.data)) {
             setDivID(result.data);
 
-            handleRowChange(row.id, "hasDivision", result.data.length > 0);
+            handleRowChange(row.id, "haveDivision", result.data.length > 0);
 
             /*
              * IMPORTANT:
@@ -2052,7 +2052,7 @@ const ReceiptRow = memo(
 
             handleRowChange(row.id, "DivID", "");
 
-            handleRowChange(row.id, "hasDivision", false);
+            handleRowChange(row.id, "haveDivision", false);
           }
         } catch (error) {
           console.error("Get Customer Divisions Error:", error);
@@ -2061,7 +2061,7 @@ const ReceiptRow = memo(
 
           handleRowChange(row.id, "DivID", "");
 
-          handleRowChange(row.id, "hasDivision", false);
+          handleRowChange(row.id, "haveDivision", false);
         } finally {
           setDivisionLoading(false);
         }
@@ -2591,7 +2591,7 @@ const ReceiptRow = memo(
             isDisabled={
               !row.accountId ||
               divisionLoading ||
-              !row.hasDivision ||
+              !row.haveDivision ||
               divisionOptions.length === 0
             }
             menuPlacement="auto"
