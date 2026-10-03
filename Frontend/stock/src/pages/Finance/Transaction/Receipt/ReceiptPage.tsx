@@ -1202,10 +1202,10 @@ const ReceiptPage: React.FC = () => {
         result.newReceiptNo
       ) {
         lastLookupKeyRef.current = ""; // lets the Receipt No lookup run again
-        setDocumentNo(result.newReceiptNo);
+        setTxtDocNo(result.newReceiptNo);
 
         toast.warning(
-          `Receipt No ${documentNo} was already used by another user. Changed to ${result.newReceiptNo}. Please click Save again.`,
+          `Receipt No ${txtDocNo} was already used by another user. Changed to ${result.newReceiptNo}. Please click Save again.`,
         );
 
         requestAnimationFrame(() => actionsRef.current?.focusSave());

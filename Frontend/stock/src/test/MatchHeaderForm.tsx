@@ -20,7 +20,7 @@ import {
   DatePicker,
 } from "@mui/x-date-pickers/DatePicker";
 
-import "../Receipt/save/customselect.css";
+import "../components/Transaction/Receipt/save/commanReceipt.css";
 
 dayjs.extend(customParseFormat);
 

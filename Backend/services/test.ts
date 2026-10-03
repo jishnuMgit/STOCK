@@ -15,7 +15,7 @@ const PstrUserID = process.env.PstrUserID;
 /* =========================================================
    HELPERS
 ========================================================= */
-
+//@ts-ignore
 function isEmpty(value) {
   return (
     value === null ||
@@ -24,7 +24,7 @@ function isEmpty(value) {
   );
 }
 
-
+//@ts-ignore
 function toNumber(value) {
   if (isEmpty(value)) {
     return 0;
@@ -43,7 +43,7 @@ function toNumber(value) {
 /* =========================================================
    DATE VALIDATION
 ========================================================= */
-
+//@ts-ignore
 function parseDateDDMMYYYY(value) {
   if (isEmpty(value)) {
     return null;
@@ -88,7 +88,7 @@ function parseDateDDMMYYYY(value) {
 /* =========================================================
    SAVE RECEIPT
 ========================================================= */
-
+//@ts-ignore
 export const saveReceiptService = async (receipt) => {
   const client = await pool.connect();
 
@@ -848,13 +848,18 @@ export const saveReceiptService = async (receipt) => {
 /* =========================================================
    GET NEXT VALID DOCUMENT NUMBER
 ========================================================= */
-
+//@ts-ignore
 async function getNextValidDocNo(
+  //@ts-ignore
   client,
   {
+    //@ts-ignore
     coid,
+    //@ts-ignore
     year,
+    //@ts-ignore
     branch,
+    //@ts-ignore
     docType,
   }
 ) {
@@ -869,16 +874,14 @@ async function getNextValidDocNo(
           $1,
           $2,
           $3,
-          $4,
-          $5
+          $4
         )
         `,
         [
           String(coid),
           Number(year),
           String(branch),
-          String(docType),
-          "dbo.tblfintrans"
+          String(docType)
         ]
       );
 
@@ -975,11 +978,15 @@ async function getNextValidDocNo(
 ========================================================= */
 
 async function getDocumentPrefixLength(
+  //@ts-ignore
   client,
-  {
+  {//@ts-ignore
     coid,
+    //@ts-ignore
     year,
+    //@ts-ignore
     branch,
+    //@ts-ignore
     docType,
   }
 ) {
@@ -992,16 +999,14 @@ async function getDocumentPrefixLength(
         $1,
         $2,
         $3,
-        $4,
-        $5
+        $4
       )
       `,
       [
         String(coid),
         Number(year),
         String(branch),
-        String(docType),
-        "dbo.tblfintrans"
+        String(docType)
       ]
     );
 
@@ -1035,7 +1040,9 @@ async function getDocumentPrefixLength(
 ========================================================= */
 
 async function callReceiptProcedure(
+  //@ts-ignore
   client,
+  //@ts-ignore
   data
 ) {
 
@@ -1330,11 +1337,16 @@ async function callReceiptProcedure(
 ========================================================= */
 
 async function incrementDocumentNumber(
+  //@ts-ignore
   client,
   {
+    //@ts-ignore
     coid,
+    //@ts-ignore
     year,
+    //@ts-ignore
     branch,
+    //@ts-ignore
     docType,
   }
 ) {
@@ -1366,16 +1378,14 @@ async function incrementDocumentNumber(
       $1,
       $2,
       $3,
-      $4,
-      $5
+      $4
     )
     `,
     [
       String(coid),
       Number(year),
       String(branch),
-      String(docType),
-      "dbo.tblfintrans"
+      String(docType)
     ]
   );
 }

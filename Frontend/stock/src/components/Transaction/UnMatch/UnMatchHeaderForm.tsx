@@ -190,17 +190,20 @@ const UnMatchHeaderForm: React.FC<MatchHeaderFormProps> = ({
   setReceiptNo,
 
   receiptNoOptions,
-
+//@ts-ignore
   branch,
+  //@ts-ignore
   setBranch,
-
+//@ts-ignore
   branchOptions,
 
   receiptDate,
   setReceiptDate,
 
   docAmount,
+  //@ts-ignore
   matchAmount,
+   //@ts-ignore
   balance,
 
   onSearch,
@@ -402,10 +405,7 @@ const UnMatchHeaderForm: React.FC<MatchHeaderFormProps> = ({
       (item) => item.value === receiptNo
     ) || null;
 
-  const selectedBranch =
-    branchOptions.find(
-      (item) => item.value === branch
-    ) || null;
+
 
   /* =======================================================
      ENTER NAVIGATION

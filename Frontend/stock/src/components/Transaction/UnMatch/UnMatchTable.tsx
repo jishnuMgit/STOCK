@@ -266,7 +266,7 @@ const MatchRow = memo(
     /* =====================================================
        CHECKBOX KEY DOWN
     ===================================================== */
-
+ //@ts-ignore
     const handleCheckboxKeyDown =
       useCallback(
         (
@@ -368,7 +368,7 @@ const MatchRow = memo(
     /* =====================================================
        MATCH CHANGE
     ===================================================== */
-
+ //@ts-ignore
     const handleMatchChange =
       useCallback(
         (

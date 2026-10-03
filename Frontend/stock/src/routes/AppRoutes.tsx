@@ -1,5 +1,5 @@
 import { lazy, Suspense } from "react";
-import { Routes, Route, Navigate } from "react-router-dom";
+import { Routes, Route } from "react-router-dom";
 
 import SetDocumentNo from "../pages/Settings/SetDocumentNoPage";
 import ProtectedRoute from "./ProtectedRoutes";
