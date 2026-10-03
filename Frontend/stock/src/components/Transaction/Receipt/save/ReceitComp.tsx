@@ -72,7 +72,7 @@ export type TableField =
   | "accountName"
   | "DivID"
   | "CCID"
-  | "creditAmount"
+  | "creditAmt"
   | "match"
   | "view";
 
@@ -2704,11 +2704,11 @@ const ReceiptRow = memo(
         <td className="receipt-cell">
           <input
             id={`txtCreditAmt-${row.id}`}
-            ref={(element) => setRowRef(index, "creditAmount", element)}
+            ref={(element) => setRowRef(index, "creditAmt", element)}
             placeholder="0.00"
             type="text"
             inputMode="decimal"
-            value={row.creditAmount}
+            value={row.creditAmt}
             onChange={(event) => {
               const inputValue = event.target.value;
 
@@ -2716,20 +2716,20 @@ const ReceiptRow = memo(
        maximum 2 decimal places */
 
               if (/^\d*\.?\d{0,2}$/.test(inputValue)) {
-                handleRowChange(row.id, "creditAmount", inputValue);
+                handleRowChange(row.id, "creditAmt", inputValue);
               }
             }}
             onFocus={() => setSelectedRowId(row.id)}
             onBlur={() => {
-              if (row.creditAmount) {
+              if (row.creditAmt) {
                 handleRowChange(
                   row.id,
-                  "creditAmount",
-                  formatCreditAmount(row.creditAmount),
+                  "creditAmt",
+                  formatCreditAmount(row.creditAmt),
                 );
               }
             }}
-            onKeyDown={(event) => handleControlKeyDown(event, "creditAmount")}
+            onKeyDown={(event) => handleControlKeyDown(event, "creditAmt")}
             className="
     receipt-grid-input
     text-right

@@ -45,7 +45,7 @@ interface ReceiptDetailRow {
   fgcs: any;
   DivID: any;
   CCID: any;
-  creditAmount: string;
+  creditAmt: string;
   match: boolean;
   description: any;
 }
@@ -1192,7 +1192,7 @@ export async function GetData({
                CREDIT AMOUNT
             ================================================= */
 
-            creditAmount:
+            creditAmt:
 
               row.fcredit !== null &&
               row.fcredit !== undefined
@@ -1243,7 +1243,7 @@ export async function GetData({
           sum +
           (
             Number(
-              row.creditAmount
+              row.creditAmt
             ) || 0
           )
         );

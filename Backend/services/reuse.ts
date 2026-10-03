@@ -100,7 +100,7 @@ export interface ReceiptRow {
   DivID?: string;
   divId?: string;
 
-  creditAmount?: string | number;
+  creditAmt?: string | number;
 
   description?: string;
 

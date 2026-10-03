@@ -87,7 +87,7 @@ export interface ReceiptRow {
   CCID?: string;
   DivID?: string;
   divId?: string;
-  creditAmount?: string | number;
+  creditAmt?: string | number;
   debit?: string | number;
   credit?: string | number;
   description?: string;

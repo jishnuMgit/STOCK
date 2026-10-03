@@ -45,7 +45,7 @@ const createRows = (): ReceiptRow[] =>
     hasDivision: false,
     DivID: "",
     CCID: "",
-    creditAmount: "",
+    creditAmt: "",
     amount: 0,
     match: false,
     description: "",
@@ -60,7 +60,7 @@ const tableFieldOrder: TableField[] = [
   "accountName",
   "DivID",
   "CCID",
-  "creditAmount",
+  "creditAmt",
 ];
 
 /* =========================================================
@@ -107,7 +107,7 @@ interface ModifyReceiptResponse {
     fgcs?: string;
     DivID?: string;
     CCID?: string;
-    creditAmount?: string | number;
+    creditAmt?: string | number;
     match?: boolean | string | number;
     description?: string;
   }>;
@@ -445,12 +445,12 @@ const ReceiptPage: React.FC = () => {
           hasDivision: Boolean(loadedRow.DivID),
           DivID: loadedRow.DivID || "",
           CCID: loadedRow.CCID || "",
-          creditAmount:
-            loadedRow.creditAmount === undefined ||
-            loadedRow.creditAmount === null
+          creditAmt:
+            loadedRow.creditAmt === undefined ||
+            loadedRow.creditAmt === null
               ? ""
-              : String(loadedRow.creditAmount),
-          amount: Number(loadedRow.creditAmount) || 0,
+              : String(loadedRow.creditAmt),
+          amount: Number(loadedRow.creditAmt) || 0,
           match:
             loadedRow.match === true ||
             loadedRow.match === 1 ||
@@ -749,7 +749,7 @@ const ReceiptPage: React.FC = () => {
           hasDivision: false,
           DivID: "",
           CCID: "",
-          creditAmount: "",
+          creditAmt: "",
           amount: 0,
           match: false,
           description: "",
@@ -876,9 +876,9 @@ const ReceiptPage: React.FC = () => {
            CREDIT REQUIRED
         =============================================== */
 
-      if (field === "creditAmount" && !row?.creditAmount.trim()) {
+      if (field === "creditAmt" && !row?.creditAmt.trim()) {
         toast.warning("Credit Amount is required.");
-        focusTableField(rowIndex, "creditAmount");
+        focusTableField(rowIndex, "creditAmt");
         return;
       }
 
@@ -886,7 +886,7 @@ const ReceiptPage: React.FC = () => {
            CREDIT -> DESCRIPTION
         =============================================== */
 
-      if (field === "creditAmount") {
+      if (field === "creditAmt") {
         setActiveDescriptionRow(rowIndex);
 
         // Only load the selected row's description
@@ -1055,7 +1055,7 @@ const ReceiptPage: React.FC = () => {
   ======================================================= */
 
   const total = useMemo(
-    () => rows.reduce((sum, row) => sum + (Number(row.creditAmount) || 0), 0),
+    () => rows.reduce((sum, row) => sum + (Number(row.creditAmt) || 0), 0),
     [rows],
   );
 
@@ -1132,7 +1132,7 @@ const ReceiptPage: React.FC = () => {
           fgcs: row.fgcs,
           DivID: row.DivID,
           CCID: row.CCID,
-          creditAmount: Number(row.creditAmount) || 0,
+          creditAmt: Number(row.creditAmt) || 0,
           match: row.match,
           description: row.description || "",
         })),
@@ -1386,7 +1386,7 @@ const ReceiptPage: React.FC = () => {
         fgcs: row.fgcs,
         DivID: row.DivID,
         CCID: row.CCID,
-        creditAmount: Number(row.creditAmount) || 0,
+        creditAmt: Number(row.creditAmt) || 0,
         match: row.match,
         description: row.description || "",
       })),

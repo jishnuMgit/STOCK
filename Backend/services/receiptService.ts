@@ -1167,7 +1167,7 @@ export async function saveReceiptService(
           return (
             sum +
             toNumber(
-              row.creditAmount
+              row.creditAmt
             )
           );
 
@@ -1273,7 +1273,7 @@ export async function saveReceiptService(
 
           credit:
             toNumber(
-              row.creditAmount
+              row.creditAmt
             ),
 
           description:
@@ -1887,7 +1887,7 @@ export async function updateReceiptService(
           return (
             sum +
             toNumber(
-              row.creditAmount
+              row.creditAmt
             )
           );
 
@@ -2088,7 +2088,7 @@ export async function updateReceiptService(
 
             credit:
               toNumber(
-                row.creditAmount
+                row.creditAmt
               ),
 
             description:

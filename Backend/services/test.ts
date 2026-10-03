@@ -351,7 +351,7 @@ export const saveReceiptService = async (receipt) => {
         (sum, row) =>
           sum +
           toNumber(
-            row.creditAmount
+            row.creditAmt
           ),
         0
       );
@@ -555,7 +555,7 @@ export const saveReceiptService = async (receipt) => {
           accountId: row.accountId,
           gcs,
           ccId: row.ccId,
-          credit: row.creditAmount,
+          credit: row.creditAmt,
           forDocNo: row.forDocNo,
         }
       );
@@ -606,7 +606,7 @@ export const saveReceiptService = async (receipt) => {
 
           credit:
             toNumber(
-              row.creditAmount
+              row.creditAmt
             ),
 
           description:

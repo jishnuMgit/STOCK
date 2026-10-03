@@ -77,12 +77,12 @@ export const cleanReceiptPayload = (body: any) => {
       !(
     
         (row.accountId === "" && row.accountName === "") ||
-        row.creditAmount === 0
+        row.creditAmt === 0
       )
   );
 
   const recalculatedTotal = filteredRows.reduce(
-    (sum: number, row: any) => sum + (Number(row.creditAmount) || 0),
+    (sum: number, row: any) => sum + (Number(row.creditAmt) || 0),
     0
   );
 
