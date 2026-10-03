@@ -110,7 +110,7 @@ mnuSetStockPostingAccount:"/Settings/SetPostingAccount",
 
   mnuUserLogin:"/Security/UserLogin",
   mnuUserPermissionMenu:"/Security/UserPermissionMenu",
-  mnuUserPermissionCoBranch:"/Security/UserPermissionCoBranch",
+  mnuUserPermissionBranch:"/Security/UserPermissionBranch",
 
   /* =========================================================
      ADMINISTRATION

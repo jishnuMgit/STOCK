@@ -6,7 +6,7 @@ import { useEnterAsTab } from "../../../hooks/useEnterAsTab";
 import { useAltShortcuts } from "../../../hooks/useAltShortcuts";
 import { useButtonPermissions } from "../../../hooks/useButtonPermissions";
 
-const API_URL = `${import.meta.env.VITE_API_URL}/user-permission-cobranch`;
+const API_URL = `${import.meta.env.VITE_API_URL}/user-permission-branch`;
 const USER_LIST_API_URL = `${import.meta.env.VITE_API_URL}/user-permission/users/list`;
 
 // ============================================================
@@ -162,8 +162,8 @@ const userIdSelectStyles: StylesConfig<SelectOption, false> = {
   menuList: (base) => ({
     ...base,
     padding: "3px 0",
-    maxHeight: "200px",
-    overflowY: "auto",
+    maxHeight: "260px", // ~8 rows visible - always leaves at least one row scrolled off so the thumb stays visible
+    overflowY: "scroll", // always show the scrollbar track, even when everything fits
   }),
 
   option: (base, state) => ({
@@ -219,7 +219,7 @@ function flattenChecked(nodes: CompanyNode[]): PermissionInput[] {
 // dbo.tblmenu fmenuid for the User Permission - Co. & Branch page.
 const MENU_ID = "9303";
 
-const UserPermissionCoBranchPage: React.FC = () => {
+const UserPermissionBranchPage: React.FC = () => {
   const perms = useButtonPermissions(MENU_ID);
   const handleEnterAsTab = useEnterAsTab();
 
@@ -279,10 +279,10 @@ const UserPermissionCoBranchPage: React.FC = () => {
   // ==========================================================
   // LOAD COMPANY / BRANCH PERMISSIONS
   //
-  // With a user picked: GET /api/user-permission-cobranch/:lkpUserID
+  // With a user picked: GET /api/user-permission-branch/:lkpUserID
   //   -> the tree with that user's real grants checked.
   // With no user picked yet (id is blank, e.g. on page load):
-  //   GET /api/user-permission-cobranch/structure
+  //   GET /api/user-permission-branch/structure
   //   -> the same tree shape, everything unchecked, so the
   //      page shows companies/branches immediately instead of
   //      a blank "select a user" box.
@@ -321,7 +321,7 @@ const UserPermissionCoBranchPage: React.FC = () => {
         Object.fromEntries(tree.map((company) => [company.fcoid, true]))
       );
     } catch (err) {
-      console.error("Load user-permission-cobranch failed:", err);
+      console.error("Load user-permission-branch failed:", err);
       setPermissionData([]);
 
       toast.error(
@@ -394,7 +394,7 @@ const UserPermissionCoBranchPage: React.FC = () => {
 
   // ==========================================================
   // SAVE
-  // PUT /api/user-permission-cobranch/:lkpUserID
+  // PUT /api/user-permission-branch/:lkpUserID
   // ==========================================================
 
   const handleSave = async () => {
@@ -439,7 +439,7 @@ const UserPermissionCoBranchPage: React.FC = () => {
 
       toast.success(result.message || "Permission saved successfully.");
     } catch (err) {
-      console.error("Save user-permission-cobranch failed:", err);
+      console.error("Save user-permission-branch failed:", err);
 
       toast.error(
         err instanceof Error ? err.message : "Failed to save permissions."
@@ -451,7 +451,7 @@ const UserPermissionCoBranchPage: React.FC = () => {
 
   // ==========================================================
   // DELETE
-  // DELETE /api/user-permission-cobranch/:lkpUserID
+  // DELETE /api/user-permission-branch/:lkpUserID
   // ==========================================================
 
   const handleDelete = async () => {
@@ -500,7 +500,7 @@ const UserPermissionCoBranchPage: React.FC = () => {
 
       toast.success(result.message || "Permissions deleted successfully.");
     } catch (err) {
-      console.error("Delete user-permission-cobranch failed:", err);
+      console.error("Delete user-permission-branch failed:", err);
 
       toast.error(
         err instanceof Error ? err.message : "Failed to delete permissions."
@@ -543,7 +543,7 @@ const UserPermissionCoBranchPage: React.FC = () => {
         {/* TITLE */}
         <header className="flex h-9 shrink-0 items-center border-b border-slate-300 bg-[#a3dfc0]">
           <span className="px-5 text-[17px] font-semibold text-slate-700">
-            User Permission - Co Branch
+            User Permission - Branch
           </span>
         </header>
 
@@ -569,6 +569,7 @@ const UserPermissionCoBranchPage: React.FC = () => {
                 setLkpUserID(option?.value || "")
               }
               styles={userIdSelectStyles}
+              classNamePrefix="userIdSelect"
               isSearchable
               isClearable={false}
               isLoading={loadingUserIdOptions}
@@ -616,7 +617,7 @@ const UserPermissionCoBranchPage: React.FC = () => {
                       {/* LEVEL 1: COMPANY */}
                       <tr className="h-7.25">
                         <td className="border-b border-[#b8f0d0] p-0">
-                          <div className="flex h-7 items-center gap-2.25 px-2.5">
+                          <div className="flex h-7 items-center gap-2.25 pl-4 pr-2.5">
                             <button
                               type="button"
                               aria-label={
@@ -664,7 +665,7 @@ const UserPermissionCoBranchPage: React.FC = () => {
                         company.children.map((branch) => (
                           <tr key={branch.fbrid} className="h-7.25">
                             <td className="border-b border-[#b8f0d0] p-0">
-                              <div className="ml-10.75 flex h-7 items-center gap-2.25 border-l border-[#b8f0d0] pl-1.5">
+                              <div className="ml-12 flex h-7 items-center gap-2.25 border-l border-[#b8f0d0] pl-1.5">
                                 <input
                                   id={`chk${company.fcoid}_${branch.fbrid}`}
                                   name={`chk${company.fcoid}_${branch.fbrid}`}
@@ -743,4 +744,4 @@ const UserPermissionCoBranchPage: React.FC = () => {
   );
 };
 
-export default UserPermissionCoBranchPage;
+export default UserPermissionBranchPage;

@@ -5,7 +5,7 @@ import {
   getUserPermissions,
   saveUserPermissions,
   deleteUserPermissions,
-} from "../../controller/SettingController/Userpermission.controller.js";
+} from "../../controller/SecurityController/UserPermissionMenuController.js";
 
 const router = Router();
 
