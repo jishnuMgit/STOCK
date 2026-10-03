@@ -1,9 +1,15 @@
-import React, { useState } from "react";
-import Select, {
-  type SingleValue,
-  type StylesConfig,
-} from "react-select";
-
+import React, { useEffect, useState } from "react";
+import Select, { type SingleValue, type StylesConfig } from "react-select";
+import { toast } from "react-toastify";
+import { useAltShortcuts } from "../../hooks/useAltShortcuts";
+import { useEnterAsTab } from "../../hooks/useEnterAsTab";
+import { useButtonPermissions } from "../../hooks/useButtonPermissions";
+import {
+  filterLabelOrValue,
+  BranchMenuList,
+  BranchOption,
+  branchMenuStyles,
+} from "../../components/BranchSelect/branchSelectParts";
 // ============================================================
 // TYPES
 // ============================================================
@@ -26,85 +32,9 @@ interface AccountRow {
 }
 
 interface FormValues {
-  branch: string;
+  lkpBranch: string;
   [key: string]: string;
 }
-
-// ============================================================
-// BRANCH OPTIONS
-// ============================================================
-
-const branchOptions: SelectOption[] = [
-  { value: "branch1", label: "Branch 1" },
-  { value: "branch2", label: "Branch 2" },
-  { value: "branch3", label: "Branch 3" },
-];
-
-// ============================================================
-// SAMPLE ACCOUNT OPTIONS
-// Replace these with your actual account data.
-// ============================================================
-
-const accountOptionsByRow: Record<string, AccountOption[]> = {
-  cashSupplier: [
-    { id: "1001", name: "Cash Supplier Account" },
-    { id: "1002", name: "Supplier Control Account" },
-    { id: "1003", name: "Local Supplier Account" },
-  ],
-
-  cashCustomer: [
-    { id: "2001", name: "Cash Customer Account" },
-    { id: "2002", name: "Customer Control Account" },
-    { id: "2003", name: "Local Customer Account" },
-  ],
-
-  stock: [
-    { id: "3001", name: "Stock Account" },
-    { id: "3002", name: "Inventory Account" },
-    { id: "3003", name: "Closing Stock Account" },
-  ],
-
-  sales: [
-    { id: "4001", name: "Sales Account" },
-    { id: "4002", name: "Local Sales Account" },
-    { id: "4003", name: "Export Sales Account" },
-  ],
-
-  salesReturn: [
-    { id: "5001", name: "Sales Return Account" },
-    { id: "5002", name: "Sales Discount Account" },
-  ],
-
-  costOfSales: [
-    { id: "6001", name: "Cost Of Sales Account" },
-    { id: "6002", name: "Purchase Cost Account" },
-  ],
-
-  costOfSalesReturn: [
-    { id: "7001", name: "Cost Of Sales Return Account" },
-    { id: "7002", name: "Purchase Return Account" },
-  ],
-
-  stockAdjustment: [
-    { id: "8001", name: "Stock Adjustment Account" },
-    { id: "8002", name: "Inventory Adjustment Account" },
-  ],
-
-  inputVAT: [
-    { id: "9001", name: "Input VAT Account" },
-    { id: "9002", name: "Input Tax Account" },
-  ],
-
-  outputVAT: [
-    { id: "10001", name: "Output VAT Account" },
-    { id: "10002", name: "Output Tax Account" },
-  ],
-
-  roundOff: [
-    { id: "11001", name: "Round Off Account" },
-    { id: "11002", name: "Rounding Difference Account" },
-  ],
-};
 
 // ============================================================
 // INITIAL FORM VALUES
@@ -138,30 +68,54 @@ const buttonClass = `
 `;
 
 const initialValues: FormValues = {
-  branch: "",
-  cashSupplierId: "",
-  cashSupplierName: "",
-  cashCustomerId: "",
-  cashCustomerName: "",
-  stockId: "",
-  stockName: "",
-  salesId: "",
-  salesName: "",
-  salesReturnId: "",
-  salesReturnName: "",
-  costOfSalesId: "",
-  costOfSalesName: "",
-  costOfSalesReturnId: "",
-  costOfSalesReturnName: "",
-  stockAdjustmentId: "",
-  stockAdjustmentName: "",
-  inputVATId: "",
-  inputVATName: "",
-  outputVATId: "",
-  outputVATName: "",
-  roundOffId: "",
-  roundOffName: "",
+  lkpBranch: "",
+  lkpCashSupplierAccountID: "",
+  lkpCashSupplierAccountName: "",
+  lkpCashCustomerAccountID: "",
+  lkpCashCustomerAccountName: "",
+  lkpStockAccountID: "",
+  lkpStockAccountName: "",
+  lkpSalesAccountID: "",
+  lkpSalesAccountName: "",
+  lkpSalesReturnAccountID: "",
+  lkpSalesReturnAccountName: "",
+  lkpCostOfSalesAccountID: "",
+  lkpCostOfSalesAccountName: "",
+  lkpCostOfSalesReturnAccountID: "",
+  lkpCostOfSalesReturnAccountName: "",
+  lkpStockAdjustmentAccountID: "",
+  lkpStockAdjustmentAccountName: "",
+  lkpRoundOffAccountID: "",
+  lkpRoundOffAccountName: "",
+  lkpInputVATAccountID: "",
+  lkpInputVATAccountName: "",
+  lkpOutputVATAccountID: "",
+  lkpOutputVATAccountName: "",
 };
+
+// ============================================================
+// FORM FIELD -> dbo.tblsetpostingaccount COLUMN
+// (the Name fields are not stored - they are looked up from the
+// account list)
+// ============================================================
+
+const postingAccountColumns: Record<string, string> = {
+  lkpCashSupplierAccountID: "fcashsupplieraccountid",
+  lkpCashCustomerAccountID: "fcashcustomeraccountid",
+  lkpStockAccountID: "fstockaccountid",
+  lkpSalesAccountID: "fsalesaccountid",
+  lkpSalesReturnAccountID: "fsalesretaccountid",
+  lkpCostOfSalesAccountID: "fsalescostaccountid",
+  lkpCostOfSalesReturnAccountID: "fsalesretcostaccountid",
+  lkpStockAdjustmentAccountID: "fstockadjaccountid",
+  lkpRoundOffAccountID: "froundoffaccountid",
+  lkpInputVATAccountID: "finputvataccountid",
+  lkpOutputVATAccountID: "foutputvataccountid",
+};
+
+// dbo.tblmenu fmenuid for the Set Stock Posting Account page.
+const MENU_ID = "9111";
+
 
 // ============================================================
 // REACT SELECT STYLES
@@ -267,9 +221,234 @@ const selectStyles: StylesConfig<SelectOption, false> = {
 // ============================================================
 
 const SetPostingAccountPage: React.FC = () => {
+  const perms = useButtonPermissions(MENU_ID);
+  const handleEnterAsTab = useEnterAsTab();
+
   const [values, setValues] = useState<FormValues>({
     ...initialValues,
   });
+
+  // ----------------------------------------------------------
+  // LOAD BRANCH LIST (lkpBranch dropdown, filtered by
+  // dbo.userbranches - same as SetBranchInfo / SetDocumentNo)
+  // ----------------------------------------------------------
+
+  const [branchOptions, setBranchOptions] = useState<SelectOption[]>([]);
+
+  useEffect(() => {
+    const loadBranchList = async () => {
+      try {
+        const PstrCoID = localStorage.getItem("PstrCoID");
+        const PstrUserID = localStorage.getItem("PstrUserID");
+
+        if (!PstrCoID || !PstrUserID) {
+          toast.error("getBranchList: no PstrCoID/PstrUserID in localStorage");
+          return;
+        }
+
+        const response = await fetch(
+          `${import.meta.env.VITE_API_URL}/PostingAccount/getBranchList?PstrCoID=${PstrCoID}&PstrUserID=${PstrUserID}`,
+        );
+
+        if (!response.ok) {
+          throw new Error(`HTTP Error: ${response.status}`);
+        }
+
+        const result = await response.json();
+
+        if (!result.success) {
+          console.error("getBranchList failed:", result.message);
+          toast.error(`getBranchList failed: ${result.message}`);
+          return;
+        }
+
+        setBranchOptions(
+          (result.data || []).map(
+            (row: { fbrid: string; fbrname: string }) => ({
+              value: row.fbrid,
+              label: row.fbrname,
+            }),
+          ),
+        );
+      } catch (error) {
+        console.error("getBranchList error:", error);
+        toast.error(
+          `getBranchList error: ${error instanceof Error ? error.message : String(error)}`,
+        );
+      }
+    };
+
+    loadBranchList();
+  }, []);
+
+  // ----------------------------------------------------------
+  // LOAD DEFAULT BRANCH (lkpBranch pre-select, live lookup via
+  // dbo.getuserdefbranch - same as SetBranchInfo)
+  // ----------------------------------------------------------
+
+  useEffect(() => {
+    const loadDefaultBranch = async () => {
+      try {
+        const PstrCoID = localStorage.getItem("PstrCoID");
+        const PstrUserID = localStorage.getItem("PstrUserID");
+
+        if (!PstrCoID || !PstrUserID) {
+          toast.error("getDefaultBranch: no PstrCoID/PstrUserID in localStorage");
+          return;
+        }
+
+        const response = await fetch(
+          `${import.meta.env.VITE_API_URL}/PostingAccount/getDefaultBranch?PstrCoID=${PstrCoID}&PstrUserID=${PstrUserID}`,
+        );
+
+        if (!response.ok) {
+          throw new Error(`HTTP Error: ${response.status}`);
+        }
+
+        const result = await response.json();
+
+        if (!result.success) {
+          console.error("getDefaultBranch failed:", result.message);
+          toast.error(`getDefaultBranch failed: ${result.message}`);
+          return;
+        }
+
+        if (result.data) {
+          setValues((previous) => ({ ...previous, lkpBranch: result.data }));
+        }
+      } catch (error) {
+        console.error("getDefaultBranch error:", error);
+        toast.error(
+          `getDefaultBranch error: ${error instanceof Error ? error.message : String(error)}`,
+        );
+      }
+    };
+
+    loadDefaultBranch();
+  }, []);
+
+  // ----------------------------------------------------------
+  // LOAD ACCOUNT LIST (the ID / Name dropdowns of every row,
+  // dbo.fillpostingaccount - company only, no branch column)
+  // ----------------------------------------------------------
+
+  const [accountList, setAccountList] = useState<AccountOption[]>([]);
+
+  useEffect(() => {
+    const loadAccountList = async () => {
+      try {
+        const PstrCoID = localStorage.getItem("PstrCoID");
+
+        if (!PstrCoID) {
+          toast.error("getAccountList: no PstrCoID in localStorage");
+          return;
+        }
+
+        const response = await fetch(
+          `${import.meta.env.VITE_API_URL}/PostingAccount/getAccountList?PstrCoID=${PstrCoID}`,
+        );
+
+        if (!response.ok) {
+          throw new Error(`HTTP Error: ${response.status}`);
+        }
+
+        const result = await response.json();
+
+        if (!result.success) {
+          console.error("getAccountList failed:", result.message);
+          toast.error(`getAccountList failed: ${result.message}`);
+          return;
+        }
+
+        setAccountList(
+          (result.data || []).map(
+            (row: { faccountid: string; faccountname: string }) => ({
+              id: row.faccountid,
+              name: row.faccountname,
+            }),
+          ),
+        );
+      } catch (error) {
+        console.error("getAccountList error:", error);
+        toast.error(
+          `getAccountList error: ${error instanceof Error ? error.message : String(error)}`,
+        );
+      }
+    };
+
+    loadAccountList();
+  }, []);
+
+  // ----------------------------------------------------------
+  // PREFILL THE 11 ACCOUNTS WHEN A BRANCH IS SELECTED (mode 'G').
+  // Waits for the account list so the Name boxes can be filled.
+  // ----------------------------------------------------------
+
+  useEffect(() => {
+    // the 22 fields (11 ID + 11 Name) for one saved row, or all
+    // blank when the branch has never been saved
+    const buildAccountValues = (row: Record<string, string | null> | null) => {
+      const accountValues: Record<string, string> = {};
+
+      for (const [field, column] of Object.entries(postingAccountColumns)) {
+        const accountId = row?.[column] ?? "";
+        const account = accountList.find((item) => item.id === accountId);
+
+        accountValues[field] = account ? account.id : "";
+        accountValues[field.replace(/ID$/, "Name")] = account?.name ?? "";
+      }
+
+      return accountValues;
+    };
+
+    if (!values.lkpBranch) {
+      setValues((previous) => ({ ...previous, ...buildAccountValues(null) }));
+      return;
+    }
+
+    if (accountList.length === 0) {
+      return;
+    }
+
+    const loadPostingAccount = async () => {
+      try {
+        const PstrCoID = localStorage.getItem("PstrCoID");
+
+        if (!PstrCoID) {
+          toast.error("getPostingAccount: no PstrCoID in localStorage");
+          return;
+        }
+
+        const response = await fetch(
+          `${import.meta.env.VITE_API_URL}/PostingAccount/getPostingAccount?PstrCoID=${PstrCoID}&lkpBranch=${values.lkpBranch}`,
+        );
+
+        if (!response.ok) {
+          throw new Error(`HTTP Error: ${response.status}`);
+        }
+
+        const result = await response.json();
+
+        if (!result.success) {
+          console.error("getPostingAccount failed:", result.message);
+          toast.error(`getPostingAccount failed: ${result.message}`);
+          return;
+        }
+
+        setValues((previous) => ({
+          ...previous,
+          ...buildAccountValues(result.data),
+        }));
+      } catch (error) {
+        console.error("getPostingAccount error:", error);
+        toast.error(
+          `getPostingAccount error: ${error instanceof Error ? error.message : String(error)}`,
+        );
+      }
+    };
+
+    loadPostingAccount();
+  }, [values.lkpBranch, accountList]);
 
   // ----------------------------------------------------------
   // GENERAL VALUE HANDLER
@@ -297,19 +476,19 @@ const SetPostingAccountPage: React.FC = () => {
   // ACCOUNT OPTIONS FOR EACH ROW
   // ----------------------------------------------------------
 
-  const getAccountOptions = (rowKey: string): AccountOption[] => {
-    return accountOptionsByRow[rowKey] ?? [];
+  const getAccountOptions = (): AccountOption[] => {
+    return accountList;
   };
 
-  const getIdOptions = (rowKey: string): SelectOption[] => {
-    return getAccountOptions(rowKey).map((account) => ({
+  const getIdOptions = (): SelectOption[] => {
+    return getAccountOptions().map((account) => ({
       value: account.id,
       label: account.id,
     }));
   };
 
-  const getNameOptions = (rowKey: string): SelectOption[] => {
-    return getAccountOptions(rowKey).map((account) => ({
+  const getNameOptions = (): SelectOption[] => {
+    return getAccountOptions().map((account) => ({
       value: account.name,
       label: account.name,
     }));
@@ -323,14 +502,14 @@ const SetPostingAccountPage: React.FC = () => {
     rowKey: string,
     selected: SingleValue<SelectOption>,
   ) => {
-    const account = getAccountOptions(rowKey).find(
+    const account = getAccountOptions().find(
       (item) => item.id === (selected?.value ?? ""),
     );
 
     setValues((previous) => ({
       ...previous,
-      [`${rowKey}Id`]: account?.id ?? "",
-      [`${rowKey}Name`]: account?.name ?? "",
+      [`lkp${rowKey}AccountID`]: account?.id ?? "",
+      [`lkp${rowKey}AccountName`]: account?.name ?? "",
     }));
   };
 
@@ -342,14 +521,14 @@ const SetPostingAccountPage: React.FC = () => {
     rowKey: string,
     selected: SingleValue<SelectOption>,
   ) => {
-    const account = getAccountOptions(rowKey).find(
+    const account = getAccountOptions().find(
       (item) => item.name === (selected?.value ?? ""),
     );
 
     setValues((previous) => ({
       ...previous,
-      [`${rowKey}Id`]: account?.id ?? "",
-      [`${rowKey}Name`]: account?.name ?? "",
+      [`lkp${rowKey}AccountID`]: account?.id ?? "",
+      [`lkp${rowKey}AccountName`]: account?.name ?? "",
     }));
   };
 
@@ -365,17 +544,80 @@ const SetPostingAccountPage: React.FC = () => {
   // SAVE FORM
   // ----------------------------------------------------------
 
-  const handleSave = () => {
-    console.log("Posting account settings:", values);
-    alert("Posting account settings logged to the console.");
+  const handleSave = async () => {
+    if (!perms.save) {
+      toast.error("You do not have permission to Save.");
+      return;
+    }
+
+    if (!values.lkpBranch) {
+      toast.warning("Branch is required.");
+      return;
+    }
+
+    const PstrCoID = localStorage.getItem("PstrCoID");
+    const PstrYear = localStorage.getItem("PstrYear");
+    const PstrUserID = localStorage.getItem("PstrUserID");
+
+    if (!PstrCoID || !PstrYear || !PstrUserID) {
+      toast.error("Company ID / Year / User ID not found. Please log in again.");
+      return;
+    }
+
+    // only the 11 account ids are stored
+    const accountPayload = Object.fromEntries(
+      Object.keys(postingAccountColumns).map((field) => [
+        field,
+        values[field] || null,
+      ]),
+    );
+
+    try {
+      const response = await fetch(
+        `${import.meta.env.VITE_API_URL}/PostingAccount/savePostingAccount`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            PstrCoID,
+            PstrYear,
+            PstrUserID,
+            lkpBranch: values.lkpBranch,
+            ...accountPayload,
+          }),
+        },
+      );
+
+      const result = await response.json();
+
+      if (!response.ok || !result.success) {
+        toast.error(result.message || "Posting accounts could not be saved.");
+        return;
+      }
+
+      toast.success(result.message || "Posting accounts saved successfully.");
+    } catch (error) {
+      console.error("savePostingAccount error:", error);
+      toast.error("Cannot connect to Posting Account API.");
+    }
   };
+
+  // Alt+S -> Save, Alt+C -> Clear (the underlined letters on the buttons)
+  useAltShortcuts({
+    s: handleSave,
+    c: handleClear,
+  });
+
 
   // ----------------------------------------------------------
   // RENDER
   // ----------------------------------------------------------
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-white p-4 sm:p-5 ">
+    <div
+      onKeyDown={handleEnterAsTab}
+      className="flex min-h-screen items-center justify-center bg-white p-4 sm:p-5 "
+    >
       <div className="w-full max-w-200 bg-white p-0.75 font-sans text-[#263449] ">
         <div className="w-full border border-[#d5d5d5] bg-white">
 
@@ -403,11 +645,14 @@ const SetPostingAccountPage: React.FC = () => {
                   inputId="lkpBranch"
                   name="lkpBranch"
                   options={branchOptions}
-                  value={getSelectedOption(branchOptions, values.branch)}
+                  value={getSelectedOption(branchOptions, values.lkpBranch)}
                   onChange={(selected) =>
-                    handleChange("branch", selected?.value ?? "")
+                    handleChange("lkpBranch", selected?.value ?? "")
                   }
-                  styles={selectStyles}
+                  styles={{ ...selectStyles, ...branchMenuStyles }}
+                  components={{ Option: BranchOption, MenuList: BranchMenuList }}
+                  filterOption={filterLabelOrValue}
+                  noOptionsMessage={() => "No Branch Found"}
                   placeholder=""
                   isClearable
                   isSearchable
@@ -429,13 +674,13 @@ const SetPostingAccountPage: React.FC = () => {
                 <Select<SelectOption, false>
                   inputId="lkpCashSupplierAccountID"
                   name="lkpCashSupplierAccountID"
-                  options={getIdOptions("cashSupplier")}
+                  options={getIdOptions()}
                   value={getSelectedOption(
-                    getIdOptions("cashSupplier"),
-                    values.cashSupplierId,
+                    getIdOptions(),
+                    values.lkpCashSupplierAccountID,
                   )}
                   onChange={(selected) =>
-                    handleAccountIdChange("cashSupplier", selected)
+                    handleAccountIdChange("CashSupplier", selected)
                   }
                   styles={selectStyles}
                   placeholder=""
@@ -449,13 +694,13 @@ const SetPostingAccountPage: React.FC = () => {
                 <Select<SelectOption, false>
                   inputId="lkpCashSupplierAccountName"
                   name="lkpCashSupplierAccountName"
-                  options={getNameOptions("cashSupplier")}
+                  options={getNameOptions()}
                   value={getSelectedOption(
-                    getNameOptions("cashSupplier"),
-                    values.cashSupplierName,
+                    getNameOptions(),
+                    values.lkpCashSupplierAccountName,
                   )}
                   onChange={(selected) =>
-                    handleAccountNameChange("cashSupplier", selected)
+                    handleAccountNameChange("CashSupplier", selected)
                   }
                   styles={selectStyles}
                   placeholder=""
@@ -478,13 +723,13 @@ const SetPostingAccountPage: React.FC = () => {
                 <Select<SelectOption, false>
                   inputId="lkpCashCustomerAccountID"
                   name="lkpCashCustomerAccountID"
-                  options={getIdOptions("cashCustomer")}
+                  options={getIdOptions()}
                   value={getSelectedOption(
-                    getIdOptions("cashCustomer"),
-                    values.cashCustomerId,
+                    getIdOptions(),
+                    values.lkpCashCustomerAccountID,
                   )}
                   onChange={(selected) =>
-                    handleAccountIdChange("cashCustomer", selected)
+                    handleAccountIdChange("CashCustomer", selected)
                   }
                   styles={selectStyles}
                   placeholder=""
@@ -497,13 +742,13 @@ const SetPostingAccountPage: React.FC = () => {
                 <Select<SelectOption, false>
                   inputId="lkpCashCustomerAccountName"
                   name="lkpCashCustomerAccountName"
-                  options={getNameOptions("cashCustomer")}
+                  options={getNameOptions()}
                   value={getSelectedOption(
-                    getNameOptions("cashCustomer"),
-                    values.cashCustomerName,
+                    getNameOptions(),
+                    values.lkpCashCustomerAccountName,
                   )}
                   onChange={(selected) =>
-                    handleAccountNameChange("cashCustomer", selected)
+                    handleAccountNameChange("CashCustomer", selected)
                   }
                   styles={selectStyles}
                   placeholder=""
@@ -526,13 +771,13 @@ const SetPostingAccountPage: React.FC = () => {
                 <Select<SelectOption, false>
                   inputId="lkpStockAccountID"
                   name="lkpStockAccountID"
-                  options={getIdOptions("stock")}
+                  options={getIdOptions()}
                   value={getSelectedOption(
-                    getIdOptions("stock"),
-                    values.stockId,
+                    getIdOptions(),
+                    values.lkpStockAccountID,
                   )}
                   onChange={(selected) =>
-                    handleAccountIdChange("stock", selected)
+                    handleAccountIdChange("Stock", selected)
                   }
                   styles={selectStyles}
                   placeholder=""
@@ -545,13 +790,13 @@ const SetPostingAccountPage: React.FC = () => {
                 <Select<SelectOption, false>
                   inputId="lkpStockAccountName"
                   name="lkpStockAccountName"
-                  options={getNameOptions("stock")}
+                  options={getNameOptions()}
                   value={getSelectedOption(
-                    getNameOptions("stock"),
-                    values.stockName,
+                    getNameOptions(),
+                    values.lkpStockAccountName,
                   )}
                   onChange={(selected) =>
-                    handleAccountNameChange("stock", selected)
+                    handleAccountNameChange("Stock", selected)
                   }
                   styles={selectStyles}
                   placeholder=""
@@ -574,13 +819,13 @@ const SetPostingAccountPage: React.FC = () => {
                 <Select<SelectOption, false>
                   inputId="lkpSalesAccountID"
                   name="lkpSalesAccountID"
-                  options={getIdOptions("sales")}
+                  options={getIdOptions()}
                   value={getSelectedOption(
-                    getIdOptions("sales"),
-                    values.salesId,
+                    getIdOptions(),
+                    values.lkpSalesAccountID,
                   )}
                   onChange={(selected) =>
-                    handleAccountIdChange("sales", selected)
+                    handleAccountIdChange("Sales", selected)
                   }
                   styles={selectStyles}
                   placeholder=""
@@ -593,13 +838,13 @@ const SetPostingAccountPage: React.FC = () => {
                 <Select<SelectOption, false>
                   inputId="lkpSalesAccountName"
                   name="lkpSalesAccountName"
-                  options={getNameOptions("sales")}
+                  options={getNameOptions()}
                   value={getSelectedOption(
-                    getNameOptions("sales"),
-                    values.salesName,
+                    getNameOptions(),
+                    values.lkpSalesAccountName,
                   )}
                   onChange={(selected) =>
-                    handleAccountNameChange("sales", selected)
+                    handleAccountNameChange("Sales", selected)
                   }
                   styles={selectStyles}
                   placeholder=""
@@ -622,13 +867,13 @@ const SetPostingAccountPage: React.FC = () => {
                 <Select<SelectOption, false>
                   inputId="lkpSalesReturnAccountID"
                   name="lkpSalesReturnAccountID"
-                  options={getIdOptions("salesReturn")}
+                  options={getIdOptions()}
                   value={getSelectedOption(
-                    getIdOptions("salesReturn"),
-                    values.salesReturnId,
+                    getIdOptions(),
+                    values.lkpSalesReturnAccountID,
                   )}
                   onChange={(selected) =>
-                    handleAccountIdChange("salesReturn", selected)
+                    handleAccountIdChange("SalesReturn", selected)
                   }
                   styles={selectStyles}
                   placeholder=""
@@ -641,13 +886,13 @@ const SetPostingAccountPage: React.FC = () => {
                 <Select<SelectOption, false>
                   inputId="lkpSalesReturnAccountName"
                   name="lkpSalesReturnAccountName"
-                  options={getNameOptions("salesReturn")}
+                  options={getNameOptions()}
                   value={getSelectedOption(
-                    getNameOptions("salesReturn"),
-                    values.salesReturnName,
+                    getNameOptions(),
+                    values.lkpSalesReturnAccountName,
                   )}
                   onChange={(selected) =>
-                    handleAccountNameChange("salesReturn", selected)
+                    handleAccountNameChange("SalesReturn", selected)
                   }
                   styles={selectStyles}
                   placeholder=""
@@ -670,13 +915,13 @@ const SetPostingAccountPage: React.FC = () => {
                 <Select<SelectOption, false>
                   inputId="lkpCostOfSalesAccountID"
                   name="lkpCostOfSalesAccountID"
-                  options={getIdOptions("costOfSales")}
+                  options={getIdOptions()}
                   value={getSelectedOption(
-                    getIdOptions("costOfSales"),
-                    values.costOfSalesId,
+                    getIdOptions(),
+                    values.lkpCostOfSalesAccountID,
                   )}
                   onChange={(selected) =>
-                    handleAccountIdChange("costOfSales", selected)
+                    handleAccountIdChange("CostOfSales", selected)
                   }
                   styles={selectStyles}
                   placeholder=""
@@ -689,13 +934,13 @@ const SetPostingAccountPage: React.FC = () => {
                 <Select<SelectOption, false>
                   inputId="lkpCostOfSalesAccountName"
                   name="lkpCostOfSalesAccountName"
-                  options={getNameOptions("costOfSales")}
+                  options={getNameOptions()}
                   value={getSelectedOption(
-                    getNameOptions("costOfSales"),
-                    values.costOfSalesName,
+                    getNameOptions(),
+                    values.lkpCostOfSalesAccountName,
                   )}
                   onChange={(selected) =>
-                    handleAccountNameChange("costOfSales", selected)
+                    handleAccountNameChange("CostOfSales", selected)
                   }
                   styles={selectStyles}
                   placeholder=""
@@ -718,13 +963,13 @@ const SetPostingAccountPage: React.FC = () => {
                 <Select<SelectOption, false>
                   inputId="lkpCostOfSalesReturnAccountID"
                   name="lkpCostOfSalesReturnAccountID"
-                  options={getIdOptions("costOfSalesReturn")}
+                  options={getIdOptions()}
                   value={getSelectedOption(
-                    getIdOptions("costOfSalesReturn"),
-                    values.costOfSalesReturnId,
+                    getIdOptions(),
+                    values.lkpCostOfSalesReturnAccountID,
                   )}
                   onChange={(selected) =>
-                    handleAccountIdChange("costOfSalesReturn", selected)
+                    handleAccountIdChange("CostOfSalesReturn", selected)
                   }
                   styles={selectStyles}
                   placeholder=""
@@ -737,13 +982,13 @@ const SetPostingAccountPage: React.FC = () => {
                 <Select<SelectOption, false>
                   inputId="lkpCostOfSalesReturnAccountName"
                   name="lkpCostOfSalesReturnAccountName"
-                  options={getNameOptions("costOfSalesReturn")}
+                  options={getNameOptions()}
                   value={getSelectedOption(
-                    getNameOptions("costOfSalesReturn"),
-                    values.costOfSalesReturnName,
+                    getNameOptions(),
+                    values.lkpCostOfSalesReturnAccountName,
                   )}
                   onChange={(selected) =>
-                    handleAccountNameChange("costOfSalesReturn", selected)
+                    handleAccountNameChange("CostOfSalesReturn", selected)
                   }
                   styles={selectStyles}
                   placeholder=""
@@ -766,13 +1011,13 @@ const SetPostingAccountPage: React.FC = () => {
                 <Select<SelectOption, false>
                   inputId="lkpStockAdjustmentAccountID"
                   name="lkpStockAdjustmentAccountID"
-                  options={getIdOptions("stockAdjustment")}
+                  options={getIdOptions()}
                   value={getSelectedOption(
-                    getIdOptions("stockAdjustment"),
-                    values.stockAdjustmentId,
+                    getIdOptions(),
+                    values.lkpStockAdjustmentAccountID,
                   )}
                   onChange={(selected) =>
-                    handleAccountIdChange("stockAdjustment", selected)
+                    handleAccountIdChange("StockAdjustment", selected)
                   }
                   styles={selectStyles}
                   placeholder=""
@@ -785,13 +1030,13 @@ const SetPostingAccountPage: React.FC = () => {
                 <Select<SelectOption, false>
                   inputId="lkpStockAdjustmentAccountName"
                   name="lkpStockAdjustmentAccountName"
-                  options={getNameOptions("stockAdjustment")}
+                  options={getNameOptions()}
                   value={getSelectedOption(
-                    getNameOptions("stockAdjustment"),
-                    values.stockAdjustmentName,
+                    getNameOptions(),
+                    values.lkpStockAdjustmentAccountName,
                   )}
                   onChange={(selected) =>
-                    handleAccountNameChange("stockAdjustment", selected)
+                    handleAccountNameChange("StockAdjustment", selected)
                   }
                   styles={selectStyles}
                   placeholder=""
@@ -800,6 +1045,56 @@ const SetPostingAccountPage: React.FC = () => {
                 />
               </div>
             </div>
+
+
+            {/* ROUND OFF ACCOUNT */}
+            <div className="flex gap-2 items-center m-2">
+              <label
+                htmlFor="lkpRoundOffAccountID"
+                className="w-[160px] shrink-0 text-right text-[0.6875rem] font-medium whitespace-nowrap"
+              >
+                Round Off Account :
+              </label>
+
+              <div className="w-[30%] min-w-0">
+                <Select<SelectOption, false>
+                  inputId="lkpRoundOffAccountID"
+                  name="lkpRoundOffAccountID"
+                  options={getIdOptions()}
+                  value={getSelectedOption(
+                    getIdOptions(),
+                    values.lkpRoundOffAccountID,
+                  )}
+                  onChange={(selected) =>
+                    handleAccountIdChange("RoundOff", selected)
+                  }
+                  styles={selectStyles}
+                  placeholder=""
+                  isClearable
+                  isSearchable
+                />
+              </div>
+
+              <div className="w-full min-w-0">
+                <Select<SelectOption, false>
+                  inputId="lkpRoundOffAccountName"
+                  name="lkpRoundOffAccountName"
+                  options={getNameOptions()}
+                  value={getSelectedOption(
+                    getNameOptions(),
+                    values.lkpRoundOffAccountName,
+                  )}
+                  onChange={(selected) =>
+                    handleAccountNameChange("RoundOff", selected)
+                  }
+                  styles={selectStyles}
+                  placeholder=""
+                  isClearable
+                  isSearchable
+                />
+              </div>
+            </div>
+
 
             {/* INPUT VAT ACCOUNT */}
             <div className="flex gap-2 items-center m-2">
@@ -814,13 +1109,13 @@ const SetPostingAccountPage: React.FC = () => {
                 <Select<SelectOption, false>
                   inputId="lkpInputVATAccountID"
                   name="lkpInputVATAccountID"
-                  options={getIdOptions("inputVAT")}
+                  options={getIdOptions()}
                   value={getSelectedOption(
-                    getIdOptions("inputVAT"),
-                    values.inputVATId,
+                    getIdOptions(),
+                    values.lkpInputVATAccountID,
                   )}
                   onChange={(selected) =>
-                    handleAccountIdChange("inputVAT", selected)
+                    handleAccountIdChange("InputVAT", selected)
                   }
                   styles={selectStyles}
                   placeholder=""
@@ -833,13 +1128,13 @@ const SetPostingAccountPage: React.FC = () => {
                 <Select<SelectOption, false>
                   inputId="lkpInputVATAccountName"
                   name="lkpInputVATAccountName"
-                  options={getNameOptions("inputVAT")}
+                  options={getNameOptions()}
                   value={getSelectedOption(
-                    getNameOptions("inputVAT"),
-                    values.inputVATName,
+                    getNameOptions(),
+                    values.lkpInputVATAccountName,
                   )}
                   onChange={(selected) =>
-                    handleAccountNameChange("inputVAT", selected)
+                    handleAccountNameChange("InputVAT", selected)
                   }
                   styles={selectStyles}
                   placeholder=""
@@ -862,13 +1157,13 @@ const SetPostingAccountPage: React.FC = () => {
                 <Select<SelectOption, false>
                   inputId="lkpOutputVATAccountID"
                   name="lkpOutputVATAccountID"
-                  options={getIdOptions("outputVAT")}
+                  options={getIdOptions()}
                   value={getSelectedOption(
-                    getIdOptions("outputVAT"),
-                    values.outputVATId,
+                    getIdOptions(),
+                    values.lkpOutputVATAccountID,
                   )}
                   onChange={(selected) =>
-                    handleAccountIdChange("outputVAT", selected)
+                    handleAccountIdChange("OutputVAT", selected)
                   }
                   styles={selectStyles}
                   placeholder=""
@@ -881,61 +1176,13 @@ const SetPostingAccountPage: React.FC = () => {
                 <Select<SelectOption, false>
                   inputId="lkpOutputVATAccountName"
                   name="lkpOutputVATAccountName"
-                  options={getNameOptions("outputVAT")}
+                  options={getNameOptions()}
                   value={getSelectedOption(
-                    getNameOptions("outputVAT"),
-                    values.outputVATName,
+                    getNameOptions(),
+                    values.lkpOutputVATAccountName,
                   )}
                   onChange={(selected) =>
-                    handleAccountNameChange("outputVAT", selected)
-                  }
-                  styles={selectStyles}
-                  placeholder=""
-                  isClearable
-                  isSearchable
-                />
-              </div>
-            </div>
-
-            {/* ROUND OFF ACCOUNT */}
-            <div className="flex gap-2 items-center m-2">
-              <label
-                htmlFor="lkpRoundOffAccountID"
-                className="w-[160px] shrink-0 text-right text-[0.6875rem] font-medium whitespace-nowrap"
-              >
-                Round Off Account :
-              </label>
-
-              <div className="w-[30%] min-w-0">
-                <Select<SelectOption, false>
-                  inputId="lkpRoundOffAccountID"
-                  name="lkpRoundOffAccountID"
-                  options={getIdOptions("roundOff")}
-                  value={getSelectedOption(
-                    getIdOptions("roundOff"),
-                    values.roundOffId,
-                  )}
-                  onChange={(selected) =>
-                    handleAccountIdChange("roundOff", selected)
-                  }
-                  styles={selectStyles}
-                  placeholder=""
-                  isClearable
-                  isSearchable
-                />
-              </div>
-
-              <div className="w-full min-w-0">
-                <Select<SelectOption, false>
-                  inputId="lkpRoundOffAccountName"
-                  name="lkpRoundOffAccountName"
-                  options={getNameOptions("roundOff")}
-                  value={getSelectedOption(
-                    getNameOptions("roundOff"),
-                    values.roundOffName,
-                  )}
-                  onChange={(selected) =>
-                    handleAccountNameChange("roundOff", selected)
+                    handleAccountNameChange("OutputVAT", selected)
                   }
                   styles={selectStyles}
                   placeholder=""
@@ -952,7 +1199,8 @@ const SetPostingAccountPage: React.FC = () => {
                 name="btnSave"
                 type="button"
                 onClick={handleSave}
-                className={buttonClass}
+                disabled={!perms.save}
+                className={`${buttonClass} disabled:cursor-not-allowed disabled:opacity-40`}
               >
                 <span className="underline underline-offset-2">S</span>ave
               </button>
