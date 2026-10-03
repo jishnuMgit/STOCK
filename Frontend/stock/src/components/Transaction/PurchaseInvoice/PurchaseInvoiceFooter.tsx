@@ -17,7 +17,7 @@ const PurchaseFooter: React.FC = () => {
         >
           <label
             htmlFor="purchase-note"
-            className="shrink-0 whitespace-nowrap text-[12px] font-semibold text-[#263449]"
+            className="shrink-0 whitespace-nowrap text-[14px] font-semibold text-[#263449]"
           >
             Note:
           </label>
@@ -25,7 +25,7 @@ const PurchaseFooter: React.FC = () => {
           <input
             id="purchase-note"
             type="text"
-            className="h-[26px] min-w-0 flex-1 rounded-[3px] border border-[#d5dce5] bg-white px-2 text-[12px] text-[#263449] outline-none focus:border-blue-400"
+            className="h-[26px] min-w-0 flex-1 rounded-[3px] border border-[#d5dce5] bg-white px-2 text-[14px] text-[#263449] outline-none focus:border-blue-400"
           />
         </div>
 
@@ -36,7 +36,7 @@ const PurchaseFooter: React.FC = () => {
         >
           <label
             htmlFor="purchaseTotal"
-            className="whitespace-nowrap pr-1 text-right text-[12px] text-[#263449]"
+            className="whitespace-nowrap pr-1 text-right text-[14px] text-[#263449]"
           >
             Total
           </label>
@@ -47,7 +47,7 @@ const PurchaseFooter: React.FC = () => {
             defaultValue="0.000"
             readOnly
             aria-label="Total"
-            className="h-[26px] w-full min-w-0 rounded-[2px] border border-[#d5dce5] bg-white px-1 text-right text-[11px] text-[#263449] outline-none"
+            className="h-[39px] w-full min-w-0 rounded-[2px] border border-[#d5dce5] bg-white px-1 text-right text-[11px] text-[#263449] outline-none"
           />
         </div>
 
@@ -62,7 +62,7 @@ const PurchaseFooter: React.FC = () => {
             defaultValue="0.0000"
             readOnly
             aria-label="Supplier total price"
-            className="h-[26px] w-full min-w-0 rounded-[2px] border border-[#d5dce5] bg-white px-1 text-right text-[11px] text-[#263449] outline-none"
+            className="h-[30px] w-full min-w-0 rounded-[2px] border border-[#d5dce5] bg-white px-1 text-right text-[11px] text-[#263449] outline-none"
           />
         </div>
 
@@ -77,7 +77,7 @@ const PurchaseFooter: React.FC = () => {
             defaultValue="0.0000"
             readOnly
             aria-label="Final total"
-            className="h-[26px] w-full min-w-0 rounded-[2px] border border-[#d5dce5] bg-white px-1 text-right text-[11px] text-[#263449] outline-none"
+            className="h-[30px] w-full min-w-0 rounded-[2px] border border-[#d5dce5] bg-white px-1 text-right text-[11px] text-[#263449] outline-none"
           />
         </div>
       </div>
@@ -92,7 +92,7 @@ const PurchaseFooter: React.FC = () => {
             key={button}
             id={`btn${button}`}
             type="button"
-            className="h-[39px] w-[107px] shrink-0 rounded-[4px] border border-[#bfcddd] bg-gradient-to-b from-white to-[#e8edf2] text-[14px] text-green-700 shadow-sm hover:border-blue-400 hover:bg-slate-50 focus:outline-none focus:ring-1 focus:ring-blue-400"
+            className="btn-style"
           >
             <span className="underline decoration-green-600 decoration-[1px] underline-offset-2">
               {button.charAt(0)}
