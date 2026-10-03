@@ -13,7 +13,7 @@ import UserPermission from "../pages/Security/UserPermissionMenu/UserPermissionM
 import BeginningStockPage from "../pages/Purchase/Transaction/BeginningStockPage";
 import UserPermissionBranchPage from "../pages/Security/UserPermissionBranch/UserPermissionBranchPage";
 import SetPostingAccountPage from "../pages/Settings/SetPostingAccountPage";
-import PurchaseInvoicePage from "../pages/Purchase/Transaction/PIPage";
+import PurchaseInvoicePage from "../pages/Purchase/Transaction/PurchaseInvoicePage";
 
 const Login = lazy(() => import("../pages/Auth/LoginPage"));
 const ReceiptPage = lazy(

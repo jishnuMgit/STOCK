@@ -1341,7 +1341,7 @@ event: React.KeyboardEvent<HTMLButtonElement>, p0: () => any        ) => {
               text-slate-700
             "
           >
-            Matching
+            Match
           </header>
 
           {/* =================================================
@@ -1426,7 +1426,7 @@ event: React.KeyboardEvent<HTMLButtonElement>, p0: () => any        ) => {
                 </label>
 
                 <div
-                  id="txtDocumentAmt"
+                  id="txtDocAmt"
                   className="
                     flex
                     h-7.25
@@ -1505,7 +1505,7 @@ event: React.KeyboardEvent<HTMLButtonElement>, p0: () => any        ) => {
               </label>
 
              {renderSelect(
-  "lkpDocumentType",
+  "lkpDocType",
   type,
   documentOptions,
   setDocType,
@@ -1593,7 +1593,7 @@ event: React.KeyboardEvent<HTMLButtonElement>, p0: () => any        ) => {
                 </div>
 
                 <span className="text-[#00a83b]">
-                  Cr.
+                  Dr.
                 </span>
               </div>
             </div>
@@ -1623,7 +1623,7 @@ event: React.KeyboardEvent<HTMLButtonElement>, p0: () => any        ) => {
 
               <div className="ml-px">
         {renderSelect(
-  "lkpDocumentNo.",
+  "lkpDocNo.",
   receiptNo,
   documentNoOptions,
   setReceiptNo,
@@ -1640,7 +1640,7 @@ event: React.KeyboardEvent<HTMLButtonElement>, p0: () => any        ) => {
               {/* MATCH APPLY DATE */}
 
              <label className="whitespace-nowrap text-right">
-  Match Apply Date :
+  Match  Date :
 </label>
 
               <LocalizationProvider dateAdapter={AdapterDayjs}>
@@ -1663,7 +1663,7 @@ event: React.KeyboardEvent<HTMLButtonElement>, p0: () => any        ) => {
     inputRef={dateRef}
     slotProps={{
       textField: {
-        id: "dtpDate",
+        id: "dtpMatchDate",
       },
 
       openPickerButton: {
@@ -2096,7 +2096,7 @@ id="chkMatch"
                         <input
                           id={
                             rowIndex === 0
-                              ? "txtDocumentNo."
+                              ? "txtDocNo."
                               : undefined
                           }
                           ref={(element) => {
@@ -2176,7 +2176,7 @@ id="chkMatch"
                           type="number"
                           ref={(element) => {
                             tableRefs.current[
-                              `${rowIndex}-docAmount`
+                              `${rowIndex}-docAmt`
                             ] = element;
                           }}
                           className={`${tableInputClass} text-right`}
