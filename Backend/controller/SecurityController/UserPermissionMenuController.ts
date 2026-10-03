@@ -164,7 +164,7 @@ export const getUserPermissions = async (
 
     // Call the stored procedure in GET mode.
     await client.query(
-      `CALL dbo.sp_pageuserpermission(
+      `CALL dbo.sp_pageuserpermissionmenu(
         $1, $2, $3, $4, $5, $6
       )`,
       [
@@ -276,7 +276,7 @@ export const saveUserPermissions = async (
 
     // Delete existing permissions (for this company).
     await client.query(
-      `CALL dbo.sp_pageuserpermission(
+      `CALL dbo.sp_pageuserpermissionmenu(
         $1, $2, $3, $4, $5, $6
       )`,
       ["D", PstrCoID, lkpUserID, null, null, "unused_cursor"]
@@ -297,7 +297,7 @@ export const saveUserPermissions = async (
       }
 
       await client.query(
-        `CALL dbo.sp_pageuserpermission(
+        `CALL dbo.sp_pageuserpermissionmenu(
           $1, $2, $3, $4, $5, $6
         )`,
         [
@@ -429,7 +429,7 @@ export const deleteUserPermissions = async (
 
   try {
     await pool.query(
-      `CALL dbo.sp_pageuserpermission(
+      `CALL dbo.sp_pageuserpermissionmenu(
         $1, $2, $3, $4, $5, $6
       )`,
       [

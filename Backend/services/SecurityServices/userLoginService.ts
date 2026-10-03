@@ -22,41 +22,41 @@ export interface UserLoginRowPayload extends UserLoginRow {
 }
 
 /* =========================================================
-   SHARED HELPER - call dbo.sp_userlogin
+   SHARED HELPER - call dbo.sp_pageuserlogin
 ========================================================= */
 
 async function callSpUserLogin(
   client: PoolClient,
   overrides: Partial<{
     strmode: string;
-    coid: string;
-    userid: string | null;
-    username: string | null;
-    userpwd: string | null;
-    usertype: string | null;
-    userstatus: string | null;
-    datevalidity: number | null;
-    original_userid: string | null;
+    PstrCoID: string;
+    txtUserID: string | null;
+    txtUserName: string | null;
+    txtPwd: string | null;
+    lkpUserType: string | null;
+    lkpUserStatus: string | null;
+    txtDateValidity: number | null;
+    txtOriginal_UserID: string | null;
     cursorName: string;
   }>
 ): Promise<void> {
   const p = {
     strmode: null,
-    coid: null,
-    userid: null,
-    username: null,
-    userpwd: null,
-    usertype: null,
-    userstatus: null,
-    datevalidity: null,
-    original_userid: null,
+    PstrCoID: null,
+    txtUserID: null,
+    txtUserName: null,
+    txtPwd: null,
+    lkpUserType: null,
+    lkpUserStatus: null,
+    txtDateValidity: null,
+    txtOriginal_UserID: null,
     cursorName: `cur_userlogin_${Date.now()}_${Math.floor(Math.random() * 100000)}`,
     ...overrides,
   };
 
   await client.query(
     `
-    CALL dbo.sp_userlogin(
+    CALL dbo.sp_pageuserlogin(
       $1::varchar, $2::varchar, $3::varchar, $4::varchar, $5::varchar,
       $6::varchar, $7::varchar, $8::numeric, $9::varchar, $10::varchar,
       $11::refcursor
@@ -64,14 +64,14 @@ async function callSpUserLogin(
     `,
     [
       p.strmode,
-      p.coid,
-      p.userid,
-      p.username,
-      p.userpwd,
-      p.usertype,
-      p.userstatus,
-      p.datevalidity,
-      p.original_userid,
+      p.PstrCoID,
+      p.txtUserID,
+      p.txtUserName,
+      p.txtPwd,
+      p.lkpUserType,
+      p.lkpUserStatus,
+      p.txtDateValidity,
+      p.txtOriginal_UserID,
       null, // p_strmenuname (unused, as in the original)
       p.cursorName,
     ]
@@ -92,7 +92,7 @@ export async function getUserLoginListService(
   try {
     await client.query("BEGIN");
 
-    await callSpUserLogin(client, { strmode: "G", coid: PstrCoID, cursorName });
+    await callSpUserLogin(client, { strmode: "G", PstrCoID, cursorName });
 
     const result = await client.query(`FETCH ALL FROM "${cursorName}"`);
 
@@ -144,44 +144,44 @@ export async function saveUserLoginListService(
     const seen = new Set<string>();
 
     for (const row of rows) {
-      const PstrUserID = (row.txtUserID ?? "").trim();
+      const txtUserID = (row.txtUserID ?? "").trim();
 
-      if (!PstrUserID) {
+      if (!txtUserID) {
         throw new Error("User ID is required");
       }
 
-      if (seen.has(PstrUserID.toUpperCase())) {
-        throw new Error(`User ID '${PstrUserID}' is entered more than once`);
+      if (seen.has(txtUserID.toUpperCase())) {
+        throw new Error(`User ID '${txtUserID}' is entered more than once`);
       }
-      seen.add(PstrUserID.toUpperCase());
+      seen.add(txtUserID.toUpperCase());
 
       if (!(row.txtUserName ?? "").trim()) {
-        throw new Error(`User Name is required for '${PstrUserID}'`);
+        throw new Error(`User Name is required for '${txtUserID}'`);
       }
 
       if (!validTypes.includes(row.lkpUserType)) {
-        throw new Error(`User Type is required for '${PstrUserID}'`);
+        throw new Error(`User Type is required for '${txtUserID}'`);
       }
 
       if (!validStatuses.includes(row.lkpUserStatus)) {
-        throw new Error(`User Status is required for '${PstrUserID}'`);
+        throw new Error(`User Status is required for '${txtUserID}'`);
       }
 
       const isNew = !row.txtOriginal_UserID;
       const pwd = row.txtPwd ?? "";
 
       if (isNew && !pwd) {
-        throw new Error(`Password is required for '${PstrUserID}'`);
+        throw new Error(`Password is required for '${txtUserID}'`);
       }
 
       if (pwd || row.txtConfirmPwd) {
         if (pwd.length < 6 || pwd.length > 12) {
-          throw new Error(`Password for '${PstrUserID}' must be 6 to 12 characters`);
+          throw new Error(`Password for '${txtUserID}' must be 6 to 12 characters`);
         }
 
         if (pwd !== row.txtConfirmPwd) {
           throw new Error(
-            `Password and Confirm Password do not match for '${PstrUserID}'`
+            `Password and Confirm Password do not match for '${txtUserID}'`
           );
         }
       }
@@ -191,16 +191,16 @@ export async function saveUserLoginListService(
     await client.query("BEGIN");
 
     for (const row of rows) {
-      const PstrUserID = row.txtUserID.trim();
+      const txtUserID = row.txtUserID.trim();
       const isNew = !row.txtOriginal_UserID;
 
       const existing = await client.query(
         `SELECT 1 FROM dbo.tbluserlogin WHERE fcoid = $1 AND upper(fuserid) = upper($2)`,
-        [PstrCoID, isNew ? PstrUserID : row.txtOriginal_UserID]
+        [PstrCoID, isNew ? txtUserID : row.txtOriginal_UserID]
       );
 
       if (isNew && existing.rows.length > 0) {
-        throw new Error(`User ID '${PstrUserID}' already exists`);
+        throw new Error(`User ID '${txtUserID}' already exists`);
       }
 
       if (!isNew && existing.rows.length === 0) {
@@ -209,14 +209,14 @@ export async function saveUserLoginListService(
 
       await callSpUserLogin(client, {
         strmode: isNew ? "S" : "M",
-        coid: PstrCoID,
-        userid: PstrUserID,
-        username: row.txtUserName.trim(),
-        userpwd: row.txtPwd ? encryptPwd(row.txtPwd, userPwdSeed) : null,
-        usertype: row.lkpUserType,
-        userstatus: row.lkpUserStatus,
-        datevalidity: isNew ? 0 : null, // NULL = keep the existing validity
-        original_userid: isNew ? null : row.txtOriginal_UserID,
+        PstrCoID,
+        txtUserID,
+        txtUserName: row.txtUserName.trim(),
+        txtPwd: row.txtPwd ? encryptPwd(row.txtPwd, userPwdSeed) : null,
+        lkpUserType: row.lkpUserType,
+        lkpUserStatus: row.lkpUserStatus,
+        txtDateValidity: isNew ? 0 : null, // NULL = keep the existing validity
+        txtOriginal_UserID: isNew ? null : row.txtOriginal_UserID,
       });
     }
 
@@ -245,8 +245,8 @@ export async function deleteUserLoginRowService(
 
     await callSpUserLogin(client, {
       strmode: "D1",
-      coid: PstrCoID,
-      original_userid: txtUserID,
+      PstrCoID,
+      txtOriginal_UserID: txtUserID,
     });
 
     await client.query("COMMIT");

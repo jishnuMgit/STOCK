@@ -1,7 +1,7 @@
 -- =========================================================
--- dbo.sp_userlogin   (converted from SQL Server SP_frmUserLogin;
+-- dbo.sp_pageuserlogin   (converted from SQL Server SP_frmUserLogin;
 -- renamed to match the page name, Security/UserLogin, same as
--- sp_setbranchinfo, sp_setcompanyinfo, sp_setdocumentno, sp_itempage)
+-- sp_pagesetbranchinfo, sp_pagesetcompanyinfo, sp_pagesetdocumentno, sp_pageitem)
 --
 -- Modes
 --   G   list all users of a company
@@ -20,7 +20,7 @@
 --     procedure never sees the plain password.
 -- =========================================================
 
-CREATE OR REPLACE PROCEDURE dbo.sp_userlogin(
+CREATE OR REPLACE PROCEDURE dbo.sp_pageuserlogin(
     p_strmode              varchar(2),
     p_pstrcoid             varchar(3)     DEFAULT NULL,
     p_struserid            varchar(30)    DEFAULT NULL,

@@ -1,4 +1,4 @@
-CREATE OR REPLACE PROCEDURE dbo.sp_setbranchinfo(
+CREATE OR REPLACE PROCEDURE dbo.sp_pagesetbranchinfo(
     p_strmode              varchar(1),
     p_pstrcoid             varchar(3),
     p_strbrid              varchar(3),

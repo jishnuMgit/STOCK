@@ -1,4 +1,4 @@
-CREATE OR REPLACE PROCEDURE dbo.sp_setcompanyinfo(
+CREATE OR REPLACE PROCEDURE dbo.sp_pagesetcompanyinfo(
     p_strmode              varchar(1),
     p_pstrcoid             varchar(3),
     p_strconame            varchar(100) DEFAULT NULL,

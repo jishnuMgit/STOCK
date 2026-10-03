@@ -23,7 +23,7 @@ export async function getDocumentNoListService(
 
     await client.query(
       `
-      CALL dbo.sp_setdocumentno(
+      CALL dbo.sp_pagesetdocumentno(
         $1::varchar, $2::varchar, $3::varchar, $4::varchar, $5::varchar,
         $6::varchar, $7::varchar, $8::varchar, $9::boolean, $10::varchar,
         $11::varchar, $12::smallint, $13::smallint, $14::varchar,
@@ -107,7 +107,7 @@ export async function saveDocumentNoListService(
 
       await client.query(
         `
-        CALL dbo.sp_setdocumentno(
+        CALL dbo.sp_pagesetdocumentno(
           $1::varchar, $2::varchar, $3::varchar, $4::varchar, $5::varchar,
           $6::varchar, $7::varchar, $8::varchar, $9::boolean, $10::varchar,
           $11::varchar, $12::smallint, $13::smallint, $14::varchar,
@@ -168,7 +168,7 @@ export async function deleteDocumentNoRowService(
 
     await client.query(
       `
-      CALL dbo.sp_setdocumentno(
+      CALL dbo.sp_pagesetdocumentno(
         $1::varchar, $2::varchar, $3::varchar, $4::varchar, $5::varchar,
         $6::varchar, $7::varchar, $8::varchar, $9::boolean, $10::varchar,
         $11::varchar, $12::smallint, $13::smallint, $14::varchar,
