@@ -188,7 +188,7 @@ const ReceiptPage: React.FC = () => {
   const [printData, setPrintData] = useState<ReceiptPrintData | null>(null);
   const [lkpBranch, setLkpBranch] = useState("");
   const [lkpType, setLkpType] = useState("");
-  const [cbAccount, setCbAccount] = useState("");
+  const [cbAccountName, setCbAccountName] = useState("");
   const [receivedFrom, setReceivedFrom] = useState("");
   const [reference, setReference] = useState("");
   const [cbCcId, setCbCcId] = useState("");
@@ -475,7 +475,7 @@ const ReceiptPage: React.FC = () => {
       setTxtDocNo(result.header.docNo || requestedDocumentNo);
 
       setDtpDate(formatReceiptDate(result.header.dtpDate) || getTodayDate());
-      setCbAccount(result.header.cbAccountName || "");
+      setCbAccountName(result.header.cbAccountName || "");
       setCbCcId(result.header.CCID || "");
       setReceivedFrom(result.header.receivedFrom || "");
       setReference(result.header.reference || "");
@@ -522,7 +522,7 @@ const ReceiptPage: React.FC = () => {
 
     setRows(createRows());
 
-    setCbAccount("");
+    setCbAccountName("");
     setCbCcId("");
     setReceivedFrom("");
     setReference("");
@@ -1086,7 +1086,7 @@ const ReceiptPage: React.FC = () => {
         !lkpType ||
         !txtDocNo.trim() ||
         !dtpDate ||
-        !cbAccount ||
+        !cbAccountName ||
         validRows.length === 0;
 
       if (validationFailed) {
@@ -1116,7 +1116,7 @@ const ReceiptPage: React.FC = () => {
       const receiptData = {
         lkpBranch,
         lkpType,
-        cashBank: cbAccount,
+        cashBank: cbAccountName,
         cbCcId,
 
         txtDocNo,
@@ -1253,7 +1253,7 @@ const ReceiptPage: React.FC = () => {
   }, [
     lkpBranch,
     lkpType,
-    cbAccount,
+    cbAccountName,
     cbCcId,
     txtDocNo,
     dtpDate,
@@ -1290,7 +1290,7 @@ const ReceiptPage: React.FC = () => {
     console.log("MODIFY CURRENT VALUES:", {
       lkpBranch,
       lkpType,
-      cbAccount,
+      cbAccountName,
       cbCcId,
       txtDocNo,
       dtpDate,
@@ -1310,7 +1310,7 @@ const ReceiptPage: React.FC = () => {
       !lkpType ||
       !txtDocNo.trim() ||
       !dtpDate ||
-      !cbAccount ||
+      !cbAccountName ||
       validRows.length === 0;
 
     if (validationFailed) {
@@ -1321,7 +1321,7 @@ const ReceiptPage: React.FC = () => {
         lkpType: !!lkpType,
         txtDocNo: !!txtDocNo.trim(),
         dtpDate: !!dtpDate,
-        cbAccount: !!cbAccount,
+        cbAccountName: !!cbAccountName,
         validRows: validRows.length,
       });
 
@@ -1365,7 +1365,7 @@ const ReceiptPage: React.FC = () => {
     const modifyPayload = {
       lkpBranch,
       lkpType: toDocumentType(lkpType),
-      cashBank: cbAccount,
+      cbAccountName: cbAccountName,
       cbCcId,
 
       /* IMPORTANT:
@@ -1531,7 +1531,7 @@ const ReceiptPage: React.FC = () => {
   }, [
     lkpBranch,
     lkpType,
-    cbAccount,
+    cbAccountName,
     cbCcId,
     txtDocNo,
     dtpDate,
@@ -1709,8 +1709,8 @@ const ReceiptPage: React.FC = () => {
           setLkpBranch={setLkpBranch}
           lkpType={lkpType}
           setLkpType={setLkpType}
-          cbAccount={cbAccount}
-          setCbAccount={setCbAccount}
+          cbAccountName={cbAccountName}
+          setCbAccountName={setCbAccountName}
           reference={reference}
           setReference={setReference}
           receivedFrom={receivedFrom}

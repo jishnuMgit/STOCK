@@ -101,8 +101,8 @@ interface ReceiptFormProps {
   lkpType: string;
   setLkpType: (value: string) => void;
 
-  cbAccount: string;
-  setCbAccount: (value: string) => void;
+  cbAccountName: string;
+  setCbAccountName: (value: string) => void;
 
   reference: string;
   setReference: (value: string) => void;
@@ -181,8 +181,8 @@ export const ReceiptForm: React.FC<ReceiptFormProps> = ({
   lkpType,
   setLkpType,
 
-  cbAccount,
-  setCbAccount,
+  cbAccountName,
+  setCbAccountName,
 
   reference,
   setReference,
@@ -426,7 +426,7 @@ export const ReceiptForm: React.FC<ReceiptFormProps> = ({
       setCbAccounts([]);
 
       if (!preserveCbAccountOnLoad) {
-        setCbAccount("");
+        setCbAccountName("");
       }
 
       return;
@@ -458,13 +458,13 @@ export const ReceiptForm: React.FC<ReceiptFormProps> = ({
         setCbAccounts(result.data);
 
         if (!preserveCbAccountOnLoad) {
-          setCbAccount("");
+          setCbAccountName("");
         }
       } else {
         setCbAccounts([]);
 
         if (!preserveCbAccountOnLoad) {
-          setCbAccount("");
+          setCbAccountName("");
         }
       }
     } catch (error) {
@@ -473,7 +473,7 @@ export const ReceiptForm: React.FC<ReceiptFormProps> = ({
       setCbAccounts([]);
 
       if (!preserveCbAccountOnLoad) {
-        setCbAccount("");
+        setCbAccountName("");
       }
     } finally {
       setAccountsLoading(false);
@@ -775,7 +775,7 @@ export const ReceiptForm: React.FC<ReceiptFormProps> = ({
     ) || null;
 
   const selectedCbAccount =
-    cbAccountOptions.find((option) => option.value === cbAccount) || null;
+    cbAccountOptions.find((option) => option.value === cbAccountName) || null;
 
   /*
    * =========================================================
@@ -1136,7 +1136,7 @@ export const ReceiptForm: React.FC<ReceiptFormProps> = ({
             onMenuOpen={() => setOpenSelect("cbAccount")}
             onMenuClose={() => setOpenSelect(null)}
             onChange={(option) => {
-              setCbAccount(option?.value || "");
+              setCbAccountName(option?.value || "");
 
               /*
                * A value was picked - the user is done with

@@ -1034,7 +1034,7 @@ export async function saveReceiptService(
 
       lkpType,
 
-      cashBank,
+      cbAccountName,
 
       txtDocNo,
 
@@ -1102,7 +1102,7 @@ export async function saveReceiptService(
 
 
     if (
-      isEmpty(cashBank)
+      isEmpty(cbAccountName)
     ) {
 
       throw new Error(
@@ -1240,7 +1240,7 @@ export async function saveReceiptService(
           reference,
 
           cbAccountId:
-            cashBank,
+            cbAccountName,
 
           accountId:
             row.accountId,
@@ -1346,7 +1346,7 @@ export async function saveReceiptService(
         reference,
 
         cbAccountId:
-          cashBank,
+          cbAccountName,
 
         gcs:
           firstRow.gcs ||
@@ -1426,7 +1426,7 @@ export async function saveReceiptService(
         total:
           finalTotal,
 
-        cashBank,
+        cbAccountName,
 
         rowCount:
           validRows.length,
@@ -1755,7 +1755,7 @@ export async function updateReceiptService(
     dtpDate,
     receivedFrom,
     reference,
-    cashBank,
+    cbAccountName,
     note,
     cbCcId,
     rows = [],
@@ -1817,7 +1817,7 @@ export async function updateReceiptService(
 
 
     if (
-      isEmpty(cashBank)
+      isEmpty(cbAccountName)
     ) {
 
       throw new Error(
@@ -1937,7 +1937,7 @@ export async function updateReceiptService(
         dtpDate,
 
         cbAccountId:
-          cashBank,
+          cbAccountName,
 
         receivedFrom,
 
@@ -1949,7 +1949,7 @@ export async function updateReceiptService(
         */
 
         accountId:
-          cashBank,
+          cbAccountName,
 
         gcs:
           validRows[0]?.gcs ||
@@ -2056,7 +2056,7 @@ export async function updateReceiptService(
               ),
 
             cbaccountid:
-              cashBank || "",
+              cbAccountName || "",
 
             receivedfrompaidto:
               receivedFrom || "",
@@ -2148,7 +2148,7 @@ export async function updateReceiptService(
         dtpDate,
 
         cbAccountId:
-          cashBank,
+          cbAccountName,
 
         receivedFrom,
 
@@ -2228,7 +2228,7 @@ export async function updateReceiptService(
         total:
           finalTotal,
 
-        cashBank,
+        cbAccountName,
 
         rowCount:
           validRows.length,

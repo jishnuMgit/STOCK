@@ -98,7 +98,7 @@ export interface ReceiptRow {
 export interface ReceiptData {
   lkpBranch?: DbValue;
   lkpType?: DbValue;
-  cashBank?: DbValue;
+  cbAccountName?: DbValue;
   txtDocNo?: DbValue;
   dtpDate?: DbValue;
   receivedFrom?: DbValue;
