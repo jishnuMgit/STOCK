@@ -216,7 +216,7 @@ export const getUserPermissionCoBranch = async (
 
 /* ---------------------------------------------------------
    SAVE (mode 'D' wipe, then mode 'S' per checked branch -
-   same delete-then-reinsert pattern as sp_pageuserpermission,
+   same delete-then-reinsert pattern as sp_pageuserpermissionmenu,
    and the same global wipe the original VB Apply() did)
    PUT /api/user-permission-cobranch/:lkpUserID
 --------------------------------------------------------- */

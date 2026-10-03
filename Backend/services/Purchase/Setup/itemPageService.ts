@@ -19,7 +19,7 @@ export async function getItemPageService(
 
     await client.query(
       `
-      CALL dbo.sp_itempage(
+      CALL dbo.sp_pageitem(
         $1::varchar, $2::varchar, $3::varchar, $4::varchar, $5::varchar,
         $6::varchar, $7::varchar, $8::varchar, $9::numeric, $10::numeric,
         $11::varchar, $12::varchar, $13::varchar, $14::integer, $15::integer,
@@ -43,7 +43,7 @@ export async function getItemPageService(
 
     await client.query(
       `
-      CALL dbo.sp_itempage(
+      CALL dbo.sp_pageitem(
         $1::varchar, $2::varchar, $3::varchar, $4::varchar, $5::varchar,
         $6::varchar, $7::varchar, $8::varchar, $9::numeric, $10::numeric,
         $11::varchar, $12::varchar, $13::varchar, $14::integer, $15::integer,
@@ -125,19 +125,19 @@ export async function saveItemPageService(
 
     await callSpItemPage(client, {
       strmode: headerMode,
-      coid: PstrCoID,
-      itemid: txtItemID,
-      itemname: txtItemName,
-      itemdesc: txtItemDescription,
-      unit: lkpUnit,
-      packing: txtPacking,
-      cbm: txtCBM,
-      itemgroupid: lkpItemGroupID,
-      supplierid: lkpSupplierID,
-      supplieritemid: txtSupplierItemID,
-      reorderlevel: txtReorderLevel,
-      reorderqty: txtReorderQty,
-      userid: PstrUserID,
+      PstrCoID,
+      txtItemID,
+      txtItemName,
+      txtItemDescription,
+      lkpUnit,
+      txtPacking,
+      txtCBM,
+      lkpItemGroupID,
+      lkpSupplierID,
+      txtSupplierItemID,
+      txtReorderLevel,
+      txtReorderQty,
+      PstrUserID,
     });
 
     /* =====================================================
@@ -158,14 +158,14 @@ export async function saveItemPageService(
 
       await callSpItemPage(client, {
         strmode: rowMode,
-        coid: PstrCoID,
-        itemid: txtItemID,
-        brid: row.lkpBranch,
-        origbrid: rowMode === "MTL" ? row.lkpBranch : null,
-        itemlocation: row.txtItemLocation,
-        allowsale: row.chkAllowSaleBelowCost,
-        inactive: row.chkInactive,
-        userid: PstrUserID,
+        PstrCoID,
+        txtItemID,
+        lkpBranch: row.lkpBranch,
+        lkpOriginalBranch: rowMode === "MTL" ? row.lkpBranch : null,
+        txtItemLocation: row.txtItemLocation,
+        chkAllowSaleBelowCost: row.chkAllowSaleBelowCost,
+        chkInactive: row.chkInactive,
+        PstrUserID,
       });
     }
 
@@ -194,8 +194,8 @@ export async function deleteItemService(
 
     await callSpItemPage(client, {
       strmode: "D",
-      coid: PstrCoID,
-      itemid: txtItemID,
+      PstrCoID,
+      txtItemID,
     });
 
     await client.query("COMMIT");
@@ -224,9 +224,9 @@ export async function deleteItemBranchRowService(
 
     await callSpItemPage(client, {
       strmode: "D1",
-      coid: PstrCoID,
-      itemid: txtItemID,
-      brid: lkpBranch,
+      PstrCoID,
+      txtItemID,
+      lkpBranch: lkpBranch,
     });
 
     await client.query("COMMIT");
@@ -240,7 +240,7 @@ export async function deleteItemBranchRowService(
 }
 
 /* =========================================================
-   SHARED HELPER — call dbo.sp_itempage with sensible
+   SHARED HELPER — call dbo.sp_pageitem with sensible
    defaults for whichever fields a given mode doesn't use
 ========================================================= */
 
@@ -248,46 +248,46 @@ async function callSpItemPage(
   client: PoolClient,
   overrides: Partial<{
     strmode: string;
-    coid: string;
-    itemid: string;
-    brid: string | null;
-    origbrid: string | null;
-    itemname: string | null;
-    itemdesc: string | null;
-    unit: string | null;
-    packing: number;
-    cbm: number;
-    itemgroupid: string | null;
-    supplierid: string | null;
-    supplieritemid: string | null;
-    reorderlevel: number;
-    reorderqty: number;
-    itemlocation: string | null;
-    allowsale: boolean;
-    inactive: boolean;
-    userid: string | null;
+    PstrCoID: string;
+    txtItemID: string;
+    lkpBranch: string | null;
+    lkpOriginalBranch: string | null;
+    txtItemName: string | null;
+    txtItemDescription: string | null;
+    lkpUnit: string | null;
+    txtPacking: number;
+    txtCBM: number;
+    lkpItemGroupID: string | null;
+    lkpSupplierID: string | null;
+    txtSupplierItemID: string | null;
+    txtReorderLevel: number;
+    txtReorderQty: number;
+    txtItemLocation: string | null;
+    chkAllowSaleBelowCost: boolean;
+    chkInactive: boolean;
+    PstrUserID: string | null;
   }>
 ): Promise<void> {
   const params = {
     strmode: null,
-    coid: null,
-    itemid: null,
-    brid: null,
-    origbrid: null,
-    itemname: null,
-    itemdesc: null,
-    unit: null,
-    packing: 0,
-    cbm: 0,
-    itemgroupid: null,
-    supplierid: null,
-    supplieritemid: null,
-    reorderlevel: 0,
-    reorderqty: 0,
-    itemlocation: null,
-    allowsale: false,
-    inactive: false,
-    userid: null,
+    PstrCoID: null,
+    txtItemID: null,
+    lkpBranch: null,
+    lkpOriginalBranch: null,
+    txtItemName: null,
+    txtItemDescription: null,
+    lkpUnit: null,
+    txtPacking: 0,
+    txtCBM: 0,
+    lkpItemGroupID: null,
+    lkpSupplierID: null,
+    txtSupplierItemID: null,
+    txtReorderLevel: 0,
+    txtReorderQty: 0,
+    txtItemLocation: null,
+    chkAllowSaleBelowCost: false,
+    chkInactive: false,
+    PstrUserID: null,
     ...overrides,
   };
 
@@ -296,7 +296,7 @@ async function callSpItemPage(
 
   await client.query(
     `
-    CALL dbo.sp_itempage(
+    CALL dbo.sp_pageitem(
       $1::varchar, $2::varchar, $3::varchar, $4::varchar, $5::varchar,
       $6::varchar, $7::varchar, $8::varchar, $9::numeric, $10::numeric,
       $11::varchar, $12::varchar, $13::varchar, $14::integer, $15::integer,
@@ -306,24 +306,24 @@ async function callSpItemPage(
     `,
     [
       params.strmode,
-      params.coid,
-      params.itemid,
-      params.brid,
-      params.origbrid,
-      params.itemname,
-      params.itemdesc,
-      params.unit,
-      params.packing,
-      params.cbm,
-      params.itemgroupid,
-      params.supplierid,
-      params.supplieritemid,
-      params.reorderlevel,
-      params.reorderqty,
-      params.itemlocation,
-      params.allowsale,
-      params.inactive,
-      params.userid,
+      params.PstrCoID,
+      params.txtItemID,
+      params.lkpBranch,
+      params.lkpOriginalBranch,
+      params.txtItemName,
+      params.txtItemDescription,
+      params.lkpUnit,
+      params.txtPacking,
+      params.txtCBM,
+      params.lkpItemGroupID,
+      params.lkpSupplierID,
+      params.txtSupplierItemID,
+      params.txtReorderLevel,
+      params.txtReorderQty,
+      params.txtItemLocation,
+      params.chkAllowSaleBelowCost,
+      params.chkInactive,
+      params.PstrUserID,
       null,
       null,
       null,

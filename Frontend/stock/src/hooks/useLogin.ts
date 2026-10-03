@@ -76,7 +76,7 @@ export const useLogin = () => {
       // }
 
       return data;
-    } catcgit h (error: unknown) {
+    } catch (error: unknown) {
       console.error("Login error:", error);
 
       const message = error instanceof Error ? error.message : "Login failed";

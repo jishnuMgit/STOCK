@@ -1,4 +1,4 @@
-CREATE OR REPLACE PROCEDURE dbo.sp_setdocumentno(
+CREATE OR REPLACE PROCEDURE dbo.sp_pagesetdocumentno(
     p_strmode                 varchar(5),
     p_pstrcoid                varchar(3),
     p_pstryear                varchar(4),

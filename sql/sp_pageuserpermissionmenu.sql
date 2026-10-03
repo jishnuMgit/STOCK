@@ -1,5 +1,5 @@
 -- =========================================================
--- dbo.sp_pageuserpermission
+-- dbo.sp_pageuserpermissionmenu
 -- Used by Security/UserPermissionMenu.
 --
 -- p_strcoid added: permissions are now scoped per company.
@@ -14,7 +14,7 @@
 --   D   delete all of this user's rows for this company
 -- =========================================================
 
-CREATE OR REPLACE PROCEDURE dbo.sp_pageuserpermission(
+CREATE OR REPLACE PROCEDURE dbo.sp_pageuserpermissionmenu(
     IN p_strmode character varying,
     IN p_strcoid character varying,
     IN p_struserid character varying,

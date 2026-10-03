@@ -8,7 +8,7 @@
 --     to go - that raises "query has no destination for result
 --     data" the moment it's called. Fixed with OPEN ... FOR
 --     SELECT into a refcursor, same pattern as the sibling
---     sp_pageuserpermission procedure.
+--     sp_pageuserpermissionmenu procedure.
 --   * S/D wrote to dbo.tbluserrightcobranch (the old SQL Server
 --     table name) - the real table is dbo.tbluserpermissionbranch,
 --     a pre-existing legacy-migrated table (fuserid, fcoid, fbrid).
@@ -17,7 +17,7 @@
 --     this procedure, so the app now points at the original
 --     tbluserpermissionbranch table instead.
 --   * Parameter order is now mode, coid, userid, brid (company
---     before user), matching sp_pageuserpermission. Column
+--     before user), matching sp_pageuserpermissionmenu. Column
 --     widths match the real table (fcoid/fbrid varchar(3),
 --     fuserid varchar(30)), not the draft's placeholder sizes.
 --
