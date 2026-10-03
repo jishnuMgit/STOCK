@@ -37,7 +37,7 @@ export interface AccountData {
 }
 
 export interface ReceiptRow {
-  // amount: number;
+  amount: number;
   slNo: number;
   id: number;
   accountId: string;

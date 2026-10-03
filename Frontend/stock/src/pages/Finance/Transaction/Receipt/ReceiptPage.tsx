@@ -431,15 +431,15 @@ const ReceiptPage: React.FC = () => {
 
       result.rows.slice(0, loadedRows.length).forEach((loadedRow, index) => {
         const account = accountOptions.find(
-          (option) => option.faccountid === loadedRow.accountId,
+          (option) => option.faccountid === loadedRow.AccountID,
         );
 
         loadedRows[index] = {
           id: index + 1,
           slNo: index + 1,
 
-          accountId: loadedRow.accountId || "",
-          accountName: loadedRow.accountName || account?.faccountname || "",
+          accountId: loadedRow.AccountID || "",
+          accountName: loadedRow.AccountName || account?.faccountname || "",
           fgcs: loadedRow.fgcs || account?.fgcs || "",
           haveCc: account?.fhavecc === true,
           haveDivision: Boolean(loadedRow.DivID),
@@ -1116,7 +1116,7 @@ const ReceiptPage: React.FC = () => {
       const receiptData = {
         lkpBranch,
         lkpType,
-        cashBank: cbAccountName,
+       cbAccountName,
         cbCcId,
 
         txtDocNo,

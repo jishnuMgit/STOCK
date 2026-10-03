@@ -498,9 +498,10 @@ export const saveReceipt = async (
     await CheckISdividISccid(payload, pool, PstrCoID);
 
     const active = await isActivePeriod(
+      PstrCoID,
       payload?.lkpBranch,
       payload?.dtpDate,
-      PstrCoID,
+      
     );
 
     if (!active) {
@@ -580,9 +581,10 @@ export const modifyReceipt = async (
     await CheckISdividISccid(payload, pool, PstrCoID);
 
     const active = await isActivePeriod(
+      PstrCoID,
       payload?.lkpBranch,
       payload?.dtpDate,
-      PstrCoID,
+      
     );
 
     if (!active) {

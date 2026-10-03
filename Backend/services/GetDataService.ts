@@ -40,8 +40,8 @@ interface ReceiptHeader {
 
 interface ReceiptDetailRow {
   id: number;
-  accountId: any;
-  accountName: any;
+  AccountID: any;
+  AccountName: any;
   fgcs: any;
   DivID: any;
   CCID: any;
@@ -1147,7 +1147,7 @@ export async function GetData({
                ACCOUNT
             ================================================= */
 
-            accountId:
+            AccountID:
               row.faccountid ??
               "",
 
@@ -1156,7 +1156,7 @@ export async function GetData({
                ACCOUNT NAME
             ================================================= */
 
-            accountName:
+            AccountName:
               row.faccountname ??
               "",
 

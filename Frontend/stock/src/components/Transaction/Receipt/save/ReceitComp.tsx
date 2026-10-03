@@ -55,14 +55,14 @@ dayjs.extend(customParseFormat);
 
 import {
   type SelectOption,
-  type ReceiptDocNumberResponse,
+  type ReceiptNoResponse,
   type AccountResponse,
   type CustomerDivision,
   type FinancialParameter,
   type CostCenter,
   type ReceiptRow,
   type AccountData,
-  type CbAccount,
+  type CbAccountName,
   type AccountOption,
   type AccountOptionProps,
 } from "../../../../types/receiptypes";
@@ -321,7 +321,7 @@ export const ReceiptForm: React.FC<ReceiptFormProps> = ({
 
   const [docnolen, setdocnolen] = useState<number>(0);
 
-  const [cbAccounts, setCbAccounts] = useState<CbAccount[]>([]);
+  const [cbAccounts, setCbAccounts] = useState<CbAccountName[]>([]);
 
   /*
    * =========================================================
@@ -385,7 +385,7 @@ export const ReceiptForm: React.FC<ReceiptFormProps> = ({
         throw new Error(`HTTP Error: ${response.status}`);
       }
 
-      const result = (await response.json()) as ReceiptDocNumberResponse;
+      const result = (await response.json()) as ReceiptNoResponse;
 
       if (
         result.success &&
