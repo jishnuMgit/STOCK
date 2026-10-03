@@ -6,7 +6,7 @@ import pool from "../../DB/db.js";
 ========================================================= */
 
 export async function getCompanyInfoService(
-  coId: string
+  PstrCoID: string
 ): Promise<any | null> {
   const client: PoolClient = await pool.connect();
 
@@ -20,7 +20,7 @@ export async function getCompanyInfoService(
 
     await client.query(
       `
-      CALL dbo.sp_setcompanyinfo(
+      CALL dbo.sp_pagesetcompanyinfo(
         $1::varchar,
         $2::varchar,
         $3::varchar,
@@ -44,7 +44,7 @@ export async function getCompanyInfoService(
       `,
       [
         "G",       // p_strmode
-        coId,      // p_pstrcoid
+        PstrCoID,  // p_pstrcoid
         null,      // p_strconame
         null,      // p_strconame_ar
         null,      // p_strconame_qr
@@ -87,22 +87,22 @@ export async function getCompanyInfoService(
 
 export async function updateCompanyInfoService(
   payload: {
-    coId: string;
-    coName: string | null;
-    coNameAr: string | null;
-    coNameQr: string | null;
-    coNameShort: string | null;
-    coVatNo: string | null;
-    coVatNoAr: string | null;
-    coAddress1: string | null;
-    coAddress2: string | null;
-    coAddress3: string | null;
-    coAddress4: string | null;
-    coAddress1Ar: string | null;
-    coAddress2Ar: string | null;
-    coAddress3Ar: string | null;
-    coAddress4Ar: string | null;
-    coStatus: string | null;
+    PstrCoID: string;
+    txtCoName: string | null;
+    txtCoName_AR: string | null;
+    txtCoName_QR: string | null;
+    txtCoName_Short: string | null;
+    txtCoVATNo: string | null;
+    txtCoVATNo_AR: string | null;
+    txtCoAddress1: string | null;
+    txtCoAddress2: string | null;
+    txtCoAddress3: string | null;
+    txtCoAddress4: string | null;
+    txtCoAddress1_AR: string | null;
+    txtCoAddress2_AR: string | null;
+    txtCoAddress3_AR: string | null;
+    txtCoAddress4_AR: string | null;
+    txtCoStatus: string | null;
     PstrUserID: string;
   }
 ): Promise<void> {
@@ -118,7 +118,7 @@ export async function updateCompanyInfoService(
 
     await client.query(
       `
-      CALL dbo.sp_setcompanyinfo(
+      CALL dbo.sp_pagesetcompanyinfo(
         $1::varchar,
         $2::varchar,
         $3::varchar,
@@ -142,22 +142,22 @@ export async function updateCompanyInfoService(
       `,
       [
         "M",
-        payload.coId,
-        payload.coName,
-        payload.coNameAr,
-        payload.coNameQr,
-        payload.coNameShort,
-        payload.coVatNo,
-        payload.coVatNoAr,
-        payload.coAddress1,
-        payload.coAddress2,
-        payload.coAddress3,
-        payload.coAddress4,
-        payload.coAddress1Ar,
-        payload.coAddress2Ar,
-        payload.coAddress3Ar,
-        payload.coAddress4Ar,
-        payload.coStatus,
+        payload.PstrCoID,
+        payload.txtCoName,
+        payload.txtCoName_AR,
+        payload.txtCoName_QR,
+        payload.txtCoName_Short,
+        payload.txtCoVATNo,
+        payload.txtCoVATNo_AR,
+        payload.txtCoAddress1,
+        payload.txtCoAddress2,
+        payload.txtCoAddress3,
+        payload.txtCoAddress4,
+        payload.txtCoAddress1_AR,
+        payload.txtCoAddress2_AR,
+        payload.txtCoAddress3_AR,
+        payload.txtCoAddress4_AR,
+        payload.txtCoStatus,
         payload.PstrUserID,
         cursorName
       ]

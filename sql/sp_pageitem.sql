@@ -1,4 +1,4 @@
-CREATE OR REPLACE PROCEDURE dbo.sp_itempage(
+CREATE OR REPLACE PROCEDURE dbo.sp_pageitem(
     p_strmode              varchar(5),
     p_pstrcoid             varchar(3),
     p_stritemid            varchar(40),

@@ -217,8 +217,15 @@ const SetCompanyInfo = () => {
   useEffect(() => {
     const loadCompanyList = async () => {
       try {
+        const PstrCoID = localStorage.getItem("PstrCoID");
+
+        if (!PstrCoID) {
+          toast.error("Company ID not found. Please log in again.");
+          return;
+        }
+
         const response = await fetch(
-          `${import.meta.env.VITE_API_URL}/CompanyInfo/getCompanyList`
+          `${import.meta.env.VITE_API_URL}/CompanyInfo/getCompanyList?PstrCoID=${encodeURIComponent(PstrCoID)}`
         );
 
         if (!response.ok) {
@@ -232,7 +239,15 @@ const SetCompanyInfo = () => {
           return;
         }
 
-        setCompanyOptions(result.data || []);
+        const companies: CompanyOption[] = result.data || [];
+
+        setCompanyOptions(companies);
+
+        // preselect the logged-in company; the details effect below
+        // then fills the form
+        if (companies.some((company) => company.fcoid === PstrCoID)) {
+          setLkpCoName(PstrCoID);
+        }
       } catch (error) {
         console.error("getCompanyList error:", error);
       }

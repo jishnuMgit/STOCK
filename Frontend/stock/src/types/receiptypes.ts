@@ -37,7 +37,7 @@ export interface AccountData {
 }
 
 export interface ReceiptRow {
-  amount: number;
+  // amount: number;
   slNo: number;
   id: number;
   accountId: string;
@@ -57,7 +57,7 @@ export interface CustomerDivision {
   fdivname: string;
 }
 
-export interface CbAccount {
+export interface CbAccountName {
   fcoid: string;
   faccountid: string;
   faccountgroupid?: string;
@@ -70,12 +70,12 @@ export interface AccountResponse {
   message?: string;
   success: boolean;
   cashorbank: string;
-  data: CbAccount[];
+  data: CbAccountName[];
 }
 
 
 
-export interface ReceiptDocNumberResponse {
+export interface ReceiptNoResponse {
   success: boolean;
 
   data: {
@@ -114,7 +114,7 @@ export interface ReceiptPrintRow {
   accountId: string;
   accountName: string;
   description: string;
-  amount: number;
+  creditAmt: number;
 }
 
 export interface ReceiptPrintData {
@@ -123,21 +123,21 @@ export interface ReceiptPrintData {
   docType: string;
   heading: string;
 
-  branchId: string;
+  brId: string;
   docNo: string;
   date: string;
 
   receivedFrom: string;
   reference: string;
-  fop: string;
+  cbAccountName: string;
   note: string;
 
   currency: string;
-  total: number;
+  totCreditAmt: number;
   amountInWords: string;
 
-  preparedBy: string;
-  preparedDate: string;
+  CUserID: string;
+  CUserDate: string;
 
   company: {
     nameEn: string;

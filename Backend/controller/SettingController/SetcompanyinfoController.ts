@@ -15,11 +15,21 @@ export const getCompanyList = async (
   res: Response
 ): Promise<Response> => {
   try {
+    const { PstrCoID } = req.query;
+
+    if (!PstrCoID) {
+      return res.status(400).json({
+        success: false,
+        message: "Company ID is required",
+      });
+    }
+
     const result = await pool.query(
       `
       SELECT *
-      FROM dbo.filllookupcompanyname()
-      `
+      FROM dbo.filllookupcompanyname($1)
+      `,
+      [PstrCoID]
     );
 
     return res.status(200).json({
@@ -129,22 +139,22 @@ export const saveCompanyDetails = async (
     }
 
     await updateCompanyInfoService({
-      coId: lkpCoName,
-      coName: txtCoName || null,
-      coNameAr: txtCoName_AR || null,
-      coNameQr: txtCoName_QR || null,
-      coNameShort: txtCoName_Short || null,
-      coVatNo: txtCoVATNo || null,
-      coVatNoAr: txtCoVATNo_AR || null,
-      coAddress1: txtCoAddress1 || null,
-      coAddress2: txtCoAddress2 || null,
-      coAddress3: txtCoAddress3 || null,
-      coAddress4: txtCoAddress4 || null,
-      coAddress1Ar: txtCoAddress1_AR || null,
-      coAddress2Ar: txtCoAddress2_AR || null,
-      coAddress3Ar: txtCoAddress3_AR || null,
-      coAddress4Ar: txtCoAddress4_AR || null,
-      coStatus: txtCoStatus || null,
+      PstrCoID: lkpCoName,
+      txtCoName: txtCoName || null,
+      txtCoName_AR: txtCoName_AR || null,
+      txtCoName_QR: txtCoName_QR || null,
+      txtCoName_Short: txtCoName_Short || null,
+      txtCoVATNo: txtCoVATNo || null,
+      txtCoVATNo_AR: txtCoVATNo_AR || null,
+      txtCoAddress1: txtCoAddress1 || null,
+      txtCoAddress2: txtCoAddress2 || null,
+      txtCoAddress3: txtCoAddress3 || null,
+      txtCoAddress4: txtCoAddress4 || null,
+      txtCoAddress1_AR: txtCoAddress1_AR || null,
+      txtCoAddress2_AR: txtCoAddress2_AR || null,
+      txtCoAddress3_AR: txtCoAddress3_AR || null,
+      txtCoAddress4_AR: txtCoAddress4_AR || null,
+      txtCoStatus: txtCoStatus || null,
       PstrUserID,
     });
 

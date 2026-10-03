@@ -163,7 +163,7 @@ export const CheckISdividISccid = async (
 
 
 
-export const isActivePeriod = async (strBrID: any, dtpDate: any, coId: any) => {
+export const isActivePeriod = async (coId: any, strBrID: any, dtpDate: any) => {
   const result = await pool.query(
     `
       SELECT dbo.isactiveperiod($1, $2, $3) AS is_active
