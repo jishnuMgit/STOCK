@@ -277,7 +277,7 @@ const createSelectStyles = (
 // tblmenu: 9109 = mnuFinSetting ("Finance Setting")
 const MENU_ID = "9109";
 
-const FinanceSetting: React.FC = () => {
+const ChartOfAccountSettings: React.FC = () => {
   const [rows, setRows] = useState<AccountSetting[]>([]);
 
   // bumped by Clear (and after a save) so the saved rows are loaded again
@@ -769,7 +769,7 @@ const FinanceSetting: React.FC = () => {
               text-slate-700
             "
           >
-Finance Setting
+Chart Of Account Settings
           </span>
 
         </div>
@@ -1106,4 +1106,4 @@ Finance Setting
   );
 };
 
-export default FinanceSetting;
+export default ChartOfAccountSettings;

@@ -93,7 +93,7 @@ mnuStockTransfer: "/Sales/Transaction/StockTransferPage",
   ========================================================= */
 
   mnuCustomer: "/Finance/Setup/CustomerPage",
-  mnuSetChartOfAccount:"/Finance/Setup/ChartOfAccountList",
+  mnuChartOfAccount:"/Finance/Setup/ChartOfAccountList",
 
   /* =========================================================
      FINANCE - REPORTS
@@ -113,7 +113,7 @@ mnuStockTransfer: "/Sales/Transaction/StockTransferPage",
     "/Settings/SetBranchInfo",
 
   mnuSetCompanyInfo: "/Settings/SetCompanyInfo",
-mnuFinSetting: "/Settings/FinanceSetting",
+mnuSetChartOfAccount: "/Settings/ChartOfAccountSettings",
 mnuSetStockPostingAccount:"/Settings/SetPostingAccount",
 
   /* =========================================================
@@ -156,13 +156,13 @@ export const ADMINISTRATION_NODE: MenuNode = {
    Hardcoded in the frontend, injected as a child of
    Finance > Report (fmenuid "1103").
    "110399" is outside the real 1103xx id space (110301–110315). */
-export const RPT_STATEMENT_OF_ACCOUNT_NODE: MenuNode = {
-  fmenuid: "110399",
-  fmenuname: "mnuRptStatementOfAccount",
-  fmenucaption: "Rpt Statement of Account",
-  fmenubuttons: "OA",
-  children: [],
-};
+// export const RPT_STATEMENT_OF_ACCOUNT_NODE: MenuNode = {
+//   fmenuid: "110399",
+//   fmenuname: "mnuRptStatementOfAccount",
+//   fmenucaption: "Rpt Statement of Account",
+//   fmenubuttons: "OA",
+//   children: [],
+// };
 
 /* Returns a new tree with `child` added under the node whose
    fmenuid is `parentId`. Does nothing if it's already there. */
