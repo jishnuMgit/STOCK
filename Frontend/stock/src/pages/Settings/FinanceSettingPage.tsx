@@ -3,6 +3,7 @@ import { toast } from "react-toastify";
 import { X } from "lucide-react";
 import { useConfirm } from "../../hooks/useConfirm";
 import { useAltShortcuts } from "../../hooks/useAltShortcuts";
+import { useEnterAsTab } from "../../hooks/useEnterAsTab";
 import { useButtonPermissions } from "../../hooks/useButtonPermissions";
 import Select, {
   components,
@@ -285,6 +286,7 @@ const FinanceSetting: React.FC = () => {
 
   const perms = useButtonPermissions(MENU_ID);
   const { confirm, confirmDialog } = useConfirm();
+  const handleEnterAsTab = useEnterAsTab();
   const [saving, setSaving] = useState<boolean>(false);
 
   const [parameterList, setParameterList] = useState<ParameterOption[]>([]);
@@ -746,7 +748,10 @@ const FinanceSetting: React.FC = () => {
   // ==========================================================
 
   return (
-    <div className="flex min-h-screen w-full items-center justify-center bg-white p-0 font-sans text-slate-700">
+    <div
+      onKeyDown={handleEnterAsTab}
+      className="flex min-h-screen w-full items-center justify-center bg-white p-0 font-sans text-slate-700"
+    >
       <div className="w-[1100px] max-w-full border border-slate-400 bg-white">
         {/* TITLE BAR */}
 
@@ -914,6 +919,7 @@ Finance Setting
                         id={`btnDeleteRow-${index}`}
                         name="btnDeleteRow"
                         type="button"
+                        tabIndex={-1}
                         onClick={() => handleDeleteRow(rows[index])}
                         disabled={!perms.delete}
                         aria-label={`Delete row ${index + 1}`}
@@ -1041,6 +1047,7 @@ Finance Setting
                       aria-label={`G/P/H row ${index + 1}`}
                       value={row.txtGPH}
                       readOnly
+                      tabIndex={-1}
                       className="
                         h-full w-full min-w-0
                         border-0 bg-transparent
