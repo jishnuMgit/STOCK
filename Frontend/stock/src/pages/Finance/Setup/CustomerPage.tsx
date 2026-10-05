@@ -50,6 +50,8 @@ const CustomerPage: React.FC<CustomerPageProps> = ({
   const isEdit = !!customerId;
   const isDelete = isEdit && mode === "delete";
 
+  const formRef = useRef<HTMLDivElement>(null);
+
   const [saving, setSaving] = useState(false);
   const [loadingRecord, setLoadingRecord] = useState(false);
   const [preserved, setPreserved] = useState<CustomerDetail>({});
@@ -239,6 +241,42 @@ const CustomerPage: React.FC<CustomerPageProps> = ({
   // Confirm with: SELECT DISTINCT fcs FROM dbo.tblaccountcs;
   const deriveCsAccountType = () => (chkCustomer ? "C" : "S");
 
+  // Auto = generated ID (locked). Manual = user types the ID.
+  // In edit mode, Manual means "rename this customer's ID".
+  const handleIdModeChange = async (value: string) => {
+    setOptNewCustomerID(value);
+
+    const focusIdField = (select = false) =>
+      setTimeout(() => {
+        const el =
+          formRef.current?.querySelector<HTMLInputElement>("#txtCustomerID");
+        el?.focus();
+        if (select) el?.select();
+      }, 0);
+
+    // EDIT: Auto = back to the current ID, Manual = edit the current ID
+    if (isEdit) {
+      if (value === "Auto") setTxtCustomerID(customerId!);
+      else focusIdField(true);
+      return;
+    }
+
+    // ADD: Manual = empty field
+    if (value === "Manual") {
+      setTxtCustomerID("");
+      focusIdField();
+      return;
+    }
+
+    // ADD: Auto = fetch the next generated ID
+    const nextId = await fetchNextCustomerId(
+      CUSTOMER_ACCOUNT_TYPE_ID,
+      PARENT_ACCOUNT_LEVEL,
+    );
+    if (nextId) setTxtCustomerID(nextId);
+    else window.alert("Failed to get next customer ID");
+  };
+
   const handleSave = async () => {
     if (saving || isDelete) return;
 
@@ -256,6 +294,11 @@ const CustomerPage: React.FC<CustomerPageProps> = ({
     }
     if (!chkCustomer && !chkSupplier) {
       window.alert("Select Customer, Supplier or both");
+      return;
+    }
+
+    if (txtCustomerID.trim().length > 12) {
+      window.alert("Customer ID cannot be longer than 12 characters");
       return;
     }
 
@@ -357,6 +400,7 @@ const CustomerPage: React.FC<CustomerPageProps> = ({
 
   const handleClear = () => {
     if (isEdit) {
+      setOptNewCustomerID("Auto");
       loadRecord();
       return;
     }
@@ -414,7 +458,6 @@ const CustomerPage: React.FC<CustomerPageProps> = ({
   // KEYBOARD: focus Customer ID on open, Enter = Tab
   // ============================================================
 
-  const formRef = useRef<HTMLDivElement>(null);
   const cancelRef = useRef<HTMLButtonElement>(null);
 
   // Runs on open, and again when an edit record finishes loading
@@ -478,7 +521,8 @@ const CustomerPage: React.FC<CustomerPageProps> = ({
         txtCustomerID={txtCustomerID}
         setTxtCustomerID={setTxtCustomerID}
         optNewCustomerID={optNewCustomerID}
-        setOptNewCustomerID={setOptNewCustomerID}
+        onIdModeChange={handleIdModeChange}
+        idLocked={isDelete}
         lkpGAccountID={lkpGAccountID}
         setlkpGAccountID={setLkpGAccountID}
         lkpGAccountName={lkpGAccountName}

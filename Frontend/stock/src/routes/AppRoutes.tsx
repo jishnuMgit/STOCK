@@ -96,7 +96,7 @@ const AppRoutes = () => {
             path="/Finance/Setup/Add/Customer"
             element={<CustomerPage />}
           />
-           <Route
+          <Route
             path="/Finance/Setup/ChartOfAccountList"
             element={<ChartOfAccountList />}
           />
@@ -107,20 +107,19 @@ const AppRoutes = () => {
             element={<StatementOfAccountMain />}
           />
 
-           {/* =================================================
+          {/* =================================================
               PURCHASE - TRANSACTION
           ================================================= */}
 
-         <Route
-          path="/Purchase/Transaction/PurchaseInvoicePage"
-          element={<PurchaseInvoicePage/>}
+          <Route
+            path="/Purchase/Transaction/PurchaseInvoicePage"
+            element={<PurchaseInvoicePage />}
           />
 
           <Route
-          path="/Purchase/Transaction/BeginningStockPage"
-          element={<BeginningStockPage/>}
+            path="/Purchase/Transaction/BeginningStockPage"
+            element={<BeginningStockPage />}
           />
-
 
           {/* =================================================
               PURCHASE - SETUP
@@ -128,11 +127,7 @@ const AppRoutes = () => {
 
           {/* ================= ITEM ================= */}
 
-          <Route
-            path="/Purchase/Setup/ItemPage"
-            element={<ItemPage />}
-          />
-
+          <Route path="/Purchase/Setup/ItemPage" element={<ItemPage />} />
 
           {/* =================================================
               SETTINGS
@@ -140,30 +135,22 @@ const AppRoutes = () => {
 
           {/* ================= COMPANY INFO ================= */}
 
-          <Route
-            path="/Settings/SetCompanyInfo"
-            element={<SetCompanyInfo />}
-          />
+          <Route path="/Settings/SetCompanyInfo" element={<SetCompanyInfo />} />
 
-          <Route path="/Settings/SetBranchInfo"
-          element={<SetBranchInfo/>}/>
+          <Route path="/Settings/SetBranchInfo" element={<SetBranchInfo />} />
 
           <Route
-          path="/Settings/ChartOfAccountSetting"
-          element={<COASettings/>}
+            path="/Settings/ChartOfAccountSetting"
+            element={<COASettings />}
           />
           <Route
-          path="/Settings/SetPostingAccount"
-          element={<SetPostingAccountPage/>}
+            path="/Settings/SetPostingAccount"
+            element={<SetPostingAccountPage />}
           />
 
           {/* ================= DOCUMENT NUMBER ================= */}
 
-          <Route
-            path="/Settings/SetDocumentNo"
-            element={<SetDocumentNo />}
-          />
-
+          <Route path="/Settings/SetDocumentNo" element={<SetDocumentNo />} />
 
           {/* =================================================
               FINANCE - REPORTS
@@ -171,39 +158,30 @@ const AppRoutes = () => {
 
           {/* ================= STATEMENT OF ACCOUNT ================= */}
 
-         <Route path="/Finance/Reports/rptSOA" element={<StatementOfAccountMain />} />
+          <Route
+            path="/Finance/Reports/rptSOA"
+            element={<StatementOfAccountMain />}
+          />
         </Route>
-
-
 
         {/*========================================================
                       SECURITY
         ===========================================================*/}
 
         {/*====================User Login==========================*/}
-       <Route path="/Security/UserLogin"
-       element={<UserLogin/>}
-       />
+        <Route path="/Security/UserLogin" element={<UserLogin />} />
 
-<Route
-path="/Security/UserPermissionMenu"
-element={<UserPermission/>}
-/>
+        <Route
+          path="/Security/UserPermissionMenu"
+          element={<UserPermission />}
+        />
 
-<Route
-path="/Security/UserPermissionBranch"
-element={<UserPermissionBranchPage/>}
-/>
+        <Route
+          path="/Security/UserPermissionBranch"
+          element={<UserPermissionBranchPage />}
+        />
 
-
-
-<Route
-path="/dev/PurchaseExpense"
-element={<PurchaseExpense/>}
-/>
-
-
-
+        <Route path="/dev/PurchaseExpense" element={<PurchaseExpense />} />
       </Routes>
     </Suspense>
   );
