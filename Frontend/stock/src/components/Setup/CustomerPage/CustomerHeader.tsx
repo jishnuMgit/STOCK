@@ -21,7 +21,9 @@ interface CustomerHeaderProps {
   setTxtCustomerID: React.Dispatch<React.SetStateAction<string>>;
 
   optNewCustomerID: string;
-  setOptNewCustomerID: React.Dispatch<React.SetStateAction<string>>;
+
+  onIdModeChange: (value: string) => void;
+  idLocked?: boolean;
 
   lkpGAccountID: string;
   setlkpGAccountID: React.Dispatch<React.SetStateAction<string>>;
@@ -129,12 +131,9 @@ const selectStyles: StylesConfig<SelectOption, false> = {
   menu: (base) => ({
     ...base,
     fontSize: "12px",
-    
-    zIndex: 9999,
-   
-  }),
 
- 
+    zIndex: 9999,
+  }),
 
   input: (base) => ({
     ...base,
@@ -174,7 +173,6 @@ const selectStyles: StylesConfig<SelectOption, false> = {
   indicatorSeparator: () => ({
     display: "none",
   }),
-
 
   menuList: (base) => ({
     ...base,
@@ -219,7 +217,9 @@ const CustomerHeader: React.FC<CustomerHeaderProps> = ({
   setTxtCustomerID,
 
   optNewCustomerID,
-  setOptNewCustomerID,
+
+  onIdModeChange,
+  idLocked = false,
 
   lkpGAccountID,
   setlkpGAccountID,
@@ -329,7 +329,8 @@ const CustomerHeader: React.FC<CustomerHeaderProps> = ({
                   type="radio"
                   value="Auto"
                   checked={optNewCustomerID === "Auto"}
-                  onChange={(e) => setOptNewCustomerID(e.target.value)}
+                  onChange={(e) => onIdModeChange(e.target.value)}
+                  disabled={idLocked}
                   className="h-3.25 w-3.25 accent-blue-600"
                 />
 
@@ -348,7 +349,8 @@ const CustomerHeader: React.FC<CustomerHeaderProps> = ({
                   type="radio"
                   value="Manual"
                   checked={optNewCustomerID === "Manual"}
-                  onChange={(e) => setOptNewCustomerID(e.target.value)}
+                  onChange={(e) => onIdModeChange(e.target.value)}
+                  disabled={idLocked}
                   className="h-3.25 w-3.25 accent-blue-600"
                 />
 
@@ -374,8 +376,14 @@ const CustomerHeader: React.FC<CustomerHeaderProps> = ({
               name="txtCustomerID"
               type="text"
               value={txtCustomerID}
+              maxLength={12}
               onChange={(e) => setTxtCustomerID(e.target.value)}
-              className={inputClass}
+              readOnly={idLocked || optNewCustomerID === "Auto"}
+              className={`${inputClass} ${
+                idLocked || optNewCustomerID === "Auto"
+                  ? "cursor-not-allowed bg-slate-100 text-slate-500"
+                  : ""
+              }`}
             />
           </div>
 

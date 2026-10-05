@@ -220,6 +220,23 @@ const callPageCustomer = async (
   await pool.query(`CALL dbo.sp_pagecustomer(${args.join(", ")})`, values);
 };
 
+// Maps Postgres errors to a status + message. Returns null if unknown.
+const mapPgError = (error: any) => {
+  switch (error?.code) {
+    case "23505": // unique_violation
+      return { status: 409, message: "Customer account already exists" };
+    case "23503": // foreign_key_violation
+      return {
+        status: 409,
+        message: "This customer ID is in use by other records",
+      };
+    case "22001": // string_data_right_truncation
+      return { status: 400, message: "A value is too long for its field" };
+    default:
+      return null;
+  }
+};
+
 // Pulls the session values. ADJUST to match your authMiddleware.
 const getSession = (req: AuthenticatedRequest) => ({
   companyId: req.user?.companyId as string | undefined,
@@ -416,7 +433,6 @@ export const updateCustomer = async (
       .json({ success: false, message: "Failed to update customer" });
   }
 };
-
 // ------------------------------------------------------------
 // DELETE /api/customers/:csAccountId   (mode 'D')
 // ------------------------------------------------------------
