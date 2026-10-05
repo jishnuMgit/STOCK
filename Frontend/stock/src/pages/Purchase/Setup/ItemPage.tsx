@@ -375,9 +375,9 @@ const ItemPage: React.FC = () => {
         }
 
         const options: SelectOption[] = (result.data || []).map(
-          (row: { funit: string }) => ({
-            value: row.funit,
-            label: row.funit,
+          (row: { lkpUnit: string }) => ({
+            value: row.lkpUnit,
+            label: row.lkpUnit,
           })
         );
 
@@ -397,7 +397,7 @@ const ItemPage: React.FC = () => {
   ========================================================= */
 
   const [itemGroupList, setItemGroupList] = useState<
-    { fitemgroupid: string; fitemgroupname: string }[]
+    { lkpItemGroupID: string; txtItemGroupName: string }[]
   >([]);
 
   useEffect(() => {
@@ -440,29 +440,29 @@ const ItemPage: React.FC = () => {
   // the box differs (ID in the first box, name in the second).
   const itemGroupIDOptions: SelectOption[] = itemGroupList.map(
     (group) => ({
-      value: group.fitemgroupid,
-      label: group.fitemgroupid,
-      id: group.fitemgroupid,
-      name: group.fitemgroupname,
+      value: group.lkpItemGroupID,
+      label: group.lkpItemGroupID,
+      id: group.lkpItemGroupID,
+      name: group.txtItemGroupName,
     })
   );
 
   const itemGroupNameOptions: SelectOption[] = itemGroupList.map(
     (group) => ({
-      value: group.fitemgroupid,
-      label: group.fitemgroupname,
-      id: group.fitemgroupid,
-      name: group.fitemgroupname,
+      value: group.lkpItemGroupID,
+      label: group.txtItemGroupName,
+      id: group.lkpItemGroupID,
+      name: group.txtItemGroupName,
     })
   );
 
   const selectItemGroup = (itemGroupID: string) => {
     const matchedGroup = itemGroupList.find(
-      (group) => group.fitemgroupid === itemGroupID
+      (group) => group.lkpItemGroupID === itemGroupID
     );
 
-    setLkpItemGroupID(matchedGroup?.fitemgroupid || "");
-    setLkpItemGroupName(matchedGroup?.fitemgroupname || "");
+    setLkpItemGroupID(matchedGroup?.lkpItemGroupID || "");
+    setLkpItemGroupName(matchedGroup?.txtItemGroupName || "");
   };
 
   /* =========================================================
@@ -471,7 +471,7 @@ const ItemPage: React.FC = () => {
   ========================================================= */
 
   const [supplierList, setSupplierList] = useState<
-    { fcsaccountid: string; fcsaccountname: string }[]
+    { lkpSupplierID: string; txtSupplierName: string }[]
   >([]);
 
   useEffect(() => {
@@ -512,29 +512,29 @@ const ItemPage: React.FC = () => {
 
   const supplierIDOptions: SelectOption[] = supplierList.map(
     (supplier) => ({
-      value: supplier.fcsaccountid,
-      label: supplier.fcsaccountid,
-      id: supplier.fcsaccountid,
-      name: supplier.fcsaccountname,
+      value: supplier.lkpSupplierID,
+      label: supplier.lkpSupplierID,
+      id: supplier.lkpSupplierID,
+      name: supplier.txtSupplierName,
     })
   );
 
   const supplierNameOptions: SelectOption[] = supplierList.map(
     (supplier) => ({
-      value: supplier.fcsaccountid,
-      label: supplier.fcsaccountname,
-      id: supplier.fcsaccountid,
-      name: supplier.fcsaccountname,
+      value: supplier.lkpSupplierID,
+      label: supplier.txtSupplierName,
+      id: supplier.lkpSupplierID,
+      name: supplier.txtSupplierName,
     })
   );
 
   const selectSupplier = (supplierID: string) => {
     const matchedSupplier = supplierList.find(
-      (supplier) => supplier.fcsaccountid === supplierID
+      (supplier) => supplier.lkpSupplierID === supplierID
     );
 
-    setLkpSupplierID(matchedSupplier?.fcsaccountid || "");
-    setLkpSupplierName(matchedSupplier?.fcsaccountname || "");
+    setLkpSupplierID(matchedSupplier?.lkpSupplierID || "");
+    setLkpSupplierName(matchedSupplier?.txtSupplierName || "");
   };
 
   /* =========================================================
@@ -571,9 +571,9 @@ const ItemPage: React.FC = () => {
         }
 
         const options: SelectOption[] = (result.data || []).map(
-          (row: { fbrid: string; fbrname: string }) => ({
-            value: row.fbrid,
-            label: row.fbrname,
+          (row: { lkpBranch: string; txtBranchName: string }) => ({
+            value: row.lkpBranch,
+            label: row.txtBranchName,
           })
         );
 
@@ -728,40 +728,40 @@ const ItemPage: React.FC = () => {
 
       const header = result.header;
 
-      setTxtItemName(header.fitemname || "");
-      setTxtItemDescription(header.fitemdescription || "");
-      setLkpUnit(header.funit || "");
-      setTxtPacking(String(header.fpacking ?? "0"));
-      setTxtCBM(String(header.fcbm ?? "0.0000"));
+      setTxtItemName(header.txtItemName || "");
+      setTxtItemDescription(header.txtItemDescription || "");
+      setLkpUnit(header.lkpUnit || "");
+      setTxtPacking(String(header.txtPacking ?? "0"));
+      setTxtCBM(String(header.txtCBM ?? "0.0000"));
 
-      setLkpItemGroupID(header.fitemgroupid || "");
+      setLkpItemGroupID(header.lkpItemGroupID || "");
       setLkpItemGroupName(
-        itemGroupList.find((group) => group.fitemgroupid === header.fitemgroupid)
-          ?.fitemgroupname || ""
+        itemGroupList.find((group) => group.lkpItemGroupID === header.lkpItemGroupID)
+          ?.txtItemGroupName || ""
       );
 
-      setLkpSupplierID(header.fsupplierid || "");
+      setLkpSupplierID(header.lkpSupplierID || "");
       setLkpSupplierName(
-        supplierList.find((supplier) => supplier.fcsaccountid === header.fsupplierid)
-          ?.fcsaccountname || ""
+        supplierList.find((supplier) => supplier.lkpSupplierID === header.lkpSupplierID)
+          ?.txtSupplierName || ""
       );
 
-      setTxtSupplierItemID(header.fsupplieritemid || "");
-      setTxtReorderLevel(String(header.freorderlevel ?? "0"));
-      setTxtReorderQty(String(header.freorderqty ?? "0"));
+      setTxtSupplierItemID(header.txtSupplierItemID || "");
+      setTxtReorderLevel(String(header.txtReorderLevel ?? "0"));
+      setTxtReorderQty(String(header.txtReorderQty ?? "0"));
 
       const foundRows: BranchRow[] = (result.rows || []).map(
         (row: {
-          fbrid: string;
-          fitemlocation: string | null;
-          fallowsalebelowcost: boolean;
-          finactive: boolean;
+          lkpBranch: string;
+          txtItemLocation: string | null;
+          chkAllowSaleBelowCost: boolean;
+          chkInactive: boolean;
         }, index: number) => ({
           id: index + 1,
-          lkpBranch: row.fbrid,
-          txtItemLocation: row.fitemlocation || "",
-          chkAllowSaleBelowCost: row.fallowsalebelowcost,
-          chkInactive: row.finactive,
+          lkpBranch: row.lkpBranch,
+          txtItemLocation: row.txtItemLocation || "",
+          chkAllowSaleBelowCost: row.chkAllowSaleBelowCost,
+          chkInactive: row.chkInactive,
         })
       );
 

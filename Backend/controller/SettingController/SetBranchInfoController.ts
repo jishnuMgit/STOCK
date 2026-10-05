@@ -6,6 +6,7 @@ import {
   saveBranchInfoService,
   type BranchInfoPayload,
 } from "../../services/SettingServices/setBranchInfoService.js";
+import { mapKeys, mapRows, branchListKeys, branchInfoKeys } from "../../utils/responseKeys.js";
 
 /* =========================================================
    GET BRANCH LIST (lkpBranch dropdown, filtered by
@@ -46,7 +47,7 @@ export const getBranchList = async (
 
     return res.status(200).json({
       success: true,
-      data: result.rows,
+      data: mapRows(result.rows, branchListKeys),
     });
   } catch (error: unknown) {
     console.error("getBranchList error:", error);
@@ -150,7 +151,7 @@ export const getBranchInfo = async (
 
     return res.status(200).json({
       success: true,
-      data,
+      data: mapKeys(data, branchInfoKeys),
     });
   } catch (error: unknown) {
     console.error("getBranchInfo error:", error);

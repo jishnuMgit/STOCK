@@ -301,9 +301,9 @@ const SetDocumentNo: React.FC = () => {
         }
 
         const options: SelectOption[] = (result.data || []).map(
-          (row: { fyear: number }) => ({
-            value: String(row.fyear),
-            label: String(row.fyear),
+          (row: { lkpYear: number }) => ({
+            value: String(row.lkpYear),
+            label: String(row.lkpYear),
           }),
         );
 
@@ -394,9 +394,9 @@ const SetDocumentNo: React.FC = () => {
         }
 
         const options: SelectOption[] = (result.data || []).map(
-          (row: { fbrid: string; fbrname: string }) => ({
-            value: row.fbrid,
-            label: row.fbrname,
+          (row: { lkpBranch: string; txtBranchName: string }) => ({
+            value: row.lkpBranch,
+            label: row.txtBranchName,
           }),
         );
 
@@ -442,9 +442,9 @@ const SetDocumentNo: React.FC = () => {
         }
 
         const options: SelectOption[] = (result.data || []).map(
-          (row: { fmoduleid: string; fmodulename: string }) => ({
-            value: row.fmoduleid,
-            label: row.fmodulename,
+          (row: { lkpModule: string; txtModuleName: string }) => ({
+            value: row.lkpModule,
+            label: row.txtModuleName,
           }),
         );
 
@@ -506,14 +506,14 @@ const SetDocumentNo: React.FC = () => {
         }
 
         const documentRows: {
-          fdoctype: string;
-          fdocname: string;
+          lkpDocument: string;
+          txtDocumentName: string;
         }[] = docListResult.data || [];
 
         setDocumentOptions(
           documentRows.map((doc) => ({
-            value: doc.fdoctype,
-            label: doc.fdocname,
+            value: doc.lkpDocument,
+            label: doc.txtDocumentName,
           })),
         );
 
@@ -530,7 +530,7 @@ const SetDocumentNo: React.FC = () => {
             if (docNoResult.success) {
               existingRows = (docNoResult.data || []).reduce(
                 (accumulator: Record<string, any>, row: any) => {
-                  accumulator[row.fdoctype] = row;
+                  accumulator[row.lkpDocument] = row;
                   return accumulator;
                 },
                 {},
@@ -541,19 +541,19 @@ const SetDocumentNo: React.FC = () => {
 
         setRows(
           documentRows.map((doc, index) => {
-            const existing = existingRows[doc.fdoctype];
+            const existing = existingRows[doc.lkpDocument];
 
             return {
               id: index + 1,
-              lkpDocument: doc.fdoctype,
-              lkpMode: existing?.fseqnoincrementmode || "Auto",
-              txtDocPrefix: existing?.fdocnoprefix || "",
-              txtStartSeqNo: existing?.fstartseqno || "",
-              chkStrictSerial: existing?.fstrictserialseqno ?? false,
-              lkpResetNo: existing?.fseqnoresetmode || "Never",
+              lkpDocument: doc.lkpDocument,
+              lkpMode: existing?.lkpMode || "Auto",
+              txtDocPrefix: existing?.txtDocPrefix || "",
+              txtStartSeqNo: existing?.txtStartSeqNo || "",
+              chkStrictSerial: existing?.chkStrictSerial ?? false,
+              lkpResetNo: existing?.lkpResetNo || "Never",
               chkPrintAfterSave:
-                existing?.fprintaftersave === 1 ||
-                existing?.fprintaftersave === true,
+                existing?.chkPrintAfterSave === 1 ||
+                existing?.chkPrintAfterSave === true,
               txtPositionNo: index + 1,
             };
           }),

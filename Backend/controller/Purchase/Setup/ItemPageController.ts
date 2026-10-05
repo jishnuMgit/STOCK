@@ -9,6 +9,7 @@ import {
   type ItemBranchRowPayload,
 } from "../../../services/Purchase/Setup/itemPageService.js";
 import { UserAudit } from "../../../utils/UserAudit.js";
+import { mapKeys, mapRows, unitListKeys, itemGroupListKeys, supplierListKeys, branchListKeys, itemHeaderKeys, itemBranchRowKeys } from "../../../utils/responseKeys.js";
 
 /* =========================================================
    GET UNIT LIST (lkpUnit dropdown)
@@ -38,7 +39,7 @@ export const getUnitList = async (
 
     return res.status(200).json({
       success: true,
-      data: result.rows,
+      data: mapRows(result.rows, unitListKeys),
     });
   } catch (error: unknown) {
     console.error("getUnitList error:", error);
@@ -82,7 +83,7 @@ export const getItemGroupList = async (
 
     return res.status(200).json({
       success: true,
-      data: result.rows,
+      data: mapRows(result.rows, itemGroupListKeys),
     });
   } catch (error: unknown) {
     console.error("getItemGroupList error:", error);
@@ -126,7 +127,7 @@ export const getSupplierList = async (
 
     return res.status(200).json({
       success: true,
-      data: result.rows,
+      data: mapRows(result.rows, supplierListKeys),
     });
   } catch (error: unknown) {
     console.error("getSupplierList error:", error);
@@ -181,7 +182,7 @@ export const getBranchList = async (
 
     return res.status(200).json({
       success: true,
-      data: result.rows,
+      data: mapRows(result.rows, branchListKeys),
     });
   } catch (error: unknown) {
     console.error("getBranchList error:", error);
@@ -237,8 +238,8 @@ export const getItem = async (
 
     return res.status(200).json({
       success: true,
-      header,
-      rows,
+      header: header ? mapKeys(header, itemHeaderKeys) : null,
+      rows: mapRows(rows, itemBranchRowKeys),
     });
   } catch (error: unknown) {
     console.error("getItem error:", error);

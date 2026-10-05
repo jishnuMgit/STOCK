@@ -7,21 +7,21 @@ import { UserAudit } from "../../utils/UserAudit.js";
 --------------------------------------------------------- */
 
 interface BranchNode {
-  fbrid: string;
-  fbrname: string;
+  lkpBranch: string;
+  txtBranchName: string;
   checked: boolean;
 }
 
 interface CompanyNode {
-  fcoid: string;
-  fconame: string;
+  lkpCoID: string;
+  txtCoName: string;
   checked: boolean;
   children: BranchNode[];
 }
 
 interface PermissionInput {
-  fcoid: string;
-  fbrid: string;
+  lkpCoID: string;
+  lkpBranch: string;
 }
 
 interface SaveBody {
@@ -78,8 +78,8 @@ async function fetchCompanyBranchTree(
 
     if (!company) {
       company = {
-        fcoid: row.fcoid,
-        fconame: row.fconame || "",
+        lkpCoID: row.fcoid,
+        txtCoName: row.fconame || "",
         checked: false,
         children: [],
       };
@@ -89,8 +89,8 @@ async function fetchCompanyBranchTree(
 
     if (row.fbrid) {
       company.children.push({
-        fbrid: row.fbrid,
-        fbrname: row.fbrname || "",
+        lkpBranch: row.fbrid,
+        txtBranchName: row.fbrname || "",
         checked: grantedSet?.has(`${row.fcoid}|${row.fbrid}`) ?? false,
       });
     }
@@ -285,17 +285,17 @@ export const saveUserPermissionCoBranch = async (
     const newPairs = new Set<string>();
 
     for (const permission of permissions) {
-      if (!permission.fcoid || !permission.fbrid) continue;
+      if (!permission.lkpCoID || !permission.lkpBranch) continue;
 
-      newPairs.add(`${permission.fcoid}|${permission.fbrid}`);
+      newPairs.add(`${permission.lkpCoID}|${permission.lkpBranch}`);
 
       await client.query(
         `CALL dbo.sp_pageuserpermissionbranch($1, $2, $3, $4, $5)`,
         [
           "S",
-          permission.fcoid,
+          permission.lkpCoID,
           lkpUserID,
-          permission.fbrid,
+          permission.lkpBranch,
           "cur_cobranch_ins",
         ]
       );
