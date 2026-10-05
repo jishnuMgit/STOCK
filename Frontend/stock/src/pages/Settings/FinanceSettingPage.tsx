@@ -77,8 +77,8 @@ const createMenuList = (
     <components.MenuList {...props}>
       <div
         className="
-          sticky top-0 z-[2]
-          grid h-[27px]
+          sticky top-0 z-2
+          grid h-6.75
           border-b border-slate-300
           bg-[#eeeeee]
           text-[12px] font-medium text-slate-800
@@ -86,7 +86,7 @@ const createMenuList = (
         style={{ gridTemplateColumns: gridColumns }}
       >
         <div
-          className={`flex min-w-0 items-center px-[7px] ${
+          className={`flex min-w-0 items-center px-1.75 ${
             secondHeader ? "border-r border-slate-300" : ""
           }`}
         >
@@ -94,7 +94,7 @@ const createMenuList = (
         </div>
 
         {secondHeader && (
-          <div className="flex min-w-0 items-center px-[7px]">
+          <div className="flex min-w-0 items-center px-1.75">
             {secondHeader}
           </div>
         )}
@@ -751,17 +751,14 @@ const FinanceSetting: React.FC = () => {
   // ==========================================================
 
   return (
-    <div
-      onKeyDown={handleEnterAsTab}
-      className="flex min-h-screen w-full items-center justify-center bg-white p-0 font-sans text-slate-700"
-    >
+    <div className="flex min-h-screen w-full items-center justify-center bg-white p-0 font-sans text-slate-700">
       <div className="w-[1100px] max-w-full border border-slate-400 bg-white">
         {/* TITLE BAR */}
 
        <div
           className="
             flex
-            h-[36px]
+            h-9
             items-center
             border-b
             border-slate-300
@@ -785,7 +782,7 @@ Finance Setting
         {/* TABLE */}
         {/* Do not add overflow-hidden here: dropdowns must remain visible. */}
 
-        <div className="mx-[25px] mt-0 mb-0 overflow-visible border border-[#b9e8d2]">
+        <div className="mx-6.25 mt-0 mb-0 overflow-visible border border-[#b9e8d2]">
           <div className="w-full">
             {/* TABLE HEADINGS */}
 
@@ -793,7 +790,7 @@ Finance Setting
               className="grid border-b border-[#b9e8d2] bg-[#eef9f3]"
               style={{ gridTemplateColumns: columns }}
             >
-              <div className="h-[30px] border-r border-[#c8eadb]" />
+              <div className="h-7.5 border-r border-[#c8eadb]" />
 
               <div className={`${headerCellClass} justify-center`}>
                 Sl.
@@ -811,7 +808,7 @@ Finance Setting
                 Account Name
               </div>
 
-              <div className="flex h-[30px] min-w-0 items-center px-[5px] text-[12px] font-medium text-slate-600">
+              <div className="flex h-7.5 min-w-0 items-center px-1.25 text-[12px] font-medium text-slate-600">
                 G/P/H
               </div>
             </div>
@@ -852,13 +849,13 @@ Finance Setting
                 >
                   {/* ROW SELECTOR */}
 
-                  <div className="h-[30px] border-r border-[#c8eadb]" />
+                  <div className="h-7.5 border-r border-[#c8eadb]" />
 
                   {/* SERIAL NUMBER */}
 
                   <div
                     id={`txtSlNo-${index}`}
-                    className="flex h-[30px] items-center justify-center border-r border-[#c8eadb]"
+                    className="flex h-7.5 items-center justify-center border-r border-[#c8eadb]"
                   >
                     {index + 1}
                   </div>
@@ -884,17 +881,17 @@ Finance Setting
                           option.label
                         ) : (
                           <div
-                            className="grid h-[27px] w-full items-center"
+                            className="grid h-6.75 w-full items-center"
                             style={{
                               gridTemplateColumns:
                                 "266px minmax(120px, 1fr)",
                             }}
                           >
-                            <span className="flex h-full min-w-0 items-center border-r border-slate-200 px-[7px]">
+                            <span className="flex h-full min-w-0 items-center border-r border-slate-200 px-1.75">
                               {option.label}
                             </span>
 
-                            <span className="flex h-full min-w-0 items-center px-[7px]">
+                            <span className="flex h-full min-w-0 items-center px-1.75">
                               {option.secondary}
                             </span>
                           </div>
@@ -928,7 +925,7 @@ Finance Setting
                         disabled={!perms.delete}
                         aria-label={`Delete row ${index + 1}`}
                         className="
-                          relative inline-flex h-full w-[25px] shrink-0
+                          relative inline-flex h-full w-[20px] shrink-0
                           items-center justify-center self-stretch rounded
                           text-[#999999] hover:text-red-600
                           disabled:cursor-not-allowed disabled:opacity-30
@@ -960,17 +957,17 @@ Finance Setting
                           option.label
                         ) : (
                           <div
-                            className="grid h-[27px] w-full items-center"
+                            className="grid h-6.75 w-full items-center"
                             style={{
                               gridTemplateColumns:
                                 "120px minmax(200px, 1fr)",
                             }}
                           >
-                            <span className="flex h-full min-w-0 items-center border-r border-slate-200 px-[7px]">
+                            <span className="flex h-full min-w-0 items-center border-r border-slate-200 px-1.75">
                               {option.label}
                             </span>
 
-                            <span className="flex h-full min-w-0 items-center px-[7px]">
+                            <span className="flex h-full min-w-0 items-center px-1.75">
                               {option.secondary}
                             </span>
                           </div>
@@ -1012,17 +1009,17 @@ Finance Setting
                           option.label
                         ) : (
                           <div
-                            className="grid h-[27px] w-full items-center"
+                            className="grid h-6.75 w-full items-center"
                             style={{
                               gridTemplateColumns:
                                 "minmax(0, 1fr) 120px",
                             }}
                           >
-                            <span className="flex h-full min-w-0 items-center border-r border-slate-200 px-[7px]">
+                            <span className="flex h-full min-w-0 items-center border-r border-slate-200 px-1.75">
                               {option.label}
                             </span>
 
-                            <span className="flex h-full min-w-0 items-center px-[7px]">
+                            <span className="flex h-full min-w-0 items-center px-1.75">
                               {option.secondary}
                             </span>
                           </div>
@@ -1046,7 +1043,7 @@ Finance Setting
 
                   {/* GROUP / HEAD */}
 
-                  <div className="h-[30px] min-w-0">
+                  <div className="h-7.5 min-w-0">
                     <input
                       id={`txtGPH-${index}`}
                       name="txtGPH"
@@ -1057,7 +1054,7 @@ Finance Setting
                       className="
                         h-full w-full min-w-0
                         border-0 bg-transparent
-                        px-[7px] text-[11px] text-slate-700
+                        px-1.75 text-[11px] text-slate-700
                         outline-none
                         focus:bg-transparent
                       "
@@ -1071,7 +1068,7 @@ Finance Setting
 
         {/* ACTION BUTTONS - stay at the bottom of the window, so Save is always visible without scrolling */}
 
-        <div className="sticky bottom-0 z-10 flex min-h-[74px] items-start justify-center gap-[12px] border-t border-slate-200 bg-white pt-[8px]">
+        <div className="sticky bottom-0 z-10 flex min-h-18.5 items-start justify-center gap-3 border-t border-slate-200 bg-white pt-2">
           <button
             id="btnSave"
             name="btnSave"
@@ -1079,9 +1076,9 @@ Finance Setting
             onClick={handleSave}
             disabled={!perms.save || saving}
             className="
-              h-[40px] w-[107px]
-              rounded-[4px] border border-[#9bb7cc]
-              bg-gradient-to-b from-white to-[#e2ebf2]
+              h-10 w-26.75
+              rounded-sm border border-[#9bb7cc]
+              bg-linear-to-b from-white to-[#e2ebf2]
               text-[14px] text-green-700 shadow-sm
               hover:from-[#f4fff7] hover:to-[#d4ebdc]
               focus:outline-none focus:ring-1 focus:ring-green-400
@@ -1099,9 +1096,9 @@ Finance Setting
             type="button"
             onClick={handleClear}
             className="
-              h-[40px] w-[107px]
-              rounded-[4px] border border-[#9bb7cc]
-              bg-gradient-to-b from-white to-[#e2ebf2]
+              h-10 w-26.75
+              rounded-sm border border-[#9bb7cc]
+              bg-linear-to-b from-white to-[#e2ebf2]
               text-[14px] text-green-700 shadow-sm
               hover:from-[#f4fff7] hover:to-[#d4ebdc]
               focus:outline-none focus:ring-1 focus:ring-green-400

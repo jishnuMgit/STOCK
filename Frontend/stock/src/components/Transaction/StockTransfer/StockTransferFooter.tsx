@@ -11,8 +11,6 @@ const inputClass =
 // BUTTON STYLE
 // ============================================================
 
-const buttonClass =
-  "h-[40px] rounded-[4px] border border-[#8ba7bd] bg-gradient-to-b from-white to-[#edf3f7] text-[14px] text-green-600 shadow-sm hover:bg-[#f5f5f5] focus:outline-none";
 
 // ============================================================
 // FOOTER
