@@ -64,6 +64,18 @@ mnuBeginningStock:"/Purchase/Transaction/BeginningStockPage",
 
 
 
+/*============================================================
+Sales-TRANSACTION
+=============================================================*/
+
+mnuSalesInvoice: "/Sales/Transaction/SalesInvoicePage",
+
+
+
+
+mnuStockTransfer: "/Sales/Transaction/StockTransferPage",
+
+
 
   /* =========================================================
      FINANCE 
@@ -81,7 +93,7 @@ mnuBeginningStock:"/Purchase/Transaction/BeginningStockPage",
   ========================================================= */
 
   mnuCustomer: "/Finance/Setup/CustomerPage",
-  mnuChartOfAccount:"/Finance/Setup/ChartOfAccountList",
+  mnuSetChartOfAccount:"/Finance/Setup/ChartOfAccountList",
 
   /* =========================================================
      FINANCE - REPORTS
