@@ -182,17 +182,30 @@ export const login = async (req: Request, res: Response): Promise<Response> => {
 
     const sessionToken = uuidv4();
 
-    await pool.query(
+    const sessionResult = await pool.query(
       `
-  INSERT INTO dbo.tblusersession (
-    fuserid,
-    fsessiontoken,
-    fcoid
-  )
+  INSERT INTO dbo.tblusersession (fuserid, fsessiontoken, fcoid)
   VALUES ($1, $2, $3)
+  ON CONFLICT (fuserid) DO UPDATE
+    SET fsessiontoken = EXCLUDED.fsessiontoken,
+        fcoid         = EXCLUDED.fcoid,
+        fcreatedat    = now(),
+        flastactivity = now(),
+        fexpiresat    = now() + interval '24 hours'
+    WHERE dbo.tblusersession.fexpiresat IS NULL
+       OR dbo.tblusersession.fexpiresat <= now()
+  RETURNING fsessionid
   `,
       [PstrUserID, sessionToken, pstrCOID],
     );
+
+    // 0 rows = a live session already exists for this user
+    if (sessionResult.rowCount === 0) {
+      return res.status(409).json({
+        success: false,
+        message: "This user is already logged in on another device",
+      });
+    }
 
     /* =====================================================
        SET SESSION COOKIE
