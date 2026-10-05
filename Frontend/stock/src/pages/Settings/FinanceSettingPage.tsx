@@ -242,9 +242,12 @@ const createSelectStyles = (
     overflow: "hidden",
   }),
 
+  // no fixed maxHeight here (react-select uses its own, up to 300px).
+  // Together with minMenuHeight on each Select, the list opens BELOW the
+  // row only when the whole list fits there; otherwise it opens ABOVE with
+  // the whole list - it is never squeezed into a short scrolling list.
   menuList: (base) => ({
     ...base,
-    maxHeight: "300px",
     padding: 0,
     overflowX: "hidden",
     overflowY: "auto",
@@ -278,7 +281,7 @@ const createSelectStyles = (
 // tblmenu: 9109 = mnuFinSetting ("Finance Setting")
 const MENU_ID = "9109";
 
-const ChartOfAccountSettings: React.FC = () => {
+const FinanceSetting: React.FC = () => {
   const [rows, setRows] = useState<AccountSetting[]>([]);
 
   // bumped by Clear (and after a save) so the saved rows are loaded again
@@ -774,7 +777,7 @@ const ChartOfAccountSettings: React.FC = () => {
               text-slate-700
             "
           >
-Chart Of Account Settings
+Finance Setting
           </span>
 
         </div>
@@ -905,6 +908,7 @@ Chart Of Account Settings
                       }
                       menuPosition="fixed"
                       menuPlacement="auto"
+                      minMenuHeight={320}
                       isClearable={false}
                       isSearchable
                       placeholder=""
@@ -924,14 +928,14 @@ Chart Of Account Settings
                         disabled={!perms.delete}
                         aria-label={`Delete row ${index + 1}`}
                         className="
-                          relative inline-flex h-full w-[20px] shrink-0
+                          relative inline-flex h-full w-[25px] shrink-0
                           items-center justify-center self-stretch rounded
                           text-[#999999] hover:text-red-600
                           disabled:cursor-not-allowed disabled:opacity-30
                           disabled:hover:text-[#999999]
                         "
                       >
-                        <X size={10} />
+                        <X size={20} />
                       </button>
                     )}
                   </div>
@@ -980,6 +984,7 @@ Chart Of Account Settings
                       }
                       menuPosition="fixed"
                       menuPlacement="auto"
+                      minMenuHeight={320}
                       isClearable={false}
                       isSearchable
                       placeholder=""
@@ -1031,6 +1036,7 @@ Chart Of Account Settings
                       }
                       menuPosition="fixed"
                       menuPlacement="auto"
+                      minMenuHeight={320}
                       isClearable={false}
                       isSearchable
                       placeholder=""
@@ -1113,4 +1119,4 @@ Chart Of Account Settings
   );
 };
 
-export default ChartOfAccountSettings;
+export default FinanceSetting;

@@ -1,13 +1,13 @@
 import type { PoolClient } from "pg";
 import pool from "../../DB/db.js";
-import { mapRows, finSettingKeys } from "../../utils/responseKeys.js";
+import { mapRows, chartOfAccountKeys } from "../../utils/responseKeys.js";
 
 /* =========================================================
    TYPES (keys = form field names)
 ========================================================= */
 
 // one saved row, as the page knows it
-export interface FinRow {
+export interface ChartOfAccountRow {
   txtSlNo: number;
   lkpParameterType: string;
   lkpAccountID: string | null;
@@ -17,15 +17,15 @@ export interface FinRow {
 // one grid row sent by the page. The two "original" values are
 // the row's type + slno as it was LOADED (null for a new row) -
 // they say which saved row this grid row came from.
-export interface FinSettingRowPayload extends FinRow {
+export interface ChartOfAccountRowPayload extends ChartOfAccountRow {
   txtOriginalSlNo: number | null;
   lkpOriginalParameterType: string | null;
 }
 
-export interface FinSettingSaveResult {
+export interface ChartOfAccountSaveResult {
   changed: boolean;
-  inserted: FinRow[];
-  updated: { before: FinRow; after: FinRow }[]; // type / account really changed
+  inserted: ChartOfAccountRow[];
+  updated: { before: ChartOfAccountRow; after: ChartOfAccountRow }[]; // type / account really changed
 }
 
 /* =========================================================
@@ -33,14 +33,14 @@ export interface FinSettingSaveResult {
    the save and the delete (which compare against them)
 ========================================================= */
 
-async function fetchFinSettingRows(
+async function fetchChartOfAccountRows(
   client: PoolClient,
   PstrCoID: string
-): Promise<FinRow[]> {
+): Promise<ChartOfAccountRow[]> {
   const cursorName =
     `cur_finsetting_${Date.now()}_${Math.floor(Math.random() * 100000)}`;
 
-  await callSpFinSetting(client, {
+  await callSpChartOfAccount(client, {
     strmode: "G",
     PstrCoID,
     cursorName,
@@ -48,30 +48,30 @@ async function fetchFinSettingRows(
 
   const result = await client.query(`FETCH ALL FROM "${cursorName}"`);
 
-  return mapRows(result.rows, finSettingKeys) as unknown as FinRow[];
+  return mapRows(result.rows, chartOfAccountKeys) as unknown as ChartOfAccountRow[];
 }
 
 /* =========================================================
-   GET FINANCE SETTING ROWS (mode 'G') - the saved
+   GET CHART OF ACCOUNT ROWS (mode 'G') - the saved
    parameter -> account rows of the company
 ========================================================= */
 
-export async function getFinSettingService(
+export async function getChartOfAccountService(
   PstrCoID: string
-): Promise<FinRow[]> {
+): Promise<ChartOfAccountRow[]> {
   const client: PoolClient = await pool.connect();
 
   try {
     await client.query("BEGIN");
 
-    const rows = await fetchFinSettingRows(client, PstrCoID);
+    const rows = await fetchChartOfAccountRows(client, PstrCoID);
 
     await client.query("COMMIT");
 
     return rows;
   } catch (error: unknown) {
     await client.query("ROLLBACK");
-    console.error("getFinSettingService error:", error);
+    console.error("getChartOfAccountService error:", error);
     throw error;
   } finally {
     client.release();
@@ -85,43 +85,43 @@ export async function getFinSettingService(
      - no original keys          -> new row        -> mode S1
      - original keys, changed    -> modified row   -> mode M1
    (Removing a row is a separate action - see
-   deleteFinSettingRowService.)
+   deleteChartOfAccountRowService.)
    Everything runs in ONE transaction - any error rolls the
    whole save back.
 ========================================================= */
 
 const keyOf = (slno: number, type: string) => `${slno}|${type}`;
 
-const sameRow = (a: FinRow, b: FinRow) =>
+const sameRow = (a: ChartOfAccountRow, b: ChartOfAccountRow) =>
   a.txtSlNo === b.txtSlNo &&
   a.lkpParameterType === b.lkpParameterType &&
   (a.lkpAccountID ?? null) === (b.lkpAccountID ?? null) &&
   (a.txtGPH ?? null) === (b.txtGPH ?? null);
 
-export async function saveFinSettingService(
+export async function saveChartOfAccountService(
   PstrCoID: string,
-  rows: FinSettingRowPayload[],
+  rows: ChartOfAccountRowPayload[],
   PstrUserID: string
-): Promise<FinSettingSaveResult> {
+): Promise<ChartOfAccountSaveResult> {
   const client: PoolClient = await pool.connect();
 
   try {
     await client.query("BEGIN");
 
-    const existing = await fetchFinSettingRows(client, PstrCoID);
+    const existing = await fetchChartOfAccountRows(client, PstrCoID);
     const existingByKey = new Map(
       existing.map((row) => [keyOf(row.txtSlNo, row.lkpParameterType), row])
     );
 
     /* ---------- sort the submitted rows into new / existing ---------- */
 
-    const inserted: FinRow[] = [];
-    const candidates: { before: FinRow; after: FinRow }[] = [];
+    const inserted: ChartOfAccountRow[] = [];
+    const candidates: { before: ChartOfAccountRow; after: ChartOfAccountRow }[] = [];
     const keptKeys = new Set<string>();
     const seenPairs = new Set<string>();
 
     for (const row of rows) {
-      const after: FinRow = {
+      const after: ChartOfAccountRow = {
         txtSlNo: Number(row.txtSlNo),
         lkpParameterType: String(row.lkpParameterType ?? "").trim(),
         lkpAccountID: row.lkpAccountID ? String(row.lkpAccountID).trim() : null,
@@ -213,7 +213,7 @@ export async function saveFinSettingService(
     const toUpdate = candidates.filter(({ before, after }) => !sameRow(before, after));
 
     for (const { before, after } of toUpdate) {
-      await callSpFinSetting(client, {
+      await callSpChartOfAccount(client, {
         strmode: "M1",
         PstrCoID,
         txtSlNo: -after.txtSlNo,
@@ -227,7 +227,7 @@ export async function saveFinSettingService(
     }
 
     for (const { before, after } of toUpdate) {
-      await callSpFinSetting(client, {
+      await callSpChartOfAccount(client, {
         strmode: "M1",
         PstrCoID,
         txtSlNo: after.txtSlNo,
@@ -242,7 +242,7 @@ export async function saveFinSettingService(
 
     // new rows last
     for (const row of inserted) {
-      await callSpFinSetting(client, {
+      await callSpChartOfAccount(client, {
         strmode: "S1",
         PstrCoID,
         txtSlNo: row.txtSlNo,
@@ -258,7 +258,7 @@ export async function saveFinSettingService(
     return { changed: true, inserted, updated };
   } catch (error: unknown) {
     await client.query("ROLLBACK");
-    console.error("saveFinSettingService error:", error);
+    console.error("saveChartOfAccountService error:", error);
     throw error;
   } finally {
     client.release();
@@ -272,18 +272,18 @@ export async function saveFinSettingService(
    Returns the row that was deleted (for the audit note).
 ========================================================= */
 
-export async function deleteFinSettingRowService(
+export async function deleteChartOfAccountRowService(
   PstrCoID: string,
   txtOriginalSlNo: number,
   lkpOriginalParameterType: string,
   PstrUserID: string
-): Promise<FinRow> {
+): Promise<ChartOfAccountRow> {
   const client: PoolClient = await pool.connect();
 
   try {
     await client.query("BEGIN");
 
-    const existing = await fetchFinSettingRows(client, PstrCoID);
+    const existing = await fetchChartOfAccountRows(client, PstrCoID);
 
     const row = existing.find(
       (item) =>
@@ -297,7 +297,7 @@ export async function deleteFinSettingRowService(
       );
     }
 
-    await callSpFinSetting(client, {
+    await callSpChartOfAccount(client, {
       strmode: "D1",
       PstrCoID,
       txtOriginalSlNo: row.txtSlNo,
@@ -310,7 +310,7 @@ export async function deleteFinSettingRowService(
     return row;
   } catch (error: unknown) {
     await client.query("ROLLBACK");
-    console.error("deleteFinSettingRowService error:", error);
+    console.error("deleteChartOfAccountRowService error:", error);
     throw error;
   } finally {
     client.release();
@@ -318,11 +318,11 @@ export async function deleteFinSettingRowService(
 }
 
 /* =========================================================
-   SHARED HELPER - call dbo.sp_pagefinancesetting with
+   SHARED HELPER - call dbo.sp_pagesetchartofaccount with
    sensible defaults for whichever fields a mode doesn't use
 ========================================================= */
 
-async function callSpFinSetting(
+async function callSpChartOfAccount(
   client: PoolClient,
   overrides: Partial<{
     strmode: string;
@@ -354,7 +354,7 @@ async function callSpFinSetting(
 
   await client.query(
     `
-    CALL dbo.sp_pagefinancesetting(
+    CALL dbo.sp_pagesetchartofaccount(
       $1::varchar, $2::varchar, $3::smallint, $4::varchar, $5::varchar,
       $6::varchar, $7::smallint, $8::varchar, $9::varchar, $10::refcursor
     )
