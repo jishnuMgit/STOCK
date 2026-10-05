@@ -113,7 +113,7 @@ mnuStockTransfer: "/Sales/Transaction/StockTransferPage",
     "/Settings/SetBranchInfo",
 
   mnuSetCompanyInfo: "/Settings/SetCompanyInfo",
-mnuFinSetting: "/Settings/ChartOfAccountSetting",
+mnuFinSetting: "/Settings/FinanceSetting",
 mnuSetStockPostingAccount:"/Settings/SetPostingAccount",
 
   /* =========================================================

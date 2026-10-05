@@ -17,20 +17,20 @@ interface SelectOption {
 }
 
 interface PermissionNode {
-  fmenuid: string;
-  fmenuname: string | null;
-  fmenucaption: string;
-  fmenubuttons: string | null;
-  fuserid: string;
-  fuserbuttons: string | number | null;
-  fparentid: string;
-  fright: number | string;
+  lkpMenuID: string;
+  txtMenuName: string | null;
+  txtMenuCaption: string;
+  txtMenuButtons: string | null;
+  lkpUserID: string;
+  txtUserButtons: string | number | null;
+  lkpParentMenuID: string;
+  txtRight: number | string;
   children: PermissionNode[];
 }
 
 interface PermissionInput {
-  menuId: string;
-  buttons: string;
+  lkpMenuID: string;
+  txtUserButtons: string;
 }
 
 interface ApiResponse {
@@ -43,10 +43,10 @@ interface MenuRowProps {
   node: PermissionNode;
   depth: number;
   expanded: Set<string>;
-  onExpand: (menuId: string) => void;
-  onToggleMenu: (menuId: string, checked: boolean) => void;
+  onExpand: (lkpMenuID: string) => void;
+  onToggleMenu: (lkpMenuID: string, checked: boolean) => void;
   onToggleButton: (
-    menuId: string,
+    lkpMenuID: string,
     buttonCode: string,
     checked: boolean
   ) => void;
@@ -190,14 +190,14 @@ const PERMISSION_BUTTONS: Record<string, string> = {
 // ============================================================
 
 function getUserButtons(node: PermissionNode): string {
-  const value = String(node.fuserbuttons ?? "").trim();
+  const value = String(node.txtUserButtons ?? "").trim();
 
   return value === "0" ? "" : value;
 }
 
 function isMenuChecked(node: PermissionNode): boolean {
   return (
-    Number(node.fright) > 0 ||
+    Number(node.txtRight) > 0 ||
     getUserButtons(node).length > 0
   );
 }
@@ -209,9 +209,9 @@ function isButtonChecked(
   return getUserButtons(node).includes(buttonCode);
 }
 
-// Only show action checkboxes supported by fmenubuttons.
+// Only show action checkboxes supported by txtMenuButtons.
 function getAvailableButtons(node: PermissionNode): string[] {
-  const available = String(node.fmenubuttons ?? "").trim();
+  const available = String(node.txtMenuButtons ?? "").trim();
 
   return Object.keys(PERMISSION_BUTTONS).filter((code) =>
     available.includes(code)
@@ -233,14 +233,14 @@ function normalizeTree(data: unknown): PermissionNode[] {
     const node = item as Partial<PermissionNode>;
 
     return {
-      fmenuid: String(node.fmenuid ?? ""),
-      fmenuname: node.fmenuname ?? null,
-      fmenucaption: String(node.fmenucaption ?? ""),
-      fmenubuttons: node.fmenubuttons ?? null,
-      fuserid: String(node.fuserid ?? ""),
-      fuserbuttons: node.fuserbuttons ?? "0",
-      fparentid: String(node.fparentid ?? ""),
-      fright: node.fright ?? 0,
+      lkpMenuID: String(node.lkpMenuID ?? ""),
+      txtMenuName: node.txtMenuName ?? null,
+      txtMenuCaption: String(node.txtMenuCaption ?? ""),
+      txtMenuButtons: node.txtMenuButtons ?? null,
+      lkpUserID: String(node.lkpUserID ?? ""),
+      txtUserButtons: node.txtUserButtons ?? "0",
+      lkpParentMenuID: String(node.lkpParentMenuID ?? ""),
+      txtRight: node.txtRight ?? 0,
       children: normalizeTree(node.children),
     };
   });
@@ -250,8 +250,8 @@ function normalizeTree(data: unknown): PermissionNode[] {
 // UPDATE MENU AND ALL DESCENDANT MENUS
 //
 // Menu checkbox selection cascades to descendant menus.
-// fuserbuttons is populated using each menu's own
-// fmenubuttons definition.
+// txtUserButtons is populated using each menu's own
+// txtMenuButtons definition.
 // ============================================================
 
 function setSubtreeChecked(
@@ -264,8 +264,8 @@ function setSubtreeChecked(
 
   return {
     ...node,
-    fuserbuttons: buttons || "0",
-    fright: checked ? 1 : 0,
+    txtUserButtons: buttons || "0",
+    txtRight: checked ? 1 : 0,
     children: node.children.map((child) =>
       setSubtreeChecked(child, checked)
     ),
@@ -274,11 +274,11 @@ function setSubtreeChecked(
 
 function updateSubtree(
   nodes: PermissionNode[],
-  menuId: string,
+  lkpMenuID: string,
   checked: boolean
 ): PermissionNode[] {
   return nodes.map((node) => {
-    if (node.fmenuid === menuId) {
+    if (node.lkpMenuID === lkpMenuID) {
       return setSubtreeChecked(node, checked);
     }
 
@@ -286,7 +286,7 @@ function updateSubtree(
       ...node,
       children: updateSubtree(
         node.children,
-        menuId,
+        lkpMenuID,
         checked
       ),
     };
@@ -297,8 +297,8 @@ function updateSubtree(
 // UPDATE ONE ACTION CHECKBOX
 //
 // Example:
-// fmenubuttons = "SMDPT"
-// fuserbuttons = "SMP"
+// txtMenuButtons = "SMDPT"
+// txtUserButtons = "SMP"
 //
 // Unchecking Print changes SMP to SM.
 // Checking Delete changes SMP to SMPD.
@@ -306,12 +306,12 @@ function updateSubtree(
 
 function updateAction(
   nodes: PermissionNode[],
-  menuId: string,
+  lkpMenuID: string,
   buttonCode: string,
   checked: boolean
 ): PermissionNode[] {
   return nodes.map((node) => {
-    if (node.fmenuid === menuId) {
+    if (node.lkpMenuID === lkpMenuID) {
       const available = getAvailableButtons(node);
 
       // Never add an action that the menu does not support.
@@ -339,8 +339,8 @@ function updateAction(
 
       return {
         ...node,
-        fuserbuttons: buttons || "0",
-        fright: buttons ? 1 : 0,
+        txtUserButtons: buttons || "0",
+        txtRight: buttons ? 1 : 0,
       };
     }
 
@@ -348,7 +348,7 @@ function updateAction(
       ...node,
       children: updateAction(
         node.children,
-        menuId,
+        lkpMenuID,
         buttonCode,
         checked
       ),
@@ -379,7 +379,7 @@ function syncParentChecks(
     return {
       ...node,
       children,
-      fright: anyChildChecked ? 1 : 0,
+      txtRight: anyChildChecked ? 1 : 0,
     };
   });
 }
@@ -397,8 +397,8 @@ function flattenSelected(
 
     if (isMenuChecked(node) || buttons.length > 0) {
       result.push({
-        menuId: node.fmenuid,
-        buttons: buttons || "0",
+        lkpMenuID: node.lkpMenuID,
+        txtUserButtons: buttons || "0",
       });
     }
 
@@ -415,8 +415,8 @@ function flattenSelected(
 function clearTree(nodes: PermissionNode[]): PermissionNode[] {
   return nodes.map((node) => ({
     ...node,
-    fuserbuttons: "0",
-    fright: 0,
+    txtUserButtons: "0",
+    txtRight: 0,
     children: clearTree(node.children),
   }));
 }
@@ -434,12 +434,12 @@ function MenuRow({
   onToggleButton,
 }: MenuRowProps) {
   const hasChildren = node.children.length > 0;
-  const isExpanded = expanded.has(node.fmenuid);
+  const isExpanded = expanded.has(node.lkpMenuID);
   const availableButtons = getAvailableButtons(node);
   const expandable = isExpandable(node);
 
   const menuLabel =
-    node.fmenucaption || node.fmenuname || node.fmenuid;
+    node.txtMenuCaption || node.txtMenuName || node.lkpMenuID;
 
   return (
     <>
@@ -467,7 +467,7 @@ function MenuRow({
                 isExpanded ? "Collapse menu" : "Expand menu"
               }
               aria-expanded={isExpanded}
-              onClick={() => onExpand(node.fmenuid)}
+              onClick={() => onExpand(node.lkpMenuID)}
               className="flex h-[18px] w-[13px] shrink-0 items-center justify-center bg-transparent p-0 text-[#7891a9] focus-visible:outline-2 focus-visible:outline-blue-400"
             >
               <span
@@ -487,7 +487,7 @@ function MenuRow({
             checked={isMenuChecked(node)}
             onChange={(event) =>
               onToggleMenu(
-                node.fmenuid,
+                node.lkpMenuID,
                 event.target.checked
               )
             }
@@ -505,7 +505,7 @@ function MenuRow({
       {isExpanded &&
         availableButtons.map((buttonCode) => (
           <div
-            key={`${node.fmenuid}-${buttonCode}`}
+            key={`${node.lkpMenuID}-${buttonCode}`}
             role="row"
             className="grid min-h-[24px] grid-cols-[23px_minmax(250px,1fr)] border-b border-[#C1F2D7] bg-[#eff7ff]"
           >
@@ -529,7 +529,7 @@ function MenuRow({
                 checked={isButtonChecked(node, buttonCode)}
                 onChange={(event) =>
                   onToggleButton(
-                    node.fmenuid,
+                    node.lkpMenuID,
                     buttonCode,
                     event.target.checked
                   )
@@ -550,7 +550,7 @@ function MenuRow({
         isExpanded &&
         node.children.map((child) => (
           <MenuRow
-            key={child.fmenuid}
+            key={child.lkpMenuID}
             node={child}
             depth={depth + 1}
             expanded={expanded}
@@ -574,9 +574,8 @@ const UserPermission: React.FC = () => {
   const perms = useButtonPermissions(MENU_ID);
   const handleEnterAsTab = useEnterAsTab();
 
-  const [lkpUserID, setLkpUserID] = useState(
-    () => localStorage.getItem("PstrUserID") || "ADMIN"
-  );
+  // no user is selected when the page opens
+  const [lkpUserID, setLkpUserID] = useState("");
 
   const [userIdOptions, setUserIdOptions] = useState<SelectOption[]>([]);
   const [loadingUserIdOptions, setLoadingUserIdOptions] = useState(true);
@@ -590,16 +589,12 @@ const UserPermission: React.FC = () => {
 
   // ==========================================================
   // LOAD PERMISSIONS
-  // GET /api/user-permission/:lkpUserID
+  // With a user picked: GET /api/user-permission/:lkpUserID
+  // With no user yet:   GET /api/user-permission/structure
+  //   (the full menu tree, everything unchecked)
   // ==========================================================
 
   const loadPermissions = useCallback(async (id: string) => {
-    if (!id.trim()) {
-      setMenuTree([]);
-      toast.warning("Please enter a user ID.");
-      return;
-    }
-
     const PstrCoID = localStorage.getItem("PstrCoID");
 
     if (!PstrCoID) {
@@ -611,9 +606,11 @@ const UserPermission: React.FC = () => {
     setLoading(true);
 
     try {
-      const response = await fetch(
-        `${API_URL}/${encodeURIComponent(id.trim())}?PstrCoID=${encodeURIComponent(PstrCoID)}`
-      );
+      const url = id.trim()
+        ? `${API_URL}/${encodeURIComponent(id.trim())}?PstrCoID=${encodeURIComponent(PstrCoID)}`
+        : `${API_URL}/structure?PstrCoID=${encodeURIComponent(PstrCoID)}`;
+
+      const response = await fetch(url);
 
       const result: ApiResponse = await response.json();
 
@@ -634,7 +631,7 @@ const UserPermission: React.FC = () => {
         new Set(
           tree
             .filter((node) => node.children.length > 0)
-            .map((node) => node.fmenuid)
+            .map((node) => node.lkpMenuID)
         )
       );
     } catch (err) {
@@ -676,7 +673,7 @@ const UserPermission: React.FC = () => {
 
         const result: {
           success: boolean;
-          data?: { fuserid: string }[];
+          data?: { lkpUserID: string }[];
         } = await response.json();
 
         if (!response.ok || !result.success) {
@@ -685,8 +682,8 @@ const UserPermission: React.FC = () => {
 
         setUserIdOptions(
           (result.data || []).map((row) => ({
-            value: row.fuserid,
-            label: row.fuserid,
+            value: row.lkpUserID,
+            label: row.lkpUserID,
           }))
         );
       } catch (err) {
@@ -703,14 +700,14 @@ const UserPermission: React.FC = () => {
   // EXPAND / COLLAPSE
   // ==========================================================
 
-  const handleExpand = (menuId: string) => {
+  const handleExpand = (lkpMenuID: string) => {
     setExpanded((previous) => {
       const next = new Set(previous);
 
-      if (next.has(menuId)) {
-        next.delete(menuId);
+      if (next.has(lkpMenuID)) {
+        next.delete(lkpMenuID);
       } else {
-        next.add(menuId);
+        next.add(lkpMenuID);
       }
 
       return next;
@@ -722,13 +719,13 @@ const UserPermission: React.FC = () => {
   // ==========================================================
 
   const handleToggleMenu = (
-    menuId: string,
+    lkpMenuID: string,
     checked: boolean
   ) => {
     setMenuTree((previous) => {
       const updated = updateSubtree(
         previous,
-        menuId,
+        lkpMenuID,
         checked
       );
 
@@ -741,7 +738,7 @@ const UserPermission: React.FC = () => {
   // ==========================================================
 
   const handleToggleButton = (
-    menuId: string,
+    lkpMenuID: string,
     buttonCode: string,
     checked: boolean
   ) => {
@@ -749,7 +746,7 @@ const UserPermission: React.FC = () => {
       syncParentChecks(
         updateAction(
           previous,
-          menuId,
+          lkpMenuID,
           buttonCode,
           checked
         )
@@ -991,7 +988,7 @@ const UserPermission: React.FC = () => {
           ) : (
             menuTree.map((node) => (
               <MenuRow
-                key={node.fmenuid}
+                key={node.lkpMenuID}
                 node={node}
                 depth={0}
                 expanded={expanded}

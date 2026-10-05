@@ -5,6 +5,7 @@ import {
   getCompanyInfoService,
   updateCompanyInfoService,
 } from "../../services/SettingServices/setcompanyInfoService.js";
+import { mapKeys, mapRows, companyListKeys, companyDetailKeys } from "../../utils/responseKeys.js";
 
 /* =========================================================
    GET COMPANY LIST (lkpCoName dropdown)
@@ -34,7 +35,7 @@ export const getCompanyList = async (
 
     return res.status(200).json({
       success: true,
-      data: result.rows,
+      data: mapRows(result.rows, companyListKeys),
     });
   } catch (error: unknown) {
     console.error("getCompanyList error:", error);
@@ -79,7 +80,7 @@ export const getCompanyDetails = async (
 
     return res.status(200).json({
       success: true,
-      data,
+      data: mapKeys(data, companyDetailKeys),
     });
   } catch (error: unknown) {
     console.error("getCompanyDetails error:", error);

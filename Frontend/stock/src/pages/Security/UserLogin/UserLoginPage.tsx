@@ -329,8 +329,21 @@ const UserLogin: React.FC = () => {
         return;
       }
 
-      const toOptions = (rows: { fpid: string; fpname: string }[]) =>
-        rows.map((row) => ({ value: row.fpid, label: row.fpname }));
+      const toTypeOptions = (
+        rows: { lkpUserType: string; txtUserTypeName: string }[]
+      ) =>
+        rows.map((row) => ({
+          value: row.lkpUserType,
+          label: row.txtUserTypeName,
+        }));
+
+      const toStatusOptions = (
+        rows: { lkpUserStatus: string; txtUserStatusName: string }[]
+      ) =>
+        rows.map((row) => ({
+          value: row.lkpUserStatus,
+          label: row.txtUserStatusName,
+        }));
 
       try {
         const [typeResponse, statusResponse] = await Promise.all([
@@ -346,11 +359,11 @@ const UserLogin: React.FC = () => {
         const statusResult = await statusResponse.json();
 
         if (typeResult.success) {
-          setUserTypeOptions(toOptions(typeResult.data));
+          setUserTypeOptions(toTypeOptions(typeResult.data));
         }
 
         if (statusResult.success) {
-          setUserStatusOptions(toOptions(statusResult.data));
+          setUserStatusOptions(toStatusOptions(statusResult.data));
         }
       } catch (error) {
         console.error("user type / status list error:", error);

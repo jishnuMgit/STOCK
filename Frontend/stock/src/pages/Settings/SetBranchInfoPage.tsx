@@ -213,6 +213,11 @@ const SetBranchInfo: React.FC = () => {
 
   const [branchOptions, setBranchOptions] = useState<SelectOption[]>([]);
 
+  // the branch the page opened with, and a counter that forces the
+  // branch info to be loaded again (used by Clear)
+  const [defaultBranch, setDefaultBranch] = useState("");
+  const [reloadKey, setReloadKey] = useState(0);
+
   useEffect(() => {
     const loadBranchList = async () => {
       try {
@@ -241,9 +246,9 @@ const SetBranchInfo: React.FC = () => {
         }
 
         const options: SelectOption[] = (result.data || []).map(
-          (row: { fbrid: string; fbrname: string }) => ({
-            value: row.fbrid,
-            label: row.fbrname,
+          (row: { lkpBranch: string; txtBranchName: string }) => ({
+            value: row.lkpBranch,
+            label: row.txtBranchName,
           })
         );
 
@@ -290,6 +295,7 @@ const SetBranchInfo: React.FC = () => {
         }
 
         if (result.data) {
+          setDefaultBranch(result.data);
           setLkpBranch(result.data);
         }
       } catch (error) {
@@ -333,36 +339,36 @@ const SetBranchInfo: React.FC = () => {
 
         const data = result.data;
 
-        setTxtBrName_AR(data.fbrname_ar || "");
-        setTxtBuildingNo(data.fbuildingno || "");
-        setTxtBuildingNo_AR(data.fbuildingno_ar || "");
-        setTxtStreetName(data.fstreetname || "");
-        setTxtStreetName_AR(data.fstreetname_ar || "");
-        setTxtDistrict(data.fdistrict || "");
-        setTxtDistrict_AR(data.fdistrict_ar || "");
-        setTxtCity(data.fcity || "");
-        setTxtCity_AR(data.fcity_ar || "");
-        setTxtCountry(data.fcountry || "");
-        setTxtCountry_AR(data.fcountry_ar || "");
-        setTxtPostalCode(data.fpostalcode || "");
-        setTxtPostalCode_AR(data.fpostalcode_ar || "");
-        setTxtAdditionalNo(data.fadditionalno || "");
-        setTxtAdditionalNo_AR(data.fadditionalno_ar || "");
-        setTxtCRNo(data.fcrno || "");
-        setTxtCRNo_AR(data.fcrno_ar || "");
-        setTxtLicenseNo(data.flicenseno || "");
-        setTxtLicenseNo_AR(data.flicenseno_ar || "");
-        setTxtLicenseCategory(data.flicensecategory || "");
-        setTxtLicenseCategory_AR(data.flicensecategory_ar || "");
-        setTxtBrAddress1(data.fbraddress1 || "");
-        setTxtBrAddress1_AR(data.fbraddress1_ar || "");
-        setTxtBrAddress2(data.fbraddress2 || "");
-        setTxtBrAddress2_AR(data.fbraddress2_ar || "");
-        setTxtBrAddress3(data.fbraddress3 || "");
-        setTxtBrAddress3_AR(data.fbraddress3_ar || "");
-        setTxtBrAddress4(data.fbraddress4 || "");
-        setTxtBrAddress4_AR(data.fbraddress4_ar || "");
-        setChkHo(!!data.fho);
+        setTxtBrName_AR(data.txtBrName_AR || "");
+        setTxtBuildingNo(data.txtBuildingNo || "");
+        setTxtBuildingNo_AR(data.txtBuildingNo_AR || "");
+        setTxtStreetName(data.txtStreetName || "");
+        setTxtStreetName_AR(data.txtStreetName_AR || "");
+        setTxtDistrict(data.txtDistrict || "");
+        setTxtDistrict_AR(data.txtDistrict_AR || "");
+        setTxtCity(data.txtCity || "");
+        setTxtCity_AR(data.txtCity_AR || "");
+        setTxtCountry(data.txtCountry || "");
+        setTxtCountry_AR(data.txtCountry_AR || "");
+        setTxtPostalCode(data.txtPostalCode || "");
+        setTxtPostalCode_AR(data.txtPostalCode_AR || "");
+        setTxtAdditionalNo(data.txtAdditionalNo || "");
+        setTxtAdditionalNo_AR(data.txtAdditionalNo_AR || "");
+        setTxtCRNo(data.txtCRNo || "");
+        setTxtCRNo_AR(data.txtCRNo_AR || "");
+        setTxtLicenseNo(data.txtLicenseNo || "");
+        setTxtLicenseNo_AR(data.txtLicenseNo_AR || "");
+        setTxtLicenseCategory(data.txtLicenseCategory || "");
+        setTxtLicenseCategory_AR(data.txtLicenseCategory_AR || "");
+        setTxtBrAddress1(data.txtBrAddress1 || "");
+        setTxtBrAddress1_AR(data.txtBrAddress1_AR || "");
+        setTxtBrAddress2(data.txtBrAddress2 || "");
+        setTxtBrAddress2_AR(data.txtBrAddress2_AR || "");
+        setTxtBrAddress3(data.txtBrAddress3 || "");
+        setTxtBrAddress3_AR(data.txtBrAddress3_AR || "");
+        setTxtBrAddress4(data.txtBrAddress4 || "");
+        setTxtBrAddress4_AR(data.txtBrAddress4_AR || "");
+        setChkHo(!!data.chkHo);
       } catch (error) {
         console.error("getBranchInfo error:", error);
         toast.error(`getBranchInfo error: ${error instanceof Error ? error.message : String(error)}`);
@@ -371,7 +377,7 @@ const SetBranchInfo: React.FC = () => {
 
     loadBranchInfo();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [lkpBranch]);
+  }, [lkpBranch, reloadKey]);
 
   const buttonClass = `
   min-w-[120px]
@@ -734,7 +740,9 @@ const SetBranchInfo: React.FC = () => {
 
   const handleClear = (clearBranch: boolean = true) => {
     if (clearBranch) {
-      setLkpBranch("");
+      // back to the page-open state: the default branch, reloaded
+      setLkpBranch(defaultBranch);
+      setReloadKey((previous) => previous + 1);
     }
 
     setTxtBrName_AR("");

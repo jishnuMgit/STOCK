@@ -8,6 +8,7 @@ import {
   type UserLoginRowPayload,
 } from "../../services/SecurityServices/userLoginService.js";
 import { UserAudit } from "../../utils/UserAudit.js";
+import { mapRows, userTypeListKeys, userStatusListKeys } from "../../utils/responseKeys.js";
 
 /* =========================================================
    ADMIN CHECK
@@ -51,7 +52,7 @@ export const getUserTypeList = async (
 
     return res.status(200).json({
       success: true,
-      data: result.rows,
+      data: mapRows(result.rows, userTypeListKeys),
     });
   } catch (error: unknown) {
     console.error("getUserTypeList error:", error);
@@ -86,7 +87,7 @@ export const getUserStatusList = async (
 
     return res.status(200).json({
       success: true,
-      data: result.rows,
+      data: mapRows(result.rows, userStatusListKeys),
     });
   } catch (error: unknown) {
     console.error("getUserStatusList error:", error);

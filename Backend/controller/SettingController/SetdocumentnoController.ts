@@ -8,6 +8,7 @@ import {
   type DocumentNoRowPayload,
 } from "../../services/SettingServices/setdocumentnoService.js";
 import { UserAudit } from "../../utils/UserAudit.js";
+import { mapRows, yearListKeys, branchListKeys, moduleListKeys, documentListKeys, documentNoGridKeys } from "../../utils/responseKeys.js";
 
 /* =========================================================
    GET YEAR LIST (lkpYear dropdown)
@@ -37,7 +38,7 @@ export const getYearList = async (
 
     return res.status(200).json({
       success: true,
-      data: result.rows,
+      data: mapRows(result.rows, yearListKeys),
     });
   } catch (error: unknown) {
     console.error("getYearList error:", error);
@@ -91,7 +92,7 @@ export const getBranchList = async (
 
     return res.status(200).json({
       success: true,
-      data: result.rows,
+      data: mapRows(result.rows, branchListKeys),
     });
   } catch (error: unknown) {
     console.error("getBranchList error:", error);
@@ -135,7 +136,7 @@ export const getModuleList = async (
 
     return res.status(200).json({
       success: true,
-      data: result.rows,
+      data: mapRows(result.rows, moduleListKeys),
     });
   } catch (error: unknown) {
     console.error("getModuleList error:", error);
@@ -186,7 +187,7 @@ export const getDocumentList = async (
 
     return res.status(200).json({
       success: true,
-      data: result.rows,
+      data: mapRows(result.rows, documentListKeys),
     });
   } catch (error: unknown) {
     console.error("getDocumentList error:", error);
@@ -236,7 +237,7 @@ export const getDocumentNoList = async (
 
     return res.status(200).json({
       success: true,
-      data,
+      data: mapRows(data, documentNoGridKeys),
     });
   } catch (error: unknown) {
     console.error("getDocumentNoList error:", error);
