@@ -101,7 +101,7 @@ mnuBeginningStock:"/Purchase/Transaction/BeginningStockPage",
     "/Settings/SetBranchInfo",
 
   mnuSetCompanyInfo: "/Settings/SetCompanyInfo",
-mnuFinSetting: "/Settings/ChartOfAccountSetting",
+mnuFinSetting: "/Settings/FinanceSetting",
 mnuSetStockPostingAccount:"/Settings/SetPostingAccount",
 
   /* =========================================================

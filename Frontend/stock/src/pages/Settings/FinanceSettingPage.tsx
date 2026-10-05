@@ -1,4 +1,9 @@
-import React, { useMemo, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
+import { toast } from "react-toastify";
+import { X } from "lucide-react";
+import { useConfirm } from "../../hooks/useConfirm";
+import { useAltShortcuts } from "../../hooks/useAltShortcuts";
+import { useButtonPermissions } from "../../hooks/useButtonPermissions";
 import Select, {
   components,
   type MenuListProps,
@@ -9,126 +14,50 @@ import Select, {
 // TYPES
 // ============================================================
 
+// one grid row. The account NAME is not stored - both the ID and the
+// Name cells are looked up from lkpAccountID (names can repeat).
 interface AccountSetting {
-  id: number;
-  parameter: string;
-  accountId: string;
-  accountName: string;
-  groupHead: string;
+  txtSlNo: number;
+  lkpParameterType: string;
+  lkpAccountID: string;
+  txtGPH: string;
+  // the type + slno this row had when it was LOADED (null for a new
+  // row) - the backend uses them to know which saved row to update
+  txtOriginalSlNo: number | null;
+  lkpOriginalParameterType: string | null;
 }
 
 interface DropdownOption {
   value: string;
   label: string;
   secondary?: string;
+  gph?: string;
 }
 
+// one row of GET /FinanceSetting/getParameterList
 interface ParameterOption {
-  parameter: string;
-  type: string;
+  lkpParameterName: string;
+  lkpParameterType: string;
 }
 
+// one row of GET /FinanceSetting/getAccountList
 interface AccountOption {
-  accountId: string;
-  accountName: string;
+  lkpAccountID: string;
+  lkpAccountName: string;
+  lkpGPH: string;
 }
-
-// ============================================================
-// INITIAL DATA
-// ============================================================
-
-const initialData: AccountSetting[] = [
-  {
-    id: 1,
-    parameter: "CASH",
-    accountId: "110100",
-    accountName: "CASH",
-    groupHead: "G",
-  },
-  {
-    id: 2,
-    parameter: "BANK",
-    accountId: "110200",
-    accountName: "BANK",
-    groupHead: "G",
-  },
-  {
-    id: 3,
-    parameter: "Cash Sales",
-    accountId: "110400",
-    accountName: "ACE TRAVEL GROUP",
-    groupHead: "G",
-  },
-  {
-    id: 4,
-    parameter: "Receivable 1",
-    accountId: "110301",
-    accountName: "CLIENTS RECEIVABLES",
-    groupHead: "G",
-  },
-  {
-    id: 5,
-    parameter: "Payable (Airline)",
-    accountId: "220100",
-    accountName: "PROVISIONS",
-    groupHead: "G",
-  },
-  {
-    id: 6,
-    parameter: "Payable (Tour)",
-    accountId: "220200",
-    accountName: "EOSB - PROVISIONS",
-    groupHead: "G",
-  },
-  {
-    id: 7,
-    parameter: "Profit & Loss",
-    accountId: "230106",
-    accountName: "CURRENT YEAR EARNINGS",
-    groupHead: "G",
-  },
-];
-
-// ============================================================
-// PARAMETER OPTIONS
-// ============================================================
-
-const parameterOptions: ParameterOption[] = [
-  { parameter: "CASH", type: "G" },
-  { parameter: "BANK", type: "G" },
-  { parameter: "Cash Sales", type: "G" },
-  { parameter: "Receivable 1", type: "G" },
-  { parameter: "Payable (Airline)", type: "G" },
-  { parameter: "Payable (Tour)", type: "G" },
-  { parameter: "Profit & Loss", type: "G" },
-];
-
-// ============================================================
-// ACCOUNT OPTIONS
-// Replace this array with your API response when required.
-// ============================================================
-
-const accountOptions: AccountOption[] = [
-  { accountId: "110100", accountName: "CASH" },
-  { accountId: "110200", accountName: "BANK" },
-  { accountId: "110400", accountName: "ACE TRAVEL GROUP" },
-  { accountId: "110301", accountName: "CLIENTS RECEIVABLES" },
-  { accountId: "120201", accountName: "ADVANCE FROM CUSTOMERS" },
-  { accountId: "220100", accountName: "PROVISIONS" },
-  { accountId: "220200", accountName: "EOSB - PROVISIONS" },
-  { accountId: "230106", accountName: "CURRENT YEAR EARNINGS" },
-];
 
 // ============================================================
 // EMPTY ROW
 // ============================================================
 
-const blankRow = (id: number): AccountSetting => ({
-  id,
-  parameter: "",
-  accountId: "",
-  accountName: "",
-  groupHead: "",
+const blankRow = (txtSlNo: number): AccountSetting => ({
+  txtSlNo,
+  lkpParameterType: "",
+  lkpAccountID: "",
+  txtGPH: "",
+  txtOriginalSlNo: null,
+  lkpOriginalParameterType: null,
 });
 
 // ============================================================
@@ -273,6 +202,10 @@ const createSelectStyles = (
 
   dropdownIndicator: (base) => ({
     ...base,
+    // centre the arrow in the 30px row (same line as the text and the X)
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
     width: "17px",
     height: "30px",
     padding: 0,
@@ -341,45 +274,203 @@ const createSelectStyles = (
 // MAIN COMPONENT
 // ============================================================
 
-const COASettings: React.FC = () => {
-  const [rows, setRows] = useState<AccountSetting[]>(
-    initialData.map((row) => ({ ...row }))
-  );
+// tblmenu: 9109 = mnuFinSetting ("Finance Setting")
+const MENU_ID = "9109";
+
+const FinanceSetting: React.FC = () => {
+  const [rows, setRows] = useState<AccountSetting[]>([]);
+
+  // bumped by Clear (and after a save) so the saved rows are loaded again
+  const [reloadKey, setReloadKey] = useState<number>(0);
+
+  const perms = useButtonPermissions(MENU_ID);
+  const { confirm, confirmDialog } = useConfirm();
+  const [saving, setSaving] = useState<boolean>(false);
+
+  const [parameterList, setParameterList] = useState<ParameterOption[]>([]);
+  const [accountList, setAccountList] = useState<AccountOption[]>([]);
+
+  // ==========================================================
+  // LOAD SAVED ROWS (the grid) - tblfinsetting rows of the
+  // logged-in company, via dbo.sp_pagefinancesetting mode 'G'.
+  // Runs when the page opens and again after Clear.
+  // ==========================================================
+
+  useEffect(() => {
+    const loadFinSetting = async () => {
+      try {
+        const PstrCoID = localStorage.getItem("PstrCoID");
+
+        if (!PstrCoID) {
+          toast.error("getFinSetting: no PstrCoID in localStorage");
+          return;
+        }
+
+        const response = await fetch(
+          `${import.meta.env.VITE_API_URL}/FinanceSetting/getFinSetting?PstrCoID=${PstrCoID}`
+        );
+
+        if (!response.ok) {
+          throw new Error(`HTTP Error: ${response.status}`);
+        }
+
+        const result = await response.json();
+
+        if (!result.success) {
+          toast.error(result.message || "Failed to load finance setting");
+          return;
+        }
+
+        setRows(
+          (result.data || []).map(
+            (row: {
+              txtSlNo: number;
+              lkpParameterType: string;
+              lkpAccountID: string | null;
+              txtGPH: string | null;
+            }) => ({
+              txtSlNo: row.txtSlNo,
+              lkpParameterType: row.lkpParameterType,
+              lkpAccountID: row.lkpAccountID ?? "",
+              txtGPH: row.txtGPH ?? "",
+              txtOriginalSlNo: row.txtSlNo,
+              lkpOriginalParameterType: row.lkpParameterType,
+            })
+          )
+        );
+      } catch (error) {
+        console.error("getFinSetting error:", error);
+        toast.error("Failed to load finance setting");
+      }
+    };
+
+    loadFinSetting();
+  }, [reloadKey]);
+
+  // ==========================================================
+  // LOAD PARAMETER LIST (Parameter dropdown) - from
+  // dbo.fillfinsetup for the logged-in company
+  // ==========================================================
+
+  useEffect(() => {
+    const loadParameterList = async () => {
+      try {
+        const PstrCoID = localStorage.getItem("PstrCoID");
+
+        if (!PstrCoID) {
+          toast.error("getParameterList: no PstrCoID in localStorage");
+          return;
+        }
+
+        const response = await fetch(
+          `${import.meta.env.VITE_API_URL}/FinanceSetting/getParameterList?PstrCoID=${PstrCoID}`
+        );
+
+        if (!response.ok) {
+          throw new Error(`HTTP Error: ${response.status}`);
+        }
+
+        const result = await response.json();
+
+        if (!result.success) {
+          toast.error(result.message || "Failed to load parameter list");
+          return;
+        }
+
+        setParameterList(result.data || []);
+      } catch (error) {
+        console.error("getParameterList error:", error);
+        toast.error("Failed to load parameter list");
+      }
+    };
+
+    loadParameterList();
+  }, []);
+
+  // ==========================================================
+  // LOAD ACCOUNT LIST (Account ID + Account Name dropdowns) -
+  // from dbo.fillfinaccount for the logged-in company
+  // ==========================================================
+
+  useEffect(() => {
+    const loadAccountList = async () => {
+      try {
+        const PstrCoID = localStorage.getItem("PstrCoID");
+
+        if (!PstrCoID) {
+          toast.error("getAccountList: no PstrCoID in localStorage");
+          return;
+        }
+
+        const response = await fetch(
+          `${import.meta.env.VITE_API_URL}/FinanceSetting/getAccountList?PstrCoID=${PstrCoID}`
+        );
+
+        if (!response.ok) {
+          throw new Error(`HTTP Error: ${response.status}`);
+        }
+
+        const result = await response.json();
+
+        if (!result.success) {
+          toast.error(result.message || "Failed to load account list");
+          return;
+        }
+
+        setAccountList(result.data || []);
+      } catch (error) {
+        console.error("getAccountList error:", error);
+        toast.error("Failed to load account list");
+      }
+    };
+
+    loadAccountList();
+  }, []);
 
   // ==========================================================
   // OPTIONS FOR REACT SELECT
   // ==========================================================
 
+  // value = lkpParameterType (the type that gets saved),
+  // label = lkpParameterName (what the user sees),
+  // secondary = the type, shown in the "Type" column of the menu
   const parameterDropdownOptions = useMemo<DropdownOption[]>(
     () =>
-      parameterOptions.map((option) => ({
-        value: option.parameter,
-        label: option.parameter,
-        secondary: option.type,
+      parameterList.map((option) => ({
+        value: option.lkpParameterType,
+        label: option.lkpParameterName,
+        secondary: option.lkpParameterType,
       })),
-    []
+    [parameterList]
   );
 
+  // Both account dropdowns save the account ID (value). They only
+  // differ in what they show: the ID list shows the ID, the Name
+  // list shows the name (sorted by name, like the old form).
+  // gph = G / H / P of that account, copied into the G/P/H cell.
   const accountIdDropdownOptions = useMemo<DropdownOption[]>(
     () =>
-      accountOptions.map((option) => ({
-        value: option.accountId,
-        label: option.accountId,
-        secondary: option.accountName,
+      accountList.map((option) => ({
+        value: option.lkpAccountID,
+        label: option.lkpAccountID,
+        secondary: option.lkpAccountName,
+        gph: option.lkpGPH,
       })),
-    []
+    [accountList]
   );
 
-  // secondary keeps the Account ID so selecting a name still
-  // fills the Account ID cell, even though it is not displayed.
+  // sorted by account name, like the old form's Account Name list
   const accountNameDropdownOptions = useMemo<DropdownOption[]>(
     () =>
-      accountOptions.map((option) => ({
-        value: option.accountName,
-        label: option.accountName,
-        secondary: option.accountId,
-      })),
-    []
+      [...accountList]
+        .sort((a, b) => a.lkpAccountName.localeCompare(b.lkpAccountName))
+        .map((option) => ({
+          value: option.lkpAccountID,
+          label: option.lkpAccountName,
+          secondary: option.lkpAccountID,
+          gph: option.lkpGPH,
+        })),
+    [accountList]
   );
 
   // ==========================================================
@@ -423,7 +514,7 @@ const COASettings: React.FC = () => {
 
       next[rowIndex] = {
         ...next[rowIndex],
-        id: rowIndex + 1,
+        txtSlNo: rowIndex + 1,
         [field]: value,
       };
 
@@ -441,87 +532,173 @@ const COASettings: React.FC = () => {
   ) => {
     updateCell(
       rowIndex,
-      "parameter",
+      "lkpParameterType",
       option?.value ?? ""
     );
-
-    if (option) {
-      updateCell(
-        rowIndex,
-        "groupHead",
-        option.secondary ?? ""
-      );
-    }
   };
 
   // ==========================================================
-  // ACCOUNT ID SELECTION
-  // Selecting an account synchronizes its corresponding name.
+  // ACCOUNT SELECTION (used by BOTH the Account ID and the Account
+  // Name dropdown - each option's value is the account ID, so the
+  // other cell and the G/P/H cell follow automatically)
   // ==========================================================
 
-  const handleSelectAccountId = (
+  const handleSelectAccount = (
     rowIndex: number,
     option: DropdownOption | null
   ) => {
-    updateCell(
-      rowIndex,
-      "accountId",
-      option?.value ?? ""
-    );
-
-    if (option) {
-      updateCell(
-        rowIndex,
-        "accountName",
-        option.secondary ?? ""
-      );
-    } else {
-      updateCell(rowIndex, "accountName", "");
-    }
+    updateCell(rowIndex, "lkpAccountID", option?.value ?? "");
+    updateCell(rowIndex, "txtGPH", option?.gph ?? "");
   };
 
   // ==========================================================
-  // ACCOUNT NAME SELECTION
-  // Selecting a name synchronizes its corresponding ID.
+  // DELETE ROW (the X button)
+  // A row that was never saved just leaves the grid. A saved row asks
+  // "Are you sure..." and is then deleted from the database right away
+  // (mode D1) - same as Set Document No. The other rows keep any
+  // unsaved edits.
   // ==========================================================
 
-  const handleSelectAccountName = (
-    rowIndex: number,
-    option: DropdownOption | null
-  ) => {
-    updateCell(
-      rowIndex,
-      "accountName",
-      option?.value ?? ""
+  const handleDeleteRow = async (row: AccountSetting) => {
+    if (row.txtOriginalSlNo === null || row.lkpOriginalParameterType === null) {
+      setRows((previous) => previous.filter((item) => item !== row));
+      return;
+    }
+
+    const shouldDelete = await confirm(
+      "Are you sure you want to delete this account setting?"
     );
 
-    if (option) {
-      updateCell(
-        rowIndex,
-        "accountId",
-        option.secondary ?? ""
+    if (!shouldDelete) {
+      return;
+    }
+
+    const PstrCoID = localStorage.getItem("PstrCoID");
+    const PstrYear = localStorage.getItem("PstrYear");
+    const PstrUserID = localStorage.getItem("PstrUserID");
+
+    if (!PstrCoID || !PstrYear || !PstrUserID) {
+      toast.error("Company ID / Year / User ID not found. Please log in again.");
+      return;
+    }
+
+    try {
+      const response = await fetch(
+        `${import.meta.env.VITE_API_URL}/FinanceSetting/deleteFinSettingRow`,
+        {
+          method: "DELETE",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            PstrCoID,
+            PstrYear,
+            PstrUserID,
+            txtOriginalSlNo: row.txtOriginalSlNo,
+            lkpOriginalParameterType: row.lkpOriginalParameterType,
+          }),
+        }
       );
-    } else {
-      updateCell(rowIndex, "accountId", "");
+
+      const result = await response.json();
+
+      if (!response.ok || !result.success) {
+        toast.error(result.message || "Could not delete the account setting. Please try again.");
+        return;
+      }
+
+      toast.success(result.message || "Account setting deleted successfully.");
+
+      setRows((previous) => previous.filter((item) => item !== row));
+    } catch (error) {
+      console.error("deleteFinSettingRow error:", error);
+      toast.error("Cannot connect to Finance Setting API.");
     }
   };
 
   // ==========================================================
   // SAVE
-  // Replace console.log with your save API when ready.
+  // Sends the whole grid. The backend works out which rows are new,
+  // changed or removed (compared with what is saved) and writes them
+  // in one transaction.
   // ==========================================================
 
-  const handleSave = () => {
-    const populatedRows = rows.filter(
-      (row) =>
-        row.parameter.trim() ||
-        row.accountId.trim() ||
-        row.accountName.trim() ||
-        row.groupHead.trim()
-    );
+  const handleSave = async () => {
+    if (saving) return;
 
-    console.log("COA Settings:", populatedRows);
-    alert("COA Settings saved locally.");
+    const PstrCoID = localStorage.getItem("PstrCoID");
+    const PstrYear = localStorage.getItem("PstrYear");
+    const PstrUserID = localStorage.getItem("PstrUserID");
+
+    if (!PstrCoID || !PstrYear || !PstrUserID) {
+      toast.error("Company ID / Year / User ID not found. Please log in again.");
+      return;
+    }
+
+    // rows with something in them, in grid order (blank rows are skipped)
+    const filledRows = rows
+      .map((row, index) => ({ row, rowNo: index + 1 }))
+      .filter(
+        ({ row }) => row.lkpParameterType.trim() || row.lkpAccountID.trim()
+      );
+
+    const seen = new Set<string>();
+
+    for (const { row, rowNo } of filledRows) {
+      if (!row.lkpParameterType.trim() || !row.lkpAccountID.trim()) {
+        toast.error(`Row ${rowNo}: select both a Parameter and an Account.`);
+        return;
+      }
+
+      const pair = `${row.lkpParameterType}|${row.lkpAccountID}`.toUpperCase();
+
+      if (seen.has(pair)) {
+        toast.error(`Row ${rowNo}: Duplicate Entry !`);
+        return;
+      }
+
+      seen.add(pair);
+    }
+
+    setSaving(true);
+
+    try {
+      const response = await fetch(
+        `${import.meta.env.VITE_API_URL}/FinanceSetting/saveFinSetting`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            PstrCoID,
+            PstrYear,
+            PstrUserID,
+            rows: filledRows.map(({ row }, index) => ({
+              txtSlNo: index + 1,
+              lkpParameterType: row.lkpParameterType,
+              lkpAccountID: row.lkpAccountID,
+              txtGPH: row.txtGPH,
+              txtOriginalSlNo: row.txtOriginalSlNo,
+              lkpOriginalParameterType: row.lkpOriginalParameterType,
+            })),
+          }),
+        }
+      );
+
+      const result = await response.json();
+
+      if (!response.ok || !result.success) {
+        toast.error(result.message || "Finance setting could not be saved.");
+        return;
+      }
+
+      toast.success(result.message || "Finance setting saved successfully.");
+
+      // load the saved rows again - they now carry their new slno / keys
+      setReloadKey((key) => key + 1);
+    } catch (error) {
+      console.error("saveFinSetting error:", error);
+      toast.error("Cannot connect to Finance Setting API.");
+    } finally {
+      setSaving(false);
+    }
   };
 
   // ==========================================================
@@ -529,8 +706,14 @@ const COASettings: React.FC = () => {
   // ==========================================================
 
   const handleClear = () => {
-    setRows(initialData.map((row) => ({ ...row })));
+    setReloadKey((key) => key + 1);
   };
+
+  // Alt+S -> Save, Alt+C -> Clear (the underlined letters on the buttons)
+  useAltShortcuts({
+    s: handleSave,
+    c: handleClear,
+  });
 
   // ==========================================================
   // DISPLAY ROWS
@@ -586,7 +769,7 @@ const COASettings: React.FC = () => {
               text-slate-700
             "
           >
-Chart Of Account Settings
+Finance Setting
           </span>
 
         </div>
@@ -630,38 +813,28 @@ Chart Of Account Settings
             {displayRows.map((row, index) => {
               const parameterValue =
                 parameterDropdownOptions.find(
-                  (option) => option.value === row.parameter
+                  (option) => option.value === row.lkpParameterType
                 ) ??
-                (row.parameter
+                (row.lkpParameterType
                   ? {
-                      value: row.parameter,
-                      label: row.parameter,
+                      value: row.lkpParameterType,
+                      label: row.lkpParameterType,
                     }
                   : null);
 
+              // both account cells are looked up from the row's account ID
               const accountIdValue =
                 accountIdDropdownOptions.find(
-                  (option) => option.value === row.accountId
+                  (option) => option.value === row.lkpAccountID
                 ) ??
-                (row.accountId
-                  ? {
-                      value: row.accountId,
-                      label: row.accountId,
-                      secondary: row.accountName,
-                    }
+                (row.lkpAccountID
+                  ? { value: row.lkpAccountID, label: row.lkpAccountID }
                   : null);
 
               const accountNameValue =
                 accountNameDropdownOptions.find(
-                  (option) => option.value === row.accountName
-                ) ??
-                (row.accountName
-                  ? {
-                      value: row.accountName,
-                      label: row.accountName,
-                      secondary: row.accountId,
-                    }
-                  : null);
+                  (option) => option.value === row.lkpAccountID
+                ) ?? null;
 
               return (
                 <div
@@ -675,15 +848,20 @@ Chart Of Account Settings
 
                   {/* SERIAL NUMBER */}
 
-                  <div className="flex h-[30px] items-center justify-center border-r border-[#c8eadb]">
-                    {row.id ? row.id : ""}
+                  <div
+                    id={`txtSlNo-${index}`}
+                    className="flex h-[30px] items-center justify-center border-r border-[#c8eadb]"
+                  >
+                    {index + 1}
                   </div>
 
                   {/* PARAMETER SELECT */}
 
-                  <div className={cellClass}>
+                  <div className={`${cellClass} flex items-stretch`}>
+                    <div className="h-full min-w-0 flex-1">
                     <Select<DropdownOption, false>
-                      inputId={`lkpParameter-${index}`}
+                      inputId={`lkpParameterType-${index}`}
+                      name="lkpParameterType"
                       aria-label={`Parameter row ${index + 1}`}
                       options={parameterDropdownOptions}
                       value={parameterValue}
@@ -727,18 +905,42 @@ Chart Of Account Settings
                       placeholder=""
                       noOptionsMessage={() => "No results found"}
                     />
+                    </div>
+
+                    {/* DELETE ROW (X) - inside the cell, after the dropdown arrow */}
+
+                    {index < rows.length && (
+                      <button
+                        id={`btnDeleteRow-${index}`}
+                        name="btnDeleteRow"
+                        type="button"
+                        onClick={() => handleDeleteRow(rows[index])}
+                        disabled={!perms.delete}
+                        aria-label={`Delete row ${index + 1}`}
+                        className="
+                          relative inline-flex h-full w-[20px] shrink-0
+                          items-center justify-center self-stretch rounded
+                          text-[#999999] hover:text-red-600
+                          disabled:cursor-not-allowed disabled:opacity-30
+                          disabled:hover:text-[#999999]
+                        "
+                      >
+                        <X size={10} />
+                      </button>
+                    )}
                   </div>
 
                   {/* ACCOUNT ID SELECT */}
 
                   <div className={cellClass}>
                     <Select<DropdownOption, false>
-                      inputId={`lkpGAccountID-${index}`}
+                      inputId={`lkpAccountID-${index}`}
+                      name="lkpAccountID"
                       aria-label={`Account ID row ${index + 1}`}
                       options={accountIdDropdownOptions}
                       value={accountIdValue}
                       onChange={(option) =>
-                        handleSelectAccountId(index, option)
+                        handleSelectAccount(index, option)
                       }
                       components={{
                         MenuList: AccountIdMenuList,
@@ -783,12 +985,13 @@ Chart Of Account Settings
 
                   <div className={cellClass}>
                     <Select<DropdownOption, false>
-                      inputId={`lkpGAccountName-${index}`}
+                      inputId={`lkpAccountName-${index}`}
+                      name="lkpAccountName"
                       aria-label={`Account Name row ${index + 1}`}
                       options={accountNameDropdownOptions}
                       value={accountNameValue}
                       onChange={(option) =>
-                        handleSelectAccountName(index, option)
+                        handleSelectAccount(index, option)
                       }
                       components={{
                         MenuList: AccountNameMenuList,
@@ -834,15 +1037,10 @@ Chart Of Account Settings
                   <div className="h-[30px] min-w-0">
                     <input
                       id={`txtGPH-${index}`}
-                      aria-label={`Group Head row ${index + 1}`}
-                      value={row.groupHead}
-                      onChange={(event) =>
-                        updateCell(
-                          index,
-                          "groupHead",
-                          event.target.value
-                        )
-                      }
+                      name="txtGPH"
+                      aria-label={`G/P/H row ${index + 1}`}
+                      value={row.txtGPH}
+                      readOnly
                       className="
                         h-full w-full min-w-0
                         border-0 bg-transparent
@@ -858,13 +1056,15 @@ Chart Of Account Settings
           </div>
         </div>
 
-        {/* ACTION BUTTONS */}
+        {/* ACTION BUTTONS - stay at the bottom of the window, so Save is always visible without scrolling */}
 
-        <div className="flex min-h-[74px] items-start justify-center gap-[12px] pt-[8px]">
+        <div className="sticky bottom-0 z-10 flex min-h-[74px] items-start justify-center gap-[12px] border-t border-slate-200 bg-white pt-[8px]">
           <button
             id="btnSave"
+            name="btnSave"
             type="button"
             onClick={handleSave}
+            disabled={!perms.save || saving}
             className="
               h-[40px] w-[107px]
               rounded-[4px] border border-[#9bb7cc]
@@ -872,6 +1072,7 @@ Chart Of Account Settings
               text-[14px] text-green-700 shadow-sm
               hover:from-[#f4fff7] hover:to-[#d4ebdc]
               focus:outline-none focus:ring-1 focus:ring-green-400
+              disabled:cursor-not-allowed disabled:opacity-40
             "
           >
             <span className="underline underline-offset-[3px]">
@@ -881,6 +1082,7 @@ Chart Of Account Settings
 
           <button
             id="btnClear"
+            name="btnClear"
             type="button"
             onClick={handleClear}
             className="
@@ -898,8 +1100,10 @@ Chart Of Account Settings
           </button>
         </div>
       </div>
+
+      {confirmDialog}
     </div>
   );
 };
 
-export default COASettings;
+export default FinanceSetting;

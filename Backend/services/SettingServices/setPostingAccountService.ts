@@ -45,30 +45,43 @@ export const postingAccountFields: {
    GET POSTING ACCOUNT (mode 'G')
 ========================================================= */
 
+// one place that runs mode 'G' - the page load and the save (to read
+// the old row for the audit note) both use it, so the SELECT lives
+// only in the procedure
+async function fetchPostingAccountRow(
+  client: PoolClient,
+  PstrCoID: string,
+  lkpBranch: string
+): Promise<Record<string, string | null> | null> {
+  const cursorName =
+    `cur_postingaccount_${Date.now()}_${Math.floor(Math.random() * 100000)}`;
+
+  await callSpPostingAccount(client, {
+    strmode: "G",
+    PstrCoID,
+    lkpBranch,
+    cursorName,
+  });
+
+  const result = await client.query(`FETCH ALL FROM "${cursorName}"`);
+
+  return result.rows[0] ?? null;
+}
+
 export async function getPostingAccountService(
   PstrCoID: string,
   lkpBranch: string
 ): Promise<any | null> {
   const client: PoolClient = await pool.connect();
 
-  const cursorName =
-    `cur_postingaccount_${Date.now()}_${Math.floor(Math.random() * 100000)}`;
-
   try {
     await client.query("BEGIN");
 
-    await callSpPostingAccount(client, {
-      strmode: "G",
-      PstrCoID,
-      lkpBranch,
-      cursorName,
-    });
-
-    const result = await client.query(`FETCH ALL FROM "${cursorName}"`);
+    const row = await fetchPostingAccountRow(client, PstrCoID, lkpBranch);
 
     await client.query("COMMIT");
 
-    return result.rows[0] || null;
+    return row;
   } catch (error: unknown) {
     await client.query("ROLLBACK");
     console.error("getPostingAccountService error:", error);
@@ -96,12 +109,7 @@ export async function savePostingAccountService(
 
     // what the row held before this save - the audit note shows
     // exactly what changed
-    const existing = await client.query(
-      `SELECT * FROM dbo.tblsetpostingaccount WHERE fcoid = $1 AND fbrid = $2`,
-      [PstrCoID, lkpBranch]
-    );
-
-    const before = existing.rows[0] ?? null;
+    const before = await fetchPostingAccountRow(client, PstrCoID, lkpBranch);
     const mode = before ? "M" : "S";
 
     await callSpPostingAccount(client, {

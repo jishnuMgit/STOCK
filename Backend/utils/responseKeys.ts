@@ -160,6 +160,26 @@ export const branchInfoKeys: KeyMap = {
   fho: "chkHo",
 };
 
+/* ---------- Settings / FinanceSetting ---------- */
+
+export const parameterListKeys: KeyMap = {
+  fname: "lkpParameterName",
+  ftype: "lkpParameterType",
+};
+
+export const finSettingKeys: KeyMap = {
+  fslno: "txtSlNo",
+  ftype: "lkpParameterType",
+  faccountid: "lkpAccountID",
+  fgph: "txtGPH",
+};
+
+export const finAccountListKeys: KeyMap = {
+  faccountid: "lkpAccountID",
+  faccountname: "lkpAccountName",
+  fgph: "lkpGPH",
+};
+
 /* ---------- Settings / SetPostingAccount ---------- */
 
 export const accountListKeys: KeyMap = {
