@@ -8,13 +8,15 @@ import PublicRoute from "./PublicRoute";
 import CustomerList from "../pages/Finance/Setup/CustomerListPage";
 import ChartOfAccountList from "../pages/Finance/Setup/COAListPage";
 import UserLogin from "../pages/Security/UserLogin/UserLoginPage";
-import FinanceSetting from "../pages/Settings/FinanceSettingPage";
+import ChartOfAccountSettings from "../pages/Settings/ChartOfAccountSettings";
 import UserPermission from "../pages/Security/UserPermissionMenu/UserPermissionMenuPage";
 import BeginningStockPage from "../pages/Purchase/Transaction/BeginningStockPage";
 import UserPermissionBranchPage from "../pages/Security/UserPermissionBranch/UserPermissionBranchPage";
 import SetPostingAccountPage from "../pages/Settings/SetPostingAccountPage";
 import PurchaseInvoicePage from "../pages/Purchase/Transaction/PurchaseInvoicePage";
 import PurchaseExpense from "../components/Transaction/PurchaseInvoice/PurchaseInvoiceExpense";
+import SalesInvoice from "../pages/Sales/Transaction/SalesInvoice";
+import StockTransfer from "../pages/Sales/Transaction/stock/StockTransfer";
 
 const Login = lazy(() => import("../pages/Auth/LoginPage"));
 const ReceiptPage = lazy(
@@ -107,6 +109,27 @@ const AppRoutes = () => {
             element={<StatementOfAccountMain />}
           />
 
+{/* Sales - TRANSACTION */}
+
+<Route
+path="/Sales/Transaction/SalesInvoicePage"
+element={<SalesInvoice/>}
+/>
+
+
+<Route
+path="/Sales/Transaction/StockTransferPage"
+element={<StockTransfer/>}
+/>
+
+
+
+
+
+
+
+
+
            {/* =================================================
               PURCHASE - TRANSACTION
           ================================================= */}
@@ -149,8 +172,8 @@ const AppRoutes = () => {
           element={<SetBranchInfo/>}/>
 
           <Route
-          path="/Settings/FinanceSetting"
-          element={<FinanceSetting />}
+          path="/Settings/ChartOfAccountSettings"
+          element={<ChartOfAccountSettings />}
           />
           <Route
           path="/Settings/SetPostingAccount"
