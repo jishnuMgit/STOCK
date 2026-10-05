@@ -12,7 +12,7 @@ export const login = async (req: Request, res: Response): Promise<Response> => {
   try {
     const { pstrCOID, PstrYear, PstrUserID, txtPwd } = req.body;
 
-    console.log(req.body, "request ====================");
+    console.log(req.body, "request ==================== login");
 
     /* =====================================================
        VALIDATION
