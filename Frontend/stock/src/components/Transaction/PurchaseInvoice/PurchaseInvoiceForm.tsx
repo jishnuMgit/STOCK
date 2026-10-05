@@ -1,4 +1,3 @@
-
 import { Plus } from "lucide-react";
 import React from "react";
 import Select, { type StylesConfig } from "react-select";
@@ -32,8 +31,7 @@ const currencyOptions = makeOptions(["SAR"]);
 const inputClass =
   "h-[30px] w-full min-w-0 rounded-[4px] border border-[#d5dce5] bg-white px-2 text-[12px] text-[#263449] outline-none focus:border-blue-400";
 
-const labelClass =
-  "shrink-0 whitespace-nowrap text-[14px] text-[#263449]";
+const labelClass = "shrink-0 whitespace-nowrap text-[14px] text-[#263449]";
 
 /* =========================================================
    BASE SELECT STYLES
@@ -231,25 +229,17 @@ const currencySelectStyles: StylesConfig<Option, false> = {
    PURCHASE FORM
 ========================================================= */
 
-
 const PurchaseForm: React.FC = () => {
   return (
     <section className="grid grid-cols-1 items-start gap-x-4 gap-y-3 px-[14px] pb-2 pt-[14px] xl:grid-cols-[1fr_1fr_2.15fr]">
-
       {/* ==================================================
           GROUP 1
           Branch, P.O. No., Misc. Sup., Currency
       ================================================== */}
-      <div
-        id="purchase-left-group"
-        className="flex min-w-0 flex-col gap-[8px]"
-      >
+      <div id="purchase-left-group" className="flex min-w-0 flex-col gap-[8px]">
         {/* Branch */}
         <div className="flex min-w-0 items-center gap-2">
-          <label
-            htmlFor="lkpBranch"
-            className={`${labelClass} w-[54px]`}
-          >
+          <label htmlFor="lkpBranch" className={`${labelClass} w-[54px]`}>
             Branch
           </label>
 
@@ -267,25 +257,16 @@ const PurchaseForm: React.FC = () => {
 
         {/* P.O. Number */}
         <div className="flex min-w-0 items-center gap-2">
-          <label
-            htmlFor="txtPONo"
-            className={`${labelClass} w-[54px]`}
-          >
+          <label htmlFor="txtPONo" className={`${labelClass} w-[54px]`}>
             P.O. No.
           </label>
 
-          <input
-            id="txtPONo"
-            className={inputClass}
-          />
+          <input id="txtPONo" className={inputClass} />
         </div>
 
         {/* Miscellaneous Supplier */}
         <div className="flex min-w-0 items-center gap-2">
-          <label
-            htmlFor="lkpMiscSup"
-            className={`${labelClass} w-[54px]`}
-          >
+          <label htmlFor="lkpMiscSup" className={`${labelClass} w-[54px]`}>
             Misc. Sup.
           </label>
 
@@ -303,10 +284,7 @@ const PurchaseForm: React.FC = () => {
 
         {/* Currency */}
         <div className="flex min-w-0 items-center gap-2">
-          <label
-            htmlFor="lkpCurrency"
-            className={`${labelClass} w-[54px]`}
-          >
+          <label htmlFor="lkpCurrency" className={`${labelClass} w-[54px]`}>
             Currency
           </label>
 
@@ -327,95 +305,79 @@ const PurchaseForm: React.FC = () => {
           GROUP 2
           Entry No., Supplier ID, Misc. Sup. ID, Currency Rate
       ================================================== */}
-    <div
-  id="purchase-middle-group"
-  className="flex w-[90%] min-w-0 flex-col gap-[8px] ml-3"
->
-  {/* Entry Number */}
-  <div className="flex min-w-0 items-center gap-3">
-    <label
-      htmlFor="txtDocNo"
-      className={`${labelClass} w-[74px]`}
-    >
-      Entry No.
-    </label>
+      <div
+        id="purchase-middle-group"
+        className="flex w-[90%] min-w-0 flex-col gap-[8px] ml-3"
+      >
+        {/* Entry Number */}
+        <div className="flex min-w-0 items-center gap-3">
+          <label htmlFor="txtDocNo" className={`${labelClass} w-[74px]`}>
+            Entry No.
+          </label>
 
-    <input
-      id="txtDocNo"
-      defaultValue="0283"
-      className={inputClass}
-    />
-  </div>
+          <input id="txtDocNo" defaultValue="0283" className={inputClass} />
+        </div>
 
-  {/* Supplier ID */}
-  <div className="flex min-w-0 items-center gap-3">
-    <label
-      htmlFor="lkpSupplierID"
-      className={`${labelClass} w-[74px]`}
-    >
-      Supplier
-    </label>
+        {/* Supplier ID */}
+        <div className="flex min-w-0 items-center gap-3">
+          <label htmlFor="lkpSupplierID" className={`${labelClass} w-[74px]`}>
+            Supplier
+          </label>
 
-    <div className="min-w-0 flex-1">
-      <Select<Option, false>
-        inputId="lkpSupplierID"
-        options={supplierOptions}
-        defaultValue={supplierOptions[0]}
-        styles={supplierIdSelectStyles}
-        isClearable={false}
-        isSearchable={false}
-      />
-    </div>
-  </div>
+          <div className="min-w-0 flex-1">
+            <Select<Option, false>
+              inputId="lkpSupplierID"
+              options={supplierOptions}
+              defaultValue={supplierOptions[0]}
+              styles={supplierIdSelectStyles}
+              isClearable={false}
+              isSearchable={false}
+            />
+          </div>
+        </div>
 
-  {/* Miscellaneous Supplier ID */}
-  <div className="flex min-w-0 items-center gap-3">
-    <label
-      htmlFor="lkpMiscSupID"
-      className={`${labelClass} w-[74px]`}
-    >
-      Misc. Sup.
-    </label>
+        {/* Miscellaneous Supplier ID */}
+        <div className="flex min-w-0 items-center gap-3">
+          <label htmlFor="lkpMiscSupID" className={`${labelClass} w-[74px]`}>
+            Misc. Sup.
+          </label>
 
-    <div className="min-w-0 flex-1">
-      <Select<Option, false>
-        inputId="lkpMiscSupID"
-        options={[]}
-        placeholder=""
-        styles={miscSupplierIdSelectStyles}
-        isClearable={false}
-        isSearchable={false}
-      />
-    </div>
-  </div>
+          <div className="min-w-0 flex-1">
+            <Select<Option, false>
+              inputId="lkpMiscSupID"
+              options={[]}
+              placeholder=""
+              styles={miscSupplierIdSelectStyles}
+              isClearable={false}
+              isSearchable={false}
+            />
+          </div>
+        </div>
 
-  {/* Currency Rate */}
-  <div className="flex min-w-0 items-center gap-3">
-    <label
-      htmlFor="txtCurrencyRate"
-      className={`${labelClass} w-[74px]`}
-    >
-      Currency Rate
-    </label>
+        {/* Currency Rate */}
+        <div className="flex min-w-0 items-center gap-3">
+          <label htmlFor="txtCurrencyRate" className={`${labelClass} w-[74px]`}>
+            Currency Rate
+          </label>
 
-    <input
-      id="txtCurrencyRate"
-      defaultValue="3.00000"
-      className={`${inputClass} flex-1 text-right`}
-    />
-  </div>
+          <input
+            id="txtCurrencyRate"
+            defaultValue="3.00000"
+            className={`${inputClass} flex-1 text-right`}
+          />
+        </div>
 
-  {/* Purchase Expense Button */}
-  <div className="flex justify-end ">
-    <button
-      id="btnPurchaseExpense"
-      type="button"
-      className="h-[30px] w-[120px] whitespace-nowrap rounded-[4px] border border-[#cbd1d9] bg-gradient-to-b from-white to-[#e8e8e8] px-[10px] text-[11px] text-[#222] hover:bg-slate-100"
-    >
-      Purchase Expense
-    </button>
-  </div>
-</div>
+        {/* Purchase Expense Button */}
+        <div className="flex justify-end ">
+          <button
+            id="btnPurchaseExpense"
+            type="button"
+            className="h-[30px] w-[120px] whitespace-nowrap rounded-[4px] border border-[#cbd1d9] bg-gradient-to-b from-white to-[#e8e8e8] px-[10px] text-[11px] text-[#222] hover:bg-slate-100"
+          >
+            Purchase Expense
+          </button>
+        </div>
+      </div>
 
       {/* ==================================================
           GROUP 3
@@ -428,10 +390,7 @@ const PurchaseForm: React.FC = () => {
         {/* Invoice Type and Date */}
         <div className="grid min-w-0 grid-cols-[minmax(0,1fr)_minmax(0,1fr)] gap-3">
           <div className="flex min-w-0 items-center gap-3">
-            <label
-              htmlFor="lkpType"
-              className={`${labelClass} w-[76px]`}
-            >
+            <label htmlFor="lkpType" className={`${labelClass} w-[76px]`}>
               Invoice Type
             </label>
 
@@ -447,23 +406,18 @@ const PurchaseForm: React.FC = () => {
             </div>
           </div>
 
-          <div
-  className="ml-auto flex min-w-0 items-center justify-end gap-2"
->
-  <label
-    htmlFor="dtpDate"
-    className={`${labelClass} w-[28px]`}
-  >
-    Date
-  </label>
+          <div className="ml-auto flex min-w-0 items-center justify-end gap-2">
+            <label htmlFor="dtpDate" className={`${labelClass} w-[28px]`}>
+              Date
+            </label>
 
-  <input
-    id="dtpDate"
-    defaultValue="29/08/2026"
-    className={inputClass}
-    style={{ width: "50%" }}
-  />
-</div>
+            <input
+              id="dtpDate"
+              defaultValue="29/08/2026"
+              className={inputClass}
+              style={{ width: "50%" }}
+            />
+          </div>
         </div>
 
         {/* Supplier Name */}
@@ -536,8 +490,6 @@ const PurchaseForm: React.FC = () => {
 
         {/* Action Buttons and Supplier Amount */}
         <div className=" flex justify-between  gap-2">
-          
-
           <button
             id="btnCalculateUnitCost"
             type="button"
