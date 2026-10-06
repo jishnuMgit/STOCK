@@ -63,9 +63,7 @@ const selectStyles: StylesConfig<Option, false> = {
     border: "none",
     borderRadius: 0,
     boxShadow: "none",
-    backgroundColor: state.isFocused
-      ? "#eff6ff"
-      : "transparent",
+    backgroundColor: state.isFocused ? "#eff6ff" : "transparent",
     cursor: "pointer",
     fontSize: 11,
 
@@ -169,8 +167,7 @@ const inputClass =
 // ============================================================
 
 const PurchaseExpense: React.FC = () => {
-  const [rows, setRows] =
-    useState<PurchaseExpenseRow[]>(createRows);
+  const [rows, setRows] = useState<PurchaseExpenseRow[]>(createRows);
 
   const [activeRow, setActiveRow] = useState(0);
 
@@ -201,16 +198,10 @@ const PurchaseExpense: React.FC = () => {
 
   const handleNumberChange = (
     index: number,
-    field:
-      | "currencyRate"
-      | "amount"
-      | "amountSAR",
+    field: "currencyRate" | "amount" | "amountSAR",
     value: string,
   ) => {
-    if (
-      value !== "" &&
-      !/^\d*\.?\d*$/.test(value)
-    ) {
+    if (value !== "" && !/^\d*\.?\d*$/.test(value)) {
       return;
     }
 
@@ -221,10 +212,7 @@ const PurchaseExpense: React.FC = () => {
   // FORMAT NUMBER
   // ----------------------------------------------------------
 
-  const formatNumber = (
-    value: string,
-    decimals = 2,
-  ) => {
+  const formatNumber = (value: string, decimals = 2) => {
     if (value.trim() === "") {
       return "";
     }
@@ -243,8 +231,7 @@ const PurchaseExpense: React.FC = () => {
   // ----------------------------------------------------------
 
   const total = rows.reduce(
-    (sum, row) =>
-      sum + (Number(row.amountSAR) || 0),
+    (sum, row) => sum + (Number(row.amountSAR) || 0),
     0,
   );
 
@@ -277,9 +264,7 @@ const PurchaseExpense: React.FC = () => {
       isSearchable={searchable}
       menuPosition="fixed"
       menuPortalTarget={
-        typeof document !== "undefined"
-          ? document.body
-          : undefined
+        typeof document !== "undefined" ? document.body : undefined
       }
       placeholder=""
       className="w-full"
@@ -291,42 +276,34 @@ const PurchaseExpense: React.FC = () => {
   // ==========================================================
 
   return (
-<div className="flex min-h-screen w-full items-center justify-center bg-slate-100">
-
-  <div className="flex w-full max-w-[1200px] flex-col overflow-hidden border border-slate-400 bg-white text-[12px] text-slate-800">
-
-    <section className="flex min-h-0 w-full flex-col bg-white -mb-3">
-
-      {/* ======================================================
+    <div className="flex min-h-screen w-full items-center justify-center bg-slate-100">
+      <div className="flex w-full max-w-[1200px] flex-col overflow-hidden border border-slate-400 bg-white text-[12px] text-slate-800">
+        <section className="flex min-h-0 w-full flex-col bg-white -mb-3">
+          {/* ======================================================
           TITLE
       ====================================================== */}
 
-       <div className="flex h-[30px] w-full shrink-0 items-center border-b border-slate-300 bg-[#a5e0c3]">
-        <h1 className="ml-[20px] text-[17px] font-semibold text-slate-700">
-         Purchase Expense
-
-        </h1>
-      </div>
-      {/* ======================================================
+          <div className="flex h-[30px] w-full shrink-0 items-center border-b border-slate-300 bg-[#a5e0c3]">
+            <h1 className="ml-[20px] text-[17px] font-semibold text-slate-700">
+              Purchase Expense
+            </h1>
+          </div>
+          {/* ======================================================
           TABLE
       ====================================================== */}
 
-      <div
-        id="purchase-expense-table"
-        className="mx-0 flex min-h-0 flex-1 flex-col overflow-hidden border-b-0 border border-[#dce5ef]"
-      >
-
-        <div className="customer-table-scroll min-h-0 flex-1 overflow-auto">
-
-          <table className="w-full min-w-[1050px] table-fixed border-collapse text-[12px]">
-
-            {/* ------------------------------------------------
+          <div
+            id="purchase-expense-table"
+            className="mx-0 flex min-h-0 flex-1 flex-col overflow-hidden border-b-0 border border-[#dce5ef]"
+          >
+            <div className="customer-table-scroll min-h-0 flex-1 overflow-auto">
+              <table className="w-full min-w-[1050px] table-fixed border-collapse text-[12px]">
+                {/* ------------------------------------------------
                 COLUMN WIDTHS
             ------------------------------------------------ */}
 
-            <colgroup>
-
-              {/* <col style={{ width: "38px" }} />
+                <colgroup>
+                  {/* <col style={{ width: "38px" }} />
 
               <col style={{ width: "150px" }} />
 
@@ -340,36 +317,33 @@ const PurchaseExpense: React.FC = () => {
 
               <col style={{ width: "95px" }} /> */}
 
-              {/* <col style={{ width: "105px" }} /> */}
+                  {/* <col style={{ width: "105px" }} /> */}
 
-              {/* <col style={{ width: "110px" }} /> */}
+                  {/* <col style={{ width: "110px" }} /> */}
+                </colgroup>
 
-            </colgroup>
-
-            {/* =================================================
+                {/* =================================================
                 HEADER
             ================================================= */}
 
-            <thead>
+                <thead>
+                  <tr className="h-[32px]">
+                    {/* Row indicator */}
 
-              <tr className="h-[32px]">
-
-                {/* Row indicator */}
-
-                <th
-                  className="
+                    <th
+                      className="
                     sticky top-0 z-20
                     border border-[#dce5ef]
                     bg-[#f1f6fc]
                     p-0
                     w-[20px]
                   "
-                />
+                    />
 
-                {/* Sl */}
+                    {/* Sl */}
 
-                <th
-                  className="
+                    <th
+                      className="
                     sticky top-0 z-20
                     h-[32px]
                     whitespace-nowrap
@@ -381,14 +355,14 @@ const PurchaseExpense: React.FC = () => {
                     text-[#202a36]
                     w-[30px]
                   "
-                >
-                  Sl.
-                </th>
+                    >
+                      Sl.
+                    </th>
 
-                {/* Account ID */}
+                    {/* Account ID */}
 
-                <th
-                  className="
+                    <th
+                      className="
                     sticky top-0 z-20
                     h-[32px]
                     whitespace-nowrap
@@ -400,15 +374,15 @@ const PurchaseExpense: React.FC = () => {
                     text-[#202a36]
                     w-[130px]
                   "
-                  id="lkpAccountID"
-                >
-                  Account ID
-                </th>
+                      id="lkpAccountID"
+                    >
+                      Account ID
+                    </th>
 
-                {/* Account Name */}
+                    {/* Account Name */}
 
-                <th
-                  className="
+                    <th
+                      className="
                     sticky top-0 z-20
                     h-[32px]
                     whitespace-nowrap
@@ -420,15 +394,15 @@ const PurchaseExpense: React.FC = () => {
                     text-[#202a36]
                     w-[350px]
                   "
-                  id="lkpAccountName"
-                >
-                  Account Name
-                </th>
+                      id="lkpAccountName"
+                    >
+                      Account Name
+                    </th>
 
-                {/* CCID */}
+                    {/* CCID */}
 
-                <th
-                  className="
+                    <th
+                      className="
                     sticky top-0 z-20
                     h-[32px]
                     whitespace-nowrap
@@ -440,15 +414,15 @@ const PurchaseExpense: React.FC = () => {
                     text-[#202a36]
                     w-[60px]
                   "
-                    id="lkpCCID"
-                >
-                  CC.ID
-                </th>
+                      id="lkpCCID"
+                    >
+                      CC.ID
+                    </th>
 
-                {/* Currency */}
+                    {/* Currency */}
 
-                <th
-                  className="
+                    <th
+                      className="
                     sticky top-0 z-20
                     h-[32px]
                     whitespace-nowrap
@@ -460,15 +434,15 @@ const PurchaseExpense: React.FC = () => {
                     text-[#202a36]
                     w-[100px]
                   "
-                  id="lkpCurrency"
-                >
-                  Currency
-                </th>
+                      id="lkpCurrency"
+                    >
+                      Currency
+                    </th>
 
-                {/* Currency Rate */}
+                    {/* Currency Rate */}
 
-                <th
-                  className="
+                    <th
+                      className="
                     sticky top-0 z-20
                     h-[32px]
                     whitespace-nowrap
@@ -480,15 +454,15 @@ const PurchaseExpense: React.FC = () => {
                     text-[#202a36]
                     w-[100px]
                   "
-                  id="lkpCurrencyRate"
-                >
-                  Currency Rate
-                </th>
+                      id="lkpCurrencyRate"
+                    >
+                      Currency Rate
+                    </th>
 
-                {/* Amount */}
+                    {/* Amount */}
 
-                <th
-                  className="
+                    <th
+                      className="
                     sticky top-0 z-20
                     h-[32px]
                     whitespace-nowrap
@@ -500,15 +474,15 @@ const PurchaseExpense: React.FC = () => {
                     w-[100px]
                     text-[#202a36]
                   "
-                  id="txtAmt"
-                >
-                  Amount
-                </th>
+                      id="txtAmt"
+                    >
+                      Amount
+                    </th>
 
-                {/* Amount SAR */}
+                    {/* Amount SAR */}
 
-                <th
-                  className="
+                    <th
+                      className="
                     sticky top-0 z-20
                     h-[32px]
                     whitespace-nowrap
@@ -520,15 +494,15 @@ const PurchaseExpense: React.FC = () => {
                     text-[#202a36]
                     w-[100px]
                   "
-                  id="txtAmtSAR"
-                >
-                  Amount SAR
-                </th>
+                      id="txtAmtSAR"
+                    >
+                      Amount SAR
+                    </th>
 
-                {/* Description */}
+                    {/* Description */}
 
-                <th
-                  className="
+                    <th
+                      className="
                     sticky top-0 z-20
                     h-[32px]
                     whitespace-nowrap
@@ -539,381 +513,323 @@ const PurchaseExpense: React.FC = () => {
                     font-semibold
                     text-[#202a36]
                   "
-                  id="txtDescription"
-                >
-                  Description
-                </th>
+                      id="txtDescription"
+                    >
+                      Description
+                    </th>
+                  </tr>
+                </thead>
 
-              </tr>
-
-            </thead>
-
-            {/* =================================================
+                {/* =================================================
                 BODY
             ================================================= */}
 
-            <tbody>
-
-              {rows.map((row, index) => (
-
-                <tr
-                  key={index}
-                  onClick={() =>
-                    setActiveRow(index)
-                  }
-                  onFocusCapture={() =>
-                    setActiveRow(index)
-                  }
-                  className={`
+                <tbody>
+                  {rows.map((row, index) => (
+                    <tr
+                      key={index}
+                      onClick={() => setActiveRow(index)}
+                      onFocusCapture={() => setActiveRow(index)}
+                      className={`
                     h-[32px]
-                    ${
-                      activeRow === index
-                        ? "bg-[#f4f8fd]"
-                        : "bg-white"
-                    }
+                    ${activeRow === index ? "bg-[#f4f8fd]" : "bg-white"}
                     hover:bg-blue-50
                   `}
-                >
-
-                  {/* ------------------------------------------
+                    >
+                      {/* ------------------------------------------
                       ACTIVE ROW INDICATOR
                   ------------------------------------------ */}
 
-                  <td
-                    className="
+                      <td
+                        className="
                       h-[32px]
                       border border-[#dce5ef]
                       p-0
                       text-center
                     "
-                  >
-                    {activeRow === index ? (
-                      <Play size={9} />
-                    ) : null}
-                  </td>
+                      >
+                        {activeRow === index ? <Play size={9} /> : null}
+                      </td>
 
-                  {/* ------------------------------------------
+                      {/* ------------------------------------------
                       SL
                   ------------------------------------------ */}
 
-                  <td
-                    className="
+                      <td
+                        className="
                       h-[32px]
                       border border-[#dce5ef]
                       p-0
                       text-center
                       text-[11px]
                     "
-                  >
-                    {index + 1}
-                  </td>
+                      >
+                        {index + 1}
+                      </td>
 
-                  {/* ------------------------------------------
+                      {/* ------------------------------------------
                       ACCOUNT ID
                   ------------------------------------------ */}
 
-                  <td
-                    className="
+                      <td
+                        className="
                       h-[32px]
                       border border-[#dce5ef]
                       p-0
                     "
-                  >
-                    {renderSelect(
-                      index,
-                      "lkpAccountID",
-                      row.accountId,
-                      accountOptions,
-                      (option) => {
-                        updateRow(
+                      >
+                        {renderSelect(
                           index,
-                          "accountId",
-                          option,
-                        );
-                        setActiveRow(index);
-                      },
-                    )}
-                  </td>
+                          "lkpAccountID",
+                          row.accountId,
+                          accountOptions,
+                          (option) => {
+                            updateRow(index, "accountId", option);
+                            setActiveRow(index);
+                          },
+                        )}
+                      </td>
 
-                  {/* ------------------------------------------
+                      {/* ------------------------------------------
                       ACCOUNT NAME
                   ------------------------------------------ */}
 
-                  <td
-                    className="
+                      <td
+                        className="
                       h-[32px]
                       border border-[#dce5ef]
                       p-0
                     "
-                  >
-                    {renderSelect(
-                      index,
-                      "lkpAccountName",
-                      row.accountName,
-                      accountOptions,
-                      (option) => {
-                        updateRow(
+                      >
+                        {renderSelect(
                           index,
-                          "accountName",
-                          option,
-                        );
-                        setActiveRow(index);
-                      },
-                    )}
-                  </td>
+                          "lkpAccountName",
+                          row.accountName,
+                          accountOptions,
+                          (option) => {
+                            updateRow(index, "accountName", option);
+                            setActiveRow(index);
+                          },
+                        )}
+                      </td>
 
-                  {/* ------------------------------------------
+                      {/* ------------------------------------------
                       CCID
                   ------------------------------------------ */}
 
-                  <td
-                    className="
+                      <td
+                        className="
                       h-[32px]
                       border border-[#dce5ef]
                       p-0
                     "
-                  >
-                    {renderSelect(
-                      index,
-                      "lkpCCID",
-                      row.ccid,
-                      ccidOptions,
-                      (option) => {
-                        updateRow(
+                      >
+                        {renderSelect(
                           index,
-                          "ccid",
-                          option,
-                        );
-                        setActiveRow(index);
-                      },
-                      false,
-                    )}
-                  </td>
+                          "lkpCCID",
+                          row.ccid,
+                          ccidOptions,
+                          (option) => {
+                            updateRow(index, "ccid", option);
+                            setActiveRow(index);
+                          },
+                          false,
+                        )}
+                      </td>
 
-                  {/* ------------------------------------------
+                      {/* ------------------------------------------
                       CURRENCY
                   ------------------------------------------ */}
 
-                  <td
-                    className="
+                      <td
+                        className="
                       h-[32px]
                       border border-[#dce5ef]
                       p-0
                     "
-                  >
-                    {renderSelect(
-                      index,
-                      "lkpCurrency",
-                      row.currency,
-                      currencyOptions,
-                      (option) => {
-                        updateRow(
+                      >
+                        {renderSelect(
                           index,
-                          "currency",
-                          option,
-                        );
-                        setActiveRow(index);
-                      },
-                      false,
-                    )}
-                  </td>
+                          "lkpCurrency",
+                          row.currency,
+                          currencyOptions,
+                          (option) => {
+                            updateRow(index, "currency", option);
+                            setActiveRow(index);
+                          },
+                          false,
+                        )}
+                      </td>
 
-                  {/* ------------------------------------------
+                      {/* ------------------------------------------
                       CURRENCY RATE
                   ------------------------------------------ */}
 
-                  <td
-                    className="
+                      <td
+                        className="
                       h-[32px]
                       border border-[#dce5ef]
                       p-0
                     "
-                  >
-                    <input
-                      id={`lkpCurrencyRate-${index}`}
-                      type="text"
-                      inputMode="decimal"
-                      autoComplete="off"
-                      value={row.currencyRate}
-                      onFocus={() => {
-                        setActiveRow(index);
-                      }}
-                      onChange={(event) =>
-                        handleNumberChange(
-                          index,
-                          "currencyRate",
-                          event.target.value,
-                        )
-                      }
-                      onBlur={() =>
-                        updateRow(
-                          index,
-                          "currencyRate",
-                          formatNumber(
-                            row.currencyRate,
-                            4,
-                          ),
-                        )
-                      }
-                      className={`${inputClass} text-right`}
-                    />
-                  </td>
+                      >
+                        <input
+                          id={`lkpCurrencyRate-${index}`}
+                          type="text"
+                          inputMode="decimal"
+                          autoComplete="off"
+                          value={row.currencyRate}
+                          onFocus={() => {
+                            setActiveRow(index);
+                          }}
+                          onChange={(event) =>
+                            handleNumberChange(
+                              index,
+                              "currencyRate",
+                              event.target.value,
+                            )
+                          }
+                          onBlur={() =>
+                            updateRow(
+                              index,
+                              "currencyRate",
+                              formatNumber(row.currencyRate, 4),
+                            )
+                          }
+                          className={`${inputClass} text-right`}
+                        />
+                      </td>
 
-                  {/* ------------------------------------------
+                      {/* ------------------------------------------
                       AMOUNT
                   ------------------------------------------ */}
 
-                  <td
-                    className="
+                      <td
+                        className="
                       h-[32px]
                       border border-[#dce5ef]
                       p-0
                     "
-                  >
-                    <input
-                      id={`txtAmount-${index}`}
-                      type="text"
-                      inputMode="decimal"
-                      autoComplete="off"
-                      value={row.amount}
-                      onFocus={() => {
-                        setActiveRow(index);
-                      }}
-                      onChange={(event) =>
-                        handleNumberChange(
-                          index,
-                          "amount",
-                          event.target.value,
-                        )
-                      }
-                      onBlur={() =>
-                        updateRow(
-                          index,
-                          "amount",
-                          formatNumber(
-                            row.amount,
-                            2,
-                          ),
-                        )
-                      }
-                      className={`${inputClass} text-right`}
-                    />
-                  </td>
+                      >
+                        <input
+                          id={`txtAmount-${index}`}
+                          type="text"
+                          inputMode="decimal"
+                          autoComplete="off"
+                          value={row.amount}
+                          onFocus={() => {
+                            setActiveRow(index);
+                          }}
+                          onChange={(event) =>
+                            handleNumberChange(
+                              index,
+                              "amount",
+                              event.target.value,
+                            )
+                          }
+                          onBlur={() =>
+                            updateRow(
+                              index,
+                              "amount",
+                              formatNumber(row.amount, 2),
+                            )
+                          }
+                          className={`${inputClass} text-right`}
+                        />
+                      </td>
 
-                  {/* ------------------------------------------
+                      {/* ------------------------------------------
                       AMOUNT SAR
                   ------------------------------------------ */}
 
-                  <td
-                    className="
+                      <td
+                        className="
                       h-[32px]
                       border border-[#dce5ef]
                       p-0
                     "
-                  >
-                    <input
-                      id={`txtAmountSAR-${index}`}
-                      type="text"
-                      inputMode="decimal"
-                      autoComplete="off"
-                      value={row.amountSAR}
-                      onFocus={() => {
-                        setActiveRow(index);
-                      }}
-                      onChange={(event) =>
-                        handleNumberChange(
-                          index,
-                          "amountSAR",
-                          event.target.value,
-                        )
-                      }
-                      onBlur={() =>
-                        updateRow(
-                          index,
-                          "amountSAR",
-                          formatNumber(
-                            row.amountSAR,
-                            2,
-                          ),
-                        )
-                      }
-                      className={`${inputClass} text-right`}
-                    />
-                  </td>
+                      >
+                        <input
+                          id={`txtAmountSAR-${index}`}
+                          type="text"
+                          inputMode="decimal"
+                          autoComplete="off"
+                          value={row.amountSAR}
+                          onFocus={() => {
+                            setActiveRow(index);
+                          }}
+                          onChange={(event) =>
+                            handleNumberChange(
+                              index,
+                              "amountSAR",
+                              event.target.value,
+                            )
+                          }
+                          onBlur={() =>
+                            updateRow(
+                              index,
+                              "amountSAR",
+                              formatNumber(row.amountSAR, 2),
+                            )
+                          }
+                          className={`${inputClass} text-right`}
+                        />
+                      </td>
 
-                  {/* ------------------------------------------
+                      {/* ------------------------------------------
                       DESCRIPTION
                   ------------------------------------------ */}
 
-                  <td
-                    className="
+                      <td
+                        className="
                       h-[32px]
                       border border-[#dce5ef]
                       p-0
                     "
-                  >
-                    <input
-                      id={`txtDescription-${index}`}
-                      type="text"
-                      autoComplete="off"
-                      value={row.description}
-                      onFocus={() =>
-                        setActiveRow(index)
-                      }
-                      onChange={(event) =>
-                        updateRow(
-                          index,
-                          "description",
-                          event.target.value,
-                        )
-                      }
-                      className={inputClass}
-                    />
-                  </td>
+                      >
+                        <input
+                          id={`txtDescription-${index}`}
+                          type="text"
+                          autoComplete="off"
+                          value={row.description}
+                          onFocus={() => setActiveRow(index)}
+                          onChange={(event) =>
+                            updateRow(index, "description", event.target.value)
+                          }
+                          className={inputClass}
+                        />
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
 
-                </tr>
-
-              ))}
-
-            </tbody>
-
-          </table>
-
-        </div>
-
-      </div>
-
-      {/* ======================================================
+          {/* ======================================================
           BOTTOM FORM
       ====================================================== */}
 
-      <div className="relative h-[77px] shrink-0 bg-white">
-
-
-        <button
-          id="btnClear"
-          type="button"
-          onClick={() =>
-            setRows(createRows())
-          }
-          className="
+          <div className="relative h-[77px] shrink-0 bg-white">
+            <button
+              id="btnClear"
+              type="button"
+              onClick={() => setRows(createRows())}
+              className="
             absolute
             left-[486px]
             top-[17px]
          btn-style
           "
-        >
-          <span className="underline">
-            C
-          </span>lear
-        </button>
+            >
+              <span className="underline">C</span>lear
+            </button>
 
-        {/* ----------------------------------------------------
+            {/* ----------------------------------------------------
             TOTAL LABEL
         ---------------------------------------------------- */}
 
-        <div
-          className="
+            <div
+              className="
             absolute
             left-[690px]
             top-[17px]
@@ -928,17 +844,17 @@ const PurchaseExpense: React.FC = () => {
             text-[14px]
             text-[#333]
           "
-        >
-          Total
-        </div>
+            >
+              Total
+            </div>
 
-        {/* ----------------------------------------------------
+            {/* ----------------------------------------------------
             TOTAL VALUE
         ---------------------------------------------------- */}
 
-        <div
-          id="txtTotal"
-          className="
+            <div
+              id="txtTotal"
+              className="
             absolute
             left-[790px]
             top-[17px]
@@ -954,17 +870,17 @@ const PurchaseExpense: React.FC = () => {
             text-[14px]
             text-[#333]
           "
-        >
-          {totalDisplay}
-        </div>
+            >
+              {totalDisplay}
+            </div>
 
-        {/* ----------------------------------------------------
+            {/* ----------------------------------------------------
             AMOUNT SAR TOTAL
         ---------------------------------------------------- */}
 
-        <div
-          id="txtTotalSAR"
-          className="
+            <div
+              id="txtTotalSAR"
+              className="
             absolute
             left-[890px]
             top-[17px]
@@ -980,15 +896,13 @@ const PurchaseExpense: React.FC = () => {
             text-[14px]
             text-[#333]
           "
-        >
-          0.00
-        </div>
-
+            >
+              0.00
+            </div>
+          </div>
+        </section>
       </div>
-
-    </section>
-</div>
-</div>
+    </div>
   );
 };
 

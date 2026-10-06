@@ -10,11 +10,11 @@ type Option = {
 };
 
 const columns = [
-  { name: "Sl.No.", width: "38px" },
-  { name: "Item ID", width: "158px" },
-  { name: "Item Name", width: "auto" },
-  { name: "Unit", width: "56px" },
-  { name: "Qty", width: "58px" },
+  { name: "Sl.", width: "38px", fieldName: "Sl" },
+  { name: "Item ID", width: "158px", filedName: "itemID" },
+  { name: "Item Name", width: "auto", fieldName: "itemName" },
+  { name: "Unit", width: "56px", fieldName: "unit" },
+  { name: "Qty.", width: "58px", fieldName: "" },
   { name: "S.Unit Price", width: "85px" },
   { name: "S.Total Price", width: "90px" },
   { name: "Unit Price", width: "80px" },

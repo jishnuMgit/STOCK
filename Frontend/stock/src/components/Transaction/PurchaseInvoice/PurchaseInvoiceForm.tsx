@@ -1,7 +1,9 @@
 import { Plus } from "lucide-react";
-import React from "react";
+import React, { useState } from "react";
 import Select, { type StylesConfig } from "react-select";
 import type { PurchaseHeader } from "../../../hooks/Purchase/Transaction/usePurchaseInvoice";
+import type { MiscSupplierData } from "./PurchaseInoviceMiscsup";
+import PurchaseInoviceMiscsup from "./PurchaseInoviceMiscsup";
 
 type Option = { value: string; label: string };
 
@@ -237,6 +239,7 @@ interface Props {
     supplierNames?: Option[];
     currencies?: Option[];
   };
+  onMiscSupplierSave?: (data: MiscSupplierData) => void;
 }
 
 const PurchaseForm: React.FC<Props> = ({
@@ -245,7 +248,9 @@ const PurchaseForm: React.FC<Props> = ({
   onDocNoBlur,
   totalSupplierAmt,
   lookups,
+  onMiscSupplierSave
 }) => {
+  const [miscOpen, setMiscOpen] = useState(false);
   const branchOptions = lookups?.branches ?? defaultBranchOptions;
   const supplierOptions = lookups?.supplierIds ?? defaultSupplierIdOptions;
   const supplierNameOptions =
@@ -492,6 +497,7 @@ const PurchaseForm: React.FC<Props> = ({
             id="btnAddMiscSupplier"
             type="button"
             aria-label="Add miscellaneous supplier"
+            onClick={() => setMiscOpen(true)}
             className="flex h-[30px] w-[30px] cursor-pointer shrink-0 items-center justify-center rounded-full bg-[#28a745] text-[20px] font-bold leading-none text-white hover:bg-green-700"
           >
             <Plus />
@@ -557,6 +563,11 @@ const PurchaseForm: React.FC<Props> = ({
           </div>
         </div>
       </div>
+      <PurchaseInoviceMiscsup
+        open={miscOpen}
+        onClose={() => setMiscOpen(false)}
+        onSave={onMiscSupplierSave}
+      />
     </section>
   );
 };
