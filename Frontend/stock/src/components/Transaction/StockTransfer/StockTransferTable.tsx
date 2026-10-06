@@ -1,5 +1,7 @@
 import React, { useState } from "react";
+
 import { Play } from "lucide-react";
+
 import Select, { type StylesConfig } from "react-select";
 
 // ============================================================
@@ -14,7 +16,7 @@ type Option = {
 type StockTransferRow = {
   itemId: Option | null;
   itemName: Option | null;
-  unit: Option | null;
+  unit: string;
   qty: string;
   unitCost: string;
 };
@@ -31,8 +33,6 @@ const ROW_COUNT = 11;
 
 const itemOptions: Option[] = [];
 
-const unitOptions: Option[] = [];
-
 // ============================================================
 // CREATE ROW
 // ============================================================
@@ -40,7 +40,7 @@ const unitOptions: Option[] = [];
 const createRow = (): StockTransferRow => ({
   itemId: null,
   itemName: null,
-  unit: null,
+  unit: "",
   qty: "",
   unitCost: "",
 });
@@ -188,11 +188,14 @@ const selectStyles: StylesConfig<Option, false> = {
 };
 
 // ============================================================
-// NUMBER INPUT STYLE
+// INPUT STYLES
 // ============================================================
 
 const numberInputClass =
   "number-no-spinner h-[20px] w-full min-w-0 border-0 bg-transparent px-1 text-right text-[11px] outline-none focus:bg-blue-50";
+
+const textInputClass =
+  "h-[20px] w-full min-w-0 border-0 bg-transparent px-1 text-[11px] outline-none focus:bg-blue-50";
 
 // ============================================================
 // TABLE
@@ -313,17 +316,60 @@ const StockTransferTable: React.FC = () => {
   };
 
   // ==========================================================
+  // NORMAL TEXT INPUT
+  // ==========================================================
+
+  const renderTextInput = (
+    index: number,
+    field: "unit",
+    id: string,
+    label: string,
+  ) => {
+    return (
+      <input
+        id={`${id}-${index}`}
+        aria-label={`${label}, row ${index + 1}`}
+        type="text"
+        autoComplete="off"
+        value={rows[index][field]}
+        onFocus={() => {
+          setActiveRow(index);
+        }}
+        onChange={(event) => {
+          updateRow(
+            index,
+            field,
+            event.target.value,
+          );
+        }}
+        className={textInputClass}
+      />
+    );
+  };
+
+  // ==========================================================
   // RENDER
   // ==========================================================
 
   return (
     <section
       id="stock-transfer-table"
-      className="mx-[11px] mb-0 mt-6 flex h-[370px]  min-h-0 flex-col overflow-hidden border-b-0 border border-[#dce5ef]"
+      className="
+        mx-[11px]
+        mb-0
+        mt-6
+        flex
+        h-[370px]
+        min-h-0
+        flex-col
+        overflow-hidden
+        border-b-0
+        border
+        border-[#dce5ef]
+      "
     >
       <div className="customer-table-scroll min-h-0 flex-1 overflow-auto">
         <table className="w-full min-w-[900px] table-fixed border-collapse text-[11px]">
-
           {/* ==================================================
               COLUMN WIDTHS
           ================================================== */}
@@ -357,7 +403,6 @@ const StockTransferTable: React.FC = () => {
 
           <thead>
             <tr className="h-[30px]">
-
               {/* Active row indicator */}
 
               <th
@@ -455,7 +500,7 @@ const StockTransferTable: React.FC = () => {
                   bg-[#f1f6fc]
                   px-1
                   py-0
-                  text-center
+                  text-left
                   align-middle
                   font-semibold
                   text-[#202a36]
@@ -534,7 +579,6 @@ const StockTransferTable: React.FC = () => {
                   hover:bg-blue-50
                 `}
               >
-
                 {/* ==================================================
                     ACTIVE ROW INDICATOR
                 ================================================== */}
@@ -671,32 +715,12 @@ const StockTransferTable: React.FC = () => {
                     p-0
                   "
                 >
-                  <Select<Option, false>
-                    inputId={`txtUnit-${index}`}
-                    instanceId={`unit-${index}`}
-                    options={unitOptions}
-                    value={row.unit}
-                    onChange={(option) => {
-                      updateRow(
-                        index,
-                        "unit",
-                        option,
-                      );
-
-                      setActiveRow(index);
-                    }}
-                    styles={selectStyles}
-                    isClearable={false}
-                    isSearchable={false}
-                    menuPosition="fixed"
-                    menuPortalTarget={
-                      typeof document !== "undefined"
-                        ? document.body
-                        : undefined
-                    }
-                    placeholder=""
-                    className="w-full"
-                  />
+                  {renderTextInput(
+                    index,
+                    "unit",
+                    "txtUnit",
+                    "Unit",
+                  )}
                 </td>
 
                 {/* ==================================================
