@@ -128,14 +128,12 @@ const selectStyles: StylesConfig<Option, false> = {
 // ============================================================
 
 const inputClass =
-  "h-[30px] border border-[#cbd5e1] bg-white px-2 text-[15px] text-[#202020] outline-none focus:border-blue-400 focus:bg-blue-50";
+  "h-[30px] border border-[#cbd5e1] rounded-[4px] bg-white px-2 text-[14px] text-[#202020] outline-none focus:border-blue-400 focus:bg-blue-50";
 
 // ============================================================
 // BUTTON STYLE
 // ============================================================
 
-const buttonClass =
-  "h-[38px] rounded-[4px] border border-[#8ba7bd] bg-gradient-to-b from-white to-[#edf3f7] text-[14px] text-green-600 shadow-sm hover:bg-[#f5f5f5] focus:outline-none";
 
 // ============================================================
 // SALES INVOICE FOOTER
@@ -154,7 +152,7 @@ const SalesInvoiceFooter: React.FC = () => {
       <div className="absolute left-[7px] top-[8px] flex h-[30px] items-center">
         <label
           htmlFor="lkpDiscountType"
-          className="mr-[7px] whitespace-nowrap text-[15px] text-[#202020]"
+          className="mr-[7px] whitespace-nowrap text-[14px] text-[#202020]"
         >
           Discount Type :
         </label>
@@ -198,9 +196,9 @@ const SalesInvoiceFooter: React.FC = () => {
           TOTAL
       ====================================================== */}
 
-      <div className="absolute left-[440px] top-[8px] flex h-[30px] items-center">
+      <div className="absolute left-[668px] top-[8px] flex h-[30px] items-center">
         <label
-          className="mr-[7px] whitespace-nowrap text-[15px] text-[#202020]"
+          className="mr-[7px] whitespace-nowrap text-[14px] text-[#202020]"
         >
           Total
         </label>
@@ -269,7 +267,7 @@ const SalesInvoiceFooter: React.FC = () => {
         <div className="mb-[6px] flex h-[30px] items-center">
           <label
             htmlFor="txtTotalAmt"
-            className="w-[110px] whitespace-nowrap text-right text-[15px] text-[#202020]"
+            className="w-[110px] whitespace-nowrap text-right text-[14px] text-[#202020]"
           >
             Total Amt. :
           </label>
@@ -287,7 +285,7 @@ const SalesInvoiceFooter: React.FC = () => {
         <div className="mb-[6px] flex h-[30px] items-center">
           <label
             htmlFor="txtVATAmt"
-            className="w-[110px] whitespace-nowrap text-right text-[15px] text-[#202020]"
+            className="w-[110px] whitespace-nowrap text-right text-[14px] text-[#202020]"
           >
             VAT Amt. :
           </label>
@@ -305,7 +303,7 @@ const SalesInvoiceFooter: React.FC = () => {
         <div className="mb-[6px] flex h-[30px] items-center">
           <label
             htmlFor="txtNetAmt"
-            className="w-[110px] whitespace-nowrap text-right text-[15px] text-[#202020]"
+            className="w-[110px] whitespace-nowrap text-right text-[14px] text-[#202020]"
           >
             Net Amt. :
           </label>
@@ -323,7 +321,7 @@ const SalesInvoiceFooter: React.FC = () => {
         <div className="flex h-[30px] items-center">
           <label
             htmlFor="txtPaidAmt"
-            className="w-[110px] whitespace-nowrap text-right text-[15px] text-[#202020]"
+            className="w-[110px] whitespace-nowrap text-right text-[14px] text-[#202020]"
           >
             Paid Amt. :
           </label>
@@ -344,7 +342,7 @@ const SalesInvoiceFooter: React.FC = () => {
       <div className="absolute left-[7px] top-[43px] flex h-[30px] items-center">
         <label
           htmlFor="txtNone"
-          className="mr-[15px] whitespace-nowrap text-[15px] text-[#202020]"
+          className="mr-[15px] whitespace-nowrap text-[14px] text-[#202020]"
         >
           Note :
         </label>
@@ -391,7 +389,7 @@ const SalesInvoiceFooter: React.FC = () => {
           type="button"
           className='btn-style'
         >
-          <u>Post</u>
+          <u>P</u>ost
         </button>
 
         <button
