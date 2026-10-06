@@ -10,16 +10,16 @@ type Option = {
 };
 
 const columns = [
-  { name: "Sl.", width: "38px", fieldName: "Sl" },
-  { name: "Item ID", width: "158px", filedName: "itemID" },
-  { name: "Item Name", width: "auto", fieldName: "itemName" },
-  { name: "Unit", width: "56px", fieldName: "unit" },
-  { name: "Qty.", width: "58px", fieldName: "" },
-  { name: "S.Unit Price", width: "85px" },
-  { name: "S.Total Price", width: "90px" },
-  { name: "Unit Price", width: "80px" },
-  { name: "Unit Cost", width: "80px" },
-  { name: "Total Cost", width: "80px" },
+  { name: "Sl.", width: "38px", id: "txtSlNo" },
+  { name: "Item ID", width: "158px", id: "lkpItemID" },
+  { name: "Item Name", width: "auto", id: "lkpItemName" },
+  { name: "Unit", width: "56px", id: "txtUnit" },
+  { name: "Qty.", width: "58px", id: "txtQtyIn" },
+  { name: "S.Unit Price", width: "85px", id: "txtSup_UnitPrice" },
+  { name: "S.Total Price", width: "90px", id: "txtSup_TotPrice" },
+  { name: "Unit Price", width: "80px", id: "txtUnitPrice" },
+  { name: "Unit Cost", width: "80px", id: "txtUnitCost" },
+  { name: "Total Cost", width: "80px", id: "txtTotCost" },
 ];
 
 const numericColumns = [
@@ -228,7 +228,11 @@ const PurchaseTable: React.FC<Props> = ({ rows, onRowChange, lookups }) => {
             <col style={{ width: "14px" }} />
 
             {columns.map((column) => (
-              <col key={column.name} style={{ width: column.width }} />
+              <col
+                key={column.name}
+                style={{ width: column.width }}
+                id={column.id}
+              />
             ))}
           </colgroup>
 
