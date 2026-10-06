@@ -126,7 +126,10 @@ Sales-TRANSACTION
      ADMINISTRATION
   ========================================================= */
 
-  mnuAdministration: "/Administration",
+
+
+mnuAdministration: "/Administration",
+mnuCompany: "/Administration/CompanyPage",
 };
 
 /* =========================================================
@@ -147,7 +150,15 @@ export const ADMINISTRATION_NODE: MenuNode = {
   fmenuname: "mnuAdministration",
   fmenucaption: "Administration",
   fmenubuttons: "0",
-  children: [],
+  children: [
+    {
+      fmenuid: "9901",
+      fmenuname: "mnuCompany",
+      fmenucaption: "Company",
+      fmenubuttons: "0",
+      children: [],
+    },
+  ],
 };
 
 /* Rpt Statement of Account (synthetic node)
