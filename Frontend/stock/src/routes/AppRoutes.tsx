@@ -19,6 +19,7 @@ import SalesInvoice from "../pages/Sales/Transaction/SalesInvoice";
 import StockTransfer from "../pages/Sales/Transaction/stock/StockTransfer";
 import BeginningBalance from "../pages/Finance/Transaction/BeginningBalance/BeginningBalance";
 import ItemGroupPage from "../pages/Purchase/Setup/ItemGroupPage";
+import CompanyPage from "../pages/Administration/CompanyPage";
 
 const Login = lazy(() => import("../pages/Auth/LoginPage"));
 const ReceiptPage = lazy(
@@ -219,6 +220,8 @@ element={<StockTransfer/>}
         />
 
         <Route path="/dev/PurchaseExpense" element={<PurchaseExpense />} />
+
+        <Route path="/Administration/CompanyPage" element={<CompanyPage/>}/>
       </Routes>
     </Suspense>
   );
