@@ -17,6 +17,8 @@ import PurchaseInvoicePage from "../pages/Purchase/Transaction/PurchaseInvoicePa
 import PurchaseExpense from "../components/Transaction/PurchaseInvoice/PurchaseInvoiceExpense";
 import SalesInvoice from "../pages/Sales/Transaction/SalesInvoice";
 import StockTransfer from "../pages/Sales/Transaction/stock/StockTransfer";
+import BeginningBalance from "../pages/Finance/Transaction/BeginningBalance/BeginningBalance";
+import ItemGroupPage from "../pages/Purchase/Setup/ItemGroupPage";
 
 const Login = lazy(() => import("../pages/Auth/LoginPage"));
 const ReceiptPage = lazy(
@@ -88,6 +90,10 @@ const AppRoutes = () => {
             path="/Finance/Transaction/Transaction-unmatching"
             element={<UnMatch />}
           />
+          <Route
+            path="/Finance/Transaction/BeginningBalance"
+            element={<BeginningBalance />}
+          />
 
           {/* Finance - Setup */}
           <Route
@@ -152,6 +158,8 @@ element={<StockTransfer/>}
 
           <Route path="/Purchase/Setup/ItemPage" element={<ItemPage />} />
 
+          <Route  path="/Purchase/Setup/ItemGroupPage"element={<ItemGroupPage/>} />
+
           {/* =================================================
               SETTINGS
           ================================================= */}
@@ -174,6 +182,7 @@ element={<StockTransfer/>}
           {/* ================= DOCUMENT NUMBER ================= */}
 
           <Route path="/Settings/SetDocumentNo" element={<SetDocumentNo />} />
+          
 
           {/* =================================================
               FINANCE - REPORTS
