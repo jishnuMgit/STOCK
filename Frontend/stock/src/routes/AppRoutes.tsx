@@ -8,7 +8,7 @@ import PublicRoute from "./PublicRoute";
 import CustomerList from "../pages/Finance/Setup/CustomerListPage";
 import ChartOfAccountList from "../pages/Finance/Setup/COAListPage";
 import UserLogin from "../pages/Security/UserLogin/UserLoginPage";
-import ChartOfAccountSettings from "../pages/Settings/ChartOfAccountSettings";
+import SetChartOfAccount from "../pages/Settings/SetChartOfAccountPage";
 import UserPermission from "../pages/Security/UserPermissionMenu/UserPermissionMenuPage";
 import BeginningStockPage from "../pages/Purchase/Transaction/BeginningStockPage";
 import UserPermissionBranchPage from "../pages/Security/UserPermissionBranch/UserPermissionBranchPage";
@@ -171,8 +171,8 @@ element={<StockTransfer/>}
           <Route path="/Settings/SetBranchInfo" element={<SetBranchInfo />} />
 
           <Route
-          path="/Settings/ChartOfAccountSettings"
-          element={<ChartOfAccountSettings />}
+          path="/Settings/SetChartOfAccount"
+          element={<SetChartOfAccount />}
           />
           <Route
             path="/Settings/SetPostingAccount"

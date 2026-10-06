@@ -6,8 +6,6 @@ export interface Company {
   fCoName_AR: string | null;
   fCoName_QR: string | null;
   fCoName_Short: string | null;
-  fCoAddress1: string | null;
-  fCoAddress2: string | null;
   fCoVATNo: string | null;
   fCoStatus: boolean | null;
   fPositionNo: number | null;

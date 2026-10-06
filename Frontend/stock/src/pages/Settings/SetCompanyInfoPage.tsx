@@ -149,14 +149,6 @@ interface CompanyFormData {
   txtCoName_Short: string;
   txtCoVATNo: string;
   txtCoVATNo_AR: string;
-  txtCoAddress1: string;
-  txtCoAddress2: string;
-  txtCoAddress3: string;
-  txtCoAddress4: string;
-  txtCoAddress1_AR: string;
-  txtCoAddress2_AR: string;
-  txtCoAddress3_AR: string;
-  txtCoAddress4_AR: string;
 }
 
 const emptyFormData: CompanyFormData = {
@@ -165,14 +157,6 @@ const emptyFormData: CompanyFormData = {
   txtCoName_Short: "",
   txtCoVATNo: "",
   txtCoVATNo_AR: "",
-  txtCoAddress1: "",
-  txtCoAddress2: "",
-  txtCoAddress3: "",
-  txtCoAddress4: "",
-  txtCoAddress1_AR: "",
-  txtCoAddress2_AR: "",
-  txtCoAddress3_AR: "",
-  txtCoAddress4_AR: "",
 };
 
 // dbo.tblmenu fmenuid for the Set Company Info page.
@@ -299,14 +283,6 @@ const SetCompanyInfo = () => {
           txtCoName_Short: data.txtCoName_Short || "",
           txtCoVATNo: data.txtCoVATNo || "",
           txtCoVATNo_AR: data.txtCoVATNo_AR || "",
-          txtCoAddress1: data.txtCoAddress1 || "",
-          txtCoAddress2: data.txtCoAddress2 || "",
-          txtCoAddress3: data.txtCoAddress3 || "",
-          txtCoAddress4: data.txtCoAddress4 || "",
-          txtCoAddress1_AR: (data.txtCoAddress1_AR || "").trim(),
-          txtCoAddress2_AR: (data.txtCoAddress2_AR || "").trim(),
-          txtCoAddress3_AR: (data.txtCoAddress3_AR || "").trim(),
-          txtCoAddress4_AR: data.txtCoAddress4_AR || "",
         });
       } catch (error) {
         console.error("getCompanyDetails error:", error);
@@ -321,14 +297,44 @@ const SetCompanyInfo = () => {
      SAVE COMPANY DETAILS (mode 'M')
   ======================================================= */
 
-  const handleSave = async () => {
-    if (!perms.save) {
-      toast.error("You do not have permission to Save.");
+  // Runs before every Save (the old form's ValidateMe): shows the message,
+  // moves the cursor to the field and returns false as soon as ONE rule fails.
+  // For now it only covers the fields marked with a red * in the form.
+  const validateMe = (): boolean => {
+    const fail = (message: string, fieldId: string): boolean => {
+      toast.warning(message);
+      document.getElementById(fieldId)?.focus();
+      return false;
+    };
+
+    if (!lkpCoName) {
+      return fail("Please select a 'Company'", "lkpCoName");
+    }
+
+    if (!formData.txtCoName_AR.trim()) {
+      return fail("Please input 'Company Name (AR)'", "txtCoName_AR");
+    }
+
+    if (!formData.txtCoName_QR.trim()) {
+      return fail("Please input a 'Company Name in QR Code'", "txtCoName_QR");
+    }
+
+    if (!formData.txtCoName_Short.trim()) {
+      return fail("Please input 'Company Name (Short)'", "txtCoName_Short");
+    }
+
+    return true;
+  };
+
+  // This screen only ever edits an existing company, so it works with the
+  // MODIFY right (letter M of the menu's buttons), not Save.
+  const handleModify = async () => {
+    if (!perms.modify) {
+      toast.error("You do not have permission to Modify.");
       return;
     }
 
-    if (!lkpCoName) {
-      toast.warning("Please select a company first.");
+    if (!validateMe()) {
       return;
     }
 
@@ -357,6 +363,13 @@ const SetCompanyInfo = () => {
 
       if (!response.ok || !result.success) {
         toast.error(result.message || "Company info could not be saved.");
+
+        // the backend validator names the field that failed - same name as
+        // the element id, so the cursor goes straight into it
+        if (result.field) {
+          document.getElementById(result.field)?.focus();
+        }
+
         return;
       }
 
@@ -380,21 +393,21 @@ const SetCompanyInfo = () => {
 
   /* =======================================================
      KEYBOARD SHORTCUTS
-     Alt+S -> Save, Alt+C -> Clear (matches the underlined
+     Alt+M -> Modify, Alt+C -> Clear (matches the underlined
      accelerator letters on the buttons).
   ======================================================= */
 
   useAltShortcuts({
-    s: handleSave,
+    m: handleModify,
     c: handleClear,
   });
 
   return (
     <div
       onKeyDown={handleEnterAsTab}
-      className="min-h-screen flex items-center justify-center"
+      className="min-h-screen flex items-center justify-center "
     >
-      <div className="w-[850px]  bg-white border-[0.5px] shadow-md">
+      <div className="w-[600px]  bg-white border-[0.5px] shadow-md  min-h-[200px]">
 
         {/* Header */}
         <div className="h-[30px] bg-[#a7dfc0] flex ">
@@ -448,6 +461,7 @@ const SetCompanyInfo = () => {
                 id="txtCoName_AR"
                 maxLength={100}
                 name="txtCoName_AR"
+                aria-required="true"
                 type="text"
                 dir="rtl"
                 value={formData.txtCoName_AR}
@@ -474,6 +488,7 @@ const SetCompanyInfo = () => {
               maxLength={30}
                 id="txtCoName_QR"
                 name="txtCoName_QR"
+                aria-required="true"
                 type="text"
                 value={formData.txtCoName_QR}
                 onChange={(event) =>
@@ -500,6 +515,7 @@ const SetCompanyInfo = () => {
               maxLength={30}
                 id="txtCoName_Short"
                 name="txtCoName_Short"
+                aria-required="true"
                 type="text"
                 value={formData.txtCoName_Short}
                 onChange={(event) =>
@@ -514,8 +530,9 @@ const SetCompanyInfo = () => {
           <div className="grid grid-cols-[145px_1fr] items-center mb-[8px]">
             <label
               htmlFor="txtCoVATNo"
-              className="text-[11px] text-gray-600 text-right pr-3"
+              className="relative text-[11px] text-gray-600 text-right pr-3"
             >
+              <span className="absolute right-[15px] -top-0.5 h-[4px] w-[4px] text-red-500">*</span>
               VAT No. :
             </label>
 
@@ -524,6 +541,7 @@ const SetCompanyInfo = () => {
               maxLength={15}
                 id="txtCoVATNo"
                 name="txtCoVATNo"
+                aria-required="true"
                 type="text"
                 value={formData.txtCoVATNo}
                 onChange={(event) =>
@@ -538,8 +556,9 @@ const SetCompanyInfo = () => {
           <div className="grid grid-cols-[145px_1fr] items-center mb-[8px]">
             <label
               htmlFor="txtCoVATNo_AR"
-              className="text-[11px] text-gray-600 text-right pr-3"
+              className="relative text-[11px] text-gray-600 text-right pr-3"
             >
+              <span className="absolute right-[15px] -top-0.5 h-[4px] w-[4px] text-red-500">*</span>
               VAT No. (AR) :
             </label>
 
@@ -548,6 +567,7 @@ const SetCompanyInfo = () => {
               maxLength={15}
                 id="txtCoVATNo_AR"
                 name="txtCoVATNo_AR"
+                aria-required="true"
                 type="text"
                 value={formData.txtCoVATNo_AR}
                 onChange={(event) =>
@@ -558,191 +578,15 @@ const SetCompanyInfo = () => {
             </div>
           </div>
 
-          {/* ================= ADDRESS SECTION ================= */}
-          <div className="mt-[10px]">
-
-            {/* Address Headers */}
-            <div className="grid grid-cols-[145px_1fr_1fr] items-center mb-[6px]">
-
-              <div></div>
-
-              <div className="text-[11px] font-semibold text-gray-600 text-center">
-                Address (EN)
-              </div>
-
-              <div className="text-[11px] font-semibold text-gray-600 text-center">
-                Address (AR)
-              </div>
-
-            </div>
-
-            {/* Address 1 */}
-            <div className="grid grid-cols-[145px_1fr_1fr] items-center mb-[8px]">
-
-              <label
-                htmlFor="txtCoAddress1"
-                className="text-[11px] text-gray-600 text-right pr-3"
-              >
-                Address-Line 1 :
-              </label>
-
-              {/* English */}
-              <input
-                id="txtCoAddress1"
-                name="txtCoAddress1"
-                maxLength={80}
-                type="text"
-                value={formData.txtCoAddress1}
-                onChange={(event) =>
-                  handleFieldChange("txtCoAddress1", event.target.value)
-                }
-                className="w-full h-[23px] border border-gray-300 rounded-sm px-2 text-[11px] outline-none mr-[5px]"
-              />
-
-              {/* Arabic */}
-              <input
-                id="txtCoAddress1_AR"
-                name="txtCoAddress1_AR"
-                maxLength={80}
-                type="text"
-                dir="rtl"
-                value={formData.txtCoAddress1_AR}
-                onChange={(event) =>
-                  handleFieldChange("txtCoAddress1_AR", event.target.value)
-                }
-                className="w-full h-[23px] border border-gray-300 rounded-sm px-2 text-[11px] outline-none ml-[5px]"
-              />
-
-            </div>
-
-            {/* Address 2 */}
-            <div className="grid grid-cols-[145px_1fr_1fr] items-center mb-[8px]">
-
-              <label
-                htmlFor="txtCoAddress2"
-                className="text-[11px] text-gray-600 text-right pr-3"
-              >
-                Address-Line 2 :
-              </label>
-
-              {/* English */}
-              <input
-                id="txtCoAddress2"
-                name="txtCoAddress2"
-                maxLength={80}
-                type="text"
-                value={formData.txtCoAddress2}
-                onChange={(event) =>
-                  handleFieldChange("txtCoAddress2", event.target.value)
-                }
-                className="w-full h-[23px] border border-gray-300 rounded-sm px-2 text-[11px] outline-none mr-[5px]"
-              />
-
-              {/* Arabic */}
-              <input
-                id="txtCoAddress2_AR"
-                name="txtCoAddress2_AR"
-                maxLength={80}
-                type="text"
-                dir="rtl"
-                value={formData.txtCoAddress2_AR}
-                onChange={(event) =>
-                  handleFieldChange("txtCoAddress2_AR", event.target.value)
-                }
-                className="w-full h-[23px] border border-gray-300 rounded-sm px-2 text-[11px] outline-none ml-[5px]"
-              />
-
-            </div>
-
-            {/* Address 3 */}
-            <div className="grid grid-cols-[145px_1fr_1fr] items-center mb-[8px]">
-
-              <label
-                htmlFor="txtCoAddress3"
-                className="text-[11px] text-gray-600 text-right pr-3"
-              >
-                Address-line 3 :
-              </label>
-
-              {/* English */}
-              <input
-                id="txtCoAddress3"
-                name="txtCoAddress3"
-                maxLength={80}
-                type="text"
-                value={formData.txtCoAddress3}
-                onChange={(event) =>
-                  handleFieldChange("txtCoAddress3", event.target.value)
-                }
-                className="w-full h-[23px] border border-gray-300 rounded-sm px-2 text-[11px] outline-none mr-[5px]"
-              />
-
-              {/* Arabic */}
-              <input
-                id="txtCoAddress3_AR"
-                name="txtCoAddress3_AR"
-                maxLength={80}
-                type="text"
-                dir="rtl"
-                value={formData.txtCoAddress3_AR}
-                onChange={(event) =>
-                  handleFieldChange("txtCoAddress3_AR", event.target.value)
-                }
-                className="w-full h-[23px] border border-gray-300 rounded-sm px-2 text-[11px] outline-none ml-[5px]"
-              />
-
-            </div>
-
-            {/* Address 4 */}
-            <div className="grid grid-cols-[145px_1fr_1fr] items-center">
-
-              <label
-                htmlFor="txtCoAddress4"
-                className="text-[11px] text-gray-600 text-right pr-3"
-              >
-                Address-Line 4 :
-              </label>
-
-              {/* English */}
-              <input
-                id="txtCoAddress4"
-                name="txtCoAddress4"
-                maxLength={80}
-                type="text"
-                value={formData.txtCoAddress4}
-                onChange={(event) =>
-                  handleFieldChange("txtCoAddress4", event.target.value)
-                }
-                className="w-full h-[23px] border border-gray-300 rounded-sm px-2 text-[11px] outline-none mr-[5px]"
-              />
-
-              {/* Arabic */}
-              <input
-                id="txtCoAddress4_AR"
-                name="txtCoAddress4_AR"
-                maxLength={80}
-                type="text"
-                dir="rtl"
-                value={formData.txtCoAddress4_AR}
-                onChange={(event) =>
-                  handleFieldChange("txtCoAddress4_AR", event.target.value)
-                }
-                className="w-full h-[23px] border border-gray-300 rounded-sm px-2 text-[11px] outline-none ml-[5px]"
-              />
-
-            </div>
-
-          </div>
-
           {/* ================= BUTTONS ================= */}
           <div className="flex justify-center gap-3 mt-[14px] mb-[12px]">
 
             <button
-              id="btnSave"
-              name="btnSave"
+              id="btnModify"
+              name="btnModify"
               type="button"
-              onClick={handleSave}
-              disabled={!perms.save}
+              onClick={handleModify}
+              disabled={!perms.modify}
               className="
                 w-[105px]
                 h-[34px]
@@ -758,7 +602,7 @@ const SetCompanyInfo = () => {
                 disabled:opacity-40
               "
             >
-              <span className="underline underline-offset-2">S</span>ave
+              <span className="underline underline-offset-2">M</span>odify
             </button>
 
             <button

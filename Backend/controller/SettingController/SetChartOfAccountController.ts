@@ -2,12 +2,12 @@ import { Request, Response } from "express";
 
 import pool from "../../DB/db.js";
 import {
-  getFinSettingService,
-  saveFinSettingService,
-  deleteFinSettingRowService,
-  type FinRow,
-  type FinSettingRowPayload,
-} from "../../services/SettingServices/financeSettingService.js";
+  getChartOfAccountService,
+  saveChartOfAccountService,
+  deleteChartOfAccountRowService,
+  type ChartOfAccountRow,
+  type ChartOfAccountRowPayload,
+} from "../../services/SettingServices/setChartOfAccountService.js";
 import { UserAudit } from "../../utils/UserAudit.js";
 import {
   mapRows,
@@ -107,11 +107,11 @@ export const getAccountList = async (
 };
 
 /* =========================================================
-   GET FINANCE SETTING (the saved parameter -> account rows
+   GET CHART OF ACCOUNT (the saved parameter -> account rows
    that fill the grid when the page opens)
 ========================================================= */
 
-export const getFinSetting = async (
+export const getChartOfAccount = async (
   req: Request,
   res: Response
 ): Promise<Response> => {
@@ -126,18 +126,18 @@ export const getFinSetting = async (
     }
 
     // the service already returns the form field names
-    const rows = await getFinSettingService(String(PstrCoID));
+    const rows = await getChartOfAccountService(String(PstrCoID));
 
     return res.status(200).json({
       success: true,
       data: rows,
     });
   } catch (error: unknown) {
-    console.error("getFinSetting error:", error);
+    console.error("getChartOfAccount error:", error);
 
     return res.status(500).json({
       success: false,
-      message: "Failed to load finance setting",
+      message: "Failed to load chart of account setting",
       error:
         error instanceof Error
           ? error.message
@@ -152,7 +152,7 @@ export const getFinSetting = async (
    id (1101001) into "1101001 PETTY CASH".
 ========================================================= */
 
-const loadNameLookups = async (PstrCoID: string, rows: FinRow[]) => {
+const loadNameLookups = async (PstrCoID: string, rows: ChartOfAccountRow[]) => {
   const accountIds = [
     ...new Set(
       rows
@@ -193,11 +193,11 @@ const loadNameLookups = async (PstrCoID: string, rows: FinRow[]) => {
 };
 
 /* =========================================================
-   SAVE FINANCE SETTING (the whole grid: new rows -> S1,
+   SAVE CHART OF ACCOUNT (the whole grid: new rows -> S1,
    changed rows -> M1)
 ========================================================= */
 
-export const saveFinSetting = async (
+export const saveChartOfAccount = async (
   req: Request,
   res: Response
 ): Promise<Response> => {
@@ -211,7 +211,7 @@ export const saveFinSetting = async (
       PstrCoID: string;
       PstrYear: string;
       PstrUserID: string;
-      rows: FinSettingRowPayload[];
+      rows: ChartOfAccountRowPayload[];
     } = req.body;
 
     if (!PstrCoID) {
@@ -242,7 +242,7 @@ export const saveFinSetting = async (
       });
     }
 
-    const result = await saveFinSettingService(PstrCoID, rows, PstrUserID);
+    const result = await saveChartOfAccountService(PstrCoID, rows, PstrUserID);
 
     if (!result.changed) {
       return res.status(200).json({
@@ -296,30 +296,30 @@ export const saveFinSetting = async (
         null,
         null,
         null,
-        "Finance Setting",
+        "Set Chart Of Account",
         updated.length === 0 ? "S" : "M",
         PstrUserID,
-        `Finance setting: ${parts.join("; ")}`
+        `Chart of account setting: ${parts.join("; ")}`
       );
     } catch (auditError: unknown) {
       // the settings are already saved - don't fail the request
       // over an audit-logging problem, just log it
-      console.error("UserAudit error (saveFinSetting):", auditError);
+      console.error("UserAudit error (saveChartOfAccount):", auditError);
     }
 
     return res.status(200).json({
       success: true,
-      message: "Finance setting saved successfully",
+      message: "Chart of account setting saved successfully",
     });
   } catch (error: unknown) {
-    console.error("saveFinSetting error:", error);
+    console.error("saveChartOfAccount error:", error);
 
     return res.status(400).json({
       success: false,
       message:
         error instanceof Error
           ? error.message
-          : "Finance setting could not be saved",
+          : "Chart of account setting could not be saved",
     });
   }
 };
@@ -328,7 +328,7 @@ export const saveFinSetting = async (
    DELETE ONE ROW (mode 'D1') - the X button on a grid row
 ========================================================= */
 
-export const deleteFinSettingRow = async (
+export const deleteChartOfAccountRow = async (
   req: Request,
   res: Response
 ): Promise<Response> => {
@@ -375,7 +375,7 @@ export const deleteFinSettingRow = async (
       });
     }
 
-    const deleted = await deleteFinSettingRowService(
+    const deleted = await deleteChartOfAccountRowService(
       PstrCoID,
       Number(txtOriginalSlNo),
       lkpOriginalParameterType,
@@ -395,30 +395,30 @@ export const deleteFinSettingRow = async (
         null,
         null,
         null,
-        "Finance Setting",
+        "Set Chart Of Account",
         "D",
         PstrUserID,
-        `Finance setting: Removed ${parameter(deleted.lkpParameterType)} -> ${account(deleted.lkpAccountID)}`
+        `Chart of account setting: Removed ${parameter(deleted.lkpParameterType)} -> ${account(deleted.lkpAccountID)}`
       );
     } catch (auditError: unknown) {
       // the row is already deleted - don't fail the request
       // over an audit-logging problem, just log it
-      console.error("UserAudit error (deleteFinSettingRow):", auditError);
+      console.error("UserAudit error (deleteChartOfAccountRow):", auditError);
     }
 
     return res.status(200).json({
       success: true,
-      message: "Finance setting deleted successfully",
+      message: "Chart of account setting deleted successfully",
     });
   } catch (error: unknown) {
-    console.error("deleteFinSettingRow error:", error);
+    console.error("deleteChartOfAccountRow error:", error);
 
     return res.status(400).json({
       success: false,
       message:
         error instanceof Error
           ? error.message
-          : "Finance setting could not be deleted",
+          : "Chart of account setting could not be deleted",
     });
   }
 };

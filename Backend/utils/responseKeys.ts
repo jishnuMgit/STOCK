@@ -114,14 +114,6 @@ export const companyDetailKeys: KeyMap = {
   fconame_short: "txtCoName_Short",
   fcovatno: "txtCoVATNo",
   fcovatno_ar: "txtCoVATNo_AR",
-  fcoaddress1: "txtCoAddress1",
-  fcoaddress2: "txtCoAddress2",
-  fcoaddress3: "txtCoAddress3",
-  fcoaddress4: "txtCoAddress4",
-  fcoaddress1_ar: "txtCoAddress1_AR",
-  fcoaddress2_ar: "txtCoAddress2_AR",
-  fcoaddress3_ar: "txtCoAddress3_AR",
-  fcoaddress4_ar: "txtCoAddress4_AR",
   fcostatus: "txtCoStatus",
 };
 
@@ -160,17 +152,17 @@ export const branchInfoKeys: KeyMap = {
   fho: "chkHo",
 };
 
-/* ---------- Settings / FinanceSetting ---------- */
+/* ---------- Settings / SetChartOfAccount ---------- */
 
 export const parameterListKeys: KeyMap = {
   fname: "lkpParameterName",
   ftype: "lkpParameterType",
 };
 
-export const finSettingKeys: KeyMap = {
+export const chartOfAccountKeys: KeyMap = {
   fslno: "txtSlNo",
   ftype: "lkpParameterType",
-  faccountid: "lkpAccountID",
+  fgaccountid: "lkpAccountID",
   fgph: "txtGPH",
 };
 

@@ -1,5 +1,6 @@
 import { Request, Response, NextFunction } from "express";
 import pool from "../DB/db.js";
+import { isUserActive, idleUserMessage } from "../validators/common.js";
 
 export interface AuthenticatedRequest extends Request {
   user?: { userId: string; userType: string; companyId: string };
@@ -74,10 +75,12 @@ export const authenticate = async (
        USER STATUS
     ===================================================== */
 
-    if (user.fuserstatus === false) {
+    // fuserstatus is 'A' (active) or 'I' (idle) - not true / false.
+    // ADMIN is always active.
+    if (!isUserActive(user.fuserid, user.fuserstatus)) {
       res.status(403).json({
         success: false,
-        message: "This User is Idle",
+        message: idleUserMessage(user.fuserid),
       });
       return;
     }
