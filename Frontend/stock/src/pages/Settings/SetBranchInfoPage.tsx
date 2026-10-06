@@ -44,6 +44,8 @@ interface BranchTextRowProps {
   setValueAr: (value: string) => void;
   maxLength: number;
   inputWidth: number;
+  // shows the red * after the label (both boxes of the row are mandatory)
+  required?: boolean;
 }
 
 const BranchTextRow: React.FC<BranchTextRowProps> = ({
@@ -57,6 +59,7 @@ const BranchTextRow: React.FC<BranchTextRowProps> = ({
   setValueAr,
   maxLength,
   inputWidth,
+  required = false,
 }) => {
   const rowGrid =
     "grid grid-cols-[120px_460px_460px_80px] items-center gap-3";
@@ -103,7 +106,9 @@ const BranchTextRow: React.FC<BranchTextRowProps> = ({
         htmlFor={idEn}
         className={labelEnglishClass}
       >
-        {labelEn} :
+        {labelEn}
+        {required && <span className="ml-0.5 text-red-500">*</span>}
+        {" "}:
       </label>
 
       <div className="flex w-[460px] justify-start">
@@ -657,9 +662,11 @@ const SetBranchInfo: React.FC = () => {
      SAVE
   ========================================================= */
 
-  const handleSave = async () => {
-    if (!perms.save) {
-      toast.error("You do not have permission to Save.");
+  // This screen only ever edits an existing branch, so it works with the
+  // MODIFY right (letter M of the menu's buttons), not Save.
+  const handleModify = async () => {
+    if (!perms.modify) {
+      toast.error("You do not have permission to Modify.");
       return;
     }
 
@@ -724,6 +731,13 @@ const SetBranchInfo: React.FC = () => {
 
       if (!response.ok || !result.success) {
         toast.error(result.message || "Branch info could not be saved.");
+
+        // the backend validator names the field that failed - same name as
+        // the element id, so the cursor goes straight into it
+        if (result.field) {
+          document.getElementById(result.field)?.focus();
+        }
+
         return;
       }
 
@@ -794,12 +808,12 @@ const SetBranchInfo: React.FC = () => {
 
   /* =========================================================
      KEYBOARD SHORTCUTS
-     Alt+S -> Save, Alt+C -> Clear (matches the underlined
+     Alt+M -> Modify, Alt+C -> Clear (matches the underlined
      accelerator letters on the buttons).
   ========================================================= */
 
   useAltShortcuts({
-    s: handleSave,
+    m: handleModify,
     c: () => handleClear(true),
   });
 
@@ -891,7 +905,7 @@ const SetBranchInfo: React.FC = () => {
               htmlFor="lkpBranch"
               className={labelEnglishClass}
             >
-              Branch :
+              Branch<span className="ml-0.5 text-red-500">*</span> :
             </label>
 
             {/* BRANCH SELECT - 300px */}
@@ -975,6 +989,7 @@ const SetBranchInfo: React.FC = () => {
 
           <BranchTextRow
             labelEn="Building No."
+            required
             labelAr="رقم المبنى"
             idEn="txtBuildingNo"
             idAr="txtBuildingNo_AR"
@@ -992,6 +1007,7 @@ const SetBranchInfo: React.FC = () => {
 
           <BranchTextRow
             labelEn="Street Name"
+            required
             labelAr="اسم الشارع"
             idEn="txtStreetName"
             idAr="txtStreetName_AR"
@@ -1009,6 +1025,7 @@ const SetBranchInfo: React.FC = () => {
 
           <BranchTextRow
             labelEn="District"
+            required
             labelAr="الحي"
             idEn="txtDistrict"
             idAr="txtDistrict_AR"
@@ -1026,6 +1043,7 @@ const SetBranchInfo: React.FC = () => {
 
           <BranchTextRow
             labelEn="City"
+            required
             labelAr="مدينة"
             idEn="txtCity"
             idAr="txtCity_AR"
@@ -1043,6 +1061,7 @@ const SetBranchInfo: React.FC = () => {
 
           <BranchTextRow
             labelEn="Country"
+            required
             labelAr="دولة"
             idEn="txtCountry"
             idAr="txtCountry_AR"
@@ -1060,6 +1079,7 @@ const SetBranchInfo: React.FC = () => {
 
           <BranchTextRow
             labelEn="Postal Code"
+            required
             labelAr="رمز بريدي"
             idEn="txtPostalCode"
             idAr="txtPostalCode_AR"
@@ -1096,6 +1116,7 @@ const SetBranchInfo: React.FC = () => {
 
           <BranchTextRow
             labelEn="CR No."
+            required
             labelAr="رقم السجل"
             idEn="txtCRNo"
             idAr="txtCRNo_AR"
@@ -1113,6 +1134,7 @@ const SetBranchInfo: React.FC = () => {
 
           <BranchTextRow
             labelEn="License No."
+            required
             labelAr="رقم الترخيص"
             idEn="txtLicenseNo"
             idAr="txtLicenseNo_AR"
@@ -1130,6 +1152,7 @@ const SetBranchInfo: React.FC = () => {
 
           <BranchTextRow
             labelEn="License Category"
+            required
             labelAr="فئة"
             idEn="txtLicenseCategory"
             idAr="txtLicenseCategory_AR"
@@ -1292,20 +1315,24 @@ const SetBranchInfo: React.FC = () => {
   "
 >
   <button
+    id="btnModify"
+    name="btnModify"
     type="button"
-    onClick={handleSave}
-    disabled={!perms.save}
+    onClick={handleModify}
+    disabled={!perms.modify}
     className={`${buttonClass} disabled:cursor-not-allowed disabled:opacity-40`}
   >
      <span className={textClass}>
                 <span className="underline decoration-2 underline-offset-1">
-                  S
+                  M
                 </span>
-                ave
+                odify
               </span>
   </button>
 
   <button
+    id="btnClear"
+    name="btnClear"
     type="button"
     onClick={() => handleClear(true)}
     className={buttonClass}

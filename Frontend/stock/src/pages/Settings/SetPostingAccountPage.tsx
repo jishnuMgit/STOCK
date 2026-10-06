@@ -10,6 +10,12 @@ import {
   BranchOption,
   branchMenuStyles,
 } from "../../components/BranchSelect/branchSelectParts";
+import {
+  receiptPairIdComponents as accountIdComponents,
+  receiptPairNameComponents as accountNameComponents,
+  receiptPairMenuStyles as accountMenuStyles,
+  filterPairOption as accountFilterOption,
+} from "../../components/PairSelect/pairSelectParts";
 // ============================================================
 // TYPES
 // ============================================================
@@ -17,6 +23,10 @@ import {
 interface SelectOption {
   value: string;
   label: string;
+  // set on the account ID / Name boxes, whose open list shows both
+  // columns and filters on either
+  id?: string;
+  name?: string;
 }
 
 interface AccountOption {
@@ -479,22 +489,29 @@ const SetPostingAccountPage: React.FC = () => {
     return accountList;
   };
 
+  // Both boxes use the account ID as the option's value (account names can
+  // repeat, the ID cannot); the box only differs in what it shows.
   const getIdOptions = (): SelectOption[] => {
     return getAccountOptions().map((account) => ({
       value: account.lkpAccountID,
       label: account.lkpAccountID,
+      id: account.lkpAccountID,
+      name: account.txtAccountName,
     }));
   };
 
   const getNameOptions = (): SelectOption[] => {
     return getAccountOptions().map((account) => ({
-      value: account.txtAccountName,
+      value: account.lkpAccountID,
       label: account.txtAccountName,
+      id: account.lkpAccountID,
+      name: account.txtAccountName,
     }));
   };
 
   // ----------------------------------------------------------
-  // ACCOUNT ID CHANGE
+  // ACCOUNT CHANGE - used by the ID box AND the Name box (both give the
+  // account ID as the value, so picking from either fills both)
   // ----------------------------------------------------------
 
   const handleAccountIdChange = (
@@ -503,25 +520,6 @@ const SetPostingAccountPage: React.FC = () => {
   ) => {
     const account = getAccountOptions().find(
       (item) => item.lkpAccountID === (selected?.value ?? ""),
-    );
-
-    setValues((previous) => ({
-      ...previous,
-      [`lkp${rowKey}AccountID`]: account?.lkpAccountID ?? "",
-      [`lkp${rowKey}AccountName`]: account?.txtAccountName ?? "",
-    }));
-  };
-
-  // ----------------------------------------------------------
-  // ACCOUNT NAME CHANGE
-  // ----------------------------------------------------------
-
-  const handleAccountNameChange = (
-    rowKey: string,
-    selected: SingleValue<SelectOption>,
-  ) => {
-    const account = getAccountOptions().find(
-      (item) => item.txtAccountName === (selected?.value ?? ""),
     );
 
     setValues((previous) => ({
@@ -684,7 +682,13 @@ const SetPostingAccountPage: React.FC = () => {
                   onChange={(selected) =>
                     handleAccountIdChange("CashSupplier", selected)
                   }
-                  styles={selectStyles}
+                  styles={{ ...selectStyles, ...accountMenuStyles }}
+                  components={accountIdComponents}
+                  filterOption={accountFilterOption}
+                  noOptionsMessage={() => "No Account Found"}
+                  menuPortalTarget={document.body}
+                  menuPosition="fixed"
+                  menuPlacement="auto"
                   placeholder=""
                   isClearable
                   isSearchable
@@ -699,12 +703,18 @@ const SetPostingAccountPage: React.FC = () => {
                   options={getNameOptions()}
                   value={getSelectedOption(
                     getNameOptions(),
-                    values.lkpCashSupplierAccountName,
+                    values.lkpCashSupplierAccountID,
                   )}
                   onChange={(selected) =>
-                    handleAccountNameChange("CashSupplier", selected)
+                    handleAccountIdChange("CashSupplier", selected)
                   }
-                  styles={selectStyles}
+                  styles={{ ...selectStyles, ...accountMenuStyles }}
+                  components={accountNameComponents}
+                  filterOption={accountFilterOption}
+                  noOptionsMessage={() => "No Account Found"}
+                  menuPortalTarget={document.body}
+                  menuPosition="fixed"
+                  menuPlacement="auto"
                   placeholder=""
                   isClearable
                   isSearchable
@@ -733,7 +743,13 @@ const SetPostingAccountPage: React.FC = () => {
                   onChange={(selected) =>
                     handleAccountIdChange("CashCustomer", selected)
                   }
-                  styles={selectStyles}
+                  styles={{ ...selectStyles, ...accountMenuStyles }}
+                  components={accountIdComponents}
+                  filterOption={accountFilterOption}
+                  noOptionsMessage={() => "No Account Found"}
+                  menuPortalTarget={document.body}
+                  menuPosition="fixed"
+                  menuPlacement="auto"
                   placeholder=""
                   isClearable
                   isSearchable
@@ -747,12 +763,18 @@ const SetPostingAccountPage: React.FC = () => {
                   options={getNameOptions()}
                   value={getSelectedOption(
                     getNameOptions(),
-                    values.lkpCashCustomerAccountName,
+                    values.lkpCashCustomerAccountID,
                   )}
                   onChange={(selected) =>
-                    handleAccountNameChange("CashCustomer", selected)
+                    handleAccountIdChange("CashCustomer", selected)
                   }
-                  styles={selectStyles}
+                  styles={{ ...selectStyles, ...accountMenuStyles }}
+                  components={accountNameComponents}
+                  filterOption={accountFilterOption}
+                  noOptionsMessage={() => "No Account Found"}
+                  menuPortalTarget={document.body}
+                  menuPosition="fixed"
+                  menuPlacement="auto"
                   placeholder=""
                   isClearable
                   isSearchable
@@ -781,7 +803,13 @@ const SetPostingAccountPage: React.FC = () => {
                   onChange={(selected) =>
                     handleAccountIdChange("Stock", selected)
                   }
-                  styles={selectStyles}
+                  styles={{ ...selectStyles, ...accountMenuStyles }}
+                  components={accountIdComponents}
+                  filterOption={accountFilterOption}
+                  noOptionsMessage={() => "No Account Found"}
+                  menuPortalTarget={document.body}
+                  menuPosition="fixed"
+                  menuPlacement="auto"
                   placeholder=""
                   isClearable
                   isSearchable
@@ -795,12 +823,18 @@ const SetPostingAccountPage: React.FC = () => {
                   options={getNameOptions()}
                   value={getSelectedOption(
                     getNameOptions(),
-                    values.lkpStockAccountName,
+                    values.lkpStockAccountID,
                   )}
                   onChange={(selected) =>
-                    handleAccountNameChange("Stock", selected)
+                    handleAccountIdChange("Stock", selected)
                   }
-                  styles={selectStyles}
+                  styles={{ ...selectStyles, ...accountMenuStyles }}
+                  components={accountNameComponents}
+                  filterOption={accountFilterOption}
+                  noOptionsMessage={() => "No Account Found"}
+                  menuPortalTarget={document.body}
+                  menuPosition="fixed"
+                  menuPlacement="auto"
                   placeholder=""
                   isClearable
                   isSearchable
@@ -829,7 +863,13 @@ const SetPostingAccountPage: React.FC = () => {
                   onChange={(selected) =>
                     handleAccountIdChange("Sales", selected)
                   }
-                  styles={selectStyles}
+                  styles={{ ...selectStyles, ...accountMenuStyles }}
+                  components={accountIdComponents}
+                  filterOption={accountFilterOption}
+                  noOptionsMessage={() => "No Account Found"}
+                  menuPortalTarget={document.body}
+                  menuPosition="fixed"
+                  menuPlacement="auto"
                   placeholder=""
                   isClearable
                   isSearchable
@@ -843,12 +883,18 @@ const SetPostingAccountPage: React.FC = () => {
                   options={getNameOptions()}
                   value={getSelectedOption(
                     getNameOptions(),
-                    values.lkpSalesAccountName,
+                    values.lkpSalesAccountID,
                   )}
                   onChange={(selected) =>
-                    handleAccountNameChange("Sales", selected)
+                    handleAccountIdChange("Sales", selected)
                   }
-                  styles={selectStyles}
+                  styles={{ ...selectStyles, ...accountMenuStyles }}
+                  components={accountNameComponents}
+                  filterOption={accountFilterOption}
+                  noOptionsMessage={() => "No Account Found"}
+                  menuPortalTarget={document.body}
+                  menuPosition="fixed"
+                  menuPlacement="auto"
                   placeholder=""
                   isClearable
                   isSearchable
@@ -877,7 +923,13 @@ const SetPostingAccountPage: React.FC = () => {
                   onChange={(selected) =>
                     handleAccountIdChange("SalesReturn", selected)
                   }
-                  styles={selectStyles}
+                  styles={{ ...selectStyles, ...accountMenuStyles }}
+                  components={accountIdComponents}
+                  filterOption={accountFilterOption}
+                  noOptionsMessage={() => "No Account Found"}
+                  menuPortalTarget={document.body}
+                  menuPosition="fixed"
+                  menuPlacement="auto"
                   placeholder=""
                   isClearable
                   isSearchable
@@ -891,12 +943,18 @@ const SetPostingAccountPage: React.FC = () => {
                   options={getNameOptions()}
                   value={getSelectedOption(
                     getNameOptions(),
-                    values.lkpSalesReturnAccountName,
+                    values.lkpSalesReturnAccountID,
                   )}
                   onChange={(selected) =>
-                    handleAccountNameChange("SalesReturn", selected)
+                    handleAccountIdChange("SalesReturn", selected)
                   }
-                  styles={selectStyles}
+                  styles={{ ...selectStyles, ...accountMenuStyles }}
+                  components={accountNameComponents}
+                  filterOption={accountFilterOption}
+                  noOptionsMessage={() => "No Account Found"}
+                  menuPortalTarget={document.body}
+                  menuPosition="fixed"
+                  menuPlacement="auto"
                   placeholder=""
                   isClearable
                   isSearchable
@@ -925,7 +983,13 @@ const SetPostingAccountPage: React.FC = () => {
                   onChange={(selected) =>
                     handleAccountIdChange("CostOfSales", selected)
                   }
-                  styles={selectStyles}
+                  styles={{ ...selectStyles, ...accountMenuStyles }}
+                  components={accountIdComponents}
+                  filterOption={accountFilterOption}
+                  noOptionsMessage={() => "No Account Found"}
+                  menuPortalTarget={document.body}
+                  menuPosition="fixed"
+                  menuPlacement="auto"
                   placeholder=""
                   isClearable
                   isSearchable
@@ -939,12 +1003,18 @@ const SetPostingAccountPage: React.FC = () => {
                   options={getNameOptions()}
                   value={getSelectedOption(
                     getNameOptions(),
-                    values.lkpCostOfSalesAccountName,
+                    values.lkpCostOfSalesAccountID,
                   )}
                   onChange={(selected) =>
-                    handleAccountNameChange("CostOfSales", selected)
+                    handleAccountIdChange("CostOfSales", selected)
                   }
-                  styles={selectStyles}
+                  styles={{ ...selectStyles, ...accountMenuStyles }}
+                  components={accountNameComponents}
+                  filterOption={accountFilterOption}
+                  noOptionsMessage={() => "No Account Found"}
+                  menuPortalTarget={document.body}
+                  menuPosition="fixed"
+                  menuPlacement="auto"
                   placeholder=""
                   isClearable
                   isSearchable
@@ -973,7 +1043,13 @@ const SetPostingAccountPage: React.FC = () => {
                   onChange={(selected) =>
                     handleAccountIdChange("CostOfSalesReturn", selected)
                   }
-                  styles={selectStyles}
+                  styles={{ ...selectStyles, ...accountMenuStyles }}
+                  components={accountIdComponents}
+                  filterOption={accountFilterOption}
+                  noOptionsMessage={() => "No Account Found"}
+                  menuPortalTarget={document.body}
+                  menuPosition="fixed"
+                  menuPlacement="auto"
                   placeholder=""
                   isClearable
                   isSearchable
@@ -987,12 +1063,18 @@ const SetPostingAccountPage: React.FC = () => {
                   options={getNameOptions()}
                   value={getSelectedOption(
                     getNameOptions(),
-                    values.lkpCostOfSalesReturnAccountName,
+                    values.lkpCostOfSalesReturnAccountID,
                   )}
                   onChange={(selected) =>
-                    handleAccountNameChange("CostOfSalesReturn", selected)
+                    handleAccountIdChange("CostOfSalesReturn", selected)
                   }
-                  styles={selectStyles}
+                  styles={{ ...selectStyles, ...accountMenuStyles }}
+                  components={accountNameComponents}
+                  filterOption={accountFilterOption}
+                  noOptionsMessage={() => "No Account Found"}
+                  menuPortalTarget={document.body}
+                  menuPosition="fixed"
+                  menuPlacement="auto"
                   placeholder=""
                   isClearable
                   isSearchable
@@ -1021,7 +1103,13 @@ const SetPostingAccountPage: React.FC = () => {
                   onChange={(selected) =>
                     handleAccountIdChange("StockAdjustment", selected)
                   }
-                  styles={selectStyles}
+                  styles={{ ...selectStyles, ...accountMenuStyles }}
+                  components={accountIdComponents}
+                  filterOption={accountFilterOption}
+                  noOptionsMessage={() => "No Account Found"}
+                  menuPortalTarget={document.body}
+                  menuPosition="fixed"
+                  menuPlacement="auto"
                   placeholder=""
                   isClearable
                   isSearchable
@@ -1035,12 +1123,18 @@ const SetPostingAccountPage: React.FC = () => {
                   options={getNameOptions()}
                   value={getSelectedOption(
                     getNameOptions(),
-                    values.lkpStockAdjustmentAccountName,
+                    values.lkpStockAdjustmentAccountID,
                   )}
                   onChange={(selected) =>
-                    handleAccountNameChange("StockAdjustment", selected)
+                    handleAccountIdChange("StockAdjustment", selected)
                   }
-                  styles={selectStyles}
+                  styles={{ ...selectStyles, ...accountMenuStyles }}
+                  components={accountNameComponents}
+                  filterOption={accountFilterOption}
+                  noOptionsMessage={() => "No Account Found"}
+                  menuPortalTarget={document.body}
+                  menuPosition="fixed"
+                  menuPlacement="auto"
                   placeholder=""
                   isClearable
                   isSearchable
@@ -1070,7 +1164,13 @@ const SetPostingAccountPage: React.FC = () => {
                   onChange={(selected) =>
                     handleAccountIdChange("RoundOff", selected)
                   }
-                  styles={selectStyles}
+                  styles={{ ...selectStyles, ...accountMenuStyles }}
+                  components={accountIdComponents}
+                  filterOption={accountFilterOption}
+                  noOptionsMessage={() => "No Account Found"}
+                  menuPortalTarget={document.body}
+                  menuPosition="fixed"
+                  menuPlacement="auto"
                   placeholder=""
                   isClearable
                   isSearchable
@@ -1084,12 +1184,18 @@ const SetPostingAccountPage: React.FC = () => {
                   options={getNameOptions()}
                   value={getSelectedOption(
                     getNameOptions(),
-                    values.lkpRoundOffAccountName,
+                    values.lkpRoundOffAccountID,
                   )}
                   onChange={(selected) =>
-                    handleAccountNameChange("RoundOff", selected)
+                    handleAccountIdChange("RoundOff", selected)
                   }
-                  styles={selectStyles}
+                  styles={{ ...selectStyles, ...accountMenuStyles }}
+                  components={accountNameComponents}
+                  filterOption={accountFilterOption}
+                  noOptionsMessage={() => "No Account Found"}
+                  menuPortalTarget={document.body}
+                  menuPosition="fixed"
+                  menuPlacement="auto"
                   placeholder=""
                   isClearable
                   isSearchable
@@ -1119,7 +1225,13 @@ const SetPostingAccountPage: React.FC = () => {
                   onChange={(selected) =>
                     handleAccountIdChange("InputVAT", selected)
                   }
-                  styles={selectStyles}
+                  styles={{ ...selectStyles, ...accountMenuStyles }}
+                  components={accountIdComponents}
+                  filterOption={accountFilterOption}
+                  noOptionsMessage={() => "No Account Found"}
+                  menuPortalTarget={document.body}
+                  menuPosition="fixed"
+                  menuPlacement="auto"
                   placeholder=""
                   isClearable
                   isSearchable
@@ -1133,12 +1245,18 @@ const SetPostingAccountPage: React.FC = () => {
                   options={getNameOptions()}
                   value={getSelectedOption(
                     getNameOptions(),
-                    values.lkpInputVATAccountName,
+                    values.lkpInputVATAccountID,
                   )}
                   onChange={(selected) =>
-                    handleAccountNameChange("InputVAT", selected)
+                    handleAccountIdChange("InputVAT", selected)
                   }
-                  styles={selectStyles}
+                  styles={{ ...selectStyles, ...accountMenuStyles }}
+                  components={accountNameComponents}
+                  filterOption={accountFilterOption}
+                  noOptionsMessage={() => "No Account Found"}
+                  menuPortalTarget={document.body}
+                  menuPosition="fixed"
+                  menuPlacement="auto"
                   placeholder=""
                   isClearable
                   isSearchable
@@ -1167,7 +1285,13 @@ const SetPostingAccountPage: React.FC = () => {
                   onChange={(selected) =>
                     handleAccountIdChange("OutputVAT", selected)
                   }
-                  styles={selectStyles}
+                  styles={{ ...selectStyles, ...accountMenuStyles }}
+                  components={accountIdComponents}
+                  filterOption={accountFilterOption}
+                  noOptionsMessage={() => "No Account Found"}
+                  menuPortalTarget={document.body}
+                  menuPosition="fixed"
+                  menuPlacement="auto"
                   placeholder=""
                   isClearable
                   isSearchable
@@ -1181,12 +1305,18 @@ const SetPostingAccountPage: React.FC = () => {
                   options={getNameOptions()}
                   value={getSelectedOption(
                     getNameOptions(),
-                    values.lkpOutputVATAccountName,
+                    values.lkpOutputVATAccountID,
                   )}
                   onChange={(selected) =>
-                    handleAccountNameChange("OutputVAT", selected)
+                    handleAccountIdChange("OutputVAT", selected)
                   }
-                  styles={selectStyles}
+                  styles={{ ...selectStyles, ...accountMenuStyles }}
+                  components={accountNameComponents}
+                  filterOption={accountFilterOption}
+                  noOptionsMessage={() => "No Account Found"}
+                  menuPortalTarget={document.body}
+                  menuPosition="fixed"
+                  menuPlacement="auto"
                   placeholder=""
                   isClearable
                   isSearchable

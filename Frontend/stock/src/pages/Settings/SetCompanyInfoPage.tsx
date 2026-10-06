@@ -423,8 +423,9 @@ const SetCompanyInfo = () => {
           <div className="grid grid-cols-[145px_1fr] items-center mb-[8px]">
             <label
               htmlFor="lkpCoName"
-              className="text-[11px] text-gray-600 text-right pr-3"
+              className="relative text-[11px] text-gray-600 text-right pr-3"
             >
+              <span className="absolute right-[15px] -top-0.5 h-[4px] w-[4px] text-red-500">*</span>
               Company Name :
             </label>
 
