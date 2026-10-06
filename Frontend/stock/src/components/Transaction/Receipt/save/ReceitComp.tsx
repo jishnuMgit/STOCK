@@ -140,20 +140,7 @@ interface ReceiptFormProps {
 
   focusReceiptNoAfterClear?: number;
 }
-//@ts-ignore
-const CustomOption = (props: OptionProps<SelectOption, false>) => {
-  const { data } = props;
 
-  return (
-    <components.Option {...props}>
-      <div className="flex w-full items-center justify-between">
-        <span className="text-[14px] text-slate-700">{data.label}</span>
-
-        <span className="text-[11px] text-gray-400">{data.value}</span>
-      </div>
-    </components.Option>
-  );
-};
 
 const filterOption = (
   option: {
@@ -244,18 +231,6 @@ export const ReceiptForm: React.FC<ReceiptFormProps> = ({
    */
   const keepBranchFocus = useRef(false);
 
-  /*
-   * This function is used when keyboard navigation moves TO
-   * the Branch select.
-   */
-  //@ts-ignore
-  const focusBranch = useCallback(() => {
-    keepBranchFocus.current = true;
-
-    requestAnimationFrame(() => {
-      branchRef.current?.focus();
-    });
-  }, [branchRef]);
 
   /*
    * =========================================================
