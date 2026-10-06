@@ -13,7 +13,7 @@ type Option = {
 type SalesInvoiceRow = {
   itemId: Option | null;
   itemName: Option | null;
-  unit: Option | null;
+  unit: string;
   qty: string;
   unitPrice: string;
   discountAmount: string;
@@ -42,7 +42,7 @@ const unitOptions: Option[] = [];
 const createRow = (): SalesInvoiceRow => ({
   itemId: null,
   itemName: null,
-  unit: null,
+  unit: "",
   qty: "",
   unitPrice: "",
   discountAmount: "",
@@ -60,22 +60,16 @@ const createRows = (): SalesInvoiceRow[] =>
 const selectStyles: StylesConfig<Option, false> = {
   control: (base, state) => ({
     ...base,
-
     minHeight: 20,
     height: 20,
     width: "100%",
-
     border: "none",
     borderRadius: 0,
-
     boxShadow: "none",
-
     backgroundColor: state.isFocused
       ? "#eff6ff"
       : "transparent",
-
     cursor: "pointer",
-
     fontSize: 11,
 
     "&:hover": {
@@ -85,22 +79,17 @@ const selectStyles: StylesConfig<Option, false> = {
 
   valueContainer: (base) => ({
     ...base,
-
     minHeight: 20,
     height: 20,
-
     padding: "0 4px",
-
     overflow: "hidden",
   }),
 
   singleValue: (base) => ({
     ...base,
-
     color: "#263449",
-
     margin: 0,
-
+    fontSize: 11,
     overflow: "hidden",
     textOverflow: "ellipsis",
     whiteSpace: "nowrap",
@@ -108,32 +97,27 @@ const selectStyles: StylesConfig<Option, false> = {
 
   placeholder: (base) => ({
     ...base,
-
     margin: 0,
-
     color: "#64748b",
+    fontSize: 11,
   }),
 
   input: (base) => ({
     ...base,
-
     margin: 0,
     padding: 0,
-
     color: "#263449",
+    fontSize: 11,
   }),
 
   indicatorsContainer: (base) => ({
     ...base,
-
     height: 20,
   }),
 
   dropdownIndicator: (base) => ({
     ...base,
-
     padding: "0 1px",
-
     color: "#677385",
 
     "&:hover": {
@@ -147,43 +131,32 @@ const selectStyles: StylesConfig<Option, false> = {
 
   menuPortal: (base) => ({
     ...base,
-
     zIndex: 9999,
   }),
 
   menu: (base) => ({
     ...base,
-
     zIndex: 9999,
-
     fontSize: 11,
-
     marginTop: 1,
   }),
 
   menuList: (base) => ({
     ...base,
-
     padding: 0,
-
     maxHeight: 180,
   }),
 
   option: (base, state) => ({
     ...base,
-
     padding: "5px 8px",
-
     fontSize: 11,
-
     color: "#263449",
-
     backgroundColor: state.isSelected
       ? "#dbeafe"
       : state.isFocused
         ? "#eff6ff"
         : "#fff",
-
     cursor: "pointer",
   }),
 };
@@ -194,6 +167,13 @@ const selectStyles: StylesConfig<Option, false> = {
 
 const numberInputClass =
   "number-no-spinner h-[20px] w-full min-w-0 border-0 bg-transparent px-1 text-right text-[11px] outline-none focus:bg-blue-50";
+
+// ============================================================
+// TEXT INPUT STYLE
+// ============================================================
+
+const textInputClass =
+  "h-[20px] w-full min-w-0 border-0 bg-transparent px-1 text-[11px] outline-none focus:bg-blue-50";
 
 // ============================================================
 // TABLE
@@ -227,7 +207,7 @@ const SalesInvoiceTable: React.FC = () => {
   };
 
   // ==========================================================
-  // PRICE / NUMBER CHANGE
+  // NUMBER CHANGE
   // ==========================================================
 
   const handleNumberChange = (
@@ -240,13 +220,11 @@ const SalesInvoiceTable: React.FC = () => {
       | "totalPrice",
     value: string,
   ) => {
-    // Allow empty value while typing
     if (value === "") {
       updateRow(index, field, value);
       return;
     }
 
-    // Allow only numbers and decimal point
     if (!/^\d*\.?\d*$/.test(value)) {
       return;
     }
@@ -270,6 +248,38 @@ const SalesInvoiceTable: React.FC = () => {
     }
 
     return number.toFixed(2);
+  };
+
+  // ==========================================================
+  // NORMAL TEXT INPUT
+  // ==========================================================
+
+  const renderTextInput = (
+    index: number,
+    field: "unit",
+    id: string,
+    label: string,
+  ) => {
+    return (
+      <input
+        id={`${id}-${index}`}
+        aria-label={`${label}, row ${index + 1}`}
+        type="text"
+        autoComplete="off"
+        value={rows[index][field]}
+        onFocus={() => {
+          setActiveRow(index);
+        }}
+        onChange={(event) => {
+          updateRow(
+            index,
+            field,
+            event.target.value,
+          );
+        }}
+        className={textInputClass}
+      />
+    );
   };
 
   // ==========================================================
@@ -297,7 +307,6 @@ const SalesInvoiceTable: React.FC = () => {
         value={rows[index][field]}
         onFocus={(event) => {
           setActiveRow(index);
-
           event.currentTarget.select();
         }}
         onChange={(event) => {
@@ -330,43 +339,52 @@ const SalesInvoiceTable: React.FC = () => {
   return (
     <section
       id="sales-invoice-table"
-      className="mx-[11px] mb-0 mt-6 flex h-[370px] min-h-0 flex-col overflow-hidden border-b-0 border border-[#dce5ef]"
+      className="
+        mx-[11px]
+        mb-0
+        mt-6
+        flex
+        h-fit
+        min-h-0
+        flex-col
+        overflow-hidden
+        border
+        border-[#dce5ef]
+      "
     >
       <div className="customer-table-scroll min-h-0 flex-1 overflow-auto">
-        <table className="w-full min-w-[900px] table-fixed border-collapse text-[11px]">
+        <table
+          className="
+            w-full
+            min-w-[900px]
+            table-fixed
+            border-collapse
+            text-[11px]
+          "
+        >
           {/* ==================================================
               COLUMN WIDTHS
           ================================================== */}
 
           <colgroup>
-            {/* Row indicator */}
             <col style={{ width: "14px" }} />
 
-            {/* Sl */}
             <col style={{ width: "28px" }} />
 
-            {/* Item ID */}
-            <col style={{ width: "158px" }} />
+            <col style={{ width: "138px" }} />
 
-            {/* Item Name */}
             <col style={{ width: "auto" }} />
 
-            {/* Unit */}
             <col style={{ width: "56px" }} />
 
-            {/* Qty */}
             <col style={{ width: "58px" }} />
 
-            {/* Unit Price */}
             <col style={{ width: "85px" }} />
 
-            {/* U.Disc Amt */}
             <col style={{ width: "90px" }} />
 
-            {/* VAT Amt */}
             <col style={{ width: "90px" }} />
 
-            {/* Total Price */}
             <col style={{ width: "90px" }} />
           </colgroup>
 
@@ -376,7 +394,8 @@ const SalesInvoiceTable: React.FC = () => {
 
           <thead>
             <tr className="h-[30px]">
-              {/* Empty row selector column */}
+
+              {/* ROW INDICATOR */}
 
               <th
                 className="
@@ -390,7 +409,7 @@ const SalesInvoiceTable: React.FC = () => {
                 "
               />
 
-              {/* Sl */}
+              {/* SL */}
 
               <th
                 className="
@@ -413,7 +432,7 @@ const SalesInvoiceTable: React.FC = () => {
                 Sl.
               </th>
 
-              {/* Item ID */}
+              {/* ITEM ID */}
 
               <th
                 className="
@@ -436,7 +455,7 @@ const SalesInvoiceTable: React.FC = () => {
                 Item ID
               </th>
 
-              {/* Item Name */}
+              {/* ITEM NAME */}
 
               <th
                 className="
@@ -459,7 +478,7 @@ const SalesInvoiceTable: React.FC = () => {
                 Item Name
               </th>
 
-              {/* Unit */}
+              {/* UNIT */}
 
               <th
                 className="
@@ -482,7 +501,7 @@ const SalesInvoiceTable: React.FC = () => {
                 Unit
               </th>
 
-              {/* Qty */}
+              {/* QTY */}
 
               <th
                 className="
@@ -505,7 +524,7 @@ const SalesInvoiceTable: React.FC = () => {
                 Qty.
               </th>
 
-              {/* Unit Price */}
+              {/* UNIT PRICE */}
 
               <th
                 className="
@@ -528,7 +547,7 @@ const SalesInvoiceTable: React.FC = () => {
                 Unit Price
               </th>
 
-              {/* U.Disc Amt */}
+              {/* U.DISC AMT */}
 
               <th
                 className="
@@ -551,7 +570,7 @@ const SalesInvoiceTable: React.FC = () => {
                 U.Disc Amt.
               </th>
 
-              {/* VAT Amt */}
+              {/* VAT AMT */}
 
               <th
                 className="
@@ -574,7 +593,7 @@ const SalesInvoiceTable: React.FC = () => {
                 VAT Amt.
               </th>
 
-              {/* Total Price */}
+              {/* TOTAL PRICE */}
 
               <th
                 className="
@@ -621,6 +640,7 @@ const SalesInvoiceTable: React.FC = () => {
                   hover:bg-blue-50
                 `}
               >
+
                 {/* ==================================================
                     ACTIVE ROW INDICATOR
                 ================================================== */}
@@ -641,7 +661,9 @@ const SalesInvoiceTable: React.FC = () => {
                       : undefined
                   }
                 >
-                  {activeRow === index ? "▾" : ""}
+                  {activeRow === index
+                    ? "▾"
+                    : ""}
                 </td>
 
                 {/* ==================================================
@@ -741,7 +763,7 @@ const SalesInvoiceTable: React.FC = () => {
                 </td>
 
                 {/* ==================================================
-                    UNIT
+                    UNIT - NORMAL INPUT
                 ================================================== */}
 
                 <td
@@ -752,32 +774,12 @@ const SalesInvoiceTable: React.FC = () => {
                     p-0
                   "
                 >
-                  <Select<Option, false>
-                    inputId={`txtUnit-${index}`}
-                    instanceId={`unit-${index}`}
-                    options={unitOptions}
-                    value={row.unit}
-                    onChange={(option) => {
-                      updateRow(
-                        index,
-                        "unit",
-                        option,
-                      );
-
-                      setActiveRow(index);
-                    }}
-                    styles={selectStyles}
-                    isClearable={false}
-                    isSearchable={false}
-                    menuPosition="fixed"
-                    menuPortalTarget={
-                      typeof document !== "undefined"
-                        ? document.body
-                        : undefined
-                    }
-                    placeholder=""
-                    className="w-full"
-                  />
+                  {renderTextInput(
+                    index,
+                    "unit",
+                    "txtUnit",
+                    "Unit",
+                  )}
                 </td>
 
                 {/* ==================================================

@@ -15,7 +15,17 @@ body {
 .input-style {
   height: 30px;
   border-radius: 4px;
+  border: 1px solid #d7dee7;
+  background-color: #ffffff;
+  padding: 0 8px;
   font-size: 14px;
+  color: #334155;
+  outline: none;
+}
+
+.input-style:focus {
+  border-color: #9fdfbc;
+  box-shadow: 0 0 0 1px #9fdfbc;
 }
 
 .btn-style {
@@ -24,7 +34,7 @@ body {
   border-radius: 4px;
   border: 1px solid #9db8d4;
   cursor: pointer;
-color:green;
+  color: green;
 
   background: linear-gradient(to right, #ffffff, #e7eef5);
 
