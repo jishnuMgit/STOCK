@@ -1,35 +1,33 @@
 import { Plus } from "lucide-react";
 import React from "react";
 import Select, { type StylesConfig } from "react-select";
+import type { PurchaseHeader } from "../../../hooks/Purchase/Transaction/usePurchaseInvoice";
 
-type Option = {
-  value: string;
-  label: string;
-};
-
-/* =========================================================
-   OPTIONS
-========================================================= */
+type Option = { value: string; label: string };
 
 const makeOptions = (values: string[]): Option[] =>
-  values.map((value) => ({
-    value,
-    label: value,
-  }));
+  values.map((value) => ({ value, label: value }));
 
-const branchOptions = makeOptions(["OFFICE"]);
+/* Fallback options until the lookup endpoints exist.
+   Supplier ID and Supplier Name share the same value (the account id),
+   like fAccountID did in the VB. */
+const defaultBranchOptions = makeOptions(["OFFICE"]);
 const invoiceTypeOptions = makeOptions(["C"]);
-const supplierOptions = makeOptions(["1030101"]);
-const supplierNameOptions = makeOptions(["AlSulaijer Hamad"]);
+const defaultSupplierIdOptions: Option[] = [
+  { value: "1030101", label: "1030101" },
+];
+const defaultSupplierNameOptions: Option[] = [
+  { value: "1030101", label: "AlSulaijer Hamad" },
+];
 const miscSupplierOptions = makeOptions(["No", "Yes"]);
-const currencyOptions = makeOptions(["SAR"]);
+const defaultCurrencyOptions = makeOptions(["SAR"]);
+
+const pick = (options: Option[], value: string): Option | null =>
+  options.find((o) => o.value === value) ?? null;
 
 /* =========================================================
-   INPUT AND LABEL STYLES
+   LABEL STYLE
 ========================================================= */
-
-const inputClass =
-  "h-[30px] w-full min-w-0 rounded-[4px] border border-[#d5dce5] bg-white px-2 text-[12px] text-[#263449] outline-none focus:border-blue-400";
 
 const labelClass = "shrink-0 whitespace-nowrap text-[14px] text-[#263449]";
 
@@ -225,13 +223,45 @@ const currencySelectStyles: StylesConfig<Option, false> = {
   }),
 };
 
-/* =========================================================
-   PURCHASE FORM
-========================================================= */
+interface Props {
+  header: PurchaseHeader;
+  onChange: <K extends keyof PurchaseHeader>(
+    field: K,
+    value: PurchaseHeader[K],
+  ) => void;
+  onDocNoBlur: () => void;
+  totalSupplierAmt: number;
+  lookups?: {
+    branches?: Option[];
+    supplierIds?: Option[];
+    supplierNames?: Option[];
+    currencies?: Option[];
+  };
+}
 
-const PurchaseForm: React.FC = () => {
+const PurchaseForm: React.FC<Props> = ({
+  header,
+  onChange,
+  onDocNoBlur,
+  totalSupplierAmt,
+  lookups,
+}) => {
+  const branchOptions = lookups?.branches ?? defaultBranchOptions;
+  const supplierOptions = lookups?.supplierIds ?? defaultSupplierIdOptions;
+  const supplierNameOptions =
+    lookups?.supplierNames ?? defaultSupplierNameOptions;
+  const currencyOptions = lookups?.currencies ?? defaultCurrencyOptions;
+
+  /* Supplier ID and Supplier Name are one account: set both together */
+  const handleSupplierChange = (accountId: string) => {
+    const name =
+      supplierNameOptions.find((o) => o.value === accountId)?.label ?? "";
+    onChange("supplierId", accountId);
+    onChange("supplierName", name);
+  };
+
   return (
-    <section className="grid grid-cols-1 items-start gap-x-4 gap-y-3 px-[14px] pb-2 pt-[14px] xl:grid-cols-[1fr_1fr_2.15fr]">
+    <section className="grid grid-cols-1 items-start gap-x-4 gap-y-3 px-[14px] pb-2 pt-[14px] xl:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_minmax(0,2.15fr)]">
       {/* ==================================================
           GROUP 1
           Branch, P.O. No., Misc. Sup., Currency
@@ -239,15 +269,15 @@ const PurchaseForm: React.FC = () => {
       <div id="purchase-left-group" className="flex min-w-0 flex-col gap-[8px]">
         {/* Branch */}
         <div className="flex min-w-0 items-center gap-2">
-          <label htmlFor="lkpBranch" className={`${labelClass} w-[54px]`}>
+          <label htmlFor="lkpBranch" className={`${labelClass} w-[72px]`}>
             Branch
           </label>
-
           <div className="min-w-0 flex-1">
             <Select<Option, false>
               inputId="lkpBranch"
               options={branchOptions}
-              defaultValue={branchOptions[0]}
+              value={pick(branchOptions, header.brId)}
+              onChange={(o) => onChange("brId", o?.value ?? "")}
               styles={branchSelectStyles}
               isClearable={false}
               isSearchable={false}
@@ -255,21 +285,24 @@ const PurchaseForm: React.FC = () => {
           </div>
         </div>
 
-        {/* P.O. Number */}
+        {/* P.O. No. */}
         <div className="flex min-w-0 items-center gap-2">
-          <label htmlFor="txtPONo" className={`${labelClass} w-[54px]`}>
+          <label htmlFor="txtPONo" className={`${labelClass} w-[72px]`}>
             P.O. No.
           </label>
-
-          <input id="txtPONo" className={inputClass} />
+          <input
+            id="txtPONo"
+            value={header.poNo}
+            onChange={(e) => onChange("poNo", e.target.value)}
+            className="input-style min-w-0 flex-1"
+          />
         </div>
 
-        {/* Miscellaneous Supplier */}
+        {/* Misc. Supplier (UI only, not saved yet) */}
         <div className="flex min-w-0 items-center gap-2">
-          <label htmlFor="lkpMiscSup" className={`${labelClass} w-[54px]`}>
+          <label htmlFor="lkpMiscSup" className={`${labelClass} w-[72px]`}>
             Misc. Sup.
           </label>
-
           <div className="min-w-0 w-[50%]">
             <Select<Option, false>
               inputId="lkpMiscSup"
@@ -284,15 +317,15 @@ const PurchaseForm: React.FC = () => {
 
         {/* Currency */}
         <div className="flex min-w-0 items-center gap-2">
-          <label htmlFor="lkpCurrency" className={`${labelClass} w-[54px]`}>
+          <label htmlFor="lkpCurrency" className={`${labelClass} w-[72px]`}>
             Currency
           </label>
-
           <div className="min-w-0 w-[50%]">
             <Select<Option, false>
               inputId="lkpCurrency"
               options={currencyOptions}
-              defaultValue={currencyOptions[0]}
+              value={pick(currencyOptions, header.currency)}
+              onChange={(o) => onChange("currency", o?.value ?? "")}
               styles={currencySelectStyles}
               isClearable={false}
               isSearchable={false}
@@ -307,41 +340,45 @@ const PurchaseForm: React.FC = () => {
       ================================================== */}
       <div
         id="purchase-middle-group"
-        className="flex w-[90%] min-w-0 flex-col gap-[8px] ml-3"
+        className="ml-3 flex w-[90%] min-w-0 flex-col gap-[8px]"
       >
-        {/* Entry Number */}
+        {/* Entry No. */}
         <div className="flex min-w-0 items-center gap-3">
-          <label htmlFor="txtDocNo" className={`${labelClass} w-[74px]`}>
+          <label htmlFor="txtDocNo" className={`${labelClass} w-[92px]`}>
             Entry No.
           </label>
-
-          <input id="txtDocNo" defaultValue="0283" className={inputClass} />
+          <input
+            id="txtDocNo"
+            value={header.docNo}
+            onChange={(e) => onChange("docNo", e.target.value)}
+            onBlur={onDocNoBlur}
+            className="input-style min-w-0 flex-1"
+          />
         </div>
 
         {/* Supplier ID */}
         <div className="flex min-w-0 items-center gap-3">
-          <label htmlFor="lkpSupplierID" className={`${labelClass} w-[74px]`}>
+          <label htmlFor="lkpSupplierID" className={`${labelClass} w-[92px]`}>
             Supplier
           </label>
-
           <div className="min-w-0 flex-1">
             <Select<Option, false>
               inputId="lkpSupplierID"
               options={supplierOptions}
-              defaultValue={supplierOptions[0]}
+              value={pick(supplierOptions, header.supplierId)}
+              onChange={(o) => handleSupplierChange(o?.value ?? "")}
               styles={supplierIdSelectStyles}
               isClearable={false}
-              isSearchable={false}
+              isSearchable
             />
           </div>
         </div>
 
-        {/* Miscellaneous Supplier ID */}
+        {/* Misc. Supplier ID (UI only) */}
         <div className="flex min-w-0 items-center gap-3">
-          <label htmlFor="lkpMiscSupID" className={`${labelClass} w-[74px]`}>
+          <label htmlFor="lkpMiscSupID" className={`${labelClass} w-[92px]`}>
             Misc. Sup.
           </label>
-
           <div className="min-w-0 flex-1">
             <Select<Option, false>
               inputId="lkpMiscSupID"
@@ -356,23 +393,28 @@ const PurchaseForm: React.FC = () => {
 
         {/* Currency Rate */}
         <div className="flex min-w-0 items-center gap-3">
-          <label htmlFor="txtCurrencyRate" className={`${labelClass} w-[74px]`}>
+          <label htmlFor="txtCurrencyRate" className={`${labelClass} w-[92px]`}>
             Currency Rate
           </label>
-
           <input
             id="txtCurrencyRate"
-            defaultValue="3.00000"
-            className={`${inputClass} flex-1 text-right`}
+            inputMode="decimal"
+            value={header.currencyRate}
+            onChange={(e) => {
+              const v = e.target.value;
+              if (v === "" || /^\d*\.?\d*$/.test(v))
+                onChange("currencyRate", v);
+            }}
+            className="input-style min-w-0 flex-1 text-right"
           />
         </div>
 
-        {/* Purchase Expense Button */}
-        <div className="flex justify-end ">
+        {/* Purchase Expense */}
+        <div className="flex justify-end">
           <button
             id="btnPurchaseExpense"
             type="button"
-            className="h-[30px] w-[120px] whitespace-nowrap rounded-[4px] border border-[#cbd1d9] bg-gradient-to-b from-white to-[#e8e8e8] px-[10px] text-[11px] text-[#222] hover:bg-slate-100"
+            className="h-[30px] w-[120px] whitespace-nowrap cursor-pointer rounded-[4px] border border-[#cbd1d9] bg-gradient-to-b from-white to-[#e8e8e8] px-[10px] text-[11px] text-[#222] hover:bg-slate-100"
           >
             Purchase Expense
           </button>
@@ -384,21 +426,21 @@ const PurchaseForm: React.FC = () => {
           Remaining fields and action buttons
       ================================================== */}
       <div
-        id="purchase-right-group "
-        className="flex min-w-0 flex-col gap-[8px] "
+        id="purchase-right-group"
+        className="flex min-w-0 flex-col gap-[8px]"
       >
         {/* Invoice Type and Date */}
         <div className="grid min-w-0 grid-cols-[minmax(0,1fr)_minmax(0,1fr)] gap-3">
           <div className="flex min-w-0 items-center gap-3">
             <label htmlFor="lkpType" className={`${labelClass} w-[76px]`}>
-              Invoice Type
+              Type
             </label>
-
             <div className="min-w-0 w-[35%]">
               <Select<Option, false>
                 inputId="lkpType"
                 options={invoiceTypeOptions}
-                defaultValue={invoiceTypeOptions[0]}
+                value={pick(invoiceTypeOptions, header.invoiceType)}
+                onChange={(o) => onChange("invoiceType", o?.value ?? "")}
                 styles={invoiceTypeSelectStyles}
                 isClearable={false}
                 isSearchable={false}
@@ -407,93 +449,94 @@ const PurchaseForm: React.FC = () => {
           </div>
 
           <div className="ml-auto flex min-w-0 items-center justify-end gap-2">
-            <label htmlFor="dtpDate" className={`${labelClass} w-[28px]`}>
+            <label htmlFor="dtpDate" className={`${labelClass} w-[36px]`}>
               Date
             </label>
-
             <input
               id="dtpDate"
-              defaultValue="29/08/2026"
-              className={inputClass}
-              style={{ width: "50%" }}
+              type="date"
+              value={header.date}
+              onChange={(e) => onChange("date", e.target.value)}
+              className="input-style"
+              style={{ width: "140px" }}
             />
           </div>
         </div>
 
         {/* Supplier Name */}
-        <div className="min-w-0 ">
+        <div className="min-w-0">
           <Select<Option, false>
             inputId="lkpSupplierName"
             options={supplierNameOptions}
-            defaultValue={supplierNameOptions[0]}
+            value={pick(supplierNameOptions, header.supplierId)}
+            onChange={(o) => handleSupplierChange(o?.value ?? "")}
             styles={supplierNameSelectStyles}
             isClearable={false}
-            isSearchable={false}
+            isSearchable
           />
         </div>
 
-        {/* Miscellaneous Supplier Name */}
+        {/* Misc. Supplier Name (UI only) */}
         <div className="flex min-w-0 items-center gap-2">
           <div className="min-w-0 flex-1">
             <Select<Option, false>
               inputId="lkpMiscSupName"
-              options={supplierNameOptions}
-              defaultValue={supplierNameOptions[0]}
+              options={[]}
+              placeholder=""
               styles={miscSupplierNameSelectStyles}
               isClearable={false}
               isSearchable={false}
             />
           </div>
-
           <button
             id="btnAddMiscSupplier"
             type="button"
             aria-label="Add miscellaneous supplier"
-            className="flex h-[30px] w-[30px] shrink-0 items-center justify-center rounded-full bg-[#28a745] text-[20px] font-bold leading-none text-white hover:bg-green-700"
+            className="flex h-[30px] w-[30px] cursor-pointer shrink-0 items-center justify-center rounded-full bg-[#28a745] text-[20px] font-bold leading-none text-white hover:bg-green-700"
           >
             <Plus />
           </button>
         </div>
 
-        {/* Supplier Invoice Number and Date */}
-        <div className="grid min-w-0 grid-cols-2 gap-3">
+        {/* Supplier Invoice No. and Date */}
+        <div className="grid min-w-0 grid-cols-[minmax(0,1fr)_minmax(0,1fr)] gap-3">
           <div className="flex min-w-0 items-center gap-2">
             <label
               htmlFor="txtSupInvoiceNo"
-              className="shrink-0 whitespace-nowrap text-[12px] text-[#263449]"
+              className="shrink-0 whitespace-nowrap text-[14px] text-[#263449]"
             >
               Sup. Invoice No.
             </label>
-
             <input
               id="txtSupInvoiceNo"
-              defaultValue="001SUINV00646"
-              className={inputClass}
+              value={header.piNo}
+              onChange={(e) => onChange("piNo", e.target.value)}
+              className="input-style min-w-0 flex-1"
             />
           </div>
 
+          {/* UI only: the backend has no column for this yet */}
           <div className="flex min-w-0 items-center gap-2">
             <label
               htmlFor="dtpSupInvoiceDate"
-              className="shrink-0 whitespace-nowrap text-[12px] text-[#263449]"
+              className="shrink-0 whitespace-nowrap text-[14px] text-[#263449]"
             >
               Sup. Invoice Date
             </label>
-
             <input
               id="dtpSupInvoiceDate"
-              defaultValue="09/08/2026"
-              className={inputClass}
+              type="date"
+              className="input-style min-w-0 flex-1"
             />
           </div>
         </div>
 
-        {/* Action Buttons and Supplier Amount */}
-        <div className=" flex justify-between  gap-2">
+        {/* Calculate Unit Cost and Supplier Amount */}
+        <div className="flex justify-between gap-2">
           <button
             id="btnCalculateUnitCost"
             type="button"
-            className="h-[30px] whitespace-nowrap rounded-[4px] w-[120px]  ml-25 border border-[#cbd1d9] bg-gradient-to-b from-white to-[#e8e8e8] px-[10px] text-[11px] text-[#222] hover:bg-slate-100"
+            className="ml-25 h-[30px] w-[120px] cursor-pointer whitespace-nowrap rounded-[4px] border border-[#cbd1d9] bg-gradient-to-b from-white to-[#e8e8e8] px-[10px] text-[11px] text-[#222] hover:bg-slate-100"
           >
             Calculate Unit Cost
           </button>
@@ -501,15 +544,15 @@ const PurchaseForm: React.FC = () => {
           <div className="flex min-w-0 items-center justify-end gap-2">
             <label
               htmlFor="txtSupAmount"
-              className="shrink-0 whitespace-nowrap text-[12px] text-[#263449]"
+              className="shrink-0 whitespace-nowrap text-[14px] text-[#263449]"
             >
               Sup. Amount
             </label>
-
             <input
               id="txtSupAmount"
-              defaultValue="0.00"
-              className={`${inputClass} max-w-[140px] text-right`}
+              value={totalSupplierAmt.toFixed(2)}
+              readOnly
+              className="input-style min-w-0 max-w-[140px] text-right"
             />
           </div>
         </div>

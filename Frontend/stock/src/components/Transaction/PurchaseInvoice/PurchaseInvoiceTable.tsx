@@ -1,26 +1,13 @@
-
 import { Play } from "lucide-react";
 import React, { useState } from "react";
 import Select, { type StylesConfig } from "react-select";
+import type { PurchaseRow } from "../../../hooks/Purchase/Transaction/usePurchaseInvoice";
 
 type Option = {
-  value: string;
+  value: string; // item id
   label: string;
+  unit?: string; // item's unit, filled in when the item is picked
 };
-
-type PurchaseRow = {
-  itemId: Option | null;
-  itemName: Option | null;
-  unit: string;
-  qty: string;
-  sUnitPrice: string;
-  sTotalPrice: string;
-  unitPrice: string;
-  unitCost: string;
-  totalCost: string;
-};
-
-const ROW_COUNT = 12;
 
 const columns = [
   { name: "Sl.No.", width: "38px" },
@@ -35,33 +22,23 @@ const columns = [
   { name: "Total Cost", width: "80px" },
 ];
 
-const itemOptions: Option[] = [];
-const unitOptions: Option[] = [];
+const numericColumns = [
+  "Qty",
+  "S.Unit Price",
+  "S.Total Price",
+  "Unit Price",
+  "Unit Cost",
+  "Total Cost",
+];
 
-const createRow = (): PurchaseRow => ({
-  itemId: null,
-  itemName: null,
-  unit: "",
-  qty: "",
-  sUnitPrice: "0.00",
-  sTotalPrice: "0.00",
-  unitPrice: "0.00",
-  unitCost: "0.00",
-  totalCost: "0.00",
-});
+type PriceField =
+  | "sUnitPrice"
+  | "sTotalPrice"
+  | "unitPrice"
+  | "unitCost"
+  | "totalCost";
 
-const createRows = (): PurchaseRow[] =>
-  Array.from({ length: ROW_COUNT }, createRow);
-
-const priceFields = [
-  { key: "sUnitPrice", id: "txtSUnitPrice", label: "Supplier unit price" },
-  { key: "sTotalPrice", id: "txtSTotalPrice", label: "Supplier total price" },
-  { key: "unitPrice", id: "txtUnitPrice", label: "Unit price" },
-  { key: "unitCost", id: "txtUnitCost", label: "Unit cost" },
-  { key: "totalCost", id: "txtTotalCost", label: "Total cost" },
-] as const;
-
-type PriceField = (typeof priceFields)[number]["key"];
+const EMPTY: Option[] = [];
 
 const selectStyles: StylesConfig<Option, false> = {
   control: (base, state) => ({
@@ -162,23 +139,24 @@ const selectStyles: StylesConfig<Option, false> = {
 
 const numberInputClass =
   "number-no-spinner h-[20px] w-full min-w-0 border-0 bg-transparent px-1 text-right outline-none focus:bg-blue-50";
-const PurchaseTable: React.FC = () => {
-  const [rows, setRows] = useState<PurchaseRow[]>(createRows);
+
+interface Props {
+  rows: PurchaseRow[];
+  onRowChange: (index: number, patch: Partial<PurchaseRow>) => void;
+  lookups?: {
+    itemIds?: Option[]; // { value: itemId, label: itemId, unit }
+    itemNames?: Option[]; // { value: itemId, label: itemName, unit }
+  };
+}
+
+const PurchaseTable: React.FC<Props> = ({ rows, onRowChange, lookups }) => {
   const [activeRow, setActiveRow] = useState(0);
 
-  const updateRow = <K extends keyof PurchaseRow>(
-    index: number,
-    field: K,
-    value: PurchaseRow[K],
-  ) => {
-    setRows((previousRows) =>
-      previousRows.map((row, rowIndex) =>
-        rowIndex === index
-          ? { ...row, [field]: value }
-          : row,
-      ),
-    );
-  };
+  const itemIdOptions = lookups?.itemIds ?? EMPTY;
+  const itemNameOptions = lookups?.itemNames ?? EMPTY;
+
+  const portalTarget =
+    typeof document !== "undefined" ? document.body : undefined;
 
   // Format prices to two decimal places when leaving the field.
   const formatPrice = (value: string): string => {
@@ -186,29 +164,26 @@ const PurchaseTable: React.FC = () => {
 
     const number = Number(value);
 
-    if (!Number.isFinite(number)) return "0.00";
-
-    return number.toFixed(2);
+    return Number.isFinite(number) ? number.toFixed(2) : "0.00";
   };
 
-  const handlePriceChange = (
-    index: number,
-    field: PriceField,
-    value: string,
-  ) => {
-    // Allow a decimal point while the user is typing.
-    if (value !== "" && !/^\d*\.?\d*$/.test(value)) {
-      return;
-    }
-
-    updateRow(index, field, value);
+  // Item ID and Item Name are the same field (fItemID), as in the VB grid.
+  const handleItemChange = (index: number, option: Option | null) => {
+    onRowChange(index, {
+      itemId: option?.value ?? "",
+      unit: option?.unit ?? "",
+    });
+    setActiveRow(index);
   };
 
+  // Only S.Unit Price is typed by the user; the other price columns
+  // are calculated by the page.
   const renderPriceInput = (
     index: number,
     field: PriceField,
     id: string,
     label: string,
+    editable = false,
   ) => (
     <input
       id={`${id}-${index}`}
@@ -216,25 +191,34 @@ const PurchaseTable: React.FC = () => {
       type="text"
       inputMode="decimal"
       autoComplete="off"
+      readOnly={!editable}
+      tabIndex={editable ? 0 : -1}
       value={rows[index][field]}
       onFocus={(event) => {
         setActiveRow(index);
-        event.currentTarget.select();
+        if (editable) event.currentTarget.select();
       }}
-      onChange={(event) =>
-        handlePriceChange(index, field, event.target.value)
-      }
-      onBlur={() =>
-        updateRow(index, field, formatPrice(rows[index][field]))
-      }
-      className={numberInputClass}
+      onChange={(event) => {
+        const value = event.target.value;
+
+        // Allow a decimal point while the user is typing.
+        if (editable && (value === "" || /^\d*\.?\d*$/.test(value))) {
+          onRowChange(index, { [field]: value });
+        }
+      }}
+      onBlur={() => {
+        if (editable) {
+          onRowChange(index, { [field]: formatPrice(rows[index][field]) });
+        }
+      }}
+      className={`${numberInputClass} ${editable ? "" : "bg-slate-100"}`}
     />
   );
 
   return (
     <section
       id="purchase-table"
-      className="mx-3 mb-1 flex min-h-0 max-h-[393px] flex-1 flex-col overflow-hidden border-b-0 border border-[#dce5ef]"
+      className="mx-3 mb-1 flex min-h-0 max-h-[393px] flex-1 flex-col overflow-hidden border border-b-0 border-[#dce5ef]"
     >
       {/* Header and body share one table to keep columns aligned. */}
       <div className="customer-table-scroll min-h-0 max-h-fit flex-1 overflow-auto">
@@ -244,10 +228,7 @@ const PurchaseTable: React.FC = () => {
             <col style={{ width: "14px" }} />
 
             {columns.map((column) => (
-              <col
-                key={column.name}
-                style={{ width: column.width }}
-              />
+              <col key={column.name} style={{ width: column.width }} />
             ))}
           </colgroup>
 
@@ -256,27 +237,18 @@ const PurchaseTable: React.FC = () => {
             <tr className="h-[30px]">
               <th className="sticky top-0 z-20 border border-[#dce5ef] bg-[#f1f6fc] p-0" />
 
-              {columns.map((column) => {
-  const isNumericColumn = [
-    "Qty",
-    "S.Unit Price",
-    "S.Total Price",
-    "Unit Price",
-    "Unit Cost",
-    "Total Cost",
-  ].includes(column.name);
-
-  return (
-    <th
-      key={column.name}
-      className={`sticky top-0 z-20 h-[30px] whitespace-nowrap border border-[#dce5ef] bg-[#f1f6fc] px-1 py-0 align-middle font-semibold text-[#202a36] ${
-        isNumericColumn ? "text-right" : "text-left"
-      }`}
-    >
-      {column.name}
-    </th>
-  );
-})}
+              {columns.map((column) => (
+                <th
+                  key={column.name}
+                  className={`sticky top-0 z-20 h-[30px] whitespace-nowrap border border-[#dce5ef] bg-[#f1f6fc] px-1 py-0 align-middle font-semibold text-[#202a36] ${
+                    numericColumns.includes(column.name)
+                      ? "text-right"
+                      : "text-left"
+                  }`}
+                >
+                  {column.name}
+                </th>
+              ))}
             </tr>
           </thead>
 
@@ -287,17 +259,13 @@ const PurchaseTable: React.FC = () => {
                 onClick={() => setActiveRow(index)}
                 onFocusCapture={() => setActiveRow(index)}
                 className={`h-[30px] ${
-                  activeRow === index
-                    ? "bg-[#f4f8fd]"
-                    : "bg-white"
+                  activeRow === index ? "bg-[#f4f8fd]" : "bg-white"
                 } hover:bg-blue-50`}
               >
                 {/* Active row indicator */}
                 <td
                   className="h-[30px] border border-[#dce5ef] p-0 text-center text-[9px] text-[#263449]"
-                  aria-label={
-                    activeRow === index ? "Active row" : undefined
-                  }
+                  aria-label={activeRow === index ? "Active row" : undefined}
                 >
                   {activeRow === index ? <Play size={10} /> : ""}
                 </td>
@@ -307,86 +275,54 @@ const PurchaseTable: React.FC = () => {
                   {index + 1}
                 </td>
 
-                {/* Item ID - React Select on every row */}
+                {/* Item ID */}
                 <td className="h-[30px] border border-[#dce5ef] p-0">
                   <Select<Option, false>
                     inputId={`lkpItemID-${index}`}
                     instanceId={`item-id-${index}`}
-                    options={itemOptions}
-                    value={row.itemId}
-                    onChange={(option) => {
-                      updateRow(index, "itemId", option);
-                      setActiveRow(index);
-                    }}
+                    options={itemIdOptions}
+                    value={
+                      itemIdOptions.find((o) => o.value === row.itemId) ?? null
+                    }
+                    onChange={(option) => handleItemChange(index, option)}
                     styles={selectStyles}
                     isClearable={false}
                     isSearchable
                     menuPosition="fixed"
-                    menuPortalTarget={
-                      typeof document !== "undefined"
-                        ? document.body
-                        : undefined
-                    }
+                    menuPortalTarget={portalTarget}
                     placeholder=""
                     className="w-full"
                   />
                 </td>
 
-                {/* Item Name - React Select on every row */}
+                {/* Item Name (same itemId) */}
                 <td className="h-[30px] border border-[#dce5ef] p-0">
                   <Select<Option, false>
                     inputId={`lkpItemName-${index}`}
                     instanceId={`item-name-${index}`}
-                    options={itemOptions}
-                    value={row.itemName}
-                    onChange={(option) => {
-                      updateRow(index, "itemName", option);
-                      setActiveRow(index);
-                    }}
+                    options={itemNameOptions}
+                    value={
+                      itemNameOptions.find((o) => o.value === row.itemId) ??
+                      null
+                    }
+                    onChange={(option) => handleItemChange(index, option)}
                     styles={selectStyles}
                     isClearable={false}
                     isSearchable
                     menuPosition="fixed"
-                    menuPortalTarget={
-                      typeof document !== "undefined"
-                        ? document.body
-                        : undefined
-                    }
+                    menuPortalTarget={portalTarget}
                     placeholder=""
                     className="w-full"
                   />
                 </td>
 
-                {/* Unit */}
-                <td className="h-[30px] border border-[#dce5ef] p-0">
-                  <Select<Option, false>
-                    inputId={`txtUnit-${index}`}
-                    instanceId={`unit-${index}`}
-                    options={unitOptions}
-                    value={
-                      unitOptions.find(
-                        (option) => option.value === row.unit,
-                      ) ?? null
-                    }
-                    onChange={(option) => {
-                      updateRow(index, "unit", option?.value ?? "");
-                      setActiveRow(index);
-                    }}
-                    styles={selectStyles}
-                    isClearable={false}
-                    isSearchable={false}
-                    menuPosition="fixed"
-                    menuPortalTarget={
-                      typeof document !== "undefined"
-                        ? document.body
-                        : undefined
-                    }
-                    placeholder=""
-                  />
+                {/* Unit: read-only, comes from the item */}
+                <td className="h-[30px] border border-[#dce5ef] bg-slate-100 px-1">
+                  {row.unit}
                 </td>
 
                 {/* Quantity */}
-                <td className="h-[30px] border border-[#dce5ef] p-0 ">
+                <td className="h-[30px] border border-[#dce5ef] p-0">
                   <input
                     id={`txtQty-${index}`}
                     aria-label={`Quantity row ${index + 1}`}
@@ -396,23 +332,24 @@ const PurchaseTable: React.FC = () => {
                     value={row.qty}
                     onFocus={() => setActiveRow(index)}
                     onChange={(event) =>
-                      updateRow(index, "qty", event.target.value)
+                      onRowChange(index, { qty: event.target.value })
                     }
                     className={numberInputClass}
                   />
                 </td>
 
-                {/* S.Unit Price */}
+                {/* S.Unit Price (editable) */}
                 <td className="h-[30px] border border-[#dce5ef] p-0">
                   {renderPriceInput(
                     index,
                     "sUnitPrice",
                     "txtSUnitPrice",
                     "Supplier unit price",
+                    true,
                   )}
                 </td>
 
-                {/* S.Total Price */}
+                {/* S.Total Price (calculated) */}
                 <td className="h-[30px] border border-[#dce5ef] p-0">
                   {renderPriceInput(
                     index,
@@ -422,7 +359,7 @@ const PurchaseTable: React.FC = () => {
                   )}
                 </td>
 
-                {/* Unit Price */}
+                {/* Unit Price (calculated) */}
                 <td className="h-[30px] border border-[#dce5ef] p-0">
                   {renderPriceInput(
                     index,
@@ -432,7 +369,7 @@ const PurchaseTable: React.FC = () => {
                   )}
                 </td>
 
-                {/* Unit Cost */}
+                {/* Unit Cost (calculated) */}
                 <td className="h-[30px] border border-[#dce5ef] p-0">
                   {renderPriceInput(
                     index,
@@ -442,7 +379,7 @@ const PurchaseTable: React.FC = () => {
                   )}
                 </td>
 
-                {/* Total Cost */}
+                {/* Total Cost (calculated) */}
                 <td className="h-[30px] border border-[#dce5ef] p-0">
                   {renderPriceInput(
                     index,
