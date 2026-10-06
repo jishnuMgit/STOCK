@@ -159,6 +159,105 @@ const CompanyPage: React.FC = () => {
       },
     }),
   };
+    const selectStyles1: StylesConfig<Option, false> = {
+    control: (base, state) => ({
+      ...base,
+      minHeight: "30px",
+      height: "30px",
+      width: "25%",
+      border: "1px solid #d1d5db",
+      borderRadius: "4px",
+      boxShadow: "none",
+      backgroundColor: state.isFocused ? "#eefbf4" : "#ffffff",
+      fontSize: "11px",
+      cursor: "pointer",
+
+      "&:hover": {
+        borderColor: "#9fdfbc",
+      },
+    }),
+
+    valueContainer: (base) => ({
+      ...base,
+      height: "23px",
+      minHeight: "23px",
+      padding: "0 6px",
+    }),
+
+    singleValue: (base) => ({
+      ...base,
+      margin: 0,
+      color: "#374151",
+      fontSize: "11px",
+    }),
+
+    placeholder: (base) => ({
+      ...base,
+      margin: 0,
+      color: "#808080",
+      fontSize: "11px",
+    }),
+
+    input: (base) => ({
+      ...base,
+      margin: 0,
+      padding: 0,
+      fontSize: "11px",
+      color: "#374151",
+    }),
+
+    indicatorsContainer: (base) => ({
+      ...base,
+      height: "23px",
+    }),
+
+    dropdownIndicator: (base) => ({
+      ...base,
+      padding: "2px 4px",
+      color: "#aeb8c2",
+
+      "&:hover": {
+        color: "#808080",
+      },
+    }),
+
+    indicatorSeparator: () => ({
+      display: "none",
+    }),
+
+    menu: (base) => ({
+      ...base,
+      zIndex: 9999,
+      marginTop: "2px",
+      fontSize: "11px",
+      borderRadius: "2px",
+      overflow: "hidden",
+    }),
+
+    menuList: (base) => ({
+      ...base,
+      padding: 0,
+      maxHeight: "180px",
+    }),
+
+    option: (base, state) => ({
+      ...base,
+      padding: "5px 8px",
+      fontSize: "11px",
+      color: "#374151",
+      cursor: "pointer",
+
+      backgroundColor: state.isSelected
+        ? "#dff5e9"
+        : state.isFocused
+          ? "#eefbf4"
+          : "#ffffff",
+
+      "&:active": {
+        backgroundColor: "#dff5e9",
+      },
+    }),
+  };
 
   // ============================================================
   // SAVE
@@ -255,7 +354,7 @@ const CompanyPage: React.FC = () => {
               value={txtCoID}
               onChange={(e) => setCoID(e.target.value)}
               autoComplete="off"
-              className="w-[20%] input-style"
+              className="w-[10%] input-style"
             />
           </div>
 
@@ -440,7 +539,7 @@ const CompanyPage: React.FC = () => {
               onChange={(option: SingleValue<Option>) =>
                 setBG2ARAP(option)
               }
-              styles={selectStyles}
+              styles={selectStyles1}
               isClearable={false}
               isSearchable={false}
               placeholder=""
@@ -468,7 +567,7 @@ const CompanyPage: React.FC = () => {
               onChange={(option: SingleValue<Option>) =>
                 setYearClosingMethod(option)
               }
-              styles={selectStyles}
+              styles={selectStyles1}
               isClearable={false}
               isSearchable={false}
               placeholder=""
