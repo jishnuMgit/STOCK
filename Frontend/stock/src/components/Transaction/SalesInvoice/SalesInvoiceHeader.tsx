@@ -42,7 +42,7 @@ const selectStyles: StylesConfig<Option, false> = {
     height: 30,
     width: "100%",
     border: "1px solid #cbd5e1",
-    borderRadius: 2,
+    borderRadius: 4,
     boxShadow: "none",
     backgroundColor: state.isFocused ? "#eff6ff" : "#ffffff",
     cursor: "pointer",
@@ -138,7 +138,7 @@ const selectStyles: StylesConfig<Option, false> = {
 // ============================================================
 
 const inputClass =
-  "h-[30px] border border-[#cbd5e1] bg-white px-1 text-[11px] text-[#202020] outline-none focus:border-blue-400 focus:bg-blue-50";
+  "h-[30px] border border-[#cbd5e1] rounded-[4px] bg-white px-1 text-[11px] text-[#202020] outline-none focus:border-blue-400 focus:bg-blue-50";
 
 // ============================================================
 // COMPONENT
@@ -202,8 +202,8 @@ const SalesInvoiceHeader: React.FC = () => {
       BRANCH
   ------------------------------------------------ */}
 
-  <div className="mb-[10px] flex h-[30px] items-center gap-5">
-    <label className="w-[80px] shrink-0 text-right text-[15px] text-[#202020] whitespace-nowrap">
+  <div className="mb-[10px] flex h-[30px] items-center gap-2">
+    <label className="w-[80px] shrink-0 text-right text-[14px] text-[#202020] whitespace-nowrap">
       Branch :
     </label>
 
@@ -231,8 +231,8 @@ const SalesInvoiceHeader: React.FC = () => {
       CUSTOMER
   ------------------------------------------------ */}
 
-  <div className="mb-[15px] flex h-[30px] items-center gap-5">
-    <label className="w-[80px] shrink-0 text-right text-[15px] text-[#202020] whitespace-nowrap">
+  <div className="mb-[15px] flex h-[30px] items-center gap-2">
+    <label className="w-[80px] shrink-0 text-right text-[14px] text-[#202020] whitespace-nowrap">
       Customer :
     </label>
 
@@ -281,8 +281,8 @@ const SalesInvoiceHeader: React.FC = () => {
       SQ NO
   ------------------------------------------------ */}
 
-  <div className="flex h-[22px]  items-center gap-5">
-    <label className="w-[80px] shrink-0 text-right text-[15px] text-[#202020] whitespace-nowrap">
+  <div className="flex h-[22px]  items-center gap-2">
+    <label className="w-[80px] shrink-0 text-right text-[14px] text-[#202020] whitespace-nowrap">
       SQ. No :
     </label>
 
@@ -298,25 +298,25 @@ const SalesInvoiceHeader: React.FC = () => {
               RIGHT SIDE
           ================================================== */}
 
-         <div className="pl-[4px]">
+     <div className="right-side ml-auto w-fit pl-[4px]">
   {/* -----------------------------------------------
       INVOICE NO + DATE
   ------------------------------------------------ */}
 
   <div className="mb-[10px] flex h-[30px] items-center">
-    <label className="w-[90px] shrink-0 text-right text-[15px] text-[#202020] whitespace-nowrap">
+    <label className="w-[90px] shrink-0 whitespace-nowrap text-right text-[14px] text-[#202020]">
       Invoice No. :
     </label>
 
     <input
-      id="txtInvoiceNo"
+      id="txtDocNo"
       type="text"
       defaultValue="OC3"
       autoComplete="off"
       className={`${inputClass} ml-[7px] w-[150px]`}
     />
 
-    <label className="ml-[50px] mr-[3px] shrink-0 text-[15px] text-[#202020] whitespace-nowrap">
+    <label className="ml-[50px] mr-[3px] shrink-0 whitespace-nowrap text-[14px] text-[#202020]">
       Date :
     </label>
 
@@ -333,7 +333,7 @@ const SalesInvoiceHeader: React.FC = () => {
   ------------------------------------------------ */}
 
   <div className="mb-[10px] flex h-[30px] items-center">
-    <label className="w-[90px] shrink-0 text-right text-[15px] text-[#202020] whitespace-nowrap">
+    <label className="w-[90px] shrink-0 whitespace-nowrap text-right text-[14px] text-[#202020]">
       Reference :
     </label>
 
@@ -350,7 +350,17 @@ const SalesInvoiceHeader: React.FC = () => {
   ------------------------------------------------ */}
 
   <div className="flex h-[30px] items-center">
-    <label className="w-[90px] shrink-0 text-right text-[15px] text-[#202020] whitespace-nowrap">
+    
+
+    <button
+      id="BranchStockbtn"
+      type="button"
+      className="ml-[13px] h-[30px] w-[105px] border border-[#cbd5e1] bg-[#eeeeee] px-2 text-[12px] text-[#202020] shadow-sm hover:bg-[#e5e5e5]"
+    >
+       Stock
+    </button>
+
+    <label className="w-[90px] shrink-0 whitespace-nowrap text-right text-[14px] text-[#202020]">
       Stock :
     </label>
 
@@ -361,14 +371,6 @@ const SalesInvoiceHeader: React.FC = () => {
       readOnly
       className={`${inputClass} ml-[7px] w-[76px] text-center`}
     />
-
-    <button
-      id="BranchStockbtn"
-      type="button"
-      className="ml-[13px] h-[30px] w-[155px] border border-[#cbd5e1] bg-[#eeeeee] px-2 text-[12px] text-[#202020] shadow-sm hover:bg-[#e5e5e5]"
-    >
-      Branches Stock
-    </button>
   </div>
 </div>
         </div>
