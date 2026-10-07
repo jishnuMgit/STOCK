@@ -1,4 +1,5 @@
-import { Router } from "express";
+import { Router, type RequestHandler } from "express";
+import { authenticate } from "../../middleware/authMiddleware.js";
 import {
   getCompanyBranchStructure,
   getUserPermissionCoBranch,
@@ -12,7 +13,8 @@ const router = Router();
 router.get("/structure", getCompanyBranchStructure);
 
 router.get("/:lkpUserID", getUserPermissionCoBranch);
-router.put("/:lkpUserID", saveUserPermissionCoBranch);
-router.delete("/:lkpUserID", deleteUserPermissionCoBranch);
+// (typed handlers, so cast for the chain) behind the session check: save / delete need to know WHO is acting (idle, rights)
+router.put("/:lkpUserID", authenticate, saveUserPermissionCoBranch as unknown as RequestHandler);
+router.delete("/:lkpUserID", authenticate, deleteUserPermissionCoBranch as unknown as RequestHandler);
 
 export default router;

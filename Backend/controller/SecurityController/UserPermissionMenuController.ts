@@ -1,6 +1,8 @@
 import type { Request, Response } from "express";
 import pool from "../../DB/db.js";
 import { UserAudit } from "../../utils/UserAudit.js";
+import type { AuthenticatedRequest } from "../../middleware/authMiddleware.js";
+import { validateSecurityWrite } from "../../validators/SecurityPageValidator.js";
 
 /* ---------------------------------------------------------
    TYPES
@@ -269,6 +271,9 @@ export const getMenuStructure = async (
    PUT /api/user-permission/:lkpUserID
 --------------------------------------------------------- */
 
+// dbo.tblmenu fmenuid of the User Permission - Menu screen
+const MENU_ID = "9302";
+
 export const saveUserPermissions = async (
   req: Request<UserParams, unknown, SaveBody>,
   res: Response
@@ -296,6 +301,25 @@ export const saveUserPermissions = async (
     res.status(400).json({
       success: false,
       message: "User ID is required",
+    });
+    return;
+  }
+
+  // validators/SecurityPageValidator.ts: idle user, then logged in with the
+  // Save right - the first rule that fails stops the save
+  const check = await validateSecurityWrite({
+    PstrUserID,
+    user: (req as unknown as AuthenticatedRequest).user,
+    menuId: MENU_ID,
+    code: "S",
+    field: "lkpUserID",
+  });
+
+  if (!check.valid) {
+    res.status(check.status).json({
+      success: false,
+      message: check.message,
+      field: check.field,
     });
     return;
   }
@@ -484,6 +508,24 @@ export const deleteUserPermissions = async (
     res.status(400).json({
       success: false,
       message: "User ID is required",
+    });
+    return;
+  }
+
+  // idle user, then logged in with the Delete right
+  const check = await validateSecurityWrite({
+    PstrUserID,
+    user: (req as unknown as AuthenticatedRequest).user,
+    menuId: MENU_ID,
+    code: "D",
+    field: "lkpUserID",
+  });
+
+  if (!check.valid) {
+    res.status(check.status).json({
+      success: false,
+      message: check.message,
+      field: check.field,
     });
     return;
   }

@@ -526,6 +526,13 @@ const SetDocumentNo: React.FC = () => {
   // ==========================================================
 
   const [rows, setRows] = useState<DocumentRow[]>([]);
+
+  // Does this Year + Branch + Module already have saved numbering?
+  // false -> the button says Save, true -> Modify. Set by the grid load.
+  const [hasSavedRows, setHasSavedRows] = useState(false);
+
+  // bumped after a save so the grid loads again (the button flips to Modify)
+  const [reloadKey, setReloadKey] = useState(0);
   const [documentOptions, setDocumentOptions] = useState<SelectOption[]>([]);
 
   /* =======================================================
@@ -537,6 +544,7 @@ const SetDocumentNo: React.FC = () => {
     if (!lkpModule) {
       setDocumentOptions([]);
       setRows([]);
+      setHasSavedRows(false);
       return;
     }
 
@@ -598,6 +606,8 @@ const SetDocumentNo: React.FC = () => {
           }
         }
 
+        setHasSavedRows(Object.keys(existingRows).length > 0);
+
         setRows(
           documentRows.map((doc, index) => {
             const existing = existingRows[doc.lkpDocument];
@@ -623,7 +633,7 @@ const SetDocumentNo: React.FC = () => {
     };
 
     loadDocumentGrid();
-  }, [lkpYear, lkpBranch, lkpModule]);
+  }, [lkpYear, lkpBranch, lkpModule, reloadKey]);
 
   // ==========================================================
   // BUTTON STATE
@@ -656,14 +666,33 @@ const SetDocumentNo: React.FC = () => {
   // SAVE
   // ==========================================================
 
+  // The one button: Save the first time, Modify once this Year + Branch +
+  // Module has numbering (the old form switched its button text between
+  // "&Save" and "&Modify").
+  const actionWord = hasSavedRows ? "Modify" : "Save";
+  const canSaveOrModify = hasSavedRows ? perms.modify : perms.save;
+
   const handleSave = async () => {
-    if (!perms.save) {
-      toast.error("You do not have permission to Save.");
+    if (!canSaveOrModify) {
+      toast.error(`You do not have permission to ${actionWord}.`);
       return;
     }
 
-    if (!lkpYear || !lkpBranch || !lkpModule) {
-      toast.warning("Year, Branch and Module are required.");
+    if (!lkpYear) {
+      toast.warning("Please select 'Year'");
+      document.getElementById("lkpYear")?.focus();
+      return;
+    }
+
+    if (!lkpBranch) {
+      toast.warning("Please select 'Branch'");
+      document.getElementById("lkpBranch")?.focus();
+      return;
+    }
+
+    if (!lkpModule) {
+      toast.warning("Please select 'Module'");
+      document.getElementById("lkpModule")?.focus();
       return;
     }
 
@@ -674,6 +703,7 @@ const SetDocumentNo: React.FC = () => {
 
     if (validRows.length === 0) {
       toast.warning("There is no information for saving.");
+      document.getElementById(`txtDocPrefix_${rows[0]?.id ?? 1}`)?.focus();
       return;
     }
 
@@ -690,6 +720,7 @@ const SetDocumentNo: React.FC = () => {
         `${import.meta.env.VITE_API_URL}/DocumentNo/saveDocumentNo`,
         {
           method: "POST",
+          credentials: "include", // the server checks the session and the rights
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
             PstrCoID,
@@ -714,11 +745,30 @@ const SetDocumentNo: React.FC = () => {
       const result = await response.json();
 
       if (!response.ok || !result.success) {
-        toast.error(result.message || "Document numbering could not be saved.");
+        toast.error(
+          result.message ||
+            (hasSavedRows ? "Not modified, try again." : "Not saved, try again."),
+        );
+
+        // the backend validator names the field that failed - same name as
+        // the element id, so the cursor goes straight into it
+        if (result.field) {
+          document.getElementById(result.field)?.focus();
+        }
+
         return;
       }
 
-      toast.success(result.message || "Document numbering saved successfully.");
+      toast.success(
+        result.message ||
+          (hasSavedRows
+            ? "Document numbering modified successfully."
+            : "Document numbering saved successfully."),
+      );
+
+      // load the grid again: it now has saved numbering, so the button
+      // flips from Save to Modify
+      setReloadKey((previous) => previous + 1);
     } catch (error) {
       console.error("saveDocumentNo error:", error);
       toast.error("Cannot connect to Document No API.");
@@ -740,12 +790,18 @@ const SetDocumentNo: React.FC = () => {
 
   // ==========================================================
   // KEYBOARD SHORTCUTS
-  // Alt+S -> Save, Alt+C -> Copy To Next Year (matches the
-  // underlined accelerator letters on the buttons).
+  // Alt+S -> Save (nothing saved yet), Alt+M -> Modify (saved numbering),
+  // Alt+C -> Copy To Next Year (matches the underlined accelerator letters
+  // on the buttons).
   // ==========================================================
 
   useAltShortcuts({
-    s: handleSave,
+    s: () => {
+      if (!hasSavedRows) handleSave();
+    },
+    m: () => {
+      if (hasSavedRows) handleSave();
+    },
     c: () => setCopyToNextYearbtn((previous) => !previous),
   });
 
@@ -754,6 +810,11 @@ const SetDocumentNo: React.FC = () => {
   // ==========================================================
 
   const handleDeleteRow = async (row: DocumentRow) => {
+    if (!perms.delete) {
+      toast.error("You do not have permission to Delete.");
+      return;
+    }
+
     if (!lkpYear || !lkpBranch || !lkpModule) {
       toast.warning("Year, Branch and Module are required.");
       return;
@@ -788,6 +849,7 @@ const SetDocumentNo: React.FC = () => {
         `${import.meta.env.VITE_API_URL}/DocumentNo/deleteDocumentNoRow`,
         {
           method: "DELETE",
+          credentials: "include", // the server checks the session and the rights
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
             PstrCoID,
@@ -1286,6 +1348,7 @@ const SetDocumentNo: React.FC = () => {
 
                           {/* DELETE */}
 
+                          {perms.delete && (
                           <button
                             type="button"
                             onClick={() => handleDeleteRow(row)}
@@ -1309,6 +1372,7 @@ const SetDocumentNo: React.FC = () => {
                   style={{ transform: "translateY(-3px)" }}
                 />
               </button>
+                          )}
 
             </div>
 
@@ -1560,14 +1624,17 @@ const SetDocumentNo: React.FC = () => {
 
         <div className="mt-[14px] flex justify-center gap-3">
           <button
-            id="Save"
-            name="Save"
+            id={hasSavedRows ? "Modify" : "Save"}
+            name={hasSavedRows ? "Modify" : "Save"}
             type="button"
             onClick={handleSave}
-            disabled={!perms.save}
+            disabled={!canSaveOrModify}
             className="btn-style disabled:cursor-not-allowed disabled:opacity-40"
           >
-            <span className="underline underline-offset-2">S</span>ave
+            <span className="underline underline-offset-2">
+              {actionWord.charAt(0)}
+            </span>
+            {actionWord.slice(1)}
           </button>
 
           <button

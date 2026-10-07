@@ -166,33 +166,13 @@ const StockTransferHeader: React.FC = () => {
           TITLE
       ====================================================== */}
 
-      <div
-        className="
-          flex
-          h-[36px]
-          items-center
-          border-b
-          border-slate-300
-          bg-[#a3dfc0]
-        "
-      >
-        <span
-          className="
-            px-6
-            text-[17px]
-            font-semibold
-            text-slate-700
-          "
-        >
-          Stock Transfer
-        </span>
-      </div>
+      
 
       {/* ======================================================
           HEADER FORM
       ====================================================== */}
 
-      <div className="h-[83px] w-full px-[16px] pt-[8px] mt-2">
+      <div className="h-[83px] w-full px-[16px] pt-3 mt-2">
         <div className="relative h-full w-full">
 
           {/* ==================================================

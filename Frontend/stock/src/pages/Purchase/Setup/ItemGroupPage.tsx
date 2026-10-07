@@ -176,7 +176,7 @@ const ItemGroupPage: React.FC = () => {
   };
 
   return (
- <div className="flex min-h-screen w-full justify-center overflow-hidden bg-white pt-5">
+ <div className="flex min-h-full w-full justify-center items-center overflow-hidden bg-white pt-5">
   <main className="h-fit w-full min-w-[700px] max-w-[720px] border border-gray-400 bg-white pb-6 text-[#202020]">
 
 

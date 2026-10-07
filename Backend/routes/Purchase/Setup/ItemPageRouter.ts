@@ -1,5 +1,7 @@
 import express from "express";
 
+import { authenticate } from "../../../middleware/authMiddleware.js";
+
 import {
   getUnitList,
   getItemGroupList,
@@ -18,8 +20,9 @@ router.get("/getItemGroupList", getItemGroupList);
 router.get("/getSupplierList", getSupplierList);
 router.get("/getBranchList", getBranchList);
 router.get("/getItem", getItem);
-router.post("/saveItem", saveItem);
-router.delete("/deleteItem", deleteItem);
-router.delete("/deleteItemBranchRow", deleteItemBranchRow);
+// behind the session check: save / delete need to know WHO is acting (rights)
+router.post("/saveItem", authenticate, saveItem);
+router.delete("/deleteItem", authenticate, deleteItem);
+router.delete("/deleteItemBranchRow", authenticate, deleteItemBranchRow);
 
 export default router;

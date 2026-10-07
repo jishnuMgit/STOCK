@@ -46,32 +46,7 @@ interface ApiResponse {
 // BUTTON CLASS
 // ============================================================
 
-const buttonClass = `
-  min-w-[110px]
-  h-[40px]
-  rounded-[4px]
-  border
-  border-[#9db8d4]
-  bg-gradient-to-b
-  from-[#ffffff]
-  to-[#e7eef5]
-  px-4
-  text-[18px]
-  shadow-[inset_0_1px_0_rgba(255,255,255,0.8)]
-  transition-colors
-  duration-100
-  text-transparent
-  bg-clip-text
-  bg-gradient-to-r
-  from-green-800
-  to-green-500
-  hover:border-[#7f9fbd]
-  hover:bg-gradient-to-b
-  focus:border-[#20884e]
-  focus:outline-none
-  focus:ring-0
-  hover:text-green-800
-`;
+const buttonClass = "btn-style";
 
 // ============================================================
 // USER ID SELECT STYLE
@@ -80,15 +55,16 @@ const buttonClass = `
 // ============================================================
 
 const userIdSelectStyles: StylesConfig<SelectOption, false> = {
-  control: (base) => ({
+  control: (base, state) => ({
     ...base,
-    minHeight: "28px",
-    height: "28px",
-    borderColor: "#d7dee7",
+    minHeight: "30px",
+    height: "30px",
+    border: "1px solid #d1d5db",
     borderRadius: "4px",
     boxShadow: "none",
-    fontSize: "12px",
-    cursor: "text",
+    backgroundColor: state.isFocused ? "#eefbf4" : "#ffffff",
+    fontSize: "11px",
+    cursor: "pointer",
 
     "&:hover": {
       borderColor: "#9fdfbc",
@@ -97,33 +73,36 @@ const userIdSelectStyles: StylesConfig<SelectOption, false> = {
 
   valueContainer: (base) => ({
     ...base,
-    height: "28px",
-    padding: "0 8px",
+    height: "23px",
+    minHeight: "23px",
+    padding: "0 6px",
   }),
 
   singleValue: (base) => ({
     ...base,
-    color: "#344054",
-    fontSize: "12px",
+    margin: 0,
+    color: "#374151",
+    fontSize: "11px",
   }),
 
   placeholder: (base) => ({
     ...base,
+    margin: 0,
     color: "#808080",
-    fontSize: "12px",
+    fontSize: "11px",
   }),
 
   input: (base) => ({
     ...base,
     margin: 0,
     padding: 0,
-    fontSize: "12px",
-    color: "#344054",
+    fontSize: "11px",
+    color: "#374151",
   }),
 
   indicatorsContainer: (base) => ({
     ...base,
-    height: "28px",
+    height: "23px",
   }),
 
   dropdownIndicator: (base) => ({
@@ -426,6 +405,7 @@ const UserPermissionBranchPage: React.FC = () => {
         `${API_URL}/${encodeURIComponent(lkpUserID.trim())}`,
         {
           method: "PUT",
+          credentials: "include", // the server checks the session, idle and rights
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ PstrCoID, PstrYear, PstrUserID, permissions }),
         }
@@ -485,6 +465,7 @@ const UserPermissionBranchPage: React.FC = () => {
         `${API_URL}/${encodeURIComponent(lkpUserID.trim())}`,
         {
           method: "DELETE",
+          credentials: "include", // the server checks the session, idle and rights
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ PstrCoID, PstrYear, PstrUserID }),
         }
@@ -536,22 +517,25 @@ const UserPermissionBranchPage: React.FC = () => {
 
   return (
     <div
-      className="mt-25 flex items-center justify-center"
+      className="flex min-h-screen w-full items-center justify-center bg-white"
       onKeyDown={handleEnterAsTab}
     >
-      <div className="mb-10 flex min-h-fit w-[calc(100%-32px)] max-w-[30%] min-w-100 flex-col border border-slate-400 bg-white pb-5 font-[Arial,Helvetica,sans-serif] text-[12px] text-gray-700">
+      <div className="flex w-[calc(100%-32px)] max-w-[30%] min-w-100 flex-col border border-slate-400 bg-white text-[12px] text-gray-700 shadow-sm">
         {/* TITLE */}
-        <header className="flex h-9 shrink-0 items-center border-b border-slate-300 bg-[#a3dfc0]">
-          <span className="px-5 text-[17px] font-semibold text-slate-700">
+        <header className="flex h-[28px] w-full shrink-0 items-center bg-[#a7dfc0]">
+          <h1 className="ml-[5px] text-[17px] font-semibold text-[#374151]">
             User Permission - Branch
-          </span>
+          </h1>
         </header>
 
+        {/* FORM */}
+        <div className="p-[12px] m-[12px]">
+
         {/* USER SELECT */}
-        <section className="flex h-16.5 shrink-0 items-center gap-5 px-5.5">
+        <section className="mb-[8px] flex shrink-0 items-center gap-2">
           <label
             htmlFor="lkpUserID"
-            className="w-18 shrink-0 text-[16px] text-slate-600"
+            className="w-[84px] shrink-0 pr-3 text-right text-[14px] text-gray-600"
           >
             User ID :
           </label>
@@ -581,7 +565,7 @@ const UserPermissionBranchPage: React.FC = () => {
 
         {/* PERMISSION TREE */}
         <main
-          className="flex min-h-0 flex-1 flex-col px-4.75"
+          className="flex min-h-0 flex-1 flex-col"
           id="trlBranches"
         >
           <div className="min-h-65 flex-1 overflow-auto border border-[#b8f0d0]">
@@ -591,8 +575,8 @@ const UserPermissionBranchPage: React.FC = () => {
               </colgroup>
 
               <thead>
-                <tr className="h-7.5 bg-[#ecfaf3]">
-                  <th className="border-b border-[#b8f0d0] px-2.75 text-left text-[15px] font-normal text-slate-700">
+                <tr className="h-[30px] bg-[#eef9f3]">
+                  <th className="border-b border-[#b8f0d0] px-2.75 text-left text-[14px] font-normal text-gray-600">
                     Branches
                   </th>
                 </tr>
@@ -700,8 +684,8 @@ const UserPermissionBranchPage: React.FC = () => {
         </main>
 
         {/* ACTION BUTTONS */}
-        <footer className="flex min-h-19.25 -mb-6 shrink-0 flex-col items-center justify-center gap-1 px-4 py-2">
-          <div className="flex flex-wrap items-center justify-center gap-3.75">
+        <footer className="mt-[14px] shrink-0">
+          <div className="flex flex-wrap items-center justify-center gap-3">
             {/* SAVE */}
             <button
               id="btnSave"
@@ -739,6 +723,8 @@ const UserPermissionBranchPage: React.FC = () => {
             </button>
           </div>
         </footer>
+
+        </div>
       </div>
     </div>
   );

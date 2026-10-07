@@ -26,7 +26,7 @@ const StockTransferFooter: React.FC = () => {
           NOTE
       ====================================================== */}
 
-      <div className="absolute left-[20px] top-[10px] flex h-[28px] items-center">
+      <div className="absolute left-[25px] top-[10px] flex h-[28px] items-center">
         <label
           htmlFor="txtNote"
           className="mr-[9px] text-[13px] text-[#202020]"
@@ -46,22 +46,17 @@ const StockTransferFooter: React.FC = () => {
           TOTAL
       ====================================================== */}
 
-      <div className="absolute right-[100px] top-[10px] flex h-[28px] items-center">
+      <div className="absolute right-28 top-[10px] flex h-[28px] items-center">
         <input
           id="txtTotalLabel"
           type="text"
           value="Total"
           readOnly
           className="
-            h-[28px]
+          
             w-[68px]
-            border
-            border-[#cbd5e1]
-            bg-white
-            text-center
-            text-[13px]
-            text-[#202020]
-            outline-none
+            input-style
+            
           "
         />
 
@@ -69,7 +64,7 @@ const StockTransferFooter: React.FC = () => {
           id="txtTotal"
           type="text"
           defaultValue="0.000"
-          className={`${inputClass} ml-[7px] w-[95px] text-right`}
+          className={`${inputClass} ml-[7px] w-[70px] text-right`}
         />
       </div>
 

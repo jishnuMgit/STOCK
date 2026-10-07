@@ -3286,28 +3286,7 @@ export const ReceiptActions = forwardRef<
     };
 
     const buttonClass = `
-      min-w-[105px]
-      h-[40px]
-      rounded-[4px]
-      border
-      border-[#9db8d4]
-      bg-gradient-to-r
-      from-[#ffffff]
-      to-[#e7eef5]
-      px-4
-      text-[15px]
-      shadow-[inset_0_1px_0_rgba(255,255,255,0.8)]
-      transition-colors
-      duration-100
-      hover:border-[#7f9fbd]
-      hover:bg-gradient-to-b
-      hover:from-[#ffffff]
-      hover:to-[#dce8f1]
-      focus:border-[#20884e]
-      focus:bg-gradient-to-b
-      focus:from-[#ffffff]
-      focus:to-[#dcefe5]
-      focus:ring-0
+     btn-style
     `;
 
     const textClass = `

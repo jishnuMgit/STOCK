@@ -64,15 +64,16 @@ const userIdSelectStyles: StylesConfig<SelectOption, false> = {
     width: "min(340px, 55%)",
   }),
 
-  control: (base) => ({
+  control: (base, state) => ({
     ...base,
-    minHeight: "28px",
-    height: "28px",
-    borderColor: "#d7dee7",
+    minHeight: "30px",
+    height: "30px",
+    border: "1px solid #d1d5db",
     borderRadius: "4px",
     boxShadow: "none",
-    fontSize: "12px",
-    cursor: "text",
+    backgroundColor: state.isFocused ? "#eefbf4" : "#ffffff",
+    fontSize: "11px",
+    cursor: "pointer",
 
     "&:hover": {
       borderColor: "#9fdfbc",
@@ -81,33 +82,36 @@ const userIdSelectStyles: StylesConfig<SelectOption, false> = {
 
   valueContainer: (base) => ({
     ...base,
-    height: "28px",
-    padding: "0 8px",
+    height: "23px",
+    minHeight: "23px",
+    padding: "0 6px",
   }),
 
   singleValue: (base) => ({
     ...base,
-    color: "#344054",
-    fontSize: "12px",
+    margin: 0,
+    color: "#374151",
+    fontSize: "11px",
   }),
 
   placeholder: (base) => ({
     ...base,
+    margin: 0,
     color: "#808080",
-    fontSize: "12px",
+    fontSize: "11px",
   }),
 
   input: (base) => ({
     ...base,
     margin: 0,
     padding: 0,
-    fontSize: "12px",
-    color: "#344054",
+    fontSize: "11px",
+    color: "#374151",
   }),
 
   indicatorsContainer: (base) => ({
     ...base,
-    height: "28px",
+    height: "23px",
   }),
 
   dropdownIndicator: (base) => ({
@@ -788,6 +792,7 @@ const UserPermission: React.FC = () => {
         `${API_URL}/${encodeURIComponent(lkpUserID.trim())}`,
         {
           method: "PUT",
+          credentials: "include", // the server checks the session, idle and rights
           headers: {
             "Content-Type": "application/json",
           },
@@ -859,6 +864,7 @@ const UserPermission: React.FC = () => {
         `${API_URL}/${encodeURIComponent(lkpUserID.trim())}`,
         {
           method: "DELETE",
+          credentials: "include", // the server checks the session, idle and rights
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ PstrCoID, PstrYear, PstrUserID }),
         }
@@ -915,14 +921,20 @@ const UserPermission: React.FC = () => {
   // ==========================================================
 
   return (
-    <div className="flex justify-center" onKeyDown={handleEnterAsTab}>
-      <main className="mb-10 flex min-h-fit w-[calc(100%-32px)] max-w-[1000px] flex-col border border-slate-400 bg-white pb-5 font-[Arial,Helvetica,sans-serif] text-[12px] text-gray-700">
+    <div
+      className="flex min-h-screen w-full items-center justify-center bg-white"
+      onKeyDown={handleEnterAsTab}
+    >
+      <main className="flex w-[calc(100%-32px)] max-w-[1000px] flex-col border border-slate-400 bg-white text-[12px] text-gray-700 shadow-sm">
         {/* Title */}
-        <div className="flex h-[36px] shrink-0 items-center border-b border-slate-300 bg-[#a3dfc0]">
-          <span className="px-5 text-[17px] font-semibold text-slate-700">
+        <div className="flex h-[28px] w-full shrink-0 items-center bg-[#a7dfc0]">
+          <h1 className="ml-[5px] text-[17px] font-semibold text-[#374151]">
             User Permission - Menu
-          </span>
+          </h1>
         </div>
+
+        {/* Form */}
+        <div className="p-[12px] m-[12px]">
 
         {/* User ID */}
         <form
@@ -930,11 +942,11 @@ const UserPermission: React.FC = () => {
             event.preventDefault();
             void loadPermissions(lkpUserID);
           }}
-          className="flex min-h-[55px] shrink-0 flex-wrap items-center gap-[15px] px-4 pb-2 pt-[13px]"
+          className="mb-[8px] flex shrink-0 flex-wrap items-center gap-[15px]"
         >
           <label
-            htmlFor="permission-user-id"
-            className="shrink-0 rounded-[4px] px-1 py-[5px] text-[14px] text-gray-800 shadow-sm"
+            htmlFor="lkpUserID"
+            className="shrink-0 pr-3 text-right text-[14px] text-gray-600"
           >
             User ID :
           </label>
@@ -964,15 +976,15 @@ const UserPermission: React.FC = () => {
         id="trlMenu"
           role="grid"
           aria-label="Menu permissions"
-          className="ml-[17px] w-[95%] flex max-h-[65vh] min-h-[200px] flex-col overflow-auto border border-[#C1F2D7]"
+          className="flex max-h-[65vh] min-h-[200px] w-full flex-col overflow-auto border border-[#C1F2D7]"
         >
           <div
             role="row"
-            className="sticky top-0 z-10 grid h-[24px] shrink-0 grid-cols-[23px_minmax(250px,1fr)] border-b border-[#C1F2D7] bg-[#eaf5ff]"
+            className="sticky top-0 z-10 grid h-[30px] shrink-0 grid-cols-[23px_minmax(250px,1fr)] border-b border-[#C1F2D7] bg-[#eef9f3]"
           >
             <div className="border-r border-[#C1F2D7]" />
 
-            <div className="px-[7px] py-1 text-gray-700">
+            <div className="flex items-center px-[7px] text-[14px] text-gray-600">
               Menu
             </div>
           </div>
@@ -1001,40 +1013,36 @@ const UserPermission: React.FC = () => {
         </section>
 
         {/* Action buttons */}
-        <footer className="flex shrink-0 items-center justify-center gap-[13px] px-3 pt-[10px] max-[600px]:gap-2">
+        <footer className="mt-[14px] flex shrink-0 justify-center gap-3">
           <button
             type="button"
             onClick={handleSave}
             disabled={saving || loading || !perms.save}
-            className="h-10 w-[108px] rounded-[4px] border border-[#9eb8d2] bg-gradient-to-b from-white to-[#e5edf4] text-[14px] text-green-700 shadow-sm hover:from-[#f8fbff] hover:to-[#d9e7f3] disabled:cursor-not-allowed disabled:opacity-60 max-[600px]:flex-1"
+            className="btn-style disabled:cursor-not-allowed disabled:opacity-40"
           >
-            <span className="underline underline-offset-2">
-             S
-            </span>ave
+            <span className="underline underline-offset-2">S</span>ave
           </button>
 
           <button
             type="button"
             onClick={handleDelete}
             disabled={saving || loading || !perms.delete}
-            className="h-10 w-[108px] rounded-[4px] border border-[#9eb8d2] bg-gradient-to-b from-white to-[#e5edf4] text-[14px] text-green-700 shadow-sm hover:from-[#f8fbff] hover:to-[#d9e7f3] disabled:cursor-not-allowed disabled:opacity-60 max-[600px]:flex-1"
+            className="btn-style disabled:cursor-not-allowed disabled:opacity-40"
           >
-            <span className="underline underline-offset-2">
-              D
-            </span>elete
+            <span className="underline underline-offset-2">D</span>elete
           </button>
 
           <button
             type="button"
             onClick={handleClear}
             disabled={saving || loading}
-            className="h-10 w-[108px] rounded-[4px] border border-[#9eb8d2] bg-gradient-to-b from-white to-[#e5edf4] text-[14px] text-green-700 shadow-sm hover:from-[#f8fbff] hover:to-[#d9e7f3] disabled:cursor-not-allowed disabled:opacity-60 max-[600px]:flex-1"
+            className="btn-style disabled:cursor-not-allowed disabled:opacity-40"
           >
-            <span className="underline underline-offset-2">
-              C
-            </span>lear
+            <span className="underline underline-offset-2">C</span>lear
           </button>
         </footer>
+
+        </div>
       </main>
     </div>
   );

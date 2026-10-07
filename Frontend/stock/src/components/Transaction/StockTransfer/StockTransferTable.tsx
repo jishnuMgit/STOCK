@@ -388,10 +388,10 @@ const StockTransferTable: React.FC = () => {
             <col style={{ width: "auto" }} />
 
             {/* Unit */}
-            <col style={{ width: "90px" }} />
+            <col style={{ width: "70px" }} />
 
             {/* Qty */}
-            <col style={{ width: "90px" }} />
+            <col style={{ width: "70px" }} />
 
             {/* Unit Cost */}
             <col style={{ width: "90px" }} />
