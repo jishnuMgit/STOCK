@@ -132,6 +132,65 @@ const selectStyles: StylesConfig<SelectOption, false> = {
 };
 
 // ============================================================
+// YEAR / BRANCH / MODULE BOXES - same box as the Company page select
+// (30px, #d1d5db border, mint background when focused)
+// ============================================================
+
+const headerSelectStyles: StylesConfig<SelectOption, false> = {
+  ...selectStyles,
+
+  control: (base, state) => ({
+    ...base,
+    minHeight: "30px",
+    height: "30px",
+    border: "1px solid #d1d5db",
+    borderRadius: "4px",
+    boxShadow: "none",
+    backgroundColor: state.isFocused ? "#eefbf4" : "#ffffff",
+    fontSize: "11px",
+    cursor: "pointer",
+
+    "&:hover": {
+      borderColor: "#9fdfbc",
+    },
+  }),
+
+  valueContainer: (base) => ({
+    ...base,
+    height: "23px",
+    minHeight: "23px",
+    padding: "0 6px",
+  }),
+
+  singleValue: (base) => ({
+    ...base,
+    margin: 0,
+    color: "#374151",
+    fontSize: "11px",
+  }),
+
+  placeholder: (base) => ({
+    ...base,
+    margin: 0,
+    color: "#808080",
+    fontSize: "11px",
+  }),
+
+  input: (base) => ({
+    ...base,
+    margin: 0,
+    padding: 0,
+    fontSize: "11px",
+    color: "#374151",
+  }),
+
+  indicatorsContainer: (base) => ({
+    ...base,
+    height: "23px",
+  }),
+};
+
+// ============================================================
 // TABLE SELECT STYLES
 // ============================================================
 
@@ -794,29 +853,19 @@ const SetDocumentNo: React.FC = () => {
   return (
     <div
       onKeyDown={handleEnterAsTab}
-      className="
-        flex
-        min-h-full
-        w-full
-        flex-col
-        items-center
-        justify-center
-        bg-white
-        p-1
-        text-[13px]
-        text-slate-700
-      "
+      className="flex min-h-screen w-full items-center justify-center bg-white text-[13px] text-slate-700"
     >
       {/* =====================================================
           MAIN CONTAINER
       ====================================================== */}
 
+      {/* no overflow-hidden: the Year / Branch / Module lists must stay visible */}
       <div
         className="
           mx-auto
           w-full
           border
-          border-slate-300
+          border-slate-400
           bg-white
           shadow-sm
           sm:w-[75%]
@@ -827,27 +876,17 @@ const SetDocumentNo: React.FC = () => {
             TITLE
         ====================================================== */}
 
-        <div
-          className="
-            flex
-            h-[30px]
-            items-center
-            border-b
-            border-slate-300
-            bg-[#a3dfc0]
-          "
-        >
-          <h1
-            className="
-              ml-3
-              text-[17px]
-              font-semibold
-              text-slate-700
-            "
-          >
+        <div className="flex h-[28px] w-full items-center bg-[#a7dfc0]">
+          <h1 className="ml-[5px] text-[17px] font-semibold text-[#374151]">
             Set Document No.
           </h1>
         </div>
+
+        {/* =====================================================
+            FORM
+        ====================================================== */}
+
+        <div className="p-[12px] m-[12px]">
 
         {/* =====================================================
             HEADER
@@ -860,16 +899,13 @@ const SetDocumentNo: React.FC = () => {
             gap-3
             border-b
             border-slate-200
-            px-3
-            py-3
+            pb-3
 
             sm:grid-cols-2
-            sm:px-5
 
             lg:grid-cols-[200px_1fr_1fr]
             lg:items-center
             lg:gap-4
-            lg:px-10
           "
         >
           {/* ===================================================
@@ -879,12 +915,7 @@ const SetDocumentNo: React.FC = () => {
           <div className="flex w-full items-center gap-2">
             <label
               htmlFor="lkpYear"
-              className="
-                w-[40px]
-                shrink-0
-                text-right
-                font-semibold
-              "
+              className="w-[56px] shrink-0 pr-3 text-right text-[14px] text-gray-600"
             >
               Year :
             </label>
@@ -899,7 +930,7 @@ const SetDocumentNo: React.FC = () => {
                 onChange={(option: SingleValue<SelectOption>) =>
                   setLkpYear(option?.value ?? "")
                 }
-                styles={selectStyles}
+                styles={headerSelectStyles}
                 components={{
                   DropdownIndicator: CustomDropdownIndicator,
                 }}
@@ -926,10 +957,7 @@ const SetDocumentNo: React.FC = () => {
           >
             <label
               htmlFor="lkpBranch"
-              className="
-                shrink-0
-                font-semibold
-              "
+              className="shrink-0 pr-3 text-right text-[14px] text-gray-600"
             >
               Branch :
             </label>
@@ -958,7 +986,7 @@ const SetDocumentNo: React.FC = () => {
                   )
                 }
                 styles={{
-                  ...selectStyles,
+                  ...headerSelectStyles,
                   ...branchMenuStyles,
                 }}
                 components={{
@@ -990,10 +1018,7 @@ const SetDocumentNo: React.FC = () => {
           >
             <label
               htmlFor="lkpModule"
-              className="
-                shrink-0
-                font-semibold
-              "
+              className="shrink-0 pr-3 text-right text-[14px] text-gray-600"
             >
               Module :
             </label>
@@ -1014,7 +1039,7 @@ const SetDocumentNo: React.FC = () => {
                 onChange={(option: SingleValue<SelectOption>) =>
                   setLkpModule(option?.value ?? "")
                 }
-                styles={selectStyles}
+                styles={headerSelectStyles}
                 components={{
                   DropdownIndicator: CustomDropdownIndicator,
                 }}
@@ -1025,11 +1050,7 @@ const SetDocumentNo: React.FC = () => {
           </div>
         </div>
 
-        <div
-          className="
-            px-3
-          "
-        >
+        <div>
           <div
             className="
               w-full
@@ -1065,9 +1086,8 @@ const SetDocumentNo: React.FC = () => {
           h-9
           bg-slate-50
           text-left
-          text-[13px]
-          font-semibold
-          text-slate-600
+          text-[14px]
+          text-gray-600
         "
                   >
                     {/* DOCUMENT */}
@@ -1078,7 +1098,6 @@ const SetDocumentNo: React.FC = () => {
             border-r
             border-slate-200
             px-1
-            font-semibold
             whitespace-nowrap
           "
                     >
@@ -1093,7 +1112,6 @@ const SetDocumentNo: React.FC = () => {
             border-r
             border-slate-200
             px-1
-            font-semibold
             whitespace-nowrap
           "
                     >
@@ -1109,7 +1127,6 @@ const SetDocumentNo: React.FC = () => {
             border-slate-200
             px-1
             text-center
-            font-semibold
             whitespace-nowrap
           "
                     >
@@ -1125,7 +1142,6 @@ const SetDocumentNo: React.FC = () => {
             border-slate-200
             px-1
             text-center
-            font-semibold
             whitespace-nowrap
           "
                     >
@@ -1141,7 +1157,6 @@ const SetDocumentNo: React.FC = () => {
             border-slate-200
             px-1
             text-center
-            font-semibold
             whitespace-nowrap
           "
                     >
@@ -1157,7 +1172,6 @@ const SetDocumentNo: React.FC = () => {
             border-slate-200
             px-1
             text-center
-            font-semibold
             whitespace-nowrap
           "
                     >
@@ -1174,7 +1188,6 @@ const SetDocumentNo: React.FC = () => {
             text-left
             px-1
             text-center
-            font-semibold
             whitespace-nowrap
           "
                     >
@@ -1188,7 +1201,6 @@ const SetDocumentNo: React.FC = () => {
             w-[13%]
             px-1
             text-center
-            font-semibold
             whitespace-nowrap
           "
                     >
@@ -1329,11 +1341,8 @@ const SetDocumentNo: React.FC = () => {
                           }
                           className="
                 w-full
-                bg-transparent
+                input-style
                 text-left
-                text-[13px]
-                text-slate-600
-                outline-none
               "
                         />
                       </td>
@@ -1364,11 +1373,8 @@ const SetDocumentNo: React.FC = () => {
                           }
                           className="
                 w-full
-                bg-transparent
+                input-style
                 text-center
-                text-[13px]
-                text-slate-600
-                outline-none
               "
                         />
                       </td>
@@ -1535,11 +1541,8 @@ const SetDocumentNo: React.FC = () => {
                           }
                           className="
                 w-full
-                bg-transparent
+                input-style
                 text-right
-                text-[13px]
-                text-slate-600
-                outline-none
               "
                         />
                       </td>
@@ -1555,108 +1558,29 @@ const SetDocumentNo: React.FC = () => {
             BUTTONS
         ====================================================== */}
 
-        <div
-          className="
-            flex
-            flex-col
-            items-center
-            justify-center
-            gap-3
-            px-3
-            pb-3
-            pt-8
-
-            sm:flex-row
-            sm:gap-4
-            sm:px-5
-
-            lg:px-10
-            lg:pt-12
-          "
-        >
-          {/* =================================================
-              SAVE
-          ================================================== */}
-
+        <div className="mt-[14px] flex justify-center gap-3">
           <button
             id="Save"
             name="Save"
             type="button"
             onClick={handleSave}
             disabled={!perms.save}
-            className="
-              h-[47px]
-              w-[125px]
-              rounded
-              border
-              border-slate-400
-              bg-gradient-to-b
-              from-white
-              to-slate-100
-              text-[18px]
-              text-green-600
-              shadow-sm
-              hover:bg-slate-50
-              disabled:cursor-not-allowed
-              disabled:opacity-40
-            "
+            className="btn-style disabled:cursor-not-allowed disabled:opacity-40"
           >
             <span className="underline underline-offset-2">S</span>ave
           </button>
-
-          {/* =================================================
-              CLEAR
-          ================================================== */}
-
-          {/* <button
-            id="Clear"
-            name="Clear"
-            type="button"
-            onClick={handleClear}
-            className="
-              h-[47px]
-              w-[125px]
-              rounded
-              border
-              border-slate-400
-              bg-gradient-to-b
-              from-white
-              to-slate-100
-              text-[18px]
-              text-green-600
-              shadow-sm
-              hover:bg-slate-50
-            "
-          >
-            Clear
-          </button> */}
-
-          {/* =================================================
-              COPY TO NEXT YEAR
-          ================================================== */}
 
           <button
             id="CopyToNextYearbtn"
             name="CopyToNextYearbtn"
             type="button"
             onClick={() => setCopyToNextYearbtn(!CopyToNextYearbtn)}
-            className="
-              h-[47px]
-              w-[225px]
-              rounded
-              border
-              border-slate-400
-              bg-gradient-to-b
-              from-white
-              to-slate-100
-              text-[18px]
-              text-green-600
-              shadow-sm
-              hover:bg-slate-50
-            "
+            className="btn-style"
           >
             <span className="underline underline-offset-2">C</span>opy To Next Year
           </button>
+        </div>
+
         </div>
       </div>
 

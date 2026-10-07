@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import Select, { components, type StylesConfig } from "react-select";
+import Select, { type StylesConfig } from "react-select";
 import { toast } from "react-toastify";
 import { X } from "lucide-react";
 import { useEnterAsTab } from "../../../hooks/useEnterAsTab";
@@ -11,6 +11,12 @@ import {
   BranchOption,
   branchMenuStyles,
 } from "../../../components/BranchSelect/branchSelectParts";
+import {
+  makePairComponents,
+  filterPairOption,
+  pairMenuStyles,
+  pairNameMenuStyles,
+} from "../../../components/PairSelect/pairSelectParts";
 
 /* =========================================================
    TYPES
@@ -36,110 +42,10 @@ interface SelectOption {
 /* =========================================================
    ID | NAME DROPDOWN (Item Group, Supplier)
 
-   Same idea as the legacy desktop form: the ID box and the Name
-   box each open the same two-column "ID | Name" list, both are
-   searchable (type part of the ID or the name), and picking from
-   either one fills both.
+   The helper itself (the two-column "ID | Name" list, the search on
+   either column, the menu styles) is shared with other pages - see
+   components/PairSelect/pairSelectParts.tsx.
 ========================================================= */
-
-// The ID box is 155px wide + 8px gap, then the Name box starts and its
-// text is inset ~9px. The row has 10px left padding, so 162px puts the
-// name column directly under the text in the Name box.
-const PAIR_GRID_COLUMNS = "162px 1fr";
-
-const filterPairOption = (
-  option: { label: string; value: string; data: SelectOption },
-  inputValue: string
-) => {
-  const search = inputValue.toLowerCase().trim();
-
-  if (!search) {
-    return true;
-  }
-
-  return (
-    (option.data.id || "").toLowerCase().includes(search) ||
-    (option.data.name || "").toLowerCase().includes(search)
-  );
-};
-
-// Name box's list (same idea as the Branch dropdown): the name column is
-// exactly as wide as the Name box and the ID column sits right after the
-// box's right edge, in the part of the menu that hangs past it
-// (menu width = 100% + 56px; 46px ID column + 10px right padding).
-const PAIR_GRID_COLUMNS_NAME_FIRST = "calc(100% - 100px) 100px";
-
-const ellipsisStyle = {
-  overflow: "hidden",
-  textOverflow: "ellipsis",
-  whiteSpace: "nowrap",
-} as const;
-
-// nameFirst = false -> "ID | Name"  (used by the ID box)
-// nameFirst = true  -> "Name | ID"  (used by the Name box)
-const makePairComponents = (
-  idHeader: string,
-  nameHeader: string,
-  nameFirst: boolean
-) => {
-  const columns = nameFirst
-    ? PAIR_GRID_COLUMNS_NAME_FIRST
-    : PAIR_GRID_COLUMNS;
-
-  return {
-    MenuList: (props: any) => (
-      <components.MenuList {...props}>
-        <div
-          style={{
-            display: "grid",
-            gridTemplateColumns: columns,
-            padding: "6px 10px",
-            backgroundColor: "#f5f7fa",
-            borderBottom: "1px solid #d7dee7",
-            fontSize: "11px",
-            fontWeight: 600,
-            color: "#555",
-            whiteSpace: "nowrap",   
-            position: "sticky",
-            top: 0,
-            zIndex: 99999,
-          }}
-        >
-          <div>{nameFirst ? nameHeader : idHeader}</div>
-          <div>{nameFirst ? idHeader : nameHeader}</div>
-        </div>
-
-        {props.children}
-      </components.MenuList>
-    ),
-
-    Option: (props: any) => (
-      <components.Option {...props}>
-        <div
-          style={{
-            display: "grid",
-            gridTemplateColumns: columns,
-            width: "100%",
-            alignItems: "center",
-            fontSize: "12px",
-          }}
-        >
-          {nameFirst ? (
-            <>
-              <div style={ellipsisStyle}>{props.data.name}</div>
-              <div>{props.data.id}</div>
-            </>
-          ) : (
-            <>
-              <div>{props.data.id}</div>
-              <div style={ellipsisStyle}>{props.data.name}</div>
-            </>
-          )}
-        </div>
-      </components.Option>
-    ),
-  };
-};
 
 // Created once (not inside the component) so react-select doesn't
 // remount the menu on every render.
@@ -163,47 +69,6 @@ const supplierNameComponents = makePairComponents(
   "Supplier Name",
   true
 );
-
-// For the Name boxes: menu = Name box width + the ID column.
-const pairNameMenuStyles: Pick<
-  StylesConfig<SelectOption, false>,
-  "menu" | "menuList" | "menuPortal"
-> = {
-  menu: (base) => ({
-    ...base,
-    width: "calc(100% + 110px)",
-    zIndex: 99999,
-    fontSize: "12px",
-  }),
-  menuList: (base) => ({
-    ...base,
-    padding: 0,
-  }),
-  menuPortal: (base) => ({
-    ...base,
-    zIndex: 99999,
-  }),
-};
-
-const pairMenuStyles: Pick<
-  StylesConfig<SelectOption, false>,
-  "menu" | "menuList" | "menuPortal"
-> = {
-  menu: (base) => ({
-    ...base,
-    width: "560px",
-    zIndex: 99999,
-    fontSize: "12px",
-  }),
-  menuList: (base) => ({
-    ...base,
-    padding: 0,
-  }),
-  menuPortal: (base) => ({
-    ...base,
-    zIndex: 99999,
-  }),
-};
 
 /* =========================================================
    BUTTON CLASS
@@ -254,7 +119,7 @@ const textClass = `
 // dbo.tblmenu fmenuid for the Item page (fmenucaption = "Item").
 const MENU_ID = "010201";
 
-const ItemPage: React.FC = () => {
+  const ItemPage: React.FC = () => {
   const handleEnterAsTab = useEnterAsTab();
   const perms = useButtonPermissions(MENU_ID);
 
@@ -275,13 +140,13 @@ const ItemPage: React.FC = () => {
 
   const [lkpItemGroupID, setLkpItemGroupID] =
     useState("");
-//@ts-ignore
+  //@ts-ignore
   const [lkpItemGroupName, setLkpItemGroupName] =
     useState("");
 
   const [lkpSupplierID, setLkpSupplierID] =
     useState("");
-//@ts-ignore
+  //@ts-ignore
   const [lkpSupplierName, setLkpSupplierName] =
     useState("");
 
@@ -974,8 +839,8 @@ const ItemPage: React.FC = () => {
      COMMON INPUT CLASS
   ========================================================= */
 
-  const inputClass = `h-[28px] w-full rounded-none border border-slate-300 bg-white px-2 text-[12px] text-slate-700 outline-none
-    focus:border-blue-500`;
+  // const inputClass = `h-[28px] w-full rounded-none border border-slate-300 bg-white px-2 text-[12px] text-slate-700 outline-none
+  //   focus:border-blue-500`;
 
   /* =========================================================
      LABEL CLASS
@@ -1014,91 +879,112 @@ const ItemPage: React.FC = () => {
   /* =========================================================
      REACT SELECT - FORM
   ========================================================= */
+const reactSelectStyles: StylesConfig<SelectOption, false> = {
+  control: (provided, state) => ({
+    ...provided,
+    minHeight: "30px",
+    height: "30px",
+    borderRadius: "4px",
 
-  const reactSelectStyles: StylesConfig<
-    SelectOption,
-    false
-  > = {
-    control: (provided) => ({
-      ...provided,
-      minHeight: "28px",
-      height: "28px",
-      borderRadius: "0px",
-      borderColor: "#cbd5e1",
-      boxShadow: "none",
-      fontSize: "12px",
-    }),
+    border: `1px solid ${
+      state.isFocused ? "#9fdfbc" : "#d7dee7"
+    }`,
 
-    valueContainer: (provided) => ({
-      ...provided,
-      height: "28px",
-      padding: "0 8px",
-    }),
+    backgroundColor: "#ffffff",
 
-    input: (provided) => ({
-      ...provided,
-      margin: "0px",
-      padding: "0px",
-      fontSize: "12px",
-    }),
+    boxShadow: state.isFocused
+      ? "0 0 0 1px #9fdfbc"
+      : "none",
 
-    singleValue: (provided) => ({
-      ...provided,
-      fontSize: "12px",
-      color: "#334155",
-    }),
+    fontSize: "14px",
+    outline: "none",
+    cursor: "default",
 
-    placeholder: (provided) => ({
-      ...provided,
-      fontSize: "12px",
+    // Prevent blue border on hover
+    "&:hover": {
+      borderColor: state.isFocused ? "#9fdfbc" : "#d7dee7",
+    },
+  }),
+
+  valueContainer: (provided) => ({
+    ...provided,
+    height: "30px",
+    padding: "0 8px",
+  }),
+
+  input: (provided) => ({
+    ...provided,
+    margin: "0px",
+    padding: "0px",
+    fontSize: "14px",
+    color: "#334155",
+  }),
+
+  singleValue: (provided) => ({
+    ...provided,
+    fontSize: "14px",
+    color: "#334155",
+  }),
+
+  placeholder: (provided) => ({
+    ...provided,
+    fontSize: "14px",
+    color: "#64748b",
+  }),
+
+  indicatorsContainer: (provided) => ({
+    ...provided,
+    height: "30px",
+  }),
+
+  dropdownIndicator: (provided) => ({
+    ...provided,
+    padding: "4px 6px",
+    color: "#64748b",
+    "&:hover": {
       color: "#64748b",
-    }),
+    },
+  }),
 
-    indicatorsContainer: (provided) => ({
-      ...provided,
-      height: "28px",
-    }),
+  clearIndicator: (provided) => ({
+    ...provided,
+    padding: "4px 6px",
+    color: "#64748b",
+    "&:hover": {
+      color: "#64748b",
+    },
+  }),
 
-    dropdownIndicator: (provided) => ({
-      ...provided,
-      padding: "4px",
-    }),
+  indicatorSeparator: () => ({
+    display: "none",
+  }),
 
-    clearIndicator: (provided) => ({
-      ...provided,
-      padding: "4px",
-    }),
+  menu: (provided) => ({
+    ...provided,
+    zIndex: 100,
+    fontSize: "14px",
+    borderRadius: "4px",
+    marginTop: "2px",
+  }),
 
-    indicatorSeparator: () => ({
-      display: "none",
-    }),
+  menuList: (provided) => ({
+    ...provided,
+    padding: "3px 0",
+  }),
 
-    menu: (provided) => ({
-      ...provided,
-      zIndex: 100,
-      fontSize: "12px",
-    }),
-
-    menuList: (provided) => ({
-      ...provided,
-      padding: "3px 0",
-    }),
-
-    option: (provided, state) => ({
-      ...provided,
-      fontSize: "12px",
-      padding: "6px 8px",
-
-      backgroundColor: state.isSelected
-        ? "#dbeafe"
-        : state.isFocused
-          ? "#eff6ff"
-          : "#ffffff",
-
-      color: "#475569",
-      cursor: "pointer",
-    }),
-  };
+  option: (provided, state) => ({
+    ...provided,
+    fontSize: "14px",
+    padding: "7px 8px",
+    backgroundColor: state.isSelected
+      ? "#dbeafe"
+      : state.isFocused
+        ? "#eff6ff"
+        : "#ffffff",
+    color: "#334155",
+    cursor: "pointer",
+  }),
+};
 
   /* =========================================================
      REACT SELECT - TABLE
@@ -1313,16 +1199,7 @@ const ItemPage: React.FC = () => {
                 value={txtItemID}
                 onChange={(e) => setTxtItemID(e.target.value)}
                 onBlur={handleItemIDBlur}
-                className="
-                  h-[28px]
-                  w-[225px]
-                  border
-                  border-slate-300
-                  px-2
-                  text-[12px]
-                  outline-none
-                  focus:border-blue-500
-                "
+                className="input-style  w-[225px]"
               />
             </div>
 
@@ -1354,7 +1231,7 @@ const ItemPage: React.FC = () => {
                 type="text"
                 value={txtItemName}
                 onChange={(e) => setTxtItemName(e.target.value)}
-                className={inputClass}
+                className="input-style"
               />
             </div>
 
@@ -1381,7 +1258,7 @@ const ItemPage: React.FC = () => {
                 type="text"
                 value={txtItemDescription}
                 onChange={(e) => setTxtItemDescription(e.target.value)}
-                className={inputClass}
+                className="input-style"
               />
             </div>
 
@@ -1417,7 +1294,8 @@ const ItemPage: React.FC = () => {
                 onChange={(option) => setLkpUnit(option?.value || "")}
                 styles={reactSelectStyles}
                 isClearable
-              />
+                 
+                                />
             </div>
 
             {/* =================================================
@@ -1448,7 +1326,7 @@ const ItemPage: React.FC = () => {
                 onChange={(e) =>
                   setTxtPacking(e.target.value)
                 }
-                className={inputClass}
+                className="input-style"
               />
 
               <label htmlFor="txtCBM" className={labelClass}>
@@ -1468,7 +1346,7 @@ const ItemPage: React.FC = () => {
                 onChange={(e) =>
                   setTxtCBM(e.target.value)
                 }
-                className={inputClass}
+                className="input-style"
               />
             </div>
 
@@ -1633,16 +1511,7 @@ const ItemPage: React.FC = () => {
                 type="text"
                 value={txtSupplierItemID}
                 onChange={(e) => setTxtSupplierItemID(e.target.value)}
-                className="
-                  h-[28px]
-                  w-[275px]
-                  border
-                  border-slate-300
-                  px-2
-                  text-[12px]
-                  outline-none
-                  focus:border-blue-500
-                "
+                className="input-style w-[275px]"
               />
             </div>
 
@@ -1669,7 +1538,7 @@ const ItemPage: React.FC = () => {
                 type="text"
                 value={txtReorderLevel}
                 onChange={(e) => setTxtReorderLevel(e.target.value)}
-                className={inputClass}
+                className="input-style"
               />
             </div>
 
@@ -1696,7 +1565,7 @@ const ItemPage: React.FC = () => {
                 type="text"
                 value={txtReorderQty}
                 onChange={(e) => setTxtReorderQty(e.target.value)}
-                className={inputClass}
+                className="input-style"
               />
 
               {/* ALL BRANCHES */}
@@ -2048,7 +1917,7 @@ const ItemPage: React.FC = () => {
 
             <button
               type="button"
-              className={`${buttonClass} disabled:cursor-not-allowed disabled:opacity-40`}
+              className="btn-style"
               onClick={handleSave}
               disabled={!perms.save}
               id="Savebtn"
@@ -2066,7 +1935,7 @@ const ItemPage: React.FC = () => {
 
             <button
               type="button"
-              className={buttonClass}
+              className="btn-style"
               onClick={handleFind}
               id="Findbtn"
               name="Findbtn"
@@ -2083,7 +1952,7 @@ const ItemPage: React.FC = () => {
 
             <button
               type="button"
-              className={`${buttonClass} disabled:cursor-not-allowed disabled:opacity-40`}
+              className="btn-style"
               onClick={handleDelete}
               disabled={!perms.delete}
               id="Deletebtn"
@@ -2101,7 +1970,7 @@ const ItemPage: React.FC = () => {
 
             <button
               type="button"
-              className={buttonClass}
+              className="btn-style"
               onClick={handleClear}
               id="Clearbtn"
               name="Clearbtn"

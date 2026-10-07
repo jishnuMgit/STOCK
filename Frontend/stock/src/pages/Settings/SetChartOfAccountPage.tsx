@@ -597,6 +597,7 @@ const SetChartOfAccount: React.FC = () => {
         `${import.meta.env.VITE_API_URL}/SetChartOfAccount/deleteChartOfAccountRow`,
         {
           method: "DELETE",
+          credentials: "include", // the server checks the session and the rights
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
             PstrCoID,
@@ -631,8 +632,20 @@ const SetChartOfAccount: React.FC = () => {
   // in one transaction.
   // ==========================================================
 
+  // The one button: Save the first time, Modify once the company has saved
+  // rows (the old form switched its button text between "&Save" and
+  // "&Modify"). A row that carries its original keys came from the database.
+  const hasSavedRows = rows.some((row) => row.txtOriginalSlNo !== null);
+  const actionWord = hasSavedRows ? "Modify" : "Save";
+  const canSaveOrModify = hasSavedRows ? perms.modify : perms.save;
+
   const handleSave = async () => {
     if (saving) return;
+
+    if (!canSaveOrModify) {
+      toast.error(`You do not have permission to ${actionWord}.`);
+      return;
+    }
 
     const PstrCoID = localStorage.getItem("PstrCoID");
     const PstrYear = localStorage.getItem("PstrYear");
@@ -655,6 +668,13 @@ const SetChartOfAccount: React.FC = () => {
     for (const { row, rowNo } of filledRows) {
       if (!row.lkpParameterType.trim() || !row.lkpAccountID.trim()) {
         toast.error(`Row ${rowNo}: select both a Parameter and an Account.`);
+        document
+          .getElementById(
+            row.lkpParameterType.trim()
+              ? `lkpAccountID-${rowNo - 1}`
+              : `lkpParameterType-${rowNo - 1}`
+          )
+          ?.focus();
         return;
       }
 
@@ -662,6 +682,7 @@ const SetChartOfAccount: React.FC = () => {
 
       if (seen.has(pair)) {
         toast.error(`Row ${rowNo}: Duplicate Entry !`);
+        document.getElementById(`lkpAccountID-${rowNo - 1}`)?.focus();
         return;
       }
 
@@ -675,12 +696,14 @@ const SetChartOfAccount: React.FC = () => {
         `${import.meta.env.VITE_API_URL}/SetChartOfAccount/saveChartOfAccount`,
         {
           method: "POST",
+          credentials: "include", // the server checks the session and the rights
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
             PstrCoID,
             PstrYear,
             PstrUserID,
-            rows: filledRows.map(({ row }, index) => ({
+            rows: filledRows.map(({ row, rowNo }, index) => ({
+              txtGridRow: rowNo - 1, // where the row sits in the grid (for the focus)
               txtSlNo: index + 1,
               lkpParameterType: row.lkpParameterType,
               lkpAccountID: row.lkpAccountID,
@@ -695,11 +718,26 @@ const SetChartOfAccount: React.FC = () => {
       const result = await response.json();
 
       if (!response.ok || !result.success) {
-        toast.error(result.message || "Chart of account setting could not be saved.");
+        toast.error(
+          result.message ||
+            (hasSavedRows ? "Not modified, try again." : "Not saved, try again.")
+        );
+
+        // the backend validator names the field that failed - same name as
+        // the element id, so the cursor goes straight into it
+        if (result.field) {
+          document.getElementById(result.field)?.focus();
+        }
+
         return;
       }
 
-      toast.success(result.message || "Chart of account setting saved successfully.");
+      toast.success(
+        result.message ||
+          (hasSavedRows
+            ? "Chart of account setting modified successfully."
+            : "Chart of account setting saved successfully.")
+      );
 
       // load the saved rows again - they now carry their new slno / keys
       setReloadKey((key) => key + 1);
@@ -719,9 +757,15 @@ const SetChartOfAccount: React.FC = () => {
     setReloadKey((key) => key + 1);
   };
 
-  // Alt+S -> Save, Alt+C -> Clear (the underlined letters on the buttons)
+  // Alt+S -> Save (nothing saved yet), Alt+M -> Modify (saved rows),
+  // Alt+C -> Clear (the underlined letters on the buttons)
   useAltShortcuts({
-    s: handleSave,
+    s: () => {
+      if (!hasSavedRows) handleSave();
+    },
+    m: () => {
+      if (hasSavedRows) handleSave();
+    },
     c: handleClear,
   });
 
@@ -746,7 +790,7 @@ const SetChartOfAccount: React.FC = () => {
     "18px 34px 266px 120px minmax(180px, 1fr) 58px";
 
   const headerCellClass =
-    "flex h-[30px] min-w-0 items-center border-r border-[#c8eadb] px-[7px] text-[12px] font-medium text-slate-600";
+    "flex h-[30px] min-w-0 items-center border-r border-[#c8eadb] px-[7px] text-[14px] text-gray-600";
 
   const cellClass =
     "relative h-[30px] min-w-0 border-r border-[#c8eadb] p-0";
@@ -758,39 +802,26 @@ const SetChartOfAccount: React.FC = () => {
   return (
     <div
       onKeyDown={handleEnterAsTab}
-      className="flex min-h-screen w-full items-center justify-center bg-white p-0 font-sans text-slate-700"
+      className="flex min-h-screen w-full items-center justify-center bg-white text-slate-700"
     >
-      <div className="w-[1100px] max-w-full border border-slate-400 bg-white">
+      {/* no overflow-hidden on the card: dropdowns must remain visible */}
+      <div className="w-[1100px] max-w-full border border-slate-400 bg-white shadow-sm">
         {/* TITLE BAR */}
 
-       <div
-          className="
-            flex
-            h-[36px]
-            items-center
-            border-b
-            border-slate-300
-            bg-[#a3dfc0]
-          "
-        >
-
-          <span
-            className="
-              px-6
-              text-[17px]
-              font-semibold
-              text-slate-700
-            "
-          >
-Set Chart Of Account
-          </span>
-
+        <div className="flex h-[28px] w-full items-center bg-[#a7dfc0]">
+          <h1 className="ml-[5px] text-[17px] font-semibold text-[#374151]">
+            Set Chart Of Account
+          </h1>
         </div>
+
+        {/* FORM */}
+
+        <div className="p-[12px] m-[12px]">
 
         {/* TABLE */}
         {/* Do not add overflow-hidden here: dropdowns must remain visible. */}
 
-        <div className="mx-[25px] mt-0 mb-0 overflow-visible border border-[#b9e8d2]">
+        <div className="overflow-visible border border-[#b9e8d2]">
           <div className="w-full">
             {/* TABLE HEADINGS */}
 
@@ -816,7 +847,7 @@ Set Chart Of Account
                 Account Name
               </div>
 
-              <div className="flex h-[30px] min-w-0 items-center px-[5px] text-[12px] font-medium text-slate-600">
+              <div className="flex h-[30px] min-w-0 items-center px-[5px] text-[14px] text-gray-600">
                 G/P/H
               </div>
             </div>
@@ -1075,28 +1106,23 @@ Set Chart Of Account
           </div>
         </div>
 
+        </div>
+
         {/* ACTION BUTTONS - stay at the bottom of the window, so Save is always visible without scrolling */}
 
-        <div className="sticky bottom-0 z-10 flex min-h-[74px] items-start justify-center gap-[12px] border-t border-slate-200 bg-white pt-[8px]">
+        <div className="sticky bottom-0 z-10 flex justify-center gap-3 bg-white pb-[12px] pt-[2px]">
           <button
-            id="btnSave"
-            name="btnSave"
+            id={hasSavedRows ? "btnModify" : "btnSave"}
+            name={hasSavedRows ? "btnModify" : "btnSave"}
             type="button"
             onClick={handleSave}
-            disabled={!perms.save || saving}
-            className="
-              h-[40px] w-[107px]
-              rounded-[4px] border border-[#9bb7cc]
-              bg-gradient-to-b from-white to-[#e2ebf2]
-              text-[14px] text-green-700 shadow-sm
-              hover:from-[#f4fff7] hover:to-[#d4ebdc]
-              focus:outline-none focus:ring-1 focus:ring-green-400
-              disabled:cursor-not-allowed disabled:opacity-40
-            "
+            disabled={!canSaveOrModify || saving}
+            className="btn-style disabled:cursor-not-allowed disabled:opacity-40"
           >
-            <span className="underline underline-offset-[3px]">
-              S
-            </span>ave
+            <span className="underline underline-offset-2">
+              {actionWord.charAt(0)}
+            </span>
+            {actionWord.slice(1)}
           </button>
 
           <button
@@ -1104,18 +1130,9 @@ Set Chart Of Account
             name="btnClear"
             type="button"
             onClick={handleClear}
-            className="
-              h-[40px] w-[107px]
-              rounded-[4px] border border-[#9bb7cc]
-              bg-gradient-to-b from-white to-[#e2ebf2]
-              text-[14px] text-green-700 shadow-sm
-              hover:from-[#f4fff7] hover:to-[#d4ebdc]
-              focus:outline-none focus:ring-1 focus:ring-green-400
-            "
+            className="btn-style"
           >
-            <span className="underline underline-offset-[3px]">
-              C
-            </span>lear
+            <span className="underline underline-offset-2">C</span>lear
           </button>
         </div>
       </div>

@@ -140,20 +140,7 @@ interface ReceiptFormProps {
 
   focusReceiptNoAfterClear?: number;
 }
-//@ts-ignore
-const CustomOption = (props: OptionProps<SelectOption, false>) => {
-  const { data } = props;
 
-  return (
-    <components.Option {...props}>
-      <div className="flex w-full items-center justify-between">
-        <span className="text-[14px] text-slate-700">{data.label}</span>
-
-        <span className="text-[11px] text-gray-400">{data.value}</span>
-      </div>
-    </components.Option>
-  );
-};
 
 const filterOption = (
   option: {
@@ -244,18 +231,6 @@ export const ReceiptForm: React.FC<ReceiptFormProps> = ({
    */
   const keepBranchFocus = useRef(false);
 
-  /*
-   * This function is used when keyboard navigation moves TO
-   * the Branch select.
-   */
-  //@ts-ignore
-  const focusBranch = useCallback(() => {
-    keepBranchFocus.current = true;
-
-    requestAnimationFrame(() => {
-      branchRef.current?.focus();
-    });
-  }, [branchRef]);
 
   /*
    * =========================================================
@@ -2025,11 +2000,7 @@ const ReceiptRow = memo(
               if (savedDivisionExists) {
                 handleRowChange(row.id, "DivID", existingDivision);
               } else if (result.data.length === 1) {
-                handleRowChange(
-                  row.id,
-                  "DivID",
-                  String(result.data[0].fdivid),
-                );
+                handleRowChange(row.id, "DivID", String(result.data[0].fdivid));
               }
 
               return;
@@ -2039,11 +2010,7 @@ const ReceiptRow = memo(
              * Normal new account selection.
              */
             if (result.data.length === 1) {
-              handleRowChange(
-                row.id,
-                "DivID",
-                String(result.data[0].fdivid),
-              );
+              handleRowChange(row.id, "DivID", String(result.data[0].fdivid));
             } else {
               handleRowChange(row.id, "DivID", "");
             }
@@ -2995,25 +2962,31 @@ export const ReceiptTable = forwardRef<ReceiptTableRef, ReceiptTableProps>(
 
           <thead>
             <tr>
-              <th>Sl.</th>
+              <th id="txtSlNo">Sl.</th>
 
-              <th>
+              <th id="lkpAccountID">
                 <button type="button" onClick={() => handleSort("accountId")}>
                   Account ID
                 </button>
               </th>
 
-              <th>
+              <th id="lkpAccountName">
                 <button type="button" onClick={() => handleSort("accountName")}>
                   Account Name
                 </button>
               </th>
 
-              <th>Div. ID</th>
-              <th>CC. ID</th>
-              <th className="text-right">Credit Amt.</th>
-              <th className="text-center">Match</th>
-              <th className="text-center">View</th>
+              <th id="lkpDivID">Div. ID</th>
+              <th id="lkpCCID">CC. ID</th>
+              <th id="txtCreditAmt" className="text-right">
+                Credit Amt.
+              </th>
+              <th id="ckhMatch" className="text-center">
+                Match
+              </th>
+              <th id="btnView" className="text-center">
+                View
+              </th>
             </tr>
           </thead>
 

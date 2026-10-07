@@ -334,7 +334,7 @@ const CompanyPage: React.FC = () => {
             FORM
         ===================================================== */}
 
-        <div className="px-[5px] pb-[12px] pt-[8px]">
+        <div className="p-[12px] m-[12px]">
 
           {/* =================================================
               COMPANY ID
