@@ -7,11 +7,36 @@ import StockTransferFooter from "../../../../components/Transaction/StockTransfe
 const StockTransfer: React.FC = () => {
   return (
     <div className="flex h-screen w-full justify-center overflow-hidden bg-[#F1F5F9]">
-      <main className="h-fit w-full min-w-250 max-w-277.5 overflow-hidden bg-white border border-gray-400 text-[#202020]">
+      <main className="h-fit w-full min-w-250 max-w-277.5 overflow-hidden bg-white border border-gray-400 text-[#202020] pb-3 ">
         <div className="flex h-fit w-full flex-col">
-          <StockTransferHeader />
+          <div
+        className="
+          flex
+          h-[36px]
+          items-center
+          border-b
+          border-slate-300
+          bg-[#a3dfc0]
+        "
+      >
+        <span
+          className="
+            px-6
+            text-[17px]
+            font-semibold
+            text-slate-700
+          "
+        >
+          Stock Transfer
+        </span>
+      </div>
+          <div className=" px-2">
+            <StockTransferHeader />
+          </div>
 
-          <StockTransferTable />
+          <div className="px-3 mx-auto">
+            <StockTransferTable />
+          </div>
 
           <StockTransferFooter />
         </div>
