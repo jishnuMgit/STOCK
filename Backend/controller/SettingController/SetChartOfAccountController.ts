@@ -1,4 +1,7 @@
 import { Request, Response } from "express";
+import type { AuthenticatedRequest } from "../../middleware/authMiddleware.js";
+import { hasButtonRight } from "../../utils/buttonRights.js";
+import { validateSetChartOfAccount } from "../../validators/SetChartOfAccountValidator.js";
 
 import pool from "../../DB/db.js";
 import {
@@ -197,8 +200,11 @@ const loadNameLookups = async (PstrCoID: string, rows: ChartOfAccountRow[]) => {
    changed rows -> M1)
 ========================================================= */
 
+// dbo.tblmenu fmenuid of the Set Chart Of Account screen
+const MENU_ID = "9110";
+
 export const saveChartOfAccount = async (
-  req: Request,
+  req: AuthenticatedRequest,
   res: Response
 ): Promise<Response> => {
   try {
@@ -239,6 +245,40 @@ export const saveChartOfAccount = async (
       return res.status(400).json({
         success: false,
         message: "There is no information for saving.",
+      });
+    }
+
+    // validators/SetChartOfAccountValidator.ts: idle user, then every row
+    // has a Parameter and an Account and no pair is repeated - the first
+    // rule that fails stops the save
+    const check = await validateSetChartOfAccount({ PstrUserID, rows });
+
+    if (!check.valid) {
+      return res.status(check.status).json({
+        success: false,
+        message: check.message,
+        field: check.field,
+      });
+    }
+
+    // Save (S) when the company has no chart of account rows yet, Modify (M)
+    // when it already has - each needs its own button right. The user comes
+    // from the session (authenticate), not from the request body.
+    if (!req.user) {
+      return res.status(401).json({
+        success: false,
+        message: "Authentication required",
+      });
+    }
+
+    const wantedMode =
+      (await getChartOfAccountService(PstrCoID)).length > 0 ? "M" : "S";
+
+    if (!(await hasButtonRight(req.user, MENU_ID, wantedMode))) {
+      return res.status(403).json({
+        success: false,
+        message: `You do not have permission to ${wantedMode === "M" ? "Modify" : "Save"}.`,
+        field: "lkpParameterType-0",
       });
     }
 
@@ -309,7 +349,11 @@ export const saveChartOfAccount = async (
 
     return res.status(200).json({
       success: true,
-      message: "Chart of account setting saved successfully",
+      message:
+        wantedMode === "M"
+          ? "Chart of account setting modified successfully"
+          : "Chart of account setting saved successfully",
+      mode: wantedMode,
     });
   } catch (error: unknown) {
     console.error("saveChartOfAccount error:", error);
@@ -329,7 +373,7 @@ export const saveChartOfAccount = async (
 ========================================================= */
 
 export const deleteChartOfAccountRow = async (
-  req: Request,
+  req: AuthenticatedRequest,
   res: Response
 ): Promise<Response> => {
   try {
@@ -372,6 +416,21 @@ export const deleteChartOfAccountRow = async (
       return res.status(400).json({
         success: false,
         message: "The row to delete is required",
+      });
+    }
+
+    // the Delete button right, checked for the logged-in user (session)
+    if (!req.user) {
+      return res.status(401).json({
+        success: false,
+        message: "Authentication required",
+      });
+    }
+
+    if (!(await hasButtonRight(req.user, MENU_ID, "D"))) {
+      return res.status(403).json({
+        success: false,
+        message: "You do not have permission to Delete.",
       });
     }
 

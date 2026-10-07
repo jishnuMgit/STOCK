@@ -6,16 +6,25 @@ import { useEnterAsTab } from "../../hooks/useEnterAsTab";
 import { useButtonPermissions } from "../../hooks/useButtonPermissions";
 import {
   filterLabelOrValue,
-  BranchMenuList,
-  BranchOption,
+  makeNameIdMenuComponents,
   branchMenuStyles,
 } from "../../components/BranchSelect/branchSelectParts";
+
+// Branch list with a divider between the Branch and the ID column
+const branchComponents = makeNameIdMenuComponents("Branch", true);
 import {
-  receiptPairIdComponents as accountIdComponents,
-  receiptPairNameComponents as accountNameComponents,
-  receiptPairMenuStyles as accountMenuStyles,
+  makePairComponents,
+  pairDividedIdMenuStyles as accountIdMenuStyles,
+  pairDividedNameMenuStyles as accountNameMenuStyles,
   filterPairOption as accountFilterOption,
 } from "../../components/PairSelect/pairSelectParts";
+
+// Same list look as the Branch dropdown: grey "Account ID | Account Name"
+// header and a divider between the columns (the Name box shows
+// "Account Name | Account ID"). Created once,
+// outside the page component, so react-select doesn't remount the menu.
+const accountIdComponents = makePairComponents("Account ID", "Account Name", false, true);
+const accountNameComponents = makePairComponents("Account ID", "Account Name", true, true);
 // ============================================================
 // TYPES
 // ============================================================
@@ -50,32 +59,7 @@ interface FormValues {
 // INITIAL FORM VALUES
 // ============================================================
 
-const buttonClass = `
-  min-w-[110px]
-  h-[40px]
-  rounded-[4px]
-  border
-  border-[#9db8d4]
-  bg-gradient-to-b
-  from-[#ffffff]
-  to-[#e7eef5]
-  px-4
-  text-[18px]
-  shadow-[inset_0_1px_0_rgba(255,255,255,0.8)]
-  transition-colors
-  duration-100
-  text-transparent
-  bg-clip-text
-  bg-gradient-to-r
-  from-green-800
-  to-green-500
-  hover:border-[#7f9fbd]
-  hover:bg-gradient-to-b
-  focus:border-[#20884e]
-  focus:outline-none
-  focus:ring-0
-  hover:text-green-800
-`;
+const buttonClass = "btn-style";
 
 const initialValues: FormValues = {
   lkpBranch: "",
@@ -134,26 +118,25 @@ const MENU_ID = "9111";
 const selectStyles: StylesConfig<SelectOption, false> = {
   control: (base, state) => ({
     ...base,
-    minHeight: "27px",
-    height: "27px",
+    minHeight: "30px",
+    height: "30px",
     width: "100%",
-    borderRadius: "2px",
-    border: state.isFocused
-      ? "1px solid #7398c5"
-      : "1px solid #c7cbd1",
+    borderRadius: "4px",
+    border: "1px solid #d1d5db",
     boxShadow: "none",
-    backgroundColor: "#ffffff",
+    backgroundColor: state.isFocused ? "#eefbf4" : "#ffffff",
     fontSize: "11px",
     cursor: "pointer",
     "&:hover": {
-      borderColor: "#8b9db3",
+      borderColor: "#9fdfbc",
     },
   }),
 
   valueContainer: (base) => ({
     ...base,
-    height: "25px",
-    padding: "0 5px",
+    height: "23px",
+    minHeight: "23px",
+    padding: "0 6px",
   }),
 
   input: (base) => ({
@@ -180,7 +163,7 @@ const selectStyles: StylesConfig<SelectOption, false> = {
 
   indicatorsContainer: (base) => ({
     ...base,
-    height: "25px",
+    height: "23px",
   }),
 
   dropdownIndicator: (base) => ({
@@ -249,6 +232,10 @@ const SetPostingAccountPage: React.FC = () => {
   // saved accounts to be loaded again (used by Clear)
   const [defaultBranch, setDefaultBranch] = useState("");
   const [reloadKey, setReloadKey] = useState(0);
+
+  // Does the selected branch already have posting accounts set?
+  // false -> the button says Save (mode S), true -> Modify (mode M)
+  const [hasSavedRow, setHasSavedRow] = useState(false);
 
   useEffect(() => {
     const loadBranchList = async () => {
@@ -411,6 +398,7 @@ const SetPostingAccountPage: React.FC = () => {
     };
 
     if (!values.lkpBranch) {
+      setHasSavedRow(false);
       setValues((previous) => ({ ...previous, ...buildAccountValues(null) }));
       return;
     }
@@ -443,6 +431,13 @@ const SetPostingAccountPage: React.FC = () => {
           toast.error(`getPostingAccount failed: ${result.message}`);
           return;
         }
+
+        // null = a branch that was never saved. A row with every account
+        // empty counts as "nothing set yet" too, so the button stays Save.
+        setHasSavedRow(
+          !!result.data &&
+            postingAccountFields.some((field) => !!result.data[field]),
+        );
 
         setValues((previous) => ({
           ...previous,
@@ -544,14 +539,20 @@ const SetPostingAccountPage: React.FC = () => {
   // SAVE FORM
   // ----------------------------------------------------------
 
+  // The one button: Save the first time, Modify once the branch has a row
+  // (the old form switched its button text between "&Save" and "&Modify").
+  const actionWord = hasSavedRow ? "Modify" : "Save";
+  const canSaveOrModify = hasSavedRow ? perms.modify : perms.save;
+
   const handleSave = async () => {
-    if (!perms.save) {
-      toast.error("You do not have permission to Save.");
+    if (!canSaveOrModify) {
+      toast.error(`You do not have permission to ${actionWord}.`);
       return;
     }
 
     if (!values.lkpBranch) {
-      toast.warning("Branch is required.");
+      toast.warning("Please select a 'Branch'");
+      document.getElementById("lkpBranch")?.focus();
       return;
     }
 
@@ -577,6 +578,7 @@ const SetPostingAccountPage: React.FC = () => {
         `${import.meta.env.VITE_API_URL}/PostingAccount/savePostingAccount`,
         {
           method: "POST",
+          credentials: "include", // the server checks the session and the rights
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
             PstrCoID,
@@ -591,20 +593,47 @@ const SetPostingAccountPage: React.FC = () => {
       const result = await response.json();
 
       if (!response.ok || !result.success) {
-        toast.error(result.message || "Posting accounts could not be saved.");
+        toast.error(
+          result.message ||
+            (hasSavedRow
+              ? "Not modified, try again."
+              : "Not saved, try again."),
+        );
+
+        // the backend validator names the field that failed - same name as
+        // the element id, so the cursor goes straight into it
+        if (result.field) {
+          document.getElementById(result.field)?.focus();
+        }
+
         return;
       }
 
-      toast.success(result.message || "Posting accounts saved successfully.");
+      toast.success(
+        result.message ||
+          (hasSavedRow
+            ? "Posting accounts modified successfully."
+            : "Posting accounts saved successfully."),
+      );
+
+      // load the branch again: it now has a saved row, so the button
+      // flips from Save to Modify
+      setReloadKey((previous) => previous + 1);
     } catch (error) {
       console.error("savePostingAccount error:", error);
       toast.error("Cannot connect to Posting Account API.");
     }
   };
 
-  // Alt+S -> Save, Alt+C -> Clear (the underlined letters on the buttons)
+  // Alt+S -> Save (new branch), Alt+M -> Modify (saved branch),
+  // Alt+C -> Clear (the underlined letters on the buttons)
   useAltShortcuts({
-    s: handleSave,
+    s: () => {
+      if (!hasSavedRow) handleSave();
+    },
+    m: () => {
+      if (hasSavedRow) handleSave();
+    },
     c: handleClear,
   });
 
@@ -616,31 +645,30 @@ const SetPostingAccountPage: React.FC = () => {
   return (
     <div
       onKeyDown={handleEnterAsTab}
-      className="flex min-h-screen items-center justify-center bg-white p-4 sm:p-5 "
+      className="flex min-h-screen w-full items-center justify-center bg-white"
     >
-      <div className="w-full max-w-200 bg-white p-0.75 font-sans text-[#263449] ">
-        <div className="w-full border border-[#d5d5d5] bg-white">
+      <div className="w-[870px] overflow-hidden border border-slate-400 bg-white shadow-sm">
 
           {/* HEADER */}
-          <header className="flex h-9 shrink-0 items-center border-b border-slate-300 bg-[#a3dfc0]">
-            <span className="px-5 text-[1.0625rem] font-semibold text-slate-700">
+          <div className="flex h-[28px] w-full items-center bg-[#a7dfc0]">
+            <h1 className="ml-[5px] text-[17px] font-semibold text-[#374151]">
               Set Posting Account
-            </span>
-          </header>
+            </h1>
+          </div>
 
           {/* FORM BODY */}
-          <div className="pb-3.75 pt-3.5 sm:pr-3 ">
+          <div className="p-[12px] m-[12px]">
 
             {/* BRANCH */}
-            <div className="flex flex-wrap items-center gap-x-2 gap-y-0 -ml-4">
+            <div className="mb-[8px] flex items-center gap-2">
               <label
                 htmlFor="lkpBranch"
-                className="w-full shrink-0 text-left text-[0.6875rem] font-medium sm:w-46.25 sm:text-right"
+                className="w-[230px] shrink-0 whitespace-nowrap pr-3 text-right text-[14px] text-gray-600"
               >
                 Branch :
               </label>
 
-              <div className="w-full min-w-0 sm:w-50">
+              <div className="-ml-3 w-[30%] min-w-0">
                 <Select<SelectOption, false>
                   inputId="lkpBranch"
                   name="lkpBranch"
@@ -650,7 +678,7 @@ const SetPostingAccountPage: React.FC = () => {
                     handleChange("lkpBranch", selected?.value ?? "")
                   }
                   styles={{ ...selectStyles, ...branchMenuStyles }}
-                  components={{ Option: BranchOption, MenuList: BranchMenuList }}
+                  components={branchComponents}
                   filterOption={filterLabelOrValue}
                   noOptionsMessage={() => "No Branch Found"}
                   placeholder=""
@@ -661,16 +689,16 @@ const SetPostingAccountPage: React.FC = () => {
             </div>
 
             {/* CASH SUPPLIER ACCOUNT */}
-            <div className="flex gap-2 items-center m-2">
+            <div className="mb-[8px] flex items-center gap-2">
               <label
                 htmlFor="lkpCashSupplierAccountID"
-                className="w-[160px] shrink-0 text-right text-[0.6875rem] font-medium whitespace-nowrap"
+                className="w-[230px] shrink-0 whitespace-nowrap pr-3 text-right text-[14px] text-gray-600"
               >
                 Cash Supplier Account :
               </label>
 
               {/* ACCOUNT ID */}
-              <div className="w-[30%] min-w-0">
+              <div className="-ml-3 w-[30%] min-w-0">
                 <Select<SelectOption, false>
                   inputId="lkpCashSupplierAccountID"
                   name="lkpCashSupplierAccountID"
@@ -682,7 +710,7 @@ const SetPostingAccountPage: React.FC = () => {
                   onChange={(selected) =>
                     handleAccountIdChange("CashSupplier", selected)
                   }
-                  styles={{ ...selectStyles, ...accountMenuStyles }}
+                  styles={{ ...selectStyles, ...accountIdMenuStyles }}
                   components={accountIdComponents}
                   filterOption={accountFilterOption}
                   noOptionsMessage={() => "No Account Found"}
@@ -696,7 +724,7 @@ const SetPostingAccountPage: React.FC = () => {
               </div>
 
               {/* ACCOUNT NAME */}
-              <div className="w-full min-w-0">
+              <div className="ml-3 w-full min-w-0">
                 <Select<SelectOption, false>
                   inputId="lkpCashSupplierAccountName"
                   name="lkpCashSupplierAccountName"
@@ -708,7 +736,7 @@ const SetPostingAccountPage: React.FC = () => {
                   onChange={(selected) =>
                     handleAccountIdChange("CashSupplier", selected)
                   }
-                  styles={{ ...selectStyles, ...accountMenuStyles }}
+                  styles={{ ...selectStyles, ...accountNameMenuStyles }}
                   components={accountNameComponents}
                   filterOption={accountFilterOption}
                   noOptionsMessage={() => "No Account Found"}
@@ -723,15 +751,15 @@ const SetPostingAccountPage: React.FC = () => {
             </div>
 
             {/* CASH CUSTOMER ACCOUNT */}
-            <div className="flex gap-2 items-center m-2">
+            <div className="mb-[8px] flex items-center gap-2">
               <label
                 htmlFor="lkpCashCustomerAccountID"
-                className="w-[160px] shrink-0 text-right text-[0.6875rem] font-medium whitespace-nowrap"
+                className="w-[230px] shrink-0 whitespace-nowrap pr-3 text-right text-[14px] text-gray-600"
               >
                 Cash Customer Account :
               </label>
 
-              <div className="w-[30%] min-w-0">
+              <div className="-ml-3 w-[30%] min-w-0">
                 <Select<SelectOption, false>
                   inputId="lkpCashCustomerAccountID"
                   name="lkpCashCustomerAccountID"
@@ -743,7 +771,7 @@ const SetPostingAccountPage: React.FC = () => {
                   onChange={(selected) =>
                     handleAccountIdChange("CashCustomer", selected)
                   }
-                  styles={{ ...selectStyles, ...accountMenuStyles }}
+                  styles={{ ...selectStyles, ...accountIdMenuStyles }}
                   components={accountIdComponents}
                   filterOption={accountFilterOption}
                   noOptionsMessage={() => "No Account Found"}
@@ -756,7 +784,7 @@ const SetPostingAccountPage: React.FC = () => {
                 />
               </div>
 
-              <div className="w-full min-w-0">
+              <div className="ml-3 w-full min-w-0">
                 <Select<SelectOption, false>
                   inputId="lkpCashCustomerAccountName"
                   name="lkpCashCustomerAccountName"
@@ -768,7 +796,7 @@ const SetPostingAccountPage: React.FC = () => {
                   onChange={(selected) =>
                     handleAccountIdChange("CashCustomer", selected)
                   }
-                  styles={{ ...selectStyles, ...accountMenuStyles }}
+                  styles={{ ...selectStyles, ...accountNameMenuStyles }}
                   components={accountNameComponents}
                   filterOption={accountFilterOption}
                   noOptionsMessage={() => "No Account Found"}
@@ -783,15 +811,15 @@ const SetPostingAccountPage: React.FC = () => {
             </div>
 
             {/* STOCK ACCOUNT */}
-            <div className="flex gap-2 items-center m-2">
+            <div className="mb-[8px] flex items-center gap-2">
               <label
                 htmlFor="lkpStockAccountID"
-                className="w-[160px] shrink-0 text-right text-[0.6875rem] font-medium whitespace-nowrap"
+                className="w-[230px] shrink-0 whitespace-nowrap pr-3 text-right text-[14px] text-gray-600"
               >
                 Stock Account :
               </label>
 
-              <div className="w-[30%] min-w-0">
+              <div className="-ml-3 w-[30%] min-w-0">
                 <Select<SelectOption, false>
                   inputId="lkpStockAccountID"
                   name="lkpStockAccountID"
@@ -803,7 +831,7 @@ const SetPostingAccountPage: React.FC = () => {
                   onChange={(selected) =>
                     handleAccountIdChange("Stock", selected)
                   }
-                  styles={{ ...selectStyles, ...accountMenuStyles }}
+                  styles={{ ...selectStyles, ...accountIdMenuStyles }}
                   components={accountIdComponents}
                   filterOption={accountFilterOption}
                   noOptionsMessage={() => "No Account Found"}
@@ -816,7 +844,7 @@ const SetPostingAccountPage: React.FC = () => {
                 />
               </div>
 
-              <div className="w-full min-w-0">
+              <div className="ml-3 w-full min-w-0">
                 <Select<SelectOption, false>
                   inputId="lkpStockAccountName"
                   name="lkpStockAccountName"
@@ -828,7 +856,7 @@ const SetPostingAccountPage: React.FC = () => {
                   onChange={(selected) =>
                     handleAccountIdChange("Stock", selected)
                   }
-                  styles={{ ...selectStyles, ...accountMenuStyles }}
+                  styles={{ ...selectStyles, ...accountNameMenuStyles }}
                   components={accountNameComponents}
                   filterOption={accountFilterOption}
                   noOptionsMessage={() => "No Account Found"}
@@ -843,15 +871,15 @@ const SetPostingAccountPage: React.FC = () => {
             </div>
 
             {/* SALES ACCOUNT */}
-            <div className="flex gap-2 items-center m-2">
+            <div className="mb-[8px] flex items-center gap-2">
               <label
                 htmlFor="lkpSalesAccountID"
-                className="w-[160px] shrink-0 text-right text-[0.6875rem] font-medium whitespace-nowrap"
+                className="w-[230px] shrink-0 whitespace-nowrap pr-3 text-right text-[14px] text-gray-600"
               >
                 Sales Account :
               </label>
 
-              <div className="w-[30%] min-w-0">
+              <div className="-ml-3 w-[30%] min-w-0">
                 <Select<SelectOption, false>
                   inputId="lkpSalesAccountID"
                   name="lkpSalesAccountID"
@@ -863,7 +891,7 @@ const SetPostingAccountPage: React.FC = () => {
                   onChange={(selected) =>
                     handleAccountIdChange("Sales", selected)
                   }
-                  styles={{ ...selectStyles, ...accountMenuStyles }}
+                  styles={{ ...selectStyles, ...accountIdMenuStyles }}
                   components={accountIdComponents}
                   filterOption={accountFilterOption}
                   noOptionsMessage={() => "No Account Found"}
@@ -876,7 +904,7 @@ const SetPostingAccountPage: React.FC = () => {
                 />
               </div>
 
-              <div className="w-full min-w-0">
+              <div className="ml-3 w-full min-w-0">
                 <Select<SelectOption, false>
                   inputId="lkpSalesAccountName"
                   name="lkpSalesAccountName"
@@ -888,7 +916,7 @@ const SetPostingAccountPage: React.FC = () => {
                   onChange={(selected) =>
                     handleAccountIdChange("Sales", selected)
                   }
-                  styles={{ ...selectStyles, ...accountMenuStyles }}
+                  styles={{ ...selectStyles, ...accountNameMenuStyles }}
                   components={accountNameComponents}
                   filterOption={accountFilterOption}
                   noOptionsMessage={() => "No Account Found"}
@@ -903,15 +931,15 @@ const SetPostingAccountPage: React.FC = () => {
             </div>
 
             {/* SALES RETURN ACCOUNT */}
-            <div className="flex gap-2 items-center m-2">
+            <div className="mb-[8px] flex items-center gap-2">
               <label
                 htmlFor="lkpSalesReturnAccountID"
-                className="w-[160px] shrink-0 text-right text-[0.6875rem] font-medium whitespace-nowrap"
+                className="w-[230px] shrink-0 whitespace-nowrap pr-3 text-right text-[14px] text-gray-600"
               >
                 Sales Return Account :
               </label>
 
-              <div className="w-[30%] min-w-0">
+              <div className="-ml-3 w-[30%] min-w-0">
                 <Select<SelectOption, false>
                   inputId="lkpSalesReturnAccountID"
                   name="lkpSalesReturnAccountID"
@@ -923,7 +951,7 @@ const SetPostingAccountPage: React.FC = () => {
                   onChange={(selected) =>
                     handleAccountIdChange("SalesReturn", selected)
                   }
-                  styles={{ ...selectStyles, ...accountMenuStyles }}
+                  styles={{ ...selectStyles, ...accountIdMenuStyles }}
                   components={accountIdComponents}
                   filterOption={accountFilterOption}
                   noOptionsMessage={() => "No Account Found"}
@@ -936,7 +964,7 @@ const SetPostingAccountPage: React.FC = () => {
                 />
               </div>
 
-              <div className="w-full min-w-0">
+              <div className="ml-3 w-full min-w-0">
                 <Select<SelectOption, false>
                   inputId="lkpSalesReturnAccountName"
                   name="lkpSalesReturnAccountName"
@@ -948,7 +976,7 @@ const SetPostingAccountPage: React.FC = () => {
                   onChange={(selected) =>
                     handleAccountIdChange("SalesReturn", selected)
                   }
-                  styles={{ ...selectStyles, ...accountMenuStyles }}
+                  styles={{ ...selectStyles, ...accountNameMenuStyles }}
                   components={accountNameComponents}
                   filterOption={accountFilterOption}
                   noOptionsMessage={() => "No Account Found"}
@@ -963,15 +991,15 @@ const SetPostingAccountPage: React.FC = () => {
             </div>
 
             {/* COST OF SALES ACCOUNT */}
-            <div className="flex gap-2 items-center m-2">
+            <div className="mb-[8px] flex items-center gap-2">
               <label
                 htmlFor="lkpCostOfSalesAccountID"
-                className="w-[160px] shrink-0 text-right text-[0.6875rem] font-medium whitespace-nowrap"
+                className="w-[230px] shrink-0 whitespace-nowrap pr-3 text-right text-[14px] text-gray-600"
               >
                 Cost Of Sales Account :
               </label>
 
-              <div className="w-[30%] min-w-0">
+              <div className="-ml-3 w-[30%] min-w-0">
                 <Select<SelectOption, false>
                   inputId="lkpCostOfSalesAccountID"
                   name="lkpCostOfSalesAccountID"
@@ -983,7 +1011,7 @@ const SetPostingAccountPage: React.FC = () => {
                   onChange={(selected) =>
                     handleAccountIdChange("CostOfSales", selected)
                   }
-                  styles={{ ...selectStyles, ...accountMenuStyles }}
+                  styles={{ ...selectStyles, ...accountIdMenuStyles }}
                   components={accountIdComponents}
                   filterOption={accountFilterOption}
                   noOptionsMessage={() => "No Account Found"}
@@ -996,7 +1024,7 @@ const SetPostingAccountPage: React.FC = () => {
                 />
               </div>
 
-              <div className="w-full min-w-0">
+              <div className="ml-3 w-full min-w-0">
                 <Select<SelectOption, false>
                   inputId="lkpCostOfSalesAccountName"
                   name="lkpCostOfSalesAccountName"
@@ -1008,7 +1036,7 @@ const SetPostingAccountPage: React.FC = () => {
                   onChange={(selected) =>
                     handleAccountIdChange("CostOfSales", selected)
                   }
-                  styles={{ ...selectStyles, ...accountMenuStyles }}
+                  styles={{ ...selectStyles, ...accountNameMenuStyles }}
                   components={accountNameComponents}
                   filterOption={accountFilterOption}
                   noOptionsMessage={() => "No Account Found"}
@@ -1023,15 +1051,15 @@ const SetPostingAccountPage: React.FC = () => {
             </div>
 
             {/* COST OF SALES RETURN ACCOUNT */}
-            <div className="flex gap-2 items-center m-2">
+            <div className="mb-[8px] flex items-center gap-2">
               <label
                 htmlFor="lkpCostOfSalesReturnAccountID"
-                className="w-[160px] shrink-0 text-right text-[0.6875rem] font-medium whitespace-nowrap"
+                className="w-[230px] shrink-0 whitespace-nowrap pr-3 text-right text-[14px] text-gray-600"
               >
                 Cost Of Sales Return Account :
               </label>
 
-              <div className="w-[30%] min-w-0">
+              <div className="-ml-3 w-[30%] min-w-0">
                 <Select<SelectOption, false>
                   inputId="lkpCostOfSalesReturnAccountID"
                   name="lkpCostOfSalesReturnAccountID"
@@ -1043,7 +1071,7 @@ const SetPostingAccountPage: React.FC = () => {
                   onChange={(selected) =>
                     handleAccountIdChange("CostOfSalesReturn", selected)
                   }
-                  styles={{ ...selectStyles, ...accountMenuStyles }}
+                  styles={{ ...selectStyles, ...accountIdMenuStyles }}
                   components={accountIdComponents}
                   filterOption={accountFilterOption}
                   noOptionsMessage={() => "No Account Found"}
@@ -1056,7 +1084,7 @@ const SetPostingAccountPage: React.FC = () => {
                 />
               </div>
 
-              <div className="w-full min-w-0">
+              <div className="ml-3 w-full min-w-0">
                 <Select<SelectOption, false>
                   inputId="lkpCostOfSalesReturnAccountName"
                   name="lkpCostOfSalesReturnAccountName"
@@ -1068,7 +1096,7 @@ const SetPostingAccountPage: React.FC = () => {
                   onChange={(selected) =>
                     handleAccountIdChange("CostOfSalesReturn", selected)
                   }
-                  styles={{ ...selectStyles, ...accountMenuStyles }}
+                  styles={{ ...selectStyles, ...accountNameMenuStyles }}
                   components={accountNameComponents}
                   filterOption={accountFilterOption}
                   noOptionsMessage={() => "No Account Found"}
@@ -1083,15 +1111,15 @@ const SetPostingAccountPage: React.FC = () => {
             </div>
 
             {/* STOCK ADJUSTMENT ACCOUNT */}
-            <div className="flex gap-2 items-center m-2">
+            <div className="mb-[8px] flex items-center gap-2">
               <label
                 htmlFor="lkpStockAdjustmentAccountID"
-                className="w-[160px] shrink-0 text-right text-[0.6875rem] font-medium whitespace-nowrap"
+                className="w-[230px] shrink-0 whitespace-nowrap pr-3 text-right text-[14px] text-gray-600"
               >
                 Stock Adjustment Account :
               </label>
 
-              <div className="w-[30%] min-w-0">
+              <div className="-ml-3 w-[30%] min-w-0">
                 <Select<SelectOption, false>
                   inputId="lkpStockAdjustmentAccountID"
                   name="lkpStockAdjustmentAccountID"
@@ -1103,7 +1131,7 @@ const SetPostingAccountPage: React.FC = () => {
                   onChange={(selected) =>
                     handleAccountIdChange("StockAdjustment", selected)
                   }
-                  styles={{ ...selectStyles, ...accountMenuStyles }}
+                  styles={{ ...selectStyles, ...accountIdMenuStyles }}
                   components={accountIdComponents}
                   filterOption={accountFilterOption}
                   noOptionsMessage={() => "No Account Found"}
@@ -1116,7 +1144,7 @@ const SetPostingAccountPage: React.FC = () => {
                 />
               </div>
 
-              <div className="w-full min-w-0">
+              <div className="ml-3 w-full min-w-0">
                 <Select<SelectOption, false>
                   inputId="lkpStockAdjustmentAccountName"
                   name="lkpStockAdjustmentAccountName"
@@ -1128,7 +1156,7 @@ const SetPostingAccountPage: React.FC = () => {
                   onChange={(selected) =>
                     handleAccountIdChange("StockAdjustment", selected)
                   }
-                  styles={{ ...selectStyles, ...accountMenuStyles }}
+                  styles={{ ...selectStyles, ...accountNameMenuStyles }}
                   components={accountNameComponents}
                   filterOption={accountFilterOption}
                   noOptionsMessage={() => "No Account Found"}
@@ -1144,15 +1172,15 @@ const SetPostingAccountPage: React.FC = () => {
 
 
             {/* ROUND OFF ACCOUNT */}
-            <div className="flex gap-2 items-center m-2">
+            <div className="mb-[8px] flex items-center gap-2">
               <label
                 htmlFor="lkpRoundOffAccountID"
-                className="w-[160px] shrink-0 text-right text-[0.6875rem] font-medium whitespace-nowrap"
+                className="w-[230px] shrink-0 whitespace-nowrap pr-3 text-right text-[14px] text-gray-600"
               >
                 Round Off Account :
               </label>
 
-              <div className="w-[30%] min-w-0">
+              <div className="-ml-3 w-[30%] min-w-0">
                 <Select<SelectOption, false>
                   inputId="lkpRoundOffAccountID"
                   name="lkpRoundOffAccountID"
@@ -1164,7 +1192,7 @@ const SetPostingAccountPage: React.FC = () => {
                   onChange={(selected) =>
                     handleAccountIdChange("RoundOff", selected)
                   }
-                  styles={{ ...selectStyles, ...accountMenuStyles }}
+                  styles={{ ...selectStyles, ...accountIdMenuStyles }}
                   components={accountIdComponents}
                   filterOption={accountFilterOption}
                   noOptionsMessage={() => "No Account Found"}
@@ -1177,7 +1205,7 @@ const SetPostingAccountPage: React.FC = () => {
                 />
               </div>
 
-              <div className="w-full min-w-0">
+              <div className="ml-3 w-full min-w-0">
                 <Select<SelectOption, false>
                   inputId="lkpRoundOffAccountName"
                   name="lkpRoundOffAccountName"
@@ -1189,7 +1217,7 @@ const SetPostingAccountPage: React.FC = () => {
                   onChange={(selected) =>
                     handleAccountIdChange("RoundOff", selected)
                   }
-                  styles={{ ...selectStyles, ...accountMenuStyles }}
+                  styles={{ ...selectStyles, ...accountNameMenuStyles }}
                   components={accountNameComponents}
                   filterOption={accountFilterOption}
                   noOptionsMessage={() => "No Account Found"}
@@ -1205,15 +1233,15 @@ const SetPostingAccountPage: React.FC = () => {
 
 
             {/* INPUT VAT ACCOUNT */}
-            <div className="flex gap-2 items-center m-2">
+            <div className="mb-[8px] flex items-center gap-2">
               <label
                 htmlFor="lkpInputVATAccountID"
-                className="w-[160px] shrink-0 text-right text-[0.6875rem] font-medium whitespace-nowrap"
+                className="w-[230px] shrink-0 whitespace-nowrap pr-3 text-right text-[14px] text-gray-600"
               >
                 Input VAT Account :
               </label>
 
-              <div className="w-[30%] min-w-0">
+              <div className="-ml-3 w-[30%] min-w-0">
                 <Select<SelectOption, false>
                   inputId="lkpInputVATAccountID"
                   name="lkpInputVATAccountID"
@@ -1225,7 +1253,7 @@ const SetPostingAccountPage: React.FC = () => {
                   onChange={(selected) =>
                     handleAccountIdChange("InputVAT", selected)
                   }
-                  styles={{ ...selectStyles, ...accountMenuStyles }}
+                  styles={{ ...selectStyles, ...accountIdMenuStyles }}
                   components={accountIdComponents}
                   filterOption={accountFilterOption}
                   noOptionsMessage={() => "No Account Found"}
@@ -1238,7 +1266,7 @@ const SetPostingAccountPage: React.FC = () => {
                 />
               </div>
 
-              <div className="w-full min-w-0">
+              <div className="ml-3 w-full min-w-0">
                 <Select<SelectOption, false>
                   inputId="lkpInputVATAccountName"
                   name="lkpInputVATAccountName"
@@ -1250,7 +1278,7 @@ const SetPostingAccountPage: React.FC = () => {
                   onChange={(selected) =>
                     handleAccountIdChange("InputVAT", selected)
                   }
-                  styles={{ ...selectStyles, ...accountMenuStyles }}
+                  styles={{ ...selectStyles, ...accountNameMenuStyles }}
                   components={accountNameComponents}
                   filterOption={accountFilterOption}
                   noOptionsMessage={() => "No Account Found"}
@@ -1265,15 +1293,15 @@ const SetPostingAccountPage: React.FC = () => {
             </div>
 
             {/* OUTPUT VAT ACCOUNT */}
-            <div className="flex gap-2 items-center m-2">
+            <div className="mb-[8px] flex items-center gap-2">
               <label
                 htmlFor="lkpOutputVATAccountID"
-                className="w-[160px] shrink-0 text-right text-[0.6875rem] font-medium whitespace-nowrap"
+                className="w-[230px] shrink-0 whitespace-nowrap pr-3 text-right text-[14px] text-gray-600"
               >
                 Output VAT Account :
               </label>
 
-              <div className="w-[30%] min-w-0">
+              <div className="-ml-3 w-[30%] min-w-0">
                 <Select<SelectOption, false>
                   inputId="lkpOutputVATAccountID"
                   name="lkpOutputVATAccountID"
@@ -1285,7 +1313,7 @@ const SetPostingAccountPage: React.FC = () => {
                   onChange={(selected) =>
                     handleAccountIdChange("OutputVAT", selected)
                   }
-                  styles={{ ...selectStyles, ...accountMenuStyles }}
+                  styles={{ ...selectStyles, ...accountIdMenuStyles }}
                   components={accountIdComponents}
                   filterOption={accountFilterOption}
                   noOptionsMessage={() => "No Account Found"}
@@ -1298,7 +1326,7 @@ const SetPostingAccountPage: React.FC = () => {
                 />
               </div>
 
-              <div className="w-full min-w-0">
+              <div className="ml-3 w-full min-w-0">
                 <Select<SelectOption, false>
                   inputId="lkpOutputVATAccountName"
                   name="lkpOutputVATAccountName"
@@ -1310,7 +1338,7 @@ const SetPostingAccountPage: React.FC = () => {
                   onChange={(selected) =>
                     handleAccountIdChange("OutputVAT", selected)
                   }
-                  styles={{ ...selectStyles, ...accountMenuStyles }}
+                  styles={{ ...selectStyles, ...accountNameMenuStyles }}
                   components={accountNameComponents}
                   filterOption={accountFilterOption}
                   noOptionsMessage={() => "No Account Found"}
@@ -1325,16 +1353,19 @@ const SetPostingAccountPage: React.FC = () => {
             </div>
 
             {/* BUTTONS */}
-            <div className="flex min-h-18.5 -mb-6 items-start justify-center gap-3 pt-2">
+            <div className="mt-[14px] flex justify-center gap-3">
               <button
-                id="btnSave"
-                name="btnSave"
+                id={hasSavedRow ? "btnModify" : "btnSave"}
+                name={hasSavedRow ? "btnModify" : "btnSave"}
                 type="button"
                 onClick={handleSave}
-                disabled={!perms.save}
+                disabled={!canSaveOrModify}
                 className={`${buttonClass} disabled:cursor-not-allowed disabled:opacity-40`}
               >
-                <span className="underline underline-offset-2">S</span>ave
+                <span className="underline underline-offset-2">
+                  {actionWord.charAt(0)}
+                </span>
+                {actionWord.slice(1)}
               </button>
 
               <button
@@ -1349,7 +1380,6 @@ const SetPostingAccountPage: React.FC = () => {
             </div>
 
           </div>
-        </div>
       </div>
     </div>
   );

@@ -24,15 +24,16 @@ interface CompanyOption {
 ========================================================= */
 
 const companySelectStyles = {
-  control: (base: any) => ({
+  control: (base: any, state: any) => ({
     ...base,
-    minHeight: "28px",
-    height: "28px",
-    borderColor: "#d7dee7",
+    minHeight: "30px",
+    height: "30px",
+    border: "1px solid #d1d5db",
     borderRadius: "4px",
     boxShadow: "none",
-    fontSize: "12px",
-    cursor: "text",
+    backgroundColor: state.isFocused ? "#eefbf4" : "#ffffff",
+    fontSize: "11px",
+    cursor: "pointer",
 
     "&:hover": {
       borderColor: "#9fdfbc",
@@ -41,33 +42,36 @@ const companySelectStyles = {
 
   valueContainer: (base: any) => ({
     ...base,
-    height: "28px",
-    padding: "0 8px",
+    height: "23px",
+    minHeight: "23px",
+    padding: "0 6px",
   }),
 
   singleValue: (base: any) => ({
     ...base,
-    color: "#344054",
-    fontSize: "12px",
+    margin: 0,
+    color: "#374151",
+    fontSize: "11px",
   }),
 
   placeholder: (base: any) => ({
     ...base,
+    margin: 0,
     color: "#808080",
-    fontSize: "12px",
+    fontSize: "11px",
   }),
 
   input: (base: any) => ({
     ...base,
     margin: 0,
     padding: 0,
-    fontSize: "12px",
-    color: "#344054",
+    fontSize: "11px",
+    color: "#374151",
   }),
 
   indicatorsContainer: (base: any) => ({
     ...base,
-    height: "28px",
+    height: "23px",
   }),
 
   dropdownIndicator: (base: any) => ({
@@ -405,25 +409,25 @@ const SetCompanyInfo = () => {
   return (
     <div
       onKeyDown={handleEnterAsTab}
-      className="min-h-screen flex items-center justify-center "
+      className="flex min-h-screen w-full items-center justify-center bg-white"
     >
-      <div className="w-[600px]  bg-white border-[0.5px] shadow-md  min-h-[200px]">
+      <div className="w-[870px] overflow-hidden border border-slate-400 bg-white shadow-sm">
 
         {/* Header */}
-        <div className="h-[30px] bg-[#a7dfc0] flex ">
-          <h2 className="text-[17px] font-semibold text-[#374151] ml-[5px]">
+        <div className="flex h-[28px] w-full items-center bg-[#a7dfc0]">
+          <h1 className="ml-[5px] text-[17px] font-semibold text-[#374151]">
             Set Company Info.
-          </h2>
+          </h1>
         </div>
 
         {/* Form */}
-        <div className="px-[5px] pr-[30px] py-[5px] pt-[15px]">
+        <div className="p-[12px] m-[12px]">
 
           {/* Company Name */}
-          <div className="grid grid-cols-[145px_1fr] items-center mb-[8px]">
+          <div className="grid grid-cols-[195px_1fr] items-center mb-[8px]">
             <label
               htmlFor="lkpCoName"
-              className="relative text-[11px] text-gray-600 text-right pr-3"
+              className="relative pr-3 text-right text-[14px] text-gray-600"
             >
               <span className="absolute right-[15px] -top-0.5 h-[4px] w-[4px] text-red-500">*</span>
               Company Name :
@@ -448,10 +452,10 @@ const SetCompanyInfo = () => {
           </div>
 
           {/* Company Name AR */}
-          <div className="grid grid-cols-[145px_1fr] items-center mb-[8px]">
+          <div className="grid grid-cols-[195px_1fr] items-center mb-[8px]">
             <label
               htmlFor="txtCoName_AR"
-              className="relative text-[11px] text-gray-600 text-right pr-3"
+              className="relative pr-3 text-right text-[14px] text-gray-600"
             >
               <span className="absolute right-[15px] -top-0.5 h-[4px] w-[4px] text-red-500">*</span>
               Company Name (AR) :
@@ -469,16 +473,16 @@ const SetCompanyInfo = () => {
                 onChange={(event) =>
                   handleFieldChange("txtCoName_AR", event.target.value)
                 }
-                className="w-full h-[23px] border border-gray-300 rounded-sm px-2 text-[11px] outline-none"
+                className="w-full input-style"
               />
             </div>
           </div>
 
           {/* Company Name QR */}
-          <div className="grid grid-cols-[145px_1fr] items-center mb-[8px]">
+          <div className="grid grid-cols-[195px_1fr] items-center mb-[8px]">
             <label
               htmlFor="txtCoName_QR"
-              className="relative text-[11px] text-gray-600 text-right pr-3"
+              className="relative pr-3 text-right text-[14px] text-gray-600"
             >
               <span className="absolute right-[15px] -top-0.5 h-[4px] w-[4px] text-red-500">*</span>
               Company Name (QR) :
@@ -495,17 +499,17 @@ const SetCompanyInfo = () => {
                 onChange={(event) =>
                   handleFieldChange("txtCoName_QR", event.target.value)
                 }
-                className="w-[50%] h-[23px] border border-gray-300 rounded-sm px-2 text-[11px] outline-none"
+                className="w-[50%] input-style"
               />
             </div>
           </div>
 
 
           {/* Company Name short */}
-          <div className="grid grid-cols-[145px_1fr] items-center mb-[8px]">
+          <div className="grid grid-cols-[195px_1fr] items-center mb-[8px]">
             <label
               htmlFor="txtCoName_Short"
-              className="relative text-[11px] text-gray-600 text-right pr-3"
+              className="relative pr-3 text-right text-[14px] text-gray-600"
             >
               <span className="absolute right-[15px] -top-0.5 h-[4px] w-[4px] text-red-500">*</span>
               Company Name (Short) :
@@ -522,19 +526,19 @@ const SetCompanyInfo = () => {
                 onChange={(event) =>
                   handleFieldChange("txtCoName_Short", event.target.value)
                 }
-                className="w-[50%] h-[23px] border border-gray-300 rounded-sm px-2 text-[11px] outline-none"
+                className="w-[50%] input-style"
               />
             </div>
           </div>
 
           {/* VAT No */}
-          <div className="grid grid-cols-[145px_1fr] items-center mb-[8px]">
+          <div className="grid grid-cols-[195px_1fr] items-center mb-[8px]">
             <label
               htmlFor="txtCoVATNo"
-              className="relative text-[11px] text-gray-600 text-right pr-3"
+              className="relative pr-3 text-right text-[14px] text-gray-600"
             >
               <span className="absolute right-[15px] -top-0.5 h-[4px] w-[4px] text-red-500">*</span>
-              VAT No. :
+              VAT No :
             </label>
 
             <div className="relative">
@@ -548,16 +552,16 @@ const SetCompanyInfo = () => {
                 onChange={(event) =>
                   handleFieldChange("txtCoVATNo", event.target.value)
                 }
-                className="w-[50%] h-[23px] border border-gray-300 rounded-sm px-2 text-[11px] outline-none"
+                className="w-[50%] input-style"
               />
             </div>
           </div>
 
           {/* VAT No AR */}
-          <div className="grid grid-cols-[145px_1fr] items-center mb-[8px]">
+          <div className="grid grid-cols-[195px_1fr] items-center mb-[8px]">
             <label
               htmlFor="txtCoVATNo_AR"
-              className="relative text-[11px] text-gray-600 text-right pr-3"
+              className="relative pr-3 text-right text-[14px] text-gray-600"
             >
               <span className="absolute right-[15px] -top-0.5 h-[4px] w-[4px] text-red-500">*</span>
               VAT No. (AR) :
@@ -574,13 +578,13 @@ const SetCompanyInfo = () => {
                 onChange={(event) =>
                   handleFieldChange("txtCoVATNo_AR", event.target.value)
                 }
-                className="w-[50%] h-[23px] border border-gray-300 rounded-sm px-2 text-[11px] outline-none text-right"
+                className="w-[50%] input-style text-right"
               />
             </div>
           </div>
 
           {/* ================= BUTTONS ================= */}
-          <div className="flex justify-center gap-3 mt-[14px] mb-[12px]">
+          <div className="mt-[14px] flex justify-center gap-3">
 
             <button
               id="btnModify"
@@ -589,16 +593,7 @@ const SetCompanyInfo = () => {
               onClick={handleModify}
               disabled={!perms.modify}
               className="
-                w-[105px]
-                h-[34px]
-                border
-                border-gray-400
-                rounded-md
-                bg-gradient-to-b
-                from-white
-                to-[#e5eef5]
-                text-green-600
-                text-[15px]
+                btn-style
                 disabled:cursor-not-allowed
                 disabled:opacity-40
               "
@@ -612,16 +607,7 @@ const SetCompanyInfo = () => {
               type="button"
               onClick={handleClear}
               className="
-                w-[105px]
-                h-[34px]
-                border
-                border-gray-400
-                rounded-md
-                bg-gradient-to-b
-                from-white
-                to-[#e5eef5]
-                text-green-600
-                text-[15px]
+                btn-style
               "
             >
               <span className="underline underline-offset-2">C</span>lear

@@ -62,36 +62,16 @@ const BranchTextRow: React.FC<BranchTextRowProps> = ({
   required = false,
 }) => {
   const rowGrid =
-    "grid grid-cols-[120px_460px_460px_80px] items-center gap-3";
+    "grid grid-cols-[195px_460px_460px_90px] items-center gap-3";
 
-  const inputClass = `
-    h-[32px]
-    rounded-[6px]
-    border
-    border-slate-300
-    bg-white
-    px-3
-    text-[13px]
-    text-slate-700
-    outline-none
-    focus:border-blue-500
-    focus:ring-2
-    focus:ring-blue-100
-  `;
+  // the shared form-input look from index.css
+  const inputClass = "input-style";
 
-  const labelEnglishClass = `
-    whitespace-nowrap
-    text-left
-    text-[13px]
-    text-slate-600
-  `;
+  const labelEnglishClass =
+    "whitespace-nowrap pr-3 text-right text-[14px] text-gray-600";
 
-  const labelArabicClass = `
-    whitespace-nowrap
-    text-right
-    text-[13px]
-    text-slate-600
-  `;
+  const labelArabicClass =
+    "whitespace-nowrap text-right text-[14px] text-gray-600";
 
 
 
@@ -99,7 +79,7 @@ const BranchTextRow: React.FC<BranchTextRowProps> = ({
     <div
       className={`
         ${rowGrid}
-        mb-3
+        mb-[8px]
       `}
     >
       <label
@@ -107,8 +87,7 @@ const BranchTextRow: React.FC<BranchTextRowProps> = ({
         className={labelEnglishClass}
       >
         {labelEn}
-        {required && <span className="ml-0.5 text-red-500">*</span>}
-        {" "}:
+        <span className="inline-block w-[10px] text-center text-red-500">{required ? "*" : ""}</span>:
       </label>
 
       <div className="flex w-[460px] justify-start">
@@ -384,43 +363,9 @@ const SetBranchInfo: React.FC = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [lkpBranch, reloadKey]);
 
-  const buttonClass = `
-  min-w-[120px]
-      h-[40px]
-      rounded-[4px]
-      border-l
-      border-r
-      border-b
-      border-[#9db8d4]
-      border-t-0
-      bg-gradient-to-b
-      from-[#ffffff]
-      to-[#e7eef5]
-      px-4
-      text-[18px]
-      shadow-[inset_0_1px_0_rgba(255,255,255,0.8)]
-      transition-colors
-      duration-100
-      hover:border-l-[#7f9fbd]
-      hover:border-r-[#7f9fbd]
-      hover:border-b-[#7f9fbd]
-      hover:bg-gradient-to-b
-      hover:from-[#ffffff]
-      hover:to-[#dce8f1]
-      focus:border-l-[#20884e]
-      focus:border-r-[#20884e]
-      focus:border-b-[#20884e]
-      focus:border-t-0
-      focus:bg-gradient-to-b
-      focus:from-[#ffffff]
-      focus:to-[#dcefe5]
-      focus:outline-none
-      focus:ring-0
-`;
+  const buttonClass = "btn-style";
 
-  const textClass = `
-  text-[18px] text-green-600
-`;
+  const textClass = "";
 
   /* =========================================================
      FIELD WIDTHS
@@ -446,44 +391,24 @@ const SetBranchInfo: React.FC = () => {
   ========================================================= */
 
   const rowGrid =
-    "grid grid-cols-[120px_460px_460px_80px] items-center gap-3";
+    "grid grid-cols-[195px_460px_460px_90px] items-center gap-3";
 
   /* =========================================================
      INPUT CLASS
   ========================================================= */
 
-  const inputClass = `
-    h-[32px]
-    rounded-[6px]
-    border
-    border-slate-300
-    bg-white
-    px-3
-    text-[13px]
-    text-slate-700
-    outline-none
-    focus:border-blue-500
-    focus:ring-2
-    focus:ring-blue-100
-  `;
+  // the shared form-input look from index.css
+  const inputClass = "input-style";
 
   /* =========================================================
      LABEL CLASSES
   ========================================================= */
 
-  const labelEnglishClass = `
-    whitespace-nowrap
-    text-left
-    text-[13px]
-    text-slate-600
-  `;
+  const labelEnglishClass =
+    "whitespace-nowrap pr-3 text-right text-[14px] text-gray-600";
 
-  const labelArabicClass = `
-    whitespace-nowrap
-    text-right
-    text-[13px]
-    text-slate-600
-  `;
+  const labelArabicClass =
+    "whitespace-nowrap text-right text-[14px] text-gray-600";
 
   /* =========================================================
      SELECT STYLES
@@ -824,16 +749,7 @@ const SetBranchInfo: React.FC = () => {
   return (
    <div
   onKeyDown={handleEnterAsTab}
-  className="
-    flex
-    min-h-screen
-    w-full
-    items-center
-    justify-center
-    overflow-x-auto
-    bg-white
-    px-4
-  "
+  className="flex min-h-screen w-full items-center justify-center overflow-x-auto bg-white"
 >
 
       {/* =====================================================
@@ -843,50 +759,23 @@ const SetBranchInfo: React.FC = () => {
           when the sidebar is displayed.
       ===================================================== */}
 
-      <div
-        className="
-          w-[1220px]
-          min-w-[1120px]
-          shrink-0
-          border
-          border-slate-300
-          bg-white
-        "
-      >
+      <div className="w-[1300px] shrink-0 overflow-hidden border border-slate-400 bg-white shadow-sm">
 
         {/* ===================================================
             TITLE
         ==================================================== */}
 
-        <div
-          className="
-            flex
-            h-[36px]
-            items-center
-            border-b
-            border-slate-300
-            bg-[#a3dfc0]
-          "
-        >
-
-          <span
-            className="
-              px-3
-              text-[17px]
-              font-semibold
-              text-slate-700
-            "
-          >
+        <div className="flex h-[28px] w-full items-center bg-[#a7dfc0]">
+          <h1 className="ml-[5px] text-[17px] font-semibold text-[#374151]">
             Set Branch Info.
-          </span>
-
+          </h1>
         </div>
 
         {/* ===================================================
             FORM
         ==================================================== */}
 
-        <div className="px-5 py-5">
+        <div className="p-[12px] m-[12px]">
 
           {/* =================================================
               BRANCH
@@ -895,7 +784,7 @@ const SetBranchInfo: React.FC = () => {
           <div
             className={`
               ${rowGrid}
-              mb-3
+              mb-[8px]
             `}
           >
 
@@ -905,7 +794,8 @@ const SetBranchInfo: React.FC = () => {
               htmlFor="lkpBranch"
               className={labelEnglishClass}
             >
-              Branch<span className="ml-0.5 text-red-500">*</span> :
+              Branch
+              <span className="inline-block w-[10px] text-center text-red-500">*</span>:
             </label>
 
             {/* BRANCH SELECT - 300px */}
@@ -1254,7 +1144,7 @@ const SetBranchInfo: React.FC = () => {
               HEAD OFFICE
           ================================================= */}
 
-          <div className="mt-4 ml-[133px]">
+          <div className="mt-4 ml-[207px]">
 
             <label
               htmlFor="chkHo"
@@ -1296,24 +1186,11 @@ const SetBranchInfo: React.FC = () => {
 
           </div>
 
-        </div>
-
         {/* ===================================================
             BUTTONS
         ==================================================== */}
 
-    <div
-  className="
-    relative
-    -top-[20px]
-    mb-0
-    flex
-    w-full
-    items-start
-    justify-center
-    gap-4
-  "
->
+    <div className="mt-[14px] flex justify-center gap-3">
   <button
     id="btnModify"
     name="btnModify"
@@ -1345,6 +1222,8 @@ const SetBranchInfo: React.FC = () => {
               </span>
   </button>
 </div>
+
+        </div>
       </div>
 
     </div>
