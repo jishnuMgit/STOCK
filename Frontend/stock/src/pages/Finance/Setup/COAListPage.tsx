@@ -407,15 +407,8 @@ const TreeRow: React.FC<TreeRowProps> = ({
         ====================================================== */}
 
         <div
-          className={`
-    flex
-    items-center
-    border-r
-    border-slate-300
-    px-2
-    ${node.color ?? "text-slate-700"}
-    ${node.bold ? "font-semibold" : "font-normal"}
-  `}
+          className={`flex items-center border-r border-slate-300 px-2 ${node.color ?? "text-slate-700"}
+    ${node.bold ? "font-semibold" : "font-normal"}`}
         >
           {node.accountId}
         </div>
@@ -424,15 +417,7 @@ const TreeRow: React.FC<TreeRowProps> = ({
             ADD
         ====================================================== */}
 
-        <div
-          className="
-            flex
-            items-center
-            justify-center
-            border-r
-            border-slate-300
-          "
-        >
+        <div className="flex items-center justify-center border-r border-slate-300">
           <button
             id={`Addbtn-${node.id}`}
             type="button"
@@ -460,15 +445,7 @@ const TreeRow: React.FC<TreeRowProps> = ({
             MODIFY
         ====================================================== */}
 
-        <div
-          className="
-            flex
-            items-center
-            justify-center
-            border-r
-            border-slate-300
-          "
-        >
+        <div className="flex items-center justify-center border-r border-slate-300">
           <button
             id={`Modifybtn-${node.id}`}
             type="button"
@@ -496,13 +473,7 @@ const TreeRow: React.FC<TreeRowProps> = ({
             DELETE
         ====================================================== */}
 
-        <div
-          className="
-            flex
-            items-center
-            justify-center
-          "
-        >
+        <div className="flex items-center justify-center">
           <button
             id={`Deletebtn-${node.id}`}
             type="button"
