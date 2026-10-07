@@ -467,12 +467,12 @@ const BeginningStockPage: React.FC = () => {
             <colgroup>
               <col style={{ width: "17px" }} />
               <col style={{ width: "43px" }} />
-              <col style={{ width: "24%" }} />
-              <col style={{ width: "40%" }} />
+              <col style={{ width: "14%" }} />
+              <col style={{ width: "50%" }} />
               <col style={{ width: "6.2%" }} />
               <col style={{ width: "6.2%" }} />
-              <col style={{ width: "9.2%" }} />
-              <col style={{ width: "9.2%" }} />
+              <col style={{ width: "8.2%" }} />
+              <col style={{ width: "10.2%" }} />
             </colgroup>
 
             <thead className="sticky top-0 z-10  bg-[#f5f8fc]">
@@ -481,7 +481,7 @@ const BeginningStockPage: React.FC = () => {
                   ▾
                 </th>
                 <th className="border border-[#d5e5ff] px-1 text-center font-medium">
-                  Sl.No.
+                  Sl.
                 </th>
                 <th className="border border-[#d5e5ff] px-2 font-medium">
                   Item ID
@@ -509,7 +509,7 @@ const BeginningStockPage: React.FC = () => {
                 <tr
                   key={row.id}
                   onClick={() => setActiveRow(index)}
-                  className={`h-[27px] ${
+                  className={`h-[30px] ${
                     activeRow === index
                       ? "bg-[#f8fbff]"
                       : "bg-white"
@@ -698,7 +698,7 @@ const BeginningStockPage: React.FC = () => {
           name="txtTotal"
           value={formatAmount(total)}
           readOnly
-          className="ml-auto h-[28px] w-[9.2%] shrink-0 rounded border border-slate-300 bg-white px-2 text-right text-[14px] outline-none"
+          className="ml-auto h-[28px] w-[10.2%] shrink-0 rounded border border-slate-300 bg-white px-2 text-right text-[14px] outline-none"
         />
       </section>
 

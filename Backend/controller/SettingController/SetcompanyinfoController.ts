@@ -6,6 +6,7 @@ import {
   updateCompanyInfoService,
 } from "../../services/SettingServices/setcompanyInfoService.js";
 import { mapKeys, mapRows, companyListKeys, companyDetailKeys } from "../../utils/responseKeys.js";
+import { validateSetCompanyInfo } from "../../validators/SetCompanyInfoValidator.js";
 
 /* =========================================================
    GET COMPANY LIST (lkpCoName dropdown)
@@ -62,10 +63,14 @@ export const getCompanyDetails = async (
   try {
     const { lkpCoName } = req.body;
 
-    if (!lkpCoName) {
-      return res.status(400).json({
+    // validators/SetCompanyInfoValidator.ts - mode "G"
+    const check = await validateSetCompanyInfo("G", { lkpCoName });
+
+    if (!check.valid) {
+      return res.status(check.status).json({
         success: false,
-        message: "Company ID is required",
+        message: check.message,
+        field: check.field,
       });
     }
 
@@ -114,28 +119,33 @@ export const saveCompanyDetails = async (
       txtCoName_Short,
       txtCoVATNo,
       txtCoVATNo_AR,
-      txtCoAddress1,
-      txtCoAddress2,
-      txtCoAddress3,
-      txtCoAddress4,
-      txtCoAddress1_AR,
-      txtCoAddress2_AR,
-      txtCoAddress3_AR,
-      txtCoAddress4_AR,
       txtCoStatus,
     } = req.body;
-
-    if (!lkpCoName) {
-      return res.status(400).json({
-        success: false,
-        message: "Company ID is required",
-      });
-    }
 
     if (!PstrUserID) {
       return res.status(400).json({
         success: false,
         message: "User ID is required",
+      });
+    }
+
+    // validators/SetCompanyInfoValidator.ts - mode "M": idle user, company,
+    // names, VAT numbers - the first rule that fails stops the save
+    const check = await validateSetCompanyInfo("M", {
+      lkpCoName,
+      PstrUserID,
+      txtCoName_AR,
+      txtCoName_QR,
+      txtCoName_Short,
+      txtCoVATNo,
+      txtCoVATNo_AR,
+    });
+
+    if (!check.valid) {
+      return res.status(check.status).json({
+        success: false,
+        message: check.message,
+        field: check.field,
       });
     }
 
@@ -147,14 +157,6 @@ export const saveCompanyDetails = async (
       txtCoName_Short: txtCoName_Short || null,
       txtCoVATNo: txtCoVATNo || null,
       txtCoVATNo_AR: txtCoVATNo_AR || null,
-      txtCoAddress1: txtCoAddress1 || null,
-      txtCoAddress2: txtCoAddress2 || null,
-      txtCoAddress3: txtCoAddress3 || null,
-      txtCoAddress4: txtCoAddress4 || null,
-      txtCoAddress1_AR: txtCoAddress1_AR || null,
-      txtCoAddress2_AR: txtCoAddress2_AR || null,
-      txtCoAddress3_AR: txtCoAddress3_AR || null,
-      txtCoAddress4_AR: txtCoAddress4_AR || null,
       txtCoStatus: txtCoStatus || null,
       PstrUserID,
     });

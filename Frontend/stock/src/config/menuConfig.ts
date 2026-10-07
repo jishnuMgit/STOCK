@@ -40,7 +40,7 @@ export const menuRouteMap: Record<string, string> = {
 
   mnuPurchaseInvoice: "/Purchase/Transaction/PurchaseInvoicePage",
 
-mnuBeginningStock:"/Purchase/Transaction/BeginningStockPage",
+  mnuBeginningStock:"/Purchase/Transaction/BeginningStockPage",
 
 
 
@@ -53,6 +53,7 @@ mnuBeginningStock:"/Purchase/Transaction/BeginningStockPage",
 
 
   mnuItem: "/Purchase/Setup/ItemPage",
+  mnuItemGroup: "/Purchase/Setup/ItemGroupPage",
 
 
     /* =========================================================
@@ -68,12 +69,12 @@ mnuBeginningStock:"/Purchase/Transaction/BeginningStockPage",
 Sales-TRANSACTION
 =============================================================*/
 
-mnuSalesInvoice: "/Sales/Transaction/SalesInvoicePage",
+  mnuSalesInvoice: "/Sales/Transaction/SalesInvoicePage",
 
 
 
 
-mnuStockTransfer: "/Sales/Transaction/StockTransferPage",
+  mnuStockTransfer: "/Sales/Transaction/StockTransferPage",
 
 
 
@@ -85,7 +86,7 @@ mnuStockTransfer: "/Sales/Transaction/StockTransferPage",
   ========================================================= */
 
   mnuReceipt: "/Finance/Transaction/Receipt",
-
+  mnuBeginningBalance: "/Finance/Transaction/BeginningBalance",
   mnuJournal: "/Finance/Transaction/journal",
 
   /* =========================================================
@@ -107,14 +108,11 @@ mnuStockTransfer: "/Sales/Transaction/StockTransferPage",
      SETTINGS
   ========================================================= */
 
-  mnuSetDocumentNo:
-    "/Settings/SetDocumentNo",
-    mnuSetBranchInfo:
-    "/Settings/SetBranchInfo",
-
-  mnuSetCompanyInfo: "/Settings/SetCompanyInfo",
-mnuSetChartOfAccount: "/Settings/ChartOfAccountSettings",
-mnuSetStockPostingAccount:"/Settings/SetPostingAccount",
+   mnuSetDocumentNo: "/Settings/SetDocumentNo",
+   mnuSetBranchInfo:"/Settings/SetBranchInfo",
+   mnuSetCompanyInfo: "/Settings/SetCompanyInfo",
+   mnuSetChartOfAccount: "/Settings/SetChartOfAccount",
+   mnuSetStockPostingAccount:"/Settings/SetPostingAccount",
 
   /* =========================================================
      SECURITY
@@ -128,7 +126,10 @@ mnuSetStockPostingAccount:"/Settings/SetPostingAccount",
      ADMINISTRATION
   ========================================================= */
 
-  mnuAdministration: "/Administration",
+
+
+mnuAdministration: "/Administration",
+mnuCompany: "/Administration/CompanyPage",
 };
 
 /* =========================================================
@@ -149,7 +150,15 @@ export const ADMINISTRATION_NODE: MenuNode = {
   fmenuname: "mnuAdministration",
   fmenucaption: "Administration",
   fmenubuttons: "0",
-  children: [],
+  children: [
+    {
+      fmenuid: "9901",
+      fmenuname: "mnuCompany",
+      fmenucaption: "Company",
+      fmenubuttons: "0",
+      children: [],
+    },
+  ],
 };
 
 /* Rpt Statement of Account (synthetic node)

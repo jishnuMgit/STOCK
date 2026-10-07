@@ -1,16 +1,46 @@
 import React from "react";
 
-const PurchaseFooter: React.FC = () => {
-  const buttons = ["Save", "Delete", "Print", "Post", "Clear"];
+interface Props {
+  note: string;
+  onNoteChange: (v: string) => void;
+  totals: { supplierTotal: number; finalTotal: number; qty: number };
+  isModify: boolean;
+  busy: boolean;
+  onSave: () => void;
+  onDelete: () => void;
+  onPrint: () => void;
+  onPost: () => void;
+  onClear: () => void;
+}
+
+const PurchaseFooter: React.FC<Props> = ({
+  note,
+  onNoteChange,
+  totals,
+  isModify,
+  busy,
+  onSave,
+  onDelete,
+  onPrint,
+  onPost,
+  onClear,
+}) => {
+  const buttons = [
+    { label: isModify ? "Modify" : "Save", onClick: onSave },
+    { label: "Delete", onClick: onDelete },
+    { label: "Print", onClick: onPrint },
+    { label: "Post", onClick: onPost },
+    { label: "Clear", onClick: onClear },
+  ];
 
   return (
     <footer className="shrink-0 px-3 pb-3 pt-1">
-      {/* Note and three numeric inputs */}
+      {/* Same column widths and min-width as the table, so totals line up */}
       <div
         id="purchase-footer-fields"
-        className="grid w-full min-w-[859px] grid-cols-[14px_38px_158px_minmax(120px,1fr)_56px_58px_85px_90px_80px_80px_80px] items-center pt-2"
+        className="grid w-full min-w-[900px] grid-cols-[14px_38px_158px_minmax(120px,1fr)_56px_58px_85px_90px_80px_80px_80px] items-center pt-2"
       >
-        {/* Note */}
+        {/* Note: spans indicator, Sl.No., Item ID, Item Name */}
         <div
           id="purchase-note-group"
           className="col-[1/5] flex min-w-0 items-center gap-2 pr-3"
@@ -25,11 +55,13 @@ const PurchaseFooter: React.FC = () => {
           <input
             id="purchase-note"
             type="text"
-            className="h-[26px] min-w-0 flex-1 rounded-[3px] border border-[#d5dce5] bg-white px-2 text-[14px] text-[#263449] outline-none focus:border-blue-400"
+            value={note}
+            onChange={(e) => onNoteChange(e.target.value)}
+            className="input-style min-w-0 flex-1"
           />
         </div>
 
-        {/* Total: label in Unit column, input aligned with Qty */}
+        {/* Total: label sits in the Unit column, input under Qty */}
         <div
           id="purchase-total-group"
           className="col-[5/7] grid min-w-0 grid-cols-[minmax(0,1fr)_58px] items-center gap-0"
@@ -44,14 +76,14 @@ const PurchaseFooter: React.FC = () => {
           <input
             id="purchaseTotal"
             type="text"
-            defaultValue="0.000"
+            value={totals.qty.toFixed(3)}
             readOnly
             aria-label="Total"
-            className="h-[39px] w-full min-w-0 rounded-[2px] border border-[#d5dce5] bg-white px-1 text-right text-[11px] text-[#263449] outline-none"
+            className="input-style w-full min-w-0 text-right"
           />
         </div>
 
-        {/* Supplier Total: aligned with S.Total Price */}
+        {/* Supplier Total: under S.Total Price */}
         <div
           id="purchase-supplier-total-group"
           className="col-[8/9] min-w-0 px-[1px]"
@@ -59,14 +91,14 @@ const PurchaseFooter: React.FC = () => {
           <input
             id="purchaseSupplierTotal"
             type="text"
-            defaultValue="0.0000"
+            value={totals.supplierTotal.toFixed(4)}
             readOnly
             aria-label="Supplier total price"
-            className="h-[30px] w-full min-w-0 rounded-[2px] border border-[#d5dce5] bg-white px-1 text-right text-[11px] text-[#263449] outline-none"
+            className="input-style w-full min-w-0 text-right"
           />
         </div>
 
-        {/* Final Total: aligned with Total Cost */}
+        {/* Final Total: under Total Cost */}
         <div
           id="purchase-final-total-group"
           className="col-[11/12] min-w-0 px-[1px]"
@@ -74,10 +106,10 @@ const PurchaseFooter: React.FC = () => {
           <input
             id="purchaseFinalTotal"
             type="text"
-            defaultValue="0.0000"
+            value={totals.finalTotal.toFixed(4)}
             readOnly
             aria-label="Final total"
-            className="h-[30px] w-full min-w-0 rounded-[2px] border border-[#d5dce5] bg-white px-1 text-right text-[11px] text-[#263449] outline-none"
+            className="input-style w-full min-w-0 text-right"
           />
         </div>
       </div>
@@ -87,17 +119,19 @@ const PurchaseFooter: React.FC = () => {
         id="purchase-footer-actions"
         className="mt-[9px] mb-[5px] flex flex-wrap justify-center gap-[12px]"
       >
-        {buttons.map((button) => (
+        {buttons.map(({ label, onClick }) => (
           <button
-            key={button}
-            id={`btn${button}`}
+            key={label}
+            id={`btn${label}`}
             type="button"
+            disabled={busy}
+            onClick={onClick}
             className="btn-style"
           >
             <span className="underline decoration-green-600 decoration-[1px] underline-offset-2">
-              {button.charAt(0)}
+              {label.charAt(0)}
             </span>
-            {button.slice(1)}
+            {label.slice(1)}
           </button>
         ))}
       </div>

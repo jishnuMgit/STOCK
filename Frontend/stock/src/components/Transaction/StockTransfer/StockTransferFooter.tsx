@@ -5,7 +5,7 @@ import React from "react";
 // ============================================================
 
 const inputClass =
-  "h-[28px] border border-[#cbd5e1] bg-white px-2 text-[13px] text-[#202020] outline-none focus:border-blue-400 focus:bg-blue-50";
+  "input-style";
 
 // ============================================================
 // BUTTON STYLE
@@ -38,7 +38,7 @@ const StockTransferFooter: React.FC = () => {
           id="txtNote"
           type="text"
           autoComplete="off"
-          className={`${inputClass} w-[780px]`}
+          className={`${inputClass} w-[740px]`}
         />
       </div>
 
@@ -46,7 +46,7 @@ const StockTransferFooter: React.FC = () => {
           TOTAL
       ====================================================== */}
 
-      <div className="absolute right-[92px] top-[10px] flex h-[28px] items-center">
+      <div className="absolute right-[100px] top-[10px] flex h-[28px] items-center">
         <input
           id="txtTotalLabel"
           type="text"
@@ -68,8 +68,8 @@ const StockTransferFooter: React.FC = () => {
         <input
           id="txtTotal"
           type="text"
-          defaultValue="0.00"
-          className={`${inputClass} ml-[7px] w-[65px] text-right`}
+          defaultValue="0.000"
+          className={`${inputClass} ml-[7px] w-[95px] text-right`}
         />
       </div>
 

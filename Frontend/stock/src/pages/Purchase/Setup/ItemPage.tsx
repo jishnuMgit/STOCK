@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import Select, { components, type StylesConfig } from "react-select";
+import Select, { type StylesConfig } from "react-select";
 import { toast } from "react-toastify";
 import { X } from "lucide-react";
 import { useEnterAsTab } from "../../../hooks/useEnterAsTab";
@@ -11,6 +11,12 @@ import {
   BranchOption,
   branchMenuStyles,
 } from "../../../components/BranchSelect/branchSelectParts";
+import {
+  makePairComponents,
+  filterPairOption,
+  pairMenuStyles,
+  pairNameMenuStyles,
+} from "../../../components/PairSelect/pairSelectParts";
 
 /* =========================================================
    TYPES
@@ -36,110 +42,10 @@ interface SelectOption {
 /* =========================================================
    ID | NAME DROPDOWN (Item Group, Supplier)
 
-   Same idea as the legacy desktop form: the ID box and the Name
-   box each open the same two-column "ID | Name" list, both are
-   searchable (type part of the ID or the name), and picking from
-   either one fills both.
+   The helper itself (the two-column "ID | Name" list, the search on
+   either column, the menu styles) is shared with other pages - see
+   components/PairSelect/pairSelectParts.tsx.
 ========================================================= */
-
-// The ID box is 155px wide + 8px gap, then the Name box starts and its
-// text is inset ~9px. The row has 10px left padding, so 162px puts the
-// name column directly under the text in the Name box.
-const PAIR_GRID_COLUMNS = "162px 1fr";
-
-const filterPairOption = (
-  option: { label: string; value: string; data: SelectOption },
-  inputValue: string
-) => {
-  const search = inputValue.toLowerCase().trim();
-
-  if (!search) {
-    return true;
-  }
-
-  return (
-    (option.data.id || "").toLowerCase().includes(search) ||
-    (option.data.name || "").toLowerCase().includes(search)
-  );
-};
-
-// Name box's list (same idea as the Branch dropdown): the name column is
-// exactly as wide as the Name box and the ID column sits right after the
-// box's right edge, in the part of the menu that hangs past it
-// (menu width = 100% + 56px; 46px ID column + 10px right padding).
-const PAIR_GRID_COLUMNS_NAME_FIRST = "calc(100% - 100px) 100px";
-
-const ellipsisStyle = {
-  overflow: "hidden",
-  textOverflow: "ellipsis",
-  whiteSpace: "nowrap",
-} as const;
-
-// nameFirst = false -> "ID | Name"  (used by the ID box)
-// nameFirst = true  -> "Name | ID"  (used by the Name box)
-const makePairComponents = (
-  idHeader: string,
-  nameHeader: string,
-  nameFirst: boolean
-) => {
-  const columns = nameFirst
-    ? PAIR_GRID_COLUMNS_NAME_FIRST
-    : PAIR_GRID_COLUMNS;
-
-  return {
-    MenuList: (props: any) => (
-      <components.MenuList {...props}>
-        <div
-          style={{
-            display: "grid",
-            gridTemplateColumns: columns,
-            padding: "6px 10px",
-            backgroundColor: "#f5f7fa",
-            borderBottom: "1px solid #d7dee7",
-            fontSize: "11px",
-            fontWeight: 600,
-            color: "#555",
-            whiteSpace: "nowrap",   
-            position: "sticky",
-            top: 0,
-            zIndex: 99999,
-          }}
-        >
-          <div>{nameFirst ? nameHeader : idHeader}</div>
-          <div>{nameFirst ? idHeader : nameHeader}</div>
-        </div>
-
-        {props.children}
-      </components.MenuList>
-    ),
-
-    Option: (props: any) => (
-      <components.Option {...props}>
-        <div
-          style={{
-            display: "grid",
-            gridTemplateColumns: columns,
-            width: "100%",
-            alignItems: "center",
-            fontSize: "12px",
-          }}
-        >
-          {nameFirst ? (
-            <>
-              <div style={ellipsisStyle}>{props.data.name}</div>
-              <div>{props.data.id}</div>
-            </>
-          ) : (
-            <>
-              <div>{props.data.id}</div>
-              <div style={ellipsisStyle}>{props.data.name}</div>
-            </>
-          )}
-        </div>
-      </components.Option>
-    ),
-  };
-};
 
 // Created once (not inside the component) so react-select doesn't
 // remount the menu on every render.
@@ -163,47 +69,6 @@ const supplierNameComponents = makePairComponents(
   "Supplier Name",
   true
 );
-
-// For the Name boxes: menu = Name box width + the ID column.
-const pairNameMenuStyles: Pick<
-  StylesConfig<SelectOption, false>,
-  "menu" | "menuList" | "menuPortal"
-> = {
-  menu: (base) => ({
-    ...base,
-    width: "calc(100% + 110px)",
-    zIndex: 99999,
-    fontSize: "12px",
-  }),
-  menuList: (base) => ({
-    ...base,
-    padding: 0,
-  }),
-  menuPortal: (base) => ({
-    ...base,
-    zIndex: 99999,
-  }),
-};
-
-const pairMenuStyles: Pick<
-  StylesConfig<SelectOption, false>,
-  "menu" | "menuList" | "menuPortal"
-> = {
-  menu: (base) => ({
-    ...base,
-    width: "560px",
-    zIndex: 99999,
-    fontSize: "12px",
-  }),
-  menuList: (base) => ({
-    ...base,
-    padding: 0,
-  }),
-  menuPortal: (base) => ({
-    ...base,
-    zIndex: 99999,
-  }),
-};
 
 /* =========================================================
    BUTTON CLASS

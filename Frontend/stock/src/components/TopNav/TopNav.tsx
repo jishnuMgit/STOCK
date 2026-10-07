@@ -8,6 +8,7 @@ import { useLogout } from "../../hooks/useLogout";
 import { getMenuIcon, getMenuRoute } from "../../config/menuConfig";
 import { isNodeActive } from "../../utils/menuActive";
 import type { MenuNode } from "../../types/menu";
+import { clearStoredUser } from "../../utils/authStorage";
 
 interface TopNavProps {
   menuTree: MenuNode[];
@@ -80,6 +81,7 @@ export default function TopNav({
       return;
     }
 
+    clearStoredUser();
     toast.success("Logged out successfully");
     navigate("/login", { replace: true });
   };

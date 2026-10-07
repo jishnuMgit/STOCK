@@ -1,8 +1,14 @@
 import { Navigate, Outlet } from "react-router-dom";
 import { useAuth } from "../hooks/useAuth";
+import { hasStoredUser } from "../utils/authStorage";
 
 const PublicRoute = () => {
   const { loading, isAuthenticated } = useAuth();
+
+  // No localStorage -> show login immediately, don't wait for the API
+  if (!hasStoredUser()) {
+    return <Outlet />;
+  }
 
   if (loading) {
     return (

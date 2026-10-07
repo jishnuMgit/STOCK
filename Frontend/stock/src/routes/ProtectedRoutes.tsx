@@ -1,8 +1,21 @@
-import { Navigate, Outlet } from "react-router-dom";
+import { useEffect } from "react";
+import { Navigate, Outlet, useLocation } from "react-router-dom";
 import { useAuth } from "../hooks/useAuth";
+import { hasStoredUser, clearStoredUser } from "../utils/authStorage";
 
 const ProtectedRoute = () => {
+  const location = useLocation();
   const { loading, isAuthenticated } = useAuth();
+  const stored = hasStoredUser();
+
+  // Cookie expired/invalid but localStorage still there -> clear it
+  useEffect(() => {
+    if (!loading && stored && !isAuthenticated) clearStoredUser();
+  }, [loading, stored, isAuthenticated]);
+
+  if (!stored) {
+    return <Navigate to="/login" replace state={{ from: location }} />;
+  }
 
   if (loading) {
     return (
@@ -13,7 +26,7 @@ const ProtectedRoute = () => {
   }
 
   if (!isAuthenticated) {
-    return <Navigate to="/login" replace />;
+    return <Navigate to="/login" replace state={{ from: location }} />;
   }
 
   return <Outlet />;

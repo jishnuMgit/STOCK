@@ -3,6 +3,7 @@ import { v4 as uuidv4 } from "uuid";
 import pool from "../DB/db.js";
 import { AuthenticatedRequest } from "../middleware/authMiddleware.js";
 import { decryptPwd } from "../utils/passwordCrypto.js";
+import { isUserActive, idleUserMessage } from "../validators/common.js";
 
 /* =========================================================
    LOGIN
@@ -103,12 +104,14 @@ export const login = async (req: Request, res: Response): Promise<Response> => {
        USER STATUS
     ===================================================== */
 
-    const userStatus = userResult.rows[0]?.fuserstatus;
+    // fuserstatus is 'A' (active) or 'I' (idle) - not true / false.
+    // ADMIN is always active (same rule as the old form's GetUserStatus).
+    const userRow = userResult.rows[0];
 
-    if (userStatus === false) {
+    if (!isUserActive(userRow?.fuserid, userRow?.fuserstatus)) {
       return res.status(403).json({
         success: false,
-        message: "This User is Idle",
+        message: idleUserMessage(userRow?.fuserid ?? PstrUserID),
       });
     }
 

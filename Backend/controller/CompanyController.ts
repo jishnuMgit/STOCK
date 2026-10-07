@@ -13,8 +13,6 @@ export const getCompanies = async (
         fconame_ar AS "fCoName_AR",
         fconame_qr AS "fCoName_QR",
         fconame_short AS "fCoName_Short",
-        fcoaddress1 AS "fCoAddress1",
-        fcoaddress2 AS "fCoAddress2",
         fcovatno AS "fCoVATNo",
         fcostatus AS "fCoStatus",
         fpositionno AS "fPositionNo"

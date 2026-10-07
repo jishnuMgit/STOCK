@@ -200,15 +200,13 @@ const accountTree: AccountNode[] = [
 
 const getExpandedForMinimumRows = (
   nodes: AccountNode[],
-  minimumRows: number
+  minimumRows: number,
 ): Set<string> => {
   const result = new Set<string>();
 
   let visibleRows = 0;
 
-  const expandUntilMinimum = (
-    currentNodes: AccountNode[]
-  ): boolean => {
+  const expandUntilMinimum = (currentNodes: AccountNode[]): boolean => {
     for (const node of currentNodes) {
       visibleRows++;
 
@@ -237,10 +235,7 @@ const getExpandedForMinimumRows = (
 // HELPER - FILTER TREE
 // ============================================================
 
-const filterTree = (
-  nodes: AccountNode[],
-  search: string
-): AccountNode[] => {
+const filterTree = (nodes: AccountNode[], search: string): AccountNode[] => {
   if (!search.trim()) {
     return nodes;
   }
@@ -265,12 +260,10 @@ const filterTree = (
       }
 
       return null;
-    }
+    },
   );
 
-  return filtered.filter(
-    (node): node is AccountNode => node !== null
-  );
+  return filtered.filter((node): node is AccountNode => node !== null);
 };
 
 // ============================================================
@@ -300,9 +293,7 @@ const TreeRow: React.FC<TreeRowProps> = ({
   onModify,
   onDelete,
 }) => {
-  const hasChildren = Boolean(
-    node.children && node.children.length > 0
-  );
+  const hasChildren = Boolean(node.children && node.children.length > 0);
 
   const isExpanded = expanded.has(node.id);
 
@@ -359,9 +350,7 @@ const TreeRow: React.FC<TreeRowProps> = ({
 
             <button
               type="button"
-              onClick={() =>
-                hasChildren && toggleNode(node.id)
-              }
+              onClick={() => hasChildren && toggleNode(node.id)}
               className="
                 mr-1
                 flex
@@ -374,11 +363,7 @@ const TreeRow: React.FC<TreeRowProps> = ({
                 focus:outline-none
               "
               aria-label={
-                hasChildren
-                  ? isExpanded
-                    ? "Collapse"
-                    : "Expand"
-                  : undefined
+                hasChildren ? (isExpanded ? "Collapse" : "Expand") : undefined
               }
             >
               {hasChildren ? (
@@ -464,12 +449,7 @@ const TreeRow: React.FC<TreeRowProps> = ({
               focus:outline-none
             "
           >
-            {level !== 3 && (
-              <Plus
-                size={11}
-                strokeWidth={3}
-              />
-            )}
+            {level !== 3 && <Plus size={11} strokeWidth={3} />}
           </button>
         </div>
 
@@ -504,10 +484,7 @@ const TreeRow: React.FC<TreeRowProps> = ({
               focus:outline-none
             "
           >
-            <SquarePen
-              size={9}
-              strokeWidth={2.5}
-            />
+            <SquarePen size={9} strokeWidth={2.5} />
           </button>
         </div>
 
@@ -538,10 +515,7 @@ const TreeRow: React.FC<TreeRowProps> = ({
               focus:outline-none
             "
           >
-            <Trash2
-              size={11}
-              strokeWidth={2.5}
-            />
+            <Trash2 size={11} strokeWidth={2.5} />
           </button>
         </div>
       </div>
@@ -587,8 +561,8 @@ const COAListPage: React.FC = () => {
   // DEFAULT EXPANDED NODES
   // ============================================================
 
-  const [expanded, setExpanded] = useState<Set<string>>(
-    () => getExpandedForMinimumRows(accountTree, 25)
+  const [expanded, setExpanded] = useState<Set<string>>(() =>
+    getExpandedForMinimumRows(accountTree, 25),
   );
 
   // ============================================================
@@ -641,9 +615,7 @@ const COAListPage: React.FC = () => {
   // ============================================================
 
   const handleDelete = (node: AccountNode) => {
-    const confirmed = window.confirm(
-      `Delete account "${node.name}"?`
-    );
+    const confirmed = window.confirm(`Delete account "${node.name}"?`);
 
     if (!confirmed) {
       return;
@@ -675,16 +647,10 @@ const COAListPage: React.FC = () => {
       }
     };
 
-    document.addEventListener(
-      "keydown",
-      handleEscape
-    );
+    document.addEventListener("keydown", handleEscape);
 
     return () => {
-      document.removeEventListener(
-        "keydown",
-        handleEscape
-      );
+      document.removeEventListener("keydown", handleEscape);
     };
   }, [showCOAPage]);
 
@@ -699,7 +665,7 @@ const COAListPage: React.FC = () => {
 
     const expandMatchingParents = (
       nodes: AccountNode[],
-      result: Set<string>
+      result: Set<string>,
     ) => {
       const value = search.trim().toLowerCase();
 
@@ -712,28 +678,21 @@ const COAListPage: React.FC = () => {
           (child) =>
             child.name.toLowerCase().includes(value) ||
             child.accountId.toLowerCase().includes(value) ||
-            (child.children &&
-              child.children.length > 0)
+            (child.children && child.children.length > 0),
         );
 
         if (childMatches) {
           result.add(node.id);
         }
 
-        expandMatchingParents(
-          node.children,
-          result
-        );
+        expandMatchingParents(node.children, result);
       });
     };
 
     setExpanded((previous) => {
       const next = new Set(previous);
 
-      expandMatchingParents(
-        filteredTree,
-        next
-      );
+      expandMatchingParents(filteredTree, next);
 
       return next;
     });
@@ -751,65 +710,24 @@ const COAListPage: React.FC = () => {
       ======================================================== */}
 
       <div
-        className={`
-          flex
-          items-center
-          justify-center
-          transition-all
-          duration-200
-          ${
-            showCOAPage
-              ? "blur-[3px]"
-              : ""
-          }
+        className={`flex items-center justify-center transition-all duration-200
+          ${showCOAPage ? "blur-[3px]" : ""}
         `}
       >
-        <div
-          className="
-            min-h-screen
-            w-[1000px]
-            mt-10
-            px-0
-            pt-0
-          "
-        >
+        <div className="min-h-screen w-[1000px] mt-10 px-0 pt-0">
           {/* ====================================================
               MAIN CONTAINER
           ==================================================== */}
 
-          <div
-            className="
-              w-full
-              max-w-none
-              overflow-hidden
-              border
-              border-slate-400
-              bg-white
-            "
-          >
+          <div className="w-full max-w-none overflow-hidden border border-slate-400 bg-white">
             {/* ==================================================
                 TITLE
             ================================================== */}
 
-            <div
-              className="
-                flex
-                h-7
-                w-full
-                items-center
-                border-b
-                border-slate-400
-                bg-[#a3dfc0]
-              "
-            >
+            <div className="flex h-7 w-full items-center border-b border-slate-400 bg-[#a3dfc0]">
               <h1
                 id="ChartOfAccount"
-                className="
-                  ml-[10px]
-                  text-[17px]
-                  font-semibold
-                  text-slate-700
-                "
+                className="ml-[10px] text-[17px] font-semibold text-slate-700"
               >
                 Chart Of Account List
               </h1>
@@ -819,13 +737,7 @@ const COAListPage: React.FC = () => {
                 SEARCH
             ================================================== */}
 
-            <div
-              className="
-                px-3.5
-                pb-2
-                pt-3
-              "
-            >
+            <div className="px-3.5 pb-2 pt-3">
               <div className="relative w-[74.5%]">
                 <Search
                   size={11}
@@ -843,28 +755,9 @@ const COAListPage: React.FC = () => {
                   id="txtSearch"
                   type="text"
                   value={search}
-                  onChange={(event) =>
-                    setSearch(
-                      event.target.value
-                    )
-                  }
+                  onChange={(event) => setSearch(event.target.value)}
                   placeholder="Search..."
-                  className="
-                    h-6
-                    w-full
-                    rounded-[2px]
-                    border
-                    border-slate-300
-                    bg-white
-                    pl-7
-                    pr-2
-                    text-[10px]
-                    text-slate-700
-                    outline-none
-                    placeholder:text-slate-400
-                    focus:border-slate-400
-                    focus:ring-0
-                  "
+                  className="input-style"
                 />
               </div>
             </div>
@@ -1055,20 +948,9 @@ const COAListPage: React.FC = () => {
           ==================================================== */}
 
           <div
-            className="
-              relative
-              max-h-[95vh]
-              w-[850px]
-              overflow-auto
-              rounded-[3px]
-              border
-              border-slate-400
-              bg-white
-              shadow-[0_20px_60px_rgba(0,0,0,0.30)]
-            "
-            onMouseDown={(event) =>
-              event.stopPropagation()
-            }
+            className="relative max-h-[95vh] w-[850px] overflow-auto rounded-[3px] border
+              border-slate-400 bg-white shadow-[0_20px_60px_rgba(0,0,0,0.30)]"
+            onMouseDown={(event) => event.stopPropagation()}
           >
             {/* ==================================================
                 CLOSE BUTTON
@@ -1079,29 +961,10 @@ const COAListPage: React.FC = () => {
               type="button"
               title="Close"
               onClick={closeCOAPage}
-              className="
-                absolute
-                right-2
-                top-1
-                z-[10000]
-                flex
-                h-6
-                w-6
-                items-center
-                justify-center
-                rounded-full
-                bg-white
-                text-slate-500
-                shadow
-                hover:bg-slate-100
-                hover:text-red-500
-                focus:outline-none
-              "
+              className="absolute right-2 top-1 z-[10000] flex h-6 w-6 items-center justify-center rounded-full bg-white
+                text-slate-500 shadow hover:bg-slate-100 hover:text-red-500 focus:outline-none"
             >
-              <X
-                size={15}
-                strokeWidth={2}
-              />
+              <X size={15} strokeWidth={2} />
             </button>
 
             {/* ==================================================

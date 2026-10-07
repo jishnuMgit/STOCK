@@ -17,8 +17,10 @@ import { useCallback } from "react";
    consumed the key.
 ========================================================= */
 
+// tabindex="-1" means "not part of the keyboard flow" (e.g. a delete X or a
+// read-only box) - Enter skips those, just like Tab does.
 const FOCUSABLE_SELECTOR =
-  'input:not([disabled]):not([type="hidden"]), select:not([disabled]), textarea:not([disabled]), button:not([disabled]), [tabindex]:not([tabindex="-1"])';
+  'input:not([disabled]):not([type="hidden"]):not([tabindex="-1"]), select:not([disabled]):not([tabindex="-1"]), textarea:not([disabled]):not([tabindex="-1"]), button:not([disabled]):not([tabindex="-1"]), [tabindex]:not([tabindex="-1"])';
 
 export function useEnterAsTab() {
   return useCallback((e: React.KeyboardEvent<HTMLElement>) => {

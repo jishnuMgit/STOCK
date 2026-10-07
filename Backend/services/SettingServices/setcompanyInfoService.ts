@@ -2,6 +2,13 @@ import type { PoolClient } from "pg";
 import pool from "../../DB/db.js";
 
 /* =========================================================
+   The procedure is called with NAMED arguments (p_xxx => value),
+   so only the parameters a mode really uses are passed and the
+   order of the procedure's parameters can never shift a value
+   into the wrong one.
+========================================================= */
+
+/* =========================================================
    GET COMPANY INFO (mode 'G')
 ========================================================= */
 
@@ -21,48 +28,12 @@ export async function getCompanyInfoService(
     await client.query(
       `
       CALL dbo.sp_pagesetcompanyinfo(
-        $1::varchar,
-        $2::varchar,
-        $3::varchar,
-        $4::varchar,
-        $5::varchar,
-        $6::varchar,
-        $7::varchar,
-        $8::varchar,
-        $9::varchar,
-        $10::varchar,
-        $11::varchar,
-        $12::varchar,
-        $13::varchar,
-        $14::varchar,
-        $15::varchar,
-        $16::varchar,
-        $17::varchar,
-        $18::varchar,
-        $19::refcursor
+        p_strmode       => $1::varchar,
+        p_pstrcoid      => $2::varchar,
+        p_result_cursor => $3::refcursor
       )
       `,
-      [
-        "G",       // p_strmode
-        PstrCoID,  // p_pstrcoid
-        null,      // p_strconame
-        null,      // p_strconame_ar
-        null,      // p_strconame_qr
-        null,      // p_strconame_short
-        null,      // p_strcovatno
-        null,      // p_strcovatno_ar
-        null,      // p_strcoaddress1
-        null,      // p_strcoaddress2
-        null,      // p_strcoaddress3
-        null,      // p_strcoaddress4
-        null,      // p_strcoaddress1_ar
-        null,      // p_strcoaddress2_ar
-        null,      // p_strcoaddress3_ar
-        null,      // p_strcoaddress4_ar
-        null,      // p_strcostatus
-        null,      // p_pstruserid
-        cursorName // p_result_cursor
-      ]
+      ["G", PstrCoID, cursorName]
     );
 
     const result = await client.query(
@@ -94,14 +65,6 @@ export async function updateCompanyInfoService(
     txtCoName_Short: string | null;
     txtCoVATNo: string | null;
     txtCoVATNo_AR: string | null;
-    txtCoAddress1: string | null;
-    txtCoAddress2: string | null;
-    txtCoAddress3: string | null;
-    txtCoAddress4: string | null;
-    txtCoAddress1_AR: string | null;
-    txtCoAddress2_AR: string | null;
-    txtCoAddress3_AR: string | null;
-    txtCoAddress4_AR: string | null;
     txtCoStatus: string | null;
     PstrUserID: string;
   }
@@ -119,25 +82,17 @@ export async function updateCompanyInfoService(
     await client.query(
       `
       CALL dbo.sp_pagesetcompanyinfo(
-        $1::varchar,
-        $2::varchar,
-        $3::varchar,
-        $4::varchar,
-        $5::varchar,
-        $6::varchar,
-        $7::varchar,
-        $8::varchar,
-        $9::varchar,
-        $10::varchar,
-        $11::varchar,
-        $12::varchar,
-        $13::varchar,
-        $14::varchar,
-        $15::varchar,
-        $16::varchar,
-        $17::varchar,
-        $18::varchar,
-        $19::refcursor
+        p_strmode         => $1::varchar,
+        p_pstrcoid        => $2::varchar,
+        p_strconame       => $3::varchar,
+        p_strconame_ar    => $4::varchar,
+        p_strconame_qr    => $5::varchar,
+        p_strconame_short => $6::varchar,
+        p_strcovatno      => $7::varchar,
+        p_strcovatno_ar   => $8::varchar,
+        p_strcostatus     => $9::varchar,
+        p_pstruserid      => $10::varchar,
+        p_result_cursor   => $11::refcursor
       )
       `,
       [
@@ -149,14 +104,6 @@ export async function updateCompanyInfoService(
         payload.txtCoName_Short,
         payload.txtCoVATNo,
         payload.txtCoVATNo_AR,
-        payload.txtCoAddress1,
-        payload.txtCoAddress2,
-        payload.txtCoAddress3,
-        payload.txtCoAddress4,
-        payload.txtCoAddress1_AR,
-        payload.txtCoAddress2_AR,
-        payload.txtCoAddress3_AR,
-        payload.txtCoAddress4_AR,
         payload.txtCoStatus,
         payload.PstrUserID,
         cursorName

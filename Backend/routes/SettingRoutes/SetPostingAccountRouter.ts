@@ -1,5 +1,7 @@
 import express from "express";
 
+import { authenticate } from "../../middleware/authMiddleware.js";
+
 import {
   getBranchList,
   getDefaultBranch,
@@ -14,6 +16,7 @@ router.get("/getBranchList", getBranchList);
 router.get("/getDefaultBranch", getDefaultBranch);
 router.get("/getAccountList", getAccountList);
 router.get("/getPostingAccount", getPostingAccount);
-router.post("/savePostingAccount", savePostingAccount);
+// behind the session check: the save needs to know WHO is saving (rights)
+router.post("/savePostingAccount", authenticate, savePostingAccount);
 
 export default router;

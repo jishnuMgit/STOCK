@@ -3,6 +3,7 @@ import { toast } from "react-toastify";
 import { X } from "lucide-react";
 import { useConfirm } from "../../hooks/useConfirm";
 import { useAltShortcuts } from "../../hooks/useAltShortcuts";
+import { useEnterAsTab } from "../../hooks/useEnterAsTab";
 import { useButtonPermissions } from "../../hooks/useButtonPermissions";
 import Select, {
   components,
@@ -34,13 +35,13 @@ interface DropdownOption {
   gph?: string;
 }
 
-// one row of GET /FinanceSetting/getParameterList
+// one row of GET /SetChartOfAccount/getParameterList
 interface ParameterOption {
   lkpParameterName: string;
   lkpParameterType: string;
 }
 
-// one row of GET /FinanceSetting/getAccountList
+// one row of GET /SetChartOfAccount/getAccountList
 interface AccountOption {
   lkpAccountID: string;
   lkpAccountName: string;
@@ -76,8 +77,8 @@ const createMenuList = (
     <components.MenuList {...props}>
       <div
         className="
-          sticky top-0 z-2
-          grid h-6.75
+          sticky top-0 z-[2]
+          grid h-[27px]
           border-b border-slate-300
           bg-[#eeeeee]
           text-[12px] font-medium text-slate-800
@@ -85,7 +86,7 @@ const createMenuList = (
         style={{ gridTemplateColumns: gridColumns }}
       >
         <div
-          className={`flex min-w-0 items-center px-1.75 ${
+          className={`flex min-w-0 items-center px-[7px] ${
             secondHeader ? "border-r border-slate-300" : ""
           }`}
         >
@@ -93,7 +94,7 @@ const createMenuList = (
         </div>
 
         {secondHeader && (
-          <div className="flex min-w-0 items-center px-1.75">
+          <div className="flex min-w-0 items-center px-[7px]">
             {secondHeader}
           </div>
         )}
@@ -241,9 +242,12 @@ const createSelectStyles = (
     overflow: "hidden",
   }),
 
+  // no fixed maxHeight here (react-select uses its own, up to 300px).
+  // Together with minMenuHeight on each Select, the list opens BELOW the
+  // row only when the whole list fits there; otherwise it opens ABOVE with
+  // the whole list - it is never squeezed into a short scrolling list.
   menuList: (base) => ({
     ...base,
-    maxHeight: "300px",
     padding: 0,
     overflowX: "hidden",
     overflowY: "auto",
@@ -274,10 +278,10 @@ const createSelectStyles = (
 // MAIN COMPONENT
 // ============================================================
 
-// tblmenu: 9109 = mnuFinSetting ("Finance Setting")
-const MENU_ID = "9109";
+// tblmenu: 9110 = mnuSetChartOfAccount ("Set Chart Of Account")
+const MENU_ID = "9110";
 
-const ChartOfAccountSettings: React.FC = () => {
+const SetChartOfAccount: React.FC = () => {
   const [rows, setRows] = useState<AccountSetting[]>([]);
 
   // bumped by Clear (and after a save) so the saved rows are loaded again
@@ -285,6 +289,7 @@ const ChartOfAccountSettings: React.FC = () => {
 
   const perms = useButtonPermissions(MENU_ID);
   const { confirm, confirmDialog } = useConfirm();
+  const handleEnterAsTab = useEnterAsTab();
   const [saving, setSaving] = useState<boolean>(false);
 
   const [parameterList, setParameterList] = useState<ParameterOption[]>([]);
@@ -292,22 +297,22 @@ const ChartOfAccountSettings: React.FC = () => {
 
   // ==========================================================
   // LOAD SAVED ROWS (the grid) - tblfinsetting rows of the
-  // logged-in company, via dbo.sp_pagefinancesetting mode 'G'.
+  // logged-in company, via dbo.sp_pagesetchartofaccount mode 'G'.
   // Runs when the page opens and again after Clear.
   // ==========================================================
 
   useEffect(() => {
-    const loadFinSetting = async () => {
+    const loadChartOfAccount = async () => {
       try {
         const PstrCoID = localStorage.getItem("PstrCoID");
 
         if (!PstrCoID) {
-          toast.error("getFinSetting: no PstrCoID in localStorage");
+          toast.error("getChartOfAccount: no PstrCoID in localStorage");
           return;
         }
 
         const response = await fetch(
-          `${import.meta.env.VITE_API_URL}/FinanceSetting/getFinSetting?PstrCoID=${PstrCoID}`
+          `${import.meta.env.VITE_API_URL}/SetChartOfAccount/getChartOfAccount?PstrCoID=${PstrCoID}`
         );
 
         if (!response.ok) {
@@ -317,7 +322,7 @@ const ChartOfAccountSettings: React.FC = () => {
         const result = await response.json();
 
         if (!result.success) {
-          toast.error(result.message || "Failed to load finance setting");
+          toast.error(result.message || "Failed to load chart of account setting");
           return;
         }
 
@@ -339,12 +344,12 @@ const ChartOfAccountSettings: React.FC = () => {
           )
         );
       } catch (error) {
-        console.error("getFinSetting error:", error);
-        toast.error("Failed to load finance setting");
+        console.error("getChartOfAccount error:", error);
+        toast.error("Failed to load chart of account setting");
       }
     };
 
-    loadFinSetting();
+    loadChartOfAccount();
   }, [reloadKey]);
 
   // ==========================================================
@@ -363,7 +368,7 @@ const ChartOfAccountSettings: React.FC = () => {
         }
 
         const response = await fetch(
-          `${import.meta.env.VITE_API_URL}/FinanceSetting/getParameterList?PstrCoID=${PstrCoID}`
+          `${import.meta.env.VITE_API_URL}/SetChartOfAccount/getParameterList?PstrCoID=${PstrCoID}`
         );
 
         if (!response.ok) {
@@ -403,7 +408,7 @@ const ChartOfAccountSettings: React.FC = () => {
         }
 
         const response = await fetch(
-          `${import.meta.env.VITE_API_URL}/FinanceSetting/getAccountList?PstrCoID=${PstrCoID}`
+          `${import.meta.env.VITE_API_URL}/SetChartOfAccount/getAccountList?PstrCoID=${PstrCoID}`
         );
 
         if (!response.ok) {
@@ -443,6 +448,11 @@ const ChartOfAccountSettings: React.FC = () => {
       })),
     [parameterList]
   );
+
+  // height of the Parameter list when ALL of it is shown (the header and one
+  // 27px row per parameter) - so it never needs a scroll bar, however many
+  // parameters there are
+  const parameterMenuHeight = (parameterList.length + 1) * 27 + 2;
 
   // Both account dropdowns save the account ID (value). They only
   // differ in what they show: the ID list shows the ID, the Name
@@ -584,9 +594,10 @@ const ChartOfAccountSettings: React.FC = () => {
 
     try {
       const response = await fetch(
-        `${import.meta.env.VITE_API_URL}/FinanceSetting/deleteFinSettingRow`,
+        `${import.meta.env.VITE_API_URL}/SetChartOfAccount/deleteChartOfAccountRow`,
         {
           method: "DELETE",
+          credentials: "include", // the server checks the session and the rights
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
             PstrCoID,
@@ -609,8 +620,8 @@ const ChartOfAccountSettings: React.FC = () => {
 
       setRows((previous) => previous.filter((item) => item !== row));
     } catch (error) {
-      console.error("deleteFinSettingRow error:", error);
-      toast.error("Cannot connect to Finance Setting API.");
+      console.error("deleteChartOfAccountRow error:", error);
+      toast.error("Cannot connect to Set Chart Of Account API.");
     }
   };
 
@@ -621,8 +632,20 @@ const ChartOfAccountSettings: React.FC = () => {
   // in one transaction.
   // ==========================================================
 
+  // The one button: Save the first time, Modify once the company has saved
+  // rows (the old form switched its button text between "&Save" and
+  // "&Modify"). A row that carries its original keys came from the database.
+  const hasSavedRows = rows.some((row) => row.txtOriginalSlNo !== null);
+  const actionWord = hasSavedRows ? "Modify" : "Save";
+  const canSaveOrModify = hasSavedRows ? perms.modify : perms.save;
+
   const handleSave = async () => {
     if (saving) return;
+
+    if (!canSaveOrModify) {
+      toast.error(`You do not have permission to ${actionWord}.`);
+      return;
+    }
 
     const PstrCoID = localStorage.getItem("PstrCoID");
     const PstrYear = localStorage.getItem("PstrYear");
@@ -645,6 +668,13 @@ const ChartOfAccountSettings: React.FC = () => {
     for (const { row, rowNo } of filledRows) {
       if (!row.lkpParameterType.trim() || !row.lkpAccountID.trim()) {
         toast.error(`Row ${rowNo}: select both a Parameter and an Account.`);
+        document
+          .getElementById(
+            row.lkpParameterType.trim()
+              ? `lkpAccountID-${rowNo - 1}`
+              : `lkpParameterType-${rowNo - 1}`
+          )
+          ?.focus();
         return;
       }
 
@@ -652,6 +682,7 @@ const ChartOfAccountSettings: React.FC = () => {
 
       if (seen.has(pair)) {
         toast.error(`Row ${rowNo}: Duplicate Entry !`);
+        document.getElementById(`lkpAccountID-${rowNo - 1}`)?.focus();
         return;
       }
 
@@ -662,15 +693,17 @@ const ChartOfAccountSettings: React.FC = () => {
 
     try {
       const response = await fetch(
-        `${import.meta.env.VITE_API_URL}/FinanceSetting/saveFinSetting`,
+        `${import.meta.env.VITE_API_URL}/SetChartOfAccount/saveChartOfAccount`,
         {
           method: "POST",
+          credentials: "include", // the server checks the session and the rights
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
             PstrCoID,
             PstrYear,
             PstrUserID,
-            rows: filledRows.map(({ row }, index) => ({
+            rows: filledRows.map(({ row, rowNo }, index) => ({
+              txtGridRow: rowNo - 1, // where the row sits in the grid (for the focus)
               txtSlNo: index + 1,
               lkpParameterType: row.lkpParameterType,
               lkpAccountID: row.lkpAccountID,
@@ -685,17 +718,32 @@ const ChartOfAccountSettings: React.FC = () => {
       const result = await response.json();
 
       if (!response.ok || !result.success) {
-        toast.error(result.message || "Finance setting could not be saved.");
+        toast.error(
+          result.message ||
+            (hasSavedRows ? "Not modified, try again." : "Not saved, try again.")
+        );
+
+        // the backend validator names the field that failed - same name as
+        // the element id, so the cursor goes straight into it
+        if (result.field) {
+          document.getElementById(result.field)?.focus();
+        }
+
         return;
       }
 
-      toast.success(result.message || "Finance setting saved successfully.");
+      toast.success(
+        result.message ||
+          (hasSavedRows
+            ? "Chart of account setting modified successfully."
+            : "Chart of account setting saved successfully.")
+      );
 
       // load the saved rows again - they now carry their new slno / keys
       setReloadKey((key) => key + 1);
     } catch (error) {
-      console.error("saveFinSetting error:", error);
-      toast.error("Cannot connect to Finance Setting API.");
+      console.error("saveChartOfAccount error:", error);
+      toast.error("Cannot connect to Set Chart Of Account API.");
     } finally {
       setSaving(false);
     }
@@ -709,9 +757,15 @@ const ChartOfAccountSettings: React.FC = () => {
     setReloadKey((key) => key + 1);
   };
 
-  // Alt+S -> Save, Alt+C -> Clear (the underlined letters on the buttons)
+  // Alt+S -> Save (nothing saved yet), Alt+M -> Modify (saved rows),
+  // Alt+C -> Clear (the underlined letters on the buttons)
   useAltShortcuts({
-    s: handleSave,
+    s: () => {
+      if (!hasSavedRows) handleSave();
+    },
+    m: () => {
+      if (hasSavedRows) handleSave();
+    },
     c: handleClear,
   });
 
@@ -736,7 +790,7 @@ const ChartOfAccountSettings: React.FC = () => {
     "18px 34px 266px 120px minmax(180px, 1fr) 58px";
 
   const headerCellClass =
-    "flex h-[30px] min-w-0 items-center border-r border-[#c8eadb] px-[7px] text-[12px] font-medium text-slate-600";
+    "flex h-[30px] min-w-0 items-center border-r border-[#c8eadb] px-[7px] text-[14px] text-gray-600";
 
   const cellClass =
     "relative h-[30px] min-w-0 border-r border-[#c8eadb] p-0";
@@ -746,38 +800,28 @@ const ChartOfAccountSettings: React.FC = () => {
   // ==========================================================
 
   return (
-    <div className="flex min-h-screen w-full items-center justify-center bg-white p-0 font-sans text-slate-700">
-      <div className="w-275 max-w-full border border-slate-400 bg-white">
+    <div
+      onKeyDown={handleEnterAsTab}
+      className="flex min-h-screen w-full items-center justify-center bg-white text-slate-700"
+    >
+      {/* no overflow-hidden on the card: dropdowns must remain visible */}
+      <div className="w-[1100px] max-w-full border border-slate-400 bg-white shadow-sm">
         {/* TITLE BAR */}
 
-       <div
-          className="
-            flex
-            h-9
-            items-center
-            border-b
-            border-slate-300
-            bg-[#a3dfc0]
-          "
-        >
-
-          <span
-            className="
-              px-6
-              text-[17px]
-              font-semibold
-              text-slate-700
-            "
-          >
-Chart Of Account Settings
-          </span>
-
+        <div className="flex h-[28px] w-full items-center bg-[#a7dfc0]">
+          <h1 className="ml-[5px] text-[17px] font-semibold text-[#374151]">
+            Set Chart Of Account
+          </h1>
         </div>
+
+        {/* FORM */}
+
+        <div className="p-[12px] m-[12px]">
 
         {/* TABLE */}
         {/* Do not add overflow-hidden here: dropdowns must remain visible. */}
 
-        <div className="mx-6.25 mt-0 mb-0 overflow-visible border border-[#b9e8d2]">
+        <div className="overflow-visible border border-[#b9e8d2]">
           <div className="w-full">
             {/* TABLE HEADINGS */}
 
@@ -785,7 +829,7 @@ Chart Of Account Settings
               className="grid border-b border-[#b9e8d2] bg-[#eef9f3]"
               style={{ gridTemplateColumns: columns }}
             >
-              <div className="h-7.5 border-r border-[#c8eadb]" />
+              <div className="h-[30px] border-r border-[#c8eadb]" />
 
               <div className={`${headerCellClass} justify-center`}>
                 Sl.
@@ -803,7 +847,7 @@ Chart Of Account Settings
                 Account Name
               </div>
 
-              <div className="flex h-7.5 min-w-0 items-center px-1.25 text-[12px] font-medium text-slate-600">
+              <div className="flex h-[30px] min-w-0 items-center px-[5px] text-[14px] text-gray-600">
                 G/P/H
               </div>
             </div>
@@ -844,13 +888,13 @@ Chart Of Account Settings
                 >
                   {/* ROW SELECTOR */}
 
-                  <div className="h-7.5 border-r border-[#c8eadb]" />
+                  <div className="h-[30px] border-r border-[#c8eadb]" />
 
                   {/* SERIAL NUMBER */}
 
                   <div
                     id={`txtSlNo-${index}`}
-                    className="flex h-7.5 items-center justify-center border-r border-[#c8eadb]"
+                    className="flex h-[30px] items-center justify-center border-r border-[#c8eadb]"
                   >
                     {index + 1}
                   </div>
@@ -876,17 +920,17 @@ Chart Of Account Settings
                           option.label
                         ) : (
                           <div
-                            className="grid h-6.75 w-full items-center"
+                            className="grid h-[27px] w-full items-center"
                             style={{
                               gridTemplateColumns:
                                 "266px minmax(120px, 1fr)",
                             }}
                           >
-                            <span className="flex h-full min-w-0 items-center border-r border-slate-200 px-1.75">
+                            <span className="flex h-full min-w-0 items-center border-r border-slate-200 px-[7px]">
                               {option.label}
                             </span>
 
-                            <span className="flex h-full min-w-0 items-center px-1.75">
+                            <span className="flex h-full min-w-0 items-center px-[7px]">
                               {option.secondary}
                             </span>
                           </div>
@@ -900,6 +944,8 @@ Chart Of Account Settings
                       }
                       menuPosition="fixed"
                       menuPlacement="auto"
+                      maxMenuHeight={parameterMenuHeight}
+                      minMenuHeight={Math.max(320, parameterMenuHeight + 20)}
                       isClearable={false}
                       isSearchable
                       placeholder=""
@@ -914,18 +960,19 @@ Chart Of Account Settings
                         id={`btnDeleteRow-${index}`}
                         name="btnDeleteRow"
                         type="button"
+                        tabIndex={-1}
                         onClick={() => handleDeleteRow(rows[index])}
                         disabled={!perms.delete}
                         aria-label={`Delete row ${index + 1}`}
                         className="
-                          relative inline-flex h-full w-5 shrink-0
+                          relative inline-flex h-full w-[27px] shrink-0
                           items-center justify-center self-stretch rounded
                           text-[#999999] hover:text-red-600
                           disabled:cursor-not-allowed disabled:opacity-30
                           disabled:hover:text-[#999999]
                         "
                       >
-                        <X size={10} />
+                        <X size={13} />
                       </button>
                     )}
                   </div>
@@ -950,17 +997,17 @@ Chart Of Account Settings
                           option.label
                         ) : (
                           <div
-                            className="grid h-6.75 w-full items-center"
+                            className="grid h-[27px] w-full items-center"
                             style={{
                               gridTemplateColumns:
                                 "120px minmax(200px, 1fr)",
                             }}
                           >
-                            <span className="flex h-full min-w-0 items-center border-r border-slate-200 px-1.75">
+                            <span className="flex h-full min-w-0 items-center border-r border-slate-200 px-[7px]">
                               {option.label}
                             </span>
 
-                            <span className="flex h-full min-w-0 items-center px-1.75">
+                            <span className="flex h-full min-w-0 items-center px-[7px]">
                               {option.secondary}
                             </span>
                           </div>
@@ -974,6 +1021,7 @@ Chart Of Account Settings
                       }
                       menuPosition="fixed"
                       menuPlacement="auto"
+                      minMenuHeight={320}
                       isClearable={false}
                       isSearchable
                       placeholder=""
@@ -1001,17 +1049,17 @@ Chart Of Account Settings
                           option.label
                         ) : (
                           <div
-                            className="grid h-6.75 w-full items-center"
+                            className="grid h-[27px] w-full items-center"
                             style={{
                               gridTemplateColumns:
                                 "minmax(0, 1fr) 120px",
                             }}
                           >
-                            <span className="flex h-full min-w-0 items-center border-r border-slate-200 px-1.75">
+                            <span className="flex h-full min-w-0 items-center border-r border-slate-200 px-[7px]">
                               {option.label}
                             </span>
 
-                            <span className="flex h-full min-w-0 items-center px-1.75">
+                            <span className="flex h-full min-w-0 items-center px-[7px]">
                               {option.secondary}
                             </span>
                           </div>
@@ -1025,6 +1073,7 @@ Chart Of Account Settings
                       }
                       menuPosition="fixed"
                       menuPlacement="auto"
+                      minMenuHeight={320}
                       isClearable={false}
                       isSearchable
                       placeholder=""
@@ -1034,17 +1083,18 @@ Chart Of Account Settings
 
                   {/* GROUP / HEAD */}
 
-                  <div className="h-7.5 min-w-0">
+                  <div className="h-[30px] min-w-0">
                     <input
                       id={`txtGPH-${index}`}
                       name="txtGPH"
                       aria-label={`G/P/H row ${index + 1}`}
                       value={row.txtGPH}
                       readOnly
+                      tabIndex={-1}
                       className="
                         h-full w-full min-w-0
                         border-0 bg-transparent
-                        px-1.75 text-[11px] text-slate-700
+                        px-[7px] text-[11px] text-slate-700
                         outline-none
                         focus:bg-transparent
                       "
@@ -1056,28 +1106,23 @@ Chart Of Account Settings
           </div>
         </div>
 
+        </div>
+
         {/* ACTION BUTTONS - stay at the bottom of the window, so Save is always visible without scrolling */}
 
-        <div className="sticky bottom-0 z-10 flex min-h-18.5 items-start justify-center gap-3 border-t border-slate-200 bg-white pt-2">
+        <div className="sticky bottom-0 z-10 flex justify-center gap-3 bg-white pb-[12px] pt-[2px]">
           <button
-            id="btnSave"
-            name="btnSave"
+            id={hasSavedRows ? "btnModify" : "btnSave"}
+            name={hasSavedRows ? "btnModify" : "btnSave"}
             type="button"
             onClick={handleSave}
-            disabled={!perms.save || saving}
-            className="
-              h-10 w-26.75
-              rounded-sm border border-[#9bb7cc]
-              bg-linear-to-b from-white to-[#e2ebf2]
-              text-[14px] text-green-700 shadow-sm
-              hover:from-[#f4fff7] hover:to-[#d4ebdc]
-              focus:outline-none focus:ring-1 focus:ring-green-400
-              disabled:cursor-not-allowed disabled:opacity-40
-            "
+            disabled={!canSaveOrModify || saving}
+            className="btn-style disabled:cursor-not-allowed disabled:opacity-40"
           >
-            <span className="underline underline-offset-[3px]">
-              S
-            </span>ave
+            <span className="underline underline-offset-2">
+              {actionWord.charAt(0)}
+            </span>
+            {actionWord.slice(1)}
           </button>
 
           <button
@@ -1085,18 +1130,9 @@ Chart Of Account Settings
             name="btnClear"
             type="button"
             onClick={handleClear}
-            className="
-              h-10 w-26.75
-              rounded-sm border border-[#9bb7cc]
-              bg-linear-to-b from-white to-[#e2ebf2]
-              text-[14px] text-green-700 shadow-sm
-              hover:from-[#f4fff7] hover:to-[#d4ebdc]
-              focus:outline-none focus:ring-1 focus:ring-green-400
-            "
+            className="btn-style"
           >
-            <span className="underline underline-offset-[3px]">
-              C
-            </span>lear
+            <span className="underline underline-offset-2">C</span>lear
           </button>
         </div>
       </div>
@@ -1106,4 +1142,4 @@ Chart Of Account Settings
   );
 };
 
-export default ChartOfAccountSettings;
+export default SetChartOfAccount;

@@ -46,7 +46,7 @@ const selectStyles: StylesConfig<Option, false> = {
     height: 28,
     width: "100%",
     border: "1px solid #cbd5e1",
-    borderRadius: 2,
+    borderRadius: 4,
     boxShadow: "none",
     backgroundColor: state.isFocused ? "#eff6ff" : "#ffffff",
     cursor: "pointer",
@@ -142,7 +142,7 @@ const selectStyles: StylesConfig<Option, false> = {
 // ============================================================
 
 const inputClass =
-  "h-[28px] border border-[#cbd5e1] bg-white px-2 text-[15px] text-[#202020] outline-none focus:border-blue-400 focus:bg-blue-50";
+  " px-2 input-style";
 
 // ============================================================
 // HEADER
@@ -206,7 +206,7 @@ const StockTransferHeader: React.FC = () => {
                 shrink-0
                 whitespace-nowrap
                 text-right
-                text-[15px]
+                text-[14px]
                 text-[#202020]
               "
             >
@@ -244,7 +244,7 @@ const StockTransferHeader: React.FC = () => {
                 shrink-0
                 whitespace-nowrap
                 text-right
-                text-[15px]
+                text-[14px]
                 text-[#202020]
               "
             >
@@ -276,7 +276,7 @@ const StockTransferHeader: React.FC = () => {
           ================================================== */}
 
           <div className="absolute right-0 top-0 flex h-[28px] items-center">
-            <label className="mr-[7px] whitespace-nowrap text-[15px] text-[#202020]">
+            <label className="mr-[7px] whitespace-nowrap text-[14px] text-[#202020]">
               Date :
             </label>
 
@@ -284,7 +284,7 @@ const StockTransferHeader: React.FC = () => {
               id="dtpDate"
               type="date"
               defaultValue="2026-07-01"
-              className={`h-[28px] border border-[#cbd5e1] bg-white px-2 text-[#202020] outline-none focus:border-blue-400 focus:bg-blue-50 w-[120px] text-[13px]`}
+              className={`w-[120px] input-style`}
             />
           </div>
 
@@ -299,7 +299,7 @@ const StockTransferHeader: React.FC = () => {
                 shrink-0
                 whitespace-nowrap
                 text-right
-                text-[15px]
+                text-[14px]
                 text-[#202020]
               "
             >
@@ -330,8 +330,8 @@ const StockTransferHeader: React.FC = () => {
               STOCK
           ================================================== */}
 
-          <div className="absolute left-[459px] top-[38px] flex h-[28px] items-center">
-            <label className="mr-[7px] whitespace-nowrap text-[15px] text-[#202020]">
+          <div className="absolute left-[43%] top-[38px] flex h-[28px] items-center">
+            <label className="mr-[7px] whitespace-nowrap text-[14px] text-[#202020]">
               Stock :
             </label>
 
