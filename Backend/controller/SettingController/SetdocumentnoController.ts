@@ -1,4 +1,7 @@
 import { Request, Response } from "express";
+import type { AuthenticatedRequest } from "../../middleware/authMiddleware.js";
+import { hasButtonRight } from "../../utils/buttonRights.js";
+import { validateSetDocumentNo } from "../../validators/SetDocumentNoValidator.js";
 
 import pool from "../../DB/db.js";
 import {
@@ -257,8 +260,11 @@ export const getDocumentNoList = async (
    SAVE DOCUMENT NO LIST (mode 'S' or 'M' per row)
 ========================================================= */
 
+// dbo.tblmenu fmenuid of the Set Document No screen
+const MENU_ID = "9102";
+
 export const saveDocumentNo = async (
-  req: Request,
+  req: AuthenticatedRequest,
   res: Response
 ): Promise<Response> => {
   try {
@@ -285,13 +291,6 @@ export const saveDocumentNo = async (
       });
     }
 
-    if (!lkpYear || !lkpBranch || !lkpModule) {
-      return res.status(400).json({
-        success: false,
-        message: "Year, Branch and Module are required",
-      });
-    }
-
     if (!PstrUserID) {
       return res.status(400).json({
         success: false,
@@ -299,10 +298,47 @@ export const saveDocumentNo = async (
       });
     }
 
-    if (!Array.isArray(rows) || rows.length === 0) {
-      return res.status(400).json({
+    // validators/SetDocumentNoValidator.ts: idle user, then Year, Branch and
+    // Module, then something to save - the first rule that fails stops the save
+    const check = await validateSetDocumentNo({
+      PstrUserID,
+      lkpYear,
+      lkpBranch,
+      lkpModule,
+      rows,
+    });
+
+    if (!check.valid) {
+      return res.status(check.status).json({
         success: false,
-        message: "There is no information for saving.",
+        message: check.message,
+        field: check.field,
+      });
+    }
+
+    // Save (S) when this Year + Branch + Module has no numbering yet, Modify
+    // (M) when it already has - each needs its own button right. The user
+    // comes from the session (authenticate), not from the request body.
+    if (!req.user) {
+      return res.status(401).json({
+        success: false,
+        message: "Authentication required",
+      });
+    }
+
+    const savedNumbering = await getDocumentNoListService(
+      PstrCoID,
+      lkpYear,
+      lkpBranch,
+      lkpModule
+    );
+    const wantedMode = savedNumbering.length > 0 ? "M" : "S";
+
+    if (!(await hasButtonRight(req.user, MENU_ID, wantedMode))) {
+      return res.status(403).json({
+        success: false,
+        message: `You do not have permission to ${wantedMode === "M" ? "Modify" : "Save"}.`,
+        field: "lkpYear",
       });
     }
 
@@ -329,7 +365,11 @@ export const saveDocumentNo = async (
 
     return res.status(200).json({
       success: true,
-      message: "Document numbering saved successfully",
+      message:
+        wantedMode === "M"
+          ? "Document numbering modified successfully"
+          : "Document numbering saved successfully",
+      mode: wantedMode,
     });
   } catch (error: unknown) {
     console.error("saveDocumentNo error:", error);
@@ -349,7 +389,7 @@ export const saveDocumentNo = async (
 ========================================================= */
 
 export const deleteDocumentNoRow = async (
-  req: Request,
+  req: AuthenticatedRequest,
   res: Response
 ): Promise<Response> => {
   try {
@@ -391,6 +431,21 @@ export const deleteDocumentNoRow = async (
       return res.status(400).json({
         success: false,
         message: "User ID is required",
+      });
+    }
+
+    // the Delete button right, checked for the logged-in user (session)
+    if (!req.user) {
+      return res.status(401).json({
+        success: false,
+        message: "Authentication required",
+      });
+    }
+
+    if (!(await hasButtonRight(req.user, MENU_ID, "D"))) {
+      return res.status(403).json({
+        success: false,
+        message: "You do not have permission to Delete.",
       });
     }
 

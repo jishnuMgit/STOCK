@@ -71,48 +71,6 @@ const supplierNameComponents = makePairComponents(
 );
 
 /* =========================================================
-   BUTTON CLASS
-========================================================= */
-
-const buttonClass = `
-  min-w-[120px]
-      h-[40px]
-      rounded-[4px]
-      border-l
-      border-r
-      border-b
-      border-[#9db8d4]
-      border-t-0
-      bg-gradient-to-b
-      from-[#ffffff]
-      to-[#e7eef5]
-      px-4
-      text-[18px]
-      shadow-[inset_0_1px_0_rgba(255,255,255,0.8)]
-      transition-colors
-      duration-100
-      hover:border-l-[#7f9fbd]
-      hover:border-r-[#7f9fbd]
-      hover:border-b-[#7f9fbd]
-      hover:bg-gradient-to-b
-      hover:from-[#ffffff]
-      hover:to-[#dce8f1]
-      focus:border-l-[#20884e]
-      focus:border-r-[#20884e]
-      focus:border-b-[#20884e]
-      focus:border-t-0
-      focus:bg-gradient-to-b
-      focus:from-[#ffffff]
-      focus:to-[#dcefe5]
-      focus:outline-none
-      focus:ring-0
-`;
-
-const textClass = `
-  text-[18px] text-green-600
-`;
-
-/* =========================================================
    ITEM PAGE
 ========================================================= */
 
@@ -128,6 +86,10 @@ const MENU_ID = "010201";
   ========================================================= */
 
   const [txtItemID, setTxtItemID] = useState("");
+
+  // Does the Item ID already exist? false -> the button says Save (new item),
+  // true -> Modify. Set by the load (blur / Search), reset when the ID is typed.
+  const [hasSavedItem, setHasSavedItem] = useState(false);
   const [txtItemName, setTxtItemName] = useState("");
   const [txtItemDescription, setTxtItemDescription] = useState("");
   const [lkpUnit, setLkpUnit] = useState("");
@@ -477,21 +439,41 @@ const MENU_ID = "010201";
      BUTTON HANDLERS
   ========================================================= */
 
+  // The one button: Save for a new Item ID, Modify for an existing one (the
+  // old form switched its button text between "&Save" and "&Modify").
+  const actionWord = hasSavedItem ? "Modify" : "Save";
+  const canSaveOrModify = hasSavedItem ? perms.modify : perms.save;
+
   const handleSave = async () => {
-    if (!perms.save) {
-      toast.error("You do not have permission to Save.");
+    if (!canSaveOrModify) {
+      toast.error(`You do not have permission to ${actionWord}.`);
       return;
     }
 
-    if (!txtItemID || !txtItemName || !lkpUnit || !lkpItemGroupID || !lkpSupplierID || !txtSupplierItemID) {
-      toast.warning("Item ID, Item Name, Unit, Item Group, Supplier and Supplier Item ID are required.");
+    // the boxes with the red *, in page order - the first empty one stops the
+    // save and gets the cursor (the server checks the same list)
+    const requiredBoxes: { id: string; value: string; message: string }[] = [
+      { id: "txtItemID", value: txtItemID, message: "Please input 'Item ID'" },
+      { id: "txtItemName", value: txtItemName, message: "Please input 'Item Name'" },
+      { id: "lkpUnit", value: lkpUnit, message: "Please select 'Unit'" },
+      { id: "lkpItemGroupID", value: lkpItemGroupID, message: "Please select 'Item Group'" },
+      { id: "lkpSupplierID", value: lkpSupplierID, message: "Please select 'Supplier'" },
+      { id: "txtSupplierItemID", value: txtSupplierItemID, message: "Please input 'Supplier Item ID'" },
+    ];
+
+    const missing = requiredBoxes.find((box) => !box.value.trim());
+
+    if (missing) {
+      toast.warning(missing.message);
+      document.getElementById(missing.id)?.focus();
       return;
     }
 
     const validRows = rows.filter((row) => row.lkpBranch);
 
     if (validRows.length === 0) {
-      toast.warning("At least one Branch row is required.");
+      toast.warning("Please select at least one 'Branch'");
+      document.getElementById(`lkpBranch_${rows[0]?.id ?? 1}`)?.focus();
       return;
     }
 
@@ -508,6 +490,7 @@ const MENU_ID = "010201";
         `${import.meta.env.VITE_API_URL}/Item/saveItem`,
         {
           method: "POST",
+          credentials: "include", // the server checks the session and the rights
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
             PstrCoID,
@@ -536,11 +519,27 @@ const MENU_ID = "010201";
       const result = await response.json();
 
       if (!response.ok || !result.success) {
-        toast.error(result.message || "Item could not be saved.");
+        toast.error(
+          result.message ||
+            (hasSavedItem ? "Not modified, try again." : "Not saved, try again.")
+        );
+
+        // the backend validator names the field that failed - same name as
+        // the element id, so the cursor goes straight into it
+        if (result.field) {
+          document.getElementById(result.field)?.focus();
+        }
+
         return;
       }
 
-      toast.success(result.message || "Item saved successfully.");
+      toast.success(
+        result.message ||
+          (hasSavedItem ? "Item modified successfully." : "Item saved successfully.")
+      );
+
+      // load the item again: it now exists, so the button flips to Modify
+      findItem(txtItemID, { silent: true });
     } catch (error) {
       console.error("saveItem error:", error);
       toast.error("Cannot connect to Item API.");
@@ -585,11 +584,15 @@ const MENU_ID = "010201";
       const result = await response.json();
 
       if (!response.ok || !result.success) {
+        setHasSavedItem(false);
+
         if (!silent) {
           toast.error(result.message || "Item not found.");
         }
         return;
       }
+
+      setHasSavedItem(true);
 
       const header = result.header;
 
@@ -690,6 +693,7 @@ const MENU_ID = "010201";
         `${import.meta.env.VITE_API_URL}/Item/deleteItem`,
         {
           method: "DELETE",
+          credentials: "include", // the server checks the session and the rights
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
             PstrCoID,
@@ -757,6 +761,7 @@ const MENU_ID = "010201";
         `${import.meta.env.VITE_API_URL}/Item/deleteItemBranchRow`,
         {
           method: "DELETE",
+          credentials: "include", // the server checks the session and the rights
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
             PstrCoID,
@@ -790,6 +795,7 @@ const MENU_ID = "010201";
   };
 
   const handleClear = () => {
+    setHasSavedItem(false);
     setTxtItemID("");
     setTxtItemName("");
     setTxtItemDescription("");
@@ -829,8 +835,15 @@ const MENU_ID = "010201";
      accelerator letters on the buttons).
   ========================================================= */
 
+  // Alt+S -> Save (new item), Alt+M -> Modify (existing item),
+  // Alt+D -> Delete, Alt+C -> Clear
   useAltShortcuts({
-    s: handleSave,
+    s: () => {
+      if (!hasSavedItem) handleSave();
+    },
+    m: () => {
+      if (hasSavedItem) handleSave();
+    },
     d: handleDelete,
     c: handleClear,
   });
@@ -839,23 +852,15 @@ const MENU_ID = "010201";
      COMMON INPUT CLASS
   ========================================================= */
 
-  // const inputClass = `h-[28px] w-full rounded-none border border-slate-300 bg-white px-2 text-[12px] text-slate-700 outline-none
-  //   focus:border-blue-500`;
+  // the shared form-input look from index.css
+  const inputClass = "w-full input-style";
 
   /* =========================================================
      LABEL CLASS
   ========================================================= */
 
-  const labelClass = `
-    relative
-    flex
-    items-center
-    justify-end
-    text-right
-    text-[12px]
-    text-slate-700
-    whitespace-nowrap
-  `;
+  const labelClass =
+    "relative flex items-center justify-end whitespace-nowrap pr-3 text-right text-[14px] text-gray-600";
 
   /* =========================================================
      REQUIRED RED DOT
@@ -865,8 +870,8 @@ const MENU_ID = "010201";
     <span
       className="
         absolute
-        right-[3px]
-  -top-0.5
+        right-[15px]
+        -top-0.5
         h-[4px]
         w-[4px]
        text-red-500
@@ -879,63 +884,60 @@ const MENU_ID = "010201";
   /* =========================================================
      REACT SELECT - FORM
   ========================================================= */
-const reactSelectStyles: StylesConfig<SelectOption, false> = {
-  control: (provided, state) => ({
-    ...provided,
-    minHeight: "30px",
-    height: "30px",
-    borderRadius: "4px",
 
-    border: `1px solid ${
-      state.isFocused ? "#9fdfbc" : "#d7dee7"
-    }`,
+  const reactSelectStyles: StylesConfig<
+    SelectOption,
+    false
+  > = {
+    control: (provided, state) => ({
+      ...provided,
+      minHeight: "30px",
+      height: "30px",
+      border: "1px solid #d1d5db",
+      borderRadius: "4px",
+      boxShadow: "none",
+      backgroundColor: state.isFocused ? "#eefbf4" : "#ffffff",
+      fontSize: "11px",
+      cursor: "pointer",
 
-    backgroundColor: "#ffffff",
+      "&:hover": {
+        borderColor: "#9fdfbc",
+      },
+    }),
 
-    boxShadow: state.isFocused
-      ? "0 0 0 1px #9fdfbc"
-      : "none",
+    valueContainer: (provided) => ({
+      ...provided,
+      height: "23px",
+      minHeight: "23px",
+      padding: "0 6px",
+    }),
 
-    fontSize: "14px",
-    outline: "none",
-    cursor: "default",
+    input: (provided) => ({
+      ...provided,
+      margin: "0px",
+      padding: "0px",
+      fontSize: "11px",
+      color: "#374151",
+    }),
 
-    // Prevent blue border on hover
-    "&:hover": {
-      borderColor: state.isFocused ? "#9fdfbc" : "#d7dee7",
-    },
-  }),
+    singleValue: (provided) => ({
+      ...provided,
+      margin: 0,
+      fontSize: "11px",
+      color: "#374151",
+    }),
 
-  valueContainer: (provided) => ({
-    ...provided,
-    height: "30px",
-    padding: "0 8px",
-  }),
+    placeholder: (provided) => ({
+      ...provided,
+      margin: 0,
+      fontSize: "11px",
+      color: "#808080",
+    }),
 
-  input: (provided) => ({
-    ...provided,
-    margin: "0px",
-    padding: "0px",
-    fontSize: "14px",
-    color: "#334155",
-  }),
-
-  singleValue: (provided) => ({
-    ...provided,
-    fontSize: "14px",
-    color: "#334155",
-  }),
-
-  placeholder: (provided) => ({
-    ...provided,
-    fontSize: "14px",
-    color: "#64748b",
-  }),
-
-  indicatorsContainer: (provided) => ({
-    ...provided,
-    height: "30px",
-  }),
+    indicatorsContainer: (provided) => ({
+      ...provided,
+      height: "23px",
+    }),
 
   dropdownIndicator: (provided) => ({
     ...provided,
@@ -1139,11 +1141,13 @@ const reactSelectStyles: StylesConfig<SelectOption, false> = {
             MAIN CONTAINER
         ====================================================== */}
 
+        {/* no overflow-hidden: the dropdown lists must stay visible */}
         <div
           className="
             w-full
             border
             border-slate-400
+            shadow-sm
           "
         >
 
@@ -1151,25 +1155,17 @@ const reactSelectStyles: StylesConfig<SelectOption, false> = {
               HEADER
           =================================================== */}
 
-          <div className="flex h-[30px] items-center border-b border-slate-400 bg-[#a3dfc0]">
-            <span
-              className="
-                rounded-[3px]
-                px-2
-                text-[18px]
-                font-semibold
-                text-slate-800
-              "
-            >
+          <div className="flex h-[28px] w-full items-center bg-[#a7dfc0]">
+            <h1 className="ml-[5px] text-[17px] font-semibold text-[#374151]">
               Item
-            </span>
+            </h1>
           </div>
 
           {/* ===================================================
               FORM
           =================================================== */}
 
-          <div className="px-5 py-4">
+          <div className="p-[12px] m-[12px]">
             {/* =================================================
                 ITEM ID
             ================================================= */}
@@ -1178,7 +1174,7 @@ const reactSelectStyles: StylesConfig<SelectOption, false> = {
               className="
                 mb-2
                 grid
-                grid-cols-[85px_minmax(0,1fr)]
+                grid-cols-[130px_minmax(0,1fr)]
                 items-center
                 gap-2
               "
@@ -1197,9 +1193,12 @@ const reactSelectStyles: StylesConfig<SelectOption, false> = {
                 name="txtItemID"
                 type="text"
                 value={txtItemID}
-                onChange={(e) => setTxtItemID(e.target.value)}
+                onChange={(e) => {
+                  setTxtItemID(e.target.value);
+                  setHasSavedItem(false);
+                }}
                 onBlur={handleItemIDBlur}
-                className="input-style  w-[225px]"
+                className="w-[225px] input-style"
               />
             </div>
 
@@ -1211,7 +1210,7 @@ const reactSelectStyles: StylesConfig<SelectOption, false> = {
               className="
                 mb-2
                 grid
-                grid-cols-[85px_minmax(0,1fr)]
+                grid-cols-[130px_minmax(0,1fr)]
                 items-center
                 gap-2
               "
@@ -1243,7 +1242,7 @@ const reactSelectStyles: StylesConfig<SelectOption, false> = {
               className="
                 mb-2
                 grid
-                grid-cols-[85px_minmax(0,1fr)]
+                grid-cols-[130px_minmax(0,1fr)]
                 items-center
                 gap-2
               "
@@ -1270,7 +1269,7 @@ const reactSelectStyles: StylesConfig<SelectOption, false> = {
               className="
                 mb-2
                 grid
-                grid-cols-[85px_155px]
+                grid-cols-[130px_155px]
                 items-center
                 gap-2
               "
@@ -1306,7 +1305,7 @@ const reactSelectStyles: StylesConfig<SelectOption, false> = {
               className="
                 mb-2
                 grid
-                grid-cols-[85px_155px_65px_120px]
+                grid-cols-[130px_155px_65px_120px]
                 items-center
                 gap-2
               "
@@ -1358,7 +1357,7 @@ const reactSelectStyles: StylesConfig<SelectOption, false> = {
               className="
                 mb-2
                 grid
-                grid-cols-[85px_155px_minmax(0,1fr)]
+                grid-cols-[130px_155px_minmax(0,1fr)]
                 items-center
                 gap-2
               "
@@ -1425,7 +1424,7 @@ const reactSelectStyles: StylesConfig<SelectOption, false> = {
               className="
                 mb-2
                 grid
-                grid-cols-[85px_155px_minmax(0,1fr)]
+                grid-cols-[130px_155px_minmax(0,1fr)]
                 items-center
                 gap-2
               "
@@ -1489,7 +1488,7 @@ const reactSelectStyles: StylesConfig<SelectOption, false> = {
               className="
                 mb-2
                 grid
-                grid-cols-[85px_minmax(0,1fr)]
+                grid-cols-[130px_minmax(0,1fr)]
                 items-center
                 gap-2
               "
@@ -1497,9 +1496,6 @@ const reactSelectStyles: StylesConfig<SelectOption, false> = {
               <label
                 htmlFor="txtSupplierItemID"
                 className={labelClass}
-                style={{
-                  marginLeft: "-10px",
-                }}
               >
                 {requiredDot}
                 Supplier Item ID :
@@ -1511,7 +1507,7 @@ const reactSelectStyles: StylesConfig<SelectOption, false> = {
                 type="text"
                 value={txtSupplierItemID}
                 onChange={(e) => setTxtSupplierItemID(e.target.value)}
-                className="input-style w-[275px]"
+                className="w-[275px] input-style"
               />
             </div>
 
@@ -1523,7 +1519,7 @@ const reactSelectStyles: StylesConfig<SelectOption, false> = {
               className="
                 mb-2
                 grid
-                grid-cols-[85px_155px]
+                grid-cols-[130px_155px]
                 items-center
                 gap-2
               "
@@ -1550,7 +1546,7 @@ const reactSelectStyles: StylesConfig<SelectOption, false> = {
               className="
                 mb-3
                 grid
-                grid-cols-[85px_155px_minmax(0,1fr)]
+                grid-cols-[130px_155px_minmax(0,1fr)]
                 items-center
                 gap-2
               "
@@ -1657,8 +1653,10 @@ const reactSelectStyles: StylesConfig<SelectOption, false> = {
 
                   <tr
                     className="
-                      h-[28px]
-                      bg-slate-100
+                      h-[30px]
+                      bg-[#eef9f3]
+                      text-[14px]
+                      text-gray-600
                     "
                   >
 
@@ -1668,7 +1666,7 @@ const reactSelectStyles: StylesConfig<SelectOption, false> = {
 
                     <th
                       className="
-                        w-[29%]
+                        w-[28%]
                         border
                         border-slate-300
                         px-2
@@ -1689,7 +1687,7 @@ const reactSelectStyles: StylesConfig<SelectOption, false> = {
 
                     <th
                       className="
-                        w-[34%]
+                        w-[32%]
                         border
                         border-slate-300
                         px-2
@@ -1706,7 +1704,7 @@ const reactSelectStyles: StylesConfig<SelectOption, false> = {
 
                     <th
                       className="
-                        w-[14%]
+                        w-[24%]
                         border
                         border-slate-300
                         px-2
@@ -1724,7 +1722,7 @@ const reactSelectStyles: StylesConfig<SelectOption, false> = {
 
                     <th
                       className="
-                        w-[14%]
+                        w-[16%]
                         border
                         border-slate-300
                         px-2
@@ -1895,40 +1893,27 @@ const reactSelectStyles: StylesConfig<SelectOption, false> = {
               </table>
 
             </div>
-          </div>
 
           {/* ===================================================
               ACTION BUTTONS
           =================================================== */}
 
-          <div
-            className="
-              my-5
-              flex
-              w-full
-              flex-wrap
-              items-center
-              justify-center
-              gap-2.75
-            "
-          >
+          <div className="mt-[14px] flex justify-center gap-3">
 
             {/* SAVE */}
 
             <button
               type="button"
-              className="btn-style"
+              className="btn-style disabled:cursor-not-allowed disabled:opacity-40"
               onClick={handleSave}
-              disabled={!perms.save}
-              id="Savebtn"
-              name="Savebtn"
+              disabled={!canSaveOrModify}
+              id={hasSavedItem ? "Modifybtn" : "Savebtn"}
+              name={hasSavedItem ? "Modifybtn" : "Savebtn"}
             >
-              <span className={textClass}>
-                <span className="underline decoration-2 underline-offset-1">
-                  S
-                </span>
-                ave
+              <span className="underline underline-offset-2">
+                {actionWord.charAt(0)}
               </span>
+              {actionWord.slice(1)}
             </button>
 
             {/* FIND */}
@@ -1940,30 +1925,20 @@ const reactSelectStyles: StylesConfig<SelectOption, false> = {
               id="Findbtn"
               name="Findbtn"
             >
-              <span className={textClass}>
-                <span className="underline decoration-2 underline-offset-1">
-                  S
-                </span>
-                earch
-              </span>
+              <span className="underline underline-offset-2">S</span>earch
             </button>
 
             {/* DELETE */}
 
             <button
               type="button"
-              className="btn-style"
+              className="btn-style disabled:cursor-not-allowed disabled:opacity-40"
               onClick={handleDelete}
               disabled={!perms.delete}
               id="Deletebtn"
               name="Deletebtn"
             >
-              <span className={textClass}>
-                <span className="underline decoration-2 underline-offset-1">
-                  D
-                </span>
-                elete
-              </span>
+              <span className="underline underline-offset-2">D</span>elete
             </button>
 
             {/* CLEAR */}
@@ -1975,13 +1950,10 @@ const reactSelectStyles: StylesConfig<SelectOption, false> = {
               id="Clearbtn"
               name="Clearbtn"
             >
-              <span className={textClass}>
-                <span className="underline decoration-2 underline-offset-1">
-                  C
-                </span>
-                lear
-              </span>
+              <span className="underline underline-offset-2">C</span>lear
             </button>
+
+          </div>
 
           </div>
 
