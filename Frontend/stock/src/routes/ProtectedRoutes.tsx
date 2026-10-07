@@ -1,8 +1,24 @@
-import { Navigate, Outlet } from "react-router-dom";
+import { Navigate, Outlet, useLocation } from "react-router-dom";
 import { useAuth } from "../hooks/useAuth";
 
+const hasStoredUser = () => {
+  try {
+    const stored = localStorage.getItem("user"); // use your actual key
+    return !!stored && !!JSON.parse(stored);
+  } catch {
+    localStorage.removeItem("user"); // corrupted value
+    return false;
+  }
+};
+
 const ProtectedRoute = () => {
-  const { loading, isAuthenticated } = useAuth();
+  const location = useLocation();
+  const { loading, isAuthenticated } = useAuth(); // hooks must run before any early return
+
+  // No localStorage data -> straight to login, no need to wait for the API
+  if (!hasStoredUser()) {
+    return <Navigate to="/login" replace state={{ from: location }} />;
+  }
 
   if (loading) {
     return (
@@ -12,8 +28,10 @@ const ProtectedRoute = () => {
     );
   }
 
+  // Cookie expired or invalid -> clear stale localStorage and go to login
   if (!isAuthenticated) {
-    return <Navigate to="/login" replace />;
+    localStorage.removeItem("user");
+    return <Navigate to="/login" replace state={{ from: location }} />;
   }
 
   return <Outlet />;
