@@ -920,8 +920,8 @@ const JournalPage: React.FC = () => {
       className="
         min-h-screen
         bg-slate-100
-        px-5
-        py-2
+        px-3
+        py-3
         flex
         flex-col
         justify-center
@@ -936,6 +936,7 @@ const JournalPage: React.FC = () => {
           md:w-[55%]
           max-w-362.5
           min-w-212.5
+         
           border
           border-gray-400
           bg-white
@@ -985,7 +986,8 @@ const JournalPage: React.FC = () => {
             JOURNAL TABLE
         ================================================= */}
 
-        <JournalTable
+       <div className="p-3">
+         <JournalTable
           ref={journalTableRef}
 
           rows={rows}
@@ -1010,6 +1012,7 @@ const JournalPage: React.FC = () => {
             costCenters
           }
         />
+       </div>
 
         {/* =================================================
             TOTALS
@@ -1018,7 +1021,8 @@ const JournalPage: React.FC = () => {
         <div
   className="
     mt-2
-    mr-36
+    px-3
+    mr-32
     ml-auto
     flex
     w-55
@@ -1059,7 +1063,7 @@ const JournalPage: React.FC = () => {
       readOnly
       className="
         h-7
-        w-19
+        w-25
         rounded
         border
         border-gray-300
@@ -1074,7 +1078,7 @@ const JournalPage: React.FC = () => {
       readOnly
       className="
         h-7
-        w-19
+        w-25
         rounded
         border
         border-gray-300
@@ -1114,7 +1118,7 @@ const JournalPage: React.FC = () => {
       readOnly
       className="
         h-7
-        w-19
+        w-25
         rounded
         border
         border-gray-300

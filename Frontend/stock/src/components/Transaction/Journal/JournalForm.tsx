@@ -768,7 +768,9 @@ const JournalForm: React.FC<
     <div
       className="
         px-3
-        pt-2.5
+        pt-3
+        mx-3
+        mt-3
         pb-2
       "
     >
@@ -805,7 +807,7 @@ const JournalForm: React.FC<
               w-13.75
               shrink-0
               text-right
-              text-xs
+              text-[14px]
               font-normal
               text-slate-700
             "
@@ -929,7 +931,7 @@ const JournalForm: React.FC<
             className="
               whitespace-nowrap
               text-right
-              text-xs
+              text-[14px]
               font-normal
               text-slate-700
             "
@@ -962,7 +964,7 @@ const JournalForm: React.FC<
 
             className={`
               ${inputClass}
-              w-37.5
+              w-35
             `}
           />
         </div>
@@ -983,7 +985,7 @@ const JournalForm: React.FC<
               w-13.75
               shrink-0
               text-right
-              text-xs
+              text-[14px]
               font-normal
               text-slate-700
             "
@@ -1109,7 +1111,7 @@ const JournalForm: React.FC<
             className="
               whitespace-nowrap
               text-right
-              text-xs
+              text-[14px  ]
               font-normal
               text-slate-700
             "
@@ -1117,13 +1119,9 @@ const JournalForm: React.FC<
             Date :
           </label>
 
-          <LocalizationProvider
-            dateAdapter={
-              AdapterDayjs
-            }
-          >
-            <DatePicker
-              value={
+    <LocalizationProvider dateAdapter={AdapterDayjs}>
+                <DatePicker
+                  value={
                 journalDate
                   ? dayjs(
                       journalDate,
@@ -1166,144 +1164,117 @@ const JournalForm: React.FC<
                       focusFirstAccountId
                     ),
                 },
-
-                openPickerButton: {
-                  sx: {
-                    padding:
-                      "2px",
-
-                    margin: 0,
-                  },
-                },
-
-                inputAdornment: {
-                  sx: {
-                    margin: 0,
-
-                    padding: 0,
-                  },
-                },
-              }}
-
-              sx={{
-                width:
-                  "150px",
-
-                "& .MuiPickersTextField-root":
-                  {
-                    width:
-                      "150px",
-                  },
-
-                "& .MuiPickersInputBase-root":
-                  {
-                    width:
-                      "150px",
-
-                    height:
-                      "28px",
-
-                    minHeight:
-                      "28px",
-
-                    boxSizing:
-                      "border-box",
-
-                    borderRadius:
-                      "3px",
-
-                    backgroundColor:
-                      "#ffffff",
-
-                    fontSize:
-                      "12px",
-
-                    padding: 0,
-
-                    overflow:
-                      "hidden",
-                  },
-
-                "& .MuiPickersInputBase-sectionContainer":
-                  {
-                    minWidth: 0,
-
-                    padding:
-                      "0 0 0 8px",
-
-                    overflow:
-                      "hidden",
-                  },
-
-                "& .MuiPickersInputBase-input":
-                  {
-                    minWidth: 0,
-
-                    width:
-                      "100%",
-
-                    fontSize:
-                      "12px",
-
-                    padding: 0,
-
-                    height:
-                      "28px",
-
-                    boxSizing:
-                      "border-box",
-                  },
-
-                "& .MuiInputAdornment-root":
-                  {
-                    margin: 0,
-
-                    padding: 0,
-                  },
-
-                "& .MuiIconButton-root":
-                  {
-                    width:
-                      "24px",
-
-                    height:
-                      "24px",
-
-                    padding:
-                      "2px",
-
-                    margin: 0,
-                  },
-
-                "& .MuiSvgIcon-root":
-                  {
-                    fontSize:
-                      "16px",
-                  },
-
-                "& .MuiPickersOutlinedInput-notchedOutline":
-                  {
-                    borderColor:
-                      "#d7dee7",
-                  },
-
-                "& .MuiPickersInputBase-root:hover .MuiPickersOutlinedInput-notchedOutline":
-                  {
-                    borderColor:
-                      "#9fdfbc",
-                  },
-
-                "& .MuiPickersInputBase-root.Mui-focused .MuiPickersOutlinedInput-notchedOutline":
-                  {
-                    borderColor:
-                      "#9fdfbc",
-
-                    borderWidth:
-                      "1px",
-                  },
-              }}
-            />
-          </LocalizationProvider>
+    
+                    openPickerButton: {
+                      sx: {
+                        padding: "2px",
+                        margin: 0,
+                      },
+                    },
+    
+                    inputAdornment: {
+                      sx: {
+                        margin: 0,
+                        padding: 0,
+                      },
+                    },
+                  }}
+                  sx={{
+                    width: "140px",
+    
+                    "& .MuiPickersTextField-root": {
+                      width: "120px",
+                    },
+    
+                    "& .MuiPickersInputBase-root": {
+                      width: "140px",
+                      height: "30px",
+                      minHeight: "30px",
+                      boxSizing: "border-box",
+                      borderRadius: "4px",
+                      backgroundColor: "#ffffff",
+                      fontSize: "12px",
+                      padding: 0,
+                      overflow: "hidden",
+                    },
+    
+                    "& .MuiPickersInputBase-sectionsContainer": {
+                      paddingLeft: "10px !important",
+    
+                      paddingRight: "0px !important",
+    
+                      marginBottom: "-5px !important",
+    
+                      marginLeft: "0px !important",
+    
+                      boxSizing: "border-box",
+    
+                      overflow: "hidden",
+                    },
+    
+                    "& .MuiPickersInputBase-sectionContent": {
+                      fontSize: "12px",
+                      color: "#344054",
+                    },
+    
+                    "& .MuiPickersInputBase-input": {
+                      minWidth: 0,
+                      width: "100%",
+                      fontSize: "12px",
+                      padding: 0,
+                      height: "30px",
+                      boxSizing: "border-box",
+                    },
+    
+                    "& .MuiInputAdornment-root": {
+                      margin: 0,
+                      padding: 0,
+                    },
+    
+                    "& .MuiIconButton-root": {
+                      width: "24px",
+                      height: "24px",
+                      padding: "2px",
+                      margin: 0,
+                    },
+    
+                    "& .MuiSvgIcon-root": {
+                      fontSize: "16px",
+                    },
+    
+                    "& .MuiPickersOutlinedInput-notchedOutline": {
+                      borderColor: "#B7C7D7 !important",
+                    },
+    
+                    "& .MuiPickersInputBase-root:hover .MuiPickersOutlinedInput-notchedOutline":
+                      {
+                        borderColor: "#B7C7D7 !important",
+                      },
+    
+                    "& .MuiPickersInputBase-root.Mui-focused .MuiPickersOutlinedInput-notchedOutline":
+                      {
+                        borderColor: "#B7C7D7 !important",
+    
+                        borderWidth: "1px",
+                      },
+    
+                    "& .MuiPickersInputBase-root.Mui-error .MuiPickersOutlinedInput-notchedOutline":
+                      {
+                        borderColor: "#B7C7D7 !important",
+                      },
+    
+                    "& .MuiPickersInputBase-root.Mui-error:hover .MuiPickersOutlinedInput-notchedOutline":
+                      {
+                        borderColor: "#B7C7D7 !important",
+                      },
+    
+                    "& .MuiPickersInputBase-root.Mui-error.Mui-focused .MuiPickersOutlinedInput-notchedOutline":
+                      {
+                        borderColor: "#B7C7D7 !important",
+                      },
+                  }}
+                />
+              </LocalizationProvider>
         </div>
       </div>
     </div>

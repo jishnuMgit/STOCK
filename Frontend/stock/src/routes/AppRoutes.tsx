@@ -15,11 +15,17 @@ import UserPermissionBranchPage from "../pages/Security/UserPermissionBranch/Use
 import SetPostingAccountPage from "../pages/Settings/SetPostingAccountPage";
 import PurchaseInvoicePage from "../pages/Purchase/Transaction/PurchaseInvoicePage";
 import PurchaseExpense from "../components/Transaction/PurchaseInvoice/PurchaseInvoiceExpense";
-import SalesInvoice from "../pages/Sales/Transaction/SalesInvoice";
-import StockTransfer from "../pages/Sales/Transaction/stock/StockTransfer";
+import SalesInvoice from "../pages/Sales/Transaction/SalesInvoicePage";
+import StockTransfer from "../pages/Sales/Transaction/stock/StockTransferPage";
 import BeginningBalance from "../pages/Finance/Transaction/BeginningBalance/BeginningBalance";
 import ItemGroupPage from "../pages/Purchase/Setup/ItemGroupPage";
 import CompanyPage from "../pages/Administration/CompanyPage";
+import ActivePeriodPage from "../pages/Settings/ActivePeriodPage";
+import StockAdjustmentPage from "../pages/Sales/Transaction/stock/StockAdjustmentPage";
+import SetDefaultBranch from "../pages/Settings/SetDefaultBranchPage";
+
+import ItemEnquiryPage from "../pages/Sales/Setup/ItemEnquiryPage";
+import UnitPage from "../pages/Purchase/Setup/UnitPage";
 
 const Login = lazy(() => import("../pages/Auth/LoginPage"));
 const ReceiptPage = lazy(
@@ -127,9 +133,21 @@ const AppRoutes = () => {
             element={<SalesInvoice />}
           />
           <Route
+          path="/Sales/Transaction/StockAdjustment"
+          element={<StockAdjustmentPage/>}
+          />
+          <Route
             path="/Sales/Transaction/StockTransferPage"
             element={<StockTransfer />}
           />
+          {/* ================= SALES - SETUP ================= */}
+
+
+        <Route
+        path="/Sales/Setup/ItemEnquiry"
+        element={<ItemEnquiryPage/>}
+        />
+
 
           {/* ================= PURCHASE - TRANSACTION ================= */}
           <Route
@@ -139,6 +157,10 @@ const AppRoutes = () => {
           <Route
             path="/Purchase/Transaction/BeginningStockPage"
             element={<BeginningStockPage />}
+          />
+          <Route
+          path="/Purchase/Setup/UnitPage"
+          element={<UnitPage/>}
           />
 
           {/* ================= PURCHASE - SETUP ================= */}
@@ -155,6 +177,10 @@ const AppRoutes = () => {
             path="/Settings/SetChartOfAccount"
             element={<SetChartOfAccount />}
           />
+          <Route 
+          path="/Setting/SetDefaultBranch"
+          element={<SetDefaultBranch/>}
+          />
           {/* the screen's earlier address - kept so old bookmarks still open it */}
           <Route
             path="/Settings/ChartOfAccountSettings"
@@ -164,6 +190,13 @@ const AppRoutes = () => {
             path="/Settings/SetPostingAccount"
             element={<SetPostingAccountPage />}
           />
+          <Route
+          path="/Setting/SetActivePeriod"
+          element={<ActivePeriodPage/>}
+          />
+
+          {/* ================= DOCUMENT NUMBER ================= */}
+
           <Route path="/Settings/SetDocumentNo" element={<SetDocumentNo />} />
 
           {/* ================= SECURITY ================= */}

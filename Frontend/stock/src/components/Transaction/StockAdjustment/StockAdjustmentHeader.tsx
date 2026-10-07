@@ -148,7 +148,7 @@ const inputClass =
 // HEADER
 // ============================================================
 
-const StockTransferHeader: React.FC = () => {
+const StockAdjustmentHeader: React.FC = () => {
   const [branch, setBranch] = useState<Option | null>(
     branchOptions[0],
   );
@@ -166,20 +166,40 @@ const StockTransferHeader: React.FC = () => {
           TITLE
       ====================================================== */}
 
-      
+      <div
+        className="
+          flex
+          h-[36px]
+          items-center
+          border-b
+          border-slate-300
+          bg-[#a3dfc0]
+        "
+      >
+        <span
+          className="
+            px-6
+            text-[17px]
+            font-semibold
+            text-slate-700
+          "
+        >
+          Stock Adjustment
+        </span>
+      </div>
 
       {/* ======================================================
           HEADER FORM
       ====================================================== */}
 
-      <div className="h-[83px] w-full px-[16px] pt-3 mt-2">
-        <div className="relative h-full w-full">
+      <div className="h-[43px] w-full px-[24px] mt-3 pt-3 mx-auto ">
+        <div className="relative h-full w-full ">
 
           {/* ==================================================
               BRANCH
           ================================================== */}
 
-          <div className="absolute left-0 top-0 flex h-[28px] items-center">
+          <div className="absolute -left-6 top-0  flex h-[28px] items-center justify-start">
             <label
               className="
                 w-[80px]
@@ -193,7 +213,7 @@ const StockTransferHeader: React.FC = () => {
               Branch :
             </label>
 
-            <div className="ml-[7px] w-[220px]">
+            <div className="ml-[7px] w-[140px]">
               <Select<Option, false>
                 inputId="lkpBranch"
                 instanceId="lkpBranch"
@@ -272,60 +292,15 @@ const StockTransferHeader: React.FC = () => {
               TRANSFER TO
           ================================================== */}
 
-          <div className="absolute left-0 top-[38px] flex h-[28px] items-center">
-            <label
-              className="
-                w-[80px]
-                shrink-0
-                whitespace-nowrap
-                text-right
-                text-[14px]
-                text-[#202020]
-              "
-            >
-              Transfer To :
-            </label>
-
-            <div className="ml-[7px] w-[220px]">
-              <Select<Option, false>
-                inputId="lkpTransferTo"
-                instanceId="lkpTransferTo"
-                options={transferToOptions}
-                value={transferTo}
-                onChange={setTransferTo}
-                styles={selectStyles}
-                isClearable={false}
-                isSearchable={false}
-                menuPosition="fixed"
-                menuPortalTarget={
-                  typeof document !== "undefined"
-                    ? document.body
-                    : undefined
-                }
-              />
-            </div>
-          </div>
-
           {/* ==================================================
               STOCK
           ================================================== */}
 
-          <div className="absolute left-[43%] top-[38px] flex h-[28px] items-center">
-            <label className="mr-[7px] whitespace-nowrap text-[14px] text-[#202020]">
-              Stock :
-            </label>
-
-            <input
-              id="txtStock"
-              type="text"
-              defaultValue=""
-              className={`${inputClass} w-[86px]`}
-            />
-          </div>
+         
         </div>
       </div>
     </header>
   );
 };
 
-export default StockTransferHeader;
+export default StockAdjustmentHeader;
