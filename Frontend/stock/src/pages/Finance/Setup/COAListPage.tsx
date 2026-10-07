@@ -356,6 +356,7 @@ const TreeRow: React.FC<TreeRowProps> = ({
                 flex
                 h-3.5
                 w-3.5
+                cursor-pointer
                 shrink-0
                 items-center
                 justify-center
