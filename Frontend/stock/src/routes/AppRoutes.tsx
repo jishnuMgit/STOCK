@@ -25,6 +25,7 @@ import StockAdjustmentPage from "../pages/Sales/Transaction/stock/StockAdjustmen
 import SetDefaultBranch from "../pages/Settings/SetDefaultBranchPage";
 
 import ItemEnquiryPage from "../pages/Sales/Setup/ItemEnquiryPage";
+import UnitPage from "../pages/Purchase/Setup/UnitPage";
 
 const Login = lazy(() => import("../pages/Auth/LoginPage"));
 const ReceiptPage = lazy(
@@ -156,6 +157,10 @@ const AppRoutes = () => {
           <Route
             path="/Purchase/Transaction/BeginningStockPage"
             element={<BeginningStockPage />}
+          />
+          <Route
+          path="/Purchase/Setup/UnitPage"
+          element={<UnitPage/>}
           />
 
           {/* ================= PURCHASE - SETUP ================= */}

@@ -54,6 +54,7 @@ export const menuRouteMap: Record<string, string> = {
 
   mnuItem: "/Purchase/Setup/ItemPage",
   mnuItemGroup: "/Purchase/Setup/ItemGroupPage",
+  mnuUnit:"/Purchase/Setup/UnitPage",
 
 
     /* =========================================================
@@ -72,7 +73,7 @@ Sales-TRANSACTION
   mnuSalesInvoice: "/Sales/Transaction/SalesInvoicePage",
 
 
-mnuStockAdjustment:"/Sales/Transaction/StockAdjustment",
+  mnuStockAdjustment:"/Sales/Transaction/StockAdjustment",
 
   mnuStockTransfer: "/Sales/Transaction/StockTransferPage",
 
