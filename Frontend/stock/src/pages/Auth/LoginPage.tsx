@@ -66,6 +66,7 @@ const LoginPage: React.FC = () => {
       return;
     }
 
+    localStorage.setItem("PstrUserID", userId);
     toast.success(result.message || "Login successful");
 
     navigate("/");

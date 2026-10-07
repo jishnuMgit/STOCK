@@ -1,22 +1,19 @@
+import { useEffect } from "react";
 import { Navigate, Outlet, useLocation } from "react-router-dom";
 import { useAuth } from "../hooks/useAuth";
-
-const hasStoredUser = () => {
-  try {
-    const stored = localStorage.getItem("user"); // use your actual key
-    return !!stored && !!JSON.parse(stored);
-  } catch {
-    localStorage.removeItem("user"); // corrupted value
-    return false;
-  }
-};
+import { hasStoredUser, clearStoredUser } from "../utils/authStorage";
 
 const ProtectedRoute = () => {
   const location = useLocation();
-  const { loading, isAuthenticated } = useAuth(); // hooks must run before any early return
+  const { loading, isAuthenticated } = useAuth();
+  const stored = hasStoredUser();
 
-  // No localStorage data -> straight to login, no need to wait for the API
-  if (!hasStoredUser()) {
+  // Cookie expired/invalid but localStorage still there -> clear it
+  useEffect(() => {
+    if (!loading && stored && !isAuthenticated) clearStoredUser();
+  }, [loading, stored, isAuthenticated]);
+
+  if (!stored) {
     return <Navigate to="/login" replace state={{ from: location }} />;
   }
 
@@ -28,9 +25,7 @@ const ProtectedRoute = () => {
     );
   }
 
-  // Cookie expired or invalid -> clear stale localStorage and go to login
   if (!isAuthenticated) {
-    localStorage.removeItem("user");
     return <Navigate to="/login" replace state={{ from: location }} />;
   }
 
