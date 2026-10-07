@@ -7,7 +7,7 @@ import StockTransferFooter from "../../../../components/Transaction/StockTransfe
 const StockTransfer: React.FC = () => {
   return (
     <div className="flex h-screen w-full justify-center overflow-hidden bg-[#F1F5F9]">
-      <main className="h-fit w-full min-w-[1000px] max-w-[1110px] overflow-hidden bg-white border border-gray-400 text-[#202020]">
+      <main className="h-fit w-full min-w-250 max-w-277.5 overflow-hidden bg-white border border-gray-400 text-[#202020]">
         <div className="flex h-fit w-full flex-col">
           <StockTransferHeader />
 

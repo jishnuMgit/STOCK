@@ -5,7 +5,7 @@ import StockAdjustmentHeader from "../../../../components/Transaction/StockAdjus
 import StockAdjustmentTable from "../../../../components/Transaction/StockAdjustment/StockAdjustmentTable";
 import StockAdjustmentAction from "../../../../components/Transaction/StockAdjustment/StockAdjustmentAction";
 
-const StockTransfer: React.FC = () => {
+const StockTransferPage: React.FC = () => {
   return (
     <div className="flex h-screen w-full justify-center overflow-hidden bg-[#F1F5F9]">
       <main className="h-fit w-full min-w-250 max-w-277.5 overflow-hidden bg-white border border-gray-400 text-[#202020]">
@@ -21,4 +21,4 @@ const StockTransfer: React.FC = () => {
   );
 };
 
-export default StockTransfer;
+export default StockTransferPage;

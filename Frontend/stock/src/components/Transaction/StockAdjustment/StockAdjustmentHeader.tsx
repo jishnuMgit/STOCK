@@ -184,7 +184,7 @@ const StockAdjustmentHeader: React.FC = () => {
             text-slate-700
           "
         >
-          Stock Transfer
+          Stock Adjustment
         </span>
       </div>
 
@@ -192,14 +192,14 @@ const StockAdjustmentHeader: React.FC = () => {
           HEADER FORM
       ====================================================== */}
 
-      <div className="h-[83px] w-full px-[16px] pt-[8px] mt-2">
-        <div className="relative h-full w-full">
+      <div className="h-[43px] w-full px-[24px] mt-3 pt-3 mx-auto ">
+        <div className="relative h-full w-full ">
 
           {/* ==================================================
               BRANCH
           ================================================== */}
 
-          <div className="absolute left-0 top-0 flex h-[28px] items-center">
+          <div className="absolute -left-6 top-0  flex h-[28px] items-center justify-start">
             <label
               className="
                 w-[80px]
@@ -292,56 +292,11 @@ const StockAdjustmentHeader: React.FC = () => {
               TRANSFER TO
           ================================================== */}
 
-          <div className="absolute left-0 top-[38px] flex h-[28px] items-center">
-            <label
-              className="
-                w-[80px]
-                shrink-0
-                whitespace-nowrap
-                text-right
-                text-[14px]
-                text-[#202020]
-              "
-            >
-              Transfer To :
-            </label>
-
-            <div className="ml-[7px] w-[220px]">
-              <Select<Option, false>
-                inputId="lkpTransferTo"
-                instanceId="lkpTransferTo"
-                options={transferToOptions}
-                value={transferTo}
-                onChange={setTransferTo}
-                styles={selectStyles}
-                isClearable={false}
-                isSearchable={false}
-                menuPosition="fixed"
-                menuPortalTarget={
-                  typeof document !== "undefined"
-                    ? document.body
-                    : undefined
-                }
-              />
-            </div>
-          </div>
-
           {/* ==================================================
               STOCK
           ================================================== */}
 
-          <div className="absolute left-[43%] top-[38px] flex h-[28px] items-center">
-            <label className="mr-[7px] whitespace-nowrap text-[14px] text-[#202020]">
-              Stock :
-            </label>
-
-            <input
-              id="txtStock"
-              type="text"
-              defaultValue=""
-              className={`${inputClass} w-[86px]`}
-            />
-          </div>
+         
         </div>
       </div>
     </header>

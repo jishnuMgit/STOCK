@@ -21,6 +21,7 @@ import BeginningBalance from "../pages/Finance/Transaction/BeginningBalance/Begi
 import ItemGroupPage from "../pages/Purchase/Setup/ItemGroupPage";
 import CompanyPage from "../pages/Administration/CompanyPage";
 import ActivePeriodPage from "../pages/Settings/ActivePeriodPage";
+import StockTransferPage from "../pages/Sales/Transaction/stock/StockAdjustmentPage";
 
 const Login = lazy(() => import("../pages/Auth/LoginPage"));
 const ReceiptPage = lazy(
@@ -124,7 +125,11 @@ path="/Sales/Transaction/SalesInvoicePage"
 element={<SalesInvoice/>}
 />
 
+<Route
+path="/Sales/Transaction/StockAdjustment"
+element={<StockTransferPage/>}
 
+/>
 <Route
 path="/Sales/Transaction/StockTransferPage"
 element={<StockTransfer/>}

@@ -72,7 +72,7 @@ Sales-TRANSACTION
   mnuSalesInvoice: "/Sales/Transaction/SalesInvoicePage",
 
 
-
+mnuStockAdjustment:"/Sales/Transaction/StockAdjustment",
 
   mnuStockTransfer: "/Sales/Transaction/StockTransferPage",
 

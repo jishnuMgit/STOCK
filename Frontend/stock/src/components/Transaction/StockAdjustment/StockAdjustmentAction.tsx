@@ -20,7 +20,7 @@ const StockAdjustmentAction: React.FC = () => {
   return (
     <footer
       id="stock-transfer-footer"
-      className="relative h-[107px] w-full shrink-0 overflow-hidden bg-white"
+      className="relative h-[107px] w-full pb-3 mb-3 shrink-0 overflow-hidden bg-white"
     >
       {/* ======================================================
           NOTE
@@ -38,7 +38,7 @@ const StockAdjustmentAction: React.FC = () => {
           id="txtNote"
           type="text"
           autoComplete="off"
-          className={`${inputClass} w-[740px]`}
+          className={`${inputClass} w-[540px]`}
         />
       </div>
 
@@ -46,30 +46,29 @@ const StockAdjustmentAction: React.FC = () => {
           TOTAL
       ====================================================== */}
 
-      <div className="absolute right-[100px] top-[10px] flex h-[28px] items-center">
-        <input
-          id="txtTotalLabel"
-          type="text"
-          value="Total"
-          readOnly
-          className="
-            h-[28px]
-            w-[68px]
-            border
-            border-[#cbd5e1]
-            bg-white
-            text-center
-            text-[13px]
-            text-[#202020]
-            outline-none
-          "
-        />
+      <div className="absolute  right-[100px] top-[10px] flex h-[28px] items-center ">
+       
 
-        <input
+       <div  className="absolute flex right-28">
+         <input
           id="txtTotal"
           type="text"
           defaultValue="0.000"
-          className={`${inputClass} ml-[7px] w-[95px] text-right`}
+          className={`${inputClass} ml-[7px] w-[65px] text-right`}
+        />
+
+         <input
+          id="txtTotal"
+          type="text"
+          defaultValue="0.000"
+          className={`${inputClass} ml-[7px] w-[65px] text-right`}
+        />
+       </div>
+         <input
+          id="txtTotal"
+          type="text"
+          defaultValue="0.000"
+          className={`${inputClass} ml-[7px] w-[100px] text-right absolute -left-7`}
         />
       </div>
 
@@ -87,6 +86,15 @@ const StockAdjustmentAction: React.FC = () => {
           className="btn-style"
         >
           <u>S</u>ave
+        </button>
+
+{/* SEARCH */}
+         <button
+          id="btnSearch"
+          type="button"
+          className="btn-style"
+        >
+          <u>S</u>earch
         </button>
 
         {/* DELETE */}
