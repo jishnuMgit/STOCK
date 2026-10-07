@@ -213,7 +213,7 @@ const StockAdjustmentHeader: React.FC = () => {
               Branch :
             </label>
 
-            <div className="ml-[7px] w-[220px]">
+            <div className="ml-[7px] w-[140px]">
               <Select<Option, false>
                 inputId="lkpBranch"
                 instanceId="lkpBranch"

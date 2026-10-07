@@ -29,7 +29,7 @@ const StockAdjustmentAction: React.FC = () => {
       <div className="absolute left-[20px] top-[10px] flex h-[28px] items-center">
         <label
           htmlFor="txtNote"
-          className="mr-[9px] text-[13px] text-[#202020]"
+          className="mr-[9px] text-[14px] text-[#202020]"
         >
           Note :
         </label>

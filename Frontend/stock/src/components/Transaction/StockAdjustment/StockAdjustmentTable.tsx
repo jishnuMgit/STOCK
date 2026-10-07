@@ -163,10 +163,10 @@ const selectStyles: StylesConfig<Option, false> = {
 // ============================================================
 
 const numberInputClass =
-  "number-no-spinner h-[20px] w-full min-w-0 border-0 bg-transparent px-1 text-right text-[11px] outline-none focus:bg-blue-50";
+  "number-no-spinner h-[20px] w-full min-w-0 border-0 bg-transparent px-1 text-right text-[14px] outline-none focus:bg-blue-50";
 
 const textInputClass =
-  "h-[20px] w-full min-w-0 border-0 bg-transparent px-1 text-[11px] outline-none focus:bg-blue-50";
+  "h-[30px] w-full min-w-0 border-0 bg-transparent px-1 text-[14px] outline-none focus:bg-blue-50";
 
 // ============================================================
 // TABLE
@@ -352,7 +352,7 @@ const StockAdjustmentTable: React.FC = () => {
          mt-6
         flex
         
-        h-[370px]
+        h-[380px]
         min-h-0
         flex-col
         overflow-hidden
