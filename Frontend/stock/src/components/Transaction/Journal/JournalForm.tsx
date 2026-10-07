@@ -526,217 +526,140 @@ const JournalForm: React.FC<
      COMMON SELECT STYLE
   ======================================================= */
 
-  const selectStyles = {
-    control: (
-      base: any
-    ) => ({
-      ...base,
+const selectStyles = {
+  control: (
+    base: any,
+    state: any
+  ) => ({
+    ...base,
 
-      minHeight: "28px",
-      height: "28px",
+    minHeight: "30px",
+    height: "30px",
 
-      borderColor:
-        "#d7dee7",
+    borderColor: "#99a1af",
 
-      borderRadius:
-        "3px",
+    borderRadius: "4px",
 
-      boxShadow:
-        "none",
+    // Remove React Select's blue focus outline
+    boxShadow: "none",
 
-      fontSize:
-        "12px",
+    fontSize: "12px",
 
-      backgroundColor:
-        "#ffffff",
+    backgroundColor: "#ffffff",
 
-      cursor: "text",
+    cursor: "text",
 
-      "&:hover": {
-        borderColor:
-          "#9fdfbc",
-      },
+    "&:hover": {
+      borderColor: "#20884e",
+    },
 
-      "&:focus": {
-        borderColor:
-          "#9fdfbc",
-      },
+    ...(state.isFocused && {
+      borderColor: "#20884e",
+      boxShadow: "none",
+      outline: "none",
     }),
+  }),
 
-    valueContainer: (
-      base: any
-    ) => ({
-      ...base,
+  valueContainer: (base: any) => ({
+    ...base,
+    height: "28px",
+    padding: "0 8px",
+    overflow: "hidden",
+  }),
 
-      height: "28px",
+  singleValue: (base: any) => ({
+    ...base,
+    color: "#344054",
+    fontSize: "12px",
+    margin: 0,
+  }),
 
-      padding:
-        "0 8px",
+  placeholder: (base: any) => ({
+    ...base,
+    color: "#8b96a3",
+    fontSize: "12px",
+    margin: 0,
+  }),
 
-      overflow:
-        "hidden",
-    }),
+  input: (base: any) => ({
+    ...base,
+    margin: 0,
+    padding: 0,
+    fontSize: "12px",
+    color: "#344054",
+  }),
 
-    singleValue: (
-      base: any
-    ) => ({
-      ...base,
+  indicatorsContainer: (base: any) => ({
+    ...base,
+    height: "28px",
+  }),
 
-      color:
-        "#344054",
+  dropdownIndicator: (base: any) => ({
+    ...base,
+    color: "#aeb8c2",
+    padding: "4px",
 
-      fontSize:
-        "12px",
+    "&:hover": {
+      color: "#808080",
+    },
+  }),
 
-      margin: 0,
-    }),
+  indicatorSeparator: () => ({
+    display: "none",
+  }),
 
-    placeholder: (
-      base: any
-    ) => ({
-      ...base,
+  clearIndicator: (base: any) => ({
+    ...base,
+    color: "#aeb8c2",
+    padding: "4px",
 
-      color:
-        "#8b96a3",
+    "&:hover": {
+      color: "#808080",
+    },
+  }),
 
-      fontSize:
-        "12px",
+  menu: (base: any) => ({
+    ...base,
+    fontSize: "12px",
+    zIndex: 9999,
+    marginTop: "2px",
+    borderRadius: "3px",
+    overflow: "hidden",
+    boxShadow: "0 4px 12px rgba(0,0,0,0.12)",
+  }),
 
-      margin: 0,
-    }),
+  menuList: (base: any) => ({
+    ...base,
+    padding: "3px 0",
+    maxHeight: "200px",
+    overflowY: "auto",
+  }),
 
-    input: (
-      base: any
-    ) => ({
-      ...base,
+  option: (
+    base: any,
+    state: any
+  ) => ({
+    ...base,
 
-      margin: 0,
+    fontSize: "12px",
 
-      padding: 0,
+    cursor: "pointer",
 
-      fontSize:
-        "12px",
+    backgroundColor: state.isSelected
+      ? "#eefbf4"
+      : state.isFocused
+        ? "#eefbf4"
+        : "#ffffff",
 
-      color:
-        "#344054",
-    }),
+    color: "#344054",
 
-    indicatorsContainer: (
-      base: any
-    ) => ({
-      ...base,
+    padding: "7px 10px",
 
-      height: "28px",
-    }),
-
-    dropdownIndicator: (
-      base: any
-    ) => ({
-      ...base,
-
-      color:
-        "#aeb8c2",
-
-      padding:
-        "4px",
-
-      "&:hover": {
-        color:
-          "#808080",
-      },
-    }),
-
-    indicatorSeparator: () => ({
-      display:
-        "none",
-    }),
-
-    clearIndicator: (
-      base: any
-    ) => ({
-      ...base,
-
-      color:
-        "#aeb8c2",
-
-      padding:
-        "4px",
-
-      "&:hover": {
-        color:
-          "#808080",
-      },
-    }),
-
-    menu: (
-      base: any
-    ) => ({
-      ...base,
-
-      fontSize:
-        "12px",
-
-      zIndex: 9999,
-
-      marginTop:
-        "2px",
-
-      borderRadius:
-        "3px",
-
-      overflow:
-        "hidden",
-
-      boxShadow:
-        "0 4px 12px rgba(0,0,0,0.12)",
-    }),
-
-    menuList: (
-      base: any
-    ) => ({
-      ...base,
-
-      padding:
-        "3px 0",
-
-      maxHeight:
-        "200px",
-
-      overflowY:
-        "auto",
-    }),
-
-    option: (
-      base: any,
-      state: any
-    ) => ({
-      ...base,
-
-      fontSize:
-        "12px",
-
-      cursor:
-        "pointer",
-
-      backgroundColor:
-        state.isSelected
-          ? "#eefbf4"
-          : state.isFocused
-          ? "#eefbf4"
-          : "#ffffff",
-
-      color:
-        "#344054",
-
-      padding:
-        "7px 10px",
-
-      "&:active": {
-        backgroundColor:
-          "#dff5e9",
-      },
-    }),
-  };
+    "&:active": {
+      backgroundColor: "#dff5e9",
+    },
+  }),
+};
 
   /* =======================================================
      SELECTED BRANCH
@@ -808,105 +731,77 @@ const JournalForm: React.FC<
               shrink-0
               text-right
               text-[14px]
-              font-normal
-              text-slate-700
+             
             "
           >
             Branch :
           </label>
 
-          <Select<
-            SelectOption,
-            false
-          >
-            ref={branchRef}
+        <Select<SelectOption, false>
+  ref={branchRef}
 
-            value={
-              selectedBranch
-            }
+  value={selectedBranch}
 
-            onKeyDown={(
-              event
-            ) =>
-              handleSelectKeyDown(
-                event,
-                "branch",
-                () =>
-                  typeRef.current?.focus()
-              )
-            }
+  onKeyDown={(event) =>
+    handleSelectKeyDown(
+      event,
+      "branch",
+      () => typeRef.current?.focus()
+    )
+  }
 
-            onMenuOpen={() =>
-              setOpenSelect(
-                "branch"
-              )
-            }
+  onMenuOpen={() =>
+    setOpenSelect("branch")
+  }
 
-            onMenuClose={() =>
-              setOpenSelect(
-                null
-              )
-            }
+  onMenuClose={() =>
+    setOpenSelect(null)
+  }
 
-            onChange={(
-              option
-            ) => {
-              const selected =
-                option?.value ||
-                "";
+  onChange={(option) => {
+    const selected =
+      option?.value || "";
 
-              setBranch(
-                selected
-              );
+    setBranch(selected);
 
-              getJournalDocNumber(
-                selected,
-                type || "S"
-              );
-            }}
+    getJournalDocNumber(
+      selected,
+      type || "S"
+    );
+  }}
 
-            options={
-              branchOptions
-            }
+  options={branchOptions}
 
-            placeholder="Select"
+  placeholder="Select"
 
-            components={{
-              Option:
-                CustomOption,
-            }}
+  components={{
+    Option: CustomOption,
+  }}
 
-            filterOption={
-              filterOption
-            }
+  filterOption={filterOption}
 
-            styles={{
-              ...selectStyles,
+  styles={{
+    ...selectStyles,
 
-              control: (
-                base: any
-              ) => ({
-                ...base,
+    control: (base: any, state: any) => ({
+      // Keep ALL your original control styles
+      ...selectStyles.control(base, state),
 
-                width:
-                  "250px",
+      // Only override the size
+      width: "250px",
+      minHeight: "30px",
+      height: "30px",
+    }),
+  }}
 
-                minHeight:
-                  "28px",
+  isSearchable
 
-                height:
-                  "28px",
-              }),
-            }}
+  isClearable={false}
 
-            isSearchable
-
-            isClearable={false}
-
-            noOptionsMessage={() =>
-              "No Branch Found"
-            }
-          />
+  noOptionsMessage={() =>
+    "No Branch Found"
+  }
+/>
         </div>
 
         {/* =================================================
@@ -932,8 +827,7 @@ const JournalForm: React.FC<
               whitespace-nowrap
               text-right
               text-[14px]
-              font-normal
-              text-slate-700
+            
             "
           >
             Journal No. :
@@ -986,107 +880,84 @@ const JournalForm: React.FC<
               shrink-0
               text-right
               text-[14px]
-              font-normal
-              text-slate-700
+             
             "
           >
             Type :
           </label>
 
-          <Select<
-            SelectOption,
-            false
-          >
-            ref={typeRef}
+        <Select<SelectOption, false>
+  ref={typeRef}
 
-            value={
-              selectedType
-            }
+  value={selectedType}
 
-            onKeyDown={(
-              event
-            ) =>
-              handleSelectKeyDown(
-                event,
-                "type",
-                () =>
-                  journalNoRef.current?.focus()
-              )
-            }
+  onKeyDown={(event) =>
+    handleSelectKeyDown(
+      event,
+      "type",
+      () =>
+        journalNoRef.current?.focus()
+    )
+  }
 
-            onMenuOpen={() =>
-              setOpenSelect(
-                "type"
-              )
-            }
+  onMenuOpen={() =>
+    setOpenSelect("type")
+  }
 
-            onMenuClose={() =>
-              setOpenSelect(
-                null
-              )
-            }
+  onMenuClose={() =>
+    setOpenSelect(null)
+  }
 
-            onChange={(
-              option
-            ) => {
-              const selected =
-                option?.value ||
-                "S";
+  onChange={(option) => {
+    const selected =
+      option?.value || "S";
 
-              setType(
-                selected
-              );
+    setType(selected);
 
-              if (branch) {
-                getJournalDocNumber(
-                  branch,
-                  selected
-                );
-              }
-            }}
+    if (branch) {
+      getJournalDocNumber(
+        branch,
+        selected
+      );
+    }
+  }}
 
-            options={
-              typeOptions
-            }
+  options={typeOptions}
 
-            placeholder="Select"
+  placeholder="Select"
 
-            components={{
-              Option:
-                CustomOption,
-            }}
+  components={{
+    Option: CustomOption,
+  }}
 
-            filterOption={
-              filterOption
-            }
+  filterOption={filterOption}
 
-            styles={{
-              ...selectStyles,
+  styles={{
+    ...selectStyles,
 
-              control: (
-                base: any
-              ) => ({
-                ...base,
+    control: (
+      base: any,
+      state: any
+    ) => ({
+      ...selectStyles.control(
+        base,
+        state
+      ),
 
-                width:
-                  "250px",
+      width: "250px",
+      minHeight: "30px",
+      height: "30px",
+    }),
+  }}
 
-                minHeight:
-                  "28px",
+  isSearchable
 
-                height:
-                  "28px",
-              }),
-            }}
+  isClearable={false}
 
-            isSearchable
-
-            isClearable={false}
-
-            noOptionsMessage={() =>
-              "No Type Found"
-            }
-          />
+  noOptionsMessage={() =>
+    "No Type Found"
+  }
+/>
         </div>
 
         {/* =================================================
@@ -1112,8 +983,7 @@ const JournalForm: React.FC<
               whitespace-nowrap
               text-right
               text-[14px  ]
-              font-normal
-              text-slate-700
+             
             "
           >
             Date :

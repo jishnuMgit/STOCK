@@ -103,7 +103,7 @@ const selectStyles: StylesConfig<Option, false> = {
 
     cursor: "pointer",
 
-    fontSize: 11,
+    fontSize: 14,
 
     "&:hover": {
       border: "none",
@@ -121,6 +121,7 @@ const selectStyles: StylesConfig<Option, false> = {
     overflow: "hidden",
   }),
 
+  // SELECTED TEXT
   singleValue: (base) => ({
     ...base,
 
@@ -128,7 +129,7 @@ const selectStyles: StylesConfig<Option, false> = {
 
     color: "#263449",
 
-    fontSize: 11,
+    fontSize: 14,
 
     overflow: "hidden",
 
@@ -137,6 +138,7 @@ const selectStyles: StylesConfig<Option, false> = {
     whiteSpace: "nowrap",
   }),
 
+  // PLACEHOLDER
   placeholder: (base) => ({
     ...base,
 
@@ -144,9 +146,10 @@ const selectStyles: StylesConfig<Option, false> = {
 
     color: "#64748b",
 
-    fontSize: 11,
+    fontSize: 14,
   }),
 
+  // SEARCH INPUT
   input: (base) => ({
     ...base,
 
@@ -156,7 +159,7 @@ const selectStyles: StylesConfig<Option, false> = {
 
     color: "#263449",
 
-    fontSize: 11,
+    fontSize: 14,
   }),
 
   indicatorsContainer: (base) => ({
@@ -192,7 +195,7 @@ const selectStyles: StylesConfig<Option, false> = {
 
     zIndex: 9999,
 
-    fontSize: 11,
+    fontSize: 14,
 
     marginTop: 1,
   }),
@@ -205,12 +208,13 @@ const selectStyles: StylesConfig<Option, false> = {
     maxHeight: 180,
   }),
 
+  // DROPDOWN OPTIONS
   option: (base, state) => ({
     ...base,
 
     padding: "6px 8px",
 
-    fontSize: 11,
+    fontSize: 14,
 
     color: "#263449",
 
@@ -401,7 +405,7 @@ const SetDefaultBranch: React.FC = () => {
         min-w-[600px]
         table-fixed
         border-collapse
-        text-[11px]
+        text-[14px]
       "
     >
 
@@ -470,7 +474,7 @@ const SetDefaultBranch: React.FC = () => {
                       py-0
                       text-left
                       align-middle
-                      text-[11px]
+                      text-[14px]
                       font-normal
                       text-[#263449]
                       font-semibold
@@ -494,7 +498,7 @@ const SetDefaultBranch: React.FC = () => {
                       py-0
                       text-left
                       align-middle
-                      text-[11px]
+                      text-[14px]
                       font-normal
                       text-[#263449]
                       font-semibold
@@ -580,7 +584,7 @@ const SetDefaultBranch: React.FC = () => {
                         py-0
                         text-left
                         align-middle
-                        text-[11px]
+                        text-[14px]
                         uppercase
                         text-[#263449]
                       "

@@ -346,11 +346,11 @@ const ActivePeriodPage: React.FC = () => {
               <colgroup>
                 <col style={{ width: "30px" }} />
 
-                <col style={{ width: "54%" }} />
+                <col style={{ width: "40%" }} />
 
-                <col style={{ width: "20%" }} />
+                <col style={{ width: "27%" }} />
 
-                <col style={{ width: "20%" }} />
+                <col style={{ width: "27%" }} />
               </colgroup>
 
               {/* ==================================================
@@ -388,7 +388,7 @@ const ActivePeriodPage: React.FC = () => {
                       py-0
                       text-left
                       align-middle
-                      text-[13px]
+                      text-[14px]
                       font-semibold
                       leading-none
                       text-[#4b5563]
@@ -411,7 +411,7 @@ const ActivePeriodPage: React.FC = () => {
                       py-0
                       text-left
                       align-middle
-                      text-[13px]
+                      text-[14px]
                       font-semibold
                       leading-none
                       text-[#4b5563]
@@ -434,7 +434,7 @@ const ActivePeriodPage: React.FC = () => {
                       py-0
                       text-left
                       align-middle
-                      text-[13px]
+                      text-[14px]
                       font-semibold
                       leading-none
                       text-[#4b5563]

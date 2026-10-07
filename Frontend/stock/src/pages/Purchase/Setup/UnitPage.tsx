@@ -212,7 +212,7 @@ const UnitPage: React.FC = () => {
                 w-full
                 table-fixed
                 border-collapse
-                text-[12px]
+                text-[14px]
               "
             >
               {/* ==================================================
@@ -356,7 +356,7 @@ const UnitPage: React.FC = () => {
                           px-[11px]
                           py-0
                           text-left
-                          text-[13px]
+                          text-[14px]
                           text-[#374151]
                           outline-none
                           focus:bg-[#f1f8ff]
@@ -381,24 +381,12 @@ const UnitPage: React.FC = () => {
             type="button"
             onClick={handleSave}
             className="
-              h-[47px]
-              w-[124px]
-              rounded-[5px]
-              border
-              border-[#9bb6c9]
-              bg-gradient-to-b
-              from-[#ffffff]
-              to-[#e7eef4]
-              text-[17px]
-              text-green-700
-              shadow-[0_1px_3px_rgba(0,0,0,0.2)]
-              hover:bg-[#f5f5f5]
-              active:translate-y-[1px]
+                btn-style
             "
           >
             <span className="underline">
-              Save
-            </span>
+              S
+            </span>ave
           </button>
 
           {/* CLEAR */}
@@ -407,24 +395,12 @@ const UnitPage: React.FC = () => {
             type="button"
             onClick={handleClear}
             className="
-              h-[47px]
-              w-[124px]
-              rounded-[5px]
-              border
-              border-[#9bb6c9]
-              bg-gradient-to-b
-              from-[#ffffff]
-              to-[#e7eef4]
-              text-[17px]
-              text-green-700
-              shadow-[0_1px_3px_rgba(0,0,0,0.2)]
-              hover:bg-[#f5f5f5]
-              active:translate-y-[1px]
+             btn-style
             "
           >
             <span className="underline">
-              Clear
-            </span>
+              C
+            </span>lear
           </button>
         </div>
       </div>

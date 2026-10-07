@@ -3305,6 +3305,7 @@ export const ReceiptActions = forwardRef<
           my-5
           flex
           w-full
+          pb-2
           flex-wrap
           items-center
           justify-center

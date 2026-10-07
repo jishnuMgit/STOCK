@@ -223,7 +223,7 @@ const ItemEnquiryPage: React.FC = () => {
   <div
     className="
       w-full
-      max-w-[900px]
+      max-w-[800px]
       border
       border-gray-400
       bg-white
@@ -300,7 +300,9 @@ const ItemEnquiryPage: React.FC = () => {
           items-center
           justify-end
           gap-[15px]
+          mt-[10px]
           px-[30px]
+          pb-6
         "
       >
         {/* TOTAL */}
@@ -310,7 +312,7 @@ const ItemEnquiryPage: React.FC = () => {
             flex
             items-center
             gap-[8px]
-             mr-65
+             mr-59.5
           "
         >
           <span
@@ -349,19 +351,7 @@ const ItemEnquiryPage: React.FC = () => {
           type="button"
           onClick={handleClear}
           className="
-            h-[46px]
-            w-[124px]
-            rounded-[5px]
-            border
-            border-[#9eb5ca]
-            bg-gradient-to-b
-            from-white
-            to-[#e5edf4]
-            text-[17px]
-            text-[#008a35]
-            shadow-sm
-            hover:from-[#f7fff9]
-            hover:to-[#dce9e2]
+           btn-style
           "
         >
           <span className="underline">
