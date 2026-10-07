@@ -1,5 +1,6 @@
 import React, { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
+import { X } from "lucide-react";
 
 export interface MiscSupplierData {
   miscSupId: string;
@@ -81,13 +82,24 @@ const PurchaseInoviceMiscsup: React.FC<Props> = ({ open, onClose, onSave }) => {
         className="w-[500px] overflow-hidden border border-slate-400 bg-white text-[12px] text-slate-800 shadow-xl"
       >
         {/* TITLE */}
-        <div className="flex h-[30px] w-full shrink-0 items-center border-b border-slate-300 bg-[#a5e0c3]">
+        <div className="relative flex h-[30px] w-full shrink-0 items-center border-b border-slate-300 bg-[#a5e0c3]">
           <h1
             id="miscSupTitle"
             className="ml-[20px] text-[17px] font-semibold text-slate-700"
           >
             Misc. Supplier
           </h1>
+
+          <button
+            id="btnMiscClose"
+            type="button"
+            title="Close"
+            aria-label="Close"
+            onClick={onClose}
+            className="absolute right-2 top-1/2 flex h-6 w-6 -translate-y-1/2 cursor-pointer items-center justify-center rounded-full bg-white text-slate-500 shadow hover:bg-slate-100 hover:text-red-500 focus:outline-none"
+          >
+            <X size={15} strokeWidth={2} />
+          </button>
         </div>
 
         {/* FORM */}
@@ -172,15 +184,6 @@ const PurchaseInoviceMiscsup: React.FC<Props> = ({ open, onClose, onSave }) => {
             className={buttonClass}
           >
             Save
-          </button>
-
-          <button
-            id="btnMiscClose"
-            type="button"
-            onClick={onClose}
-            className={buttonClass}
-          >
-            Close
           </button>
         </div>
       </div>
