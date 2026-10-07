@@ -1,6 +1,6 @@
--- PROCEDURE: dbo.sp_pagesetcompanyinfo(character varying, character varying, character varying, character varying, character varying, character varying, character varying, character varying, character varying, character varying, character varying, character varying, character varying, character varying, character varying, character varying, character varying, character varying, refcursor)
+-- PROCEDURE: dbo.sp_pagesetcompanyinfo(character varying, character varying, character varying, character varying, character varying, character varying, character varying, character varying, character varying, character varying, refcursor)
 
--- DROP PROCEDURE IF EXISTS dbo.sp_pagesetcompanyinfo(character varying, character varying, character varying, character varying, character varying, character varying, character varying, character varying, character varying, character varying, character varying, character varying, character varying, character varying, character varying, character varying, character varying, character varying, refcursor);
+-- DROP PROCEDURE IF EXISTS dbo.sp_pagesetcompanyinfo(character varying, character varying, character varying, character varying, character varying, character varying, character varying, character varying, character varying, character varying, refcursor);
 
 CREATE OR REPLACE PROCEDURE dbo.sp_pagesetcompanyinfo(
 	IN p_strmode character varying,
@@ -11,14 +11,6 @@ CREATE OR REPLACE PROCEDURE dbo.sp_pagesetcompanyinfo(
 	IN p_strconame_short character varying DEFAULT NULL::character varying,
 	IN p_strcovatno character varying DEFAULT NULL::character varying,
 	IN p_strcovatno_ar character varying DEFAULT NULL::character varying,
-	IN p_strcoaddress1 character varying DEFAULT NULL::character varying,
-	IN p_strcoaddress2 character varying DEFAULT NULL::character varying,
-	IN p_strcoaddress3 character varying DEFAULT NULL::character varying,
-	IN p_strcoaddress4 character varying DEFAULT NULL::character varying,
-	IN p_strcoaddress1_ar character varying DEFAULT NULL::character varying,
-	IN p_strcoaddress2_ar character varying DEFAULT NULL::character varying,
-	IN p_strcoaddress3_ar character varying DEFAULT NULL::character varying,
-	IN p_strcoaddress4_ar character varying DEFAULT NULL::character varying,
 	IN p_strcostatus character varying DEFAULT NULL::character varying,
 	IN p_pstruserid character varying DEFAULT NULL::character varying,
 	IN p_result_cursor refcursor DEFAULT 'cur_setcompanyinfo'::refcursor)
@@ -27,7 +19,7 @@ AS $BODY$
 BEGIN
 
     /* =====================================================
-       MODE G — GET
+       MODE G - GET
     ===================================================== */
 
     IF p_strmode = 'G' THEN
@@ -41,14 +33,6 @@ BEGIN
                 fconame_short,
                 fcovatno,
                 fcovatno_ar,
-                fcoaddress1,
-                fcoaddress2,
-                fcoaddress3,
-                fcoaddress4,
-                fcoaddress1_ar,
-                fcoaddress2_ar,
-                fcoaddress3_ar,
-                fcoaddress4_ar,
                 fcostatus
             FROM dbo.tblcompany
             WHERE fcoid = p_pstrcoid
@@ -57,7 +41,7 @@ BEGIN
     END IF;
 
     /* =====================================================
-       MODE M — MODIFY
+       MODE M - MODIFY
     ===================================================== */
 
     IF p_strmode = 'M' THEN
@@ -70,14 +54,6 @@ BEGIN
             fconame_short     = p_strconame_short,
             fcovatno          = p_strcovatno,
             fcovatno_ar       = p_strcovatno_ar,
-            fcoaddress1       = p_strcoaddress1,
-            fcoaddress2       = p_strcoaddress2,
-            fcoaddress3       = p_strcoaddress3,
-            fcoaddress4       = p_strcoaddress4,
-            fcoaddress1_ar    = p_strcoaddress1_ar,
-            fcoaddress2_ar    = p_strcoaddress2_ar,
-            fcoaddress3_ar    = p_strcoaddress3_ar,
-            fcoaddress4_ar    = p_strcoaddress4_ar,
             fcostatus         = COALESCE(p_strcostatus, fcostatus),
             fmuserid          = p_pstruserid,
             fmuserdate        = now()
@@ -87,6 +63,6 @@ BEGIN
 
 END;
 $BODY$;
-ALTER PROCEDURE dbo.sp_pagesetcompanyinfo(character varying, character varying, character varying, character varying, character varying, character varying, character varying, character varying, character varying, character varying, character varying, character varying, character varying, character varying, character varying, character varying, character varying, character varying, refcursor)
+ALTER PROCEDURE dbo.sp_pagesetcompanyinfo(character varying, character varying, character varying, character varying, character varying, character varying, character varying, character varying, character varying, character varying, refcursor)
     OWNER TO postgres;
 

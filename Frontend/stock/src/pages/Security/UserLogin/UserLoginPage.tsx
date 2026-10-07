@@ -44,45 +44,7 @@ const createEmptyUser = (): UserRow => ({
 // BUTTON CLASS
 // ============================================================
 
-const buttonClass = `
-  min-w-[120px]
-  h-[40px]
-  rounded-[4px]
-  border-l
-  border-r
-  border-b
-  border-[#9db8d4]
-  border-t-0
-  bg-gradient-to-b
-  from-[#ffffff]
-  to-[#e7eef5]
-  px-4
-  text-[18px]
-  shadow-[inset_0_1px_0_rgba(255,255,255,0.8)]
-  transition-colors
-  duration-100
-  text-transparent
-  bg-clip-text
-  bg-gradient-to-r
-  from-green-800
-  to-green-500
-  hover:border-l-[#7f9fbd]
-  hover:border-r-[#7f9fbd]
-  hover:border-b-[#7f9fbd]
-  hover:bg-gradient-to-b
-  hover:from-[#ffffff]
-  hover:to-[#dce8f1]
-  focus:border-l-[#20884e]
-  focus:border-r-[#20884e]
-  focus:border-b-[#20884e]
-  focus:border-t-0
-  focus:bg-gradient-to-b
-  focus:from-[#ffffff]
-  focus:to-[#dcefe5]
-  focus:outline-none
-  focus:ring-0
-  hover:text-green-800
-`;
+const buttonClass = "btn-style";
 
 // ============================================================
 // SELECT STYLE
@@ -93,17 +55,21 @@ const selectStyles = {
   // CONTROL
   // ==========================================================
 
-  control: (base: any) => ({
+  control: (base: any, state: any) => ({
     ...base,
-    minHeight: "23px",
-    height: "23px",
+    minHeight: "30px",
+    height: "30px",
     width: "100%",
-    border: "none",
-    borderRadius: "0px",
+    border: "1px solid #d1d5db",
+    borderRadius: "4px",
     boxShadow: "none",
-    backgroundColor: "transparent",
-    fontSize: "12px",
+    backgroundColor: state.isFocused ? "#eefbf4" : "#ffffff",
+    fontSize: "11px",
     cursor: "pointer",
+
+    "&:hover": {
+      borderColor: "#9fdfbc",
+    },
   }),
 
   // ==========================================================
@@ -113,7 +79,8 @@ const selectStyles = {
   valueContainer: (base: any) => ({
     ...base,
     height: "23px",
-    padding: "0px",
+    minHeight: "23px",
+    padding: "0 6px",
   }),
 
   // ==========================================================
@@ -122,8 +89,8 @@ const selectStyles = {
 
   singleValue: (base: any) => ({
     ...base,
-    fontSize: "12px",
-    color: "#1e293b",
+    fontSize: "11px",
+    color: "#374151",
     margin: "0px",
   }),
 
@@ -598,16 +565,8 @@ const UserLogin: React.FC = () => {
   // INPUT CLASS
   // ============================================================
 
-  const inputClass = `
-    h-[23px]
-    w-full
-    border-none
-    bg-transparent
-    px-0
-    text-[12px]
-    text-slate-800
-    outline-none
-  `;
+  // the shared form-input look from index.css
+  const inputClass = "w-full input-style";
 
   // ============================================================
   // RENDER
@@ -616,56 +575,29 @@ const UserLogin: React.FC = () => {
   return (
     <div
       onKeyDown={handleEnterAsTab}
-      className="
-        min-h-fit
-        mx-auto
-        flex
-        w-[1000px]
-        mt-5
-        items-center
-        justify-center
-        bg-white
-        px-0
-        pt-0
-      "
+      className="flex min-h-screen w-full items-center justify-center bg-white"
     >
       {/* ============================================================
           MAIN CONTAINER
       ============================================================ */}
 
-      <div
-        className="
-          w-full
-          border
-          border-slate-400
-          bg-white
-        "
-      >
+      {/* no overflow-hidden on the card: the dropdown lists must stay visible */}
+      <div className="w-[1000px] max-w-full border border-slate-400 bg-white shadow-sm">
         {/* ============================================================
             TITLE
         ============================================================ */}
 
-        <div
-          className="
-            flex
-            h-7.5
-            w-full
-            items-center
-            justify-start
-            bg-[#a3dfc0]
-          "
-        >
-          <h1
-            className="
-              ml-[15px]
-              text-[17px]
-              font-semibold
-              text-slate-700
-            "
-          >
+        <div className="flex h-[28px] w-full items-center bg-[#a7dfc0]">
+          <h1 className="ml-[5px] text-[17px] font-semibold text-[#374151]">
             User Login
           </h1>
         </div>
+
+        {/* ============================================================
+            FORM
+        ============================================================ */}
+
+        <div className="p-[12px] m-[12px]">
 
         {/* ============================================================
             TABLE
@@ -673,7 +605,6 @@ const UserLogin: React.FC = () => {
 
         <div
           className="
-            mx-4
             overflow-hidden
             border
             border-[#b7e8cf]
@@ -693,7 +624,7 @@ const UserLogin: React.FC = () => {
             <thead>
               <tr
                 className="
-                  h-6
+                  h-[30px]
                   bg-[#f0faf5]
                 "
               >
@@ -705,10 +636,10 @@ const UserLogin: React.FC = () => {
                     border-[#b7e8cf]
                     px-2
                     text-left
-                    text-[12px]
+                    text-[14px]
                     font-normal
                     whitespace-nowrap
-                    text-slate-800
+                    text-gray-600
                   "
                 >
                   User ID
@@ -722,10 +653,10 @@ const UserLogin: React.FC = () => {
                     border-[#b7e8cf]
                     px-2
                     text-left
-                    text-[12px]
+                    text-[14px]
                     font-normal
                     whitespace-nowrap
-                    text-slate-800
+                    text-gray-600
                   "
                 >
                   User Name
@@ -739,9 +670,9 @@ const UserLogin: React.FC = () => {
                     border-[#b7e8cf]
                     px-2
                     text-left
-                    text-[12px]
+                    text-[14px]
                     font-normal
-                    text-slate-800
+                    text-gray-600
                   "
                 >
                   Password
@@ -755,10 +686,10 @@ const UserLogin: React.FC = () => {
                     border-[#b7e8cf]
                     px-2
                     text-left
-                    text-[12px]
+                    text-[14px]
                     font-normal
                     whitespace-nowrap
-                    text-slate-800
+                    text-gray-600
                   "
                 >
                   Confirm Password
@@ -772,10 +703,10 @@ const UserLogin: React.FC = () => {
                     border-[#b7e8cf]
                     px-2
                     text-left
-                    text-[12px]
+                    text-[14px]
                     font-normal
                     whitespace-nowrap
-                    text-slate-800
+                    text-gray-600
                   "
                 >
                   User Type
@@ -788,10 +719,10 @@ const UserLogin: React.FC = () => {
                     border-[#b7e8cf]
                     px-2
                     text-left
-                    text-[12px]
+                    text-[14px]
                     font-normal
                     whitespace-nowrap
-                    text-slate-800
+                    text-gray-600
                   "
                 >
                   User Status
@@ -807,7 +738,7 @@ const UserLogin: React.FC = () => {
               {displayUsers.map((user, index) => (
                 <tr
                   key={index}
-                  className="h-[25px]"
+                  className="h-[38px]"
                 >
                   {/* USER ID */}
 
@@ -965,7 +896,8 @@ const UserLogin: React.FC = () => {
                       border-b
                       border-r
                       border-[#b7e8cf]
-                      p-2
+                      px-2
+                      py-1
                     "
                   >
                     <Select
@@ -993,7 +925,8 @@ const UserLogin: React.FC = () => {
                     className="
                       border-b
                       border-[#b7e8cf]
-                      p-2
+                      px-2
+                      py-1
                     "
                   >
                     <Select
@@ -1024,17 +957,7 @@ const UserLogin: React.FC = () => {
             ACTION BUTTONS
         ============================================================ */}
 
-        <div
-          className="
-            mt-5
-            flex
-            items-center
-            justify-center
-            gap-3
-            pb-3
-            pt-0
-          "
-        >
+        <div className="mt-[14px] flex justify-center gap-3">
           {/* SAVE */}
 
           <button
@@ -1063,6 +986,8 @@ const UserLogin: React.FC = () => {
             </span>
             lear
           </button>
+        </div>
+
         </div>
       </div>
 
