@@ -1,4 +1,7 @@
 import { Request, Response } from "express";
+import type { AuthenticatedRequest } from "../../../middleware/authMiddleware.js";
+import { hasButtonRight } from "../../../utils/buttonRights.js";
+import { validateItemPage } from "../../../validators/ItemPageValidator.js";
 
 import pool from "../../../DB/db.js";
 import {
@@ -259,8 +262,11 @@ export const getItem = async (
    SAVE ITEM (header mode 'SHD'/'MHD', per-row 'STL'/'MTL')
 ========================================================= */
 
+// dbo.tblmenu fmenuid of the Item page
+const MENU_ID = "010201";
+
 export const saveItem = async (
-  req: Request,
+  req: AuthenticatedRequest,
   res: Response
 ): Promise<Response> => {
   try {
@@ -310,19 +316,51 @@ export const saveItem = async (
       });
     }
 
-    if (!txtItemID || !txtItemName || !lkpUnit || !lkpItemGroupID || !lkpSupplierID || !txtSupplierItemID) {
-      return res.status(400).json({
+    // validators/ItemPageValidator.ts: idle user, then the mandatory boxes
+    // (the ones with the red *) and at least one Branch row - the first rule
+    // that fails stops the save
+    const check = await validateItemPage({
+      PstrUserID,
+      txtItemID,
+      txtItemName,
+      lkpUnit,
+      lkpItemGroupID,
+      lkpSupplierID,
+      txtSupplierItemID,
+      rows,
+    });
+
+    if (!check.valid) {
+      return res.status(check.status).json({
         success: false,
-        message: "Item ID, Item Name, Unit, Item Group, Supplier and Supplier Item ID are required",
+        message: check.message,
+        field: check.field,
       });
     }
 
     const branchRows = (rows || []).filter((row) => row.lkpBranch);
 
-    if (branchRows.length === 0) {
-      return res.status(400).json({
+    // Save (S) for a new Item ID, Modify (M) for one that already exists -
+    // each needs its own button right. The user comes from the session
+    // (authenticate), not from the request body.
+    if (!req.user) {
+      return res.status(401).json({
         success: false,
-        message: "At least one Branch row is required",
+        message: "Authentication required",
+      });
+    }
+
+    const existingItem = await pool.query(
+      `SELECT 1 FROM dbo.tblitemhd WHERE fcoid = $1 AND fitemid = $2`,
+      [PstrCoID, txtItemID]
+    );
+    const wantedMode = existingItem.rows.length > 0 ? "M" : "S";
+
+    if (!(await hasButtonRight(req.user, MENU_ID, wantedMode))) {
+      return res.status(403).json({
+        success: false,
+        message: `You do not have permission to ${wantedMode === "M" ? "Modify" : "Save"}.`,
+        field: "txtItemID",
       });
     }
 
@@ -345,7 +383,11 @@ export const saveItem = async (
 
     return res.status(200).json({
       success: true,
-      message: "Item saved successfully",
+      message:
+        wantedMode === "M"
+          ? "Item modified successfully"
+          : "Item saved successfully",
+      mode: wantedMode,
     });
   } catch (error: unknown) {
     console.error("saveItem error:", error);
@@ -365,7 +407,7 @@ export const saveItem = async (
 ========================================================= */
 
 export const deleteItem = async (
-  req: Request,
+  req: AuthenticatedRequest,
   res: Response
 ): Promise<Response> => {
   try {
@@ -408,6 +450,21 @@ export const deleteItem = async (
       return res.status(400).json({
         success: false,
         message: "Item ID is required",
+      });
+    }
+
+    // the Delete button right, checked for the logged-in user (session)
+    if (!req.user) {
+      return res.status(401).json({
+        success: false,
+        message: "Authentication required",
+      });
+    }
+
+    if (!(await hasButtonRight(req.user, MENU_ID, "D"))) {
+      return res.status(403).json({
+        success: false,
+        message: "You do not have permission to Delete.",
       });
     }
 
@@ -459,7 +516,7 @@ export const deleteItem = async (
 ========================================================= */
 
 export const deleteItemBranchRow = async (
-  req: Request,
+  req: AuthenticatedRequest,
   res: Response
 ): Promise<Response> => {
   try {
@@ -498,6 +555,21 @@ export const deleteItemBranchRow = async (
       return res.status(400).json({
         success: false,
         message: "Item ID and Branch are required",
+      });
+    }
+
+    // the Delete button right, checked for the logged-in user (session)
+    if (!req.user) {
+      return res.status(401).json({
+        success: false,
+        message: "Authentication required",
+      });
+    }
+
+    if (!(await hasButtonRight(req.user, MENU_ID, "D"))) {
+      return res.status(403).json({
+        success: false,
+        message: "You do not have permission to Delete.",
       });
     }
 

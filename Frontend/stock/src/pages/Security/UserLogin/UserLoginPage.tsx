@@ -452,6 +452,7 @@ const UserLogin: React.FC = () => {
         `${import.meta.env.VITE_API_URL}/UserLogin/saveUserLoginList`,
         {
           method: "POST",
+          credentials: "include", // the server checks the session, idle and rights
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ PstrCoID, PstrUserID, rows }),
         }
@@ -461,6 +462,12 @@ const UserLogin: React.FC = () => {
 
       if (!response.ok || !result.success) {
         toast.error(result.message || "User logins could not be saved.");
+
+        // the backend names the field that failed - same name as the element id
+        if (result.field) {
+          document.getElementById(result.field)?.focus();
+        }
+
         return;
       }
 
@@ -516,6 +523,7 @@ const UserLogin: React.FC = () => {
         `${import.meta.env.VITE_API_URL}/UserLogin/deleteUserLoginRow`,
         {
           method: "DELETE",
+          credentials: "include", // the server checks the session, idle and rights
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
             PstrCoID,
@@ -530,6 +538,11 @@ const UserLogin: React.FC = () => {
 
       if (!response.ok || !result.success) {
         toast.error(result.message || "User could not be deleted.");
+
+        if (result.field) {
+          document.getElementById(result.field)?.focus();
+        }
+
         return;
       }
 
@@ -565,8 +578,16 @@ const UserLogin: React.FC = () => {
   // INPUT CLASS
   // ============================================================
 
-  // the shared form-input look from index.css
-  const inputClass = "w-full input-style";
+  const inputClass = `
+    h-[23px]
+    w-full
+    border-none
+    bg-transparent
+    px-0
+    text-[12px]
+    text-slate-800
+    outline-none
+  `;
 
   // ============================================================
   // RENDER
@@ -630,7 +651,7 @@ const UserLogin: React.FC = () => {
               >
                 <th
                   className="
-                    w-[23%]
+                    w-[17%]
                     border-b
                     border-r
                     border-[#b7e8cf]
@@ -647,7 +668,7 @@ const UserLogin: React.FC = () => {
 
                 <th
                   className="
-                    w-[34%]
+                    w-[25%]
                     border-b
                     border-r
                     border-[#b7e8cf]
@@ -664,7 +685,7 @@ const UserLogin: React.FC = () => {
 
                 <th
                   className="
-                    w-[15%]
+                    w-[14%]
                     border-b
                     border-r
                     border-[#b7e8cf]
@@ -680,7 +701,7 @@ const UserLogin: React.FC = () => {
 
                 <th
                   className="
-                    w-[15%]
+                    w-[19%]
                     border-b
                     border-r
                     border-[#b7e8cf]
@@ -697,7 +718,7 @@ const UserLogin: React.FC = () => {
 
                 <th
                   className="
-                    w-[16%]
+                    w-[15%]
                     border-b
                     border-r
                     border-[#b7e8cf]
@@ -714,7 +735,7 @@ const UserLogin: React.FC = () => {
 
                 <th
                   className="
-                    w-[12%]
+                    w-[10%]
                     border-b
                     border-[#b7e8cf]
                     px-2

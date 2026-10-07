@@ -1,4 +1,6 @@
 import { Request, Response } from "express";
+import type { AuthenticatedRequest } from "../../middleware/authMiddleware.js";
+import { validateSecurityWrite } from "../../validators/SecurityPageValidator.js";
 
 import pool from "../../DB/db.js";
 import {
@@ -152,8 +154,11 @@ export const getUserLoginList = async (
    SAVE USER LOGIN LIST (mode 'S' new / 'M' existing)
 ========================================================= */
 
+// dbo.tblmenu fmenuid of the User Login screen
+const MENU_ID = "9301";
+
 export const saveUserLoginList = async (
-  req: Request,
+  req: AuthenticatedRequest,
   res: Response
 ): Promise<Response> => {
   try {
@@ -188,7 +193,27 @@ export const saveUserLoginList = async (
       });
     }
 
-    const notAllowed = await checkAdminUser(PstrCoID, PstrUserID);
+    // validators/SecurityPageValidator.ts: idle user, then logged in with the
+    // Save right - the first rule that fails stops the save
+    const check = await validateSecurityWrite({
+      PstrUserID,
+      user: req.user,
+      menuId: MENU_ID,
+      code: "S",
+      field: "txtUserID-0",
+    });
+
+    if (!check.valid) {
+      return res.status(check.status).json({
+        success: false,
+        message: check.message,
+        field: check.field,
+      });
+    }
+
+    // only an Admin User may change user logins - asked of the session user,
+    // not of the user id in the request body
+    const notAllowed = await checkAdminUser(PstrCoID, req.user!.userId);
 
     if (notAllowed) {
       return res.status(403).json({ success: false, message: notAllowed });
@@ -218,7 +243,7 @@ export const saveUserLoginList = async (
 ========================================================= */
 
 export const deleteUserLoginRow = async (
-  req: Request,
+  req: AuthenticatedRequest,
   res: Response
 ): Promise<Response> => {
   try {
@@ -262,13 +287,31 @@ export const deleteUserLoginRow = async (
       });
     }
 
-    const notAllowed = await checkAdminUser(PstrCoID, PstrUserID);
+    // idle user, then logged in with the Delete right
+    const check = await validateSecurityWrite({
+      PstrUserID,
+      user: req.user,
+      menuId: MENU_ID,
+      code: "D",
+      field: "txtUserID-0",
+    });
+
+    if (!check.valid) {
+      return res.status(check.status).json({
+        success: false,
+        message: check.message,
+        field: check.field,
+      });
+    }
+
+    // only an Admin User may delete user logins (session user)
+    const notAllowed = await checkAdminUser(PstrCoID, req.user!.userId);
 
     if (notAllowed) {
       return res.status(403).json({ success: false, message: notAllowed });
     }
 
-    if (txtUserID.toUpperCase() === PstrUserID.toUpperCase()) {
+    if (txtUserID.toUpperCase() === req.user!.userId.toUpperCase()) {
       return res.status(400).json({
         success: false,
         message: "You cannot delete the user you are logged in as",
