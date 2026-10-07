@@ -21,7 +21,10 @@ import BeginningBalance from "../pages/Finance/Transaction/BeginningBalance/Begi
 import ItemGroupPage from "../pages/Purchase/Setup/ItemGroupPage";
 import CompanyPage from "../pages/Administration/CompanyPage";
 import ActivePeriodPage from "../pages/Settings/ActivePeriodPage";
-import StockTransferPage from "../pages/Sales/Transaction/stock/StockAdjustmentPage";
+import StockAdjustmentPage from "../pages/Sales/Transaction/stock/StockAdjustmentPage";
+import SetDefaultBranch from "../pages/Settings/SetDefaultBranchPage";
+
+import ItemEnquiryPage from "../pages/Sales/Setup/ItemEnquiryPage";
 
 const Login = lazy(() => import("../pages/Auth/LoginPage"));
 const ReceiptPage = lazy(
@@ -129,9 +132,21 @@ const AppRoutes = () => {
             element={<SalesInvoice />}
           />
           <Route
+          path="/Sales/Transaction/StockAdjustment"
+          element={<StockAdjustmentPage/>}
+          />
+          <Route
             path="/Sales/Transaction/StockTransferPage"
             element={<StockTransfer />}
           />
+          {/* ================= SALES - SETUP ================= */}
+
+
+        <Route
+        path="/Sales/Setup/ItemEnquiry"
+        element={<ItemEnquiryPage/>}
+        />
+
 
           {/* ================= PURCHASE - TRANSACTION ================= */}
           <Route
@@ -156,6 +171,10 @@ const AppRoutes = () => {
           <Route
             path="/Settings/SetChartOfAccount"
             element={<SetChartOfAccount />}
+          />
+          <Route 
+          path="/Setting/SetDefaultBranch"
+          element={<SetDefaultBranch/>}
           />
           {/* the screen's earlier address - kept so old bookmarks still open it */}
           <Route

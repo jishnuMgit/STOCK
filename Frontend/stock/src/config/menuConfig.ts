@@ -77,6 +77,13 @@ mnuStockAdjustment:"/Sales/Transaction/StockAdjustment",
   mnuStockTransfer: "/Sales/Transaction/StockTransferPage",
 
 
+/*============================================================
+Sales-SETUP
+=============================================================*/
+
+  mnuItemEnquiry:"/Sales/Setup/ItemEnquiry",
+
+
 
   /* =========================================================
      FINANCE 
@@ -114,6 +121,7 @@ mnuStockAdjustment:"/Sales/Transaction/StockAdjustment",
    mnuSetChartOfAccount: "/Settings/SetChartOfAccount",
    mnuSetStockPostingAccount:"/Settings/SetPostingAccount",
    mnuSetActivePeriod:"/Setting/SetActivePeriod",
+   mnuSetDefaultBranch:"/Setting/SetDefaultBranch",
 
   /* =========================================================
      SECURITY
