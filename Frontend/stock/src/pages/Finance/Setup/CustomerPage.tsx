@@ -263,7 +263,6 @@ const CustomerPage: React.FC<CustomerPageProps> = ({
 
     // ADD: Manual = empty field
     if (value === "Manual") {
-      setTxtCustomerID("");
       focusIdField();
       return;
     }

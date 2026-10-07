@@ -77,7 +77,7 @@ const supplierNameComponents = makePairComponents(
 // dbo.tblmenu fmenuid for the Item page (fmenucaption = "Item").
 const MENU_ID = "010201";
 
-const ItemPage: React.FC = () => {
+  const ItemPage: React.FC = () => {
   const handleEnterAsTab = useEnterAsTab();
   const perms = useButtonPermissions(MENU_ID);
 
@@ -102,13 +102,13 @@ const ItemPage: React.FC = () => {
 
   const [lkpItemGroupID, setLkpItemGroupID] =
     useState("");
-//@ts-ignore
+  //@ts-ignore
   const [lkpItemGroupName, setLkpItemGroupName] =
     useState("");
 
   const [lkpSupplierID, setLkpSupplierID] =
     useState("");
-//@ts-ignore
+  //@ts-ignore
   const [lkpSupplierName, setLkpSupplierName] =
     useState("");
 
@@ -939,46 +939,54 @@ const ItemPage: React.FC = () => {
       height: "23px",
     }),
 
-    dropdownIndicator: (provided) => ({
-      ...provided,
-      padding: "4px",
-    }),
+  dropdownIndicator: (provided) => ({
+    ...provided,
+    padding: "4px 6px",
+    color: "#64748b",
+    "&:hover": {
+      color: "#64748b",
+    },
+  }),
 
-    clearIndicator: (provided) => ({
-      ...provided,
-      padding: "4px",
-    }),
+  clearIndicator: (provided) => ({
+    ...provided,
+    padding: "4px 6px",
+    color: "#64748b",
+    "&:hover": {
+      color: "#64748b",
+    },
+  }),
 
-    indicatorSeparator: () => ({
-      display: "none",
-    }),
+  indicatorSeparator: () => ({
+    display: "none",
+  }),
 
-    menu: (provided) => ({
-      ...provided,
-      zIndex: 100,
-      fontSize: "12px",
-    }),
+  menu: (provided) => ({
+    ...provided,
+    zIndex: 100,
+    fontSize: "14px",
+    borderRadius: "4px",
+    marginTop: "2px",
+  }),
 
-    menuList: (provided) => ({
-      ...provided,
-      padding: "3px 0",
-    }),
+  menuList: (provided) => ({
+    ...provided,
+    padding: "3px 0",
+  }),
 
-    option: (provided, state) => ({
-      ...provided,
-      fontSize: "12px",
-      padding: "6px 8px",
-
-      backgroundColor: state.isSelected
-        ? "#dbeafe"
-        : state.isFocused
-          ? "#eff6ff"
-          : "#ffffff",
-
-      color: "#475569",
-      cursor: "pointer",
-    }),
-  };
+  option: (provided, state) => ({
+    ...provided,
+    fontSize: "14px",
+    padding: "7px 8px",
+    backgroundColor: state.isSelected
+      ? "#dbeafe"
+      : state.isFocused
+        ? "#eff6ff"
+        : "#ffffff",
+    color: "#334155",
+    cursor: "pointer",
+  }),
+};
 
   /* =========================================================
      REACT SELECT - TABLE
@@ -1222,7 +1230,7 @@ const ItemPage: React.FC = () => {
                 type="text"
                 value={txtItemName}
                 onChange={(e) => setTxtItemName(e.target.value)}
-                className={inputClass}
+                className="input-style"
               />
             </div>
 
@@ -1249,7 +1257,7 @@ const ItemPage: React.FC = () => {
                 type="text"
                 value={txtItemDescription}
                 onChange={(e) => setTxtItemDescription(e.target.value)}
-                className={inputClass}
+                className="input-style"
               />
             </div>
 
@@ -1285,7 +1293,8 @@ const ItemPage: React.FC = () => {
                 onChange={(option) => setLkpUnit(option?.value || "")}
                 styles={reactSelectStyles}
                 isClearable
-              />
+                 
+                                />
             </div>
 
             {/* =================================================
@@ -1316,7 +1325,7 @@ const ItemPage: React.FC = () => {
                 onChange={(e) =>
                   setTxtPacking(e.target.value)
                 }
-                className={inputClass}
+                className="input-style"
               />
 
               <label htmlFor="txtCBM" className={labelClass}>
@@ -1336,7 +1345,7 @@ const ItemPage: React.FC = () => {
                 onChange={(e) =>
                   setTxtCBM(e.target.value)
                 }
-                className={inputClass}
+                className="input-style"
               />
             </div>
 
@@ -1525,7 +1534,7 @@ const ItemPage: React.FC = () => {
                 type="text"
                 value={txtReorderLevel}
                 onChange={(e) => setTxtReorderLevel(e.target.value)}
-                className={inputClass}
+                className="input-style"
               />
             </div>
 
@@ -1552,7 +1561,7 @@ const ItemPage: React.FC = () => {
                 type="text"
                 value={txtReorderQty}
                 onChange={(e) => setTxtReorderQty(e.target.value)}
-                className={inputClass}
+                className="input-style"
               />
 
               {/* ALL BRANCHES */}

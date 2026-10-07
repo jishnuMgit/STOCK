@@ -135,16 +135,27 @@ const staffOptions = [
 ========================================================= */
 
 const selectStyles = {
-  control: (base: any) => ({
+  control: (base: any, state: any) => ({
     ...base,
     minHeight: "27px",
     height: "30px",
-    borderRadius: "0px",
-    borderColor: "#94a3b8",
+    borderRadius: "4px",
+    borderColor: state.isFocused ? "#9fdfbc" : "#9fdfbc",
     boxShadow: "none",
+    outline: "none",
     fontSize: "12px",
     backgroundColor: "#ffffff",
     cursor: "pointer",
+
+    "&:hover": {
+      borderColor: "#9fdfbc",
+    },
+
+    "&:focus": {
+      borderColor: "#9fdfbc",
+      boxShadow: "none",
+      outline: "none",
+    },
   }),
 
   valueContainer: (base: any) => ({
@@ -231,8 +242,7 @@ const CustomDropdownIndicator = (props: any) => {
    INPUT CLASSES
 ========================================================= */
 
-const inputClass = `h-[30px] w-full md:w-[80%] rounded-none border border-slate-400 bg-white px-2 text-[12px] text-slate-700
-  outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-200`;
+const inputClass = ` w-full md:w-[80%] input-style`;
 
 const arabicInputClass = `
   ${inputClass}
