@@ -1,4 +1,6 @@
 import { Request, Response } from "express";
+import type { AuthenticatedRequest } from "../../middleware/authMiddleware.js";
+import { hasButtonRight } from "../../utils/buttonRights.js";
 
 import pool from "../../DB/db.js";
 import {
@@ -8,6 +10,7 @@ import {
   type PostingAccountPayload,
 } from "../../services/SettingServices/setPostingAccountService.js";
 import { UserAudit } from "../../utils/UserAudit.js";
+import { validateSetPostingAccount } from "../../validators/SetPostingAccountValidator.js";
 import { mapKeys, mapRows, branchListKeys, accountListKeys, postingAccountKeys } from "../../utils/responseKeys.js";
 
 /* =========================================================
@@ -211,8 +214,11 @@ export const getPostingAccount = async (
    SAVE POSTING ACCOUNT (mode 'S' or 'M')
 ========================================================= */
 
+// dbo.tblmenu fmenuid of the Set Stock Posting Account screen
+const MENU_ID = "9111";
+
 export const savePostingAccount = async (
-  req: Request,
+  req: AuthenticatedRequest,
   res: Response
 ): Promise<Response> => {
   try {
@@ -250,10 +256,18 @@ export const savePostingAccount = async (
       });
     }
 
-    if (!lkpBranch) {
-      return res.status(400).json({
+    // validators/SetPostingAccountValidator.ts: idle user, then branch -
+    // the first rule that fails stops the save
+    const check = await validateSetPostingAccount({
+      lkpBranch,
+      PstrUserID,
+    });
+
+    if (!check.valid) {
+      return res.status(check.status).json({
         success: false,
-        message: "Branch is required",
+        message: check.message,
+        field: check.field,
       });
     }
 
@@ -266,6 +280,34 @@ export const savePostingAccount = async (
       return res.status(403).json({
         success: false,
         message: `User '${PstrUserID}' does not have access to Branch '${lkpBranch}'`,
+      });
+    }
+
+    // Save (S) when this branch has no posting accounts yet, Modify (M) when
+    // it already has - and each needs its own button right. The user comes
+    // from the session (authenticate), not from the request body.
+    if (!req.user) {
+      return res.status(401).json({
+        success: false,
+        message: "Authentication required",
+      });
+    }
+
+    // A branch counts as "already set" only when at least one account is
+    // chosen. A row with every account empty (everything was cleared and
+    // saved before) is still a first-time Save as far as the user is
+    // concerned - the procedure itself updates that row, it doesn't insert.
+    const existing = await getPostingAccountService(PstrCoID, lkpBranch);
+    const wantedMode =
+      existing && postingAccountFields.some(({ column }) => existing[column])
+        ? "M"
+        : "S";
+
+    if (!(await hasButtonRight(req.user, MENU_ID, wantedMode))) {
+      return res.status(403).json({
+        success: false,
+        message: `You do not have permission to ${wantedMode === "M" ? "Modify" : "Save"}.`,
+        field: "lkpBranch",
       });
     }
 
@@ -354,7 +396,11 @@ export const savePostingAccount = async (
 
     return res.status(200).json({
       success: true,
-      message: "Posting accounts saved successfully",
+      message:
+        wantedMode === "M"
+          ? "Posting accounts modified successfully"
+          : "Posting accounts saved successfully",
+      mode: wantedMode,
     });
   } catch (error: unknown) {
     console.error("savePostingAccount error:", error);

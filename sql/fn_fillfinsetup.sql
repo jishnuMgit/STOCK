@@ -1,4 +1,4 @@
--- Parameter Name dropdown for Settings/FinanceSetting
+-- Parameter Name dropdown for Settings/SetChartOfAccount
 -- (old SP_GetFinSetup). Master list from tblfinsetup for the
 -- logged-in company, one row per parameter, in position order.
 -- Columns are cast so the function works whatever the exact

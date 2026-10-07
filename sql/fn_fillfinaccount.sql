@@ -1,4 +1,4 @@
--- Account ID / Account Name dropdowns for Settings/FinanceSetting
+-- Account ID / Account Name dropdowns for Settings/SetChartOfAccount
 -- (old FillCombos: tblAccount WHERE fAccountLevel >= 3).
 -- Level 3 = group accounts (fgph 'G'), level 4 = ledger accounts
 -- (fgph 'H' / 'P') - so the user can map a parameter either to a

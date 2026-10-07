@@ -1,30 +1,26 @@
--- Settings/SetPostingAccount (converted from SQL Server
--- SP_frmSetPostingAccount). Company before user, as everywhere else.
---
--- Modes
---   G   the 11 saved account ids for this company + branch
---   S   insert a new company + branch row
---   M   update the 11 account ids of an existing row
+-- PROCEDURE: dbo.sp_pagesetpostingaccount(character varying, character varying, character varying, character varying, character varying, character varying, character varying, character varying, character varying, character varying, character varying, character varying, character varying, character varying, character varying, refcursor)
+
+-- DROP PROCEDURE IF EXISTS dbo.sp_pagesetpostingaccount(character varying, character varying, character varying, character varying, character varying, character varying, character varying, character varying, character varying, character varying, character varying, character varying, character varying, character varying, character varying, refcursor);
+
 CREATE OR REPLACE PROCEDURE dbo.sp_pagesetpostingaccount(
-    p_strmode                   varchar(1),
-    p_pstrcoid                  varchar(3),
-    p_strbrid                   varchar(3),
-    p_strcashsupplieraccountid  varchar(12) DEFAULT NULL,
-    p_strcashcustomeraccountid  varchar(12) DEFAULT NULL,
-    p_strstockaccountid         varchar(12) DEFAULT NULL,
-    p_strsalesaccountid         varchar(12) DEFAULT NULL,
-    p_strsalesretaccountid      varchar(12) DEFAULT NULL,
-    p_strsalescostaccountid     varchar(12) DEFAULT NULL,
-    p_strsalesretcostaccountid  varchar(12) DEFAULT NULL,
-    p_strstockadjaccountid      varchar(12) DEFAULT NULL,
-    p_strroundoffaccountid      varchar(12) DEFAULT NULL,
-    p_strinputvataccountid      varchar(12) DEFAULT NULL,
-    p_stroutputvataccountid     varchar(12) DEFAULT NULL,
-    p_pstruserid                varchar(30) DEFAULT NULL,
-    p_result_cursor             refcursor   DEFAULT 'cur_setpostingaccount'
-)
-LANGUAGE plpgsql
-AS $$
+	IN p_strmode character varying,
+	IN p_pstrcoid character varying,
+	IN p_strbrid character varying,
+	IN p_strcashsupplieraccountid character varying DEFAULT NULL::character varying,
+	IN p_strcashcustomeraccountid character varying DEFAULT NULL::character varying,
+	IN p_strstockaccountid character varying DEFAULT NULL::character varying,
+	IN p_strsalesaccountid character varying DEFAULT NULL::character varying,
+	IN p_strsalesretaccountid character varying DEFAULT NULL::character varying,
+	IN p_strsalescostaccountid character varying DEFAULT NULL::character varying,
+	IN p_strsalesretcostaccountid character varying DEFAULT NULL::character varying,
+	IN p_strstockadjaccountid character varying DEFAULT NULL::character varying,
+	IN p_strroundoffaccountid character varying DEFAULT NULL::character varying,
+	IN p_strinputvataccountid character varying DEFAULT NULL::character varying,
+	IN p_stroutputvataccountid character varying DEFAULT NULL::character varying,
+	IN p_pstruserid character varying DEFAULT NULL::character varying,
+	IN p_result_cursor refcursor DEFAULT 'cur_setpostingaccount'::refcursor)
+LANGUAGE 'plpgsql'
+AS $BODY$
 BEGIN
 
     /* =====================================================
@@ -51,7 +47,6 @@ BEGIN
               AND fbrid = p_strbrid;
 
     END IF;
-
 
     /* =====================================================
        MODE S - SAVE (new company + branch row)
@@ -80,7 +75,6 @@ BEGIN
 
     END IF;
 
-
     /* =====================================================
        MODE M - MODIFY
     ===================================================== */
@@ -108,4 +102,7 @@ BEGIN
     END IF;
 
 END;
-$$;
+$BODY$;
+ALTER PROCEDURE dbo.sp_pagesetpostingaccount(character varying, character varying, character varying, character varying, character varying, character varying, character varying, character varying, character varying, character varying, character varying, character varying, character varying, character varying, character varying, refcursor)
+    OWNER TO postgres;
+

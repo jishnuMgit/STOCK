@@ -1,5 +1,5 @@
 import { lazy, Suspense } from "react";
-import { Routes, Route } from "react-router-dom";
+import { Routes, Route, Navigate } from "react-router-dom";
 
 import SetDocumentNo from "../pages/Settings/SetDocumentNoPage";
 import ProtectedRoute from "./ProtectedRoutes";
@@ -8,7 +8,7 @@ import PublicRoute from "./PublicRoute";
 import CustomerList from "../pages/Finance/Setup/CustomerListPage";
 import ChartOfAccountList from "../pages/Finance/Setup/COAListPage";
 import UserLogin from "../pages/Security/UserLogin/UserLoginPage";
-import ChartOfAccountSettings from "../pages/Settings/ChartOfAccountSettings";
+import SetChartOfAccount from "../pages/Settings/SetChartOfAccountPage";
 import UserPermission from "../pages/Security/UserPermissionMenu/UserPermissionMenuPage";
 import BeginningStockPage from "../pages/Purchase/Transaction/BeginningStockPage";
 import UserPermissionBranchPage from "../pages/Security/UserPermissionBranch/UserPermissionBranchPage";
@@ -19,6 +19,7 @@ import SalesInvoice from "../pages/Sales/Transaction/SalesInvoice";
 import StockTransfer from "../pages/Sales/Transaction/stock/StockTransfer";
 import BeginningBalance from "../pages/Finance/Transaction/BeginningBalance/BeginningBalance";
 import ItemGroupPage from "../pages/Purchase/Setup/ItemGroupPage";
+import CompanyPage from "../pages/Administration/CompanyPage";
 
 const Login = lazy(() => import("../pages/Auth/LoginPage"));
 const ReceiptPage = lazy(
@@ -171,8 +172,13 @@ element={<StockTransfer/>}
           <Route path="/Settings/SetBranchInfo" element={<SetBranchInfo />} />
 
           <Route
-          path="/Settings/ChartOfAccountSettings"
-          element={<ChartOfAccountSettings />}
+          path="/Settings/SetChartOfAccount"
+          element={<SetChartOfAccount />}
+          />
+          {/* the screen's earlier address - kept so old bookmarks still open it */}
+          <Route
+            path="/Settings/ChartOfAccountSettings"
+            element={<Navigate to="/Settings/SetChartOfAccount" replace />}
           />
           <Route
             path="/Settings/SetPostingAccount"
@@ -214,6 +220,8 @@ element={<StockTransfer/>}
         />
 
         <Route path="/dev/PurchaseExpense" element={<PurchaseExpense />} />
+
+        <Route path="/Administration/CompanyPage" element={<CompanyPage/>}/>
       </Routes>
     </Suspense>
   );
