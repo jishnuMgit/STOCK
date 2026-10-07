@@ -1,4 +1,10 @@
 import React, { useState } from "react";
+import Select, {
+  components,
+  type MenuListProps,
+  type SingleValue,
+  type StylesConfig,
+} from "react-select";
 
 // ============================================================
 // TYPES
@@ -16,6 +22,110 @@ interface AccountFormData {
   lkpGPH: string;
   newAccountID: "Auto" | "Manual";
 }
+
+interface GphOption {
+  value: string;
+  label: string;
+  description: string;
+}
+
+const gphOptions: GphOption[] = [
+  { value: "G", label: "G", description: "Account Group" },
+  { value: "H", label: "H", description: "Account Head" },
+  { value: "P", label: "P", description: "Account Parent" },
+];
+
+// first column = width of the input, so the divider lines up with its right edge
+const GPH_COLS = "calc(var(--ctrl-w, 125px) - 1px) 1fr";
+
+const gphStyles: StylesConfig<GphOption, false> = {
+  control: (base, state) => ({
+    ...base,
+    minHeight: "29px",
+    height: "29px",
+    borderRadius: "2px",
+    borderColor: state.isFocused ? "#94a3b8" : "#cbd5e1",
+    boxShadow: "none",
+    fontSize: "13px",
+    cursor: "pointer",
+    "&:hover": { borderColor: "#94a3b8" },
+  }),
+  valueContainer: (base) => ({ ...base, height: "29px", padding: "0 8px" }),
+  input: (base) => ({ ...base, margin: 0, padding: 0 }),
+  singleValue: (base) => ({ ...base, color: "#334155" }),
+  indicatorsContainer: (base) => ({ ...base, height: "29px" }),
+  indicatorSeparator: () => ({ display: "none" }),
+  menuPortal: (base, state: any) =>
+    ({
+      ...base,
+      zIndex: 9999,
+      "--ctrl-w": `${state?.rect?.width ?? 0}px`,
+    }) as any,
+  menu: (base) => ({
+    ...base,
+    width: "300px",
+    minWidth: "100%",
+    fontSize: "13px",
+    borderRadius: "6px",
+    border: "1px solid #d9e2dc",
+    boxShadow: "0 6px 18px rgba(15, 23, 42, 0.12)",
+    overflow: "hidden",
+    marginTop: "4px",
+  }),
+  menuList: (base) => ({ ...base, padding: 0 }),
+  option: (base, state) => ({
+    ...base,
+    padding: 0,
+    borderBottom: "1px solid #f1f5f9",
+    color: state.isDisabled ? "#cbd5e1" : "#334155",
+    cursor: state.isDisabled ? "not-allowed" : "pointer",
+    backgroundColor: state.isDisabled
+      ? "#ffffff"
+      : state.isSelected
+        ? "#dff0e6"
+        : state.isFocused
+          ? "#edf7f1"
+          : "#ffffff",
+  }),
+};
+
+// Open menu: "G | Account Group". Closed box: just "G".
+const formatGphOption = (
+  option: GphOption,
+  { context }: { context: "menu" | "value" },
+) =>
+  context === "menu" ? (
+    <div className="grid" style={{ gridTemplateColumns: GPH_COLS }}>
+      <span className="border-r border-slate-200 px-3 py-2">
+        {option.label}
+      </span>
+      <span className="truncate px-3 py-2">{option.description}</span>
+    </div>
+  ) : (
+    option.label
+  );
+
+const GphMenuList = (props: MenuListProps<GphOption, false>) => (
+  <components.MenuList {...props}>
+    <div
+      className="sticky top-0 z-[1] grid border-b border-slate-300 bg-slate-100 text-[13px] font-semibold text-slate-800"
+      style={{ gridTemplateColumns: GPH_COLS }}
+    >
+      <span className="border-r border-slate-300 px-3 py-2">Code</span>
+      <span className="px-3 py-2">Description</span>
+    </div>
+    {props.children}
+  </components.MenuList>
+);
+
+// G is only allowed for level < 4, H only for level >= 4 (P is always allowed)
+const isGphDisabled = (code: string, levelText: string) => {
+  const level = parseInt(levelText, 10);
+  if (Number.isNaN(level)) return false; // no level yet: nothing is blocked
+  if (code === "G") return level >= 4;
+  if (code === "H") return level < 4;
+  return false;
+};
 
 // ============================================================
 // MAIN COMPONENT
@@ -43,14 +153,19 @@ const COAPage: React.FC = () => {
   // INPUT CHANGE
   // ============================================================
 
-  const handleChange = (
-    field: keyof AccountFormData,
-    value: string
-  ) => {
-    setFormData((previous) => ({
-      ...previous,
-      [field]: value,
-    }));
+  const handleChange = (field: keyof AccountFormData, value: string) => {
+    setFormData((previous) => {
+      const next = { ...previous, [field]: value };
+
+      // Level < 4 -> G (Group), otherwise H (Head)
+      if (field === "txtAccountLevel") {
+        const level = parseInt(value, 10);
+        if (!Number.isNaN(level)) {
+          next.lkpAccountGroupOrHead = level < 4 ? "G" : "H";
+        }
+      }
+      return next;
+    });
   };
 
   // ============================================================
@@ -58,6 +173,17 @@ const COAPage: React.FC = () => {
   // ============================================================
 
   const handleSave = () => {
+    if (
+      isGphDisabled(formData.lkpAccountGroupOrHead, formData.txtAccountLevel)
+    ) {
+      window.alert(
+        formData.lkpAccountGroupOrHead === "G"
+          ? "Group (G) is only allowed for Account Level below 4"
+          : "Head (H) is only allowed for Account Level 4 and above",
+      );
+      return;
+    }
+
     console.log("Save:", formData);
   };
 
@@ -92,20 +218,6 @@ const COAPage: React.FC = () => {
   // COMMON STYLES
   // ============================================================
 
-  const inputClass = `
-    h-[29px]
-    rounded-[2px]
-    border
-    border-slate-300
-    bg-white
-    px-2
-    text-[13px]
-    text-slate-700
-    outline-none
-    focus:border-slate-400
-    focus:ring-0
-  `;
-
   const smallInputClass = `
     h-[29px]
     rounded-[2px]
@@ -121,7 +233,7 @@ const COAPage: React.FC = () => {
   `;
 
   const labelClass = `
-    text-[13px]
+    text-[14px]
     text-slate-600
     whitespace-nowrap
   `;
@@ -132,20 +244,13 @@ const COAPage: React.FC = () => {
           MAIN PAGE
       ======================================================== */}
 
-      <div
-        className="
-          mt-[2px]
-          w-full
-        
-                  bg-white
-        "
-      >
+      <div className="mt-[2px] w-full bg-white">
         {/* ======================================================
             TITLE
         ====================================================== */}
 
         <div
-              className="
+          className="
                 flex
                 h-7
                 w-full
@@ -154,19 +259,19 @@ const COAPage: React.FC = () => {
                 border-slate-400
                 bg-[#a3dfc0]
               "
-            >
-              <h1
-                id="ChartOfAccount"
-                className="
+        >
+          <h1
+            id="ChartOfAccount"
+            className="
                   ml-[10px]
                   text-[17px]
                   font-semibold
                   text-slate-700
                 "
-              >
-                Chart Of Account
-              </h1>
-            </div>
+          >
+            Chart Of Account
+          </h1>
+        </div>
 
         {/* ======================================================
             FORM
@@ -190,12 +295,9 @@ const COAPage: React.FC = () => {
               type="text"
               value={formData.txtAccountGroupID}
               onChange={(e) =>
-                handleChange(
-                  "txtAccountGroupID",
-                  e.target.value
-                )
+                handleChange("txtAccountGroupID", e.target.value)
               }
-              className={inputClass}
+              className="input-style"
             />
 
             <input
@@ -203,12 +305,9 @@ const COAPage: React.FC = () => {
               type="text"
               value={formData.txtAccountGroupName}
               onChange={(e) =>
-                handleChange(
-                  "txtAccountGroupName",
-                  e.target.value
-                )
+                handleChange("txtAccountGroupName", e.target.value)
               }
-              className={inputClass}
+              className="input-style"
             />
           </div>
 
@@ -229,10 +328,7 @@ const COAPage: React.FC = () => {
               type="text"
               value={formData.txtAccountGroupLevel}
               onChange={(e) =>
-                handleChange(
-                  "txtAccountGroupLevel",
-                  e.target.value
-                )
+                handleChange("txtAccountGroupLevel", e.target.value)
               }
               className={smallInputClass}
             />
@@ -257,7 +353,7 @@ const COAPage: React.FC = () => {
               <legend
                 className="
                   px-[5px]
-                  text-[12px]
+                  text-[14px]
                   text-slate-500
                 "
               >
@@ -268,34 +364,16 @@ const COAPage: React.FC = () => {
 
               <label
                 htmlFor="autoAccountID"
-                className="
-                  flex
-                  cursor-pointer
-                  items-center
-                  gap-[7px]
-                  text-[13px]
-                  text-slate-600
-                "
+                className="flex cursor-pointer items-center gap-[7px] text-[13px] text-slate-600"
               >
                 <input
                   id="autoAccountID"
                   type="radio"
                   name="newAccountID"
                   value="Auto"
-                  checked={
-                    formData.newAccountID === "Auto"
-                  }
-                  onChange={() =>
-                    handleChange(
-                      "newAccountID",
-                      "Auto"
-                    )
-                  }
-                  className="
-                    h-[16px]
-                    w-[16px]
-                    accent-blue-600
-                  "
+                  checked={formData.newAccountID === "Auto"}
+                  onChange={() => handleChange("newAccountID", "Auto")}
+                  className="h-[16px] w-[16px] accent-blue-600"
                 />
 
                 <span>Auto</span>
@@ -319,15 +397,8 @@ const COAPage: React.FC = () => {
                   type="radio"
                   name="newAccountID"
                   value="Manual"
-                  checked={
-                    formData.newAccountID === "Manual"
-                  }
-                  onChange={() =>
-                    handleChange(
-                      "newAccountID",
-                      "Manual"
-                    )
-                  }
+                  checked={formData.newAccountID === "Manual"}
+                  onChange={() => handleChange("newAccountID", "Manual")}
                   className="
                     h-[16px]
                     w-[16px]
@@ -356,13 +427,8 @@ const COAPage: React.FC = () => {
               id="txtAccountID"
               type="text"
               value={formData.txtAccountID}
-              onChange={(e) =>
-                handleChange(
-                  "txtAccountID",
-                  e.target.value
-                )
-              }
-              className={inputClass}
+              onChange={(e) => handleChange("txtAccountID", e.target.value)}
+              className="input-style"
             />
           </div>
 
@@ -382,13 +448,8 @@ const COAPage: React.FC = () => {
               id="txtAccountName"
               type="text"
               value={formData.txtAccountName}
-              onChange={(e) =>
-                handleChange(
-                  "txtAccountName",
-                  e.target.value
-                )
-              }
-              className={inputClass}
+              onChange={(e) => handleChange("txtAccountName", e.target.value)}
+              className="input-style"
             />
           </div>
 
@@ -410,12 +471,9 @@ const COAPage: React.FC = () => {
               dir="rtl"
               value={formData.txtAccountName_AR}
               onChange={(e) =>
-                handleChange(
-                  "txtAccountName_AR",
-                  e.target.value
-                )
+                handleChange("txtAccountName_AR", e.target.value)
               }
-              className={inputClass}
+              className="input-style"
             />
           </div>
 
@@ -435,38 +493,21 @@ const COAPage: React.FC = () => {
               id="txtAccountLevel"
               type="text"
               value={formData.txtAccountLevel}
-              onChange={(e) =>
-                handleChange(
-                  "txtAccountLevel",
-                  e.target.value
-                )
-              }
+              onChange={(e) => handleChange("txtAccountLevel", e.target.value)}
               className={smallInputClass}
             />
 
             <div />
 
-            <label
-              htmlFor="lkpGPH"
-              className={`${labelClass} text-right`}
-            >
+            <label htmlFor="lkpGPH" className={`${labelClass} text-right`}>
               Have Cost Center :
             </label>
 
             <select
               id="lkpGPH"
               value={formData.lkpGPH}
-              onChange={(e) =>
-                handleChange(
-                  "lkpGPH",
-                  e.target.value
-                )
-              }
-              className={`
-                ${inputClass}
-                cursor-pointer
-                pr-2
-              `}
+              onChange={(e) => handleChange("lkpGPH", e.target.value)}
+              className="input-style cursor-pointer pr-2"
             >
               <option value="Yes">Yes</option>
               <option value="No">No</option>
@@ -485,19 +526,28 @@ const COAPage: React.FC = () => {
               Group/Parent/Head :
             </label>
 
-            <input
-              id="lkpAccountGroupOrHead"
-              type="text"
+            <Select
+              inputId="lkpAccountGroupOrHead"
+              instanceId="lkpAccountGroupOrHead"
+              name="lkpAccountGroupOrHead"
+              options={gphOptions}
               value={
-                formData.lkpAccountGroupOrHead
+                gphOptions.find(
+                  (o) => o.value === formData.lkpAccountGroupOrHead,
+                ) ?? null
               }
-              onChange={(e) =>
-                handleChange(
-                  "lkpAccountGroupOrHead",
-                  e.target.value
-                )
+              onChange={(option: SingleValue<GphOption>) =>
+                handleChange("lkpAccountGroupOrHead", option?.value ?? "")
               }
-              className={smallInputClass}
+              isOptionDisabled={(option) =>
+                isGphDisabled(option.value, formData.txtAccountLevel)
+              }
+              formatOptionLabel={formatGphOption}
+              styles={gphStyles}
+              components={{ MenuList: GphMenuList }}
+              isSearchable={false}
+              menuPortalTarget={document.body}
+              menuPosition="fixed"
             />
           </div>
 
@@ -519,25 +569,9 @@ const COAPage: React.FC = () => {
               id="btnSave"
               type="button"
               onClick={handleSave}
-              className="
-                h-[39px]
-                w-[105px]
-                rounded-[4px]
-                border
-                border-slate-300
-                bg-gradient-to-b
-                from-white
-                to-[#e6edf3]
-                text-[14px]
-                text-green-600
-                shadow-sm
-                hover:bg-slate-100
-                focus:outline-none
-              "
+              className="btn-style"
             >
-              <span className="underline">
-                S
-              </span>
+              <span className="underline">S</span>
               ave
             </button>
 
@@ -547,25 +581,9 @@ const COAPage: React.FC = () => {
               id="btnDelete"
               type="button"
               onClick={handleDelete}
-              className="
-                h-[39px]
-                w-[105px]
-                rounded-[4px]
-                border
-                border-slate-300
-                bg-gradient-to-b
-                from-white
-                to-[#e6edf3]
-                text-[14px]
-                text-green-600
-                shadow-sm
-                hover:bg-slate-100
-                focus:outline-none
-              "
+              className="btn-style"
             >
-              <span className="underline">
-                D
-              </span>
+              <span className="underline">D</span>
               elete
             </button>
 
@@ -575,25 +593,9 @@ const COAPage: React.FC = () => {
               id="btnClear"
               type="button"
               onClick={handleClear}
-              className="
-                h-[39px]
-                w-[105px]
-                rounded-[4px]
-                border
-                border-slate-300
-                bg-gradient-to-b
-                from-white
-                to-[#e6edf3]
-                text-[14px]
-                text-green-600
-                shadow-sm
-                hover:bg-slate-100
-                focus:outline-none
-              "
+              className="btn-style"
             >
-              <span className="underline">
-                C
-              </span>
+              <span className="underline">C</span>
               lear
             </button>
           </div>

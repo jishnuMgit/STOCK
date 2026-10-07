@@ -58,6 +58,9 @@ const PageLoader = () => (
   </div>
 );
 
+// Shown at "/" - replace with your real home/dashboard later
+const Home = () => <div className="p-4 text-[13px] text-slate-600" />;
+
 const AppRoutes = () => {
   return (
     <Suspense fallback={<PageLoader />}>
@@ -67,14 +70,12 @@ const AppRoutes = () => {
           <Route path="/login" element={<Login />} />
         </Route>
 
-        {/* Protected */}
+        {/* Protected - everything below requires login */}
         <Route element={<ProtectedRoute />}>
-          {/* <Route
-            path="/"
-            element={<Navigate to="/Finance/Transaction/Receipt" replace />}
-          /> */}
+          {/* Home */}
+          <Route path="/" element={<Home />} />
 
-          {/* Finance - Transactions */}
+          {/* ================= FINANCE - TRANSACTION ================= */}
           <Route
             path="/Finance/Transaction/Receipt"
             element={<ReceiptPage />}
@@ -96,7 +97,7 @@ const AppRoutes = () => {
             element={<BeginningBalance />}
           />
 
-          {/* Finance - Setup */}
+          {/* ================= FINANCE - SETUP ================= */}
           <Route
             path="/Finance/Setup/CustomerPage"
             element={<CustomerList />}
@@ -110,70 +111,49 @@ const AppRoutes = () => {
             element={<ChartOfAccountList />}
           />
 
-          {/* Finance - Report */}
+          {/* ================= FINANCE - REPORTS ================= */}
           <Route
             path="/Finance/Setup/rptSOA"
             element={<StatementOfAccountMain />}
           />
+          <Route
+            path="/Finance/Reports/rptSOA"
+            element={<StatementOfAccountMain />}
+          />
 
-{/* Sales - TRANSACTION */}
+          {/* ================= SALES - TRANSACTION ================= */}
+          <Route
+            path="/Sales/Transaction/SalesInvoicePage"
+            element={<SalesInvoice />}
+          />
+          <Route
+            path="/Sales/Transaction/StockTransferPage"
+            element={<StockTransfer />}
+          />
 
-<Route
-path="/Sales/Transaction/SalesInvoicePage"
-element={<SalesInvoice/>}
-/>
-
-
-<Route
-path="/Sales/Transaction/StockTransferPage"
-element={<StockTransfer/>}
-/>
-
-
-
-
-
-
-
-
-
-          {/* =================================================
-              PURCHASE - TRANSACTION
-          ================================================= */}
-
+          {/* ================= PURCHASE - TRANSACTION ================= */}
           <Route
             path="/Purchase/Transaction/PurchaseInvoicePage"
             element={<PurchaseInvoicePage />}
           />
-
           <Route
             path="/Purchase/Transaction/BeginningStockPage"
             element={<BeginningStockPage />}
           />
 
-          {/* =================================================
-              PURCHASE - SETUP
-          ================================================= */}
-
-          {/* ================= ITEM ================= */}
-
+          {/* ================= PURCHASE - SETUP ================= */}
           <Route path="/Purchase/Setup/ItemPage" element={<ItemPage />} />
-
-          <Route  path="/Purchase/Setup/ItemGroupPage"element={<ItemGroupPage/>} />
-
-          {/* =================================================
-              SETTINGS
-          ================================================= */}
-
-          {/* ================= COMPANY INFO ================= */}
-
-          <Route path="/Settings/SetCompanyInfo" element={<SetCompanyInfo />} />
-
-          <Route path="/Settings/SetBranchInfo" element={<SetBranchInfo />} />
-
           <Route
-          path="/Settings/SetChartOfAccount"
-          element={<SetChartOfAccount />}
+            path="/Purchase/Setup/ItemGroupPage"
+            element={<ItemGroupPage />}
+          />
+
+          {/* ================= SETTINGS ================= */}
+          <Route path="/Settings/SetCompanyInfo" element={<SetCompanyInfo />} />
+          <Route path="/Settings/SetBranchInfo" element={<SetBranchInfo />} />
+          <Route
+            path="/Settings/SetChartOfAccount"
+            element={<SetChartOfAccount />}
           />
           {/* the screen's earlier address - kept so old bookmarks still open it */}
           <Route
@@ -184,44 +164,28 @@ element={<StockTransfer/>}
             path="/Settings/SetPostingAccount"
             element={<SetPostingAccountPage />}
           />
-
-          {/* ================= DOCUMENT NUMBER ================= */}
-
           <Route path="/Settings/SetDocumentNo" element={<SetDocumentNo />} />
-          
 
-          {/* =================================================
-              FINANCE - REPORTS
-          ================================================= */}
-
-          {/* ================= STATEMENT OF ACCOUNT ================= */}
-
+          {/* ================= SECURITY ================= */}
+          <Route path="/Security/UserLogin" element={<UserLogin />} />
           <Route
-            path="/Finance/Reports/rptSOA"
-            element={<StatementOfAccountMain />}
+            path="/Security/UserPermissionMenu"
+            element={<UserPermission />}
           />
+          <Route
+            path="/Security/UserPermissionBranch"
+            element={<UserPermissionBranchPage />}
+          />
+
+          {/* ================= ADMINISTRATION ================= */}
+          <Route path="/Administration/CompanyPage" element={<CompanyPage />} />
+
+          {/* ================= DEV ================= */}
+          <Route path="/dev/PurchaseExpense" element={<PurchaseExpense />} />
+
+          {/* Unknown URL -> back to "/" ("/" has its own element, so no loop) */}
+          <Route path="*" element={<Navigate to="/" replace />} />
         </Route>
-
-        {/*========================================================
-                      SECURITY
-        ===========================================================*/}
-
-        {/*====================User Login==========================*/}
-        <Route path="/Security/UserLogin" element={<UserLogin />} />
-
-        <Route
-          path="/Security/UserPermissionMenu"
-          element={<UserPermission />}
-        />
-
-        <Route
-          path="/Security/UserPermissionBranch"
-          element={<UserPermissionBranchPage />}
-        />
-
-        <Route path="/dev/PurchaseExpense" element={<PurchaseExpense />} />
-
-        <Route path="/Administration/CompanyPage" element={<CompanyPage/>}/>
       </Routes>
     </Suspense>
   );
