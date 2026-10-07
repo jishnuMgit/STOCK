@@ -7,6 +7,7 @@ import {
   type BranchInfoPayload,
 } from "../../services/SettingServices/setBranchInfoService.js";
 import { mapKeys, mapRows, branchListKeys, branchInfoKeys } from "../../utils/responseKeys.js";
+import { validateSetBranchInfo } from "../../validators/SetBranchInfoValidator.js";
 
 /* =========================================================
    GET BRANCH LIST (lkpBranch dropdown, filtered by
@@ -201,10 +202,19 @@ export const saveBranchInfo = async (
       });
     }
 
-    if (!lkpBranch) {
-      return res.status(400).json({
+    // validators/SetBranchInfoValidator.ts: idle user, branch, and every
+    // mandatory English / Arabic box - the first rule that fails stops the save
+    const check = await validateSetBranchInfo({
+      lkpBranch,
+      PstrUserID,
+      ...payload,
+    });
+
+    if (!check.valid) {
+      return res.status(check.status).json({
         success: false,
-        message: "Branch is required",
+        message: check.message,
+        field: check.field,
       });
     }
 

@@ -1,5 +1,5 @@
 import { lazy, Suspense } from "react";
-import { Routes, Route } from "react-router-dom";
+import { Routes, Route, Navigate } from "react-router-dom";
 
 import SetDocumentNo from "../pages/Settings/SetDocumentNoPage";
 import ProtectedRoute from "./ProtectedRoutes";
@@ -174,6 +174,11 @@ element={<StockTransfer/>}
           <Route
           path="/Settings/SetChartOfAccount"
           element={<SetChartOfAccount />}
+          />
+          {/* the screen's earlier address - kept so old bookmarks still open it */}
+          <Route
+            path="/Settings/ChartOfAccountSettings"
+            element={<Navigate to="/Settings/SetChartOfAccount" replace />}
           />
           <Route
             path="/Settings/SetPostingAccount"
