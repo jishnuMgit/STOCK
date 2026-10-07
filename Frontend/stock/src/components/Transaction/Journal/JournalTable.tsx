@@ -2101,19 +2101,19 @@ const JournalTable = forwardRef<
               </th>
 
               <th id="lkpDivID">
-                Division
+                Div.ID
               </th>
 
               <th id="lkpCCID">
                 CC. ID
               </th>
 
-              <th className="text-right">
-                Debit Amount
+              <th id="txtDebitAmount" className="text-right">
+                Debit Amt.
               </th>
 
-              <th id="txtCreditAmount" className="text-right">
-                Credit Amount
+              <th id="txtCreditAmt" className="text-right">
+                Credit Amt.
               </th>
 
               <th id="chkMatch" className="text-center">

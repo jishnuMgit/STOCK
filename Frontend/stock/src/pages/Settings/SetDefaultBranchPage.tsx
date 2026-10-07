@@ -380,7 +380,8 @@ const SetDefaultBranch: React.FC = () => {
     h-[370px]
     w-full
     overflow-hidden
-    px-3
+    px-6
+    mx-auto
   "
 >
   <div
@@ -701,7 +702,7 @@ const SetDefaultBranch: React.FC = () => {
             items-center
             justify-center
             gap-[11px]
-            pb-3
+            pb-6
                mt-3
            
          
