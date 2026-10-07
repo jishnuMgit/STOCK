@@ -113,6 +113,7 @@ Sales-TRANSACTION
    mnuSetCompanyInfo: "/Settings/SetCompanyInfo",
    mnuSetChartOfAccount: "/Settings/ChartOfAccountSettings",
    mnuSetStockPostingAccount:"/Settings/SetPostingAccount",
+   mnuSetActivePeriod:"/Setting/SetActivePeriod",
 
   /* =========================================================
      SECURITY

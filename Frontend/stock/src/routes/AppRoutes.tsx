@@ -15,11 +15,12 @@ import UserPermissionBranchPage from "../pages/Security/UserPermissionBranch/Use
 import SetPostingAccountPage from "../pages/Settings/SetPostingAccountPage";
 import PurchaseInvoicePage from "../pages/Purchase/Transaction/PurchaseInvoicePage";
 import PurchaseExpense from "../components/Transaction/PurchaseInvoice/PurchaseInvoiceExpense";
-import SalesInvoice from "../pages/Sales/Transaction/SalesInvoice";
-import StockTransfer from "../pages/Sales/Transaction/stock/StockTransfer";
+import SalesInvoice from "../pages/Sales/Transaction/SalesInvoicePage";
+import StockTransfer from "../pages/Sales/Transaction/stock/StockTransferPage";
 import BeginningBalance from "../pages/Finance/Transaction/BeginningBalance/BeginningBalance";
 import ItemGroupPage from "../pages/Purchase/Setup/ItemGroupPage";
 import CompanyPage from "../pages/Administration/CompanyPage";
+import ActivePeriodPage from "../pages/Settings/ActivePeriodPage";
 
 const Login = lazy(() => import("../pages/Auth/LoginPage"));
 const ReceiptPage = lazy(
@@ -178,6 +179,10 @@ element={<StockTransfer/>}
           <Route
             path="/Settings/SetPostingAccount"
             element={<SetPostingAccountPage />}
+          />
+          <Route
+          path="/Setting/SetActivePeriod"
+          element={<ActivePeriodPage/>}
           />
 
           {/* ================= DOCUMENT NUMBER ================= */}

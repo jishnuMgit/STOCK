@@ -2008,7 +2008,7 @@ const JournalTable = forwardRef<
 
       <div
         className="
-          receipt-table-wrapper
+          receipt-table-wrapper 
         "
       >
 
