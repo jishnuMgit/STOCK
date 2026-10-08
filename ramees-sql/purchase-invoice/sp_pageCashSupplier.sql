@@ -1,4 +1,4 @@
-CREATE OR REPLACE PROCEDURE dbo.sp_frmcashsupplier(
+CREATE OR REPLACE PROCEDURE dbo.sp_pagecashsupplier(
   strmode             varchar,
   gstrcoid            varchar,
   strcashsupplierid   varchar,

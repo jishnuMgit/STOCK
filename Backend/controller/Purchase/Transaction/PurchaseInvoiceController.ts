@@ -568,14 +568,14 @@ export const saveCashSupplier = async (
       });
 
     await pool.query(
-      `CALL dbo.sp_frmcashsupplier(
-         strmode => $1, gstrcoid => $2, strcashsupplierid => $3,
-         strcashsuppliername => $4, strvatno => $5, gstruserid => $6)`,
+      `CALL dbo.sp_pagecashsupplier(
+     strmode => $1, gstrcoid => $2, strcashsupplierid => $3,
+     strcashsuppliername => $4, strvatno => $5, gstruserid => $6)`,
       [
         mode,
         coId,
         cashSupplierId.trim(),
-        cashSupplierName.trim().toUpperCase(), // VB: CharacterCasing.Upper
+        cashSupplierName.trim().toUpperCase(),
         vat,
         userId,
       ],
@@ -609,8 +609,8 @@ export const deleteCashSupplier = async (
         .json({ success: false, message: "Please input 'Cash Supplier ID'" });
 
     await pool.query(
-      `CALL dbo.sp_frmcashsupplier(
-         strmode => 'D', gstrcoid => $1, strcashsupplierid => $2, gstruserid => $3)`,
+      `CALL dbo.sp_pagecashsupplier(
+     strmode => 'D', gstrcoid => $1, strcashsupplierid => $2, gstruserid => $3)`,
       [coId, id, userId],
     );
 
