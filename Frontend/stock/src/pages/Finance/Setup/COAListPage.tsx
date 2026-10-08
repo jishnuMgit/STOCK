@@ -319,12 +319,12 @@ const TreeRow: React.FC<TreeRowProps> = ({
       <div
         className="
           grid
-          min-h-[23px]
+          min-h-[30px]
           grid-cols-[minmax(0,1fr)_84px_55px_55px_52px]
           border-b
           border-slate-300
           bg-white
-          text-[10px]
+          text-[12px]
         "
       >
         {/* ======================================================
@@ -356,6 +356,7 @@ const TreeRow: React.FC<TreeRowProps> = ({
                 flex
                 h-3.5
                 w-3.5
+                cursor-pointer
                 shrink-0
                 items-center
                 justify-center
@@ -406,14 +407,8 @@ const TreeRow: React.FC<TreeRowProps> = ({
         ====================================================== */}
 
         <div
-          className="
-            flex
-            items-center
-            border-r
-            border-slate-300
-            px-2
-            text-slate-700
-          "
+          className={`flex items-center border-r border-slate-300 px-2 ${node.color ?? "text-slate-700"}
+    ${node.bold ? "font-semibold" : "font-normal"}`}
         >
           {node.accountId}
         </div>
@@ -422,15 +417,7 @@ const TreeRow: React.FC<TreeRowProps> = ({
             ADD
         ====================================================== */}
 
-        <div
-          className="
-            flex
-            items-center
-            justify-center
-            border-r
-            border-slate-300
-          "
-        >
+        <div className="flex items-center justify-center border-r border-slate-300">
           <button
             id={`Addbtn-${node.id}`}
             type="button"
@@ -438,8 +425,9 @@ const TreeRow: React.FC<TreeRowProps> = ({
             onClick={() => onAdd(node)}
             className="
               flex
-              h-4
-              w-4
+              h-5
+              w-5
+              cursor-pointer
               items-center
               justify-center
               rounded-full
@@ -457,15 +445,7 @@ const TreeRow: React.FC<TreeRowProps> = ({
             MODIFY
         ====================================================== */}
 
-        <div
-          className="
-            flex
-            items-center
-            justify-center
-            border-r
-            border-slate-300
-          "
-        >
+        <div className="flex items-center justify-center border-r border-slate-300">
           <button
             id={`Modifybtn-${node.id}`}
             type="button"
@@ -473,8 +453,9 @@ const TreeRow: React.FC<TreeRowProps> = ({
             onClick={() => onModify(node)}
             className="
               flex
-              h-4
-              w-4
+              h-5
+              w-5
+              cursor-pointer
               items-center
               justify-center
               rounded-full
@@ -492,13 +473,7 @@ const TreeRow: React.FC<TreeRowProps> = ({
             DELETE
         ====================================================== */}
 
-        <div
-          className="
-            flex
-            items-center
-            justify-center
-          "
-        >
+        <div className="flex items-center justify-center">
           <button
             id={`Deletebtn-${node.id}`}
             type="button"
@@ -506,8 +481,9 @@ const TreeRow: React.FC<TreeRowProps> = ({
             onClick={() => onDelete(node)}
             className="
               flex
-              h-4
-              w-4
+              h-5
+              w-5
+              cursor-pointer
               items-center
               justify-center
               text-red-500
@@ -739,7 +715,7 @@ const COAListPage: React.FC = () => {
 
             <div className="px-3.5 pb-2 pt-3">
               <div className="relative w-[74.5%]">
-                <Search
+                {/* <Search
                   size={11}
                   className="
                     pointer-events-none
@@ -749,7 +725,7 @@ const COAListPage: React.FC = () => {
                     -translate-y-1/2
                     text-slate-500
                   "
-                />
+                /> */}
 
                 <input
                   id="txtSearch"
@@ -757,7 +733,7 @@ const COAListPage: React.FC = () => {
                   value={search}
                   onChange={(event) => setSearch(event.target.value)}
                   placeholder="Search..."
-                  className="input-style"
+                  className="input-style w-full"
                 />
               </div>
             </div>
@@ -787,7 +763,7 @@ const COAListPage: React.FC = () => {
                   border-r
                   border-slate-300
                   px-2
-                  text-[10px]
+                  text-[12px]
                   font-semibold
                   text-slate-700
                 "
@@ -805,7 +781,7 @@ const COAListPage: React.FC = () => {
                   border-r
                   border-slate-300
                   px-2
-                  text-[10px]
+                  text-[12px]
                   font-semibold
                   text-slate-700
                 "
@@ -824,7 +800,7 @@ const COAListPage: React.FC = () => {
                   justify-center
                   border-r
                   border-slate-300
-                  text-[10px]
+                  text-[12px]
                   font-semibold
                   text-slate-700
                 "
@@ -843,7 +819,7 @@ const COAListPage: React.FC = () => {
                   justify-center
                   border-r
                   border-slate-300
-                  text-[10px]
+                  text-[12px]
                   font-semibold
                   text-slate-700
                 "
@@ -860,7 +836,7 @@ const COAListPage: React.FC = () => {
                   h-[23px]
                   items-center
                   justify-center
-                  text-[10px]
+                  text-[12px]
                   font-semibold
                   text-slate-700
                 "

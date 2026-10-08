@@ -1,5 +1,25 @@
-import React, { useState } from "react";
-import Select, { type StylesConfig } from "react-select";
+import React, {
+  useRef,
+  useState,
+} from "react";
+
+import Select, {
+  type StylesConfig,
+} from "react-select";
+
+import dayjs from "dayjs";
+
+import {
+  LocalizationProvider,
+} from "@mui/x-date-pickers/LocalizationProvider";
+
+import {
+  DatePicker,
+} from "@mui/x-date-pickers/DatePicker";
+
+import {
+  AdapterDayjs,
+} from "@mui/x-date-pickers/AdapterDayjs";
 
 // ============================================================
 // TYPES
@@ -129,17 +149,61 @@ const selectStyles: StylesConfig<Option, false> = {
 // INPUT STYLE
 // ============================================================
 
-const inputClass =
-  "input-style";
+const inputClass = "input-style";
 
 // ============================================================
 // HEADER
 // ============================================================
 
 const BeginningBalanceHeader: React.FC = () => {
-  const [branch, setBranch] = useState<Option | null>(
-    branchOptions[0],
-  );
+  // ==========================================================
+  // BRANCH
+  // ==========================================================
+
+  const [branch, setBranch] =
+    useState<Option | null>(
+      branchOptions[0],
+    );
+
+  // ==========================================================
+  // DATE
+  // ==========================================================
+
+  const [dtpDate, setDtpDate] =
+    useState<string>(
+      dayjs().format("DD-MM-YYYY"),
+    );
+
+  // ==========================================================
+  // REFS
+  // ==========================================================
+
+  const dateRef =
+    useRef<HTMLInputElement | null>(null);
+
+  const receivedFromRef =
+    useRef<HTMLInputElement | null>(null);
+
+  // ==========================================================
+  // ENTER KEY HANDLER
+  // ==========================================================
+
+  const handleInputKeyDown = (
+    event: React.KeyboardEvent,
+    next?: () => void,
+  ) => {
+    if (event.key === "Enter") {
+      event.preventDefault();
+
+      if (next) {
+        next();
+      }
+    }
+  };
+
+  // ==========================================================
+  // RENDER
+  // ==========================================================
 
   return (
     <header className="w-full shrink-0">
@@ -148,30 +212,27 @@ const BeginningBalanceHeader: React.FC = () => {
           TITLE
       ====================================================== */}
 
-     
-       <div
+      <div
+        className="
+          flex
+          h-9
+          items-center
+          border-b
+          border-slate-300
+          bg-[#a3dfc0]
+        "
+      >
+        <span
           className="
-            flex
-            h-9
-            items-center
-            border-b
-            border-slate-300
-            bg-[#a3dfc0]
+            px-4.5
+            text-[17px]
+            font-semibold
+            text-slate-700
           "
         >
-
-          <span
-            className="
-              px-4.5
-              text-[17px]
-              font-semibold
-              text-slate-700
-            "
-          >
-Beginning Balance
-          </span>
-
-        </div>
+          Beginning Balance
+        </span>
+      </div>
 
       {/* ======================================================
           HEADER FORM
@@ -185,6 +246,7 @@ Beginning Balance
           ================================================== */}
 
           <div className="absolute left-0 top-0 flex h-[30px] items-center">
+
             <label
               className="
                 w-[51px]
@@ -199,6 +261,7 @@ Beginning Balance
             </label>
 
             <div className="ml-[8px] w-[235px]">
+
               <Select<Option, false>
                 inputId="lkpBranch"
                 instanceId="lkpBranch"
@@ -215,6 +278,7 @@ Beginning Balance
                     : undefined
                 }
               />
+
             </div>
           </div>
 
@@ -223,24 +287,205 @@ Beginning Balance
           ================================================== */}
 
           <div className="absolute right-0 top-0 flex h-[30px] items-center">
-            <label
-              className="
-                mr-[8px]
-                whitespace-nowrap
-                text-[14px]
-                text-[#202020]
-              "
-            >
-              Date :
-            </label>
 
-            <input
-              id="dtpDate"
-              type="date"
-              defaultValue="2023-12-03"
-              className={`${inputClass} w-[145px]`}
-            />
+            <div className="flex items-center gap-2 -mr-2">
+
+              <label
+                className="
+                  whitespace-nowrap
+                  text-right
+                  text-[14px]
+                "
+              >
+                Date :
+              </label>
+
+              <LocalizationProvider
+                dateAdapter={AdapterDayjs}
+              >
+
+                <DatePicker
+                  value={
+                    dtpDate
+                      ? dayjs(
+                          dtpDate,
+                          "DD-MM-YYYY",
+                        )
+                      : null
+                  }
+
+                  onChange={(newValue) => {
+                    if (
+                      newValue?.isValid()
+                    ) {
+                      setDtpDate(
+                        newValue.format(
+                          "DD-MM-YYYY",
+                        ),
+                      );
+                    } else {
+                      setDtpDate("");
+                    }
+                  }}
+
+                  format="DD-MM-YYYY"
+
+                  inputRef={dateRef}
+
+                  slotProps={{
+                    textField: {
+                      id: "dtpDate",
+
+                      onKeyDown: (
+                        event,
+                      ) =>
+                        handleInputKeyDown(
+                          event,
+                          () =>
+                            receivedFromRef.current?.focus(),
+                        ),
+                    },
+
+                    openPickerButton: {
+                      sx: {
+                        padding: "2px",
+                        margin: 0,
+                      },
+                    },
+
+                    inputAdornment: {
+                      sx: {
+                        margin: 0,
+                        padding: 0,
+                      },
+                    },
+                  }}
+
+                  sx={{
+                    width: "140px",
+
+                    "& .MuiPickersTextField-root":
+                      {
+                        width: "120px",
+                      },
+
+                    "& .MuiPickersInputBase-root":
+                      {
+                        width: "140px",
+                        height: "30px",
+                        minHeight: "30px",
+                        boxSizing:
+                          "border-box",
+                        borderRadius: "4px",
+                        backgroundColor:
+                          "#ffffff",
+                        fontSize: "12px",
+                        padding: 0,
+                        overflow: "hidden",
+                      },
+
+                    "& .MuiPickersInputBase-sectionsContainer":
+                      {
+                        paddingLeft:
+                          "10px !important",
+
+                        paddingRight:
+                          "0px !important",
+
+                        marginBottom:
+                          "-5px !important",
+
+                        marginLeft:
+                          "0px !important",
+
+                        boxSizing:
+                          "border-box",
+
+                        overflow:
+                          "hidden",
+                      },
+
+                    "& .MuiPickersInputBase-sectionContent":
+                      {
+                        fontSize: "12px",
+                        color: "#344054",
+                      },
+
+                    "& .MuiPickersInputBase-input":
+                      {
+                        minWidth: 0,
+                        width: "100%",
+                        fontSize: "12px",
+                        padding: 0,
+                        height: "30px",
+                        boxSizing:
+                          "border-box",
+                      },
+
+                    "& .MuiInputAdornment-root":
+                      {
+                        margin: 0,
+                        padding: 0,
+                      },
+
+                    "& .MuiIconButton-root":
+                      {
+                        width: "24px",
+                        height: "24px",
+                        padding: "2px",
+                        margin: 0,
+                      },
+
+                    "& .MuiSvgIcon-root":
+                      {
+                        fontSize: "16px",
+                      },
+
+                    "& .MuiPickersOutlinedInput-notchedOutline":
+                      {
+                        borderColor:
+                          "#B7C7D7 !important",
+                      },
+
+                    "& .MuiPickersInputBase-root:hover .MuiPickersOutlinedInput-notchedOutline":
+                      {
+                        borderColor:
+                          "#B7C7D7 !important",
+                      },
+
+                    "& .MuiPickersInputBase-root.Mui-focused .MuiPickersOutlinedInput-notchedOutline":
+                      {
+                        borderColor:
+                          "#B7C7D7 !important",
+
+                        borderWidth: "1px",
+                      },
+
+                    "& .MuiPickersInputBase-root.Mui-error .MuiPickersOutlinedInput-notchedOutline":
+                      {
+                        borderColor:
+                          "#B7C7D7 !important",
+                      },
+
+                    "& .MuiPickersInputBase-root.Mui-error:hover .MuiPickersOutlinedInput-notchedOutline":
+                      {
+                        borderColor:
+                          "#B7C7D7 !important",
+                      },
+
+                    "& .MuiPickersInputBase-root.Mui-error.Mui-focused .MuiPickersOutlinedInput-notchedOutline":
+                      {
+                        borderColor:
+                          "#B7C7D7 !important",
+                      },
+                  }}
+                />
+
+              </LocalizationProvider>
+
+            </div>
           </div>
+
         </div>
       </div>
     </header>

@@ -918,7 +918,7 @@ const JournalPage: React.FC = () => {
   return (
     <div
       className="
-        min-h-screen
+        min-h-full
         bg-slate-100
         px-3
         py-3
