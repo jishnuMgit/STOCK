@@ -427,3 +427,198 @@ export const deletePurchaseInvoice = async (
       .json({ success: false, message: "Not deleted, try again" });
   }
 };
+
+/* =========================================================
+   CASH (MISC.) SUPPLIER  -  port of VB clsCashSupplier
+   ========================================================= */
+
+/* VB: SP_GetCashSupplier -> list for the combos */
+export const getCashSuppliers = async (
+  req: AuthenticatedRequest,
+  res: Response,
+): Promise<Response> => {
+  try {
+    const coId = req.user?.companyId;
+    if (!coId)
+      return res
+        .status(401)
+        .json({ success: false, message: "Authentication required" });
+
+    const result = await pool.query(
+      `SELECT "fCashSupplierID"   AS fcashsupplierid,
+          "fCashSupplierName" AS fcashsuppliername,
+          "fVATNo"            AS fvatno
+   FROM dbo."tblCashSupplier"
+   WHERE "fCoID" = $1
+   ORDER BY "fCashSupplierID"`,
+      [coId],
+    );
+
+    return res.status(200).json({ success: true, data: result.rows });
+  } catch (error: unknown) {
+    console.error("getCashSuppliers error:", error);
+    return res
+      .status(500)
+      .json({ success: false, message: "Failed to fetch cash suppliers" });
+  }
+};
+
+/* VB: GetCashSupplierID -> Select dbo.GetCashSupplierID(CoID) */
+export const getNextCashSupplierId = async (
+  req: AuthenticatedRequest,
+  res: Response,
+): Promise<Response> => {
+  try {
+    const coId = req.user?.companyId;
+    if (!coId)
+      return res
+        .status(401)
+        .json({ success: false, message: "Authentication required" });
+
+    const result = await pool.query(
+      `SELECT dbo.getcashsupplierid($1::varchar) AS id`,
+      [coId],
+    );
+
+    return res
+      .status(200)
+      .json({ success: true, data: { id: result.rows[0]?.id ?? "" } });
+  } catch (error: unknown) {
+    console.error("getNextCashSupplierId error:", error);
+    return res
+      .status(500)
+      .json({ success: false, message: "Failed to get next supplier id" });
+  }
+};
+
+/* VB: GetData (strMode "G") */
+export const getCashSupplier = async (
+  req: AuthenticatedRequest,
+  res: Response,
+): Promise<Response> => {
+  try {
+    const coId = req.user?.companyId;
+    const { id } = req.params;
+    if (!coId || !id)
+      return res
+        .status(400)
+        .json({ success: false, message: "Cash Supplier ID is required" });
+
+    const result = await pool.query(
+      `SELECT "fCashSupplierID"   AS fcashsupplierid,
+          "fCashSupplierName" AS fcashsuppliername,
+          "fVATNo"            AS fvatno
+   FROM dbo."tblCashSupplier"
+   WHERE "fCoID" = $1 AND "fCashSupplierID" = $2`,
+      [coId, id],
+    );
+
+    if (result.rows.length === 0)
+      return res
+        .status(404)
+        .json({ success: false, message: "Cash Supplier not found" });
+
+    return res.status(200).json({ success: true, data: result.rows[0] });
+  } catch (error: unknown) {
+    console.error("getCashSupplier error:", error);
+    return res
+      .status(500)
+      .json({ success: false, message: "Failed to fetch cash supplier" });
+  }
+};
+
+/* VB: Apply (strMode S / M) + ValidateMe */
+export const saveCashSupplier = async (
+  req: AuthenticatedRequest,
+  res: Response,
+): Promise<Response> => {
+  try {
+    const coId = req.user?.companyId;
+    const userId = req.user?.userId;
+
+    const { mode, cashSupplierId, cashSupplierName, vatNo } = req.body as {
+      mode: "S" | "M";
+      cashSupplierId: string;
+      cashSupplierName: string;
+      vatNo?: string;
+    };
+
+    if (!coId || !userId)
+      return res
+        .status(401)
+        .json({ success: false, message: "Authentication required" });
+    if (!["S", "M"].includes(mode))
+      return res
+        .status(400)
+        .json({ success: false, message: "mode must be 'S' or 'M'" });
+    if (!cashSupplierId?.trim())
+      return res
+        .status(400)
+        .json({ success: false, message: "Please input 'Cash Supplier ID'" });
+    if (!cashSupplierName?.trim())
+      return res
+        .status(400)
+        .json({ success: false, message: "Please input 'Cash Supplier Name'" });
+
+    const vat = (vatNo ?? "").trim();
+    if (vat && vat.length < 15)
+      return res.status(400).json({
+        success: false,
+        message: "'VAT No.' Should be 15 digits width",
+      });
+
+    await pool.query(
+      `CALL dbo.sp_frmcashsupplier(
+         strmode => $1, gstrcoid => $2, strcashsupplierid => $3,
+         strcashsuppliername => $4, strvatno => $5, gstruserid => $6)`,
+      [
+        mode,
+        coId,
+        cashSupplierId.trim(),
+        cashSupplierName.trim().toUpperCase(), // VB: CharacterCasing.Upper
+        vat,
+        userId,
+      ],
+    );
+
+    return res.status(200).json({
+      success: true,
+      message: mode === "S" ? "Saved" : "Modified",
+      data: { cashSupplierId: cashSupplierId.trim() },
+    });
+  } catch (error: unknown) {
+    console.error("saveCashSupplier error:", error);
+    return res
+      .status(500)
+      .json({ success: false, message: "Not saved, try again" });
+  }
+};
+
+/* VB: ApplyD */
+export const deleteCashSupplier = async (
+  req: AuthenticatedRequest,
+  res: Response,
+): Promise<Response> => {
+  try {
+    const coId = req.user?.companyId;
+    const userId = req.user?.userId;
+    const { id } = req.params;
+    if (!coId || !userId || !id)
+      return res
+        .status(400)
+        .json({ success: false, message: "Please input 'Cash Supplier ID'" });
+
+    await pool.query(
+      `CALL dbo.sp_frmcashsupplier(
+         strmode => 'D', gstrcoid => $1, strcashsupplierid => $2, gstruserid => $3)`,
+      [coId, id, userId],
+    );
+
+    return res.status(200).json({ success: true, message: "Deleted" });
+  } catch (error: unknown) {
+    console.error("deleteCashSupplier error:", error);
+    return res
+      .status(500)
+      .json({ success: false, message: "Document is not deleted, try again" });
+  }
+};

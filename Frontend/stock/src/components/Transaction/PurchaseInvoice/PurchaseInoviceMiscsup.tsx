@@ -1,6 +1,7 @@
 import React, { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { X } from "lucide-react";
+import { usePurchaseInvoice } from "../../../hooks/Purchase/Transaction/usePurchaseInvoice";
 
 export interface MiscSupplierData {
   miscSupId: string;
@@ -11,31 +12,53 @@ export interface MiscSupplierData {
 interface Props {
   open: boolean;
   onClose: () => void;
-  onSave?: (data: MiscSupplierData) => void;
+  onSaved?: (data: MiscSupplierData) => void;
 }
 
-const inputClassmiscId = "w-[110px] input-style";
 const inputClassmiscName = "w-[300px] input-style";
 const inputClassvat = "w-[220px] input-style";
 const buttonClass = "btn-style";
 
-const PurchaseInoviceMiscsup: React.FC<Props> = ({ open, onClose, onSave }) => {
+const PurchaseInoviceMiscsup: React.FC<Props> = ({
+  open,
+  onClose,
+  onSaved,
+}) => {
+  const { fetchNextCashSupplierId, saveCashSupplier } = usePurchaseInvoice();
+
   const [miscSupId, setMiscSupId] = useState("");
   const [miscSupName, setMiscSupName] = useState("");
   const [vatNo, setVatNo] = useState("");
   const [error, setError] = useState("");
+  const [saving, setSaving] = useState(false);
 
-  const firstInputRef = useRef<HTMLInputElement>(null);
+  const nameInputRef = useRef<HTMLInputElement>(null);
+  const vatInputRef = useRef<HTMLInputElement>(null);
+  const dialogRef = useRef<HTMLDivElement>(null);
 
-  /* Reset the fields and focus the first one each time the popup opens */
+  /* Each time the popup opens: reset, load the next ID, focus the name */
   useEffect(() => {
     if (!open) return;
     setMiscSupId("");
     setMiscSupName("");
     setVatNo("");
     setError("");
-    firstInputRef.current?.focus();
-  }, [open]);
+    nameInputRef.current?.focus();
+
+    let cancelled = false;
+    fetchNextCashSupplierId()
+      .then((id) => {
+        if (!cancelled) setMiscSupId(id);
+      })
+      .catch((err: unknown) => {
+        if (!cancelled)
+          setError(err instanceof Error ? err.message : "Failed to get ID");
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [open, fetchNextCashSupplierId]);
 
   /* Esc closes the popup */
   useEffect(() => {
@@ -49,22 +72,73 @@ const PurchaseInoviceMiscsup: React.FC<Props> = ({ open, onClose, onSave }) => {
 
   if (!open) return null;
 
-  const handleSave = () => {
+  /* Enter works like Tab between fields; Tab / Shift+Tab stay inside the popup */
+  const handleDialogKeyDown = (e: React.KeyboardEvent<HTMLDivElement>) => {
+    if (e.key === "Tab") {
+      const root = dialogRef.current;
+      if (!root) return;
+
+      const focusables = Array.from(
+        root.querySelectorAll<HTMLElement>("input, button"),
+      ).filter(
+        (el) =>
+          !el.hasAttribute("disabled") &&
+          !(el as HTMLInputElement).readOnly &&
+          el.tabIndex >= 0,
+      );
+      if (focusables.length === 0) return;
+
+      const first = focusables[0];
+      const last = focusables[focusables.length - 1];
+
+      if (e.shiftKey && document.activeElement === first) {
+        e.preventDefault();
+        last.focus();
+      } else if (!e.shiftKey && document.activeElement === last) {
+        e.preventDefault();
+        first.focus();
+      }
+    }
+  };
+
+  const handleSave = async () => {
+    if (saving) return;
+
     if (!miscSupId.trim()) {
-      setError("Please enter 'Misc. Sup.ID'");
+      setError("Please input 'Cash Supplier ID'");
       return;
     }
     if (!miscSupName.trim()) {
-      setError("Please enter 'Misc. Sup.Name'");
+      setError("Please input 'Cash Supplier Name'");
+      return;
+    }
+    if (vatNo.trim() && vatNo.trim().length < 15) {
+      setError("'VAT No.' Should be 15 digits width");
       return;
     }
 
-    onSave?.({
+    const data: MiscSupplierData = {
       miscSupId: miscSupId.trim(),
-      miscSupName: miscSupName.trim(),
+      miscSupName: miscSupName.trim().toUpperCase(),
       vatNo: vatNo.trim(),
-    });
-    onClose();
+    };
+
+    try {
+      setSaving(true);
+      setError("");
+      await saveCashSupplier({
+        mode: "S",
+        cashSupplierId: data.miscSupId,
+        cashSupplierName: data.miscSupName,
+        vatNo: data.vatNo,
+      });
+      onSaved?.(data);
+      onClose();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Not saved, try again");
+    } finally {
+      setSaving(false);
+    }
   };
 
   return createPortal(
@@ -76,6 +150,7 @@ const PurchaseInoviceMiscsup: React.FC<Props> = ({ open, onClose, onSave }) => {
       }}
     >
       <div
+        ref={dialogRef}
         role="dialog"
         aria-modal="true"
         aria-labelledby="miscSupTitle"
@@ -104,42 +179,47 @@ const PurchaseInoviceMiscsup: React.FC<Props> = ({ open, onClose, onSave }) => {
 
         {/* FORM */}
         <div className="px-[25px] py-[22px]">
-          {/* Misc. Sup.ID */}
+          {/* Supplier ID (auto, read-only) */}
           <div className="mb-[12px] flex items-center">
             <label
               htmlFor="txtMiscSupID"
               className="w-[125px] shrink-0 text-right text-[13px] text-slate-700"
             >
-              Misc. Sup.ID :
+              Supplier ID :
             </label>
 
             <input
-              ref={firstInputRef}
               id="txtMiscSupID"
               type="text"
               value={miscSupId}
-              maxLength={12}
-              onChange={(e) => setMiscSupId(e.target.value)}
-              autoComplete="off"
-              className={`${inputClassmiscId} ml-[10px]`}
+              readOnly
+              tabIndex={-1}
+              className="input-style ml-[10px] w-[110px] bg-slate-100"
             />
           </div>
 
-          {/* Misc. Sup.Name */}
+          {/* Supplier Name */}
           <div className="mb-[12px] flex items-center">
             <label
               htmlFor="txtMiscSupName"
               className="w-[125px] shrink-0 text-right text-[13px] text-slate-700"
             >
-              Misc. Sup.Name :
+              Supplier Name :
             </label>
 
             <input
+              ref={nameInputRef}
               id="txtMiscSupName"
               type="text"
               value={miscSupName}
               maxLength={100}
-              onChange={(e) => setMiscSupName(e.target.value)}
+              onChange={(e) => setMiscSupName(e.target.value.toUpperCase())}
+              onKeyDown={(e) => {
+                if (e.key === "Enter") {
+                  e.preventDefault();
+                  vatInputRef.current?.focus();
+                }
+              }}
               autoComplete="off"
               className={`${inputClassmiscName} ml-[10px]`}
             />
@@ -151,17 +231,21 @@ const PurchaseInoviceMiscsup: React.FC<Props> = ({ open, onClose, onSave }) => {
               htmlFor="txtVatNo"
               className="w-[125px] shrink-0 text-right text-[13px] text-slate-700"
             >
-              Vat No. :
+              VAT No. :
             </label>
 
             <input
+              ref={vatInputRef}
               id="txtVatNo"
               type="text"
               value={vatNo}
               maxLength={15}
               onChange={(e) => setVatNo(e.target.value)}
               onKeyDown={(e) => {
-                if (e.key === "Enter") handleSave();
+                if (e.key === "Enter") {
+                  e.preventDefault();
+                  void handleSave();
+                }
               }}
               autoComplete="off"
               className={`${inputClassvat} ml-[10px]`}
@@ -180,10 +264,11 @@ const PurchaseInoviceMiscsup: React.FC<Props> = ({ open, onClose, onSave }) => {
           <button
             id="btnMiscSave"
             type="button"
-            onClick={handleSave}
-            className={buttonClass}
+            onClick={() => void handleSave()}
+            disabled={saving}
+            className={`${buttonClass} disabled:opacity-60`}
           >
-            Save
+            {saving ? "Saving..." : "Save"}
           </button>
         </div>
       </div>

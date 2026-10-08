@@ -1,11 +1,13 @@
-import React, { useCallback, useMemo, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useState } from "react";
 import PurchaseForm from "../../../components/Transaction/PurchaseInvoice/PurchaseInvoiceForm";
 import PurchaseTable from "../../../components/Transaction/PurchaseInvoice/PurchaseInvoiceTable";
 import PurchaseFooter from "../../../components/Transaction/PurchaseInvoice/PurchaseInvoiceFooter";
+import type { MiscSupplierData } from "../../../components/Transaction/PurchaseInvoice/PurchaseInoviceMiscsup";
 import {
   usePurchaseInvoice,
   emptyHeader,
   emptyRow,
+  type CashSupplier,
   type PurchaseHeader,
   type PurchaseRow,
 } from "../../../hooks/Purchase/Transaction/usePurchaseInvoice";
@@ -32,13 +34,23 @@ const recalcRow = (row: PurchaseRow, rate: number): PurchaseRow => {
 };
 
 const PurchaseInvoicePage: React.FC = () => {
-  const { fetchInvoice, saveInvoice, deleteInvoice, calcUnitCost, loading } =
-    usePurchaseInvoice();
+  const {
+    fetchInvoice,
+    saveInvoice,
+    deleteInvoice,
+    calcUnitCost,
+    fetchCashSuppliers,
+    loading,
+  } = usePurchaseInvoice();
 
   const [header, setHeader] = useState<PurchaseHeader>(emptyHeader);
   const [rows, setRows] = useState<PurchaseRow[]>(createRows);
   const [mode, setMode] = useState<"S" | "M">("S");
   const [message, setMessage] = useState("");
+
+  // Misc. supplier lookup + the Yes/No switch
+  const [miscSuppliers, setMiscSuppliers] = useState<CashSupplier[]>([]);
+  const [miscMode, setMiscMode] = useState("No");
 
   // TODO: wire these to the Purchase Expense total (txtTotExp)
   // and a discount field (txtDiscAmt)
@@ -55,6 +67,19 @@ const PurchaseInvoicePage: React.FC = () => {
     }),
     [rows],
   );
+
+  /* VB: GetCashSupplier -> fills the Misc. Sup. combos */
+  const loadMiscSuppliers = useCallback(async () => {
+    try {
+      setMiscSuppliers(await fetchCashSuppliers());
+    } catch {
+      setMiscSuppliers([]);
+    }
+  }, [fetchCashSuppliers]);
+
+  useEffect(() => {
+    void loadMiscSuppliers();
+  }, [loadMiscSuppliers]);
 
   const handleHeaderChange = useCallback(
     <K extends keyof PurchaseHeader>(field: K, value: PurchaseHeader[K]) => {
@@ -80,10 +105,22 @@ const PurchaseInvoicePage: React.FC = () => {
     [rate],
   );
 
+  /* VB cmdAdd_Click: refresh the combos, then select the saved supplier */
+  const handleMiscSupplierSaved = useCallback(
+    async (d: MiscSupplierData) => {
+      await loadMiscSuppliers();
+      handleHeaderChange("miscSupId", d.miscSupId);
+      handleHeaderChange("supplierName", d.miscSupName);
+      handleHeaderChange("vatNo", d.vatNo);
+    },
+    [loadMiscSuppliers, handleHeaderChange],
+  );
+
   const handleClear = useCallback(() => {
     setHeader(emptyHeader());
     setRows(createRows());
     setMode("S");
+    setMiscMode("No");
     setMessage("");
   }, []);
 
@@ -102,6 +139,7 @@ const PurchaseInvoicePage: React.FC = () => {
           emptyRow,
         ),
       ]);
+      setMiscMode("No");
       setMode("M");
       return;
     }
@@ -114,6 +152,7 @@ const PurchaseInvoicePage: React.FC = () => {
         docNo: header.docNo,
       });
       setRows(createRows());
+      setMiscMode("No");
     }
     setMode("S");
   }, [fetchInvoice, header.brId, header.docNo, mode]);
@@ -168,6 +207,10 @@ const PurchaseInvoicePage: React.FC = () => {
         onDocNoBlur={handleDocNoBlur}
         totalSupplierAmt={totals.supplierTotal}
         onCalcUnitCost={handleCalcUnitCost}
+        miscSuppliers={miscSuppliers}
+        miscMode={miscMode}
+        onMiscModeChange={setMiscMode}
+        onMiscSupplierSaved={handleMiscSupplierSaved}
       />
 
       <PurchaseTable rows={rows} onRowChange={handleRowChange} />
