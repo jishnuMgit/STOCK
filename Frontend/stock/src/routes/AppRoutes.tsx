@@ -26,6 +26,8 @@ import SetDefaultBranch from "../pages/Settings/SetDefaultBranchPage";
 
 import ItemEnquiryPage from "../pages/Sales/Setup/ItemEnquiryPage";
 import UnitPage from "../pages/Purchase/Setup/UnitPage";
+import StaffPage from "../pages/Purchase/Setup/StaffPage";
+import UserAudit from "../pages/Security/UserAudit/UserAuditPage";
 
 const Login = lazy(() => import("../pages/Auth/LoginPage"));
 const ReceiptPage = lazy(
@@ -162,6 +164,10 @@ const AppRoutes = () => {
           path="/Purchase/Setup/UnitPage"
           element={<UnitPage/>}
           />
+          <Route
+          path="/Purchase/Setup/StaffPage"
+          element={<StaffPage/>}
+          />
 
           {/* ================= PURCHASE - SETUP ================= */}
           <Route path="/Purchase/Setup/ItemPage" element={<ItemPage />} />
@@ -209,6 +215,7 @@ const AppRoutes = () => {
             path="/Security/UserPermissionBranch"
             element={<UserPermissionBranchPage />}
           />
+          <Route path="/Security/UserAudit" element={<UserAudit/>}/>
 
           {/* ================= ADMINISTRATION ================= */}
           <Route path="/Administration/CompanyPage" element={<CompanyPage />} />

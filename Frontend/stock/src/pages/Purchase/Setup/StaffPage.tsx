@@ -18,7 +18,7 @@ type StaffRow = {
 const initialRows: StaffRow[] = [
   {
     id: "01",
-    staff: "JACOB MATHEW",
+    staff: "MATHEW",
     purchase: true,
     sales: false,
   },
@@ -30,7 +30,7 @@ const initialRows: StaffRow[] = [
   },
   {
     id: "03",
-    staff: "JACOB JOSEPH",
+    staff: "JOSEPH",
     purchase: false,
     sales: true,
   },
@@ -316,28 +316,20 @@ const StaffPage: React.FC = () => {
   // ============================================================
 
   return (
-    <div className="flex min-h-screen w-full items-start justify-center bg-white pt-[26px]">
+    <div className="flex min-h-full w-full items-center justify-center bg-white pt-[26px]">
       {/* ======================================================
           MAIN CONTAINER
       ====================================================== */}
 
-      <div className="w-[530px] bg-white">
+      <div className="w-[830px] min-w-[830px] bg-white border border-gray-400">
         {/* ====================================================
             GREEN TITLE BAR
         ==================================================== */}
 
-        <div className="flex h-[30px] items-center border-b border-slate-400 bg-[#a3dfc0]">
-            <span
-              className="
-                rounded-[3px]
-                px-2
-                text-[18px]
-                font-semibold
-                text-slate-800
-              "
-            >
+        <div className="flex h-[28px] w-full items-center bg-[#a7dfc0]">
+            <h1 className="ml-[15px] text-[17px] font-semibold text-[#374151]">
               Staff
-            </span>
+            </h1>
           </div>
 
         {/* ====================================================
@@ -351,7 +343,7 @@ const StaffPage: React.FC = () => {
                 w-full
                 table-fixed
                 border-collapse
-                text-[12px]
+                text-[14px]
               "
             >
               {/* ==================================================
@@ -466,12 +458,7 @@ const StaffPage: React.FC = () => {
                   <tr
                     key={index}
                     className={`
-                      h-[30px]
-                      ${
-                        selectedRow === index
-                          ? "bg-[#f8fcfa]"
-                          : "bg-white"
-                      }
+                      h-[30px] bg-white
                     `}
                     onClick={() =>
                       setSelectedRow(index)
@@ -546,7 +533,7 @@ const StaffPage: React.FC = () => {
                           bg-transparent
                           px-[12px]
                           py-0
-                          text-[12px]
+                          text-[14px]
                           text-[#374151]
                           outline-none
                           focus:bg-[#f1f8ff]
@@ -596,7 +583,7 @@ const StaffPage: React.FC = () => {
                           bg-transparent
                           px-[12px]
                           py-0
-                          text-[12px]
+                          text-[14px]
                           text-[#374151]
                           outline-none
                           focus:bg-[#f1f8ff]
@@ -735,24 +722,10 @@ const StaffPage: React.FC = () => {
             type="button"
             onClick={handleSave}
             className="
-              h-[41px]
-              w-[112px]
-              rounded-[5px]
-              border
-              border-[#9bb6c9]
-              bg-gradient-to-b
-              from-[#ffffff]
-              to-[#e7eef4]
-              text-[16px]
-              text-green-700
-              shadow-[0_1px_3px_rgba(0,0,0,0.2)]
-              hover:bg-[#f5f5f5]
-              active:translate-y-[1px]
+             btn-style
             "
           >
-            <span className="underline">
-              Save
-            </span>
+           <u>S</u>ave
           </button>
 
           {/* CLEAR */}
@@ -761,24 +734,10 @@ const StaffPage: React.FC = () => {
             type="button"
             onClick={handleClear}
             className="
-              h-[41px]
-              w-[112px]
-              rounded-[5px]
-              border
-              border-[#9bb6c9]
-              bg-gradient-to-b
-              from-[#ffffff]
-              to-[#e7eef4]
-              text-[16px]
-              text-green-700
-              shadow-[0_1px_3px_rgba(0,0,0,0.2)]
-              hover:bg-[#f5f5f5]
-              active:translate-y-[1px]
+              btn-style
             "
           >
-            <span className="underline">
-              Clear
-            </span>
+           <u>C</u>lear
           </button>
         </div>
       </div>

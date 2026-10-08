@@ -45,96 +45,162 @@ const itemNameOptions: SelectOption[] = [
 // REACT SELECT STYLES
 // ============================================================
 
-const selectStyles: StylesConfig<SelectOption, false> = {
-  control: (base, state) => ({
+const selectStyles = {
+  control: (
+    base: any,
+    state: any
+  ) => ({
     ...base,
+
     minHeight: "30px",
     height: "30px",
-    borderRadius: "5px",
-    borderColor: state.isFocused ? "#80bdff" : "#d5e5ff",
-    boxShadow: state.isFocused ? "0 0 0 1px #80bdff" : "none",
-    fontSize: "12px",
+
+    borderColor: "#99a1af",
+
+    borderRadius: "4px",
+
+    boxShadow: "none",
+
+    fontSize: "14px",
+
     backgroundColor: "#ffffff",
-    cursor: "pointer",
+
+    cursor: "text",
+
     "&:hover": {
-      borderColor: "#9caec3",
+      borderColor: "#20884e",
     },
+
+    ...(state.isFocused && {
+      borderColor: "#20884e",
+      boxShadow: "none",
+      outline: "none",
+    }),
   }),
 
-  valueContainer: (base) => ({
+  valueContainer: (base: any) => ({
     ...base,
-    padding: "0 5px",
-    height: "29px",
+    height: "30px",
+    padding: "0 8px",
+    overflow: "hidden",
   }),
 
-  input: (base) => ({
+  singleValue: (base: any) => ({
+    ...base,
+    color: "#344054",
+    fontSize: "14px",
+    margin: 0,
+  }),
+
+  placeholder: (base: any) => ({
+    ...base,
+    color: "#8b96a3",
+    fontSize: "14px",
+    margin: 0,
+  }),
+
+  input: (base: any) => ({
     ...base,
     margin: 0,
     padding: 0,
+    fontSize: "14px",
+    color: "#344054",
   }),
 
-  singleValue: (base) => ({
+  indicatorsContainer: (base: any) => ({
     ...base,
-    margin: 0,
-    color: "#374151",
+    height: "28px",
   }),
 
-  placeholder: (base) => ({
+  dropdownIndicator: (base: any) => ({
     ...base,
-    margin: 0,
-    color: "#9ca3af",
-  }),
+    color: "#aeb8c2",
+    padding: "4px",
 
-  indicatorsContainer: (base) => ({
-    ...base,
-  }),
-
-  dropdownIndicator: (base) => ({
-    ...base,
-    padding: "3px",
-    color: "#64748b",
-  }),
-
-  clearIndicator: (base) => ({
-    ...base,
-    display: "none",
+    "&:hover": {
+      color: "#808080",
+    },
   }),
 
   indicatorSeparator: () => ({
     display: "none",
   }),
 
-  // Dropdown menu
-  menu: (base) => ({
+  clearIndicator: (base: any) => ({
     ...base,
-    zIndex: 99999,
-    fontSize: "12px",
-    marginTop: "2px",
+    color: "#aeb8c2",
+    padding: "4px",
+
+    "&:hover": {
+      color: "#808080",
+    },
   }),
 
-  menuList: (base) => ({
+  // ==========================================================
+  // MENU
+  // ==========================================================
+
+  menu: (base: any) => ({
     ...base,
-    maxHeight: "180px",
+
+    fontSize: "14px",
+
+    zIndex: 999999,
+
+    marginTop: "2px",
+
+    borderRadius: "3px",
+
+    overflow: "hidden",
+
+    boxShadow:
+      "0 4px 12px rgba(0,0,0,0.12)",
+  }),
+
+  // ==========================================================
+  // MENU PORTAL
+  // ==========================================================
+
+  menuPortal: (base: any) => ({
+    ...base,
+
+    zIndex: 999999,
+  }),
+
+  menuList: (base: any) => ({
+    ...base,
+
+    padding: "3px 0",
+
+    maxHeight: "200px",
+
     overflowY: "auto",
   }),
 
-  // IMPORTANT: Render the menu above the table and page.
-  menuPortal: (base) => ({
+  option: (
+    base: any,
+    state: any
+  ) => ({
     ...base,
-    zIndex: 99999,
-  }),
 
-  option: (base, state) => ({
-    ...base,
-    padding: "6px 9px",
     fontSize: "12px",
-    backgroundColor: state.isSelected
-      ? "#EEF8F3"
-      : state.isFocused
-        ? "#eff6ff"
-        : "#ffffff",
-    color: "#374151",
+
     cursor: "pointer",
+
+    backgroundColor:
+      state.isSelected
+        ? "#eefbf4"
+        : state.isFocused
+          ? "#eefbf4"
+          : "#ffffff",
+
+    color: "#344054",
+
+    padding: "7px 10px",
+
+    "&:active": {
+      backgroundColor: "#dff5e9",
+    },
   }),
 };
 
@@ -154,7 +220,7 @@ const tableSelectStyles: StylesConfig<SelectOption, false> = {
     boxShadow: "none",
     outline: "none",
     backgroundColor: "transparent",
-    fontSize: "12px",
+    fontSize: "14px",
     cursor: "pointer",
 
     "&:hover": {
@@ -414,12 +480,12 @@ const BeginningStockPage: React.FC = () => {
         <div className="flex min-w-0 items-center gap-3 ">
           <label
             htmlFor="lkpBranch"
-            className="shrink-0 text-[14px] font-semibold text-slate-600"
+            className="shrink-0 text-[14px]  "
           >
             Branch :
           </label>
 
-          <div className="w-[270px] max-w-full">
+          <div className="w-[250px] max-w-full">
             <Select<SelectOption, false>
               inputId="lkpBranch"
               name="lkpBranch"
@@ -467,8 +533,8 @@ const BeginningStockPage: React.FC = () => {
             <colgroup>
               <col style={{ width: "17px" }} />
               <col style={{ width: "43px" }} />
-              <col style={{ width: "14%" }} />
-              <col style={{ width: "50%" }} />
+              <col style={{ width: "10%" }} />
+              <col style={{ width: "54%" }} />
               <col style={{ width: "6.2%" }} />
               <col style={{ width: "6.2%" }} />
               <col style={{ width: "8.2%" }} />
@@ -478,7 +544,7 @@ const BeginningStockPage: React.FC = () => {
             <thead className="sticky top-0 z-10  bg-[#f5f8fc]">
               <tr className="h-[30px] text-left text-[12px] text-slate-600">
                 <th className="border border-[#d5e5ff] px-1 font-normal">
-                  ▾
+                  
                 </th>
                 <th className="border border-[#d5e5ff] px-1 text-center font-medium">
                   Sl.
@@ -509,7 +575,7 @@ const BeginningStockPage: React.FC = () => {
                 <tr
                   key={row.id}
                   onClick={() => setActiveRow(index)}
-                  className={`h-[30px] ${
+                  className={`h-[30px] text-[14px] ${
                     activeRow === index
                       ? "bg-[#f8fbff]"
                       : "bg-white"
@@ -665,7 +731,7 @@ const BeginningStockPage: React.FC = () => {
         {/* NOTE */}
         <label
           htmlFor="txtNote"
-          className="w-[32px] shrink-0 text-[12px] text-slate-700"
+          className="w-[32px] shrink-0 text-[14px] text-slate-700"
         >
           Note
         </label>
@@ -675,11 +741,11 @@ const BeginningStockPage: React.FC = () => {
           name="txtNote"
           value={note}
           onChange={(event) => setNote(event.target.value)}
-          className="h-[28px] w-[60%] shrink-0 border border-slate-300 bg-white px-2 outline-none focus:border-blue-400"
+          className=" w-[60%] shrink-0 input-style"
         />
 
         {/* TOTAL LABEL */}
-        <div className="ml-9 flex h-[28px] w-[71px] shrink-0 items-center justify-center rounded border border-slate-300 bg-white text-[12px]">
+        <div className="ml-9 flex h-[30px] w-[71px] shrink-0 items-center justify-center rounded border border-slate-300 bg-white text-[14px]">
           Total
         </div>
 
@@ -689,7 +755,7 @@ const BeginningStockPage: React.FC = () => {
           name="txtGrandTotal"
           value={formatAmount(total)}
           readOnly
-          className="h-[28px] w-[6.5%] shrink-0 rounded border border-slate-300 bg-white px-1 text-right text-[14px] outline-none"
+          className="h-[30px] w-[6.5%] shrink-0 rounded border border-slate-300 bg-white px-1 text-right text-[14px] outline-none"
         />
 
         {/* RIGHT-SIDE TOTAL DISPLAY */}
@@ -698,7 +764,7 @@ const BeginningStockPage: React.FC = () => {
           name="txtTotal"
           value={formatAmount(total)}
           readOnly
-          className="ml-auto h-[28px] w-[10.2%] shrink-0 rounded border border-slate-300 bg-white px-2 text-right text-[14px] outline-none"
+          className="ml-auto h-[30px] w-[10.2%] shrink-0 rounded border border-slate-300 bg-white px-2 text-right text-[14px] outline-none"
         />
       </section>
 

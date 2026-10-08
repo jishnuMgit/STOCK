@@ -325,7 +325,7 @@ const StockTransferHeader: React.FC = () => {
               Entry No. :
             </label>
 
-            <div className="ml-[7px] w-[145px]">
+            <div className="ml-[7px] w-[140px]">
              
               <input type="text" className="input-style w-40"  id="txtEntryNo"
                  />

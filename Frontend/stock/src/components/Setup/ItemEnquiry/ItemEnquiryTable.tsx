@@ -168,7 +168,7 @@ const ItemEnquiryTable: React.FC<
         mx-[24px]
         mt-[2px]
         
-        h-[276px]
+        h-[277px]
         overflow-hidden
         border
         border-[#dce5ef]

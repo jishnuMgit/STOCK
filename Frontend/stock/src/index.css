@@ -88,6 +88,14 @@ body {
 .userIdSelect__menu-list::-webkit-scrollbar-thumb:hover {
   background-color: #4b5563;
 }
-.branch-w {
+.branch{
  width:  '140px';
 }
+.date{
+  width: '140px';
+}
+.docNo{
+  width: '140px';
+}
+
+

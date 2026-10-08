@@ -186,11 +186,11 @@ const UnitPage: React.FC = () => {
             GREEN HEADER
         ==================================================== */}
 
-        <div className="flex h-[30px] items-center border-b border-slate-400 bg-[#a3dfc0]">
-          <span className="px-2 text-[18px] font-semibold text-slate-800">
-            Unit
-          </span>
-        </div>
+        <div className="flex h-[28px] w-full items-center bg-[#a7dfc0]">
+            <h1 className="ml-[15px] text-[17px] font-semibold text-[#374151]">
+              Unit
+            </h1>
+          </div>
 
         {/* ====================================================
             TABLE AREA
@@ -384,9 +384,7 @@ const UnitPage: React.FC = () => {
                 btn-style
             "
           >
-            <span className="underline">
-              S
-            </span>ave
+           <u>S</u>ave
           </button>
 
           {/* CLEAR */}
@@ -398,9 +396,9 @@ const UnitPage: React.FC = () => {
              btn-style
             "
           >
-            <span className="underline">
-              C
-            </span>lear
+           <u>C</u>
+              
+            lear
           </button>
         </div>
       </div>

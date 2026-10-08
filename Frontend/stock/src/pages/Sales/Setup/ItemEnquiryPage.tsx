@@ -219,7 +219,7 @@ const ItemEnquiryPage: React.FC = () => {
   };
 
   return (
-   <div className="flex min-h-screen w-full items-center justify-center bg-white">
+   <div className="flex min-h-full w-full items-center justify-center bg-white">
   <div
     className="
       w-full

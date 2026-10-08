@@ -7,7 +7,7 @@ import BeginningBalanceFooter from "../../../../components/Transaction/Beginning
 const BeginningBalance: React.FC = () => {
   return (
     <div className="flex h-full w-full justify-center overflow-hidden bg-[#eeeeee]">
-      <main className="h-fit w-full min-w-[900px] max-w-[1000px] mt-5 overflow-hidden bg-white border border-gray-400 pb-3 text-[#202020]">
+      <main className="h-fit w-full min-w-[950px] max-w-[1010px] mt-5 overflow-hidden bg-white border border-gray-400 pb-3 text-[#202020]">
         <div className="flex h-full w-full flex-col">
           <BeginningBalanceHeader />
 
