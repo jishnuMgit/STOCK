@@ -226,5 +226,45 @@ export const usePurchaseInvoice = () => {
     [],
   );
 
-  return { fetchInvoice, saveInvoice, deleteInvoice, loading, error };
+  const calcUnitCost = useCallback(
+    async (
+      rows: PurchaseRow[],
+      totalExpense: number,
+      discAmt: number,
+    ): Promise<PurchaseRow[]> => {
+      const lines = rows.map((r) => ({
+        itemId: r.itemId,
+        qtyIn: n(r.qty),
+        unitPrice: n(r.unitPrice),
+      }));
+
+      const result = await apiRequest<{
+        data: { lines: { unitCost: number; totalCost: number }[] };
+      }>("POST", "/purchase-invoice/calc-unit-cost", {
+        lines,
+        totalExpense,
+        discAmt,
+      });
+
+      return rows.map((r, i) =>
+        r.itemId
+          ? {
+              ...r,
+              unitCost: fixed(result.data.lines[i]?.unitCost, 4),
+              totalCost: fixed(result.data.lines[i]?.totalCost, 4),
+            }
+          : r,
+      );
+    },
+    [],
+  );
+
+  return {
+    fetchInvoice,
+    saveInvoice,
+    deleteInvoice,
+    calcUnitCost,
+    loading,
+    error,
+  };
 };

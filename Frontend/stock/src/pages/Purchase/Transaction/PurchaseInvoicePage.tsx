@@ -32,13 +32,18 @@ const recalcRow = (row: PurchaseRow, rate: number): PurchaseRow => {
 };
 
 const PurchaseInvoicePage: React.FC = () => {
-  const { fetchInvoice, saveInvoice, deleteInvoice, loading } =
+  const { fetchInvoice, saveInvoice, deleteInvoice, calcUnitCost, loading } =
     usePurchaseInvoice();
 
   const [header, setHeader] = useState<PurchaseHeader>(emptyHeader);
   const [rows, setRows] = useState<PurchaseRow[]>(createRows);
   const [mode, setMode] = useState<"S" | "M">("S");
   const [message, setMessage] = useState("");
+
+  // TODO: wire these to the Purchase Expense total (txtTotExp)
+  // and a discount field (txtDiscAmt)
+  const totalExpense = 0;
+  const discAmt = 0;
 
   const rate = num(header.currencyRate) || 1;
 
@@ -85,7 +90,9 @@ const PurchaseInvoicePage: React.FC = () => {
   /* Load an existing invoice when the Entry No. field is left */
   const handleDocNoBlur = useCallback(async () => {
     if (!header.brId || !header.docNo) return;
+
     const found = await fetchInvoice(YEAR, header.brId, header.docNo);
+
     if (found) {
       setHeader(found.header);
       setRows([
@@ -96,10 +103,32 @@ const PurchaseInvoicePage: React.FC = () => {
         ),
       ]);
       setMode("M");
-    } else {
-      setMode("S");
+      return;
     }
-  }, [fetchInvoice, header.brId, header.docNo]);
+
+    // Not found: if an existing invoice was loaded before, don't keep its data
+    if (mode === "M") {
+      setHeader({
+        ...emptyHeader(),
+        brId: header.brId,
+        docNo: header.docNo,
+      });
+      setRows(createRows());
+    }
+    setMode("S");
+  }, [fetchInvoice, header.brId, header.docNo, mode]);
+
+  /* VB: cmdCalcUnitcost_Click -> CalcUnitCost (calculated on the server) */
+  const handleCalcUnitCost = useCallback(async () => {
+    try {
+      const updated = await calcUnitCost(rows, totalExpense, discAmt);
+      setRows(updated);
+    } catch (err) {
+      window.alert(
+        err instanceof Error ? err.message : "Failed to calculate unit cost",
+      );
+    }
+  }, [calcUnitCost, rows, totalExpense, discAmt]);
 
   const handleSave = useCallback(async () => {
     try {
@@ -138,6 +167,7 @@ const PurchaseInvoicePage: React.FC = () => {
         onChange={handleHeaderChange}
         onDocNoBlur={handleDocNoBlur}
         totalSupplierAmt={totals.supplierTotal}
+        onCalcUnitCost={handleCalcUnitCost}
       />
 
       <PurchaseTable rows={rows} onRowChange={handleRowChange} />

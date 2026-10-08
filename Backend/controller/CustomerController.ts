@@ -1,7 +1,10 @@
 import { Request, Response } from "express";
 import pool from "../DB/db.js";
 import { AuthenticatedRequest } from "../middleware/authMiddleware.js";
-import { validateCustomerCreate, validateCustomerUpdate } from "../validators/customerValidation.js";
+import {
+  validateCustomerCreate,
+  validateCustomerUpdate,
+} from "../validators/customerValidation.js";
 
 // ============================================================
 // GET /api/customers
@@ -470,5 +473,77 @@ export const deleteCustomer = async (
     return res
       .status(500)
       .json({ success: false, message: "Failed to delete customer" });
+  }
+};
+
+// ============================================================
+// GET /api/customers/countries
+// dbo.getcustsupcountry(p_strcoid)
+// ============================================================
+export const getCustSupCountries = async (
+  req: AuthenticatedRequest,
+  res: Response,
+) => {
+  try {
+    const { companyId } = getSession(req);
+
+    if (!companyId) {
+      return res
+        .status(401)
+        .json({ success: false, message: "Company not found in session" });
+    }
+
+    const result = await pool.query("SELECT * FROM dbo.getcustsupcountry($1)", [
+      companyId,
+    ]);
+
+    const data = result.rows
+      .map((r) => ({
+        countryId: r.fcountryid,
+        countryName: r.fcountryname,
+        countryNameA: r.fcountryname_a,
+        positionNo: r.fpositionno,
+      }))
+      // the function has no ORDER BY, so order by fpositionno here
+      .sort((a, b) => (a.positionNo ?? 0) - (b.positionNo ?? 0));
+
+    return res.status(200).json({ success: true, count: data.length, data });
+  } catch (error) {
+    console.error("getCustSupCountries error:", error);
+    return res
+      .status(500)
+      .json({ success: false, message: "Failed to fetch countries" });
+  }
+};
+
+// ============================================================
+// GET /api/customers/staffs
+// dbo.getstaffs(p_strcoid)
+// ============================================================
+export const getStaffs = async (req: AuthenticatedRequest, res: Response) => {
+  try {
+    const { companyId } = getSession(req);
+
+    if (!companyId) {
+      return res
+        .status(401)
+        .json({ success: false, message: "Company not found in session" });
+    }
+
+    const result = await pool.query("SELECT * FROM dbo.getstaffs($1)", [
+      companyId,
+    ]);
+
+    const data = result.rows.map((r) => ({
+      staffId: r.fstaffid,
+      staffName: r.fstaffname,
+    }));
+
+    return res.status(200).json({ success: true, count: data.length, data });
+  } catch (error) {
+    console.error("getStaffs error:", error);
+    return res
+      .status(500)
+      .json({ success: false, message: "Failed to fetch staffs" });
   }
 };

@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import Select, {
   components,
   type MenuListProps,
@@ -111,7 +111,7 @@ const GphMenuList = (props: MenuListProps<GphOption, false>) => (
       className="sticky top-0 z-[1] grid border-b border-slate-300 bg-slate-100 text-[13px] font-semibold text-slate-800"
       style={{ gridTemplateColumns: GPH_COLS }}
     >
-      <span className="border-r border-slate-300 px-3 py-2">Code</span>
+      <span className="border-r border-slate-300 px-3 py-2">Id</span>
       <span className="px-3 py-2">Description</span>
     </div>
     {props.children}
@@ -119,11 +119,11 @@ const GphMenuList = (props: MenuListProps<GphOption, false>) => (
 );
 
 // G is only allowed for level < 4, H only for level >= 4 (P is always allowed)
-const isGphDisabled = (code: string, levelText: string) => {
+const isGphDisabled = (gph: string, levelText: string) => {
   const level = parseInt(levelText, 10);
-  if (Number.isNaN(level)) return false; // no level yet: nothing is blocked
-  if (code === "G") return level >= 4;
-  if (code === "H") return level < 4;
+  if (Number.isNaN(level)) return false;
+  if (gph === "G") return level >= 4;
+  if (gph === "H") return level < 4;
   return false;
 };
 
@@ -149,6 +149,49 @@ const COAPage: React.FC = () => {
     newAccountID: "Auto",
   });
 
+  const accountIdRef = useRef<HTMLInputElement>(null);
+  const accountNameRef = useRef<HTMLInputElement>(null);
+
+  const formRef = useRef<HTMLDivElement>(null);
+
+  const handleEnterAsTab = (e: React.KeyboardEvent<HTMLDivElement>) => {
+    if (e.key !== "Enter" || e.defaultPrevented) return; // react-select handles Enter itself when its menu is open
+
+    const target = e.target as HTMLElement;
+    if (target.tagName !== "INPUT" && target.tagName !== "SELECT") return; // leave buttons alone
+
+    const root = formRef.current;
+    if (!root) return;
+
+    const focusables = Array.from(
+      root.querySelectorAll<HTMLElement>("input, select, textarea, button"),
+    ).filter((el) => {
+      const input = el as HTMLInputElement;
+      return (
+        !el.hasAttribute("disabled") &&
+        input.type !== "hidden" &&
+        el.tabIndex >= 0 &&
+        el.offsetParent !== null && // skip anything not visible
+        !(input.type === "radio" && !input.checked) // one stop per radio group, like Tab
+      );
+    });
+
+    const index = focusables.indexOf(target);
+    const next = focusables[index + (e.shiftKey ? -1 : 1)];
+
+    if (next) {
+      e.preventDefault();
+      next.focus();
+      if (next instanceof HTMLInputElement && next.type === "text")
+        next.select();
+    }
+  };
+
+  // Initial load: cursor in Account Name
+  useEffect(() => {
+    accountNameRef.current?.focus();
+  }, []);
+
   // ============================================================
   // INPUT CHANGE
   // ============================================================
@@ -166,6 +209,20 @@ const COAPage: React.FC = () => {
       }
       return next;
     });
+  };
+
+  const handleIdModeChange = (mode: "Auto" | "Manual") => {
+    setFormData((previous) => ({ ...previous, newAccountID: mode }));
+
+    // wait for the re-render so the Account ID input is enabled/disabled first
+    setTimeout(() => {
+      if (mode === "Manual") {
+        accountIdRef.current?.focus();
+        accountIdRef.current?.focus();
+      } else {
+        accountNameRef.current?.focus();
+      }
+    }, 0);
   };
 
   // ============================================================
@@ -212,6 +269,7 @@ const COAPage: React.FC = () => {
       lkpGPH: "No",
       newAccountID: "Auto",
     });
+    accountNameRef.current?.focus();
   };
 
   // ============================================================
@@ -277,7 +335,11 @@ const COAPage: React.FC = () => {
             FORM
         ====================================================== */}
 
-        <div className="px-[38px] pb-[25px] pt-[10px]">
+        <div
+          ref={formRef}
+          onKeyDown={handleEnterAsTab}
+          className="px-[38px] pb-[25px] pt-[10px]"
+        >
           {/* ====================================================
               ACCOUNT GROUP
           ==================================================== */}
@@ -372,7 +434,7 @@ const COAPage: React.FC = () => {
                   name="newAccountID"
                   value="Auto"
                   checked={formData.newAccountID === "Auto"}
-                  onChange={() => handleChange("newAccountID", "Auto")}
+                  onChange={() => handleIdModeChange("Auto")}
                   className="h-[16px] w-[16px] accent-blue-600"
                 />
 
@@ -398,7 +460,7 @@ const COAPage: React.FC = () => {
                   name="newAccountID"
                   value="Manual"
                   checked={formData.newAccountID === "Manual"}
-                  onChange={() => handleChange("newAccountID", "Manual")}
+                  onChange={() => handleIdModeChange("Manual")}
                   className="
                     h-[16px]
                     w-[16px]
@@ -425,10 +487,12 @@ const COAPage: React.FC = () => {
 
             <input
               id="txtAccountID"
+              ref={accountIdRef}
               type="text"
               value={formData.txtAccountID}
+              disabled={formData.newAccountID === "Auto"}
               onChange={(e) => handleChange("txtAccountID", e.target.value)}
-              className="input-style"
+              className="input-style disabled:cursor-not-allowed disabled:bg-slate-100 disabled:text-slate-500"
             />
           </div>
 
@@ -446,6 +510,7 @@ const COAPage: React.FC = () => {
 
             <input
               id="txtAccountName"
+              ref={accountNameRef}
               type="text"
               value={formData.txtAccountName}
               onChange={(e) => handleChange("txtAccountName", e.target.value)}
@@ -495,11 +560,12 @@ const COAPage: React.FC = () => {
               value={formData.txtAccountLevel}
               onChange={(e) => handleChange("txtAccountLevel", e.target.value)}
               className={smallInputClass}
+              readOnly
             />
 
             <div />
 
-            <label htmlFor="lkpGPH" className={`${labelClass} text-right`}>
+            <label htmlFor="lkpGPH" className={`${labelClass } text-right -ml-4`}>
               Have Cost Center :
             </label>
 

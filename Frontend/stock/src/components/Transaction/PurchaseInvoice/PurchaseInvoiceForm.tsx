@@ -242,6 +242,7 @@ interface Props {
     currencies?: Option[];
   };
   onMiscSupplierSave?: (data: MiscSupplierData) => void;
+  onCalcUnitCost?: () => void;
 }
 
 const PurchaseForm: React.FC<Props> = ({
@@ -251,6 +252,7 @@ const PurchaseForm: React.FC<Props> = ({
   totalSupplierAmt,
   lookups,
   onMiscSupplierSave,
+  onCalcUnitCost,
 }) => {
   const [miscOpen, setMiscOpen] = useState(false);
   const [expenseOpen, setExpenseOpen] = useState(false);
@@ -555,6 +557,7 @@ const PurchaseForm: React.FC<Props> = ({
           <button
             id="btnCalculateUnitCost"
             type="button"
+            onClick={onCalcUnitCost}
             className="ml-25 h-[30px] w-[120px] cursor-pointer whitespace-nowrap rounded-[4px] border border-[#cbd1d9] bg-gradient-to-b from-white to-[#e8e8e8] px-[10px] text-[11px] text-[#222] hover:bg-slate-100"
           >
             Calculate Unit Cost

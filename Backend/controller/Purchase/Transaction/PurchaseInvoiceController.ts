@@ -29,6 +29,77 @@ const getIntDocNo = (docNo: string): number => {
 };
 
 /* =========================================================
+   POST /purchase-invoice/calc-unit-cost
+   Port of VB CalcUnitCost (cmdCalcUnitcost_Click)
+   body: { lines: [{ itemId, qtyIn, unitPrice }], totalExpense, discAmt }
+   ========================================================= */
+export const calcUnitCost = (
+  req: AuthenticatedRequest,
+  res: Response,
+): Response => {
+  try {
+    const { lines, totalExpense, discAmt } = req.body as {
+      lines: { itemId?: string; qtyIn?: number; unitPrice?: number }[];
+      totalExpense?: number;
+      discAmt?: number;
+    };
+
+    if (!Array.isArray(lines)) {
+      return res
+        .status(400)
+        .json({ success: false, message: "lines are required" });
+    }
+
+    const round4 = (v: number) =>
+      Math.round((v + Number.EPSILON) * 10000) / 10000;
+
+    // VB: grdvDoc.Columns("fTotalPrice").SummaryText (SAR total = qty * unit price)
+    const totalInvoiceAmt = lines.reduce(
+      (sum, l) =>
+        l.itemId
+          ? sum + Number((num(l.qtyIn) * num(l.unitPrice)).toFixed(2))
+          : sum,
+      0,
+    );
+
+    const expFor1SAR =
+      totalInvoiceAmt !== 0 ? num(totalExpense) / totalInvoiceAmt : 0;
+    const discFor1SAR =
+      totalInvoiceAmt !== 0 ? num(discAmt) / totalInvoiceAmt : 0;
+
+    let totalCost = 0;
+
+    const result = lines.map((l) => {
+      // VB skips rows with no item
+      if (!l.itemId) return { unitCost: 0, totalCost: 0 };
+
+      const unitPrice = num(l.unitPrice);
+
+      let unitCost =
+        unitPrice * expFor1SAR + unitPrice - unitPrice * discFor1SAR;
+      unitCost =
+        unitCost <= 0 || !Number.isFinite(unitCost) ? 0 : round4(unitCost);
+
+      let rowTotal = num(l.qtyIn) * unitCost;
+      rowTotal = rowTotal <= 0 ? 0 : round4(rowTotal);
+
+      totalCost += rowTotal;
+      return { unitCost, totalCost: rowTotal };
+    });
+
+    return res.status(200).json({
+      success: true,
+      data: { lines: result, totalCost: round4(totalCost) },
+    });
+  } catch (error: unknown) {
+    console.error("calcUnitCost error:", error);
+    return res
+      .status(500)
+      .json({ success: false, message: "Failed to calculate unit cost" });
+  }
+};
+
+/* =========================================================
    GET  /purchase-invoice?year=&brId=&docNo=
    (reads tables directly: a PROCEDURE can't return rows)
    ========================================================= */
