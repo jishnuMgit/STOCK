@@ -695,63 +695,57 @@ const UnitPage: React.FC = () => {
 
                         {/* UNIT COLUMN */}
 
-                    <td
-                      className="
-                        h-[34px]
-                        border
-                        border-l-0
-                        border-[#bfe8d0]
-                        bg-white
-                        p-0
-                        align-middle
-                      "
-                    >
-                      <input
-                        ref={
-                          index === 0
-                            ? firstInputRef
-                            : undefined
-                        }
-                        id={`txtUnit-${index}`}
-                        type="text"
-                        value={row.unit}
-                        autoComplete="off"
-                        onFocus={() =>
-                          setSelectedRow(index)
-                        }
-                        onChange={(event) =>
-                          updateUnit(
-                            index,
-                            event.target.value
-                          )
-                        }
-                        onKeyDown={(event) =>
-                          handleUnitKeyDown(
-                            event,
-                            index
-                          )
-                        }
-                        className="
-                          h-[32px]
-                          w-full
-                          border-0
-                          bg-transparent
-                          px-[11px]
-                          py-0
-                          text-left
-                          text-[13px]
-                          text-[#374151]
-                          outline-none
-                          focus:bg-[#f1f8ff]
-                        "
-                      />
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+                        <td className="h-[34px] border border-l-0 border-[#bfe8d0] bg-white p-0 align-middle">
+                          <div className="flex h-[32px] items-center">
+                            <input
+                              id={`txtUnit-${index}`}
+                              name="txtUnit"
+                              type="text"
+                              value={row.txtUnit}
+                              maxLength={8}
+                              autoComplete="off"
+                              onFocus={() => {
+                                setSelectedRow(index);
+
+                                if (row.txtOriginalUnit !== null) {
+                                  checkUnitUsed(row.txtOriginalUnit);
+                                }
+                              }}
+                              onBlur={() => handleUnitBlur(index)}
+                              onChange={(event) =>
+                                updateUnit(index, event.target.value)
+                              }
+                              onPaste={(event) => {
+                                if (isEditBlocked(index)) {
+                                  event.preventDefault();
+                                }
+                              }}
+                              onKeyDown={(event) =>
+                                handleUnitKeyDown(event, index)
+                              }
+                              className="h-[32px] min-w-0 flex-1 border-0 bg-transparent px-[11px] py-0 text-left text-[13px] text-[#374151] outline-none focus:bg-[#f1f8ff]"
+                            />
+
+                            {showDelete && (
+                              <button
+                                type="button"
+                                tabIndex={-1}
+                                onClick={() => handleDeleteRow(index)}
+                                className="inline-flex h-full w-[24px] shrink-0 items-center justify-center text-[#999999] hover:text-red-600"
+                                aria-label={`Delete ${row.txtUnit}`}
+                              >
+                                <X size={12} />
+                              </button>
+                            )}
+                          </div>
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
           </div>
-        </div>
 
           {/* ====================================================
               BUTTONS
