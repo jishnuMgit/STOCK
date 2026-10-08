@@ -55,21 +55,17 @@ const selectStyles = {
   // CONTROL
   // ==========================================================
 
-  control: (base: any, state: any) => ({
+  control: (base: any) => ({
     ...base,
-    minHeight: "30px",
-    height: "30px",
+    minHeight: "23px",
+    height: "23px",
     width: "100%",
-    border: "1px solid #d1d5db",
-    borderRadius: "4px",
+    border: "none",
+    borderRadius: "0px",
     boxShadow: "none",
-    backgroundColor: state.isFocused ? "#eefbf4" : "#ffffff",
-    fontSize: "11px",
+    backgroundColor: "transparent",
+    fontSize: "12px",
     cursor: "pointer",
-
-    "&:hover": {
-      borderColor: "#9fdfbc",
-    },
   }),
 
   // ==========================================================
@@ -79,8 +75,7 @@ const selectStyles = {
   valueContainer: (base: any) => ({
     ...base,
     height: "23px",
-    minHeight: "23px",
-    padding: "0 6px",
+    padding: "0px",
   }),
 
   // ==========================================================
@@ -89,8 +84,8 @@ const selectStyles = {
 
   singleValue: (base: any) => ({
     ...base,
-    fontSize: "11px",
-    color: "#374151",
+    fontSize: "12px",
+    color: "#1e293b",
     margin: "0px",
   }),
 
@@ -759,7 +754,7 @@ const UserLogin: React.FC = () => {
               {displayUsers.map((user, index) => (
                 <tr
                   key={index}
-                  className="h-[38px]"
+                  className="h-[25px]"
                 >
                   {/* USER ID */}
 
@@ -917,8 +912,7 @@ const UserLogin: React.FC = () => {
                       border-b
                       border-r
                       border-[#b7e8cf]
-                      px-2
-                      py-1
+                      p-2
                     "
                   >
                     <Select
@@ -946,8 +940,7 @@ const UserLogin: React.FC = () => {
                     className="
                       border-b
                       border-[#b7e8cf]
-                      px-2
-                      py-1
+                      p-2
                     "
                   >
                     <Select
