@@ -257,19 +257,29 @@ const COAPage: React.FC = () => {
   // ============================================================
 
   const handleClear = () => {
-    setFormData({
+    setFormData((previous) => ({
       txtAccountGroupID: "",
       txtAccountGroupName: "",
       txtAccountGroupLevel: "",
-      txtAccountID: "",
+      // Auto -> keep the generated ID, Manual -> clear it
+      txtAccountID:
+        previous.newAccountID === "Auto" ? previous.txtAccountID : "",
       txtAccountName: "",
       txtAccountName_AR: "",
       txtAccountLevel: "",
       lkpAccountGroupOrHead: "",
       lkpGPH: "No",
-      newAccountID: "Auto",
-    });
-    accountNameRef.current?.focus();
+      newAccountID: previous.newAccountID, // keep the current mode
+    }));
+
+    // Manual: cursor goes to the Account ID box, Auto: to Account Name
+    setTimeout(() => {
+      if (formData.newAccountID === "Manual") {
+        accountIdRef.current?.focus();
+      } else {
+        accountNameRef.current?.focus();
+      }
+    }, 0);
   };
 
   // ============================================================
@@ -565,7 +575,10 @@ const COAPage: React.FC = () => {
 
             <div />
 
-            <label htmlFor="lkpGPH" className={`${labelClass } text-right -ml-4`}>
+            <label
+              htmlFor="lkpGPH"
+              className={`${labelClass} text-right -ml-4`}
+            >
               Have Cost Center :
             </label>
 
