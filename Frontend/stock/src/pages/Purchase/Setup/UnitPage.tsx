@@ -186,11 +186,11 @@ const UnitPage: React.FC = () => {
             GREEN HEADER
         ==================================================== */}
 
-        <div className="flex h-[30px] items-center border-b border-slate-400 bg-[#a3dfc0]">
-          <span className="px-2 text-[18px] font-semibold text-slate-800">
-            Unit
-          </span>
-        </div>
+        <div className="flex h-[28px] w-full items-center bg-[#a7dfc0]">
+            <h1 className="ml-[15px] text-[17px] font-semibold text-[#374151]">
+              Unit
+            </h1>
+          </div>
 
         {/* ====================================================
             TABLE AREA
@@ -212,7 +212,7 @@ const UnitPage: React.FC = () => {
                 w-full
                 table-fixed
                 border-collapse
-                text-[12px]
+                text-[14px]
               "
             >
               {/* ==================================================
@@ -356,7 +356,7 @@ const UnitPage: React.FC = () => {
                           px-[11px]
                           py-0
                           text-left
-                          text-[13px]
+                          text-[14px]
                           text-[#374151]
                           outline-none
                           focus:bg-[#f1f8ff]
@@ -381,24 +381,10 @@ const UnitPage: React.FC = () => {
             type="button"
             onClick={handleSave}
             className="
-              h-[47px]
-              w-[124px]
-              rounded-[5px]
-              border
-              border-[#9bb6c9]
-              bg-gradient-to-b
-              from-[#ffffff]
-              to-[#e7eef4]
-              text-[17px]
-              text-green-700
-              shadow-[0_1px_3px_rgba(0,0,0,0.2)]
-              hover:bg-[#f5f5f5]
-              active:translate-y-[1px]
+                btn-style
             "
           >
-            <span className="underline">
-              Save
-            </span>
+           <u>S</u>ave
           </button>
 
           {/* CLEAR */}
@@ -407,24 +393,12 @@ const UnitPage: React.FC = () => {
             type="button"
             onClick={handleClear}
             className="
-              h-[47px]
-              w-[124px]
-              rounded-[5px]
-              border
-              border-[#9bb6c9]
-              bg-gradient-to-b
-              from-[#ffffff]
-              to-[#e7eef4]
-              text-[17px]
-              text-green-700
-              shadow-[0_1px_3px_rgba(0,0,0,0.2)]
-              hover:bg-[#f5f5f5]
-              active:translate-y-[1px]
+             btn-style
             "
           >
-            <span className="underline">
-              Clear
-            </span>
+           <u>C</u>
+              
+            lear
           </button>
         </div>
       </div>

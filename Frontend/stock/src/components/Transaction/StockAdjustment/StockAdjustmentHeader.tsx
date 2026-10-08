@@ -1,6 +1,11 @@
-import React, { useState } from "react";
+import React, { useRef, useState } from "react";
 import Select, { type StylesConfig } from "react-select";
 
+import dayjs from "dayjs";
+
+import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
+import { DatePicker } from "@mui/x-date-pickers/DatePicker";
+import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
 // ============================================================
 // TYPES
 // ============================================================
@@ -44,7 +49,7 @@ const selectStyles: StylesConfig<Option, false> = {
     ...base,
     minHeight: 28,
     height: 28,
-    width: "100%",
+    width: "250px",
     border: "1px solid #cbd5e1",
     borderRadius: 4,
     boxShadow: "none",
@@ -158,7 +163,24 @@ const StockAdjustmentHeader: React.FC = () => {
 
   const [entryNo, setEntryNo] =
     useState<Option | null>(entryNoOptions[0]);
+ const [dtpDate, setDtpDate] =
+    useState<string>(
+      dayjs().format("DD-MM-YYYY")
+    );
+  const handleDateKeyDown = (
+    event: React.KeyboardEvent
+  ) => {
+    if (event.key === "Enter") {
+      event.preventDefault();
 
+      stockRef.current?.focus();
+    }
+  };
+
+    const dateRef =
+      useRef<HTMLInputElement | null>(null);
+    const stockRef =
+      useRef<HTMLInputElement | null>(null);
   return (
     <header className="w-full shrink-0">
 
@@ -166,27 +188,9 @@ const StockAdjustmentHeader: React.FC = () => {
           TITLE
       ====================================================== */}
 
-      <div
-        className="
-          flex
-          h-[36px]
-          items-center
-          border-b
-          border-slate-300
-          bg-[#a3dfc0]
-        "
-      >
-        <span
-          className="
-            px-6
-            text-[17px]
-            font-semibold
-            text-slate-700
-          "
-        >
-          Stock Adjustment
-        </span>
-      </div>
+      <header className="flex h-6.5 items-center justify-start pl-6 bg-[#9fdfbc] text-[18px] font-semi-bold text-slate-700">
+      Stock Adjustment
+    </header>
 
       {/* ======================================================
           HEADER FORM
@@ -251,23 +255,8 @@ const StockAdjustmentHeader: React.FC = () => {
               Entry No. :
             </label>
 
-            <div className="ml-[7px] w-[145px]">
-              <Select<Option, false>
-                inputId="txtEntryNo"
-                instanceId="txtEntryNo"
-                options={entryNoOptions}
-                value={entryNo}
-                onChange={setEntryNo}
-                styles={selectStyles}
-                isClearable={false}
-                isSearchable={false}
-                menuPosition="fixed"
-                menuPortalTarget={
-                  typeof document !== "undefined"
-                    ? document.body
-                    : undefined
-                }
-              />
+            <div className="ml-[7px] w-[140px]">
+             <input type="text" id="txtEntryNo" className="w-40 input-style" />
             </div>
           </div>
 
@@ -276,16 +265,187 @@ const StockAdjustmentHeader: React.FC = () => {
           ================================================== */}
 
           <div className="absolute right-0 top-0 flex h-[28px] items-center">
-            <label className="mr-[7px] whitespace-nowrap text-[14px] text-[#202020]">
-              Date :
-            </label>
+            <div className="-mr-2 flex items-center gap-2">
 
-            <input
-              id="dtpDate"
-              type="date"
-              defaultValue="2026-07-01"
-              className={`w-[120px] input-style`}
-            />
+              <label
+                className="
+                  whitespace-nowrap
+                  text-right
+                  text-[14px]
+                  text-[#202020]
+                "
+              >
+                Date :
+              </label>
+
+              <LocalizationProvider
+                dateAdapter={AdapterDayjs}
+              >
+                <DatePicker
+                  value={
+                    dtpDate
+                      ? dayjs(
+                          dtpDate,
+                          "DD-MM-YYYY"
+                        )
+                      : null
+                  }
+
+                  onChange={(newValue) => {
+                    if (
+                      newValue &&
+                      newValue.isValid()
+                    ) {
+                      setDtpDate(
+                        newValue.format(
+                          "DD-MM-YYYY"
+                        )
+                      );
+                    } else {
+                      setDtpDate("");
+                    }
+                  }}
+
+                  format="DD-MM-YYYY"
+
+                  inputRef={dateRef}
+
+                  slotProps={{
+                    textField: {
+                      id: "dtpDate",
+
+                      onKeyDown:
+                        handleDateKeyDown,
+                    },
+
+                    openPickerButton: {
+                      sx: {
+                        padding: "2px",
+                        margin: 0,
+                      },
+                    },
+
+                    inputAdornment: {
+                      sx: {
+                        margin: 0,
+                        padding: 0,
+                      },
+                    },
+                  }}
+
+                  sx={{
+                    width: "140px",
+
+                    "& .MuiPickersTextField-root": {
+                      width: "120px",
+                    },
+
+                    "& .MuiPickersInputBase-root": {
+                      width: "140px",
+                      height: "30px",
+                      minHeight: "30px",
+                      boxSizing: "border-box",
+                      borderRadius: "4px",
+                      backgroundColor: "#ffffff",
+                      fontSize: "12px",
+                      padding: 0,
+                      overflow: "hidden",
+                    },
+
+                    "& .MuiPickersInputBase-sectionsContainer":
+                      {
+                        paddingLeft:
+                          "10px !important",
+
+                        paddingRight:
+                          "0px !important",
+
+                        marginBottom:
+                          "-5px !important",
+
+                        marginLeft:
+                          "0px !important",
+
+                        boxSizing:
+                          "border-box",
+
+                        overflow: "hidden",
+                      },
+
+                    "& .MuiPickersInputBase-sectionContent":
+                      {
+                        fontSize: "12px",
+                        color: "#344054",
+                      },
+
+                    "& .MuiPickersInputBase-input":
+                      {
+                        minWidth: 0,
+                        width: "100%",
+                        fontSize: "12px",
+                        padding: 0,
+                        height: "30px",
+                        boxSizing:
+                          "border-box",
+                      },
+
+                    "& .MuiInputAdornment-root": {
+                      margin: 0,
+                      padding: 0,
+                    },
+
+                    "& .MuiIconButton-root": {
+                      width: "24px",
+                      height: "24px",
+                      padding: "2px",
+                      margin: 0,
+                    },
+
+                    "& .MuiSvgIcon-root": {
+                      fontSize: "16px",
+                    },
+
+                    "& .MuiPickersOutlinedInput-notchedOutline":
+                      {
+                        borderColor:
+                          "#B7C7D7 !important",
+                      },
+
+                    "& .MuiPickersInputBase-root:hover .MuiPickersOutlinedInput-notchedOutline":
+                      {
+                        borderColor:
+                          "#B7C7D7 !important",
+                      },
+
+                    "& .MuiPickersInputBase-root.Mui-focused .MuiPickersOutlinedInput-notchedOutline":
+                      {
+                        borderColor:
+                          "#B7C7D7 !important",
+
+                        borderWidth: "1px",
+                      },
+
+                    "& .MuiPickersInputBase-root.Mui-error .MuiPickersOutlinedInput-notchedOutline":
+                      {
+                        borderColor:
+                          "#B7C7D7 !important",
+                      },
+
+                    "& .MuiPickersInputBase-root.Mui-error:hover .MuiPickersOutlinedInput-notchedOutline":
+                      {
+                        borderColor:
+                          "#B7C7D7 !important",
+                      },
+
+                    "& .MuiPickersInputBase-root.Mui-error.Mui-focused .MuiPickersOutlinedInput-notchedOutline":
+                      {
+                        borderColor:
+                          "#B7C7D7 !important",
+                      },
+                  }}
+                />
+              </LocalizationProvider>
+            </div>
           </div>
 
           {/* ==================================================

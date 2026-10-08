@@ -87,8 +87,8 @@ const selectStyles: StylesConfig<Option, false> = {
   control: (base, state) => ({
     ...base,
 
-    minHeight: 28,
-    height: 28,
+    minHeight: 30,
+    height: 30,
 
     width: "100%",
 
@@ -103,7 +103,7 @@ const selectStyles: StylesConfig<Option, false> = {
 
     cursor: "pointer",
 
-    fontSize: 11,
+    fontSize: 14,
 
     "&:hover": {
       border: "none",
@@ -113,14 +113,15 @@ const selectStyles: StylesConfig<Option, false> = {
   valueContainer: (base) => ({
     ...base,
 
-    minHeight: 28,
-    height: 28,
+    minHeight: 30,
+    height: 30,
 
     padding: "0 5px",
 
     overflow: "hidden",
   }),
 
+  // SELECTED TEXT
   singleValue: (base) => ({
     ...base,
 
@@ -128,7 +129,7 @@ const selectStyles: StylesConfig<Option, false> = {
 
     color: "#263449",
 
-    fontSize: 11,
+    fontSize: 14,
 
     overflow: "hidden",
 
@@ -137,6 +138,7 @@ const selectStyles: StylesConfig<Option, false> = {
     whiteSpace: "nowrap",
   }),
 
+  // PLACEHOLDER
   placeholder: (base) => ({
     ...base,
 
@@ -144,9 +146,10 @@ const selectStyles: StylesConfig<Option, false> = {
 
     color: "#64748b",
 
-    fontSize: 11,
+    fontSize: 14,
   }),
 
+  // SEARCH INPUT
   input: (base) => ({
     ...base,
 
@@ -156,7 +159,7 @@ const selectStyles: StylesConfig<Option, false> = {
 
     color: "#263449",
 
-    fontSize: 11,
+    fontSize: 14,
   }),
 
   indicatorsContainer: (base) => ({
@@ -192,7 +195,7 @@ const selectStyles: StylesConfig<Option, false> = {
 
     zIndex: 9999,
 
-    fontSize: 11,
+    fontSize: 14,
 
     marginTop: 1,
   }),
@@ -205,12 +208,13 @@ const selectStyles: StylesConfig<Option, false> = {
     maxHeight: 180,
   }),
 
+  // DROPDOWN OPTIONS
   option: (base, state) => ({
     ...base,
 
     padding: "6px 8px",
 
-    fontSize: 11,
+    fontSize: 14,
 
     color: "#263449",
 
@@ -365,7 +369,7 @@ const SetDefaultBranch: React.FC = () => {
             HEADING
         ===================================================== */}
 
-        <div className="flex h-[28px] w-full items-center bg-[#a7dfc0]">
+        <div className="flex h-[30px] w-full items-center bg-[#a7dfc0]">
           <h1 className="ml-[5px] text-[17px] font-semibold text-[#374151]">
             Set Default Branch
           </h1>
@@ -401,7 +405,7 @@ const SetDefaultBranch: React.FC = () => {
         min-w-[600px]
         table-fixed
         border-collapse
-        text-[11px]
+        text-[14px]
       "
     >
 
@@ -470,7 +474,7 @@ const SetDefaultBranch: React.FC = () => {
                       py-0
                       text-left
                       align-middle
-                      text-[11px]
+                      text-[14px]
                       font-normal
                       text-[#263449]
                       font-semibold
@@ -494,7 +498,7 @@ const SetDefaultBranch: React.FC = () => {
                       py-0
                       text-left
                       align-middle
-                      text-[11px]
+                      text-[14px]
                       font-normal
                       text-[#263449]
                       font-semibold
@@ -580,7 +584,7 @@ const SetDefaultBranch: React.FC = () => {
                         py-0
                         text-left
                         align-middle
-                        text-[11px]
+                        text-[14px]
                         uppercase
                         text-[#263449]
                       "
@@ -717,22 +721,7 @@ const SetDefaultBranch: React.FC = () => {
             type="button"
             onClick={handleSave}
             className="
-              h-[36px]
-              w-[96px]
-              rounded-[4px]
-              border
-           
-              border-[#9eb5ca]
-              bg-gradient-to-b
-              from-white
-              to-[#e6edf4]
-              text-[14px]
-              font-normal
-              text-[#008a35]
-              shadow-sm
-              hover:from-[#f7fff9]
-              hover:to-[#dce9e2]
-              active:translate-y-[1px]
+              btn-style
             "
           >
             <span className="underline">
@@ -749,21 +738,7 @@ const SetDefaultBranch: React.FC = () => {
             type="button"
             onClick={handleSearch}
             className="
-              h-[36px]
-              w-[110px]
-              rounded-[4px]
-              border
-              border-[#9eb5ca]
-              bg-gradient-to-b
-              from-white
-              to-[#e6edf4]
-              text-[14px]
-              font-normal
-              text-[#008a35]
-              shadow-sm
-              hover:from-[#f7fff9]
-              hover:to-[#dce9e2]
-              active:translate-y-[1px]
+             btn-style
             "
           >
             <span className="underline">
@@ -780,21 +755,7 @@ const SetDefaultBranch: React.FC = () => {
             type="button"
             onClick={handleClear}
             className="
-              h-[36px]
-              w-[96px]
-              rounded-[4px]
-              border
-              border-[#9eb5ca]
-              bg-gradient-to-b
-              from-white
-              to-[#e6edf4]
-              text-[14px]
-              font-normal
-              text-[#008a35]
-              shadow-sm
-              hover:from-[#f7fff9]
-              hover:to-[#dce9e2]
-              active:translate-y-[1px]
+             btn-style
             "
           >
             <span className="underline">

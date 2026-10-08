@@ -220,7 +220,7 @@ const ItemEnquiryHeader: React.FC<
       className="
         w-full
         px-[24px]
-        pt-[10px]
+        pt-6
       "
     >
 
@@ -384,16 +384,9 @@ const ItemEnquiryHeader: React.FC<
             )
           }
           className="
-            h-[30px]
+          
             w-[159px]
-            rounded-[4px]
-            border
-            border-[#d3dbe4]
-            px-[8px]
-            text-[12px]
-            text-[#263449]
-            outline-none
-            focus:border-[#9bbbd8]
+          
             input-style
           "
           name="txtUnit"
@@ -405,80 +398,55 @@ const ItemEnquiryHeader: React.FC<
       {/* ==================================================
           ITEM GROUP
       =================================================== */}
+<div
+  className="
+    mb-[8px]
+    flex
+    items-center
+  "
+>
+  <FieldLabel highlight>
+    Item Group
+  </FieldLabel>
 
-      <div
+  <div className="flex w-full items-center gap-[20px]">
+    <div>
+      <input
+        type="text"
+        value={item.itemGroupId}
+        onChange={(event) =>
+          updateItem(
+            "itemGroupId",
+            event.target.value,
+          )
+        }
         className="
-          mb-[8px]
-          flex
-          items-center
+          w-[159px]
+          input-style
         "
-      >
-        <FieldLabel highlight>
-          Item Group
-        </FieldLabel>
+        name="txtItemGroupID"
+      />
+    </div>
 
-        <div className="flex items-center gap-[20px]">
-
-          <div>
-            <input
-              type="text"
-              value={item.itemGroupId}
-              onChange={(event) =>
-                updateItem(
-                  "itemGroupId",
-                  event.target.value,
-                )
-              }
-              className="
-                h-[32px]
-                w-[159px]
-                rounded-[4px]
-                border
-                border-[#d3dbe4]
-                px-[8px]
-                text-[12px]
-                text-[#263449]
-                outline-none
-                focus:border-[#9bbbd8]
-                input-style
-              "
-              name="txtItemGroupID"
-            />
-
-            
-          </div>
-
-          <div className="flex-1">
-            <input
-              type="text"
-              value={item.itemGroupName}
-              onChange={(event) =>
-                updateItem(
-                  "itemGroupName",
-                  event.target.value,
-                )
-              }
-              className="
-                h-[32px]
-                w-full
-                rounded-[4px]
-                border
-                border-[#d3dbe4]
-                px-[8px]
-                text-[12px]
-                text-[#263449]
-                outline-none
-                focus:border-[#9bbbd8]
-                input-style
-              "
-              name="txtItemGroupName"
-            />
-
-          </div>
-
-        </div>
-      </div>
-
+    <div className="flex-1">
+      <input
+        type="text"
+        value={item.itemGroupName}
+        onChange={(event) =>
+          updateItem(
+            "itemGroupName",
+            event.target.value,
+          )
+        }
+        className="
+          w-full
+          input-style
+        "
+        name="txtItemGroupName"
+      />
+    </div>
+  </div>
+</div>
       {/* ==================================================
           SUPPLIER
       =================================================== */}
@@ -494,8 +462,8 @@ const ItemEnquiryHeader: React.FC<
           Supplier
         </FieldLabel>
 
-        <div className="flex items-center gap-[20px]">
-
+        <div className="flex w-full items-center gap-[20px]">
+ 
           <div>
             <input
               type="text"
@@ -507,14 +475,9 @@ const ItemEnquiryHeader: React.FC<
                 )
               }
               className="
-                h-[32px]
+              
                 w-[159px]
-                rounded-[4px]
-                border
-                border-[#d3dbe4]
-                px-[8px]
-                text-[12px]
-                outline-none
+              input-style
               "
               name="txtSupplierID"
             />
@@ -533,14 +496,10 @@ const ItemEnquiryHeader: React.FC<
                 )
               }
               className="
-                h-[32px]
+                
                 w-full
-                rounded-[4px]
-                border
-                border-[#d3dbe4]
-                px-[8px]
-                text-[12px]
-                outline-none
+                input-style
+                
               "
               name="txtSupplierName"
             />
@@ -576,15 +535,9 @@ const ItemEnquiryHeader: React.FC<
               )
             }
             className="
-              h-[30px]
+             
               w-[329px]
-              rounded-[4px]
-              border
-              border-[#d3dbe4]
-              px-[8px]
-              text-[12px]
-              outline-none
-              focus:border-[#9bbbd8]
+              
               input-style
             "
             name="txtSupplierItemID"
