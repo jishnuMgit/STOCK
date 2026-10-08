@@ -1,28 +1,10 @@
-// import React, { useRef, useState } from "react";
+import React, { useState } from "react";
 import Select, { type StylesConfig, type SingleValue } from "react-select";
-import { toast } from "react-toastify";
-import React, { useEffect, useRef, useState } from "react";
+
 type Option = {
   value: string;
   label: string;
 };
-
-const API = `${import.meta.env.VITE_API_URL}/companies`;
-
-// Enter key moves focus in this order
-const FIELD_ORDER = [
-  "txtCoID",
-  "txtCoName",
-  "txtCoName_AR",
-  "txtCoName_Short",
-  "txtCoName_QR",
-  "txtCoVATNo",
-  "txtCoVATNo_AR",
-  "lkpPurchaseExpenseGroup",
-  "lkpBG2ARAP",
-  "lkpYearClosingMethod",
-  "btnSave",
-];
 
 const CompanyPage: React.FC = () => {
   // ============================================================
@@ -34,26 +16,25 @@ const CompanyPage: React.FC = () => {
   const [txtCoName_AR, setCoName_AR] = useState("");
   const [txtCoName_Short, setCoName_Short] = useState("");
   const [txtCoName_QR, setCoName_QR] = useState("");
-  const [txtCoVATNo, setCoVATNo] = useState("");
-  const [txtCoVATNo_AR, setCoVATNo_AR] = useState("");
+  const [txtVATNo, setVATNo] = useState("");
+  const [txtVATNo_AR, setVATNo_AR] = useState("");
 
   const [lkpPurchaseExpenseGroup, setPurchaseExpenseGroup] =
     useState<Option | null>(null);
 
-  const [lkpBG2ARAP, setBG2ARAP] = useState<Option | null>(null);
+  const [lkpBG2ARAP, setBG2ARAP] =
+    useState<Option | null>(null);
 
   const [lkpYearClosingMethod, setYearClosingMethod] =
     useState<Option | null>(null);
-
-  // empty = new record, filled = editing an existing record
-  const [originalCoID, setOriginalCoID] = useState("");
-  const [saving, setSaving] = useState(false);
 
   // ============================================================
   // OPTIONS
   // ============================================================
 
-  const purchaseExpenseGroupOptions: Option[] = [{ value: "", label: "" }];
+  const purchaseExpenseGroupOptions: Option[] = [
+    { value: "", label: "" },
+  ];
 
   const bg2ARAPOptions: Option[] = [
     { value: "Yes/No", label: "Yes/No" },
@@ -63,8 +44,8 @@ const CompanyPage: React.FC = () => {
 
   const yearClosingMethodOptions: Option[] = [
     { value: "", label: "" },
-    { value: "M", label: "Monthly" },
-    { value: "Y", label: "Yearly" },
+    { value: "Monthly", label: "Monthly" },
+    { value: "Yearly", label: "Yearly" },
   ];
 
   // ============================================================
@@ -178,8 +159,7 @@ const CompanyPage: React.FC = () => {
       },
     }),
   };
-
-  const selectStyles1: StylesConfig<Option, false> = {
+    const selectStyles1: StylesConfig<Option, false> = {
     control: (base, state) => ({
       ...base,
       minHeight: "30px",
@@ -280,33 +260,39 @@ const CompanyPage: React.FC = () => {
   };
 
   // ============================================================
-  // ENTER KEY NAVIGATION
+  // SAVE
   // ============================================================
 
-  const menuOpenRef = useRef(false);
-
-  const focusNext = (currentId: string) => {
-    const i = FIELD_ORDER.indexOf(currentId);
-    const nextId = FIELD_ORDER[i + 1];
-    if (nextId) document.getElementById(nextId)?.focus();
+  const handleSave = () => {
+    console.log({
+      txtCoID,
+      txtCoName,
+      txtCoName_AR,
+      txtCoName_Short,
+      txtCoName_QR,
+      txtVATNo,
+      txtVATNo_AR,
+      lkpPurchaseExpenseGroup,
+      lkpBG2ARAP,
+      lkpYearClosingMethod,
+    });
   };
 
-  // For text inputs
-  const handleEnter = (e: React.KeyboardEvent<HTMLInputElement>) => {
-    if (e.key !== "Enter") return;
-    e.preventDefault();
-    focusNext(e.currentTarget.id);
+  // ============================================================
+  // SEARCH
+  // ============================================================
+
+  const handleSearch = () => {
+    console.log("Search");
   };
 
-  // For react-select: Enter picks an option while the menu is open,
-  // and moves to the next control when the menu is closed
-  const handleSelectEnter =
-    (id: string) => (e: React.KeyboardEvent<HTMLDivElement>) => {
-      if (e.key === "Enter" && !menuOpenRef.current) {
-        e.preventDefault();
-        focusNext(id);
-      }
-    };
+  // ============================================================
+  // DELETE
+  // ============================================================
+
+  const handleDelete = () => {
+    console.log("Delete");
+  };
 
   // ============================================================
   // CLEAR
@@ -318,229 +304,14 @@ const CompanyPage: React.FC = () => {
     setCoName_AR("");
     setCoName_Short("");
     setCoName_QR("");
-    setCoVATNo("");
-    setCoVATNo_AR("");
+    setVATNo("");
+    setVATNo_AR("");
 
     setPurchaseExpenseGroup(null);
     setBG2ARAP(null);
     setYearClosingMethod(null);
-
-    setOriginalCoID("");
   };
 
-  // ============================================================
-  // SAVE
-  // ============================================================
-
-  const handleSave = async () => {
-    if (!txtCoID.trim()) {
-      toast.warning("Company ID is required");
-      document.getElementById("txtCoID")?.focus();
-      return;
-    }
-    if (!txtCoName.trim()) {
-      toast.warning("Company Name is required");
-      document.getElementById("txtCoName")?.focus();
-      return;
-    }
-
-    setSaving(true);
-    try {
-      const res = await fetch(API, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          originalCoID,
-          coID: txtCoID,
-          coName: txtCoName,
-          coNameAR: txtCoName_AR,
-          coNameShort: txtCoName_Short,
-          coNameQR: txtCoName_QR,
-          coVatNo: txtCoVATNo,
-          coVatNoAR: txtCoVATNo_AR,
-          purchaseExpenseGroup: lkpPurchaseExpenseGroup?.value ?? "",
-          bg2ARAP: lkpBG2ARAP?.value ?? "",
-          yearClosingMethod: lkpYearClosingMethod?.value ?? "",
-        }),
-      });
-      const data = await res.json();
-      if (!res.ok || !data.success) {
-        toast.error(data.message || "Not saved, try again");
-        return;
-      }
-      toast.success(data.message); // "Saved" or "Modified"
-      handleClear();
-      document.getElementById("txtCoID")?.focus();
-    } catch {
-      toast.error("Not saved, try again");
-    } finally {
-      setSaving(false);
-    }
-  };
-
-  // ============================================================
-  // SEARCH
-  // ============================================================
-
-  // Fills every field from the API response
-  const fillForm = (c: any) => {
-    setCoID(c.fCoID ?? "");
-    setCoName(c.fCoName ?? "");
-    setCoName_AR(c.fCoName_AR ?? "");
-    setCoName_Short(c.fCoName_Short ?? "");
-    setCoName_QR(c.fCoName_QR ?? "");
-    setCoVATNo(c.fCoVATNo ?? "");
-    setCoVATNo_AR(c.fCoVATNo_AR ?? "");
-    setPurchaseExpenseGroup(
-      purchaseExpenseGroupOptions.find(
-        (o) => o.value === c.fPiExpenseAccountGroup,
-      ) ?? null,
-    );
-    setBG2ARAP(bg2ARAPOptions.find((o) => o.value === c.fBG2ARAP) ?? null);
-    setYearClosingMethod(
-      yearClosingMethodOptions.find((o) => o.value === c.fYCMethod) ?? null,
-    );
-    setOriginalCoID(c.fCoID); // Save becomes Modify
-  };
-
-  // Returns true when the company was found and loaded
-  const loadCompany = async (
-    id: string,
-    showErrors: boolean,
-  ): Promise<boolean> => {
-    try {
-      const res = await fetch(`${API}/${encodeURIComponent(id)}`);
-
-      if (res.status === 404) return false; // not found = new company
-
-      const data = await res.json();
-      if (!res.ok || !data.success) {
-        if (showErrors) toast.error(data.message || "Search failed");
-        return false;
-      }
-
-      fillForm(data.company);
-      return true;
-    } catch {
-      if (showErrors) toast.error("Search failed");
-      return false;
-    }
-  };
-
-  // Search button
-  const handleSearch = async () => {
-    const id = txtCoID.trim();
-    if (!id) {
-      toast.warning("Enter a Company ID to search");
-      document.getElementById("txtCoID")?.focus();
-      return;
-    }
-    const found = await loadCompany(id, true);
-    if (!found) toast.info("Company not found", { toastId: "co-not-found" });
-  };
-
-  // Runs when the cursor leaves the Company ID box
-  const handleCoIDBlur = async (e: React.FocusEvent<HTMLInputElement>) => {
-    // Clear and Search buttons do their own work; don't race with them
-    const next = (e.relatedTarget as HTMLElement | null)?.id;
-    if (next === "btnClear" || next === "btnSearch") return;
-
-    const id = txtCoID.trim();
-    if (!id) return;
-    if (id === originalCoID) return; // this record is already loaded
-
-    const found = await loadCompany(id, false);
-
-    if (!found && originalCoID) {
-      // Was editing another company and the new ID doesn't exist:
-      // start a fresh record with this ID
-      const keepId = id;
-      handleClear();
-      setCoID(keepId);
-    }
-  };
-
-  // ============================================================
-  // DELETE
-  // ============================================================
-
-  const handleDelete = async () => {
-    if (!originalCoID) {
-      toast.warning("Search for a company first");
-      return;
-    }
-    if (!window.confirm(`Delete company ${originalCoID}?`)) return;
-
-    try {
-      const res = await fetch(`${API}/${encodeURIComponent(originalCoID)}`, {
-        method: "DELETE",
-      });
-      const data = await res.json();
-      if (!res.ok || !data.success) {
-        toast.error(data.message || "Not deleted");
-        return;
-      }
-      toast.success(data.message); // "Deleted"
-      handleClear();
-      document.getElementById("txtCoID")?.focus();
-    } catch {
-      toast.error("Not deleted");
-    }
-  };
-
-
-     // ============================================================
-  // ALT SHORTCUTS: S = Save, M = Modify, D = Delete, C = Clear
-  // ============================================================
-
-  const actionsRef = useRef({
-    save: () => {},
-    modify: () => {},
-    del: () => {},
-    clear: () => {},
-  });
-
-  // Keep the ref pointing at the latest handlers and state.
-  // No dependency array on purpose: it refreshes after every render.
-  useEffect(() => {
-    actionsRef.current = {
-      // Save and Modify share one button; each shortcut works only in its own mode
-      save: () => {
-        if (!originalCoID && !saving) handleSave();
-      },
-      modify: () => {
-        if (originalCoID && !saving) handleSave();
-      },
-      del: () => handleDelete(),
-      clear: () => {
-        handleClear();
-        document.getElementById("txtCoID")?.focus();
-      },
-    };
-  });
-
-  // Registers the key listener once
-  useEffect(() => {
-    const onKeyDown = (e: KeyboardEvent) => {
-      if (!e.altKey || e.ctrlKey || e.metaKey) return;
-
-      const actions: Record<string, () => void> = {
-        KeyS: () => actionsRef.current.save(),
-        KeyM: () => actionsRef.current.modify(),
-        KeyD: () => actionsRef.current.del(),
-        KeyC: () => actionsRef.current.clear(),        
-      };
-
-      const action = actions[e.code];
-      if (!action) return;
-
-      e.preventDefault();
-      action();
-    };
-
-    window.addEventListener("keydown", onKeyDown);
-    return () => window.removeEventListener("keydown", onKeyDown);
-  }, []);
   // ============================================================
   // RENDER
   // ============================================================
@@ -580,12 +351,8 @@ const CompanyPage: React.FC = () => {
             <input
               id="txtCoID"
               type="text"
-              maxLength={3}
-              autoFocus
               value={txtCoID}
               onChange={(e) => setCoID(e.target.value)}
-              onBlur={handleCoIDBlur}
-              onKeyDown={handleEnter}
               autoComplete="off"
               className="w-[10%] input-style"
             />
@@ -606,10 +373,8 @@ const CompanyPage: React.FC = () => {
             <input
               id="txtCoName"
               type="text"
-              maxLength={100}
               value={txtCoName}
               onChange={(e) => setCoName(e.target.value)}
-              onKeyDown={handleEnter}
               autoComplete="off"
               className={inputClass}
             />
@@ -631,10 +396,8 @@ const CompanyPage: React.FC = () => {
               id="txtCoName_AR"
               type="text"
               dir="rtl"
-              maxLength={100}
               value={txtCoName_AR}
               onChange={(e) => setCoName_AR(e.target.value)}
-              onKeyDown={handleEnter}
               autoComplete="off"
               className={inputClass}
             />
@@ -655,10 +418,8 @@ const CompanyPage: React.FC = () => {
             <input
               id="txtCoName_Short"
               type="text"
-              maxLength={30}
               value={txtCoName_Short}
               onChange={(e) => setCoName_Short(e.target.value)}
-              onKeyDown={handleEnter}
               autoComplete="off"
               className={smallInputClass}
             />
@@ -679,10 +440,8 @@ const CompanyPage: React.FC = () => {
             <input
               id="txtCoName_QR"
               type="text"
-              maxLength={30}
               value={txtCoName_QR}
               onChange={(e) => setCoName_QR(e.target.value)}
-              onKeyDown={handleEnter}
               autoComplete="off"
               className={smallInputClass}
             />
@@ -701,12 +460,10 @@ const CompanyPage: React.FC = () => {
             </label>
 
             <input
-              id="txtCoVATNo"
+              id="txtVATNo"
               type="text"
-              maxLength={15}
-              value={txtCoVATNo}
-              onChange={(e) => setCoVATNo(e.target.value)}
-              onKeyDown={handleEnter}
+              value={txtVATNo}
+              onChange={(e) => setVATNo(e.target.value)}
               autoComplete="off"
               className={smallInputClass}
             />
@@ -725,12 +482,10 @@ const CompanyPage: React.FC = () => {
             </label>
 
             <input
-              id="txtCoVATNo_AR"
+              id="txtVATNo_AR"
               type="text"
-              maxLength={15}
-              value={txtCoVATNo_AR}
-              onChange={(e) => setCoVATNo_AR(e.target.value)}
-              onKeyDown={handleEnter}
+              value={txtVATNo_AR}
+              onChange={(e) => setVATNo_AR(e.target.value)}
               autoComplete="off"
               className={`${smallInputClass} text-right`}
             />
@@ -756,9 +511,6 @@ const CompanyPage: React.FC = () => {
               onChange={(option: SingleValue<Option>) =>
                 setPurchaseExpenseGroup(option)
               }
-              onKeyDown={handleSelectEnter("lkpPurchaseExpenseGroup")}
-              onMenuOpen={() => (menuOpenRef.current = true)}
-              onMenuClose={() => (menuOpenRef.current = false)}
               styles={selectStyles}
               isClearable={false}
               isSearchable
@@ -784,10 +536,9 @@ const CompanyPage: React.FC = () => {
               instanceId="lkpBG2ARAP"
               options={bg2ARAPOptions}
               value={lkpBG2ARAP}
-              onChange={(option: SingleValue<Option>) => setBG2ARAP(option)}
-              onKeyDown={handleSelectEnter("lkpBG2ARAP")}
-              onMenuOpen={() => (menuOpenRef.current = true)}
-              onMenuClose={() => (menuOpenRef.current = false)}
+              onChange={(option: SingleValue<Option>) =>
+                setBG2ARAP(option)
+              }
               styles={selectStyles1}
               isClearable={false}
               isSearchable={false}
@@ -816,9 +567,6 @@ const CompanyPage: React.FC = () => {
               onChange={(option: SingleValue<Option>) =>
                 setYearClosingMethod(option)
               }
-              onKeyDown={handleSelectEnter("lkpYearClosingMethod")}
-              onMenuOpen={() => (menuOpenRef.current = true)}
-              onMenuClose={() => (menuOpenRef.current = false)}
               styles={selectStyles1}
               isClearable={false}
               isSearchable={false}
@@ -837,20 +585,12 @@ const CompanyPage: React.FC = () => {
               id="btnSave"
               type="button"
               onClick={handleSave}
-              disabled={saving}
               className="btn-style"
             >
-              {originalCoID ? (
-                <>
-                  <span className="underline underline-offset-2">M</span>
-                  odify
-                </>
-              ) : (
-                <>
-                  <span className="underline underline-offset-2">S</span>
-                  ave
-                </>
-              )}
+              <span className="underline underline-offset-2">
+                S
+              </span>
+              ave
             </button>
 
             <button
@@ -859,7 +599,9 @@ const CompanyPage: React.FC = () => {
               onClick={handleSearch}
               className="btn-style"
             >
-              <span className="underline underline-offset-2">S</span>
+              <span className="underline underline-offset-2">
+                S
+              </span>
               earch
             </button>
 
@@ -869,7 +611,9 @@ const CompanyPage: React.FC = () => {
               onClick={handleDelete}
               className="btn-style"
             >
-              <span className="underline underline-offset-2">D</span>
+              <span className="underline underline-offset-2">
+                D
+              </span>
               elete
             </button>
 
@@ -879,7 +623,9 @@ const CompanyPage: React.FC = () => {
               onClick={handleClear}
               className="btn-style"
             >
-              <span className="underline underline-offset-2">C</span>
+              <span className="underline underline-offset-2">
+                C
+              </span>
               lear
             </button>
 
