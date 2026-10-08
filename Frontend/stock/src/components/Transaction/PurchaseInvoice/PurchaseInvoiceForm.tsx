@@ -1,7 +1,10 @@
 import { Plus } from "lucide-react";
 import React, { useEffect, useState } from "react";
 import Select, { type StylesConfig } from "react-select";
-import type { PurchaseHeader } from "../../../hooks/Purchase/Transaction/usePurchaseInvoice";
+import type {
+  CashSupplier,
+  PurchaseHeader,
+} from "../../../hooks/Purchase/Transaction/usePurchaseInvoice";
 import type { MiscSupplierData } from "./PurchaseInoviceMiscsup";
 import PurchaseInoviceMiscsup from "./PurchaseInoviceMiscsup";
 import { createPortal } from "react-dom";
@@ -49,8 +52,8 @@ const baseSelectStyles: StylesConfig<Option, false> = {
     borderRadius: 4,
     borderColor: state.isFocused ? "#80bdff" : "#d5dce5",
     boxShadow: "none",
-    backgroundColor: "#fff",
-    cursor: "pointer",
+    backgroundColor: state.isDisabled ? "#f1f5f9" : "#fff",
+    cursor: state.isDisabled ? "not-allowed" : "pointer",
     fontSize: 12,
     "&:hover": {
       borderColor: "#aebdce",
@@ -151,6 +154,8 @@ const branchSelectStyles: StylesConfig<Option, false> = {
     height: 30,
     minHeight: 30,
     borderRadius: 4,
+    // width: "250px",
+    borderColor: "#d7dee7",
   }),
 };
 
@@ -241,7 +246,11 @@ interface Props {
     supplierNames?: Option[];
     currencies?: Option[];
   };
-  onMiscSupplierSave?: (data: MiscSupplierData) => void;
+  miscSuppliers?: CashSupplier[];
+  miscMode: string; // "Yes" | "No"
+  onMiscModeChange: (mode: string) => void;
+  onMiscSupplierSaved?: (data: MiscSupplierData) => void | Promise<void>;
+  onCalcUnitCost?: () => void;
 }
 
 const PurchaseForm: React.FC<Props> = ({
@@ -250,7 +259,11 @@ const PurchaseForm: React.FC<Props> = ({
   onDocNoBlur,
   totalSupplierAmt,
   lookups,
-  onMiscSupplierSave,
+  miscSuppliers = [],
+  miscMode,
+  onMiscModeChange,
+  onMiscSupplierSaved,
+  onCalcUnitCost,
 }) => {
   const [miscOpen, setMiscOpen] = useState(false);
   const [expenseOpen, setExpenseOpen] = useState(false);
@@ -260,12 +273,38 @@ const PurchaseForm: React.FC<Props> = ({
     lookups?.supplierNames ?? defaultSupplierNameOptions;
   const currencyOptions = lookups?.currencies ?? defaultCurrencyOptions;
 
+  const isMisc = miscMode === "Yes";
+
+  /* Misc. ID and Misc. Name come from the same records (cash suppliers) */
+  const miscIdOptions: Option[] = miscSuppliers.map((m) => ({
+    value: m.id,
+    label: m.id,
+  }));
+  const miscNameOptions: Option[] = miscSuppliers.map((m) => ({
+    value: m.id,
+    label: m.name,
+  }));
+
   /* Supplier ID and Supplier Name are one account: set both together */
   const handleSupplierChange = (accountId: string) => {
     const name =
       supplierNameOptions.find((o) => o.value === accountId)?.label ?? "";
     onChange("supplierId", accountId);
     onChange("supplierName", name);
+  };
+
+  /* Misc. ID and Misc. Name are one record: set both plus the VAT no. */
+  const handleMiscChange = (id: string) => {
+    const m = miscSuppliers.find((x) => x.id === id);
+    onChange("miscSupId", id);
+    onChange("supplierName", m?.name ?? "");
+    onChange("vatNo", m?.vatNo ?? "");
+  };
+
+  const handleMiscModeChange = (mode: string) => {
+    onMiscModeChange(mode);
+    // going back to "No": drop the misc supplier, but only if one was picked
+    if (mode !== "Yes" && header.miscSupId) handleMiscChange("");
   };
 
   useEffect(() => {
@@ -315,7 +354,7 @@ const PurchaseForm: React.FC<Props> = ({
           />
         </div>
 
-        {/* Misc. Supplier (UI only, not saved yet) */}
+        {/* Misc. Supplier Yes / No */}
         <div className="flex min-w-0 items-center gap-2">
           <label htmlFor="lkpMiscSup" className={`${labelClass} w-[72px]`}>
             Misc. Sup.
@@ -324,7 +363,8 @@ const PurchaseForm: React.FC<Props> = ({
             <Select<Option, false>
               inputId="lkpMiscSup"
               options={miscSupplierOptions}
-              defaultValue={miscSupplierOptions[0]}
+              value={pick(miscSupplierOptions, miscMode)}
+              onChange={(o) => handleMiscModeChange(o?.value ?? "No")}
               styles={miscSupplierSelectStyles}
               isClearable={false}
               isSearchable={false}
@@ -391,7 +431,7 @@ const PurchaseForm: React.FC<Props> = ({
           </div>
         </div>
 
-        {/* Misc. Supplier ID (UI only) */}
+        {/* Misc. Supplier ID */}
         <div className="flex min-w-0 items-center gap-3">
           <label htmlFor="lkpMiscSupID" className={`${labelClass} w-[92px]`}>
             Misc. Sup.
@@ -399,11 +439,14 @@ const PurchaseForm: React.FC<Props> = ({
           <div className="min-w-0 flex-1">
             <Select<Option, false>
               inputId="lkpMiscSupID"
-              options={[]}
+              options={miscIdOptions}
+              value={pick(miscIdOptions, header.miscSupId)}
+              onChange={(o) => handleMiscChange(o?.value ?? "")}
+              isDisabled={!isMisc}
               placeholder=""
               styles={miscSupplierIdSelectStyles}
               isClearable={false}
-              isSearchable={false}
+              isSearchable
             />
           </div>
         </div>
@@ -494,16 +537,19 @@ const PurchaseForm: React.FC<Props> = ({
           />
         </div>
 
-        {/* Misc. Supplier Name (UI only) */}
+        {/* Misc. Supplier Name + Add */}
         <div className="flex min-w-0 items-center gap-2">
           <div className="min-w-0 flex-1">
             <Select<Option, false>
               inputId="lkpMiscSupName"
-              options={[]}
+              options={miscNameOptions}
+              value={pick(miscNameOptions, header.miscSupId)}
+              onChange={(o) => handleMiscChange(o?.value ?? "")}
+              isDisabled={!isMisc}
               placeholder=""
               styles={miscSupplierNameSelectStyles}
               isClearable={false}
-              isSearchable={false}
+              isSearchable
             />
           </div>
           <button
@@ -555,6 +601,7 @@ const PurchaseForm: React.FC<Props> = ({
           <button
             id="btnCalculateUnitCost"
             type="button"
+            onClick={onCalcUnitCost}
             className="ml-25 h-[30px] w-[120px] cursor-pointer whitespace-nowrap rounded-[4px] border border-[#cbd1d9] bg-gradient-to-b from-white to-[#e8e8e8] px-[10px] text-[11px] text-[#222] hover:bg-slate-100"
           >
             Calculate Unit Cost
@@ -576,10 +623,14 @@ const PurchaseForm: React.FC<Props> = ({
           </div>
         </div>
       </div>
+
       <PurchaseInoviceMiscsup
         open={miscOpen}
         onClose={() => setMiscOpen(false)}
-        onSave={onMiscSupplierSave}
+        onSaved={(data) => {
+          onMiscModeChange("Yes"); // switch to misc mode so the new one shows
+          void onMiscSupplierSaved?.(data);
+        }}
       />
 
       {expenseOpen &&

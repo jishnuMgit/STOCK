@@ -1,11 +1,16 @@
 import React from "react";
 import Select, { components } from "react-select";
+import type { Country, Staff } from "../../../hooks/useCustomer";
 
 /* =========================================================
    TYPES
 ========================================================= */
 
 interface CustomerMiddleProps {
+  /* Lookup lists (from DB) */
+  countries: Country[];
+  staffs: Staff[];
+
   /* English */
   txtCustomerName: string;
   setTxtCustomerName: React.Dispatch<React.SetStateAction<string>>;
@@ -96,39 +101,6 @@ interface CustomerMiddleProps {
   txtPhone: string;
   setTxtPhone: React.Dispatch<React.SetStateAction<string>>;
 }
-
-/* =========================================================
-   OPTIONS
-========================================================= */
-
-const countryOptions = [
-  { value: "UAE", label: "United Arab Emirates" },
-  { value: "IND", label: "India" },
-  { value: "KSA", label: "Saudi Arabia" },
-  { value: "QAT", label: "Qatar" },
-];
-
-const countryArabicOptions = [
-  { value: "UAE", label: "الإمارات العربية المتحدة" },
-  { value: "IND", label: "الهند" },
-  { value: "KSA", label: "المملكة العربية السعودية" },
-  { value: "QAT", label: "قطر" },
-];
-
-const staffOptions = [
-  {
-    value: "staff1",
-    label: "Staff 1",
-  },
-  {
-    value: "staff2",
-    label: "Staff 2",
-  },
-  {
-    value: "staff3",
-    label: "Staff 3",
-  },
-];
 
 /* =========================================================
    SELECT STYLES
@@ -255,6 +227,13 @@ const arabicInputClass = `
 
 const CustomerMiddle: React.FC<CustomerMiddleProps> = ({
   /* =======================================================
+     LOOKUP LISTS
+  ======================================================= */
+
+  countries,
+  staffs,
+
+  /* =======================================================
      ENGLISH
   ======================================================= */
 
@@ -353,6 +332,25 @@ const CustomerMiddle: React.FC<CustomerMiddleProps> = ({
   txtPhone,
   setTxtPhone,
 }) => {
+  /* =======================================================
+     OPTIONS (built from DB data)
+  ======================================================= */
+
+  const countryOptions = countries.map((c) => ({
+    value: c.countryId,
+    label: c.countryName,
+  }));
+
+  const countryArabicOptions = countries.map((c) => ({
+    value: c.countryId,
+    label: c.countryNameA || c.countryName,
+  }));
+
+  const staffOptions = staffs.map((s) => ({
+    value: s.staffId,
+    label: s.staffName,
+  }));
+
   return (
     <div className="w-full">
       {/* =====================================================

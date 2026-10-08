@@ -15,6 +15,18 @@ export interface ParentAccount {
   accountName: string;
 }
 
+export interface Country {
+  countryId: string;
+  countryName: string;
+  countryNameA: string;
+  positionNo: number;
+}
+
+export interface Staff {
+  staffId: string;
+  staffName: string;
+}
+
 // Full customer record: GET /customer/:csAccountId (response)
 // and POST / PUT body. Keys match the backend SP_PARAM_MAP.
 export interface CustomerDetail {
@@ -129,6 +141,8 @@ export const useCustomer = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [parentAccounts, setParentAccounts] = useState<ParentAccount[]>([]);
+  const [countries, setCountries] = useState<Country[]>([]);
+  const [staffs, setStaffs] = useState<Staff[]>([]);
 
   const fetchCustomers = useCallback(async (): Promise<Customer[] | null> => {
     try {
@@ -212,6 +226,36 @@ export const useCustomer = () => {
     }
   }, []);
 
+  const fetchCountries = useCallback(async (): Promise<Country[] | null> => {
+    try {
+      setError("");
+      const result = await apiGet<{ data: Country[] }>("/customer/countries");
+      const list = result.data ?? [];
+      setCountries(list);
+      return list;
+    } catch (err: unknown) {
+      console.error("Countries error:", err);
+      setError(
+        err instanceof Error ? err.message : "Failed to fetch countries",
+      );
+      return null;
+    }
+  }, []);
+
+  const fetchStaffs = useCallback(async (): Promise<Staff[] | null> => {
+    try {
+      setError("");
+      const result = await apiGet<{ data: Staff[] }>("/customer/staffs");
+      const list = result.data ?? [];
+      setStaffs(list);
+      return list;
+    } catch (err: unknown) {
+      console.error("Staffs error:", err);
+      setError(err instanceof Error ? err.message : "Failed to fetch staffs");
+      return null;
+    }
+  }, []);
+
   // ------------------------------------------------------------
   // Single-record calls. These THROW on failure (and don't touch the
   // shared `error` state, which the list page uses to hide the table)
@@ -262,6 +306,10 @@ export const useCustomer = () => {
     fetchNextCustomerId,
     parentAccounts,
     fetchParentAccounts,
+    countries,
+    fetchCountries,
+    staffs,
+    fetchStaffs,
     fetchCustomer,
     saveCustomer,
     updateCustomer,

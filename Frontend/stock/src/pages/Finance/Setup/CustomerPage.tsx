@@ -125,6 +125,10 @@ const CustomerPage: React.FC<CustomerPageProps> = ({
     fetchNextCustomerId,
     parentAccounts,
     fetchParentAccounts,
+    countries,
+    fetchCountries,
+    staffs,
+    fetchStaffs,
     fetchCustomer,
     saveCustomer,
     updateCustomer,
@@ -136,9 +140,11 @@ const CustomerPage: React.FC<CustomerPageProps> = ({
   // ============================================================
 
   const loadDefaults = useCallback(async () => {
-    const [nextId, accounts] = await Promise.all([
+    const [nextId, accounts, countryList] = await Promise.all([
       fetchNextCustomerId(CUSTOMER_ACCOUNT_TYPE_ID, PARENT_ACCOUNT_LEVEL),
       fetchParentAccounts(),
+      fetchCountries(),
+      fetchStaffs(),
     ]);
 
     if (nextId) setTxtCustomerID(nextId);
@@ -147,7 +153,15 @@ const CustomerPage: React.FC<CustomerPageProps> = ({
       setLkpGAccountID(accounts[0].accountId);
       setLkpGAccountName(accounts[0].accountName);
     }
-  }, [fetchNextCustomerId, fetchParentAccounts]);
+
+    // default country: UAE if it exists in the list, otherwise the first one
+    const defaultCountry =
+      countryList?.find((c) => c.countryId === "UAE") ?? countryList?.[0];
+    if (defaultCountry) {
+      setLkpCountry(defaultCountry.countryId);
+      setLkpCountry_AR(defaultCountry.countryId);
+    }
+  }, [fetchNextCustomerId, fetchParentAccounts, fetchCountries, fetchStaffs]);
 
   // DB record -> form state
   const populate = useCallback((d: CustomerDetail) => {
@@ -209,6 +223,8 @@ const CustomerPage: React.FC<CustomerPageProps> = ({
       const [detail, accounts] = await Promise.all([
         fetchCustomer(customerId),
         fetchParentAccounts(),
+        fetchCountries(),
+        fetchStaffs(),
       ]);
       populate(detail);
       const match = accounts?.find((a) => a.accountId === detail.gAccountId);
@@ -220,7 +236,14 @@ const CustomerPage: React.FC<CustomerPageProps> = ({
       setLoadingRecord(false);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [customerId, fetchCustomer, fetchParentAccounts, populate]);
+  }, [
+    customerId,
+    fetchCustomer,
+    fetchParentAccounts,
+    fetchCountries,
+    fetchStaffs,
+    populate,
+  ]);
 
   useEffect(() => {
     if (isEdit) loadRecord();
@@ -539,6 +562,8 @@ const CustomerPage: React.FC<CustomerPageProps> = ({
 
         {/* MIDDLE */}
         <CustomerMiddle
+          countries={countries}
+          staffs={staffs}
           txtCustomerName={txtCustomerName}
           setTxtCustomerName={setTxtCustomerName}
           txtLegalName={txtLegalName}

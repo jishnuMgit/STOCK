@@ -937,8 +937,8 @@ const COAListPage: React.FC = () => {
               type="button"
               title="Close"
               onClick={closeCOAPage}
-              className="absolute right-2 top-1 z-[10000] flex h-6 w-6 items-center justify-center rounded-full bg-white
-                text-slate-500 shadow hover:bg-slate-100 hover:text-red-500 focus:outline-none"
+              className="absolute right-2 top-1 z-[10000] flex h-6 w-6 cursor-pointer items-center justify-center rounded-full bg-white
+    text-slate-500 shadow hover:bg-slate-100 hover:text-red-500 focus:outline-none"
             >
               <X size={15} strokeWidth={2} />
             </button>
