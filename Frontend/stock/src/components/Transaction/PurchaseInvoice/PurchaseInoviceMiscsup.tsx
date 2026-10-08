@@ -72,35 +72,6 @@ const PurchaseInoviceMiscsup: React.FC<Props> = ({
 
   if (!open) return null;
 
-  /* Enter works like Tab between fields; Tab / Shift+Tab stay inside the popup */
-  const handleDialogKeyDown = (e: React.KeyboardEvent<HTMLDivElement>) => {
-    if (e.key === "Tab") {
-      const root = dialogRef.current;
-      if (!root) return;
-
-      const focusables = Array.from(
-        root.querySelectorAll<HTMLElement>("input, button"),
-      ).filter(
-        (el) =>
-          !el.hasAttribute("disabled") &&
-          !(el as HTMLInputElement).readOnly &&
-          el.tabIndex >= 0,
-      );
-      if (focusables.length === 0) return;
-
-      const first = focusables[0];
-      const last = focusables[focusables.length - 1];
-
-      if (e.shiftKey && document.activeElement === first) {
-        e.preventDefault();
-        last.focus();
-      } else if (!e.shiftKey && document.activeElement === last) {
-        e.preventDefault();
-        first.focus();
-      }
-    }
-  };
-
   const handleSave = async () => {
     if (saving) return;
 
