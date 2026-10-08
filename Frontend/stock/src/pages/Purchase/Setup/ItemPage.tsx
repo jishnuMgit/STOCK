@@ -14,8 +14,8 @@ import {
 import {
   makePairComponents,
   filterPairOption,
-  pairMenuStyles,
-  pairNameMenuStyles,
+  pairDividedIdMenuStyles,
+  pairDividedNameMenuStyles,
 } from "../../../components/PairSelect/pairSelectParts";
 
 /* =========================================================
@@ -52,22 +52,26 @@ interface SelectOption {
 const itemGroupIdComponents = makePairComponents(
   "Item Group ID",
   "Item Group Name",
-  false
+  false,
+  true // divider between the columns
 );
 const itemGroupNameComponents = makePairComponents(
   "Item Group ID",
   "Item Group Name",
-  true
+  true,
+  true // divider between the columns
 );
 const supplierIdComponents = makePairComponents(
   "Supplier ID",
   "Supplier Name",
-  false
+  false,
+  true // divider between the columns
 );
 const supplierNameComponents = makePairComponents(
   "Supplier ID",
   "Supplier Name",
-  true
+  true,
+  true // divider between the columns
 );
 
 /* =========================================================
@@ -1383,7 +1387,7 @@ const MENU_ID = "010201";
                 onChange={(option) =>
                   selectItemGroup(option?.value || "")
                 }
-                styles={{ ...reactSelectStyles, ...pairMenuStyles }}
+                styles={{ ...reactSelectStyles, ...pairDividedIdMenuStyles }}
                 components={itemGroupIdComponents}
                 filterOption={filterPairOption}
                 noOptionsMessage={() => "No Item Group Found"}
@@ -1405,7 +1409,7 @@ const MENU_ID = "010201";
                 onChange={(option) =>
                   selectItemGroup(option?.value || "")
                 }
-                styles={{ ...reactSelectStyles, ...pairNameMenuStyles }}
+                styles={{ ...reactSelectStyles, ...pairDividedNameMenuStyles }}
                 components={itemGroupNameComponents}
                 filterOption={filterPairOption}
                 noOptionsMessage={() => "No Item Group Found"}
@@ -1447,7 +1451,7 @@ const MENU_ID = "010201";
                 onChange={(option) =>
                   selectSupplier(option?.value || "")
                 }
-                styles={{ ...reactSelectStyles, ...pairMenuStyles }}
+                styles={{ ...reactSelectStyles, ...pairDividedIdMenuStyles }}
                 components={supplierIdComponents}
                 filterOption={filterPairOption}
                 noOptionsMessage={() => "No Supplier Found"}
@@ -1469,7 +1473,7 @@ const MENU_ID = "010201";
                 onChange={(option) =>
                   selectSupplier(option?.value || "")
                 }
-                styles={{ ...reactSelectStyles, ...pairNameMenuStyles }}
+                styles={{ ...reactSelectStyles, ...pairDividedNameMenuStyles }}
                 components={supplierNameComponents}
                 filterOption={filterPairOption}
                 noOptionsMessage={() => "No Supplier Found"}

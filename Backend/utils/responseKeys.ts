@@ -56,6 +56,10 @@ export const documentNoGridKeys: KeyMap = {
 
 export const unitListKeys: KeyMap = { funit: "lkpUnit" };
 
+export const unitGridKeys: KeyMap = {
+  funit: "txtUnit",
+};
+
 export const itemGroupKeys: KeyMap = {
   fitemgroupid: "txtItemGroupID",
   fitemgroupname: "txtItemGroupName",
