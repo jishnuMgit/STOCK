@@ -12,10 +12,14 @@ import SetChartOfAccountRouter from "./SettingRoutes/SetChartOfAccountRouter.js"
 import customerRouter from "./CustomerRoute.js";
 import menuRoutes from "./MenuRoute.js";
 import ItemPageRouter from "./Purchase/Setup/ItemPageRouter.js";
+import ItemGroupPageRouter from "./Purchase/Setup/ItemGroupPageRouter.js";
+import UnitPageRouter from "./Purchase/Setup/UnitPageRouter.js";
+import StaffPageRouter from "./Purchase/Setup/StaffPageRouter.js";
 import UserLoginRouter from "./SecurityRoutes/UserLoginRouter.js";
 import userpermission from "./SecurityRoutes/UserPermissionMenuRouter.js";
 import userpermissionBranch from "./SecurityRoutes/UserPermissionBranchRouter.js";
 import purchaseInvoiceRouter from "./Purchase/Transaction/PurchaseInvoiceRouter.js";
+import branchRouter from "./common/BranchRouter.js";
 
 const router = express.Router();
 
@@ -31,10 +35,14 @@ router.use("/PostingAccount", SetPostingAccountRouter);
 router.use("/SetChartOfAccount", SetChartOfAccountRouter);
 router.use("/menu", menuRoutes);
 router.use("/Item", ItemPageRouter);
+router.use("/ItemGroup", ItemGroupPageRouter);
+router.use("/Unit", UnitPageRouter);
+router.use("/Staff", StaffPageRouter);
 router.use("/customer", customerRouter);
 router.use("/UserLogin", UserLoginRouter);
 router.use("/user-permission", userpermission);
 router.use("/user-permission-branch", userpermissionBranch);
 router.use("/purchase-invoice", purchaseInvoiceRouter);
+router.use("/branch", branchRouter);
 
 export default router;

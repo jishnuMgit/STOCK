@@ -879,7 +879,7 @@ export const ReceiptForm: React.FC<ReceiptFormProps> = ({
 
                 boxShadow: "none",
 
-                fontSize: "12px",
+                fontSize: "14px",
 
                 cursor: "text",
 

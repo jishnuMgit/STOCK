@@ -1405,8 +1405,11 @@ const SetDocumentNo: React.FC = () => {
                           }
                           className="
                 w-full
-                input-style
+                bg-transparent
                 text-left
+                text-[13px]
+                text-slate-600
+                outline-none
               "
                         />
                       </td>
@@ -1437,8 +1440,11 @@ const SetDocumentNo: React.FC = () => {
                           }
                           className="
                 w-full
-                input-style
+                bg-transparent
                 text-center
+                text-[13px]
+                text-slate-600
+                outline-none
               "
                         />
                       </td>
@@ -1605,8 +1611,11 @@ const SetDocumentNo: React.FC = () => {
                           }
                           className="
                 w-full
-                input-style
+                bg-transparent
                 text-right
+                text-[13px]
+                text-slate-600
+                outline-none
               "
                         />
                       </td>
