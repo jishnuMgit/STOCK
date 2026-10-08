@@ -77,6 +77,8 @@ Sales-TRANSACTION
   mnuStockAdjustment:"/Sales/Transaction/StockAdjustment",
 
   mnuStockTransfer: "/Sales/Transaction/StockTransferPage",
+  mnuStkDocumentPost:"/Sales/Transaction/StockDocumentPost",
+  mnuStkDocumentRePost:"/Sales/Transaction/StockDocumentRePost",
 
 
 /*============================================================
@@ -110,6 +112,7 @@ Sales-SETUP
   ========================================================= */
 
   mnuRptSOA: "/Finance/Reports/rptSOA",
+  mnuRptGL:"/Finance/Reports/rptGL",
 
 
 
@@ -133,6 +136,7 @@ Sales-SETUP
   mnuUserPermissionMenu:"/Security/UserPermissionMenu",
   mnuUserPermissionBranch:"/Security/UserPermissionBranch",
   mnuRptUserAudit:"/Security/UserAudit",
+  mnuRptUserTransactionAudit:"/Security/UserTransactionAudit",
 
   /* =========================================================
      ADMINISTRATION
