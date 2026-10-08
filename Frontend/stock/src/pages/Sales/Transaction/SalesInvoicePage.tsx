@@ -6,8 +6,8 @@ import SalesInvoiceFooter from "../../../components/Transaction/SalesInvoice/Sal
 
 const SalesInvoice: React.FC = () => {
   return (
-    <div className="flex h-screen  w-full justify-center overflow-hidden bg-gray-100">
-  <main className="h-fit border border-gray-400 w-full min-w-[1000px] max-w-[1200px] overflow-hidden bg-white text-[#202020]">
+    <div className="flex h-full  w-full justify-center overflow-hidden bg-gray-100 ">
+  <main className="h-fit border border-gray-400 w-full min-w-300 max-w-300 overflow-hidden mt-5 bg-white text-[#202020]">
     <div className="flex h-full w-full flex-col mb-2">
 
       {/* Header */}

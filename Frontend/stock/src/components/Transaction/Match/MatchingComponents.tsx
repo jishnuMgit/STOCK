@@ -1681,7 +1681,7 @@ event: React.KeyboardEvent<HTMLButtonElement>, p0: () => any        ) => {
       },
     }}
     sx={{
-      width: "150px",
+      width: "140px",
 
       "& .MuiPickersTextField-root": {
         width: "120px",

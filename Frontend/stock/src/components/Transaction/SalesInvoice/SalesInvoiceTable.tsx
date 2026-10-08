@@ -371,7 +371,7 @@ const SalesInvoiceTable: React.FC = () => {
 
             <col style={{ width: "28px" }} />
 
-            <col style={{ width: "138px" }} />
+            <col style={{ width: "120px" }} />
 
             <col style={{ width: "auto" }} />
 

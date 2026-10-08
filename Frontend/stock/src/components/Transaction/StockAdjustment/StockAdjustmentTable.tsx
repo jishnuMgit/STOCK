@@ -55,8 +55,8 @@ const createRows = (): StockTransferRow[] =>
 const selectStyles: StylesConfig<Option, false> = {
   control: (base, state) => ({
     ...base,
-    minHeight: 20,
-    height: 20,
+    minHeight: 30,
+    height: 30,
     width: "100%",
     border: "none",
     borderRadius: 0,
@@ -65,7 +65,7 @@ const selectStyles: StylesConfig<Option, false> = {
       ? "#eff6ff"
       : "transparent",
     cursor: "pointer",
-    fontSize: 11,
+    fontSize: 14,
 
     "&:hover": {
       border: "none",
@@ -74,8 +74,8 @@ const selectStyles: StylesConfig<Option, false> = {
 
   valueContainer: (base) => ({
     ...base,
-    minHeight: 20,
-    height: 20,
+    minHeight: 30,
+    height: 30,
     padding: "0 4px",
     overflow: "hidden",
   }),
@@ -83,7 +83,7 @@ const selectStyles: StylesConfig<Option, false> = {
   singleValue: (base) => ({
     ...base,
     color: "#263449",
-    fontSize: 11,
+    fontSize: 14,
     margin: 0,
     overflow: "hidden",
     textOverflow: "ellipsis",
@@ -94,7 +94,7 @@ const selectStyles: StylesConfig<Option, false> = {
     ...base,
     margin: 0,
     color: "#64748b",
-    fontSize: 11,
+    fontSize: 14,
   }),
 
   input: (base) => ({
@@ -102,7 +102,7 @@ const selectStyles: StylesConfig<Option, false> = {
     margin: 0,
     padding: 0,
     color: "#263449",
-    fontSize: 11,
+    fontSize: 14,
   }),
 
   indicatorsContainer: (base) => ({
@@ -163,7 +163,7 @@ const selectStyles: StylesConfig<Option, false> = {
 // ============================================================
 
 const numberInputClass =
-  "number-no-spinner h-[20px] w-full min-w-0 border-0 bg-transparent px-1 text-right text-[14px] outline-none focus:bg-blue-50";
+  "number-no-spinner h-[30px] w-full min-w-0 border-0 bg-transparent px-1 text-right text-[14px] outline-none focus:bg-blue-50";
 
 const textInputClass =
   "h-[30px] w-full min-w-0 border-0 bg-transparent px-1 text-[14px] outline-none focus:bg-blue-50";
@@ -361,7 +361,7 @@ const StockAdjustmentTable: React.FC = () => {
       "
     >
       <div className="customer-table-scroll min-h-0  flex-1 overflow-auto ">
-        <table className="w-full min-w-[1040px]  table-fixed border-collapse  text-[11px]">
+        <table className="w-full min-w-[1040px]  table-fixed border-collapse  text-[14px]">
 
           {/* ==================================================
               COLUMN WIDTHS
@@ -376,7 +376,7 @@ const StockAdjustmentTable: React.FC = () => {
             <col style={{ width: "38px" }} />
 
             {/* Item ID */}
-            <col style={{ width: "150px" }} />
+            <col style={{ width: "120px" }} />
 
             {/* Item Name */}
             <col style={{ width: "auto" }} />
@@ -436,7 +436,7 @@ const StockAdjustmentTable: React.FC = () => {
                   text-left
                   align-middle
                   font-semibold
-                  text-[#202a36]
+                  text-gray-500
                 "
               >
                 Sl.
@@ -459,7 +459,7 @@ const StockAdjustmentTable: React.FC = () => {
                   text-left
                   align-middle
                   font-semibold
-                  text-[#202a36]
+                  text-gray-500
                 "
               >
                 Item ID
@@ -482,7 +482,7 @@ const StockAdjustmentTable: React.FC = () => {
                   text-left
                   align-middle
                   font-semibold
-                  text-[#202a36]
+                  text-gray-500
                 "
               >
                 Item Name
@@ -505,7 +505,7 @@ const StockAdjustmentTable: React.FC = () => {
                   text-left
                   align-middle
                   font-semibold
-                  text-[#202a36]
+                  text-gray-500
                 "
               >
                 Unit
@@ -528,7 +528,7 @@ const StockAdjustmentTable: React.FC = () => {
                   text-right
                   align-middle
                   font-semibold
-                  text-[#202a36]
+                  text-gray-500
                 "
               >
                 Qty. In
@@ -551,7 +551,7 @@ const StockAdjustmentTable: React.FC = () => {
                   text-right
                   align-middle
                   font-semibold
-                  text-[#202a36]
+                  text-gray-500
                 "
               >
                 Qty. Out
@@ -574,7 +574,7 @@ const StockAdjustmentTable: React.FC = () => {
                   text-right
                   align-middle
                   font-semibold
-                  text-[#202a36]
+                  text-gray-500
                 "
               >
                 Unit Cost
@@ -597,7 +597,7 @@ const StockAdjustmentTable: React.FC = () => {
                   text-right
                   align-middle
                   font-semibold
-                  text-[#202a36]
+                  text-gray-500
                 "
               >
                 Total Cost
@@ -635,7 +635,7 @@ const StockAdjustmentTable: React.FC = () => {
 
                 <td
                   className="
-                    h-[23px]
+                    h-[30px]
                     border
                     border-[#dce5ef]
                     p-0
@@ -663,7 +663,7 @@ const StockAdjustmentTable: React.FC = () => {
 
                 <td
                   className="
-                    h-[23px]
+                    h-[30px]
                     border
                     border-[#dce5ef]
                     p-0
@@ -679,7 +679,7 @@ const StockAdjustmentTable: React.FC = () => {
 
                 <td
                   className="
-                    h-[23px]
+                    h-[30px]
                     border
                     border-[#dce5ef]
                     p-0
@@ -719,7 +719,7 @@ const StockAdjustmentTable: React.FC = () => {
 
                 <td
                   className="
-                    h-[23px]
+                    h-[30px]
                     border
                     border-[#dce5ef]
                     p-0
@@ -759,7 +759,7 @@ const StockAdjustmentTable: React.FC = () => {
 
                 <td
                   className="
-                    h-[23px]
+                    h-[30px]
                     border
                     border-[#dce5ef]
                     p-0
@@ -779,7 +779,7 @@ const StockAdjustmentTable: React.FC = () => {
 
                 <td
                   className="
-                    h-[23px]
+                    h-[30px]
                     border
                     border-[#dce5ef]
                     p-0
@@ -799,7 +799,7 @@ const StockAdjustmentTable: React.FC = () => {
 
                 <td
                   className="
-                    h-[23px]
+                    h-[30px]
                     border
                     border-[#dce5ef]
                     p-0
@@ -819,7 +819,7 @@ const StockAdjustmentTable: React.FC = () => {
 
                 <td
                   className="
-                    h-[23px]
+                    h-[30px]
                     border
                     border-[#dce5ef]
                     p-0
@@ -839,7 +839,7 @@ const StockAdjustmentTable: React.FC = () => {
 
                 <td
                   className="
-                    h-[23px]
+                    h-[30px]
                     border
                     border-[#dce5ef]
                     p-0

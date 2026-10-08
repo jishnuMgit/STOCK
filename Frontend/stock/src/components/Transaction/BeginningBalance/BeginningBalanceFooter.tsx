@@ -133,7 +133,7 @@ const BeginningBalanceFooter: React.FC = () => {
         <button
           id="btnModify"
           type="button"
-          className={`btn-style w-[147px]`}
+          className={`btn-style `}
         >
         Modify
         </button>
@@ -143,7 +143,7 @@ const BeginningBalanceFooter: React.FC = () => {
         <button
           id="btnDelete"
           type="button"
-          className={`btn-style w-[143px]`}
+          className={`btn-style `}
         >
          Delete
         </button>
@@ -153,7 +153,7 @@ const BeginningBalanceFooter: React.FC = () => {
         <button
           id="btnPrint"
           type="button"
-          className={`btn-style w-[128px]`}
+          className={`btn-style `}
         >
           Print
         </button>
@@ -163,7 +163,7 @@ const BeginningBalanceFooter: React.FC = () => {
         <button
           id="btnPost"
           type="button"
-          className={`btn-style w-[128px]`}
+          className={`btn-style `}
         >
           Post
         </button>
@@ -173,7 +173,7 @@ const BeginningBalanceFooter: React.FC = () => {
         <button
           id="btnClear"
           type="button"
-          className={`btn-style w-[128px]`}
+          className={`btn-style `}
         >
           <u>C</u>lear
         </button>

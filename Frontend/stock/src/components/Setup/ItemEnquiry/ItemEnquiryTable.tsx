@@ -36,21 +36,147 @@ const ItemEnquiryTable: React.FC<
   setSelectedRow,
   updateRow,
 }) => {
+  // ==========================================================
+  // FOCUS CELL
+  // ==========================================================
+
+  const focusCell = (
+    rowIndex: number,
+    field: string,
+  ) => {
+    requestAnimationFrame(() => {
+      const input = document.getElementById(
+        `itemEnquiry-${field}-${rowIndex}`,
+      ) as HTMLInputElement | null;
+
+      if (input) {
+        input.focus();
+
+        const length = input.value.length;
+
+        input.setSelectionRange(
+          length,
+          length,
+        );
+      }
+
+      setSelectedRow(rowIndex);
+    });
+  };
+
+  // ==========================================================
+  // KEYBOARD NAVIGATION
+  // ==========================================================
+
+  const handleCellKeyDown = (
+    event: React.KeyboardEvent<HTMLInputElement>,
+    rowIndex: number,
+    fieldIndex: number,
+  ) => {
+    if (event.key === "Enter") {
+      event.preventDefault();
+
+      // Move to next cell in the same row
+      if (fieldIndex < 4) {
+        const fields = [
+          "branch",
+          "stock",
+          "prevUnitCost",
+          "unitCost",
+          "salesPrice",
+        ];
+
+        focusCell(
+          rowIndex,
+          fields[fieldIndex + 1],
+        );
+
+        return;
+      }
+
+      // Last cell -> next row
+      if (rowIndex < rows.length - 1) {
+        focusCell(
+          rowIndex + 1,
+          "branch",
+        );
+
+        return;
+      }
+    }
+
+    // ========================================================
+    // ARROW DOWN
+    // ========================================================
+
+    if (event.key === "ArrowDown") {
+      event.preventDefault();
+
+      if (rowIndex < rows.length - 1) {
+        focusCell(
+          rowIndex + 1,
+          getFieldName(fieldIndex),
+        );
+      }
+
+      return;
+    }
+
+    // ========================================================
+    // ARROW UP
+    // ========================================================
+
+    if (event.key === "ArrowUp") {
+      event.preventDefault();
+
+      if (rowIndex > 0) {
+        focusCell(
+          rowIndex - 1,
+          getFieldName(fieldIndex),
+        );
+      }
+
+      return;
+    }
+  };
+
+  // ==========================================================
+  // FIELD NAME
+  // ==========================================================
+
+  const getFieldName = (
+    fieldIndex: number,
+  ) => {
+    const fields = [
+      "branch",
+      "stock",
+      "prevUnitCost",
+      "unitCost",
+      "salesPrice",
+    ];
+
+    return fields[fieldIndex];
+  };
+
+  // ==========================================================
+  // RENDER
+  // ==========================================================
+
   return (
     <div
       className="
         mx-[24px]
         mt-[2px]
-        h-[276px]
+        
+        h-[277px]
         overflow-hidden
         border
         border-[#dce5ef]
       "
     >
-
-      {/* ==================================================
+      {/* ======================================================
           SCROLL
-      =================================================== */}
+      ====================================================== */}
 
       <div
         className="
@@ -62,81 +188,69 @@ const ItemEnquiryTable: React.FC<
           scrollbar-track-[#f5faf7]
         "
       >
-
         <table
           className="
             w-full
-            min-w-[820px]
+            min-w-[700px]
             table-fixed
             border-collapse
             text-[13px]
           "
         >
-
           {/* ==================================================
               COLUMN WIDTHS
-          =================================================== */}
+          ================================================== */}
 
           <colgroup>
-
             {/* Indicator */}
-
             <col
               style={{
-                width: "22px",
+                width: "2%",
               }}
             />
 
             {/* Branch */}
-
             <col
               style={{
-                width: "302px",
+                width: "auto",
               }}
             />
 
             {/* Stock */}
-
             <col
               style={{
-                width: "115px",
+                width: "16%",
               }}
             />
 
             {/* Previous Unit Cost */}
-
             <col
               style={{
-                width: "137px",
+                width: "16%",
               }}
             />
 
             {/* Unit Cost */}
-
             <col
               style={{
-                width: "138px",
+                width: "16%",
               }}
             />
 
             {/* Sales Price */}
-
             <col
               style={{
-                width: "138px",
+                width: "16%",
               }}
             />
-
           </colgroup>
 
           {/* ==================================================
               HEADER
-          =================================================== */}
+          ================================================== */}
 
           <thead>
-
             <tr className="h-[39px]">
-
               {/* Indicator */}
 
               <th
@@ -200,7 +314,7 @@ const ItemEnquiryTable: React.FC<
                 Stock
               </th>
 
-              {/* Prev Unit Cost */}
+              {/* Previous Unit Cost */}
 
               <th
                 className="
@@ -271,43 +385,34 @@ const ItemEnquiryTable: React.FC<
               >
                 Sales Price
               </th>
-
             </tr>
-
           </thead>
 
           {/* ==================================================
               BODY
-          =================================================== */}
+          ================================================== */}
 
           <tbody>
-
             {rows.map((row, index) => (
-
               <tr
                 key={index}
-                tabIndex={0}
-                onClick={() =>
-                  setSelectedRow(index)
-                }
-                onFocus={() =>
-                  setSelectedRow(index)
-                }
                 className={`
                   h-[39px]
                   outline-none
                   ${
                     selectedRow === index
-                      ? "bg-[#f7fbf8]"
+                      ? "bg-white"
                       : "bg-white"
                   }
-                  hover:bg-[#f2faf5]
+                  hover:bg-white
                 `}
+                onClick={() =>
+                  setSelectedRow(index)
+                }
               >
-
-                {/* ==================================================
+                {/* ============================================
                     INDICATOR
-                =================================================== */}
+                ============================================ */}
 
                 <td
                   className="
@@ -320,20 +425,15 @@ const ItemEnquiryTable: React.FC<
                   "
                 >
                   {selectedRow === index && (
-                    <span
-                      className="
-                        text-[9px]
-                        text-[#222]
-                      "
-                    >
+                    <span className="text-[9px] text-[#222]">
                       ▶
                     </span>
                   )}
                 </td>
 
-                {/* ==================================================
+                {/* ============================================
                     BRANCH
-                =================================================== */}
+                ============================================ */}
 
                 <td
                   className="
@@ -341,18 +441,51 @@ const ItemEnquiryTable: React.FC<
                     border
                     border-[#bfe8d0]
                     p-0
-                    text-center
                     align-middle
                   "
                 >
-                  <span className="text-[13px] text-[#481111]">
-                    {row.branch}
-                  </span>
+                  <input
+                    id={`itemEnquiry-branch-${index}`}
+                    type="text"
+                    value={String(
+                      row.branch ?? "",
+                    )}
+                    autoComplete="off"
+                    onFocus={() =>
+                      setSelectedRow(index)
+                    }
+                    onChange={(event) =>
+                      updateRow(
+                        index,
+                        "branch",
+                        event.target.value,
+                      )
+                    }
+                    onKeyDown={(event) =>
+                      handleCellKeyDown(
+                        event,
+                        index,
+                        0,
+                      )
+                    }
+                    className="
+                      h-[38px]
+                      w-full
+                      border-0
+                      bg-transparent
+                      px-[10px]
+                      py-0
+                      text-[13px]
+                      text-[#481111]
+                      outline-none
+                      focus:bg-[#f1f8ff]
+                    "
+                  />
                 </td>
 
-                {/* ==================================================
+                {/* ============================================
                     STOCK
-                =================================================== */}
+                ============================================ */}
 
                 <td
                   className="
@@ -360,18 +493,52 @@ const ItemEnquiryTable: React.FC<
                     border
                     border-[#bfe8d0]
                     p-0
-                    text-center
                     align-middle
                   "
                 >
-                  <span className="text-[13px] text-[#481111]">
-                    {row.stock}
-                  </span>
+                  <input
+                    id={`itemEnquiry-stock-${index}`}
+                    type="text"
+                    value={String(
+                      row.stock ?? "",
+                    )}
+                    autoComplete="off"
+                    onFocus={() =>
+                      setSelectedRow(index)
+                    }
+                    onChange={(event) =>
+                      updateRow(
+                        index,
+                        "stock",
+                        event.target.value,
+                      )
+                    }
+                    onKeyDown={(event) =>
+                      handleCellKeyDown(
+                        event,
+                        index,
+                        1,
+                      )
+                    }
+                    className="
+                      h-[38px]
+                      w-full
+                      border-0
+                      bg-transparent
+                      px-[8px]
+                      py-0
+                      text-center
+                      text-[13px]
+                      text-[#481111]
+                      outline-none
+                      focus:bg-[#f1f8ff]
+                    "
+                  />
                 </td>
 
-                {/* ==================================================
+                {/* ============================================
                     PREVIOUS UNIT COST
-                =================================================== */}
+                ============================================ */}
 
                 <td
                   className="
@@ -379,18 +546,52 @@ const ItemEnquiryTable: React.FC<
                     border
                     border-[#bfe8d0]
                     p-0
-                    text-center
                     align-middle
                   "
                 >
-                  <span className="text-[13px] text-[#481111]">
-                    {row.prevUnitCost}
-                  </span>
+                  <input
+                    id={`itemEnquiry-prevUnitCost-${index}`}
+                    type="text"
+                    value={String(
+                      row.prevUnitCost ?? "",
+                    )}
+                    autoComplete="off"
+                    onFocus={() =>
+                      setSelectedRow(index)
+                    }
+                    onChange={(event) =>
+                      updateRow(
+                        index,
+                        "prevUnitCost",
+                        event.target.value,
+                      )
+                    }
+                    onKeyDown={(event) =>
+                      handleCellKeyDown(
+                        event,
+                        index,
+                        2,
+                      )
+                    }
+                    className="
+                      h-[38px]
+                      w-full
+                      border-0
+                      bg-transparent
+                      px-[8px]
+                      py-0
+                      text-center
+                      text-[13px]
+                      text-[#481111]
+                      outline-none
+                      focus:bg-[#f1f8ff]
+                    "
+                  />
                 </td>
 
-                {/* ==================================================
+                {/* ============================================
                     UNIT COST
-                =================================================== */}
+                ============================================ */}
 
                 <td
                   className="
@@ -398,18 +599,52 @@ const ItemEnquiryTable: React.FC<
                     border
                     border-[#bfe8d0]
                     p-0
-                    text-center
                     align-middle
                   "
                 >
-                  <span className="text-[13px] text-[#481111]">
-                    {row.unitCost}
-                  </span>
+                  <input
+                    id={`itemEnquiry-unitCost-${index}`}
+                    type="text"
+                    value={String(
+                      row.unitCost ?? "",
+                    )}
+                    autoComplete="off"
+                    onFocus={() =>
+                      setSelectedRow(index)
+                    }
+                    onChange={(event) =>
+                      updateRow(
+                        index,
+                        "unitCost",
+                        event.target.value,
+                      )
+                    }
+                    onKeyDown={(event) =>
+                      handleCellKeyDown(
+                        event,
+                        index,
+                        3,
+                      )
+                    }
+                    className="
+                      h-[38px]
+                      w-full
+                      border-0
+                      bg-transparent
+                      px-[8px]
+                      py-0
+                      text-center
+                      text-[13px]
+                      text-[#481111]
+                      outline-none
+                      focus:bg-[#f1f8ff]
+                    "
+                  />
                 </td>
 
-                {/* ==================================================
+                {/* ============================================
                     SALES PRICE
-                =================================================== */}
+                ============================================ */}
 
                 <td
                   className="
@@ -417,25 +652,53 @@ const ItemEnquiryTable: React.FC<
                     border
                     border-[#bfe8d0]
                     p-0
-                    text-center
                     align-middle
                   "
                 >
-                  <span className="text-[13px] text-[#481111]">
-                    {row.salesPrice}
-                  </span>
+                  <input
+                    id={`itemEnquiry-salesPrice-${index}`}
+                    type="text"
+                    value={String(
+                      row.salesPrice ?? "",
+                    )}
+                    autoComplete="off"
+                    onFocus={() =>
+                      setSelectedRow(index)
+                    }
+                    onChange={(event) =>
+                      updateRow(
+                        index,
+                        "salesPrice",
+                        event.target.value,
+                      )
+                    }
+                    onKeyDown={(event) =>
+                      handleCellKeyDown(
+                        event,
+                        index,
+                        4,
+                      )
+                    }
+                    className="
+                      h-[38px]
+                      w-full
+                      border-0
+                      bg-transparent
+                      px-[8px]
+                      py-0
+                      text-center
+                      text-[13px]
+                      text-[#481111]
+                      outline-none
+                      focus:bg-[#f1f8ff]
+                    "
+                  />
                 </td>
-
               </tr>
-
             ))}
-
           </tbody>
-
         </table>
-
       </div>
-
     </div>
   );
 };

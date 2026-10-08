@@ -265,7 +265,7 @@ const BeginningBalanceTable: React.FC = () => {
       className="
         mx-[16px]
         flex
-        h-[436px]
+        h-[438px]
         min-h-0
         flex-col
         overflow-hidden
@@ -296,11 +296,11 @@ const BeginningBalanceTable: React.FC = () => {
 
             {/* Account ID */}
 
-            <col style={{ width: "125px" }} />
+            <col style={{ width: "105px" }} />
 
             {/* Account Name */}
 
-            <col style={{ width: "485px" }} />
+            <col style={{ width: "auto" }} />
 
             {/* CC ID */}
 
