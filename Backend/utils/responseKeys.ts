@@ -56,6 +56,18 @@ export const documentNoGridKeys: KeyMap = {
 
 export const unitListKeys: KeyMap = { funit: "lkpUnit" };
 
+export const itemGroupKeys: KeyMap = {
+  fitemgroupid: "txtItemGroupID",
+  fitemgroupname: "txtItemGroupName",
+  fvatslab: "lkpVATSlab",
+  fvatper: "txtVATPer",
+};
+
+export const vatSlabListKeys: KeyMap = {
+  fvatslab: "lkpVATSlab",
+  fvatper: "txtVATPer",
+};
+
 export const itemGroupListKeys: KeyMap = {
   fitemgroupid: "lkpItemGroupID",
   fitemgroupname: "txtItemGroupName",
