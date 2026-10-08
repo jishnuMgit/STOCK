@@ -28,6 +28,10 @@ import ItemEnquiryPage from "../pages/Sales/Setup/ItemEnquiryPage";
 import UnitPage from "../pages/Purchase/Setup/UnitPage";
 import StaffPage from "../pages/Purchase/Setup/StaffPage";
 import UserAudit from "../pages/Security/UserAudit/UserAuditPage";
+import UserTransactionAudit from "../pages/Security/UserTransactionAudit/UserTransactionAuditPage";
+import StockDocumentPost from "../pages/Sales/Transaction/stock/StockDocumentPostPage";
+import StockDocumentPostCancel from "../pages/Sales/Transaction/stock/StockDocumentPostCancel";
+import StockDocumentRePost from "../pages/Sales/Transaction/stock/StockDocumentRePost";
 
 const Login = lazy(() => import("../pages/Auth/LoginPage"));
 const ReceiptPage = lazy(
@@ -57,7 +61,7 @@ const SetCompanyInfo = lazy(
 // Finance - Reports
 const StatementOfAccountMain = lazy(
   () =>
-    import("../pages/Finance/Report/StatementOfAccount/StatementOfAccountMain"),
+    import("../pages/Finance/Report/StatementOfAccount/RptSOAPage"),
 );
 
 const PageLoader = () => (
@@ -142,6 +146,9 @@ const AppRoutes = () => {
             path="/Sales/Transaction/StockTransferPage"
             element={<StockTransfer />}
           />
+
+          <Route path="/Sales/Transaction/StockDocumentPost" element={<StockDocumentPost/>}/>
+          <Route path="/Sales/Transaction/StockDocumentRePost" element={<StockDocumentRePost/>}/>
           {/* ================= SALES - SETUP ================= */}
 
 
@@ -216,6 +223,7 @@ const AppRoutes = () => {
             element={<UserPermissionBranchPage />}
           />
           <Route path="/Security/UserAudit" element={<UserAudit/>}/>
+          <Route path="/Security/UserTransactionAudit" element={<UserTransactionAudit/>}/>
 
           {/* ================= ADMINISTRATION ================= */}
           <Route path="/Administration/CompanyPage" element={<CompanyPage />} />
@@ -223,6 +231,7 @@ const AppRoutes = () => {
           {/* ================= DEV ================= */}
           <Route path="/dev/PurchaseExpense" element={<PurchaseExpense />} />
 
+<Route path="/dev/StockDocumentPostCancel" element={<StockDocumentPostCancel/>}/>
           {/* Unknown URL -> back to "/" ("/" has its own element, so no loop) */}
           <Route path="*" element={<Navigate to="/" replace />} />
         </Route>
