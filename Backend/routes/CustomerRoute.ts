@@ -3,6 +3,8 @@ import {
   getCustomerList,
   getNextCSAccountId,
   getParentAccountReceivables,
+  getCustSupCountries,
+  getStaffs,
   getCustomer,
   createCustomer,
   updateCustomer,
@@ -17,6 +19,8 @@ router.use(authenticate);
 router.get("/", getCustomerList);
 router.get("/next-id", getNextCSAccountId);
 router.get("/parent-accounts", getParentAccountReceivables);
+router.get("/countries", getCustSupCountries);
+router.get("/staffs", getStaffs);
 
 router.get("/:csAccountId", getCustomer);
 router.post("/", createCustomer);

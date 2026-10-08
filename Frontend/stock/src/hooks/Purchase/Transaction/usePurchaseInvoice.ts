@@ -2,7 +2,14 @@ import { useCallback, useState } from "react";
 
 const API_URL = import.meta.env.VITE_API_URL;
 
+const CASH_SUPPLIER_BASE = "/purchase-invoice/cash-supplier";
+
 /* ---------- UI shapes ---------- */
+
+export interface Branch {
+  id: string;
+  name: string;
+}
 
 export interface PurchaseHeader {
   brId: string;
@@ -12,6 +19,8 @@ export interface PurchaseHeader {
   poNo: string;
   supplierId: string;
   supplierName: string;
+  vatNo: string;
+  miscSupId: string; // UI only for now, see note below
   currency: string;
   currencyRate: string;
   piNo: string; // supplier invoice no.
@@ -27,6 +36,12 @@ export interface PurchaseRow {
   unitPrice: string; // fUnitPrice
   unitCost: string;
   totalCost: string;
+}
+
+export interface CashSupplier {
+  id: string;
+  name: string;
+  vatNo: string;
 }
 
 export const emptyRow = (): PurchaseRow => ({
@@ -48,6 +63,8 @@ export const emptyHeader = (): PurchaseHeader => ({
   poNo: "",
   supplierId: "",
   supplierName: "",
+  vatNo: "",
+  miscSupId: "",
   currency: "SAR",
   currencyRate: "1",
   piNo: "",
@@ -64,6 +81,7 @@ interface InvoiceHeaderApi {
   fdate: string | null;
   fpino: string | null;
   fpono: string | null;
+  fvatno: string | null;
   finvoicetype: string | null;
   fnote: string | null;
 }
@@ -81,11 +99,24 @@ interface InvoiceLineApi {
   ftotalcost: string | number | null;
 }
 
+interface CashSupplierApi {
+  fcashsupplierid: string;
+  fcashsuppliername: string | null;
+  fvatno: string | null;
+}
+
 export interface SavePayload {
   mode: "S" | "M";
   year: string;
   header: PurchaseHeader;
   rows: PurchaseRow[];
+}
+
+export interface SaveCashSupplierPayload {
+  mode: "S" | "M";
+  cashSupplierId: string;
+  cashSupplierName: string;
+  vatNo: string;
 }
 
 const n = (v: unknown): number => {
@@ -122,7 +153,18 @@ export const usePurchaseInvoice = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
-  /* Throws on failure so the page can show its own message. */
+  /* ======================================================
+     PURCHASE INVOICE
+  ====================================================== */
+
+  const fetchBranches = useCallback(async (): Promise<Branch[]> => {
+    const result = await apiRequest<{
+      data: { fbrid: string; fbrname: string | null }[];
+    }>("GET", "/branch");
+    return result.data.map((b) => ({ id: b.fbrid, name: s(b.fbrname) }));
+  }, []);
+
+  /* Returns null when not found (new document) or on error (see `error`). */
   const fetchInvoice = useCallback(
     async (
       year: string,
@@ -149,6 +191,8 @@ export const usePurchaseInvoice = () => {
             poNo: s(h.fpono),
             supplierId: s(h.fsupplierid),
             supplierName: s(h.fsuppliername),
+            vatNo: s(h.fvatno),
+            miscSupId: "",
             currency: s(h.fcurrency) || "SAR",
             currencyRate: s(h.fcurrencyrate) || "1",
             piNo: s(h.fpino),
@@ -182,10 +226,9 @@ export const usePurchaseInvoice = () => {
       const rate = n(header.currencyRate) || 1;
 
       const lines = rows
-        .map((r, i) => ({ r, slNo: i + 1 }))
-        .filter(({ r }) => r.itemId)
-        .map(({ r, slNo }, idx) => ({
-          slNo: idx + 1 || slNo,
+        .filter((r) => r.itemId)
+        .map((r, idx) => ({
+          slNo: idx + 1,
           itemId: r.itemId,
           unit: r.unit,
           qtyIn: n(r.qty),
@@ -206,6 +249,7 @@ export const usePurchaseInvoice = () => {
         piNo: header.piNo,
         poNo: header.poNo,
         date: header.date,
+        vatNo: header.vatNo,
         supplierId: header.supplierId,
         supplierName: header.supplierName,
         currency: header.currency,
@@ -226,5 +270,94 @@ export const usePurchaseInvoice = () => {
     [],
   );
 
-  return { fetchInvoice, saveInvoice, deleteInvoice, loading, error };
+  const calcUnitCost = useCallback(
+    async (
+      rows: PurchaseRow[],
+      totalExpense: number,
+      discAmt: number,
+    ): Promise<PurchaseRow[]> => {
+      const lines = rows.map((r) => ({
+        itemId: r.itemId,
+        qtyIn: n(r.qty),
+        unitPrice: n(r.unitPrice),
+      }));
+
+      const result = await apiRequest<{
+        data: { lines: { unitCost: number; totalCost: number }[] };
+      }>("POST", "/purchase-invoice/calc-unit-cost", {
+        lines,
+        totalExpense,
+        discAmt,
+      });
+
+      return rows.map((r, i) =>
+        r.itemId
+          ? {
+              ...r,
+              unitCost: fixed(result.data.lines[i]?.unitCost, 4),
+              totalCost: fixed(result.data.lines[i]?.totalCost, 4),
+            }
+          : r,
+      );
+    },
+    [],
+  );
+
+  /* ======================================================
+     CASH (MISC.) SUPPLIER
+     These throw on failure so the caller can show the message.
+     They don't touch `loading`, so the invoice buttons stay enabled.
+  ====================================================== */
+
+  /* VB: GetCashSupplierData -> fills the Misc. Sup. combos */
+  const fetchCashSuppliers = useCallback(async (): Promise<CashSupplier[]> => {
+    const result = await apiRequest<{ data: CashSupplierApi[] }>(
+      "GET",
+      CASH_SUPPLIER_BASE,
+    );
+    return result.data.map((r) => ({
+      id: r.fcashsupplierid,
+      name: s(r.fcashsuppliername),
+      vatNo: s(r.fvatno),
+    }));
+  }, []);
+
+  /* VB: GetCashSupplierID */
+  const fetchNextCashSupplierId = useCallback(async (): Promise<string> => {
+    const result = await apiRequest<{ data: { id: string } }>(
+      "GET",
+      `${CASH_SUPPLIER_BASE}/next-id`,
+    );
+    return s(result.data.id);
+  }, []);
+
+  /* VB: Apply (S / M) */
+  const saveCashSupplier = useCallback(
+    async (payload: SaveCashSupplierPayload): Promise<void> => {
+      await apiRequest("POST", CASH_SUPPLIER_BASE, payload);
+    },
+    [],
+  );
+
+  /* VB: ApplyD */
+  const deleteCashSupplier = useCallback(async (id: string): Promise<void> => {
+    await apiRequest(
+      "DELETE",
+      `${CASH_SUPPLIER_BASE}/${encodeURIComponent(id)}`,
+    );
+  }, []);
+
+  return {
+    fetchBranches,
+    fetchInvoice,
+    saveInvoice,
+    deleteInvoice,
+    calcUnitCost,
+    fetchCashSuppliers,
+    fetchNextCashSupplierId,
+    saveCashSupplier,
+    deleteCashSupplier,
+    loading,
+    error,
+  };
 };
