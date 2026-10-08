@@ -32,6 +32,7 @@ import UserTransactionAudit from "../pages/Security/UserTransactionAudit/UserTra
 import StockDocumentPost from "../pages/Sales/Transaction/stock/StockDocumentPostPage";
 import StockDocumentPostCancel from "../pages/Sales/Transaction/stock/StockDocumentPostCancel";
 import StockDocumentRePost from "../pages/Sales/Transaction/stock/StockDocumentRePost";
+import RptGLPage from "../pages/Finance/Report/GeneralLedger/RptGLPage";
 
 const Login = lazy(() => import("../pages/Auth/LoginPage"));
 const ReceiptPage = lazy(
@@ -59,9 +60,9 @@ const SetCompanyInfo = lazy(
 );
 
 // Finance - Reports
-const StatementOfAccountMain = lazy(
+const RptSOAPage = lazy(
   () =>
-    import("../pages/Finance/Report/StatementOfAccount/RptSOAPage"),
+    import("../pages/Finance/Report/A-R_and_A-P/StatementOfAccount/RptSOAPage"),
 );
 
 const PageLoader = () => (
@@ -124,14 +125,14 @@ const AppRoutes = () => {
           />
 
           {/* ================= FINANCE - REPORTS ================= */}
-          <Route
-            path="/Finance/Setup/rptSOA"
-            element={<StatementOfAccountMain />}
-          />
+  
           <Route
             path="/Finance/Reports/rptSOA"
-            element={<StatementOfAccountMain />}
+            element={<RptSOAPage />}
           />
+          <Route
+          path="/Finance/Reports/rptGL"
+          element={<RptGLPage/>}/>
 
           {/* ================= SALES - TRANSACTION ================= */}
           <Route

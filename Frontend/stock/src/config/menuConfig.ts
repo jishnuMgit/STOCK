@@ -112,6 +112,7 @@ Sales-SETUP
   ========================================================= */
 
   mnuRptSOA: "/Finance/Reports/rptSOA",
+  mnuRptGL:"/Finance/Reports/rptGL",
 
 
 

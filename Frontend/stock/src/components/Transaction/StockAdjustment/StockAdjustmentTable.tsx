@@ -434,9 +434,10 @@ const StockAdjustmentTable: React.FC = () => {
                   px-1
                   py-0
                   text-left
+                  text-[12px]
                   align-middle
                   font-semibold
-                  text-gray-500
+                
                 "
               >
                 Sl.
@@ -459,7 +460,8 @@ const StockAdjustmentTable: React.FC = () => {
                   text-left
                   align-middle
                   font-semibold
-                  text-gray-500
+                  text-[12px]
+                 
                 "
               >
                 Item ID
@@ -481,8 +483,9 @@ const StockAdjustmentTable: React.FC = () => {
                   py-0
                   text-left
                   align-middle
+                  text-[12px]
                   font-semibold
-                  text-gray-500
+                 
                 "
               >
                 Item Name
@@ -504,8 +507,9 @@ const StockAdjustmentTable: React.FC = () => {
                   py-0
                   text-left
                   align-middle
+                  text-[12px]
                   font-semibold
-                  text-gray-500
+                 
                 "
               >
                 Unit
@@ -527,8 +531,9 @@ const StockAdjustmentTable: React.FC = () => {
                   py-0
                   text-right
                   align-middle
+                  text-[12px]
                   font-semibold
-                  text-gray-500
+                 
                 "
               >
                 Qty. In
@@ -550,8 +555,9 @@ const StockAdjustmentTable: React.FC = () => {
                   py-0
                   text-right
                   align-middle
+                  text-[12px]
                   font-semibold
-                  text-gray-500
+                 
                 "
               >
                 Qty. Out
@@ -573,8 +579,9 @@ const StockAdjustmentTable: React.FC = () => {
                   py-0
                   text-right
                   align-middle
+                  text-[12px]
                   font-semibold
-                  text-gray-500
+                  
                 "
               >
                 Unit Cost
@@ -596,8 +603,9 @@ const StockAdjustmentTable: React.FC = () => {
                   py-0
                   text-right
                   align-middle
+                  text-[12px]
                   font-semibold
-                  text-gray-500
+             
                 "
               >
                 Total Cost
