@@ -16,6 +16,7 @@ import UserLoginRouter from "./SecurityRoutes/UserLoginRouter.js";
 import userpermission from "./SecurityRoutes/UserPermissionMenuRouter.js";
 import userpermissionBranch from "./SecurityRoutes/UserPermissionBranchRouter.js";
 import purchaseInvoiceRouter from "./Purchase/Transaction/PurchaseInvoiceRouter.js";
+import branchRouter from "./common/BranchRouter.js";
 
 const router = express.Router();
 
@@ -36,5 +37,6 @@ router.use("/UserLogin", UserLoginRouter);
 router.use("/user-permission", userpermission);
 router.use("/user-permission-branch", userpermissionBranch);
 router.use("/purchase-invoice", purchaseInvoiceRouter);
+router.use("/branch", branchRouter);
 
 export default router;

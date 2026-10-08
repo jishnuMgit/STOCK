@@ -6,6 +6,11 @@ const CASH_SUPPLIER_BASE = "/purchase-invoice/cash-supplier";
 
 /* ---------- UI shapes ---------- */
 
+export interface Branch {
+  id: string;
+  name: string;
+}
+
 export interface PurchaseHeader {
   brId: string;
   docNo: string;
@@ -151,6 +156,13 @@ export const usePurchaseInvoice = () => {
   /* ======================================================
      PURCHASE INVOICE
   ====================================================== */
+
+  const fetchBranches = useCallback(async (): Promise<Branch[]> => {
+    const result = await apiRequest<{
+      data: { fbrid: string; fbrname: string | null }[];
+    }>("GET", "/branch");
+    return result.data.map((b) => ({ id: b.fbrid, name: s(b.fbrname) }));
+  }, []);
 
   /* Returns null when not found (new document) or on error (see `error`). */
   const fetchInvoice = useCallback(
@@ -336,6 +348,7 @@ export const usePurchaseInvoice = () => {
   }, []);
 
   return {
+    fetchBranches,
     fetchInvoice,
     saveInvoice,
     deleteInvoice,

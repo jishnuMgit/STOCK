@@ -35,6 +35,7 @@ const recalcRow = (row: PurchaseRow, rate: number): PurchaseRow => {
 
 const PurchaseInvoicePage: React.FC = () => {
   const {
+    fetchBranches,
     fetchInvoice,
     saveInvoice,
     deleteInvoice,
@@ -47,6 +48,9 @@ const PurchaseInvoicePage: React.FC = () => {
   const [rows, setRows] = useState<PurchaseRow[]>(createRows);
   const [mode, setMode] = useState<"S" | "M">("S");
   const [message, setMessage] = useState("");
+  const [branches, setBranches] = useState<{ value: string; label: string }[]>(
+    [],
+  );
 
   // Misc. supplier lookup + the Yes/No switch
   const [miscSuppliers, setMiscSuppliers] = useState<CashSupplier[]>([]);
@@ -67,6 +71,14 @@ const PurchaseInvoicePage: React.FC = () => {
     }),
     [rows],
   );
+
+  useEffect(() => {
+    fetchBranches()
+      .then((list) =>
+        setBranches(list.map((b) => ({ value: b.id, label: b.name }))),
+      )
+      .catch(() => setBranches([]));
+  }, [fetchBranches]);
 
   /* VB: GetCashSupplier -> fills the Misc. Sup. combos */
   const loadMiscSuppliers = useCallback(async () => {
@@ -207,6 +219,7 @@ const PurchaseInvoicePage: React.FC = () => {
         onDocNoBlur={handleDocNoBlur}
         totalSupplierAmt={totals.supplierTotal}
         onCalcUnitCost={handleCalcUnitCost}
+        lookups={{ branches: branches.length ? branches : undefined }}
         miscSuppliers={miscSuppliers}
         miscMode={miscMode}
         onMiscModeChange={setMiscMode}
