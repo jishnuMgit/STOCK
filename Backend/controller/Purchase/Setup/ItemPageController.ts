@@ -9,6 +9,7 @@ import {
   saveItemPageService,
   deleteItemService,
   deleteItemBranchRowService,
+  haveItemTransService,
   type ItemBranchRowPayload,
 } from "../../../services/Purchase/Setup/itemPageService.js";
 import { UserAudit } from "../../../utils/UserAudit.js";
@@ -364,6 +365,16 @@ export const saveItem = async (
       });
     }
 
+    // an item that transactions already use cannot be modified (the old
+    // HaveTrans check on the Item ID)
+    if (wantedMode === "M" && (await haveItemTransService(PstrCoID, txtItemID))) {
+      return res.status(409).json({
+        success: false,
+        message: `You can't Modify. Transactions already entered with this Item '${txtItemID}'`,
+        field: "txtItemID",
+      });
+    }
+
     await saveItemPageService(
       PstrCoID,
       txtItemID,
@@ -465,6 +476,15 @@ export const deleteItem = async (
       return res.status(403).json({
         success: false,
         message: "You do not have permission to Delete.",
+      });
+    }
+
+    // an item that transactions already use cannot be deleted (the old
+    // HaveTrans check on the Item ID)
+    if (await haveItemTransService(PstrCoID, txtItemID)) {
+      return res.status(409).json({
+        success: false,
+        message: `You can't delete. Transactions already entered with this Item '${txtItemID}'`,
       });
     }
 
