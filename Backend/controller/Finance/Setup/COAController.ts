@@ -14,8 +14,7 @@ import { AuthenticatedRequest } from "../../../middleware/authMiddleware.js";
 //   DELETE /api/chart-of-accounts/:accountId     -> mode 'D'
 // ============================================================
 
-const MIN_ACCOUNT_ID_LEN = 8; // VB: gintMinAccountIDLen
-const MAX_ACCOUNT_ID_LEN = 12; // VB: txtAccountID.MaxLength
+const ACCOUNTID_LEN = 7;
 const MAX_ACCOUNT_LEVEL = 4; // VB: level 4 can't have children (mnuAdd hidden)
 const ROOT_LEVEL = 1; // VB: level 1 can't be modified / deleted
 
@@ -395,17 +394,9 @@ export const createChartOfAccount = async (
     }
 
     if (!accountId) return bad(res, "Please input an 'Account ID'");
-    if (accountId.length < MIN_ACCOUNT_ID_LEN)
-      return bad(
-        res,
-        `Minimum length of 'Account ID' should be '${MIN_ACCOUNT_ID_LEN}'`,
-      );
-    if (accountId.length > MAX_ACCOUNT_ID_LEN)
-      return bad(
-        res,
-        `Maximum length of 'Account ID' is '${MAX_ACCOUNT_ID_LEN}'`,
-      );
-
+    if (accountId.length !== ACCOUNTID_LEN)
+      return bad(res, `'Account ID' must be ${ACCOUNTID_LEN} characters`);
+    
     if (await accountIdExists(CoID, accountId))
       return bad(res, "'Account ID' already exists!", 409);
 
@@ -473,16 +464,8 @@ export const updateChartOfAccount = async (
     if (!groupOrHead)
       return bad(res, "Invalid Group/Parent/Head for this account level");
 
-    if (newAccountId.length < MIN_ACCOUNT_ID_LEN)
-      return bad(
-        res,
-        `Minimum length of 'Account ID' should be '${MIN_ACCOUNT_ID_LEN}'`,
-      );
-    if (newAccountId.length > MAX_ACCOUNT_ID_LEN)
-      return bad(
-        res,
-        `Maximum length of 'Account ID' is '${MAX_ACCOUNT_ID_LEN}'`,
-      );
+    if (newAccountId.length !== ACCOUNTID_LEN)
+      return bad(res, `'Account ID' must be ${ACCOUNTID_LEN} characters`);
 
     if (
       newAccountId !== oldAccountId &&
