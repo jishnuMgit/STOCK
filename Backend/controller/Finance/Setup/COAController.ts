@@ -20,9 +20,8 @@ const MAX_ACCOUNT_LEVEL = 4; // VB: level 4 can't have children (mnuAdd hidden)
 const ROOT_LEVEL = 1; // VB: level 1 can't be modified / deleted
 
 // ---- DB object names (ADJUST if your Postgres names differ) ----
-const TREE_FN = 'dbo."SP_pageChartofAccountTree"'; // quoted: mixed-case name
-const NEXT_ID_FN = "dbo.getnextaccountid"; // objCommon.GetNextAccountID
-const APPLY_PROC = 'dbo."SP_pageChartofAccount"'; // quoted: mixed-case name
+const TREE_FN = 'dbo."SP_pageChartofAccountTree"';
+const APPLY_PROC = 'dbo."SP_pageChartofAccount"';
 
 const getSession = (req: AuthenticatedRequest) => ({
   CoID: req.user?.CoID as string | undefined,
@@ -52,10 +51,12 @@ const getAccountTypeId = async (coId: string, accountId: string) => {
 };
 
 const getParentAccountId = async (coId: string, accountId: string) => {
-  const v = await scalar("SELECT dbo.getparentaccountid($1, $2) AS v", [
-    coId,
-    accountId,
-  ]);
+  const v = await scalar(
+    `SELECT faccountgroupid AS v
+       FROM dbo.tblaccount
+      WHERE fcoid = $1 AND faccountid = $2`,
+    [coId, accountId],
+  );
   return v ? String(v) : "";
 };
 
@@ -103,17 +104,64 @@ const accountNameExists = async (
   return r.rows.length > 0;
 };
 
+// Port of objCommon.GetNextAccountID(groupId, groupLevel).
+// Returns "" when no ID can be generated (callers answer 409 "Unable to Generate New Account ID").
 const generateNextAccountId = async (
   coId: string,
   groupId: string,
   groupLevel: number,
 ) => {
-  const v = await scalar("SELECT dbo.getnextaccountid($1, $2, $3) AS v", [
-    coId,
-    groupId,
-    groupLevel,
-  ]);
-  return v ? String(v) : "";
+  if (!groupId) return "";
+
+  const newLevel = groupLevel + 1; // VB: strAccountLevel + 1
+  const val = (s: string) => Number(s) || 0; // VB Val(): non-numeric -> 0
+
+  const maxId = async (where: string, params: unknown[]) => {
+    const r = await pool.query(
+      `SELECT MAX(faccountid) AS maxid FROM dbo.tblaccount WHERE fcoid = $1 AND ${where}`,
+      [coId, ...params],
+    );
+    return String(r.rows[0]?.maxid ?? "");
+  };
+
+  switch (newLevel) {
+    // first char + 1 digit serial + last 6 chars
+    case 2: {
+      const dummy = await maxId(
+        "LEFT(faccountid, 1) = $2 AND RIGHT(faccountid, 6) = $3",
+        [groupId.slice(0, 1), groupId.slice(-6)],
+      );
+      const slNo = val(dummy.substring(1, 2)) + 1; // VB Mid(dummy, 2, 1)
+      if (slNo > 9) return "";
+      return dummy.slice(0, 1) + String(slNo) + dummy.slice(-6);
+    }
+
+    // first 2 chars + 2 digit serial + last 4 chars
+    case 3: {
+      const dummy = await maxId(
+        "LEFT(faccountid, 2) = $2 AND RIGHT(faccountid, 4) = $3",
+        [groupId.slice(0, 2), groupId.slice(-4)],
+      );
+      const slNo = val(dummy.substring(2, 4)) + 1; // VB Mid(dummy, 3, 2)
+      if (slNo > 99) return "";
+      return (
+        dummy.slice(0, 2) + String(slNo).padStart(2, "0") + dummy.slice(-4)
+      );
+    }
+
+    // same first 4 chars, highest id + 1
+    case 4: {
+      const dummy = await maxId("LEFT(faccountid, 4) = $2", [
+        groupId.slice(0, 4),
+      ]);
+      if (!dummy) return "";
+      if (val(dummy.substring(4, 8)) >= 9999) return ""; // VB Mid(dummy, 5, 4)
+      return String(val(dummy) + 1);
+    }
+
+    default:
+      return "";
+  }
 };
 
 // Calls the stored procedure (S / M / D)
