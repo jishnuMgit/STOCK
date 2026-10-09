@@ -33,6 +33,9 @@ import StockDocumentPost from "../pages/Sales/Transaction/stock/StockDocumentPos
 import StockDocumentPostCancel from "../pages/Sales/Transaction/stock/StockDocumentPostCancel";
 import StockDocumentRePost from "../pages/Sales/Transaction/stock/StockDocumentRePost";
 import RptGLPage from "../pages/Finance/Report/GeneralLedger/RptGLPage";
+import MatchingPage from "../pages/Finance/Transaction/Match/MatchPage";
+import UnMatchPage from "../pages/Finance/Transaction/MatchReversal/MatchReversalPage";
+import CostCenterPage from "../pages/Finance/Setup/CostCenterPage";
 
 const Login = lazy(() => import("../pages/Auth/LoginPage"));
 const ReceiptPage = lazy(
@@ -42,10 +45,10 @@ const Journalpage = lazy(
   () => import("../pages/Finance/Transaction/Journal/Journalpage"),
 );
 const Matching = lazy(
-  () => import("../pages/Finance/Transaction/Matching/Matching"),
+  () => import("../pages/Finance/Transaction/Match/MatchPage"),
 );
 const UnMatch = lazy(
-  () => import("../pages/Finance/Transaction/Unmatch/UnMatch"),
+  () => import("../pages/Finance/Transaction/MatchReversal/MatchReversalPage"),
 );
 
 // Finance - Setup
@@ -122,6 +125,10 @@ const AppRoutes = () => {
           <Route
             path="/Finance/Setup/ChartOfAccountList"
             element={<ChartOfAccountList />}
+          />
+          <Route
+          path="/Finance/Setup/CostCenter"
+          element={<CostCenterPage/>}
           />
 
           {/* ================= FINANCE - REPORTS ================= */}
@@ -229,10 +236,20 @@ const AppRoutes = () => {
           {/* ================= ADMINISTRATION ================= */}
           <Route path="/Administration/CompanyPage" element={<CompanyPage />} />
 
+
+
+
+
           {/* ================= DEV ================= */}
           <Route path="/dev/PurchaseExpense" element={<PurchaseExpense />} />
 
-<Route path="/dev/StockDocumentPostCancel" element={<StockDocumentPostCancel/>}/>
+         <Route path="/dev/StockDocumentPostCancel" element={<StockDocumentPostCancel/>}/>
+
+         <Route path="/dev/matchpage" element={<MatchingPage/>}/>
+  
+        <Route path="/dev/unmatchpage" element={<UnMatchPage/>}/>
+
+
           {/* Unknown URL -> back to "/" ("/" has its own element, so no loop) */}
           <Route path="*" element={<Navigate to="/" replace />} />
         </Route>
