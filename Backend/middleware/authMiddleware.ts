@@ -3,7 +3,7 @@ import pool from "../DB/db.js";
 import { isUserActive, idleUserMessage } from "../validators/common.js";
 
 export interface AuthenticatedRequest extends Request {
-  user?: { userId: string; userType: string; companyId: string };
+  user?: { userId: string; userType: string; CoID: string };
 }
 
 export const authenticate = async (
@@ -43,7 +43,7 @@ export const authenticate = async (
       return;
     }
 
-    const { fuserid: userId, fcoid: companyId } = sessionResult.rows[0];
+    const { fuserid: userId, fcoid: CoID } = sessionResult.rows[0];
 
     /* =====================================================
        GET USER TYPE
@@ -92,7 +92,7 @@ export const authenticate = async (
     req.user = {
       userId: user.fuserid,
       userType: user.fusertype,
-      companyId,
+      CoID,
     };
 
     next();

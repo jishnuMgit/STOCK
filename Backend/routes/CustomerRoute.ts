@@ -9,7 +9,7 @@ import {
   createCustomer,
   updateCustomer,
   deleteCustomer,
-} from "../controller/CustomerController.js";
+} from "../controller/COAController.js";
 import { authenticate } from "../middleware/authMiddleware.js";
 
 const router = Router();

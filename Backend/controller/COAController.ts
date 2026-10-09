@@ -48,7 +48,7 @@ export const getNextCSAccountId = async (
 
     // gstrCoID in VB -> company from the logged-in session.
     // ADJUST this to however your authMiddleware stores it.
-    const companyId = req.user?.companyId;
+    const CoID = req.user?.CoID;
 
     if (!accountTypeId) {
       return res
@@ -56,7 +56,7 @@ export const getNextCSAccountId = async (
         .json({ success: false, message: "accountTypeId is required" });
     }
 
-    if (!companyId) {
+    if (!CoID) {
       return res
         .status(401)
         .json({ success: false, message: "Company not found in session" });
@@ -74,7 +74,7 @@ export const getNextCSAccountId = async (
          FROM dbo.tblaccountcs
         WHERE fcoid = $1
           AND LEFT(fcsaccountid, 2) = $2`,
-      [companyId, accountTypeId],
+      [CoID, accountTypeId],
     );
 
     const maxId = String(result.rows[0].maxid);
@@ -200,7 +200,7 @@ const SP_PARAM_MAP: Record<string, string> = {
  */
 const callPageCustomer = async (
   mode: "S" | "M" | "D",
-  companyId: string,
+  CoID: string,
   userId: string | undefined,
   fields: Record<string, unknown>,
 ) => {
@@ -213,7 +213,7 @@ const callPageCustomer = async (
   };
 
   add("p_strmode", mode);
-  add("p_strcoid", companyId);
+  add("p_strcoid", CoID);
   if (userId) add("p_gstruserid", userId);
 
   for (const [key, param] of Object.entries(SP_PARAM_MAP)) {
@@ -226,7 +226,7 @@ const callPageCustomer = async (
 
 // Pulls the session values. ADJUST to match your authMiddleware.
 const getSession = (req: AuthenticatedRequest) => ({
-  companyId: req.user?.companyId as string | undefined,
+  CoID: req.user?.CoID as string | undefined,
   userId: (req.user as any)?.userId as string | undefined,
 });
 
@@ -242,10 +242,10 @@ const getSession = (req: AuthenticatedRequest) => ({
 // ------------------------------------------------------------
 export const getCustomer = async (req: AuthenticatedRequest, res: Response) => {
   try {
-    const { companyId } = getSession(req);
+    const { CoID } = getSession(req);
     const csAccountId = String(req.params.csAccountId ?? "").trim();
 
-    if (!companyId) {
+    if (!CoID) {
       return res
         .status(401)
         .json({ success: false, message: "Company not found in session" });
@@ -261,7 +261,7 @@ export const getCustomer = async (req: AuthenticatedRequest, res: Response) => {
          FROM dbo.tblaccountcs
         WHERE fcoid = $1
           AND fcsaccountid = $2`,
-      [companyId, csAccountId],
+      [CoID, csAccountId],
     );
 
     if (result.rows.length === 0) {
@@ -342,9 +342,9 @@ export const createCustomer = async (
   res: Response,
 ) => {
   try {
-    const { companyId, userId } = getSession(req);
+    const { CoID, userId } = getSession(req);
 
-    if (!companyId) {
+    if (!CoID) {
       return res
         .status(401)
         .json({ success: false, message: "Company not found in session" });
@@ -355,14 +355,14 @@ export const createCustomer = async (
         .json({ success: false, message: "csAccountId is required" });
     }
 
-    const v = await validateCustomerCreate(companyId, req.body);
+    const v = await validateCustomerCreate(CoID, req.body);
     if (!v.ok) {
       return res
         .status(v.status)
         .json({ success: false, message: v.message, code: v.code });
     }
 
-    await callPageCustomer("S", companyId, userId, req.body);
+    await callPageCustomer("S", CoID, userId, req.body);
 
     return res
       .status(201)
@@ -391,10 +391,10 @@ export const updateCustomer = async (
   res: Response,
 ) => {
   try {
-    const { companyId, userId } = getSession(req);
+    const { CoID, userId } = getSession(req);
     const oldCsAccountId = String(req.params.csAccountId ?? "").trim();
 
-    if (!companyId) {
+    if (!CoID) {
       return res
         .status(401)
         .json({ success: false, message: "Company not found in session" });
@@ -405,14 +405,14 @@ export const updateCustomer = async (
         .json({ success: false, message: "csAccountId is required" });
     }
 
-    const v = await validateCustomerUpdate(companyId, oldCsAccountId, req.body);
+    const v = await validateCustomerUpdate(CoID, oldCsAccountId, req.body);
     if (!v.ok) {
       return res
         .status(v.status)
         .json({ success: false, message: v.message, code: v.code });
     }
 
-    await callPageCustomer("M", companyId, userId, {
+    await callPageCustomer("M", CoID, userId, {
       ...req.body,
       oldCsAccountId,
       // if the id wasn't changed, the new id is the same as the old one
@@ -442,10 +442,10 @@ export const deleteCustomer = async (
   res: Response,
 ) => {
   try {
-    const { companyId, userId } = getSession(req);
+    const { CoID, userId } = getSession(req);
     const csAccountId = String(req.params.csAccountId ?? "").trim();
 
-    if (!companyId) {
+    if (!CoID) {
       return res
         .status(401)
         .json({ success: false, message: "Company not found in session" });
@@ -456,7 +456,7 @@ export const deleteCustomer = async (
         .json({ success: false, message: "csAccountId is required" });
     }
 
-    await callPageCustomer("D", companyId, userId, { csAccountId });
+    await callPageCustomer("D", CoID, userId, { csAccountId });
 
     return res
       .status(200)
@@ -485,16 +485,16 @@ export const getCustSupCountries = async (
   res: Response,
 ) => {
   try {
-    const { companyId } = getSession(req);
+    const { CoID } = getSession(req);
 
-    if (!companyId) {
+    if (!CoID) {
       return res
         .status(401)
         .json({ success: false, message: "Company not found in session" });
     }
 
     const result = await pool.query("SELECT * FROM dbo.getcustsupcountry($1)", [
-      companyId,
+      CoID,
     ]);
 
     const data = result.rows
@@ -522,16 +522,16 @@ export const getCustSupCountries = async (
 // ============================================================
 export const getStaffs = async (req: AuthenticatedRequest, res: Response) => {
   try {
-    const { companyId } = getSession(req);
+    const { CoID } = getSession(req);
 
-    if (!companyId) {
+    if (!CoID) {
       return res
         .status(401)
         .json({ success: false, message: "Company not found in session" });
     }
 
     const result = await pool.query("SELECT * FROM dbo.getstaffs($1)", [
-      companyId,
+      CoID,
     ]);
 
     const data = result.rows.map((r) => ({
