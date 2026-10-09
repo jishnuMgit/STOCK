@@ -22,6 +22,7 @@ import userpermission from "./SecurityRoutes/UserPermissionMenuRouter.js";
 import userpermissionBranch from "./SecurityRoutes/UserPermissionBranchRouter.js";
 import purchaseInvoiceRouter from "./Purchase/Transaction/PurchaseInvoiceRouter.js";
 import branchRouter from "./common/BranchRouter.js";
+import chartOfAccountRouter from "./Finance/Setup/COARouter.js";
 
 const router = express.Router();
 
@@ -48,5 +49,6 @@ router.use("/user-permission", userpermission);
 router.use("/user-permission-branch", userpermissionBranch);
 router.use("/purchase-invoice", purchaseInvoiceRouter);
 router.use("/branch", branchRouter);
+router.use("/coa", chartOfAccountRouter);
 
 export default router;
