@@ -106,6 +106,7 @@ Sales-SETUP
 
   mnuCustomer: "/Finance/Setup/CustomerPage",
   mnuChartOfAccount:"/Finance/Setup/ChartOfAccountList",
+  mnuCostCenter:"/Finance/Setup/CostCenter",
 
   /* =========================================================
      FINANCE - REPORTS
