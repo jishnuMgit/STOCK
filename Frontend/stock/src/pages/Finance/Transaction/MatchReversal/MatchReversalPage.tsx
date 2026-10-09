@@ -9,9 +9,9 @@ import  {
   type MatchingComponentsRef,
   type ReceiptRow,
   type SelectOption,
-} from "../../../../components/Transaction/Match/types";
+} from "../../../../components/Transaction/MatchReversal/types";
 
-import MatchingComponents from "../../../../components/Transaction/Match/MatchingComponents"
+import MatchingComponents from "../../../../components/Transaction/MatchReversal/MatchReversalComponents"
 
 /* =========================================================
    CUSTOMER ACCOUNT TYPE
@@ -52,7 +52,7 @@ const createRows = (): ReceiptRow[] => {
    MATCHING
 ========================================================= */
 
-const MatchPage: React.FC = () => {
+const MatchReversalPage: React.FC = () => {
   /* =======================================================
      HEADER STATE
   ======================================================= */
@@ -670,4 +670,4 @@ if (
   );
 };
 
-export default MatchPage;
+export default MatchReversalPage;

@@ -32,11 +32,11 @@ import {
 
 import useMatching from "../../../hooks/useMatching";
 
-import MatchHeader from "./MatchHeader";
+import MatchHeader from "./MatchReversalHeader";
 
-import MatchTable from "./MatchTable";
+import MatchTable from "./MatchReversalTable";
 
-import MatchFooter from "./MatchFooter";
+import MatchFooter from "./MatchReversalFooter";
 
 import type {
 
@@ -309,7 +309,7 @@ const ResponsiveSelect = ({
   );
 };
 
-const MatchingComponents = forwardRef<
+const MatchReversalComponents = forwardRef<
 
   MatchingComponentsRef,
 
@@ -1279,7 +1279,7 @@ const MatchingComponents = forwardRef<
 
 });
 
-MatchingComponents.displayName =
- "MatchingComponents";
+MatchReversalComponents.displayName =
+ "MatchReversalComponents";
 
-export default MatchingComponents;
+export default MatchReversalComponents;

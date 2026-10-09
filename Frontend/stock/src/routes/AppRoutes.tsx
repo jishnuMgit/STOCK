@@ -34,7 +34,7 @@ import StockDocumentPostCancel from "../pages/Sales/Transaction/stock/StockDocum
 import StockDocumentRePost from "../pages/Sales/Transaction/stock/StockDocumentRePost";
 import RptGLPage from "../pages/Finance/Report/GeneralLedger/RptGLPage";
 import MatchingPage from "../pages/Finance/Transaction/Match/MatchPage";
-import UnMatchPage from "../pages/Finance/Transaction/Unmatch/UnMatchPage";
+import UnMatchPage from "../pages/Finance/Transaction/MatchReversal/MatchReversalPage";
 
 const Login = lazy(() => import("../pages/Auth/LoginPage"));
 const ReceiptPage = lazy(
@@ -47,7 +47,7 @@ const Matching = lazy(
   () => import("../pages/Finance/Transaction/Match/MatchPage"),
 );
 const UnMatch = lazy(
-  () => import("../pages/Finance/Transaction/Unmatch/UnMatchPage"),
+  () => import("../pages/Finance/Transaction/MatchReversal/MatchReversalPage"),
 );
 
 // Finance - Setup
