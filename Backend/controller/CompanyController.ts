@@ -192,3 +192,25 @@ export const deleteCompany = async (
     client.release();
   }
 };
+
+// GET /api/companies/purchase-groups  -> Purchase Expense Group dropdown
+export const getPurchaseGroups = async (
+  _req: Request,
+  res: Response,
+): Promise<Response> => {
+  try {
+    const result = await pool.query(
+      `SELECT faccountid AS "value", faccountname AS "label"
+       FROM dbo.fillpurchaseexpensegroup()
+       ORDER BY faccountid`,
+    );
+    return res.status(200).json({ success: true, groups: result.rows });
+  } catch (error: unknown) {
+    console.error("Get purchase groups error:", error);
+    return res.status(500).json({
+      success: false,
+      message: "Failed to load purchase expense groups",
+      error: error instanceof Error ? error.message : String(error),
+    });
+  }
+};
