@@ -127,7 +127,7 @@ const generateNextAccountId = async (
     // first char + 1 digit serial + last 6 chars
     case 2: {
       const dummy = await maxId(
-        "LEFT(faccountid, 1) = $2 AND RIGHT(faccountid, 6) = $3",
+        "LEFT(faccountid, 1) = $2 AND RIGHT(faccountid, 5) = $3",
         [groupId.slice(0, 1), groupId.slice(-6)],
       );
       const slNo = val(dummy.substring(1, 2)) + 1; // VB Mid(dummy, 2, 1)
@@ -138,7 +138,7 @@ const generateNextAccountId = async (
     // first 2 chars + 2 digit serial + last 4 chars
     case 3: {
       const dummy = await maxId(
-        "LEFT(faccountid, 2) = $2 AND RIGHT(faccountid, 4) = $3",
+        "LEFT(faccountid, 2) = $2 AND RIGHT(faccountid, 3) = $3",
         [groupId.slice(0, 2), groupId.slice(-4)],
       );
       const slNo = val(dummy.substring(2, 4)) + 1; // VB Mid(dummy, 3, 2)
@@ -197,10 +197,19 @@ const callApply = async (args: {
   add("blnhavecc", args.haveCC);
   add("gstruserid", args.userId ?? null);
   add("strmenuname", args.menuName ?? null);
-  if (args.accountNameA != null) add("straccountname_a", args.accountNameA);
-  if (args.groupOrHead) add("strgrouporhead", args.groupOrHead);
 
   await pool.query(`CALL ${APPLY_PROC}(${names.join(", ")})`, values);
+
+  // The procedure has no Arabic-name parameter, so save it with a direct update.
+  // (Delete is skipped: the row is already gone.)
+  if (args.mode !== "D" && args.accountNameA != null) {
+    await pool.query(
+      `UPDATE dbo.tblaccount
+          SET faccountname_ar = $1
+        WHERE fcoid = $2 AND faccountid = $3`,
+      [args.accountNameA, args.coId, args.accountId],
+    );
+  }
 };
 
 // G only for level < 4, H only for level >= 4, P always (same rule as the UI)
@@ -396,7 +405,7 @@ export const createChartOfAccount = async (
     if (!accountId) return bad(res, "Please input an 'Account ID'");
     if (accountId.length !== ACCOUNTID_LEN)
       return bad(res, `'Account ID' must be ${ACCOUNTID_LEN} characters`);
-    
+
     if (await accountIdExists(CoID, accountId))
       return bad(res, "'Account ID' already exists!", 409);
 
