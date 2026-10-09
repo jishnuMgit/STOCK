@@ -50,7 +50,7 @@ const createRows = (): ReceiptRow[] => {
    MATCHING
 ========================================================= */
 
-const Matching: React.FC = () => {
+const MatchPage: React.FC = () => {
   /* =======================================================
      HEADER STATE
   ======================================================= */
@@ -510,7 +510,7 @@ if (
   return (
     <div
       className="
-        min-h-screen
+        min-h-full
         w-full
         bg-slate-100
         px-2
@@ -668,4 +668,4 @@ if (
   );
 };
 
-export default Matching;
+export default MatchPage;

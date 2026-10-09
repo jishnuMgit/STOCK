@@ -144,7 +144,7 @@ interface ReceiptsResponse {
    MATCHING
 ========================================================= */
 
-const UnMatch: React.FC = () => {
+const UnMatchPage: React.FC = () => {
   /* =======================================================
      HEADER STATE
   ======================================================= */
@@ -1550,4 +1550,4 @@ const UnMatch: React.FC = () => {
   );
 };
 
-export default UnMatch;
+export default UnMatchPage;

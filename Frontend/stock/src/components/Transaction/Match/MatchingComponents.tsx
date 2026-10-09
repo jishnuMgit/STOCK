@@ -1328,21 +1328,29 @@ event: React.KeyboardEvent<HTMLButtonElement>, p0: () => any        ) => {
               TITLE
           ================================================= */}
 
-          <header
-            id="03q9ys"
+         <div
+          className="
+            flex
+            h-[36px]
+            items-center
+            border-b
+            border-slate-300
+            bg-[#a3dfc0]
+          "
+        >
+
+          <span
             className="
-              flex
-              h-8.75
-              items-center
-              justify-center
-              bg-[#9fdfbc]
-              text-[21px]
-              font-bold
+              px-3
+              text-[17px]
+              font-semibold
               text-slate-700
             "
           >
             Match
-          </header>
+          </span>
+
+        </div>
 
           {/* =================================================
               HEADER
@@ -1351,8 +1359,8 @@ event: React.KeyboardEvent<HTMLButtonElement>, p0: () => any        ) => {
           <div
             className="
               px-6.75
-              pt-2.25
-              pb-1.75
+              pt-6
+              pb-3
             "
           >
 
@@ -1374,7 +1382,7 @@ event: React.KeyboardEvent<HTMLButtonElement>, p0: () => any        ) => {
               "
             >
 
-              <label className="text-right whitespace-nowrap">
+              <label className="text-right text-black font-semibold text-[14px] whitespace-nowrap">
                 Customer :
               </label>
 
@@ -1404,6 +1412,7 @@ event: React.KeyboardEvent<HTMLButtonElement>, p0: () => any        ) => {
                 handleCustomerNameChange,
                 () =>
                   divisionRef.current?.focus(),
+                
                 customerNameRef,
                 true,
                 //@ts-ignore
@@ -1421,7 +1430,7 @@ event: React.KeyboardEvent<HTMLButtonElement>, p0: () => any        ) => {
                   gap-2
                 "
               >
-                <label className="whitespace-nowrap">
+                <label className="whitespace-nowrap text-black font-semibold text-[14px]">
                   Document Amt. :
                 </label>
 
@@ -1474,7 +1483,7 @@ event: React.KeyboardEvent<HTMLButtonElement>, p0: () => any        ) => {
 
               {/* DIVISION */}
 
-              <label className="text-right">
+              <label className="text-right text-black font-semibold text-[14px]">
                 Division :
               </label>
 
@@ -1500,7 +1509,7 @@ event: React.KeyboardEvent<HTMLButtonElement>, p0: () => any        ) => {
 
               {/* CREDIT DOCUMENT */}
 
-              <label className="whitespace-nowrap text-right">
+              <label className="whitespace-nowrap text-right text-black font-semibold text-[14px]">
                 Document Type :
               </label>
 
@@ -1565,7 +1574,7 @@ event: React.KeyboardEvent<HTMLButtonElement>, p0: () => any        ) => {
                   
                 "
               >
-                <label className="whitespace-nowrap">
+                <label className="whitespace-nowrap text-black font-semibold text-[14px]">
                   Match Amt. :
                 </label>
 
@@ -1617,7 +1626,7 @@ event: React.KeyboardEvent<HTMLButtonElement>, p0: () => any        ) => {
 
               {/* DOCUMENT NO */}
 
-              <label className="text-right whitespace-nowrap">
+              <label className="text-right whitespace-nowrap text-black font-semibold text-[14px]">
                 Document No. :
               </label>
 
@@ -1639,7 +1648,7 @@ event: React.KeyboardEvent<HTMLButtonElement>, p0: () => any        ) => {
 
               {/* MATCH APPLY DATE */}
 
-             <label className="whitespace-nowrap text-right">
+             <label className="whitespace-nowrap text-right text-black font-semibold text-[14px]">
   Match  Date :
 </label>
 
@@ -1804,7 +1813,7 @@ event: React.KeyboardEvent<HTMLButtonElement>, p0: () => any        ) => {
                   gap-2
                 "
               >
-                <label className="whitespace-nowrap">
+                <label className="whitespace-nowrap text-black font-semibold text-[14px]">
                   Balance Amt. :
                 </label>
 
@@ -1866,12 +1875,14 @@ event: React.KeyboardEvent<HTMLButtonElement>, p0: () => any        ) => {
                   <th
                     className="
                       w-[5%]
+                     
+                      text-left
                       border
                       border-[#bce8d2]
+                     font-semibold
+                  
                       px-1
-                      text-left
                       py-1.25
-                      font-normal
                     "
                     id="txtBrID"
                   >
@@ -1881,12 +1892,14 @@ event: React.KeyboardEvent<HTMLButtonElement>, p0: () => any        ) => {
                   <th
                     className="
                       w-[10%]
+                      
                       text-left
                       border
                       border-[#bce8d2]
+                     font-semibold
+                  
                       px-1
                       py-1.25
-                      font-normal
                     "
                     id="dtpDate"
                   >
@@ -1896,12 +1909,14 @@ event: React.KeyboardEvent<HTMLButtonElement>, p0: () => any        ) => {
                   <th
                     className="
                       w-[12%]
+                     
                       text-left
                       border
                       border-[#bce8d2]
+                     font-semibold
+                  
                       px-1
                       py-1.25
-                      font-normal
                     "
                     id="txtDocumentNo"
                   >
@@ -1914,9 +1929,10 @@ event: React.KeyboardEvent<HTMLButtonElement>, p0: () => any        ) => {
                       text-left
                       border
                       border-[#bce8d2]
+                     font-semibold
+                  
                       px-1
                       py-1.25
-                      font-normal
                     "
                     id="txtDescription"
                   >
@@ -1927,11 +1943,14 @@ event: React.KeyboardEvent<HTMLButtonElement>, p0: () => any        ) => {
                     className="
                     text-right
                       w-[10%]
+                      
+                     
                       border
                       border-[#bce8d2]
+                     font-semibold
+                  
                       px-1
                       py-1.25
-                      font-normal
                     "
                     id="txtDocumenAmount"
                   >
@@ -1942,11 +1961,13 @@ event: React.KeyboardEvent<HTMLButtonElement>, p0: () => any        ) => {
                     className="
                       w-[10%]
                       text-right
+                       
                       border
                       border-[#bce8d2]
+                     font-semibold
+                  
                       px-1
                       py-1.25
-                      font-normal
                     "
                     id="txtDebit"
                   >
@@ -1958,11 +1979,13 @@ event: React.KeyboardEvent<HTMLButtonElement>, p0: () => any        ) => {
                       w-[10%]
                      text-right
 
+                      
                       border
                       border-[#bce8d2]
+                     font-semibold
+                  
                       px-1
                       py-1.25
-                      font-normal
                     "
                     id="txtCredit"
                   >
@@ -1972,13 +1995,14 @@ event: React.KeyboardEvent<HTMLButtonElement>, p0: () => any        ) => {
                   <th
                     className="
                       w-[6%]
-                      border
                     
-
+                      text-center
+                      border
                       border-[#bce8d2]
+                     font-semibold
+                  
                       px-1
                       py-1.25
-                      font-normal
                     "
 id="chkMatch"
 >
@@ -1988,12 +2012,14 @@ id="chkMatch"
                   <th
                     className="
                       w-[10%]
+                       
+                      text-right
                       border
                       border-[#bce8d2]
+                     font-semibold
+                  
                       px-1
                       py-1.25
-                      font-normal
-                      text-right
 
 
                       "
@@ -2566,7 +2592,7 @@ id="chkMatch"
               justify-center
               gap-3.25
               pt-2.25
-              pb-4.5
+              pb-6
               flex-wrap
               px-2
             "
@@ -2594,28 +2620,7 @@ id="chkMatch"
                   }}
                   type="button"
                   className="
-                    h-10
-                    min-w-27
-                    rounded-sm
-                    border-l
-                    border-r
-                    border-b
-                    border-[#9db8d4]
-                    border-t-0
-                    bg-linear-to-b
-                    from-white
-                    to-[#e7eef5]
-                    px-4
-                    text-[15px]
-                    shadow-[inset_0_1px_0_rgba(255,255,255,0.8)]
-                    hover:border-[#7f9fbd]
-                    hover:from-white
-                    hover:to-[#dce8f1]
-                    focus:border-[#20884e]
-                    focus:from-white
-                    focus:to-[#dcefe5]
-                    focus:outline-none
-                    focus:ring-0
+                    btn-style
                   "
                   onFocus={() =>
                     setActiveButton(

@@ -253,8 +253,8 @@ const UnMatchHeaderForm: React.FC<MatchHeaderFormProps> = ({
     control: (base: any) => ({
       ...base,
 
-      minHeight: "27px",
-      height: "27px",
+      minHeight: "30px",
+      height: "30px",
       
 
       border: "1px solid #cfd7df",
@@ -276,7 +276,7 @@ const UnMatchHeaderForm: React.FC<MatchHeaderFormProps> = ({
     valueContainer: (base: any) => ({
       ...base,
 
-      height: "27px",
+      height: "30px",
 
       padding: "0 7px",
 
@@ -319,7 +319,7 @@ const UnMatchHeaderForm: React.FC<MatchHeaderFormProps> = ({
     indicatorsContainer: (base: any) => ({
       ...base,
 
-      height: "27px",
+      height: "30px",
     }),
 
     dropdownIndicator: (base: any) => ({
@@ -444,7 +444,7 @@ const UnMatchHeaderForm: React.FC<MatchHeaderFormProps> = ({
   ======================================================= */
 
 return (
-  <div className="w-full bg-[#f5f6f8] px-2 py-1.5">
+  <div className="w-full bg-white h-[150px] px-2 py-1.5 mb-3">
 
     <div className="relative w-full">
 
@@ -452,16 +452,17 @@ return (
           LEFT SECTION
       ===================================================== */}
 
-      <div className="flex w-150 flex-col gap-1.25">
+      <div className="flex w-150 flex-col gap-3">
 
         {/* =================================================
             CUSTOMER
         ================================================= */}
 
-        <div className="flex h-6.75 w-150 items-center">
+        <div className="flex h-6.75 gap-5 w-full  items-center">
 
           <label
             className="
+          
               box-border
               w-13.75
               shrink-0
@@ -469,9 +470,9 @@ return (
               pr-2
               text-right
               mr-2
-              text-[12px]
+              text-[14px]
               leading-6.75
-              text-slate-700
+             
             "
             id="lkpCustomerId"
           >
@@ -481,7 +482,7 @@ return (
 
           {/* CUSTOMER ID */}
 
-          <div className="w-21.25 shrink-0" id="lkpCustomerId">
+          <div className="w-26.25 shrink-0" id="lkpCustomerId">
 
             <Select<SelectOption, false>
               ref={customerIdRef}
@@ -529,22 +530,22 @@ return (
                 container: (base: any) => ({
                   ...base,
 
-                  width: "85px",
+                  width: "120px",
                 }),
 
                 control: (base: any) => ({
                   ...base,
 
-                  width: "85px",
+                  width: "120px",
 
-                  minWidth: "85px",
+                  minWidth: "120px",
 
-                  minHeight: "27px",
+                  minHeight: "30px",
 
-                  height: "27px",
+                  height: "30px",
 
                   backgroundColor:
-                    "#dff4f8",
+                    "white",
                 }),
               }}
             />
@@ -602,19 +603,19 @@ return (
                 container: (base: any) => ({
                   ...base,
 
-                  width: "350px",
+                  width: "450px",
                 }),
 
                 control: (base: any) => ({
                   ...base,
 
-                  width: "350px",
+                  width: "450px",
 
-                  minWidth: "350px",
+                  minWidth: "450px",
 
-                  minHeight: "27px",
+                  minHeight: "30px",
 
-                  height: "27px",
+                  height: "30px",
                 }),
               }}
             />
@@ -628,7 +629,7 @@ return (
             DIVISION
         ================================================= */}
 
-        <div className="flex h-6.75 w-125 items-center">
+        <div className="flex h-6.75 w-125 gap-5 items-center">
 
           <label
             className="
@@ -639,16 +640,16 @@ return (
               pr-2
               mr-2
               text-right
-              text-[12px]
+              text-[14px]
               leading-6.75
-              text-slate-700
+             
             "
           >
             Division :
           </label>
 
 
-          <div className="w-50 shrink-0" id="lkpDivision">
+          <div className="w-[250px] shrink-0 " id="lkpDivision ">
 
             <Select<SelectOption, false>
               ref={divisionRef}
@@ -696,162 +697,25 @@ return (
                 container: (base: any) => ({
                   ...base,
 
-                  width: "200px",
+                  width: "250px",
                 }),
 
                 control: (base: any) => ({
                   ...base,
 
-                  width: "200px",
+                  width: "250px",
 
-                  minWidth: "200px",
+                  minWidth: "250px",
 
-                  minHeight: "27px",
+                  minHeight: "30px",
 
-                  height: "27px",
+                  height: "30px",
                 }),
               }}
             />
 
           </div>
-
-        </div>
-
-
-        {/* =================================================
-            DOC NO
-        ================================================= */}
-
-        <div className="flex h-6.75 w-125 items-center">
-
-          <label
-            className="
-              box-border
-              w-13.75
-              shrink-0
-              mr-2
-              whitespace-nowrap
-              pr-2
-              text-right
-              text-[12px]
-              leading-6.75
-              text-slate-700
-            "
-          >
-            Doc. No. :
-          </label>
-
-
-          <div className="w-108.75 shrink-0">
-
-            <Select<SelectOption, false>
-              ref={receiptNoRef}
-
-              value={selectedReceiptNo}
-
-              options={
-                receiptNoOptions || []
-              }
-
-              components={{
-                Option: CustomOption,
-              }}
-
-              filterOption={filterOption}
-
-              placeholder=""
-
-              isSearchable
-              isClearable={false}
-
-              onChange={(option) => {
-                setReceiptNo(
-                  option?.value || ""
-                );
-              }}
-
-              onKeyDown={(event) =>
-                handleEnter(
-                  event,
-                  () =>
-                    branchRef.current?.focus()
-                )
-              }
-
-              styles={{
-                ...selectStyles,
-
-                container: (base: any) => ({
-                  ...base,
-
-                  width: "435px",
-                }),
-
-                control: (base: any) => ({
-                  ...base,
-
-                  width: "435px",
-
-                  minWidth: "435px",
-
-                  minHeight: "27px",
-
-                  height: "27px",
-                }),
-              }}
-            />
-
-          </div>
-
-        </div>
-
-
-        {/* =================================================
-            BRANCH
-        ================================================= */}
-
-        <div className="flex h-6.75 w-125 items-center">
-
-        
-
-
-          <div className="w-50 shrink-0">
-
-           
-
-          </div>
-
-        </div>
-
-      </div>
-
-
-      {/* =====================================================
-          MIDDLE SECTION
-      ===================================================== */}
-
-      <div
-        className="
-          absolute
-          left-76.25
-          top-0
-          flex
-          w-100
-          flex-col
-          gap-1.25
-        "
-      >
-
-        {/* ROW 1 */}
-
-        <div className="h-6.75" />
-
-
-        {/* =================================================
-            DOC TYPE
-        ================================================= */}
-
-        <div className="flex h-6.75 items-center">
+ <div className="flex h-6.75 items-center ml-3">
 
           <label
             className="
@@ -860,16 +724,16 @@ return (
               shrink-0
               whitespace-nowrap
               text-right
-              text-[12px]
+              text-[14px]
               leading-6.75
-              text-slate-700
+             
             "
           >
              Doc Type :
           </label>
 
 
-          <div className="w-13.75 shrink-0">
+          <div className="w-[140px] shrink-0">
 
             <Select<SelectOption, false>
               ref={typeRef}
@@ -916,19 +780,19 @@ return (
                 container: (base: any) => ({
                   ...base,
 
-                  width: "55px",
+                  width: "140px",
                 }),
 
                 control: (base: any) => ({
                   ...base,
 
-                  width: "55px",
+                  width: "140px",
 
-                  minWidth: "55px",
+                  minWidth: "140px",
 
-                  minHeight: "27px",
+                  minHeight: "30px",
 
-                  height: "27px",
+                  height: "30px",
                 }),
               }}
             />
@@ -952,8 +816,8 @@ return (
               border
               border-[#b9c7d5]
               bg-[#f7f9fb]
-              text-[12px]
-              text-slate-700
+              text-[14px]
+             
               shadow-sm
               hover:bg-[#edf2f6]
               active:bg-[#e2e8ee]
@@ -963,18 +827,95 @@ return (
           </button>
 
         </div>
-
-
-        {/* ROW 3 */}
-
-        <div className="h-6.75" />
+        </div>
 
 
         {/* =================================================
-            MATCH APPLY DATE
+            DOC NO
         ================================================= */}
 
-        <div className="flex h-6.75 items-center">
+        <div className="flex h-6.75 w-125 items-center gap-5 ">
+
+          <label
+            className="
+              box-border
+              w-13.75
+              shrink-0
+              mr-2
+              whitespace-nowrap
+              pr-2
+              text-right
+              text-[14px]
+              leading-6.75
+             
+            "
+          >
+            Credit Document :
+          </label>
+
+
+          <div className="w-[250px] shrink-0 mr-8">
+
+            <Select<SelectOption, false>
+              ref={receiptNoRef}
+
+              value={selectedReceiptNo}
+
+              options={
+                receiptNoOptions || []
+              }
+
+              components={{
+                Option: CustomOption,
+              }}
+
+              filterOption={filterOption}
+
+              placeholder=""
+
+              isSearchable
+              isClearable={false}
+
+              onChange={(option) => {
+                setReceiptNo(
+                  option?.value || ""
+                );
+              }}
+
+              onKeyDown={(event) =>
+                handleEnter(
+                  event,
+                  () =>
+                    branchRef.current?.focus()
+                )
+              }
+
+              styles={{
+                ...selectStyles,
+
+                container: (base: any) => ({
+                  ...base,
+
+                  width: "250px",
+                }),
+
+                control: (base: any) => ({
+                  ...base,
+
+                  width: "250px",
+
+                  minWidth: "250px",
+
+                  minHeight: "30px",
+
+                  height: "30px",
+                }),
+              }}
+            />
+
+          </div>
+
+           <div className="flex h-6.75 items-center">
 
           <label
           title="Match Apply Date"
@@ -984,9 +925,9 @@ return (
               whitespace-nowrap
               text-right
               -ml-2
-              text-[12px]
+              text-[14px]
               leading-6.75
-              text-slate-700
+             
             "
           >
             Match Date :
@@ -1061,102 +1002,183 @@ return (
 
               }}
 
-              sx={{
+               sx={{
+      width: "140px",
 
-                width: "120px",
+      "& .MuiPickersTextField-root": {
+        width: "120px",
+      },
 
-                flexShrink: 0,
+      /* =========================================
+         MAIN INPUT
+      ========================================= */
+      "& .MuiPickersInputBase-root": {
+        width: "140px",
+        height: "28px",
+        minHeight: "28px",
+        boxSizing: "border-box",
+        borderRadius: "4px",
+        backgroundColor: "#ffffff",
+        fontSize: "12px",
+        padding: 0,
+        overflow: "hidden",
+      },
 
-                "& .MuiPickersInputBase-root":
-                  {
+      /* =========================================
+         DATE TEXT CONTAINER
+         THIS IS THE IMPORTANT PART
+      ========================================= */
+      "& .MuiPickersInputBase-sectionsContainer": {
+        paddingLeft: "10px !important",
+        paddingRight: "0px !important",
+        marginBottom:"-5px !important",
+        marginLeft: "0px !important",
+        boxSizing: "border-box",
+        overflow: "hidden",
+      },
 
-                    width: "125px",
+      /* =========================================
+         INDIVIDUAL DATE SECTIONS
+      ========================================= */
+      "& .MuiPickersInputBase-sectionContent": {
+        fontSize: "12px",
+      },
 
-                    height: "27px",
+      /* =========================================
+         INPUT
+      ========================================= */
+      "& .MuiPickersInputBase-input": {
+        minWidth: 0,
+        width: "100%",
+        fontSize: "12px",
+        padding: 0,
+        height: "28px",
+        boxSizing: "border-box",
+      },
 
-                    minHeight: "27px",
+      /* =========================================
+         INPUT ADORNMENT
+      ========================================= */
+      "& .MuiInputAdornment-root": {
+        margin: 0,
+        padding: 0,
+      },
 
-                    borderRadius: "2px",
+      /* =========================================
+         CALENDAR BUTTON
+      ========================================= */
+      "& .MuiIconButton-root": {
+        width: "24px",
+        height: "24px",
+        padding: "2px",
+        margin: 0,
+      },
 
-                    fontSize: "12px",
+      "& .MuiSvgIcon-root": {
+        fontSize: "16px",
+      },
 
-                    padding: 0,
+      /* =========================================
+         BORDER
+      ========================================= */
+      "& .MuiPickersOutlinedInput-notchedOutline": {
+        borderColor: "#B7C7D7 !important",
+      },
 
-                    backgroundColor:
-                      "#ffffff",
+      "& .MuiPickersInputBase-root:hover .MuiPickersOutlinedInput-notchedOutline":
+        {
+          borderColor: "#B7C7D7 !important",
+        },
 
-                  },
+      "& .MuiPickersInputBase-root.Mui-focused .MuiPickersOutlinedInput-notchedOutline":
+        {
+          borderColor: "#B7C7D7 !important",
+          borderWidth: "1px",
+        },
 
-                "& .MuiPickersInputBase-sectionContainer":
-                  {
+      "& .MuiPickersInputBase-root.Mui-error .MuiPickersOutlinedInput-notchedOutline":
+        {
+          borderColor: "#B7C7D7 !important",
+        },
 
-                    paddingLeft: "7px",
+      "& .MuiPickersInputBase-root.Mui-error:hover .MuiPickersOutlinedInput-notchedOutline":
+        {
+          borderColor: "#B7C7D7 !important",
+        },
 
-                  },
-
-                "& .MuiPickersInputBase-input":
-                  {
-
-                    fontSize: "12px",
-
-                    padding: 0,
-
-                    height: "27px",
-
-                  },
-
-                "& .MuiIconButton-root":
-                  {
-
-                    width: "24px",
-
-                    height: "24px",
-
-                    padding: "2px",
-
-                  },
-
-                "& .MuiSvgIcon-root":
-                  {
-
-                    fontSize: "16px",
-                    marginRight:"20px"
-
-                  },
-
-                "& .MuiPickersOutlinedInput-notchedOutline":
-                  {
-
-                    borderColor:
-                      "#cfd7df",
-
-                  },
-
-                "& .MuiPickersInputBase-root:hover .MuiPickersOutlinedInput-notchedOutline":
-                  {
-
-                    borderColor:
-                      "#9db8d4",
-
-                  },
-
-                "& .MuiPickersInputBase-root.Mui-focused .MuiPickersOutlinedInput-notchedOutline":
-                  {
-
-                    borderColor:
-                      "#9db8d4",
-
-                    borderWidth: "1px",
-
-                  },
-
-              }}
+      "& .MuiPickersInputBase-root.Mui-error.Mui-focused .MuiPickersOutlinedInput-notchedOutline":
+        {
+          borderColor: "#B7C7D7 !important",
+        },
+    }}
 
             />
 
           </LocalizationProvider>
 
         </div>
+
+        </div>
+
+
+        {/* =================================================
+            BRANCH
+        ================================================= */}
+
+        <div className="flex h-6.75 w-125 items-center">
+
+        
+
+
+          <div className="w-50 shrink-0">
+
+           
+
+          </div>
+
+        </div>
+
+      </div>
+
+
+      {/* =====================================================
+          MIDDLE SECTION
+      ===================================================== */}
+
+      <div
+        className="
+          absolute
+          left-76.25
+          top-0
+          flex
+          w-100
+          flex-col
+          gap-3
+        "
+      >
+
+        {/* ROW 1 */}
+
+        <div className="h-6.75" />
+
+
+        {/* =================================================
+            DOC TYPE
+        ================================================= */}
+
+       
+
+
+        {/* ROW 3 */}
+
+        <div className="h-6.75" />
+
+
+        {/* =================================================
+            MATCH APPLY DATE
+        ================================================= */}
+
+       
 
       </div>
 
@@ -1200,8 +1222,8 @@ return (
         shrink-0
         whitespace-nowrap
         text-right
-        text-[12px]
-        text-slate-700
+        text-[14px]
+       
       "
     >
       Doc. Amt. :
@@ -1212,7 +1234,7 @@ return (
       className="
         ml-2
         flex
-        h-6
+        h-[30px]
         w-25
         shrink-0
         items-center
@@ -1257,178 +1279,6 @@ return (
 
   </div>
 
-
-  {/* =================================================
-      MATCH AMOUNT
-  ================================================= */}
-
-  {/* <div
-    className="
-      flex
-      h-[27px]
-      w-full
-      items-center
-    "
-  >
-
-    <span
-      className="
-        w-[65px]
-        shrink-0
-        whitespace-nowrap
-        text-right
-        text-[12px]
-        text-slate-700
-      "
-    >
-      Match Amt. :
-    </span>
-
-
-    <div
-      className="
-        ml-2
-        flex
-        h-[24px]
-        w-[100px]
-        shrink-0
-        items-center
-        justify-end
-        rounded-[2px]
-        border
-        border-[#cfd7df]
-        bg-white
-        px-2
-        box-border
-      "
-    >
-
-      <span
-        className="
-          text-[13px]
-          font-semibold
-          text-green-600
-        "
-      >
-        {formatAmount(matchAmount)}
-      </span>
-
-    </div>
-
-
-    <span
-      className="
-        ml-1
-        w-[20px]
-        shrink-0
-        whitespace-nowrap
-        text-left
-        text-[11px]
-        font-semibold
-        text-green-600
-      "
-    >
-      Cr.
-    </span>
-
-  </div> */}
-
-
-  {/* =================================================
-      BALANCE
-  ================================================= */}
-
-  {/* <div
-    className="
-      flex
-      h-[27px]
-      w-full
-      items-center
-    "
-  >
-
-    <span
-      className="
-        w-[65px]
-        shrink-0
-        whitespace-nowrap
-        text-right
-        text-[12px]
-        text-slate-700
-      "
-    >
-      Balance :
-    </span>
-
-
-    <div
-      className="
-        ml-2
-        flex
-        h-[24px]
-        w-[100px]
-        shrink-0
-        items-center
-        justify-end
-        rounded-[2px]
-        border
-        border-[#cfd7df]
-        bg-white
-        px-2
-        box-border
-      "
-    >
-
-      <span
-        className={
-          balance === 0
-            ? `
-              text-[13px]
-              font-semibold
-              text-green-600
-            `
-            : `
-              text-[13px]
-              font-semibold
-              text-red-500
-            `
-        }
-      >
-        {formatAmount(balance)}
-      </span>
-
-    </div>
-
-
-    <span
-      className={
-        balance === 0
-          ? `
-            ml-1
-            w-[20px]
-            shrink-0
-            whitespace-nowrap
-            text-left
-            text-[11px]
-            font-semibold
-            text-green-600
-          `
-          : `
-            ml-1
-            w-[20px]
-            shrink-0
-            whitespace-nowrap
-            text-left
-            text-[11px]
-            font-semibold
-            text-red-500
-          `
-      }
-    >
-      Cr.
-    </span>
-
-  </div> */}
 
 </div>
 
