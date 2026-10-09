@@ -35,6 +35,7 @@ import StockDocumentRePost from "../pages/Sales/Transaction/stock/StockDocumentR
 import RptGLPage from "../pages/Finance/Report/GeneralLedger/RptGLPage";
 import MatchingPage from "../pages/Finance/Transaction/Match/MatchPage";
 import UnMatchPage from "../pages/Finance/Transaction/MatchReversal/MatchReversalPage";
+import CostCenterPage from "../pages/Finance/Setup/CostCenterPage";
 
 const Login = lazy(() => import("../pages/Auth/LoginPage"));
 const ReceiptPage = lazy(
@@ -124,6 +125,10 @@ const AppRoutes = () => {
           <Route
             path="/Finance/Setup/ChartOfAccountList"
             element={<ChartOfAccountList />}
+          />
+          <Route
+          path="/Finance/Setup/CostCenter"
+          element={<CostCenterPage/>}
           />
 
           {/* ================= FINANCE - REPORTS ================= */}
