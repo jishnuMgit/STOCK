@@ -312,14 +312,15 @@ const ItemEnquiryPage: React.FC = () => {
             flex
             items-center
             gap-[8px]
-             mr-59.5
+             mr-5
           "
         >
           <span
             className="
-              text-[13px]
+              text-[14px]
               text-[#374151]
-            "
+            whitespace-nowrap
+              "
           >
             Total :
           </span>
@@ -344,6 +345,48 @@ const ItemEnquiryPage: React.FC = () => {
             "
           />
         </div>
+
+
+        <div
+          className="
+            flex
+            items-center
+            gap-[8px]
+             mr-5
+          "
+        >
+          <span
+            className="
+              text-[14px]
+              text-[#374151]
+              whitespace-nowrap
+            "
+          >
+            Item Value :
+          </span>
+
+          <input
+          id="ItemValue"
+            type="text"
+            value="0.000"
+            readOnly
+            className="
+              h-[38px]
+              w-[135px]
+              rounded-[4px]
+              border
+              border-[#d6dde5]
+              bg-white
+              px-[8px]
+             
+              text-right
+              text-[14px]
+              text-[#263449]
+              outline-none
+            "
+          />
+        </div>
+        
 
         {/* CLEAR */}
 
