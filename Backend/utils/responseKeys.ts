@@ -56,6 +56,22 @@ export const documentNoGridKeys: KeyMap = {
 
 export const unitListKeys: KeyMap = { funit: "lkpUnit" };
 
+export const defaultBranchUserListKeys: KeyMap = {
+  fuserid: "txtUserID",
+};
+
+export const defaultBranchGridKeys: KeyMap = {
+  fuserid: "txtUserID",
+  fdefbrid: "lkpDefaultBranch",
+};
+
+export const activePeriodGridKeys: KeyMap = {
+  fbrid: "txtBranchID",
+  fbrname: "txtBranchName",
+  factivefromdate: "dtpFromDate",
+  factivetodate: "dtpToDate",
+};
+
 export const staffGridKeys: KeyMap = {
   fstaffid: "txtStaffID",
   fstaffname: "txtStaffName",

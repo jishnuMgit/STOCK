@@ -9,6 +9,7 @@ import {
   getItemGroupPageService,
   saveItemGroupPageService,
   deleteItemGroupPageService,
+  haveItemGroupTransService,
 } from "../../../services/Purchase/Setup/itemGroupPageService.js";
 import {
   mapKeys,
@@ -209,6 +210,19 @@ export const saveItemGroup = async (
       });
     }
 
+    // an item group that items already use cannot be modified (the old
+    // HaveTrans check on the Item Group ID)
+    if (
+      wantedMode === "M" &&
+      (await haveItemGroupTransService(PstrCoID, txtItemGroupID.trim()))
+    ) {
+      return res.status(409).json({
+        success: false,
+        message: `You can't Modify. Transactions already entered with this Item Group '${txtItemGroupID.trim()}'`,
+        field: "txtItemGroupID",
+      });
+    }
+
     const { mode, before, txtVATPer } = await saveItemGroupPageService(
       PstrCoID,
       txtItemGroupID.trim(),
@@ -340,19 +354,14 @@ export const deleteItemGroup = async (
       });
     }
 
-    // a group that items still use cannot go - they would be left pointing
-    // at a group that no longer exists
-    const used = await pool.query(
-      `SELECT count(*)::int AS "itemCount" FROM dbo.tblitemhd WHERE fcoid = $1 AND fitemgroupid = $2`,
-      [PstrCoID, txtItemGroupID]
-    );
-
-    const itemCount: number = used.rows[0]?.itemCount ?? 0;
-
-    if (itemCount > 0) {
+    // a group that items already use cannot be deleted (the old HaveTrans
+    // check on the Item Group ID) - they would be left pointing at a group
+    // that no longer exists
+    if (await haveItemGroupTransService(PstrCoID, txtItemGroupID)) {
       return res.status(409).json({
         success: false,
-        message: `Item Group '${txtItemGroupID}' is used by ${itemCount} item${itemCount === 1 ? "" : "s"} and cannot be deleted`,
+        message: `You can't delete. Transactions already entered with this Item Group '${txtItemGroupID}'`,
+        field: "txtItemGroupID",
       });
     }
 
