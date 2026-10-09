@@ -180,6 +180,36 @@ export async function saveItemPageService(
 }
 
 /* =========================================================
+   HAVE TRANS (dbo.sp_havetrans) - "is this item already used?"
+   The table it looks in is not written here: it comes from the rule row of
+   fSearchKey 'fItemID' in dbo.tblstocksetupdeletion (tblstocktrans.fitemid).
+========================================================= */
+
+export async function haveItemTransService(
+  PstrCoID: string,
+  txtItemID: string
+): Promise<boolean> {
+  try {
+    const result = await pool.query(
+      `SELECT dbo.sp_havetrans($1, 'fItemID', $2) AS "haveTrans"`,
+      [PstrCoID, txtItemID]
+    );
+
+    return Number(result.rows[0]?.haveTrans) > 0;
+  } catch (error: unknown) {
+    // 42P01 = the rule row names a table that does not exist: the setup of
+    // the check is wrong, which is not the same as "not used"
+    if ((error as { code?: string }).code === "42P01") {
+      throw new Error(
+        "The 'already used' check for items is not set up correctly (rule 'fItemID' in tblstocksetupdeletion). Please contact the administrator."
+      );
+    }
+
+    throw error;
+  }
+}
+
+/* =========================================================
    DELETE ITEM (mode 'D' — whole item, header + every branch)
 ========================================================= */
 

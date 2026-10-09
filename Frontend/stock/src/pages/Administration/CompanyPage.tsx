@@ -1,7 +1,14 @@
-// import React, { useRef, useState } from "react";
-import Select, { type StylesConfig, type SingleValue } from "react-select";
-import { toast } from "react-toastify";
 import React, { useEffect, useRef, useState } from "react";
+import Select, {
+  components,
+  createFilter,
+  type StylesConfig,
+  type SingleValue,
+  type MenuListProps,
+  type OptionProps,
+} from "react-select";
+import { toast } from "react-toastify";
+
 type Option = {
   value: string;
   label: string;
@@ -24,6 +31,29 @@ const FIELD_ORDER = [
   "btnSave",
 ];
 
+// ============================================================
+// PURCHASE EXPENSE GROUP: table-style dropdown (header + 2 columns)
+// ============================================================
+
+const AccountMenuList = (props: MenuListProps<Option, false>) => (
+  <components.MenuList {...props}>
+    <div className="sticky top-0 z-10 grid grid-cols-[1fr_110px] border-b border-gray-200 bg-white px-3 py-2 text-[12px] font-semibold text-gray-600">
+      <span>Account Name</span>
+      <span className="text-right">Account ID</span>
+    </div>
+    {props.children}
+  </components.MenuList>
+);
+
+const AccountOption = (props: OptionProps<Option, false>) => (
+  <components.Option {...props}>
+    <div className="grid min-h-[18px] grid-cols-[1fr_110px] items-center">
+      <span>{props.data.label}</span>
+      <span className="text-right text-gray-500">{props.data.value}</span>
+    </div>
+  </components.Option>
+);
+
 const CompanyPage: React.FC = () => {
   // ============================================================
   // STATE
@@ -45,6 +75,10 @@ const CompanyPage: React.FC = () => {
   const [lkpYearClosingMethod, setYearClosingMethod] =
     useState<Option | null>(null);
 
+  // Purchase Expense Group options are loaded from the database
+  const [purchaseExpenseGroupOptions, setPurchaseExpenseGroupOptions] =
+    useState<Option[]>([]);
+
   // empty = new record, filled = editing an existing record
   const [originalCoID, setOriginalCoID] = useState("");
   const [saving, setSaving] = useState(false);
@@ -53,10 +87,7 @@ const CompanyPage: React.FC = () => {
   // OPTIONS
   // ============================================================
 
-  const purchaseExpenseGroupOptions: Option[] = [{ value: "", label: "" }];
-
   const bg2ARAPOptions: Option[] = [
-    { value: "Yes/No", label: "Yes/No" },
     { value: "Yes", label: "Yes" },
     { value: "No", label: "No" },
   ];
@@ -279,6 +310,74 @@ const CompanyPage: React.FC = () => {
     }),
   };
 
+  const purchaseSelectStyles: StylesConfig<Option, false> = {
+    ...selectStyles,
+
+    clearIndicator: () => ({ display: "none" }),
+
+    menu: (base) => ({
+      ...base,
+      zIndex: 9999,
+      width: "480px",
+      marginTop: "4px",
+      borderRadius: "8px",
+      border: "1px solid #e5e7eb",
+      boxShadow: "0 8px 24px rgba(0,0,0,0.12)",
+      overflow: "hidden",
+    }),
+
+    menuList: (base) => ({
+      ...base,
+      padding: 0,
+      maxHeight: "260px",
+    }),
+
+    option: (base, state) => ({
+      ...base,
+      padding: "9px 12px",
+      fontSize: "13px",
+      color: "#374151",
+      cursor: "pointer",
+      backgroundColor:
+        state.isFocused || state.isSelected ? "#eefbf4" : "#ffffff",
+      "&:active": { backgroundColor: "#dff5e9" },
+    }),
+  };
+
+  // ============================================================
+  // LOAD PURCHASE EXPENSE GROUP OPTIONS
+  // ============================================================
+
+  useEffect(() => {
+    let cancelled = false;
+
+    const loadPurchaseGroups = async () => {
+      try {
+        const res = await fetch(`${API}/purchase-groups`);
+        const data = await res.json();
+        if (!res.ok || !data.success) {
+          toast.error(data.message || "Failed to load purchase expense groups");
+          return;
+        }
+        if (cancelled) return;
+
+        setPurchaseExpenseGroupOptions([
+          ...data.groups.map((g: { value: string; label: string }) => ({
+            value: g.value,
+            label: g.label,
+          })),
+        ]);
+      } catch {
+        if (!cancelled) toast.error("Failed to load purchase expense groups");
+      }
+    };
+
+    loadPurchaseGroups();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
   // ============================================================
   // ENTER KEY NAVIGATION
   // ============================================================
@@ -356,8 +455,8 @@ const CompanyPage: React.FC = () => {
           coNameAR: txtCoName_AR,
           coNameShort: txtCoName_Short,
           coNameQR: txtCoName_QR,
-          coVatNo: txtCoVATNo,
-          coVatNoAR: txtCoVATNo_AR,
+          vatNo: txtCoVATNo, // controller reads b.vatNo
+          vatNoAR: txtCoVATNo_AR, // controller reads b.vatNoAR
           purchaseExpenseGroup: lkpPurchaseExpenseGroup?.value ?? "",
           bg2ARAP: lkpBG2ARAP?.value ?? "",
           yearClosingMethod: lkpYearClosingMethod?.value ?? "",
@@ -391,10 +490,16 @@ const CompanyPage: React.FC = () => {
     setCoName_QR(c.fCoName_QR ?? "");
     setCoVATNo(c.fCoVATNo ?? "");
     setCoVATNo_AR(c.fCoVATNo_AR ?? "");
+    // Keep the saved group even if it isn't in the dropdown list,
+    // so Modify never overwrites it with a blank
+    const savedGroup = c.fPiExpenseAccountGroup ?? "";
     setPurchaseExpenseGroup(
-      purchaseExpenseGroupOptions.find(
-        (o) => o.value === c.fPiExpenseAccountGroup,
-      ) ?? null,
+      savedGroup
+        ? (purchaseExpenseGroupOptions.find((o) => o.value === savedGroup) ?? {
+            value: savedGroup,
+            label: savedGroup,
+          })
+        : null,
     );
     setBG2ARAP(bg2ARAPOptions.find((o) => o.value === c.fBG2ARAP) ?? null);
     setYearClosingMethod(
@@ -488,9 +593,8 @@ const CompanyPage: React.FC = () => {
     }
   };
 
-
-     // ============================================================
-  // ALT SHORTCUTS: S = Save, M = Modify, D = Delete, C = Clear
+  // ============================================================
+  // ALT SHORTCUTS: S = Save, M = Modify, D = Delete, C = Clear, E = Search
   // ============================================================
 
   const actionsRef = useRef({
@@ -498,6 +602,7 @@ const CompanyPage: React.FC = () => {
     modify: () => {},
     del: () => {},
     clear: () => {},
+    search: () => {},
   });
 
   // Keep the ref pointing at the latest handlers and state.
@@ -516,6 +621,7 @@ const CompanyPage: React.FC = () => {
         handleClear();
         document.getElementById("txtCoID")?.focus();
       },
+      search: () => handleSearch(),
     };
   });
 
@@ -528,7 +634,8 @@ const CompanyPage: React.FC = () => {
         KeyS: () => actionsRef.current.save(),
         KeyM: () => actionsRef.current.modify(),
         KeyD: () => actionsRef.current.del(),
-        KeyC: () => actionsRef.current.clear(),        
+        KeyC: () => actionsRef.current.clear(),
+        KeyE: () => actionsRef.current.search(),
       };
 
       const action = actions[e.code];
@@ -541,6 +648,7 @@ const CompanyPage: React.FC = () => {
     window.addEventListener("keydown", onKeyDown);
     return () => window.removeEventListener("keydown", onKeyDown);
   }, []);
+
   // ============================================================
   // RENDER
   // ============================================================
@@ -694,7 +802,7 @@ const CompanyPage: React.FC = () => {
 
           <div className="mb-[8px] grid grid-cols-[195px_1fr] items-center">
             <label
-              htmlFor="txtVATNo"
+              htmlFor="txtCoVATNo"
               className="pr-3 text-right text-[14px] text-gray-600"
             >
               VAT No. :
@@ -718,7 +826,7 @@ const CompanyPage: React.FC = () => {
 
           <div className="mb-[8px] grid grid-cols-[195px_1fr] items-center">
             <label
-              htmlFor="txtVATNo_AR"
+              htmlFor="txtCoVATNo_AR"
               className="pr-3 text-right text-[14px] text-gray-600"
             >
               VAT No. (AR) :
@@ -759,8 +867,17 @@ const CompanyPage: React.FC = () => {
               onKeyDown={handleSelectEnter("lkpPurchaseExpenseGroup")}
               onMenuOpen={() => (menuOpenRef.current = true)}
               onMenuClose={() => (menuOpenRef.current = false)}
-              styles={selectStyles}
-              isClearable={false}
+              components={{ MenuList: AccountMenuList, Option: AccountOption }}
+              styles={purchaseSelectStyles}
+              filterOption={createFilter({
+                ignoreCase: true,
+                ignoreAccents: true,
+                matchFrom: "any",
+                stringify: (o) => `${o.data.label} ${o.data.value}`,
+              })}
+              noOptionsMessage={() => "No matching account"}
+              isClearable
+              backspaceRemovesValue
               isSearchable
               placeholder=""
               menuPosition="fixed"
@@ -838,6 +955,7 @@ const CompanyPage: React.FC = () => {
               type="button"
               onClick={handleSave}
               disabled={saving}
+              title={originalCoID ? "Alt+M" : "Alt+S"}
               className="btn-style"
             >
               {originalCoID ? (
@@ -857,16 +975,19 @@ const CompanyPage: React.FC = () => {
               id="btnSearch"
               type="button"
               onClick={handleSearch}
+              title="Alt+E"
               className="btn-style"
             >
-              <span className="underline underline-offset-2">S</span>
-              earch
+              S
+              <span className="underline underline-offset-2">e</span>
+              arch
             </button>
 
             <button
               id="btnDelete"
               type="button"
               onClick={handleDelete}
+              title="Alt+D"
               className="btn-style"
             >
               <span className="underline underline-offset-2">D</span>
@@ -877,6 +998,7 @@ const CompanyPage: React.FC = () => {
               id="btnClear"
               type="button"
               onClick={handleClear}
+              title="Alt+C"
               className="btn-style"
             >
               <span className="underline underline-offset-2">C</span>

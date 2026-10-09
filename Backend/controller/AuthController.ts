@@ -119,9 +119,11 @@ export const login = async (req: Request, res: Response): Promise<Response> => {
        COMPANY ACCESS
     ===================================================== */
 
+    // An Admin User (type AU, ADMIN included) can enter every company; anyone
+    // else needs a row in tbluserpermission for it (dbo.hascoright).
     let hasCompanyRight = true;
 
-    if (PstrUserID !== "ADMIN") {
+    if (user.fusertype !== "AU") {
       const companyRightResult = await pool.query(
         `SELECT dbo.hascoright($1, $2) AS "hasCoRight"`,
         [pstrCOID, PstrUserID],

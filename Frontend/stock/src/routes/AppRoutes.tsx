@@ -23,6 +23,7 @@ import CompanyPage from "../pages/Administration/CompanyPage";
 import ActivePeriodPage from "../pages/Settings/ActivePeriodPage";
 import StockAdjustmentPage from "../pages/Sales/Transaction/stock/StockAdjustmentPage";
 import SetDefaultBranch from "../pages/Settings/SetDefaultBranchPage";
+import SetActivePeriod from "../pages/Settings/SetActivePeriodPage";
 
 import ItemEnquiryPage from "../pages/Sales/Setup/ItemEnquiryPage";
 import UnitPage from "../pages/Purchase/Setup/UnitPage";
@@ -201,6 +202,10 @@ const AppRoutes = () => {
           <Route 
           path="/Setting/SetDefaultBranch"
           element={<SetDefaultBranch/>}
+          />
+          <Route
+            path="/Setting/SetActivePeriod"
+            element={<SetActivePeriod />}
           />
           {/* the screen's earlier address - kept so old bookmarks still open it */}
           <Route
