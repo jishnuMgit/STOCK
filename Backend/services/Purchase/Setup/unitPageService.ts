@@ -75,9 +75,9 @@ async function fetchUnitRows(
 }
 
 /* =========================================================
-   HAVE TRANS (dbo.sp_havetrans) - "has a transaction already used this
+   HAVE TRANS (dbo.havetrans) - "has a transaction already used this
    unit?" The table it looks in is not written here: it comes from the rule
-   row of fSearchKey 'fUnit' in dbo.tblstocksetupdeletion.
+   row of fSearchKey 'fUnit' in the setup deletion tables (dbo.tblstocksetupdeletion / dbo.tblfinsetupdeletion).
 ========================================================= */
 
 export async function haveUnitTransService(
@@ -85,7 +85,7 @@ export async function haveUnitTransService(
   unit: string
 ): Promise<boolean> {
   const result = await pool.query(
-    `SELECT dbo.sp_havetrans($1, 'fUnit', $2) AS "haveTrans"`,
+    `SELECT dbo.havetrans($1, 'fUnit', $2) AS "haveTrans"`,
     [PstrCoID, unit]
   );
 

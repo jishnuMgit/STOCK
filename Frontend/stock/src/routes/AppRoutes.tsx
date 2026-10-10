@@ -29,6 +29,7 @@ import ItemEnquiryPage from "../pages/Sales/Setup/ItemEnquiryPage";
 import UnitPage from "../pages/Purchase/Setup/UnitPage";
 import StaffPage from "../pages/Purchase/Setup/StaffPage";
 import UserAudit from "../pages/Security/UserAudit/UserAuditPage";
+import UserAuditPrint from "../pages/Security/UserAudit/UserAuditPrintPage";
 import UserTransactionAudit from "../pages/Security/UserTransactionAudit/UserTransactionAuditPage";
 import StockDocumentPost from "../pages/Sales/Transaction/stock/StockDocumentPostPage";
 import StockDocumentPostCancel from "../pages/Sales/Transaction/stock/StockDocumentPostCancel";
@@ -236,6 +237,8 @@ const AppRoutes = () => {
             element={<UserPermissionBranchPage />}
           />
           <Route path="/Security/UserAudit" element={<UserAudit/>}/>
+          {/* the print page the User Audit dialog opens (no menu entry of its own) */}
+          <Route path="/Security/UserAudit/Print" element={<UserAuditPrint />} />
           <Route path="/Security/UserTransactionAudit" element={<UserTransactionAudit/>}/>
 
           {/* ================= ADMINISTRATION ================= */}
