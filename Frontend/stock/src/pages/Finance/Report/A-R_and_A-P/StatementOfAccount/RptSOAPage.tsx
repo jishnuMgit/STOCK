@@ -1,3 +1,7 @@
+import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
+import { DatePicker } from "@mui/x-date-pickers/DatePicker";
+import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
+import dayjs from "dayjs";
 import React, { useState } from "react";
 import Select from "react-select";
 
@@ -173,7 +177,7 @@ const selectClassNames = {
   }) => `
     !min-h-[30px]
     !h-[30px]
-    !rounded-none
+    !rounded-[4px]
     !border
     !border-[#cfd7df]
     !bg-white
@@ -399,7 +403,8 @@ const RadioPanel: React.FC<
     </div>
   );
 };
-
+const DATE_FORMAT = "DD-MM-YYYY";
+const DEFAULT_DATE = "07-07-2026";
 // ============================================================
 // FIELD LABEL
 // ============================================================
@@ -427,6 +432,100 @@ const FieldLabel: React.FC<{
   );
 };
 
+
+type AppDatePickerProps = {
+  id: string;
+  label: string;
+  value: string;
+  onChange: (value: string) => void;
+  disabled?: boolean;
+};
+
+const AppDatePicker: React.FC<AppDatePickerProps> = ({
+  id,
+  label,
+  value,
+  onChange,
+  disabled = false,
+}) => (
+  <LocalizationProvider dateAdapter={AdapterDayjs}>
+    <DatePicker
+      value={value ? dayjs(value, DATE_FORMAT) : null}
+      onChange={(newValue) => {
+        onChange(newValue?.isValid() ? newValue.format(DATE_FORMAT) : "");
+      }}
+      format={DATE_FORMAT}
+      disabled={disabled}
+      slotProps={{
+        textField: {
+          id,
+          slotProps: { htmlInput: { "aria-label": label } },
+        },
+        openPickerButton: { sx: { padding: "2px", margin: 0 } },
+        inputAdornment: { sx: { margin: 0, padding: 0 } },
+      }}
+      sx={{
+        width: "140px",
+        "& .MuiPickersTextField-root": { width: "120px" },
+        "& .MuiPickersInputBase-root": {
+          width: "140px",
+          height: "30px",
+          minHeight: "30px",
+          boxSizing: "border-box",
+          borderRadius: "4px",
+          backgroundColor: "#ffffff",
+          fontSize: "12px",
+          padding: 0,
+          overflow: "hidden",
+        },
+        "& .MuiPickersInputBase-sectionsContainer": {
+          paddingLeft: "10px !important",
+          paddingRight: "0px !important",
+          marginBottom: "-5px !important",
+          marginLeft: "0px !important",
+          boxSizing: "border-box",
+          overflow: "hidden",
+        },
+        "& .MuiPickersInputBase-sectionContent": {
+          fontSize: "12px",
+          color: "#344054",
+        },
+        "& .MuiPickersInputBase-input": {
+          minWidth: 0,
+          width: "100%",
+          fontSize: "12px",
+          padding: 0,
+          height: "30px",
+          boxSizing: "border-box",
+        },
+        "& .MuiInputAdornment-root": { margin: 0, padding: 0 },
+        "& .MuiIconButton-root": {
+          width: "24px",
+          height: "24px",
+          padding: "2px",
+          margin: 0,
+        },
+        "& .MuiSvgIcon-root": { fontSize: "16px" },
+        // keep the same text colour when disabled
+        "& .Mui-disabled": { WebkitTextFillColor: "#24364d" },
+        // one border colour for every state
+        "& .MuiPickersOutlinedInput-notchedOutline": {
+          borderColor: "#B7C7D7 !important",
+        },
+        "& .MuiPickersInputBase-root:hover .MuiPickersOutlinedInput-notchedOutline":
+          { borderColor: "#B7C7D7 !important" },
+        "& .MuiPickersInputBase-root.Mui-focused .MuiPickersOutlinedInput-notchedOutline":
+          { borderColor: "#B7C7D7 !important", borderWidth: "1px" },
+        "& .MuiPickersInputBase-root.Mui-error .MuiPickersOutlinedInput-notchedOutline":
+          { borderColor: "#B7C7D7 !important" },
+        "& .MuiPickersInputBase-root.Mui-error:hover .MuiPickersOutlinedInput-notchedOutline":
+          { borderColor: "#B7C7D7 !important" },
+        "& .MuiPickersInputBase-root.Mui-error.Mui-focused .MuiPickersOutlinedInput-notchedOutline":
+          { borderColor: "#B7C7D7 !important" },
+      }}
+    />
+  </LocalizationProvider>
+);
 // ============================================================
 // COMPONENT
 // ============================================================
@@ -642,8 +741,8 @@ const RptSOAPage: React.FC = () => {
 
       <div
         className="
-          w-[900px]
-          max-w-full
+          max-w-205
+          min-w-205
           overflow-hidden
           border
           border-gray-400
@@ -1103,55 +1202,24 @@ const RptSOAPage: React.FC = () => {
                 Period :
               </FieldLabel>
 
-              <div
-                className="
-                  col-span-2
+             <div className="  col-span-2
                   flex
-                  gap-[8px]
-                "
-              >
-                <input
-                  type="date"
-                  value={fromDate}
-                  onChange={(e) =>
-                    setFromDate(
-                      e.target.value,
-                    )
-                  }
-                  className="
-                    h-[30px]
-                    w-[150px]
-                    border
-                    border-[#cfd7df]
-                    bg-white
-                    px-[7px]
-                    text-[14px]
-                    text-[#24364d]
-                    outline-none
-                  "
-                />
-
-                <input
-                  type="date"
-                  value={toDate}
-                  onChange={(e) =>
-                    setToDate(
-                      e.target.value,
-                    )
-                  }
-                  className="
-                    h-[30px]
-                    w-[150px]
-                    border
-                    border-[#cfd7df]
-                    bg-white
-                    px-[7px]
-                    text-[14px]
-                    text-[#24364d]
-                    outline-none
-                  "
-                />
-              </div>
+                  gap-[8px]">
+                  <AppDatePicker
+                    id="dtpFromDate"
+                    label="From Date"
+                    value={fromDate}
+                    onChange={setFromDate}
+                    
+                  />
+                  <AppDatePicker
+                    id="dtpToDate"
+                    label="To Date"
+                    value={toDate}
+                    onChange={setToDate}
+                    
+                  />
+                </div>
 
               {/* AGEING */}
 

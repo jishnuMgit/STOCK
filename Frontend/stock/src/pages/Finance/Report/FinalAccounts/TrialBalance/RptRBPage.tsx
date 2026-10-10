@@ -43,8 +43,9 @@ const yesNoOptions: Option[] = [
 
 const selectClassNames = {
   control: ({ isFocused }: { isFocused: boolean }) => `
-    !min-h-[25px] !h-[25px] !rounded-none !border !bg-white
+    !min-h-[25px] !h-[30px] !rounded-[4px] !border !bg-white
     !shadow-none !text-[13px] hover:!border-[#aab8c5]
+  
     ${isFocused ? "!border-[#91a7b9]" : "!border-[#cfd7df]"}
   `,
   valueContainer: () => "!h-[23px] !py-0 !px-[5px] !overflow-hidden",
@@ -271,8 +272,8 @@ const RptTBPage: React.FC = () => {
   };
 
   return (
-    <div className="flex min-h-screen w-full items-start justify-center bg-white px-4 py-4">
-      <div className="min-h-fit w-225 max-w-full bg-white p-0">
+    <div className="flex min-h-full  w-full items-start justify-center bg-white px-4 py-4">
+      <div className="min-h-fit max-w-205 min-w-205 bg-white p-0">
         <main className="w-full overflow-hidden border border-[#d5dce2] bg-white">
           <header className="flex h-[36px] items-center justify-start bg-[#9fdfbc] pl-[12px] text-[18px] font-semibold text-slate-700">
             Trial Balance
@@ -300,7 +301,7 @@ const RptTBPage: React.FC = () => {
                 </div>
               </RadioPanel>
 
-              <div className="relative mt-3 w-55">
+              <div className="relative mt-3 w-62.5 ">
                 <Select
                   inputId="lkpBranch"
                   instanceId="lkpBranch"
@@ -376,7 +377,7 @@ const RptTBPage: React.FC = () => {
               />
 
               <FieldLabel>Post Status :</FieldLabel>
-              <div className="w-32">
+              <div className="w-35">
                 <Select
                   inputId="lkpPostStatus"
                   instanceId="lkpPostStatus"
