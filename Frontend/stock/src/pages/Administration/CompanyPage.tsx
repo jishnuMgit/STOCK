@@ -455,8 +455,8 @@ const CompanyPage: React.FC = () => {
           coNameAR: txtCoName_AR,
           coNameShort: txtCoName_Short,
           coNameQR: txtCoName_QR,
-          coVatNo: txtCoVATNo, // controller reads b.vatNo
-          coVatNoAR: txtCoVATNo_AR, // controller reads b.vatNoAR
+          coVatNo: txtCoVATNo, 
+          coVatNoAR: txtCoVATNo_AR, 
           purchaseExpenseGroup: lkpPurchaseExpenseGroup?.value ?? "",
           bg2ARAP: lkpBG2ARAP?.value ?? "",
           yearClosingMethod: lkpYearClosingMethod?.value ?? "",
