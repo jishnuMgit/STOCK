@@ -86,6 +86,7 @@ Sales-SETUP
 =============================================================*/
 
   mnuItemEnquiry:"/Sales/Setup/ItemEnquiry",
+  "mnuRptStock Value": "/Sales/Reports/StockValue",
 
 /*============================================================
 Sales-REPORT
