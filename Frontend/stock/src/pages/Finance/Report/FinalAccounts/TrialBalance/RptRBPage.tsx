@@ -274,8 +274,8 @@ const RptTBPage: React.FC = () => {
   return (
     <div className="flex min-h-full  w-full items-start justify-center bg-white px-4 py-4">
       <div className="min-h-fit max-w-205 min-w-205 bg-white p-0">
-        <main className="w-full overflow-hidden border border-[#d5dce2] bg-white">
-          <header className="flex h-[36px] items-center justify-start bg-[#9fdfbc] pl-[12px] text-[18px] font-semibold text-slate-700">
+        <main className="w-full overflow-hidden border border-gray-400 bg-white">
+          <header className="flex h-7.5 items-center justify-start bg-[#9fdfbc] pl-3 text-[18px] font-semibold text-slate-700">
             Trial Balance
           </header>
 

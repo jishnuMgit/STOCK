@@ -39,6 +39,7 @@ import UnMatchPage from "../pages/Finance/Transaction/MatchReversal/MatchReversa
 import CostCenterPage from "../pages/Finance/Setup/CostCenterPage";
 import MatchEnquiryPage from "../pages/Finance/Transaction/MatchEnquiry/MatchEnquiryPage";
 import RptTBPage from "../pages/Finance/Report/FinalAccounts/TrialBalance/RptRBPage";
+import RptStockPage from "../pages/Sales/Report/RptStockPage";
 
 const Login = lazy(() => import("../pages/Auth/LoginPage"));
 const ReceiptPage = lazy(
@@ -172,6 +173,12 @@ const AppRoutes = () => {
         element={<ItemEnquiryPage/>}
         />
 
+
+
+        <Route
+        path="/Sales/Report/RptStock"
+        element={<RptStockPage/>}
+        />
 
           {/* ================= PURCHASE - TRANSACTION ================= */}
           <Route

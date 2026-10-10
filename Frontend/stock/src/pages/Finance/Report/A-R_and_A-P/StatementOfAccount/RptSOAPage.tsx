@@ -756,7 +756,7 @@ const RptSOAPage: React.FC = () => {
           <header
             className="
               flex
-              h-[36px]
+              h-[30px]
               items-center
               justify-start
               bg-[#9fdfbc]
