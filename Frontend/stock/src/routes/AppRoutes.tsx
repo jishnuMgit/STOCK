@@ -38,6 +38,7 @@ import MatchingPage from "../pages/Finance/Transaction/Match/MatchPage";
 import UnMatchPage from "../pages/Finance/Transaction/MatchReversal/MatchReversalPage";
 import CostCenterPage from "../pages/Finance/Setup/CostCenterPage";
 import MatchEnquiryPage from "../pages/Finance/Transaction/MatchEnquiry/MatchEnquiryPage";
+import RptTBPage from "../pages/Finance/Report/FinalAccounts/TrialBalance/RptRBPage";
 
 const Login = lazy(() => import("../pages/Auth/LoginPage"));
 const ReceiptPage = lazy(
@@ -143,6 +144,10 @@ const AppRoutes = () => {
           path="/Finance/Reports/rptGL"
           element={<RptGLPage/>}/>
 
+          <Route
+          path="/Finance/Reports/rptTB"
+          element={<RptTBPage/>}
+          />
           {/* ================= SALES - TRANSACTION ================= */}
           <Route
             path="/Sales/Transaction/SalesInvoicePage"

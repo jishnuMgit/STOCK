@@ -286,6 +286,7 @@ const CustomRadio: React.FC<
     <label
       className="
         flex
+       
         cursor-pointer
         items-center
         gap-[10px]
@@ -687,9 +688,10 @@ const RptSOAPage: React.FC = () => {
           <div
             className="
               grid
-              grid-cols-[240px_1fr_220px]
+              grid-cols-[200px_1fr_220px]
               items-start
               gap-[18px]
+               
             "
           >
             {/* ===============================================
@@ -698,6 +700,7 @@ const RptSOAPage: React.FC = () => {
 
             <RadioPanel
               className="
+              
                 h-[82px]
                 px-[16px]
                 py-[12px]
@@ -705,6 +708,7 @@ const RptSOAPage: React.FC = () => {
             >
               <div
                 className="
+               
                   flex
                   flex-col
                   gap-[10px]
@@ -821,7 +825,7 @@ const RptSOAPage: React.FC = () => {
   className="
     mt-[10px]
     grid
-    grid-cols-[240px_120px_minmax(0,1fr)]
+    grid-cols-[200px_120px_minmax(0,1fr)]
     gap-[18px]
   "
 >
@@ -971,7 +975,7 @@ const RptSOAPage: React.FC = () => {
   className="
     mt-[10px]
     grid
-    grid-cols-[240px_120px_minmax(0,1fr)]
+    grid-cols-[200px_120px_minmax(0,1fr)]
     gap-[18px]
   "
 >
@@ -1087,7 +1091,7 @@ const RptSOAPage: React.FC = () => {
               className="
                 col-span-2
                 grid
-                grid-cols-[240px_160px_1fr]
+                grid-cols-[200px_160px_1fr]
                 items-center
                 gap-x-[18px]
                 gap-y-[8px]

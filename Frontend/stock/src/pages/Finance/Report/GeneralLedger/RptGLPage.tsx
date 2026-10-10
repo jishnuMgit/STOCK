@@ -606,7 +606,7 @@ const GeneralLedger: React.FC = () => {
           <div
             className="
               grid
-              grid-cols-[240px_250px_220px]
+              grid-cols-[200px_250px_220px]
               items-start
               justify-between
               gap-4.5
@@ -729,7 +729,7 @@ const GeneralLedger: React.FC = () => {
   className="
     mt-[12px]
     grid
-    grid-cols-[240px_120px_minmax(0,1fr)]
+    grid-cols-[200px_120px_minmax(0,1fr)]
     gap-[18px]
   "
 >
@@ -881,7 +881,7 @@ const GeneralLedger: React.FC = () => {
               className="
                 col-span-2
                 grid
-                grid-cols-[240px_250px_1fr]
+                grid-cols-[200px_250px_1fr]
                 items-center
                 gap-x-4.5
                 gap-y-2
