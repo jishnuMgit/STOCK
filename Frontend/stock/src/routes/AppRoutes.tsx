@@ -29,6 +29,7 @@ import ItemEnquiryPage from "../pages/Sales/Setup/ItemEnquiryPage";
 import UnitPage from "../pages/Purchase/Setup/UnitPage";
 import StaffPage from "../pages/Purchase/Setup/StaffPage";
 import UserAudit from "../pages/Security/UserAudit/UserAuditPage";
+import UserAuditPrint from "../pages/Security/UserAudit/UserAuditPrintPage";
 import UserTransactionAudit from "../pages/Security/UserTransactionAudit/UserTransactionAuditPage";
 import StockDocumentPost from "../pages/Sales/Transaction/stock/StockDocumentPostPage";
 import StockDocumentPostCancel from "../pages/Sales/Transaction/stock/StockDocumentPostCancel";
@@ -37,6 +38,10 @@ import RptGLPage from "../pages/Finance/Report/GeneralLedger/RptGLPage";
 import MatchingPage from "../pages/Finance/Transaction/Match/MatchPage";
 import UnMatchPage from "../pages/Finance/Transaction/MatchReversal/MatchReversalPage";
 import CostCenterPage from "../pages/Finance/Setup/CostCenterPage";
+import MatchEnquiryPage from "../pages/Finance/Transaction/MatchEnquiry/MatchEnquiryPage";
+import RptTBPage from "../pages/Finance/Report/FinalAccounts/TrialBalance/RptRBPage";
+import RptStockPage from "../pages/Sales/Report/RptStockPage";
+import RptStockValuePage from "../pages/Sales/Report/RptSVPage";
 
 const Login = lazy(() => import("../pages/Auth/LoginPage"));
 const ReceiptPage = lazy(
@@ -142,6 +147,10 @@ const AppRoutes = () => {
           path="/Finance/Reports/rptGL"
           element={<RptGLPage/>}/>
 
+          <Route
+          path="/Finance/Reports/rptTB"
+          element={<RptTBPage/>}
+          />
           {/* ================= SALES - TRANSACTION ================= */}
           <Route
             path="/Sales/Transaction/SalesInvoicePage"
@@ -166,6 +175,16 @@ const AppRoutes = () => {
         element={<ItemEnquiryPage/>}
         />
 
+
+  {/* ================= SALES - REPORT ================= */}
+        <Route
+        path="/Sales/Report/RptStock"
+        element={<RptStockPage/>}
+        />
+        <Route
+        path="/Sales/Reports/StockValue"
+        element={<RptStockValuePage/>}
+        />
 
           {/* ================= PURCHASE - TRANSACTION ================= */}
           <Route
@@ -236,6 +255,8 @@ const AppRoutes = () => {
             element={<UserPermissionBranchPage />}
           />
           <Route path="/Security/UserAudit" element={<UserAudit/>}/>
+          {/* the print page the User Audit dialog opens (no menu entry of its own) */}
+          <Route path="/Security/UserAudit/Print" element={<UserAuditPrint />} />
           <Route path="/Security/UserTransactionAudit" element={<UserTransactionAudit/>}/>
 
           {/* ================= ADMINISTRATION ================= */}
@@ -253,6 +274,7 @@ const AppRoutes = () => {
          <Route path="/dev/matchpage" element={<MatchingPage/>}/>
   
         <Route path="/dev/unmatchpage" element={<UnMatchPage/>}/>
+        <Route path="/dev/MatchEnquiryPage" element={<MatchEnquiryPage/>}/>
 
 
           {/* Unknown URL -> back to "/" ("/" has its own element, so no loop) */}

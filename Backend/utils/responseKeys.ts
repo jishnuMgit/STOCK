@@ -65,6 +65,28 @@ export const defaultBranchGridKeys: KeyMap = {
   fdefbrid: "lkpDefaultBranch",
 };
 
+export const userAuditUserListKeys: KeyMap = {
+  fuserid: "lkpUserID",
+};
+
+export const userAuditActionListKeys: KeyMap = {
+  fpid: "lkpAction",
+  fpname: "txtActionName",
+};
+
+export const userAuditGridKeys: KeyMap = {
+  fyear: "txtYear",
+  fbrid: "txtBranchID",
+  fbrname: "txtBranchName",
+  fdoctype: "txtDocType",
+  fdocno: "txtDocNo",
+  fscreenname: "txtScreenName",
+  faction: "txtAction",
+  fnote: "txtAuditNote",
+  fuserid: "txtUserID",
+  fuserdate: "txtAuditDate",
+};
+
 export const activePeriodGridKeys: KeyMap = {
   fbrid: "txtBranchID",
   fbrname: "txtBranchName",

@@ -8,7 +8,7 @@ export const getUserBranches = async (
   res: Response,
 ): Promise<Response> => {
   try {
-    const coId = req.user?.companyId;
+    const coId = req.user?.CoID;
     const userId = req.user?.userId;
 
     if (!coId || !userId) {
