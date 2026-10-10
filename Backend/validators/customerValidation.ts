@@ -4,8 +4,13 @@ import pool from "../DB/db.js";
 // 1. FIELD FORMAT VALIDATION (no DB needed)
 // ============================================================
 
+const toEnglishDigits = (value: unknown): string =>
+  String(value ?? "")
+    .replace(/[٠-٩]/g, (d) => String(d.charCodeAt(0) - 0x0660))
+    .replace(/[۰-۹]/g, (d) => String(d.charCodeAt(0) - 0x06f0));
+
 const digitsOnly = (v: unknown, len: number) =>
-  new RegExp(`^\\d{${len}}$`).test(String(v ?? "").trim());
+  new RegExp(`^\\d{${len}}$`).test(toEnglishDigits(v).trim());
 
 const isBlank = (v: unknown) =>
   v === undefined || v === null || String(v).trim() === "";
@@ -19,33 +24,42 @@ const isBlank = (v: unknown) =>
 export const validateCustomerFormat = (
   body: Record<string, any>,
 ): string | null => {
-  // [bodyKey, label, exactLength]
-  const rules: Array<[string, string, number]> = [
-    ["buildingNo", "Building No.", 4],
-    ["buildingNoA", "Building No. (Arabic)", 4],
-    ["postalCode", "Postal Code", 5],
-    ["postalCodeA", "Postal Code (Arabic)", 5],
-    ["additionalNo", "Additional No.", 4],
-    ["additionalNoA", "Additional No. (Arabic)", 4],
-  ];
+  // Saudi national-address / VAT rules apply only to Saudi customers.
+  // If countryId isn't sent (partial update), it falls back to "SA".
+  const isSaudi = (body.countryId ?? "SA") === "SA";
 
-  for (const [key, label, len] of rules) {
-    if (!isBlank(body[key]) && !digitsOnly(body[key], len)) {
-      return `'${label}' should be exactly ${len} digits`;
+  if (isSaudi) {
+    // [bodyKey, label, exactLength]
+    const rules: Array<[string, string, number]> = [
+      ["buildingNo", "Building No.", 4],
+      ["buildingNoA", "Building No. (Arabic)", 4],
+      ["postalCode", "Postal Code", 5],
+      ["postalCodeA", "Postal Code (Arabic)", 5],
+      ["additionalNo", "Additional No.", 4],
+      ["additionalNoA", "Additional No. (Arabic)", 4],
+    ];
+
+    for (const [key, label, len] of rules) {
+      if (!isBlank(body[key]) && !digitsOnly(body[key], len)) {
+        return `'${label}' should be exactly ${len} digits`;
+      }
+    }
+
+    // VAT No. length must be 15 (when entered)
+    for (const [key, label] of [
+      ["vatNo", "VAT No."],
+      ["vatNoA", "VAT No. (Arabic)"],
+    ] as const) {
+      if (
+        !isBlank(body[key]) &&
+        toEnglishDigits(body[key]).trim().length !== 15
+      ) {
+        return `Length of '${label}' should be 15`;
+      }
     }
   }
 
-  // VB: VAT No. length must be 15 (when entered)
-  for (const [key, label] of [
-    ["vatNo", "VAT No."],
-    ["vatNoA", "VAT No. (Arabic)"],
-  ] as const) {
-    if (!isBlank(body[key]) && String(body[key]).trim().length !== 15) {
-      return `Length of '${label}' should be 15`;
-    }
-  }
-
-  // VB: e-mails separated with ';'
+  // e-mails separated with ';' (applies to every country)
   if (!isBlank(body.email)) {
     const emailRe = /^[^\s@;]+@[^\s@;]+\.[^\s@;]+$/;
     const bad = String(body.email)
@@ -93,8 +107,8 @@ export const customerNameExists = async (
   let sql = `SELECT COUNT(fcsaccountid)::int AS cnt
                FROM dbo.tblaccountcs
               WHERE fcoid = $1
-                AND faccountname = $2
-                AND fcs = $3`; // fcs = fCSAccountType (see getCustomer mapping)
+                AND fcsaccountname = $2
+                AND fcs = $3`;
   if (excludeCsAccountId) {
     params.push(excludeCsAccountId);
     sql += ` AND fcsaccountid <> $4`;
