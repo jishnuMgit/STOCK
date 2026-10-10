@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from "react";
+import React, { useCallback, useEffect, useRef, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";
 import dayjs from "dayjs";
@@ -41,6 +41,9 @@ type UserAuditRow = {
 // report is printed - on A4 landscape, about 30 rows to a page, the table
 // heading repeated on every page, and a row never split between two pages.
 //
+// On the screen the report is kept out of sight (the browser still prints it):
+// you go from the dialog straight to the print window.
+//
 // The company name, the title and the info line sit in the table's repeating
 // head, so they are printed at the top of every page.
 //
@@ -52,6 +55,14 @@ type UserAuditRow = {
 // margin there is nowhere for "Page x of y".
 const printCss = `
 .print-spacer { display: none; }
+@media screen {
+  #userAuditReport {
+    position: absolute;
+    left: -10000px;
+    top: 0;
+    width: 1100px;
+  }
+}
 @page {
   size: A4 landscape;
   margin: 0;
@@ -119,6 +130,7 @@ const UserAuditPrintPage: React.FC = () => {
 
   // the browser's print window opens by itself once, when the report is ready
   const autoPrintedRef = useRef(false);
+  const returnedRef = useRef(false);
   const printTimerRef = useRef<number | undefined>(undefined);
 
   // ============================================================
@@ -148,6 +160,7 @@ const UserAuditPrintPage: React.FC = () => {
 
         if (!PstrCoID) {
           setErrorMessage("Company ID not found. Please log in again.");
+          toast.error("Company ID not found. Please log in again.");
           return;
         }
 
@@ -209,27 +222,44 @@ const UserAuditPrintPage: React.FC = () => {
   }, [loading, errorMessage, rows.length]);
 
   // ============================================================
-  // AFTER THE PRINT WINDOW CLOSES (Print / Save as PDF, or Cancel) go straight
-  // back to the dialog, with what was picked still filled in - this page is only
-  // a stop on the way. Opened straight from the address (nothing to go back
-  // to), it replaces itself with the dialog instead.
+  // BACK TO THE DIALOG, with what was picked still filled in - this page is only
+  // a stop on the way. Once only (the page loads twice in development). Opened
+  // straight from the address (nothing to go back to), it replaces itself with
+  // the dialog instead.
   // ============================================================
 
-  useEffect(() => {
-    const handleAfterPrint = () => {
-      const canGoBack = (window.history.state?.idx ?? 0) > 0;
+  const goBackToDialog = useCallback(() => {
+    if (returnedRef.current) return;
+    returnedRef.current = true;
 
-      if (canGoBack) {
-        navigate(-1);
-      } else {
-        navigate("/Security/UserAudit", { replace: true, state: picked });
-      }
-    };
+    const canGoBack = (window.history.state?.idx ?? 0) > 0;
 
-    window.addEventListener("afterprint", handleAfterPrint);
-
-    return () => window.removeEventListener("afterprint", handleAfterPrint);
+    if (canGoBack) {
+      navigate(-1);
+    } else {
+      navigate("/Security/UserAudit", { replace: true, state: picked });
+    }
   }, [navigate, picked]);
+
+  // after the print window closes (Print / Save as PDF, or Cancel)
+  useEffect(() => {
+    window.addEventListener("afterprint", goBackToDialog);
+
+    return () => window.removeEventListener("afterprint", goBackToDialog);
+  }, [goBackToDialog]);
+
+  // nothing to print (the report could not be loaded, or has no rows): the
+  // message is already a toast - go back to the dialog, it is shown there
+  useEffect(() => {
+    if (loading) return;
+
+    if (errorMessage !== "") {
+      goBackToDialog();
+    } else if (picked !== null && rows.length === 0) {
+      toast.info("No audit rows for this selection.");
+      goBackToDialog();
+    }
+  }, [loading, errorMessage, rows.length, picked, goBackToDialog]);
 
   // leaving the page before the window opened: cancel it
   useEffect(() => () => window.clearTimeout(printTimerRef.current), []);
@@ -258,8 +288,23 @@ const UserAuditPrintPage: React.FC = () => {
     <div className="min-h-full w-full bg-[#f3f4f6] py-[16px] flex flex-col items-center gap-[12px]">
       <style>{printCss}</style>
 
+      {/* a short message while the report is made ready; the print window
+          opens by itself after it */}
+
+      {(loading || (errorMessage === "" && rows.length > 0)) && (
+        <div className="no-print py-[40px] text-center text-[14px] text-gray-500">
+          Preparing the print...
+        </div>
+      )}
+
+      {!loading && errorMessage !== "" && (
+        <div className="no-print py-[40px] text-center text-[14px] text-red-600">
+          {errorMessage}
+        </div>
+      )}
+
       {/* ====================================================
-          THE REPORT
+          THE REPORT - out of sight on the screen, printed by the browser
       ==================================================== */}
 
       <div
@@ -267,19 +312,7 @@ const UserAuditPrintPage: React.FC = () => {
         className="w-full max-w-[1100px] border border-[#d1d5db] bg-white p-[20px]"
         style={{ fontFamily: '"Times New Roman", Times, serif' }}
       >
-        {loading && (
-          <div className="py-[40px] text-center text-[14px] text-gray-500">
-            Loading the user audit...
-          </div>
-        )}
-
-        {!loading && errorMessage !== "" && (
-          <div className="py-[40px] text-center text-[14px] text-red-600">
-            {errorMessage}
-          </div>
-        )}
-
-        {!loading && errorMessage === "" && (
+        {!loading && errorMessage === "" && rows.length > 0 && (
           <>
             <table className="w-full table-fixed border-collapse">
               <colgroup>
