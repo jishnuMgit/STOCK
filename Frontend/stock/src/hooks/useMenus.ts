@@ -45,9 +45,18 @@ async function fetchMenuRows(): Promise<MenuRow[]> {
   return data.data ?? [];
 }
 
-export const useMenus = () => {
+/* =========================================================
+   HOOK
+
+   enabled = false  -> no request is made (e.g. nobody is
+                       logged in yet), no error is logged.
+   Nothing is stored under PstrCoID -> the same: no request,
+   no error. The menu simply stays empty until login.
+========================================================= */
+
+export const useMenus = (enabled = true) => {
   const [menus, setMenus] = useState<MenuRow[]>([]);
-  const [loading, setLoading] = useState(true); // true by default: we always fetch on mount
+  const [loading, setLoading] = useState(true); // true by default: we always try to fetch on mount
   const [error, setError] = useState("");
 
   /* =====================================================
@@ -78,16 +87,28 @@ export const useMenus = () => {
   }, []);
 
   /* =====================================================
-     FETCH ON MOUNT
+     FETCH ON MOUNT (and when `enabled` changes)
 
      No setState call is made synchronously in the effect
-     body — `loading` already starts `true`, and every
-     update below runs inside a .then()/.catch()/.finally()
-     callback once the fetch resolves.
+     body — every update runs inside a .then()/.catch()/
+     .finally() callback.
   ===================================================== */
 
   useEffect(() => {
     let cancelled = false;
+
+    // not logged in (yet): skip the request quietly
+    if (!enabled || !localStorage.getItem("PstrCoID")) {
+      Promise.resolve().then(() => {
+        if (!cancelled) {
+          setLoading(false);
+        }
+      });
+
+      return () => {
+        cancelled = true;
+      };
+    }
 
     fetchMenuRows()
       .then((rows) => {
@@ -111,7 +132,7 @@ export const useMenus = () => {
     return () => {
       cancelled = true;
     };
-  }, []);
+  }, [enabled]);
 
   return { menus, loading, error, refetch };
 };
