@@ -87,9 +87,9 @@ async function fetchStaffRows(
 }
 
 /* =========================================================
-   HAVE TRANS (dbo.sp_havetrans) - "is this staff member already used?"
+   HAVE TRANS (dbo.havetrans) - "is this staff member already used?"
    The tables it looks in are not written here: they come from the rule
-   rows of fSearchKey 'fStaffID' in dbo.tblstocksetupdeletion.
+   rows of fSearchKey 'fStaffID' in the setup deletion tables (dbo.tblstocksetupdeletion / dbo.tblfinsetupdeletion).
 ========================================================= */
 
 export async function haveStaffTransService(
@@ -97,7 +97,7 @@ export async function haveStaffTransService(
   txtStaffID: string
 ): Promise<boolean> {
   const result = await pool.query(
-    `SELECT dbo.sp_havetrans($1, 'fStaffID', $2) AS "haveTrans"`,
+    `SELECT dbo.havetrans($1, 'fStaffID', $2) AS "haveTrans"`,
     [PstrCoID, txtStaffID]
   );
 

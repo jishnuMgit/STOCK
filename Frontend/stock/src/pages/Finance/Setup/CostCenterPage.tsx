@@ -1,7 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { toast } from "react-toastify";
 import { useEnterAsTab } from "../../../hooks/useEnterAsTab";
-import { useAltShortcuts } from "../../../hooks/useAltShortcuts";
 import { useButtonPermissions } from "../../../hooks/useButtonPermissions";
 
 // ============================================================
@@ -217,7 +216,7 @@ const CostCenterPage: React.FC = () => {
       setUsedIds((previous) => ({ ...previous, [id]: !!data.used }));
       return !!data.used;
     } catch {
-      toast.error("Could not check the transactions");
+      toast.error("Could not check the transactions.");
       return true;
     }
   };
@@ -544,17 +543,64 @@ const CostCenterPage: React.FC = () => {
   //   focusCell("txtCCName", index);
   // };
 
-  // Alt+S -> Save (nothing saved yet), Alt+M -> Modify (saved ones exist),
-  // Alt+F -> Find, Alt+C -> Clear (the underlined letters on the buttons)
-  useAltShortcuts({
-    s: () => {
-      if (!hasSaved) handleSave();
-    },
-    m: () => {
-      if (hasSaved) handleSave();
-    },
-    // f: openFind,
-    c: handleClear,
+  // ============================================================
+  // KEYBOARD SHORTCUTS (page wide)
+  //  Alt+S  Save    (only when nothing is saved yet)
+  //  Alt+M  Modify  (only when saved cost centers exist)
+  //  Alt+C  Clear
+  //  Ctrl+Delete  delete the selected row (also works when focus is not in a box)
+  // The listener is added once; the ref always holds the latest handlers,
+  // so it never uses old rows / permissions.
+  // ============================================================
+
+  // No dependency array on purpose: the listener is re-attached after every
+  // render, so it always sees the latest rows / permissions / handlers
+  // (and no ref is read or written during render).
+  useEffect(() => {
+    const onKeyDown = (event: KeyboardEvent) => {
+      // Alt + letter (event.code also works on Mac, where Option+S types "ß")
+      if (event.altKey && !event.ctrlKey && !event.metaKey) {
+        if (event.code === "KeyS" || event.code === "KeyM") {
+          event.preventDefault();
+
+          const wantsModify = event.code === "KeyM";
+
+          // Alt+S only when nothing is saved, Alt+M only when saved ones exist
+          if (wantsModify !== hasSaved) return;
+          if (!canSaveOrModify || saving) return;
+
+          handleSave();
+          return;
+        }
+
+        if (event.code === "KeyC") {
+          event.preventDefault();
+          handleClear();
+          return;
+        }
+
+        // Alt+F -> Find (turn on together with the Find code above)
+        // if (event.code === "KeyF") {
+        //   event.preventDefault();
+        //   openFind();
+        //   return;
+        // }
+      }
+
+      // Ctrl + Delete when focus is NOT in a box (inside a box the cell
+      // handler already does it, so skip it here to avoid deleting twice)
+      if (
+        event.ctrlKey &&
+        event.key === "Delete" &&
+        !(event.target instanceof HTMLInputElement)
+      ) {
+        event.preventDefault();
+        deleteRow(selectedRow);
+      }
+    };
+
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
   });
 
   // Enter on a BUTTON presses it (the old form's behaviour: Enter on an empty
@@ -609,7 +655,7 @@ const CostCenterPage: React.FC = () => {
             <div className="h-full overflow-y-auto overflow-x-hidden">
               <table className="w-full table-fixed border-collapse text-[12px]">
                 <colgroup>
-                  <col className="w-[52px]" />
+                  <col className="w-[42px]" />
                   <col className="w-[100px]" />
                   <col />
                   <col className="w-[110px]" />
@@ -701,7 +747,7 @@ const CostCenterPage: React.FC = () => {
                           name="txtCCName"
                           type="text"
                           value={row.txtCCName}
-                          maxLength={80}
+                          maxLength={20}
                           autoComplete="off"
                           onFocus={() => setSelectedRow(index)}
                           onBlur={() => handleBlur(index, "txtCCName")}

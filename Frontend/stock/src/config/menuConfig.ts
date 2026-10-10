@@ -86,6 +86,12 @@ Sales-SETUP
 =============================================================*/
 
   mnuItemEnquiry:"/Sales/Setup/ItemEnquiry",
+  "mnuRptStock Value": "/Sales/Reports/StockValue",
+
+/*============================================================
+Sales-REPORT
+=============================================================*/
+  mnuRptStock:"/Sales/Report/RptStock",
 
 
 
@@ -111,9 +117,18 @@ Sales-SETUP
   /* =========================================================
      FINANCE - REPORTS
   ========================================================= */
+ // FINANCE - REPORTS - A/R & A/P
 
   mnuRptSOA: "/Finance/Reports/rptSOA",
+
+  // FINANCE - REPORTS - GENERAL LEDGER
+  
   mnuRptGL:"/Finance/Reports/rptGL",
+
+
+  // FINANCE - REPORTS - FINAL ACCOUNTS
+
+  mnuRptTB:"/Finance/Reports/rptTB",
 
 
 

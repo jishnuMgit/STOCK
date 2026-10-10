@@ -21,7 +21,8 @@ export type ButtonCode = "S" | "M" | "D" | "P" | "T" | "N" | "E";
 export interface RightsUser {
   userId: string;
   userType: string;
-  companyId: string;
+  // the session middleware calls it CoID (it was companyId before)
+  CoID: string;
 }
 
 export async function hasButtonRight(
@@ -46,7 +47,7 @@ export async function hasButtonRight(
       AND fcoid = $2
       AND fmenuid = $3
     `,
-    [user.userId, user.companyId, menuId]
+    [user.userId, user.CoID, menuId]
   );
 
   return String(result.rows[0]?.fuserbuttons ?? "").includes(code);

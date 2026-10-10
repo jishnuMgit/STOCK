@@ -277,30 +277,29 @@ export const getCustomer = async (req: AuthenticatedRequest, res: Response) => {
       csAccountTypeDet: r.fcsdet,
       gAccountId: r.fgaccountid,
       csAccountId: r.fcsaccountid,
-      accountName: r.faccountname,
-      accountNameA: r.faccountname_a,
-      legalName: r.fleagalaccountname,
-      legalNameA: r.fleagalaccountname_a,
+
+      // names
+      accountName: r.fcsaccountname,
+      accountNameA: r.faccountname_ar,
+      legalName: r.fcsaccountname_leagal,
+      legalNameA: r.fleagalaccountname_ar,
+      shortName: r.fcsaccountname_short,
+
       vatNo: r.fvatno,
-      vatNoA: r.fvatno_a,
+      vatNoA: r.fvatno_ar,
       contact: r.fcontact,
       phone: r.fphone,
       email: r.femail,
-      transType: r.ftranstype,
-      invMethod: r.finvmethod,
-      rcnMethod: r.frcnmethod,
-      businessTypeId: r.fbussinesstypeid,
+      businessTypeId: r.fbussinesstype,
       brId: r.fbrid,
       creditLimit: r.fcreditlimit,
       creditDays: r.fcreditdays,
-      gdsCustomerId: r.fgdscustomerid,
       ctaCardType: r.fctacardtype,
       ctaCardNo: r.fctacardno,
       ctaExpiry: r.fctaexpiry,
-      serviceChargePolicy: r.fservicechargepolicy,
-      calcVatOnDomCanXchg: r.fcalcvatondomcanxchg,
       exclFromAgeing: r.fexcludefromageing,
-      custProfitPer: r.fcustprofitper,
+
+      // English address
       buildingNo: r.fbuildingno,
       streetName: r.fstreetname,
       district: r.fdistrict,
@@ -309,20 +308,20 @@ export const getCustomer = async (req: AuthenticatedRequest, res: Response) => {
       postalCode: r.fpostalcode,
       additionalNo: r.fadditionalno,
       crNo: r.fcrno,
-      buildingNoA: r.fbuildingno_a,
+
+      // Arabic address
+      buildingNoA: r.fbuildingno_ar,
       streetNameA: r.fstreetname_a,
-      districtA: r.fdistrict_a,
-      cityA: r.fcity_a,
-      countryIdA: r.fcountryid_a,
-      postalCodeA: r.fpostalcode_a,
-      additionalNoA: r.fadditionalno_a,
-      crNoA: r.fcrno_a,
+      districtA: r.fdistrict_ar,
+      cityA: r.fcity_ar,
+      countryIdA: r.fcountryid_ar,
+      postalCodeA: r.fpostalcode_ar,
+      additionalNoA: r.fadditionalno_ar,
+      crNoA: r.fcrno_ar,
+
       haveDivision: r.fhavedivision,
       status: r.fstatus,
       interCompany: r.fintercompany,
-      doNotRound: r.fdonotround,
-      shortName: r.fshortname,
-      csAccountCategoryId: r.fcsaccountcategoryid,
     };
 
     return res.status(200).json({ success: true, data });
@@ -530,9 +529,7 @@ export const getStaffs = async (req: AuthenticatedRequest, res: Response) => {
         .json({ success: false, message: "Company not found in session" });
     }
 
-    const result = await pool.query("SELECT * FROM dbo.getstaffs($1)", [
-      CoID,
-    ]);
+    const result = await pool.query("SELECT * FROM dbo.getstaffs($1)", [CoID]);
 
     const data = result.rows.map((r) => ({
       staffId: r.fstaffid,

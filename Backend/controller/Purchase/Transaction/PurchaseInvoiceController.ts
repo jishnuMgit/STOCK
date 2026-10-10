@@ -108,7 +108,7 @@ export const getPurchaseInvoice = async (
   res: Response,
 ): Promise<Response> => {
   try {
-    const coId = req.user?.companyId;
+    const coId = req.user?.CoID;
     const { year, brId, docNo } = req.query as Record<string, string>;
 
     if (!coId || !year || !brId || !docNo) {
@@ -166,7 +166,7 @@ export const savePurchaseInvoice = async (
   const client = await pool.connect();
 
   try {
-    const coId = req.user?.companyId;
+    const coId = req.user?.CoID;
     const userId = req.user?.userId;
 
     const {
@@ -401,7 +401,7 @@ export const deletePurchaseInvoice = async (
   res: Response,
 ): Promise<Response> => {
   try {
-    const coId = req.user?.companyId;
+    const coId = req.user?.CoID;
     const userId = req.user?.userId;
     const { year, brId, docNo } = req.query as Record<string, string>;
 
@@ -438,7 +438,7 @@ export const getCashSuppliers = async (
   res: Response,
 ): Promise<Response> => {
   try {
-    const coId = req.user?.companyId;
+    const coId = req.user?.CoID;
     if (!coId)
       return res
         .status(401)
@@ -469,7 +469,7 @@ export const getNextCashSupplierId = async (
   res: Response,
 ): Promise<Response> => {
   try {
-    const coId = req.user?.companyId;
+    const coId = req.user?.CoID;
     if (!coId)
       return res
         .status(401)
@@ -497,7 +497,7 @@ export const getCashSupplier = async (
   res: Response,
 ): Promise<Response> => {
   try {
-    const coId = req.user?.companyId;
+    const coId = req.user?.CoID;
     const { id } = req.params;
     if (!coId || !id)
       return res
@@ -533,7 +533,7 @@ export const saveCashSupplier = async (
   res: Response,
 ): Promise<Response> => {
   try {
-    const coId = req.user?.companyId;
+    const coId = req.user?.CoID;
     const userId = req.user?.userId;
 
     const { mode, cashSupplierId, cashSupplierName, vatNo } = req.body as {
@@ -600,7 +600,7 @@ export const deleteCashSupplier = async (
   res: Response,
 ): Promise<Response> => {
   try {
-    const coId = req.user?.companyId;
+    const coId = req.user?.CoID;
     const userId = req.user?.userId;
     const { id } = req.params;
     if (!coId || !userId || !id)
