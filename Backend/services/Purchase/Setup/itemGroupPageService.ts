@@ -125,9 +125,9 @@ export async function saveItemGroupPageService(
 }
 
 /* =========================================================
-   HAVE TRANS (dbo.sp_havetrans) - "is this item group already used?"
+   HAVE TRANS (dbo.havetrans) - "is this item group already used?"
    The table it looks in is not written here: it comes from the rule row of
-   fSearchKey 'fItemGroupID' in dbo.tblstocksetupdeletion
+   fSearchKey 'fItemGroupID' in the setup deletion tables (dbo.tblstocksetupdeletion / dbo.tblfinsetupdeletion)
    (tblitemhd.fitemgroupid).
 ========================================================= */
 
@@ -137,7 +137,7 @@ export async function haveItemGroupTransService(
 ): Promise<boolean> {
   try {
     const result = await pool.query(
-      `SELECT dbo.sp_havetrans($1, 'fItemGroupID', $2) AS "haveTrans"`,
+      `SELECT dbo.havetrans($1, 'fItemGroupID', $2) AS "haveTrans"`,
       [PstrCoID, txtItemGroupID]
     );
 
@@ -149,7 +149,7 @@ export async function haveItemGroupTransService(
 
     if (code === "42P01" || code === "42703") {
       throw new Error(
-        "The 'already used' check for item groups is not set up correctly (rule 'fItemGroupID' in tblstocksetupdeletion). Please contact the administrator."
+        "The 'already used' check for item groups is not set up correctly (rule 'fItemGroupID' in the setup deletion tables). Please contact the administrator."
       );
     }
 
