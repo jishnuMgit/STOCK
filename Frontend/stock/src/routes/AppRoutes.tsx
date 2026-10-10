@@ -37,6 +37,7 @@ import RptGLPage from "../pages/Finance/Report/GeneralLedger/RptGLPage";
 import MatchingPage from "../pages/Finance/Transaction/Match/MatchPage";
 import UnMatchPage from "../pages/Finance/Transaction/MatchReversal/MatchReversalPage";
 import CostCenterPage from "../pages/Finance/Setup/CostCenterPage";
+import MatchEnquiryPage from "../pages/Finance/Transaction/MatchEnquiry/MatchEnquiryPage";
 
 const Login = lazy(() => import("../pages/Auth/LoginPage"));
 const ReceiptPage = lazy(
@@ -253,6 +254,7 @@ const AppRoutes = () => {
          <Route path="/dev/matchpage" element={<MatchingPage/>}/>
   
         <Route path="/dev/unmatchpage" element={<UnMatchPage/>}/>
+        <Route path="/dev/MatchEnquiryPage" element={<MatchEnquiryPage/>}/>
 
 
           {/* Unknown URL -> back to "/" ("/" has its own element, so no loop) */}
