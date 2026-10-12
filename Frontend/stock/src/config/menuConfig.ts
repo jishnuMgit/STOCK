@@ -131,12 +131,14 @@ mnuInactivateAccount:"/Finance/Setup/InactivateAccount",
   // FINANCE - REPORTS - GENERAL LEDGER
   
   mnuRptGL:"/Finance/Reports/rptGL",
-  mnuRptPL:"/Finance/Reports/RptPL",
+  
 
 
   // FINANCE - REPORTS - FINAL ACCOUNTS
 
   mnuRptTB:"/Finance/Reports/rptTB",
+  mnuRptBS:"/Finance/Reports/RptBS",
+  mnuRptPL:"/Finance/Reports/RptPL",
 
 
 
