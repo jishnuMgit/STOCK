@@ -128,23 +128,23 @@ const generateNextAccountId = async (
     case 2: {
       const dummy = await maxId(
         "LEFT(faccountid, 1) = $2 AND RIGHT(faccountid, 5) = $3",
-        [groupId.slice(0, 1), groupId.slice(-6)],
+        [groupId.slice(0, 1), groupId.slice(-5)],
       );
-      const slNo = val(dummy.substring(1, 2)) + 1; // VB Mid(dummy, 2, 1)
+      const slNo = val(dummy.substring(1, 2)) + 1;
       if (slNo > 9) return "";
-      return dummy.slice(0, 1) + String(slNo) + dummy.slice(-6);
+      return groupId.slice(0, 1) + String(slNo) + groupId.slice(-5);
     }
 
     // first 2 chars + 2 digit serial + last 4 chars
     case 3: {
       const dummy = await maxId(
         "LEFT(faccountid, 2) = $2 AND RIGHT(faccountid, 3) = $3",
-        [groupId.slice(0, 2), groupId.slice(-4)],
+        [groupId.slice(0, 2), groupId.slice(-3)],
       );
-      const slNo = val(dummy.substring(2, 4)) + 1; // VB Mid(dummy, 3, 2)
+      const slNo = val(dummy.substring(2, 4)) + 1;
       if (slNo > 99) return "";
       return (
-        dummy.slice(0, 2) + String(slNo).padStart(2, "0") + dummy.slice(-4)
+        groupId.slice(0, 2) + String(slNo).padStart(2, "0") + groupId.slice(-3)
       );
     }
 
@@ -176,39 +176,79 @@ const callApply = async (args: {
   accountLevel: number;
   haveCC: boolean;
   menuName?: string;
-  accountNameA?: string | null; // Arabic name   (ASSUMED param: p_straccountname_a)
-  groupOrHead?: string | null; // G / H / P      (ASSUMED param: p_strgrouporhead)
+  accountNameA?: string | null;
+  groupOrHead?: string | null;
 }) => {
-  const names: string[] = [];
-  const values: unknown[] = [];
-  const add = (param: string, value: unknown) => {
-    values.push(value);
-    names.push(`${param} => $${values.length}`);
-  };
+  const client = await pool.connect();
+  try {
+    await client.query("BEGIN");
 
-  add("strmode", args.mode);
-  add("gstrcoid", args.coId);
-  add("straccountid", args.accountId);
-  add("stroldaccountid", args.oldAccountId);
-  add("straccountname", args.accountName);
-  add("straccountgroupid", args.accountGroupId);
-  add("straccounttypeid", args.accountTypeId);
-  add("intaccountlevel", args.accountLevel);
-  add("blnhavecc", args.haveCC);
-  add("gstruserid", args.userId ?? null);
-  add("strmenuname", args.menuName ?? null);
+    if (args.mode === "S") {
+      await client.query(
+        `INSERT INTO dbo.tblaccount (
+            fcoid, faccountid, faccountname, faccountname_ar,
+            faccountgroupid, faccounttypeid, faccountlevel,
+            fgph, fhavecc, fstatus, fcuserid, fcuserdate
+         )
+        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, true, $10, CURRENT_TIMESTAMP)`,
+        [
+          args.coId,
+          args.accountId,
+          args.accountName,
+          args.accountNameA ?? null,
+          args.accountGroupId,
+          args.accountTypeId,
+          args.accountLevel,
+          args.groupOrHead ?? null,
+          args.haveCC,
+          args.userId ?? null,
+        ],
+      );
+    } else if (args.mode === "M") {
+      await client.query(
+        `UPDATE dbo.tblaccount
+            SET faccountid      = $1,
+                faccountname    = $2,
+                faccountname_ar = $3,
+                fgph            = COALESCE($4, fgph),
+                fhavecc         = $5,
+                fmuserid        = $6,
+                fmuserdate      = CURRENT_TIMESTAMP
+          WHERE fcoid = $7 AND faccountid = $8`,
+        [
+          args.accountId,
+          args.accountName,
+          args.accountNameA ?? null,
+          args.groupOrHead ?? null,
+          args.haveCC,
+          args.userId ?? null,
+          args.coId,
+          args.oldAccountId,
+        ],
+      );
 
-  await pool.query(`CALL ${APPLY_PROC}(${names.join(", ")})`, values);
+      // if the id was renamed, re-point the children to the new id
+      if (args.accountId !== args.oldAccountId) {
+        await client.query(
+          `UPDATE dbo.tblaccount
+              SET faccountgroupid = $1
+            WHERE fcoid = $2 AND faccountgroupid = $3`,
+          [args.accountId, args.coId, args.oldAccountId],
+        );
+      }
+    } else {
+      await client.query(
+        `DELETE FROM dbo.tblaccount WHERE fcoid = $1 AND faccountid = $2`,
+        [args.coId, args.accountId],
+      );
+    }
 
-  // The procedure has no Arabic-name parameter, so save it with a direct update.
-  // (Delete is skipped: the row is already gone.)
-  if (args.mode !== "D" && args.accountNameA != null) {
-    await pool.query(
-      `UPDATE dbo.tblaccount
-          SET faccountname_ar = $1
-        WHERE fcoid = $2 AND faccountid = $3`,
-      [args.accountNameA, args.coId, args.accountId],
-    );
+    await client.query("COMMIT");
+  } catch (err) {
+    await client.query("ROLLBACK");
+    throw err;
+  } finally {
+    client.release();
   }
 };
 
@@ -341,8 +381,8 @@ export const getChartOfAccount = async (
       data: {
         accountId: row.faccountid,
         accountName: row.faccountname,
-        accountNameA: row.faccountname_a ?? "",
-        groupOrHead: row.fgrouporhead ?? "",
+        accountNameA: row.faccountname_ar ?? "",
+        groupOrHead: row.fgph ?? "",
         accountLevel: level,
         accountTypeId,
         haveCC,
