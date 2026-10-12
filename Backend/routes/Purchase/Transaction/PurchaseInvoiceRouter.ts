@@ -11,6 +11,7 @@ import {
   getCashSupplier,
   saveCashSupplier,
   deleteCashSupplier,
+  getNextDocNo,
 } from "../../../controller/Purchase/Transaction/PurchaseInvoiceController.js";
 
 const router = express.Router();
@@ -26,6 +27,7 @@ router.post("/calc-unit-cost", calcUnitCost);
 router.get("/cash-supplier", getCashSuppliers);
 router.get("/cash-supplier/next-id", getNextCashSupplierId); // keep above "/:id"
 router.get("/cash-supplier/:id", getCashSupplier);
+router.get("/next-doc-no", getNextDocNo);
 router.post("/cash-supplier", saveCashSupplier);
 router.delete("/cash-supplier/:id", deleteCashSupplier);
 

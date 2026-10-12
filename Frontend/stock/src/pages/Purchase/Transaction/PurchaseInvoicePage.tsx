@@ -35,6 +35,8 @@ const recalcRow = (row: PurchaseRow, rate: number): PurchaseRow => {
 
 const PurchaseInvoicePage: React.FC = () => {
   const {
+    fetchDefaultBranch,
+    fetchNextDocNo,
     fetchBranches,
     fetchInvoice,
     saveInvoice,
@@ -80,6 +82,39 @@ const PurchaseInvoicePage: React.FC = () => {
       .catch(() => setBranches([]));
   }, [fetchBranches]);
 
+  /* default branch + its next entry no. (only fetches, sets no state) */
+  const getDefaults = useCallback(async () => {
+    try {
+      const brId = await fetchDefaultBranch();
+      if (!brId) return null;
+
+      let docNo = "";
+      try {
+        docNo = await fetchNextDocNo(YEAR, brId);
+      } catch {
+        docNo = "";
+      }
+
+      return { brId, docNo };
+    } catch {
+      return null; // no default branch: leave the form empty
+    }
+  }, [fetchDefaultBranch, fetchNextDocNo]);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    getDefaults().then((d) => {
+      if (d && !cancelled) {
+        setHeader((prev) => ({ ...prev, brId: d.brId, docNo: d.docNo }));
+      }
+    });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [getDefaults]);
+
   /* VB: GetCashSupplier -> fills the Misc. Sup. combos */
   const loadMiscSuppliers = useCallback(async () => {
     try {
@@ -102,8 +137,15 @@ const PurchaseInvoicePage: React.FC = () => {
         const r = num(String(value)) || 1;
         setRows((prev) => prev.map((row) => recalcRow(row, r)));
       }
+
+      // new entry: a different branch has its own entry no.
+      if (field === "brId" && mode === "S" && value) {
+        fetchNextDocNo(YEAR, String(value))
+          .then((docNo) => setHeader((prev) => ({ ...prev, docNo })))
+          .catch(() => undefined);
+      }
     },
-    [],
+    [mode, fetchNextDocNo],
   );
 
   const handleRowChange = useCallback(
@@ -128,13 +170,16 @@ const PurchaseInvoicePage: React.FC = () => {
     [loadMiscSuppliers, handleHeaderChange],
   );
 
-  const handleClear = useCallback(() => {
+  const handleClear = useCallback(async () => {
     setHeader(emptyHeader());
     setRows(createRows());
     setMode("S");
     setMiscMode("No");
     setMessage("");
-  }, []);
+
+    const d = await getDefaults();
+    if (d) setHeader((prev) => ({ ...prev, brId: d.brId, docNo: d.docNo }));
+  }, [getDefaults]);
 
   /* Load an existing invoice when the Entry No. field is left */
   const handleDocNoBlur = useCallback(async () => {
