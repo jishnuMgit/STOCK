@@ -174,16 +174,16 @@ const CustomerSupplierCountryPage: React.FC<CustomerSupplierCountryPageProps> = 
                 <thead className="sticky top-0 z-10">
                   <tr className="bg-[#fafbfc] text-[#405066]">
                     <th className="h-7.5 border border-[#e0e5ea]" />
-                    <th className="h-7.5 border border-[#e0e5ea] px-2 text-left font-normal">
+                    <th className="h-7.5 border border-[#e0e5ea] px-2 text-left font-semibold">
                       ID
                     </th>
-                    <th className="h-7.5 border border-[#e0e5ea] px-2 text-left font-normal">
+                    <th className="h-7.5 border border-[#e0e5ea] px-2 text-left font-semibold">
                       Country
                     </th>
-                    <th className="h-7.5 border border-[#e0e5ea] px-2 text-right font-normal">
+                    <th className="h-7.5 border border-[#e0e5ea] px-2 text-right font-semibold">
                       Country(Arabic)
                     </th>
-                    <th className="h-7.5 border border-[#e0e5ea] px-2 text-right font-normal">
+                    <th className="h-7.5 border border-[#e0e5ea] px-2 text-right font-semibold">
                       Position No.
                     </th>
                   </tr>

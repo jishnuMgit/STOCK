@@ -65,7 +65,7 @@ const selectProps = {
 };
 
 const FieldLabel: React.FC<{ children: React.ReactNode }> = ({ children }) => (
-  <div className="flex h-7.5 items-center justify-end border border-[#e0e5ea] bg-[#fafbfc] pr-3 text-[12px] text-[#405066]">
+  <div className="flex h-7.5 items-center justify-end border border-[#e0e5ea] bg-[#fafbfc] pr-3 text-[14px] ">
     {children}
   </div>
 );

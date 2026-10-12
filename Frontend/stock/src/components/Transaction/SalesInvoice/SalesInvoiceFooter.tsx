@@ -239,21 +239,21 @@ const SalesInvoiceFooter: React.FC = () => {
           id="txtTotalValue1"
           type="text"
           defaultValue="0.000"
-          className={`${inputClass} w-[80px] text-right`}
+          className={`${inputClass} w-[70px] text-right`}
         />
 
         <input
           id="txtTotalValue2"
           type="text"
           defaultValue="0.000"
-          className={`${inputClass} w-[80px] text-right`}
+          className={`${inputClass} w-[70px] text-right`}
         />
 
         <input
           id="txtTotalValue3"
           type="text"
           defaultValue="0.000"
-          className={`${inputClass} w-[100px] text-right`}
+          className={`${inputClass} w-[90px] text-right`}
         />
       </div>
 

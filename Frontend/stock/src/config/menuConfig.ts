@@ -123,10 +123,15 @@ mnuInactivateAccount:"/Finance/Setup/InactivateAccount",
  // FINANCE - REPORTS - A/R & A/P
 
   mnuRptSOA: "/Finance/Reports/rptSOA",
+  mnuRptReceivables:"/Finance/Reports/RptReceivables",
+  mnuRptAgeingDr:"/Finance/Reports/RptAgeingDr",
+  mnuRptPayables:"/Finance/Reports/RptPayables",
+  mnuRptAgeingCr:"/Finance/Reports/RptAgeingCr",
 
   // FINANCE - REPORTS - GENERAL LEDGER
   
   mnuRptGL:"/Finance/Reports/rptGL",
+  mnuRptPL:"/Finance/Reports/RptPL",
 
 
   // FINANCE - REPORTS - FINAL ACCOUNTS

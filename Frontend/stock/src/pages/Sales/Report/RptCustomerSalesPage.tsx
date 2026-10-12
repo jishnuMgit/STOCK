@@ -346,14 +346,14 @@ const RptCustomerSalesPage: React.FC<RptCustomerSalesPageProps> = ({
               {/* Branch */}
               <RadioPanel>
                 <CustomRadio
-                  name="optBranch"
+                  name="rdgBranch"
                   value="One Branch"
                   label="One Branch"
                   checked={branchMode === "One Branch"}
                   onChange={() => setBranchMode("One Branch")}
                 />
                 <CustomRadio
-                  name="optBranch"
+                  name="rdgBranch"
                   value="All Branch"
                   label="All Branch"
                   checked={branchMode === "All Branch"}
@@ -383,14 +383,14 @@ const RptCustomerSalesPage: React.FC<RptCustomerSalesPageProps> = ({
               {/* Customer */}
               <RadioPanel>
                 <CustomRadio
-                  name="optCustomer"
+                  name="rdgCustomer"
                   value="One Customer"
                   label="One Customer"
                   checked={customerMode === "One Customer"}
                   onChange={() => setCustomerMode("One Customer")}
                 />
                 <CustomRadio
-                  name="optCustomer"
+                  name="rdgCustomer"
                   value="All Customer"
                   label="All Customer"
                   checked={customerMode === "All Customer"}
@@ -429,21 +429,21 @@ const RptCustomerSalesPage: React.FC<RptCustomerSalesPageProps> = ({
               {/* Item */}
               <RadioPanel>
                 <CustomRadio
-                  name="optItem"
+                  name="rdgItem"
                   value="One Item"
                   label="One Item"
                   checked={itemMode === "One Item"}
                   onChange={() => setItemMode("One Item")}
                 />
                 <CustomRadio
-                  name="optItem"
+                  name="rdgItem"
                   value="Range Item"
                   label="Range Item"
                   checked={itemMode === "Range Item"}
                   onChange={() => setItemMode("Range Item")}
                 />
                 <CustomRadio
-                  name="optItem"
+                  name="rdgItem"
                   value="All Item"
                   label="All Item"
                   checked={itemMode === "All Item"}
@@ -506,21 +506,21 @@ const RptCustomerSalesPage: React.FC<RptCustomerSalesPageProps> = ({
               {/* Report type + actions */}
               <RadioPanel>
                 <CustomRadio
-                  name="optReportType"
+                  name="rdgReportType"
                   value="Detailed"
                   label="Detailed"
                   checked={reportType === "Detailed"}
                   onChange={() => setReportType("Detailed")}
                 />
                 <CustomRadio
-                  name="optReportType"
+                  name="rdgReportType"
                   value="Summary1"
                   label="Summary1"
                   checked={reportType === "Summary1"}
                   onChange={() => setReportType("Summary1")}
                 />
                 <CustomRadio
-                  name="optReportType"
+                  name="rdgReportType"
                   value="Summary2"
                   label="Summary2"
                   checked={reportType === "Summary2"}

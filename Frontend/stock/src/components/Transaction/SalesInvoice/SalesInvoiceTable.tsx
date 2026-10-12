@@ -70,7 +70,7 @@ const selectStyles: StylesConfig<Option, false> = {
       ? "#eff6ff"
       : "transparent",
     cursor: "pointer",
-    fontSize: 11,
+    fontSize: 13,
 
     "&:hover": {
       border: "none",
@@ -107,7 +107,7 @@ const selectStyles: StylesConfig<Option, false> = {
     margin: 0,
     padding: 0,
     color: "#263449",
-    fontSize: 11,
+    fontSize: 13,
   }),
 
   indicatorsContainer: (base) => ({
@@ -166,14 +166,14 @@ const selectStyles: StylesConfig<Option, false> = {
 // ============================================================
 
 const numberInputClass =
-  "number-no-spinner h-[20px] w-full min-w-0 border-0 bg-transparent px-1 text-right text-[11px] outline-none focus:bg-blue-50";
+  "number-no-spinner h-[20px] w-full min-w-0 border-0 bg-transparent px-1 text-right text-[14px] outline-none focus:bg-blue-50";
 
 // ============================================================
 // TEXT INPUT STYLE
 // ============================================================
 
 const textInputClass =
-  "h-[20px] w-full min-w-0 border-0 bg-transparent px-1 text-[11px] outline-none focus:bg-blue-50";
+  "h-[20px] w-full min-w-0 border-0 bg-transparent px-1 text-[14px] outline-none focus:bg-blue-50";
 
 // ============================================================
 // TABLE
@@ -371,7 +371,7 @@ const SalesInvoiceTable: React.FC = () => {
 
             <col style={{ width: "28px" }} />
 
-            <col style={{ width: "120px" }} />
+            <col style={{ width: "200px" }} />
 
             <col style={{ width: "auto" }} />
 
@@ -379,11 +379,11 @@ const SalesInvoiceTable: React.FC = () => {
 
             <col style={{ width: "58px" }} />
 
-            <col style={{ width: "85px" }} />
+            <col style={{ width: "75px" }} />
 
-            <col style={{ width: "90px" }} />
+            <col style={{ width: "70px" }} />
 
-            <col style={{ width: "90px" }} />
+            <col style={{ width: "70px" }} />
 
             <col style={{ width: "90px" }} />
           </colgroup>

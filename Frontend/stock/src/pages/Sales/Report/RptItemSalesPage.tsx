@@ -346,14 +346,14 @@ const RptItemSalesPage: React.FC<RptItemSalesPageProps> = ({
               {/* Branch */}
               <RadioPanel>
                 <CustomRadio
-                  name="optBranch"
+                  name="rdgBranch"
                   value="One Branch"
                   label="One Branch"
                   checked={branchMode === "One Branch"}
                   onChange={() => setBranchMode("One Branch")}
                 />
                 <CustomRadio
-                  name="optBranch"
+                  name="rdgBranch"
                   value="All Branch"
                   label="All Branch"
                   checked={branchMode === "All Branch"}
@@ -380,7 +380,7 @@ const RptItemSalesPage: React.FC<RptItemSalesPageProps> = ({
               {/* Item */}
               <RadioPanel>
                 <CustomRadio
-                  name="optItem"
+                  name="rdgItem"
                   value="One Item"
                   label="One Item"
                   checked={itemMode === "One Item"}
@@ -388,7 +388,7 @@ const RptItemSalesPage: React.FC<RptItemSalesPageProps> = ({
                 />
                 
                 <CustomRadio
-                  name="optItem"
+                  name="rdgItem"
                   value="All Item"
                   label="All Item"
                   checked={itemMode === "All Item"}
