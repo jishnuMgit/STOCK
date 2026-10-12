@@ -221,6 +221,14 @@ const arabicInputClass = `
   text-right
 `;
 
+// digits only (also converts Arabic-Indic digits), then cut to max length
+const AR_DIGITS = "٠١٢٣٤٥٦٧٨٩";
+const digitsOnly = (value: string, max: number) =>
+  value
+    .replace(/[٠-٩]/g, (d) => String(AR_DIGITS.indexOf(d)))
+    .replace(/\D/g, "")
+    .slice(0, max);
+
 /* =========================================================
    COMPONENT
 ========================================================= */
@@ -448,9 +456,12 @@ const CustomerMiddle: React.FC<CustomerMiddleProps> = ({
                 id="txtBuildingNo"
                 name="txtBuildingNo"
                 type="text"
+                inputMode="numeric"
                 value={txtBuildingNo}
-                maxLength={6}
-                onChange={(e) => setTxtBuildingNo(e.target.value)}
+                maxLength={4}
+                onChange={(e) =>
+                  setTxtBuildingNo(digitsOnly(e.target.value, 4))
+                }
                 className={inputClass}
               />
             </div>
@@ -564,12 +575,15 @@ const CustomerMiddle: React.FC<CustomerMiddleProps> = ({
               </label>
 
               <input
-                maxLength={7}
+                maxLength={5}
+                inputMode="numeric"
                 id="txtPostalCode"
                 name="txtPostalCode"
                 type="text"
                 value={txtPostalCode}
-                onChange={(e) => setTxtPostalCode(e.target.value)}
+                onChange={(e) =>
+                  setTxtPostalCode(digitsOnly(e.target.value, 5))
+                }
                 className={inputClass}
               />
             </div>
@@ -585,12 +599,15 @@ const CustomerMiddle: React.FC<CustomerMiddleProps> = ({
               </label>
 
               <input
-                maxLength={6}
+                maxLength={4}
+                inputMode="numeric"
                 id="txtAdditionalNo"
                 name="txtAdditionalNo"
                 type="text"
                 value={txtAdditionalNo}
-                onChange={(e) => setTxtAdditionalNo(e.target.value)}
+                onChange={(e) =>
+                  setTxtAdditionalNo(digitsOnly(e.target.value, 4))
+                }
                 className={inputClass}
               />
             </div>
@@ -604,11 +621,12 @@ const CustomerMiddle: React.FC<CustomerMiddleProps> = ({
 
               <input
                 maxLength={20}
+                inputMode="numeric"
                 id="txtCRNo"
                 name="txtCRNo"
                 type="text"
                 value={txtCRNo}
-                onChange={(e) => setTxtCRNo(e.target.value)}
+                onChange={(e) => setTxtCRNo(digitsOnly(e.target.value, 20))}
                 className={inputClass}
               />
             </div>
@@ -623,11 +641,12 @@ const CustomerMiddle: React.FC<CustomerMiddleProps> = ({
 
               <input
                 maxLength={15}
+                inputMode="numeric"
                 id="txtVATNo"
                 name="txtVATNo"
                 type="text"
                 value={txtVATNo}
-                onChange={(e) => setTxtVATNo(e.target.value)}
+                onChange={(e) => setTxtVATNo(digitsOnly(e.target.value, 15))}
                 className={inputClass}
               />
             </div>
@@ -703,9 +722,12 @@ const CustomerMiddle: React.FC<CustomerMiddleProps> = ({
                 id="txtBuildingNo_AR"
                 name="txtBuildingNo_AR"
                 type="text"
+                inputMode="numeric"
                 value={txtBuildingNo_AR}
-                onChange={(e) => setTxtBuildingNo_AR(e.target.value)}
-                maxLength={6}
+                onChange={(e) =>
+                  setTxtBuildingNo_AR(digitsOnly(e.target.value, 4))
+                }
+                maxLength={4}
                 dir="rtl"
                 className={arabicInputClass}
               />
