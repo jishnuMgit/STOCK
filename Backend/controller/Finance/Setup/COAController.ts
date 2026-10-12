@@ -128,23 +128,23 @@ const generateNextAccountId = async (
     case 2: {
       const dummy = await maxId(
         "LEFT(faccountid, 1) = $2 AND RIGHT(faccountid, 5) = $3",
-        [groupId.slice(0, 1), groupId.slice(-6)],
+        [groupId.slice(0, 1), groupId.slice(-5)],
       );
-      const slNo = val(dummy.substring(1, 2)) + 1; // VB Mid(dummy, 2, 1)
+      const slNo = val(dummy.substring(1, 2)) + 1;
       if (slNo > 9) return "";
-      return dummy.slice(0, 1) + String(slNo) + dummy.slice(-6);
+      return groupId.slice(0, 1) + String(slNo) + groupId.slice(-5);
     }
 
     // first 2 chars + 2 digit serial + last 4 chars
     case 3: {
       const dummy = await maxId(
         "LEFT(faccountid, 2) = $2 AND RIGHT(faccountid, 3) = $3",
-        [groupId.slice(0, 2), groupId.slice(-4)],
+        [groupId.slice(0, 2), groupId.slice(-3)],
       );
-      const slNo = val(dummy.substring(2, 4)) + 1; // VB Mid(dummy, 3, 2)
+      const slNo = val(dummy.substring(2, 4)) + 1;
       if (slNo > 99) return "";
       return (
-        dummy.slice(0, 2) + String(slNo).padStart(2, "0") + dummy.slice(-4)
+        groupId.slice(0, 2) + String(slNo).padStart(2, "0") + groupId.slice(-3)
       );
     }
 
