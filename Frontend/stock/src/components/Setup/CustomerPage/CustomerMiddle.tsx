@@ -415,6 +415,7 @@ const CustomerMiddle: React.FC<CustomerMiddleProps> = ({
                 onChange={(e) => setTxtCustomerName(e.target.value)}
                 className={inputClass}
                 style={{ width: "100%" }}
+                required
               />
             </div>
 
@@ -438,6 +439,7 @@ const CustomerMiddle: React.FC<CustomerMiddleProps> = ({
                 onChange={(e) => setTxtLegalName(e.target.value)}
                 className={inputClass}
                 style={{ width: "100%" }}
+                required
               />
             </div>
 
@@ -463,6 +465,7 @@ const CustomerMiddle: React.FC<CustomerMiddleProps> = ({
                   setTxtBuildingNo(digitsOnly(e.target.value, 4))
                 }
                 className={inputClass}
+                required
               />
             </div>
 
@@ -485,6 +488,7 @@ const CustomerMiddle: React.FC<CustomerMiddleProps> = ({
                 onChange={(e) => setTxtStreetName(e.target.value)}
                 maxLength={40}
                 className={inputClass}
+                required
               />
             </div>
 
@@ -507,6 +511,7 @@ const CustomerMiddle: React.FC<CustomerMiddleProps> = ({
                 onChange={(e) => setTxtDistrict(e.target.value)}
                 maxLength={40}
                 className={inputClass}
+                required
               />
             </div>
 
@@ -526,6 +531,7 @@ const CustomerMiddle: React.FC<CustomerMiddleProps> = ({
                 value={txtCity}
                 onChange={(e) => setTxtCity(e.target.value)}
                 className={inputClass}
+                required
               />
             </div>
 
@@ -585,6 +591,7 @@ const CustomerMiddle: React.FC<CustomerMiddleProps> = ({
                   setTxtPostalCode(digitsOnly(e.target.value, 5))
                 }
                 className={inputClass}
+                required
               />
             </div>
 
@@ -648,6 +655,7 @@ const CustomerMiddle: React.FC<CustomerMiddleProps> = ({
                 value={txtVATNo}
                 onChange={(e) => setTxtVATNo(digitsOnly(e.target.value, 15))}
                 className={inputClass}
+                required
               />
             </div>
           </div>

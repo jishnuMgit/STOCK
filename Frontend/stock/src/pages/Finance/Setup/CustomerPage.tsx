@@ -4,6 +4,7 @@ import CustomerHeader from "../../../components/Setup/CustomerPage/CustomerHeade
 import CustomerMiddle from "../../../components/Setup/CustomerPage/CustomerMiddle";
 import CustomerFooter from "../../../components/Setup/CustomerPage/CustomerFooter";
 import { useCustomer, type CustomerDetail } from "../../../hooks/useCustomer";
+import { toast } from "react-toastify";
 
 interface CustomerPageProps {
   /** When set, the page opens for this existing customer. */
@@ -197,6 +198,7 @@ const CustomerPage: React.FC<CustomerPageProps> = ({
     setTxtCreditLimit(d.creditLimit == null ? "" : String(d.creditLimit));
     setTxtCreditDays(d.creditDays == null ? "" : String(d.creditDays));
     setTxtShortName(d.shortName ?? "");
+    setLkpStaff(d.staffId ?? "");
     setTxtContact(d.contact ?? "");
     setTxtEMail(d.email ?? "");
     setTxtPhone(d.phone ?? "");
@@ -230,7 +232,7 @@ const CustomerPage: React.FC<CustomerPageProps> = ({
       const match = accounts?.find((a) => a.accountId === detail.gAccountId);
       setLkpGAccountName(match?.accountName ?? "");
     } catch (err) {
-      window.alert(errMsg(err, "Failed to load customer"));
+      toast.error(errMsg(err, "Failed to load customer"));
       onClose?.();
     } finally {
       setLoadingRecord(false);
@@ -296,31 +298,61 @@ const CustomerPage: React.FC<CustomerPageProps> = ({
       PARENT_ACCOUNT_LEVEL,
     );
     if (nextId) setTxtCustomerID(nextId);
-    else window.alert("Failed to get next customer ID");
+    else toast.error("Failed to get next customer ID");
   };
 
   const handleSave = async () => {
     if (saving || isDelete) return;
 
     if (!txtCustomerID.trim()) {
-      window.alert("Customer ID is required");
+      toast.warning("Customer ID is required");
       return;
     }
     if (!txtCustomerName.trim()) {
-      window.alert("Customer Name is required");
+      toast.warning("Customer Name is required");
       return;
     }
     if (!lkpGAccountID) {
-      window.alert("GL Account is required");
+      toast.warning("GL Account is required");
       return;
     }
     if (!chkCustomer && !chkSupplier) {
-      window.alert("Select Customer, Supplier or both");
+      toast.warning("Select Customer, Supplier or both");
       return;
     }
 
     if (txtCustomerID.trim().length > 12) {
-      window.alert("Customer ID cannot be longer than 12 characters");
+      toast.warning("Customer ID cannot be longer than 12 characters");
+      return;
+    }
+
+    // numbers only + max length (also catches old records with bad data)
+    const numericChecks: [string, string, number][] = [
+      ["Building No", txtBuildingNo, 4],
+      ["Postal Code", txtPostalCode, 5],
+      ["Additional No", txtAdditionalNo, 4],
+      ["CR No", txtCRNo, 20],
+      ["VAT No", txtVATNo, 15],
+      ["Building No (AR)", txtBuildingNo_AR, 4],
+      ["Postal Code (AR)", txtPostalCode_AR, 5],
+      ["Additional No (AR)", txtAdditionalNo_AR, 4],
+      ["CR No (AR)", txtCRNo_AR, 20],
+      ["VAT No (AR)", txtVATNo_AR, 15],
+    ];
+
+    for (const [label, value, max] of numericChecks) {
+      if (value && !/^\d+$/.test(value)) {
+        toast.warning(`${label} must contain numbers only`);
+        return;
+      }
+      if (value.length > max) {
+        toast.warning(`${label} cannot be longer than ${max} digits`);
+        return;
+      }
+    }
+
+    if (txtEMail && !/^\S+@\S+\.\S+$/.test(txtEMail)) {
+      toast.warning("Invalid e-mail");
       return;
     }
 
@@ -361,10 +393,10 @@ const CustomerPage: React.FC<CustomerPageProps> = ({
       creditLimit: parseInt(txtCreditLimit, 10) || 0,
       creditDays: parseInt(txtCreditDays, 10) || 0,
       shortName: txtShortName,
+      staffId: lkpStaff || undefined,
       contact: txtContact,
       email: txtEMail,
       phone: txtPhone,
-      // lkpStaff has no matching column in sp_pagecustomer, so it isn't sent
 
       interCompany: chkInterCompany,
       status: chkInactiveCustomer, // ASSUMPTION: fstatus true = inactive
@@ -377,7 +409,7 @@ const CustomerPage: React.FC<CustomerPageProps> = ({
       if (isEdit) await updateCustomer(customerId!, payload);
       else await saveCustomer(payload);
 
-      window.alert(
+      toast.success(
         isEdit
           ? "Customer updated successfully"
           : "Customer saved successfully",
@@ -385,7 +417,7 @@ const CustomerPage: React.FC<CustomerPageProps> = ({
       onSaved?.();
       onClose?.();
     } catch (err) {
-      window.alert(errMsg(err, "Failed to save customer"));
+      toast.error(errMsg(err, "Failed to save customer"));
     } finally {
       setSaving(false);
     }
@@ -399,7 +431,7 @@ const CustomerPage: React.FC<CustomerPageProps> = ({
     if (saving) return;
 
     if (!isEdit) {
-      window.alert("Open an existing customer to delete it");
+      toast.warning("Open an existing customer to delete it");
       return;
     }
     if (!window.confirm(`Delete customer "${txtCustomerName}"?`)) return;
@@ -407,10 +439,11 @@ const CustomerPage: React.FC<CustomerPageProps> = ({
     try {
       setSaving(true);
       await deleteCustomer(customerId!);
+      toast.success("Customer deleted successfully");
       onSaved?.();
       onClose?.();
     } catch (err) {
-      window.alert(errMsg(err, "Failed to delete customer"));
+      toast.error(errMsg(err, "Failed to delete customer"));
     } finally {
       setSaving(false);
     }

@@ -79,6 +79,7 @@ export interface CustomerDetail {
   interCompany?: boolean | null;
   doNotRound?: boolean | null;
   shortName?: string | null;
+   staffId?: string | null;
   csAccountCategoryId?: string | null;
 }
 
