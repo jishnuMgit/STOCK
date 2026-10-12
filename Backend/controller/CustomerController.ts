@@ -221,7 +221,19 @@ const callPageCustomer = async (
     if (value !== undefined && value !== null) add(param, value);
   }
 
-  await pool.query(`CALL dbo.sp_pagecustomer(${args.join(", ")})`, values);
+  // use one connection so the search_path and the CALL run together
+  const client = await pool.connect();
+  try {
+    await client.query("BEGIN");
+    await client.query("SET LOCAL search_path TO dbo, public");
+    await client.query(`CALL dbo.sp_pagecustomer(${args.join(", ")})`, values);
+    await client.query("COMMIT");
+  } catch (err) {
+    await client.query("ROLLBACK");
+    throw err;
+  } finally {
+    client.release();
+  }
 };
 
 // Pulls the session values. ADJUST to match your authMiddleware.
