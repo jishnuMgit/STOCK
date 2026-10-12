@@ -84,7 +84,7 @@ const selectStyles: StylesConfig<Option, false> = {
 
     cursor: "pointer",
 
-    fontSize: 11,
+    fontSize: 14,
 
     "&:hover": {
       borderColor: "#94a3b8",
@@ -108,7 +108,7 @@ const selectStyles: StylesConfig<Option, false> = {
 
     color: "#202020",
 
-    fontSize: 11,
+    fontSize: 14,
 
     margin: 0,
 
@@ -124,7 +124,7 @@ const selectStyles: StylesConfig<Option, false> = {
 
     color: "#64748b",
 
-    fontSize: 11,
+    fontSize: 14,
 
     margin: 0,
   }),
@@ -136,7 +136,7 @@ const selectStyles: StylesConfig<Option, false> = {
 
     padding: 0,
 
-    fontSize: 11,
+    fontSize: 14,
   }),
 
   indicatorsContainer: (base) => ({
@@ -168,7 +168,7 @@ const selectStyles: StylesConfig<Option, false> = {
 
     zIndex: 999999,
 
-    fontSize: 11,
+    fontSize: 14,
 
     marginTop: 1,
   }),
@@ -186,7 +186,7 @@ const selectStyles: StylesConfig<Option, false> = {
 
     padding: "5px 7px",
 
-    fontSize: 11,
+    fontSize: 14,
 
     color: "#202020",
 
@@ -206,7 +206,7 @@ const selectStyles: StylesConfig<Option, false> = {
 // ============================================================
 
 const inputClass =
-  "h-[30px] border border-[#cbd5e1] rounded-[4px] bg-white px-1 text-[11px] text-[#202020] outline-none focus:border-blue-400 focus:bg-blue-50";
+  "h-[30px] border border-[#cbd5e1] rounded-[4px] bg-white px-1 text-[14px] text-[#202020] outline-none focus:border-blue-400 focus:bg-blue-50";
 
 // ============================================================
 // COMPONENT
@@ -368,7 +368,7 @@ const SalesInvoiceHeader: React.FC = () => {
                 CUSTOMER
             ------------------------------------------------ */}
 
-            <div className="mb-[15px] flex h-[30px] items-center gap-2">
+            <div className="mb-[15px] flex h-[30px] items-center gap-2  w-[800px] min-w-[600]">
 
               <label
                 className="
@@ -385,7 +385,7 @@ const SalesInvoiceHeader: React.FC = () => {
 
               {/* Customer ID */}
 
-              <div className="w-[100px]">
+              <div className="w-[140px]">
 
                 <Select<Option, false>
                   inputId="lkpCustomerID"
@@ -408,7 +408,7 @@ const SalesInvoiceHeader: React.FC = () => {
 
               {/* Customer Name */}
 
-              <div className="ml-[3px] w-[365px]">
+              <div className="-ml-[5px] w-[470px] min-w-[300px]">
 
                 <Select<Option, false>
                   inputId="lkpCustomerName"
@@ -447,14 +447,14 @@ const SalesInvoiceHeader: React.FC = () => {
                   whitespace-nowrap
                 "
               >
-                SQ. No :
+                S.Qtn. No :
               </label>
 
               <input
-                id="txtSQNo"
+                id="txtSQtnNo"
                 type="text"
                 autoComplete="off"
-                className={`${inputClass} w-[220px]`}
+                className={`input-style w-[220px]`}
               />
 
             </div>
@@ -491,7 +491,7 @@ const SalesInvoiceHeader: React.FC = () => {
                 type="text"
                 defaultValue="OC3"
                 autoComplete="off"
-                className={`${inputClass} ml-[7px] w-[160px]`}
+                className={`input-style ml-[7px] w-[160px]`}
               />
 
               <label
@@ -746,7 +746,7 @@ const SalesInvoiceHeader: React.FC = () => {
                 id="txtReference"
                 type="text"
                 autoComplete="off"
-                className={`${inputClass} ml-[7px] w-[360px]`}
+                className={`input-style ml-[7px] w-[360px]`}
               />
 
             </div>

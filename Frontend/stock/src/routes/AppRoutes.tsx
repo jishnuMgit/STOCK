@@ -42,6 +42,17 @@ import MatchEnquiryPage from "../pages/Finance/Transaction/MatchEnquiry/MatchEnq
 import RptTBPage from "../pages/Finance/Report/FinalAccounts/TrialBalance/RptRBPage";
 import RptStockPage from "../pages/Sales/Report/RptStockPage";
 import RptStockValuePage from "../pages/Sales/Report/RptSVPage";
+import RptCustomerSalesPage from "../pages/Sales/Report/RptCustomerSalesPage";
+import RptItemSalesPage from "../pages/Sales/Report/RptItemSalesPage";
+import CustomerSupplierCountryPage from "../pages/Finance/Setup/CustomerSupplierCountryPage";
+import InactivateAccountPage from "../pages/Finance/Setup/InactivateAccountPage";
+import CurrencyPage from "../pages/Purchase/Setup/CurrencyPage";
+import RptReceivablesPage from "../pages/Finance/Report/A-R_and_A-P/Receivables/RptReceivablesPage";
+import RptAgeingReceivablesPage from "../pages/Finance/Report/A-R_and_A-P/AgeingOfReceivables/AgeingOfReceivablesPage";
+import RptPayablesPage from "../pages/Finance/Report/A-R_and_A-P/Payables/RptPayablesPage";
+import RptAgeingOfPayablesPage from "../pages/Finance/Report/A-R_and_A-P/AgeingOfPayables/RptAgeingOfPayablesPage";
+import RptPLPage from "../pages/Finance/Report/FinalAccounts/ProfitLoss/RptPLPage";
+
 
 const Login = lazy(() => import("../pages/Auth/LoginPage"));
 const ReceiptPage = lazy(
@@ -98,183 +109,104 @@ const AppRoutes = () => {
           <Route path="/" element={<Home />} />
 
           {/* ================= FINANCE - TRANSACTION ================= */}
-          <Route
-            path="/Finance/Transaction/Receipt"
-            element={<ReceiptPage />}
-          />
-          <Route
-            path="/Finance/Transaction/journal"
-            element={<Journalpage />}
-          />
-          <Route
-            path="/Finance/Transaction/Transaction-matching"
-            element={<Matching />}
-          />
-          <Route
-            path="/Finance/Transaction/Transaction-unmatching"
-            element={<UnMatch />}
-          />
-          <Route
-            path="/Finance/Transaction/BeginningBalance"
-            element={<BeginningBalance />}
-          />
+          
+          <Route path="/Finance/Transaction/Receipt"  element={<ReceiptPage />}  />
+          <Route  path="/Finance/Transaction/journal"  element={<Journalpage />} />
+          <Route  path="/Finance/Transaction/Transaction-matching"  element={<Matching />}/>
+          <Route  path="/Finance/Transaction/Transaction-unmatching"   element={<UnMatch />}  />
+          <Route  path="/Finance/Transaction/BeginningBalance" element={<BeginningBalance />} />
 
           {/* ================= FINANCE - SETUP ================= */}
-          <Route
-            path="/Finance/Setup/CustomerPage"
-            element={<CustomerList />}
-          />
-          <Route
-            path="/Finance/Setup/Add/Customer"
-            element={<CustomerPage />}
-          />
-          <Route
-            path="/Finance/Setup/ChartOfAccountList"
-            element={<ChartOfAccountList />}
-          />
-          <Route
-          path="/Finance/Setup/CostCenter"
-          element={<CostCenterPage/>}
-          />
+
+          <Route path="/Finance/Setup/CustomerPage" element={<CustomerList />} />
+          <Route  path="/Finance/Setup/Add/Customer" element={<CustomerPage />} />
+          <Route  path="/Finance/Setup/ChartOfAccountList" element={<ChartOfAccountList />} />
+          <Route path="/Finance/Setup/CostCenter" element={<CostCenterPage/>} />
+          <Route path="/Finance/Setup/CustomerSupplierCountry" element={<CustomerSupplierCountryPage/>}  />
+          <Route path="/Finance/Setup/InactivateAccount" element={<InactivateAccountPage/>}/>
 
           {/* ================= FINANCE - REPORTS ================= */}
   
-          <Route
-            path="/Finance/Reports/rptSOA"
-            element={<RptSOAPage />}
-          />
-          <Route
-          path="/Finance/Reports/rptGL"
-          element={<RptGLPage/>}/>
+          <Route path="/Finance/Reports/rptSOA" element={<RptSOAPage />}/>
+          <Route path="/Finance/Reports/rptGL" element={<RptGLPage/>}/>
+          <Route path="/Finance/Reports/rptTB" element={<RptTBPage/>}  />
+          <Route path="/Finance/Reports/RptAgeingDr" element={<RptAgeingReceivablesPage/>}/>
+          <Route path="/Finance/Reports/RptReceivables" element={<RptReceivablesPage/>}/>
+          <Route path="/Finance/Reports/RptPayables" element={<RptPayablesPage/>}/>
+          <Route path="/Finance/Reports/RptAgeingCr" element={<RptAgeingOfPayablesPage/>}/>
+          <Route path="/Finance/Reports/RptPL"element={<RptPLPage/>}/>
 
-          <Route
-          path="/Finance/Reports/rptTB"
-          element={<RptTBPage/>}
-          />
           {/* ================= SALES - TRANSACTION ================= */}
-          <Route
-            path="/Sales/Transaction/SalesInvoicePage"
-            element={<SalesInvoice />}
-          />
-          <Route
-          path="/Sales/Transaction/StockAdjustment"
-          element={<StockAdjustmentPage/>}
-          />
-          <Route
-            path="/Sales/Transaction/StockTransferPage"
-            element={<StockTransfer />}
-          />
 
+          <Route path="/Sales/Transaction/SalesInvoicePage" element={<SalesInvoice />}/>
+          <Route path="/Sales/Transaction/StockAdjustment"  element={<StockAdjustmentPage/>} />
+          <Route path="/Sales/Transaction/StockTransferPage" element={<StockTransfer />}/>
           <Route path="/Sales/Transaction/StockDocumentPost" element={<StockDocumentPost/>}/>
           <Route path="/Sales/Transaction/StockDocumentRePost" element={<StockDocumentRePost/>}/>
+
           {/* ================= SALES - SETUP ================= */}
 
+          <Route path="/Sales/Setup/ItemEnquiry" element={<ItemEnquiryPage/>} />
 
-        <Route
-        path="/Sales/Setup/ItemEnquiry"
-        element={<ItemEnquiryPage/>}
-        />
+          {/* ================= SALES - REPORT ================= */}
 
-
-  {/* ================= SALES - REPORT ================= */}
-        <Route
-        path="/Sales/Report/RptStock"
-        element={<RptStockPage/>}
-        />
-        <Route
-        path="/Sales/Reports/StockValue"
-        element={<RptStockValuePage/>}
-        />
+          <Route path="/Sales/Report/RptStock" element={<RptStockPage/>} />
+          <Route path="/Sales/Reports/StockValue" element={<RptStockValuePage/>} />
+          <Route path="/Sales/Reports/RptCustomerSales" element={<RptCustomerSalesPage/>}/>
+          <Route path="/Sales/Reports/RptItemSales" element={<RptItemSalesPage/>}/>
 
           {/* ================= PURCHASE - TRANSACTION ================= */}
-          <Route
-            path="/Purchase/Transaction/PurchaseInvoicePage"
-            element={<PurchaseInvoicePage />}
-          />
-          <Route
-            path="/Purchase/Transaction/BeginningStockPage"
-            element={<BeginningStockPage />}
-          />
-          <Route
-          path="/Purchase/Setup/UnitPage"
-          element={<UnitPage/>}
-          />
-          <Route
-          path="/Purchase/Setup/StaffPage"
-          element={<StaffPage/>}
-          />
+
+          <Route path="/Purchase/Transaction/PurchaseInvoicePage" element={<PurchaseInvoicePage />}/>
+          <Route path="/Purchase/Transaction/BeginningStockPage" element={<BeginningStockPage />} />
+          <Route path="/Purchase/Setup/UnitPage" element={<UnitPage/>} />
+          <Route path="/Purchase/Setup/StaffPage" element={<StaffPage/>} />
 
           {/* ================= PURCHASE - SETUP ================= */}
-          <Route path="/Purchase/Setup/ItemPage" element={<ItemPage />} />
-          <Route
-            path="/Purchase/Setup/ItemGroupPage"
-            element={<ItemGroupPage />}
-          />
 
+          <Route path="/Purchase/Setup/ItemPage" element={<ItemPage />} />
+          <Route path="/Purchase/Setup/ItemGroupPage" element={<ItemGroupPage />}  />
+          <Route path="/Purchase/Setup/Currency" element={<CurrencyPage/>}/>
+       
           {/* ================= SETTINGS ================= */}
+
           <Route path="/Settings/SetCompanyInfo" element={<SetCompanyInfo />} />
           <Route path="/Settings/SetBranchInfo" element={<SetBranchInfo />} />
-          <Route
-            path="/Settings/SetChartOfAccount"
-            element={<SetChartOfAccount />}
-          />
-          <Route 
-          path="/Setting/SetDefaultBranch"
-          element={<SetDefaultBranch/>}
-          />
-          <Route
-            path="/Setting/SetActivePeriod"
-            element={<SetActivePeriod />}
-          />
+          <Route path="/Settings/SetChartOfAccount"  element={<SetChartOfAccount />}  />
+          <Route  path="/Setting/SetDefaultBranch" element={<SetDefaultBranch/>}  />
+          <Route path="/Setting/SetActivePeriod" element={<SetActivePeriod />} />
+
           {/* the screen's earlier address - kept so old bookmarks still open it */}
-          <Route
-            path="/Settings/ChartOfAccountSettings"
-            element={<Navigate to="/Settings/SetChartOfAccount" replace />}
-          />
-          <Route
-            path="/Settings/SetPostingAccount"
-            element={<SetPostingAccountPage />}
-          />
-          <Route
-          path="/Setting/SetActivePeriod"
-          element={<ActivePeriodPage/>}
-          />
+          <Route path="/Settings/ChartOfAccountSettings" element={<Navigate to="/Settings/SetChartOfAccount" replace />} />
+          <Route path="/Settings/SetPostingAccount"  element={<SetPostingAccountPage />} />
+          <Route path="/Setting/SetActivePeriod"  element={<ActivePeriodPage/>} />
 
           {/* ================= DOCUMENT NUMBER ================= */}
 
           <Route path="/Settings/SetDocumentNo" element={<SetDocumentNo />} />
 
           {/* ================= SECURITY ================= */}
+
           <Route path="/Security/UserLogin" element={<UserLogin />} />
-          <Route
-            path="/Security/UserPermissionMenu"
-            element={<UserPermission />}
-          />
-          <Route
-            path="/Security/UserPermissionBranch"
-            element={<UserPermissionBranchPage />}
-          />
+          <Route  path="/Security/UserPermissionMenu"  element={<UserPermission />}  />
+          <Route  path="/Security/UserPermissionBranch" element={<UserPermissionBranchPage />}  />
           <Route path="/Security/UserAudit" element={<UserAudit/>}/>
+
           {/* the print page the User Audit dialog opens (no menu entry of its own) */}
           <Route path="/Security/UserAudit/Print" element={<UserAuditPrint />} />
           <Route path="/Security/UserTransactionAudit" element={<UserTransactionAudit/>}/>
 
           {/* ================= ADMINISTRATION ================= */}
+
           <Route path="/Administration/CompanyPage" element={<CompanyPage />} />
 
-
-
-
-
           {/* ================= DEV ================= */}
+
           <Route path="/dev/PurchaseExpense" element={<PurchaseExpense />} />
-
-         <Route path="/dev/StockDocumentPostCancel" element={<StockDocumentPostCancel/>}/>
-
-         <Route path="/dev/matchpage" element={<MatchingPage/>}/>
-  
-        <Route path="/dev/unmatchpage" element={<UnMatchPage/>}/>
-        <Route path="/dev/MatchEnquiryPage" element={<MatchEnquiryPage/>}/>
+          <Route path="/dev/StockDocumentPostCancel" element={<StockDocumentPostCancel/>}/>
+          <Route path="/dev/matchpage" element={<MatchingPage/>}/>
+          <Route path="/dev/unmatchpage" element={<UnMatchPage/>}/>
+          <Route path="/dev/MatchEnquiryPage" element={<MatchEnquiryPage/>}/>
 
 
           {/* Unknown URL -> back to "/" ("/" has its own element, so no loop) */}
