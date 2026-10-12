@@ -688,6 +688,7 @@ const CustomerMiddle: React.FC<CustomerMiddleProps> = ({
                 dir="rtl"
                 className={arabicInputClass}
                 style={{ width: "100%" }}
+                required
               />
             </div>
 
@@ -712,6 +713,7 @@ const CustomerMiddle: React.FC<CustomerMiddleProps> = ({
                 dir="rtl"
                 className={arabicInputClass}
                 style={{ width: "100%" }}
+                required
               />
             </div>
 
@@ -738,6 +740,7 @@ const CustomerMiddle: React.FC<CustomerMiddleProps> = ({
                 maxLength={4}
                 dir="rtl"
                 className={arabicInputClass}
+                required
               />
             </div>
 
@@ -761,6 +764,7 @@ const CustomerMiddle: React.FC<CustomerMiddleProps> = ({
                 maxLength={40}
                 dir="rtl"
                 className={arabicInputClass}
+                required
               />
             </div>
 
@@ -784,6 +788,7 @@ const CustomerMiddle: React.FC<CustomerMiddleProps> = ({
                 maxLength={40}
                 dir="rtl"
                 className={arabicInputClass}
+                required
               />
             </div>
 
@@ -807,6 +812,7 @@ const CustomerMiddle: React.FC<CustomerMiddleProps> = ({
                 maxLength={40}
                 dir="rtl"
                 className={arabicInputClass}
+                required
               />
             </div>
 
@@ -902,6 +908,7 @@ const CustomerMiddle: React.FC<CustomerMiddleProps> = ({
                 maxLength={7}
                 dir="rtl"
                 className={arabicInputClass}
+                required
               />
             </div>
 
@@ -969,6 +976,7 @@ const CustomerMiddle: React.FC<CustomerMiddleProps> = ({
                 onChange={(e) => setTxtVATNo_AR(e.target.value)}
                 dir="rtl"
                 className={arabicInputClass}
+                required
               />
             </div>
           </div>
