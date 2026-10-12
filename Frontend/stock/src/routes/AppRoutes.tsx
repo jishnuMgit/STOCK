@@ -42,6 +42,11 @@ import MatchEnquiryPage from "../pages/Finance/Transaction/MatchEnquiry/MatchEnq
 import RptTBPage from "../pages/Finance/Report/FinalAccounts/TrialBalance/RptRBPage";
 import RptStockPage from "../pages/Sales/Report/RptStockPage";
 import RptStockValuePage from "../pages/Sales/Report/RptSVPage";
+import RptCustomerSalesPage from "../pages/Sales/Report/RptCustomerSalesPage";
+import RptItemSalesPage from "../pages/Sales/Report/RptItemSalesPage";
+import CustomerSupplierCountryPage from "../pages/Finance/Setup/CustomerSupplierCountryPage";
+import InactivateAccountPage from "../pages/Finance/Setup/InactivateAccountPage";
+import CurrencyPage from "../pages/Purchase/Setup/Currencypage";
 
 const Login = lazy(() => import("../pages/Auth/LoginPage"));
 const ReceiptPage = lazy(
@@ -136,6 +141,14 @@ const AppRoutes = () => {
           path="/Finance/Setup/CostCenter"
           element={<CostCenterPage/>}
           />
+             <Route
+          path="/Finance/Setup/CustomerSupplierCountry"
+          element={<CustomerSupplierCountryPage/>}
+          />
+          <Route
+          path="/Finance/Setup/InactivateAccount"
+          element={<InactivateAccountPage/>}/>
+
 
           {/* ================= FINANCE - REPORTS ================= */}
   
@@ -185,6 +198,12 @@ const AppRoutes = () => {
         path="/Sales/Reports/StockValue"
         element={<RptStockValuePage/>}
         />
+        <Route
+        path="/Sales/Reports/RptCustomerSales"
+        element={<RptCustomerSalesPage/>}/>
+        <Route
+        path="/Sales/Reports/RptItemSales"
+        element={<RptItemSalesPage/>}/>
 
           {/* ================= PURCHASE - TRANSACTION ================= */}
           <Route
@@ -210,7 +229,8 @@ const AppRoutes = () => {
             path="/Purchase/Setup/ItemGroupPage"
             element={<ItemGroupPage />}
           />
-
+          <Route path="/Purchase/Setup/Currency" element={<CurrencyPage/>}/>
+       
           {/* ================= SETTINGS ================= */}
           <Route path="/Settings/SetCompanyInfo" element={<SetCompanyInfo />} />
           <Route path="/Settings/SetBranchInfo" element={<SetBranchInfo />} />
