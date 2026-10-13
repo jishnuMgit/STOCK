@@ -279,14 +279,14 @@ const RptSupplierPurchasePage: React.FC<RptSupplierPurchasePageProps> = ({
               {/* Branch */}
               <RadioPanel>
                 <CustomRadio
-                  name="optBranch"
+                  name="rdgBranch"
                   value="One Branch"
                   label="One Branch"
                   checked={branchMode === "One Branch"}
                   onChange={() => setBranchMode("One Branch")}
                 />
                 <CustomRadio
-                  name="optBranch"
+                  name="rdgBranch"
                   value="All Branch"
                   label="All Branch"
                   checked={branchMode === "All Branch"}
@@ -310,14 +310,14 @@ const RptSupplierPurchasePage: React.FC<RptSupplierPurchasePageProps> = ({
               {/* Supplier */}
               <RadioPanel>
                 <CustomRadio
-                  name="optSupplier"
+                  name="rdgSupplier"
                   value="One Supplier"
                   label="One Supplier"
                   checked={supplierMode === "One Supplier"}
                   onChange={() => setSupplierMode("One Supplier")}
                 />
                 <CustomRadio
-                  name="optSupplier"
+                  name="rdgSupplier"
                   value="All Supplier"
                   label="All Supplier"
                   checked={supplierMode === "All Supplier"}
@@ -367,14 +367,14 @@ const RptSupplierPurchasePage: React.FC<RptSupplierPurchasePageProps> = ({
               {/* Report type + actions */}
               <RadioPanel>
                 <CustomRadio
-                  name="optReportType"
+                  name="rdgReportType"
                   value="Detailed"
                   label="Detailed"
                   checked={reportType === "Detailed"}
                   onChange={() => setReportType("Detailed")}
                 />
                 <CustomRadio
-                  name="optReportType"
+                  name="rdgReportType"
                   value="Summary"
                   label="Summary"
                   checked={reportType === "Summary"}
