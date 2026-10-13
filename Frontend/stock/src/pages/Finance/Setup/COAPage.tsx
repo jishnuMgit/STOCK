@@ -5,6 +5,7 @@ import Select, {
   type SingleValue,
   type StylesConfig,
 } from "react-select";
+import { toast } from "react-toastify";
 
 import { useCoa } from "../../../hooks/useCoa";
 
@@ -334,7 +335,7 @@ const COAPage: React.FC<COAPageProps> = ({
         );
         setFormData((previous) => ({ ...previous, txtAccountID: nextId }));
       } catch (err) {
-        window.alert(errorMessage(err, "Unable to Generate New Account ID"));
+        toast.error(errorMessage(err, "Unable to Generate New Account ID"));
       }
     }
 
@@ -360,7 +361,7 @@ const COAPage: React.FC<COAPageProps> = ({
           formData.txtAccountGroupLevel,
         );
       } catch (err) {
-        window.alert(errorMessage(err, "Unable to Generate New Account ID"));
+        toast.error(errorMessage(err, "Unable to Generate New Account ID"));
       }
     }
 
@@ -384,7 +385,7 @@ const COAPage: React.FC<COAPageProps> = ({
 
   const handleSave = async () => {
     if (!formData.txtAccountName.trim()) {
-      window.alert(
+      toast.warning(
         isAdd
           ? "Please input an 'Account name'"
           : "Please input the 'Account Name'",
@@ -396,7 +397,7 @@ const COAPage: React.FC<COAPageProps> = ({
     if (
       isGphDisabled(formData.lkpAccountGroupOrHead, formData.txtAccountLevel)
     ) {
-      window.alert(
+      toast.warning(
         formData.lkpAccountGroupOrHead === "G"
           ? "Group (G) is only allowed for Account Level below 4"
           : "Head (H) is only allowed for Account Level 4 and above",
@@ -424,7 +425,7 @@ const COAPage: React.FC<COAPageProps> = ({
           accountId: auto ? undefined : formData.txtAccountID.trim(),
         });
 
-        window.alert("Saved");
+        toast.success("Saved");
         await onChanged(formData.txtAccountGroupID);
 
         // ready for the next account under the same group (VB: ClearMe)
@@ -435,12 +436,12 @@ const COAPage: React.FC<COAPageProps> = ({
           accountId: formData.txtAccountID.trim(),
         });
 
-        window.alert("Modified");
+        toast.success("Modified");
         await onChanged();
         onClose();
       }
     } catch (err) {
-      window.alert(
+      toast.error(
         errorMessage(
           err,
           isAdd ? "Not Saved, try again" : "Not Modified, try again",
@@ -466,16 +467,15 @@ const COAPage: React.FC<COAPageProps> = ({
     try {
       setBusy(true);
       await deleteAccount(accountId);
-      window.alert("Deleted!");
+      toast.success("Deleted!");
       await onChanged();
       onClose();
     } catch (err) {
-      window.alert(errorMessage(err, "Not Deleted, try again"));
+      toast.error(errorMessage(err, "Not Deleted, try again"));
     } finally {
       setBusy(false);
     }
   };
-
   // ============================================================
   // COMMON STYLES
   // ============================================================
@@ -614,10 +614,14 @@ const COAPage: React.FC<COAPageProps> = ({
                 id="txtAccountID"
                 ref={accountIdRef}
                 type="text"
+                inputMode="numeric"
                 maxLength={12}
                 value={formData.txtAccountID}
                 disabled={formData.newAccountID === "Auto" || isDelete}
-                onChange={(e) => handleChange("txtAccountID", e.target.value)}
+                onChange={(e) => {
+                  const value = e.target.value.replace(/\D/g, "");
+                  handleChange("txtAccountID", value);
+                }}
                 className="input-style disabled:cursor-not-allowed disabled:bg-slate-100 disabled:text-slate-500"
               />
             </div>

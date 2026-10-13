@@ -444,7 +444,7 @@ export const createChartOfAccount = async (
 
     if (!accountId) return bad(res, "Please input an 'Account ID'");
     if (accountId.length !== ACCOUNTID_LEN)
-      return bad(res, `'Account ID' must be ${ACCOUNTID_LEN} characters`);
+      return bad(res, `'Account ID' width must be ${ACCOUNTID_LEN} characters`);
 
     if (await accountIdExists(CoID, accountId))
       return bad(res, "'Account ID' already exists!", 409);
@@ -514,7 +514,7 @@ export const updateChartOfAccount = async (
       return bad(res, "Invalid Group/Parent/Head for this account level");
 
     if (newAccountId.length !== ACCOUNTID_LEN)
-      return bad(res, `'Account ID' must be ${ACCOUNTID_LEN} characters`);
+      return bad(res, `'Account ID' width must be ${ACCOUNTID_LEN} characters`);
 
     if (
       newAccountId !== oldAccountId &&

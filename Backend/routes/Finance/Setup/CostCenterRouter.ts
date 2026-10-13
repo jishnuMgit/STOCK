@@ -3,7 +3,7 @@ import {
   getCostCenters,
   checkCostCenterUsed,
   saveCostCenters,
-} from "../controller/CostCenterController.js";
+} from "../../../controller/Finance/Setup/CostCenterController.js";
 
 const router = express.Router();
 

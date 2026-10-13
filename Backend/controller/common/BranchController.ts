@@ -31,3 +31,33 @@ export const getUserBranches = async (
       .json({ success: false, message: "Failed to fetch branches" });
   }
 };
+
+export const getDefaultBranch = async (
+  req: AuthenticatedRequest,
+  res: Response,
+): Promise<Response> => {
+  try {
+    const coId = req.user?.CoID;
+    const userId = req.user?.userId;
+
+    if (!coId || !userId) {
+      return res
+        .status(401)
+        .json({ success: false, message: "Authentication required" });
+    }
+
+    const result = await pool.query(
+      `SELECT dbo.getuserdefbranch($1::varchar, $2::varchar) AS "defBranch"`,
+      [coId, userId],
+    );
+
+    return res
+      .status(200)
+      .json({ success: true, data: result.rows[0]?.defBranch ?? "" });
+  } catch (error: unknown) {
+    console.error("getDefaultBranch error:", error);
+    return res
+      .status(500)
+      .json({ success: false, message: "Failed to load default branch" });
+  }
+};

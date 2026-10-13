@@ -1,6 +1,11 @@
 import { Play } from "lucide-react";
 import React, { useState } from "react";
-import Select, { type StylesConfig } from "react-select";
+import Select, {
+  components,
+  type DropdownIndicatorProps,
+  type StylesConfig,
+} from "react-select";
+import { RxTriangleDown } from "react-icons/rx";
 import type { PurchaseRow } from "../../../hooks/Purchase/Transaction/usePurchaseInvoice";
 
 type Option = {
@@ -37,6 +42,18 @@ type PriceField =
   | "unitPrice"
   | "unitCost"
   | "totalCost";
+
+/* custom arrow for the item dropdowns */
+const DropdownIndicator = (props: DropdownIndicatorProps<Option, false>) => (
+  <components.DropdownIndicator {...props}>
+    <RxTriangleDown size={16} />
+  </components.DropdownIndicator>
+);
+
+const selectComponents = {
+  DropdownIndicator,
+  IndicatorSeparator: () => null,
+};
 
 const EMPTY: Option[] = [];
 
@@ -290,6 +307,7 @@ const PurchaseTable: React.FC<Props> = ({ rows, onRowChange, lookups }) => {
                     }
                     onChange={(option) => handleItemChange(index, option)}
                     styles={selectStyles}
+                    components={selectComponents}
                     isClearable={false}
                     isSearchable
                     menuPosition="fixed"
@@ -311,6 +329,7 @@ const PurchaseTable: React.FC<Props> = ({ rows, onRowChange, lookups }) => {
                     }
                     onChange={(option) => handleItemChange(index, option)}
                     styles={selectStyles}
+                    components={selectComponents}
                     isClearable={false}
                     isSearchable
                     menuPosition="fixed"

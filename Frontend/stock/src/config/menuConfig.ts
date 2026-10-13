@@ -57,11 +57,17 @@ export const menuRouteMap: Record<string, string> = {
   mnuUnit:"/Purchase/Setup/UnitPage",
   mnuStaff:"/Purchase/Setup/StaffPage",
 
-
+mnuCurrency:"/Purchase/Setup/Currency",
     /* =========================================================
      PURCHASE - REPORTS
   ========================================================= */
 
+"mnuRrptSupplier Purchase":"/Purchase/Report/RptSupplierPurchase",
+mnuRptItemPurchase:"/Purchase/Report/RptItemPurchase",
+mnuRptPOSummary:"/Purchase/Report/RptPOSummary",
+mnuRptStaffSales:"/Purchase/Report/RptStaffSales",
+mnuRptSalesSummary:"/Purchase/Report/RptSalesSummary",
+mnuRptItemMovement:"/Purchase/Report/RptItemMovement",
 
 
 
@@ -86,14 +92,16 @@ Sales-SETUP
 =============================================================*/
 
   mnuItemEnquiry:"/Sales/Setup/ItemEnquiry",
-  "mnuRptStock Value": "/Sales/Reports/StockValue",
+ 
 
 /*============================================================
 Sales-REPORT
 =============================================================*/
   mnuRptStock:"/Sales/Report/RptStock",
 
-
+ "mnuRptStock Value": "/Sales/Reports/StockValue",
+  mnuRptCustomerSales:"/Sales/Reports/RptCustomerSales",
+  mnuRptItemSales:"/Sales/Reports/RptItemSales",
 
   /* =========================================================
      FINANCE 
@@ -113,22 +121,34 @@ Sales-REPORT
   mnuCustomer: "/Finance/Setup/CustomerPage",
   mnuChartOfAccount:"/Finance/Setup/ChartOfAccountList",
   mnuCostCenter:"/Finance/Setup/CostCenter",
-
+"mnuCustomer/Supplier Country":"/Finance/Setup/CustomerSupplierCountry",
+mnuInactivateAccount:"/Finance/Setup/InactivateAccount",
   /* =========================================================
      FINANCE - REPORTS
   ========================================================= */
+
+  mnuRptChartOfAccount:"/Finance/Reports/RptChartOfAccount",
+  mnuRptCustomerList:"/Finance/Reports/RptCustomerList",
+  mnuRptSupplierList:"/Finance/Reports/RptSupplierList",
  // FINANCE - REPORTS - A/R & A/P
 
   mnuRptSOA: "/Finance/Reports/rptSOA",
+  mnuRptReceivables:"/Finance/Reports/RptReceivables",
+  mnuRptAgeingDr:"/Finance/Reports/RptAgeingDr",
+  mnuRptPayables:"/Finance/Reports/RptPayables",
+  mnuRptAgeingCr:"/Finance/Reports/RptAgeingCr",
 
   // FINANCE - REPORTS - GENERAL LEDGER
   
   mnuRptGL:"/Finance/Reports/rptGL",
+  
 
 
   // FINANCE - REPORTS - FINAL ACCOUNTS
 
   mnuRptTB:"/Finance/Reports/rptTB",
+  mnuRptBS:"/Finance/Reports/RptBS",
+  mnuRptPL:"/Finance/Reports/RptPL",
 
 
 

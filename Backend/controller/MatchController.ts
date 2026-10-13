@@ -1,39 +1,18 @@
 import type { Request, Response } from "express";
 import pool from "../DB/db.js";
-import { getDocumentsToMatch } from '../services/matchService.js'
-
-
+import { getDocumentsToMatch } from "../services/matchService.js";
 
 export const getCSaccounts = async (
   req: Request,
-  res: Response
+  res: Response,
 ): Promise<Response> => {
   try {
-    const PstrCoID =
-      process.env.PstrCoID;
-
-    console.log(
-      "================================="
-    );
-
-    console.log(
-      "COMPANY ID:",
-      PstrCoID
-    );
-
-    console.log(
-      "================================="
-    );
-
-    /* =====================================================
-       ENVIRONMENT VALIDATION
-    ===================================================== */
+    const PstrCoID = process.env.PstrCoID;
 
     if (!PstrCoID) {
       return res.status(400).json({
         success: false,
-        message:
-          "Company ID is not configured",
+        message: "Company ID is not configured",
       });
     }
 
@@ -41,17 +20,13 @@ export const getCSaccounts = async (
        LOAD ACCOUNTS
     ===================================================== */
 
-    const [
-      AccountID,
-      AccountName,
-      DocType
-    ] = await Promise.all([
+    const [AccountID, AccountName, DocType] = await Promise.all([
       pool.query(
         `
         SELECT *
         FROM dbo.filllookupcustomerid($1)
         `,
-        [PstrCoID]
+        [PstrCoID],
       ),
 
       pool.query(
@@ -59,24 +34,17 @@ export const getCSaccounts = async (
         SELECT *
         FROM dbo.filllookupcustomername($1)
         `,
-        [PstrCoID]
+        [PstrCoID],
       ),
 
-      pool.query(`
+      pool.query(
+        `
         SELECT *
         FROM dbo.getdoctype($1,$2)
         `,
-        [PstrCoID, "FIN"]
+        [PstrCoID, "FIN"],
       ),
-
     ]);
-
-
-
-
-
-
-
 
     /* =====================================================
        RESPONSE
@@ -85,64 +53,42 @@ export const getCSaccounts = async (
     return res.status(200).json({
       success: true,
 
-      AccountID:
-        AccountID.rows,
+      AccountID: AccountID.rows,
 
-      AccountName:
-        AccountName.rows,
+      AccountName: AccountName.rows,
 
       DocType: DocType.rows,
 
-      message:
-        "Receipt data loaded successfully",
+      message: "Receipt data loaded successfully",
     });
-
   } catch (error: unknown) {
-
-    console.error(
-      "getCSaccounts error:",
-      error
-    );
+    console.error("getCSaccounts error:", error);
 
     return res.status(500).json({
       success: false,
 
-      message:
-        "Failed to load receipt data",
+      message: "Failed to load receipt data",
 
-      error:
-        error instanceof Error
-          ? error.message
-          : String(error),
+      error: error instanceof Error ? error.message : String(error),
     });
   }
 };
 
 export const GetData = async (
   req: Request,
-  res: Response
+  res: Response,
 ): Promise<Response> => {
   const client = await pool.connect();
 
   try {
+    console.log("===============================");
+    console.log(req.body);
 
-
-
-
-
-
-    console.log("===============================")
-    console.log(req.body)
-
-    console.log("===============================")
+    console.log("===============================");
 
     const strCoID = process.env.PstrCoID;
     const strYear = process.env.PstrYear;
-    const {
-      strDocType,
-      strCSAccountID,
-      strDivID,
-    } = req.body;
+    const { strDocType, strCSAccountID, strDivID } = req.body;
     if (!strCoID) {
       return res.status(500).json({
         success: false,
@@ -157,10 +103,7 @@ export const GetData = async (
       });
     }
 
-    if (
-      !strCSAccountID ||
-      strCSAccountID.trim() === ""
-    ) {
+    if (!strCSAccountID || strCSAccountID.trim() === "") {
       return res.status(400).json({
         success: false,
         message: "Please select 'Customer'",
@@ -206,7 +149,6 @@ export const GetData = async (
       )
       `,
       [
-
         /* 1 - p_strmode */
         "GetTL",
 
@@ -248,29 +190,20 @@ export const GetData = async (
 
         /* 14 - p_result_cursor */
         cursorName,
-      ]
+      ],
     );
 
     /* =====================================================
        FETCH CURSOR
     ===================================================== */
 
-    const result = await client.query(
-      `FETCH ALL FROM "${cursorName}"`
-    );
+    const result = await client.query(`FETCH ALL FROM "${cursorName}"`);
 
-    console.log(
-      "================================="
-    );
+    console.log("=================================");
 
-    console.log(
-      "Match Accounts Result:",
-      result.rows
-    );
+    console.log("Match Accounts Result:", result.rows);
 
-    console.log(
-      "================================="
-    );
+    console.log("=================================");
 
     /* =====================================================
        COMMIT
@@ -281,41 +214,26 @@ export const GetData = async (
     return res.status(200).json({
       success: true,
       data: result.rows,
-      message:
-        "Match accounts loaded successfully",
+      message: "Match accounts loaded successfully",
     });
-
   } catch (error) {
-
     await client.query("ROLLBACK");
 
-    console.error(
-      "Get Match Accounts Error:",
-      error
-    );
+    console.error("Get Match Accounts Error:", error);
 
     return res.status(500).json({
       success: false,
-      message:
-        "Failed to get match accounts",
-      error:
-        error instanceof Error
-          ? error.message
-          : "Unknown error",
+      message: "Failed to get match accounts",
+      error: error instanceof Error ? error.message : "Unknown error",
     });
-
   } finally {
-
     client.release();
-
   }
 };
 
-
-
 export async function getDocumentsToMatchController(
   req: Request,
-  res: Response
+  res: Response,
 ) {
   try {
     const {
@@ -348,19 +266,15 @@ export async function getDocumentsToMatchController(
       },
       pool,
       // Use your actual company ID source here
-      req.body.coId
+      req.body.coId,
     );
 
     return res.status(200).json({
       success: true,
       ...result,
     });
-
   } catch (error) {
-    console.error(
-      "getDocumentsToMatch error:",
-      error
-    );
+    console.error("getDocumentsToMatch error:", error);
 
     return res.status(500).json({
       success: false,
