@@ -53,6 +53,9 @@ import RptPayablesPage from "../pages/Finance/Report/A-R_and_A-P/Payables/RptPay
 import RptAgeingOfPayablesPage from "../pages/Finance/Report/A-R_and_A-P/AgeingOfPayables/RptAgeingOfPayablesPage";
 import RptPLPage from "../pages/Finance/Report/FinalAccounts/ProfitLoss/RptPLPage";
 import RptBalanceSheetPage from "../pages/Finance/Report/FinalAccounts/BalanceSheet/RptBalanceSheetPage";
+import RptChartOfAccountPage from "../pages/Finance/Report/ChartOfAccount/RptChartOfAccountPage";
+import RptCustomerListPage from "../pages/Finance/Report/CustomerList/RptCustomerListPage";
+import RptSupplierListPage from "../pages/Finance/Report/SupplierList/RptSupplierListPage";
 
 
 const Login = lazy(() => import("../pages/Auth/LoginPage"));
@@ -135,8 +138,11 @@ const AppRoutes = () => {
           <Route path="/Finance/Reports/RptReceivables" element={<RptReceivablesPage/>}/>
           <Route path="/Finance/Reports/RptPayables" element={<RptPayablesPage/>}/>
           <Route path="/Finance/Reports/RptAgeingCr" element={<RptAgeingOfPayablesPage/>}/>
-          <Route path="/Finance/Reports/RptPL"element={<RptPLPage/>}/>
+          <Route path="/Finance/Reports/RptPL" element={<RptPLPage/>}/>
           <Route path="/Finance/Reports/RptBS" element={<RptBalanceSheetPage/>}/>
+          <Route path="/Finance/Reports/RptChartOfAccount" element={<RptChartOfAccountPage/>}/>
+          <Route path="/Finance/Reports/RptCustomerList" element={<RptCustomerListPage/>}/>
+          <Route path="/Finance/Reports/RptSupplierList" element={<RptSupplierListPage/>}/>
 
           {/* ================= SALES - TRANSACTION ================= */}
 

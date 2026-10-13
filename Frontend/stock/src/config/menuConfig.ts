@@ -120,6 +120,10 @@ mnuInactivateAccount:"/Finance/Setup/InactivateAccount",
   /* =========================================================
      FINANCE - REPORTS
   ========================================================= */
+
+  mnuRptChartOfAccount:"/Finance/Reports/RptChartOfAccount",
+  mnuRptCustomerList:"/Finance/Reports/RptCustomerList",
+  mnuRptSupplierList:"/Finance/Reports/RptSupplierList",
  // FINANCE - REPORTS - A/R & A/P
 
   mnuRptSOA: "/Finance/Reports/rptSOA",
