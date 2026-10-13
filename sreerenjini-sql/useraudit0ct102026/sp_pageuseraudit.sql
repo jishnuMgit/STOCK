@@ -88,7 +88,7 @@ BEGIN
         ORDER BY
             a.fuserid,
             a.fuserdate,
-            a.ftransid;
+            a.fid;
 
 END;
 $procedure$;
