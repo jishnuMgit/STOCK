@@ -62,7 +62,7 @@ mnuCurrency:"/Purchase/Setup/Currency",
      PURCHASE - REPORTS
   ========================================================= */
 
-
+"mnuRrptSupplier Purchase":"/Purchase/Report/RptSupplierPurchase",
 
 
 

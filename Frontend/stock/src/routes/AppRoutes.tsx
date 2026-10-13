@@ -56,6 +56,7 @@ import RptBalanceSheetPage from "../pages/Finance/Report/FinalAccounts/BalanceSh
 import RptChartOfAccountPage from "../pages/Finance/Report/ChartOfAccount/RptChartOfAccountPage";
 import RptCustomerListPage from "../pages/Finance/Report/CustomerList/RptCustomerListPage";
 import RptSupplierListPage from "../pages/Finance/Report/SupplierList/RptSupplierListPage";
+import RptSupplierPurchasePage from "../pages/Purchase/Report/SupplierPurchase/RptSupplierPurchasePager";
 
 
 const Login = lazy(() => import("../pages/Auth/LoginPage"));
@@ -175,6 +176,10 @@ const AppRoutes = () => {
           <Route path="/Purchase/Setup/ItemPage" element={<ItemPage />} />
           <Route path="/Purchase/Setup/ItemGroupPage" element={<ItemGroupPage />}  />
           <Route path="/Purchase/Setup/Currency" element={<CurrencyPage/>}/>
+
+          {/* ================= PURCHASE - REPORT ================= */}
+
+          <Route path="/Purchase/Report/RptSupplierPurchase" element={<RptSupplierPurchasePage/>}/>
        
           {/* ================= SETTINGS ================= */}
 
