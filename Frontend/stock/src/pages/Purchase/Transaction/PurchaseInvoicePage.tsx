@@ -11,6 +11,7 @@ import {
   type PurchaseHeader,
   type PurchaseRow,
 } from "../../../hooks/Purchase/Transaction/usePurchaseInvoice";
+import { RxTriangleDown } from "react-icons/rx";
 
 const ROW_COUNT = 12;
 const createRows = () => Array.from({ length: ROW_COUNT }, emptyRow);
