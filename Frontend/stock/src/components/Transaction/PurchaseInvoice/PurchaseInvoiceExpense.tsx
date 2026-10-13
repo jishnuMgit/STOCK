@@ -1,5 +1,10 @@
 import React, { useState } from "react";
-import Select, { type StylesConfig } from "react-select";
+import Select, {
+  components,
+  type DropdownIndicatorProps,
+  type StylesConfig,
+} from "react-select";
+import { RxTriangleDown } from "react-icons/rx";
 import { Play, X } from "lucide-react";
 
 // ============================================================
@@ -31,6 +36,18 @@ const ROW_COUNT = 12;
 const accountOptions: Option[] = [];
 const ccidOptions: Option[] = [];
 const currencyOptions: Option[] = [];
+
+/* custom arrow for the dropdowns in this table */
+const DropdownIndicator = (props: DropdownIndicatorProps<Option, false>) => (
+  <components.DropdownIndicator {...props}>
+    <RxTriangleDown size={16} />
+  </components.DropdownIndicator>
+);
+
+const selectComponents = {
+  DropdownIndicator,
+  IndicatorSeparator: () => null,
+};
 
 // ============================================================
 // CREATE ROW
@@ -261,6 +278,7 @@ const PurchaseExpense: React.FC<PurchaseExpenseProps> = ({ onClose }) => {
       value={value}
       onChange={onChange}
       styles={selectStyles}
+      components={selectComponents}
       isClearable={false}
       isSearchable={searchable}
       menuPosition="fixed"
