@@ -64,6 +64,11 @@ mnuCurrency:"/Purchase/Setup/Currency",
 
 "mnuRrptSupplier Purchase":"/Purchase/Report/RptSupplierPurchase",
 mnuRptItemPurchase:"/Purchase/Report/RptItemPurchase",
+mnuRptPOSummary:"/Purchase/Report/RptPOSummary",
+mnuRptStaffSales:"/Purchase/Report/RptStaffSales",
+mnuRptSalesSummary:"/Purchase/Report/RptSalesSummary",
+mnuRptItemMovement:"/Purchase/Report/RptItemMovement",
+
 
 
 

@@ -58,6 +58,10 @@ import RptCustomerListPage from "../pages/Finance/Report/CustomerList/RptCustome
 import RptSupplierListPage from "../pages/Finance/Report/SupplierList/RptSupplierListPage";
 import RptSupplierPurchasePage from "../pages/Purchase/Report/SupplierPurchase/RptSupplierPurchasePager";
 import RptItemPurchasePage from "../pages/Purchase/Report/ItemPurchase/RptItemPurchasePage";
+import RptPOSummaryPage from "../pages/Purchase/Report/POSummary/RptPOSummaryPage";
+import RptStaffSalesPage from "../pages/Purchase/Report/StaffSales/RptStaffSalesPage";
+import RptSalesSummaryPage from "../pages/Purchase/Report/SalesSummary/RptSalesSummaryPage";
+import RptItemMovementPage from "../pages/Purchase/Report/ItemMovement/RptItemMovementPage";
 
 
 const Login = lazy(() => import("../pages/Auth/LoginPage"));
@@ -182,6 +186,11 @@ const AppRoutes = () => {
 
           <Route path="/Purchase/Report/RptSupplierPurchase" element={<RptSupplierPurchasePage/>}/>
           <Route path="/Purchase/Report/RptItemPurchase" element={<RptItemPurchasePage/>}/>
+          <Route path="/Purchase/Report/RptPOSummary" element={<RptPOSummaryPage/>}/>
+          <Route path="/Purchase/Report/RptStaffSales" element={<RptStaffSalesPage/>}/>
+          <Route path="/Purchase/Report/RptSalesSummary" element={<RptSalesSummaryPage/>}/>
+          <Route path="/Purchase/Report/RptItemMovement" element={<RptItemMovementPage/>}/>
+          
        
           {/* ================= SETTINGS ================= */}
 
