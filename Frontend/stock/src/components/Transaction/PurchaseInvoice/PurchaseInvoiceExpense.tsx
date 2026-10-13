@@ -330,63 +330,17 @@ const PurchaseExpense: React.FC<PurchaseExpenseProps> = ({ onClose }) => {
             >
               <div className="customer-table-scroll min-h-0 flex-1 overflow-auto">
                 <table className="w-full min-w-[1050px] table-fixed border-collapse text-[12px]">
-                  {/* ------------------------------------------------
-                COLUMN WIDTHS
-            ------------------------------------------------ */}
-
-                  <colgroup>
-                    {/* <col style={{ width: "38px" }} />
-
-              <col style={{ width: "150px" }} />
-
-              <col style={{ width: "370px" }} />
-
-              <col style={{ width: "60px" }} />
-
-              <col style={{ width: "72px" }} />
-
-              <col style={{ width: "100px" }} />
-
-              <col style={{ width: "95px" }} /> */}
-
-                    {/* <col style={{ width: "105px" }} /> */}
-
-                    {/* <col style={{ width: "110px" }} /> */}
-                  </colgroup>
-
-                  {/* =================================================
-                HEADER
-            ================================================= */}
-
                   <thead>
                     <tr className="h-[32px]">
                       {/* Row indicator */}
 
-                      <th
-                        className="
-                    sticky top-0 z-20
-                    border border-[#dce5ef]
-                    bg-[#f1f6fc]
-                    p-0
-                    w-[20px]
-                  "
-                      />
+                      <th className="sticky top-0 z-20 border border-[#dce5ef] bg-[#f1f6fc] p-0 w-[20px]" />
 
                       {/* Sl */}
 
                       <th
-                        className="
-                    sticky top-0 z-20
-                    h-[32px]
-                    whitespace-nowrap
-                    border border-[#dce5ef]
-                    bg-[#f1f6fc]
-                    px-1 py-0
-                    text-left
-                    font-semibold
-                    text-[#202a36]
-                    w-[30px]
-                  "
+                        className=" sticky top-0 z-20 h-[32px] whitespace-nowrap border border-[#dce5ef] bg-[#f1f6fc]
+                    px-1 py-0 text-left font-semibold text-[#202a36] w-[30px]"
                       >
                         Sl.
                       </th>
