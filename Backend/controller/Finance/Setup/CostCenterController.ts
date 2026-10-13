@@ -1,5 +1,5 @@
 import { Request, Response } from "express";
-import pool from "../DB/db.js";
+import pool from "../../../DB/db.js";
 
 const SCREEN_NAME = "pageCostCenter";
 const MENU_NAME = "Cost Center";
