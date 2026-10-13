@@ -27,6 +27,7 @@ import chartOfAccountRouter from "./Finance/Setup/COARouter.js";
 import CostCenterRouter from "./Finance/Setup/CostCenterRouter.js";
 import InactivateAccountRouter from "./Finance/Setup/InactivateAccountRouter.js"
 import CustomerSupplierCountryRouter from "./Finance/Setup/CustomerSupplierCountryRouter.js"
+import CurrencyRouter from "./Purchase/Setup/CurrencyPageRouter.js"
 
 
 const router = express.Router();
@@ -57,7 +58,8 @@ router.use("/purchase-invoice", purchaseInvoiceRouter);
 router.use("/branch", branchRouter);
 router.use("/coa", chartOfAccountRouter);
 router.use("/CostCenter", CostCenterRouter)
-router.use("/InactivateAccount",InactivateAccountRouter)
-router.use("/CustomerSupplierCountry",CustomerSupplierCountryRouter)
+router.use("/InactivateAccount", InactivateAccountRouter)
+router.use("/CustomerSupplierCountry", CustomerSupplierCountryRouter)
+router.use("/Currency", CurrencyRouter)
 
 export default router;
