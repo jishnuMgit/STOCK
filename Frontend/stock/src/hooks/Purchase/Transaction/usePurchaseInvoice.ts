@@ -157,6 +157,26 @@ export const usePurchaseInvoice = () => {
      PURCHASE INVOICE
   ====================================================== */
 
+  //fetch default branch
+  const fetchDefaultBranch = useCallback(async (): Promise<string> => {
+    const result = await apiRequest<{ data: string }>("GET", "/branch/default");
+    return s(result.data);
+  }, []);
+
+  /* next entry no. for the branch */
+  const fetchNextDocNo = useCallback(
+    async (year: string, brId: string): Promise<string> => {
+      const params = new URLSearchParams({ year, brId });
+      const result = await apiRequest<{ data: { docNo: string } }>(
+        "GET",
+        `/purchase-invoice/next-doc-no?${params}`,
+      );
+      return s(result.data.docNo);
+    },
+    [],
+  );
+
+  //fetch all branches
   const fetchBranches = useCallback(async (): Promise<Branch[]> => {
     const result = await apiRequest<{
       data: { fbrid: string; fbrname: string | null }[];
@@ -348,6 +368,8 @@ export const usePurchaseInvoice = () => {
   }, []);
 
   return {
+    fetchDefaultBranch,
+    fetchNextDocNo,
     fetchBranches,
     fetchInvoice,
     saveInvoice,

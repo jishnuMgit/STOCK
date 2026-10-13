@@ -1,6 +1,11 @@
 import { Plus } from "lucide-react";
 import React, { useEffect, useState } from "react";
-import Select, { type StylesConfig } from "react-select";
+import Select, {
+  components,
+  type DropdownIndicatorProps,
+  type StylesConfig,
+} from "react-select";
+import { RxTriangleDown } from "react-icons/rx";
 import type {
   CashSupplier,
   PurchaseHeader,
@@ -31,6 +36,18 @@ const defaultCurrencyOptions = makeOptions(["SAR"]);
 
 const pick = (options: Option[], value: string): Option | null =>
   options.find((o) => o.value === value) ?? null;
+
+/* custom arrow used by every dropdown on this form */
+const DropdownIndicator = (props: DropdownIndicatorProps<Option, false>) => (
+  <components.DropdownIndicator {...props}>
+    <RxTriangleDown size={18} />
+  </components.DropdownIndicator>
+);
+
+const selectComponents = {
+  DropdownIndicator,
+  IndicatorSeparator: () => null,
+};
 
 /* =========================================================
    LABEL STYLE
@@ -335,6 +352,7 @@ const PurchaseForm: React.FC<Props> = ({
               value={pick(branchOptions, header.brId)}
               onChange={(o) => onChange("brId", o?.value ?? "")}
               styles={branchSelectStyles}
+              components={selectComponents}
               isClearable={false}
               isSearchable={false}
             />
@@ -366,6 +384,7 @@ const PurchaseForm: React.FC<Props> = ({
               value={pick(miscSupplierOptions, miscMode)}
               onChange={(o) => handleMiscModeChange(o?.value ?? "No")}
               styles={miscSupplierSelectStyles}
+              components={selectComponents}
               isClearable={false}
               isSearchable={false}
             />
@@ -384,6 +403,7 @@ const PurchaseForm: React.FC<Props> = ({
               value={pick(currencyOptions, header.currency)}
               onChange={(o) => onChange("currency", o?.value ?? "")}
               styles={currencySelectStyles}
+              components={selectComponents}
               isClearable={false}
               isSearchable={false}
             />
@@ -425,6 +445,7 @@ const PurchaseForm: React.FC<Props> = ({
               value={pick(supplierOptions, header.supplierId)}
               onChange={(o) => handleSupplierChange(o?.value ?? "")}
               styles={supplierIdSelectStyles}
+              components={selectComponents}
               isClearable={false}
               isSearchable
             />
@@ -445,6 +466,7 @@ const PurchaseForm: React.FC<Props> = ({
               isDisabled={!isMisc}
               placeholder=""
               styles={miscSupplierIdSelectStyles}
+              components={selectComponents}
               isClearable={false}
               isSearchable
             />
@@ -503,6 +525,7 @@ const PurchaseForm: React.FC<Props> = ({
                 value={pick(invoiceTypeOptions, header.invoiceType)}
                 onChange={(o) => onChange("invoiceType", o?.value ?? "")}
                 styles={invoiceTypeSelectStyles}
+                components={selectComponents}
                 isClearable={false}
                 isSearchable={false}
               />
@@ -532,6 +555,7 @@ const PurchaseForm: React.FC<Props> = ({
             value={pick(supplierNameOptions, header.supplierId)}
             onChange={(o) => handleSupplierChange(o?.value ?? "")}
             styles={supplierNameSelectStyles}
+            components={selectComponents}
             isClearable={false}
             isSearchable
           />
@@ -548,6 +572,7 @@ const PurchaseForm: React.FC<Props> = ({
               isDisabled={!isMisc}
               placeholder=""
               styles={miscSupplierNameSelectStyles}
+              components={selectComponents}
               isClearable={false}
               isSearchable
             />
