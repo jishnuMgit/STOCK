@@ -302,7 +302,11 @@ const CurrencyPage: React.FC<CurrencyPageProps> = ({ onClose }) => {
   const focusSaveButton = () => {
     document.getElementById(hasSaved ? "btnModify" : "btnSave")?.focus();
   };
-
+  const handleClear = () => {
+    setSelectedRow(0);
+    setReloadKey((key) => key + 1);
+    focusCell(0);
+  };
   const handleCellKeyDown = (
     event: React.KeyboardEvent<HTMLInputElement>,
     index: number,
@@ -423,6 +427,7 @@ const CurrencyPage: React.FC<CurrencyPageProps> = ({ onClose }) => {
       }
 
       toast.success(hasSaved ? "Modified" : "Saved");
+       handleClear();
       reload();
     } catch {
       toast.error(hasSaved ? "Not modified, try again" : "Not saved, try again");
@@ -495,7 +500,7 @@ const CurrencyPage: React.FC<CurrencyPageProps> = ({ onClose }) => {
 
         if (event.code === "KeyC") {
           event.preventDefault();
-          handleClose();
+          handleClear();
           return;
         }
       }
@@ -665,6 +670,16 @@ const CurrencyPage: React.FC<CurrencyPageProps> = ({ onClose }) => {
               S<span className="underline underline-offset-2">e</span>arch
             </button>
 
+            <button
+              id="btnClear"
+              name="btnClear"
+              type="button"
+              onClick={handleClear}
+              title="Alt+C"
+              className="btn-style"
+            >
+              <span className="underline underline-offset-2">C</span>lear
+            </button>
           </div>
         </div>
       </div>
