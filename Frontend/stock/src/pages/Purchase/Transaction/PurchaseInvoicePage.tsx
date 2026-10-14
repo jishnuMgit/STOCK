@@ -10,6 +10,8 @@ import {
   type CashSupplier,
   type PurchaseHeader,
   type PurchaseRow,
+  type Item,
+  type SupplierLookup,
 } from "../../../hooks/Purchase/Transaction/usePurchaseInvoice";
 
 const ROW_COUNT = 12;
@@ -17,6 +19,9 @@ const createRows = () => Array.from({ length: ROW_COUNT }, emptyRow);
 
 // TODO: replace with the login year you already keep after /login (PstrYear)
 const YEAR = String(new Date().getFullYear());
+
+// company is stored in localStorage by useLogin after /login
+const getCoId = () => localStorage.getItem("PstrCoID") ?? "";
 
 const num = (v: string) => (Number.isFinite(Number(v)) ? Number(v) : 0);
 
@@ -35,12 +40,16 @@ const recalcRow = (row: PurchaseRow, rate: number): PurchaseRow => {
 
 const PurchaseInvoicePage: React.FC = () => {
   const {
+    fetchDefaultBranch,
+    fetchNextDocNo,
     fetchBranches,
     fetchInvoice,
     saveInvoice,
     deleteInvoice,
     calcUnitCost,
     fetchCashSuppliers,
+    fetchItems,
+    fetchSuppliers,
     loading,
   } = usePurchaseInvoice();
 
@@ -55,6 +64,11 @@ const PurchaseInvoicePage: React.FC = () => {
   // Misc. supplier lookup + the Yes/No switch
   const [miscSuppliers, setMiscSuppliers] = useState<CashSupplier[]>([]);
   const [miscMode, setMiscMode] = useState("No");
+  const [items, setItems] = useState<Item[]>([]);
+
+  // Supplier lookups: one list sorted by ID, one sorted by name
+  const [suppliersById, setSuppliersById] = useState<SupplierLookup[]>([]);
+  const [suppliersByName, setSuppliersByName] = useState<SupplierLookup[]>([]);
 
   // TODO: wire these to the Purchase Expense total (txtTotExp)
   // and a discount field (txtDiscAmt)
@@ -80,6 +94,119 @@ const PurchaseInvoicePage: React.FC = () => {
       .catch(() => setBranches([]));
   }, [fetchBranches]);
 
+  /* default branch + its next entry no. (only fetches, sets no state) */
+  const getDefaults = useCallback(async () => {
+    try {
+      const brId = await fetchDefaultBranch();
+      if (!brId) return null;
+
+      let docNo = "";
+      try {
+        docNo = await fetchNextDocNo(YEAR, brId);
+      } catch {
+        docNo = "";
+      }
+
+      return { brId, docNo };
+    } catch {
+      return null; // no default branch: leave the form empty
+    }
+  }, [fetchDefaultBranch, fetchNextDocNo]);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    getDefaults().then((d) => {
+      if (d && !cancelled) {
+        setHeader((prev) => ({ ...prev, brId: d.brId, docNo: d.docNo }));
+      }
+    });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [getDefaults]);
+
+  /* items of the selected branch (items are stored per branch in tblitemtl) */
+  useEffect(() => {
+    const coId = getCoId();
+
+    if (!coId || !header.brId) {
+      setItems([]);
+      return;
+    }
+
+    let cancelled = false;
+
+    fetchItems(coId, header.brId)
+      .then((list) => {
+        if (!cancelled) setItems(list);
+      })
+      .catch(() => {
+        if (!cancelled) setItems([]);
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [fetchItems, header.brId]);
+
+  const itemLookups = useMemo(
+    () => ({
+      itemIds: items.map((i) => ({ value: i.id, label: i.id, name: i.name })),
+      itemNames: items.map((i) => ({
+        value: i.id,
+        label: i.name,
+        name: i.name,
+      })),
+    }),
+    [items],
+  );
+
+  /* suppliers for the Supplier ID / Supplier Name dropdowns */
+  useEffect(() => {
+    const coId = getCoId();
+    if (!coId) return;
+
+    let cancelled = false;
+
+    fetchSuppliers(coId, "by-id")
+      .then((list) => {
+        if (!cancelled) setSuppliersById(list);
+      })
+      .catch(() => {
+        if (!cancelled) setSuppliersById([]);
+      });
+
+    fetchSuppliers(coId, "by-name")
+      .then((list) => {
+        if (!cancelled) setSuppliersByName(list);
+      })
+      .catch(() => {
+        if (!cancelled) setSuppliersByName([]);
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [fetchSuppliers]);
+
+  const supplierLookups = useMemo(
+    () => ({
+      supplierIds: suppliersById.map((x) => ({
+        value: x.id,
+        label: x.id,
+        name: x.name,
+      })),
+      supplierNames: suppliersByName.map((x) => ({
+        value: x.id,
+        label: x.name,
+        name: x.name,
+      })),
+    }),
+    [suppliersById, suppliersByName],
+  );
+
   /* VB: GetCashSupplier -> fills the Misc. Sup. combos */
   const loadMiscSuppliers = useCallback(async () => {
     try {
@@ -102,8 +229,15 @@ const PurchaseInvoicePage: React.FC = () => {
         const r = num(String(value)) || 1;
         setRows((prev) => prev.map((row) => recalcRow(row, r)));
       }
+
+      // new entry: a different branch has its own entry no.
+      if (field === "brId" && mode === "S" && value) {
+        fetchNextDocNo(YEAR, String(value))
+          .then((docNo) => setHeader((prev) => ({ ...prev, docNo })))
+          .catch(() => undefined);
+      }
     },
-    [],
+    [mode, fetchNextDocNo],
   );
 
   const handleRowChange = useCallback(
@@ -128,13 +262,16 @@ const PurchaseInvoicePage: React.FC = () => {
     [loadMiscSuppliers, handleHeaderChange],
   );
 
-  const handleClear = useCallback(() => {
+  const handleClear = useCallback(async () => {
     setHeader(emptyHeader());
     setRows(createRows());
     setMode("S");
     setMiscMode("No");
     setMessage("");
-  }, []);
+
+    const d = await getDefaults();
+    if (d) setHeader((prev) => ({ ...prev, brId: d.brId, docNo: d.docNo }));
+  }, [getDefaults]);
 
   /* Load an existing invoice when the Entry No. field is left */
   const handleDocNoBlur = useCallback(async () => {
@@ -219,14 +356,21 @@ const PurchaseInvoicePage: React.FC = () => {
         onDocNoBlur={handleDocNoBlur}
         totalSupplierAmt={totals.supplierTotal}
         onCalcUnitCost={handleCalcUnitCost}
-        lookups={{ branches: branches.length ? branches : undefined }}
+        lookups={{
+          branches: branches.length ? branches : undefined,
+          ...supplierLookups,
+        }}
         miscSuppliers={miscSuppliers}
         miscMode={miscMode}
         onMiscModeChange={setMiscMode}
         onMiscSupplierSaved={handleMiscSupplierSaved}
       />
 
-      <PurchaseTable rows={rows} onRowChange={handleRowChange} />
+      <PurchaseTable
+        rows={rows}
+        onRowChange={handleRowChange}
+        lookups={itemLookups}
+      />
 
       <PurchaseFooter
         note={header.note}

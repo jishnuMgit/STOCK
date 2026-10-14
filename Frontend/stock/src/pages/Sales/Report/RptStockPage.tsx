@@ -319,14 +319,14 @@ const RptStockPage: React.FC = () => {
               {/* Branch */}
               <RadioPanel>
                 <CustomRadio
-                  name="optBranch"
+                  name="rdgBranch"
                   value="One Branch"
                   label="One Branch"
                   checked={branchMode === "One Branch"}
                   onChange={() => setBranchMode("One Branch")}
                 />
                 <CustomRadio
-                  name="optBranch"
+                  name="rdgBranch"
                   value="All Branches"
                   label="All Branches"
                   checked={branchMode === "All Branches"}
@@ -350,21 +350,21 @@ const RptStockPage: React.FC = () => {
               {/* Item */}
               <RadioPanel>
                 <CustomRadio
-                  name="optItem"
+                  name="rdgItem"
                   value="One Item"
                   label="One Item"
                   checked={itemMode === "One Item"}
                   onChange={() => setItemMode("One Item")}
                 />
                 <CustomRadio
-                  name="optItem"
+                  name="rdgItem"
                   value="One Item Group"
                   label="One Item Group"
                   checked={itemMode === "One Item Group"}
                   onChange={() => setItemMode("One Item Group")}
                 />
                 <CustomRadio
-                  name="optItem"
+                  name="rdgItem"
                   value="All Item"
                   label="All Item"
                   checked={itemMode === "All Item"}
@@ -445,14 +445,14 @@ const RptStockPage: React.FC = () => {
               {/* Detailed / Summary and period */}
               <RadioPanel>
                 <CustomRadio
-                  name="optDetSum"
+                  name="rdgDetSum"
                   value="Detailed"
                   label="Detailed"
                   checked={detSum === "Detailed"}
                   onChange={() => setDetSum("Detailed")}
                 />
                 <CustomRadio
-                  name="optDetSum"
+                  name="rdgDetSum"
                   value="Summary"
                   label="Summary"
                   checked={detSum === "Summary"}

@@ -1,11 +1,19 @@
 import { Play } from "lucide-react";
 import React, { useState } from "react";
-import Select, { type StylesConfig } from "react-select";
+import Select, {
+  components,
+  type DropdownIndicatorProps,
+  type FormatOptionLabelMeta,
+  type MenuListProps,
+  type StylesConfig,
+} from "react-select";
+import { RxTriangleDown } from "react-icons/rx";
 import type { PurchaseRow } from "../../../hooks/Purchase/Transaction/usePurchaseInvoice";
 
 type Option = {
   value: string; // item id
-  label: string;
+  label: string; // what the control shows (the id or the name)
+  name: string; // item name, used for the menu text and for searching
   unit?: string; // item's unit, filled in when the item is picked
 };
 
@@ -23,7 +31,7 @@ const columns = [
 ];
 
 const numericColumns = [
-  "Qty",
+  "Qty.",
   "S.Unit Price",
   "S.Total Price",
   "Unit Price",
@@ -37,6 +45,145 @@ type PriceField =
   | "unitPrice"
   | "unitCost"
   | "totalCost";
+
+/* custom arrow for the item dropdowns */
+const DropdownIndicator = (props: DropdownIndicatorProps<Option, false>) => (
+  <components.DropdownIndicator {...props}>
+    <RxTriangleDown size={16} />
+  </components.DropdownIndicator>
+);
+
+// must match the Item ID column width in `columns` (158px)
+const ID_COL_WIDTH = 158;
+
+// width of the first column in the Item Name dropdown
+const NAME_COL_WIDTH = 300;
+
+// font size of the dropdown menu (header row + options)
+const MENU_FONT_SIZE = 14;
+
+/* Which two columns each dropdown shows, and in which order.
+   id   dropdown: Item ID   | Item Name
+   name dropdown: Item Name | Item ID */
+type MenuVariant = "id" | "name";
+
+const menuLayout: Record<
+  MenuVariant,
+  {
+    firstTitle: string;
+    secondTitle: string;
+    firstWidth: number;
+    first: (o: Option) => string;
+    second: (o: Option) => string;
+  }
+> = {
+  id: {
+    firstTitle: "Item ID",
+    secondTitle: "Item Name",
+    firstWidth: ID_COL_WIDTH,
+    first: (o) => o.value,
+    second: (o) => o.name,
+  },
+  name: {
+    firstTitle: "Item Name",
+    secondTitle: "Item ID",
+    firstWidth: NAME_COL_WIDTH,
+    first: (o) => o.name,
+    second: (o) => o.value,
+  },
+};
+
+/* gray header row at the top of the dropdown menu (sticky while scrolling) */
+const createMenuList = (variant: MenuVariant) => {
+  const layout = menuLayout[variant];
+
+  const MenuList = (props: MenuListProps<Option, false>) => (
+    <components.MenuList {...props}>
+      <div
+        style={{
+          display: "flex",
+          position: "sticky",
+          top: 0,
+          zIndex: 1,
+          background: "#eeeeee",
+          borderBottom: "1px solid #cfcfcf",
+          fontWeight: 600,
+          fontSize: MENU_FONT_SIZE,
+          color: "#202a36",
+        }}
+      >
+        <div
+          style={{
+            width: layout.firstWidth,
+            flexShrink: 0,
+            boxSizing: "border-box",
+            padding: "5px 8px",
+            borderRight: "1px solid #cfcfcf",
+          }}
+        >
+          {layout.firstTitle}
+        </div>
+        <div style={{ flex: 1, padding: "5px 8px" }}>{layout.secondTitle}</div>
+      </div>
+      {props.children}
+    </components.MenuList>
+  );
+
+  return MenuList;
+};
+
+const idSelectComponents = {
+  DropdownIndicator,
+  IndicatorSeparator: () => null,
+  MenuList: createMenuList("id"),
+};
+
+const nameSelectComponents = {
+  DropdownIndicator,
+  IndicatorSeparator: () => null,
+  MenuList: createMenuList("name"),
+};
+
+/* menu rows show two columns; the control shows only its own label */
+const createFormatLabel =
+  (variant: MenuVariant) =>
+  (option: Option, meta: FormatOptionLabelMeta<Option>) => {
+    if (meta.context !== "menu") return option.label;
+
+    const layout = menuLayout[variant];
+
+    return (
+      <div style={{ display: "flex" }}>
+        <div
+          style={{
+            width: layout.firstWidth,
+            flexShrink: 0,
+            boxSizing: "border-box",
+            padding: "6px 8px",
+            borderRight: "1px solid #e3e8ef",
+          }}
+        >
+          {layout.first(option)}
+        </div>
+        <div style={{ flex: 1, padding: "6px 8px" }}>
+          {layout.second(option)}
+        </div>
+      </div>
+    );
+  };
+
+const formatIdLabel = createFormatLabel("id");
+const formatNameLabel = createFormatLabel("name");
+
+/* typing searches both the item id and the item name */
+const filterItem = (option: { data: Option }, input: string): boolean => {
+  const text = input.trim().toLowerCase();
+  if (!text) return true;
+  return (
+    option.data.value.toLowerCase().includes(text) ||
+    option.data.name.toLowerCase().includes(text)
+  );
+};
 
 const EMPTY: Option[] = [];
 
@@ -113,29 +260,39 @@ const selectStyles: StylesConfig<Option, false> = {
   menu: (base) => ({
     ...base,
     zIndex: 9999,
-    fontSize: 11,
+    fontSize: MENU_FONT_SIZE,
     marginTop: 1,
+    width: 520,
+    minWidth: 520,
+    border: "none",
+    borderRadius: 0,
+    boxShadow: "0 0 0 1px #cfcfcf, 0 4px 10px rgba(0,0,0,0.15)",
   }),
 
   menuList: (base) => ({
     ...base,
     padding: 0,
-    maxHeight: 180,
+    maxHeight: 260,
   }),
 
   option: (base, state) => ({
     ...base,
-    padding: "5px 8px",
-    fontSize: 11,
+    padding: 0, // the two cells inside the label carry the padding
+    fontSize: MENU_FONT_SIZE,
     color: "#263449",
     backgroundColor: state.isSelected
-      ? "#dbeafe"
+      ? "#cdeedd"
       : state.isFocused
-        ? "#eff6ff"
+        ? "#e6f6ee"
         : "#fff",
     cursor: "pointer",
   }),
 };
+
+/* Item Name menu: opens at the left edge of the Item Name column.
+   Its divider sits at NAME_COL_WIDTH (the name column is "auto" width,
+   so it can't line up with a table line like the Item ID menu does). */
+const nameSelectStyles: StylesConfig<Option, false> = selectStyles;
 
 const numberInputClass =
   "number-no-spinner h-[20px] w-full min-w-0 border-0 bg-transparent px-1 text-right outline-none focus:bg-blue-50";
@@ -144,8 +301,8 @@ interface Props {
   rows: PurchaseRow[];
   onRowChange: (index: number, patch: Partial<PurchaseRow>) => void;
   lookups?: {
-    itemIds?: Option[]; // { value: itemId, label: itemId, unit }
-    itemNames?: Option[]; // { value: itemId, label: itemName, unit }
+    itemIds?: Option[]; // { value: id, label: id, name, unit? }
+    itemNames?: Option[]; // { value: id, label: name, name, unit? }
   };
 }
 
@@ -279,7 +436,7 @@ const PurchaseTable: React.FC<Props> = ({ rows, onRowChange, lookups }) => {
                   {index + 1}
                 </td>
 
-                {/* Item ID */}
+                {/* Item ID: menu shows Item ID | Item Name */}
                 <td className="h-[30px] border border-[#dce5ef] p-0">
                   <Select<Option, false>
                     inputId={`lkpItemID-${index}`}
@@ -289,7 +446,10 @@ const PurchaseTable: React.FC<Props> = ({ rows, onRowChange, lookups }) => {
                       itemIdOptions.find((o) => o.value === row.itemId) ?? null
                     }
                     onChange={(option) => handleItemChange(index, option)}
+                    formatOptionLabel={formatIdLabel}
+                    filterOption={filterItem}
                     styles={selectStyles}
+                    components={idSelectComponents}
                     isClearable={false}
                     isSearchable
                     menuPosition="fixed"
@@ -299,7 +459,7 @@ const PurchaseTable: React.FC<Props> = ({ rows, onRowChange, lookups }) => {
                   />
                 </td>
 
-                {/* Item Name (same itemId) */}
+                {/* Item Name (same itemId): menu shows Item Name | Item ID */}
                 <td className="h-[30px] border border-[#dce5ef] p-0">
                   <Select<Option, false>
                     inputId={`lkpItemName-${index}`}
@@ -310,7 +470,10 @@ const PurchaseTable: React.FC<Props> = ({ rows, onRowChange, lookups }) => {
                       null
                     }
                     onChange={(option) => handleItemChange(index, option)}
-                    styles={selectStyles}
+                    formatOptionLabel={formatNameLabel}
+                    filterOption={filterItem}
+                    styles={nameSelectStyles}
+                    components={nameSelectComponents}
                     isClearable={false}
                     isSearchable
                     menuPosition="fixed"

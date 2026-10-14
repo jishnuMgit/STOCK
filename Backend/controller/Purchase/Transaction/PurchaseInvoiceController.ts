@@ -622,3 +622,46 @@ export const deleteCashSupplier = async (
       .json({ success: false, message: "Document is not deleted, try again" });
   }
 };
+
+// GET /api/purchase-invoice/next-doc-no?year=2026&brId=OFFICE
+export const getNextDocNo = async (
+  req: AuthenticatedRequest,
+  res: Response,
+) => {
+  try {
+    const coId = req.user?.CoID;
+    const year = String(req.query.year ?? "").trim();
+    const brId = String(req.query.brId ?? "").trim();
+
+    if (!coId) {
+      return res
+        .status(401)
+        .json({ success: false, message: "Authentication required" });
+    }
+    if (!year || !brId) {
+      return res
+        .status(400)
+        .json({ success: false, message: "year and brId are required" });
+    }
+
+    const result = await pool.query(
+      `SELECT fdocno, fdocnolen
+         FROM dbo.getnextdocno($1::varchar, $2::varchar, $3::varchar, 'PI')`,
+      [coId, year, brId],
+    );
+
+    return res.status(200).json({
+      success: true,
+      data: {
+        docNo: String(result.rows[0]?.fdocno ?? ""),
+        docNoLen: Number(result.rows[0]?.fdocnolen ?? 0),
+      },
+    });
+  } catch (error: any) {
+    console.error("getNextDocNo error:", error);
+    return res.status(500).json({
+      success: false,
+      message: "Failed to generate entry no.",
+    });
+  }
+};

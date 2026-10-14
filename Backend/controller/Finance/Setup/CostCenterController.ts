@@ -1,5 +1,6 @@
-import { Request, Response } from "express";
-import pool from "../DB/db.js";
+import { Response } from "express";
+import pool from "../../../DB/db.js";
+import { AuthenticatedRequest } from "../../../middleware/authMiddleware.js";
 
 const SCREEN_NAME = "pageCostCenter";
 const MENU_NAME = "Cost Center";
@@ -7,20 +8,23 @@ const MODULE_ID = "FIN";
 
 type Params = { coId: string; year: string; userId: string };
 
-// Values come from the request, not the session:
+// CoID and userId come from the logged-in user (auth middleware), never from
+// the request body / query, so a caller cannot act on another company.
+// year is not in the session, so it still comes from the request:
 //   POST -> req.body, GET -> req.query (a GET has no body)
-const getParams = (req: Request): Params => {
+
+const getParams = (req: AuthenticatedRequest): Params => {
   const src = { ...(req.query ?? {}), ...(req.body ?? {}) } as Record<
     string,
     unknown
   >;
   return {
-    coId: String(src.coId ?? "").trim(),
+    // session first; the request value is only a stopgap
+    coId: String(req.user?.CoID ?? src.coId ?? "").trim(),
     year: String(src.year ?? "").trim(),
-    userId: String(src.userId ?? "").trim(),
+    userId: String((req.user as any)?.userId ?? src.userId ?? "").trim(),
   };
 };
-
 class ApiError extends Error {
   status: number;
   constructor(status: number, message: string) {
@@ -31,20 +35,21 @@ class ApiError extends Error {
 
 const errMsg = (e: unknown) => (e instanceof Error ? e.message : String(e));
 
+const noCompany = (res: Response): Response =>
+  res
+    .status(401)
+    .json({ success: false, message: "Company not found in session" });
+
 // ------------------------------------------------------------
-// GET /api/CostCenter?coId=..  -> the company's cost centers
+// GET /api/CostCenter  -> the company's cost centers
 // ------------------------------------------------------------
 export const getCostCenters = async (
-  req: Request,
+  req: AuthenticatedRequest,
   res: Response,
 ): Promise<Response> => {
   const { coId } = getParams(req);
 
-  if (!coId) {
-    return res
-      .status(400)
-      .json({ success: false, message: "Company is not selected" });
-  }
+  if (!coId) return noCompany(res);
 
   try {
     const result = await pool.query(
@@ -69,20 +74,16 @@ export const getCostCenters = async (
 };
 
 // ------------------------------------------------------------
-// GET /api/CostCenter/used/:id?coId=..  -> do transactions already use this one?
+// GET /api/CostCenter/used/:id  -> do transactions already use this one?
 // (the old objCommon.HaveTrans("fCCID", id))
 // ------------------------------------------------------------
 export const checkCostCenterUsed = async (
-  req: Request,
+  req: AuthenticatedRequest,
   res: Response,
 ): Promise<Response> => {
   const { coId } = getParams(req);
 
-  if (!coId) {
-    return res
-      .status(400)
-      .json({ success: false, message: "Company is not selected" });
-  }
+  if (!coId) return noCompany(res);
 
   try {
     const result = await pool.query(
@@ -105,10 +106,11 @@ export const checkCostCenterUsed = async (
 
 // ------------------------------------------------------------
 // POST /api/CostCenter  -> Save / Modify
-// body: { coId, year, userId,
+// body: { year,
 //         inserted: [{ccID, ccName, positionNo}],
 //         updated:  [{originalCCID, ccID, ccName, positionNo}],
 //         deleted:  [originalCCID] }
+// (company and user come from the session)
 // All or nothing: one transaction (the old BeginTransaction / EndTransaction)
 // ------------------------------------------------------------
 type NewRow = { ccID: string; ccName: string; positionNo: number };
@@ -139,16 +141,12 @@ const cleanRow = (row: any): NewRow => {
 };
 
 export const saveCostCenters = async (
-  req: Request,
+  req: AuthenticatedRequest,
   res: Response,
 ): Promise<Response> => {
   const params = getParams(req);
 
-  if (!params.coId) {
-    return res
-      .status(400)
-      .json({ success: false, message: "Company is not selected" });
-  }
+  if (!params.coId) return noCompany(res);
 
   const client = await pool.connect();
 

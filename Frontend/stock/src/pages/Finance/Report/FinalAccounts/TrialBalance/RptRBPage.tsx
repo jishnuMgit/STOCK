@@ -107,7 +107,7 @@ const CustomRadio: React.FC<RadioOptionProps> = ({
         }`}
       />
     </span>
-    <span className="text-[12px] font-normal text-[#35445a]">{label}</span>
+    <span className="text-[14px] font-normal text-[#35445a]">{label}</span>
   </label>
 );
 
@@ -121,7 +121,7 @@ const RadioPanel: React.FC<{
 );
 
 const FieldLabel: React.FC<{ children: React.ReactNode }> = ({ children }) => (
-  <div className="flex h-6.5 items-center justify-end border border-[#e0e5ea] bg-[#fafbfc] pr-2 text-[12px] text-[#405066]">
+  <div className="flex h-6.5 items-center justify-end border border-[#e0e5ea] bg-[#fafbfc] pr-2 text-[14px] text-[#405066]">
     {children}
   </div>
 );
@@ -275,7 +275,7 @@ const RptTBPage: React.FC = () => {
     <div className="flex min-h-full  w-full items-start justify-center bg-white px-4 py-4">
       <div className="min-h-fit max-w-205 min-w-205 bg-white p-0">
         <main className="w-full overflow-hidden border border-gray-400 bg-white">
-          <header className="flex h-7.5 items-center justify-start bg-[#9fdfbc] pl-3 text-[18px] font-semibold text-slate-700">
+          <header className="flex h-7.5 items-center justify-start bg-[#9fdfbc] pl-3 text-[17px] font-semibold text-slate-700">
             Trial Balance
           </header>
 
@@ -373,7 +373,7 @@ const RptTBPage: React.FC = () => {
                 min="1"
                 value={accountLevel}
                 onChange={(event) => setAccountLevel(event.target.value)}
-                className="h-6.5 w-10 justify-self-start border border-[#cfd7df] bg-white px-2 text-[12px] text-[#24364d] outline-none focus:border-[#91a7b9]"
+                className="h-6.5 w-10 justify-self-start border border-[#cfd7df] bg-white px-2 text-[14px] text-[#24364d] outline-none focus:border-[#91a7b9]"
               />
 
               <FieldLabel>Post Status :</FieldLabel>

@@ -15,7 +15,7 @@ type KeyMap = Record<string, string>;
 
 export const mapKeys = (row: Row, keys: KeyMap): Row =>
   Object.fromEntries(
-    Object.entries(keys).map(([column, field]) => [field, row[column]])
+    Object.entries(keys).map(([column, field]) => [field, row[column]]),
   );
 
 export const mapRows = (rows: Row[], keys: KeyMap): Row[] =>
@@ -328,4 +328,19 @@ export const postingAccountKeys: KeyMap = {
   froundoffaccountid: "lkpRoundOffAccountID",
   finputvataccountid: "lkpInputVATAccountID",
   foutputvataccountid: "lkpOutputVATAccountID",
+};
+
+export const itemListKeys = {
+  fitemid: "itemID",
+  fitemname: "itemName",
+  fbrid: "branchID",
+  fpacking: "packing",
+  fitemgroupid: "itemGroupID",
+  fallowsalebelowcost: "allowSaleBelowCost",
+  finactive: "inactive",
+};
+
+export const supplierLookupKeys = {
+  fcsaccountid: "supplierID",
+  fcsaccountname: "supplierName",
 };

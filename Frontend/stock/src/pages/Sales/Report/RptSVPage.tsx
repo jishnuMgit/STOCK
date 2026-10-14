@@ -283,14 +283,14 @@ const RptStockValuePage: React.FC = () => {
               {/* Branch */}
               <RadioPanel>
                 <CustomRadio
-                  name="optOneBranch"
+                  name="rdgOneBranch"
                   value="One Branch"
                   label="One Branch"
                   checked={branchMode === "One Branch"}
                   onChange={() => setBranchMode("One Branch")}
                 />
                 <CustomRadio
-                  name="optOneBranch"
+                  name="rdgOneBranch"
                   value="All Branches"
                   label="All Branches"
                   checked={branchMode === "All Branches"}
@@ -314,14 +314,14 @@ const RptStockValuePage: React.FC = () => {
               {/* Item group */}
               <RadioPanel>
                 <CustomRadio
-                  name="optOneItemGroup"
+                  name="rdgOneItemGroup"
                   value="One Item Group"
                   label="One Item Group"
                   checked={groupMode === "One Item Group"}
                   onChange={() => setGroupMode("One Item Group")}
                 />
                 <CustomRadio
-                  name="optOneItemGroup"
+                  name="rdgOneItemGroup"
                   value="All Item Groups"
                   label="All Item Groups"
                   checked={groupMode === "All Item Groups"}

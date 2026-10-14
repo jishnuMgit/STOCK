@@ -4,11 +4,39 @@ const API_URL = import.meta.env.VITE_API_URL;
 
 const CASH_SUPPLIER_BASE = "/purchase-invoice/cash-supplier";
 
+// TODO: match the path where you mounted the supplier routes
+const SUPPLIER_LOOKUP_BASE = "/supplier";
+
+const ITEM_BASE = "/item/items";
+
 /* ---------- UI shapes ---------- */
 
 export interface Branch {
   id: string;
   name: string;
+}
+
+export interface Item {
+  id: string;
+  name: string;
+  branchId: string;
+  packing: string;
+  itemGroupId: string;
+  inactive: boolean;
+}
+
+export interface SupplierLookup {
+  id: string;
+  name: string;
+}
+
+interface ItemApi {
+  itemID: string;
+  itemName: string | null;
+  branchID: string | null;
+  packing: string | number | null;
+  itemGroupID: string | null;
+  inactive: number | boolean | null;
 }
 
 export interface PurchaseHeader {
@@ -105,6 +133,11 @@ interface CashSupplierApi {
   fvatno: string | null;
 }
 
+interface SupplierLookupApi {
+  supplierID: string;
+  supplierName: string | null;
+}
+
 export interface SavePayload {
   mode: "S" | "M";
   year: string;
@@ -157,12 +190,72 @@ export const usePurchaseInvoice = () => {
      PURCHASE INVOICE
   ====================================================== */
 
+  //fetch default branch
+  const fetchDefaultBranch = useCallback(async (): Promise<string> => {
+    const result = await apiRequest<{ data: string }>("GET", "/branch/default");
+    return s(result.data);
+  }, []);
+
+  /* next entry no. for the branch */
+  const fetchNextDocNo = useCallback(
+    async (year: string, brId: string): Promise<string> => {
+      const params = new URLSearchParams({ year, brId });
+      const result = await apiRequest<{ data: { docNo: string } }>(
+        "GET",
+        `/purchase-invoice/next-doc-no?${params}`,
+      );
+      return s(result.data.docNo);
+    },
+    [],
+  );
+
+  //fetch all branches
   const fetchBranches = useCallback(async (): Promise<Branch[]> => {
     const result = await apiRequest<{
       data: { fbrid: string; fbrname: string | null }[];
     }>("GET", "/branch");
     return result.data.map((b) => ({ id: b.fbrid, name: s(b.fbrname) }));
   }, []);
+
+  /* items of a branch (dbo.sp_getitem) -> Item ID / Item Name dropdowns */
+  const fetchItems = useCallback(
+    async (coId: string, brId: string): Promise<Item[]> => {
+      const params = new URLSearchParams({ PstrCoID: coId, PstrBrID: brId });
+      const result = await apiRequest<{ data: ItemApi[] }>(
+        "GET",
+        `${ITEM_BASE}?${params}`,
+      );
+      return result.data.map((r) => ({
+        id: s(r.itemID),
+        name: s(r.itemName),
+        branchId: s(r.branchID),
+        packing: s(r.packing),
+        itemGroupId: s(r.itemGroupID),
+        inactive: Boolean(r.inactive),
+      }));
+    },
+    [],
+  );
+
+  /* supplier lookups (dbo.filllookupsupplierid / filllookupsuppliername)
+     "by-id" is sorted by supplier ID, "by-name" is sorted by supplier name */
+  const fetchSuppliers = useCallback(
+    async (
+      coId: string,
+      sortBy: "by-id" | "by-name",
+    ): Promise<SupplierLookup[]> => {
+      const params = new URLSearchParams({ PstrCoID: coId });
+      const result = await apiRequest<{ data: SupplierLookupApi[] }>(
+        "GET",
+        `${SUPPLIER_LOOKUP_BASE}/${sortBy}?${params}`,
+      );
+      return result.data.map((r) => ({
+        id: s(r.supplierID),
+        name: s(r.supplierName),
+      }));
+    },
+    [],
+  );
 
   /* Returns null when not found (new document) or on error (see `error`). */
   const fetchInvoice = useCallback(
@@ -348,6 +441,8 @@ export const usePurchaseInvoice = () => {
   }, []);
 
   return {
+    fetchDefaultBranch,
+    fetchNextDocNo,
     fetchBranches,
     fetchInvoice,
     saveInvoice,
@@ -357,6 +452,8 @@ export const usePurchaseInvoice = () => {
     fetchNextCashSupplierId,
     saveCashSupplier,
     deleteCashSupplier,
+    fetchItems,
+    fetchSuppliers,
     loading,
     error,
   };
