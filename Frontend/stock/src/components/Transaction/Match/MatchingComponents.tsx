@@ -334,7 +334,7 @@ const ResponsiveSelect = ({
               backgroundColor: "#eeeeee",
               borderBottom: "1px solid #c8c8c8",
               color: "#222",
-              fontSize: "12px",
+              fontSize: "14px",
             }}
           >
             {headers.map((header, index) => (
@@ -377,7 +377,7 @@ const ResponsiveSelect = ({
               backgroundColor: "#eeeeee",
               borderBottom: "1px solid #c8c8c8",
               color: "#222",
-              fontSize: "13px",
+              fontSize: "14px",
             }}
           >
             <div
@@ -719,26 +719,36 @@ const MatchingComponents = forwardRef<MatchingComponentsRef, Props>(
    ===================================================== */
 
     const selectStyles: StylesConfig<SelectOption, false> = {
-      control: (base) => ({
+      control: (base, state) => ({
         ...base,
-        minHeight: "29px",
-        height: "29px",
-        borderRadius: "3px",
-        borderColor: "#b7c7d7",
+        minHeight: "30px",
+        height: "30px",
+        borderRadius: "4px",
+        border: "1px solid #9fdfbc",
         boxShadow: "none",
-        fontSize: "13px",
+        fontSize: "14px",
+        outline: "none",
         backgroundColor: "#ffffff",
+
+        "&:hover": {
+          borderColor: "#9fdfbc",
+        },
+
+        ...(state.isFocused && {
+          borderColor: "#9fdfbc",
+          boxShadow: "none",
+        }),
       }),
 
       valueContainer: (base) => ({
         ...base,
-        height: "29px",
+        height: "30px",
         padding: "0 8px",
       }),
 
       indicatorsContainer: (base) => ({
         ...base,
-        height: "29px",
+        height: "30px",
       }),
 
       dropdownIndicator: (base) => ({
@@ -754,7 +764,7 @@ const MatchingComponents = forwardRef<MatchingComponentsRef, Props>(
       menu: (base) => ({
         ...base,
         zIndex: 9999,
-        fontSize: "13px",
+        fontSize: "14px",
         width: "min(520px, calc(100vw - 24px))",
         minWidth: "min(360px, calc(100vw - 24px))",
         maxWidth: "calc(100vw - 24px)",
@@ -770,7 +780,7 @@ const MatchingComponents = forwardRef<MatchingComponentsRef, Props>(
 
       option: (base, state) => ({
         ...base,
-        fontSize: "13px",
+        fontSize: "14px",
         padding: "6px 8px",
         backgroundColor: state.isFocused ? "#dbeafe" : "#ffffff",
         color: "#222",

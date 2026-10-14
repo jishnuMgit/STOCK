@@ -123,36 +123,14 @@ const MatchHeader: React.FC<MatchHeaderProps> = ({
   return (
     <>
       {/* TITLE */}
-      <div
-        className="
-          flex
-          h-[36px]
-          items-center
-          border-b
-          border-slate-300
-          bg-[#a3dfc0]
-        "
-      >
-        <span
-          className="
-            px-3
-            text-[17px]
-            font-semibold
-            text-slate-700
-          "
-        >
+      <div className="flex h-[36px] items-center border-b border-slate-300 bg-[#a3dfc0]">
+        <span className="px-3 text-[17px] font-semibold text-slate-700">
           Match
         </span>
       </div>
 
       {/* HEADER */}
-      <div
-        className="
-          px-6.75
-          pt-6
-          pb-3
-        "
-      >
+      <div className="px-6.75 pt-6 pb-3">
         {/* HEADER ROW 1 */}
         <div
           className="
