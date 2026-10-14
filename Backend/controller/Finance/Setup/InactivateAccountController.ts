@@ -1,33 +1,36 @@
-import { Request, Response } from "express";
+import { Response } from "express";
 import pool from "../../../DB/db.js";
+import { AuthenticatedRequest } from "../../../middleware/authMiddleware.js";
 
-type Params = { coId: string; year: string; userId: string };
+type Params = { coId: string; userId: string };
 
-
-const getParams = (req: Request): Params => {
+// CoID and userId come from the logged-in user (auth middleware), never from
+// the request body / query, so a caller cannot act on another company.
+// STOPGAP: falls back to coId / userId sent by the page until the router uses
+// the auth middleware and the page sends the token. Then remove the
+// `?? src.coId` and `?? src.userId` parts.
+const getParams = (req: AuthenticatedRequest): Params => {
   const src = { ...(req.query ?? {}), ...(req.body ?? {}) } as Record<
     string,
     unknown
   >;
   return {
-    coId: String(src.coId ?? "").trim(),
-    year: String(src.year ?? "").trim(),
-    userId: String(src.userId ?? "").trim(),
+    coId: String(req.user?.CoID ?? src.coId ?? "").trim(),
+    userId: String((req.user as any)?.userId ?? src.userId ?? "").trim(),
   };
 };
 
-// GET /InactivateAccount?coId=01
+const noSession = (res: Response, message: string) =>
+  res.status(401).json({ success: false, message });
+
+// GET /InactivateAccount
 // VB: FillCombos / GetInactiveAccount (account heads only).
 // fgph = 'H' is inferred from the data; confirm against the old dbo.IsAccountHead (maybe IN ('H','P')).
 // To hide customer accounts from this screen add: AND fgcs <> 'C'
-export const getAccounts = async (req: Request, res: Response) => {
+export const getAccounts = async (req: AuthenticatedRequest, res: Response) => {
   const { coId } = getParams(req);
 
-  if (!coId) {
-    return res
-      .status(400)
-      .json({ success: false, message: "coId is required" });
-  }
+  if (!coId) return noSession(res, "Company not found in session");
 
   try {
     const { rows } = await pool.query(
@@ -49,17 +52,16 @@ export const getAccounts = async (req: Request, res: Response) => {
   }
 };
 
-// POST /InactivateAccount   body: { coId, year, userId, accountId, isActive, menuName? }
+// POST /InactivateAccount   body: { accountId, isActive, menuName? }
+// (company and user come from the session)
 // VB: ValidateMe + objInactivateAccount.Apply -> SP_frmInactivateAccount mode 'M'
-export const modifyStatus = async (req: Request, res: Response) => {
+export const modifyStatus = async (req: AuthenticatedRequest, res: Response) => {
   const { accountId, isActive, menuName } = req.body ?? {};
   const { coId, userId } = getParams(req);
 
-  if (!coId || !userId) {
-    return res
-      .status(400)
-      .json({ success: false, message: "coId and userId are required" });
-  }
+  if (!coId) return noSession(res, "Company not found in session");
+  if (!userId) return noSession(res, "User not found in session");
+
   if (!accountId) {
     return res
       .status(400)
