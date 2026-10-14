@@ -62,6 +62,7 @@ import RptPOSummaryPage from "../pages/Purchase/Report/POSummary/RptPOSummaryPag
 import RptStaffSalesPage from "../pages/Purchase/Report/StaffSales/RptStaffSalesPage";
 import RptSalesSummaryPage from "../pages/Purchase/Report/SalesSummary/RptSalesSummaryPage";
 import RptItemMovementPage from "../pages/Purchase/Report/ItemMovement/RptItemMovementPage";
+import RptInvoicewiseProfitPage from "../pages/Purchase/Report/InvoicewiseProfit/RptInvoicewiseProfitPage";
 
 
 const Login = lazy(() => import("../pages/Auth/LoginPage"));
@@ -190,6 +191,7 @@ const AppRoutes = () => {
           <Route path="/Purchase/Report/RptStaffSales" element={<RptStaffSalesPage/>}/>
           <Route path="/Purchase/Report/RptSalesSummary" element={<RptSalesSummaryPage/>}/>
           <Route path="/Purchase/Report/RptItemMovement" element={<RptItemMovementPage/>}/>
+          <Route path="/Purchase/Report/RptInvoicewiseProfit" element={<RptInvoicewiseProfitPage/>}/>
           
        
           {/* ================= SETTINGS ================= */}
