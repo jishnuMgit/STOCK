@@ -452,134 +452,77 @@ const MatchingComponents = forwardRef<MatchingComponentsRef, Props>(
   (props, ref) => {
     const {
       branch,
-
       setBranch,
-
       type,
-
       setDocType,
-
       receiptNo,
-
       setReceiptNo,
-
       receiptDate,
-
       setReceiptDate,
-
       customerId,
-
       setCustomerId,
-
       customerName,
-
       setCustomerName,
-
       divisionId,
-
       setDivisionId,
-
       rows,
-
       handleRowChange,
-
       onSave,
-
       clearForm,
-
       onSearch,
-
       gstrCoID = import.meta.env.VITE_CO_ID ?? "",
-
       branchOptions,
-
       customerOptions,
-
       customerNameOptions,
-
       documentOptions,
-
       documentAmount,
-
       totalMatchAmount,
-
       balance,
     } = props;
 
     /* =====================================================
-
      REFS
-
-  ===================================================== */
+ ===================================================== */
 
     const customerIdRef = useRef<HTMLDivElement | null>(null);
-
     const customerNameRef = useRef<HTMLDivElement | null>(null);
-
     const divisionRef = useRef<HTMLDivElement | null>(null);
-
     const creditDocumentRef = useRef<HTMLDivElement | null>(null);
-
     const documentNoRef = useRef<HTMLDivElement | null>(null);
-
     const dateRef = useRef<HTMLInputElement | null>(null);
-
     const noteRef = useRef<HTMLInputElement | null>(null);
-
     const tableRefs = useRef<Record<string, HTMLElement | null>>({});
-
     const actionRefs = useRef<(HTMLButtonElement | null)[]>([]);
 
     /* =====================================================
-
      MATCHING API
-
   ===================================================== */
 
-    const {
-      divisionOptionsLocal,
-
-      divisionLoading,
-
-      getDiv,
-
-      getMatchAccounts,
-    } = useMatching();
+    const { divisionOptionsLocal, divisionLoading, getDiv, getMatchAccounts } =
+      useMatching();
 
     const [documentNoOptions, setDocumentNoOptions] = useState<
       DocumentOption[]
     >([]);
 
     /* =====================================================
-
      TABLE FIELD ORDER
-
   ===================================================== */
 
     const tableFieldOrder: TableField[] = [
       "brId",
-
       "date",
-
       "docNo",
-
       "description",
-
       "docAmount",
-
       "debit",
-
       "credit",
-
       "match",
-
       "matchAmount",
     ];
 
     /* =====================================================
-
      FOCUS HELPERS
-
   ===================================================== */
 
     const focusCustomerId = useCallback(() => {
@@ -624,14 +567,10 @@ const MatchingComponents = forwardRef<MatchingComponentsRef, Props>(
 
     useImperativeHandle(
       ref,
-
       () => ({
         focusCustomerId,
-
         focusTableField,
-
         focusNote,
-
         focusSave,
       }),
 
@@ -639,9 +578,7 @@ const MatchingComponents = forwardRef<MatchingComponentsRef, Props>(
     );
 
     /* =====================================================
-
-     TABLE KEYBOARD NAVIGATION
-
+ TABLE KEYBOARD NAVIGATION
   ===================================================== */
 
     const handleTableEscape = useCallback(() => {
@@ -679,18 +616,14 @@ const MatchingComponents = forwardRef<MatchingComponentsRef, Props>(
         }
 
         // Last cell → Note.
-
         focusNote();
       },
-
       [rows.length, focusTableField, focusNote],
     );
 
     const handleTableKeyDown = (
       event: React.KeyboardEvent,
-
       rowIndex: number,
-
       field: TableField,
     ) => {
       handleKeyboardAction(event, {
@@ -701,29 +634,21 @@ const MatchingComponents = forwardRef<MatchingComponentsRef, Props>(
     };
 
     /* =====================================================
-
-     CUSTOMER ID → CUSTOMER NAME
-
+    CUSTOMER ID → CUSTOMER NAME
   ===================================================== */
 
     const handleCustomerIdChange = useCallback(
       async (id: string) => {
         setCustomerId(id);
-
         const customer = customerOptions.find((option) => option.value === id);
-
         setCustomerName(customer?.label ?? "");
-
         await getDiv(id);
       },
-
       [customerOptions, setCustomerId, setCustomerName, getDiv],
     );
 
     /* =====================================================
-
      CUSTOMER NAME → CUSTOMER ID
-
   ===================================================== */
 
     const handleCustomerNameChange = useCallback(
@@ -735,47 +660,36 @@ const MatchingComponents = forwardRef<MatchingComponentsRef, Props>(
         );
 
         const accountId = customer?.label ?? "";
-
         setCustomerId(accountId);
-
         await getDiv(accountId);
       },
-
       [customerNameOptions, setCustomerId, setCustomerName, getDiv],
     );
 
     /* =====================================================
-
      SEARCH
-
   ===================================================== */
 
     const handleSearch = useCallback(async () => {
       if (!type.trim()) {
         console.warn("Please input 'Document Type'");
-
         return;
       }
 
       if (!customerId.trim()) {
         console.warn("Please select 'Customer'");
-
         return;
       }
 
       if (!divisionId.trim()) {
         console.warn("Please select 'Division'");
-
         return;
       }
 
       const data = await getMatchAccounts({
         strDocType: type,
-
         strCSAccountID: customerId,
-
         strDivID: divisionId,
-
         gstrCoID,
       });
 
@@ -787,21 +701,13 @@ const MatchingComponents = forwardRef<MatchingComponentsRef, Props>(
 
         .map((item: any) => ({
           value: String(item.fdocno ?? ""),
-
           label: String(item.fdocno ?? ""),
-
           brId: String(item.fbrid ?? ""),
-
           date: String(item.fdate ?? ""),
-
           docType: String(item.fdoctype ?? ""),
-
           docNo: String(item.fdocno ?? ""),
-
           debit: String(item.fdebit ?? "0.00"),
-
           credit: String(item.fcredit ?? "0.00"),
-
           description: String(item.fdescription ?? ""),
         }));
 
@@ -809,126 +715,85 @@ const MatchingComponents = forwardRef<MatchingComponentsRef, Props>(
     }, [type, customerId, divisionId, gstrCoID, getMatchAccounts, onSearch]);
 
     /* =====================================================
-
-     SELECT STYLES
-
-  ===================================================== */
+   SELECT STYLES
+   ===================================================== */
 
     const selectStyles: StylesConfig<SelectOption, false> = {
       control: (base) => ({
         ...base,
-
         minHeight: "29px",
-
         height: "29px",
-
         borderRadius: "3px",
-
         borderColor: "#b7c7d7",
-
         boxShadow: "none",
-
         fontSize: "13px",
-
         backgroundColor: "#ffffff",
       }),
 
       valueContainer: (base) => ({
         ...base,
-
         height: "29px",
-
         padding: "0 8px",
       }),
 
       indicatorsContainer: (base) => ({
         ...base,
-
         height: "29px",
       }),
 
       dropdownIndicator: (base) => ({
         ...base,
-
         padding: "4px",
       }),
 
       clearIndicator: (base) => ({
         ...base,
-
         padding: "4px",
       }),
 
       menu: (base) => ({
         ...base,
-
         zIndex: 9999,
-
         fontSize: "13px",
-
         width: "min(520px, calc(100vw - 24px))",
-
         minWidth: "min(360px, calc(100vw - 24px))",
-
         maxWidth: "calc(100vw - 24px)",
-
         left: 0,
       }),
 
       menuList: (base) => ({
         ...base,
-
         padding: 0,
-
         maxWidth: "100%",
-
         overflowX: "hidden",
       }),
 
       option: (base, state) => ({
         ...base,
-
         fontSize: "13px",
-
         padding: "6px 8px",
-
         backgroundColor: state.isFocused ? "#dbeafe" : "#ffffff",
-
         color: "#222",
-
         cursor: "pointer",
       }),
     };
 
     /* =====================================================
-
-     SELECT HELPER
-
-  ===================================================== */
+   SELECT HELPER
+   ===================================================== */
 
     const renderSelect = (
       id: string,
-
       value: string,
-
       options: SelectOption[],
-
       onChange: (value: string) => void,
-
       next: () => void,
-
       selectRef: React.RefObject<HTMLDivElement | null>,
-
       reverseDropdown = false,
-
       columnHeaders?: [string, string],
-
       customStyles?: StylesConfig<SelectOption, false>,
-
       disabled = false,
-
       documentMode = false,
-
       swapColumns = false,
     ) => (
       <ResponsiveSelect
@@ -948,9 +813,7 @@ const MatchingComponents = forwardRef<MatchingComponentsRef, Props>(
     );
 
     /* =====================================================
-
-     FOOTER ACTIONS
-
+    FOOTER ACTIONS
   ===================================================== */
 
     const buttons = ["Save", "Clear"];
@@ -1039,25 +902,7 @@ const MatchingComponents = forwardRef<MatchingComponentsRef, Props>(
   ===================================================== */
 
     return (
-      <div
-        className="
-
-        w-full
-
-        border
-
-        border-[#9aa4ad]
-
-        bg-white
-
-        font-sans
-
-        text-[13px]
-
-        text-slate-700
-
-      "
-      >
+      <div className="w-full border border-[#9aa4ad] bg-white font-sans text-[13px] text-slate-700">
         <MatchHeader
           branch={branch}
           setBranch={setBranch}
