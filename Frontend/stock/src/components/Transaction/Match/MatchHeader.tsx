@@ -1,4 +1,3 @@
-
 import React from "react";
 import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
 import { DatePicker } from "@mui/x-date-pickers/DatePicker";
@@ -71,7 +70,7 @@ export interface MatchHeaderProps {
     customStyles?: StylesConfig<SelectOption, false>,
     disabled?: boolean,
     documentMode?: boolean,
-    swapColumns?: boolean
+    swapColumns?: boolean,
   ) => React.ReactNode;
 
   handleKeyboardAction: (
@@ -82,7 +81,7 @@ export interface MatchHeaderProps {
 }
 
 const MatchHeader: React.FC<MatchHeaderProps> = ({
-    branch,
+  branch,
   customerId,
   customerName,
   divisionId,
@@ -124,36 +123,14 @@ const MatchHeader: React.FC<MatchHeaderProps> = ({
   return (
     <>
       {/* TITLE */}
-      <div
-        className="
-          flex
-          h-[36px]
-          items-center
-          border-b
-          border-slate-300
-          bg-[#a3dfc0]
-        "
-      >
-        <span
-          className="
-            px-3
-            text-[17px]
-            font-semibold
-            text-slate-700
-          "
-        >
+      <div className="flex h-[36px] items-center border-b border-slate-300 bg-[#a3dfc0]">
+        <span className="px-3 text-[17px] font-semibold text-slate-700">
           Match
         </span>
       </div>
 
       {/* HEADER */}
-      <div
-        className="
-          px-6.75
-          pt-6
-          pb-3
-        "
-      >
+      <div className="px-6.75 pt-6 pb-3">
         {/* HEADER ROW 1 */}
         <div
           className="
@@ -181,7 +158,7 @@ const MatchHeader: React.FC<MatchHeaderProps> = ({
             () => customerNameRef.current?.focus(),
             customerIdRef,
             false,
-            ["Account ID", "Account Name"]
+            ["Account ID", "Account Name"],
           )}
 
           {/* CUSTOMER NAME */}
@@ -193,7 +170,7 @@ const MatchHeader: React.FC<MatchHeaderProps> = ({
             () => divisionRef.current?.focus(),
             customerNameRef,
             true,
-            ["Account Name", "Account ID"]
+            ["Account Name", "Account ID"],
           )}
 
           {/* DOCUMENT AMOUNT */}
@@ -257,11 +234,9 @@ const MatchHeader: React.FC<MatchHeaderProps> = ({
               true,
               ["Division Name", "Division ID"],
               undefined,
-              !customerId ||
-                divisionLoading ||
-                divisionOptions .length === 0,
+              !customerId || divisionLoading || divisionOptions.length === 0,
               false,
-              true
+              true,
             )}
           </div>
 
@@ -278,7 +253,7 @@ const MatchHeader: React.FC<MatchHeaderProps> = ({
             () => documentNoRef.current?.focus(),
             creditDocumentRef,
             true,
-            ["DocumentType ID", "DocumentType Name"]
+            ["DocumentType ID", "DocumentType Name"],
           )}
 
           {/* SEARCH */}
@@ -373,7 +348,7 @@ const MatchHeader: React.FC<MatchHeaderProps> = ({
               undefined,
               undefined,
               false,
-              true
+              true,
             )}
           </div>
 
@@ -385,9 +360,7 @@ const MatchHeader: React.FC<MatchHeaderProps> = ({
           <LocalizationProvider dateAdapter={AdapterDayjs}>
             <DatePicker
               value={
-                receiptDate
-                  ? dayjs(receiptDate, "DD-MM-YYYY", true)
-                  : null
+                receiptDate ? dayjs(receiptDate, "DD-MM-YYYY", true) : null
               }
               onChange={(newValue) => {
                 if (newValue?.isValid()) {

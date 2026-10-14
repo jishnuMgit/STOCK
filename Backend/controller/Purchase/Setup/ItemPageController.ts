@@ -13,7 +13,17 @@ import {
   type ItemBranchRowPayload,
 } from "../../../services/Purchase/Setup/itemPageService.js";
 import { UserAudit } from "../../../utils/UserAudit.js";
-import { mapKeys, mapRows, unitListKeys, itemGroupListKeys, supplierListKeys, branchListKeys, itemHeaderKeys, itemBranchRowKeys } from "../../../utils/responseKeys.js";
+import {
+  mapKeys,
+  mapRows,
+  unitListKeys,
+  itemGroupListKeys,
+  supplierListKeys,
+  branchListKeys,
+  itemHeaderKeys,
+  itemBranchRowKeys,
+  itemListKeys,
+} from "../../../utils/responseKeys.js";
 
 /* =========================================================
    GET UNIT LIST (lkpUnit dropdown)
@@ -21,7 +31,7 @@ import { mapKeys, mapRows, unitListKeys, itemGroupListKeys, supplierListKeys, br
 
 export const getUnitList = async (
   req: Request,
-  res: Response
+  res: Response,
 ): Promise<Response> => {
   try {
     const { PstrCoID } = req.query;
@@ -38,7 +48,7 @@ export const getUnitList = async (
       SELECT *
       FROM dbo.fillunit($1)
       `,
-      [PstrCoID]
+      [PstrCoID],
     );
 
     return res.status(200).json({
@@ -51,10 +61,7 @@ export const getUnitList = async (
     return res.status(500).json({
       success: false,
       message: "Failed to load unit list",
-      error:
-        error instanceof Error
-          ? error.message
-          : String(error),
+      error: error instanceof Error ? error.message : String(error),
     });
   }
 };
@@ -65,7 +72,7 @@ export const getUnitList = async (
 
 export const getItemGroupList = async (
   req: Request,
-  res: Response
+  res: Response,
 ): Promise<Response> => {
   try {
     const { PstrCoID } = req.query;
@@ -82,7 +89,7 @@ export const getItemGroupList = async (
       SELECT *
       FROM dbo.fillitemgroup($1)
       `,
-      [PstrCoID]
+      [PstrCoID],
     );
 
     return res.status(200).json({
@@ -95,10 +102,7 @@ export const getItemGroupList = async (
     return res.status(500).json({
       success: false,
       message: "Failed to load item group list",
-      error:
-        error instanceof Error
-          ? error.message
-          : String(error),
+      error: error instanceof Error ? error.message : String(error),
     });
   }
 };
@@ -109,7 +113,7 @@ export const getItemGroupList = async (
 
 export const getSupplierList = async (
   req: Request,
-  res: Response
+  res: Response,
 ): Promise<Response> => {
   try {
     const { PstrCoID } = req.query;
@@ -126,7 +130,7 @@ export const getSupplierList = async (
       SELECT *
       FROM dbo.fillsupplier($1)
       `,
-      [PstrCoID]
+      [PstrCoID],
     );
 
     return res.status(200).json({
@@ -139,10 +143,7 @@ export const getSupplierList = async (
     return res.status(500).json({
       success: false,
       message: "Failed to load supplier list",
-      error:
-        error instanceof Error
-          ? error.message
-          : String(error),
+      error: error instanceof Error ? error.message : String(error),
     });
   }
 };
@@ -154,7 +155,7 @@ export const getSupplierList = async (
 
 export const getBranchList = async (
   req: Request,
-  res: Response
+  res: Response,
 ): Promise<Response> => {
   try {
     const { PstrCoID, PstrUserID } = req.query;
@@ -181,7 +182,7 @@ export const getBranchList = async (
         AND dbo.userbranches($1, $2, fbrid)
       ORDER BY fpositionno, fbrid
       `,
-      [PstrCoID, PstrUserID]
+      [PstrCoID, PstrUserID],
     );
 
     return res.status(200).json({
@@ -194,10 +195,7 @@ export const getBranchList = async (
     return res.status(500).json({
       success: false,
       message: "Failed to load branch list",
-      error:
-        error instanceof Error
-          ? error.message
-          : String(error),
+      error: error instanceof Error ? error.message : String(error),
     });
   }
 };
@@ -209,7 +207,7 @@ export const getBranchList = async (
 
 export const getItem = async (
   req: Request,
-  res: Response
+  res: Response,
 ): Promise<Response> => {
   try {
     const { PstrCoID, txtItemID } = req.query;
@@ -230,7 +228,7 @@ export const getItem = async (
 
     const { header, rows } = await getItemPageService(
       String(PstrCoID),
-      String(txtItemID)
+      String(txtItemID),
     );
 
     if (!header) {
@@ -251,10 +249,7 @@ export const getItem = async (
     return res.status(500).json({
       success: false,
       message: "Failed to load item",
-      error:
-        error instanceof Error
-          ? error.message
-          : String(error),
+      error: error instanceof Error ? error.message : String(error),
     });
   }
 };
@@ -268,7 +263,7 @@ const MENU_ID = "010201";
 
 export const saveItem = async (
   req: AuthenticatedRequest,
-  res: Response
+  res: Response,
 ): Promise<Response> => {
   try {
     const {
@@ -353,7 +348,7 @@ export const saveItem = async (
 
     const existingItem = await pool.query(
       `SELECT 1 FROM dbo.tblitemhd WHERE fcoid = $1 AND fitemid = $2`,
-      [PstrCoID, txtItemID]
+      [PstrCoID, txtItemID],
     );
     const wantedMode = existingItem.rows.length > 0 ? "M" : "S";
 
@@ -367,7 +362,10 @@ export const saveItem = async (
 
     // an item that transactions already use cannot be modified (the old
     // HaveTrans check on the Item ID)
-    if (wantedMode === "M" && (await haveItemTransService(PstrCoID, txtItemID))) {
+    if (
+      wantedMode === "M" &&
+      (await haveItemTransService(PstrCoID, txtItemID))
+    ) {
       return res.status(409).json({
         success: false,
         message: `You can't Modify. Transactions already entered with this Item '${txtItemID}'`,
@@ -389,7 +387,7 @@ export const saveItem = async (
       Number(txtReorderLevel) || 0,
       Number(txtReorderQty) || 0,
       PstrUserID,
-      branchRows
+      branchRows,
     );
 
     return res.status(200).json({
@@ -406,9 +404,7 @@ export const saveItem = async (
     return res.status(400).json({
       success: false,
       message:
-        error instanceof Error
-          ? error.message
-          : "Item could not be saved",
+        error instanceof Error ? error.message : "Item could not be saved",
     });
   }
 };
@@ -419,7 +415,7 @@ export const saveItem = async (
 
 export const deleteItem = async (
   req: AuthenticatedRequest,
-  res: Response
+  res: Response,
 ): Promise<Response> => {
   try {
     const {
@@ -505,7 +501,7 @@ export const deleteItem = async (
         "Item Page",
         "D",
         PstrUserID,
-        `Deleted item '${txtItemID}' (${txtItemName || txtItemID})`
+        `Deleted item '${txtItemID}' (${txtItemName || txtItemID})`,
       );
     } catch (auditError: unknown) {
       // the item is already deleted - don't fail the request over
@@ -523,9 +519,7 @@ export const deleteItem = async (
     return res.status(400).json({
       success: false,
       message:
-        error instanceof Error
-          ? error.message
-          : "Item could not be deleted",
+        error instanceof Error ? error.message : "Item could not be deleted",
     });
   }
 };
@@ -537,7 +531,7 @@ export const deleteItem = async (
 
 export const deleteItemBranchRow = async (
   req: AuthenticatedRequest,
-  res: Response
+  res: Response,
 ): Promise<Response> => {
   try {
     const {
@@ -595,7 +589,7 @@ export const deleteItemBranchRow = async (
 
     const branchAccessResult = await pool.query(
       `SELECT dbo.userbranches($1, $2, $3) AS "hasAccess"`,
-      [PstrCoID, PstrUserID, lkpBranch]
+      [PstrCoID, PstrUserID, lkpBranch],
     );
 
     if (!branchAccessResult.rows[0]?.hasAccess) {
@@ -621,7 +615,7 @@ export const deleteItemBranchRow = async (
         "Item Page",
         "D",
         PstrUserID,
-        `Deleted item '${txtItemID}' (${txtItemName || txtItemID}) from branch '${branchName || lkpBranch}'`
+        `Deleted item '${txtItemID}' (${txtItemName || txtItemID}) from branch '${branchName || lkpBranch}'`,
       );
     } catch (auditError: unknown) {
       // the branch row is already deleted - don't fail the request over
@@ -643,5 +637,65 @@ export const deleteItemBranchRow = async (
           ? error.message
           : "Branch row could not be deleted",
     });
+  }
+};
+
+/* =========================================================
+   GET ITEMS (dbo.sp_getitem - refcursor)
+   PstrBrID is optional: when empty, items of all branches
+   of the company are returned.
+========================================================= */
+
+export const getItems = async (
+  req: Request,
+  res: Response,
+): Promise<Response> => {
+  const client = await pool.connect();
+
+  try {
+    const { PstrCoID, PstrBrID } = req.query;
+
+    if (!PstrCoID) {
+      return res.status(400).json({
+        success: false,
+        message: "Company ID is required",
+      });
+    }
+
+    const cursorName = "item_cursor";
+
+    // a refcursor only lives inside a transaction, on one connection
+    await client.query("BEGIN");
+
+    await client.query(`CALL dbo.sp_getitem($1, $2, $3)`, [
+      String(PstrCoID),
+      PstrBrID ? String(PstrBrID) : null,
+      cursorName,
+    ]);
+
+    const result = await client.query(`FETCH ALL IN "${cursorName}"`);
+
+    await client.query("COMMIT");
+
+    return res.status(200).json({
+      success: true,
+      data: mapRows(result.rows, itemListKeys),
+    });
+  } catch (error: unknown) {
+    try {
+      await client.query("ROLLBACK");
+    } catch (rollbackError: unknown) {
+      console.error("getItems rollback error:", rollbackError);
+    }
+
+    console.error("getItems error:", error);
+
+    return res.status(500).json({
+      success: false,
+      message: "Failed to load items",
+      error: error instanceof Error ? error.message : String(error),
+    });
+  } finally {
+    client.release();
   }
 };

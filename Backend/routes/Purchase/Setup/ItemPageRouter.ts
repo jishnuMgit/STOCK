@@ -11,6 +11,7 @@ import {
   saveItem,
   deleteItem,
   deleteItemBranchRow,
+  getItems,
 } from "../../../controller/Purchase/Setup/ItemPageController.js";
 
 const router = express.Router();
@@ -20,6 +21,7 @@ router.get("/getItemGroupList", getItemGroupList);
 router.get("/getSupplierList", getSupplierList);
 router.get("/getBranchList", getBranchList);
 router.get("/getItem", getItem);
+router.get("/items", authenticate, getItems);
 // behind the session check: save / delete need to know WHO is acting (rights)
 router.post("/saveItem", authenticate, saveItem);
 router.delete("/deleteItem", authenticate, deleteItem);

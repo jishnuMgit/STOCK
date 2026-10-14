@@ -25,10 +25,10 @@ import purchaseInvoiceRouter from "./Purchase/Transaction/PurchaseInvoiceRouter.
 import branchRouter from "./common/BranchRouter.js";
 import chartOfAccountRouter from "./Finance/Setup/COARouter.js";
 import CostCenterRouter from "./Finance/Setup/CostCenterRouter.js";
-import InactivateAccountRouter from "./Finance/Setup/InactivateAccountRouter.js"
-import CustomerSupplierCountryRouter from "./Finance/Setup/CustomerSupplierCountryRouter.js"
-import CurrencyRouter from "./Purchase/Setup/CurrencyPageRouter.js"
-
+import InactivateAccountRouter from "./Finance/Setup/InactivateAccountRouter.js";
+import CustomerSupplierCountryRouter from "./Finance/Setup/CustomerSupplierCountryRouter.js";
+import CurrencyRouter from "./Purchase/Setup/CurrencyPageRouter.js";
+import supplierRouter from "./common/SupplierRouter.js";
 
 const router = express.Router();
 
@@ -57,9 +57,10 @@ router.use("/user-permission-branch", userpermissionBranch);
 router.use("/purchase-invoice", purchaseInvoiceRouter);
 router.use("/branch", branchRouter);
 router.use("/coa", chartOfAccountRouter);
-router.use("/CostCenter", CostCenterRouter)
-router.use("/InactivateAccount", InactivateAccountRouter)
-router.use("/CustomerSupplierCountry", CustomerSupplierCountryRouter)
-router.use("/Currency", CurrencyRouter)
+router.use("/CostCenter", CostCenterRouter);
+router.use("/InactivateAccount", InactivateAccountRouter);
+router.use("/CustomerSupplierCountry", CustomerSupplierCountryRouter);
+router.use("/Currency", CurrencyRouter);
+router.use("/supplier", supplierRouter);
 
 export default router;
