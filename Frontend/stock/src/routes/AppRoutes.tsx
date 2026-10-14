@@ -65,6 +65,7 @@ import RptItemMovementPage from "../pages/Purchase/Report/ItemMovement/RptItemMo
 import RptInvoicewiseProfitPage from "../pages/Purchase/Report/InvoicewiseProfit/RptInvoicewiseProfitPage";
 import RptStockReportPage from "../pages/Purchase/Report/Stock/RptStockReportPage";
 import RptStockValuationPage from "../pages/Purchase/Report/StockValue/RptStockValuationPage";
+import RptStockVerificationPage from "../pages/Purchase/Report/StockVerification/RptStockVerificationPage";
 
 
 const Login = lazy(() => import("../pages/Auth/LoginPage"));
@@ -196,6 +197,7 @@ const AppRoutes = () => {
           <Route path="/Purchase/Report/RptInvoicewiseProfit" element={<RptInvoicewiseProfitPage/>}/>
           <Route path="/Purchase/Report/RptStockReport" element={<RptStockReportPage/>}/>
           <Route path="/Purchase/Report/RptStockValuation" element={<RptStockValuationPage/>}/>
+          <Route path="/Purchase/Report/RptStockVerification" element={<RptStockVerificationPage/>}/>
           
        
           {/* ================= SETTINGS ================= */}

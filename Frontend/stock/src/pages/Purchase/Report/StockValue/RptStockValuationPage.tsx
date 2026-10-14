@@ -314,6 +314,13 @@ const RptStockValuationPage: React.FC<RptStockValuationPageProps> = ({ onClose }
                   checked={branchMode === "One Branch"}
                   onChange={() => setBranchMode("One Branch")}
                 />
+                 <CustomRadio
+                  name="rdgBranch"
+                  value="Selected Branch"
+                  label="Selected Branch"
+                  checked={branchMode === "Selected Branch"}
+                  onChange={() => setBranchMode("Selected Branch")}
+                />
                 <CustomRadio
                   name="rdgBranch"
                   value="All Branch"
@@ -321,6 +328,7 @@ const RptStockValuationPage: React.FC<RptStockValuationPageProps> = ({ onClose }
                   checked={branchMode === "All Branch"}
                   onChange={() => setBranchMode("All Branch")}
                 />
+
               </RadioPanel>
               <div className="pt-3">
                 <div className="w-[250px]">
@@ -346,6 +354,7 @@ const RptStockValuationPage: React.FC<RptStockValuationPageProps> = ({ onClose }
                   checked={itemMode === "One Item Group"}
                   onChange={() => setItemMode("One Item Group")}
                 />
+                
                 <CustomRadio
                   name="rdgItem"
                   value="All Item"
