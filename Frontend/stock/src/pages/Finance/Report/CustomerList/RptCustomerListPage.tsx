@@ -1,37 +1,88 @@
+import React, { useEffect, useMemo, useRef, useState } from "react";
+import { toast } from "react-toastify";
+import { printCustomerListReport } from "./PrintCustomerListReport";
 
-import React, { useEffect, useRef, useState } from "react";
+// ============================================================
+// TYPES
+// ============================================================
 
 type AccountNode = {
   id: string;
   name: string;
-  children?: AccountNode[];
+  level: number;
+  children: AccountNode[];
 };
 
-const accountTree: AccountNode[] = [
-  {
-    id: "1",
-    name: "PENDING CASH",
-    children: [
-      { id: "1-1", name: "CUSTOMER 1" },
-      { id: "1-2", name: "CUSTOMER 2" },
-    ],
-  },
-  {
-    id: "2",
-    name: "RECEIVABLES OFFICE RUH",
-    children: [
-      { id: "2-1", name: "CUSTOMER 3" },
-      { id: "2-2", name: "CUSTOMER 4" },
-    ],
-  },
-];
+type TreeAccount = {
+  accountId: string;
+  accountName: string;
+  accountGroupId: string | null;
+  accountLevel: number;
+};
 
-const leavesOf = (node: AccountNode): string[] =>
-  node.children && node.children.length > 0
-    ? node.children.map((child) => child.id)
-    : [node.id];
+const API = `${import.meta.env.VITE_API_URL}/RptCustomerList`;
 
-const allLeafIds = (): string[] => accountTree.flatMap(leavesOf);
+// Sends the login cookie, and the company / user kept at sign-in as a stopgap
+// (the server uses its session first and only falls back to these).
+// TODO: if your COA page sends a token, add the same Authorization header here,
+// then delete the coId / userId part.
+const apiFetch = (url: string, init: RequestInit = {}) => {
+  const coId = localStorage.getItem("PstrCoID") ?? "";
+  const userId = localStorage.getItem("PstrUserID") ?? "";
+  const sep = url.includes("?") ? "&" : "?";
+
+  return fetch(
+    `${url}${sep}coId=${encodeURIComponent(coId)}&userId=${encodeURIComponent(userId)}`,
+    { credentials: "include", ...init },
+  );
+};
+
+// ============================================================
+// TREE HELPERS
+// ============================================================
+
+// VB FillTree: an account goes under its group when that group is in the list;
+// otherwise (the customer group heads themselves) it becomes a root.
+const buildTree = (list: TreeAccount[]) => {
+  const byId = new Map<string, AccountNode>();
+  const parentOf = new Map<string, string | null>();
+  const roots: AccountNode[] = [];
+
+  list.forEach((a) =>
+    byId.set(a.accountId, {
+      id: a.accountId,
+      name: a.accountName,
+      level: a.accountLevel,
+      children: [],
+    }),
+  );
+
+  list.forEach((a) => {
+    const node = byId.get(a.accountId)!;
+
+    const parent =
+      a.accountGroupId && a.accountGroupId !== a.accountId
+        ? byId.get(a.accountGroupId)
+        : undefined;
+
+    if (parent) {
+      parent.children.push(node);
+      parentOf.set(node.id, parent.id);
+    } else {
+      roots.push(node);
+      parentOf.set(node.id, null);
+    }
+  });
+
+  return { roots, byId, parentOf };
+};
+
+const descendantsOf = (node: AccountNode): string[] =>
+  node.children.flatMap((child) => [child.id, ...descendantsOf(child)]);
+
+// ============================================================
+// CHECKBOX (never shows the indeterminate dash)
+// ============================================================
 
 type TreeCheckboxProps = {
   id: string;
@@ -49,10 +100,7 @@ const TreeCheckbox: React.FC<TreeCheckboxProps> = ({
   const ref = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
-    if (ref.current) {
-      // Never show the indeterminate dash.
-      ref.current.indeterminate = false;
-    }
+    if (ref.current) ref.current.indeterminate = false;
   }, [checked]);
 
   return (
@@ -66,11 +114,12 @@ const TreeCheckbox: React.FC<TreeCheckboxProps> = ({
       className="
         account-checkbox
         h-4 w-4 shrink-0 cursor-pointer
-        appearance-none rounded-xs
+        appearance-none rounded-[2px]
         border border-[#9aa8b5]
         bg-white
         checked:border-[#64d96e]
-        checked:bg-[#64d96e] focus-visible:outline-2
+        checked:bg-[#64d96e]
+        focus-visible:outline focus-visible:outline-2
         focus-visible:outline-offset-2
         focus-visible:outline-[#64d96e]
       "
@@ -78,107 +127,183 @@ const TreeCheckbox: React.FC<TreeCheckboxProps> = ({
   );
 };
 
+// ============================================================
+// PAGE
+// ============================================================
+
 type RptCustomerListPageProps = {
   onClose?: () => void;
 };
 
-const RptCustomerListPage: React.FC<
-  RptCustomerListPageProps
-> = ({ onClose }) => {
-  const [checked, setChecked] = useState<Set<string>>(
-    () => new Set(allLeafIds()),
-  );
+const RptCustomerListPage: React.FC<RptCustomerListPageProps> = ({
+  onClose,
+}) => {
+  const [accounts, setAccounts] = useState<TreeAccount[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [printing, setPrinting] = useState(false);
 
-const [expanded, setExpanded] = useState<Set<string>>(
-  () => new Set(accountTree.map((node) => node.id)),
-);
+  const [checked, setChecked] = useState<Set<string>>(new Set());
+  const [expanded, setExpanded] = useState<Set<string>>(new Set());
+  const [selectedId, setSelectedId] = useState<string | null>(null);
 
-  const [selectedId, setSelectedId] = useState<string | null>(
-    accountTree[0]?.id ?? null,
-  );
+  const tree = useMemo(() => buildTree(accounts), [accounts]);
 
+  // everything starts checked, the first level open (VB: CheckNode(Checked))
+  const resetSelection = (list: TreeAccount[]) => {
+    const t = buildTree(list);
+    setChecked(new Set(t.byId.keys()));
+    setExpanded(new Set(t.roots.map((r) => r.id)));
+    setSelectedId(t.roots[0]?.id ?? null);
+  };
+
+  // ------------------------------------------------------------
+  // LOAD THE TREE
+  // ------------------------------------------------------------
+  useEffect(() => {
+    let cancelled = false;
+
+    const load = async () => {
+      try {
+        const res = await apiFetch(API);
+        const data = await res.json();
+
+        if (!res.ok || !data.success) {
+          toast.error(data.message || "Failed to load customers");
+          return;
+        }
+        if (cancelled) return;
+
+        const list = data.accounts as TreeAccount[];
+        setAccounts(list);
+        resetSelection(list);
+      } catch {
+        if (!cancelled) toast.error("Failed to load customers");
+      } finally {
+        if (!cancelled) setLoading(false);
+      }
+    };
+
+    load();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  // ------------------------------------------------------------
+  // EXPAND / CHECK
+  // ------------------------------------------------------------
   const toggleExpand = (id: string) => {
     setExpanded((prev) => {
       const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  };
 
-      if (next.has(id)) {
-        next.delete(id);
-      } else {
-        next.add(id);
+  // VB SetCheckedNode: a click turns the node and everything under it on / off.
+  // A parent shows checked while at least one child is checked.
+  const toggleNode = (node: AccountNode) => {
+    setChecked((prev) => {
+      const next = new Set(prev);
+      const turnOn = !next.has(node.id);
+
+      [node.id, ...descendantsOf(node)].forEach((id) => {
+        if (turnOn) next.add(id);
+        else next.delete(id);
+      });
+
+      let parentId = tree.parentOf.get(node.id) ?? null;
+      while (parentId) {
+        const parent = tree.byId.get(parentId)!;
+        if (parent.children.some((c) => next.has(c.id))) next.add(parentId);
+        else next.delete(parentId);
+        parentId = tree.parentOf.get(parentId) ?? null;
       }
 
       return next;
     });
   };
 
-  const toggleNode = (node: AccountNode) => {
-    const leaves = leavesOf(node);
+  // ------------------------------------------------------------
+  // PRINT (VB cmdPrint_Click)
+  // The checked accounts go to the server, which returns the report rows;
+  // the report is then opened in the browser's print dialog.
+  // ------------------------------------------------------------
+  const handlePrint = async () => {
+    if (printing) return;
 
-    setChecked((prev) => {
-      const next = new Set(prev);
-      const allChecked = leaves.every((leaf) => next.has(leaf));
+    const accountIds = [...checked];
+    if (accountIds.length === 0) {
+      toast.warning("Select at least one customer", { toastId: "cust-none" });
+      return;
+    }
 
-      leaves.forEach((leaf) => {
-        if (allChecked) {
-          next.delete(leaf);
-        } else {
-          next.add(leaf);
-        }
+    setPrinting(true);
+    try {
+      const res = await apiFetch(`${API}/print`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ accountIds }),
       });
+      const data = await res.json();
 
-      return next;
-    });
-  };
+      if (!res.ok || !data.success) {
+        toast.error(data.message || "Could not prepare the report");
+        return;
+      }
 
-  const nodeState = (node: AccountNode) => {
-    const leaves = leavesOf(node);
-    const count = leaves.filter((leaf) => checked.has(leaf)).length;
-
-    return {
-      // A parent is checked when at least one child is checked.
-      checked: count > 0,
-    };
-  };
-
-  const handlePrint = () => {
-    const selected = accountTree
-      .map((root) => {
-        const children = (root.children ?? [])
-          .filter((child) => checked.has(child.id))
-          .map((child) => ({
-            id: child.id,
-            name: child.name,
-          }));
-
-        if (children.length === 0 && !checked.has(root.id)) {
-          return null;
-        }
-
-        return {
-          id: root.id,
-          name: root.name,
-          children,
-        };
-      })
-      .filter(Boolean);
-
-    console.log(selected);
+      printCustomerListReport(data.report);
+    } catch {
+      toast.error("Could not prepare the report");
+    } finally {
+      setPrinting(false);
+    }
   };
 
   const handleClose = () => {
-    setChecked(new Set(allLeafIds()));
-    setExpanded(new Set(accountTree.map((node) => node.id)));
-    setSelectedId(accountTree[0]?.id ?? null);
-    onClose?.();
+    resetSelection(accounts);
+    if (onClose) onClose();
+    else window.history.back();
   };
 
-  const renderRow = (node: AccountNode, level: 1 | 2) => {
-    const hasChildren =
-      !!node.children && node.children.length > 0;
+  // Alt+P prints, Alt+C closes (Ctrl+P / Ctrl+L of the old form clash with the
+  // browser). Re-attached every render so it always sees the latest state.
+  useEffect(() => {
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (!event.altKey || event.ctrlKey || event.metaKey) return;
 
+      if (event.code === "KeyP") {
+        event.preventDefault();
+        handlePrint();
+      } else if (event.code === "KeyC") {
+        event.preventDefault();
+        handleClose();
+      }
+    };
+
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
+  });
+
+  // ------------------------------------------------------------
+  // ROWS ON THE SCREEN (open branches only)
+  // ------------------------------------------------------------
+  const visible: { node: AccountNode; depth: number }[] = [];
+  const walk = (nodes: AccountNode[], depth: number) => {
+    nodes.forEach((node) => {
+      visible.push({ node, depth });
+      if (node.children.length > 0 && expanded.has(node.id)) {
+        walk(node.children, depth + 1);
+      }
+    });
+  };
+  walk(tree.roots, 0);
+
+  const renderRow = ({ node, depth }: { node: AccountNode; depth: number }) => {
+    const hasChildren = node.children.length > 0;
     const isExpanded = expanded.has(node.id);
     const selected = selectedId === node.id;
-    const state = nodeState(node);
 
     return (
       <tr
@@ -186,7 +311,7 @@ const [expanded, setExpanded] = useState<Set<string>>(
         onClick={() => setSelectedId(node.id)}
         className={selected ? "bg-[#f2faf5]" : "bg-white"}
       >
-        <td className="h-7 border border-[#e0e5ea] bg-[#fafbfc] text-center text-[8px] text-[#405066]">
+        <td className="h-[28px] border border-[#e0e5ea] bg-[#fafbfc] text-center text-[8px] text-[#405066]">
           {selected ? "▶" : ""}
         </td>
 
@@ -196,40 +321,29 @@ const [expanded, setExpanded] = useState<Set<string>>(
           }`}
         >
           <div
-            className="flex h-7 items-center gap-2 pr-2"
-            style={{
-              // Child indentation increased by 10px.
-              paddingLeft: level === 1 ? 8 : 44,
-            }}
+            className="flex h-[28px] items-center gap-2 pr-2"
+            style={{ paddingLeft: 8 + depth * 24 }}
           >
-            {level === 1 ? (
-              <button
-                type="button"
-                aria-label={isExpanded ? "Collapse" : "Expand"}
-                aria-expanded={
-                  hasChildren ? isExpanded : undefined
-                }
-                disabled={!hasChildren}
-                onClick={(event) => {
-                  event.stopPropagation();
-                  toggleExpand(node.id);
-                }}
-                className={`flex h-4 w-4 shrink-0 items-center justify-center text-[8px] text-[#657486] transition-transform ${
-                  isExpanded ? "rotate-90" : ""
-                } ${
-                  hasChildren
-                    ? "cursor-pointer"
-                    : "invisible"
-                }`}
-              >
-                ▶
-              </button>
-            ) : null}
+            <button
+              type="button"
+              aria-label={isExpanded ? "Collapse" : "Expand"}
+              aria-expanded={hasChildren ? isExpanded : undefined}
+              disabled={!hasChildren}
+              onClick={(event) => {
+                event.stopPropagation();
+                toggleExpand(node.id);
+              }}
+              className={`flex h-4 w-4 shrink-0 items-center justify-center text-[8px] text-[#657486] transition-transform ${
+                isExpanded ? "rotate-90" : ""
+              } ${hasChildren ? "cursor-pointer" : "invisible"}`}
+            >
+              ▶
+            </button>
 
             <TreeCheckbox
               id={`chk-${node.id}`}
               label={node.name}
-              checked={state.checked}
+              checked={checked.has(node.id)}
               onChange={() => toggleNode(node)}
             />
 
@@ -252,37 +366,43 @@ const [expanded, setExpanded] = useState<Set<string>>(
         <main className="w-full overflow-hidden border border-[#d5dce2] bg-white">
           <header className="flex h-7.5 items-center justify-start bg-[#9fdfbc]">
             <h1 className="m-0 ml-3.5 text-[17px] font-semibold text-[#24364d]">
-               Customer List            </h1>
+              Customer List
+            </h1>
           </header>
 
-          <section id="trlCustomerList" className="px-3.5 pb-6 pt-3">
-            <div className="h-105 overflow-auto border border-[#cfd7df] bg-white">
+          <section id="trlCustomer" className="px-3.5 pb-6 pt-3">
+            <div className="h-[420px] overflow-auto border border-[#cfd7df] bg-white">
               <table className="w-full table-fixed border-collapse text-[12px] text-[#24364d]">
                 <colgroup>
-                  <col className="w-5.5" />
+                  <col className="w-[22px]" />
                   <col />
                 </colgroup>
 
                 <thead className="sticky top-0 z-10">
                   <tr className="bg-[#fafbfc] text-[#405066]">
-                    <th className="h-7 border border-[#e0e5ea]" />
-                    <th className="h-7 border border-[#e0e5ea] px-2 text-left font-normal">
+                    <th className="h-[28px] border border-[#e0e5ea]" />
+                    <th className="h-[28px] border border-[#e0e5ea] px-2 text-left font-normal">
                       Customer Name
                     </th>
                   </tr>
                 </thead>
 
                 <tbody>
-                  {accountTree.map((root) => (
-                    <React.Fragment key={root.id}>
-                      {renderRow(root, 1)}
-
-                      {expanded.has(root.id) &&
-                        root.children?.map((child) =>
-                          renderRow(child, 2),
-                        )}
-                    </React.Fragment>
-                  ))}
+                  {loading ? (
+                    <tr>
+                      <td colSpan={2} className="px-3 py-3 text-[12px] text-gray-500">
+                        Loading...
+                      </td>
+                    </tr>
+                  ) : visible.length === 0 ? (
+                    <tr>
+                      <td colSpan={2} className="px-3 py-3 text-[12px] text-gray-500">
+                        No customers found
+                      </td>
+                    </tr>
+                  ) : (
+                    visible.map(renderRow)
+                  )}
                 </tbody>
               </table>
             </div>
@@ -292,7 +412,9 @@ const [expanded, setExpanded] = useState<Set<string>>(
                 id="btnPrint"
                 type="button"
                 onClick={handlePrint}
-                className="btn-style"
+                disabled={loading || printing}
+                title="Alt+P"
+                className="btn-style disabled:cursor-not-allowed disabled:opacity-40"
               >
                 <u>P</u>rint
               </button>
@@ -301,6 +423,7 @@ const [expanded, setExpanded] = useState<Set<string>>(
                 id="btnClose"
                 type="button"
                 onClick={handleClose}
+                title="Alt+C"
                 className="btn-style"
               >
                 <u>C</u>lose
