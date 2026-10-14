@@ -1,5 +1,6 @@
-import { Request, Response } from "express";
+import { Response } from "express";
 import pool from "../../../DB/db.js";
+import { AuthenticatedRequest } from "../../../middleware/authMiddleware.js";
 
 const SCREEN_NAME = "pageCustSupCountry";
 const MENU_NAME = "Customer/Supplier Country";
@@ -7,17 +8,22 @@ const MODULE_ID = "FIN";
 
 type Params = { coId: string; year: string; userId: string };
 
-// Values come from the request, not the session:
+// CoID and userId come from the logged-in user (auth middleware), never from
+// the request body / query, so a caller cannot act on another company.
+// year is not in the session, so it still comes from the request:
 //   POST -> req.body, GET -> req.query (a GET has no body)
-const getParams = (req: Request): Params => {
+// STOPGAP: falls back to coId / userId sent by the page until the router uses
+// the auth middleware and the page sends the token. Then remove the
+// `?? src.coId` and `?? src.userId` parts.
+const getParams = (req: AuthenticatedRequest): Params => {
   const src = { ...(req.query ?? {}), ...(req.body ?? {}) } as Record<
     string,
     unknown
   >;
   return {
-    coId: String(src.coId ?? "").trim(),
+    coId: String(req.user?.CoID ?? src.coId ?? "").trim(),
     year: String(src.year ?? "").trim(),
-    userId: String(src.userId ?? "").trim(),
+    userId: String((req.user as any)?.userId ?? src.userId ?? "").trim(),
   };
 };
 
@@ -35,15 +41,15 @@ const errMsg = (e: unknown) => (e instanceof Error ? e.message : String(e));
 // GET /api/CustomerCountry?coId=..  -> the company's countries
 // ------------------------------------------------------------
 export const getCountries = async (
-  req: Request,
+  req: AuthenticatedRequest,
   res: Response,
 ): Promise<Response> => {
   const { coId } = getParams(req);
 
   if (!coId) {
     return res
-      .status(400)
-      .json({ success: false, message: "Company is not selected" });
+      .status(401)
+      .json({ success: false, message: "Company not found in session" });
   }
 
   try {
@@ -74,15 +80,15 @@ export const getCountries = async (
 // (the old objCommon.HaveTrans("fCountryID", id))
 // ------------------------------------------------------------
 export const checkCountryUsed = async (
-  req: Request,
+  req: AuthenticatedRequest,
   res: Response,
 ): Promise<Response> => {
   const { coId } = getParams(req);
 
   if (!coId) {
     return res
-      .status(400)
-      .json({ success: false, message: "Company is not selected" });
+      .status(401)
+      .json({ success: false, message: "Company not found in session" });
   }
 
   try {
@@ -146,15 +152,15 @@ const cleanRow = (row: any): NewRow => {
 };
 
 export const saveCountries = async (
-  req: Request,
+  req: AuthenticatedRequest,
   res: Response,
 ): Promise<Response> => {
   const params = getParams(req);
 
   if (!params.coId) {
     return res
-      .status(400)
-      .json({ success: false, message: "Company is not selected" });
+      .status(401)
+      .json({ success: false, message: "Company not found in session" });
   }
 
   const client = await pool.connect();

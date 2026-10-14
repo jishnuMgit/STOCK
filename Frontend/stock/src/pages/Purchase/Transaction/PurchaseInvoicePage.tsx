@@ -10,14 +10,18 @@ import {
   type CashSupplier,
   type PurchaseHeader,
   type PurchaseRow,
+  type Item,
+  type SupplierLookup,
 } from "../../../hooks/Purchase/Transaction/usePurchaseInvoice";
-import { RxTriangleDown } from "react-icons/rx";
 
 const ROW_COUNT = 12;
 const createRows = () => Array.from({ length: ROW_COUNT }, emptyRow);
 
 // TODO: replace with the login year you already keep after /login (PstrYear)
 const YEAR = String(new Date().getFullYear());
+
+// company is stored in localStorage by useLogin after /login
+const getCoId = () => localStorage.getItem("PstrCoID") ?? "";
 
 const num = (v: string) => (Number.isFinite(Number(v)) ? Number(v) : 0);
 
@@ -44,6 +48,8 @@ const PurchaseInvoicePage: React.FC = () => {
     deleteInvoice,
     calcUnitCost,
     fetchCashSuppliers,
+    fetchItems,
+    fetchSuppliers,
     loading,
   } = usePurchaseInvoice();
 
@@ -58,6 +64,11 @@ const PurchaseInvoicePage: React.FC = () => {
   // Misc. supplier lookup + the Yes/No switch
   const [miscSuppliers, setMiscSuppliers] = useState<CashSupplier[]>([]);
   const [miscMode, setMiscMode] = useState("No");
+  const [items, setItems] = useState<Item[]>([]);
+
+  // Supplier lookups: one list sorted by ID, one sorted by name
+  const [suppliersById, setSuppliersById] = useState<SupplierLookup[]>([]);
+  const [suppliersByName, setSuppliersByName] = useState<SupplierLookup[]>([]);
 
   // TODO: wire these to the Purchase Expense total (txtTotExp)
   // and a discount field (txtDiscAmt)
@@ -115,6 +126,86 @@ const PurchaseInvoicePage: React.FC = () => {
       cancelled = true;
     };
   }, [getDefaults]);
+
+  /* items of the selected branch (items are stored per branch in tblitemtl) */
+  useEffect(() => {
+    const coId = getCoId();
+
+    if (!coId || !header.brId) {
+      setItems([]);
+      return;
+    }
+
+    let cancelled = false;
+
+    fetchItems(coId, header.brId)
+      .then((list) => {
+        if (!cancelled) setItems(list);
+      })
+      .catch(() => {
+        if (!cancelled) setItems([]);
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [fetchItems, header.brId]);
+
+  const itemLookups = useMemo(
+    () => ({
+      itemIds: items.map((i) => ({ value: i.id, label: i.id, name: i.name })),
+      itemNames: items.map((i) => ({
+        value: i.id,
+        label: i.name,
+        name: i.name,
+      })),
+    }),
+    [items],
+  );
+
+  /* suppliers for the Supplier ID / Supplier Name dropdowns */
+  useEffect(() => {
+    const coId = getCoId();
+    if (!coId) return;
+
+    let cancelled = false;
+
+    fetchSuppliers(coId, "by-id")
+      .then((list) => {
+        if (!cancelled) setSuppliersById(list);
+      })
+      .catch(() => {
+        if (!cancelled) setSuppliersById([]);
+      });
+
+    fetchSuppliers(coId, "by-name")
+      .then((list) => {
+        if (!cancelled) setSuppliersByName(list);
+      })
+      .catch(() => {
+        if (!cancelled) setSuppliersByName([]);
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [fetchSuppliers]);
+
+  const supplierLookups = useMemo(
+    () => ({
+      supplierIds: suppliersById.map((x) => ({
+        value: x.id,
+        label: x.id,
+        name: x.name,
+      })),
+      supplierNames: suppliersByName.map((x) => ({
+        value: x.id,
+        label: x.name,
+        name: x.name,
+      })),
+    }),
+    [suppliersById, suppliersByName],
+  );
 
   /* VB: GetCashSupplier -> fills the Misc. Sup. combos */
   const loadMiscSuppliers = useCallback(async () => {
@@ -265,14 +356,21 @@ const PurchaseInvoicePage: React.FC = () => {
         onDocNoBlur={handleDocNoBlur}
         totalSupplierAmt={totals.supplierTotal}
         onCalcUnitCost={handleCalcUnitCost}
-        lookups={{ branches: branches.length ? branches : undefined }}
+        lookups={{
+          branches: branches.length ? branches : undefined,
+          ...supplierLookups,
+        }}
         miscSuppliers={miscSuppliers}
         miscMode={miscMode}
         onMiscModeChange={setMiscMode}
         onMiscSupplierSaved={handleMiscSupplierSaved}
       />
 
-      <PurchaseTable rows={rows} onRowChange={handleRowChange} />
+      <PurchaseTable
+        rows={rows}
+        onRowChange={handleRowChange}
+        lookups={itemLookups}
+      />
 
       <PurchaseFooter
         note={header.note}
