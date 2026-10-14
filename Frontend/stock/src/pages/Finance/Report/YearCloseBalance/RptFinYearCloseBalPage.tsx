@@ -163,7 +163,7 @@ const RptFinYearCloseBalPage: React.FC<RptFinYearCloseBalPageProps> = ({
         <main className="w-full overflow-hidden border border-gray-400 bg-white">
           <header className="flex h-7.5 items-center justify-start bg-[#9fdfbc]">
             <h1 className="m-0 ml-3.5 text-[17px] font-semibold text-[#24364d]">
-              Year Close Balance
+             Beginning/Year Close Balance
             </h1>
           </header>
 

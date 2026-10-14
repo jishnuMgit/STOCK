@@ -152,6 +152,7 @@ mnuInactivateAccount:"/Finance/Setup/InactivateAccount",
   
   mnuRptGL:"/Finance/Reports/rptGL",
   mnuRptGLGroup:"/Finance/Reports/RptGLGroup",
+  mnuRptGLSum:"/Finance/Reports/RptGLSum",
   
 
 
