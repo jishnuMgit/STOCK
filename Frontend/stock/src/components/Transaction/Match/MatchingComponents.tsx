@@ -896,10 +896,8 @@ const MatchingComponents = forwardRef<MatchingComponentsRef, Props>(
     };
 
     /* =====================================================
-
      RENDER
-
-  ===================================================== */
+    ===================================================== */
 
     return (
       <div className="w-full border border-[#9aa4ad] bg-white font-sans text-[13px] text-slate-700">
