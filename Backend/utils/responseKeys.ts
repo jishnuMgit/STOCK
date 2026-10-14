@@ -65,6 +65,50 @@ export const defaultBranchGridKeys: KeyMap = {
   fdefbrid: "lkpDefaultBranch",
 };
 
+/* ---------- Purchase / BeginningStock ---------- */
+
+export const beginningStockItemKeys: KeyMap = {
+  fitemid: "lkpItemID",
+  fitemname: "txtItemName",
+  funit: "txtUnit",
+};
+
+export const beginningStockLineKeys: KeyMap = {
+  fslno: "txtSlNo",
+  fitemid: "lkpItemID",
+  funit: "txtUnit",
+  fqtyin: "txtQty",
+  funitcost: "txtUnitCost",
+  ftotalcost: "txtTotalCost",
+};
+
+// the Beginning Stock print: the heading (company, branch, date, doc no) and the lines
+export const beginningStockPrintHeaderKeys: KeyMap = {
+  fconame: "txtCoName",
+  fbrname: "txtBranchName",
+  fdate: "dtpDate",
+  fdocno: "txtDocNo",
+};
+
+export const beginningStockPrintLineKeys: KeyMap = {
+  fslno: "txtSlNo",
+  fitemid: "lkpItemID",
+  fitemname: "lkpItemName",
+  funit: "txtUnit",
+  fqtyin: "txtQty",
+  funitcost: "txtUnitCost",
+  ftotalcost: "txtTotalCost",
+};
+
+export const beginningStockHeaderKeys: KeyMap = {
+  fdate: "dtpDate",
+  fsuserid: "txtSavedBy",
+  fsuserdate: "txtSavedOn",
+  fmuserid: "txtModifiedBy",
+  fmuserdate: "txtModifiedOn",
+  fnote: "txtNote",
+};
+
 export const userAuditUserListKeys: KeyMap = {
   fuserid: "lkpUserID",
 };

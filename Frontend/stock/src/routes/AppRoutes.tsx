@@ -11,6 +11,7 @@ import UserLogin from "../pages/Security/UserLogin/UserLoginPage";
 import SetChartOfAccount from "../pages/Settings/SetChartOfAccountPage";
 import UserPermission from "../pages/Security/UserPermissionMenu/UserPermissionMenuPage";
 import BeginningStockPage from "../pages/Purchase/Transaction/BeginningStockPage";
+import BeginningStockPrintPage from "../pages/Purchase/Transaction/BeginningStockPrintPage";
 import UserPermissionBranchPage from "../pages/Security/UserPermissionBranch/UserPermissionBranchPage";
 import SetPostingAccountPage from "../pages/Settings/SetPostingAccountPage";
 import PurchaseInvoicePage from "../pages/Purchase/Transaction/PurchaseInvoicePage";
@@ -194,6 +195,10 @@ const AppRoutes = () => {
           <Route
             path="/Purchase/Transaction/BeginningStockPage"
             element={<BeginningStockPage />}
+          />
+          <Route
+            path="/Purchase/Transaction/BeginningStockPage/Print"
+            element={<BeginningStockPrintPage />}
           />
           <Route
           path="/Purchase/Setup/UnitPage"

@@ -4,7 +4,7 @@
 --
 -- dbo.tbluseraudit holds one row per audited action:
 --   fcoid, fyear, fbrid, fdoctype, fscreenname, fscreenkey, faction,
---   fnote, fuserid, fuserdate   (+ ftransid, a running number)
+--   fnote, fuserid, fuserdate   (+ fid, a running number)
 -- fscreenkey is  branch + doc type + doc no  glued together (dbo.sp_useraudit),
 -- so the document number is what is left of it after the branch and the doc
 -- type - for a screen with no document it is just the key of the row (a user
@@ -88,7 +88,7 @@ BEGIN
         ORDER BY
             a.fuserid,
             a.fuserdate,
-            a.ftransid;
+            a.fid;
 
 END;
 $procedure$;
