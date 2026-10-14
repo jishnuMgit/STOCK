@@ -72,6 +72,7 @@ irptRptInvoicewiseProfit:"/Purchase/Report/RptInvoicewiseProfit",
 mnuRptStockReport:"/Purchase/Report/RptStockReport",
 mnuRptStockValuation:"/Purchase/Report/RptStockValuation",
 mnuRptStockVerification:"/Purchase/Report/RptStockVerification",
+mnuRptStockAgeing:"/Purchase/Report/RptStockAgeing",
 
 
 
