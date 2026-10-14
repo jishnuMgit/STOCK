@@ -69,6 +69,7 @@ mnuRptStaffSales:"/Purchase/Report/RptStaffSales",
 mnuRptSalesSummary:"/Purchase/Report/RptSalesSummary",
 mnuRptItemMovement:"/Purchase/Report/RptItemMovement",
 irptRptInvoicewiseProfit:"/Purchase/Report/RptInvoicewiseProfit",
+mnuRptStockReport:"/Purchase/Report/RptStockReport",
 
 
 
