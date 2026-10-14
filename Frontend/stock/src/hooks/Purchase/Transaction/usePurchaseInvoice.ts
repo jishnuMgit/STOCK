@@ -11,6 +11,26 @@ export interface Branch {
   name: string;
 }
 
+const ITEM_BASE = "/item/items";
+
+export interface Item {
+  id: string;
+  name: string;
+  branchId: string;
+  packing: string;
+  itemGroupId: string;
+  inactive: boolean;
+}
+
+interface ItemApi {
+  itemID: string;
+  itemName: string | null;
+  branchID: string | null;
+  packing: string | number | null;
+  itemGroupID: string | null;
+  inactive: number | boolean | null;
+}
+
 export interface PurchaseHeader {
   brId: string;
   docNo: string;
@@ -183,6 +203,26 @@ export const usePurchaseInvoice = () => {
     }>("GET", "/branch");
     return result.data.map((b) => ({ id: b.fbrid, name: s(b.fbrname) }));
   }, []);
+
+  /* items of a branch (dbo.sp_getitem) -> Item ID / Item Name dropdowns */
+  const fetchItems = useCallback(
+    async (coId: string, brId: string): Promise<Item[]> => {
+      const params = new URLSearchParams({ PstrCoID: coId, PstrBrID: brId });
+      const result = await apiRequest<{ data: ItemApi[] }>(
+        "GET",
+        `${ITEM_BASE}?${params}`,
+      );
+      return result.data.map((r) => ({
+        id: s(r.itemID),
+        name: s(r.itemName),
+        branchId: s(r.branchID),
+        packing: s(r.packing),
+        itemGroupId: s(r.itemGroupID),
+        inactive: Boolean(r.inactive),
+      }));
+    },
+    [],
+  );
 
   /* Returns null when not found (new document) or on error (see `error`). */
   const fetchInvoice = useCallback(
@@ -379,6 +419,7 @@ export const usePurchaseInvoice = () => {
     fetchNextCashSupplierId,
     saveCashSupplier,
     deleteCashSupplier,
+    fetchItems,
     loading,
     error,
   };

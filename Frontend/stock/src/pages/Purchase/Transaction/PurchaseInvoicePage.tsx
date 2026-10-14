@@ -10,8 +10,8 @@ import {
   type CashSupplier,
   type PurchaseHeader,
   type PurchaseRow,
+  type Item,
 } from "../../../hooks/Purchase/Transaction/usePurchaseInvoice";
-import { RxTriangleDown } from "react-icons/rx";
 
 const ROW_COUNT = 12;
 const createRows = () => Array.from({ length: ROW_COUNT }, emptyRow);
@@ -44,6 +44,7 @@ const PurchaseInvoicePage: React.FC = () => {
     deleteInvoice,
     calcUnitCost,
     fetchCashSuppliers,
+    fetchItems,
     loading,
   } = usePurchaseInvoice();
 
@@ -58,6 +59,7 @@ const PurchaseInvoicePage: React.FC = () => {
   // Misc. supplier lookup + the Yes/No switch
   const [miscSuppliers, setMiscSuppliers] = useState<CashSupplier[]>([]);
   const [miscMode, setMiscMode] = useState("No");
+  const [items, setItems] = useState<Item[]>([]);
 
   // TODO: wire these to the Purchase Expense total (txtTotExp)
   // and a discount field (txtDiscAmt)
@@ -115,6 +117,43 @@ const PurchaseInvoicePage: React.FC = () => {
       cancelled = true;
     };
   }, [getDefaults]);
+
+  const getCoId = () => localStorage.getItem("PstrCoID") ?? "";
+
+  useEffect(() => {
+    const coId = getCoId();
+
+    if (!coId || !header.brId) {
+      setItems([]);
+      return;
+    }
+
+    let cancelled = false;
+
+    fetchItems(coId, header.brId)
+      .then((list) => {
+        if (!cancelled) setItems(list);
+      })
+      .catch(() => {
+        if (!cancelled) setItems([]);
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [fetchItems, header.brId]);
+  
+  const itemLookups = useMemo(
+    () => ({
+      itemIds: items.map((i) => ({ value: i.id, label: i.id, name: i.name })),
+      itemNames: items.map((i) => ({
+        value: i.id,
+        label: i.name,
+        name: i.name,
+      })),
+    }),
+    [items],
+  );
 
   /* VB: GetCashSupplier -> fills the Misc. Sup. combos */
   const loadMiscSuppliers = useCallback(async () => {
@@ -272,7 +311,11 @@ const PurchaseInvoicePage: React.FC = () => {
         onMiscSupplierSaved={handleMiscSupplierSaved}
       />
 
-      <PurchaseTable rows={rows} onRowChange={handleRowChange} />
+      <PurchaseTable
+        rows={rows}
+        onRowChange={handleRowChange}
+        lookups={itemLookups}
+      />
 
       <PurchaseFooter
         note={header.note}
