@@ -73,6 +73,8 @@ mnuRptStockReport:"/Purchase/Report/RptStockReport",
 mnuRptStockValuation:"/Purchase/Report/RptStockValuation",
 mnuRptStockVerification:"/Purchase/Report/RptStockVerification",
 mnuRptStockAgeing:"/Purchase/Report/RptStockAgeing",
+mnuRptDocumentList:"/Purchase/Report/RptDocumentList",
+mnuRptSalesPriceList:"/Purchase/Report/RptSalesPriceList",
 
 
 

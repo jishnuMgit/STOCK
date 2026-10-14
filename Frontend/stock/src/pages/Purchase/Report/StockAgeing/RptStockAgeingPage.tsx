@@ -122,7 +122,7 @@ const CustomRadio: React.FC<RadioOptionProps> = ({
         }`}
       />
     </span>
-    <span className="text-[12px] font-normal text-[#35445a]">{label}</span>
+    <span className="text-[14px] font-normal text-[#35445a]">{label}</span>
   </label>
 );
 
@@ -136,7 +136,7 @@ const RadioPanel: React.FC<{
 );
 
 const FieldLabel: React.FC<{ children: React.ReactNode }> = ({ children }) => (
-  <div className="flex h-[30px] items-center border border-[#e0e5ea] bg-[#fafbfc] px-3 text-[12px] text-[#405066]">
+  <div className="flex h-[30px] items-center border border-[#e0e5ea] bg-[#fafbfc] px-3 text-[14px] text-[#405066]">
     {children}
   </div>
 );
@@ -176,7 +176,7 @@ const AppDatePicker: React.FC<AppDatePickerProps> = ({
           boxSizing: "border-box",
           borderRadius: "4px",
           backgroundColor: "#ffffff",
-          fontSize: "12px",
+          fontSize: "14px",
           padding: 0,
           overflow: "hidden",
         },
@@ -189,13 +189,13 @@ const AppDatePicker: React.FC<AppDatePickerProps> = ({
           overflow: "hidden",
         },
         "& .MuiPickersInputBase-sectionContent": {
-          fontSize: "12px",
+          fontSize: "14px",
           color: "#344054",
         },
         "& .MuiPickersInputBase-input": {
           minWidth: 0,
           width: "100%",
-          fontSize: "12px",
+          fontSize: "14px",
           padding: 0,
           height: "30px",
           boxSizing: "border-box",
@@ -290,9 +290,9 @@ const RptStockAgeingPage: React.FC<RptStockAgeingPageProps> = ({ onClose }) => {
   };
 
   return (
-    <div className="flex min-h-screen w-full items-start justify-center bg-white px-4 py-4">
+    <div className="flex min-h-full w-full items-start justify-center bg-white px-4 py-4">
       <div className="min-h-fit w-205 max-w-full bg-white p-0">
-        <main className="w-full overflow-hidden border border-[#d5dce2] bg-white">
+        <main className="w-full overflow-hidden border border-gray-400 bg-white">
           <header className="flex h-7.5 items-center justify-start bg-[#9fdfbc]">
             <h1 className="m-0 ml-3.5 text-[17px] font-semibold text-[#24364d]">
               Stock Ageing
@@ -304,14 +304,14 @@ const RptStockAgeingPage: React.FC<RptStockAgeingPageProps> = ({ onClose }) => {
               {/* Branch */}
               <RadioPanel>
                 <CustomRadio
-                  name="optBranch"
+                  name="rdgBranch"
                   value="One Branch"
                   label="One Branch"
                   checked={branchMode === "One Branch"}
                   onChange={() => setBranchMode("One Branch")}
                 />
                 <CustomRadio
-                  name="optBranch"
+                  name="rdgBranch"
                   value="All Branch"
                   label="All Branch"
                   checked={branchMode === "All Branch"}
@@ -335,21 +335,21 @@ const RptStockAgeingPage: React.FC<RptStockAgeingPageProps> = ({ onClose }) => {
               {/* Item */}
               <RadioPanel>
                 <CustomRadio
-                  name="optItem"
+                  name="rdgItem"
                   value="One Item"
                   label="One Item"
                   checked={itemMode === "One Item"}
                   onChange={() => setItemMode("One Item")}
                 />
                 <CustomRadio
-                  name="optItem"
+                  name="rdgItem"
                   value="Range Item"
                   label="Range Item"
                   checked={itemMode === "Range Item"}
                   onChange={() => setItemMode("Range Item")}
                 />
                 <CustomRadio
-                  name="optItem"
+                  name="rdgItem"
                   value="All Item"
                   label="All Item"
                   checked={itemMode === "All Item"}
@@ -389,7 +389,7 @@ const RptStockAgeingPage: React.FC<RptStockAgeingPageProps> = ({ onClose }) => {
                         {...selectProps}
                       />
                     </div>
-                    <span className="text-[12px] text-[#405066]">to</span>
+                    <span className="text-[14px] text-[#405066]">to</span>
                     <div className="w-[135px]">
                       <Select
                         inputId="lkpToItem"
