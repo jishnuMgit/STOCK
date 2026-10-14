@@ -1,4 +1,3 @@
-
 import React from "react";
 import { handleKeyboardAction } from "../../../hooks/useMatchKeyboard";
 
@@ -13,17 +12,11 @@ interface MatchFooterProps {
 
   buttons: string[];
 
-  actionRefs: React.MutableRefObject<
-    (HTMLButtonElement | null)[]
-  >;
+  actionRefs: React.MutableRefObject<(HTMLButtonElement | null)[]>;
 
-  setActiveButton: React.Dispatch<
-    React.SetStateAction<number>
-  >;
+  setActiveButton: React.Dispatch<React.SetStateAction<number>>;
 
-  handleActionKeyDown: (
-    event: React.KeyboardEvent<HTMLButtonElement>
-  ) => void;
+  handleActionKeyDown: (event: React.KeyboardEvent<HTMLButtonElement>) => void;
 
   executeAction: (index: number) => void;
 }
@@ -46,33 +39,11 @@ const MatchFooter: React.FC<MatchFooterProps> = ({
           NOTE + TOTAL
       ================================================= */}
 
-      <div
-        className="
-          flex
-          items-center
-          px-6.75
-          pt-2.5
-          gap-3
-          max-[900px]:flex-wrap
-          max-[900px]:px-2
-        "
-      >
+      <div className="flex items-center px-6.75 pt-2.5 gap-3 max-[900px]:flex-wrap max-[900px]:px-2">
         {/* NOTE */}
 
-        <div
-          className="
-            flex
-            flex-1
-            items-center
-            gap-3.5
-            min-w-0
-            max-[900px]:w-full
-            max-[900px]:flex-none
-          "
-        >
-          <label>
-            Note :
-          </label>
+        <div className="flex flex-1 items-center gap-3.5 min-w-0 max-[900px]:w-full max-[900px]:flex-none">
+          <label>Note :</label>
 
           <input
             id="txtNote"
@@ -200,9 +171,7 @@ const MatchFooter: React.FC<MatchFooterProps> = ({
           max-[900px]:w-full
         "
       >
-        <label>
-          Difference :
-        </label>
+        <label>Difference :</label>
 
         <div
           className="

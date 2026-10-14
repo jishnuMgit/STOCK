@@ -16,177 +16,163 @@ interface GetMatchAccountsParams {
   gstrCoID: string;
 }
 
+export interface GetDocumentsToMatchParams {
+  customerAccountId: string;
+  docNo: string;
+  brId: string;
+  docType: string;
+  divId: string;
+  year: string | number;
+  matchAccountSlNo: number;
+  matchAccountSlNoSub: number;
+  debit: number;
+  credit: number;
+  matchDocAmt: number;
+  coId: string;
+}
+
+export interface SaveMatchPayload {
+  strMode: string;
+  year: string | number;
+  brId: string;
+  docType: string;
+  docNo: string;
+  intDocNo: number;
+  docDate: string;
+  efDate: string; // YYYY-MM-DD
+  divId: string;
+  totalAmount: number;
+  data: Record<string, unknown>[];
+  match: Record<string, unknown>[];
+}
+
+const API = import.meta.env.VITE_API_URL;
+
+const postJson = async (url: string, body: unknown) => {
+  const response = await fetch(url, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(body),
+  });
+
+  // Backend sends { success:false, message } on 400/500 – surface that message.
+  const result = await response.json().catch(() => null);
+
+  if (!response.ok || !result?.success) {
+    throw new Error(result?.message || `HTTP Error: ${response.status}`);
+  }
+  return result;
+};
+
 const useMatching = () => {
-  const [divisionOptionsLocal, setDivisionOptionsLocal] =
-    useState<SelectOption[]>([]);
+  const [divisionOptionsLocal, setDivisionOptionsLocal] = useState<
+    SelectOption[]
+  >([]);
+  const [divisionLoading, setDivisionLoading] = useState(false);
+  const [matchAccounts, setMatchAccounts] = useState<MatchAccountRow[]>([]);
+  const [matchAccountsLoading, setMatchAccountsLoading] = useState(false);
+  const [saving, setSaving] = useState(false);
 
-  const [divisionLoading, setDivisionLoading] =
-    useState(false);
-
-  const [matchAccounts, setMatchAccounts] =
-    useState<MatchAccountRow[]>([]);
-
-  const [matchAccountsLoading, setMatchAccountsLoading] =
-    useState(false);
-
-  /* =========================================================
-     FIRST API
-     GET CUSTOMER DIVISION
-  ========================================================= */
+  /* ---------- GET DIVISION ---------- */
   const getDiv = useCallback(
     async (strCSAccountID: string): Promise<SelectOption[]> => {
       setDivisionOptionsLocal([]);
-
-      if (!strCSAccountID?.trim()) {
-        return [];
-      }
+      if (!strCSAccountID?.trim()) return [];
 
       setDivisionLoading(true);
-
       try {
-        const response = await fetch(
-          "http://localhost:5000/api/Receipt/getDivID",
-          {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-            },
-            body: JSON.stringify({
-              customerid: strCSAccountID,
-            }),
-          }
-        );
+        const result = await postJson(`${API}/Receipt/getDivID`, {
+          customerid: strCSAccountID,
+        });
 
-        if (!response.ok) {
-          throw new Error(`HTTP Error: ${response.status}`);
-        }
-
-        const result = await response.json();
-
-        if (
-          !result?.success ||
-          !Array.isArray(result?.data)
-        ) {
-          setDivisionOptionsLocal([]);
-          return [];
-        }
+        if (!Array.isArray(result?.data)) return [];
 
         const options: SelectOption[] = result.data
-          .map((division: any) => ({
-            // Keep fDivID as the actual selected value because
-            // the Match API expects strDivID.
-            value: String(
-              division.fdivid ??
-              division.fDivID ??
-              ""
-            ),
+          .map((d: any) => ({
+            value: String(d.fdivid ?? d.fDivID ?? ""),
             label: String(
-              division.fdivname ??
-              division.fDivName ??
-              division.fdivid ??
-              division.fDivID ??
-              ""
+              d.fdivname ?? d.fDivName ?? d.fdivid ?? d.fDivID ?? "",
             ),
           }))
-          .filter(
-            (option: SelectOption) =>
-              option.value.trim() !== ""
-          );
+          .filter((o: SelectOption) => o.value.trim() !== "");
 
         setDivisionOptionsLocal(options);
-
         return options;
       } catch (error) {
-        console.error(
-          "Get Customer Division Error:",
-          error
-        );
-
+        console.error("Get Customer Division Error:", error);
         setDivisionOptionsLocal([]);
         return [];
       } finally {
         setDivisionLoading(false);
       }
     },
-    []
+    [],
   );
 
-  /* =========================================================
-     SECOND API
-     GET MATCH ACCOUNTS
-
-     Equivalent to:
-     objMatchAccounts.GetData(
-       strDocType,
-       strCSAccountID,
-       strDivID
-     )
-  ========================================================= */
+  /* ---------- GET MATCH ACCOUNTS (GetTL) ---------- */
   const getMatchAccounts = useCallback(
-    async ({
-      strDocType,
-      strCSAccountID,
-      strDivID,
-      gstrCoID,
-    }: GetMatchAccountsParams): Promise<MatchAccountRow[]> => {
+    async (params: GetMatchAccountsParams): Promise<MatchAccountRow[]> => {
       setMatchAccountsLoading(true);
-
       try {
-        const response = await fetch(
-          "http://localhost:5000/api/Match/getMatchAccounts",
-          {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-            },
-            body: JSON.stringify({
-              strDocType,
-              strCSAccountID,
-              strDivID,
-              gstrCoID,
-            }),
-          }
-        );
-
-        if (!response.ok) {
-          throw new Error(`HTTP Error: ${response.status}`);
-        }
-
-        const result = await response.json();
-
-        if (!result?.success) {
-          throw new Error(
-            result?.message ||
-              "Failed to get match accounts"
-          );
-        }
-
-        const data: MatchAccountRow[] =
-          Array.isArray(result?.data)
-            ? result.data
-            : [];
-
+        const result = await postJson(`${API}/Match/getMatchAccounts`, params);
+        const data: MatchAccountRow[] = Array.isArray(result?.data)
+          ? result.data
+          : [];
         setMatchAccounts(data);
-
         return data;
       } catch (error) {
-        console.error(
-          "Get Match Accounts Error:",
-          error
-        );
-
+        console.error("Get Match Accounts Error:", error);
         setMatchAccounts([]);
         throw error;
       } finally {
         setMatchAccountsLoading(false);
       }
     },
-    []
+    [],
   );
 
-  /* =========================================================
-     CLEAR MATCHING DATA
-  ========================================================= */
+  /* ---------- GET DOCUMENTS TO MATCH (match grid) ---------- */
+  const getDocumentsToMatch = useCallback(
+    async (params: GetDocumentsToMatchParams): Promise<MatchAccountRow[]> => {
+      const result = await postJson(`${API}/Match/getDocumentsToMatch`, params);
+
+      // matchService's return shape isn't known to me – accept common keys.
+      const rows =
+        result.data ?? result.rows ?? result.documents ?? result.result ?? [];
+      return Array.isArray(rows) ? rows : [];
+    },
+    [],
+  );
+
+  /* ---------- GET MATCH DATE ---------- */
+  const getMatchDate = useCallback(
+    async (params: {
+      year: string | number;
+      brId: string;
+      docType: string;
+      docNo: string;
+    }): Promise<string | null> => {
+      try {
+        const result = await postJson(`${API}/Match/getMatchDate`, params);
+        return result.date ?? null;
+      } catch (error) {
+        console.error("Get Match Date Error:", error);
+        return null;
+      }
+    },
+    [],
+  );
+
+  /* ---------- SAVE MATCH ---------- */
+  const saveMatch = useCallback(async (payload: SaveMatchPayload) => {
+    setSaving(true);
+    try {
+      return await postJson(`${API}/Match/saveMatch`, payload);
+    } finally {
+      setSaving(false);
+    }
+  }, []);
+
   const clearMatchingData = useCallback(() => {
     setDivisionOptionsLocal([]);
     setMatchAccounts([]);
@@ -197,8 +183,12 @@ const useMatching = () => {
     divisionLoading,
     matchAccounts,
     matchAccountsLoading,
+    saving,
     getDiv,
     getMatchAccounts,
+    getDocumentsToMatch,
+    getMatchDate,
+    saveMatch,
     clearMatchingData,
   };
 };

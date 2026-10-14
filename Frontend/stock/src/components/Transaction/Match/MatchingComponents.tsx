@@ -1,33 +1,20 @@
 import React, {
-
   forwardRef,
-
   useCallback,
-
   useImperativeHandle,
-
   useRef,
-
   useState,
-
 } from "react";
 
 import Select, {
-
   components,
-
   type OptionProps,
-
   type StylesConfig,
-
 } from "react-select";
 
 import {
-
   handleKeyboardAction,
-
   focusElement,
-
 } from "../../../hooks/useMatchKeyboard";
 
 import useMatching from "../../../hooks/useMatching";
@@ -39,21 +26,14 @@ import MatchTable from "./MatchTable";
 import MatchFooter from "./MatchFooter";
 
 import type {
-
   ReceiptRow,
-
   TableField,
-
   SelectOption,
-
   DocumentOption,
-
   MatchingComponentsRef,
-
 } from "./types";
 
 interface Props {
-
   branch: string;
 
   setBranch: React.Dispatch<React.SetStateAction<string>>;
@@ -85,13 +65,11 @@ interface Props {
   rows: ReceiptRow[];
 
   handleRowChange: (
-
     rowIndex: number,
 
     field: keyof ReceiptRow,
 
-    value: string | number | boolean
-
+    value: string | number | boolean,
   ) => void;
 
   onSave: () => void;
@@ -117,11 +95,9 @@ interface Props {
   totalMatchAmount: number;
 
   balance: number;
-
 }
 
 interface ResponsiveSelectProps {
-
   id: string;
 
   value: string;
@@ -146,12 +122,7 @@ interface ResponsiveSelectProps {
 
   swapColumns?: boolean;
 
-  customOption?: React.ComponentType<
-
-    OptionProps<SelectOption, false>
-
-  >;
-
+  customOption?: React.ComponentType<OptionProps<SelectOption, false>>;
 }
 
 const ResponsiveSelect = ({
@@ -194,20 +165,46 @@ const ResponsiveSelect = ({
     if (documentMode) {
       return (
         <components.SingleValue {...selectProps}>
-          <div style={{ display: "grid", gridTemplateColumns: "52px 105px 70px 105px 75px 85px minmax(0, 1fr)", width: "100%", minWidth: 0, alignItems: "center", fontSize: "12px" }}>
+          <div
+            style={{
+              display: "grid",
+              gridTemplateColumns:
+                "52px 105px 70px 105px 75px 85px minmax(0, 1fr)",
+              width: "100%",
+              minWidth: 0,
+              alignItems: "center",
+              fontSize: "12px",
+            }}
+          >
             <span>{data.brId ?? ""}</span>
             <span>{data.date ?? ""}</span>
             <span>{data.docType ?? ""}</span>
             <span>{data.docNo ?? data.value ?? ""}</span>
-            <span style={{ textAlign: "right", paddingRight: "8px" }}>{data.debit ?? ""}</span>
-            <span style={{ textAlign: "right", paddingRight: "8px" }}>{data.credit ?? ""}</span>
-            <span style={{ overflow: "hidden", whiteSpace: "nowrap", textOverflow: "ellipsis" }}>{data.description ?? ""}</span>
+            <span style={{ textAlign: "right", paddingRight: "8px" }}>
+              {data.debit ?? ""}
+            </span>
+            <span style={{ textAlign: "right", paddingRight: "8px" }}>
+              {data.credit ?? ""}
+            </span>
+            <span
+              style={{
+                overflow: "hidden",
+                whiteSpace: "nowrap",
+                textOverflow: "ellipsis",
+              }}
+            >
+              {data.description ?? ""}
+            </span>
           </div>
         </components.SingleValue>
       );
     }
 
-    return <components.SingleValue {...selectProps}>{data.value}</components.SingleValue>;
+    return (
+      <components.SingleValue {...selectProps}>
+        {data.value}
+      </components.SingleValue>
+    );
   };
 
   const DefaultOption = (optionProps: OptionProps<SelectOption, false>) => {
@@ -216,14 +213,36 @@ const ResponsiveSelect = ({
     if (documentMode) {
       return (
         <components.Option {...optionProps}>
-          <div style={{ display: "grid", gridTemplateColumns: "52px 105px 70px 105px 75px 85px minmax(0, 1fr)", width: "100%", minWidth: 0, alignItems: "center", fontSize: "12px" }}>
+          <div
+            style={{
+              display: "grid",
+              gridTemplateColumns:
+                "52px 105px 70px 105px 75px 85px minmax(0, 1fr)",
+              width: "100%",
+              minWidth: 0,
+              alignItems: "center",
+              fontSize: "12px",
+            }}
+          >
             <div>{data.brId ?? ""}</div>
             <div>{data.date ?? ""}</div>
             <div>{data.docType ?? ""}</div>
             <div>{data.docNo ?? data.value ?? ""}</div>
-            <div style={{ textAlign: "right", paddingRight: "8px" }}>{data.debit ?? ""}</div>
-            <div style={{ textAlign: "right", paddingRight: "8px" }}>{data.credit ?? ""}</div>
-            <div style={{ overflow: "hidden", whiteSpace: "nowrap", textOverflow: "ellipsis" }}>{data.description ?? ""}</div>
+            <div style={{ textAlign: "right", paddingRight: "8px" }}>
+              {data.debit ?? ""}
+            </div>
+            <div style={{ textAlign: "right", paddingRight: "8px" }}>
+              {data.credit ?? ""}
+            </div>
+            <div
+              style={{
+                overflow: "hidden",
+                whiteSpace: "nowrap",
+                textOverflow: "ellipsis",
+              }}
+            >
+              {data.description ?? ""}
+            </div>
           </div>
         </components.Option>
       );
@@ -232,7 +251,16 @@ const ResponsiveSelect = ({
     if (!columnHeaders) {
       return (
         <components.Option {...optionProps}>
-          <div style={{ whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", width: "100%" }}>{data.value}</div>
+          <div
+            style={{
+              whiteSpace: "nowrap",
+              overflow: "hidden",
+              textOverflow: "ellipsis",
+              width: "100%",
+            }}
+          >
+            {data.value}
+          </div>
         </components.Option>
       );
     }
@@ -241,9 +269,40 @@ const ResponsiveSelect = ({
     const secondColumn = swapColumns ? data.value : data.label;
     return (
       <components.Option {...optionProps}>
-        <div style={{ display: "grid", gridTemplateColumns: reverseDropdown ? "minmax(0, 1fr) 132px" : "140px minmax(0, 1fr)", width: "100%", minWidth: 0, alignItems: "center" }}>
-          <div style={{ minWidth: 0, paddingRight: "8px", overflow: "hidden", whiteSpace: "nowrap", textOverflow: "ellipsis" }}>{firstColumn}</div>
-          <div style={{ minWidth: 0, borderLeft: "1px solid #d5dce3", paddingLeft: "10px", overflow: "hidden", whiteSpace: "nowrap", textOverflow: "ellipsis" }}>{secondColumn}</div>
+        <div
+          style={{
+            display: "grid",
+            gridTemplateColumns: reverseDropdown
+              ? "minmax(0, 1fr) 132px"
+              : "140px minmax(0, 1fr)",
+            width: "100%",
+            minWidth: 0,
+            alignItems: "center",
+          }}
+        >
+          <div
+            style={{
+              minWidth: 0,
+              paddingRight: "8px",
+              overflow: "hidden",
+              whiteSpace: "nowrap",
+              textOverflow: "ellipsis",
+            }}
+          >
+            {firstColumn}
+          </div>
+          <div
+            style={{
+              minWidth: 0,
+              borderLeft: "1px solid #d5dce3",
+              paddingLeft: "10px",
+              overflow: "hidden",
+              whiteSpace: "nowrap",
+              textOverflow: "ellipsis",
+            }}
+          >
+            {secondColumn}
+          </div>
         </div>
       </components.Option>
     );
@@ -251,12 +310,49 @@ const ResponsiveSelect = ({
 
   const CustomMenuList = (menuProps: any) => {
     if (documentMode) {
-      const headers = ["BrID", "Date", "Doc. Type", "Doc. No.", "Debit", "Credit", "Description"];
+      const headers = [
+        "BrID",
+        "Date",
+        "Doc. Type",
+        "Doc. No.",
+        "Debit",
+        "Credit",
+        "Description",
+      ];
       return (
         <components.MenuList {...menuProps}>
-          <div style={{ display: "grid", gridTemplateColumns: "52px 105px 70px 105px 75px 85px minmax(0, 1fr)", width: "100%", minWidth: 0, alignItems: "center", height: "28px", boxSizing: "border-box", backgroundColor: "#eeeeee", borderBottom: "1px solid #c8c8c8", color: "#222", fontSize: "12px" }}>
+          <div
+            style={{
+              display: "grid",
+              gridTemplateColumns:
+                "52px 105px 70px 105px 75px 85px minmax(0, 1fr)",
+              width: "100%",
+              minWidth: 0,
+              alignItems: "center",
+              height: "28px",
+              boxSizing: "border-box",
+              backgroundColor: "#eeeeee",
+              borderBottom: "1px solid #c8c8c8",
+              color: "#222",
+              fontSize: "12px",
+            }}
+          >
             {headers.map((header, index) => (
-              <div key={header} style={{ minWidth: 0, paddingLeft: "6px", paddingRight: "4px", borderLeft: index === 0 ? "none" : "1px solid #c8c8c8", textAlign: index === 4 || index === 5 ? "right" : "left", overflow: "hidden", whiteSpace: "nowrap", textOverflow: "ellipsis" }}>{header}</div>
+              <div
+                key={header}
+                style={{
+                  minWidth: 0,
+                  paddingLeft: "6px",
+                  paddingRight: "4px",
+                  borderLeft: index === 0 ? "none" : "1px solid #c8c8c8",
+                  textAlign: index === 4 || index === 5 ? "right" : "left",
+                  overflow: "hidden",
+                  whiteSpace: "nowrap",
+                  textOverflow: "ellipsis",
+                }}
+              >
+                {header}
+              </div>
             ))}
           </div>
           {menuProps.children}
@@ -267,9 +363,47 @@ const ResponsiveSelect = ({
     return (
       <components.MenuList {...menuProps}>
         {columnHeaders && (
-          <div style={{ display: "grid", gridTemplateColumns: reverseDropdown ? "minmax(0, 1fr) 140px" : "148px minmax(0, 1fr)", width: "100%", minWidth: 0, alignItems: "center", height: "28px", boxSizing: "border-box", backgroundColor: "#eeeeee", borderBottom: "1px solid #c8c8c8", color: "#222", fontSize: "13px" }}>
-            <div style={{ minWidth: 0, paddingLeft: "8px", paddingRight: "8px", overflow: "hidden", whiteSpace: "nowrap", textOverflow: "ellipsis" }}>{swapColumns ? columnHeaders[1] : columnHeaders[0]}</div>
-            <div style={{ minWidth: 0, borderLeft: "1px solid #c8c8c8", paddingLeft: "10px", overflow: "hidden", whiteSpace: "nowrap", textOverflow: "ellipsis" }}>{swapColumns ? columnHeaders[0] : columnHeaders[1]}</div>
+          <div
+            style={{
+              display: "grid",
+              gridTemplateColumns: reverseDropdown
+                ? "minmax(0, 1fr) 140px"
+                : "148px minmax(0, 1fr)",
+              width: "100%",
+              minWidth: 0,
+              alignItems: "center",
+              height: "28px",
+              boxSizing: "border-box",
+              backgroundColor: "#eeeeee",
+              borderBottom: "1px solid #c8c8c8",
+              color: "#222",
+              fontSize: "13px",
+            }}
+          >
+            <div
+              style={{
+                minWidth: 0,
+                paddingLeft: "8px",
+                paddingRight: "8px",
+                overflow: "hidden",
+                whiteSpace: "nowrap",
+                textOverflow: "ellipsis",
+              }}
+            >
+              {swapColumns ? columnHeaders[1] : columnHeaders[0]}
+            </div>
+            <div
+              style={{
+                minWidth: 0,
+                borderLeft: "1px solid #c8c8c8",
+                paddingLeft: "10px",
+                overflow: "hidden",
+                whiteSpace: "nowrap",
+                textOverflow: "ellipsis",
+              }}
+            >
+              {swapColumns ? columnHeaders[0] : columnHeaders[1]}
+            </div>
           </div>
         )}
         {menuProps.children}
@@ -285,11 +419,14 @@ const ResponsiveSelect = ({
       id={id}
       ref={(element) => {
         wrapperRef.current = element;
-        (selectRef as React.MutableRefObject<HTMLDivElement | null>).current = element;
+        (selectRef as React.MutableRefObject<HTMLDivElement | null>).current =
+          element;
       }}
       tabIndex={0}
       onKeyDown={(event) => handleKeyboardAction(event, { onEnter: next })}
-      style={{ "--select-width": selectWidth, width: "100%" } as React.CSSProperties}
+      style={
+        { "--select-width": selectWidth, width: "100%" } as React.CSSProperties
+      }
     >
       <Select<SelectOption, false>
         inputId={`${id}-input`}
@@ -297,7 +434,9 @@ const ResponsiveSelect = ({
         components={{
           Option: OptionComponent,
           SingleValue: CustomSingleValue,
-          ...(columnHeaders || documentMode ? { MenuList: CustomMenuList } : {}),
+          ...(columnHeaders || documentMode
+            ? { MenuList: CustomMenuList }
+            : {}),
         }}
         options={options}
         styles={styles}
@@ -309,841 +448,599 @@ const ResponsiveSelect = ({
   );
 };
 
-const MatchingComponents = forwardRef<
+const MatchingComponents = forwardRef<MatchingComponentsRef, Props>(
+  (props, ref) => {
+    const {
+      branch,
 
-  MatchingComponentsRef,
+      setBranch,
 
-  Props
+      type,
 
->((props, ref) => {
+      setDocType,
 
-  const {
+      receiptNo,
 
-    branch,
+      setReceiptNo,
 
-    setBranch,
+      receiptDate,
 
-    type,
+      setReceiptDate,
 
-    setDocType,
+      customerId,
 
-    receiptNo,
+      setCustomerId,
 
-    setReceiptNo,
+      customerName,
 
-    receiptDate,
+      setCustomerName,
 
-    setReceiptDate,
+      divisionId,
 
-    customerId,
+      setDivisionId,
 
-    setCustomerId,
+      rows,
 
-    customerName,
+      handleRowChange,
 
-    setCustomerName,
+      onSave,
 
-    divisionId,
+      clearForm,
 
-    setDivisionId,
+      onSearch,
 
-    rows,
+      gstrCoID = import.meta.env.VITE_CO_ID ?? "",
 
-    handleRowChange,
+      branchOptions,
 
-    onSave,
+      customerOptions,
 
-    clearForm,
+      customerNameOptions,
 
-    onSearch,
+      documentOptions,
 
-    gstrCoID = import.meta.env.VITE_CO_ID ?? "",
+      documentAmount,
 
-    branchOptions,
+      totalMatchAmount,
 
-    customerOptions,
+      balance,
+    } = props;
 
-    customerNameOptions,
-
-    documentOptions,
-
-    documentAmount,
-
-    totalMatchAmount,
-
-    balance,
-
-  } = props;
-
-  /* =====================================================
+    /* =====================================================
 
      REFS
 
   ===================================================== */
 
-  const customerIdRef =
+    const customerIdRef = useRef<HTMLDivElement | null>(null);
 
-    useRef<HTMLDivElement | null>(null);
+    const customerNameRef = useRef<HTMLDivElement | null>(null);
 
-  const customerNameRef =
+    const divisionRef = useRef<HTMLDivElement | null>(null);
 
-    useRef<HTMLDivElement | null>(null);
+    const creditDocumentRef = useRef<HTMLDivElement | null>(null);
 
-  const divisionRef =
+    const documentNoRef = useRef<HTMLDivElement | null>(null);
 
-    useRef<HTMLDivElement | null>(null);
+    const dateRef = useRef<HTMLInputElement | null>(null);
 
-  const creditDocumentRef =
+    const noteRef = useRef<HTMLInputElement | null>(null);
 
-    useRef<HTMLDivElement | null>(null);
+    const tableRefs = useRef<Record<string, HTMLElement | null>>({});
 
-  const documentNoRef =
+    const actionRefs = useRef<(HTMLButtonElement | null)[]>([]);
 
-    useRef<HTMLDivElement | null>(null);
-
-  const dateRef =
-
-    useRef<HTMLInputElement | null>(null);
-
-  const noteRef =
-
-    useRef<HTMLInputElement | null>(null);
-
-  const tableRefs = useRef<
-
-    Record<string, HTMLElement | null>
-
-  >({});
-
-  const actionRefs = useRef<
-
-    (HTMLButtonElement | null)[]
-
-  >([]);
-
-  /* =====================================================
+    /* =====================================================
 
      MATCHING API
 
   ===================================================== */
 
-  const {
+    const {
+      divisionOptionsLocal,
 
-    divisionOptionsLocal,
+      divisionLoading,
 
-    divisionLoading,
+      getDiv,
 
-    getDiv,
+      getMatchAccounts,
+    } = useMatching();
 
-    getMatchAccounts,
+    const [documentNoOptions, setDocumentNoOptions] = useState<
+      DocumentOption[]
+    >([]);
 
-  } = useMatching();
-
-  const [
-
-    documentNoOptions,
-
-    setDocumentNoOptions,
-
-  ] = useState<DocumentOption[]>([]);
-
-  /* =====================================================
+    /* =====================================================
 
      TABLE FIELD ORDER
 
   ===================================================== */
 
-  const tableFieldOrder: TableField[] = [
+    const tableFieldOrder: TableField[] = [
+      "brId",
 
-    "brId",
+      "date",
 
-    "date",
+      "docNo",
 
-    "docNo",
+      "description",
 
-    "description",
+      "docAmount",
 
-    "docAmount",
+      "debit",
 
-    "debit",
+      "credit",
 
-    "credit",
+      "match",
 
-    "match",
+      "matchAmount",
+    ];
 
-    "matchAmount",
-
-  ];
-
-  /* =====================================================
+    /* =====================================================
 
      FOCUS HELPERS
 
   ===================================================== */
 
-  const focusCustomerId = useCallback(() => {
+    const focusCustomerId = useCallback(() => {
+      requestAnimationFrame(() => {
+        customerIdRef.current?.focus();
+      });
+    }, []);
 
-    requestAnimationFrame(() => {
+    const focusTableField = useCallback(
+      (rowIndex: number, field: TableField) => {
+        // MatchTable uses "docAmt" for the Document Amount input ref.
+        const refField = field === "docAmount" ? "docAmt" : field;
+        const element =
+          tableRefs.current[`${rowIndex}-${field}`] ??
+          tableRefs.current[`${rowIndex}-${refField}`];
 
-      customerIdRef.current?.focus();
+        if (element) {
+          focusElement(element);
+        }
+      },
 
-    });
+      [],
+    );
 
-  }, []);
+    const focusNote = useCallback(() => {
+      requestAnimationFrame(() => {
+        noteRef.current?.focus();
+      });
+    }, []);
 
-  const focusTableField = useCallback(
+    const focusSave = useCallback(() => {
+      requestAnimationFrame(() => {
+        actionRefs.current[0]?.focus();
+      });
+    }, []);
 
-    (rowIndex: number, field: TableField) => {
-
-      // MatchTable uses "docAmt" for the Document Amount input ref.
-      const refField = field === "docAmount" ? "docAmt" : field;
-      const element =
-        tableRefs.current[`${rowIndex}-${field}`] ??
-        tableRefs.current[`${rowIndex}-${refField}`];
-
-      if (element) {
-
-        focusElement(element);
-
-      }
-
-    },
-
-    []
-
-  );
-
-  const focusNote = useCallback(() => {
-
-    requestAnimationFrame(() => {
-
-      noteRef.current?.focus();
-
-    });
-
-  }, []);
-
-  const focusSave = useCallback(() => {
-
-    requestAnimationFrame(() => {
-
-      actionRefs.current[0]?.focus();
-
-    });
-
-  }, []);
-
-  /* =====================================================
+    /* =====================================================
 
      EXPOSE METHODS TO THE PARENT
 
   ===================================================== */
 
-  useImperativeHandle(
+    useImperativeHandle(
+      ref,
 
-    ref,
+      () => ({
+        focusCustomerId,
 
-    () => ({
+        focusTableField,
 
-      focusCustomerId,
+        focusNote,
 
-      focusTableField,
+        focusSave,
+      }),
 
-      focusNote,
+      [focusCustomerId, focusTableField, focusNote, focusSave],
+    );
 
-      focusSave,
-
-    }),
-
-    [
-
-      focusCustomerId,
-
-      focusTableField,
-
-      focusNote,
-
-      focusSave,
-
-    ]
-
-  );
-
-  /* =====================================================
+    /* =====================================================
 
      TABLE KEYBOARD NAVIGATION
 
   ===================================================== */
 
-  const handleTableEscape = useCallback(() => {
-
-    focusNote();
-
-  }, [focusNote]);
-
-  const handleTableEnter = useCallback(
-
-    (rowIndex: number, field: TableField) => {
-
-      const currentIndex =
-
-        tableFieldOrder.indexOf(field);
-
-      // Next field in the current row.
-
-      if (currentIndex < tableFieldOrder.length - 1) {
-
-        focusTableField(
-
-          rowIndex,
-
-          tableFieldOrder[currentIndex + 1]
-
-        );
-
-        return;
-
-      }
-
-      // First field in the next row.
-
-      const nextRow = rowIndex + 1;
-
-      if (nextRow < rows.length) {
-
-        focusTableField(
-
-          nextRow,
-
-          tableFieldOrder[0]
-
-        );
-
-        return;
-
-      }
-
-      // Last cell → Note.
-
+    const handleTableEscape = useCallback(() => {
       focusNote();
+    }, [focusNote]);
 
-    },
+    const handleTableEnter = useCallback(
+      (rowIndex: number, field: TableField) => {
+        const currentIndex = tableFieldOrder.indexOf(field);
 
-    [rows.length, focusTableField, focusNote]
+        // Next field in the current row.
 
-  );
+        if (currentIndex < tableFieldOrder.length - 1) {
+          focusTableField(
+            rowIndex,
 
-  const handleTableKeyDown = (
+            tableFieldOrder[currentIndex + 1],
+          );
 
-    event: React.KeyboardEvent,
+          return;
+        }
 
-    rowIndex: number,
+        // First field in the next row.
 
-    field: TableField
+        const nextRow = rowIndex + 1;
 
-  ) => {
+        if (nextRow < rows.length) {
+          focusTableField(
+            nextRow,
 
-    handleKeyboardAction(event, {
+            tableFieldOrder[0],
+          );
 
-      onEnter: () =>
+          return;
+        }
 
-        handleTableEnter(rowIndex, field),
+        // Last cell → Note.
 
-      onEscape: handleTableEscape,
+        focusNote();
+      },
 
-    });
+      [rows.length, focusTableField, focusNote],
+    );
 
-  };
+    const handleTableKeyDown = (
+      event: React.KeyboardEvent,
 
-  /* =====================================================
+      rowIndex: number,
+
+      field: TableField,
+    ) => {
+      handleKeyboardAction(event, {
+        onEnter: () => handleTableEnter(rowIndex, field),
+
+        onEscape: handleTableEscape,
+      });
+    };
+
+    /* =====================================================
 
      CUSTOMER ID → CUSTOMER NAME
 
   ===================================================== */
 
-  const handleCustomerIdChange = useCallback(
+    const handleCustomerIdChange = useCallback(
+      async (id: string) => {
+        setCustomerId(id);
 
-    async (id: string) => {
+        const customer = customerOptions.find((option) => option.value === id);
 
-      setCustomerId(id);
+        setCustomerName(customer?.label ?? "");
 
-      const customer = customerOptions.find(
+        await getDiv(id);
+      },
 
-        (option) => option.value === id
+      [customerOptions, setCustomerId, setCustomerName, getDiv],
+    );
 
-      );
-
-      setCustomerName(customer?.label ?? "");
-
-      await getDiv(id);
-
-    },
-
-    [
-
-      customerOptions,
-
-      setCustomerId,
-
-      setCustomerName,
-
-      getDiv,
-
-    ]
-
-  );
-
-  /* =====================================================
+    /* =====================================================
 
      CUSTOMER NAME → CUSTOMER ID
 
   ===================================================== */
 
-  const handleCustomerNameChange = useCallback(
+    const handleCustomerNameChange = useCallback(
+      async (name: string) => {
+        setCustomerName(name);
 
-    async (name: string) => {
+        const customer = customerNameOptions.find(
+          (option) => option.value === name,
+        );
 
-      setCustomerName(name);
+        const accountId = customer?.label ?? "";
 
-      const customer = customerNameOptions.find(
+        setCustomerId(accountId);
 
-        (option) => option.value === name
+        await getDiv(accountId);
+      },
 
-      );
+      [customerNameOptions, setCustomerId, setCustomerName, getDiv],
+    );
 
-      const accountId = customer?.label ?? "";
-
-      setCustomerId(accountId);
-
-      await getDiv(accountId);
-
-    },
-
-    [
-
-      customerNameOptions,
-
-      setCustomerId,
-
-      setCustomerName,
-
-      getDiv,
-
-    ]
-
-  );
-
-  /* =====================================================
+    /* =====================================================
 
      SEARCH
 
   ===================================================== */
 
-  const handleSearch = useCallback(async () => {
+    const handleSearch = useCallback(async () => {
+      if (!type.trim()) {
+        console.warn("Please input 'Document Type'");
 
-    if (!type.trim()) {
+        return;
+      }
 
-      console.warn("Please input 'Document Type'");
+      if (!customerId.trim()) {
+        console.warn("Please select 'Customer'");
 
-      return;
+        return;
+      }
 
-    }
+      if (!divisionId.trim()) {
+        console.warn("Please select 'Division'");
 
-    if (!customerId.trim()) {
+        return;
+      }
 
-      console.warn("Please select 'Customer'");
+      const data = await getMatchAccounts({
+        strDocType: type,
 
-      return;
+        strCSAccountID: customerId,
 
-    }
+        strDivID: divisionId,
 
-    if (!divisionId.trim()) {
+        gstrCoID,
+      });
 
-      console.warn("Please select 'Division'");
+      const searchResults: any[] = Array.isArray(data) ? data : [];
+      onSearch(searchResults);
 
-      return;
+      const options: DocumentOption[] = searchResults
+        .filter((item: any) => item.fdocno && String(item.fdocno).trim() !== "")
 
-    }
+        .map((item: any) => ({
+          value: String(item.fdocno ?? ""),
 
-    const data = await getMatchAccounts({
+          label: String(item.fdocno ?? ""),
 
-      strDocType: type,
+          brId: String(item.fbrid ?? ""),
 
-      strCSAccountID: customerId,
+          date: String(item.fdate ?? ""),
 
-      strDivID: divisionId,
+          docType: String(item.fdoctype ?? ""),
 
-      gstrCoID,
+          docNo: String(item.fdocno ?? ""),
 
-    });
+          debit: String(item.fdebit ?? "0.00"),
 
-    const searchResults: any[] = Array.isArray(data) ? data : [];
-    onSearch(searchResults);
+          credit: String(item.fcredit ?? "0.00"),
 
-    const options: DocumentOption[] = searchResults
-      .filter(
+          description: String(item.fdescription ?? ""),
+        }));
 
-        (item: any) =>
+      setDocumentNoOptions(options);
+    }, [type, customerId, divisionId, gstrCoID, getMatchAccounts, onSearch]);
 
-          item.fdocno &&
-
-          String(item.fdocno).trim() !== ""
-
-      )
-
-      .map((item: any) => ({
-
-        value: String(item.fdocno ?? ""),
-
-        label: String(item.fdocno ?? ""),
-
-        brId: String(item.fbrid ?? ""),
-
-        date: String(item.fdate ?? ""),
-
-        docType: String(item.fdoctype ?? ""),
-
-        docNo: String(item.fdocno ?? ""),
-
-        debit: String(item.fdebit ?? "0.00"),
-
-        credit: String(item.fcredit ?? "0.00"),
-
-        description: String(item.fdescription ?? ""),
-
-      }));
-
-    setDocumentNoOptions(options);
-
-  }, [
-
-    type,
-
-    customerId,
-
-    divisionId,
-
-    gstrCoID,
-
-    getMatchAccounts,
-
-    onSearch,
-
-  ]);
-
-  /* =====================================================
+    /* =====================================================
 
      SELECT STYLES
 
   ===================================================== */
 
-  const selectStyles: StylesConfig<SelectOption, false> = {
+    const selectStyles: StylesConfig<SelectOption, false> = {
+      control: (base) => ({
+        ...base,
 
-    control: (base) => ({
+        minHeight: "29px",
 
-      ...base,
+        height: "29px",
 
-      minHeight: "29px",
+        borderRadius: "3px",
 
-      height: "29px",
+        borderColor: "#b7c7d7",
 
-      borderRadius: "3px",
+        boxShadow: "none",
 
-      borderColor: "#b7c7d7",
+        fontSize: "13px",
 
-      boxShadow: "none",
+        backgroundColor: "#ffffff",
+      }),
 
-      fontSize: "13px",
+      valueContainer: (base) => ({
+        ...base,
 
-      backgroundColor: "#ffffff",
+        height: "29px",
 
-    }),
+        padding: "0 8px",
+      }),
 
-    valueContainer: (base) => ({
+      indicatorsContainer: (base) => ({
+        ...base,
 
-      ...base,
+        height: "29px",
+      }),
 
-      height: "29px",
+      dropdownIndicator: (base) => ({
+        ...base,
 
-      padding: "0 8px",
+        padding: "4px",
+      }),
 
-    }),
+      clearIndicator: (base) => ({
+        ...base,
 
-    indicatorsContainer: (base) => ({
+        padding: "4px",
+      }),
 
-      ...base,
+      menu: (base) => ({
+        ...base,
 
-      height: "29px",
+        zIndex: 9999,
 
-    }),
+        fontSize: "13px",
 
-    dropdownIndicator: (base) => ({
+        width: "min(520px, calc(100vw - 24px))",
 
-      ...base,
+        minWidth: "min(360px, calc(100vw - 24px))",
 
-      padding: "4px",
+        maxWidth: "calc(100vw - 24px)",
 
-    }),
+        left: 0,
+      }),
 
-    clearIndicator: (base) => ({
+      menuList: (base) => ({
+        ...base,
 
-      ...base,
+        padding: 0,
 
-      padding: "4px",
+        maxWidth: "100%",
 
-    }),
+        overflowX: "hidden",
+      }),
 
-    menu: (base) => ({
+      option: (base, state) => ({
+        ...base,
 
-      ...base,
+        fontSize: "13px",
 
-      zIndex: 9999,
+        padding: "6px 8px",
 
-      fontSize: "13px",
+        backgroundColor: state.isFocused ? "#dbeafe" : "#ffffff",
 
-      width: "min(520px, calc(100vw - 24px))",
+        color: "#222",
 
-      minWidth: "min(360px, calc(100vw - 24px))",
+        cursor: "pointer",
+      }),
+    };
 
-      maxWidth: "calc(100vw - 24px)",
-
-      left: 0,
-
-    }),
-
-    menuList: (base) => ({
-
-      ...base,
-
-      padding: 0,
-
-      maxWidth: "100%",
-
-      overflowX: "hidden",
-
-    }),
-
-    option: (base, state) => ({
-
-      ...base,
-
-      fontSize: "13px",
-
-      padding: "6px 8px",
-
-      backgroundColor: state.isFocused
-
-        ? "#dbeafe"
-
-        : "#ffffff",
-
-      color: "#222",
-
-      cursor: "pointer",
-
-    }),
-
-  };
-
-  /* =====================================================
+    /* =====================================================
 
      SELECT HELPER
 
   ===================================================== */
 
-  const renderSelect = (
+    const renderSelect = (
+      id: string,
 
-    id: string,
+      value: string,
 
-    value: string,
+      options: SelectOption[],
 
-    options: SelectOption[],
+      onChange: (value: string) => void,
 
-    onChange: (value: string) => void,
+      next: () => void,
 
-    next: () => void,
+      selectRef: React.RefObject<HTMLDivElement | null>,
 
-    selectRef: React.RefObject<HTMLDivElement | null>,
+      reverseDropdown = false,
 
-    reverseDropdown = false,
+      columnHeaders?: [string, string],
 
-    columnHeaders?: [string, string],
+      customStyles?: StylesConfig<SelectOption, false>,
 
-    customStyles?: StylesConfig<SelectOption, false>,
+      disabled = false,
 
-    disabled = false,
+      documentMode = false,
 
-    documentMode = false,
+      swapColumns = false,
+    ) => (
+      <ResponsiveSelect
+        id={id}
+        value={value}
+        options={options}
+        onChange={onChange}
+        next={next}
+        selectRef={selectRef}
+        styles={customStyles ?? selectStyles}
+        reverseDropdown={reverseDropdown}
+        columnHeaders={columnHeaders}
+        disabled={disabled}
+        documentMode={documentMode}
+        swapColumns={swapColumns}
+      />
+    );
 
-    swapColumns = false
-
-  ) => (
-
-    <ResponsiveSelect
-
-      id={id}
-
-      value={value}
-
-      options={options}
-
-      onChange={onChange}
-
-      next={next}
-
-      selectRef={selectRef}
-
-      styles={customStyles ?? selectStyles}
-
-      reverseDropdown={reverseDropdown}
-
-      columnHeaders={columnHeaders}
-
-      disabled={disabled}
-
-      documentMode={documentMode}
-
-      swapColumns={swapColumns}
-
-    />
-
-  );
-
-  /* =====================================================
+    /* =====================================================
 
      FOOTER ACTIONS
 
   ===================================================== */
 
-  const buttons = ["Apply", "Clear"];
+    const buttons = ["Save", "Clear"];
 
-  const [activeButton, setActiveButton] = useState(0);
+    const [activeButton, setActiveButton] = useState(0);
 
-  const focusActionButton = useCallback(
+    const focusActionButton = useCallback(
+      (index: number) => {
+        const button = actionRefs.current[index];
 
-    (index: number) => {
+        if (!button) return;
 
-      const button = actionRefs.current[index];
+        setActiveButton(index);
 
-      if (!button) return;
+        requestAnimationFrame(() => {
+          button.focus();
+        });
+      },
 
-      setActiveButton(index);
+      [],
+    );
 
-      requestAnimationFrame(() => {
+    const executeAction = useCallback(
+      (index: number) => {
+        switch (index) {
+          case 0:
+            onSave();
 
-        button.focus();
+            break;
 
-      });
+          case 1:
+            clearForm();
 
-    },
+            break;
 
-    []
+          default:
+            break;
+        }
+      },
 
-  );
+      [onSave, clearForm],
+    );
 
-  const executeAction = useCallback(
+    const handleActionKeyDown = (
+      event: React.KeyboardEvent<HTMLButtonElement>,
+    ) => {
+      switch (event.key) {
+        case "ArrowRight":
 
-    (index: number) => {
+        case "ArrowDown": {
+          event.preventDefault();
 
-      switch (index) {
-
-        case 0:
-
-          onSave();
+          focusActionButton(
+            activeButton < buttons.length - 1 ? activeButton + 1 : 0,
+          );
 
           break;
+        }
 
-        case 1:
+        case "ArrowLeft":
 
-          clearForm();
+        case "ArrowUp": {
+          event.preventDefault();
+
+          focusActionButton(
+            activeButton > 0 ? activeButton - 1 : buttons.length - 1,
+          );
 
           break;
+        }
 
-        default:
+        case "Enter": {
+          event.preventDefault();
+
+          executeAction(activeButton);
 
           break;
-
+        }
       }
+    };
 
-    },
-
-    [onSave, clearForm]
-
-  );
-
-  const handleActionKeyDown = (
-
-    event: React.KeyboardEvent<HTMLButtonElement>
-
-  ) => {
-
-    switch (event.key) {
-
-      case "ArrowRight":
-
-      case "ArrowDown": {
-
-        event.preventDefault();
-
-        focusActionButton(
-
-          activeButton < buttons.length - 1
-
-            ? activeButton + 1
-
-            : 0
-
-        );
-
-        break;
-
-      }
-
-      case "ArrowLeft":
-
-      case "ArrowUp": {
-
-        event.preventDefault();
-
-        focusActionButton(
-
-          activeButton > 0
-
-            ? activeButton - 1
-
-            : buttons.length - 1
-
-        );
-
-        break;
-
-      }
-
-      case "Enter": {
-
-        event.preventDefault();
-
-        executeAction(activeButton);
-
-        break;
-
-      }
-
-    }
-
-  };
-
-  /* =====================================================
+    /* =====================================================
 
      RENDER
 
   ===================================================== */
 
-  return (
-
-    <div
-
-      className="
+    return (
+      <div
+        className="
 
         w-full
 
@@ -1160,126 +1057,69 @@ const MatchingComponents = forwardRef<
         text-slate-700
 
       "
+      >
+        <MatchHeader
+          branch={branch}
+          setBranch={setBranch}
+          type={type}
+          setDocType={setDocType}
+          receiptNo={receiptNo}
+          setReceiptNo={setReceiptNo}
+          receiptDate={receiptDate}
+          setReceiptDate={setReceiptDate}
+          customerId={customerId}
+          setCustomerId={setCustomerId}
+          customerName={customerName}
+          setCustomerName={setCustomerName}
+          divisionId={divisionId}
+          setDivisionId={setDivisionId}
+          branchOptions={branchOptions}
+          customerOptions={customerOptions}
+          customerNameOptions={customerNameOptions}
+          divisionOptions={divisionOptionsLocal}
+          documentOptions={documentOptions}
+          documentNoOptions={documentNoOptions}
+          documentAmount={documentAmount}
+          totalMatchAmount={totalMatchAmount}
+          balance={balance}
+          customerIdRef={customerIdRef}
+          customerNameRef={customerNameRef}
+          divisionRef={divisionRef}
+          creditDocumentRef={creditDocumentRef}
+          documentNoRef={documentNoRef}
+          dateRef={dateRef}
+          divisionLoading={divisionLoading}
+          handleCustomerIdChange={handleCustomerIdChange}
+          handleCustomerNameChange={handleCustomerNameChange}
+          handleSearch={handleSearch}
+          renderSelect={renderSelect}
+          handleKeyboardAction={handleKeyboardAction}
+        />
 
-    >
+        <MatchTable
+          rows={rows}
+          handleRowChange={handleRowChange}
+          tableRefs={tableRefs}
+          handleTableKeyDown={handleTableKeyDown}
+        />
 
-      <MatchHeader
+        <MatchFooter
+          noteRef={noteRef}
+          focusSave={focusSave}
+          documentAmount={documentAmount}
+          totalMatchAmount={totalMatchAmount}
+          balance={balance}
+          buttons={buttons}
+          actionRefs={actionRefs}
+          setActiveButton={setActiveButton}
+          handleActionKeyDown={handleActionKeyDown}
+          executeAction={executeAction}
+        />
+      </div>
+    );
+  },
+);
 
-        branch={branch}
-
-        setBranch={setBranch}
-
-        type={type}
-
-        setDocType={setDocType}
-
-        receiptNo={receiptNo}
-
-        setReceiptNo={setReceiptNo}
-
-        receiptDate={receiptDate}
-
-        setReceiptDate={setReceiptDate}
-
-        customerId={customerId}
-
-        setCustomerId={setCustomerId}
-
-        customerName={customerName}
-
-        setCustomerName={setCustomerName}
-
-        divisionId={divisionId}
-
-        setDivisionId={setDivisionId}
-
-        branchOptions={branchOptions}
-
-        customerOptions={customerOptions}
-
-        customerNameOptions={customerNameOptions}
-
-        divisionOptions={divisionOptionsLocal}
-
-        documentOptions={documentOptions}
-
-        documentNoOptions={documentNoOptions}
-
-        documentAmount={documentAmount}
-
-        totalMatchAmount={totalMatchAmount}
-
-        balance={balance}
-
-        customerIdRef={customerIdRef}
-
-        customerNameRef={customerNameRef}
-
-        divisionRef={divisionRef}
-
-        creditDocumentRef={creditDocumentRef}
-
-        documentNoRef={documentNoRef}
-
-        dateRef={dateRef}
-
-        divisionLoading={divisionLoading}
-
-        handleCustomerIdChange={handleCustomerIdChange}
-
-        handleCustomerNameChange={handleCustomerNameChange}
-
-        handleSearch={handleSearch}
-
-        renderSelect={renderSelect}
-
-        handleKeyboardAction={handleKeyboardAction}
-
-      />
-
-      <MatchTable
-
-        rows={rows}
-
-        handleRowChange={handleRowChange}
-
-        tableRefs={tableRefs}
-
-        handleTableKeyDown={handleTableKeyDown}
-
-      />
-
-      <MatchFooter
-
-        noteRef={noteRef}
-
-        focusSave={focusSave}
-
-        documentAmount={documentAmount}
-
-        totalMatchAmount={totalMatchAmount}
-
-        balance={balance}
-
-        buttons={buttons}
-
-        actionRefs={actionRefs}
-
-        setActiveButton={setActiveButton}
-
-        handleActionKeyDown={handleActionKeyDown}
-
-        executeAction={executeAction}
-
-      />
-
-    </div>
-
-  );
-
-});
-
-MatchingComponents.displayName =
- "MatchingComponents";
+MatchingComponents.displayName = "MatchingComponents";
 
 export default MatchingComponents;
