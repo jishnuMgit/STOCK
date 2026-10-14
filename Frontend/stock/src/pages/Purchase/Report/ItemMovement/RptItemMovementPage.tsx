@@ -114,7 +114,7 @@ const CustomRadio: React.FC<RadioOptionProps> = ({
         }`}
       />
     </span>
-    <span className="text-[12px] font-normal text-[#35445a]">{label}</span>
+    <span className="text-[14px] font-normal text-[#35445a]">{label}</span>
   </label>
 );
 
@@ -132,7 +132,7 @@ const FieldLabel: React.FC<{
   className?: string;
 }> = ({ children, className = "" }) => (
   <div
-    className={`flex h-7.5 items-center border border-[#e0e5ea] bg-[#fafbfc] px-3 text-[12px] text-[#405066] ${className}`}
+    className={`flex h-7.5 items-center border border-[#e0e5ea] bg-[#fafbfc] px-3 text-[14px] text-[#405066] ${className}`}
   >
     {children}
   </div>
@@ -173,7 +173,7 @@ const AppDatePicker: React.FC<AppDatePickerProps> = ({
           boxSizing: "border-box",
           borderRadius: "4px",
           backgroundColor: "#ffffff",
-          fontSize: "12px",
+          fontSize: "14px",
           padding: 0,
           overflow: "hidden",
         },
@@ -186,13 +186,13 @@ const AppDatePicker: React.FC<AppDatePickerProps> = ({
           overflow: "hidden",
         },
         "& .MuiPickersInputBase-sectionContent": {
-          fontSize: "12px",
+          fontSize: "14px",
           color: "#344054",
         },
         "& .MuiPickersInputBase-input": {
           minWidth: 0,
           width: "100%",
-          fontSize: "12px",
+          fontSize: "14px",
           padding: 0,
           height: "30px",
           boxSizing: "border-box",
@@ -387,7 +387,7 @@ const RptItemMovementPage: React.FC<RptItemMovementPageProps> = ({
                         {...selectProps}
                       />
                     </div>
-                    <span className="text-[12px] text-[#405066]">to</span>
+                    <span className="text-[14px] text-[#405066]">to</span>
                     <div className="w-33.75">
                       <Select
                         inputId="lkpToItem"

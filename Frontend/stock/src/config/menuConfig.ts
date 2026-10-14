@@ -68,6 +68,15 @@ mnuRptPOSummary:"/Purchase/Report/RptPOSummary",
 mnuRptStaffSales:"/Purchase/Report/RptStaffSales",
 mnuRptSalesSummary:"/Purchase/Report/RptSalesSummary",
 mnuRptItemMovement:"/Purchase/Report/RptItemMovement",
+irptRptInvoicewiseProfit:"/Purchase/Report/RptInvoicewiseProfit",
+mnuRptStockReport:"/Purchase/Report/RptStockReport",
+mnuRptStockValuation:"/Purchase/Report/RptStockValuation",
+mnuRptStockVerification:"/Purchase/Report/RptStockVerification",
+mnuRptStockAgeing:"/Purchase/Report/RptStockAgeing",
+mnuRptDocumentList:"/Purchase/Report/RptDocumentList",
+mnuRptSalesPriceList:"/Purchase/Report/RptSalesPriceList",
+mnuRptItemList:"/Purchase/Report/RptItemList",
+mnuRptItemHistory:"/Purchase/Report/RptItemHistory",
 
 
 
@@ -130,6 +139,7 @@ mnuInactivateAccount:"/Finance/Setup/InactivateAccount",
   mnuRptChartOfAccount:"/Finance/Reports/RptChartOfAccount",
   mnuRptCustomerList:"/Finance/Reports/RptCustomerList",
   mnuRptSupplierList:"/Finance/Reports/RptSupplierList",
+  mnuRptFinYearCloseBal:"/Finance/Reports/RptFinYearCloseBal",
  // FINANCE - REPORTS - A/R & A/P
 
   mnuRptSOA: "/Finance/Reports/rptSOA",
@@ -141,6 +151,8 @@ mnuInactivateAccount:"/Finance/Setup/InactivateAccount",
   // FINANCE - REPORTS - GENERAL LEDGER
   
   mnuRptGL:"/Finance/Reports/rptGL",
+  mnuRptGLGroup:"/Finance/Reports/RptGLGroup",
+  mnuRptGLSum:"/Finance/Reports/RptGLSum",
   
 
 
