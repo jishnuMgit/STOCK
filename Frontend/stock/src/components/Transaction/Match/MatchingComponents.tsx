@@ -18,11 +18,8 @@ import {
 } from "../../../hooks/useMatchKeyboard";
 
 import useMatching from "../../../hooks/useMatching";
-
 import MatchHeader from "./MatchHeader";
-
 import MatchTable from "./MatchTable";
-
 import MatchFooter from "./MatchFooter";
 
 import type {
@@ -35,93 +32,52 @@ import type {
 
 interface Props {
   branch: string;
-
   setBranch: React.Dispatch<React.SetStateAction<string>>;
-
   type: string;
-
   setDocType: React.Dispatch<React.SetStateAction<string>>;
-
   receiptNo: string;
-
   setReceiptNo: React.Dispatch<React.SetStateAction<string>>;
-
   receiptDate: string;
-
   setReceiptDate: React.Dispatch<React.SetStateAction<string>>;
-
   customerId: string;
-
   setCustomerId: React.Dispatch<React.SetStateAction<string>>;
-
   customerName: string;
-
   setCustomerName: React.Dispatch<React.SetStateAction<string>>;
-
   divisionId: string;
-
   setDivisionId: React.Dispatch<React.SetStateAction<string>>;
-
   rows: ReceiptRow[];
-
   handleRowChange: (
     rowIndex: number,
-
     field: keyof ReceiptRow,
-
     value: string | number | boolean,
   ) => void;
-
   onSave: () => void;
-
   clearForm: () => void;
-
   onSearch: (data?: any[]) => void;
-
   gstrCoID?: string;
-
   branchOptions: SelectOption[];
-
   customerOptions: SelectOption[];
-
   customerNameOptions: SelectOption[];
-
   divisionOptions: SelectOption[];
-
   documentOptions: SelectOption[];
-
   documentAmount: number;
-
   totalMatchAmount: number;
-
   balance: number;
 }
 
 interface ResponsiveSelectProps {
   id: string;
-
   value: string;
-
   options: SelectOption[];
-
   onChange: (value: string) => void;
-
   next: () => void;
-
   selectRef: React.RefObject<HTMLDivElement | null>;
-
   styles: StylesConfig<SelectOption, false>;
-
   reverseDropdown?: boolean;
-
   columnHeaders?: [string, string];
-
   disabled?: boolean;
-
   documentMode?: boolean;
-
   swapColumns?: boolean;
-
   customOption?: React.ComponentType<OptionProps<SelectOption, false>>;
 }
 
