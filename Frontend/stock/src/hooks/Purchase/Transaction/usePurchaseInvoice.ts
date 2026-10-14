@@ -4,14 +4,17 @@ const API_URL = import.meta.env.VITE_API_URL;
 
 const CASH_SUPPLIER_BASE = "/purchase-invoice/cash-supplier";
 
+// TODO: match the path where you mounted the supplier routes
+const SUPPLIER_LOOKUP_BASE = "/supplier";
+
+const ITEM_BASE = "/item/items";
+
 /* ---------- UI shapes ---------- */
 
 export interface Branch {
   id: string;
   name: string;
 }
-
-const ITEM_BASE = "/item/items";
 
 export interface Item {
   id: string;
@@ -20,6 +23,11 @@ export interface Item {
   packing: string;
   itemGroupId: string;
   inactive: boolean;
+}
+
+export interface SupplierLookup {
+  id: string;
+  name: string;
 }
 
 interface ItemApi {
@@ -125,6 +133,11 @@ interface CashSupplierApi {
   fvatno: string | null;
 }
 
+interface SupplierLookupApi {
+  supplierID: string;
+  supplierName: string | null;
+}
+
 export interface SavePayload {
   mode: "S" | "M";
   year: string;
@@ -219,6 +232,26 @@ export const usePurchaseInvoice = () => {
         packing: s(r.packing),
         itemGroupId: s(r.itemGroupID),
         inactive: Boolean(r.inactive),
+      }));
+    },
+    [],
+  );
+
+  /* supplier lookups (dbo.filllookupsupplierid / filllookupsuppliername)
+     "by-id" is sorted by supplier ID, "by-name" is sorted by supplier name */
+  const fetchSuppliers = useCallback(
+    async (
+      coId: string,
+      sortBy: "by-id" | "by-name",
+    ): Promise<SupplierLookup[]> => {
+      const params = new URLSearchParams({ PstrCoID: coId });
+      const result = await apiRequest<{ data: SupplierLookupApi[] }>(
+        "GET",
+        `${SUPPLIER_LOOKUP_BASE}/${sortBy}?${params}`,
+      );
+      return result.data.map((r) => ({
+        id: s(r.supplierID),
+        name: s(r.supplierName),
       }));
     },
     [],
@@ -420,6 +453,7 @@ export const usePurchaseInvoice = () => {
     saveCashSupplier,
     deleteCashSupplier,
     fetchItems,
+    fetchSuppliers,
     loading,
     error,
   };

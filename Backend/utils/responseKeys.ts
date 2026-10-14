@@ -263,3 +263,8 @@ export const itemListKeys = {
   fallowsalebelowcost: "allowSaleBelowCost",
   finactive: "inactive",
 };
+
+export const supplierLookupKeys = {
+  fcsaccountid: "supplierID",
+  fcsaccountname: "supplierName",
+};
