@@ -1,6 +1,5 @@
 import { lazy, Suspense } from "react";
 import { Routes, Route, Navigate } from "react-router-dom";
-
 import SetDocumentNo from "../pages/Settings/SetDocumentNoPage";
 import ProtectedRoute from "./ProtectedRoutes";
 import SetBranchInfo from "../pages/Settings/SetBranchInfoPage";
@@ -24,7 +23,6 @@ import ActivePeriodPage from "../pages/Settings/ActivePeriodPage";
 import StockAdjustmentPage from "../pages/Sales/Transaction/stock/StockAdjustmentPage";
 import SetDefaultBranch from "../pages/Settings/SetDefaultBranchPage";
 import SetActivePeriod from "../pages/Settings/SetActivePeriodPage";
-
 import ItemEnquiryPage from "../pages/Sales/Setup/ItemEnquiryPage";
 import UnitPage from "../pages/Purchase/Setup/UnitPage";
 import StaffPage from "../pages/Purchase/Setup/StaffPage";
@@ -69,6 +67,7 @@ import RptStockVerificationPage from "../pages/Purchase/Report/StockVerification
 import RptStockAgeingPage from "../pages/Purchase/Report/StockAgeing/RptStockAgeingPage";
 import RptDocumentListPage from "../pages/Purchase/Report/DocumentList/RptDocumentListPage";
 import RptSalesPriceListPage from "../pages/Purchase/Report/SalesPriceList/RptSalesPriceListPage";
+import RptItemListPage from "../pages/Purchase/Report/ItemList/RptItemListPage";
 
 
 const Login = lazy(() => import("../pages/Auth/LoginPage"));
@@ -204,6 +203,7 @@ const AppRoutes = () => {
           <Route path="/Purchase/Report/RptStockAgeing" element={<RptStockAgeingPage/>}/>
           <Route path="/Purchase/Report/RptDocumentList" element={<RptDocumentListPage/>}/>
           <Route path="/Purchase/Report/RptSalesPriceList" element={<RptSalesPriceListPage/>}/>
+          <Route path="/Purchase/Report/RptItemList" element={<RptItemListPage/>}/>
           
        
           {/* ================= SETTINGS ================= */}
