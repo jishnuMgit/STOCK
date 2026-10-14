@@ -378,6 +378,7 @@ const RadioPanel: React.FC<
         relative
         border
         border-[#d7dee5]
+       
         bg-white
         ${className}
       `}
@@ -741,8 +742,8 @@ const RptSOAPage: React.FC = () => {
 
       <div
         className="
-          max-w-205
-          min-w-205
+          max-w-220
+          min-w-220
           overflow-hidden
           border
           border-gray-400
@@ -817,327 +818,201 @@ const RptSOAPage: React.FC = () => {
                   name="branchMode"
                   value="One Branch"
                   label="One Branch"
-                  checked={
-                    branchMode ===
-                    "One Branch"
-                  }
-                  onChange={() =>
-                    setBranchMode(
-                      "One Branch",
-                    )
-                  }
+                  checked={ branchMode ==="One Branch"}
+                  onChange={() => setBranchMode( "One Branch",)}
                 />
 
                 <CustomRadio
                   name="branchMode"
                   value="All Branches"
                   label="All Branches"
-                  checked={
-                    branchMode ===
-                    "All Branches"
-                  }
-                  onChange={() =>
-                    setBranchMode(
-                      "All Branches",
-                    )
-                  }
-                />
+                  checked={branchMode ==="All Branches" }
+                  onChange={() => setBranchMode( "All Branches",)} />
               </div>
             </RadioPanel>
-
             {/* ===============================================
                 BRANCH SELECT
             =============================================== */}
-
-            <div
-              className="
-                w-[250px]
-                pt-[8px]
-              "
-            >
+            <div  className=" w-[250px] pt-[8px] " >
               <Select
                 inputId="lkpBranch"
                 instanceId="lkpBranch"
                 options={branchOptions}
                 value={branch}
                 onChange={setBranch}
-                {...selectProps}
-              />
+                {...selectProps}/>
             </div>
-
             {/* ===============================================
                 CUSTOMER / SUPPLIER
             =============================================== */}
-
-            <RadioPanel
-              className="
-                h-[82px]
-                px-[16px]
-                py-[12px]
-              "
-            >
-              <div
-                className="
-                  flex
-                  flex-col
-                  gap-[10px]
-                "
-              >
+            <RadioPanel className=" h-[82px] px-[16px]  py-[12px] w-[85%] ml-[15%]  "  >
+              <div className=" flex flex-col gap-[10px] " >
                 <CustomRadio
                   name="reportType"
                   value="Customer"
                   label="Customer"
-                  checked={
-                    reportType ===
-                    "Customer"
-                  }
-                  onChange={() =>
-                    setReportType(
-                      "Customer",
-                    )
-                  }
+                  checked={reportType === "Customer" }
+                  onChange={() => setReportType( "Customer", )}
                 />
-
                 <CustomRadio
                   name="reportType"
                   value="Supplier"
-                  label="Supplier"
-                  checked={
-                    reportType ===
-                    "Supplier"
-                  }
-                  onChange={() =>
-                    setReportType(
-                      "Supplier",
-                    )
-                  }
+                  label="Supplier"  checked={ reportType === "Supplier"  }
+                  onChange={() =>  setReportType( "Supplier",  ) }
                 />
               </div>
             </RadioPanel>
           </div>
-
           {/* =================================================
               CUSTOMER SECTION
           ================================================= */}
+      
 
-          <div
-  className="
-    mt-[10px]
-    grid
-    grid-cols-[200px_120px_minmax(0,1fr)]
-    gap-[18px]
-  "
->
-  {/* ========================================================
-      CUSTOMER RADIO
-  ======================================================== */}
+<div className="mt-[10px] grid grid-cols-[200px_120px_minmax(0,1fr)] gap-[18px]">
+  {/* CUSTOMER RADIO */}
 
-  <RadioPanel
-    className="
-      h-[120px]
-      px-[16px]
-      py-[12px]
-    "
-  >
-    <div
-      className="
-        flex
-        flex-col
-        gap-[10px]
-      "
-    >
+  <RadioPanel className="h-[120px] px-[16px] py-[12px]">
+    <div className="flex flex-col gap-[10px]">
       <CustomRadio
         name="customerMode"
         value="One Customer"
         label="One Customer"
-        checked={
-          customerMode ===
-          "One Customer"
-        }
-        onChange={() =>
-          setCustomerMode(
-            "One Customer",
-          )
-        }
+        checked={customerMode === "One Customer"}
+        onChange={() => setCustomerMode("One Customer")}
       />
 
       <CustomRadio
         name="customerMode"
         value="Range Customer"
         label="Range Customer"
-        checked={
-          customerMode ===
-          "Range Customer"
-        }
-        onChange={() =>
-          setCustomerMode(
-            "Range Customer",
-          )
-        }
+        checked={customerMode === "Range Customer"}
+        onChange={() => setCustomerMode("Range Customer")}
       />
 
       <CustomRadio
         name="customerMode"
         value="All Customers"
         label="All Customers"
-        checked={
-          customerMode ===
-          "All Customers"
-        }
-        onChange={() =>
-          setCustomerMode(
-            "All Customers",
-          )
-        }
+        checked={customerMode === "All Customers"}
+        onChange={() => setCustomerMode("All Customers")}
       />
     </div>
   </RadioPanel>
 
-  {/* ========================================================
-      CUSTOMER ID
-  ======================================================== */}
+  {/* CUSTOMER ID */}
 
-  <div
-    className="
-      flex
-      w-[120px]
-      flex-col
-      gap-[10px]
-      pt-[12px]
-    "
-  >
-    <div className="w-[120px]">
+  <div className="flex w-[120px] flex-col gap-[10px] pt-[12px]">
+    {customerMode === "One Customer" && (
       <Select
         inputId="lkpOneCustomerID"
         instanceId="lkpOneCustomerID"
         options={customerIdOptions}
         value={customerId}
-        onChange={setCustomerId}
-        {...selectProps}
-      />
-    </div>
+        onChange={(selected) => {
+          setCustomerId(selected);
 
-    <div className="w-[120px]">
-      <Select
-        inputId="lkpRangeCustomerID"
-        instanceId="lkpRangeCustomerID"
-        options={customerIdOptions}
-        value={rangeCustomerId}
-        onChange={setRangeCustomerId}
+          const matchingName = customerNameOptions.find(
+            (option) => option.value === selected?.value
+          );
+
+          setCustomerName(matchingName ?? null);
+        }}
         {...selectProps}
       />
-    </div>
+    )}
+
+    {customerMode === "Range Customer" && (
+      <div className="mt-7">
+        <Select
+          inputId="lkpRangeStartCustomerID"
+          instanceId="lkpRangeStartCustomerID"
+          options={customerIdOptions}
+          value={customerId}
+          onChange={setCustomerId}
+          {...selectProps}
+        />
+
+      
+      </div>
+    )}
   </div>
 
-  {/* ========================================================
-      CUSTOMER NAME - REMAINING SPACE
-  ======================================================== */}
+  {/* CUSTOMER NAME */}
 
-  <div
-    className="
-      min-w-0
-      w-full
-      flex
-      flex-col
-      gap-[10px]
-      pt-[12px]
-    "
-  >
-    <div className="w-full min-w-0">
+  <div className="min-w-0 w-full flex flex-col gap-[10px] pt-[12px]">
+    {customerMode === "One Customer" && (
       <Select
         inputId="lkpOneCustomerName"
         instanceId="lkpOneCustomerName"
         options={customerNameOptions}
         value={customerName}
-        onChange={setCustomerName}
-        {...selectProps}
-      />
-    </div>
+        onChange={(selected) => {
+          setCustomerName(selected);
 
-    <div className="w-full min-w-0">
-      <Select
-        inputId="lkpRangeCustomerName"
-        instanceId="lkpRangeCustomerName"
-        options={customerNameOptions}
-        value={rangeCustomerName}
-        onChange={setRangeCustomerName}
+          const matchingId = customerIdOptions.find(
+            (option) => option.value === selected?.value
+          );
+
+          setCustomerId(matchingId ?? null);
+        }}
         {...selectProps}
       />
-    </div>
+    )}
+
+    {customerMode === "Range Customer" && (
+       <div className=" w-[120px] mt-7">
+         <Select
+          inputId="lkpRangeEndCustomerID"
+          instanceId="lkpRangeEndCustomerID"
+          options={customerIdOptions}
+          value={rangeCustomerId}
+          onChange={(selected) => {
+            setRangeCustomerId(selected);
+
+            const matchingName = customerNameOptions.find(
+              (option) => option.value === selected?.value
+            );
+
+            setRangeCustomerName(matchingName ?? null);
+          }}
+          {...selectProps}
+       
+      />
+       </div>
+    )}
   </div>
 </div>
+
+
           {/* =================================================
               DIVISION
           ================================================= */}
-
-        <div
-  className="
-    mt-[10px]
-    grid
-    grid-cols-[200px_120px_minmax(0,1fr)]
-    gap-[18px]
-  "
->
+        <div className="mt-[10px] grid grid-cols-[200px_120px_minmax(0,1fr)] gap-[18px] ">
   {/* ========================================================
       DIVISION RADIO
   ======================================================== */}
 
-  <RadioPanel
-    className="
-      h-[82px]
-      px-[16px]
-      py-[12px]
-    "
-  >
-    <div
-      className="
-        flex
-        flex-col
-        gap-[10px]
-      "
-    >
+  <RadioPanel className="h-[82px] px-[16px] py-[12px]">
+    <div className=" flex flex-col gap-[10px] " >
       <CustomRadio
         name="divisionMode"
         value="One Division"
         label="One Division"
-        checked={
-          divisionMode ===
-          "One Division"
-        }
-        onChange={() =>
-          setDivisionMode(
-            "One Division",
-          )
-        }
-      />
-
+        checked={  divisionMode === "One Division" }
+        onChange={() => setDivisionMode(  "One Division",  )  } />
       <CustomRadio
         name="divisionMode"
         value="All Division"
         label="All Division"
-        checked={
-          divisionMode ===
-          "All Division"
-        }
-        onChange={() =>
-          setDivisionMode(
-            "All Division",
-          )
-        }
+        checked={divisionMode === "All Division"  }
+        onChange={() => setDivisionMode("All Division", ) }
       />
     </div>
   </RadioPanel>
-
   {/* ========================================================
       DIVISION ID - 120px
   ======================================================== */}
-
-  <div
-    className="
-      w-[120px]
-      pt-[26px]
-    "
-  >
+  <div className=" w-[120px] pt-[26px] " >
     <Select
       inputId="lkpOneDivisionID"
       instanceId="lkpOneDivisionID"
@@ -1147,18 +1022,10 @@ const RptSOAPage: React.FC = () => {
       {...selectProps}
     />
   </div>
-
   {/* ========================================================
       DIVISION NAME - REMAINING SPACE
   ======================================================== */}
-
-  <div
-    className="
-      min-w-0
-      w-full
-      pt-[26px]
-    "
-  >
+  <div className=" min-w-0 w-[102%] -ml-2.5 pt-[26px]" >
     <Select
       inputId="lkpOneDivisionName"
       instanceId="lkpOneDivisionName"
@@ -1169,127 +1036,73 @@ const RptSOAPage: React.FC = () => {
     />
   </div>
 </div>
-
-          {/* =================================================
+         {/* =================================================
               LOWER SECTION
           ================================================= */}
 
-          <div
-            className="
-              mt-[10px]
-              grid
-              grid-cols-[240px_1fr_220px]
-              gap-[18px]
-            "
-          >
+          <div className=" mt-[10px] grid  grid-cols-[240px_1fr_220px] gap-[18px]" >
             {/* ===============================================
                 FILTERS
             =============================================== */}
-
-            <div
-              className="
-                col-span-2
-                grid
-                grid-cols-[200px_160px_1fr]
-                items-center
-                gap-x-[18px]
-                gap-y-[8px]
-              "
-            >
+            <div className=" col-span-2 grid grid-cols-[200px_160px_1fr] items-center gap-x-[18px] gap-y-[8px] "  >
               {/* PERIOD */}
-
               <FieldLabel>
                 Period :
               </FieldLabel>
-
-             <div className="  col-span-2
-                  flex
-                  gap-[8px]">
+             <div className="col-span-2 flex gap-[8px]">
                   <AppDatePicker
                     id="dtpFromDate"
                     label="From Date"
                     value={fromDate}
                     onChange={setFromDate}
-                    
-                  />
+                            />
                   <AppDatePicker
                     id="dtpToDate"
                     label="To Date"
                     value={toDate}
-                    onChange={setToDate}
-                    
+                    onChange={setToDate}             
                   />
                 </div>
-
               {/* AGEING */}
-
               <FieldLabel>
                 Ageing :
               </FieldLabel>
-
               <div className="w-[180px]">
                 <Select
                   inputId="lkpAgeing"
                   instanceId="lkpAgeing"
-                  options={
-                    ageingOptions
-                  }
+                  options={ ageingOptions }
                   value={ageing}
-                  onChange={
-                    setAgeing
-                  }
-                  {...selectProps}
-                />
+                  onChange={setAgeing  }
+                  {...selectProps} />
               </div>
-
               <div />
-
               {/* AGEING MODE */}
-
               <FieldLabel>
                 Ageing Mode :
               </FieldLabel>
-
               <div className="w-[180px]">
                 <Select
                   inputId="lkpAgeingMode"
                   instanceId="lkpAgeingMode"
-                  options={
-                    ageingModeOptions
-                  }
-                  value={
-                    ageingMode
-                  }
-                  onChange={
-                    setAgeingMode
-                  }
-                  {...selectProps}
-                />
+                  options={ ageingModeOptions  }                 
+                  value={ ageingMode }
+                  onChange={ setAgeingMode}
+                  {...selectProps} />
               </div>
-
               <div />
-
               {/* POST STATUS */}
-
               <FieldLabel>
                 Post Status :
               </FieldLabel>
-
               <div className="w-[180px]">
                 <Select
                   inputId="lkpPostStatus"
                   instanceId="lkpPostStatus"
-                  options={
-                    postStatusOptions
-                  }
-                  value={
-                    postStatus
-                  }
-                  onChange={
-                    setPostStatus
-                  }
-                  {...selectProps}
-                />
+                  options={ postStatusOptions  }
+                  value={ postStatus }
+                  onChange={  setPostStatus }
+                  {...selectProps}  />
               </div>
 
               <div />
@@ -1316,104 +1129,42 @@ const RptSOAPage: React.FC = () => {
                   {...selectProps}
                 />
               </div>
-
               <div />
             </div>
-
-            {/* ===============================================
-                STATUS
-            =============================================== */}
-
+            {/*   STATUS */}
             <RadioPanel
-              title="Status"
-              className="
-                h-[90px]
-                px-[16px]
-                py-[12px]
-              "
-            >
-              <div
-                className="
-                  flex
-                  flex-col
-                  gap-[10px]
-                "
-              >
-                <CustomRadio
-                  name="status"
-                  value="Outstanding"
-                  label="Outstanding"
-                  checked={
-                    status ===
-                    "Outstanding"
-                  }
-                  onChange={() =>
-                    setStatus(
-                      "Outstanding",
-                    )
-                  }
-                />
-
-                <CustomRadio
-                  name="status"
-                  value="All"
-                  label="All"
-                  checked={
-                    status === "All"
-                  }
-                  onChange={() =>
-                    setStatus("All")
-                  }
-                />
+              title="SOA Type"
+              className="h-[90px] px-[16px] py-[12px]  w-[85%] ml-[15%] " >
+              <div className=" flex flex-col  gap-[10px] ">
+                <CustomRadio name="rdgOutstandingSOA" value="Outstanding SOA" label="Outstanding SOA"
+                  checked={status ==="Outstanding" }
+                  onChange={() => setStatus( "Outstanding", )  } />
+                <CustomRadio name="rdgSOA" value="SOA" label="SOA"
+                  checked={  status === "All" }
+                  onChange={() =>  setStatus("All") } />
               </div>
             </RadioPanel>
           </div>
-
-          {/* =================================================
-              BUTTONS
-          ================================================= */}
-
+          {/* BUTTONS */}
           <div
-            className="
-              mt-[16px]
-              flex
-              justify-center
-              gap-[12px]
-            "
-          >
+            className=" mt-[16px] flex justify-center gap-[12px] ">
             {/* PRINT */}
-
-            <button
-              type="button"
+            <button type="button"
               onClick={handlePrint}
-              className="
-                btn-style
-              "
-            >
+              className="btn-style" >
               <u>P</u>rint
             </button>
-
             {/* PDF */}
-
-            <button
-              type="button"
+            <button type="button"
               onClick={handlePrint}
-              className="
-              btn-style
-              "
-            >
+              className="btn-style" >
               PDF Export
             </button>
-
             {/* CLEAR */}
-
             <button
               type="button"
               onClick={handleClear}
-              className="
-               btn-style
-              "
-            >
+              className="btn-style"  >
               <u>C</u>lear
             </button>
           </div>

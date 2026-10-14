@@ -251,9 +251,9 @@ const RptItemHistoryPage: React.FC<RptItemHistoryPageProps> = ({ onClose }) => {
   };
 
   return (
-    <div className="flex min-h-screen w-full items-start justify-center bg-white px-4 py-4">
+    <div className="flex min-h-full w-full items-start justify-center bg-white px-4 py-4">
       <div className="min-h-fit w-205 max-w-full bg-white p-0">
-        <main className="w-full overflow-hidden border border-[#d5dce2] bg-white">
+        <main className="w-full overflow-hidden border border-gray-400 bg-white">
           <header className="flex h-7.5 items-center justify-start bg-[#9fdfbc]">
             <h1 className="m-0 ml-3.5 text-[17px] font-semibold text-[#24364d]">
               Item History

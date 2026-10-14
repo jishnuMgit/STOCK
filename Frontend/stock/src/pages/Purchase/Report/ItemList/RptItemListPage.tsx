@@ -180,7 +180,7 @@ const RptItemListPage: React.FC<RptItemListPageProps> = ({ onClose }) => {
   const groupDisabled = groupMode !== "One Item Group";
 
   return (
-    <div className="flex min-h-screen w-full items-start justify-center bg-white px-4 py-4">
+    <div className="flex min-h-full w-full items-start justify-center bg-white px-4 py-4">
       <div className="min-h-fit w-225 max-w-full bg-white p-0">
         <main className="w-full overflow-hidden border border-gray-400 bg-white">
           <header className="flex h-7.5 items-center justify-start bg-[#9fdfbc]">

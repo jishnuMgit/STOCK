@@ -139,6 +139,7 @@ mnuInactivateAccount:"/Finance/Setup/InactivateAccount",
   mnuRptChartOfAccount:"/Finance/Reports/RptChartOfAccount",
   mnuRptCustomerList:"/Finance/Reports/RptCustomerList",
   mnuRptSupplierList:"/Finance/Reports/RptSupplierList",
+  mnuRptFinYearCloseBal:"/Finance/Reports/RptFinYearCloseBal",
  // FINANCE - REPORTS - A/R & A/P
 
   mnuRptSOA: "/Finance/Reports/rptSOA",
@@ -150,6 +151,7 @@ mnuInactivateAccount:"/Finance/Setup/InactivateAccount",
   // FINANCE - REPORTS - GENERAL LEDGER
   
   mnuRptGL:"/Finance/Reports/rptGL",
+  mnuRptGLGroup:"/Finance/Reports/RptGLGroup",
   
 
 

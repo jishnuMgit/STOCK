@@ -32,7 +32,7 @@ import UserTransactionAudit from "../pages/Security/UserTransactionAudit/UserTra
 import StockDocumentPost from "../pages/Sales/Transaction/stock/StockDocumentPostPage";
 import StockDocumentPostCancel from "../pages/Sales/Transaction/stock/StockDocumentPostCancel";
 import StockDocumentRePost from "../pages/Sales/Transaction/stock/StockDocumentRePost";
-import RptGLPage from "../pages/Finance/Report/GeneralLedger/RptGLPage";
+import RptGLPage from "../pages/Finance/Report/GeneralLedger/GeneralLedger/RptGLPage";
 import MatchingPage from "../pages/Finance/Transaction/Match/MatchPage";
 import UnMatchPage from "../pages/Finance/Transaction/MatchReversal/MatchReversalPage";
 import CostCenterPage from "../pages/Finance/Setup/CostCenterPage";
@@ -69,6 +69,8 @@ import RptDocumentListPage from "../pages/Purchase/Report/DocumentList/RptDocume
 import RptSalesPriceListPage from "../pages/Purchase/Report/SalesPriceList/RptSalesPriceListPage";
 import RptItemListPage from "../pages/Purchase/Report/ItemList/RptItemListPage";
 import RptItemHistoryPage from "../pages/Purchase/Report/ItemHistory/RptItemHistoryPage";
+import RptGeneralLedgerGroup from "../pages/Finance/Report/GeneralLedger/GeneralLedgerGroup/RptGeneralLedgerGroupPage";
+import RptFinYearCloseBalPage from "../pages/Finance/Report/YearCloseBalance/RptFinYearCloseBalPage";
 
 
 const Login = lazy(() => import("../pages/Auth/LoginPage"));
@@ -156,6 +158,8 @@ const AppRoutes = () => {
           <Route path="/Finance/Reports/RptChartOfAccount" element={<RptChartOfAccountPage/>}/>
           <Route path="/Finance/Reports/RptCustomerList" element={<RptCustomerListPage/>}/>
           <Route path="/Finance/Reports/RptSupplierList" element={<RptSupplierListPage/>}/>
+          <Route path="/Finance/Reports/RptGLGroup" element={<RptGeneralLedgerGroup/>}/>
+          <Route path="/Finance/Reports/RptFinYearCloseBal" element={<RptFinYearCloseBalPage/>}/>
 
           {/* ================= SALES - TRANSACTION ================= */}
 
