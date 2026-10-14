@@ -109,6 +109,38 @@ export const beginningStockHeaderKeys: KeyMap = {
   fnote: "txtNote",
 };
 
+/* ---------- Sales / Setup / ItemEnquiry ---------- */
+
+export const itemEnquiryItemKeys: KeyMap = {
+  fitemid: "lkpItemID",
+  fitemname: "lkpItemName",
+};
+
+export const itemEnquiryHeaderKeys: KeyMap = {
+  fitemid: "lkpItemID",
+  fitemname: "lkpItemName",
+  funit: "txtUnit",
+  fpacking: "txtPacking",
+  fcbm: "txtCBM",
+  fitemgroupid: "lkpItemGroupID",
+  fitemgroupname: "lkpItemGroupName",
+  fsupplierid: "lkpSupplierID",
+  fsuppliername: "lkpSupplierName",
+  fsupplieritemid: "txtSupplierItemID",
+  freorderlevel: "txtReorderLevel",
+  freorderqty: "txtReorderQty",
+};
+
+export const itemEnquiryGridKeys: KeyMap = {
+  fbrid: "txtBranchID",
+  fbrname: "txtBranchName",
+  fstock: "txtStock",
+  fpreviousunitcost: "txtPrevUnitCost",
+  funitprice: "txtUnitPrice",
+  funitcost: "txtUnitCost",
+  ftotalcost: "txtTotalCost",
+};
+
 export const userAuditUserListKeys: KeyMap = {
   fuserid: "lkpUserID",
 };

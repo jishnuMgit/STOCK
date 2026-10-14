@@ -23,6 +23,7 @@ import userpermission from "./SecurityRoutes/UserPermissionMenuRouter.js";
 import userpermissionBranch from "./SecurityRoutes/UserPermissionBranchRouter.js";
 import purchaseInvoiceRouter from "./Purchase/Transaction/PurchaseInvoiceRouter.js";
 import BeginningStockRouter from "./Purchase/Transaction/BeginningStockRouter.js";
+import ItemEnquiryRouter from "./Sales/Setup/ItemEnquiryRouter.js";
 import branchRouter from "./common/BranchRouter.js";
 import chartOfAccountRouter from "./Finance/Setup/COARouter.js";
 import CostCenterRouter from "./CostCenterRouter.js";
@@ -53,6 +54,7 @@ router.use("/user-permission", userpermission);
 router.use("/user-permission-branch", userpermissionBranch);
 router.use("/purchase-invoice", purchaseInvoiceRouter);
 router.use("/BeginningStock", BeginningStockRouter);
+router.use("/ItemEnquiry", ItemEnquiryRouter);
 router.use("/branch", branchRouter);
 router.use("/coa", chartOfAccountRouter);
 router.use ("/CostCenter", CostCenterRouter)
