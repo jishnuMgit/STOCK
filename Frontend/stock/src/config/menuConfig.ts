@@ -76,6 +76,7 @@ mnuRptStockAgeing:"/Purchase/Report/RptStockAgeing",
 mnuRptDocumentList:"/Purchase/Report/RptDocumentList",
 mnuRptSalesPriceList:"/Purchase/Report/RptSalesPriceList",
 mnuRptItemList:"/Purchase/Report/RptItemList",
+mnuRptItemHistory:"/Purchase/Report/RptItemHistory",
 
 
 
