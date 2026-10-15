@@ -1350,7 +1350,7 @@ const BeginningStockPage: React.FC = () => {
               <col style={{ width: "30%" }} />
               <col style={{ width: "54%" }} />
               <col style={{ width: "6.2%" }} />
-              <col style={{ width: "6.4%" }} />
+              <col style={{ width: "8.9%" }} />
               <col style={{ width: "9.6%" }} />
               <col style={{ width: "10.2%" }} />
             </colgroup>
@@ -1565,49 +1565,82 @@ const BeginningStockPage: React.FC = () => {
         </div>
       </main>
 
-      {/* BOTTOM FORM */}
-      <section className="flex h-[60px] bg-white shrink-0 items-center gap-3">
+      {/* BOTTOM FORM: a one-row table with the SAME column widths as the grid
+          above, so the total quantity sits exactly under the Qty. column and the
+          total cost exactly under the Total Cost column */}
+      <section className="shrink-0 bg-white">
+        <div className="border border-transparent">
+          <table className="w-full min-w-[900px] table-fixed border-collapse border border-transparent">
+            <colgroup>
+              <col style={{ width: "17px" }} />
+              <col style={{ width: "43px" }} />
+              <col style={{ width: "30%" }} />
+              <col style={{ width: "54%" }} />
+              <col style={{ width: "6.2%" }} />
+              <col style={{ width: "8.9%" }} />
+              <col style={{ width: "9.6%" }} />
+              <col style={{ width: "10.2%" }} />
+            </colgroup>
 
-        {/* NOTE */}
-        <label
-          htmlFor="txtNote"
-          className="w-[32px] shrink-0 text-[14px] text-gray-600"
-        >
-          Note
-        </label>
+            <tbody>
+              <tr className="h-[60px]">
+                {/* NOTE (under the first four columns) */}
+                <td colSpan={4} className="p-0 pr-3">
+                  <div className="flex items-center gap-3">
+                    <label
+                      htmlFor="txtNote"
+                      className="w-[32px] shrink-0 text-[14px] text-gray-600"
+                    >
+                      Note
+                    </label>
 
-        <input
-          id="txtNote"
-          name="txtNote"
-          value={txtNote}
-          maxLength={100}
-          readOnly={chkPosted}
-          onChange={(event) => setTxtNote(event.target.value)}
-          className=" w-[60%] shrink-0 input-style"
-        />
+                    <input
+                      id="txtNote"
+                      name="txtNote"
+                      value={txtNote}
+                      maxLength={100}
+                      readOnly={chkPosted}
+                      onChange={(event) => setTxtNote(event.target.value)}
+                      className="input-style w-full min-w-0"
+                    />
+                  </div>
+                </td>
 
-        {/* TOTAL LABEL */}
-        <div className="ml-9 flex h-[30px] w-[71px] shrink-0 items-center justify-center rounded border border-[#d7dee7] bg-white text-[14px] text-gray-600">
-          Total
+                {/* TOTAL LABEL (under the Unit column) */}
+                <td className="p-0 pr-[4px]">
+                  <div className="flex h-[30px] w-full items-center justify-center rounded border border-[#d7dee7] bg-white text-[14px] text-gray-600">
+                    Total
+                  </div>
+                </td>
+
+                {/* TOTAL QUANTITY (under the Qty. column) */}
+                <td className="p-0">
+                  <input
+                    id="txtTotalQty"
+                    name="txtTotalQty"
+                    value={formatQty(totalQty)}
+                    readOnly
+                    className="input-style w-full min-w-0 text-right"
+                  />
+                </td>
+
+                {/* nothing under Unit Cost */}
+                <td className="p-0" />
+
+                {/* TOTAL COST (under the Total Cost column) */}
+                <td className="p-0">
+                  <input
+                    id="txtTotalCost"
+                    name="txtTotalCost"
+                    value={formatAmount(total)}
+                    readOnly
+                    className="input-style w-full min-w-0 text-right"
+                  />
+                </td>
+              </tr>
+            </tbody>
+          </table>
         </div>
-
-        {/* TOTAL QUANTITY */}
-        <input
-          id="txtTotalQty"
-          name="txtTotalQty"
-          value={formatQty(totalQty)}
-          readOnly
-          className="input-style w-[6.5%] shrink-0 text-right"
-        />
-
-        {/* TOTAL COST (under the Total Cost column) */}
-        <input
-          id="txtTotalCost"
-          name="txtTotalCost"
-          value={formatAmount(total)}
-          readOnly
-          className="input-style ml-auto w-[10.2%] shrink-0 text-right"
-        />
       </section>
 
       {/* the "Do you want to delete ?." question */}

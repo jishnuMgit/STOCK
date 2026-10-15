@@ -25,6 +25,14 @@
 --   5. The quantity variables are numeric(18,3) (pasted: 18,2) because the
 --      page and tblStockTrans.fQtyIn have 3 decimals; 18,2 would round a
 --      quantity like 1.234 to 1.23 in the stock and in the total cost.
+--   6. ADDED: the posting transaction number. When the document is posted, one
+--      number is taken from dbo.getnexttransno(company, year, branch, 'P') and
+--      written into fpostingtransno of EVERY line of the document (a line that
+--      already has one keeps it). Needs alter_tblstocktrans_transno.sql.
+--   7. tblStockControl.fYear is now varchar(4) (ALTER TABLE dbo.tblstockcontrol ALTER
+--      COLUMN fyear TYPE varchar(4)), so every statement on tblStockControl uses
+--      p_pstryear as text; the statements on tblStockTrans (fYear smallint) and on
+--      tblFinTrans (fYear text) are unchanged.
 --   The post order (fPostOrder / fPostOrderC / getnextpostorder) is NOT used
 --   for now: all its lines stay commented, exactly as pasted.
 --
@@ -67,6 +75,7 @@ DECLARE
     v_numnewunitcost numeric(18,4);
     v_numcostofstock numeric(18,4) := 0;
     v_intpostorder integer := 0;
+    v_strpostingtransno varchar(9);      -- the posting transaction number
 
     v_row record;
 BEGIN
@@ -115,12 +124,12 @@ BEGIN
             INSERT INTO dbo.tblStockControl
                 (fCoID, fItemID, fYear, fBrID, fPreviousStock, fStock,
                  fPreviousUnitCost, fUnitCost, fCUserID, fCUserDate)
-            SELECT p_pstrcoid, v_stritemid, p_pstryear::smallint, p_strbrid, 0, 0,
+            SELECT p_pstrcoid, v_stritemid, p_pstryear, p_strbrid, 0, 0,
                    0, 0, p_gstruserid, now()
             WHERE NOT EXISTS (
                 SELECT 1 FROM dbo.tblStockControl
                 WHERE fCoID = p_pstrcoid
-                  AND fYear = p_pstryear::smallint
+                  AND fYear = p_pstryear
                   AND fBrID = p_strbrid
                   AND fItemID = v_stritemid
             );
@@ -133,7 +142,7 @@ BEGIN
                 v_numoldunitcost
             FROM dbo.tblStockControl
             WHERE fCoID = p_pstrcoid
-              AND fYear = p_pstryear::smallint          -- was: fYear = p_pstryear
+              AND fYear = p_pstryear          -- was: fYear = p_pstryear
               AND fBrID = p_strbrid
               AND fItemID = v_stritemid;
 
@@ -143,7 +152,7 @@ BEGIN
                 fPreviousStock = COALESCE(fStock, 0),
                 fPreviousUnitCost = COALESCE(fUnitCost, 0)
             WHERE fCoID = p_pstrcoid
-              AND fYear = p_pstryear::smallint          -- was: fYear = p_pstryear
+              AND fYear = p_pstryear          -- was: fYear = p_pstryear
               AND fBrID = p_strbrid
               AND fItemID = v_stritemid;
 
@@ -187,7 +196,7 @@ BEGIN
                 fUnitCost = v_numnewunitcost,
                 fStock = COALESCE(fStock, 0) + v_numqtyinout
             WHERE fCoID = p_pstrcoid
-              AND fYear = p_pstryear::smallint          -- was: fYear = p_pstryear
+              AND fYear = p_pstryear          -- was: fYear = p_pstryear
               AND fBrID = p_strbrid
               AND fItemID = v_stritemid;
 
@@ -210,12 +219,17 @@ BEGIN
             --         dbo.getnextpostorder(p_pstrcoid);
             -- END IF;
 
+            -- the posting transaction number: one for the whole document
+            v_strpostingtransno :=
+                dbo.getnexttransno(p_pstrcoid, p_pstryear, p_strbrid, 'P');
+
             UPDATE dbo.tblStockTrans
             SET
-                fPost = true                             -- was: fPost = 1
+                fPost = true,                            -- was: fPost = 1
+                fPostingTransNo = COALESCE(fPostingTransNo, v_strpostingtransno)
                 -- fPostOrder = v_intpostorder,
                 -- fPostOrderC = v_intpostorder
-                -- (when switching these on, put a comma after "fPost = true")
+                -- (when switching these on, put a comma after the line above)
             WHERE fCoID = p_pstrcoid
               AND fYear = p_pstryear::smallint          -- was: fYear = p_pstryear
               AND fBrID = p_strbrid

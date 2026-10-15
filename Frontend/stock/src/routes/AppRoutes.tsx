@@ -17,6 +17,7 @@ import PurchaseInvoicePage from "../pages/Purchase/Transaction/PurchaseInvoicePa
 import PurchaseExpense from "../components/Transaction/PurchaseInvoice/PurchaseInvoiceExpense";
 import SalesInvoice from "../pages/Sales/Transaction/SalesInvoicePage";
 import StockTransfer from "../pages/Sales/Transaction/stock/StockTransferPage";
+import StockTransferPrint from "../pages/Sales/Transaction/stock/StockTransferPrintPage";
 import BeginningBalance from "../pages/Finance/Transaction/BeginningBalance/BeginningBalance";
 import ItemGroupPage from "../pages/Purchase/Setup/ItemGroupPage";
 import CompanyPage from "../pages/Administration/CompanyPage";
@@ -169,6 +170,7 @@ const AppRoutes = () => {
           <Route path="/Sales/Transaction/SalesInvoicePage" element={<SalesInvoice />}/>
           <Route path="/Sales/Transaction/StockAdjustment"  element={<StockAdjustmentPage/>} />
           <Route path="/Sales/Transaction/StockTransferPage" element={<StockTransfer />}/>
+          <Route path="/Sales/Transaction/StockTransferPage/Print" element={<StockTransferPrint />}/>
           <Route path="/Sales/Transaction/StockDocumentPost" element={<StockDocumentPost/>}/>
           <Route path="/Sales/Transaction/StockDocumentRePost" element={<StockDocumentRePost/>}/>
 

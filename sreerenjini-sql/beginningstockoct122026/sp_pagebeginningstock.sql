@@ -33,6 +33,13 @@
 --     the note with M (a call to M without it would clear the notes).
 --   * fnote is varchar(100).
 --
+-- ADDED: the saving transaction number (fsavingtransno)
+--   * p_strsavingtransno is the document's saving number (from dbo.getnexttransno,
+--     asked once per document by the backend).
+--   * mode S writes it into the line it inserts;
+--   * mode M gives it to every line that has none yet (COALESCE): lines that
+--     already carry one keep it, so a Modify never renumbers the document.
+--
 -- As in the original, the year is used ONLY by mode S (it writes fyear); every
 -- other mode finds its rows by company + branch + doc type (+ Sl.# for M1 / D1).
 --
@@ -46,6 +53,8 @@
 -- make a SECOND procedure next to the old one and calls would become ambiguous.
 -- This drops the old argument list first (nothing happens if it is not there):
 DROP PROCEDURE IF EXISTS dbo.sp_pagebeginningstock(character varying, character varying, smallint, character varying, character varying, character varying, timestamp without time zone, boolean, character varying, smallint, character varying, character varying, numeric, numeric, numeric, smallint, character varying, character varying, refcursor);
+-- ... and the one before the saving transaction number was added (p_strnote, no p_strsavingtransno)
+DROP PROCEDURE IF EXISTS dbo.sp_pagebeginningstock(character varying, character varying, smallint, character varying, character varying, character varying, timestamp without time zone, boolean, character varying, smallint, character varying, character varying, numeric, numeric, numeric, smallint, character varying, character varying, character varying, refcursor);
 
 CREATE OR REPLACE PROCEDURE dbo.sp_pagebeginningstock(
     IN    p_strmode          character varying,
@@ -67,6 +76,7 @@ CREATE OR REPLACE PROCEDURE dbo.sp_pagebeginningstock(
     IN    p_pstruserid       character varying DEFAULT NULL::character varying,
     IN    p_strmenuname      character varying DEFAULT NULL::character varying,
     IN    p_strnote          character varying DEFAULT NULL::character varying,
+    IN    p_strsavingtransno character varying DEFAULT NULL::character varying,
     INOUT p_result_cursor    refcursor         DEFAULT 'cur_beginningstock'::refcursor)
  LANGUAGE plpgsql
 AS $procedure$
@@ -114,14 +124,14 @@ BEGIN
             fcoid, fyear, fbrid, fdoctype, fdocno, fdate, fslno,
             fitemid, funit, fqtyin, funitcost, ftotalcost,
             forigin, fpost, ftransno,
-            fcuserid, fcuserdate, fnote
+            fcuserid, fcuserdate, fnote, fsavingtransno
         )
         VALUES (
             p_pstrcoid, p_pintyear, p_strbrid, p_strdoctype, p_strdocno, p_dtpdate, p_intslno,
             p_stritemid, p_strunit,
             COALESCE(p_numqtyin, 0), COALESCE(p_numunitcost, 0), COALESCE(p_numtotalcost, 0),
             'UI', p_blnpost, p_strtransno,
-            p_pstruserid, now(), NULLIF(p_strnote, '')
+            p_pstruserid, now(), NULLIF(p_strnote, ''), p_strsavingtransno
         );
 
     ELSIF p_strmode = 'M' THEN
@@ -145,7 +155,8 @@ BEGIN
             fcuserdate = v_suserdate,
             fmuserid   = v_muserid,
             fmuserdate = v_muserdate,
-            fnote      = NULLIF(p_strnote, '')
+            fnote      = NULLIF(p_strnote, ''),
+            fsavingtransno = COALESCE(fsavingtransno, p_strsavingtransno)
         WHERE fcoid    = p_pstrcoid
           AND fbrid    = p_strbrid
           AND fdoctype = p_strdoctype;
