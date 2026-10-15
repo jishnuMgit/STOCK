@@ -752,14 +752,14 @@ export async function postStockTransferService(p: {
       CALL dbo.sp_pagestocktransferpost(
         p_strmode    => $1::varchar,
         p_pstrcoid   => $2::varchar,
-        p_pintyear   => $3::smallint,
+        p_pstryear   => $3::varchar,
         p_strbrid    => $4::varchar,
         p_strdoctype => $5::varchar,
         p_strdocno   => $6::varchar,
         p_gstruserid => $7::varchar
       )
       `,
-      ["P", p.PstrCoID, p.PstrYear, p.lkpBranch, DOC_TYPE, p.txtDocNo, p.PstrUserID]
+      ["P", p.PstrCoID, String(p.PstrYear), p.lkpBranch, DOC_TYPE, p.txtDocNo, p.PstrUserID]
     );
 
     const after = await fetchCursor<StockTransferLine>(
@@ -978,7 +978,7 @@ async function callSpStockTransfer(
     CALL dbo.sp_pagestocktransferpage(
       p_strmode        => $1::varchar,
       p_pstrcoid       => $2::varchar,
-      p_pintyear       => $3::smallint,
+      p_pstryear       => $3::varchar,
       p_strstbrid      => $4::varchar,
       p_strdoctype     => $5::varchar,
       p_strdoctypeg    => $6::varchar,
@@ -1001,7 +1001,7 @@ async function callSpStockTransfer(
     [
       p.strmode,
       p.PstrCoID,
-      p.PstrYear,
+      String(p.PstrYear),
       p.lkpBranch,
       DOC_TYPE,
       DOC_TYPE_G,

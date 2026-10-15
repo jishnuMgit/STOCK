@@ -1,11 +1,14 @@
 
--- tblstocktrans.fyear is varchar(4) now (like tblstockcontrol.fyear): the year argument
--- stays a smallint, and every comparison with a year column casts it (p_pintyear::varchar).
+-- tblstocktrans.fyear is varchar(4) now (like tblstockcontrol.fyear): the year argument is
+-- TEXT, p_pstryear (it was a smallint, p_pintyear), and is compared with the year columns
+-- as it is. The DROP below removes the smallint version.
+
+DROP PROCEDURE IF EXISTS dbo.sp_pagestocktransferpost(character varying, character varying, smallint, character varying, character varying, character varying, character varying);
 
 CREATE OR REPLACE PROCEDURE dbo.sp_pagestocktransferpost(
     IN p_strmode    varchar(1),
     IN p_pstrcoid   varchar(3),
-    IN p_pintyear   smallint,
+    IN p_pstryear   varchar(4),
     IN p_strbrid    varchar(3),
     IN p_strdoctype varchar(5),
     IN p_strdocno   varchar(15),
@@ -14,7 +17,7 @@ CREATE OR REPLACE PROCEDURE dbo.sp_pagestocktransferpost(
 LANGUAGE plpgsql
 AS $$
 DECLARE
-    v_stryear           varchar(4) := p_pintyear::varchar;   -- tblstockcontrol.fyear is text
+    v_stryear           varchar(4) := p_pstryear;   -- the year is text (tblstockcontrol and tblstocktrans)
     v_strdoctypeg       varchar(5) := 'STI';
     v_intslno           smallint;
     v_strtobrid         varchar(3);
@@ -43,7 +46,7 @@ BEGIN
                COALESCE(st.fqtyout, 0) AS qtyout
         FROM dbo.tblstocktrans st
         WHERE st.fcoid    = p_pstrcoid
-          AND st.fyear    = p_pintyear::varchar
+          AND st.fyear    = p_pstryear
           AND st.fbrid    = p_strbrid
           AND st.fdoctype = p_strdoctype
           AND st.fdocno   = p_strdocno
@@ -78,7 +81,7 @@ BEGIN
            SET funitcost  = v_numnewunitcost,
                ftotalcost = v_numqtyout * v_numnewunitcost
          WHERE fcoid    = p_pstrcoid
-           AND fyear    = p_pintyear::varchar
+           AND fyear    = p_pstryear
            AND fbrid    = p_strbrid
            AND fdoctype = p_strdoctype
            AND fdocno   = p_strdocno
@@ -89,7 +92,7 @@ BEGIN
            SET funitcost  = v_numnewunitcost,
                ftotalcost = v_numqtyout * v_numnewunitcost
          WHERE fcoid    = p_pstrcoid
-           AND fyear    = p_pintyear::varchar
+           AND fyear    = p_pstryear
            AND fbrid    = v_strtobrid
            AND fdoctype = v_strdoctypeg
            AND fdocno   = p_strdocno
@@ -155,7 +158,7 @@ BEGIN
     IF v_intlines = 0 THEN
         RAISE EXCEPTION
             'No eligible stock transactions found for company %, year %, branch %, document type %, document number %',
-            p_pstrcoid, p_pintyear, p_strbrid, p_strdoctype, p_strdocno;
+            p_pstrcoid, p_pstryear, p_strbrid, p_strdoctype, p_strdocno;
     END IF;
 
     -- 5. both sets of rows are posted
@@ -163,7 +166,7 @@ BEGIN
        SET fpost = true
            -- , fpostorder = v_intpostorder, fpostorderc = v_intpostorder   (no such columns)
      WHERE fcoid   = p_pstrcoid
-       AND fyear   = p_pintyear::varchar
+       AND fyear   = p_pstryear
        AND fstbrid = p_strbrid
        AND (fdoctype = p_strdoctype OR fdoctype = v_strdoctypeg)
        AND fdocno  = p_strdocno;

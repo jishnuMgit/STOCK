@@ -38,21 +38,23 @@
 --   * p_strnote is the note, written on every row (varchar(100)).
 --
 -- tblstocktrans.fyear is varchar(4) now (like tblstockcontrol.fyear): the year argument
--- stays a smallint, and every comparison with a year column casts it (p_pintyear::varchar).
+-- stays a smallint, and every comparison with a year column casts it (p_pstryear).
 --
 -- Examples (cursor calls run inside one transaction)
 --   BEGIN;
---   CALL dbo.sp_pagestocktransferpage('GTL', '01', 2026::smallint, 'JD', 'ST', 'STI', 'STJD-2600001', p_result_cursor => 'c1');
+--   CALL dbo.sp_pagestocktransferpage('GTL', '01', '2026', 'JD', 'ST', 'STI', 'STJD-2600001', p_result_cursor => 'c1');
 --   FETCH ALL FROM "c1";
 --   COMMIT;
 -- =====================================================================
 
 DROP PROCEDURE IF EXISTS dbo.sp_pagestocktransfer(character varying, character varying, smallint, character varying, character varying, character varying, character varying, character varying, timestamp without time zone, numeric, character varying, numeric, smallint, character varying, character varying, numeric, numeric, numeric, smallint, character varying, character varying, refcursor);
 
+DROP PROCEDURE IF EXISTS dbo.sp_pagestocktransferpage(character varying, character varying, smallint, character varying, character varying, character varying, character varying, character varying, timestamp without time zone, numeric, character varying, numeric, smallint, character varying, character varying, numeric, numeric, numeric, smallint, character varying, character varying, refcursor);
+
 CREATE OR REPLACE PROCEDURE dbo.sp_pagestocktransferpage(
     IN    p_strmode          character varying,
     IN    p_pstrcoid         character varying,
-    IN    p_pintyear         smallint,
+    IN    p_pstryear         character varying,
     IN    p_strstbrid        character varying,
     IN    p_strdoctype       character varying,
     IN    p_strdoctypeg      character varying,
@@ -97,7 +99,7 @@ BEGIN
                 to_char(fmuserdate, 'DD Mon YYYY HH24:MI:SS')  AS fmuserdate
             FROM dbo.tblstocktrans
             WHERE fcoid    = p_pstrcoid
-              AND fyear    = p_pintyear::varchar
+              AND fyear    = p_pstryear
               AND fstbrid  = p_strstbrid
               AND fdoctype = p_strdoctype
               AND fdocno   = p_strdocno
@@ -116,7 +118,7 @@ BEGIN
                 ftotalcost
             FROM dbo.tblstocktrans
             WHERE fcoid    = p_pstrcoid
-              AND fyear    = p_pintyear::varchar
+              AND fyear    = p_pstryear
               AND fstbrid  = p_strstbrid
               AND fdoctype = p_strdoctype
               AND fdocno   = p_strdocno
@@ -132,7 +134,7 @@ BEGIN
             fcuserid, fcuserdate
         )
         VALUES (
-            p_pstrcoid, p_pintyear, p_strstbrid, p_strdoctype, p_strdocno, p_strstbrid, p_strtobrid, p_dtpdate,
+            p_pstrcoid, p_pstryear, p_strstbrid, p_strdoctype, p_strdocno, p_strstbrid, p_strtobrid, p_dtpdate,
             NULLIF(p_strnote, ''), p_intslno, p_stritemid, p_strunit,
             COALESCE(p_numqtyout, 0), COALESCE(p_numunitcost, 0), COALESCE(p_numtotalcost, 0), COALESCE(p_numdocamt, 0),
             'UI', false,
@@ -147,7 +149,7 @@ BEGIN
             fcuserid, fcuserdate
         )
         VALUES (
-            p_pstrcoid, p_pintyear, p_strtobrid, p_strdoctypeg, p_strdocno, p_strstbrid, p_strtobrid, p_dtpdate,
+            p_pstrcoid, p_pstryear, p_strtobrid, p_strdoctypeg, p_strdocno, p_strstbrid, p_strtobrid, p_dtpdate,
             NULLIF(p_strnote, ''), p_intslno, p_stritemid, p_strunit,
             COALESCE(p_numqtyout, 0), COALESCE(p_numunitcost, 0), COALESCE(p_numtotalcost, 0), COALESCE(p_numdocamt, 0),
             'GS', false,
@@ -164,7 +166,7 @@ BEGIN
           INTO v_suserid, v_suserdate
           FROM dbo.tblstocktrans
          WHERE fcoid    = p_pstrcoid
-           AND fyear    = p_pintyear::varchar
+           AND fyear    = p_pstryear
            AND fstbrid  = p_strstbrid
            AND fdoctype = p_strdoctype
            AND fdocno   = p_strdocno
@@ -185,7 +187,7 @@ BEGIN
             fmuserid   = v_muserid,
             fmuserdate = v_muserdate
         WHERE fcoid    = p_pstrcoid
-          AND fyear    = p_pintyear::varchar
+          AND fyear    = p_pstryear
           AND fstbrid  = p_strstbrid
           AND fdoctype = p_strdoctype
           AND fdocno   = p_strdocno;
@@ -204,7 +206,7 @@ BEGIN
             fmuserid   = v_muserid,
             fmuserdate = v_muserdate
         WHERE fcoid    = p_pstrcoid
-          AND fyear    = p_pintyear::varchar
+          AND fyear    = p_pstryear
           AND fstbrid  = p_strstbrid
           AND fdoctype = p_strdoctypeg
           AND fdocno   = p_strdocno;
@@ -219,7 +221,7 @@ BEGIN
             funitcost  = COALESCE(p_numunitcost, 0),
             ftotalcost = COALESCE(p_numtotalcost, 0)
         WHERE fcoid    = p_pstrcoid
-          AND fyear    = p_pintyear::varchar
+          AND fyear    = p_pstryear
           AND fstbrid  = p_strstbrid
           AND fdoctype = p_strdoctype
           AND fdocno   = p_strdocno
@@ -233,7 +235,7 @@ BEGIN
             funitcost  = COALESCE(p_numunitcost, 0),
             ftotalcost = COALESCE(p_numtotalcost, 0)
         WHERE fcoid    = p_pstrcoid
-          AND fyear    = p_pintyear::varchar
+          AND fyear    = p_pstryear
           AND fstbrid  = p_strstbrid
           AND fdoctype = p_strdoctypeg
           AND fdocno   = p_strdocno
@@ -243,7 +245,7 @@ BEGIN
 
         DELETE FROM dbo.tblstocktrans
         WHERE fcoid    = p_pstrcoid
-          AND fyear    = p_pintyear::varchar
+          AND fyear    = p_pstryear
           AND fstbrid  = p_strstbrid
           AND fdoctype = p_strdoctype
           AND fdocno   = p_strdocno
@@ -251,7 +253,7 @@ BEGIN
 
         DELETE FROM dbo.tblstocktrans
         WHERE fcoid    = p_pstrcoid
-          AND fyear    = p_pintyear::varchar
+          AND fyear    = p_pstryear
           AND fstbrid  = p_strstbrid
           AND fdoctype = p_strdoctypeg
           AND fdocno   = p_strdocno
@@ -261,14 +263,14 @@ BEGIN
 
         DELETE FROM dbo.tblstocktrans
         WHERE fcoid    = p_pstrcoid
-          AND fyear    = p_pintyear::varchar
+          AND fyear    = p_pstryear
           AND fstbrid  = p_strstbrid
           AND fdoctype = p_strdoctype
           AND fdocno   = p_strdocno;
 
         DELETE FROM dbo.tblstocktrans
         WHERE fcoid    = p_pstrcoid
-          AND fyear    = p_pintyear::varchar
+          AND fyear    = p_pstryear
           AND fstbrid  = p_strstbrid
           AND fdoctype = p_strdoctypeg
           AND fdocno   = p_strdocno;
@@ -276,14 +278,14 @@ BEGIN
         -- as in the original: the finance rows of both doc types, by the From branch
         DELETE FROM dbo.tblfintrans
         WHERE fcoid    = p_pstrcoid
-          AND fyear    = p_pintyear::varchar
+          AND fyear    = p_pstryear
           AND fbrid    = p_strstbrid
           AND fdoctype = p_strdoctype
           AND fdocno   = p_strdocno;
 
         DELETE FROM dbo.tblfintrans
         WHERE fcoid    = p_pstrcoid
-          AND fyear    = p_pintyear::varchar
+          AND fyear    = p_pstryear
           AND fbrid    = p_strstbrid
           AND fdoctype = p_strdoctypeg
           AND fdocno   = p_strdocno;
