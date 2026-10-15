@@ -82,7 +82,7 @@ const CustomRadio: React.FC<RadioOptionProps> = ({name,value,label,checked,onCha
     <span
       className={`flex h-[19px] w-[19px] shrink-0 items-center justify-center rounded-full border bg-white ${checked ? "border-[#64d96e]" : "border-[#cbd3dc]"}`} >
       <span className={`h-2.5 w-2.5 rounded-full bg-[#64d96e] ${ checked ? "opacity-100" : "opacity-0"}`}/></span>
-    <span className="text-[12px] font-normal text-[#35445a]">{label}</span>
+    <span className="text-[14px] font-normal text-[#35445a]">{label}</span>
   </label>
 );
 const RadioPanel: React.FC<{
@@ -94,7 +94,7 @@ const RadioPanel: React.FC<{
   </div>
 );
 const FieldLabel: React.FC<{ children: React.ReactNode }> = ({ children }) => (
-  <div className="flex h-[30px] items-center justify-end border border-[#e0e5ea] bg-[#fafbfc] pr-3 text-[12px] text-[#405066]">
+  <div className="flex h-[30px] items-center justify-end border border-[#e0e5ea] bg-[#fafbfc] pr-3 text-[14px] text-[#405066]">
     {children}
   </div>
 );
@@ -119,10 +119,10 @@ const AppDatePicker: React.FC<AppDatePickerProps> = ({id,label,value,onChange,})
       sx={{
         width: "140px",
         "& .MuiPickersTextField-root": { width: "120px" },
-        "& .MuiPickersInputBase-root": {width: "140px",height: "30px",minHeight: "30px",boxSizing: "border-box", borderRadius: "4px", backgroundColor: "#ffffff", fontSize: "12px", padding: 0, overflow: "hidden", },
+        "& .MuiPickersInputBase-root": {width: "140px",height: "30px",minHeight: "30px",boxSizing: "border-box", borderRadius: "4px", backgroundColor: "#ffffff", fontSize: "14px", padding: 0, overflow: "hidden", },
         "& .MuiPickersInputBase-sectionsContainer": { paddingLeft: "10px !important", paddingRight: "0px !important", marginBottom: "-5px !important", marginLeft: "0px !important",  boxSizing: "border-box",  overflow: "hidden", },
-        "& .MuiPickersInputBase-sectionContent": { fontSize: "12px", color: "#344054", },
-        "& .MuiPickersInputBase-input": { minWidth: 0, width: "100%", fontSize: "12px", padding: 0, height: "30px", boxSizing: "border-box", },
+        "& .MuiPickersInputBase-sectionContent": { fontSize: "14px", color: "#344054", },
+        "& .MuiPickersInputBase-input": { minWidth: 0, width: "100%", fontSize: "14px", padding: 0, height: "30px", boxSizing: "border-box", },
         "& .MuiInputAdornment-root": { margin: 0, padding: 0 },
         "& .MuiIconButton-root": { width: "24px", height: "24px",  padding: "2px", margin: 0, },
         "& .MuiSvgIcon-root": { fontSize: "16px" },

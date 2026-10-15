@@ -1,45 +1,163 @@
 
 import { Play } from "lucide-react";
-import React, { useMemo, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import Select, {
   type SingleValue,
   type StylesConfig,
 } from "react-select";
+import { useLocation, useNavigate } from "react-router-dom";
+import { toast } from "react-toastify";
+import {
+  makePairComponents,
+  filterPairOption,
+  pairDividedIdMenuStyles,
+  pairDividedNameMenuStyles,
+} from "../../../components/PairSelect/pairSelectParts";
+import { useAltShortcuts } from "../../../hooks/useAltShortcuts";
+import { useConfirm } from "../../../hooks/useConfirm";
+import { useButtonPermissions } from "../../../hooks/useButtonPermissions";
+import {
+  BranchMenuList,
+  BranchOption,
+  CustomDropdownIndicator,
+  branchMenuStyles,
+  filterLabelOrValue,
+} from "../../../components/BranchSelect/branchSelectParts";
 
 interface SelectOption {
   value: string;
   label: string;
+  // only on the Item ID / Item Name boxes: their open list shows both columns
+  // and the search matches either
+  id?: string;
+  name?: string;
 }
 
 interface StockRow {
   id: number;
-  slNo: number;
-  itemId: SelectOption | null;
-  itemName: SelectOption | null;
-  unit: string;
-  qty: string;
-  unitCost: string;
+  txtSlNo: number;
+  lkpItemID: SelectOption | null;
+  lkpItemName: SelectOption | null;
+  txtUnit: string;
+  txtQty: string;
+  txtUnitCost: string;
+  // the Sl.# the line had when it was loaded (null for a new line)
+  txtOriginalSlNo: number | null;
 }
 
-const branchOptions: SelectOption[] = [
-  { value: "OFFICE", label: "OFFICE" },
-  { value: "BRANCH1", label: "BRANCH 1" },
-  { value: "BRANCH2", label: "BRANCH 2" },
-];
+// an item of the branch, as the server gives it
+interface ItemRecord {
+  lkpItemID: string;
+  txtItemName: string;
+  txtUnit: string;
+}
 
-const itemOptions: SelectOption[] = [
-  { value: "ITM001", label: "ITM001" },
-  { value: "ITM002", label: "ITM002" },
-  { value: "ITM003", label: "ITM003" },
-  { value: "ITM004", label: "ITM004" },
-];
+// dbo.tblmenu fmenuid of the Beginning Stock page
+const MENU_ID = "010104";
 
-const itemNameOptions: SelectOption[] = [
-  { value: "ITM001", label: "Apple" },
-  { value: "ITM002", label: "Orange" },
-  { value: "ITM003", label: "Mango" },
-  { value: "ITM004", label: "Banana" },
-];
+// today as yyyy-mm-dd, in the user's own time
+const todayLocal = () => new Date().toLocaleDateString("en-CA");
+
+// ============================================================
+// BRANCH SELECT STYLE
+// The project's Branch box (as on Set Document No / Set Branch Info): 30px, light
+// border, mint when focused, the filled arrow, and a "Branch | ID" list.
+// ============================================================
+
+const branchSelectStyles: StylesConfig<SelectOption, false> = {
+  control: (base, state) => ({
+    ...base,
+    minHeight: "30px",
+    height: "30px",
+    border: "1px solid #d1d5db",
+    borderRadius: "4px",
+    boxShadow: "none",
+    backgroundColor: state.isFocused ? "#eefbf4" : "#ffffff",
+    fontSize: "11px",
+    cursor: "pointer",
+
+    "&:hover": {
+      borderColor: "#9fdfbc",
+    },
+  }),
+
+  valueContainer: (base) => ({
+    ...base,
+    height: "23px",
+    minHeight: "23px",
+    padding: "0 6px",
+  }),
+
+  singleValue: (base) => ({
+    ...base,
+    margin: 0,
+    color: "#374151",
+    fontSize: "11px",
+  }),
+
+  placeholder: (base) => ({
+    ...base,
+    margin: 0,
+    color: "#808080",
+    fontSize: "11px",
+  }),
+
+  input: (base) => ({
+    ...base,
+    margin: 0,
+    padding: 0,
+    fontSize: "11px",
+    color: "#374151",
+  }),
+
+  indicatorsContainer: (base) => ({
+    ...base,
+    height: "23px",
+  }),
+
+  dropdownIndicator: (base) => ({
+    ...base,
+    padding: "4px 7px",
+    color: "#64748b",
+  }),
+
+  indicatorSeparator: () => ({
+    display: "none",
+  }),
+
+  menuPortal: (base) => ({
+    ...base,
+    zIndex: 99999,
+  }),
+
+  option: (base, state) => ({
+    ...base,
+    minHeight: "30px",
+    padding: "6px 10px",
+    fontSize: "13px",
+    backgroundColor: state.isSelected
+      ? "#dbeafe"
+      : state.isFocused
+        ? "#eff6ff"
+        : "#ffffff",
+    color: "#475569",
+    cursor: "pointer",
+  }),
+
+  // the wide menu and the flush "Branch | ID" header
+  ...branchMenuStyles,
+};
+
+// ============================================================
+// ITEM ID | ITEM NAME LISTS
+// The same two-column list as the Supplier boxes on the Item page (shared in
+// components/PairSelect/pairSelectParts.tsx): the Item ID box opens "Item ID |
+// Item Name", the Item Name box opens "Item Name | Item ID", both with a divider,
+// both searchable on either column, and picking from one fills the other.
+// ============================================================
+
+const itemIdComponents = makePairComponents("Item ID", "Item Name", false, true);
+const itemNameComponents = makePairComponents("Item ID", "Item Name", true, true);
 
 // ============================================================
 // REACT SELECT STYLES
@@ -220,7 +338,7 @@ const tableSelectStyles: StylesConfig<SelectOption, false> = {
     boxShadow: "none",
     outline: "none",
     backgroundColor: "transparent",
-    fontSize: "14px",
+    fontSize: "13px",
     cursor: "pointer",
 
     "&:hover": {
@@ -232,6 +350,27 @@ const tableSelectStyles: StylesConfig<SelectOption, false> = {
     ...base,
     padding: "0 5px",
     height: "26px",
+  }),
+
+  singleValue: (base) => ({
+    ...base,
+    margin: 0,
+    fontSize: "13px",
+    color: "#374151",
+  }),
+
+  placeholder: (base) => ({
+    ...base,
+    margin: 0,
+    fontSize: "13px",
+    color: "#94a3b8",
+  }),
+
+  input: (base) => ({
+    ...base,
+    margin: 0,
+    padding: 0,
+    fontSize: "13px",
   }),
 
   indicatorsContainer: (base) => ({
@@ -248,13 +387,14 @@ const tableSelectStyles: StylesConfig<SelectOption, false> = {
   clearIndicator: (base) => ({
     ...base,
     padding: "3px",
+    color: "#94a3b8",
   }),
 
   menu: (base) => ({
     ...base,
     zIndex: 99999,
-    fontSize: "12px",
-    marginTop: "2px",
+    fontSize: "13px",
+    marginTop: "1px",
   }),
 
   menuList: (base) => ({
@@ -267,6 +407,19 @@ const tableSelectStyles: StylesConfig<SelectOption, false> = {
     ...base,
     zIndex: 99999,
   }),
+
+  option: (base, state) => ({
+    ...base,
+    padding: "7px 8px",
+    fontSize: "13px",
+    color: "#374151",
+    cursor: "pointer",
+    backgroundColor: state.isSelected
+      ? "#dbeafe"
+      : state.isFocused
+        ? "#eff6ff"
+        : "#ffffff",
+  }),
 };
 
 // ============================================================
@@ -276,12 +429,13 @@ const tableSelectStyles: StylesConfig<SelectOption, false> = {
 const createInitialRows = (): StockRow[] =>
   Array.from({ length: 15 }, (_, index) => ({
     id: index + 1,
-    slNo: index + 1,
-    itemId: null,
-    itemName: null,
-    unit: "",
-    qty: "",
-    unitCost: "",
+    txtSlNo: index + 1,
+    lkpItemID: null,
+    lkpItemName: null,
+    txtUnit: "",
+    txtQty: "",
+    txtUnitCost: "",
+    txtOriginalSlNo: null,
   }));
 
 // ============================================================
@@ -289,15 +443,256 @@ const createInitialRows = (): StockRow[] =>
 // ============================================================
 
 const BeginningStockPage: React.FC = () => {
-  const [branch, setBranch] = useState<SelectOption | null>(
-    branchOptions[0],
-  );
+  // The Branch box: only the branches the logged-in user has a right to
+  // (dbo.userbranches), with the user's own default branch (dbo.getuserdefbranch,
+  // from Set Default Branch) selected when the page opens.
+  const [branchOptions, setBranchOptions] = useState<SelectOption[]>([]);
+  const [lkpDefaultBranch, setLkpDefaultBranch] = useState<SelectOption | null>(null);
+  const [lkpBranch, setLkpBranch] = useState<SelectOption | null>(null);
 
-  const [date, setDate] = useState("2026-06-29");
-  const [note, setNote] = useState("");
+  const [dtpDate, setDtpDate] = useState(todayLocal);
+  const [txtNote, setTxtNote] = useState("");
   const [rows, setRows] = useState<StockRow[]>(createInitialRows);
   const [activeRow, setActiveRow] = useState(0);//@ts-ignore
   const [message, setMessage] = useState("");
+
+  const perms = useButtonPermissions(MENU_ID);
+  const navigate = useNavigate();
+  const location = useLocation();
+
+  // coming back from the print page: the branch that was printed is chosen again
+  const returnedBranchID =
+    (location.state as { lkpBranch?: string } | null)?.lkpBranch ?? "";
+  const { confirm, confirmDialog } = useConfirm();
+
+  // the items of the chosen branch (not blocked for it)
+  const [items, setItems] = useState<ItemRecord[]>([]);
+
+  // the saved Beginning Stock of the chosen branch
+  //   chkSaved  = there is one (the button says Modify)
+  //   chkPosted = it is posted: the page is locked, nothing can be changed
+  const [chkSaved, setChkSaved] = useState(false);
+  const [chkPosted, setChkPosted] = useState(false);
+  const [txtUserInfo, setTxtUserInfo] = useState("");
+
+  const [saving, setSaving] = useState(false);
+
+  // bumped by Clear / after a save so the document is loaded again
+  const [reloadKey, setReloadKey] = useState(0);
+
+  // the two item boxes: Item ID shows the ID, Item Name shows the name; both
+  // carry the item's ID as their value, so choosing one fills the other
+  const itemOptions: SelectOption[] = items.map((item) => ({
+    value: item.lkpItemID,
+    label: item.lkpItemID,
+    id: item.lkpItemID,
+    name: item.txtItemName,
+  }));
+
+  const itemNameOptions: SelectOption[] = items.map((item) => ({
+    value: item.lkpItemID,
+    label: item.txtItemName,
+    id: item.lkpItemID,
+    name: item.txtItemName,
+  }));
+
+  // ----------------------------------------------------------
+  // LOAD THE BRANCHES AND THE DEFAULT BRANCH
+  // ----------------------------------------------------------
+
+  useEffect(() => {
+    const loadBranches = async () => {
+      try {
+        const PstrCoID = localStorage.getItem("PstrCoID");
+
+        if (!PstrCoID) {
+          toast.error("getBranchList: no PstrCoID in localStorage");
+          return;
+        }
+
+        // needs the login: the branches depend on WHO is logged in
+        const response = await fetch(
+          `${import.meta.env.VITE_API_URL}/BeginningStock/getBranchList?PstrCoID=${PstrCoID}`,
+          { credentials: "include" },
+        );
+
+        const result = await response.json();
+
+        if (!response.ok || !result.success) {
+          toast.error(`getBranchList failed: ${result.message}`);
+          return;
+        }
+
+        const options: SelectOption[] = (result.data || []).map(
+          (row: { lkpBranch: string; txtBranchName: string }) => ({
+            value: row.lkpBranch,
+            label: row.txtBranchName,
+          }),
+        );
+
+        const initial =
+          options.find((option) => option.value === result.lkpDefaultBranch) ??
+          null;
+
+        const returned =
+          options.find((option) => option.value === returnedBranchID) ?? null;
+
+        setBranchOptions(options);
+        setLkpDefaultBranch(initial);
+        setLkpBranch(returned ?? initial);
+      } catch (error) {
+        console.error("getBranchList error:", error);
+        toast.error(
+          `Beginning Stock load error: ${error instanceof Error ? error.message : String(error)}`,
+        );
+      }
+    };
+
+    loadBranches();
+  }, []);
+
+  // ----------------------------------------------------------
+  // THE BRANCH CHANGED (or Clear): load its items and its saved Beginning Stock
+  // ----------------------------------------------------------
+
+  useEffect(() => {
+    if (!lkpBranch) {
+      setItems([]);
+      setRows(createInitialRows());
+      setChkSaved(false);
+      setChkPosted(false);
+      setTxtUserInfo("");
+      setTxtNote("");
+      return;
+    }
+
+    let cancelled = false;
+
+    const loadDocument = async () => {
+      try {
+        const PstrCoID = localStorage.getItem("PstrCoID");
+        const PstrYear = localStorage.getItem("PstrYear");
+
+        if (!PstrCoID || !PstrYear) {
+          toast.error("Company ID / Year not found. Please log in again.");
+          return;
+        }
+
+        const api = import.meta.env.VITE_API_URL;
+        const query = `PstrCoID=${PstrCoID}&PstrYear=${PstrYear}&lkpBranch=${encodeURIComponent(lkpBranch.value)}`;
+
+        const [itemResponse, documentResponse] = await Promise.all([
+          fetch(`${api}/BeginningStock/getItemList?${query}`, { credentials: "include" }),
+          fetch(`${api}/BeginningStock/getBeginningStock?${query}`, { credentials: "include" }),
+        ]);
+
+        const itemResult = await itemResponse.json();
+        const documentResult = await documentResponse.json();
+
+        if (!itemResponse.ok || !itemResult.success) {
+          toast.error(`getItemList failed: ${itemResult.message}`);
+          return;
+        }
+
+        if (!documentResponse.ok || !documentResult.success) {
+          toast.error(`getBeginningStock failed: ${documentResult.message}`);
+          return;
+        }
+
+        if (cancelled) return;
+
+        const loadedItems: ItemRecord[] = (itemResult.data || []).map(
+          (row: { lkpItemID: string; txtItemName: string | null; txtUnit: string | null }) => ({
+            lkpItemID: row.lkpItemID,
+            txtItemName: row.txtItemName ?? row.lkpItemID,
+            txtUnit: row.txtUnit ?? "",
+          }),
+        );
+
+        // the saved lines, then blank rows up to the usual 15
+        const savedRows: StockRow[] = (documentResult.data || []).map(
+          (
+            line: {
+              txtSlNo: number;
+              lkpItemID: string;
+              txtUnit: string | null;
+              txtQty: string;
+              txtUnitCost: string;
+            },
+            index: number,
+          ) => {
+            const item = loadedItems.find((entry) => entry.lkpItemID === line.lkpItemID);
+
+            return {
+              id: index + 1,
+              txtSlNo: index + 1,
+              lkpItemID: {
+                value: line.lkpItemID,
+                label: line.lkpItemID,
+                id: line.lkpItemID,
+                name: item?.txtItemName ?? line.lkpItemID,
+              },
+              lkpItemName: {
+                value: line.lkpItemID,
+                label: item?.txtItemName ?? line.lkpItemID,
+                id: line.lkpItemID,
+                name: item?.txtItemName ?? line.lkpItemID,
+              },
+              txtUnit: line.txtUnit ?? item?.txtUnit ?? "",
+              txtQty: Number(line.txtQty).toFixed(3),
+              txtUnitCost: Number(line.txtUnitCost).toFixed(4),
+              txtOriginalSlNo: Number(line.txtSlNo),
+            };
+          },
+        );
+
+        const blankRows = createInitialRows()
+          .slice(savedRows.length)
+          .map((row, index) => ({
+            ...row,
+            id: savedRows.length + index + 1,
+            txtSlNo: savedRows.length + index + 1,
+          }));
+
+        setItems(loadedItems);
+        setRows([...savedRows, ...blankRows]);
+        setActiveRow(0);
+        setChkSaved(Boolean(documentResult.chkSaved));
+        setChkPosted(Boolean(documentResult.chkPosted));
+        setDtpDate(documentResult.header?.dtpDate || todayLocal());
+        setTxtNote(documentResult.header?.txtNote ?? "");
+
+        // "Saved By : X date / Last Modified By : Y date", as the old form showed
+        const header = documentResult.header;
+        let info = "";
+
+        if (header?.txtSavedBy) {
+          info = `Saved By : ${header.txtSavedBy} ${header.txtSavedOn ?? ""}`;
+        }
+
+        if (header?.txtModifiedBy) {
+          info += `\nLast Modified By : ${header.txtModifiedBy} ${header.txtModifiedOn ?? ""}`;
+        }
+
+        setTxtUserInfo(info);
+
+        if (documentResult.chkPosted) {
+          toast.info("This Beginning Stock is posted: it is locked.");
+        }
+      } catch (error) {
+        console.error("loadBeginningStock error:", error);
+        toast.error(
+          `Beginning Stock load error: ${error instanceof Error ? error.message : String(error)}`,
+        );
+      }
+    };
+
+    loadDocument();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [lkpBranch, reloadKey]);
 
   // ----------------------------------------------------------
   // UPDATE ROW
@@ -315,24 +710,39 @@ const BeginningStockPage: React.FC = () => {
         const updated = { ...row, [field]: value };
 
         // Keep Item ID and Item Name synchronized.
-        if (field === "itemId") {
+        if (field === "lkpItemID") {
           const selected = value as SelectOption | null;
 
-          updated.itemName = selected
+          updated.lkpItemName = selected
             ? itemNameOptions.find(
                 (option) => option.value === selected.value,
               ) ?? null
             : null;
         }
 
-        if (field === "itemName") {
+        if (field === "lkpItemName") {
           const selected = value as SelectOption | null;
 
-          updated.itemId = selected
+          updated.lkpItemID = selected
             ? itemOptions.find(
                 (option) => option.value === selected.value,
               ) ?? null
             : null;
+        }
+
+        // the unit comes from the item; clearing the item clears the whole row
+        // (unit, quantity, unit cost - and so the total), as the old form's ClearRow
+        if (field === "lkpItemID" || field === "lkpItemName") {
+          const selected = value as SelectOption | null;
+
+          updated.txtUnit = selected
+            ? items.find((item) => item.lkpItemID === selected.value)?.txtUnit ?? ""
+            : "";
+
+          if (!selected) {
+            updated.txtQty = "";
+            updated.txtUnitCost = "";
+          }
         }
 
         return updated;
@@ -346,10 +756,21 @@ const BeginningStockPage: React.FC = () => {
 
   const updateTextField = (
     rowIndex: number,
-    field: "unit" | "qty" | "unitCost",
+    field: "txtQty" | "txtUnitCost",
     value: string,
   ) => {
     updateRow(rowIndex, field, value);
+  };
+
+  // on leaving the box: Qty shows 3 decimals, Unit Cost 4 (1 -> 1.000 / 12.0000)
+  const showDecimals = (
+    rowIndex: number,
+    field: "txtQty" | "txtUnitCost",
+    value: string,
+  ) => {
+    if (value === "" || Number.isNaN(Number(value))) return;
+
+    updateRow(rowIndex, field, Number(value).toFixed(field === "txtQty" ? 3 : 4));
   };
 
   // ----------------------------------------------------------
@@ -357,8 +778,8 @@ const BeginningStockPage: React.FC = () => {
   // ----------------------------------------------------------
 
   const getTotalCost = (row: StockRow) => {
-    const qty = Number(row.qty) || 0;
-    const cost = Number(row.unitCost) || 0;
+    const qty = Number(row.txtQty) || 0;
+    const cost = Number(row.txtUnitCost) || 0;
 
     return qty * cost;
   };
@@ -368,10 +789,22 @@ const BeginningStockPage: React.FC = () => {
     [rows],
   );
 
+  // Qty = 3 decimals, Unit Cost and Total Cost = 4 decimals (the columns)
+  const totalQty = useMemo(
+    () => rows.reduce((sum, row) => sum + (Number(row.txtQty) || 0), 0),
+    [rows],
+  );
+
+  const formatQty = (quantity: number) =>
+    quantity.toLocaleString("en-US", {
+      minimumFractionDigits: 3,
+      maximumFractionDigits: 3,
+    });
+
   const formatAmount = (amount: number) =>
     amount.toLocaleString("en-US", {
-      minimumFractionDigits: 2,
-      maximumFractionDigits: 2,
+      minimumFractionDigits: 4,
+      maximumFractionDigits: 4,
     });
 
   // ----------------------------------------------------------
@@ -385,12 +818,13 @@ const BeginningStockPage: React.FC = () => {
         id: previous.length
           ? Math.max(...previous.map((row) => row.id)) + 1
           : 1,
-        slNo: previous.length + 1,
-        itemId: null,
-        itemName: null,
-        unit: "",
-        qty: "",
-        unitCost: "",
+        txtSlNo: previous.length + 1,
+        lkpItemID: null,
+        lkpItemName: null,
+        txtUnit: "",
+        txtQty: "",
+        txtUnitCost: "",
+        txtOriginalSlNo: null,
       },
     ]);
   };
@@ -399,13 +833,20 @@ const BeginningStockPage: React.FC = () => {
   // CLEAR FORM
   // ----------------------------------------------------------
 
+  // as the old Cancel: the grid is emptied and the branch's saved Beginning Stock
+  // is loaded again (a branch with none is simply left empty)
   const clearForm = () => {
-    setBranch(branchOptions[0]);
-    setDate("2026-06-29");
-    setNote("");
-    setRows(createInitialRows());
-    setActiveRow(0);
+    setTxtNote("");
     setMessage("");
+
+    if (lkpBranch) {
+      setReloadKey((key) => key + 1);
+    } else {
+      setLkpBranch(lkpDefaultBranch);
+      setDtpDate(todayLocal());
+      setRows(createInitialRows());
+      setActiveRow(0);
+    }
   };
 
   // ----------------------------------------------------------
@@ -415,27 +856,385 @@ const BeginningStockPage: React.FC = () => {
   const handleTableKeyDown = (
     event: React.KeyboardEvent<HTMLInputElement>,
     rowIndex: number,
-    field: "unit" | "qty" | "unitCost",
+    field: "txtUnit" | "txtQty" | "txtUnitCost",
   ) => {
     if (event.key !== "Enter") return;
 
     event.preventDefault();
 
-    if (field === "unit") {
+    if (field === "txtUnit") {
       document.getElementById(`txtQty-${rowIndex}`)?.focus();
-    } else if (field === "qty") {
+    } else if (field === "txtQty") {
       document.getElementById(`txtUnitCost-${rowIndex}`)?.focus();
     } else if (rowIndex < rows.length - 1) {
       setActiveRow(rowIndex + 1);
-      document.getElementById(`txtSNo-${rowIndex + 1}`)?.focus();
+      document.getElementById(`txtSlNo-${rowIndex + 1}`)?.focus();
     } else {
       addRow();
 
       window.setTimeout(() => {
-        document.getElementById(`txtSNo-${rowIndex + 1}`)?.focus();
+        document.getElementById(`txtSlNo-${rowIndex + 1}`)?.focus();
       }, 0);
     }
   };
+
+  // ----------------------------------------------------------
+  // SAVE / MODIFY
+  //
+  // The one button: Save while the branch has no Beginning Stock, Modify once
+  // it has one. The rules are the old form's (checked here for a quick answer
+  // and again by the server, which is the one that counts): a branch, a date,
+  // at least one line, no item twice, and not both Qty and Unit Cost at 0.
+  // A posted Beginning Stock is locked.
+  // ----------------------------------------------------------
+
+  const actionWord = chkSaved ? "Modify" : "Save";
+  const canSaveOrModify = chkSaved ? perms.modify : perms.save;
+
+  const handleSave = async () => {
+    if (saving) return;
+
+    if (chkPosted) {
+      toast.warning("This Beginning Stock is already posted and cannot be modified.");
+      return;
+    }
+
+    if (!canSaveOrModify) {
+      toast.error(`You do not have permission to ${actionWord}.`);
+      return;
+    }
+
+    const PstrCoID = localStorage.getItem("PstrCoID");
+    const PstrYear = localStorage.getItem("PstrYear");
+
+    if (!PstrCoID || !PstrYear) {
+      toast.error("Company ID / Year not found. Please log in again.");
+      return;
+    }
+
+    if (!lkpBranch) {
+      toast.warning("Please select a 'Branch'");
+      document.getElementById("lkpBranch")?.focus();
+      return;
+    }
+
+    if (!dtpDate) {
+      toast.warning("Please select 'Date'");
+      document.getElementById("dtpDate")?.focus();
+      return;
+    }
+
+    // the rows that have an item, in grid order (blank rows are skipped)
+    const filledRows = rows
+      .map((row, index) => ({ row, index }))
+      .filter(({ row }) => row.lkpItemID !== null);
+
+    if (filledRows.length === 0) {
+      toast.warning("There is no information for saving.");
+      document.getElementById("lkpItemID-0")?.focus();
+      return;
+    }
+
+    const seenItems = new Set<string>();
+
+    for (const [position, { row, index }] of filledRows.entries()) {
+      const itemId = (row.lkpItemID as SelectOption).value;
+
+      if (seenItems.has(itemId.toLowerCase())) {
+        toast.warning("Item already exists !");
+        document.getElementById(`lkpItemID-${index}`)?.focus();
+        return;
+      }
+
+      seenItems.add(itemId.toLowerCase());
+
+      if ((Number(row.txtQty) || 0) <= 0 && (Number(row.txtUnitCost) || 0) <= 0) {
+        toast.warning(
+          ` Sl.# : ${position + 1} - Not Both Qty and UnitCost less than or equal to 0.`,
+        );
+        document.getElementById(`txtQty-${index}`)?.focus();
+        return;
+      }
+    }
+
+    setSaving(true);
+
+    try {
+      const response = await fetch(
+        `${import.meta.env.VITE_API_URL}/BeginningStock/saveBeginningStock`,
+        {
+          method: "POST",
+          credentials: "include", // the server checks the session and the rights
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            PstrCoID,
+            PstrYear,
+            lkpBranch: lkpBranch.value,
+            dtpDate,
+            txtNote,
+            rows: filledRows.map(({ row, index }) => ({
+              txtGridRow: index, // where the row sits in the grid (for the focus)
+              lkpItemID: (row.lkpItemID as SelectOption).value,
+              txtQty: row.txtQty,
+              txtUnitCost: row.txtUnitCost,
+              txtOriginalSlNo: row.txtOriginalSlNo,
+            })),
+          }),
+        },
+      );
+
+      const result = await response.json();
+
+      if (!response.ok || !result.success) {
+        toast.error(
+          result.message ||
+            (chkSaved ? "Not Modified,Try again" : "Not Saved,Try again"),
+        );
+
+        // the backend names the box that failed - same name as the element id
+        if (result.field) {
+          document.getElementById(result.field)?.focus();
+        }
+
+        return;
+      }
+
+      toast.success(
+        result.message ||
+          (chkSaved ? "Modified" : "Saved"),
+      );
+
+      // load the document again - the lines now carry their saved Sl.#
+      setReloadKey((key) => key + 1);
+    } catch (error) {
+      console.error("saveBeginningStock error:", error);
+      toast.error("Cannot connect to Beginning Stock API.");
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  // ----------------------------------------------------------
+  // DELETE
+  //
+  // The whole Beginning Stock of the branch (the old cmdDelete): it needs the
+  // Delete right, there must be one saved, a posted one is locked, and the old
+  // question comes first. The server checks the same again.
+  // ----------------------------------------------------------
+
+  const handleDelete = async () => {
+    if (saving) return;
+
+    if (!chkSaved) {
+      toast.warning("There is no Beginning Stock to delete.");
+      return;
+    }
+
+    if (chkPosted) {
+      toast.warning("This Beginning Stock is already posted and cannot be deleted.");
+      return;
+    }
+
+    if (!perms.delete) {
+      toast.error("You do not have permission to Delete.");
+      return;
+    }
+
+    const PstrCoID = localStorage.getItem("PstrCoID");
+    const PstrYear = localStorage.getItem("PstrYear");
+
+    if (!PstrCoID || !PstrYear) {
+      toast.error("Company ID / Year not found. Please log in again.");
+      return;
+    }
+
+    if (!lkpBranch) {
+      toast.warning("Please select a 'Branch'");
+      document.getElementById("lkpBranch")?.focus();
+      return;
+    }
+
+    const shouldDelete = await confirm("Are you sure you want to delete the Beginning Stock?");
+
+    if (!shouldDelete) {
+      return;
+    }
+
+    setSaving(true);
+
+    try {
+      const response = await fetch(
+        `${import.meta.env.VITE_API_URL}/BeginningStock/deleteBeginningStock`,
+        {
+          method: "DELETE",
+          credentials: "include", // the server checks the session and the rights
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            PstrCoID,
+            PstrYear,
+            lkpBranch: lkpBranch.value,
+          }),
+        },
+      );
+
+      const result = await response.json();
+
+      if (!response.ok || !result.success) {
+        toast.error(result.message || "Not Deleted,Try again");
+
+        if (result.field) {
+          document.getElementById(result.field)?.focus();
+        }
+
+        return;
+      }
+
+      toast.success(result.message || "Deleted");
+
+      // load the branch again - the document is gone
+      setReloadKey((key) => key + 1);
+    } catch (error) {
+      console.error("deleteBeginningStock error:", error);
+      toast.error("Cannot connect to Beginning Stock API.");
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  // ----------------------------------------------------------
+  // POST
+  //
+  // The saved Beginning Stock goes into the stock (the old cmdPost): it needs the
+  // Post right, there must be one saved, and it must not be posted already. Once
+  // posted the page is locked. The server checks the same again.
+  // ----------------------------------------------------------
+
+  const handlePost = async () => {
+    if (saving) return;
+
+    if (!chkSaved) {
+      toast.warning("Beginning Stock not found");
+      return;
+    }
+
+    if (chkPosted) {
+      toast.warning("This Beginning Stock is already posted.");
+      return;
+    }
+
+    if (!perms.post) {
+      toast.error("You do not have permission to Post.");
+      return;
+    }
+
+    const PstrCoID = localStorage.getItem("PstrCoID");
+    const PstrYear = localStorage.getItem("PstrYear");
+
+    if (!PstrCoID || !PstrYear) {
+      toast.error("Company ID / Year not found. Please log in again.");
+      return;
+    }
+
+    if (!lkpBranch) {
+      toast.warning("Please select a 'Branch'");
+      document.getElementById("lkpBranch")?.focus();
+      return;
+    }
+
+    const shouldPost = await confirm("Do you want to post ?.");
+
+    if (!shouldPost) {
+      return;
+    }
+
+    setSaving(true);
+
+    try {
+      const response = await fetch(
+        `${import.meta.env.VITE_API_URL}/BeginningStock/postBeginningStock`,
+        {
+          method: "POST",
+          credentials: "include", // the server checks the session and the rights
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            PstrCoID,
+            PstrYear,
+            lkpBranch: lkpBranch.value,
+          }),
+        },
+      );
+
+      const result = await response.json();
+
+      if (!response.ok || !result.success) {
+        toast.error(result.message || "Beginning Stock Not Posted");
+
+        if (result.field) {
+          document.getElementById(result.field)?.focus();
+        }
+
+        return;
+      }
+
+      toast.success(result.message || "Beginning Stock Posted");
+
+      // load the branch again - it is posted now, so the page locks
+      setReloadKey((key) => key + 1);
+    } catch (error) {
+      console.error("postBeginningStock error:", error);
+      toast.error("Cannot connect to Beginning Stock API.");
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  // ----------------------------------------------------------
+  // PRINT
+  //
+  // The saved Beginning Stock is printed (the old cmdPrint): it needs the Print
+  // right and there must be one saved. The print page asks the server for the
+  // data itself and opens the browser's print window; a posted one can be
+  // printed too. The server checks the right again.
+  // ----------------------------------------------------------
+
+  const handlePrint = () => {
+    if (saving) return;
+
+    if (!chkSaved) {
+      toast.warning("Beginning Stock not found");
+      return;
+    }
+
+    if (!perms.print) {
+      toast.error("You do not have permission to Print.");
+      return;
+    }
+
+    if (!lkpBranch) {
+      toast.warning("Please select a 'Branch'");
+      document.getElementById("lkpBranch")?.focus();
+      return;
+    }
+
+    navigate("/Purchase/Transaction/BeginningStockPage/Print", {
+      state: { lkpBranch: lkpBranch.value },
+    });
+  };
+
+  // Alt+S -> Save (nothing saved yet), Alt+M -> Modify (saved), Alt+D -> Delete,
+  // Alt+P -> Print, Alt+T -> Post (the old Ctrl+T), Alt+C -> Clear
+  useAltShortcuts({
+    s: () => {
+      if (!chkSaved) handleSave();
+    },
+    m: () => {
+      if (chkSaved) handleSave();
+    },
+    d: handleDelete,
+    p: handlePrint,
+    t: handlePost,
+    c: clearForm,
+  });
 
   // ----------------------------------------------------------
   // ACTION BUTTONS
@@ -448,14 +1247,13 @@ const BeginningStockPage: React.FC = () => {
     }
 
     if (action === "Save") {
-      setMessage("Ready to save beginning stock.");
+      handleSave();
     } else if (action === "Delete") {
-      setMessage("Delete action selected.");
+      handleDelete();
     } else if (action === "Print") {
-      window.print();
-      return;
+      handlePrint();
     } else if (action === "Post") {
-      setMessage("Post action selected.");
+      handlePost();
     }
   };
 
@@ -464,23 +1262,31 @@ const BeginningStockPage: React.FC = () => {
   // ==========================================================
 
   return (
-    <div className="mx-auto mt-5 flex min-h-[700px] h-fit min-w-[800px] bg-whiteh-[90%] max-w-[1200px] flex-col overflow-hidden border border-slate-400  text-[12px] text-slate-700">
+    // the frame: up to 1200px wide, centred on the light-gray page, 20px from the
+    // top. No minimum width (like the Purchase Invoice page): with the side menu
+    // open it shrinks to the space it has instead of spilling out under the menu.
+    <div className="flex min-h-full w-full justify-center bg-gray-100 px-3 pb-5">
+    <main className="mt-5 flex h-fit min-h-[700px] w-full max-w-300 flex-col overflow-hidden border border-gray-400 bg-white text-[12px] text-slate-700">
 
       {/* TITLE BAR */}
-      <div className="flex h-[30px] w-full shrink-0 items-center border-b border-slate-300 bg-[#a5e0c3]">
-        <h1 className="ml-[20px] text-[17px] font-semibold text-slate-700">
+      <div className="flex h-[28px] w-full shrink-0 items-center bg-[#a7dfc0]">
+        <h1 className="ml-[5px] text-[17px] font-semibold text-[#374151]">
           Beginning Stock
         </h1>
       </div>
 
+      {/* FORM BODY - 12px round it, but nothing extra above the Branch row (as
+          the Sales Invoice page: the Branch box is ~12px under the title bar) */}
+      <div className="m-[12px] flex min-h-0 flex-1 flex-col px-[12px] pb-[12px] pt-0">
+
       {/* HEADER FORM */}
-      <section className="flex h-[66px] bg-white  shrink-0 items-center justify-between gap-4 px-[22px] mt-2">
+      <section className="mb-[12px] flex h-[30px] bg-white shrink-0 items-center justify-between gap-4">
 
         {/* Branch */}
-        <div className="flex min-w-0 items-center gap-3 ">
+        <div className="flex min-w-0 items-center gap-1 ">
           <label
             htmlFor="lkpBranch"
-            className="shrink-0 text-[14px]  "
+            className="shrink-0 text-[14px] text-gray-600"
           >
             Branch :
           </label>
@@ -490,12 +1296,19 @@ const BeginningStockPage: React.FC = () => {
               inputId="lkpBranch"
               name="lkpBranch"
               options={branchOptions}
-              value={branch}
+              value={lkpBranch}
               onChange={(option: SingleValue<SelectOption>) =>
-                setBranch(option)
+                setLkpBranch(option)
               }
-              styles={selectStyles}
-              isClearable
+              styles={branchSelectStyles}
+              components={{
+                DropdownIndicator: CustomDropdownIndicator,
+                Option: BranchOption,
+                MenuList: BranchMenuList,
+              }}
+              filterOption={filterLabelOrValue}
+              noOptionsMessage={() => "No Branch Found"}
+              isSearchable
               placeholder="Select Branch"
 
               // Portal is also enabled for the header dropdown.
@@ -510,7 +1323,7 @@ const BeginningStockPage: React.FC = () => {
         <div className="flex shrink-0 items-center gap-3">
           <label
             htmlFor="dtpDate"
-            className="text-[14px] font-semibold text-slate-600"
+            className="text-[14px] text-gray-600"
           >
             Date :
           </label>
@@ -519,52 +1332,53 @@ const BeginningStockPage: React.FC = () => {
             id="dtpDate"
             name="dtpDate"
             type="date"
-            value={date}
-            onChange={(event) => setDate(event.target.value)}
-            className="h-[29px] w-[142px] rounded border border-slate-300 bg-white px-2 text-[12px] outline-none focus:border-blue-400"
+            value={dtpDate}
+            onChange={(event) => setDtpDate(event.target.value)}
+            disabled={chkPosted}
+            className="input-style w-[142px]"
           />
         </div>
       </section>
 
       {/* STOCK TABLE */}
-<main className="customer-table-scroll flex min-h-0 flex-1 flex-col bg-white px-[21px]">
-  <div className="customer-table-scroll min-h-0 flex-1 overflow-auto border border-[#d5e5ff]">
-    <table className="customer-table-scroll w-full min-w-[900px] table-fixed border-collapse border border-[#d5e5ff]">
+<main className="customer-table-scroll flex min-h-0 flex-1 flex-col bg-white">
+  <div className="customer-table-scroll min-h-0 flex-1 overflow-auto border border-[#bfe8d0]">
+    <table className="customer-table-scroll w-full min-w-[900px] table-fixed border-collapse border border-[#bfe8d0]">
             <colgroup>
               <col style={{ width: "17px" }} />
               <col style={{ width: "43px" }} />
-              <col style={{ width: "10%" }} />
+              <col style={{ width: "30%" }} />
               <col style={{ width: "54%" }} />
               <col style={{ width: "6.2%" }} />
-              <col style={{ width: "6.2%" }} />
-              <col style={{ width: "8.2%" }} />
+              <col style={{ width: "6.4%" }} />
+              <col style={{ width: "9.6%" }} />
               <col style={{ width: "10.2%" }} />
             </colgroup>
 
-            <thead className="sticky top-0 z-10  bg-[#f5f8fc]">
-              <tr className="h-[30px] text-left text-[12px] text-slate-600">
-                <th className="border border-[#d5e5ff] px-1 font-normal">
+            <thead className="sticky top-0 z-10 bg-[#edf9f2]">
+              <tr className="h-[30px] text-left text-[14px] text-gray-600">
+                <th className="border border-[#bfe8d0] px-1 font-normal">
                   
                 </th>
-                <th className="border border-[#d5e5ff] px-1 text-center font-medium">
+                <th className="border border-[#bfe8d0] px-1 text-center font-normal">
                   Sl.
                 </th>
-                <th className="border border-[#d5e5ff] px-2 font-medium">
+                <th className="border border-[#bfe8d0] px-2 font-normal">
                   Item ID
                 </th>
-                <th className="border border-[#d5e5ff] px-2 font-medium">
+                <th className="border border-[#bfe8d0] px-2 font-normal">
                   Item Name
                 </th>
-                <th className="border border-[#d5e5ff] px-2 font-medium">
+                <th className="border border-[#bfe8d0] px-2 font-normal">
                   Unit
                 </th>
-                <th className="border border-[#d5e5ff] px-2 text-right font-medium">
+                <th className="border border-[#bfe8d0] px-2 text-right font-normal">
                   Qty.
                 </th>
-                <th className="border border-[#d5e5ff] px-2 text-right font-medium">
+                <th className="border border-[#bfe8d0] px-2 text-right font-normal">
                   Unit Cost
                 </th>
-                <th className="border border-[#d5e5ff] px-2 text-right font-medium">
+                <th className="border border-[#bfe8d0] px-2 text-right font-normal">
                   Total Cost
                 </th>
               </tr>
@@ -577,12 +1391,12 @@ const BeginningStockPage: React.FC = () => {
                   onClick={() => setActiveRow(index)}
                   className={`h-[30px] text-[14px] ${
                     activeRow === index
-                      ? "bg-[#f8fbff]"
+                      ? "bg-[#f8fcfa]"
                       : "bg-white"
                   }`}
                 >
                   {/* ROW SELECTOR */}
-                  <td className="border border-[#d5e5ff] px-1 text-center">
+                  <td className="border border-[#bfe8d0] px-1 text-center">
                     {activeRow === index && (
                       <span className="text-[10px] text-slate-700">
                         <Play size={10} />
@@ -591,29 +1405,39 @@ const BeginningStockPage: React.FC = () => {
                   </td>
 
                   {/* SERIAL NUMBER */}
-                  <td className="border border-[#d5e5ff] p-0">
+                  <td className="border border-[#bfe8d0] p-0">
                     <input
-                      id={`txtSNo-${index}`}
-                      name="txtSNo"
+                      id={`txtSlNo-${index}`}
+                      name="txtSlNo"
                       aria-label={`Serial number row ${index + 1}`}
-                      value={row.slNo}
+                      value={row.txtSlNo}
                       readOnly
                       className="h-[26px] w-full bg-transparent px-1 text-center outline-none"
                     />
                   </td>
 
                   {/* ITEM ID */}
-                  <td className="border border-[#d5e5ff] p-0">
+                  <td className="border border-[#bfe8d0] p-0">
                     <Select<SelectOption, false>
                       inputId={`lkpItemID-${index}`}
                       name="lkpItemID"
                       options={itemOptions}
-                      value={row.itemId}
+                      value={row.lkpItemID}
                       onChange={(option: SingleValue<SelectOption>) =>
-                        updateRow(index, "itemId", option)
+                        updateRow(index, "lkpItemID", option)
                       }
-                      styles={tableSelectStyles}
+                      styles={
+                        {
+                          ...tableSelectStyles,
+                          ...pairDividedIdMenuStyles,
+                        } as StylesConfig<SelectOption, false>
+                      }
+                      components={itemIdComponents}
+                      filterOption={filterPairOption}
+                      noOptionsMessage={() => "No Item Found"}
+                      isSearchable
                       isClearable
+                      isDisabled={chkPosted}
                       placeholder=""
 
                       // FIX: render outside the scrollable table.
@@ -625,17 +1449,27 @@ const BeginningStockPage: React.FC = () => {
                   </td>
 
                   {/* ITEM NAME */}
-                  <td className="border border-[#d5e5ff] p-0">
+                  <td className="border border-[#bfe8d0] p-0">
                     <Select<SelectOption, false>
                       inputId={`lkpItemName-${index}`}
                       name="lkpItemName"
                       options={itemNameOptions}
-                      value={row.itemName}
+                      value={row.lkpItemName}
                       onChange={(option: SingleValue<SelectOption>) =>
-                        updateRow(index, "itemName", option)
+                        updateRow(index, "lkpItemName", option)
                       }
-                      styles={tableSelectStyles}
-                      isClearable
+                      styles={
+                        {
+                          ...tableSelectStyles,
+                          ...pairDividedNameMenuStyles,
+                        } as StylesConfig<SelectOption, false>
+                      }
+                      components={itemNameComponents}
+                      filterOption={filterPairOption}
+                      noOptionsMessage={() => "No Item Found"}
+                      isSearchable
+                      isClearable={false}
+                      isDisabled={chkPosted}
                       placeholder=""
 
                       // FIX: render outside the scrollable table.
@@ -647,70 +1481,76 @@ const BeginningStockPage: React.FC = () => {
                   </td>
 
                   {/* UNIT */}
-                  <td className="border border-[#d5e5ff] p-0">
+                  <td className="border border-[#bfe8d0] p-0">
                     <input
                       id={`txtUnit-${index}`}
                       name="txtUnit"
-                      value={row.unit}
-                      onChange={(event) =>
-                        updateTextField(index, "unit", event.target.value)
-                      }
+                      value={row.txtUnit}
+                      readOnly
                       onKeyDown={(event) =>
-                        handleTableKeyDown(event, index, "unit")
+                        handleTableKeyDown(event, index, "txtUnit")
                       }
-                      className="h-[26px] w-full bg-transparent px-2 outline-none focus:bg-blue-50"
+                      className="h-[26px] w-full bg-transparent px-2 outline-none focus:bg-[#f1f8ff]"
                     />
                   </td>
 
                   {/* QUANTITY */}
-                  <td className="border border-[#d5e5ff] p-0">
+                  <td className="border border-[#bfe8d0] p-0">
                     <input
                       id={`txtQty-${index}`}
                       name="txtQty"
                       type="number"
                       min="0"
-                      step="any"
-                      value={row.qty}
+                      step="0.001"
+                      value={row.txtQty}
+                      readOnly={chkPosted}
                       onChange={(event) =>
-                        updateTextField(index, "qty", event.target.value)
+                        updateTextField(index, "txtQty", event.target.value)
+                      }
+                      onBlur={(event) =>
+                        showDecimals(index, "txtQty", event.target.value)
                       }
                       onKeyDown={(event) =>
-                        handleTableKeyDown(event, index, "qty")
+                        handleTableKeyDown(event, index, "txtQty")
                       }
-                      className="number-no-spinner h-[26px] w-full bg-transparent px-2 text-right outline-none focus:bg-blue-50"
+                      className="number-no-spinner h-[26px] w-full bg-transparent px-2 text-right outline-none focus:bg-[#f1f8ff]"
                     />
                   </td>
 
                   {/* UNIT COST */}
-                  <td className="border border-[#d5e5ff] p-0">
+                  <td className="border border-[#bfe8d0] p-0">
                     <input
                       id={`txtUnitCost-${index}`}
                       name="txtUnitCost"
                       type="number"
                       min="0"
-                      step="0.01"
-                      value={row.unitCost}
+                      step="0.0001"
+                      value={row.txtUnitCost}
+                      readOnly={chkPosted}
                       onChange={(event) =>
                         updateTextField(
                           index,
-                          "unitCost",
+                          "txtUnitCost",
                           event.target.value,
                         )
                       }
-                      onKeyDown={(event) =>
-                        handleTableKeyDown(event, index, "unitCost")
+                      onBlur={(event) =>
+                        showDecimals(index, "txtUnitCost", event.target.value)
                       }
-                      className="number-no-spinner h-[26px] w-full bg-transparent px-2 text-right outline-none focus:bg-blue-50"
+                      onKeyDown={(event) =>
+                        handleTableKeyDown(event, index, "txtUnitCost")
+                      }
+                      className="number-no-spinner h-[26px] w-full bg-transparent px-2 text-right outline-none focus:bg-[#f1f8ff]"
                     />
                   </td>
 
                   {/* TOTAL COST */}
-                  <td className="border border-[#d5e5ff] p-0">
+                  <td className="border border-[#bfe8d0] p-0">
                     <input
                       id={`txtTotalCost-${index}`}
                       name="txtTotalCost"
                       value={
-                        row.qty !== "" || row.unitCost !== ""
+                        row.txtQty !== "" || row.txtUnitCost !== ""
                           ? formatAmount(getTotalCost(row))
                           : ""
                       }
@@ -726,12 +1566,12 @@ const BeginningStockPage: React.FC = () => {
       </main>
 
       {/* BOTTOM FORM */}
-      <section className="flex h-[70px] bg-white   shrink-0 items-center gap-3 px-[21px]">
+      <section className="flex h-[60px] bg-white shrink-0 items-center gap-3">
 
         {/* NOTE */}
         <label
           htmlFor="txtNote"
-          className="w-[32px] shrink-0 text-[14px] text-slate-700"
+          className="w-[32px] shrink-0 text-[14px] text-gray-600"
         >
           Note
         </label>
@@ -739,60 +1579,84 @@ const BeginningStockPage: React.FC = () => {
         <input
           id="txtNote"
           name="txtNote"
-          value={note}
-          onChange={(event) => setNote(event.target.value)}
+          value={txtNote}
+          maxLength={100}
+          readOnly={chkPosted}
+          onChange={(event) => setTxtNote(event.target.value)}
           className=" w-[60%] shrink-0 input-style"
         />
 
         {/* TOTAL LABEL */}
-        <div className="ml-9 flex h-[30px] w-[71px] shrink-0 items-center justify-center rounded border border-slate-300 bg-white text-[14px]">
+        <div className="ml-9 flex h-[30px] w-[71px] shrink-0 items-center justify-center rounded border border-[#d7dee7] bg-white text-[14px] text-gray-600">
           Total
         </div>
 
-        {/* CALCULATED TOTAL */}
+        {/* TOTAL QUANTITY */}
         <input
-          id="txtGrandTotal"
-          name="txtGrandTotal"
-          value={formatAmount(total)}
+          id="txtTotalQty"
+          name="txtTotalQty"
+          value={formatQty(totalQty)}
           readOnly
-          className="h-[30px] w-[6.5%] shrink-0 rounded border border-slate-300 bg-white px-1 text-right text-[14px] outline-none"
+          className="input-style w-[6.5%] shrink-0 text-right"
         />
 
-        {/* RIGHT-SIDE TOTAL DISPLAY */}
+        {/* TOTAL COST (under the Total Cost column) */}
         <input
-          id="txtTotal"
-          name="txtTotal"
+          id="txtTotalCost"
+          name="txtTotalCost"
           value={formatAmount(total)}
           readOnly
-          className="ml-auto h-[30px] w-[10.2%] shrink-0 rounded border border-slate-300 bg-white px-2 text-right text-[14px] outline-none"
+          className="input-style ml-auto w-[10.2%] shrink-0 text-right"
         />
       </section>
 
-      {/* ACTION BUTTONS */}
-      <footer className="flex min-h-[94px] shrink-0 flex-col items-center justify-center gap-2 border-[#333333] bg-white px-4 pb-1">
+      {/* the "Do you want to delete ?." question */}
+      {confirmDialog}
 
-        <div className="flex w-full flex-wrap items-center justify-center gap-[13px]">
-          {["Save", "Delete", "Print", "Post", "Clear"].map(
-            (action) => (
-              <button
-                key={action}
-                id={`btn${action}`}
-                name={`btn${action}`}
-                type="button"
-                onClick={() => handleAction(action)}
-                className="h-[44px] w-[117px] max-w-full rounded-[5px] border border-[#9bb0c7] bg-gradient-to-b from-white to-[#dce5ed] text-[16px] font-normal text-green-600 shadow-sm transition-colors hover:from-[#edf7ff] hover:to-[#d0e1ef] focus:outline-none focus:ring-2 focus:ring-blue-300 active:translate-y-px"
-              >
-               <span>
-  <span className="underline decoration-green-600 decoration-[1px] underline-offset-2">
-    {action.charAt(0)}
-  </span>
-  {action.slice(1)}
-</span>
-              </button>
-            ),
-          )}
+      {/* SAVED BY / LAST MODIFIED BY */}
+      {txtUserInfo !== "" && (
+        <div className="whitespace-pre-line text-[12px] text-gray-500">
+          {txtUserInfo}
         </div>
+      )}
+
+      {/* ACTION BUTTONS */}
+      <footer className="mt-[14px] flex shrink-0 flex-wrap items-center justify-center gap-3">
+        {["Save", "Delete", "Print", "Post", "Clear"].map((action) => {
+          const isSave = action === "Save";
+          const label = isSave ? actionWord : action;
+
+          return (
+            <button
+              key={action}
+              id={isSave ? (chkSaved ? "btnModify" : "btnSave") : `btn${action}`}
+              name={isSave ? (chkSaved ? "btnModify" : "btnSave") : `btn${action}`}
+              type="button"
+              onClick={() => handleAction(action)}
+              disabled={
+                isSave
+                  ? !canSaveOrModify || saving || chkPosted
+                  : action === "Delete"
+                    ? !chkSaved || chkPosted || !perms.delete || saving
+                    : action === "Post"
+                      ? !chkSaved || chkPosted || !perms.post || saving
+                      : action === "Print"
+                        ? !chkSaved || !perms.print || saving
+                        : false
+              }
+              className="btn-style disabled:cursor-not-allowed disabled:opacity-40"
+            >
+              <span className="underline underline-offset-2">
+                {label.charAt(0)}
+              </span>
+              {label.slice(1)}
+            </button>
+          );
+        })}
       </footer>
+
+      </div>
+    </main>
     </div>
   );
 };
