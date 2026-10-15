@@ -1,0 +1,421 @@
+import pool from "../DB/db.js";
+import {
+  type ValidationResult,
+  passed,
+  failed,
+  isNullOrEmpty,
+  getUserStatus,
+  idleUserMessage,
+} from "./common.js";
+
+/* =========================================================
+   STOCK TRANSFER - validations (the old form's ValidateMe + ValidateGrid)
+
+   Same shape as the other screens' validators: the FIRST rule that fails is
+   returned, with the field to put the cursor on (the same name as the element
+   id on the page: lkpBranch, txtDocNo, lkpToBranch, dtpDate, lkpItemID-<row>,
+   txtQty-<row>). The page sends only the rows that have an item, each with
+   txtGridRow - its position in the grid (0 = first row). The date is
+   yyyy-mm-dd.
+========================================================= */
+
+const DOC_TYPE = "ST";
+
+// tblstocktrans.fnote is varchar(100), fdocno varchar(14)
+const NOTE_LENGTH = 100;
+const DOC_NO_LENGTH = 14;
+
+const text = (value: unknown): string => String(value ?? "").trim();
+
+const isRealDate = (value: string): boolean => {
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(value)) {
+    return false;
+  }
+
+  const date = new Date(`${value}T00:00:00Z`);
+
+  return !Number.isNaN(date.getTime()) && date.toISOString().slice(0, 10) === value;
+};
+
+// yyyy-mm-dd -> dd/mm/yyyy (what dbo.isactiveperiod reads, and what people read)
+const showDate = (value: string): string =>
+  value ? value.split("-").reverse().join("/") : "";
+
+/* ---------------------------------------------------------
+   The checks every action shares: the user is not idle, the login year is not
+   permanently closed (not for Print), a branch is chosen that the user has a
+   right to, and an Entry No. is given.
+--------------------------------------------------------- */
+
+async function checkBranchAndEntryNo(
+  data: {
+    PstrCoID?: unknown;
+    PstrYear?: unknown;
+    PstrUserID?: unknown;
+    lkpBranch?: unknown;
+    txtDocNo?: unknown;
+  },
+  checkYearClosed: boolean
+): Promise<ValidationResult> {
+  const userId = text(data.PstrUserID);
+
+  if (!(await getUserStatus(userId))) {
+    return failed(idleUserMessage(userId), "lkpBranch", 403);
+  }
+
+  const PstrCoID = text(data.PstrCoID);
+  const PstrYear = text(data.PstrYear);
+  const lkpBranch = text(data.lkpBranch);
+
+  if (checkYearClosed && lkpBranch !== "" && /^\d+$/.test(PstrYear)) {
+    const yearResult = await pool.query(
+      `SELECT fyearclosestatusid FROM dbo.tblyear WHERE fcoid = $1 AND fyear = $2 AND fbrid = $3`,
+      [PstrCoID, Number(PstrYear), lkpBranch]
+    );
+
+    if (yearResult.rows[0]?.fyearclosestatusid === "P") {
+      return failed(
+        "'Login Year' has permanently closed.\nSo, you can't Save/Modify any document with this 'Year'",
+        "txtDocNo"
+      );
+    }
+  }
+
+  if (lkpBranch === "") {
+    return failed("Please select 'Branch'", "lkpBranch");
+  }
+
+  const branchResult = await pool.query(
+    `SELECT dbo.userbranches($1, $2, $3) AS "hasAccess"
+       FROM dbo.tblbranch WHERE fcoid = $1 AND fbrid = $3`,
+    [PstrCoID, userId, lkpBranch]
+  );
+
+  if (branchResult.rowCount === 0) {
+    return failed(`Branch '${lkpBranch}' not found`, "lkpBranch");
+  }
+
+  if (!branchResult.rows[0]?.hasAccess) {
+    return failed(
+      `The user '${userId}' don't have the Right to access the Branch : ${lkpBranch}`,
+      "lkpBranch",
+      403
+    );
+  }
+
+  if (isNullOrEmpty(data.txtDocNo)) {
+    return failed("Please enter 'Entry No'", "txtDocNo");
+  }
+
+  return passed;
+}
+
+// Delete (the old ValidateMe "D") and Print ("P")
+export const validateStockTransferDelete = (data: {
+  PstrCoID?: unknown;
+  PstrYear?: unknown;
+  PstrUserID?: unknown;
+  lkpBranch?: unknown;
+  txtDocNo?: unknown;
+}) => checkBranchAndEntryNo(data, true);
+
+export const validateStockTransferPrint = (data: {
+  PstrCoID?: unknown;
+  PstrYear?: unknown;
+  PstrUserID?: unknown;
+  lkpBranch?: unknown;
+  txtDocNo?: unknown;
+}) => checkBranchAndEntryNo(data, false);
+
+/* =========================================================
+   SAVE / MODIFY (the old ValidateMe "S" / "M" and ValidateGrid "S")
+========================================================= */
+
+export interface StockTransferData {
+  PstrCoID?: unknown;
+  PstrYear?: unknown;
+  // the logged-in user - from the session, not from the request body
+  PstrUserID?: unknown;
+  lkpBranch?: unknown;
+  txtDocNo?: unknown;
+  lkpToBranch?: unknown;
+  dtpDate?: unknown;
+  txtNote?: unknown;
+  rows?: unknown;
+}
+
+export async function validateStockTransfer(
+  data: StockTransferData
+): Promise<ValidationResult> {
+  const rows = Array.isArray(data.rows)
+    ? (data.rows as Record<string, unknown>[])
+    : [];
+
+  const gridIndexOf = (row: Record<string, unknown>, position: number) => {
+    const given = Number(row.txtGridRow);
+    return Number.isInteger(given) && given >= 0 ? given : position;
+  };
+
+  // the user, the year, the branch and its right, the Entry No. given
+  const common = await checkBranchAndEntryNo(data, true);
+
+  if (!common.valid) {
+    return common;
+  }
+
+  const PstrCoID = text(data.PstrCoID);
+  const PstrYear = Number(text(data.PstrYear));
+  const lkpBranch = text(data.lkpBranch);
+  const txtDocNo = text(data.txtDocNo);
+  const lkpToBranch = text(data.lkpToBranch);
+  const dtpDate = text(data.dtpDate);
+
+  // the Entry No. fits the column and starts with the prefix of the branch's
+  // ST setting (the old GetPrefix)
+  if (txtDocNo.length > DOC_NO_LENGTH) {
+    return failed(`'Entry No' cannot be longer than ${DOC_NO_LENGTH} characters`, "txtDocNo");
+  }
+
+  const prefixResult = await pool.query(
+    `
+    SELECT fdocnoprefix
+    FROM dbo.tbldocumentno
+    WHERE fcoid = $1 AND fyear = $2 AND fbrid = $3 AND fdoctype = $4
+    LIMIT 1
+    `,
+    [PstrCoID, String(PstrYear), lkpBranch, DOC_TYPE]
+  );
+
+  const prefix = text(prefixResult.rows[0]?.fdocnoprefix);
+
+  if (prefix !== "" && !txtDocNo.startsWith(prefix)) {
+    return failed("Please Check 'Entry No.'", "txtDocNo");
+  }
+
+  // the To branch: chosen, exists, and is not the From branch
+  if (lkpToBranch === "") {
+    return failed("Please select 'Branch To'", "lkpToBranch");
+  }
+
+  const toResult = await pool.query(
+    `SELECT 1 FROM dbo.tblbranch WHERE fcoid = $1 AND fbrid = $2`,
+    [PstrCoID, lkpToBranch]
+  );
+
+  if (toResult.rowCount === 0) {
+    return failed(`Branch '${lkpToBranch}' not found`, "lkpToBranch");
+  }
+
+  if (lkpToBranch === lkpBranch) {
+    return failed("You can't transfer to the same branch", "lkpToBranch");
+  }
+
+  // the date: chosen, real, in the login year, inside the From branch's Active Period
+  if (isNullOrEmpty(dtpDate)) {
+    return failed("Please enter 'Date'", "dtpDate");
+  }
+
+  if (!isRealDate(dtpDate)) {
+    return failed("'Date' is not a valid date", "dtpDate");
+  }
+
+  if (Number(dtpDate.slice(0, 4)) !== PstrYear) {
+    return failed("'Login Year' should be same as 'Transaction Year'", "dtpDate");
+  }
+
+  const periodResult = await pool.query(
+    `SELECT dbo.isactiveperiod($1, $2, $3) AS "inPeriod",
+            to_char(factivefromdate, 'DD/MM/YYYY') AS "fromDate",
+            to_char(factivetodate, 'DD/MM/YYYY') AS "toDate"
+       FROM dbo.tblbranch WHERE fcoid = $1 AND fbrid = $2`,
+    [PstrCoID, lkpBranch, showDate(dtpDate)]
+  );
+
+  if (!periodResult.rows[0]?.inPeriod) {
+    const from = periodResult.rows[0]?.fromDate;
+    const to = periodResult.rows[0]?.toDate;
+
+    return failed(
+      `'Date' must be within the Active Period '${from && to ? `${from} - ${to}` : "not set"}'`,
+      "dtpDate"
+    );
+  }
+
+  if (text(data.txtNote).length > NOTE_LENGTH) {
+    return failed(`'Note' cannot be longer than ${NOTE_LENGTH} characters`, "txtNote");
+  }
+
+  // something to save
+  if (rows.length === 0) {
+    return failed("There is no information for saving.", "lkpItemID-0");
+  }
+
+  // the lines: the items of the From branch, none blocked, none twice, a
+  // quantity above 0, and not more than the branch has in stock
+  const itemResult = await pool.query(
+    `
+    SELECT t.fitemid, COALESCE(t.finactive, false) AS "blocked"
+    FROM dbo.tblitemtl t
+    WHERE t.fcoid = $1 AND t.fbrid = $2
+    `,
+    [PstrCoID, lkpBranch]
+  );
+  const itemState = new Map<string, boolean>(
+    itemResult.rows.map((row) => [row.fitemid as string, row.blocked as boolean])
+  );
+
+  const seenItems = new Set<string>();
+
+  for (const [position, row] of rows.entries()) {
+    const index = gridIndexOf(row, position);
+    const lkpItemID = text(row.lkpItemID);
+
+    if (lkpItemID === "") {
+      return failed("Please select an 'Item'", `lkpItemID-${index}`);
+    }
+
+    if (!itemState.has(lkpItemID)) {
+      return failed(
+        `Item '${lkpItemID}' is not available for this Branch`,
+        `lkpItemID-${index}`
+      );
+    }
+
+    if (itemState.get(lkpItemID)) {
+      return failed("Selected Item Blocked For This Branch.", `lkpItemID-${index}`);
+    }
+
+    if (seenItems.has(lkpItemID.toLowerCase())) {
+      return failed("Item already exits !", `lkpItemID-${index}`);
+    }
+
+    seenItems.add(lkpItemID.toLowerCase());
+
+    const qty = Number(row.txtQty);
+    const unitCost = Number(row.txtUnitCost);
+
+    if (
+      (row.txtQty !== "" && row.txtQty !== null && Number.isNaN(qty)) ||
+      (row.txtUnitCost !== "" && row.txtUnitCost !== null && Number.isNaN(unitCost))
+    ) {
+      return failed(
+        ` Sl.# : ${position + 1} - Qty and UnitCost must be numbers.`,
+        `txtQty-${index}`
+      );
+    }
+
+    if ((qty || 0) <= 0) {
+      return failed(
+        ` Sl.# : ${position + 1} - Qty. can't be less than or equal to 0.`,
+        `txtQty-${index}`
+      );
+    }
+
+    if ((unitCost || 0) < 0) {
+      return failed(
+        ` Sl.# : ${position + 1} - UnitCost can't be less than 0.`,
+        `txtQty-${index}`
+      );
+    }
+
+    // the old GetItemStock: what came in minus what went out of the branch,
+    // from all the stock lines of the item, leaving out THIS document's own
+    // OUT lines (doc type ST + Entry No.)
+    const stockResult = await pool.query(
+      `
+      SELECT COALESCE(SUM(COALESCE(fqtyin, 0)), 0)
+           - COALESCE(SUM(COALESCE(fqtyout, 0)), 0) AS "stock"
+      FROM dbo.tblstocktrans
+      WHERE fcoid   = $1
+        AND fbrid   = $2
+        AND fitemid = $3
+        AND NOT (fdoctype = $4 AND fdocno = $5)
+      `,
+      [PstrCoID, lkpBranch, lkpItemID, DOC_TYPE, txtDocNo]
+    );
+
+    if (qty > Number(stockResult.rows[0]?.stock ?? 0)) {
+      return failed(
+        ` Out of Stock for the Item  : ${lkpItemID}`,
+        `txtQty-${index}`
+      );
+    }
+  }
+
+  return passed;
+}
+
+/* =========================================================
+   POST (the old ValidateMe "T" and ValidateGrid "T")
+
+   The first part is the same as Delete: the user, the login year (not
+   permanently closed), the branch and its right, an Entry No. The lines are
+   checked here (the controller calls it after it has found the transfer):
+     * enough POSTED stock - the old GetItemPostedStock: the quantity can't be
+       more than tblstockcontrol.fstock of the From branch. (Read exactly here,
+       with its 3 decimals; the TL's dbo.getitempostedstock returns whole numbers.)
+     * a unit cost - the old HaveUnitCost, the TL's dbo.haveunitcost: for a line
+       taking stock out, the From branch's cost in tblstockcontrol must be above 0
+       (the post writes that cost onto both sets of rows). The quantity is passed
+       rounded UP: the function's quantity arguments are whole numbers.
+========================================================= */
+
+export const validateStockTransferPost = (data: {
+  PstrCoID?: unknown;
+  PstrYear?: unknown;
+  PstrUserID?: unknown;
+  lkpBranch?: unknown;
+  txtDocNo?: unknown;
+}) => checkBranchAndEntryNo(data, true);
+
+export async function validateStockTransferPostLines(
+  PstrCoID: string,
+  PstrYear: number,
+  lkpBranch: string,
+  txtDocNo: string,
+  lines: { fslno: number | string; fitemid: string; fqtyout: number | string }[]
+): Promise<ValidationResult> {
+  for (const line of lines) {
+    const index = Number(line.fslno) - 1; // the grid row of the line
+    const itemId = String(line.fitemid);
+
+    const stockResult = await pool.query(
+      `
+      SELECT COALESCE(fstock, 0) AS "stock"
+      FROM dbo.tblstockcontrol
+      WHERE fcoid   = $1
+        AND fyear   = $2::varchar
+        AND fbrid   = $3
+        AND fitemid = $4
+      `,
+      [PstrCoID, String(PstrYear), lkpBranch, itemId]
+    );
+
+    const stock = Number(stockResult.rows[0]?.stock ?? 0);
+
+    if (Number(line.fqtyout) > stock) {
+      return failed(` Out of Stock for the Item  : ${itemId}`, `txtQty-${index}`);
+    }
+
+    // the TL's dbo.haveunitcost (company, branch, item, year, doc type, doc no,
+    // qty in, qty out)
+    const costResult = await pool.query(
+      `SELECT dbo.haveunitcost($1::varchar, $2::varchar, $3::varchar, $4::varchar, $5::varchar, $6::varchar, 0, $7::numeric) AS "haveCost"`,
+      [
+        PstrCoID,
+        lkpBranch,
+        itemId,
+        String(PstrYear),
+        DOC_TYPE,
+        txtDocNo,
+        Math.ceil(Number(line.fqtyout)),
+      ]
+    );
+
+    if (!costResult.rows[0]?.haveCost) {
+      return failed(` Check unit cost for the Item  : ${itemId}`, `lkpItemID-${index}`);
+    }
+  }
+
+  return passed;
+}
