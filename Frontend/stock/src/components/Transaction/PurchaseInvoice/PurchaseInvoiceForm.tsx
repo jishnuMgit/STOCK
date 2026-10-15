@@ -1,5 +1,5 @@
 import { Plus } from "lucide-react";
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import Select, {
   components,
   type DropdownIndicatorProps,
@@ -249,6 +249,23 @@ const currencySelectStyles: StylesConfig<Option, false> = {
   }),
 };
 
+const FIELD_ORDER = [
+  "txtDocNo",
+  "lkpBranch",
+  "lkpType",
+  "dtpDate",
+  "txtPONo",
+  "lkpSupplierID",
+  "lkpSupplierName",
+  "lkpMiscSup",
+  "lkpMiscSupID",
+  "lkpMiscSupName",
+  "lkpCurrency",
+  "txtCurrencyRate",
+  "txtSupInvoiceNo",
+  "dtpSupInvoiceDate",
+];
+
 interface Props {
   header: PurchaseHeader;
   onChange: <K extends keyof PurchaseHeader>(
@@ -302,6 +319,55 @@ const PurchaseForm: React.FC<Props> = ({
     label: m.name,
   }));
 
+  const docNoRef = useRef<HTMLInputElement>(null);
+
+  /* cursor starts in Entry No. when the page loads */
+  useEffect(() => {
+    docNoRef.current?.focus();
+  }, []);
+
+  /* Enter / Tab -> next field, Shift+Enter / Shift+Tab -> previous field */
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLElement>) => {
+    // react-select already handled it (e.g. Enter picked an option)
+    if (e.defaultPrevented) return;
+    if (e.key !== "Enter" && e.key !== "Tab") return;
+
+    const target = e.target as HTMLElement;
+    // ignore portal content (popups) and non-inputs (buttons keep Enter)
+    if (!e.currentTarget.contains(target) || target.tagName !== "INPUT") return;
+
+    const index = FIELD_ORDER.indexOf(target.id);
+    if (index === -1) return;
+
+    const step = e.shiftKey ? -1 : 1;
+
+    for (let i = index + step; i >= 0 && i < FIELD_ORDER.length; i += step) {
+      const el = document.getElementById(
+        FIELD_ORDER[i],
+      ) as HTMLInputElement | null;
+
+      if (el && !el.disabled) {
+        e.preventDefault();
+        el.focus();
+        if (el.type === "text") el.select();
+        return;
+      }
+    }
+
+    // after the last field, Enter jumps into the item table below the form
+    if (e.key === "Enter" && !e.shiftKey) {
+      const next =
+        e.currentTarget.nextElementSibling?.querySelector<HTMLElement>(
+          "input:not([disabled])",
+        );
+      if (next) {
+        e.preventDefault();
+        next.focus();
+      }
+    }
+    // Tab past the last field (or Shift+Tab before the first) uses the browser default
+  };
+
   /* Supplier ID and Supplier Name are one account: set both together */
   const handleSupplierChange = (accountId: string) => {
     const name =
@@ -334,7 +400,10 @@ const PurchaseForm: React.FC<Props> = ({
   }, [expenseOpen]);
 
   return (
-    <section className="grid grid-cols-1 items-start gap-x-4 gap-y-3 px-[14px] pb-2 pt-[14px] xl:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_minmax(0,2.15fr)]">
+    <section
+      onKeyDown={handleKeyDown}
+      className="grid grid-cols-1 items-start gap-x-4 gap-y-3 px-[14px] pb-2 pt-[14px] xl:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_minmax(0,2.15fr)]"
+    >
       {/* ==================================================
           GROUP 1
           Branch, P.O. No., Misc. Sup., Currency
@@ -426,6 +495,7 @@ const PurchaseForm: React.FC<Props> = ({
           </label>
           <input
             id="txtDocNo"
+            ref={docNoRef}
             value={header.docNo}
             onChange={(e) => onChange("docNo", e.target.value)}
             onBlur={onDocNoBlur}
@@ -510,12 +580,12 @@ const PurchaseForm: React.FC<Props> = ({
       ================================================== */}
       <div
         id="purchase-right-group"
-        className="flex min-w-0 flex-col gap-[8px]"
+        className="flex min-w-0 flex-col gap-2"
       >
         {/* Invoice Type and Date */}
         <div className="grid min-w-0 grid-cols-[minmax(0,1fr)_minmax(0,1fr)] gap-3">
           <div className="flex min-w-0 items-center gap-3">
-            <label htmlFor="lkpType" className={`${labelClass} w-[76px]`}>
+            <label htmlFor="lkpType" className={`${labelClass} w-19`}>
               Type
             </label>
             <div className="min-w-0 w-[35%]">
@@ -533,7 +603,7 @@ const PurchaseForm: React.FC<Props> = ({
           </div>
 
           <div className="ml-auto flex min-w-0 items-center justify-end gap-2">
-            <label htmlFor="dtpDate" className={`${labelClass} w-[36px]`}>
+            <label htmlFor="dtpDate" className={`${labelClass} w-9`}>
               Date
             </label>
             <input

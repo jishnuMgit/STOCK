@@ -10,7 +10,6 @@ import UserLogin from "../pages/Security/UserLogin/UserLoginPage";
 import SetChartOfAccount from "../pages/Settings/SetChartOfAccountPage";
 import UserPermission from "../pages/Security/UserPermissionMenu/UserPermissionMenuPage";
 import BeginningStockPage from "../pages/Purchase/Transaction/BeginningStockPage";
-import BeginningStockPrintPage from "../pages/Purchase/Transaction/BeginningStockPrintPage";
 import UserPermissionBranchPage from "../pages/Security/UserPermissionBranch/UserPermissionBranchPage";
 import SetPostingAccountPage from "../pages/Settings/SetPostingAccountPage";
 import PurchaseInvoicePage from "../pages/Purchase/Transaction/PurchaseInvoicePage";
@@ -192,10 +191,19 @@ const AppRoutes = () => {
 
           {/* ================= SALES - REPORT ================= */}
 
-          <Route path="/Sales/Report/RptStock" element={<RptStockPage/>} />
-          <Route path="/Sales/Reports/StockValue" element={<RptStockValuePage/>} />
-          <Route path="/Sales/Reports/RptCustomerSales" element={<RptCustomerSalesPage/>}/>
-          <Route path="/Sales/Reports/RptItemSales" element={<RptItemSalesPage/>}/>
+          <Route path="/Sales/Report/RptStock" element={<RptStockPage />} />
+          <Route
+            path="/Sales/Reports/StockValue"
+            element={<RptStockValuePage />}
+          />
+          <Route
+            path="/Sales/Reports/RptCustomerSales"
+            element={<RptCustomerSalesPage />}
+          />
+          <Route
+            path="/Sales/Reports/RptItemSales"
+            element={<RptItemSalesPage />}
+          />
 
           {/* ================= PURCHASE - TRANSACTION ================= */}
 
@@ -208,40 +216,105 @@ const AppRoutes = () => {
           {/* ================= PURCHASE - SETUP ================= */}
 
           <Route path="/Purchase/Setup/ItemPage" element={<ItemPage />} />
-          <Route path="/Purchase/Setup/ItemGroupPage" element={<ItemGroupPage />}  />
-          <Route path="/Purchase/Setup/Currency" element={<CurrencyPage/>}/>
+          <Route
+            path="/Purchase/Setup/ItemGroupPage"
+            element={<ItemGroupPage />}
+          />
+          <Route path="/Purchase/Setup/Currency" element={<CurrencyPage />} />
 
           {/* ================= PURCHASE - REPORT ================= */}
 
-          <Route path="/Purchase/Report/RptSupplierPurchase" element={<RptSupplierPurchasePage/>}/>
-          <Route path="/Purchase/Report/RptItemPurchase" element={<RptItemPurchasePage/>}/>
-          <Route path="/Purchase/Report/RptPOSummary" element={<RptPOSummaryPage/>}/>
-          <Route path="/Purchase/Report/RptStaffSales" element={<RptStaffSalesPage/>}/>
-          <Route path="/Purchase/Report/RptSalesSummary" element={<RptSalesSummaryPage/>}/>
-          <Route path="/Purchase/Report/RptItemMovement" element={<RptItemMovementPage/>}/>
-          <Route path="/Purchase/Report/RptInvoicewiseProfit" element={<RptInvoicewiseProfitPage/>}/>
-          <Route path="/Purchase/Report/RptStockReport" element={<RptStockReportPage/>}/>
-          <Route path="/Purchase/Report/RptStockValuation" element={<RptStockValuationPage/>}/>
-          <Route path="/Purchase/Report/RptStockVerification" element={<RptStockVerificationPage/>}/>
-          <Route path="/Purchase/Report/RptStockAgeing" element={<RptStockAgeingPage/>}/>
-          <Route path="/Purchase/Report/RptDocumentList" element={<RptDocumentListPage/>}/>
-          <Route path="/Purchase/Report/RptSalesPriceList" element={<RptSalesPriceListPage/>}/>
-          <Route path="/Purchase/Report/RptItemList" element={<RptItemListPage/>}/>
-          <Route path="/Purchase/Report/RptItemHistory" element={<RptItemHistoryPage/>}/>
-          
-       
+          <Route
+            path="/Purchase/Report/RptSupplierPurchase"
+            element={<RptSupplierPurchasePage />}
+          />
+          <Route
+            path="/Purchase/Report/RptItemPurchase"
+            element={<RptItemPurchasePage />}
+          />
+          <Route
+            path="/Purchase/Report/RptPOSummary"
+            element={<RptPOSummaryPage />}
+          />
+          <Route
+            path="/Purchase/Report/RptStaffSales"
+            element={<RptStaffSalesPage />}
+          />
+          <Route
+            path="/Purchase/Report/RptSalesSummary"
+            element={<RptSalesSummaryPage />}
+          />
+          <Route
+            path="/Purchase/Report/RptItemMovement"
+            element={<RptItemMovementPage />}
+          />
+          <Route
+            path="/Purchase/Report/RptInvoicewiseProfit"
+            element={<RptInvoicewiseProfitPage />}
+          />
+          <Route
+            path="/Purchase/Report/RptStockReport"
+            element={<RptStockReportPage />}
+          />
+          <Route
+            path="/Purchase/Report/RptStockValuation"
+            element={<RptStockValuationPage />}
+          />
+          <Route
+            path="/Purchase/Report/RptStockVerification"
+            element={<RptStockVerificationPage />}
+          />
+          <Route
+            path="/Purchase/Report/RptStockAgeing"
+            element={<RptStockAgeingPage />}
+          />
+          <Route
+            path="/Purchase/Report/RptDocumentList"
+            element={<RptDocumentListPage />}
+          />
+          <Route
+            path="/Purchase/Report/RptSalesPriceList"
+            element={<RptSalesPriceListPage />}
+          />
+          <Route
+            path="/Purchase/Report/RptItemList"
+            element={<RptItemListPage />}
+          />
+          <Route
+            path="/Purchase/Report/RptItemHistory"
+            element={<RptItemHistoryPage />}
+          />
+
           {/* ================= SETTINGS ================= */}
 
           <Route path="/Settings/SetCompanyInfo" element={<SetCompanyInfo />} />
           <Route path="/Settings/SetBranchInfo" element={<SetBranchInfo />} />
-          <Route path="/Settings/SetChartOfAccount"  element={<SetChartOfAccount />}  />
-          <Route  path="/Setting/SetDefaultBranch" element={<SetDefaultBranch/>}  />
-          <Route path="/Setting/SetActivePeriod" element={<SetActivePeriod />} />
+          <Route
+            path="/Settings/SetChartOfAccount"
+            element={<SetChartOfAccount />}
+          />
+          <Route
+            path="/Setting/SetDefaultBranch"
+            element={<SetDefaultBranch />}
+          />
+          <Route
+            path="/Setting/SetActivePeriod"
+            element={<SetActivePeriod />}
+          />
 
           {/* the screen's earlier address - kept so old bookmarks still open it */}
-          <Route path="/Settings/ChartOfAccountSettings" element={<Navigate to="/Settings/SetChartOfAccount" replace />} />
-          <Route path="/Settings/SetPostingAccount"  element={<SetPostingAccountPage />} />
-          <Route path="/Setting/SetActivePeriod"  element={<ActivePeriodPage/>} />
+          <Route
+            path="/Settings/ChartOfAccountSettings"
+            element={<Navigate to="/Settings/SetChartOfAccount" replace />}
+          />
+          <Route
+            path="/Settings/SetPostingAccount"
+            element={<SetPostingAccountPage />}
+          />
+          <Route
+            path="/Setting/SetActivePeriod"
+            element={<ActivePeriodPage />}
+          />
 
           {/* ================= DOCUMENT NUMBER ================= */}
 
@@ -250,13 +323,25 @@ const AppRoutes = () => {
           {/* ================= SECURITY ================= */}
 
           <Route path="/Security/UserLogin" element={<UserLogin />} />
-          <Route  path="/Security/UserPermissionMenu"  element={<UserPermission />}  />
-          <Route  path="/Security/UserPermissionBranch" element={<UserPermissionBranchPage />}  />
-          <Route path="/Security/UserAudit" element={<UserAudit/>}/>
+          <Route
+            path="/Security/UserPermissionMenu"
+            element={<UserPermission />}
+          />
+          <Route
+            path="/Security/UserPermissionBranch"
+            element={<UserPermissionBranchPage />}
+          />
+          <Route path="/Security/UserAudit" element={<UserAudit />} />
 
           {/* the print page the User Audit dialog opens (no menu entry of its own) */}
-          <Route path="/Security/UserAudit/Print" element={<UserAuditPrint />} />
-          <Route path="/Security/UserTransactionAudit" element={<UserTransactionAudit/>}/>
+          <Route
+            path="/Security/UserAudit/Print"
+            element={<UserAuditPrint />}
+          />
+          <Route
+            path="/Security/UserTransactionAudit"
+            element={<UserTransactionAudit />}
+          />
 
           {/* ================= ADMINISTRATION ================= */}
 
@@ -265,11 +350,13 @@ const AppRoutes = () => {
           {/* ================= DEV ================= */}
 
           <Route path="/dev/PurchaseExpense" element={<PurchaseExpense />} />
-          <Route path="/dev/StockDocumentPostCancel" element={<StockDocumentPostCancel/>}/>
-          <Route path="/dev/matchpage" element={<MatchingPage/>}/>
-          <Route path="/dev/unmatchpage" element={<UnMatchPage/>}/>
-          <Route path="/dev/MatchEnquiryPage" element={<MatchEnquiryPage/>}/>
-
+          <Route
+            path="/dev/StockDocumentPostCancel"
+            element={<StockDocumentPostCancel />}
+          />
+          <Route path="/dev/matchpage" element={<MatchingPage />} />
+          <Route path="/dev/unmatchpage" element={<UnMatchPage />} />
+          <Route path="/dev/MatchEnquiryPage" element={<MatchEnquiryPage />} />
 
           {/* Unknown URL -> back to "/" ("/" has its own element, so no loop) */}
           <Route path="*" element={<Navigate to="/" replace />} />
