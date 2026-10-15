@@ -13,9 +13,8 @@ import { useAltShortcuts } from "../../../hooks/useAltShortcuts";
 // ITEM ENQUIRY (the old frmItemEnquiry)
 //
 // A view-only screen: pick an item (Item ID or Item Name - both boxes open the
-// same "ID | Name" list and picking from one fills the other, or use the
-// First / Prev / Next / Last buttons; nothing is chosen when the page opens)
-// and see its details and, branch by
+// same "ID | Name" list and picking from one fills the other; nothing is chosen
+// when the page opens) and see its details and, branch by
 // branch, its stock, cost and price. Nothing here can be edited or saved.
 //
 // Names follow the rule: state = element id/name = response key
@@ -364,22 +363,6 @@ const ItemEnquiryPage: React.FC = () => {
   };
 
   // ----------------------------------------------------------
-  // FIRST / PREV / NEXT / LAST (the old navigator)
-  // ----------------------------------------------------------
-
-  const currentIndex = itemIdOptions.findIndex(
-    (option) => option.value === itemValue,
-  );
-
-  const goTo = (index: number) => {
-    const option = itemIdOptions[index];
-
-    if (option) pickItem(option.value);
-  };
-
-  const lastIndex = itemIdOptions.length - 1;
-
-  // ----------------------------------------------------------
   // CLEAR
   // ----------------------------------------------------------
 
@@ -408,9 +391,6 @@ const ItemEnquiryPage: React.FC = () => {
 
   // the grid always shows at least MIN_GRID_ROWS rows
   const blankRows = Math.max(0, MIN_GRID_ROWS - rows.length);
-
-  const navButtonClass =
-    "btn-style min-w-[44px] disabled:cursor-not-allowed disabled:opacity-40";
 
   // ==========================================================
   // JSX
@@ -729,55 +709,8 @@ const ItemEnquiryPage: React.FC = () => {
             </table>
           </div>
 
-          {/* NAVIGATOR / TOTALS / CLEAR */}
-          <div className="mt-[4px] flex flex-wrap items-center justify-between gap-3">
-            <div className="flex items-center gap-2">
-              <button
-                id="btnFirst"
-                name="btnFirst"
-                type="button"
-                aria-label="First item"
-                onClick={() => goTo(0)}
-                disabled={itemIdOptions.length === 0 || currentIndex === 0}
-                className={navButtonClass}
-              >
-                |&lt;
-              </button>
-              <button
-                id="btnPrev"
-                name="btnPrev"
-                type="button"
-                aria-label="Previous item"
-                onClick={() => goTo(currentIndex - 1)}
-                disabled={itemIdOptions.length === 0 || currentIndex <= 0}
-                className={navButtonClass}
-              >
-                &lt;
-              </button>
-              <button
-                id="btnNext"
-                name="btnNext"
-                type="button"
-                aria-label="Next item"
-                onClick={() => goTo(currentIndex + 1)}
-                disabled={itemIdOptions.length === 0 || currentIndex >= lastIndex}
-                className={navButtonClass}
-              >
-                &gt;
-              </button>
-              <button
-                id="btnLast"
-                name="btnLast"
-                type="button"
-                aria-label="Last item"
-                onClick={() => goTo(lastIndex)}
-                disabled={itemIdOptions.length === 0 || currentIndex === lastIndex}
-                className={navButtonClass}
-              >
-                &gt;|
-              </button>
-            </div>
-
+          {/* TOTALS / CLEAR */}
+          <div className="mt-[4px] flex flex-wrap items-center justify-end gap-3">
             <div className="flex items-center gap-4">
               <div className="flex items-center gap-2">
                 <label htmlFor="txtTotalStock" className="text-[14px] text-gray-600">
