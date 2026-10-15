@@ -98,6 +98,27 @@ export const emptyHeader = (): PurchaseHeader => ({
   piNo: "",
   note: "",
 });
+export interface ExpenseAccount {
+  id: string;
+  name: string;
+}
+
+export interface CostCenter {
+  id: string;
+  name: string;
+}
+
+export interface ExpenseLookups {
+  accounts: ExpenseAccount[];
+  costCenters: CostCenter[];
+  currencies: string[];
+}
+
+interface ExpenseLookupsApi {
+  accounts: { fAccountID: string; fAccountName: string | null }[];
+  costCenters: { fCCID: string; fCCName: string | null }[];
+  currencies: { fCurrency: string }[];
+}
 
 /* ---------- API shapes ---------- */
 
@@ -256,6 +277,25 @@ export const usePurchaseInvoice = () => {
     },
     [],
   );
+
+  /* Purchase Expense combos (clsPIExp.FillCombos): accounts, cost centers, currencies */
+  const fetchExpenseLookups = useCallback(async (): Promise<ExpenseLookups> => {
+    const result = await apiRequest<{ data: ExpenseLookupsApi }>(
+      "GET",
+      "/purchase-invoice/expense/lookups",
+    );
+    return {
+      accounts: result.data.accounts.map((a) => ({
+        id: s(a.fAccountID),
+        name: s(a.fAccountName),
+      })),
+      costCenters: result.data.costCenters.map((c) => ({
+        id: s(c.fCCID),
+        name: s(c.fCCName),
+      })),
+      currencies: result.data.currencies.map((c) => s(c.fCurrency)),
+    };
+  }, []);
 
   /* Returns null when not found (new document) or on error (see `error`). */
   const fetchInvoice = useCallback(
@@ -454,6 +494,7 @@ export const usePurchaseInvoice = () => {
     deleteCashSupplier,
     fetchItems,
     fetchSuppliers,
+    fetchExpenseLookups,
     loading,
     error,
   };

@@ -665,3 +665,140 @@ export const getNextDocNo = async (
     });
   }
 };
+
+/* =========================================================
+   PURCHASE EXPENSE (frmPIExp) LOOKUPS
+   Port of clsPIExp.FillCombos
+   ========================================================= */
+
+/* VB filter: fIsPurchaseExp=1 AND fIsAccountHead=1
+   One list serves both the Account ID and Account Name combos. */
+const queryPIExpAccounts = (coId: string) =>
+  pool.query(
+    `SELECT a.faccountid   AS "fAccountID",
+            a.faccountname AS "fAccountName"
+       FROM dbo.tblaccount a
+      WHERE a.fcoid = $1
+        AND dbo.ispurchaseexp($1::varchar, a.faccountid) = true
+      ORDER BY a.faccountid`,
+    [coId],
+  );
+
+const queryPIExpCostCenters = (coId: string) =>
+  pool.query(
+    `SELECT fccid   AS "fCCID",
+            fccname AS "fCCName"
+       FROM dbo.tblcostcenter
+      WHERE fcoid = $1
+      ORDER BY fpositionno`,
+    [coId],
+  );
+
+const queryPIExpCurrencies = (coId: string) =>
+  pool.query(
+    `SELECT fcurrency AS "fCurrency"
+       FROM dbo.tblcurrency
+      WHERE fcoid = $1
+      ORDER BY fcurrency`,
+    [coId],
+  );
+
+/* GET /purchase-invoice/expense/accounts */
+export const getPIExpAccounts = async (
+  req: AuthenticatedRequest,
+  res: Response,
+): Promise<Response> => {
+  try {
+    const coId = req.user?.CoID;
+    if (!coId)
+      return res
+        .status(401)
+        .json({ success: false, message: "Authentication required" });
+
+    const result = await queryPIExpAccounts(coId);
+    return res.status(200).json({ success: true, data: result.rows });
+  } catch (error: unknown) {
+    console.error("getPIExpAccounts error:", error);
+    return res
+      .status(500)
+      .json({ success: false, message: "Failed to fetch expense accounts" });
+  }
+};
+
+/* GET /purchase-invoice/expense/cost-centers */
+export const getPIExpCostCenters = async (
+  req: AuthenticatedRequest,
+  res: Response,
+): Promise<Response> => {
+  try {
+    const coId = req.user?.CoID;
+    if (!coId)
+      return res
+        .status(401)
+        .json({ success: false, message: "Authentication required" });
+
+    const result = await queryPIExpCostCenters(coId);
+    return res.status(200).json({ success: true, data: result.rows });
+  } catch (error: unknown) {
+    console.error("getPIExpCostCenters error:", error);
+    return res
+      .status(500)
+      .json({ success: false, message: "Failed to fetch cost centers" });
+  }
+};
+
+/* GET /purchase-invoice/expense/currencies */
+export const getPIExpCurrencies = async (
+  req: AuthenticatedRequest,
+  res: Response,
+): Promise<Response> => {
+  try {
+    const coId = req.user?.CoID;
+    if (!coId)
+      return res
+        .status(401)
+        .json({ success: false, message: "Authentication required" });
+
+    const result = await queryPIExpCurrencies(coId);
+    return res.status(200).json({ success: true, data: result.rows });
+  } catch (error: unknown) {
+    console.error("getPIExpCurrencies error:", error);
+    return res
+      .status(500)
+      .json({ success: false, message: "Failed to fetch currencies" });
+  }
+};
+
+/* GET /purchase-invoice/expense/lookups -> all combos in one call */
+export const getPIExpLookups = async (
+  req: AuthenticatedRequest,
+  res: Response,
+): Promise<Response> => {
+  try {
+    const coId = req.user?.CoID;
+    if (!coId)
+      return res
+        .status(401)
+        .json({ success: false, message: "Authentication required" });
+
+    const [accounts, costCenters, currencies] = await Promise.all([
+      queryPIExpAccounts(coId),
+      queryPIExpCostCenters(coId),
+      queryPIExpCurrencies(coId),
+    ]);
+
+    return res.status(200).json({
+      success: true,
+      data: {
+        accounts: accounts.rows,
+        costCenters: costCenters.rows,
+        currencies: currencies.rows,
+      },
+    });
+  } catch (error: unknown) {
+    console.error("getPIExpLookups error:", error);
+    return res
+      .status(500)
+      .json({ success: false, message: "Failed to fetch expense lookups" });
+  }
+};
