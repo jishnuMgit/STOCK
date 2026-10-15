@@ -32,6 +32,7 @@ import CustomerSupplierCountryRouter from "./Finance/Setup/CustomerSupplierCount
 import CurrencyRouter from "./Purchase/Setup/CurrencyPageRouter.js";
 import supplierRouter from "./common/SupplierRouter.js";import RptCOARouter from "./Finance/Report/RptChartOfAccountRouter.js" 
 import RptCustomerListRouter from "./Finance/Report/RptCustomerListRouter.js"
+import RptItemHistoryRouter from "./Purchase/Report/RptItemHistoryRouter.js"
 
 
 const router = express.Router();
@@ -70,5 +71,6 @@ router.use("/Currency", CurrencyRouter);
 router.use("/supplier", supplierRouter);
 router.use("/RptChartOfAccount", RptCOARouter);
 router.use("/RptCustomerList",  RptCustomerListRouter);
+router.use("/RptItemHistory", RptItemHistoryRouter);
 
 export default router;
