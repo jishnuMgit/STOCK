@@ -187,6 +187,7 @@ const AppRoutes = () => {
 
           <Route path="/Purchase/Transaction/PurchaseInvoicePage" element={<PurchaseInvoicePage />}/>
           <Route path="/Purchase/Transaction/BeginningStockPage" element={<BeginningStockPage />} />
+          <Route path="/Purchase/Transaction/BeginningStockPage/Print" element={<BeginningStockPrintPage />} />
           <Route path="/Purchase/Setup/UnitPage" element={<UnitPage/>} />
           <Route path="/Purchase/Setup/StaffPage" element={<StaffPage/>} />
 

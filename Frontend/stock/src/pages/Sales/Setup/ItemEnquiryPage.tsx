@@ -453,7 +453,7 @@ const ItemEnquiryPage: React.FC = () => {
                 noOptionsMessage={() => "No Item Found"}
                 isSearchable
                 isClearable
-                placeholder=""
+                placeholder="Select"
                 menuPortalTarget={document.body}
                 menuPosition="fixed"
                 menuPlacement="auto"
@@ -488,7 +488,7 @@ const ItemEnquiryPage: React.FC = () => {
                 noOptionsMessage={() => "No Item Found"}
                 isSearchable
                 isClearable={false}
-                placeholder=""
+                placeholder="Select"
                 menuPortalTarget={document.body}
                 menuPosition="fixed"
                 menuPlacement="auto"
