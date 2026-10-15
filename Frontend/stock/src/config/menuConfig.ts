@@ -96,6 +96,7 @@ Sales-SETUP
 =============================================================*/
 
   mnuItemEnquiry:"/Sales/Setup/ItemEnquiry",
+  mnuSalesPriceList:"/Sales/Setup/SalesPriceList",
  
 
 /*============================================================
@@ -138,6 +139,7 @@ Sales-REPORT
   mnuRptFinYearCloseBal:"/Finance/Reports/RptFinYearCloseBal",
   mnuRptExpenseSum:"/Finance/Reports/RptExpenseSum",
   mnuRptRVPVSum:"/Finance/Reports/RptRVPVSum",
+  mnuRptFinDocList:"/Finance/Reports/RptFinDocList",
  // FINANCE - REPORTS - A/R & A/P
 
   mnuRptSOA: "/Finance/Reports/rptSOA",

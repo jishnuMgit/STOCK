@@ -77,6 +77,8 @@ import DocumentPostPage from "../pages/Finance/Transaction/DocumentPost/Document
 import RptDocumentPrintPage from "../pages/Finance/Transaction/DocumentPrint/RptDocumentPrintPage";
 import RptExpenseSumPage from "../pages/Finance/Report/ExpenseSummary/RptExpenseSumPage";
 import RptReceiptPaymentSumPage from "../pages/Finance/Report/ReceiptPaymentSum/RptReceiptPaymentSumPage";
+import RptFinDocList from "../pages/Finance/Report/DocumentsList/RptFinDocList";
+import SalesPriceListPage from "../pages/Sales/Setup/SalesPriceListPage";
 
 
 const Login = lazy(() => import("../pages/Auth/LoginPage"));
@@ -171,6 +173,7 @@ const AppRoutes = () => {
           <Route path="/Finance/Reports/RptGLSum" element={<RptGeneralLedgerSummaryPage/>}/>
           <Route path="/Finance/Reports/RptExpenseSum" element={<RptExpenseSumPage/>}/>
           <Route path="/Finance/Reports/RptRVPVSum" element={<RptReceiptPaymentSumPage/>}/>
+          <Route path="/Finance/Reports/RptFinDocList" element={<RptFinDocList/>}/>
 
           {/* ================= SALES - TRANSACTION ================= */}
 
@@ -183,6 +186,7 @@ const AppRoutes = () => {
           {/* ================= SALES - SETUP ================= */}
 
           <Route path="/Sales/Setup/ItemEnquiry" element={<ItemEnquiryPage/>} />
+          <Route path="/Sales/Setup/SalesPriceList" element={<SalesPriceListPage/>}/>
 
           {/* ================= SALES - REPORT ================= */}
 
