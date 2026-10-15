@@ -1,10 +1,16 @@
-import React, { useState } from "react";
-import Select from "react-select";
+import React, { useEffect, useMemo, useRef, useState } from "react";
+import Select, {
+  components,
+  type MenuListProps,
+  type OptionProps,
+} from "react-select";
+import { toast } from "react-toastify";
 import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
 import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
 import { DatePicker } from "@mui/x-date-pickers/DatePicker";
 import dayjs from "dayjs";
 import customParseFormat from "dayjs/plugin/customParseFormat";
+import { printItemHistoryReport } from "./printItemHistoryReport";
 
 dayjs.extend(customParseFormat);
 
@@ -15,27 +21,38 @@ type RadioOptionProps = {
   value: string;
   label: string;
   checked: boolean;
+  disabled?: boolean;
   onChange: () => void;
+};
+
+type Branch = { brId: string; brName: string };
+
+type Item = {
+  itemId: string;
+  itemName: string;
+  brId: string;
+  packing: string;
+  inactive: boolean;
 };
 
 const DATE_FORMAT = "DD-MM-YYYY";
 
-/* Replace these with data from your API */
-const branchOptions: Option[] = [
-  { value: "OFFICE", label: "OFFICE" },
-  { value: "BRANCH 1", label: "BRANCH 1" },
-  { value: "BRANCH 2", label: "BRANCH 2" },
-];
-const itemIdOptions: Option[] = [
-  { value: "1001", label: "1001" },
-  { value: "1002", label: "1002" },
-  { value: "1003", label: "1003" },
-];
-const itemNameOptions: Option[] = [
-  { value: "1001", label: "Item One" },
-  { value: "1002", label: "Item Two" },
-  { value: "1003", label: "Item Three" },
-];
+const API = `${import.meta.env.VITE_API_URL}/RptItemHistory`;
+
+// Sends the login cookie, and the company / user kept at sign-in as a stopgap
+// (the server uses its session first and only falls back to these).
+// TODO: if your pages send a token, add the same Authorization header here,
+// then delete the coId / userId part.
+const apiFetch = (url: string, init: RequestInit = {}) => {
+  const coId = localStorage.getItem("PstrCoID") ?? "";
+  const userId = localStorage.getItem("PstrUserID") ?? "";
+  const sep = url.includes("?") ? "&" : "?";
+
+  return fetch(
+    `${url}${sep}coId=${encodeURIComponent(coId)}&userId=${encodeURIComponent(userId)}`,
+    { credentials: "include", ...init },
+  );
+};
 
 const selectClassNames = {
   control: ({
@@ -82,19 +99,117 @@ const selectProps = {
   menuPortalTarget: typeof document !== "undefined" ? document.body : undefined,
 };
 
+// ---- two-column lookup list (Item ID | Item Name, like the grid lookups) ----
+type ItemOption = Option & { id: string; name: string };
+
+const ID_FIRST = "grid grid-cols-[143px_1fr]"; // lkpItemID: Item ID (box 135 + gap 8) | Item Name (= width of the name box)
+const NAME_FIRST = "grid grid-cols-[1fr_130px]"; // lkpItemName: Item Name (= box width) | Item ID outside
+
+const itemListClassNames = (menuWidth: string) => ({
+  ...selectClassNames,
+  menu: () =>
+    `!mt-[1px] ${menuWidth} !rounded-none !border !border-[#cfd7df] !z-[999999] !shadow-md`,
+  menuList: () => "!p-0 !max-h-[240px]",
+  option: ({
+    isFocused,
+    isSelected,
+  }: {
+    isFocused: boolean;
+    isSelected: boolean;
+  }) => `
+    !cursor-pointer !p-0 !text-[13px] !text-[#24364d]
+    ${isSelected ? "!bg-[#e7f7ed]" : isFocused ? "!bg-[#f2faf5]" : "!bg-white"}
+  `,
+});
+
+// the first column is exactly as wide as the box; the second column hangs
+// outside the box to the right
+const idClassNames = itemListClassNames(""); // width is set from the measured Item row
+const nameClassNames = itemListClassNames("!w-[calc(100%_+_130px)]"); // box + 130
+
+const makeItemMenuList = (
+  cols: string,
+  first: string,
+  second: string,
+  headerBg = "bg-[#f5f6fa]", // same header colour for every lookup
+) => {
+  const ItemMenuList = (props: MenuListProps<ItemOption, false>) => (
+    <components.MenuList {...props}>
+      <div
+        className={`${cols} sticky top-0 z-[1] border-b border-[#cfd7df] ${headerBg} text-[13px] font-semibold text-[#24364d]`}
+      >
+        <div className="border-r border-[#cfd7df] px-[8px] py-[7px]">
+          {first}
+        </div>
+        <div className="px-[8px] py-[7px]">{second}</div>
+      </div>
+      {props.children}
+    </components.MenuList>
+  );
+  return ItemMenuList;
+};
+
+const makeItemOption = (cols: string, idFirst: boolean) => {
+  const ItemOptionRow = (props: OptionProps<ItemOption, false>) => {
+    const { id, name } = props.data;
+    return (
+      <components.Option {...props}>
+        <div className={cols}>
+          <div className="truncate px-[8px] py-[6px]">{idFirst ? id : name}</div>
+          <div className="truncate px-[8px] py-[6px]">{idFirst ? name : id}</div>
+        </div>
+      </components.Option>
+    );
+  };
+  return ItemOptionRow;
+};
+
+const idComponents = {
+  MenuList: makeItemMenuList(ID_FIRST, "Item ID", "Item Name"),
+  Option: makeItemOption(ID_FIRST, true),
+};
+const nameComponents = {
+  MenuList: makeItemMenuList(NAME_FIRST, "Item Name", "Item ID"),
+  Option: makeItemOption(NAME_FIRST, false),
+};
+
+// lkpBranch: Branch (= box width) | ID hanging outside to the right
+const BRANCH_COLS = "grid grid-cols-[1fr_55px]";
+const branchClassNames = itemListClassNames("!w-[calc(100%_+_55px)]");
+const branchComponents = {
+  MenuList: makeItemMenuList(BRANCH_COLS, "Branch", "ID"),
+  Option: makeItemOption(BRANCH_COLS, false),
+};
+
+// type in either box: matches the item id or the item name
+const filterItem = (option: { data: ItemOption }, input: string) => {
+  const q = input.trim().toLowerCase();
+  return (
+    q === "" ||
+    option.data.id.toLowerCase().includes(q) ||
+    option.data.name.toLowerCase().includes(q)
+  );
+};
+
 const CustomRadio: React.FC<RadioOptionProps> = ({
   name,
   value,
   label,
   checked,
+  disabled = false,
   onChange,
 }) => (
-  <label className="flex cursor-pointer items-center gap-2.5 whitespace-nowrap select-none">
+  <label
+    className={`flex items-center gap-2.5 whitespace-nowrap select-none ${
+      disabled ? "cursor-not-allowed opacity-50" : "cursor-pointer"
+    }`}
+  >
     <input
       type="radio"
       name={name}
       value={value}
       checked={checked}
+      disabled={disabled}
       onChange={onChange}
       className="sr-only"
     />
@@ -224,31 +339,213 @@ type RptItemHistoryPageProps = {
 };
 
 const RptItemHistoryPage: React.FC<RptItemHistoryPageProps> = ({ onClose }) => {
+  const [branches, setBranches] = useState<Branch[]>([]);
+  const [items, setItems] = useState<Item[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [printing, setPrinting] = useState(false);
+
+  // lkpItemID list is as wide as the whole Item row (ID box + gap + name box),
+  // so its Item Name column lines up with the name box
+  const itemRowRef = useRef<HTMLDivElement>(null);
+  const [itemRowWidth, setItemRowWidth] = useState<number | undefined>();
+
   const [branchMode, setBranchMode] = useState("One Branch"); // optBranch
-  const [branch, setBranch] = useState<Option | null>(branchOptions[0]); // lkpBranch
+  const [branch, setBranch] = useState<ItemOption | null>(null); // lkpBranch
   const [itemId, setItemId] = useState<string | null>(null); // lkpItemID / lkpItemName
-  const [asOnDate, setAsOnDate] = useState(""); // dtpAsOnDate
+  const [asOnDate, setAsOnDate] = useState(() => dayjs().format(DATE_FORMAT)); // dtpAsOnDate
+
+  // ------------------------------------------------------------
+  // OPTIONS FROM THE SERVER
+  // ------------------------------------------------------------
+  const branchOptions: ItemOption[] = useMemo(
+    () =>
+      branches.map((b) => ({
+        value: b.brId,
+        label: b.brName,
+        id: b.brId,
+        name: b.brName,
+      })),
+    [branches],
+  );
+
+  // each item once (the lookup has one row per item and branch)
+  const uniqueItems = useMemo(() => {
+    const map = new Map<string, Item>();
+    items.forEach((i) => {
+      if (!map.has(i.itemId)) map.set(i.itemId, i);
+    });
+    return [...map.values()];
+  }, [items]);
+
+  const collator = useMemo(
+    () => new Intl.Collator(undefined, { numeric: true, sensitivity: "base" }),
+    [],
+  );
+
+  // lkpItemID: sorted by item id
+  const itemIdOptions: ItemOption[] = useMemo(
+    () =>
+      [...uniqueItems]
+        .sort((a, b) => collator.compare(a.itemId, b.itemId))
+        .map((i) => ({
+          value: i.itemId,
+          label: i.itemId,
+          id: i.itemId,
+          name: i.itemName,
+        })),
+    [uniqueItems, collator],
+  );
+
+  // lkpItemName: sorted by item name (item id breaks ties)
+  const itemNameOptions: ItemOption[] = useMemo(
+    () =>
+      [...uniqueItems]
+        .sort(
+          (a, b) =>
+            collator.compare(a.itemName, b.itemName) ||
+            collator.compare(a.itemId, b.itemId),
+        )
+        .map((i) => ({
+          value: i.itemId,
+          label: i.itemName,
+          id: i.itemId,
+          name: i.itemName,
+        })),
+    [uniqueItems, collator],
+  );
 
   const selectedItemId = itemIdOptions.find((o) => o.value === itemId) ?? null;
   const selectedItemName =
     itemNameOptions.find((o) => o.value === itemId) ?? null;
 
-  const handlePrint = () => {
-    console.log({
-      branchMode,
-      branch: branchMode === "One Branch" ? branch : null,
-      itemId,
-      asOnDate,
-    });
+  // VB ConfigurerdgBranchUserID: a user who has one branch only works with it
+  // (assumed rule - the old helper is not in the files)
+  const canUseAllBranches = branches.length > 1;
+
+  // ------------------------------------------------------------
+  // LOAD BRANCHES + ITEMS (VB FillCombos)
+  // ------------------------------------------------------------
+  useEffect(() => {
+    let cancelled = false;
+
+    const load = async () => {
+      try {
+        const res = await apiFetch(`${API}/lookups`);
+        const data = await res.json();
+
+        if (!res.ok || !data.success) {
+          toast.error(data.message || "Failed to load branches and items");
+          return;
+        }
+        if (cancelled) return;
+
+        const list = data.branches as Branch[];
+        setBranches(list);
+        setItems(data.items as Item[]);
+        // the first branch is the default
+        setBranch(
+          list[0]
+            ? {
+                value: list[0].brId,
+                label: list[0].brName,
+                id: list[0].brId,
+                name: list[0].brName,
+              }
+            : null,
+        );
+      } catch {
+        if (!cancelled) toast.error("Failed to load branches and items");
+      } finally {
+        if (!cancelled) setLoading(false);
+      }
+    };
+
+    load();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  // ------------------------------------------------------------
+  // PRINT (VB cmdPrint_Click + ValidateMe)
+  // ------------------------------------------------------------
+  const handlePrint = async () => {
+    if (printing) return;
+
+    const oneBranch = branchMode === "One Branch";
+
+    if (oneBranch && !branch) {
+      toast.warning("Please select 'Branch'", { toastId: "ih-branch" });
+      document.getElementById("lkpBranch")?.focus();
+      return;
+    }
+
+    if (!itemId) {
+      toast.warning("Please select an Item", { toastId: "ih-item" });
+      document.getElementById("lkpItemID")?.focus();
+      return;
+    }
+
+    if (!asOnDate || !dayjs(asOnDate, DATE_FORMAT, true).isValid()) {
+      toast.warning("Please select Date", { toastId: "ih-date" });
+      document.getElementById("dtpAsOnDate")?.focus();
+      return;
+    }
+
+    setPrinting(true);
+    try {
+      const res = await apiFetch(`${API}/print`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          allBranches: !oneBranch,
+          branchId: oneBranch ? branch?.value : "",
+          itemId,
+          asOnDate: asOnDate.replace(/-/g, "/"), // DD-MM-YYYY -> DD/MM/YYYY
+        }),
+      });
+      const data = await res.json();
+
+      if (!res.ok || !data.success) {
+        toast.error(data.message || "Could not prepare the report");
+        return;
+      }
+
+      printItemHistoryReport(data.report);
+    } catch {
+      toast.error("Could not prepare the report");
+    } finally {
+      setPrinting(false);
+    }
   };
 
   const handleClose = () => {
     setBranchMode("One Branch");
-    setBranch(branchOptions[0]);
+    setBranch(branchOptions[0] ?? null);
     setItemId(null);
-    setAsOnDate("");
-    onClose?.();
+    setAsOnDate(dayjs().format(DATE_FORMAT));
+    if (onClose) onClose();
+    else window.history.back();
   };
+
+  // Alt+P prints, Alt+C closes (Ctrl+P / Ctrl+L of the old form clash with the
+  // browser). Re-attached every render so it always sees the latest state.
+  useEffect(() => {
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (!event.altKey || event.ctrlKey || event.metaKey) return;
+
+      if (event.code === "KeyP") {
+        event.preventDefault();
+        handlePrint();
+      } else if (event.code === "KeyC") {
+        event.preventDefault();
+        handleClose();
+      }
+    };
+
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
+  });
 
   return (
     <div className="flex min-h-full w-full items-start justify-center bg-white px-4 py-4">
@@ -276,6 +573,7 @@ const RptItemHistoryPage: React.FC<RptItemHistoryPageProps> = ({ onClose }) => {
                   value="All Branch"
                   label="All Branch"
                   checked={branchMode === "All Branch"}
+                  disabled={!canUseAllBranches}
                   onChange={() => setBranchMode("All Branch")}
                 />
               </RadioPanel>
@@ -287,22 +585,37 @@ const RptItemHistoryPage: React.FC<RptItemHistoryPageProps> = ({ onClose }) => {
                     options={branchOptions}
                     value={branch}
                     onChange={setBranch}
-                    isDisabled={branchMode !== "One Branch"}
+                    isDisabled={branchMode !== "One Branch" || loading}
                     {...selectProps}
+                    classNames={branchClassNames}
+                    components={branchComponents}
                   />
                 </div>
               </div>
 
-              {/* Item */}
+              {/* Item (each box fills the other) */}
               <FieldLabel>Item :</FieldLabel>
-              <div className="grid grid-cols-[135px_1fr] gap-2">
+              <div ref={itemRowRef} className="grid grid-cols-[135px_1fr] gap-2">
                 <Select
                   inputId="lkpItemID"
                   instanceId="lkpItemID"
                   options={itemIdOptions}
                   value={selectedItemId}
                   onChange={(option) => setItemId(option?.value ?? null)}
+                  isDisabled={loading}
                   {...selectProps}
+                  classNames={idClassNames}
+                  styles={{
+                    menu: (base) => ({ ...base, width: itemRowWidth ?? 480 }),
+                  }}
+                  onMenuOpen={() =>
+                    setItemRowWidth(
+                      itemRowRef.current?.getBoundingClientRect().width,
+                    )
+                  }
+                  components={idComponents}
+                  filterOption={filterItem}
+                  isSearchable
                 />
                 <Select
                   inputId="lkpItemName"
@@ -310,7 +623,12 @@ const RptItemHistoryPage: React.FC<RptItemHistoryPageProps> = ({ onClose }) => {
                   options={itemNameOptions}
                   value={selectedItemName}
                   onChange={(option) => setItemId(option?.value ?? null)}
+                  isDisabled={loading}
                   {...selectProps}
+                  classNames={nameClassNames}
+                  components={nameComponents}
+                  filterOption={filterItem}
+                  isSearchable
                 />
               </div>
 
@@ -330,7 +648,9 @@ const RptItemHistoryPage: React.FC<RptItemHistoryPageProps> = ({ onClose }) => {
                   id="btnPrint"
                   type="button"
                   onClick={handlePrint}
-                  className="btn-style"
+                  disabled={loading || printing}
+                  title="Alt+P"
+                  className="btn-style disabled:cursor-not-allowed disabled:opacity-40"
                 >
                   <u>P</u>rint
                 </button>
@@ -338,6 +658,7 @@ const RptItemHistoryPage: React.FC<RptItemHistoryPageProps> = ({ onClose }) => {
                   id="btnClose"
                   type="button"
                   onClick={handleClose}
+                  title="Alt+C"
                   className="btn-style"
                 >
                   <u>C</u>lose

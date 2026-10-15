@@ -141,6 +141,58 @@ export const itemEnquiryGridKeys: KeyMap = {
   ftotalcost: "txtTotalCost",
 };
 
+/* ---------- Sales / Transaction / StockTransfer ---------- */
+
+export const stockTransferToBranchKeys: KeyMap = {
+  fbrid: "lkpToBranch",
+  fbrname: "txtToBranchName",
+};
+
+export const stockTransferItemKeys: KeyMap = {
+  fitemid: "lkpItemID",
+  fitemname: "txtItemName",
+  funit: "txtUnit",
+  fpacking: "txtPacking",
+};
+
+export const stockTransferLineKeys: KeyMap = {
+  fslno: "txtSlNo",
+  fitemid: "lkpItemID",
+  funit: "txtUnit",
+  fqtyout: "txtQty",
+  funitcost: "txtUnitCost",
+  ftotalcost: "txtTotalCost",
+};
+
+export const stockTransferHeaderKeys: KeyMap = {
+  fsttobrid: "lkpToBranch",
+  fdate: "dtpDate",
+  fnote: "txtNote",
+  fsuserid: "txtSavedBy",
+  fsuserdate: "txtSavedOn",
+  fmuserid: "txtModifiedBy",
+  fmuserdate: "txtModifiedOn",
+};
+
+export const stockTransferPrintHeaderKeys: KeyMap = {
+  fconame: "txtCoName",
+  fbrname: "txtBranchName",
+  ftobrname: "txtToBranchName",
+  fdocno: "txtDocNo",
+  fdate: "dtpDate",
+  fnote: "txtNote",
+};
+
+export const stockTransferPrintLineKeys: KeyMap = {
+  fslno: "txtSlNo",
+  fitemid: "lkpItemID",
+  fitemname: "lkpItemName",
+  funit: "txtUnit",
+  fqtyout: "txtQty",
+  funitcost: "txtUnitCost",
+  ftotalcost: "txtTotalCost",
+};
+
 export const userAuditUserListKeys: KeyMap = {
   fuserid: "lkpUserID",
 };

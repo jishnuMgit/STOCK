@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import Select, {
   components,
   type DropdownIndicatorProps,
@@ -6,6 +6,10 @@ import Select, {
 } from "react-select";
 import { RxTriangleDown } from "react-icons/rx";
 import { Play, X } from "lucide-react";
+import {
+  usePurchaseInvoice,
+  type ExpenseLookups,
+} from "../../../hooks/Purchase/Transaction/usePurchaseInvoice";
 
 // ============================================================
 // TYPES
@@ -17,13 +21,12 @@ type Option = {
 };
 
 type PurchaseExpenseRow = {
-  accountId: Option | null;
-  accountName: Option | null;
-  ccid: Option | null;
-  currency: Option | null;
+  accountId: string; // one account: drives both the ID and Name combos
+  ccid: string;
+  currency: string;
   currencyRate: string;
-  amount: string;
-  amountSAR: string;
+  amount: string; // FC amount (fCreditFC)
+  amountSAR: string; // SAR amount (fCredit)
   description: string;
 };
 
@@ -33,9 +36,14 @@ type PurchaseExpenseRow = {
 
 const ROW_COUNT = 12;
 
-const accountOptions: Option[] = [];
-const ccidOptions: Option[] = [];
-const currencyOptions: Option[] = [];
+const emptyLookups: ExpenseLookups = {
+  accounts: [],
+  costCenters: [],
+  currencies: [],
+};
+
+const pick = (options: Option[], value: string): Option | null =>
+  options.find((o) => o.value === value) ?? null;
 
 /* custom arrow for the dropdowns in this table */
 const DropdownIndicator = (props: DropdownIndicatorProps<Option, false>) => (
@@ -54,10 +62,9 @@ const selectComponents = {
 // ============================================================
 
 const createRow = (): PurchaseExpenseRow => ({
-  accountId: null,
-  accountName: null,
-  ccid: null,
-  currency: null,
+  accountId: "",
+  ccid: "",
+  currency: "",
   currencyRate: "",
   amount: "",
   amountSAR: "",
@@ -185,9 +192,60 @@ interface PurchaseExpenseProps {
 }
 
 const PurchaseExpense: React.FC<PurchaseExpenseProps> = ({ onClose }) => {
-  const [rows, setRows] = useState<PurchaseExpenseRow[]>(createRows);
+  const { fetchExpenseLookups } = usePurchaseInvoice();
 
+  const [rows, setRows] = useState<PurchaseExpenseRow[]>(createRows);
   const [activeRow, setActiveRow] = useState(0);
+  const [lookups, setLookups] = useState<ExpenseLookups>(emptyLookups);
+  const [lookupError, setLookupError] = useState("");
+
+  // ----------------------------------------------------------
+  // LOAD COMBOS ONCE WHEN THE POPUP OPENS (clsPIExp.FillCombos)
+  // ----------------------------------------------------------
+
+  useEffect(() => {
+    let cancelled = false;
+
+    fetchExpenseLookups()
+      .then((data) => {
+        if (!cancelled) setLookups(data);
+      })
+      .catch((err: unknown) => {
+        if (!cancelled)
+          setLookupError(
+            err instanceof Error ? err.message : "Failed to load lookups",
+          );
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [fetchExpenseLookups]);
+
+  /* Account ID combo (sorted by id) and Account Name combo (sorted by name).
+     Both use the account id as the value, so picking one fills the other. */
+  const accountIdOptions = useMemo<Option[]>(
+    () => lookups.accounts.map((a) => ({ value: a.id, label: a.id })),
+    [lookups.accounts],
+  );
+
+  const accountNameOptions = useMemo<Option[]>(
+    () =>
+      [...lookups.accounts]
+        .sort((a, b) => a.name.localeCompare(b.name))
+        .map((a) => ({ value: a.id, label: a.name })),
+    [lookups.accounts],
+  );
+
+  const ccOptions = useMemo<Option[]>(
+    () => lookups.costCenters.map((c) => ({ value: c.id, label: c.id })),
+    [lookups.costCenters],
+  );
+
+  const currencyOptions = useMemo<Option[]>(
+    () => lookups.currencies.map((c) => ({ value: c, label: c })),
+    [lookups.currencies],
+  );
 
   // ----------------------------------------------------------
   // UPDATE ROW
@@ -211,7 +269,9 @@ const PurchaseExpense: React.FC<PurchaseExpenseProps> = ({ onClose }) => {
   };
 
   // ----------------------------------------------------------
-  // NUMBER CHANGE
+  // NUMBER CHANGE (VB: grdvPIExp_ValidatingEditor)
+  //   rate / amount(FC) changed -> amount SAR = rate * FC
+  //   amount SAR changed        -> amount(FC) = SAR / rate
   // ----------------------------------------------------------
 
   const handleNumberChange = (
@@ -223,7 +283,24 @@ const PurchaseExpense: React.FC<PurchaseExpenseProps> = ({ onClose }) => {
       return;
     }
 
-    updateRow(index, field, value);
+    setRows((previousRows) =>
+      previousRows.map((row, rowIndex) => {
+        if (rowIndex !== index) return row;
+
+        const next = { ...row, [field]: value };
+        const rate = Number(next.currencyRate) || 0;
+
+        if (field === "currencyRate" || field === "amount") {
+          if (rate && next.amount !== "") {
+            next.amountSAR = (rate * Number(next.amount)).toFixed(2);
+          }
+        } else if (rate && value !== "") {
+          next.amount = (Number(value) / rate).toFixed(4);
+        }
+
+        return next;
+      }),
+    );
   };
 
   // ----------------------------------------------------------
@@ -245,19 +322,15 @@ const PurchaseExpense: React.FC<PurchaseExpenseProps> = ({ onClose }) => {
   };
 
   // ----------------------------------------------------------
-  // TOTAL
+  // TOTALS (VB footer sums: fCreditFC and fCredit)
   // ----------------------------------------------------------
 
-  const total = rows.reduce(
+  const totalFC = rows.reduce((sum, row) => sum + (Number(row.amount) || 0), 0);
+
+  const totalSAR = rows.reduce(
     (sum, row) => sum + (Number(row.amountSAR) || 0),
     0,
   );
-
-  // ----------------------------------------------------------
-  // TOTAL DISPLAY
-  // ----------------------------------------------------------
-
-  const totalDisplay = total.toFixed(2);
 
   // ----------------------------------------------------------
   // SELECT COMPONENT
@@ -266,17 +339,20 @@ const PurchaseExpense: React.FC<PurchaseExpenseProps> = ({ onClose }) => {
   const renderSelect = (
     index: number,
     inputId: string,
-    value: Option | null,
+    value: string,
     options: Option[],
-    onChange: (option: Option | null) => void,
+    onChange: (value: string) => void,
     searchable = true,
   ) => (
     <Select<Option, false>
       inputId={`${inputId}-${index}`}
       instanceId={`${inputId}-${index}`}
       options={options}
-      value={value}
-      onChange={onChange}
+      value={pick(options, value)}
+      onChange={(option) => {
+        onChange(option?.value ?? "");
+        setActiveRow(index);
+      }}
       styles={selectStyles}
       components={selectComponents}
       isClearable={false}
@@ -568,11 +644,8 @@ const PurchaseExpense: React.FC<PurchaseExpenseProps> = ({ onClose }) => {
                             index,
                             "lkpAccountID",
                             row.accountId,
-                            accountOptions,
-                            (option) => {
-                              updateRow(index, "accountId", option);
-                              setActiveRow(index);
-                            },
+                            accountIdOptions,
+                            (value) => updateRow(index, "accountId", value),
                           )}
                         </td>
 
@@ -590,12 +663,9 @@ const PurchaseExpense: React.FC<PurchaseExpenseProps> = ({ onClose }) => {
                           {renderSelect(
                             index,
                             "lkpAccountName",
-                            row.accountName,
-                            accountOptions,
-                            (option) => {
-                              updateRow(index, "accountName", option);
-                              setActiveRow(index);
-                            },
+                            row.accountId,
+                            accountNameOptions,
+                            (value) => updateRow(index, "accountId", value),
                           )}
                         </td>
 
@@ -614,11 +684,8 @@ const PurchaseExpense: React.FC<PurchaseExpenseProps> = ({ onClose }) => {
                             index,
                             "lkpCCID",
                             row.ccid,
-                            ccidOptions,
-                            (option) => {
-                              updateRow(index, "ccid", option);
-                              setActiveRow(index);
-                            },
+                            ccOptions,
+                            (value) => updateRow(index, "ccid", value),
                             false,
                           )}
                         </td>
@@ -639,10 +706,7 @@ const PurchaseExpense: React.FC<PurchaseExpenseProps> = ({ onClose }) => {
                             "lkpCurrency",
                             row.currency,
                             currencyOptions,
-                            (option) => {
-                              updateRow(index, "currency", option);
-                              setActiveRow(index);
-                            },
+                            (value) => updateRow(index, "currency", value),
                             false,
                           )}
                         </td>
@@ -686,7 +750,7 @@ const PurchaseExpense: React.FC<PurchaseExpenseProps> = ({ onClose }) => {
                         </td>
 
                         {/* ------------------------------------------
-                      AMOUNT
+                      AMOUNT (FC)
                   ------------------------------------------ */}
 
                         <td className="h-[32px] border border-[#dce5ef] p-0">
@@ -710,7 +774,7 @@ const PurchaseExpense: React.FC<PurchaseExpenseProps> = ({ onClose }) => {
                               updateRow(
                                 index,
                                 "amount",
-                                formatNumber(row.amount, 2),
+                                formatNumber(row.amount, 4),
                               )
                             }
                             className={`${inputClass} text-right`}
@@ -789,6 +853,10 @@ const PurchaseExpense: React.FC<PurchaseExpenseProps> = ({ onClose }) => {
               </div>
             </div>
 
+            {lookupError && (
+              <p className="px-3 py-1 text-red-600">{lookupError}</p>
+            )}
+
             {/* ======================================================
           BOTTOM FORM
       ====================================================== */}
@@ -833,7 +901,7 @@ const PurchaseExpense: React.FC<PurchaseExpenseProps> = ({ onClose }) => {
               </div>
 
               {/* ----------------------------------------------------
-            TOTAL VALUE
+            TOTAL VALUE (FC)
         ---------------------------------------------------- */}
 
               <div
@@ -855,7 +923,7 @@ const PurchaseExpense: React.FC<PurchaseExpenseProps> = ({ onClose }) => {
             text-[#333]
           "
               >
-                {totalDisplay}
+                {totalFC.toFixed(4)}
               </div>
 
               {/* ----------------------------------------------------
@@ -881,7 +949,7 @@ const PurchaseExpense: React.FC<PurchaseExpenseProps> = ({ onClose }) => {
             text-[#333]
           "
               >
-                0.00
+                {totalSAR.toFixed(2)}
               </div>
             </div>
           </section>

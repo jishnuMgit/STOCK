@@ -94,7 +94,7 @@ BEGIN
                    ON sc.fcoid   = a.fcoid
                   AND sc.fitemid = a.fitemid
                   AND sc.fbrid   = a.fbrid
-                  AND sc.fyear   = p_pintyear
+                  AND sc.fyear   = p_pintyear::varchar     -- tblstockcontrol.fyear is varchar(4)
             WHERE a.fcoid   = p_pstrcoid
               AND a.fitemid = p_stritemid
             ORDER BY c.fbrid;

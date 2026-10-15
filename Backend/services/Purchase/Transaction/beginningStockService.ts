@@ -354,6 +354,32 @@ export async function saveBeginningStockService(p: {
     const savedSlNos = new Set(saved.map((line) => Number(line.fslno)));
     const mode: "S" | "M" = saved.length > 0 ? "M" : "S";
 
+    // The document's saving transaction number (fsavingtransno): the one its
+    // lines already carry, so a Modify never renumbers it - or, for a new
+    // document (or lines saved before the column existed), the next one from
+    // dbo.getnexttransno. The same number goes on every line.
+    const savingResult = await client.query(
+      `
+      SELECT MAX(fsavingtransno) AS "savingTransNo"
+      FROM dbo.tblstocktrans
+      WHERE fcoid    = $1
+        AND fyear    = $2
+        AND fbrid    = $3
+        AND fdoctype = $4
+        AND fdocno   = $5
+      `,
+      [p.PstrCoID, p.PstrYear, p.lkpBranch, DOC_TYPE, DOC_NO]
+    );
+
+    const savingTransNo: string =
+      savingResult.rows[0]?.savingTransNo ??
+      (
+        await client.query(
+          `SELECT dbo.getnexttransno($1::varchar, $2::varchar, $3::varchar, 'S') AS "savingTransNo"`,
+          [p.PstrCoID, String(p.PstrYear), p.lkpBranch]
+        )
+      ).rows[0].savingTransNo;
+
     const kept = lines.filter(
       (line) => line.originalSlNo !== null && savedSlNos.has(line.originalSlNo)
     );
@@ -370,6 +396,7 @@ export async function saveBeginningStockService(p: {
       dtpDate: p.dtpDate,
       txtNote: p.txtNote,
       PstrUserID: p.PstrUserID,
+      savingTransNo,
     };
 
     // removed lines first
@@ -688,7 +715,7 @@ export async function postBeginningStockService(p: {
           SELECT 1
           FROM dbo.tblstockcontrol c
           WHERE c.fcoid   = t.fcoid
-            AND c.fyear   = t.fyear
+            AND c.fyear   = t.fyear::varchar
             AND c.fbrid   = t.fbrid
             AND c.fitemid = t.fitemid
         )
@@ -861,6 +888,7 @@ async function callSpBeginningStock(
     totalCost?: number;
     originalSlNo?: number;
     PstrUserID?: string;
+    savingTransNo?: string;
     cursorName?: string;
   }
 ): Promise<void> {
@@ -885,7 +913,8 @@ async function callSpBeginningStock(
       p_original_fslno => $14::smallint,
       p_pstruserid     => $15::varchar,
       p_strnote        => $16::varchar,
-      p_result_cursor  => $17::refcursor
+      p_strsavingtransno => $17::varchar,
+      p_result_cursor  => $18::refcursor
     )
     `,
     [
@@ -905,6 +934,7 @@ async function callSpBeginningStock(
       p.originalSlNo ?? 0,
       p.PstrUserID ?? null,
       p.txtNote ?? null,
+      p.savingTransNo ?? null,
       p.cursorName ??
         `cur_beginningstock_${Date.now()}_${Math.floor(Math.random() * 100000)}`,
     ]
