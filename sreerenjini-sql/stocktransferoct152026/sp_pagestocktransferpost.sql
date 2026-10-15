@@ -1,4 +1,7 @@
 
+-- tblstocktrans.fyear is varchar(4) now (like tblstockcontrol.fyear): the year argument
+-- stays a smallint, and every comparison with a year column casts it (p_pintyear::varchar).
+
 CREATE OR REPLACE PROCEDURE dbo.sp_pagestocktransferpost(
     IN p_strmode    varchar(1),
     IN p_pstrcoid   varchar(3),
@@ -40,7 +43,7 @@ BEGIN
                COALESCE(st.fqtyout, 0) AS qtyout
         FROM dbo.tblstocktrans st
         WHERE st.fcoid    = p_pstrcoid
-          AND st.fyear    = p_pintyear
+          AND st.fyear    = p_pintyear::varchar
           AND st.fbrid    = p_strbrid
           AND st.fdoctype = p_strdoctype
           AND st.fdocno   = p_strdocno
@@ -75,7 +78,7 @@ BEGIN
            SET funitcost  = v_numnewunitcost,
                ftotalcost = v_numqtyout * v_numnewunitcost
          WHERE fcoid    = p_pstrcoid
-           AND fyear    = p_pintyear
+           AND fyear    = p_pintyear::varchar
            AND fbrid    = p_strbrid
            AND fdoctype = p_strdoctype
            AND fdocno   = p_strdocno
@@ -86,7 +89,7 @@ BEGIN
            SET funitcost  = v_numnewunitcost,
                ftotalcost = v_numqtyout * v_numnewunitcost
          WHERE fcoid    = p_pstrcoid
-           AND fyear    = p_pintyear
+           AND fyear    = p_pintyear::varchar
            AND fbrid    = v_strtobrid
            AND fdoctype = v_strdoctypeg
            AND fdocno   = p_strdocno
@@ -160,7 +163,7 @@ BEGIN
        SET fpost = true
            -- , fpostorder = v_intpostorder, fpostorderc = v_intpostorder   (no such columns)
      WHERE fcoid   = p_pstrcoid
-       AND fyear   = p_pintyear
+       AND fyear   = p_pintyear::varchar
        AND fstbrid = p_strbrid
        AND (fdoctype = p_strdoctype OR fdoctype = v_strdoctypeg)
        AND fdocno  = p_strdocno;

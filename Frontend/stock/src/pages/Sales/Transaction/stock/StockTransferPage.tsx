@@ -10,7 +10,7 @@ import {
   makePairComponents,
   filterPairOption,
   pairDividedIdMenuStyles,
-  pairDividedNameMenuStyles,
+  makePairDividedMenuStyles,
 } from "../../../../components/PairSelect/pairSelectParts";
 import { useAltShortcuts } from "../../../../hooks/useAltShortcuts";
 import { useConfirm } from "../../../../hooks/useConfirm";
@@ -173,7 +173,17 @@ const branchSelectStyles: StylesConfig<SelectOption, false> = {
 // ============================================================
 
 const itemIdComponents = makePairComponents("Item ID", "Item Name", false, true);
-const itemNameComponents = makePairComponents("Item ID", "Item Name", true, true);
+// The Item Name box's list hangs 210px past the box: that is its Item ID column,
+// wide enough for a whole ID on one line (the default 100px wrapped long IDs).
+const NAME_LIST_HANG = 210;
+const itemNameComponents = makePairComponents(
+  "Item ID",
+  "Item Name",
+  true,
+  true,
+  NAME_LIST_HANG,
+);
+const itemNameMenuStyles = makePairDividedMenuStyles(NAME_LIST_HANG);
 
 // ============================================================
 // REACT SELECT STYLES
@@ -1820,7 +1830,7 @@ const StockTransferPage: React.FC = () => {
                       styles={
                         {
                           ...tableSelectStyles,
-                          ...pairDividedNameMenuStyles,
+                          ...itemNameMenuStyles,
                         } as StylesConfig<SelectOption, false>
                       }
                       components={itemNameComponents}

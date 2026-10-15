@@ -15,7 +15,7 @@
 -- Differences from the old procedure (each is kept as a comment):
 --   1. GTL: the old procedure read fStock, fUnitCost and fPrevUnitCost from
 --      tblItemTL. Here the stock lives in tblstockcontrol (the table Post
---      fills), so GTL joins it for the login year (p_pintyear). A branch that
+--      fills), so GTL joins it for the login year (p_pstryear). A branch that
 --      has the item but no stock row shows 0.
 --   2. GTL: tblitemtl has ONE price (funitprice) instead of Retail, Wholesale
 --      and Special price, so one Unit Price column is returned.
@@ -25,15 +25,19 @@
 --
 -- Test:
 --   BEGIN;
---   CALL dbo.sp_pageitemenquiry('GTL', '01', 2026::smallint, 'light', p_result_cursor => 'c1');
+--   CALL dbo.sp_pageitemenquiry('GTL', '01', '2026', 'light', p_result_cursor => 'c1');
 --   FETCH ALL IN c1;
 --   COMMIT;
 -- =====================================================================
 
+-- The year is now TEXT (p_pstryear, like tblstockcontrol.fyear which is varchar(4)).
+-- It was a smallint (p_pintyear); the DROP below removes that version.
+DROP PROCEDURE IF EXISTS dbo.sp_pageitemenquiry(character varying, character varying, smallint, character varying, refcursor);
+
 CREATE OR REPLACE PROCEDURE dbo.sp_pageitemenquiry(
     IN    p_strmode          character varying,
     IN    p_pstrcoid         character varying,
-    IN    p_pintyear         smallint          DEFAULT NULL::smallint,
+    IN    p_pstryear         character varying DEFAULT NULL::character varying,
     IN    p_stritemid        character varying DEFAULT NULL::character varying,
     INOUT p_result_cursor    refcursor         DEFAULT 'cur_pageitemenquiry'::refcursor)
 LANGUAGE plpgsql
@@ -94,7 +98,7 @@ BEGIN
                    ON sc.fcoid   = a.fcoid
                   AND sc.fitemid = a.fitemid
                   AND sc.fbrid   = a.fbrid
-                  AND sc.fyear   = p_pintyear::varchar     -- tblstockcontrol.fyear is varchar(4)
+                  AND sc.fyear   = p_pstryear              -- tblstockcontrol.fyear is varchar(4)
             WHERE a.fcoid   = p_pstrcoid
               AND a.fitemid = p_stritemid
             ORDER BY c.fbrid;
