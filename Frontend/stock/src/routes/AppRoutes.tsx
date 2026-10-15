@@ -79,6 +79,7 @@ import RptExpenseSumPage from "../pages/Finance/Report/ExpenseSummary/RptExpense
 import RptReceiptPaymentSumPage from "../pages/Finance/Report/ReceiptPaymentSum/RptReceiptPaymentSumPage";
 import RptFinDocList from "../pages/Finance/Report/DocumentsList/RptFinDocList";
 import SalesPriceListPage from "../pages/Sales/Setup/SalesPriceListPage";
+import BeginningStockPrintPage from "../pages/Purchase/Transaction/BeginningStockPrintPage";
 
 
 const Login = lazy(() => import("../pages/Auth/LoginPage"));
