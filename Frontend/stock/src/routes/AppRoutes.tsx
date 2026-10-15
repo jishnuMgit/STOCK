@@ -1,6 +1,5 @@
 import { lazy, Suspense } from "react";
 import { Routes, Route, Navigate } from "react-router-dom";
-
 import SetDocumentNo from "../pages/Settings/SetDocumentNoPage";
 import ProtectedRoute from "./ProtectedRoutes";
 import SetBranchInfo from "../pages/Settings/SetBranchInfoPage";
@@ -11,6 +10,7 @@ import UserLogin from "../pages/Security/UserLogin/UserLoginPage";
 import SetChartOfAccount from "../pages/Settings/SetChartOfAccountPage";
 import UserPermission from "../pages/Security/UserPermissionMenu/UserPermissionMenuPage";
 import BeginningStockPage from "../pages/Purchase/Transaction/BeginningStockPage";
+import BeginningStockPrintPage from "../pages/Purchase/Transaction/BeginningStockPrintPage";
 import UserPermissionBranchPage from "../pages/Security/UserPermissionBranch/UserPermissionBranchPage";
 import SetPostingAccountPage from "../pages/Settings/SetPostingAccountPage";
 import PurchaseInvoicePage from "../pages/Purchase/Transaction/PurchaseInvoicePage";
@@ -24,7 +24,6 @@ import ActivePeriodPage from "../pages/Settings/ActivePeriodPage";
 import StockAdjustmentPage from "../pages/Sales/Transaction/stock/StockAdjustmentPage";
 import SetDefaultBranch from "../pages/Settings/SetDefaultBranchPage";
 import SetActivePeriod from "../pages/Settings/SetActivePeriodPage";
-
 import ItemEnquiryPage from "../pages/Sales/Setup/ItemEnquiryPage";
 import UnitPage from "../pages/Purchase/Setup/UnitPage";
 import StaffPage from "../pages/Purchase/Setup/StaffPage";
@@ -34,7 +33,7 @@ import UserTransactionAudit from "../pages/Security/UserTransactionAudit/UserTra
 import StockDocumentPost from "../pages/Sales/Transaction/stock/StockDocumentPostPage";
 import StockDocumentPostCancel from "../pages/Sales/Transaction/stock/StockDocumentPostCancel";
 import StockDocumentRePost from "../pages/Sales/Transaction/stock/StockDocumentRePost";
-import RptGLPage from "../pages/Finance/Report/GeneralLedger/RptGLPage";
+import RptGLPage from "../pages/Finance/Report/GeneralLedger/GeneralLedger/RptGLPage";
 import MatchingPage from "../pages/Finance/Transaction/Match/MatchPage";
 import UnMatchPage from "../pages/Finance/Transaction/MatchReversal/MatchReversalPage";
 import CostCenterPage from "../pages/Finance/Setup/CostCenterPage";
@@ -62,6 +61,18 @@ import RptPOSummaryPage from "../pages/Purchase/Report/POSummary/RptPOSummaryPag
 import RptStaffSalesPage from "../pages/Purchase/Report/StaffSales/RptStaffSalesPage";
 import RptSalesSummaryPage from "../pages/Purchase/Report/SalesSummary/RptSalesSummaryPage";
 import RptItemMovementPage from "../pages/Purchase/Report/ItemMovement/RptItemMovementPage";
+import RptInvoicewiseProfitPage from "../pages/Purchase/Report/InvoicewiseProfit/RptInvoicewiseProfitPage";
+import RptStockReportPage from "../pages/Purchase/Report/Stock/RptStockReportPage";
+import RptStockValuationPage from "../pages/Purchase/Report/StockValue/RptStockValuationPage";
+import RptStockVerificationPage from "../pages/Purchase/Report/StockVerification/RptStockVerificationPage";
+import RptStockAgeingPage from "../pages/Purchase/Report/StockAgeing/RptStockAgeingPage";
+import RptDocumentListPage from "../pages/Purchase/Report/DocumentList/RptDocumentListPage";
+import RptSalesPriceListPage from "../pages/Purchase/Report/SalesPriceList/RptSalesPriceListPage";
+import RptItemListPage from "../pages/Purchase/Report/ItemList/RptItemListPage";
+import RptItemHistoryPage from "../pages/Purchase/Report/ItemHistory/RptItemHistoryPage";
+import RptGeneralLedgerGroup from "../pages/Finance/Report/GeneralLedger/GeneralLedgerGroup/RptGeneralLedgerGroupPage";
+import RptFinYearCloseBalPage from "../pages/Finance/Report/YearCloseBalance/RptFinYearCloseBalPage";
+import RptGeneralLedgerSummaryPage from "../pages/Finance/Report/GeneralLedger/GeneralLedgerSummary/RptGeneralLedgerSummaryPage";
 
 
 const Login = lazy(() => import("../pages/Auth/LoginPage"));
@@ -149,6 +160,9 @@ const AppRoutes = () => {
           <Route path="/Finance/Reports/RptChartOfAccount" element={<RptChartOfAccountPage/>}/>
           <Route path="/Finance/Reports/RptCustomerList" element={<RptCustomerListPage/>}/>
           <Route path="/Finance/Reports/RptSupplierList" element={<RptSupplierListPage/>}/>
+          <Route path="/Finance/Reports/RptGLGroup" element={<RptGeneralLedgerGroup/>}/>
+          <Route path="/Finance/Reports/RptFinYearCloseBal" element={<RptFinYearCloseBalPage/>}/>
+          <Route path="/Finance/Reports/RptGLSum" element={<RptGeneralLedgerSummaryPage/>}/>
 
           {/* ================= SALES - TRANSACTION ================= */}
 
@@ -190,6 +204,15 @@ const AppRoutes = () => {
           <Route path="/Purchase/Report/RptStaffSales" element={<RptStaffSalesPage/>}/>
           <Route path="/Purchase/Report/RptSalesSummary" element={<RptSalesSummaryPage/>}/>
           <Route path="/Purchase/Report/RptItemMovement" element={<RptItemMovementPage/>}/>
+          <Route path="/Purchase/Report/RptInvoicewiseProfit" element={<RptInvoicewiseProfitPage/>}/>
+          <Route path="/Purchase/Report/RptStockReport" element={<RptStockReportPage/>}/>
+          <Route path="/Purchase/Report/RptStockValuation" element={<RptStockValuationPage/>}/>
+          <Route path="/Purchase/Report/RptStockVerification" element={<RptStockVerificationPage/>}/>
+          <Route path="/Purchase/Report/RptStockAgeing" element={<RptStockAgeingPage/>}/>
+          <Route path="/Purchase/Report/RptDocumentList" element={<RptDocumentListPage/>}/>
+          <Route path="/Purchase/Report/RptSalesPriceList" element={<RptSalesPriceListPage/>}/>
+          <Route path="/Purchase/Report/RptItemList" element={<RptItemListPage/>}/>
+          <Route path="/Purchase/Report/RptItemHistory" element={<RptItemHistoryPage/>}/>
           
        
           {/* ================= SETTINGS ================= */}

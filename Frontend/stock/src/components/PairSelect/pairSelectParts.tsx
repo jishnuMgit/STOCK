@@ -91,19 +91,26 @@ const ellipsisStyle = {
 // nameFirst = true  -> "Name | ID"  (used by the Name box)
 // divider   = true  -> a thin line between the two columns, in the header
 //                      and in every row (off by default: Item page)
+// hang      = only with the divider: how many px the list hangs past the
+//             box (the width of the second column). Left out, the lists keep
+//             their usual sizes (330px for an ID box, 100px for a Name box);
+//             give the SAME number to makePairDividedMenuStyles below.
 export const makePairComponents = (
   idHeader: string,
   nameHeader: string,
   nameFirst: boolean,
-  divider = false
+  divider = false,
+  hang?: number
 ) => {
   // With the divider the first column is exactly as wide as the box the
   // list belongs to (the line sits at the box's right edge) - see
   // pairDividedIdMenuStyles / pairDividedNameMenuStyles below.
   const columns = divider
-    ? nameFirst
-      ? DIVIDED_COLUMNS_NAME_FIRST
-      : DIVIDED_COLUMNS_ID_FIRST
+    ? hang !== undefined
+      ? `calc(100% - ${hang - 8}px) 1fr`
+      : nameFirst
+        ? DIVIDED_COLUMNS_NAME_FIRST
+        : DIVIDED_COLUMNS_ID_FIRST
     : nameFirst
       ? PAIR_GRID_COLUMNS_NAME_FIRST
       : PAIR_GRID_COLUMNS;
@@ -246,6 +253,23 @@ export const pairDividedIdMenuStyles: typeof pairNameMenuStyles = {
     marginTop: "1px", // the list sits right under the box (default is 8px)
   }),
 };
+
+// A divided list that hangs `hang` px past its box - the same look as
+// pairDividedNameMenuStyles / pairDividedIdMenuStyles with a width of your own
+// (use the same number in makePairComponents(..., true, hang)).
+export const makePairDividedMenuStyles = (
+  hang: number
+): typeof pairNameMenuStyles => ({
+  ...pairNameMenuStyles,
+  menuList: dividedMenuList,
+  menu: (base) => ({
+    ...base,
+    width: `calc(100% + ${hang}px)`,
+    zIndex: 99999,
+    fontSize: "12px",
+    marginTop: "1px",
+  }),
+});
 
 // For the ID boxes: a fixed-width list, wider than the box.
 export const pairMenuStyles: Pick<

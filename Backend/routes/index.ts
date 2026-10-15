@@ -22,13 +22,17 @@ import UserAuditRouter from "./SecurityRoutes/UserAuditRouter.js";
 import userpermission from "./SecurityRoutes/UserPermissionMenuRouter.js";
 import userpermissionBranch from "./SecurityRoutes/UserPermissionBranchRouter.js";
 import purchaseInvoiceRouter from "./Purchase/Transaction/PurchaseInvoiceRouter.js";
+import BeginningStockRouter from "./Purchase/Transaction/BeginningStockRouter.js";
+import ItemEnquiryRouter from "./Sales/Setup/ItemEnquiryRouter.js";
 import branchRouter from "./common/BranchRouter.js";
 import chartOfAccountRouter from "./Finance/Setup/COARouter.js";
 import CostCenterRouter from "./Finance/Setup/CostCenterRouter.js";
 import InactivateAccountRouter from "./Finance/Setup/InactivateAccountRouter.js";
 import CustomerSupplierCountryRouter from "./Finance/Setup/CustomerSupplierCountryRouter.js";
 import CurrencyRouter from "./Purchase/Setup/CurrencyPageRouter.js";
-import supplierRouter from "./common/SupplierRouter.js";
+import supplierRouter from "./common/SupplierRouter.js";import RptCOARouter from "./Finance/Report/RptChartOfAccountRouter.js" 
+import RptCustomerListRouter from "./Finance/Report/RptCustomerListRouter.js"
+
 
 const router = express.Router();
 
@@ -55,6 +59,8 @@ router.use("/UserAudit", UserAuditRouter);
 router.use("/user-permission", userpermission);
 router.use("/user-permission-branch", userpermissionBranch);
 router.use("/purchase-invoice", purchaseInvoiceRouter);
+router.use("/BeginningStock", BeginningStockRouter);
+router.use("/ItemEnquiry", ItemEnquiryRouter);
 router.use("/branch", branchRouter);
 router.use("/coa", chartOfAccountRouter);
 router.use("/CostCenter", CostCenterRouter);
@@ -62,5 +68,7 @@ router.use("/InactivateAccount", InactivateAccountRouter);
 router.use("/CustomerSupplierCountry", CustomerSupplierCountryRouter);
 router.use("/Currency", CurrencyRouter);
 router.use("/supplier", supplierRouter);
+router.use("/RptChartOfAccount", RptCOARouter);
+router.use("/RptCustomerList",  RptCustomerListRouter);
 
 export default router;
