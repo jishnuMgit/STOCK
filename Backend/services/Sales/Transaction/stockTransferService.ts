@@ -828,6 +828,9 @@ export type StockTransferPrintLine = {
   fqtyout: string;
   funitcost: string;
   ftotalcost: string;
+  // the branch names the procedure joins on every row
+  fbrname?: string | null;
+  ftobrname?: string | null;
 };
 
 export type StockTransferPrint = {
@@ -855,42 +858,66 @@ export async function getStockTransferPrintService(
     txtDocNo
   );
 
-  const lines = await pool.query(
-    `
-    SELECT a.fslno, a.fitemid, i.fitemname, a.funit, a.fqtyout, a.funitcost, a.ftotalcost
-    FROM dbo.tblstocktrans a
-    LEFT OUTER JOIN dbo.tblitemhd i
-           ON i.fcoid = a.fcoid AND i.fitemid = a.fitemid
-    WHERE a.fcoid    = $1
-      AND a.fyear    = $2
-      AND a.fstbrid  = $3
-      AND a.fdoctype = $4
-      AND a.fdocno   = $5
-    ORDER BY a.fslno
-    `,
-    [PstrCoID, PstrYear, lkpBranch, DOC_TYPE, txtDocNo]
-  );
+  // The lines come from the TL's dbo.sp_pagestockprint (the old SP_rptStDocPrint),
+  // which takes the WHERE text. The filter is built HERE, from values the
+  // controller has already validated, each one quoted - never from the browser.
+  // (The old report's filter: company, year, branch, doc type and Entry No.)
+  const quote = (value: string) => value.replace(/'/g, "''");
 
-  const names = await pool.query(
-    `
-    SELECT
-      (SELECT fconame FROM dbo.tblcompany WHERE fcoid = $1) AS "fconame",
-      (SELECT fbrname FROM dbo.tblbranch WHERE fcoid = $1 AND fbrid = $2) AS "fbrname",
-      (SELECT fbrname FROM dbo.tblbranch WHERE fcoid = $1 AND fbrid = $3) AS "ftobrname"
-    `,
-    [PstrCoID, lkpBranch, document.header?.fsttobrid ?? ""]
+  const strFilter =
+    `a.fcoid = '${quote(PstrCoID)}' and a.fyear = '${Math.trunc(Number(PstrYear))}' ` +
+    `and a.fbrid = '${quote(lkpBranch)}' and a.fdoctype = '${DOC_TYPE}' ` +
+    `and a.fdocno = '${quote(txtDocNo)}'`;
+
+  const cursorName =
+    `cur_stocktransferprint_${Date.now()}_${Math.floor(Math.random() * 100000)}`;
+
+  const client: PoolClient = await pool.connect();
+
+  let lines: StockTransferPrintLine[];
+
+  try {
+    await client.query("BEGIN");
+
+    await client.query(
+      `CALL dbo.sp_pagestockprint(
+         p_strdoc        => $1::varchar,
+         p_strfilter     => $2::text,
+         p_result_cursor => $3::refcursor
+       )`,
+      [DOC_TYPE, strFilter, cursorName]
+    );
+
+    const result = await client.query(`FETCH ALL FROM "${cursorName}"`);
+
+    await client.query("COMMIT");
+
+    lines = result.rows as StockTransferPrintLine[];
+  } catch (error: unknown) {
+    await client.query("ROLLBACK");
+    console.error("getStockTransferPrintService error:", error);
+    throw error;
+  } finally {
+    client.release();
+  }
+
+  // the company name the old report took from the application
+  const company = await pool.query(
+    `SELECT fconame FROM dbo.tblcompany WHERE fcoid = $1`,
+    [PstrCoID]
   );
 
   return {
     header: {
-      fconame: String(names.rows[0]?.fconame ?? "").trim(),
-      fbrname: String(names.rows[0]?.fbrname ?? ""),
-      ftobrname: String(names.rows[0]?.ftobrname ?? ""),
+      fconame: String(company.rows[0]?.fconame ?? "").trim(),
+      // d (the row's own branch = the From branch) and f (the To branch) of the procedure
+      fbrname: String(lines[0]?.fbrname ?? ""),
+      ftobrname: String(lines[0]?.ftobrname ?? ""),
       fdocno: txtDocNo,
       fdate: document.header?.fdate ?? null,
       fnote: document.header?.fnote ?? null,
     },
-    lines: lines.rows as StockTransferPrintLine[],
+    lines,
   };
 }
 

@@ -1,3 +1,8 @@
+-- dbo.getnextdocno - the ORIGINAL function. It once failed for the stock documents
+-- (PI, PR, SI, SR, ST, ADJ): tblstocktrans.fyear was a smallint and p_stryear is text,
+-- and a ::SMALLINT cast fixed it. tblstocktrans.fyear is varchar(4) now, so the cast is
+-- gone again and the function is exactly as it was written.
+
 
 CREATE OR REPLACE FUNCTION dbo.getnextdocno(p_strcoid character varying, p_stryear character varying, p_strbrid character varying, p_strdoctype character varying)
  RETURNS TABLE(fdocno character varying, fdocnolen smallint)
@@ -36,7 +41,7 @@ BEGIN
         INTO v_last_doc_no
         FROM dbo.tblstocktrans t
         WHERE t.fcoid = p_strcoid
-          AND t.fyear = p_stryear::SMALLINT          -- was: t.fyear = p_stryear
+          AND t.fyear = p_stryear
           AND t.fbrid = p_strbrid
           AND t.fdoctype = p_strdoctype;
 

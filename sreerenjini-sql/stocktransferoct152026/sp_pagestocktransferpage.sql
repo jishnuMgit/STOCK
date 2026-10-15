@@ -37,6 +37,9 @@
 --   * the two read modes return dates as text so no time zone can move them.
 --   * p_strnote is the note, written on every row (varchar(100)).
 --
+-- tblstocktrans.fyear is varchar(4) now (like tblstockcontrol.fyear): the year argument
+-- stays a smallint, and every comparison with a year column casts it (p_pintyear::varchar).
+--
 -- Examples (cursor calls run inside one transaction)
 --   BEGIN;
 --   CALL dbo.sp_pagestocktransferpage('GTL', '01', 2026::smallint, 'JD', 'ST', 'STI', 'STJD-2600001', p_result_cursor => 'c1');
@@ -94,7 +97,7 @@ BEGIN
                 to_char(fmuserdate, 'DD Mon YYYY HH24:MI:SS')  AS fmuserdate
             FROM dbo.tblstocktrans
             WHERE fcoid    = p_pstrcoid
-              AND fyear    = p_pintyear
+              AND fyear    = p_pintyear::varchar
               AND fstbrid  = p_strstbrid
               AND fdoctype = p_strdoctype
               AND fdocno   = p_strdocno
@@ -113,7 +116,7 @@ BEGIN
                 ftotalcost
             FROM dbo.tblstocktrans
             WHERE fcoid    = p_pstrcoid
-              AND fyear    = p_pintyear
+              AND fyear    = p_pintyear::varchar
               AND fstbrid  = p_strstbrid
               AND fdoctype = p_strdoctype
               AND fdocno   = p_strdocno
@@ -161,7 +164,7 @@ BEGIN
           INTO v_suserid, v_suserdate
           FROM dbo.tblstocktrans
          WHERE fcoid    = p_pstrcoid
-           AND fyear    = p_pintyear
+           AND fyear    = p_pintyear::varchar
            AND fstbrid  = p_strstbrid
            AND fdoctype = p_strdoctype
            AND fdocno   = p_strdocno
@@ -182,7 +185,7 @@ BEGIN
             fmuserid   = v_muserid,
             fmuserdate = v_muserdate
         WHERE fcoid    = p_pstrcoid
-          AND fyear    = p_pintyear
+          AND fyear    = p_pintyear::varchar
           AND fstbrid  = p_strstbrid
           AND fdoctype = p_strdoctype
           AND fdocno   = p_strdocno;
@@ -201,7 +204,7 @@ BEGIN
             fmuserid   = v_muserid,
             fmuserdate = v_muserdate
         WHERE fcoid    = p_pstrcoid
-          AND fyear    = p_pintyear
+          AND fyear    = p_pintyear::varchar
           AND fstbrid  = p_strstbrid
           AND fdoctype = p_strdoctypeg
           AND fdocno   = p_strdocno;
@@ -216,7 +219,7 @@ BEGIN
             funitcost  = COALESCE(p_numunitcost, 0),
             ftotalcost = COALESCE(p_numtotalcost, 0)
         WHERE fcoid    = p_pstrcoid
-          AND fyear    = p_pintyear
+          AND fyear    = p_pintyear::varchar
           AND fstbrid  = p_strstbrid
           AND fdoctype = p_strdoctype
           AND fdocno   = p_strdocno
@@ -230,7 +233,7 @@ BEGIN
             funitcost  = COALESCE(p_numunitcost, 0),
             ftotalcost = COALESCE(p_numtotalcost, 0)
         WHERE fcoid    = p_pstrcoid
-          AND fyear    = p_pintyear
+          AND fyear    = p_pintyear::varchar
           AND fstbrid  = p_strstbrid
           AND fdoctype = p_strdoctypeg
           AND fdocno   = p_strdocno
@@ -240,7 +243,7 @@ BEGIN
 
         DELETE FROM dbo.tblstocktrans
         WHERE fcoid    = p_pstrcoid
-          AND fyear    = p_pintyear
+          AND fyear    = p_pintyear::varchar
           AND fstbrid  = p_strstbrid
           AND fdoctype = p_strdoctype
           AND fdocno   = p_strdocno
@@ -248,7 +251,7 @@ BEGIN
 
         DELETE FROM dbo.tblstocktrans
         WHERE fcoid    = p_pstrcoid
-          AND fyear    = p_pintyear
+          AND fyear    = p_pintyear::varchar
           AND fstbrid  = p_strstbrid
           AND fdoctype = p_strdoctypeg
           AND fdocno   = p_strdocno
@@ -258,14 +261,14 @@ BEGIN
 
         DELETE FROM dbo.tblstocktrans
         WHERE fcoid    = p_pstrcoid
-          AND fyear    = p_pintyear
+          AND fyear    = p_pintyear::varchar
           AND fstbrid  = p_strstbrid
           AND fdoctype = p_strdoctype
           AND fdocno   = p_strdocno;
 
         DELETE FROM dbo.tblstocktrans
         WHERE fcoid    = p_pstrcoid
-          AND fyear    = p_pintyear
+          AND fyear    = p_pintyear::varchar
           AND fstbrid  = p_strstbrid
           AND fdoctype = p_strdoctypeg
           AND fdocno   = p_strdocno;
