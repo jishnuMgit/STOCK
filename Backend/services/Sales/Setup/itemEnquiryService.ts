@@ -133,7 +133,7 @@ async function fetchCursor<T>(
     CALL dbo.sp_pageitemenquiry(
       p_strmode       => $1::varchar,
       p_pstrcoid      => $2::varchar,
-      p_pintyear      => $3::smallint,
+      p_pstryear      => $3::varchar,
       p_stritemid     => $4::varchar,
       p_result_cursor => $5::refcursor
     )
