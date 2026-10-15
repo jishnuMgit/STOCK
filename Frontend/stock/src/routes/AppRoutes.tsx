@@ -75,6 +75,7 @@ import RptFinYearCloseBalPage from "../pages/Finance/Report/YearCloseBalance/Rpt
 import RptGeneralLedgerSummaryPage from "../pages/Finance/Report/GeneralLedger/GeneralLedgerSummary/RptGeneralLedgerSummaryPage";
 import DocumentPostPage from "../pages/Finance/Transaction/DocumentPost/DocumentPostPage";
 import RptDocumentPrintPage from "../pages/Finance/Transaction/DocumentPrint/RptDocumentPrintPage";
+import RptExpenseSumPage from "../pages/Finance/Report/ExpenseSummary/RptExpenseSumPage";
 
 
 const Login = lazy(() => import("../pages/Auth/LoginPage"));
@@ -167,6 +168,7 @@ const AppRoutes = () => {
           <Route path="/Finance/Reports/RptGLGroup" element={<RptGeneralLedgerGroup/>}/>
           <Route path="/Finance/Reports/RptFinYearCloseBal" element={<RptFinYearCloseBalPage/>}/>
           <Route path="/Finance/Reports/RptGLSum" element={<RptGeneralLedgerSummaryPage/>}/>
+          <Route path="/Finance/Reports/RptExpenseSum" element={<RptExpenseSumPage/>}/>
 
           {/* ================= SALES - TRANSACTION ================= */}
 
