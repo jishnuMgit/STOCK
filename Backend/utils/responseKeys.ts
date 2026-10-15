@@ -65,6 +65,82 @@ export const defaultBranchGridKeys: KeyMap = {
   fdefbrid: "lkpDefaultBranch",
 };
 
+/* ---------- Purchase / BeginningStock ---------- */
+
+export const beginningStockItemKeys: KeyMap = {
+  fitemid: "lkpItemID",
+  fitemname: "txtItemName",
+  funit: "txtUnit",
+};
+
+export const beginningStockLineKeys: KeyMap = {
+  fslno: "txtSlNo",
+  fitemid: "lkpItemID",
+  funit: "txtUnit",
+  fqtyin: "txtQty",
+  funitcost: "txtUnitCost",
+  ftotalcost: "txtTotalCost",
+};
+
+// the Beginning Stock print: the heading (company, branch, date, doc no) and the lines
+export const beginningStockPrintHeaderKeys: KeyMap = {
+  fconame: "txtCoName",
+  fbrname: "txtBranchName",
+  fdate: "dtpDate",
+  fdocno: "txtDocNo",
+};
+
+export const beginningStockPrintLineKeys: KeyMap = {
+  fslno: "txtSlNo",
+  fitemid: "lkpItemID",
+  fitemname: "lkpItemName",
+  funit: "txtUnit",
+  fqtyin: "txtQty",
+  funitcost: "txtUnitCost",
+  ftotalcost: "txtTotalCost",
+};
+
+export const beginningStockHeaderKeys: KeyMap = {
+  fdate: "dtpDate",
+  fsuserid: "txtSavedBy",
+  fsuserdate: "txtSavedOn",
+  fmuserid: "txtModifiedBy",
+  fmuserdate: "txtModifiedOn",
+  fnote: "txtNote",
+};
+
+/* ---------- Sales / Setup / ItemEnquiry ---------- */
+
+export const itemEnquiryItemKeys: KeyMap = {
+  fitemid: "lkpItemID",
+  fitemname: "lkpItemName",
+};
+
+export const itemEnquiryHeaderKeys: KeyMap = {
+  fitemid: "lkpItemID",
+  fitemname: "lkpItemName",
+  funit: "txtUnit",
+  fpacking: "txtPacking",
+  fcbm: "txtCBM",
+  fitemgroupid: "lkpItemGroupID",
+  fitemgroupname: "lkpItemGroupName",
+  fsupplierid: "lkpSupplierID",
+  fsuppliername: "lkpSupplierName",
+  fsupplieritemid: "txtSupplierItemID",
+  freorderlevel: "txtReorderLevel",
+  freorderqty: "txtReorderQty",
+};
+
+export const itemEnquiryGridKeys: KeyMap = {
+  fbrid: "txtBranchID",
+  fbrname: "txtBranchName",
+  fstock: "txtStock",
+  fpreviousunitcost: "txtPrevUnitCost",
+  funitprice: "txtUnitPrice",
+  funitcost: "txtUnitCost",
+  ftotalcost: "txtTotalCost",
+};
+
 export const userAuditUserListKeys: KeyMap = {
   fuserid: "lkpUserID",
 };
