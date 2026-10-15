@@ -137,6 +137,7 @@ Sales-REPORT
   mnuRptSupplierList:"/Finance/Reports/RptSupplierList",
   mnuRptFinYearCloseBal:"/Finance/Reports/RptFinYearCloseBal",
   mnuRptExpenseSum:"/Finance/Reports/RptExpenseSum",
+  mnuRptRVPVSum:"/Finance/Reports/RptRVPVSum",
  // FINANCE - REPORTS - A/R & A/P
 
   mnuRptSOA: "/Finance/Reports/rptSOA",
