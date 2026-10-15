@@ -580,12 +580,12 @@ const PurchaseForm: React.FC<Props> = ({
       ================================================== */}
       <div
         id="purchase-right-group"
-        className="flex min-w-0 flex-col gap-[8px]"
+        className="flex min-w-0 flex-col gap-2"
       >
         {/* Invoice Type and Date */}
         <div className="grid min-w-0 grid-cols-[minmax(0,1fr)_minmax(0,1fr)] gap-3">
           <div className="flex min-w-0 items-center gap-3">
-            <label htmlFor="lkpType" className={`${labelClass} w-[76px]`}>
+            <label htmlFor="lkpType" className={`${labelClass} w-19`}>
               Type
             </label>
             <div className="min-w-0 w-[35%]">
@@ -603,7 +603,7 @@ const PurchaseForm: React.FC<Props> = ({
           </div>
 
           <div className="ml-auto flex min-w-0 items-center justify-end gap-2">
-            <label htmlFor="dtpDate" className={`${labelClass} w-[36px]`}>
+            <label htmlFor="dtpDate" className={`${labelClass} w-9`}>
               Date
             </label>
             <input
