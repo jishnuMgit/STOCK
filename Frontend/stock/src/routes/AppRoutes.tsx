@@ -74,6 +74,7 @@ import RptGeneralLedgerGroup from "../pages/Finance/Report/GeneralLedger/General
 import RptFinYearCloseBalPage from "../pages/Finance/Report/YearCloseBalance/RptFinYearCloseBalPage";
 import RptGeneralLedgerSummaryPage from "../pages/Finance/Report/GeneralLedger/GeneralLedgerSummary/RptGeneralLedgerSummaryPage";
 import DocumentPostPage from "../pages/Finance/Transaction/DocumentPost/DocumentPostPage";
+import RptDocumentPrintPage from "../pages/Finance/Transaction/DocumentPrint/RptDocumentPrintPage";
 
 
 const Login = lazy(() => import("../pages/Auth/LoginPage"));
@@ -133,17 +134,18 @@ const AppRoutes = () => {
           {/* ================= FINANCE - TRANSACTION ================= */}
 
           <Route path="/Finance/Transaction/Receipt"  element={<ReceiptPage />}  />
-          <Route  path="/Finance/Transaction/journal"  element={<Journalpage />} />
-          <Route  path="/Finance/Transaction/Transaction-matching"  element={<Matching />}/>
-          <Route  path="/Finance/Transaction/Transaction-unmatching"   element={<UnMatch />}  />
-          <Route  path="/Finance/Transaction/BeginningBalance" element={<BeginningBalance />} />
+          <Route path="/Finance/Transaction/journal"  element={<Journalpage />} />
+          <Route path="/Finance/Transaction/Transaction-matching"  element={<Matching />}/>
+          <Route path="/Finance/Transaction/Transaction-unmatching"   element={<UnMatch />}  />
+          <Route path="/Finance/Transaction/BeginningBalance" element={<BeginningBalance />} />
           <Route path="/Finance/Transaction/FinDocPost" element={<DocumentPostPage/>}/>
+          <Route path="/Finance/Transaction/FinDocPrint" element={<RptDocumentPrintPage/>}/>
 
           {/* ================= FINANCE - SETUP ================= */}
 
           <Route path="/Finance/Setup/CustomerPage" element={<CustomerList />} />
-          <Route  path="/Finance/Setup/Add/Customer" element={<CustomerPage />} />
-          <Route  path="/Finance/Setup/ChartOfAccountList" element={<ChartOfAccountList />} />
+          <Route path="/Finance/Setup/Add/Customer" element={<CustomerPage />} />
+          <Route path="/Finance/Setup/ChartOfAccountList" element={<ChartOfAccountList />} />
           <Route path="/Finance/Setup/CostCenter" element={<CostCenterPage/>} />
           <Route path="/Finance/Setup/CustomerSupplierCountry" element={<CustomerSupplierCountryPage/>}  />
           <Route path="/Finance/Setup/InactivateAccount" element={<InactivateAccountPage/>}/>

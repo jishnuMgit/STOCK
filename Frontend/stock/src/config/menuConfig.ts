@@ -117,6 +117,7 @@ Sales-REPORT
   mnuBeginningBalance: "/Finance/Transaction/BeginningBalance",
   mnuJournal: "/Finance/Transaction/journal",
   mnuFinDocPost:"/Finance/Transaction/FinDocPost",
+  mnuFinDocPrint:"/Finance/Transaction/FinDocPrint",
 
   /* =========================================================
      FINANCE - SETUP
