@@ -73,6 +73,7 @@ import RptItemHistoryPage from "../pages/Purchase/Report/ItemHistory/RptItemHist
 import RptGeneralLedgerGroup from "../pages/Finance/Report/GeneralLedger/GeneralLedgerGroup/RptGeneralLedgerGroupPage";
 import RptFinYearCloseBalPage from "../pages/Finance/Report/YearCloseBalance/RptFinYearCloseBalPage";
 import RptGeneralLedgerSummaryPage from "../pages/Finance/Report/GeneralLedger/GeneralLedgerSummary/RptGeneralLedgerSummaryPage";
+import DocumentPostPage from "../pages/Finance/Transaction/DocumentPost/DocumentPostPage";
 
 
 const Login = lazy(() => import("../pages/Auth/LoginPage"));
@@ -136,6 +137,7 @@ const AppRoutes = () => {
           <Route  path="/Finance/Transaction/Transaction-matching"  element={<Matching />}/>
           <Route  path="/Finance/Transaction/Transaction-unmatching"   element={<UnMatch />}  />
           <Route  path="/Finance/Transaction/BeginningBalance" element={<BeginningBalance />} />
+          <Route path="/Finance/Transaction/FinDocPost" element={<DocumentPostPage/>}/>
 
           {/* ================= FINANCE - SETUP ================= */}
 

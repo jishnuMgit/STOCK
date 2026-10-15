@@ -39,7 +39,6 @@ export const menuRouteMap: Record<string, string> = {
 
 
   mnuPurchaseInvoice: "/Purchase/Transaction/PurchaseInvoicePage",
-
   mnuBeginningStock:"/Purchase/Transaction/BeginningStockPage",
 
 
@@ -56,27 +55,26 @@ export const menuRouteMap: Record<string, string> = {
   mnuItemGroup: "/Purchase/Setup/ItemGroupPage",
   mnuUnit:"/Purchase/Setup/UnitPage",
   mnuStaff:"/Purchase/Setup/StaffPage",
-
-mnuCurrency:"/Purchase/Setup/Currency",
+  mnuCurrency:"/Purchase/Setup/Currency",
     /* =========================================================
      PURCHASE - REPORTS
   ========================================================= */
 
-"mnuRrptSupplier Purchase":"/Purchase/Report/RptSupplierPurchase",
-mnuRptItemPurchase:"/Purchase/Report/RptItemPurchase",
-mnuRptPOSummary:"/Purchase/Report/RptPOSummary",
-mnuRptStaffSales:"/Purchase/Report/RptStaffSales",
-mnuRptSalesSummary:"/Purchase/Report/RptSalesSummary",
-mnuRptItemMovement:"/Purchase/Report/RptItemMovement",
-irptRptInvoicewiseProfit:"/Purchase/Report/RptInvoicewiseProfit",
-mnuRptStockReport:"/Purchase/Report/RptStockReport",
-mnuRptStockValuation:"/Purchase/Report/RptStockValuation",
-mnuRptStockVerification:"/Purchase/Report/RptStockVerification",
-mnuRptStockAgeing:"/Purchase/Report/RptStockAgeing",
-mnuRptDocumentList:"/Purchase/Report/RptDocumentList",
-mnuRptSalesPriceList:"/Purchase/Report/RptSalesPriceList",
-mnuRptItemList:"/Purchase/Report/RptItemList",
-mnuRptItemHistory:"/Purchase/Report/RptItemHistory",
+  "mnuRrptSupplier Purchase":"/Purchase/Report/RptSupplierPurchase",
+  mnuRptItemPurchase:"/Purchase/Report/RptItemPurchase",
+  mnuRptPOSummary:"/Purchase/Report/RptPOSummary",
+  mnuRptStaffSales:"/Purchase/Report/RptStaffSales",
+  mnuRptSalesSummary:"/Purchase/Report/RptSalesSummary",
+  mnuRptItemMovement:"/Purchase/Report/RptItemMovement",
+  irptRptInvoicewiseProfit:"/Purchase/Report/RptInvoicewiseProfit",
+  mnuRptStockReport:"/Purchase/Report/RptStockReport",
+  mnuRptStockValuation:"/Purchase/Report/RptStockValuation",
+  mnuRptStockVerification:"/Purchase/Report/RptStockVerification",
+  mnuRptStockAgeing:"/Purchase/Report/RptStockAgeing",
+  mnuRptDocumentList:"/Purchase/Report/RptDocumentList",
+  mnuRptSalesPriceList:"/Purchase/Report/RptSalesPriceList",
+  mnuRptItemList:"/Purchase/Report/RptItemList",
+  mnuRptItemHistory:"/Purchase/Report/RptItemHistory",
 
 
 
@@ -87,10 +85,7 @@ Sales-TRANSACTION
 =============================================================*/
 
   mnuSalesInvoice: "/Sales/Transaction/SalesInvoicePage",
-
-
   mnuStockAdjustment:"/Sales/Transaction/StockAdjustment",
-
   mnuStockTransfer: "/Sales/Transaction/StockTransferPage",
   mnuStkDocumentPost:"/Sales/Transaction/StockDocumentPost",
   mnuStkDocumentRePost:"/Sales/Transaction/StockDocumentRePost",
@@ -107,7 +102,6 @@ Sales-SETUP
 Sales-REPORT
 =============================================================*/
   mnuRptStock:"/Sales/Report/RptStock",
-
  "mnuRptStock Value": "/Sales/Reports/StockValue",
   mnuRptCustomerSales:"/Sales/Reports/RptCustomerSales",
   mnuRptItemSales:"/Sales/Reports/RptItemSales",
@@ -122,6 +116,7 @@ Sales-REPORT
   mnuReceipt: "/Finance/Transaction/Receipt",
   mnuBeginningBalance: "/Finance/Transaction/BeginningBalance",
   mnuJournal: "/Finance/Transaction/journal",
+  mnuFinDocPost:"/Finance/Transaction/FinDocPost",
 
   /* =========================================================
      FINANCE - SETUP
@@ -130,8 +125,8 @@ Sales-REPORT
   mnuCustomer: "/Finance/Setup/CustomerPage",
   mnuChartOfAccount:"/Finance/Setup/ChartOfAccountList",
   mnuCostCenter:"/Finance/Setup/CostCenter",
-"mnuCustomer/Supplier Country":"/Finance/Setup/CustomerSupplierCountry",
-mnuInactivateAccount:"/Finance/Setup/InactivateAccount",
+ "mnuCustomer/Supplier Country":"/Finance/Setup/CustomerSupplierCountry",
+  mnuInactivateAccount:"/Finance/Setup/InactivateAccount",
   /* =========================================================
      FINANCE - REPORTS
   ========================================================= */
