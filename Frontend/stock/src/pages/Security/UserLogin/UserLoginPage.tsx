@@ -6,6 +6,7 @@ import { useEnterAsTab } from "../../../hooks/useEnterAsTab";
 import { useAltShortcuts } from "../../../hooks/useAltShortcuts";
 import { useButtonPermissions } from "../../../hooks/useButtonPermissions";
 import { useConfirm } from "../../../hooks/useConfirm";
+import selectComponents from "../../../components/sharecomponents/selectComponents";
 
 // ============================================================
 // TYPES
@@ -916,6 +917,7 @@ const UserLogin: React.FC = () => {
                     "
                   >
                     <Select
+                      components={selectComponents}
                       inputId={`lkpUserType-${index}`}
                       options={userTypeOptions}
                       value={
@@ -944,6 +946,7 @@ const UserLogin: React.FC = () => {
                     "
                   >
                     <Select
+                      components={selectComponents}
                       inputId={`lkpUserStatus-${index}`}
                       options={userStatusOptions}
                       value={

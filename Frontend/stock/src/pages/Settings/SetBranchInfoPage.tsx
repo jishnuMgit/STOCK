@@ -11,9 +11,9 @@ import {
   filterLabelOrValue,
   BranchMenuList,
   BranchOption,
-  CustomDropdownIndicator,
   branchMenuStyles,
 } from "../../components/BranchSelect/branchSelectParts";
+import selectComponents from "../../components/sharecomponents/selectComponents";
 
 /* =========================================================
    TYPES
@@ -825,8 +825,7 @@ const SetBranchInfo: React.FC = () => {
                   ...branchMenuStyles,
                 }}
                 components={{
-                  DropdownIndicator:
-                    CustomDropdownIndicator,
+                  ...selectComponents,
                   Option: BranchOption,
                   MenuList: BranchMenuList,
                 }}

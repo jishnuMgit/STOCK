@@ -1,4 +1,5 @@
 import { components, type StylesConfig } from "react-select";
+import selectComponents from "../sharecomponents/selectComponents";
 
 /* =========================================================
    SHARED BRANCH DROPDOWN LOOK
@@ -67,6 +68,7 @@ export const makeNameIdMenuComponents = (
   const idCell = divider ? { paddingLeft: "8px" } : {};
 
   return {
+  ...selectComponents,
   MenuList: (props: any) => (
     <components.MenuList {...props}>
       <div

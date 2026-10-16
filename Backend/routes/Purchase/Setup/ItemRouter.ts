@@ -12,7 +12,7 @@ import {
   deleteItem,
   deleteItemBranchRow,
   getItems,
-} from "../../../controller/Purchase/Setup/ItemPageController.js";
+} from "../../../controller/Purchase/Setup/ItemController.js";
 
 const router = express.Router();
 

@@ -1,10 +1,10 @@
-// routes/Purchase/Setup/CurrencyPageRouter.ts
+// routes/Purchase/Setup/CurrencyRouter.ts
 import { Router } from "express";
 import {
   getCurrencies,
   checkCurrencyUsed,
   saveCurrencies,
-} from "../../../controller/Purchase/Setup/CurrencyPageController.js";
+} from "../../../controller/Purchase/Setup/CurrencyController.js";
 
 const router = Router();
 
@@ -16,7 +16,7 @@ export default router;
 
 // ---- in your app / server file (next to the CostCenter router) ----
 //
-//   import currencyRoutes from "./routes/Purchase/Setup/CurrencyPageRouter.js";
+//   import currencyRoutes from "./routes/Purchase/Setup/CurrencyRouter.js";
 //   app.use("/api/Currency", currencyRoutes);
 //
 // ---- in your React router ----
