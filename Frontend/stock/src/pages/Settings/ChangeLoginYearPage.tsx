@@ -1,11 +1,12 @@
 import React, { useState } from "react";
 import Select from "react-select";
+import selectComponents from "../../components/sharecomponents/selectComponents";
 
 type Option = { value: string; label: string };
 
 type Company = { id: string; name: string };
 
-const MIN_ROWS = 9;
+// const MIN_ROWS = 9;
 
 /* Replace these with data from your API */
 const companies: Company[] = [{ id: "1", name: "GREEN SPECTRA" }];
@@ -62,7 +63,7 @@ const selectProps = {
 };
 
 const FieldLabel: React.FC<{ children: React.ReactNode }> = ({ children }) => (
-  <div className="flex h-[30px] items-center justify-end  bg-[#fafbfc] pr-3 text-[12px] text-[#405066]">
+  <div className="flex h-7.5 items-center justify-end  bg-[#fafbfc] pr-3 text-[14px] ">
     {children}
   </div>
 );
@@ -86,7 +87,7 @@ const ChangeLoginYear: React.FC<ChangeLoginYearProps> = ({
   ); // lkpYear
 
   const selectedCompany = companies.find((c) => c.id === selectedId) ?? null;
-  const emptyCount = Math.max(0, MIN_ROWS - companies.length);
+//   const emptyCount = Math.max(0, MIN_ROWS - companies.length);
 
   const handleOk = () => {
     if (!selectedCompany || !year) return;
@@ -100,23 +101,23 @@ const ChangeLoginYear: React.FC<ChangeLoginYearProps> = ({
   };
 
   // arrow keys move the selection, Enter confirms
-  const handleGridKeyDown = (event: React.KeyboardEvent<HTMLDivElement>) => {
-    const index = companies.findIndex((c) => c.id === selectedId);
-    if (event.key === "ArrowDown" && index < companies.length - 1) {
-      event.preventDefault();
-      setSelectedId(companies[index + 1].id);
-    } else if (event.key === "ArrowUp" && index > 0) {
-      event.preventDefault();
-      setSelectedId(companies[index - 1].id);
-    } else if (event.key === "Enter") {
-      event.preventDefault();
-      handleOk();
-    }
-  };
+//   const handleGridKeyDown = (event: React.KeyboardEvent<HTMLDivElement>) => {
+//     const index = companies.findIndex((c) => c.id === selectedId);
+//     if (event.key === "ArrowDown" && index < companies.length - 1) {
+//       event.preventDefault();
+//       setSelectedId(companies[index + 1].id);
+//     } else if (event.key === "ArrowUp" && index > 0) {
+//       event.preventDefault();
+//       setSelectedId(companies[index - 1].id);
+//     } else if (event.key === "Enter") {
+//       event.preventDefault();
+//       handleOk();
+//     }
+//   };
 
   return (
-    <div className="flex min-h-full w-full items-start justify-center bg-white px-4 py-4">
-      <div className="min-h-fit w-125 max-w-full bg-white p-0">
+    <div className="flex min-h-full w-full items-center justify-center bg-white px-4 py-4">
+      <div className="min-h-fit w-80 max-w-full bg-white p-0">
         <main className="w-full overflow-hidden border border-gray-400 bg-white">
           <header className="flex h-7.5 items-center justify-start bg-[#9fdfbc]">
             <h1 className="m-0 ml-3.5 text-[17px] font-semibold text-[#24364d]">
@@ -126,7 +127,7 @@ const ChangeLoginYear: React.FC<ChangeLoginYearProps> = ({
 
           <section className="px-3.5 pb-6 pt-3">
             {/* Company grid */}
-            <div
+            {/* <div
               tabIndex={0}
               onKeyDown={handleGridKeyDown}
               className="h-[250px] overflow-auto border border-[#B7ECD0] bg-white outline-none focus:border-[#91a7b9]"
@@ -164,7 +165,7 @@ const ChangeLoginYear: React.FC<ChangeLoginYearProps> = ({
                     );
                   })}
 
-                  {/* empty filler rows */}
+                 
                   {Array.from({ length: emptyCount }).map((_, index) => (
                     <tr key={`empty-${index}`} className="bg-white">
                       <td className="h-[28px] border border-[#B7ECD0] bg-[#fafbfc]" />
@@ -173,17 +174,18 @@ const ChangeLoginYear: React.FC<ChangeLoginYearProps> = ({
                   ))}
                 </tbody>
               </table>
-            </div>
+            </div> */}
 
             {/* Year + actions */}
-            <div className="mt-4 flex flex-wrap items-center justify-between gap-3">
-              <div className="flex items-center gap-3">
+            <div className="mt-4 flex flex-wrap flex-col items-center justify-between gap-3">
+              <div className="flex items-start gap-3 justify-start " >
                 <FieldLabel>Year :</FieldLabel>
-                <div className="w-[110px]">
+                <div className="w-40">
                   <Select
                     inputId="lkpYear"
                     instanceId="lkpYear"
                     options={yearOptions}
+                    components={selectComponents}
                     value={year}
                     onChange={setYear}
                     {...selectProps}

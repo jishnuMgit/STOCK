@@ -6,7 +6,7 @@ import dayjs from "dayjs";
 import customParseFormat from "dayjs/plugin/customParseFormat";
 
 import type { SelectOption, DocumentOption } from "./types";
-import type { TableField } from "./types";
+// import type { TableField } from "./types";
 import { handleKeyboardAction } from "../../../hooks/useMatchKeyboard";
 import type { StylesConfig } from "react-select";
 
@@ -81,7 +81,7 @@ export interface MatchHeaderProps {
 }
 
 const MatchHeader: React.FC<MatchHeaderProps> = ({
-  branch,
+  // branch,
   customerId,
   customerName,
   divisionId,
@@ -93,7 +93,7 @@ const MatchHeader: React.FC<MatchHeaderProps> = ({
   setDocType,
   setReceiptNo,
   setReceiptDate,
-  setBranch,
+  // setBranch,
 
   customerOptions,
   customerNameOptions,
@@ -123,7 +123,7 @@ const MatchHeader: React.FC<MatchHeaderProps> = ({
   return (
     <>
       {/* TITLE */}
-      <div className="flex h-[36px] items-center border-b border-slate-300 bg-[#a3dfc0]">
+      <div className="flex h-7.5 items-center border-b border-slate-300 bg-[#a3dfc0]">
         <span className="px-3 text-[17px] font-semibold text-slate-700">
           Match
         </span>

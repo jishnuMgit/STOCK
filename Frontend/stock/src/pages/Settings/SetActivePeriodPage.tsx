@@ -253,13 +253,13 @@ const SetActivePeriodPage: React.FC = () => {
       onKeyDown={handlePageKeyDown}
       className="flex min-h-screen w-full items-center justify-center bg-white"
     >
-      <div className="w-full max-w-[640px] border border-slate-400 bg-white shadow-sm">
+      <div className="w-full max-w-160 border border-slate-400 bg-white shadow-sm">
         {/* ====================================================
             TITLE
         ==================================================== */}
 
-        <div className="flex h-[28px] w-full items-center bg-[#a7dfc0]">
-          <h1 className="ml-[5px] text-[17px] font-semibold text-[#374151]">
+        <div className="flex h-7 w-full items-center bg-[#a7dfc0]">
+          <h1 className="ml-1.25 text-[17px] font-semibold text-[#374151]">
             Set Active Period
           </h1>
         </div>
@@ -268,14 +268,14 @@ const SetActivePeriodPage: React.FC = () => {
             FORM
         ==================================================== */}
 
-        <div className="p-[12px] m-[12px]">
+        <div className="p-3 m-3">
           {/* TABLE AREA */}
 
-          <div className="h-[305px] overflow-hidden border border-[#bfe8d0]">
+          <div className="h-76.25 overflow-hidden border border-[#bfe8d0]">
             <div className="h-full overflow-y-auto overflow-x-hidden">
               <table className="w-full table-fixed border-collapse text-[12px]">
                 <colgroup>
-                  <col className="w-[38px]" />
+                  <col className="w-9.5" />
                   <col className="w-[40%]" />
                   <col />
                   <col />
@@ -283,17 +283,17 @@ const SetActivePeriodPage: React.FC = () => {
 
                 <thead>
                   <tr>
-                    <th className="sticky top-0 z-20 h-[34px] border border-[#bfe8d0] bg-[#edf9f2] p-0" />
+                    <th className="sticky top-0 z-20 h-8.5 border border-[#bfe8d0] bg-[#edf9f2] p-0" />
 
-                    <th className="sticky top-0 z-20 h-[34px] border border-l-0 border-[#bfe8d0] bg-[#edf9f2] px-[11px] py-0 text-left text-[14px] font-normal text-gray-600">
+                    <th className="sticky top-0 z-20 h-8.5 border border-l-0 border-[#bfe8d0] bg-[#edf9f2] px-2.75 py-0 text-left text-[14px] font-normal text-gray-600">
                       Branch
                     </th>
 
-                    <th className="sticky top-0 z-20 h-[34px] border border-l-0 border-[#bfe8d0] bg-[#edf9f2] px-[11px] py-0 text-left text-[14px] font-normal text-gray-600">
+                    <th className="sticky top-0 z-20 h-8.5 border border-l-0 border-[#bfe8d0] bg-[#edf9f2] px-2.75 py-0 text-left text-[14px] font-normal text-gray-600">
                       From Date
                     </th>
 
-                    <th className="sticky top-0 z-20 h-[34px] border border-l-0 border-[#bfe8d0] bg-[#edf9f2] px-[11px] py-0 text-left text-[14px] font-normal text-gray-600">
+                    <th className="sticky top-0 z-20 h-8.5 border border-l-0 border-[#bfe8d0] bg-[#edf9f2] px-2.75 py-0 text-left text-[14px] font-normal text-gray-600">
                       To Date
                     </th>
                   </tr>
@@ -303,14 +303,14 @@ const SetActivePeriodPage: React.FC = () => {
                   {rows.map((row, index) => (
                     <tr
                       key={row.txtBranchID}
-                      className={`h-[34px] ${
+                      className={`h-8.5 ${
                         selectedRow === index ? "bg-[#f8fcfa]" : "bg-white"
                       }`}
                       onClick={() => setSelectedRow(index)}
                     >
                       {/* SELECTOR COLUMN */}
 
-                      <td className="h-[34px] w-[38px] border border-[#bfe8d0] bg-white p-0 text-center align-middle">
+                      <td className="h-8.5 w-9.5 border border-[#bfe8d0] bg-white p-0 text-center align-middle">
                         {selectedRow === index && (
                           <span className="text-[9px] text-[#222]">▶</span>
                         )}
@@ -318,7 +318,7 @@ const SetActivePeriodPage: React.FC = () => {
 
                       {/* BRANCH - the branch of this row (fixed text, the name) */}
 
-                      <td className="h-[34px] border border-l-0 border-[#bfe8d0] bg-white p-0 align-middle">
+                      <td className="h-8.5 border border-l-0 border-[#bfe8d0] bg-white p-0 align-middle">
                         <input
                           id={`txtBranchName-${index}`}
                           name="txtBranchName"
@@ -326,13 +326,13 @@ const SetActivePeriodPage: React.FC = () => {
                           value={row.txtBranchName}
                           readOnly
                           tabIndex={-1}
-                          className="h-[32px] w-full min-w-0 border-0 bg-transparent px-[11px] py-0 text-left text-[13px] text-[#374151] outline-none"
+                          className="h-8 w-full min-w-0 border-0 bg-transparent px-2.75 py-0 text-left text-[13px] text-[#374151] outline-none"
                         />
                       </td>
 
                       {/* FROM DATE */}
 
-                      <td className="h-[34px] border border-l-0 border-[#bfe8d0] bg-white p-0 align-middle">
+                      <td className="h-8.5 border border-l-0 border-[#bfe8d0] bg-white p-0 align-middle">
                         <input
                           id={`dtpFromDate-${index}`}
                           name="dtpFromDate"
@@ -348,7 +348,7 @@ const SetActivePeriodPage: React.FC = () => {
 
                       {/* TO DATE */}
 
-                      <td className="h-[34px] border border-l-0 border-[#bfe8d0] bg-white p-0 align-middle">
+                      <td className="h-8.5 border border-l-0 border-[#bfe8d0] bg-white p-0 align-middle">
                         <input
                           id={`dtpToDate-${index}`}
                           name="dtpToDate"
@@ -372,7 +372,7 @@ const SetActivePeriodPage: React.FC = () => {
               BUTTONS
           ==================================================== */}
 
-          <div className="mt-[14px] flex justify-center gap-3">
+          <div className="mt-3.5 flex justify-center gap-3">
             <button
               id="btnModify"
               name="btnModify"

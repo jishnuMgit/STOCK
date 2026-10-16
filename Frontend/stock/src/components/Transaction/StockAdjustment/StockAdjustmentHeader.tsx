@@ -27,19 +27,19 @@ const branchOptions: Option[] = [
   },
 ];
 
-const transferToOptions: Option[] = [
-  {
-    value: "",
-    label: "",
-  },
-];
+// const transferToOptions: Option[] = [
+//   {
+//     value: "",
+//     label: "",
+//   },
+// ];
 
-const entryNoOptions: Option[] = [
-  {
-    value: "01",
-    label: "01",
-  },
-];
+// const entryNoOptions: Option[] = [
+//   {
+//     value: "01",
+//     label: "01",
+//   },
+// ];
 
 // ============================================================
 // SELECT STYLES
@@ -147,8 +147,6 @@ const selectStyles: StylesConfig<Option, false> = {
 // INPUT STYLE
 // ============================================================
 
-const inputClass =
-  " px-2 input-style";
 
 // ============================================================
 // HEADER
@@ -159,11 +157,11 @@ const StockAdjustmentHeader: React.FC = () => {
     branchOptions[0],
   );
 
-  const [transferTo, setTransferTo] =
-    useState<Option | null>(transferToOptions[0]);
+  // const [transferTo, setTransferTo] =
+  //   useState<Option | null>(transferToOptions[0]);
 
-  const [entryNo, setEntryNo] =
-    useState<Option | null>(entryNoOptions[0]);
+  // const [entryNo, setEntryNo] =
+  //   useState<Option | null>(entryNoOptions[0]);
  const [dtpDate, setDtpDate] =
     useState<string>(
       dayjs().format("DD-MM-YYYY")
@@ -197,17 +195,17 @@ const StockAdjustmentHeader: React.FC = () => {
           HEADER FORM
       ====================================================== */}
 
-      <div className="h-[43px] w-full px-[24px] mt-3 pt-3 mx-auto ">
+      <div className="h-10.75 w-full px-6 mt-3 pt-3 mx-auto ">
         <div className="relative h-full w-full ">
 
           {/* ==================================================
               BRANCH
           ================================================== */}
 
-          <div className="absolute -left-6 top-0  flex h-[28px] items-center justify-start">
+          <div className="absolute -left-6 top-0  flex h-7 items-center justify-start">
             <label
               className="
-                w-[80px]
+                w-20
                 shrink-0
                 whitespace-nowrap
                 text-right
@@ -218,7 +216,7 @@ const StockAdjustmentHeader: React.FC = () => {
               Branch :
             </label>
 
-            <div className="ml-[7px] w-[140px]">
+            <div className="ml-1.75 w-35">
               <Select<Option, false>
                 inputId="lkpBranch"
                 instanceId="lkpBranch"
@@ -243,10 +241,10 @@ const StockAdjustmentHeader: React.FC = () => {
               ENTRY NO
           ================================================== */}
 
-          <div className="absolute left-[425px] top-0 flex h-[28px] items-center">
+          <div className="absolute left-106.25 top-0 flex h-7 items-center">
             <label
               className="
-                w-[82px]
+                w-20.5
                 shrink-0
                 whitespace-nowrap
                 text-right
@@ -257,7 +255,7 @@ const StockAdjustmentHeader: React.FC = () => {
               Entry No. :
             </label>
 
-            <div className="ml-[7px] w-[140px]">
+            <div className="ml-1.75 w-35">
              <input type="text" id="txtEntryNo" className="w-40 input-style" />
             </div>
           </div>
@@ -266,7 +264,7 @@ const StockAdjustmentHeader: React.FC = () => {
               DATE
           ================================================== */}
 
-          <div className="absolute right-0 top-0 flex h-[28px] items-center">
+          <div className="absolute right-0 top-0 flex h-7 items-center">
             <div className="-mr-2 flex items-center gap-2">
 
               <label

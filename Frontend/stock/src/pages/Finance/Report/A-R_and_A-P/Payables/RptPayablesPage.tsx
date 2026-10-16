@@ -115,26 +115,26 @@ const CustomRadio: React.FC<RadioOptionProps> = ({
   </label>
 );
 
-const CustomCheckbox: React.FC<{
-  id: string;
-  label: string;
-  checked: boolean;
-  onChange: (checked: boolean) => void;
-}> = ({ id, label, checked, onChange }) => (
-  <label
-    htmlFor={id}
-    className="flex h-7.5 cursor-pointer items-center gap-2 text-[14px] text-[#405066] select-none"
-  >
-    <input
-      id={id}
-      type="checkbox"
-      checked={checked}
-      onChange={(event) => onChange(event.target.checked)}
-      className="h-4 w-4 accent-[#64d96e]"
-    />
-    {label}
-  </label>
-);
+// const CustomCheckbox: React.FC<{
+//   id: string;
+//   label: string;
+//   checked: boolean;
+//   onChange: (checked: boolean) => void;
+// }> = ({ id, label, checked, onChange }) => (
+//   <label
+//     htmlFor={id}
+//     className="flex h-7.5 cursor-pointer items-center gap-2 text-[14px] text-[#405066] select-none"
+//   >
+//     <input
+//       id={id}
+//       type="checkbox"
+//       checked={checked}
+//       onChange={(event) => onChange(event.target.checked)}
+//       className="h-4 w-4 accent-[#64d96e]"
+//     />
+//     {label}
+//   </label>
+// );
 
 const RadioPanel: React.FC<{
   children: React.ReactNode;

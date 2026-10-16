@@ -138,8 +138,13 @@ const FinanceYearClose: React.FC<FinanceYearCloseProps> = ({
 
     console.log("Year close settings:", data);
     onConfirm?.(data);
+    if (message){
+    setMessage(message);
 
-    setMessage("Year close settings validated successfully.");
+    }else{
+            setMessage("Year close settings validated successfully.");
+    }
+
   };
 
   const handleCancel = () => {

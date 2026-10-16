@@ -890,7 +890,6 @@ const MENU_ID = "010201";
   ========================================================= */
 
   // the shared form-input look from index.css
-  const inputClass = "w-full input-style";
 
   /* =========================================================
      LABEL CLASS
@@ -907,10 +906,10 @@ const MENU_ID = "010201";
     <span
       className="
         absolute
-        right-[15px]
+        right-3.75
         -top-0.5
-        h-[4px]
-        w-[4px]
+        h-1
+        w-1
        text-red-500
         
        
@@ -1164,11 +1163,11 @@ const MENU_ID = "010201";
 
       <div
         className="
-          w-[960px]
-          min-w-[960px]
-          max-w-[960px]
-          ml-[4px]
-          mt-[0px]
+          w-240
+          min-w-240
+          max-w-240
+          ml-1
+          mt-0
           bg-white
           p-0
         "
@@ -1192,8 +1191,8 @@ const MENU_ID = "010201";
               HEADER
           =================================================== */}
 
-          <div className="flex h-[28px] w-full items-center bg-[#a7dfc0]">
-            <h1 className="ml-[5px] text-[17px] font-semibold text-[#374151]">
+          <div className="flex h-7 w-full items-center bg-[#a7dfc0]">
+            <h1 className="ml-1.25 text-[17px] font-semibold text-[#374151]">
               Item
             </h1>
           </div>
@@ -1202,7 +1201,7 @@ const MENU_ID = "010201";
               FORM
           =================================================== */}
 
-          <div className="p-[12px] m-[12px]">
+          <div className="p-3 m-3">
             {/* =================================================
                 ITEM ID
             ================================================= */}
@@ -1235,7 +1234,7 @@ const MENU_ID = "010201";
                   setHasSavedItem(false);
                 }}
                 onBlur={handleItemIDBlur}
-                className="w-[225px] input-style"
+                className="w-56.25 input-style"
               />
             </div>
 
@@ -1557,7 +1556,7 @@ const MENU_ID = "010201";
                 type="text"
                 value={txtSupplierItemID}
                 onChange={(e) => setTxtSupplierItemID(e.target.value)}
-                className="w-[275px] input-style"
+                className="w-68.75 input-style"
               />
             </div>
 
@@ -1618,9 +1617,9 @@ const MENU_ID = "010201";
 
               <div
                 className="
-                  ml-[35px]
+                  ml-8.75
                   flex
-                  w-[145px]
+                  w-36.25
                   items-center
                   gap-2
                   border
@@ -1665,8 +1664,8 @@ const MENU_ID = "010201";
                     }
                   }}
                   className="
-                    h-[15px]
-                    w-[15px]
+                    h-3.75
+                    w-3.75
                     accent-blue-600
                   "
                 />
@@ -1703,7 +1702,7 @@ const MENU_ID = "010201";
 
                   <tr
                     className="
-                      h-[30px]
+                      h-7.5
                       bg-[#eef9f3]
                       text-[14px]
                       text-gray-600
@@ -1792,7 +1791,7 @@ const MENU_ID = "010201";
 
                     <tr
                       key={row.id}
-                      className="h-[32px]"
+                      className="h-8"
                     >
 
                       {/* =====================================
@@ -1806,7 +1805,7 @@ const MENU_ID = "010201";
                           p-0
                         "
                       >
-                        <div className="flex h-[32px] items-stretch">
+                        <div className="flex h-8 items-stretch">
                           <div className="flex-1 overflow-hidden">
                             <Select
                               inputId={`lkpBranch_${row.id}`}
@@ -1854,7 +1853,7 @@ const MENU_ID = "010201";
                               }
                               className="
                                 h-full
-                                w-[20px]
+                                w-5
                                 self-stretch
                                 flex
                                 items-center
@@ -1888,7 +1887,7 @@ const MENU_ID = "010201";
                           onChange={(e) =>
                             updateRow(row.id, "txtItemLocation", e.target.value)
                           }
-                          className="h-[27px] w-full border-0 px-2 text-[11px] outline-none"
+                          className="h-6.75 w-full border-0 px-2 text-[11px] outline-none"
                         />
                       </td>
 
@@ -1909,7 +1908,7 @@ const MENU_ID = "010201";
                               e.target.checked,
                             )
                           }
-                          className="h-[14px] w-[14px] accent-blue-600"
+                          className="h-3.5 w-3.5 accent-blue-600"
                         />
                       </td>
 
@@ -1949,7 +1948,7 @@ const MENU_ID = "010201";
               ACTION BUTTONS
           =================================================== */}
 
-          <div className="mt-[14px] flex justify-center gap-3">
+          <div className="mt-3.5 flex justify-center gap-3">
 
             {/* SAVE */}
 
