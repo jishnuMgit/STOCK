@@ -5,6 +5,7 @@ import {
   getCompanies as loadCompanies,
   getCompany as loadCompany,
   getPurchaseGroups as loadPurchaseGroups,
+  getYearClosingMethods as loadYearClosingMethods,
   saveCompany as saveCompanyData,
   deleteCompany as deleteCompanyData,
 } from "../services/CompanyService.js";
@@ -117,6 +118,32 @@ export const getPurchaseGroups = async (
     return res.status(500).json({
       success: false,
       message: "Failed to load purchase expense groups",
+      error: errMsg(error),
+    });
+  }
+};
+
+// GET /api/companies/year-closing-methods?PstrCoID=...
+export const getYearClosingMethods = async (
+  req: Request,
+  res: Response,
+): Promise<Response> => {
+  const PstrCoID = String(req.query.PstrCoID ?? "").trim();
+  if (!PstrCoID) {
+    return res.status(400).json({
+      success: false,
+      message: "Company ID is required",
+    });
+  }
+
+  try {
+    const methods = await loadYearClosingMethods(PstrCoID);
+    return res.status(200).json({ success: true, methods });
+  } catch (error: unknown) {
+    console.error("Get year closing methods error:", error);
+    return res.status(500).json({
+      success: false,
+      message: "Failed to load year closing methods",
       error: errMsg(error),
     });
   }

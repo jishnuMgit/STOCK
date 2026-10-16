@@ -1,0 +1,2 @@
+alter table dbo.tblstockcontrol
+add column flastpurchasecost numeric(18,4);

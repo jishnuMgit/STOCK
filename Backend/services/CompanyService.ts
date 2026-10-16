@@ -127,6 +127,18 @@ export const getPurchaseGroups = async (): Promise<PurchaseGroup[]> => {
   return rows;
 };
 
+export const getYearClosingMethods = async (
+  PstrCoID: string,
+): Promise<PurchaseGroup[]> => {
+  const { rows } = await pool.query(
+    `SELECT fpid AS "value", fpname AS "label"
+       FROM dbo.filllookupycfinparam($1)
+      ORDER BY fpid`,
+    [PstrCoID],
+  );
+  return rows;
+};
+
 // ------------------------------------------------------------
 // SAVE (insert when originalCoID is empty, else update)
 // Returns the mode used: "S" saved, "M" modified.
