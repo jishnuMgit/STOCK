@@ -22,6 +22,7 @@ import {
 import {
   LocalizationProvider,
 } from "@mui/x-date-pickers/LocalizationProvider";
+import selectComponents from "../../sharecomponents/selectComponents";
 
 dayjs.extend(customParseFormat);
 
@@ -350,6 +351,7 @@ const SalesInvoiceHeader: React.FC = () => {
                   value={branch}
                   onChange={setBranch}
                   styles={selectStyles}
+                  components={selectComponents}
                   isClearable={false}
                   isSearchable={false}
                   menuPosition="fixed"
@@ -392,6 +394,7 @@ const SalesInvoiceHeader: React.FC = () => {
                   instanceId="lkpCustomerID"
                   options={customerIdOptions}
                   value={customerId}
+                  components={selectComponents}
                   onChange={setCustomerId}
                   styles={selectStyles}
                   isClearable={false}
@@ -415,6 +418,7 @@ const SalesInvoiceHeader: React.FC = () => {
                   instanceId="lkpCustomerName"
                   options={customerNameOptions}
                   value={customerName}
+                  components={selectComponents}
                   onChange={setCustomerName}
                   styles={selectStyles}
                   isClearable={false}

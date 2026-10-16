@@ -15,7 +15,7 @@ const DropdownIndicator = (
   props: DropdownIndicatorProps<any, false>,
 ) => (
   <components.DropdownIndicator {...props}>
-    <RxTriangleDown size={18} />
+    <RxTriangleDown size={17} color="gray"/>
   </components.DropdownIndicator>
 );
 

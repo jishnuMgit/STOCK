@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import Select, { type StylesConfig } from "react-select";
+import selectComponents from "../../sharecomponents/selectComponents";
 
 // ============================================================
 // TYPES
@@ -698,6 +699,7 @@ const SalesInvoiceTable: React.FC = () => {
                     inputId={`lkpItemID-${index}`}
                     instanceId={`item-id-${index}`}
                     options={itemOptions}
+                    components={selectComponents}
                     value={row.itemId}
                     onChange={(option) => {
                       updateRow(
@@ -738,6 +740,7 @@ const SalesInvoiceTable: React.FC = () => {
                     inputId={`lkpItemName-${index}`}
                     instanceId={`item-name-${index}`}
                     options={itemOptions}
+                    components={selectComponents}
                     value={row.itemName}
                     onChange={(option) => {
                       updateRow(
