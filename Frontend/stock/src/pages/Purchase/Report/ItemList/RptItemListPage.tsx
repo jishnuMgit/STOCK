@@ -1,5 +1,11 @@
-import React, { useState } from "react";
-import Select from "react-select";
+import React, { useEffect, useMemo, useRef, useState } from "react";
+import Select, {
+  components,
+  type MenuListProps,
+  type OptionProps,
+} from "react-select";
+import { toast } from "react-toastify";
+import { printItemListReport } from "./printItemListReport";
 
 type Option = { value: string; label: string };
 
@@ -8,33 +14,28 @@ type RadioOptionProps = {
   value: string;
   label: string;
   checked: boolean;
+  disabled?: boolean;
   onChange: () => void;
 };
 
-/* Replace these with data from your API */
-const branchOptions: Option[] = [
-  { value: "OFFICE", label: "OFFICE" },
-  { value: "BRANCH 1", label: "BRANCH 1" },
-  { value: "BRANCH 2", label: "BRANCH 2" },
-];
-const groupIdOptions: Option[] = [
-  { value: "G1", label: "G1" },
-  { value: "G2", label: "G2" },
-];
-const groupNameOptions: Option[] = [
-  { value: "G1", label: "Group One" },
-  { value: "G2", label: "Group Two" },
-];
-const itemIdOptions: Option[] = [
-  { value: "1001", label: "1001" },
-  { value: "1002", label: "1002" },
-  { value: "1003", label: "1003" },
-];
-const itemNameOptions: Option[] = [
-  { value: "1001", label: "Item One" },
-  { value: "1002", label: "Item Two" },
-  { value: "1003", label: "Item Three" },
-];
+type Branch = { brId: string; brName: string };
+type Group = { groupId: string; groupName: string };
+type Item = { itemId: string; itemName: string };
+
+const API = `${import.meta.env.VITE_API_URL}/RptItemList`;
+
+// Sends the login cookie, and the company / user kept at sign-in as a stopgap
+// (the server uses its session first and only falls back to these).
+const apiFetch = (url: string, init: RequestInit = {}) => {
+  const coId = localStorage.getItem("PstrCoID") ?? "";
+  const userId = localStorage.getItem("PstrUserID") ?? "";
+  const sep = url.includes("?") ? "&" : "?";
+
+  return fetch(
+    `${url}${sep}coId=${encodeURIComponent(coId)}&userId=${encodeURIComponent(userId)}`,
+    { credentials: "include", ...init },
+  );
+};
 
 const selectClassNames = {
   control: ({
@@ -81,19 +82,176 @@ const selectProps = {
   menuPortalTarget: typeof document !== "undefined" ? document.body : undefined,
 };
 
+// ---- two-column lookup list (Item ID | Item Name, like the grid lookups) ----
+type ItemOption = Option & { id: string; name: string };
+
+const ID_FIRST = "grid grid-cols-[143px_1fr]"; // lkpItemID: Item ID (box 135 + gap 8) | Item Name (= width of the name box)
+const NAME_FIRST = "grid grid-cols-[1fr_130px]"; // lkpItemName: Item Name (= box width) | Item ID outside
+
+const itemListClassNames = (menuWidth: string) => ({
+  ...selectClassNames,
+  menu: () =>
+    `!mt-[1px] ${menuWidth} !rounded-none !border !border-[#cfd7df] !z-[999999] !shadow-md`,
+  menuList: () => "!p-0 !max-h-[240px]",
+  option: ({
+    isFocused,
+    isSelected,
+  }: {
+    isFocused: boolean;
+    isSelected: boolean;
+  }) => `
+    !cursor-pointer !p-0 !text-[13px] !text-[#24364d]
+    ${isSelected ? "!bg-[#e7f7ed]" : isFocused ? "!bg-[#f2faf5]" : "!bg-white"}
+  `,
+});
+
+// the first column is exactly as wide as the box; the second column hangs
+// outside the box to the right
+const idClassNames = itemListClassNames(""); // width is set from the measured Item row
+const nameClassNames = itemListClassNames("!w-[calc(100%_+_130px)]"); // box + 130
+
+const makeItemMenuList = (
+  cols: string,
+  first: string,
+  second: string,
+  headerBg = "bg-[#f5f6fa]", // same header colour for every lookup
+) => {
+  const ItemMenuList = (props: MenuListProps<ItemOption, false>) => (
+    <components.MenuList {...props}>
+      <div
+        className={`${cols} sticky top-0 z-[1] border-b border-[#cfd7df] ${headerBg} text-[13px] font-semibold text-[#24364d]`}
+      >
+        <div className="border-r border-[#cfd7df] px-[8px] py-[7px]">
+          {first}
+        </div>
+        <div className="px-[8px] py-[7px]">{second}</div>
+      </div>
+      {props.children}
+    </components.MenuList>
+  );
+  return ItemMenuList;
+};
+
+const makeItemOption = (cols: string, idFirst: boolean) => {
+  const ItemOptionRow = (props: OptionProps<ItemOption, false>) => {
+    const { id, name } = props.data;
+    return (
+      <components.Option {...props}>
+        <div className={cols}>
+          <div className="truncate px-[8px] py-[6px]">{idFirst ? id : name}</div>
+          <div className="truncate px-[8px] py-[6px]">{idFirst ? name : id}</div>
+        </div>
+      </components.Option>
+    );
+  };
+  return ItemOptionRow;
+};
+
+const idComponents = {
+  MenuList: makeItemMenuList(ID_FIRST, "Item ID", "Item Name"),
+  Option: makeItemOption(ID_FIRST, true),
+};
+const nameComponents = {
+  MenuList: makeItemMenuList(NAME_FIRST, "Item Name", "Item ID"),
+  Option: makeItemOption(NAME_FIRST, false),
+};
+
+// lkpBranch: Branch (= box width) | ID hanging outside to the right
+const BRANCH_COLS = "grid grid-cols-[1fr_55px]";
+const branchClassNames = itemListClassNames("!w-[calc(100%_+_55px)]");
+const branchComponents = {
+  MenuList: makeItemMenuList(BRANCH_COLS, "Branch", "ID"),
+  Option: makeItemOption(BRANCH_COLS, false),
+};
+
+// type in either box: matches the item id or the item name
+const filterItem = (option: { data: ItemOption }, input: string) => {
+  const q = input.trim().toLowerCase();
+  return (
+    q === "" ||
+    option.data.id.toLowerCase().includes(q) ||
+    option.data.name.toLowerCase().includes(q)
+  );
+};
+
+// ---- list layouts for the group / range lookups -------------------------
+// group ID box: Group ID (box + gap) | Group Name (= width of the name box)
+// group name box: Group Name (= box width) | Group ID hanging outside
+const groupIdComponents = {
+  MenuList: makeItemMenuList(ID_FIRST, "ID", "Group Name"),
+  Option: makeItemOption(ID_FIRST, true),
+};
+const groupNameComponents = {
+  MenuList: makeItemMenuList(NAME_FIRST, "Group Name", "ID"),
+  Option: makeItemOption(NAME_FIRST, false),
+};
+
+// range boxes (135px each): Item ID (= box width) | Item Name outside
+const RANGE_COLS = "grid grid-cols-[135px_1fr]";
+const rangeComponents = {
+  MenuList: makeItemMenuList(RANGE_COLS, "Item ID", "Item Name"),
+  Option: makeItemOption(RANGE_COLS, true),
+};
+
+// ---- Enter moves to the next field (like Tab) ------------------------------
+// Branch -> Group ID -> Group Name -> Item ID -> Item Name (or From -> To)
+// -> Print. A disabled or hidden field is skipped.
+const NAV_ORDER = [
+  "lkpBranch",
+  "lkpItemGroupID",
+  "lkpItemGroupName",
+  "lkpItemID",
+  "lkpItemName",
+  "lkpFromItem",
+  "lkpToItem",
+  "btnPrint",
+] as const;
+type NavKey = (typeof NAV_ORDER)[number];
+
+const focusField = (key: NavKey): boolean => {
+  const el = document.getElementById(key);
+  if (!el || (el as HTMLInputElement).disabled) return false;
+  el.focus();
+  return true;
+};
+
+const focusNext = (from: NavKey) => {
+  for (let i = NAV_ORDER.indexOf(from) + 1; i < NAV_ORDER.length; i++) {
+    if (focusField(NAV_ORDER[i])) return;
+  }
+};
+
+// focus a field after React has re-rendered (a radio just enabled / showed it)
+const focusSoon = (id: string) =>
+  setTimeout(() => document.getElementById(id)?.focus(), 50);
+
+// width of a row of two boxes, measured when its list opens
+const useRowWidth = () => {
+  const ref = useRef<HTMLDivElement>(null);
+  const [width, setWidth] = useState<number | undefined>();
+  const measure = () => setWidth(ref.current?.getBoundingClientRect().width);
+  return { ref, width, measure };
+};
+
 const CustomRadio: React.FC<RadioOptionProps> = ({
   name,
   value,
   label,
   checked,
+  disabled = false,
   onChange,
 }) => (
-  <label className="flex cursor-pointer items-center gap-2.5 whitespace-nowrap select-none">
+  <label
+    className={`flex items-center gap-2.5 whitespace-nowrap select-none ${
+      disabled ? "cursor-not-allowed opacity-50" : "cursor-pointer"
+    }`}
+  >
     <input
       type="radio"
       name={name}
       value={value}
       checked={checked}
+      disabled={disabled}
       onChange={onChange}
       className="sr-only"
     />
@@ -121,24 +279,164 @@ const RadioPanel: React.FC<{
   </div>
 );
 
+const FieldLabel: React.FC<{ children: React.ReactNode }> = ({ children }) => (
+  <div className="flex h-[30px] items-center justify-end border border-[#e0e5ea] bg-[#fafbfc] pr-3 text-[12px] text-[#405066]">
+    {children}
+  </div>
+);
+
 type RptItemListPageProps = {
   onClose?: () => void;
 };
 
 const RptItemListPage: React.FC<RptItemListPageProps> = ({ onClose }) => {
-  const [branchMode, setBranchMode] = useState("One Branch"); // optBranch
-  const [branch, setBranch] = useState<Option | null>(branchOptions[0]); // lkpBranch
+  const [branches, setBranches] = useState<Branch[]>([]);
+  const [groupsById, setGroupsById] = useState<Group[]>([]);
+  const [groupsByName, setGroupsByName] = useState<Group[]>([]);
+  const [itemsById, setItemsById] = useState<Item[]>([]);
+  const [itemsByName, setItemsByName] = useState<Item[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [printing, setPrinting] = useState(false);
 
-  const [statusMode, setStatusMode] = useState("Active"); // optStatus
+  const groupRow = useRowWidth();
+  const itemRow = useRowWidth();
 
-  const [groupMode, setGroupMode] = useState("One Item Group"); // optItemGroup
-  const [groupId, setGroupId] = useState<string | null>(null); // lkpItemGroupID / lkpItemGroupName
+  const [branchMode, setBranchMode] = useState("One Branch"); // rdgBranch
+  const [branch, setBranch] = useState<ItemOption | null>(null); // lkpBranch
+
+  const [statusMode, setStatusMode] = useState("Active"); // rdgItemStatus
+
+  // VB Activated: All Category, All Item
+  const [groupMode, setGroupMode] = useState("All Item Group"); // rdgCategory
+  const [groupId, setGroupId] = useState<string | null>(null); // lkpItemGroupID / Name
   const [salesBelowCost, setSalesBelowCost] = useState(false); // chkSalesBelowCost
 
-  const [itemMode, setItemMode] = useState("One Item"); // optItem
-  const [itemId, setItemId] = useState<string | null>(null); // lkpItemID / lkpItemName
-  const [fromItem, setFromItem] = useState<Option | null>(null); // lkpFromItem
-  const [toItem, setToItem] = useState<Option | null>(null); // lkpToItem
+  const [itemMode, setItemMode] = useState("All Item"); // rdgItem
+  const [itemId, setItemId] = useState<string | null>(null); // lkpItemID / Name
+  const [fromItem, setFromItem] = useState<ItemOption | null>(null); // lkpItemIDFrom
+  const [toItem, setToItem] = useState<ItemOption | null>(null); // lkpItemIDTo
+
+  // Enter on a lookup:
+  //  - list closed -> go to the next field
+  //  - list open   -> Enter picks the highlighted row, then go to the next field
+  const pendingAdvance = useRef<NavKey | null>(null);
+
+  const advanceOnEnter =
+    (key: NavKey) => (event: React.KeyboardEvent<HTMLDivElement>) => {
+      if (event.key !== "Enter") return;
+
+      const open =
+        (event.target as HTMLElement).getAttribute("aria-expanded") === "true";
+
+      if (!open) {
+        event.preventDefault();
+        focusNext(key);
+        return;
+      }
+
+      pendingAdvance.current = key;
+      setTimeout(() => {
+        pendingAdvance.current = null; // nothing was picked (e.g. "No options")
+      }, 0);
+    };
+
+  const advanceAfterPick = () => {
+    const key = pendingAdvance.current;
+    if (!key) return; // picked with the mouse: stay
+    pendingAdvance.current = null;
+    setTimeout(() => focusNext(key), 0);
+  };
+
+  // ------------------------------------------------------------
+  // OPTIONS FROM THE SERVER
+  // ------------------------------------------------------------
+  const collator = useMemo(
+    () => new Intl.Collator(undefined, { numeric: true, sensitivity: "base" }),
+    [],
+  );
+
+  const uniqueBy = <T,>(list: T[], key: (t: T) => string): T[] => {
+    const seen = new Set<string>();
+    return list.filter((x) => {
+      const k = key(x);
+      if (seen.has(k)) return false;
+      seen.add(k);
+      return true;
+    });
+  };
+
+  const branchOptions: ItemOption[] = useMemo(
+    () =>
+      branches.map((b) => ({
+        value: b.brId,
+        label: b.brName,
+        id: b.brId,
+        name: b.brName,
+      })),
+    [branches],
+  );
+
+  // lkpItemGroupID: by id / lkpItemGroupName: by name
+  const groupIdOptions: ItemOption[] = useMemo(
+    () =>
+      uniqueBy(groupsById, (g) => g.groupId)
+        .sort((a, b) => collator.compare(a.groupId, b.groupId))
+        .map((g) => ({
+          value: g.groupId,
+          label: g.groupId,
+          id: g.groupId,
+          name: g.groupName,
+        })),
+    [groupsById, collator],
+  );
+
+  const groupNameOptions: ItemOption[] = useMemo(
+    () =>
+      uniqueBy(groupsByName, (g) => g.groupId)
+        .sort(
+          (a, b) =>
+            collator.compare(a.groupName, b.groupName) ||
+            collator.compare(a.groupId, b.groupId),
+        )
+        .map((g) => ({
+          value: g.groupId,
+          label: g.groupName,
+          id: g.groupId,
+          name: g.groupName,
+        })),
+    [groupsByName, collator],
+  );
+
+  // lkpItemID: by id / lkpItemName: by name (each item once)
+  const itemIdOptions: ItemOption[] = useMemo(
+    () =>
+      uniqueBy(itemsById, (i) => i.itemId)
+        .sort((a, b) => collator.compare(a.itemId, b.itemId))
+        .map((i) => ({
+          value: i.itemId,
+          label: i.itemId,
+          id: i.itemId,
+          name: i.itemName,
+        })),
+    [itemsById, collator],
+  );
+
+  const itemNameOptions: ItemOption[] = useMemo(
+    () =>
+      uniqueBy(itemsByName, (i) => i.itemId)
+        .sort(
+          (a, b) =>
+            collator.compare(a.itemName, b.itemName) ||
+            collator.compare(a.itemId, b.itemId),
+        )
+        .map((i) => ({
+          value: i.itemId,
+          label: i.itemName,
+          id: i.itemId,
+          name: i.itemName,
+        })),
+    [itemsByName, collator],
+  );
 
   const selectedGroupId =
     groupIdOptions.find((o) => o.value === groupId) ?? null;
@@ -148,33 +446,168 @@ const RptItemListPage: React.FC<RptItemListPageProps> = ({ onClose }) => {
   const selectedItemName =
     itemNameOptions.find((o) => o.value === itemId) ?? null;
 
-  const handlePrint = () => {
-    console.log({
-      branchMode,
-      branch: branchMode === "One Branch" ? branch : null,
-      statusMode,
-      groupMode,
-      groupId: groupMode === "One Item Group" ? groupId : null,
-      salesBelowCost,
-      itemMode,
-      itemId: itemMode === "One Item" ? itemId : null,
-      fromItem: itemMode === "Range Item" ? fromItem : null,
-      toItem: itemMode === "Range Item" ? toItem : null,
-    });
+  // VB ConfigurerdgBranchUserID: a user who has one branch only works with it
+  // (assumed rule - the old helper is not in the files)
+  const canUseAllBranches = branches.length > 1;
+
+  // ------------------------------------------------------------
+  // LOAD THE LOOKUPS (VB FillCombos)
+  // ------------------------------------------------------------
+  useEffect(() => {
+    let cancelled = false;
+
+    const load = async () => {
+      try {
+        const res = await apiFetch(`${API}/lookups`);
+        const data = await res.json();
+
+        if (!res.ok || !data.success) {
+          toast.error(data.message || "Failed to load the lookups");
+          return;
+        }
+        if (cancelled) return;
+
+        const list = data.branches as Branch[];
+        setBranches(list);
+        setGroupsById(data.groupsById as Group[]);
+        setGroupsByName(data.groupsByName as Group[]);
+        setItemsById(data.itemsById as Item[]);
+        setItemsByName(data.itemsByName as Item[]);
+        // the first branch is the default
+        setBranch(
+          list[0]
+            ? {
+                value: list[0].brId,
+                label: list[0].brName,
+                id: list[0].brId,
+                name: list[0].brName,
+              }
+            : null,
+        );
+      } catch {
+        if (!cancelled) toast.error("Failed to load the lookups");
+      } finally {
+        if (!cancelled) setLoading(false);
+      }
+    };
+
+    load();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  // ------------------------------------------------------------
+  // PRINT (VB cmdPrint_Click + ValidateMe)
+  // ------------------------------------------------------------
+  const handlePrint = async () => {
+    if (printing) return;
+
+    const oneBranch = branchMode === "One Branch";
+    const oneGroup = groupMode === "One Item Group";
+
+    if (oneBranch && !branch) {
+      toast.warning("Please select 'Branch'", { toastId: "il-branch" });
+      document.getElementById("lkpBranch")?.focus();
+      return;
+    }
+    if (oneGroup && !groupId) {
+      toast.warning("Please select 'Item Group'", { toastId: "il-group" });
+      document.getElementById("lkpItemGroupID")?.focus();
+      return;
+    }
+    if (itemMode === "One Item" && !itemId) {
+      toast.warning("Please select 'Item ID'", { toastId: "il-item" });
+      document.getElementById("lkpItemID")?.focus();
+      return;
+    }
+    if (itemMode === "Range Item") {
+      if (!fromItem) {
+        toast.warning("Please select 'Item ID From'", { toastId: "il-from" });
+        document.getElementById("lkpFromItem")?.focus();
+        return;
+      }
+      if (!toItem) {
+        toast.warning("Please select 'Item ID To'", { toastId: "il-to" });
+        document.getElementById("lkpToItem")?.focus();
+        return;
+      }
+    }
+
+    setPrinting(true);
+    try {
+      const res = await apiFetch(`${API}/print`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          allBranches: !oneBranch,
+          branchId: oneBranch ? branch?.value : "",
+          allGroups: !oneGroup,
+          groupId: oneGroup ? groupId : "",
+          itemMode: { "One Item": 0, "Range Item": 1, "All Item": 2 }[itemMode],
+          itemId: itemMode === "One Item" ? itemId : "",
+          fromItemId: itemMode === "Range Item" ? fromItem?.value : "",
+          toItemId: itemMode === "Range Item" ? toItem?.value : "",
+          status: { Active: 0, Inactive: 1, Hide: 2 }[statusMode],
+          salesBelowCost,
+        }),
+      });
+      const data = await res.json();
+
+      if (!res.ok || !data.success) {
+        toast.error(data.message || "Could not prepare the report");
+        return;
+      }
+
+      printItemListReport(data.report);
+    } catch {
+      toast.error("Could not prepare the report");
+    } finally {
+      setPrinting(false);
+    }
   };
 
   const handleClose = () => {
     setBranchMode("One Branch");
-    setBranch(branchOptions[0]);
+    setBranch(branchOptions[0] ?? null);
     setStatusMode("Active");
-    setGroupMode("One Item Group");
+    setGroupMode("All Item Group");
     setGroupId(null);
     setSalesBelowCost(false);
-    setItemMode("One Item");
+    setItemMode("All Item");
     setItemId(null);
     setFromItem(null);
     setToItem(null);
-    onClose?.();
+    if (onClose) onClose();
+    else window.history.back();
+  };
+
+  // Alt+P prints, Alt+C closes (Ctrl+P / Ctrl+L of the old form clash with the
+  // browser). Re-attached every render so it always sees the latest state.
+  useEffect(() => {
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (!event.altKey || event.ctrlKey || event.metaKey) return;
+
+      if (event.code === "KeyP") {
+        event.preventDefault();
+        handlePrint();
+      } else if (event.code === "KeyC") {
+        event.preventDefault();
+        handleClose();
+      }
+    };
+
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
+  });
+
+  // VB rdgItem_SelectedIndexChanged: clear the item boxes, focus the first
+  const chooseItemMode = (mode: string, focusId?: string) => {
+    setItemMode(mode);
+    setItemId(null);
+    setFromItem(null);
+    setToItem(null);
+    if (focusId) focusSoon(focusId);
   };
 
   const groupDisabled = groupMode !== "One Item Group";
@@ -198,13 +631,17 @@ const RptItemListPage: React.FC<RptItemListPageProps> = ({ onClose }) => {
                   value="One Branch"
                   label="One Branch"
                   checked={branchMode === "One Branch"}
-                  onChange={() => setBranchMode("One Branch")}
+                  onChange={() => {
+                    setBranchMode("One Branch");
+                    focusSoon("lkpBranch");
+                  }}
                 />
                 <CustomRadio
                   name="rdgBranch"
                   value="All Branch"
                   label="All Branch"
                   checked={branchMode === "All Branch"}
+                  disabled={!canUseAllBranches}
                   onChange={() => setBranchMode("All Branch")}
                 />
               </RadioPanel>
@@ -215,9 +652,15 @@ const RptItemListPage: React.FC<RptItemListPageProps> = ({ onClose }) => {
                     instanceId="lkpBranch"
                     options={branchOptions}
                     value={branch}
-                    onChange={setBranch}
-                    isDisabled={branchMode !== "One Branch"}
+                    onChange={(option) => {
+                      setBranch(option);
+                      advanceAfterPick();
+                    }}
+                    onKeyDown={advanceOnEnter("lkpBranch")}
+                    isDisabled={branchMode !== "One Branch" || loading}
                     {...selectProps}
+                    classNames={branchClassNames}
+                    components={branchComponents}
                   />
                 </div>
               </div>
@@ -225,21 +668,21 @@ const RptItemListPage: React.FC<RptItemListPageProps> = ({ onClose }) => {
               {/* Status (top right) */}
               <RadioPanel className="max-[760px]:col-span-2">
                 <CustomRadio
-                  name="rdgStatus"
+                  name="rdgItemStatus"
                   value="Active"
                   label="Active"
                   checked={statusMode === "Active"}
                   onChange={() => setStatusMode("Active")}
                 />
                 <CustomRadio
-                  name="rdgStatus"
+                  name="rdgItemStatus"
                   value="Inactive"
                   label="Inactive"
                   checked={statusMode === "Inactive"}
                   onChange={() => setStatusMode("Inactive")}
                 />
                 <CustomRadio
-                  name="rdgStatus"
+                  name="rdgItemStatus"
                   value="Hide"
                   label="Hide"
                   checked={statusMode === "Hide"}
@@ -250,39 +693,71 @@ const RptItemListPage: React.FC<RptItemListPageProps> = ({ onClose }) => {
               {/* Item group */}
               <RadioPanel>
                 <CustomRadio
-                  name="rdgItemGroup"
+                  name="rdgCategory"
                   value="One Item Group"
                   label="One Item Group"
                   checked={groupMode === "One Item Group"}
-                  onChange={() => setGroupMode("One Item Group")}
+                  onChange={() => {
+                    setGroupMode("One Item Group");
+                    focusSoon("lkpItemGroupID");
+                  }}
                 />
                 <CustomRadio
-                  name="rdgItemGroup"
+                  name="rdgCategory"
                   value="All Item Group"
                   label="All Item Group"
                   checked={groupMode === "All Item Group"}
-                  onChange={() => setGroupMode("All Item Group")}
+                  onChange={() => {
+                    setGroupMode("All Item Group");
+                    setGroupId(null);
+                  }}
                 />
               </RadioPanel>
               <div className="pt-3">
-                <div className="grid grid-cols-[135px_1fr] gap-2">
+                <div
+                  ref={groupRow.ref}
+                  className="grid grid-cols-[135px_1fr] gap-2"
+                >
                   <Select
                     inputId="lkpItemGroupID"
                     instanceId="lkpItemGroupID"
                     options={groupIdOptions}
                     value={selectedGroupId}
-                    onChange={(option) => setGroupId(option?.value ?? null)}
-                    isDisabled={groupDisabled}
+                    onChange={(option) => {
+                      setGroupId(option?.value ?? null);
+                      advanceAfterPick();
+                    }}
+                    onKeyDown={advanceOnEnter("lkpItemGroupID")}
+                    isDisabled={groupDisabled || loading}
                     {...selectProps}
+                    classNames={idClassNames}
+                    styles={{
+                      menu: (base) => ({
+                        ...base,
+                        width: groupRow.width ?? 480,
+                      }),
+                    }}
+                    onMenuOpen={groupRow.measure}
+                    components={groupIdComponents}
+                    filterOption={filterItem}
+                    isSearchable
                   />
                   <Select
                     inputId="lkpItemGroupName"
                     instanceId="lkpItemGroupName"
                     options={groupNameOptions}
                     value={selectedGroupName}
-                    onChange={(option) => setGroupId(option?.value ?? null)}
-                    isDisabled={groupDisabled}
+                    onChange={(option) => {
+                      setGroupId(option?.value ?? null);
+                      advanceAfterPick();
+                    }}
+                    onKeyDown={advanceOnEnter("lkpItemGroupName")}
+                    isDisabled={groupDisabled || loading}
                     {...selectProps}
+                    classNames={nameClassNames}
+                    components={groupNameComponents}
+                    filterOption={filterItem}
+                    isSearchable
                   />
                 </div>
               </div>
@@ -309,41 +784,69 @@ const RptItemListPage: React.FC<RptItemListPageProps> = ({ onClose }) => {
                   value="One Item"
                   label="One Item"
                   checked={itemMode === "One Item"}
-                  onChange={() => setItemMode("One Item")}
+                  onChange={() => chooseItemMode("One Item", "lkpItemID")}
                 />
                 <CustomRadio
                   name="rdgItem"
                   value="Range Item"
                   label="Range Item"
                   checked={itemMode === "Range Item"}
-                  onChange={() => setItemMode("Range Item")}
+                  onChange={() => chooseItemMode("Range Item", "lkpFromItem")}
                 />
                 <CustomRadio
                   name="rdgItem"
                   value="All Item"
                   label="All Item"
                   checked={itemMode === "All Item"}
-                  onChange={() => setItemMode("All Item")}
+                  onChange={() => chooseItemMode("All Item")}
                 />
               </RadioPanel>
               <div className="pt-3">
                 {itemMode === "One Item" && (
-                  <div className="grid grid-cols-[135px_1fr] gap-2">
+                  <div
+                    ref={itemRow.ref}
+                    className="grid grid-cols-[135px_1fr] gap-2"
+                  >
                     <Select
                       inputId="lkpItemID"
                       instanceId="lkpItemID"
                       options={itemIdOptions}
                       value={selectedItemId}
-                      onChange={(option) => setItemId(option?.value ?? null)}
+                      onChange={(option) => {
+                        setItemId(option?.value ?? null);
+                        advanceAfterPick();
+                      }}
+                      onKeyDown={advanceOnEnter("lkpItemID")}
+                      isDisabled={loading}
                       {...selectProps}
+                      classNames={idClassNames}
+                      styles={{
+                        menu: (base) => ({
+                          ...base,
+                          width: itemRow.width ?? 480,
+                        }),
+                      }}
+                      onMenuOpen={itemRow.measure}
+                      components={idComponents}
+                      filterOption={filterItem}
+                      isSearchable
                     />
                     <Select
                       inputId="lkpItemName"
                       instanceId="lkpItemName"
                       options={itemNameOptions}
                       value={selectedItemName}
-                      onChange={(option) => setItemId(option?.value ?? null)}
+                      onChange={(option) => {
+                        setItemId(option?.value ?? null);
+                        advanceAfterPick();
+                      }}
+                      onKeyDown={advanceOnEnter("lkpItemName")}
+                      isDisabled={loading}
                       {...selectProps}
+                      classNames={nameClassNames}
+                      components={nameComponents}
+                      filterOption={filterItem}
+                      isSearchable
                     />
                   </div>
                 )}
@@ -355,8 +858,18 @@ const RptItemListPage: React.FC<RptItemListPageProps> = ({ onClose }) => {
                         instanceId="lkpFromItem"
                         options={itemIdOptions}
                         value={fromItem}
-                        onChange={setFromItem}
+                        onChange={(option) => {
+                          setFromItem(option);
+                          advanceAfterPick();
+                        }}
+                        onKeyDown={advanceOnEnter("lkpFromItem")}
+                        isDisabled={loading}
                         {...selectProps}
+                        classNames={idClassNames}
+                        styles={{ menu: (base) => ({ ...base, width: 480 }) }}
+                        components={rangeComponents}
+                        filterOption={filterItem}
+                        isSearchable
                       />
                     </div>
                     <span className="text-[12px] text-[#405066]">to</span>
@@ -366,8 +879,18 @@ const RptItemListPage: React.FC<RptItemListPageProps> = ({ onClose }) => {
                         instanceId="lkpToItem"
                         options={itemIdOptions}
                         value={toItem}
-                        onChange={setToItem}
+                        onChange={(option) => {
+                          setToItem(option);
+                          advanceAfterPick();
+                        }}
+                        onKeyDown={advanceOnEnter("lkpToItem")}
+                        isDisabled={loading}
                         {...selectProps}
+                        classNames={idClassNames}
+                        styles={{ menu: (base) => ({ ...base, width: 480 }) }}
+                        components={rangeComponents}
+                        filterOption={filterItem}
+                        isSearchable
                       />
                     </div>
                   </div>
@@ -382,7 +905,9 @@ const RptItemListPage: React.FC<RptItemListPageProps> = ({ onClose }) => {
                   id="btnPrint"
                   type="button"
                   onClick={handlePrint}
-                  className="btn-style"
+                  disabled={loading || printing}
+                  title="Alt+P"
+                  className="btn-style focus-visible:ring-2 focus-visible:ring-[#64d96e] disabled:cursor-not-allowed disabled:opacity-40"
                 >
                   <u>P</u>rint
                 </button>
@@ -390,7 +915,8 @@ const RptItemListPage: React.FC<RptItemListPageProps> = ({ onClose }) => {
                   id="btnClose"
                   type="button"
                   onClick={handleClose}
-                  className="btn-style"
+                  title="Alt+C"
+                  className="btn-style focus-visible:ring-2 focus-visible:ring-[#64d96e]"
                 >
                   <u>C</u>lose
                 </button>
