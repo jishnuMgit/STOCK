@@ -83,6 +83,8 @@ import BeginningStockPrintPage from "../pages/Purchase/Transaction/BeginningStoc
 import RptIncomeSumPage from "../pages/Finance/Report/IncomeSummary/RptIncomeSumPage";
 import RptDocumentExportPage from "../pages/Finance/Report/DocumentExportPage/RptDocumentExportPage";
 import SetReceivableAgeingPeriod from "../pages/Settings/SetReceivableAgeingPeriodPage";
+import SetDatabaseBackupPathPage from "../pages/Settings/SetDatabaseBackupPathPage";
+import ChangeLoginYear from "../pages/Settings/ChangeLoginYearPage";
 
 
 const Login = lazy(() => import("../pages/Auth/LoginPage"));
@@ -304,6 +306,8 @@ const AppRoutes = () => {
           <Route path="/Settings/SetPostingAccount" element={<SetPostingAccountPage />}/>
           <Route path="/Setting/SetActivePeriod"  element={<ActivePeriodPage />}   />
           <Route path="/Setting/SetDrAgeingPeriod" element={<SetReceivableAgeingPeriod/>}/>
+          <Route path="/Setting/SetDatabaseBackupPath" element={<SetDatabaseBackupPathPage/>}/>
+          <Route path="/Setting/ChangeLoginYear" element={<ChangeLoginYear/>}/>
 
           {/* ================= DOCUMENT NUMBER ================= */}
 

@@ -178,6 +178,8 @@ Sales-REPORT
    mnuSetActivePeriod:"/Setting/SetActivePeriod",
    mnuSetDefaultBranch:"/Setting/SetDefaultBranch",
    mnuSetDrAgeingPeriod:"/Setting/SetDrAgeingPeriod",
+   mnuSetDatabaseBackupPath:"/Setting/SetDatabaseBackupPath",
+   mnuChangeLoginYear:"/Setting/ChangeLoginYear",
 
   /* =========================================================
      SECURITY
