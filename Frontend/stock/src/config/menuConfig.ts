@@ -192,6 +192,13 @@ Sales-REPORT
   mnuRptUserTransactionAudit:"/Security/UserTransactionAudit",
 
   /* =========================================================
+     Utility
+  ========================================================= */
+
+
+  mnuFinYearClose:"/Utility/FinYearClose",
+
+  /* =========================================================
      ADMINISTRATION
   ========================================================= */
 

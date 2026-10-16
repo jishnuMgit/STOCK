@@ -85,6 +85,7 @@ import RptDocumentExportPage from "../pages/Finance/Report/DocumentExportPage/Rp
 import SetReceivableAgeingPeriod from "../pages/Settings/SetReceivableAgeingPeriodPage";
 import SetDatabaseBackupPathPage from "../pages/Settings/SetDatabaseBackupPathPage";
 import ChangeLoginYear from "../pages/Settings/ChangeLoginYearPage";
+import FinanceYearClose from "../pages/Utility/FinanceYearClose";
 
 
 const Login = lazy(() => import("../pages/Auth/LoginPage"));
@@ -335,6 +336,11 @@ const AppRoutes = () => {
             path="/Security/UserTransactionAudit"
             element={<UserTransactionAudit />}
           />
+    {/* ================= Utility ================= */}
+
+
+
+          <Route path="/Utility/FinYearClose" element={<FinanceYearClose/>}/>
 
           {/* ================= ADMINISTRATION ================= */}
 
