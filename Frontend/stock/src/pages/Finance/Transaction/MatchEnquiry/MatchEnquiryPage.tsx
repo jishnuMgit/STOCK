@@ -45,6 +45,8 @@ const createRows = (): ReceiptRow[] => {
     credit: 0,
     match: false,
     matchAmount: 0,
+    parentChild: "",
+    matchApplyDate: "",
   }));
 };
 

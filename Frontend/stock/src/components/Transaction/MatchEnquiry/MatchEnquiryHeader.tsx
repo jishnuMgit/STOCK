@@ -80,19 +80,19 @@ export interface MatchHeaderProps {
 }
 
 const MatchEnquiryHeader: React.FC<MatchHeaderProps> = ({
-    branch,
+    // branch,
   customerId,
   customerName,
   divisionId,
   type,
   receiptNo,
-  receiptDate,
+  // receiptDate,
 
   setDivisionId,
   setDocType,
   setReceiptNo,
-  setReceiptDate,
-  setBranch,
+  // setReceiptDate,
+  // setBranch,
 
   customerOptions,
   customerNameOptions,
@@ -102,9 +102,9 @@ const MatchEnquiryHeader: React.FC<MatchHeaderProps> = ({
 
   divisionLoading,
 
-  documentAmount,
-  totalMatchAmount,
-  balance,
+  // documentAmount,
+  // totalMatchAmount,
+  // balance,
 
   customerIdRef,
   customerNameRef,
@@ -125,7 +125,7 @@ const MatchEnquiryHeader: React.FC<MatchHeaderProps> = ({
       <div
         className="
           flex
-          h-[36px]
+          h-7.5
           items-center
           border-b
           border-slate-300

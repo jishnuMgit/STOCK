@@ -177,7 +177,7 @@ const CustomRadio: React.FC<
   RadioOptionProps
 > = ({name,value,label,checked,onChange,}) => {
   return (
-    <label  className="  flex cursor-pointer  items-center  gap-[10px]  whitespace-nowrap   select-none  "  >
+    <label  className="  flex cursor-pointer  items-center  gap-2.5  whitespace-nowrap   select-none  "  >
       <input
         type="radio"
         name={name}
@@ -187,9 +187,9 @@ const CustomRadio: React.FC<
         className="sr-only"
       />
       {/* RADIO CIRCLE */}
-      <span  className={` flex h-[18px] w-[18px]  shrink-0  items-center justify-center rounded-full border bg-white ${  checked      ? "border-[#4dcc68]" : "border-[#c5ced8]"  } `}>
+      <span  className={` flex h-4.5 w-4.5  shrink-0  items-center justify-center rounded-full border bg-white ${  checked      ? "border-[#4dcc68]" : "border-[#c5ced8]"  } `}>
         {/* GREEN INNER CIRCLE */}
-        <span className={` h-[10px] w-[10px] rounded-full bg-[#4dcc68]  ${ checked ? "opacity-100" : "opacity-0"  }`} />
+        <span className={` h-2.5 w-2.5 rounded-full bg-[#4dcc68]  ${ checked ? "opacity-100" : "opacity-0"  }`} />
       </span>
      <span className="text-[14px] font-normal text-[#24364d]  " > {label}
       </span>
@@ -213,7 +213,7 @@ const RadioPanel: React.FC<
     <div  className={`  relative border  border-[#d7dee5]  bg-white  ${className}`} >
       {title && (
         <div
-          className=" absolute left-1/2 top-[-10px]  -translate-x-1/2  bg-white px-[8px] text-[14px]  text-[#24364d]" >
+          className=" absolute left-1/2 -top-2.5  -translate-x-1/2  bg-white px-2 text-[14px]  text-[#24364d]" >
           {title}
         </div>
       )}
@@ -223,7 +223,7 @@ const RadioPanel: React.FC<
   );
 };
 const DATE_FORMAT = "DD-MM-YYYY";
-const DEFAULT_DATE = "07-07-2026";
+// const DEFAULT_DATE = "07-07-2026";
 // ============================================================
 // FIELD LABEL
 // ============================================================
@@ -232,7 +232,7 @@ const FieldLabel: React.FC<{
   children: React.ReactNode;
 }> = ({ children }) => {
   return (
-    <div className=" flex h-[30px] items-center justify-end border border-[#d7dee5] bg-[#fafbfc] pr-[8px]  text-[14px]text-[#24364d]  " >
+    <div className=" flex h-7.5 items-center justify-end border border-[#d7dee5] bg-[#fafbfc] pr-2  text-[14px]text-[#24364d]  " >
            {children}
     </div>
   );
@@ -366,17 +366,17 @@ const AppDatePicker: React.FC<AppDatePickerProps> = ({id,label,value,onChange,di
       {/*    MAIN PAGE     */}
       <div className=" max-w-220  min-w-220  overflow-hidden border border-gray-400 bg-white">
         {/*             TITLE      */}
-          <header  className=" flex h-[30px] items-center justify-start bg-[#9fdfbc] pl-[12px] text-[18px]  font-semibold text-slate-700" >
+          <header  className=" flex h-7.5 items-center justify-start bg-[#9fdfbc] pl-3 text-[18px]  font-semibold text-slate-700" >
             Statement Of Account
           </header>
         {/*            MAIN FORM        */}
-        <div  className=" relative  px-[20px] pb-[14px] pt-[12px] ">
+        <div  className=" relative  px-5 pb-3.5 pt-3 ">
           {/*
               TOP ROW       */}
-          <div  className="  grid  grid-cols-[200px_1fr_220px] items-start   gap-[18px]  ">
+          <div  className="  grid  grid-cols-[200px_1fr_220px] items-start   gap-4.5  ">
             {/*                 BRANCH RADIO            */}
-           <RadioPanel  className=" h-[82px]  px-[16px]  py-[12px] " >
-              <div  className=" flex flex-col gap-[10px] " >
+           <RadioPanel  className=" h-20.5  px-4  py-3 " >
+              <div  className=" flex flex-col gap-2.5 " >
                 <CustomRadio
                   name="branchMode"
                   value="One Branch"
@@ -393,7 +393,7 @@ const AppDatePicker: React.FC<AppDatePickerProps> = ({id,label,value,onChange,di
               </div>
             </RadioPanel>
             {/*    BRANCH SELECT           */}
-            <div  className=" w-[250px] pt-[8px] " >
+            <div  className=" w-62.5 pt-2 " >
               <Select
                 inputId="lkpBranch"
                 instanceId="lkpBranch"
@@ -403,8 +403,8 @@ const AppDatePicker: React.FC<AppDatePickerProps> = ({id,label,value,onChange,di
                 {...selectProps}/>
             </div>
             {/* CUSTOMER / SUPPLIER            */}
-            <RadioPanel className=" h-[82px] px-[16px]  py-[12px] w-[85%] ml-[15%]  "  >
-              <div className=" flex flex-col gap-[10px] " >
+            <RadioPanel className=" h-20.5 px-4  py-3 w-[85%] ml-[15%]  "  >
+              <div className=" flex flex-col gap-2.5 " >
                 <CustomRadio
                   name="reportType"
                   value="Customer"
@@ -424,11 +424,11 @@ const AppDatePicker: React.FC<AppDatePickerProps> = ({id,label,value,onChange,di
           {/*  CUSTOMER SECTION          */}
       
 
-<div className="mt-[10px] grid grid-cols-[200px_120px_minmax(0,1fr)] gap-[18px]">
+<div className="mt-2.5 grid grid-cols-[200px_120px_minmax(0,1fr)] gap-4.5">
   {/* CUSTOMER RADIO */}
 
-  <RadioPanel className="h-[120px] px-[16px] py-[12px]">
-    <div className="flex flex-col gap-[10px]">
+  <RadioPanel className="h-30 px-4 py-3">
+    <div className="flex flex-col gap-2.5">
       <CustomRadio
         name="customerMode"
         value="One Customer"
@@ -457,7 +457,7 @@ const AppDatePicker: React.FC<AppDatePickerProps> = ({id,label,value,onChange,di
 
   {/* CUSTOMER ID */}
 
-  <div className="flex w-[120px] flex-col gap-[10px] pt-[12px]">
+  <div className="flex w-30 flex-col gap-2.5 pt-3">
     {customerMode === "One Customer" && (
       <Select
         inputId="lkpOneCustomerID"
@@ -495,7 +495,7 @@ const AppDatePicker: React.FC<AppDatePickerProps> = ({id,label,value,onChange,di
 
   {/* CUSTOMER NAME */}
 
-  <div className="min-w-0 w-full flex flex-col gap-[10px] pt-[12px]">
+  <div className="min-w-0 w-full flex flex-col gap-2.5 pt-3">
     {customerMode === "One Customer" && (
       <Select
         inputId="lkpOneCustomerName"
@@ -516,7 +516,7 @@ const AppDatePicker: React.FC<AppDatePickerProps> = ({id,label,value,onChange,di
     )}
 
     {customerMode === "Range Customer" && (
-       <div className=" w-[120px] mt-7">
+       <div className=" w-30 mt-7">
          <Select
           inputId="lkpRangeEndCustomerID"
           instanceId="lkpRangeEndCustomerID"
@@ -543,13 +543,13 @@ const AppDatePicker: React.FC<AppDatePickerProps> = ({id,label,value,onChange,di
           {/* =================================================
               DIVISION
           ================================================= */}
-        <div className="mt-[10px] grid grid-cols-[200px_120px_minmax(0,1fr)] gap-[18px] ">
+        <div className="mt-2.5 grid grid-cols-[200px_120px_minmax(0,1fr)] gap-4.5 ">
   {/* ========================================================
       DIVISION RADIO
   ======================================================== */}
 
-  <RadioPanel className="h-[82px] px-[16px] py-[12px]">
-    <div className=" flex flex-col gap-[10px] " >
+  <RadioPanel className="h-20.5 px-4 py-3">
+    <div className=" flex flex-col gap-2.5 " >
       <CustomRadio
         name="divisionMode"
         value="One Division"
@@ -568,7 +568,7 @@ const AppDatePicker: React.FC<AppDatePickerProps> = ({id,label,value,onChange,di
   {/* ========================================================
       DIVISION ID - 120px
   ======================================================== */}
-  <div className=" w-[120px] pt-[26px] " >
+  <div className=" w-30 pt-6.5 " >
     <Select
       inputId="lkpOneDivisionID"
       instanceId="lkpOneDivisionID"
@@ -581,7 +581,7 @@ const AppDatePicker: React.FC<AppDatePickerProps> = ({id,label,value,onChange,di
   {/* ========================================================
       DIVISION NAME - REMAINING SPACE
   ======================================================== */}
-  <div className=" min-w-0 w-[102%] -ml-2.5 pt-[26px]" >
+  <div className=" min-w-0 w-[102%] -ml-2.5 pt-6.5" >
     <Select
       inputId="lkpOneDivisionName"
       instanceId="lkpOneDivisionName"
@@ -596,16 +596,16 @@ const AppDatePicker: React.FC<AppDatePickerProps> = ({id,label,value,onChange,di
               LOWER SECTION
           ================================================= */}
 
-          <div className=" mt-[10px] grid  grid-cols-[240px_1fr_220px] gap-[18px]" >
+          <div className=" mt-2.5 grid  grid-cols-[240px_1fr_220px] gap-4.5" >
             {/* ===============================================
                 FILTERS
             =============================================== */}
-            <div className=" col-span-2 grid grid-cols-[200px_160px_1fr] items-center gap-x-[18px] gap-y-[8px] "  >
+            <div className=" col-span-2 grid grid-cols-[200px_160px_1fr] items-center gap-x-4.5 gap-y-2 "  >
               {/* PERIOD */}
               <FieldLabel>
                 Period :
               </FieldLabel>
-             <div className="col-span-2 flex gap-[8px]">
+             <div className="col-span-2 flex gap-2">
                   <AppDatePicker
                     id="dtpFromDate"
                     label="From Date"
@@ -623,7 +623,7 @@ const AppDatePicker: React.FC<AppDatePickerProps> = ({id,label,value,onChange,di
               <FieldLabel>
                 Ageing :
               </FieldLabel>
-              <div className="w-[180px]">
+              <div className="w-45">
                 <Select
                   inputId="lkpAgeing"
                   instanceId="lkpAgeing"
@@ -637,7 +637,7 @@ const AppDatePicker: React.FC<AppDatePickerProps> = ({id,label,value,onChange,di
               <FieldLabel>
                 Ageing Mode :
               </FieldLabel>
-              <div className="w-[180px]">
+              <div className="w-45">
                 <Select
                   inputId="lkpAgeingMode"
                   instanceId="lkpAgeingMode"
@@ -651,7 +651,7 @@ const AppDatePicker: React.FC<AppDatePickerProps> = ({id,label,value,onChange,di
               <FieldLabel>
                 Post Status :
               </FieldLabel>
-              <div className="w-[180px]">
+              <div className="w-45">
                 <Select
                   inputId="lkpPostStatus"
                   instanceId="lkpPostStatus"
@@ -669,7 +669,7 @@ const AppDatePicker: React.FC<AppDatePickerProps> = ({id,label,value,onChange,di
                 Print 0 Balance :
               </FieldLabel>
 
-              <div className="w-[180px]">
+              <div className="w-45">
                 <Select
                   inputId="lkpPrint0Balance"
                   instanceId="lkpPrint0Balance"
@@ -690,8 +690,8 @@ const AppDatePicker: React.FC<AppDatePickerProps> = ({id,label,value,onChange,di
             {/*   STATUS */}
             <RadioPanel
               title="SOA Type"
-              className="h-[90px] px-[16px] py-[12px]  w-[85%] ml-[15%] " >
-              <div className=" flex flex-col  gap-[10px] ">
+              className="h-22.5 px-4 py-3  w-[85%] ml-[15%] " >
+              <div className=" flex flex-col  gap-2.5 ">
                 <CustomRadio name="rdgOutstandingSOA" value="Outstanding SOA" label="Outstanding SOA"
                   checked={status ==="Outstanding" }
                   onChange={() => setStatus( "Outstanding", )  } />
@@ -703,7 +703,7 @@ const AppDatePicker: React.FC<AppDatePickerProps> = ({id,label,value,onChange,di
           </div>
           {/* BUTTONS */}
           <div
-            className=" mt-[16px] flex justify-center gap-[12px] ">
+            className=" mt-4 flex justify-center gap-3 ">
             {/* PRINT */}
             <button type="button"
               onClick={handlePrint}

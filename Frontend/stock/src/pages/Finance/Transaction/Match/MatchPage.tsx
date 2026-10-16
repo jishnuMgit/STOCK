@@ -64,6 +64,7 @@ const blankRow = (id: number): ReceiptRow => ({
   credit: 0,
   match: false,
   matchAmount: 0,
+  raw: undefined
 });
 
 const createRows = (): ReceiptRow[] =>

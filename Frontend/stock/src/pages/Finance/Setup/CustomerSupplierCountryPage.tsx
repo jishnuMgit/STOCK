@@ -65,6 +65,7 @@ type CustomerCountryPageProps = {
 };
 
 const CustomerCountryPage: React.FC<CustomerCountryPageProps> = ({ onClose }) => {
+  console.log(onClose)
   const handleEnterAsTab = useEnterAsTab();
   const perms = useButtonPermissions(MENU_ID);
 
@@ -417,11 +418,7 @@ const CustomerCountryPage: React.FC<CustomerCountryPageProps> = ({ onClose }) =>
     focusCell("txtCountryID", 0);
   };
 
-  const handleClose = () => {
-    if (onClose) onClose();
-    else window.history.back();
-  };
-
+  
   const handleSave = async () => {
     const inserted: {
       countryID: string;
@@ -641,30 +638,30 @@ const CustomerCountryPage: React.FC<CustomerCountryPageProps> = ({ onClose }) =>
       onKeyDown={handlePageKeyDown}
       className="flex min-h-screen w-full items-center justify-center bg-white"
     >
-      <div className="w-full max-w-[760px] border border-slate-400 bg-white shadow-sm">
+      <div className="w-full max-w-190 border border-slate-400 bg-white shadow-sm">
         {/* TITLE */}
-        <div className="flex h-[28px] w-full items-center bg-[#a7dfc0]">
-          <h1 className="ml-[5px] text-[17px] font-semibold text-[#374151]">
+        <div className="flex h-7.5 w-full items-center bg-[#a7dfc0]">
+          <h1 className="ml-1.25 text-[17px] font-semibold text-[#374151]">
             Customer/Supplier Country
           </h1>
         </div>
 
         {/* FORM */}
-        <div className="p-[12px] m-[12px]">
-          <div className="h-[400px] overflow-hidden border border-[#bfe8d0]">
+        <div className="p-3 m-3">
+          <div className="h-100 overflow-hidden border border-[#bfe8d0]">
             <div className="h-full overflow-y-auto overflow-x-hidden">
               <table className="w-full table-fixed border-collapse text-[12px]">
                 <colgroup>
-                  <col className="w-[42px]" />
-                  <col className="w-[80px]" />
+                  <col className="w-10.5" />
+                  <col className="w-20" />
                   <col />
                   <col />
-                  <col className="w-[110px]" />
+                  <col className="w-27.5" />
                 </colgroup>
 
                 <thead>
                   <tr>
-                    <th className="sticky top-0 z-20 h-[34px] border border-[#bfe8d0] bg-[#edf9f2] p-0" />
+                    <th className="sticky top-0 z-20 h-8.5 border border-[#bfe8d0] bg-[#edf9f2] p-0" />
                     <th className={`${headerCellClass} text-left`}>ID</th>
                     <th className={`${headerCellClass} text-left`}>Country</th>
                     <th className={`${headerCellClass} text-right`}>
@@ -680,15 +677,15 @@ const CustomerCountryPage: React.FC<CustomerCountryPageProps> = ({ onClose }) =>
                   {displayRows.map((row, index) => (
                     <tr
                       key={index}
-                      className={`h-[34px] ${
+                      className={`h-8.5 ${
                         selectedRow === index ? "bg-[#f8fcfa]" : "bg-white"
                       }`}
                       onClick={() => setSelectedRow(index)}
                     >
                       {/* SELECTOR COLUMN: arrow + delete-row button */}
-                      <td className="h-[34px] border border-[#bfe8d0] bg-white p-0 text-center align-middle">
+                      <td className="h-8.5 border border-[#bfe8d0] bg-white p-0 text-center align-middle">
                         {selectedRow === index && (
-                          <span className="inline-flex items-center gap-[6px]">
+                          <span className="inline-flex items-center gap-1.5">
                             <span className="text-[9px] text-[#222]">▶</span>
                             {rows[index] && (
                               <button
@@ -832,7 +829,7 @@ const CustomerCountryPage: React.FC<CustomerCountryPageProps> = ({ onClose }) =>
           </div>
 
           {/* BUTTONS */}
-          <div className="mt-[14px] flex justify-center gap-3">
+          <div className="mt-3.5 flex justify-center gap-3">
             <button
               id={hasSaved ? "btnModify" : "btnSave"}
               name={hasSaved ? "btnModify" : "btnSave"}
@@ -878,7 +875,7 @@ const CustomerCountryPage: React.FC<CustomerCountryPageProps> = ({ onClose }) =>
       {/* FIND BOX */}
       {findOpen && (
         <div
-          className="fixed inset-0 z-50 flex items-start justify-center bg-black/20 pt-[120px]"
+          className="fixed inset-0 z-50 flex items-start justify-center bg-black/20 pt-30"
           onClick={(event) => {
             if (event.target === event.currentTarget) closeFind();
           }}
@@ -891,12 +888,12 @@ const CustomerCountryPage: React.FC<CustomerCountryPageProps> = ({ onClose }) =>
             }
           }}
         >
-          <div className="w-[460px] border border-slate-400 bg-white shadow-lg">
-            <div className="flex h-[28px] items-center bg-[#a7dfc0] px-[8px] text-[15px] font-semibold text-[#374151]">
+          <div className="w-115 border border-slate-400 bg-white shadow-lg">
+            <div className="flex h-7 items-center bg-[#a7dfc0] px-2 text-[15px] font-semibold text-[#374151]">
               Find Country
             </div>
 
-            <div className="p-[10px]">
+            <div className="p-2.5">
               <input
                 autoFocus
                 type="text"
@@ -913,9 +910,9 @@ const CustomerCountryPage: React.FC<CustomerCountryPageProps> = ({ onClose }) =>
                 className="input-style w-full"
               />
 
-              <div className="mt-[8px] max-h-[260px] overflow-y-auto border border-[#bfe8d0]">
+              <div className="mt-2 max-h-65 overflow-y-auto border border-[#bfe8d0]">
                 {findMatches.length === 0 ? (
-                  <div className="px-[10px] py-[8px] text-[12px] text-gray-500">
+                  <div className="px-2.5 py-2 text-[12px] text-gray-500">
                     No matching country
                   </div>
                 ) : (
@@ -924,7 +921,7 @@ const CustomerCountryPage: React.FC<CustomerCountryPageProps> = ({ onClose }) =>
                       key={index}
                       type="button"
                       onClick={() => pickFound(index)}
-                      className="grid w-full grid-cols-[60px_1fr_1fr] gap-2 px-[10px] py-[6px] text-left text-[12px] text-[#374151] hover:bg-[#eefbf4]"
+                      className="grid w-full grid-cols-[60px_1fr_1fr] gap-2 px-2.5 py-1.5 text-left text-[12px] text-[#374151] hover:bg-[#eefbf4]"
                     >
                       <span>{row.txtCountryID}</span>
                       <span>{row.txtCountryName}</span>

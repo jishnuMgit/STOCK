@@ -87,6 +87,7 @@ import SetReceivableAgeingPeriod from "../pages/Settings/SetReceivableAgeingPeri
 import SetDatabaseBackupPathPage from "../pages/Settings/SetDatabaseBackupPathPage";
 import ChangeLoginYear from "../pages/Settings/ChangeLoginYearPage";
 import FinanceYearClose from "../pages/Utility/FinanceYearClose";
+import YearCloseStatusPage from "../pages/Utility/YearCloseStatusPage";
 
 
 const Login = lazy(() => import("../pages/Auth/LoginPage"));
@@ -343,6 +344,7 @@ const AppRoutes = () => {
 
 
           <Route path="/Utility/FinYearClose" element={<FinanceYearClose/>}/>
+          <Route path="/Utility/YearCloseStatus" element={<YearCloseStatusPage/>}/>
 
           {/* ================= ADMINISTRATION ================= */}
 

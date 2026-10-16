@@ -6,6 +6,7 @@ import type React from "react";
 ========================================================= */
 
 export interface ReceiptRow {
+  raw: any;
   id: number;
   brId: string;
   date: string;
