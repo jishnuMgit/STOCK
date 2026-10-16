@@ -225,14 +225,6 @@ const focusNext = (from: NavKey) => {
 const focusSoon = (id: string) =>
   setTimeout(() => document.getElementById(id)?.focus(), 50);
 
-// width of a row of two boxes, measured when its list opens
-const useRowWidth = () => {
-  const ref = useRef<HTMLDivElement>(null);
-  const [width, setWidth] = useState<number | undefined>();
-  const measure = () => setWidth(ref.current?.getBoundingClientRect().width);
-  return { ref, width, measure };
-};
-
 const CustomRadio: React.FC<RadioOptionProps> = ({
   name,
   value,
@@ -279,12 +271,6 @@ const RadioPanel: React.FC<{
   </div>
 );
 
-const FieldLabel: React.FC<{ children: React.ReactNode }> = ({ children }) => (
-  <div className="flex h-[30px] items-center justify-end border border-[#e0e5ea] bg-[#fafbfc] pr-3 text-[12px] text-[#405066]">
-    {children}
-  </div>
-);
-
 type RptItemListPageProps = {
   onClose?: () => void;
 };
@@ -298,9 +284,6 @@ const RptItemListPage: React.FC<RptItemListPageProps> = ({ onClose }) => {
   const [loading, setLoading] = useState(true);
   const [printing, setPrinting] = useState(false);
 
-  const groupRow = useRowWidth();
-  const itemRow = useRowWidth();
-
   const [branchMode, setBranchMode] = useState("One Branch"); // rdgBranch
   const [branch, setBranch] = useState<ItemOption | null>(null); // lkpBranch
 
@@ -313,6 +296,8 @@ const RptItemListPage: React.FC<RptItemListPageProps> = ({ onClose }) => {
 
   const [itemMode, setItemMode] = useState("All Item"); // rdgItem
   const [itemId, setItemId] = useState<string | null>(null); // lkpItemID / Name
+  const [groupRowWidth, setGroupRowWidth] = useState<number | undefined>();
+  const [itemRowWidth, setItemRowWidth] = useState<number | undefined>();
   const [fromItem, setFromItem] = useState<ItemOption | null>(null); // lkpItemIDFrom
   const [toItem, setToItem] = useState<ItemOption | null>(null); // lkpItemIDTo
 
@@ -321,24 +306,31 @@ const RptItemListPage: React.FC<RptItemListPageProps> = ({ onClose }) => {
   //  - list open   -> Enter picks the highlighted row, then go to the next field
   const pendingAdvance = useRef<NavKey | null>(null);
 
-  const advanceOnEnter =
-    (key: NavKey) => (event: React.KeyboardEvent<HTMLDivElement>) => {
-      if (event.key !== "Enter") return;
+  const handleAdvanceOnEnter = (
+    event: React.KeyboardEvent<HTMLDivElement>,
+    key: NavKey,
+  ) => {
+    if (event.key !== "Enter") return;
 
-      const open =
-        (event.target as HTMLElement).getAttribute("aria-expanded") === "true";
+    const open =
+      (event.target as HTMLElement).getAttribute("aria-expanded") === "true";
 
-      if (!open) {
-        event.preventDefault();
-        focusNext(key);
-        return;
-      }
+    if (!open) {
+      event.preventDefault();
+      focusNext(key);
+      return;
+    }
 
-      pendingAdvance.current = key;
-      setTimeout(() => {
-        pendingAdvance.current = null; // nothing was picked (e.g. "No options")
-      }, 0);
-    };
+    pendingAdvance.current = key;
+    setTimeout(() => {
+      pendingAdvance.current = null; // nothing was picked (e.g. "No options")
+    }, 0);
+  };
+
+  const measureLookupRow = (id: string, setWidth: (width: number) => void) => {
+    const row = document.getElementById(id);
+    if (row) setWidth(row.getBoundingClientRect().width);
+  };
 
   const advanceAfterPick = () => {
     const key = pendingAdvance.current;
@@ -656,7 +648,9 @@ const RptItemListPage: React.FC<RptItemListPageProps> = ({ onClose }) => {
                       setBranch(option);
                       advanceAfterPick();
                     }}
-                    onKeyDown={advanceOnEnter("lkpBranch")}
+                    onKeyDown={(event) =>
+                      handleAdvanceOnEnter(event, "lkpBranch")
+                    }
                     isDisabled={branchMode !== "One Branch" || loading}
                     {...selectProps}
                     classNames={branchClassNames}
@@ -715,7 +709,7 @@ const RptItemListPage: React.FC<RptItemListPageProps> = ({ onClose }) => {
               </RadioPanel>
               <div className="pt-3">
                 <div
-                  ref={groupRow.ref}
+                  id="itemGroupLookupRow"
                   className="grid grid-cols-[135px_1fr] gap-2"
                 >
                   <Select
@@ -727,17 +721,21 @@ const RptItemListPage: React.FC<RptItemListPageProps> = ({ onClose }) => {
                       setGroupId(option?.value ?? null);
                       advanceAfterPick();
                     }}
-                    onKeyDown={advanceOnEnter("lkpItemGroupID")}
+                    onKeyDown={(event) =>
+                      handleAdvanceOnEnter(event, "lkpItemGroupID")
+                    }
                     isDisabled={groupDisabled || loading}
                     {...selectProps}
                     classNames={idClassNames}
                     styles={{
                       menu: (base) => ({
                         ...base,
-                        width: groupRow.width ?? 480,
+                        width: groupRowWidth ?? 480,
                       }),
                     }}
-                    onMenuOpen={groupRow.measure}
+                    onMenuOpen={() =>
+                      measureLookupRow("itemGroupLookupRow", setGroupRowWidth)
+                    }
                     components={groupIdComponents}
                     filterOption={filterItem}
                     isSearchable
@@ -751,7 +749,9 @@ const RptItemListPage: React.FC<RptItemListPageProps> = ({ onClose }) => {
                       setGroupId(option?.value ?? null);
                       advanceAfterPick();
                     }}
-                    onKeyDown={advanceOnEnter("lkpItemGroupName")}
+                    onKeyDown={(event) =>
+                      handleAdvanceOnEnter(event, "lkpItemGroupName")
+                    }
                     isDisabled={groupDisabled || loading}
                     {...selectProps}
                     classNames={nameClassNames}
@@ -804,7 +804,7 @@ const RptItemListPage: React.FC<RptItemListPageProps> = ({ onClose }) => {
               <div className="pt-3">
                 {itemMode === "One Item" && (
                   <div
-                    ref={itemRow.ref}
+                    id="itemLookupRow"
                     className="grid grid-cols-[135px_1fr] gap-2"
                   >
                     <Select
@@ -816,17 +816,21 @@ const RptItemListPage: React.FC<RptItemListPageProps> = ({ onClose }) => {
                         setItemId(option?.value ?? null);
                         advanceAfterPick();
                       }}
-                      onKeyDown={advanceOnEnter("lkpItemID")}
+                      onKeyDown={(event) =>
+                        handleAdvanceOnEnter(event, "lkpItemID")
+                      }
                       isDisabled={loading}
                       {...selectProps}
                       classNames={idClassNames}
                       styles={{
                         menu: (base) => ({
                           ...base,
-                          width: itemRow.width ?? 480,
+                          width: itemRowWidth ?? 480,
                         }),
                       }}
-                      onMenuOpen={itemRow.measure}
+                      onMenuOpen={() =>
+                        measureLookupRow("itemLookupRow", setItemRowWidth)
+                      }
                       components={idComponents}
                       filterOption={filterItem}
                       isSearchable
@@ -840,7 +844,9 @@ const RptItemListPage: React.FC<RptItemListPageProps> = ({ onClose }) => {
                         setItemId(option?.value ?? null);
                         advanceAfterPick();
                       }}
-                      onKeyDown={advanceOnEnter("lkpItemName")}
+                      onKeyDown={(event) =>
+                        handleAdvanceOnEnter(event, "lkpItemName")
+                      }
                       isDisabled={loading}
                       {...selectProps}
                       classNames={nameClassNames}
@@ -862,7 +868,9 @@ const RptItemListPage: React.FC<RptItemListPageProps> = ({ onClose }) => {
                           setFromItem(option);
                           advanceAfterPick();
                         }}
-                        onKeyDown={advanceOnEnter("lkpFromItem")}
+                        onKeyDown={(event) =>
+                          handleAdvanceOnEnter(event, "lkpFromItem")
+                        }
                         isDisabled={loading}
                         {...selectProps}
                         classNames={idClassNames}
@@ -883,7 +891,9 @@ const RptItemListPage: React.FC<RptItemListPageProps> = ({ onClose }) => {
                           setToItem(option);
                           advanceAfterPick();
                         }}
-                        onKeyDown={advanceOnEnter("lkpToItem")}
+                        onKeyDown={(event) =>
+                          handleAdvanceOnEnter(event, "lkpToItem")
+                        }
                         isDisabled={loading}
                         {...selectProps}
                         classNames={idClassNames}
