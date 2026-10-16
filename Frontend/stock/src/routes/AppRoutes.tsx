@@ -82,6 +82,7 @@ import SalesPriceListPage from "../pages/Sales/Setup/SalesPriceListPage";
 import BeginningStockPrintPage from "../pages/Purchase/Transaction/BeginningStockPrintPage";
 import RptIncomeSumPage from "../pages/Finance/Report/IncomeSummary/RptIncomeSumPage";
 import RptDocumentExportPage from "../pages/Finance/Report/DocumentExportPage/RptDocumentExportPage";
+import SetReceivableAgeingPeriod from "../pages/Settings/SetReceivableAgeingPeriodPage";
 
 
 const Login = lazy(() => import("../pages/Auth/LoginPage"));
@@ -294,32 +295,15 @@ const AppRoutes = () => {
 
           <Route path="/Settings/SetCompanyInfo" element={<SetCompanyInfo />} />
           <Route path="/Settings/SetBranchInfo" element={<SetBranchInfo />} />
-          <Route
-            path="/Settings/SetChartOfAccount"
-            element={<SetChartOfAccount />}
-          />
-          <Route
-            path="/Setting/SetDefaultBranch"
-            element={<SetDefaultBranch />}
-          />
-          <Route
-            path="/Setting/SetActivePeriod"
-            element={<SetActivePeriod />}
-          />
-
+          <Route path="/Settings/SetChartOfAccount" element={<SetChartOfAccount />} />
+          <Route path="/Setting/SetDefaultBranch" element={<SetDefaultBranch />} />
+          <Route path="/Setting/SetActivePeriod" element={<SetActivePeriod />} />
           {/* the screen's earlier address - kept so old bookmarks still open it */}
-          <Route
-            path="/Settings/ChartOfAccountSettings"
-            element={<Navigate to="/Settings/SetChartOfAccount" replace />}
-          />
-          <Route
-            path="/Settings/SetPostingAccount"
-            element={<SetPostingAccountPage />}
-          />
-          <Route
-            path="/Setting/SetActivePeriod"
-            element={<ActivePeriodPage />}
-          />
+          {/* <Route path="/Settings/ChartOfAccountSettings" element={<Navigate to="/Settings/SetChartOfAccount" replace />}
+          /> */}
+          <Route path="/Settings/SetPostingAccount" element={<SetPostingAccountPage />}/>
+          <Route path="/Setting/SetActivePeriod"  element={<ActivePeriodPage />}   />
+          <Route path="/Setting/SetDrAgeingPeriod" element={<SetReceivableAgeingPeriod/>}/>
 
           {/* ================= DOCUMENT NUMBER ================= */}
 

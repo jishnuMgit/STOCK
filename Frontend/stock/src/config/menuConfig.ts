@@ -177,6 +177,7 @@ Sales-REPORT
    mnuSetStockPostingAccount:"/Settings/SetPostingAccount",
    mnuSetActivePeriod:"/Setting/SetActivePeriod",
    mnuSetDefaultBranch:"/Setting/SetDefaultBranch",
+   mnuSetDrAgeingPeriod:"/Setting/SetDrAgeingPeriod",
 
   /* =========================================================
      SECURITY
