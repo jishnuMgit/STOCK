@@ -14,7 +14,7 @@ import {
 import {
   makePairComponents,
   filterPairOption,
-  pairDividedIdMenuStyles,
+  makePairDividedMenuStyles,
   pairDividedNameMenuStyles,
 } from "../../../components/PairSelect/pairSelectParts";
 import selectComponents from "../../../components/sharecomponents/selectComponents";
@@ -89,6 +89,38 @@ const MENU_ID = "010201";
   /* =========================================================
      FORM STATE
   ========================================================= */
+
+  // How far the Item Group / Supplier ID lists hang past their box: they cover
+  // the ID box AND the Name box next to it (to the Name box's right edge), so it
+  // is measured from the two boxes when the page shows and when a list opens.
+  const [idMenuHang, setIdMenuHang] = useState(330);
+
+  const measureIdMenuHang = (idInputId: string, nameInputId: string) => {
+    const boxOf = (inputId: string) =>
+      document.getElementById(inputId)?.closest('div[class$="-control"]');
+
+    const idBox = boxOf(idInputId);
+    const nameBox = boxOf(nameInputId);
+
+    if (idBox && nameBox) {
+      setIdMenuHang(
+        Math.round(
+          nameBox.getBoundingClientRect().right -
+            idBox.getBoundingClientRect().right,
+        ),
+      );
+    }
+  };
+
+  useEffect(() => {
+    const measure = () =>
+      measureIdMenuHang("lkpItemGroupID", "lkpItemGroupName");
+
+    measure();
+    window.addEventListener("resize", measure);
+
+    return () => window.removeEventListener("resize", measure);
+  }, []);
 
   const [txtItemID, setTxtItemID] = useState("");
 
@@ -1389,7 +1421,13 @@ const MENU_ID = "010201";
                 onChange={(option) =>
                   selectItemGroup(option?.value || "")
                 }
-                styles={{ ...reactSelectStyles, ...pairDividedIdMenuStyles }}
+                styles={{
+                  ...reactSelectStyles,
+                  ...makePairDividedMenuStyles(idMenuHang),
+                }}
+                onMenuOpen={() =>
+                  measureIdMenuHang("lkpItemGroupID", "lkpItemGroupName")
+                }
                 components={itemGroupIdComponents}
                 filterOption={filterPairOption}
                 noOptionsMessage={() => "No Item Group Found"}
@@ -1453,7 +1491,13 @@ const MENU_ID = "010201";
                 onChange={(option) =>
                   selectSupplier(option?.value || "")
                 }
-                styles={{ ...reactSelectStyles, ...pairDividedIdMenuStyles }}
+                styles={{
+                  ...reactSelectStyles,
+                  ...makePairDividedMenuStyles(idMenuHang),
+                }}
+                onMenuOpen={() =>
+                  measureIdMenuHang("lkpSupplierID", "lkpSupplierName")
+                }
                 components={supplierIdComponents}
                 filterOption={filterPairOption}
                 noOptionsMessage={() => "No Supplier Found"}
