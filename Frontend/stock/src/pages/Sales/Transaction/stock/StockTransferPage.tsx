@@ -2009,7 +2009,7 @@ const StockTransferPage: React.FC = () => {
 
       {/* ACTION BUTTONS */}
       <footer className="mt-[14px] flex shrink-0 flex-wrap items-center justify-center gap-3">
-        {["Save", "Delete", "Print", "Post", "Cancel"].map((action) => {
+        {["Save", "Delete", "Print", "Post", "Clear"].map((action) => {
           const isSave = action === "Save";
           const label = isSave ? actionWord : action;
 
