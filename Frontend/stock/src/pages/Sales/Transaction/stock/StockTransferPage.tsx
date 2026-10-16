@@ -9,9 +9,9 @@ import { toast } from "react-toastify";
 import {
   makePairComponents,
   filterPairOption,
-  pairDividedIdMenuStyles,
   makePairDividedMenuStyles,
 } from "../../../../components/PairSelect/pairSelectParts";
+import { usePairMenuHang } from "../../../../hooks/usePairMenuHang";
 import { useAltShortcuts } from "../../../../hooks/useAltShortcuts";
 import { useConfirm } from "../../../../hooks/useConfirm";
 import { useButtonPermissions } from "../../../../hooks/useButtonPermissions";
@@ -521,6 +521,9 @@ const StockTransferPage: React.FC = () => {
   const [txtUserInfo, setTxtUserInfo] = useState("");
 
   const [saving, setSaving] = useState(false);
+
+  // the Item ID list covers the Item ID box AND the Item Name box next to it
+  const { hang: idMenuHang, measure: measureIdMenuHang } = usePairMenuHang();
 
   const api = import.meta.env.VITE_API_URL;
 
@@ -1799,8 +1802,11 @@ const StockTransferPage: React.FC = () => {
                       styles={
                         {
                           ...tableSelectStyles,
-                          ...pairDividedIdMenuStyles,
+                          ...makePairDividedMenuStyles(idMenuHang),
                         } as StylesConfig<SelectOption, false>
+                      }
+                      onMenuOpen={() =>
+                        measureIdMenuHang(`lkpItemID-${index}`, `lkpItemName-${index}`)
                       }
                       components={itemIdComponents}
                       filterOption={filterPairOption}
@@ -2002,7 +2008,7 @@ const StockTransferPage: React.FC = () => {
 
       {/* SAVED BY / LAST MODIFIED BY */}
       {txtUserInfo !== "" && (
-        <div className="whitespace-pre-line text-[12px] text-gray-500">
+        <div className="self-end whitespace-pre-line text-right text-[12px] text-gray-500">
           {txtUserInfo}
         </div>
       )}
