@@ -197,6 +197,7 @@ Sales-REPORT
 
 
   mnuFinYearClose:"/Utility/FinYearClose",
+  mnuYearCloseStatus:"/Utility/YearCloseStatus",
 
   /* =========================================================
      ADMINISTRATION
