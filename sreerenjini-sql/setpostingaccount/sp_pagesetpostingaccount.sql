@@ -1,3 +1,8 @@
+-- The Set Posting Account page reads and writes dbo.tblstockposting (the table the TL's
+-- dbo.getstockaccountid / dbo.getstockadjaccountid read). That table spells the round-off
+-- column frounfoffaccountid: the G mode returns it as froundoffaccountid, so the page and
+-- the backend are unchanged.
+
 -- PROCEDURE: dbo.sp_pagesetpostingaccount(character varying, character varying, character varying, character varying, character varying, character varying, character varying, character varying, character varying, character varying, character varying, character varying, character varying, character varying, character varying, refcursor)
 
 -- DROP PROCEDURE IF EXISTS dbo.sp_pagesetpostingaccount(character varying, character varying, character varying, character varying, character varying, character varying, character varying, character varying, character varying, character varying, character varying, character varying, character varying, character varying, character varying, refcursor);
@@ -39,10 +44,10 @@ BEGIN
                 fsalescostaccountid,
                 fsalesretcostaccountid,
                 fstockadjaccountid,
-                froundoffaccountid,
+                frounfoffaccountid AS froundoffaccountid,   -- (the column is spelled so in tblstockposting)
                 finputvataccountid,
                 foutputvataccountid
-            FROM dbo.tblsetpostingaccount
+            FROM dbo.tblstockposting
             WHERE fcoid = p_pstrcoid
               AND fbrid = p_strbrid;
 
@@ -54,12 +59,12 @@ BEGIN
 
     IF p_strmode = 'S' THEN
 
-        INSERT INTO dbo.tblsetpostingaccount (
+        INSERT INTO dbo.tblstockposting (
             fcoid, fbrid,
             fcashsupplieraccountid, fcashcustomeraccountid,
             fstockaccountid, fsalesaccountid, fsalesretaccountid,
             fsalescostaccountid, fsalesretcostaccountid,
-            fstockadjaccountid, froundoffaccountid,
+            fstockadjaccountid, frounfoffaccountid,
             finputvataccountid, foutputvataccountid,
             fcuserid, fcuserdate
         )
@@ -81,7 +86,7 @@ BEGIN
 
     IF p_strmode = 'M' THEN
 
-        UPDATE dbo.tblsetpostingaccount
+        UPDATE dbo.tblstockposting
         SET
             fcashsupplieraccountid = p_strcashsupplieraccountid,
             fcashcustomeraccountid = p_strcashcustomeraccountid,
@@ -91,7 +96,7 @@ BEGIN
             fsalescostaccountid    = p_strsalescostaccountid,
             fsalesretcostaccountid = p_strsalesretcostaccountid,
             fstockadjaccountid     = p_strstockadjaccountid,
-            froundoffaccountid     = p_strroundoffaccountid,
+            frounfoffaccountid     = p_strroundoffaccountid,
             finputvataccountid     = p_strinputvataccountid,
             foutputvataccountid    = p_stroutputvataccountid,
             fmuserid               = p_pstruserid,

@@ -177,6 +177,9 @@ Sales-REPORT
    mnuSetStockPostingAccount:"/Settings/SetPostingAccount",
    mnuSetActivePeriod:"/Setting/SetActivePeriod",
    mnuSetDefaultBranch:"/Setting/SetDefaultBranch",
+   mnuSetDrAgeingPeriod:"/Setting/SetDrAgeingPeriod",
+   mnuSetDatabaseBackupPath:"/Setting/SetDatabaseBackupPath",
+   mnuChangeLoginYear:"/Setting/ChangeLoginYear",
 
   /* =========================================================
      SECURITY
@@ -187,6 +190,13 @@ Sales-REPORT
   mnuUserPermissionBranch:"/Security/UserPermissionBranch",
   mnuRptUserAudit:"/Security/UserAudit",
   mnuRptUserTransactionAudit:"/Security/UserTransactionAudit",
+
+  /* =========================================================
+     Utility
+  ========================================================= */
+
+
+  mnuFinYearClose:"/Utility/FinYearClose",
 
   /* =========================================================
      ADMINISTRATION

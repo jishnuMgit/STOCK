@@ -193,6 +193,62 @@ export const stockTransferPrintLineKeys: KeyMap = {
   ftotalcost: "txtTotalCost",
 };
 
+/* ---------- Sales / Transaction / StockAdjustment ---------- */
+
+export const stockAdjustmentItemKeys: KeyMap = {
+  fitemid: "lkpItemID",
+  fitemname: "txtItemName",
+  funit: "txtUnit",
+  fpacking: "txtPacking",
+};
+
+export const stockAdjustmentLineKeys: KeyMap = {
+  fslno: "txtSlNo",
+  fitemid: "lkpItemID",
+  funit: "txtUnit",
+  fqtyin: "txtQtyIn",
+  fqtyout: "txtQtyOut",
+  funitcost: "txtUnitCost",
+  ftotalcost: "txtTotalCost",
+};
+
+export const stockAdjustmentHeaderKeys: KeyMap = {
+  fdate: "dtpDate",
+  fnote: "txtNote",
+  fsuserid: "txtSavedBy",
+  fsuserdate: "txtSavedOn",
+  fmuserid: "txtModifiedBy",
+  fmuserdate: "txtModifiedOn",
+};
+
+export const stockAdjustmentPrintHeaderKeys: KeyMap = {
+  fconame: "txtCoName",
+  fbrname: "txtBranchName",
+  fdocno: "txtDocNo",
+  fdate: "dtpDate",
+  fnote: "txtNote",
+};
+
+export const stockAdjustmentPrintLineKeys: KeyMap = {
+  fslno: "txtSlNo",
+  fitemid: "lkpItemID",
+  fitemname: "lkpItemName",
+  funit: "txtUnit",
+  fqtyin: "txtQtyIn",
+  fqtyout: "txtQtyOut",
+  funitcost: "txtUnitCost",
+  ftotalcost: "txtTotalCost",
+};
+
+// the Search list: the saved adjustments of a branch
+export const stockAdjustmentFindKeys: KeyMap = {
+  fdocno: "txtDocNo",
+  fdate: "dtpDate",
+  fnote: "txtNote",
+  ftotalcost: "txtTotalCost",
+  fpost: "chkPosted",
+};
+
 export const userAuditUserListKeys: KeyMap = {
   fuserid: "lkpUserID",
 };

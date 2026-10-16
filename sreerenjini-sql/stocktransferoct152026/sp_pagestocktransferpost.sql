@@ -2,6 +2,13 @@
 -- tblstocktrans.fyear is varchar(4) now (like tblstockcontrol.fyear): the year argument is
 -- TEXT, p_pstryear (it was a smallint, p_pintyear), and is compared with the year columns
 -- as it is. The DROP below removes the smallint version.
+--
+-- ADDED: the posting transaction number (fpostingtransno), as in Beginning Stock Post
+--   one number for the whole document, from dbo.getnexttransno(co, year, From branch, 'P'),
+--   written into BOTH sets of rows (ST and STI) together with the posted flag. A row that
+--   already has one keeps it (COALESCE). Needs the two columns of
+--   beginningstockoct122026/alter_tblstocktrans_transno.sql.
+--   The signature is unchanged: the backend call stays as it is.
 
 DROP PROCEDURE IF EXISTS dbo.sp_pagestocktransferpost(character varying, character varying, smallint, character varying, character varying, character varying, character varying);
 
@@ -29,6 +36,7 @@ DECLARE
     v_numcalcunitcost   numeric(18,4);
     v_numcostofstock    numeric(18,4) := 0;
     v_intlines          integer := 0;
+    v_strpostingtransno varchar(9);      -- the posting transaction number
     v_row               record;
 BEGIN
     IF upper(p_strdoctype) <> 'ST' THEN
@@ -161,9 +169,13 @@ BEGIN
             p_pstrcoid, p_pstryear, p_strbrid, p_strdoctype, p_strdocno;
     END IF;
 
+    -- the posting transaction number: one for the whole document
+    v_strpostingtransno := dbo.getnexttransno(p_pstrcoid, p_pstryear, p_strbrid, 'P');
+
     -- 5. both sets of rows are posted
     UPDATE dbo.tblstocktrans
-       SET fpost = true
+       SET fpost = true,
+           fpostingtransno = COALESCE(fpostingtransno, v_strpostingtransno)
            -- , fpostorder = v_intpostorder, fpostorderc = v_intpostorder   (no such columns)
      WHERE fcoid   = p_pstrcoid
        AND fyear   = p_pstryear

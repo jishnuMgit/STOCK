@@ -5,6 +5,7 @@ import { toast } from "react-toastify";
 import { useEnterAsTab } from "../../../hooks/useEnterAsTab";
 import { useAltShortcuts } from "../../../hooks/useAltShortcuts";
 import { useButtonPermissions } from "../../../hooks/useButtonPermissions";
+import selectComponents from "../../../components/sharecomponents/selectComponents";
 
 const API_URL = `${import.meta.env.VITE_API_URL}/user-permission-branch`;
 const USER_LIST_API_URL = `${import.meta.env.VITE_API_URL}/user-permission/users/list`;
@@ -542,6 +543,7 @@ const UserPermissionBranchPage: React.FC = () => {
 
           <div className="w-[50%] min-w-50 max-w-[calc(100%-92px)]">
             <Select<SelectOption, false>
+              components={selectComponents}
               inputId="lkpUserID"
               name="lkpUserID"
               options={userIdOptions}

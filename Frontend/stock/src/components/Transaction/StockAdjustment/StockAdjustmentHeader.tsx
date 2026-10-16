@@ -6,6 +6,7 @@ import dayjs from "dayjs";
 import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
 import { DatePicker } from "@mui/x-date-pickers/DatePicker";
 import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
+import selectComponents from "../../sharecomponents/selectComponents";
 // ============================================================
 // TYPES
 // ============================================================
@@ -221,6 +222,7 @@ const StockAdjustmentHeader: React.FC = () => {
               <Select<Option, false>
                 inputId="lkpBranch"
                 instanceId="lkpBranch"
+                 components={selectComponents}
                 options={branchOptions}
                 value={branch}
                 onChange={setBranch}

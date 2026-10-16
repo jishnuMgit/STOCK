@@ -1,4 +1,5 @@
 import { components, type StylesConfig } from "react-select";
+import selectComponents from "../sharecomponents/selectComponents";
 import { accountDropdownStyles } from "../Transaction/Receipt/save/ReactSelectStyles";
 
 /* =========================================================
@@ -131,6 +132,7 @@ export const makePairComponents = (
   const secondCell = divider ? { paddingLeft: "8px" } : {};
 
   return {
+    ...selectComponents,
     MenuList: (props: any) => (
       <components.MenuList {...props}>
         <div

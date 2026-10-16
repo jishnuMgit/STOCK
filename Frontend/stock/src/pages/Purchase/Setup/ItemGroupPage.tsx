@@ -5,6 +5,7 @@ import { useEnterAsTab } from "../../../hooks/useEnterAsTab";
 import { useAltShortcuts } from "../../../hooks/useAltShortcuts";
 import { useButtonPermissions } from "../../../hooks/useButtonPermissions";
 import { useConfirm } from "../../../hooks/useConfirm";
+import selectComponents from "../../../components/sharecomponents/selectComponents";
 
 // ============================================================
 // TYPES
@@ -525,6 +526,7 @@ const ItemGroupPage: React.FC = () => {
 
             <div className="w-[30%]">
               <Select<Option, false>
+                components={selectComponents}
                 inputId="lkpVATSlab"
                 instanceId="lkpVATSlab"
                 name="lkpVATSlab"

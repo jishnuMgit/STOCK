@@ -1,18 +1,16 @@
+import express from "express";
 
-import { Router } from "express";
+import { authenticate } from "../../../middleware/authMiddleware.js";
 import {
   getCurrencies,
   checkCurrencyUsed,
   saveCurrencies,
 } from "../../../controller/Purchase/Setup/CurrencyController.js";
-import { authenticate } from "../../../middleware/authMiddleware.js";
 
-const router = Router();
+const router = express.Router();
 // router.use(authenticate);
 router.get("/", getCurrencies);
 router.get("/used/:id", checkCurrencyUsed);
 router.post("/", saveCurrencies);
 
 export default router;
-
-

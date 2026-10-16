@@ -1,4 +1,4 @@
-// controller/Purchase/Setup/CurrencyPageController.ts
+// controller/Purchase/Setup/CurrencyController.ts
 import { Response } from "express";
 import { AuthenticatedRequest } from "../../../middleware/authMiddleware.js";
 import {
@@ -10,13 +10,6 @@ import {
 
 type Params = { coId: string; year: string; userId: string };
 
-// CoID and userId come from the logged-in user (auth middleware), never from
-// the request body / query, so a caller cannot act on another company.
-// year is not in the session, so it still comes from the request:
-//   POST -> req.body, GET -> req.query (a GET has no body)
-// STOPGAP: falls back to coId / userId sent by the page until the router uses
-// the auth middleware and the page sends the token. Then remove the
-// `?? src.coId` and `?? src.userId` parts.
 const getParams = (req: AuthenticatedRequest): Params => {
   const src = { ...(req.query ?? {}), ...(req.body ?? {}) } as Record<
     string,
@@ -84,10 +77,9 @@ export const checkCurrencyUsed = async (
 
 // ------------------------------------------------------------
 // POST /api/Currency  -> Save / Modify
-// body: { coId, year, userId,
-//         inserted: [{currency}],
-//         updated:  [{originalCurrency, currency}],
-//         deleted:  [originalCurrency] }
+// body: { year, inserted: [{currency}],
+//         updated: [{originalCurrency, currency}], deleted: [originalCurrency] }
+// (company and user come from the session)
 // ------------------------------------------------------------
 export const saveCurrencies = async (
   req: AuthenticatedRequest,

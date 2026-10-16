@@ -12,6 +12,7 @@ import { toast } from "react-toastify";
 import { useEnterAsTab } from "../../../hooks/useEnterAsTab";
 import { useAltShortcuts } from "../../../hooks/useAltShortcuts";
 import { useButtonPermissions } from "../../../hooks/useButtonPermissions";
+import selectComponents from "../../../components/sharecomponents/selectComponents";
 
 // ============================================================
 // TYPES
@@ -408,6 +409,7 @@ const UserAudit: React.FC = () => {
 
             <div className="min-w-0 flex-1">
               <Select<Option, false>
+                components={selectComponents}
                 inputId="lkpUserID"
                 instanceId="lkpUserID"
                 name="lkpUserID"
@@ -445,6 +447,7 @@ const UserAudit: React.FC = () => {
 
             <div className="w-[140px]">
               <Select<Option, false>
+                components={selectComponents}
                 inputId="lkpAction"
                 instanceId="lkpAction"
                 name="lkpAction"
