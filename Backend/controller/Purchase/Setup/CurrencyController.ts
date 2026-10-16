@@ -6,7 +6,7 @@ import {
   getCurrencies as loadCurrencies,
   haveTrans,
   saveCurrencies as saveCurrenciesData,
-} from "../../../services/Purchase/Setup/CurrencyPageService.js";
+} from "../../../services/Purchase/Setup/CurrencyService.js";
 
 type Params = { coId: string; year: string; userId: string };
 
