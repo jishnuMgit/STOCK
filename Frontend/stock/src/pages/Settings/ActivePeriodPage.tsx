@@ -281,7 +281,7 @@ const ActivePeriodPage: React.FC = () => {
         className="
           min-h-fit
           w-full
-          max-w-[800px]
+          max-w-200
           border
           border-gray-400
           bg-white
@@ -294,7 +294,7 @@ const ActivePeriodPage: React.FC = () => {
        <div
           className="
             flex
-            h-[36px]
+            h-9
             items-center
             border-b
             border-slate-300
@@ -319,13 +319,13 @@ const ActivePeriodPage: React.FC = () => {
             TABLE
         ====================================================== */}
 
-        <div className="m-[12px] p-[12px]">
+        <div className="m-3 p-3">
 
           {/* TABLE SCROLL CONTAINER */}
 
           <div
             className="
-              max-h-[500px]
+              max-h-125
               overflow-y-auto
               overflow-x-hidden
               border
@@ -358,7 +358,7 @@ const ActivePeriodPage: React.FC = () => {
               ================================================== */}
 
               <thead>
-                <tr className="h-[33px]">
+                <tr className="h-8.25">
 
                   {/* Row indicator */}
 
@@ -384,7 +384,7 @@ const ActivePeriodPage: React.FC = () => {
                       border
                       border-[#d5e5f7]
                       bg-[#f4f8fc]
-                      px-[6px]
+                      px-1.5
                       py-0
                       text-left
                       align-middle
@@ -407,7 +407,7 @@ const ActivePeriodPage: React.FC = () => {
                       border
                       border-[#d5e5f7]
                       bg-[#f4f8fc]
-                      px-[6px]
+                      px-1.5
                       py-0
                       text-left
                       align-middle
@@ -430,7 +430,7 @@ const ActivePeriodPage: React.FC = () => {
                       border
                       border-[#d5e5f7]
                       bg-[#f4f8fc]
-                      px-[6px]
+                      px-1.5
                       py-0
                       text-left
                       align-middle
@@ -455,7 +455,7 @@ const ActivePeriodPage: React.FC = () => {
                     key={index}
                     onClick={() => setActiveRow(index)}
                     className={`
-                      h-[32px]
+                      h-8
                       ${
                         activeRow === index
                           ? "bg-[#fafcff]"
@@ -469,7 +469,7 @@ const ActivePeriodPage: React.FC = () => {
 
                     <td
                       className="
-                        h-[32px]
+                        h-8
                         border
                         border-[#d5e5f7]
                         p-0
@@ -499,7 +499,7 @@ const ActivePeriodPage: React.FC = () => {
 
                     <td
                       className="
-                        h-[32px]
+                        h-8
                         border
                         border-[#d5e5f7]
                         p-0
@@ -541,13 +541,13 @@ const ActivePeriodPage: React.FC = () => {
 
                     <td
                       className="
-                        h-[32px]
+                        h-8
                         border
                         border-[#d5e5f7]
                         p-0
                       "
                     >
-                      <div className="relative h-[30px] w-full">
+                      <div className="relative h-7.5 w-full">
 
                         <input
                           id={`dtpFromDate-${index}`}
@@ -589,7 +589,7 @@ const ActivePeriodPage: React.FC = () => {
                               className="
                                 pointer-events-none
                                 absolute
-                                left-[8px]
+                                left-2
                                 top-1/2
                                 -translate-y-1/2
                                 text-[15px]
@@ -608,13 +608,13 @@ const ActivePeriodPage: React.FC = () => {
 
                     <td
                       className="
-                        h-[32px]
+                        h-8
                         border
                         border-[#d5e5f7]
                         p-0
                       "
                     >
-                      <div className="relative h-[30px] w-full">
+                      <div className="relative h-7.5 w-full">
 
                         <input
                           id={`dtpToDate-${index}`}
@@ -656,7 +656,7 @@ const ActivePeriodPage: React.FC = () => {
                               className="
                                 pointer-events-none
                                 absolute
-                                left-[8px]
+                                left-2
                                 top-1/2
                                 -translate-y-1/2
                                 text-[15px]
@@ -675,12 +675,12 @@ const ActivePeriodPage: React.FC = () => {
           </div>
            <div
           className="
-            mt-[12px]
+            mt-3
           
            
             flex
             justify-center
-            gap-[20px]
+            gap-5
           "
         >
           <button
@@ -689,7 +689,7 @@ const ActivePeriodPage: React.FC = () => {
             onClick={handleSave}
             className="btn-style"
           >
-            <span className="underline underline-offset-[2px]">
+            <span className="underline underline-offset-2">
               S
             </span>
             ave
@@ -701,7 +701,7 @@ const ActivePeriodPage: React.FC = () => {
             onClick={handleClear}
             className="btn-style"
           >
-            <span className="underline underline-offset-[2px]">
+            <span className="underline underline-offset-2">
               C
             </span>
             lear

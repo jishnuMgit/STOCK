@@ -1,5 +1,4 @@
 import React, { useState } from "react";
-import { RxTriangleDown } from "react-icons/rx";
 import Select from "react-select";
 import selectComponents from "../../components/sharecomponents/selectComponents";
 type Option = { value: string; label: string };
@@ -222,11 +221,11 @@ const SetReceivableAgeingPeriod: React.FC<SetReceivableAgeingPeriodProps> = ({
                 </colgroup>
                 <thead className="sticky top-0 z-0">
                   <tr className="bg-[#EEFBF4] text-[#405066]">
-                    <th className="h-[28px] border border-[#B7ECD0]" />
-                    <th className="h-[28px] border border-[#B7ECD0] px-2 text-right font-semibold">
+                    <th className="h-7 border border-[#B7ECD0]" />
+                    <th className="h-7 border border-[#B7ECD0] px-2 text-right font-semibold">
                       From {unit}
                     </th>
-                    <th className="h-[28px] border border-[#B7ECD0] px-2 text-right font-semibold">
+                    <th className="h-7 border border-[#B7ECD0] px-2 text-right font-semibold">
                       To {unit}
                     </th>
                   </tr>

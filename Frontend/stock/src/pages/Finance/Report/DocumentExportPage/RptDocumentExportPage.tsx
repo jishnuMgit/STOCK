@@ -217,6 +217,7 @@ const RptDocumentExportPage: React.FC<RptDocumentExportPageProps> = ({
         setMessage(
           "Folder selection is not supported in this browser. Use Chrome or Edge on HTTPS or localhost.",
         );
+        console.log(message)
         return;
       }
 
@@ -328,7 +329,7 @@ const RptDocumentExportPage: React.FC<RptDocumentExportPageProps> = ({
       <div className="w-full max-w-130 bg-white">
         <main className="w-full border border-gray-400 bg-white">
           {/* Header */}
-          <header className="flex h-[33px] items-center bg-[#9fdfbc]">
+          <header className="flex h-7.5 items-center bg-[#9fdfbc]">
             <h1 className="ml-4 text-[14px] font-semibold text-[#24364d]">
               Document Export
             </h1>
@@ -354,7 +355,7 @@ const RptDocumentExportPage: React.FC<RptDocumentExportPageProps> = ({
                   onClick={handleBrowseFolder}
                   placeholder="Select export folder..."
                   title={exportPath}
-                  className={`${inputClass} cursor-pointer pr-[40px]`}
+                  className={`${inputClass} cursor-pointer pr-10`}
                 />
 
                 {/* Three dots inside the input */}
@@ -363,7 +364,7 @@ const RptDocumentExportPage: React.FC<RptDocumentExportPageProps> = ({
                   onClick={handleBrowseFolder}
                   aria-label="Browse export folder"
                   title="Browse folder"
-                  className="absolute right-[1px] top-[1px] flex h-[28px] w-[34px] items-center justify-center rounded-r-[3px] bg-white text-[14px] text-[#657486] hover:bg-[#f3f7f5]"
+                  className="absolute right-px top-px flex h-7 w-8.5 items-center justify-center rounded-r-[3px] bg-white text-[14px] text-[#657486] hover:bg-[#f3f7f5]"
                 >
                   ...
                 </button>

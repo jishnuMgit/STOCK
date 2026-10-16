@@ -19,10 +19,10 @@ type Account = {
   name: string;
 };
 
-type AccountSelection = {
-  id: Option | null;
-  name: Option | null;
-};
+// type AccountSelection = {
+//   id: Option | null;
+//   name: Option | null;
+// };
 
 type RadioOptionProps = {
   name: string;
@@ -116,12 +116,12 @@ const getAccountNameOption = (
 ): Option | null =>
   accountNameOptions.find((option) => option.value === id) ?? null;
 
-const createAccountSelection = (
-  id: string,
-): AccountSelection => ({
-  id: getAccountIdOption(id),
-  name: getAccountNameOption(id),
-});
+// const createAccountSelection = (
+//   id: string,
+// ): AccountSelection => ({
+//   id: getAccountIdOption(id),
+//   name: getAccountNameOption(id),
+// });
 
 // ============================================================
 // REACT SELECT STYLES
@@ -548,14 +548,14 @@ const GeneralLedger: React.FC = () => {
     );
   };
 
-  const handleRangeAccountNameChange = (
-    selected: Option | null,
-  ) => {
-    setRangeAccountName(selected);
-    setRangeAccountId(
-      selected ? getAccountIdOption(selected.value) : null,
-    );
-  };
+  // const handleRangeAccountNameChange = (
+  //   selected: Option | null,
+  // ) => {
+  //   setRangeAccountName(selected);
+  //   setRangeAccountId(
+  //     selected ? getAccountIdOption(selected.value) : null,
+  //   );
+  // };
 
   // ----------------------------------------------------------
   // ACCOUNT MODE CHANGE
@@ -748,11 +748,11 @@ const GeneralLedger: React.FC = () => {
 
           {/* ACCOUNT SECTION */}
 
-        <div className="mt-[12px] grid grid-cols-[200px_120px_minmax(0,1fr)] gap-[18px]">
+        <div className="mt-3 grid grid-cols-[200px_120px_minmax(0,1fr)] gap-4.5">
   {/* ACCOUNT MODE */}
 
-  <RadioPanel className="h-[130px] px-[16px] py-[14px]">
-    <div className="flex flex-col gap-[12px]">
+  <RadioPanel className="h-32.5 px-4 py-3.5">
+    <div className="flex flex-col gap-3">
       <CustomRadio
         name="accountMode"
         value="One Account"
@@ -781,7 +781,7 @@ const GeneralLedger: React.FC = () => {
 
   {/* ACCOUNT IDs */}
 
-  <div className="flex w-[120px] flex-col gap-[10px] pt-[12px]">
+  <div className="flex w-30 flex-col gap-2.5 pt-3">
     {accountMode === "One Account" && (
       <Select<Option, false>
         inputId="lkpAccountID"
@@ -815,7 +815,7 @@ const GeneralLedger: React.FC = () => {
 
   {/* ACCOUNT NAMES */}
 
-  <div className="flex min-w-0 w-[102%] flex-col gap-[10px] pt-[12px] -ml-2.5">
+  <div className="flex min-w-0 w-[102%] flex-col gap-2.5 pt-3 -ml-2.5">
     {accountMode === "One Account" && (
       <Select<Option, false>
         inputId="lkpAccountName"
@@ -828,7 +828,7 @@ const GeneralLedger: React.FC = () => {
     )}
 
     {accountMode === "Range Account" && (
-      <div className="w-[120px] mt-8">
+      <div className="w-30 mt-8">
         {/* FROM ACCOUNT NAME */}
 
        
@@ -876,7 +876,7 @@ const GeneralLedger: React.FC = () => {
               <FieldLabel>Period :</FieldLabel>
 
               <div className="flex gap-2">
-                <div className="col-span-2 flex gap-[8px]">
+                <div className="col-span-2 flex gap-2">
                   <AppDatePicker
                     id="dtpFromDate"
                     label="From Date"

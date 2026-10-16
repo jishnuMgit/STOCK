@@ -149,7 +149,7 @@ const selectStyles: StylesConfig<Option, false> = {
 // INPUT STYLE
 // ============================================================
 
-const inputClass = "input-style";
+// const inputClass = "input-style";
 
 // ============================================================
 // HEADER
@@ -238,18 +238,18 @@ const BeginningBalanceHeader: React.FC = () => {
           HEADER FORM
       ====================================================== */}
 
-      <div className="h-[75px] w-full px-[20px] pt-[22px]">
+      <div className="h-18.75 w-full px-5 pt-5.5">
         <div className="relative h-full w-full">
 
           {/* ==================================================
               BRANCH
           ================================================== */}
 
-          <div className="absolute left-0 top-0 flex h-[30px] items-center">
+          <div className="absolute left-0 top-0 flex h-7.5 items-center">
 
             <label
               className="
-                w-[51px]
+                w-12.75
                 shrink-0
                 whitespace-nowrap
                 text-right
@@ -260,7 +260,7 @@ const BeginningBalanceHeader: React.FC = () => {
               Branch :
             </label>
 
-            <div className="ml-[8px] w-[235px]">
+            <div className="ml-2 w-58.75">
 
               <Select<Option, false>
                 inputId="lkpBranch"
@@ -286,7 +286,7 @@ const BeginningBalanceHeader: React.FC = () => {
               DATE
           ================================================== */}
 
-          <div className="absolute right-0 top-0 flex h-[30px] items-center">
+          <div className="absolute right-0 top-0 flex h-7.5 items-center">
 
             <div className="flex items-center gap-2 -mr-2">
 

@@ -103,7 +103,7 @@ const CustomRadio: React.FC<RadioOptionProps> = ({
       className="sr-only"
     />
     <span
-      className={`flex h-[19px] w-[19px] shrink-0 items-center justify-center rounded-full border bg-white ${
+      className={`flex h-4.75 w-4.75 shrink-0 items-center justify-center rounded-full border bg-white ${
         checked ? "border-[#64d96e]" : "border-[#cbd3dc]"
       }`}
     >
@@ -127,7 +127,7 @@ const RadioPanel: React.FC<{
 );
 
 const FieldLabel: React.FC<{ children: React.ReactNode }> = ({ children }) => (
-  <div className="flex h-[30px] items-center justify-end border border-[#e0e5ea] bg-[#fafbfc] pr-3 text-[12px] text-[#405066]">
+  <div className="flex h-7.5 items-center justify-end border border-[#e0e5ea] bg-[#fafbfc] pr-3 text-[12px] text-[#405066]">
     {children}
   </div>
 );
@@ -324,7 +324,7 @@ const RptIncomeSumPage: React.FC<RptIncomeSumPageProps> = ({
                 />
               </RadioPanel>
               <div className="pt-3">
-                <div className="w-[250px]">
+                <div className="w-62.5">
                   <Select
                     inputId="lkpBranch"
                     instanceId="lkpBranch"
@@ -355,7 +355,7 @@ const RptIncomeSumPage: React.FC<RptIncomeSumPageProps> = ({
                 />
               </RadioPanel>
               <div className="pt-3">
-                <div className="w-[140px]">
+                <div className="w-35">
                   <Select
                     inputId="lkpCostCenter"
                     instanceId="lkpCostCenter"
@@ -386,7 +386,7 @@ const RptIncomeSumPage: React.FC<RptIncomeSumPageProps> = ({
                 />
               </RadioPanel>
               <div
-                className={`flex items-start gap-2 ${isPeriod ? "pt-[38px]" : "pt-[7px]"}`}
+                className={`flex items-start gap-2 ${isPeriod ? "pt-9.5" : "pt-1.75"}`}
               >
                 {isPeriod ? (
                   <>
@@ -422,12 +422,12 @@ const RptIncomeSumPage: React.FC<RptIncomeSumPageProps> = ({
                 min="1"
                 value={accountLevel}
                 onChange={(event) => setAccountLevel(event.target.value)}
-                className="h-[30px] w-[56px] rounded-[4px] border border-[#cfd7df] bg-white px-2 text-[12px] text-[#24364d] outline-none focus:border-[#91a7b9]"
+                className="h-7.5 w-14 rounded-sm border border-[#cfd7df] bg-white px-2 text-[12px] text-[#24364d] outline-none focus:border-[#91a7b9]"
               />
 
               {/* Post status */}
               <FieldLabel>Post Status :</FieldLabel>
-              <div className="w-[140px]">
+              <div className="w-35">
                 <Select
                   inputId="lkpPostStatus"
                   instanceId="lkpPostStatus"
@@ -440,7 +440,7 @@ const RptIncomeSumPage: React.FC<RptIncomeSumPageProps> = ({
 
               {/* Print 0 balance */}
               <FieldLabel>Print 0 Balance :</FieldLabel>
-              <div className="w-[100px]">
+              <div className="w-25">
                 <Select
                   inputId="lkpPrint0Balance"
                   instanceId="lkpPrint0Balance"
@@ -453,7 +453,7 @@ const RptIncomeSumPage: React.FC<RptIncomeSumPageProps> = ({
 
               {/* Print A/c group */}
               <FieldLabel>Print A/c Group :</FieldLabel>
-              <div className="w-[100px]">
+              <div className="w-25">
                 <Select
                   inputId="lkpPrintACGroup"
                   instanceId="lkpPrintACGroup"

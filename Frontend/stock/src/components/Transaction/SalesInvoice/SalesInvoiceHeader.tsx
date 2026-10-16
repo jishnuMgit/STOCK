@@ -290,7 +290,7 @@ const SalesInvoiceHeader: React.FC = () => {
       <div
         className="
           flex
-          h-[36px]
+          h-9
           items-center
           border-b
           border-slate-300
@@ -313,7 +313,7 @@ const SalesInvoiceHeader: React.FC = () => {
           HEADER AREA
       ====================================================== */}
 
-      <div className="h-[100px] w-full px-[12px] pt-[12px] mb-3">
+      <div className="h-25 w-full px-3 pt-3 mb-3">
 
         <div className="grid h-full grid-cols-[56%_44%]">
 
@@ -321,17 +321,17 @@ const SalesInvoiceHeader: React.FC = () => {
               LEFT SIDE
           ================================================== */}
 
-          <div className="pr-[15px]">
+          <div className="pr-3.75">
 
             {/* -----------------------------------------------
                 BRANCH
             ------------------------------------------------ */}
 
-            <div className="mb-[10px] flex h-[30px] items-center gap-2">
+            <div className="mb-2.5 flex h-7.5 items-center gap-2">
 
               <label
                 className="
-                  w-[80px]
+                  w-20
                   shrink-0
                   text-right
                   text-[14px]
@@ -342,7 +342,7 @@ const SalesInvoiceHeader: React.FC = () => {
                 Branch :
               </label>
 
-              <div className="w-[220px]">
+              <div className="w-55">
 
                 <Select<Option, false>
                   inputId="lkpBranch"
@@ -370,11 +370,11 @@ const SalesInvoiceHeader: React.FC = () => {
                 CUSTOMER
             ------------------------------------------------ */}
 
-            <div className="mb-[15px] flex h-[30px] items-center gap-2  w-[800px] min-w-[600]">
+            <div className="mb-3.75 flex h-7.5 items-center gap-2  w-200 min-w-[600]">
 
               <label
                 className="
-                  w-[80px]
+                  w-20
                   shrink-0
                   text-right
                   text-[14px]
@@ -387,7 +387,7 @@ const SalesInvoiceHeader: React.FC = () => {
 
               {/* Customer ID */}
 
-              <div className="w-[140px]">
+              <div className="w-35">
 
                 <Select<Option, false>
                   inputId="lkpCustomerID"
@@ -411,7 +411,7 @@ const SalesInvoiceHeader: React.FC = () => {
 
               {/* Customer Name */}
 
-              <div className="-ml-[5px] w-[470px] min-w-[300px]">
+              <div className="-ml-1.25 w-117.5 min-w-75">
 
                 <Select<Option, false>
                   inputId="lkpCustomerName"
@@ -439,11 +439,11 @@ const SalesInvoiceHeader: React.FC = () => {
                 SQ NO
             ------------------------------------------------ */}
 
-            <div className="flex h-[22px] items-center gap-2">
+            <div className="flex h-5.5 items-center gap-2">
 
               <label
                 className="
-                  w-[80px]
+                  w-20
                   shrink-0
                   text-right
                   text-[14px]
@@ -458,7 +458,7 @@ const SalesInvoiceHeader: React.FC = () => {
                 id="txtSQtnNo"
                 type="text"
                 autoComplete="off"
-                className={`input-style w-[220px]`}
+                className={`input-style w-55`}
               />
 
             </div>
@@ -469,17 +469,17 @@ const SalesInvoiceHeader: React.FC = () => {
               RIGHT SIDE
           ================================================== */}
 
-          <div className="right-side ml-auto w-fit pl-[4px]">
+          <div className="right-side ml-auto w-fit pl-1">
 
             {/* -----------------------------------------------
                 INVOICE NO + DATE
             ------------------------------------------------ */}
 
-            <div className="mb-[10px] flex h-[30px] items-center">
+            <div className="mb-2.5 flex h-7.5 items-center">
 
               <label
                 className="
-                  w-[90px]
+                  w-22.5
                   shrink-0
                   whitespace-nowrap
                   text-right
@@ -495,13 +495,13 @@ const SalesInvoiceHeader: React.FC = () => {
                 type="text"
                 defaultValue="OC3"
                 autoComplete="off"
-                className={`input-style ml-[7px] w-[160px]`}
+                className={`input-style ml-1.75 w-40`}
               />
 
               <label
                 className="
-                  ml-[15px]
-                  mr-[5px]
+                  ml-3.75
+                  mr-1.25
                   shrink-0
                   whitespace-nowrap
                   text-[14px]
@@ -731,11 +731,11 @@ const SalesInvoiceHeader: React.FC = () => {
                 REFERENCE
             ------------------------------------------------ */}
 
-            <div className="mb-[10px] flex h-[30px] items-center">
+            <div className="mb-2.5 flex h-7.5 items-center">
 
               <label
                 className="
-                  w-[90px]
+                  w-22.5
                   shrink-0
                   whitespace-nowrap
                   text-right
@@ -750,7 +750,7 @@ const SalesInvoiceHeader: React.FC = () => {
                 id="txtReference"
                 type="text"
                 autoComplete="off"
-                className={`input-style ml-[7px] w-[360px]`}
+                className={`input-style ml-1.75 w-90`}
               />
 
             </div>
@@ -759,15 +759,15 @@ const SalesInvoiceHeader: React.FC = () => {
                 STOCK + BRANCH STOCK BUTTON
             ------------------------------------------------ */}
 
-            <div className="flex h-[30px] items-center">
+            <div className="flex h-7.5 items-center">
 
               <button
                 id="BranchStockbtn"
                 type="button"
                 className="
-                  ml-[13px]
-                  h-[30px]
-                  w-[105px]
+                  ml-3.25
+                  h-7.5
+                  w-26.25
                   border
                   border-[#cbd5e1]
                   bg-[#eeeeee]
@@ -783,7 +783,7 @@ const SalesInvoiceHeader: React.FC = () => {
 
               <label
                 className="
-                  w-[90px]
+                  w-22.5
                   shrink-0
                   whitespace-nowrap
                   text-right
@@ -799,7 +799,7 @@ const SalesInvoiceHeader: React.FC = () => {
                 type="text"
                 value="0"
                 readOnly
-                className={`${inputClass} ml-[7px] w-[76px] text-center`}
+                className={`${inputClass} ml-1.75 w-19 text-center`}
               />
 
             </div>

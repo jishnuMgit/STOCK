@@ -48,7 +48,7 @@ const SetDatabaseBackupPathPage: React.FC<SetDatabaseBackupPathPageProps> = ({
 
     try {
       const pickerWindow = window as DirectoryPickerWindow;
-
+console.log(message)
       if (!pickerWindow.showDirectoryPicker) {
         setMessage(
           "Folder selection is not supported in this browser. Use Chrome or Edge on HTTPS or localhost.",

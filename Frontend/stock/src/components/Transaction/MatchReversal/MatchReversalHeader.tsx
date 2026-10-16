@@ -80,19 +80,19 @@ export interface MatchHeaderProps {
 }
 
 const MatchReversalHeader: React.FC<MatchHeaderProps> = ({
-    branch,
+    // branch,
   customerId,
   customerName,
   divisionId,
   type,
   receiptNo,
-  receiptDate,
+  // receiptDate,
 
   setDivisionId,
   setDocType,
   setReceiptNo,
-  setReceiptDate,
-  setBranch,
+  // setReceiptDate,
+  // setBranch,
 
   customerOptions,
   customerNameOptions,
@@ -103,8 +103,8 @@ const MatchReversalHeader: React.FC<MatchHeaderProps> = ({
   divisionLoading,
 
   documentAmount,
-  totalMatchAmount,
-  balance,
+  // totalMatchAmount,
+  // balance,
 
   customerIdRef,
   customerNameRef,
@@ -125,7 +125,7 @@ const MatchReversalHeader: React.FC<MatchHeaderProps> = ({
       <div
         className="
           flex
-          h-[36px]
+          h-9
           items-center
           border-b
           border-slate-300

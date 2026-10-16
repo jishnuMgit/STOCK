@@ -26,14 +26,14 @@ const branchOptions: Option[] = [
   { value: "RIYADH", label: "RIYADH" },
   { value: "DAMMAM", label: "DAMMAM" },
 ];
-const parentIdOptions: Option[] = [
-  { value: "1100", label: "1100" },
-  { value: "1200", label: "1200" },
-];
-const parentNameOptions: Option[] = [
-  { value: "1100", label: "Trade Receivables" },
-  { value: "1200", label: "Other Receivables" },
-];
+// const parentIdOptions: Option[] = [
+//   { value: "1100", label: "1100" },
+//   { value: "1200", label: "1200" },
+// ];
+// const parentNameOptions: Option[] = [
+//   { value: "1100", label: "Trade Receivables" },
+//   { value: "1200", label: "Other Receivables" },
+// ];
 const ageingModeOptions: Option[] = [
   { value: "MONTH", label: "Month" },
   { value: "DAYS", label: "Days" },
@@ -110,7 +110,7 @@ const CustomRadio: React.FC<RadioOptionProps> = ({
       className="sr-only"
     />
     <span
-      className={`flex h-[19px] w-[19px] shrink-0 items-center justify-center rounded-full border bg-white ${
+      className={`flex h-4.75 w-4.75 shrink-0 items-center justify-center rounded-full border bg-white ${
         checked ? "border-[#64d96e]" : "border-[#cbd3dc]"
       }`}
     >
@@ -134,7 +134,7 @@ const RadioPanel: React.FC<{
 );
 
 const FieldLabel: React.FC<{ children: React.ReactNode }> = ({ children }) => (
-  <div className="flex h-[30px] items-center justify-end border border-[#e0e5ea] bg-[#fafbfc] pr-3 text-[14px] text-[#405066]">
+  <div className="flex h-7.5 items-center justify-end border border-[#e0e5ea] bg-[#fafbfc] pr-3 text-[14px] text-[#405066]">
     {children}
   </div>
 );
@@ -318,7 +318,7 @@ const RptAgeingOfPayablesPage: React.FC<RptAgeingOfPayablesPageProps> = ({
                 />
               </RadioPanel>
               <div className="pt-3">
-                <div className="w-[250px]">
+                <div className="w-62.5">
                   <Select
                     inputId="lkpBranch"
                     instanceId="lkpBranch"
@@ -347,7 +347,7 @@ const RptAgeingOfPayablesPage: React.FC<RptAgeingOfPayablesPageProps> = ({
                 />
 
                 <FieldLabel>Ageing Mode :</FieldLabel>
-                <div className="w-[140px]">
+                <div className="w-35">
                   <Select
                     inputId="lkpAgeingMode"
                     instanceId="lkpAgeingMode"
@@ -359,7 +359,7 @@ const RptAgeingOfPayablesPage: React.FC<RptAgeingOfPayablesPageProps> = ({
                 </div>
 
                 <FieldLabel>Post Status :</FieldLabel>
-                <div className="w-[140px]">
+                <div className="w-35">
                   <Select
                     inputId="lkpPostStatus"
                     instanceId="lkpPostStatus"
@@ -371,7 +371,7 @@ const RptAgeingOfPayablesPage: React.FC<RptAgeingOfPayablesPageProps> = ({
                 </div>
 
                 <FieldLabel>Print 0 Balance :</FieldLabel>
-                <div className="w-[100px]">
+                <div className="w-25">
                   <Select
                     inputId="lkpPrint0Balance"
                     instanceId="lkpPrint0Balance"
