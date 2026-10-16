@@ -132,6 +132,13 @@ const branchMenuComponents = makeNameIdMenuComponents("Branch");
 export const BranchMenuList = branchMenuComponents.MenuList;
 export const BranchOption = branchMenuComponents.Option;
 
+// The same "Branch | ID" list with a thin divider line between the two columns
+// (header and every row). Use it with branchMenuStyles, like the other one.
+const branchDividedMenuComponents = makeNameIdMenuComponents("Branch", true);
+
+export const BranchDividedMenuList = branchDividedMenuComponents.MenuList;
+export const BranchDividedOption = branchDividedMenuComponents.Option;
+
 export const CustomDropdownIndicator = (props: any) => {
   return (
     <components.DropdownIndicator {...props}>

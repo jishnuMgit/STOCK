@@ -7,8 +7,8 @@ import { useAltShortcuts } from "../../../hooks/useAltShortcuts";
 import { useButtonPermissions } from "../../../hooks/useButtonPermissions";
 import {
   filterLabelOrValue,
-  BranchMenuList,
-  BranchOption,
+  BranchDividedMenuList,
+  BranchDividedOption,
   branchMenuStyles,
 } from "../../../components/BranchSelect/branchSelectParts";
 import {
@@ -1831,8 +1831,8 @@ const MENU_ID = "010201";
                               }}
                               components={{
                                 ...selectComponents,
-                                Option: BranchOption,
-                                MenuList: BranchMenuList,
+                                Option: BranchDividedOption,
+                                MenuList: BranchDividedMenuList,
                               }}
                               filterOption={filterLabelOrValue}
                               noOptionsMessage={() => "No Branch Found"}
