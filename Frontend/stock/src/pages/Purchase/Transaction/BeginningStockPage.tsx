@@ -10,15 +10,15 @@ import { toast } from "react-toastify";
 import {
   makePairComponents,
   filterPairOption,
-  pairDividedIdMenuStyles,
-  pairDividedNameMenuStyles,
+  makePairDividedMenuStyles,
 } from "../../../components/PairSelect/pairSelectParts";
+import { usePairMenuHang } from "../../../hooks/usePairMenuHang";
 import { useAltShortcuts } from "../../../hooks/useAltShortcuts";
 import { useConfirm } from "../../../hooks/useConfirm";
 import { useButtonPermissions } from "../../../hooks/useButtonPermissions";
 import {
-  BranchMenuList,
-  BranchOption,
+  BranchDividedMenuList,
+  BranchDividedOption,
   branchMenuStyles,
   filterLabelOrValue,
 } from "../../../components/BranchSelect/branchSelectParts";
@@ -157,7 +157,17 @@ const branchSelectStyles: StylesConfig<SelectOption, false> = {
 // ============================================================
 
 const itemIdComponents = makePairComponents("Item ID", "Item Name", false, true);
-const itemNameComponents = makePairComponents("Item ID", "Item Name", true, true);
+// The Item Name box's list hangs 210px past the box: that is its Item ID column,
+// wide enough for a whole ID on one line (the default 100px wrapped long IDs).
+const NAME_LIST_HANG = 210;
+const itemNameComponents = makePairComponents(
+  "Item ID",
+  "Item Name",
+  true,
+  true,
+  NAME_LIST_HANG,
+);
+const itemNameMenuStyles = makePairDividedMenuStyles(NAME_LIST_HANG);
 
 // ============================================================
 // REACT SELECT STYLES
@@ -476,6 +486,9 @@ const BeginningStockPage: React.FC = () => {
   const [txtUserInfo, setTxtUserInfo] = useState("");
 
   const [saving, setSaving] = useState(false);
+
+  // the Item ID list covers the Item ID box AND the Item Name box next to it
+  const { hang: idMenuHang, measure: measureIdMenuHang } = usePairMenuHang();
 
   // bumped by Clear / after a save so the document is loaded again
   const [reloadKey, setReloadKey] = useState(0);
@@ -1303,8 +1316,8 @@ const BeginningStockPage: React.FC = () => {
               styles={branchSelectStyles}
               components={{
                 ...selectComponents,
-                Option: BranchOption,
-                MenuList: BranchMenuList,
+                Option: BranchDividedOption,
+                MenuList: BranchDividedMenuList,
               }}
               filterOption={filterLabelOrValue}
               noOptionsMessage={() => "No Branch Found"}
@@ -1352,7 +1365,7 @@ const BeginningStockPage: React.FC = () => {
               <col style={{ width: "6.2%" }} />
               <col style={{ width: "8.9%" }} />
               <col style={{ width: "9.6%" }} />
-              <col style={{ width: "10.2%" }} />
+              <col style={{ width: "13.8%" }} />
             </colgroup>
 
             <thead className="sticky top-0 z-10 bg-[#edf9f2]">
@@ -1429,8 +1442,11 @@ const BeginningStockPage: React.FC = () => {
                       styles={
                         {
                           ...tableSelectStyles,
-                          ...pairDividedIdMenuStyles,
+                          ...makePairDividedMenuStyles(idMenuHang),
                         } as StylesConfig<SelectOption, false>
+                      }
+                      onMenuOpen={() =>
+                        measureIdMenuHang(`lkpItemID-${index}`, `lkpItemName-${index}`)
                       }
                       components={itemIdComponents}
                       filterOption={filterPairOption}
@@ -1461,7 +1477,7 @@ const BeginningStockPage: React.FC = () => {
                       styles={
                         {
                           ...tableSelectStyles,
-                          ...pairDividedNameMenuStyles,
+                          ...itemNameMenuStyles,
                         } as StylesConfig<SelectOption, false>
                       }
                       components={itemNameComponents}
@@ -1648,7 +1664,7 @@ const BeginningStockPage: React.FC = () => {
 
       {/* SAVED BY / LAST MODIFIED BY */}
       {txtUserInfo !== "" && (
-        <div className="whitespace-pre-line text-[12px] text-gray-500">
+        <div className="self-end whitespace-pre-line text-right text-[12px] text-gray-500">
           {txtUserInfo}
         </div>
       )}

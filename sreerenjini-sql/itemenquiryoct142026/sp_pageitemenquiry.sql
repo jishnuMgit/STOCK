@@ -22,6 +22,9 @@
 --   3. GHD: the old one was "select *"; the item group name and the supplier
 --      name are joined here instead of being looked up by the form.
 --      fAvoidFixedExp does not exist in tblitemhd -> not returned.
+--      The supplier name comes from dbo.tblaccountcs (the customer / supplier
+--      accounts, fcs = 'S' for a supplier) - the same table dbo.fillsupplier reads
+--      for the Supplier box of the Item page - NOT from dbo.tblaccount.
 --
 -- Test:
 --   BEGIN;
@@ -66,7 +69,7 @@ BEGIN
                 a.fitemgroupid,
                 g.fitemgroupname,
                 a.fsupplierid,
-                s.faccountname      AS fsuppliername,
+                s.fcsaccountname    AS fsuppliername,
                 a.fsupplieritemid,
                 a.freorderlevel,
                 a.freorderqty
@@ -74,8 +77,8 @@ BEGIN
             FROM dbo.tblitemhd a
             LEFT OUTER JOIN dbo.tblitemgroup g
                    ON g.fcoid = a.fcoid AND g.fitemgroupid = a.fitemgroupid
-            LEFT OUTER JOIN dbo.tblaccount s
-                   ON s.fcoid = a.fcoid AND s.faccountid = a.fsupplierid
+            LEFT OUTER JOIN dbo.tblaccountcs s
+                   ON s.fcoid = a.fcoid AND s.fcsaccountid = a.fsupplierid AND s.fcs = 'S'
             WHERE a.fcoid   = p_pstrcoid
               AND a.fitemid = p_stritemid;
 
