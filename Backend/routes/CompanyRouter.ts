@@ -7,6 +7,7 @@ import {
   getPurchaseGroups,
 } from "../controller/CompanyController.js";
 
+
 const router = express.Router();
 
 router.get("/", getCompanies);

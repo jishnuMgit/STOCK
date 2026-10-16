@@ -5,7 +5,7 @@ import {
   getUnitList,
   haveUnitTrans,
   saveUnit,
-} from "../../../controller/Purchase/Setup/UnitPageController.js";
+} from "../../../controller/Purchase/Setup/UnitController.js";
 
 const router = express.Router();
 

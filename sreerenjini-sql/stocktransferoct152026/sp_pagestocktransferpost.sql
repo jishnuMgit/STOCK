@@ -1,8 +1,21 @@
 
+-- tblstocktrans.fyear is varchar(4) now (like tblstockcontrol.fyear): the year argument is
+-- TEXT, p_pstryear (it was a smallint, p_pintyear), and is compared with the year columns
+-- as it is. The DROP below removes the smallint version.
+--
+-- ADDED: the posting transaction number (fpostingtransno), as in Beginning Stock Post
+--   one number for the whole document, from dbo.getnexttransno(co, year, From branch, 'P'),
+--   written into BOTH sets of rows (ST and STI) together with the posted flag. A row that
+--   already has one keeps it (COALESCE). Needs the two columns of
+--   beginningstockoct122026/alter_tblstocktrans_transno.sql.
+--   The signature is unchanged: the backend call stays as it is.
+
+DROP PROCEDURE IF EXISTS dbo.sp_pagestocktransferpost(character varying, character varying, smallint, character varying, character varying, character varying, character varying);
+
 CREATE OR REPLACE PROCEDURE dbo.sp_pagestocktransferpost(
     IN p_strmode    varchar(1),
     IN p_pstrcoid   varchar(3),
-    IN p_pintyear   smallint,
+    IN p_pstryear   varchar(4),
     IN p_strbrid    varchar(3),
     IN p_strdoctype varchar(5),
     IN p_strdocno   varchar(15),
@@ -11,7 +24,7 @@ CREATE OR REPLACE PROCEDURE dbo.sp_pagestocktransferpost(
 LANGUAGE plpgsql
 AS $$
 DECLARE
-    v_stryear           varchar(4) := p_pintyear::varchar;   -- tblstockcontrol.fyear is text
+    v_stryear           varchar(4) := p_pstryear;   -- the year is text (tblstockcontrol and tblstocktrans)
     v_strdoctypeg       varchar(5) := 'STI';
     v_intslno           smallint;
     v_strtobrid         varchar(3);
@@ -23,6 +36,7 @@ DECLARE
     v_numcalcunitcost   numeric(18,4);
     v_numcostofstock    numeric(18,4) := 0;
     v_intlines          integer := 0;
+    v_strpostingtransno varchar(9);      -- the posting transaction number
     v_row               record;
 BEGIN
     IF upper(p_strdoctype) <> 'ST' THEN
@@ -40,7 +54,7 @@ BEGIN
                COALESCE(st.fqtyout, 0) AS qtyout
         FROM dbo.tblstocktrans st
         WHERE st.fcoid    = p_pstrcoid
-          AND st.fyear    = p_pintyear
+          AND st.fyear    = p_pstryear
           AND st.fbrid    = p_strbrid
           AND st.fdoctype = p_strdoctype
           AND st.fdocno   = p_strdocno
@@ -75,7 +89,7 @@ BEGIN
            SET funitcost  = v_numnewunitcost,
                ftotalcost = v_numqtyout * v_numnewunitcost
          WHERE fcoid    = p_pstrcoid
-           AND fyear    = p_pintyear
+           AND fyear    = p_pstryear
            AND fbrid    = p_strbrid
            AND fdoctype = p_strdoctype
            AND fdocno   = p_strdocno
@@ -86,7 +100,7 @@ BEGIN
            SET funitcost  = v_numnewunitcost,
                ftotalcost = v_numqtyout * v_numnewunitcost
          WHERE fcoid    = p_pstrcoid
-           AND fyear    = p_pintyear
+           AND fyear    = p_pstryear
            AND fbrid    = v_strtobrid
            AND fdoctype = v_strdoctypeg
            AND fdocno   = p_strdocno
@@ -152,15 +166,19 @@ BEGIN
     IF v_intlines = 0 THEN
         RAISE EXCEPTION
             'No eligible stock transactions found for company %, year %, branch %, document type %, document number %',
-            p_pstrcoid, p_pintyear, p_strbrid, p_strdoctype, p_strdocno;
+            p_pstrcoid, p_pstryear, p_strbrid, p_strdoctype, p_strdocno;
     END IF;
+
+    -- the posting transaction number: one for the whole document
+    v_strpostingtransno := dbo.getnexttransno(p_pstrcoid, p_pstryear, p_strbrid, 'P');
 
     -- 5. both sets of rows are posted
     UPDATE dbo.tblstocktrans
-       SET fpost = true
+       SET fpost = true,
+           fpostingtransno = COALESCE(fpostingtransno, v_strpostingtransno)
            -- , fpostorder = v_intpostorder, fpostorderc = v_intpostorder   (no such columns)
      WHERE fcoid   = p_pstrcoid
-       AND fyear   = p_pintyear
+       AND fyear   = p_pstryear
        AND fstbrid = p_strbrid
        AND (fdoctype = p_strdoctype OR fdoctype = v_strdoctypeg)
        AND fdocno  = p_strdocno;

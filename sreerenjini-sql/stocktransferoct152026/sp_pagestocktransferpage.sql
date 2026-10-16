@@ -37,19 +37,37 @@
 --   * the two read modes return dates as text so no time zone can move them.
 --   * p_strnote is the note, written on every row (varchar(100)).
 --
+-- tblstocktrans.fyear is varchar(4) now (like tblstockcontrol.fyear): the year argument
+-- is TEXT, p_pstryear (it was a smallint, p_pintyear), compared with the year columns as it is.
+--
+-- ADDED: the saving transaction number (fsavingtransno), worked out INSIDE the procedure
+--   (no new argument: the signature and the backend call are unchanged)
+--   * for modes S and M the procedure first looks for the number the document already has
+--     (the ST rows of the Entry No.); if there is none it asks
+--     dbo.getnexttransno(co, year, From branch, 'S') - ONE number for the whole document;
+--   * mode S writes it into BOTH rows it inserts (the OUT row and the IN row), so every
+--     line of the document - and its IN rows in the To branch - carry the same number;
+--   * mode M gives it to every row (both sets) that has none yet (COALESCE): a Modify
+--     never renumbers the document;
+--   * M1 / D1 / D leave it alone.
+--   * The posting number (fpostingtransno) is written by sp_pagestocktransferpost.
+--   * Needs the two columns of beginningstockoct122026/alter_tblstocktrans_transno.sql.
+--
 -- Examples (cursor calls run inside one transaction)
 --   BEGIN;
---   CALL dbo.sp_pagestocktransferpage('GTL', '01', 2026::smallint, 'JD', 'ST', 'STI', 'STJD-2600001', p_result_cursor => 'c1');
+--   CALL dbo.sp_pagestocktransferpage('GTL', '01', '2026', 'JD', 'ST', 'STI', 'STJD-2600001', p_result_cursor => 'c1');
 --   FETCH ALL FROM "c1";
 --   COMMIT;
 -- =====================================================================
 
 DROP PROCEDURE IF EXISTS dbo.sp_pagestocktransfer(character varying, character varying, smallint, character varying, character varying, character varying, character varying, character varying, timestamp without time zone, numeric, character varying, numeric, smallint, character varying, character varying, numeric, numeric, numeric, smallint, character varying, character varying, refcursor);
 
+DROP PROCEDURE IF EXISTS dbo.sp_pagestocktransferpage(character varying, character varying, smallint, character varying, character varying, character varying, character varying, character varying, timestamp without time zone, numeric, character varying, numeric, smallint, character varying, character varying, numeric, numeric, numeric, smallint, character varying, character varying, refcursor);
+
 CREATE OR REPLACE PROCEDURE dbo.sp_pagestocktransferpage(
     IN    p_strmode          character varying,
     IN    p_pstrcoid         character varying,
-    IN    p_pintyear         smallint,
+    IN    p_pstryear         character varying,
     IN    p_strstbrid        character varying,
     IN    p_strdoctype       character varying,
     IN    p_strdoctypeg      character varying,
@@ -76,7 +94,25 @@ DECLARE
     v_suserdate  timestamp without time zone;
     v_muserid    character varying;
     v_muserdate  timestamp without time zone;
+    v_strsavingtransno character varying;   -- the document's saving transaction number
 BEGIN
+
+    -- the document's saving transaction number (modes S and M): the one its rows already
+    -- carry, or - for a new document - the next one from dbo.getnexttransno
+    IF p_strmode IN ('S', 'M') THEN
+        SELECT MAX(fsavingtransno)
+          INTO v_strsavingtransno
+          FROM dbo.tblstocktrans
+         WHERE fcoid    = p_pstrcoid
+           AND fyear    = p_pstryear
+           AND fstbrid  = p_strstbrid
+           AND fdoctype = p_strdoctype
+           AND fdocno   = p_strdocno;
+
+        IF v_strsavingtransno IS NULL THEN
+            v_strsavingtransno := dbo.getnexttransno(p_pstrcoid, p_pstryear, p_strstbrid, 'S');
+        END IF;
+    END IF;
 
     IF p_strmode = 'GHD' THEN
 
@@ -94,7 +130,7 @@ BEGIN
                 to_char(fmuserdate, 'DD Mon YYYY HH24:MI:SS')  AS fmuserdate
             FROM dbo.tblstocktrans
             WHERE fcoid    = p_pstrcoid
-              AND fyear    = p_pintyear
+              AND fyear    = p_pstryear
               AND fstbrid  = p_strstbrid
               AND fdoctype = p_strdoctype
               AND fdocno   = p_strdocno
@@ -113,7 +149,7 @@ BEGIN
                 ftotalcost
             FROM dbo.tblstocktrans
             WHERE fcoid    = p_pstrcoid
-              AND fyear    = p_pintyear
+              AND fyear    = p_pstryear
               AND fstbrid  = p_strstbrid
               AND fdoctype = p_strdoctype
               AND fdocno   = p_strdocno
@@ -126,14 +162,14 @@ BEGIN
             fcoid, fyear, fbrid, fdoctype, fdocno, fstbrid, fsttobrid, fdate,
             fnote, fslno, fitemid, funit,   -- fstexpamt, fdnno: no such columns
             fqtyout, funitcost, ftotalcost, fdocamt, forigin, fpost,
-            fcuserid, fcuserdate
+            fcuserid, fcuserdate, fsavingtransno
         )
         VALUES (
-            p_pstrcoid, p_pintyear, p_strstbrid, p_strdoctype, p_strdocno, p_strstbrid, p_strtobrid, p_dtpdate,
+            p_pstrcoid, p_pstryear, p_strstbrid, p_strdoctype, p_strdocno, p_strstbrid, p_strtobrid, p_dtpdate,
             NULLIF(p_strnote, ''), p_intslno, p_stritemid, p_strunit,
             COALESCE(p_numqtyout, 0), COALESCE(p_numunitcost, 0), COALESCE(p_numtotalcost, 0), COALESCE(p_numdocamt, 0),
             'UI', false,
-            p_pstruserid, now()
+            p_pstruserid, now(), v_strsavingtransno
         );
 
         -- the IN row (generated): the To branch
@@ -141,14 +177,14 @@ BEGIN
             fcoid, fyear, fbrid, fdoctype, fdocno, fstbrid, fsttobrid, fdate,
             fnote, fslno, fitemid, funit,   -- fstexpamt, fdnno: no such columns
             fqtyin, funitcost, ftotalcost, fdocamt, forigin, fpost,
-            fcuserid, fcuserdate
+            fcuserid, fcuserdate, fsavingtransno
         )
         VALUES (
-            p_pstrcoid, p_pintyear, p_strtobrid, p_strdoctypeg, p_strdocno, p_strstbrid, p_strtobrid, p_dtpdate,
+            p_pstrcoid, p_pstryear, p_strtobrid, p_strdoctypeg, p_strdocno, p_strstbrid, p_strtobrid, p_dtpdate,
             NULLIF(p_strnote, ''), p_intslno, p_stritemid, p_strunit,
             COALESCE(p_numqtyout, 0), COALESCE(p_numunitcost, 0), COALESCE(p_numtotalcost, 0), COALESCE(p_numdocamt, 0),
             'GS', false,
-            p_pstruserid, now()
+            p_pstruserid, now(), v_strsavingtransno
         );
 
     ELSIF p_strmode = 'M' THEN
@@ -161,7 +197,7 @@ BEGIN
           INTO v_suserid, v_suserdate
           FROM dbo.tblstocktrans
          WHERE fcoid    = p_pstrcoid
-           AND fyear    = p_pintyear
+           AND fyear    = p_pstryear
            AND fstbrid  = p_strstbrid
            AND fdoctype = p_strdoctype
            AND fdocno   = p_strdocno
@@ -180,9 +216,10 @@ BEGIN
             fcuserid   = v_suserid,
             fcuserdate = v_suserdate,
             fmuserid   = v_muserid,
-            fmuserdate = v_muserdate
+            fmuserdate = v_muserdate,
+            fsavingtransno = COALESCE(fsavingtransno, v_strsavingtransno)
         WHERE fcoid    = p_pstrcoid
-          AND fyear    = p_pintyear
+          AND fyear    = p_pstryear
           AND fstbrid  = p_strstbrid
           AND fdoctype = p_strdoctype
           AND fdocno   = p_strdocno;
@@ -199,9 +236,10 @@ BEGIN
             fcuserid   = v_suserid,
             fcuserdate = v_suserdate,
             fmuserid   = v_muserid,
-            fmuserdate = v_muserdate
+            fmuserdate = v_muserdate,
+            fsavingtransno = COALESCE(fsavingtransno, v_strsavingtransno)
         WHERE fcoid    = p_pstrcoid
-          AND fyear    = p_pintyear
+          AND fyear    = p_pstryear
           AND fstbrid  = p_strstbrid
           AND fdoctype = p_strdoctypeg
           AND fdocno   = p_strdocno;
@@ -216,7 +254,7 @@ BEGIN
             funitcost  = COALESCE(p_numunitcost, 0),
             ftotalcost = COALESCE(p_numtotalcost, 0)
         WHERE fcoid    = p_pstrcoid
-          AND fyear    = p_pintyear
+          AND fyear    = p_pstryear
           AND fstbrid  = p_strstbrid
           AND fdoctype = p_strdoctype
           AND fdocno   = p_strdocno
@@ -230,7 +268,7 @@ BEGIN
             funitcost  = COALESCE(p_numunitcost, 0),
             ftotalcost = COALESCE(p_numtotalcost, 0)
         WHERE fcoid    = p_pstrcoid
-          AND fyear    = p_pintyear
+          AND fyear    = p_pstryear
           AND fstbrid  = p_strstbrid
           AND fdoctype = p_strdoctypeg
           AND fdocno   = p_strdocno
@@ -240,7 +278,7 @@ BEGIN
 
         DELETE FROM dbo.tblstocktrans
         WHERE fcoid    = p_pstrcoid
-          AND fyear    = p_pintyear
+          AND fyear    = p_pstryear
           AND fstbrid  = p_strstbrid
           AND fdoctype = p_strdoctype
           AND fdocno   = p_strdocno
@@ -248,7 +286,7 @@ BEGIN
 
         DELETE FROM dbo.tblstocktrans
         WHERE fcoid    = p_pstrcoid
-          AND fyear    = p_pintyear
+          AND fyear    = p_pstryear
           AND fstbrid  = p_strstbrid
           AND fdoctype = p_strdoctypeg
           AND fdocno   = p_strdocno
@@ -258,14 +296,14 @@ BEGIN
 
         DELETE FROM dbo.tblstocktrans
         WHERE fcoid    = p_pstrcoid
-          AND fyear    = p_pintyear
+          AND fyear    = p_pstryear
           AND fstbrid  = p_strstbrid
           AND fdoctype = p_strdoctype
           AND fdocno   = p_strdocno;
 
         DELETE FROM dbo.tblstocktrans
         WHERE fcoid    = p_pstrcoid
-          AND fyear    = p_pintyear
+          AND fyear    = p_pstryear
           AND fstbrid  = p_strstbrid
           AND fdoctype = p_strdoctypeg
           AND fdocno   = p_strdocno;
@@ -273,14 +311,14 @@ BEGIN
         -- as in the original: the finance rows of both doc types, by the From branch
         DELETE FROM dbo.tblfintrans
         WHERE fcoid    = p_pstrcoid
-          AND fyear    = p_pintyear::varchar
+          AND fyear    = p_pstryear
           AND fbrid    = p_strstbrid
           AND fdoctype = p_strdoctype
           AND fdocno   = p_strdocno;
 
         DELETE FROM dbo.tblfintrans
         WHERE fcoid    = p_pstrcoid
-          AND fyear    = p_pintyear::varchar
+          AND fyear    = p_pstryear
           AND fbrid    = p_strstbrid
           AND fdoctype = p_strdoctypeg
           AND fdocno   = p_strdocno;

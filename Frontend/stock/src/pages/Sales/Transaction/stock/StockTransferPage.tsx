@@ -10,7 +10,7 @@ import {
   makePairComponents,
   filterPairOption,
   pairDividedIdMenuStyles,
-  pairDividedNameMenuStyles,
+  makePairDividedMenuStyles,
 } from "../../../../components/PairSelect/pairSelectParts";
 import { useAltShortcuts } from "../../../../hooks/useAltShortcuts";
 import { useConfirm } from "../../../../hooks/useConfirm";
@@ -18,10 +18,10 @@ import { useButtonPermissions } from "../../../../hooks/useButtonPermissions";
 import {
   BranchMenuList,
   BranchOption,
-  CustomDropdownIndicator,
   branchMenuStyles,
   filterLabelOrValue,
 } from "../../../../components/BranchSelect/branchSelectParts";
+import selectComponents from "../../../../components/sharecomponents/selectComponents";
 
 // ============================================================
 // STOCK TRANSFER (the old frmST)
@@ -173,7 +173,17 @@ const branchSelectStyles: StylesConfig<SelectOption, false> = {
 // ============================================================
 
 const itemIdComponents = makePairComponents("Item ID", "Item Name", false, true);
-const itemNameComponents = makePairComponents("Item ID", "Item Name", true, true);
+// The Item Name box's list hangs 210px past the box: that is its Item ID column,
+// wide enough for a whole ID on one line (the default 100px wrapped long IDs).
+const NAME_LIST_HANG = 210;
+const itemNameComponents = makePairComponents(
+  "Item ID",
+  "Item Name",
+  true,
+  true,
+  NAME_LIST_HANG,
+);
+const itemNameMenuStyles = makePairDividedMenuStyles(NAME_LIST_HANG);
 
 // ============================================================
 // REACT SELECT STYLES
@@ -1597,7 +1607,7 @@ const StockTransferPage: React.FC = () => {
               onChange={(option: SingleValue<SelectOption>) => setLkpBranch(option)}
               styles={branchSelectStyles}
               components={{
-                DropdownIndicator: CustomDropdownIndicator,
+                ...selectComponents,
                 Option: BranchOption,
                 MenuList: BranchMenuList,
               }}
@@ -1681,7 +1691,7 @@ const StockTransferPage: React.FC = () => {
               isDisabled={chkPosted}
               styles={branchSelectStyles}
               components={{
-                DropdownIndicator: CustomDropdownIndicator,
+                ...selectComponents,
                 Option: BranchOption,
                 MenuList: BranchMenuList,
               }}
@@ -1820,7 +1830,7 @@ const StockTransferPage: React.FC = () => {
                       styles={
                         {
                           ...tableSelectStyles,
-                          ...pairDividedNameMenuStyles,
+                          ...itemNameMenuStyles,
                         } as StylesConfig<SelectOption, false>
                       }
                       components={itemNameComponents}
@@ -1999,7 +2009,7 @@ const StockTransferPage: React.FC = () => {
 
       {/* ACTION BUTTONS */}
       <footer className="mt-[14px] flex shrink-0 flex-wrap items-center justify-center gap-3">
-        {["Save", "Delete", "Print", "Post", "Cancel"].map((action) => {
+        {["Save", "Delete", "Print", "Post", "Clear"].map((action) => {
           const isSave = action === "Save";
           const label = isSave ? actionWord : action;
 

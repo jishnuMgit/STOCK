@@ -19,10 +19,10 @@ import { useButtonPermissions } from "../../../hooks/useButtonPermissions";
 import {
   BranchMenuList,
   BranchOption,
-  CustomDropdownIndicator,
   branchMenuStyles,
   filterLabelOrValue,
 } from "../../../components/BranchSelect/branchSelectParts";
+import selectComponents from "../../../components/sharecomponents/selectComponents";
 
 interface SelectOption {
   value: string;
@@ -1302,7 +1302,7 @@ const BeginningStockPage: React.FC = () => {
               }
               styles={branchSelectStyles}
               components={{
-                DropdownIndicator: CustomDropdownIndicator,
+                ...selectComponents,
                 Option: BranchOption,
                 MenuList: BranchMenuList,
               }}

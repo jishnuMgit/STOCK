@@ -140,6 +140,8 @@ Sales-REPORT
   mnuRptExpenseSum:"/Finance/Reports/RptExpenseSum",
   mnuRptRVPVSum:"/Finance/Reports/RptRVPVSum",
   mnuRptFinDocList:"/Finance/Reports/RptFinDocList",
+  mnuRptIncomeSum:"/Finance/Reports/RptIncomeSum",
+  mnuRptDocumentExport:"/Finance/Reports/RptDocumentExport",
  // FINANCE - REPORTS - A/R & A/P
 
   mnuRptSOA: "/Finance/Reports/rptSOA",
@@ -175,6 +177,9 @@ Sales-REPORT
    mnuSetStockPostingAccount:"/Settings/SetPostingAccount",
    mnuSetActivePeriod:"/Setting/SetActivePeriod",
    mnuSetDefaultBranch:"/Setting/SetDefaultBranch",
+   mnuSetDrAgeingPeriod:"/Setting/SetDrAgeingPeriod",
+   mnuSetDatabaseBackupPath:"/Setting/SetDatabaseBackupPath",
+   mnuChangeLoginYear:"/Setting/ChangeLoginYear",
 
   /* =========================================================
      SECURITY
@@ -185,6 +190,13 @@ Sales-REPORT
   mnuUserPermissionBranch:"/Security/UserPermissionBranch",
   mnuRptUserAudit:"/Security/UserAudit",
   mnuRptUserTransactionAudit:"/Security/UserTransactionAudit",
+
+  /* =========================================================
+     Utility
+  ========================================================= */
+
+
+  mnuFinYearClose:"/Utility/FinYearClose",
 
   /* =========================================================
      ADMINISTRATION

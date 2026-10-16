@@ -1,40 +1,59 @@
+-- FUNCTION: dbo.getnexttransno(character varying, character varying, character varying, character varying)
+
+-- DROP FUNCTION IF EXISTS dbo.getnexttransno(character varying, character varying, character varying, character varying);
+
 CREATE OR REPLACE FUNCTION dbo.getnexttransno(
-    p_pstrcoid VARCHAR(3),
-    p_pstryear VARCHAR(4),
-    p_strbrid VARCHAR(3),
-    p_strsavingposting VARCHAR(1)
-)
-RETURNS VARCHAR(9)
-LANGUAGE plpgsql
-AS $$
+	pstrcoid character varying,
+	pstryear character varying,
+	strbrid character varying,
+	strsavingposting character varying)
+    RETURNS character varying
+    LANGUAGE 'plpgsql'
+    COST 100
+    VOLATILE PARALLEL UNSAFE
+AS $BODY$
 DECLARE
-    v_strnexttransno BIGINT;
-    v_result VARCHAR(9);
+    strnexttransno VARCHAR(9);
+    nextno BIGINT;
 BEGIN
-    IF p_strsavingposting = 'S' THEN
-        -- saving transaction number
-        SELECT COALESCE(MAX(fsavingtransno), 0) + 1
-        INTO v_strnexttransno
-        FROM dbo.tblstocktrans
-        WHERE fcoid = p_pstrcoid
-          AND fyear::VARCHAR = p_pstryear
-          AND fbrid = p_strbrid;
+
+    IF strsavingposting = 'S' THEN
+
+        -- Saving
+        SELECT COALESCE(MAX(fSavingTransNo::BIGINT), 0) + 1      -- was: MAX(fSavingTransNo)
+        INTO nextno
+        FROM dbo.tblStockTrans
+        WHERE fCoID = pstrcoid
+          AND fYear = pstryear                        -- was: fYear = pstryear
+          AND fBrID = strbrid;
+
     ELSE
-        -- posting transaction number
-        SELECT COALESCE(MAX(fpostingtransno), 0) + 1
-        INTO v_strnexttransno
-        FROM dbo.tblstocktrans
-        WHERE fcoid = p_pstrcoid
-          AND fyear::VARCHAR = p_pstryear
-          AND fbrid = p_strbrid;
+
+        -- Posting
+        SELECT COALESCE(MAX(fPostingTransNo::BIGINT), 0) + 1     -- was: MAX(fPostingTransNo)
+        INTO nextno
+        FROM dbo.tblStockTrans
+        WHERE fCoID = pstrcoid
+          AND fYear = pstryear                         -- was: fYear = pstryear
+          AND fBrID = strbrid;
+
     END IF;
 
-    IF v_strnexttransno = 1 THEN
-        v_result := RIGHT(p_pstryear, 2) || '000000' || v_strnexttransno::VARCHAR;
+    -- First transaction
+    IF nextno = 1 THEN
+        strnexttransno :=
+            RIGHT(pstryear, 2) ||
+            '000000' ||
+            nextno::VARCHAR;
     ELSE
-        v_result := v_strnexttransno::VARCHAR;
+        strnexttransno := nextno::VARCHAR;
     END IF;
 
-    RETURN v_result;
+    RETURN strnexttransno;
+
 END;
-$$;
+$BODY$;
+
+ALTER FUNCTION dbo.getnexttransno(character varying, character varying, character varying, character varying)
+    OWNER TO postgres;
+

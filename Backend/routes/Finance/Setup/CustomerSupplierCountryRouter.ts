@@ -1,5 +1,6 @@
 // routes/customerCountryRoutes.ts
 import { Router } from "express";
+import { authenticate } from "../../../middleware/authMiddleware.js";
 import {
   getCountries,
   checkCountryUsed,
@@ -7,7 +8,7 @@ import {
 } from "../../../controller/Finance/Setup/CustomerSupplierCountryController.js"
 
 const router = Router();
-
+// router.use(authenticate);
 router.get("/", getCountries);
 router.get("/used/:id", checkCountryUsed);
 router.post("/", saveCountries);
