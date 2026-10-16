@@ -30,7 +30,7 @@ import chartOfAccountRouter from "./Finance/Setup/COARouter.js";
 import CostCenterRouter from "./Finance/Setup/CostCenterRouter.js";
 import InactivateAccountRouter from "./Finance/Setup/InactivateAccountRouter.js";
 import CustomerSupplierCountryRouter from "./Finance/Setup/CustomerSupplierCountryRouter.js";
-import CurrencyRouter from "./Purchase/Setup/CurrencyPageRouter.js";
+import CurrencyRouter from "./Purchase/Setup/CurrencyRouter.js";
 import supplierRouter from "./common/SupplierRouter.js";import RptCOARouter from "./Finance/Report/RptChartOfAccountRouter.js" 
 import RptCustomerListRouter from "./Finance/Report/RptCustomerListRouter.js"
 import RptItemHistoryRouter from "./Purchase/Report/RptItemHistoryRouter.js"

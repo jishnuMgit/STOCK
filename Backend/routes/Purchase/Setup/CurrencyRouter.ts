@@ -4,7 +4,7 @@ import {
   getCurrencies,
   checkCurrencyUsed,
   saveCurrencies,
-} from "../../../controller/Purchase/Setup/CurrencyPageController.js";
+} from "../../../controller/Purchase/Setup/CurrencyController.js";
 import { authenticate } from "../../../middleware/authMiddleware.js";
 
 const router = Router();
