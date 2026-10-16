@@ -10,6 +10,7 @@ import Select, {
   type MenuListProps,
   type StylesConfig,
 } from "react-select";
+import selectComponents from "../../components/sharecomponents/selectComponents";
 
 // ============================================================
 // TYPES
@@ -913,6 +914,7 @@ const SetChartOfAccount: React.FC = () => {
                         handleSelectParameter(index, option)
                       }
                       components={{
+                        ...selectComponents,
                         MenuList: ParameterMenuList,
                       }}
                       formatOptionLabel={(option, { context }) =>
@@ -990,6 +992,7 @@ const SetChartOfAccount: React.FC = () => {
                         handleSelectAccount(index, option)
                       }
                       components={{
+                        ...selectComponents,
                         MenuList: AccountIdMenuList,
                       }}
                       formatOptionLabel={(option, { context }) =>
@@ -1042,6 +1045,7 @@ const SetChartOfAccount: React.FC = () => {
                         handleSelectAccount(index, option)
                       }
                       components={{
+                        ...selectComponents,
                         MenuList: AccountNameMenuList,
                       }}
                       formatOptionLabel={(option, { context }) =>

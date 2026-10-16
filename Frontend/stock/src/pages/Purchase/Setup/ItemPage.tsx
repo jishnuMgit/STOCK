@@ -17,6 +17,7 @@ import {
   pairDividedIdMenuStyles,
   pairDividedNameMenuStyles,
 } from "../../../components/PairSelect/pairSelectParts";
+import selectComponents from "../../../components/sharecomponents/selectComponents";
 
 /* =========================================================
    TYPES
@@ -1287,6 +1288,7 @@ const MENU_ID = "010201";
               </label>
 
               <Select
+                components={selectComponents}
                 required
                 inputId="lkpUnit"
                 name="lkpUnit"
@@ -1785,6 +1787,7 @@ const MENU_ID = "010201";
                                 ...branchMenuStyles,
                               }}
                               components={{
+                                ...selectComponents,
                                 Option: BranchOption,
                                 MenuList: BranchMenuList,
                               }}

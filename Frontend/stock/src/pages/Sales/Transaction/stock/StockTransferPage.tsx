@@ -18,10 +18,10 @@ import { useButtonPermissions } from "../../../../hooks/useButtonPermissions";
 import {
   BranchMenuList,
   BranchOption,
-  CustomDropdownIndicator,
   branchMenuStyles,
   filterLabelOrValue,
 } from "../../../../components/BranchSelect/branchSelectParts";
+import selectComponents from "../../../../components/sharecomponents/selectComponents";
 
 // ============================================================
 // STOCK TRANSFER (the old frmST)
@@ -1607,7 +1607,7 @@ const StockTransferPage: React.FC = () => {
               onChange={(option: SingleValue<SelectOption>) => setLkpBranch(option)}
               styles={branchSelectStyles}
               components={{
-                DropdownIndicator: CustomDropdownIndicator,
+                ...selectComponents,
                 Option: BranchOption,
                 MenuList: BranchMenuList,
               }}
@@ -1691,7 +1691,7 @@ const StockTransferPage: React.FC = () => {
               isDisabled={chkPosted}
               styles={branchSelectStyles}
               components={{
-                DropdownIndicator: CustomDropdownIndicator,
+                ...selectComponents,
                 Option: BranchOption,
                 MenuList: BranchMenuList,
               }}

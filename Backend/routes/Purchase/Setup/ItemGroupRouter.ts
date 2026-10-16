@@ -6,7 +6,7 @@ import {
   getItemGroup,
   saveItemGroup,
   deleteItemGroup,
-} from "../../../controller/Purchase/Setup/ItemGroupPageController.js";
+} from "../../../controller/Purchase/Setup/ItemGroupController.js";
 
 const router = express.Router();
 
