@@ -191,6 +191,36 @@ const filterItem = (option: { data: ItemOption }, input: string) => {
   );
 };
 
+// ---- Enter moves to the next field (like Tab) ------------------------------
+// lkpBranch -> lkpItemID -> lkpItemName -> As On Date -> Print button.
+// A disabled field (e.g. lkpBranch in "All Branch" mode) is skipped.
+const NAV_ORDER = [
+  "lkpBranch",
+  "lkpItemID",
+  "lkpItemName",
+  "dtpAsOnDate",
+  "btnPrint",
+] as const;
+type NavKey = (typeof NAV_ORDER)[number];
+
+const focusField = (key: NavKey): boolean => {
+  const el =
+    key === "dtpAsOnDate"
+      ? (document.querySelector<HTMLElement>("#navAsOnDate input") ??
+        document.querySelector<HTMLElement>("#navAsOnDate button"))
+      : document.getElementById(key);
+
+  if (!el || (el as HTMLInputElement).disabled) return false;
+  el.focus();
+  return true;
+};
+
+const focusNext = (from: NavKey) => {
+  for (let i = NAV_ORDER.indexOf(from) + 1; i < NAV_ORDER.length; i++) {
+    if (focusField(NAV_ORDER[i])) return;
+  }
+};
+
 const CustomRadio: React.FC<RadioOptionProps> = ({
   name,
   value,
@@ -348,6 +378,38 @@ const RptItemHistoryPage: React.FC<RptItemHistoryPageProps> = ({ onClose }) => {
   // so its Item Name column lines up with the name box
   const itemRowRef = useRef<HTMLDivElement>(null);
   const [itemRowWidth, setItemRowWidth] = useState<number | undefined>();
+
+  // Enter on a lookup:
+  //  - list closed -> go to the next field
+  //  - list open   -> Enter picks the highlighted row, then go to the next field
+  const pendingAdvance = useRef<NavKey | null>(null);
+
+  const advanceOnEnter =
+    (key: NavKey) => (event: React.KeyboardEvent<HTMLDivElement>) => {
+      if (event.key !== "Enter") return;
+
+      const open =
+        (event.target as HTMLElement).getAttribute("aria-expanded") === "true";
+
+      if (!open) {
+        event.preventDefault();
+        focusNext(key);
+        return;
+      }
+
+      pendingAdvance.current = key;
+      setTimeout(() => {
+        pendingAdvance.current = null; // nothing was picked (e.g. "No options")
+      }, 0);
+    };
+
+  // called from every lookup's onChange: moves on only after an Enter pick
+  const advanceAfterPick = () => {
+    const key = pendingAdvance.current;
+    if (!key) return; // picked with the mouse: stay
+    pendingAdvance.current = null;
+    setTimeout(() => focusNext(key), 0);
+  };
 
   const [branchMode, setBranchMode] = useState("One Branch"); // optBranch
   const [branch, setBranch] = useState<ItemOption | null>(null); // lkpBranch
@@ -584,7 +646,11 @@ const RptItemHistoryPage: React.FC<RptItemHistoryPageProps> = ({ onClose }) => {
                     instanceId="lkpBranch"
                     options={branchOptions}
                     value={branch}
-                    onChange={setBranch}
+                    onChange={(option) => {
+                      setBranch(option);
+                      advanceAfterPick();
+                    }}
+                    onKeyDown={advanceOnEnter("lkpBranch")}
                     isDisabled={branchMode !== "One Branch" || loading}
                     {...selectProps}
                     classNames={branchClassNames}
@@ -601,7 +667,11 @@ const RptItemHistoryPage: React.FC<RptItemHistoryPageProps> = ({ onClose }) => {
                   instanceId="lkpItemID"
                   options={itemIdOptions}
                   value={selectedItemId}
-                  onChange={(option) => setItemId(option?.value ?? null)}
+                  onChange={(option) => {
+                    setItemId(option?.value ?? null);
+                    advanceAfterPick();
+                  }}
+                  onKeyDown={advanceOnEnter("lkpItemID")}
                   isDisabled={loading}
                   {...selectProps}
                   classNames={idClassNames}
@@ -622,7 +692,11 @@ const RptItemHistoryPage: React.FC<RptItemHistoryPageProps> = ({ onClose }) => {
                   instanceId="lkpItemName"
                   options={itemNameOptions}
                   value={selectedItemName}
-                  onChange={(option) => setItemId(option?.value ?? null)}
+                  onChange={(option) => {
+                    setItemId(option?.value ?? null);
+                    advanceAfterPick();
+                  }}
+                  onKeyDown={advanceOnEnter("lkpItemName")}
                   isDisabled={loading}
                   {...selectProps}
                   classNames={nameClassNames}
@@ -634,12 +708,25 @@ const RptItemHistoryPage: React.FC<RptItemHistoryPageProps> = ({ onClose }) => {
 
               {/* As on date */}
               <FieldLabel>As On Date :</FieldLabel>
-              <AppDatePicker
-                id="dtpAsOnDate"
-                label="As On Date"
-                value={asOnDate}
-                onChange={setAsOnDate}
-              />
+              {/* "contents": no layout change; the wrapper only finds the input and
+                  catches Enter */}
+              <div
+                id="navAsOnDate"
+                className="contents"
+                onKeyDown={(event) => {
+                  if (event.key === "Enter") {
+                    event.preventDefault();
+                    focusNext("dtpAsOnDate");
+                  }
+                }}
+              >
+                <AppDatePicker
+                  id="dtpAsOnDate"
+                  label="As On Date"
+                  value={asOnDate}
+                  onChange={setAsOnDate}
+                />
+              </div>
 
               {/* Actions */}
               <div />
@@ -650,7 +737,7 @@ const RptItemHistoryPage: React.FC<RptItemHistoryPageProps> = ({ onClose }) => {
                   onClick={handlePrint}
                   disabled={loading || printing}
                   title="Alt+P"
-                  className="btn-style disabled:cursor-not-allowed disabled:opacity-40"
+                  className="btn-style focus-visible:ring-2 focus-visible:ring-[#64d96e] disabled:cursor-not-allowed disabled:opacity-40"
                 >
                   <u>P</u>rint
                 </button>
@@ -659,7 +746,7 @@ const RptItemHistoryPage: React.FC<RptItemHistoryPageProps> = ({ onClose }) => {
                   type="button"
                   onClick={handleClose}
                   title="Alt+C"
-                  className="btn-style"
+                  className="btn-style focus-visible:ring-2 focus-visible:ring-[#64d96e]"
                 >
                   <u>C</u>lose
                 </button>
