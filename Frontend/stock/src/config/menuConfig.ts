@@ -140,6 +140,8 @@ Sales-REPORT
   mnuRptExpenseSum:"/Finance/Reports/RptExpenseSum",
   mnuRptRVPVSum:"/Finance/Reports/RptRVPVSum",
   mnuRptFinDocList:"/Finance/Reports/RptFinDocList",
+  mnuRptIncomeSum:"/Finance/Reports/RptIncomeSum",
+  mnuRptDocumentExport:"/Finance/Reports/RptDocumentExport",
  // FINANCE - REPORTS - A/R & A/P
 
   mnuRptSOA: "/Finance/Reports/rptSOA",

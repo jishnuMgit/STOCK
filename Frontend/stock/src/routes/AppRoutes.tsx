@@ -80,6 +80,8 @@ import RptReceiptPaymentSumPage from "../pages/Finance/Report/ReceiptPaymentSum/
 import RptFinDocList from "../pages/Finance/Report/DocumentsList/RptFinDocList";
 import SalesPriceListPage from "../pages/Sales/Setup/SalesPriceListPage";
 import BeginningStockPrintPage from "../pages/Purchase/Transaction/BeginningStockPrintPage";
+import RptIncomeSumPage from "../pages/Finance/Report/IncomeSummary/RptIncomeSumPage";
+import RptDocumentExportPage from "../pages/Finance/Report/DocumentExportPage/RptDocumentExportPage";
 
 
 const Login = lazy(() => import("../pages/Auth/LoginPage"));
@@ -175,6 +177,8 @@ const AppRoutes = () => {
           <Route path="/Finance/Reports/RptExpenseSum" element={<RptExpenseSumPage/>}/>
           <Route path="/Finance/Reports/RptRVPVSum" element={<RptReceiptPaymentSumPage/>}/>
           <Route path="/Finance/Reports/RptFinDocList" element={<RptFinDocList/>}/>
+          <Route path="/Finance/Reports/RptIncomeSum" element={<RptIncomeSumPage/>}/>
+          <Route path="/Finance/Reports/RptDocumentExport" element={<RptDocumentExportPage/>}/>
 
           {/* ================= SALES - TRANSACTION ================= */}
 
