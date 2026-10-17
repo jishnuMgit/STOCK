@@ -870,7 +870,8 @@ export const postStockTransfer = async (
       Number(PstrYear),
       lkpBranch,
       docNo,
-      current.lines
+      current.lines,
+      current.header?.fsttobrid ?? null
     );
 
     if (!lineCheck.valid) {

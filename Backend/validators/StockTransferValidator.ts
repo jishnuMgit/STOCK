@@ -188,7 +188,13 @@ export async function validateStockTransfer(
 
   const prefix = text(prefixResult.rows[0]?.fdocnoprefix);
 
-  if (prefix !== "" && !txtDocNo.startsWith(prefix)) {
+  // the Entry No. is the branch's prefix followed by NUMBERS only: dbo.getnextdocno reads
+  // what follows the prefix as a number to make the next Entry No., so a number like
+  // 'ST11-2600001' under the prefix 'ST' would break the numbering of the branch
+  if (
+    prefixResult.rowCount !== 0 &&
+    (!txtDocNo.startsWith(prefix) || !/^\d+$/.test(txtDocNo.slice(prefix.length)))
+  ) {
     return failed("Please Check 'Entry No.'", "txtDocNo");
   }
 
@@ -354,6 +360,9 @@ export async function validateStockTransfer(
      * enough POSTED stock - the old GetItemPostedStock: the quantity can't be
        more than tblstockcontrol.fstock of the From branch. (Read exactly here,
        with its 3 decimals; the TL's dbo.getitempostedstock returns whole numbers.)
+     * the stock account of BOTH branches (Set Posting Account): the post writes two
+       finance lines, a credit to the From branch's stock account and a debit to the To
+       branch's - the same message the procedure gives, shown before it starts.
      * a unit cost - the old HaveUnitCost, the TL's dbo.haveunitcost: for a line
        taking stock out, the From branch's cost in tblstockcontrol must be above 0
        (the post writes that cost onto both sets of rows). The quantity is passed
@@ -373,8 +382,29 @@ export async function validateStockTransferPostLines(
   PstrYear: number,
   lkpBranch: string,
   txtDocNo: string,
-  lines: { fslno: number | string; fitemid: string; fqtyout: number | string }[]
+  lines: { fslno: number | string; fitemid: string; fqtyout: number | string }[],
+  lkpToBranch?: string | null
 ): Promise<ValidationResult> {
+  // the stock account of the From branch and of the To branch
+  for (const [field, branchId] of [
+    ["lkpBranch", lkpBranch],
+    ["lkpToBranch", lkpToBranch ?? ""],
+  ] as const) {
+    if (branchId === "") continue;
+
+    const account = await pool.query(
+      `SELECT dbo.getstockaccountid($1::varchar, $2::varchar) AS "stockAccount"`,
+      [PstrCoID, branchId]
+    );
+
+    if (text(account.rows[0]?.stockAccount) === "") {
+      return failed(
+        `The Stock Account of the Branch ${branchId} is not set (Set Posting Account)`,
+        field
+      );
+    }
+  }
+
   for (const line of lines) {
     const index = Number(line.fslno) - 1; // the grid row of the line
     const itemId = String(line.fitemid);

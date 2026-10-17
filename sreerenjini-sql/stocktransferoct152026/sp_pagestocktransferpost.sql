@@ -1,18 +1,61 @@
-
--- tblstocktrans.fyear is varchar(4) now (like tblstockcontrol.fyear): the year argument is
--- TEXT, p_pstryear (it was a smallint, p_pintyear), and is compared with the year columns
--- as it is. The DROP below removes the smallint version.
+-- =====================================================================
+-- dbo.sp_pagestocktransferpost   (Stock Transfer - Post, with the finance lines)
 --
--- ADDED: the posting transaction number (fpostingtransno), as in Beginning Stock Post
---   one number for the whole document, from dbo.getnexttransno(co, year, From branch, 'P'),
---   written into BOTH sets of rows (ST and STI) together with the posted flag. A row that
---   already has one keeps it (COALESCE). Needs the two columns of
---   beginningstockoct122026/alter_tblstocktrans_transno.sql.
---   The signature (the types) is unchanged.
+-- Postgres port of the SQL Server SP_STPostNew. The version before this one (stock only,
+-- the finance lines kept as a comment) is in old/sp_pagestocktransferpost_before_finance.sql.
 --
--- THE USER ARGUMENT is p_pstruserid (it was p_gstruserid), the name the other screens'
--- procedures use. A procedure's argument names cannot be changed by CREATE OR REPLACE, so
--- the DROP below removes the version with the old name first.
+-- For every ST line that is not posted yet (in Sl.# order):
+--   1. the From branch's tblstockcontrol row is made when missing; its unit cost is read;
+--   2. that cost and the total (qty out x cost) are written on the ST row and on the STI
+--      row of the To branch;
+--   3. the From branch's stock goes DOWN (its cost is not changed);
+--   4. the To branch's stock row is made when missing; its previous stock and cost are
+--      saved; the new average cost is
+--        (To stock x To cost + qty x From cost) / (To stock + qty)
+--      (a negative To stock counts as 0) and its stock goes UP;
+--   5. the cost of everything transferred is added up.
+--
+-- Then the finance lines (tblfintrans, forigin 'GP', posted, description
+-- '<From branch name> To <To branch name>'), after the document's old finance rows are
+-- deleted:
+--   line 1  the From branch's stock account   CREDIT the cost of everything transferred
+--   line 2  the To branch's stock account     DEBIT  the same amount
+--   fccid   the From branch when the account is an income / expense account
+--           (dbo.isincomeorexpense), otherwise blank - as in the original
+--   Both rows are inserted unposted and then marked posted, as the original does.
+--
+-- Last, both sets of rows (ST and STI) are marked posted and get the POSTING transaction
+-- number (fpostingtransno): one number for the whole document, from
+-- dbo.getnexttransno(co, year, From branch, 'P'); a row that already has one keeps it.
+-- This replaces the original's fPostOrder / dbo.getnextpostorder (no such columns).
+--
+-- Modes (p_strmode)
+--   P  Post   the lines not posted yet
+--   R  Re-post the original treats ANY mode other than P as a re-post: the lines that ARE
+--             posted are worked out again and the finance amounts of the document are updated
+--             (no finance rows are made). No screen calls it yet (the page only posts).
+--
+-- Differences from the SQL Server procedure - all forced by our tables, or for safety:
+--   * @gintYear is TEXT here (p_pstryear): the year columns are varchar(4).
+--   * fIntDocNo, fPostOrder / fPostOrderC, fSUserID / fSUserDate do not exist:
+--     fcuserid / fcuserdate are used on the finance rows; the cursor is ordered by fSlNo.
+--   * the user argument is p_pstruserid (it was @gstrUserID / p_gstruserid).
+--   * dbo.IsStockItemExist becomes an INSERT ... WHERE NOT EXISTS.
+--   * NEW CHECK (not in the original): when the From or the To branch has no stock account
+--     (Set Posting Account) the post stops with a message and nothing changes, instead of
+--     writing finance rows with an empty account.
+--   * the quantity variables are numeric(18,3) (the original had 18,2): the page and the
+--     table have 3 decimals.
+--
+-- Argument names cannot be changed by CREATE OR REPLACE, so the DROPs below remove the earlier
+-- versions first.
+--
+-- Test (rolled back):
+--   BEGIN;
+--   CALL dbo.sp_pagestocktransferpost('P', '01', '2026', 'JD', 'ST', 'ST0009', 'ADMIN');
+--   SELECT * FROM dbo.tblfintrans WHERE fdoctype = 'ST' AND fdocno = 'ST0009';
+--   ROLLBACK;
+-- =====================================================================
 
 DROP PROCEDURE IF EXISTS dbo.sp_pagestocktransferpost(character varying, character varying, smallint, character varying, character varying, character varying, character varying);
 
@@ -31,31 +74,39 @@ CREATE OR REPLACE PROCEDURE dbo.sp_pagestocktransferpost(
 LANGUAGE plpgsql
 AS $$
 DECLARE
-    v_stryear           varchar(4) := p_pstryear;   -- the year is text (tblstockcontrol and tblstocktrans)
+    v_stryear           varchar(4) := p_pstryear;   -- the year is text (stock and finance tables)
     v_strdoctypeg       varchar(5) := 'STI';
     v_intslno           smallint;
     v_strtobrid         varchar(3);
     v_stritemid         varchar(40);
+    v_dtpdate           timestamp;
     v_numqtyout         numeric(18,3);
     v_numstock          numeric(18,3);
     v_numoldunitcost    numeric(18,4);
     v_numnewunitcost    numeric(18,4);
     v_numcalcunitcost   numeric(18,4);
     v_numcostofstock    numeric(18,4) := 0;
-    v_intlines          integer := 0;
+    v_strstockfrombraccountid varchar(12);
+    v_strstocktobraccountid   varchar(12);
+    v_strfrombrname     varchar(50);
+    v_strtobrname       varchar(50);
+    v_strdescription    varchar(100);
+    v_strccid           varchar(50);
     v_strpostingtransno varchar(9);      -- the posting transaction number
+    v_intlines          integer := 0;
     v_row               record;
 BEGIN
     IF upper(p_strdoctype) <> 'ST' THEN
         RAISE EXCEPTION 'sp_pagestocktransferpost supports document type ST only';
     END IF;
 
-    IF upper(p_strmode) <> 'P' THEN
-        RAISE EXCEPTION 'Invalid mode %. Only P (post) is supported', p_strmode;
+    IF upper(p_strmode) NOT IN ('P', 'R') THEN
+        RAISE EXCEPTION 'Invalid mode %. Use P (post) or R (re-post)', p_strmode;
     END IF;
 
     FOR v_row IN
         SELECT st.fslno,
+               st.fdate,
                st.fitemid,
                st.fsttobrid,
                COALESCE(st.fqtyout, 0) AS qtyout
@@ -65,15 +116,21 @@ BEGIN
           AND st.fbrid    = p_strbrid
           AND st.fdoctype = p_strdoctype
           AND st.fdocno   = p_strdocno
-          AND COALESCE(st.fpost, false) = false
+          AND (
+                (upper(p_strmode) = 'P' AND COALESCE(st.fpost, false) = false)
+                OR
+                (upper(p_strmode) <> 'P' AND COALESCE(st.fpost, false) = true)
+              )
         ORDER BY st.fslno
     LOOP
+        v_dtpdate   := v_row.fdate;
         v_intslno   := v_row.fslno;
         v_stritemid := v_row.fitemid;
         v_strtobrid := v_row.fsttobrid;
         v_numqtyout := v_row.qtyout;
         v_intlines  := v_intlines + 1;
 
+        -- ST -------------------------------------------------------------
         -- 1. the From branch's stock row, and its current unit cost
         INSERT INTO dbo.tblstockcontrol (fcoid, fyear, fbrid, fitemid, fcuserid, fcuserdate)
         SELECT p_pstrcoid, v_stryear, p_strbrid, v_stritemid, p_pstruserid, now()
@@ -82,6 +139,8 @@ BEGIN
             WHERE fcoid = p_pstrcoid AND fyear = v_stryear
               AND fbrid = p_strbrid AND fitemid = v_stritemid
         );
+
+        v_numnewunitcost := 0;
 
         SELECT COALESCE(sc.funitcost, 0)
           INTO v_numnewunitcost
@@ -121,6 +180,7 @@ BEGIN
            AND fbrid   = p_strbrid
            AND fitemid = v_stritemid;
 
+        -- STI ------------------------------------------------------------
         -- 4. the To branch's stock row, its previous values, the average cost, the stock
         INSERT INTO dbo.tblstockcontrol (fcoid, fyear, fbrid, fitemid, funitcost, fcuserid, fcuserdate)
         SELECT p_pstrcoid, v_stryear, v_strtobrid, v_stritemid, 0, p_pstruserid, now()
@@ -129,6 +189,8 @@ BEGIN
             WHERE fcoid = p_pstrcoid AND fyear = v_stryear
               AND fbrid = v_strtobrid AND fitemid = v_stritemid
         );
+
+        v_numcalcunitcost := 0;
 
         SELECT COALESCE(sc.fstock, 0),
                COALESCE(sc.funitcost, 0)
@@ -151,7 +213,7 @@ BEGIN
            AND fbrid   = v_strtobrid
            AND fitemid = v_stritemid;
 
-        -- (for the finance lines: the cost of everything transferred)
+        -- 5. the cost of everything transferred (for the finance lines)
         v_numcostofstock := v_numcostofstock + (v_numqtyout * v_numnewunitcost);
 
         IF v_numqtyout <> 0 THEN
@@ -176,38 +238,114 @@ BEGIN
             p_pstrcoid, p_pstryear, p_strbrid, p_strdoctype, p_strdocno;
     END IF;
 
-    -- the posting transaction number: one for the whole document
-    v_strpostingtransno := dbo.getnexttransno(p_pstrcoid, p_pstryear, p_strbrid, 'P');
+    -- the two stock accounts of the finance lines
+    v_strstockfrombraccountid := dbo.getstockaccountid(p_pstrcoid, p_strbrid);
+    v_strstocktobraccountid   := dbo.getstockaccountid(p_pstrcoid, v_strtobrid);
 
-    -- 5. both sets of rows are posted
-    UPDATE dbo.tblstocktrans
-       SET fpost = true,
-           fpostingtransno = COALESCE(fpostingtransno, v_strpostingtransno)
-           -- , fpostorder = v_intpostorder, fpostorderc = v_intpostorder   (no such columns)
-     WHERE fcoid   = p_pstrcoid
-       AND fyear   = p_pstryear
-       AND fstbrid = p_strbrid
-       AND (fdoctype = p_strdoctype OR fdoctype = v_strdoctypeg)
-       AND fdocno  = p_strdocno;
+    IF COALESCE(v_strstockfrombraccountid, '') = '' THEN
+        RAISE EXCEPTION 'The Stock Account of the Branch % is not set (Set Posting Account)', p_strbrid;
+    END IF;
 
-    /* -------------------------------------------------------------------
-       THE FINANCE LINES of sp_stpost (not on yet - see the notes above):
+    IF COALESCE(v_strstocktobraccountid, '') = '' THEN
+        RAISE EXCEPTION 'The Stock Account of the Branch % is not set (Set Posting Account)', v_strtobrid;
+    END IF;
 
-       v_strstockfrombraccountid := dbo.getstockaccountid(p_pstrcoid, p_strbrid);
-       v_strstocktobraccountid   := dbo.getstockaccountid(p_pstrcoid, v_strtobrid);
-       v_strdescription := <From branch name> || ' To ' || <To branch name>;
+    IF upper(p_strmode) = 'P' THEN   -- Posting
 
-       DELETE FROM dbo.tblfintrans WHERE fcoid, fyear (text), fbrid = p_strbrid,
-              fdoctype = p_strdoctype, fdocno = p_strdocno;
+        SELECT b.fbrname INTO v_strfrombrname
+          FROM dbo.tblbranch b WHERE b.fcoid = p_pstrcoid AND b.fbrid = p_strbrid;
 
-       INSERT INTO dbo.tblfintrans (..., fslno 1, faccountid = From stock account,
-              fdebit 0, fcredit = v_numcostofstock, fpost false, forigin 'GP', ...);
-       INSERT INTO dbo.tblfintrans (..., fslno 2, faccountid = To stock account,
-              fdebit = v_numcostofstock, fcredit 0, fpost false, forigin 'GP', ...);
+        SELECT b.fbrname INTO v_strtobrname
+          FROM dbo.tblbranch b WHERE b.fcoid = p_pstrcoid AND b.fbrid = v_strtobrid;
 
-       UPDATE dbo.tblfintrans SET fpost = true WHERE ... (both doc types)
-       (tblfintrans has no fintdocno, fsuserid, fsuserdate or fpostorder: use
-        fcuserid / fcuserdate and leave the others out)
-       ------------------------------------------------------------------- */
+        v_strdescription := v_strfrombrname || ' To ' || v_strtobrname;
+
+        DELETE FROM dbo.tblfintrans
+         WHERE fcoid    = p_pstrcoid
+           AND fyear    = p_pstryear
+           AND fbrid    = p_strbrid
+           AND fdoctype = p_strdoctype
+           AND fdocno   = p_strdocno;
+
+        IF dbo.isincomeorexpense(p_pstrcoid, v_strstockfrombraccountid) THEN
+            v_strccid := p_strbrid;
+        ELSE
+            v_strccid := '';
+        END IF;
+
+        -- Credit Stock From Branch Account
+        INSERT INTO dbo.tblfintrans (
+            fcoid, fyear, fbrid, fdoctype, fdocno, fdate, fdescription, fslno,
+            faccountid, fccid, fdebit, fcredit, fpost, fyearclose, forigin,
+            fcuserid, fcuserdate
+        )
+        VALUES (
+            p_pstrcoid, p_pstryear, p_strbrid, p_strdoctype, p_strdocno, v_dtpdate, v_strdescription, 1,
+            v_strstockfrombraccountid, v_strccid, 0, COALESCE(v_numcostofstock, 0), false, false, 'GP',
+            p_pstruserid, now()
+        );
+
+        IF dbo.isincomeorexpense(p_pstrcoid, v_strstocktobraccountid) THEN
+            v_strccid := p_strbrid;
+        ELSE
+            v_strccid := '';
+        END IF;
+
+        -- Debit Stock To Branch Account
+        INSERT INTO dbo.tblfintrans (
+            fcoid, fyear, fbrid, fdoctype, fdocno, fdate, fdescription, fslno,
+            faccountid, fccid, fdebit, fcredit, fpost, fyearclose, forigin,
+            fcuserid, fcuserdate
+        )
+        VALUES (
+            p_pstrcoid, p_pstryear, p_strbrid, p_strdoctype, p_strdocno, v_dtpdate, v_strdescription, 2,
+            v_strstocktobraccountid, v_strccid, COALESCE(v_numcostofstock, 0), 0, false, false, 'GP',
+            p_pstruserid, now()
+        );
+
+        -- the posting transaction number: one for the whole document
+        v_strpostingtransno := dbo.getnexttransno(p_pstrcoid, p_pstryear, p_strbrid, 'P');
+
+        -- both sets of rows are posted
+        UPDATE dbo.tblstocktrans
+           SET fpost = true,
+               fpostingtransno = COALESCE(fpostingtransno, v_strpostingtransno)
+         WHERE fcoid   = p_pstrcoid
+           AND fyear   = p_pstryear
+           AND fstbrid = p_strbrid
+           AND (fdoctype = p_strdoctype OR fdoctype = v_strdoctypeg)
+           AND fdocno  = p_strdocno;
+
+        UPDATE dbo.tblfintrans
+           SET fpost = true
+         WHERE fcoid   = p_pstrcoid
+           AND fyear   = p_pstryear
+           AND fbrid   = p_strbrid
+           AND (fdoctype = p_strdoctype OR fdoctype = v_strdoctypeg)
+           AND fdocno  = p_strdocno;
+
+    ELSE   -- Re-posting
+
+        -- Credit
+        UPDATE dbo.tblfintrans
+           SET fcredit = COALESCE(v_numcostofstock, 0)
+         WHERE fcoid   = p_pstrcoid
+           AND fyear   = p_pstryear
+           AND fbrid   = p_strbrid
+           AND (fdoctype = p_strdoctype OR fdoctype = v_strdoctypeg)
+           AND fdocno  = p_strdocno
+           AND faccountid = v_strstockfrombraccountid;
+
+        -- Debit
+        UPDATE dbo.tblfintrans
+           SET fdebit = COALESCE(v_numcostofstock, 0)
+         WHERE fcoid   = p_pstrcoid
+           AND fyear   = p_pstryear
+           AND fbrid   = p_strbrid
+           AND (fdoctype = p_strdoctype OR fdoctype = v_strdoctypeg)
+           AND fdocno  = p_strdocno
+           AND faccountid = v_strstocktobraccountid;
+
+    END IF;
 END;
 $$;
