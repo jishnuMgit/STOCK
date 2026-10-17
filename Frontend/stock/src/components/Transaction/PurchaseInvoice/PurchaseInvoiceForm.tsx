@@ -3,6 +3,8 @@ import React, { useEffect, useRef, useState } from "react";
 import Select, {
   components,
   type DropdownIndicatorProps,
+  type FormatOptionLabelMeta,
+  type MenuListProps,
   type StylesConfig,
 } from "react-select";
 import { RxTriangleDown } from "react-icons/rx";
@@ -15,7 +17,7 @@ import PurchaseInoviceMiscsup from "./PurchaseInoviceMiscsup";
 import { createPortal } from "react-dom";
 import PurchaseExpense from "./PurchaseInvoiceExpense";
 
-type Option = { value: string; label: string };
+type Option = { value: string; label: string; name?: string };
 
 const makeOptions = (values: string[]): Option[] =>
   values.map((value) => ({ value, label: value }));
@@ -243,6 +245,188 @@ const currencySelectStyles: StylesConfig<Option, false> = {
   }),
 };
 
+/* =========================================================
+   TWO-COLUMN LOOKUP MENU (same look as the item table dropdown)
+========================================================= */
+
+const MENU_FONT_SIZE = 14;
+const ID_COL_WIDTH = 140;
+const NAME_COL_WIDTH = 300;
+
+type MenuVariant = "supplierId" | "supplierName" | "miscId" | "miscName";
+
+const menuLayout: Record<
+  MenuVariant,
+  {
+    firstTitle: string;
+    secondTitle: string;
+    firstWidth: number;
+    first: (o: Option) => string;
+    second: (o: Option) => string;
+  }
+> = {
+  supplierId: {
+    firstTitle: "Supplier ID",
+    secondTitle: "Supplier Name",
+    firstWidth: ID_COL_WIDTH,
+    first: (o) => o.value,
+    second: (o) => o.name ?? o.label,
+  },
+  supplierName: {
+    firstTitle: "Supplier Name",
+    secondTitle: "Supplier ID",
+    firstWidth: NAME_COL_WIDTH,
+    first: (o) => o.name ?? o.label,
+    second: (o) => o.value,
+  },
+  miscId: {
+    firstTitle: "Misc. Sup. ID",
+    secondTitle: "Misc. Sup. Name",
+    firstWidth: ID_COL_WIDTH,
+    first: (o) => o.value,
+    second: (o) => o.name ?? o.label,
+  },
+  miscName: {
+    firstTitle: "Misc. Sup. Name",
+    secondTitle: "Misc. Sup. ID",
+    firstWidth: NAME_COL_WIDTH,
+    first: (o) => o.name ?? o.label,
+    second: (o) => o.value,
+  },
+};
+
+/* gray sticky header row at the top of the menu */
+const createMenuList = (variant: MenuVariant) => {
+  const layout = menuLayout[variant];
+
+  const MenuList = (props: MenuListProps<Option, false>) => (
+    <components.MenuList {...props}>
+      <div
+        style={{
+          display: "flex",
+          position: "sticky",
+          top: 0,
+          zIndex: 1,
+          background: "#eeeeee",
+          borderBottom: "1px solid #cfcfcf",
+          fontWeight: 600,
+          fontSize: MENU_FONT_SIZE,
+          color: "#202a36",
+        }}
+      >
+        <div
+          style={{
+            width: layout.firstWidth,
+            flexShrink: 0,
+            boxSizing: "border-box",
+            padding: "5px 8px",
+            borderRight: "1px solid #cfcfcf",
+          }}
+        >
+          {layout.firstTitle}
+        </div>
+        <div style={{ flex: 1, padding: "5px 8px" }}>{layout.secondTitle}</div>
+      </div>
+      {props.children}
+    </components.MenuList>
+  );
+
+  return MenuList;
+};
+
+/* menu rows show two columns; the control shows only its own label */
+const createFormatLabel =
+  (variant: MenuVariant) =>
+  (option: Option, meta: FormatOptionLabelMeta<Option>) => {
+    if (meta.context !== "menu") return option.label;
+
+    const layout = menuLayout[variant];
+
+    return (
+      <div style={{ display: "flex" }}>
+        <div
+          style={{
+            width: layout.firstWidth,
+            flexShrink: 0,
+            boxSizing: "border-box",
+            padding: "6px 8px",
+            borderRight: "1px solid #e3e8ef",
+          }}
+        >
+          {layout.first(option)}
+        </div>
+        <div style={{ flex: 1, padding: "6px 8px" }}>
+          {layout.second(option)}
+        </div>
+      </div>
+    );
+  };
+
+/* typing searches both the id and the name */
+const filterLookup = (option: { data: Option }, input: string): boolean => {
+  const text = input.trim().toLowerCase();
+  if (!text) return true;
+  return (
+    option.data.value.toLowerCase().includes(text) ||
+    (option.data.name ?? option.data.label).toLowerCase().includes(text)
+  );
+};
+
+const lookupMenuStyles: StylesConfig<Option, false> = {
+  menuPortal: (base) => ({ ...base, zIndex: 9999 }),
+  menu: (base) => ({
+    ...base,
+    zIndex: 9999,
+    fontSize: MENU_FONT_SIZE,
+    marginTop: 1,
+    width: 480,
+    minWidth: 480,
+    border: "none",
+    borderRadius: 0,
+    boxShadow: "0 0 0 1px #cfcfcf, 0 4px 10px rgba(0,0,0,0.15)",
+  }),
+  menuList: (base) => ({ ...base, padding: 0, maxHeight: 260 }),
+  option: (base, state) => ({
+    ...base,
+    padding: 0,
+    fontSize: MENU_FONT_SIZE,
+    color: "#263449",
+    backgroundColor: state.isSelected
+      ? "#cdeedd"
+      : state.isFocused
+        ? "#e6f6ee"
+        : "#fff",
+    cursor: "pointer",
+  }),
+};
+
+const supplierIdStyles = { ...supplierIdSelectStyles, ...lookupMenuStyles };
+const supplierNameStyles = { ...supplierNameSelectStyles, ...lookupMenuStyles };
+const miscIdStyles = { ...miscSupplierIdSelectStyles, ...lookupMenuStyles };
+const miscNameStyles = { ...miscSupplierNameSelectStyles, ...lookupMenuStyles };
+
+const supplierIdComponents = {
+  ...selectComponents,
+  MenuList: createMenuList("supplierId"),
+};
+const supplierNameComponents = {
+  ...selectComponents,
+  MenuList: createMenuList("supplierName"),
+};
+const miscIdComponents = {
+  ...selectComponents,
+  MenuList: createMenuList("miscId"),
+};
+const miscNameComponents = {
+  ...selectComponents,
+  MenuList: createMenuList("miscName"),
+};
+
+const formatSupplierId = createFormatLabel("supplierId");
+const formatSupplierName = createFormatLabel("supplierName");
+const formatMiscId = createFormatLabel("miscId");
+const formatMiscName = createFormatLabel("miscName");
+
 const FIELD_ORDER = [
   "txtDocNo",
   "lkpBranch",
@@ -307,17 +491,23 @@ const PurchaseForm: React.FC<Props> = ({
 
   /* Cash invoice: the supplier account is fixed (the branch's cash purchase
      account), so Supplier ID / Name are locked, like the VB form. */
-  const isCash = header.invoiceType === "C";
+  // const isCash = header.invoiceType === "C";
 
   /* Misc. ID and Misc. Name come from the same records (cash suppliers) */
   const miscIdOptions: Option[] = miscSuppliers.map((m) => ({
     value: m.id,
     label: m.id,
+    name: m.name,
   }));
   const miscNameOptions: Option[] = miscSuppliers.map((m) => ({
     value: m.id,
     label: m.name,
+    name: m.name,
   }));
+
+  /* menus render in document.body so the form never clips them */
+  const portalTarget =
+    typeof document !== "undefined" ? document.body : undefined;
 
   const docNoRef = useRef<HTMLInputElement>(null);
 
@@ -511,8 +701,12 @@ const PurchaseForm: React.FC<Props> = ({
               value={pick(supplierOptions, header.supplierId)}
               onChange={(o) => handleSupplierChange(o?.value ?? "")}
               // isDisabled={isCash}
-              styles={supplierIdSelectStyles}
-              components={selectComponents}
+              styles={supplierIdStyles}
+              components={supplierIdComponents}
+              formatOptionLabel={formatSupplierId}
+              filterOption={filterLookup}
+              menuPosition="fixed"
+              menuPortalTarget={portalTarget}
               isClearable={false}
               isSearchable
             />
@@ -532,8 +726,12 @@ const PurchaseForm: React.FC<Props> = ({
               onChange={(o) => handleMiscChange(o?.value ?? "")}
               isDisabled={!isMisc}
               placeholder=""
-              styles={miscSupplierIdSelectStyles}
-              components={selectComponents}
+              styles={miscIdStyles}
+              components={miscIdComponents}
+              formatOptionLabel={formatMiscId}
+              filterOption={filterLookup}
+              menuPosition="fixed"
+              menuPortalTarget={portalTarget}
               isClearable={false}
               isSearchable
             />
@@ -619,8 +817,12 @@ const PurchaseForm: React.FC<Props> = ({
             value={pick(supplierNameOptions, header.supplierId)}
             onChange={(o) => handleSupplierChange(o?.value ?? "")}
             // isDisabled={isCash}
-            styles={supplierNameSelectStyles}
-            components={selectComponents}
+            styles={supplierNameStyles}
+            components={supplierNameComponents}
+            formatOptionLabel={formatSupplierName}
+            filterOption={filterLookup}
+            menuPosition="fixed"
+            menuPortalTarget={portalTarget}
             isClearable={false}
             isSearchable
           />
@@ -636,8 +838,12 @@ const PurchaseForm: React.FC<Props> = ({
               onChange={(o) => handleMiscChange(o?.value ?? "")}
               isDisabled={!isMisc}
               placeholder=""
-              styles={miscSupplierNameSelectStyles}
-              components={selectComponents}
+              styles={miscNameStyles}
+              components={miscNameComponents}
+              formatOptionLabel={formatMiscName}
+              filterOption={filterLookup}
+              menuPosition="fixed"
+              menuPortalTarget={portalTarget}
               isClearable={false}
               isSearchable
             />

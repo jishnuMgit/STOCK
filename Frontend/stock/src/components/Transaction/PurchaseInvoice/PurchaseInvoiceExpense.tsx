@@ -2,6 +2,8 @@ import React, { useEffect, useMemo, useState } from "react";
 import Select, {
   components,
   type DropdownIndicatorProps,
+  type FormatOptionLabelMeta,
+  type MenuListProps,
   type StylesConfig,
 } from "react-select";
 import { RxTriangleDown } from "react-icons/rx";
@@ -18,6 +20,7 @@ import {
 type Option = {
   value: string;
   label: string;
+  name?: string; // account name, used by the two-column menu and search
 };
 
 type PurchaseExpenseRow = {
@@ -180,11 +183,181 @@ const selectStyles: StylesConfig<Option, false> = {
 };
 
 // ============================================================
+// TWO-COLUMN LOOKUP MENU (Account ID / Account Name)
+// same look as the dropdowns in the Purchase Invoice item table
+// ============================================================
+
+const MENU_FONT_SIZE = 13;
+const ID_COL_WIDTH = 130; // = Account ID column width (w-[130px])
+const NAME_COL_WIDTH = 350; // = Account Name column width (w-[350px])
+
+type MenuVariant = "accountId" | "accountName";
+
+const menuLayout: Record<
+  MenuVariant,
+  {
+    firstTitle: string;
+    secondTitle: string;
+    firstWidth: number;
+    first: (o: Option) => string;
+    second: (o: Option) => string;
+  }
+> = {
+  accountId: {
+    firstTitle: "Account ID",
+    secondTitle: "Account Name",
+    firstWidth: ID_COL_WIDTH,
+    first: (o) => o.value,
+    second: (o) => o.name ?? o.label,
+  },
+  accountName: {
+    firstTitle: "Account Name",
+    secondTitle: "Account ID",
+    firstWidth: NAME_COL_WIDTH,
+    first: (o) => o.name ?? o.label,
+    second: (o) => o.value,
+  },
+};
+
+/* gray sticky header row at the top of the menu */
+const createMenuList = (variant: MenuVariant) => {
+  const layout = menuLayout[variant];
+
+  const MenuList = (props: MenuListProps<Option, false>) => (
+    <components.MenuList {...props}>
+      <div
+        style={{
+          display: "flex",
+          position: "sticky",
+          top: 0,
+          zIndex: 1,
+          background: "#eeeeee",
+          borderBottom: "1px solid #cfcfcf",
+          fontWeight: 600,
+          fontSize: MENU_FONT_SIZE,
+          color: "#202a36",
+        }}
+      >
+        <div
+          style={{
+            width: layout.firstWidth,
+            flexShrink: 0,
+            boxSizing: "border-box",
+            padding: "5px 8px",
+            borderRight: "1px solid #cfcfcf",
+          }}
+        >
+          {layout.firstTitle}
+        </div>
+        <div style={{ flex: 1, padding: "5px 8px" }}>{layout.secondTitle}</div>
+      </div>
+      {props.children}
+    </components.MenuList>
+  );
+
+  return MenuList;
+};
+
+/* menu rows show two columns; the control shows only its own label */
+const createFormatLabel =
+  (variant: MenuVariant) =>
+  (option: Option, meta: FormatOptionLabelMeta<Option>) => {
+    if (meta.context !== "menu") return option.label;
+
+    const layout = menuLayout[variant];
+
+    return (
+      <div style={{ display: "flex" }}>
+        <div
+          style={{
+            width: layout.firstWidth,
+            flexShrink: 0,
+            boxSizing: "border-box",
+            padding: "6px 8px",
+            borderRight: "1px solid #e3e8ef",
+          }}
+        >
+          {layout.first(option)}
+        </div>
+        <div style={{ flex: 1, padding: "6px 8px" }}>
+          {layout.second(option)}
+        </div>
+      </div>
+    );
+  };
+
+/* typing searches both the account id and the account name */
+const filterAccount = (option: { data: Option }, input: string): boolean => {
+  const text = input.trim().toLowerCase();
+  if (!text) return true;
+  return (
+    option.data.value.toLowerCase().includes(text) ||
+    (option.data.name ?? option.data.label).toLowerCase().includes(text)
+  );
+};
+
+const lookupSelectStyles: StylesConfig<Option, false> = {
+  ...selectStyles,
+  menu: (base) => ({
+    ...base,
+    zIndex: 9999,
+    fontSize: MENU_FONT_SIZE,
+    marginTop: 1,
+    width: 520,
+    minWidth: 520,
+    border: "none",
+    borderRadius: 0,
+    boxShadow: "0 0 0 1px #cfcfcf, 0 4px 10px rgba(0,0,0,0.15)",
+  }),
+  menuList: (base) => ({
+    ...base,
+    padding: 0,
+    maxHeight: 260,
+  }),
+  option: (base, state) => ({
+    ...base,
+    padding: 0,
+    fontSize: MENU_FONT_SIZE,
+    color: "#263449",
+    backgroundColor: state.isSelected
+      ? "#cdeedd"
+      : state.isFocused
+        ? "#e6f6ee"
+        : "#fff",
+    cursor: "pointer",
+  }),
+};
+
+const lookupComponents: Record<MenuVariant, typeof selectComponents> = {
+  accountId: {
+    ...selectComponents,
+    MenuList: createMenuList("accountId"),
+  } as typeof selectComponents,
+  accountName: {
+    ...selectComponents,
+    MenuList: createMenuList("accountName"),
+  } as typeof selectComponents,
+};
+
+const lookupFormat: Record<
+  MenuVariant,
+  (option: Option, meta: FormatOptionLabelMeta<Option>) => React.ReactNode
+> = {
+  accountId: createFormatLabel("accountId"),
+  accountName: createFormatLabel("accountName"),
+};
+
+// ============================================================
 // INPUT CLASS
 // ============================================================
 
 const inputClass =
   "h-[20px] w-full min-w-0 border-0 bg-transparent px-1 outline-none focus:bg-blue-50";
+
+const thBase =
+  "sticky top-0 z-20 h-[32px] whitespace-nowrap border border-[#dce5ef] bg-[#f1f6fc] py-0 font-semibold text-[#202a36]";
+
+const tdClass = "h-[32px] border border-[#dce5ef] p-0";
 
 interface PurchaseExpenseProps {
   /** When set, the page is shown inside a popup and gets a close icon. */
@@ -223,9 +396,15 @@ const PurchaseExpense: React.FC<PurchaseExpenseProps> = ({ onClose }) => {
   }, [fetchExpenseLookups]);
 
   /* Account ID combo (sorted by id) and Account Name combo (sorted by name).
-     Both use the account id as the value, so picking one fills the other. */
+     Both use the account id as the value, so picking one fills the other.
+     Both carry the name so the two-column menu and the search can use it. */
   const accountIdOptions = useMemo<Option[]>(
-    () => lookups.accounts.map((a) => ({ value: a.id, label: a.id })),
+    () =>
+      lookups.accounts.map((a) => ({
+        value: a.id,
+        label: a.id,
+        name: a.name,
+      })),
     [lookups.accounts],
   );
 
@@ -233,7 +412,7 @@ const PurchaseExpense: React.FC<PurchaseExpenseProps> = ({ onClose }) => {
     () =>
       [...lookups.accounts]
         .sort((a, b) => a.name.localeCompare(b.name))
-        .map((a) => ({ value: a.id, label: a.name })),
+        .map((a) => ({ value: a.id, label: a.name, name: a.name })),
     [lookups.accounts],
   );
 
@@ -334,6 +513,7 @@ const PurchaseExpense: React.FC<PurchaseExpenseProps> = ({ onClose }) => {
 
   // ----------------------------------------------------------
   // SELECT COMPONENT
+  // `variant` switches on the two-column menu (Account ID / Name)
   // ----------------------------------------------------------
 
   const renderSelect = (
@@ -343,6 +523,7 @@ const PurchaseExpense: React.FC<PurchaseExpenseProps> = ({ onClose }) => {
     options: Option[],
     onChange: (value: string) => void,
     searchable = true,
+    variant?: MenuVariant,
   ) => (
     <Select<Option, false>
       inputId={`${inputId}-${index}`}
@@ -353,8 +534,10 @@ const PurchaseExpense: React.FC<PurchaseExpenseProps> = ({ onClose }) => {
         onChange(option?.value ?? "");
         setActiveRow(index);
       }}
-      styles={selectStyles}
-      components={selectComponents}
+      styles={variant ? lookupSelectStyles : selectStyles}
+      components={variant ? lookupComponents[variant] : selectComponents}
+      formatOptionLabel={variant ? lookupFormat[variant] : undefined}
+      filterOption={variant ? filterAccount : undefined}
       isClearable={false}
       isSearchable={searchable}
       menuPosition="fixed"
@@ -409,172 +592,72 @@ const PurchaseExpense: React.FC<PurchaseExpenseProps> = ({ onClose }) => {
                   <thead>
                     <tr className="h-[32px]">
                       {/* Row indicator */}
-
-                      <th className="sticky top-0 z-20 border border-[#dce5ef] bg-[#f1f6fc] p-0 w-[20px]" />
+                      <th className="sticky top-0 z-20 w-[20px] border border-[#dce5ef] bg-[#f1f6fc] p-0" />
 
                       {/* Sl */}
-
-                      <th
-                        className=" sticky top-0 z-20 h-[32px] whitespace-nowrap border border-[#dce5ef] bg-[#f1f6fc]
-                    px-1 py-0 text-left font-semibold text-[#202a36] w-[30px]"
-                      >
+                      <th className={`${thBase} w-[30px] px-1 text-left`}>
                         Sl.
                       </th>
 
                       {/* Account ID */}
-
                       <th
-                        className="
-                    sticky top-0 z-20
-                    h-[32px]
-                    whitespace-nowrap
-                    border border-[#dce5ef]
-                    bg-[#f1f6fc]
-                    px-2 py-0
-                    text-left
-                    font-semibold
-                    text-[#202a36]
-                    w-[130px]
-                  "
+                        className={`${thBase} w-[130px] px-2 text-left`}
                         id="lkpAccountID"
                       >
                         Account ID
                       </th>
 
                       {/* Account Name */}
-
                       <th
-                        className="
-                    sticky top-0 z-20
-                    h-[32px]
-                    whitespace-nowrap
-                    border border-[#dce5ef]
-                    bg-[#f1f6fc]
-                    px-2 py-0
-                    text-left
-                    font-semibold
-                    text-[#202a36]
-                    w-[350px]
-                  "
+                        className={`${thBase} w-[350px] px-2 text-left`}
                         id="lkpAccountName"
                       >
                         Account Name
                       </th>
 
                       {/* CCID */}
-
                       <th
-                        className="
-                    sticky top-0 z-20
-                    h-[32px]
-                    whitespace-nowrap
-                    border border-[#dce5ef]
-                    bg-[#f1f6fc]
-                    px-1 py-0
-                    text-center
-                    font-semibold
-                    text-[#202a36]
-                    w-[60px]
-                  "
+                        className={`${thBase} w-[60px] px-1 text-center`}
                         id="lkpCCID"
                       >
                         CC.ID
                       </th>
 
                       {/* Currency */}
-
                       <th
-                        className="
-                    sticky top-0 z-20
-                    h-[32px]
-                    whitespace-nowrap
-                    border border-[#dce5ef]
-                    bg-[#f1f6fc]
-                    px-1 py-0
-                    text-left
-                    font-semibold
-                    text-[#202a36]
-                    w-[100px]
-                  "
+                        className={`${thBase} w-[100px] px-1 text-left`}
                         id="lkpCurrency"
                       >
                         Currency
                       </th>
 
                       {/* Currency Rate */}
-
                       <th
-                        className="
-                    sticky top-0 z-20
-                    h-[32px]
-                    whitespace-nowrap
-                    border border-[#dce5ef]
-                    bg-[#f1f6fc]
-                    px-1 py-0
-                    text-left
-                    font-semibold
-                    text-[#202a36]
-                    w-[100px]
-                  "
+                        className={`${thBase} w-[100px] px-1 text-left`}
                         id="lkpCurrencyRate"
                       >
                         Currency Rate
                       </th>
 
                       {/* Amount */}
-
                       <th
-                        className="
-                    sticky top-0 z-20
-                    h-[32px]
-                    whitespace-nowrap
-                    border border-[#dce5ef]
-                    bg-[#f1f6fc]
-                    px-1 py-0
-                    text-right
-                    font-semibold
-                    w-[100px]
-                    text-[#202a36]
-                  "
+                        className={`${thBase} w-[100px] px-1 text-right`}
                         id="txtAmt"
                       >
                         Amount
                       </th>
 
                       {/* Amount SAR */}
-
                       <th
-                        className="
-                    sticky top-0 z-20
-                    h-[32px]
-                    whitespace-nowrap
-                    border border-[#dce5ef]
-                    bg-[#f1f6fc]
-                    px-1 py-0
-                    text-right
-                    font-semibold
-                    text-[#202a36]
-                    w-[100px]
-                  "
+                        className={`${thBase} w-[100px] px-1 text-right`}
                         id="txtAmtSAR"
                       >
                         Amount SAR
                       </th>
 
                       {/* Description */}
-
                       <th
-                        className="
-                    sticky top-0 z-20
-                    h-[32px]
-                    whitespace-nowrap
-                    border border-[#dce5ef]
-                    bg-[#f1f6fc]
-                    px-1 py-0
-                    text-left
-                    font-semibold
-                    text-[#202a36]
-                  "
+                        className={`${thBase} px-1 text-left`}
                         id="txtDescription"
                       >
                         Description
@@ -592,94 +675,48 @@ const PurchaseExpense: React.FC<PurchaseExpenseProps> = ({ onClose }) => {
                         key={index}
                         onClick={() => setActiveRow(index)}
                         onFocusCapture={() => setActiveRow(index)}
-                        className={`
-                    h-[32px]
-                    ${activeRow === index ? "bg-[#f4f8fd]" : "bg-white"}
-                    hover:bg-blue-50
-                  `}
+                        className={`h-[32px] ${
+                          activeRow === index ? "bg-[#f4f8fd]" : "bg-white"
+                        } hover:bg-blue-50`}
                       >
-                        {/* ------------------------------------------
-                      ACTIVE ROW INDICATOR
-                  ------------------------------------------ */}
-
-                        <td
-                          className="
-                      h-[32px]
-                      border border-[#dce5ef]
-                      p-0
-                      text-center
-                    "
-                        >
+                        {/* ACTIVE ROW INDICATOR */}
+                        <td className={`${tdClass} text-center`}>
                           {activeRow === index ? <Play size={9} /> : null}
                         </td>
 
-                        {/* ------------------------------------------
-                      SL
-                  ------------------------------------------ */}
-
-                        <td
-                          className="
-                      h-[32px]
-                      border border-[#dce5ef]
-                      p-0
-                      text-center
-                      text-[11px]
-                    "
-                        >
+                        {/* SL */}
+                        <td className={`${tdClass} text-center text-[11px]`}>
                           {index + 1}
                         </td>
 
-                        {/* ------------------------------------------
-                      ACCOUNT ID
-                  ------------------------------------------ */}
-
-                        <td
-                          className="
-                      h-[32px]
-                      border border-[#dce5ef]
-                      p-0
-                    "
-                        >
+                        {/* ACCOUNT ID */}
+                        <td className={tdClass}>
                           {renderSelect(
                             index,
                             "lkpAccountID",
                             row.accountId,
                             accountIdOptions,
                             (value) => updateRow(index, "accountId", value),
+                            true,
+                            "accountId",
                           )}
                         </td>
 
-                        {/* ------------------------------------------
-                      ACCOUNT NAME
-                  ------------------------------------------ */}
-
-                        <td
-                          className="
-                      h-[32px]
-                      border border-[#dce5ef]
-                      p-0
-                    "
-                        >
+                        {/* ACCOUNT NAME */}
+                        <td className={tdClass}>
                           {renderSelect(
                             index,
                             "lkpAccountName",
                             row.accountId,
                             accountNameOptions,
                             (value) => updateRow(index, "accountId", value),
+                            true,
+                            "accountName",
                           )}
                         </td>
 
-                        {/* ------------------------------------------
-                      CCID
-                  ------------------------------------------ */}
-
-                        <td
-                          className="
-                      h-[32px]
-                      border border-[#dce5ef]
-                      p-0
-                    "
-                        >
+                        {/* CCID */}
+                        <td className={tdClass}>
                           {renderSelect(
                             index,
                             "lkpCCID",
@@ -690,17 +727,8 @@ const PurchaseExpense: React.FC<PurchaseExpenseProps> = ({ onClose }) => {
                           )}
                         </td>
 
-                        {/* ------------------------------------------
-                      CURRENCY
-                  ------------------------------------------ */}
-
-                        <td
-                          className="
-                      h-[32px]
-                      border border-[#dce5ef]
-                      p-0
-                    "
-                        >
+                        {/* CURRENCY */}
+                        <td className={tdClass}>
                           {renderSelect(
                             index,
                             "lkpCurrency",
@@ -711,17 +739,8 @@ const PurchaseExpense: React.FC<PurchaseExpenseProps> = ({ onClose }) => {
                           )}
                         </td>
 
-                        {/* ------------------------------------------
-                      CURRENCY RATE
-                  ------------------------------------------ */}
-
-                        <td
-                          className="
-                      h-[32px]
-                      border border-[#dce5ef]
-                      p-0
-                    "
-                        >
+                        {/* CURRENCY RATE */}
+                        <td className={tdClass}>
                           <input
                             id={`lkpCurrencyRate-${index}`}
                             type="text"
@@ -749,11 +768,8 @@ const PurchaseExpense: React.FC<PurchaseExpenseProps> = ({ onClose }) => {
                           />
                         </td>
 
-                        {/* ------------------------------------------
-                      AMOUNT (FC)
-                  ------------------------------------------ */}
-
-                        <td className="h-[32px] border border-[#dce5ef] p-0">
+                        {/* AMOUNT (FC) */}
+                        <td className={tdClass}>
                           <input
                             id={`txtAmount-${index}`}
                             type="text"
@@ -781,17 +797,8 @@ const PurchaseExpense: React.FC<PurchaseExpenseProps> = ({ onClose }) => {
                           />
                         </td>
 
-                        {/* ------------------------------------------
-                      AMOUNT SAR
-                  ------------------------------------------ */}
-
-                        <td
-                          className="
-                      h-[32px]
-                      border border-[#dce5ef]
-                      p-0
-                    "
-                        >
+                        {/* AMOUNT SAR */}
+                        <td className={tdClass}>
                           <input
                             id={`txtAmountSAR-${index}`}
                             type="text"
@@ -819,17 +826,8 @@ const PurchaseExpense: React.FC<PurchaseExpenseProps> = ({ onClose }) => {
                           />
                         </td>
 
-                        {/* ------------------------------------------
-                      DESCRIPTION
-                  ------------------------------------------ */}
-
-                        <td
-                          className="
-                      h-[32px]
-                      border border-[#dce5ef]
-                      p-0
-                    "
-                        >
+                        {/* DESCRIPTION */}
+                        <td className={tdClass}>
                           <input
                             id={`txtDescription-${index}`}
                             type="text"
@@ -866,88 +864,28 @@ const PurchaseExpense: React.FC<PurchaseExpenseProps> = ({ onClose }) => {
                 id="btnClear"
                 type="button"
                 onClick={() => setRows(createRows())}
-                className="
-            absolute
-            left-[486px]
-            top-[17px]
-         btn-style
-          "
+                className="absolute left-[486px] top-[17px] btn-style"
               >
                 <span className="underline">C</span>lear
               </button>
 
-              {/* ----------------------------------------------------
-            TOTAL LABEL
-        ---------------------------------------------------- */}
-
-              <div
-                className="
-            absolute
-            left-[690px]
-            top-[17px]
-            flex
-            h-[32px]
-            w-[90px]
-            items-center
-            justify-center
-            border
-            border-[#d6d6d6]
-            bg-white
-            text-[14px]
-            text-[#333]
-          "
-              >
+              {/* TOTAL LABEL */}
+              <div className="absolute left-[690px] top-[17px] flex h-[32px] w-[90px] items-center justify-center border border-[#d6d6d6] bg-white text-[14px] text-[#333]">
                 Total
               </div>
 
-              {/* ----------------------------------------------------
-            TOTAL VALUE (FC)
-        ---------------------------------------------------- */}
-
+              {/* TOTAL VALUE (FC) */}
               <div
                 id="txtTotal"
-                className="
-            absolute
-            left-[790px]
-            top-[17px]
-            flex
-            h-[32px]
-            w-[90px]
-            items-center
-            justify-end
-            border
-            border-[#d6d6d6]
-            bg-white
-            px-2
-            text-[14px]
-            text-[#333]
-          "
+                className="absolute left-[790px] top-[17px] flex h-[32px] w-[90px] items-center justify-end border border-[#d6d6d6] bg-white px-2 text-[14px] text-[#333]"
               >
                 {totalFC.toFixed(4)}
               </div>
 
-              {/* ----------------------------------------------------
-            AMOUNT SAR TOTAL
-        ---------------------------------------------------- */}
-
+              {/* AMOUNT SAR TOTAL */}
               <div
                 id="txtTotalSAR"
-                className="
-            absolute
-            left-[890px]
-            top-[17px]
-            flex
-            h-[32px]
-            w-[106px]
-            items-center
-            justify-end
-            border
-            border-[#d6d6d6]
-            bg-white
-            px-2
-            text-[14px]
-            text-[#333]
-          "
+                className="absolute left-[890px] top-[17px] flex h-[32px] w-[106px] items-center justify-end border border-[#d6d6d6] bg-white px-2 text-[14px] text-[#333]"
               >
                 {totalSAR.toFixed(2)}
               </div>
