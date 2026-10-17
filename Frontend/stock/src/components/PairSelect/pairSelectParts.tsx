@@ -64,7 +64,7 @@ const PAIR_GRID_COLUMNS_NAME_FIRST = "calc(100% - 100px) 100px";
 const DIVIDED_HANG_ID = 330;
 const DIVIDED_HANG_NAME = 100;
 const DIVIDED_COLUMNS_ID_FIRST = `calc(100% - (var(--pair-hang, ${DIVIDED_HANG_ID}px) - 8px)) 1fr`;
-const DIVIDED_COLUMNS_NAME_FIRST = `calc(100% - ${DIVIDED_HANG_NAME - 8}px) 1fr`;
+const DIVIDED_COLUMNS_NAME_FIRST = `calc(100% - (var(--pair-hang, ${DIVIDED_HANG_NAME}px) - 8px)) 1fr`;
 
 export const filterPairOption = (
   option: { label: string; value: string; data: PairOption },

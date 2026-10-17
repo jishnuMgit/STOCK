@@ -11,13 +11,15 @@ import {
   filterPairOption,
   makePairDividedMenuStyles,
 } from "../../../../components/PairSelect/pairSelectParts";
+import { useScrollbarWidth } from "../../../../hooks/useScrollbarWidth";
+import { useAdvanceAfterSelect } from "../../../../hooks/useAdvanceAfterSelect";
 import { usePairMenuHang } from "../../../../hooks/usePairMenuHang";
 import { useAltShortcuts } from "../../../../hooks/useAltShortcuts";
 import { useConfirm } from "../../../../hooks/useConfirm";
 import { useButtonPermissions } from "../../../../hooks/useButtonPermissions";
 import {
-  BranchMenuList,
-  BranchOption,
+  BranchDividedMenuList,
+  BranchDividedOption,
   branchMenuStyles,
   filterLabelOrValue,
 } from "../../../../components/BranchSelect/branchSelectParts";
@@ -366,6 +368,13 @@ const StockAdjustmentPage: React.FC = () => {
 
   // the Item ID list covers the Item ID box AND the Item Name box next to it
   const { hang: idMenuHang, measure: measureIdMenuHang } = usePairMenuHang();
+
+  // Enter / Tab / click on a dropdown goes on to the next box of the row
+  const { advanceAfterPick, advanceOnEnter } = useAdvanceAfterSelect();
+
+  // the grid's scroll bar narrows its columns; the totals row below gets the same
+  // amount as padding so its boxes end where the grid's columns end
+  const gridScroll = useScrollbarWidth<HTMLDivElement>();
 
   // the Search list (the old Find): the saved adjustments of the branch
   const [chkFindOpen, setChkFindOpen] = useState(false);
@@ -817,6 +826,9 @@ const StockAdjustmentPage: React.FC = () => {
 
     if (option) {
       fetchItemStock(rows[rowIndex].id, option.value);
+
+      // Enter / Tab / click picked it: on to Qty. In
+      advanceAfterPick(`lkpItemID-${rowIndex}`, [`lkpItemName-${rowIndex}`]);
     }
   };
 
@@ -1501,8 +1513,8 @@ const StockAdjustmentPage: React.FC = () => {
               styles={branchSelectStyles}
               components={{
                 ...selectComponents,
-                Option: BranchOption,
-                MenuList: BranchMenuList,
+                Option: BranchDividedOption,
+                MenuList: BranchDividedMenuList,
               }}
               filterOption={filterLabelOrValue}
               noOptionsMessage={() => "No Branch Found"}
@@ -1567,7 +1579,10 @@ const StockAdjustmentPage: React.FC = () => {
 
       {/* STOCK TABLE */}
 <main className="customer-table-scroll flex min-h-0 flex-1 flex-col bg-white">
-  <div className="customer-table-scroll min-h-0 flex-1 overflow-auto border border-[#bfe8d0]">
+  <div
+    ref={gridScroll.ref}
+    className="customer-table-scroll min-h-0 flex-1 overflow-auto border border-[#bfe8d0]"
+  >
     <table className="customer-table-scroll w-full min-w-[900px] table-fixed border-collapse border border-[#bfe8d0]">
             <colgroup>
               <col style={{ width: "17px" }} />
@@ -1626,7 +1641,9 @@ const StockAdjustmentPage: React.FC = () => {
                   </td>
 
                   {/* ITEM ID */}
-                  <td className="border border-[#bfe8d0] p-0">
+                  <td className="border border-[#bfe8d0] p-0"
+                    onKeyDown={(event) => advanceOnEnter(event, [`lkpItemName-${index}`])}
+                  >
                     <Select<SelectOption, false>
                       inputId={`lkpItemID-${index}`}
                       name="lkpItemID"
@@ -1659,7 +1676,9 @@ const StockAdjustmentPage: React.FC = () => {
                   </td>
 
                   {/* ITEM NAME */}
-                  <td className="border border-[#bfe8d0] p-0">
+                  <td className="border border-[#bfe8d0] p-0"
+                    onKeyDown={(event) => advanceOnEnter(event)}
+                  >
                     <Select<SelectOption, false>
                       inputId={`lkpItemName-${index}`}
                       name="lkpItemName"
@@ -1768,7 +1787,10 @@ const StockAdjustmentPage: React.FC = () => {
       {/* BOTTOM FORM: a one-row table with the SAME column widths as the grid
           above, so the totals sit exactly under their columns */}
       <section className="shrink-0 bg-white">
-        <div className="border border-transparent">
+        <div
+          className="border border-transparent"
+          style={{ paddingRight: gridScroll.width }}
+        >
           <table className="w-full min-w-[900px] table-fixed border-collapse border border-transparent">
             <colgroup>
               <col style={{ width: "17px" }} />
@@ -1859,9 +1881,23 @@ const StockAdjustmentPage: React.FC = () => {
 
       {/* SAVED BY / LAST MODIFIED BY */}
       {txtUserInfo !== "" && (
-        <div className="self-end whitespace-pre-line text-right text-[12px] text-gray-500">
-          {txtUserInfo}
-        </div>
+        <table className="self-end border-collapse text-left text-[12px] text-gray-500">
+          <tbody>
+            {/* one row per line ("Saved By : ..." / "Last Modified By : ..."), in
+                three columns - label, colon, text - so the colons line up */}
+            {txtUserInfo.split("\n").map((line) => {
+              const [label, ...rest] = line.split(" : ");
+
+              return (
+                <tr key={label}>
+                  <td className="whitespace-nowrap pr-[4px]">{label}</td>
+                  <td className="pr-[4px]">:</td>
+                  <td className="whitespace-nowrap">{rest.join(" : ")}</td>
+                </tr>
+              );
+            })}
+          </tbody>
+        </table>
       )}
 
       {/* ACTION BUTTONS */}

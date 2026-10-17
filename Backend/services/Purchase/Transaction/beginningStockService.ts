@@ -68,15 +68,8 @@ export async function getBeginningStockItemListService(
 ): Promise<BeginningStockItem[]> {
   const result = await pool.query(
     `
-    SELECT h.fitemid, h.fitemname, h.funit
-    FROM dbo.tblitemtl t
-    JOIN dbo.tblitemhd h
-      ON h.fcoid = t.fcoid
-     AND h.fitemid = t.fitemid
-    WHERE t.fcoid = $1
-      AND t.fbrid = $2
-      AND COALESCE(t.finactive, false) = false
-    ORDER BY h.fitemid
+    SELECT fitemid, fitemname, funit
+    FROM dbo.fillbranchitems($1::varchar, $2::varchar)
     `,
     [PstrCoID, lkpBranch]
   );
@@ -897,7 +890,7 @@ async function callSpBeginningStock(
     CALL dbo.sp_pagebeginningstock(
       p_strmode        => $1::varchar,
       p_pstrcoid       => $2::varchar,
-      p_pintyear       => $3::smallint,
+      p_pstryear       => $3::varchar,
       p_strbrid        => $4::varchar,
       p_strdoctype     => $5::varchar,
       p_strdocno       => $6::varchar,
@@ -920,7 +913,7 @@ async function callSpBeginningStock(
     [
       p.strmode,
       p.PstrCoID,
-      p.PstrYear,
+      String(p.PstrYear),
       p.lkpBranch,
       DOC_TYPE,
       DOC_NO,

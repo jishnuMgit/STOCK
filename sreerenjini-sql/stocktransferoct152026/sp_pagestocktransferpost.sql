@@ -8,9 +8,16 @@
 --   written into BOTH sets of rows (ST and STI) together with the posted flag. A row that
 --   already has one keeps it (COALESCE). Needs the two columns of
 --   beginningstockoct122026/alter_tblstocktrans_transno.sql.
---   The signature is unchanged: the backend call stays as it is.
+--   The signature (the types) is unchanged.
+--
+-- THE USER ARGUMENT is p_pstruserid (it was p_gstruserid), the name the other screens'
+-- procedures use. A procedure's argument names cannot be changed by CREATE OR REPLACE, so
+-- the DROP below removes the version with the old name first.
 
 DROP PROCEDURE IF EXISTS dbo.sp_pagestocktransferpost(character varying, character varying, smallint, character varying, character varying, character varying, character varying);
+
+-- ... and the version whose last argument was called p_gstruserid (same types)
+DROP PROCEDURE IF EXISTS dbo.sp_pagestocktransferpost(character varying, character varying, character varying, character varying, character varying, character varying, character varying);
 
 CREATE OR REPLACE PROCEDURE dbo.sp_pagestocktransferpost(
     IN p_strmode    varchar(1),
@@ -19,7 +26,7 @@ CREATE OR REPLACE PROCEDURE dbo.sp_pagestocktransferpost(
     IN p_strbrid    varchar(3),
     IN p_strdoctype varchar(5),
     IN p_strdocno   varchar(15),
-    IN p_gstruserid varchar(20) DEFAULT NULL
+    IN p_pstruserid varchar(20) DEFAULT NULL
 )
 LANGUAGE plpgsql
 AS $$
@@ -69,7 +76,7 @@ BEGIN
 
         -- 1. the From branch's stock row, and its current unit cost
         INSERT INTO dbo.tblstockcontrol (fcoid, fyear, fbrid, fitemid, fcuserid, fcuserdate)
-        SELECT p_pstrcoid, v_stryear, p_strbrid, v_stritemid, p_gstruserid, now()
+        SELECT p_pstrcoid, v_stryear, p_strbrid, v_stritemid, p_pstruserid, now()
         WHERE NOT EXISTS (
             SELECT 1 FROM dbo.tblstockcontrol
             WHERE fcoid = p_pstrcoid AND fyear = v_stryear
@@ -116,7 +123,7 @@ BEGIN
 
         -- 4. the To branch's stock row, its previous values, the average cost, the stock
         INSERT INTO dbo.tblstockcontrol (fcoid, fyear, fbrid, fitemid, funitcost, fcuserid, fcuserdate)
-        SELECT p_pstrcoid, v_stryear, v_strtobrid, v_stritemid, 0, p_gstruserid, now()
+        SELECT p_pstrcoid, v_stryear, v_strtobrid, v_stritemid, 0, p_pstruserid, now()
         WHERE NOT EXISTS (
             SELECT 1 FROM dbo.tblstockcontrol
             WHERE fcoid = p_pstrcoid AND fyear = v_stryear

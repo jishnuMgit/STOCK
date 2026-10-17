@@ -43,9 +43,13 @@
 -- As in the original, the year is used ONLY by mode S (it writes fyear); every
 -- other mode finds its rows by company + branch + doc type (+ Sl.# for M1 / D1).
 --
+-- THE YEAR IS TEXT: the argument is p_pstryear character varying (it was p_pintyear
+-- smallint), like the year of the other screens' procedures, because
+-- tblstocktrans.fyear is varchar(4). The DROP below removes the smallint version.
+--
 -- Examples (cursor calls must run inside one transaction)
 --   BEGIN;
---   CALL dbo.sp_pagebeginningstock('GTL', '01', 2026::smallint, 'JD', 'BG', p_result_cursor => 'c1');
+--   CALL dbo.sp_pagebeginningstock('GTL', '01', '2026', 'JD', 'BG', p_result_cursor => 'c1');
 --   FETCH ALL FROM "c1";
 --   COMMIT;
 
@@ -53,13 +57,16 @@
 -- make a SECOND procedure next to the old one and calls would become ambiguous.
 -- This drops the old argument list first (nothing happens if it is not there):
 DROP PROCEDURE IF EXISTS dbo.sp_pagebeginningstock(character varying, character varying, smallint, character varying, character varying, character varying, timestamp without time zone, boolean, character varying, smallint, character varying, character varying, numeric, numeric, numeric, smallint, character varying, character varying, refcursor);
--- ... and the one before the saving transaction number was added (p_strnote, no p_strsavingtransno)
+-- ... the one before the saving transaction number was added (p_strnote, no p_strsavingtransno)
 DROP PROCEDURE IF EXISTS dbo.sp_pagebeginningstock(character varying, character varying, smallint, character varying, character varying, character varying, timestamp without time zone, boolean, character varying, smallint, character varying, character varying, numeric, numeric, numeric, smallint, character varying, character varying, character varying, refcursor);
+
+-- ... and the version with the year as a smallint (p_pintyear), the one in use until now
+DROP PROCEDURE IF EXISTS dbo.sp_pagebeginningstock(character varying, character varying, smallint, character varying, character varying, character varying, timestamp without time zone, boolean, character varying, smallint, character varying, character varying, numeric, numeric, numeric, smallint, character varying, character varying, character varying, character varying, refcursor);
 
 CREATE OR REPLACE PROCEDURE dbo.sp_pagebeginningstock(
     IN    p_strmode          character varying,
     IN    p_pstrcoid         character varying,
-    IN    p_pintyear         smallint,
+    IN    p_pstryear         character varying,
     IN    p_strbrid          character varying,
     IN    p_strdoctype       character varying,
     IN    p_strdocno         character varying DEFAULT NULL::character varying,
@@ -127,7 +134,7 @@ BEGIN
             fcuserid, fcuserdate, fnote, fsavingtransno
         )
         VALUES (
-            p_pstrcoid, p_pintyear, p_strbrid, p_strdoctype, p_strdocno, p_dtpdate, p_intslno,
+            p_pstrcoid, p_pstryear, p_strbrid, p_strdoctype, p_strdocno, p_dtpdate, p_intslno,
             p_stritemid, p_strunit,
             COALESCE(p_numqtyin, 0), COALESCE(p_numunitcost, 0), COALESCE(p_numtotalcost, 0),
             'UI', p_blnpost, p_strtransno,
