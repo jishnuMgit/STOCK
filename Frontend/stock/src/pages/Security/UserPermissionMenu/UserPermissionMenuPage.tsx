@@ -4,6 +4,7 @@ import { toast } from "react-toastify";
 import { useEnterAsTab } from "../../../hooks/useEnterAsTab";
 import { useAltShortcuts } from "../../../hooks/useAltShortcuts";
 import { useButtonPermissions } from "../../../hooks/useButtonPermissions";
+import selectComponents from "../../../components/sharecomponents/selectComponents";
 
 const API_URL = `${import.meta.env.VITE_API_URL}/user-permission`;
 
@@ -952,6 +953,7 @@ const UserPermission: React.FC = () => {
           </label>
 
           <Select<SelectOption, false>
+            components={selectComponents}
             inputId="lkpUserID"
             name="lkpUserID"
             options={userIdOptions}

@@ -9,11 +9,11 @@ import { useAltShortcuts } from "../../hooks/useAltShortcuts";
 import { useButtonPermissions } from "../../hooks/useButtonPermissions";
 import {
   filterLabelOrValue,
-  BranchMenuList,
-  BranchOption,
-  CustomDropdownIndicator,
+  BranchDividedMenuList,
+  BranchDividedOption,
   branchMenuStyles,
 } from "../../components/BranchSelect/branchSelectParts";
+import selectComponents from "../../components/sharecomponents/selectComponents";
 
 /* =========================================================
    TYPES
@@ -825,10 +825,9 @@ const SetBranchInfo: React.FC = () => {
                   ...branchMenuStyles,
                 }}
                 components={{
-                  DropdownIndicator:
-                    CustomDropdownIndicator,
-                  Option: BranchOption,
-                  MenuList: BranchMenuList,
+                  ...selectComponents,
+                  Option: BranchDividedOption,
+                  MenuList: BranchDividedMenuList,
                 }}
                 filterOption={filterLabelOrValue}
                 noOptionsMessage={() => "No Branch Found"}

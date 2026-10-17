@@ -1,4 +1,5 @@
 import { components, type StylesConfig } from "react-select";
+import selectComponents from "../sharecomponents/selectComponents";
 import { accountDropdownStyles } from "../Transaction/Receipt/save/ReactSelectStyles";
 
 /* =========================================================
@@ -62,8 +63,8 @@ const PAIR_GRID_COLUMNS_NAME_FIRST = "calc(100% - 100px) 100px";
 //    edge and the ID column sits in the 100px that hang past it.
 const DIVIDED_HANG_ID = 330;
 const DIVIDED_HANG_NAME = 100;
-const DIVIDED_COLUMNS_ID_FIRST = `calc(100% - ${DIVIDED_HANG_ID - 8}px) 1fr`;
-const DIVIDED_COLUMNS_NAME_FIRST = `calc(100% - ${DIVIDED_HANG_NAME - 8}px) 1fr`;
+const DIVIDED_COLUMNS_ID_FIRST = `calc(100% - (var(--pair-hang, ${DIVIDED_HANG_ID}px) - 8px)) 1fr`;
+const DIVIDED_COLUMNS_NAME_FIRST = `calc(100% - (var(--pair-hang, ${DIVIDED_HANG_NAME}px) - 8px)) 1fr`;
 
 export const filterPairOption = (
   option: { label: string; value: string; data: PairOption },
@@ -131,6 +132,7 @@ export const makePairComponents = (
   const secondCell = divider ? { paddingLeft: "8px" } : {};
 
   return {
+    ...selectComponents,
     MenuList: (props: any) => (
       <components.MenuList {...props}>
         <div
@@ -255,20 +257,25 @@ export const pairDividedIdMenuStyles: typeof pairNameMenuStyles = {
 };
 
 // A divided list that hangs `hang` px past its box - the same look as
-// pairDividedNameMenuStyles / pairDividedIdMenuStyles with a width of your own
-// (use the same number in makePairComponents(..., true, hang)).
+// pairDividedNameMenuStyles / pairDividedIdMenuStyles with a width of your own.
+// Either use the same number in makePairComponents(..., true, hang), or - for an
+// ID list made with makePairComponents(..., false, true) and no hang - just
+// call this with the width you want: the menu carries the number in the CSS
+// variable --pair-hang and the ID column follows it.
 export const makePairDividedMenuStyles = (
   hang: number
 ): typeof pairNameMenuStyles => ({
   ...pairNameMenuStyles,
   menuList: dividedMenuList,
-  menu: (base) => ({
-    ...base,
-    width: `calc(100% + ${hang}px)`,
-    zIndex: 99999,
-    fontSize: "12px",
-    marginTop: "1px",
-  }),
+  menu: (base) =>
+    ({
+      ...base,
+      width: `calc(100% + ${hang}px)`,
+      zIndex: 99999,
+      fontSize: "12px",
+      marginTop: "1px",
+      "--pair-hang": `${hang}px`,
+    }) as typeof base,
 });
 
 // For the ID boxes: a fixed-width list, wider than the box.

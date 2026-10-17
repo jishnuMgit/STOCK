@@ -13,9 +13,8 @@ import { useAltShortcuts } from "../../../hooks/useAltShortcuts";
 // ITEM ENQUIRY (the old frmItemEnquiry)
 //
 // A view-only screen: pick an item (Item ID or Item Name - both boxes open the
-// same "ID | Name" list and picking from one fills the other, or use the
-// First / Prev / Next / Last buttons; nothing is chosen when the page opens)
-// and see its details and, branch by
+// same "ID | Name" list and picking from one fills the other; nothing is chosen
+// when the page opens) and see its details and, branch by
 // branch, its stock, cost and price. Nothing here can be edited or saved.
 //
 // Names follow the rule: state = element id/name = response key
@@ -364,22 +363,6 @@ const ItemEnquiryPage: React.FC = () => {
   };
 
   // ----------------------------------------------------------
-  // FIRST / PREV / NEXT / LAST (the old navigator)
-  // ----------------------------------------------------------
-
-  const currentIndex = itemIdOptions.findIndex(
-    (option) => option.value === itemValue,
-  );
-
-  const goTo = (index: number) => {
-    const option = itemIdOptions[index];
-
-    if (option) pickItem(option.value);
-  };
-
-  const lastIndex = itemIdOptions.length - 1;
-
-  // ----------------------------------------------------------
   // CLEAR
   // ----------------------------------------------------------
 
@@ -409,31 +392,28 @@ const ItemEnquiryPage: React.FC = () => {
   // the grid always shows at least MIN_GRID_ROWS rows
   const blankRows = Math.max(0, MIN_GRID_ROWS - rows.length);
 
-  const navButtonClass =
-    "btn-style min-w-[44px] disabled:cursor-not-allowed disabled:opacity-40";
-
   // ==========================================================
   // JSX
   // ==========================================================
 
   return (
     <div className="flex min-h-full w-full justify-center bg-gray-100 px-3 pb-5">
-      <main className="mt-5 flex h-fit w-full max-w-[900px] flex-col overflow-hidden border border-gray-400 bg-white text-[12px] text-slate-700">
+      <main className="mt-5 flex h-fit w-full max-w-225 flex-col overflow-hidden border border-gray-400 bg-white text-[12px] text-slate-700">
         {/* TITLE BAR */}
-        <div className="flex h-[28px] w-full shrink-0 items-center bg-[#a7dfc0]">
-          <h1 className="ml-[5px] text-[17px] font-semibold text-[#374151]">
+        <div className="flex h-7 w-full shrink-0 items-center bg-[#a7dfc0]">
+          <h1 className="ml-1.25 text-[17px] font-semibold text-[#374151]">
             Item Enquiry
           </h1>
         </div>
 
-        <div className="m-[12px] flex flex-col gap-[10px] px-[12px] pb-[12px]">
+        <div className="m-3 flex flex-col gap-2.5 px-3 pb-3">
           {/* ITEM ID */}
           <div className="flex items-center gap-3">
             <label htmlFor="lkpItemID" className={labelClass}>
               Item ID :
             </label>
 
-            <div className="w-[300px] max-w-full">
+            <div className="w-75 max-w-full">
               <Select<SelectOption, false>
                 inputId="lkpItemID"
                 name="lkpItemID"
@@ -468,7 +448,7 @@ const ItemEnquiryPage: React.FC = () => {
               Item Name :
             </label>
 
-            <div className="w-[520px] max-w-full">
+            <div className="w-130 max-w-full">
               <Select<SelectOption, false>
                 inputId="lkpItemName"
                 name="lkpItemName"
@@ -507,7 +487,7 @@ const ItemEnquiryPage: React.FC = () => {
               name="txtUnit"
               value={txtUnit}
               readOnly
-              className={`${readOnlyClass} w-[240px]`}
+              className={`${readOnlyClass} w-60`}
             />
           </div>
 
@@ -521,10 +501,10 @@ const ItemEnquiryPage: React.FC = () => {
               name="txtPacking"
               value={txtPacking}
               readOnly
-              className={`${readOnlyClass} w-[110px] text-right`}
+              className={`${readOnlyClass} w-27.5 text-right`}
             />
 
-            <label htmlFor="txtCBM" className="ml-[60px] w-[50px] text-right text-[14px] text-gray-600">
+            <label htmlFor="txtCBM" className="ml-15 w-12.5 text-right text-[14px] text-gray-600">
               CBM :
             </label>
             <input
@@ -532,7 +512,7 @@ const ItemEnquiryPage: React.FC = () => {
               name="txtCBM"
               value={txtCBM}
               readOnly
-              className={`${readOnlyClass} w-[110px] text-right`}
+              className={`${readOnlyClass} w-27.5 text-right`}
             />
           </div>
 
@@ -546,7 +526,7 @@ const ItemEnquiryPage: React.FC = () => {
               name="lkpItemGroupID"
               value={lkpItemGroupID}
               readOnly
-              className={`${readOnlyClass} w-[120px]`}
+              className={`${readOnlyClass} w-30`}
             />
             <input
               id="lkpItemGroupName"
@@ -554,7 +534,7 @@ const ItemEnquiryPage: React.FC = () => {
               aria-label="Item Group Name"
               value={lkpItemGroupName}
               readOnly
-              className={`${readOnlyClass} w-[390px] max-w-full`}
+              className={`${readOnlyClass} w-97.5 max-w-full`}
             />
           </div>
 
@@ -568,7 +548,7 @@ const ItemEnquiryPage: React.FC = () => {
               name="lkpSupplierID"
               value={lkpSupplierID}
               readOnly
-              className={`${readOnlyClass} w-[120px]`}
+              className={`${readOnlyClass} w-30`}
             />
             <input
               id="lkpSupplierName"
@@ -576,7 +556,7 @@ const ItemEnquiryPage: React.FC = () => {
               aria-label="Supplier Name"
               value={lkpSupplierName}
               readOnly
-              className={`${readOnlyClass} w-[390px] max-w-full`}
+              className={`${readOnlyClass} w-97.5 max-w-full`}
             />
           </div>
 
@@ -590,7 +570,7 @@ const ItemEnquiryPage: React.FC = () => {
               name="txtSupplierItemID"
               value={txtSupplierItemID}
               readOnly
-              className={`${readOnlyClass} w-[240px]`}
+              className={`${readOnlyClass} w-60`}
             />
           </div>
 
@@ -604,10 +584,10 @@ const ItemEnquiryPage: React.FC = () => {
               name="txtReorderLevel"
               value={txtReorderLevel}
               readOnly
-              className={`${readOnlyClass} w-[110px] text-right`}
+              className={`${readOnlyClass} w-27.5 text-right`}
             />
 
-            <label htmlFor="txtReorderQty" className="ml-[60px] w-[100px] text-right text-[14px] text-gray-600">
+            <label htmlFor="txtReorderQty" className="ml-15 w-25 text-right text-[14px] text-gray-600">
               Reorder Qty. :
             </label>
             <input
@@ -615,13 +595,13 @@ const ItemEnquiryPage: React.FC = () => {
               name="txtReorderQty"
               value={txtReorderQty}
               readOnly
-              className={`${readOnlyClass} w-[110px] text-right`}
+              className={`${readOnlyClass} w-27.5 text-right`}
             />
           </div>
 
           {/* BRANCH GRID */}
-          <div className="customer-table-scroll mt-[6px] overflow-auto border border-[#bfe8d0]">
-            <table className="w-full min-w-[700px] table-fixed border-collapse border border-[#bfe8d0]">
+          <div className="customer-table-scroll mt-1.5 overflow-auto border border-[#bfe8d0]">
+            <table className="w-full min-w-175 table-fixed border-collapse border border-[#bfe8d0]">
               <colgroup>
                 <col />
                 <col style={{ width: "13%" }} />
@@ -632,7 +612,7 @@ const ItemEnquiryPage: React.FC = () => {
               </colgroup>
 
               <thead className="bg-[#edf9f2]">
-                <tr className="h-[30px] text-[14px] text-gray-600">
+                <tr className="h-7.5 text-[14px] text-gray-600">
                   <th className="border border-[#bfe8d0] px-2 text-left font-normal">
                     Branch
                   </th>
@@ -656,14 +636,14 @@ const ItemEnquiryPage: React.FC = () => {
 
               <tbody>
                 {rows.map((row, index) => (
-                  <tr key={row.txtBranchID} className="h-[30px] text-[14px]">
+                  <tr key={row.txtBranchID} className="h-7.5 text-[14px]">
                     <td className="border border-[#bfe8d0] px-2">
                       <input
                         id={`txtBranchName-${index}`}
                         name="txtBranchName"
                         value={row.txtBranchName}
                         readOnly
-                        className="h-[26px] w-full bg-transparent outline-none"
+                        className="h-6.5 w-full bg-transparent outline-none"
                       />
                     </td>
                     <td className="border border-[#bfe8d0] px-2">
@@ -672,7 +652,7 @@ const ItemEnquiryPage: React.FC = () => {
                         name="txtStock"
                         value={formatStock(Number(row.txtStock))}
                         readOnly
-                        className="h-[26px] w-full bg-transparent text-right outline-none"
+                        className="h-6.5 w-full bg-transparent text-right outline-none"
                       />
                     </td>
                     <td className="border border-[#bfe8d0] px-2">
@@ -681,7 +661,7 @@ const ItemEnquiryPage: React.FC = () => {
                         name="txtPrevUnitCost"
                         value={formatCost(Number(row.txtPrevUnitCost))}
                         readOnly
-                        className="h-[26px] w-full bg-transparent text-right outline-none"
+                        className="h-6.5 w-full bg-transparent text-right outline-none"
                       />
                     </td>
                     <td className="border border-[#bfe8d0] px-2">
@@ -694,7 +674,7 @@ const ItemEnquiryPage: React.FC = () => {
                             : formatPrice(Number(row.txtUnitPrice))
                         }
                         readOnly
-                        className="h-[26px] w-full bg-transparent text-right outline-none"
+                        className="h-6.5 w-full bg-transparent text-right outline-none"
                       />
                     </td>
                     <td className="border border-[#bfe8d0] px-2">
@@ -703,7 +683,7 @@ const ItemEnquiryPage: React.FC = () => {
                         name="txtUnitCost"
                         value={formatCost(Number(row.txtUnitCost))}
                         readOnly
-                        className="h-[26px] w-full bg-transparent text-right outline-none"
+                        className="h-6.5 w-full bg-transparent text-right outline-none"
                       />
                     </td>
                     <td className="border border-[#bfe8d0] px-2">
@@ -712,14 +692,14 @@ const ItemEnquiryPage: React.FC = () => {
                         name="txtTotalCost"
                         value={formatCost(Number(row.txtTotalCost))}
                         readOnly
-                        className="h-[26px] w-full bg-transparent text-right outline-none"
+                        className="h-6.5 w-full bg-transparent text-right outline-none"
                       />
                     </td>
                   </tr>
                 ))}
 
                 {Array.from({ length: blankRows }).map((_, index) => (
-                  <tr key={`blank-${index}`} className="h-[30px]">
+                  <tr key={`blank-${index}`} className="h-7.5">
                     {Array.from({ length: 6 }).map((__, cell) => (
                       <td key={cell} className="border border-[#bfe8d0]" />
                     ))}
@@ -729,55 +709,8 @@ const ItemEnquiryPage: React.FC = () => {
             </table>
           </div>
 
-          {/* NAVIGATOR / TOTALS / CLEAR */}
-          <div className="mt-[4px] flex flex-wrap items-center justify-between gap-3">
-            <div className="flex items-center gap-2">
-              <button
-                id="btnFirst"
-                name="btnFirst"
-                type="button"
-                aria-label="First item"
-                onClick={() => goTo(0)}
-                disabled={itemIdOptions.length === 0 || currentIndex === 0}
-                className={navButtonClass}
-              >
-                |&lt;
-              </button>
-              <button
-                id="btnPrev"
-                name="btnPrev"
-                type="button"
-                aria-label="Previous item"
-                onClick={() => goTo(currentIndex - 1)}
-                disabled={itemIdOptions.length === 0 || currentIndex <= 0}
-                className={navButtonClass}
-              >
-                &lt;
-              </button>
-              <button
-                id="btnNext"
-                name="btnNext"
-                type="button"
-                aria-label="Next item"
-                onClick={() => goTo(currentIndex + 1)}
-                disabled={itemIdOptions.length === 0 || currentIndex >= lastIndex}
-                className={navButtonClass}
-              >
-                &gt;
-              </button>
-              <button
-                id="btnLast"
-                name="btnLast"
-                type="button"
-                aria-label="Last item"
-                onClick={() => goTo(lastIndex)}
-                disabled={itemIdOptions.length === 0 || currentIndex === lastIndex}
-                className={navButtonClass}
-              >
-                &gt;|
-              </button>
-            </div>
-
+          {/* TOTALS / CLEAR */}
+          <div className="mt-1 flex flex-wrap items-center justify-end gap-3">
             <div className="flex items-center gap-4">
               <div className="flex items-center gap-2">
                 <label htmlFor="txtTotalStock" className="text-[14px] text-gray-600">
@@ -788,7 +721,7 @@ const ItemEnquiryPage: React.FC = () => {
                   name="txtTotalStock"
                   value={formatStock(txtTotalStock)}
                   readOnly
-                  className="input-style w-[130px] text-right"
+                  className="input-style w-32.5 text-right"
                 />
               </div>
 
@@ -801,7 +734,7 @@ const ItemEnquiryPage: React.FC = () => {
                   name="txtItemValue"
                   value={formatCost(txtItemValue)}
                   readOnly
-                  className="input-style w-[150px] text-right"
+                  className="input-style w-37.5 text-right"
                 />
               </div>
 

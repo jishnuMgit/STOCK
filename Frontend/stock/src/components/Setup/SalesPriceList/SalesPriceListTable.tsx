@@ -2,17 +2,22 @@ import React, { useEffect, useState } from "react";
 import { type PriceRow, formatMoney, round2 } from "./SalesPriceListShared";
 
 type PriceCellProps = {
+  index: number;
   value: number;
   label: string;
   changed: boolean;
+  locked: boolean;
   onCommit: (value: number) => void;
 };
 
-/** Editable price box: shows 2 decimals, selects on focus, commits on blur / Enter */
+/** Editable price box: shows 2 decimals, selects on focus, commits on blur / Enter
+ *  (Enter goes on to the price of the next row). Locked = read only, and Tab skips it. */
 const PriceCell: React.FC<PriceCellProps> = ({
+  index,
   value,
   label,
   changed,
+  locked,
   onCommit,
 }) => {
   const [text, setText] = useState(value.toFixed(2));
@@ -24,9 +29,13 @@ const PriceCell: React.FC<PriceCellProps> = ({
 
   return (
     <input
+      id={`txtUnitPrice-${index}`}
+      name="txtUnitPrice"
       aria-label={label}
       inputMode="decimal"
       value={text}
+      readOnly={locked}
+      tabIndex={locked ? -1 : 0}
       onFocus={(event) => {
         setFocused(true);
         event.target.select();
@@ -38,10 +47,14 @@ const PriceCell: React.FC<PriceCellProps> = ({
         onCommit(Number.isFinite(parsed) && parsed >= 0 ? round2(parsed) : value);
       }}
       onKeyDown={(event) => {
-        if (event.key === "Enter") event.currentTarget.blur();
+        if (event.key !== "Enter") return;
+
+        event.preventDefault();
+        event.currentTarget.blur();
+        document.getElementById(`txtUnitPrice-${index + 1}`)?.focus();
       }}
       className={`h-7.5 w-full px-2 text-right text-[12px] text-[#24364d] outline-none focus:bg-white focus:ring-1 focus:ring-inset focus:ring-[#91a7b9] ${
-        changed ? "bg-[#fff6d6]" : "bg-[#eef8ff]"
+        locked ? "bg-[#f6f8fa]" : changed ? "bg-[#fff6d6]" : "bg-[#eef8ff]"
       }`}
     />
   );
@@ -50,8 +63,10 @@ const PriceCell: React.FC<PriceCellProps> = ({
 type SalesPriceListTableProps = {
   rows: PriceRow[];
   activeId: string | null;
-  onActivateRow: (id: string) => void;
-  onPriceChange: (id: string, value: number) => void;
+  // the price column can be typed in only after "Apply to Unit Price" is ticked
+  locked: boolean;
+  onActivateRow: (lkpItemID: string) => void;
+  onPriceChange: (lkpItemID: string, value: number) => void;
 };
 
 const cell = "h-[30px] border border-[#B7ECD0] bg-[#f6f8fa] px-2";
@@ -59,6 +74,7 @@ const cell = "h-[30px] border border-[#B7ECD0] bg-[#f6f8fa] px-2";
 const SalesPriceListTable: React.FC<SalesPriceListTableProps> = ({
   rows,
   activeId,
+  locked,
   onActivateRow,
   onPriceChange,
 }) => (
@@ -103,28 +119,30 @@ const SalesPriceListTable: React.FC<SalesPriceListTableProps> = ({
             </td>
           </tr>
         )}
-        {rows.map((row) => {
-          const active = row.id === activeId;
-          const changed = row.unitPrice !== row.basePrice;
+        {rows.map((row, index) => {
+          const active = row.lkpItemID === activeId;
+          const changed = row.txtUnitPrice !== row.txtOriginalUnitPrice;
           return (
-            <tr key={row.id} onClick={() => onActivateRow(row.id)}>
+            <tr key={row.lkpItemID} onClick={() => onActivateRow(row.lkpItemID)}>
               <td className="h-7.5 border border-[#B7ECD0] bg-[#fafbfc] text-center text-[8px] text-[#405066]">
                 {active ? "▶" : ""}
               </td>
-              <td className={cell}>{row.itemId}</td>
-              <td className={`${cell} truncate`} title={row.itemName}>
-                {row.itemName}
+              <td className={cell}>{row.lkpItemID}</td>
+              <td className={`${cell} truncate`} title={row.txtItemName}>
+                {row.txtItemName}
               </td>
-              <td className={cell}>{row.unit}</td>
+              <td className={cell}>{row.txtUnit}</td>
               <td className={`${cell} text-right`}>
-                {formatMoney(row.unitCost, 4)}
+                {formatMoney(row.txtUnitCost, 4)}
               </td>
               <td className="border border-[#B7ECD0] p-0">
                 <PriceCell
-                  value={row.unitPrice}
-                  label={`Unit price for ${row.itemId}`}
+                  index={index}
+                  value={row.txtUnitPrice}
+                  label={`Unit price for ${row.lkpItemID}`}
                   changed={changed}
-                  onCommit={(value) => onPriceChange(row.id, value)}
+                  locked={locked}
+                  onCommit={(value) => onPriceChange(row.lkpItemID, value)}
                 />
               </td>
             </tr>

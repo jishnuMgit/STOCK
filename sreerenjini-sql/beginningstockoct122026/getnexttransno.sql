@@ -3,7 +3,7 @@
 -- Your function, with only the type fixes it needs to run (each marked "was:"):
 --   1. fSavingTransNo / fPostingTransNo are text, so MAX(...) must be read as a
 --      number before "+ 1"          ->  MAX(...::BIGINT)
---   2. fYear is a smallint but pstryear is text  ->  pstryear::SMALLINT
+--   2. fYear is a smallint but pstryear is text  ->  pstryear
 -- The logic is unchanged: the first number of a year is YY + 000000 + 1
 -- (260000001), then the highest + 1. Saving and posting are counted separately.
 -- Needs the two columns of alter_tblstocktrans_transno.sql.
@@ -32,7 +32,7 @@ BEGIN
         INTO nextno
         FROM dbo.tblStockTrans
         WHERE fCoID = pstrcoid
-          AND fYear = pstryear::SMALLINT                          -- was: fYear = pstryear
+          AND fYear = pstryear
           AND fBrID = strbrid;
 
     ELSE
@@ -42,7 +42,7 @@ BEGIN
         INTO nextno
         FROM dbo.tblStockTrans
         WHERE fCoID = pstrcoid
-          AND fYear = pstryear::SMALLINT                          -- was: fYear = pstryear
+          AND fYear = pstryear
           AND fBrID = strbrid;
 
     END IF;

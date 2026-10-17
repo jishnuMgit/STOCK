@@ -588,16 +588,16 @@ const PurchaseForm: React.FC<Props> = ({
   return (
     <section
       onKeyDown={handleKeyDown}
-      className="grid grid-cols-1 items-start gap-x-4 gap-y-3 px-[14px] pb-2 pt-[14px] xl:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_minmax(0,2.15fr)]"
+      className="grid grid-cols-1 items-start gap-x-4 gap-y-3 px-3.5 pb-2 pt-3.5 xl:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_minmax(0,2.15fr)]"
     >
       {/* ==================================================
           GROUP 1
           Branch, P.O. No., Misc. Sup., Currency
       ================================================== */}
-      <div id="purchase-left-group" className="flex min-w-0 flex-col gap-[8px]">
+      <div id="purchase-left-group" className="flex min-w-0 flex-col gap-2">
         {/* Branch */}
         <div className="flex min-w-0 items-center gap-2">
-          <label htmlFor="lkpBranch" className={`${labelClass} w-[72px]`}>
+          <label htmlFor="lkpBranch" className={`${labelClass} w-18`}>
             Branch
           </label>
           <div className="min-w-0 flex-1">
@@ -616,7 +616,7 @@ const PurchaseForm: React.FC<Props> = ({
 
         {/* P.O. No. */}
         <div className="flex min-w-0 items-center gap-2">
-          <label htmlFor="txtPONo" className={`${labelClass} w-[72px]`}>
+          <label htmlFor="txtPONo" className={`${labelClass} w-18`}>
             P.O. No.
           </label>
           <input
@@ -629,7 +629,7 @@ const PurchaseForm: React.FC<Props> = ({
 
         {/* Misc. Supplier Yes / No */}
         <div className="flex min-w-0 items-center gap-2">
-          <label htmlFor="lkpMiscSup" className={`${labelClass} w-[72px]`}>
+          <label htmlFor="lkpMiscSup" className={`${labelClass} w-18`}>
             Misc. Sup.
           </label>
           <div className="min-w-0 w-[50%]">
@@ -648,7 +648,7 @@ const PurchaseForm: React.FC<Props> = ({
 
         {/* Currency */}
         <div className="flex min-w-0 items-center gap-2">
-          <label htmlFor="lkpCurrency" className={`${labelClass} w-[72px]`}>
+          <label htmlFor="lkpCurrency" className={`${labelClass} w-18`}>
             Currency
           </label>
           <div className="min-w-0 w-[50%]">
@@ -672,11 +672,11 @@ const PurchaseForm: React.FC<Props> = ({
       ================================================== */}
       <div
         id="purchase-middle-group"
-        className="ml-3 flex w-[90%] min-w-0 flex-col gap-[8px]"
+        className="ml-3 flex w-[90%] min-w-0 flex-col gap-2"
       >
         {/* Entry No. */}
         <div className="flex min-w-0 items-center gap-3">
-          <label htmlFor="txtDocNo" className={`${labelClass} w-[92px]`}>
+          <label htmlFor="txtDocNo" className={`${labelClass} w-23`}>
             Entry No.
           </label>
           <input
@@ -691,7 +691,7 @@ const PurchaseForm: React.FC<Props> = ({
 
         {/* Supplier ID */}
         <div className="flex min-w-0 items-center gap-3">
-          <label htmlFor="lkpSupplierID" className={`${labelClass} w-[92px]`}>
+          <label htmlFor="lkpSupplierID" className={`${labelClass} w-23`}>
             Supplier
           </label>
           <div className="min-w-0 flex-1">
@@ -715,7 +715,7 @@ const PurchaseForm: React.FC<Props> = ({
 
         {/* Misc. Supplier ID */}
         <div className="flex min-w-0 items-center gap-3">
-          <label htmlFor="lkpMiscSupID" className={`${labelClass} w-[92px]`}>
+          <label htmlFor="lkpMiscSupID" className={`${labelClass} w-23`}>
             Misc. Sup.
           </label>
           <div className="min-w-0 flex-1">
@@ -740,7 +740,7 @@ const PurchaseForm: React.FC<Props> = ({
 
         {/* Currency Rate */}
         <div className="flex min-w-0 items-center gap-3">
-          <label htmlFor="txtCurrencyRate" className={`${labelClass} w-[92px]`}>
+          <label htmlFor="txtCurrencyRate" className={`${labelClass} w-23`}>
             Currency Rate
           </label>
           <input
@@ -762,7 +762,7 @@ const PurchaseForm: React.FC<Props> = ({
             id="btnPurchaseExpense"
             type="button"
             onClick={() => setExpenseOpen(true)}
-            className="h-[30px] w-[120px] whitespace-nowrap cursor-pointer rounded-[4px] border border-[#cbd1d9] bg-gradient-to-b from-white to-[#e8e8e8] px-[10px] text-[11px] text-[#222] hover:bg-slate-100"
+            className="h-7.5 w-30 whitespace-nowrap cursor-pointer rounded-sm border border-[#cbd1d9] bg-linear-to-b from-white to-[#e8e8e8] px-2.5 text-[11px] text-[#222] hover:bg-slate-100"
           >
             Purchase Expense
           </button>
@@ -853,7 +853,7 @@ const PurchaseForm: React.FC<Props> = ({
             type="button"
             aria-label="Add miscellaneous supplier"
             onClick={() => setMiscOpen(true)}
-            className="flex h-[30px] w-[30px] cursor-pointer shrink-0 items-center justify-center rounded-full bg-[#28a745] text-[20px] font-bold leading-none text-white hover:bg-green-700"
+            className="flex h-7.5 w-7.5 cursor-pointer shrink-0 items-center justify-center rounded-full bg-[#28a745] text-[20px] font-bold leading-none text-white hover:bg-green-700"
           >
             <Plus />
           </button>
@@ -898,7 +898,7 @@ const PurchaseForm: React.FC<Props> = ({
             id="btnCalculateUnitCost"
             type="button"
             onClick={onCalcUnitCost}
-            className="ml-25 h-[30px] w-[120px] cursor-pointer whitespace-nowrap rounded-[4px] border border-[#cbd1d9] bg-gradient-to-b from-white to-[#e8e8e8] px-[10px] text-[11px] text-[#222] hover:bg-slate-100"
+            className="ml-25 h-7.5 w-30 cursor-pointer whitespace-nowrap rounded-sm border border-[#cbd1d9] bg-linear-to-b from-white to-[#e8e8e8] px-2.5 text-[11px] text-[#222] hover:bg-slate-100"
           >
             Calculate Unit Cost
           </button>
@@ -914,7 +914,7 @@ const PurchaseForm: React.FC<Props> = ({
               id="txtSupAmount"
               value={totalSupplierAmt.toFixed(2)}
               readOnly
-              className="input-style min-w-0 max-w-[140px] text-right"
+              className="input-style min-w-0 max-w-35 text-right"
             />
           </div>
         </div>
@@ -932,7 +932,7 @@ const PurchaseForm: React.FC<Props> = ({
       {expenseOpen &&
         createPortal(
           <div
-            className="fixed inset-0 z-[9000] flex items-center justify-center bg-black/40"
+            className="fixed inset-0 z-9000 flex items-center justify-center bg-black/40"
             onMouseDown={(e) => {
               if (e.target === e.currentTarget) setExpenseOpen(false);
             }}
@@ -940,7 +940,7 @@ const PurchaseForm: React.FC<Props> = ({
             <div
               role="dialog"
               aria-modal="true"
-              className="max-h-[95vh] w-[1200px] max-w-[95vw] overflow-auto border border-slate-400 bg-white shadow-xl"
+              className="max-h-[95vh] w-300 max-w-[95vw] overflow-auto border border-slate-400 bg-white shadow-xl"
             >
               <PurchaseExpense onClose={() => setExpenseOpen(false)} />
             </div>

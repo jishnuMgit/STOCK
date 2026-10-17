@@ -52,6 +52,8 @@ type CurrencyPageProps = {
 };
 
 const CurrencyPage: React.FC<CurrencyPageProps> = ({ onClose }) => {
+
+console.log(onClose)
   const handleEnterAsTab = useEnterAsTab();
   const perms = useButtonPermissions(MENU_ID);
 
@@ -372,10 +374,6 @@ const CurrencyPage: React.FC<CurrencyPageProps> = ({ onClose }) => {
     focusCell(0);
   };
 
-  const handleClose = () => {
-    if (onClose) onClose();
-    else window.history.back();
-  };
 
   const handleSave = async () => {
     const inserted: { currency: string }[] = [];
@@ -548,27 +546,27 @@ const CurrencyPage: React.FC<CurrencyPageProps> = ({ onClose }) => {
       onKeyDown={handlePageKeyDown}
       className="flex min-h-screen w-full items-center justify-center bg-white"
     >
-      <div className="w-full max-w-[400px] border border-slate-400 bg-white shadow-sm">
+      <div className="w-full max-w-100 border border-slate-400 bg-white shadow-sm">
         {/* TITLE */}
-        <div className="flex h-[28px] w-full items-center bg-[#a7dfc0]">
-          <h1 className="ml-[5px] text-[17px] font-semibold text-[#374151]">
+        <div className="flex h-7 w-full items-center bg-[#a7dfc0]">
+          <h1 className="ml-1.25 text-[17px] font-semibold text-[#374151]">
             Currency
           </h1>
         </div>
 
         {/* FORM */}
-        <div className="p-[12px] m-[12px]">
-          <div className="h-[305px] overflow-hidden border border-[#bfe8d0]">
+        <div className="p-3 m-3">
+          <div className="h-76.25 overflow-hidden border border-[#bfe8d0]">
             <div className="h-full overflow-y-auto overflow-x-hidden">
               <table className="w-full table-fixed border-collapse text-[12px]">
                 <colgroup>
-                  <col className="w-[42px]" />
+                  <col className="w-10.5" />
                   <col />
                 </colgroup>
 
                 <thead>
                   <tr>
-                    <th className="sticky top-0 z-20 h-[34px] border border-[#bfe8d0] bg-[#edf9f2] p-0" />
+                    <th className="sticky top-0 z-20 h-8.5 border border-[#bfe8d0] bg-[#edf9f2] p-0" />
                     <th className={`${headerCellClass} text-left`}>Currency</th>
                   </tr>
                 </thead>
@@ -577,15 +575,15 @@ const CurrencyPage: React.FC<CurrencyPageProps> = ({ onClose }) => {
                   {displayRows.map((row, index) => (
                     <tr
                       key={index}
-                      className={`h-[34px] ${
+                      className={`h-8.5 ${
                         selectedRow === index ? "bg-[#f8fcfa]" : "bg-white"
                       }`}
                       onClick={() => setSelectedRow(index)}
                     >
                       {/* SELECTOR COLUMN: arrow + delete-row button */}
-                      <td className="h-[34px] border border-[#bfe8d0] bg-white p-0 text-center align-middle">
+                      <td className="h-8.5 border border-[#bfe8d0] bg-white p-0 text-center align-middle">
                         {selectedRow === index && (
-                          <span className="inline-flex items-center gap-[6px]">
+                          <span className="inline-flex items-center gap-1.5">
                             <span className="text-[9px] text-[#222]">▶</span>
                             {rows[index] && (
                               <button
@@ -603,7 +601,7 @@ const CurrencyPage: React.FC<CurrencyPageProps> = ({ onClose }) => {
                       </td>
 
                       {/* CURRENCY (max 3, capital letters) */}
-                      <td className="h-[34px] border border-l-0 border-[#bfe8d0] bg-white p-0 align-middle">
+                      <td className="h-8.5 border border-l-0 border-[#bfe8d0] bg-white p-0 align-middle">
                         <input
                           id={`txtCurrency-${index}`}
                           name="txtCurrency"
@@ -643,7 +641,7 @@ const CurrencyPage: React.FC<CurrencyPageProps> = ({ onClose }) => {
           </div>
 
           {/* BUTTONS */}
-          <div className="mt-[14px] flex justify-center gap-3">
+          <div className="mt-3.5 flex justify-center gap-3">
             <button
               id={hasSaved ? "btnModify" : "btnSave"}
               name={hasSaved ? "btnModify" : "btnSave"}
@@ -687,7 +685,7 @@ const CurrencyPage: React.FC<CurrencyPageProps> = ({ onClose }) => {
       {/* FIND BOX */}
       {findOpen && (
         <div
-          className="fixed inset-0 z-50 flex items-start justify-center bg-black/20 pt-[120px]"
+          className="fixed inset-0 z-50 flex items-start justify-center bg-black/20 pt-30"
           onClick={(event) => {
             if (event.target === event.currentTarget) closeFind();
           }}
@@ -700,12 +698,12 @@ const CurrencyPage: React.FC<CurrencyPageProps> = ({ onClose }) => {
             }
           }}
         >
-          <div className="w-[300px] border border-slate-400 bg-white shadow-lg">
-            <div className="flex h-[28px] items-center bg-[#a7dfc0] px-[8px] text-[15px] font-semibold text-[#374151]">
+          <div className="w-75 border border-slate-400 bg-white shadow-lg">
+            <div className="flex h-7 items-center bg-[#a7dfc0] px-2 text-[15px] font-semibold text-[#374151]">
               Find Currency
             </div>
 
-            <div className="p-[10px]">
+            <div className="p-2.5">
               <input
                 autoFocus
                 type="text"
@@ -722,9 +720,9 @@ const CurrencyPage: React.FC<CurrencyPageProps> = ({ onClose }) => {
                 className="input-style w-full"
               />
 
-              <div className="mt-[8px] max-h-[220px] overflow-y-auto border border-[#bfe8d0]">
+              <div className="mt-2 max-h-55 overflow-y-auto border border-[#bfe8d0]">
                 {findMatches.length === 0 ? (
-                  <div className="px-[10px] py-[8px] text-[12px] text-gray-500">
+                  <div className="px-2.5 py-2 text-[12px] text-gray-500">
                     No matching currency
                   </div>
                 ) : (
@@ -733,7 +731,7 @@ const CurrencyPage: React.FC<CurrencyPageProps> = ({ onClose }) => {
                       key={index}
                       type="button"
                       onClick={() => pickFound(index)}
-                      className="block w-full px-[10px] py-[6px] text-left text-[12px] text-[#374151] hover:bg-[#eefbf4]"
+                      className="block w-full px-2.5 py-1.5 text-left text-[12px] text-[#374151] hover:bg-[#eefbf4]"
                     >
                       {row.txtCurrency}
                     </button>

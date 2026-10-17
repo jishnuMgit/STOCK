@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import Select, { type StylesConfig } from "react-select";
+import selectComponents from "../../sharecomponents/selectComponents";
 
 // ============================================================
 // TYPES
@@ -33,7 +34,7 @@ const ROW_COUNT = 11;
 
 const itemOptions: Option[] = [];
 
-const unitOptions: Option[] = [];
+
 
 // ============================================================
 // CREATE ROW
@@ -340,7 +341,7 @@ const SalesInvoiceTable: React.FC = () => {
     <section
       id="sales-invoice-table"
       className="
-        mx-[11px]
+        mx-2.75
         mb-0
         mt-6
         flex
@@ -356,7 +357,7 @@ const SalesInvoiceTable: React.FC = () => {
         <table
           className="
             w-full
-            min-w-[900px]
+            min-w-225
             table-fixed
             border-collapse
             text-[11px]
@@ -393,7 +394,7 @@ const SalesInvoiceTable: React.FC = () => {
           ================================================== */}
 
           <thead>
-            <tr className="h-[30px]">
+            <tr className="h-7.5">
 
               {/* ROW INDICATOR */}
 
@@ -416,7 +417,7 @@ const SalesInvoiceTable: React.FC = () => {
                   sticky
                   top-0
                   z-20
-                  h-[30px]
+                  h-7.5
                   whitespace-nowrap
                   border
                   border-[#dce5ef]
@@ -439,7 +440,7 @@ const SalesInvoiceTable: React.FC = () => {
                   sticky
                   top-0
                   z-20
-                  h-[30px]
+                  h-7.5
                   whitespace-nowrap
                   border
                   border-[#dce5ef]
@@ -462,7 +463,7 @@ const SalesInvoiceTable: React.FC = () => {
                   sticky
                   top-0
                   z-20
-                  h-[30px]
+                  h-7.5
                   whitespace-nowrap
                   border
                   border-[#dce5ef]
@@ -485,7 +486,7 @@ const SalesInvoiceTable: React.FC = () => {
                   sticky
                   top-0
                   z-20
-                  h-[30px]
+                  h-7.5
                   whitespace-nowrap
                   border
                   border-[#dce5ef]
@@ -508,7 +509,7 @@ const SalesInvoiceTable: React.FC = () => {
                   sticky
                   top-0
                   z-20
-                  h-[30px]
+                  h-7.5
                   whitespace-nowrap
                   border
                   border-[#dce5ef]
@@ -531,7 +532,7 @@ const SalesInvoiceTable: React.FC = () => {
                   sticky
                   top-0
                   z-20
-                  h-[30px]
+                  h-7.5
                   whitespace-nowrap
                   border
                   border-[#dce5ef]
@@ -554,7 +555,7 @@ const SalesInvoiceTable: React.FC = () => {
                   sticky
                   top-0
                   z-20
-                  h-[30px]
+                  h-7.5
                   whitespace-nowrap
                   border
                   border-[#dce5ef]
@@ -577,7 +578,7 @@ const SalesInvoiceTable: React.FC = () => {
                   sticky
                   top-0
                   z-20
-                  h-[30px]
+                  h-7.5
                   whitespace-nowrap
                   border
                   border-[#dce5ef]
@@ -600,7 +601,7 @@ const SalesInvoiceTable: React.FC = () => {
                   sticky
                   top-0
                   z-20
-                  h-[30px]
+                  h-7.5
                   whitespace-nowrap
                   border
                   border-[#dce5ef]
@@ -631,7 +632,7 @@ const SalesInvoiceTable: React.FC = () => {
                   setActiveRow(index)
                 }
                 className={`
-                  h-[30px]
+                  h-7.5
                   ${
                     activeRow === index
                       ? "bg-[#f4f8fd]"
@@ -647,7 +648,7 @@ const SalesInvoiceTable: React.FC = () => {
 
                 <td
                   className="
-                    h-[23px]
+                    h-5.75
                     border
                     border-[#dce5ef]
                     p-0
@@ -672,7 +673,7 @@ const SalesInvoiceTable: React.FC = () => {
 
                 <td
                   className="
-                    h-[23px]
+                    h-5.75
                     border
                     border-[#dce5ef]
                     p-0
@@ -688,7 +689,7 @@ const SalesInvoiceTable: React.FC = () => {
 
                 <td
                   className="
-                    h-[23px]
+                    h-5.75
                     border
                     border-[#dce5ef]
                     p-0
@@ -698,6 +699,7 @@ const SalesInvoiceTable: React.FC = () => {
                     inputId={`lkpItemID-${index}`}
                     instanceId={`item-id-${index}`}
                     options={itemOptions}
+                    components={selectComponents}
                     value={row.itemId}
                     onChange={(option) => {
                       updateRow(
@@ -728,7 +730,7 @@ const SalesInvoiceTable: React.FC = () => {
 
                 <td
                   className="
-                    h-[23px]
+                    h-5.75
                     border
                     border-[#dce5ef]
                     p-0
@@ -738,6 +740,7 @@ const SalesInvoiceTable: React.FC = () => {
                     inputId={`lkpItemName-${index}`}
                     instanceId={`item-name-${index}`}
                     options={itemOptions}
+                    components={selectComponents}
                     value={row.itemName}
                     onChange={(option) => {
                       updateRow(
@@ -768,7 +771,7 @@ const SalesInvoiceTable: React.FC = () => {
 
                 <td
                   className="
-                    h-[23px]
+                    h-5.75
                     border
                     border-[#dce5ef]
                     p-0
@@ -788,7 +791,7 @@ const SalesInvoiceTable: React.FC = () => {
 
                 <td
                   className="
-                    h-[23px]
+                    h-5.75
                     border
                     border-[#dce5ef]
                     p-0
@@ -808,7 +811,7 @@ const SalesInvoiceTable: React.FC = () => {
 
                 <td
                   className="
-                    h-[23px]
+                    h-5.75
                     border
                     border-[#dce5ef]
                     p-0
@@ -828,7 +831,7 @@ const SalesInvoiceTable: React.FC = () => {
 
                 <td
                   className="
-                    h-[23px]
+                    h-5.75
                     border
                     border-[#dce5ef]
                     p-0
@@ -848,7 +851,7 @@ const SalesInvoiceTable: React.FC = () => {
 
                 <td
                   className="
-                    h-[23px]
+                    h-5.75
                     border
                     border-[#dce5ef]
                     p-0
@@ -868,7 +871,7 @@ const SalesInvoiceTable: React.FC = () => {
 
                 <td
                   className="
-                    h-[23px]
+                    h-5.75
                     border
                     border-[#dce5ef]
                     p-0

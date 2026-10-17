@@ -136,7 +136,7 @@ const formatGphOption = (
 const GphMenuList = (props: MenuListProps<GphOption, false>) => (
   <components.MenuList {...props}>
     <div
-      className="sticky top-0 z-[1] grid border-b border-slate-300 bg-slate-100 text-[13px] font-semibold text-slate-800"
+      className="sticky top-0 z-1 grid border-b border-slate-300 bg-slate-100 text-[13px] font-semibold text-slate-800"
       style={{ gridTemplateColumns: GPH_COLS }}
     >
       <span className="border-r border-slate-300 px-3 py-2">Id</span>
@@ -192,7 +192,7 @@ const COAPage: React.FC<COAPageProps> = ({
   const formRef = useRef<HTMLDivElement>(null);
 
   const isAdd = mode === "S";
-  const isModify = mode === "M";
+  // const isModify = mode === "M";
   const isDelete = mode === "D";
   const disabledAll = loading || busy;
 
@@ -489,12 +489,12 @@ const COAPage: React.FC<COAPageProps> = ({
 
   return (
     <div className="flex min-h-fit items-start w-full justify-center bg-[#a3dfc0]">
-      <div className="mt-[2px] w-full bg-white">
+      <div className="mt-0.5 w-full bg-white">
         {/* TITLE */}
         <div className="flex h-7 w-full items-center border-b border-slate-400 bg-[#a3dfc0]">
           <h1
             id="ChartOfAccount"
-            className="ml-[10px] text-[17px] font-semibold text-slate-700"
+            className="ml-2.5 text-[17px] font-semibold text-slate-700"
           >
             Chart Of Account
           </h1>
@@ -502,7 +502,7 @@ const COAPage: React.FC<COAPageProps> = ({
 
         {/* LOAD ERROR */}
         {loadError && (
-          <div className="px-[38px] py-6 text-center text-[13px] text-red-500">
+          <div className="px-9.5 py-6 text-center text-[13px] text-red-500">
             {loadError}
           </div>
         )}
@@ -512,10 +512,10 @@ const COAPage: React.FC<COAPageProps> = ({
           <div
             ref={formRef}
             onKeyDown={handleEnterAsTab}
-            className={`px-[38px] pb-[25px] pt-[10px] ${loading ? "pointer-events-none opacity-60" : ""}`}
+            className={`px-9.5 pb-6.25 pt-2.5 ${loading ? "pointer-events-none opacity-60" : ""}`}
           >
             {/* ACCOUNT GROUP */}
-            <div className="mb-[5px] grid grid-cols-[155px_125px_1fr] items-center gap-[10px]">
+            <div className="mb-1.25 grid grid-cols-[155px_125px_1fr] items-center gap-2.5">
               <label
                 htmlFor="txtAccountGroupID"
                 className={`${labelClass} text-right`}
@@ -543,7 +543,7 @@ const COAPage: React.FC<COAPageProps> = ({
             </div>
 
             {/* ACCOUNT GROUP LEVEL + NEW ACCOUNT ID */}
-            <div className="mb-[5px] grid grid-cols-[155px_125px_1fr] items-center gap-[10px]">
+            <div className="mb-1.25 grid grid-cols-[155px_125px_1fr] items-center gap-2.5">
               <label
                 htmlFor="txtAccountGroupLevel"
                 className={`${labelClass} text-right`}
@@ -560,14 +560,14 @@ const COAPage: React.FC<COAPageProps> = ({
                 className={`${smallInputClass} ${roClass}`}
               />
 
-              <fieldset className="relative ml-[5px] flex h-[55px] items-center gap-[25px] rounded-[7px] border border-slate-200 px-[17px] pt-[5px]">
-                <legend className="px-[5px] text-[14px] text-slate-500">
+              <fieldset className="relative ml-1.25 flex h-13.75 items-center gap-6.25 rounded-[7px] border border-slate-200 px-4.25 pt-1.25">
+                <legend className="px-1.25 text-[14px] text-slate-500">
                   New Account ID
                 </legend>
 
                 <label
                   htmlFor="autoAccountID"
-                  className="flex cursor-pointer items-center gap-[7px] text-[13px] text-slate-600"
+                  className="flex cursor-pointer items-center gap-1.75 text-[13px] text-slate-600"
                 >
                   <input
                     id="autoAccountID"
@@ -577,14 +577,14 @@ const COAPage: React.FC<COAPageProps> = ({
                     checked={formData.newAccountID === "Auto"}
                     disabled={!isAdd || disabledAll}
                     onChange={() => handleIdModeChange("Auto")}
-                    className="h-[16px] w-[16px] accent-blue-600"
+                    className="h-4 w-4 accent-blue-600"
                   />
                   <span>Auto</span>
                 </label>
 
                 <label
                   htmlFor="manualAccountID"
-                  className="flex cursor-pointer items-center gap-[7px] text-[13px] text-slate-600"
+                  className="flex cursor-pointer items-center gap-1.75 text-[13px] text-slate-600"
                 >
                   <input
                     id="manualAccountID"
@@ -594,7 +594,7 @@ const COAPage: React.FC<COAPageProps> = ({
                     checked={formData.newAccountID === "Manual"}
                     disabled={!isAdd || disabledAll}
                     onChange={() => handleIdModeChange("Manual")}
-                    className="h-[16px] w-[16px] accent-blue-600"
+                    className="h-4 w-4 accent-blue-600"
                   />
                   <span>Manual</span>
                 </label>
@@ -602,7 +602,7 @@ const COAPage: React.FC<COAPageProps> = ({
             </div>
 
             {/* ACCOUNT ID */}
-            <div className="mb-[5px] grid grid-cols-[155px_125px_1fr] items-center gap-[10px]">
+            <div className="mb-1.25 grid grid-cols-[155px_125px_1fr] items-center gap-2.5">
               <label
                 htmlFor="txtAccountID"
                 className={`${labelClass} text-right`}
@@ -627,7 +627,7 @@ const COAPage: React.FC<COAPageProps> = ({
             </div>
 
             {/* ACCOUNT NAME */}
-            <div className="mb-[5px] grid grid-cols-[155px_1fr] items-center gap-[10px]">
+            <div className="mb-1.25 grid grid-cols-[155px_1fr] items-center gap-2.5">
               <label
                 htmlFor="txtAccountName"
                 className={`${labelClass} text-right`}
@@ -648,7 +648,7 @@ const COAPage: React.FC<COAPageProps> = ({
             </div>
 
             {/* ACCOUNT NAME ARABIC */}
-            <div className="mb-[5px] grid grid-cols-[155px_1fr] items-center gap-[10px]">
+            <div className="mb-1.25 grid grid-cols-[155px_1fr] items-center gap-2.5">
               <label
                 htmlFor="txtAccountName_AR"
                 className={`${labelClass} text-right`}
@@ -671,7 +671,7 @@ const COAPage: React.FC<COAPageProps> = ({
             </div>
 
             {/* ACCOUNT LEVEL + HAVE COST CENTER */}
-            <div className="mb-[5px] grid grid-cols-[155px_125px_1fr_108px_108px] items-center gap-[10px]">
+            <div className="mb-1.25 grid grid-cols-[155px_125px_1fr_108px_108px] items-center gap-2.5">
               <label
                 htmlFor="txtAccountLevel"
                 className={`${labelClass} text-right`}
@@ -710,7 +710,7 @@ const COAPage: React.FC<COAPageProps> = ({
             </div>
 
             {/* GROUP / PARENT / HEAD */}
-            <div className="grid grid-cols-[155px_125px_1fr] items-center gap-[10px]">
+            <div className="grid grid-cols-[155px_125px_1fr] items-center gap-2.5">
               <label
                 htmlFor="lkpAccountGroupOrHead"
                 className={`${labelClass} text-right`}
@@ -745,7 +745,7 @@ const COAPage: React.FC<COAPageProps> = ({
             </div>
 
             {/* BUTTONS */}
-            <div className="mt-[10px] flex justify-center gap-[11px]">
+            <div className="mt-2.5 flex justify-center gap-2.75">
               {/* SAVE / MODIFY (disabled in Delete mode) */}
               <button
                 id="btnSave"

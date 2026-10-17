@@ -26,14 +26,7 @@ const branchOptions: Option[] = [
   { value: "BRANCH 1", label: "BRANCH 1" },
   { value: "BRANCH 2", label: "BRANCH 2" },
 ];
-const customerIdOptions: Option[] = [
-  { value: "C001", label: "C001" },
-  { value: "C002", label: "C002" },
-];
-const customerNameOptions: Option[] = [
-  { value: "C001", label: "Customer One" },
-  { value: "C002", label: "Customer Two" },
-];
+
 const itemIdOptions: Option[] = [
   { value: "1001", label: "1001" },
   { value: "1002", label: "1002" },
@@ -110,7 +103,7 @@ const CustomRadio: React.FC<RadioOptionProps> = ({
       className="sr-only"
     />
     <span
-      className={`flex h-[19px] w-[19px] shrink-0 items-center justify-center rounded-full border bg-white ${
+      className={`flex h-4.75 w-4.75 shrink-0 items-center justify-center rounded-full border bg-white ${
         checked ? "border-[#64d96e]" : "border-[#cbd3dc]"
       }`}
     >
@@ -124,26 +117,6 @@ const CustomRadio: React.FC<RadioOptionProps> = ({
   </label>
 );
 
-const CustomCheckbox: React.FC<{
-  id: string;
-  label: string;
-  checked: boolean;
-  onChange: (checked: boolean) => void;
-}> = ({ id, label, checked, onChange }) => (
-  <label
-    htmlFor={id}
-    className="flex h-[30px] cursor-pointer items-center gap-2 text-[12px] text-[#405066] select-none"
-  >
-    <input
-      id={id}
-      type="checkbox"
-      checked={checked}
-      onChange={(event) => onChange(event.target.checked)}
-      className="h-4 w-4 accent-[#64d96e]"
-    />
-    {label}
-  </label>
-);
 
 const RadioPanel: React.FC<{
   children: React.ReactNode;
@@ -159,7 +132,7 @@ const FieldLabel: React.FC<{
   className?: string;
 }> = ({ children, className = "" }) => (
   <div
-    className={`flex h-[30px] items-center border border-[#e0e5ea] bg-[#fafbfc] px-3 text-[12px] text-[#405066] ${className}`}
+    className={`flex h-7.5 items-center border border-[#e0e5ea] bg-[#fafbfc] px-3 text-[12px] text-[#405066] ${className}`}
   >
     {children}
   </div>
@@ -329,6 +302,7 @@ const RptItemSalesPage: React.FC<RptItemSalesPageProps> = ({
   };
 
   const customerDisabled = customerMode !== "One Customer";
+  console.log(customerDisabled)
   const itemDisabled = itemMode !== "One Item";
 
   return (
@@ -361,7 +335,7 @@ const RptItemSalesPage: React.FC<RptItemSalesPageProps> = ({
                 />
               </RadioPanel>
               <div className="flex items-start gap-3 pt-3">
-                <div className="w-[250px]">
+                <div className="w-62.5">
                   <Select
                     inputId="lkpBranch"
                     instanceId="lkpBranch"
@@ -437,7 +411,7 @@ const RptItemSalesPage: React.FC<RptItemSalesPageProps> = ({
 
               {/* Post status */}
               <FieldLabel>Post Status :</FieldLabel>
-              <div className="w-[107px]">
+              <div className="w-26.75">
                 <Select
                   inputId="lkpPostStatus"
                   instanceId="lkpPostStatus"

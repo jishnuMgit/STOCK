@@ -1,14 +1,16 @@
+import selectComponents from "../../sharecomponents/selectComponents";
+
 export type Option = { value: string; label: string };
 
+// one row of the grid (names = the response / payload keys of the server)
 export type PriceRow = {
-  id: string;
-  groupId: string;
-  itemId: string;
-  itemName: string;
-  unit: string;
-  unitCost: number;
-  basePrice: number; // price as loaded (used to detect changes and to apply the % increase)
-  unitPrice: number; // current / edited price
+  lkpItemID: string;
+  txtItemName: string;
+  txtUnit: string;
+  txtUnitCost: number;
+  txtUnitPrice: number; // the price now (typed, or made by the % increase)
+  txtOriginalUnitPrice: number; // the price as loaded (to find the changed rows)
+  lkpItemGroupID: string;
 };
 
 const selectClassNames = {
@@ -52,6 +54,7 @@ export const selectProps = {
   isClearable: false,
   placeholder: "",
   classNames: selectClassNames,
+  components: selectComponents, // the shared dropdown look
   menuPosition: "fixed" as const,
   menuPortalTarget: typeof document !== "undefined" ? document.body : undefined,
 };

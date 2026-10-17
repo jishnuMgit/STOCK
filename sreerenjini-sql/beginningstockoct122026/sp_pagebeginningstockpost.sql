@@ -31,8 +31,8 @@
 --      already has one keeps it). Needs alter_tblstocktrans_transno.sql.
 --   7. tblStockControl.fYear is now varchar(4) (ALTER TABLE dbo.tblstockcontrol ALTER
 --      COLUMN fyear TYPE varchar(4)), so every statement on tblStockControl uses
---      p_pstryear as text; the statements on tblStockTrans (fYear smallint) and on
---      tblFinTrans (fYear text) are unchanged.
+--      p_pstryear as text; tblStockTrans.fYear and tblFinTrans.fYear are text too now,
+--      so EVERY year comparison in this procedure uses p_pstryear as it is.
 --   The post order (fPostOrder / fPostOrderC / getnextpostorder) is NOT used
 --   for now: all its lines stay commented, exactly as pasted.
 --
@@ -93,7 +93,7 @@ BEGIN
                 COALESCE(fUnitCost, 0) AS unitcost
             FROM dbo.tblStockTrans
             WHERE fCoID = p_pstrcoid
-              AND fYear = p_pstryear::smallint          -- was: fYear = p_pstryear
+              AND fYear = p_pstryear          -- was: fYear = p_pstryear
               AND fBrID = p_strbrid
               AND fDocType = p_strdoctype
               AND fDocNo = p_strdocno
@@ -184,7 +184,7 @@ BEGIN
                 fUnitCost = v_numnewunitcost,
                 fTotalCost = v_numqtyin * v_numnewunitcost
             WHERE fCoID = p_pstrcoid
-              AND fYear = p_pstryear::smallint          -- was: fYear = p_pstryear
+              AND fYear = p_pstryear          -- was: fYear = p_pstryear
               AND fBrID = p_strbrid
               AND fDocType = p_strdoctype
               AND fDocNo = p_strdocno
@@ -231,7 +231,7 @@ BEGIN
                 -- fPostOrderC = v_intpostorder
                 -- (when switching these on, put a comma after the line above)
             WHERE fCoID = p_pstrcoid
-              AND fYear = p_pstryear::smallint          -- was: fYear = p_pstryear
+              AND fYear = p_pstryear          -- was: fYear = p_pstryear
               AND fBrID = p_strbrid
               AND fDocType = p_strdoctype
               AND fDocNo = p_strdocno;

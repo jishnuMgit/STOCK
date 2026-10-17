@@ -10,6 +10,7 @@ import Select, {
   type MenuListProps,
   type StylesConfig,
 } from "react-select";
+import selectComponents from "../../components/sharecomponents/selectComponents";
 
 // ============================================================
 // TYPES
@@ -492,18 +493,40 @@ const SetChartOfAccount: React.FC = () => {
     []
   );
 
+  // Widths of the two account lists, measured when one opens: the Account ID list
+  // covers the Account ID box AND the Account Name box next to it (to the Name
+  // box's right edge); the Account Name list is as wide as its own box.
+  const [idMenuWidth, setIdMenuWidth] = useState<number>(850);
+  const [nameMenuWidth, setNameMenuWidth] = useState<number>(850);
+
+  const measureAccountMenus = (rowIndex: number) => {
+    const boxOf = (inputId: string) =>
+      document.getElementById(inputId)?.closest('div[class$="-control"]');
+
+    const idBox = boxOf(`lkpAccountID-${rowIndex}`);
+    const nameBox = boxOf(`lkpAccountName-${rowIndex}`);
+
+    if (!idBox || !nameBox) return;
+
+    const idRect = idBox.getBoundingClientRect();
+    const nameRect = nameBox.getBoundingClientRect();
+
+    setIdMenuWidth(Math.round(nameRect.right - idRect.left));
+    setNameMenuWidth(Math.round(nameRect.width));
+  };
+
   const accountIdStyles = useMemo(
     () =>
       createSelectStyles(
-        650,
+        idMenuWidth,
         "0px minmax(0px, 1fr)"
       ),
-    []
+    [idMenuWidth]
   );
 
   const accountNameStyles = useMemo(
-    () => createSelectStyles(650, "minmax(-400px, 1fr) 120px"),
-    []
+    () => createSelectStyles(nameMenuWidth, "minmax(-400px, 1fr) 120px"),
+    [nameMenuWidth]
   );
 
   // ==========================================================
@@ -805,7 +828,7 @@ const SetChartOfAccount: React.FC = () => {
       className="flex min-h-screen w-full items-center justify-center bg-white text-slate-700"
     >
       {/* no overflow-hidden on the card: dropdowns must remain visible */}
-      <div className="w-[1100px] max-w-full border border-slate-400 bg-white shadow-sm">
+      <div className="w-[1350px] max-w-full border border-slate-400 bg-white shadow-sm">
         {/* TITLE BAR */}
 
         <div className="flex h-[28px] w-full items-center bg-[#a7dfc0]">
@@ -913,6 +936,7 @@ const SetChartOfAccount: React.FC = () => {
                         handleSelectParameter(index, option)
                       }
                       components={{
+                        ...selectComponents,
                         MenuList: ParameterMenuList,
                       }}
                       formatOptionLabel={(option, { context }) =>
@@ -990,6 +1014,7 @@ const SetChartOfAccount: React.FC = () => {
                         handleSelectAccount(index, option)
                       }
                       components={{
+                        ...selectComponents,
                         MenuList: AccountIdMenuList,
                       }}
                       formatOptionLabel={(option, { context }) =>
@@ -1014,6 +1039,7 @@ const SetChartOfAccount: React.FC = () => {
                         )
                       }
                       styles={accountIdStyles}
+                      onMenuOpen={() => measureAccountMenus(index)}
                       menuPortalTarget={
                         typeof document !== "undefined"
                           ? document.body
@@ -1042,6 +1068,7 @@ const SetChartOfAccount: React.FC = () => {
                         handleSelectAccount(index, option)
                       }
                       components={{
+                        ...selectComponents,
                         MenuList: AccountNameMenuList,
                       }}
                       formatOptionLabel={(option, { context }) =>
@@ -1066,6 +1093,7 @@ const SetChartOfAccount: React.FC = () => {
                         )
                       }
                       styles={accountNameStyles}
+                      onMenuOpen={() => measureAccountMenus(index)}
                       menuPortalTarget={
                         typeof document !== "undefined"
                           ? document.body

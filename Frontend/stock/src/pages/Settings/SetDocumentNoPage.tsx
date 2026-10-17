@@ -1,6 +1,5 @@
 import React, { useEffect, useState } from "react";
 import Select, {
-  components,
   type SingleValue,
   type StylesConfig,
 } from "react-select";
@@ -12,11 +11,11 @@ import { useAltShortcuts } from "../../hooks/useAltShortcuts";
 import { useButtonPermissions } from "../../hooks/useButtonPermissions";
 import {
   filterLabelOrValue,
-  BranchMenuList,
-  BranchOption,
-  CustomDropdownIndicator,
+  BranchDividedMenuList,
+  BranchDividedOption,
   branchMenuStyles,
 } from "../../components/BranchSelect/branchSelectParts";
+import selectComponents from "../../components/sharecomponents/selectComponents";
 
 // ============================================================
 // TYPES
@@ -282,26 +281,6 @@ const resetOptions: SelectOption[] = [
 // (Branch menu / filter / arrow are shared with SetBranchInfo —
 //  see components/BranchSelect/branchSelectParts.tsx)
 // ============================================================
-
-// Same arrow as the Account ID column on Transaction/Receipt
-// (.receipt-dropdown-arrow in commanReceipt.css)
-const ReceiptStyleDropdownIndicator = (props: any) => {
-  return (
-    <components.DropdownIndicator {...props}>
-      <span
-        style={{
-          display: "block",
-          fontSize: "8px",
-          lineHeight: "8px",
-          color: "#999999",
-          transform: "translateY(1px)",
-        }}
-      >
-        ▼
-      </span>
-    </components.DropdownIndicator>
-  );
-};
 
 // ============================================================
 // COMPONENT
@@ -994,7 +973,7 @@ const SetDocumentNo: React.FC = () => {
                 }
                 styles={headerSelectStyles}
                 components={{
-                  DropdownIndicator: CustomDropdownIndicator,
+                  ...selectComponents,
                 }}
                 filterOption={filterLabelOrValue}
                 noOptionsMessage={() => "No Year Found"}
@@ -1052,10 +1031,9 @@ const SetDocumentNo: React.FC = () => {
                   ...branchMenuStyles,
                 }}
                 components={{
-                  DropdownIndicator:
-                    CustomDropdownIndicator,
-                  Option: BranchOption,
-                  MenuList: BranchMenuList,
+                  ...selectComponents,
+                  Option: BranchDividedOption,
+                  MenuList: BranchDividedMenuList,
                 }}
                 filterOption={filterLabelOrValue}
                 noOptionsMessage={() => "No Branch Found"}
@@ -1103,7 +1081,7 @@ const SetDocumentNo: React.FC = () => {
                 }
                 styles={headerSelectStyles}
                 components={{
-                  DropdownIndicator: CustomDropdownIndicator,
+                  ...selectComponents,
                 }}
                 isSearchable={false}
                 menuPlacement="auto"
@@ -1334,8 +1312,7 @@ const SetDocumentNo: React.FC = () => {
                     }),
                   }}
                   components={{
-                    DropdownIndicator:
-                      ReceiptStyleDropdownIndicator,
+                    ...selectComponents,
                   }}
                   filterOption={filterLabelOrValue}
                   noOptionsMessage={() => "No Document Found"}
@@ -1509,7 +1486,7 @@ const SetDocumentNo: React.FC = () => {
                           }
                           styles={tableSelectStyles}
                           components={{
-                            DropdownIndicator: CustomDropdownIndicator,
+                            ...selectComponents,
                           }}
                           isSearchable={false}
                           menuPortalTarget={document.body}
@@ -1544,7 +1521,7 @@ const SetDocumentNo: React.FC = () => {
                           }
                           styles={tableSelectStyles}
                           components={{
-                            DropdownIndicator: CustomDropdownIndicator,
+                            ...selectComponents,
                           }}
                           isSearchable={false}
                           menuPortalTarget={document.body}

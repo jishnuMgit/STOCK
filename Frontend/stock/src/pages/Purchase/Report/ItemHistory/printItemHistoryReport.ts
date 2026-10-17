@@ -102,13 +102,10 @@ const headerBlock = (g: HistoryGroup) => `
     ${cell("Last Sale Unit Price")}${colon}${cell(fixed(g.lastSaleUnitPrice, 2))}
   </div>
   <div class="g" style="grid-template-columns:${COLS_PAIR}">
-    ${cell("Last Purchase Unit Price (FC)")}${colon}${cell(fixed(g.lastPurUnitPriceFC, 4))}
+    ${cell("Last Purchase Unit Price")}${colon}${cell(fixed(g.lastPurUnitPrice, 4))}
     ${cell("Current Stock")}${colon}${cell(whole(g.stock))}
   </div>
-  <div class="g" style="grid-template-columns:${COLS_PAIR}">
-    ${cell("Last Purchase Unit Price")}${colon}${cell(fixed(g.lastPurUnitPrice, 2))}
-    <div></div><div></div><div></div>
-  </div>
+  
   <div class="g" style="grid-template-columns:${COLS_PAIR}">
     ${cell("Last Purchase Unit Cost")}${colon}${cell(fixed(g.lastPurUnitCost, 4))}
     <div></div><div></div><div></div>

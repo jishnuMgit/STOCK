@@ -5,7 +5,7 @@ import {
   getStaffList,
   haveStaffTrans,
   saveStaff,
-} from "../../../controller/Purchase/Setup/StaffPageController.js";
+} from "../../../controller/Purchase/Setup/StaffController.js";
 
 const router = express.Router();
 

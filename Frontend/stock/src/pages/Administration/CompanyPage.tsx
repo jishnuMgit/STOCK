@@ -78,6 +78,8 @@ const CompanyPage: React.FC = () => {
   // Purchase Expense Group options are loaded from the database
   const [purchaseExpenseGroupOptions, setPurchaseExpenseGroupOptions] =
     useState<Option[]>([]);
+  const [yearClosingMethodOptions, setYearClosingMethodOptions] =
+    useState<Option[]>([]);
 
   // empty = new record, filled = editing an existing record
   const [originalCoID, setOriginalCoID] = useState("");
@@ -90,12 +92,6 @@ const CompanyPage: React.FC = () => {
   const bg2ARAPOptions: Option[] = [
     { value: "Yes", label: "Yes" },
     { value: "No", label: "No" },
-  ];
-
-  const yearClosingMethodOptions: Option[] = [
-    { value: "", label: "" },
-    { value: "M", label: "Monthly" },
-    { value: "Y", label: "Yearly" },
   ];
 
   // ============================================================
@@ -373,6 +369,43 @@ const CompanyPage: React.FC = () => {
     };
 
     loadPurchaseGroups();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  useEffect(() => {
+    let cancelled = false;
+    const PstrCoID = localStorage.getItem("PstrCoID") ?? "";
+
+    if (!PstrCoID) {
+      return;
+    }
+
+    const loadYearClosingMethods = async () => {
+      try {
+        const res = await fetch(
+          `${API}/year-closing-methods?PstrCoID=${encodeURIComponent(PstrCoID)}`,
+        );
+        const data = await res.json();
+        if (!res.ok || !data.success) {
+          toast.error(data.message || "Failed to load year closing methods");
+          return;
+        }
+        if (cancelled) return;
+
+        setYearClosingMethodOptions(
+          data.methods.map((method: { value: string; label: string }) => ({
+            value: method.value,
+            label: method.label,
+          })),
+        );
+      } catch {
+        if (!cancelled) toast.error("Failed to load year closing methods");
+      }
+    };
+
+    loadYearClosingMethods();
     return () => {
       cancelled = true;
     };

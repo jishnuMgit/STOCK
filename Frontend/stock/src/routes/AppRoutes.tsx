@@ -17,6 +17,7 @@ import PurchaseExpense from "../components/Transaction/PurchaseInvoice/PurchaseI
 import SalesInvoice from "../pages/Sales/Transaction/SalesInvoicePage";
 import StockTransfer from "../pages/Sales/Transaction/stock/StockTransferPage";
 import StockTransferPrint from "../pages/Sales/Transaction/stock/StockTransferPrintPage";
+import StockAdjustmentPrint from "../pages/Sales/Transaction/stock/StockAdjustmentPrintPage";
 import BeginningBalance from "../pages/Finance/Transaction/BeginningBalance/BeginningBalance";
 import ItemGroupPage from "../pages/Purchase/Setup/ItemGroupPage";
 import CompanyPage from "../pages/Administration/CompanyPage";
@@ -80,6 +81,13 @@ import RptReceiptPaymentSumPage from "../pages/Finance/Report/ReceiptPaymentSum/
 import RptFinDocList from "../pages/Finance/Report/DocumentsList/RptFinDocList";
 import SalesPriceListPage from "../pages/Sales/Setup/SalesPriceListPage";
 import BeginningStockPrintPage from "../pages/Purchase/Transaction/BeginningStockPrintPage";
+import RptIncomeSumPage from "../pages/Finance/Report/IncomeSummary/RptIncomeSumPage";
+import RptDocumentExportPage from "../pages/Finance/Report/DocumentExportPage/RptDocumentExportPage";
+import SetReceivableAgeingPeriod from "../pages/Settings/SetReceivableAgeingPeriodPage";
+import SetDatabaseBackupPathPage from "../pages/Settings/SetDatabaseBackupPathPage";
+import ChangeLoginYear from "../pages/Settings/ChangeLoginYearPage";
+import FinanceYearClose from "../pages/Utility/FinanceYearClose";
+import YearCloseStatusPage from "../pages/Utility/YearCloseStatusPage";
 
 
 const Login = lazy(() => import("../pages/Auth/LoginPage"));
@@ -175,6 +183,8 @@ const AppRoutes = () => {
           <Route path="/Finance/Reports/RptExpenseSum" element={<RptExpenseSumPage/>}/>
           <Route path="/Finance/Reports/RptRVPVSum" element={<RptReceiptPaymentSumPage/>}/>
           <Route path="/Finance/Reports/RptFinDocList" element={<RptFinDocList/>}/>
+          <Route path="/Finance/Reports/RptIncomeSum" element={<RptIncomeSumPage/>}/>
+          <Route path="/Finance/Reports/RptDocumentExport" element={<RptDocumentExportPage/>}/>
 
           {/* ================= SALES - TRANSACTION ================= */}
 
@@ -182,6 +192,7 @@ const AppRoutes = () => {
           <Route path="/Sales/Transaction/StockAdjustment"  element={<StockAdjustmentPage/>} />
           <Route path="/Sales/Transaction/StockTransferPage" element={<StockTransfer />}/>
           <Route path="/Sales/Transaction/StockTransferPage/Print" element={<StockTransferPrint />}/>
+          <Route path="/Sales/Transaction/StockAdjustment/Print" element={<StockAdjustmentPrint />}/>
           <Route path="/Sales/Transaction/StockDocumentPost" element={<StockDocumentPost/>}/>
           <Route path="/Sales/Transaction/StockDocumentRePost" element={<StockDocumentRePost/>}/>
 
@@ -290,32 +301,17 @@ const AppRoutes = () => {
 
           <Route path="/Settings/SetCompanyInfo" element={<SetCompanyInfo />} />
           <Route path="/Settings/SetBranchInfo" element={<SetBranchInfo />} />
-          <Route
-            path="/Settings/SetChartOfAccount"
-            element={<SetChartOfAccount />}
-          />
-          <Route
-            path="/Setting/SetDefaultBranch"
-            element={<SetDefaultBranch />}
-          />
-          <Route
-            path="/Setting/SetActivePeriod"
-            element={<SetActivePeriod />}
-          />
-
+          <Route path="/Settings/SetChartOfAccount" element={<SetChartOfAccount />} />
+          <Route path="/Setting/SetDefaultBranch" element={<SetDefaultBranch />} />
+          <Route path="/Setting/SetActivePeriod" element={<SetActivePeriod />} />
           {/* the screen's earlier address - kept so old bookmarks still open it */}
-          <Route
-            path="/Settings/ChartOfAccountSettings"
-            element={<Navigate to="/Settings/SetChartOfAccount" replace />}
-          />
-          <Route
-            path="/Settings/SetPostingAccount"
-            element={<SetPostingAccountPage />}
-          />
-          <Route
-            path="/Setting/SetActivePeriod"
-            element={<ActivePeriodPage />}
-          />
+          {/* <Route path="/Settings/ChartOfAccountSettings" element={<Navigate to="/Settings/SetChartOfAccount" replace />}
+          /> */}
+          <Route path="/Settings/SetPostingAccount" element={<SetPostingAccountPage />}/>
+          <Route path="/Setting/SetActivePeriod"  element={<ActivePeriodPage />}   />
+          <Route path="/Setting/SetDrAgeingPeriod" element={<SetReceivableAgeingPeriod/>}/>
+          <Route path="/Setting/SetDatabaseBackupPath" element={<SetDatabaseBackupPathPage/>}/>
+          <Route path="/Setting/ChangeLoginYear" element={<ChangeLoginYear/>}/>
 
           {/* ================= DOCUMENT NUMBER ================= */}
 
@@ -343,6 +339,12 @@ const AppRoutes = () => {
             path="/Security/UserTransactionAudit"
             element={<UserTransactionAudit />}
           />
+    {/* ================= Utility ================= */}
+
+
+
+          <Route path="/Utility/FinYearClose" element={<FinanceYearClose/>}/>
+          <Route path="/Utility/YearCloseStatus" element={<YearCloseStatusPage/>}/>
 
           {/* ================= ADMINISTRATION ================= */}
 

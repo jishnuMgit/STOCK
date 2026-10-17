@@ -1,6 +1,6 @@
 
 import React from "react";
-import { handleKeyboardAction } from "../../../hooks/useMatchKeyboard";
+// import { handleKeyboardAction } from "../../../hooks/useMatchKeyboard";
 
 interface MatchFooterProps {
   noteRef: React.RefObject<HTMLInputElement | null>;
@@ -29,9 +29,9 @@ interface MatchFooterProps {
 }
 
 const MatchEnquiryFooter: React.FC<MatchFooterProps> = ({
-  noteRef,
-  focusSave,
-  documentAmount,
+  // noteRef,
+  // focusSave,
+  // documentAmount,
   totalMatchAmount,
   balance,
   buttons,

@@ -13,10 +13,10 @@ import SetDefaultBranchRouter from "./SettingRoutes/SetDefaultBranchRouter.js";
 import SetActivePeriodRouter from "./SettingRoutes/SetActivePeriodRouter.js";
 import customerRouter from "./CustomerRoute.js";
 import menuRoutes from "./MenuRoute.js";
-import ItemPageRouter from "./Purchase/Setup/ItemPageRouter.js";
-import ItemGroupPageRouter from "./Purchase/Setup/ItemGroupPageRouter.js";
-import UnitPageRouter from "./Purchase/Setup/UnitPageRouter.js";
-import StaffPageRouter from "./Purchase/Setup/StaffPageRouter.js";
+import ItemRouter from "./Purchase/Setup/ItemRouter.js";
+import ItemGroupRouter from "./Purchase/Setup/ItemGroupRouter.js";
+import UnitRouter from "./Purchase/Setup/UnitRouter.js";
+import StaffRouter from "./Purchase/Setup/StaffRouter.js";
 import UserLoginRouter from "./SecurityRoutes/UserLoginRouter.js";
 import UserAuditRouter from "./SecurityRoutes/UserAuditRouter.js";
 import userpermission from "./SecurityRoutes/UserPermissionMenuRouter.js";
@@ -24,16 +24,19 @@ import userpermissionBranch from "./SecurityRoutes/UserPermissionBranchRouter.js
 import purchaseInvoiceRouter from "./Purchase/Transaction/PurchaseInvoiceRouter.js";
 import BeginningStockRouter from "./Purchase/Transaction/BeginningStockRouter.js";
 import ItemEnquiryRouter from "./Sales/Setup/ItemEnquiryRouter.js";
+import SalesPriceListRouter from "./Sales/Setup/SalesPriceListRouter.js";
 import StockTransferRouter from "./Sales/Transaction/StockTransferRouter.js";
+import StockAdjustmentRouter from "./Sales/Transaction/StockAdjustmentRouter.js";
 import branchRouter from "./common/BranchRouter.js";
 import chartOfAccountRouter from "./Finance/Setup/COARouter.js";
 import CostCenterRouter from "./Finance/Setup/CostCenterRouter.js";
 import InactivateAccountRouter from "./Finance/Setup/InactivateAccountRouter.js";
 import CustomerSupplierCountryRouter from "./Finance/Setup/CustomerSupplierCountryRouter.js";
-import CurrencyRouter from "./Purchase/Setup/CurrencyPageRouter.js";
-import supplierRouter from "./common/SupplierRouter.js";import RptCOARouter from "./Finance/Report/RptChartOfAccountRouter.js" 
+import CurrencyRouter from "./Purchase/Setup/CurrencyRouter.js";
+import supplierRouter from "./common/SupplierRouter.js"; import RptCOARouter from "./Finance/Report/RptChartOfAccountRouter.js"
 import RptCustomerListRouter from "./Finance/Report/RptCustomerListRouter.js"
 import RptItemHistoryRouter from "./Purchase/Report/RptItemHistoryRouter.js"
+import RptItemListRouter from "./Purchase/Report/RptItemListRouter.js"
 
 
 const router = express.Router();
@@ -51,10 +54,10 @@ router.use("/SetChartOfAccount", SetChartOfAccountRouter);
 router.use("/DefaultBranch", SetDefaultBranchRouter);
 router.use("/ActivePeriod", SetActivePeriodRouter);
 router.use("/menu", menuRoutes);
-router.use("/Item", ItemPageRouter);
-router.use("/ItemGroup", ItemGroupPageRouter);
-router.use("/Unit", UnitPageRouter);
-router.use("/Staff", StaffPageRouter);
+router.use("/Item", ItemRouter);
+router.use("/ItemGroup", ItemGroupRouter);
+router.use("/Unit", UnitRouter);
+router.use("/Staff", StaffRouter);
 router.use("/customer", customerRouter);
 router.use("/UserLogin", UserLoginRouter);
 router.use("/UserAudit", UserAuditRouter);
@@ -63,7 +66,9 @@ router.use("/user-permission-branch", userpermissionBranch);
 router.use("/purchase-invoice", purchaseInvoiceRouter);
 router.use("/BeginningStock", BeginningStockRouter);
 router.use("/ItemEnquiry", ItemEnquiryRouter);
+router.use("/SalesPriceList", SalesPriceListRouter);
 router.use("/StockTransfer", StockTransferRouter);
+router.use("/StockAdjustment", StockAdjustmentRouter);
 router.use("/branch", branchRouter);
 router.use("/coa", chartOfAccountRouter);
 router.use("/CostCenter", CostCenterRouter);
@@ -72,7 +77,8 @@ router.use("/CustomerSupplierCountry", CustomerSupplierCountryRouter);
 router.use("/Currency", CurrencyRouter);
 router.use("/supplier", supplierRouter);
 router.use("/RptChartOfAccount", RptCOARouter);
-router.use("/RptCustomerList",  RptCustomerListRouter);
+router.use("/RptCustomerList", RptCustomerListRouter);
 router.use("/RptItemHistory", RptItemHistoryRouter);
+router.use("/RptItemList", RptItemListRouter);
 
 export default router;
