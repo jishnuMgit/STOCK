@@ -452,3 +452,19 @@ export const supplierLookupKeys = {
   fcsaccountid: "supplierID",
   fcsaccountname: "supplierName",
 };
+
+/* ---------- Sales / Setup / SalesPriceList ---------- */
+
+export const salesPriceListItemGroupKeys: KeyMap = {
+  fitemgroupid: "lkpItemGroupID",
+  fitemgroupname: "lkpItemGroupName",
+};
+
+export const salesPriceListGridKeys: KeyMap = {
+  fitemid: "lkpItemID",
+  fitemname: "txtItemName",
+  funit: "txtUnit",
+  funitcost: "txtUnitCost",
+  funitprice: "txtUnitPrice",
+  fitemgroupid: "lkpItemGroupID",
+};
