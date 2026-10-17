@@ -198,6 +198,9 @@ Sales-REPORT
 
   mnuFinYearClose:"/Utility/FinYearClose",
   mnuYearCloseStatus:"/Utility/YearCloseStatus",
+  mnuRptVerifyDocAccuracy:"/Utility/RptVerifyDocAccuracy",
+  mnuRptDocsAfterYearClose:"/Utility/RptDocsAfterYearClose",
+  mnuDatabaseBackup:"/Utility/DatabaseBackup",
 
   /* =========================================================
      ADMINISTRATION
@@ -207,6 +210,9 @@ Sales-REPORT
 
 mnuAdministration: "/Administration",
 mnuCompany: "/Administration/CompanyPage",
+mnuBranch:"/Administration/Branch",
+mnuYear:"/Administration/Year",
+mnuDocument:"/Administration/Document",
 };
 
 /* =========================================================
@@ -232,6 +238,27 @@ export const ADMINISTRATION_NODE: MenuNode = {
       fmenuid: "9901",
       fmenuname: "mnuCompany",
       fmenucaption: "Company",
+      fmenubuttons: "0",
+      children: [],
+    },
+    {
+      fmenuid: "9902",
+      fmenuname: "mnuBranch",
+      fmenucaption: "Branch",
+      fmenubuttons: "0",
+      children: [],
+    },
+     {
+      fmenuid: "9903",
+      fmenuname: "mnuYear",
+      fmenucaption: "Year",
+      fmenubuttons: "0",
+      children: [],
+    },
+     {
+      fmenuid: "9904",
+      fmenuname: "mnuDocument",
+      fmenucaption: "Document",
       fmenubuttons: "0",
       children: [],
     },

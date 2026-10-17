@@ -279,7 +279,7 @@ const RptTBPage: React.FC = () => {
             Trial Balance
           </header>
 
-          <section className="relative min-h-99.25 px-3.5 pb-5 pt-2.25">
+          <section className="relative min-h-89.25 px-3.5 pb-5 pt-2.25">
             {/* Branch selection */}
             <div className="grid grid-cols-[168px_220px] items-start gap-3">
               <RadioPanel className="relative mt-0 h-21 px-3.5 py-3">
@@ -315,50 +315,25 @@ const RptTBPage: React.FC = () => {
 
             {/* Date mode and report filters */}
             <div className="mt-2.5 grid grid-cols-[168px_1fr] items-start gap-4">
-              <RadioPanel className="relative h-20.5 px-3.5 py-3">
-                <div className="flex flex-col gap-3">
-                  <CustomRadio
-                    name="dateMode"
-                    value="As On Date"
-                    label="As On Date"
-                    checked={dateMode === "As On Date"}
-                    onChange={() => setDateMode("As On Date")}
-                  />
-                  <CustomRadio
-                    name="dateMode"
-                    value="For A Period"
-                    label="For A Period"
-                    checked={dateMode === "For A Period"}
-                    onChange={() => setDateMode("For A Period")}
-                  />
-                </div>
-              </RadioPanel>
+             <FieldLabel>Period :</FieldLabel>
 
-              <div className="pt-3">
-                <div className="relative flex items-center gap-2">
-                  <AppDatePicker
-                    id="dtpAsOnDate"
-                    label="As On Date"
-                    value={asOnDate}
-                    onChange={setAsOnDate}
-                    disabled={dateMode !== "As On Date"}
-                  />
-                </div>
+              <div className="">
+               
 
-                <div className="relative mt-1.75 flex items-center gap-2">
+                <div className="relative  flex items-center gap-2">
                   <AppDatePicker
                     id="dtpFromDate"
                     label="From Date"
                     value={fromDate}
                     onChange={setFromDate}
-                    disabled={dateMode !== "For A Period"}
+                    // disabled={dateMode !== "For A Period"}
                   />
                   <AppDatePicker
                     id="dtpToDate"
                     label="To Date"
                     value={toDate}
                     onChange={setToDate}
-                    disabled={dateMode !== "For A Period"}
+                    // disabled={dateMode !== "For A Period"}
                   />
                 </div>
               </div>
@@ -416,6 +391,13 @@ const RptTBPage: React.FC = () => {
             {/* Entry type */}
             <RadioPanel className="absolute right-3.5 top-51.25 h-28.75 w-45.75 px-3.5 py-3.25 max-[700px]:static max-[700px]:mt-3.5">
               <div className="flex flex-col gap-3">
+               <CustomRadio
+                  name="entryMode"
+                  value="Generated"
+                  label="Generated Entries"
+                  checked={entryMode === "Generated"}
+                  onChange={() => setEntryMode("Generated")}
+                />
                 <CustomRadio
                   name="entryMode"
                   value="Manual"
@@ -423,13 +405,7 @@ const RptTBPage: React.FC = () => {
                   checked={entryMode === "Manual"}
                   onChange={() => setEntryMode("Manual")}
                 />
-                <CustomRadio
-                  name="entryMode"
-                  value="Generated"
-                  label="Generated Entries"
-                  checked={entryMode === "Generated"}
-                  onChange={() => setEntryMode("Generated")}
-                />
+                
                 <CustomRadio
                   name="entryMode"
                   value="All"
