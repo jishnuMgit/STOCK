@@ -1,114 +1,50 @@
-import React, { useMemo, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
+import { toast } from "react-toastify";
 import SalesPriceListHeader from "../../../components/Setup/SalesPriceList/SalesPriceListHeader";
 import SalesPriceListTable from "../../../components/Setup/SalesPriceList/SalesPriceListTable";
 import SalesPriceListFooter from "../../../components/Setup/SalesPriceList/SalesPriceListFooter";
-import {type Option,type PriceRow, round2 } from "../../../components/Setup/SalesPriceList/SalesPriceListShared";
+import {
+  type Option,
+  type PriceRow,
+  round2,
+} from "../../../components/Setup/SalesPriceList/SalesPriceListShared";
+import type { PairOption } from "../../../components/PairSelect/pairSelectParts";
+import { useAltShortcuts } from "../../../hooks/useAltShortcuts";
+import { useButtonPermissions } from "../../../hooks/useButtonPermissions";
 
-/* Replace these with data from your API */
-const branchOptions: Option[] = [
-  { value: "OFFICE", label: "OFFICE" },
-  { value: "BRANCH 1", label: "BRANCH 1" },
-  { value: "BRANCH 2", label: "BRANCH 2" },
-];
-const groupIdOptions: Option[] = [
-  { value: "36", label: "36" },
-  { value: "37", label: "37" },
-];
-const groupNameOptions: Option[] = [
-  { value: "36", label: "PROJECTS" },
-  { value: "37", label: "ELECTRICAL" },
-];
+// ============================================================
+// SALES PRICE LIST (the old frmEditPriceList)
+//
+// Shows the items of a Branch (all item groups, or one) with the Unit Cost and the
+// Unit Price. The Unit Price can be typed in the grid (once "Apply to Unit Price"
+// is ticked), or made for every item as cost + cost x "Increase Price By %"
+// (One Item Group). Modify saves only the items whose price changed - in this
+// branch, or in all branches ("Apply To All Branches").
+//
+// Names follow the rule: state = element id/name = payload key = response key
+// (lkpBranch, rdgItemGroup, lkpItemGroupID, txtIncreasePercent, chkApplyUnitPrice,
+// lkpItemID, txtUnitPrice ...).
+// ============================================================
 
-/* Sample items. Replace with an API call that uses the branch and item group. */
-const buildSampleRows = (): PriceRow[] => {
-const sample: [string, string, string, string, number, number][] = [
-  // Group 36 — 25 items
-  ["36", "ACCSS-COPPER-WIRE", "Copper Wire 4mm 100m Roll", "ROL.", 45, 55],
-  ["36", "ACCSS-DRAIN-PIPE", "PVC Drain Pipe 1/2 Inch", "PCS.", 8, 12],
-  ["36", "ACCSS-INSULATION-3/4", "Rubber Insulation Tube 3/4 Inch", "MTR.", 15, 20],
-  ["36", "ACCSS-CABLE-TIE", "Nylon Cable Tie 200mm Pack", "PKT.", 5, 8],
-  ["36", "ACCSS-AC-FILTER", "Air Conditioner Filter Mesh", "NOS.", 10, 15],
-  ["36", "ACCSS-SCREW-25MM", "Self Tapping Screw 25mm", "BOX.", 6, 9],
-  ["36", "ACCSS-AC-BRACKET", "Outdoor AC Mounting Bracket", "SET.", 38, 48],
-  ["36", "ACCSS-FOAM-TAPE", "Self Adhesive Foam Tape 10m", "ROL.", 7, 11],
-  ["36", "ACCSS-PVC-TAPE", "PVC Electrical Insulation Tape", "ROL.", 2, 4],
-  ["36", "ACCSS-COPPER-PIPE", "Copper Pipe 1/4 Inch", "MTR.", 18, 25],
-  ["36", "ACCSS-AC-CAPACITOR", "AC Capacitor 35UF 450V", "NOS.", 12, 18],
-  ["36", "ACCSS-DRAIN-HOSE", "Flexible AC Drain Hose", "MTR.", 4, 7],
-  ["36", "ACCSS-THERMAL-PASTE", "Thermal Paste Compound 50g", "NOS.", 6, 10],
-  ["36", "ACCSS-INSULATION-1IN", "Rubber Insulation Tube 1 Inch", "MTR.", 20, 27],
-  ["36", "ACCSS-AC-REMOTE", "Universal AC Remote Control", "NOS.", 15, 22],
-  ["36", "ACCSS-CABLE-CLIP", "Round Cable Clip 10mm", "PKT.", 3, 5],
-  ["36", "ACCSS-WALL-PLUG", "Plastic Wall Plug 8mm", "PKT.", 4, 6],
-  ["36", "ACCSS-COPPER-ELBOW", "Copper Pipe Elbow Connector", "NOS.", 5, 8],
-  ["36", "ACCSS-AC-SENSOR", "Air Conditioner Temperature Sensor", "NOS.", 9, 14],
-  ["36", "ACCSS-ALU-TAPE", "Aluminium Foil Tape 50mm", "ROL.", 8, 12],
-  ["36", "ACCSS-PIPE-CLAMP", "Metal Pipe Clamp 1/2 Inch", "NOS.", 2, 4],
-  ["36", "ACCSS-DRAIN-PUMP", "Mini AC Drain Water Pump", "NOS.", 55, 70],
-  ["36", "ACCSS-AC-CONTACTOR", "AC Contactor 25A", "NOS.", 22, 30],
-  ["36", "ACCSS-CLEANER", "AC Coil Cleaning Spray 500ml", "NOS.", 8, 13],
-  ["36", "ACCSS-COPPER-TEE", "Copper Pipe Tee Connector", "NOS.", 7, 11],
+// tblmenu: 020202 = mnuSalesPriceList ("Sales Price List", its only button is M)
+const MENU_ID = "020202";
 
-  // Group 37 — 25 items
-  ["37", "ELEC-MCB-32A", "Miniature Circuit Breaker 32A", "NOS.", 18.5, 22],
-  ["37", "ELEC-SOCKET-13A", "13A Universal Wall Socket", "NOS.", 12, 16],
-  ["37", "ELEC-LED-18W", "LED Panel Light 18W White", "NOS.", 22, 28],
-  ["37", "ELEC-WIRE-1.5MM", "Single Core Copper Wire 1.5mm", "ROL.", 35, 42],
-  ["37", "ELEC-SWITCH-2G", "Two Gang Light Switch 10A", "NOS.", 8.5, 12],
-  ["37", "ELEC-EXTENSION-5M", "Extension Cable 5 Metre", "NOS.", 25, 32],
-  ["37", "ELEC-MCB-16A", "Miniature Circuit Breaker 16A", "NOS.", 14, 18],
-  ["37", "ELEC-DB-12WAY", "Distribution Board 12 Way", "NOS.", 65, 85],
-  ["37", "ELEC-LED-9W", "LED Bulb 9W Cool White", "NOS.", 4, 7],
-  ["37", "ELEC-PLUG-13A", "13A Three Pin Power Plug", "NOS.", 5, 8],
-  ["37", "ELEC-FAN-CEILING", "Ceiling Fan 1200mm", "NOS.", 75, 95],
-  ["37", "ELEC-CONDUIT-20MM", "PVC Electrical Conduit 20mm", "PCS.", 3, 5],
-  ["37", "ELEC-CHANGEOVER", "Manual Changeover Switch 63A", "NOS.", 45, 60],
-  ["37", "ELEC-ISOLATOR-40A", "Double Pole Isolator 40A", "NOS.", 18, 25],
-  ["37", "ELEC-RELAY-12V", "Electromagnetic Relay 12V", "NOS.", 7, 12],
-  ["37", "ELEC-TERMINAL-BLOCK", "Electrical Terminal Block 12 Way", "NOS.", 6, 10],
-  ["37", "ELEC-FUSE-10A", "Cartridge Fuse 10A", "NOS.", 2, 4],
-  ["37", "ELEC-INDICATOR-RED", "Panel Indicator Lamp Red", "NOS.", 3, 6],
-  ["37", "ELEC-CABLE-GLAND", "Cable Gland 20mm", "NOS.", 2.5, 5],
-  ["37", "ELEC-USB-SOCKET", "Dual USB Wall Socket", "NOS.", 18, 25],
-  ["37", "ELEC-TIMER-SWITCH", "Digital Programmable Timer", "NOS.", 28, 38],
-  ["37", "ELEC-POWER-CONTACTOR", "Power Contactor 32A", "NOS.", 25, 35],
-  // Group 38 — 25 items
-  ["38", "PLMB-ELBOW-25MM", "PVC Elbow 25mm White", "NOS.", 2.5, 4],
-  ["38", "PLMB-VALVE-1IN", "Brass Ball Valve 1 Inch", "NOS.", 32, 40],
-  ["38", "PLMB-TEE-32MM", "PVC Tee Connector 32mm", "NOS.", 3, 5],
-  ["38", "PLMB-FLEX-HOSE", "Flexible Water Hose 60cm", "NOS.", 9, 14],
-  ["38", "PLMB-CPVC-PIPE", "CPVC Pipe 20mm 3m", "PCS.", 14, 19],
-  ["38", "PLMB-STOP-COCK", "Brass Stop Cock 1/2 Inch", "NOS.", 16, 23],
-  ["38", "PLMB-ELBOW-20MM", "CPVC Elbow 20mm", "NOS.", 2, 4],
-  ["38", "PLMB-TEE-20MM", "CPVC Tee Connector 20mm", "NOS.", 2.5, 4],
-  ["38", "PLMB-REDUCER-32-20", "PVC Reducer 32mm to 20mm", "NOS.", 3, 5],
-  ["38", "PLMB-BALL-VALVE-1/2", "Brass Ball Valve 1/2 Inch", "NOS.", 12, 18],
-  ["38", "PLMB-WASTE-COUPLING", "Wash Basin Waste Coupling", "NOS.", 8, 13],
-  ["38", "PLMB-SINK-TRAP", "PVC Kitchen Sink Bottle Trap", "NOS.", 10, 16],
-  ["38", "PLMB-SHOWER-HEAD", "Handheld Shower Head", "NOS.", 12, 20],
-  ["38", "PLMB-ANGLE-VALVE", "Chrome Angle Valve 1/2 Inch", "NOS.", 9, 15],
-  ["38", "PLMB-BIB-COCK", "Brass Bib Cock 1/2 Inch", "NOS.", 11, 17],
-  ["38", "PLMB-PILLAR-COCK", "Chrome Pillar Cock", "NOS.", 25, 38],
-  ["38", "PLMB-FLUSH-VALVE", "Toilet Flush Valve", "NOS.", 18, 28],
-  ["38", "PLMB-FLOAT-VALVE", "Water Tank Float Valve", "NOS.", 10, 16],
-  ["38", "PLMB-PPR-PIPE-25", "PPR Pipe 25mm 4m", "PCS.", 18, 25],
-  ["38", "PLMB-UNION-25MM", "PVC Union Connector 25mm", "NOS.", 4, 7],
-  ["38", "PLMB-SOLVENT-500ML", "PVC Solvent Cement 500ml", "TIN.", 8, 12],
-  ["38", "PLMB-PTFE-TAPE", "PTFE Thread Seal Tape", "ROL.", 1, 2],
-  ["38", "PLMB-CLAMP-32MM", "Pipe Clamp 32mm", "NOS.", 2, 4],
-  ["38", "PLMB-FLOOR-DRAIN", "Stainless Steel Floor Drain", "NOS.", 12, 20],
-  ["38", "PLMB-WATER-HAMMER", "Water Hammer Arrestor", "NOS.", 22, 32],
-];
-  return sample.map(([groupId, itemId, itemName, unit, unitCost, price]) => ({
-    id: itemId,
-    groupId,
-    itemId,
-    itemName,
-    unit,
-    unitCost,
-    basePrice: price,
-    unitPrice: price,
-  }));
+const api = import.meta.env.VITE_API_URL;
+
+interface ItemGroup {
+  lkpItemGroupID: string;
+  lkpItemGroupName: string;
+}
+
+// the server names the field by its element id / name
+const focusField = (field?: string) => {
+  if (!field) return;
+
+  const element =
+    document.getElementById(field) ??
+    document.querySelector<HTMLElement>(`[name="${field}"]`);
+
+  element?.focus();
 };
 
 type SalesPriceListPageProps = {
@@ -116,102 +52,391 @@ type SalesPriceListPageProps = {
 };
 
 const SalesPriceListPage: React.FC<SalesPriceListPageProps> = ({ onClose }) => {
-  const [branch, setBranch] = useState<Option | null>(branchOptions[0]); // lkpBranch
-  const [applyAllBranches, setApplyAllBranches] = useState(false); // chkApplyToAllBranches
+  const perms = useButtonPermissions(MENU_ID);
 
-  const [groupMode, setGroupMode] = useState("One Item Group"); // optItemGroup
-  const [groupId, setGroupId] = useState<string | null>(groupIdOptions[0].value); // lkpItemGroupID / lkpItemGroupName
+  const [branchOptions, setBranchOptions] = useState<Option[]>([]);
+  const [lkpBranch, setLkpBranch] = useState<Option | null>(null);
+  const [chkApplyToAllBranches, setChkApplyToAllBranches] = useState(false);
 
-  const [percent, setPercent] = useState("0.00"); // txtIncreasePercent
-  const [applyPercent, setApplyPercent] = useState(false); // chkApplyUnitPrice
+  const [itemGroups, setItemGroups] = useState<ItemGroup[]>([]);
+  // the old form opened on All Item Group (1), where the prices can be typed at once
+  const [rdgItemGroup, setRdgItemGroup] = useState(1);
+  const [lkpItemGroupID, setLkpItemGroupID] = useState("");
 
-  const [showFind, setShowFind] = useState(false);
-  const [query, setQuery] = useState("");
+  const [txtIncreasePercent, setTxtIncreasePercent] = useState("0.00");
+  const [chkApplyUnitPrice, setChkApplyUnitPrice] = useState(true);
 
-  const [rows, setRows] = useState<PriceRow[]>(buildSampleRows);
-  const [activeId, setActiveId] = useState<string | null>(rows[0]?.id ?? null);
+  const [chkFindOpen, setChkFindOpen] = useState(false);
+  const [txtFind, setTxtFind] = useState("");
 
-  // rows shown in the grid (item group filter + find)
-  const visibleRows = useMemo(() => {
-    const search = query.trim().toLowerCase();
-    return rows.filter((row) => {
-      if (groupMode === "One Item Group" && row.groupId !== groupId) return false;
-      if (
-        search &&
-        !row.itemId.toLowerCase().includes(search) &&
-        !row.itemName.toLowerCase().includes(search)
-      ) {
-        return false;
+  const [rows, setRows] = useState<PriceRow[]>([]);
+  const [activeId, setActiveId] = useState<string | null>(null);
+  const [saving, setSaving] = useState(false);
+
+  // bumped by Cancel and after a Modify so the grid is loaded again
+  const [reloadKey, setReloadKey] = useState(0);
+
+  // only the answer of the latest request may fill the grid
+  const gridRequest = useRef(0);
+
+  // ----------------------------------------------------------
+  // LISTS: the branches of the user, the item groups
+  // ----------------------------------------------------------
+
+  useEffect(() => {
+    const loadBranches = async () => {
+      try {
+        const PstrCoID = localStorage.getItem("PstrCoID");
+
+        if (!PstrCoID) {
+          toast.error("getBranchList: no PstrCoID in localStorage");
+          return;
+        }
+
+        const response = await fetch(
+          `${api}/SalesPriceList/getBranchList?PstrCoID=${PstrCoID}`,
+          { credentials: "include" },
+        );
+
+        const result = await response.json();
+
+        if (!response.ok || !result.success) {
+          toast.error(`getBranchList failed: ${result.message}`);
+          return;
+        }
+
+        const options: Option[] = (result.data || []).map(
+          (row: { lkpBranch: string; txtBranchName: string }) => ({
+            value: row.lkpBranch,
+            label: row.txtBranchName,
+          }),
+        );
+
+        setBranchOptions(options);
+        setLkpBranch(
+          options.find((option) => option.value === result.lkpDefaultBranch) ??
+            null,
+        );
+      } catch (error: unknown) {
+        console.error("getBranchList error:", error);
+        toast.error("Failed to load branch list");
       }
-      return true;
-    });
-  }, [rows, groupMode, groupId, query]);
+    };
 
-  const modifiedCount = rows.filter((r) => r.unitPrice !== r.basePrice).length;
+    const loadItemGroups = async () => {
+      try {
+        const PstrCoID = localStorage.getItem("PstrCoID");
 
-  // set every unit price to base price + the given percent
-  const applyIncrease = (pctText: string) => {
-    const pct = parseFloat(pctText);
-    const factor = 1 + (Number.isFinite(pct) ? pct : 0) / 100;
-    setRows((prev) =>
-      prev.map((row) =>
-        visibleRows.some((v) => v.id === row.id)
-          ? { ...row, unitPrice: round2(row.basePrice * factor) }
-          : row,
+        if (!PstrCoID) return;
+
+        const response = await fetch(
+          `${api}/SalesPriceList/getItemGroupList?PstrCoID=${PstrCoID}`,
+          { credentials: "include" },
+        );
+
+        const result = await response.json();
+
+        if (!response.ok || !result.success) {
+          toast.error(`getItemGroupList failed: ${result.message}`);
+          return;
+        }
+
+        setItemGroups(result.data || []);
+      } catch (error: unknown) {
+        console.error("getItemGroupList error:", error);
+        toast.error("Failed to load item group list");
+      }
+    };
+
+    loadBranches();
+    loadItemGroups();
+  }, []);
+
+  // ----------------------------------------------------------
+  // THE GRID: loaded again when the Branch, One / All Item Group or the Item
+  // Group changes (as the old getData), and after Cancel / Modify. Unsaved
+  // prices are dropped by that, like the old form.
+  // ----------------------------------------------------------
+
+  useEffect(() => {
+    const requestNo = ++gridRequest.current;
+
+    const loadGrid = async () => {
+      // nothing to ask for until a branch (and, for One Item Group, a group)
+      if (!lkpBranch || (rdgItemGroup === 0 && lkpItemGroupID === "")) {
+        setRows([]);
+        setActiveId(null);
+        return;
+      }
+
+      try {
+        const PstrCoID = localStorage.getItem("PstrCoID");
+        const PstrYear = localStorage.getItem("PstrYear");
+
+        if (!PstrCoID || !PstrYear) {
+          toast.error("getSalesPriceList: no PstrCoID / PstrYear in localStorage");
+          return;
+        }
+
+        const params = new URLSearchParams({
+          PstrCoID,
+          PstrYear,
+          lkpBranch: lkpBranch.value,
+          rdgItemGroup: String(rdgItemGroup),
+          lkpItemGroupID: rdgItemGroup === 0 ? lkpItemGroupID : "",
+        });
+
+        const response = await fetch(
+          `${api}/SalesPriceList/getSalesPriceList?${params.toString()}`,
+          { credentials: "include" },
+        );
+
+        const result = await response.json();
+
+        if (requestNo !== gridRequest.current) return;
+
+        if (!response.ok || !result.success) {
+          toast.error(`getSalesPriceList failed: ${result.message}`);
+          setRows([]);
+          return;
+        }
+
+        const loaded: PriceRow[] = (result.data || []).map(
+          (row: {
+            lkpItemID: string;
+            txtItemName: string | null;
+            txtUnit: string | null;
+            txtUnitCost: string | number;
+            txtUnitPrice: string | number;
+            lkpItemGroupID: string | null;
+          }) => ({
+            lkpItemID: row.lkpItemID,
+            txtItemName: row.txtItemName ?? "",
+            txtUnit: row.txtUnit ?? "",
+            txtUnitCost: Number(row.txtUnitCost) || 0,
+            txtUnitPrice: Number(row.txtUnitPrice) || 0,
+            txtOriginalUnitPrice: Number(row.txtUnitPrice) || 0,
+            lkpItemGroupID: row.lkpItemGroupID ?? "",
+          }),
+        );
+
+        setRows(loaded);
+        setActiveId(loaded[0]?.lkpItemID ?? null);
+      } catch (error: unknown) {
+        if (requestNo !== gridRequest.current) return;
+
+        console.error("getSalesPriceList error:", error);
+        toast.error("Failed to load the Sales Price List");
+      }
+    };
+
+    loadGrid();
+  }, [lkpBranch, rdgItemGroup, lkpItemGroupID, reloadKey]);
+
+  // ----------------------------------------------------------
+  // WHAT THE BOXES SHOW
+  // ----------------------------------------------------------
+
+  const groupIdOptions = useMemo<PairOption[]>(
+    () =>
+      itemGroups.map((group) => ({
+        value: group.lkpItemGroupID,
+        label: group.lkpItemGroupID,
+        id: group.lkpItemGroupID,
+        name: group.lkpItemGroupName,
+      })),
+    [itemGroups],
+  );
+
+  const groupNameOptions = useMemo<PairOption[]>(
+    () =>
+      [...itemGroups]
+        .sort((a, b) => a.lkpItemGroupName.localeCompare(b.lkpItemGroupName))
+        .map((group) => ({
+          value: group.lkpItemGroupID,
+          label: group.lkpItemGroupName,
+          id: group.lkpItemGroupID,
+          name: group.lkpItemGroupName,
+        })),
+    [itemGroups],
+  );
+
+  // rows shown in the grid (the Find box filters what is loaded)
+  const visibleRows = useMemo(() => {
+    const search = txtFind.trim().toLowerCase();
+
+    if (!search) return rows;
+
+    return rows.filter(
+      (row) =>
+        row.lkpItemID.toLowerCase().includes(search) ||
+        row.txtItemName.toLowerCase().includes(search),
+    );
+  }, [rows, txtFind]);
+
+  const changedRows = rows.filter(
+    (row) => row.txtUnitPrice !== row.txtOriginalUnitPrice,
+  );
+
+  // ----------------------------------------------------------
+  // ONE / ALL ITEM GROUP, ITEM GROUP, BRANCH
+  // ----------------------------------------------------------
+
+  // the old rdgItemGroup_SelectedIndexChanged: All Item Group ticks "Apply to
+  // Unit Price" (prices typed at once), One Item Group unticks it and zeroes the %
+  const handleRdgItemGroupChange = (value: number) => {
+    setRdgItemGroup(value);
+    setTxtIncreasePercent("0.00");
+    setChkApplyUnitPrice(value === 1);
+    setChkFindOpen(false);
+    setTxtFind("");
+  };
+
+  // ----------------------------------------------------------
+  // PRICES
+  // ----------------------------------------------------------
+
+  // every price = cost + cost x % / 100 (the old setSellingPrices: on the COST)
+  const applyIncrease = (percentText: string) => {
+    const percent = parseFloat(percentText);
+    const factor = Number.isFinite(percent) ? percent : 0;
+
+    setRows((previous) =>
+      previous.map((row) => ({
+        ...row,
+        txtUnitPrice: round2(row.txtUnitCost + (row.txtUnitCost * factor) / 100),
+      })),
+    );
+  };
+
+  const handlePercentCommit = () => {
+    const parsed = parseFloat(txtIncreasePercent);
+
+    setTxtIncreasePercent(Number.isFinite(parsed) ? parsed.toFixed(2) : "0.00");
+
+    if (chkApplyUnitPrice && rows.length > 0) applyIncrease(txtIncreasePercent);
+  };
+
+  const handlePriceChange = (lkpItemID: string, value: number) => {
+    const row = rows.find((entry) => entry.lkpItemID === lkpItemID);
+
+    // the old only told the user - it did not stop the price
+    if (row && value !== row.txtUnitPrice && value < row.txtUnitCost) {
+      toast.info("'Unit Price' is less than 'Unit Cost'");
+    }
+
+    setRows((previous) =>
+      previous.map((entry) =>
+        entry.lkpItemID === lkpItemID
+          ? { ...entry, txtUnitPrice: value }
+          : entry,
       ),
     );
   };
 
-  const handleApplyPercentChange = (checked: boolean) => {
-    setApplyPercent(checked);
-    if (checked) applyIncrease(percent);
-  };
+  // ----------------------------------------------------------
+  // CANCEL / FIND / CLOSE
+  // ----------------------------------------------------------
 
-  const handlePercentCommit = () => {
-    const parsed = parseFloat(percent);
-    setPercent(Number.isFinite(parsed) ? parsed.toFixed(2) : "0.00");
-    if (applyPercent) applyIncrease(percent);
-  };
-
-  const handlePriceChange = (id: string, value: number) => {
-    setRows((prev) =>
-      prev.map((row) => (row.id === id ? { ...row, unitPrice: value } : row)),
-    );
-  };
-
-  const handleModify = () => {
-    const changed = rows.filter((r) => r.unitPrice !== r.basePrice);
-    console.log({
-      branch,
-      applyToAllBranches: applyAllBranches,
-      items: changed.map((r) => ({ itemId: r.itemId, unitPrice: r.unitPrice })),
-    });
-    // after a successful API call, treat the new prices as the saved prices
-    setRows((prev) => prev.map((row) => ({ ...row, basePrice: row.unitPrice })));
+  // the old ClearMe: the % and ticks back to their start, the grid loaded again
+  const handleCancel = () => {
+    setTxtIncreasePercent("0.00");
+    setChkApplyUnitPrice(rdgItemGroup === 1);
+    setChkApplyToAllBranches(false);
+    setChkFindOpen(false);
+    setTxtFind("");
+    setReloadKey((previous) => previous + 1);
   };
 
   const handleFind = () => {
-    setShowFind((prev) => !prev);
-    setQuery("");
-  };
-
-  const handleCancel = () => {
-    // drop all unsaved price edits
-    setRows((prev) => prev.map((row) => ({ ...row, unitPrice: row.basePrice })));
-    setPercent("0.00");
-    setApplyPercent(false);
-    setShowFind(false);
-    setQuery("");
+    setChkFindOpen((previous) => !previous);
+    setTxtFind("");
   };
 
   const handleClose = () => {
-    handleCancel();
-    setBranch(branchOptions[0]);
-    setApplyAllBranches(false);
-    setGroupMode("One Item Group");
-    setGroupId(groupIdOptions[0].value);
-    onClose?.();
+    if (onClose) onClose();
+    else window.history.back();
   };
+
+  // ----------------------------------------------------------
+  // MODIFY (the old cmdSave_Click): the server checks everything again, and the
+  // right to Modify
+  // ----------------------------------------------------------
+
+  const handleModify = async () => {
+    if (saving || !perms.modify) return;
+
+    if (!lkpBranch) {
+      toast.info("Please Select 'Branch'");
+      focusField("lkpBranch");
+      return;
+    }
+
+    if (rdgItemGroup === 0 && lkpItemGroupID === "") {
+      toast.info("Please Select 'Item Group'");
+      focusField("lkpItemGroupID");
+      return;
+    }
+
+    if (rows.length === 0) {
+      toast.info("There is no data in the grid to modify");
+      return;
+    }
+
+    if (changedRows.length === 0) {
+      toast.info("No Unit Price is changed");
+      return;
+    }
+
+    setSaving(true);
+
+    try {
+      const response = await fetch(`${api}/SalesPriceList/modifySalesPriceList`, {
+        method: "POST",
+        credentials: "include", // the server checks the session and the rights
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          PstrCoID: localStorage.getItem("PstrCoID"),
+          PstrYear: localStorage.getItem("PstrYear"),
+          lkpBranch: lkpBranch.value,
+          rdgItemGroup,
+          lkpItemGroupID: rdgItemGroup === 0 ? lkpItemGroupID : "",
+          chkApplyToAllBranches,
+          rows: changedRows.map((row) => ({
+            lkpItemID: row.lkpItemID,
+            txtUnitPrice: row.txtUnitPrice,
+            txtOriginalUnitPrice: row.txtOriginalUnitPrice,
+          })),
+        }),
+      });
+
+      const result = await response.json();
+
+      if (!response.ok || !result.success) {
+        toast.error(result.message || "Not Modified,Try again");
+        focusField(result.field);
+        return;
+      }
+
+      toast.success(result.message);
+
+      // the old ClearMe, then the grid again (with the new prices)
+      handleCancel();
+    } catch (error: unknown) {
+      console.error("modifySalesPriceList error:", error);
+      toast.error("Not Modified,Try again");
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  // Alt+M Modify, Alt+F Find, Alt+C Cancel, Alt+O Close
+  useAltShortcuts({
+    m: handleModify,
+    f: handleFind,
+    c: handleCancel,
+    o: handleClose,
+  });
 
   return (
     <div className="flex min-h-full w-full items-start justify-center bg-white px-4 py-4">
@@ -219,43 +444,44 @@ const SalesPriceListPage: React.FC<SalesPriceListPageProps> = ({ onClose }) => {
         <main className="w-full overflow-hidden border border-[#d5dce2] bg-white">
           <header className="flex h-7.5 items-center justify-start bg-[#9fdfbc]">
             <h1 className="m-0 ml-3.5 text-[17px] font-semibold text-[#24364d]">
-              Edit Price List
+              Sales Price List
             </h1>
           </header>
 
           <section className="flex flex-col gap-3 px-3.5 pb-6 pt-3">
             <SalesPriceListHeader
               branchOptions={branchOptions}
-              branch={branch}
-              onBranchChange={setBranch}
-              applyAllBranches={applyAllBranches}
-              onApplyAllBranchesChange={setApplyAllBranches}
-              groupMode={groupMode}
-              onGroupModeChange={setGroupMode}
+              lkpBranch={lkpBranch}
+              onBranchChange={setLkpBranch}
+              chkApplyToAllBranches={chkApplyToAllBranches}
+              onChkApplyToAllBranchesChange={setChkApplyToAllBranches}
+              rdgItemGroup={rdgItemGroup}
+              onRdgItemGroupChange={handleRdgItemGroupChange}
               groupIdOptions={groupIdOptions}
               groupNameOptions={groupNameOptions}
-              groupId={groupId}
-              onGroupChange={setGroupId}
-              percent={percent}
-              onPercentChange={setPercent}
+              lkpItemGroupID={lkpItemGroupID}
+              onItemGroupChange={setLkpItemGroupID}
+              txtIncreasePercent={txtIncreasePercent}
+              onPercentChange={setTxtIncreasePercent}
               onPercentCommit={handlePercentCommit}
-              applyPercent={applyPercent}
-              onApplyPercentChange={handleApplyPercentChange}
-              showFind={showFind}
-              query={query}
-              onQueryChange={setQuery}
+              chkApplyUnitPrice={chkApplyUnitPrice}
+              onChkApplyUnitPriceChange={setChkApplyUnitPrice}
+              showFind={chkFindOpen}
+              txtFind={txtFind}
+              onTxtFindChange={setTxtFind}
             />
 
             <div>
               <SalesPriceListTable
                 rows={visibleRows}
                 activeId={activeId}
+                locked={!chkApplyUnitPrice}
                 onActivateRow={setActiveId}
                 onPriceChange={handlePriceChange}
               />
               <SalesPriceListFooter
                 itemCount={visibleRows.length}
-                modifiedCount={modifiedCount}
+                canModify={perms.modify && changedRows.length > 0 && !saving}
                 onModify={handleModify}
                 onFind={handleFind}
                 onCancel={handleCancel}

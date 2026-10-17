@@ -24,6 +24,7 @@ import userpermissionBranch from "./SecurityRoutes/UserPermissionBranchRouter.js
 import purchaseInvoiceRouter from "./Purchase/Transaction/PurchaseInvoiceRouter.js";
 import BeginningStockRouter from "./Purchase/Transaction/BeginningStockRouter.js";
 import ItemEnquiryRouter from "./Sales/Setup/ItemEnquiryRouter.js";
+import SalesPriceListRouter from "./Sales/Setup/SalesPriceListRouter.js";
 import StockTransferRouter from "./Sales/Transaction/StockTransferRouter.js";
 import StockAdjustmentRouter from "./Sales/Transaction/StockAdjustmentRouter.js";
 import branchRouter from "./common/BranchRouter.js";
@@ -65,6 +66,7 @@ router.use("/user-permission-branch", userpermissionBranch);
 router.use("/purchase-invoice", purchaseInvoiceRouter);
 router.use("/BeginningStock", BeginningStockRouter);
 router.use("/ItemEnquiry", ItemEnquiryRouter);
+router.use("/SalesPriceList", SalesPriceListRouter);
 router.use("/StockTransfer", StockTransferRouter);
 router.use("/StockAdjustment", StockAdjustmentRouter);
 router.use("/branch", branchRouter);
