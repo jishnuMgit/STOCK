@@ -5,6 +5,7 @@ interface Props {
   onNoteChange: (v: string) => void;
   totals: { supplierTotal: number; finalTotal: number; qty: number };
   isModify: boolean;
+  isPosted?: boolean;
   busy: boolean;
   onSave: () => void;
   onDelete: () => void;
@@ -18,6 +19,7 @@ const PurchaseFooter: React.FC<Props> = ({
   onNoteChange,
   totals,
   isModify,
+  isPosted = false,
   busy,
   onSave,
   onDelete,
@@ -26,11 +28,16 @@ const PurchaseFooter: React.FC<Props> = ({
   onClear,
 }) => {
   const buttons = [
-    { label: isModify ? "Modify" : "Save", onClick: onSave },
-    { label: "Delete", onClick: onDelete },
-    { label: "Print", onClick: onPrint },
-    { label: "Post", onClick: onPost },
-    { label: "Clear", onClick: onClear },
+    {
+      label: isModify ? "Modify" : "Save",
+      onClick: onSave,
+      disabled: isPosted,
+    },
+    { label: "Delete", onClick: onDelete, disabled: isPosted },
+    { label: "Print", onClick: onPrint, disabled: false },
+    // Post only works on a saved (loaded) invoice that is not posted yet
+    { label: "Post", onClick: onPost, disabled: isPosted || !isModify },
+    { label: "Clear", onClick: onClear, disabled: false },
   ];
 
   return (
@@ -59,6 +66,8 @@ const PurchaseFooter: React.FC<Props> = ({
             type="text"
             value={note}
             onChange={(e) => onNoteChange(e.target.value)}
+            readOnly={isPosted}
+            maxLength={100}
             className="input-style min-w-0 flex-1"
           />
         </div>
@@ -116,17 +125,23 @@ const PurchaseFooter: React.FC<Props> = ({
         </div>
       </div>
 
+      {isPosted && (
+        <p className="mt-2 text-center text-[13px] font-semibold text-green-700">
+          Posted
+        </p>
+      )}
+
       {/* Action buttons */}
       <div
         id="purchase-footer-actions"
         className="mt-[9px] mb-[5px] flex flex-wrap justify-center gap-[12px]"
       >
-        {buttons.map(({ label, onClick }) => (
+        {buttons.map(({ label, onClick, disabled }) => (
           <button
             key={label}
             id={`btn${label}`}
             type="button"
-            disabled={busy}
+            disabled={busy || disabled}
             onClick={onClick}
             className="btn-style"
           >

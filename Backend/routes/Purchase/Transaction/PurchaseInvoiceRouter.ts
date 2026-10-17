@@ -18,6 +18,7 @@ import {
   getPIExpCostCenters,
   getPIExpCurrencies,
   getPIExpLookups,
+  postPurchaseInvoice,
 } from "../../../controller/Purchase/Transaction/PurchaseInvoiceController.js";
 
 const router = express.Router();
@@ -27,6 +28,7 @@ router.use(authenticate);
 router.get("/", getPurchaseInvoice);
 router.post("/", savePurchaseInvoice);
 router.delete("/", deletePurchaseInvoice);
+router.post("/post", postPurchaseInvoice); 
 router.post("/calc-unit-cost", calcUnitCost);
 router.get("/next-doc-no", getNextDocNo);
 

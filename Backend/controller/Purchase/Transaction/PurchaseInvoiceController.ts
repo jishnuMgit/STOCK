@@ -145,12 +145,12 @@ export const getPurchaseInvoice = async (
     // same columns as sp_pagepi 'GHD'
     const header = await pool.query(
       `SELECT DISTINCT
-          fpisitype AS finvoicetype, fdate, fcsaccountid,
-          fpono, fcurrency, fcurrencyrate, fnote, fdiscamt, fdocamt,
-          fnetdocamt, fvatamt,
-          fcuserid, fcuserdate, fmuserid, fmuserdate
-     FROM dbo.tblstocktrans
-    WHERE fcoid=$1 AND fyear=$2 AND fbrid=$3 AND fdoctype=$4 AND fdocno=$5`,
+      fpisitype AS finvoicetype, fdate, fcsaccountid AS faccountid,
+      fpono, fcurrency, fcurrencyrate, fnote, fdiscamt, fdocamt,
+      fnetdocamt, fvatamt, COALESCE(fpost, false) AS fpost,
+      fcuserid, fcuserdate, fmuserid, fmuserdate
+ FROM dbo.tblstocktrans
+WHERE fcoid=$1 AND fyear=$2 AND fbrid=$3 AND fdoctype=$4 AND fdocno=$5`,
       params,
     );
 
@@ -884,5 +884,95 @@ export const getPIExpLookups = async (
     return res
       .status(500)
       .json({ success: false, message: "Failed to fetch expense lookups" });
+  }
+};
+
+/* true when every row of the document is already posted */
+const isPosted = async (
+  db: PgClient,
+  coId: string,
+  year: string,
+  brId: string,
+  docNo: string,
+): Promise<boolean | null> => {
+  const r = await db.query(
+    `SELECT COALESCE(fpost, false) AS fpost
+       FROM dbo.tblstocktrans
+      WHERE fcoid=$1 AND fyear=$2 AND fbrid=$3 AND fdoctype=$4 AND fdocno=$5
+      FOR UPDATE`,
+    [coId, String(year), brId, DOC_TYPE, docNo],
+  );
+  if (r.rows.length === 0) return null; // document not found
+  return r.rows.every((x: { fpost: boolean }) => x.fpost);
+};
+
+/* =========================================================
+   POST /purchase-invoice/post
+   body: { year, brId, docNo }
+   Calls dbo.sp_pipost in mode 'P'
+   ========================================================= */
+export const postPurchaseInvoice = async (
+  req: AuthenticatedRequest,
+  res: Response,
+): Promise<Response> => {
+  const client = await pool.connect();
+
+  try {
+    const coId = req.user?.CoID;
+    const userId = req.user?.userId;
+    const { year, brId, docNo } = req.body as {
+      year: string;
+      brId: string;
+      docNo: string;
+    };
+
+    if (!coId || !userId)
+      return res
+        .status(401)
+        .json({ success: false, message: "Authentication required" });
+    if (!year || !brId || !docNo)
+      return res.status(400).json({
+        success: false,
+        message: "year, brId and docNo are required",
+      });
+
+    await client.query("BEGIN");
+
+    const posted = await isPosted(client, coId, year, brId, docNo);
+    if (posted === null) {
+      await client.query("ROLLBACK");
+      return res
+        .status(404)
+        .json({ success: false, message: "Purchase Invoice not found" });
+    }
+    if (posted) {
+      await client.query("ROLLBACK");
+      return res.status(409).json({
+        success: false,
+        message: "Purchase Invoice is already posted",
+      });
+    }
+
+    await client.query(
+      `CALL dbo.sp_pipost(
+         p_strmode => $1, p_gstrcoid => $2, p_gintyear => $3,
+         p_strbrid => $4, p_strdoctype => $5, p_strdocno => $6,
+         p_gstruserid => $7)`,
+      ["P", coId, Number(year), brId, DOC_TYPE, docNo, userId],
+    );
+
+    await client.query("COMMIT");
+
+    return res.status(200).json({ success: true, message: "Posted" });
+  } catch (error: unknown) {
+    await client.query("ROLLBACK").catch(() => undefined);
+    console.error("postPurchaseInvoice error:", error);
+    return res.status(500).json({
+      success: false,
+      message: "Not posted, try again",
+      error: error instanceof Error ? error.message : String(error),
+    });
+  } finally {
+    client.release();
   }
 };

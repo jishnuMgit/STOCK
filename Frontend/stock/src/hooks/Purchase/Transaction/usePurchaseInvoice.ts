@@ -144,6 +144,7 @@ interface InvoiceHeaderApi {
   fnote: string | null;
   fdiscamt: string | number | null;
   fvatamt: string | number | null;
+  fpost: boolean | null;
 }
 
 interface InvoiceLineApi {
@@ -453,6 +454,13 @@ export const usePurchaseInvoice = () => {
     [],
   );
 
+  const postInvoice = useCallback(
+    async (year: string, brId: string, docNo: string): Promise<void> => {
+      await apiRequest("POST", "/purchase-invoice/post", { year, brId, docNo });
+    },
+    [],
+  );
+
   const calcUnitCost = useCallback(
     async (
       rows: PurchaseRow[],
@@ -533,6 +541,7 @@ export const usePurchaseInvoice = () => {
     fetchInvoice,
     saveInvoice,
     deleteInvoice,
+    postInvoice,
     calcUnitCost,
     fetchCashSuppliers,
     fetchNextCashSupplierId,

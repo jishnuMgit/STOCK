@@ -49,6 +49,7 @@ const PurchaseInvoicePage: React.FC = () => {
     fetchInvoice,
     saveInvoice,
     deleteInvoice,
+    postInvoice,
     calcUnitCost,
     fetchCashSuppliers,
     fetchItems,
@@ -61,6 +62,8 @@ const PurchaseInvoicePage: React.FC = () => {
   const [mode, setMode] = useState<"S" | "M">("S");
   const [originalSlNos, setOriginalSlNos] = useState<number[]>([]);
   const [message, setMessage] = useState("");
+  const [posted, setPosted] = useState(false);
+  const [posting, setPosting] = useState(false);
   const [branches, setBranches] = useState<{ value: string; label: string }[]>(
     [],
   );
@@ -310,8 +313,9 @@ const PurchaseInvoicePage: React.FC = () => {
     setRows(createRows());
     setMode("S");
     setOriginalSlNos([]);
-    setMiscMode("Yes"); // default type is Cash
+    setMiscMode("Yes");
     setMessage("");
+    setPosted(false);
 
     const d = await getDefaults();
     if (d) setHeader((prev) => ({ ...prev, brId: d.brId, docNo: d.docNo }));
@@ -340,6 +344,7 @@ const PurchaseInvoicePage: React.FC = () => {
       ]);
       setOriginalSlNos(found.originalSlNos);
       setMiscMode(found.header.invoiceType === "C" ? "Yes" : "No");
+      setPosted(found.posted);
       setMode("M");
       return;
     }
@@ -355,6 +360,7 @@ const PurchaseInvoicePage: React.FC = () => {
       setOriginalSlNos([]);
       setMiscMode("Yes");
     }
+    setPosted(false);
     setMode("S");
   }, [fetchInvoice, header.brId, header.docNo, mode, miscSuppliers]);
 
@@ -371,6 +377,10 @@ const PurchaseInvoicePage: React.FC = () => {
   }, [calcUnitCost, rows, totalExpense, discAmt]);
 
   const handleSave = useCallback(async () => {
+    if (posted) {
+      window.alert("Posted Purchase Invoice cannot be modified");
+      return;
+    }
     try {
       setMessage("");
       await saveInvoice({ mode, year: YEAR, header, rows, originalSlNos });
@@ -379,9 +389,13 @@ const PurchaseInvoicePage: React.FC = () => {
     } catch (err) {
       window.alert(err instanceof Error ? err.message : "Not saved, try again");
     }
-  }, [mode, header, rows, originalSlNos, saveInvoice, handleClear]);
+  }, [posted, mode, header, rows, originalSlNos, saveInvoice, handleClear]);
 
   const handleDelete = useCallback(async () => {
+    if (posted) {
+      window.alert("Posted Purchase Invoice cannot be deleted");
+      return;
+    }
     if (!window.confirm("Do you want to delete ?")) return;
     try {
       await deleteInvoice(YEAR, header.brId, header.docNo);
@@ -392,7 +406,33 @@ const PurchaseInvoicePage: React.FC = () => {
         err instanceof Error ? err.message : "Not deleted, try again",
       );
     }
-  }, [deleteInvoice, header.brId, header.docNo, handleClear]);
+  }, [posted, deleteInvoice, header.brId, header.docNo, handleClear]);
+
+  /* Post: only an already-saved (loaded) invoice can be posted */
+  const handlePost = useCallback(async () => {
+    if (mode !== "M") {
+      window.alert("Please save the invoice before posting");
+      return;
+    }
+    if (posted) {
+      window.alert("Purchase Invoice is already posted");
+      return;
+    }
+    if (!window.confirm("Do you want to post ?")) return;
+
+    try {
+      setPosting(true);
+      await postInvoice(YEAR, header.brId, header.docNo);
+      window.alert("Posted");
+      handleClear();
+    } catch (err) {
+      window.alert(
+        err instanceof Error ? err.message : "Not posted, try again",
+      );
+    } finally {
+      setPosting(false);
+    }
+  }, [mode, posted, postInvoice, header.brId, header.docNo, handleClear]);
 
   return (
     <main className="mx-auto flex h-fit w-full max-w-[1100px] flex-col overflow-hidden border border-slate-400 bg-white text-[12px] text-slate-800">
@@ -426,12 +466,13 @@ const PurchaseInvoicePage: React.FC = () => {
         onNoteChange={(v) => handleHeaderChange("note", v)}
         totals={totals}
         isModify={mode === "M"}
-        busy={loading}
+        isPosted={posted}
+        busy={loading || posting}
         onSave={handleSave}
         onDelete={handleDelete}
         onClear={handleClear}
         onPrint={() => window.print()}
-        onPost={() => undefined /* post endpoint not built yet */}
+        onPost={handlePost}
       />
       {message && <p className="px-3 pb-2 text-red-600">{message}</p>}
     </main>
