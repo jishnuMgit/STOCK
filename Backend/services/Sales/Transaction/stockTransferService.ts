@@ -83,15 +83,8 @@ export async function getStockTransferItemListService(
 ): Promise<StockTransferItem[]> {
   const result = await pool.query(
     `
-    SELECT h.fitemid, h.fitemname, h.funit, h.fpacking
-    FROM dbo.tblitemtl t
-    JOIN dbo.tblitemhd h
-      ON h.fcoid = t.fcoid
-     AND h.fitemid = t.fitemid
-    WHERE t.fcoid = $1
-      AND t.fbrid = $2
-      AND COALESCE(t.finactive, false) = false
-    ORDER BY h.fitemid
+    SELECT fitemid, fitemname, funit, fpacking
+    FROM dbo.fillbranchitems($1::varchar, $2::varchar)
     `,
     [PstrCoID, lkpBranch]
   );
@@ -756,7 +749,7 @@ export async function postStockTransferService(p: {
         p_strbrid    => $4::varchar,
         p_strdoctype => $5::varchar,
         p_strdocno   => $6::varchar,
-        p_gstruserid => $7::varchar
+        p_pstruserid => $7::varchar
       )
       `,
       ["P", p.PstrCoID, String(p.PstrYear), p.lkpBranch, DOC_TYPE, p.txtDocNo, p.PstrUserID]

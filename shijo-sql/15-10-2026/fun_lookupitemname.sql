@@ -23,7 +23,7 @@ begin
         a.fitemid,
         b.fitemname,
         a.fbrid,
-        b.fpacking,
+        b.fpacking::varchar,
         b.fitemgroupid,
         a.fallowsalebelowcost,
         a.finactive

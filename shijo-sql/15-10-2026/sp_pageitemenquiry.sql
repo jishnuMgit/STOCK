@@ -1,6 +1,6 @@
 -- PROCEDURE: dbo.sp_pageitemenquiry(character varying, character varying, character varying, character varying, refcursor)
 
--- DROP PROCEDURE IF EXISTS dbo.sp_pageitemenquiry(character varying, character varying, character varying, character varying, refcursor);
+ DROP PROCEDURE IF EXISTS dbo.sp_pageitemenquiry(character varying, character varying, character varying, character varying, refcursor);
 
 CREATE OR REPLACE PROCEDURE dbo.sp_pageitemenquiry(
 	IN p_strmode character varying,

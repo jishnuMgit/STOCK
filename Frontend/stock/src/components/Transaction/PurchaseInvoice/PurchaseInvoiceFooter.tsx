@@ -5,6 +5,7 @@ interface Props {
   onNoteChange: (v: string) => void;
   totals: { supplierTotal: number; finalTotal: number; qty: number };
   isModify: boolean;
+  isPosted?: boolean;
   busy: boolean;
   onSave: () => void;
   onDelete: () => void;
@@ -18,6 +19,7 @@ const PurchaseFooter: React.FC<Props> = ({
   onNoteChange,
   totals,
   isModify,
+  isPosted = false,
   busy,
   onSave,
   onDelete,
@@ -26,19 +28,26 @@ const PurchaseFooter: React.FC<Props> = ({
   onClear,
 }) => {
   const buttons = [
-    { label: isModify ? "Modify" : "Save", onClick: onSave },
-    { label: "Delete", onClick: onDelete },
-    { label: "Print", onClick: onPrint },
-    { label: "Post", onClick: onPost },
-    { label: "Clear", onClick: onClear },
+    {
+      label: isModify ? "Modify" : "Save",
+      onClick: onSave,
+      disabled: isPosted,
+    },
+    { label: "Delete", onClick: onDelete, disabled: isPosted },
+    { label: "Print", onClick: onPrint, disabled: false },
+    // Post only works on a saved (loaded) invoice that is not posted yet
+    { label: "Post", onClick: onPost, disabled: isPosted || !isModify },
+    { label: "Clear", onClick: onClear, disabled: false },
   ];
 
   return (
     <footer className="shrink-0 px-3 pb-3 pt-1">
-      {/* Same column widths and min-width as the table, so totals line up */}
+      {/* Same column widths and min-width as the table, so totals line up.
+          Columns: indicator, Sl., Item ID, Item Name, Unit, Qty,
+                   Unit Price, Total Price, Unit Cost, Total Cost */}
       <div
         id="purchase-footer-fields"
-        className="grid w-full min-w-[900px] grid-cols-[14px_38px_158px_minmax(120px,1fr)_56px_58px_85px_90px_80px_80px_80px] items-center pt-2"
+        className="grid w-full min-w-[900px] grid-cols-[14px_38px_158px_minmax(120px,1fr)_56px_58px_85px_90px_80px_80px] items-center pt-2"
       >
         {/* Note: spans indicator, Sl.No., Item ID, Item Name */}
         <div
@@ -57,6 +66,8 @@ const PurchaseFooter: React.FC<Props> = ({
             type="text"
             value={note}
             onChange={(e) => onNoteChange(e.target.value)}
+            readOnly={isPosted}
+            maxLength={100}
             className="input-style min-w-0 flex-1"
           />
         </div>
@@ -83,7 +94,7 @@ const PurchaseFooter: React.FC<Props> = ({
           />
         </div>
 
-        {/* Supplier Total: under S.Total Price */}
+        {/* Supplier Total: under Total Price */}
         <div
           id="purchase-supplier-total-group"
           className="col-[8/9] min-w-0 px-[1px]"
@@ -91,9 +102,9 @@ const PurchaseFooter: React.FC<Props> = ({
           <input
             id="purchaseSupplierTotal"
             type="text"
-            value={totals.supplierTotal.toFixed(4)}
+            value={totals.supplierTotal.toFixed(2)}
             readOnly
-            aria-label="Supplier total price"
+            aria-label="Total price"
             className="input-style w-full min-w-0 text-right"
           />
         </div>
@@ -101,7 +112,7 @@ const PurchaseFooter: React.FC<Props> = ({
         {/* Final Total: under Total Cost */}
         <div
           id="purchase-final-total-group"
-          className="col-[11/12] min-w-0 px-[1px]"
+          className="col-[10/11] min-w-0 px-[1px]"
         >
           <input
             id="purchaseFinalTotal"
@@ -114,17 +125,23 @@ const PurchaseFooter: React.FC<Props> = ({
         </div>
       </div>
 
+      {isPosted && (
+        <p className="mt-2 text-center text-[13px] font-semibold text-green-700">
+          Posted
+        </p>
+      )}
+
       {/* Action buttons */}
       <div
         id="purchase-footer-actions"
         className="mt-[9px] mb-[5px] flex flex-wrap justify-center gap-[12px]"
       >
-        {buttons.map(({ label, onClick }) => (
+        {buttons.map(({ label, onClick, disabled }) => (
           <button
             key={label}
             id={`btn${label}`}
             type="button"
-            disabled={busy}
+            disabled={busy || disabled}
             onClick={onClick}
             className="btn-style"
           >

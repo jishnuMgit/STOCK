@@ -1,6 +1,5 @@
 -- FUNCTION: dbo.getnexttransno(character varying, character varying, character varying, character varying)
-
--- DROP FUNCTION IF EXISTS dbo.getnexttransno(character varying, character varying, character varying, character varying);
+ DROP FUNCTION IF EXISTS dbo.getnexttransno(character varying, character varying, character varying, character varying);
 
 CREATE OR REPLACE FUNCTION dbo.getnexttransno(
 	pstrcoid character varying,

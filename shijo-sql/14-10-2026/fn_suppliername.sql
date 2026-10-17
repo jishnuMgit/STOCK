@@ -1,6 +1,6 @@
 -- FUNCTION: dbo.filllookupsuppliername(character varying)
 
--- DROP FUNCTION IF EXISTS dbo.filllookupsuppliername(character varying);
+ DROP FUNCTION IF EXISTS dbo.filllookupsuppliername(character varying);
 
 CREATE OR REPLACE FUNCTION dbo.filllookupsuppliername(
 	p_coid character varying)

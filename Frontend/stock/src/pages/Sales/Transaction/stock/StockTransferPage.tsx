@@ -11,13 +11,15 @@ import {
   filterPairOption,
   makePairDividedMenuStyles,
 } from "../../../../components/PairSelect/pairSelectParts";
+import { useScrollbarWidth } from "../../../../hooks/useScrollbarWidth";
+import { useAdvanceAfterSelect } from "../../../../hooks/useAdvanceAfterSelect";
 import { usePairMenuHang } from "../../../../hooks/usePairMenuHang";
 import { useAltShortcuts } from "../../../../hooks/useAltShortcuts";
 import { useConfirm } from "../../../../hooks/useConfirm";
 import { useButtonPermissions } from "../../../../hooks/useButtonPermissions";
 import {
-  BranchMenuList,
-  BranchOption,
+  BranchDividedMenuList,
+  BranchDividedOption,
   branchMenuStyles,
   filterLabelOrValue,
 } from "../../../../components/BranchSelect/branchSelectParts";
@@ -173,17 +175,10 @@ const branchSelectStyles: StylesConfig<SelectOption, false> = {
 // ============================================================
 
 const itemIdComponents = makePairComponents("Item ID", "Item Name", false, true);
-// The Item Name box's list hangs 210px past the box: that is its Item ID column,
-// wide enough for a whole ID on one line (the default 100px wrapped long IDs).
-const NAME_LIST_HANG = 210;
-const itemNameComponents = makePairComponents(
-  "Item ID",
-  "Item Name",
-  true,
-  true,
-  NAME_LIST_HANG,
-);
-const itemNameMenuStyles = makePairDividedMenuStyles(NAME_LIST_HANG);
+// The Item Name box's list reaches the right edge of the Qty. column: the part past
+// the Item Name box is its Item ID column, measured when the list opens (see
+// usePairMenuHang), so it is wide enough for a whole ID on one line.
+const itemNameComponents = makePairComponents("Item ID", "Item Name", true, true);
 
 // ============================================================
 // REACT SELECT STYLES
@@ -524,6 +519,15 @@ const StockTransferPage: React.FC = () => {
 
   // the Item ID list covers the Item ID box AND the Item Name box next to it
   const { hang: idMenuHang, measure: measureIdMenuHang } = usePairMenuHang();
+
+  // Enter / Tab / click on a dropdown goes on to the next box of the row
+  const { advanceAfterPick, advanceOnEnter } = useAdvanceAfterSelect();
+  // ... and the Item Name list covers the columns up to Qty.
+  const { hang: nameMenuHang, measure: measureNameMenuHang } = usePairMenuHang(210);
+
+  // the grid's scroll bar narrows its columns; the totals row below gets the same
+  // amount as padding so its boxes end where the grid's columns end
+  const gridScroll = useScrollbarWidth<HTMLDivElement>();
 
   const api = import.meta.env.VITE_API_URL;
 
@@ -873,7 +877,7 @@ const StockTransferPage: React.FC = () => {
   // no stock is refused (the old "Out Of Stock")
   // ----------------------------------------------------------
 
-  const fetchItemStock = async (rowId: number, itemId: string) => {
+  const fetchItemStock = async (rowId: number, itemId: string, rowIndex: number) => {
     try {
       const PstrCoID = localStorage.getItem("PstrCoID");
       const PstrYear = localStorage.getItem("PstrYear");
@@ -926,6 +930,11 @@ const StockTransferPage: React.FC = () => {
           };
         }),
       );
+
+      // the item is accepted (Enter / Tab / click picked it): on to Qty.
+      if (stock > 0) {
+        advanceAfterPick(`lkpItemID-${rowIndex}`, [`lkpItemName-${rowIndex}`]);
+      }
     } catch (error) {
       console.error("getItemStock error:", error);
       toast.error("Cannot connect to Stock Transfer API.");
@@ -1044,7 +1053,7 @@ const StockTransferPage: React.FC = () => {
     updateRow(rowIndex, field, option);
 
     if (option) {
-      fetchItemStock(rows[rowIndex].id, option.value);
+      fetchItemStock(rows[rowIndex].id, option.value, rowIndex);
     } else {
       setTxtStock("");
     }
@@ -1611,8 +1620,8 @@ const StockTransferPage: React.FC = () => {
               styles={branchSelectStyles}
               components={{
                 ...selectComponents,
-                Option: BranchOption,
-                MenuList: BranchMenuList,
+                Option: BranchDividedOption,
+                MenuList: BranchDividedMenuList,
               }}
               filterOption={filterLabelOrValue}
               noOptionsMessage={() => "No Branch Found"}
@@ -1695,8 +1704,8 @@ const StockTransferPage: React.FC = () => {
               styles={branchSelectStyles}
               components={{
                 ...selectComponents,
-                Option: BranchOption,
-                MenuList: BranchMenuList,
+                Option: BranchDividedOption,
+                MenuList: BranchDividedMenuList,
               }}
               filterOption={filterLabelOrValue}
               noOptionsMessage={() => "No Branch Found"}
@@ -1727,7 +1736,10 @@ const StockTransferPage: React.FC = () => {
 
       {/* STOCK TABLE */}
 <main className="customer-table-scroll flex min-h-0 flex-1 flex-col bg-white">
-  <div className="customer-table-scroll min-h-0 flex-1 overflow-auto border border-[#bfe8d0]">
+  <div
+    ref={gridScroll.ref}
+    className="customer-table-scroll min-h-0 flex-1 overflow-auto border border-[#bfe8d0]"
+  >
     <table className="customer-table-scroll w-full min-w-[900px] table-fixed border-collapse border border-[#bfe8d0]">
             <colgroup>
               <col style={{ width: "17px" }} />
@@ -1737,8 +1749,8 @@ const StockTransferPage: React.FC = () => {
               <col style={{ width: "6.2%" }} />
               <col style={{ width: "6.2%" }} />
               <col style={{ width: "8.9%" }} />
-              <col style={{ width: "9.6%" }} />
-              <col style={{ width: "10.2%" }} />
+              <col style={{ width: "11.6%" }} />
+              <col style={{ width: "14.2%" }} />
             </colgroup>
 
             <thead className="sticky top-0 z-10 bg-[#edf9f2]">
@@ -1789,7 +1801,9 @@ const StockTransferPage: React.FC = () => {
                   </td>
 
                   {/* ITEM ID */}
-                  <td className="border border-[#bfe8d0] p-0">
+                  <td className="border border-[#bfe8d0] p-0"
+                    onKeyDown={(event) => advanceOnEnter(event, [`lkpItemName-${index}`])}
+                  >
                     <Select<SelectOption, false>
                       inputId={`lkpItemID-${index}`}
                       name="lkpItemID"
@@ -1823,7 +1837,9 @@ const StockTransferPage: React.FC = () => {
                   </td>
 
                   {/* ITEM NAME */}
-                  <td className="border border-[#bfe8d0] p-0">
+                  <td className="border border-[#bfe8d0] p-0"
+                    onKeyDown={(event) => advanceOnEnter(event)}
+                  >
                     <Select<SelectOption, false>
                       inputId={`lkpItemName-${index}`}
                       name="lkpItemName"
@@ -1836,8 +1852,11 @@ const StockTransferPage: React.FC = () => {
                       styles={
                         {
                           ...tableSelectStyles,
-                          ...itemNameMenuStyles,
+                          ...makePairDividedMenuStyles(nameMenuHang),
                         } as StylesConfig<SelectOption, false>
+                      }
+                      onMenuOpen={() =>
+                        measureNameMenuHang(`lkpItemName-${index}`, `txtQty-${index}`)
                       }
                       components={itemNameComponents}
                       filterOption={filterPairOption}
@@ -1928,7 +1947,10 @@ const StockTransferPage: React.FC = () => {
       {/* BOTTOM FORM: a one-row table with the SAME column widths as the grid
           above, so the totals sit exactly under their columns */}
       <section className="shrink-0 bg-white">
-        <div className="border border-transparent">
+        <div
+          className="border border-transparent"
+          style={{ paddingRight: gridScroll.width }}
+        >
           <table className="w-full min-w-[900px] table-fixed border-collapse border border-transparent">
             <colgroup>
               <col style={{ width: "17px" }} />
@@ -2008,9 +2030,23 @@ const StockTransferPage: React.FC = () => {
 
       {/* SAVED BY / LAST MODIFIED BY */}
       {txtUserInfo !== "" && (
-        <div className="self-end whitespace-pre-line text-right text-[12px] text-gray-500">
-          {txtUserInfo}
-        </div>
+        <table className="self-end border-collapse text-left text-[12px] text-gray-500">
+          <tbody>
+            {/* one row per line ("Saved By : ..." / "Last Modified By : ..."), in
+                three columns - label, colon, text - so the colons line up */}
+            {txtUserInfo.split("\n").map((line) => {
+              const [label, ...rest] = line.split(" : ");
+
+              return (
+                <tr key={label}>
+                  <td className="whitespace-nowrap pr-[4px]">{label}</td>
+                  <td className="pr-[4px]">:</td>
+                  <td className="whitespace-nowrap">{rest.join(" : ")}</td>
+                </tr>
+              );
+            })}
+          </tbody>
+        </table>
       )}
 
       {/* ACTION BUTTONS */}

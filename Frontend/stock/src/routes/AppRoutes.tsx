@@ -88,6 +88,12 @@ import SetDatabaseBackupPathPage from "../pages/Settings/SetDatabaseBackupPathPa
 import ChangeLoginYear from "../pages/Settings/ChangeLoginYearPage";
 import FinanceYearClose from "../pages/Utility/FinanceYearClose";
 import YearCloseStatusPage from "../pages/Utility/YearCloseStatusPage";
+import RptVerifyDocumentAccuracyPage from "../pages/Utility/RptVerifyDocumentAccuracyPage";
+import BranchPage from "../pages/Administration/BranchPage";
+import BranchYearPage from "../pages/Administration/BranchYearPage";
+import DocumentPage from "../pages/Administration/DocumentPage";
+import RptDocumentsAfterYearClosePage from "../pages/Utility/RptDocumentsAfterYearClosePage";
+import BackupPage from "../pages/Utility/BackupPage";
 
 
 const Login = lazy(() => import("../pages/Auth/LoginPage"));
@@ -345,10 +351,16 @@ const AppRoutes = () => {
 
           <Route path="/Utility/FinYearClose" element={<FinanceYearClose/>}/>
           <Route path="/Utility/YearCloseStatus" element={<YearCloseStatusPage/>}/>
+          <Route path="/Utility/RptVerifyDocAccuracy" element={<RptVerifyDocumentAccuracyPage/>}/>
+          <Route path="/Utility/RptDocsAfterYearClose" element={<RptDocumentsAfterYearClosePage/>}/>
+          <Route path="/Utility/DatabaseBackup" element={<BackupPage/>}/>
 
           {/* ================= ADMINISTRATION ================= */}
 
           <Route path="/Administration/CompanyPage" element={<CompanyPage />} />
+          <Route path="/Administration/Branch" element={<BranchPage/>}/>
+          <Route path="/Administration/Year" element={<BranchYearPage/>}/>
+          <Route path="/Administration/Document" element={<DocumentPage/>}/>
 
           {/* ================= DEV ================= */}
 
