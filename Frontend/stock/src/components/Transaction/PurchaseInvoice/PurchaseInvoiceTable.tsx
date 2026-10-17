@@ -17,34 +17,28 @@ type Option = {
   unit?: string; // item's unit, filled in when the item is picked
 };
 
+/* FC columns removed: Unit Price is typed, Total Price is calculated */
 const columns = [
   { name: "Sl.", width: "38px", id: "txtSlNo" },
   { name: "Item ID", width: "158px", id: "lkpItemID" },
   { name: "Item Name", width: "auto", id: "lkpItemName" },
   { name: "Unit", width: "56px", id: "txtUnit" },
   { name: "Qty.", width: "58px", id: "txtQtyIn" },
-  { name: "S.Unit Price", width: "85px", id: "txtSup_UnitPrice" },
-  { name: "S.Total Price", width: "90px", id: "txtSup_TotPrice" },
-  { name: "Unit Price", width: "80px", id: "txtUnitPrice" },
+  { name: "Unit Price", width: "85px", id: "txtUnitPrice" },
+  { name: "Total Price", width: "90px", id: "txtTotPrice" },
   { name: "Unit Cost", width: "80px", id: "txtUnitCost" },
   { name: "Total Cost", width: "80px", id: "txtTotCost" },
 ];
 
 const numericColumns = [
   "Qty.",
-  "S.Unit Price",
-  "S.Total Price",
   "Unit Price",
+  "Total Price",
   "Unit Cost",
   "Total Cost",
 ];
 
-type PriceField =
-  | "sUnitPrice"
-  | "sTotalPrice"
-  | "unitPrice"
-  | "unitCost"
-  | "totalCost";
+type PriceField = "unitPrice" | "totalPrice" | "unitCost" | "totalCost";
 
 /* custom arrow for the item dropdowns */
 const DropdownIndicator = (props: DropdownIndicatorProps<Option, false>) => (
@@ -62,9 +56,6 @@ const NAME_COL_WIDTH = 300;
 // font size of the dropdown menu (header row + options)
 const MENU_FONT_SIZE = 14;
 
-/* Which two columns each dropdown shows, and in which order.
-   id   dropdown: Item ID   | Item Name
-   name dropdown: Item Name | Item ID */
 type MenuVariant = "id" | "name";
 
 const menuLayout: Record<
@@ -277,7 +268,7 @@ const selectStyles: StylesConfig<Option, false> = {
 
   option: (base, state) => ({
     ...base,
-    padding: 0, // the two cells inside the label carry the padding
+    padding: 0,
     fontSize: MENU_FONT_SIZE,
     color: "#263449",
     backgroundColor: state.isSelected
@@ -289,9 +280,6 @@ const selectStyles: StylesConfig<Option, false> = {
   }),
 };
 
-/* Item Name menu: opens at the left edge of the Item Name column.
-   Its divider sits at NAME_COL_WIDTH (the name column is "auto" width,
-   so it can't line up with a table line like the Item ID menu does). */
 const nameSelectStyles: StylesConfig<Option, false> = selectStyles;
 
 const numberInputClass =
@@ -301,8 +289,8 @@ interface Props {
   rows: PurchaseRow[];
   onRowChange: (index: number, patch: Partial<PurchaseRow>) => void;
   lookups?: {
-    itemIds?: Option[]; // { value: id, label: id, name, unit? }
-    itemNames?: Option[]; // { value: id, label: name, name, unit? }
+    itemIds?: Option[];
+    itemNames?: Option[];
   };
 }
 
@@ -333,7 +321,7 @@ const PurchaseTable: React.FC<Props> = ({ rows, onRowChange, lookups }) => {
     setActiveRow(index);
   };
 
-  // Only S.Unit Price is typed by the user; the other price columns
+  // Only Unit Price is typed by the user; the other price columns
   // are calculated by the page.
   const renderPriceInput = (
     index: number,
@@ -377,7 +365,6 @@ const PurchaseTable: React.FC<Props> = ({ rows, onRowChange, lookups }) => {
       id="purchase-table"
       className="mx-3 mb-1 flex min-h-0 max-h-[393px] flex-1 flex-col overflow-hidden border border-b-0 border-[#dce5ef]"
     >
-      {/* Header and body share one table to keep columns aligned. */}
       <div className="customer-table-scroll min-h-0 max-h-fit flex-1 overflow-auto">
         <table className="w-full min-w-[900px] table-fixed border-collapse text-[11px]">
           <colgroup>
@@ -393,7 +380,6 @@ const PurchaseTable: React.FC<Props> = ({ rows, onRowChange, lookups }) => {
             ))}
           </colgroup>
 
-          {/* Sticky header */}
           <thead>
             <tr className="h-[30px]">
               <th className="sticky top-0 z-20 border border-[#dce5ef] bg-[#f1f6fc] p-0" />
@@ -436,7 +422,7 @@ const PurchaseTable: React.FC<Props> = ({ rows, onRowChange, lookups }) => {
                   {index + 1}
                 </td>
 
-                {/* Item ID: menu shows Item ID | Item Name */}
+                {/* Item ID */}
                 <td className="h-[30px] border border-[#dce5ef] p-0">
                   <Select<Option, false>
                     inputId={`lkpItemID-${index}`}
@@ -459,7 +445,7 @@ const PurchaseTable: React.FC<Props> = ({ rows, onRowChange, lookups }) => {
                   />
                 </td>
 
-                {/* Item Name (same itemId): menu shows Item Name | Item ID */}
+                {/* Item Name (same itemId) */}
                 <td className="h-[30px] border border-[#dce5ef] p-0">
                   <Select<Option, false>
                     inputId={`lkpItemName-${index}`}
@@ -505,34 +491,24 @@ const PurchaseTable: React.FC<Props> = ({ rows, onRowChange, lookups }) => {
                   />
                 </td>
 
-                {/* S.Unit Price (editable) */}
-                <td className="h-[30px] border border-[#dce5ef] p-0">
-                  {renderPriceInput(
-                    index,
-                    "sUnitPrice",
-                    "txtSUnitPrice",
-                    "Supplier unit price",
-                    true,
-                  )}
-                </td>
-
-                {/* S.Total Price (calculated) */}
-                <td className="h-[30px] border border-[#dce5ef] p-0">
-                  {renderPriceInput(
-                    index,
-                    "sTotalPrice",
-                    "txtSTotalPrice",
-                    "Supplier total price",
-                  )}
-                </td>
-
-                {/* Unit Price (calculated) */}
+                {/* Unit Price (editable) */}
                 <td className="h-[30px] border border-[#dce5ef] p-0">
                   {renderPriceInput(
                     index,
                     "unitPrice",
-                    "txtUnitPrice",
+                    "txtUnitPriceInput",
                     "Unit price",
+                    true,
+                  )}
+                </td>
+
+                {/* Total Price (calculated) */}
+                <td className="h-[30px] border border-[#dce5ef] p-0">
+                  {renderPriceInput(
+                    index,
+                    "totalPrice",
+                    "txtTotalPrice",
+                    "Total price",
                   )}
                 </td>
 

@@ -4,15 +4,14 @@ import { AuthenticatedRequest } from "../../../middleware/authMiddleware.js";
 
 const DOC_TYPE = "PI";
 
+/* FC (foreign currency) fields removed - the new sp_pagepi does not have them */
 interface PILine {
   slNo: number;
   itemId: string;
   unit?: string;
   qtyIn: number;
-  unitPriceFC?: number;
   unitPrice?: number;
   totalPrice?: number;
-  totalPriceFC?: number;
   unitCost?: number;
   totalCost?: number;
 }
@@ -26,6 +25,26 @@ const num = (v: unknown): number => {
 const getIntDocNo = (docNo: string): number => {
   const m = docNo.match(/(\d+)$/);
   return m ? parseInt(m[1], 10) : 0;
+};
+
+/* =========================================================
+   Helper: CALL dbo.sp_pagepi with named args.
+   All SP params start with "p_", so we add the prefix here.
+   Works with both `pool` and a transaction `client`.
+   ========================================================= */
+type PgClient = {
+  query: (sql: string, params?: unknown[]) => Promise<any>;
+};
+
+const callPagePI = (db: PgClient, args: Record<string, unknown>) => {
+  const keys = Object.keys(args);
+  const sql = `CALL dbo.sp_pagepi(${keys
+    .map((k, i) => `p_${k} => $${i + 1}`)
+    .join(", ")})`;
+  return db.query(
+    sql,
+    keys.map((k) => args[k]),
+  );
 };
 
 /* =========================================================
@@ -53,7 +72,6 @@ export const calcUnitCost = (
     const round4 = (v: number) =>
       Math.round((v + Number.EPSILON) * 10000) / 10000;
 
-    // VB: grdvDoc.Columns("fTotalPrice").SummaryText (SAR total = qty * unit price)
     const totalInvoiceAmt = lines.reduce(
       (sum, l) =>
         l.itemId
@@ -70,7 +88,6 @@ export const calcUnitCost = (
     let totalCost = 0;
 
     const result = lines.map((l) => {
-      // VB skips rows with no item
       if (!l.itemId) return { unitCost: 0, totalCost: 0 };
 
       const unitPrice = num(l.unitPrice);
@@ -101,7 +118,12 @@ export const calcUnitCost = (
 
 /* =========================================================
    GET  /purchase-invoice?year=&brId=&docNo=
-   (reads tables directly: a PROCEDURE can't return rows)
+
+   NOTE: sp_pagepi modes GHD / GTL are SELECTs inside a PROCEDURE.
+   A Postgres PROCEDURE cannot return rows, so those modes
+   will fail. Until they are moved into table-returning
+   functions, we read tblstocktrans directly using the same
+   columns the SP's GHD / GTL modes select.
    ========================================================= */
 export const getPurchaseInvoice = async (
   req: AuthenticatedRequest,
@@ -118,13 +140,17 @@ export const getPurchaseInvoice = async (
       });
     }
 
-    const params = [coId, year, brId, DOC_TYPE, docNo];
+    const params = [coId, Number(year), brId, DOC_TYPE, docNo];
 
+    // same columns as sp_pagepi 'GHD'
     const header = await pool.query(
-      `SELECT fsupplierid, fsuppliername, fcurrency, fcurrencyrate, fdate,
-              fpino, fpono, fvatno, finvoicetype, fnote
-       FROM dbo.tblpurchaseinvoice
-       WHERE fcoid=$1 AND fyear=$2 AND fbrid=$3 AND fdoctype=$4 AND fdocno=$5`,
+      `SELECT DISTINCT
+          fpisitype AS finvoicetype, fdate, fcsaccountid,
+          fpono, fcurrency, fcurrencyrate, fnote, fdiscamt, fdocamt,
+          fnetdocamt, fvatamt,
+          fcuserid, fcuserdate, fmuserid, fmuserdate
+     FROM dbo.tblstocktrans
+    WHERE fcoid=$1 AND fyear=$2 AND fbrid=$3 AND fdoctype=$4 AND fdocno=$5`,
       params,
     );
 
@@ -134,13 +160,13 @@ export const getPurchaseInvoice = async (
         .json({ success: false, message: "Purchase Invoice not found" });
     }
 
+    // same columns as sp_pagepi 'GTL'
     const lines = await pool.query(
-      `SELECT fslno, fitemid, funit, fqtyin, funitprice_fc, funitprice,
-              ftotalprice, ftotalprice_fc, funitcost, ftotalcost,
-              fsupplieramt, fdiscamt_fc, fdiscamt, fvatamt
-       FROM dbo.tblpurchaseinvoicedetail
-       WHERE fcoid=$1 AND fyear=$2 AND fbrid=$3 AND fdoctype=$4 AND fdocno=$5
-       ORDER BY fslno`,
+      `SELECT fslno, fitemid, funit, fqtyin, funitprice, ftotalprice,
+              funitcost, ftotalcost
+         FROM dbo.tblstocktrans
+        WHERE fcoid=$1 AND fyear=$2 AND fbrid=$3 AND fdoctype=$4 AND fdocno=$5
+        ORDER BY fslno`,
       params,
     );
 
@@ -158,6 +184,10 @@ export const getPurchaseInvoice = async (
 
 /* =========================================================
    POST /purchase-invoice   (create or modify)
+
+   Flow (same as VB):
+   - New    : S for every line
+   - Modify : M (update header) -> D1 for every old line -> S for every new line
    ========================================================= */
 export const savePurchaseInvoice = async (
   req: AuthenticatedRequest,
@@ -184,34 +214,34 @@ export const savePurchaseInvoice = async (
       currency,
       currencyRate,
       note,
-      discAmtFC,
       discAmt,
       vatAmt,
       menuName,
       lines,
+      originalSlNos,
     } = req.body as {
       mode: "S" | "M";
       year: string;
       brId: string;
       docNo: string;
-      invoiceType: string;
+      invoiceType: "C" | "R";
       piNo: string;
       poNo?: string;
       date: string;
       vatNo?: string;
-      supplierId: string;
+      supplierId?: string;
       supplierName?: string;
       currency: string;
       currencyRate: number;
       note?: string;
-      discAmtFC?: number;
       discAmt?: number;
       vatAmt?: number;
       menuName?: string;
       lines: PILine[];
+      originalSlNos?: number[]; // sl.# of lines loaded from DB (modify only)
     };
 
-    /* ---------- validation (from frmPI.ValidateMe / ValidateGrid) ---------- */
+    /* ---------- validation ---------- */
     if (!coId || !userId)
       return res
         .status(401)
@@ -220,6 +250,10 @@ export const savePurchaseInvoice = async (
       return res
         .status(400)
         .json({ success: false, message: "mode must be 'S' or 'M'" });
+    if (!["C", "R"].includes(invoiceType))
+      return res
+        .status(400)
+        .json({ success: false, message: "invoiceType must be 'C' or 'R'" });
     if (!year || !brId)
       return res
         .status(400)
@@ -245,10 +279,15 @@ export const savePurchaseInvoice = async (
       return res
         .status(400)
         .json({ success: false, message: "Please enter 'Supplier Name'" });
-    if (invoiceType !== "C" && !supplierId)
+    if (invoiceType === "R" && !supplierId)
       return res
         .status(400)
         .json({ success: false, message: "Please select 'Supplier ID'" });
+    if (mode === "M" && !Array.isArray(originalSlNos))
+      return res.status(400).json({
+        success: false,
+        message: "originalSlNos is required for modify",
+      });
 
     const validLines = (lines ?? []).filter((l) => l.itemId);
     if (validLines.length === 0)
@@ -265,40 +304,30 @@ export const savePurchaseInvoice = async (
         });
     }
 
-    if (poNo) {
-      const po = await client.query(
-        `SELECT 1 FROM dbo.tblpo WHERE fcoid=$1 AND fbrid=$2 AND fpono=$3`,
-        [coId, brId, poNo.trim()],
+    /* ---------- cash invoice -> cash purchase account (VB GetCashPurchaseAccountID) ---------- */
+    let resolvedSupplierId = supplierId ?? "";
+    if (invoiceType === "C" && !resolvedSupplierId) {
+      const acc = await client.query(
+        `SELECT dbo.getcashpurchaseaccountid($1::varchar, $2::varchar) AS id`,
+        [coId, brId],
       );
-      if (po.rows.length === 0)
+      resolvedSupplierId = acc.rows[0]?.id ?? "";
+      if (!resolvedSupplierId)
         return res.status(400).json({
           success: false,
-          message: "Purchase Order No. does not exist.",
+          message: "Cash purchase account is not configured for this branch",
         });
     }
 
-    /* ---------- totals (same as VB) ---------- */
-    const grossPrice = validLines.reduce((s, l) => s + num(l.totalPrice), 0);
+    /* ---------- totals ---------- */
     const totalCost = validLines.reduce((s, l) => s + num(l.totalCost), 0);
-    const totalPriceFC = validLines.reduce(
-      (s, l) => s + num(l.totalPriceFC),
-      0,
-    );
+    const grossPrice = validLines.reduce((s, l) => s + num(l.totalPrice), 0);
     const supplierAmt = Number((grossPrice - num(discAmt)).toFixed(2));
 
-    /* ---------- named-arg CALL helper ---------- */
-    const callSP = (args: Record<string, unknown>) => {
-      const keys = Object.keys(args);
-      const sql = `CALL dbo.sp_pagepi(${keys.map((k, i) => `${k} => $${i + 1}`).join(", ")})`;
-      return client.query(
-        sql,
-        keys.map((k) => args[k]),
-      );
-    };
-
+    /* ---------- common SP args ---------- */
     const base = {
-      pstrcoid: coId,
-      stryear: String(year),
+      gstrcoid: coId,
+      gintyear: Number(year),
       strbrid: brId,
       strdoctype: DOC_TYPE,
       strdocno: docNo,
@@ -307,13 +336,32 @@ export const savePurchaseInvoice = async (
       strmenuname: menuName ?? "frmPI",
     };
 
+    const header = {
+      strinvoicetype: invoiceType,
+      dtpdate: date,
+      strpino: piNo,
+      strpono: poNo?.trim() || null,
+      strvatno: vatNo ?? null,
+      strsupplierid: resolvedSupplierId,
+      strsuppliername: supplierName ?? null,
+      strcurrency: currency,
+      numcurrencyrate: num(currencyRate) || 1,
+      strnote: note ?? null,
+      numgtotalcost: totalCost,
+      numsupplieramt: supplierAmt,
+      numdiscamt: num(discAmt),
+      numvatamt: num(vatAmt),
+    };
+
     await client.query("BEGIN");
 
     if (mode === "S") {
+      // duplicate Entry No. check (no SP exists for this)
       const exists = await client.query(
-        `SELECT 1 FROM dbo.tblpurchaseinvoice
-         WHERE fcoid=$1 AND fyear=$2 AND fbrid=$3 AND fdoctype=$4 AND fdocno=$5`,
-        [coId, String(year), brId, DOC_TYPE, docNo],
+        `SELECT 1 FROM dbo.tblstocktrans
+          WHERE fcoid=$1 AND fyear=$2 AND fbrid=$3 AND fdoctype=$4 AND fdocno=$5
+          LIMIT 1`,
+        [coId, Number(year), brId, DOC_TYPE, docNo],
       );
       if (exists.rows.length > 0) {
         await client.query("ROLLBACK");
@@ -323,53 +371,32 @@ export const savePurchaseInvoice = async (
         });
       }
     } else {
-      // modify = wipe header + lines, then re-insert (as VB did for expenses)
-      await callSP({ strmode: "D", ...base });
+      // 1) update header on existing rows
+      await callPagePI(client, { strmode: "M", ...base, ...header });
+      // 2) remove old lines one by one
+      for (const sl of originalSlNos ?? []) {
+        await callPagePI(client, {
+          strmode: "D1",
+          ...base,
+          original_fslno: sl,
+        });
+      }
     }
 
-    /* ---------- header ---------- */
-    await callSP({
-      strmode: "S",
-      ...base,
-      strinvoicetype: invoiceType,
-      dtpdate: date,
-      strpino: piNo,
-      strpono: poNo?.trim() ?? null,
-      strvatno: vatNo ?? null,
-      strsupplierid: supplierId,
-      strsuppliername:
-        invoiceType === "C" ? supplierName : (supplierName ?? null),
-      strcurrency: currency,
-      numcurrencyrate: num(currencyRate) || 1,
-      strnote: note ?? null,
-    });
-
-    /* ---------- lines ---------- */
+    /* ---------- lines: S inserts row + header fields and rebuilds postings ---------- */
     for (const l of validLines) {
-      await callSP({
-        strmode: "M",
+      await callPagePI(client, {
+        strmode: "S",
         ...base,
-        dtpdate: date,
-        strsupplierid: supplierId,
-        strcurrency: currency,
-        numcurrencyrate: num(currencyRate) || 1,
+        ...header,
         intslno: l.slNo,
         stritemid: l.itemId,
         strunit: l.unit ?? null,
         numqtyin: num(l.qtyIn),
-        numunitprice_fc: num(l.unitPriceFC),
         numunitprice: num(l.unitPrice),
         numtotalprice: num(l.totalPrice),
-        numtotalprice_fc: num(l.totalPriceFC),
         numunitcost: num(l.unitCost),
         numtotalcost: num(l.totalCost),
-        numgtotalcost: totalCost,
-        numgtotalprice_fc: totalPriceFC,
-        numsupplieramt: supplierAmt,
-        numdiscamt_fc: num(discAmtFC),
-        numdiscamt: num(discAmt),
-        numvatamt: num(vatAmt),
-        strnote: note ?? null,
       });
     }
 
@@ -412,12 +439,16 @@ export const deletePurchaseInvoice = async (
       });
     }
 
-    await pool.query(
-      `CALL dbo.sp_pagepi(
-         strmode => 'D', pstrcoid => $1, stryear => $2, strbrid => $3,
-         strdoctype => $4, strdocno => $5, gstruserid => $6)`,
-      [coId, year, brId, DOC_TYPE, docNo, userId],
-    );
+    await callPagePI(pool, {
+      strmode: "D",
+      gstrcoid: coId,
+      gintyear: Number(year),
+      strbrid: brId,
+      strdoctype: DOC_TYPE,
+      strdocno: docNo,
+      gstruserid: userId,
+      strmenuname: "frmPI",
+    });
 
     return res.status(200).json({ success: true, message: "Deleted" });
   } catch (error: unknown) {
@@ -425,6 +456,59 @@ export const deletePurchaseInvoice = async (
     return res
       .status(500)
       .json({ success: false, message: "Not deleted, try again" });
+  }
+};
+
+/* =========================================================
+   INVOICE TYPES (C / R)  -> dbo.getpurchasestockparam()
+   GET /purchase-invoice/invoice-types
+   ========================================================= */
+export const getPurchaseInvoiceTypes = async (
+  req: AuthenticatedRequest,
+  res: Response,
+): Promise<Response> => {
+  try {
+    const result = await pool.query(
+      `SELECT fptype, fpid, fpname FROM dbo.getpurchasestockparam()`,
+    );
+    return res.status(200).json({ success: true, data: result.rows });
+  } catch (error: unknown) {
+    console.error("getPurchaseInvoiceTypes error:", error);
+    return res
+      .status(500)
+      .json({ success: false, message: "Failed to fetch invoice types" });
+  }
+};
+
+/* =========================================================
+   CASH PURCHASE ACCOUNT  (VB GetCashPurchaseAccountID)
+   GET /purchase-invoice/cash-purchase-account?brId=
+   ========================================================= */
+export const getCashPurchaseAccount = async (
+  req: AuthenticatedRequest,
+  res: Response,
+): Promise<Response> => {
+  try {
+    const coId = req.user?.CoID;
+    const brId = String(req.query.brId ?? "").trim();
+    if (!coId || !brId)
+      return res
+        .status(400)
+        .json({ success: false, message: "brId is required" });
+
+    const result = await pool.query(
+      `SELECT dbo.getcashpurchaseaccountid($1::varchar, $2::varchar) AS id`,
+      [coId, brId],
+    );
+    return res
+      .status(200)
+      .json({ success: true, data: { accountId: result.rows[0]?.id ?? "" } });
+  } catch (error: unknown) {
+    console.error("getCashPurchaseAccount error:", error);
+    return res.status(500).json({
+      success: false,
+      message: "Failed to fetch cash purchase account",
+    });
   }
 };
 

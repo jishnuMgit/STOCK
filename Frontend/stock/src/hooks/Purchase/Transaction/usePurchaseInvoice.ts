@@ -30,6 +30,11 @@ export interface SupplierLookup {
   name: string;
 }
 
+export interface InvoiceTypeOption {
+  value: string; // "C" cash / "R" credit
+  label: string;
+}
+
 interface ItemApi {
   itemID: string;
   itemName: string | null;
@@ -48,20 +53,22 @@ export interface PurchaseHeader {
   supplierId: string;
   supplierName: string;
   vatNo: string;
-  miscSupId: string; // UI only for now, see note below
+  miscSupId: string; // UI only
   currency: string;
   currencyRate: string;
   piNo: string; // supplier invoice no.
   note: string;
+  discAmt: string; // no input on screen yet, kept so modify doesn't wipe it
+  vatAmt: string; // no input on screen yet, kept so modify doesn't wipe it
 }
 
+/* FC columns are gone: the new sp_pagepi has only unit price / total price */
 export interface PurchaseRow {
   itemId: string;
   unit: string;
   qty: string;
-  sUnitPrice: string; // fUnitPrice_FC
-  sTotalPrice: string; // fTotalPrice_FC
-  unitPrice: string; // fUnitPrice
+  unitPrice: string; // typed by the user
+  totalPrice: string; // qty * unitPrice
   unitCost: string;
   totalCost: string;
 }
@@ -76,9 +83,8 @@ export const emptyRow = (): PurchaseRow => ({
   itemId: "",
   unit: "",
   qty: "",
-  sUnitPrice: "0.00",
-  sTotalPrice: "0.00",
   unitPrice: "0.00",
+  totalPrice: "0.00",
   unitCost: "0.00",
   totalCost: "0.00",
 });
@@ -97,7 +103,10 @@ export const emptyHeader = (): PurchaseHeader => ({
   currencyRate: "1",
   piNo: "",
   note: "",
+  discAmt: "0",
+  vatAmt: "0",
 });
+
 export interface ExpenseAccount {
   id: string;
   name: string;
@@ -120,19 +129,21 @@ interface ExpenseLookupsApi {
   currencies: { fCurrency: string }[];
 }
 
-/* ---------- API shapes ---------- */
+/* ---------- API shapes (columns come from tblstocktrans) ---------- */
 
 interface InvoiceHeaderApi {
-  fsupplierid: string | null;
-  fsuppliername: string | null;
-  fcurrency: string | null;
-  fcurrencyrate: string | number | null;
+  finvoicetype: string | null;
   fdate: string | null;
   fpino: string | null;
-  fpono: string | null;
   fvatno: string | null;
-  finvoicetype: string | null;
+  faccountid: string | null;
+  faccountname: string | null;
+  fpono: string | null;
+  fcurrency: string | null;
+  fcurrencyrate: string | number | null;
   fnote: string | null;
+  fdiscamt: string | number | null;
+  fvatamt: string | number | null;
 }
 
 interface InvoiceLineApi {
@@ -140,12 +151,17 @@ interface InvoiceLineApi {
   fitemid: string | null;
   funit: string | null;
   fqtyin: string | number | null;
-  funitprice_fc: string | number | null;
   funitprice: string | number | null;
   ftotalprice: string | number | null;
-  ftotalprice_fc: string | number | null;
   funitcost: string | number | null;
   ftotalcost: string | number | null;
+}
+
+interface InvoiceTypeApi {
+  fptype: string;
+  fpid: string;
+  fpname: string | null;
+  forderby: number | null;
 }
 
 interface CashSupplierApi {
@@ -164,6 +180,7 @@ export interface SavePayload {
   year: string;
   header: PurchaseHeader;
   rows: PurchaseRow[];
+  originalSlNos: number[]; // sl.# of lines loaded from DB (modify only)
 }
 
 export interface SaveCashSupplierPayload {
@@ -180,7 +197,7 @@ const n = (v: unknown): number => {
 const s = (v: unknown): string => (v == null ? "" : String(v));
 const fixed = (v: unknown, d: number) => n(v).toFixed(d);
 
-/* ---------- shared request helper (same as useCustomer) ---------- */
+/* ---------- shared request helper ---------- */
 
 const apiRequest = async <T>(
   method: "GET" | "POST" | "DELETE",
@@ -211,13 +228,11 @@ export const usePurchaseInvoice = () => {
      PURCHASE INVOICE
   ====================================================== */
 
-  //fetch default branch
   const fetchDefaultBranch = useCallback(async (): Promise<string> => {
     const result = await apiRequest<{ data: string }>("GET", "/branch/default");
     return s(result.data);
   }, []);
 
-  /* next entry no. for the branch */
   const fetchNextDocNo = useCallback(
     async (year: string, brId: string): Promise<string> => {
       const params = new URLSearchParams({ year, brId });
@@ -230,7 +245,6 @@ export const usePurchaseInvoice = () => {
     [],
   );
 
-  //fetch all branches
   const fetchBranches = useCallback(async (): Promise<Branch[]> => {
     const result = await apiRequest<{
       data: { fbrid: string; fbrname: string | null }[];
@@ -238,7 +252,33 @@ export const usePurchaseInvoice = () => {
     return result.data.map((b) => ({ id: b.fbrid, name: s(b.fbrname) }));
   }, []);
 
-  /* items of a branch (dbo.sp_getitem) -> Item ID / Item Name dropdowns */
+  /* invoice types C / R  (dbo.getpurchasestockparam) */
+  const fetchInvoiceTypes = useCallback(async (): Promise<
+    InvoiceTypeOption[]
+  > => {
+    const result = await apiRequest<{ data: InvoiceTypeApi[] }>(
+      "GET",
+      "/purchase-invoice/invoice-types",
+    );
+    return result.data.map((t) => ({
+      value: s(t.fpid),
+      label: s(t.fpid),
+    }));
+  }, []);
+
+  /* cash purchase account of a branch (dbo.getcashpurchaseaccountid) */
+  const fetchCashPurchaseAccount = useCallback(
+    async (brId: string): Promise<string> => {
+      const params = new URLSearchParams({ brId });
+      const result = await apiRequest<{ data: { accountId: string } }>(
+        "GET",
+        `/purchase-invoice/cash-purchase-account?${params}`,
+      );
+      return s(result.data.accountId);
+    },
+    [],
+  );
+
   const fetchItems = useCallback(
     async (coId: string, brId: string): Promise<Item[]> => {
       const params = new URLSearchParams({ PstrCoID: coId, PstrBrID: brId });
@@ -258,8 +298,6 @@ export const usePurchaseInvoice = () => {
     [],
   );
 
-  /* supplier lookups (dbo.filllookupsupplierid / filllookupsuppliername)
-     "by-id" is sorted by supplier ID, "by-name" is sorted by supplier name */
   const fetchSuppliers = useCallback(
     async (
       coId: string,
@@ -278,7 +316,6 @@ export const usePurchaseInvoice = () => {
     [],
   );
 
-  /* Purchase Expense combos (clsPIExp.FillCombos): accounts, cost centers, currencies */
   const fetchExpenseLookups = useCallback(async (): Promise<ExpenseLookups> => {
     const result = await apiRequest<{ data: ExpenseLookupsApi }>(
       "GET",
@@ -303,7 +340,11 @@ export const usePurchaseInvoice = () => {
       year: string,
       brId: string,
       docNo: string,
-    ): Promise<{ header: PurchaseHeader; rows: PurchaseRow[] } | null> => {
+    ): Promise<{
+      header: PurchaseHeader;
+      rows: PurchaseRow[];
+      originalSlNos: number[];
+    } | null> => {
       try {
         setLoading(true);
         setError("");
@@ -322,25 +363,27 @@ export const usePurchaseInvoice = () => {
             invoiceType: s(h.finvoicetype) || "C",
             date: h.fdate ? new Date(h.fdate).toISOString().slice(0, 10) : "",
             poNo: s(h.fpono),
-            supplierId: s(h.fsupplierid),
-            supplierName: s(h.fsuppliername),
+            supplierId: s(h.faccountid),
+            supplierName: s(h.faccountname),
             vatNo: s(h.fvatno),
             miscSupId: "",
             currency: s(h.fcurrency) || "SAR",
             currencyRate: s(h.fcurrencyrate) || "1",
             piNo: s(h.fpino),
             note: s(h.fnote),
+            discAmt: s(h.fdiscamt) || "0",
+            vatAmt: s(h.fvatamt) || "0",
           },
           rows: result.data.lines.map((l) => ({
             itemId: s(l.fitemid),
             unit: s(l.funit),
             qty: s(l.fqtyin),
-            sUnitPrice: fixed(l.funitprice_fc, 2),
-            sTotalPrice: fixed(l.ftotalprice_fc, 2),
             unitPrice: fixed(l.funitprice, 2),
+            totalPrice: fixed(l.ftotalprice, 2),
             unitCost: fixed(l.funitcost, 2),
             totalCost: fixed(l.ftotalcost, 2),
           })),
+          originalSlNos: result.data.lines.map((l) => l.fslno),
         };
       } catch (err: unknown) {
         // 404 just means "new document", not a real error
@@ -355,7 +398,13 @@ export const usePurchaseInvoice = () => {
   );
 
   const saveInvoice = useCallback(
-    async ({ mode, year, header, rows }: SavePayload): Promise<void> => {
+    async ({
+      mode,
+      year,
+      header,
+      rows,
+      originalSlNos,
+    }: SavePayload): Promise<void> => {
       const rate = n(header.currencyRate) || 1;
 
       const lines = rows
@@ -365,10 +414,8 @@ export const usePurchaseInvoice = () => {
           itemId: r.itemId,
           unit: r.unit,
           qtyIn: n(r.qty),
-          unitPriceFC: n(r.sUnitPrice),
           unitPrice: n(r.unitPrice),
           totalPrice: Number((n(r.qty) * n(r.unitPrice)).toFixed(2)),
-          totalPriceFC: n(r.sTotalPrice),
           unitCost: n(r.unitCost),
           totalCost: n(r.totalCost),
         }));
@@ -388,8 +435,11 @@ export const usePurchaseInvoice = () => {
         currency: header.currency,
         currencyRate: rate,
         note: header.note,
+        discAmt: n(header.discAmt),
+        vatAmt: n(header.vatAmt),
         menuName: "frmPI",
         lines,
+        originalSlNos: mode === "M" ? originalSlNos : undefined,
       });
     },
     [],
@@ -438,11 +488,8 @@ export const usePurchaseInvoice = () => {
 
   /* ======================================================
      CASH (MISC.) SUPPLIER
-     These throw on failure so the caller can show the message.
-     They don't touch `loading`, so the invoice buttons stay enabled.
   ====================================================== */
 
-  /* VB: GetCashSupplierData -> fills the Misc. Sup. combos */
   const fetchCashSuppliers = useCallback(async (): Promise<CashSupplier[]> => {
     const result = await apiRequest<{ data: CashSupplierApi[] }>(
       "GET",
@@ -455,7 +502,6 @@ export const usePurchaseInvoice = () => {
     }));
   }, []);
 
-  /* VB: GetCashSupplierID */
   const fetchNextCashSupplierId = useCallback(async (): Promise<string> => {
     const result = await apiRequest<{ data: { id: string } }>(
       "GET",
@@ -464,7 +510,6 @@ export const usePurchaseInvoice = () => {
     return s(result.data.id);
   }, []);
 
-  /* VB: Apply (S / M) */
   const saveCashSupplier = useCallback(
     async (payload: SaveCashSupplierPayload): Promise<void> => {
       await apiRequest("POST", CASH_SUPPLIER_BASE, payload);
@@ -472,7 +517,6 @@ export const usePurchaseInvoice = () => {
     [],
   );
 
-  /* VB: ApplyD */
   const deleteCashSupplier = useCallback(async (id: string): Promise<void> => {
     await apiRequest(
       "DELETE",
@@ -484,6 +528,8 @@ export const usePurchaseInvoice = () => {
     fetchDefaultBranch,
     fetchNextDocNo,
     fetchBranches,
+    fetchInvoiceTypes,
+    fetchCashPurchaseAccount,
     fetchInvoice,
     saveInvoice,
     deleteInvoice,

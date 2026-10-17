@@ -20,17 +20,14 @@ type Option = { value: string; label: string };
 const makeOptions = (values: string[]): Option[] =>
   values.map((value) => ({ value, label: value }));
 
-/* Fallback options until the lookup endpoints exist.
-   Supplier ID and Supplier Name share the same value (the account id),
-   like fAccountID did in the VB. */
+/* Fallback options until the lookup endpoints load. */
 const defaultBranchOptions = makeOptions(["OFFICE"]);
-const invoiceTypeOptions = makeOptions(["C"]);
-const defaultSupplierIdOptions: Option[] = [
-  { value: "1030101", label: "1030101" },
+const defaultInvoiceTypeOptions: Option[] = [
+  { value: "C", label: "C" },
+  { value: "R", label: "R" },
 ];
-const defaultSupplierNameOptions: Option[] = [
-  { value: "1030101", label: "AlSulaijer Hamad" },
-];
+const defaultSupplierIdOptions: Option[] = [];
+const defaultSupplierNameOptions: Option[] = [];
 const miscSupplierOptions = makeOptions(["No", "Yes"]);
 const defaultCurrencyOptions = makeOptions(["SAR"]);
 
@@ -57,7 +54,6 @@ const labelClass = "shrink-0 whitespace-nowrap text-[14px] text-[#263449]";
 
 /* =========================================================
    BASE SELECT STYLES
-   Each dropdown below has its own StylesConfig.
 ========================================================= */
 
 const baseSelectStyles: StylesConfig<Option, false> = {
@@ -160,7 +156,6 @@ const baseSelectStyles: StylesConfig<Option, false> = {
 
 /* =========================================================
    INDIVIDUAL SELECT STYLES
-   Change any one of these without affecting the others.
 ========================================================= */
 
 // 1. Branch
@@ -171,7 +166,6 @@ const branchSelectStyles: StylesConfig<Option, false> = {
     height: 30,
     minHeight: 30,
     borderRadius: 4,
-    // width: "250px",
     borderColor: "#d7dee7",
   }),
 };
@@ -276,6 +270,7 @@ interface Props {
   totalSupplierAmt: number;
   lookups?: {
     branches?: Option[];
+    invoiceTypes?: Option[]; // C / R from dbo.getpurchasestockparam
     supplierIds?: Option[];
     supplierNames?: Option[];
     currencies?: Option[];
@@ -302,12 +297,17 @@ const PurchaseForm: React.FC<Props> = ({
   const [miscOpen, setMiscOpen] = useState(false);
   const [expenseOpen, setExpenseOpen] = useState(false);
   const branchOptions = lookups?.branches ?? defaultBranchOptions;
+  const invoiceTypeOptions = lookups?.invoiceTypes ?? defaultInvoiceTypeOptions;
   const supplierOptions = lookups?.supplierIds ?? defaultSupplierIdOptions;
   const supplierNameOptions =
     lookups?.supplierNames ?? defaultSupplierNameOptions;
   const currencyOptions = lookups?.currencies ?? defaultCurrencyOptions;
 
   const isMisc = miscMode === "Yes";
+
+  /* Cash invoice: the supplier account is fixed (the branch's cash purchase
+     account), so Supplier ID / Name are locked, like the VB form. */
+  const isCash = header.invoiceType === "C";
 
   /* Misc. ID and Misc. Name come from the same records (cash suppliers) */
   const miscIdOptions: Option[] = miscSuppliers.map((m) => ({
@@ -328,12 +328,10 @@ const PurchaseForm: React.FC<Props> = ({
 
   /* Enter / Tab -> next field, Shift+Enter / Shift+Tab -> previous field */
   const handleKeyDown = (e: React.KeyboardEvent<HTMLElement>) => {
-    // react-select already handled it (e.g. Enter picked an option)
     if (e.defaultPrevented) return;
     if (e.key !== "Enter" && e.key !== "Tab") return;
 
     const target = e.target as HTMLElement;
-    // ignore portal content (popups) and non-inputs (buttons keep Enter)
     if (!e.currentTarget.contains(target) || target.tagName !== "INPUT") return;
 
     const index = FIELD_ORDER.indexOf(target.id);
@@ -365,7 +363,6 @@ const PurchaseForm: React.FC<Props> = ({
         next.focus();
       }
     }
-    // Tab past the last field (or Shift+Tab before the first) uses the browser default
   };
 
   /* Supplier ID and Supplier Name are one account: set both together */
@@ -386,7 +383,6 @@ const PurchaseForm: React.FC<Props> = ({
 
   const handleMiscModeChange = (mode: string) => {
     onMiscModeChange(mode);
-    // going back to "No": drop the misc supplier, but only if one was picked
     if (mode !== "Yes" && header.miscSupId) handleMiscChange("");
   };
 
@@ -514,6 +510,7 @@ const PurchaseForm: React.FC<Props> = ({
               options={supplierOptions}
               value={pick(supplierOptions, header.supplierId)}
               onChange={(o) => handleSupplierChange(o?.value ?? "")}
+              // isDisabled={isCash}
               styles={supplierIdSelectStyles}
               components={selectComponents}
               isClearable={false}
@@ -578,17 +575,14 @@ const PurchaseForm: React.FC<Props> = ({
           GROUP 3
           Remaining fields and action buttons
       ================================================== */}
-      <div
-        id="purchase-right-group"
-        className="flex min-w-0 flex-col gap-2"
-      >
+      <div id="purchase-right-group" className="flex min-w-0 flex-col gap-2">
         {/* Invoice Type and Date */}
         <div className="grid min-w-0 grid-cols-[minmax(0,1fr)_minmax(0,1fr)] gap-3">
           <div className="flex min-w-0 items-center gap-3">
             <label htmlFor="lkpType" className={`${labelClass} w-19`}>
               Type
             </label>
-            <div className="min-w-0 w-[35%]">
+            <div className="min-w-0 w-[55%]">
               <Select<Option, false>
                 inputId="lkpType"
                 options={invoiceTypeOptions}
@@ -624,6 +618,7 @@ const PurchaseForm: React.FC<Props> = ({
             options={supplierNameOptions}
             value={pick(supplierNameOptions, header.supplierId)}
             onChange={(o) => handleSupplierChange(o?.value ?? "")}
+            // isDisabled={isCash}
             styles={supplierNameSelectStyles}
             components={selectComponents}
             isClearable={false}
@@ -733,7 +728,6 @@ const PurchaseForm: React.FC<Props> = ({
           <div
             className="fixed inset-0 z-[9000] flex items-center justify-center bg-black/40"
             onMouseDown={(e) => {
-              // click on the dark backdrop closes; clicks inside do not
               if (e.target === e.currentTarget) setExpenseOpen(false);
             }}
           >

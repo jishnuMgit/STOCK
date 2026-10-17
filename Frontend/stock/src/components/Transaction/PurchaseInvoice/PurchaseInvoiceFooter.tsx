@@ -35,10 +35,12 @@ const PurchaseFooter: React.FC<Props> = ({
 
   return (
     <footer className="shrink-0 px-3 pb-3 pt-1">
-      {/* Same column widths and min-width as the table, so totals line up */}
+      {/* Same column widths and min-width as the table, so totals line up.
+          Columns: indicator, Sl., Item ID, Item Name, Unit, Qty,
+                   Unit Price, Total Price, Unit Cost, Total Cost */}
       <div
         id="purchase-footer-fields"
-        className="grid w-full min-w-[900px] grid-cols-[14px_38px_158px_minmax(120px,1fr)_56px_58px_85px_90px_80px_80px_80px] items-center pt-2"
+        className="grid w-full min-w-[900px] grid-cols-[14px_38px_158px_minmax(120px,1fr)_56px_58px_85px_90px_80px_80px] items-center pt-2"
       >
         {/* Note: spans indicator, Sl.No., Item ID, Item Name */}
         <div
@@ -83,7 +85,7 @@ const PurchaseFooter: React.FC<Props> = ({
           />
         </div>
 
-        {/* Supplier Total: under S.Total Price */}
+        {/* Supplier Total: under Total Price */}
         <div
           id="purchase-supplier-total-group"
           className="col-[8/9] min-w-0 px-[1px]"
@@ -91,9 +93,9 @@ const PurchaseFooter: React.FC<Props> = ({
           <input
             id="purchaseSupplierTotal"
             type="text"
-            value={totals.supplierTotal.toFixed(4)}
+            value={totals.supplierTotal.toFixed(2)}
             readOnly
-            aria-label="Supplier total price"
+            aria-label="Total price"
             className="input-style w-full min-w-0 text-right"
           />
         </div>
@@ -101,7 +103,7 @@ const PurchaseFooter: React.FC<Props> = ({
         {/* Final Total: under Total Cost */}
         <div
           id="purchase-final-total-group"
-          className="col-[11/12] min-w-0 px-[1px]"
+          className="col-[10/11] min-w-0 px-[1px]"
         >
           <input
             id="purchaseFinalTotal"

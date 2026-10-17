@@ -6,6 +6,8 @@ import {
   deletePurchaseInvoice,
   getPurchaseInvoice,
   savePurchaseInvoice,
+  getPurchaseInvoiceTypes,
+  getCashPurchaseAccount,
   getCashSuppliers,
   getNextCashSupplierId,
   getCashSupplier,
@@ -27,6 +29,10 @@ router.post("/", savePurchaseInvoice);
 router.delete("/", deletePurchaseInvoice);
 router.post("/calc-unit-cost", calcUnitCost);
 router.get("/next-doc-no", getNextDocNo);
+
+// invoice types (C / R) and cash purchase account
+router.get("/invoice-types", getPurchaseInvoiceTypes);
+router.get("/cash-purchase-account", getCashPurchaseAccount);
 
 // cash (misc.) supplier
 router.get("/cash-supplier", getCashSuppliers);
