@@ -37,7 +37,7 @@ const yearOptions: Option[] = Array.from(
 );
 
 const FinanceYearClose: React.FC<FinanceYearCloseProps> = ({
-  onClose,
+  
   onCancel,
   onConfirm,
 }) => {
@@ -147,7 +147,7 @@ const FinanceYearClose: React.FC<FinanceYearCloseProps> = ({
 
   };
 
-  const handleCancel = () => {
+  const handleClear = () => {
     setBranch(branchOptions[0]);
     setYear(String(currentYear));
     setClosingType("Temporary");
@@ -155,10 +155,10 @@ const FinanceYearClose: React.FC<FinanceYearCloseProps> = ({
     onCancel?.();
   };
 
-  const handleClose = () => {
-    setMessage("");
-    onClose?.();
-  };
+  // const handleClose = () => {
+  //   setMessage("");
+  //   onClose?.();
+  // };
 
   return (
     <div className="flex min-h-full w-full items-start justify-center bg-white px-3 py-3 sm:px-4 sm:py-4">
@@ -201,7 +201,7 @@ const FinanceYearClose: React.FC<FinanceYearCloseProps> = ({
               {/* Closing panel */}
               <fieldset className="row-span-2 rounded-[4px] border border-[#e0e5ea]">
                 <legend className="px-2 text-[14px] text-[#405066]">
-                  Closing
+                  Year Close Type
                 </legend>
 
                 <div className="flex flex-col gap-2 px-3 pb-3 pt-1">
@@ -289,14 +289,14 @@ const FinanceYearClose: React.FC<FinanceYearCloseProps> = ({
               </button>
 
               <button
-                id="btnCancel"
+                id="btnClear"
                 type="button"
-                onClick={handleCancel}
+                onClick={handleClear}
                 className={buttonClass}
               >
-                <u>C</u>ancel
+                <u>C</u>lear
               </button>
-
+{/* 
               <button
                 id="btnClose"
                 type="button"
@@ -304,7 +304,7 @@ const FinanceYearClose: React.FC<FinanceYearCloseProps> = ({
                 className={buttonClass}
               >
                 <u>C</u>lose
-              </button>
+              </button> */}
             </div>
           </section>
         </main>
