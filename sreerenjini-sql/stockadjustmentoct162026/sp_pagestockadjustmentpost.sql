@@ -9,7 +9,9 @@
 --   2. the unit cost is read from it, and written onto the line:
 --        funitcost = that cost,  ftotalcost = (Qty. In - Qty. Out) x that cost;
 --   3. the cost of everything adjusted is added up: (Qty. Out - Qty. In) x cost;
---   4. fstock goes up by Qty. In - Qty. Out. The cost is NOT averaged or changed.
+--   4. fpreviousstock = the stock the item had BEFORE this line, then fstock goes up
+--      by Qty. In - Qty. Out. The cost is NOT averaged or changed (fpreviousunitcost
+--      is not touched).
 --
 -- Then the finance lines (tblfintrans, forigin 'GP', posted, year = the year of the
 -- document's date, description 'Stock Adjustment <Entry No.>'):
@@ -33,8 +35,15 @@
 --     columns); fcuserid / fcuserdate are used on the finance lines.
 --   * the original cursor and its dynamic filter are a plain FOR loop.
 --
+-- THE USER ARGUMENT is p_pstruserid (it was p_gstruserid), the name the other screens'
+-- procedures use; the DROP below removes the version with the old name first (CREATE OR
+-- REPLACE cannot rename an argument).
+--
 -- Example:  CALL dbo.sp_pagestockadjustmentpost('P', '01', '2026', 'JD', 'ADJ', 'ADJ0001', 'ADMIN');
 -- =====================================================================
+
+-- the version whose last argument was called p_gstruserid (same types)
+DROP PROCEDURE IF EXISTS dbo.sp_pagestockadjustmentpost(character varying, character varying, character varying, character varying, character varying, character varying, character varying);
 
 CREATE OR REPLACE PROCEDURE dbo.sp_pagestockadjustmentpost(
     IN p_strmode    varchar(1),
@@ -43,7 +52,7 @@ CREATE OR REPLACE PROCEDURE dbo.sp_pagestockadjustmentpost(
     IN p_strbrid    varchar(3),
     IN p_strdoctype varchar(5),
     IN p_strdocno   varchar(15),
-    IN p_gstruserid varchar(20) DEFAULT NULL
+    IN p_pstruserid varchar(20) DEFAULT NULL
 )
 LANGUAGE plpgsql
 AS $$
@@ -106,7 +115,7 @@ BEGIN
 
         -- 1. the stock row of the branch, when missing
         INSERT INTO dbo.tblstockcontrol (fcoid, fyear, fbrid, fitemid, fcuserid, fcuserdate)
-        SELECT p_pstrcoid, p_pstryear, p_strbrid, v_stritemid, p_gstruserid, now()
+        SELECT p_pstrcoid, p_pstryear, p_strbrid, v_stritemid, p_pstruserid, now()
         WHERE NOT EXISTS (
             SELECT 1 FROM dbo.tblstockcontrol
             WHERE fcoid = p_pstrcoid AND fyear = p_pstryear
@@ -135,7 +144,15 @@ BEGIN
         -- 3. the cost of everything adjusted (for the finance lines)
         v_numcostofstock := v_numcostofstock + ((v_numqtyout - v_numqtyin) * v_numunitcost);
 
-        -- 4. the stock moves; the cost stays
+        -- 4. the stock the item had before this line is kept, then the stock moves;
+        --    the cost stays
+        UPDATE dbo.tblstockcontrol
+           SET fpreviousstock = COALESCE(fstock, 0)
+         WHERE fcoid   = p_pstrcoid
+           AND fyear   = p_pstryear
+           AND fbrid   = p_strbrid
+           AND fitemid = v_stritemid;
+
         UPDATE dbo.tblstockcontrol
            SET fstock = COALESCE(fstock, 0) + (v_numqtyin - v_numqtyout)
          WHERE fcoid   = p_pstrcoid
@@ -173,7 +190,7 @@ BEGIN
         CASE WHEN v_numcostofstock < 0 THEN COALESCE(ABS(v_numcostofstock), 0) ELSE 0 END,
         CASE WHEN v_numcostofstock < 0 THEN 0 ELSE COALESCE(v_numcostofstock, 0) END,
         true, 'GP', false,
-        p_gstruserid, now()
+        p_pstruserid, now()
     );
 
     -- line 2: the stock adjustment account (the opposite side)
@@ -194,7 +211,7 @@ BEGIN
         CASE WHEN v_numcostofstock < 0 THEN 0 ELSE COALESCE(v_numcostofstock, 0) END,
         CASE WHEN v_numcostofstock < 0 THEN COALESCE(ABS(v_numcostofstock), 0) ELSE 0 END,
         true, 'GP', false,
-        p_gstruserid, now()
+        p_pstruserid, now()
     );
 
     -- the posting transaction number: one for the whole document

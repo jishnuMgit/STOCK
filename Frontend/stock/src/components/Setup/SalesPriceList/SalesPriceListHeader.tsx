@@ -1,6 +1,31 @@
-import React from "react";
+import React, { useMemo } from "react";
 import Select from "react-select";
 import { type Option, selectProps } from "./SalesPriceListShared";
+import {
+  type PairOption,
+  filterPairOption,
+  makePairComponents,
+  makePairDividedMenuStyles,
+} from "../../PairSelect/pairSelectParts";
+import {
+  BranchDividedMenuList,
+  BranchDividedOption,
+  branchMenuStyles,
+  filterLabelOrValue,
+} from "../../BranchSelect/branchSelectParts";
+import selectComponents from "../../sharecomponents/selectComponents";
+import { usePairMenuHang } from "../../../hooks/usePairMenuHang";
+
+// the Item Group ID box shows "ID | Name", the Item Group Name box "Name | ID",
+// both with the divider line
+const groupIdComponents = makePairComponents("ID", "Name", false, true);
+const groupNameComponents = makePairComponents("ID", "Name", true, true);
+
+const branchComponents = {
+  ...selectComponents,
+  MenuList: BranchDividedMenuList,
+  Option: BranchDividedOption,
+};
 
 type RadioOptionProps = {
   name: string;
@@ -64,6 +89,7 @@ const CheckboxBox: React.FC<{
   >
     <input
       id={id}
+      name={id}
       type="checkbox"
       checked={checked}
       onChange={(event) => onChange(event.target.checked)}
@@ -75,54 +101,65 @@ const CheckboxBox: React.FC<{
 
 type SalesPriceListHeaderProps = {
   branchOptions: Option[];
-  branch: Option | null;
+  lkpBranch: Option | null;
   onBranchChange: (option: Option | null) => void;
-  applyAllBranches: boolean;
-  onApplyAllBranchesChange: (checked: boolean) => void;
+  chkApplyToAllBranches: boolean;
+  onChkApplyToAllBranchesChange: (checked: boolean) => void;
 
-  groupMode: string;
-  onGroupModeChange: (mode: string) => void;
-  groupIdOptions: Option[];
-  groupNameOptions: Option[];
-  groupId: string | null;
-  onGroupChange: (id: string | null) => void;
+  // 0 = One Item Group, 1 = All Item Group
+  rdgItemGroup: number;
+  onRdgItemGroupChange: (value: number) => void;
+  groupIdOptions: PairOption[];
+  groupNameOptions: PairOption[];
+  lkpItemGroupID: string;
+  onItemGroupChange: (lkpItemGroupID: string) => void;
 
-  percent: string;
+  txtIncreasePercent: string;
   onPercentChange: (value: string) => void;
   onPercentCommit: () => void;
-  applyPercent: boolean;
-  onApplyPercentChange: (checked: boolean) => void;
+  chkApplyUnitPrice: boolean;
+  onChkApplyUnitPriceChange: (checked: boolean) => void;
 
   showFind: boolean;
-  query: string;
-  onQueryChange: (value: string) => void;
+  txtFind: string;
+  onTxtFindChange: (value: string) => void;
 };
 
 const SalesPriceListHeader: React.FC<SalesPriceListHeaderProps> = ({
   branchOptions,
-  branch,
+  lkpBranch,
   onBranchChange,
-  applyAllBranches,
-  onApplyAllBranchesChange,
-  groupMode,
-  onGroupModeChange,
+  chkApplyToAllBranches,
+  onChkApplyToAllBranchesChange,
+  rdgItemGroup,
+  onRdgItemGroupChange,
   groupIdOptions,
   groupNameOptions,
-  groupId,
-  onGroupChange,
-  percent,
+  lkpItemGroupID,
+  onItemGroupChange,
+  txtIncreasePercent,
   onPercentChange,
   onPercentCommit,
-  applyPercent,
-  onApplyPercentChange,
+  chkApplyUnitPrice,
+  onChkApplyUnitPriceChange,
   showFind,
-  query,
-  onQueryChange,
+  txtFind,
+  onTxtFindChange,
 }) => {
-  const selectedGroupId = groupIdOptions.find((o) => o.value === groupId) ?? null;
+  const selectedGroupId =
+    groupIdOptions.find((o) => o.value === lkpItemGroupID) ?? null;
   const selectedGroupName =
-    groupNameOptions.find((o) => o.value === groupId) ?? null;
-  const groupDisabled = groupMode !== "One Item Group";
+    groupNameOptions.find((o) => o.value === lkpItemGroupID) ?? null;
+  const oneItemGroup = rdgItemGroup === 0;
+
+  // the Item Group ID list covers the ID box AND the Name box next to it, to the
+  // Name box's right edge (measured when the list opens)
+  const { hang: idMenuHang, measure: measureIdMenuHang } = usePairMenuHang();
+
+  const groupIdStyles = useMemo(
+    () => makePairDividedMenuStyles(idMenuHang),
+    [idMenuHang]
+  );
 
   return (
     <div className="flex flex-col gap-3">
@@ -134,18 +171,25 @@ const SalesPriceListHeader: React.FC<SalesPriceListHeaderProps> = ({
             <Select
               inputId="lkpBranch"
               instanceId="lkpBranch"
+              name="lkpBranch"
               options={branchOptions}
-              value={branch}
+              value={lkpBranch}
               onChange={onBranchChange}
               {...selectProps}
+              placeholder="Select Branch"
+              isSearchable
+              components={branchComponents}
+              styles={branchMenuStyles}
+              filterOption={filterLabelOrValue}
+              noOptionsMessage={() => "No Branch Found"}
             />
           </div>
         </div>
         <CheckboxBox
           id="chkApplyToAllBranches"
           label="Apply To All Branches"
-          checked={applyAllBranches}
-          onChange={onApplyAllBranchesChange}
+          checked={chkApplyToAllBranches}
+          onChange={onChkApplyToAllBranchesChange}
         />
       </div>
 
@@ -155,67 +199,90 @@ const SalesPriceListHeader: React.FC<SalesPriceListHeaderProps> = ({
           <div className="border border-[#e0e5ea] bg-white px-3.5 py-3">
             <div className="flex flex-col gap-3">
               <CustomRadio
-                name="optItemGroup"
-                value="One Item Group"
+                name="rdgItemGroup"
+                value="0"
                 label="One Item Group"
-                checked={groupMode === "One Item Group"}
-                onChange={() => onGroupModeChange("One Item Group")}
+                checked={oneItemGroup}
+                onChange={() => onRdgItemGroupChange(0)}
               />
               <CustomRadio
-                name="optItemGroup"
-                value="All Item Group"
+                name="rdgItemGroup"
+                value="1"
                 label="All Item Group"
-                checked={groupMode === "All Item Group"}
-                onChange={() => onGroupModeChange("All Item Group")}
+                checked={!oneItemGroup}
+                onChange={() => onRdgItemGroupChange(1)}
               />
             </div>
           </div>
-          <div className="grid grid-cols-[110px_350px] gap-2 pt-3">
-            <Select
-              inputId="lkpItemGroupID"
-              instanceId="lkpItemGroupID"
-              options={groupIdOptions}
-              value={selectedGroupId}
-              onChange={(option) => onGroupChange(option?.value ?? null)}
-              isDisabled={groupDisabled}
-              {...selectProps}
-            />
-            <Select
-              inputId="lkpItemGroupName"
-              instanceId="lkpItemGroupName"
-              options={groupNameOptions}
-              value={selectedGroupName}
-              onChange={(option) => onGroupChange(option?.value ?? null)}
-              isDisabled={groupDisabled}
-              {...selectProps}
-            />
-          </div>
+
+          {/* the Item Group boxes are only for One Item Group */}
+          {oneItemGroup && (
+            <div className="grid grid-cols-[110px_350px] gap-2 pt-3">
+              <Select<PairOption, false>
+                inputId="lkpItemGroupID"
+                instanceId="lkpItemGroupID"
+                name="lkpItemGroupID"
+                options={groupIdOptions}
+                value={selectedGroupId}
+                onChange={(option) => onItemGroupChange(option?.value ?? "")}
+                {...selectProps}
+                placeholder="Select"
+                isSearchable
+                components={groupIdComponents}
+                styles={groupIdStyles}
+                filterOption={filterPairOption}
+                onMenuOpen={() =>
+                  measureIdMenuHang("lkpItemGroupID", "lkpItemGroupName")
+                }
+                noOptionsMessage={() => "No Item Group Found"}
+              />
+              <Select<PairOption, false>
+                inputId="lkpItemGroupName"
+                instanceId="lkpItemGroupName"
+                name="lkpItemGroupName"
+                options={groupNameOptions}
+                value={selectedGroupName}
+                onChange={(option) => onItemGroupChange(option?.value ?? "")}
+                {...selectProps}
+                placeholder="Select"
+                isSearchable
+                components={groupNameComponents}
+                styles={makePairDividedMenuStyles(100)}
+                filterOption={filterPairOption}
+                noOptionsMessage={() => "No Item Group Found"}
+              />
+            </div>
+          )}
         </div>
 
-        {/* Increase price by % (unit price only) */}
+        {/* Apply to Unit Price: unlocks the price column. Increase price by %
+            (made on the unit cost) only for One Item Group */}
         <div className="flex flex-col items-end gap-2">
           <CheckboxBox
             id="chkApplyUnitPrice"
             label="Apply to Unit Price"
-            checked={applyPercent}
-            onChange={onApplyPercentChange}
+            checked={chkApplyUnitPrice}
+            onChange={onChkApplyUnitPriceChange}
           />
-          <div className="flex items-center gap-2">
-            <FieldLabel className="w-42.5">Increase Price By % :</FieldLabel>
-            <input
-              id="txtIncreasePercent"
-              type="number"
-              step="0.01"
-              aria-label="Increase price by percent"
-              value={percent}
-              onChange={(event) => onPercentChange(event.target.value)}
-              onBlur={onPercentCommit}
-              onKeyDown={(event) => {
-                if (event.key === "Enter") onPercentCommit();
-              }}
-              className="h-7.5 w-27.5 rounded-sm border border-[#cfd7df] bg-white px-2 text-right text-[14px] text-[#24364d] outline-none focus:border-[#91a7b9]"
-            />
-          </div>
+          {oneItemGroup && (
+            <div className="flex items-center gap-2">
+              <FieldLabel className="w-42.5">Increase Price By % :</FieldLabel>
+              <input
+                id="txtIncreasePercent"
+                name="txtIncreasePercent"
+                type="number"
+                step="0.01"
+                aria-label="Increase price by percent"
+                value={txtIncreasePercent}
+                onChange={(event) => onPercentChange(event.target.value)}
+                onBlur={onPercentCommit}
+                onKeyDown={(event) => {
+                  if (event.key === "Enter") onPercentCommit();
+                }}
+                className="h-7.5 w-27.5 rounded-sm border border-[#cfd7df] bg-white px-2 text-right text-[14px] text-[#24364d] outline-none focus:border-[#91a7b9]"
+              />
+            </div>
+          )}
         </div>
       </div>
 
@@ -225,10 +292,11 @@ const SalesPriceListHeader: React.FC<SalesPriceListHeaderProps> = ({
           <FieldLabel className="w-27.5">Find :</FieldLabel>
           <input
             id="txtFind"
+            name="txtFind"
             type="text"
             autoFocus
-            value={query}
-            onChange={(event) => onQueryChange(event.target.value)}
+            value={txtFind}
+            onChange={(event) => onTxtFindChange(event.target.value)}
             placeholder="Item ID or item name"
             className="h-7.5 w-62.5 rounded-sm border border-[#cfd7df] bg-white px-2 text-[14px] text-[#24364d] outline-none focus:border-[#91a7b9]"
           />

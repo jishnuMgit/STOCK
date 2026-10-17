@@ -4,6 +4,7 @@ import { toast } from "react-toastify";
 import { useAltShortcuts } from "../../hooks/useAltShortcuts";
 import { useEnterAsTab } from "../../hooks/useEnterAsTab";
 import { useButtonPermissions } from "../../hooks/useButtonPermissions";
+import { usePairMenuHang } from "../../hooks/usePairMenuHang";
 import {
   filterLabelOrValue,
   makeNameIdMenuComponents,
@@ -14,7 +15,7 @@ import {
 const branchComponents = makeNameIdMenuComponents("Branch", true);
 import {
   makePairComponents,
-  pairDividedIdMenuStyles as accountIdMenuStyles,
+  makePairDividedMenuStyles,
   pairDividedNameMenuStyles as accountNameMenuStyles,
   filterPairOption as accountFilterOption,
 } from "../../components/PairSelect/pairSelectParts";
@@ -232,6 +233,10 @@ const SetPostingAccountPage: React.FC = () => {
   // saved accounts to be loaded again (used by Clear)
   const [defaultBranch, setDefaultBranch] = useState("");
   const [reloadKey, setReloadKey] = useState(0);
+
+  // an Account ID list covers the Account ID box AND the Account Name box next to
+  // it, to the Name box's right edge (measured when the list opens)
+  const { hang: idMenuHang, measure: measureIdMenuHang } = usePairMenuHang();
 
   // Does the selected branch already have posting accounts set?
   // false -> the button says Save (mode S), true -> Modify (mode M)
@@ -710,7 +715,13 @@ const SetPostingAccountPage: React.FC = () => {
                   onChange={(selected) =>
                     handleAccountIdChange("CashSupplier", selected)
                   }
-                  styles={{ ...selectStyles, ...accountIdMenuStyles }}
+                  styles={{
+                    ...selectStyles,
+                    ...makePairDividedMenuStyles(idMenuHang),
+                  }}
+                  onMenuOpen={() =>
+                    measureIdMenuHang("lkpCashSupplierAccountID", "lkpCashSupplierAccountName")
+                  }
                   components={accountIdComponents}
                   filterOption={accountFilterOption}
                   noOptionsMessage={() => "No Account Found"}
@@ -771,7 +782,13 @@ const SetPostingAccountPage: React.FC = () => {
                   onChange={(selected) =>
                     handleAccountIdChange("CashCustomer", selected)
                   }
-                  styles={{ ...selectStyles, ...accountIdMenuStyles }}
+                  styles={{
+                    ...selectStyles,
+                    ...makePairDividedMenuStyles(idMenuHang),
+                  }}
+                  onMenuOpen={() =>
+                    measureIdMenuHang("lkpCashCustomerAccountID", "lkpCashCustomerAccountName")
+                  }
                   components={accountIdComponents}
                   filterOption={accountFilterOption}
                   noOptionsMessage={() => "No Account Found"}
@@ -831,7 +848,13 @@ const SetPostingAccountPage: React.FC = () => {
                   onChange={(selected) =>
                     handleAccountIdChange("Stock", selected)
                   }
-                  styles={{ ...selectStyles, ...accountIdMenuStyles }}
+                  styles={{
+                    ...selectStyles,
+                    ...makePairDividedMenuStyles(idMenuHang),
+                  }}
+                  onMenuOpen={() =>
+                    measureIdMenuHang("lkpStockAccountID", "lkpStockAccountName")
+                  }
                   components={accountIdComponents}
                   filterOption={accountFilterOption}
                   noOptionsMessage={() => "No Account Found"}
@@ -891,7 +914,13 @@ const SetPostingAccountPage: React.FC = () => {
                   onChange={(selected) =>
                     handleAccountIdChange("Sales", selected)
                   }
-                  styles={{ ...selectStyles, ...accountIdMenuStyles }}
+                  styles={{
+                    ...selectStyles,
+                    ...makePairDividedMenuStyles(idMenuHang),
+                  }}
+                  onMenuOpen={() =>
+                    measureIdMenuHang("lkpSalesAccountID", "lkpSalesAccountName")
+                  }
                   components={accountIdComponents}
                   filterOption={accountFilterOption}
                   noOptionsMessage={() => "No Account Found"}
@@ -951,7 +980,13 @@ const SetPostingAccountPage: React.FC = () => {
                   onChange={(selected) =>
                     handleAccountIdChange("SalesReturn", selected)
                   }
-                  styles={{ ...selectStyles, ...accountIdMenuStyles }}
+                  styles={{
+                    ...selectStyles,
+                    ...makePairDividedMenuStyles(idMenuHang),
+                  }}
+                  onMenuOpen={() =>
+                    measureIdMenuHang("lkpSalesReturnAccountID", "lkpSalesReturnAccountName")
+                  }
                   components={accountIdComponents}
                   filterOption={accountFilterOption}
                   noOptionsMessage={() => "No Account Found"}
@@ -1011,7 +1046,13 @@ const SetPostingAccountPage: React.FC = () => {
                   onChange={(selected) =>
                     handleAccountIdChange("CostOfSales", selected)
                   }
-                  styles={{ ...selectStyles, ...accountIdMenuStyles }}
+                  styles={{
+                    ...selectStyles,
+                    ...makePairDividedMenuStyles(idMenuHang),
+                  }}
+                  onMenuOpen={() =>
+                    measureIdMenuHang("lkpCostOfSalesAccountID", "lkpCostOfSalesAccountName")
+                  }
                   components={accountIdComponents}
                   filterOption={accountFilterOption}
                   noOptionsMessage={() => "No Account Found"}
@@ -1071,7 +1112,13 @@ const SetPostingAccountPage: React.FC = () => {
                   onChange={(selected) =>
                     handleAccountIdChange("CostOfSalesReturn", selected)
                   }
-                  styles={{ ...selectStyles, ...accountIdMenuStyles }}
+                  styles={{
+                    ...selectStyles,
+                    ...makePairDividedMenuStyles(idMenuHang),
+                  }}
+                  onMenuOpen={() =>
+                    measureIdMenuHang("lkpCostOfSalesReturnAccountID", "lkpCostOfSalesReturnAccountName")
+                  }
                   components={accountIdComponents}
                   filterOption={accountFilterOption}
                   noOptionsMessage={() => "No Account Found"}
@@ -1131,7 +1178,13 @@ const SetPostingAccountPage: React.FC = () => {
                   onChange={(selected) =>
                     handleAccountIdChange("StockAdjustment", selected)
                   }
-                  styles={{ ...selectStyles, ...accountIdMenuStyles }}
+                  styles={{
+                    ...selectStyles,
+                    ...makePairDividedMenuStyles(idMenuHang),
+                  }}
+                  onMenuOpen={() =>
+                    measureIdMenuHang("lkpStockAdjustmentAccountID", "lkpStockAdjustmentAccountName")
+                  }
                   components={accountIdComponents}
                   filterOption={accountFilterOption}
                   noOptionsMessage={() => "No Account Found"}
@@ -1192,7 +1245,13 @@ const SetPostingAccountPage: React.FC = () => {
                   onChange={(selected) =>
                     handleAccountIdChange("RoundOff", selected)
                   }
-                  styles={{ ...selectStyles, ...accountIdMenuStyles }}
+                  styles={{
+                    ...selectStyles,
+                    ...makePairDividedMenuStyles(idMenuHang),
+                  }}
+                  onMenuOpen={() =>
+                    measureIdMenuHang("lkpRoundOffAccountID", "lkpRoundOffAccountName")
+                  }
                   components={accountIdComponents}
                   filterOption={accountFilterOption}
                   noOptionsMessage={() => "No Account Found"}
@@ -1253,7 +1312,13 @@ const SetPostingAccountPage: React.FC = () => {
                   onChange={(selected) =>
                     handleAccountIdChange("InputVAT", selected)
                   }
-                  styles={{ ...selectStyles, ...accountIdMenuStyles }}
+                  styles={{
+                    ...selectStyles,
+                    ...makePairDividedMenuStyles(idMenuHang),
+                  }}
+                  onMenuOpen={() =>
+                    measureIdMenuHang("lkpInputVATAccountID", "lkpInputVATAccountName")
+                  }
                   components={accountIdComponents}
                   filterOption={accountFilterOption}
                   noOptionsMessage={() => "No Account Found"}
@@ -1313,7 +1378,13 @@ const SetPostingAccountPage: React.FC = () => {
                   onChange={(selected) =>
                     handleAccountIdChange("OutputVAT", selected)
                   }
-                  styles={{ ...selectStyles, ...accountIdMenuStyles }}
+                  styles={{
+                    ...selectStyles,
+                    ...makePairDividedMenuStyles(idMenuHang),
+                  }}
+                  onMenuOpen={() =>
+                    measureIdMenuHang("lkpOutputVATAccountID", "lkpOutputVATAccountName")
+                  }
                   components={accountIdComponents}
                   filterOption={accountFilterOption}
                   noOptionsMessage={() => "No Account Found"}

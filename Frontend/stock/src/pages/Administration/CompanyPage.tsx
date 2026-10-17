@@ -14,6 +14,19 @@ type Option = {
   label: string;
 };
 
+type CompanyData = {
+  fCoID: string;
+  fCoName?: string | null;
+  fCoName_AR?: string | null;
+  fCoName_Short?: string | null;
+  fCoName_QR?: string | null;
+  fCoVATNo?: string | null;
+  fCoVATNo_AR?: string | null;
+  fPiExpenseAccountGroup?: string | null;
+  fBG2ARAP?: string | null;
+  fYCMethod?: string | null;
+};
+
 const API = `${import.meta.env.VITE_API_URL}/companies`;
 
 // Enter key moves focus in this order
@@ -515,7 +528,7 @@ const CompanyPage: React.FC = () => {
   // ============================================================
 
   // Fills every field from the API response
-  const fillForm = (c: any) => {
+  const fillForm = (c: CompanyData) => {
     setCoID(c.fCoID ?? "");
     setCoName(c.fCoName ?? "");
     setCoName_AR(c.fCoName_AR ?? "");

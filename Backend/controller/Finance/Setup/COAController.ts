@@ -188,9 +188,9 @@ const callApply = async (args: {
         `INSERT INTO dbo.tblaccount (
             fcoid, faccountid, faccountname, faccountname_ar,
             faccountgroupid, faccounttypeid, faccountlevel,
-            fgph, fhavecc, fstatus, fcuserid, fcuserdate
+            fgph,fgcs, fhavecc, fstatus, fcuserid, fcuserdate
          )
-        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, true, $10, CURRENT_TIMESTAMP)`,
+        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9,$10, true, $11, CURRENT_TIMESTAMP)`,
         [
           args.coId,
           args.accountId,
@@ -200,6 +200,7 @@ const callApply = async (args: {
           args.accountTypeId,
           args.accountLevel,
           args.groupOrHead ?? null,
+          'G',
           args.haveCC,
           args.userId ?? null,
         ],

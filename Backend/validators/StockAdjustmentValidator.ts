@@ -194,7 +194,13 @@ export async function validateStockAdjustment(
 
   const prefix = text(prefixResult.rows[0]?.fdocnoprefix);
 
-  if (prefix !== "" && !txtDocNo.startsWith(prefix)) {
+  // the Entry No. is the branch's prefix followed by NUMBERS only: dbo.getnextdocno reads
+  // what follows the prefix as a number to make the next Entry No., so a number like
+  // 'ST11-2600001' under the prefix 'ST' would break the numbering of the branch
+  if (
+    prefixResult.rowCount !== 0 &&
+    (!txtDocNo.startsWith(prefix) || !/^\d+$/.test(txtDocNo.slice(prefix.length)))
+  ) {
     return failed("Please Check 'Entry No.'", "txtDocNo");
   }
 

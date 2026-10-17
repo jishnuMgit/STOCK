@@ -1,6 +1,5 @@
 -- PROCEDURE: dbo.sp_rptaccount(character varying, character varying, character varying, character varying, refcursor)
-
--- DROP PROCEDURE IF EXISTS dbo.sp_rptaccount(character varying, character varying, character varying, character varying, refcursor);
+ DROP PROCEDURE IF EXISTS dbo.sp_rptaccount(character varying, character varying, character varying, character varying, refcursor);
 
 CREATE OR REPLACE PROCEDURE dbo.sp_rptaccount(
 	IN p_strmode character varying,

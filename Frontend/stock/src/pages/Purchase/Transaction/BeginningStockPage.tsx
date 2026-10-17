@@ -12,6 +12,8 @@ import {
   filterPairOption,
   makePairDividedMenuStyles,
 } from "../../../components/PairSelect/pairSelectParts";
+import { useScrollbarWidth } from "../../../hooks/useScrollbarWidth";
+import { useAdvanceAfterSelect } from "../../../hooks/useAdvanceAfterSelect";
 import { usePairMenuHang } from "../../../hooks/usePairMenuHang";
 import { useAltShortcuts } from "../../../hooks/useAltShortcuts";
 import { useConfirm } from "../../../hooks/useConfirm";
@@ -157,17 +159,10 @@ const branchSelectStyles: StylesConfig<SelectOption, false> = {
 // ============================================================
 
 const itemIdComponents = makePairComponents("Item ID", "Item Name", false, true);
-// The Item Name box's list hangs 210px past the box: that is its Item ID column,
-// wide enough for a whole ID on one line (the default 100px wrapped long IDs).
-const NAME_LIST_HANG = 210;
-const itemNameComponents = makePairComponents(
-  "Item ID",
-  "Item Name",
-  true,
-  true,
-  NAME_LIST_HANG,
-);
-const itemNameMenuStyles = makePairDividedMenuStyles(NAME_LIST_HANG);
+// The Item Name box's list reaches the right edge of the Unit Cost column: the part
+// past the Item Name box is its Item ID column, measured when the list opens (see
+// usePairMenuHang), so it is wide enough for a whole ID on one line.
+const itemNameComponents = makePairComponents("Item ID", "Item Name", true, true);
 
 // ============================================================
 // REACT SELECT STYLES
@@ -489,6 +484,15 @@ const BeginningStockPage: React.FC = () => {
 
   // the Item ID list covers the Item ID box AND the Item Name box next to it
   const { hang: idMenuHang, measure: measureIdMenuHang } = usePairMenuHang();
+
+  // Enter / Tab / click on a dropdown goes on to the next box of the row
+  const { advanceAfterPick, advanceOnEnter } = useAdvanceAfterSelect();
+  // ... and the Item Name list covers the columns up to Unit Cost
+  const { hang: nameMenuHang, measure: measureNameMenuHang } = usePairMenuHang(210);
+
+  // the grid's scroll bar narrows its columns; the totals row below gets the same
+  // amount as padding so its boxes end where the grid's columns end
+  const gridScroll = useScrollbarWidth<HTMLDivElement>();
 
   // bumped by Clear / after a save so the document is loaded again
   const [reloadKey, setReloadKey] = useState(0);
@@ -1355,17 +1359,20 @@ const BeginningStockPage: React.FC = () => {
 
       {/* STOCK TABLE */}
 <main className="customer-table-scroll flex min-h-0 flex-1 flex-col bg-white">
-  <div className="customer-table-scroll min-h-0 flex-1 overflow-auto border border-[#bfe8d0]">
+  <div
+    ref={gridScroll.ref}
+    className="customer-table-scroll min-h-0 flex-1 overflow-auto border border-[#bfe8d0]"
+  >
     <table className="customer-table-scroll w-full min-w-[900px] table-fixed border-collapse border border-[#bfe8d0]">
             <colgroup>
               <col style={{ width: "17px" }} />
               <col style={{ width: "43px" }} />
-              <col style={{ width: "30%" }} />
-              <col style={{ width: "54%" }} />
-              <col style={{ width: "6.2%" }} />
-              <col style={{ width: "8.9%" }} />
-              <col style={{ width: "9.6%" }} />
-              <col style={{ width: "13.8%" }} />
+              <col style={{ width: "22%" }} />
+              <col style={{ width: "40.5%" }} />
+              <col style={{ width: "6%" }} />
+              <col style={{ width: "9.5%" }} />
+              <col style={{ width: "10.5%" }} />
+              <col style={{ width: "11.5%" }} />
             </colgroup>
 
             <thead className="sticky top-0 z-10 bg-[#edf9f2]">
@@ -1430,15 +1437,18 @@ const BeginningStockPage: React.FC = () => {
                   </td>
 
                   {/* ITEM ID */}
-                  <td className="border border-[#bfe8d0] p-0">
+                  <td className="border border-[#bfe8d0] p-0"
+                    onKeyDown={(event) => advanceOnEnter(event, [`lkpItemName-${index}`])}
+                  >
                     <Select<SelectOption, false>
                       inputId={`lkpItemID-${index}`}
                       name="lkpItemID"
                       options={itemOptions}
                       value={row.lkpItemID}
-                      onChange={(option: SingleValue<SelectOption>) =>
-                        updateRow(index, "lkpItemID", option)
-                      }
+                      onChange={(option: SingleValue<SelectOption>) => {
+                        updateRow(index, "lkpItemID", option);
+                        if (option) advanceAfterPick(`lkpItemID-${index}`, [`lkpItemName-${index}`]);
+                      }}
                       styles={
                         {
                           ...tableSelectStyles,
@@ -1465,20 +1475,26 @@ const BeginningStockPage: React.FC = () => {
                   </td>
 
                   {/* ITEM NAME */}
-                  <td className="border border-[#bfe8d0] p-0">
+                  <td className="border border-[#bfe8d0] p-0"
+                    onKeyDown={(event) => advanceOnEnter(event)}
+                  >
                     <Select<SelectOption, false>
                       inputId={`lkpItemName-${index}`}
                       name="lkpItemName"
                       options={itemNameOptions}
                       value={row.lkpItemName}
-                      onChange={(option: SingleValue<SelectOption>) =>
-                        updateRow(index, "lkpItemName", option)
-                      }
+                      onChange={(option: SingleValue<SelectOption>) => {
+                        updateRow(index, "lkpItemName", option);
+                        if (option) advanceAfterPick(`lkpItemName-${index}`);
+                      }}
                       styles={
                         {
                           ...tableSelectStyles,
-                          ...itemNameMenuStyles,
+                          ...makePairDividedMenuStyles(nameMenuHang),
                         } as StylesConfig<SelectOption, false>
+                      }
+                      onMenuOpen={() =>
+                        measureNameMenuHang(`lkpItemName-${index}`, `txtUnitCost-${index}`)
                       }
                       components={itemNameComponents}
                       filterOption={filterPairOption}
@@ -1585,17 +1601,20 @@ const BeginningStockPage: React.FC = () => {
           above, so the total quantity sits exactly under the Qty. column and the
           total cost exactly under the Total Cost column */}
       <section className="shrink-0 bg-white">
-        <div className="border border-transparent">
+        <div
+          className="border border-transparent"
+          style={{ paddingRight: gridScroll.width }}
+        >
           <table className="w-full min-w-[900px] table-fixed border-collapse border border-transparent">
             <colgroup>
               <col style={{ width: "17px" }} />
               <col style={{ width: "43px" }} />
-              <col style={{ width: "30%" }} />
-              <col style={{ width: "54%" }} />
-              <col style={{ width: "6.2%" }} />
-              <col style={{ width: "8.9%" }} />
-              <col style={{ width: "9.6%" }} />
-              <col style={{ width: "10.2%" }} />
+              <col style={{ width: "22%" }} />
+              <col style={{ width: "40.5%" }} />
+              <col style={{ width: "6%" }} />
+              <col style={{ width: "9.5%" }} />
+              <col style={{ width: "10.5%" }} />
+              <col style={{ width: "11.5%" }} />
             </colgroup>
 
             <tbody>
@@ -1664,9 +1683,23 @@ const BeginningStockPage: React.FC = () => {
 
       {/* SAVED BY / LAST MODIFIED BY */}
       {txtUserInfo !== "" && (
-        <div className="self-end whitespace-pre-line text-right text-[12px] text-gray-500">
-          {txtUserInfo}
-        </div>
+        <table className="self-end border-collapse text-left text-[12px] text-gray-500">
+          <tbody>
+            {/* one row per line ("Saved By : ..." / "Last Modified By : ..."), in
+                three columns - label, colon, text - so the colons line up */}
+            {txtUserInfo.split("\n").map((line) => {
+              const [label, ...rest] = line.split(" : ");
+
+              return (
+                <tr key={label}>
+                  <td className="whitespace-nowrap pr-[4px]">{label}</td>
+                  <td className="pr-[4px]">:</td>
+                  <td className="whitespace-nowrap">{rest.join(" : ")}</td>
+                </tr>
+              );
+            })}
+          </tbody>
+        </table>
       )}
 
       {/* ACTION BUTTONS */}
