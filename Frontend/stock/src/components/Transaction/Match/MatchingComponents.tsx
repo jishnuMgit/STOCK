@@ -742,7 +742,7 @@ const MatchingComponents = forwardRef<MatchingComponentsRef, Props>(
         ...base,
         fontSize: "14px",
         padding: "6px 8px",
-        backgroundColor: state.isFocused ? "#dbeafe" : "#ffffff",
+        backgroundColor: state.isFocused ? "#EEF8F3" : "#ffffff",
         color: "#222",
         cursor: "pointer",
       }),
