@@ -81,7 +81,7 @@ const rowHtml = (r: TBRow) => `<tr style="color:${LEVEL_COLOR[r.level] ?? DETAIL
   <td class="r">${amount(r.closing)}</td>
 </tr>`;
 
-const buildHtml = (r: PrintReport) => `<!doctype html>
+export const buildHtml = (r: PrintReport) => `<!doctype html>
 <html>
 <head>
 <meta charset="utf-8" />

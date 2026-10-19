@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useRef, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import Select, {
   components,
   type MenuListProps,
@@ -10,7 +10,8 @@ import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
 import { DatePicker } from "@mui/x-date-pickers/DatePicker";
 import dayjs from "dayjs";
 import customParseFormat from "dayjs/plugin/customParseFormat";
-import { printTrialBalanceReport } from "./printTrialBalanceReport";
+import { downloadTrialBalancePdf } from "./downloadTrialBalancePdf";
+import { buildHtml, type PrintReport } from "./printTrialBalanceReport";
 
 dayjs.extend(customParseFormat); // needed for dayjs(value, "DD-MM-YYYY")
 
@@ -213,8 +214,9 @@ const CustomRadio: React.FC<RadioOptionProps> = ({
 const RadioPanel: React.FC<{
   children: React.ReactNode;
   className?: string;
-}> = ({ children, className = "" }) => (
-  <div className={`border border-[#e0e5ea] bg-white ${className}`}>
+  id?: string;
+}> = ({ children, className = "", id }) => (
+  <div id={id} className={`border border-[#e0e5ea] bg-white ${className}`}>
     {children}
   </div>
 );
@@ -377,6 +379,14 @@ const RptTBPage: React.FC = () => {
     yesNoOptions[0],
   );
   const [entryMode, setEntryMode] = useState("All");
+  const [reportFile, setReportFile] = useState("Excel"); // "Excel" | "PDF"
+
+  // print preview: shown after Print, OK then downloads the chosen file
+  const [preview, setPreview] = useState<{
+    report: PrintReport;
+    request: NonNullable<ReturnType<typeof buildRequest>>;
+    asPdf: boolean;
+  } | null>(null);
 
   const branchOptions: ItemOption[] = useMemo(
     () =>
@@ -396,7 +406,7 @@ const RptTBPage: React.FC = () => {
   // Enter on a lookup:
   //  - list closed -> go to the next field
   //  - list open   -> Enter picks the highlighted row, then go to the next field
-  const pendingAdvance = useRef<NavKey | null>(null);
+  const [pendingAdvance, setPendingAdvance] = useState<NavKey | null>(null);
 
   const advanceOnEnter =
     (key: NavKey) => (event: React.KeyboardEvent<HTMLDivElement>) => {
@@ -411,16 +421,16 @@ const RptTBPage: React.FC = () => {
         return;
       }
 
-      pendingAdvance.current = key;
+      setPendingAdvance(key);
       setTimeout(() => {
-        pendingAdvance.current = null; // nothing was picked
+        setPendingAdvance(null); // nothing was picked
       }, 0);
     };
 
   const advanceAfterPick = () => {
-    const key = pendingAdvance.current;
+    const key = pendingAdvance;
     if (!key) return; // picked with the mouse: stay
-    pendingAdvance.current = null;
+    setPendingAdvance(null);
     setTimeout(() => focusNext(key), 0);
   };
 
@@ -477,6 +487,7 @@ const RptTBPage: React.FC = () => {
     setPrintZeroBalance(yesNoOptions[1]);
     setPrintAccountGroup(yesNoOptions[0]);
     setEntryMode("All");
+    setReportFile("Excel");
   };
 
   // ------------------------------------------------------------
@@ -555,11 +566,59 @@ const RptTBPage: React.FC = () => {
     };
   };
 
+  // file name: TrialBalance_<from>_<to>.<ext> (dates are DD/MM/YYYY)
+  const makeFileName = (
+    request: NonNullable<ReturnType<typeof buildRequest>>,
+    ext: string,
+  ) => {
+    const ymd = (d: string) => d.split("/").reverse().join("");
+    return `TrialBalance_${ymd(request.fromDate)}_${ymd(request.toDate)}.${ext}`;
+  };
+
+  // downloads the .xlsx made by the server
+  const downloadExcel = async (
+    request: NonNullable<ReturnType<typeof buildRequest>>,
+  ) => {
+    const res = await apiFetch(`${API}/excel`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(request),
+    });
+
+    // an error comes back as JSON, the file as a blob
+    if (!res.ok) {
+      let message = "Could not create the Excel file";
+      try {
+        const data = await res.json();
+        message = data.message || message;
+      } catch {
+        /* keep the default message */
+      }
+      toast.error(message);
+      return;
+    }
+
+    const disposition = res.headers.get("Content-Disposition") ?? "";
+    const name =
+      /filename="?([^";]+)"?/i.exec(disposition)?.[1] ?? "TrialBalance.xlsx";
+
+    const blob = await res.blob();
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = name;
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
+  };
+
   // ------------------------------------------------------------
-  // PRINT (VB cmdPrint_Click)
+  // PRINT (VB cmdPrint_Click): gets the report and shows the preview.
+  // OK in the preview downloads the "Report File" choice (Excel or PDF).
   // ------------------------------------------------------------
   const handlePrint = async () => {
-    if (busy) return;
+    if (busy || preview) return;
 
     const request = buildRequest();
     if (!request) return;
@@ -578,7 +637,11 @@ const RptTBPage: React.FC = () => {
         return;
       }
 
-      printTrialBalanceReport(data.report);
+      setPreview({
+        report: data.report,
+        request,
+        asPdf: reportFile === "PDF",
+      });
     } catch {
       toast.error("Could not prepare the report");
     } finally {
@@ -586,49 +649,52 @@ const RptTBPage: React.FC = () => {
     }
   };
 
+  // OK in the preview
+  const handlePreviewOk = async () => {
+    if (!preview || busy) return;
+    const { report, request, asPdf } = preview;
+
+    setBusy(true);
+    try {
+      if (asPdf) {
+        downloadTrialBalancePdf(report, makeFileName(request, "pdf"));
+      } else {
+        await downloadExcel(request);
+      }
+      setPreview(null);
+    } catch {
+      toast.error(
+        asPdf ? "Could not create the PDF file" : "Could not create the Excel file",
+      );
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const previewHtml = useMemo(
+    () =>
+      preview
+        ? // 10px left / right margin for the preview only
+          buildHtml(preview.report).replace(
+            "</head>",
+            "<style>body{padding-left:10px;padding-right:10px}</style></head>",
+          )
+        : "",
+    [preview],
+  );
+
   // ------------------------------------------------------------
-  // EXCEL: the same report as an .xlsx download
+  // EXCEL button: always the .xlsx, whatever "Report File" says
   // ------------------------------------------------------------
   const handleExcel = async () => {
-    if (busy) return;
+    if (busy || preview) return;
 
     const request = buildRequest();
     if (!request) return;
 
     setBusy(true);
     try {
-      const res = await apiFetch(`${API}/excel`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(request),
-      });
-
-      // an error comes back as JSON, the file as a blob
-      if (!res.ok) {
-        let message = "Could not create the Excel file";
-        try {
-          const data = await res.json();
-          message = data.message || message;
-        } catch {
-          /* keep the default message */
-        }
-        toast.error(message);
-        return;
-      }
-
-      const disposition = res.headers.get("Content-Disposition") ?? "";
-      const name =
-        /filename="?([^";]+)"?/i.exec(disposition)?.[1] ?? "TrialBalance.xlsx";
-
-      const blob = await res.blob();
-      const url = URL.createObjectURL(blob);
-      const link = document.createElement("a");
-      link.href = url;
-      link.download = name;
-      document.body.appendChild(link);
-      link.click();
-      link.remove();
-      setTimeout(() => URL.revokeObjectURL(url), 1000);
+      await downloadExcel(request);
     } catch {
       toast.error("Could not create the Excel file");
     } finally {
@@ -640,6 +706,10 @@ const RptTBPage: React.FC = () => {
   // with the browser). Re-attached every render so it sees the latest state.
   useEffect(() => {
     const onKeyDown = (event: KeyboardEvent) => {
+      if (preview) {
+        if (event.key === "Escape") setPreview(null);
+        return;
+      }
       if (!event.altKey || event.ctrlKey || event.metaKey) return;
 
       if (event.code === "KeyP") {
@@ -695,7 +765,9 @@ const RptTBPage: React.FC = () => {
                 </div>
               </RadioPanel>
 
-              <div className="relative mt-3 w-62.5 ">
+              <div
+                className={`relative mt-3 w-62.5 ${branchMode === "One Branch" ? "" : "hidden"}`}
+              >
                 <Select
                   inputId="lkpBranch"
                   instanceId="lkpBranch"
@@ -713,6 +785,29 @@ const RptTBPage: React.FC = () => {
                 />
               </div>
             </div>
+
+            {/* Report File: what the Print button produces */}
+            <RadioPanel id="rdgReportFile" className="absolute right-3.5 top-[calc(1.5625rem)] h-21 w-45.75 px-3.5 py-3 max-[700px]:static max-[700px]:mt-3.5">
+              <span className="absolute -top-2.5 left-2.5 bg-white px-1 text-[13px] text-[#405066]">
+                Report File
+              </span>
+              <div className="flex flex-col gap-3">
+                <CustomRadio
+                  name="rdgReportFile"
+                  value="Excel"
+                  label="Excel"
+                  checked={reportFile === "Excel"}
+                  onChange={() => setReportFile("Excel")}
+                />
+                <CustomRadio
+                  name="rdgReportFile"
+                  value="PDF"
+                  label="PDF"
+                  checked={reportFile === "PDF"}
+                  onChange={() => setReportFile("PDF")}
+                />
+              </div>
+            </RadioPanel>
 
             {/* Period */}
             <div className="mt-2.5 grid grid-cols-[168px_1fr] items-start gap-4">
@@ -864,7 +959,7 @@ const RptTBPage: React.FC = () => {
               >
                 <u>P</u>rint
               </button>
-              <button
+              {/* <button
                 id="btnExcel"
                 type="button"
                 onClick={handleExcel}
@@ -873,7 +968,7 @@ const RptTBPage: React.FC = () => {
                 className="btn-style focus-visible:ring-2 focus-visible:ring-[#64d96e] disabled:cursor-not-allowed disabled:opacity-40"
               >
                 <u>E</u>xcel
-              </button>
+              </button> */}
               <button
                 id="btnClear"
                 type="button"
@@ -887,6 +982,45 @@ const RptTBPage: React.FC = () => {
           </section>
         </main>
       </div>
+
+      {/* Print preview */}
+      {preview && (
+        <div className="fixed inset-0 z-[99999] flex items-center justify-center bg-black/40 p-4">
+          <div className="flex h-[90vh] w-full max-w-300 flex-col overflow-hidden border border-gray-400 bg-white shadow-xl">
+            <header className="flex h-7.5 shrink-0 items-center bg-[#9fdfbc] pl-3 text-[17px] font-semibold text-slate-700">
+              Print Preview
+            </header>
+
+            <iframe
+              title="Print Preview"
+              srcDoc={previewHtml}
+              className="min-h-0 flex-1 border-0 bg-white"
+            />
+
+            <footer className="flex shrink-0 items-center justify-center gap-3 border-t border-[#e0e5ea] py-3">
+              <button
+                id="btnPreviewOk"
+                type="button"
+                autoFocus
+                onClick={handlePreviewOk}
+                disabled={busy}
+                className="btn-style focus-visible:ring-2 focus-visible:ring-[#64d96e] disabled:cursor-not-allowed disabled:opacity-40"
+              >
+                OK
+              </button>
+              <button
+                id="btnPreviewCancel"
+                type="button"
+                onClick={() => setPreview(null)}
+                disabled={busy}
+                className="btn-style focus-visible:ring-2 focus-visible:ring-[#64d96e] disabled:cursor-not-allowed disabled:opacity-40"
+              >
+                Cancel
+              </button>
+            </footer>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
