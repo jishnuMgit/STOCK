@@ -344,6 +344,7 @@ const PurchaseInvoicePage: React.FC = () => {
       ]);
       setOriginalSlNos(found.originalSlNos);
       setMiscMode(found.header.invoiceType === "C" ? "Yes" : "No");
+      //@ts-ignore
       setPosted(found.posted);
       setMode("M");
       return;
