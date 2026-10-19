@@ -10,7 +10,9 @@ import { RxTriangleDown } from "react-icons/rx";
 import { Play, X } from "lucide-react";
 import {
   usePurchaseInvoice,
+  createExpenseRows,
   type ExpenseLookups,
+  type PurchaseExpenseRow,
 } from "../../../hooks/Purchase/Transaction/usePurchaseInvoice";
 
 // ============================================================
@@ -20,24 +22,8 @@ import {
 type Option = {
   value: string;
   label: string;
-  name?: string; // account name, used by the two-column menu and search
+  name?: string;
 };
-
-type PurchaseExpenseRow = {
-  accountId: string; // one account: drives both the ID and Name combos
-  ccid: string;
-  currency: string;
-  currencyRate: string;
-  amount: string; // FC amount (fCreditFC)
-  amountSAR: string; // SAR amount (fCredit)
-  description: string;
-};
-
-// ============================================================
-// CONSTANTS
-// ============================================================
-
-const ROW_COUNT = 12;
 
 const emptyLookups: ExpenseLookups = {
   accounts: [],
@@ -59,27 +45,6 @@ const selectComponents = {
   DropdownIndicator,
   IndicatorSeparator: () => null,
 };
-
-// ============================================================
-// CREATE ROW
-// ============================================================
-
-const createRow = (): PurchaseExpenseRow => ({
-  accountId: "",
-  ccid: "",
-  currency: "",
-  currencyRate: "",
-  amount: "",
-  amountSAR: "",
-  description: "",
-});
-
-const createRows = (): PurchaseExpenseRow[] =>
-  Array.from({ length: ROW_COUNT }, createRow);
-
-// ============================================================
-// SELECT STYLES
-// ============================================================
 
 const selectStyles: StylesConfig<Option, false> = {
   control: (base, state) => ({
@@ -360,14 +325,22 @@ const thBase =
 const tdClass = "h-[32px] border border-[#dce5ef] p-0";
 
 interface PurchaseExpenseProps {
-  /** When set, the page is shown inside a popup and gets a close icon. */
   onClose?: () => void;
+  initialRows?: PurchaseExpenseRow[];
+  onSave?: (rows: PurchaseExpenseRow[]) => void;
 }
 
-const PurchaseExpense: React.FC<PurchaseExpenseProps> = ({ onClose }) => {
+const PurchaseExpense: React.FC<PurchaseExpenseProps> = ({
+  onClose,
+  initialRows,
+  onSave,
+}) => {
   const { fetchExpenseLookups } = usePurchaseInvoice();
 
-  const [rows, setRows] = useState<PurchaseExpenseRow[]>(createRows);
+  // popup unmounts on close, so this re-reads the saved rows every time it opens
+  const [rows, setRows] = useState<PurchaseExpenseRow[]>(
+    () => initialRows ?? createExpenseRows(),
+  );
   const [activeRow, setActiveRow] = useState(0);
   const [lookups, setLookups] = useState<ExpenseLookups>(emptyLookups);
   const [lookupError, setLookupError] = useState("");
@@ -861,9 +834,18 @@ const PurchaseExpense: React.FC<PurchaseExpenseProps> = ({ onClose }) => {
 
             <div className="relative h-[77px] shrink-0 bg-white">
               <button
+                id="btnSave"
+                type="button"
+                onClick={() => onSave?.(rows)}
+                className="absolute left-[350px] top-[17px] btn-style"
+              >
+                <span className="underline">S</span>ave
+              </button>
+
+              <button
                 id="btnClear"
                 type="button"
-                onClick={() => setRows(createRows())}
+                onClick={() => setRows(createExpenseRows())}
                 className="absolute left-[486px] top-[17px] btn-style"
               >
                 <span className="underline">C</span>lear

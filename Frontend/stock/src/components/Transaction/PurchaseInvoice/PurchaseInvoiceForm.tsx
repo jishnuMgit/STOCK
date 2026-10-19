@@ -11,6 +11,7 @@ import { RxTriangleDown } from "react-icons/rx";
 import type {
   CashSupplier,
   PurchaseHeader,
+  PurchaseExpenseRow,
 } from "../../../hooks/Purchase/Transaction/usePurchaseInvoice";
 import type { MiscSupplierData } from "./PurchaseInoviceMiscsup";
 import PurchaseInoviceMiscsup from "./PurchaseInoviceMiscsup";
@@ -464,6 +465,8 @@ interface Props {
   onMiscModeChange: (mode: string) => void;
   onMiscSupplierSaved?: (data: MiscSupplierData) => void | Promise<void>;
   onCalcUnitCost?: () => void;
+  expenseRows: PurchaseExpenseRow[];
+  onExpenseSave: (rows: PurchaseExpenseRow[]) => void;
 }
 
 const PurchaseForm: React.FC<Props> = ({
@@ -477,6 +480,8 @@ const PurchaseForm: React.FC<Props> = ({
   onMiscModeChange,
   onMiscSupplierSaved,
   onCalcUnitCost,
+  expenseRows,
+  onExpenseSave,
 }) => {
   const [miscOpen, setMiscOpen] = useState(false);
   const [expenseOpen, setExpenseOpen] = useState(false);
@@ -942,7 +947,14 @@ const PurchaseForm: React.FC<Props> = ({
               aria-modal="true"
               className="max-h-[95vh] w-300 max-w-[95vw] overflow-auto border border-slate-400 bg-white shadow-xl"
             >
-              <PurchaseExpense onClose={() => setExpenseOpen(false)} />
+              <PurchaseExpense
+                initialRows={expenseRows}
+                onSave={(rows) => {
+                  onExpenseSave(rows);
+                  setExpenseOpen(false);
+                }}
+                onClose={() => setExpenseOpen(false)}
+              />
             </div>
           </div>,
           document.body,

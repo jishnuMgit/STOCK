@@ -47,7 +47,7 @@ const PurchaseFooter: React.FC<Props> = ({
                    Unit Price, Total Price, Unit Cost, Total Cost */}
       <div
         id="purchase-footer-fields"
-        className="grid w-full min-w-[900px] grid-cols-[14px_38px_158px_minmax(120px,1fr)_56px_58px_85px_90px_80px_80px] items-center pt-2"
+        className="grid w-full min-w-225 grid-cols-[14px_38px_158px_minmax(120px,1fr)_56px_58px_85px_90px_80px_80px] items-center pt-2"
       >
         {/* Note: spans indicator, Sl.No., Item ID, Item Name */}
         <div
@@ -97,7 +97,7 @@ const PurchaseFooter: React.FC<Props> = ({
         {/* Supplier Total: under Total Price */}
         <div
           id="purchase-supplier-total-group"
-          className="col-[8/9] min-w-0 px-[1px]"
+          className="col-[8/9] min-w-0 px-px"
         >
           <input
             id="purchaseSupplierTotal"
@@ -112,7 +112,7 @@ const PurchaseFooter: React.FC<Props> = ({
         {/* Final Total: under Total Cost */}
         <div
           id="purchase-final-total-group"
-          className="col-[10/11] min-w-0 px-[1px]"
+          className="col-[10/11] min-w-0 px-px"
         >
           <input
             id="purchaseFinalTotal"
@@ -145,7 +145,7 @@ const PurchaseFooter: React.FC<Props> = ({
             onClick={onClick}
             className="btn-style"
           >
-            <span className="underline decoration-green-600 decoration-[1px] underline-offset-2">
+            <span className="underline decoration-green-600 decoration-1 underline-offset-2">
               {label.charAt(0)}
             </span>
             {label.slice(1)}
