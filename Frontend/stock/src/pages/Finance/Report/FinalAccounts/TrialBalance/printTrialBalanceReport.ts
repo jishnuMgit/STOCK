@@ -1,8 +1,8 @@
 // printTrialBalanceReport.ts
 // The printed page (port of rptTB_MRpt): A4 landscape, company name, heading,
-// branch, then Account ID, Account Name, Opening, Current Dr., Current Cr.,
-// Cu. Movement, Closing, and a "Total :" row at the end.
-// Rows are coloured by account level (1 red, 2 green, 3 blue, else black).
+// branch, then a two-line header: Account ID, Account Name, Opening,
+// Transactions (Debit, Credit, Movement), Closing - and a "Total :" row at the end.
+// Rows are coloured by account level (1 green, 2 blue, 3 magenta, 4 slate).
 // Opens the browser print dialog from a hidden iframe (no pop-up to block).
 
 export type TBRow = {
@@ -59,17 +59,19 @@ const amount = (v: number) => {
   return v < 0 ? `(${s})` : s;
 };
 
-// VB: level 1 red, 2 green, 3 blue, otherwise black
+// same colours as the account tree: level 1 green, 2 blue, 3 magenta,
+// level 4 (the accounts) dark slate. Levels 1-3 (the groups) are bold.
 const LEVEL_COLOR: Record<number, string> = {
-  1: "#ff0000",
-  2: "#008000",
-  3: "#0000ff",
+  1: "#00a63e",
+  2: "#155dfc",
+  3: "#c800de",
 };
+const DETAIL_COLOR = "#314158";
 
 // VB column weights
 const COL_WIDTHS = [0.0798, 0.3646, 0.1101, 0.1101, 0.1101, 0.1101, 0.1152];
 
-const rowHtml = (r: TBRow) => `<tr style="color:${LEVEL_COLOR[r.level] ?? "#000"}">
+const rowHtml = (r: TBRow) => `<tr style="color:${LEVEL_COLOR[r.level] ?? DETAIL_COLOR};${r.level >= 1 && r.level <= 3 ? "font-weight:bold" : ""}">
   <td>${esc(r.accountId)}</td>
   <td class="name">${esc(r.accountName)}</td>
   <td class="r">${amount(r.opening)}</td>
@@ -87,7 +89,7 @@ const buildHtml = (r: PrintReport) => `<!doctype html>
 <style>
   @page {
     size: A4 landscape;
-    margin: 12.7mm 10mm 14mm 25.4mm;
+    margin: 12mm 10mm 12mm 15mm;
     @top-right    { content: "Page " counter(page) " of " counter(pages); font: 8pt "Times New Roman", serif; }
     @bottom-right { content: "${cssStr(r.reportInfo)}"; font: 8pt "Times New Roman", serif; }
   }
@@ -102,7 +104,10 @@ const buildHtml = (r: PrintReport) => `<!doctype html>
   .br   { font-size: 9pt;  text-align: left;   height: 20px; }
   th { background: #eff3fa; border: 1px solid #b0c4de; height: 24px;
        padding: 0 4px; font-weight: normal; text-align: left; }
+  th { vertical-align: bottom; }   /* spanning labels sit on the same line as Debit / Credit / Movement */
   th.r { text-align: right; }
+  th.c { text-align: center; }
+  th.m { vertical-align: middle; }          /* Account ID / Account Name: centred between the two lines */
   td { border: 1px solid #b0c4de; border-top: 0; height: 24px; padding: 0 4px;
        overflow: hidden; white-space: nowrap; }
   td.name { white-space: pre; }            /* keeps the A/C group indent */
@@ -120,10 +125,13 @@ const buildHtml = (r: PrintReport) => `<!doctype html>
     <tr><td colspan="7" class="head" style="border:0">${esc(r.heading)}</td></tr>
     <tr><td colspan="7" class="br"   style="border:0">${esc(r.branch)}</td></tr>
     <tr>
-      <th>Account ID</th><th>Account Name</th>
-      <th class="r">Opening</th><th class="r">Current Dr.</th>
-      <th class="r">Current Cr.</th><th class="r">Cu. Movement</th>
-      <th class="r">Closing</th>
+      <th rowspan="2" class="m">Account ID</th><th rowspan="2" class="m">Account Name</th>
+      <th rowspan="2" class="r">Opening</th>
+      <th colspan="3" class="c">Transactions</th>
+      <th rowspan="2" class="r">Closing</th>
+    </tr>
+    <tr>
+      <th class="r">Debit</th><th class="r">Credit</th><th class="r">Movement</th>
     </tr>
   </thead>
   <tbody>

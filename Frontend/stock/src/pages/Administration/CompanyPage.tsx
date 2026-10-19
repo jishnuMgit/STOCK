@@ -1,11 +1,7 @@
 import React, { useEffect, useRef, useState } from "react";
 import Select, {
-  components,
-  createFilter,
   type StylesConfig,
   type SingleValue,
-  type MenuListProps,
-  type OptionProps,
 } from "react-select";
 import { toast } from "react-toastify";
 
@@ -43,29 +39,6 @@ const FIELD_ORDER = [
   "lkpYearClosingMethod",
   "btnSave",
 ];
-
-// ============================================================
-// PURCHASE EXPENSE GROUP: table-style dropdown (header + 2 columns)
-// ============================================================
-
-const AccountMenuList = (props: MenuListProps<Option, false>) => (
-  <components.MenuList {...props}>
-    <div className="sticky top-0 z-10 grid grid-cols-[1fr_110px] border-b border-gray-200 bg-white px-3 py-2 text-[12px] font-semibold text-gray-600">
-      <span>Account Name</span>
-      <span className="text-right">Account ID</span>
-    </div>
-    {props.children}
-  </components.MenuList>
-);
-
-const AccountOption = (props: OptionProps<Option, false>) => (
-  <components.Option {...props}>
-    <div className="grid min-h-[18px] grid-cols-[1fr_110px] items-center">
-      <span>{props.data.label}</span>
-      <span className="text-right text-gray-500">{props.data.value}</span>
-    </div>
-  </components.Option>
-);
 
 const CompanyPage: React.FC = () => {
   // ============================================================
@@ -118,106 +91,6 @@ const CompanyPage: React.FC = () => {
   // ============================================================
   // REACT SELECT STYLE
   // ============================================================
-
-  const selectStyles: StylesConfig<Option, false> = {
-    control: (base, state) => ({
-      ...base,
-      minHeight: "30px",
-      height: "30px",
-      width: "50%",
-      border: "1px solid #d1d5db",
-      borderRadius: "4px",
-      boxShadow: "none",
-      backgroundColor: state.isFocused ? "#eefbf4" : "#ffffff",
-      fontSize: "11px",
-      cursor: "pointer",
-
-      "&:hover": {
-        borderColor: "#9fdfbc",
-      },
-    }),
-
-    valueContainer: (base) => ({
-      ...base,
-      height: "23px",
-      minHeight: "23px",
-      padding: "0 6px",
-    }),
-
-    singleValue: (base) => ({
-      ...base,
-      margin: 0,
-      color: "#374151",
-      fontSize: "11px",
-    }),
-
-    placeholder: (base) => ({
-      ...base,
-      margin: 0,
-      color: "#808080",
-      fontSize: "11px",
-    }),
-
-    input: (base) => ({
-      ...base,
-      margin: 0,
-      padding: 0,
-      fontSize: "11px",
-      color: "#374151",
-    }),
-
-    indicatorsContainer: (base) => ({
-      ...base,
-      height: "23px",
-    }),
-
-    dropdownIndicator: (base) => ({
-      ...base,
-      padding: "2px 4px",
-      color: "#aeb8c2",
-
-      "&:hover": {
-        color: "#808080",
-      },
-    }),
-
-    indicatorSeparator: () => ({
-      display: "none",
-    }),
-
-    menu: (base) => ({
-      ...base,
-      zIndex: 9999,
-      marginTop: "2px",
-      fontSize: "11px",
-      borderRadius: "2px",
-      overflow: "hidden",
-    }),
-
-    menuList: (base) => ({
-      ...base,
-      padding: 0,
-      maxHeight: "180px",
-    }),
-
-    option: (base, state) => ({
-      ...base,
-      padding: "5px 8px",
-      fontSize: "11px",
-      color: "#374151",
-      cursor: "pointer",
-
-      backgroundColor: state.isSelected
-        ? "#dff5e9"
-        : state.isFocused
-          ? "#eefbf4"
-          : "#ffffff",
-
-      "&:active": {
-        backgroundColor: "#dff5e9",
-      },
-    }),
-  };
 
   const selectStyles1: StylesConfig<Option, false> = {
     control: (base, state) => ({
@@ -316,40 +189,6 @@ const CompanyPage: React.FC = () => {
       "&:active": {
         backgroundColor: "#dff5e9",
       },
-    }),
-  };
-
-  const purchaseSelectStyles: StylesConfig<Option, false> = {
-    ...selectStyles,
-
-    clearIndicator: () => ({ display: "none" }),
-
-    menu: (base) => ({
-      ...base,
-      zIndex: 9999,
-      width: "480px",
-      marginTop: "4px",
-      borderRadius: "8px",
-      border: "1px solid #e5e7eb",
-      boxShadow: "0 8px 24px rgba(0,0,0,0.12)",
-      overflow: "hidden",
-    }),
-
-    menuList: (base) => ({
-      ...base,
-      padding: 0,
-      maxHeight: "260px",
-    }),
-
-    option: (base, state) => ({
-      ...base,
-      padding: "9px 12px",
-      fontSize: "13px",
-      color: "#374151",
-      cursor: "pointer",
-      backgroundColor:
-        state.isFocused || state.isSelected ? "#eefbf4" : "#ffffff",
-      "&:active": { backgroundColor: "#dff5e9" },
     }),
   };
 
@@ -894,7 +733,7 @@ const CompanyPage: React.FC = () => {
               PURCHASE EXPENSE GROUP
           ================================================= */}
 
-          <div className="mb-[8px] grid grid-cols-[195px_1fr] items-center">
+          {/* <div className="mb-[8px] grid grid-cols-[195px_1fr] items-center">
             <label
               htmlFor="lkpPurchaseExpenseGroup"
               className="pr-3 text-right text-[14px] text-gray-600"
@@ -928,7 +767,7 @@ const CompanyPage: React.FC = () => {
               placeholder=""
               menuPosition="fixed"
             />
-          </div>
+          </div> */}
 
           {/* =================================================
               BG2 AR/AP
