@@ -129,7 +129,7 @@ const ResponsiveSelect = ({
               width: "100%",
               minWidth: 0,
               alignItems: "center",
-              fontSize: "12px",
+              fontSize: "14px",
             }}
           >
             <span>{data.brId ?? ""}</span>

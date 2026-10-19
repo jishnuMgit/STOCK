@@ -861,6 +861,15 @@ const PurchaseExpense: React.FC<PurchaseExpenseProps> = ({ onClose }) => {
 
             <div className="relative h-[77px] shrink-0 bg-white">
               <button
+                id="btnSave"
+                type="button"
+                // onClick={() => setRows(createRows())}
+                className="absolute left-[350px] top-[17px] btn-style"
+              >
+                <span className="underline">S</span>ave
+              </button>
+
+              <button
                 id="btnClear"
                 type="button"
                 onClick={() => setRows(createRows())}
