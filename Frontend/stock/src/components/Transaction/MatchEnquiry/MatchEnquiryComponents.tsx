@@ -933,7 +933,7 @@ const MatchReversalComponents = forwardRef<
 
       backgroundColor: state.isFocused
 
-        ? "#dbeafe"
+        ? "#EEF8F3"
 
         : "#ffffff",
 

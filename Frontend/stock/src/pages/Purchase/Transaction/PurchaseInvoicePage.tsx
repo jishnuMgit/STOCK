@@ -7,6 +7,8 @@ import {
   usePurchaseInvoice,
   emptyHeader,
   emptyRow,
+  createExpenseRows,
+  type PurchaseExpenseRow,
   type CashSupplier,
   type InvoiceTypeOption,
   type PurchaseHeader,
@@ -77,9 +79,13 @@ const PurchaseInvoicePage: React.FC = () => {
 
   const [suppliersById, setSuppliersById] = useState<SupplierLookup[]>([]);
   const [suppliersByName, setSuppliersByName] = useState<SupplierLookup[]>([]);
+  const [expenseRows, setExpenseRows] =
+    useState<PurchaseExpenseRow[]>(createExpenseRows);
 
-  // TODO: wire this to the Purchase Expense total (txtTotExp)
-  const totalExpense = 0;
+  const totalExpense = useMemo(
+    () => expenseRows.reduce((t, r) => t + num(r.amountSAR), 0),
+    [expenseRows],
+  );
   const discAmt = num(header.discAmt);
 
   const totals = useMemo(
@@ -316,6 +322,7 @@ const PurchaseInvoicePage: React.FC = () => {
     setMiscMode("Yes");
     setMessage("");
     setPosted(false);
+    setExpenseRows(createExpenseRows());
 
     const d = await getDefaults();
     if (d) setHeader((prev) => ({ ...prev, brId: d.brId, docNo: d.docNo }));
@@ -383,7 +390,14 @@ const PurchaseInvoicePage: React.FC = () => {
     }
     try {
       setMessage("");
-      await saveInvoice({ mode, year: YEAR, header, rows, originalSlNos });
+      await saveInvoice({
+        mode,
+        year: YEAR,
+        header,
+        rows,
+        originalSlNos,
+        expenses: expenseRows,
+      });
       window.alert(mode === "S" ? "Saved" : "Modified");
       handleClear();
     } catch (err) {
@@ -453,6 +467,8 @@ const PurchaseInvoicePage: React.FC = () => {
         miscMode={miscMode}
         onMiscModeChange={setMiscMode}
         onMiscSupplierSaved={handleMiscSupplierSaved}
+        expenseRows={expenseRows}
+        onExpenseSave={setExpenseRows}
       />
 
       <PurchaseTable

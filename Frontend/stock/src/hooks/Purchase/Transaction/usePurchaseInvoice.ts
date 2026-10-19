@@ -73,6 +73,29 @@ export interface PurchaseRow {
   totalCost: string;
 }
 
+export interface PurchaseExpenseRow {
+  accountId: string;
+  ccid: string;
+  currency: string;
+  currencyRate: string;
+  amount: string; // FC amount
+  amountSAR: string; // SAR amount
+  description: string;
+}
+
+export const emptyExpenseRow = (): PurchaseExpenseRow => ({
+  accountId: "",
+  ccid: "",
+  currency: "",
+  currencyRate: "",
+  amount: "",
+  amountSAR: "",
+  description: "",
+});
+
+export const createExpenseRows = (count = 12): PurchaseExpenseRow[] =>
+  Array.from({ length: count }, emptyExpenseRow);
+
 export interface CashSupplier {
   id: string;
   name: string;
@@ -181,7 +204,8 @@ export interface SavePayload {
   year: string;
   header: PurchaseHeader;
   rows: PurchaseRow[];
-  originalSlNos: number[]; // sl.# of lines loaded from DB (modify only)
+  originalSlNos: number[];
+  expenses: PurchaseExpenseRow[];
 }
 
 export interface SaveCashSupplierPayload {
@@ -405,6 +429,7 @@ export const usePurchaseInvoice = () => {
       header,
       rows,
       originalSlNos,
+      expenses,
     }: SavePayload): Promise<void> => {
       const rate = n(header.currencyRate) || 1;
 
@@ -419,6 +444,19 @@ export const usePurchaseInvoice = () => {
           totalPrice: Number((n(r.qty) * n(r.unitPrice)).toFixed(2)),
           unitCost: n(r.unitCost),
           totalCost: n(r.totalCost),
+        }));
+
+      const expenseLines = expenses
+        .filter((e) => e.accountId)
+        .map((e, idx) => ({
+          slNo: idx + 1,
+          accountId: e.accountId,
+          ccId: e.ccid,
+          currency: e.currency,
+          currencyRate: n(e.currencyRate),
+          amountFC: n(e.amount),
+          amountSAR: n(e.amountSAR),
+          description: e.description,
         }));
 
       await apiRequest("POST", "/purchase-invoice", {
@@ -440,6 +478,7 @@ export const usePurchaseInvoice = () => {
         vatAmt: n(header.vatAmt),
         menuName: "frmPI",
         lines,
+        expenses: expenseLines,
         originalSlNos: mode === "M" ? originalSlNos : undefined,
       });
     },

@@ -763,7 +763,7 @@ const queryPIExpAccounts = (coId: string) =>
             a.faccountname AS "fAccountName"
        FROM dbo.tblaccount a
       WHERE a.fcoid = $1
-        AND dbo.ispurchaseexp($1::varchar, a.faccountid) = true
+        AND dbo.ispurchaseexpense($1::varchar, a.faccountid) = true
       ORDER BY a.faccountid`,
     [coId],
   );
