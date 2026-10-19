@@ -381,7 +381,11 @@ const ResponsiveSelect = ({
       tabIndex={0}
       onKeyDown={(event) => handleKeyboardAction(event, { onEnter: next })}
       style={
-        { "--select-width": selectWidth, width: "100%" } as React.CSSProperties
+        {
+          "--select-width": selectWidth,
+          width: "100%",
+          outline: "none",
+        } as React.CSSProperties
       }
     >
       <Select<SelectOption, false>
