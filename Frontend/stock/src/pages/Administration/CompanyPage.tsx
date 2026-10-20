@@ -18,7 +18,6 @@ type CompanyData = {
   fCoName_QR?: string | null;
   fCoVATNo?: string | null;
   fCoVATNo_AR?: string | null;
-  fPiExpenseAccountGroup?: string | null;
   fBG2ARAP?: string | null;
   fYCMethod?: string | null;
 };
@@ -34,7 +33,6 @@ const FIELD_ORDER = [
   "txtCoName_QR",
   "txtCoVATNo",
   "txtCoVATNo_AR",
-  "lkpPurchaseExpenseGroup",
   "lkpBG2ARAP",
   "lkpYearClosingMethod",
   "btnSave",
@@ -53,17 +51,11 @@ const CompanyPage: React.FC = () => {
   const [txtCoVATNo, setCoVATNo] = useState("");
   const [txtCoVATNo_AR, setCoVATNo_AR] = useState("");
 
-  const [lkpPurchaseExpenseGroup, setPurchaseExpenseGroup] =
-    useState<Option | null>(null);
-
   const [lkpBG2ARAP, setBG2ARAP] = useState<Option | null>(null);
 
   const [lkpYearClosingMethod, setYearClosingMethod] =
     useState<Option | null>(null);
 
-  // Purchase Expense Group options are loaded from the database
-  const [purchaseExpenseGroupOptions, setPurchaseExpenseGroupOptions] =
-    useState<Option[]>([]);
   const [yearClosingMethodOptions, setYearClosingMethodOptions] =
     useState<Option[]>([]);
 
@@ -192,40 +184,6 @@ const CompanyPage: React.FC = () => {
     }),
   };
 
-  // ============================================================
-  // LOAD PURCHASE EXPENSE GROUP OPTIONS
-  // ============================================================
-
-  useEffect(() => {
-    let cancelled = false;
-
-    const loadPurchaseGroups = async () => {
-      try {
-        const res = await fetch(`${API}/purchase-groups`);
-        const data = await res.json();
-        if (!res.ok || !data.success) {
-          toast.error(data.message || "Failed to load purchase expense groups");
-          return;
-        }
-        if (cancelled) return;
-
-        setPurchaseExpenseGroupOptions([
-          ...data.groups.map((g: { value: string; label: string }) => ({
-            value: g.value,
-            label: g.label,
-          })),
-        ]);
-      } catch {
-        if (!cancelled) toast.error("Failed to load purchase expense groups");
-      }
-    };
-
-    loadPurchaseGroups();
-    return () => {
-      cancelled = true;
-    };
-  }, []);
-
   useEffect(() => {
     let cancelled = false;
     const PstrCoID = localStorage.getItem("PstrCoID") ?? "";
@@ -305,7 +263,6 @@ const CompanyPage: React.FC = () => {
     setCoVATNo("");
     setCoVATNo_AR("");
 
-    setPurchaseExpenseGroup(null);
     setBG2ARAP(null);
     setYearClosingMethod(null);
 
@@ -342,7 +299,6 @@ const CompanyPage: React.FC = () => {
           coNameQR: txtCoName_QR,
           coVatNo: txtCoVATNo, 
           coVatNoAR: txtCoVATNo_AR, 
-          purchaseExpenseGroup: lkpPurchaseExpenseGroup?.value ?? "",
           bg2ARAP: lkpBG2ARAP?.value ?? "",
           yearClosingMethod: lkpYearClosingMethod?.value ?? "",
         }),
@@ -375,17 +331,6 @@ const CompanyPage: React.FC = () => {
     setCoName_QR(c.fCoName_QR ?? "");
     setCoVATNo(c.fCoVATNo ?? "");
     setCoVATNo_AR(c.fCoVATNo_AR ?? "");
-    // Keep the saved group even if it isn't in the dropdown list,
-    // so Modify never overwrites it with a blank
-    const savedGroup = c.fPiExpenseAccountGroup ?? "";
-    setPurchaseExpenseGroup(
-      savedGroup
-        ? (purchaseExpenseGroupOptions.find((o) => o.value === savedGroup) ?? {
-            value: savedGroup,
-            label: savedGroup,
-          })
-        : null,
-    );
     setBG2ARAP(bg2ARAPOptions.find((o) => o.value === c.fBG2ARAP) ?? null);
     setYearClosingMethod(
       yearClosingMethodOptions.find((o) => o.value === c.fYCMethod) ?? null,
@@ -728,46 +673,6 @@ const CompanyPage: React.FC = () => {
               className={`${smallInputClass} text-right`}
             />
           </div>
-
-          {/* =================================================
-              PURCHASE EXPENSE GROUP
-          ================================================= */}
-
-          {/* <div className="mb-[8px] grid grid-cols-[195px_1fr] items-center">
-            <label
-              htmlFor="lkpPurchaseExpenseGroup"
-              className="pr-3 text-right text-[14px] text-gray-600"
-            >
-              Purchase Expense Group :
-            </label>
-
-            <Select<Option, false>
-              inputId="lkpPurchaseExpenseGroup"
-              instanceId="lkpPurchaseExpenseGroup"
-              options={purchaseExpenseGroupOptions}
-              value={lkpPurchaseExpenseGroup}
-              onChange={(option: SingleValue<Option>) =>
-                setPurchaseExpenseGroup(option)
-              }
-              onKeyDown={handleSelectEnter("lkpPurchaseExpenseGroup")}
-              onMenuOpen={() => (menuOpenRef.current = true)}
-              onMenuClose={() => (menuOpenRef.current = false)}
-              components={{ MenuList: AccountMenuList, Option: AccountOption }}
-              styles={purchaseSelectStyles}
-              filterOption={createFilter({
-                ignoreCase: true,
-                ignoreAccents: true,
-                matchFrom: "any",
-                stringify: (o) => `${o.data.label} ${o.data.value}`,
-              })}
-              noOptionsMessage={() => "No matching account"}
-              isClearable
-              backspaceRemovesValue
-              isSearchable
-              placeholder=""
-              menuPosition="fixed"
-            />
-          </div> */}
 
           {/* =================================================
               BG2 AR/AP

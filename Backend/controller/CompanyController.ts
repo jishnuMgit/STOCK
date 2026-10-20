@@ -4,7 +4,6 @@ import {
   ApiError,
   getCompanies as loadCompanies,
   getCompany as loadCompany,
-  getPurchaseGroups as loadPurchaseGroups,
   getYearClosingMethods as loadYearClosingMethods,
   saveCompany as saveCompanyData,
   deleteCompany as deleteCompanyData,
@@ -101,24 +100,6 @@ export const deleteCompany = async (
     return res.status(500).json({
       success: false,
       message: errMsg(error),
-    });
-  }
-};
-
-// GET /api/companies/purchase-groups  -> Purchase Expense Group dropdown
-export const getPurchaseGroups = async (
-  _req: Request,
-  res: Response,
-): Promise<Response> => {
-  try {
-    const groups = await loadPurchaseGroups();
-    return res.status(200).json({ success: true, groups });
-  } catch (error: unknown) {
-    console.error("Get purchase groups error:", error);
-    return res.status(500).json({
-      success: false,
-      message: "Failed to load purchase expense groups",
-      error: errMsg(error),
     });
   }
 };

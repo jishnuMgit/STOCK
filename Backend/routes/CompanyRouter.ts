@@ -3,8 +3,7 @@ import {
   getCompanies,
   getCompany,
   saveCompany,
-  deleteCompany,
-  getPurchaseGroups,
+  deleteCompany,  
   getYearClosingMethods,
 } from "../controller/CompanyController.js";
 
@@ -12,7 +11,6 @@ import {
 const router = express.Router();
 
 router.get("/", getCompanies);
-router.get("/purchase-groups", getPurchaseGroups); // before "/:id"
 router.get("/year-closing-methods", getYearClosingMethods); // before "/:id"
 router.get("/:id", getCompany);
 router.post("/", saveCompany);
