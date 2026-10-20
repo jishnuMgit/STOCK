@@ -1,7 +1,8 @@
 // printCustomerListReport.ts
 // The printed page (port of rptCustomerListRpt): A4 LANDSCAPE, company name,
-// heading, report info, then Customer ID / Name / Address / Contact / Phone /
+// heading, then Customer ID / Name / Address / Contact / Phone /
 // VAT No. / Credit Limit / Credit Days, coloured by account level.
+// Page number top right, user id + date bottom right of every page.
 // Opens the browser print dialog from a hidden iframe (no pop-up to block).
 
 export type PrintRow = {
@@ -30,6 +31,14 @@ const esc = (v: unknown) =>
     .replace(/>/g, "&gt;")
     .replace(/"/g, "&quot;");
 
+// text placed inside a CSS string ("...") in the print stylesheet
+const cssStr = (v: unknown) =>
+  String(v ?? "")
+    .replace(/\\/g, "\\\\")
+    .replace(/"/g, '\\"')
+    .replace(/</g, "\\3C ")
+    .replace(/[\r\n]+/g, " ");
+
 // VB Detail_BeforePrint: level 1 red, 2 green, 3 blue, else black
 const levelClass = (level: number) =>
   level === 1 ? "l1" : level === 2 ? "l2" : level === 3 ? "l3" : "l4";
@@ -54,7 +63,8 @@ const buildHtml = (r: PrintReport) => `<!doctype html>
   @page {
     size: A4 landscape;
     margin: 12mm 10mm 14mm 15mm;
-    @bottom-right { content: "Page " counter(page) " of " counter(pages); font: 8pt "Times New Roman", serif; }
+    @top-right    { content: "Page " counter(page) " of " counter(pages); font: 8pt "Times New Roman", serif; }
+    @bottom-right { content: "${cssStr(r.reportInfo)}"; font: 8pt "Times New Roman", serif; }
   }
   * { box-sizing: border-box; }
   body { margin: 0; font: 9pt "Times New Roman", serif; color: #000;
@@ -64,12 +74,10 @@ const buildHtml = (r: PrintReport) => `<!doctype html>
   tr { page-break-inside: avoid; }
   .co   { font-size: 14pt; text-align: center; height: 24px; }
   .head { font-size: 12pt; text-align: center; height: 24px; }
-  .info { font-size: 8pt;  text-align: right;  height: 24px; }
   th { background: #eff3fa; border: 1px solid #c7d1e4; height: 24px;
        padding: 0 4px; font-weight: normal; text-align: left; }
   td { border: 1px solid #c7d1e4; border-top: 0; min-height: 22px; padding: 2px 4px;
        vertical-align: middle; overflow-wrap: anywhere; }
-  tbody tr:nth-child(even) td { background: #f7f9fd; }
   .name { white-space: pre-wrap; }                  /* keeps the level 4 indent */
   .r { text-align: right; }
   .l1 { color: #ff0000; } .l2 { color: #008000; } .l3 { color: #0000ff; } .l4 { color: #000; }
@@ -90,7 +98,6 @@ const buildHtml = (r: PrintReport) => `<!doctype html>
   <thead>
     <tr><td colspan="8" class="co"   style="border:0">${esc(r.coName)}</td></tr>
     <tr><td colspan="8" class="head" style="border:0">${esc(r.heading)}</td></tr>
-    <tr><td colspan="8" class="info" style="border:0">${esc(r.reportInfo)}</td></tr>
     <tr>
       <th>Customer ID</th><th>Customer Name</th><th>Address</th><th>Contact</th>
       <th>Phone</th><th>VAT No.</th>
