@@ -360,14 +360,20 @@ const RptSalesPriceListPage: React.FC<RptSalesPriceListPageProps> = ({
     [items, groupMode, groupId],
   );
 
-  // a chosen item that is not in the selected group any more is cleared
-  useEffect(() => {
-    const has = (id: string | null) =>
-      id === null || itemChoices.some((i) => i.id === id);
-    if (!has(itemId)) setItemId(null);
-    if (!has(itemFrom)) setItemFrom(null);
-    if (!has(itemTo)) setItemTo(null);
-  }, [itemChoices, itemId, itemFrom, itemTo]);
+  const handleGroupChange = (nextGroupId: string | null) => {
+    setGroupId(nextGroupId);
+
+    const nextItemChoices =
+      groupMode === "One" && nextGroupId
+        ? items.filter((item) => item.groupId === nextGroupId)
+        : items;
+    const hasItem = (id: string | null) =>
+      id === null || nextItemChoices.some((item) => item.id === id);
+
+    setItemId((id) => (hasItem(id) ? id : null));
+    setItemFrom((id) => (hasItem(id) ? id : null));
+    setItemTo((id) => (hasItem(id) ? id : null));
+  };
 
   // print preview: shown after Print, OK then downloads the chosen file
   const [preview, setPreview] = useState<{
@@ -732,7 +738,7 @@ const RptSalesPriceListPage: React.FC<RptSalesPriceListPageProps> = ({
                     kit={groupKit}
                     items={itemGroups}
                     value={groupId}
-                    onChange={setGroupId}
+                    onChange={handleGroupChange}
                     disabled={groupMode !== "One"}
                   />
                 </div>
