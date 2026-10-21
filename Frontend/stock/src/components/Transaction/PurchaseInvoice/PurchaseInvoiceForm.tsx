@@ -26,8 +26,8 @@ const makeOptions = (values: string[]): Option[] =>
 /* Fallback options until the lookup endpoints load. */
 const defaultBranchOptions = makeOptions(["OFFICE"]);
 const defaultInvoiceTypeOptions: Option[] = [
-  { value: "C", label: "C" },
-  { value: "R", label: "R" },
+  { value: "C", label: "C", name: "CASH" },
+  { value: "R", label: "R", name: "CREDIT" },
 ];
 const defaultSupplierIdOptions: Option[] = [];
 const defaultSupplierNameOptions: Option[] = [];
@@ -254,7 +254,13 @@ const MENU_FONT_SIZE = 14;
 const ID_COL_WIDTH = 140;
 const NAME_COL_WIDTH = 300;
 
-type MenuVariant = "supplierId" | "supplierName" | "miscId" | "miscName";
+type MenuVariant =
+  | "supplierId"
+  | "supplierName"
+  | "miscId"
+  | "miscName"
+  | "type"
+  | "branch";
 
 const menuLayout: Record<
   MenuVariant,
@@ -292,6 +298,20 @@ const menuLayout: Record<
     secondTitle: "Misc. Sup. ID",
     firstWidth: NAME_COL_WIDTH,
     first: (o) => o.name ?? o.label,
+    second: (o) => o.value,
+  },
+  type: {
+    firstTitle: "Type",
+    secondTitle: "Name",
+    firstWidth: 70,
+    first: (o) => o.value,
+    second: (o) => o.name ?? o.label,
+  },
+  branch: {
+    firstTitle: "Branch",
+    secondTitle: "ID",
+    firstWidth: 150,
+    first: (o) => o.label,
     second: (o) => o.value,
   },
 };
@@ -401,10 +421,90 @@ const lookupMenuStyles: StylesConfig<Option, false> = {
   }),
 };
 
-const supplierIdStyles = { ...supplierIdSelectStyles, ...lookupMenuStyles };
-const supplierNameStyles = { ...supplierNameSelectStyles, ...lookupMenuStyles };
-const miscIdStyles = { ...miscSupplierIdSelectStyles, ...lookupMenuStyles };
-const miscNameStyles = { ...miscSupplierNameSelectStyles, ...lookupMenuStyles };
+/* menu that starts at its own select and ends at the right edge of the
+   box with the given id (the paired name select) */
+const spanMenuStyles = (endBoxId: string): StylesConfig<Option, false> => ({
+  ...lookupMenuStyles,
+  menuPortal: (base) => {
+    const end =
+      typeof document !== "undefined"
+        ? document.getElementById(endBoxId)
+        : null;
+    const right = end?.getBoundingClientRect().right;
+    return {
+      ...base,
+      zIndex: 9999,
+      width: right ? Math.max(right - Number(base.left), 240) : 480,
+    };
+  },
+  menu: (base, state) => ({
+    ...lookupMenuStyles.menu!(base, state),
+    width: "100%",
+    minWidth: 0,
+  }),
+});
+
+/* menu exactly as wide as its own select (touches both edges) */
+const fullWidthMenuStyles: StylesConfig<Option, false> = {
+  ...lookupMenuStyles,
+  menu: (base, state) => ({
+    ...lookupMenuStyles.menu!(base, state),
+    width: "100%",
+    minWidth: 0,
+  }),
+};
+
+// ID selects: the menu stretches until the right edge of the name box
+const supplierIdStyles = {
+  ...supplierIdSelectStyles,
+  ...spanMenuStyles("supplierNameBox"),
+};
+const miscIdStyles = {
+  ...miscSupplierIdSelectStyles,
+  ...spanMenuStyles("miscNameBox"),
+};
+
+const supplierNameStyles = {
+  ...supplierNameSelectStyles,
+  ...fullWidthMenuStyles,
+};
+const miscNameStyles = {
+  ...miscSupplierNameSelectStyles,
+  ...fullWidthMenuStyles,
+};
+
+const typeStyles = {
+  ...invoiceTypeSelectStyles,
+  ...lookupMenuStyles,
+  menu: (base: any, state: any) => ({
+    ...lookupMenuStyles.menu!(base, state),
+    width: 220,
+    minWidth: 220,
+  }),
+};
+
+const typeComponents = {
+  ...selectComponents,
+  MenuList: createMenuList("type"),
+};
+
+const branchStyles = {
+  ...branchSelectStyles,
+  ...lookupMenuStyles,
+  menu: (base: any, state: any) => ({
+    ...lookupMenuStyles.menu!(base, state),
+    width: 200,
+    minWidth: 200,
+  }),
+};
+
+const branchComponents = {
+  ...selectComponents,
+  MenuList: createMenuList("branch"),
+};
+const formatBranch = createFormatLabel("branch");
+
+const formatType = createFormatLabel("type");
 
 const supplierIdComponents = {
   ...selectComponents,
@@ -593,13 +693,16 @@ const PurchaseForm: React.FC<Props> = ({
   return (
     <section
       onKeyDown={handleKeyDown}
-      className="grid grid-cols-1 items-start gap-x-4 gap-y-3 px-3.5 pb-2 pt-3.5 xl:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_minmax(0,2.15fr)]"
+      className="grid grid-cols-1 items-start gap-x-0 gap-y-3 px-3.5 pb-2 pt-3.5 xl:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_minmax(0,2.15fr)]"
     >
       {/* ==================================================
           GROUP 1
           Branch, P.O. No., Misc. Sup., Currency
       ================================================== */}
-      <div id="purchase-left-group" className="flex min-w-0 flex-col gap-2">
+      <div
+        id="purchase-left-group"
+        className="flex min-w-0 flex-col gap-2 pr-7"
+      >
         {/* Branch */}
         <div className="flex min-w-0 items-center gap-2">
           <label htmlFor="lkpBranch" className={`${labelClass} w-18`}>
@@ -611,10 +714,14 @@ const PurchaseForm: React.FC<Props> = ({
               options={branchOptions}
               value={pick(branchOptions, header.brId)}
               onChange={(o) => onChange("brId", o?.value ?? "")}
-              styles={branchSelectStyles}
-              components={selectComponents}
+              styles={branchStyles}
+              components={branchComponents}
+              formatOptionLabel={formatBranch}
+              filterOption={filterLookup}
+              menuPosition="fixed"
+              menuPortalTarget={portalTarget}
               isClearable={false}
-              isSearchable={false}
+              isSearchable
             />
           </div>
         </div>
@@ -677,7 +784,7 @@ const PurchaseForm: React.FC<Props> = ({
       ================================================== */}
       <div
         id="purchase-middle-group"
-        className="ml-3 flex w-[90%] min-w-0 flex-col gap-2"
+        className="flex min-w-0 flex-col gap-2 pr-2"
       >
         {/* Entry No. */}
         <div className="flex min-w-0 items-center gap-3">
@@ -785,14 +892,17 @@ const PurchaseForm: React.FC<Props> = ({
             <label htmlFor="lkpType" className={`${labelClass} w-19`}>
               Type
             </label>
-            <div className="min-w-0 w-[55%]">
+            <div className="min-w-0 w-[26%]">
               <Select<Option, false>
                 inputId="lkpType"
                 options={invoiceTypeOptions}
                 value={pick(invoiceTypeOptions, header.invoiceType)}
                 onChange={(o) => onChange("invoiceType", o?.value ?? "")}
-                styles={invoiceTypeSelectStyles}
-                components={selectComponents}
+                styles={typeStyles}
+                components={typeComponents}
+                formatOptionLabel={formatType}
+                menuPosition="fixed"
+                menuPortalTarget={portalTarget}
                 isClearable={false}
                 isSearchable={false}
               />
@@ -815,7 +925,7 @@ const PurchaseForm: React.FC<Props> = ({
         </div>
 
         {/* Supplier Name */}
-        <div className="min-w-0">
+        <div id="supplierNameBox" className="min-w-0">
           <Select<Option, false>
             inputId="lkpSupplierName"
             options={supplierNameOptions}
@@ -835,7 +945,7 @@ const PurchaseForm: React.FC<Props> = ({
 
         {/* Misc. Supplier Name + Add */}
         <div className="flex min-w-0 items-center gap-2">
-          <div className="min-w-0 flex-1">
+          <div id="miscNameBox" className="min-w-0 flex-1">
             <Select<Option, false>
               inputId="lkpMiscSupName"
               options={miscNameOptions}

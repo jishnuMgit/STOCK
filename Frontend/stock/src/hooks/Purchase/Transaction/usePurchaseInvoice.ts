@@ -34,6 +34,7 @@ export interface SupplierLookup {
 export interface InvoiceTypeOption {
   value: string; // "C" cash / "R" credit
   label: string;
+  name: string; // CASH / CREDIT
 }
 
 interface ItemApi {
@@ -280,6 +281,8 @@ export const usePurchaseInvoice = () => {
   }, []);
 
   /* invoice types C / R  (dbo.getpurchasestockparam) */
+  const TYPE_NAMES: Record<string, string> = { C: "CASH", R: "CREDIT" };
+
   const fetchInvoiceTypes = useCallback(async (): Promise<
     InvoiceTypeOption[]
   > => {
@@ -290,6 +293,8 @@ export const usePurchaseInvoice = () => {
     return result.data.map((t) => ({
       value: s(t.fpid),
       label: s(t.fpid),
+      // use the name from the database; fall back to CASH / CREDIT
+      name: s(t.fpname) || TYPE_NAMES[s(t.fpid)] || s(t.fpid),
     }));
   }, []);
 
