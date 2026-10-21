@@ -57,6 +57,7 @@ const PurchaseInvoicePage: React.FC = () => {
     fetchCashSuppliers,
     fetchItems,
     fetchSuppliers,
+    fetchCurrencies,
     loading,
   } = usePurchaseInvoice();
 
@@ -71,6 +72,7 @@ const PurchaseInvoicePage: React.FC = () => {
     [],
   );
   const [invoiceTypes, setInvoiceTypes] = useState<InvoiceTypeOption[]>([]);
+  const [currencies, setCurrencies] = useState<string[]>([]);
 
   // Misc. supplier lookup + the Yes/No switch.
   // Default type is Cash (C), where the supplier name comes from Misc. Sup.
@@ -108,6 +110,12 @@ const PurchaseInvoicePage: React.FC = () => {
       )
       .catch(() => setBranches([]));
   }, [fetchBranches]);
+
+  useEffect(() => {
+    fetchCurrencies()
+      .then(setCurrencies)
+      .catch(() => setCurrencies([]));
+  }, [fetchCurrencies]);
 
   /* invoice types (C / R) from dbo.getpurchasestockparam */
   useEffect(() => {
@@ -243,6 +251,9 @@ const PurchaseInvoicePage: React.FC = () => {
     () => ({
       branches: branches.length ? branches : undefined,
       invoiceTypes: invoiceTypes.length ? invoiceTypes : undefined,
+      currencies: currencies.length
+        ? currencies.map((c) => ({ value: c, label: c }))
+        : undefined,
       supplierIds: suppliersById.map((x) => ({
         value: x.id,
         label: x.id,
@@ -254,7 +265,7 @@ const PurchaseInvoicePage: React.FC = () => {
         name: x.name,
       })),
     }),
-    [branches, invoiceTypes, suppliersById, suppliersByName],
+    [branches, invoiceTypes, currencies, suppliersById, suppliersByName],
   );
 
   const loadMiscSuppliers = useCallback(async () => {

@@ -155,6 +155,11 @@ interface ExpenseLookupsApi {
   currencies: { fCurrency: string }[];
 }
 
+interface CurrencyApi {
+  currency?: string | null;
+  fCurrency?: string | null;
+  fcurrency?: string | null;
+}
 /* ---------- API shapes (columns come from tblstocktrans) ---------- */
 
 interface InvoiceHeaderApi {
@@ -365,6 +370,16 @@ export const usePurchaseInvoice = () => {
       })),
       currencies: result.data.currencies.map((c) => s(c.fCurrency)),
     };
+  }, []);
+
+  const fetchCurrencies = useCallback(async (): Promise<string[]> => {
+    const result = await apiRequest<{ currencies: CurrencyApi[] }>(
+      "GET",
+      "/Currency",
+    );
+    return result.currencies
+      .map((c) => s(c.currency ?? c.fCurrency ?? c.fcurrency))
+      .filter(Boolean);
   }, []);
 
   /* Returns null when not found (new document) or on error (see `error`). */
@@ -598,6 +613,7 @@ export const usePurchaseInvoice = () => {
     fetchItems,
     fetchSuppliers,
     fetchExpenseLookups,
+    fetchCurrencies,
     loading,
     error,
   };
