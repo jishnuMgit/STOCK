@@ -37,7 +37,7 @@ const pick = (options: Option[], value: string): Option | null =>
 /* custom arrow for the dropdowns in this table */
 const DropdownIndicator = (props: DropdownIndicatorProps<Option, false>) => (
   <components.DropdownIndicator {...props}>
-    <RxTriangleDown size={16} />
+    <RxTriangleDown size={16} color="#91918e" />
   </components.DropdownIndicator>
 );
 
