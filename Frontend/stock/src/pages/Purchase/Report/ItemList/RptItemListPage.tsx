@@ -20,7 +20,7 @@ type RadioOptionProps = {
 
 type Branch = { brId: string; brName: string };
 type Group = { groupId: string; groupName: string };
-type Item = { itemId: string; itemName: string };
+type Item = { itemId: string; itemName: string; groupId?: string };
 
 const API = `${import.meta.env.VITE_API_URL}/RptItemList`;
 
@@ -399,10 +399,26 @@ const RptItemListPage: React.FC<RptItemListPageProps> = ({ onClose }) => {
     [groupsByName, collator],
   );
 
+  // the item lookups only list the items of the selected Item Group
+  const groupFilter = groupMode === "One Item Group" && groupId ? groupId : null;
+
+  const scopedItemsById = useMemo(
+    () =>
+      groupFilter ? itemsById.filter((i) => i.groupId === groupFilter) : itemsById,
+    [itemsById, groupFilter],
+  );
+  const scopedItemsByName = useMemo(
+    () =>
+      groupFilter
+        ? itemsByName.filter((i) => i.groupId === groupFilter)
+        : itemsByName,
+    [itemsByName, groupFilter],
+  );
+
   // lkpItemID: by id / lkpItemName: by name (each item once)
   const itemIdOptions: ItemOption[] = useMemo(
     () =>
-      uniqueBy(itemsById, (i) => i.itemId)
+      uniqueBy(scopedItemsById, (i) => i.itemId)
         .sort((a, b) => collator.compare(a.itemId, b.itemId))
         .map((i) => ({
           value: i.itemId,
@@ -410,12 +426,12 @@ const RptItemListPage: React.FC<RptItemListPageProps> = ({ onClose }) => {
           id: i.itemId,
           name: i.itemName,
         })),
-    [itemsById, collator],
+    [scopedItemsById, collator],
   );
 
   const itemNameOptions: ItemOption[] = useMemo(
     () =>
-      uniqueBy(itemsByName, (i) => i.itemId)
+      uniqueBy(scopedItemsByName, (i) => i.itemId)
         .sort(
           (a, b) =>
             collator.compare(a.itemName, b.itemName) ||
@@ -427,8 +443,18 @@ const RptItemListPage: React.FC<RptItemListPageProps> = ({ onClose }) => {
           id: i.itemId,
           name: i.itemName,
         })),
-    [itemsByName, collator],
+    [scopedItemsByName, collator],
   );
+
+  // a chosen item that is not in the selected group any more is cleared
+  useEffect(() => {
+    if (!groupFilter) return;
+    const has = (id: string | null | undefined) =>
+      !id || scopedItemsById.some((i) => i.itemId === id);
+    if (!has(itemId)) setItemId(null);
+    if (!has(fromItem?.value)) setFromItem(null);
+    if (!has(toItem?.value)) setToItem(null);
+  }, [groupFilter, scopedItemsById, itemId, fromItem, toItem]);
 
   const selectedGroupId =
     groupIdOptions.find((o) => o.value === groupId) ?? null;

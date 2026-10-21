@@ -162,7 +162,7 @@ const FinanceYearClose: React.FC<FinanceYearCloseProps> = ({
 
   return (
     <div className="flex min-h-full w-full items-start justify-center bg-white px-3 py-3 sm:px-4 sm:py-4">
-      <div className="w-full max-w-[715px] bg-white">
+      <div className="w-full max-w-[615px] bg-white">
         <main className="w-full border border-[#cfd7df] bg-white">
           {/* Header */}
           <header className="flex h-[33px] items-center bg-[#9fdfbc]">
@@ -182,7 +182,7 @@ const FinanceYearClose: React.FC<FinanceYearCloseProps> = ({
                 Branch :
               </label>
 
-              <div className="min-w-0">
+              <div className="min-w-0 w-[250px]">
                 <Select<Option, false>
                   inputId="branch"
                   options={branchOptions}

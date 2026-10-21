@@ -1,11 +1,7 @@
 import React, { useEffect, useRef, useState } from "react";
 import Select, {
-  components,
-  createFilter,
   type StylesConfig,
   type SingleValue,
-  type MenuListProps,
-  type OptionProps,
 } from "react-select";
 import { toast } from "react-toastify";
 
@@ -22,7 +18,6 @@ type CompanyData = {
   fCoName_QR?: string | null;
   fCoVATNo?: string | null;
   fCoVATNo_AR?: string | null;
-  fPiExpenseAccountGroup?: string | null;
   fBG2ARAP?: string | null;
   fYCMethod?: string | null;
 };
@@ -38,34 +33,10 @@ const FIELD_ORDER = [
   "txtCoName_QR",
   "txtCoVATNo",
   "txtCoVATNo_AR",
-  "lkpPurchaseExpenseGroup",
   "lkpBG2ARAP",
   "lkpYearClosingMethod",
   "btnSave",
 ];
-
-// ============================================================
-// PURCHASE EXPENSE GROUP: table-style dropdown (header + 2 columns)
-// ============================================================
-
-const AccountMenuList = (props: MenuListProps<Option, false>) => (
-  <components.MenuList {...props}>
-    <div className="sticky top-0 z-10 grid grid-cols-[1fr_110px] border-b border-gray-200 bg-white px-3 py-2 text-[12px] font-semibold text-gray-600">
-      <span>Account Name</span>
-      <span className="text-right">Account ID</span>
-    </div>
-    {props.children}
-  </components.MenuList>
-);
-
-const AccountOption = (props: OptionProps<Option, false>) => (
-  <components.Option {...props}>
-    <div className="grid min-h-[18px] grid-cols-[1fr_110px] items-center">
-      <span>{props.data.label}</span>
-      <span className="text-right text-gray-500">{props.data.value}</span>
-    </div>
-  </components.Option>
-);
 
 const CompanyPage: React.FC = () => {
   // ============================================================
@@ -80,17 +51,11 @@ const CompanyPage: React.FC = () => {
   const [txtCoVATNo, setCoVATNo] = useState("");
   const [txtCoVATNo_AR, setCoVATNo_AR] = useState("");
 
-  const [lkpPurchaseExpenseGroup, setPurchaseExpenseGroup] =
-    useState<Option | null>(null);
-
   const [lkpBG2ARAP, setBG2ARAP] = useState<Option | null>(null);
 
   const [lkpYearClosingMethod, setYearClosingMethod] =
     useState<Option | null>(null);
 
-  // Purchase Expense Group options are loaded from the database
-  const [purchaseExpenseGroupOptions, setPurchaseExpenseGroupOptions] =
-    useState<Option[]>([]);
   const [yearClosingMethodOptions, setYearClosingMethodOptions] =
     useState<Option[]>([]);
 
@@ -118,106 +83,6 @@ const CompanyPage: React.FC = () => {
   // ============================================================
   // REACT SELECT STYLE
   // ============================================================
-
-  const selectStyles: StylesConfig<Option, false> = {
-    control: (base, state) => ({
-      ...base,
-      minHeight: "30px",
-      height: "30px",
-      width: "50%",
-      border: "1px solid #d1d5db",
-      borderRadius: "4px",
-      boxShadow: "none",
-      backgroundColor: state.isFocused ? "#eefbf4" : "#ffffff",
-      fontSize: "11px",
-      cursor: "pointer",
-
-      "&:hover": {
-        borderColor: "#9fdfbc",
-      },
-    }),
-
-    valueContainer: (base) => ({
-      ...base,
-      height: "23px",
-      minHeight: "23px",
-      padding: "0 6px",
-    }),
-
-    singleValue: (base) => ({
-      ...base,
-      margin: 0,
-      color: "#374151",
-      fontSize: "11px",
-    }),
-
-    placeholder: (base) => ({
-      ...base,
-      margin: 0,
-      color: "#808080",
-      fontSize: "11px",
-    }),
-
-    input: (base) => ({
-      ...base,
-      margin: 0,
-      padding: 0,
-      fontSize: "11px",
-      color: "#374151",
-    }),
-
-    indicatorsContainer: (base) => ({
-      ...base,
-      height: "23px",
-    }),
-
-    dropdownIndicator: (base) => ({
-      ...base,
-      padding: "2px 4px",
-      color: "#aeb8c2",
-
-      "&:hover": {
-        color: "#808080",
-      },
-    }),
-
-    indicatorSeparator: () => ({
-      display: "none",
-    }),
-
-    menu: (base) => ({
-      ...base,
-      zIndex: 9999,
-      marginTop: "2px",
-      fontSize: "11px",
-      borderRadius: "2px",
-      overflow: "hidden",
-    }),
-
-    menuList: (base) => ({
-      ...base,
-      padding: 0,
-      maxHeight: "180px",
-    }),
-
-    option: (base, state) => ({
-      ...base,
-      padding: "5px 8px",
-      fontSize: "11px",
-      color: "#374151",
-      cursor: "pointer",
-
-      backgroundColor: state.isSelected
-        ? "#dff5e9"
-        : state.isFocused
-          ? "#eefbf4"
-          : "#ffffff",
-
-      "&:active": {
-        backgroundColor: "#dff5e9",
-      },
-    }),
-  };
 
   const selectStyles1: StylesConfig<Option, false> = {
     control: (base, state) => ({
@@ -319,74 +184,6 @@ const CompanyPage: React.FC = () => {
     }),
   };
 
-  const purchaseSelectStyles: StylesConfig<Option, false> = {
-    ...selectStyles,
-
-    clearIndicator: () => ({ display: "none" }),
-
-    menu: (base) => ({
-      ...base,
-      zIndex: 9999,
-      width: "480px",
-      marginTop: "4px",
-      borderRadius: "8px",
-      border: "1px solid #e5e7eb",
-      boxShadow: "0 8px 24px rgba(0,0,0,0.12)",
-      overflow: "hidden",
-    }),
-
-    menuList: (base) => ({
-      ...base,
-      padding: 0,
-      maxHeight: "260px",
-    }),
-
-    option: (base, state) => ({
-      ...base,
-      padding: "9px 12px",
-      fontSize: "13px",
-      color: "#374151",
-      cursor: "pointer",
-      backgroundColor:
-        state.isFocused || state.isSelected ? "#eefbf4" : "#ffffff",
-      "&:active": { backgroundColor: "#dff5e9" },
-    }),
-  };
-
-  // ============================================================
-  // LOAD PURCHASE EXPENSE GROUP OPTIONS
-  // ============================================================
-
-  useEffect(() => {
-    let cancelled = false;
-
-    const loadPurchaseGroups = async () => {
-      try {
-        const res = await fetch(`${API}/purchase-groups`);
-        const data = await res.json();
-        if (!res.ok || !data.success) {
-          toast.error(data.message || "Failed to load purchase expense groups");
-          return;
-        }
-        if (cancelled) return;
-
-        setPurchaseExpenseGroupOptions([
-          ...data.groups.map((g: { value: string; label: string }) => ({
-            value: g.value,
-            label: g.label,
-          })),
-        ]);
-      } catch {
-        if (!cancelled) toast.error("Failed to load purchase expense groups");
-      }
-    };
-
-    loadPurchaseGroups();
-    return () => {
-      cancelled = true;
-    };
-  }, []);
-
   useEffect(() => {
     let cancelled = false;
     const PstrCoID = localStorage.getItem("PstrCoID") ?? "";
@@ -466,7 +263,6 @@ const CompanyPage: React.FC = () => {
     setCoVATNo("");
     setCoVATNo_AR("");
 
-    setPurchaseExpenseGroup(null);
     setBG2ARAP(null);
     setYearClosingMethod(null);
 
@@ -503,7 +299,6 @@ const CompanyPage: React.FC = () => {
           coNameQR: txtCoName_QR,
           coVatNo: txtCoVATNo, 
           coVatNoAR: txtCoVATNo_AR, 
-          purchaseExpenseGroup: lkpPurchaseExpenseGroup?.value ?? "",
           bg2ARAP: lkpBG2ARAP?.value ?? "",
           yearClosingMethod: lkpYearClosingMethod?.value ?? "",
         }),
@@ -536,17 +331,6 @@ const CompanyPage: React.FC = () => {
     setCoName_QR(c.fCoName_QR ?? "");
     setCoVATNo(c.fCoVATNo ?? "");
     setCoVATNo_AR(c.fCoVATNo_AR ?? "");
-    // Keep the saved group even if it isn't in the dropdown list,
-    // so Modify never overwrites it with a blank
-    const savedGroup = c.fPiExpenseAccountGroup ?? "";
-    setPurchaseExpenseGroup(
-      savedGroup
-        ? (purchaseExpenseGroupOptions.find((o) => o.value === savedGroup) ?? {
-            value: savedGroup,
-            label: savedGroup,
-          })
-        : null,
-    );
     setBG2ARAP(bg2ARAPOptions.find((o) => o.value === c.fBG2ARAP) ?? null);
     setYearClosingMethod(
       yearClosingMethodOptions.find((o) => o.value === c.fYCMethod) ?? null,
@@ -887,46 +671,6 @@ const CompanyPage: React.FC = () => {
               onKeyDown={handleEnter}
               autoComplete="off"
               className={`${smallInputClass} text-right`}
-            />
-          </div>
-
-          {/* =================================================
-              PURCHASE EXPENSE GROUP
-          ================================================= */}
-
-          <div className="mb-[8px] grid grid-cols-[195px_1fr] items-center">
-            <label
-              htmlFor="lkpPurchaseExpenseGroup"
-              className="pr-3 text-right text-[14px] text-gray-600"
-            >
-              Purchase Expense Group :
-            </label>
-
-            <Select<Option, false>
-              inputId="lkpPurchaseExpenseGroup"
-              instanceId="lkpPurchaseExpenseGroup"
-              options={purchaseExpenseGroupOptions}
-              value={lkpPurchaseExpenseGroup}
-              onChange={(option: SingleValue<Option>) =>
-                setPurchaseExpenseGroup(option)
-              }
-              onKeyDown={handleSelectEnter("lkpPurchaseExpenseGroup")}
-              onMenuOpen={() => (menuOpenRef.current = true)}
-              onMenuClose={() => (menuOpenRef.current = false)}
-              components={{ MenuList: AccountMenuList, Option: AccountOption }}
-              styles={purchaseSelectStyles}
-              filterOption={createFilter({
-                ignoreCase: true,
-                ignoreAccents: true,
-                matchFrom: "any",
-                stringify: (o) => `${o.data.label} ${o.data.value}`,
-              })}
-              noOptionsMessage={() => "No matching account"}
-              isClearable
-              backspaceRemovesValue
-              isSearchable
-              placeholder=""
-              menuPosition="fixed"
             />
           </div>
 

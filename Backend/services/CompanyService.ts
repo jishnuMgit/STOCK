@@ -31,13 +31,13 @@ export type Company = {
   fCoName_QR: string | null;
   fCoVATNo: string | null;
   fCoVATNo_AR: string | null;
-  fPiExpenseAccountGroup: string | null;
   fBG2ARAP: string | null; // 'Yes' | 'No' | 'Yes/No'
   fYCMethod: string | null; // 'M' | 'Y'
   fCoStatus: string | null;
 };
 
-export type PurchaseGroup = { value: string; label: string };
+// a lookup entry (used by the Year Closing Method dropdown)
+export type LookupOption = { value: string; label: string };
 
 export type SavePayload = {
   userId: string | null;
@@ -49,7 +49,6 @@ export type SavePayload = {
   coNameQR?: unknown;
   coVatNo?: unknown;
   coVatNoAR?: unknown;
-  purchaseExpenseGroup?: unknown;
   bg2ARAP?: unknown;
   yearClosingMethod?: unknown;
 };
@@ -100,7 +99,6 @@ export const getCompany = async (id: string): Promise<Company | null> => {
       fCoName_QR: r.fconame_qr,
       fCoVATNo: r.fcovatno,
       fCoVATNo_AR: r.fcovatno_ar,
-      fPiExpenseAccountGroup: r.fpiexpenseaccountgroup,
       fBG2ARAP: r.fbg2arap,
       fYCMethod: r.fycmethod,
       fCoStatus: r.fcostatus,
@@ -117,19 +115,9 @@ export const getCompany = async (id: string): Promise<Company | null> => {
   }
 };
 
-// Purchase Expense Group dropdown
-export const getPurchaseGroups = async (): Promise<PurchaseGroup[]> => {
-  const { rows } = await pool.query(
-    `SELECT faccountid AS "value", faccountname AS "label"
-       FROM dbo.fillpurchaseexpensegroup()
-      ORDER BY faccountid`,
-  );
-  return rows;
-};
-
 export const getYearClosingMethods = async (
   PstrCoID: string,
-): Promise<PurchaseGroup[]> => {
+): Promise<LookupOption[]> => {
   const { rows } = await pool.query(
     `SELECT fpid AS "value", fpname AS "label"
        FROM dbo.filllookupycfinparam($1)
@@ -162,8 +150,8 @@ export const saveCompany = async (p: SavePayload): Promise<"S" | "M"> => {
       `CALL dbo.sp_pagecompany(
          p_mode => $1, p_coid => $2, p_coname => $3, p_coname_ar => $4,
          p_coname_short => $5, p_coname_qr => $6, p_covatno => $7, p_covatno_ar => $8,
-         p_piexpenseaccountgroup => $9, p_bg2arap => $10, p_ycmethod => $11,
-         p_original_coid => $12, p_userid => $13)`,
+         p_bg2arap => $9, p_ycmethod => $10,
+         p_original_coid => $11, p_userid => $12)`,
       [
         mode,
         coID,
@@ -173,7 +161,6 @@ export const saveCompany = async (p: SavePayload): Promise<"S" | "M"> => {
         p.coNameQR,
         p.coVatNo,
         p.coVatNoAR,
-        p.purchaseExpenseGroup,
         p.bg2ARAP,
         p.yearClosingMethod,
         original || null,

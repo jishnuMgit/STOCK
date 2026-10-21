@@ -39,7 +39,7 @@ import MatchingPage from "../pages/Finance/Transaction/Match/MatchPage";
 import UnMatchPage from "../pages/Finance/Transaction/MatchReversal/MatchReversalPage";
 import CostCenterPage from "../pages/Finance/Setup/CostCenterPage";
 import MatchEnquiryPage from "../pages/Finance/Transaction/MatchEnquiry/MatchEnquiryPage";
-import RptTBPage from "../pages/Finance/Report/FinalAccounts/TrialBalance/RptRBPage";
+import RptTBPage from "../pages/Finance/Report/FinalAccounts/TrialBalance/RptTBPage";
 import RptStockPage from "../pages/Sales/Report/RptStockPage";
 import RptStockValuePage from "../pages/Sales/Report/RptSVPage";
 import RptCustomerSalesPage from "../pages/Sales/Report/RptCustomerSalesPage";

@@ -677,9 +677,28 @@ export const getItems = async (
 
     await client.query("COMMIT");
 
+    // sp_getitem does not return funit, so read it from the item header
+    // and attach it to each row (remove this once the procedure returns it)
+    const unitResult = await pool.query(
+      `SELECT fitemid, funit FROM dbo.tblitemhd WHERE fcoid = $1`,
+      [String(PstrCoID)],
+    );
+
+    const unitByItem = new Map<string, string | null>(
+      unitResult.rows.map((r) => [
+        r.fitemid as string,
+        r.funit == null ? null : String(r.funit).trim(),
+      ]),
+    );
+
+    const rowsWithUnit = result.rows.map((row) => ({
+      ...row,
+      funit: row.funit ?? unitByItem.get(row.fitemid) ?? null,
+    }));
+
     return res.status(200).json({
       success: true,
-      data: mapRows(result.rows, itemListKeys),
+      data: mapRows(rowsWithUnit, itemListKeys),
     });
   } catch (error: unknown) {
     try {
