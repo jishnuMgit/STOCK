@@ -146,7 +146,7 @@ export const getPurchaseInvoice = async (
     const header = await pool.query(
       `SELECT DISTINCT
       fpisitype AS finvoicetype, fdate, fcsaccountid AS faccountid,
-      fpono, fcurrency, fcurrencyrate, fnote, fdiscamt, fdocamt,
+      fpono, fpino, fcurrency, fcurrencyrate, fnote, fdiscamt, fdocamt,
       fnetdocamt, fvatamt, COALESCE(fpost, false) AS fpost,
       fcuserid, fcuserdate, fmuserid, fmuserdate
  FROM dbo.tblstocktrans
@@ -272,9 +272,10 @@ export const savePurchaseInvoice = async (
         message: "'Login Year' should be same as 'Transaction Year'",
       });
     if (!piNo)
-      return res
-        .status(400)
-        .json({ success: false, message: "Please enter 'Invoice No'" });
+      return res.status(400).json({
+        success: false,
+        message: "Please enter 'Supplier Invoice No'",
+      });
     if (invoiceType === "C" && !supplierName)
       return res
         .status(400)
@@ -331,9 +332,8 @@ export const savePurchaseInvoice = async (
       strbrid: brId,
       strdoctype: DOC_TYPE,
       strdocno: docNo,
-      intdocno: getIntDocNo(docNo),
       pstruserid: userId,
-      strmenuname: menuName ?? "frmPI",
+      strmenuname: menuName ?? "pagePI",
     };
 
     const header = {

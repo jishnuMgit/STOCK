@@ -275,7 +275,7 @@ const menuLayout: Record<
   supplierId: {
     firstTitle: "Supplier ID",
     secondTitle: "Supplier Name",
-    firstWidth: ID_COL_WIDTH,
+    firstWidth: 146,
     first: (o) => o.value,
     second: (o) => o.name ?? o.label,
   },
@@ -289,7 +289,7 @@ const menuLayout: Record<
   miscId: {
     firstTitle: "Misc. Sup. ID",
     secondTitle: "Misc. Sup. Name",
-    firstWidth: ID_COL_WIDTH,
+    firstWidth: 146,
     first: (o) => o.value,
     second: (o) => o.name ?? o.label,
   },
