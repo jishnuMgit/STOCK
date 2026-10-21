@@ -90,7 +90,7 @@ import FinanceYearClose from "../pages/Utility/FinanceYearClose";
 import YearCloseStatusPage from "../pages/Utility/YearCloseStatusPage";
 import RptVerifyDocumentAccuracyPage from "../pages/Utility/RptVerifyDocumentAccuracyPage";
 import BranchPage from "../pages/Administration/BranchPage";
-import BranchYearPage from "../pages/Administration/BranchYearPage";
+import YearPage from "../pages/Administration/YearPage";
 import DocumentPage from "../pages/Administration/DocumentPage";
 import RptDocumentsAfterYearClosePage from "../pages/Utility/RptDocumentsAfterYearClosePage";
 import BackupPage from "../pages/Utility/BackupPage";
@@ -359,7 +359,7 @@ const AppRoutes = () => {
 
           <Route path="/Administration/CompanyPage" element={<CompanyPage />} />
           <Route path="/Administration/Branch" element={<BranchPage/>}/>
-          <Route path="/Administration/Year" element={<BranchYearPage/>}/>
+          <Route path="/Administration/Year" element={<YearPage/>}/>
           <Route path="/Administration/Document" element={<DocumentPage/>}/>
 
           {/* ================= DEV ================= */}

@@ -468,3 +468,46 @@ export const salesPriceListGridKeys: KeyMap = {
   funitprice: "txtUnitPrice",
   fitemgroupid: "lkpItemGroupID",
 };
+
+/* ---------- Administration / Branch ---------- */
+
+export const administrationBranchHeaderKeys: KeyMap = {
+  fconame: "txtCompany",
+};
+
+export const administrationBranchGridKeys: KeyMap = {
+  fbrid: "txtBrID",
+  fbrname: "txtBrName",
+  fpositionno: "txtPositionNo",
+};
+
+/* ---------- Finance / Transaction / BeginningBalance ---------- */
+
+// one head account of the Account ID / Account Name boxes (the same row in both
+// lists); chkHaveCC = the account needs a cost center
+export const beginningBalanceAccountKeys: KeyMap = {
+  faccountid: "lkpAccountID",
+  faccountname: "txtAccountName",
+  fhavecc: "chkHaveCC",
+};
+
+export const beginningBalanceCostCenterKeys: KeyMap = {
+  fccid: "lkpCCID",
+  fccname: "txtCCName",
+};
+
+/* ---------- Administration / Year ---------- */
+
+export const administrationYearGridKeys: KeyMap = {
+  fbrid: "lkpBranch",
+  fyear: "txtYear",
+};
+
+/* ---------- Administration / Document ---------- */
+
+export const administrationDocumentGridKeys: KeyMap = {
+  fdoctype: "txtDocType",
+  fdocname: "txtDocName",
+  ftobepost: "chkToBePost",
+  fpositionno: "txtPositionNo",
+};
