@@ -529,12 +529,12 @@ export const getCashSuppliers = async (
         .json({ success: false, message: "Authentication required" });
 
     const result = await pool.query(
-      `SELECT "fCashSupplierID"   AS fcashsupplierid,
-          "fCashSupplierName" AS fcashsuppliername,
-          "fVATNo"            AS fvatno
-   FROM dbo."tblCashSupplier"
-   WHERE "fCoID" = $1
-   ORDER BY "fCashSupplierID"`,
+      `SELECT fcashsupplierid AS fcashsupplierid,
+       fcashsuppliername AS fcashsuppliername,
+       fvatno AS fvatno
+FROM dbo.tblcashsupplier
+WHERE fcoid = $1
+ORDER BY fcashsupplierid;`,
       [coId],
     );
 
@@ -589,11 +589,12 @@ export const getCashSupplier = async (
         .json({ success: false, message: "Cash Supplier ID is required" });
 
     const result = await pool.query(
-      `SELECT "fCashSupplierID"   AS fcashsupplierid,
-          "fCashSupplierName" AS fcashsuppliername,
-          "fVATNo"            AS fvatno
-   FROM dbo."tblCashSupplier"
-   WHERE "fCoID" = $1 AND "fCashSupplierID" = $2`,
+      `SELECT fcashsupplierid AS fcashsupplierid,
+       fcashsuppliername AS fcashsuppliername,
+       fvatno AS fvatno
+FROM dbo.tblcashsupplier
+WHERE fcoid = $1
+  AND fcashsupplierid = $2;`,
       [coId, id],
     );
 
