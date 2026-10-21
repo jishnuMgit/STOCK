@@ -444,7 +444,7 @@ export const usePurchaseInvoice = () => {
           unit: r.unit,
           qtyIn: n(r.qty),
           unitPrice: n(r.unitPrice),
-          totalPrice: Number((n(r.qty) * n(r.unitPrice)).toFixed(2)),
+          totalPrice: Number((n(r.qty) * n(r.unitPrice) * rate).toFixed(2)),
           unitCost: n(r.unitCost),
           totalCost: n(r.totalCost),
         }));
@@ -508,11 +508,12 @@ export const usePurchaseInvoice = () => {
       rows: PurchaseRow[],
       totalExpense: number,
       discAmt: number,
+      rate = 1,
     ): Promise<PurchaseRow[]> => {
       const lines = rows.map((r) => ({
         itemId: r.itemId,
         qtyIn: n(r.qty),
-        unitPrice: n(r.unitPrice),
+        unitPrice: n(r.unitPrice) * rate,
       }));
 
       const result = await apiRequest<{
