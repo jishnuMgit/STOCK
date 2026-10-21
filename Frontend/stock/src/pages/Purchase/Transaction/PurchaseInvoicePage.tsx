@@ -194,11 +194,17 @@ const PurchaseInvoicePage: React.FC = () => {
 
   const itemLookups = useMemo(
     () => ({
-      itemIds: items.map((i) => ({ value: i.id, label: i.id, name: i.name })),
+      itemIds: items.map((i) => ({
+        value: i.id,
+        label: i.id,
+        name: i.name,
+        unit: i.unit,
+      })),
       itemNames: items.map((i) => ({
         value: i.id,
         label: i.name,
         name: i.name,
+        unit: i.unit,
       })),
     }),
     [items],

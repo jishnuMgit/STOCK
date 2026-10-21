@@ -20,6 +20,7 @@ export interface Item {
   id: string;
   name: string;
   branchId: string;
+  unit: string;
   packing: string;
   itemGroupId: string;
   inactive: boolean;
@@ -39,6 +40,7 @@ interface ItemApi {
   itemID: string;
   itemName: string | null;
   branchID: string | null;
+  unit: string | null;
   packing: string | number | null;
   itemGroupID: string | null;
   inactive: number | boolean | null;
@@ -315,6 +317,7 @@ export const usePurchaseInvoice = () => {
         id: s(r.itemID),
         name: s(r.itemName),
         branchId: s(r.branchID),
+        unit: s(r.unit),
         packing: s(r.packing),
         itemGroupId: s(r.itemGroupID),
         inactive: Boolean(r.inactive),
