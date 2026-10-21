@@ -326,13 +326,13 @@ export const savePurchaseInvoice = async (
 
     /* ---------- common SP args ---------- */
     const base = {
-      gstrcoid: coId,
-      gintyear: Number(year),
+      pstrcoid: coId,
+      pstryear: String(year),
       strbrid: brId,
       strdoctype: DOC_TYPE,
       strdocno: docNo,
       intdocno: getIntDocNo(docNo),
-      gstruserid: userId,
+      pstruserid: userId,
       strmenuname: menuName ?? "frmPI",
     };
 

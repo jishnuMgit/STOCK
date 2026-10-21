@@ -20,6 +20,7 @@ export interface Item {
   id: string;
   name: string;
   branchId: string;
+  unit: string;
   packing: string;
   itemGroupId: string;
   inactive: boolean;
@@ -39,6 +40,7 @@ interface ItemApi {
   itemID: string;
   itemName: string | null;
   branchID: string | null;
+  unit: string | null;
   packing: string | number | null;
   itemGroupID: string | null;
   inactive: number | boolean | null;
@@ -315,6 +317,7 @@ export const usePurchaseInvoice = () => {
         id: s(r.itemID),
         name: s(r.itemName),
         branchId: s(r.branchID),
+        unit: s(r.unit),
         packing: s(r.packing),
         itemGroupId: s(r.itemGroupID),
         inactive: Boolean(r.inactive),
@@ -441,7 +444,7 @@ export const usePurchaseInvoice = () => {
           unit: r.unit,
           qtyIn: n(r.qty),
           unitPrice: n(r.unitPrice),
-          totalPrice: Number((n(r.qty) * n(r.unitPrice)).toFixed(2)),
+          totalPrice: Number((n(r.qty) * n(r.unitPrice) * rate).toFixed(2)),
           unitCost: n(r.unitCost),
           totalCost: n(r.totalCost),
         }));
@@ -505,11 +508,12 @@ export const usePurchaseInvoice = () => {
       rows: PurchaseRow[],
       totalExpense: number,
       discAmt: number,
+      rate = 1,
     ): Promise<PurchaseRow[]> => {
       const lines = rows.map((r) => ({
         itemId: r.itemId,
         qtyIn: n(r.qty),
-        unitPrice: n(r.unitPrice),
+        unitPrice: n(r.unitPrice) * rate,
       }));
 
       const result = await apiRequest<{
