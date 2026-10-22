@@ -15,6 +15,7 @@ import { useAdvanceAfterSelect } from "../../../../hooks/useAdvanceAfterSelect";
 import { usePairMenuHang } from "../../../../hooks/usePairMenuHang";
 import { useAltShortcuts } from "../../../../hooks/useAltShortcuts";
 import { useInitialFocus } from "../../../../hooks/useInitialFocus";
+import { useGridCellFocus } from "../../../../hooks/useGridCellFocus";
 import { useConfirmModal } from "../../../../hooks/useConfirmModal";
 import ReportPreview from "../../../../components/common/ReportPreview";
 import { buildStockTransferPdf } from "../../../../components/Transaction/StockTransfer/StockTransferPdf";
@@ -534,6 +535,8 @@ const StockTransferPage: React.FC = () => {
 
   // Enter / Tab / click on a dropdown goes on to the next box of the row
   const { advanceAfterPick, advanceOnEnter } = useAdvanceAfterSelect();
+  // the cell the cursor is in is outlined; a typed-in box has its text selected
+  const { cellFocusClass, selectOnFocus } = useGridCellFocus();
   // ... and the Item Name list covers the columns up to Qty.
   const { hang: nameMenuHang, measure: measureNameMenuHang } = usePairMenuHang(210);
 
@@ -2006,7 +2009,7 @@ const StockTransferPage: React.FC = () => {
                   </td>
 
                   {/* ITEM ID */}
-                  <td className="border border-[#bfe8d0] p-0"
+                  <td className={`border border-[#bfe8d0] p-0 ${cellFocusClass}`}
                     onKeyDown={(event) => advanceOnEnter(event, [`lkpItemName-${index}`])}
                   >
                     <Select<SelectOption, false>
@@ -2042,7 +2045,7 @@ const StockTransferPage: React.FC = () => {
                   </td>
 
                   {/* ITEM NAME */}
-                  <td className="border border-[#bfe8d0] p-0"
+                  <td className={`border border-[#bfe8d0] p-0 ${cellFocusClass}`}
                     onKeyDown={(event) => advanceOnEnter(event)}
                   >
                     <Select<SelectOption, false>
@@ -2100,7 +2103,7 @@ const StockTransferPage: React.FC = () => {
                   </td>
 
                   {/* QUANTITY */}
-                  <td className="border border-[#bfe8d0] p-0">
+                  <td className={`border border-[#bfe8d0] p-0 ${cellFocusClass}`}>
                     <input
                       id={`txtQty-${index}`}
                       name="txtQty"
@@ -2110,7 +2113,10 @@ const StockTransferPage: React.FC = () => {
                       value={row.txtQty}
                       readOnly={chkPosted}
                       onChange={(event) => updateQty(index, event.target.value)}
-                      onFocus={() => showRowStock(index)}
+                      onFocus={(event) => {
+                        showRowStock(index);
+                        selectOnFocus(event);
+                      }}
                       onBlur={(event) => showQty(index, event.target.value)}
                       onKeyDown={(event) => handleQtyKeyDown(event, index)}
                       className="number-no-spinner h-[26px] w-full bg-transparent px-2 text-right outline-none focus:bg-[#f1f8ff]"
