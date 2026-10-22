@@ -9,7 +9,7 @@ import Select, {
 } from "react-select";
 import { RxTriangleDown } from "react-icons/rx";
 import type { PurchaseRow } from "../../../hooks/Purchase/Transaction/usePurchaseInvoice";
-import { useConfirm } from "../../common/ConfirmModal";
+import { useConfirmModal } from "../../../hooks/useConfirmModal";
 
 type Option = {
   value: string; // item id
@@ -20,7 +20,7 @@ type Option = {
 
 /* FC columns removed: Unit Price is typed, Total Price is calculated */
 const columns = [
-  { name: "Sl.", width: "38px", id: "txtSlNo" },
+  { name: "Line", width: "38px", id: "txtSlNo" },
   { name: "Item ID", width: "158px", id: "lkpItemID" },
   { name: "Item Name", width: "auto", id: "lkpItemName" },
   { name: "Unit", width: "56px", id: "txtUnit" },
@@ -305,7 +305,7 @@ const PurchaseTable: React.FC<Props> = ({
   lookups,
 }) => {
   const [activeRow, setActiveRow] = useState(0);
-  const { confirm, dialog } = useConfirm();
+  const { confirm, dialog } = useConfirmModal();
 
   const itemIdOptions = lookups?.itemIds ?? EMPTY;
   const itemNameOptions = lookups?.itemNames ?? EMPTY;
@@ -344,7 +344,7 @@ const PurchaseTable: React.FC<Props> = ({
   const handleDeleteClick = async (index: number) => {
     const ok = await confirm({
       title: "Purchase Invoice",
-      message: `Do you want to delete ${index + 1} ?`,
+      message: `Do you want to delete Line ${index + 1} ?`,
     });
     if (!ok) return;
 

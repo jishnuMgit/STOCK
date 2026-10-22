@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useRef, useState } from "react";
+import React, { useEffect, useRef } from "react";
 
 export interface ConfirmOptions {
   title?: string;
@@ -14,7 +14,9 @@ interface ConfirmModalProps extends ConfirmOptions {
   onCancel: () => void;
 }
 
-/* First letter underlined, same as the footer buttons */
+const focusStyle =
+  "focus:outline-2! focus:outline-offset-1! focus:outline-green-600!";
+
 const HotLabel: React.FC<{ text: string }> = ({ text }) => (
   <>
     <span className="underline decoration-green-600 decoration-1 underline-offset-2">
@@ -24,7 +26,7 @@ const HotLabel: React.FC<{ text: string }> = ({ text }) => (
   </>
 );
 
-export const ConfirmModal: React.FC<ConfirmModalProps> = ({
+const ConfirmModal: React.FC<ConfirmModalProps> = ({
   open,
   title = "Confirm",
   message,
@@ -34,14 +36,39 @@ export const ConfirmModal: React.FC<ConfirmModalProps> = ({
   onConfirm,
   onCancel,
 }) => {
-  const confirmRef = useRef<HTMLButtonElement>(null);
+  const dialogRef = useRef<HTMLDivElement>(null);
+  const cancelRef = useRef<HTMLButtonElement>(null);
 
   useEffect(() => {
     if (!open) return;
 
-    confirmRef.current?.focus();
+    // Cancel is selected by default
+    cancelRef.current?.focus();
 
     const onKeyDown = (e: KeyboardEvent) => {
+      // Tab / Shift+Tab: move between the buttons, stay inside the modal
+      if (e.key === "Tab") {
+        e.preventDefault();
+        const buttons = Array.from(
+          dialogRef.current?.querySelectorAll<HTMLButtonElement>(
+            "button:not(:disabled)",
+          ) ?? [],
+        );
+        if (buttons.length === 0) return;
+
+        const i = buttons.indexOf(document.activeElement as HTMLButtonElement);
+        const next = e.shiftKey
+          ? i <= 0
+            ? buttons.length - 1
+            : i - 1
+          : i === -1 || i === buttons.length - 1
+            ? 0
+            : i + 1;
+
+        buttons[next].focus();
+        return;
+      }
+
       const key = e.key.toLowerCase();
       if (e.key === "Escape" || key === cancelLabel.charAt(0).toLowerCase()) {
         e.preventDefault();
@@ -66,11 +93,13 @@ export const ConfirmModal: React.FC<ConfirmModalProps> = ({
       }}
     >
       <div
+        ref={dialogRef}
+        tabIndex={-1}
         role="alertdialog"
         aria-modal="true"
         aria-labelledby="confirm-modal-title"
         aria-describedby="confirm-modal-message"
-        className="w-full max-w-sm overflow-hidden border border-slate-400 bg-white text-[12px] text-slate-800 shadow-lg"
+        className="w-full max-w-sm overflow-hidden border border-slate-400 bg-white text-[12px] text-slate-800 shadow-lg outline-none"
       >
         <div className="flex h-7.5 items-center border-b border-slate-300 bg-[#a5e0c3] px-3">
           <h2
@@ -90,20 +119,20 @@ export const ConfirmModal: React.FC<ConfirmModalProps> = ({
 
         <div className="mb-3 flex justify-center gap-[12px]">
           <button
-            ref={confirmRef}
             type="button"
             id="btnConfirmYes"
             disabled={busy}
             onClick={onConfirm}
-            className="btn-style"
+            className={`btn-style ${focusStyle}`}
           >
             <HotLabel text={confirmLabel} />
           </button>
           <button
+            ref={cancelRef}
             type="button"
             id="btnConfirmNo"
             onClick={onCancel}
-            className="btn-style"
+            className={`btn-style ${focusStyle}`}
           >
             <HotLabel text={cancelLabel} />
           </button>
@@ -111,42 +140,6 @@ export const ConfirmModal: React.FC<ConfirmModalProps> = ({
       </div>
     </div>
   );
-};
-
-/* Promise based helper:  if (!(await confirm({ message: "..." }))) return; */
-export const useConfirm = () => {
-  const [state, setState] = useState<{
-    options: ConfirmOptions;
-    resolve: (v: boolean) => void;
-  } | null>(null);
-
-  const confirm = useCallback(
-    (options: ConfirmOptions) =>
-      new Promise<boolean>((resolve) => setState({ options, resolve })),
-    [],
-  );
-
-  const close = useCallback(
-    (result: boolean) => {
-      state?.resolve(result);
-      setState(null);
-    },
-    [state],
-  );
-
-  const dialog = (
-    <ConfirmModal
-      open={state !== null}
-      title={state?.options.title}
-      message={state?.options.message}
-      confirmLabel={state?.options.confirmLabel}
-      cancelLabel={state?.options.cancelLabel}
-      onConfirm={() => close(true)}
-      onCancel={() => close(false)}
-    />
-  );
-
-  return { confirm, dialog };
 };
 
 export default ConfirmModal;

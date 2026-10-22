@@ -18,7 +18,7 @@ import {
   type SupplierLookup,
 } from "../../../hooks/Purchase/Transaction/usePurchaseInvoice";
 import { toast } from "react-toastify";
-import { useConfirm } from "../../../components/common/ConfirmModal";
+import { useConfirmModal } from "../../../hooks/useConfirmModal";
 
 const ROW_COUNT = 12;
 const createRows = () => Array.from({ length: ROW_COUNT }, emptyRow);
@@ -64,7 +64,7 @@ const PurchaseInvoicePage: React.FC = () => {
     loading,
   } = usePurchaseInvoice();
 
-  const { confirm, dialog } = useConfirm();
+  const { confirm, dialog } = useConfirmModal();
 
   const [header, setHeader] = useState<PurchaseHeader>(emptyHeader);
   const [rows, setRows] = useState<PurchaseRow[]>(createRows);
@@ -77,7 +77,7 @@ const PurchaseInvoicePage: React.FC = () => {
     [],
   );
 
-  console.log("rows", rows)
+  console.log("rows", rows);
   const [invoiceTypes, setInvoiceTypes] = useState<InvoiceTypeOption[]>([]);
   const [currencies, setCurrencies] = useState<string[]>([]);
 
