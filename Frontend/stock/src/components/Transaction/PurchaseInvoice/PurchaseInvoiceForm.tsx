@@ -620,42 +620,65 @@ const PurchaseForm: React.FC<Props> = ({
     docNoRef.current?.focus();
   }, []);
 
-  /* Enter / Tab -> next field, Shift+Enter / Shift+Tab -> previous field */
-  const handleKeyDown = (e: React.KeyboardEvent<HTMLElement>) => {
-    if (e.defaultPrevented) return;
-    if (e.key !== "Enter" && e.key !== "Tab") return;
-
-    const target = e.target as HTMLElement;
-    if (!e.currentTarget.contains(target) || target.tagName !== "INPUT") return;
-
-    const index = FIELD_ORDER.indexOf(target.id);
-    if (index === -1) return;
-
-    const step = e.shiftKey ? -1 : 1;
-
+  /* focus the next (or previous) enabled field in FIELD_ORDER */
+  const focusField = (fromId: string, step: 1 | -1): boolean => {
+    const index = FIELD_ORDER.indexOf(fromId);
     for (let i = index + step; i >= 0 && i < FIELD_ORDER.length; i += step) {
       const el = document.getElementById(
         FIELD_ORDER[i],
       ) as HTMLInputElement | null;
 
       if (el && !el.disabled) {
-        e.preventDefault();
         el.focus();
         if (el.type === "text") el.select();
-        return;
+        return true;
       }
     }
+    return false;
+  };
 
-    // after the last field, Enter jumps into the item table below the form
-    if (e.key === "Enter" && !e.shiftKey) {
-      const next =
-        e.currentTarget.nextElementSibling?.querySelector<HTMLElement>(
-          "input:not([disabled])",
-        );
-      if (next) {
-        e.preventDefault();
-        next.focus();
-      }
+  /* after the last field, Enter jumps into the item table below the form */
+  const focusTable = (section: HTMLElement) => {
+    section.nextElementSibling
+      ?.querySelector<HTMLElement>("input:not([disabled])")
+      ?.focus();
+  };
+
+  /* Enter / Tab -> next field, Shift+Enter / Shift+Tab -> previous field */
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLElement>) => {
+    if (e.key !== "Enter" && e.key !== "Tab") return;
+
+    const target = e.target as HTMLElement;
+    if (!e.currentTarget.contains(target) || target.tagName !== "INPUT") return;
+    if (!FIELD_ORDER.includes(target.id)) return;
+
+    const step = e.shiftKey ? -1 : 1;
+    const section = e.currentTarget;
+
+    // Enter that just picked an option from an open dropdown:
+    // wait one tick so fields enabled by that choice (Misc. Sup. Yes) are ready
+    const pickedOption =
+      e.key === "Enter" &&
+      e.defaultPrevented &&
+      target.getAttribute("aria-expanded") === "true";
+
+    if (pickedOption) {
+      setTimeout(() => {
+        if (!focusField(target.id, step) && step === 1) focusTable(section);
+      }, 0);
+      return;
+    }
+
+    if (e.defaultPrevented) return;
+
+    if (focusField(target.id, step)) {
+      e.preventDefault();
+      return;
+    }
+
+    if (e.key === "Enter" && step === 1) {
+      e.preventDefault();
+      focusTable(section);
     }
   };
 
