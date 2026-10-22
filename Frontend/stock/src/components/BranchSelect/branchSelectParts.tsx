@@ -45,14 +45,16 @@ const BRANCH_GRID_COLUMNS = `calc(100% - ${BRANCH_ID_COLUMN}) ${BRANCH_ID_COLUMN
 // divider = true draws a thin line between the Name and the ID column, in
 // the header and in every row (off by default, so the other screens keep
 // their look). The line sits at the box's right edge: header and rows both
-// get 8px side padding and the ID column is 48px.
-const DIVIDED_GRID_COLUMNS = "calc(100% - 48px) 48px";
-
+// get 8px side padding and the ID column is 48px (dividedIdWidth changes
+// that, e.g. the Year screen makes the ID column as wide as its Year column).
 export const makeNameIdMenuComponents = (
   nameHeader: string,
-  divider = false
+  divider = false,
+  dividedIdWidth = 48
 ) => {
-  const columns = divider ? DIVIDED_GRID_COLUMNS : BRANCH_GRID_COLUMNS;
+  const columns = divider
+    ? `calc(100% - ${dividedIdWidth}px) ${dividedIdWidth}px`
+    : BRANCH_GRID_COLUMNS;
 
   // The line is the Name cell's right border; the cell grows by the
   // container's vertical padding (negative margin + padding) so the line is

@@ -1,7 +1,18 @@
 import React, {
+  useEffect,
   useRef,
   useState,
 } from "react";
+
+import { toast } from "react-toastify";
+
+import {
+  BranchDividedMenuList,
+  BranchDividedOption,
+  branchMenuStyles,
+  filterLabelOrValue,
+} from "../../BranchSelect/branchSelectParts";
+import selectComponents from "../../sharecomponents/selectComponents";
 
 import Select, {
   type StylesConfig,
@@ -30,16 +41,7 @@ type Option = {
   label: string;
 };
 
-// ============================================================
-// OPTIONS
-// ============================================================
-
-const branchOptions: Option[] = [
-  {
-    value: "OFFICE",
-    label: "OFFICE",
-  },
-];
+const api = import.meta.env.VITE_API_URL;
 
 // ============================================================
 // SELECT STYLES
@@ -157,13 +159,79 @@ const selectStyles: StylesConfig<Option, false> = {
 
 const BeginningBalanceHeader: React.FC = () => {
   // ==========================================================
-  // BRANCH
+  // BRANCH: the branches the user has a right to, the user's default one
+  // selected (the same list the Beginning Stock screen loads)
   // ==========================================================
 
-  const [branch, setBranch] =
-    useState<Option | null>(
-      branchOptions[0],
-    );
+  const [branchOptions, setBranchOptions] =
+    useState<Option[]>([]);
+
+  const [lkpBranch, setLkpBranch] =
+    useState<Option | null>(null);
+
+  useEffect(() => {
+    const loadBranches = async () => {
+      try {
+        const PstrCoID =
+          localStorage.getItem("PstrCoID");
+
+        if (!PstrCoID) {
+          toast.error(
+            "getBranchList: no PstrCoID in localStorage",
+          );
+          return;
+        }
+
+        // needs the login: the branches depend on WHO is logged in
+        const response = await fetch(
+          `${api}/BeginningBalance/getBranchList?PstrCoID=${PstrCoID}`,
+          { credentials: "include" },
+        );
+
+        const result = await response.json();
+
+        if (!response.ok || !result.success) {
+          toast.error(
+            result.message ||
+              "Failed to load the Branches",
+          );
+          return;
+        }
+
+        const options: Option[] = (
+          result.data || []
+        ).map(
+          (row: {
+            lkpBranch: string;
+            txtBranchName: string;
+          }) => ({
+            value: row.lkpBranch,
+            label: row.txtBranchName,
+          }),
+        );
+
+        setBranchOptions(options);
+
+        setLkpBranch(
+          options.find(
+            (option) =>
+              option.value ===
+              result.lkpDefaultBranch,
+          ) ?? null,
+        );
+      } catch (error: unknown) {
+        console.error(
+          "getBranchList error:",
+          error,
+        );
+        toast.error(
+          "Failed to load the Branches",
+        );
+      }
+    };
+
+    loadBranches();
+  }, []);
 
   // ==========================================================
   // DATE
@@ -266,11 +334,25 @@ const BeginningBalanceHeader: React.FC = () => {
                 inputId="lkpBranch"
                 instanceId="lkpBranch"
                 options={branchOptions}
-                value={branch}
-                onChange={setBranch}
-                styles={selectStyles}
+                value={lkpBranch}
+                onChange={setLkpBranch}
+                styles={{
+                  ...selectStyles,
+                  ...branchMenuStyles,
+                }}
+                components={{
+                  ...selectComponents,
+                  Option: BranchDividedOption,
+                  MenuList: BranchDividedMenuList,
+                }}
+                filterOption={filterLabelOrValue}
                 isClearable={false}
-                isSearchable={false}
+                isSearchable
+                menuPlacement="auto"
+                placeholder="Select Branch"
+                noOptionsMessage={() =>
+                  "No Branch Found"
+                }
                 menuPosition="fixed"
                 menuPortalTarget={
                   typeof document !== "undefined"

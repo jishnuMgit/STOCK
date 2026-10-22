@@ -1,6 +1,5 @@
 import React, { useEffect, useState } from "react";
 import { toast } from "react-toastify";
-import { X } from "lucide-react";
 import { useEnterAsTab } from "../../../hooks/useEnterAsTab";
 import { useAltShortcuts } from "../../../hooks/useAltShortcuts";
 import { useButtonPermissions } from "../../../hooks/useButtonPermissions";
@@ -689,7 +688,21 @@ const UnitPage: React.FC = () => {
 
                         <td className="h-[34px] w-[38px] border border-[#bfe8d0] bg-white p-0 text-center align-middle">
                           {selectedRow === index && (
-                            <span className="text-[9px] text-[#222]">▶</span>
+                            <span className="inline-flex items-center gap-1.5">
+                              <span className="text-[9px] text-[#222]">▶</span>
+                              {showDelete && (
+                                <button
+                                  type="button"
+                                  tabIndex={-1}
+                                  title="Delete row"
+                                  onClick={() => handleDeleteRow(index)}
+                                  aria-label={`Delete ${row.txtUnit}`}
+                                  className="text-[12px] leading-none text-gray-400 hover:text-red-600"
+                                >
+                                  ✕
+                                </button>
+                              )}
+                            </span>
                           )}
                         </td>
 
@@ -725,18 +738,6 @@ const UnitPage: React.FC = () => {
                               }
                               className="h-[32px] min-w-0 flex-1 border-0 bg-transparent px-[11px] py-0 text-left text-[13px] text-[#374151] outline-none focus:bg-[#f1f8ff]"
                             />
-
-                            {showDelete && (
-                              <button
-                                type="button"
-                                tabIndex={-1}
-                                onClick={() => handleDeleteRow(index)}
-                                className="inline-flex h-full w-[24px] shrink-0 items-center justify-center text-[#999999] hover:text-red-600"
-                                aria-label={`Delete ${row.txtUnit}`}
-                              >
-                                <X size={12} />
-                              </button>
-                            )}
                           </div>
                         </td>
                       </tr>

@@ -11,12 +11,18 @@ import { createPortal } from "react-dom";
    Usage:
      const { confirm, confirmDialog } = useConfirm();
      const ok = await confirm("Are you sure you want to delete?");
+     // the first button can have its own name (default "OK"):
+     const ok = await confirm("Are you sure you want to delete?", "Delete");
      ...
      return (<div> ... {confirmDialog} </div>);
 ========================================================= */
 
+// the question every Delete (the x of a row) asks - the same on every screen
+export const DELETE_CONFIRM_MESSAGE = "Do you want to delete?";
+
 export function useConfirm() {
   const [message, setMessage] = useState<string | null>(null);
+  const [confirmLabel, setConfirmLabel] = useState("OK");
 
   const resolverRef = useRef<((value: boolean) => void) | null>(null);
   const previousFocusRef = useRef<HTMLElement | null>(null);
@@ -24,7 +30,7 @@ export function useConfirm() {
   const cancelButtonRef = useRef<HTMLButtonElement | null>(null);
 
   const confirm = useCallback(
-    (text: string) =>
+    (text: string, okLabel = "OK") =>
       new Promise<boolean>((resolve) => {
         previousFocusRef.current =
           document.activeElement instanceof HTMLElement
@@ -32,6 +38,7 @@ export function useConfirm() {
             : null;
 
         resolverRef.current = resolve;
+        setConfirmLabel(okLabel);
         setMessage(text);
       }),
     []
@@ -107,7 +114,7 @@ export function useConfirm() {
                   onClick={() => close(true)}
                   className={`${buttonBase} bg-[#67508a] text-white hover:bg-[#5a4479]`}
                 >
-                  OK
+                  {confirmLabel}
                 </button>
 
                 <button
