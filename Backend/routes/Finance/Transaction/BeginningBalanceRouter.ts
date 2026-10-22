@@ -9,6 +9,7 @@ import {
   deleteBeginningBalance,
   postBeginningBalance,
   printBeginningBalance,
+  downloadBeginningBalanceExcel,
 } from "../../../controller/Finance/Transaction/BeginningBalanceController.js";
 
 const router = express.Router();
@@ -22,7 +23,9 @@ router.get("/getBeginningBalance", authenticate, getBeginningBalance);
 router.post("/saveBeginningBalance", authenticate, saveBeginningBalance);
 router.post("/deleteBeginningBalance", authenticate, deleteBeginningBalance);
 router.post("/postBeginningBalance", authenticate, postBeginningBalance);
-// a POST: the print page asks for the data itself
+// a POST: the page asks for the data itself
 router.post("/printBeginningBalance", authenticate, printBeginningBalance);
+// the same body: the Excel file of the Print Preview
+router.post("/downloadBeginningBalanceExcel", authenticate, downloadBeginningBalanceExcel);
 
 export default router;

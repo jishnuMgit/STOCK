@@ -25,6 +25,7 @@ import {
   buildBeginningBalancePostAuditNote,
   type BeginningBalanceRowPayload,
 } from "../../../services/Finance/Transaction/beginningBalanceService.js";
+import { buildBeginningBalanceWorkbook } from "../../../services/Finance/Transaction/beginningBalanceExcel.js";
 import {
   mapRows,
   mapKeys,
@@ -665,90 +666,107 @@ export const postBeginningBalance = async (
 
 /* =========================================================
    PRINT BEGINNING BALANCE (the Print button)
-   The branch's balance as the report rows, for the print page. A POST: the print
-   page asks for the data itself. Needs the Print right (P). A posted balance can
-   be printed too - nothing is changed. The logged-in user comes from the SESSION.
+   The branch's balance as the report rows, for the Print Preview (preview, printer,
+   PDF) - and, with the same body, the Excel file. A POST: the page asks for the data
+   itself. Needs the Print right (P). A posted balance can be printed too - nothing is
+   changed. The logged-in user comes from the SESSION.
 ========================================================= */
+
+const pad = (n: number) => String(n).padStart(2, "0");
+
+// the old objCommon.ReportInfo: "<user>  dd/mm/yyyy hh:mm" - bottom right of every page
+const reportInfoOf = (userId: string): string => {
+  const d = new Date();
+
+  return `${userId}  ${pad(d.getDate())}/${pad(d.getMonth() + 1)}/${d.getFullYear()} ${pad(d.getHours())}:${pad(d.getMinutes())}`;
+};
+
+type PreparedPrint =
+  | {
+      ok: true;
+      report: Awaited<ReturnType<typeof getBeginningBalancePrintService>>;
+      reportInfo: string;
+    }
+  | { ok: false; status: number; body: Record<string, unknown> };
+
+// the checks and the data of Print and Excel
+const preparePrint = async (req: AuthenticatedRequest): Promise<PreparedPrint> => {
+  const {
+    PstrCoID,
+    PstrYear,
+    lkpBranch,
+    dtpDate,
+  }: { PstrCoID: string; PstrYear: string; lkpBranch: string; dtpDate: string } =
+    req.body;
+
+  const stop = (status: number, message: string, field?: string): PreparedPrint => ({
+    ok: false,
+    status,
+    body: { success: false, message, ...(field ? { field } : {}) },
+  });
+
+  if (!PstrCoID) {
+    return stop(400, "Company ID is required");
+  }
+
+  if (!PstrYear || !/^\d{4}$/.test(String(PstrYear))) {
+    return stop(400, "Year is required");
+  }
+
+  if (!req.user) {
+    return stop(401, "Authentication required");
+  }
+
+  // validators/BeginningBalanceValidator.ts: idle user, branch (and the right to
+  // it), date - the branch is checked BEFORE it goes into the report
+  const check = await validateBeginningBalancePrint({
+    PstrCoID,
+    PstrYear,
+    PstrUserID: req.user.userId,
+    lkpBranch,
+    dtpDate,
+  });
+
+  if (!check.valid) {
+    return stop(check.status, check.message, check.field);
+  }
+
+  if (!(await hasButtonRight(req.user, MENU_ID, "P"))) {
+    return stop(403, "You do not have permission to Print.", "lkpBranch");
+  }
+
+  // the old form passed the year of the date
+  const report = await getBeginningBalancePrintService(
+    PstrCoID,
+    lkpBranch,
+    Number(String(dtpDate).slice(0, 4))
+  );
+
+  if (report.lines.length === 0) {
+    return stop(404, "Beginning Balance not found", "lkpBranch");
+  }
+
+  return { ok: true, report, reportInfo: reportInfoOf(req.user.userId) };
+};
 
 export const printBeginningBalance = async (
   req: AuthenticatedRequest,
   res: Response
 ): Promise<Response> => {
   try {
-    const {
-      PstrCoID,
-      PstrYear,
-      lkpBranch,
-      dtpDate,
-    }: { PstrCoID: string; PstrYear: string; lkpBranch: string; dtpDate: string } =
-      req.body;
+    const prepared = await preparePrint(req);
 
-    if (!PstrCoID) {
-      return res.status(400).json({
-        success: false,
-        message: "Company ID is required",
-      });
-    }
-
-    if (!PstrYear || !/^\d{4}$/.test(String(PstrYear))) {
-      return res.status(400).json({
-        success: false,
-        message: "Year is required",
-      });
-    }
-
-    if (!req.user) {
-      return res.status(401).json({
-        success: false,
-        message: "Authentication required",
-      });
-    }
-
-    // validators/BeginningBalanceValidator.ts: idle user, branch (and the right to
-    // it), date - the branch is checked BEFORE it goes into the report
-    const check = await validateBeginningBalancePrint({
-      PstrCoID,
-      PstrYear,
-      PstrUserID: req.user.userId,
-      lkpBranch,
-      dtpDate,
-    });
-
-    if (!check.valid) {
-      return res.status(check.status).json({
-        success: false,
-        message: check.message,
-        field: check.field,
-      });
-    }
-
-    if (!(await hasButtonRight(req.user, MENU_ID, "P"))) {
-      return res.status(403).json({
-        success: false,
-        message: "You do not have permission to Print.",
-        field: "lkpBranch",
-      });
-    }
-
-    // the old form passed the year of the date
-    const report = await getBeginningBalancePrintService(
-      PstrCoID,
-      lkpBranch,
-      Number(String(dtpDate).slice(0, 4))
-    );
-
-    if (report.lines.length === 0) {
-      return res.status(404).json({
-        success: false,
-        message: "Beginning Balance not found",
-        field: "lkpBranch",
-      });
+    if (!prepared.ok) {
+      return res.status(prepared.status).json(prepared.body);
     }
 
     return res.status(200).json({
       success: true,
-      header: mapKeys(report.header, beginningBalancePrintHeaderKeys),
-      data: mapRows(report.lines, beginningBalancePrintLineKeys),
+      header: {
+        ...mapKeys(prepared.report.header, beginningBalancePrintHeaderKeys),
+        txtReportInfo: prepared.reportInfo,
+      },
+      data: mapRows(prepared.report.lines, beginningBalancePrintLineKeys),
     });
   } catch (error: unknown) {
     console.error("printBeginningBalance error:", error);
@@ -756,6 +774,51 @@ export const printBeginningBalance = async (
     return res.status(500).json({
       success: false,
       message: "Failed to load the Beginning Balance print",
+      error: messageOf(error),
+    });
+  }
+};
+
+/* =========================================================
+   EXCEL BEGINNING BALANCE (Download in the Print Preview, File Format Excel)
+   The same body and the same checks as Print; answers with the .xlsx file.
+========================================================= */
+
+export const downloadBeginningBalanceExcel = async (
+  req: AuthenticatedRequest,
+  res: Response
+): Promise<Response> => {
+  try {
+    const prepared = await preparePrint(req);
+
+    if (!prepared.ok) {
+      return res.status(prepared.status).json(prepared.body);
+    }
+
+    const { report, reportInfo } = prepared;
+
+    const buffer = await buildBeginningBalanceWorkbook({
+      coName: report.header.fconame,
+      heading: "Beginning Balance",
+      branch: `Branch : ${report.header.fbrname}`,
+      reportInfo,
+      lines: report.lines,
+    });
+
+    res.setHeader(
+      "Content-Type",
+      "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+    );
+    res.setHeader("Content-Disposition", 'attachment; filename="BeginningBalance.xlsx"');
+    res.setHeader("Access-Control-Expose-Headers", "Content-Disposition");
+
+    return res.status(200).send(buffer);
+  } catch (error: unknown) {
+    console.error("downloadBeginningBalanceExcel error:", error);
+
+    return res.status(500).json({
+      success: false,
+      message: "Failed to create the Beginning Balance Excel file",
       error: messageOf(error),
     });
   }

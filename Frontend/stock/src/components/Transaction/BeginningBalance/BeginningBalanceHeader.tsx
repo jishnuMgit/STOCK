@@ -165,9 +165,6 @@ type Props = {
   onDateChange: (value: string) => void;
   // a posted balance is locked: its date cannot be changed
   disabled: boolean;
-  // the branch to show first (coming back from the print page); else the user's
-  // default branch
-  initialBranchID?: string;
 };
 
 const BeginningBalanceHeader: React.FC<Props> = ({
@@ -176,7 +173,6 @@ const BeginningBalanceHeader: React.FC<Props> = ({
   dtpDate,
   onDateChange,
   disabled,
-  initialBranchID,
 }) => {
   // ==========================================================
   // BRANCH: the branches the user has a right to, the user's default one
@@ -233,14 +229,8 @@ const BeginningBalanceHeader: React.FC<Props> = ({
           options.find(
             (option) =>
               option.value ===
-              initialBranchID,
-          ) ??
-            options.find(
-              (option) =>
-                option.value ===
-                result.lkpDefaultBranch,
-            ) ??
-            null,
+              result.lkpDefaultBranch,
+          ) ?? null,
         );
       } catch (error: unknown) {
         console.error(

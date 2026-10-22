@@ -1,10 +1,11 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
-import { useLocation, useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";
 
 import BeginningBalanceHeader from "../../../../components/Transaction/BeginningBalance/BeginningBalanceHeader";
 import BeginningBalanceTable from "../../../../components/Transaction/BeginningBalance/BeginningBalanceTable";
 import BeginningBalanceFooter from "../../../../components/Transaction/BeginningBalance/BeginningBalanceFooter";
+import BeginningBalancePrintPreview from "../../../../components/Transaction/BeginningBalance/BeginningBalancePrintPreview";
+import type { PrintReport } from "../../../../components/Transaction/BeginningBalance/BeginningBalancePrintReport";
 import {
   MENU_ID,
   api,
@@ -36,17 +37,8 @@ const focusField = (field?: string) => {
 
 const round2 = (value: number) => Math.round(value * 100) / 100;
 
-// the print page comes back here with the branch and the date it printed
-const PRINT_PATH = "/Finance/Transaction/BeginningBalance/Print";
-
 const BeginningBalance: React.FC = () => {
   const PstrYear = localStorage.getItem("PstrYear") ?? "";
-
-  const navigate = useNavigate();
-  const returned = useLocation().state as {
-    lkpBranch?: string;
-    dtpDate?: string;
-  } | null;
 
   const perms = useButtonPermissions(MENU_ID);
   const { confirm, confirmDialog } = useConfirm();
@@ -57,9 +49,7 @@ const BeginningBalance: React.FC = () => {
 
   const [lkpBranch, setLkpBranch] = useState<Option | null>(null);
   // yyyy-mm-dd
-  const [dtpDate, setDtpDate] = useState(
-    () => returned?.dtpDate || defaultDate(PstrYear),
-  );
+  const [dtpDate, setDtpDate] = useState(() => defaultDate(PstrYear));
   const [rows, setRows] = useState<BeginningBalanceRow[]>(() => padRows([]));
   // the branch has a balance: the button says Modify, not Save
   const [chkSaved, setChkSaved] = useState(false);
@@ -67,6 +57,14 @@ const BeginningBalance: React.FC = () => {
   const [chkPosted, setChkPosted] = useState(false);
   const [txtUserInfo, setTxtUserInfo] = useState("");
   const [saving, setSaving] = useState(false);
+  // the Print Preview (after Print): the report the server sent, and the branch and
+  // date it was made for (the Excel file is made for the same ones)
+  const [preview, setPreview] = useState<{
+    report: PrintReport;
+    lkpBranch: string;
+    dtpDate: string;
+    fileBase: string;
+  } | null>(null);
 
   // bumped after a Save / Modify / Delete / Clear so the branch's balance is loaded again
   const [reloadKey, setReloadKey] = useState(0);
@@ -435,8 +433,17 @@ const BeginningBalance: React.FC = () => {
 
   // ----------------------------------------------------------
 
-  const handlePrint = () => {
-    if (saving) return;
+  // the body of the Print and Excel requests: the branch and the date
+  const printBody = (branch: string, date: string) =>
+    JSON.stringify({
+      PstrCoID: localStorage.getItem("PstrCoID"),
+      PstrYear: localStorage.getItem("PstrYear"),
+      lkpBranch: branch,
+      dtpDate: date,
+    });
+
+  const handlePrint = async () => {
+    if (saving || preview) return;
 
     if (!perms.print) {
       toast.error("You do not have permission to Print.");
@@ -456,9 +463,73 @@ const BeginningBalance: React.FC = () => {
       return;
     }
 
-    navigate(PRINT_PATH, {
-      state: { lkpBranch: lkpBranch.value, dtpDate },
+    setSaving(true);
+
+    try {
+      const response = await fetch(`${api}/BeginningBalance/printBeginningBalance`, {
+        method: "POST",
+        credentials: "include",
+        headers: { "Content-Type": "application/json" },
+        body: printBody(lkpBranch.value, dtpDate),
+      });
+
+      const result = await response.json();
+
+      if (!response.ok || !result.success) {
+        toast.error(result.message || "The Beginning Balance could not be printed.");
+        focusField(result.field);
+        return;
+      }
+
+      // a name that is never the name of a file that is still open
+      const now = new Date();
+      const pad = (value: number) => String(value).padStart(2, "0");
+      const stamp = `${now.getFullYear()}${pad(now.getMonth() + 1)}${pad(now.getDate())}_${pad(now.getHours())}${pad(now.getMinutes())}${pad(now.getSeconds())}`;
+
+      setPreview({
+        report: { ...result.header, rows: result.data || [] },
+        lkpBranch: lkpBranch.value,
+        dtpDate,
+        fileBase: `BeginningBalance_${lkpBranch.value}_${stamp}`,
+      });
+    } catch (error: unknown) {
+      console.error("printBeginningBalance error:", error);
+      toast.error("Cannot connect to Beginning Balance API.");
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  // the Excel file of the Print Preview, made by the server (null after an error)
+  const fetchExcel = async (): Promise<Blob | null> => {
+    if (!preview) return null;
+
+    const response = await fetch(`${api}/BeginningBalance/downloadBeginningBalanceExcel`, {
+      method: "POST",
+      credentials: "include",
+      headers: { "Content-Type": "application/json" },
+      body: printBody(preview.lkpBranch, preview.dtpDate),
     });
+
+    // an error comes back as JSON, the file as a blob
+    if (!response.ok) {
+      let message = "Could not create the Excel file";
+
+      try {
+        const result = await response.json();
+        message = result.message || message;
+      } catch {
+        message =
+          response.status === 404
+            ? "Excel is not available: the downloadBeginningBalanceExcel route was not found (404)"
+            : `Could not create the Excel file (error ${response.status})`;
+      }
+
+      toast.error(message);
+      return null;
+    }
+
+    return response.blob();
   };
 
   // ----------------------------------------------------------
@@ -478,8 +549,9 @@ const BeginningBalance: React.FC = () => {
     setRows((previous) => padRows(previous.filter((_, rowIndex) => rowIndex !== index)));
   };
 
-  // Alt+S Save, Alt+M Modify, Alt+D Delete, Alt+P Print, Alt+T Post, Alt+C Clear
-  useAltShortcuts({
+  // Alt+S Save, Alt+M Modify, Alt+D Delete, Alt+P Print, Alt+T Post, Alt+C Clear.
+  // Off while the Print Preview is open: it has its own Alt+P, Alt+D and Alt+C.
+  useAltShortcuts(preview ? {} : {
     s: () => {
       if (!chkSaved) handleSave();
     },
@@ -502,7 +574,6 @@ const BeginningBalance: React.FC = () => {
             dtpDate={dtpDate}
             onDateChange={setDtpDate}
             disabled={chkPosted}
-            initialBranchID={returned?.lkpBranch}
           />
 
           <BeginningBalanceTable
@@ -539,6 +610,16 @@ const BeginningBalance: React.FC = () => {
 
       {/* the "Do you want to delete?" question */}
       {confirmDialog}
+
+      {/* the Print Preview (after Print) */}
+      {preview && (
+        <BeginningBalancePrintPreview
+          report={preview.report}
+          fileBase={preview.fileBase}
+          fetchExcel={fetchExcel}
+          onClose={() => setPreview(null)}
+        />
+      )}
     </div>
   );
 };

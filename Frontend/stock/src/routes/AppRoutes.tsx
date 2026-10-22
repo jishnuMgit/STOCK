@@ -19,7 +19,6 @@ import StockTransfer from "../pages/Sales/Transaction/stock/StockTransferPage";
 import StockTransferPrint from "../pages/Sales/Transaction/stock/StockTransferPrintPage";
 import StockAdjustmentPrint from "../pages/Sales/Transaction/stock/StockAdjustmentPrintPage";
 import BeginningBalance from "../pages/Finance/Transaction/BeginningBalance/BeginningBalancePage";
-import BeginningBalancePrintPage from "../pages/Finance/Transaction/BeginningBalance/BeginningBalancePrintPage";
 import ItemGroupPage from "../pages/Purchase/Setup/ItemGroupPage";
 import CompanyPage from "../pages/Administration/CompanyPage";
 import ActivePeriodPage from "../pages/Settings/ActivePeriodPage";
@@ -158,7 +157,6 @@ const AppRoutes = () => {
           <Route path="/Finance/Transaction/Transaction-matching"  element={<Matching />}/>
           <Route path="/Finance/Transaction/Transaction-unmatching"   element={<UnMatch />}  />
           <Route path="/Finance/Transaction/BeginningBalance" element={<BeginningBalance />} />
-          <Route path="/Finance/Transaction/BeginningBalance/Print" element={<BeginningBalancePrintPage />} />
           <Route path="/Finance/Transaction/FinDocPost" element={<DocumentPostPage/>}/>
           <Route path="/Finance/Transaction/FinDocPrint" element={<RptDocumentPrintPage/>}/>
 
