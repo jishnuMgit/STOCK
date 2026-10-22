@@ -157,7 +157,23 @@ const selectStyles: StylesConfig<Option, false> = {
 // HEADER
 // ============================================================
 
-const BeginningBalanceHeader: React.FC = () => {
+type Props = {
+  lkpBranch: Option | null;
+  onBranchChange: (option: Option | null) => void;
+  // yyyy-mm-dd
+  dtpDate: string;
+  onDateChange: (value: string) => void;
+  // a posted balance is locked: its date cannot be changed
+  disabled: boolean;
+};
+
+const BeginningBalanceHeader: React.FC<Props> = ({
+  lkpBranch,
+  onBranchChange,
+  dtpDate,
+  onDateChange,
+  disabled,
+}) => {
   // ==========================================================
   // BRANCH: the branches the user has a right to, the user's default one
   // selected (the same list the Beginning Stock screen loads)
@@ -165,9 +181,6 @@ const BeginningBalanceHeader: React.FC = () => {
 
   const [branchOptions, setBranchOptions] =
     useState<Option[]>([]);
-
-  const [lkpBranch, setLkpBranch] =
-    useState<Option | null>(null);
 
   useEffect(() => {
     const loadBranches = async () => {
@@ -212,7 +225,7 @@ const BeginningBalanceHeader: React.FC = () => {
 
         setBranchOptions(options);
 
-        setLkpBranch(
+        onBranchChange(
           options.find(
             (option) =>
               option.value ===
@@ -234,22 +247,25 @@ const BeginningBalanceHeader: React.FC = () => {
   }, []);
 
   // ==========================================================
-  // DATE
+  // DATE: only a day of the login year (the old SetDate)
   // ==========================================================
 
-  const [dtpDate, setDtpDate] =
-    useState<string>(
-      dayjs().format("DD-MM-YYYY"),
-    );
+  const loginYear =
+    localStorage.getItem("PstrYear") ?? "";
+
+  const minDate = /^\d{4}$/.test(loginYear)
+    ? dayjs(`${loginYear}-01-01`)
+    : undefined;
+
+  const maxDate = /^\d{4}$/.test(loginYear)
+    ? dayjs(`${loginYear}-12-31`)
+    : undefined;
 
   // ==========================================================
   // REFS
   // ==========================================================
 
   const dateRef =
-    useRef<HTMLInputElement | null>(null);
-
-  const receivedFromRef =
     useRef<HTMLInputElement | null>(null);
 
   // ==========================================================
@@ -335,7 +351,7 @@ const BeginningBalanceHeader: React.FC = () => {
                 instanceId="lkpBranch"
                 options={branchOptions}
                 value={lkpBranch}
-                onChange={setLkpBranch}
+                onChange={onBranchChange}
                 styles={{
                   ...selectStyles,
                   ...branchMenuStyles,
@@ -391,7 +407,7 @@ const BeginningBalanceHeader: React.FC = () => {
                     dtpDate
                       ? dayjs(
                           dtpDate,
-                          "DD-MM-YYYY",
+                          "YYYY-MM-DD",
                         )
                       : null
                   }
@@ -400,17 +416,23 @@ const BeginningBalanceHeader: React.FC = () => {
                     if (
                       newValue?.isValid()
                     ) {
-                      setDtpDate(
+                      onDateChange(
                         newValue.format(
-                          "DD-MM-YYYY",
+                          "YYYY-MM-DD",
                         ),
                       );
                     } else {
-                      setDtpDate("");
+                      onDateChange("");
                     }
                   }}
 
                   format="DD-MM-YYYY"
+
+                  minDate={minDate}
+
+                  maxDate={maxDate}
+
+                  disabled={disabled}
 
                   inputRef={dateRef}
 
@@ -424,7 +446,11 @@ const BeginningBalanceHeader: React.FC = () => {
                         handleInputKeyDown(
                           event,
                           () =>
-                            receivedFromRef.current?.focus(),
+                            document
+                              .getElementById(
+                                "lkpAccountID-0",
+                              )
+                              ?.focus(),
                         ),
                     },
 

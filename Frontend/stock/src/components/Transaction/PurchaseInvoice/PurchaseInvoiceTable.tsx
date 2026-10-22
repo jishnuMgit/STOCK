@@ -1,4 +1,4 @@
-import { Play } from "lucide-react";
+import { Play, X } from "lucide-react";
 import React, { useState } from "react";
 import Select, {
   components,
@@ -9,6 +9,7 @@ import Select, {
 } from "react-select";
 import { RxTriangleDown } from "react-icons/rx";
 import type { PurchaseRow } from "../../../hooks/Purchase/Transaction/usePurchaseInvoice";
+import { useConfirmModal } from "../../../hooks/useConfirmModal";
 
 type Option = {
   value: string; // item id
@@ -19,7 +20,7 @@ type Option = {
 
 /* FC columns removed: Unit Price is typed, Total Price is calculated */
 const columns = [
-  { name: "Sl.", width: "38px", id: "txtSlNo" },
+  { name: "Line", width: "38px", id: "txtSlNo" },
   { name: "Item ID", width: "158px", id: "lkpItemID" },
   { name: "Item Name", width: "auto", id: "lkpItemName" },
   { name: "Unit", width: "56px", id: "txtUnit" },
@@ -285,17 +286,30 @@ const nameSelectStyles: StylesConfig<Option, false> = selectStyles;
 const numberInputClass =
   "number-no-spinner h-[20px] w-full min-w-0 border-0 bg-transparent px-1 text-right outline-none focus:bg-blue-50";
 
+/* cell that holds an input: outlined while the cursor is inside it */
+const editCellClass =
+  "h-[30px] border border-[#dce5ef] p-0 focus-within:outline-2 focus-within:-outline-offset-2 focus-within:outline-green-600";
+
 interface Props {
   rows: PurchaseRow[];
   onRowChange: (index: number, patch: Partial<PurchaseRow>) => void;
+  onRowDelete: (index: number) => void;
+  disabled?: boolean; // posted invoice: no deleting
   lookups?: {
     itemIds?: Option[];
     itemNames?: Option[];
   };
 }
 
-const PurchaseTable: React.FC<Props> = ({ rows, onRowChange, lookups }) => {
+const PurchaseTable: React.FC<Props> = ({
+  rows,
+  onRowChange,
+  onRowDelete,
+  disabled = false,
+  lookups,
+}) => {
   const [activeRow, setActiveRow] = useState(0);
+  const { confirm, dialog } = useConfirmModal();
 
   const itemIdOptions = lookups?.itemIds ?? EMPTY;
   const itemNameOptions = lookups?.itemNames ?? EMPTY;
@@ -312,6 +326,15 @@ const PurchaseTable: React.FC<Props> = ({ rows, onRowChange, lookups }) => {
     return Number.isFinite(number) ? number.toFixed(2) : "0.00";
   };
 
+  // Format quantity to three decimal places when leaving the field.
+  const formatQty = (value: string): string => {
+    if (value.trim() === "") return "";
+
+    const number = Number(value);
+
+    return Number.isFinite(number) ? number.toFixed(3) : "";
+  };
+
   // Item ID and Item Name are the same field (fItemID), as in the VB grid.
   const handleItemChange = (index: number, option: Option | null) => {
     onRowChange(index, {
@@ -319,6 +342,18 @@ const PurchaseTable: React.FC<Props> = ({ rows, onRowChange, lookups }) => {
       unit: option?.unit ?? "",
     });
     setActiveRow(index);
+  };
+
+  // Ask first, then remove the row and put the cursor back on its Item ID.
+  const handleDeleteClick = async (index: number) => {
+    const ok = await confirm({
+      title: "Purchase Invoice",
+      message: `Do you want to delete Line ${index + 1} ?`,
+    });
+    if (!ok) return;
+
+    onRowDelete(index);
+    document.getElementById(`lkpItemID-${index}`)?.focus();
   };
 
   // Only Unit Price is typed by the user; the other price columns
@@ -356,187 +391,252 @@ const PurchaseTable: React.FC<Props> = ({ rows, onRowChange, lookups }) => {
           onRowChange(index, { [field]: formatPrice(rows[index][field]) });
         }
       }}
+      onKeyDown={(event) => {
+        if (editable && event.key === "Enter") {
+          event.preventDefault();
+          document.getElementById(`lkpItemID-${index + 1}`)?.focus();
+        }
+      }}
       className={`${numberInputClass} ${editable ? "" : "bg-slate-100"}`}
     />
   );
 
   return (
-    <section
-      id="purchase-table"
-      className="mx-3 mb-1 flex min-h-0 max-h-[393px] flex-1 flex-col overflow-hidden border border-b-0 border-[#dce5ef]"
-    >
-      <div className="customer-table-scroll min-h-0 max-h-fit flex-1 overflow-auto">
-        <table className="w-full min-w-[900px] table-fixed border-collapse text-[11px]">
-          <colgroup>
-            {/* Dynamic row indicator */}
-            <col style={{ width: "14px" }} />
-
-            {columns.map((column) => (
-              <col
-                key={column.name}
-                style={{ width: column.width }}
-                id={column.id}
-              />
-            ))}
-          </colgroup>
-
-          <thead>
-            <tr className="h-[30px]">
-              <th className="sticky top-0 z-20 border border-[#dce5ef] bg-[#f1f6fc] p-0" />
+    <>
+      <section
+        id="purchase-table"
+        className="mx-3 mb-1 flex min-h-0 max-h-[393px] flex-1 flex-col overflow-hidden border border-b-0 border-[#dce5ef]"
+      >
+        <div className="customer-table-scroll min-h-0 max-h-fit flex-1 overflow-auto">
+          <table className="w-full min-w-[928px] table-fixed border-collapse text-[11px]">
+            <colgroup>
+              {/* Dynamic row indicator */}
+              <col style={{ width: "14px" }} />
 
               {columns.map((column) => (
-                <th
+                <col
                   key={column.name}
-                  className={`sticky top-0 z-20 h-[30px] whitespace-nowrap border border-[#dce5ef] bg-[#f1f6fc] px-1 py-0 align-middle font-semibold text-[#202a36] ${
-                    numericColumns.includes(column.name)
-                      ? "text-right"
-                      : "text-left"
-                  }`}
-                >
-                  {column.name}
-                </th>
+                  style={{ width: column.width }}
+                  id={column.id}
+                />
               ))}
-            </tr>
-          </thead>
 
-          <tbody>
-            {rows.map((row, index) => (
-              <tr
-                key={index}
-                onClick={() => setActiveRow(index)}
-                onFocusCapture={() => setActiveRow(index)}
-                className={`h-[30px] ${
-                  activeRow === index ? "bg-[#f4f8fd]" : "bg-white"
-                } hover:bg-blue-50`}
-              >
-                {/* Active row indicator */}
-                <td
-                  className="h-[30px] border border-[#dce5ef] p-0 text-center text-[9px] text-[#263449]"
-                  aria-label={activeRow === index ? "Active row" : undefined}
-                >
-                  {activeRow === index ? <Play size={10} /> : ""}
-                </td>
+              {/* Delete button */}
+              <col style={{ width: "28px" }} />
+            </colgroup>
 
-                {/* Serial number */}
-                <td className="h-[30px] border border-[#dce5ef] p-0 text-center">
-                  {index + 1}
-                </td>
+            <thead>
+              <tr className="h-[30px]">
+                <th className="sticky top-0 z-20 border border-[#dce5ef] bg-[#f1f6fc] p-0" />
 
-                {/* Item ID */}
-                <td className="h-[30px] border border-[#dce5ef] p-0">
-                  <Select<Option, false>
-                    inputId={`lkpItemID-${index}`}
-                    instanceId={`item-id-${index}`}
-                    options={itemIdOptions}
-                    value={
-                      itemIdOptions.find((o) => o.value === row.itemId) ?? null
-                    }
-                    onChange={(option) => handleItemChange(index, option)}
-                    formatOptionLabel={formatIdLabel}
-                    filterOption={filterItem}
-                    styles={selectStyles}
-                    components={idSelectComponents}
-                    isClearable={false}
-                    isSearchable
-                    menuPosition="fixed"
-                    menuPortalTarget={portalTarget}
-                    placeholder=""
-                    className="w-full"
-                  />
-                </td>
+                {columns.map((column) => (
+                  <th
+                    key={column.name}
+                    className={`sticky top-0 z-20 h-[30px] whitespace-nowrap border border-[#dce5ef] bg-[#f1f6fc] px-1 py-0 align-middle font-semibold text-[#202a36] ${
+                      numericColumns.includes(column.name)
+                        ? "text-right"
+                        : "text-left"
+                    }`}
+                  >
+                    {column.name}
+                  </th>
+                ))}
 
-                {/* Item Name (same itemId) */}
-                <td className="h-[30px] border border-[#dce5ef] p-0">
-                  <Select<Option, false>
-                    inputId={`lkpItemName-${index}`}
-                    instanceId={`item-name-${index}`}
-                    options={itemNameOptions}
-                    value={
-                      itemNameOptions.find((o) => o.value === row.itemId) ??
-                      null
-                    }
-                    onChange={(option) => handleItemChange(index, option)}
-                    formatOptionLabel={formatNameLabel}
-                    filterOption={filterItem}
-                    styles={nameSelectStyles}
-                    components={nameSelectComponents}
-                    isClearable={false}
-                    isSearchable
-                    menuPosition="fixed"
-                    menuPortalTarget={portalTarget}
-                    placeholder=""
-                    className="w-full"
-                  />
-                </td>
-
-                {/* Unit: read-only, comes from the item */}
-                <td className="h-[30px] border border-[#dce5ef] bg-slate-100 px-1">
-                  {row.unit}
-                </td>
-
-                {/* Quantity */}
-                <td className="h-[30px] border border-[#dce5ef] p-0">
-                  <input
-                    id={`txtQty-${index}`}
-                    aria-label={`Quantity row ${index + 1}`}
-                    type="number"
-                    min="0"
-                    step="any"
-                    value={row.qty}
-                    onFocus={() => setActiveRow(index)}
-                    onChange={(event) =>
-                      onRowChange(index, { qty: event.target.value })
-                    }
-                    className={numberInputClass}
-                  />
-                </td>
-
-                {/* Unit Price (editable) */}
-                <td className="h-[30px] border border-[#dce5ef] p-0">
-                  {renderPriceInput(
-                    index,
-                    "unitPrice",
-                    "txtUnitPriceInput",
-                    "Unit price",
-                    true,
-                  )}
-                </td>
-
-                {/* Total Price (calculated) */}
-                <td className="h-[30px] border border-[#dce5ef] p-0">
-                  {renderPriceInput(
-                    index,
-                    "totalPrice",
-                    "txtTotalPrice",
-                    "Total price",
-                  )}
-                </td>
-
-                {/* Unit Cost (calculated) */}
-                <td className="h-[30px] border border-[#dce5ef] p-0">
-                  {renderPriceInput(
-                    index,
-                    "unitCost",
-                    "txtUnitCost",
-                    "Unit cost",
-                  )}
-                </td>
-
-                {/* Total Cost (calculated) */}
-                <td className="h-[30px] border border-[#dce5ef] p-0">
-                  {renderPriceInput(
-                    index,
-                    "totalCost",
-                    "txtTotalCost",
-                    "Total cost",
-                  )}
-                </td>
+                <th className="sticky top-0 z-20 border border-[#dce5ef] bg-[#f1f6fc] p-0" />
               </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
-    </section>
+            </thead>
+
+            <tbody>
+              {rows.map((row, index) => (
+                <tr
+                  key={index}
+                  onClick={() => setActiveRow(index)}
+                  onFocusCapture={() => setActiveRow(index)}
+                  className={`h-[30px] ${
+                    activeRow === index ? "bg-[#f4f8fd]" : "bg-white"
+                  } hover:bg-blue-50`}
+                >
+                  {/* Active row indicator */}
+                  <td
+                    className="h-[30px] border border-[#dce5ef] p-0 text-center text-[9px] text-[#263449]"
+                    aria-label={activeRow === index ? "Active row" : undefined}
+                  >
+                    {activeRow === index ? <Play size={10} /> : ""}
+                  </td>
+
+                  {/* Serial number */}
+                  <td className="h-[30px] border border-[#dce5ef] p-0 text-center">
+                    {index + 1}
+                  </td>
+
+                  {/* Item ID */}
+                  <td className={editCellClass}>
+                    <Select<Option, false>
+                      inputId={`lkpItemID-${index}`}
+                      instanceId={`item-id-${index}`}
+                      options={itemIdOptions}
+                      value={
+                        itemIdOptions.find((o) => o.value === row.itemId) ??
+                        null
+                      }
+                      onChange={(option) => handleItemChange(index, option)}
+                      formatOptionLabel={formatIdLabel}
+                      filterOption={filterItem}
+                      styles={selectStyles}
+                      components={idSelectComponents}
+                      isClearable={false}
+                      isSearchable
+                      menuPosition="fixed"
+                      menuPortalTarget={portalTarget}
+                      placeholder=""
+                      className="w-full"
+                    />
+                  </td>
+
+                  {/* Item Name (same itemId) */}
+                  <td className={editCellClass}>
+                    <Select<Option, false>
+                      inputId={`lkpItemName-${index}`}
+                      instanceId={`item-name-${index}`}
+                      options={itemNameOptions}
+                      value={
+                        itemNameOptions.find((o) => o.value === row.itemId) ??
+                        null
+                      }
+                      onChange={(option) => handleItemChange(index, option)}
+                      formatOptionLabel={formatNameLabel}
+                      filterOption={filterItem}
+                      styles={nameSelectStyles}
+                      components={nameSelectComponents}
+                      isClearable={false}
+                      isSearchable
+                      menuPosition="fixed"
+                      menuPortalTarget={portalTarget}
+                      placeholder=""
+                      className="w-full"
+                    />
+                  </td>
+
+                  {/* Unit: read-only, comes from the item. Enter -> Qty */}
+                  <td className={editCellClass}>
+                    <input
+                      id={`txtUnit-${index}`}
+                      aria-label={`Unit row ${index + 1}`}
+                      type="text"
+                      readOnly
+                      value={row.unit}
+                      onFocus={() => setActiveRow(index)}
+                      onKeyDown={(event) => {
+                        if (event.key === "Enter") {
+                          event.preventDefault();
+                          document.getElementById(`txtQty-${index}`)?.focus();
+                        }
+                      }}
+                      className="h-[20px] w-full min-w-0 border-0 bg-slate-100 px-1 outline-none focus:bg-blue-50"
+                    />
+                  </td>
+
+                  {/* Quantity (3 decimals) */}
+                  <td className={editCellClass}>
+                    <input
+                      id={`txtQty-${index}`}
+                      aria-label={`Quantity row ${index + 1}`}
+                      type="text"
+                      inputMode="decimal"
+                      autoComplete="off"
+                      value={row.qty}
+                      onFocus={(event) => {
+                        setActiveRow(index);
+                        event.currentTarget.select();
+                      }}
+                      onChange={(event) => {
+                        const value = event.target.value;
+
+                        // digits with at most 3 decimal places
+                        if (value === "" || /^\d*\.?\d{0,3}$/.test(value)) {
+                          onRowChange(index, { qty: value });
+                        }
+                      }}
+                      onBlur={() =>
+                        onRowChange(index, { qty: formatQty(rows[index].qty) })
+                      }
+                      onKeyDown={(event) => {
+                        if (event.key === "Enter") {
+                          event.preventDefault();
+                          document
+                            .getElementById(`txtUnitPriceInput-${index}`)
+                            ?.focus();
+                        }
+                      }}
+                      className={numberInputClass}
+                    />
+                  </td>
+
+                  {/* Unit Price (editable) */}
+                  <td className={editCellClass}>
+                    {renderPriceInput(
+                      index,
+                      "unitPrice",
+                      "txtUnitPriceInput",
+                      "Unit price",
+                      true,
+                    )}
+                  </td>
+
+                  {/* Total Price (calculated) */}
+                  <td className={editCellClass}>
+                    {renderPriceInput(
+                      index,
+                      "totalPrice",
+                      "txtTotalPrice",
+                      "Total price",
+                    )}
+                  </td>
+
+                  {/* Unit Cost (calculated) */}
+                  <td className={editCellClass}>
+                    {renderPriceInput(
+                      index,
+                      "unitCost",
+                      "txtUnitCost",
+                      "Unit cost",
+                    )}
+                  </td>
+
+                  {/* Total Cost (calculated) */}
+                  <td className={editCellClass}>
+                    {renderPriceInput(
+                      index,
+                      "totalCost",
+                      "txtTotalCost",
+                      "Total cost",
+                    )}
+                  </td>
+
+                  {/* Delete: only for rows that have an item */}
+                  <td className="h-[30px] border border-[#dce5ef] p-0 text-center">
+                    {row.itemId && !disabled && (
+                      <button
+                        type="button"
+                        tabIndex={-1}
+                        aria-label={`Delete item, row ${index + 1}`}
+                        title="Delete item"
+                        onClick={() => handleDeleteClick(index)}
+                        className="inline-flex h-[20px] w-[20px] cursor-pointer items-center justify-center rounded-sm text-slate-500 hover:bg-red-100 hover:text-red-600"
+                      >
+                        <X size={14} />
+                      </button>
+                    )}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      {dialog}
+    </>
   );
 };
 

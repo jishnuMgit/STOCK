@@ -17,7 +17,7 @@ import {
   type ReceiptTableRef,
   type SortField,
   type ReceiptActionsRef,
-} from "../../../../components/Transaction/Receipt/save/ReceitComp";
+} from "../../../../components/Transaction/Receipt/save/ReceiptComp";
 
 import {
   type SelectOption,

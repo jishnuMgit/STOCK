@@ -8,6 +8,7 @@ import {
   emptyHeader,
   emptyRow,
   createExpenseRows,
+  padExpenseRows,
   type PurchaseExpenseRow,
   type CashSupplier,
   type InvoiceTypeOption,
@@ -16,6 +17,8 @@ import {
   type Item,
   type SupplierLookup,
 } from "../../../hooks/Purchase/Transaction/usePurchaseInvoice";
+import { toast } from "react-toastify";
+import { useConfirmModal } from "../../../hooks/useConfirmModal";
 
 const ROW_COUNT = 12;
 const createRows = () => Array.from({ length: ROW_COUNT }, emptyRow);
@@ -57,8 +60,11 @@ const PurchaseInvoicePage: React.FC = () => {
     fetchCashSuppliers,
     fetchItems,
     fetchSuppliers,
+    fetchCurrencies,
     loading,
   } = usePurchaseInvoice();
+
+  const { confirm, dialog } = useConfirmModal();
 
   const [header, setHeader] = useState<PurchaseHeader>(emptyHeader);
   const [rows, setRows] = useState<PurchaseRow[]>(createRows);
@@ -70,12 +76,15 @@ const PurchaseInvoicePage: React.FC = () => {
   const [branches, setBranches] = useState<{ value: string; label: string }[]>(
     [],
   );
+
+  console.log("rows", rows);
   const [invoiceTypes, setInvoiceTypes] = useState<InvoiceTypeOption[]>([]);
+  const [currencies, setCurrencies] = useState<string[]>([]);
 
   // Misc. supplier lookup + the Yes/No switch.
   // Default type is Cash (C), where the supplier name comes from Misc. Sup.
   const [miscSuppliers, setMiscSuppliers] = useState<CashSupplier[]>([]);
-  const [miscMode, setMiscMode] = useState("Yes");
+  const [miscMode, setMiscMode] = useState("No");
   const [items, setItems] = useState<Item[]>([]);
 
   const [suppliersById, setSuppliersById] = useState<SupplierLookup[]>([]);
@@ -108,6 +117,12 @@ const PurchaseInvoicePage: React.FC = () => {
       )
       .catch(() => setBranches([]));
   }, [fetchBranches]);
+
+  useEffect(() => {
+    fetchCurrencies()
+      .then(setCurrencies)
+      .catch(() => setCurrencies([]));
+  }, [fetchCurrencies]);
 
   /* invoice types (C / R) from dbo.getpurchasestockparam */
   useEffect(() => {
@@ -243,6 +258,9 @@ const PurchaseInvoicePage: React.FC = () => {
     () => ({
       branches: branches.length ? branches : undefined,
       invoiceTypes: invoiceTypes.length ? invoiceTypes : undefined,
+      currencies: currencies.length
+        ? currencies.map((c) => ({ value: c, label: c }))
+        : undefined,
       supplierIds: suppliersById.map((x) => ({
         value: x.id,
         label: x.id,
@@ -254,7 +272,7 @@ const PurchaseInvoicePage: React.FC = () => {
         name: x.name,
       })),
     }),
-    [branches, invoiceTypes, suppliersById, suppliersByName],
+    [branches, invoiceTypes, currencies, suppliersById, suppliersByName],
   );
 
   const loadMiscSuppliers = useCallback(async () => {
@@ -268,6 +286,16 @@ const PurchaseInvoicePage: React.FC = () => {
   useEffect(() => {
     void loadMiscSuppliers();
   }, [loadMiscSuppliers]);
+
+  /* The GET returns no supplier name, so when it is empty take it from the
+     supplier lookup by ID. Defined before the handlers that use it. */
+  const resolveSupplierName = useCallback(
+    (h: PurchaseHeader) =>
+      h.supplierName?.trim() ||
+      suppliersById.find((s) => s.id === h.supplierId)?.name ||
+      "",
+    [suppliersById],
+  );
 
   const handleHeaderChange = useCallback(
     <K extends keyof PurchaseHeader>(field: K, value: PurchaseHeader[K]) => {
@@ -286,7 +314,7 @@ const PurchaseInvoicePage: React.FC = () => {
       });
 
       if (field === "invoiceType") {
-        setMiscMode(value === "C" ? "Yes" : "No");
+        setMiscMode("No");
       }
 
       if (field === "currencyRate") {
@@ -317,6 +345,22 @@ const PurchaseInvoicePage: React.FC = () => {
     [currencyRate],
   );
 
+  /* remove one entered item; keep the grid at least ROW_COUNT rows long */
+  const handleRowDelete = useCallback(
+    (index: number) => {
+      if (posted) {
+        toast.warning("Posted Purchase Invoice cannot be modified");
+        return;
+      }
+      setRows((prev) => {
+        const next = prev.filter((_, i) => i !== index);
+        while (next.length < ROW_COUNT) next.push(emptyRow());
+        return next;
+      });
+    },
+    [posted],
+  );
+
   /* VB cmdAdd_Click: refresh the combos, then select the saved supplier */
   const handleMiscSupplierSaved = useCallback(
     async (d: MiscSupplierData) => {
@@ -333,7 +377,7 @@ const PurchaseInvoicePage: React.FC = () => {
     setRows(createRows());
     setMode("S");
     setOriginalSlNos([]);
-    setMiscMode("Yes");
+    setMiscMode("No");
     setMessage("");
     setPosted(false);
     setExpenseRows(createExpenseRows());
@@ -355,7 +399,11 @@ const PurchaseInvoicePage: React.FC = () => {
           ? miscSuppliers.find((m) => m.name === found.header.supplierName)
           : undefined;
 
-      setHeader({ ...found.header, miscSupId: misc?.id ?? "" });
+      setHeader({
+        ...found.header,
+        supplierName: resolveSupplierName(found.header),
+        miscSupId: misc?.id ?? "",
+      });
       setRows([
         ...found.rows,
         ...Array.from(
@@ -364,8 +412,18 @@ const PurchaseInvoicePage: React.FC = () => {
         ),
       ]);
       setOriginalSlNos(found.originalSlNos);
-      setMiscMode(found.header.invoiceType === "C" ? "Yes" : "No");
-      //@ts-ignore
+      const hRate = num(found.header.currencyRate) || 1;
+      setExpenseRows(
+        padExpenseRows(
+          found.expenses.map((e) => ({
+            ...e,
+            currency: found.header.currency,
+            currencyRate: hRate.toFixed(4),
+            amount: e.amountSAR ? (num(e.amountSAR) / hRate).toFixed(4) : "",
+          })),
+        ),
+      );
+      setMiscMode(misc ? "Yes" : "No");
       setPosted(found.posted);
       setMode("M");
       return;
@@ -380,11 +438,19 @@ const PurchaseInvoicePage: React.FC = () => {
       });
       setRows(createRows());
       setOriginalSlNos([]);
-      setMiscMode("Yes");
+      setExpenseRows(createExpenseRows());
+      setMiscMode("No");
     }
     setPosted(false);
     setMode("S");
-  }, [fetchInvoice, header.brId, header.docNo, mode, miscSuppliers]);
+  }, [
+    fetchInvoice,
+    header.brId,
+    header.docNo,
+    mode,
+    miscSuppliers,
+    resolveSupplierName,
+  ]);
 
   /* VB: cmdCalcUnitcost_Click -> CalcUnitCost (calculated on the server) */
   const handleCalcUnitCost = useCallback(async () => {
@@ -397,7 +463,7 @@ const PurchaseInvoicePage: React.FC = () => {
       );
       setRows(updated);
     } catch (err) {
-      window.alert(
+      toast.error(
         err instanceof Error ? err.message : "Failed to calculate unit cost",
       );
     }
@@ -405,7 +471,14 @@ const PurchaseInvoicePage: React.FC = () => {
 
   const handleSave = useCallback(async () => {
     if (posted) {
-      window.alert("Posted Purchase Invoice cannot be modified");
+      toast.warning("Posted Purchase Invoice cannot be modified");
+      return;
+    }
+    if (miscMode === "Yes" && !header.miscSupId) {
+      toast.warning("Please select a 'Misc. Sup.' or change it to 'No'", {
+        toastId: "misc-sup-warning", // prevents duplicate toasts
+      });
+      document.getElementById("lkpMiscSupID")?.focus();
       return;
     }
     try {
@@ -413,60 +486,85 @@ const PurchaseInvoicePage: React.FC = () => {
       await saveInvoice({
         mode,
         year: YEAR,
-        header,
+        header: { ...header, supplierName: resolveSupplierName(header) },
         rows,
         originalSlNos,
         expenses: expenseRows,
       });
-      window.alert(mode === "S" ? "Saved" : "Modified");
+      toast.success(mode === "S" ? "Saved" : "Modified");
       handleClear();
     } catch (err) {
-      window.alert(err instanceof Error ? err.message : "Not saved, try again");
+      toast.error(err instanceof Error ? err.message : "Not saved, try again");
     }
-  }, [posted, mode, header, rows, originalSlNos, saveInvoice, handleClear]);
+  }, [
+    posted,
+    miscMode,
+    mode,
+    header,
+    rows,
+    originalSlNos,
+    expenseRows,
+    saveInvoice,
+    handleClear,
+    resolveSupplierName,
+  ]);
 
   const handleDelete = useCallback(async () => {
     if (posted) {
-      window.alert("Posted Purchase Invoice cannot be deleted");
+      toast.warning("Posted Purchase Invoice cannot be deleted");
       return;
     }
-    if (!window.confirm("Do you want to delete ?")) return;
+    const ok = await confirm({
+      title: "Purchase Invoice",
+      message: "Do you want to delete ?",
+    });
+    if (!ok) return;
     try {
       await deleteInvoice(YEAR, header.brId, header.docNo);
-      window.alert("Deleted");
+      toast.success("Deleted");
       handleClear();
     } catch (err) {
-      window.alert(
+      toast.error(
         err instanceof Error ? err.message : "Not deleted, try again",
       );
     }
-  }, [posted, deleteInvoice, header.brId, header.docNo, handleClear]);
+  }, [posted, confirm, deleteInvoice, header.brId, header.docNo, handleClear]);
 
   /* Post: only an already-saved (loaded) invoice can be posted */
   const handlePost = useCallback(async () => {
     if (mode !== "M") {
-      window.alert("Please save the invoice before posting");
+      toast.warning("Please save the invoice before posting");
       return;
     }
     if (posted) {
-      window.alert("Purchase Invoice is already posted");
+      toast.warning("Purchase Invoice is already posted");
       return;
     }
-    if (!window.confirm("Do you want to post ?")) return;
+    const ok = await confirm({
+      title: "Purchase Invoice",
+      message: "Do you want to post ?",
+    });
+    if (!ok) return;
 
     try {
       setPosting(true);
       await postInvoice(YEAR, header.brId, header.docNo);
-      window.alert("Posted");
+      toast.success("Posted");
       handleClear();
     } catch (err) {
-      window.alert(
-        err instanceof Error ? err.message : "Not posted, try again",
-      );
+      toast.error(err instanceof Error ? err.message : "Not posted, try again");
     } finally {
       setPosting(false);
     }
-  }, [mode, posted, postInvoice, header.brId, header.docNo, handleClear]);
+  }, [
+    mode,
+    posted,
+    confirm,
+    postInvoice,
+    header.brId,
+    header.docNo,
+    handleClear,
+  ]);
 
   return (
     <main className="mx-auto flex h-fit w-full max-w-275 flex-col overflow-hidden border border-slate-400 bg-white text-[12px] text-slate-800">
@@ -494,9 +592,10 @@ const PurchaseInvoicePage: React.FC = () => {
       <PurchaseTable
         rows={rows}
         onRowChange={handleRowChange}
+        onRowDelete={handleRowDelete}
+        disabled={posted}
         lookups={itemLookups}
       />
-
       <PurchaseFooter
         note={header.note}
         onNoteChange={(v) => handleHeaderChange("note", v)}
@@ -511,6 +610,7 @@ const PurchaseInvoicePage: React.FC = () => {
         onPost={handlePost}
       />
       {message && <p className="px-3 pb-2 text-red-600">{message}</p>}
+      {dialog}
     </main>
   );
 };

@@ -37,7 +37,7 @@ const pick = (options: Option[], value: string): Option | null =>
 /* custom arrow for the dropdowns in this table */
 const DropdownIndicator = (props: DropdownIndicatorProps<Option, false>) => (
   <components.DropdownIndicator {...props}>
-    <RxTriangleDown size={16} />
+    <RxTriangleDown size={16} color="#91918e" />
   </components.DropdownIndicator>
 );
 
@@ -590,10 +590,10 @@ const PurchaseExpense: React.FC<PurchaseExpenseProps> = ({
 
                       {/* CCID */}
                       <th
-                        className={`${thBase} w-[60px] px-1 text-center`}
+                        className={`${thBase} w-[60px] px-1 text-left`}
                         id="lkpCCID"
                       >
-                        CC.ID
+                        CC. ID
                       </th>
 
                       {/* Currency */}

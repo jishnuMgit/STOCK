@@ -1,58 +1,37 @@
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useMemo, useState } from "react";
 import { Play } from "lucide-react";
 import Select, { type StylesConfig } from "react-select";
-import { toast } from "react-toastify";
 
 import {
   filterPairOption,
   makePairComponents,
   makePairDividedMenuStyles,
-  type PairOption,
 } from "../../PairSelect/pairSelectParts";
 import { usePairMenuHang } from "../../../hooks/usePairMenuHang";
 import { useAdvanceAfterSelect } from "../../../hooks/useAdvanceAfterSelect";
+import {
+  isEmptyRow,
+  padRows,
+  type AccountOption,
+  type BeginningBalanceRow,
+} from "./BeginningBalanceShared";
 
 // ============================================================
-// TYPES
+// PROPS: the page owns the rows (and the lists); the grid edits them
 // ============================================================
 
-// an account / cost center of the lists: the pair lists need value, label, id
-// and name; chkHaveCC = the account needs a cost center
-type AccountOption = PairOption & { chkHaveCC?: boolean };
-
-// the box values follow the element ids: lkpAccountID, lkpCCID, txtDebit,
-// txtCredit (the Account Name box shows the name of lkpAccountID)
-type BeginningBalanceRow = {
-  lkpAccountID: string;
-  lkpCCID: string;
-  txtDebit: string;
-  txtCredit: string;
+type Props = {
+  rows: BeginningBalanceRow[];
+  setRows: React.Dispatch<React.SetStateAction<BeginningBalanceRow[]>>;
+  accountsByID: AccountOption[];
+  accountsByName: AccountOption[];
+  costCenters: AccountOption[];
+  // a posted balance is locked
+  disabled: boolean;
+  // the x of a row: takes the line out of the grid (it is gone from the database
+  // when the balance is saved)
+  onRemoveRow: (index: number) => void;
 };
-
-// ============================================================
-// CONSTANTS
-// ============================================================
-
-const api = import.meta.env.VITE_API_URL;
-
-const ROW_COUNT = 13;
-
-// ============================================================
-// CREATE ROW
-// ============================================================
-
-const createRow = (): BeginningBalanceRow => ({
-  lkpAccountID: "",
-  lkpCCID: "",
-  txtDebit: "",
-  txtCredit: "",
-});
-
-const createRows = (): BeginningBalanceRow[] =>
-  Array.from(
-    { length: ROW_COUNT },
-    createRow,
-  );
 
 // ============================================================
 // SELECT STYLES
@@ -174,25 +153,6 @@ const ccStyles = {
   ...makePairDividedMenuStyles(CC_MENU_HANG),
 } as StylesConfig<AccountOption, false>;
 
-type AccountRow = {
-  lkpAccountID: string;
-  txtAccountName: string | null;
-  chkHaveCC: boolean | null;
-};
-
-// showName: the Account Name box shows the name, the Account ID box the ID
-const toAccountOptions = (
-  rows: AccountRow[],
-  showName: boolean,
-): AccountOption[] =>
-  rows.map((row) => ({
-    value: row.lkpAccountID,
-    label: showName ? (row.txtAccountName ?? "") : row.lkpAccountID,
-    id: row.lkpAccountID,
-    name: row.txtAccountName ?? "",
-    chkHaveCC: row.chkHaveCC === true,
-  }));
-
 // ============================================================
 // NUMBER INPUT
 // ============================================================
@@ -204,12 +164,15 @@ const numberInputClass =
 // TABLE
 // ============================================================
 
-const BeginningBalanceTable: React.FC = () => {
-  const [rows, setRows] =
-    useState<BeginningBalanceRow[]>(
-      createRows,
-    );
-
+const BeginningBalanceTable: React.FC<Props> = ({
+  rows,
+  setRows,
+  accountsByID,
+  accountsByName,
+  costCenters,
+  disabled,
+  onRemoveRow,
+}) => {
   const [activeRow, setActiveRow] =
     useState(0);
 
@@ -228,86 +191,6 @@ const BeginningBalanceTable: React.FC = () => {
     hang: nameMenuHang,
     measure: measureNameMenuHang,
   } = usePairMenuHang(170);
-
-  // the head accounts (once by Account ID, once by Account Name) and the cost
-  // centers - the same database functions the Receipt screen uses
-  const [accountsByID, setAccountsByID] =
-    useState<AccountOption[]>([]);
-
-  const [accountsByName, setAccountsByName] =
-    useState<AccountOption[]>([]);
-
-  const [costCenters, setCostCenters] =
-    useState<AccountOption[]>([]);
-
-  useEffect(() => {
-    const loadAccounts = async () => {
-      try {
-        const PstrCoID =
-          localStorage.getItem("PstrCoID");
-
-        if (!PstrCoID) {
-          toast.error(
-            "getAccountList: no PstrCoID in localStorage",
-          );
-          return;
-        }
-
-        const response = await fetch(
-          `${api}/BeginningBalance/getAccountList?PstrCoID=${PstrCoID}`,
-          { credentials: "include" },
-        );
-
-        const result = await response.json();
-
-        if (!response.ok || !result.success) {
-          toast.error(
-            result.message ||
-              "Failed to load the Accounts",
-          );
-          return;
-        }
-
-        setAccountsByID(
-          toAccountOptions(
-            result.accountsByID || [],
-            false,
-          ),
-        );
-
-        setAccountsByName(
-          toAccountOptions(
-            result.accountsByName || [],
-            true,
-          ),
-        );
-
-        setCostCenters(
-          (result.costCenters || []).map(
-            (row: {
-              lkpCCID: string;
-              txtCCName: string | null;
-            }) => ({
-              value: row.lkpCCID,
-              label: row.lkpCCID,
-              id: row.lkpCCID,
-              name: row.txtCCName ?? "",
-            }),
-          ),
-        );
-      } catch (error: unknown) {
-        console.error(
-          "getAccountList error:",
-          error,
-        );
-        toast.error(
-          "Failed to load the Accounts",
-        );
-      }
-    };
-
-    loadAccounts();
-  }, []);
 
   // the option of an account / cost center, by its ID (the value of the row)
   const accountIdByCode = useMemo(
@@ -355,13 +238,15 @@ const BeginningBalanceTable: React.FC = () => {
     value: BeginningBalanceRow[K],
   ) => {
     setRows((previousRows) =>
-      previousRows.map((row, rowIndex) =>
-        rowIndex === index
-          ? {
-              ...row,
-              [field]: value,
-            }
-          : row,
+      padRows(
+        previousRows.map((row, rowIndex) =>
+          rowIndex === index
+            ? {
+                ...row,
+                [field]: value,
+              }
+            : row,
+        ),
       ),
     );
   };
@@ -378,16 +263,18 @@ const BeginningBalanceTable: React.FC = () => {
     if (!option) return;
 
     setRows((previousRows) =>
-      previousRows.map((row, rowIndex) =>
-        rowIndex === index
-          ? {
-              ...row,
-              lkpAccountID: option.value,
-              lkpCCID: option.chkHaveCC
-                ? row.lkpCCID
-                : "",
-            }
-          : row,
+      padRows(
+        previousRows.map((row, rowIndex) =>
+          rowIndex === index
+            ? {
+                ...row,
+                lkpAccountID: option.value,
+                lkpCCID: option.chkHaveCC
+                  ? row.lkpCCID
+                  : "",
+              }
+            : row,
+        ),
       ),
     );
 
@@ -415,6 +302,40 @@ const BeginningBalanceTable: React.FC = () => {
     updateRow(index, field, value);
   };
 
+  // an amount is shown with two decimals once you leave the box (1000.5 -> 1000.50)
+  const handleNumberBlur = (
+    index: number,
+    field: "txtDebit" | "txtCredit",
+    value: string,
+  ) => {
+    if (value === "") return;
+
+    const number = Number(value);
+
+    if (Number.isFinite(number)) {
+      updateRow(index, field, number.toFixed(2));
+    }
+  };
+
+  // Enter: Debit goes on to Credit, Credit to the Account ID of the next row
+  const handleNumberKeyDown = (
+    event: React.KeyboardEvent<HTMLInputElement>,
+    index: number,
+    field: "txtDebit" | "txtCredit",
+  ) => {
+    if (event.key !== "Enter") return;
+
+    event.preventDefault();
+
+    document
+      .getElementById(
+        field === "txtDebit"
+          ? `txtCredit-${index}`
+          : `lkpAccountID-${index + 1}`,
+      )
+      ?.focus();
+  };
+
   // ==========================================================
   // RENDER NUMBER
   // ==========================================================
@@ -433,6 +354,7 @@ const BeginningBalanceTable: React.FC = () => {
         inputMode="decimal"
         autoComplete="off"
         value={rows[index][field]}
+        readOnly={disabled}
         onFocus={(event) => {
           setActiveRow(index);
           event.currentTarget.select();
@@ -444,6 +366,16 @@ const BeginningBalanceTable: React.FC = () => {
             event.target.value,
           );
         }}
+        onBlur={(event) =>
+          handleNumberBlur(
+            index,
+            field,
+            event.target.value,
+          )
+        }
+        onKeyDown={(event) =>
+          handleNumberKeyDown(event, index, field)
+        }
         className={numberInputClass}
       />
     );
@@ -504,9 +436,9 @@ const BeginningBalanceTable: React.FC = () => {
 
             <col style={{ width: "100px" }} />
 
-            {/* Credit */}
+            {/* Credit (and the x of the row) */}
 
-            <col style={{ width: "100px" }} />
+            <col style={{ width: "124px" }} />
           </colgroup>
 
           {/* ==================================================
@@ -742,6 +674,7 @@ const BeginningBalanceTable: React.FC = () => {
                         "No Account Found"
                       }
                       isClearable={false}
+                      isDisabled={disabled}
                       isSearchable
                       menuPosition="fixed"
                       menuPlacement="auto"
@@ -815,6 +748,7 @@ const BeginningBalanceTable: React.FC = () => {
                         "No Account Found"
                       }
                       isClearable={false}
+                      isDisabled={disabled}
                       isSearchable
                       menuPosition="fixed"
                       menuPlacement="auto"
@@ -872,6 +806,7 @@ const BeginningBalanceTable: React.FC = () => {
                         }
                       }}
                       isDisabled={
+                        disabled ||
                         !accountIdByCode.get(
                           row.lkpAccountID,
                         )?.chkHaveCC
@@ -928,12 +863,38 @@ const BeginningBalanceTable: React.FC = () => {
                     p-0
                   "
                 >
-                  {renderNumberInput(
-                    index,
-                    "txtCredit",
-                    "txtCredit",
-                    "Credit",
-                  )}
+                  <div className="flex items-center">
+                    <div className="min-w-0 flex-1">
+                      {renderNumberInput(
+                        index,
+                        "txtCredit",
+                        "txtCredit",
+                        "Credit",
+                      )}
+                    </div>
+
+                    {/* the slot is always there so the amounts do not move when the x shows */}
+                    <span className="flex w-6 shrink-0 items-center justify-center">
+                      {activeRow === index &&
+                        !disabled &&
+                        !isEmptyRow(row) && (
+                          <button
+                            id={`btnRemoveRow-${index}`}
+                            name="btnRemoveRow"
+                            type="button"
+                            tabIndex={-1}
+                            title="Remove row"
+                            aria-label={`Remove row ${index + 1}`}
+                            onClick={() =>
+                              onRemoveRow(index)
+                            }
+                            className="text-[12px] leading-none text-gray-400 hover:text-red-600"
+                          >
+                            ✕
+                          </button>
+                        )}
+                    </span>
+                  </div>
                 </td>
               </tr>
             ))}

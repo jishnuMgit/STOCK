@@ -497,6 +497,40 @@ export const beginningBalanceCostCenterKeys: KeyMap = {
   fccname: "txtCCName",
 };
 
+// the header of the branch's balance: the date and who saved / modified it (text)
+export const beginningBalanceHeaderKeys: KeyMap = {
+  fdate: "dtpDate",
+  fcuserid: "txtSavedBy",
+  fcuserdate: "txtSavedOn",
+  fmuserid: "txtModifiedBy",
+  fmuserdate: "txtModifiedOn",
+};
+
+// the Print report (the old rptYearCloseBalRpt): the heading ...
+export const beginningBalancePrintHeaderKeys: KeyMap = {
+  fconame: "txtCoName",
+  fbrname: "txtBranchName",
+};
+
+// ... and a row of it (the account level colours the row)
+export const beginningBalancePrintLineKeys: KeyMap = {
+  faccountid: "lkpAccountID",
+  faccountname: "txtAccountName",
+  faccountlevel: "txtAccountLevel",
+  fccid: "lkpCCID",
+  fdebit: "txtDebit",
+  fcredit: "txtCredit",
+};
+
+// one line of the grid
+export const beginningBalanceLineKeys: KeyMap = {
+  fslno: "txtSlNo",
+  faccountid: "lkpAccountID",
+  fccid: "lkpCCID",
+  fdebit: "txtDebit",
+  fcredit: "txtCredit",
+};
+
 /* ---------- Administration / Year ---------- */
 
 export const administrationYearGridKeys: KeyMap = {

@@ -8,7 +8,8 @@ import {
 } from "../../../controller/Purchase/Setup/CurrencyController.js";
 
 const router = express.Router();
-// router.use(authenticate);
+
+router.use(authenticate);
 router.get("/", getCurrencies);
 router.get("/used/:id", checkCurrencyUsed);
 router.post("/", saveCurrencies);

@@ -36,6 +36,74 @@ type PgClient = {
   query: (sql: string, params?: unknown[]) => Promise<any>;
 };
 
+interface PIExpLine {
+  slNo: number;
+  accountId: string;
+  ccId?: string;
+  currency?: string;
+  currencyRate?: number;
+  creditFC?: number;
+  credit: number;
+  description?: string;
+}
+
+/* CALL dbo.sp_frmpiexp with named args (all SP params start with "p_") */
+const callPIExp = (db: PgClient, args: Record<string, unknown>) => {
+  const keys = Object.keys(args);
+  const sql = `CALL dbo.sp_frmpiexp(${keys
+    .map((k, i) => `p_${k} => $${i + 1}`)
+    .join(", ")})`;
+  return db.query(
+    sql,
+    keys.map((k) => args[k]),
+  );
+};
+
+/* Port of VB ApplyPIExp: D1 (delete all) then S for every row */
+const applyPIExp = async (
+  db: PgClient,
+  a: {
+    coId: string;
+    userId: string;
+    year: string;
+    brId: string;
+    docNo: string;
+    date: string;
+    currency: string;
+    currencyRate: number;
+    rows: PIExpLine[];
+  },
+) => {
+  const common = {
+    gstrcoid: a.coId,
+    gintyear: Number(a.year),
+    strbrid: a.brId,
+    strdoctype: DOC_TYPE,
+    strdocno: a.docNo,
+  };
+
+  // VB ApplyDExp: delete all existing expense postings
+  await callPIExp(db, { strmode: "D1", ...common });
+
+  for (const r of a.rows) {
+    await callPIExp(db, {
+      strmode: "S",
+      ...common,
+      intdocno: getIntDocNo(a.docNo),
+      dtpdate: a.date,
+      intslno: r.slNo,
+      straccountid: r.accountId,
+      strccid: r.ccId ?? "",
+      strcurrency: r.currency || a.currency,
+      numcurrencyrate: num(r.currencyRate) || num(a.currencyRate) || 1,
+      numcreditfc: num(r.creditFC),
+      numcredit: num(r.credit),
+      strdescription: r.description?.slice(0, 100) ?? null,
+      gstruserid: a.userId,
+    });
+  }
+};
+
 const callPagePI = (db: PgClient, args: Record<string, unknown>) => {
   const keys = Object.keys(args);
   const sql = `CALL dbo.sp_pagepi(${keys
@@ -146,7 +214,7 @@ export const getPurchaseInvoice = async (
     const header = await pool.query(
       `SELECT DISTINCT
       fpisitype AS finvoicetype, fdate, fcsaccountid AS faccountid,
-      fpono, fcurrency, fcurrencyrate, fnote, fdiscamt, fdocamt,
+      fpono, fpino, fcurrency, fcurrencyrate, fnote, fdiscamt, fdocamt,
       fnetdocamt, fvatamt, COALESCE(fpost, false) AS fpost,
       fcuserid, fcuserdate, fmuserid, fmuserdate
  FROM dbo.tblstocktrans
@@ -219,6 +287,7 @@ export const savePurchaseInvoice = async (
       menuName,
       lines,
       originalSlNos,
+      expenses,
     } = req.body as {
       mode: "S" | "M";
       year: string;
@@ -239,6 +308,7 @@ export const savePurchaseInvoice = async (
       menuName?: string;
       lines: PILine[];
       originalSlNos?: number[]; // sl.# of lines loaded from DB (modify only)
+      expenses?: PIExpLine[]; // purchase expense rows (frmPIExp)
     };
 
     /* ---------- validation ---------- */
@@ -272,9 +342,10 @@ export const savePurchaseInvoice = async (
         message: "'Login Year' should be same as 'Transaction Year'",
       });
     if (!piNo)
-      return res
-        .status(400)
-        .json({ success: false, message: "Please enter 'Invoice No'" });
+      return res.status(400).json({
+        success: false,
+        message: "Please enter 'Supplier Invoice No'",
+      });
     if (invoiceType === "C" && !supplierName)
       return res
         .status(400)
@@ -301,6 +372,16 @@ export const savePurchaseInvoice = async (
         return res.status(400).json({
           success: false,
           message: `Sl.# ${l.slNo} - Please input 'Qty.'`,
+        });
+    }
+
+    /* ---------- expense validation ---------- */
+    const expRows = (expenses ?? []).filter((e) => e.accountId);
+    for (const e of expRows) {
+      if (num(e.credit) <= 0)
+        return res.status(400).json({
+          success: false,
+          message: `Expense Sl.# ${e.slNo} - Please input 'Amount'`,
         });
     }
 
@@ -331,9 +412,8 @@ export const savePurchaseInvoice = async (
       strbrid: brId,
       strdoctype: DOC_TYPE,
       strdocno: docNo,
-      intdocno: getIntDocNo(docNo),
       pstruserid: userId,
-      strmenuname: menuName ?? "frmPI",
+      strmenuname: menuName ?? "pagePI",
     };
 
     const header = {
@@ -353,6 +433,11 @@ export const savePurchaseInvoice = async (
       numvatamt: num(vatAmt),
     };
 
+    // NEW: original creator, read before the old lines are deleted
+    let origCreator:
+      | { fcuserid: string | null; fcuserdate: Date | null }
+      | undefined;
+
     await client.query("BEGIN");
 
     if (mode === "S") {
@@ -371,6 +456,15 @@ export const savePurchaseInvoice = async (
         });
       }
     } else {
+      // NEW: keep the original creator, the lines are deleted and re-inserted below
+      const orig = await client.query(
+        `SELECT fcuserid, fcuserdate FROM dbo.tblstocktrans
+          WHERE fcoid=$1 AND fyear=$2 AND fbrid=$3 AND fdoctype=$4 AND fdocno=$5
+          LIMIT 1`,
+        [coId, Number(year), brId, DOC_TYPE, docNo],
+      );
+      origCreator = orig.rows[0];
+
       // 1) update header on existing rows
       await callPagePI(client, { strmode: "M", ...base, ...header });
       // 2) remove old lines one by one
@@ -397,6 +491,46 @@ export const savePurchaseInvoice = async (
         numtotalprice: num(l.totalPrice),
         numunitcost: num(l.unitCost),
         numtotalcost: num(l.totalCost),
+      });
+    }
+
+    /* NEW: modify -> put back the original creator and set the modifier */
+    if (mode === "M" && origCreator) {
+      await client.query(
+        `UPDATE dbo.tblstocktrans
+            SET fcuserid = $6, fcuserdate = $7,
+                fmuserid = $8, fmuserdate = now()
+          WHERE fcoid=$1 AND fyear=$2 AND fbrid=$3 AND fdoctype=$4 AND fdocno=$5`,
+        [
+          coId,
+          Number(year),
+          brId,
+          DOC_TYPE,
+          docNo,
+          origCreator.fcuserid,
+          origCreator.fcuserdate,
+          userId,
+        ],
+      );
+    }
+
+    /* ---------- purchase expenses (frmPIExp) ----------
+       Runs AFTER the PI lines so the PI posting rebuild doesn't
+       overwrite them. Same transaction, so all-or-nothing.
+       - expenses omitted  -> existing expenses are left untouched
+       - expenses: []      -> existing expenses are cleared (D1 only)
+       For exact VB behaviour (skip when empty), use: expRows.length > 0 */
+    if (Array.isArray(expenses)) {
+      await applyPIExp(client, {
+        coId,
+        userId,
+        year: String(year),
+        brId,
+        docNo,
+        date,
+        currency,
+        currencyRate: num(currencyRate) || 1,
+        rows: expRows,
       });
     }
 
@@ -959,7 +1093,7 @@ export const postPurchaseInvoice = async (
          p_strmode => $1, p_pstrcoid => $2, p_pstryear => $3,
          p_strbrid => $4, p_strdoctype => $5, p_strdocno => $6,
          p_pstruserid => $7)`,
-      ["P", coId, Number(year), brId, DOC_TYPE, docNo, userId],
+      ["P", coId, String(year), brId, DOC_TYPE, docNo, userId],
     );
 
     await client.query("COMMIT");
@@ -975,5 +1109,48 @@ export const postPurchaseInvoice = async (
     });
   } finally {
     client.release();
+  }
+};
+
+/* =========================================================
+   GET /purchase-invoice/expense?year=&brId=&docNo=
+   Port of VB GetPIExpDetail -> sp_frmpiexp mode 'G'.
+   Procedures can't return rows, so we read tblfintrans with the
+   same columns / filter / order as the SP's 'G' mode.
+   ========================================================= */
+export const getPIExpDetail = async (
+  req: AuthenticatedRequest,
+  res: Response,
+): Promise<Response> => {
+  try {
+    const coId = req.user?.CoID;
+    const { year, brId, docNo } = req.query as Record<string, string>;
+
+    if (!coId || !year || !brId || !docNo) {
+      return res.status(400).json({
+        success: false,
+        message: "year, brId and docNo are required",
+      });
+    }
+
+    const result = await pool.query(
+      `SELECT fslno         AS "fSlNo",
+              faccountid    AS "fAccountID",
+              fcredit       AS "fCredit",
+              fccid         AS "fCCID",
+              fdescription  AS "fDescription"
+         FROM dbo.tblfintrans
+        WHERE fcoid=$1 AND fyear=$2 AND fbrid=$3
+          AND fdoctype=$4 AND fdocno=$5 AND fslno > 0
+        ORDER BY fslno`,
+      [coId, Number(year), brId, DOC_TYPE, docNo],
+    );
+
+    return res.status(200).json({ success: true, data: result.rows });
+  } catch (error: unknown) {
+    console.error("getPIExpDetail error:", error);
+    return res
+      .status(500)
+      .json({ success: false, message: "Failed to fetch expense details" });
   }
 };
