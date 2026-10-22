@@ -8,21 +8,63 @@ const inputClass =
   "input-style ";
 
 // ============================================================
-// BUTTON STYLE
+// PROPS: the totals and the buttons belong to the page
 // ============================================================
 
+type Props = {
+  txtDebitTotal: string;
+  txtCreditTotal: string;
+  txtDifference: string;
+  // the total debit and the total credit differ
+  chkDifferent: boolean;
+  // "Saved By : X date" / "Last Modified By : Y date", as the old form showed
+  txtUserInfo: string;
+  // the branch has a balance: the button says Modify, not Save
+  chkSaved: boolean;
+  chkPosted: boolean;
+  saving: boolean;
+  canSaveOrModify: boolean;
+  canDelete: boolean;
+  canPost: boolean;
+  canPrint: boolean;
+  onSave: () => void;
+  onDelete: () => void;
+  onPost: () => void;
+  onPrint: () => void;
+  onClear: () => void;
+};
 
 // ============================================================
 // FOOTER
 // ============================================================
 
-const BeginningBalanceFooter: React.FC = () => {
+const BeginningBalanceFooter: React.FC<Props> = ({
+  txtDebitTotal,
+  txtCreditTotal,
+  txtDifference,
+  chkDifferent,
+  txtUserInfo,
+  chkSaved,
+  chkPosted,
+  saving,
+  canSaveOrModify,
+  canDelete,
+  canPost,
+  canPrint,
+  onSave,
+  onDelete,
+  onPost,
+  onPrint,
+  onClear,
+}) => {
+  const actionWord = chkSaved ? "Modify" : "Save";
+
   return (
     <footer
       id="beginning-balance-footer"
       className="
         relative
-        h-[160px]
+        h-[172px]
         w-full
         shrink-0
         overflow-hidden
@@ -34,14 +76,13 @@ const BeginningBalanceFooter: React.FC = () => {
           TOTALS
       ====================================================== */}
 
-      
       <div
         className="
           absolute
           right-[91px]
           top-[10px]
           flex
-          
+
           h-[25px]
           items-center
         "
@@ -50,9 +91,11 @@ const BeginningBalanceFooter: React.FC = () => {
 
         <input
           id="txtDebitTotal"
+          name="txtDebitTotal"
           type="text"
-          defaultValue="50,000.00"
+          value={txtDebitTotal}
           readOnly
+          tabIndex={-1}
           className={`${inputClass} w-[153px] text-right border `}
         />
 
@@ -60,9 +103,11 @@ const BeginningBalanceFooter: React.FC = () => {
 
         <input
           id="txtCreditTotal"
+          name="txtCreditTotal"
           type="text"
-          defaultValue="50,000.00"
+          value={txtCreditTotal}
           readOnly
+          tabIndex={-1}
           className={`${inputClass} ml-0 w-[166px] text-right`}
         />
       </div>
@@ -95,10 +140,12 @@ const BeginningBalanceFooter: React.FC = () => {
 
         <input
           id="txtDifference"
+          name="txtDifference"
           type="text"
-          defaultValue="0.00"
+          value={txtDifference}
           readOnly
-          className="
+          tabIndex={-1}
+          className={`
             h-[30px]
             w-[100px]
             border
@@ -107,11 +154,35 @@ const BeginningBalanceFooter: React.FC = () => {
             px-2
             text-right
             text-[14px]
-            text-red-600
             outline-none
-          "
+            ${chkDifferent ? "text-red-600" : "text-[#202020]"}
+          `}
         />
       </div>
+
+      {/* ======================================================
+          SAVED BY / LAST MODIFIED BY
+      ====================================================== */}
+
+      {txtUserInfo !== "" && (
+        <table className="absolute right-[82px] top-[84px] border-collapse text-left text-[12px] text-gray-500">
+          <tbody>
+            {/* one row per line ("Saved By : ..." / "Last Modified By : ..."), in
+                three columns - label, colon, text - so the colons line up */}
+            {txtUserInfo.split("\n").map((line) => {
+              const [label, ...rest] = line.split(" : ");
+
+              return (
+                <tr key={label}>
+                  <td className="whitespace-nowrap pr-[4px]">{label}</td>
+                  <td className="pr-[4px]">:</td>
+                  <td className="whitespace-nowrap">{rest.join(" : ")}</td>
+                </tr>
+              );
+            })}
+          </tbody>
+        </table>
+      )}
 
       {/* ======================================================
           ACTION BUTTONS
@@ -128,52 +199,73 @@ const BeginningBalanceFooter: React.FC = () => {
         "
       >
 
-        {/* MODIFY */}
+        {/* SAVE / MODIFY (one button: it says Modify once the branch has a balance) */}
 
         <button
-          id="btnModify"
+          id={chkSaved ? "btnModify" : "btnSave"}
+          name={chkSaved ? "btnModify" : "btnSave"}
           type="button"
-          className={`btn-style `}
+          onClick={onSave}
+          disabled={!canSaveOrModify || saving || chkPosted}
+          title={chkSaved ? "Alt+M" : "Alt+S"}
+          className="btn-style disabled:cursor-not-allowed disabled:opacity-40"
         >
-        Modify
+          <u>{actionWord.charAt(0)}</u>
+          {actionWord.slice(1)}
         </button>
 
         {/* DELETE */}
 
         <button
           id="btnDelete"
+          name="btnDelete"
           type="button"
-          className={`btn-style `}
+          onClick={onDelete}
+          disabled={!chkSaved || chkPosted || !canDelete || saving}
+          title="Alt+D"
+          className="btn-style disabled:cursor-not-allowed disabled:opacity-40"
         >
-         Delete
+          <u>D</u>elete
         </button>
 
-        {/* PRINT */}
+        {/* PRINT (at any time: it needs a branch and a date, not a saved balance) */}
 
         <button
           id="btnPrint"
+          name="btnPrint"
           type="button"
-          className={`btn-style `}
+          onClick={onPrint}
+          disabled={!canPrint || saving}
+          title="Alt+P"
+          className="btn-style disabled:cursor-not-allowed disabled:opacity-40"
         >
-          Print
+          <u>P</u>rint
         </button>
 
-        {/* POST */}
+        {/* POST (the balance is final after it: the page is locked) */}
 
         <button
           id="btnPost"
+          name="btnPost"
           type="button"
-          className={`btn-style `}
+          onClick={onPost}
+          disabled={!chkSaved || chkPosted || !canPost || saving}
+          title="Alt+T"
+          className="btn-style disabled:cursor-not-allowed disabled:opacity-40"
         >
-          Post
+          Pos<u>t</u>
         </button>
 
         {/* CLEAR */}
 
         <button
           id="btnClear"
+          name="btnClear"
           type="button"
-          className={`btn-style `}
+          onClick={onClear}
+          disabled={saving}
+          title="Alt+C"
+          className="btn-style disabled:cursor-not-allowed disabled:opacity-40"
         >
           <u>C</u>lear
         </button>
