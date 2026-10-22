@@ -1,26 +1,25 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "react-toastify";
 
-import { saveFile } from "../../../pages/Finance/Report/ChartOfAccount/saveFile";
-import { buildBeginningBalancePdf } from "./BeginningBalancePdf";
-import {
-  buildHtml,
-  printBeginningBalanceReport,
-  type PrintReport,
-} from "./BeginningBalancePrintReport";
+import { saveFile } from "../../pages/Finance/Report/ChartOfAccount/saveFile";
 
 // ============================================================
-// BEGINNING BALANCE - THE PRINT PREVIEW
-// Opens after Print on the page (the same window as the Chart Of Account report):
-// the report as it will be printed, with Print (the browser's print window),
-// Download (Excel or PDF, the File Format chosen) and Close.
+// THE PRINT PREVIEW (the same window as the Chart Of Account report)
+// Opens after Print on a page: the report as it will be printed, with Print (the
+// browser's print window), Download (Excel or PDF, the File Format chosen) and Close.
+// The page gives it the report's HTML and the three things that need the report's
+// own data: how to print it, how to make the PDF, how to get the Excel file.
 // ============================================================
 
 type Props = {
-  // the report the server sent
-  report: PrintReport;
+  // the report's HTML (the same page the printer gets)
+  html: string;
   // the name of the downloaded file, without the extension
   fileBase: string;
+  // Print: the browser's print window (the printer, or Save as PDF)
+  onPrint: () => void;
+  // the PDF file, made in the browser
+  buildPdf: () => Blob;
   // the Excel file made by the server (null after an error message)
   fetchExcel: () => Promise<Blob | null>;
   onClose: () => void;
@@ -61,9 +60,11 @@ const CustomRadio: React.FC<RadioProps> = ({ name, value, label, checked, onChan
   </label>
 );
 
-const BeginningBalancePrintPreview: React.FC<Props> = ({
-  report,
+const ReportPreview: React.FC<Props> = ({
+  html,
   fileBase,
+  onPrint,
+  buildPdf,
   fetchExcel,
   onClose,
 }) => {
@@ -77,19 +78,18 @@ const BeginningBalancePrintPreview: React.FC<Props> = ({
   // 40px left / 20px right margin for the preview only
   const previewHtml = useMemo(
     () =>
-      buildHtml(report).replace(
+      html.replace(
         "</head>",
         "<style>body{padding-left:40px;padding-right:20px}</style></head>",
       ),
-    [report],
+    [html],
   );
 
-  // Print: the browser's print window (the printer, or Save as PDF)
   const handlePrint = () => {
     if (busy) return;
 
     try {
-      printBeginningBalanceReport(report);
+      onPrint();
     } catch {
       toast.error("Could not open the print view");
     }
@@ -105,7 +105,7 @@ const BeginningBalancePrintPreview: React.FC<Props> = ({
 
     setBusy(true);
     try {
-      const blob = asPdf ? buildBeginningBalancePdf(report) : await fetchExcel();
+      const blob = asPdf ? buildPdf() : await fetchExcel();
       if (!blob) return; // the error is already shown
 
       const kind = asPdf ? "pdf" : "xlsx";
@@ -126,9 +126,9 @@ const BeginningBalancePrintPreview: React.FC<Props> = ({
     }
   };
 
-  // Alt+P Print, Alt+D Download, Alt+C or Esc Close. The page's own shortcuts are off
-  // while the preview is open (see the page), so Alt+D cannot delete the balance.
-  // Re-attached every render so it always sees the latest state.
+  // Alt+P Print, Alt+D Download, Alt+C or Esc Close. The page's own shortcuts must be
+  // off while the preview is open, so Alt+D cannot delete anything. Re-attached every
+  // render so it always sees the latest state.
   useEffect(() => {
     const onKeyDown = (event: KeyboardEvent) => {
       if (event.key === "Escape") {
@@ -230,4 +230,4 @@ const BeginningBalancePrintPreview: React.FC<Props> = ({
   );
 };
 
-export default BeginningBalancePrintPreview;
+export default ReportPreview;

@@ -106,7 +106,7 @@ export const buildBeginningBalancePdf = (report: PrintReport): Blob => {
     doc.setFontSize(12);
     doc.text(REPORT_HEADING, PAGE_W / 2, MARGIN.top + 15, { align: "center" });
 
-    doc.setFontSize(10);
+    doc.setFontSize(9);
     doc.text(`Branch : ${report.txtBranchName}`, MARGIN.left, MARGIN.top + 23);
   };
 
@@ -124,7 +124,7 @@ export const buildBeginningBalancePdf = (report: PrintReport): Blob => {
     showHead: "everyPage",
     styles: {
       font: "times",
-      fontSize: 10,
+      fontSize: 9,
       cellPadding: PAD,
       lineColor: BORDER,
       lineWidth: 0.2,

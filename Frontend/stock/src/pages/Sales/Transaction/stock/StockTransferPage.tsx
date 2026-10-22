@@ -4,7 +4,6 @@ import Select, {
   type SingleValue,
   type StylesConfig,
 } from "react-select";
-import { useLocation, useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";
 import {
   makePairComponents,
@@ -15,7 +14,15 @@ import { useScrollbarWidth } from "../../../../hooks/useScrollbarWidth";
 import { useAdvanceAfterSelect } from "../../../../hooks/useAdvanceAfterSelect";
 import { usePairMenuHang } from "../../../../hooks/usePairMenuHang";
 import { useAltShortcuts } from "../../../../hooks/useAltShortcuts";
-import { useConfirm } from "../../../../hooks/useConfirm";
+import { useInitialFocus } from "../../../../hooks/useInitialFocus";
+import { useConfirmModal } from "../../../../hooks/useConfirmModal";
+import ReportPreview from "../../../../components/common/ReportPreview";
+import { buildStockTransferPdf } from "../../../../components/Transaction/StockTransfer/StockTransferPdf";
+import {
+  buildHtml,
+  printStockTransferReport,
+  type PrintReport,
+} from "../../../../components/Transaction/StockTransfer/StockTransferPrintReport";
 import { useButtonPermissions } from "../../../../hooks/useButtonPermissions";
 import {
   BranchDividedMenuList,
@@ -72,6 +79,9 @@ interface ItemRecord {
 
 // dbo.tblmenu fmenuid of the Stock Transfer page
 const MENU_ID = "020103";
+
+// the title of the question windows
+const SCREEN_TITLE = "Stock Transfer";
 
 // today as yyyy-mm-dd, in the user's own time
 const todayLocal = () => new Date().toLocaleDateString("en-CA");
@@ -490,20 +500,22 @@ const StockTransferPage: React.FC = () => {
   const [txtNote, setTxtNote] = useState("");
   const [txtStock, setTxtStock] = useState("");
   const [rows, setRows] = useState<StockRow[]>(createInitialRows);
+  // the branch list and the default branch have been loaded (the cursor can start)
+  const [branchesLoaded, setBranchesLoaded] = useState(false);
   const [activeRow, setActiveRow] = useState(0);
 
   const perms = useButtonPermissions(MENU_ID);
-  const navigate = useNavigate();
-  const location = useLocation();
-  const { confirm, confirmDialog } = useConfirm();
+  // the common themed question window (the same as the Purchase Invoice screen)
+  const { confirm, dialog: confirmDialog } = useConfirmModal();
 
-  // coming back from the print page: the transfer that was printed is shown again
-  const returnedState = (location.state ?? null) as {
-    lkpBranch?: string;
-    txtDocNo?: string;
-  } | null;
-  const returnedBranchID = returnedState?.lkpBranch ?? "";
-  const returnedDocNo = useRef(returnedState?.txtDocNo ?? "");
+  // the Print Preview (after Print): the report the server sent, and the branch and
+  // Entry No. it was made for (the Excel file is made for the same ones)
+  const [preview, setPreview] = useState<{
+    report: PrintReport;
+    lkpBranch: string;
+    txtDocNo: string;
+    fileBase: string;
+  } | null>(null);
 
   // the items of the chosen branch (not blocked for it)
   const [items, setItems] = useState<ItemRecord[]>([]);
@@ -601,23 +613,26 @@ const StockTransferPage: React.FC = () => {
           options.find((option) => option.value === fromResult.lkpDefaultBranch) ??
           null;
 
-        const returned =
-          options.find((option) => option.value === returnedBranchID) ?? null;
-
         setBranchOptions(options);
         setToBranchOptions(toOptions);
         setLkpDefaultBranch(initial);
-        setLkpBranch(returned ?? initial);
+        setLkpBranch(initial);
       } catch (error) {
         console.error("loadBranches (stock transfer) error:", error);
         toast.error(
           `Stock Transfer load error: ${error instanceof Error ? error.message : String(error)}`,
         );
+      } finally {
+        setBranchesLoaded(true);
       }
     };
 
     loadBranches();
   }, []);
+
+  // where the cursor starts: Entry No. when a branch is already chosen (the user's
+  // default branch), else the Branch box
+  useInitialFocus(branchesLoaded, lkpBranch ? "txtDocNo" : "lkpBranch");
 
   // ----------------------------------------------------------
   // THE DOCUMENT STATE, emptied (the old ClearMe): the grid, the To branch, the
@@ -846,16 +861,7 @@ const StockTransferPage: React.FC = () => {
 
         setItems(loadedItems);
         resetDocument();
-
-        if (returnedDocNo.current !== "") {
-          const docNo = returnedDocNo.current;
-
-          returnedDocNo.current = "";
-          setTxtDocNo(docNo);
-          await loadDocument(lkpBranch.value, docNo, loadedItems);
-        } else {
-          await loadNextDocNo(lkpBranch.value);
-        }
+        await loadNextDocNo(lkpBranch.value);
       } catch (error) {
         console.error("loadBranch (stock transfer) error:", error);
         toast.error(
@@ -874,7 +880,7 @@ const StockTransferPage: React.FC = () => {
   // ----------------------------------------------------------
   // THE STOCK AND COST OF A CHOSEN ITEM (the old GetItemStock / GetUnitCost):
   // the Stock box shows it, the Unit Cost of the row is filled, and an item with
-  // no stock is refused (the old "Out Of Stock")
+  // no stock gets the old "Out Of Stock" warning (the item stays in the row)
   // ----------------------------------------------------------
 
   const fetchItemStock = async (rowId: number, itemId: string, rowIndex: number) => {
@@ -900,38 +906,26 @@ const StockTransferPage: React.FC = () => {
 
       setTxtStock(stock.toLocaleString("en-US", { maximumFractionDigits: 3 }));
 
-      // no stock: the item is not accepted (the whole row is cleared). The message
+      // no stock: only a warning - the item stays in the row and the user deletes the
+      // row. (Save refuses it anyway: the server checks the stock again.) The message
       // is shown HERE, once - not inside setRows, which React may run twice.
       if (stock <= 0) {
         toast.warning(`Out Of Stock for the Item  : ${itemId} - this branch has no stock of it`);
       }
 
       setRows((previous) =>
-        previous.map((row) => {
-          if (row.id !== rowId) return row;
-
-          if (stock <= 0) {
-            return {
-              ...row,
-              lkpItemID: null,
-              lkpItemName: null,
-              txtUnit: "",
-              txtPacking: "",
-              txtQty: "",
-              txtUnitCost: "",
-              txtStock: null,
-            };
-          }
-
-          return {
-            ...row,
-            txtStock: stock,
-            txtUnitCost: Number(result.txtUnitCost).toFixed(4),
-          };
-        }),
+        previous.map((row) =>
+          row.id === rowId
+            ? {
+                ...row,
+                txtStock: stock,
+                txtUnitCost: Number(result.txtUnitCost).toFixed(4),
+              }
+            : row,
+        ),
       );
 
-      // the item is accepted (Enter / Tab / click picked it): on to Qty.
+      // the item has stock (Enter / Tab / click picked it): on to Qty.
       if (stock > 0) {
         advanceAfterPick(`lkpItemID-${rowIndex}`, [`lkpItemName-${rowIndex}`]);
       }
@@ -1151,6 +1145,15 @@ const StockTransferPage: React.FC = () => {
     } else {
       setLkpBranch(lkpDefaultBranch);
     }
+
+    // the cursor goes where it started: Entry No. when a branch is chosen, else Branch
+    window.setTimeout(
+      () =>
+        document
+          .getElementById(lkpBranch || lkpDefaultBranch ? "txtDocNo" : "lkpBranch")
+          ?.focus(),
+      0,
+    );
   };
 
   // ----------------------------------------------------------
@@ -1366,7 +1369,10 @@ const StockTransferPage: React.FC = () => {
       return;
     }
 
-    const shouldDelete = await confirm("Do you want delete ?");
+    const shouldDelete = await confirm({
+      title: SCREEN_TITLE,
+      message: "Do you want to delete ?",
+    });
 
     if (!shouldDelete) {
       return;
@@ -1461,7 +1467,10 @@ const StockTransferPage: React.FC = () => {
       return;
     }
 
-    const shouldPost = await confirm("Do you want to post ?.");
+    const shouldPost = await confirm({
+      title: SCREEN_TITLE,
+      message: "Do you want to post ?",
+    });
 
     if (!shouldPost) {
       return;
@@ -1513,12 +1522,21 @@ const StockTransferPage: React.FC = () => {
   // PRINT
   //
   // The saved Stock Transfer is printed (the old cmdPrint): it needs the Print
-  // right and there must be a saved transfer. The print page asks the server for
-  // the data itself and opens the browser's print window.
+  // right and there must be a saved transfer. The server sends the report and the
+  // Print Preview opens (Print = the browser's print window, Download = Excel / PDF).
   // ----------------------------------------------------------
 
-  const handlePrint = () => {
-    if (saving) return;
+  // the body of the Print and Excel requests: the branch and the Entry No.
+  const printBody = (branch: string, docNo: string) =>
+    JSON.stringify({
+      PstrCoID: localStorage.getItem("PstrCoID"),
+      PstrYear: localStorage.getItem("PstrYear"),
+      lkpBranch: branch,
+      txtDocNo: docNo,
+    });
+
+  const handlePrint = async () => {
+    if (saving || preview) return;
 
     if (!lkpBranch) {
       toast.warning("Please select 'Branch'");
@@ -1542,14 +1560,180 @@ const StockTransferPage: React.FC = () => {
       return;
     }
 
-    navigate("/Sales/Transaction/StockTransferPage/Print", {
-      state: { lkpBranch: lkpBranch.value, txtDocNo: txtDocNo.trim() },
+    setSaving(true);
+
+    try {
+      const response = await fetch(`${api}/StockTransfer/printStockTransfer`, {
+        method: "POST",
+        credentials: "include",
+        headers: { "Content-Type": "application/json" },
+        body: printBody(lkpBranch.value, txtDocNo.trim()),
+      });
+
+      const result = await response.json();
+
+      if (!response.ok || !result.success) {
+        toast.error(result.message || "The Stock Transfer could not be printed.");
+        return;
+      }
+
+      // a name that is never the name of a file that is still open
+      const now = new Date();
+      const pad = (value: number) => String(value).padStart(2, "0");
+      const stamp = `${now.getFullYear()}${pad(now.getMonth() + 1)}${pad(now.getDate())}_${pad(now.getHours())}${pad(now.getMinutes())}${pad(now.getSeconds())}`;
+
+      setPreview({
+        report: { ...result.header, rows: result.data || [] },
+        lkpBranch: lkpBranch.value,
+        txtDocNo: txtDocNo.trim(),
+        fileBase: `StockTransfer_${txtDocNo.trim().replace(/[^A-Za-z0-9_-]/g, "_")}_${stamp}`,
+      });
+    } catch (error) {
+      console.error("printStockTransfer error:", error);
+      toast.error("Cannot connect to Stock Transfer API.");
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  // the Excel file of the Print Preview, made by the server (null after an error)
+  const fetchExcel = async (): Promise<Blob | null> => {
+    if (!preview) return null;
+
+    const response = await fetch(`${api}/StockTransfer/downloadStockTransferExcel`, {
+      method: "POST",
+      credentials: "include",
+      headers: { "Content-Type": "application/json" },
+      body: printBody(preview.lkpBranch, preview.txtDocNo),
     });
+
+    // an error comes back as JSON, the file as a blob
+    if (!response.ok) {
+      let message = "Could not create the Excel file";
+
+      try {
+        const result = await response.json();
+        message = result.message || message;
+      } catch {
+        message =
+          response.status === 404
+            ? "Excel is not available: the downloadStockTransferExcel route was not found (404)"
+            : `Could not create the Excel file (error ${response.status})`;
+      }
+
+      toast.error(message);
+      return null;
+    }
+
+    return response.blob();
+  };
+
+  // ----------------------------------------------------------
+  // DELETE A ROW (the x of a row): asks first. A line that is saved goes from the
+  // database at once, with the message "Deleted" (the last saved line takes the whole
+  // transfer with it); a line that was never saved only leaves the grid. The cursor
+  // goes back to the row's Item ID.
+  // ----------------------------------------------------------
+
+  const handleRemoveRow = async (index: number) => {
+    if (saving || chkPosted) return;
+
+    const row = rows[index];
+    if (!row) return;
+
+    // the line is in the database: it has the Sl.# it was loaded with
+    const savedLine = chkSaved && row.txtOriginalSlNo !== null;
+    const onlySavedLine =
+      savedLine && rows.filter((entry) => entry.txtOriginalSlNo !== null).length === 1;
+
+    const shouldRemove = await confirm({
+      title: SCREEN_TITLE,
+      message: onlySavedLine
+        ? "Do you want to delete ?"
+        : `Do you want to delete Line ${index + 1} ?`,
+    });
+
+    if (!shouldRemove) return;
+
+    if (savedLine) {
+      if (!lkpBranch) return;
+
+      setSaving(true);
+
+      try {
+        const response = await fetch(`${api}/StockTransfer/deleteStockTransferLine`, {
+          method: "DELETE",
+          credentials: "include",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            PstrCoID: localStorage.getItem("PstrCoID"),
+            PstrYear: localStorage.getItem("PstrYear"),
+            lkpBranch: lkpBranch.value,
+            txtDocNo: txtDocNo.trim(),
+            txtSlNo: row.txtOriginalSlNo,
+          }),
+        });
+
+        const result = await response.json();
+
+        if (!response.ok || !result.success) {
+          toast.error(result.message || "Not Deleted,Try again");
+          return;
+        }
+
+        toast.success(result.message || "Deleted");
+
+        // the last line took the whole transfer with it: the page starts again
+        if (result.chkDocumentDeleted) {
+          clearForm();
+          return;
+        }
+      } catch (error) {
+        console.error("deleteStockTransferLine error:", error);
+        toast.error("Cannot connect to Stock Transfer API.");
+        return;
+      } finally {
+        setSaving(false);
+      }
+    }
+
+    setRows((previous) => {
+      const kept = previous.filter((_, rowIndex) => rowIndex !== index);
+
+      // the grid keeps its length, with empty rows at the end
+      let nextId = previous.length ? Math.max(...previous.map((entry) => entry.id)) + 1 : 1;
+      const minRows = createInitialRows().length;
+
+      while (kept.length < minRows) {
+        kept.push({
+          id: nextId++,
+          txtSlNo: 0,
+          lkpItemID: null,
+          lkpItemName: null,
+          txtUnit: "",
+          txtPacking: "",
+          txtQty: "",
+          txtUnitCost: "",
+          txtStock: null,
+          txtOriginalSlNo: null,
+        });
+      }
+
+      // Sl.# is the line's place in the grid
+      return kept.map((entry, rowIndex) => ({ ...entry, txtSlNo: rowIndex + 1 }));
+    });
+
+    setActiveRow(index);
+    setTxtStock("");
+
+    // after the grid has been drawn again
+    window.setTimeout(() => document.getElementById(`lkpItemID-${index}`)?.focus(), 0);
   };
 
   // Alt+S -> Save (new), Alt+M -> Modify (saved), Alt+D -> Delete, Alt+P -> Print,
-  // Alt+T -> Post (the old Ctrl+T), Alt+C -> Cancel
-  useAltShortcuts({
+  // Alt+T -> Post (the old Ctrl+T), Alt+C -> Cancel. Off while the Print Preview is
+  // open: it has its own Alt+P, Alt+D and Alt+C.
+  useAltShortcuts(preview ? {} : {
     s: () => {
       if (!chkSaved) handleSave();
     },
@@ -1567,7 +1751,7 @@ const StockTransferPage: React.FC = () => {
   // ----------------------------------------------------------
 
   const handleAction = (action: string) => {
-    if (action === "Cancel") {
+    if (action === "Cancel" || action === "Clear") {
       clearForm();
       return;
     }
@@ -1610,13 +1794,23 @@ const StockTransferPage: React.FC = () => {
             Branch :
           </label>
 
-          <div className="w-[220px] max-w-full">
+          <div className="w-[220px] max-w-full" onKeyDown={(event) => advanceOnEnter(event)}>
             <Select<SelectOption, false>
               inputId="lkpBranch"
               name="lkpBranch"
               options={branchOptions}
               value={lkpBranch}
-              onChange={(option: SingleValue<SelectOption>) => setLkpBranch(option)}
+              onChange={(option: SingleValue<SelectOption>) => {
+                setLkpBranch(option);
+
+                // a branch chosen: on to Entry No.
+                if (option) {
+                  window.setTimeout(
+                    () => document.getElementById("txtDocNo")?.focus(),
+                    0,
+                  );
+                }
+              }}
               styles={branchSelectStyles}
               components={{
                 ...selectComponents,
@@ -1678,6 +1872,13 @@ const StockTransferPage: React.FC = () => {
             type="date"
             value={dtpDate}
             onChange={(event) => setDtpDate(event.target.value)}
+            onKeyDown={(event) => {
+              // Enter goes on to Transfer To (a date box does not move on by itself)
+              if (event.key === "Enter") {
+                event.preventDefault();
+                document.getElementById("lkpToBranch")?.focus();
+              }
+            }}
             disabled={chkPosted}
             className="input-style w-[142px]"
           />
@@ -1693,13 +1894,18 @@ const StockTransferPage: React.FC = () => {
             Transfer To :
           </label>
 
-          <div className="w-[220px] max-w-full">
+          <div className="w-[220px] max-w-full" onKeyDown={(event) => advanceOnEnter(event)}>
             <Select<SelectOption, false>
               inputId="lkpToBranch"
               name="lkpToBranch"
               options={toBranchOptions}
               value={lkpToBranch}
-              onChange={(option: SingleValue<SelectOption>) => setLkpToBranch(option)}
+              onChange={(option: SingleValue<SelectOption>) => {
+                setLkpToBranch(option);
+
+                // a branch chosen: on to the first Item ID
+                if (option) advanceAfterPick("lkpToBranch");
+              }}
               isDisabled={chkPosted}
               styles={branchSelectStyles}
               components={{
@@ -1720,17 +1926,16 @@ const StockTransferPage: React.FC = () => {
 
         {/* Stock of the item you are on */}
         <div className="flex shrink-0 items-center gap-3">
-          <label htmlFor="txtStock" className="text-[14px] text-gray-600">
-            Stock :
-          </label>
+          <span className="text-[14px] text-gray-600">Stock :</span>
 
-          <input
+          {/* a label, not a box: the stock of the item you are on - in the place of
+              the Date box above (same width, the text starts where the date starts) */}
+          <span
             id="txtStock"
-            name="txtStock"
-            value={txtStock}
-            readOnly
-            className="input-style w-[142px] text-right"
-          />
+            className="w-[142px] pl-[9px] text-left text-[14px] text-[#334155]"
+          >
+            {txtStock}
+          </span>
         </div>
       </section>
 
@@ -1747,7 +1952,7 @@ const StockTransferPage: React.FC = () => {
               <col style={{ width: "21%" }} />
               <col style={{ width: "37%" }} />
               <col style={{ width: "6.2%" }} />
-              <col style={{ width: "6.2%" }} />
+              <col style={{ width: "6.9%" }} />
               <col style={{ width: "8.9%" }} />
               <col style={{ width: "11.6%" }} />
               <col style={{ width: "14.2%" }} />
@@ -1756,7 +1961,7 @@ const StockTransferPage: React.FC = () => {
             <thead className="sticky top-0 z-10 bg-[#edf9f2]">
               <tr className="h-[30px] text-left text-[14px] text-gray-600">
                 <th className="border border-[#bfe8d0] px-1 font-normal"></th>
-                <th className="border border-[#bfe8d0] px-1 text-center font-normal">Sl.</th>
+                <th className="border border-[#bfe8d0] px-1 text-center font-normal">Line</th>
                 <th className="border border-[#bfe8d0] px-2 font-normal">Item ID</th>
                 <th className="border border-[#bfe8d0] px-2 font-normal">Item Name</th>
                 <th className="border border-[#bfe8d0] px-2 font-normal">Unit</th>
@@ -1826,7 +2031,7 @@ const StockTransferPage: React.FC = () => {
                       filterOption={filterPairOption}
                       noOptionsMessage={() => "No Item Found"}
                       isSearchable
-                      isClearable
+                      isClearable={false}
                       isDisabled={chkPosted}
                       placeholder=""
                       menuPortalTarget={document.body}
@@ -1923,19 +2128,39 @@ const StockTransferPage: React.FC = () => {
                     />
                   </td>
 
-                  {/* TOTAL COST */}
+                  {/* TOTAL COST (with the x of the row after it) */}
                   <td className="border border-[#bfe8d0] p-0">
-                    <input
-                      id={`txtTotalCost-${index}`}
-                      name="txtTotalCost"
-                      value={
-                        row.txtQty !== "" || row.txtUnitCost !== ""
-                          ? formatAmount(getTotalCost(row))
-                          : ""
-                      }
-                      readOnly
-                      className="h-[26px] w-full bg-transparent px-2 text-right outline-none"
-                    />
+                    <div className="flex items-center">
+                      <input
+                        id={`txtTotalCost-${index}`}
+                        name="txtTotalCost"
+                        value={
+                          row.txtQty !== "" || row.txtUnitCost !== ""
+                            ? formatAmount(getTotalCost(row))
+                            : ""
+                        }
+                        readOnly
+                        className="h-[26px] min-w-0 flex-1 bg-transparent px-2 text-right outline-none"
+                      />
+
+                      {/* the slot is always there so the amounts do not move when the x shows */}
+                      <span className="flex w-6 shrink-0 items-center justify-center">
+                        {row.lkpItemID && !chkPosted && (
+                          <button
+                            id={`btnRemoveRow-${index}`}
+                            name="btnRemoveRow"
+                            type="button"
+                            tabIndex={-1}
+                            title="Remove row"
+                            aria-label={`Remove row ${index + 1}`}
+                            onClick={() => handleRemoveRow(index)}
+                            className="text-[12px] leading-none text-gray-400 hover:text-red-600"
+                          >
+                            ✕
+                          </button>
+                        )}
+                      </span>
+                    </div>
                   </td>
                 </tr>
               ))}
@@ -1960,14 +2185,14 @@ const StockTransferPage: React.FC = () => {
               <col style={{ width: "6.2%" }} />
               <col style={{ width: "6.2%" }} />
               <col style={{ width: "8.9%" }} />
-              <col style={{ width: "9.6%" }} />
-              <col style={{ width: "10.2%" }} />
+              <col style={{ width: "11.6%" }} />
+              <col style={{ width: "14.2%" }} />
             </colgroup>
 
             <tbody>
               <tr className="h-[60px]">
-                {/* NOTE (under the first five columns) */}
-                <td colSpan={5} className="p-0 pr-3">
+                {/* NOTE (under the first four columns: up to the end of Item Name) */}
+                <td colSpan={4} className="p-0">
                   <div className="flex items-center gap-3">
                     <label
                       htmlFor="txtNote"
@@ -1988,8 +2213,11 @@ const StockTransferPage: React.FC = () => {
                   </div>
                 </td>
 
+                {/* nothing under Unit */}
+                <td className="p-0" />
+
                 {/* TOTAL LABEL (under the Packing column) */}
-                <td className="p-0 pr-[4px]">
+                <td className="p-0 px-[4px]">
                   <div className="flex h-[30px] w-full items-center justify-center rounded border border-[#d7dee7] bg-white text-[14px] text-gray-600">
                     Total
                   </div>
@@ -2025,8 +2253,20 @@ const StockTransferPage: React.FC = () => {
         </div>
       </section>
 
-      {/* the "Do you want delete ?" question */}
+      {/* the "Do you want to delete ?" question */}
       {confirmDialog}
+
+      {/* the Print Preview (after Print) */}
+      {preview && (
+        <ReportPreview
+          html={buildHtml(preview.report)}
+          fileBase={preview.fileBase}
+          onPrint={() => printStockTransferReport(preview.report)}
+          buildPdf={() => buildStockTransferPdf(preview.report)}
+          fetchExcel={fetchExcel}
+          onClose={() => setPreview(null)}
+        />
+      )}
 
       {/* SAVED BY / LAST MODIFIED BY */}
       {txtUserInfo !== "" && (

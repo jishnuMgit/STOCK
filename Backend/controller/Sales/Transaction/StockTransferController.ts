@@ -20,13 +20,16 @@ import {
   getStockTransferService,
   saveStockTransferService,
   deleteStockTransferService,
+  deleteStockTransferLineService,
   postStockTransferService,
   getStockTransferPrintService,
   buildStockTransferAuditNote,
   buildStockTransferDeleteAuditNote,
+  buildStockTransferLineDeleteAuditNote,
   buildStockTransferPostAuditNote,
   type StockTransferRowPayload,
 } from "../../../services/Sales/Transaction/stockTransferService.js";
+import { buildStockTransferWorkbook } from "../../../services/Sales/Transaction/stockTransferExcel.js";
 import {
   mapRows,
   mapKeys,
@@ -676,12 +679,14 @@ export const deleteStockTransfer = async (
 };
 
 /* =========================================================
-   PRINT STOCK TRANSFER (the Print button)
-   The saved document, for the print page. A POST: the print page asks for the
-   data itself. Needs the Print right (P). A posted one can be printed too.
+   DELETE ONE LINE (the x of a row of a saved transfer)
+   The line goes from the database at once. A posted transfer is locked. Deleting a
+   line is a change of the transfer, so it needs the Modify right (M) - the last line
+   of a transfer takes the whole transfer with it, which needs the Delete right (D)
+   and is audited as a delete.
 ========================================================= */
 
-export const printStockTransfer = async (
+export const deleteStockTransferLine = async (
   req: AuthenticatedRequest,
   res: Response
 ): Promise<Response> => {
@@ -691,8 +696,14 @@ export const printStockTransfer = async (
       PstrYear,
       lkpBranch,
       txtDocNo,
-    }: { PstrCoID: string; PstrYear: string; lkpBranch: string; txtDocNo: string } =
-      req.body;
+      txtSlNo,
+    }: {
+      PstrCoID: string;
+      PstrYear: string;
+      lkpBranch: string;
+      txtDocNo: string;
+      txtSlNo: number | string;
+    } = req.body;
 
     if (!PstrCoID) {
       return res.status(400).json({
@@ -715,10 +726,23 @@ export const printStockTransfer = async (
       });
     }
 
-    const check = await validateStockTransferPrint({
+    const slNo = Number(txtSlNo);
+
+    if (!Number.isInteger(slNo) || slNo < 1) {
+      return res.status(400).json({
+        success: false,
+        message: "The line to delete is not valid.",
+        field: "txtSlNo",
+      });
+    }
+
+    const PstrUserID = req.user.userId;
+
+    // idle user, the branch (and the right to it), the Entry No.
+    const check = await validateStockTransferDelete({
       PstrCoID,
       PstrYear,
-      PstrUserID: req.user.userId,
+      PstrUserID,
       lkpBranch,
       txtDocNo,
     });
@@ -731,33 +755,219 @@ export const printStockTransfer = async (
       });
     }
 
-    if (!(await hasButtonRight(req.user, MENU_ID, "P"))) {
-      return res.status(403).json({
+    const docNo = String(txtDocNo).trim();
+
+    const current = await getStockTransferService(
+      PstrCoID,
+      Number(PstrYear),
+      lkpBranch,
+      docNo
+    );
+
+    if (current.lines.length === 0) {
+      return res.status(404).json({
         success: false,
-        message: "You do not have permission to Print.",
+        message: "There is no Stock Transfer to delete.",
         field: "txtDocNo",
       });
     }
 
-    const report = await getStockTransferPrintService(
-      PstrCoID,
-      Number(PstrYear),
-      lkpBranch,
-      String(txtDocNo).trim()
-    );
-
-    if (report.lines.length === 0) {
-      return res.status(404).json({
+    // a posted Stock Transfer is locked
+    if (current.header?.fpost) {
+      return res.status(409).json({
         success: false,
-        message: "Stock Transfer not found",
+        message: "This Stock Transfer is already posted and cannot be changed.",
         field: "txtDocNo",
       });
+    }
+
+    if (!current.lines.some((line) => Number(line.fslno) === slNo)) {
+      return res.status(404).json({
+        success: false,
+        message: "This line is not in the Stock Transfer any more.",
+        field: "txtSlNo",
+      });
+    }
+
+    // the last line takes the whole transfer with it
+    const wholeTransfer = current.lines.length === 1;
+
+    if (!(await hasButtonRight(req.user, MENU_ID, wholeTransfer ? "D" : "M"))) {
+      return res.status(403).json({
+        success: false,
+        message: wholeTransfer
+          ? "You do not have permission to Delete."
+          : "You do not have permission to Modify.",
+        field: "txtDocNo",
+      });
+    }
+
+    const result = await deleteStockTransferLineService({
+      PstrCoID,
+      PstrYear: Number(PstrYear),
+      lkpBranch,
+      txtDocNo: docNo,
+      txtSlNo: slNo,
+      PstrUserID,
+    });
+
+    if (result.line === null) {
+      return res.status(404).json({
+        success: false,
+        message: "This line is not in the Stock Transfer any more.",
+        field: "txtSlNo",
+      });
+    }
+
+    // =====================================================
+    // USER AUDIT (only after the delete has actually succeeded)
+    // =====================================================
+
+    try {
+      await UserAudit(
+        PstrCoID,
+        PstrYear,
+        lkpBranch,
+        DOC_TYPE,
+        docNo,
+        SCREEN_NAME,
+        result.documentDeleted ? "D" : "M",
+        PstrUserID,
+        result.documentDeleted
+          ? buildStockTransferDeleteAuditNote(
+              lkpBranch,
+              docNo,
+              result.header?.fsttobrid ?? null,
+              result.header?.fdate ?? null,
+              result.lines
+            )
+          : buildStockTransferLineDeleteAuditNote(
+              lkpBranch,
+              docNo,
+              result.header?.fsttobrid ?? null,
+              result.line,
+              result.lines.length
+            )
+      );
+    } catch (auditError: unknown) {
+      console.error("UserAudit error (deleteStockTransferLine):", auditError);
     }
 
     return res.status(200).json({
       success: true,
-      header: mapKeys(report.header, stockTransferPrintHeaderKeys),
-      data: mapRows(report.lines, stockTransferPrintLineKeys),
+      message: "Deleted",
+      chkDocumentDeleted: result.documentDeleted,
+    });
+  } catch (error: unknown) {
+    console.error("deleteStockTransferLine error:", error);
+
+    return res.status(400).json({
+      success: false,
+      message: messageOf(error, "The line could not be deleted"),
+    });
+  }
+};
+
+/* =========================================================
+   PRINT STOCK TRANSFER (the Print button)
+   The saved document, for the Print Preview (preview, printer, PDF) - and, with the
+   same body, the Excel file. A POST: the page asks for the data itself. Needs the
+   Print right (P). A posted one can be printed too.
+========================================================= */
+
+const pad = (n: number) => String(n).padStart(2, "0");
+
+// the old objCommon.ReportInfo: "<user>  dd/mm/yyyy hh:mm" - bottom right of every page
+const reportInfoOf = (userId: string): string => {
+  const d = new Date();
+
+  return `${userId}  ${pad(d.getDate())}/${pad(d.getMonth() + 1)}/${d.getFullYear()} ${pad(d.getHours())}:${pad(d.getMinutes())}`;
+};
+
+type PreparedPrint =
+  | {
+      ok: true;
+      report: Awaited<ReturnType<typeof getStockTransferPrintService>>;
+      reportInfo: string;
+    }
+  | { ok: false; status: number; body: Record<string, unknown> };
+
+// the checks and the data of Print and Excel
+const preparePrint = async (req: AuthenticatedRequest): Promise<PreparedPrint> => {
+  const {
+    PstrCoID,
+    PstrYear,
+    lkpBranch,
+    txtDocNo,
+  }: { PstrCoID: string; PstrYear: string; lkpBranch: string; txtDocNo: string } =
+    req.body;
+
+  const stop = (status: number, message: string, field?: string): PreparedPrint => ({
+    ok: false,
+    status,
+    body: { success: false, message, ...(field ? { field } : {}) },
+  });
+
+  if (!PstrCoID) {
+    return stop(400, "Company ID is required");
+  }
+
+  if (!PstrYear || !/^\d+$/.test(String(PstrYear))) {
+    return stop(400, "Year is required");
+  }
+
+  if (!req.user) {
+    return stop(401, "Authentication required");
+  }
+
+  const check = await validateStockTransferPrint({
+    PstrCoID,
+    PstrYear,
+    PstrUserID: req.user.userId,
+    lkpBranch,
+    txtDocNo,
+  });
+
+  if (!check.valid) {
+    return stop(check.status, check.message, check.field);
+  }
+
+  if (!(await hasButtonRight(req.user, MENU_ID, "P"))) {
+    return stop(403, "You do not have permission to Print.", "txtDocNo");
+  }
+
+  const report = await getStockTransferPrintService(
+    PstrCoID,
+    Number(PstrYear),
+    lkpBranch,
+    String(txtDocNo).trim()
+  );
+
+  if (report.lines.length === 0) {
+    return stop(404, "Stock Transfer not found", "txtDocNo");
+  }
+
+  return { ok: true, report, reportInfo: reportInfoOf(req.user.userId) };
+};
+
+export const printStockTransfer = async (
+  req: AuthenticatedRequest,
+  res: Response
+): Promise<Response> => {
+  try {
+    const prepared = await preparePrint(req);
+
+    if (!prepared.ok) {
+      return res.status(prepared.status).json(prepared.body);
+    }
+
+    return res.status(200).json({
+      success: true,
+      header: {
+        ...mapKeys(prepared.report.header, stockTransferPrintHeaderKeys),
+        txtReportInfo: prepared.reportInfo,
+      },
+      data: mapRows(prepared.report.lines, stockTransferPrintLineKeys),
     });
   } catch (error: unknown) {
     console.error("printStockTransfer error:", error);
@@ -765,6 +975,47 @@ export const printStockTransfer = async (
     return res.status(500).json({
       success: false,
       message: "Failed to load the Stock Transfer print",
+      error: messageOf(error, String(error)),
+    });
+  }
+};
+
+/* =========================================================
+   EXCEL STOCK TRANSFER (Download in the Print Preview, File Format Excel)
+   The same body and the same checks as Print; answers with the .xlsx file.
+========================================================= */
+
+export const downloadStockTransferExcel = async (
+  req: AuthenticatedRequest,
+  res: Response
+): Promise<Response> => {
+  try {
+    const prepared = await preparePrint(req);
+
+    if (!prepared.ok) {
+      return res.status(prepared.status).json(prepared.body);
+    }
+
+    const buffer = await buildStockTransferWorkbook({
+      report: prepared.report,
+      heading: SCREEN_NAME,
+      reportInfo: prepared.reportInfo,
+    });
+
+    res.setHeader(
+      "Content-Type",
+      "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+    );
+    res.setHeader("Content-Disposition", 'attachment; filename="StockTransfer.xlsx"');
+    res.setHeader("Access-Control-Expose-Headers", "Content-Disposition");
+
+    return res.status(200).send(buffer);
+  } catch (error: unknown) {
+    console.error("downloadStockTransferExcel error:", error);
+
+    return res.status(500).json({
+      success: false,
+      message: "Failed to create the Stock Transfer Excel file",
       error: messageOf(error, String(error)),
     });
   }

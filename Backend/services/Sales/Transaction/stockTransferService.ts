@@ -709,6 +709,103 @@ export async function deleteStockTransferService(p: {
 }
 
 /* =========================================================
+   DELETE ONE LINE (the x of a row of a saved transfer): the line goes from the
+   database at once - mode D1, both its rows (the OUT row in the From branch and the
+   IN row in the To branch). The last line of a transfer cannot be left on its own:
+   the whole transfer is deleted then (mode D), as the Delete button does. One
+   transaction. The lines are read first, for the audit note.
+========================================================= */
+
+export async function deleteStockTransferLineService(p: {
+  PstrCoID: string;
+  PstrYear: number;
+  lkpBranch: string;
+  txtDocNo: string;
+  // the line's Sl.# in the database (the Sl.# it had when the page loaded it)
+  txtSlNo: number;
+  PstrUserID: string;
+}): Promise<{
+  header: StockTransferHeader | null;
+  lines: StockTransferLine[];
+  line: StockTransferLine | null;
+  documentDeleted: boolean;
+}> {
+  const client: PoolClient = await pool.connect();
+
+  try {
+    await client.query("BEGIN");
+
+    const lines = await fetchCursor<StockTransferLine>(
+      client,
+      "GTL",
+      p.PstrCoID,
+      p.PstrYear,
+      p.lkpBranch,
+      p.txtDocNo
+    );
+
+    const header = await fetchCursor<StockTransferHeader>(
+      client,
+      "GHD",
+      p.PstrCoID,
+      p.PstrYear,
+      p.lkpBranch,
+      p.txtDocNo
+    );
+
+    const line = lines.find((entry) => Number(entry.fslno) === p.txtSlNo) ?? null;
+
+    if (line === null) {
+      await client.query("ROLLBACK");
+
+      return { header: header[0] ?? null, lines, line: null, documentDeleted: false };
+    }
+
+    const documentDeleted = lines.length === 1;
+
+    await callSpStockTransfer(client, {
+      strmode: documentDeleted ? "D" : "D1",
+      PstrCoID: p.PstrCoID,
+      PstrYear: p.PstrYear,
+      lkpBranch: p.lkpBranch,
+      txtDocNo: p.txtDocNo,
+      originalSlNo: p.txtSlNo,
+      PstrUserID: p.PstrUserID,
+    });
+
+    await client.query("COMMIT");
+
+    return { header: header[0] ?? null, lines, line, documentDeleted };
+  } catch (error: unknown) {
+    await client.query("ROLLBACK");
+    console.error("deleteStockTransferLineService error:", error);
+    throw error;
+  } finally {
+    client.release();
+  }
+}
+
+// the audit note of a deleted line (Modify): the document and the line
+export function buildStockTransferLineDeleteAuditNote(
+  lkpBranch: string,
+  txtDocNo: string,
+  lkpToBranch: string | null,
+  line: StockTransferLine,
+  linesBefore: number
+): string {
+  const head =
+    `DocType : ${DOC_TYPE} - DocNo : ${txtDocNo}; Branch : ${lkpBranch}` +
+    (lkpToBranch ? ` To : ${lkpToBranch}` : "") +
+    `; Lines : ${linesBefore} -> ${linesBefore - 1}`;
+
+  const deleted = `Sl.# ${Number(line.fslno)} '${line.fitemid}' Qty ${num(Number(line.fqtyout))} x ${num(Number(line.funitcost))} = ${num(Number(line.ftotalcost))}`;
+
+  const note = `${head}\nDeleted line: ${deleted}`;
+
+  return note.length > 2000 ? `${note.slice(0, 1996)}...` : note;
+}
+
+/* =========================================================
    POST (the Post button): dbo.sp_pagestocktransferpost, mode P.
    One transaction: the From branch's stock goes down, the To branch's up (at the
    weighted-average cost), both sets of rows are marked posted - or nothing

@@ -4,8 +4,13 @@ import { toast } from "react-toastify";
 import BeginningBalanceHeader from "../../../../components/Transaction/BeginningBalance/BeginningBalanceHeader";
 import BeginningBalanceTable from "../../../../components/Transaction/BeginningBalance/BeginningBalanceTable";
 import BeginningBalanceFooter from "../../../../components/Transaction/BeginningBalance/BeginningBalanceFooter";
-import BeginningBalancePrintPreview from "../../../../components/Transaction/BeginningBalance/BeginningBalancePrintPreview";
-import type { PrintReport } from "../../../../components/Transaction/BeginningBalance/BeginningBalancePrintReport";
+import ReportPreview from "../../../../components/common/ReportPreview";
+import { buildBeginningBalancePdf } from "../../../../components/Transaction/BeginningBalance/BeginningBalancePdf";
+import {
+  buildHtml,
+  printBeginningBalanceReport,
+  type PrintReport,
+} from "../../../../components/Transaction/BeginningBalance/BeginningBalancePrintReport";
 import {
   MENU_ID,
   api,
@@ -19,7 +24,7 @@ import {
 } from "../../../../components/Transaction/BeginningBalance/BeginningBalanceShared";
 import { useAltShortcuts } from "../../../../hooks/useAltShortcuts";
 import { useButtonPermissions } from "../../../../hooks/useButtonPermissions";
-import { useConfirm, DELETE_CONFIRM_MESSAGE } from "../../../../hooks/useConfirm";
+import { useConfirmModal } from "../../../../hooks/useConfirmModal";
 
 // ============================================================
 
@@ -37,11 +42,15 @@ const focusField = (field?: string) => {
 
 const round2 = (value: number) => Math.round(value * 100) / 100;
 
+// the title of the question windows
+const SCREEN_TITLE = "Beginning Balance";
+
 const BeginningBalance: React.FC = () => {
   const PstrYear = localStorage.getItem("PstrYear") ?? "";
 
   const perms = useButtonPermissions(MENU_ID);
-  const { confirm, confirmDialog } = useConfirm();
+  // the common themed question window (the same as the Purchase Invoice screen)
+  const { confirm, dialog: confirmDialog } = useConfirmModal();
 
   // the head accounts and the cost centers of the grid's boxes
   const { accountsByID, accountsByName, costCenters } =
@@ -331,7 +340,10 @@ const BeginningBalance: React.FC = () => {
       return;
     }
 
-    const shouldDelete = await confirm(DELETE_CONFIRM_MESSAGE, "Delete");
+    const shouldDelete = await confirm({
+      title: SCREEN_TITLE,
+      message: "Do you want to delete ?",
+    });
 
     if (!shouldDelete) return;
 
@@ -543,10 +555,22 @@ const BeginningBalance: React.FC = () => {
     setReloadKey((previous) => previous + 1);
   };
 
-  // the x of a row: the line leaves the grid (it is gone from the database when
-  // the balance is saved)
-  const handleRemoveRow = (index: number) => {
+  // the x of a row: asks first, then the line leaves the grid (it is gone from the
+  // database when the balance is saved) and the cursor goes back to its Account ID
+  const handleRemoveRow = async (index: number) => {
+    if (saving) return;
+
+    const shouldRemove = await confirm({
+      title: SCREEN_TITLE,
+      message: `Do you want to delete Line ${index + 1} ?`,
+    });
+
+    if (!shouldRemove) return;
+
     setRows((previous) => padRows(previous.filter((_, rowIndex) => rowIndex !== index)));
+
+    // after the grid has been drawn again
+    setTimeout(() => document.getElementById(`lkpAccountID-${index}`)?.focus(), 0);
   };
 
   // Alt+S Save, Alt+M Modify, Alt+D Delete, Alt+P Print, Alt+T Post, Alt+C Clear.
@@ -613,9 +637,11 @@ const BeginningBalance: React.FC = () => {
 
       {/* the Print Preview (after Print) */}
       {preview && (
-        <BeginningBalancePrintPreview
-          report={preview.report}
+        <ReportPreview
+          html={buildHtml(preview.report)}
           fileBase={preview.fileBase}
+          onPrint={() => printBeginningBalanceReport(preview.report)}
+          buildPdf={() => buildBeginningBalancePdf(preview.report)}
           fetchExcel={fetchExcel}
           onClose={() => setPreview(null)}
         />

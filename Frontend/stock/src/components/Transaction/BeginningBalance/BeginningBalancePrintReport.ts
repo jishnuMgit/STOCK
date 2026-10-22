@@ -3,7 +3,9 @@
 // branch, then Account ID / Account Name / C.C. ID / Debit / Credit, coloured by the
 // account level, and a Total row at the end. "Page x of y" top right and the report
 // info bottom right of every page.
-// Opens the browser print dialog from a hidden iframe (no pop-up to be blocked).
+// Printed through components/common/printHtml (a hidden iframe).
+
+import { cssStr, esc, printHtmlDocument } from "../../common/printHtml";
 
 // the level of the accounts the report is made for (the old strInputAccountLevel)
 export const INPUT_ACCOUNT_LEVEL = 4;
@@ -27,21 +29,6 @@ export type PrintReport = {
 };
 
 export const REPORT_HEADING = "Beginning Balance";
-
-const esc = (v: unknown) =>
-  String(v ?? "")
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;")
-    .replace(/"/g, "&quot;");
-
-// text placed inside a CSS string ("...") in the print stylesheet
-const cssStr = (v: unknown) =>
-  String(v ?? "")
-    .replace(/\\/g, "\\\\")
-    .replace(/"/g, '\\"')
-    .replace(/</g, "\\3C ")
-    .replace(/[\r\n]+/g, " ");
 
 // a row: 1,234.50 (the old {0:#,#0.00})
 export const formatAmount = (value: number) =>
@@ -105,7 +92,7 @@ export const buildHtml = (r: PrintReport) => {
     @bottom-right { content: "${cssStr(r.txtReportInfo)}"; font: 8pt "Times New Roman", serif; }
   }
   * { box-sizing: border-box; }
-  body { margin: 0; font: 10pt "Times New Roman", serif; color: #000;
+  body { margin: 0; font: 9pt "Times New Roman", serif; color: #000;
          -webkit-print-color-adjust: exact; print-color-adjust: exact; }
   table { width: 100%; border-collapse: collapse; table-layout: fixed;
           margin-left: 0; margin-right: 0; }
@@ -113,7 +100,7 @@ export const buildHtml = (r: PrintReport) => {
   tr { page-break-inside: avoid; }
   .co   { font-size: 14pt; text-align: center; height: 24px; }
   .head { font-size: 12pt; text-align: center; height: 24px; }
-  .br   { font-size: 10pt; text-align: left;   height: 24px; }
+  .br   { font-size: 9pt;  text-align: left;   height: 24px; }
   th { background: #eff3fa; border: 1px solid #c7d1e4; height: 24px;
        padding: 0 6px; font-weight: normal; text-align: left; }
   th.r { text-align: right; }
@@ -151,31 +138,5 @@ export const buildHtml = (r: PrintReport) => {
 </html>`;
 };
 
-export const printBeginningBalanceReport = (report: PrintReport): void => {
-  const iframe = document.createElement("iframe");
-  iframe.style.cssText =
-    "position:fixed;right:0;bottom:0;width:0;height:0;border:0;visibility:hidden";
-  document.body.appendChild(iframe);
-
-  const doc = iframe.contentDocument;
-  const win = iframe.contentWindow;
-  if (!doc || !win) {
-    iframe.remove();
-    throw new Error("Could not open the print view");
-  }
-
-  doc.open();
-  doc.write(buildHtml(report));
-  doc.close();
-
-  const cleanup = () => setTimeout(() => iframe.remove(), 500);
-  win.addEventListener("afterprint", cleanup);
-
-  // let the iframe lay out before printing
-  setTimeout(() => {
-    win.focus();
-    win.print();
-    // some browsers never fire afterprint: remove it anyway after a minute
-    setTimeout(() => iframe.remove(), 60000);
-  }, 250);
-};
+export const printBeginningBalanceReport = (report: PrintReport): void =>
+  printHtmlDocument(buildHtml(report));
