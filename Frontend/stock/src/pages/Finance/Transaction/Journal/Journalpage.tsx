@@ -25,7 +25,7 @@ import JournalBottomForm, {
 import JournalActions from "../../../../components/Transaction/Journal/JournalTable";
 import JournalForm from "../../../../components/Transaction/Journal/JournalForm";
 import JournalHeader from "../../../../components/Transaction/Journal/JournalHeader";
-import { ReceiptActions, ReceiptBottomForm, type ReceiptActionsRef } from "../../../../components/Transaction/Receipt/save/ReceitComp";
+import { ReceiptActions, ReceiptBottomForm, type ReceiptActionsRef } from "../../../../components/Transaction/Receipt/save/ReceiptComp";
 
 /* =========================================================
    TYPES

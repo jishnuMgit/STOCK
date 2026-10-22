@@ -2962,7 +2962,7 @@ export const ReceiptTable = forwardRef<ReceiptTableRef, ReceiptTableProps>(
 
           <thead>
             <tr>
-              <th id="txtSlNo">Sl.</th>
+              <th id="txtSlNo">Line</th>
 
               <th id="lkpAccountID">
                 <button type="button" onClick={() => handleSort("accountId")}>
