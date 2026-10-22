@@ -9,6 +9,10 @@ import {
   getItemsByName,
   getItemList,
 } from "../../../services/Purchase/Report/RptItemListService.js";
+import {
+  buildItemListWorkbook,
+  type ItemListReport,
+} from "../../../services/Purchase/Report/RptItemListExcel.js";
 import { getCompanyName } from "../../../utils/companyName.js";
 
 type Session = { coId: string; userId: string; coName: string };
@@ -123,6 +127,123 @@ export const getLookups = async (req: AuthenticatedRequest, res: Response) => {
 };
 
 // ------------------------------------------------------------
+// VB ValidateMe + the data of the report. Used by Print and Excel.
+// ------------------------------------------------------------
+type Prepared = { report: ItemListReport & { userId: string }; fileBase: string };
+
+const prepareReport = async (req: AuthenticatedRequest): Promise<Prepared> => {
+  const { coId, userId, coName: sessionCoName } = getSession(req);
+  if (!coId) throw new ApiError(401, "Company not found in session");
+  if (!userId) throw new ApiError(401, "User not found in session");
+
+  const body = req.body ?? {};
+  const allBranches = body.allBranches === true;
+  const branchId = String(body.branchId ?? "").trim();
+  const allGroups = body.allGroups !== false; // default: all groups
+  const groupId = String(body.groupId ?? "").trim();
+  const itemMode = Number(body.itemMode ?? 2);
+  const itemId = String(body.itemId ?? "").trim();
+  const fromItemId = String(body.fromItemId ?? "").trim();
+  const toItemId = String(body.toItemId ?? "").trim();
+  const status = Number(body.status ?? 0);
+  const salesBelowCost = body.salesBelowCost === true;
+
+  if (![0, 1, 2].includes(itemMode)) {
+    throw new ApiError(400, "Invalid item selection");
+  }
+  if (![0, 1, 2].includes(status)) {
+    throw new ApiError(400, "Invalid status");
+  }
+
+  if (!allBranches && !branchId) {
+    throw new ApiError(400, "Please select 'Branch'");
+  }
+  if (!allGroups && !groupId) {
+    throw new ApiError(400, "Please select 'Item Group'");
+  }
+  if (itemMode === 0 && !itemId) {
+    throw new ApiError(400, "Please select 'Item ID'");
+  }
+  if (itemMode === 1) {
+    if (!fromItemId) throw new ApiError(400, "Please select 'Item ID From'");
+    if (!toItemId) throw new ApiError(400, "Please select 'Item ID To'");
+  }
+
+  // a branch may only be one the user has
+  let branchName = "";
+  if (!allBranches) {
+    const branches = await getUserBranches(coId, userId);
+    const branch = branches.find((b) => b.brId === branchId);
+    if (!branch) throw new ApiError(403, "This branch is not allowed");
+    branchName = branch.brName;
+  }
+
+  // ---- the report -------------------------------------------
+  const rows = await getItemList({
+    coId,
+    allBranches,
+    branchId,
+    allGroups,
+    groupId,
+    itemMode: itemMode as 0 | 1 | 2,
+    itemId,
+    fromItemId,
+    toItemId,
+    status: status as 0 | 1 | 2,
+    salesBelowCost,
+  });
+
+  if (rows.length === 0) throw new ApiError(404, "No records found");
+
+  const coName = sessionCoName || (await getCompanyName(coId));
+
+  // VB: All Branch -> rptItemListAllBrRpt
+  //     One Branch + Active -> rptItemListRpt (grouped by item group)
+  //     One Branch + Inactive / Hide -> rptItemListStatusRpt
+  const variant = allBranches ? "allBranch" : status === 0 ? "branch" : "status";
+
+  const heading =
+    status === 1
+      ? "Inactive Item List"
+      : status === 2
+        ? "Hidden Item List"
+        : "Item List";
+
+  // date + time, so a new download never has the name of a file that is
+  // still open (Acrobat / Excel lock the file)
+  const d = new Date();
+  const stamp = `${d.getFullYear()}${pad(d.getMonth() + 1)}${pad(d.getDate())}_${pad(d.getHours())}${pad(d.getMinutes())}${pad(d.getSeconds())}`;
+  const branchPart = allBranches
+    ? "AllBranches"
+    : branchId.replace(/[^A-Za-z0-9_-]/g, "_");
+
+  return {
+    report: {
+      variant,
+      coName,
+      heading,
+      branch: allBranches ? "" : `Branch : ${branchName}`,
+      reportInfo: reportInfo(userId),
+      userId,
+      rows,
+    },
+    fileBase: `${heading.replace(/\s+/g, "")}_${branchPart}_${stamp}`,
+  };
+};
+
+const sendError = (res: Response, error: unknown, what: string) => {
+  if (error instanceof ApiError) {
+    return res
+      .status(error.status)
+      .json({ success: false, message: error.message });
+  }
+  console.error(`rptItemList ${what} error:`, error);
+  return res
+    .status(500)
+    .json({ success: false, message: "Failed to prepare the report" });
+};
+
+// ------------------------------------------------------------
 // POST /api/RptItemList/print
 // body: { allBranches: boolean, branchId?: string,
 //         allGroups: boolean, groupId?: string,
@@ -130,111 +251,36 @@ export const getLookups = async (req: AuthenticatedRequest, res: Response) => {
 //         itemId?, fromItemId?, toItemId?,
 //         status: 0 | 1 | 2     (0 active, 1 inactive, 2 hide),
 //         salesBelowCost: boolean }
-// -> everything the printed page needs
+// -> everything the preview / printer / PDF needs
 // ------------------------------------------------------------
 export const getPrintData = async (req: AuthenticatedRequest, res: Response) => {
-  const { coId, userId, coName: sessionCoName } = getSession(req);
-  if (!coId) return noCompany(res);
-  if (!userId) return noUser(res);
-
   try {
-    // ---- VB ValidateMe ----------------------------------------
-    const body = req.body ?? {};
-    const allBranches = body.allBranches === true;
-    const branchId = String(body.branchId ?? "").trim();
-    const allGroups = body.allGroups !== false; // default: all groups
-    const groupId = String(body.groupId ?? "").trim();
-    const itemMode = Number(body.itemMode ?? 2);
-    const itemId = String(body.itemId ?? "").trim();
-    const fromItemId = String(body.fromItemId ?? "").trim();
-    const toItemId = String(body.toItemId ?? "").trim();
-    const status = Number(body.status ?? 0);
-    const salesBelowCost = body.salesBelowCost === true;
-
-    if (![0, 1, 2].includes(itemMode)) {
-      throw new ApiError(400, "Invalid item selection");
-    }
-    if (![0, 1, 2].includes(status)) {
-      throw new ApiError(400, "Invalid status");
-    }
-
-    if (!allBranches && !branchId) {
-      throw new ApiError(400, "Please select 'Branch'");
-    }
-    if (!allGroups && !groupId) {
-      throw new ApiError(400, "Please select 'Item Group'");
-    }
-    if (itemMode === 0 && !itemId) {
-      throw new ApiError(400, "Please select 'Item ID'");
-    }
-    if (itemMode === 1) {
-      if (!fromItemId) throw new ApiError(400, "Please select 'Item ID From'");
-      if (!toItemId) throw new ApiError(400, "Please select 'Item ID To'");
-    }
-
-    // a branch may only be one the user has
-    let branchName = "";
-    if (!allBranches) {
-      const branches = await getUserBranches(coId, userId);
-      const branch = branches.find((b) => b.brId === branchId);
-      if (!branch) throw new ApiError(403, "This branch is not allowed");
-      branchName = branch.brName;
-    }
-
-    // ---- the report -------------------------------------------
-    const rows = await getItemList({
-      coId,
-      allBranches,
-      branchId,
-      allGroups,
-      groupId,
-      itemMode: itemMode as 0 | 1 | 2,
-      itemId,
-      fromItemId,
-      toItemId,
-      status: status as 0 | 1 | 2,
-      salesBelowCost,
-    });
-
-    if (rows.length === 0) {
-      throw new ApiError(404, "No records found");
-    }
-
-    const coName = sessionCoName || (await getCompanyName(coId));
-
-    // VB: All Branch -> rptItemListAllBrRpt
-    //     One Branch + Active -> rptItemListRpt (grouped by item group)
-    //     One Branch + Inactive / Hide -> rptItemListStatusRpt
-    const variant = allBranches ? "allBranch" : status === 0 ? "branch" : "status";
-
-    const heading =
-      status === 1
-        ? "Inactive Item List"
-        : status === 2
-          ? "Hidden Item List"
-          : "Item List";
-
-    return res.status(200).json({
-      success: true,
-      report: {
-        variant,
-        coName,
-        heading,
-        branch: allBranches ? "" : `Branch : ${branchName}`,
-        reportInfo: reportInfo(userId),
-        userId,
-        rows,
-      },
-    });
+    const { report, fileBase } = await prepareReport(req);
+    return res.status(200).json({ success: true, report, fileBase });
   } catch (error) {
-    if (error instanceof ApiError) {
-      return res
-        .status(error.status)
-        .json({ success: false, message: error.message });
-    }
-    console.error("rptItemList getPrintData error:", error);
-    return res
-      .status(500)
-      .json({ success: false, message: "Failed to prepare the report" });
+    return sendError(res, error, "getPrintData");
+  }
+};
+
+// ------------------------------------------------------------
+// POST /api/RptItemList/excel  (same body as /print) -> the .xlsx file
+// ------------------------------------------------------------
+export const getExcel = async (req: AuthenticatedRequest, res: Response) => {
+  try {
+    const { report, fileBase } = await prepareReport(req);
+    const buffer = await buildItemListWorkbook(report);
+
+    res.setHeader(
+      "Content-Type",
+      "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+    );
+    res.setHeader(
+      "Content-Disposition",
+      `attachment; filename="${fileBase}.xlsx"`,
+    );
+    res.setHeader("Access-Control-Expose-Headers", "Content-Disposition");
+    return res.status(200).send(buffer);
+  } catch (error) {
+    return sendError(res, error, "getExcel");
   }
 };

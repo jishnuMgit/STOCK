@@ -111,7 +111,9 @@ const prepareReport = async (req: AuthenticatedRequest): Promise<Prepared> => {
   const coName = sessionCoName || (await getCompanyName(coId));
 
   const d = new Date();
-  const stamp = `${d.getFullYear()}${pad(d.getMonth() + 1)}${pad(d.getDate())}`;
+  // date + time, so a new download never has the name of a file that is
+  // still open (Acrobat / Excel lock the file)
+  const stamp = `${d.getFullYear()}${pad(d.getMonth() + 1)}${pad(d.getDate())}_${pad(d.getHours())}${pad(d.getMinutes())}${pad(d.getSeconds())}`;
 
   return {
     report: {

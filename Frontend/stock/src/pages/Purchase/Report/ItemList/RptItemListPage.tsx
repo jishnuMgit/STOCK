@@ -5,7 +5,13 @@ import Select, {
   type OptionProps,
 } from "react-select";
 import { toast } from "react-toastify";
-import { printItemListReport } from "./printItemListReport";
+import { buildItemListPdf } from "./downloadItemListPdf";
+import { saveFile } from "./saveFile";
+import {
+  buildHtml,
+  printItemListReport,
+  type PrintReport,
+} from "./printItemListReport";
 
 type Option = { value: string; label: string };
 
@@ -21,6 +27,19 @@ type RadioOptionProps = {
 type Branch = { brId: string; brName: string };
 type Group = { groupId: string; groupName: string };
 type Item = { itemId: string; itemName: string; groupId?: string };
+
+type ItemListRequest = {
+  allBranches: boolean;
+  branchId: string;
+  allGroups: boolean;
+  groupId: string;
+  itemMode: number;
+  itemId: string;
+  fromItemId: string;
+  toItemId: string;
+  status: number;
+  salesBelowCost: boolean;
+};
 
 const API = `${import.meta.env.VITE_API_URL}/RptItemList`;
 
@@ -284,6 +303,17 @@ const RptItemListPage: React.FC<RptItemListPageProps> = ({ onClose }) => {
   const [loading, setLoading] = useState(true);
   const [printing, setPrinting] = useState(false);
 
+  // rdgReportFile (inside the Print Preview): what Download saves
+  const [reportFile, setReportFile] = useState("Excel"); // "Excel" | "PDF"
+
+  // print preview: shown after Print. Print there sends it to the printer,
+  // Download saves the "Report File" choice
+  const [preview, setPreview] = useState<{
+    report: PrintReport;
+    fileBase: string;
+    request: ItemListRequest;
+  } | null>(null);
+
   const [branchMode, setBranchMode] = useState("One Branch"); // rdgBranch
   const [branch, setBranch] = useState<ItemOption | null>(null); // lkpBranch
 
@@ -516,59 +546,98 @@ const RptItemListPage: React.FC<RptItemListPageProps> = ({ onClose }) => {
   }, []);
 
   // ------------------------------------------------------------
-  // PRINT (VB cmdPrint_Click + ValidateMe)
+  // VB ValidateMe: returns the request, or null after showing the message
   // ------------------------------------------------------------
-  const handlePrint = async () => {
-    if (printing) return;
-
+  const buildRequest = (): ItemListRequest | null => {
     const oneBranch = branchMode === "One Branch";
     const oneGroup = groupMode === "One Item Group";
 
     if (oneBranch && !branch) {
       toast.warning("Please select 'Branch'", { toastId: "il-branch" });
       document.getElementById("lkpBranch")?.focus();
-      return;
+      return null;
     }
     if (oneGroup && !groupId) {
       toast.warning("Please select 'Item Group'", { toastId: "il-group" });
       document.getElementById("lkpItemGroupID")?.focus();
-      return;
+      return null;
     }
     if (itemMode === "One Item" && !itemId) {
       toast.warning("Please select 'Item ID'", { toastId: "il-item" });
       document.getElementById("lkpItemID")?.focus();
-      return;
+      return null;
     }
     if (itemMode === "Range Item") {
       if (!fromItem) {
         toast.warning("Please select 'Item ID From'", { toastId: "il-from" });
         document.getElementById("lkpFromItem")?.focus();
-        return;
+        return null;
       }
       if (!toItem) {
         toast.warning("Please select 'Item ID To'", { toastId: "il-to" });
         document.getElementById("lkpToItem")?.focus();
-        return;
+        return null;
       }
     }
+
+    return {
+      allBranches: !oneBranch,
+      branchId: oneBranch ? (branch?.value ?? "") : "",
+      allGroups: !oneGroup,
+      groupId: oneGroup ? (groupId ?? "") : "",
+      itemMode: { "One Item": 0, "Range Item": 1, "All Item": 2 }[itemMode] ?? 2,
+      itemId: itemMode === "One Item" ? (itemId ?? "") : "",
+      fromItemId: itemMode === "Range Item" ? (fromItem?.value ?? "") : "",
+      toItemId: itemMode === "Range Item" ? (toItem?.value ?? "") : "",
+      status: { Active: 0, Inactive: 1, Hide: 2 }[statusMode] ?? 0,
+      salesBelowCost,
+    };
+  };
+
+  // gets the .xlsx made by the server (null after an error message)
+  const fetchExcel = async (request: ItemListRequest): Promise<Blob | null> => {
+    const res = await apiFetch(`${API}/excel`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(request),
+    });
+
+    // an error comes back as JSON, the file as a blob
+    if (!res.ok) {
+      let message = "Could not create the Excel file";
+      try {
+        const data = await res.json();
+        message = data.message || message;
+      } catch {
+        // not JSON: the server has no /excel route (404) or crashed (500)
+        message =
+          res.status === 404
+            ? "Excel is not available: the /excel route was not found (404)"
+            : `Could not create the Excel file (error ${res.status})`;
+      }
+      toast.error(message);
+      return null;
+    }
+
+    return res.blob();
+  };
+
+  // ------------------------------------------------------------
+  // PRINT (VB cmdPrint_Click): validates, gets the report and shows the
+  // Print Preview (Print = printer, Download = Excel / PDF file)
+  // ------------------------------------------------------------
+  const handlePrint = async () => {
+    if (printing || preview) return;
+
+    const request = buildRequest();
+    if (!request) return;
 
     setPrinting(true);
     try {
       const res = await apiFetch(`${API}/print`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          allBranches: !oneBranch,
-          branchId: oneBranch ? branch?.value : "",
-          allGroups: !oneGroup,
-          groupId: oneGroup ? groupId : "",
-          itemMode: { "One Item": 0, "Range Item": 1, "All Item": 2 }[itemMode],
-          itemId: itemMode === "One Item" ? itemId : "",
-          fromItemId: itemMode === "Range Item" ? fromItem?.value : "",
-          toItemId: itemMode === "Range Item" ? toItem?.value : "",
-          status: { Active: 0, Inactive: 1, Hide: 2 }[statusMode],
-          salesBelowCost,
-        }),
+        body: JSON.stringify(request),
       });
       const data = await res.json();
 
@@ -577,13 +646,68 @@ const RptItemListPage: React.FC<RptItemListPageProps> = ({ onClose }) => {
         return;
       }
 
-      printItemListReport(data.report);
+      setPreview({ report: data.report, fileBase: data.fileBase, request });
     } catch {
       toast.error("Could not prepare the report");
     } finally {
       setPrinting(false);
     }
   };
+
+  // Print in the preview: the browser print dialog (printer)
+  const handlePreviewPrint = () => {
+    if (!preview || printing) return;
+    try {
+      printItemListReport(preview.report);
+    } catch {
+      toast.error("Could not open the print view");
+    }
+  };
+
+  // Download in the preview: saves the chosen file ("Save as" window, so the
+  // browser does not open it afterwards)
+  // a double click must not start two saves (state is not updated yet on the
+  // second click, so a ref is used)
+  const downloading = useRef(false);
+
+  const handlePreviewOk = async () => {
+    if (!preview || printing || downloading.current) return;
+    downloading.current = true;
+    const { report, fileBase, request } = preview;
+    const asPdf = reportFile === "PDF";
+
+    setPrinting(true);
+    try {
+      const blob = asPdf ? buildItemListPdf(report) : await fetchExcel(request);
+      if (!blob) return; // the error is already shown
+
+      const kind = asPdf ? "pdf" : "xlsx";
+      const saved = await saveFile(blob, `${fileBase}.${kind}`, kind);
+      if (saved) {
+        setPreview(null); // cancelled "Save as": the preview stays
+        toast.success(asPdf ? "PDF file downloaded" : "Excel file downloaded");
+      }
+    } catch {
+      toast.error(
+        asPdf ? "Could not create the PDF file" : "Could not create the Excel file",
+      );
+    } finally {
+      downloading.current = false;
+      setPrinting(false);
+    }
+  };
+
+  const previewHtml = useMemo(
+    () =>
+      preview
+        ? // 40px left / 20px right margin for the preview only
+          buildHtml(preview.report).replace(
+            "</head>",
+            "<style>body{padding-left:40px;padding-right:20px}</style></head>",
+          )
+        : "",
+    [preview],
+  );
 
   const handleClose = () => {
     setBranchMode("One Branch");
@@ -596,6 +720,8 @@ const RptItemListPage: React.FC<RptItemListPageProps> = ({ onClose }) => {
     setItemId(null);
     setFromItem(null);
     setToItem(null);
+    setReportFile("Excel");
+    setPreview(null);
     if (onClose) onClose();
     else window.history.back();
   };
@@ -604,6 +730,10 @@ const RptItemListPage: React.FC<RptItemListPageProps> = ({ onClose }) => {
   // browser). Re-attached every render so it always sees the latest state.
   useEffect(() => {
     const onKeyDown = (event: KeyboardEvent) => {
+      if (preview) {
+        if (event.key === "Escape") setPreview(null);
+        return;
+      }
       if (!event.altKey || event.ctrlKey || event.metaKey) return;
 
       if (event.code === "KeyP") {
@@ -733,60 +863,65 @@ const RptItemListPage: React.FC<RptItemListPageProps> = ({ onClose }) => {
                   }}
                 />
               </RadioPanel>
-              <div className="pt-3">
-                <div
-                  id="itemGroupLookupRow"
-                  className="grid grid-cols-[135px_1fr] gap-2"
-                >
-                  <Select
-                    inputId="lkpItemGroupID"
-                    instanceId="lkpItemGroupID"
-                    options={groupIdOptions}
-                    value={selectedGroupId}
-                    onChange={(option) => {
-                      setGroupId(option?.value ?? null);
-                      advanceAfterPick();
-                    }}
-                    onKeyDown={(event) =>
-                      handleAdvanceOnEnter(event, "lkpItemGroupID")
-                    }
-                    isDisabled={groupDisabled || loading}
-                    {...selectProps}
-                    classNames={idClassNames}
-                    styles={{
-                      menu: (base) => ({
-                        ...base,
-                        width: groupRowWidth ?? 480,
-                      }),
-                    }}
-                    onMenuOpen={() =>
-                      measureLookupRow("itemGroupLookupRow", setGroupRowWidth)
-                    }
-                    components={groupIdComponents}
-                    filterOption={filterItem}
-                    isSearchable
-                  />
-                  <Select
-                    inputId="lkpItemGroupName"
-                    instanceId="lkpItemGroupName"
-                    options={groupNameOptions}
-                    value={selectedGroupName}
-                    onChange={(option) => {
-                      setGroupId(option?.value ?? null);
-                      advanceAfterPick();
-                    }}
-                    onKeyDown={(event) =>
-                      handleAdvanceOnEnter(event, "lkpItemGroupName")
-                    }
-                    isDisabled={groupDisabled || loading}
-                    {...selectProps}
-                    classNames={nameClassNames}
-                    components={groupNameComponents}
-                    filterOption={filterItem}
-                    isSearchable
-                  />
+              {/* hidden while All Item Group is selected (empty cell keeps the grid) */}
+              {groupMode === "One Item Group" ? (
+                <div className="pt-3">
+                  <div
+                    id="itemGroupLookupRow"
+                    className="grid grid-cols-[135px_1fr] gap-2"
+                  >
+                    <Select
+                      inputId="lkpItemGroupID"
+                      instanceId="lkpItemGroupID"
+                      options={groupIdOptions}
+                      value={selectedGroupId}
+                      onChange={(option) => {
+                        setGroupId(option?.value ?? null);
+                        advanceAfterPick();
+                      }}
+                      onKeyDown={(event) =>
+                        handleAdvanceOnEnter(event, "lkpItemGroupID")
+                      }
+                      isDisabled={groupDisabled || loading}
+                      {...selectProps}
+                      classNames={idClassNames}
+                      styles={{
+                        menu: (base) => ({
+                          ...base,
+                          width: groupRowWidth ?? 480,
+                        }),
+                      }}
+                      onMenuOpen={() =>
+                        measureLookupRow("itemGroupLookupRow", setGroupRowWidth)
+                      }
+                      components={groupIdComponents}
+                      filterOption={filterItem}
+                      isSearchable
+                    />
+                    <Select
+                      inputId="lkpItemGroupName"
+                      instanceId="lkpItemGroupName"
+                      options={groupNameOptions}
+                      value={selectedGroupName}
+                      onChange={(option) => {
+                        setGroupId(option?.value ?? null);
+                        advanceAfterPick();
+                      }}
+                      onKeyDown={(event) =>
+                        handleAdvanceOnEnter(event, "lkpItemGroupName")
+                      }
+                      isDisabled={groupDisabled || loading}
+                      {...selectProps}
+                      classNames={nameClassNames}
+                      components={groupNameComponents}
+                      filterOption={filterItem}
+                      isSearchable
+                    />
+                  </div>
                 </div>
-              </div>
+              ) : (
+                <div />
+              )}
               <div className="pt-3 max-[760px]:col-span-2 max-[760px]:pt-0">
                 <label
                   htmlFor="chkSalesBelowCost"
@@ -961,6 +1096,80 @@ const RptItemListPage: React.FC<RptItemListPageProps> = ({ onClose }) => {
           </section>
         </main>
       </div>
+
+      {/* Print preview */}
+      {preview && (
+        <div className="fixed inset-0 z-[99999] flex items-center justify-center bg-black/40 p-4">
+          <div className="flex h-[90vh] w-full max-w-300 flex-col overflow-hidden border border-gray-400 bg-white shadow-xl">
+            <header className="flex h-7.5 shrink-0 items-center bg-[#9fdfbc] pl-3 text-[17px] font-semibold text-slate-700">
+              Print Preview
+            </header>
+
+            <iframe
+              title="Print Preview"
+              srcDoc={previewHtml}
+              className="min-h-0 flex-1 border-0 bg-white"
+            />
+
+            <footer className="flex shrink-0 flex-wrap items-center justify-center gap-4 border-t border-[#e0e5ea] px-3 py-4">
+              <div className="flex gap-3">
+                <button
+                  id="btnPreviewPrint"
+                  type="button"
+                  onClick={handlePreviewPrint}
+                  disabled={printing}
+                  className="btn-style focus-visible:ring-2 focus-visible:ring-[#64d96e] disabled:cursor-not-allowed disabled:opacity-40"
+                >
+                  <u>P</u>rint
+                </button>
+                <button
+                  id="btnPreviewOk"
+                  type="button"
+                  autoFocus
+                  onClick={handlePreviewOk}
+                  disabled={printing}
+                  className="btn-style focus-visible:ring-2 focus-visible:ring-[#64d96e] disabled:cursor-not-allowed disabled:opacity-40"
+                >
+                  <u>D</u>ownload
+                </button>
+                <button
+                  id="btnPreviewCancel"
+                  type="button"
+                  onClick={() => setPreview(null)}
+                  disabled={printing}
+                  className="btn-style focus-visible:ring-2 focus-visible:ring-[#64d96e] disabled:cursor-not-allowed disabled:opacity-40"
+                >
+                  <u>C</u>lose
+                </button>
+              </div>
+
+              {/* Report File: what Download saves */}
+              <div
+                id="rdgReportFile"
+                className="relative flex items-center gap-5 border border-[#e0e5ea] bg-white px-3.5 py-2.5"
+              >
+                <span className="absolute -top-2.5 left-2.5 bg-white px-1 text-[13px] text-[#405066]">
+                  Report File
+                </span>
+                <CustomRadio
+                  name="rdgReportFile"
+                  value="Excel"
+                  label="Excel"
+                  checked={reportFile === "Excel"}
+                  onChange={() => setReportFile("Excel")}
+                />
+                <CustomRadio
+                  name="rdgReportFile"
+                  value="PDF"
+                  label="PDF"
+                  checked={reportFile === "PDF"}
+                  onChange={() => setReportFile("PDF")}
+                />
+              </div>
+            </footer>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

@@ -1,5 +1,5 @@
 // downloadSalesPriceListPdf.ts
-// The Price List as a PDF download: A4 portrait, company name, heading,
+// The Price List as a PDF (returned as a Blob; saveFile.ts saves it): A4 portrait, company name, heading,
 // branch, column labels repeated on every page, items grouped by item group,
 // page number top right and the report info bottom right of every page.
 // Needs:  npm i jspdf jspdf-autotable
@@ -27,10 +27,7 @@ const PAGE_W = 210; // A4 portrait, mm
 const MARGIN = { top: 12, right: 10, bottom: 12, left: 15 };
 const TABLE_TOP = 38; // below company / heading / branch
 
-export const downloadSalesPriceListPdf = (
-  report: PriceListReport,
-  fileName: string,
-): void => {
+export const buildSalesPriceListPdf = (report: PriceListReport): Blob => {
   const doc = new jsPDF({ orientation: "portrait", unit: "mm", format: "a4" });
   const usable = PAGE_W - MARGIN.left - MARGIN.right;
 
@@ -137,5 +134,5 @@ export const downloadSalesPriceListPdf = (
     });
   }
 
-  doc.save(fileName);
+  return doc.output("blob");
 };
