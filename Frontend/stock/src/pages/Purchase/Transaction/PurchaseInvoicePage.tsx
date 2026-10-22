@@ -343,6 +343,22 @@ const PurchaseInvoicePage: React.FC = () => {
     [currencyRate],
   );
 
+  /* remove one entered item; keep the grid at least ROW_COUNT rows long */
+  const handleRowDelete = useCallback(
+    (index: number) => {
+      if (posted) {
+        toast.warning("Posted Purchase Invoice cannot be modified");
+        return;
+      }
+      setRows((prev) => {
+        const next = prev.filter((_, i) => i !== index);
+        while (next.length < ROW_COUNT) next.push(emptyRow());
+        return next;
+      });
+    },
+    [posted],
+  );
+
   /* VB cmdAdd_Click: refresh the combos, then select the saved supplier */
   const handleMiscSupplierSaved = useCallback(
     async (d: MiscSupplierData) => {
@@ -574,9 +590,10 @@ const PurchaseInvoicePage: React.FC = () => {
       <PurchaseTable
         rows={rows}
         onRowChange={handleRowChange}
+        onRowDelete={handleRowDelete}
+        disabled={posted}
         lookups={itemLookups}
       />
-
       <PurchaseFooter
         note={header.note}
         onNoteChange={(v) => handleHeaderChange("note", v)}
