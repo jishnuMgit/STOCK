@@ -7,7 +7,9 @@
 //               Item ID, Item Name, Unit, Packing, Stock
 //   "allBranch" all branches - A4 portrait:
 //               Item ID, Item Name, Unit, Packing
-// Opens the browser print dialog from a hidden iframe (no pop-up to block).
+// buildHtml is used by the print preview; printItemListReport sends the report
+// to the printer (browser print dialog, hidden iframe - no pop-up to block).
+// COLS is shared with the Excel / PDF files so all of them have the same columns.
 
 export type Variant = "branch" | "status" | "allBranch";
 
@@ -61,7 +63,7 @@ const fixed = (v: number | null, decimals: number) =>
 const whole = (v: number | null) =>
   v == null ? "" : v.toLocaleString("en-US", { maximumFractionDigits: 0 });
 
-type Col = {
+export type Col = {
   label: string;
   width: number; // VB width (1/100 inch) - only the proportions matter
   right?: boolean;
@@ -74,7 +76,7 @@ const idName: Col[] = [
   { label: "Unit", width: 50, get: (r) => r.unit },
 ];
 
-const COLS: Record<Variant, Col[]> = {
+export const COLS: Record<Variant, Col[]> = {
   // rptItemListRpt (1025 wide, landscape)
   branch: [
     ...idName,
@@ -125,7 +127,7 @@ const groupedBody = (cols: Col[], rows: ItemRow[]) => {
   return out.join("\n");
 };
 
-const buildHtml = (r: PrintReport) => {
+export const buildHtml = (r: PrintReport) => {
   const cols = COLS[r.variant];
   const total = cols.reduce((t, c) => t + c.width, 0);
   const landscape = r.variant === "branch";

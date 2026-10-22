@@ -442,6 +442,7 @@ export const itemListKeys = {
   fitemid: "itemID",
   fitemname: "itemName",
   fbrid: "branchID",
+  funit: "unit",
   fpacking: "packing",
   fitemgroupid: "itemGroupID",
   fallowsalebelowcost: "allowSaleBelowCost",

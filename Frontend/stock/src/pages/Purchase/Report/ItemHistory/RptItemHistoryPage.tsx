@@ -10,7 +10,13 @@ import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
 import { DatePicker } from "@mui/x-date-pickers/DatePicker";
 import dayjs from "dayjs";
 import customParseFormat from "dayjs/plugin/customParseFormat";
-import { printItemHistoryReport } from "./printItemHistoryReport";
+import { buildItemHistoryPdf } from "./downloadItemHistoryPdf";
+import { saveFile } from "./saveFile";
+import {
+  buildHtml,
+  printItemHistoryReport,
+  type PrintReport,
+} from "./printItemHistoryReport";
 
 dayjs.extend(customParseFormat);
 
@@ -38,6 +44,13 @@ type Item = {
 const DATE_FORMAT = "DD-MM-YYYY";
 
 const API = `${import.meta.env.VITE_API_URL}/RptItemHistory`;
+
+type ItemHistoryRequest = {
+  allBranches: boolean;
+  branchId: string;
+  itemId: string;
+  asOnDate: string; // DD/MM/YYYY
+};
 
 // Sends the login cookie, and the company / user kept at sign-in as a stopgap
 // (the server uses its session first and only falls back to these).
@@ -230,9 +243,8 @@ const CustomRadio: React.FC<RadioOptionProps> = ({
   onChange,
 }) => (
   <label
-    className={`flex items-center gap-2.5 whitespace-nowrap select-none ${
-      disabled ? "cursor-not-allowed opacity-50" : "cursor-pointer"
-    }`}
+    className={`flex items-center gap-2.5 whitespace-nowrap select-none ${disabled ? "cursor-not-allowed opacity-50" : "cursor-pointer"
+      }`}
   >
     <input
       type="radio"
@@ -244,14 +256,12 @@ const CustomRadio: React.FC<RadioOptionProps> = ({
       className="sr-only"
     />
     <span
-      className={`flex h-[19px] w-[19px] shrink-0 items-center justify-center rounded-full border bg-white ${
-        checked ? "border-[#64d96e]" : "border-[#cbd3dc]"
-      }`}
+      className={`flex h-[19px] w-[19px] shrink-0 items-center justify-center rounded-full border bg-white ${checked ? "border-[#64d96e]" : "border-[#cbd3dc]"
+        }`}
     >
       <span
-        className={`h-2.5 w-2.5 rounded-full bg-[#64d96e] ${
-          checked ? "opacity-100" : "opacity-0"
-        }`}
+        className={`h-2.5 w-2.5 rounded-full bg-[#64d96e] ${checked ? "opacity-100" : "opacity-0"
+          }`}
       />
     </span>
     <span className="text-[12px] font-normal text-[#35445a]">{label}</span>
@@ -374,6 +384,17 @@ const RptItemHistoryPage: React.FC<RptItemHistoryPageProps> = ({ onClose }) => {
   const [loading, setLoading] = useState(true);
   const [printing, setPrinting] = useState(false);
 
+  // rdgReportFile (inside the Print Preview): what Download saves
+  const [reportFile, setReportFile] = useState("Excel"); // "Excel" | "PDF"
+
+  // print preview: shown after Print. Print there sends it to the printer,
+  // Download saves the "Report File" choice
+  const [preview, setPreview] = useState<{
+    report: PrintReport;
+    fileBase: string;
+    request: ItemHistoryRequest;
+  } | null>(null);
+
   // lkpItemID list is as wide as the whole Item row (ID box + gap + name box),
   // so its Item Name column lines up with the name box
   const itemRowRef = useRef<HTMLDivElement>(null);
@@ -384,24 +405,26 @@ const RptItemHistoryPage: React.FC<RptItemHistoryPageProps> = ({ onClose }) => {
   //  - list open   -> Enter picks the highlighted row, then go to the next field
   const pendingAdvance = useRef<NavKey | null>(null);
 
-  const advanceOnEnter =
-    (key: NavKey) => (event: React.KeyboardEvent<HTMLDivElement>) => {
-      if (event.key !== "Enter") return;
+  const advanceOnEnter = (
+    key: NavKey,
+    event: React.KeyboardEvent<HTMLDivElement>,
+  ) => {
+    if (event.key !== "Enter") return;
 
-      const open =
-        (event.target as HTMLElement).getAttribute("aria-expanded") === "true";
+    const open =
+      (event.target as HTMLElement).getAttribute("aria-expanded") === "true";
 
-      if (!open) {
-        event.preventDefault();
-        focusNext(key);
-        return;
-      }
+    if (!open) {
+      event.preventDefault();
+      focusNext(key);
+      return;
+    }
 
-      pendingAdvance.current = key;
-      setTimeout(() => {
-        pendingAdvance.current = null; // nothing was picked (e.g. "No options")
-      }, 0);
-    };
+    pendingAdvance.current = key;
+    setTimeout(() => {
+      pendingAdvance.current = null; // nothing was picked (e.g. "No options")
+    }, 0);
+  };
 
   // called from every lookup's onChange: moves on only after an Enter pick
   const advanceAfterPick = () => {
@@ -508,11 +531,11 @@ const RptItemHistoryPage: React.FC<RptItemHistoryPageProps> = ({ onClose }) => {
         setBranch(
           list[0]
             ? {
-                value: list[0].brId,
-                label: list[0].brName,
-                id: list[0].brId,
-                name: list[0].brName,
-              }
+              value: list[0].brId,
+              label: list[0].brName,
+              id: list[0].brId,
+              name: list[0].brName,
+            }
             : null,
         );
       } catch {
@@ -529,42 +552,83 @@ const RptItemHistoryPage: React.FC<RptItemHistoryPageProps> = ({ onClose }) => {
   }, []);
 
   // ------------------------------------------------------------
-  // PRINT (VB cmdPrint_Click + ValidateMe)
+  // VB ValidateMe: returns the request, or null after showing the message
   // ------------------------------------------------------------
-  const handlePrint = async () => {
-    if (printing) return;
-
+  const buildRequest = (): ItemHistoryRequest | null => {
     const oneBranch = branchMode === "One Branch";
 
     if (oneBranch && !branch) {
       toast.warning("Please select 'Branch'", { toastId: "ih-branch" });
       document.getElementById("lkpBranch")?.focus();
-      return;
+      return null;
     }
 
     if (!itemId) {
       toast.warning("Please select an Item", { toastId: "ih-item" });
       document.getElementById("lkpItemID")?.focus();
-      return;
+      return null;
     }
 
     if (!asOnDate || !dayjs(asOnDate, DATE_FORMAT, true).isValid()) {
       toast.warning("Please select Date", { toastId: "ih-date" });
       document.getElementById("dtpAsOnDate")?.focus();
-      return;
+      return null;
     }
+
+    return {
+      allBranches: !oneBranch,
+      branchId: oneBranch ? (branch?.value ?? "") : "",
+      itemId,
+      asOnDate: asOnDate.replace(/-/g, "/"), // DD-MM-YYYY -> DD/MM/YYYY
+    };
+  };
+
+  // gets the .xlsx made by the server (null after an error message)
+  const fetchExcel = async (
+    request: ItemHistoryRequest,
+  ): Promise<Blob | null> => {
+    const res = await apiFetch(`${API}/excel`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(request),
+    });
+
+    // an error comes back as JSON, the file as a blob
+    if (!res.ok) {
+      let message = "Could not create the Excel file";
+      try {
+        const data = await res.json();
+        message = data.message || message;
+      } catch {
+        // not JSON: the server has no /excel route (404) or crashed (500)
+        message =
+          res.status === 404
+            ? "Excel is not available: the /excel route was not found (404)"
+            : `Could not create the Excel file (error ${res.status})`;
+      }
+      toast.error(message);
+      return null;
+    }
+
+    return res.blob();
+  };
+
+  // ------------------------------------------------------------
+  // PRINT (VB cmdPrint_Click): validates, gets the report and shows the
+  // Print Preview (Print = printer, Download = Excel / PDF file)
+  // ------------------------------------------------------------
+  const handlePrint = async () => {
+    if (printing || preview) return;
+
+    const request = buildRequest();
+    if (!request) return;
 
     setPrinting(true);
     try {
       const res = await apiFetch(`${API}/print`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          allBranches: !oneBranch,
-          branchId: oneBranch ? branch?.value : "",
-          itemId,
-          asOnDate: asOnDate.replace(/-/g, "/"), // DD-MM-YYYY -> DD/MM/YYYY
-        }),
+        body: JSON.stringify(request),
       });
       const data = await res.json();
 
@@ -573,7 +637,7 @@ const RptItemHistoryPage: React.FC<RptItemHistoryPageProps> = ({ onClose }) => {
         return;
       }
 
-      printItemHistoryReport(data.report);
+      setPreview({ report: data.report, fileBase: data.fileBase, request });
     } catch {
       toast.error("Could not prepare the report");
     } finally {
@@ -581,11 +645,68 @@ const RptItemHistoryPage: React.FC<RptItemHistoryPageProps> = ({ onClose }) => {
     }
   };
 
+  // Print in the preview: the browser print dialog (printer)
+  const handlePreviewPrint = () => {
+    if (!preview || printing) return;
+    try {
+      printItemHistoryReport(preview.report);
+    } catch {
+      toast.error("Could not open the print view");
+    }
+  };
+
+  // Download in the preview: saves the chosen file ("Save as" window, so the
+  // browser does not open it afterwards)
+  // a double click must not start two saves (state is not updated yet on the
+  // second click, so a ref is used)
+  const downloading = useRef(false);
+
+  const handlePreviewOk = async () => {
+    if (!preview || printing || downloading.current) return;
+    downloading.current = true;
+    const { report, fileBase, request } = preview;
+    const asPdf = reportFile === "PDF";
+
+    setPrinting(true);
+    try {
+      const blob = asPdf ? buildItemHistoryPdf(report) : await fetchExcel(request);
+      if (!blob) return; // the error is already shown
+
+      const kind = asPdf ? "pdf" : "xlsx";
+      const saved = await saveFile(blob, `${fileBase}.${kind}`, kind);
+      if (saved) {
+        setPreview(null); // cancelled "Save as": the preview stays
+        toast.success(asPdf ? "PDF file downloaded" : "Excel file downloaded");
+      }
+    } catch {
+      toast.error(
+        asPdf ? "Could not create the PDF file" : "Could not create the Excel file",
+      );
+    } finally {
+      downloading.current = false;
+      setPrinting(false);
+    }
+  };
+
+  const previewHtml = useMemo(
+    () =>
+      preview
+        ? // 40px left / 20px right margin for the preview only
+        buildHtml(preview.report).replace(
+          "</head>",
+          "<style>body{padding-left:40px;padding-right:20px}</style></head>",
+        )
+        : "",
+    [preview],
+  );
+
   const handleClose = () => {
     setBranchMode("One Branch");
     setBranch(branchOptions[0] ?? null);
     setItemId(null);
     setAsOnDate(dayjs().format(DATE_FORMAT));
+    setReportFile("Excel");
+    setPreview(null);
     if (onClose) onClose();
     else window.history.back();
   };
@@ -594,6 +715,10 @@ const RptItemHistoryPage: React.FC<RptItemHistoryPageProps> = ({ onClose }) => {
   // browser). Re-attached every render so it always sees the latest state.
   useEffect(() => {
     const onKeyDown = (event: KeyboardEvent) => {
+      if (preview) {
+        if (event.key === "Escape") setPreview(null);
+        return;
+      }
       if (!event.altKey || event.ctrlKey || event.metaKey) return;
 
       if (event.code === "KeyP") {
@@ -641,21 +766,23 @@ const RptItemHistoryPage: React.FC<RptItemHistoryPageProps> = ({ onClose }) => {
               </RadioPanel>
               <div className="pt-3">
                 <div className="w-[250px]">
-                  <Select
-                    inputId="lkpBranch"
-                    instanceId="lkpBranch"
-                    options={branchOptions}
-                    value={branch}
-                    onChange={(option) => {
-                      setBranch(option);
-                      advanceAfterPick();
-                    }}
-                    onKeyDown={advanceOnEnter("lkpBranch")}
-                    isDisabled={branchMode !== "One Branch" || loading}
-                    {...selectProps}
-                    classNames={branchClassNames}
-                    components={branchComponents}
-                  />
+                  {branchMode === "One Branch" && (
+                    <Select
+                      inputId="lkpBranch"
+                      instanceId="lkpBranch"
+                      options={branchOptions}
+                      value={branch}
+                      onChange={(option) => {
+                        setBranch(option);
+                        advanceAfterPick();
+                      }}
+                      onKeyDown={(event) => advanceOnEnter("lkpBranch", event)}
+                      isDisabled={loading}
+                      {...selectProps}
+                      classNames={branchClassNames}
+                      components={branchComponents}
+                    />
+                  )}
                 </div>
               </div>
 
@@ -671,7 +798,7 @@ const RptItemHistoryPage: React.FC<RptItemHistoryPageProps> = ({ onClose }) => {
                     setItemId(option?.value ?? null);
                     advanceAfterPick();
                   }}
-                  onKeyDown={advanceOnEnter("lkpItemID")}
+                  onKeyDown={(event) => advanceOnEnter("lkpItemID", event)}
                   isDisabled={loading}
                   {...selectProps}
                   classNames={idClassNames}
@@ -696,7 +823,7 @@ const RptItemHistoryPage: React.FC<RptItemHistoryPageProps> = ({ onClose }) => {
                     setItemId(option?.value ?? null);
                     advanceAfterPick();
                   }}
-                  onKeyDown={advanceOnEnter("lkpItemName")}
+                  onKeyDown={(event) => advanceOnEnter("lkpItemName", event)}
                   isDisabled={loading}
                   {...selectProps}
                   classNames={nameClassNames}
@@ -755,6 +882,80 @@ const RptItemHistoryPage: React.FC<RptItemHistoryPageProps> = ({ onClose }) => {
           </section>
         </main>
       </div>
+
+      {/* Print preview */}
+      {preview && (
+        <div className="fixed inset-0 z-[99999] flex items-center justify-center bg-black/40 p-4">
+          <div className="flex h-[90vh] w-full max-w-250 flex-col overflow-hidden border border-gray-400 bg-white shadow-xl">
+            <header className="flex h-7.5 shrink-0 items-center bg-[#9fdfbc] pl-3 text-[17px] font-semibold text-slate-700">
+              Print Preview
+            </header>
+
+            <iframe
+              title="Print Preview"
+              srcDoc={previewHtml}
+              className="min-h-0 flex-1 border-0 bg-white"
+            />
+
+            <footer className="flex shrink-0 flex-wrap items-center justify-center gap-4 border-t border-[#e0e5ea] px-3 py-4">
+              <div className="flex gap-3">
+                <button
+                  id="btnPreviewPrint"
+                  type="button"
+                  onClick={handlePreviewPrint}
+                  disabled={printing}
+                  className="btn-style focus-visible:ring-2 focus-visible:ring-[#64d96e] disabled:cursor-not-allowed disabled:opacity-40"
+                >
+                  <u>P</u>rint
+                </button>
+                <button
+                  id="btnPreviewOk"
+                  type="button"
+                  autoFocus
+                  onClick={handlePreviewOk}
+                  disabled={printing}
+                  className="btn-style focus-visible:ring-2 focus-visible:ring-[#64d96e] disabled:cursor-not-allowed disabled:opacity-40"
+                >
+                  <u>D</u>ownload
+                </button>
+                <button
+                  id="btnPreviewCancel"
+                  type="button"
+                  onClick={() => setPreview(null)}
+                  disabled={printing}
+                  className="btn-style focus-visible:ring-2 focus-visible:ring-[#64d96e] disabled:cursor-not-allowed disabled:opacity-40"
+                >
+                  <u>C</u>lose
+                </button>
+              </div>
+
+              {/* Report File: what Download saves */}
+              <div
+                id="rdgReportFile"
+                className="relative flex items-center gap-5 border border-[#e0e5ea] bg-white px-10.5 py-2.5"
+              >
+                <span className="absolute -top-2.5 left-2.5 bg-white px-1 text-[13px] text-[#405066]">
+                  File Format
+                </span>
+                <CustomRadio
+                  name="rdgReportFile"
+                  value="Excel"
+                  label="Excel"
+                  checked={reportFile === "Excel"}
+                  onChange={() => setReportFile("Excel")}
+                />
+                <CustomRadio
+                  name="rdgReportFile"
+                  value="PDF"
+                  label="PDF"
+                  checked={reportFile === "PDF"}
+                  onChange={() => setReportFile("PDF")}
+                />
+              </div>
+            </footer>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

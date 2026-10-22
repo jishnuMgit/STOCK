@@ -174,8 +174,14 @@ const prepareReport = async (req: AuthenticatedRequest): Promise<Prepared> => {
       rows,
       totals: sumTotals(rows, accountLevel),
     },
-    fileName: `TrialBalance_${from.y}${pad(from.mo)}${pad(from.d)}_${to.y}${pad(to.mo)}${pad(to.d)}.xlsx`,
+    fileName: `TrialBalance_${from.y}${pad(from.mo)}${pad(from.d)}_${to.y}${pad(to.mo)}${pad(to.d)}_${timeStamp()}.xlsx`,
   };
+};
+
+// HHMMSS - keeps every download's name different from a file still open
+const timeStamp = () => {
+  const d = new Date();
+  return `${pad(d.getHours())}${pad(d.getMinutes())}${pad(d.getSeconds())}`;
 };
 
 const sendError = (res: Response, error: unknown, what: string) => {

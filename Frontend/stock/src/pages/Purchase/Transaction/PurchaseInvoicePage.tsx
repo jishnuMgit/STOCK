@@ -30,14 +30,15 @@ const num = (v: string) => (Number.isFinite(Number(v)) ? Number(v) : 0);
 
 /* Recalculate one row. No foreign-currency price any more:
    the user types Unit Price, everything else follows from it. */
-const recalcRow = (row: PurchaseRow): PurchaseRow => {
+const recalcRow = (row: PurchaseRow, rate: number): PurchaseRow => {
   const qty = num(row.qty);
   const unitPrice = num(row.unitPrice);
+  const total = qty * unitPrice * rate;
   return {
     ...row,
-    totalPrice: (qty * unitPrice).toFixed(2),
-    unitCost: unitPrice.toFixed(2),
-    totalCost: (qty * unitPrice).toFixed(2),
+    totalPrice: total.toFixed(2),
+    unitCost: (unitPrice * rate).toFixed(2),
+    totalCost: total.toFixed(2),
   };
 };
 
@@ -194,11 +195,17 @@ const PurchaseInvoicePage: React.FC = () => {
 
   const itemLookups = useMemo(
     () => ({
-      itemIds: items.map((i) => ({ value: i.id, label: i.id, name: i.name })),
+      itemIds: items.map((i) => ({
+        value: i.id,
+        label: i.id,
+        name: i.name,
+        unit: i.unit,
+      })),
       itemNames: items.map((i) => ({
         value: i.id,
         label: i.name,
         name: i.name,
+        unit: i.unit,
       })),
     }),
     [items],
@@ -282,6 +289,11 @@ const PurchaseInvoicePage: React.FC = () => {
         setMiscMode(value === "C" ? "Yes" : "No");
       }
 
+      if (field === "currencyRate") {
+        const rate = num(String(value)) || 1;
+        setRows((prev) => prev.map((r) => (r.itemId ? recalcRow(r, rate) : r)));
+      }
+
       // new entry: a different branch has its own entry no.
       if (field === "brId" && mode === "S" && value) {
         fetchNextDocNo(YEAR, String(value))
@@ -292,15 +304,17 @@ const PurchaseInvoicePage: React.FC = () => {
     [mode, fetchNextDocNo],
   );
 
+  const currencyRate = num(header.currencyRate) || 1;
+
   const handleRowChange = useCallback(
     (index: number, patch: Partial<PurchaseRow>) => {
       setRows((prev) =>
         prev.map((row, i) =>
-          i === index ? recalcRow({ ...row, ...patch }) : row,
+          i === index ? recalcRow({ ...row, ...patch }, currencyRate) : row,
         ),
       );
     },
-    [],
+    [currencyRate],
   );
 
   /* VB cmdAdd_Click: refresh the combos, then select the saved supplier */
@@ -375,14 +389,19 @@ const PurchaseInvoicePage: React.FC = () => {
   /* VB: cmdCalcUnitcost_Click -> CalcUnitCost (calculated on the server) */
   const handleCalcUnitCost = useCallback(async () => {
     try {
-      const updated = await calcUnitCost(rows, totalExpense, discAmt);
+      const updated = await calcUnitCost(
+        rows,
+        totalExpense,
+        discAmt,
+        currencyRate,
+      );
       setRows(updated);
     } catch (err) {
       window.alert(
         err instanceof Error ? err.message : "Failed to calculate unit cost",
       );
     }
-  }, [calcUnitCost, rows, totalExpense, discAmt]);
+  }, [calcUnitCost, rows, totalExpense, discAmt, currencyRate]);
 
   const handleSave = useCallback(async () => {
     if (posted) {

@@ -6,6 +6,10 @@ import {
   getItemLookup,
   getItemHistory,
 } from "../../../services/Purchase/Report/RptItemHistoryService.js";
+import {
+  buildItemHistoryWorkbook,
+  type ItemHistoryReport,
+} from "../../../services/Purchase/Report/RptItemHistoryExcel.js";
 import { getCompanyName } from "../../../utils/companyName.js";
 
 type Session = { coId: string; userId: string; coName: string };
@@ -118,77 +122,122 @@ export const getLookups = async (req: AuthenticatedRequest, res: Response) => {
 };
 
 // ------------------------------------------------------------
+// VB ValidateMe + the data of the report. Used by Print and Excel.
+// ------------------------------------------------------------
+type Prepared = {
+  report: ItemHistoryReport & { userId: string };
+  fileBase: string;
+};
+
+const prepareReport = async (req: AuthenticatedRequest): Promise<Prepared> => {
+  const { coId, userId, coName: sessionCoName } = getSession(req);
+  if (!coId) throw new ApiError(401, "Company not found in session");
+  if (!userId) throw new ApiError(401, "User not found in session");
+
+  const body = req.body ?? {};
+  const allBranches = body.allBranches === true;
+  const branchId = String(body.branchId ?? "").trim();
+  const itemId = String(body.itemId ?? "").trim();
+  const asOnDate = String(body.asOnDate ?? "").trim();
+
+  if (!allBranches && !branchId) {
+    throw new ApiError(400, "Please select 'Branch'");
+  }
+  if (!itemId) throw new ApiError(400, "Please select an Item");
+  if (!asOnDate) throw new ApiError(400, "Please select Date");
+
+  const date = parseDMY(asOnDate);
+  if (!date) throw new ApiError(400, "Date must be DD/MM/YYYY");
+
+  // a branch may only be one the user has
+  let branchName = "";
+  if (!allBranches) {
+    const branches = await getUserBranches(coId, userId);
+    const branch = branches.find((b) => b.brId === branchId);
+    if (!branch) throw new ApiError(403, "This branch is not allowed");
+    branchName = branch.brName;
+  }
+
+  // ---- the report -------------------------------------------
+  const groups = await getItemHistory({
+    coId,
+    allBranches,
+    branchId,
+    itemId,
+    asOnDate,
+  });
+
+  if (groups.length === 0) {
+    throw new ApiError(404, "No records found for this item");
+  }
+
+  const coName = sessionCoName || (await getCompanyName(coId));
+
+  // date + time, so a new download never has the name of a file that is
+  // still open (Acrobat / Excel lock the file)
+  const d = new Date();
+  const stamp = `${d.getFullYear()}${pad(d.getMonth() + 1)}${pad(d.getDate())}_${pad(d.getHours())}${pad(d.getMinutes())}${pad(d.getSeconds())}`;
+  const safe = (v: string) => v.replace(/[^A-Za-z0-9_-]/g, "_");
+
+  return {
+    report: {
+      coName,
+      heading: `Item History As On Date : ${pad(date.d)}-${MONTHS[date.mo - 1]}-${date.y}`,
+      branch: allBranches ? "" : `Branch : ${branchName}`,
+      reportInfo: reportInfo(userId),
+      userId,
+      groups,
+    },
+    fileBase: `ItemHistory_${safe(itemId)}_${allBranches ? "AllBranches" : safe(branchId)}_${stamp}`,
+  };
+};
+
+const sendError = (res: Response, error: unknown, what: string) => {
+  if (error instanceof ApiError) {
+    return res
+      .status(error.status)
+      .json({ success: false, message: error.message });
+  }
+  console.error(`rptItemHistory ${what} error:`, error);
+  return res
+    .status(500)
+    .json({ success: false, message: "Failed to prepare the report" });
+};
+
+// ------------------------------------------------------------
 // POST /api/RptItemHistory/print
 // body: { allBranches: boolean, branchId?: string, itemId: string,
 //         asOnDate: "DD/MM/YYYY" }
-// -> everything the printed page needs
+// -> everything the preview / printer / PDF needs
 // ------------------------------------------------------------
 export const getPrintData = async (req: AuthenticatedRequest, res: Response) => {
-  const { coId, userId, coName: sessionCoName } = getSession(req);
-  if (!coId) return noCompany(res);
-  if (!userId) return noUser(res);
-
   try {
-    // ---- VB ValidateMe ----------------------------------------
-    const body = req.body ?? {};
-    const allBranches = body.allBranches === true;
-    const branchId = String(body.branchId ?? "").trim();
-    const itemId = String(body.itemId ?? "").trim();
-    const asOnDate = String(body.asOnDate ?? "").trim();
-
-    if (!allBranches && !branchId) {
-      throw new ApiError(400, "Please select 'Branch'");
-    }
-    if (!itemId) throw new ApiError(400, "Please select an Item");
-    if (!asOnDate) throw new ApiError(400, "Please select Date");
-
-    const date = parseDMY(asOnDate);
-    if (!date) throw new ApiError(400, "Date must be DD/MM/YYYY");
-
-    // a branch may only be one the user has
-    let branchName = "";
-    if (!allBranches) {
-      const branches = await getUserBranches(coId, userId);
-      const branch = branches.find((b) => b.brId === branchId);
-      if (!branch) throw new ApiError(403, "This branch is not allowed");
-      branchName = branch.brName;
-    }
-
-    // ---- the report -------------------------------------------
-    const groups = await getItemHistory({
-      coId,
-      allBranches,
-      branchId,
-      itemId,
-      asOnDate,
-    });
-
-    if (groups.length === 0) {
-      throw new ApiError(404, "No records found for this item");
-    }
-
-    const coName = sessionCoName || (await getCompanyName(coId));
-
-    return res.status(200).json({
-      success: true,
-      report: {
-        coName,
-        heading: `Item History As On Date : ${pad(date.d)}-${MONTHS[date.mo - 1]}-${date.y}`,
-        branch: allBranches ? "" : `Branch : ${branchName}`,
-        reportInfo: reportInfo(userId),
-        userId,
-        groups,
-      },
-    });
+    const { report, fileBase } = await prepareReport(req);
+    return res.status(200).json({ success: true, report, fileBase });
   } catch (error) {
-    if (error instanceof ApiError) {
-      return res
-        .status(error.status)
-        .json({ success: false, message: error.message });
-    }
-    console.error("rptItemHistory getPrintData error:", error);
-    return res
-      .status(500)
-      .json({ success: false, message: "Failed to prepare the report" });
+    return sendError(res, error, "getPrintData");
+  }
+};
+
+// ------------------------------------------------------------
+// POST /api/RptItemHistory/excel  (same body as /print) -> the .xlsx file
+// ------------------------------------------------------------
+export const getExcel = async (req: AuthenticatedRequest, res: Response) => {
+  try {
+    const { report, fileBase } = await prepareReport(req);
+    const buffer = await buildItemHistoryWorkbook(report);
+
+    res.setHeader(
+      "Content-Type",
+      "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+    );
+    res.setHeader(
+      "Content-Disposition",
+      `attachment; filename="${fileBase}.xlsx"`,
+    );
+    res.setHeader("Access-Control-Expose-Headers", "Content-Disposition");
+    return res.status(200).send(buffer);
+  } catch (error) {
+    return sendError(res, error, "getExcel");
   }
 };

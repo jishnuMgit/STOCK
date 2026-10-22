@@ -326,13 +326,13 @@ export const savePurchaseInvoice = async (
 
     /* ---------- common SP args ---------- */
     const base = {
-      gstrcoid: coId,
-      gintyear: Number(year),
+      pstrcoid: coId,
+      pstryear: String(year),
       strbrid: brId,
       strdoctype: DOC_TYPE,
       strdocno: docNo,
       intdocno: getIntDocNo(docNo),
-      gstruserid: userId,
+      pstruserid: userId,
       strmenuname: menuName ?? "frmPI",
     };
 
@@ -529,12 +529,12 @@ export const getCashSuppliers = async (
         .json({ success: false, message: "Authentication required" });
 
     const result = await pool.query(
-      `SELECT "fCashSupplierID"   AS fcashsupplierid,
-          "fCashSupplierName" AS fcashsuppliername,
-          "fVATNo"            AS fvatno
-   FROM dbo."tblCashSupplier"
-   WHERE "fCoID" = $1
-   ORDER BY "fCashSupplierID"`,
+      `SELECT fcashsupplierid AS fcashsupplierid,
+       fcashsuppliername AS fcashsuppliername,
+       fvatno AS fvatno
+FROM dbo.tblcashsupplier
+WHERE fcoid = $1
+ORDER BY fcashsupplierid;`,
       [coId],
     );
 
@@ -589,11 +589,12 @@ export const getCashSupplier = async (
         .json({ success: false, message: "Cash Supplier ID is required" });
 
     const result = await pool.query(
-      `SELECT "fCashSupplierID"   AS fcashsupplierid,
-          "fCashSupplierName" AS fcashsuppliername,
-          "fVATNo"            AS fvatno
-   FROM dbo."tblCashSupplier"
-   WHERE "fCoID" = $1 AND "fCashSupplierID" = $2`,
+      `SELECT fcashsupplierid AS fcashsupplierid,
+       fcashsuppliername AS fcashsuppliername,
+       fvatno AS fvatno
+FROM dbo.tblcashsupplier
+WHERE fcoid = $1
+  AND fcashsupplierid = $2;`,
       [coId, id],
     );
 
@@ -955,9 +956,9 @@ export const postPurchaseInvoice = async (
 
     await client.query(
       `CALL dbo.sp_pipost(
-         p_strmode => $1, p_gstrcoid => $2, p_gintyear => $3,
+         p_strmode => $1, p_pstrcoid => $2, p_pstryear => $3,
          p_strbrid => $4, p_strdoctype => $5, p_strdocno => $6,
-         p_gstruserid => $7)`,
+         p_pstruserid => $7)`,
       ["P", coId, Number(year), brId, DOC_TYPE, docNo, userId],
     );
 
