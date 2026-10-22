@@ -405,24 +405,26 @@ const RptItemHistoryPage: React.FC<RptItemHistoryPageProps> = ({ onClose }) => {
   //  - list open   -> Enter picks the highlighted row, then go to the next field
   const pendingAdvance = useRef<NavKey | null>(null);
 
-  const advanceOnEnter =
-    (key: NavKey) => (event: React.KeyboardEvent<HTMLDivElement>) => {
-      if (event.key !== "Enter") return;
+  const advanceOnEnter = (
+    key: NavKey,
+    event: React.KeyboardEvent<HTMLDivElement>,
+  ) => {
+    if (event.key !== "Enter") return;
 
-      const open =
-        (event.target as HTMLElement).getAttribute("aria-expanded") === "true";
+    const open =
+      (event.target as HTMLElement).getAttribute("aria-expanded") === "true";
 
-      if (!open) {
-        event.preventDefault();
-        focusNext(key);
-        return;
-      }
+    if (!open) {
+      event.preventDefault();
+      focusNext(key);
+      return;
+    }
 
-      pendingAdvance.current = key;
-      setTimeout(() => {
-        pendingAdvance.current = null; // nothing was picked (e.g. "No options")
-      }, 0);
-    };
+    pendingAdvance.current = key;
+    setTimeout(() => {
+      pendingAdvance.current = null; // nothing was picked (e.g. "No options")
+    }, 0);
+  };
 
   // called from every lookup's onChange: moves on only after an Enter pick
   const advanceAfterPick = () => {
@@ -774,7 +776,7 @@ const RptItemHistoryPage: React.FC<RptItemHistoryPageProps> = ({ onClose }) => {
                         setBranch(option);
                         advanceAfterPick();
                       }}
-                      onKeyDown={advanceOnEnter("lkpBranch")}
+                      onKeyDown={(event) => advanceOnEnter("lkpBranch", event)}
                       isDisabled={loading}
                       {...selectProps}
                       classNames={branchClassNames}
@@ -796,7 +798,7 @@ const RptItemHistoryPage: React.FC<RptItemHistoryPageProps> = ({ onClose }) => {
                     setItemId(option?.value ?? null);
                     advanceAfterPick();
                   }}
-                  onKeyDown={advanceOnEnter("lkpItemID")}
+                  onKeyDown={(event) => advanceOnEnter("lkpItemID", event)}
                   isDisabled={loading}
                   {...selectProps}
                   classNames={idClassNames}
@@ -821,7 +823,7 @@ const RptItemHistoryPage: React.FC<RptItemHistoryPageProps> = ({ onClose }) => {
                     setItemId(option?.value ?? null);
                     advanceAfterPick();
                   }}
-                  onKeyDown={advanceOnEnter("lkpItemName")}
+                  onKeyDown={(event) => advanceOnEnter("lkpItemName", event)}
                   isDisabled={loading}
                   {...selectProps}
                   classNames={nameClassNames}
