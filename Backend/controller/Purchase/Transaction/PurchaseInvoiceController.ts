@@ -287,7 +287,7 @@ export const savePurchaseInvoice = async (
       menuName,
       lines,
       originalSlNos,
-      expenses, // <-- new
+      expenses,
     } = req.body as {
       mode: "S" | "M";
       year: string;
@@ -308,7 +308,7 @@ export const savePurchaseInvoice = async (
       menuName?: string;
       lines: PILine[];
       originalSlNos?: number[]; // sl.# of lines loaded from DB (modify only)
-      expenses?: PIExpLine[]; // <-- new: purchase expense rows (frmPIExp)
+      expenses?: PIExpLine[]; // purchase expense rows (frmPIExp)
     };
 
     /* ---------- validation ---------- */
@@ -375,7 +375,7 @@ export const savePurchaseInvoice = async (
         });
     }
 
-    /* ---------- expense validation (new) ---------- */
+    /* ---------- expense validation ---------- */
     const expRows = (expenses ?? []).filter((e) => e.accountId);
     for (const e of expRows) {
       if (num(e.credit) <= 0)
@@ -433,6 +433,11 @@ export const savePurchaseInvoice = async (
       numvatamt: num(vatAmt),
     };
 
+    // NEW: original creator, read before the old lines are deleted
+    let origCreator:
+      | { fcuserid: string | null; fcuserdate: Date | null }
+      | undefined;
+
     await client.query("BEGIN");
 
     if (mode === "S") {
@@ -451,6 +456,15 @@ export const savePurchaseInvoice = async (
         });
       }
     } else {
+      // NEW: keep the original creator, the lines are deleted and re-inserted below
+      const orig = await client.query(
+        `SELECT fcuserid, fcuserdate FROM dbo.tblstocktrans
+          WHERE fcoid=$1 AND fyear=$2 AND fbrid=$3 AND fdoctype=$4 AND fdocno=$5
+          LIMIT 1`,
+        [coId, Number(year), brId, DOC_TYPE, docNo],
+      );
+      origCreator = orig.rows[0];
+
       // 1) update header on existing rows
       await callPagePI(client, { strmode: "M", ...base, ...header });
       // 2) remove old lines one by one
@@ -478,6 +492,26 @@ export const savePurchaseInvoice = async (
         numunitcost: num(l.unitCost),
         numtotalcost: num(l.totalCost),
       });
+    }
+
+    /* NEW: modify -> put back the original creator and set the modifier */
+    if (mode === "M" && origCreator) {
+      await client.query(
+        `UPDATE dbo.tblstocktrans
+            SET fcuserid = $6, fcuserdate = $7,
+                fmuserid = $8, fmuserdate = now()
+          WHERE fcoid=$1 AND fyear=$2 AND fbrid=$3 AND fdoctype=$4 AND fdocno=$5`,
+        [
+          coId,
+          Number(year),
+          brId,
+          DOC_TYPE,
+          docNo,
+          origCreator.fcuserid,
+          origCreator.fcuserdate,
+          userId,
+        ],
+      );
     }
 
     /* ---------- purchase expenses (frmPIExp) ----------

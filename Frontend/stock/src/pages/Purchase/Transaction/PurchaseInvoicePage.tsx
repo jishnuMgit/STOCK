@@ -285,6 +285,16 @@ const PurchaseInvoicePage: React.FC = () => {
     void loadMiscSuppliers();
   }, [loadMiscSuppliers]);
 
+  /* The GET returns no supplier name, so when it is empty take it from the
+     supplier lookup by ID. Defined before the handlers that use it. */
+  const resolveSupplierName = useCallback(
+    (h: PurchaseHeader) =>
+      h.supplierName?.trim() ||
+      suppliersById.find((s) => s.id === h.supplierId)?.name ||
+      "",
+    [suppliersById],
+  );
+
   const handleHeaderChange = useCallback(
     <K extends keyof PurchaseHeader>(field: K, value: PurchaseHeader[K]) => {
       setHeader((prev) => {
@@ -371,7 +381,11 @@ const PurchaseInvoicePage: React.FC = () => {
           ? miscSuppliers.find((m) => m.name === found.header.supplierName)
           : undefined;
 
-      setHeader({ ...found.header, miscSupId: misc?.id ?? "" });
+      setHeader({
+        ...found.header,
+        supplierName: resolveSupplierName(found.header),
+        miscSupId: misc?.id ?? "",
+      });
       setRows([
         ...found.rows,
         ...Array.from(
@@ -411,7 +425,14 @@ const PurchaseInvoicePage: React.FC = () => {
     }
     setPosted(false);
     setMode("S");
-  }, [fetchInvoice, header.brId, header.docNo, mode, miscSuppliers]);
+  }, [
+    fetchInvoice,
+    header.brId,
+    header.docNo,
+    mode,
+    miscSuppliers,
+    resolveSupplierName,
+  ]);
 
   /* VB: cmdCalcUnitcost_Click -> CalcUnitCost (calculated on the server) */
   const handleCalcUnitCost = useCallback(async () => {
@@ -447,7 +468,7 @@ const PurchaseInvoicePage: React.FC = () => {
       await saveInvoice({
         mode,
         year: YEAR,
-        header,
+        header: { ...header, supplierName: resolveSupplierName(header) },
         rows,
         originalSlNos,
         expenses: expenseRows,
@@ -467,6 +488,7 @@ const PurchaseInvoicePage: React.FC = () => {
     expenseRows,
     saveInvoice,
     handleClear,
+    resolveSupplierName,
   ]);
 
   const handleDelete = useCallback(async () => {
@@ -516,7 +538,15 @@ const PurchaseInvoicePage: React.FC = () => {
     } finally {
       setPosting(false);
     }
-  }, [mode, posted, postInvoice, header.brId, header.docNo, handleClear]);
+  }, [
+    mode,
+    posted,
+    confirm,
+    postInvoice,
+    header.brId,
+    header.docNo,
+    handleClear,
+  ]);
 
   return (
     <main className="mx-auto flex h-fit w-full max-w-275 flex-col overflow-hidden border border-slate-400 bg-white text-[12px] text-slate-800">
