@@ -33,11 +33,11 @@ const cssStr = (v: unknown) =>
     .replace(/</g, "\\3C ")
     .replace(/[\r\n]+/g, " ");
 
-// VB Detail_BeforePrint: level 1 red, 2 green, 3 blue, else black
+// level colours as on the tree: 1 green, 2 blue, 3 purple, else dark slate
 const levelClass = (level: number) =>
   level === 1 ? "l1" : level === 2 ? "l2" : level === 3 ? "l3" : "l4";
 
-const buildHtml = (r: PrintReport) => `<!doctype html>
+export const buildHtml = (r: PrintReport) => `<!doctype html>
 <html>
 <head>
 <meta charset="utf-8" />
@@ -64,7 +64,7 @@ const buildHtml = (r: PrintReport) => `<!doctype html>
   td { border: 1px solid #c7d1e4; border-top: 0; height: 30px; padding: 0 6px; }
   .name { white-space: pre; }                       /* keeps the level indent */
   .c-id { width: 86px; } .c-cc { width: 42px; } .c-lv { width: 55px; text-align: right; }
-  .l1 { color: #ff0000; } .l2 { color: #008000; } .l3 { color: #0000ff; } .l4 { color: #000; }
+  .l1 { color: #00a63e; } .l2 { color: #155dfc; } .l3 { color: #c800de; } .l4 { color: #314158; }
 </style>
 </head>
 <body>

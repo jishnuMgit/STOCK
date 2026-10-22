@@ -10,8 +10,10 @@ import {
   getStockTransfer,
   saveStockTransfer,
   deleteStockTransfer,
+  deleteStockTransferLine,
   postStockTransfer,
   printStockTransfer,
+  downloadStockTransferExcel,
 } from "../../../controller/Sales/Transaction/StockTransferController.js";
 
 const router = express.Router();
@@ -26,8 +28,12 @@ router.get("/getStockTransfer", authenticate, getStockTransfer);
 // a POST: the lines travel in the body
 router.post("/saveStockTransfer", authenticate, saveStockTransfer);
 router.delete("/deleteStockTransfer", authenticate, deleteStockTransfer);
+// one line of a saved transfer (the x of a row): gone from the database at once
+router.delete("/deleteStockTransferLine", authenticate, deleteStockTransferLine);
 router.post("/postStockTransfer", authenticate, postStockTransfer);
-// a POST: the print page asks for the data itself
+// a POST: the page asks for the data itself
 router.post("/printStockTransfer", authenticate, printStockTransfer);
+// the same body: the Excel file of the Print Preview
+router.post("/downloadStockTransferExcel", authenticate, downloadStockTransferExcel);
 
 export default router;

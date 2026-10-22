@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import Select, {
   components,
   createFilter,
@@ -6,8 +6,13 @@ import Select, {
   type OptionProps,
 } from "react-select";
 import { toast } from "react-toastify";
-import { downloadSalesPriceListPdf } from "./downloadSalesPriceListPdf";
-import { buildHtml, type PriceListReport } from "./PrintSalesPriceListReport";
+import { buildSalesPriceListPdf } from "./downloadSalesPriceListPdf";
+import { saveFile } from "./saveFile";
+import {
+  buildHtml,
+  printSalesPriceListReport,
+  type PriceListReport,
+} from "./PrintSalesPriceListReport";
 
 type Option = { value: string; label: string };
 
@@ -375,12 +380,12 @@ const RptSalesPriceListPage: React.FC<RptSalesPriceListPageProps> = ({
     setItemTo((id) => (hasItem(id) ? id : null));
   };
 
-  // print preview: shown after Print, OK then downloads the chosen file
+  // print preview: shown after Print. Print there sends it to the printer,
+  // Download saves the "Report File" choice (rdgReportFile)
   const [preview, setPreview] = useState<{
     report: PriceListReport;
     fileBase: string;
     request: Request;
-    asPdf: boolean;
   } | null>(null);
 
   // ------------------------------------------------------------
@@ -441,8 +446,8 @@ const RptSalesPriceListPage: React.FC<RptSalesPriceListPageProps> = ({
     };
   }, []);
 
-  // downloads the .xlsx made by the server
-  const downloadExcel = async (request: Request) => {
+  // gets the .xlsx made by the server (null after an error message)
+  const fetchExcel = async (request: Request): Promise<Blob | null> => {
     const res = await apiFetch(`${API}/excel`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -459,23 +464,10 @@ const RptSalesPriceListPage: React.FC<RptSalesPriceListPageProps> = ({
         /* keep the default message */
       }
       toast.error(message);
-      return false;
+      return null;
     }
 
-    const disposition = res.headers.get("Content-Disposition") ?? "";
-    const name =
-      /filename="?([^";]+)"?/i.exec(disposition)?.[1] ?? "PriceList.xlsx";
-
-    const blob = await res.blob();
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement("a");
-    link.href = url;
-    link.download = name;
-    document.body.appendChild(link);
-    link.click();
-    link.remove();
-    setTimeout(() => URL.revokeObjectURL(url), 1000);
-    return true;
+    return res.blob();
   };
 
   // VB ValidateMe: returns the request, or null after showing the message
@@ -519,7 +511,7 @@ const RptSalesPriceListPage: React.FC<RptSalesPriceListPageProps> = ({
 
   // ------------------------------------------------------------
   // PRINT (VB cmdPrint_Click): validates, gets the report and shows the
-  // preview. OK in the preview downloads the "Report File" choice.
+  // Print Preview (Print = printer, Download = Excel / PDF file).
   // ------------------------------------------------------------
   const handlePrint = async () => {
     if (busy || preview) return;
@@ -545,7 +537,6 @@ const RptSalesPriceListPage: React.FC<RptSalesPriceListPageProps> = ({
         report: data.report,
         fileBase: data.fileBase,
         request,
-        asPdf: reportFile === "PDF",
       });
     } catch {
       toast.error("Could not prepare the report");
@@ -554,24 +545,45 @@ const RptSalesPriceListPage: React.FC<RptSalesPriceListPageProps> = ({
     }
   };
 
-  // OK in the preview
-  const handlePreviewOk = async () => {
+  // Print in the preview: the browser print dialog (printer)
+  const handlePreviewPrint = () => {
     if (!preview || busy) return;
-    const { report, fileBase, request, asPdf } = preview;
+    try {
+      printSalesPriceListReport(preview.report);
+    } catch {
+      toast.error("Could not open the print view");
+    }
+  };
+
+  // Download in the preview: saves the chosen file ("Save as" window, so the
+  // browser does not open it afterwards)
+  // a double click must not start two saves (state is not updated yet on the
+  // second click, so a ref is used)
+  const downloading = useRef(false);
+
+  const handlePreviewOk = async () => {
+    if (!preview || busy || downloading.current) return;
+    downloading.current = true;
+    const { report, fileBase, request } = preview;
+    const asPdf = reportFile === "PDF";
 
     setBusy(true);
     try {
-      if (asPdf) {
-        downloadSalesPriceListPdf(report, `${fileBase}.pdf`);
-        setPreview(null);
-      } else if (await downloadExcel(request)) {
-        setPreview(null);
+      const blob = asPdf ? buildSalesPriceListPdf(report) : await fetchExcel(request);
+      if (!blob) return; // the error is already shown
+
+      const kind = asPdf ? "pdf" : "xlsx";
+      const saved = await saveFile(blob, `${fileBase}.${kind}`, kind);
+      if (saved) {
+        setPreview(null); // cancelled "Save as": the preview stays
+        toast.success(asPdf ? "PDF file downloaded" : "Excel file downloaded");
       }
     } catch {
       toast.error(
         asPdf ? "Could not create the PDF file" : "Could not create the Excel file",
       );
     } finally {
+      downloading.current = false;
       setBusy(false);
     }
   };
@@ -579,10 +591,10 @@ const RptSalesPriceListPage: React.FC<RptSalesPriceListPageProps> = ({
   const previewHtml = useMemo(
     () =>
       preview
-        ? // 10px left / right margin for the preview only
+        ? // 40px left / 20px right margin for the preview only
           buildHtml(preview.report).replace(
             "</head>",
-            "<style>body{padding-left:10px;padding-right:10px}</style></head>",
+            "<style>body{padding-left:40px;padding-right:20px}</style></head>",
           )
         : "",
     [preview],
@@ -636,7 +648,7 @@ const RptSalesPriceListPage: React.FC<RptSalesPriceListPageProps> = ({
           </header>
 
           <section className="px-3.5 pb-6 pt-3">
-            {/* Branch + Report File */}
+            {/* Branch */}
             <div className="flex items-start justify-between gap-4 max-[560px]:flex-col">
               <div className="flex items-center gap-3 pt-3">
                 <FieldLabel className="w-fit">Branch :</FieldLabel>
@@ -654,26 +666,6 @@ const RptSalesPriceListPage: React.FC<RptSalesPriceListPageProps> = ({
                 </div>
               </div>
 
-              {/* Report File: what the Print button produces */}
-              <RadioPanel id="rdgReportFile" className="mt-2 h-21 w-[190px] shrink-0">
-                <span className="absolute -top-2.5 left-2.5 bg-white px-1 text-[13px] text-[#405066]">
-                  Report File
-                </span>
-                <CustomRadio
-                  name="rdgReportFile"
-                  value="Excel"
-                  label="Excel"
-                  checked={reportFile === "Excel"}
-                  onChange={() => setReportFile("Excel")}
-                />
-                <CustomRadio
-                  name="rdgReportFile"
-                  value="PDF"
-                  label="PDF"
-                  checked={reportFile === "PDF"}
-                  onChange={() => setReportFile("PDF")}
-                />
-              </RadioPanel>
             </div>
 
             {/* Item Group / Item filters */}
@@ -732,15 +724,17 @@ const RptSalesPriceListPage: React.FC<RptSalesPriceListPageProps> = ({
               <div className="flex min-w-0 flex-1 flex-col gap-3">
                 {/* Item Group: ID | Name (same height as its radio panel) */}
                 <div className="h-[76px] pt-3">
-                  <LookupPair
-                    idInputId="lkpItemGroupID"
-                    nameInputId="lkpItemGroupName"
-                    kit={groupKit}
-                    items={itemGroups}
-                    value={groupId}
-                    onChange={handleGroupChange}
-                    disabled={groupMode !== "One"}
-                  />
+                  {/* hidden while All Item Group is selected */}
+                  {groupMode === "One" && (
+                    <LookupPair
+                      idInputId="lkpItemGroupID"
+                      nameInputId="lkpItemGroupName"
+                      kit={groupKit}
+                      items={itemGroups}
+                      value={groupId}
+                      onChange={handleGroupChange}
+                    />
+                  )}
                 </div>
 
                 {/* Item: One Item = ID + Name, Range Item = ID to ID,
@@ -817,26 +811,61 @@ const RptSalesPriceListPage: React.FC<RptSalesPriceListPageProps> = ({
               className="min-h-0 flex-1 border-0 bg-white"
             />
 
-            <footer className="flex shrink-0 items-center justify-center gap-3 border-t border-[#e0e5ea] py-3">
-              <button
-                id="btnPreviewOk"
-                type="button"
-                autoFocus
-                onClick={handlePreviewOk}
-                disabled={busy}
-                className="btn-style focus-visible:ring-2 focus-visible:ring-[#64d96e] disabled:cursor-not-allowed disabled:opacity-40"
+            <footer className="flex shrink-0 flex-wrap items-center justify-center gap-4 border-t border-[#e0e5ea] px-3 py-4">
+              <div className="flex gap-3">
+                <button
+                  id="btnPreviewPrint"
+                  type="button"
+                  onClick={handlePreviewPrint}
+                  disabled={busy}
+                  className="btn-style focus-visible:ring-2 focus-visible:ring-[#64d96e] disabled:cursor-not-allowed disabled:opacity-40"
+                >
+                  <u>P</u>rint
+                </button>
+                <button
+                  id="btnPreviewOk"
+                  type="button"
+                  autoFocus
+                  onClick={handlePreviewOk}
+                  disabled={busy}
+                  className="btn-style focus-visible:ring-2 focus-visible:ring-[#64d96e] disabled:cursor-not-allowed disabled:opacity-40"
+                >
+                  <u>D</u>ownload
+                </button>
+                <button
+                  id="btnPreviewCancel"
+                  type="button"
+                  onClick={() => setPreview(null)}
+                  disabled={busy}
+                  className="btn-style focus-visible:ring-2 focus-visible:ring-[#64d96e] disabled:cursor-not-allowed disabled:opacity-40"
+                >
+                  <u>C</u>lose
+                </button>
+              </div>
+
+              {/* Report File: what Download saves */}
+              <div
+                id="rdgReportFile"
+                className="relative flex items-center gap-5 border border-[#e0e5ea] bg-white px-10.5 py-2.5"
               >
-                OK
-              </button>
-              <button
-                id="btnPreviewCancel"
-                type="button"
-                onClick={() => setPreview(null)}
-                disabled={busy}
-                className="btn-style focus-visible:ring-2 focus-visible:ring-[#64d96e] disabled:cursor-not-allowed disabled:opacity-40"
-              >
-                Cancel
-              </button>
+                <span className="absolute -top-2.5 left-2.5 bg-white px-1 text-[13px] text-[#405066]">
+                  File Format
+                </span>
+                <CustomRadio
+                  name="rdgReportFile"
+                  value="Excel"
+                  label="Excel"
+                  checked={reportFile === "Excel"}
+                  onChange={() => setReportFile("Excel")}
+                />
+                <CustomRadio
+                  name="rdgReportFile"
+                  value="PDF"
+                  label="PDF"
+                  checked={reportFile === "PDF"}
+                  onChange={() => setReportFile("PDF")}
+                />
+              </div>
             </footer>
           </div>
         </div>

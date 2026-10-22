@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import Select, {
   components,
   type MenuListProps,
@@ -10,8 +10,13 @@ import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
 import { DatePicker } from "@mui/x-date-pickers/DatePicker";
 import dayjs from "dayjs";
 import customParseFormat from "dayjs/plugin/customParseFormat";
-import { downloadTrialBalancePdf } from "./downloadTrialBalancePdf";
-import { buildHtml, type PrintReport } from "./printTrialBalanceReport";
+import { buildTrialBalancePdf } from "./downloadTrialBalancePdf";
+import { saveFile } from "./saveFile";
+import {
+  buildHtml,
+  printTrialBalanceReport,
+  type PrintReport,
+} from "./printTrialBalanceReport";
 
 dayjs.extend(customParseFormat); // needed for dayjs(value, "DD-MM-YYYY")
 
@@ -379,13 +384,14 @@ const RptTBPage: React.FC = () => {
     yesNoOptions[0],
   );
   const [entryMode, setEntryMode] = useState("All");
+  // rdgReportFile (inside the Print Preview): what Download saves
   const [reportFile, setReportFile] = useState("Excel"); // "Excel" | "PDF"
 
-  // print preview: shown after Print, OK then downloads the chosen file
+  // print preview: shown after Print. Print there sends it to the printer,
+  // Download saves the "Report File" choice
   const [preview, setPreview] = useState<{
     report: PrintReport;
     request: NonNullable<ReturnType<typeof buildRequest>>;
-    asPdf: boolean;
   } | null>(null);
 
   const branchOptions: ItemOption[] = useMemo(
@@ -566,19 +572,25 @@ const RptTBPage: React.FC = () => {
     };
   };
 
-  // file name: TrialBalance_<from>_<to>.<ext> (dates are DD/MM/YYYY)
+  // file name: TrialBalance_<from>_<to>_<time>.<ext> (dates are DD/MM/YYYY).
+  // The time keeps every download's name different from a file that is still
+  // open (Acrobat / Excel lock the file).
   const makeFileName = (
     request: NonNullable<ReturnType<typeof buildRequest>>,
     ext: string,
   ) => {
     const ymd = (d: string) => d.split("/").reverse().join("");
-    return `TrialBalance_${ymd(request.fromDate)}_${ymd(request.toDate)}.${ext}`;
+    const t = new Date();
+    const hms = [t.getHours(), t.getMinutes(), t.getSeconds()]
+      .map((n) => String(n).padStart(2, "0"))
+      .join("");
+    return `TrialBalance_${ymd(request.fromDate)}_${ymd(request.toDate)}_${hms}.${ext}`;
   };
 
-  // downloads the .xlsx made by the server
-  const downloadExcel = async (
+  // gets the .xlsx made by the server (null after an error message)
+  const fetchExcel = async (
     request: NonNullable<ReturnType<typeof buildRequest>>,
-  ) => {
+  ): Promise<Blob | null> => {
     const res = await apiFetch(`${API}/excel`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -595,27 +607,15 @@ const RptTBPage: React.FC = () => {
         /* keep the default message */
       }
       toast.error(message);
-      return;
+      return null;
     }
 
-    const disposition = res.headers.get("Content-Disposition") ?? "";
-    const name =
-      /filename="?([^";]+)"?/i.exec(disposition)?.[1] ?? "TrialBalance.xlsx";
-
-    const blob = await res.blob();
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement("a");
-    link.href = url;
-    link.download = name;
-    document.body.appendChild(link);
-    link.click();
-    link.remove();
-    setTimeout(() => URL.revokeObjectURL(url), 1000);
+    return res.blob();
   };
 
   // ------------------------------------------------------------
-  // PRINT (VB cmdPrint_Click): gets the report and shows the preview.
-  // OK in the preview downloads the "Report File" choice (Excel or PDF).
+  // PRINT (VB cmdPrint_Click): validates, gets the report and shows the
+  // Print Preview (Print = printer, Download = Excel / PDF file)
   // ------------------------------------------------------------
   const handlePrint = async () => {
     if (busy || preview) return;
@@ -637,11 +637,7 @@ const RptTBPage: React.FC = () => {
         return;
       }
 
-      setPreview({
-        report: data.report,
-        request,
-        asPdf: reportFile === "PDF",
-      });
+      setPreview({ report: data.report, request });
     } catch {
       toast.error("Could not prepare the report");
     } finally {
@@ -649,24 +645,49 @@ const RptTBPage: React.FC = () => {
     }
   };
 
-  // OK in the preview
-  const handlePreviewOk = async () => {
+  // Print in the preview: the browser print dialog (printer)
+  const handlePreviewPrint = () => {
     if (!preview || busy) return;
-    const { report, request, asPdf } = preview;
+    try {
+      printTrialBalanceReport(preview.report);
+    } catch {
+      toast.error("Could not open the print view");
+    }
+  };
+
+  // ------------------------------------------------------------
+  // Download in the preview: saves the chosen file ("Save as" window, so the
+  // browser does not open it afterwards)
+  // a double click on OK must not start two saves (state is not updated yet
+  // on the second click, so a ref is used)
+  const downloading = useRef(false);
+
+  const handlePreviewOk = async () => {
+    if (!preview || busy || downloading.current) return;
+    downloading.current = true;
+    const { report, request } = preview;
+    const asPdf = reportFile === "PDF";
 
     setBusy(true);
     try {
-      if (asPdf) {
-        downloadTrialBalancePdf(report, makeFileName(request, "pdf"));
-      } else {
-        await downloadExcel(request);
+      const blob = asPdf ? buildTrialBalancePdf(report) : await fetchExcel(request);
+      if (!blob) return; // the error is already shown
+
+      const saved = await saveFile(
+        blob,
+        makeFileName(request, asPdf ? "pdf" : "xlsx"),
+        asPdf ? "pdf" : "xlsx",
+      );
+      if (saved) {
+        setPreview(null); // cancelled "Save as": the preview stays
+        toast.success(asPdf ? "PDF file downloaded" : "Excel file downloaded");
       }
-      setPreview(null);
     } catch {
       toast.error(
         asPdf ? "Could not create the PDF file" : "Could not create the Excel file",
       );
     } finally {
+      downloading.current = false;
       setBusy(false);
     }
   };
@@ -674,10 +695,10 @@ const RptTBPage: React.FC = () => {
   const previewHtml = useMemo(
     () =>
       preview
-        ? // 10px left / right margin for the preview only
+        ? // 40px left / 20px right margin for the preview only
           buildHtml(preview.report).replace(
             "</head>",
-            "<style>body{padding-left:10px;padding-right:10px}</style></head>",
+            "<style>body{padding-left:40px;padding-right:20px}</style></head>",
           )
         : "",
     [preview],
@@ -694,7 +715,11 @@ const RptTBPage: React.FC = () => {
 
     setBusy(true);
     try {
-      await downloadExcel(request);
+      const blob = await fetchExcel(request);
+      if (blob) {
+        const saved = await saveFile(blob, makeFileName(request, "xlsx"), "xlsx");
+        if (saved) toast.success("Excel file downloaded");
+      }
     } catch {
       toast.error("Could not create the Excel file");
     } finally {
@@ -785,29 +810,34 @@ const RptTBPage: React.FC = () => {
                 />
               </div>
             </div>
-
-            {/* Report File: what the Print button produces */}
-            <RadioPanel id="rdgReportFile" className="absolute right-3.5 top-[calc(1.5625rem)] h-21 w-45.75 px-3.5 py-3 max-[700px]:static max-[700px]:mt-3.5">
-              <span className="absolute -top-2.5 left-2.5 bg-white px-1 text-[13px] text-[#405066]">
-                Report File
-              </span>
+            {/* Entry type */}
+            <RadioPanel className="absolute right-3.5 top-[calc(1.5625rem)] h-30 w-45.75 px-3.5 py-3 max-[700px]:static max-[700px]:mt-3.5">
               <div className="flex flex-col gap-3">
                 <CustomRadio
-                  name="rdgReportFile"
-                  value="Excel"
-                  label="Excel"
-                  checked={reportFile === "Excel"}
-                  onChange={() => setReportFile("Excel")}
+                  name="entryMode"
+                  value="Generated"
+                  label="Generated Entries"
+                  checked={entryMode === "Generated"}
+                  onChange={() => setEntryMode("Generated")}
                 />
                 <CustomRadio
-                  name="rdgReportFile"
-                  value="PDF"
-                  label="PDF"
-                  checked={reportFile === "PDF"}
-                  onChange={() => setReportFile("PDF")}
+                  name="entryMode"
+                  value="Manual"
+                  label="Manual Entries"
+                  checked={entryMode === "Manual"}
+                  onChange={() => setEntryMode("Manual")}
+                />
+
+                <CustomRadio
+                  name="entryMode"
+                  value="All"
+                  label="All"
+                  checked={entryMode === "All"}
+                  onChange={() => setEntryMode("All")}
                 />
               </div>
             </RadioPanel>
+           
 
             {/* Period */}
             <div className="mt-2.5 grid grid-cols-[168px_1fr] items-start gap-4">
@@ -919,34 +949,6 @@ const RptTBPage: React.FC = () => {
               </div>
             </div>
 
-            {/* Entry type */}
-            <RadioPanel className="absolute right-3.5 top-51.25 h-28.75 w-45.75 px-3.5 py-3.25 max-[700px]:static max-[700px]:mt-3.5">
-              <div className="flex flex-col gap-3">
-                <CustomRadio
-                  name="entryMode"
-                  value="Generated"
-                  label="Generated Entries"
-                  checked={entryMode === "Generated"}
-                  onChange={() => setEntryMode("Generated")}
-                />
-                <CustomRadio
-                  name="entryMode"
-                  value="Manual"
-                  label="Manual Entries"
-                  checked={entryMode === "Manual"}
-                  onChange={() => setEntryMode("Manual")}
-                />
-
-                <CustomRadio
-                  name="entryMode"
-                  value="All"
-                  label="All"
-                  checked={entryMode === "All"}
-                  onChange={() => setEntryMode("All")}
-                />
-              </div>
-            </RadioPanel>
-
             {/* Actions */}
             <div className="mt-4.5 flex justify-center gap-3 max-[700px]:mt-3.5">
               <button
@@ -997,26 +999,61 @@ const RptTBPage: React.FC = () => {
               className="min-h-0 flex-1 border-0 bg-white"
             />
 
-            <footer className="flex shrink-0 items-center justify-center gap-3 border-t border-[#e0e5ea] py-3">
-              <button
-                id="btnPreviewOk"
-                type="button"
-                autoFocus
-                onClick={handlePreviewOk}
-                disabled={busy}
-                className="btn-style focus-visible:ring-2 focus-visible:ring-[#64d96e] disabled:cursor-not-allowed disabled:opacity-40"
+            <footer className="flex shrink-0 flex-wrap items-center justify-center gap-4 border-t border-[#e0e5ea] px-3 py-4">
+              <div className="flex gap-3">
+                <button
+                  id="btnPreviewPrint"
+                  type="button"
+                  onClick={handlePreviewPrint}
+                  disabled={busy}
+                  className="btn-style focus-visible:ring-2 focus-visible:ring-[#64d96e] disabled:cursor-not-allowed disabled:opacity-40"
+                >
+                  <u>P</u>rint
+                </button>
+                <button
+                  id="btnPreviewOk"
+                  type="button"
+                  autoFocus
+                  onClick={handlePreviewOk}
+                  disabled={busy}
+                  className="btn-style focus-visible:ring-2 focus-visible:ring-[#64d96e] disabled:cursor-not-allowed disabled:opacity-40"
+                >
+                  <u>D</u>ownload
+                </button>
+                <button
+                  id="btnPreviewCancel"
+                  type="button"
+                  onClick={() => setPreview(null)}
+                  disabled={busy}
+                  className="btn-style focus-visible:ring-2 focus-visible:ring-[#64d96e] disabled:cursor-not-allowed disabled:opacity-40"
+                >
+                  <u>C</u>lose
+                </button>
+              </div>
+
+              {/* Report File: what Download saves */}
+              <div
+                id="rdgReportFile"
+                className="relative flex items-center gap-5 border border-[#e0e5ea] bg-white px-10.5 py-2.5"
               >
-                OK
-              </button>
-              <button
-                id="btnPreviewCancel"
-                type="button"
-                onClick={() => setPreview(null)}
-                disabled={busy}
-                className="btn-style focus-visible:ring-2 focus-visible:ring-[#64d96e] disabled:cursor-not-allowed disabled:opacity-40"
-              >
-                Cancel
-              </button>
+                <span className="absolute -top-2.5 left-2.5 bg-white px-1 text-[13px] text-[#405066]">
+                  File Format
+                </span>
+                <CustomRadio
+                  name="rdgReportFile"
+                  value="Excel"
+                  label="Excel"
+                  checked={reportFile === "Excel"}
+                  onChange={() => setReportFile("Excel")}
+                />
+                <CustomRadio
+                  name="rdgReportFile"
+                  value="PDF"
+                  label="PDF"
+                  checked={reportFile === "PDF"}
+                  onChange={() => setReportFile("PDF")}
+                />
+              </div>
             </footer>
           </div>
         </div>

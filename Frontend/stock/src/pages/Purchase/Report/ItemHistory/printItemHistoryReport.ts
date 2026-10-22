@@ -3,7 +3,9 @@
 // heading, branch, then per item a header block (item, supplier, last sale /
 // purchase, stock ...), the transactions (Date, Type, Document No., Account ID,
 // Qty. In, Qty. Out, Unit Cost, Unit Price) and a "Total :" row.
-// Opens the browser print dialog from a hidden iframe (no pop-up to block).
+// buildHtml is used by the print preview; printItemHistoryReport sends the
+// report to the printer (browser print dialog, hidden iframe - no pop-up).
+// The formatters are shared with the PDF file.
 
 export type HistoryRow = {
   date: string | null; // YYYY-MM-DD
@@ -60,14 +62,14 @@ const MONTHS = [
 ];
 
 // "YYYY-MM-DD" -> dd-MMM-yyyy / dd-MMM-yy ; empty stays empty
-const dmy = (iso: string | null, longYear: boolean) => {
+export const dmy = (iso: string | null, longYear: boolean) => {
   const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(iso ?? "");
   if (!m) return "";
   const year = longYear ? m[1] : m[1].slice(2);
   return `${m[3]}-${MONTHS[Number(m[2]) - 1]}-${year}`;
 };
 
-const fixed = (v: number | null, decimals: number) =>
+export const fixed = (v: number | null, decimals: number) =>
   v == null
     ? ""
     : v.toLocaleString("en-US", {
@@ -75,11 +77,11 @@ const fixed = (v: number | null, decimals: number) =>
         maximumFractionDigits: decimals,
       });
 
-const whole = (v: number | null) =>
+export const whole = (v: number | null) =>
   v == null ? "" : v.toLocaleString("en-US", { maximumFractionDigits: 0 });
 
 // {0} (no format): the number as it is
-const raw = (v: number | null) => (v == null ? "" : String(v));
+export const raw = (v: number | null) => (v == null ? "" : String(v));
 
 // header block: label | : | value   (VB XrTable1, six rows)
 const COLS_ITEM = "25.74% 1.18% 22.06% 51.03%";
@@ -146,7 +148,7 @@ ${g.rows
 </tr>`;
 };
 
-const buildHtml = (r: PrintReport) => `<!doctype html>
+export const buildHtml = (r: PrintReport) => `<!doctype html>
 <html>
 <head>
 <meta charset="utf-8" />

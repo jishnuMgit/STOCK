@@ -1,32 +1,49 @@
-import React, { useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
+import { toast } from "react-toastify";
+import { useAltShortcuts } from "../../hooks/useAltShortcuts";
+import { useConfirm, DELETE_CONFIRM_MESSAGE } from "../../hooks/useConfirm";
+
+// ============================================================
+// BRANCH (Administration > Branch, the old frmBranch)
+
+// (txtCompany, txtBrID, txtBrName, txtPositionNo, txtFind ...).
+// ============================================================
+
+const api = import.meta.env.VITE_API_URL;
+
+const MIN_ROWS = 12;
+const MAX_ID_LENGTH = 3;
+const MAX_NAME_LENGTH = 40;
 
 type BranchRow = {
   key: number;
-  id: string;
-  branch: string;
-  position: string;
+  txtBrID: string;
+  txtBrName: string;
+  txtPositionNo: string;
+  // the row came from the server: a change of it is an update
+  chkSaved: boolean;
+  // what the server has (to find the changed rows, and the row itself)
+  original: {
+    txtBrID: string;
+    txtBrName: string;
+    txtPositionNo: string;
+  } | null;
 };
-
-const MIN_ROWS = 12;
-
-/* Replace with data from your API */
-const initialData: Omit<BranchRow, "key">[] = [
-  { id: "01", branch: "WAREHOUSE RIYADH", position: "1" },
-  { id: "11", branch: "OFFICE", position: "5" },
-];
 
 let keyCounter = 0;
 const nextKey = () => ++keyCounter;
 
 const emptyRow = (): BranchRow => ({
   key: nextKey(),
-  id: "",
-  branch: "",
-  position: "",
+  txtBrID: "",
+  txtBrName: "",
+  txtPositionNo: "",
+  chkSaved: false,
+  original: null,
 });
 
 const isEmptyRow = (row: BranchRow) =>
-  !row.id && !row.branch && !row.position;
+  !row.txtBrID && !row.txtBrName && !row.txtPositionNo;
 
 /** keeps one empty row at the end and at least MIN_ROWS rows in total */
 const padRows = (rows: BranchRow[]): BranchRow[] => {
@@ -38,90 +55,345 @@ const padRows = (rows: BranchRow[]): BranchRow[] => {
   return result;
 };
 
-const buildInitialRows = (): BranchRow[] =>
-  padRows(initialData.map((row) => ({ key: nextKey(), ...row })));
+// a new row with something typed, or a saved row whose name / position changed
+const isChanged = (row: BranchRow) =>
+  row.chkSaved
+    ? row.original !== null &&
+      (row.txtBrName.trim() !== row.original.txtBrName ||
+        row.txtPositionNo.trim() !== row.original.txtPositionNo)
+    : !isEmptyRow(row);
+
+type Field = "txtBrID" | "txtBrName" | "txtPositionNo";
 
 const cellInputClass =
   "h-[26px] w-full bg-transparent px-2 text-[12px] text-[#24364d] outline-none focus:bg-white ";
 
-type BranchPageProps = {
-  companyName?: string;
-  onClose?: () => void;
+const focusField = (field?: string) => {
+  if (!field) return;
+
+  const element =
+    document.getElementById(field) ??
+    document.querySelector<HTMLElement>(`[name="${field}"]`);
+
+  element?.focus();
 };
 
-const BranchPage: React.FC<BranchPageProps> = ({
-  companyName = "GREEN SPECTRA",
-  onClose,
-}) => {
-  const [rows, setRows] = useState<BranchRow[]>(buildInitialRows);
-  const [selectedKey, setSelectedKey] = useState<number | null>(
-    () => rows[0]?.key ?? null,
-  );
-  const [showFind, setShowFind] = useState(false);
-  const [query, setQuery] = useState("");
-  const [error, setError] = useState("");
+const BranchPage: React.FC = () => {
+  const [txtCompany, setTxtCompany] = useState("");
+  const [rows, setRows] = useState<BranchRow[]>(() => padRows([]));
+  const [selectedKey, setSelectedKey] = useState<number | null>(null);
+  const [chkFindOpen, setChkFindOpen] = useState(false);
+  const [txtFind, setTxtFind] = useState("");
+  const [saving, setSaving] = useState(false);
+  const { confirm, confirmDialog } = useConfirm();
 
-  const updateCell = (
-    key: number,
-    field: "id" | "branch" | "position",
-    value: string,
-  ) => {
-    setError("");
-    setRows((prev) =>
+  // bumped after a Save / Modify so the branches are loaded again
+  const [reloadKey, setReloadKey] = useState(0);
+
+  // only the answer of the latest request may fill the grid
+  const loadRequest = useRef(0);
+
+  // ----------------------------------------------------------
+  // LOAD: the company name and its branches
+  // ----------------------------------------------------------
+
+  useEffect(() => {
+    const requestNo = ++loadRequest.current;
+
+    const loadBranches = async () => {
+      try {
+        const PstrCoID = localStorage.getItem("PstrCoID");
+
+        if (!PstrCoID) {
+          toast.error("getBranch: no PstrCoID in localStorage");
+          return;
+        }
+
+        const response = await fetch(
+          `${api}/AdministrationBranch/getBranch?PstrCoID=${PstrCoID}`,
+          { credentials: "include" },
+        );
+
+        const result = await response.json();
+
+        if (requestNo !== loadRequest.current) return;
+
+        if (!response.ok || !result.success) {
+          toast.error(result.message || "Failed to load the Branches");
+          return;
+        }
+
+        setTxtCompany(result.header?.txtCompany ?? "");
+
+        const loaded: BranchRow[] = (result.data || []).map(
+          (row: {
+            txtBrID: string;
+            txtBrName: string | null;
+            txtPositionNo: number | string | null;
+          }) => {
+            const txtBrName = row.txtBrName ?? "";
+            const txtPositionNo =
+              row.txtPositionNo === null || row.txtPositionNo === undefined
+                ? ""
+                : String(row.txtPositionNo);
+
+            return {
+              key: nextKey(),
+              txtBrID: row.txtBrID,
+              txtBrName,
+              txtPositionNo,
+              chkSaved: true,
+              original: {
+                txtBrID: row.txtBrID,
+                txtBrName,
+                txtPositionNo,
+              },
+            };
+          },
+        );
+
+        const padded = padRows(loaded);
+
+        setRows(padded);
+        setSelectedKey(padded[0]?.key ?? null);
+      } catch (error: unknown) {
+        if (requestNo !== loadRequest.current) return;
+
+        console.error("getBranch error:", error);
+        toast.error("Failed to load the Branches");
+      }
+    };
+
+    loadBranches();
+  }, [reloadKey]);
+
+  // ----------------------------------------------------------
+  // EDIT
+  // ----------------------------------------------------------
+
+  const updateCell = (key: number, field: Field, value: string) => {
+    setRows((previous) =>
       padRows(
-        prev.map((row) => (row.key === key ? { ...row, [field]: value } : row)),
+        previous.map((row) => (row.key === key ? { ...row, [field]: value } : row)),
       ),
     );
   };
 
-  const handleSave = () => {
+  // Enter goes on to the next cell of the row, then to the next row
+  const handleCellKeyDown = (
+    event: React.KeyboardEvent<HTMLInputElement>,
+    index: number,
+    field: Field,
+  ) => {
+    if (event.key !== "Enter") return;
+
+    event.preventDefault();
+
+    const order: Field[] = ["txtBrID", "txtBrName", "txtPositionNo"];
+    let nextIndex = index;
+    let nextField = order[order.indexOf(field) + 1];
+
+    if (!nextField) {
+      nextIndex = index + 1;
+      nextField = "txtBrID";
+    }
+
+    document.getElementById(`${nextField}-${nextIndex}`)?.focus();
+  };
+
+  const changedRows = rows.filter(isChanged);
+
+  // something to send: a new row or a changed row (the button itself is always
+  // on, as in the old form; with nothing to send it says so)
+  const hasChanges = changedRows.length > 0;
+
+  // ----------------------------------------------------------
+  // SAVE (the old cmdSave_Click): the server checks everything again, and that
+  // the user is the administrator.
+  // ----------------------------------------------------------
+
+  const handleSave = async () => {
+    if (saving) return;
+
     const filled = rows.filter((row) => !isEmptyRow(row));
 
-    const incomplete = filled.findIndex((row) => !row.id.trim() || !row.branch.trim());
-    if (incomplete !== -1) {
-      setError("Every branch needs an ID and a branch name.");
-      return;
+    // the old grdvBranch_ValidateRow, on every row
+    for (const row of filled) {
+      const index = rows.indexOf(row);
+
+      if (!row.txtBrID.trim()) {
+        toast.info("Please enter the 'Branch ID'");
+        focusField(`txtBrID-${index}`);
+        return;
+      }
+
+      if (!row.txtBrName.trim()) {
+        toast.info(`Please enter the 'Branch' name of '${row.txtBrID.trim()}'`);
+        focusField(`txtBrName-${index}`);
+        return;
+      }
     }
-    const ids = filled.map((row) => row.id.trim().toLowerCase());
-    if (new Set(ids).size !== ids.length) {
-      setError("Branch IDs must be unique.");
+
+    const seenIDs = new Set<string>();
+    const seenNames = new Set<string>();
+
+    for (const row of filled) {
+      const index = rows.indexOf(row);
+      const idKey = row.txtBrID.trim().toLowerCase();
+      const nameKey = row.txtBrName.trim().toLowerCase();
+
+      if (seenIDs.has(idKey)) {
+        toast.info("'Branch ID' already exists");
+        focusField(`txtBrID-${index}`);
+        return;
+      }
+
+      if (seenNames.has(nameKey)) {
+        toast.info("'Branch Name' already exists");
+        focusField(`txtBrName-${index}`);
+        return;
+      }
+
+      seenIDs.add(idKey);
+      seenNames.add(nameKey);
+    }
+
+    if (!hasChanges) {
+      toast.info("There is no data to save");
       return;
     }
 
-    setError("");
-    console.log({
-      company: companyName,
-      branches: filled.map((row) => ({
-        id: row.id.trim(),
-        branch: row.branch.trim(),
-        position: row.position ? Number(row.position) : null,
-      })),
-    });
+    setSaving(true);
+
+    try {
+      const response = await fetch(`${api}/AdministrationBranch/saveBranch`, {
+        method: "POST",
+        credentials: "include", // the server checks the session and the user type
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          PstrCoID: localStorage.getItem("PstrCoID"),
+          PstrYear: localStorage.getItem("PstrYear"),
+          rows: changedRows.map((row) => ({
+            txtBrID: row.txtBrID.trim(),
+            txtBrName: row.txtBrName.trim(),
+            txtPositionNo: row.txtPositionNo.trim(),
+            chkSaved: row.chkSaved,
+          })),
+        }),
+      });
+
+      const result = await response.json();
+
+      if (!response.ok || !result.success) {
+        toast.error(result.message || "Not Saved,try again");
+        focusField(result.field);
+        return;
+      }
+
+      toast.success(result.message);
+
+      setReloadKey((previous) => previous + 1);
+    } catch (error: unknown) {
+      console.error("saveBranch error:", error);
+      toast.error("Not Saved,try again");
+    } finally {
+      setSaving(false);
+    }
   };
+
+  // ----------------------------------------------------------
+  // DELETE (the X of a row). A row only typed on the page just goes. A saved row
+  // asks "Do you want to delete?" and, on Delete, is deleted in the database at
+  // once; the other rows keep what has been typed in them.
+  // ----------------------------------------------------------
+
+  const handleDeleteRow = async (row: BranchRow) => {
+    if (saving) return;
+
+    if (!row.chkSaved) {
+      setRows((previous) =>
+        padRows(previous.filter((item) => item.key !== row.key)),
+      );
+      return;
+    }
+
+    const shouldDelete = await confirm(DELETE_CONFIRM_MESSAGE, "Delete");
+
+    if (!shouldDelete) return;
+
+    setSaving(true);
+
+    try {
+      // the same endpoint as Save, with nothing but this branch to delete
+      const response = await fetch(`${api}/AdministrationBranch/saveBranch`, {
+        method: "POST",
+        credentials: "include",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          PstrCoID: localStorage.getItem("PstrCoID"),
+          PstrYear: localStorage.getItem("PstrYear"),
+          rows: [],
+          deletedRows: [{ txtBrID: row.txtBrID }],
+        }),
+      });
+
+      const result = await response.json();
+
+      if (!response.ok || !result.success) {
+        toast.error(result.message || "Not Deleted,try again");
+        return;
+      }
+
+      toast.success(result.message);
+
+      setRows((previous) =>
+        padRows(previous.filter((item) => item.key !== row.key)),
+      );
+    } catch (error: unknown) {
+      console.error("deleteBranch error:", error);
+      toast.error("Not Deleted,try again");
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  // ----------------------------------------------------------
+  // FIND / CLEAR
+  // ----------------------------------------------------------
 
   const handleFind = () => {
-    setShowFind((prev) => !prev);
-    setQuery("");
+    setChkFindOpen((previous) => !previous);
+    setTxtFind("");
   };
 
-  const handleClose = () => {
-    const fresh = buildInitialRows();
-    setRows(fresh);
-    setSelectedKey(fresh[0]?.key ?? null);
-    setShowFind(false);
-    setQuery("");
-    setError("");
-    onClose?.();
+  // Clear: back to what is saved - the typed rows and the changes are dropped,
+  // and the branches are loaded again
+  const handleClear = () => {
+    if (saving) return;
+
+    setChkFindOpen(false);
+    setTxtFind("");
+    setReloadKey((previous) => previous + 1);
   };
 
-  const search = query.trim().toLowerCase();
-  const visibleRows = search
-    ? rows.filter(
-        (row) =>
-          row.id.toLowerCase().includes(search) ||
-          row.branch.toLowerCase().includes(search),
-      )
-    : rows;
+  // Alt+S Save, Alt+F Find, Alt+C Clear
+  useAltShortcuts({
+    s: handleSave,
+    f: handleFind,
+    c: handleClear,
+  });
+
+  const search = txtFind.trim().toLowerCase();
+
+  // the row keeps its place in the full list (its element ids carry that number)
+  const visibleRows = rows
+    .map((row, index) => ({ row, index }))
+    .filter(
+      ({ row }) =>
+        !search ||
+        row.txtBrID.toLowerCase().includes(search) ||
+        row.txtBrName.toLowerCase().includes(search),
+    );
 
   return (
     <div className="flex min-h-screen w-full items-start justify-center bg-white px-4 py-4">
@@ -134,31 +406,34 @@ const BranchPage: React.FC<BranchPageProps> = ({
           </header>
 
           <section className="px-3.5 pb-6 pt-3">
-            {/* Company (read-only) */}
-            <div className="flex items-center gap-3">
-              <div className="flex h-[30px] w-[110px] items-center justify-end border border-[#BFE8D0] bg-[#fafbfc] pr-3 text-[12px] text-[#405066]">
+            {/* Company (the logged-in company, read-only) */}
+            {/* <div className="flex items-center gap-3"> */}
+              {/* <div className="flex h-[30px] w-[110px] items-center justify-end border border-[#BFE8D0] bg-[#fafbfc] pr-3 text-[12px] text-[#405066]">
                 Company :
-              </div>
-              <input
+              </div> */}
+              {/* <input
                 id="txtCompany"
+                name="txtCompany"
                 type="text"
                 readOnly
-                value={companyName}
+                tabIndex={-1}
+                value={txtCompany}
                 className="h-[30px] w-[320px] max-w-full rounded-[4px] border border-[#cfd7df] bg-[#f6f8fa] px-2 text-[13px] text-[#24364d] outline-none"
               />
-            </div>
+            </div> */}
 
-            {showFind && (
+            {chkFindOpen && (
               <div className="mt-3 flex items-center gap-3">
                 <div className="flex h-[30px] w-[110px] items-center justify-end border border-[#BFE8D0] bg-[#fafbfc] pr-3 text-[12px] text-[#405066]">
                   Find :
                 </div>
                 <input
                   id="txtFind"
+                  name="txtFind"
                   type="text"
                   autoFocus
-                  value={query}
-                  onChange={(event) => setQuery(event.target.value)}
+                  value={txtFind}
+                  onChange={(event) => setTxtFind(event.target.value)}
                   placeholder="ID or branch"
                   className="h-[30px] w-[250px] rounded-[4px] border border-[#cfd7df] bg-white px-2 text-[12px] text-[#24364d] outline-none focus:border-[#91a7b9]"
                 />
@@ -189,8 +464,12 @@ const BranchPage: React.FC<BranchPageProps> = ({
                   </tr>
                 </thead>
                 <tbody>
-                  {visibleRows.map((row) => {
+                  {visibleRows.map(({ row, index }) => {
                     const selected = row.key === selectedKey;
+                    const changed = isChanged(row) && row.chkSaved;
+                    const showDelete =
+                      selected && (row.chkSaved || !isEmptyRow(row));
+
                     return (
                       <tr
                         key={row.key}
@@ -201,45 +480,92 @@ const BranchPage: React.FC<BranchPageProps> = ({
                           {selected ? "▶" : ""}
                         </td>
                         <td
-                          className={`border border-[#BFE8D0] p-0 ${selected ? "bg-[#F2FAF5]" : ""}`}
+                          className={`border border-[#BFE8D0] p-0 ${
+                            changed ? "bg-[#fff6d6]" : selected ? "bg-[#F2FAF5]" : ""
+                          }`}
                         >
                           <input
+                            id={`txtBrID-${index}`}
+                            name="txtBrID"
                             aria-label="ID"
-                            value={row.id}
+                            maxLength={MAX_ID_LENGTH}
+                            readOnly={row.chkSaved}
+                            value={row.txtBrID}
                             onFocus={() => setSelectedKey(row.key)}
                             onChange={(event) =>
-                              updateCell(row.key, "id", event.target.value)
+                              updateCell(row.key, "txtBrID", event.target.value)
                             }
-                            className={cellInputClass}
+                            onKeyDown={(event) =>
+                              handleCellKeyDown(event, index, "txtBrID")
+                            }
+                            className={`${cellInputClass} ${row.chkSaved ? "cursor-default" : ""}`}
                           />
                         </td>
-                        <td className="border border-[#BFE8D0] p-0">
+                        <td
+                          className={`border border-[#BFE8D0] p-0 ${changed ? "bg-[#fff6d6]" : ""}`}
+                        >
                           <input
+                            id={`txtBrName-${index}`}
+                            name="txtBrName"
                             aria-label="Branch"
-                            value={row.branch}
+                            maxLength={MAX_NAME_LENGTH}
+                            value={row.txtBrName}
                             onFocus={() => setSelectedKey(row.key)}
                             onChange={(event) =>
                               updateCell(
                                 row.key,
-                                "branch",
-                                event.target.value.toUpperCase(),
+                                "txtBrName",
+                                event.target.value,
                               )
+                            }
+                            onKeyDown={(event) =>
+                              handleCellKeyDown(event, index, "txtBrName")
                             }
                             className={cellInputClass}
                           />
                         </td>
-                        <td className="border border-[#BFE8D0] p-0">
-                          <input
-                            aria-label="Position No."
-                            type="number"
-                            min="0"
-                            value={row.position}
-                            onFocus={() => setSelectedKey(row.key)}
-                            onChange={(event) =>
-                              updateCell(row.key, "position", event.target.value)
-                            }
-                            className={`${cellInputClass} text-right [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none`}
-                          />
+                        <td
+                          className={`border border-[#BFE8D0] p-0 ${changed ? "bg-[#fff6d6]" : ""}`}
+                        >
+                          <div className="flex h-[26px] items-center">
+                            <input
+                              id={`txtPositionNo-${index}`}
+                              name="txtPositionNo"
+                              aria-label="Position No."
+                              inputMode="numeric"
+                              value={row.txtPositionNo}
+                              onFocus={() => setSelectedKey(row.key)}
+                              onChange={(event) =>
+                                updateCell(
+                                  row.key,
+                                  "txtPositionNo",
+                                  event.target.value.replace(/\D/g, "").slice(0, 5),
+                                )
+                              }
+                              onKeyDown={(event) =>
+                                handleCellKeyDown(event, index, "txtPositionNo")
+                              }
+                              className="h-[26px] min-w-0 flex-1 bg-transparent px-2 text-right text-[12px] text-[#24364d] outline-none focus:bg-white"
+                            />
+                            {/* the slot is always there so the numbers do not move when the x shows */}
+                            <span className="flex w-6 shrink-0 items-center justify-center">
+                              {showDelete && (
+                                <button
+                                  id={`btnDeleteRow-${index}`}
+                                  name="btnDeleteRow"
+                                  type="button"
+                                  tabIndex={-1}
+                                  title="Delete row"
+                                  onClick={() => handleDeleteRow(row)}
+                                  disabled={saving}
+                                  aria-label={`Delete branch ${row.txtBrID || "row"}`}
+                                  className="text-[12px] leading-none text-gray-400 hover:text-red-600 disabled:cursor-not-allowed disabled:opacity-30"
+                                >
+                                  ✕
+                                </button>
+                              )}
+                            </span>
+                          </div>
                         </td>
                       </tr>
                     );
@@ -248,42 +574,46 @@ const BranchPage: React.FC<BranchPageProps> = ({
               </table>
             </div>
 
-            {error && (
-              <p role="alert" className="mt-2 text-[12px] text-[#c0392b]">
-                {error}
-              </p>
-            )}
-
-            {/* Actions */}
+            {/* Actions: one Save does it all (new rows, changes, deleted rows) */}
             <div className="mt-5 flex justify-center gap-3">
               <button
                 id="btnSave"
+                name="btnSave"
                 type="button"
                 onClick={handleSave}
-                className="btn-style"
+                disabled={saving}
+                title="Alt+S"
+                className="btn-style disabled:cursor-not-allowed disabled:opacity-60"
               >
                 <u>S</u>ave
               </button>
               <button
                 id="btnFind"
+                name="btnFind"
                 type="button"
                 onClick={handleFind}
+                title="Alt+F"
                 className="btn-style"
               >
                 <u>F</u>ind
               </button>
               <button
-                id="btnClose"
+                id="btnClear"
+                name="btnClear"
                 type="button"
-                onClick={handleClose}
-                className="btn-style"
+                onClick={handleClear}
+                disabled={saving}
+                title="Alt+C"
+                className="btn-style disabled:cursor-not-allowed disabled:opacity-60"
               >
-                <u>C</u>lose
+                <u>C</u>lear
               </button>
             </div>
           </section>
         </main>
       </div>
+
+      {confirmDialog}
     </div>
   );
 };
