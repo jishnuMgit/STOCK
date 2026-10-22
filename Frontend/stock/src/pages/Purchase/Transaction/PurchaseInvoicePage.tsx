@@ -8,6 +8,7 @@ import {
   emptyHeader,
   emptyRow,
   createExpenseRows,
+  padExpenseRows,
   type PurchaseExpenseRow,
   type CashSupplier,
   type InvoiceTypeOption,
@@ -16,6 +17,7 @@ import {
   type Item,
   type SupplierLookup,
 } from "../../../hooks/Purchase/Transaction/usePurchaseInvoice";
+import { toast } from "react-toastify";
 
 const ROW_COUNT = 12;
 const createRows = () => Array.from({ length: ROW_COUNT }, emptyRow);
@@ -77,7 +79,7 @@ const PurchaseInvoicePage: React.FC = () => {
   // Misc. supplier lookup + the Yes/No switch.
   // Default type is Cash (C), where the supplier name comes from Misc. Sup.
   const [miscSuppliers, setMiscSuppliers] = useState<CashSupplier[]>([]);
-  const [miscMode, setMiscMode] = useState("Yes");
+  const [miscMode, setMiscMode] = useState("No");
   const [items, setItems] = useState<Item[]>([]);
 
   const [suppliersById, setSuppliersById] = useState<SupplierLookup[]>([]);
@@ -297,7 +299,7 @@ const PurchaseInvoicePage: React.FC = () => {
       });
 
       if (field === "invoiceType") {
-        setMiscMode(value === "C" ? "Yes" : "No");
+        setMiscMode("No");
       }
 
       if (field === "currencyRate") {
@@ -344,7 +346,7 @@ const PurchaseInvoicePage: React.FC = () => {
     setRows(createRows());
     setMode("S");
     setOriginalSlNos([]);
-    setMiscMode("Yes");
+    setMiscMode("No");
     setMessage("");
     setPosted(false);
     setExpenseRows(createExpenseRows());
@@ -375,8 +377,18 @@ const PurchaseInvoicePage: React.FC = () => {
         ),
       ]);
       setOriginalSlNos(found.originalSlNos);
-      setMiscMode(found.header.invoiceType === "C" ? "Yes" : "No");
-      //@ts-ignore
+      const hRate = num(found.header.currencyRate) || 1;
+      setExpenseRows(
+        padExpenseRows(
+          found.expenses.map((e) => ({
+            ...e,
+            currency: found.header.currency,
+            currencyRate: hRate.toFixed(4),
+            amount: e.amountSAR ? (num(e.amountSAR) / hRate).toFixed(4) : "",
+          })),
+        ),
+      );
+      setMiscMode(misc ? "Yes" : "No");
       setPosted(found.posted);
       setMode("M");
       return;
@@ -391,7 +403,8 @@ const PurchaseInvoicePage: React.FC = () => {
       });
       setRows(createRows());
       setOriginalSlNos([]);
-      setMiscMode("Yes");
+      setExpenseRows(createExpenseRows());
+      setMiscMode("No");
     }
     setPosted(false);
     setMode("S");
@@ -408,7 +421,7 @@ const PurchaseInvoicePage: React.FC = () => {
       );
       setRows(updated);
     } catch (err) {
-      window.alert(
+      toast.error(
         err instanceof Error ? err.message : "Failed to calculate unit cost",
       );
     }
@@ -416,7 +429,14 @@ const PurchaseInvoicePage: React.FC = () => {
 
   const handleSave = useCallback(async () => {
     if (posted) {
-      window.alert("Posted Purchase Invoice cannot be modified");
+      toast.warning("Posted Purchase Invoice cannot be modified");
+      return;
+    }
+    if (miscMode === "Yes" && !header.miscSupId) {
+      toast.warning("Please select a 'Misc. Sup.' or change it to 'No'", {
+        toastId: "misc-sup-warning", // prevents duplicate toasts
+      });
+      document.getElementById("lkpMiscSupID")?.focus();
       return;
     }
     try {
@@ -429,25 +449,35 @@ const PurchaseInvoicePage: React.FC = () => {
         originalSlNos,
         expenses: expenseRows,
       });
-      window.alert(mode === "S" ? "Saved" : "Modified");
+      toast.success(mode === "S" ? "Saved" : "Modified");
       handleClear();
     } catch (err) {
-      window.alert(err instanceof Error ? err.message : "Not saved, try again");
+      toast.error(err instanceof Error ? err.message : "Not saved, try again");
     }
-  }, [posted, mode, header, rows, originalSlNos, saveInvoice, handleClear]);
+  }, [
+    posted,
+    miscMode,
+    mode,
+    header,
+    rows,
+    originalSlNos,
+    expenseRows,
+    saveInvoice,
+    handleClear,
+  ]);
 
   const handleDelete = useCallback(async () => {
     if (posted) {
-      window.alert("Posted Purchase Invoice cannot be deleted");
+      toast.warning("Posted Purchase Invoice cannot be deleted");
       return;
     }
     if (!window.confirm("Do you want to delete ?")) return;
     try {
       await deleteInvoice(YEAR, header.brId, header.docNo);
-      window.alert("Deleted");
+      toast.success("Deleted");
       handleClear();
     } catch (err) {
-      window.alert(
+      toast.error(
         err instanceof Error ? err.message : "Not deleted, try again",
       );
     }
@@ -456,11 +486,11 @@ const PurchaseInvoicePage: React.FC = () => {
   /* Post: only an already-saved (loaded) invoice can be posted */
   const handlePost = useCallback(async () => {
     if (mode !== "M") {
-      window.alert("Please save the invoice before posting");
+      toast.warning("Please save the invoice before posting");
       return;
     }
     if (posted) {
-      window.alert("Purchase Invoice is already posted");
+      toast.warning("Purchase Invoice is already posted");
       return;
     }
     if (!window.confirm("Do you want to post ?")) return;
@@ -468,12 +498,10 @@ const PurchaseInvoicePage: React.FC = () => {
     try {
       setPosting(true);
       await postInvoice(YEAR, header.brId, header.docNo);
-      window.alert("Posted");
+      toast.success("Posted");
       handleClear();
     } catch (err) {
-      window.alert(
-        err instanceof Error ? err.message : "Not posted, try again",
-      );
+      toast.error(err instanceof Error ? err.message : "Not posted, try again");
     } finally {
       setPosting(false);
     }

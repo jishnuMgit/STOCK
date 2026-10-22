@@ -251,7 +251,6 @@ const currencySelectStyles: StylesConfig<Option, false> = {
 ========================================================= */
 
 const MENU_FONT_SIZE = 14;
-const ID_COL_WIDTH = 140;
 const NAME_COL_WIDTH = 300;
 
 type MenuVariant =
@@ -859,10 +858,20 @@ const PurchaseForm: React.FC<Props> = ({
             id="txtCurrencyRate"
             inputMode="decimal"
             value={header.currencyRate}
+            onFocus={(e) => e.currentTarget.select()}
             onChange={(e) => {
               const v = e.target.value;
-              if (v === "" || /^\d*\.?\d*$/.test(v))
+              if (v === "" || /^\d*\.?\d{0,6}$/.test(v))
                 onChange("currencyRate", v);
+            }}
+            onBlur={() => {
+              const rate = Number(header.currencyRate);
+              onChange(
+                "currencyRate",
+                Number.isFinite(rate) && rate > 0
+                  ? rate.toFixed(4)
+                  : "1.000000",
+              );
             }}
             className="input-style min-w-0 flex-1 text-right"
           />

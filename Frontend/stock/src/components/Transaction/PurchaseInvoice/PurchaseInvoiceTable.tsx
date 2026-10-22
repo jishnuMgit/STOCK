@@ -312,6 +312,15 @@ const PurchaseTable: React.FC<Props> = ({ rows, onRowChange, lookups }) => {
     return Number.isFinite(number) ? number.toFixed(2) : "0.00";
   };
 
+  // Format quantity to three decimal places when leaving the field.
+  const formatQty = (value: string): string => {
+    if (value.trim() === "") return "";
+
+    const number = Number(value);
+
+    return Number.isFinite(number) ? number.toFixed(3) : "";
+  };
+
   // Item ID and Item Name are the same field (fItemID), as in the VB grid.
   const handleItemChange = (index: number, option: Option | null) => {
     onRowChange(index, {
@@ -354,6 +363,12 @@ const PurchaseTable: React.FC<Props> = ({ rows, onRowChange, lookups }) => {
       onBlur={() => {
         if (editable) {
           onRowChange(index, { [field]: formatPrice(rows[index][field]) });
+        }
+      }}
+      onKeyDown={(event) => {
+        if (editable && event.key === "Enter") {
+          event.preventDefault();
+          document.getElementById(`lkpItemID-${index + 1}`)?.focus();
         }
       }}
       className={`${numberInputClass} ${editable ? "" : "bg-slate-100"}`}
@@ -469,24 +484,57 @@ const PurchaseTable: React.FC<Props> = ({ rows, onRowChange, lookups }) => {
                   />
                 </td>
 
-                {/* Unit: read-only, comes from the item */}
-                <td className="h-[30px] border border-[#dce5ef] bg-slate-100 px-1">
-                  {row.unit}
+                {/* Unit: read-only, comes from the item. Enter -> Qty */}
+                <td className="h-[30px] border border-[#dce5ef] p-0">
+                  <input
+                    id={`txtUnit-${index}`}
+                    aria-label={`Unit row ${index + 1}`}
+                    type="text"
+                    readOnly
+                    value={row.unit}
+                    onFocus={() => setActiveRow(index)}
+                    onKeyDown={(event) => {
+                      if (event.key === "Enter") {
+                        event.preventDefault();
+                        document.getElementById(`txtQty-${index}`)?.focus();
+                      }
+                    }}
+                    className="h-[20px] w-full min-w-0 border-0 bg-slate-100 px-1 outline-none focus:bg-blue-50"
+                  />
                 </td>
 
-                {/* Quantity */}
+                {/* Quantity (3 decimals) */}
                 <td className="h-[30px] border border-[#dce5ef] p-0">
                   <input
                     id={`txtQty-${index}`}
                     aria-label={`Quantity row ${index + 1}`}
-                    type="number"
-                    min="0"
-                    step="any"
+                    type="text"
+                    inputMode="decimal"
+                    autoComplete="off"
                     value={row.qty}
-                    onFocus={() => setActiveRow(index)}
-                    onChange={(event) =>
-                      onRowChange(index, { qty: event.target.value })
+                    onFocus={(event) => {
+                      setActiveRow(index);
+                      event.currentTarget.select();
+                    }}
+                    onChange={(event) => {
+                      const value = event.target.value;
+
+                      // digits with at most 3 decimal places
+                      if (value === "" || /^\d*\.?\d{0,3}$/.test(value)) {
+                        onRowChange(index, { qty: value });
+                      }
+                    }}
+                    onBlur={() =>
+                      onRowChange(index, { qty: formatQty(rows[index].qty) })
                     }
+                    onKeyDown={(event) => {
+                      if (event.key === "Enter") {
+                        event.preventDefault();
+                        document
+                          .getElementById(`txtUnitPriceInput-${index}`)
+                          ?.focus();
+                      }
+                    }}
                     className={numberInputClass}
                   />
                 </td>

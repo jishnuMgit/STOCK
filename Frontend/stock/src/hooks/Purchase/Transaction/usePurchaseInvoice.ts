@@ -99,6 +99,15 @@ export const emptyExpenseRow = (): PurchaseExpenseRow => ({
 export const createExpenseRows = (count = 12): PurchaseExpenseRow[] =>
   Array.from({ length: count }, emptyExpenseRow);
 
+/* pad saved rows up to the grid size so the popup always shows 12 rows */
+export const padExpenseRows = (
+  rows: PurchaseExpenseRow[],
+  count = 12,
+): PurchaseExpenseRow[] => [
+  ...rows,
+  ...Array.from({ length: Math.max(count - rows.length, 0) }, emptyExpenseRow),
+];
+
 export interface CashSupplier {
   id: string;
   name: string;
@@ -126,7 +135,7 @@ export const emptyHeader = (): PurchaseHeader => ({
   vatNo: "",
   miscSupId: "",
   currency: "SAR",
-  currencyRate: "1",
+  currencyRate: "1.0000",
   piNo: "",
   note: "",
   discAmt: "0",
@@ -153,6 +162,18 @@ interface ExpenseLookupsApi {
   accounts: { fAccountID: string; fAccountName: string | null }[];
   costCenters: { fCCID: string; fCCName: string | null }[];
   currencies: { fCurrency: string }[];
+}
+
+/* saved expense row from GET /purchase-invoice/expense (sp_frmpiexp 'G') */
+interface ExpenseDetailApi {
+  fSlNo: number;
+  fAccountID: string | null;
+  fCCID: string | null;
+  fCurrency: string | null;
+  fCurrencyRate: string | number | null;
+  fCreditFC: string | number | null;
+  fCredit: string | number | null;
+  fDescription: string | null;
 }
 
 interface CurrencyApi {
@@ -372,6 +393,31 @@ export const usePurchaseInvoice = () => {
     };
   }, []);
 
+  /* saved purchase expense rows (sp_frmpiexp mode 'G') */
+  const fetchExpenseDetail = useCallback(
+    async (
+      year: string,
+      brId: string,
+      docNo: string,
+    ): Promise<PurchaseExpenseRow[]> => {
+      const params = new URLSearchParams({ year, brId, docNo });
+      const result = await apiRequest<{ data: ExpenseDetailApi[] }>(
+        "GET",
+        `/purchase-invoice/expense?${params}`,
+      );
+      return result.data.map((e) => ({
+        accountId: s(e.fAccountID),
+        ccid: s(e.fCCID),
+        currency: "",
+        currencyRate: "",
+        amount: "",
+        amountSAR: fixed(e.fCredit, 2),
+        description: s(e.fDescription),
+      }));
+    },
+    [],
+  );
+
   const fetchCurrencies = useCallback(async (): Promise<string[]> => {
     const result = await apiRequest<{ currencies: CurrencyApi[] }>(
       "GET",
@@ -392,6 +438,8 @@ export const usePurchaseInvoice = () => {
       header: PurchaseHeader;
       rows: PurchaseRow[];
       originalSlNos: number[];
+      expenses: PurchaseExpenseRow[];
+      posted: boolean;
     } | null> => {
       try {
         setLoading(true);
@@ -403,6 +451,14 @@ export const usePurchaseInvoice = () => {
         }>("GET", `/purchase-invoice?${params}`);
 
         const h = result.data.header;
+
+        // a failure loading expenses must not block loading the invoice
+        let expenses: PurchaseExpenseRow[] = [];
+        try {
+          expenses = await fetchExpenseDetail(year, brId, docNo);
+        } catch {
+          expenses = [];
+        }
 
         return {
           header: {
@@ -416,7 +472,9 @@ export const usePurchaseInvoice = () => {
             vatNo: s(h.fvatno),
             miscSupId: "",
             currency: s(h.fcurrency) || "SAR",
-            currencyRate: s(h.fcurrencyrate) || "1",
+            currencyRate: n(h.fcurrencyrate)
+              ? fixed(h.fcurrencyrate, 4)
+              : "1.0000",
             piNo: s(h.fpino),
             note: s(h.fnote),
             discAmt: s(h.fdiscamt) || "0",
@@ -432,6 +490,8 @@ export const usePurchaseInvoice = () => {
             totalCost: fixed(l.ftotalcost, 2),
           })),
           originalSlNos: result.data.lines.map((l) => l.fslno),
+          expenses,
+          posted: Boolean(h.fpost),
         };
       } catch (err: unknown) {
         // 404 just means "new document", not a real error
@@ -442,7 +502,7 @@ export const usePurchaseInvoice = () => {
         setLoading(false);
       }
     },
-    [],
+    [fetchExpenseDetail],
   );
 
   const saveInvoice = useCallback(
@@ -469,6 +529,8 @@ export const usePurchaseInvoice = () => {
           totalCost: n(r.totalCost),
         }));
 
+      /* field names match the backend PIExpLine:
+         creditFC = foreign-currency amount, credit = SAR amount */
       const expenseLines = expenses
         .filter((e) => e.accountId)
         .map((e, idx) => ({
@@ -477,8 +539,8 @@ export const usePurchaseInvoice = () => {
           ccId: e.ccid,
           currency: e.currency,
           currencyRate: n(e.currencyRate),
-          amountFC: n(e.amount),
-          amountSAR: n(e.amountSAR),
+          creditFC: n(e.amount),
+          credit: n(e.amountSAR),
           description: e.description,
         }));
 
@@ -613,6 +675,7 @@ export const usePurchaseInvoice = () => {
     fetchItems,
     fetchSuppliers,
     fetchExpenseLookups,
+    fetchExpenseDetail,
     fetchCurrencies,
     loading,
     error,
