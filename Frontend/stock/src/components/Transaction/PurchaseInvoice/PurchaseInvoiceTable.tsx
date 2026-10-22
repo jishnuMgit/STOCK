@@ -344,7 +344,7 @@ const PurchaseTable: React.FC<Props> = ({
   const handleDeleteClick = async (index: number) => {
     const ok = await confirm({
       title: "Purchase Invoice",
-      message: `Do you want to delete item ${rows[index].itemId} ?`,
+      message: `Do you want to delete ${index + 1} ?`,
     });
     if (!ok) return;
 

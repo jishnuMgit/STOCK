@@ -76,6 +76,8 @@ const PurchaseInvoicePage: React.FC = () => {
   const [branches, setBranches] = useState<{ value: string; label: string }[]>(
     [],
   );
+
+  console.log("rows", rows)
   const [invoiceTypes, setInvoiceTypes] = useState<InvoiceTypeOption[]>([]);
   const [currencies, setCurrencies] = useState<string[]>([]);
 
