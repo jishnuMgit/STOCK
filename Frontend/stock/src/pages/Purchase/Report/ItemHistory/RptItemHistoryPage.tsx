@@ -243,9 +243,8 @@ const CustomRadio: React.FC<RadioOptionProps> = ({
   onChange,
 }) => (
   <label
-    className={`flex items-center gap-2.5 whitespace-nowrap select-none ${
-      disabled ? "cursor-not-allowed opacity-50" : "cursor-pointer"
-    }`}
+    className={`flex items-center gap-2.5 whitespace-nowrap select-none ${disabled ? "cursor-not-allowed opacity-50" : "cursor-pointer"
+      }`}
   >
     <input
       type="radio"
@@ -257,14 +256,12 @@ const CustomRadio: React.FC<RadioOptionProps> = ({
       className="sr-only"
     />
     <span
-      className={`flex h-[19px] w-[19px] shrink-0 items-center justify-center rounded-full border bg-white ${
-        checked ? "border-[#64d96e]" : "border-[#cbd3dc]"
-      }`}
+      className={`flex h-[19px] w-[19px] shrink-0 items-center justify-center rounded-full border bg-white ${checked ? "border-[#64d96e]" : "border-[#cbd3dc]"
+        }`}
     >
       <span
-        className={`h-2.5 w-2.5 rounded-full bg-[#64d96e] ${
-          checked ? "opacity-100" : "opacity-0"
-        }`}
+        className={`h-2.5 w-2.5 rounded-full bg-[#64d96e] ${checked ? "opacity-100" : "opacity-0"
+          }`}
       />
     </span>
     <span className="text-[12px] font-normal text-[#35445a]">{label}</span>
@@ -532,11 +529,11 @@ const RptItemHistoryPage: React.FC<RptItemHistoryPageProps> = ({ onClose }) => {
         setBranch(
           list[0]
             ? {
-                value: list[0].brId,
-                label: list[0].brName,
-                id: list[0].brId,
-                name: list[0].brName,
-              }
+              value: list[0].brId,
+              label: list[0].brName,
+              id: list[0].brId,
+              name: list[0].brName,
+            }
             : null,
         );
       } catch {
@@ -693,10 +690,10 @@ const RptItemHistoryPage: React.FC<RptItemHistoryPageProps> = ({ onClose }) => {
     () =>
       preview
         ? // 40px left / 20px right margin for the preview only
-          buildHtml(preview.report).replace(
-            "</head>",
-            "<style>body{padding-left:40px;padding-right:20px}</style></head>",
-          )
+        buildHtml(preview.report).replace(
+          "</head>",
+          "<style>body{padding-left:40px;padding-right:20px}</style></head>",
+        )
         : "",
     [preview],
   );
@@ -767,21 +764,23 @@ const RptItemHistoryPage: React.FC<RptItemHistoryPageProps> = ({ onClose }) => {
               </RadioPanel>
               <div className="pt-3">
                 <div className="w-[250px]">
-                  <Select
-                    inputId="lkpBranch"
-                    instanceId="lkpBranch"
-                    options={branchOptions}
-                    value={branch}
-                    onChange={(option) => {
-                      setBranch(option);
-                      advanceAfterPick();
-                    }}
-                    onKeyDown={advanceOnEnter("lkpBranch")}
-                    isDisabled={branchMode !== "One Branch" || loading}
-                    {...selectProps}
-                    classNames={branchClassNames}
-                    components={branchComponents}
-                  />
+                  {branchMode === "One Branch" && (
+                    <Select
+                      inputId="lkpBranch"
+                      instanceId="lkpBranch"
+                      options={branchOptions}
+                      value={branch}
+                      onChange={(option) => {
+                        setBranch(option);
+                        advanceAfterPick();
+                      }}
+                      onKeyDown={advanceOnEnter("lkpBranch")}
+                      isDisabled={loading}
+                      {...selectProps}
+                      classNames={branchClassNames}
+                      components={branchComponents}
+                    />
+                  )}
                 </div>
               </div>
 
