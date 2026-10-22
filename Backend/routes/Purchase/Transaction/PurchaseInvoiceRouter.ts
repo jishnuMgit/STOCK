@@ -18,6 +18,7 @@ import {
   getPIExpCostCenters,
   getPIExpCurrencies,
   getPIExpLookups,
+  getPIExpDetail, // <-- new
   postPurchaseInvoice,
 } from "../../../controller/Purchase/Transaction/PurchaseInvoiceController.js";
 
@@ -28,7 +29,7 @@ router.use(authenticate);
 router.get("/", getPurchaseInvoice);
 router.post("/", savePurchaseInvoice);
 router.delete("/", deletePurchaseInvoice);
-router.post("/post", postPurchaseInvoice); 
+router.post("/post", postPurchaseInvoice);
 router.post("/calc-unit-cost", calcUnitCost);
 router.get("/next-doc-no", getNextDocNo);
 
@@ -43,7 +44,8 @@ router.get("/cash-supplier/:id", getCashSupplier);
 router.post("/cash-supplier", saveCashSupplier);
 router.delete("/cash-supplier/:id", deleteCashSupplier);
 
-// purchase expense (frmPIExp) lookups
+// purchase expense (frmPIExp)
+router.get("/expense", getPIExpDetail); // <-- new: load saved expense rows for a PI
 router.get("/expense/accounts", getPIExpAccounts);
 router.get("/expense/cost-centers", getPIExpCostCenters);
 router.get("/expense/currencies", getPIExpCurrencies);
