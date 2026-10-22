@@ -286,6 +286,10 @@ const nameSelectStyles: StylesConfig<Option, false> = selectStyles;
 const numberInputClass =
   "number-no-spinner h-[20px] w-full min-w-0 border-0 bg-transparent px-1 text-right outline-none focus:bg-blue-50";
 
+/* cell that holds an input: outlined while the cursor is inside it */
+const editCellClass =
+  "h-[30px] border border-[#dce5ef] p-0 focus-within:outline-2 focus-within:-outline-offset-2 focus-within:outline-green-600";
+
 interface Props {
   rows: PurchaseRow[];
   onRowChange: (index: number, patch: Partial<PurchaseRow>) => void;
@@ -466,7 +470,7 @@ const PurchaseTable: React.FC<Props> = ({
                   </td>
 
                   {/* Item ID */}
-                  <td className="h-[30px] border border-[#dce5ef] p-0">
+                  <td className={editCellClass}>
                     <Select<Option, false>
                       inputId={`lkpItemID-${index}`}
                       instanceId={`item-id-${index}`}
@@ -490,7 +494,7 @@ const PurchaseTable: React.FC<Props> = ({
                   </td>
 
                   {/* Item Name (same itemId) */}
-                  <td className="h-[30px] border border-[#dce5ef] p-0">
+                  <td className={editCellClass}>
                     <Select<Option, false>
                       inputId={`lkpItemName-${index}`}
                       instanceId={`item-name-${index}`}
@@ -514,7 +518,7 @@ const PurchaseTable: React.FC<Props> = ({
                   </td>
 
                   {/* Unit: read-only, comes from the item. Enter -> Qty */}
-                  <td className="h-[30px] border border-[#dce5ef] p-0">
+                  <td className={editCellClass}>
                     <input
                       id={`txtUnit-${index}`}
                       aria-label={`Unit row ${index + 1}`}
@@ -533,7 +537,7 @@ const PurchaseTable: React.FC<Props> = ({
                   </td>
 
                   {/* Quantity (3 decimals) */}
-                  <td className="h-[30px] border border-[#dce5ef] p-0">
+                  <td className={editCellClass}>
                     <input
                       id={`txtQty-${index}`}
                       aria-label={`Quantity row ${index + 1}`}
@@ -569,7 +573,7 @@ const PurchaseTable: React.FC<Props> = ({
                   </td>
 
                   {/* Unit Price (editable) */}
-                  <td className="h-[30px] border border-[#dce5ef] p-0">
+                  <td className={editCellClass}>
                     {renderPriceInput(
                       index,
                       "unitPrice",
@@ -580,7 +584,7 @@ const PurchaseTable: React.FC<Props> = ({
                   </td>
 
                   {/* Total Price (calculated) */}
-                  <td className="h-[30px] border border-[#dce5ef] p-0">
+                  <td className={editCellClass}>
                     {renderPriceInput(
                       index,
                       "totalPrice",
@@ -590,7 +594,7 @@ const PurchaseTable: React.FC<Props> = ({
                   </td>
 
                   {/* Unit Cost (calculated) */}
-                  <td className="h-[30px] border border-[#dce5ef] p-0">
+                  <td className={editCellClass}>
                     {renderPriceInput(
                       index,
                       "unitCost",
@@ -600,7 +604,7 @@ const PurchaseTable: React.FC<Props> = ({
                   </td>
 
                   {/* Total Cost (calculated) */}
-                  <td className="h-[30px] border border-[#dce5ef] p-0">
+                  <td className={editCellClass}>
                     {renderPriceInput(
                       index,
                       "totalCost",
