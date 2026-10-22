@@ -52,7 +52,7 @@ const PurchaseFooter: React.FC<Props> = ({
         {/* Note: spans indicator, Sl.No., Item ID, Item Name */}
         <div
           id="purchase-note-group"
-          className="col-[1/5] flex min-w-0 items-center gap-2 pr-3"
+          className="col-[1/5] flex min-w-0 items-center gap-2 pr-8"
         >
           <label
             htmlFor="purchase-note"
@@ -75,7 +75,7 @@ const PurchaseFooter: React.FC<Props> = ({
         {/* Total: label sits in the Unit column, input under Qty */}
         <div
           id="purchase-total-group"
-          className="col-[5/7] grid min-w-0 grid-cols-[minmax(0,1fr)_58px] items-center gap-0"
+          className="col-[5/7] grid min-w-0 grid-cols-[minmax(0,1fr)_58px] items-center gap-0 pr-4"
         >
           <label
             htmlFor="purchaseTotal"
@@ -97,7 +97,7 @@ const PurchaseFooter: React.FC<Props> = ({
         {/* Supplier Total: under Total Price */}
         <div
           id="purchase-supplier-total-group"
-          className="col-[8/9] min-w-0 px-px"
+          className="col-[8/9] min-w-0 px-px pr-5"
         >
           <input
             id="purchaseSupplierTotal"
