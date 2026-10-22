@@ -590,10 +590,10 @@ const PurchaseExpense: React.FC<PurchaseExpenseProps> = ({
 
                       {/* CCID */}
                       <th
-                        className={`${thBase} w-[60px] px-1 text-center`}
+                        className={`${thBase} w-[60px] px-1 text-left`}
                         id="lkpCCID"
                       >
-                        CC.ID
+                        CC. ID
                       </th>
 
                       {/* Currency */}

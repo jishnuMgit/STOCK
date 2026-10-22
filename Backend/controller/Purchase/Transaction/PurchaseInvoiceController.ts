@@ -1056,10 +1056,10 @@ export const postPurchaseInvoice = async (
 
     await client.query(
       `CALL dbo.sp_pipost(
-         p_strmode => $1, p_gstrcoid => $2, p_ptryear => $3,
+         p_strmode => $1, p_pstrcoid => $2, p_pstryear => $3,
          p_strbrid => $4, p_strdoctype => $5, p_strdocno => $6,
-         p_gstruserid => $7)`,
-      ["P", coId, Number(year), brId, DOC_TYPE, docNo, userId],
+         p_pstruserid => $7)`,
+      ["P", coId, String(year), brId, DOC_TYPE, docNo, userId],
     );
 
     await client.query("COMMIT");

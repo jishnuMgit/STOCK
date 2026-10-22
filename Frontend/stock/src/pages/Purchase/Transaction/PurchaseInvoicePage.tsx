@@ -18,6 +18,7 @@ import {
   type SupplierLookup,
 } from "../../../hooks/Purchase/Transaction/usePurchaseInvoice";
 import { toast } from "react-toastify";
+import { useConfirm } from "../../../components/common/ConfirmModal";
 
 const ROW_COUNT = 12;
 const createRows = () => Array.from({ length: ROW_COUNT }, emptyRow);
@@ -62,6 +63,8 @@ const PurchaseInvoicePage: React.FC = () => {
     fetchCurrencies,
     loading,
   } = usePurchaseInvoice();
+
+  const { confirm, dialog } = useConfirm();
 
   const [header, setHeader] = useState<PurchaseHeader>(emptyHeader);
   const [rows, setRows] = useState<PurchaseRow[]>(createRows);
@@ -471,7 +474,11 @@ const PurchaseInvoicePage: React.FC = () => {
       toast.warning("Posted Purchase Invoice cannot be deleted");
       return;
     }
-    if (!window.confirm("Do you want to delete ?")) return;
+    const ok = await confirm({
+      title: "Purchase Invoice",
+      message: "Do you want to delete ?",
+    });
+    if (!ok) return;
     try {
       await deleteInvoice(YEAR, header.brId, header.docNo);
       toast.success("Deleted");
@@ -481,7 +488,7 @@ const PurchaseInvoicePage: React.FC = () => {
         err instanceof Error ? err.message : "Not deleted, try again",
       );
     }
-  }, [posted, deleteInvoice, header.brId, header.docNo, handleClear]);
+  }, [posted, confirm, deleteInvoice, header.brId, header.docNo, handleClear]);
 
   /* Post: only an already-saved (loaded) invoice can be posted */
   const handlePost = useCallback(async () => {
@@ -493,7 +500,11 @@ const PurchaseInvoicePage: React.FC = () => {
       toast.warning("Purchase Invoice is already posted");
       return;
     }
-    if (!window.confirm("Do you want to post ?")) return;
+    const ok = await confirm({
+      title: "Purchase Invoice",
+      message: "Do you want to post ?",
+    });
+    if (!ok) return;
 
     try {
       setPosting(true);
@@ -550,6 +561,7 @@ const PurchaseInvoicePage: React.FC = () => {
         onPost={handlePost}
       />
       {message && <p className="px-3 pb-2 text-red-600">{message}</p>}
+      {dialog}
     </main>
   );
 };
