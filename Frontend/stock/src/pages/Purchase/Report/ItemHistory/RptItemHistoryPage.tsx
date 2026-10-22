@@ -932,10 +932,10 @@ const RptItemHistoryPage: React.FC<RptItemHistoryPageProps> = ({ onClose }) => {
               {/* Report File: what Download saves */}
               <div
                 id="rdgReportFile"
-                className="relative flex items-center gap-5 border border-[#e0e5ea] bg-white px-3.5 py-2.5"
+                className="relative flex items-center gap-5 border border-[#e0e5ea] bg-white px-10.5 py-2.5"
               >
                 <span className="absolute -top-2.5 left-2.5 bg-white px-1 text-[13px] text-[#405066]">
-                  Report File
+                  File Format
                 </span>
                 <CustomRadio
                   name="rdgReportFile"

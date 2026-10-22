@@ -253,9 +253,8 @@ const CustomRadio: React.FC<RadioOptionProps> = ({
   onChange,
 }) => (
   <label
-    className={`flex items-center gap-2.5 whitespace-nowrap select-none ${
-      disabled ? "cursor-not-allowed opacity-50" : "cursor-pointer"
-    }`}
+    className={`flex items-center gap-2.5 whitespace-nowrap select-none ${disabled ? "cursor-not-allowed opacity-50" : "cursor-pointer"
+      }`}
   >
     <input
       type="radio"
@@ -267,14 +266,12 @@ const CustomRadio: React.FC<RadioOptionProps> = ({
       className="sr-only"
     />
     <span
-      className={`flex h-[19px] w-[19px] shrink-0 items-center justify-center rounded-full border bg-white ${
-        checked ? "border-[#64d96e]" : "border-[#cbd3dc]"
-      }`}
+      className={`flex h-[19px] w-[19px] shrink-0 items-center justify-center rounded-full border bg-white ${checked ? "border-[#64d96e]" : "border-[#cbd3dc]"
+        }`}
     >
       <span
-        className={`h-2.5 w-2.5 rounded-full bg-[#64d96e] ${
-          checked ? "opacity-100" : "opacity-0"
-        }`}
+        className={`h-2.5 w-2.5 rounded-full bg-[#64d96e] ${checked ? "opacity-100" : "opacity-0"
+          }`}
       />
     </span>
     <span className="text-[12px] font-normal text-[#35445a]">{label}</span>
@@ -476,15 +473,21 @@ const RptItemListPage: React.FC<RptItemListPageProps> = ({ onClose }) => {
     [scopedItemsByName, collator],
   );
 
-  // a chosen item that is not in the selected group any more is cleared
-  useEffect(() => {
-    if (!groupFilter) return;
-    const has = (id: string | null | undefined) =>
-      !id || scopedItemsById.some((i) => i.itemId === id);
-    if (!has(itemId)) setItemId(null);
-    if (!has(fromItem?.value)) setFromItem(null);
-    if (!has(toItem?.value)) setToItem(null);
-  }, [groupFilter, scopedItemsById, itemId, fromItem, toItem]);
+  const handleGroupChange = (nextGroupId: string | null) => {
+    setGroupId(nextGroupId);
+
+    if (groupMode !== "One Item Group" || !nextGroupId) return;
+
+    const nextGroupItems = itemsById.filter(
+      (item) => item.groupId === nextGroupId,
+    );
+    const hasItem = (id: string | null | undefined) =>
+      !id || nextGroupItems.some((item) => item.itemId === id);
+
+    setItemId((id) => (hasItem(id) ? id : null));
+    setFromItem((item) => (hasItem(item?.value) ? item : null));
+    setToItem((item) => (hasItem(item?.value) ? item : null));
+  };
 
   const selectedGroupId =
     groupIdOptions.find((o) => o.value === groupId) ?? null;
@@ -525,11 +528,11 @@ const RptItemListPage: React.FC<RptItemListPageProps> = ({ onClose }) => {
         setBranch(
           list[0]
             ? {
-                value: list[0].brId,
-                label: list[0].brName,
-                id: list[0].brId,
-                name: list[0].brName,
-              }
+              value: list[0].brId,
+              label: list[0].brName,
+              id: list[0].brId,
+              name: list[0].brName,
+            }
             : null,
         );
       } catch {
@@ -701,10 +704,10 @@ const RptItemListPage: React.FC<RptItemListPageProps> = ({ onClose }) => {
     () =>
       preview
         ? // 40px left / 20px right margin for the preview only
-          buildHtml(preview.report).replace(
-            "</head>",
-            "<style>body{padding-left:40px;padding-right:20px}</style></head>",
-          )
+        buildHtml(preview.report).replace(
+          "</head>",
+          "<style>body{padding-left:40px;padding-right:20px}</style></head>",
+        )
         : "",
     [preview],
   );
@@ -795,23 +798,23 @@ const RptItemListPage: React.FC<RptItemListPageProps> = ({ onClose }) => {
               </RadioPanel>
               <div className="pt-3">
                 <div className="w-[250px]">
-                  <Select
-                    inputId="lkpBranch"
-                    instanceId="lkpBranch"
-                    options={branchOptions}
-                    value={branch}
-                    onChange={(option) => {
-                      setBranch(option);
-                      advanceAfterPick();
-                    }}
-                    onKeyDown={(event) =>
-                      handleAdvanceOnEnter(event, "lkpBranch")
-                    }
-                    isDisabled={branchMode !== "One Branch" || loading}
-                    {...selectProps}
-                    classNames={branchClassNames}
-                    components={branchComponents}
-                  />
+                  {branchMode === "One Branch" && (
+                    <Select
+                      inputId="lkpBranch"
+                      instanceId="lkpBranch"
+                      options={branchOptions}
+                      value={branch}
+                      onChange={(option) => {
+                        setBranch(option);
+                        advanceAfterPick();
+                      }}
+                      onKeyDown={(event) => handleAdvanceOnEnter(event, "lkpBranch")}
+                      isDisabled={loading}
+                      {...selectProps}
+                      classNames={branchClassNames}
+                      components={branchComponents}
+                    />
+                  )}
                 </div>
               </div>
 
@@ -876,7 +879,7 @@ const RptItemListPage: React.FC<RptItemListPageProps> = ({ onClose }) => {
                       options={groupIdOptions}
                       value={selectedGroupId}
                       onChange={(option) => {
-                        setGroupId(option?.value ?? null);
+                        handleGroupChange(option?.value ?? null);
                         advanceAfterPick();
                       }}
                       onKeyDown={(event) =>
@@ -904,7 +907,7 @@ const RptItemListPage: React.FC<RptItemListPageProps> = ({ onClose }) => {
                       options={groupNameOptions}
                       value={selectedGroupName}
                       onChange={(option) => {
-                        setGroupId(option?.value ?? null);
+                        handleGroupChange(option?.value ?? null);
                         advanceAfterPick();
                       }}
                       onKeyDown={(event) =>
@@ -1146,10 +1149,10 @@ const RptItemListPage: React.FC<RptItemListPageProps> = ({ onClose }) => {
               {/* Report File: what Download saves */}
               <div
                 id="rdgReportFile"
-                className="relative flex items-center gap-5 border border-[#e0e5ea] bg-white px-3.5 py-2.5"
+                className="relative flex items-center gap-5 border border-[#e0e5ea] bg-white px-10.5 py-2.5"
               >
                 <span className="absolute -top-2.5 left-2.5 bg-white px-1 text-[13px] text-[#405066]">
-                  Report File
+                 File Format
                 </span>
                 <CustomRadio
                   name="rdgReportFile"

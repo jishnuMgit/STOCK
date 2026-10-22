@@ -54,7 +54,7 @@ const money = (v: number | null) =>
 const whole = (v: number | null) =>
   v == null ? "" : v.toLocaleString("en-US", { maximumFractionDigits: 0 });
 
-const buildHtml = (r: PrintReport) => `<!doctype html>
+export const buildHtml = (r: PrintReport) => `<!doctype html>
 <html>
 <head>
 <meta charset="utf-8" />
