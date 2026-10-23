@@ -1,5 +1,5 @@
 // downloadTrialBalancePdf.ts
-// The Trial Balance as a PDF download: A4 landscape, company name, heading,
+// The Trial Balance as a PDF (returned as a Blob; saveFile.ts saves it): A4 landscape, company name, heading,
 // branch, two-line column header (repeated on every page), rows coloured by
 // account level, "Total :" row at the end, page number top right and the
 // report info bottom right of every page.
@@ -31,16 +31,14 @@ const BORDER: RGB = [176, 196, 222];
 const HEAD_FILL: RGB = [239, 243, 250];
 
 // VB column weights (same as the print page)
-const COL_WIDTHS = [0.0798, 0.3646, 0.1101, 0.1101, 0.1101, 0.1101, 0.1152];
+// Movement is a little narrower than Debit / Credit; Account Name gets the rest
+const COL_WIDTHS = [0.0798, 0.3796, 0.1101, 0.1101, 0.1101, 0.0951, 0.1152];
 
 const PAGE_W = 297; // A4 landscape, mm
 const MARGIN = { top: 12, right: 10, bottom: 12, left: 15 };
 const TABLE_TOP = 38; // below company / heading / branch
 
-export const downloadTrialBalancePdf = (
-  report: PrintReport,
-  fileName: string,
-): void => {
+export const buildTrialBalancePdf = (report: PrintReport): Blob => {
   const doc = new jsPDF({ orientation: "landscape", unit: "mm", format: "a4" });
   const usable = PAGE_W - MARGIN.left - MARGIN.right;
 
@@ -181,5 +179,5 @@ export const downloadTrialBalancePdf = (
     });
   }
 
-  doc.save(fileName);
+  return doc.output("blob");
 };

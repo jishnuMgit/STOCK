@@ -469,3 +469,80 @@ export const salesPriceListGridKeys: KeyMap = {
   funitprice: "txtUnitPrice",
   fitemgroupid: "lkpItemGroupID",
 };
+
+/* ---------- Administration / Branch ---------- */
+
+export const administrationBranchHeaderKeys: KeyMap = {
+  fconame: "txtCompany",
+};
+
+export const administrationBranchGridKeys: KeyMap = {
+  fbrid: "txtBrID",
+  fbrname: "txtBrName",
+  fpositionno: "txtPositionNo",
+};
+
+/* ---------- Finance / Transaction / BeginningBalance ---------- */
+
+// one head account of the Account ID / Account Name boxes (the same row in both
+// lists); chkHaveCC = the account needs a cost center
+export const beginningBalanceAccountKeys: KeyMap = {
+  faccountid: "lkpAccountID",
+  faccountname: "txtAccountName",
+  fhavecc: "chkHaveCC",
+};
+
+export const beginningBalanceCostCenterKeys: KeyMap = {
+  fccid: "lkpCCID",
+  fccname: "txtCCName",
+};
+
+// the header of the branch's balance: the date and who saved / modified it (text)
+export const beginningBalanceHeaderKeys: KeyMap = {
+  fdate: "dtpDate",
+  fcuserid: "txtSavedBy",
+  fcuserdate: "txtSavedOn",
+  fmuserid: "txtModifiedBy",
+  fmuserdate: "txtModifiedOn",
+};
+
+// the Print report (the old rptYearCloseBalRpt): the heading ...
+export const beginningBalancePrintHeaderKeys: KeyMap = {
+  fconame: "txtCoName",
+  fbrname: "txtBranchName",
+};
+
+// ... and a row of it (the account level colours the row)
+export const beginningBalancePrintLineKeys: KeyMap = {
+  faccountid: "lkpAccountID",
+  faccountname: "txtAccountName",
+  faccountlevel: "txtAccountLevel",
+  fccid: "lkpCCID",
+  fdebit: "txtDebit",
+  fcredit: "txtCredit",
+};
+
+// one line of the grid
+export const beginningBalanceLineKeys: KeyMap = {
+  fslno: "txtSlNo",
+  faccountid: "lkpAccountID",
+  fccid: "lkpCCID",
+  fdebit: "txtDebit",
+  fcredit: "txtCredit",
+};
+
+/* ---------- Administration / Year ---------- */
+
+export const administrationYearGridKeys: KeyMap = {
+  fbrid: "lkpBranch",
+  fyear: "txtYear",
+};
+
+/* ---------- Administration / Document ---------- */
+
+export const administrationDocumentGridKeys: KeyMap = {
+  fdoctype: "txtDocType",
+  fdocname: "txtDocName",
+  ftobepost: "chkToBePost",
+  fpositionno: "txtPositionNo",
+};

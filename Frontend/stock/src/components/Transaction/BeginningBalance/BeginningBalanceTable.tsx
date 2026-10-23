@@ -1,63 +1,43 @@
-import React, { useState } from "react";
+import React, { useMemo, useState } from "react";
 import { Play } from "lucide-react";
 import Select, { type StylesConfig } from "react-select";
 
+import {
+  filterPairOption,
+  makePairComponents,
+  makePairDividedMenuStyles,
+} from "../../PairSelect/pairSelectParts";
+import { usePairMenuHang } from "../../../hooks/usePairMenuHang";
+import { useAdvanceAfterSelect } from "../../../hooks/useAdvanceAfterSelect";
+import {
+  isEmptyRow,
+  padRows,
+  type AccountOption,
+  type BeginningBalanceRow,
+} from "./BeginningBalanceShared";
+
 // ============================================================
-// TYPES
+// PROPS: the page owns the rows (and the lists); the grid edits them
 // ============================================================
 
-type Option = {
-  value: string;
-  label: string;
+type Props = {
+  rows: BeginningBalanceRow[];
+  setRows: React.Dispatch<React.SetStateAction<BeginningBalanceRow[]>>;
+  accountsByID: AccountOption[];
+  accountsByName: AccountOption[];
+  costCenters: AccountOption[];
+  // a posted balance is locked
+  disabled: boolean;
+  // the x of a row: takes the line out of the grid (it is gone from the database
+  // when the balance is saved)
+  onRemoveRow: (index: number) => void;
 };
-
-type BeginningBalanceRow = {
-  accountId: Option | null;
-  accountName: Option | null;
-  ccId: Option | null;
-  debit: string;
-  credit: string;
-};
-
-// ============================================================
-// CONSTANTS
-// ============================================================
-
-const ROW_COUNT = 13;
-
-// ============================================================
-// OPTIONS
-// ============================================================
-
-const accountIdOptions: Option[] = [];
-
-const accountNameOptions: Option[] = [];
-
-const ccIdOptions: Option[] = [];
-
-// ============================================================
-// CREATE ROW
-// ============================================================
-
-const createRow = (): BeginningBalanceRow => ({
-  accountId: null,
-  accountName: null,
-  ccId: null,
-  debit: "",
-  credit: "",
-});
-
-const createRows = (): BeginningBalanceRow[] =>
-  Array.from(
-    { length: ROW_COUNT },
-    createRow,
-  );
 
 // ============================================================
 // SELECT STYLES
 // ============================================================
 
-const selectStyles: StylesConfig<Option, false> = {
+const selectStyles: StylesConfig<AccountOption, false> = {
   control: (base, state) => ({
     ...base,
     minHeight: 25,
@@ -157,6 +137,22 @@ const selectStyles: StylesConfig<Option, false> = {
   }),
 };
 
+// ID | Name lists with the divider, the same as the Item ID / Item Name boxes of
+// Beginning Stock (components/PairSelect): the Account ID list covers the ID box
+// AND the Name box next to it; the Account Name list is exactly as wide as its box
+// with the Account ID after it, out to the Debit column (both measured when the
+// list opens, see usePairMenuHang)
+const accountIdComponents = makePairComponents("Account ID", "Account Name", false, true);
+const accountNameComponents = makePairComponents("Account ID", "Account Name", true, true);
+
+// the C.C. ID box is narrow: its list hangs a fixed 200px past it
+const CC_MENU_HANG = 200;
+const ccComponents = makePairComponents("C.C. ID", "C.C. Name", false, true, CC_MENU_HANG);
+const ccStyles = {
+  ...selectStyles,
+  ...makePairDividedMenuStyles(CC_MENU_HANG),
+} as StylesConfig<AccountOption, false>;
+
 // ============================================================
 // NUMBER INPUT
 // ============================================================
@@ -168,14 +164,67 @@ const numberInputClass =
 // TABLE
 // ============================================================
 
-const BeginningBalanceTable: React.FC = () => {
-  const [rows, setRows] =
-    useState<BeginningBalanceRow[]>(
-      createRows,
-    );
-
+const BeginningBalanceTable: React.FC<Props> = ({
+  rows,
+  setRows,
+  accountsByID,
+  accountsByName,
+  costCenters,
+  disabled,
+  onRemoveRow,
+}) => {
   const [activeRow, setActiveRow] =
     useState(0);
+
+  // Enter / Tab / click on a dropdown goes on to the next box of the row
+  const { advanceAfterPick, advanceOnEnter } =
+    useAdvanceAfterSelect();
+
+  // the Account ID list covers the ID box AND the Name box next to it ...
+  const {
+    hang: idMenuHang,
+    measure: measureIdMenuHang,
+  } = usePairMenuHang();
+
+  // ... and the Account Name list reaches the right edge of the Debit column
+  const {
+    hang: nameMenuHang,
+    measure: measureNameMenuHang,
+  } = usePairMenuHang(170);
+
+  // the option of an account / cost center, by its ID (the value of the row)
+  const accountIdByCode = useMemo(
+    () =>
+      new Map(
+        accountsByID.map((option) => [
+          option.value,
+          option,
+        ]),
+      ),
+    [accountsByID],
+  );
+
+  const accountNameByCode = useMemo(
+    () =>
+      new Map(
+        accountsByName.map((option) => [
+          option.value,
+          option,
+        ]),
+      ),
+    [accountsByName],
+  );
+
+  const costCenterByCode = useMemo(
+    () =>
+      new Map(
+        costCenters.map((option) => [
+          option.value,
+          option,
+        ]),
+      ),
+    [costCenters],
+  );
 
   // ==========================================================
   // UPDATE ROW
@@ -189,15 +238,47 @@ const BeginningBalanceTable: React.FC = () => {
     value: BeginningBalanceRow[K],
   ) => {
     setRows((previousRows) =>
-      previousRows.map((row, rowIndex) =>
-        rowIndex === index
-          ? {
-              ...row,
-              [field]: value,
-            }
-          : row,
+      padRows(
+        previousRows.map((row, rowIndex) =>
+          rowIndex === index
+            ? {
+                ...row,
+                [field]: value,
+              }
+            : row,
+        ),
       ),
     );
+  };
+
+  // ==========================================================
+  // ACCOUNT CHANGE: the Account ID and the Account Name boxes are one account.
+  // The cost center is only for an account that needs one.
+  // ==========================================================
+
+  const handleAccountChange = (
+    index: number,
+    option: AccountOption | null,
+  ) => {
+    if (!option) return;
+
+    setRows((previousRows) =>
+      padRows(
+        previousRows.map((row, rowIndex) =>
+          rowIndex === index
+            ? {
+                ...row,
+                lkpAccountID: option.value,
+                lkpCCID: option.chkHaveCC
+                  ? row.lkpCCID
+                  : "",
+              }
+            : row,
+        ),
+      ),
+    );
+
+    setActiveRow(index);
   };
 
   // ==========================================================
@@ -206,7 +287,7 @@ const BeginningBalanceTable: React.FC = () => {
 
   const handleNumberChange = (
     index: number,
-    field: "debit" | "credit",
+    field: "txtDebit" | "txtCredit",
     value: string,
   ) => {
     if (value === "") {
@@ -221,13 +302,47 @@ const BeginningBalanceTable: React.FC = () => {
     updateRow(index, field, value);
   };
 
+  // an amount is shown with two decimals once you leave the box (1000.5 -> 1000.50)
+  const handleNumberBlur = (
+    index: number,
+    field: "txtDebit" | "txtCredit",
+    value: string,
+  ) => {
+    if (value === "") return;
+
+    const number = Number(value);
+
+    if (Number.isFinite(number)) {
+      updateRow(index, field, number.toFixed(2));
+    }
+  };
+
+  // Enter: Debit goes on to Credit, Credit to the Account ID of the next row
+  const handleNumberKeyDown = (
+    event: React.KeyboardEvent<HTMLInputElement>,
+    index: number,
+    field: "txtDebit" | "txtCredit",
+  ) => {
+    if (event.key !== "Enter") return;
+
+    event.preventDefault();
+
+    document
+      .getElementById(
+        field === "txtDebit"
+          ? `txtCredit-${index}`
+          : `lkpAccountID-${index + 1}`,
+      )
+      ?.focus();
+  };
+
   // ==========================================================
   // RENDER NUMBER
   // ==========================================================
 
   const renderNumberInput = (
     index: number,
-    field: "debit" | "credit",
+    field: "txtDebit" | "txtCredit",
     id: string,
     label: string,
   ) => {
@@ -239,6 +354,7 @@ const BeginningBalanceTable: React.FC = () => {
         inputMode="decimal"
         autoComplete="off"
         value={rows[index][field]}
+        readOnly={disabled}
         onFocus={(event) => {
           setActiveRow(index);
           event.currentTarget.select();
@@ -250,6 +366,16 @@ const BeginningBalanceTable: React.FC = () => {
             event.target.value,
           );
         }}
+        onBlur={(event) =>
+          handleNumberBlur(
+            index,
+            field,
+            event.target.value,
+          )
+        }
+        onKeyDown={(event) =>
+          handleNumberKeyDown(event, index, field)
+        }
         className={numberInputClass}
       />
     );
@@ -310,9 +436,9 @@ const BeginningBalanceTable: React.FC = () => {
 
             <col style={{ width: "100px" }} />
 
-            {/* Credit */}
+            {/* Credit (and the x of the row) */}
 
-            <col style={{ width: "100px" }} />
+            <col style={{ width: "124px" }} />
           </colgroup>
 
           {/* ==================================================
@@ -497,31 +623,69 @@ const BeginningBalanceTable: React.FC = () => {
                     p-0
                   "
                 >
-                  <Select<Option, false>
-                    inputId={`txtAccountID-${index}`}
-                    instanceId={`account-id-${index}`}
-                    options={accountIdOptions}
-                    value={row.accountId}
-                    onChange={(option) => {
-                      updateRow(
-                        index,
-                        "accountId",
-                        option,
-                      );
-
-                      setActiveRow(index);
-                    }}
-                    styles={selectStyles}
-                    isClearable={false}
-                    isSearchable
-                    menuPosition="fixed"
-                    menuPortalTarget={
-                      typeof document !== "undefined"
-                        ? document.body
-                        : undefined
+                  <div
+                    onKeyDown={(event) =>
+                      advanceOnEnter(event, [
+                        `lkpAccountName-${index}`,
+                      ])
                     }
-                    placeholder=""
-                  />
+                  >
+                    <Select<AccountOption, false>
+                      inputId={`lkpAccountID-${index}`}
+                      instanceId={`lkpAccountID-${index}`}
+                      name="lkpAccountID"
+                      aria-label="Account ID"
+                      options={accountsByID}
+                      value={
+                        accountIdByCode.get(
+                          row.lkpAccountID,
+                        ) ?? null
+                      }
+                      onChange={(option) => {
+                        handleAccountChange(
+                          index,
+                          option,
+                        );
+
+                        if (option) {
+                          advanceAfterPick(
+                            `lkpAccountID-${index}`,
+                            [`lkpAccountName-${index}`],
+                          );
+                        }
+                      }}
+                      styles={
+                        {
+                          ...selectStyles,
+                          ...makePairDividedMenuStyles(
+                            idMenuHang,
+                          ),
+                        } as StylesConfig<AccountOption, false>
+                      }
+                      onMenuOpen={() =>
+                        measureIdMenuHang(
+                          `lkpAccountID-${index}`,
+                          `lkpAccountName-${index}`,
+                        )
+                      }
+                      components={accountIdComponents}
+                      filterOption={filterPairOption}
+                      noOptionsMessage={() =>
+                        "No Account Found"
+                      }
+                      isClearable={false}
+                      isDisabled={disabled}
+                      isSearchable
+                      menuPosition="fixed"
+                      menuPlacement="auto"
+                      menuPortalTarget={
+                        typeof document !== "undefined"
+                          ? document.body
+                          : undefined
+                      }
+                      placeholder=""
+                    />
+                  </div>
                 </td>
 
                 {/* ==================================================
@@ -536,31 +700,66 @@ const BeginningBalanceTable: React.FC = () => {
                     p-0
                   "
                 >
-                  <Select<Option, false>
-                    inputId={`txtAccountName-${index}`}
-                    instanceId={`account-name-${index}`}
-                    options={accountNameOptions}
-                    value={row.accountName}
-                    onChange={(option) => {
-                      updateRow(
-                        index,
-                        "accountName",
-                        option,
-                      );
-
-                      setActiveRow(index);
-                    }}
-                    styles={selectStyles}
-                    isClearable={false}
-                    isSearchable
-                    menuPosition="fixed"
-                    menuPortalTarget={
-                      typeof document !== "undefined"
-                        ? document.body
-                        : undefined
+                  <div
+                    onKeyDown={(event) =>
+                      advanceOnEnter(event)
                     }
-                    placeholder=""
-                  />
+                  >
+                    <Select<AccountOption, false>
+                      inputId={`lkpAccountName-${index}`}
+                      instanceId={`lkpAccountName-${index}`}
+                      name="lkpAccountName"
+                      aria-label="Account Name"
+                      options={accountsByName}
+                      value={
+                        accountNameByCode.get(
+                          row.lkpAccountID,
+                        ) ?? null
+                      }
+                      onChange={(option) => {
+                        handleAccountChange(
+                          index,
+                          option,
+                        );
+
+                        if (option) {
+                          advanceAfterPick(
+                            `lkpAccountName-${index}`,
+                          );
+                        }
+                      }}
+                      styles={
+                        {
+                          ...selectStyles,
+                          ...makePairDividedMenuStyles(
+                            nameMenuHang,
+                          ),
+                        } as StylesConfig<AccountOption, false>
+                      }
+                      onMenuOpen={() =>
+                        measureNameMenuHang(
+                          `lkpAccountName-${index}`,
+                          `txtDebit-${index}`,
+                        )
+                      }
+                      components={accountNameComponents}
+                      filterOption={filterPairOption}
+                      noOptionsMessage={() =>
+                        "No Account Found"
+                      }
+                      isClearable={false}
+                      isDisabled={disabled}
+                      isSearchable
+                      menuPosition="fixed"
+                      menuPlacement="auto"
+                      menuPortalTarget={
+                        typeof document !== "undefined"
+                          ? document.body
+                          : undefined
+                      }
+                      placeholder=""
+                    />
+                  </div>
                 </td>
 
                 {/* ==================================================
@@ -575,31 +774,61 @@ const BeginningBalanceTable: React.FC = () => {
                     p-0
                   "
                 >
-                  <Select<Option, false>
-                    inputId={`txtCCID-${index}`}
-                    instanceId={`cc-id-${index}`}
-                    options={ccIdOptions}
-                    value={row.ccId}
-                    onChange={(option) => {
-                      updateRow(
-                        index,
-                        "ccId",
-                        option,
-                      );
-
-                      setActiveRow(index);
-                    }}
-                    styles={selectStyles}
-                    isClearable={false}
-                    isSearchable
-                    menuPosition="fixed"
-                    menuPortalTarget={
-                      typeof document !== "undefined"
-                        ? document.body
-                        : undefined
+                  <div
+                    onKeyDown={(event) =>
+                      advanceOnEnter(event)
                     }
-                    placeholder=""
-                  />
+                  >
+                    <Select<AccountOption, false>
+                      inputId={`lkpCCID-${index}`}
+                      instanceId={`lkpCCID-${index}`}
+                      name="lkpCCID"
+                      aria-label="C.C. ID"
+                      options={costCenters}
+                      value={
+                        costCenterByCode.get(
+                          row.lkpCCID,
+                        ) ?? null
+                      }
+                      onChange={(option) => {
+                        updateRow(
+                          index,
+                          "lkpCCID",
+                          option?.value ?? "",
+                        );
+
+                        setActiveRow(index);
+
+                        if (option) {
+                          advanceAfterPick(
+                            `lkpCCID-${index}`,
+                          );
+                        }
+                      }}
+                      isDisabled={
+                        disabled ||
+                        !accountIdByCode.get(
+                          row.lkpAccountID,
+                        )?.chkHaveCC
+                      }
+                      styles={ccStyles}
+                      components={ccComponents}
+                      filterOption={filterPairOption}
+                      noOptionsMessage={() =>
+                        "No Cost Center Found"
+                      }
+                      isClearable={false}
+                      isSearchable
+                      menuPosition="fixed"
+                      menuPlacement="auto"
+                      menuPortalTarget={
+                        typeof document !== "undefined"
+                          ? document.body
+                          : undefined
+                      }
+                      placeholder=""
+                    />
+                  </div>
                 </td>
 
                 {/* ==================================================
@@ -616,7 +845,7 @@ const BeginningBalanceTable: React.FC = () => {
                 >
                   {renderNumberInput(
                     index,
-                    "debit",
+                    "txtDebit",
                     "txtDebit",
                     "Debit",
                   )}
@@ -634,12 +863,38 @@ const BeginningBalanceTable: React.FC = () => {
                     p-0
                   "
                 >
-                  {renderNumberInput(
-                    index,
-                    "credit",
-                    "txtCredit",
-                    "Credit",
-                  )}
+                  <div className="flex items-center">
+                    <div className="min-w-0 flex-1">
+                      {renderNumberInput(
+                        index,
+                        "txtCredit",
+                        "txtCredit",
+                        "Credit",
+                      )}
+                    </div>
+
+                    {/* the slot is always there so the amounts do not move when the x shows */}
+                    <span className="flex w-6 shrink-0 items-center justify-center">
+                      {activeRow === index &&
+                        !disabled &&
+                        !isEmptyRow(row) && (
+                          <button
+                            id={`btnRemoveRow-${index}`}
+                            name="btnRemoveRow"
+                            type="button"
+                            tabIndex={-1}
+                            title="Remove row"
+                            aria-label={`Remove row ${index + 1}`}
+                            onClick={() =>
+                              onRemoveRow(index)
+                            }
+                            className="text-[12px] leading-none text-gray-400 hover:text-red-600"
+                          >
+                            ✕
+                          </button>
+                        )}
+                    </span>
+                  </div>
                 </td>
               </tr>
             ))}

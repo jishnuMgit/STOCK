@@ -69,7 +69,8 @@ const LEVEL_COLOR: Record<number, string> = {
 const DETAIL_COLOR = "#314158";
 
 // VB column weights
-const COL_WIDTHS = [0.0798, 0.3646, 0.1101, 0.1101, 0.1101, 0.1101, 0.1152];
+// Movement is a little narrower than Debit / Credit; Account Name gets the rest
+const COL_WIDTHS = [0.0798, 0.3796, 0.1101, 0.1101, 0.1101, 0.0951, 0.1152];
 
 const rowHtml = (r: TBRow) => `<tr style="color:${LEVEL_COLOR[r.level] ?? DETAIL_COLOR};${r.level >= 1 && r.level <= 3 ? "font-weight:bold" : ""}">
   <td>${esc(r.accountId)}</td>

@@ -16,9 +16,8 @@ import PurchaseInvoicePage from "../pages/Purchase/Transaction/PurchaseInvoicePa
 import PurchaseExpense from "../components/Transaction/PurchaseInvoice/PurchaseInvoiceExpense";
 import SalesInvoice from "../pages/Sales/Transaction/SalesInvoicePage";
 import StockTransfer from "../pages/Sales/Transaction/stock/StockTransferPage";
-import StockTransferPrint from "../pages/Sales/Transaction/stock/StockTransferPrintPage";
 import StockAdjustmentPrint from "../pages/Sales/Transaction/stock/StockAdjustmentPrintPage";
-import BeginningBalance from "../pages/Finance/Transaction/BeginningBalance/BeginningBalance";
+import BeginningBalance from "../pages/Finance/Transaction/BeginningBalance/BeginningBalancePage";
 import ItemGroupPage from "../pages/Purchase/Setup/ItemGroupPage";
 import CompanyPage from "../pages/Administration/CompanyPage";
 import ActivePeriodPage from "../pages/Settings/ActivePeriodPage";
@@ -90,7 +89,7 @@ import FinanceYearClose from "../pages/Utility/FinanceYearClose";
 import YearCloseStatusPage from "../pages/Utility/YearCloseStatusPage";
 import RptVerifyDocumentAccuracyPage from "../pages/Utility/RptVerifyDocumentAccuracyPage";
 import BranchPage from "../pages/Administration/BranchPage";
-import BranchYearPage from "../pages/Administration/BranchYearPage";
+import YearPage from "../pages/Administration/YearPage";
 import DocumentPage from "../pages/Administration/DocumentPage";
 import RptDocumentsAfterYearClosePage from "../pages/Utility/RptDocumentsAfterYearClosePage";
 import BackupPage from "../pages/Utility/BackupPage";
@@ -197,7 +196,6 @@ const AppRoutes = () => {
           <Route path="/Sales/Transaction/SalesInvoicePage" element={<SalesInvoice />}/>
           <Route path="/Sales/Transaction/StockAdjustment"  element={<StockAdjustmentPage/>} />
           <Route path="/Sales/Transaction/StockTransferPage" element={<StockTransfer />}/>
-          <Route path="/Sales/Transaction/StockTransferPage/Print" element={<StockTransferPrint />}/>
           <Route path="/Sales/Transaction/StockAdjustment/Print" element={<StockAdjustmentPrint />}/>
           <Route path="/Sales/Transaction/StockDocumentPost" element={<StockDocumentPost/>}/>
           <Route path="/Sales/Transaction/StockDocumentRePost" element={<StockDocumentRePost/>}/>
@@ -359,7 +357,7 @@ const AppRoutes = () => {
 
           <Route path="/Administration/CompanyPage" element={<CompanyPage />} />
           <Route path="/Administration/Branch" element={<BranchPage/>}/>
-          <Route path="/Administration/Year" element={<BranchYearPage/>}/>
+          <Route path="/Administration/Year" element={<YearPage/>}/>
           <Route path="/Administration/Document" element={<DocumentPage/>}/>
 
           {/* ================= DEV ================= */}

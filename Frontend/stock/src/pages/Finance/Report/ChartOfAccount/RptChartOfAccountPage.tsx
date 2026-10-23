@@ -1,6 +1,12 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "react-toastify";
-import { printChartOfAccountReport } from "./PrintChartOfAccountReport";
+import {
+  buildHtml,
+  printChartOfAccountReport,
+  type PrintReport,
+} from "./PrintChartOfAccountReport";
+import { buildChartOfAccountPdf } from "./downloadChartOfAccountPdf";
+import { saveFile } from "./saveFile";
 
 // ============================================================
 // TYPES
@@ -127,6 +133,56 @@ const TreeCheckbox: React.FC<TreeCheckboxProps> = ({
 };
 
 // ============================================================
+// RADIO (Report File, inside the Print Preview)
+// ============================================================
+
+type RadioOptionProps = {
+  name: string;
+  value: string;
+  label: string;
+  checked: boolean;
+  disabled?: boolean;
+  onChange: () => void;
+};
+
+const CustomRadio: React.FC<RadioOptionProps> = ({
+  name,
+  value,
+  label,
+  checked,
+  disabled = false,
+  onChange,
+}) => (
+  <label
+    className={`flex items-center gap-2.5 whitespace-nowrap select-none ${
+      disabled ? "cursor-not-allowed opacity-50" : "cursor-pointer"
+    }`}
+  >
+    <input
+      type="radio"
+      name={name}
+      value={value}
+      checked={checked}
+      disabled={disabled}
+      onChange={onChange}
+      className="sr-only"
+    />
+    <span
+      className={`flex h-[19px] w-[19px] shrink-0 items-center justify-center rounded-full border bg-white ${
+        checked ? "border-[#64d96e]" : "border-[#cbd3dc]"
+      }`}
+    >
+      <span
+        className={`h-2.5 w-2.5 rounded-full bg-[#64d96e] ${
+          checked ? "opacity-100" : "opacity-0"
+        }`}
+      />
+    </span>
+    <span className="text-[12px] font-normal text-[#35445a]">{label}</span>
+  </label>
+);
+
+// ============================================================
 // PAGE
 // ============================================================
 
@@ -140,6 +196,17 @@ const RptChartOfAccountPage: React.FC<RptChartOfAccountPageProps> = ({
   const [accounts, setAccounts] = useState<TreeAccount[]>([]);
   const [loading, setLoading] = useState(true);
   const [printing, setPrinting] = useState(false);
+
+  // rdgReportFile (inside the Print Preview): what Download saves
+  const [reportFile, setReportFile] = useState("Excel"); // "Excel" | "PDF"
+
+  // print preview: shown after Print. Print there sends it to the printer,
+  // Download saves the "Report File" choice
+  const [preview, setPreview] = useState<{
+    report: PrintReport;
+    fileBase: string;
+    accountIds: string[];
+  } | null>(null);
 
   const [checked, setChecked] = useState<Set<string>>(new Set());
   const [expanded, setExpanded] = useState<Set<string>>(new Set());
@@ -224,13 +291,41 @@ const RptChartOfAccountPage: React.FC<RptChartOfAccountPageProps> = ({
     });
   };
 
+  // gets the .xlsx made by the server (null after an error message)
+  const fetchExcel = async (accountIds: string[]): Promise<Blob | null> => {
+    const res = await apiFetch(`${API}/excel`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ accountIds }),
+    });
+
+    // an error comes back as JSON, the file as a blob
+    if (!res.ok) {
+      let message = "Could not create the Excel file";
+      try {
+        const data = await res.json();
+        message = data.message || message;
+      } catch {
+        // not JSON: the server has no /excel route (404) or crashed (500)
+        message =
+          res.status === 404
+            ? "Excel is not available: the /excel route was not found (404)"
+            : `Could not create the Excel file (error ${res.status})`;
+      }
+      toast.error(message);
+      return null;
+    }
+
+    return res.blob();
+  };
+
   // ------------------------------------------------------------
   // PRINT (VB cmdPrint_Click)
   // The checked accounts go to the server, which returns the report rows;
-  // the report is then opened in the browser's print dialog.
+  // the Print Preview is then shown (Print = printer, Download = Excel / PDF).
   // ------------------------------------------------------------
   const handlePrint = async () => {
-    if (printing) return;
+    if (printing || preview) return;
 
     const accountIds = [...checked];
     if (accountIds.length === 0) {
@@ -252,7 +347,7 @@ const RptChartOfAccountPage: React.FC<RptChartOfAccountPageProps> = ({
         return;
       }
 
-      printChartOfAccountReport(data.report);
+      setPreview({ report: data.report, fileBase: data.fileBase, accountIds });
     } catch {
       toast.error("Could not prepare the report");
     } finally {
@@ -260,8 +355,67 @@ const RptChartOfAccountPage: React.FC<RptChartOfAccountPageProps> = ({
     }
   };
 
+  // Print in the preview: the browser print dialog (printer)
+  const handlePreviewPrint = () => {
+    if (!preview || printing) return;
+    try {
+      printChartOfAccountReport(preview.report);
+    } catch {
+      toast.error("Could not open the print view");
+    }
+  };
+
+  // Download in the preview: saves the chosen file ("Save as" window, so the
+  // browser does not open it afterwards).
+  // A double click must not start two saves (state is not updated yet on the
+  // second click, so a ref is used).
+  const downloading = useRef(false);
+
+  const handlePreviewOk = async () => {
+    if (!preview || printing || downloading.current) return;
+    downloading.current = true;
+    const { report, fileBase, accountIds } = preview;
+    const asPdf = reportFile === "PDF";
+
+    setPrinting(true);
+    try {
+      const blob = asPdf
+        ? buildChartOfAccountPdf(report)
+        : await fetchExcel(accountIds);
+      if (!blob) return; // the error is already shown
+
+      const kind = asPdf ? "pdf" : "xlsx";
+      const saved = await saveFile(blob, `${fileBase}.${kind}`, kind);
+      if (saved) {
+        setPreview(null); // cancelled "Save as": the preview stays
+        toast.success(asPdf ? "PDF file downloaded" : "Excel file downloaded");
+      }
+    } catch {
+      toast.error(
+        asPdf ? "Could not create the PDF file" : "Could not create the Excel file",
+      );
+    } finally {
+      downloading.current = false;
+      setPrinting(false);
+    }
+  };
+
+  const previewHtml = useMemo(
+    () =>
+      preview
+        ? // 40px left / 20px right margin for the preview only
+          buildHtml(preview.report).replace(
+            "</head>",
+            "<style>body{padding-left:40px;padding-right:20px}</style></head>",
+          )
+        : "",
+    [preview],
+  );
+
   const handleClose = () => {
     resetSelection(accounts);
+    setReportFile("Excel");
+    setPreview(null);
     if (onClose) onClose();
     else window.history.back();
   };
@@ -270,6 +424,10 @@ const RptChartOfAccountPage: React.FC<RptChartOfAccountPageProps> = ({
   // browser). Re-attached every render so it always sees the latest state.
   useEffect(() => {
     const onKeyDown = (event: KeyboardEvent) => {
+      if (preview) {
+        if (event.key === "Escape") setPreview(null);
+        return;
+      }
       if (!event.altKey || event.ctrlKey || event.metaKey) return;
 
       if (event.code === "KeyP") {
@@ -425,6 +583,80 @@ const RptChartOfAccountPage: React.FC<RptChartOfAccountPageProps> = ({
           </section>
         </main>
       </div>
+
+      {/* Print preview */}
+      {preview && (
+        <div className="fixed inset-0 z-[99999] flex items-center justify-center bg-black/40 p-4">
+          <div className="flex h-[90vh] w-full max-w-250 flex-col overflow-hidden border border-gray-400 bg-white shadow-xl">
+            <header className="flex h-7.5 shrink-0 items-center bg-[#9fdfbc] pl-3 text-[17px] font-semibold text-slate-700">
+              Print Preview
+            </header>
+
+            <iframe
+              title="Print Preview"
+              srcDoc={previewHtml}
+              className="min-h-0 flex-1 border-0 bg-white"
+            />
+
+            <footer className="flex shrink-0 flex-wrap items-center justify-center gap-4 border-t border-[#e0e5ea] px-3 py-4">
+              <div className="flex gap-3">
+                <button
+                  id="btnPreviewPrint"
+                  type="button"
+                  onClick={handlePreviewPrint}
+                  disabled={printing}
+                  className="btn-style focus-visible:ring-2 focus-visible:ring-[#64d96e] disabled:cursor-not-allowed disabled:opacity-40"
+                >
+                  <u>P</u>rint
+                </button>
+                <button
+                  id="btnPreviewOk"
+                  type="button"
+                  autoFocus
+                  onClick={handlePreviewOk}
+                  disabled={printing}
+                  className="btn-style focus-visible:ring-2 focus-visible:ring-[#64d96e] disabled:cursor-not-allowed disabled:opacity-40"
+                >
+                  <u>D</u>ownload
+                </button>
+                <button
+                  id="btnPreviewCancel"
+                  type="button"
+                  onClick={() => setPreview(null)}
+                  disabled={printing}
+                  className="btn-style focus-visible:ring-2 focus-visible:ring-[#64d96e] disabled:cursor-not-allowed disabled:opacity-40"
+                >
+                  <u>C</u>lose
+                </button>
+              </div>
+
+              {/* Report File: what Download saves */}
+              <div
+                id="rdgReportFile"
+                className="relative flex items-center gap-5 border border-[#e0e5ea] bg-white px-10.5 py-2.5"
+              >
+                <span className="absolute -top-2.5 left-2.5 bg-white px-1 text-[13px] text-[#405066]">
+                 File Format
+                </span>
+                <CustomRadio
+                  name="rdgReportFile"
+                  value="Excel"
+                  label="Excel"
+                  checked={reportFile === "Excel"}
+                  onChange={() => setReportFile("Excel")}
+                />
+                <CustomRadio
+                  name="rdgReportFile"
+                  value="PDF"
+                  label="PDF"
+                  checked={reportFile === "PDF"}
+                  onChange={() => setReportFile("PDF")}
+                />
+              </div>
+            </footer>
+          </div>
+        </div>
+      )}
 
       {/* Draw a white checkmark on checked boxes. */}
       <style>{`

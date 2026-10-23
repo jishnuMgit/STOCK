@@ -1,7 +1,18 @@
 import React, {
+  useEffect,
   useRef,
   useState,
 } from "react";
+
+import { toast } from "react-toastify";
+
+import {
+  BranchDividedMenuList,
+  BranchDividedOption,
+  branchMenuStyles,
+  filterLabelOrValue,
+} from "../../BranchSelect/branchSelectParts";
+import selectComponents from "../../sharecomponents/selectComponents";
 
 import Select, {
   type StylesConfig,
@@ -30,16 +41,7 @@ type Option = {
   label: string;
 };
 
-// ============================================================
-// OPTIONS
-// ============================================================
-
-const branchOptions: Option[] = [
-  {
-    value: "OFFICE",
-    label: "OFFICE",
-  },
-];
+const api = import.meta.env.VITE_API_URL;
 
 // ============================================================
 // SELECT STYLES
@@ -155,33 +157,115 @@ const selectStyles: StylesConfig<Option, false> = {
 // HEADER
 // ============================================================
 
-const BeginningBalanceHeader: React.FC = () => {
+type Props = {
+  lkpBranch: Option | null;
+  onBranchChange: (option: Option | null) => void;
+  // yyyy-mm-dd
+  dtpDate: string;
+  onDateChange: (value: string) => void;
+  // a posted balance is locked: its date cannot be changed
+  disabled: boolean;
+};
+
+const BeginningBalanceHeader: React.FC<Props> = ({
+  lkpBranch,
+  onBranchChange,
+  dtpDate,
+  onDateChange,
+  disabled,
+}) => {
   // ==========================================================
-  // BRANCH
+  // BRANCH: the branches the user has a right to, the user's default one
+  // selected (the same list the Beginning Stock screen loads)
   // ==========================================================
 
-  const [branch, setBranch] =
-    useState<Option | null>(
-      branchOptions[0],
-    );
+  const [branchOptions, setBranchOptions] =
+    useState<Option[]>([]);
+
+  useEffect(() => {
+    const loadBranches = async () => {
+      try {
+        const PstrCoID =
+          localStorage.getItem("PstrCoID");
+
+        if (!PstrCoID) {
+          toast.error(
+            "getBranchList: no PstrCoID in localStorage",
+          );
+          return;
+        }
+
+        // needs the login: the branches depend on WHO is logged in
+        const response = await fetch(
+          `${api}/BeginningBalance/getBranchList?PstrCoID=${PstrCoID}`,
+          { credentials: "include" },
+        );
+
+        const result = await response.json();
+
+        if (!response.ok || !result.success) {
+          toast.error(
+            result.message ||
+              "Failed to load the Branches",
+          );
+          return;
+        }
+
+        const options: Option[] = (
+          result.data || []
+        ).map(
+          (row: {
+            lkpBranch: string;
+            txtBranchName: string;
+          }) => ({
+            value: row.lkpBranch,
+            label: row.txtBranchName,
+          }),
+        );
+
+        setBranchOptions(options);
+
+        onBranchChange(
+          options.find(
+            (option) =>
+              option.value ===
+              result.lkpDefaultBranch,
+          ) ?? null,
+        );
+      } catch (error: unknown) {
+        console.error(
+          "getBranchList error:",
+          error,
+        );
+        toast.error(
+          "Failed to load the Branches",
+        );
+      }
+    };
+
+    loadBranches();
+  }, []);
 
   // ==========================================================
-  // DATE
+  // DATE: only a day of the login year (the old SetDate)
   // ==========================================================
 
-  const [dtpDate, setDtpDate] =
-    useState<string>(
-      dayjs().format("DD-MM-YYYY"),
-    );
+  const loginYear =
+    localStorage.getItem("PstrYear") ?? "";
+
+  const minDate = /^\d{4}$/.test(loginYear)
+    ? dayjs(`${loginYear}-01-01`)
+    : undefined;
+
+  const maxDate = /^\d{4}$/.test(loginYear)
+    ? dayjs(`${loginYear}-12-31`)
+    : undefined;
 
   // ==========================================================
   // REFS
   // ==========================================================
 
   const dateRef =
-    useRef<HTMLInputElement | null>(null);
-
-  const receivedFromRef =
     useRef<HTMLInputElement | null>(null);
 
   // ==========================================================
@@ -266,11 +350,25 @@ const BeginningBalanceHeader: React.FC = () => {
                 inputId="lkpBranch"
                 instanceId="lkpBranch"
                 options={branchOptions}
-                value={branch}
-                onChange={setBranch}
-                styles={selectStyles}
+                value={lkpBranch}
+                onChange={onBranchChange}
+                styles={{
+                  ...selectStyles,
+                  ...branchMenuStyles,
+                }}
+                components={{
+                  ...selectComponents,
+                  Option: BranchDividedOption,
+                  MenuList: BranchDividedMenuList,
+                }}
+                filterOption={filterLabelOrValue}
                 isClearable={false}
-                isSearchable={false}
+                isSearchable
+                menuPlacement="auto"
+                placeholder="Select Branch"
+                noOptionsMessage={() =>
+                  "No Branch Found"
+                }
                 menuPosition="fixed"
                 menuPortalTarget={
                   typeof document !== "undefined"
@@ -309,7 +407,7 @@ const BeginningBalanceHeader: React.FC = () => {
                     dtpDate
                       ? dayjs(
                           dtpDate,
-                          "DD-MM-YYYY",
+                          "YYYY-MM-DD",
                         )
                       : null
                   }
@@ -318,17 +416,23 @@ const BeginningBalanceHeader: React.FC = () => {
                     if (
                       newValue?.isValid()
                     ) {
-                      setDtpDate(
+                      onDateChange(
                         newValue.format(
-                          "DD-MM-YYYY",
+                          "YYYY-MM-DD",
                         ),
                       );
                     } else {
-                      setDtpDate("");
+                      onDateChange("");
                     }
                   }}
 
                   format="DD-MM-YYYY"
+
+                  minDate={minDate}
+
+                  maxDate={maxDate}
+
+                  disabled={disabled}
 
                   inputRef={dateRef}
 
@@ -342,7 +446,11 @@ const BeginningBalanceHeader: React.FC = () => {
                         handleInputKeyDown(
                           event,
                           () =>
-                            receivedFromRef.current?.focus(),
+                            document
+                              .getElementById(
+                                "lkpAccountID-0",
+                              )
+                              ?.focus(),
                         ),
                     },
 

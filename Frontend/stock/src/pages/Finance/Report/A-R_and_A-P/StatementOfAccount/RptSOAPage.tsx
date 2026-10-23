@@ -710,12 +710,7 @@ const AppDatePicker: React.FC<AppDatePickerProps> = ({id,label,value,onChange,di
               className="btn-style" >
               <u>P</u>rint
             </button>
-            {/* PDF */}
-            <button type="button"
-              onClick={handlePrint}
-              className="btn-style" >
-              PDF Export
-            </button>
+           
             {/* CLEAR */}
             <button
               type="button"

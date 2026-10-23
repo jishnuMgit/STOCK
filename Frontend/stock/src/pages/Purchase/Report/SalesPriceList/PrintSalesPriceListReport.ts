@@ -3,7 +3,8 @@
 // heading, branch, column labels (Item ID, Item Name, Unit, Unit Cost,
 // Unit Price) and the items grouped by item group.
 // Page number top right, user id + date bottom right of every page.
-// buildHtml is used by the print preview on the page.
+// buildHtml is used by the print preview; printSalesPriceListReport sends the
+// report to the printer (browser print dialog, hidden iframe - no pop-up).
 
 export type PriceItem = {
   itemId: string;
@@ -119,3 +120,32 @@ export const buildHtml = (r: PriceListReport) => `<!doctype html>
 </table>
 </body>
 </html>`;
+
+export const printSalesPriceListReport = (report: PriceListReport): void => {
+  const iframe = document.createElement("iframe");
+  iframe.style.cssText =
+    "position:fixed;right:0;bottom:0;width:0;height:0;border:0;visibility:hidden";
+  document.body.appendChild(iframe);
+
+  const doc = iframe.contentDocument;
+  const win = iframe.contentWindow;
+  if (!doc || !win) {
+    iframe.remove();
+    throw new Error("Could not open the print view");
+  }
+
+  doc.open();
+  doc.write(buildHtml(report));
+  doc.close();
+
+  const cleanup = () => setTimeout(() => iframe.remove(), 500);
+  win.addEventListener("afterprint", cleanup);
+
+  // let the iframe lay out before printing
+  setTimeout(() => {
+    win.focus();
+    win.print();
+    // some browsers never fire afterprint: remove it anyway after a minute
+    setTimeout(() => iframe.remove(), 60000);
+  }, 250);
+};
