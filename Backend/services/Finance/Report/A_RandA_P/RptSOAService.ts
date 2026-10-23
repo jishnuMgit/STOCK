@@ -2,6 +2,8 @@
 // Data access for the Statement Of Account REPORT page
 // (port of FinBL.rptSOA.FillCombos / GetAgeingPeriod / FillDivision /
 // GetDataStAc + SP_rptSOA -> dbo.sp_rptsoa).
+import { readFile } from "node:fs/promises";
+import path from "node:path";
 import pool from "../../../../DB/db.js";
 
 export type Option = { value: string; label: string };
@@ -44,7 +46,13 @@ export type ReportAccount = {
   paymentDays: string;
   creditLimit: number;
   division: string;
-  company: { name: string; address: string[]; license: string; category: string };
+  company: {
+    name: string;
+    nameAr: string;
+    address: string[]; // address 1, 2, 4, 3 (the order of the VB header)
+    addressAr: string[];
+    telephone: string;
+  };
   bank: {
     beneficiary: string;
     bankName: string;
@@ -61,6 +69,8 @@ export type ReportAccount = {
 };
 
 export type SoaReportData = {
+  logo: string; // data: URI of Header_<CoID>.jpg ("" when the file is missing)
+  footerImage: string; // data: URI of Footer.jpg ("" when the file is missing)
   heading1: string;
   heading2: string;
   branchLabel: string;
@@ -77,6 +87,20 @@ const MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "
 const DATE_RE = /^\d{2}-\d{2}-\d{4}$/;
 const ACCOUNT_ID_MAX = 12; // VB: @strAccountID varchar(12)
 const DIV_ID_MAX = 4; // VB: @strDivID varchar(4)
+
+// The VB report loaded Images\\Header_<CoID>.jpg and Images\\Footer.jpg from the
+// application folder. Here they are read from this folder on the SERVER:
+// set SOA_IMAGE_DIR in .env, or put an "Images" folder next to the backend.
+const IMAGE_DIR = process.env.SOA_IMAGE_DIR || path.join(process.cwd(), "Images");
+
+const loadImage = async (fileName: string): Promise<string> => {
+  try {
+    const buf = await readFile(path.join(IMAGE_DIR, fileName));
+    return `data:image/jpeg;base64,${buf.toString("base64")}`;
+  } catch {
+    return ""; // no image: the report prints without it
+  }
+};
 
 const num = (v: unknown): number => (v == null ? 0 : Number(v));
 const str = (v: unknown): string => (v == null ? "" : String(v));
@@ -98,10 +122,16 @@ export const getBranches = async (coId: string, userId: string): Promise<Option[
   return rows.map((r) => ({ value: r.fbrid, label: r.fbrname ?? r.fbrid }));
 };
 
-export const getAccounts = async (coId: string) => {
+// Customer -> filllookupcustomerid / filllookupcustomername
+// Supplier -> filllookupsupplierid / filllookupsuppliername
+export const getAccounts = async (coId: string, supplier = false) => {
+  // fixed function names (never built from user input)
+  const idFn = supplier ? "dbo.filllookupsupplierid" : "dbo.filllookupcustomerid";
+  const nameFn = supplier ? "dbo.filllookupsuppliername" : "dbo.filllookupcustomername";
+
   const [ids, names] = await Promise.all([
-    pool.query(`SELECT * FROM dbo.filllookupcustomerid($1)`, [coId]),
-    pool.query(`SELECT * FROM dbo.filllookupcustomername($1)`, [coId]),
+    pool.query(`SELECT * FROM ${idFn}($1)`, [coId]),
+    pool.query(`SELECT * FROM ${nameFn}($1)`, [coId]),
   ]);
   return {
     ids: ids.rows.map((r) => ({ value: r.fcsaccountid, label: r.fcsaccountid })) as Option[],
@@ -251,11 +281,20 @@ export const getReportData = async (
         division: r.fdivid ? str(r.fdivname || r.fdivid) : "",
         company: {
           name: str(r.fconame),
-          address: [r.fcombinedaddress1, r.fcombinedaddress2, r.fcombinedaddress3, r.fcombinedaddress4]
+          nameAr: str(r.fconame_ar),
+          // the VB header lists address 1, 2, 4, 3
+          address: [r.fcombinedaddress1, r.fcombinedaddress2, r.fcombinedaddress4, r.fcombinedaddress3]
             .map(str)
             .filter((s) => s !== ""),
-          license: str(r.fcombinedlicenseno),
-          category: str(r.fcombinedcategory),
+          addressAr: [
+            r.fcombinedaddress1_ar,
+            r.fcombinedaddress2_ar,
+            r.fcombinedaddress4_ar,
+            r.fcombinedaddress3_ar,
+          ]
+            .map(str)
+            .filter((s) => s !== ""),
+          telephone: str(r.fcombinedtelephone),
         },
         bank: {
           beneficiary: str(r.fbeneficiaryname),
@@ -297,7 +336,16 @@ export const getReportData = async (
     });
   }
 
+  // the file name is built from the company id: letters / digits only
+  const safeCo = /^[A-Za-z0-9_-]+$/.test(coId) ? coId : "";
+  const [logo, footerImage] = await Promise.all([
+    safeCo ? loadImage(`Header_${safeCo}.jpg`) : Promise.resolve(""),
+    loadImage("Footer.jpg"),
+  ]);
+
   return {
+    logo,
+    footerImage,
     heading1:
       p.soaType === "Outstanding" ? "OUTSTANDING STATEMENT OF ACCOUNT" : "STATEMENT OF ACCOUNT",
     heading2: `Period : ${longDate(p.fromDate)}  To  ${longDate(p.toDate)}`,

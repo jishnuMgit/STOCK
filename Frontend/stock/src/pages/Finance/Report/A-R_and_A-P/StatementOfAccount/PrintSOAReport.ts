@@ -23,7 +23,13 @@ export type PrintAccount = {
   paymentDays: string;
   creditLimit: number;
   division: string;
-  company: { name: string; address: string[]; license: string; category: string };
+  company: {
+    name: string;
+    nameAr: string;
+    address: string[]; // address 1, 2, 4, 3 (the order of the VB header)
+    addressAr: string[];
+    telephone: string;
+  };
   bank: {
     beneficiary: string;
     bankName: string;
@@ -40,6 +46,8 @@ export type PrintAccount = {
 };
 
 export type PrintReport = {
+  logo: string; // data: URI, "" = none
+  footerImage: string; // data: URI, "" = none
   coName: string;
   heading1: string;
   heading2: string;
@@ -79,12 +87,21 @@ export const blankZero = (v: number) => (v ? money(v) : "");
 
 const accountHtml = (r: PrintReport, a: PrintAccount, last: boolean) => {
   const b = a.bank;
-  const lic = [a.company.license, a.company.category].filter(Boolean).join("     ");
+  const c = a.company;
+  const tel = c.telephone ? `<div>${esc(c.telephone)}</div>` : "";
 
   return `<section class="acc" ${last ? 'style="page-break-after:auto"' : ""}>
-  <div class="co">${esc(a.company.name || r.coName)}</div>
-  ${a.company.address.map((l) => `<div class="addr">${esc(l)}</div>`).join("")}
-  ${lic ? `<div class="addr">${esc(lic)}</div>` : ""}
+  <table class="hdr"><tr>
+    <td class="hl">
+      <div class="coname">${esc(c.name || r.coName)}</div>
+      ${c.address.map((l) => `<div>${esc(l)}</div>`).join("")}${tel}
+    </td>
+    <td class="hc">${r.logo ? `<img class="logo" src="${r.logo}" />` : ""}</td>
+    <td class="hr" dir="rtl">
+      <div class="coname">${esc(c.nameAr)}</div>
+      ${c.addressAr.map((l) => `<div>${esc(l)}</div>`).join("")}${tel}
+    </td>
+  </tr></table>
   <div class="h1">${esc(r.heading1)}</div>
   <div class="h2">${esc(r.heading2)}</div>
   ${r.branchLabel ? `<div class="br">${esc(r.branchLabel)}</div>` : ""}
@@ -155,6 +172,7 @@ const accountHtml = (r: PrintReport, a: PrintAccount, last: boolean) => {
       : ""
   }
   <div class="by">Prepared By : ${esc(r.userId)}</div>
+  ${r.footerImage ? `<img class="foot" src="${r.footerImage}" />` : ""}
 </section>`;
 };
 
@@ -174,7 +192,13 @@ export const buildHtml = (r: PrintReport) => `<!doctype html>
   body { margin: 0; font: 9pt "Times New Roman", serif; color: #000;
          -webkit-print-color-adjust: exact; print-color-adjust: exact; }
   .acc { page-break-after: always; }
-  .co   { font-size: 14pt; font-weight: bold; text-align: center; }
+  .hdr { margin-bottom: 6px; }
+  .hl, .hr { width: 40%; vertical-align: top; font-size: 9pt; line-height: 1.35; }
+  .hl { text-align: left; } .hr { text-align: right; }
+  .hc { width: 20%; text-align: center; vertical-align: top; }
+  .logo { max-width: 154px; max-height: 140px; }
+  .foot { display: block; width: 100%; height: 80px; margin-top: 10px; }
+  .coname { font-size: 14pt; font-weight: bold; }
   .addr { font-size: 9pt; text-align: center; }
   .h1   { font-size: 12pt; font-weight: bold; text-align: center; margin-top: 8px; }
   .h2   { font-size: 10pt; text-align: center; margin-bottom: 6px; }

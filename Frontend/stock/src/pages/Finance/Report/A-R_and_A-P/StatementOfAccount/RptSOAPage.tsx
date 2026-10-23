@@ -253,6 +253,20 @@ const RptSOAPage: React.FC<RptSOAPageProps> = () => {
     () => accountNameOptions.map((o) => ({ ...o, cols: [o.label, o.value] })),
     [accountNameOptions],
   );
+  // division lookups: same layout as the customer ones
+  const divisionIdGrid = useMemo<GridOption[]>(() => {
+    const nameById = new Map(divisionNameOptions.map((o) => [o.value, o.label]));
+    return divisionIdOptions.map((o) => ({
+      ...o,
+      cols: [o.label, nameById.get(o.value) ?? ""],
+    }));
+  }, [divisionIdOptions, divisionNameOptions]);
+  const divisionNameGrid = useMemo<GridOption[]>(
+    () => divisionNameOptions.map((o) => ({ ...o, cols: [o.label, o.value] })),
+    [divisionNameOptions],
+  );
+  const DIVISION_HEADERS = useMemo(() => ["Division ID", "Division Name"], []);
+  const DIVISION_NAME_HEADERS = useMemo(() => ["Division Name", "Division ID"], []);
   const BRANCH_HEADERS = useMemo(() => ["Branch", "ID"], []);
   const ACCOUNT_HEADERS = useMemo(() => [`${csLabel} ID`, `${csLabel} Name`], [csLabel]);
   const ACCOUNT_NAME_HEADERS = useMemo(() => [`${csLabel} Name`, `${csLabel} ID`], [csLabel]);
@@ -265,22 +279,17 @@ const RptSOAPage: React.FC<RptSOAPageProps> = () => {
 
     const load = async () => {
       try {
-        const [b, a] = await Promise.all([
-          apiFetch(`${API}/branches`).then((r) => r.json()),
-          apiFetch(`${API}/accounts`).then((r) => r.json()),
-        ]);
+        const b = await apiFetch(`${API}/branches`).then((r) => r.json());
         if (cancelled) return;
 
-        if (!b.success || !a.success) {
-          toast.error(b.message || a.message || "Could not load the lists");
+        if (!b.success) {
+          toast.error(b.message || "Could not load the branches");
           return;
         }
         setBranchOptions(b.branches);
         setBranch(b.branches[0] ?? null);
-        setAccountIdOptions(a.ids);
-        setAccountNameOptions(a.names);
       } catch {
-        if (!cancelled) toast.error("Could not load the lists");
+        if (!cancelled) toast.error("Could not load the branches");
       }
     };
 
@@ -289,6 +298,34 @@ const RptSOAPage: React.FC<RptSOAPageProps> = () => {
       cancelled = true;
     };
   }, []);
+
+  // Customer -> customer lookups, Supplier -> supplier lookups
+  // (reloaded every time the Customer / Supplier radio changes)
+  useEffect(() => {
+    let cancelled = false;
+
+    const load = async () => {
+      try {
+        const type = reportType === "Supplier" ? "S" : "C";
+        const a = await apiFetch(`${API}/accounts?type=${type}`).then((r) => r.json());
+        if (cancelled) return;
+
+        if (!a.success) {
+          toast.error(a.message || `Could not load the ${reportType.toLowerCase()}s`);
+          return;
+        }
+        setAccountIdOptions(a.ids);
+        setAccountNameOptions(a.names);
+      } catch {
+        if (!cancelled) toast.error(`Could not load the ${reportType.toLowerCase()}s`);
+      }
+    };
+
+    load();
+    return () => {
+      cancelled = true;
+    };
+  }, [reportType]);
 
   const resetDivisions = () => {
     setDivisionIdOptions([]);
@@ -501,7 +538,7 @@ const RptSOAPage: React.FC<RptSOAPageProps> = () => {
 
     setPrinting(true);
     try {
-      const blob = asPdf ? buildSoaPdf(report) : await fetchExcel(payload);
+      const blob = asPdf ? await buildSoaPdf(report) : await fetchExcel(payload);
       if (!blob) return; // the error is already shown
 
       const kind = asPdf ? "pdf" : "xlsx";
@@ -625,7 +662,7 @@ const RptSOAPage: React.FC<RptSOAPageProps> = () => {
                   options={accountIdGrid} value={customerId}
                   onChange={(s) => pickOneAccount(s?.value ?? null)}
                   headers={ACCOUNT_HEADERS} colTemplate="140px 1fr" menuWidth={500}
-                  {...selectProps} />
+                  alignTo="wrapCustomerName" {...selectProps} />
               )}
               {customerMode === "Range Customer" && (
                 <div className="mt-7">
@@ -638,7 +675,7 @@ const RptSOAPage: React.FC<RptSOAPageProps> = () => {
             </div>
 
             {/* ACCOUNT NAME */}
-            <div className="min-w-0 w-full flex flex-col gap-2.5 pt-3">
+            <div id="wrapCustomerName" className="min-w-0 w-full flex flex-col gap-2.5 pt-3">
               {customerMode === "One Customer" && (
                 <GridSelect inputId="lkpOneCustomerName" instanceId="lkpOneCustomerName"
                   options={accountNameGrid} value={customerName}
@@ -673,16 +710,20 @@ const RptSOAPage: React.FC<RptSOAPageProps> = () => {
 
             <div className="w-30 pt-6.5">
               {hasDivision && divisionMode === "One Division" && (
-                <Select inputId="lkpOneDivisionID" instanceId="lkpOneDivisionID"
-                  options={divisionIdOptions} value={divisionId}
-                  onChange={(s) => pickDivision(s?.value ?? null)} {...selectProps} />
+                <GridSelect inputId="lkpOneDivisionID" instanceId="lkpOneDivisionID"
+                  options={divisionIdGrid} value={divisionId}
+                  onChange={(s) => pickDivision(s?.value ?? null)}
+                  headers={DIVISION_HEADERS} colTemplate="140px 1fr" menuWidth={500}
+                  alignTo="wrapDivisionName" {...selectProps} />
               )}
             </div>
-            <div className="min-w-0 w-[102%] -ml-2.5 pt-6.5">
+            <div id="wrapDivisionName" className="min-w-0 w-[102%] -ml-2.5 pt-6.5">
               {hasDivision && divisionMode === "One Division" && (
-                <Select inputId="lkpOneDivisionName" instanceId="lkpOneDivisionName"
-                  options={divisionNameOptions} value={divisionName}
-                  onChange={(s) => pickDivision(s?.value ?? null)} {...selectProps} />
+                <GridSelect inputId="lkpOneDivisionName" instanceId="lkpOneDivisionName"
+                  options={divisionNameGrid} value={divisionName}
+                  onChange={(s) => pickDivision(s?.value ?? null)}
+                  headers={DIVISION_NAME_HEADERS} colTemplate="1fr 140px" extraWidth={140}
+                  {...selectProps} />
               )}
             </div>
           </div>

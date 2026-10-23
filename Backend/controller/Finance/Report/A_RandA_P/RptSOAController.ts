@@ -15,7 +15,6 @@ import {
 } from "../../../../services/Finance/Report/A_RandA_P/RptSOAExcel.js";
 // the company name lookup is shared with the other reports
 import { getCompanyName } from "../../../../utils/companyName.js";
-
 type Session = { coId: string; userId: string; coName: string };
 
 const pick = (...values: unknown[]): string => {
@@ -81,7 +80,7 @@ const fail = (res: Response, error: unknown, what: string, message: string) => {
 // ------------------------------------------------------------
 // LOOKUPS
 // GET /api/RptSOA/branches
-// GET /api/RptSOA/accounts
+// GET /api/RptSOA/accounts?type=C|S
 // GET /api/RptSOA/divisions/:accountId
 // ------------------------------------------------------------
 export const getBranchList = async (req: AuthenticatedRequest, res: Response) => {
@@ -99,7 +98,9 @@ export const getAccountList = async (req: AuthenticatedRequest, res: Response) =
   const { coId } = getSession(req);
   if (!coId) return noCompany(res);
   try {
-    const { ids, names } = await getAccounts(coId);
+    // ?type=S -> suppliers, anything else -> customers
+    const supplier = String(req.query.type ?? "").toUpperCase() === "S";
+    const { ids, names } = await getAccounts(coId, supplier);
     return res.status(200).json({ success: true, ids, names });
   } catch (error) {
     return fail(res, error, "getAccountList", "Failed to load accounts");

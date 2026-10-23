@@ -60,8 +60,22 @@ export const buildSoaWorkbook = async (report: SoaReport): Promise<Buffer> => {
   report.accounts.forEach((a, idx) => {
     if (idx > 0) ws.addRow([]);
 
-    merged(a.company.name || report.coName, { size: 14, bold: true }, "center");
-    a.company.address.forEach((l) => merged(l, { size: 9 }, "center"));
+    // header: English on the left, Arabic on the right (like the VB header)
+    const pair = (left: string, right: string, font: Partial<ExcelJS.Font>) => {
+      const r = ws.addRow([left, "", "", "", right]);
+      ws.mergeCells(r.number, 1, r.number, 4);
+      ws.mergeCells(r.number, 5, r.number, 8);
+      r.getCell(1).font = { name: "Times New Roman", ...font };
+      r.getCell(5).font = { name: "Times New Roman", ...font };
+      r.getCell(1).alignment = { horizontal: "left" };
+      r.getCell(5).alignment = { horizontal: "right", readingOrder: "rtl" };
+    };
+    pair(a.company.name || report.coName, a.company.nameAr, { size: 14, bold: true });
+    const rows = Math.max(a.company.address.length, a.company.addressAr.length);
+    for (let i = 0; i < rows; i++) {
+      pair(a.company.address[i] ?? "", a.company.addressAr[i] ?? "", { size: 9 });
+    }
+    if (a.company.telephone) pair(a.company.telephone, a.company.telephone, { size: 9 });
     merged(report.heading1, { size: 12, bold: true }, "center");
     merged(report.heading2, { size: 10 }, "center");
     if (report.branchLabel) merged(report.branchLabel, { size: 10 }, "left");

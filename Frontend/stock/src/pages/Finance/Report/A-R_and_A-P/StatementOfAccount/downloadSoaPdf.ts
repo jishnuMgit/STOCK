@@ -23,10 +23,50 @@ const MARGIN = { top: 14, right: 10, bottom: 16, left: 12 };
 const COL_PCT = [11, 7, 7, 15, 30, 10, 10, 10];
 const PAD = 1.2;
 
-export const buildSoaPdf = (report: PrintReport): Blob => {
+// Arabic needs a font with Arabic letters. jsPDF cannot use the system fonts, so
+// the file public/fonts/ArabicPdf.ttf (a small DejaVu Sans subset) is fetched
+// once and embedded. Without it the PDF is still made, only without Arabic.
+const bytesToBase64 = (buf: ArrayBuffer) => {
+  const bytes = new Uint8Array(buf);
+  let bin = "";
+  for (let i = 0; i < bytes.length; i += 0x8000) {
+    bin += String.fromCharCode(...bytes.subarray(i, i + 0x8000));
+  }
+  return btoa(bin);
+};
+
+let arabicFont: Promise<string | null> | null = null;
+const loadArabicFont = (): Promise<string | null> => {
+  if (!arabicFont) {
+    arabicFont = fetch(`${import.meta.env.BASE_URL}fonts/ArabicPdf.ttf`)
+      .then((r) => {
+        if (!r.ok) throw new Error(`Arabic font not found (${r.status})`);
+        return r.arrayBuffer();
+      })
+      .then(bytesToBase64)
+      .catch((error) => {
+        console.warn("SOA pdf:", error);
+        arabicFont = null; // try again next time
+        return null;
+      });
+  }
+  return arabicFont;
+};
+
+export const buildSoaPdf = async (report: PrintReport): Promise<Blob> => {
   const doc = new jsPDF({ orientation: "portrait", unit: "mm", format: "a4" });
+
+  const fontData = await loadArabicFont();
+  if (fontData) {
+    doc.addFileToVFS("ArabicPdf.ttf", fontData);
+    doc.addFont("ArabicPdf.ttf", "ArabicPdf", "normal");
+  }
+  const hasArabic = fontData !== null;
   const usable = PAGE_W - MARGIN.left - MARGIN.right;
   const centre = PAGE_W / 2;
+  // room for the footer image (Footer.jpg) at the bottom of every page
+  const FOOT_H = 18;
+  const bottom = report.footerImage ? MARGIN.bottom + FOOT_H + 2 : MARGIN.bottom;
   const lastY = () => (doc as unknown as { lastAutoTable: { finalY: number } }).lastAutoTable.finalY;
 
   const columnStyles: Record<number, { cellWidth: number; halign?: "right" }> = {};
@@ -39,7 +79,7 @@ export const buildSoaPdf = (report: PrintReport): Blob => {
 
   // moves to a new page when the next block does not fit
   const ensureSpace = (y: number, needed: number) => {
-    if (y + needed > PAGE_H - MARGIN.bottom) {
+    if (y + needed > PAGE_H - bottom) {
       doc.addPage();
       return MARGIN.top;
     }
@@ -51,15 +91,45 @@ export const buildSoaPdf = (report: PrintReport): Blob => {
     let y = MARGIN.top;
 
     doc.setTextColor(0, 0, 0);
+    // header: company name, address 1/2/4/3 and telephone on the left
     doc.setFont("times", "bold");
     doc.setFontSize(14);
-    doc.text(a.company.name || report.coName, centre, (y += 4), { align: "center" });
+    doc.text(a.company.name || report.coName, MARGIN.left, (y += 4));
 
     doc.setFont("times", "normal");
     doc.setFontSize(9);
-    a.company.address.forEach((l) => doc.text(l, centre, (y += 4.2), { align: "center" }));
-    const lic = [a.company.license, a.company.category].filter(Boolean).join("     ");
-    if (lic) doc.text(lic, centre, (y += 4.2), { align: "center" });
+    [...a.company.address, a.company.telephone]
+      .filter((l) => l !== "")
+      .forEach((l) => doc.text(l, MARGIN.left, (y += 4.2)));
+
+    // the same header in Arabic on the right
+    if (hasArabic) {
+      const xr = PAGE_W - MARGIN.right;
+      let ya = MARGIN.top + 4;
+      doc.setFont("ArabicPdf", "normal");
+      doc.setFontSize(14);
+      if (a.company.nameAr) doc.text(a.company.nameAr, xr, ya, { align: "right" });
+      doc.setFontSize(9);
+      [...a.company.addressAr, a.company.telephone]
+        .filter((l) => l !== "")
+        .forEach((l) => doc.text(l, xr, (ya += 4.2), { align: "right" }));
+      y = Math.max(y, ya);
+      doc.setFont("times", "normal");
+    }
+
+    // company logo (Header_<CoID>.jpg) in the middle, fitted into 40 x 37 mm
+    if (report.logo) {
+      try {
+        const p = doc.getImageProperties(report.logo);
+        const s = Math.min(40 / p.width, 37 / p.height);
+        const w = p.width * s;
+        const h = p.height * s;
+        doc.addImage(report.logo, "JPEG", centre - w / 2, MARGIN.top, w, h);
+        y = Math.max(y, MARGIN.top + h);
+      } catch {
+        // an unreadable image is skipped
+      }
+    }
 
     doc.setFont("times", "bold");
     doc.setFontSize(12);
@@ -97,7 +167,7 @@ export const buildSoaPdf = (report: PrintReport): Blob => {
       margin: {
         top: MARGIN.top,
         right: MARGIN.right,
-        bottom: MARGIN.bottom,
+        bottom,
         left: MARGIN.left,
       },
       tableWidth: usable,
@@ -211,6 +281,20 @@ export const buildSoaPdf = (report: PrintReport): Blob => {
   doc.setTextColor(0, 0, 0);
   for (let i = 1; i <= pages; i++) {
     doc.setPage(i);
+    if (report.footerImage) {
+      try {
+        doc.addImage(
+          report.footerImage,
+          "JPEG",
+          MARGIN.left,
+          PAGE_H - MARGIN.bottom - FOOT_H,
+          usable,
+          FOOT_H,
+        );
+      } catch {
+        // an unreadable image is skipped
+      }
+    }
     doc.text(`Page ${i} of ${pages}`, PAGE_W - MARGIN.right, MARGIN.top - 4, { align: "right" });
     doc.text(report.reportInfo, PAGE_W - MARGIN.right, PAGE_H - MARGIN.bottom + 8, {
       align: "right",
