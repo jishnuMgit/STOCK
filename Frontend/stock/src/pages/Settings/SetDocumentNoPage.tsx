@@ -1,12 +1,14 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import Select, {
   type SingleValue,
   type StylesConfig,
 } from "react-select";
 import { toast } from "react-toastify";
-import { X } from "lucide-react";
 import { useEnterAsTab } from "../../hooks/useEnterAsTab";
-import { useConfirm } from "../../hooks/useConfirm";
+import { useConfirmModal } from "../../hooks/useConfirmModal";
+import { useDeleteToast } from "../../hooks/useDeleteToast";
+import { useGridCellFocus } from "../../hooks/useGridCellFocus";
+import { useAdvanceAfterSelect } from "../../hooks/useAdvanceAfterSelect";
 import { useAltShortcuts } from "../../hooks/useAltShortcuts";
 import { useButtonPermissions } from "../../hooks/useButtonPermissions";
 import {
@@ -291,7 +293,13 @@ const MENU_ID = "9102";
 
 const SetDocumentNo: React.FC = () => {
   const handleEnterAsTab = useEnterAsTab();
-  const { confirm, confirmDialog } = useConfirm();
+  // the common themed question window and the standard delete messages
+  const { confirm, dialog } = useConfirmModal();
+  const { deleted, notDeleted } = useDeleteToast("Set Document No.");
+  // the cell the cursor is in is outlined (a typed-in box has its text selected)
+  const { cellFocusClass, selectOnFocus } = useGridCellFocus();
+  // after a dropdown pick (or Enter on a closed one) the cursor goes on in the row
+  const { advanceAfterPick, advanceOnEnter } = useAdvanceAfterSelect();
   const perms = useButtonPermissions(MENU_ID);
 
   // ==========================================================
@@ -307,6 +315,9 @@ const SetDocumentNo: React.FC = () => {
   const [lkpBranch, setLkpBranch] = useState<string>("");
   const [branchOptions, setBranchOptions] = useState<SelectOption[]>([]);
   const [lkpModule, setLkpModule] = useState<string>("");
+
+  // the user's default branch has been asked for (found or not) - the cursor can start
+  const [branchDefaultLoaded, setBranchDefaultLoaded] = useState(false);
   const [moduleOptions, setModuleOptions] = useState<SelectOption[]>([]);
 
   /* =======================================================
@@ -394,6 +405,8 @@ const SetDocumentNo: React.FC = () => {
         toast.error(
           `getDefaultBranch error: ${error instanceof Error ? error.message : String(error)}`,
         );
+      } finally {
+        setBranchDefaultLoaded(true);
       }
     };
 
@@ -513,6 +526,39 @@ const SetDocumentNo: React.FC = () => {
   // bumped after a save so the grid loads again (the button flips to Modify)
   const [reloadKey, setReloadKey] = useState(0);
   const [documentOptions, setDocumentOptions] = useState<SelectOption[]>([]);
+
+  // ==========================================================
+  // WHERE THE CURSOR STARTS (once, on page load)
+  // The first header box that is still empty (Year, Branch); when Year, Branch
+  // and Module are all chosen, the Prefix of the first row that has no numbering
+  // yet (the first row when every row has some).
+  // ==========================================================
+
+  const cursorStarted = useRef(false);
+
+  useEffect(() => {
+    if (cursorStarted.current || !branchDefaultLoaded) return;
+
+    let targetId = "";
+
+    if (!lkpYear) {
+      targetId = "lkpYear";
+    } else if (!lkpBranch) {
+      targetId = "lkpBranch";
+    } else if (rows.length > 0) {
+      const target =
+        rows.find((row) => !row.txtDocPrefix.trim() && !row.txtStartSeqNo.trim()) ??
+        rows[0];
+
+      targetId = `txtDocPrefix_${target.id}`;
+    } else {
+      return; // the grid is still loading
+    }
+
+    cursorStarted.current = true;
+
+    window.setTimeout(() => document.getElementById(targetId)?.focus(), 0);
+  }, [branchDefaultLoaded, lkpYear, lkpBranch, rows]);
 
   /* =======================================================
      LOAD DOCUMENT LIST (per Module) + existing saved rules
@@ -648,7 +694,7 @@ const SetDocumentNo: React.FC = () => {
   // The one button: Save the first time, Modify once this Year + Branch +
   // Module has numbering (the old form switched its button text between
   // "&Save" and "&Modify").
-  const actionWord = hasSavedRows ? "Modify" : "Save";
+  const actionWord = "Save";
   const canSaveOrModify = hasSavedRows ? perms.modify : perms.save;
 
   const handleSave = async () => {
@@ -726,7 +772,7 @@ const SetDocumentNo: React.FC = () => {
       if (!response.ok || !result.success) {
         toast.error(
           result.message ||
-            (hasSavedRows ? "Not modified, try again." : "Not saved, try again."),
+            "Not saved, try again.",
         );
 
         // the backend validator names the field that failed - same name as
@@ -739,10 +785,7 @@ const SetDocumentNo: React.FC = () => {
       }
 
       toast.success(
-        result.message ||
-          (hasSavedRows
-            ? "Document numbering modified successfully."
-            : "Document numbering saved successfully."),
+        result.message || "Set Document No. saved successfully.",
       );
 
       // load the grid again: it now has saved numbering, so the button
@@ -775,12 +818,7 @@ const SetDocumentNo: React.FC = () => {
   // ==========================================================
 
   useAltShortcuts({
-    s: () => {
-      if (!hasSavedRows) handleSave();
-    },
-    m: () => {
-      if (hasSavedRows) handleSave();
-    },
+    s: () => handleSave(),
     c: () => setCopyToNextYearbtn((previous) => !previous),
   });
 
@@ -807,9 +845,10 @@ const SetDocumentNo: React.FC = () => {
       branchOptions.find((option) => option.value === lkpBranch)
         ?.label || lkpBranch;
 
-    const shouldDelete = await confirm(
-      "Are you sure you want to delete?"
-    );
+    const shouldDelete = await confirm({
+      title: "Set Document No.",
+      message: "Do you want to delete ?",
+    });
 
     if (!shouldDelete) {
       return;
@@ -846,14 +885,11 @@ const SetDocumentNo: React.FC = () => {
       const result = await response.json();
 
       if (!response.ok || !result.success) {
-        toast.error(
-          result.message ||
-            `Could not delete the numbering for ${documentName}. Please try again.`
-        );
+        notDeleted(result.message);
         return;
       }
 
-      toast.success(`Numbering for ${documentName} deleted successfully.`);
+      deleted();
 
       setRows((previousRows) =>
         previousRows.map((r) =>
@@ -872,7 +908,7 @@ const SetDocumentNo: React.FC = () => {
       );
     } catch (error) {
       console.error("deleteDocumentNoRow error:", error);
-      toast.error("Cannot connect to Document No API.");
+      notDeleted();
     }
   };
 
@@ -892,6 +928,7 @@ const SetDocumentNo: React.FC = () => {
   // ==========================================================
 
   return (
+    <>
     <div
       onKeyDown={handleEnterAsTab}
       className="flex min-h-screen w-full items-center justify-center bg-white text-[13px] text-slate-700"
@@ -1268,17 +1305,20 @@ const SetDocumentNo: React.FC = () => {
           ================================================= */}
 
                       <td
-                        className="
+                        className={`
               border-r
               border-t
               border-slate-200
               p-0
-            "
+             ${cellFocusClass}`}
           >
 
             <div className="flex h-[36px] items-stretch">
 
-              <div className="min-w-0 flex-1 overflow-hidden">
+              <div
+                className="min-w-0 flex-1 overflow-hidden"
+                onKeyDown={(event) => advanceOnEnter(event)}
+              >
 
                 <Select
                   inputId={`lkpDocument_${row.id}`}
@@ -1291,13 +1331,14 @@ const SetDocumentNo: React.FC = () => {
                   )}
                   onChange={(
                     option: SingleValue<SelectOption>,
-                  ) =>
+                  ) => {
                     handleRowChange(
                       row.id,
                       "lkpDocument",
                       option?.value ?? "",
-                    )
-                  }
+                    );
+                    if (option) advanceAfterPick(`lkpDocument_${row.id}`);
+                  }}
                   styles={{
                     ...tableSelectStyles,
                     dropdownIndicator: (base) => ({
@@ -1323,33 +1364,6 @@ const SetDocumentNo: React.FC = () => {
 
               </div>
 
-                          {/* DELETE */}
-
-                          {perms.delete && (
-                          <button
-                            type="button"
-                            onClick={() => handleDeleteRow(row)}
-                            className="
-                  relative
-                  inline-flex
-                  h-full
-                  w-[20px]
-                  shrink-0
-                  items-center
-                  justify-center
-                  self-stretch
-                  rounded
-                  text-[#999999]
-                  hover:text-red-600
-                "
-                aria-label={`Delete ${row.lkpDocument}`}
-              >
-                <X
-                  size={10}
-                  style={{ transform: "translateY(-3px)" }}
-                />
-              </button>
-                          )}
 
             </div>
 
@@ -1361,15 +1375,16 @@ const SetDocumentNo: React.FC = () => {
           ================================================= */}
 
                       <td
-                        className="
+                        className={`
               border-r
               border-t
               border-slate-200
               px-1
-            "
+             ${cellFocusClass}`}
                       >
                         <input
                           id={`txtDocPrefix_${row.id}`}
+                          onFocus={selectOnFocus}
                           name="txtDocPrefix"
                           type="text"
                           value={row.txtDocPrefix}
@@ -1396,15 +1411,16 @@ const SetDocumentNo: React.FC = () => {
           ================================================= */}
 
                       <td
-                        className="
+                        className={`
               border-r
               border-t
               border-slate-200
               px-1
-            "
+             ${cellFocusClass}`}
                       >
                         <input
                           id={`txtStartSeqNo_${row.id}`}
+                          onFocus={selectOnFocus}
                           name="txtStartSeqNo"
                           type="text"
                           value={row.txtStartSeqNo}
@@ -1431,12 +1447,12 @@ const SetDocumentNo: React.FC = () => {
           ================================================= */}
 
                       <td
-                        className="
+                        className={`
               border-r
               border-t
               border-slate-200
               text-center
-            "
+             ${cellFocusClass}`}
                       >
                         <input
                           id={`chkStrictSerial_${row.id}`}
@@ -1464,12 +1480,12 @@ const SetDocumentNo: React.FC = () => {
           ================================================= */}
 
                       <td
-                        className="
+                        className={`
               border-r
               border-t
               border-slate-200
               p-0
-            "
+             ${cellFocusClass}`}
                       >
                         <Select
                           inputId={`lkpMode_${row.id}`}
@@ -1477,13 +1493,14 @@ const SetDocumentNo: React.FC = () => {
                           name="lkpMode"
                           options={modeOptions}
                           value={getOption(modeOptions, row.lkpMode)}
-                          onChange={(option: SingleValue<SelectOption>) =>
+                          onChange={(option: SingleValue<SelectOption>) => {
                             handleRowChange(
                               row.id,
                               "lkpMode",
                               option?.value ?? "",
-                            )
-                          }
+                            );
+                            if (option) advanceAfterPick(`lkpMode_${row.id}`);
+                          }}
                           styles={tableSelectStyles}
                           components={{
                             ...selectComponents,
@@ -1499,12 +1516,12 @@ const SetDocumentNo: React.FC = () => {
           ================================================= */}
 
                       <td
-                        className="
+                        className={`
               border-r
               border-t
               border-slate-200
               p-0
-            "
+             ${cellFocusClass}`}
                       >
                         <Select
                           inputId={`lkpResetNo_${row.id}`}
@@ -1512,13 +1529,14 @@ const SetDocumentNo: React.FC = () => {
                           name="lkpResetNo"
                           options={resetOptions}
                           value={getOption(resetOptions, row.lkpResetNo)}
-                          onChange={(option: SingleValue<SelectOption>) =>
+                          onChange={(option: SingleValue<SelectOption>) => {
                             handleRowChange(
                               row.id,
                               "lkpResetNo",
                               option?.value ?? "",
-                            )
-                          }
+                            );
+                            if (option) advanceAfterPick(`lkpResetNo_${row.id}`);
+                          }}
                           styles={tableSelectStyles}
                           components={{
                             ...selectComponents,
@@ -1534,12 +1552,12 @@ const SetDocumentNo: React.FC = () => {
           ================================================= */}
 
                       <td
-                        className="
+                        className={`
               border-r
               border-t
               border-slate-200
               text-center
-            "
+             ${cellFocusClass}`}
                       >
                         <input
                           id={`chkPrintAfterSave_${row.id}`}
@@ -1567,15 +1585,17 @@ const SetDocumentNo: React.FC = () => {
           ================================================= */}
 
                       <td
-                        className="
+                        className={`
               border-t
               border-slate-200
               px-1
               text-center
-            "
+             ${cellFocusClass}`}
                       >
+                        <div className="flex items-center">
                         <input
                           id={`txtPositionNo_${row.id}`}
+                          onFocus={selectOnFocus}
                           name="txtPositionNo"
                           type="number"
                           value={row.txtPositionNo}
@@ -1595,6 +1615,20 @@ const SetDocumentNo: React.FC = () => {
                 outline-none
               "
                         />
+
+                        {/* the X of the row, at the right end */}
+                        {perms.delete && (
+                          <button
+                            type="button"
+                            tabIndex={-1}
+                            onClick={() => handleDeleteRow(row)}
+                            className="ml-1 inline-flex h-[24px] w-[20px] shrink-0 items-center justify-center text-[12px] leading-none text-[#999999] hover:text-red-600"
+                            aria-label={`Delete ${row.lkpDocument}`}
+                          >
+                            ✕
+                          </button>
+                        )}
+                        </div>
                       </td>
                     </tr>
                   ))}
@@ -1610,8 +1644,8 @@ const SetDocumentNo: React.FC = () => {
 
         <div className="mt-[14px] flex justify-center gap-3">
           <button
-            id={hasSavedRows ? "Modify" : "Save"}
-            name={hasSavedRows ? "Modify" : "Save"}
+            id="Save"
+            name="Save"
             type="button"
             onClick={handleSave}
             disabled={!canSaveOrModify}
@@ -1637,9 +1671,12 @@ const SetDocumentNo: React.FC = () => {
         </div>
       </div>
 
-      {confirmDialog}
-
     </div>
+
+    {/* the "Do you want to delete ?" question - outside the root div so the page's
+        Enter handling does not take the Enter of the Yes / No buttons */}
+    {dialog}
+    </>
   );
 };
 

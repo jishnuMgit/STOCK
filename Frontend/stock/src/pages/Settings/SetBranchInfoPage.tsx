@@ -7,6 +7,9 @@ import { toast } from "react-toastify";
 import { useEnterAsTab } from "../../hooks/useEnterAsTab";
 import { useAltShortcuts } from "../../hooks/useAltShortcuts";
 import { useButtonPermissions } from "../../hooks/useButtonPermissions";
+import { useGridCellFocus } from "../../hooks/useGridCellFocus";
+import { useAdvanceAfterSelect } from "../../hooks/useAdvanceAfterSelect";
+import { useInitialFocus } from "../../hooks/useInitialFocus";
 import {
   filterLabelOrValue,
   BranchDividedMenuList,
@@ -67,6 +70,9 @@ const BranchTextRow: React.FC<BranchTextRowProps> = ({
   // the shared form-input look from index.css
   const inputClass = "input-style";
 
+  // the box the cursor is in is outlined, and its text is selected
+  const { cellFocusClass, selectOnFocus } = useGridCellFocus();
+
   const labelEnglishClass =
     "whitespace-nowrap pr-3 text-right text-[14px] text-gray-600";
 
@@ -91,30 +97,36 @@ const BranchTextRow: React.FC<BranchTextRowProps> = ({
       </label>
 
       <div className="flex w-[460px] justify-start">
-        <input
-          id={idEn}
-          name={idEn}
-          type="text"
-          value={valueEn}
-          maxLength={maxLength}
-          onChange={(e) => setValueEn(e.target.value)}
-          className={inputClass}
-          style={{ width: `${inputWidth}px` }}
-        />
+        <div className={`inline-flex ${cellFocusClass}`}>
+          <input
+            id={idEn}
+            name={idEn}
+            type="text"
+            value={valueEn}
+            maxLength={maxLength}
+            onFocus={selectOnFocus}
+            onChange={(e) => setValueEn(e.target.value)}
+            className={inputClass}
+            style={{ width: `${inputWidth}px` }}
+          />
+        </div>
       </div>
 
       <div className="flex w-[460px] justify-end">
-        <input
-          id={idAr}
-          name={idAr}
-          type="text"
-          dir="rtl"
-          value={valueAr}
-          maxLength={maxLength}
-          onChange={(e) => setValueAr(e.target.value)}
-          className={`${inputClass} text-right`}
-          style={{ width: `${inputWidth}px` }}
-        />
+        <div className={`inline-flex ${cellFocusClass}`}>
+          <input
+            id={idAr}
+            name={idAr}
+            type="text"
+            dir="rtl"
+            value={valueAr}
+            maxLength={maxLength}
+            onFocus={selectOnFocus}
+            onChange={(e) => setValueAr(e.target.value)}
+            className={`${inputClass} text-right`}
+            style={{ width: `${inputWidth}px` }}
+          />
+        </div>
       </div>
 
       <label
@@ -138,6 +150,13 @@ const MENU_ID = "9115";
 const SetBranchInfo: React.FC = () => {
   const handleEnterAsTab = useEnterAsTab();
   const perms = useButtonPermissions(MENU_ID);
+  // the box the cursor is in is outlined, and its text is selected
+  const { cellFocusClass, selectOnFocus } = useGridCellFocus();
+  // after a Branch pick (or Enter on a closed Branch box) the cursor goes on
+  const { advanceAfterPick, advanceOnEnter } = useAdvanceAfterSelect();
+
+  // the default branch has been asked for (found or not): the cursor can start
+  const [branchDefaultLoaded, setBranchDefaultLoaded] = useState(false);
 
   /* =========================================================
      STATES
@@ -285,6 +304,8 @@ const SetBranchInfo: React.FC = () => {
       } catch (error) {
         console.error("getDefaultBranch error:", error);
         toast.error(`getDefaultBranch error: ${error instanceof Error ? error.message : String(error)}`);
+      } finally {
+        setBranchDefaultLoaded(true);
       }
     };
 
@@ -587,11 +608,11 @@ const SetBranchInfo: React.FC = () => {
      SAVE
   ========================================================= */
 
-  // This screen only ever edits an existing branch, so it works with the
-  // MODIFY right (letter M of the menu's buttons), not Save.
-  const handleModify = async () => {
+  // This screen only ever edits an existing branch, so the button is just "Save"
+  // but it works with the MODIFY right (letter M of the menu's buttons).
+  const handleSave = async () => {
     if (!perms.modify) {
-      toast.error("You do not have permission to Modify.");
+      toast.error("You do not have permission to Save.");
       return;
     }
 
@@ -655,7 +676,7 @@ const SetBranchInfo: React.FC = () => {
       const result = await response.json();
 
       if (!response.ok || !result.success) {
-        toast.error(result.message || "Branch info could not be saved.");
+        toast.error(result.message || "Not saved, try again");
 
         // the backend validator names the field that failed - same name as
         // the element id, so the cursor goes straight into it
@@ -666,7 +687,7 @@ const SetBranchInfo: React.FC = () => {
         return;
       }
 
-      toast.success(result.message || "Branch info saved successfully.");
+      toast.success(result.message || "Set Branch Info saved successfully");
     } catch (error) {
       console.error("saveBranchInfo error:", error);
       toast.error("Cannot connect to Branch Info API.");
@@ -682,6 +703,9 @@ const SetBranchInfo: React.FC = () => {
       // back to the page-open state: the default branch, reloaded
       setLkpBranch(defaultBranch);
       setReloadKey((previous) => previous + 1);
+
+      // the cursor goes back to the Branch box
+      window.setTimeout(() => document.getElementById("lkpBranch")?.focus(), 0);
     }
 
     setTxtBrName_AR("");
@@ -733,12 +757,15 @@ const SetBranchInfo: React.FC = () => {
 
   /* =========================================================
      KEYBOARD SHORTCUTS
-     Alt+M -> Modify, Alt+C -> Clear (matches the underlined
+     Alt+S -> Save, Alt+C -> Clear (matches the underlined
      accelerator letters on the buttons).
   ========================================================= */
 
+  // the cursor starts on the Branch box
+  useInitialFocus(branchDefaultLoaded, "lkpBranch");
+
   useAltShortcuts({
-    m: handleModify,
+    s: handleSave,
     c: () => handleClear(true),
   });
 
@@ -800,8 +827,12 @@ const SetBranchInfo: React.FC = () => {
 
             {/* BRANCH SELECT - 300px */}
 
-            <div className="flex w-[460px] justify-start">
+            <div
+              className="flex w-[460px] justify-start"
+              onKeyDown={(event) => advanceOnEnter(event)}
+            >
 
+              <div className={`inline-flex ${cellFocusClass}`}>
               <Select
                 inputId="lkpBranch"
                 name="lkpBranch"
@@ -815,11 +846,14 @@ const SetBranchInfo: React.FC = () => {
                 }
                 onChange={(
                   option: SingleValue<SelectOption>,
-                ) =>
+                ) => {
                   setLkpBranch(
                     option?.value || "",
-                  )
-                }
+                  );
+
+                  // a branch chosen: on to the next box
+                  if (option) advanceAfterPick("lkpBranch");
+                }}
                 styles={{
                   ...branchSelectStyles,
                   ...branchMenuStyles,
@@ -834,6 +868,7 @@ const SetBranchInfo: React.FC = () => {
                 isSearchable
                 placeholder="Select..."
               />
+              </div>
 
             </div>
 
@@ -847,17 +882,20 @@ const SetBranchInfo: React.FC = () => {
                 justify-end
               "
             >
-              <input
-                id="txtBrName_AR"
-                name="txtBrName_AR"
-                type="text"
-                dir="rtl"
-                value={txtBrName_AR}
-                maxLength={40}
-                onChange={(e) => setTxtBrName_AR(e.target.value)}
-                className={`${inputClass} text-right`}
-                style={{ width: `${WIDTH_GENERAL}px` }}
-              />
+              <div className={`inline-flex ${cellFocusClass}`}>
+                <input
+                  id="txtBrName_AR"
+                  name="txtBrName_AR"
+                  type="text"
+                  dir="rtl"
+                  value={txtBrName_AR}
+                  maxLength={40}
+                  onFocus={selectOnFocus}
+                  onChange={(e) => setTxtBrName_AR(e.target.value)}
+                  className={`${inputClass} text-right`}
+                  style={{ width: `${WIDTH_GENERAL}px` }}
+                />
+              </div>
             </div>
 
             {/* ARABIC LABEL */}
@@ -1147,7 +1185,8 @@ const SetBranchInfo: React.FC = () => {
 
             <label
               htmlFor="chkHo"
-              className="
+              className={`
+                ${cellFocusClass}
                 inline-flex
                 items-center
                 gap-2
@@ -1159,7 +1198,7 @@ const SetBranchInfo: React.FC = () => {
                 py-1.5
                 text-[13px]
                 text-slate-700
-              "
+              `}
             >
 
               <input
@@ -1191,18 +1230,18 @@ const SetBranchInfo: React.FC = () => {
 
     <div className="mt-[14px] flex justify-center gap-3">
   <button
-    id="btnModify"
-    name="btnModify"
+    id="btnSave"
+    name="btnSave"
     type="button"
-    onClick={handleModify}
+    onClick={handleSave}
     disabled={!perms.modify}
     className={`${buttonClass} disabled:cursor-not-allowed disabled:opacity-40`}
   >
      <span className={textClass}>
                 <span className="underline decoration-2 underline-offset-1">
-                  M
+                  S
                 </span>
-                odify
+                ave
               </span>
   </button>
 

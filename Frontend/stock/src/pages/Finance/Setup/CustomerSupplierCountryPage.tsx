@@ -2,6 +2,9 @@ import React, { useEffect, useState } from "react";
 import { toast } from "react-toastify";
 import { useEnterAsTab } from "../../../hooks/useEnterAsTab";
 import { useButtonPermissions } from "../../../hooks/useButtonPermissions";
+import { useConfirmModal } from "../../../hooks/useConfirmModal";
+import { useDeleteToast } from "../../../hooks/useDeleteToast";
+import { useGridCellFocus } from "../../../hooks/useGridCellFocus";
 
 // ============================================================
 // TYPES
@@ -35,7 +38,7 @@ const API = `${import.meta.env.VITE_API_URL}/CustomerSupplierCountry`;
 
 // at least this many rows are always on the screen (filled ones + blanks)
 // (the old form used AddGridRows(dt, 20))
-const MIN_ROW_COUNT = 20;
+const MIN_ROW_COUNT = 8;
 
 // TODO: dbo.tblmenu fmenuid of the "Customer/Supplier Country" page
 const MENU_ID = "110206";
@@ -68,6 +71,12 @@ const CustomerCountryPage: React.FC<CustomerCountryPageProps> = ({ onClose }) =>
   console.log(onClose)
   const handleEnterAsTab = useEnterAsTab();
   const perms = useButtonPermissions(MENU_ID);
+  // the common themed question window (the same as on the other screens)
+  const { confirm, dialog } = useConfirmModal();
+  // the standard messages of a delete: "Customer/Supplier Country deleted successfully"
+  const { deleted, notDeleted } = useDeleteToast("Customer/Supplier Country");
+  // the cell the cursor is in is outlined (a typed-in box has its text selected)
+  const { cellFocusClass, selectOnFocus } = useGridCellFocus();
 
   const { coId, year, userId } = getAppSession();
 
@@ -142,6 +151,15 @@ const CustomerCountryPage: React.FC<CustomerCountryPageProps> = ({ onClose }) =>
         setLoaded(loadedMap);
         setDeletedIds([]);
         setUsedIds({});
+
+        // the cursor goes to the first empty row (after the last saved country), ready
+        // for a new one
+        const firstEmptyRow = list.length;
+
+        window.setTimeout(() => {
+          document.getElementById(`txtCountryID-${firstEmptyRow}`)?.focus();
+          setSelectedRow(firstEmptyRow);
+        }, 0);
       } catch {
         if (!cancelled) toast.error("Failed to load countries");
       }
@@ -156,11 +174,11 @@ const CustomerCountryPage: React.FC<CustomerCountryPageProps> = ({ onClose }) =>
   // ============================================================
   // ROWS ON THE SCREEN
   // The loaded rows, then blank rows to type new countries into
-  // (always at least MIN_ROW_COUNT rows, and 3 blank ones at the end).
+  // (always at least MIN_ROW_COUNT rows, and 1 blank one at the end).
   // ============================================================
 
   const displayRows: CountryRow[] = Array.from(
-    { length: Math.max(MIN_ROW_COUNT, rows.length + 3) },
+    { length: Math.max(MIN_ROW_COUNT, rows.length + 1) },
     (_, index) => rows[index] ?? blankRow(),
   );
 
@@ -298,8 +316,9 @@ const CustomerCountryPage: React.FC<CustomerCountryPageProps> = ({ onClose }) =>
   // ============================================================
   // DELETE A ROW (the old Delete key on the grid)
   // Here: Ctrl+Delete, or the x button on the selected row.
-  // The row leaves the grid now; the database changes when Save / Modify
-  // is pressed.
+  // A row typed and not saved just leaves the grid. A saved country goes from the
+  // database at once, after the Delete right, the "used by transactions?" check and
+  // the question; the message is "Customer/Supplier Country deleted successfully".
   // ============================================================
 
   const deleteRow = async (index: number) => {
@@ -325,7 +344,39 @@ const CustomerCountryPage: React.FC<CustomerCountryPageProps> = ({ onClose }) =>
         return;
       }
 
-      setDeletedIds((previous) => [...previous, original]);
+      const shouldDelete = await confirm({
+        title: "Customer/Supplier Country",
+        message: "Do you want to delete ?",
+      });
+
+      if (!shouldDelete) return;
+
+      // the country goes from the database at once (a save that only deletes it)
+      try {
+        const res = await fetch(API, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            coId,
+            year,
+            userId,
+            inserted: [],
+            updated: [],
+            deleted: [original],
+          }),
+        });
+        const data = await res.json();
+
+        if (!res.ok || !data.success) {
+          notDeleted(data.message);
+          return;
+        }
+
+        deleted();
+      } catch {
+        notDeleted();
+        return;
+      }
     }
 
     setRows((previousRows) => previousRows.filter((_, i) => i !== index));
@@ -345,7 +396,7 @@ const CustomerCountryPage: React.FC<CustomerCountryPageProps> = ({ onClose }) =>
     deletedIds.length > 0;
 
   const focusSaveButton = () => {
-    document.getElementById(hasSaved ? "btnModify" : "btnSave")?.focus();
+    document.getElementById("btnSave")?.focus();
   };
 
   const handleCellKeyDown = (
@@ -404,12 +455,14 @@ const CustomerCountryPage: React.FC<CustomerCountryPageProps> = ({ onClose }) =>
   // ============================================================
   // SAVE / MODIFY
   //
-  // The one button: Save the first time, Modify once there are saved
+  // The one button, always "Save" (the old form switched it to "Modify" once there
+  // were saved countries; here it stays Save). It used to be: Save the first time,
+  // Modify once there are saved
   // countries (the old form switched its button text between the two).
   // Sends only what changed: new rows, changed rows and removed rows.
   // ============================================================
 
-  const actionWord = hasSaved ? "Modify" : "Save";
+  const actionWord = "Save";
   const canSaveOrModify = hasSaved ? perms.modify : perms.save;
 
   const handleClear = () => {
@@ -502,17 +555,14 @@ const CustomerCountryPage: React.FC<CustomerCountryPageProps> = ({ onClose }) =>
       const data = await res.json();
 
       if (!res.ok || !data.success) {
-        toast.error(
-          data.message ||
-            (hasSaved ? "Not modified, try again" : "Not saved, try again"),
-        );
+        toast.error(data.message || "Not saved, try again");
         return;
       }
 
-      toast.success(hasSaved ? "Modified" : "Saved");
+      toast.success("Customer/Supplier Country saved successfully");
       handleClear();
     } catch {
-      toast.error(hasSaved ? "Not modified, try again" : "Not saved, try again");
+      toast.error("Not saved, try again");
     } finally {
       setSaving(false);
     }
@@ -552,7 +602,6 @@ const CustomerCountryPage: React.FC<CustomerCountryPageProps> = ({ onClose }) =>
   // ============================================================
   // KEYBOARD SHORTCUTS (page wide)
   //  Alt+S  Save    (only when nothing is saved yet)
-  //  Alt+M  Modify  (only when saved countries exist)
   //  Alt+F  Find
   //  Alt+N  Cancel
   //  Alt+C  Close
@@ -564,13 +613,9 @@ const CustomerCountryPage: React.FC<CustomerCountryPageProps> = ({ onClose }) =>
   useEffect(() => {
     const onKeyDown = (event: KeyboardEvent) => {
       if (event.altKey && !event.ctrlKey && !event.metaKey) {
-        if (event.code === "KeyS" || event.code === "KeyM") {
+        if (event.code === "KeyS") {
           event.preventDefault();
 
-          const wantsModify = event.code === "KeyM";
-
-          // Alt+S only when nothing is saved, Alt+M only when saved ones exist
-          if (wantsModify !== hasSaved) return;
           if (!canSaveOrModify || saving) return;
 
           handleSave();
@@ -633,7 +678,11 @@ const CustomerCountryPage: React.FC<CustomerCountryPageProps> = ({ onClose }) =>
   const dataCellClass =
     "h-[34px] border border-l-0 border-[#bfe8d0] bg-white p-0 align-middle";
 
+  // a data cell is outlined while the cursor is in it
+  const outlinedCellClass = `${dataCellClass} ${cellFocusClass}`;
+
   return (
+    <>
     <div
       onKeyDown={handlePageKeyDown}
       className="flex min-h-screen w-full items-center justify-center bg-white"
@@ -648,15 +697,15 @@ const CustomerCountryPage: React.FC<CustomerCountryPageProps> = ({ onClose }) =>
 
         {/* FORM */}
         <div className="p-3 m-3">
-          <div className="h-100 overflow-hidden border border-[#bfe8d0]">
+          <div className="h-[310px] overflow-hidden border border-[#bfe8d0]">
             <div className="h-full overflow-y-auto overflow-x-hidden">
               <table className="w-full table-fixed border-collapse text-[12px]">
                 <colgroup>
-                  <col className="w-10.5" />
+                  <col className="w-6" />
                   <col className="w-20" />
                   <col />
                   <col />
-                  <col className="w-27.5" />
+                  <col className="w-35" />
                 </colgroup>
 
                 <thead>
@@ -682,28 +731,15 @@ const CustomerCountryPage: React.FC<CustomerCountryPageProps> = ({ onClose }) =>
                       }`}
                       onClick={() => setSelectedRow(index)}
                     >
-                      {/* SELECTOR COLUMN: arrow + delete-row button */}
+                      {/* SELECTOR COLUMN: the arrow of the selected row */}
                       <td className="h-8.5 border border-[#bfe8d0] bg-white p-0 text-center align-middle">
                         {selectedRow === index && (
-                          <span className="inline-flex items-center gap-1.5">
-                            <span className="text-[9px] text-[#222]">▶</span>
-                            {rows[index] && (
-                              <button
-                                type="button"
-                                tabIndex={-1}
-                                title="Delete row (Ctrl+Delete)"
-                                onClick={() => deleteRow(index)}
-                                className="text-[12px] leading-none text-gray-400 hover:text-red-600"
-                              >
-                                ✕
-                              </button>
-                            )}
-                          </span>
+                          <span className="text-[9px] text-[#222]">▶</span>
                         )}
                       </td>
 
                       {/* COUNTRY ID (max 4) */}
-                      <td className={dataCellClass}>
+                      <td className={outlinedCellClass}>
                         <input
                           id={`txtCountryID-${index}`}
                           name="txtCountryID"
@@ -711,8 +747,8 @@ const CustomerCountryPage: React.FC<CustomerCountryPageProps> = ({ onClose }) =>
                           value={row.txtCountryID}
                           maxLength={4}
                           autoComplete="off"
-                          autoFocus={index === 0}
-                          onFocus={() => {
+                          onFocus={(event) => {
+                            selectOnFocus(event);
                             setSelectedRow(index);
 
                             // find out early whether transactions use it
@@ -737,7 +773,7 @@ const CustomerCountryPage: React.FC<CustomerCountryPageProps> = ({ onClose }) =>
                       </td>
 
                       {/* COUNTRY NAME (max 50) */}
-                      <td className={dataCellClass}>
+                      <td className={outlinedCellClass}>
                         <input
                           id={`txtCountryName-${index}`}
                           name="txtCountryName"
@@ -745,7 +781,10 @@ const CustomerCountryPage: React.FC<CustomerCountryPageProps> = ({ onClose }) =>
                           value={row.txtCountryName}
                           maxLength={50}
                           autoComplete="off"
-                          onFocus={() => setSelectedRow(index)}
+                          onFocus={(event) => {
+                            selectOnFocus(event);
+                            setSelectedRow(index);
+                          }}
                           onChange={(event) =>
                             updateRow(index, { txtCountryName: event.target.value })
                           }
@@ -762,7 +801,7 @@ const CustomerCountryPage: React.FC<CustomerCountryPageProps> = ({ onClose }) =>
                       </td>
 
                       {/* COUNTRY NAME (ARABIC) (max 50, right to left) */}
-                      <td className={dataCellClass}>
+                      <td className={outlinedCellClass}>
                         <input
                           id={`txtCountryNameA-${index}`}
                           name="txtCountryNameA"
@@ -771,7 +810,10 @@ const CustomerCountryPage: React.FC<CustomerCountryPageProps> = ({ onClose }) =>
                           value={row.txtCountryNameA}
                           maxLength={50}
                           autoComplete="off"
-                          onFocus={() => setSelectedRow(index)}
+                          onFocus={(event) => {
+                            selectOnFocus(event);
+                            setSelectedRow(index);
+                          }}
                           onChange={(event) =>
                             updateRow(index, { txtCountryNameA: event.target.value })
                           }
@@ -787,39 +829,60 @@ const CustomerCountryPage: React.FC<CustomerCountryPageProps> = ({ onClose }) =>
                         />
                       </td>
 
-                      {/* POSITION # (whole numbers, smallint) */}
-                      <td className={dataCellClass}>
-                        <input
-                          id={`txtPositionNo-${index}`}
-                          name="txtPositionNo"
-                          type="text"
-                          inputMode="numeric"
-                          value={row.txtPositionNo}
-                          maxLength={5}
-                          autoComplete="off"
-                          onFocus={() => setSelectedRow(index)}
-                          onChange={(event) => {
-                            const digits = event.target.value
-                              .replace(/\D/g, "")
-                              .slice(0, 5);
+                      {/* POSITION # (whole numbers, smallint) and the X of the row */}
+                      <td className={outlinedCellClass}>
+                        <div className="flex h-8 items-center">
+                          <input
+                            id={`txtPositionNo-${index}`}
+                            name="txtPositionNo"
+                            type="text"
+                            inputMode="numeric"
+                            value={row.txtPositionNo}
+                            maxLength={5}
+                            autoComplete="off"
+                            onFocus={(event) => {
+                              selectOnFocus(event);
+                              setSelectedRow(index);
+                            }}
+                            onChange={(event) => {
+                              const digits = event.target.value
+                                .replace(/\D/g, "")
+                                .slice(0, 5);
 
-                            updateRow(index, {
-                              txtPositionNo:
-                                digits !== "" && Number(digits) > 32767
-                                  ? "32767"
-                                  : digits,
-                            });
-                          }}
-                          onPaste={(event) => {
-                            if (isEditBlocked(index, "txtPositionNo")) {
-                              event.preventDefault();
+                              updateRow(index, {
+                                txtPositionNo:
+                                  digits !== "" && Number(digits) > 32767
+                                    ? "32767"
+                                    : digits,
+                              });
+                            }}
+                            onPaste={(event) => {
+                              if (isEditBlocked(index, "txtPositionNo")) {
+                                event.preventDefault();
+                              }
+                            }}
+                            onKeyDown={(event) =>
+                              handleCellKeyDown(event, index, "txtPositionNo")
                             }
-                          }}
-                          onKeyDown={(event) =>
-                            handleCellKeyDown(event, index, "txtPositionNo")
-                          }
-                          className={`${cellInputClass} text-right`}
-                        />
+                            className={`${cellInputClass} text-right`}
+                          />
+
+                          {/* the X of the row, at the right end (the slot is always there so the
+                              box does not change size) */}
+                          <span className="flex w-8 shrink-0 items-center justify-center">
+                            {selectedRow === index && rows[index] && (
+                              <button
+                                type="button"
+                                tabIndex={-1}
+                                title="Delete row (Ctrl+Delete)"
+                                onClick={() => deleteRow(index)}
+                                className="text-[12px] leading-none text-gray-400 hover:text-red-600"
+                              >
+                                ✕
+                              </button>
+                            )}
+                          </span>
+                        </div>
                       </td>
                     </tr>
                   ))}
@@ -831,12 +894,12 @@ const CustomerCountryPage: React.FC<CustomerCountryPageProps> = ({ onClose }) =>
           {/* BUTTONS */}
           <div className="mt-3.5 flex justify-center gap-3">
             <button
-              id={hasSaved ? "btnModify" : "btnSave"}
-              name={hasSaved ? "btnModify" : "btnSave"}
+              id="btnSave"
+              name="btnSave"
               type="button"
               onClick={handleSave}
               disabled={!canSaveOrModify || saving}
-              title={hasSaved ? "Alt+M" : "Alt+S"}
+              title="Alt+S"
               className="btn-style disabled:cursor-not-allowed disabled:opacity-40"
             >
               <span className="underline underline-offset-2">
@@ -937,6 +1000,11 @@ const CustomerCountryPage: React.FC<CustomerCountryPageProps> = ({ onClose }) =>
         </div>
       )}
     </div>
+
+    {/* the "Do you want to delete ?" question - outside the root div: the page's
+        Enter handling must not take the Enter of the Yes / No buttons */}
+    {dialog}
+    </>
   );
 };
 

@@ -5,6 +5,8 @@ import { useConfirm } from "../../hooks/useConfirm";
 import { useAltShortcuts } from "../../hooks/useAltShortcuts";
 import { useEnterAsTab } from "../../hooks/useEnterAsTab";
 import { useButtonPermissions } from "../../hooks/useButtonPermissions";
+import { useGridCellFocus } from "../../hooks/useGridCellFocus";
+import { useAdvanceAfterSelect } from "../../hooks/useAdvanceAfterSelect";
 import Select, {
   components,
   type MenuListProps,
@@ -291,6 +293,10 @@ const SetChartOfAccount: React.FC = () => {
   const perms = useButtonPermissions(MENU_ID);
   const { confirm, confirmDialog } = useConfirm();
   const handleEnterAsTab = useEnterAsTab();
+  // the cell the cursor is in is outlined
+  const { cellFocusClass } = useGridCellFocus();
+  // after a dropdown pick (or Enter on a closed one) the cursor goes on
+  const { advanceAfterPick, advanceOnEnter } = useAdvanceAfterSelect();
   const [saving, setSaving] = useState<boolean>(false);
 
   const [parameterList, setParameterList] = useState<ParameterOption[]>([]);
@@ -655,11 +661,12 @@ const SetChartOfAccount: React.FC = () => {
   // in one transaction.
   // ==========================================================
 
-  // The one button: Save the first time, Modify once the company has saved
-  // rows (the old form switched its button text between "&Save" and
-  // "&Modify"). A row that carries its original keys came from the database.
+  // The one button, always "Save" (the old form switched its text to "Modify" once
+  // the company had saved rows; here it stays Save, and the right checked is still
+  // Save for a first save, Modify once rows are saved). A row that carries its
+  // original keys came from the database.
   const hasSavedRows = rows.some((row) => row.txtOriginalSlNo !== null);
-  const actionWord = hasSavedRows ? "Modify" : "Save";
+  const actionWord = "Save";
   const canSaveOrModify = hasSavedRows ? perms.modify : perms.save;
 
   const handleSave = async () => {
@@ -743,7 +750,7 @@ const SetChartOfAccount: React.FC = () => {
       if (!response.ok || !result.success) {
         toast.error(
           result.message ||
-            (hasSavedRows ? "Not modified, try again." : "Not saved, try again.")
+            "Not saved, try again."
         );
 
         // the backend validator names the field that failed - same name as
@@ -756,10 +763,7 @@ const SetChartOfAccount: React.FC = () => {
       }
 
       toast.success(
-        result.message ||
-          (hasSavedRows
-            ? "Chart of account setting modified successfully."
-            : "Chart of account setting saved successfully.")
+        result.message || "Set Chart Of Account saved successfully"
       );
 
       // load the saved rows again - they now carry their new slno / keys
@@ -780,15 +784,9 @@ const SetChartOfAccount: React.FC = () => {
     setReloadKey((key) => key + 1);
   };
 
-  // Alt+S -> Save (nothing saved yet), Alt+M -> Modify (saved rows),
-  // Alt+C -> Clear (the underlined letters on the buttons)
+  // Alt+S -> Save, Alt+C -> Clear (the underlined letters on the buttons)
   useAltShortcuts({
-    s: () => {
-      if (!hasSavedRows) handleSave();
-    },
-    m: () => {
-      if (hasSavedRows) handleSave();
-    },
+    s: handleSave,
     c: handleClear,
   });
 
@@ -816,7 +814,7 @@ const SetChartOfAccount: React.FC = () => {
     "flex h-[30px] min-w-0 items-center border-r border-[#c8eadb] px-[7px] text-[14px] text-gray-600";
 
   const cellClass =
-    "relative h-[30px] min-w-0 border-r border-[#c8eadb] p-0";
+    `relative h-[30px] min-w-0 border-r border-[#c8eadb] p-0 ${cellFocusClass}`;
 
   // ==========================================================
   // RENDER
@@ -925,16 +923,20 @@ const SetChartOfAccount: React.FC = () => {
                   {/* PARAMETER SELECT */}
 
                   <div className={`${cellClass} flex items-stretch`}>
-                    <div className="h-full min-w-0 flex-1">
+                    <div
+                      className="h-full min-w-0 flex-1"
+                      onKeyDown={(event) => advanceOnEnter(event)}
+                    >
                     <Select<DropdownOption, false>
                       inputId={`lkpParameterType-${index}`}
                       name="lkpParameterType"
                       aria-label={`Parameter row ${index + 1}`}
                       options={parameterDropdownOptions}
                       value={parameterValue}
-                      onChange={(option) =>
-                        handleSelectParameter(index, option)
-                      }
+                      onChange={(option) => {
+                        handleSelectParameter(index, option);
+                        if (option) advanceAfterPick(`lkpParameterType-${index}`);
+                      }}
                       components={{
                         ...selectComponents,
                         MenuList: ParameterMenuList,
@@ -1003,16 +1005,27 @@ const SetChartOfAccount: React.FC = () => {
 
                   {/* ACCOUNT ID SELECT */}
 
-                  <div className={cellClass}>
+                  <div
+                    className={cellClass}
+                    onKeyDown={(event) =>
+                      advanceOnEnter(event, [`lkpAccountName-${index}`])
+                    }
+                  >
                     <Select<DropdownOption, false>
                       inputId={`lkpAccountID-${index}`}
                       name="lkpAccountID"
                       aria-label={`Account ID row ${index + 1}`}
                       options={accountIdDropdownOptions}
                       value={accountIdValue}
-                      onChange={(option) =>
-                        handleSelectAccount(index, option)
-                      }
+                      onChange={(option) => {
+                        handleSelectAccount(index, option);
+                        // the Account Name box is filled by this pick: skip it
+                        if (option) {
+                          advanceAfterPick(`lkpAccountID-${index}`, [
+                            `lkpAccountName-${index}`,
+                          ]);
+                        }
+                      }}
                       components={{
                         ...selectComponents,
                         MenuList: AccountIdMenuList,
@@ -1057,16 +1070,20 @@ const SetChartOfAccount: React.FC = () => {
 
                   {/* ACCOUNT NAME SELECT */}
 
-                  <div className={cellClass}>
+                  <div
+                    className={cellClass}
+                    onKeyDown={(event) => advanceOnEnter(event)}
+                  >
                     <Select<DropdownOption, false>
                       inputId={`lkpAccountName-${index}`}
                       name="lkpAccountName"
                       aria-label={`Account Name row ${index + 1}`}
                       options={accountNameDropdownOptions}
                       value={accountNameValue}
-                      onChange={(option) =>
-                        handleSelectAccount(index, option)
-                      }
+                      onChange={(option) => {
+                        handleSelectAccount(index, option);
+                        if (option) advanceAfterPick(`lkpAccountName-${index}`);
+                      }}
                       components={{
                         ...selectComponents,
                         MenuList: AccountNameMenuList,
@@ -1140,8 +1157,8 @@ const SetChartOfAccount: React.FC = () => {
 
         <div className="sticky bottom-0 z-10 flex justify-center gap-3 bg-white pb-[12px] pt-[2px]">
           <button
-            id={hasSavedRows ? "btnModify" : "btnSave"}
-            name={hasSavedRows ? "btnModify" : "btnSave"}
+            id="btnSave"
+            name="btnSave"
             type="button"
             onClick={handleSave}
             disabled={!canSaveOrModify || saving}

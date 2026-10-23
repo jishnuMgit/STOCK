@@ -3,6 +3,7 @@ import { toast } from "react-toastify";
 import { useEnterAsTab } from "../../hooks/useEnterAsTab";
 import { useAltShortcuts } from "../../hooks/useAltShortcuts";
 import { useButtonPermissions } from "../../hooks/useButtonPermissions";
+import { useGridCellFocus } from "../../hooks/useGridCellFocus";
 
 // dbo.tblmenu fmenuid of the Set Active Period page
 const MENU_ID = "9103";
@@ -33,6 +34,8 @@ const dateInputClass =
 const SetActivePeriodPage: React.FC = () => {
   const handleEnterAsTab = useEnterAsTab();
   const perms = useButtonPermissions(MENU_ID);
+  // the cell the cursor is in is outlined (a typed-in box has its text selected)
+  const { cellFocusClass, selectOnFocus } = useGridCellFocus();
 
   const [rows, setRows] = useState<ActivePeriodRow[]>([]);
   const [selectedRow, setSelectedRow] = useState<number>(0);
@@ -85,14 +88,10 @@ const SetActivePeriodPage: React.FC = () => {
         );
 
         // the cursor goes to the first From Date
-        requestAnimationFrame(() => {
-          const input = document.getElementById(
-            "dtpFromDate-0",
-          ) as HTMLInputElement | null;
-
-          input?.focus();
+        window.setTimeout(() => {
+          document.getElementById("dtpFromDate-0")?.focus();
           setSelectedRow(0);
-        });
+        }, 0);
       } catch (error) {
         console.error("loadActivePeriodPage error:", error);
         toast.error(
@@ -117,9 +116,10 @@ const SetActivePeriodPage: React.FC = () => {
   };
 
   // ============================================================
-  // MODIFY
+  // SAVE
   //
-  // The branches already exist, so the one button only ever Modifies. The
+  // The branches already exist, so the saving is a modify on the server (the
+  // Modify right is the one checked), but the button is just "Save". The
   // rules are the old form's ValidateMe, checked here for a quick answer and
   // again by the server (which is the one that counts): every branch needs a
   // From Date and a To Date, and From may not be later than To. Checked when
@@ -130,7 +130,7 @@ const SetActivePeriodPage: React.FC = () => {
     if (saving) return;
 
     if (!perms.modify) {
-      toast.error("You do not have permission to Modify.");
+      toast.error("You do not have permission to Save.");
       return;
     }
 
@@ -193,7 +193,7 @@ const SetActivePeriodPage: React.FC = () => {
       const result = await response.json();
 
       if (!response.ok || !result.success) {
-        toast.error(result.message || "Not modified, try again.");
+        toast.error(result.message || "Not saved, try again.");
 
         // the backend names the box that failed - same name as the element id
         if (result.field) {
@@ -203,7 +203,7 @@ const SetActivePeriodPage: React.FC = () => {
         return;
       }
 
-      toast.success(result.message || "Active period modified successfully.");
+      toast.success(result.message || "Set Active Period saved successfully");
 
       // load the page again - the rows now carry what was saved
       setReloadKey((key) => key + 1);
@@ -224,9 +224,9 @@ const SetActivePeriodPage: React.FC = () => {
     setReloadKey((key) => key + 1);
   };
 
-  // Alt+M -> Modify, Alt+C -> Clear (the underlined letters on the buttons)
+  // Alt+S -> Save, Alt+C -> Clear (the underlined letters on the buttons)
   useAltShortcuts({
-    m: handleSave,
+    s: handleSave,
     c: handleClear,
   });
 
@@ -332,13 +332,16 @@ const SetActivePeriodPage: React.FC = () => {
 
                       {/* FROM DATE */}
 
-                      <td className="h-8.5 border border-l-0 border-[#bfe8d0] bg-white p-0 align-middle">
+                      <td className={`h-8.5 border border-l-0 border-[#bfe8d0] bg-white p-0 align-middle ${cellFocusClass}`}>
                         <input
                           id={`dtpFromDate-${index}`}
                           name="dtpFromDate"
                           type="date"
                           value={row.dtpFromDate}
-                          onFocus={() => setSelectedRow(index)}
+                          onFocus={(event) => {
+                            selectOnFocus(event);
+                            setSelectedRow(index);
+                          }}
                           onChange={(event) =>
                             updateRow(index, { dtpFromDate: event.target.value })
                           }
@@ -348,13 +351,16 @@ const SetActivePeriodPage: React.FC = () => {
 
                       {/* TO DATE */}
 
-                      <td className="h-8.5 border border-l-0 border-[#bfe8d0] bg-white p-0 align-middle">
+                      <td className={`h-8.5 border border-l-0 border-[#bfe8d0] bg-white p-0 align-middle ${cellFocusClass}`}>
                         <input
                           id={`dtpToDate-${index}`}
                           name="dtpToDate"
                           type="date"
                           value={row.dtpToDate}
-                          onFocus={() => setSelectedRow(index)}
+                          onFocus={(event) => {
+                            selectOnFocus(event);
+                            setSelectedRow(index);
+                          }}
                           onChange={(event) =>
                             updateRow(index, { dtpToDate: event.target.value })
                           }
@@ -374,14 +380,14 @@ const SetActivePeriodPage: React.FC = () => {
 
           <div className="mt-3.5 flex justify-center gap-3">
             <button
-              id="btnModify"
-              name="btnModify"
+              id="btnSave"
+              name="btnSave"
               type="button"
               onClick={handleSave}
               disabled={!perms.modify || saving}
               className="btn-style disabled:cursor-not-allowed disabled:opacity-40"
             >
-              <span className="underline underline-offset-2">M</span>odify
+              <span className="underline underline-offset-2">S</span>ave
             </button>
 
             <button

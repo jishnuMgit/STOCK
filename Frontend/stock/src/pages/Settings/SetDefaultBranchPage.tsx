@@ -3,6 +3,7 @@ import Select, { type StylesConfig } from "react-select";
 import { toast } from "react-toastify";
 import { useEnterAsTab } from "../../hooks/useEnterAsTab";
 import { useAltShortcuts } from "../../hooks/useAltShortcuts";
+import { useGridCellFocus } from "../../hooks/useGridCellFocus";
 import { useButtonPermissions } from "../../hooks/useButtonPermissions";
 import {
   filterLabelOrValue,
@@ -144,6 +145,8 @@ const branchSelectStyles: StylesConfig<Option, false> = {
 const SetDefaultBranchPage: React.FC = () => {
   const handleEnterAsTab = useEnterAsTab();
   const perms = useButtonPermissions(MENU_ID);
+  // the cell the cursor is in is outlined
+  const { cellFocusClass } = useGridCellFocus();
 
   const [rows, setRows] = useState<DefaultBranchRow[]>([]);
   const [selectedRow, setSelectedRow] = useState<number>(0);
@@ -336,15 +339,15 @@ const SetDefaultBranchPage: React.FC = () => {
   const hasSavedRows = rows.some((row) => row.lkpOriginalDefaultBranch !== "");
 
   // ============================================================
-  // SAVE / MODIFY
+  // SAVE
   //
-  // The one button: Save while no default branch is saved, Modify once there
-  // is (the old form switched its button text). The server compares every row
+  // The one button, always "Save" (the old form switched it to "Modify" once a
+  // default branch was saved; here it stays Save). The server compares every row
   // with what is saved: a new branch is added, another branch changes it, an
   // emptied box removes it. The user comes from the login (session).
   // ============================================================
 
-  const actionWord = hasSavedRows ? "Modify" : "Save";
+  const actionWord = "Save";
   const canSaveOrModify = hasSavedRows ? perms.modify : perms.save;
 
   const handleSave = async () => {
@@ -392,10 +395,7 @@ const SetDefaultBranchPage: React.FC = () => {
       const result = await response.json();
 
       if (!response.ok || !result.success) {
-        toast.error(
-          result.message ||
-            (hasSavedRows ? "Not modified, try again." : "Not saved, try again."),
-        );
+        toast.error(result.message || "Not saved, try again.");
 
         // the backend names the box that failed - same name as the element id
         if (result.field) {
@@ -405,12 +405,7 @@ const SetDefaultBranchPage: React.FC = () => {
         return;
       }
 
-      toast.success(
-        result.message ||
-          (hasSavedRows
-            ? "Default branch modified successfully."
-            : "Default branch saved successfully."),
-      );
+      toast.success(result.message || "Default branch saved successfully");
 
       // load the page again - the rows now carry what was saved
       setReloadKey((key) => key + 1);
@@ -431,15 +426,9 @@ const SetDefaultBranchPage: React.FC = () => {
     setReloadKey((key) => key + 1);
   };
 
-  // Alt+S -> Save (nothing saved yet), Alt+M -> Modify (something saved),
-  // Alt+C -> Clear (the underlined letters on the buttons)
+  // Alt+S -> Save, Alt+C -> Clear (the underlined letters on the buttons)
   useAltShortcuts({
-    s: () => {
-      if (!hasSavedRows) handleSave();
-    },
-    m: () => {
-      if (hasSavedRows) handleSave();
-    },
+    s: handleSave,
     c: handleClear,
   });
 
@@ -541,7 +530,7 @@ const SetDefaultBranchPage: React.FC = () => {
                       {/* DEFAULT BRANCH - only the branches this row's user has a
                           right to; no clear (x) button, a branch is only changed to another one */}
 
-                      <td className="h-[34px] border border-l-0 border-[#bfe8d0] bg-white p-0 align-middle">
+                      <td className={`h-[34px] border border-l-0 border-[#bfe8d0] bg-white p-0 align-middle ${cellFocusClass}`}>
                         <Select<Option, false>
                           inputId={`lkpDefaultBranch-${index}`}
                           instanceId={`lkpDefaultBranch-${index}`}
@@ -590,7 +579,7 @@ const SetDefaultBranchPage: React.FC = () => {
 
                               const next =
                                 document.getElementById(`lkpDefaultBranch-${index + 1}`) ??
-                                document.getElementById(hasSavedRows ? "btnModify" : "btnSave");
+                                document.getElementById("btnSave");
 
                               if (next && !(next as HTMLButtonElement).disabled) {
                                 next.focus();
@@ -623,8 +612,8 @@ const SetDefaultBranchPage: React.FC = () => {
 
           <div className="mt-[14px] flex justify-center gap-3">
             <button
-              id={hasSavedRows ? "btnModify" : "btnSave"}
-              name={hasSavedRows ? "btnModify" : "btnSave"}
+              id="btnSave"
+              name="btnSave"
               type="button"
               onClick={handleSave}
               disabled={!canSaveOrModify || saving}

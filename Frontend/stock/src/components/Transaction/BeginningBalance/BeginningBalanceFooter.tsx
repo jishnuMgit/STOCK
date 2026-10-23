@@ -79,7 +79,7 @@ const BeginningBalanceFooter: React.FC<Props> = ({
       <div
         className="
           absolute
-          right-[91px]
+          right-[17px]
           top-[10px]
           flex
 
@@ -96,7 +96,7 @@ const BeginningBalanceFooter: React.FC<Props> = ({
           value={txtDebitTotal}
           readOnly
           tabIndex={-1}
-          className={`${inputClass} w-[153px] text-right border `}
+          className={`${inputClass} w-[124px] text-right`}
         />
 
         {/* Credit Total */}
@@ -108,7 +108,7 @@ const BeginningBalanceFooter: React.FC<Props> = ({
           value={txtCreditTotal}
           readOnly
           tabIndex={-1}
-          className={`${inputClass} ml-0 w-[166px] text-right`}
+          className={`${inputClass} ml-[6px] w-[154px] text-right`}
         />
       </div>
 
@@ -119,7 +119,7 @@ const BeginningBalanceFooter: React.FC<Props> = ({
       <div
         className="
           absolute
-          right-[82px]
+          right-[37px]
           top-[48px]
           flex
           h-[25px]
@@ -147,7 +147,7 @@ const BeginningBalanceFooter: React.FC<Props> = ({
           tabIndex={-1}
           className={`
             h-[30px]
-            w-[100px]
+            w-[154px]
             border
             border-[#cbd5e1]
             bg-white

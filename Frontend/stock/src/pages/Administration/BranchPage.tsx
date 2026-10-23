@@ -1,7 +1,9 @@
 import React, { useEffect, useRef, useState } from "react";
 import { toast } from "react-toastify";
 import { useAltShortcuts } from "../../hooks/useAltShortcuts";
-import { useConfirm, DELETE_CONFIRM_MESSAGE } from "../../hooks/useConfirm";
+import { useConfirmModal } from "../../hooks/useConfirmModal";
+import { useDeleteToast } from "../../hooks/useDeleteToast";
+import { useGridCellFocus } from "../../hooks/useGridCellFocus";
 
 // ============================================================
 // BRANCH (Administration > Branch, the old frmBranch)
@@ -79,19 +81,34 @@ const focusField = (field?: string) => {
 };
 
 const BranchPage: React.FC = () => {
-  const [txtCompany, setTxtCompany] = useState("");
   const [rows, setRows] = useState<BranchRow[]>(() => padRows([]));
   const [selectedKey, setSelectedKey] = useState<number | null>(null);
   const [chkFindOpen, setChkFindOpen] = useState(false);
   const [txtFind, setTxtFind] = useState("");
   const [saving, setSaving] = useState(false);
-  const { confirm, confirmDialog } = useConfirm();
+  // the common themed question window and the standard delete messages
+  const { confirm, dialog } = useConfirmModal();
+  const { deleted, notDeleted } = useDeleteToast("Branch");
+  // the cell the cursor is in is outlined (a typed-in box has its text selected)
+  const { cellFocusClass, selectOnFocus } = useGridCellFocus();
 
   // bumped after a Save / Modify so the branches are loaded again
   const [reloadKey, setReloadKey] = useState(0);
 
   // only the answer of the latest request may fill the grid
   const loadRequest = useRef(0);
+
+  // the row the cursor goes to after a load (set by the load, done once the rows
+  // are drawn)
+  const focusRowRef = useRef<number | null>(null);
+
+  useEffect(() => {
+    if (focusRowRef.current === null) return;
+
+    const rowIndex = focusRowRef.current;
+    focusRowRef.current = null;
+    document.getElementById(`txtBrID-${rowIndex}`)?.focus();
+  }, [rows]);
 
   // ----------------------------------------------------------
   // LOAD: the company name and its branches
@@ -123,8 +140,6 @@ const BranchPage: React.FC = () => {
           return;
         }
 
-        setTxtCompany(result.header?.txtCompany ?? "");
-
         const loaded: BranchRow[] = (result.data || []).map(
           (row: {
             txtBrID: string;
@@ -155,7 +170,15 @@ const BranchPage: React.FC = () => {
         const padded = padRows(loaded);
 
         setRows(padded);
-        setSelectedKey(padded[0]?.key ?? null);
+
+        // the cursor goes to the first empty row (after the last saved one), ready for
+        // a new entry
+        const firstEmptyRow = loaded.length;
+
+        setSelectedKey(padded[firstEmptyRow]?.key ?? padded[0]?.key ?? null);
+
+        // (done by the effect below, once the rows are on the screen)
+        focusRowRef.current = firstEmptyRow;
       } catch (error: unknown) {
         if (requestNo !== loadRequest.current) return;
 
@@ -317,7 +340,10 @@ const BranchPage: React.FC = () => {
       return;
     }
 
-    const shouldDelete = await confirm(DELETE_CONFIRM_MESSAGE, "Delete");
+    const shouldDelete = await confirm({
+      title: "Branch",
+      message: "Do you want to delete ?",
+    });
 
     if (!shouldDelete) return;
 
@@ -340,18 +366,18 @@ const BranchPage: React.FC = () => {
       const result = await response.json();
 
       if (!response.ok || !result.success) {
-        toast.error(result.message || "Not Deleted,try again");
+        notDeleted(result.message);
         return;
       }
 
-      toast.success(result.message);
+      deleted();
 
       setRows((previous) =>
         padRows(previous.filter((item) => item.key !== row.key)),
       );
     } catch (error: unknown) {
       console.error("deleteBranch error:", error);
-      toast.error("Not Deleted,try again");
+      notDeleted();
     } finally {
       setSaving(false);
     }
@@ -480,7 +506,7 @@ const BranchPage: React.FC = () => {
                           {selected ? "▶" : ""}
                         </td>
                         <td
-                          className={`border border-[#BFE8D0] p-0 ${
+                          className={`border border-[#BFE8D0] p-0 ${cellFocusClass} ${
                             changed ? "bg-[#fff6d6]" : selected ? "bg-[#F2FAF5]" : ""
                           }`}
                         >
@@ -491,7 +517,10 @@ const BranchPage: React.FC = () => {
                             maxLength={MAX_ID_LENGTH}
                             readOnly={row.chkSaved}
                             value={row.txtBrID}
-                            onFocus={() => setSelectedKey(row.key)}
+                            onFocus={(event) => {
+                              selectOnFocus(event);
+                              setSelectedKey(row.key);
+                            }}
                             onChange={(event) =>
                               updateCell(row.key, "txtBrID", event.target.value)
                             }
@@ -502,7 +531,7 @@ const BranchPage: React.FC = () => {
                           />
                         </td>
                         <td
-                          className={`border border-[#BFE8D0] p-0 ${changed ? "bg-[#fff6d6]" : ""}`}
+                          className={`border border-[#BFE8D0] p-0 ${cellFocusClass} ${changed ? "bg-[#fff6d6]" : ""}`}
                         >
                           <input
                             id={`txtBrName-${index}`}
@@ -510,7 +539,10 @@ const BranchPage: React.FC = () => {
                             aria-label="Branch"
                             maxLength={MAX_NAME_LENGTH}
                             value={row.txtBrName}
-                            onFocus={() => setSelectedKey(row.key)}
+                            onFocus={(event) => {
+                              selectOnFocus(event);
+                              setSelectedKey(row.key);
+                            }}
                             onChange={(event) =>
                               updateCell(
                                 row.key,
@@ -525,7 +557,7 @@ const BranchPage: React.FC = () => {
                           />
                         </td>
                         <td
-                          className={`border border-[#BFE8D0] p-0 ${changed ? "bg-[#fff6d6]" : ""}`}
+                          className={`border border-[#BFE8D0] p-0 ${cellFocusClass} ${changed ? "bg-[#fff6d6]" : ""}`}
                         >
                           <div className="flex h-[26px] items-center">
                             <input
@@ -534,7 +566,10 @@ const BranchPage: React.FC = () => {
                               aria-label="Position No."
                               inputMode="numeric"
                               value={row.txtPositionNo}
-                              onFocus={() => setSelectedKey(row.key)}
+                              onFocus={(event) => {
+                              selectOnFocus(event);
+                              setSelectedKey(row.key);
+                            }}
                               onChange={(event) =>
                                 updateCell(
                                   row.key,
@@ -613,7 +648,7 @@ const BranchPage: React.FC = () => {
         </main>
       </div>
 
-      {confirmDialog}
+      {dialog}
     </div>
   );
 };

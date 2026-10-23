@@ -362,10 +362,7 @@ export const saveDefaultBranch = async (
 
     return res.status(200).json({
       success: true,
-      message:
-        wantedMode === "M"
-          ? "Default branch modified successfully"
-          : "Default branch saved successfully",
+      message: "Default branch saved successfully",
       mode: wantedMode,
     });
   } catch (error: unknown) {

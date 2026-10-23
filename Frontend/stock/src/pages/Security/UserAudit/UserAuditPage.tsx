@@ -1,5 +1,4 @@
 import React, { useEffect, useRef, useState } from "react";
-import { useLocation, useNavigate } from "react-router-dom";
 
 import Select, {
   type StylesConfig,
@@ -12,6 +11,16 @@ import { toast } from "react-toastify";
 import { useEnterAsTab } from "../../../hooks/useEnterAsTab";
 import { useAltShortcuts } from "../../../hooks/useAltShortcuts";
 import { useButtonPermissions } from "../../../hooks/useButtonPermissions";
+import { useGridCellFocus } from "../../../hooks/useGridCellFocus";
+import { useAdvanceAfterSelect } from "../../../hooks/useAdvanceAfterSelect";
+import { useInitialFocus } from "../../../hooks/useInitialFocus";
+import ReportPreview from "../../../components/common/ReportPreview";
+import { buildUserAuditPdf } from "../../../components/Security/UserAudit/UserAuditPdf";
+import {
+  buildHtml,
+  printUserAuditReport,
+  type PrintReport,
+} from "../../../components/Security/UserAudit/UserAuditPrintReport";
 import selectComponents from "../../../components/sharecomponents/selectComponents";
 
 // ============================================================
@@ -152,37 +161,38 @@ const MENU_ID = "9304";
 const UserAudit: React.FC = () => {
   const handleEnterAsTab = useEnterAsTab();
   const perms = useButtonPermissions(MENU_ID);
-  const navigate = useNavigate();
 
-  // Back from the print page brings you here with what you had picked. It
-  // travels in the browser's navigation state (not in the address), so the
-  // address stays clean.
-  const location = useLocation();
-  const picked = (location.state ?? {}) as Partial<{
-    lkpUserID: string;
-    lkpAction: string;
-    dtpFromDate: string;
-    dtpToDate: string;
-  }>;
+  // the box the cursor is in is outlined, and its text is selected
+  const { cellFocusClass } = useGridCellFocus();
+  // after a dropdown pick (or Enter on a closed one) the cursor goes on
+  const { advanceAfterPick, advanceOnEnter } = useAdvanceAfterSelect();
+
+  // the User and Action lists have been asked for (found or not): the cursor can start
+  const [listsLoaded, setListsLoaded] = useState(false);
+
+  // the Print Preview (after Print): the report the server sent, and what was picked
+  // (the Excel file is made for the same choice)
+  const [preview, setPreview] = useState<{
+    report: PrintReport;
+    filters: { lkpUserID: string; lkpAction: string; dtpFromDate: string; dtpToDate: string };
+    fileBase: string;
+  } | null>(null);
+  const [printing, setPrinting] = useState(false);
 
   // ==========================================================
   // THE DIALOG: user, action, period
   // both are chosen before Print (the "All" choice counts); empty = "Select..."
   // ==========================================================
 
-  const [lkpUserID, setLkpUserID] = useState<string>(
-    picked.lkpUserID ?? "",
-  );
-  const [lkpAction, setLkpAction] = useState<string>(
-    picked.lkpAction ?? "",
-  );
+  const [lkpUserID, setLkpUserID] = useState<string>("");
+  const [lkpAction, setLkpAction] = useState<string>("");
 
   // yyyy-mm-dd (what the server takes); the pickers show dd-mm-yyyy
   const [dtpFromDate, setDtpFromDate] = useState<string>(
-    picked.dtpFromDate ?? dayjs().startOf("month").format(SQL_DATE),
+    dayjs().startOf("month").format(SQL_DATE),
   );
   const [dtpToDate, setDtpToDate] = useState<string>(
-    picked.dtpToDate ?? dayjs().format(SQL_DATE),
+    dayjs().format(SQL_DATE),
   );
 
   const [userOptions, setUserOptions] = useState<Option[]>([]);
@@ -252,11 +262,16 @@ const UserAudit: React.FC = () => {
         toast.error(
           `User Audit load error: ${error instanceof Error ? error.message : String(error)}`,
         );
+      } finally {
+        setListsLoaded(true);
       }
     };
 
     loadLists();
   }, []);
+
+  // the cursor starts on the User ID box
+  useInitialFocus(listsLoaded, "lkpUserID");
 
   // the lists the boxes show: "All" first, then what the server gave
   const userChoices: Option[] = [
@@ -282,13 +297,22 @@ const UserAudit: React.FC = () => {
   };
 
   // ==========================================================
-  // PRINT - checks the dialog, then opens the print page with what you picked.
-  // The print page asks the server for the report. The same rules as the
-  // server (which is the one that counts): both dates, and From not later
-  // than To.
+  // PRINT - checks the dialog, asks the server for the report (the server is the one
+  // that counts: both dates, From not later than To, who may see whom, the Print right)
+  // and opens the Print Preview.
   // ==========================================================
 
-  const handlePrint = () => {
+  const printBody = (filters: {
+    lkpUserID: string;
+    lkpAction: string;
+    dtpFromDate: string;
+    dtpToDate: string;
+  }) =>
+    JSON.stringify({ PstrCoID: localStorage.getItem("PstrCoID"), ...filters });
+
+  const handlePrint = async () => {
+    if (printing || preview) return;
+
     if (!perms.print) {
       toast.error("You do not have permission to Print.");
       return;
@@ -327,11 +351,89 @@ const UserAudit: React.FC = () => {
 
     const filters = { lkpUserID, lkpAction, dtpFromDate, dtpToDate };
 
-    // first keep what you picked in THIS page's history entry (it replaces the
-    // current entry, no new one), then go to the print page with the same:
-    // the browser's Back from there comes to this dialog with the boxes filled
-    navigate("/Security/UserAudit", { replace: true, state: filters });
-    navigate("/Security/UserAudit/Print", { state: filters });
+    setPrinting(true);
+
+    try {
+      const response = await fetch(
+        `${import.meta.env.VITE_API_URL}/UserAudit/getUserAuditList`,
+        {
+          method: "POST",
+          credentials: "include",
+          headers: { "Content-Type": "application/json" },
+          body: printBody(filters),
+        },
+      );
+
+      const result = await response.json();
+
+      if (!response.ok || !result.success) {
+        toast.error(result.message || "The user audit could not be loaded.");
+        focusField(result.field);
+        return;
+      }
+
+      if (!result.data || result.data.length === 0) {
+        toast.info("No audit rows for this selection.");
+        return;
+      }
+
+      // a name that is never the name of a file that is still open
+      const now = new Date();
+      const pad = (value: number) => String(value).padStart(2, "0");
+      const stamp = `${now.getFullYear()}${pad(now.getMonth() + 1)}${pad(now.getDate())}_${pad(now.getHours())}${pad(now.getMinutes())}${pad(now.getSeconds())}`;
+
+      setPreview({
+        report: {
+          txtCompanyName: result.txtCompanyName ?? "",
+          txtReportInfo: result.txtReportInfo ?? "",
+          dtpFromDate,
+          dtpToDate,
+          rows: result.data,
+        },
+        filters,
+        fileBase: `UserAudit_${stamp}`,
+      });
+    } catch (error) {
+      console.error("getUserAuditList error:", error);
+      toast.error("Cannot connect to User Audit API.");
+    } finally {
+      setPrinting(false);
+    }
+  };
+
+  // the Excel file of the Print Preview, made by the server (null after an error)
+  const fetchExcel = async (): Promise<Blob | null> => {
+    if (!preview) return null;
+
+    const response = await fetch(
+      `${import.meta.env.VITE_API_URL}/UserAudit/downloadUserAuditExcel`,
+      {
+        method: "POST",
+        credentials: "include",
+        headers: { "Content-Type": "application/json" },
+        body: printBody(preview.filters),
+      },
+    );
+
+    // an error comes back as JSON, the file as a blob
+    if (!response.ok) {
+      let message = "Could not create the Excel file";
+
+      try {
+        const result = await response.json();
+        message = result.message || message;
+      } catch {
+        message =
+          response.status === 404
+            ? "Excel is not available: the downloadUserAuditExcel route was not found (404)"
+            : `Could not create the Excel file (error ${response.status})`;
+      }
+
+      toast.error(message);
+      return null;
+    }
+
+    return response.blob();
   };
 
   // ==========================================================
@@ -339,21 +441,17 @@ const UserAudit: React.FC = () => {
   // ==========================================================
 
   const handleClear = () => {
-    // forget what was kept for Back, too
-    navigate("/Security/UserAudit", { replace: true, state: null });
-
     setLkpUserID("");
     setLkpAction("");
     setDtpFromDate(dayjs().startOf("month").format(SQL_DATE));
     setDtpToDate(dayjs().format(SQL_DATE));
 
-    requestAnimationFrame(() => {
-      document.getElementById("lkpUserID")?.focus();
-    });
+    window.setTimeout(() => document.getElementById("lkpUserID")?.focus(), 0);
   };
 
-  // Alt+P -> Print, Alt+C -> Clear (the underlined letters on the buttons)
-  useAltShortcuts({
+  // Alt+P -> Print, Alt+C -> Clear (the underlined letters on the buttons). Off while
+  // the Print Preview is open: it has its own Alt+P, Alt+D and Alt+C.
+  useAltShortcuts(preview ? {} : {
     p: handlePrint,
     c: handleClear,
   });
@@ -377,6 +475,7 @@ const UserAudit: React.FC = () => {
   // ==========================================================
 
   return (
+    <>
     <div
       onKeyDown={handlePageKeyDown}
       className="flex min-h-screen w-full items-center justify-center bg-white"
@@ -407,7 +506,10 @@ const UserAudit: React.FC = () => {
               User ID :
             </label>
 
-            <div className="min-w-0 flex-1">
+            <div
+              className={`min-w-0 flex-1 ${cellFocusClass}`}
+              onKeyDown={(event) => advanceOnEnter(event)}
+            >
               <Select<Option, false>
                 components={selectComponents}
                 inputId="lkpUserID"
@@ -418,7 +520,12 @@ const UserAudit: React.FC = () => {
                   userChoices.find((option) => option.value === lkpUserID) ??
                   null
                 }
-                onChange={(option) => setLkpUserID(option?.value ?? "")}
+                onChange={(option) => {
+                  setLkpUserID(option?.value ?? "");
+
+                  // a user chosen: on to Action
+                  if (option) advanceAfterPick("lkpUserID");
+                }}
                 styles={selectStyles}
                 classNamePrefix="userIdSelect"
                 isClearable={false}
@@ -445,7 +552,10 @@ const UserAudit: React.FC = () => {
               Action :
             </label>
 
-            <div className="w-[140px]">
+            <div
+              className={`w-[140px] ${cellFocusClass}`}
+              onKeyDown={(event) => advanceOnEnter(event)}
+            >
               <Select<Option, false>
                 components={selectComponents}
                 inputId="lkpAction"
@@ -456,7 +566,12 @@ const UserAudit: React.FC = () => {
                   actionChoices.find((option) => option.value === lkpAction) ??
                   null
                 }
-                onChange={(option) => setLkpAction(option?.value ?? "")}
+                onChange={(option) => {
+                  setLkpAction(option?.value ?? "");
+
+                  // an action chosen: on to From Date
+                  if (option) advanceAfterPick("lkpAction");
+                }}
                 styles={selectStyles}
                 classNamePrefix="userIdSelect"
                 isClearable={false}
@@ -480,25 +595,29 @@ const UserAudit: React.FC = () => {
               Period :
             </label>
 
-            <input
-              id="dtpFromDate"
-              name="dtpFromDate"
-              type="date"
-              ref={fromDateRef}
-              value={dtpFromDate}
-              onChange={(event) => setDtpFromDate(event.target.value)}
-              className="input-style w-[130px]"
-            />
+            <div className={`inline-flex ${cellFocusClass}`}>
+              <input
+                id="dtpFromDate"
+                name="dtpFromDate"
+                type="date"
+                ref={fromDateRef}
+                value={dtpFromDate}
+                onChange={(event) => setDtpFromDate(event.target.value)}
+                className="input-style w-[130px]"
+              />
+            </div>
 
-            <input
-              id="dtpToDate"
-              name="dtpToDate"
-              type="date"
-              ref={toDateRef}
-              value={dtpToDate}
-              onChange={(event) => setDtpToDate(event.target.value)}
-              className="input-style w-[130px]"
-            />
+            <div className={`inline-flex ${cellFocusClass}`}>
+              <input
+                id="dtpToDate"
+                name="dtpToDate"
+                type="date"
+                ref={toDateRef}
+                value={dtpToDate}
+                onChange={(event) => setDtpToDate(event.target.value)}
+                className="input-style w-[130px]"
+              />
+            </div>
           </section>
 
           {/* ====================================================
@@ -512,7 +631,7 @@ const UserAudit: React.FC = () => {
               name="btnPrint"
               type="button"
               onClick={handlePrint}
-              disabled={!perms.print}
+              disabled={!perms.print || printing}
               className="btn-style disabled:cursor-not-allowed disabled:opacity-40"
             >
               <u>P</u>rint
@@ -532,6 +651,19 @@ const UserAudit: React.FC = () => {
         </div>
       </div>
     </div>
+
+    {/* the Print Preview (after Print) */}
+    {preview && (
+      <ReportPreview
+        html={buildHtml(preview.report)}
+        fileBase={preview.fileBase}
+        onPrint={() => printUserAuditReport(preview.report)}
+        buildPdf={() => buildUserAuditPdf(preview.report)}
+        fetchExcel={fetchExcel}
+        onClose={() => setPreview(null)}
+      />
+    )}
+    </>
   );
 };
 

@@ -163,7 +163,7 @@ export const saveCompanyDetails = async (
 
     return res.status(200).json({
       success: true,
-      message: "Company info saved successfully",
+      message: "Set Company Info saved successfully",
     });
   } catch (error: unknown) {
     console.error("saveCompanyDetails error:", error);
