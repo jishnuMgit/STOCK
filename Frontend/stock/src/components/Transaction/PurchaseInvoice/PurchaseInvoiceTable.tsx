@@ -311,6 +311,10 @@ const PurchaseTable: React.FC<Props> = ({
   const [activeRow, setActiveRow] = useState(0);
   const { confirm, dialog } = useConfirmModal();
 
+  // which item dropdown (if any) currently has its menu open,
+  // e.g. "id-0" / "name-0"
+  const [openMenuKey, setOpenMenuKey] = useState<string | null>(null);
+
   const itemIdOptions = lookups?.itemIds ?? EMPTY;
   const itemNameOptions = lookups?.itemNames ?? EMPTY;
 
@@ -342,6 +346,22 @@ const PurchaseTable: React.FC<Props> = ({
       unit: option?.unit ?? "",
     });
     setActiveRow(index);
+  };
+
+  // Enter in an item dropdown: if the menu is closed and an item is already
+  // selected, go to that row's Qty. (When the menu is open, Enter just
+  // selects the highlighted option.)
+  const handleItemKeyDown = (
+    event: React.KeyboardEvent<HTMLDivElement>,
+    index: number,
+    menuKey: string,
+  ) => {
+    if (event.key !== "Enter") return;
+    if (openMenuKey === menuKey) return; // let react-select pick the option
+    if (!rows[index].itemId) return; // nothing selected yet
+
+    event.preventDefault();
+    document.getElementById(`txtQty-${index}`)?.focus();
   };
 
   // Ask first, then remove the row and put the cursor back on its Item ID.
@@ -490,6 +510,15 @@ const PurchaseTable: React.FC<Props> = ({
                       menuPortalTarget={portalTarget}
                       placeholder=""
                       className="w-full"
+                      onMenuOpen={() => setOpenMenuKey(`id-${index}`)}
+                      onMenuClose={() =>
+                        setOpenMenuKey((prev) =>
+                          prev === `id-${index}` ? null : prev,
+                        )
+                      }
+                      onKeyDown={(event) =>
+                        handleItemKeyDown(event, index, `id-${index}`)
+                      }
                     />
                   </td>
 
@@ -514,6 +543,15 @@ const PurchaseTable: React.FC<Props> = ({
                       menuPortalTarget={portalTarget}
                       placeholder=""
                       className="w-full"
+                      onMenuOpen={() => setOpenMenuKey(`name-${index}`)}
+                      onMenuClose={() =>
+                        setOpenMenuKey((prev) =>
+                          prev === `name-${index}` ? null : prev,
+                        )
+                      }
+                      onKeyDown={(event) =>
+                        handleItemKeyDown(event, index, `name-${index}`)
+                      }
                     />
                   </td>
 

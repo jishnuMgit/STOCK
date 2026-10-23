@@ -43,7 +43,7 @@ import RptItemHistoryRouter from "./Purchase/Report/RptItemHistoryRouter.js"
 import RptItemListRouter from "./Purchase/Report/RptItemListRouter.js"
 import RptTBRouter from "./Finance/Report/FinalAccounts/RptTBRouter.js";
 import RptSalesPriceListRouter from "./Purchase/Report/RptSalesPriceListRouter.js";
-
+import RptSOARouter from "./Finance/Report/A_RandA_P/RptSOARouter.js";
 const router = express.Router();
 
 router.use("/Receipt", ReceiptRouter);
@@ -91,4 +91,5 @@ router.use("/RptItemHistory", RptItemHistoryRouter);
 router.use("/RptItemList", RptItemListRouter);
 router.use("/RptTB", RptTBRouter); // Trial Balance report
 router.use("/RptSalesPriceList", RptSalesPriceListRouter);
+router.use("/RptSOA", RptSOARouter);
 export default router;
