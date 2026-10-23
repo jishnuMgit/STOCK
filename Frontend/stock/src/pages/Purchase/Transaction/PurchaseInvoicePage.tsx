@@ -31,6 +31,8 @@ const getCoId = () => localStorage.getItem("PstrCoID") ?? "";
 
 const num = (v: string) => (Number.isFinite(Number(v)) ? Number(v) : 0);
 
+const norm = (v: string) => v.trim().toLowerCase();
+
 /* Recalculate one row. No foreign-currency price any more:
    the user types Unit Price, everything else follows from it. */
 const recalcRow = (row: PurchaseRow, rate: number): PurchaseRow => {
@@ -394,10 +396,9 @@ const PurchaseInvoicePage: React.FC = () => {
 
     if (found) {
       // cash invoice: show the saved name in the Misc. Sup. boxes
-      const misc =
-        found.header.invoiceType === "C"
-          ? miscSuppliers.find((m) => m.name === found.header.supplierName)
-          : undefined;
+      const misc = found.header.miscSupId
+        ? miscSuppliers.find((m) => m.id === found.header.miscSupId)
+        : undefined;
 
       setHeader({
         ...found.header,
