@@ -313,7 +313,24 @@ const lookupFormat: Record<
 };
 
 // ============================================================
-// INPUT CLASS
+// ENTER-KEY ORDER INSIDE ONE ROW
+// Account ID and Account Name are the same field (accountId),
+// so both of them go straight to CC. ID.
+// The last field goes to the next row's Account ID.
+// ============================================================
+
+const NEXT_FIELD: Record<string, string> = {
+  lkpAccountID: "lkpCCID",
+  lkpAccountName: "lkpCCID",
+  lkpCCID: "lkpCurrency",
+  lkpCurrency: "lkpCurrencyRate",
+  lkpCurrencyRate: "txtAmount",
+  txtAmount: "txtAmountSAR",
+  txtAmountSAR: "txtDescription",
+};
+
+// ============================================================
+// CLASSES
 // ============================================================
 
 const inputClass =
@@ -323,6 +340,9 @@ const thBase =
   "sticky top-0 z-20 h-[32px] whitespace-nowrap border border-[#dce5ef] bg-[#f1f6fc] py-0 font-semibold text-[#202a36]";
 
 const tdClass = "h-[32px] border border-[#dce5ef] p-0";
+
+/* cell that holds an input: outlined while the cursor is inside it */
+const editCellClass = `${tdClass} focus-within:outline-2 focus-within:-outline-offset-2 focus-within:outline-green-600`;
 
 interface PurchaseExpenseProps {
   onClose?: () => void;
@@ -344,6 +364,14 @@ const PurchaseExpense: React.FC<PurchaseExpenseProps> = ({
   const [activeRow, setActiveRow] = useState(0);
   const [lookups, setLookups] = useState<ExpenseLookups>(emptyLookups);
   const [lookupError, setLookupError] = useState("");
+
+  // which dropdown (if any) currently has its menu open, e.g. "lkpAccountID-0"
+  const [openMenuKey, setOpenMenuKey] = useState<string | null>(null);
+
+  // cursor starts in the first Account ID cell when the popup opens
+  useEffect(() => {
+    document.getElementById("lkpAccountID-0")?.focus();
+  }, []);
 
   // ----------------------------------------------------------
   // LOAD COMBOS ONCE WHEN THE POPUP OPENS (clsPIExp.FillCombos)
@@ -398,6 +426,37 @@ const PurchaseExpense: React.FC<PurchaseExpenseProps> = ({
     () => lookups.currencies.map((c) => ({ value: c, label: c })),
     [lookups.currencies],
   );
+
+  // ----------------------------------------------------------
+  // ENTER KEY: move to the next cell
+  // ----------------------------------------------------------
+
+  const focusNext = (fieldId: string, index: number) => {
+    const next = NEXT_FIELD[fieldId];
+
+    if (next) {
+      document.getElementById(`${next}-${index}`)?.focus();
+      return;
+    }
+
+    // last field of the row: next row's Account ID, or the Save button
+    if (index + 1 < rows.length) {
+      document.getElementById(`lkpAccountID-${index + 1}`)?.focus();
+    } else {
+      document.getElementById("btnSave")?.focus();
+    }
+  };
+
+  /* Enter in a text / number input */
+  const handleInputEnter = (
+    event: React.KeyboardEvent<HTMLInputElement>,
+    fieldId: string,
+    index: number,
+  ) => {
+    if (event.key !== "Enter") return;
+    event.preventDefault();
+    focusNext(fieldId, index);
+  };
 
   // ----------------------------------------------------------
   // UPDATE ROW
@@ -487,6 +546,7 @@ const PurchaseExpense: React.FC<PurchaseExpenseProps> = ({
   // ----------------------------------------------------------
   // SELECT COMPONENT
   // `variant` switches on the two-column menu (Account ID / Name)
+  // `required` = Enter does nothing until a value is picked
   // ----------------------------------------------------------
 
   const renderSelect = (
@@ -497,30 +557,47 @@ const PurchaseExpense: React.FC<PurchaseExpenseProps> = ({
     onChange: (value: string) => void,
     searchable = true,
     variant?: MenuVariant,
-  ) => (
-    <Select<Option, false>
-      inputId={`${inputId}-${index}`}
-      instanceId={`${inputId}-${index}`}
-      options={options}
-      value={pick(options, value)}
-      onChange={(option) => {
-        onChange(option?.value ?? "");
-        setActiveRow(index);
-      }}
-      styles={variant ? lookupSelectStyles : selectStyles}
-      components={variant ? lookupComponents[variant] : selectComponents}
-      formatOptionLabel={variant ? lookupFormat[variant] : undefined}
-      filterOption={variant ? filterAccount : undefined}
-      isClearable={false}
-      isSearchable={searchable}
-      menuPosition="fixed"
-      menuPortalTarget={
-        typeof document !== "undefined" ? document.body : undefined
-      }
-      placeholder=""
-      className="w-full"
-    />
-  );
+    required = false,
+  ) => {
+    const menuKey = `${inputId}-${index}`;
+
+    return (
+      <Select<Option, false>
+        inputId={menuKey}
+        instanceId={menuKey}
+        options={options}
+        value={pick(options, value)}
+        onChange={(option) => {
+          onChange(option?.value ?? "");
+          setActiveRow(index);
+        }}
+        styles={variant ? lookupSelectStyles : selectStyles}
+        components={variant ? lookupComponents[variant] : selectComponents}
+        formatOptionLabel={variant ? lookupFormat[variant] : undefined}
+        filterOption={variant ? filterAccount : undefined}
+        isClearable={false}
+        isSearchable={searchable}
+        menuPosition="fixed"
+        menuPortalTarget={
+          typeof document !== "undefined" ? document.body : undefined
+        }
+        placeholder=""
+        className="w-full"
+        onMenuOpen={() => setOpenMenuKey(menuKey)}
+        onMenuClose={() =>
+          setOpenMenuKey((prev) => (prev === menuKey ? null : prev))
+        }
+        onKeyDown={(event) => {
+          if (event.key !== "Enter") return;
+          if (openMenuKey === menuKey) return; // menu open: Enter just selects
+          if (required && !value) return; // nothing selected yet
+
+          event.preventDefault();
+          focusNext(inputId, index);
+        }}
+      />
+    );
+  };
 
   // ==========================================================
   // RENDER
@@ -662,8 +739,8 @@ const PurchaseExpense: React.FC<PurchaseExpenseProps> = ({
                           {index + 1}
                         </td>
 
-                        {/* ACCOUNT ID */}
-                        <td className={tdClass}>
+                        {/* ACCOUNT ID (Enter -> CC. ID) */}
+                        <td className={editCellClass}>
                           {renderSelect(
                             index,
                             "lkpAccountID",
@@ -672,11 +749,12 @@ const PurchaseExpense: React.FC<PurchaseExpenseProps> = ({
                             (value) => updateRow(index, "accountId", value),
                             true,
                             "accountId",
+                            true,
                           )}
                         </td>
 
-                        {/* ACCOUNT NAME */}
-                        <td className={tdClass}>
+                        {/* ACCOUNT NAME (same accountId, Enter -> CC. ID) */}
+                        <td className={editCellClass}>
                           {renderSelect(
                             index,
                             "lkpAccountName",
@@ -685,11 +763,12 @@ const PurchaseExpense: React.FC<PurchaseExpenseProps> = ({
                             (value) => updateRow(index, "accountId", value),
                             true,
                             "accountName",
+                            true,
                           )}
                         </td>
 
                         {/* CCID */}
-                        <td className={tdClass}>
+                        <td className={editCellClass}>
                           {renderSelect(
                             index,
                             "lkpCCID",
@@ -701,7 +780,7 @@ const PurchaseExpense: React.FC<PurchaseExpenseProps> = ({
                         </td>
 
                         {/* CURRENCY */}
-                        <td className={tdClass}>
+                        <td className={editCellClass}>
                           {renderSelect(
                             index,
                             "lkpCurrency",
@@ -713,15 +792,16 @@ const PurchaseExpense: React.FC<PurchaseExpenseProps> = ({
                         </td>
 
                         {/* CURRENCY RATE */}
-                        <td className={tdClass}>
+                        <td className={editCellClass}>
                           <input
                             id={`lkpCurrencyRate-${index}`}
                             type="text"
                             inputMode="decimal"
                             autoComplete="off"
                             value={row.currencyRate}
-                            onFocus={() => {
+                            onFocus={(event) => {
                               setActiveRow(index);
+                              event.currentTarget.select();
                             }}
                             onChange={(event) =>
                               handleNumberChange(
@@ -737,20 +817,24 @@ const PurchaseExpense: React.FC<PurchaseExpenseProps> = ({
                                 formatNumber(row.currencyRate, 4),
                               )
                             }
+                            onKeyDown={(event) =>
+                              handleInputEnter(event, "lkpCurrencyRate", index)
+                            }
                             className={`${inputClass} text-right`}
                           />
                         </td>
 
                         {/* AMOUNT (FC) */}
-                        <td className={tdClass}>
+                        <td className={editCellClass}>
                           <input
                             id={`txtAmount-${index}`}
                             type="text"
                             inputMode="decimal"
                             autoComplete="off"
                             value={row.amount}
-                            onFocus={() => {
+                            onFocus={(event) => {
                               setActiveRow(index);
+                              event.currentTarget.select();
                             }}
                             onChange={(event) =>
                               handleNumberChange(
@@ -766,20 +850,24 @@ const PurchaseExpense: React.FC<PurchaseExpenseProps> = ({
                                 formatNumber(row.amount, 4),
                               )
                             }
+                            onKeyDown={(event) =>
+                              handleInputEnter(event, "txtAmount", index)
+                            }
                             className={`${inputClass} text-right`}
                           />
                         </td>
 
                         {/* AMOUNT SAR */}
-                        <td className={tdClass}>
+                        <td className={editCellClass}>
                           <input
                             id={`txtAmountSAR-${index}`}
                             type="text"
                             inputMode="decimal"
                             autoComplete="off"
                             value={row.amountSAR}
-                            onFocus={() => {
+                            onFocus={(event) => {
                               setActiveRow(index);
+                              event.currentTarget.select();
                             }}
                             onChange={(event) =>
                               handleNumberChange(
@@ -795,24 +883,33 @@ const PurchaseExpense: React.FC<PurchaseExpenseProps> = ({
                                 formatNumber(row.amountSAR, 2),
                               )
                             }
+                            onKeyDown={(event) =>
+                              handleInputEnter(event, "txtAmountSAR", index)
+                            }
                             className={`${inputClass} text-right`}
                           />
                         </td>
 
-                        {/* DESCRIPTION */}
-                        <td className={tdClass}>
+                        {/* DESCRIPTION (Enter -> next row's Account ID) */}
+                        <td className={editCellClass}>
                           <input
                             id={`txtDescription-${index}`}
                             type="text"
                             autoComplete="off"
                             value={row.description}
-                            onFocus={() => setActiveRow(index)}
+                            onFocus={(event) => {
+                              setActiveRow(index);
+                              event.currentTarget.select();
+                            }}
                             onChange={(event) =>
                               updateRow(
                                 index,
                                 "description",
                                 event.target.value,
                               )
+                            }
+                            onKeyDown={(event) =>
+                              handleInputEnter(event, "txtDescription", index)
                             }
                             className={inputClass}
                           />
