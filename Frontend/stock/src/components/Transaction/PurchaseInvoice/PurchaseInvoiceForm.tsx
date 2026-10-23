@@ -528,8 +528,8 @@ const formatMiscId = createFormatLabel("miscId");
 const formatMiscName = createFormatLabel("miscName");
 
 const FIELD_ORDER = [
-  "txtDocNo",
   "lkpBranch",
+  "txtDocNo",
   "lkpType",
   "dtpDate",
   "txtPONo",
