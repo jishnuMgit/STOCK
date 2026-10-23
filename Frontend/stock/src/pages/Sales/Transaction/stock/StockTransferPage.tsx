@@ -16,6 +16,7 @@ import { usePairMenuHang } from "../../../../hooks/usePairMenuHang";
 import { useAltShortcuts } from "../../../../hooks/useAltShortcuts";
 import { useInitialFocus } from "../../../../hooks/useInitialFocus";
 import { useGridCellFocus } from "../../../../hooks/useGridCellFocus";
+import { useDeleteToast } from "../../../../hooks/useDeleteToast";
 import { useConfirmModal } from "../../../../hooks/useConfirmModal";
 import ReportPreview from "../../../../components/common/ReportPreview";
 import { buildStockTransferPdf } from "../../../../components/Transaction/StockTransfer/StockTransferPdf";
@@ -537,6 +538,8 @@ const StockTransferPage: React.FC = () => {
   const { advanceAfterPick, advanceOnEnter } = useAdvanceAfterSelect();
   // the cell the cursor is in is outlined; a typed-in box has its text selected
   const { cellFocusClass, selectOnFocus } = useGridCellFocus();
+  // the standard messages of a delete (the same on every screen)
+  const { deleted, notDeleted } = useDeleteToast(SCREEN_TITLE);
   // ... and the Item Name list covers the columns up to Qty.
   const { hang: nameMenuHang, measure: measureNameMenuHang } = usePairMenuHang(210);
 
@@ -1399,7 +1402,7 @@ const StockTransferPage: React.FC = () => {
       const result = await response.json();
 
       if (!response.ok || !result.success) {
-        toast.error(result.message || "Not Deleted,Try again");
+        notDeleted(result.message);
 
         if (result.field) {
           document.getElementById(result.field)?.focus();
@@ -1408,7 +1411,7 @@ const StockTransferPage: React.FC = () => {
         return;
       }
 
-      toast.success(result.message || "Deleted");
+      deleted();
 
       // as the old form: the page is emptied and the next Entry No. shown
       resetDocument();
@@ -1633,7 +1636,7 @@ const StockTransferPage: React.FC = () => {
 
   // ----------------------------------------------------------
   // DELETE A ROW (the x of a row): asks first. A line that is saved goes from the
-  // database at once, with the message "Deleted" (the last saved line takes the whole
+  // database at once, with "Stock Transfer deleted successfully" (the last saved line takes the whole
   // transfer with it); a line that was never saved only leaves the grid. The cursor
   // goes back to the row's Item ID.
   // ----------------------------------------------------------
@@ -1646,14 +1649,10 @@ const StockTransferPage: React.FC = () => {
 
     // the line is in the database: it has the Sl.# it was loaded with
     const savedLine = chkSaved && row.txtOriginalSlNo !== null;
-    const onlySavedLine =
-      savedLine && rows.filter((entry) => entry.txtOriginalSlNo !== null).length === 1;
 
     const shouldRemove = await confirm({
       title: SCREEN_TITLE,
-      message: onlySavedLine
-        ? "Do you want to delete ?"
-        : `Do you want to delete Line ${index + 1} ?`,
+      message: `Do you want to delete Line ${index + 1} ?`,
     });
 
     if (!shouldRemove) return;
@@ -1680,11 +1679,11 @@ const StockTransferPage: React.FC = () => {
         const result = await response.json();
 
         if (!response.ok || !result.success) {
-          toast.error(result.message || "Not Deleted,Try again");
+          notDeleted(result.message);
           return;
         }
 
-        toast.success(result.message || "Deleted");
+        deleted();
 
         // the last line took the whole transfer with it: the page starts again
         if (result.chkDocumentDeleted) {

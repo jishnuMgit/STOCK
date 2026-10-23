@@ -4,7 +4,9 @@ import { toast } from "react-toastify";
 import { useEnterAsTab } from "../../../hooks/useEnterAsTab";
 import { useAltShortcuts } from "../../../hooks/useAltShortcuts";
 import { useButtonPermissions } from "../../../hooks/useButtonPermissions";
-import { useConfirm } from "../../../hooks/useConfirm";
+import { useConfirmModal } from "../../../hooks/useConfirmModal";
+import { useDeleteToast } from "../../../hooks/useDeleteToast";
+import { useInitialFocus } from "../../../hooks/useInitialFocus";
 import selectComponents from "../../../components/sharecomponents/selectComponents";
 
 // ============================================================
@@ -129,7 +131,12 @@ const MENU_ID = "010202";
 const ItemGroupPage: React.FC = () => {
   const handleEnterAsTab = useEnterAsTab();
   const perms = useButtonPermissions(MENU_ID);
-  const { confirm, confirmDialog } = useConfirm();
+  // the common themed question window (the same as on the other screens)
+  const { confirm, dialog } = useConfirmModal();
+  // the standard messages of a delete: "Item Group deleted successfully"
+  const { deleted, notDeleted } = useDeleteToast("Item Group");
+  // where the cursor starts: the Item Group ID box
+  useInitialFocus(true, "txtItemGroupID");
 
   const [txtItemGroupID, setTxtItemGroupID] = useState("");
   const [txtItemGroupName, setTxtItemGroupName] = useState("");
@@ -360,9 +367,10 @@ const ItemGroupPage: React.FC = () => {
       return;
     }
 
-    const shouldDelete = await confirm(
-      "Are you sure you want to delete this item group?",
-    );
+    const shouldDelete = await confirm({
+      title: "Item Group",
+      message: "Do you want to delete ?",
+    });
 
     if (!shouldDelete) {
       return;
@@ -396,11 +404,11 @@ const ItemGroupPage: React.FC = () => {
       const result = await response.json();
 
       if (!response.ok || !result.success) {
-        toast.error(result.message || "Item group could not be deleted.");
+        notDeleted(result.message);
         return;
       }
 
-      toast.success(result.message || "Item group deleted successfully.");
+      deleted();
       handleClear();
     } catch (error) {
       console.error("deleteItemGroup error:", error);
@@ -434,6 +442,7 @@ const ItemGroupPage: React.FC = () => {
   });
 
   return (
+    <>
     <div
       onKeyDown={handleEnterAsTab}
       className="flex min-h-screen w-full items-center justify-center bg-white"
@@ -619,8 +628,12 @@ const ItemGroupPage: React.FC = () => {
         </div>
       </div>
 
-      {confirmDialog}
     </div>
+
+    {/* the "Do you want to delete ?" question - outside the root div: the page's
+        Enter-as-Tab must not take the Enter of the Yes / No buttons */}
+    {dialog}
+    </>
   );
 };
 

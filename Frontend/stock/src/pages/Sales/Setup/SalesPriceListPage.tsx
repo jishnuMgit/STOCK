@@ -418,7 +418,7 @@ const SalesPriceListPage: React.FC<SalesPriceListPageProps> = ({ onClose }) => {
         return;
       }
 
-      toast.success(result.message);
+      toast.success("Sales Price List modified successfully");
 
       // the old ClearMe, then the grid again (with the new prices)
       handleCancel();

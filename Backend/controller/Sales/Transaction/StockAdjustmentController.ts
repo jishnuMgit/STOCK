@@ -20,13 +20,16 @@ import {
   getStockAdjustmentFindListService,
   saveStockAdjustmentService,
   deleteStockAdjustmentService,
+  deleteStockAdjustmentLineService,
   postStockAdjustmentService,
   getStockAdjustmentPrintService,
   buildStockAdjustmentAuditNote,
   buildStockAdjustmentDeleteAuditNote,
+  buildStockAdjustmentLineDeleteAuditNote,
   buildStockAdjustmentPostAuditNote,
   type StockAdjustmentRowPayload,
 } from "../../../services/Sales/Transaction/stockAdjustmentService.js";
+import { buildStockAdjustmentWorkbook } from "../../../services/Sales/Transaction/stockAdjustmentExcel.js";
 import {
   mapRows,
   mapKeys,
@@ -613,12 +616,14 @@ export const deleteStockAdjustment = async (
 };
 
 /* =========================================================
-   PRINT STOCK ADJUSTMENT (the Print button)
-   The saved document, for the print page. A POST: the print page asks for the
-   data itself. Needs the Print right (P). A posted one can be printed too.
+   DELETE ONE LINE (the x of a row of a saved adjustment)
+   The line goes from the database at once. A posted adjustment is locked. Deleting a
+   line is a change of the adjustment, so it needs the Modify right (M) - the last line
+   of an adjustment takes the whole adjustment with it, which needs the Delete right
+   (D) and is audited as a delete.
 ========================================================= */
 
-export const printStockAdjustment = async (
+export const deleteStockAdjustmentLine = async (
   req: AuthenticatedRequest,
   res: Response
 ): Promise<Response> => {
@@ -628,8 +633,14 @@ export const printStockAdjustment = async (
       PstrYear,
       lkpBranch,
       txtDocNo,
-    }: { PstrCoID: string; PstrYear: string; lkpBranch: string; txtDocNo: string } =
-      req.body;
+      txtSlNo,
+    }: {
+      PstrCoID: string;
+      PstrYear: string;
+      lkpBranch: string;
+      txtDocNo: string;
+      txtSlNo: number | string;
+    } = req.body;
 
     if (!PstrCoID) {
       return reject(res, 400, "Company ID is required");
@@ -643,10 +654,19 @@ export const printStockAdjustment = async (
       return reject(res, 401, "Authentication required");
     }
 
-    const check = await validateStockAdjustmentPrint({
+    const slNo = Number(txtSlNo);
+
+    if (!Number.isInteger(slNo) || slNo < 1) {
+      return reject(res, 400, "The line to delete is not valid.", "txtSlNo");
+    }
+
+    const PstrUserID = req.user.userId;
+
+    // idle user, the branch (and the right to it), the Entry No.
+    const check = await validateStockAdjustmentDelete({
       PstrCoID,
       PstrYear,
-      PstrUserID: req.user.userId,
+      PstrUserID,
       lkpBranch,
       txtDocNo,
     });
@@ -655,25 +675,208 @@ export const printStockAdjustment = async (
       return reject(res, check.status, check.message, check.field);
     }
 
-    if (!(await hasButtonRight(req.user, MENU_ID, "P"))) {
-      return reject(res, 403, "You do not have permission to Print.", "txtDocNo");
-    }
+    const docNo = String(txtDocNo).trim();
 
-    const report = await getStockAdjustmentPrintService(
+    const current = await getStockAdjustmentService(
       PstrCoID,
       Number(PstrYear),
       lkpBranch,
-      String(txtDocNo).trim()
+      docNo
     );
 
-    if (report.lines.length === 0) {
-      return reject(res, 404, "Stock Adjustment not found", "txtDocNo");
+    if (current.lines.length === 0) {
+      return reject(res, 404, "There is no Stock Adjustment to delete.", "txtDocNo");
+    }
+
+    // a posted Stock Adjustment is locked
+    if (current.header?.fpost) {
+      return reject(
+        res,
+        409,
+        "This Stock Adjustment is already posted and cannot be changed.",
+        "txtDocNo"
+      );
+    }
+
+    if (!current.lines.some((line) => Number(line.fslno) === slNo)) {
+      return reject(res, 404, "This line is not in the Stock Adjustment any more.", "txtSlNo");
+    }
+
+    // the last line takes the whole adjustment with it
+    const wholeDocument = current.lines.length === 1;
+
+    if (!(await hasButtonRight(req.user, MENU_ID, wholeDocument ? "D" : "M"))) {
+      return reject(
+        res,
+        403,
+        wholeDocument
+          ? "You do not have permission to Delete."
+          : "You do not have permission to Modify.",
+        "txtDocNo"
+      );
+    }
+
+    const result = await deleteStockAdjustmentLineService({
+      PstrCoID,
+      PstrYear: Number(PstrYear),
+      lkpBranch,
+      txtDocNo: docNo,
+      txtSlNo: slNo,
+      PstrUserID,
+    });
+
+    if (result.line === null) {
+      return reject(res, 404, "This line is not in the Stock Adjustment any more.", "txtSlNo");
+    }
+
+    // =====================================================
+    // USER AUDIT (only after the delete has actually succeeded)
+    // =====================================================
+
+    try {
+      await UserAudit(
+        PstrCoID,
+        PstrYear,
+        lkpBranch,
+        DOC_TYPE,
+        docNo,
+        SCREEN_NAME,
+        result.documentDeleted ? "D" : "M",
+        PstrUserID,
+        result.documentDeleted
+          ? buildStockAdjustmentDeleteAuditNote(
+              lkpBranch,
+              docNo,
+              result.header?.fdate ?? null,
+              result.lines
+            )
+          : buildStockAdjustmentLineDeleteAuditNote(
+              lkpBranch,
+              docNo,
+              result.line,
+              result.lines.length
+            )
+      );
+    } catch (auditError: unknown) {
+      console.error("UserAudit error (deleteStockAdjustmentLine):", auditError);
     }
 
     return res.status(200).json({
       success: true,
-      header: mapKeys(report.header, stockAdjustmentPrintHeaderKeys),
-      data: mapRows(report.lines, stockAdjustmentPrintLineKeys),
+      message: "Deleted",
+      chkDocumentDeleted: result.documentDeleted,
+    });
+  } catch (error: unknown) {
+    console.error("deleteStockAdjustmentLine error:", error);
+
+    return reject(
+      res,
+      400,
+      error instanceof Error ? error.message : "The line could not be deleted"
+    );
+  }
+};
+
+/* =========================================================
+   PRINT STOCK ADJUSTMENT (the Print button)
+   The saved document, for the Print Preview (preview, printer, PDF) - and, with the
+   same body, the Excel file. A POST: the page asks for the data itself. Needs the
+   Print right (P). A posted one can be printed too.
+========================================================= */
+
+const pad = (n: number) => String(n).padStart(2, "0");
+
+// the old objCommon.ReportInfo: "<user>  dd/mm/yyyy hh:mm" - bottom right of every page
+const reportInfoOf = (userId: string): string => {
+  const d = new Date();
+
+  return `${userId}  ${pad(d.getDate())}/${pad(d.getMonth() + 1)}/${d.getFullYear()} ${pad(d.getHours())}:${pad(d.getMinutes())}`;
+};
+
+type PreparedPrint =
+  | {
+      ok: true;
+      report: Awaited<ReturnType<typeof getStockAdjustmentPrintService>>;
+      reportInfo: string;
+    }
+  | { ok: false; status: number; body: Record<string, unknown> };
+
+// the checks and the data of Print and Excel
+const preparePrint = async (req: AuthenticatedRequest): Promise<PreparedPrint> => {
+  const {
+    PstrCoID,
+    PstrYear,
+    lkpBranch,
+    txtDocNo,
+  }: { PstrCoID: string; PstrYear: string; lkpBranch: string; txtDocNo: string } =
+    req.body;
+
+  const stop = (status: number, message: string, field?: string): PreparedPrint => ({
+    ok: false,
+    status,
+    body: { success: false, message, ...(field ? { field } : {}) },
+  });
+
+  if (!PstrCoID) {
+    return stop(400, "Company ID is required");
+  }
+
+  if (!isYear(PstrYear)) {
+    return stop(400, "Year is required");
+  }
+
+  if (!req.user) {
+    return stop(401, "Authentication required");
+  }
+
+  const check = await validateStockAdjustmentPrint({
+    PstrCoID,
+    PstrYear,
+    PstrUserID: req.user.userId,
+    lkpBranch,
+    txtDocNo,
+  });
+
+  if (!check.valid) {
+    return stop(check.status, check.message, check.field);
+  }
+
+  if (!(await hasButtonRight(req.user, MENU_ID, "P"))) {
+    return stop(403, "You do not have permission to Print.", "txtDocNo");
+  }
+
+  const report = await getStockAdjustmentPrintService(
+    PstrCoID,
+    Number(PstrYear),
+    lkpBranch,
+    String(txtDocNo).trim()
+  );
+
+  if (report.lines.length === 0) {
+    return stop(404, "Stock Adjustment not found", "txtDocNo");
+  }
+
+  return { ok: true, report, reportInfo: reportInfoOf(req.user.userId) };
+};
+
+export const printStockAdjustment = async (
+  req: AuthenticatedRequest,
+  res: Response
+): Promise<Response> => {
+  try {
+    const prepared = await preparePrint(req);
+
+    if (!prepared.ok) {
+      return res.status(prepared.status).json(prepared.body);
+    }
+
+    return res.status(200).json({
+      success: true,
+      header: {
+        ...mapKeys(prepared.report.header, stockAdjustmentPrintHeaderKeys),
+        txtReportInfo: prepared.reportInfo,
+      },
+      data: mapRows(prepared.report.lines, stockAdjustmentPrintLineKeys),
     });
   } catch (error: unknown) {
     console.error("printStockAdjustment error:", error);
@@ -681,6 +884,47 @@ export const printStockAdjustment = async (
     return res.status(500).json({
       success: false,
       message: "Failed to load the Stock Adjustment print",
+      error: messageOf(error, String(error)),
+    });
+  }
+};
+
+/* =========================================================
+   EXCEL STOCK ADJUSTMENT (Download in the Print Preview, File Format Excel)
+   The same body and the same checks as Print; answers with the .xlsx file.
+========================================================= */
+
+export const downloadStockAdjustmentExcel = async (
+  req: AuthenticatedRequest,
+  res: Response
+): Promise<Response> => {
+  try {
+    const prepared = await preparePrint(req);
+
+    if (!prepared.ok) {
+      return res.status(prepared.status).json(prepared.body);
+    }
+
+    const buffer = await buildStockAdjustmentWorkbook({
+      report: prepared.report,
+      heading: SCREEN_NAME,
+      reportInfo: prepared.reportInfo,
+    });
+
+    res.setHeader(
+      "Content-Type",
+      "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+    );
+    res.setHeader("Content-Disposition", 'attachment; filename="StockAdjustment.xlsx"');
+    res.setHeader("Access-Control-Expose-Headers", "Content-Disposition");
+
+    return res.status(200).send(buffer);
+  } catch (error: unknown) {
+    console.error("downloadStockAdjustmentExcel error:", error);
+
+    return res.status(500).json({
+      success: false,
+      message: "Failed to create the Stock Adjustment Excel file",
       error: messageOf(error, String(error)),
     });
   }

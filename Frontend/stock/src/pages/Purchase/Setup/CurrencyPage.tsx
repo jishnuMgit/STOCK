@@ -85,7 +85,9 @@ console.log(onClose)
 
     const load = async () => {
       try {
-        const res = await fetch(`${API}?coId=${encodeURIComponent(coId)}`);
+        const res = await fetch(`${API}?coId=${encodeURIComponent(coId)}`, {
+          credentials: "include", // the server checks the login session
+        });
         const data = await res.json();
 
         if (!res.ok || !data.success) {
@@ -172,6 +174,7 @@ console.log(onClose)
     try {
       const res = await fetch(
         `${API}/used/${encodeURIComponent(id)}?coId=${encodeURIComponent(coId)}`,
+        { credentials: "include" }, // the server checks the login session
       );
       const data = await res.json();
 
@@ -404,6 +407,7 @@ console.log(onClose)
     try {
       const res = await fetch(API, {
         method: "POST",
+        credentials: "include", // the server checks the login session
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           coId,
