@@ -575,13 +575,13 @@ export const deletePurchaseInvoice = async (
 
     await callPagePI(pool, {
       strmode: "D",
-      gstrcoid: coId,
-      gintyear: Number(year),
+      pstrcoid: coId,
+      pstryear: year,
       strbrid: brId,
       strdoctype: DOC_TYPE,
       strdocno: docNo,
-      gstruserid: userId,
-      strmenuname: "frmPI",
+      pstruserid: userId,
+      strmenuname: "pagePI",
     });
 
     return res.status(200).json({ success: true, message: "Deleted" });
