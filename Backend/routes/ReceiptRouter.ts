@@ -10,10 +10,14 @@ import {
   testget,
   DeleteReceipt,
   GetDatas,
-  getReceiptPrint
+  getReceiptPrint,
 } from "../controller/ReceiptController.js";
 
+import { requireReceiptContext } from "../middleware/receiptContext.js";
+
 const router = express.Router();
+
+router.use(requireReceiptContext);
 
 router.get("/getReceipt", getReceipt);
 
@@ -32,7 +36,7 @@ router.post("/modifyReceipt", modifyReceipt);
 router.post("/get/data", GetDatas);
 
 router.get("/get/data", GetDatas);
-router.delete('/delete',DeleteReceipt)
+router.delete("/delete", DeleteReceipt);
 
 router.get("/print", getReceiptPrint);
 

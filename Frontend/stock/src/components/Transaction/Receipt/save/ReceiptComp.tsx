@@ -11,8 +11,10 @@ import React, {
   useLayoutEffect,
 } from "react";
 
-import { Link } from "react-router-dom";
+import { apiFetch } from "../../../../utils/session";
+import { GetStrDocType } from "../../../../utils/receiptHelpers";
 
+import { Link } from "react-router-dom";
 import { FaEye } from "react-icons/fa";
 
 import Select, {
@@ -72,7 +74,7 @@ export type TableField =
   | "accountName"
   | "DivID"
   | "CCID"
-  | "creditAmt"
+  | "txtDebitCredit"
   | "match"
   | "view";
 
@@ -335,12 +337,12 @@ export const ReceiptForm: React.FC<ReceiptFormProps> = ({
       return;
     }
 
-    const strDocType = typeId + "R";
+    const strDocType = GetStrDocType(typeId);
 
     try {
       setDocumentNoLoading(true);
 
-      const response = await fetch(
+      const response = await apiFetch(
         `${import.meta.env.VITE_API_URL}/Receipt/getDocNo`,
         {
           method: "POST",
@@ -408,7 +410,7 @@ export const ReceiptForm: React.FC<ReceiptFormProps> = ({
     try {
       setAccountsLoading(true);
 
-      const response = await fetch(
+      const response = await apiFetch(
         `${import.meta.env.VITE_API_URL}/Receipt/getReceiptType`,
         {
           method: "POST",
@@ -1964,7 +1966,7 @@ const ReceiptRow = memo(
         setDivisionLoading(true);
 
         try {
-          const response = await fetch(
+          const response = await apiFetch(
             `${import.meta.env.VITE_API_URL}/Receipt/getDivID`,
             {
               method: "POST",
@@ -2671,37 +2673,36 @@ const ReceiptRow = memo(
 
         <td className={`receipt-cell ${activeCellClass}`}>
           <input
-            id={`txtCreditAmt-${row.id}`}
-            ref={(element) => setRowRef(index, "creditAmt", element)}
+            id={`txtDebitCredit-${row.id}`}
+            ref={(element) => setRowRef(index, "txtDebitCredit", element)}
             placeholder="0.00"
             type="text"
-            inputMode="decimal"
-            value={row.creditAmt}
+            value={row.txtDebitCredit}
             onChange={(event) => {
               const inputValue = event.target.value;
 
-              /* Allow only numbers with
-       maximum 2 decimal places */
-
-              if (/^\d*\.?\d{0,2}$/.test(inputValue)) {
-                handleRowChange(row.id, "creditAmt", inputValue);
+              /*
+               * Allowed: an optional "-" only as the FIRST character,
+               * then digits, and one "." with at most 2 decimals.
+               * Letters, "+", ",", spaces and every other symbol are rejected,
+               * including when pasted.
+               */
+              if (/^-?\d*\.?\d{0,2}$/.test(inputValue)) {
+                handleRowChange(row.id, "txtDebitCredit", inputValue);
               }
             }}
             onFocus={() => setSelectedRowId(row.id)}
             onBlur={() => {
-              if (row.creditAmt) {
+              if (row.txtDebitCredit) {
                 handleRowChange(
                   row.id,
-                  "creditAmt",
-                  formatCreditAmount(row.creditAmt),
+                  "txtDebitCredit",
+                  formatCreditAmount(row.txtDebitCredit),
                 );
               }
             }}
-            onKeyDown={(event) => handleControlKeyDown(event, "creditAmt")}
-            className="
-    receipt-grid-input
-    text-right
-  "
+            onKeyDown={(event) => handleControlKeyDown(event, "txtDebitCredit")}
+            className="receipt-grid-input text-right"
           />
         </td>
 
@@ -2980,7 +2981,7 @@ export const ReceiptTable = forwardRef<ReceiptTableRef, ReceiptTableProps>(
 
               <th id="lkpDivID">Div. ID</th>
               <th id="lkpCCID">CC. ID</th>
-              <th id="txtCreditAmt" className="text-right">
+              <th id="txtDebitCredit" className="text-right">
                 Credit Amt.
               </th>
               <th id="ckhMatch" className="text-center">
