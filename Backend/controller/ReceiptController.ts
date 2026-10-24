@@ -15,7 +15,12 @@ import {
 import { getReceiptPrintData } from "../services/receiptPrintService.js";
 import { GetData } from "../services/GetDataService.js";
 import { UserAudit } from "../utils/UserAudit.js";
-import { log } from "console";
+import type { ReceiptContext } from "../middleware/receiptContext.js";
+import { GetStrDocType } from "../utils/docType.js";
+
+/* Set by requireReceiptContext middleware (headers sent from localStorage). */
+const getCtx = (res: Response): ReceiptContext =>
+  res.locals.ctx as ReceiptContext;
 
 /* =========================================================
    GET RECEIPT INITIAL DATA
@@ -26,142 +31,47 @@ export const getReceipt = async (
   res: Response,
 ): Promise<Response> => {
   try {
-    const PstrCoID = process.env.PstrCoID;
-    const PstrUserID = process.env.PstrUserID;
-    const PstrYear = Number(process.env.PstrYear);
+    const { pstrCoID, pstrYear, pstrUserID } = getCtx(res);
 
-    console.log("=================================");
-    console.log("REQUEST BODY:", req.body);
-    console.log("=================================");
+    const year = Number(pstrYear);
 
-    /* =====================================================
-       ENVIRONMENT VALIDATION
-    ===================================================== */
+    /* B -> BR, C -> CR (GET request: type comes from the query string) */
 
-    if (!PstrCoID) {
-      return res.status(400).json({
-        success: false,
-        message: "Company ID is not configured",
-      });
-    }
-
-    if (!PstrUserID) {
-      return res.status(400).json({
-        success: false,
-        message: "User ID is not configured",
-      });
-    }
-
-    if (!PstrYear) {
-      return res.status(400).json({
-        success: false,
-        message: "Financial year is not configured",
-      });
-    }
-
-    /* =====================================================
-       RECEIPT lkpType
-       
-       UI:
-       B = Bank
-       C = Cash
-
-       DB:
-       B = BR
-       C = CR
-    ===================================================== */
-
-    const receiptType =
-      req.body?.lkpType === "B"
-        ? "BR"
-        : req.body?.lkpType === "C"
-          ? "CR"
-          : req.body?.lkpType || "BR";
-
-    console.log("UI TYPE:", req.body?.lkpType);
-    console.log("DB RECEIPT TYPE:", receiptType);
-
-    /* =====================================================
-       BRANCHES
-    ===================================================== */
+    const receiptType = GetStrDocType(req.query.lkpType ?? "B");
 
     const branchResult = await pool.query(
-      `
-      SELECT *
-      FROM dbo.filluserbranch($1, $2)
-      `,
-      [PstrCoID, PstrUserID],
+      `SELECT * FROM dbo.filluserbranch($1, $2)`,
+      [pstrCoID, pstrUserID],
     );
-
-    /* =====================================================
-       DEFAULT BRANCH
-    ===================================================== */
 
     const defaultBranchResult = await pool.query(
-      `
-      SELECT *
-      FROM dbo.filldefaultbranch($1, $2)
-      `,
-      [PstrCoID, PstrUserID],
+      `SELECT * FROM dbo.filldefaultbranch($1, $2)`,
+      [pstrCoID, pstrUserID],
     );
-
-    const LkpType = await pool.query("SELECT * FROM dbo.fillfinparam()");
-
-    console.log(LkpType.rows);
-
-    console.log("defaultBranchResult:", defaultBranchResult);
 
     const defaultBranch =
       defaultBranchResult.rows[0]?.fbrid ||
       defaultBranchResult.rows[0]?.filldefaultbranch ||
       null;
 
-    console.log("DEFAULT BRANCH:", defaultBranch);
-
-    /* =====================================================
-       FINANCIAL PARAMETERS
-    ===================================================== */
-
-    const finparamResult = await pool.query(
-      `
-      SELECT *
-      FROM dbo.fillfinparam()
-      `,
-    );
-
-    /* =====================================================
-       ACCOUNTS
-    ===================================================== */
+    const finparamResult = await pool.query(`SELECT * FROM dbo.fillfinparam()`);
 
     const accountsResult = await pool.query(
-      `
-      SELECT *
-      FROM dbo.filllookupaccountname($1)
-      `,
-      [PstrCoID],
+      `SELECT * FROM dbo.filllookupaccountname($1)`,
+      [pstrCoID],
     );
 
     const accountsidResult = await pool.query(
-      `
-      SELECT *
-      FROM dbo.filllookupaccountid($1)
-      `,
-      [PstrCoID],
+      `SELECT * FROM dbo.filllookupaccountid($1)`,
+      [pstrCoID],
     );
-
-    /* =====================================================
-       COST CENTERS
-    ===================================================== */
 
     let costCenters: any[] = [];
 
     try {
       const costCenterResult = await pool.query(
-        `
-        SELECT *
-        FROM dbo.fillcostcenters($1)
-        `,
-        [PstrCoID],
+        `SELECT * FROM dbo.fillcostcenters($1)`,
+        [pstrCoID],
       );
 
       costCenters = costCenterResult.rows;
@@ -174,42 +84,15 @@ export const getReceipt = async (
       costCenters = [];
     }
 
-    /* =====================================================
-       INITIAL RECEIPT NUMBER
-
-       IMPORTANT
-
-       getnextdocno expects the document type:
-
-       BR = Bank Receipt
-       CR = Cash Receipt
-    ===================================================== */
+    /* INITIAL RECEIPT NUMBER (getnextdocno expects BR / CR) */
 
     let receiptNo: string | number | null = null;
 
     if (defaultBranch) {
-      console.log("Calling getnextdocno with:", {
-        PstrCoID,
-        PstrYear,
-        defaultBranch,
-        receiptType,
-        module: "FIN",
-      });
-
       const receiptNoResult = await pool.query(
-        `
-        SELECT *
-        FROM dbo.getnextdocno(
-          $1,
-          $2,
-          $3,
-          $4
-        )
-        `,
-        [PstrCoID, PstrYear, defaultBranch, receiptType],
+        `SELECT * FROM dbo.getnextdocno($1, $2, $3, $4)`,
+        [pstrCoID, year, defaultBranch, receiptType],
       );
-
-      console.log("receiptNoResult:", receiptNoResult);
 
       receiptNo =
         receiptNoResult.rows[0]?.getnextdocno ||
@@ -221,10 +104,6 @@ export const getReceipt = async (
         "Default branch not found. Receipt number was not generated.",
       );
     }
-
-    /* =====================================================
-       RESPONSE
-    ===================================================== */
 
     return res.status(200).json({
       success: true,
@@ -246,8 +125,6 @@ export const getReceipt = async (
       receiptNo,
 
       receiptType,
-
-      LkpType,
     });
   } catch (error: unknown) {
     console.error("ReceiptsControllers error:", error);
@@ -263,7 +140,7 @@ export const getReceipt = async (
 };
 
 /* =========================================================
-   GET RECEIPT TYPE
+   GET RECEIPT TYPE (cash / bank accounts)
 ========================================================= */
 
 export const getReceiptType = async (
@@ -271,11 +148,9 @@ export const getReceiptType = async (
   res: Response,
 ): Promise<Response> => {
   try {
-    const PstrCoID = process.env.PstrCoID;
+    const { pstrCoID } = getCtx(res);
 
     const { lkpType } = req.body;
-    const { fptype } = req.body;
-    console.log(req.body);
 
     if (!lkpType) {
       return res.status(400).json({
@@ -292,11 +167,8 @@ export const getReceiptType = async (
     }
 
     const result = await pool.query(
-      `
-      SELECT *
-      FROM dbo.filllookupcbaccountname($1,$2)
-      `,
-      [PstrCoID, lkpType],
+      `SELECT * FROM dbo.filllookupcbaccountname($1,$2)`,
+      [pstrCoID, lkpType],
     );
 
     return res.status(200).json({
@@ -310,7 +182,6 @@ export const getReceiptType = async (
     return res.status(500).json({
       success: false,
       message: "Failed to load cash/bank accounts",
-
       error: error instanceof Error ? error.message : String(error),
     });
   }
@@ -325,30 +196,9 @@ export const getDocNo = async (
   res: Response,
 ): Promise<Response> => {
   try {
-    const PstrCoID = process.env.PstrCoID;
-    const PstrYear = Number(process.env.PstrYear);
+    const { pstrCoID, pstrYear } = getCtx(res);
 
     const { strDocType, lkpBranch } = req.body;
-
-    console.log("================fptype=================", req.body);
-
-    /* =========================================
-       VALIDATION
-    ========================================= */
-
-    if (!PstrCoID) {
-      return res.status(400).json({
-        success: false,
-        message: "Company ID is not configured",
-      });
-    }
-
-    if (!PstrYear) {
-      return res.status(400).json({
-        success: false,
-        message: "Financial year is not configured",
-      });
-    }
 
     if (!strDocType) {
       return res.status(400).json({
@@ -357,25 +207,10 @@ export const getDocNo = async (
       });
     }
 
-    /* =========================================
-       GET NEXT RECEIPT DOCUMENT NUMBER
-
-       RV = Receipt Voucher
-    ========================================= */
-
-    console.log("fbrid");
-
     const result = await pool.query(
-      `
-      SELECT *
-      FROM dbo.getnextdocno($1, $2, $3, $4)
-      `,
-      [PstrCoID, PstrYear, lkpBranch, strDocType],
+      `SELECT * FROM dbo.getnextdocno($1, $2, $3, $4)`,
+      [pstrCoID, Number(pstrYear), lkpBranch, GetStrDocType(strDocType)],
     );
-
-    /* =========================================
-       RESPONSE
-    ========================================= */
 
     return res.status(200).json({
       success: true,
@@ -386,9 +221,7 @@ export const getDocNo = async (
 
     return res.status(500).json({
       success: false,
-
       message: "Failed to generate Receipt No.",
-
       error: error instanceof Error ? error.message : String(error),
     });
   }
@@ -403,26 +236,9 @@ export const getDivID = async (
   res: Response,
 ): Promise<Response> => {
   try {
-    const PstrCoID = process.env.PstrCoID;
+    const { pstrCoID } = getCtx(res);
 
     const { accountId } = req.body;
-
-    console.log("=================================");
-
-    console.log("GET CUSTOMER DIVISIONS");
-
-    console.log("Company ID:", PstrCoID);
-
-    console.log("Customer ID:", accountId);
-
-    console.log("=================================");
-
-    if (!PstrCoID) {
-      return res.status(400).json({
-        success: false,
-        message: "Company ID is not configured",
-      });
-    }
 
     if (!accountId) {
       return res.status(400).json({
@@ -432,23 +248,13 @@ export const getDivID = async (
     }
 
     const result = await pool.query(
-      `
-        SELECT *
-        FROM dbo.fillcustomerdivisions(
-          $1,
-          $2
-        )
-        `,
-      [PstrCoID, accountId],
+      `SELECT * FROM dbo.fillcustomerdivisions($1, $2)`,
+      [pstrCoID, accountId],
     );
-
-    console.log("Customer Division Result:", result.rows);
 
     return res.status(200).json({
       success: true,
-
       message: "Customer divisions loaded successfully",
-
       data: result.rows || [],
     });
   } catch (error: unknown) {
@@ -456,15 +262,13 @@ export const getDivID = async (
 
     return res.status(500).json({
       success: false,
-
       message: "Failed to load customer divisions",
-
       error: error instanceof Error ? error.message : String(error),
     });
   }
 };
 
-/* ========================================================
+/* =========================================================
    SAVE RECEIPT
 ========================================================= */
 
@@ -472,36 +276,20 @@ export const saveReceipt = async (
   req: Request,
   res: Response,
 ): Promise<Response> => {
-  const PstrCoID = process.env.PstrCoID;
-  const PstrYear = Number(process.env.PstrYear);
-
-  // console.log("===============================");
-  // console.log(req.body);
-  // console.log("===============================");
-
   try {
+    const ctx = getCtx(res);
+
     const payload = cleanReceiptPayload(req.body);
 
-    console.log("++++++++++++++++++++++++++++++++");
-
-    console.log(payload);
-
-    console.log("++++++++++++++++++++++++++++++++");
-
-    const PstrCoID = process.env.PstrCoID;
-
-    if (!PstrCoID) {
-      throw new Error("Company ID is not configured");
-    }
+    const docType = GetStrDocType(req.body.lkpType);
 
     // CHECK CC ID AND DIVISION BEFORE SAVE
-    await CheckISdividISccid(payload, pool, PstrCoID);
+    await CheckISdividISccid(payload, pool, ctx.pstrCoID);
 
     const active = await isActivePeriod(
-      PstrCoID,
+      ctx.pstrCoID,
       payload?.lkpBranch,
       payload?.dtpDate,
-      
     );
 
     if (!active) {
@@ -510,18 +298,19 @@ export const saveReceipt = async (
         message: "'Date' must be within the Active Period",
       });
     }
-    const { lkpBranch, lkpType, txtDocNo } = req.body;
+
+    const { lkpBranch, txtDocNo } = req.body;
 
     const existing = await GetData({
       lkpBranch: String(lkpBranch),
-      lkpType: String(lkpType), // BR / CR (frontend already converts)
+      lkpType: docType,
       txtDocNo: String(txtDocNo),
     });
 
     if (existing?.exists) {
       const next = await pool.query(
         `SELECT * FROM dbo.getnextdocno($1, $2, $3, $4)`,
-        [PstrCoID, PstrYear, lkpBranch, lkpType],
+        [ctx.pstrCoID, Number(ctx.pstrYear), lkpBranch, docType],
       );
 
       const newReceiptNo = next.rows[0]?.getnextdocno;
@@ -539,10 +328,7 @@ export const saveReceipt = async (
       });
     }
 
-    // ONLY SAVE IF VALIDATION PASSED
-    const result = await saveReceiptService(payload);
-
-    console.log("saveReceipt request body:", payload);
+    const result = await saveReceiptService(payload, ctx);
 
     return res.status(200).json({
       success: true,
@@ -569,22 +355,17 @@ export const modifyReceipt = async (
   res: Response,
 ): Promise<Response> => {
   try {
+    const ctx = getCtx(res);
+
     const payload = cleanReceiptPayload(req.body);
 
-    const PstrCoID = process.env.PstrCoID;
-
-    if (!PstrCoID) {
-      throw new Error("Company ID is not configured");
-    }
-
     // CHECK CC ID AND DIVISION BEFORE SAVE
-    await CheckISdividISccid(payload, pool, PstrCoID);
+    await CheckISdividISccid(payload, pool, ctx.pstrCoID);
 
     const active = await isActivePeriod(
-      PstrCoID,
+      ctx.pstrCoID,
       payload?.lkpBranch,
       payload?.dtpDate,
-      
     );
 
     if (!active) {
@@ -594,7 +375,7 @@ export const modifyReceipt = async (
       });
     }
 
-    const result = await updateReceiptService(payload);
+    const result = await updateReceiptService(payload, ctx);
 
     return res.status(200).json({
       success: true,
@@ -638,33 +419,12 @@ export const testget = async (
 
 export async function GetDatas(req: Request, res: Response): Promise<Response> {
   try {
-    /* =====================================================
-       QUERY PARAMETERS
-    ===================================================== */
-
     const { lkpBranch, lkpType, txtDocNo } = req.query;
 
-    console.log("\n======================================");
+    const isBlank = (value: unknown): boolean =>
+      value === undefined || value === null || String(value).trim() === "";
 
-    console.log("GET RECEIPT FOR MODIFY");
-
-    console.log("Branch:", JSON.stringify(lkpBranch));
-
-    console.log("Doc lkpType:", JSON.stringify(lkpType));
-
-    console.log("Doc No 1:", JSON.stringify(txtDocNo));
-
-    console.log("======================================");
-
-    /* =====================================================
-       VALIDATION
-    ===================================================== */
-
-    if (
-      lkpBranch === undefined ||
-      lkpBranch === null ||
-      String(lkpBranch).trim() === ""
-    ) {
+    if (isBlank(lkpBranch)) {
       return res.status(400).json({
         exists: false,
         header: null,
@@ -673,11 +433,7 @@ export async function GetDatas(req: Request, res: Response): Promise<Response> {
       });
     }
 
-    if (
-      lkpType === undefined ||
-      lkpType === null ||
-      String(lkpType).trim() === ""
-    ) {
+    if (isBlank(lkpType)) {
       return res.status(400).json({
         exists: false,
         header: null,
@@ -686,11 +442,7 @@ export async function GetDatas(req: Request, res: Response): Promise<Response> {
       });
     }
 
-    if (
-      txtDocNo === undefined ||
-      txtDocNo === null ||
-      String(txtDocNo).trim() === ""
-    ) {
+    if (isBlank(txtDocNo)) {
       return res.status(400).json({
         exists: false,
         header: null,
@@ -699,23 +451,11 @@ export async function GetDatas(req: Request, res: Response): Promise<Response> {
       });
     }
 
-    /* =====================================================
-       CALL GetData
-    ===================================================== */
-
-    console.log("Calling GetData...");
-
     const result = await GetData({
       lkpBranch: String(lkpBranch),
-      lkpType: String(lkpType),
+      lkpType: GetStrDocType(lkpType),
       txtDocNo: String(txtDocNo),
     });
-
-    console.log("Calling GetData...", result?.header);
-
-    /* =====================================================
-       NOT FOUND
-    ===================================================== */
 
     if (!result || result.exists === false) {
       return res.status(404).json(
@@ -727,10 +467,6 @@ export async function GetDatas(req: Request, res: Response): Promise<Response> {
         },
       );
     }
-
-    /* =====================================================
-       SUCCESS
-    ===================================================== */
 
     return res.status(200).json(result);
   } catch (error: unknown) {
@@ -746,72 +482,45 @@ export async function GetDatas(req: Request, res: Response): Promise<Response> {
   }
 }
 
+/* =========================================================
+   DELETE RECEIPT
+========================================================= */
+
 export const DeleteReceipt = async (
   req: Request,
   res: Response,
 ): Promise<Response> => {
   try {
-    const PstrCoID = process.env.PstrCoID;
-    const PstrYear = process.env.PstrYear;
-    const PstrUserID = process.env.PstrUserID;
-
-    if (!PstrCoID) {
-      throw new Error("Company ID is not configured");
-    }
-
-    if (!PstrYear) {
-      throw new Error("Year is not configured");
-    }
-
-    if (!PstrUserID) {
-      throw new Error("User ID is not configured");
-    }
+    const ctx = getCtx(res);
 
     const { lkpBranch, lkpType, txtDocNo } = req.body;
 
     if (!lkpBranch) {
-      return res.status(400).json({
-        message: "branch is required",
-      });
+      return res.status(400).json({ message: "branch is required" });
     }
 
     if (!lkpType) {
-      return res.status(400).json({
-        message: "type is required",
-      });
+      return res.status(400).json({ message: "type is required" });
     }
 
     if (!txtDocNo) {
-      return res.status(400).json({
-        message: "Doc.No is required",
-      });
+      return res.status(400).json({ message: "Doc.No is required" });
     }
 
-    // =====================================================
-    // GET EXISTING RECEIPT BEFORE DELETE
-    // =====================================================
+    const docType = GetStrDocType(lkpType);
 
+    // GET EXISTING RECEIPT BEFORE DELETE
     const receiptData = await GetData({
       lkpBranch,
-      lkpType,
+      lkpType: docType,
       txtDocNo,
     });
 
-    console.log("Receipt Before Delete:", receiptData);
-
-    // =====================================================
-    // GET DATA REQUIRED FOR AUDIT
-    // =====================================================
-
-    // Adjust these property names according to your GetData response
+    // DATA REQUIRED FOR AUDIT
     const dtpDate = receiptData?.header?.dtpDate ?? "";
     const cbAccountName = receiptData?.header?.cbAccountName ?? "";
     const receivedFrom = receiptData?.header?.receivedFrom ?? "";
     const totalCredit = Number(receiptData?.total ?? 0);
-
-    // =====================================================
-    // USER AUDIT
-    // =====================================================
 
     const gstrUserAuditNote =
       `Date : ${dtpDate}\n` +
@@ -820,32 +529,21 @@ export const DeleteReceipt = async (
       `Amount : ${totalCredit}`;
 
     const auditResult = await UserAudit(
-      PstrCoID,
-      PstrYear,
+      ctx.pstrCoID,
+      ctx.pstrYear,
       lkpBranch,
-      lkpType,
+      docType,
       txtDocNo,
       "Receipt",
       "D",
-      PstrUserID,
+      ctx.pstrUserID,
       gstrUserAuditNote,
     );
 
-    console.log("User Audit:", auditResult);
-
-    // =====================================================
-    // DELETE RECEIPT
-    // =====================================================
-
-    const result = await deleteReceiptService({
-      lkpBranch,
-      lkpType,
-      txtDocNo,
-    });
-
-    // =====================================================
-    // RETURN
-    // =====================================================
+    const result = await deleteReceiptService(
+      { lkpBranch, lkpType: docType, txtDocNo },
+      ctx,
+    );
 
     return res.status(200).json({
       success: true,
@@ -864,26 +562,22 @@ export const DeleteReceipt = async (
   }
 };
 
+/* =========================================================
+   PRINT RECEIPT
+========================================================= */
+
 export const getReceiptPrint = async (
   req: Request,
   res: Response,
 ): Promise<Response> => {
   try {
-    const PstrCoID = process.env.PstrCoID;
-    const PstrYear = process.env.PstrYear;
-
-    if (!PstrCoID || !PstrYear) {
-      return res.status(400).json({
-        success: false,
-        message: "Company ID / financial year is not configured",
-      });
-    }
+    const { pstrCoID, pstrYear } = getCtx(res);
 
     const asText = (value: unknown): string =>
       typeof value === "string" ? value.trim() : "";
 
     const strbranch = asText(req.query.lkpBranch);
-    const lkpType = asText(req.query.lkpType) + "R";
+    const lkpType = GetStrDocType(asText(req.query.lkpType));
     const strdocNo = asText(req.query.txtDocNo);
 
     if (!strbranch || !lkpType || !strdocNo) {
@@ -893,17 +587,11 @@ export const getReceiptPrint = async (
       });
     }
 
-    console.log("getReceiptPrint parameters:", {
-      strbranch,
-      lkpType,
-      strdocNo,
-    });
-
     const data = await getReceiptPrintData({
-      coId: PstrCoID,
-      year: PstrYear,
+      coId: pstrCoID,
+      year: pstrYear,
       branch: strbranch,
-      lkpType: lkpType,
+      lkpType,
       docNo: strdocNo,
     });
 

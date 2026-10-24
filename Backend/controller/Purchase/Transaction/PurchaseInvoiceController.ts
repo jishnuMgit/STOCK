@@ -213,12 +213,21 @@ export const getPurchaseInvoice = async (
     // same columns as sp_pagepi 'GHD'
     const header = await pool.query(
       `SELECT DISTINCT
-      fpisitype AS finvoicetype, fdate, fcsaccountid AS faccountid,
-      fpono, fpino, fcurrency, fcurrencyrate, fnote, fdiscamt, fdocamt,
-      fnetdocamt, fvatamt, COALESCE(fpost, false) AS fpost,
-      fcuserid, fcuserdate, fmuserid, fmuserdate
- FROM dbo.tblstocktrans
-WHERE fcoid=$1 AND fyear=$2 AND fbrid=$3 AND fdoctype=$4 AND fdocno=$5`,
+          t.fpisitype AS finvoicetype, t.fdate, t.fcsaccountid AS faccountid,
+          t.fpono, t.fpino, t.fcurrency, t.fcurrencyrate, t.fnote,
+          t.fdiscamt, t.fdocamt, t.fnetdocamt, t.fvatamt,
+          COALESCE(t.fpost, false) AS fpost,
+          COALESCE(t.fmisccs, false) AS fmisccs,
+          t.fmisccsaccountid AS fmiscsupid,
+          c.fcashsuppliername AS faccountname,
+          c.fvatno AS fvatno,
+          t.fcuserid, t.fcuserdate, t.fmuserid, t.fmuserdate
+     FROM dbo.tblstocktrans t
+     LEFT JOIN dbo.tblcashsupplier c
+            ON c.fcoid = t.fcoid
+           AND c.fcashsupplierid = t.fmisccsaccountid
+    WHERE t.fcoid=$1 AND t.fyear=$2 AND t.fbrid=$3
+      AND t.fdoctype=$4 AND t.fdocno=$5`,
       params,
     );
 
@@ -279,6 +288,7 @@ export const savePurchaseInvoice = async (
       vatNo,
       supplierId,
       supplierName,
+      miscSupId,
       currency,
       currencyRate,
       note,
@@ -300,6 +310,7 @@ export const savePurchaseInvoice = async (
       vatNo?: string;
       supplierId?: string;
       supplierName?: string;
+      miscSupId?: string;
       currency: string;
       currencyRate: number;
       note?: string;
@@ -493,7 +504,24 @@ export const savePurchaseInvoice = async (
         numtotalcost: num(l.totalCost),
       });
     }
-
+    /* misc (cash) supplier link. sp_pagepi does not store it.
+       Must run AFTER the S loop: modify deletes and re-inserts every line row. */
+    const miscId = invoiceType === "C" ? (miscSupId ?? "").trim() : "";
+    await client.query(
+      `UPDATE dbo.tblstocktrans
+          SET fmisccs = $6, fmisccsaccountid = $7
+        WHERE fcoid=$1 AND fyear=$2 AND fbrid=$3 AND fdoctype=$4 AND fdocno=$5`,
+      [
+        coId,
+        Number(year),
+        brId,
+        DOC_TYPE,
+        docNo,
+        miscId !== "",
+        miscId || null,
+      ],
+    );
+    
     /* NEW: modify -> put back the original creator and set the modifier */
     if (mode === "M" && origCreator) {
       await client.query(

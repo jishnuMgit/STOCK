@@ -30,6 +30,10 @@ import {
 } from "../../../../types/receiptypes";
 import { toast } from "react-toastify";
 import ReceiptPrint from "../../../../components/Transaction/Receipt/save/Receipt.print";
+
+import { apiFetch } from "../../../../utils/session";
+import { GetStrDocType } from "../../../../utils/receiptHelpers";
+
 /* =========================================================
    CREATE INITIAL ROWS
 ========================================================= */
@@ -45,7 +49,7 @@ const createRows = (): ReceiptRow[] =>
     haveDivision: false,
     DivID: "",
     CCID: "",
-    creditAmt: "",
+    txtDebitCredit: "",
     amount: 0,
     match: false,
     description: "",
@@ -60,7 +64,7 @@ const tableFieldOrder: TableField[] = [
   "accountName",
   "DivID",
   "CCID",
-  "creditAmt",
+  "txtDebitCredit",
 ];
 
 /* =========================================================
@@ -107,6 +111,7 @@ interface ModifyReceiptResponse {
     fgcs?: string;
     DivID?: string;
     CCID?: string;
+    txtDebitCredit?: string | number;
     creditAmt?: string | number;
     match?: boolean | string | number;
     description?: string;
@@ -116,27 +121,6 @@ interface ModifyReceiptResponse {
 
   message?: string;
 }
-
-/* =========================================================
-   DOCUMENT TYPE
-
-   B -> BR
-   C -> CR
-========================================================= */
-
-const toDocumentType = (value: string) => {
-  const normalized = value.trim().toUpperCase();
-
-  if (normalized === "B") {
-    return "BR";
-  }
-
-  if (normalized === "C") {
-    return "CR";
-  }
-
-  return normalized;
-};
 
 /* =========================================================
    DATE FORMAT
@@ -276,7 +260,7 @@ const ReceiptPage: React.FC = () => {
 
     const loadReceiptData = async () => {
       try {
-        const response = await fetch(
+        const response = await apiFetch(
           `${import.meta.env.VITE_API_URL}/Receipt/getReceipt`,
           {
             method: "GET",
@@ -348,7 +332,7 @@ const ReceiptPage: React.FC = () => {
 
   const handlePrint = async () => {
     try {
-      const response = await fetch(
+      const response = await apiFetch(
         `${import.meta.env.VITE_API_URL}/Receipt/print?lkpBranch=${lkpBranch}&lkpType=${lkpType}&txtDocNo=${txtDocNo}`,
       );
 
@@ -384,7 +368,7 @@ const ReceiptPage: React.FC = () => {
       return;
     }
 
-    const lookupKey = `${lkpBranch}|${toDocumentType(
+    const lookupKey = `${lkpBranch}|${GetStrDocType(
       lkpType,
     )}|${requestedDocumentNo}`;
 
@@ -399,12 +383,12 @@ const ReceiptPage: React.FC = () => {
     try {
       const query = new URLSearchParams({
         lkpBranch: lkpBranch,
-        lkpType: toDocumentType(lkpType),
+        lkpType: GetStrDocType(lkpType),
         txtDocNo: requestedDocumentNo,
       });
 
       const url = `${import.meta.env.VITE_API_URL}/Receipt/get/data?${query.toString()}`;
-      const response = await fetch(url);
+      const response = await apiFetch(url);
       const responseText = await response.text();
       let result: ModifyReceiptResponse;
 
@@ -434,6 +418,9 @@ const ReceiptPage: React.FC = () => {
           (option) => option.faccountid === loadedRow.AccountID,
         );
 
+        /* new API field first, fall back to the old one */
+        const loadedAmount = loadedRow.txtDebitCredit ?? loadedRow.creditAmt;
+
         loadedRows[index] = {
           id: index + 1,
           slNo: index + 1,
@@ -445,12 +432,13 @@ const ReceiptPage: React.FC = () => {
           haveDivision: Boolean(loadedRow.DivID),
           DivID: loadedRow.DivID || "",
           CCID: loadedRow.CCID || "",
-          creditAmt:
-            loadedRow.creditAmt === undefined ||
-            loadedRow.creditAmt === null
+
+          txtDebitCredit:
+            loadedAmount === undefined || loadedAmount === null
               ? ""
-              : String(loadedRow.creditAmt),
-          amount: Number(loadedRow.creditAmt) || 0,
+              : String(loadedAmount),
+          amount: Number(loadedAmount) || 0,
+
           match:
             loadedRow.match === true ||
             loadedRow.match === 1 ||
@@ -552,7 +540,7 @@ const ReceiptPage: React.FC = () => {
          GET NEW RECEIPT DEFAULTS
       ===================================================== */
 
-      const response = await fetch(
+      const response = await apiFetch(
         `${import.meta.env.VITE_API_URL}/Receipt/getReceipt`,
         {
           method: "GET",
@@ -749,7 +737,7 @@ const ReceiptPage: React.FC = () => {
           haveDivision: false,
           DivID: "",
           CCID: "",
-          creditAmt: "",
+          txtDebitCredit: "",
           amount: 0,
           match: false,
           description: "",
@@ -876,9 +864,12 @@ const ReceiptPage: React.FC = () => {
            CREDIT REQUIRED
         =============================================== */
 
-      if (field === "creditAmt" && !row?.creditAmt.trim()) {
+      if (
+        field === "txtDebitCredit" &&
+        !Number.isFinite(parseFloat(row?.txtDebitCredit ?? ""))
+      ) {
         toast.warning("Credit Amount is required.");
-        focusTableField(rowIndex, "creditAmt");
+        focusTableField(rowIndex, "txtDebitCredit");
         return;
       }
 
@@ -886,7 +877,7 @@ const ReceiptPage: React.FC = () => {
            CREDIT -> DESCRIPTION
         =============================================== */
 
-      if (field === "creditAmt") {
+      if (field === "txtDebitCredit") {
         setActiveDescriptionRow(rowIndex);
 
         // Only load the selected row's description
@@ -1055,7 +1046,7 @@ const ReceiptPage: React.FC = () => {
   ======================================================= */
 
   const total = useMemo(
-    () => rows.reduce((sum, row) => sum + (Number(row.creditAmt) || 0), 0),
+    () => rows.reduce((sum, row) => sum + (Number(row.txtDebitCredit) || 0), 0),
     [rows],
   );
 
@@ -1116,7 +1107,7 @@ const ReceiptPage: React.FC = () => {
       const receiptData = {
         lkpBranch,
         lkpType,
-       cbAccountName,
+        cbAccountName,
         cbCcId,
 
         txtDocNo,
@@ -1132,7 +1123,7 @@ const ReceiptPage: React.FC = () => {
           fgcs: row.fgcs,
           DivID: row.DivID,
           CCID: row.CCID,
-          creditAmt: Number(row.creditAmt) || 0,
+          txtDebitCredit: Number(row.txtDebitCredit) || 0,
           match: row.match,
           description: row.description || "",
         })),
@@ -1157,7 +1148,7 @@ const ReceiptPage: React.FC = () => {
        SAVE API
     ===================================================== */
 
-      const response = await fetch(
+      const response = await apiFetch(
         `${import.meta.env.VITE_API_URL}/Receipt/saveReceipt`,
         {
           method: "POST",
@@ -1364,7 +1355,7 @@ const ReceiptPage: React.FC = () => {
 
     const modifyPayload = {
       lkpBranch,
-      lkpType: toDocumentType(lkpType),
+      lkpType: GetStrDocType(lkpType),
       cbAccountName: cbAccountName,
       cbCcId,
 
@@ -1386,7 +1377,7 @@ const ReceiptPage: React.FC = () => {
         fgcs: row.fgcs,
         DivID: row.DivID,
         CCID: row.CCID,
-        creditAmt: Number(row.creditAmt) || 0,
+        txtDebitCredit: Number(row.txtDebitCredit) || 0,
         match: row.match,
         description: row.description || "",
       })),
@@ -1416,7 +1407,7 @@ const ReceiptPage: React.FC = () => {
         `${import.meta.env.VITE_API_URL}i/Receipt/modifyReceipt`,
       );
 
-      const response = await fetch(
+      const response = await apiFetch(
         `${import.meta.env.VITE_API_URL}/Receipt/modifyReceipt`,
         {
           method: "POST",
@@ -1590,7 +1581,7 @@ const ReceiptPage: React.FC = () => {
          DELETE API
       =============================================== */
 
-      const response = await fetch(
+      const response = await apiFetch(
         `${import.meta.env.VITE_API_URL}/Receipt/delete`,
         {
           method: "DELETE",
