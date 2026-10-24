@@ -20,7 +20,7 @@ import {
 import { toast } from "react-toastify";
 import { useConfirmModal } from "../../../hooks/useConfirmModal";
 
-const ROW_COUNT = 12;
+const ROW_COUNT = 11;
 const createRows = () => Array.from({ length: ROW_COUNT }, emptyRow);
 
 // TODO: replace with the login year you already keep after /login (PstrYear)

@@ -6,8 +6,6 @@ import dayjs from "dayjs";
 import customParseFormat from "dayjs/plugin/customParseFormat";
 
 import type { SelectOption, DocumentOption } from "./types";
-// import type { TableField } from "./types";
-import { handleKeyboardAction } from "../../../hooks/useMatchKeyboard";
 import type { StylesConfig } from "react-select";
 
 dayjs.extend(customParseFormat);
@@ -58,6 +56,9 @@ export interface MatchHeaderProps {
   handleCustomerNameChange: (name: string) => void | Promise<void>;
   handleSearch: () => void | Promise<void>;
 
+  /* Enter on Match Date -> first usable table cell */
+  onDateEnter: () => void;
+
   renderSelect: (
     id: string,
     value: string,
@@ -81,7 +82,6 @@ export interface MatchHeaderProps {
 }
 
 const MatchHeader: React.FC<MatchHeaderProps> = ({
-  // branch,
   customerId,
   customerName,
   divisionId,
@@ -93,7 +93,6 @@ const MatchHeader: React.FC<MatchHeaderProps> = ({
   setDocType,
   setReceiptNo,
   setReceiptDate,
-  // setBranch,
 
   customerOptions,
   customerNameOptions,
@@ -117,6 +116,7 @@ const MatchHeader: React.FC<MatchHeaderProps> = ({
   handleCustomerIdChange,
   handleCustomerNameChange,
   handleSearch,
+  onDateEnter,
 
   renderSelect,
 }) => {
@@ -250,7 +250,7 @@ const MatchHeader: React.FC<MatchHeaderProps> = ({
             type,
             documentOptions,
             setDocType,
-            () => documentNoRef.current?.focus(),
+            () => document.getElementById("Searchbtn")?.focus(),
             creditDocumentRef,
             true,
             ["DocumentType ID", "DocumentType Name"],
@@ -273,16 +273,18 @@ const MatchHeader: React.FC<MatchHeaderProps> = ({
               text-slate-700
               hover:from-white
               hover:to-[#dce8f1]
-              focus:border-[#20884e]
+              focus:border-[#9fdfbc]
               focus:outline-none
-              focus:ring-0
+              focus:ring-1
+              focus:ring-[#9fdfbc]
             "
             onClick={handleSearch}
-            onKeyDown={(event) =>
-              handleKeyboardAction(event, {
-                onEnter: () => documentNoRef.current?.focus(),
-              })
-            }
+            onKeyDown={async (event) => {
+              if (event.key !== "Enter") return;
+              event.preventDefault(); // stop the native click, we search once here
+              await handleSearch();
+              documentNoRef.current?.focus();
+            }}
           >
             Search
           </button>
@@ -374,6 +376,12 @@ const MatchHeader: React.FC<MatchHeaderProps> = ({
               slotProps={{
                 textField: {
                   id: "dtpMatchDate",
+                  onKeyDown: (event) => {
+                    if (event.key === "Enter") {
+                      event.preventDefault();
+                      onDateEnter();
+                    }
+                  },
                 },
                 openPickerButton: {
                   sx: {
@@ -454,9 +462,14 @@ const MatchHeader: React.FC<MatchHeaderProps> = ({
                     borderColor: "#B7C7D7 !important",
                   },
 
+                /* focus look = .input-style:focus (green border + 1px ring) */
+                "& .MuiPickersInputBase-root.Mui-focused": {
+                  boxShadow: "0 0 0 1px #9fdfbc",
+                },
+
                 "& .MuiPickersInputBase-root.Mui-focused .MuiPickersOutlinedInput-notchedOutline":
                   {
-                    borderColor: "#B7C7D7 !important",
+                    borderColor: "#9fdfbc !important",
                     borderWidth: "1px",
                   },
 
@@ -472,7 +485,7 @@ const MatchHeader: React.FC<MatchHeaderProps> = ({
 
                 "& .MuiPickersInputBase-root.Mui-error.Mui-focused .MuiPickersOutlinedInput-notchedOutline":
                   {
-                    borderColor: "#B7C7D7 !important",
+                    borderColor: "#9fdfbc !important",
                   },
               }}
             />
