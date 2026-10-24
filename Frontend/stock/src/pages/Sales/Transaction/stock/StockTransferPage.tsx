@@ -1689,7 +1689,7 @@ const StockTransferPage: React.FC = () => {
           return;
         }
 
-        deleted();
+        // (no message for a deleted line: the line just leaves the grid)
 
         // the last line took the whole transfer with it: the page starts again
         if (result.chkDocumentDeleted) {
@@ -1704,9 +1704,6 @@ const StockTransferPage: React.FC = () => {
         setSaving(false);
       }
     }
-
-    // (a line that was never saved just leaves the grid: nothing in the database to delete,
-    // so there is no message)
 
     setRows((previous) => {
       const kept = previous.filter((_, rowIndex) => rowIndex !== index);
