@@ -141,7 +141,6 @@ interface ReceiptFormProps {
   focusReceiptNoAfterClear?: number;
 }
 
-
 const filterOption = (
   option: {
     label: string;
@@ -230,7 +229,6 @@ export const ReceiptForm: React.FC<ReceiptFormProps> = ({
    * It is reset when Enter moves from Branch -> Type.
    */
   const keepBranchFocus = useRef(false);
-
 
   /*
    * =========================================================
@@ -1872,6 +1870,10 @@ const getMenuLayout = (inputId: string): MenuLayout => {
   };
 };
 
+/* outline the cell while the cursor (or any control inside it) is focused */
+const activeCellClass =
+  "focus-within:outline-2 focus-within:-outline-offset-2 focus-within:outline-green-600";
+
 const ReceiptRow = memo(
   ({
     //@ts-ignore
@@ -2284,7 +2286,7 @@ const ReceiptRow = memo(
       >
         <td className="receipt-cell serial-cell">{index + 1}</td>
 
-        <td className="receipt-cell">
+        <td className={`receipt-cell ${activeCellClass}`}>
           <Select<AccountOption, false>
             inputId={`lkpAccountId-${row.id}`}
             ref={(instance) => {
@@ -2373,7 +2375,7 @@ const ReceiptRow = memo(
           />
         </td>
 
-        <td className="receipt-cell">
+        <td className={`receipt-cell ${activeCellClass}`}>
           <Select<AccountOption, false>
             inputId={`lkpAccountName-${row.id}`}
             ref={(instance) => {
@@ -2465,7 +2467,7 @@ const ReceiptRow = memo(
           />
         </td>
 
-        <td className="receipt-cell">
+        <td className={`receipt-cell ${activeCellClass}`}>
           <Select<SelectOption, false>
             inputId={`lkpDivision-${row.id}`}
             ref={(instance) => {
@@ -2569,7 +2571,7 @@ const ReceiptRow = memo(
           />
         </td>
 
-        <td className="receipt-cell">
+        <td className={`receipt-cell ${activeCellClass}`}>
           <Select<SelectOption, false>
             inputId={`lkpCCId-${row.id}`}
             ref={(instance) => {
@@ -2667,7 +2669,7 @@ const ReceiptRow = memo(
           />
         </td>
 
-        <td className="receipt-cell">
+        <td className={`receipt-cell ${activeCellClass}`}>
           <input
             id={`txtCreditAmt-${row.id}`}
             ref={(element) => setRowRef(index, "creditAmt", element)}
@@ -2703,7 +2705,7 @@ const ReceiptRow = memo(
           />
         </td>
 
-        <td className="receipt-cell">
+        <td className={`receipt-cell ${activeCellClass}`}>
           <div className="receipt-checkbox-wrapper">
             <input
               id={`chkMatch-${row.id}`}
@@ -2719,7 +2721,7 @@ const ReceiptRow = memo(
           </div>
         </td>
 
-        <td className="receipt-cell">
+        <td className={`receipt-cell ${activeCellClass}`}>
           <button
             id={`btnView-${row.id}`}
             ref={(element) => setRowRef(index, "view", element)}
