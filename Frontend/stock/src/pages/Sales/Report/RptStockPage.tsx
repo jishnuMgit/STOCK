@@ -16,6 +16,7 @@ type RadioOptionProps = {
   label: string;
   checked: boolean;
   onChange: () => void;
+  disabled?: boolean;
 };
 
 const DATE_FORMAT = "DD-MM-YYYY";
@@ -88,7 +89,6 @@ const selectClassNames = {
 const selectProps = {
   isSearchable: false,
   isClearable: false,
-  placeholder: "",
   classNames: selectClassNames,
   menuPosition: "fixed" as const,
   menuPortalTarget: typeof document !== "undefined" ? document.body : undefined,
@@ -100,14 +100,16 @@ const CustomRadio: React.FC<RadioOptionProps> = ({
   label,
   checked,
   onChange,
+  disabled = false,
 }) => (
-  <label className="flex cursor-pointer items-center gap-2.5 whitespace-nowrap select-none">
+  <label className={`flex items-center gap-2.5 whitespace-nowrap select-none ${disabled ? "cursor-not-allowed opacity-45" : "cursor-pointer"}`}>
     <input
       type="radio"
       name={name}
       value={value}
       checked={checked}
       onChange={onChange}
+      disabled={disabled}
       className="sr-only"
     />
     <span
@@ -237,10 +239,14 @@ const AppDatePicker: React.FC<AppDatePickerProps> = ({
 const RptStockPage: React.FC = () => {
   const [branchMode, setBranchMode] = useState("One Branch"); // optBranch
   const [branch, setBranch] = useState<Option | null>(null); // lkpBranch
+  const [groupByMode, setGroupByMode] = useState("By Item"); // rdgGroupBy
 
   const [itemMode, setItemMode] = useState("One Item"); // optItem
+  const [groupMode, setGroupMode] = useState("All Item Group"); // optItemGroup
   const [oneItemId, setOneItemId] = useState<Option | null>(null); // lkpOneItemID
   const [oneItemName, setOneItemName] = useState<Option | null>(null); // lkpOneItemName
+  const [fromItem, setFromItem] = useState<Option | null>(null); // Item Range: From Item
+  const [toItem, setToItem] = useState<Option | null>(null); // Item Range: To Item
   const [groupId, setGroupId] = useState<Option | null>(null); // lkpOneItemGroupID
   const [groupName, setGroupName] = useState<Option | null>(null); // lkpOneItemGroupName
 
@@ -255,9 +261,13 @@ const RptStockPage: React.FC = () => {
   const handleClear = () => {
     setBranchMode("One Branch");
     setBranch(null);
+    setGroupByMode("By Item");
     setItemMode("One Item");
+    setGroupMode("One Item Group");
     setOneItemId(null);
     setOneItemName(null);
+    setFromItem(null);
+    setToItem(null);
     setGroupId(null);
     setGroupName(null);
     setPostStatus(postStatusOptions[0]);
@@ -271,9 +281,13 @@ const RptStockPage: React.FC = () => {
     console.log({
       branchMode,
       branch,
+      groupByMode,
       itemMode,
+      groupMode,
       oneItemId,
       oneItemName,
+      fromItem,
+      toItem,
       groupId,
       groupName,
       postStatus,
@@ -284,13 +298,17 @@ const RptStockPage: React.FC = () => {
     });
   };
 
-  const oneItemDisabled = itemMode !== "One Item";
-  const groupDisabled = itemMode !== "One Item Group";
+  const itemRadioDisabled = groupByMode !== "By Item";
+  const groupRadioDisabled = groupByMode !== "By Group";
+  const oneItemDisabled =
+    groupByMode !== "By Item" ||
+    (itemMode !== "One Item" && itemMode !== "Item Range");
+  const groupDisabled = groupByMode !== "By Group" || groupMode !== "One Item Group";
 
   return (
     <div className="flex min-h-screen w-full items-start justify-center bg-white px-4 py-4">
-      <div className="min-h-fit w-205 max-w-full bg-white p-0">
-        <main className="w-full overflow-hidden border border-[#d5dce2] bg-white">
+      <div className="min-h-fit w-240 max-w-full bg-white p-0">
+        <main className="w-full overflow-hidden border border-gray-400 bg-white">
            <header
           className="
             flex
@@ -347,52 +365,46 @@ const RptStockPage: React.FC = () => {
                 </div>
               </div>
 
-              {/* Item */}
+              {/* By Group / By Item selector */}
               <RadioPanel>
                 <CustomRadio
-                  name="rdgItem"
-                  value="One Item"
-                  label="One Item"
-                  checked={itemMode === "One Item"}
-                  onChange={() => setItemMode("One Item")}
+                  name="rdgGroupBy"
+                  value="By Item Group"
+                  label="By Item Group"
+                  checked={groupByMode === "By Group"}
+                  onChange={() => setGroupByMode("By Group")}
                 />
                 <CustomRadio
-                  name="rdgItem"
+                  name="rdgGroupBy"
+                  value="By Item"
+                  label="By Item"
+                  checked={groupByMode === "By Item"}
+                  onChange={() => setGroupByMode("By Item")}
+                />
+              </RadioPanel>
+              <div aria-hidden="true" />
+
+              {/* Group filters: enabled only when By Group is selected */}
+              <RadioPanel className={groupRadioDisabled ? "bg-[#f6f8fa]" : ""}>
+                <CustomRadio
+                  name="rdgItemGroup"
                   value="One Item Group"
                   label="One Item Group"
-                  checked={itemMode === "One Item Group"}
-                  onChange={() => setItemMode("One Item Group")}
+                  checked={groupMode === "One Item Group"}
+                  onChange={() => setGroupMode("One Item Group")}
+                  disabled={groupRadioDisabled}
                 />
                 <CustomRadio
-                  name="rdgItem"
-                  value="All Item"
-                  label="All Item"
-                  checked={itemMode === "All Item"}
-                  onChange={() => setItemMode("All Item")}
+                  name="rdgItemGroup"
+                  value="All Item Group"
+                  label="All Item Group"
+                  checked={groupMode === "All Item Group"}
+                  onChange={() => setGroupMode("All Item Group")}
+                  disabled={groupRadioDisabled}
                 />
               </RadioPanel>
               <div className="flex flex-col gap-3 pt-3">
-                <div className="grid grid-cols-[135px_1fr] gap-2">
-                  <Select
-                    inputId="lkpOneItemID"
-                    instanceId="lkpOneItemID"
-                    options={itemIdOptions}
-                    value={oneItemId}
-                    onChange={setOneItemId}
-                    isDisabled={oneItemDisabled}
-                    {...selectProps}
-                  />
-                  <Select
-                    inputId="lkpOneItemName"
-                    instanceId="lkpOneItemName"
-                    options={itemNameOptions}
-                    value={oneItemName}
-                    onChange={setOneItemName}
-                    isDisabled={oneItemDisabled}
-                    {...selectProps}
-                  />
-                </div>
-                <div className="grid grid-cols-[135px_1fr] gap-2">
+                {!groupDisabled &&<div className="grid grid-cols-[190px_1fr] gap-2">
                   <Select
                     inputId="lkpOneItemGroupID"
                     instanceId="lkpOneItemGroupID"
@@ -411,7 +423,88 @@ const RptStockPage: React.FC = () => {
                     isDisabled={groupDisabled}
                     {...selectProps}
                   />
-                </div>
+                </div> }
+                
+              </div>
+
+              {/* Item filters: enabled only when By Item is selected */}
+              <RadioPanel className={itemRadioDisabled ? "bg-[#f6f8fa]" : ""}>
+                <CustomRadio
+                  name="rdgItem"
+                  value="One Item"
+                  label="One Item"
+                  checked={itemMode === "One Item"}
+                  onChange={() => setItemMode("One Item")}
+                  disabled={itemRadioDisabled}
+                />
+                <CustomRadio
+                  name="rdgItem"
+                  value="Item Range"
+                  label="Item Range"
+                  checked={itemMode === "Item Range"}
+                  onChange={() => setItemMode("Item Range")}
+                  disabled={itemRadioDisabled}
+                />
+                <CustomRadio
+                  name="rdgItem"
+                  value="All Item"
+                  label="All Item"
+                  checked={itemMode === "All Item"}
+                  onChange={() => setItemMode("All Item")}
+                  disabled={itemRadioDisabled}
+                />
+              </RadioPanel>
+              <div className="flex flex-col gap-3 pt-3">
+         {itemMode !== "All Item" &&
+  (itemMode === "Item Range" ? (
+    <div className="grid grid-cols-3 gap-2 w-[85%] mt-6">
+      <Select
+        inputId="lkpFromItem"
+        instanceId="lkpFromItem"
+        options={itemIdOptions}
+        value={fromItem}
+        onChange={setFromItem}
+        isDisabled={itemRadioDisabled}
+        placeholder="From Item"
+        aria-label="From Item"
+        {...selectProps}
+      />
+
+      <Select
+        inputId="lkpToItem"
+        instanceId="lkpToItem"
+        options={itemIdOptions}
+        value={toItem}
+        onChange={setToItem}
+        isDisabled={itemRadioDisabled}
+        placeholder="To Item"
+        aria-label="To Item"
+        {...selectProps}
+      />
+    </div>
+  ) : (
+    <div className="grid grid-cols-[190px_1fr] gap-2">
+      <Select
+        inputId="lkpOneItemID"
+        instanceId="lkpOneItemID"
+        options={itemIdOptions}
+        value={oneItemId}
+        onChange={setOneItemId}
+        isDisabled={oneItemDisabled}
+        {...selectProps}
+      />
+
+      <Select
+        inputId="lkpOneItemName"
+        instanceId="lkpOneItemName"
+        options={itemNameOptions}
+        value={oneItemName}
+        onChange={setOneItemName}
+        isDisabled={oneItemDisabled}
+        {...selectProps}
+      />
+    </div>
+  ))}
               </div>
 
               {/* Post status */}
@@ -438,7 +531,7 @@ const RptStockPage: React.FC = () => {
                     onChange={(event) => setOrderByTxnNo(event.target.checked)}
                     className="h-4 w-4 accent-[#64d96e]"
                   />
-                  Order by Txn.No.
+                  Order by Posting No.
                 </label>
               </div>
 
@@ -460,7 +553,7 @@ const RptStockPage: React.FC = () => {
                 />
               </RadioPanel>
               <div className="flex items-start gap-2">
-                <FieldLabel className="w-[168px]">Period :</FieldLabel>
+                <FieldLabel className="w-[140px]">Period :</FieldLabel>
                 <AppDatePicker
                   id="dtpFromDate"
                   label="From Date"
