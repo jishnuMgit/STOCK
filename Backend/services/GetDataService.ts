@@ -1,33 +1,25 @@
 import type { PoolClient } from "pg";
 import pool from "../DB/db.js";
 
-import {GetDataParams} from '../types/types.js'
-/* =========================================================
-   TYPES
-========================================================= */
-
-
-
-interface ReceiptProcedureParams {
-  mode: string;
-  branch: string | null;
-  lkpType: string | null;
-  docNo: string | null;
-  cursorName: string;
-}
-
-/*
-  Database rows are dynamic because the queries use SELECT *.
-  Keep this flexible for now while converting the existing JS code.
-*/
 type DbRow = Record<string, any>;
+
+/* Company / year come from the request context, NOT from .env */
+interface GetDataInput {
+  pstrCoID: string;
+  pstrYear: string;
+  pstrUserID?: string | null;
+  lkpBranch: string;
+  /* already a doc type: BR / CR (controller runs GetStrDocType) */
+  lkpType: string;
+  txtDocNo: string;
+}
 
 interface ReceiptHeader {
   companyId: any;
   year: any;
-  branch: any;
+  lkpBranch: any;
   lkpType: any;
-  docNo: any;
+  txtDocNo: any;
   dtpDate: any;
   cbAccountName: any;
   CCID: any;
@@ -45,6 +37,9 @@ interface ReceiptDetailRow {
   fgcs: any;
   DivID: any;
   CCID: any;
+  /* signed: credit - debit (negative = debit line) */
+  txtDebitCredit: string;
+  /* kept as alias so the existing frontend does not break */
   creditAmt: string;
   match: boolean;
   description: any;
@@ -59,50 +54,17 @@ interface GetDataResult {
   message: string;
 }
 
-/* =========================================================
-   ENVIRONMENT
-========================================================= */
+/* ========================= HELPERS ========================= */
 
-const PstrCoID =
-  process.env.PstrCoID || "01";
-
-const PstrYear =
-  String(process.env.PstrYear || "2026");
-
-const PstrUserID =
-  process.env.PstrUserID || "ADMIN";
-
-/* =========================================================
-   HELPERS
-========================================================= */
-
-function isEmpty(
-  value: unknown
-): boolean {
-  return (
-    value === null ||
-    value === undefined ||
-    String(value).trim() === ""
-  );
+function isEmpty(value: unknown): boolean {
+  return value === null || value === undefined || String(value).trim() === "";
 }
 
-function clean(
-  value: unknown
-): string | null {
-  if (isEmpty(value)) {
-    return null;
-  }
-
-  return String(value).trim();
+function clean(value: unknown): string | null {
+  return isEmpty(value) ? null : String(value).trim();
 }
 
-function toBoolean(
-  value: unknown
-): boolean {
-  if (typeof value === "boolean") {
-    return value;
-  }
-
+function toBoolean(value: unknown): boolean {
   return (
     value === true ||
     value === 1 ||
@@ -112,1195 +74,199 @@ function toBoolean(
   );
 }
 
-/* =========================================================
-   DOCUMENT TYPE
-========================================================= */
+/* ================= PROCEDURE CALL (GETHD / GETTL) ================= */
 
-function toDocumentType(
-  value: unknown
-): string | null {
-  if (isEmpty(value)) {
-    return null;
-  }
-
-  const type =
-    String(value)
-      .trim()
-      .toUpperCase();
-
-  /*
-     Frontend can send:
-
-     B  -> BR
-     C  -> CR
-
-     If already BR / CR,
-     keep it unchanged.
-  */
-
-  if (type === "B") {
-    return "BR";
-  }
-
-  if (type === "C") {
-    return "CR";
-  }
-
-  return type;
-}
-
-/* =========================================================
-   COMMON PROCEDURE CALL
-========================================================= */
-
-async function callReceiptProcedure(
+async function callGetProcedure(
   client: PoolClient,
+  mode: "GETHD" | "GETTL",
   {
-    mode,
-    branch,
+    pstrCoID,
+    pstrYear,
+    pstrUserID,
+    lkpBranch,
     lkpType,
-    docNo,
-    cursorName,
-  }: ReceiptProcedureParams
+    txtDocNo,
+  }: GetDataInput,
 ): Promise<DbRow[]> {
-
-  /* =======================================================
-     PostgreSQL procedure signature
-
-     1  p_strmode
-     2  p_pstrcoid
-     3  p_pstryear
-     4  p_strbrid
-     5  p_strdoctype
-     6  p_strdocno
-     7  p_intslno
-     8  p_dtpdate
-     9  p_strcbaccountid
-     10 p_strreceivedfrompaidto
-     11 p_strref
-     12 p_straccountid
-     13 p_strgcs
-     14 p_strdivid
-     15 p_strccid
-     16 p_numdebit
-     17 p_numcredit
-     18 p_strdescription
-     19 p_strnote
-     20 p_blnmatch
-     21 p_pstruserid
-     22 p_struserdate
-     23 p_result_cursor
-  ======================================================= */
+  const cursorName = `cur_receipt_${mode.toLowerCase()}_${Date.now()}_${Math.floor(
+    Math.random() * 100000,
+  )}`;
 
   const sql = `
     CALL dbo.sp_pagesreceipt_det(
-
-      $1::varchar,
-      $2::varchar,
-      $3::varchar,
-      $4::varchar,
-      $5::varchar,
-      $6::varchar,
-      $7::smallint,
-
-      $8::varchar,
-      $9::varchar,
-      $10::varchar,
-      $11::varchar,
-      $12::varchar,
-      $13::varchar,
-      $14::varchar,
-      $15::varchar,
-
-      $16::numeric,
-      $17::numeric,
-
-      $18::varchar,
-      $19::varchar,
-
-      $20::boolean,
-
-      $21::varchar,
-      $22::varchar,
-      $23::jsonb,
-      $24::refcursor
-
+      $1::varchar,  $2::varchar,  $3::varchar,  $4::varchar,
+      $5::varchar,  $6::varchar,  $7::smallint, $8::varchar,
+      $9::varchar,  $10::varchar, $11::varchar, $12::varchar,
+      $13::varchar, $14::varchar, $15::varchar, $16::numeric,
+      $17::numeric, $18::varchar, $19::varchar, $20::boolean,
+      $21::varchar, $22::varchar, $23::jsonb,   $24::refcursor
     )
   `;
 
   const values = [
-
-    /* =====================================================
-       1 - p_strmode
-    ===================================================== */
-
-    mode,
-
-    /* =====================================================
-       2 - p_pstrcoid
-    ===================================================== */
-
-    PstrCoID,
-
-    /* =====================================================
-       3 - p_pstryear
-    ===================================================== */
-
-    PstrYear,
-
-    /* =====================================================
-       4 - p_strbrid
-    ===================================================== */
-
-    clean(branch),
-
-    /* =====================================================
-       5 - p_strdoctype
-    ===================================================== */
-
-    clean(lkpType),
-
-    /* =====================================================
-       6 - p_strdocno
-    ===================================================== */
-
-    clean(docNo),
-
-    /* =====================================================
-       7 - p_intslno
-    ===================================================== */
-
-    0,
-
-    /* =====================================================
-       8 - p_dtpdate
-    ===================================================== */
-
-    null,
-
-    /* =====================================================
-       9 - p_strcbaccountid
-    ===================================================== */
-
-    null,
-
-    /* =====================================================
-       10 - p_strreceivedfrompaidto
-    ===================================================== */
-
-    null,
-
-    /* =====================================================
-       11 - p_strref
-    ===================================================== */
-
-    null,
-
-    /* =====================================================
-       12 - p_straccountid
-    ===================================================== */
-
-    null,
-
-    /* =====================================================
-       13 - p_strgcs
-    ===================================================== */
-
-    null,
-
-    /* =====================================================
-       14 - p_strdivid
-    ===================================================== */
-
-    null,
-
-    /* =====================================================
-       15 - p_strccid
-    ===================================================== */
-
-    null,
-
-    /* =====================================================
-       16 - p_numdebit
-    ===================================================== */
-
-    0,
-
-    /* =====================================================
-       17 - p_numcredit
-    ===================================================== */
-
-    0,
-
-    /* =====================================================
-       18 - p_strdescription
-    ===================================================== */
-
-    null,
-
-    /* =====================================================
-       19 - p_strnote
-    ===================================================== */
-
-    null,
-
-    /* =====================================================
-       20 - p_blnmatch
-    ===================================================== */
-
-    false,
-
-    /* =====================================================
-       21 - p_pstruserid
-    ===================================================== */
-
-    PstrUserID,
-
-    /* =====================================================
-       22 - p_struserdate
-    ===================================================== */
-
-    null,
-
-    /* =====================================================
-       JSONB
-    ===================================================== */
-
-    null,
-
-    /* =====================================================
-       24 - p_result_cursor
-    ===================================================== */
-
-    cursorName,
-
+    mode, // $1
+    clean(pstrCoID), // $2
+    clean(pstrYear), // $3
+    clean(lkpBranch), // $4
+    clean(lkpType), // $5
+    clean(txtDocNo), // $6
+    0, // $7  slno
+    null, // $8  date
+    null, // $9
+    null, // $10
+    null, // $11
+    null, // $12
+    null, // $13
+    null, // $14
+    null, // $15
+    0, // $16
+    0, // $17
+    null, // $18
+    null, // $19
+    false, // $20
+    clean(pstrUserID), // $21
+    null, // $22
+    null, // $23 details
+    cursorName, // $24 cursor
   ];
 
-  /* =======================================================
-     DEBUG
-  ======================================================= */
+  await client.query(sql, values);
 
-  console.log(
-    "======================================"
-  );
-
-  console.log(
-    `Calling sp_pagesreceipt - ${mode}`
-  );
-
-  console.log({
-    mode,
-
-    companyId:
-      PstrCoID,
-
-    year:
-      PstrYear,
-
-    branch:
-      clean(branch),
-
-    lkpType:
-      clean(lkpType),
-
-    docNo:
-      clean(docNo),
-  });
-
-  console.log(
-    "Procedure parameter count:",
-    values.length
-  );
-
-  console.log(
-    "======================================"
-  );
-
-  /* =======================================================
-     CALL PROCEDURE
-  ======================================================= */
-
-  await client.query(
-    sql,
-    values
-  );
-
-  /* =======================================================
-     FETCH CURSOR
-  ======================================================= */
-
-  const result =
-    await client.query(
-      `FETCH ALL FROM "${cursorName}"`
-    );
+  const result = await client.query(`FETCH ALL FROM "${cursorName}"`);
 
   return result.rows;
 }
 
-/* =========================================================
-   GET DATA TL
-   PostgreSQL mode:
-
-   ELSIF UPPER(TRIM(p_strmode)) = 'GETTL' THEN
-========================================================= */
-
-export async function GetDataTL({
-  lkpBranch,
-  lkpType,
-  txtDocNo,
-}: GetDataParams): Promise<DbRow[]> {
-
-  console.log(
-    "\n======================================"
-  );
-
-  console.log(
-    "GETDATA TL"
-  );
-
-  console.log(
-    "Branch:",
-    JSON.stringify(lkpBranch)
-  );
-
-  console.log(
-    "Doc lkpType:",
-    JSON.stringify(lkpType)
-  );
-
-  console.log(
-    "Doc No 1:",
-    JSON.stringify(txtDocNo)
-  );
-
-  console.log(
-    "======================================"
-  );
+/* Runs one mode inside its own transaction */
+async function runMode(
+  mode: "GETHD" | "GETTL",
+  input: GetDataInput,
+): Promise<DbRow[]> {
+  if (isEmpty(input.pstrCoID) || isEmpty(input.pstrYear)) {
+    throw new Error("Company ID and financial year are required");
+  }
+  if (isEmpty(input.lkpBranch)) throw new Error("Branch is required");
+  if (isEmpty(input.lkpType)) throw new Error("Receipt type is required");
+  if (isEmpty(input.txtDocNo)) throw new Error("Receipt number is required");
 
   const client = await pool.connect();
 
   try {
-
-    /* =====================================================
-       NORMALIZE
-    ===================================================== */
-
-    const branch = clean(lkpBranch);
-
-    const docType = toDocumentType(lkpType);
-
-    const docNo = clean(txtDocNo);
-
-
-    /* =====================================================
-       VALIDATION
-    ===================================================== */
-
-    if (isEmpty(branch)) {
-
-      throw new Error(
-        "Branch is required"
-      );
-
-    }
-
-    if (isEmpty(docType)) {
-
-      throw new Error(
-        "Receipt type is required"
-      );
-
-    }
-
-    if (isEmpty(docNo)) {
-
-      throw new Error(
-        "Receipt number is required"
-      );
-
-    }
-
-
-    /* =====================================================
-       BEGIN TRANSACTION
-    ===================================================== */
-
-    await client.query(
-      "BEGIN"
-    );
-
-
-    /* =====================================================
-       CURSOR NAME
-    ===================================================== */
-
-    const cursorName =
-      `cur_receipt_tl_${Date.now()}_${Math.floor(
-        Math.random() * 100000
-      )}`;
-
-
-    /* =====================================================
-       CALL PROCEDURE
-    ===================================================== */
-
-    const rows =
-      await callReceiptProcedure(
-        client,
-        {
-          mode: "GETTL",
-
-          branch,
-
-         lkpType: docType,
-
-          docNo,
-
-          cursorName,
-        }
-      );
-
-
-    /* =====================================================
-       DEBUG
-    ===================================================== */
-
-    console.log(
-      "GETTL row count:",
-      rows.length
-    );
-
-    console.log(
-      "GETTL rows:",
-      rows
-    );
-
-
-    /* =====================================================
-       COMMIT
-    ===================================================== */
-
-    await client.query(
-      "COMMIT"
-    );
-
+    await client.query("BEGIN");
+    const rows = await callGetProcedure(client, mode, input);
+    await client.query("COMMIT");
     return rows;
-
   } catch (error: unknown) {
-
-    /* =====================================================
-       ROLLBACK
-    ===================================================== */
-
     try {
-
-      await client.query(
-        "ROLLBACK"
-      );
-
+      await client.query("ROLLBACK");
     } catch (rollbackError: unknown) {
-
-      console.error(
-        "GETTL rollback error:",
-        rollbackError
-      );
-
+      console.error(`${mode} rollback error:`, rollbackError);
     }
-
-    console.error(
-      "GetDataTL error:",
-      error
-    );
-
+    console.error(`${mode} error:`, error);
     throw error;
-
   } finally {
-
     client.release();
-
   }
-
 }
 
-/* =========================================================
-   GET DATA HD
-   PostgreSQL mode:
+export const GetDataTL = (input: GetDataInput): Promise<DbRow[]> =>
+  runMode("GETTL", input);
 
-   ELSIF UPPER(TRIM(p_strmode)) = 'GETHD' THEN
-========================================================= */
+export const GetDataHD = (input: GetDataInput): Promise<DbRow[]> =>
+  runMode("GETHD", input);
 
-export async function GetDataHD({
-  lkpBranch,
-  lkpType,
-  txtDocNo,
-}: GetDataParams): Promise<DbRow[]> {
+/* ============================== GET DATA ============================== */
 
-  console.log(
-    "\n======================================"
-  );
+export async function GetData(input: GetDataInput): Promise<GetDataResult> {
+  const branch = clean(input.lkpBranch);
+  const docType = clean(input.lkpType);
+  const docNo = clean(input.txtDocNo);
 
-  console.log(
-    "GETDATA HD"
-  );
+  const fail = (message: string): GetDataResult => ({
+    exists: false,
+    header: null,
+    rows: [],
+    message,
+  });
 
-  console.log(
-    "Branch:",
-    JSON.stringify(lkpBranch)
-  );
+  if (!branch) return fail("Branch is required");
+  if (!docType) return fail("Receipt type is required");
+  if (!docNo) return fail("Receipt number is required");
 
-  console.log(
-    "Doc lkpType:",
-    JSON.stringify(lkpType)
-  );
+  const params: GetDataInput = {
+    ...input,
+    lkpBranch: branch,
+    lkpType: docType,
+    txtDocNo: docNo,
+  };
 
-  console.log(
-    "Doc No:",
-    JSON.stringify(txtDocNo)
-  );
+  const [detailRows, headerRows] = await Promise.all([
+    GetDataTL(params),
+    GetDataHD(params),
+  ]);
 
-  console.log(
-    "======================================"
-  );
-
-  const client = await pool.connect();
-
-  try {
-
-    /* =====================================================
-       NORMALIZE
-    ===================================================== */
-
-    const branch =
-      clean(lkpBranch);
-
-    const docType =
-      toDocumentType(lkpType);
-
-    const docNo =
-      clean(txtDocNo);
-
-
-    /* =====================================================
-       VALIDATION
-    ===================================================== */
-
-    if (isEmpty(branch)) {
-
-      throw new Error(
-        "Branch is required"
-      );
-
-    }
-
-    if (isEmpty(docType)) {
-
-      throw new Error(
-        "Receipt type is required"
-      );
-
-    }
-
-    if (isEmpty(docNo)) {
-
-      throw new Error(
-        "Receipt number is required"
-      );
-
-    }
-
-
-    /* =====================================================
-       BEGIN TRANSACTION
-    ===================================================== */
-
-    await client.query(
-      "BEGIN"
-    );
-
-
-    /* =====================================================
-       CURSOR NAME
-    ===================================================== */
-
-    const cursorName =
-      `cur_receipt_hd_${Date.now()}_${Math.floor(
-        Math.random() * 100000
-      )}`;
-
-
-    /* =====================================================
-       CALL PROCEDURE
-    ===================================================== */
-
-    const rows =
-      await callReceiptProcedure(
-        client,
-        {
-          mode: "GETHD",
-
-          branch,
-
-        lkpType:docType,
-
-          docNo,
-
-          cursorName,
-        }
-      );
-
-
-    /* =====================================================
-       DEBUG
-    ===================================================== */
-
-    console.log(
-      "GETHD row count:",
-      rows.length
-    );
-
-    console.log(
-      "GETHD rows:",
-      rows
-    );
-
-
-    /* =====================================================
-       COMMIT
-    ===================================================== */
-
-    await client.query(
-      "COMMIT"
-    );
-
-    return rows;
-
-  } catch (error: unknown) {
-
-    /* =====================================================
-       ROLLBACK
-    ===================================================== */
-
-    try {
-
-      await client.query(
-        "ROLLBACK"
-      );
-
-    } catch (rollbackError: unknown) {
-
-      console.error(
-        "GETHD rollback error:",
-        rollbackError
-      );
-
-    }
-
-    console.error(
-      "GetDataHD error:",
-      error
-    );
-
-    throw error;
-
-  } finally {
-
-    client.release();
-
+  if (!headerRows || headerRows.length === 0) {
+    return fail("Receipt not found");
   }
 
-}
+  const dbHeader = headerRows[0];
 
-/* =========================================================
-   GET DATA
+  /* ---------- DETAIL ROWS (signed amount from fdebitcredit) ---------- */
 
-   Equivalent to VB:
+  const rows: ReceiptDetailRow[] = (detailRows || [])
+    .filter((row: DbRow) => Number(row.fslno) > 0)
+    .map((row: DbRow, index: number): ReceiptDetailRow => {
+      const signed =
+        row.fdebitcredit !== null && row.fdebitcredit !== undefined
+          ? String(row.fdebitcredit)
+          : "";
 
-   Private Sub GetData(
-       ByVal strBrID As String,
-       ByVal strDocType As String,
-       ByVal strDocNo As String
-   )
-
-       dtRVS = objDoc.GetDataTL(...)
-
-       dr = objDoc.GetDataHD(...)
-
-   End Sub
-========================================================= */
-
-export async function GetData({
-  lkpBranch,
-  lkpType,
-  txtDocNo,
-}: GetDataParams): Promise<GetDataResult> {
-
-  console.log(
-    "\n\n======================================"
-  );
-
-  console.log(
-    "GET RECEIPT FOR MODIFY"
-  );
-
-  console.log(
-    "Branch:",
-    JSON.stringify(lkpBranch)
-  );
-
-  console.log(
-    "Doc lkpType:",
-    JSON.stringify(lkpType)
-  );
-
-  console.log(
-    "Doc No:",
-    JSON.stringify(txtDocNo)
-  );
-
-  console.log(
-    "======================================"
-  );
-
-
-  /* =======================================================
-     NORMALIZE
-  ======================================================= */
-
-  const branch =
-    clean(lkpBranch);
-
-  const docType =
-    toDocumentType(lkpType);
-
-  const docNo =
-    clean(txtDocNo);
-
-
-  /* =======================================================
-     VALIDATION
-  ======================================================= */
-
-  if (isEmpty(lkpBranch)) {
-
-    return {
-      exists: false,
-
-      header: null,
-
-      rows: [],
-
-      message:
-        "Branch is required",
-    };
-
-  }
-
-
-  if (isEmpty(lkpType)) {
-
-    return {
-      exists: false,
-
-      header: null,
-
-      rows: [],
-
-      message:
-        "Receipt type is required",
-    };
-
-  }
-
-
-  if (isEmpty(docNo)) {
-
-    return {
-      exists: false,
-
-      header: null,
-
-      rows: [],
-
-      message:
-        "Receipt number is required",
-    };
-
-  }
-
-
-  /* =======================================================
-     NORMALIZED DATA
-  ======================================================= */
-
-  console.log(
-    "Normalized GetData:",
-    {
-      branch,
-      docType,
-      docNo,
-    }
-  );
-
-
-  /* =======================================================
-     GET DETAIL FIRST
-  ======================================================= */
-
-  console.log(
-    "Calling GetDataTL..."
-  );
-
-  const detailRows =
-    await GetDataTL({
-      lkpBranch: branch,
-      lkpType: docType,
-      txtDocNo: docNo,
+      return {
+        id: Number(row.fslno) || index + 1,
+        AccountID: row.faccountid ?? "",
+        AccountName: row.faccountname ?? "",
+        fgcs: row.fgcs ?? "",
+        DivID: row.fdivid ?? "",
+        CCID: row.fccid ?? "",
+        txtDebitCredit: signed,
+        creditAmt: signed,
+        match: toBoolean(row.fmatch),
+        description: row.fdescription ?? "",
+      };
     });
 
-  console.log(
-    "GetDataTL returned:",
-    detailRows.length
+  /* ---------- TOTAL = sum of the same signed values ---------- */
+
+  const total = rows.reduce(
+    (sum: number, row: ReceiptDetailRow): number =>
+      sum + (Number(row.txtDebitCredit) || 0),
+    0,
   );
 
-
-  /* =======================================================
-     GET HEADER
-  ======================================================= */
-
-  console.log(
-    "Calling GetDataHD..."
-  );
-
-  const headerRows =
-    await GetDataHD({
-      lkpBranch: branch,
-      lkpType: docType,
-      txtDocNo: docNo,
-    });
-
-  console.log(
-    "GetDataHD returned:",
-    headerRows.length
-  );
-
-
-  /* =======================================================
-     CHECK RECEIPT
-  ======================================================= */
-
-  if (
-    !headerRows ||
-    headerRows.length === 0
-  ) {
-
-    console.log(
-      "Receipt not found"
-    );
-
-    return {
-      exists: false,
-
-      header: null,
-
-      rows: [],
-
-      message:
-        "Receipt not found",
-    };
-
-  }
-
-
-  /* =======================================================
-     DATABASE HEADER
-  ======================================================= */
-
-  const dbHeader =
-    headerRows[0];
-
-
-  /* =======================================================
-     HEADER
-  ======================================================= */
+  /* ---------- HEADER ---------- */
 
   const header: ReceiptHeader = {
-
-    companyId:
-      dbHeader.fcoid ??
-      PstrCoID,
-
-    year:
-      dbHeader.fyear ??
-      PstrYear,
-
-    branch:
-      dbHeader.fbrid ??
-      branch,
-
-    lkpType:
-      dbHeader.fdoctype ??
-      docType,
-
-    docNo:
-      dbHeader.fdocno ??
-      docNo,
-
-    dtpDate:
-      dbHeader.fdate ??
-      null,
-
-
-    /* =====================================================
-       CASH / BANK ACCOUNT
-    ===================================================== */
-
-    cbAccountName:
-      dbHeader.fcbaccountid ??
-      "",
-
-
-    /* =====================================================
-       COST CENTER
-    ===================================================== */
-
-    CCID:
-      dbHeader.fccid ??
-      "",
-
-
-    /* =====================================================
-       RECEIVED FROM / PAID TO
-    ===================================================== */
-
-    receivedFrom:
-      dbHeader.freceivedfrompaidto ??
-      "",
-
-
-    /* =====================================================
-       REFERENCE
-    ===================================================== */
-
-    reference:
-      dbHeader.freference ??
-      "",
-
-
-    /* =====================================================
-       NOTE
-    ===================================================== */
-
-    note:
-      dbHeader.fnote ??
-      "",
-
-
-    /* =====================================================
-       DIVISION
-    ===================================================== */
-
-    DivID:
-      dbHeader.fdivid ??
-      "",
-
-
-    /* =====================================================
-       TOTAL CREDIT
-    ===================================================== */
-
-    totalCredit:
-      Number(
-        dbHeader.totalcredit
-      ) || 0,
-
+    companyId: dbHeader.fcoid ?? input.pstrCoID,
+    year: dbHeader.fyear ?? input.pstrYear,
+    lkpBranch: dbHeader.fbrid ?? branch,
+    lkpType: dbHeader.fdoctype ?? docType,
+    txtDocNo: dbHeader.fdocno ?? docNo,
+    dtpDate: dbHeader.fdate ?? null, // already DD/MM/YYYY string
+    cbAccountName: dbHeader.fcbaccountid ?? "",
+    CCID: dbHeader.fccid ?? "",
+    receivedFrom: dbHeader.freceivedfrompaidto ?? "",
+    reference: dbHeader.freference ?? "",
+    note: dbHeader.fnote ?? "",
+    DivID: dbHeader.fdivid ?? "",
+    totalCredit: total,
   };
 
-
-  /* =======================================================
-     DETAIL ROWS
-  ======================================================= */
-
-  const rows: ReceiptDetailRow[] =
-    (detailRows || [])
-      .filter(
-        (row: DbRow) =>
-          Number(row.fslno) > 0
-      )
-      .map(
-        (
-          row: DbRow,
-          index: number
-        ): ReceiptDetailRow => {
-
-          return {
-
-            /* =================================================
-               ROW ID
-            ================================================= */
-
-            id:
-              Number(row.fslno) ||
-              index + 1,
-
-
-            /* =================================================
-               ACCOUNT
-            ================================================= */
-
-            AccountID:
-              row.faccountid ??
-              "",
-
-
-            /* =================================================
-               ACCOUNT NAME
-            ================================================= */
-
-            AccountName:
-              row.faccountname ??
-              "",
-
-
-            /* =================================================
-               G / CS
-            ================================================= */
-
-            fgcs:
-              row.fgcs ??
-              "",
-
-
-            /* =================================================
-               DIVISION
-            ================================================= */
-
-            DivID:
-              row.fdivid ??
-              "",
-
-
-            /* =================================================
-               COST CENTER
-            ================================================= */
-
-            CCID:
-              row.fccid ??
-              "",
-
-
-            /* =================================================
-               CREDIT AMOUNT
-            ================================================= */
-
-            creditAmt:
-
-              row.fcredit !== null &&
-              row.fcredit !== undefined
-
-                ? String(
-                    row.fcredit
-                  )
-
-                : "",
-
-
-            /* =================================================
-               MATCH
-            ================================================= */
-
-            match:
-              toBoolean(
-                row.fmatch
-              ),
-
-
-            /* =================================================
-               DESCRIPTION
-            ================================================= */
-
-            description:
-              row.fdescription ??
-              "",
-
-          };
-
-        }
-      );
-
-
-  /* =======================================================
-     TOTAL
-  ======================================================= */
-
-  const total =
-    rows.reduce(
-      (
-        sum: number,
-        row: ReceiptDetailRow
-      ): number => {
-
-        return (
-          sum +
-          (
-            Number(
-              row.creditAmt
-            ) || 0
-          )
-        );
-
-      },
-
-      0
-    );
-
-
-  /* =======================================================
-     FINAL RESULT
-  ======================================================= */
-
-  const result: GetDataResult = {
-
+  return {
     exists: true,
-
     header,
-
     rows,
-
     total,
-
-    rowCount:
-      rows.length,
-
-    message:
-      `${header?.docNo} loaded`,
-
+    rowCount: rows.length,
+    message: `${header.txtDocNo} loaded`,
   };
-
-
-  /* =======================================================
-     DEBUG
-  ======================================================= */
-
-  console.log(
-    "\n======================================"
-  );
-
-  console.log(
-    "GET RECEIPT SUCCESS"
-  );
-
-  console.log(
-    JSON.stringify(
-      result,
-      null,
-      2
-    )
-  );
-
-  console.log(
-    "======================================"
-  );
-
-
-  return result;
 }

@@ -87,7 +87,10 @@ function toSmallInt(value: DbValue, defaultValue: number = 0): number {
    else
       numCredit = 0, numDebit = Abs(txtDebitCredit)
 */
-function splitAmount(value: DbValue): { numDebit: number; numCredit: number } {
+function AssignDebitCredit(value: DbValue): {
+  numDebit: number;
+  numCredit: number;
+} {
   const txtDebitCredit = toNumber(value);
 
   if (txtDebitCredit > 0) {
@@ -188,7 +191,7 @@ async function callReceiptProcedure(
 
     dtpDate = null,
 
-    lkpCBAccountID = null,
+    lkpCBAccountName = null,
 
     txtReceivedFrom = null,
 
@@ -254,7 +257,7 @@ async function callReceiptProcedure(
 
     normalizeDate(dtpDate), // $8
 
-    clean(lkpCBAccountID), // $9
+    clean(lkpCBAccountName), // $9
 
     clean(txtReceivedFrom), // $10
 
@@ -466,7 +469,7 @@ async function saveReceiptLine(
 
     txtSlNo,
 
-    lkpCBAccountID,
+    lkpCBAccountName,
 
     lkpAccountID,
 
@@ -506,7 +509,7 @@ async function saveReceiptLine(
 
     dtpDate,
 
-    lkpCBAccountID,
+    lkpCBAccountName,
 
     txtReceivedFrom,
 
@@ -558,7 +561,7 @@ async function saveGeneratedEntry(
 
     txtReference,
 
-    lkpCBAccountID,
+    lkpCBAccountName,
 
     strGCS,
 
@@ -598,7 +601,7 @@ async function saveGeneratedEntry(
 
     dtpDate,
 
-    lkpCBAccountID,
+    lkpCBAccountName,
 
     txtReceivedFrom,
 
@@ -606,7 +609,7 @@ async function saveGeneratedEntry(
 
     /* The SP uses faccountid = p_strlkpCBAccountID for SC. */
 
-    lkpAccountID: lkpCBAccountID,
+    lkpAccountID: lkpCBAccountName,
 
     strGCS,
 
@@ -678,9 +681,9 @@ export async function saveReceiptService(
     const {
       lkpBranch,
       lkpType,
-      cbAccountName,
       txtDocNo,
       dtpDate,
+      lkpCBAccountName,
       txtReceivedFrom,
       txtReference,
       strNote,
@@ -697,6 +700,8 @@ export async function saveReceiptService(
       throw new Error("Receipt type is required");
     }
 
+    const strDocType = GetStrDocType(lkpType);
+
     if (isEmpty(txtDocNo)) {
       throw new Error("Receipt number is required");
     }
@@ -705,15 +710,13 @@ export async function saveReceiptService(
       throw new Error("Receipt date is required");
     }
 
-    if (isEmpty(cbAccountName)) {
+    if (isEmpty(lkpCBAccountName)) {
       throw new Error("Cash/Bank account is required");
     }
 
     if (!Array.isArray(rows)) {
       throw new Error("Receipt rows are invalid");
     }
-
-    const finalDocType = GetStrDocType(lkpType);
 
     const validRows: ReceiptRow[] = rows.filter(
       (row: ReceiptRow): boolean => row && !isEmpty(row.lkpAccountID),
@@ -743,12 +746,12 @@ export async function saveReceiptService(
 
       const txtSlNo = Number(row.txtslNo) || index + 1;
 
-      const { numDebit, numCredit } = splitAmount(row.txtDebitCredit);
+      const { numDebit, numCredit } = AssignDebitCredit(row.txtDebitCredit);
 
       await saveReceiptLine(client, ctx, {
         lkpBranch,
 
-        strDocType: finalDocType,
+        strDocType: strDocType,
 
         txtDocNo,
 
@@ -760,7 +763,7 @@ export async function saveReceiptService(
 
         txtSlNo,
 
-        lkpCBAccountID: cbAccountName,
+        lkpCBAccountName: lkpCBAccountName,
 
         lkpAccountID: row.lkpAccountID,
 
@@ -792,12 +795,12 @@ export async function saveReceiptService(
       .filter((value) => !isEmpty(value))
       .join(" - ");
 
-    const control = splitAmount(TottxtDebitCredit);
+    const control = AssignDebitCredit(TottxtDebitCredit);
 
     await saveGeneratedEntry(client, ctx, {
       lkpBranch,
 
-      strDocType: finalDocType,
+      strDocType,
 
       txtDocNo,
 
@@ -807,11 +810,13 @@ export async function saveReceiptService(
 
       txtReference,
 
-      lkpCBAccountID: cbAccountName,
+      lkpCBAccountName: lkpCBAccountName,
 
       strGCS: firstRow.strGCS || "",
 
-      lkpCCID: firstRow.lkpCCID || "",
+      // lkpDivID: firstRow.lkpDivID || "",
+
+      // lkpCCID: firstRow.lkpCCID || "",
 
       numDebit: control.numDebit,
 
@@ -820,8 +825,6 @@ export async function saveReceiptService(
       txtDescription: generatedDescription,
 
       strNote: strNote || "",
-
-      lkpDivID: firstRow.lkpDivID || "",
 
       chkMatch: toBoolean(firstRow.ckhMatch),
 
@@ -842,13 +845,13 @@ export async function saveReceiptService(
 
         lkpBranch,
 
-        strDocType: finalDocType,
+        strDocType: strDocType,
 
         txtDocNo,
 
-        total: finalTotal,
+        total: TottxtDebitCredit,
 
-        cbAccountName,
+        lkpCBAccountName,
 
         rowCount: validRows.length,
       },
@@ -895,13 +898,13 @@ export async function deleteReceiptService(
       throw new Error("Document number is required");
     }
 
-    const finalDocType = GetStrDocType(lkpType);
+    const strDocType = GetStrDocType(lkpType);
 
     await client.query("BEGIN");
 
     await deleteReceiptInternal(client, ctx, {
       lkpBranch,
-      strDocType: finalDocType,
+      strDocType: strDocType,
       txtDocNo,
     });
 
@@ -917,7 +920,7 @@ export async function deleteReceiptService(
 
         lkpBranch,
 
-        type: finalDocType,
+        type: strDocType,
 
         txtDocNo,
       },
@@ -952,7 +955,7 @@ export async function updateReceiptService(
     dtpDate,
     txtReceivedFrom,
     txtReference,
-    cbAccountName,
+    lkpCBAccountName,
     strNote,
     cbCcId,
     rows = [],
@@ -977,7 +980,7 @@ export async function updateReceiptService(
       throw new Error("Receipt date is required");
     }
 
-    if (isEmpty(cbAccountName)) {
+    if (isEmpty(lkpCBAccountName)) {
       throw new Error("Cash/Bank account is required");
     }
 
@@ -985,7 +988,7 @@ export async function updateReceiptService(
       throw new Error("Receipt rows are invalid");
     }
 
-    const finalDocType = GetStrDocType(lkpType);
+    const strDocType = GetStrDocType(lkpType);
 
     const validRows: ReceiptRow[] = rows.filter(
       (row: ReceiptRow): boolean => row && !isEmpty(row.lkpAccountID),
@@ -995,9 +998,9 @@ export async function updateReceiptService(
       throw new Error("There is no information for modifying.");
     }
 
-    const finalTotal = validRows.reduce(
-      (sum: number, row: ReceiptRow): number => {
-        return sum + toNumber(row.txtDebitCredit);
+    const TottxtDebitCredit = validRows.reduce(
+      (tot: number, row: ReceiptRow): number => {
+        return tot + toNumber(row.txtDebitCredit);
       },
       0,
     );
@@ -1005,11 +1008,11 @@ export async function updateReceiptService(
     await client.query("BEGIN");
 
     /*
-       1. MODIFY CONTROL ENTRY (M + slNo = 0)
+       1. MODIFY CONTROL ENTRY (M + txtSlNo = 0)
        Updates tblfintrans where fslno = 0. NO DELETE. NO INSERT.
     */
 
-    const control = splitAmount(finalTotal);
+    const control = AssignDebitCredit(TottxtDebitCredit);
 
     await callReceiptProcedure(client, {
       strMode: "M",
@@ -1020,7 +1023,7 @@ export async function updateReceiptService(
 
       lkpBranch,
 
-      strDocType: finalDocType,
+      strDocType: strDocType,
 
       txtDocNo: clean(txtDocNo),
 
@@ -1028,13 +1031,13 @@ export async function updateReceiptService(
 
       dtpDate,
 
-      lkpCBAccountID: cbAccountName,
+      lkpCBAccountName: lkpCBAccountName,
 
       txtReceivedFrom,
 
       txtReference,
 
-      lkpAccountID: cbAccountName,
+      lkpAccountID: lkpCBAccountName,
 
       strGCS: validRows[0]?.strGCS || "",
 
@@ -1067,40 +1070,36 @@ export async function updateReceiptService(
     */
 
     const details = validRows.map((row: ReceiptRow, index: number) => {
-      const { numDebit, numCredit } = splitAmount(row.txtDebitCredit);
+      const { numDebit, numCredit } = AssignDebitCredit(row.txtDebitCredit);
 
       return {
         slno: Number(row.txtslNo) || index + 1,
 
         dtpdate: normalizeDate(dtpDate),
 
-        lkpCBAccountID: cbAccountName || "",
+        cbaccountid: lkpCBAccountName || "",
 
         receivedfrompaidto: txtReceivedFrom || "",
 
         ref: txtReference || "",
 
-        lkpAccountID: row.lkpAccountID || "",
+        accountid: row.lkpAccountID || "",
 
-        strGCS: row.strGCS || "",
+        gcs: row.strGCS || "",
 
-        lkpDivID: row.lkpDivID || "",
+        divid: row.lkpDivID || "",
 
-        lkpCCID: row.lkpCCID || "",
+        ccid: row.lkpCCID || "",
 
         debit: numDebit,
 
         credit: numCredit,
 
-        /* signed value as typed, in case the SP wants it for fdebitcredit */
+        description: row.txtDescription || "",
 
-        txtDebitCredit: toNumber(row.txtDebitCredit),
+        note: strNote || "",
 
-        txtDescription: row.txtDescription || "",
-
-        strNote: strNote || "",
-
-        ckhMatch: toBoolean(row.ckhMatch),
+        match: toBoolean(row.ckhMatch),
       };
     });
 
@@ -1117,7 +1116,7 @@ export async function updateReceiptService(
 
       lkpBranch,
 
-      strDocType: finalDocType,
+      strDocType: strDocType,
 
       txtDocNo: clean(txtDocNo),
 
@@ -1125,7 +1124,7 @@ export async function updateReceiptService(
 
       dtpDate,
 
-      lkpCBAccountID: cbAccountName,
+      lkpCBAccountName: lkpCBAccountName,
 
       txtReceivedFrom,
 
@@ -1168,13 +1167,13 @@ export async function updateReceiptService(
 
         lkpBranch,
 
-        strDocType: finalDocType,
+        strDocType: strDocType,
 
         txtDocNo,
 
-        total: finalTotal,
+        total: TottxtDebitCredit,
 
-        cbAccountName,
+        lkpCBAccountName,
 
         rowCount: validRows.length,
       },
