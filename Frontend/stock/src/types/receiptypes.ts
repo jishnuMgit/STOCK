@@ -47,7 +47,7 @@ export interface ReceiptRow {
   haveDivision: boolean;
   DivID: string;
   CCID: string;
-  creditAmt: string;
+  txtDebitCredit: string;
   match: boolean;
   description?: string;
 }

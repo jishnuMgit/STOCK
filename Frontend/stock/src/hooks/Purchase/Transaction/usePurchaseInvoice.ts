@@ -197,6 +197,8 @@ interface InvoiceHeaderApi {
   fdiscamt: string | number | null;
   fvatamt: string | number | null;
   fpost: boolean | null;
+  fmisccs: boolean | null;
+  fmiscsupid: string | null;
 }
 
 interface InvoiceLineApi {
@@ -470,7 +472,7 @@ export const usePurchaseInvoice = () => {
             supplierId: s(h.faccountid),
             supplierName: s(h.faccountname),
             vatNo: s(h.fvatno),
-            miscSupId: "",
+            miscSupId: s(h.fmiscsupid),
             currency: s(h.fcurrency) || "SAR",
             currencyRate: n(h.fcurrencyrate)
               ? fixed(h.fcurrencyrate, 4)
@@ -556,6 +558,7 @@ export const usePurchaseInvoice = () => {
         vatNo: header.vatNo,
         supplierId: header.supplierId,
         supplierName: header.supplierName,
+        miscSupId: header.miscSupId,
         currency: header.currency,
         currencyRate: rate,
         note: header.note,
