@@ -25,9 +25,9 @@
 --   5. The quantity variables are numeric(18,3) (pasted: 18,2) because the
 --      page and tblStockTrans.fQtyIn have 3 decimals; 18,2 would round a
 --      quantity like 1.234 to 1.23 in the stock and in the total cost.
---   6. ADDED: the posting transaction number. When the document is posted, one
+--   6. ADDED: the posting number. When the document is posted, one
 --      number is taken from dbo.getnexttransno(company, year, branch, 'P') and
---      written into fpostingtransno of EVERY line of the document (a line that
+--      written into fPostingNo of EVERY line of the document (a line that
 --      already has one keeps it). Needs alter_tblstocktrans_transno.sql.
 --   7. tblStockControl.fYear is now varchar(4) (ALTER TABLE dbo.tblstockcontrol ALTER
 --      COLUMN fyear TYPE varchar(4)), so every statement on tblStockControl uses
@@ -75,7 +75,7 @@ DECLARE
     v_numnewunitcost numeric(18,4);
     v_numcostofstock numeric(18,4) := 0;
     v_intpostorder integer := 0;
-    v_strpostingtransno varchar(9);      -- the posting transaction number
+    v_strpostingno varchar(9);      -- the posting number
 
     v_row record;
 BEGIN
@@ -219,14 +219,14 @@ BEGIN
             --         dbo.getnextpostorder(p_pstrcoid);
             -- END IF;
 
-            -- the posting transaction number: one for the whole document
-            v_strpostingtransno :=
+            -- the posting number: one for the whole document
+            v_strpostingno :=
                 dbo.getnexttransno(p_pstrcoid, p_pstryear, p_strbrid, 'P');
 
             UPDATE dbo.tblStockTrans
             SET
                 fPost = true,                            -- was: fPost = 1
-                fPostingTransNo = COALESCE(fPostingTransNo, v_strpostingtransno)
+                fPostingNo = COALESCE(fPostingNo, v_strpostingno)
                 -- fPostOrder = v_intpostorder,
                 -- fPostOrderC = v_intpostorder
                 -- (when switching these on, put a comma after the line above)

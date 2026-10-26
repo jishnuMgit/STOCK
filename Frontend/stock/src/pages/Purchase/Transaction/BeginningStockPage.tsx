@@ -489,7 +489,7 @@ const BeginningStockPage: React.FC = () => {
   // the cell the cursor is in is outlined; a typed-in box has its text selected
   const { cellFocusClass, selectOnFocus } = useGridCellFocus();
   // the standard messages of a delete: "Beginning Stock deleted successfully"
-  const { deleted, notDeleted } = useDeleteToast(SCREEN_TITLE);
+  const { notDeleted } = useDeleteToast(SCREEN_TITLE);
 
   // the items of the chosen branch (not blocked for it)
   const [items, setItems] = useState<ItemRecord[]>([]);
@@ -1167,7 +1167,7 @@ const BeginningStockPage: React.FC = () => {
         return;
       }
 
-      deleted();
+      // (no message for a deleted document: the page just loads the branch again)
 
       // load the branch again - the document is gone
       setReloadKey((key) => key + 1);
@@ -1429,7 +1429,7 @@ const BeginningStockPage: React.FC = () => {
           return;
         }
 
-        deleted();
+        // (no message for a deleted line: the line just leaves the grid)
 
         // the last line took the whole Beginning Stock with it: the page starts again
         if (result.chkDocumentDeleted) {

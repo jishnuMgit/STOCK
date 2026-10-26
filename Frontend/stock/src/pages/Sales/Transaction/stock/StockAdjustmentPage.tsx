@@ -359,7 +359,8 @@ const StockAdjustmentPage: React.FC = () => {
   // the cell the cursor is in is outlined; a typed-in box has its text selected
   const { cellFocusClass, selectOnFocus } = useGridCellFocus();
   // the standard messages of a delete (the same on every screen)
-  const { deleted, notDeleted } = useDeleteToast(SCREEN_TITLE);
+  // only the failure message is used: a delete that worked shows none
+  const { notDeleted } = useDeleteToast(SCREEN_TITLE);
 
   // the branch list and the default branch have been loaded (the cursor can start)
   const [branchesLoaded, setBranchesLoaded] = useState(false);
@@ -1233,7 +1234,7 @@ const StockAdjustmentPage: React.FC = () => {
         return;
       }
 
-      deleted();
+      // (no message for a deleted Stock Adjustment: the page is just emptied)
 
       // as the old form: the page is emptied and the next Entry No. shown
       resetDocument();
@@ -1296,7 +1297,7 @@ const StockAdjustmentPage: React.FC = () => {
           return;
         }
 
-        deleted();
+        // (no message for a deleted line: the line just leaves the grid)
 
         // the last line took the whole adjustment with it: the page starts again
         if (result.chkDocumentDeleted) {
@@ -1503,16 +1504,13 @@ const StockAdjustmentPage: React.FC = () => {
         return;
       }
 
-      // a name that is never the name of a file that is still open
-      const now = new Date();
-      const pad = (value: number) => String(value).padStart(2, "0");
-      const stamp = `${now.getFullYear()}${pad(now.getMonth() + 1)}${pad(now.getDate())}_${pad(now.getHours())}${pad(now.getMinutes())}${pad(now.getSeconds())}`;
-
       setPreview({
         report: { ...result.header, rows: result.data || [] },
         lkpBranch: lkpBranch.value,
         txtDocNo: txtDocNo.trim(),
-        fileBase: `StockAdjustment_${txtDocNo.trim().replace(/[^A-Za-z0-9_-]/g, "_")}_${stamp}`,
+        // the downloaded file is "ADJ <Entry No.>" (only characters a file name cannot hold are
+        // replaced)
+        fileBase: `ADJ ${txtDocNo.trim().replace(/[\\/:*?"<>|]/g, "_")}`,
       });
     } catch (error) {
       console.error("printStockAdjustment error:", error);

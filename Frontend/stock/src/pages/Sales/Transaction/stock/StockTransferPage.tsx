@@ -539,7 +539,8 @@ const StockTransferPage: React.FC = () => {
   // the cell the cursor is in is outlined; a typed-in box has its text selected
   const { cellFocusClass, selectOnFocus } = useGridCellFocus();
   // the standard messages of a delete (the same on every screen)
-  const { deleted, notDeleted } = useDeleteToast(SCREEN_TITLE);
+  // only the failure message is used: a delete that worked shows none
+  const { notDeleted } = useDeleteToast(SCREEN_TITLE);
   // ... and the Item Name list covers the columns up to Qty.
   const { hang: nameMenuHang, measure: measureNameMenuHang } = usePairMenuHang(210);
 
@@ -1417,7 +1418,7 @@ const StockTransferPage: React.FC = () => {
         return;
       }
 
-      deleted();
+      // (no message for a deleted Stock Transfer: the page is just emptied)
 
       // as the old form: the page is emptied and the next Entry No. shown
       resetDocument();
@@ -1589,16 +1590,13 @@ const StockTransferPage: React.FC = () => {
         return;
       }
 
-      // a name that is never the name of a file that is still open
-      const now = new Date();
-      const pad = (value: number) => String(value).padStart(2, "0");
-      const stamp = `${now.getFullYear()}${pad(now.getMonth() + 1)}${pad(now.getDate())}_${pad(now.getHours())}${pad(now.getMinutes())}${pad(now.getSeconds())}`;
-
       setPreview({
         report: { ...result.header, rows: result.data || [] },
         lkpBranch: lkpBranch.value,
         txtDocNo: txtDocNo.trim(),
-        fileBase: `StockTransfer_${txtDocNo.trim().replace(/[^A-Za-z0-9_-]/g, "_")}_${stamp}`,
+        // the downloaded file is "ST <Entry No.>" (only characters a file name cannot hold are
+        // replaced)
+        fileBase: `ST ${txtDocNo.trim().replace(/[\\/:*?"<>|]/g, "_")}`,
       });
     } catch (error) {
       console.error("printStockTransfer error:", error);

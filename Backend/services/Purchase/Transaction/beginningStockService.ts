@@ -347,13 +347,13 @@ export async function saveBeginningStockService(p: {
     const savedSlNos = new Set(saved.map((line) => Number(line.fslno)));
     const mode: "S" | "M" = saved.length > 0 ? "M" : "S";
 
-    // The document's saving transaction number (fsavingtransno): the one its
+    // The document's saving transaction number (fsavingno): the one its
     // lines already carry, so a Modify never renumbers it - or, for a new
     // document (or lines saved before the column existed), the next one from
     // dbo.getnexttransno. The same number goes on every line.
     const savingResult = await client.query(
       `
-      SELECT MAX(fsavingtransno) AS "savingTransNo"
+      SELECT MAX(fsavingno) AS "savingTransNo"
       FROM dbo.tblstocktrans
       WHERE fcoid    = $1
         AND fyear    = $2
@@ -995,7 +995,7 @@ async function callSpBeginningStock(
       p_original_fslno => $14::smallint,
       p_pstruserid     => $15::varchar,
       p_strnote        => $16::varchar,
-      p_strsavingtransno => $17::varchar,
+      p_strsavingno => $17::varchar,
       p_result_cursor  => $18::refcursor
     )
     `,

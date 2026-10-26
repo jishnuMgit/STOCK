@@ -483,7 +483,7 @@ const ItemGroupPage: React.FC = () => {
                 name="txtItemGroupID"
                 type="text"
                 autoComplete="off"
-                maxLength={8}
+                maxLength={12}
                 aria-required="true"
                 value={txtItemGroupID}
                 onChange={(e) => {

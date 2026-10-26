@@ -25,7 +25,7 @@
 --   * @strMenuName was never used.
 --   * the two read modes return dates as text so no time zone can move them.
 --
--- ADDED: the saving transaction number (fsavingtransno), as in Stock Transfer
+-- ADDED: the saving transaction number (fsavingno), as in Stock Transfer
 --   * worked out INSIDE the procedure (no extra argument): for modes S and M it first
 --     looks for the number the document already has (its rows); if there is none it
 --     asks dbo.getnexttransno(co, year, branch, 'S') - ONE number for the whole
@@ -34,8 +34,14 @@
 --   * mode M gives it to every row that has none yet (COALESCE): a Modify never
 --     renumbers the document;
 --   * M1 / D1 / D leave it alone.
---   * The posting number (fpostingtransno) is written by sp_pagestockadjustmentpost.
---   * Needs the two columns of beginningstockoct122026/alter_tblstocktrans_transno.sql.
+--   * The posting number (fpostingno) is written by sp_pagestockadjustmentpost.
+--   * The columns are fsavingno / fpostingno (renamed from fsavingtransno / fpostingtransno).
+--
+-- ADDED: the item group of every line (tblstocktrans.fitemgroupid, varchar(12)), as in Stock Transfer:
+--   * modes S and M1 write dbo.getitemgroupid(co, item) on the line;
+--   * mode M gives it to every row of the document that has none yet (COALESCE), so a document
+--     saved before the column existed is filled when it is modified.
+--   * Needs:  ALTER TABLE dbo.tblstocktrans ADD COLUMN fitemgroupid VARCHAR(12);  and dbo.getitemgroupid.
 --
 -- Examples (cursor calls run inside one transaction)
 --   BEGIN;
@@ -70,14 +76,14 @@ DECLARE
     v_suserdate        timestamp without time zone;
     v_muserid          character varying;
     v_muserdate        timestamp without time zone;
-    v_strsavingtransno character varying;   -- the document's saving transaction number
+    v_strsavingno character varying;   -- the document's saving transaction number
 BEGIN
 
     -- the document's saving transaction number (modes S and M): the one its rows already
     -- carry, or - for a new document - the next one from dbo.getnexttransno
     IF p_strmode IN ('S', 'M') THEN
-        SELECT MAX(fsavingtransno)
-          INTO v_strsavingtransno
+        SELECT MAX(fsavingno)
+          INTO v_strsavingno
           FROM dbo.tblstocktrans
          WHERE fcoid    = p_pstrcoid
            AND fyear    = p_pstryear
@@ -85,8 +91,8 @@ BEGIN
            AND fdoctype = p_strdoctype
            AND fdocno   = p_strdocno;
 
-        IF v_strsavingtransno IS NULL THEN
-            v_strsavingtransno := dbo.getnexttransno(p_pstrcoid, p_pstryear, p_strbrid, 'S');
+        IF v_strsavingno IS NULL THEN
+            v_strsavingno := dbo.getnexttransno(p_pstrcoid, p_pstryear, p_strbrid, 'S');
         END IF;
     END IF;
 
@@ -135,7 +141,7 @@ BEGIN
             fcoid, fyear, fbrid, fdoctype, fdocno, fdate,
             fnote, fslno, fitemid, funit,
             fqtyout, fqtyin, funitcost, ftotalcost, forigin, fpost,
-            fcuserid, fcuserdate, fsavingtransno
+            fcuserid, fcuserdate, fsavingno, fitemgroupid
         )
         VALUES (
             p_pstrcoid, p_pstryear, p_strbrid, p_strdoctype, p_strdocno, p_dtpdate,
@@ -143,7 +149,7 @@ BEGIN
             COALESCE(p_numqtyout, 0), COALESCE(p_numqtyin, 0),
             COALESCE(p_numunitcost, 0), COALESCE(p_numtotalcost, 0),
             'UI', false,
-            p_pstruserid, now(), v_strsavingtransno
+            p_pstruserid, now(), v_strsavingno, dbo.getitemgroupid(p_pstrcoid, p_stritemid)
         );
 
     ELSIF p_strmode = 'M' THEN
@@ -170,7 +176,8 @@ BEGIN
             fcuserdate = v_suserdate,
             fmuserid   = v_muserid,
             fmuserdate = v_muserdate,
-            fsavingtransno = COALESCE(fsavingtransno, v_strsavingtransno)
+            fsavingno = COALESCE(fsavingno, v_strsavingno),
+            fitemgroupid = COALESCE(fitemgroupid, dbo.getitemgroupid(fcoid, fitemid))
         WHERE fcoid    = p_pstrcoid
           AND fyear    = p_pstryear
           AND fbrid    = p_strbrid
@@ -182,6 +189,7 @@ BEGIN
         UPDATE dbo.tblstocktrans SET
             fslno      = p_intslno,
             fitemid    = p_stritemid,
+            fitemgroupid = dbo.getitemgroupid(p_pstrcoid, p_stritemid),
             funit      = p_strunit,
             fqtyout    = COALESCE(p_numqtyout, 0),
             fqtyin     = COALESCE(p_numqtyin, 0),
