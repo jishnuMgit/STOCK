@@ -211,9 +211,14 @@ export const getPurchaseInvoice = async (
     const params = [coId, Number(year), brId, DOC_TYPE, docNo];
 
     // same columns as sp_pagepi 'GHD'
+    // fdate / fsupinvdate are returned as plain 'YYYY-MM-DD' strings so the
+    // date can't shift by a day through JS Date / UTC conversion
     const header = await pool.query(
       `SELECT DISTINCT
-          t.fpisitype AS finvoicetype, t.fdate, t.fcsaccountid AS faccountid,
+          t.fpisitype AS finvoicetype,
+          to_char(t.fdate, 'YYYY-MM-DD')    AS fdate,
+          to_char(t.fsupinvdate, 'YYYY-MM-DD') AS fsupinvdate,
+          t.fcsaccountid AS faccountid,
           t.fpono, t.fpino, t.fcurrency, t.fcurrencyrate, t.fnote,
           t.fdiscamt, t.fdocamt, t.fnetdocamt, t.fvatamt,
           COALESCE(t.fpost, false) AS fpost,
@@ -283,6 +288,7 @@ export const savePurchaseInvoice = async (
       docNo,
       invoiceType, // "C" cash / "R" credit
       piNo,
+      piDate, // supplier invoice date (yyyy-mm-dd) -> fsupinvdate
       poNo,
       date,
       vatNo,
@@ -305,6 +311,7 @@ export const savePurchaseInvoice = async (
       docNo: string;
       invoiceType: "C" | "R";
       piNo: string;
+      piDate?: string;
       poNo?: string;
       date: string;
       vatNo?: string;
@@ -431,6 +438,7 @@ export const savePurchaseInvoice = async (
       strinvoicetype: invoiceType,
       dtpdate: date,
       strpino: piNo,
+      dtpsupinvdate: piDate || null, // supplier invoice date -> fsupinvdate (stored by sp_pagepi)
       strpono: poNo?.trim() || null,
       strvatno: vatNo ?? null,
       strsupplierid: resolvedSupplierId,
@@ -444,7 +452,7 @@ export const savePurchaseInvoice = async (
       numvatamt: num(vatAmt),
     };
 
-    // NEW: original creator, read before the old lines are deleted
+    // original creator, read before the old lines are deleted
     let origCreator:
       | { fcuserid: string | null; fcuserdate: Date | null }
       | undefined;
@@ -467,7 +475,7 @@ export const savePurchaseInvoice = async (
         });
       }
     } else {
-      // NEW: keep the original creator, the lines are deleted and re-inserted below
+      // keep the original creator, the lines are deleted and re-inserted below
       const orig = await client.query(
         `SELECT fcuserid, fcuserdate FROM dbo.tblstocktrans
           WHERE fcoid=$1 AND fyear=$2 AND fbrid=$3 AND fdoctype=$4 AND fdocno=$5
@@ -521,8 +529,8 @@ export const savePurchaseInvoice = async (
         miscId || null,
       ],
     );
-    
-    /* NEW: modify -> put back the original creator and set the modifier */
+
+    /* modify -> put back the original creator and set the modifier */
     if (mode === "M" && origCreator) {
       await client.query(
         `UPDATE dbo.tblstocktrans
