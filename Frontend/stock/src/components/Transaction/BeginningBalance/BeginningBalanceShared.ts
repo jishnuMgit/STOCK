@@ -13,7 +13,7 @@ export const api = import.meta.env.VITE_API_URL;
 export const MENU_ID = "110110";
 
 // the grid always shows at least this many rows
-export const MIN_ROWS = 13;
+export const MIN_ROWS = 11;
 
 export type Option = {
   value: string;
