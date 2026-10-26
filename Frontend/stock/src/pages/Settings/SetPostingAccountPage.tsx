@@ -1,9 +1,10 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import Select, { type SingleValue, type StylesConfig } from "react-select";
 import { toast } from "react-toastify";
 import { useAltShortcuts } from "../../hooks/useAltShortcuts";
 import { useEnterAsTab } from "../../hooks/useEnterAsTab";
 import { useButtonPermissions } from "../../hooks/useButtonPermissions";
+import { useGridCellFocus } from "../../hooks/useGridCellFocus";
 import { usePairMenuHang } from "../../hooks/usePairMenuHang";
 import {
   filterLabelOrValue,
@@ -217,6 +218,13 @@ const selectStyles: StylesConfig<SelectOption, false> = {
 const SetPostingAccountPage: React.FC = () => {
   const perms = useButtonPermissions(MENU_ID);
   const handleEnterAsTab = useEnterAsTab();
+  // the box the cursor is in is outlined
+  const { cellFocusClass } = useGridCellFocus();
+
+  // the user's default branch has been asked for (found or not), and the branch
+  // whose saved accounts are on the screen - the cursor can start after both
+  const [branchDefaultLoaded, setBranchDefaultLoaded] = useState(false);
+  const [loadedBranch, setLoadedBranch] = useState<string | null>(null);
 
   const [values, setValues] = useState<FormValues>({
     ...initialValues,
@@ -329,6 +337,8 @@ const SetPostingAccountPage: React.FC = () => {
         toast.error(
           `getDefaultBranch error: ${error instanceof Error ? error.message : String(error)}`,
         );
+      } finally {
+        setBranchDefaultLoaded(true);
       }
     };
 
@@ -448,6 +458,7 @@ const SetPostingAccountPage: React.FC = () => {
           ...previous,
           ...buildAccountValues(result.data),
         }));
+        setLoadedBranch(values.lkpBranch);
       } catch (error) {
         console.error("getPostingAccount error:", error);
         toast.error(
@@ -458,6 +469,34 @@ const SetPostingAccountPage: React.FC = () => {
 
     loadPostingAccount();
   }, [values.lkpBranch, accountList, reloadKey]);
+
+  // ----------------------------------------------------------
+  // WHERE THE CURSOR STARTS (once, on page load)
+  // The Branch box when no branch is chosen; else the first account box that is
+  // still empty (the first one when every account is set).
+  // ----------------------------------------------------------
+
+  const cursorStarted = useRef(false);
+
+  useEffect(() => {
+    if (cursorStarted.current || !branchDefaultLoaded) return;
+
+    let targetId = "";
+
+    if (!values.lkpBranch) {
+      targetId = "lkpBranch";
+    } else if (loadedBranch === values.lkpBranch && accountList.length > 0) {
+      targetId =
+        postingAccountFields.find((field) => !values[field]) ??
+        postingAccountFields[0];
+    } else {
+      return; // the saved accounts are still loading
+    }
+
+    cursorStarted.current = true;
+
+    window.setTimeout(() => document.getElementById(targetId)?.focus(), 0);
+  }, [branchDefaultLoaded, loadedBranch, accountList, values]);
 
   // ----------------------------------------------------------
   // GENERAL VALUE HANDLER
@@ -544,9 +583,10 @@ const SetPostingAccountPage: React.FC = () => {
   // SAVE FORM
   // ----------------------------------------------------------
 
-  // The one button: Save the first time, Modify once the branch has a row
-  // (the old form switched its button text between "&Save" and "&Modify").
-  const actionWord = hasSavedRow ? "Modify" : "Save";
+  // The one button, always "Save" (the old form switched its text to "Modify" once
+  // the branch had a row; here it stays Save, and the right checked is still Save
+  // for a new branch, Modify for a saved one).
+  const actionWord = "Save";
   const canSaveOrModify = hasSavedRow ? perms.modify : perms.save;
 
   const handleSave = async () => {
@@ -599,10 +639,7 @@ const SetPostingAccountPage: React.FC = () => {
 
       if (!response.ok || !result.success) {
         toast.error(
-          result.message ||
-            (hasSavedRow
-              ? "Not modified, try again."
-              : "Not saved, try again."),
+          result.message || "Not saved, try again.",
         );
 
         // the backend validator names the field that failed - same name as
@@ -615,10 +652,7 @@ const SetPostingAccountPage: React.FC = () => {
       }
 
       toast.success(
-        result.message ||
-          (hasSavedRow
-            ? "Posting accounts modified successfully."
-            : "Posting accounts saved successfully."),
+        result.message || "Set Posting Account saved successfully",
       );
 
       // load the branch again: it now has a saved row, so the button
@@ -630,15 +664,9 @@ const SetPostingAccountPage: React.FC = () => {
     }
   };
 
-  // Alt+S -> Save (new branch), Alt+M -> Modify (saved branch),
-  // Alt+C -> Clear (the underlined letters on the buttons)
+  // Alt+S -> Save, Alt+C -> Clear (the underlined letters on the buttons)
   useAltShortcuts({
-    s: () => {
-      if (!hasSavedRow) handleSave();
-    },
-    m: () => {
-      if (hasSavedRow) handleSave();
-    },
+    s: handleSave,
     c: handleClear,
   });
 
@@ -673,7 +701,7 @@ const SetPostingAccountPage: React.FC = () => {
                 Branch :
               </label>
 
-              <div className="-ml-3 w-[30%] min-w-0">
+              <div className={`-ml-3 w-[30%] min-w-0 ${cellFocusClass}`}>
                 <Select<SelectOption, false>
                   inputId="lkpBranch"
                   name="lkpBranch"
@@ -703,7 +731,7 @@ const SetPostingAccountPage: React.FC = () => {
               </label>
 
               {/* ACCOUNT ID */}
-              <div className="-ml-3 w-[30%] min-w-0">
+              <div className={`-ml-3 w-[30%] min-w-0 ${cellFocusClass}`}>
                 <Select<SelectOption, false>
                   inputId="lkpCashSupplierAccountID"
                   name="lkpCashSupplierAccountID"
@@ -735,7 +763,7 @@ const SetPostingAccountPage: React.FC = () => {
               </div>
 
               {/* ACCOUNT NAME */}
-              <div className="ml-3 w-full min-w-0">
+              <div className={`ml-3 w-full min-w-0 ${cellFocusClass}`}>
                 <Select<SelectOption, false>
                   inputId="lkpCashSupplierAccountName"
                   name="lkpCashSupplierAccountName"
@@ -770,7 +798,7 @@ const SetPostingAccountPage: React.FC = () => {
                 Cash Customer Account :
               </label>
 
-              <div className="-ml-3 w-[30%] min-w-0">
+              <div className={`-ml-3 w-[30%] min-w-0 ${cellFocusClass}`}>
                 <Select<SelectOption, false>
                   inputId="lkpCashCustomerAccountID"
                   name="lkpCashCustomerAccountID"
@@ -801,7 +829,7 @@ const SetPostingAccountPage: React.FC = () => {
                 />
               </div>
 
-              <div className="ml-3 w-full min-w-0">
+              <div className={`ml-3 w-full min-w-0 ${cellFocusClass}`}>
                 <Select<SelectOption, false>
                   inputId="lkpCashCustomerAccountName"
                   name="lkpCashCustomerAccountName"
@@ -836,7 +864,7 @@ const SetPostingAccountPage: React.FC = () => {
                 Stock Account :
               </label>
 
-              <div className="-ml-3 w-[30%] min-w-0">
+              <div className={`-ml-3 w-[30%] min-w-0 ${cellFocusClass}`}>
                 <Select<SelectOption, false>
                   inputId="lkpStockAccountID"
                   name="lkpStockAccountID"
@@ -867,7 +895,7 @@ const SetPostingAccountPage: React.FC = () => {
                 />
               </div>
 
-              <div className="ml-3 w-full min-w-0">
+              <div className={`ml-3 w-full min-w-0 ${cellFocusClass}`}>
                 <Select<SelectOption, false>
                   inputId="lkpStockAccountName"
                   name="lkpStockAccountName"
@@ -902,7 +930,7 @@ const SetPostingAccountPage: React.FC = () => {
                 Sales Account :
               </label>
 
-              <div className="-ml-3 w-[30%] min-w-0">
+              <div className={`-ml-3 w-[30%] min-w-0 ${cellFocusClass}`}>
                 <Select<SelectOption, false>
                   inputId="lkpSalesAccountID"
                   name="lkpSalesAccountID"
@@ -933,7 +961,7 @@ const SetPostingAccountPage: React.FC = () => {
                 />
               </div>
 
-              <div className="ml-3 w-full min-w-0">
+              <div className={`ml-3 w-full min-w-0 ${cellFocusClass}`}>
                 <Select<SelectOption, false>
                   inputId="lkpSalesAccountName"
                   name="lkpSalesAccountName"
@@ -968,7 +996,7 @@ const SetPostingAccountPage: React.FC = () => {
                 Sales Return Account :
               </label>
 
-              <div className="-ml-3 w-[30%] min-w-0">
+              <div className={`-ml-3 w-[30%] min-w-0 ${cellFocusClass}`}>
                 <Select<SelectOption, false>
                   inputId="lkpSalesReturnAccountID"
                   name="lkpSalesReturnAccountID"
@@ -999,7 +1027,7 @@ const SetPostingAccountPage: React.FC = () => {
                 />
               </div>
 
-              <div className="ml-3 w-full min-w-0">
+              <div className={`ml-3 w-full min-w-0 ${cellFocusClass}`}>
                 <Select<SelectOption, false>
                   inputId="lkpSalesReturnAccountName"
                   name="lkpSalesReturnAccountName"
@@ -1034,7 +1062,7 @@ const SetPostingAccountPage: React.FC = () => {
                 Cost Of Sales Account :
               </label>
 
-              <div className="-ml-3 w-[30%] min-w-0">
+              <div className={`-ml-3 w-[30%] min-w-0 ${cellFocusClass}`}>
                 <Select<SelectOption, false>
                   inputId="lkpCostOfSalesAccountID"
                   name="lkpCostOfSalesAccountID"
@@ -1065,7 +1093,7 @@ const SetPostingAccountPage: React.FC = () => {
                 />
               </div>
 
-              <div className="ml-3 w-full min-w-0">
+              <div className={`ml-3 w-full min-w-0 ${cellFocusClass}`}>
                 <Select<SelectOption, false>
                   inputId="lkpCostOfSalesAccountName"
                   name="lkpCostOfSalesAccountName"
@@ -1100,7 +1128,7 @@ const SetPostingAccountPage: React.FC = () => {
                 Cost Of Sales Return Account :
               </label>
 
-              <div className="-ml-3 w-[30%] min-w-0">
+              <div className={`-ml-3 w-[30%] min-w-0 ${cellFocusClass}`}>
                 <Select<SelectOption, false>
                   inputId="lkpCostOfSalesReturnAccountID"
                   name="lkpCostOfSalesReturnAccountID"
@@ -1131,7 +1159,7 @@ const SetPostingAccountPage: React.FC = () => {
                 />
               </div>
 
-              <div className="ml-3 w-full min-w-0">
+              <div className={`ml-3 w-full min-w-0 ${cellFocusClass}`}>
                 <Select<SelectOption, false>
                   inputId="lkpCostOfSalesReturnAccountName"
                   name="lkpCostOfSalesReturnAccountName"
@@ -1166,7 +1194,7 @@ const SetPostingAccountPage: React.FC = () => {
                 Stock Adjustment Account :
               </label>
 
-              <div className="-ml-3 w-[30%] min-w-0">
+              <div className={`-ml-3 w-[30%] min-w-0 ${cellFocusClass}`}>
                 <Select<SelectOption, false>
                   inputId="lkpStockAdjustmentAccountID"
                   name="lkpStockAdjustmentAccountID"
@@ -1197,7 +1225,7 @@ const SetPostingAccountPage: React.FC = () => {
                 />
               </div>
 
-              <div className="ml-3 w-full min-w-0">
+              <div className={`ml-3 w-full min-w-0 ${cellFocusClass}`}>
                 <Select<SelectOption, false>
                   inputId="lkpStockAdjustmentAccountName"
                   name="lkpStockAdjustmentAccountName"
@@ -1233,7 +1261,7 @@ const SetPostingAccountPage: React.FC = () => {
                 Round Off Account :
               </label>
 
-              <div className="-ml-3 w-[30%] min-w-0">
+              <div className={`-ml-3 w-[30%] min-w-0 ${cellFocusClass}`}>
                 <Select<SelectOption, false>
                   inputId="lkpRoundOffAccountID"
                   name="lkpRoundOffAccountID"
@@ -1264,7 +1292,7 @@ const SetPostingAccountPage: React.FC = () => {
                 />
               </div>
 
-              <div className="ml-3 w-full min-w-0">
+              <div className={`ml-3 w-full min-w-0 ${cellFocusClass}`}>
                 <Select<SelectOption, false>
                   inputId="lkpRoundOffAccountName"
                   name="lkpRoundOffAccountName"
@@ -1300,7 +1328,7 @@ const SetPostingAccountPage: React.FC = () => {
                 Input VAT Account :
               </label>
 
-              <div className="-ml-3 w-[30%] min-w-0">
+              <div className={`-ml-3 w-[30%] min-w-0 ${cellFocusClass}`}>
                 <Select<SelectOption, false>
                   inputId="lkpInputVATAccountID"
                   name="lkpInputVATAccountID"
@@ -1331,7 +1359,7 @@ const SetPostingAccountPage: React.FC = () => {
                 />
               </div>
 
-              <div className="ml-3 w-full min-w-0">
+              <div className={`ml-3 w-full min-w-0 ${cellFocusClass}`}>
                 <Select<SelectOption, false>
                   inputId="lkpInputVATAccountName"
                   name="lkpInputVATAccountName"
@@ -1366,7 +1394,7 @@ const SetPostingAccountPage: React.FC = () => {
                 Output VAT Account :
               </label>
 
-              <div className="-ml-3 w-[30%] min-w-0">
+              <div className={`-ml-3 w-[30%] min-w-0 ${cellFocusClass}`}>
                 <Select<SelectOption, false>
                   inputId="lkpOutputVATAccountID"
                   name="lkpOutputVATAccountID"
@@ -1397,7 +1425,7 @@ const SetPostingAccountPage: React.FC = () => {
                 />
               </div>
 
-              <div className="ml-3 w-full min-w-0">
+              <div className={`ml-3 w-full min-w-0 ${cellFocusClass}`}>
                 <Select<SelectOption, false>
                   inputId="lkpOutputVATAccountName"
                   name="lkpOutputVATAccountName"
@@ -1426,8 +1454,8 @@ const SetPostingAccountPage: React.FC = () => {
             {/* BUTTONS */}
             <div className="mt-[14px] flex justify-center gap-3">
               <button
-                id={hasSavedRow ? "btnModify" : "btnSave"}
-                name={hasSavedRow ? "btnModify" : "btnSave"}
+                id="btnSave"
+                name="btnSave"
                 type="button"
                 onClick={handleSave}
                 disabled={!canSaveOrModify}

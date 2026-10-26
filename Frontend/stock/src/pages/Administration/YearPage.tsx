@@ -8,7 +8,9 @@ import {
 } from "../../components/BranchSelect/branchSelectParts";
 import { useAltShortcuts } from "../../hooks/useAltShortcuts";
 import { useAdvanceAfterSelect } from "../../hooks/useAdvanceAfterSelect";
-import { useConfirm, DELETE_CONFIRM_MESSAGE } from "../../hooks/useConfirm";
+import { useConfirmModal } from "../../hooks/useConfirmModal";
+import { useDeleteToast } from "../../hooks/useDeleteToast";
+import { useGridCellFocus } from "../../hooks/useGridCellFocus";
 
 // ============================================================
 // YEAR (Administration > Year, the old frmYear)
@@ -137,7 +139,11 @@ const YearPage: React.FC = () => {
   const [savedKeys, setSavedKeys] = useState<string[]>([]);
   const [selectedKey, setSelectedKey] = useState<number | null>(null);
   const [saving, setSaving] = useState(false);
-  const { confirm, confirmDialog } = useConfirm();
+  // the common themed question window and the standard delete messages
+  const { confirm, dialog } = useConfirmModal();
+  const { deleted, notDeleted } = useDeleteToast("Year");
+  // the cell the cursor is in is outlined (a typed-in box has its text selected)
+  const { cellFocusClass, selectOnFocus } = useGridCellFocus();
   const { advanceAfterPick, advanceOnEnter } = useAdvanceAfterSelect();
 
   // bumped after a Save so the years are loaded again
@@ -145,6 +151,18 @@ const YearPage: React.FC = () => {
 
   // only the answer of the latest request may fill the grid
   const loadRequest = useRef(0);
+
+  // the row the cursor goes to after a load (set by the load, done once the rows
+  // are drawn)
+  const focusRowRef = useRef<number | null>(null);
+
+  useEffect(() => {
+    if (focusRowRef.current === null) return;
+
+    const rowIndex = focusRowRef.current;
+    focusRowRef.current = null;
+    document.getElementById(`lkpBranch-${rowIndex}`)?.focus();
+  }, [rows]);
 
   const branchName = (lkpBranch: string) =>
     branchOptions.find((option) => option.value === lkpBranch)?.label ??
@@ -209,7 +227,15 @@ const YearPage: React.FC = () => {
         setSavedKeys(
           loaded.map((row) => `${row.lkpBranch}|${Number(row.txtYear)}`),
         );
-        setSelectedKey(padded[0]?.key ?? null);
+
+        // the cursor goes to the first empty row (after the last saved one), ready for
+        // a new entry
+        const firstEmptyRow = loaded.length;
+
+        setSelectedKey(padded[firstEmptyRow]?.key ?? padded[0]?.key ?? null);
+
+        // (done by the effect below, once the rows are on the screen)
+        focusRowRef.current = firstEmptyRow;
       } catch (error: unknown) {
         if (requestNo !== loadRequest.current) return;
 
@@ -370,7 +396,10 @@ const YearPage: React.FC = () => {
     const originalBranch = row.original?.lkpBranch ?? row.lkpBranch;
     const originalYear = row.original?.txtYear ?? row.txtYear;
 
-    const shouldDelete = await confirm(DELETE_CONFIRM_MESSAGE, "Delete");
+    const shouldDelete = await confirm({
+      title: "Year",
+      message: "Do you want to delete ?",
+    });
 
     if (!shouldDelete) return;
 
@@ -392,12 +421,12 @@ const YearPage: React.FC = () => {
       const result = await response.json();
 
       if (!response.ok || !result.success) {
-        toast.error(result.message || "Not Deleted,try again");
+        notDeleted(result.message);
         focusField(result.field);
         return;
       }
 
-      toast.success(result.message);
+      deleted();
 
       // the server no longer has this year
       setSavedKeys((previous) =>
@@ -409,7 +438,7 @@ const YearPage: React.FC = () => {
       );
     } catch (error: unknown) {
       console.error("deleteYear error:", error);
-      toast.error("Not Deleted,try again");
+      notDeleted();
     } finally {
       setSaving(false);
     }
@@ -481,7 +510,7 @@ const YearPage: React.FC = () => {
                           {selected ? "▶" : ""}
                         </td>
                         <td
-                          className={`border border-[#BFE8D0] p-0 ${
+                          className={`border border-[#BFE8D0] p-0 ${cellFocusClass} ${
                             changed ? "bg-[#fff6d6]" : selected ? "bg-[#F2FAF5]" : ""
                           }`}
                           onKeyDown={(event) => advanceOnEnter(event)}
@@ -506,7 +535,7 @@ const YearPage: React.FC = () => {
                           />
                         </td>
                         <td
-                          className={`border border-[#BFE8D0] p-0 ${changed ? "bg-[#fff6d6]" : ""}`}
+                          className={`border border-[#BFE8D0] p-0 ${cellFocusClass} ${changed ? "bg-[#fff6d6]" : ""}`}
                         >
                           <div className="flex h-[26px] items-center">
                             <input
@@ -516,7 +545,10 @@ const YearPage: React.FC = () => {
                               inputMode="numeric"
                               maxLength={4}
                               value={row.txtYear}
-                              onFocus={() => setSelectedKey(row.key)}
+                              onFocus={(event) => {
+                              selectOnFocus(event);
+                              setSelectedKey(row.key);
+                            }}
                               onChange={(event) =>
                                 updateCell(
                                   row.key,
@@ -583,7 +615,7 @@ const YearPage: React.FC = () => {
         </main>
       </div>
 
-      {confirmDialog}
+      {dialog}
     </div>
   );
 };

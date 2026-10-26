@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import Select, { type SingleValue, type StylesConfig } from "react-select";
 import { toast } from "react-toastify";
 import {
@@ -8,6 +8,7 @@ import {
   pairDividedIdMenuStyles,
 } from "../../../components/PairSelect/pairSelectParts";
 import { useAltShortcuts } from "../../../hooks/useAltShortcuts";
+import { useGridCellFocus } from "../../../hooks/useGridCellFocus";
 
 // ============================================================
 // ITEM ENQUIRY (the old frmItemEnquiry)
@@ -182,7 +183,20 @@ const selectStyles = {
 const labelClass = "w-[120px] shrink-0 text-right text-[14px] text-gray-600";
 const readOnlyClass = "input-style bg-gray-50";
 
+// the boxes of a branch row, left to right (their ids are <column>-<row index>)
+const GRID_COLUMNS = [
+  "txtBranchName",
+  "txtStock",
+  "txtPrevUnitCost",
+  "txtUnitPrice",
+  "txtUnitCost",
+  "txtTotalCost",
+];
+
 const ItemEnquiryPage: React.FC = () => {
+  // the cell the cursor is in is outlined (a box in it has its text selected, to copy)
+  const { cellFocusClass, selectOnFocus } = useGridCellFocus();
+
   // the two Item boxes (always the same item)
   const [itemIdOptions, setItemIdOptions] = useState<SelectOption[]>([]);
   const [itemNameOptions, setItemNameOptions] = useState<SelectOption[]>([]);
@@ -203,6 +217,10 @@ const ItemEnquiryPage: React.FC = () => {
 
   // the branch rows
   const [rows, setRows] = useState<BranchRow[]>([]);
+
+  // an item was just picked: when its branches have loaded, the cursor goes to the
+  // first cell of the grid
+  const goToGridRef = useRef(false);
 
   // ----------------------------------------------------------
   // CLEAR THE DETAILS AND THE GRID
@@ -313,6 +331,7 @@ const ItemEnquiryPage: React.FC = () => {
 
         if (!response.ok || !result.success) {
           toast.error(result.message || "Failed to load the item");
+          goToGridRef.current = false;
           clearDetails();
           return;
         }
@@ -330,10 +349,14 @@ const ItemEnquiryPage: React.FC = () => {
         setTxtReorderLevel(plainNumber(header?.txtReorderLevel));
         setTxtReorderQty(plainNumber(header?.txtReorderQty));
         setRows(result.data || []);
+
+        // no branches: there is no grid to go to (with some, the effect below goes)
+        if ((result.data || []).length === 0) goToGridRef.current = false;
       } catch (error) {
         if (ignore) return;
 
         console.error("getItemEnquiry error:", error);
+        goToGridRef.current = false;
         toast.error("Cannot connect to Item Enquiry API.");
       }
     };
@@ -345,21 +368,91 @@ const ItemEnquiryPage: React.FC = () => {
     };
   }, [itemValue]);
 
+  // an item was picked and its branches have been drawn: the cursor goes to the first
+  // cell of the grid (after the draw - the cells do not exist before it)
+  useEffect(() => {
+    if (!goToGridRef.current || rows.length === 0) return;
+
+    goToGridRef.current = false;
+    document.getElementById(`${GRID_COLUMNS[0]}-0`)?.focus();
+  }, [rows]);
+
   // ----------------------------------------------------------
   // PICK AN ITEM from either box: both boxes show it
   // ----------------------------------------------------------
 
   const pickItem = (itemID: string | null) => {
     if (!itemID) {
+      goToGridRef.current = false;
       setLkpItemID(null);
       setLkpItemName(null);
       return;
     }
 
+    // the same item again: nothing loads, so the cursor goes to the grid at once
+    if (itemID === itemValue) {
+      goToGridRef.current = false;
+
+      if (rows.length > 0) {
+        window.setTimeout(
+          () => document.getElementById(`${GRID_COLUMNS[0]}-0`)?.focus(),
+          0,
+        );
+      }
+
+      return;
+    }
+
+    // another item: the cursor goes to the grid once its branches have loaded
+    goToGridRef.current = true;
+
     setLkpItemID(itemIdOptions.find((option) => option.value === itemID) ?? null);
     setLkpItemName(
       itemNameOptions.find((option) => option.value === itemID) ?? null,
     );
+  };
+
+  // ----------------------------------------------------------
+  // THE KEYBOARD
+  // Tab goes through the boxes as the browser does. Enter does the same, in the
+  // boxes that are only looked at: on an item box that already has an item (and whose
+  // list is closed) it goes to the first cell of the grid; in the grid it goes to the
+  // next cell on the right, then to the first cell of the next row; after the last
+  // cell it goes to Clear.
+  // ----------------------------------------------------------
+
+  const handleItemBoxEnter = (event: React.KeyboardEvent<HTMLElement>) => {
+    if (event.key !== "Enter" || event.defaultPrevented) return;
+
+    // an open list has used the Enter to pick
+    if ((event.target as HTMLElement).getAttribute("aria-expanded") === "true") return;
+
+    if (!lkpItemID || rows.length === 0) return;
+
+    event.preventDefault();
+    document.getElementById(`${GRID_COLUMNS[0]}-0`)?.focus();
+  };
+
+  const handleGridEnter = (event: React.KeyboardEvent<HTMLTableSectionElement>) => {
+    if (event.key !== "Enter") return;
+
+    const match = /^([A-Za-z]+)-(\d+)$/.exec((event.target as HTMLElement).id);
+    if (!match) return;
+
+    const column = GRID_COLUMNS.indexOf(match[1]);
+    const row = Number(match[2]);
+    if (column === -1) return;
+
+    event.preventDefault();
+
+    const nextId =
+      column < GRID_COLUMNS.length - 1
+        ? `${GRID_COLUMNS[column + 1]}-${row}`
+        : row < rows.length - 1
+          ? `${GRID_COLUMNS[0]}-${row + 1}`
+          : "btnClear";
+
+    document.getElementById(nextId)?.focus();
   };
 
   // ----------------------------------------------------------
@@ -413,7 +506,7 @@ const ItemEnquiryPage: React.FC = () => {
               Item ID :
             </label>
 
-            <div className="w-75 max-w-full">
+            <div className="w-75 max-w-full" onKeyDown={handleItemBoxEnter}>
               <Select<SelectOption, false>
                 inputId="lkpItemID"
                 name="lkpItemID"
@@ -448,7 +541,7 @@ const ItemEnquiryPage: React.FC = () => {
               Item Name :
             </label>
 
-            <div className="w-130 max-w-full">
+            <div className="w-130 max-w-full" onKeyDown={handleItemBoxEnter}>
               <Select<SelectOption, false>
                 inputId="lkpItemName"
                 name="lkpItemName"
@@ -634,37 +727,40 @@ const ItemEnquiryPage: React.FC = () => {
                 </tr>
               </thead>
 
-              <tbody>
+              <tbody onKeyDown={handleGridEnter}>
                 {rows.map((row, index) => (
                   <tr key={row.txtBranchID} className="h-7.5 text-[14px]">
-                    <td className="border border-[#bfe8d0] px-2">
+                    <td className={`border border-[#bfe8d0] px-2 ${cellFocusClass}`}>
                       <input
                         id={`txtBranchName-${index}`}
                         name="txtBranchName"
                         value={row.txtBranchName}
                         readOnly
+                        onFocus={selectOnFocus}
                         className="h-6.5 w-full bg-transparent outline-none"
                       />
                     </td>
-                    <td className="border border-[#bfe8d0] px-2">
+                    <td className={`border border-[#bfe8d0] px-2 ${cellFocusClass}`}>
                       <input
                         id={`txtStock-${index}`}
                         name="txtStock"
                         value={formatStock(Number(row.txtStock))}
                         readOnly
+                        onFocus={selectOnFocus}
                         className="h-6.5 w-full bg-transparent text-right outline-none"
                       />
                     </td>
-                    <td className="border border-[#bfe8d0] px-2">
+                    <td className={`border border-[#bfe8d0] px-2 ${cellFocusClass}`}>
                       <input
                         id={`txtPrevUnitCost-${index}`}
                         name="txtPrevUnitCost"
                         value={formatCost(Number(row.txtPrevUnitCost))}
                         readOnly
+                        onFocus={selectOnFocus}
                         className="h-6.5 w-full bg-transparent text-right outline-none"
                       />
                     </td>
-                    <td className="border border-[#bfe8d0] px-2">
+                    <td className={`border border-[#bfe8d0] px-2 ${cellFocusClass}`}>
                       <input
                         id={`txtUnitPrice-${index}`}
                         name="txtUnitPrice"
@@ -674,24 +770,27 @@ const ItemEnquiryPage: React.FC = () => {
                             : formatPrice(Number(row.txtUnitPrice))
                         }
                         readOnly
+                        onFocus={selectOnFocus}
                         className="h-6.5 w-full bg-transparent text-right outline-none"
                       />
                     </td>
-                    <td className="border border-[#bfe8d0] px-2">
+                    <td className={`border border-[#bfe8d0] px-2 ${cellFocusClass}`}>
                       <input
                         id={`txtUnitCost-${index}`}
                         name="txtUnitCost"
                         value={formatCost(Number(row.txtUnitCost))}
                         readOnly
+                        onFocus={selectOnFocus}
                         className="h-6.5 w-full bg-transparent text-right outline-none"
                       />
                     </td>
-                    <td className="border border-[#bfe8d0] px-2">
+                    <td className={`border border-[#bfe8d0] px-2 ${cellFocusClass}`}>
                       <input
                         id={`txtTotalCost-${index}`}
                         name="txtTotalCost"
                         value={formatCost(Number(row.txtTotalCost))}
                         readOnly
+                        onFocus={selectOnFocus}
                         className="h-6.5 w-full bg-transparent text-right outline-none"
                       />
                     </td>

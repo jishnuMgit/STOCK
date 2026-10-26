@@ -16,7 +16,6 @@ import PurchaseInvoicePage from "../pages/Purchase/Transaction/PurchaseInvoicePa
 import PurchaseExpense from "../components/Transaction/PurchaseInvoice/PurchaseInvoiceExpense";
 import SalesInvoice from "../pages/Sales/Transaction/SalesInvoicePage";
 import StockTransfer from "../pages/Sales/Transaction/stock/StockTransferPage";
-import StockAdjustmentPrint from "../pages/Sales/Transaction/stock/StockAdjustmentPrintPage";
 import BeginningBalance from "../pages/Finance/Transaction/BeginningBalance/BeginningBalancePage";
 import ItemGroupPage from "../pages/Purchase/Setup/ItemGroupPage";
 import CompanyPage from "../pages/Administration/CompanyPage";
@@ -28,7 +27,6 @@ import ItemEnquiryPage from "../pages/Sales/Setup/ItemEnquiryPage";
 import UnitPage from "../pages/Purchase/Setup/UnitPage";
 import StaffPage from "../pages/Purchase/Setup/StaffPage";
 import UserAudit from "../pages/Security/UserAudit/UserAuditPage";
-import UserAuditPrint from "../pages/Security/UserAudit/UserAuditPrintPage";
 import UserTransactionAudit from "../pages/Security/UserTransactionAudit/UserTransactionAuditPage";
 import StockDocumentPost from "../pages/Sales/Transaction/stock/StockDocumentPostPage";
 import StockDocumentPostCancel from "../pages/Sales/Transaction/stock/StockDocumentPostCancel";
@@ -79,7 +77,6 @@ import RptExpenseSumPage from "../pages/Finance/Report/ExpenseSummary/RptExpense
 import RptReceiptPaymentSumPage from "../pages/Finance/Report/ReceiptPaymentSum/RptReceiptPaymentSumPage";
 import RptFinDocList from "../pages/Finance/Report/DocumentsList/RptFinDocList";
 import SalesPriceListPage from "../pages/Sales/Setup/SalesPriceListPage";
-import BeginningStockPrintPage from "../pages/Purchase/Transaction/BeginningStockPrintPage";
 import RptIncomeSumPage from "../pages/Finance/Report/IncomeSummary/RptIncomeSumPage";
 import RptDocumentExportPage from "../pages/Finance/Report/DocumentExportPage/RptDocumentExportPage";
 import SetReceivableAgeingPeriod from "../pages/Settings/SetReceivableAgeingPeriodPage";
@@ -196,7 +193,6 @@ const AppRoutes = () => {
           <Route path="/Sales/Transaction/SalesInvoicePage" element={<SalesInvoice />}/>
           <Route path="/Sales/Transaction/StockAdjustment"  element={<StockAdjustmentPage/>} />
           <Route path="/Sales/Transaction/StockTransferPage" element={<StockTransfer />}/>
-          <Route path="/Sales/Transaction/StockAdjustment/Print" element={<StockAdjustmentPrint />}/>
           <Route path="/Sales/Transaction/StockDocumentPost" element={<StockDocumentPost/>}/>
           <Route path="/Sales/Transaction/StockDocumentRePost" element={<StockDocumentRePost/>}/>
 
@@ -225,7 +221,6 @@ const AppRoutes = () => {
 
           <Route path="/Purchase/Transaction/PurchaseInvoicePage" element={<PurchaseInvoicePage />}/>
           <Route path="/Purchase/Transaction/BeginningStockPage" element={<BeginningStockPage />} />
-          <Route path="/Purchase/Transaction/BeginningStockPage/Print" element={<BeginningStockPrintPage />} />
           <Route path="/Purchase/Setup/UnitPage" element={<UnitPage/>} />
           <Route path="/Purchase/Setup/StaffPage" element={<StaffPage/>} />
 
@@ -333,12 +328,6 @@ const AppRoutes = () => {
             element={<UserPermissionBranchPage />}
           />
           <Route path="/Security/UserAudit" element={<UserAudit />} />
-
-          {/* the print page the User Audit dialog opens (no menu entry of its own) */}
-          <Route
-            path="/Security/UserAudit/Print"
-            element={<UserAuditPrint />}
-          />
           <Route
             path="/Security/UserTransactionAudit"
             element={<UserTransactionAudit />}

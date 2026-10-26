@@ -5,6 +5,7 @@ import { hasButtonRight } from "../../../utils/buttonRights.js";
 import { UserAudit } from "../../../utils/UserAudit.js";
 import {
   validateStockTransfer,
+  findOutOfStockItems,
   validateStockTransferDelete,
   validateStockTransferPrint,
   validateStockTransferPost,
@@ -457,6 +458,15 @@ export const saveStockTransfer = async (
       });
     }
 
+    // the lines without enough stock are only a warning: the transfer is saved and the
+    // page shows "Out Of Stock for the Item : X" for each of them
+    const outOfStockItems = await findOutOfStockItems(
+      PstrCoID,
+      lkpBranch,
+      String(txtDocNo).trim(),
+      Array.isArray(rows) ? rows : []
+    );
+
     // Save (S) when the Entry No. has no document yet, Modify (M) when it has
     // one - each needs its own button right
     const current = await getStockTransferService(
@@ -529,6 +539,7 @@ export const saveStockTransfer = async (
           : "Stock Transfer saved successfully",
       mode: result.mode,
       txtDocNo: result.txtDocNo,
+      warnings: outOfStockItems.map((itemId) => `Out Of Stock for the Item  : ${itemId}`),
     });
   } catch (error: unknown) {
     console.error("saveStockTransfer error:", error);

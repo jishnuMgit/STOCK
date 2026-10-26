@@ -16,6 +16,7 @@ import { usePairMenuHang } from "../../../../hooks/usePairMenuHang";
 import { useAltShortcuts } from "../../../../hooks/useAltShortcuts";
 import { useInitialFocus } from "../../../../hooks/useInitialFocus";
 import { useGridCellFocus } from "../../../../hooks/useGridCellFocus";
+import { useDeleteToast } from "../../../../hooks/useDeleteToast";
 import { useConfirmModal } from "../../../../hooks/useConfirmModal";
 import ReportPreview from "../../../../components/common/ReportPreview";
 import { buildStockTransferPdf } from "../../../../components/Transaction/StockTransfer/StockTransferPdf";
@@ -460,7 +461,7 @@ const tableSelectStyles: StylesConfig<SelectOption, false> = {
 // ============================================================
 
 const createInitialRows = (): StockRow[] =>
-  Array.from({ length: 15 }, (_, index) => ({
+  Array.from({ length: 11 }, (_, index) => ({
     id: index + 1,
     txtSlNo: index + 1,
     lkpItemID: null,
@@ -537,6 +538,9 @@ const StockTransferPage: React.FC = () => {
   const { advanceAfterPick, advanceOnEnter } = useAdvanceAfterSelect();
   // the cell the cursor is in is outlined; a typed-in box has its text selected
   const { cellFocusClass, selectOnFocus } = useGridCellFocus();
+  // the standard messages of a delete (the same on every screen)
+  // only the failure message is used: a delete that worked shows none
+  const { notDeleted } = useDeleteToast(SCREEN_TITLE);
   // ... and the Item Name list covers the columns up to Qty.
   const { hang: nameMenuHang, measure: measureNameMenuHang } = usePairMenuHang(210);
 
@@ -909,9 +913,9 @@ const StockTransferPage: React.FC = () => {
 
       setTxtStock(stock.toLocaleString("en-US", { maximumFractionDigits: 3 }));
 
-      // no stock: only a warning - the item stays in the row and the user deletes the
-      // row. (Save refuses it anyway: the server checks the stock again.) The message
-      // is shown HERE, once - not inside setRows, which React may run twice.
+      // no stock: only a warning - the item stays in the row and the transfer can still be
+      // saved (it cannot be posted without the stock). The message is shown HERE, once - not
+      // inside setRows, which React may run twice.
       if (stock <= 0) {
         toast.warning(`Out Of Stock for the Item  : ${itemId} - this branch has no stock of it`);
       }
@@ -1064,8 +1068,8 @@ const StockTransferPage: React.FC = () => {
     updateRow(rowIndex, "txtQty", value);
   };
 
-  // on leaving the box: 3 decimals, and the old "Out Of Stock" check (the
-  // server checks it again)
+  // on leaving the box: 3 decimals, and the old "Out Of Stock" warning (only a warning:
+  // the transfer can still be saved)
   const showQty = (rowIndex: number, value: string) => {
     if (value === "" || Number.isNaN(Number(value))) return;
 
@@ -1320,6 +1324,12 @@ const StockTransferPage: React.FC = () => {
 
       toast.success(result.message || (chkSaved ? "Modified" : "Saved"));
 
+      // a line without enough stock does not stop the save: it is saved, and each such item
+      // gets the "Out Of Stock" warning (it cannot be posted without the stock)
+      for (const warning of (result.warnings ?? []) as string[]) {
+        toast.warning(warning);
+      }
+
       // as the old form: the page is emptied and the next Entry No. shown
       resetDocument();
       setDtpDate(todayLocal());
@@ -1399,7 +1409,7 @@ const StockTransferPage: React.FC = () => {
       const result = await response.json();
 
       if (!response.ok || !result.success) {
-        toast.error(result.message || "Not Deleted,Try again");
+        notDeleted(result.message);
 
         if (result.field) {
           document.getElementById(result.field)?.focus();
@@ -1408,7 +1418,7 @@ const StockTransferPage: React.FC = () => {
         return;
       }
 
-      toast.success(result.message || "Deleted");
+      // (no message for a deleted Stock Transfer: the page is just emptied)
 
       // as the old form: the page is emptied and the next Entry No. shown
       resetDocument();
@@ -1580,16 +1590,13 @@ const StockTransferPage: React.FC = () => {
         return;
       }
 
-      // a name that is never the name of a file that is still open
-      const now = new Date();
-      const pad = (value: number) => String(value).padStart(2, "0");
-      const stamp = `${now.getFullYear()}${pad(now.getMonth() + 1)}${pad(now.getDate())}_${pad(now.getHours())}${pad(now.getMinutes())}${pad(now.getSeconds())}`;
-
       setPreview({
         report: { ...result.header, rows: result.data || [] },
         lkpBranch: lkpBranch.value,
         txtDocNo: txtDocNo.trim(),
-        fileBase: `StockTransfer_${txtDocNo.trim().replace(/[^A-Za-z0-9_-]/g, "_")}_${stamp}`,
+        // the downloaded file is "ST <Entry No.>" (only characters a file name cannot hold are
+        // replaced)
+        fileBase: `ST ${txtDocNo.trim().replace(/[\\/:*?"<>|]/g, "_")}`,
       });
     } catch (error) {
       console.error("printStockTransfer error:", error);
@@ -1633,7 +1640,7 @@ const StockTransferPage: React.FC = () => {
 
   // ----------------------------------------------------------
   // DELETE A ROW (the x of a row): asks first. A line that is saved goes from the
-  // database at once, with the message "Deleted" (the last saved line takes the whole
+  // database at once, with "Stock Transfer deleted successfully" (the last saved line takes the whole
   // transfer with it); a line that was never saved only leaves the grid. The cursor
   // goes back to the row's Item ID.
   // ----------------------------------------------------------
@@ -1646,14 +1653,10 @@ const StockTransferPage: React.FC = () => {
 
     // the line is in the database: it has the Sl.# it was loaded with
     const savedLine = chkSaved && row.txtOriginalSlNo !== null;
-    const onlySavedLine =
-      savedLine && rows.filter((entry) => entry.txtOriginalSlNo !== null).length === 1;
 
     const shouldRemove = await confirm({
       title: SCREEN_TITLE,
-      message: onlySavedLine
-        ? "Do you want to delete ?"
-        : `Do you want to delete Line ${index + 1} ?`,
+      message: `Do you want to delete Line ${index + 1} ?`,
     });
 
     if (!shouldRemove) return;
@@ -1680,11 +1683,11 @@ const StockTransferPage: React.FC = () => {
         const result = await response.json();
 
         if (!response.ok || !result.success) {
-          toast.error(result.message || "Not Deleted,Try again");
+          notDeleted(result.message);
           return;
         }
 
-        toast.success(result.message || "Deleted");
+        // (no message for a deleted line: the line just leaves the grid)
 
         // the last line took the whole transfer with it: the page starts again
         if (result.chkDocumentDeleted) {
@@ -1776,7 +1779,7 @@ const StockTransferPage: React.FC = () => {
 
   return (
     <div className="flex min-h-full w-full justify-center bg-gray-100 px-3 pb-5">
-    <main className="mt-5 flex h-fit min-h-[700px] w-full max-w-300 flex-col overflow-hidden border border-gray-400 bg-white text-[12px] text-slate-700">
+    <main className="mt-5 flex h-fit w-full max-w-300 flex-col overflow-hidden border border-gray-400 bg-white text-[12px] text-slate-700">
 
       {/* TITLE BAR */}
       <div className="flex h-[28px] w-full shrink-0 items-center bg-[#a7dfc0]">
@@ -1943,10 +1946,11 @@ const StockTransferPage: React.FC = () => {
       </section>
 
       {/* STOCK TABLE */}
-<main className="customer-table-scroll flex min-h-0 flex-1 flex-col bg-white">
+<main className="customer-table-scroll flex shrink-0 flex-col bg-white">
   <div
     ref={gridScroll.ref}
-    className="customer-table-scroll min-h-0 flex-1 overflow-auto border border-[#bfe8d0]"
+    // 11 rows show (the heading and 11 rows of 30px); a 12th row brings the scroll bar
+    className="customer-table-scroll h-[363px] shrink-0 overflow-auto border border-[#bfe8d0]"
   >
     <table className="customer-table-scroll w-full min-w-[900px] table-fixed border-collapse border border-[#bfe8d0]">
             <colgroup>

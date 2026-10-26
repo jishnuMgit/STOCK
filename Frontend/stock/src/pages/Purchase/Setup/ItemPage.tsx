@@ -3,6 +3,10 @@ import Select, { type StylesConfig } from "react-select";
 import { toast } from "react-toastify";
 import { X } from "lucide-react";
 import { useEnterAsTab } from "../../../hooks/useEnterAsTab";
+import { useGridCellFocus } from "../../../hooks/useGridCellFocus";
+import { useInitialFocus } from "../../../hooks/useInitialFocus";
+import { useConfirmModal } from "../../../hooks/useConfirmModal";
+import { useDeleteToast } from "../../../hooks/useDeleteToast";
 import { useAltShortcuts } from "../../../hooks/useAltShortcuts";
 import { useButtonPermissions } from "../../../hooks/useButtonPermissions";
 import {
@@ -85,6 +89,14 @@ const MENU_ID = "010201";
   const ItemPage: React.FC = () => {
   const handleEnterAsTab = useEnterAsTab();
   const perms = useButtonPermissions(MENU_ID);
+  // the cell the cursor is in is outlined (a typed-in box has its text selected)
+  const { cellFocusClass, selectOnFocus } = useGridCellFocus();
+  // where the cursor starts: the Item ID box
+  useInitialFocus(true, "txtItemID");
+  // the common themed question window (the same as on the other screens)
+  const { confirm, dialog } = useConfirmModal();
+  // the standard messages of a delete: "Item deleted successfully"
+  const { deleted, notDeleted } = useDeleteToast("Item");
 
   /* =========================================================
      FORM STATE
@@ -708,9 +720,10 @@ const MENU_ID = "010201";
       return;
     }
 
-    const shouldDelete = window.confirm(
-      "Are you sure you want to delete this item?"
-    );
+    const shouldDelete = await confirm({
+      title: "Item",
+      message: "Do you want to delete ?",
+    });
 
     if (!shouldDelete) {
       return;
@@ -745,11 +758,11 @@ const MENU_ID = "010201";
       const result = await response.json();
 
       if (!response.ok || !result.success) {
-        toast.error(result.message || "Item could not be deleted.");
+        notDeleted(result.message);
         return;
       }
 
-      toast.success(result.message || "Item deleted successfully.");
+      deleted();
       handleClear();
     } catch (error) {
       console.error("deleteItem error:", error);
@@ -772,9 +785,10 @@ const MENU_ID = "010201";
       return;
     }
 
-    const shouldDelete = window.confirm(
-      "Are you sure you want to delete this branch row?"
-    );
+    const shouldDelete = await confirm({
+      title: "Item",
+      message: "Do you want to delete ?",
+    });
 
     if (!shouldDelete) {
       return;
@@ -815,11 +829,11 @@ const MENU_ID = "010201";
       const result = await response.json();
 
       if (!response.ok || !result.success) {
-        toast.error(result.message || "Branch row could not be deleted.");
+        notDeleted(result.message);
         return;
       }
 
-      toast.success(result.message || "Branch row deleted successfully.");
+      deleted();
 
       updateRow(row.id, "lkpBranch", "");
       updateRow(row.id, "txtItemLocation", "");
@@ -1144,6 +1158,7 @@ const MENU_ID = "010201";
       opening/closing the sidebar does not resize or
       recenter this page.
     */
+    <>
     <div
       onKeyDown={handleEnterAsTab}
       className="
@@ -1228,6 +1243,7 @@ const MENU_ID = "010201";
                 id="txtItemID"
                 name="txtItemID"
                 type="text"
+                autoComplete="off"
                 value={txtItemID}
                 onChange={(e) => {
                   setTxtItemID(e.target.value);
@@ -1799,11 +1815,12 @@ const MENU_ID = "010201";
                       ===================================== */}
 
                       <td
-                        className="
+                        className={`
                           border
                           border-slate-300
                           p-0
-                        "
+                          ${cellFocusClass}
+                        `}
                       >
                         <div className="flex h-8 items-stretch">
                           <div className="flex-1 overflow-hidden">
@@ -1818,13 +1835,24 @@ const MENU_ID = "010201";
                                     row.lkpBranch,
                                 ) || null
                               }
-                              onChange={(option) =>
+                              onChange={(option) => {
                                 updateRow(
                                   row.id,
                                   "lkpBranch",
                                   option?.value || "",
-                                )
-                              }
+                                );
+
+                                // a branch chosen: on to its Item Location
+                                if (option) {
+                                  window.setTimeout(
+                                    () =>
+                                      document
+                                        .getElementById(`txtItemLocation_${row.id}`)
+                                        ?.focus(),
+                                    0,
+                                  );
+                                }
+                              }}
                               styles={{
                                 ...tableSelectStyles,
                                 ...branchMenuStyles,
@@ -1837,17 +1865,19 @@ const MENU_ID = "010201";
                               filterOption={filterLabelOrValue}
                               noOptionsMessage={() => "No Branch Found"}
                               isSearchable
-                              minMenuHeight={60}
+                              minMenuHeight={150}
                               menuPortalTarget={
                                 document.body
                               }
                               menuPosition="fixed"
+                              menuPlacement="auto"
                             />
                           </div>
 
                           {row.lkpBranch && perms.delete && (
                             <button
                               type="button"
+                              tabIndex={-1}
                               onClick={() =>
                                 handleDeleteBranchRow(row)
                               }
@@ -1873,17 +1903,19 @@ const MENU_ID = "010201";
                       ===================================== */}
 
                       <td
-                        className="
+                        className={`
                           border
                           border-slate-300
                           p-0
-                        "
+                          ${cellFocusClass}
+                        `}
                       >
                         <input
                           id={`txtItemLocation_${row.id}`}
                           name={`txtItemLocation_${row.id}`}
                           type="text"
                           value={row.txtItemLocation}
+                          onFocus={selectOnFocus}
                           onChange={(e) =>
                             updateRow(row.id, "txtItemLocation", e.target.value)
                           }
@@ -1895,7 +1927,7 @@ const MENU_ID = "010201";
                           ALLOW SALE BELOW COST
                       ===================================== */}
 
-                      <td className="border border-slate-300 text-center">
+                      <td className={`border border-slate-300 text-center ${cellFocusClass}`}>
                         <input
                           id={`chkAllowSaleBelowCost_${row.id}`}
                           name={`chkAllowSaleBelowCost_${row.id}`}
@@ -1916,7 +1948,7 @@ const MENU_ID = "010201";
                           INACTIVE
                       ===================================== */}
 
-                      <td className="border border-slate-300 text-center">
+                      <td className={`border border-slate-300 text-center ${cellFocusClass}`}>
                         <input
                           id={`chkInactive_${row.id}`}
                           name={`chkInactive_${row.id}`}
@@ -2012,6 +2044,11 @@ const MENU_ID = "010201";
       </div>
 
     </div>
+
+    {/* the "Do you want to delete ?" question - outside the root div: the page's
+        Enter-as-Tab must not take the Enter of the Yes / No buttons */}
+    {dialog}
+    </>
   );
 };
 

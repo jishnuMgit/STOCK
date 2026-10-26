@@ -396,10 +396,7 @@ export const savePostingAccount = async (
 
     return res.status(200).json({
       success: true,
-      message:
-        wantedMode === "M"
-          ? "Posting accounts modified successfully"
-          : "Posting accounts saved successfully",
+      message: "Set Posting Account saved successfully",
       mode: wantedMode,
     });
   } catch (error: unknown) {

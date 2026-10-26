@@ -347,13 +347,13 @@ export async function saveBeginningStockService(p: {
     const savedSlNos = new Set(saved.map((line) => Number(line.fslno)));
     const mode: "S" | "M" = saved.length > 0 ? "M" : "S";
 
-    // The document's saving transaction number (fsavingtransno): the one its
+    // The document's saving transaction number (fsavingno): the one its
     // lines already carry, so a Modify never renumbers it - or, for a new
     // document (or lines saved before the column existed), the next one from
     // dbo.getnexttransno. The same number goes on every line.
     const savingResult = await client.query(
       `
-      SELECT MAX(fsavingtransno) AS "savingTransNo"
+      SELECT MAX(fsavingno) AS "savingTransNo"
       FROM dbo.tblstocktrans
       WHERE fcoid    = $1
         AND fyear    = $2
@@ -567,6 +567,95 @@ export async function deleteBeginningStockService(p: {
   } finally {
     client.release();
   }
+}
+
+/* =========================================================
+   DELETE ONE LINE (the x of a row of a saved Beginning Stock): the line goes from
+   the database at once - mode D1. The last line cannot be left on its own: the whole
+   Beginning Stock is deleted then (mode D), as the Delete button does. One
+   transaction. The lines are read first, for the audit note.
+========================================================= */
+
+export async function deleteBeginningStockLineService(p: {
+  PstrCoID: string;
+  PstrYear: number;
+  lkpBranch: string;
+  // the line's Sl.# in the database (the Sl.# it had when the page loaded it)
+  txtSlNo: number;
+  PstrUserID: string;
+}): Promise<{
+  lines: BeginningStockLine[];
+  line: BeginningStockLine | null;
+  date: string | null;
+  documentDeleted: boolean;
+}> {
+  const client: PoolClient = await pool.connect();
+
+  try {
+    await client.query("BEGIN");
+
+    const lines = await fetchCursor<BeginningStockLine>(
+      client,
+      "GTL",
+      p.PstrCoID,
+      p.PstrYear,
+      p.lkpBranch
+    );
+
+    const header = await fetchCursor<BeginningStockHeader>(
+      client,
+      "GHD",
+      p.PstrCoID,
+      p.PstrYear,
+      p.lkpBranch
+    );
+
+    const line = lines.find((entry) => Number(entry.fslno) === p.txtSlNo) ?? null;
+
+    if (line === null) {
+      await client.query("ROLLBACK");
+
+      return { lines, line: null, date: header[0]?.fdate ?? null, documentDeleted: false };
+    }
+
+    const documentDeleted = lines.length === 1;
+
+    await callSpBeginningStock(client, {
+      strmode: documentDeleted ? "D" : "D1",
+      PstrCoID: p.PstrCoID,
+      PstrYear: p.PstrYear,
+      lkpBranch: p.lkpBranch,
+      originalSlNo: p.txtSlNo,
+      PstrUserID: p.PstrUserID,
+    });
+
+    await client.query("COMMIT");
+
+    return { lines, line, date: header[0]?.fdate ?? null, documentDeleted };
+  } catch (error: unknown) {
+    await client.query("ROLLBACK");
+    console.error("deleteBeginningStockLineService error:", error);
+    throw error;
+  } finally {
+    client.release();
+  }
+}
+
+// the audit note of a deleted line (Modify): the branch and the line
+export function buildBeginningStockLineDeleteAuditNote(
+  lkpBranch: string,
+  line: BeginningStockLine,
+  linesBefore: number
+): string {
+  const num = (value: number) => String(Math.round(value * 10000) / 10000);
+
+  const head = `Branch : ${lkpBranch}; Lines : ${linesBefore} -> ${linesBefore - 1}`;
+
+  const deleted = `Sl.# ${Number(line.fslno)} '${line.fitemid}' Qty ${num(Number(line.fqtyin))} x ${num(Number(line.funitcost))} = ${num(Number(line.ftotalcost))}`;
+
+  const note = `${head}\nDeleted line: ${deleted}`;
+
+  return note.length > 2000 ? `${note.slice(0, 1996)}...` : note;
 }
 
 // the audit note of a Post: the branch, the date, the totals - and each line as
@@ -906,7 +995,7 @@ async function callSpBeginningStock(
       p_original_fslno => $14::smallint,
       p_pstruserid     => $15::varchar,
       p_strnote        => $16::varchar,
-      p_strsavingtransno => $17::varchar,
+      p_strsavingno => $17::varchar,
       p_result_cursor  => $18::refcursor
     )
     `,

@@ -5,6 +5,7 @@ import {
   getUserList,
   getActionList,
   getUserAuditList,
+  downloadUserAuditExcel,
 } from "../../controller/SecurityController/UserAuditController.js";
 
 const router = express.Router();
@@ -15,5 +16,6 @@ router.get("/getUserList", authenticate, getUserList);
 router.get("/getActionList", authenticate, getActionList);
 // a POST: what was picked travels in the body, not in the address
 router.post("/getUserAuditList", authenticate, getUserAuditList);
+router.post("/downloadUserAuditExcel", authenticate, downloadUserAuditExcel);
 
 export default router;

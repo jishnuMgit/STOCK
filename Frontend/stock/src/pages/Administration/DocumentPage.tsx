@@ -7,7 +7,9 @@ import {
   makeNameIdMenuComponents,
 } from "../../components/BranchSelect/branchSelectParts";
 import { useAltShortcuts } from "../../hooks/useAltShortcuts";
-import { useConfirm, DELETE_CONFIRM_MESSAGE } from "../../hooks/useConfirm";
+import { useConfirmModal } from "../../hooks/useConfirmModal";
+import { useDeleteToast } from "../../hooks/useDeleteToast";
+import { useGridCellFocus } from "../../hooks/useGridCellFocus";
 
 // ============================================================
 // DOCUMENT (Administration > Document, the old frmDocument)
@@ -144,7 +146,11 @@ const DocumentPage: React.FC = () => {
   const [chkFindOpen, setChkFindOpen] = useState(false);
   const [txtFind, setTxtFind] = useState("");
   const [saving, setSaving] = useState(false);
-  const { confirm, confirmDialog } = useConfirm();
+  // the common themed question window and the standard delete messages
+  const { confirm, dialog } = useConfirmModal();
+  const { deleted, notDeleted } = useDeleteToast("Document");
+  // the cell the cursor is in is outlined (a typed-in box has its text selected)
+  const { cellFocusClass, selectOnFocus } = useGridCellFocus();
 
   // bumped by Clear and after a Save so the documents are loaded again
   const [reloadKey, setReloadKey] = useState(0);
@@ -152,6 +158,18 @@ const DocumentPage: React.FC = () => {
   // only the answer of the latest request may fill the grid; what was loaded last
   // (so choosing the module the server already picked does not ask twice)
   const loadRequest = useRef(0);
+
+  // the row the cursor goes to after a load (set by the load, done once the rows
+  // are drawn)
+  const focusRowRef = useRef<number | null>(null);
+
+  useEffect(() => {
+    if (focusRowRef.current === null) return;
+
+    const rowIndex = focusRowRef.current;
+    focusRowRef.current = null;
+    document.getElementById(`txtDocType-${rowIndex}`)?.focus();
+  }, [rows]);
   const lastLoaded = useRef<{ module: string; key: number } | null>(null);
 
   // ----------------------------------------------------------
@@ -242,7 +260,15 @@ const DocumentPage: React.FC = () => {
         lastLoaded.current = { module: result.lkpModule, key: reloadKey };
 
         setRows(padded);
-        setSelectedKey(padded[0]?.key ?? null);
+
+        // the cursor goes to the first empty row (after the last saved one), ready for
+        // a new entry
+        const firstEmptyRow = loaded.length;
+
+        setSelectedKey(padded[firstEmptyRow]?.key ?? padded[0]?.key ?? null);
+
+        // (done by the effect below, once the rows are on the screen)
+        focusRowRef.current = firstEmptyRow;
 
         // the server picked the first module
         if (result.lkpModule && result.lkpModule !== lkpModule) {
@@ -436,7 +462,10 @@ const DocumentPage: React.FC = () => {
     // the document as it was loaded (its ID may have been edited since)
     const originalType = row.original?.txtDocType ?? row.txtDocType;
 
-    const shouldDelete = await confirm(DELETE_CONFIRM_MESSAGE, "Delete");
+    const shouldDelete = await confirm({
+      title: "Document",
+      message: "Do you want to delete ?",
+    });
 
     if (!shouldDelete) return;
 
@@ -460,18 +489,18 @@ const DocumentPage: React.FC = () => {
       const result = await response.json();
 
       if (!response.ok || !result.success) {
-        toast.error(result.message || "Not Deleted,try again");
+        notDeleted(result.message);
         return;
       }
 
-      toast.success(result.message);
+      deleted();
 
       setRows((previous) =>
         padRows(previous.filter((item) => item.key !== row.key)),
       );
     } catch (error: unknown) {
       console.error("deleteDocument error:", error);
-      toast.error("Not Deleted,try again");
+      notDeleted();
     } finally {
       setSaving(false);
     }
@@ -617,7 +646,7 @@ const DocumentPage: React.FC = () => {
                           {selected ? "▶" : ""}
                         </td>
                         <td
-                          className={`border border-[#BFE8D0] p-0 ${
+                          className={`border border-[#BFE8D0] p-0 ${cellFocusClass} ${
                             changed ? "bg-[#fff6d6]" : selected ? "bg-[#F2FAF5]" : ""
                           }`}
                         >
@@ -627,7 +656,10 @@ const DocumentPage: React.FC = () => {
                             aria-label="ID"
                             maxLength={MAX_TYPE_LENGTH}
                             value={row.txtDocType}
-                            onFocus={() => setSelectedKey(row.key)}
+                            onFocus={(event) => {
+                              selectOnFocus(event);
+                              setSelectedKey(row.key);
+                            }}
                             onChange={(event) =>
                               updateCell(
                                 row.key,
@@ -642,7 +674,7 @@ const DocumentPage: React.FC = () => {
                           />
                         </td>
                         <td
-                          className={`border border-[#BFE8D0] p-0 ${changed ? "bg-[#fff6d6]" : ""}`}
+                          className={`border border-[#BFE8D0] p-0 ${cellFocusClass} ${changed ? "bg-[#fff6d6]" : ""}`}
                         >
                           <input
                             id={`txtDocName-${index}`}
@@ -650,7 +682,10 @@ const DocumentPage: React.FC = () => {
                             aria-label="Document"
                             maxLength={MAX_NAME_LENGTH}
                             value={row.txtDocName}
-                            onFocus={() => setSelectedKey(row.key)}
+                            onFocus={(event) => {
+                              selectOnFocus(event);
+                              setSelectedKey(row.key);
+                            }}
                             onChange={(event) =>
                               updateCell(row.key, "txtDocName", event.target.value)
                             }
@@ -661,7 +696,7 @@ const DocumentPage: React.FC = () => {
                           />
                         </td>
                         <td
-                          className={`border border-[#BFE8D0] text-center ${changed ? "bg-[#fff6d6]" : ""}`}
+                          className={`border border-[#BFE8D0] ${cellFocusClass} text-center ${changed ? "bg-[#fff6d6]" : ""}`}
                         >
                           <input
                             id={`chkToBePost-${index}`}
@@ -680,7 +715,7 @@ const DocumentPage: React.FC = () => {
                           />
                         </td>
                         <td
-                          className={`border border-[#BFE8D0] p-0 ${changed ? "bg-[#fff6d6]" : ""}`}
+                          className={`border border-[#BFE8D0] p-0 ${cellFocusClass} ${changed ? "bg-[#fff6d6]" : ""}`}
                         >
                           <div className="flex h-[26px] items-center">
                             <input
@@ -689,7 +724,10 @@ const DocumentPage: React.FC = () => {
                               aria-label="Position No."
                               inputMode="numeric"
                               value={row.txtPositionNo}
-                              onFocus={() => setSelectedKey(row.key)}
+                              onFocus={(event) => {
+                              selectOnFocus(event);
+                              setSelectedKey(row.key);
+                            }}
                               onChange={(event) =>
                                 updateCell(
                                   row.key,
@@ -768,7 +806,7 @@ const DocumentPage: React.FC = () => {
         </main>
       </div>
 
-      {confirmDialog}
+      {dialog}
     </div>
   );
 };

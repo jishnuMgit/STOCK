@@ -349,10 +349,7 @@ export const saveChartOfAccount = async (
 
     return res.status(200).json({
       success: true,
-      message:
-        wantedMode === "M"
-          ? "Chart of account setting modified successfully"
-          : "Chart of account setting saved successfully",
+      message: "Set Chart Of Account saved successfully",
       mode: wantedMode,
     });
   } catch (error: unknown) {

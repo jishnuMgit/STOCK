@@ -92,13 +92,13 @@ export const buildHtml = (r: PrintReport) => {
   .head { font-size: 12pt; text-align: center; height: 24px; }
   .info { height: 22px; }
   .info div { display: flex; justify-content: space-between; gap: 16px; }
-  th { background: #eff3fa; border: 1px solid #c7d1e4; height: 24px;
+  th { border: 1px solid #c7d1e4; height: 24px;
        padding: 0 4px; font-weight: normal; text-align: left; }
   th.r { text-align: right; }
   td { border: 1px solid #c7d1e4; border-top: 0; min-height: 22px; padding: 2px 4px;
        vertical-align: middle; overflow-wrap: anywhere; }
   .r { text-align: right; }
-  tr.tot td { background: #eff3fa; border-top: 1px solid #c7d1e4; }
+  tr.tot td { border-top: 1px solid #c7d1e4; }
 </style>
 </head>
 <body>

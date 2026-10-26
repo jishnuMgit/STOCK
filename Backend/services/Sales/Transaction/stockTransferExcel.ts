@@ -13,11 +13,6 @@ export type StockTransferExcelReport = {
 };
 
 const BORDER_COLOR = { argb: "FFC7D1E4" };
-const HEAD_FILL = {
-  type: "pattern" as const,
-  pattern: "solid" as const,
-  fgColor: { argb: "FFEFF3FA" },
-};
 const thin = {
   top: { style: "thin" as const, color: BORDER_COLOR },
   left: { style: "thin" as const, color: BORDER_COLOR },
@@ -112,7 +107,6 @@ export const buildStockTransferWorkbook = async ({
   head.values = ["Sl.#", "Item ID", "Item Name", "Unit", "Qty.", "Unit Cost", "Total Cost"];
   head.eachCell((cell, col) => {
     cell.font = { bold: true };
-    cell.fill = HEAD_FILL;
     cell.border = thin;
     cell.alignment = { horizontal: col >= 5 ? "right" : "left" };
   });
@@ -154,7 +148,6 @@ export const buildStockTransferWorkbook = async ({
   ws.mergeCells(total.number, 1, total.number, 4);
   total.eachCell({ includeEmpty: true }, (cell, col) => {
     cell.border = thin;
-    cell.fill = HEAD_FILL;
     cell.font = { bold: true };
     cell.alignment = { horizontal: col === 1 ? "left" : "right" };
     if (col === 5) cell.numFmt = QTY_FORMAT;

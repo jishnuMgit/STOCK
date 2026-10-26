@@ -754,6 +754,98 @@ export async function deleteStockAdjustmentService(p: {
 }
 
 /* =========================================================
+   DELETE ONE LINE (the x of a row of a saved adjustment): the line goes from the
+   database at once - mode D1. The last line of an adjustment cannot be left on its
+   own: the whole adjustment is deleted then (mode D), as the Delete button does. One
+   transaction. The lines are read first, for the audit note.
+========================================================= */
+
+export async function deleteStockAdjustmentLineService(p: {
+  PstrCoID: string;
+  PstrYear: number;
+  lkpBranch: string;
+  txtDocNo: string;
+  // the line's Sl.# in the database (the Sl.# it had when the page loaded it)
+  txtSlNo: number;
+  PstrUserID: string;
+}): Promise<{
+  header: StockAdjustmentHeader | null;
+  lines: StockAdjustmentLine[];
+  line: StockAdjustmentLine | null;
+  documentDeleted: boolean;
+}> {
+  const client: PoolClient = await pool.connect();
+
+  try {
+    await client.query("BEGIN");
+
+    const lines = await fetchCursor<StockAdjustmentLine>(
+      client,
+      "GTL",
+      p.PstrCoID,
+      p.PstrYear,
+      p.lkpBranch,
+      p.txtDocNo
+    );
+
+    const header = await fetchCursor<StockAdjustmentHeader>(
+      client,
+      "GHD",
+      p.PstrCoID,
+      p.PstrYear,
+      p.lkpBranch,
+      p.txtDocNo
+    );
+
+    const line = lines.find((entry) => Number(entry.fslno) === p.txtSlNo) ?? null;
+
+    if (line === null) {
+      await client.query("ROLLBACK");
+
+      return { header: header[0] ?? null, lines, line: null, documentDeleted: false };
+    }
+
+    const documentDeleted = lines.length === 1;
+
+    await callSpStockAdjustment(client, {
+      strmode: documentDeleted ? "D" : "D1",
+      PstrCoID: p.PstrCoID,
+      PstrYear: p.PstrYear,
+      lkpBranch: p.lkpBranch,
+      txtDocNo: p.txtDocNo,
+      originalSlNo: p.txtSlNo,
+      PstrUserID: p.PstrUserID,
+    });
+
+    await client.query("COMMIT");
+
+    return { header: header[0] ?? null, lines, line, documentDeleted };
+  } catch (error: unknown) {
+    await client.query("ROLLBACK");
+    console.error("deleteStockAdjustmentLineService error:", error);
+    throw error;
+  } finally {
+    client.release();
+  }
+}
+
+// the audit note of a deleted line (Modify): the document and the line
+export function buildStockAdjustmentLineDeleteAuditNote(
+  lkpBranch: string,
+  txtDocNo: string,
+  line: StockAdjustmentLine,
+  linesBefore: number
+): string {
+  const head =
+    `DocType : ${DOC_TYPE} - DocNo : ${txtDocNo}; Branch : ${lkpBranch}` +
+    `; Lines : ${linesBefore} -> ${linesBefore - 1}`;
+
+  const note = `${head}\nDeleted line: ${savedLineText(line)}`;
+
+  return note.length > 2000 ? `${note.slice(0, 1996)}...` : note;
+}
+
+/* =========================================================
    POST (the Post button): dbo.sp_pagestockadjustmentpost, mode P.
    One transaction: the branch's stock moves by Qty. In - Qty. Out, the two
    finance lines are written and the lines are marked posted - or nothing
