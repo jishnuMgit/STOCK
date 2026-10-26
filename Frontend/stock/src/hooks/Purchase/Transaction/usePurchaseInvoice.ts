@@ -60,6 +60,7 @@ export interface PurchaseHeader {
   currency: string;
   currencyRate: string;
   piNo: string; // supplier invoice no.
+  piDate: string; // supplier invoice date, yyyy-mm-dd (saved in fsupinvdate)
   note: string;
   discAmt: string; // no input on screen yet, kept so modify doesn't wipe it
   vatAmt: string; // no input on screen yet, kept so modify doesn't wipe it
@@ -137,6 +138,7 @@ export const emptyHeader = (): PurchaseHeader => ({
   currency: "SAR",
   currencyRate: "1.0000",
   piNo: "",
+  piDate: "",
   note: "",
   discAmt: "0",
   vatAmt: "0",
@@ -164,7 +166,7 @@ interface ExpenseLookupsApi {
   currencies: { fCurrency: string }[];
 }
 
-/* saved expense row from GET /purchase-invoice/expense (sp_frmpiexp 'G') */
+/* saved expense row from GET /purchase-invoice/expense (sp_pagepiexp 'G') */
 interface ExpenseDetailApi {
   fSlNo: number;
   fAccountID: string | null;
@@ -185,8 +187,9 @@ interface CurrencyApi {
 
 interface InvoiceHeaderApi {
   finvoicetype: string | null;
-  fdate: string | null;
+  fdate: string | null; // 'YYYY-MM-DD' (to_char on the server)
   fpino: string | null;
+  fsupinvdate: string | null; // 'YYYY-MM-DD' or null (to_char on the server)
   fvatno: string | null;
   faccountid: string | null;
   faccountname: string | null;
@@ -395,7 +398,7 @@ export const usePurchaseInvoice = () => {
     };
   }, []);
 
-  /* saved purchase expense rows (sp_frmpiexp mode 'G') */
+  /* saved purchase expense rows (sp_pagepiexp mode 'G') */
   const fetchExpenseDetail = useCallback(
     async (
       year: string,
@@ -467,7 +470,8 @@ export const usePurchaseInvoice = () => {
             brId,
             docNo,
             invoiceType: s(h.finvoicetype) || "C",
-            date: h.fdate ? new Date(h.fdate).toISOString().slice(0, 10) : "",
+            // the server sends plain 'YYYY-MM-DD' strings (no timezone shift)
+            date: s(h.fdate).slice(0, 10),
             poNo: s(h.fpono),
             supplierId: s(h.faccountid),
             supplierName: s(h.faccountname),
@@ -478,6 +482,7 @@ export const usePurchaseInvoice = () => {
               ? fixed(h.fcurrencyrate, 4)
               : "1.0000",
             piNo: s(h.fpino),
+            piDate: s(h.fsupinvdate).slice(0, 10),
             note: s(h.fnote),
             discAmt: s(h.fdiscamt) || "0",
             vatAmt: s(h.fvatamt) || "0",
@@ -553,6 +558,7 @@ export const usePurchaseInvoice = () => {
         docNo: header.docNo,
         invoiceType: header.invoiceType,
         piNo: header.piNo,
+        piDate: header.piDate,
         poNo: header.poNo,
         date: header.date,
         vatNo: header.vatNo,

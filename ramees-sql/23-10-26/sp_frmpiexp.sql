@@ -1,4 +1,4 @@
-CREATE OR REPLACE PROCEDURE dbo.sp_frmpiexp(
+CREATE OR REPLACE PROCEDURE dbo.sp_pagepiexp(
     IN p_strmode VARCHAR(5),
     IN p_gstrcoid VARCHAR(3),
     IN p_gintyear SMALLINT,

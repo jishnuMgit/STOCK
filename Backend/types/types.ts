@@ -1,7 +1,5 @@
-
 type DbValue = unknown;
 type DbRow = Record<string, any>;
-
 
 export interface ReceiptProcedureParams {
   strMode: string;
@@ -12,7 +10,7 @@ export interface ReceiptProcedureParams {
   strDocType?: DbValue;
   txtDocNo?: DbValue;
   dtpDate?: DbValue;
-  lkpCBAccountID?: DbValue;
+  lkpCBAccountName?: DbValue;
   txtReceivedFrom?: DbValue;
   txtReference?: DbValue;
   txtSlNo?: DbValue;
@@ -48,9 +46,9 @@ export interface ReceiptRow {
 export interface ReceiptData {
   lkpBranch?: DbValue;
   lkpType?: DbValue;
-  cbAccountName?: DbValue;
   txtDocNo?: DbValue;
   dtpDate?: DbValue;
+  lkpCBAccountName?: DbValue;
   txtReceivedFrom?: DbValue;
   txtReference?: DbValue;
   strNote?: DbValue;
@@ -88,7 +86,7 @@ export interface SaveReceiptLineParams {
   strDocType?: DbValue;
   txtDocNo?: DbValue;
   dtpDate?: DbValue;
-  lkpCBAccountID?: DbValue;
+  lkpCBAccountName?: DbValue;
   txtReceivedFrom?: DbValue;
   txtReference?: DbValue;
   txtSlNo?: DbValue;
@@ -114,7 +112,7 @@ export interface SaveGeneratedEntryParams {
   dtpDate?: DbValue;
   txtReceivedFrom?: DbValue;
   txtReference?: DbValue;
-  lkpCBAccountID?: DbValue;
+  lkpCBAccountName?: DbValue;
   strGCS?: DbValue;
   lkpCCID?: DbValue;
   numCredit?: DbValue;
@@ -126,7 +124,10 @@ export interface SaveGeneratedEntryParams {
 }
 
 export interface GetDataParams {
+  pstrCoID: unknown;
+  pstrYear: unknown;
   lkpBranch: unknown;
   lkpType: unknown;
+  strDocType: unknown;
   txtDocNo: unknown;
 }
