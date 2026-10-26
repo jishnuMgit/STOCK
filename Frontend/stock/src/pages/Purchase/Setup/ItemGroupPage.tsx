@@ -133,8 +133,8 @@ const ItemGroupPage: React.FC = () => {
   const perms = useButtonPermissions(MENU_ID);
   // the common themed question window (the same as on the other screens)
   const { confirm, dialog } = useConfirmModal();
-  // the standard messages of a delete: "Item Group deleted successfully"
-  const { deleted, notDeleted } = useDeleteToast("Item Group");
+  // the standard message of a delete that failed
+  const { notDeleted } = useDeleteToast("Item Group");
   // where the cursor starts: the Item Group ID box
   useInitialFocus(true, "txtItemGroupID");
 
@@ -408,7 +408,7 @@ const ItemGroupPage: React.FC = () => {
         return;
       }
 
-      deleted();
+      // (no message for a deleted item group)
       handleClear();
     } catch (error) {
       console.error("deleteItemGroup error:", error);

@@ -375,8 +375,6 @@ const BeginningBalance: React.FC = () => {
         return;
       }
 
-      toast.success(result.message);
-
       setReloadKey((previous) => previous + 1);
     } catch (error: unknown) {
       console.error("deleteBeginningBalance error:", error);

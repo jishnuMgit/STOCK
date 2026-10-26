@@ -8,8 +8,7 @@
 //   Summary  - A4 landscape, one row per item: Item ID / Item Name / Unit / Opening / Qty. In /
 //              Qty. Out / Closing, and a Total row at the end.
 //
-// The colours are the old reports' own: Detailed - ivory heading and light-steel-blue lines;
-// Summary - lavender-blush heading and burly-wood lines; the Total rows are gainsboro.
+// Plain: no fill on the heading row or the Total row, thin light lines (the same as the other prints).
 // "Page x of y" is top right of every page; the company, the heading, the branch and the report
 // info repeat at the top of every page.
 // Printed through components/common/printHtml (a hidden iframe).
@@ -86,11 +85,10 @@ export const formatCost = (value: number | null) =>
 export const formatDate = (value: string | null) =>
   value ? dayjs(value).format("DD-MMM-YY") : "";
 
-// the colours of the two reports
+// the colour of the lines of the two reports
 export const COLORS = {
-  D: { head: "#FFFFF0", line: "#B0C4DE" },
-  S: { head: "#FFF0F5", line: "#DEB887" },
-  total: "#DCDCDC",
+  D: { line: "#c7d1e4" },
+  S: { line: "#c7d1e4" },
 } as const;
 
 /* =========================================================
@@ -216,14 +214,14 @@ export const buildHtml = (r: PrintReport) => {
   .sub  { height: 24px; }
   .sub div { display: flex; justify-content: space-between; gap: 16px; }
   .sub .info { font-size: 8pt; }
-  th { background: ${color.head}; border: 1px solid ${color.line}; height: 25px;
+  th { border: 1px solid ${color.line}; height: 25px;
        padding: 0 4px; font-weight: normal; text-align: left; }
   th.r { text-align: right; }
   td { border: 1px solid ${color.line}; border-top: 0; height: 25px; padding: 0 4px;
        vertical-align: middle; overflow-wrap: anywhere; }
   .r { text-align: right; }
   td.item { border: 0; height: 30px; padding-top: 8px; font-size: 10.5pt; }
-  tr.tot td { background: ${COLORS.total}; border-top: 1px solid ${color.line}; }
+  tr.tot td { border-top: 1px solid ${color.line}; }
 </style>
 </head>
 <body>

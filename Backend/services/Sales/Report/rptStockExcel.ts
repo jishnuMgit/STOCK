@@ -27,16 +27,6 @@ export type StockReport = {
 };
 
 const BORDER_COLOR = { argb: "FFC7D1E4" };
-const HEAD_FILL = {
-  type: "pattern" as const,
-  pattern: "solid" as const,
-  fgColor: { argb: "FFEFF3FA" },
-};
-const TOTAL_FILL = {
-  type: "pattern" as const,
-  pattern: "solid" as const,
-  fgColor: { argb: "FFDCDCDC" },
-};
 const thin = {
   top: { style: "thin" as const, color: BORDER_COLOR },
   left: { style: "thin" as const, color: BORDER_COLOR },
@@ -135,7 +125,6 @@ export const buildStockWorkbook = async (report: StockReport): Promise<Buffer> =
   head.values = labels;
   head.eachCell((cell, col) => {
     cell.font = { bold: true };
-    cell.fill = HEAD_FILL;
     cell.border = thin;
     cell.alignment = { horizontal: col >= rightFrom ? "right" : "left" };
   });
@@ -186,7 +175,6 @@ export const buildStockWorkbook = async (report: StockReport): Promise<Buffer> =
 
       total.eachCell({ includeEmpty: true }, (cell, col) => {
         cell.border = thin;
-        cell.fill = TOTAL_FILL;
         cell.font = { bold: true };
         cell.alignment = { horizontal: col === 1 ? "right" : "right" };
         if (col >= 6) cell.numFmt = QTY_FORMAT;
@@ -219,7 +207,6 @@ export const buildStockWorkbook = async (report: StockReport): Promise<Buffer> =
 
     total.eachCell({ includeEmpty: true }, (cell, col) => {
       cell.border = thin;
-      cell.fill = TOTAL_FILL;
       cell.font = { bold: true };
       cell.alignment = { horizontal: "right" };
       if (col >= 4) cell.numFmt = QTY_FORMAT;

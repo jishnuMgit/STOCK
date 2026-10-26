@@ -9,7 +9,7 @@ export type ItemGroup = { groupId: string; groupName: string };
 
 export type StockParams = {
   detOrSum: "D" | "S";
-  postStatus: 0 | 1 | 2; // 0 non posted, 1 posted, 2 all
+  postStatus: 0 | 1 | 2; // 0 all, 1 posted, 2 non posted (as in SP_rptStock)
   coId: string;
   oneBranch: boolean;
   branchId: string;
@@ -226,20 +226,22 @@ export const getBranchName = async (coId: string, branchId: string): Promise<str
 const fetchRows = (p: StockParams) =>
   callCursor(
     "sp_rptstock",
+    // the arguments of SP_rptStock, in its order
     [
-      p.detOrSum,
-      p.postStatus,
-      p.coId,
-      p.oneBranch,
-      p.branchId,
-      p.itemMode,
-      p.itemId,
-      p.itemGroupId,
-      p.itemIdFrom,
-      p.itemIdTo,
-      p.fromDate,
-      p.toDate,
-      p.txnOrder,
+      p.detOrSum, // strDetOrSum
+      p.postStatus, // lkpPostStatus
+      p.coId, // pstrCoID
+      !p.oneBranch, // rdgBranch: 0 one branch, 1 all branches
+      p.oneBranch ? p.branchId : null, // strBrID
+      p.itemMode !== 1, // rdgByItem: 0 by item group, 1 by item
+      p.itemMode === 1 ? p.itemGroupId : null, // strItemGroupID (null = every group)
+      p.itemMode === 0 ? 0 : p.itemMode === 3 ? 1 : 2, // rdgItem: 0 one item, 1 range, 2 all
+      p.itemMode === 0 ? p.itemId : null, // strItemID
+      p.itemMode === 3 ? p.itemIdFrom : null, // strFromItemID
+      p.itemMode === 3 ? p.itemIdTo : null, // strToItemID
+      p.fromDate, // strFromDate
+      p.toDate, // strToDate
+      p.txnOrder, // blnOrderBy
     ],
     [
       "varchar",
@@ -247,8 +249,9 @@ const fetchRows = (p: StockParams) =>
       "varchar",
       "boolean",
       "varchar",
-      "int",
+      "boolean",
       "varchar",
+      "int",
       "varchar",
       "varchar",
       "varchar",

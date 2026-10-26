@@ -31,8 +31,6 @@ export const buildStockPdf = (report: PrintReport): Blob => {
   const detailed = report.txtMode === "D";
   const color = COLORS[report.txtMode];
   const lineColor = hexToRgb(color.line);
-  const headFill = hexToRgb(color.head);
-  const totalFill = hexToRgb(COLORS.total);
 
   const doc = new jsPDF({
     orientation: detailed ? "portrait" : "landscape",
@@ -46,7 +44,7 @@ export const buildStockPdf = (report: PrintReport): Blob => {
   const tableTop = margin.top + 27;
 
   const right = { halign: "right" as const };
-  const bold = { fillColor: totalFill, fontStyle: "bold" as const };
+  const bold = { fontStyle: "bold" as const };
 
   let head: CellDef[][];
   const body: CellDef[][] = [];
@@ -180,7 +178,6 @@ export const buildStockPdf = (report: PrintReport): Blob => {
       textColor: BLACK,
     },
     headStyles: {
-      fillColor: headFill,
       textColor: BLACK,
       fontStyle: "normal",
     },

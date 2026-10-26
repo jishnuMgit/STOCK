@@ -16,7 +16,6 @@ import {
 
 type RGB = [number, number, number];
 const BORDER: RGB = [199, 209, 228]; // #c7d1e4
-const HEAD_FILL: RGB = [239, 243, 250]; // #eff3fa
 const BLACK: RGB = [0, 0, 0];
 
 // the old Detail_BeforePrint: level 1 red, 2 green, 3 blue, the accounts black
@@ -87,9 +86,9 @@ export const buildBeginningBalancePdf = (report: PrintReport): Blob => {
     ];
   });
 
-  // the shaded Total row at the end
+  // the Total row at the end
   const totals = totalsOf(report.rows);
-  const totalStyles = { fillColor: HEAD_FILL, halign: "right" as const };
+  const totalStyles = { halign: "right" as const };
   body.push([
     { content: "Total", colSpan: 3, styles: totalStyles },
     { content: formatTotal(totals.debit), styles: totalStyles },
@@ -134,7 +133,6 @@ export const buildBeginningBalancePdf = (report: PrintReport): Blob => {
       textColor: BLACK,
     },
     headStyles: {
-      fillColor: HEAD_FILL,
       textColor: BLACK,
       fontStyle: "normal",
     },
