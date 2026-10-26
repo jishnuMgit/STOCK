@@ -47,10 +47,10 @@ interface PIExpLine {
   description?: string;
 }
 
-/* CALL dbo.sp_frmpiexp with named args (all SP params start with "p_") */
+/* CALL dbo.sp_pagepiexp with named args (all SP params start with "p_") */
 const callPIExp = (db: PgClient, args: Record<string, unknown>) => {
   const keys = Object.keys(args);
-  const sql = `CALL dbo.sp_frmpiexp(${keys
+  const sql = `CALL dbo.sp_pagepiexp(${keys
     .map((k, i) => `p_${k} => $${i + 1}`)
     .join(", ")})`;
   return db.query(
@@ -1142,7 +1142,7 @@ export const postPurchaseInvoice = async (
 
 /* =========================================================
    GET /purchase-invoice/expense?year=&brId=&docNo=
-   Port of VB GetPIExpDetail -> sp_frmpiexp mode 'G'.
+   Port of VB GetPIExpDetail -> sp_pagepiexp mode 'G'.
    Procedures can't return rows, so we read tblfintrans with the
    same columns / filter / order as the SP's 'G' mode.
    ========================================================= */

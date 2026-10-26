@@ -164,7 +164,7 @@ interface ExpenseLookupsApi {
   currencies: { fCurrency: string }[];
 }
 
-/* saved expense row from GET /purchase-invoice/expense (sp_frmpiexp 'G') */
+/* saved expense row from GET /purchase-invoice/expense (sp_pagepiexp 'G') */
 interface ExpenseDetailApi {
   fSlNo: number;
   fAccountID: string | null;
@@ -395,7 +395,7 @@ export const usePurchaseInvoice = () => {
     };
   }, []);
 
-  /* saved purchase expense rows (sp_frmpiexp mode 'G') */
+  /* saved purchase expense rows (sp_pagepiexp mode 'G') */
   const fetchExpenseDetail = useCallback(
     async (
       year: string,
