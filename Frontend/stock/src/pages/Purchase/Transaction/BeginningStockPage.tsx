@@ -5,7 +5,6 @@ import Select, {
   type SingleValue,
   type StylesConfig,
 } from "react-select";
-import { useLocation, useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";
 import {
   makePairComponents,
@@ -16,7 +15,17 @@ import { useScrollbarWidth } from "../../../hooks/useScrollbarWidth";
 import { useAdvanceAfterSelect } from "../../../hooks/useAdvanceAfterSelect";
 import { usePairMenuHang } from "../../../hooks/usePairMenuHang";
 import { useAltShortcuts } from "../../../hooks/useAltShortcuts";
-import { useConfirm } from "../../../hooks/useConfirm";
+import { useConfirmModal } from "../../../hooks/useConfirmModal";
+import { useGridCellFocus } from "../../../hooks/useGridCellFocus";
+import { useInitialFocus } from "../../../hooks/useInitialFocus";
+import ReportPreview from "../../../components/common/ReportPreview";
+import { buildBeginningStockPdf } from "../../../components/Transaction/BeginningStock/BeginningStockPdf";
+import {
+  buildHtml,
+  printBeginningStockReport,
+  type PrintReport,
+} from "../../../components/Transaction/BeginningStock/BeginningStockPrintReport";
+import { useDeleteToast } from "../../../hooks/useDeleteToast";
 import { useButtonPermissions } from "../../../hooks/useButtonPermissions";
 import {
   BranchDividedMenuList,
@@ -56,6 +65,9 @@ interface ItemRecord {
 
 // dbo.tblmenu fmenuid of the Beginning Stock page
 const MENU_ID = "010104";
+
+// the title of the question windows
+const SCREEN_TITLE = "Beginning Stock";
 
 // today as yyyy-mm-dd, in the user's own time
 const todayLocal = () => new Date().toLocaleDateString("en-CA");
@@ -462,13 +474,22 @@ const BeginningStockPage: React.FC = () => {
   const [message, setMessage] = useState("");
 
   const perms = useButtonPermissions(MENU_ID);
-  const navigate = useNavigate();
-  const location = useLocation();
+  // the branch list and the default branch have been loaded (the cursor can start)
+  const [branchesLoaded, setBranchesLoaded] = useState(false);
 
-  // coming back from the print page: the branch that was printed is chosen again
-  const returnedBranchID =
-    (location.state as { lkpBranch?: string } | null)?.lkpBranch ?? "";
-  const { confirm, confirmDialog } = useConfirm();
+  // the Print Preview (after Print): the report the server sent, and the branch it was
+  // made for (the Excel file is made for the same one)
+  const [preview, setPreview] = useState<{
+    report: PrintReport;
+    lkpBranch: string;
+    fileBase: string;
+  } | null>(null);
+  // the common themed question window (the same as the Purchase Invoice screen)
+  const { confirm, dialog: confirmDialog } = useConfirmModal();
+  // the cell the cursor is in is outlined; a typed-in box has its text selected
+  const { cellFocusClass, selectOnFocus } = useGridCellFocus();
+  // the standard messages of a delete: "Beginning Stock deleted successfully"
+  const { notDeleted } = useDeleteToast(SCREEN_TITLE);
 
   // the items of the chosen branch (not blocked for it)
   const [items, setItems] = useState<ItemRecord[]>([]);
@@ -496,6 +517,9 @@ const BeginningStockPage: React.FC = () => {
 
   // bumped by Clear / after a save so the document is loaded again
   const [reloadKey, setReloadKey] = useState(0);
+  // counts the documents loaded: after each one is drawn the cursor goes to the first
+  // empty Item ID (see the effect below)
+  const [docLoadTick, setDocLoadTick] = useState(0);
 
   // the two item boxes: Item ID shows the ID, Item Name shows the name; both
   // carry the item's ID as their value, so choosing one fills the other
@@ -551,22 +575,26 @@ const BeginningStockPage: React.FC = () => {
           options.find((option) => option.value === result.lkpDefaultBranch) ??
           null;
 
-        const returned =
-          options.find((option) => option.value === returnedBranchID) ?? null;
-
         setBranchOptions(options);
         setLkpDefaultBranch(initial);
-        setLkpBranch(returned ?? initial);
+        setLkpBranch(initial);
       } catch (error) {
         console.error("getBranchList error:", error);
         toast.error(
           `Beginning Stock load error: ${error instanceof Error ? error.message : String(error)}`,
         );
+      } finally {
+        setBranchesLoaded(true);
       }
     };
 
     loadBranches();
   }, []);
+
+  // where the cursor starts: the Branch box when no branch is chosen. With a branch
+  // chosen (the user's default branch) the loaded document decides: see the effect after
+  // the load - the first empty Item ID, or the Branch box when the document is posted.
+  useInitialFocus(branchesLoaded && !lkpBranch, "lkpBranch");
 
   // ----------------------------------------------------------
   // THE BRANCH CHANGED (or Clear): load its items and its saved Beginning Stock
@@ -696,6 +724,9 @@ const BeginningStockPage: React.FC = () => {
         if (documentResult.chkPosted) {
           toast.info("This Beginning Stock is posted: it is locked.");
         }
+
+        // the document is loaded: once it is drawn the cursor goes to the first empty Item ID
+        setDocLoadTick((tick) => tick + 1);
       } catch (error) {
         console.error("loadBeginningStock error:", error);
         toast.error(
@@ -710,6 +741,26 @@ const BeginningStockPage: React.FC = () => {
       cancelled = true;
     };
   }, [lkpBranch, reloadKey]);
+
+  // after a document has been loaded and drawn: a document that is not posted gets the
+  // cursor on the Item ID of its first empty row (after the saved lines, ready for the
+  // next one); a posted document is locked, so the cursor goes to the Branch box
+  useEffect(() => {
+    if (docLoadTick === 0) return;
+
+    if (chkPosted) {
+      document.getElementById("lkpBranch")?.focus();
+      return;
+    }
+
+    const firstEmpty = rows.findIndex((row) => !row.lkpItemID);
+    const target = firstEmpty === -1 ? rows.length - 1 : firstEmpty;
+
+    document.getElementById(`lkpItemID-${target}`)?.focus();
+    setActiveRow(target);
+    // only when a document has just been loaded
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [docLoadTick]);
 
   // ----------------------------------------------------------
   // UPDATE ROW
@@ -864,6 +915,12 @@ const BeginningStockPage: React.FC = () => {
       setRows(createInitialRows());
       setActiveRow(0);
     }
+
+    // with a branch the reloaded document puts the cursor on its first empty Item ID;
+    // without one it goes to the Branch box
+    if (!lkpBranch && !lkpDefaultBranch) {
+      window.setTimeout(() => document.getElementById("lkpBranch")?.focus(), 0);
+    }
   };
 
   // ----------------------------------------------------------
@@ -884,13 +941,14 @@ const BeginningStockPage: React.FC = () => {
     } else if (field === "txtQty") {
       document.getElementById(`txtUnitCost-${rowIndex}`)?.focus();
     } else if (rowIndex < rows.length - 1) {
+      // on to the next row's Item ID (the Sl.# box is only a number, not a stop)
       setActiveRow(rowIndex + 1);
-      document.getElementById(`txtSlNo-${rowIndex + 1}`)?.focus();
+      document.getElementById(`lkpItemID-${rowIndex + 1}`)?.focus();
     } else {
       addRow();
 
       window.setTimeout(() => {
-        document.getElementById(`txtSlNo-${rowIndex + 1}`)?.focus();
+        document.getElementById(`lkpItemID-${rowIndex + 1}`)?.focus();
       }, 0);
     }
   };
@@ -1071,7 +1129,10 @@ const BeginningStockPage: React.FC = () => {
       return;
     }
 
-    const shouldDelete = await confirm("Are you sure you want to delete the Beginning Stock?");
+    const shouldDelete = await confirm({
+      title: SCREEN_TITLE,
+      message: "Do you want to delete ?",
+    });
 
     if (!shouldDelete) {
       return;
@@ -1097,7 +1158,7 @@ const BeginningStockPage: React.FC = () => {
       const result = await response.json();
 
       if (!response.ok || !result.success) {
-        toast.error(result.message || "Not Deleted,Try again");
+        notDeleted(result.message);
 
         if (result.field) {
           document.getElementById(result.field)?.focus();
@@ -1106,7 +1167,7 @@ const BeginningStockPage: React.FC = () => {
         return;
       }
 
-      toast.success(result.message || "Deleted");
+      // (no message for a deleted document: the page just loads the branch again)
 
       // load the branch again - the document is gone
       setReloadKey((key) => key + 1);
@@ -1158,7 +1219,10 @@ const BeginningStockPage: React.FC = () => {
       return;
     }
 
-    const shouldPost = await confirm("Do you want to post ?.");
+    const shouldPost = await confirm({
+      title: SCREEN_TITLE,
+      message: "Do you want to post ?",
+    });
 
     if (!shouldPost) {
       return;
@@ -1214,8 +1278,16 @@ const BeginningStockPage: React.FC = () => {
   // printed too. The server checks the right again.
   // ----------------------------------------------------------
 
-  const handlePrint = () => {
-    if (saving) return;
+  // the body of the Print and Excel requests: the branch
+  const printBody = (branch: string) =>
+    JSON.stringify({
+      PstrCoID: localStorage.getItem("PstrCoID"),
+      PstrYear: localStorage.getItem("PstrYear"),
+      lkpBranch: branch,
+    });
+
+  const handlePrint = async () => {
+    if (saving || preview) return;
 
     if (!chkSaved) {
       toast.warning("Beginning Stock not found");
@@ -1233,14 +1305,180 @@ const BeginningStockPage: React.FC = () => {
       return;
     }
 
-    navigate("/Purchase/Transaction/BeginningStockPage/Print", {
-      state: { lkpBranch: lkpBranch.value },
+    setSaving(true);
+
+    try {
+      const response = await fetch(
+        `${import.meta.env.VITE_API_URL}/BeginningStock/printBeginningStock`,
+        {
+          method: "POST",
+          credentials: "include",
+          headers: { "Content-Type": "application/json" },
+          body: printBody(lkpBranch.value),
+        },
+      );
+
+      const result = await response.json();
+
+      if (!response.ok || !result.success) {
+        toast.error(result.message || "The Beginning Stock could not be printed.");
+        return;
+      }
+
+      // a name that is never the name of a file that is still open
+      const now = new Date();
+      const pad = (value: number) => String(value).padStart(2, "0");
+      const stamp = `${now.getFullYear()}${pad(now.getMonth() + 1)}${pad(now.getDate())}_${pad(now.getHours())}${pad(now.getMinutes())}${pad(now.getSeconds())}`;
+
+      setPreview({
+        report: { ...result.header, rows: result.data || [] },
+        lkpBranch: lkpBranch.value,
+        fileBase: `BeginningStock_${lkpBranch.value.replace(/[^A-Za-z0-9_-]/g, "_")}_${stamp}`,
+      });
+    } catch (error) {
+      console.error("printBeginningStock error:", error);
+      toast.error("Cannot connect to Beginning Stock API.");
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  // the Excel file of the Print Preview, made by the server (null after an error)
+  const fetchExcel = async (): Promise<Blob | null> => {
+    if (!preview) return null;
+
+    const response = await fetch(
+      `${import.meta.env.VITE_API_URL}/BeginningStock/downloadBeginningStockExcel`,
+      {
+        method: "POST",
+        credentials: "include",
+        headers: { "Content-Type": "application/json" },
+        body: printBody(preview.lkpBranch),
+      },
+    );
+
+    // an error comes back as JSON, the file as a blob
+    if (!response.ok) {
+      let message = "Could not create the Excel file";
+
+      try {
+        const result = await response.json();
+        message = result.message || message;
+      } catch {
+        message =
+          response.status === 404
+            ? "Excel is not available: the downloadBeginningStockExcel route was not found (404)"
+            : `Could not create the Excel file (error ${response.status})`;
+      }
+
+      toast.error(message);
+      return null;
+    }
+
+    return response.blob();
+  };
+
+  // ----------------------------------------------------------
+  // DELETE A ROW (the x of a row): asks first. A line that is saved goes from the
+  // database at once, with "Beginning Stock deleted successfully" (the last saved line
+  // takes the whole Beginning Stock with it); a line that was never saved only leaves
+  // the grid. The cursor goes back to the row's Item ID.
+  // ----------------------------------------------------------
+
+  const handleRemoveRow = async (index: number) => {
+    if (saving || chkPosted) return;
+
+    const row = rows[index];
+    if (!row) return;
+
+    // the line is in the database: it has the Sl.# it was loaded with
+    const savedLine = chkSaved && row.txtOriginalSlNo !== null;
+
+    const shouldRemove = await confirm({
+      title: SCREEN_TITLE,
+      message: `Do you want to delete Line ${index + 1} ?`,
     });
+
+    if (!shouldRemove) return;
+
+    if (savedLine) {
+      if (!lkpBranch) return;
+
+      setSaving(true);
+
+      try {
+        const response = await fetch(
+          `${import.meta.env.VITE_API_URL}/BeginningStock/deleteBeginningStockLine`,
+          {
+            method: "DELETE",
+            credentials: "include",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              PstrCoID: localStorage.getItem("PstrCoID"),
+              PstrYear: localStorage.getItem("PstrYear"),
+              lkpBranch: lkpBranch.value,
+              txtSlNo: row.txtOriginalSlNo,
+            }),
+          },
+        );
+
+        const result = await response.json();
+
+        if (!response.ok || !result.success) {
+          notDeleted(result.message);
+          return;
+        }
+
+        // (no message for a deleted line: the line just leaves the grid)
+
+        // the last line took the whole Beginning Stock with it: the page starts again
+        if (result.chkDocumentDeleted) {
+          setReloadKey((key) => key + 1);
+          return;
+        }
+      } catch (error) {
+        console.error("deleteBeginningStockLine error:", error);
+        toast.error("Cannot connect to Beginning Stock API.");
+        return;
+      } finally {
+        setSaving(false);
+      }
+    }
+
+    setRows((previous) => {
+      const kept = previous.filter((_, rowIndex) => rowIndex !== index);
+
+      // the grid keeps its length, with empty rows at the end
+      let nextId = previous.length ? Math.max(...previous.map((entry) => entry.id)) + 1 : 1;
+      const minRows = createInitialRows().length;
+
+      while (kept.length < minRows) {
+        kept.push({
+          id: nextId++,
+          txtSlNo: 0,
+          lkpItemID: null,
+          lkpItemName: null,
+          txtUnit: "",
+          txtQty: "",
+          txtUnitCost: "",
+          txtOriginalSlNo: null,
+        });
+      }
+
+      // Sl.# is the line's place in the grid
+      return kept.map((entry, rowIndex) => ({ ...entry, txtSlNo: rowIndex + 1 }));
+    });
+
+    setActiveRow(index);
+
+    // after the grid has been drawn again
+    window.setTimeout(() => document.getElementById(`lkpItemID-${index}`)?.focus(), 0);
   };
 
   // Alt+S -> Save (nothing saved yet), Alt+M -> Modify (saved), Alt+D -> Delete,
-  // Alt+P -> Print, Alt+T -> Post (the old Ctrl+T), Alt+C -> Clear
-  useAltShortcuts({
+  // Alt+P -> Print, Alt+T -> Post (the old Ctrl+T), Alt+C -> Clear. Off while the
+  // Print Preview is open: it has its own Alt+P, Alt+D and Alt+C.
+  useAltShortcuts(preview ? {} : {
     s: () => {
       if (!chkSaved) handleSave();
     },
@@ -1308,15 +1546,15 @@ const BeginningStockPage: React.FC = () => {
             Branch :
           </label>
 
-          <div className="w-[250px] max-w-full">
+          <div className="w-[250px] max-w-full" onKeyDown={(event) => advanceOnEnter(event)}>
             <Select<SelectOption, false>
               inputId="lkpBranch"
               name="lkpBranch"
               options={branchOptions}
               value={lkpBranch}
-              onChange={(option: SingleValue<SelectOption>) =>
-                setLkpBranch(option)
-              }
+              // a branch chosen: its document loads, and the cursor goes to the
+              // first empty Item ID (see the effect after the load)
+              onChange={(option: SingleValue<SelectOption>) => setLkpBranch(option)}
               styles={branchSelectStyles}
               components={{
                 ...selectComponents,
@@ -1351,6 +1589,13 @@ const BeginningStockPage: React.FC = () => {
             type="date"
             value={dtpDate}
             onChange={(event) => setDtpDate(event.target.value)}
+            onKeyDown={(event) => {
+              // Enter goes on to the first Item ID (a date box does not move on by itself)
+              if (event.key === "Enter") {
+                event.preventDefault();
+                document.getElementById("lkpItemID-0")?.focus();
+              }
+            }}
             disabled={chkPosted}
             className="input-style w-[142px]"
           />
@@ -1381,7 +1626,7 @@ const BeginningStockPage: React.FC = () => {
                   
                 </th>
                 <th className="border border-[#bfe8d0] px-1 text-center font-normal">
-                  Sl.
+                  Line
                 </th>
                 <th className="border border-[#bfe8d0] px-2 font-normal">
                   Item ID
@@ -1432,12 +1677,19 @@ const BeginningStockPage: React.FC = () => {
                       aria-label={`Serial number row ${index + 1}`}
                       value={row.txtSlNo}
                       readOnly
+                      onKeyDown={(event) => {
+                        // Enter on the Sl.# goes on to the Item ID of the row (Tab does too)
+                        if (event.key === "Enter") {
+                          event.preventDefault();
+                          document.getElementById(`lkpItemID-${index}`)?.focus();
+                        }
+                      }}
                       className="h-[26px] w-full bg-transparent px-1 text-center outline-none"
                     />
                   </td>
 
                   {/* ITEM ID */}
-                  <td className="border border-[#bfe8d0] p-0"
+                  <td className={`border border-[#bfe8d0] p-0 ${cellFocusClass}`}
                     onKeyDown={(event) => advanceOnEnter(event, [`lkpItemName-${index}`])}
                   >
                     <Select<SelectOption, false>
@@ -1462,7 +1714,7 @@ const BeginningStockPage: React.FC = () => {
                       filterOption={filterPairOption}
                       noOptionsMessage={() => "No Item Found"}
                       isSearchable
-                      isClearable
+                      isClearable={false}
                       isDisabled={chkPosted}
                       placeholder=""
 
@@ -1475,7 +1727,7 @@ const BeginningStockPage: React.FC = () => {
                   </td>
 
                   {/* ITEM NAME */}
-                  <td className="border border-[#bfe8d0] p-0"
+                  <td className={`border border-[#bfe8d0] p-0 ${cellFocusClass}`}
                     onKeyDown={(event) => advanceOnEnter(event)}
                   >
                     <Select<SelectOption, false>
@@ -1527,7 +1779,7 @@ const BeginningStockPage: React.FC = () => {
                   </td>
 
                   {/* QUANTITY */}
-                  <td className="border border-[#bfe8d0] p-0">
+                  <td className={`border border-[#bfe8d0] p-0 ${cellFocusClass}`}>
                     <input
                       id={`txtQty-${index}`}
                       name="txtQty"
@@ -1539,6 +1791,7 @@ const BeginningStockPage: React.FC = () => {
                       onChange={(event) =>
                         updateTextField(index, "txtQty", event.target.value)
                       }
+                      onFocus={selectOnFocus}
                       onBlur={(event) =>
                         showDecimals(index, "txtQty", event.target.value)
                       }
@@ -1550,7 +1803,7 @@ const BeginningStockPage: React.FC = () => {
                   </td>
 
                   {/* UNIT COST */}
-                  <td className="border border-[#bfe8d0] p-0">
+                  <td className={`border border-[#bfe8d0] p-0 ${cellFocusClass}`}>
                     <input
                       id={`txtUnitCost-${index}`}
                       name="txtUnitCost"
@@ -1566,6 +1819,7 @@ const BeginningStockPage: React.FC = () => {
                           event.target.value,
                         )
                       }
+                      onFocus={selectOnFocus}
                       onBlur={(event) =>
                         showDecimals(index, "txtUnitCost", event.target.value)
                       }
@@ -1576,19 +1830,39 @@ const BeginningStockPage: React.FC = () => {
                     />
                   </td>
 
-                  {/* TOTAL COST */}
+                  {/* TOTAL COST (with the x of the row after it) */}
                   <td className="border border-[#bfe8d0] p-0">
-                    <input
-                      id={`txtTotalCost-${index}`}
-                      name="txtTotalCost"
-                      value={
-                        row.txtQty !== "" || row.txtUnitCost !== ""
-                          ? formatAmount(getTotalCost(row))
-                          : ""
-                      }
-                      readOnly
-                      className="h-[26px] w-full bg-transparent px-2 text-right outline-none"
-                    />
+                    <div className="flex items-center">
+                      <input
+                        id={`txtTotalCost-${index}`}
+                        name="txtTotalCost"
+                        value={
+                          row.txtQty !== "" || row.txtUnitCost !== ""
+                            ? formatAmount(getTotalCost(row))
+                            : ""
+                        }
+                        readOnly
+                        className="h-[26px] min-w-0 flex-1 bg-transparent px-2 text-right outline-none"
+                      />
+
+                      {/* the slot is always there so the amounts do not move when the x shows */}
+                      <span className="flex w-6 shrink-0 items-center justify-center">
+                        {row.lkpItemID && !chkPosted && (
+                          <button
+                            id={`btnRemoveRow-${index}`}
+                            name="btnRemoveRow"
+                            type="button"
+                            tabIndex={-1}
+                            title="Remove row"
+                            aria-label={`Remove row ${index + 1}`}
+                            onClick={() => handleRemoveRow(index)}
+                            className="text-[12px] leading-none text-gray-400 hover:text-red-600"
+                          >
+                            ✕
+                          </button>
+                        )}
+                      </span>
+                    </div>
                   </td>
                 </tr>
               ))}
@@ -1678,8 +1952,20 @@ const BeginningStockPage: React.FC = () => {
         </div>
       </section>
 
-      {/* the "Do you want to delete ?." question */}
+      {/* the "Do you want to delete ?" question */}
       {confirmDialog}
+
+      {/* the Print Preview (after Print) */}
+      {preview && (
+        <ReportPreview
+          html={buildHtml(preview.report)}
+          fileBase={preview.fileBase}
+          onPrint={() => printBeginningStockReport(preview.report)}
+          buildPdf={() => buildBeginningStockPdf(preview.report)}
+          fetchExcel={fetchExcel}
+          onClose={() => setPreview(null)}
+        />
+      )}
 
       {/* SAVED BY / LAST MODIFIED BY */}
       {txtUserInfo !== "" && (

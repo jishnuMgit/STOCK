@@ -25,7 +25,7 @@
 --   Both rows are inserted unposted and then marked posted, as the original does.
 --
 -- Last, both sets of rows (ST and STI) are marked posted and get the POSTING transaction
--- number (fpostingtransno): one number for the whole document, from
+-- number (fpostingno): one number for the whole document, from
 -- dbo.getnexttransno(co, year, From branch, 'P'); a row that already has one keeps it.
 -- This replaces the original's fPostOrder / dbo.getnextpostorder (no such columns).
 --
@@ -92,7 +92,7 @@ DECLARE
     v_strtobrname       varchar(50);
     v_strdescription    varchar(100);
     v_strccid           varchar(50);
-    v_strpostingtransno varchar(9);      -- the posting transaction number
+    v_strpostingno varchar(9);      -- the posting transaction number
     v_intlines          integer := 0;
     v_row               record;
 BEGIN
@@ -304,12 +304,12 @@ BEGIN
         );
 
         -- the posting transaction number: one for the whole document
-        v_strpostingtransno := dbo.getnexttransno(p_pstrcoid, p_pstryear, p_strbrid, 'P');
+        v_strpostingno := dbo.getnexttransno(p_pstrcoid, p_pstryear, p_strbrid, 'P');
 
         -- both sets of rows are posted
         UPDATE dbo.tblstocktrans
            SET fpost = true,
-               fpostingtransno = COALESCE(fpostingtransno, v_strpostingtransno)
+               fpostingno = COALESCE(fpostingno, v_strpostingno)
          WHERE fcoid   = p_pstrcoid
            AND fyear   = p_pstryear
            AND fstbrid = p_strbrid

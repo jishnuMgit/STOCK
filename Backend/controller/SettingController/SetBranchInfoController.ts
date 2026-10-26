@@ -234,7 +234,7 @@ export const saveBranchInfo = async (
 
     return res.status(200).json({
       success: true,
-      message: "Branch info saved successfully",
+      message: "Set Branch Info saved successfully",
     });
   } catch (error: unknown) {
     console.error("saveBranchInfo error:", error);

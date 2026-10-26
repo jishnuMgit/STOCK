@@ -9,6 +9,7 @@ import {
 } from "../../PairSelect/pairSelectParts";
 import { usePairMenuHang } from "../../../hooks/usePairMenuHang";
 import { useAdvanceAfterSelect } from "../../../hooks/useAdvanceAfterSelect";
+import { useGridCellFocus } from "../../../hooks/useGridCellFocus";
 import {
   isEmptyRow,
   padRows,
@@ -175,6 +176,9 @@ const BeginningBalanceTable: React.FC<Props> = ({
 }) => {
   const [activeRow, setActiveRow] =
     useState(0);
+
+  // the cell the cursor is in is outlined
+  const { cellFocusClass } = useGridCellFocus();
 
   // Enter / Tab / click on a dropdown goes on to the next box of the row
   const { advanceAfterPick, advanceOnEnter } =
@@ -434,11 +438,11 @@ const BeginningBalanceTable: React.FC<Props> = ({
 
             {/* Debit */}
 
-            <col style={{ width: "100px" }} />
+            <col style={{ width: "130px" }} />
 
             {/* Credit (and the x of the row) */}
 
-            <col style={{ width: "124px" }} />
+            <col style={{ width: "154px" }} />
           </colgroup>
 
           {/* ==================================================
@@ -616,12 +620,9 @@ const BeginningBalanceTable: React.FC<Props> = ({
                 ================================================== */}
 
                 <td
-                  className="
-                    h-[30px]
-                    border
-                    border-[#bdebd4]
-                    p-0
-                  "
+                  className={`
+                    h-[30px] border border-[#bdebd4] p-0 ${cellFocusClass}
+                  `}
                 >
                   <div
                     onKeyDown={(event) =>
@@ -693,12 +694,9 @@ const BeginningBalanceTable: React.FC<Props> = ({
                 ================================================== */}
 
                 <td
-                  className="
-                    h-[30px]
-                    border
-                    border-[#bdebd4]
-                    p-0
-                  "
+                  className={`
+                    h-[30px] border border-[#bdebd4] p-0 ${cellFocusClass}
+                  `}
                 >
                   <div
                     onKeyDown={(event) =>
@@ -767,12 +765,9 @@ const BeginningBalanceTable: React.FC<Props> = ({
                 ================================================== */}
 
                 <td
-                  className="
-                    h-[30px]
-                    border
-                    border-[#bdebd4]
-                    p-0
-                  "
+                  className={`
+                    h-[30px] border border-[#bdebd4] p-0 ${cellFocusClass}
+                  `}
                 >
                   <div
                     onKeyDown={(event) =>
@@ -836,12 +831,9 @@ const BeginningBalanceTable: React.FC<Props> = ({
                 ================================================== */}
 
                 <td
-                  className="
-                    h-[30px]
-                    border
-                    border-[#bdebd4]
-                    p-0
-                  "
+                  className={`
+                    h-[30px] border border-[#bdebd4] p-0 ${cellFocusClass}
+                  `}
                 >
                   {renderNumberInput(
                     index,
@@ -856,12 +848,9 @@ const BeginningBalanceTable: React.FC<Props> = ({
                 ================================================== */}
 
                 <td
-                  className="
-                    h-[30px]
-                    border
-                    border-[#bdebd4]
-                    p-0
-                  "
+                  className={`
+                    h-[30px] border border-[#bdebd4] p-0 ${cellFocusClass}
+                  `}
                 >
                   <div className="flex items-center">
                     <div className="min-w-0 flex-1">

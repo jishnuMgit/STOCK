@@ -26,7 +26,7 @@ export interface ItemGroupPageData {
 }
 
 // tblitemgroup.fitemgroupid varchar(8), fitemgroupname varchar(60)
-const ITEM_GROUP_ID_LENGTH = 8;
+const ITEM_GROUP_ID_LENGTH = 12;
 const ITEM_GROUP_NAME_LENGTH = 60;
 
 const text = (value: unknown): string => String(value ?? "").trim();

@@ -5,6 +5,9 @@ import type { SelectOption } from "../../types/receiptypes";
 import { useEnterAsTab } from "../../hooks/useEnterAsTab";
 import { useAltShortcuts } from "../../hooks/useAltShortcuts";
 import { useButtonPermissions } from "../../hooks/useButtonPermissions";
+import { useGridCellFocus } from "../../hooks/useGridCellFocus";
+import { useAdvanceAfterSelect } from "../../hooks/useAdvanceAfterSelect";
+import { useInitialFocus } from "../../hooks/useInitialFocus";
 import {
   makeNameIdMenuComponents,
   branchMenuStyles,
@@ -169,6 +172,13 @@ const MENU_ID = "9199";
 const SetCompanyInfo = () => {
   const handleEnterAsTab = useEnterAsTab();
   const perms = useButtonPermissions(MENU_ID);
+  // the box the cursor is in is outlined, and its text is selected
+  const { cellFocusClass, selectOnFocus } = useGridCellFocus();
+  // after a Company pick (or Enter on a closed Company box) the cursor goes on
+  const { advanceAfterPick, advanceOnEnter } = useAdvanceAfterSelect();
+
+  // the company list has been asked for (found or not): the cursor can start
+  const [companyListLoaded, setCompanyListLoaded] = useState(false);
 
   const [companyOptions, setCompanyOptions] = useState<CompanyOption[]>([]);
   const [lkpCoName, setLkpCoName] = useState("");
@@ -240,6 +250,8 @@ const SetCompanyInfo = () => {
         }
       } catch (error) {
         console.error("getCompanyList error:", error);
+      } finally {
+        setCompanyListLoaded(true);
       }
     };
 
@@ -330,11 +342,11 @@ const SetCompanyInfo = () => {
     return true;
   };
 
-  // This screen only ever edits an existing company, so it works with the
-  // MODIFY right (letter M of the menu's buttons), not Save.
-  const handleModify = async () => {
+  // This screen only ever edits an existing company, so the button is just "Save"
+  // but it works with the MODIFY right (letter M of the menu's buttons).
+  const handleSave = async () => {
     if (!perms.modify) {
-      toast.error("You do not have permission to Modify.");
+      toast.error("You do not have permission to Save.");
       return;
     }
 
@@ -366,7 +378,7 @@ const SetCompanyInfo = () => {
       const result = await response.json();
 
       if (!response.ok || !result.success) {
-        toast.error(result.message || "Company info could not be saved.");
+        toast.error(result.message || "Not saved, try again");
 
         // the backend validator names the field that failed - same name as
         // the element id, so the cursor goes straight into it
@@ -377,7 +389,7 @@ const SetCompanyInfo = () => {
         return;
       }
 
-      toast.success(result.message || "Company info saved successfully.");
+      toast.success(result.message || "Set Company Info saved successfully");
     } catch (error) {
       console.error("saveCompanyDetails error:", error);
       toast.error("Cannot connect to Company Info API.");
@@ -397,12 +409,15 @@ const SetCompanyInfo = () => {
 
   /* =======================================================
      KEYBOARD SHORTCUTS
-     Alt+M -> Modify, Alt+C -> Clear (matches the underlined
+     Alt+S -> Save, Alt+C -> Clear (matches the underlined
      accelerator letters on the buttons).
   ======================================================= */
 
+  // the cursor starts on the Company Name box
+  useInitialFocus(companyListLoaded, "lkpCoName");
+
   useAltShortcuts({
-    m: handleModify,
+    s: handleSave,
     c: handleClear,
   });
 
@@ -433,12 +448,20 @@ const SetCompanyInfo = () => {
               Company Name :
             </label>
 
-            <div className="relative">
+            <div
+              className={`relative ${cellFocusClass}`}
+              onKeyDown={(event) => advanceOnEnter(event)}
+            >
               <Select<SelectOption, false>
                 inputId="lkpCoName"
                 name="lkpCoName"
                 value={selectedCompanyOption}
-                onChange={(option) => setLkpCoName(option?.value || "")}
+                onChange={(option) => {
+                  setLkpCoName(option?.value || "");
+
+                  // a company chosen: on to the next box
+                  if (option) advanceAfterPick("lkpCoName");
+                }}
                 options={companySelectOptions}
                 filterOption={companyFilterOption}
                 styles={{ ...companySelectStyles, ...branchMenuStyles }}
@@ -462,19 +485,22 @@ const SetCompanyInfo = () => {
             </label>
 
             <div className="relative">
-              <input
-                id="txtCoName_AR"
-                maxLength={100}
-                name="txtCoName_AR"
-                aria-required="true"
-                type="text"
-                dir="rtl"
-                value={formData.txtCoName_AR}
-                onChange={(event) =>
-                  handleFieldChange("txtCoName_AR", event.target.value)
-                }
-                className="w-full input-style"
-              />
+              <div className={`w-full ${cellFocusClass}`}>
+                <input
+                  id="txtCoName_AR"
+                  maxLength={100}
+                  name="txtCoName_AR"
+                  aria-required="true"
+                  type="text"
+                  dir="rtl"
+                  value={formData.txtCoName_AR}
+                  onFocus={selectOnFocus}
+                  onChange={(event) =>
+                    handleFieldChange("txtCoName_AR", event.target.value)
+                  }
+                  className="w-full input-style"
+                />
+              </div>
             </div>
           </div>
 
@@ -489,18 +515,21 @@ const SetCompanyInfo = () => {
             </label>
 
             <div className="relative">
-              <input
-              maxLength={30}
-                id="txtCoName_QR"
-                name="txtCoName_QR"
-                aria-required="true"
-                type="text"
-                value={formData.txtCoName_QR}
-                onChange={(event) =>
-                  handleFieldChange("txtCoName_QR", event.target.value)
-                }
-                className="w-[50%] input-style"
-              />
+              <div className={`w-[50%] ${cellFocusClass}`}>
+                <input
+                maxLength={30}
+                  id="txtCoName_QR"
+                  name="txtCoName_QR"
+                  aria-required="true"
+                  type="text"
+                  value={formData.txtCoName_QR}
+                  onFocus={selectOnFocus}
+                  onChange={(event) =>
+                    handleFieldChange("txtCoName_QR", event.target.value)
+                  }
+                  className="w-full input-style"
+                />
+              </div>
             </div>
           </div>
 
@@ -516,18 +545,21 @@ const SetCompanyInfo = () => {
             </label>
 
             <div className="relative">
-              <input
-              maxLength={30}
-                id="txtCoName_Short"
-                name="txtCoName_Short"
-                aria-required="true"
-                type="text"
-                value={formData.txtCoName_Short}
-                onChange={(event) =>
-                  handleFieldChange("txtCoName_Short", event.target.value)
-                }
-                className="w-[50%] input-style"
-              />
+              <div className={`w-[50%] ${cellFocusClass}`}>
+                <input
+                maxLength={30}
+                  id="txtCoName_Short"
+                  name="txtCoName_Short"
+                  aria-required="true"
+                  type="text"
+                  value={formData.txtCoName_Short}
+                  onFocus={selectOnFocus}
+                  onChange={(event) =>
+                    handleFieldChange("txtCoName_Short", event.target.value)
+                  }
+                  className="w-full input-style"
+                />
+              </div>
             </div>
           </div>
 
@@ -542,18 +574,21 @@ const SetCompanyInfo = () => {
             </label>
 
             <div className="relative">
-              <input
-              maxLength={15}
-                id="txtCoVATNo"
-                name="txtCoVATNo"
-                aria-required="true"
-                type="text"
-                value={formData.txtCoVATNo}
-                onChange={(event) =>
-                  handleFieldChange("txtCoVATNo", event.target.value)
-                }
-                className="w-[50%] input-style"
-              />
+              <div className={`w-[50%] ${cellFocusClass}`}>
+                <input
+                maxLength={15}
+                  id="txtCoVATNo"
+                  name="txtCoVATNo"
+                  aria-required="true"
+                  type="text"
+                  value={formData.txtCoVATNo}
+                  onFocus={selectOnFocus}
+                  onChange={(event) =>
+                    handleFieldChange("txtCoVATNo", event.target.value)
+                  }
+                  className="w-full input-style"
+                />
+              </div>
             </div>
           </div>
 
@@ -568,18 +603,21 @@ const SetCompanyInfo = () => {
             </label>
 
             <div className="relative">
-              <input
-              maxLength={15}
-                id="txtCoVATNo_AR"
-                name="txtCoVATNo_AR"
-                aria-required="true"
-                type="text"
-                value={formData.txtCoVATNo_AR}
-                onChange={(event) =>
-                  handleFieldChange("txtCoVATNo_AR", event.target.value)
-                }
-                className="w-[50%] input-style text-right"
-              />
+              <div className={`w-[50%] ${cellFocusClass}`}>
+                <input
+                maxLength={15}
+                  id="txtCoVATNo_AR"
+                  name="txtCoVATNo_AR"
+                  aria-required="true"
+                  type="text"
+                  value={formData.txtCoVATNo_AR}
+                  onFocus={selectOnFocus}
+                  onChange={(event) =>
+                    handleFieldChange("txtCoVATNo_AR", event.target.value)
+                  }
+                  className="w-full input-style text-right"
+                />
+              </div>
             </div>
           </div>
 
@@ -587,10 +625,10 @@ const SetCompanyInfo = () => {
           <div className="mt-[14px] flex justify-center gap-3">
 
             <button
-              id="btnModify"
-              name="btnModify"
+              id="btnSave"
+              name="btnSave"
               type="button"
-              onClick={handleModify}
+              onClick={handleSave}
               disabled={!perms.modify}
               className="
                 btn-style
@@ -598,7 +636,7 @@ const SetCompanyInfo = () => {
                 disabled:opacity-40
               "
             >
-              <span className="underline underline-offset-2">M</span>odify
+              <span className="underline underline-offset-2">S</span>ave
             </button>
 
             <button

@@ -3,7 +3,9 @@ import { toast } from "react-toastify";
 import { useEnterAsTab } from "../../../hooks/useEnterAsTab";
 import { useAltShortcuts } from "../../../hooks/useAltShortcuts";
 import { useButtonPermissions } from "../../../hooks/useButtonPermissions";
-import { useConfirm } from "../../../hooks/useConfirm";
+import { useConfirmModal } from "../../../hooks/useConfirmModal";
+import { useDeleteToast } from "../../../hooks/useDeleteToast";
+import { useGridCellFocus } from "../../../hooks/useGridCellFocus";
 
 // ============================================================
 // TYPES
@@ -20,7 +22,7 @@ type UnitRow = {
 const blankRow = (): UnitRow => ({ txtUnit: "", txtOriginalUnit: null });
 
 // at least this many rows are always on the screen (filled ones + blanks)
-const MIN_ROW_COUNT = 10;
+const MIN_ROW_COUNT = 9;
 
 // dbo.tblmenu fmenuid for the Unit page (fmenucaption = "Unit").
 const MENU_ID = "010203";
@@ -32,7 +34,12 @@ const MENU_ID = "010203";
 const UnitPage: React.FC = () => {
   const handleEnterAsTab = useEnterAsTab();
   const perms = useButtonPermissions(MENU_ID);
-  const { confirm, confirmDialog } = useConfirm();
+  // the common themed question window (the same as on the other screens)
+  const { confirm, dialog } = useConfirmModal();
+  // the standard messages of a delete: "Unit deleted successfully"
+  const { deleted, notDeleted } = useDeleteToast("Unit");
+  // the cell the cursor is in is outlined (a typed-in box has its text selected)
+  const { cellFocusClass, selectOnFocus } = useGridCellFocus();
 
   // Only Admin Users (userType "AU") may delete a saved unit - the red X, the
   // keys (Ctrl+D / Alt+D / Ctrl+Delete) and the server all follow this, even
@@ -41,8 +48,9 @@ const UnitPage: React.FC = () => {
 
   const [rows, setRows] = useState<UnitRow[]>([]);
 
+  // (no longer used: the X deletes the unit from the database at once)
   // Saved units the user took off the grid with the X. They stay in the
-  // database until Modify is pressed (then the server deletes them together
+  // database until Save is pressed (then the server deletes them together
   // with the other changes) - like the old form, where DeleteRow only
   // removed the row from the grid and Save applied it.
   const [deletedRows, setDeletedRows] = useState<{ txtOriginalUnit: string }[]>([]);
@@ -123,11 +131,11 @@ const UnitPage: React.FC = () => {
   // ============================================================
   // ROWS ON THE SCREEN
   // The loaded rows, then blank rows to type new units into
-  // (always at least MIN_ROW_COUNT rows, and 3 blank ones at the end).
+  // (always at least MIN_ROW_COUNT rows, and 1 blank one at the end).
   // ============================================================
 
   const displayRows: UnitRow[] = Array.from(
-    { length: Math.max(MIN_ROW_COUNT, rows.length + 3) },
+    { length: Math.max(MIN_ROW_COUNT, rows.length + 1) },
     (_, index) => rows[index] ?? blankRow(),
   );
 
@@ -177,7 +185,7 @@ const UnitPage: React.FC = () => {
   // ============================================================
   // "HAS A TRANSACTION USED THIS UNIT?" (the old HaveTrans)
   // Asked once per saved unit, when its row is entered. A failed call is
-  // ignored here: the server checks again when Modify is pressed.
+  // ignored here: the server checks again when Save is pressed.
   // ============================================================
 
   const checkUnitUsed = async (txtOriginalUnit: string) => {
@@ -305,7 +313,7 @@ const UnitPage: React.FC = () => {
   // ============================================================
 
   const focusSaveButton = () => {
-    document.getElementById(hasSavedUnits ? "btnModify" : "btnSave")?.focus();
+    document.getElementById("btnSave")?.focus();
   };
 
   const handleUnitKeyDown = (
@@ -363,17 +371,17 @@ const UnitPage: React.FC = () => {
   };
 
   // ============================================================
-  // SAVE / MODIFY
+  // SAVE
   //
-  // The one button: Save the first time, Modify once the company has units
-  // (the old form switched its button text between "Save" and "Modify").
-  // It also deletes the units that were taken off the grid with the X.
+  // The one button, always "Save" (the old form switched it to "Modify" once the
+  // company had units; here it stays Save). It also deletes the units that were
+  // taken off the grid with the X.
   // ============================================================
 
-  // a unit just removed from the grid is still a saved unit until Modify
+  // a unit just removed from the grid is still a saved unit until Save
   const hasSavedUnits =
     rows.some((row) => row.txtOriginalUnit !== null) || deletedRows.length > 0;
-  const actionWord = hasSavedUnits ? "Modify" : "Save";
+  const actionWord = "Save";
   const canSaveOrModify = hasSavedUnits ? perms.modify : perms.save;
 
   const handleSave = async () => {
@@ -446,10 +454,7 @@ const UnitPage: React.FC = () => {
       const result = await response.json();
 
       if (!response.ok || !result.success) {
-        toast.error(
-          result.message ||
-            (hasSavedUnits ? "Not modified, try again." : "Not saved, try again."),
-        );
+        toast.error(result.message || "Not saved, try again.");
 
         // the backend names the box that failed - same name as the element id
         if (result.field) {
@@ -459,12 +464,7 @@ const UnitPage: React.FC = () => {
         return;
       }
 
-      toast.success(
-        result.message ||
-          (hasSavedUnits
-            ? "Unit modified successfully."
-            : "Unit saved successfully."),
-      );
+      toast.success(result.message || "Unit saved successfully");
 
       // load the units again - they now carry their saved names
       setReloadKey((key) => key + 1);
@@ -480,7 +480,7 @@ const UnitPage: React.FC = () => {
   // DELETE ROW (the X or Ctrl+D / Alt+D / Ctrl+Delete - Admin Users only)
   //
   // Deleting only takes the row off the grid. A saved unit is deleted from the
-  // database when Modify is pressed. Before the row goes: the Delete right
+  // database when Save is pressed. Before the row goes: the Delete right
   // (the old CanDeleteGrid), the "used by transactions?" check (the old
   // HaveTrans) and an "Are you sure...?" question.
   // ============================================================
@@ -540,25 +540,54 @@ const UnitPage: React.FC = () => {
       return;
     }
 
-    const shouldDelete = await confirm(
-      "Are you sure you want to delete this unit?",
-    );
+    const shouldDelete = await confirm({
+      title: "Unit",
+      message: "Do you want to delete ?",
+    });
 
     if (!shouldDelete) {
       return;
     }
 
-    // off the grid now, out of the database when Modify is pressed
-    setDeletedRows((previousRows) => [
-      ...previousRows,
-      { txtOriginalUnit: row.txtOriginalUnit as string },
-    ]);
+    // the unit goes from the database at once (a save that only deletes this unit)
+    const PstrYear = localStorage.getItem("PstrYear");
+    const PstrUserID = localStorage.getItem("PstrUserID");
 
-    setRows((previousRows) =>
-      previousRows.filter((_, rowIndex) => rowIndex !== index),
-    );
+    if (!PstrYear || !PstrUserID) {
+      toast.error("Company ID / Year / User ID not found. Please log in again.");
+      return;
+    }
 
-    toast.success(`'${row.txtOriginalUnit}' removed. Click ${actionWord} to delete it.`);
+    try {
+      const response = await fetch(`${import.meta.env.VITE_API_URL}/Unit/saveUnit`, {
+        method: "POST",
+        credentials: "include", // the server checks the session and the rights
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          PstrCoID,
+          PstrYear,
+          PstrUserID,
+          rows: [],
+          deletedRows: [{ txtOriginalUnit: row.txtOriginalUnit }],
+        }),
+      });
+
+      const result = await response.json();
+
+      if (!response.ok || !result.success) {
+        notDeleted(result.message);
+        return;
+      }
+
+      deleted();
+
+      setRows((previousRows) =>
+        previousRows.filter((_, rowIndex) => rowIndex !== index),
+      );
+    } catch (error) {
+      console.error("deleteUnit error:", error);
+      toast.error("Cannot connect to Unit API.");
+    }
   };
 
   // ============================================================
@@ -571,16 +600,10 @@ const UnitPage: React.FC = () => {
     setReloadKey((key) => key + 1);
   };
 
-  // Alt+S -> Save (no units yet), Alt+M -> Modify (units saved),
-  // Alt+D -> Delete the row the cursor is on (same as the X),
+  // Alt+S -> Save, Alt+D -> Delete the row the cursor is on (same as the X),
   // Alt+C -> Clear (the underlined letters on the buttons)
   useAltShortcuts({
-    s: () => {
-      if (!hasSavedUnits) handleSave();
-    },
-    m: () => {
-      if (hasSavedUnits) handleSave();
-    },
+    s: handleSave,
     d: () => {
       handleDeleteRow(selectedRow);
     },
@@ -625,6 +648,7 @@ const UnitPage: React.FC = () => {
   // ============================================================
 
   return (
+    <>
     <div
       onKeyDown={handlePageKeyDown}
       className="flex min-h-screen w-full items-center justify-center bg-white"
@@ -647,11 +671,11 @@ const UnitPage: React.FC = () => {
         <div className="p-[12px] m-[12px]">
           {/* TABLE AREA */}
 
-          <div className="h-[305px] overflow-hidden border border-[#bfe8d0]">
+          <div className="h-[344px] overflow-hidden border border-[#bfe8d0]">
             <div className="h-full overflow-y-auto overflow-x-hidden">
               <table className="w-full table-fixed border-collapse text-[12px]">
                 <colgroup>
-                  <col className="w-[38px]" />
+                  <col className="w-[24px]" />
                   <col />
                 </colgroup>
 
@@ -686,29 +710,15 @@ const UnitPage: React.FC = () => {
                       >
                         {/* SELECTOR COLUMN */}
 
-                        <td className="h-[34px] w-[38px] border border-[#bfe8d0] bg-white p-0 text-center align-middle">
+                        <td className="h-[34px] w-[24px] border border-[#bfe8d0] bg-white p-0 text-center align-middle">
                           {selectedRow === index && (
-                            <span className="inline-flex items-center gap-1.5">
-                              <span className="text-[9px] text-[#222]">▶</span>
-                              {showDelete && (
-                                <button
-                                  type="button"
-                                  tabIndex={-1}
-                                  title="Delete row"
-                                  onClick={() => handleDeleteRow(index)}
-                                  aria-label={`Delete ${row.txtUnit}`}
-                                  className="text-[12px] leading-none text-gray-400 hover:text-red-600"
-                                >
-                                  ✕
-                                </button>
-                              )}
-                            </span>
+                            <span className="text-[9px] text-[#222]">▶</span>
                           )}
                         </td>
 
                         {/* UNIT COLUMN */}
 
-                        <td className="h-[34px] border border-l-0 border-[#bfe8d0] bg-white p-0 align-middle">
+                        <td className={`h-[34px] border border-l-0 border-[#bfe8d0] bg-white p-0 align-middle ${cellFocusClass}`}>
                           <div className="flex h-[32px] items-center">
                             <input
                               id={`txtUnit-${index}`}
@@ -717,7 +727,8 @@ const UnitPage: React.FC = () => {
                               value={row.txtUnit}
                               maxLength={8}
                               autoComplete="off"
-                              onFocus={() => {
+                              onFocus={(event) => {
+                                selectOnFocus(event);
                                 setSelectedRow(index);
 
                                 if (row.txtOriginalUnit !== null) {
@@ -738,6 +749,23 @@ const UnitPage: React.FC = () => {
                               }
                               className="h-[32px] min-w-0 flex-1 border-0 bg-transparent px-[11px] py-0 text-left text-[13px] text-[#374151] outline-none focus:bg-[#f1f8ff]"
                             />
+
+                            {/* the X of the row, at the right end of the Unit box (the slot
+                                is always there so the box does not change size) */}
+                            <span className="flex w-[32px] shrink-0 items-center justify-center">
+                              {selectedRow === index && showDelete && (
+                                <button
+                                  type="button"
+                                  tabIndex={-1}
+                                  title="Delete row"
+                                  onClick={() => handleDeleteRow(index)}
+                                  aria-label={`Delete ${row.txtUnit}`}
+                                  className="text-[12px] leading-none text-gray-400 hover:text-red-600"
+                                >
+                                  ✕
+                                </button>
+                              )}
+                            </span>
                           </div>
                         </td>
                       </tr>
@@ -754,8 +782,8 @@ const UnitPage: React.FC = () => {
 
           <div className="mt-[14px] flex justify-center gap-3">
             <button
-              id={hasSavedUnits ? "btnModify" : "btnSave"}
-              name={hasSavedUnits ? "btnModify" : "btnSave"}
+              id="btnSave"
+              name="btnSave"
               type="button"
               onClick={handleSave}
               disabled={!canSaveOrModify || saving}
@@ -780,8 +808,12 @@ const UnitPage: React.FC = () => {
         </div>
       </div>
 
-      {confirmDialog}
     </div>
+
+    {/* the "Do you want to delete ?" question - outside the root div: the page's
+        Enter handling must not take the Enter of the Yes / No buttons */}
+    {dialog}
+    </>
   );
 };
 

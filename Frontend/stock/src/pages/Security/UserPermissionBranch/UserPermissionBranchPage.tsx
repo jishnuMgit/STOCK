@@ -1,10 +1,14 @@
 import { ChevronDown, ChevronRight } from "lucide-react";
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import Select, { type SingleValue, type StylesConfig } from "react-select";
 import { toast } from "react-toastify";
 import { useEnterAsTab } from "../../../hooks/useEnterAsTab";
 import { useAltShortcuts } from "../../../hooks/useAltShortcuts";
 import { useButtonPermissions } from "../../../hooks/useButtonPermissions";
+import { useConfirmModal } from "../../../hooks/useConfirmModal";
+import { useDeleteToast } from "../../../hooks/useDeleteToast";
+import { GRID_CELL_FOCUS_CLASS } from "../../../hooks/useGridCellFocus";
+import { useInitialFocus } from "../../../hooks/useInitialFocus";
 import selectComponents from "../../../components/sharecomponents/selectComponents";
 
 const API_URL = `${import.meta.env.VITE_API_URL}/user-permission-branch`;
@@ -202,6 +206,9 @@ const MENU_ID = "9303";
 const UserPermissionBranchPage: React.FC = () => {
   const perms = useButtonPermissions(MENU_ID);
   const handleEnterAsTab = useEnterAsTab();
+  // the common themed question window and the standard delete messages
+  const { confirm, dialog } = useConfirmModal();
+  const { deleted, notDeleted } = useDeleteToast("User Permission - Branch");
 
   const [lkpUserID, setLkpUserID] = useState<string>("");
   const [userIdOptions, setUserIdOptions] = useState<SelectOption[]>([]);
@@ -316,6 +323,27 @@ const UserPermissionBranchPage: React.FC = () => {
     void loadPermissions(lkpUserID);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [lkpUserID]);
+
+  // the cursor starts on the User ID box
+  useInitialFocus(!loadingUserIdOptions, "lkpUserID");
+
+  // a user has just been picked: when his rights are drawn, the cursor goes to the
+  // first box of the list
+  const goToListRef = useRef(false);
+
+  useEffect(() => {
+    if (loading || !goToListRef.current) return;
+
+    goToListRef.current = false;
+
+    window.setTimeout(() => {
+      document
+        .querySelector<HTMLElement>(
+          '#trlBranches input[type="checkbox"], #trlBranches button'
+        )
+        ?.focus();
+    }, 0);
+  }, [loading, permissionData]);
 
   // ==========================================================
   // EXPAND / COLLAPSE INDIVIDUAL COMPANY
@@ -455,7 +483,12 @@ const UserPermissionBranchPage: React.FC = () => {
       return;
     }
 
-    if (!window.confirm(`Delete all company/branch rights for ${lkpUserID}?`)) {
+    const shouldDelete = await confirm({
+      title: "User Permission - Branch",
+      message: "Do you want to delete ?",
+    });
+
+    if (!shouldDelete) {
       return;
     }
 
@@ -480,13 +513,11 @@ const UserPermissionBranchPage: React.FC = () => {
 
       setPermissionData((previous) => clearTree(previous));
 
-      toast.success(result.message || "Permissions deleted successfully.");
+      deleted();
     } catch (err) {
       console.error("Delete user-permission-branch failed:", err);
 
-      toast.error(
-        err instanceof Error ? err.message : "Failed to delete permissions."
-      );
+      notDeleted(err instanceof Error ? err.message : undefined);
     } finally {
       setSaving(false);
     }
@@ -512,14 +543,29 @@ const UserPermissionBranchPage: React.FC = () => {
     c: handleClear,
   });
 
+  // The old form's behaviour: Enter on a BUTTON presses it (expand / collapse, Save,
+  // Delete, Clear). Enter anywhere else moves on to the next box, as on the other pages.
+  const handlePageKeyDown = (event: React.KeyboardEvent<HTMLElement>) => {
+    const target = event.target as HTMLElement;
+
+    if (event.key === "Enter" && target.tagName === "BUTTON") {
+      event.preventDefault();
+      target.click();
+      return;
+    }
+
+    handleEnterAsTab(event);
+  };
+
   // ==========================================================
   // UI
   // ==========================================================
 
   return (
+    <>
     <div
       className="flex min-h-screen w-full items-center justify-center bg-white"
-      onKeyDown={handleEnterAsTab}
+      onKeyDown={handlePageKeyDown}
     >
       <div className="flex w-[calc(100%-32px)] max-w-[30%] min-w-100 flex-col border border-slate-400 bg-white text-[12px] text-gray-700 shadow-sm">
         {/* TITLE */}
@@ -551,9 +597,12 @@ const UserPermissionBranchPage: React.FC = () => {
                 userIdOptions.find((option) => option.value === lkpUserID) ||
                 null
               }
-              onChange={(option: SingleValue<SelectOption>) =>
-                setLkpUserID(option?.value || "")
-              }
+              onChange={(option: SingleValue<SelectOption>) => {
+                setLkpUserID(option?.value || "");
+
+                // a user chosen: on to the list, once it is drawn
+                if (option) goToListRef.current = true;
+              }}
               styles={userIdSelectStyles}
               classNamePrefix="userIdSelect"
               isSearchable
@@ -603,7 +652,7 @@ const UserPermissionBranchPage: React.FC = () => {
                       {/* LEVEL 1: COMPANY */}
                       <tr className="h-7.25">
                         <td className="border-b border-[#b8f0d0] p-0">
-                          <div className="flex h-7 items-center gap-2.25 pl-4 pr-2.5">
+                          <div className={`flex h-7 items-center gap-2.25 pl-4 pr-2.5 ${GRID_CELL_FOCUS_CLASS}`}>
                             <button
                               type="button"
                               aria-label={
@@ -651,7 +700,7 @@ const UserPermissionBranchPage: React.FC = () => {
                         company.children.map((branch) => (
                           <tr key={branch.lkpBranch} className="h-7.25">
                             <td className="border-b border-[#b8f0d0] p-0">
-                              <div className="ml-15 flex h-7 items-center gap-2.25 border-l border-[#b8f0d0] pl-1.5">
+                              <div className={`ml-15 flex h-7 items-center gap-2.25 border-l border-[#b8f0d0] pl-1.5 ${GRID_CELL_FOCUS_CLASS}`}>
                                 <input
                                   id={`chk${company.lkpCoID}_${branch.lkpBranch}`}
                                   name={`chk${company.lkpCoID}_${branch.lkpBranch}`}
@@ -729,6 +778,11 @@ const UserPermissionBranchPage: React.FC = () => {
         </div>
       </div>
     </div>
+
+    {/* the "Do you want to delete ?" question - outside the root div so the page's
+        Enter handling does not take the Enter of the Yes / No buttons */}
+    {dialog}
+    </>
   );
 };
 
