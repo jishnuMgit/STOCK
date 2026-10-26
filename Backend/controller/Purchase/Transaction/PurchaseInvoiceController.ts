@@ -514,7 +514,7 @@ export const savePurchaseInvoice = async (
     }
     /* misc (cash) supplier link. sp_pagepi does not store it.
        Must run AFTER the S loop: modify deletes and re-inserts every line row. */
-    const miscId = invoiceType === "C" ? (miscSupId ?? "").trim() : "";
+    const miscId = (miscSupId ?? "").trim();
     await client.query(
       `UPDATE dbo.tblstocktrans
           SET fmisccs = $6, fmisccsaccountid = $7
