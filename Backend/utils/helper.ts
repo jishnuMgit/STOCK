@@ -1,34 +1,28 @@
-import pool from '../DB/db.js';
-import {MatchRow,GetDataMatchParams,MatchTotalParams} from '../types/types.js'
-
+import pool from "../DB/db.js";
+import {
+  MatchRow,
+  GetDataMatchParams,
+  MatchTotalParams,
+} from "../types/types.js";
 
 export function getNumber(value: unknown): number {
-  if (
-    value === null ||
-    value === undefined ||
-    value === ""
-  ) {
+  if (value === null || value === undefined || value === "") {
     return 0;
   }
 
   const number = Number(value);
 
-  return Number.isNaN(number)
-    ? 0
-    : number;
+  return Number.isNaN(number) ? 0 : number;
 }
 
 export function round2(value: number): number {
-  return Math.round(
-    (value + Number.EPSILON) * 100
-  ) / 100;
+  return Math.round((value + Number.EPSILON) * 100) / 100;
 }
-
 
 export async function getDataMatch(
   params: GetDataMatchParams,
   db: any,
-  coId: string
+  coId: string,
 ): Promise<MatchRow[]> {
   const {
     strMode,
@@ -63,46 +57,71 @@ export async function getDataMatch(
       intMAccountSlNo,
       intMAccountSlNoSub,
       strUMDKey,
-    ]
+    ],
   );
 
   return result.rows;
 }
 
+import type { ReceiptData, ReceiptRow } from "../types/types.js";
 
+export const cleanReceiptPayload = (body: any): ReceiptData => {
+  const rows: ReceiptRow[] = (Array.isArray(body?.rows) ? body.rows : [])
+    .filter((row: any) => row && String(row.accountId ?? "").trim() !== "")
+    .map(
+      (row: any, index: number): ReceiptRow => ({
+        txtslNo: Number(row.slNo) || index + 1,
 
-export const cleanReceiptPayload = (body: any) => {
-  const filteredRows = (body.rows ?? []).filter(
-    (row: any) =>
-      !(
-    
-        (row.accountId === "" && row.accountName === "") ||
-        row.creditAmt === 0
-      )
-  );
+        lkpAccountID: String(row.accountId).trim(),
 
-  const recalculatedTotal = filteredRows.reduce(
-    (sum: number, row: any) => sum + (Number(row.creditAmt) || 0),
-    0
-  );
+        lkpAccountName: row.accountName ?? "",
+
+        strGCS: row.fgcs ?? "",
+
+        lkpDivID: row.DivID ?? "",
+
+        lkpCCID: row.CCID ?? "",
+
+        /* new name first, old name as fallback */
+        txtDebitCredit: row.txtDebitCredit ?? row.creditAmt ?? 0,
+
+        txtDescription: row.description ?? "",
+
+        ckhMatch: row.match ?? false,
+      }),
+    );
 
   return {
-    ...body,
-    rows: filteredRows,
-    total: recalculatedTotal,
+    lkpBranch: body?.lkpBranch,
+
+    lkpType: body?.lkpType,
+
+    lkpCBAccountName: body?.cbAccountName,
+
+    cbCcId: body?.cbCcId,
+
+    txtDocNo: body?.txtDocNo,
+
+    dtpDate: body?.dtpDate,
+
+    txtReceivedFrom: body?.receivedFrom,
+
+    txtReference: body?.reference,
+
+    strNote: body?.note,
+
+    rows,
   };
 };
 
 export const CheckISdividISccid = async (
   body: any,
   pool: any,
-  PstrCoID: string
+  PstrCoID: string,
 ): Promise<void> => {
-
   const rows = body.rows || [];
 
   for (const item of rows) {
-
     const accountId = item.accountId;
 
     if (!accountId) {
@@ -118,7 +137,7 @@ export const CheckISdividISccid = async (
       WHERE fcoid = $1
         AND faccountid = $2
       `,
-      [PstrCoID, accountId]
+      [PstrCoID, accountId],
     );
 
     const account = result.rows[0];
@@ -130,45 +149,34 @@ export const CheckISdividISccid = async (
     const haveCC = account.haveCC === true;
     const haveDivision = account.haveDivision === true;
 
-
     /* =========================================
        CC ID REQUIRED
     ========================================= */
 
-    if (
-      haveCC &&
-      (!item.CCID || item.CCID.trim() === "")
-    ) {
+    if (haveCC && (!item.CCID || item.CCID.trim() === "")) {
       throw new Error(
-        `Account ${accountId} requires a CC ID. Please select the CC ID.`
+        `Account ${accountId} requires a CC ID. Please select the CC ID.`,
       );
     }
-
 
     /* =========================================
        DIVISION REQUIRED
     ========================================= */
 
-    if (
-      haveDivision &&
-      (!item.DivID || item.DivID.trim() === "")
-    ) {
+    if (haveDivision && (!item.DivID || item.DivID.trim() === "")) {
       throw new Error(
-        `Account ${accountId} requires a Division. Please select the Division.`
+        `Account ${accountId} requires a Division. Please select the Division.`,
       );
     }
   }
 };
 
-
-
-
-export const isActivePeriod = async (coId: any, strBrID: any, dtpDate: any) => {
+export const isActivePeriod = async (pstrCoID: any, strBrID: any, dtpDate: any) => {
   const result = await pool.query(
     `
       SELECT dbo.isactiveperiod($1, $2, $3) AS is_active
     `,
-    [coId, strBrID, dtpDate]
+    [pstrCoID, strBrID, dtpDate],
   );
 
   return result.rows[0]?.is_active === true;
