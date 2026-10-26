@@ -1,9 +1,13 @@
-import React, { useCallback, useEffect, useState } from "react";
+import React, { useCallback, useEffect, useRef, useState } from "react";
 import Select, { type SingleValue, type StylesConfig } from "react-select";
 import { toast } from "react-toastify";
 import { useEnterAsTab } from "../../../hooks/useEnterAsTab";
 import { useAltShortcuts } from "../../../hooks/useAltShortcuts";
 import { useButtonPermissions } from "../../../hooks/useButtonPermissions";
+import { useConfirmModal } from "../../../hooks/useConfirmModal";
+import { useDeleteToast } from "../../../hooks/useDeleteToast";
+import { GRID_CELL_FOCUS_CLASS } from "../../../hooks/useGridCellFocus";
+import { useInitialFocus } from "../../../hooks/useInitialFocus";
 import selectComponents from "../../../components/sharecomponents/selectComponents";
 
 const API_URL = `${import.meta.env.VITE_API_URL}/user-permission`;
@@ -460,7 +464,7 @@ function MenuRow({
 
         <div
           role="gridcell"
-          className="flex min-h-[23px] min-w-0 items-center gap-[14px] py-[2px] pr-2"
+          className={`flex min-h-[23px] min-w-0 items-center gap-[14px] py-[2px] pr-2 ${GRID_CELL_FOCUS_CLASS}`}
           style={{
             paddingLeft: `${28 + depth * 36}px`,
           }}
@@ -473,7 +477,7 @@ function MenuRow({
               }
               aria-expanded={isExpanded}
               onClick={() => onExpand(node.lkpMenuID)}
-              className="flex h-[18px] w-[13px] shrink-0 items-center justify-center bg-transparent p-0 text-[#7891a9] focus-visible:outline-2 focus-visible:outline-blue-400"
+              className="flex h-[18px] w-[13px] shrink-0 items-center justify-center bg-transparent p-0 text-[#7891a9]"
             >
               <span
                 className={`inline-block text-[18px] leading-none ${
@@ -497,7 +501,7 @@ function MenuRow({
               )
             }
             aria-label={`Permission for ${menuLabel}`}
-            className="h-[14px] w-[14px] shrink-0 cursor-pointer accent-emerald-600 focus-visible:outline-2 focus-visible:outline-blue-400"
+            className="h-[14px] w-[14px] shrink-0 cursor-pointer accent-emerald-600"
           />
 
           <span className="min-w-0 break-words text-[13px] leading-[18px] text-slate-700">
@@ -521,7 +525,7 @@ function MenuRow({
 
             <div
               role="gridcell"
-              className="flex min-h-[23px] items-center gap-[14px] py-[2px] pr-2"
+              className={`flex min-h-[23px] items-center gap-[14px] py-[2px] pr-2 ${GRID_CELL_FOCUS_CLASS}`}
               style={{
                 paddingLeft: `${28 + (depth + 1) * 36}px`,
               }}
@@ -540,7 +544,7 @@ function MenuRow({
                   )
                 }
                 aria-label={`${PERMISSION_BUTTONS[buttonCode]} permission for ${menuLabel}`}
-                className="h-[14px] w-[14px] shrink-0 cursor-pointer accent-emerald-600 focus-visible:outline-2 focus-visible:outline-blue-400"
+                className="h-[14px] w-[14px] shrink-0 cursor-pointer accent-emerald-600"
               />
 
               <span className="min-w-0 break-words text-[13px] leading-[18px] text-slate-700">
@@ -578,6 +582,9 @@ const MENU_ID = "9302";
 const UserPermission: React.FC = () => {
   const perms = useButtonPermissions(MENU_ID);
   const handleEnterAsTab = useEnterAsTab();
+  // the common themed question window and the standard delete messages
+  const { confirm, dialog } = useConfirmModal();
+  const { deleted, notDeleted } = useDeleteToast("User Permission - Menu");
 
   // no user is selected when the page opens
   const [lkpUserID, setLkpUserID] = useState("");
@@ -657,6 +664,24 @@ const UserPermission: React.FC = () => {
     void loadPermissions(lkpUserID);
   }, [loadPermissions, lkpUserID]);
 
+  // a user has just been picked: when his permissions are drawn, the cursor goes to the
+  // first box of the menu
+  const goToMenuRef = useRef(false);
+
+  useEffect(() => {
+    if (loading || !goToMenuRef.current) return;
+
+    goToMenuRef.current = false;
+
+    window.setTimeout(() => {
+      document
+        .querySelector<HTMLElement>(
+          '#trlMenu input[type="checkbox"], #trlMenu button'
+        )
+        ?.focus();
+    }, 0);
+  }, [loading, menuTree]);
+
   // ==========================================================
   // LOAD USER ID LIST (lkpUserID dropdown)
   // GET /api/user-permission/users/list
@@ -700,6 +725,9 @@ const UserPermission: React.FC = () => {
 
     loadUserIdList();
   }, []);
+
+  // the cursor starts on the User ID box
+  useInitialFocus(!loadingUserIdOptions, "lkpUserID");
 
   // ==========================================================
   // EXPAND / COLLAPSE
@@ -850,11 +878,12 @@ const UserPermission: React.FC = () => {
       return;
     }
 
-    if (
-      !window.confirm(
-        `Delete all permissions for ${lkpUserID}?`
-      )
-    ) {
+    const shouldDelete = await confirm({
+      title: "User Permission - Menu",
+      message: "Do you want to delete ?",
+    });
+
+    if (!shouldDelete) {
       return;
     }
 
@@ -881,17 +910,11 @@ const UserPermission: React.FC = () => {
 
       setMenuTree((previous) => clearTree(previous));
 
-      toast.success(
-        result.message || "Permissions deleted successfully."
-      );
+      deleted();
     } catch (err) {
       console.error("Delete permissions failed:", err);
 
-      toast.error(
-        err instanceof Error
-          ? err.message
-          : "Failed to delete permissions."
-      );
+      notDeleted(err instanceof Error ? err.message : undefined);
     } finally {
       setSaving(false);
     }
@@ -917,14 +940,29 @@ const UserPermission: React.FC = () => {
     c: handleClear,
   });
 
+  // The old form's behaviour: Enter on a BUTTON presses it (expand / collapse, Save,
+  // Delete, Clear). Enter anywhere else moves on to the next box, as on the other pages.
+  const handlePageKeyDown = (event: React.KeyboardEvent<HTMLElement>) => {
+    const target = event.target as HTMLElement;
+
+    if (event.key === "Enter" && target.tagName === "BUTTON") {
+      event.preventDefault();
+      target.click();
+      return;
+    }
+
+    handleEnterAsTab(event);
+  };
+
   // ==========================================================
   // UI
   // ==========================================================
 
   return (
+    <>
     <div
       className="flex min-h-screen w-full items-center justify-center bg-white"
-      onKeyDown={handleEnterAsTab}
+      onKeyDown={handlePageKeyDown}
     >
       <main className="flex w-[calc(100%-32px)] max-w-[1000px] flex-col border border-slate-400 bg-white text-[12px] text-gray-700 shadow-sm">
         {/* Title */}
@@ -960,9 +998,12 @@ const UserPermission: React.FC = () => {
             value={
               userIdOptions.find((option) => option.value === lkpUserID) || null
             }
-            onChange={(option: SingleValue<SelectOption>) =>
-              setLkpUserID(option?.value || "")
-            }
+            onChange={(option: SingleValue<SelectOption>) => {
+              setLkpUserID(option?.value || "");
+
+              // a user chosen: on to the menu, once it is drawn
+              if (option) goToMenuRef.current = true;
+            }}
             styles={userIdSelectStyles}
             classNamePrefix="userIdSelect"
             isSearchable
@@ -1047,6 +1088,11 @@ const UserPermission: React.FC = () => {
         </div>
       </main>
     </div>
+
+    {/* the "Do you want to delete ?" question - outside the root div so the page's
+        Enter handling does not take the Enter of the Yes / No buttons */}
+    {dialog}
+    </>
   );
 };
 

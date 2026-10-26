@@ -1,6 +1,6 @@
 
 
-import {MatchTotalParams,GetDocumentsToMatchParams,MatchRow} from '../types/types.js'
+import {MatchTotalParams,MatchRow} from '../types/types.js'
 
 import {round2,getNumber,getDataMatch} from '../utils/helper.js'
 export function matchTotal(params: MatchTotalParams) {
@@ -165,7 +165,7 @@ export function matchTotal(params: MatchTotalParams) {
 
 
 export const getDocumentsToMatch=async (
-  params: GetDocumentsToMatchParams,
+  params: any,
   db: any,
   coId: string
 )=> {

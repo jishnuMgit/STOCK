@@ -3,6 +3,9 @@ import { toast } from "react-toastify";
 import { useEnterAsTab } from "../../../hooks/useEnterAsTab";
 import { useAltShortcuts } from "../../../hooks/useAltShortcuts";
 import { useButtonPermissions } from "../../../hooks/useButtonPermissions";
+import { useConfirmModal } from "../../../hooks/useConfirmModal";
+import { useDeleteToast } from "../../../hooks/useDeleteToast";
+import { useGridCellFocus } from "../../../hooks/useGridCellFocus";
 
 // ============================================================
 // TYPES
@@ -27,7 +30,7 @@ const blankRow = (): StaffRow => ({
 });
 
 // at least this many rows are always on the screen (filled ones + blanks)
-const MIN_ROW_COUNT = 10;
+const MIN_ROW_COUNT = 9;
 
 // dbo.tblmenu fmenuid for the Staff page (fmenucaption = "Staff").
 const MENU_ID = "010204";
@@ -39,6 +42,17 @@ const MENU_ID = "010204";
 const StaffPage: React.FC = () => {
   const handleEnterAsTab = useEnterAsTab();
   const perms = useButtonPermissions(MENU_ID);
+  // the common themed question window (the same as on the other screens)
+  const { confirm, dialog } = useConfirmModal();
+  // the standard messages of a delete: "Staff deleted successfully"
+  const { deleted, notDeleted } = useDeleteToast("Staff");
+  // the cell the cursor is in is outlined (a typed-in box has its text selected)
+  const { cellFocusClass, selectOnFocus } = useGridCellFocus();
+
+  // Only Admin Users (userType "AU") may delete a saved staff member - the red X, the
+  // Alt+D key and the server all follow this, even for a Restricted User who was
+  // given the Delete right.
+  const isAdminUser = localStorage.getItem("userType") === "AU";
 
   const [rows, setRows] = useState<StaffRow[]>([]);
   const [selectedRow, setSelectedRow] = useState<number>(0);
@@ -132,11 +146,11 @@ const StaffPage: React.FC = () => {
   // ============================================================
   // ROWS ON THE SCREEN
   // The loaded rows, then blank rows to type new staff into
-  // (always at least MIN_ROW_COUNT rows, and 3 blank ones at the end).
+  // (always at least MIN_ROW_COUNT rows, and 1 blank one at the end).
   // ============================================================
 
   const displayRows: StaffRow[] = Array.from(
-    { length: Math.max(MIN_ROW_COUNT, rows.length + 3) },
+    { length: Math.max(MIN_ROW_COUNT, rows.length + 1) },
     (_, index) => rows[index] ?? blankRow(),
   );
 
@@ -188,7 +202,7 @@ const StaffPage: React.FC = () => {
   // ============================================================
   // "IS THIS STAFF MEMBER ALREADY USED?" (the old HaveTrans)
   // Asked once per saved staff id, when its row is entered. A failed call is
-  // ignored here: the server checks again when Modify is pressed.
+  // ignored here: the server checks again when Save is pressed.
   // ============================================================
 
   const checkStaffUsed = async (txtOriginalStaffID: string) => {
@@ -336,7 +350,7 @@ const StaffPage: React.FC = () => {
   const hasSavedStaff = rows.some((row) => row.txtOriginalStaffID !== null);
 
   const focusSaveButton = () => {
-    document.getElementById(hasSavedStaff ? "btnModify" : "btnSave")?.focus();
+    document.getElementById("btnSave")?.focus();
   };
 
   const handleCellKeyDown = (
@@ -393,13 +407,13 @@ const StaffPage: React.FC = () => {
   };
 
   // ============================================================
-  // SAVE / MODIFY
+  // SAVE
   //
-  // The one button: Save the first time, Modify once the company has staff
-  // (the old form switched its button text between "Save" and "Modify").
+  // The one button, always "Save" (the old form switched it to "Modify" once the
+  // company had staff; here it stays Save).
   // ============================================================
 
-  const actionWord = hasSavedStaff ? "Modify" : "Save";
+  const actionWord = "Save";
   const canSaveOrModify = hasSavedStaff ? perms.modify : perms.save;
 
   const handleSave = async () => {
@@ -498,10 +512,7 @@ const StaffPage: React.FC = () => {
       const result = await response.json();
 
       if (!response.ok || !result.success) {
-        toast.error(
-          result.message ||
-            (hasSavedStaff ? "Not modified, try again." : "Not saved, try again."),
-        );
+        toast.error(result.message || "Not saved, try again.");
 
         // the backend names the box that failed - same name as the element id
         if (result.field) {
@@ -511,12 +522,7 @@ const StaffPage: React.FC = () => {
         return;
       }
 
-      toast.success(
-        result.message ||
-          (hasSavedStaff
-            ? "Staff modified successfully."
-            : "Staff saved successfully."),
-      );
+      toast.success(result.message || "Staff saved successfully");
 
       // load the staff again - they now carry their saved ids
       setReloadKey((key) => key + 1);
@@ -529,6 +535,116 @@ const StaffPage: React.FC = () => {
   };
 
   // ============================================================
+  // DELETE ROW (the X or Alt+D - Admin Users only)
+  // A row typed and not saved just leaves the grid. A saved staff member goes from
+  // the database at once, after the Delete right, the "used by transactions?" check
+  // (the old HaveTrans) and the question; the message is "Staff deleted successfully".
+  // ============================================================
+
+  const handleDeleteRow = async (index: number) => {
+    const row = displayRows[index];
+
+    if (!row || row.txtStaffID.trim() === "" && row.txtStaffName.trim() === "") {
+      return;
+    }
+
+    // a row typed on the page and not saved yet just leaves the grid
+    if (row.txtOriginalStaffID === null) {
+      setRows((previousRows) =>
+        previousRows.filter((_, rowIndex) => rowIndex !== index),
+      );
+      return;
+    }
+
+    if (!isAdminUser) {
+      toast.error("Only an Admin User can delete staff.", {
+        toastId: "staff-delete-admin-only",
+      });
+      return;
+    }
+
+    if (!perms.delete) {
+      toast.error("You do not have permission to Delete.");
+      return;
+    }
+
+    const PstrCoID = localStorage.getItem("PstrCoID");
+    const PstrYear = localStorage.getItem("PstrYear");
+    const PstrUserID = localStorage.getItem("PstrUserID");
+
+    if (!PstrCoID || !PstrYear || !PstrUserID) {
+      toast.error("Company ID / Year / User ID not found. Please log in again.");
+      return;
+    }
+
+    // a staff member that transactions already use cannot be deleted
+    try {
+      const response = await fetch(
+        `${import.meta.env.VITE_API_URL}/Staff/haveStaffTrans?PstrCoID=${PstrCoID}&txtOriginalStaffID=${encodeURIComponent(row.txtOriginalStaffID)}`,
+      );
+
+      const result = await response.json();
+
+      if (!response.ok || !result.success) {
+        toast.error(result.message || "Could not check the staff member.");
+        return;
+      }
+
+      if (result.data === true) {
+        toast.info(
+          `You can't delete. Transactions already entered with this Staff '${row.txtOriginalStaffID}'`,
+        );
+        return;
+      }
+    } catch (error) {
+      console.error("haveStaffTrans error:", error);
+      toast.error("Cannot connect to Staff API.");
+      return;
+    }
+
+    const shouldDelete = await confirm({
+      title: "Staff",
+      message: "Do you want to delete ?",
+    });
+
+    if (!shouldDelete) {
+      return;
+    }
+
+    // the staff member goes from the database at once (a save that only deletes it)
+    try {
+      const response = await fetch(`${import.meta.env.VITE_API_URL}/Staff/saveStaff`, {
+        method: "POST",
+        credentials: "include", // the server checks the session and the rights
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          PstrCoID,
+          PstrYear,
+          PstrUserID,
+          rows: [],
+          deletedRows: [{ txtOriginalStaffID: row.txtOriginalStaffID }],
+        }),
+      });
+
+      const result = await response.json();
+
+      if (!response.ok || !result.success) {
+        notDeleted(result.message);
+        return;
+      }
+
+      deleted();
+
+      setRows((previousRows) =>
+        previousRows.filter((_, rowIndex) => rowIndex !== index),
+      );
+    } catch (error) {
+      console.error("deleteStaff error:", error);
+      toast.error("Cannot connect to Staff API.");
+    }
+  };
+
+  // ============================================================
   // CLEAR - back to what is saved
   // ============================================================
 
@@ -537,14 +653,12 @@ const StaffPage: React.FC = () => {
     setReloadKey((key) => key + 1);
   };
 
-  // Alt+S -> Save (no staff yet), Alt+M -> Modify (staff saved),
+  // Alt+S -> Save, Alt+D -> Delete the row the cursor is on (same as the X),
   // Alt+C -> Clear (the underlined letters on the buttons)
   useAltShortcuts({
-    s: () => {
-      if (!hasSavedStaff) handleSave();
-    },
-    m: () => {
-      if (hasSavedStaff) handleSave();
+    s: handleSave,
+    d: () => {
+      handleDeleteRow(selectedRow);
     },
     c: handleClear,
   });
@@ -575,6 +689,7 @@ const StaffPage: React.FC = () => {
     "sticky top-0 z-20 h-[34px] border border-l-0 border-[#bfe8d0] bg-[#edf9f2] px-[11px] py-0 text-[14px] font-normal text-gray-600";
 
   return (
+    <>
     <div
       onKeyDown={handlePageKeyDown}
       className="flex min-h-screen w-full items-center justify-center bg-white"
@@ -597,7 +712,7 @@ const StaffPage: React.FC = () => {
         <div className="p-[12px] m-[12px]">
           {/* TABLE AREA */}
 
-          <div className="h-[305px] overflow-hidden border border-[#bfe8d0]">
+          <div className="h-[344px] overflow-hidden border border-[#bfe8d0]">
             <div className="h-full overflow-y-auto overflow-x-hidden">
               <table className="w-full table-fixed border-collapse text-[12px]">
                 <colgroup>
@@ -638,7 +753,7 @@ const StaffPage: React.FC = () => {
 
                       {/* STAFF ID */}
 
-                      <td className="h-[34px] border border-l-0 border-[#bfe8d0] bg-white p-0 align-middle">
+                      <td className={`h-[34px] border border-l-0 border-[#bfe8d0] bg-white p-0 align-middle ${cellFocusClass}`}>
                         <input
                           id={`txtStaffID-${index}`}
                           name="txtStaffID"
@@ -646,7 +761,8 @@ const StaffPage: React.FC = () => {
                           value={row.txtStaffID}
                           maxLength={4}
                           autoComplete="off"
-                          onFocus={() => {
+                          onFocus={(event) => {
+                            selectOnFocus(event);
                             setSelectedRow(index);
 
                             if (row.txtOriginalStaffID !== null) {
@@ -671,7 +787,7 @@ const StaffPage: React.FC = () => {
 
                       {/* STAFF NAME */}
 
-                      <td className="h-[34px] border border-l-0 border-[#bfe8d0] bg-white p-0 align-middle">
+                      <td className={`h-[34px] border border-l-0 border-[#bfe8d0] bg-white p-0 align-middle ${cellFocusClass}`}>
                         <input
                           id={`txtStaffName-${index}`}
                           name="txtStaffName"
@@ -679,7 +795,10 @@ const StaffPage: React.FC = () => {
                           value={row.txtStaffName}
                           maxLength={50}
                           autoComplete="off"
-                          onFocus={() => setSelectedRow(index)}
+                          onFocus={(event) => {
+                            selectOnFocus(event);
+                            setSelectedRow(index);
+                          }}
                           onBlur={() => handleStaffBlur(index, "txtStaffName")}
                           onChange={(event) =>
                             updateRow(index, { txtStaffName: event.target.value })
@@ -698,7 +817,7 @@ const StaffPage: React.FC = () => {
 
                       {/* PURCHASE */}
 
-                      <td className="h-[34px] border border-l-0 border-[#bfe8d0] bg-white p-0 text-center align-middle">
+                      <td className={`h-[34px] border border-l-0 border-[#bfe8d0] bg-white p-0 text-center align-middle ${cellFocusClass}`}>
                         <input
                           id={`chkIsPurchase-${index}`}
                           name="chkIsPurchase"
@@ -718,26 +837,52 @@ const StaffPage: React.FC = () => {
                         />
                       </td>
 
-                      {/* SALES */}
+                      {/* SALES (and the X of the row, at the right end) */}
 
-                      <td className="h-[34px] border border-l-0 border-[#bfe8d0] bg-white p-0 text-center align-middle">
-                        <input
-                          id={`chkIsSales-${index}`}
-                          name="chkIsSales"
-                          type="checkbox"
-                          checked={row.chkIsSales}
-                          onFocus={() => setSelectedRow(index)}
-                          onChange={(event) => {
-                            if (isEditBlocked(index, "chkIsSales")) {
-                              return;
-                            }
+                      <td className={`h-[34px] border border-l-0 border-[#bfe8d0] bg-white p-0 text-center align-middle ${cellFocusClass}`}>
+                        <div className="flex h-[32px] items-center">
+                          <span className="w-[28px] shrink-0" />
 
-                            updateRow(index, {
-                              chkIsSales: event.target.checked,
-                            });
-                          }}
-                          className="h-[16px] w-[16px] cursor-pointer accent-green-600"
-                        />
+                          <span className="flex flex-1 items-center justify-center">
+                            <input
+                              id={`chkIsSales-${index}`}
+                              name="chkIsSales"
+                              type="checkbox"
+                              checked={row.chkIsSales}
+                              onFocus={() => setSelectedRow(index)}
+                              onChange={(event) => {
+                                if (isEditBlocked(index, "chkIsSales")) {
+                                  return;
+                                }
+
+                                updateRow(index, {
+                                  chkIsSales: event.target.checked,
+                                });
+                              }}
+                              className="h-[16px] w-[16px] cursor-pointer accent-green-600"
+                            />
+                          </span>
+
+                          {/* the slot is always there so the box does not move when the X shows */}
+                          <span className="flex w-[28px] shrink-0 items-center justify-center">
+                            {selectedRow === index &&
+                              isAdminUser &&
+                              (row.txtStaffID.trim() !== "" ||
+                                row.txtStaffName.trim() !== "") &&
+                              (row.txtOriginalStaffID === null || perms.delete) && (
+                                <button
+                                  type="button"
+                                  tabIndex={-1}
+                                  title="Delete row"
+                                  onClick={() => handleDeleteRow(index)}
+                                  aria-label={`Delete ${row.txtStaffName || row.txtStaffID}`}
+                                  className="text-[12px] leading-none text-gray-400 hover:text-red-600"
+                                >
+                                  ✕
+                                </button>
+                              )}
+                          </span>
+                        </div>
                       </td>
                     </tr>
                   ))}
@@ -752,8 +897,8 @@ const StaffPage: React.FC = () => {
 
           <div className="mt-[14px] flex justify-center gap-3">
             <button
-              id={hasSavedStaff ? "btnModify" : "btnSave"}
-              name={hasSavedStaff ? "btnModify" : "btnSave"}
+              id="btnSave"
+              name="btnSave"
               type="button"
               onClick={handleSave}
               disabled={!canSaveOrModify || saving}
@@ -778,6 +923,11 @@ const StaffPage: React.FC = () => {
         </div>
       </div>
     </div>
+
+    {/* the "Do you want to delete ?" question - outside the root div: the page's
+        Enter handling must not take the Enter of the Yes / No buttons */}
+    {dialog}
+    </>
   );
 };
 

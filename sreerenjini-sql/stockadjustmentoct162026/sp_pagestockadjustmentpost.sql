@@ -23,7 +23,7 @@
 --   branch has none the post stops with a message and nothing changes.
 --
 -- Last, every line is marked posted and gets the POSTING transaction number
--- (fpostingtransno): ONE number for the whole document, from
+-- (fpostingno): ONE number for the whole document, from
 -- dbo.getnexttransno(co, year, branch, 'P'); a line that already has one keeps it.
 -- This replaces the original's fPostOrder / dbo.getnextpostorder - the tables have no
 -- fpostorder column. Needs the two columns of
@@ -68,7 +68,7 @@ DECLARE
     v_stradjaccountid   varchar(12);
     v_strccid           varchar(8);
     v_strdescription    varchar(100);
-    v_strpostingtransno varchar(9);          -- the posting transaction number
+    v_strpostingno varchar(9);          -- the posting transaction number
     v_intlines          integer := 0;
     v_row               record;
 BEGIN
@@ -215,12 +215,12 @@ BEGIN
     );
 
     -- the posting transaction number: one for the whole document
-    v_strpostingtransno := dbo.getnexttransno(p_pstrcoid, p_pstryear, p_strbrid, 'P');
+    v_strpostingno := dbo.getnexttransno(p_pstrcoid, p_pstryear, p_strbrid, 'P');
 
     -- every line is posted
     UPDATE dbo.tblstocktrans
        SET fpost = true,
-           fpostingtransno = COALESCE(fpostingtransno, v_strpostingtransno)
+           fpostingno = COALESCE(fpostingno, v_strpostingno)
      WHERE fcoid    = p_pstrcoid
        AND fyear    = p_pstryear
        AND fbrid    = p_strbrid

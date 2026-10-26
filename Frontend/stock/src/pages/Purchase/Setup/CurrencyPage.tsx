@@ -2,6 +2,9 @@ import React, { useEffect, useState } from "react";
 import { toast } from "react-toastify";
 import { useEnterAsTab } from "../../../hooks/useEnterAsTab";
 import { useButtonPermissions } from "../../../hooks/useButtonPermissions";
+import { useConfirmModal } from "../../../hooks/useConfirmModal";
+import { useDeleteToast } from "../../../hooks/useDeleteToast";
+import { useGridCellFocus } from "../../../hooks/useGridCellFocus";
 
 // ============================================================
 // TYPES
@@ -56,6 +59,12 @@ const CurrencyPage: React.FC<CurrencyPageProps> = ({ onClose }) => {
 console.log(onClose)
   const handleEnterAsTab = useEnterAsTab();
   const perms = useButtonPermissions(MENU_ID);
+  // the common themed question window (the same as on the other screens)
+  const { confirm, dialog } = useConfirmModal();
+  // the standard messages of a delete: "Currency deleted successfully"
+  const { deleted, notDeleted } = useDeleteToast("Currency");
+  // the cell the cursor is in is outlined (a typed-in box has its text selected)
+  const { cellFocusClass, selectOnFocus } = useGridCellFocus();
 
   const { coId, year, userId } = getAppSession();
 
@@ -63,7 +72,7 @@ console.log(onClose)
   const [selectedRow, setSelectedRow] = useState<number>(0);
   const [saving, setSaving] = useState(false);
 
-  // currencies removed from the grid (applied when Save / Modify is pressed)
+  // currencies removed from the grid (applied when Save is pressed)
   const [deletedIds, setDeletedIds] = useState<string[]>([]);
 
   // saved currencies that transactions already use (true) or not (false)
@@ -85,7 +94,9 @@ console.log(onClose)
 
     const load = async () => {
       try {
-        const res = await fetch(`${API}?coId=${encodeURIComponent(coId)}`);
+        const res = await fetch(`${API}?coId=${encodeURIComponent(coId)}`, {
+          credentials: "include", // the server checks the login session
+        });
         const data = await res.json();
 
         if (!res.ok || !data.success) {
@@ -104,6 +115,15 @@ console.log(onClose)
         );
         setDeletedIds([]);
         setUsedIds({});
+
+        // the cursor goes to the first empty row (after the last saved currency),
+        // ready for a new one
+        const firstEmptyRow = list.length;
+
+        window.setTimeout(() => {
+          document.getElementById(`txtCurrency-${firstEmptyRow}`)?.focus();
+          setSelectedRow(firstEmptyRow);
+        }, 0);
       } catch {
         if (!cancelled) toast.error("Failed to load currencies");
       }
@@ -118,11 +138,11 @@ console.log(onClose)
   // ============================================================
   // ROWS ON THE SCREEN
   // The loaded rows, then blank rows to type new currencies into
-  // (always at least MIN_ROW_COUNT rows, and 3 blank ones at the end).
+  // (always at least MIN_ROW_COUNT rows, and 1 blank one at the end).
   // ============================================================
 
   const displayRows: CurrencyRow[] = Array.from(
-    { length: Math.max(MIN_ROW_COUNT, rows.length + 3) },
+    { length: Math.max(MIN_ROW_COUNT, rows.length + 1) },
     (_, index) => rows[index] ?? blankRow(),
   );
 
@@ -172,6 +192,7 @@ console.log(onClose)
     try {
       const res = await fetch(
         `${API}/used/${encodeURIComponent(id)}?coId=${encodeURIComponent(coId)}`,
+        { credentials: "include" }, // the server checks the login session
       );
       const data = await res.json();
 
@@ -256,8 +277,9 @@ console.log(onClose)
   // ============================================================
   // DELETE A ROW (the old Delete key on the grid)
   // Here: Ctrl+Delete, or the x button on the selected row.
-  // The row leaves the grid now; the database changes when Save / Modify
-  // is pressed.
+  // A row typed and not saved just leaves the grid. A saved currency goes from the
+  // database at once, after the Delete right, the "used by transactions?" check and
+  // the question; the message is "Currency deleted successfully".
   // ============================================================
 
   const deleteRow = async (index: number) => {
@@ -283,7 +305,40 @@ console.log(onClose)
         return;
       }
 
-      setDeletedIds((previous) => [...previous, original]);
+      const shouldDelete = await confirm({
+        title: "Currency",
+        message: "Do you want to delete ?",
+      });
+
+      if (!shouldDelete) return;
+
+      // the currency goes from the database at once (a save that only deletes it)
+      try {
+        const res = await fetch(API, {
+          method: "POST",
+          credentials: "include", // the server checks the login session
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            coId,
+            year,
+            userId,
+            inserted: [],
+            updated: [],
+            deleted: [original],
+          }),
+        });
+        const data = await res.json();
+
+        if (!res.ok || !data.success) {
+          notDeleted(data.message);
+          return;
+        }
+
+        deleted();
+      } catch {
+        notDeleted();
+        return;
+      }
     }
 
     setRows((previousRows) => previousRows.filter((_, i) => i !== index));
@@ -302,7 +357,7 @@ console.log(onClose)
     deletedIds.length > 0;
 
   const focusSaveButton = () => {
-    document.getElementById(hasSaved ? "btnModify" : "btnSave")?.focus();
+    document.getElementById("btnSave")?.focus();
   };
   const handleClear = () => {
     setSelectedRow(0);
@@ -358,14 +413,14 @@ console.log(onClose)
   };
 
   // ============================================================
-  // SAVE / MODIFY
+  // SAVE
   //
-  // The one button: Save the first time, Modify once there are saved
-  // currencies (the old form switched its button text between the two).
+  // The one button, always "Save" (the old form switched it to "Modify" once there
+  // were saved currencies; here it stays Save).
   // Sends only what changed: new rows, changed rows and removed rows.
   // ============================================================
 
-  const actionWord = hasSaved ? "Modify" : "Save";
+  const actionWord = "Save";
   const canSaveOrModify = hasSaved ? perms.modify : perms.save;
 
   const reload = () => {
@@ -404,6 +459,7 @@ console.log(onClose)
     try {
       const res = await fetch(API, {
         method: "POST",
+        credentials: "include", // the server checks the login session
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           coId,
@@ -417,18 +473,15 @@ console.log(onClose)
       const data = await res.json();
 
       if (!res.ok || !data.success) {
-        toast.error(
-          data.message ||
-            (hasSaved ? "Not modified, try again" : "Not saved, try again"),
-        );
+        toast.error(data.message || "Not saved, try again");
         return;
       }
 
-      toast.success(hasSaved ? "Modified" : "Saved");
+      toast.success("Currency saved successfully");
        handleClear();
       reload();
     } catch {
-      toast.error(hasSaved ? "Not modified, try again" : "Not saved, try again");
+      toast.error("Not saved, try again");
     } finally {
       setSaving(false);
     }
@@ -465,8 +518,7 @@ console.log(onClose)
 
   // ============================================================
   // KEYBOARD SHORTCUTS (page wide)
-  //  Alt+S  Save    (only when nothing is saved yet)
-  //  Alt+M  Modify  (only when saved currencies exist)
+  //  Alt+S  Save
   //  Alt+F  Find
   //  Alt+C  Close
   //  Ctrl+Delete  delete the selected row (also when focus is not in a box)
@@ -477,13 +529,9 @@ console.log(onClose)
   useEffect(() => {
     const onKeyDown = (event: KeyboardEvent) => {
       if (event.altKey && !event.ctrlKey && !event.metaKey) {
-        if (event.code === "KeyS" || event.code === "KeyM") {
+        if (event.code === "KeyS") {
           event.preventDefault();
 
-          const wantsModify = event.code === "KeyM";
-
-          // Alt+S only when nothing is saved, Alt+M only when saved ones exist
-          if (wantsModify !== hasSaved) return;
           if (!canSaveOrModify || saving) return;
 
           handleSave();
@@ -542,6 +590,7 @@ console.log(onClose)
     "sticky top-0 z-20 h-[34px] border border-l-0 border-[#bfe8d0] bg-[#edf9f2] px-[11px] py-0 text-[14px] font-normal text-gray-600";
 
   return (
+    <>
     <div
       onKeyDown={handlePageKeyDown}
       className="flex min-h-screen w-full items-center justify-center bg-white"
@@ -556,11 +605,11 @@ console.log(onClose)
 
         {/* FORM */}
         <div className="p-3 m-3">
-          <div className="h-76.25 overflow-hidden border border-[#bfe8d0]">
+          <div className="h-[344px] overflow-hidden border border-[#bfe8d0]">
             <div className="h-full overflow-y-auto overflow-x-hidden">
               <table className="w-full table-fixed border-collapse text-[12px]">
                 <colgroup>
-                  <col className="w-10.5" />
+                  <col className="w-6" />
                   <col />
                 </colgroup>
 
@@ -580,12 +629,51 @@ console.log(onClose)
                       }`}
                       onClick={() => setSelectedRow(index)}
                     >
-                      {/* SELECTOR COLUMN: arrow + delete-row button */}
+                      {/* SELECTOR COLUMN: the arrow of the selected row */}
                       <td className="h-8.5 border border-[#bfe8d0] bg-white p-0 text-center align-middle">
                         {selectedRow === index && (
-                          <span className="inline-flex items-center gap-1.5">
-                            <span className="text-[9px] text-[#222]">▶</span>
-                            {rows[index] && (
+                          <span className="text-[9px] text-[#222]">▶</span>
+                        )}
+                      </td>
+
+                      {/* CURRENCY (max 3, capital letters) */}
+                      <td className={`h-8.5 border border-l-0 border-[#bfe8d0] bg-white p-0 align-middle ${cellFocusClass}`}>
+                        <div className="flex h-8 items-center">
+                          <input
+                            id={`txtCurrency-${index}`}
+                            name="txtCurrency"
+                            type="text"
+                            value={row.txtCurrency}
+                            maxLength={3}
+                            autoComplete="off"
+                            onFocus={(event) => {
+                              selectOnFocus(event);
+                              setSelectedRow(index);
+
+                              // find out early whether transactions use it
+                              if (row.txtOriginalCurrency !== null) {
+                                isUsed(row.txtOriginalCurrency);
+                              }
+                            }}
+                            onBlur={() => handleBlur(index)}
+                            onChange={(event) =>
+                              updateRow(index, {
+                                txtCurrency: event.target.value.toUpperCase(),
+                              })
+                            }
+                            onPaste={(event) => {
+                              if (isEditBlocked(index)) {
+                                event.preventDefault();
+                              }
+                            }}
+                            onKeyDown={(event) => handleCellKeyDown(event, index)}
+                            className={cellInputClass}
+                          />
+
+                          {/* the X of the row, at the right end of the box (the slot is
+                              always there so the box does not change size) */}
+                          <span className="flex w-8 shrink-0 items-center justify-center">
+                            {selectedRow === index && rows[index] && (
                               <button
                                 type="button"
                                 tabIndex={-1}
@@ -597,41 +685,7 @@ console.log(onClose)
                               </button>
                             )}
                           </span>
-                        )}
-                      </td>
-
-                      {/* CURRENCY (max 3, capital letters) */}
-                      <td className="h-8.5 border border-l-0 border-[#bfe8d0] bg-white p-0 align-middle">
-                        <input
-                          id={`txtCurrency-${index}`}
-                          name="txtCurrency"
-                          type="text"
-                          value={row.txtCurrency}
-                          maxLength={3}
-                          autoComplete="off"
-                          autoFocus={index === 0}
-                          onFocus={() => {
-                            setSelectedRow(index);
-
-                            // find out early whether transactions use it
-                            if (row.txtOriginalCurrency !== null) {
-                              isUsed(row.txtOriginalCurrency);
-                            }
-                          }}
-                          onBlur={() => handleBlur(index)}
-                          onChange={(event) =>
-                            updateRow(index, {
-                              txtCurrency: event.target.value.toUpperCase(),
-                            })
-                          }
-                          onPaste={(event) => {
-                            if (isEditBlocked(index)) {
-                              event.preventDefault();
-                            }
-                          }}
-                          onKeyDown={(event) => handleCellKeyDown(event, index)}
-                          className={cellInputClass}
-                        />
+                        </div>
                       </td>
                     </tr>
                   ))}
@@ -643,12 +697,12 @@ console.log(onClose)
           {/* BUTTONS */}
           <div className="mt-3.5 flex justify-center gap-3">
             <button
-              id={hasSaved ? "btnModify" : "btnSave"}
-              name={hasSaved ? "btnModify" : "btnSave"}
+              id="btnSave"
+              name="btnSave"
               type="button"
               onClick={handleSave}
               disabled={!canSaveOrModify || saving}
-              title={hasSaved ? "Alt+M" : "Alt+S"}
+              title="Alt+S"
               className="btn-style disabled:cursor-not-allowed disabled:opacity-40"
             >
               <span className="underline underline-offset-2">
@@ -743,6 +797,11 @@ console.log(onClose)
         </div>
       )}
     </div>
+
+    {/* the "Do you want to delete ?" question - outside the root div: the page's
+        Enter handling must not take the Enter of the Yes / No buttons */}
+    {dialog}
+    </>
   );
 };
 

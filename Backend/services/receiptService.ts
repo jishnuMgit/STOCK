@@ -1,9 +1,18 @@
-
 import type { PoolClient } from "pg";
 import pool from "../DB/db.js";
 
-import {ReceiptProcedureParams,ReceiptData,ReceiptRow,ReceiptHeaderParams,
-  ReceiptDocumentParams,SaveReceiptLineParams,SaveGeneratedEntryParams,DeleteReceiptData} from '../types/types.js'
+import type { ReceiptContext } from "../middleware/receiptContext.js";
+import { GetStrDocType } from "../utils/docType.js";
+
+import type {
+  ReceiptProcedureParams,
+  ReceiptData,
+  ReceiptRow,
+  ReceiptHeaderParams,
+  ReceiptDocumentParams,
+  SaveReceiptLineParams,
+  SaveGeneratedEntryParams,
+} from "../types/types.js";
 
 /* =========================================================
    TYPES
@@ -12,43 +21,23 @@ import {ReceiptProcedureParams,ReceiptData,ReceiptRow,ReceiptHeaderParams,
 type DbValue = unknown;
 type DbRow = Record<string, any>;
 
-
-
-
-
-
-
 interface ServiceResult {
   message: string;
   data?: DbRow;
 }
 
-/* =========================================================
-   ENVIRONMENT
-========================================================= */
-
-const PstrCoID =
-  process.env.PstrCoID || "01";
-
-const PstrYear =
-  String(process.env.PstrYear || "2026");
-
-const PstrUserID =
-  process.env.PstrUserID || "ADMIN";
-
+/* The control entry may now be a debit when the net total is negative. */
+type SaveGeneratedEntryWithDebit = SaveGeneratedEntryParams & {
+  numDebit?: DbValue;
+};
 
 /* =========================================================
    HELPERS
 ========================================================= */
 
 function isEmpty(value: DbValue): boolean {
-  return (
-    value === null ||
-    value === undefined ||
-    String(value).trim() === ""
-  );
+  return value === null || value === undefined || String(value).trim() === "";
 }
-
 
 function clean(value: DbValue): string | null {
   if (isEmpty(value)) {
@@ -58,7 +47,6 @@ function clean(value: DbValue): string | null {
   return String(value).trim();
 }
 
-
 function toNumber(value: DbValue): number {
   if (isEmpty(value)) {
     return 0;
@@ -66,11 +54,8 @@ function toNumber(value: DbValue): number {
 
   const number = Number(value);
 
-  return Number.isFinite(number)
-    ? number
-    : 0;
+  return Number.isFinite(number) ? number : 0;
 }
-
 
 function toBoolean(value: DbValue): boolean {
   if (typeof value === "boolean") {
@@ -86,7 +71,6 @@ function toBoolean(value: DbValue): boolean {
   );
 }
 
-
 function toSmallInt(value: DbValue, defaultValue: number = 0): number {
   const number = Number(value);
 
@@ -97,144 +81,56 @@ function toSmallInt(value: DbValue, defaultValue: number = 0): number {
   return number;
 }
 
+/*
+   if txtDebitCredit > 0
+      numCredit = txtDebitCredit, numDebit = 0
+   else
+      numCredit = 0, numDebit = Abs(txtDebitCredit)
+*/
+function splitAmount(value: DbValue): { numDebit: number; numCredit: number } {
+  const txtDebitCredit = toNumber(value);
 
-/* =========================================================
-   DOCUMENT TYPE
-========================================================= */
-
-function toDocumentType(value: DbValue): string | null {
-  if (isEmpty(value)) {
-    return null;
+  if (txtDebitCredit > 0) {
+    return { numDebit: 0, numCredit: txtDebitCredit };
   }
 
-  const type =
-    String(value)
-      .trim()
-      .toUpperCase();
-
-  if (type === "B") {
-    return "BR";
-  }
-
-  if (type === "C") {
-    return "CR";
-  }
-
-  return type;
+  return { numDebit: Math.abs(txtDebitCredit), numCredit: 0 };
 }
-
 
 /* =========================================================
    DATE NORMALIZATION
+
+   PostgreSQL SP expects DD/MM/YYYY.
+   Frontend may send YYYY-MM-DD, DD/MM/YYYY or an ISO timestamp.
 ========================================================= */
 
-/*
-   PostgreSQL SP expects:
-
-      DD/MM/YYYY
-
-   Frontend may send:
-
-      YYYY-MM-DD
-
-   or:
-
-      DD/MM/YYYY
-
-   or:
-
-      YYYY-MM-DDTHH:mm:ss...
-*/
-
 function normalizeDate(value: DbValue): string | null {
-
   if (isEmpty(value)) {
     return null;
   }
 
+  const dateString = String(value).trim();
 
-  const dateString =
-    String(value).trim();
-
-
-  /* -------------------------------------------------------
-     YYYY-MM-DD
-  ------------------------------------------------------- */
-
-  if (
-    /^\d{4}-\d{2}-\d{2}$/.test(
-      dateString
-    )
-  ) {
-
-    const [
-      year,
-      month,
-      day,
-    ] =
-      dateString.split("-");
-
+  if (/^\d{4}-\d{2}-\d{2}$/.test(dateString)) {
+    const [year, month, day] = dateString.split("-");
 
     return `${day}/${month}/${year}`;
   }
 
-
-  /* -------------------------------------------------------
-     DD/MM/YYYY
-  ------------------------------------------------------- */
-
-  if (
-    /^\d{2}\/\d{2}\/\d{4}$/.test(
-      dateString
-    )
-  ) {
-
+  if (/^\d{2}\/\d{2}\/\d{4}$/.test(dateString)) {
     return dateString;
   }
 
-
-  /* -------------------------------------------------------
-     ISO TIMESTAMP
-     
-     Example:
-     2026-09-15T00:00:00.000Z
-  ------------------------------------------------------- */
-
-  if (
-    /^\d{4}-\d{2}-\d{2}T/.test(
-      dateString
-    )
-  ) {
-
-    const datePart =
-      dateString.substring(
-        0,
-        10
-      );
-
-
-    const [
-      year,
-      month,
-      day,
-    ] =
-      datePart.split("-");
-
+  if (/^\d{4}-\d{2}-\d{2}T/.test(dateString)) {
+    const [year, month, day] = dateString.substring(0, 10).split("-");
 
     return `${day}/${month}/${year}`;
   }
-
 
   return dateString;
 }
 
-
-/* =========================================================
-   CREATED DATE
-========================================================= */
-
 function normalizeCreatedDate(value: DbValue): string | null {
-
   if (isEmpty(value)) {
     return null;
   }
@@ -242,25 +138,19 @@ function normalizeCreatedDate(value: DbValue): string | null {
   return String(value).trim();
 }
 
-
 /* =========================================================
    PROCEDURE CALL
-========================================================= */
-
-/*
-  ACTUAL POSTGRESQL PROCEDURE
 
   dbo.sp_pagesreceipt_det(
-
       1   p_strmode varchar
       2   p_pstrcoid varchar
       3   p_pstryear varchar
       4   p_strbrid varchar
-      5   p_strdoctype varchar
+      5   p_strDocType varchar
       6   p_strdocno varchar
       7   p_intslno smallint
       8   p_dtpdate varchar
-      9   p_strcbaccountid varchar
+      9   p_strlkpCBAccountID varchar
       10  p_strreceivedfrompaidto varchar
       11  p_strref varchar
       12  p_straccountid varchar
@@ -276,486 +166,283 @@ function normalizeCreatedDate(value: DbValue): string | null {
       22  p_struserdate varchar
       23  p_strdetails jsonb
       24  p_result_cursor refcursor
-
   )
-
-  IMPORTANT:
-
-  The current SP DOES NOT have:
-
-      p_strcbccid
-      p_strcuserid
-
-  Therefore they are not passed here.
-*/
-
+========================================================= */
 
 async function callReceiptProcedure(
   client: PoolClient,
   {
-    mode,
+    strMode,
+
+    pstrCoID,
+
+    pstrYear,
 
     lkpBranch,
 
-    docType,
+    strDocType,
 
     txtDocNo,
 
-    slNo = 0,
+    txtSlNo = 0,
 
     dtpDate = null,
 
-    cbAccountId = null,
+    lkpCBAccountID = null,
 
-    receivedFrom = null,
+    txtReceivedFrom = null,
 
-    reference = null,
+    txtReference = null,
 
-    accountId = null,
+    lkpAccountID = null,
 
-    gcs = null,
+    strGCS = null,
 
-    DivID = null,
+    lkpDivID = null,
 
-    CCID = null,
+    lkpCCID = null,
 
-    debit = 0,
+    numDebit = 0,
 
-    credit = 0,
+    numCredit = 0,
 
-    description = null,
+    txtDescription = null,
 
-    note = null,
+    txtNote = null,
 
-    match = false,
+    chkMatch = false,
 
-    userId = PstrUserID,
+    PstrUserID,
 
-    userDate = null,
+    strUserDate = null,
 
     details = null,
+  }: ReceiptProcedureParams,
+): Promise<any[]> {
+  const coId = clean(pstrCoID);
 
-  }
-: ReceiptProcedureParams
-) : Promise<any[]> {
+  const year = clean(pstrYear);
 
-  /* =======================================================
-     CURSOR NAME
-  ======================================================= */
-
-  const cursorName =
-    `cur_receipt_${Date.now()}_${Math.floor(
-      Math.random() * 100000
-    )}`;
-
-
-  /* =======================================================
-     DETAILS JSON
-  ======================================================= */
-
-  let jsonDetails = null;
-
-
-  if (
-    details !== null &&
-    details !== undefined
-  ) {
-
-    jsonDetails =
-      JSON.stringify(details);
-
+  if (!coId || !year) {
+    throw new Error("Company ID and financial year are required");
   }
 
+  const cursorName = `cur_receipt_${Date.now()}_${Math.floor(
+    Math.random() * 100000,
+  )}`;
 
-  /* =======================================================
-     PARAMETERS
-  ======================================================= */
+  let jsonDetails: string | null = null;
+
+  if (details !== null && details !== undefined) {
+    jsonDetails = JSON.stringify(details);
+  }
 
   const values = [
+    strMode, // $1
 
-    mode,                                  // $1
+    coId, // $2
 
-    PstrCoID,                              // $2
+    year, // $3
 
-    PstrYear,                              // $3
+    clean(lkpBranch), // $4
 
-    clean(lkpBranch),                         // $4
+    clean(strDocType), // $5
 
-    clean(docType),                        // $5
+    clean(txtDocNo), // $6
 
-    clean(txtDocNo),                          // $6
+    toSmallInt(txtSlNo), // $7
 
-    toSmallInt(slNo),                      // $7
+    normalizeDate(dtpDate), // $8
 
-    normalizeDate(dtpDate),            // $8
+    clean(lkpCBAccountID), // $9
 
-    clean(cbAccountId),                    // $9
+    clean(txtReceivedFrom), // $10
 
-    clean(receivedFrom),                   // $10
+    clean(txtReference), // $11
 
-    clean(reference),                      // $11
+    clean(lkpAccountID), // $12
 
-    clean(accountId),                      // $12
+    clean(strGCS), // $13
 
-    clean(gcs),                            // $13
+    clean(lkpDivID), // $14
 
-    clean(DivID),                      // $14
+    clean(lkpCCID), // $15
 
-    clean(CCID),                           // $15
+    toNumber(numDebit), // $16
 
-    toNumber(debit),                       // $16
+    toNumber(numCredit), // $17
 
-    toNumber(credit),                      // $17
+    clean(txtDescription), // $18
 
-    clean(description),                    // $18
+    clean(txtNote), // $19
 
-    clean(note),                           // $19
+    toBoolean(chkMatch), // $20
 
-    toBoolean(match),                      // $20
+    clean(PstrUserID), // $21
 
-    clean(userId),                         // $21
+    normalizeCreatedDate(strUserDate), // $22
 
-    normalizeCreatedDate(userDate),        // $22
+    jsonDetails, // $23
 
-    jsonDetails,                           // $23
-
-    cursorName,                            // $24
-
+    cursorName, // $24
   ];
-
-
-  /* =======================================================
-     SQL
-  ======================================================= */
 
   const sql = `
     CALL dbo.sp_pagesreceipt_det(
-
       $1::varchar,
-
       $2::varchar,
-
       $3::varchar,
-
       $4::varchar,
-
       $5::varchar,
-
       $6::varchar,
-
       $7::smallint,
-
       $8::varchar,
-
       $9::varchar,
-
       $10::varchar,
-
       $11::varchar,
-
       $12::varchar,
-
       $13::varchar,
-
       $14::varchar,
-
       $15::varchar,
-
       $16::numeric,
-
       $17::numeric,
-
       $18::varchar,
-
       $19::varchar,
-
       $20::boolean,
-
       $21::varchar,
-
       $22::varchar,
-
       $23::jsonb,
-
       $24::refcursor
-
     )
   `;
 
+  console.log("sp_pagesreceipt_det", {
+    strMode,
+    coId,
+    year,
+    lkpBranch,
+    strDocType,
+    txtDocNo,
+    txtSlNo,
+  });
 
-  /* =======================================================
-     DEBUG
-  ======================================================= */
+  await client.query(sql, values);
 
-  console.log(
-    "========================================"
-  );
+  /* Only GETHD / GETTL open the cursor. S, SC, D and M do not. */
 
-  console.log(
-    "sp_pagesreceipt_det"
-  );
+  const cursorModes = ["GETHD", "GETTL"];
 
-  console.log(
-    "Mode:",
-    mode
-  );
-
-  console.log(
-    "Company:",
-    PstrCoID
-  );
-
-  console.log(
-    "Year:",
-    PstrYear
-  );
-
-  console.log(
-    "Branch:",
-    lkpBranch
-  );
-
-  console.log(
-    "Doc Type:",
-    docType
-  );
-
-  console.log(
-    "Doc No:",
-    txtDocNo
-  );
-
-  console.log(
-    "Sl No:",
-    slNo
-  );
-
-  console.log(
-    " Date:",
-    normalizeDate(dtpDate)
-  );
-
-  console.log(
-    "Details:",
-    jsonDetails
-  );
-
-  console.log(
-    "Cursor:",
-    cursorName
-  );
-
-  console.log(
-    "Values:",
-    values
-  );
-
-  console.log(
-    "========================================"
-  );
-
-
-  /* =======================================================
-     CALL PROCEDURE
-  ======================================================= */
-
-  await client.query(
-    sql,
-    values
-  );
-
-
-  /* =======================================================
-     FETCH CURSOR ONLY FOR GET MODES
-  ======================================================= */
-
-  const cursorModes = [
-    "GETHD",
-    "GETTL",
-  ];
-
-
-  if (
-    cursorModes.includes(
-      String(mode).toUpperCase()
-    )
-  ) {
-
-    const result =
-      await client.query(
-        `FETCH ALL FROM "${cursorName}"`
-      );
-
+  if (cursorModes.includes(String(strMode).toUpperCase())) {
+    const result = await client.query(`FETCH ALL FROM "${cursorName}"`);
 
     return result.rows;
   }
 
-
-  /*
-     S
-     SC
-     D
-     M
-
-     These modes do not OPEN p_result_cursor
-     in the current stored procedure.
-
-     Therefore DO NOT FETCH.
-  */
-
   return [];
 }
 
-
 /* =========================================================
    GET RECEIPT HEADER
+
+   pstrCoID / pstrYear must now be passed by the caller
+   (GetData service) - they are no longer read from .env.
 ========================================================= */
 
 export async function getReceiptHeader({
+  pstrCoID,
+  pstrYear,
   lkpBranch,
-  docType,
+  strDocType,
   txtDocNo,
 }: ReceiptHeaderParams): Promise<any[]> {
-
-  const client =
-    await pool.connect();
-
+  const client = await pool.connect();
 
   try {
+    await client.query("BEGIN");
 
-    await client.query(
-      "BEGIN"
-    );
+    const rows = await callReceiptProcedure(client, {
+      strMode: "GETHD",
 
+      pstrCoID,
 
-    const rows =
-      await callReceiptProcedure(
-        client,
-        {
+      pstrYear,
 
-          mode: "GETHD",
+      lkpBranch,
 
-          lkpBranch,
+      strDocType,
 
-          docType:
-            toDocumentType(docType),
+      txtDocNo,
 
-          txtDocNo,
+      txtSlNo: 0,
 
-          slNo: 0,
+      dtpDate: null,
 
-          dtpDate: null,
+      details: null,
+    });
 
-          details: null,
-
-        }
-      );
-
-
-    await client.query(
-      "COMMIT"
-    );
-
+    await client.query("COMMIT");
 
     return rows;
-
   } catch (error: unknown) {
+    await client.query("ROLLBACK");
 
-    await client.query(
-      "ROLLBACK"
-    );
-
-
-    console.error(
-      "getReceiptHeader error:",
-      error
-    );
-
+    console.error("getReceiptHeader error:", error);
 
     throw error;
-
   } finally {
-
     client.release();
-
   }
 }
-
 
 /* =========================================================
    GET RECEIPT LINES
 ========================================================= */
 
 export async function getReceiptLines({
+  pstrCoID,
+  pstrYear,
   lkpBranch,
-  docType,
+  strDocType,
   txtDocNo,
 }: ReceiptHeaderParams): Promise<any[]> {
-
-  const client =
-    await pool.connect();
-
+  const client = await pool.connect();
 
   try {
+    await client.query("BEGIN");
 
-    await client.query(
-      "BEGIN"
-    );
+    const rows = await callReceiptProcedure(client, {
+      strMode: "GETTL",
 
+      pstrCoID,
 
-    const rows =
-      await callReceiptProcedure(
-        client,
-        {
+      pstrYear,
 
-          mode: "GETTL",
+      lkpBranch,
 
-          lkpBranch,
+      strDocType,
 
-          docType:
-            toDocumentType(docType),
+      txtDocNo,
 
-          txtDocNo,
+      txtSlNo: 0,
 
-          slNo: 0,
+      dtpDate: null,
 
-          dtpDate: null,
+      details: null,
+    });
 
-          details: null,
-
-        }
-      );
-
-
-    await client.query(
-      "COMMIT"
-    );
-
+    await client.query("COMMIT");
 
     return rows;
-
   } catch (error: unknown) {
+    await client.query("ROLLBACK");
 
-    await client.query(
-      "ROLLBACK"
-    );
-
-
-    console.error(
-      "getReceiptLines error:",
-      error
-    );
-
+    console.error("getReceiptLines error:", error);
 
     throw error;
-
   } finally {
-
     client.release();
-
   }
 }
-
 
 /* =========================================================
    SAVE ONE RECEIPT LINE
@@ -763,212 +450,187 @@ export async function getReceiptLines({
 
 async function saveReceiptLine(
   client: PoolClient,
+  ctx: ReceiptContext,
   {
     lkpBranch,
 
-    docType,
+    strDocType,
 
     txtDocNo,
 
-    slNo,
+    dtpDate,
+
+    txtReceivedFrom,
+
+    txtReference,
+
+    txtSlNo,
+
+    lkpCBAccountID,
+
+    lkpAccountID,
+
+    strGCS,
+
+    lkpCCID,
+
+    numDebit,
+
+    numCredit,
+
+    txtDescription,
+
+    txtNote,
+
+    lkpDivID,
+
+    chkMatch,
+
+    strUserDate,
+  }: SaveReceiptLineParams,
+): Promise<any[]> {
+  return callReceiptProcedure(client, {
+    strMode: "S",
+
+    pstrCoID: ctx.pstrCoID,
+
+    pstrYear: ctx.pstrYear,
+
+    lkpBranch,
+
+    strDocType,
+
+    txtDocNo,
+
+    txtSlNo,
 
     dtpDate,
 
-    receivedFrom,
+    lkpCBAccountID,
 
-    reference,
+    txtReceivedFrom,
 
-    cbAccountId,
+    txtReference,
 
-    accountId,
+    lkpAccountID,
 
-    gcs,
+    strGCS,
 
-    CCID,
+    lkpDivID,
 
-    debit,
+    lkpCCID,
 
-    credit,
+    numDebit,
 
-    description,
+    numCredit,
 
-    note,
+    txtDescription,
 
-    DivID,
+    txtNote,
 
-    match,
+    chkMatch,
 
-    createdUserDate,
+    PstrUserID: ctx.pstrUserID,
 
-  }: SaveReceiptLineParams
-): Promise<any[]> {
+    strUserDate: strUserDate,
 
-  return callReceiptProcedure(
-    client,
-    {
-
-      mode: "S",
-
-      lkpBranch,
-
-      docType,
-
-      txtDocNo,
-
-      slNo,
-
-      dtpDate,
-
-      cbAccountId,
-
-      receivedFrom,
-
-      reference,
-
-      accountId,
-
-      gcs,
-
-      DivID,
-
-      CCID,
-
-      debit,
-
-      credit,
-
-      description,
-
-      note,
-
-      match,
-
-      userId:
-        PstrUserID,
-
-      userDate:
-        createdUserDate,
-
-      /*
-         S mode does not use details.
-      */
-
-      details: null,
-
-    }
-  );
+    details: null,
+  });
 }
 
-
 /* =========================================================
-   SAVE GENERATED ENTRY
+   SAVE GENERATED (CONTROL) ENTRY
 ========================================================= */
 
 async function saveGeneratedEntry(
   client: PoolClient,
+  ctx: ReceiptContext,
   {
     lkpBranch,
 
-    docType,
+    strDocType,
 
     txtDocNo,
 
     dtpDate,
 
-    receivedFrom,
+    txtReceivedFrom,
 
-    reference,
+    txtReference,
 
-    cbAccountId,
+    lkpCBAccountID,
 
-    gcs,
+    strGCS,
 
-    CCID,
+    lkpCCID,
 
-    credit,
+    numDebit = 0,
 
-    description,
+    numCredit,
 
-    note,
+    txtDescription,
 
-    DivID,
+    strNote,
 
-    match,
+    lkpDivID,
 
-    createdUserDate,
+    chkMatch,
 
-  }: SaveGeneratedEntryParams
+    strUserDate,
+  }: SaveGeneratedEntryWithDebit,
 ): Promise<any[]> {
+  return callReceiptProcedure(client, {
+    strMode: "SC",
 
-  return callReceiptProcedure(
-    client,
-    {
+    pstrCoID: ctx.pstrCoID,
 
-      mode: "SC",
+    pstrYear: ctx.pstrYear,
 
-      lkpBranch,
+    lkpBranch,
 
-      docType,
+    strDocType,
 
-      txtDocNo,
+    txtDocNo,
 
-      /*
-         SC always uses fslno = 0.
-      */
+    /* SC always uses fslno = 0. */
 
-      slNo: 0,
+    txtSlNo: 0,
 
-      dtpDate,
+    dtpDate,
 
-      cbAccountId,
+    lkpCBAccountID,
 
-      receivedFrom,
+    txtReceivedFrom,
 
-      reference,
+    txtReference,
 
-      /*
-         The SP itself uses:
+    /* The SP uses faccountid = p_strlkpCBAccountID for SC. */
 
-             faccountid =
-                 p_strcbaccountid
+    lkpAccountID: lkpCBAccountID,
 
-         for SC.
+    strGCS,
 
-         Therefore accountId does not need
-         to be supplied separately.
-      */
+    lkpDivID,
 
-      accountId:
-        cbAccountId,
+    lkpCCID,
 
-      gcs,
+    numDebit,
 
-      DivID,
+    numCredit,
 
-      CCID,
+    txtDescription,
 
-      debit: 0,
+    txtNote: strNote,
 
-      credit,
+    chkMatch,
 
-      description,
+    PstrUserID: ctx.pstrUserID,
 
-      note,
+    strUserDate: strUserDate,
 
-      match,
-
-      userId:
-        PstrUserID,
-
-      userDate:
-        createdUserDate,
-
-      details: null,
-
-    }
-  );
+    details: null,
+  });
 }
-
 
 /* =========================================================
    DELETE INTERNAL
@@ -976,36 +638,29 @@ async function saveGeneratedEntry(
 
 async function deleteReceiptInternal(
   client: PoolClient,
-  {
+  ctx: ReceiptContext,
+  { lkpBranch, strDocType, txtDocNo }: ReceiptHeaderParams,
+): Promise<any[]> {
+  return callReceiptProcedure(client, {
+    strMode: "D",
+
+    pstrCoID: ctx.pstrCoID,
+
+    pstrYear: ctx.pstrYear,
+
     lkpBranch,
 
-    docType,
+    strDocType,
 
     txtDocNo,
 
-  }: ReceiptHeaderParams
-): Promise<any[]> {
+    txtSlNo: 0,
 
-  return callReceiptProcedure(
-    client,
-    {
+    PstrUserID: ctx.pstrUserID,
 
-      mode: "D",
-
-      lkpBranch,
-
-      docType,
-
-      txtDocNo,
-
-      slNo: 0,
-
-      details: null,
-
-    }
-  );
+    details: null,
+  });
 }
-
 
 /* =========================================================
    SAVE RECEIPT
@@ -1013,496 +668,221 @@ async function deleteReceiptInternal(
 
 export async function saveReceiptService(
   receipt: ReceiptData,
+  ctx: ReceiptContext,
   existingClient: PoolClient | null = null,
-  manageTransaction: boolean = true
+  manageTransaction: boolean = true,
 ): Promise<ServiceResult> {
-
-  const client: PoolClient =
-    existingClient ||
-    await pool.connect();
-
+  const client: PoolClient = existingClient || (await pool.connect());
 
   try {
-
-    /* =====================================================
-       REQUEST DATA
-    ===================================================== */
-
     const {
+      lkpBranch,
+      lkpType,
+      cbAccountName,
+      txtDocNo,
+      dtpDate,
+      txtReceivedFrom,
+      txtReference,
+      strNote,
+      rows = [],
+    } = receipt;
 
+    /* VALIDATION */
+
+    if (isEmpty(lkpBranch)) {
+      throw new Error("Branch is required");
+    }
+
+    if (isEmpty(lkpType)) {
+      throw new Error("Receipt type is required");
+    }
+
+    if (isEmpty(txtDocNo)) {
+      throw new Error("Receipt number is required");
+    }
+
+    if (isEmpty(dtpDate)) {
+      throw new Error("Receipt date is required");
+    }
+
+    if (isEmpty(cbAccountName)) {
+      throw new Error("Cash/Bank account is required");
+    }
+
+    if (!Array.isArray(rows)) {
+      throw new Error("Receipt rows are invalid");
+    }
+
+    const finalDocType = GetStrDocType(lkpType);
+
+    const validRows: ReceiptRow[] = rows.filter(
+      (row: ReceiptRow): boolean => row && !isEmpty(row.lkpAccountID),
+    );
+
+    if (validRows.length === 0) {
+      throw new Error("There is no information for saving.");
+    }
+
+    /* Signed net total of all lines. */
+
+    const TottxtDebitCredit = validRows.reduce(
+      (sum: number, row: ReceiptRow): number => {
+        return sum + toNumber(row.txtDebitCredit);
+      },
+      0,
+    );
+
+    if (manageTransaction) {
+      await client.query("BEGIN");
+    }
+
+    /* SAVE RECEIPT DETAIL LINES */
+
+    for (let index = 0; index < validRows.length; index++) {
+      const row = validRows[index];
+
+      const txtSlNo = Number(row.txtslNo) || index + 1;
+
+      const { numDebit, numCredit } = splitAmount(row.txtDebitCredit);
+
+      await saveReceiptLine(client, ctx, {
+        lkpBranch,
+
+        strDocType: finalDocType,
+
+        txtDocNo,
+
+        dtpDate,
+
+        txtReceivedFrom,
+
+        txtReference,
+
+        txtSlNo,
+
+        lkpCBAccountID: cbAccountName,
+
+        lkpAccountID: row.lkpAccountID,
+
+        strGCS: row.strGCS || "",
+
+        lkpCCID: row.lkpCCID || "",
+
+        numDebit,
+
+        numCredit,
+
+        txtDescription: row.txtDescription || "",
+
+        txtNote: strNote || "",
+
+        lkpDivID: row.lkpDivID || "",
+
+        chkMatch: toBoolean(row.ckhMatch),
+
+        strUserDate: new Date().toISOString(),
+      });
+    }
+
+    /* GENERATED CONTROL ENTRY */
+
+    const firstRow = validRows[0];
+
+    const generatedDescription = [txtReference, txtReceivedFrom]
+      .filter((value) => !isEmpty(value))
+      .join(" - ");
+
+    const control = splitAmount(TottxtDebitCredit);
+
+    await saveGeneratedEntry(client, ctx, {
       lkpBranch,
 
-      lkpType,
-
-      cbAccountName,
+      strDocType: finalDocType,
 
       txtDocNo,
 
       dtpDate,
 
-      receivedFrom,
+      txtReceivedFrom,
 
-      reference,
+      txtReference,
 
-      note,
+      lkpCBAccountID: cbAccountName,
 
-      cbCcId,
+      strGCS: firstRow.strGCS || "",
 
-      rows = [],
+      lkpCCID: firstRow.lkpCCID || "",
 
-    } = receipt;
+      numDebit: control.numDebit,
 
+      numCredit: control.numCredit,
 
-    /* =====================================================
-       VALIDATION
-    ===================================================== */
+      txtDescription: generatedDescription,
 
-    if (
-      isEmpty(lkpBranch)
-    ) {
+      strNote: strNote || "",
 
-      throw new Error(
-        "Branch is required"
-      );
+      lkpDivID: firstRow.lkpDivID || "",
 
+      chkMatch: toBoolean(firstRow.ckhMatch),
+
+      strUserDate: new Date().toISOString(),
+    });
+
+    if (manageTransaction) {
+      await client.query("COMMIT");
     }
-
-
-    if (
-      isEmpty(lkpType)
-    ) {
-
-      throw new Error(
-        "Receipt type is required"
-      );
-
-    }
-
-
-    if (
-      isEmpty(txtDocNo)
-    ) {
-
-      throw new Error(
-        "Receipt number is required"
-      );
-
-    }
-
-
-    if (
-      isEmpty(dtpDate)
-    ) {
-
-      throw new Error(
-        "Receipt date is required"
-      );
-
-    }
-
-
-    if (
-      isEmpty(cbAccountName)
-    ) {
-
-      throw new Error(
-        "Cash/Bank account is required"
-      );
-
-    }
-
-
-    if (
-      !Array.isArray(rows)
-    ) {
-
-      throw new Error(
-        "Receipt rows are invalid"
-      );
-
-    }
-
-
-    /* =====================================================
-       DOCUMENT TYPE
-    ===================================================== */
-
-    const finalDocType =
-      toDocumentType(lkpType);
-
-
-    /* =====================================================
-       VALID ROWS
-    ===================================================== */
-
-    const validRows: ReceiptRow[] =
-      rows.filter(
-        (row: ReceiptRow): boolean =>
-          row &&
-          !isEmpty(
-            row.accountId
-          )
-      );
-
-
-    if (
-      validRows.length === 0
-    ) {
-
-      throw new Error(
-        "There is no information for saving."
-      );
-
-    }
-
-
-    /* =====================================================
-       TOTAL
-    ===================================================== */
-
-    const finalTotal =
-      validRows.reduce(
-        (sum: number, row: ReceiptRow): number => {
-
-          return (
-            sum +
-            toNumber(
-              row.creditAmt
-            )
-          );
-
-        },
-
-        0
-
-      );
-
-
-    console.log(
-      "Receipt total:",
-      finalTotal
-    );
-
-
-    /* =====================================================
-       BEGIN TRANSACTION
-    ===================================================== */
-
-    if (
-      manageTransaction
-    ) {
-
-      await client.query(
-        "BEGIN"
-      );
-
-    }
-
-
-    /* =====================================================
-       SAVE RECEIPT DETAIL LINES
-    ===================================================== */
-
-    for (
-      let index = 0;
-
-      index < validRows.length;
-
-      index++
-    ) {
-
-      const row =
-        validRows[index];
-
-
-      const slNo =
-        Number(row.slNo) ||
-        index + 1;
-
-
-      await saveReceiptLine(
-        client,
-        {
-
-          lkpBranch,
-
-          docType:
-            finalDocType,
-
-          txtDocNo,
-
-          slNo,
-
-          dtpDate,
-
-          receivedFrom,
-
-          reference,
-
-          cbAccountId:
-            cbAccountName,
-
-          accountId:
-            row.accountId,
-
-          /*
-             GCS
-          */
-
-          gcs:
-            row.gcs ||
-            row.fgcs ||
-            "",
-
-          /*
-             Cost Center
-          */
-
-          CCID:
-            row.CCID ||
-            "",
-
-          /*
-             Receipt detail:
-             debit = 0
-             credit = entered amount
-          */
-
-          debit:
-            0,
-
-          credit:
-            toNumber(
-              row.creditAmt
-            ),
-
-          description:
-            row.description ||
-            "",
-
-          note:
-            note ||
-            "",
-
-          DivID:
-            row.DivID ||
-            row.divId ||
-            "",
-
-          match:
-            toBoolean(
-              row.match
-            ),
-
-          createdUserDate:
-            new Date().toISOString(),
-
-        }
-      );
-
-    }
-
-
-    /* =====================================================
-       GENERATED CONTROL ENTRY
-    ===================================================== */
-
-    const firstRow =
-      validRows[0];
-
-
-    const generatedDescription =
-      [
-        reference,
-
-        receivedFrom,
-
-      ]
-        .filter(
-          (value) =>
-            !isEmpty(value)
-        )
-        .join(
-          " - "
-        );
-
-
-    await saveGeneratedEntry(
-      client,
-      {
-
-        lkpBranch,
-
-        docType:
-          finalDocType,
-
-        txtDocNo:
-          txtDocNo,
-
-        dtpDate,
-
-        receivedFrom,
-
-        reference,
-
-        cbAccountId:
-          cbAccountName,
-
-        gcs:
-          firstRow.gcs ||
-          firstRow.fgcs ||
-          "",
-
-        CCID:
-          firstRow.CCID ||
-          "",
-
-        credit:
-          finalTotal,
-
-        description:
-          generatedDescription,
-
-        note:
-          note ||
-          "",
-
-        DivID:
-          firstRow.DivID ||
-          firstRow.divId ||
-          "",
-
-        match:
-          toBoolean(
-            firstRow.match
-          ),
-
-        createdUserDate:
-          new Date().toISOString(),
-
-      }
-    );
-
-
-    /* =====================================================
-       COMMIT
-    ===================================================== */
-
-    if (
-      manageTransaction
-    ) {
-
-      await client.query(
-        "COMMIT"
-      );
-
-    }
-
-
-    /* =====================================================
-       RESPONSE
-    ===================================================== */
 
     return {
-
-      message:
-        "saved ",
+      message: "saved ",
 
       data: {
+        pstrCoID: ctx.pstrCoID,
 
-        companyId:
-          PstrCoID,
-
-        year:
-          PstrYear,
+        year: ctx.pstrYear,
 
         lkpBranch,
 
-        docType:
-          finalDocType,
+        strDocType: finalDocType,
 
         txtDocNo,
 
-        total:
-          finalTotal,
+        total: finalTotal,
 
         cbAccountName,
 
-        rowCount:
-          validRows.length,
-
+        rowCount: validRows.length,
       },
-
     };
-
   } catch (error: unknown) {
-
-    /* =====================================================
-       ROLLBACK
-    ===================================================== */
-
-    if (
-      manageTransaction
-    ) {
-
+    if (manageTransaction) {
       try {
-
-        await client.query(
-          "ROLLBACK"
-        );
-
+        await client.query("ROLLBACK");
       } catch (rollbackError: unknown) {
-
-        console.error(
-          "Receipt rollback error:",
-          rollbackError
-        );
-
+        console.error("Receipt rollback error:", rollbackError);
       }
-
     }
 
-
-    console.error(
-      "saveReceiptService error:",
-      error
-    );
-
+    console.error("saveReceiptService error:", error);
 
     throw error;
-
   } finally {
-
-    if (
-      !existingClient
-    ) {
-
+    if (!existingClient) {
       client.release();
-
     }
-
   }
 }
-
 
 /* =========================================================
    DELETE RECEIPT
 ========================================================= */
 
-export async function deleteReceiptService({
-  lkpBranch,
-  lkpType,
-  txtDocNo,
-}: ReceiptDocumentParams): Promise<ServiceResult> {
-
+export async function deleteReceiptService(
+  { lkpBranch, lkpType, txtDocNo }: ReceiptDocumentParams,
+  ctx: ReceiptContext,
+): Promise<ServiceResult> {
   const client = await pool.connect();
 
   try {
-
-    /* =====================================================
-       VALIDATION
-    ===================================================== */
-
     if (isEmpty(lkpBranch)) {
       throw new Error("Branch is required");
     }
@@ -1515,766 +895,301 @@ export async function deleteReceiptService({
       throw new Error("Document number is required");
     }
 
-
-    /* =====================================================
-       DOCUMENT TYPE
-    ===================================================== */
-
-    const finalDocType = toDocumentType(lkpType);
-
-
-    /* =====================================================
-       BEGIN
-    ===================================================== */
+    const finalDocType = GetStrDocType(lkpType);
 
     await client.query("BEGIN");
 
-
-    /* =====================================================
-       DELETE
-    ===================================================== */
-
-    await deleteReceiptInternal(
-      client,
-      {
-        lkpBranch: lkpBranch,
-        docType: finalDocType,
-        txtDocNo: txtDocNo,
-      }
-    );
-
-
-    /* =====================================================
-       COMMIT
-    ===================================================== */
+    await deleteReceiptInternal(client, ctx, {
+      lkpBranch,
+      strDocType: finalDocType,
+      txtDocNo,
+    });
 
     await client.query("COMMIT");
 
-
-    /* =====================================================
-       RESPONSE
-    ===================================================== */
-
     return {
-
       message: "Receipt deleted successfully",
 
       data: {
+        pstrCoID: ctx.pstrCoID,
 
-        companyId: PstrCoID,
-        year: PstrYear,
+        year: ctx.pstrYear,
 
         lkpBranch,
 
         type: finalDocType,
 
-        txtDocNo: txtDocNo,
-
+        txtDocNo,
       },
-
     };
-
   } catch (error: unknown) {
-
     try {
       await client.query("ROLLBACK");
     } catch (rollbackError: unknown) {
-      console.error(
-        "Delete rollback error:",
-        rollbackError
-      );
+      console.error("Delete rollback error:", rollbackError);
     }
 
-    console.error(
-      "deleteReceiptService error:",
-      error
-    );
+    console.error("deleteReceiptService error:", error);
 
     throw error;
-
   } finally {
-
     client.release();
-
   }
 }
 
-
 /* =========================================================
-   UPDATE RECEIPT
-========================================================= */
-
-// export async function updateReceiptService(
-//   receipt: ReceiptData
-// ): Promise<ServiceResult> {
-
-//   const {
-
-//     branch,
-
-//     type,
-
-//     docNo,
-
-//   } = receipt;
-
-
-//   const client =
-//     await pool.connect();
-
-
-//   try {
-
-//     /* =====================================================
-//        BEGIN
-//     ===================================================== */
-
-//     await client.query(
-//       "BEGIN"
-//     );
-
-
-//     /* =====================================================
-//        DOCUMENT TYPE
-//     ===================================================== */
-
-//     const finalDocType =
-//       toDocumentType(type);
-
-
-//     /* =====================================================
-//        DELETE OLD RECEIPT
-//     ===================================================== */
-
-//     await deleteReceiptInternal(
-//       client,
-//       {
-
-//         branch,
-
-//         docType:
-//           finalDocType,
-
-//         docNo,
-
-//       }
-//     );
-
-
-//     /* =====================================================
-//        SAVE UPDATED RECEIPT
-//     ===================================================== */
-
-//     const result =
-//       await saveReceiptService(
-//         {
-
-//           ...receipt,
-
-//           receiptNo:
-//             docNo,
-
-//         },
-
-//         client,
-
-//         false
-
-//       );
-
-
-//     /* =====================================================
-//        COMMIT
-//     ===================================================== */
-
-//     await client.query(
-//       "COMMIT"
-//     );
-
-
-//     /* =====================================================
-//        RESPONSE
-//     ===================================================== */
-
-//     return {
-
-//       ...result,
-
-//       message:
-//         "modified successfully",
-
-//     };
-
-//   } catch (error: unknown) {
-
-//     try {
-
-//       await client.query(
-//         "ROLLBACK"
-//       );
-
-//     } catch (rollbackError: unknown) {
-
-//       console.error(
-//         "Update rollback error:",
-//         rollbackError
-//       );
-
-//     }
-
-
-//     console.error(
-//       "updateReceiptService error:",
-//       error
-//     );
-
-
-//     throw error;
-
-//   } finally {
-
-//     client.release();
-
-//   }
-// }
-
-
-/* =========================================================
-   UPDATE RECEIPT
-   TRUE MODIFY USING MODE : M
+   UPDATE RECEIPT - TRUE MODIFY USING MODE : M
 ========================================================= */
 
 export async function updateReceiptService(
-  receipt: ReceiptData
+  receipt: ReceiptData,
+  ctx: ReceiptContext,
 ): Promise<ServiceResult> {
-
   const {
     lkpBranch,
     lkpType,
     txtDocNo,
     dtpDate,
-    receivedFrom,
-    reference,
+    txtReceivedFrom,
+    txtReference,
     cbAccountName,
-    note,
+    strNote,
     cbCcId,
     rows = [],
   } = receipt;
 
-
-  const client =
-    await pool.connect();
-
+  const client = await pool.connect();
 
   try {
-
-    /* =====================================================
-       VALIDATION
-    ===================================================== */
-
-    if (
-      isEmpty(lkpBranch)
-    ) {
-
-      throw new Error(
-        "Branch is required"
-      );
-
+    if (isEmpty(lkpBranch)) {
+      throw new Error("Branch is required");
     }
 
-
-    if (
-      isEmpty(lkpType)
-    ) {
-
-      throw new Error(
-        "Receipt type is required"
-      );
-
+    if (isEmpty(lkpType)) {
+      throw new Error("Receipt type is required");
     }
 
-
-    if (
-      isEmpty(txtDocNo)
-    ) {
-
-      throw new Error(
-        "Document number is required"
-      );
-
+    if (isEmpty(txtDocNo)) {
+      throw new Error("Document number is required");
     }
 
-
-    if (
-      isEmpty(dtpDate)
-    ) {
-
-      throw new Error(
-        "Receipt date is required"
-      );
-
+    if (isEmpty(dtpDate)) {
+      throw new Error("Receipt date is required");
     }
 
-
-    if (
-      isEmpty(cbAccountName)
-    ) {
-
-      throw new Error(
-        "Cash/Bank account is required"
-      );
-
+    if (isEmpty(cbAccountName)) {
+      throw new Error("Cash/Bank account is required");
     }
 
-
-    if (
-      !Array.isArray(rows)
-    ) {
-
-      throw new Error(
-        "Receipt rows are invalid"
-      );
-
+    if (!Array.isArray(rows)) {
+      throw new Error("Receipt rows are invalid");
     }
 
+    const finalDocType = GetStrDocType(lkpType);
 
-    /* =====================================================
-       DOCUMENT TYPE
-    ===================================================== */
-
-    const finalDocType =
-      toDocumentType(lkpType);
-
-
-    /* =====================================================
-       VALID ROWS
-    ===================================================== */
-
-    const validRows: ReceiptRow[] =
-      rows.filter(
-        (
-          row: ReceiptRow
-        ): boolean =>
-          row &&
-          !isEmpty(
-            row.accountId
-          )
-      );
-
-
-    if (
-      validRows.length === 0
-    ) {
-
-      throw new Error(
-        "There is no information for modifying."
-      );
-
-    }
-
-
-    /* =====================================================
-       TOTAL
-    ===================================================== */
-
-    const finalTotal =
-      validRows.reduce(
-        (
-          sum: number,
-          row: ReceiptRow
-        ): number => {
-
-          return (
-            sum +
-            toNumber(
-              row.creditAmt
-            )
-          );
-
-        },
-        0
-      );
-
-
-    /* =====================================================
-       BEGIN TRANSACTION
-    ===================================================== */
-
-    await client.query(
-      "BEGIN"
+    const validRows: ReceiptRow[] = rows.filter(
+      (row: ReceiptRow): boolean => row && !isEmpty(row.lkpAccountID),
     );
 
+    if (validRows.length === 0) {
+      throw new Error("There is no information for modifying.");
+    }
 
-    /* =====================================================
-       1. MODIFY CONTROL ENTRY
-       
-       M + slNo = 0
-       
-       This updates:
-       tblfintrans
-       fslno = 0
-
-       NO DELETE.
-       NO INSERT.
-    ===================================================== */
-
-  
-    await callReceiptProcedure(
-      client,
-      {
-
-        mode: "M",
-
-        lkpBranch,
-
-        docType:
-          finalDocType,
-
-        txtDocNo: clean(txtDocNo),
-
-        slNo: 0,
-
-        dtpDate,
-
-        cbAccountId:
-          cbAccountName,
-
-        receivedFrom,
-
-        reference,
-
-        /*
-           Control account is the
-           Cash/Bank account.
-        */
-
-        accountId:
-          cbAccountName,
-
-        gcs:
-          validRows[0]?.gcs ||
-          validRows[0]?.fgcs ||
-          "",
-
-        DivID:
-          validRows[0]?.DivID ||
-          validRows[0]?.divId ||
-          "",
-
-        CCID:
-          validRows[0]?.CCID ||
-          cbCcId ||
-          "",
-
-        /*
-           M control uses p_numcredit
-           and internally sets:
-
-           fdebit = p_numcredit
-           fcredit = 0
-        */
-
-        debit: 0,
-
-        credit:
-          finalTotal,
-
-        description:
-          [
-            reference,
-            receivedFrom,
-          ]
-            .filter(
-              (
-                value
-              ) =>
-                !isEmpty(value)
-            )
-            .join(" - "),
-
-        note:
-          note || "",
-
-        match:
-          toBoolean(
-            validRows[0]?.match
-          ),
-
-        userId:
-          PstrUserID,
-
-        userDate:
-          new Date().toISOString(),
-
-        details:
-          null,
-
-      }
+    const finalTotal = validRows.reduce(
+      (sum: number, row: ReceiptRow): number => {
+        return sum + toNumber(row.txtDebitCredit);
+      },
+      0,
     );
 
+    await client.query("BEGIN");
 
-    /* =====================================================
+    /*
+       1. MODIFY CONTROL ENTRY (M + slNo = 0)
+       Updates tblfintrans where fslno = 0. NO DELETE. NO INSERT.
+    */
+
+    const control = splitAmount(finalTotal);
+
+    await callReceiptProcedure(client, {
+      strMode: "M",
+
+      pstrCoID: ctx.pstrCoID,
+
+      pstrYear: ctx.pstrYear,
+
+      lkpBranch,
+
+      strDocType: finalDocType,
+
+      txtDocNo: clean(txtDocNo),
+
+      txtSlNo: 0,
+
+      dtpDate,
+
+      lkpCBAccountID: cbAccountName,
+
+      txtReceivedFrom,
+
+      txtReference,
+
+      lkpAccountID: cbAccountName,
+
+      strGCS: validRows[0]?.strGCS || "",
+
+      lkpDivID: validRows[0]?.lkpDivID || "",
+
+      lkpCCID: validRows[0]?.lkpCCID || cbCcId || "",
+
+      numDebit: control.numDebit,
+
+      numCredit: control.numCredit,
+
+      txtDescription: [txtReference, txtReceivedFrom]
+        .filter((value) => !isEmpty(value))
+        .join(" - "),
+
+      txtNote: strNote || "",
+
+      chkMatch: toBoolean(validRows[0]?.ckhMatch),
+
+      PstrUserID: ctx.pstrUserID,
+
+      strUserDate: new Date().toISOString(),
+
+      details: null,
+    });
+
+    /*
        2. BUILD DETAILS FOR M MODE
-       
-       IMPORTANT:
+       Property names MUST match jsonb_to_recordset() in the procedure.
+    */
 
-       These property names MUST match
-       jsonb_to_recordset() in PostgreSQL:
+    const details = validRows.map((row: ReceiptRow, index: number) => {
+      const { numDebit, numCredit } = splitAmount(row.txtDebitCredit);
 
-       slno
-       dtpdate
-       cbaccountid
-       receivedfrompaidto
-       ref
-       accountid
-       gcs
-       divid
-       CCID
-       debit
-       credit
-       description
-       note
-       match
-    ===================================================== */
+      return {
+        slno: Number(row.txtslNo) || index + 1,
 
-    const details =
-      validRows.map(
-        (
-          row: ReceiptRow,
-          index: number
-        ) => {
+        dtpdate: normalizeDate(dtpDate),
 
-          return {
+        lkpCBAccountID: cbAccountName || "",
 
-            slno:
-              Number(row.slNo) ||
-              index + 1,
+        receivedfrompaidto: txtReceivedFrom || "",
 
-            dtpdate:
-              normalizeDate(
-                dtpDate
-              ),
+        ref: txtReference || "",
 
-            cbaccountid:
-              cbAccountName || "",
+        lkpAccountID: row.lkpAccountID || "",
 
-            receivedfrompaidto:
-              receivedFrom || "",
+        strGCS: row.strGCS || "",
 
-            ref:
-              reference || "",
+        lkpDivID: row.lkpDivID || "",
 
-            accountid:
-              row.accountId || "",
+        lkpCCID: row.lkpCCID || "",
 
-            gcs:
-              row.gcs ||
-              row.fgcs ||
-              "",
+        debit: numDebit,
 
-            divid:
-              row.DivID ||
-              row.divId ||
-              "",
+        credit: numCredit,
 
-            ccid:
-              row.CCID ||
-              "",
+        /* signed value as typed, in case the SP wants it for fdebitcredit */
 
-            debit:
-              toNumber(
-                row.debit
-              ),
+        txtDebitCredit: toNumber(row.txtDebitCredit),
 
-            credit:
-              toNumber(
-                row.creditAmt
-              ),
+        txtDescription: row.txtDescription || "",
 
-            description:
-              row.description ||
-              "",
+        strNote: strNote || "",
 
-            note:
-              note ||
-              "",
+        ckhMatch: toBoolean(row.ckhMatch),
+      };
+    });
 
-            match:
-              toBoolean(
-                row.match
-              ),
+    /*
+       3. MODIFY ALL DETAIL ROWS (M + details JSON)
+    */
 
-          };
+    await callReceiptProcedure(client, {
+      strMode: "M",
 
-        }
-      );
+      pstrCoID: ctx.pstrCoID,
 
+      pstrYear: ctx.pstrYear,
 
-    /* =====================================================
-       3. MODIFY ALL DETAIL ROWS
-       
-       M + details JSON
+      lkpBranch,
 
-       PostgreSQL procedure will:
+      strDocType: finalDocType,
 
-       - update existing rows
-       - remove database detail rows that no longer
-         exist in frontend
-       - NOT delete the entire receipt
-       - NOT insert the receipt again
-    ===================================================== */
+      txtDocNo: clean(txtDocNo),
 
-    await callReceiptProcedure(
-      client,
-      {
+      txtSlNo: 1,
 
-        mode: "M",
+      dtpDate,
 
-        lkpBranch,
+      lkpCBAccountID: cbAccountName,
 
-        docType:
-          finalDocType,
+      txtReceivedFrom,
 
-        txtDocNo: clean(txtDocNo),
+      txtReference,
 
-        /*
-           Any non-zero value is enough
-           to enter the bulk-details branch
-           because p_strdetails is supplied.
-        */
+      lkpAccountID: null,
 
-        slNo: 1,
+      strGCS: null,
 
-        dtpDate,
+      lkpDivID: null,
 
-        cbAccountId:
-          cbAccountName,
+      lkpCCID: null,
 
-        receivedFrom,
+      numDebit: 0,
 
-        reference,
+      numCredit: 0,
 
-        accountId:
-          null,
+      txtDescription: null,
 
-        gcs:
-          null,
+      txtNote: null,
 
-        DivID:
-          null,
+      chkMatch: false,
 
-        CCID:
-          null,
+      PstrUserID: ctx.pstrUserID,
 
-        debit: 0,
+      strUserDate: new Date().toISOString(),
 
-        credit: 0,
+      details,
+    });
 
-        description:
-          null,
-
-        note:
-          null,
-
-        match:
-          false,
-
-        userId:
-          PstrUserID,
-
-        userDate:
-          new Date().toISOString(),
-
-        details,
-
-      }
-    );
-
-
-    /* =====================================================
-       4. COMMIT
-    ===================================================== */
-
-    await client.query(
-      "COMMIT"
-    );
-
-
-    /* =====================================================
-       RESPONSE
-    ===================================================== */
+    await client.query("COMMIT");
 
     return {
-
-      message:
-        "Receipt modified successfully",
+      message: "Receipt modified successfully",
 
       data: {
+        pstrCoID: ctx.pstrCoID,
 
-        companyId:
-          PstrCoID,
-
-        year:
-          PstrYear,
+        year: ctx.pstrYear,
 
         lkpBranch,
 
-        docType:
-          finalDocType,
+        strDocType: finalDocType,
 
-        txtDocNo:
-          txtDocNo,
+        txtDocNo,
 
-        total:
-          finalTotal,
+        total: finalTotal,
 
         cbAccountName,
 
-        rowCount:
-          validRows.length,
-
+        rowCount: validRows.length,
       },
-
     };
-
-
   } catch (error: unknown) {
-
-    /* =====================================================
-       ROLLBACK
-    ===================================================== */
-
     try {
-
-      await client.query(
-        "ROLLBACK"
-      );
-
-    } catch (
-      rollbackError: unknown
-    ) {
-
-      console.error(
-        "Receipt modify rollback error:",
-        rollbackError
-      );
-
+      await client.query("ROLLBACK");
+    } catch (rollbackError: unknown) {
+      console.error("Receipt modify rollback error:", rollbackError);
     }
 
-
-    console.error(
-      "updateReceiptService error:",
-      error
-    );
-
+    console.error("updateReceiptService error:", error);
 
     throw error;
-
-
   } finally {
-
     client.release();
-
   }
 }
-

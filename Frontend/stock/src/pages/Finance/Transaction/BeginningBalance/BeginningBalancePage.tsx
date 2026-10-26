@@ -25,6 +25,7 @@ import {
 import { useAltShortcuts } from "../../../../hooks/useAltShortcuts";
 import { useButtonPermissions } from "../../../../hooks/useButtonPermissions";
 import { useConfirmModal } from "../../../../hooks/useConfirmModal";
+import { useInitialFocus } from "../../../../hooks/useInitialFocus";
 
 // ============================================================
 
@@ -57,6 +58,8 @@ const BeginningBalance: React.FC = () => {
     useBeginningBalanceLookups();
 
   const [lkpBranch, setLkpBranch] = useState<Option | null>(null);
+  // the branch list and the user's default branch have been loaded (the cursor can start)
+  const [branchesLoaded, setBranchesLoaded] = useState(false);
   // yyyy-mm-dd
   const [dtpDate, setDtpDate] = useState(() => defaultDate(PstrYear));
   const [rows, setRows] = useState<BeginningBalanceRow[]>(() => padRows([]));
@@ -82,6 +85,10 @@ const BeginningBalance: React.FC = () => {
   const loadRequest = useRef(0);
 
   const branchID = lkpBranch?.value ?? "";
+
+  // where the cursor starts: Date when a branch is already chosen (the user's default
+  // branch), else the Branch box
+  useInitialFocus(branchesLoaded, lkpBranch ? "dtpDate" : "lkpBranch");
 
   // ----------------------------------------------------------
   // LOAD (the old SetupDocument): the balance of the branch - the lines, the date
@@ -562,7 +569,7 @@ const BeginningBalance: React.FC = () => {
 
     const shouldRemove = await confirm({
       title: SCREEN_TITLE,
-      message: `Do you want to delete Line ${index + 1} ?`,
+      message: "Do you want to delete ?",
     });
 
     if (!shouldRemove) return;
@@ -598,6 +605,7 @@ const BeginningBalance: React.FC = () => {
             dtpDate={dtpDate}
             onDateChange={setDtpDate}
             disabled={chkPosted}
+            onBranchesLoaded={() => setBranchesLoaded(true)}
           />
 
           <BeginningBalanceTable

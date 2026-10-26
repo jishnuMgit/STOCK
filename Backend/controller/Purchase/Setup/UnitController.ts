@@ -172,7 +172,11 @@ export const saveUnit = async (
     const wantedMode =
       (await getUnitPageService(PstrCoID)).length > 0 ? "M" : "S";
 
-    if (!(await hasButtonRight(req.user, MENU_ID, wantedMode))) {
+    // a save that only deletes (the X of a row) needs the Delete right alone, checked
+    // below - not the Save / Modify right as well
+    const onlyDeleting = rows.length === 0 && deletedRows.length > 0;
+
+    if (!onlyDeleting && !(await hasButtonRight(req.user, MENU_ID, wantedMode))) {
       return res.status(403).json({
         success: false,
         message: `You do not have permission to ${wantedMode === "M" ? "Modify" : "Save"}.`,
@@ -283,10 +287,7 @@ export const saveUnit = async (
 
     return res.status(200).json({
       success: true,
-      message:
-        wantedMode === "M"
-          ? "Unit modified successfully"
-          : "Unit saved successfully",
+      message: "Unit saved successfully",
       mode: wantedMode,
     });
   } catch (error: unknown) {

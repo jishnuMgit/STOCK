@@ -165,6 +165,8 @@ type Props = {
   onDateChange: (value: string) => void;
   // a posted balance is locked: its date cannot be changed
   disabled: boolean;
+  // the branch list and the default branch have been loaded (found or not)
+  onBranchesLoaded?: () => void;
 };
 
 const BeginningBalanceHeader: React.FC<Props> = ({
@@ -173,6 +175,7 @@ const BeginningBalanceHeader: React.FC<Props> = ({
   dtpDate,
   onDateChange,
   disabled,
+  onBranchesLoaded,
 }) => {
   // ==========================================================
   // BRANCH: the branches the user has a right to, the user's default one
@@ -240,6 +243,8 @@ const BeginningBalanceHeader: React.FC<Props> = ({
         toast.error(
           "Failed to load the Branches",
         );
+      } finally {
+        onBranchesLoaded?.();
       }
     };
 
@@ -344,14 +349,30 @@ const BeginningBalanceHeader: React.FC<Props> = ({
               Branch :
             </label>
 
-            <div className="ml-2 w-58.75">
+            <div
+              className="ml-2 w-58.75"
+              onKeyDown={(event) => {
+                // Enter on a closed Branch box that has a value goes on to Date
+                if (event.key === "Enter" && !event.defaultPrevented && lkpBranch) {
+                  event.preventDefault();
+                  document.getElementById("dtpDate")?.focus();
+                }
+              }}
+            >
 
               <Select<Option, false>
                 inputId="lkpBranch"
                 instanceId="lkpBranch"
                 options={branchOptions}
                 value={lkpBranch}
-                onChange={onBranchChange}
+                onChange={(option) => {
+                  onBranchChange(option);
+
+                  // a branch chosen: on to Date
+                  if (option) {
+                    window.setTimeout(() => document.getElementById("dtpDate")?.focus(), 0);
+                  }
+                }}
                 styles={{
                   ...selectStyles,
                   ...branchMenuStyles,

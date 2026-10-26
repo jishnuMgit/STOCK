@@ -10,8 +10,10 @@ import {
   getFindList,
   saveStockAdjustment,
   deleteStockAdjustment,
+  deleteStockAdjustmentLine,
   postStockAdjustment,
   printStockAdjustment,
+  downloadStockAdjustmentExcel,
 } from "../../../controller/Sales/Transaction/StockAdjustmentController.js";
 
 const router = express.Router();
@@ -26,8 +28,12 @@ router.get("/getFindList", authenticate, getFindList);
 // a POST: the lines travel in the body
 router.post("/saveStockAdjustment", authenticate, saveStockAdjustment);
 router.delete("/deleteStockAdjustment", authenticate, deleteStockAdjustment);
+// one line of a saved adjustment (the x of a row): gone from the database at once
+router.delete("/deleteStockAdjustmentLine", authenticate, deleteStockAdjustmentLine);
 router.post("/postStockAdjustment", authenticate, postStockAdjustment);
-// a POST: the print page asks for the data itself
+// a POST: the page asks for the data itself
 router.post("/printStockAdjustment", authenticate, printStockAdjustment);
+// the same body: the Excel file of the Print Preview
+router.post("/downloadStockAdjustmentExcel", authenticate, downloadStockAdjustmentExcel);
 
 export default router;

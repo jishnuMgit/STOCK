@@ -1,32 +1,36 @@
-import React, { useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import Select from "react-select";
 import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
 import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
 import { DatePicker } from "@mui/x-date-pickers/DatePicker";
 import dayjs from "dayjs";
 import customParseFormat from "dayjs/plugin/customParseFormat";
+import { toast } from "react-toastify";
+import RadioGroup from "../../../components/common/RadioGroup";
+import {
+  filterPairOption,
+  makePairComponents,
+  makePairDividedMenuStyles,
+  type PairOption,
+} from "../../../components/PairSelect/pairSelectParts";
+import { usePairMenuHang } from "../../../hooks/usePairMenuHang";
+import {
+  BranchDividedMenuList,
+  BranchDividedOption,
+  branchMenuStyles,
+  filterLabelOrValue,
+} from "../../../components/BranchSelect/branchSelectParts";
 
 dayjs.extend(customParseFormat);
 
 type Option = { value: string; label: string };
 
-type RadioOptionProps = {
-  name: string;
-  value: string;
-  label: string;
-  checked: boolean;
-  onChange: () => void;
-};
-
 const DATE_FORMAT = "DD-MM-YYYY";
 const TODAY = dayjs().format(DATE_FORMAT);
 
+const api = import.meta.env.VITE_API_URL;
+
 /* Replace these with data from your API */
-const branchOptions: Option[] = [
-  { value: "OFFICE", label: "OFFICE" },
-  { value: "BRANCH 1", label: "BRANCH 1" },
-  { value: "BRANCH 2", label: "BRANCH 2" },
-];
 const itemIdOptions: Option[] = [
   { value: "1001", label: "1001" },
   { value: "1002", label: "1002" },
@@ -34,14 +38,6 @@ const itemIdOptions: Option[] = [
 const itemNameOptions: Option[] = [
   { value: "1001", label: "Item One" },
   { value: "1002", label: "Item Two" },
-];
-const groupIdOptions: Option[] = [
-  { value: "G1", label: "G1" },
-  { value: "G2", label: "G2" },
-];
-const groupNameOptions: Option[] = [
-  { value: "G1", label: "Group One" },
-  { value: "G2", label: "Group Two" },
 ];
 const postStatusOptions: Option[] = [
   { value: "ALL", label: "All" },
@@ -88,51 +84,66 @@ const selectClassNames = {
 const selectProps = {
   isSearchable: false,
   isClearable: false,
-  placeholder: "",
   classNames: selectClassNames,
   menuPosition: "fixed" as const,
   menuPortalTarget: typeof document !== "undefined" ? document.body : undefined,
 };
 
-const CustomRadio: React.FC<RadioOptionProps> = ({
-  name,
-  value,
-  label,
-  checked,
-  onChange,
-}) => (
-  <label className="flex cursor-pointer items-center gap-2.5 whitespace-nowrap select-none">
-    <input
-      type="radio"
-      name={name}
-      value={value}
-      checked={checked}
-      onChange={onChange}
-      className="sr-only"
-    />
-    <span
-      className={`flex h-[19px] w-[19px] shrink-0 items-center justify-center rounded-full border bg-white ${
-        checked ? "border-[#64d96e]" : "border-[#cbd3dc]"
-      }`}
-    >
-      <span
-        className={`h-2.5 w-2.5 rounded-full bg-[#64d96e] ${
-          checked ? "opacity-100" : "opacity-0"
-        }`}
-      />
-    </span>
-    <span className="text-[12px] font-normal text-[#35445a]">{label}</span>
-  </label>
-);
+// The Branch box: the same "Branch | ID" list as the Branch boxes of the other screens (grey
+// header, a divider, the ID of every branch next to its name; searchable on either). Only its
+// list differs from the other boxes, so the menu / list / row looks of selectClassNames are left out.
+const branchProps = {
+  ...selectProps,
+  isSearchable: true,
+  classNames: {
+    control: selectClassNames.control,
+    valueContainer: selectClassNames.valueContainer,
+    singleValue: selectClassNames.singleValue,
+    placeholder: selectClassNames.placeholder,
+    input: selectClassNames.input,
+    indicatorsContainer: selectClassNames.indicatorsContainer,
+    dropdownIndicator: selectClassNames.dropdownIndicator,
+    indicatorSeparator: selectClassNames.indicatorSeparator,
+    clearIndicator: selectClassNames.clearIndicator,
+    option: selectClassNames.option,
+  },
+  styles: branchMenuStyles,
+  components: { Option: BranchDividedOption, MenuList: BranchDividedMenuList },
+  filterOption: filterLabelOrValue,
+};
 
-const RadioPanel: React.FC<{
-  children: React.ReactNode;
-  className?: string;
-}> = ({ children, className = "" }) => (
-  <div className={`border border-[#e0e5ea] bg-white px-3.5 py-3 ${className}`}>
-    <div className="flex flex-col gap-3">{children}</div>
-  </div>
-);
+// The Item Group boxes: the same two-column "ID | Name" lists as the Item boxes of Beginning
+// Stock (components/PairSelect): the Group ID box opens "Group ID | Group Name", the Group
+// Name box opens "Group Name | Group ID", both with a divider, both searchable on either
+// column, and picking from one fills the other. Created once, outside the page.
+const groupIdComponents = makePairComponents("Group ID", "Group Name", false, true);
+const groupNameComponents = makePairComponents("Group ID", "Group Name", true, true);
+
+// how far the Group Name list hangs past its box (its Group ID column)
+const NAME_MENU_HANG = 120;
+
+// the look of the other boxes, but the open list is the pair list's own (its menu, rows and
+// header come from the components and the divided styles); only the row colours are kept
+const pairProps = {
+  ...selectProps,
+  isSearchable: true,
+  classNames: {
+    control: selectClassNames.control,
+    valueContainer: selectClassNames.valueContainer,
+    singleValue: selectClassNames.singleValue,
+    placeholder: selectClassNames.placeholder,
+    input: selectClassNames.input,
+    indicatorsContainer: selectClassNames.indicatorsContainer,
+    dropdownIndicator: selectClassNames.dropdownIndicator,
+    indicatorSeparator: selectClassNames.indicatorSeparator,
+    clearIndicator: selectClassNames.clearIndicator,
+    option: ({ isFocused, isSelected }: { isFocused: boolean; isSelected: boolean }) =>
+      `!cursor-pointer !text-[#24364d] ${
+        isSelected ? "!bg-[#e7f7ed]" : isFocused ? "!bg-[#f2faf5]" : "!bg-white"
+      }`,
+  },
+  filterOption: filterPairOption,
+};
 
 const FieldLabel: React.FC<{
   children: React.ReactNode;
@@ -235,33 +246,112 @@ const AppDatePicker: React.FC<AppDatePickerProps> = ({
 );
 
 const RptStockPage: React.FC = () => {
-  const [branchMode, setBranchMode] = useState("One Branch"); // optBranch
+  const [rdgBranch, setRdgBranch] = useState("One Branch"); // rdgBranch
   const [branch, setBranch] = useState<Option | null>(null); // lkpBranch
 
-  const [itemMode, setItemMode] = useState("One Item"); // optItem
+  // the branches the logged-in user has a right to, and the user's default branch
+  const [branchOptions, setBranchOptions] = useState<Option[]>([]);
+  const [defaultBranch, setDefaultBranch] = useState<Option | null>(null);
+
+  // the item groups of the company
+  const [groupRows, setGroupRows] = useState<
+    { lkpItemGroupID: string; txtItemGroupName: string }[]
+  >([]);
+
+  // the Group ID list covers the Group ID box AND the Group Name box next to it (measured
+  // when it opens)
+  const { hang: groupIdHang, measure: measureGroupIdHang } = usePairMenuHang();
+
+  useEffect(() => {
+    const loadBranches = async () => {
+      try {
+        const response = await fetch(`${api}/RptStock/lookups`, { credentials: "include" });
+        const result = await response.json();
+
+        if (!response.ok || !result.success) {
+          toast.error(result.message || "Failed to load the Branches");
+          return;
+        }
+
+        const options: Option[] = (result.branches || []).map(
+          (row: { lkpBranch: string; txtBranchName: string }) => ({
+            value: row.lkpBranch,
+            label: row.txtBranchName,
+          }),
+        );
+
+        const initial =
+          options.find((option) => option.value === result.lkpDefaultBranch) ?? null;
+
+        setBranchOptions(options);
+        setDefaultBranch(initial);
+        setBranch(initial);
+        setGroupRows(result.groups || []);
+      } catch (error: unknown) {
+        console.error("rptStock branches error:", error);
+        toast.error("Cannot connect to the Stock report API.");
+      }
+    };
+
+    loadBranches();
+  }, []);
+  const [rdgByItem, setRdgByItem] = useState("By Item"); // rdgByItem: By Item / By Group
+
+  const [rdgItem, setRdgItem] = useState("One Item"); // rdgItem
+  const [rdgItemGroup, setRdgItemGroup] = useState("One Item Group"); // rdgItemGroup
   const [oneItemId, setOneItemId] = useState<Option | null>(null); // lkpOneItemID
   const [oneItemName, setOneItemName] = useState<Option | null>(null); // lkpOneItemName
-  const [groupId, setGroupId] = useState<Option | null>(null); // lkpOneItemGroupID
-  const [groupName, setGroupName] = useState<Option | null>(null); // lkpOneItemGroupName
+  const [fromItem, setFromItem] = useState<Option | null>(null); // Item Range: From Item
+  const [toItem, setToItem] = useState<Option | null>(null); // Item Range: To Item
+  // one item group: the Group ID box and the Group Name box show the same choice
+  const [groupId, setGroupId] = useState(""); // lkpOneItemGroupID / lkpOneItemGroupName
 
   const [postStatus, setPostStatus] = useState<Option | null>(
     postStatusOptions[0],
   ); // lkpPostStatus
-  const [detSum, setDetSum] = useState("Detailed"); // optDetSum
+  const [rdgDetSum, setRdgDetSum] = useState("Detailed"); // rdgDetSum
   const [fromDate, setFromDate] = useState(TODAY); // dtpFromDate
   const [toDate, setToDate] = useState(TODAY); // dtpToDate
   const [orderByTxnNo, setOrderByTxnNo] = useState(false); // chkOrderbyTxnNo
 
+  // the group boxes: ID | Name, and Name | ID (one group, two boxes)
+  const groupIdOptions = useMemo<PairOption[]>(
+    () =>
+      groupRows.map((row) => ({
+        value: row.lkpItemGroupID,
+        label: row.lkpItemGroupID,
+        id: row.lkpItemGroupID,
+        name: row.txtItemGroupName,
+      })),
+    [groupRows],
+  );
+
+  const groupNameOptions = useMemo<PairOption[]>(
+    () =>
+      [...groupRows]
+        .sort((a, b) => a.txtItemGroupName.localeCompare(b.txtItemGroupName))
+        .map((row) => ({
+          value: row.lkpItemGroupID,
+          label: row.txtItemGroupName,
+          id: row.lkpItemGroupID,
+          name: row.txtItemGroupName,
+        })),
+    [groupRows],
+  );
+
   const handleClear = () => {
-    setBranchMode("One Branch");
-    setBranch(null);
-    setItemMode("One Item");
+    setRdgBranch("One Branch");
+    setBranch(defaultBranch);
+    setRdgByItem("By Item");
+    setRdgItem("One Item");
+    setRdgItemGroup("One Item Group");
     setOneItemId(null);
     setOneItemName(null);
-    setGroupId(null);
-    setGroupName(null);
+    setFromItem(null);
+    setToItem(null);
+    setGroupId("");
     setPostStatus(postStatusOptions[0]);
-    setDetSum("Detailed");
+    setRdgDetSum("Detailed");
     setFromDate(TODAY);
     setToDate(TODAY);
     setOrderByTxnNo(false);
@@ -269,28 +359,35 @@ const RptStockPage: React.FC = () => {
 
   const handlePrint = () => {
     console.log({
-      branchMode,
+      rdgBranch,
       branch,
-      itemMode,
+      rdgByItem,
+      rdgItem,
+      rdgItemGroup,
       oneItemId,
       oneItemName,
+      fromItem,
+      toItem,
       groupId,
-      groupName,
       postStatus,
-      detSum,
+      rdgDetSum,
       fromDate,
       toDate,
       orderByTxnNo,
     });
   };
 
-  const oneItemDisabled = itemMode !== "One Item";
-  const groupDisabled = itemMode !== "One Item Group";
+  const itemRadioDisabled = rdgByItem !== "By Item";
+  const groupRadioDisabled = rdgByItem !== "By Group";
+  const oneItemDisabled =
+    rdgByItem !== "By Item" ||
+    (rdgItem !== "One Item" && rdgItem !== "Item Range");
+  const groupDisabled = rdgByItem !== "By Group" || rdgItemGroup !== "One Item Group";
 
   return (
     <div className="flex min-h-screen w-full items-start justify-center bg-white px-4 py-4">
-      <div className="min-h-fit w-205 max-w-full bg-white p-0">
-        <main className="w-full overflow-hidden border border-[#d5dce2] bg-white">
+      <div className="min-h-fit w-240 max-w-full bg-white p-0">
+        <main className="w-full overflow-hidden border border-gray-400 bg-white">
            <header
           className="
             flex
@@ -317,22 +414,15 @@ const RptStockPage: React.FC = () => {
           <section className="px-3.5 pb-6 pt-3">
             <div className="grid grid-cols-[168px_1fr] gap-x-4 gap-y-3">
               {/* Branch */}
-              <RadioPanel>
-                <CustomRadio
-                  name="rdgBranch"
-                  value="One Branch"
-                  label="One Branch"
-                  checked={branchMode === "One Branch"}
-                  onChange={() => setBranchMode("One Branch")}
-                />
-                <CustomRadio
-                  name="rdgBranch"
-                  value="All Branches"
-                  label="All Branches"
-                  checked={branchMode === "All Branches"}
-                  onChange={() => setBranchMode("All Branches")}
-                />
-              </RadioPanel>
+              <RadioGroup
+                name="rdgBranch"
+                value={rdgBranch}
+                options={[
+                  { value: "One Branch", label: "One Branch" },
+                  { value: "All Branches", label: "All Branches" },
+                ]}
+                onChange={setRdgBranch}
+              />
               <div className="pt-3">
                 <div className="w-[250px]">
                   <Select
@@ -341,77 +431,145 @@ const RptStockPage: React.FC = () => {
                     options={branchOptions}
                     value={branch}
                     onChange={setBranch}
-                    isDisabled={branchMode !== "One Branch"}
-                    {...selectProps}
+                    isDisabled={rdgBranch !== "One Branch"}
+                    noOptionsMessage={() => "No Branch Found"}
+                    {...branchProps}
                   />
                 </div>
               </div>
 
-              {/* Item */}
-              <RadioPanel>
-                <CustomRadio
-                  name="rdgItem"
-                  value="One Item"
-                  label="One Item"
-                  checked={itemMode === "One Item"}
-                  onChange={() => setItemMode("One Item")}
-                />
-                <CustomRadio
-                  name="rdgItem"
-                  value="One Item Group"
-                  label="One Item Group"
-                  checked={itemMode === "One Item Group"}
-                  onChange={() => setItemMode("One Item Group")}
-                />
-                <CustomRadio
-                  name="rdgItem"
-                  value="All Item"
-                  label="All Item"
-                  checked={itemMode === "All Item"}
-                  onChange={() => setItemMode("All Item")}
-                />
-              </RadioPanel>
+              {/* By Group / By Item selector */}
+              <RadioGroup
+                name="rdgByItem"
+                value={rdgByItem}
+                options={[
+                  { value: "By Group", label: "By Item Group" },
+                  { value: "By Item", label: "By Item" },
+                ]}
+                onChange={(value) => {
+                  setRdgByItem(value);
+
+                  // By Item Group chosen: One Item Group is what is switched on
+                  if (value === "By Group") setRdgItemGroup("One Item Group");
+                }}
+              />
+              <div aria-hidden="true" />
+
+              {/* Group filters: enabled only when By Group is selected */}
+              <RadioGroup
+                name="rdgItemGroup"
+                value={rdgItemGroup}
+                options={[
+                  { value: "One Item Group", label: "One Item Group" },
+                  { value: "All Item Group", label: "All Item Group" },
+                ]}
+                onChange={setRdgItemGroup}
+                disabled={groupRadioDisabled}
+              />
               <div className="flex flex-col gap-3 pt-3">
-                <div className="grid grid-cols-[135px_1fr] gap-2">
-                  <Select
-                    inputId="lkpOneItemID"
-                    instanceId="lkpOneItemID"
-                    options={itemIdOptions}
-                    value={oneItemId}
-                    onChange={setOneItemId}
-                    isDisabled={oneItemDisabled}
-                    {...selectProps}
-                  />
-                  <Select
-                    inputId="lkpOneItemName"
-                    instanceId="lkpOneItemName"
-                    options={itemNameOptions}
-                    value={oneItemName}
-                    onChange={setOneItemName}
-                    isDisabled={oneItemDisabled}
-                    {...selectProps}
-                  />
-                </div>
-                <div className="grid grid-cols-[135px_1fr] gap-2">
-                  <Select
-                    inputId="lkpOneItemGroupID"
-                    instanceId="lkpOneItemGroupID"
-                    options={groupIdOptions}
-                    value={groupId}
-                    onChange={setGroupId}
-                    isDisabled={groupDisabled}
-                    {...selectProps}
-                  />
-                  <Select
-                    inputId="lkpOneItemGroupName"
-                    instanceId="lkpOneItemGroupName"
-                    options={groupNameOptions}
-                    value={groupName}
-                    onChange={setGroupName}
-                    isDisabled={groupDisabled}
-                    {...selectProps}
-                  />
-                </div>
+                {!groupDisabled && (
+                  <div className="grid grid-cols-[190px_1fr]">
+                    <div>
+                      <Select<PairOption, false>
+                        inputId="lkpOneItemGroupID"
+                        instanceId="lkpOneItemGroupID"
+                        name="lkpOneItemGroupID"
+                        options={groupIdOptions}
+                        value={groupIdOptions.find((o) => o.value === groupId) ?? null}
+                        onChange={(option) => setGroupId(option?.value ?? "")}
+                        isDisabled={groupDisabled}
+                        components={groupIdComponents}
+                        styles={makePairDividedMenuStyles(groupIdHang)}
+                        onMenuOpen={() =>
+                          measureGroupIdHang("lkpOneItemGroupID", "lkpOneItemGroupName")
+                        }
+                        noOptionsMessage={() => "No Item Group Found"}
+                        {...pairProps}
+                      />
+                    </div>
+                    <div className="-ml-px">
+                      <Select<PairOption, false>
+                        inputId="lkpOneItemGroupName"
+                        instanceId="lkpOneItemGroupName"
+                        name="lkpOneItemGroupName"
+                        options={groupNameOptions}
+                        value={groupNameOptions.find((o) => o.value === groupId) ?? null}
+                        onChange={(option) => setGroupId(option?.value ?? "")}
+                        isDisabled={groupDisabled}
+                        components={groupNameComponents}
+                        styles={makePairDividedMenuStyles(NAME_MENU_HANG)}
+                        noOptionsMessage={() => "No Item Group Found"}
+                        {...pairProps}
+                      />
+                    </div>
+                  </div>
+                )}
+                
+              </div>
+
+              {/* Item filters: enabled only when By Item is selected */}
+              <RadioGroup
+                name="rdgItem"
+                value={rdgItem}
+                options={[
+                  { value: "One Item", label: "One Item" },
+                  { value: "Item Range", label: "Item Range" },
+                  { value: "All Item", label: "All Item" },
+                ]}
+                onChange={setRdgItem}
+                disabled={itemRadioDisabled}
+              />
+              <div className="flex flex-col gap-3 pt-3">
+         {rdgItem !== "All Item" &&
+  (rdgItem === "Item Range" ? (
+    <div className="grid grid-cols-3 gap-2 w-[85%] mt-6">
+      <Select
+        inputId="lkpFromItem"
+        instanceId="lkpFromItem"
+        options={itemIdOptions}
+        value={fromItem}
+        onChange={setFromItem}
+        isDisabled={itemRadioDisabled}
+        placeholder="From Item"
+        aria-label="From Item"
+        {...selectProps}
+      />
+
+      <Select
+        inputId="lkpToItem"
+        instanceId="lkpToItem"
+        options={itemIdOptions}
+        value={toItem}
+        onChange={setToItem}
+        isDisabled={itemRadioDisabled}
+        placeholder="To Item"
+        aria-label="To Item"
+        {...selectProps}
+      />
+    </div>
+  ) : (
+    <div className="grid grid-cols-[190px_1fr] gap-2">
+      <Select
+        inputId="lkpOneItemID"
+        instanceId="lkpOneItemID"
+        options={itemIdOptions}
+        value={oneItemId}
+        onChange={setOneItemId}
+        isDisabled={oneItemDisabled}
+        {...selectProps}
+      />
+
+      <Select
+        inputId="lkpOneItemName"
+        instanceId="lkpOneItemName"
+        options={itemNameOptions}
+        value={oneItemName}
+        onChange={setOneItemName}
+        isDisabled={oneItemDisabled}
+        {...selectProps}
+      />
+    </div>
+  ))}
               </div>
 
               {/* Post status */}
@@ -438,29 +596,22 @@ const RptStockPage: React.FC = () => {
                     onChange={(event) => setOrderByTxnNo(event.target.checked)}
                     className="h-4 w-4 accent-[#64d96e]"
                   />
-                  Order by Txn.No.
+                  Order by Posting No.
                 </label>
               </div>
 
               {/* Detailed / Summary and period */}
-              <RadioPanel>
-                <CustomRadio
-                  name="rdgDetSum"
-                  value="Detailed"
-                  label="Detailed"
-                  checked={detSum === "Detailed"}
-                  onChange={() => setDetSum("Detailed")}
-                />
-                <CustomRadio
-                  name="rdgDetSum"
-                  value="Summary"
-                  label="Summary"
-                  checked={detSum === "Summary"}
-                  onChange={() => setDetSum("Summary")}
-                />
-              </RadioPanel>
+              <RadioGroup
+                name="rdgDetSum"
+                value={rdgDetSum}
+                options={[
+                  { value: "Detailed", label: "Detailed" },
+                  { value: "Summary", label: "Summary" },
+                ]}
+                onChange={setRdgDetSum}
+              />
               <div className="flex items-start gap-2">
-                <FieldLabel className="w-[168px]">Period :</FieldLabel>
+                <FieldLabel className="w-[140px]">Period :</FieldLabel>
                 <AppDatePicker
                   id="dtpFromDate"
                   label="From Date"

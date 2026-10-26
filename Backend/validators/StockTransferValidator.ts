@@ -324,9 +324,37 @@ export async function validateStockTransfer(
       );
     }
 
-    // the old GetItemStock: what came in minus what went out of the branch,
-    // from all the stock lines of the item, leaving out THIS document's own
-    // OUT lines (doc type ST + Entry No.)
+    // A line with more quantity than the branch has in stock does NOT stop the save: the
+    // page shows the "Out Of Stock" warning and the transfer can still be saved (it cannot
+    // be POSTED without the stock - see validateStockTransferPostLines). The controller
+    // reports these lines in the answer: findOutOfStockItems below.
+  }
+
+  return passed;
+}
+
+/* =========================================================
+   LINES WITHOUT ENOUGH STOCK (a warning on Save, not an error)
+
+   The old GetItemStock: what came in minus what went out of the branch, from all the
+   stock lines of the item, leaving out THIS document's own OUT lines (doc type ST +
+   Entry No.). Returns the item ids (in the grid order) whose quantity is more than that.
+========================================================= */
+
+export async function findOutOfStockItems(
+  PstrCoID: string,
+  lkpBranch: string,
+  txtDocNo: string,
+  rows: { lkpItemID?: unknown; txtQty?: unknown }[]
+): Promise<string[]> {
+  const out: string[] = [];
+
+  for (const row of rows) {
+    const itemId = text(row.lkpItemID);
+    const qty = Number(row.txtQty);
+
+    if (itemId === "" || !(qty > 0)) continue;
+
     const stockResult = await pool.query(
       `
       SELECT COALESCE(SUM(COALESCE(fqtyin, 0)), 0)
@@ -337,18 +365,13 @@ export async function validateStockTransfer(
         AND fitemid = $3
         AND NOT (fdoctype = $4 AND fdocno = $5)
       `,
-      [PstrCoID, lkpBranch, lkpItemID, DOC_TYPE, txtDocNo]
+      [PstrCoID, lkpBranch, itemId, DOC_TYPE, txtDocNo]
     );
 
-    if (qty > Number(stockResult.rows[0]?.stock ?? 0)) {
-      return failed(
-        ` Out of Stock for the Item  : ${lkpItemID}`,
-        `txtQty-${index}`
-      );
-    }
+    if (qty > Number(stockResult.rows[0]?.stock ?? 0)) out.push(itemId);
   }
 
-  return passed;
+  return out;
 }
 
 /* =========================================================

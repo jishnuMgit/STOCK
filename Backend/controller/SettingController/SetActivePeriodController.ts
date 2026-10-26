@@ -182,7 +182,7 @@ export const saveActivePeriod = async (
 
     return res.status(200).json({
       success: true,
-      message: "Active period modified successfully",
+      message: "Set Active Period saved successfully",
       mode: "M",
     });
   } catch (error: unknown) {

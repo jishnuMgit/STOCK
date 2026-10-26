@@ -20,7 +20,7 @@ import {
 import { toast } from "react-toastify";
 import { useConfirmModal } from "../../../hooks/useConfirmModal";
 
-const ROW_COUNT = 12;
+const ROW_COUNT = 11;
 const createRows = () => Array.from({ length: ROW_COUNT }, emptyRow);
 
 // TODO: replace with the login year you already keep after /login (PstrYear)
@@ -30,6 +30,8 @@ const YEAR = String(new Date().getFullYear());
 const getCoId = () => localStorage.getItem("PstrCoID") ?? "";
 
 const num = (v: string) => (Number.isFinite(Number(v)) ? Number(v) : 0);
+
+const norm = (v: string) => v.trim().toLowerCase();
 
 /* Recalculate one row. No foreign-currency price any more:
    the user types Unit Price, everything else follows from it. */
@@ -394,10 +396,9 @@ const PurchaseInvoicePage: React.FC = () => {
 
     if (found) {
       // cash invoice: show the saved name in the Misc. Sup. boxes
-      const misc =
-        found.header.invoiceType === "C"
-          ? miscSuppliers.find((m) => m.name === found.header.supplierName)
-          : undefined;
+      const misc = found.header.miscSupId
+        ? miscSuppliers.find((m) => m.id === found.header.miscSupId)
+        : undefined;
 
       setHeader({
         ...found.header,

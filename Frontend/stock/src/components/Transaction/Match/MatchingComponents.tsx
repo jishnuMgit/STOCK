@@ -378,8 +378,17 @@ const ResponsiveSelect = ({
         (selectRef as React.MutableRefObject<HTMLDivElement | null>).current =
           element;
       }}
-      tabIndex={0}
-      onKeyDown={(event) => handleKeyboardAction(event, { onEnter: next })}
+      tabIndex={-1}
+      onFocus={(event) => {
+        // someone called ref.focus() on the wrapper: pass focus to the real input
+        if (event.target !== event.currentTarget) return;
+        wrapperRef.current?.querySelector<HTMLInputElement>("input")?.focus();
+      }}
+      onKeyDown={(event) => {
+        // react-select already used this Enter to pick an option
+        if (event.defaultPrevented) return;
+        handleKeyboardAction(event, { onEnter: next });
+      }}
       style={
         {
           "--select-width": selectWidth,
@@ -407,6 +416,22 @@ const ResponsiveSelect = ({
     </div>
   );
 };
+
+const TABLE_FIELD_ORDER: TableField[] = [
+  "brId",
+  "date",
+  "docNo",
+  "description",
+  "docAmount",
+  "debit",
+  "credit",
+  "match",
+  "matchAmount",
+];
+
+// MatchTable stores the Document Amount ref under "docAmt"
+const refKey = (field: TableField) =>
+  field === "docAmount" ? "docAmt" : field;
 
 const MatchingComponents = forwardRef<MatchingComponentsRef, Props>(
   (props, ref) => {
@@ -442,7 +467,7 @@ const MatchingComponents = forwardRef<MatchingComponentsRef, Props>(
 
     /* =====================================================
      REFS
- ===================================================== */
+     ===================================================== */
 
     const customerIdRef = useRef<HTMLDivElement | null>(null);
     const customerNameRef = useRef<HTMLDivElement | null>(null);
@@ -456,7 +481,7 @@ const MatchingComponents = forwardRef<MatchingComponentsRef, Props>(
 
     /* =====================================================
      MATCHING API
-  ===================================================== */
+     ===================================================== */
 
     const { divisionOptionsLocal, divisionLoading, getDiv, getMatchAccounts } =
       useMatching();
@@ -466,28 +491,26 @@ const MatchingComponents = forwardRef<MatchingComponentsRef, Props>(
     >([]);
 
     /* =====================================================
-     TABLE FIELD ORDER
-  ===================================================== */
-
-    const tableFieldOrder: TableField[] = [
-      "brId",
-      "date",
-      "docNo",
-      "description",
-      "docAmount",
-      "debit",
-      "credit",
-      "match",
-      "matchAmount",
-    ];
-
-    /* =====================================================
      FOCUS HELPERS
-  ===================================================== */
+     (order matters: focusNote must be defined before
+      focusNextTableCell, which depends on it)
+     ===================================================== */
 
     const focusCustomerId = useCallback(() => {
       requestAnimationFrame(() => {
         customerIdRef.current?.focus();
+      });
+    }, []);
+
+    const focusNote = useCallback(() => {
+      requestAnimationFrame(() => {
+        noteRef.current?.focus();
+      });
+    }, []);
+
+    const focusSave = useCallback(() => {
+      requestAnimationFrame(() => {
+        actionRefs.current[0]?.focus();
       });
     }, []);
 
@@ -503,27 +526,40 @@ const MatchingComponents = forwardRef<MatchingComponentsRef, Props>(
           focusElement(element);
         }
       },
-
       [],
     );
 
-    const focusNote = useCallback(() => {
-      requestAnimationFrame(() => {
-        noteRef.current?.focus();
-      });
-    }, []);
+    // Find the next usable cell, starting at (startRow, startField).
+    // Skips filler rows and disabled cells; if nothing is left, go to Note.
+    const focusNextTableCell = useCallback(
+      (startRow: number, startField: number) => {
+        for (let r = startRow; r < rows.length; r++) {
+          if (!rows[r].raw) continue; // blank filler row
 
-    const focusSave = useCallback(() => {
-      requestAnimationFrame(() => {
-        actionRefs.current[0]?.focus();
-      });
-    }, []);
+          for (
+            let f = r === startRow ? startField : 0;
+            f < TABLE_FIELD_ORDER.length;
+            f++
+          ) {
+            const element = tableRefs.current[
+              `${r}-${refKey(TABLE_FIELD_ORDER[f])}`
+            ] as HTMLInputElement | null | undefined;
+
+            if (element && !element.disabled) {
+              focusElement(element);
+              return;
+            }
+          }
+        }
+
+        focusNote();
+      },
+      [rows, focusNote],
+    );
 
     /* =====================================================
-
      EXPOSE METHODS TO THE PARENT
-
-  ===================================================== */
+     ===================================================== */
 
     useImperativeHandle(
       ref,
@@ -533,13 +569,12 @@ const MatchingComponents = forwardRef<MatchingComponentsRef, Props>(
         focusNote,
         focusSave,
       }),
-
       [focusCustomerId, focusTableField, focusNote, focusSave],
     );
 
     /* =====================================================
- TABLE KEYBOARD NAVIGATION
-  ===================================================== */
+     TABLE KEYBOARD NAVIGATION
+     ===================================================== */
 
     const handleTableEscape = useCallback(() => {
       focusNote();
@@ -547,38 +582,9 @@ const MatchingComponents = forwardRef<MatchingComponentsRef, Props>(
 
     const handleTableEnter = useCallback(
       (rowIndex: number, field: TableField) => {
-        const currentIndex = tableFieldOrder.indexOf(field);
-
-        // Next field in the current row.
-
-        if (currentIndex < tableFieldOrder.length - 1) {
-          focusTableField(
-            rowIndex,
-
-            tableFieldOrder[currentIndex + 1],
-          );
-
-          return;
-        }
-
-        // First field in the next row.
-
-        const nextRow = rowIndex + 1;
-
-        if (nextRow < rows.length) {
-          focusTableField(
-            nextRow,
-
-            tableFieldOrder[0],
-          );
-
-          return;
-        }
-
-        // Last cell → Note.
-        focusNote();
+        focusNextTableCell(rowIndex, TABLE_FIELD_ORDER.indexOf(field) + 1);
       },
-      [rows.length, focusTableField, focusNote],
+      [focusNextTableCell],
     );
 
     const handleTableKeyDown = (
@@ -588,14 +594,13 @@ const MatchingComponents = forwardRef<MatchingComponentsRef, Props>(
     ) => {
       handleKeyboardAction(event, {
         onEnter: () => handleTableEnter(rowIndex, field),
-
         onEscape: handleTableEscape,
       });
     };
 
     /* =====================================================
-    CUSTOMER ID → CUSTOMER NAME
-  ===================================================== */
+     CUSTOMER ID → CUSTOMER NAME
+     ===================================================== */
 
     const handleCustomerIdChange = useCallback(
       async (id: string) => {
@@ -609,7 +614,7 @@ const MatchingComponents = forwardRef<MatchingComponentsRef, Props>(
 
     /* =====================================================
      CUSTOMER NAME → CUSTOMER ID
-  ===================================================== */
+     ===================================================== */
 
     const handleCustomerNameChange = useCallback(
       async (name: string) => {
@@ -628,7 +633,7 @@ const MatchingComponents = forwardRef<MatchingComponentsRef, Props>(
 
     /* =====================================================
      SEARCH
-  ===================================================== */
+     ===================================================== */
 
     const handleSearch = useCallback(async () => {
       if (!type.trim()) {
@@ -658,7 +663,6 @@ const MatchingComponents = forwardRef<MatchingComponentsRef, Props>(
 
       const options: DocumentOption[] = searchResults
         .filter((item: any) => item.fdocno && String(item.fdocno).trim() !== "")
-
         .map((item: any) => ({
           value: String(item.fdocno ?? ""),
           label: String(item.fdocno ?? ""),
@@ -675,8 +679,8 @@ const MatchingComponents = forwardRef<MatchingComponentsRef, Props>(
     }, [type, customerId, divisionId, gstrCoID, getMatchAccounts, onSearch]);
 
     /* =====================================================
-   SELECT STYLES
-   ===================================================== */
+     SELECT STYLES
+     ===================================================== */
 
     const selectStyles: StylesConfig<SelectOption, false> = {
       control: (base, state) => ({
@@ -696,7 +700,7 @@ const MatchingComponents = forwardRef<MatchingComponentsRef, Props>(
 
         ...(state.isFocused && {
           borderColor: "#9fdfbc",
-          boxShadow: "none",
+          boxShadow: "0 0 0 1px #9fdfbc",
         }),
       }),
 
@@ -749,8 +753,8 @@ const MatchingComponents = forwardRef<MatchingComponentsRef, Props>(
     };
 
     /* =====================================================
-   SELECT HELPER
-   ===================================================== */
+     SELECT HELPER
+     ===================================================== */
 
     const renderSelect = (
       id: string,
@@ -783,47 +787,40 @@ const MatchingComponents = forwardRef<MatchingComponentsRef, Props>(
     );
 
     /* =====================================================
-    FOOTER ACTIONS
-  ===================================================== */
+     FOOTER ACTIONS
+     ===================================================== */
 
     const buttons = ["Save", "Clear"];
 
     const [activeButton, setActiveButton] = useState(0);
 
-    const focusActionButton = useCallback(
-      (index: number) => {
-        const button = actionRefs.current[index];
+    const focusActionButton = useCallback((index: number) => {
+      const button = actionRefs.current[index];
 
-        if (!button) return;
+      if (!button) return;
 
-        setActiveButton(index);
+      setActiveButton(index);
 
-        requestAnimationFrame(() => {
-          button.focus();
-        });
-      },
-
-      [],
-    );
+      requestAnimationFrame(() => {
+        button.focus();
+      });
+    }, []);
 
     const executeAction = useCallback(
       (index: number) => {
         switch (index) {
           case 0:
             onSave();
-
             break;
 
           case 1:
             clearForm();
-
             break;
 
           default:
             break;
         }
       },
-
       [onSave, clearForm],
     );
 
@@ -832,7 +829,6 @@ const MatchingComponents = forwardRef<MatchingComponentsRef, Props>(
     ) => {
       switch (event.key) {
         case "ArrowRight":
-
         case "ArrowDown": {
           event.preventDefault();
 
@@ -844,7 +840,6 @@ const MatchingComponents = forwardRef<MatchingComponentsRef, Props>(
         }
 
         case "ArrowLeft":
-
         case "ArrowUp": {
           event.preventDefault();
 
@@ -867,7 +862,7 @@ const MatchingComponents = forwardRef<MatchingComponentsRef, Props>(
 
     /* =====================================================
      RENDER
-    ===================================================== */
+     ===================================================== */
 
     return (
       <div className="w-full border border-[#9aa4ad] bg-white font-sans text-[13px] text-slate-700">
@@ -905,6 +900,7 @@ const MatchingComponents = forwardRef<MatchingComponentsRef, Props>(
           handleCustomerIdChange={handleCustomerIdChange}
           handleCustomerNameChange={handleCustomerNameChange}
           handleSearch={handleSearch}
+          onDateEnter={() => focusNextTableCell(0, 0)}
           renderSelect={renderSelect}
           handleKeyboardAction={handleKeyboardAction}
         />

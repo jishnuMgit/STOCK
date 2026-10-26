@@ -997,12 +997,26 @@ export async function getStockTransferPrintService(
     [PstrCoID]
   );
 
+  // The To branch: the procedure joins it from the lines (f), but a line that has no To
+  // branch of its own would print it blank - so it is also read from the document's header
+  // (the same value the screen's Transfer To box shows), and its name looked up here.
+  let toBranchName = String(lines[0]?.ftobrname ?? "").trim();
+
+  if (toBranchName === "" && document.header?.fsttobrid) {
+    const toBranch = await pool.query(
+      `SELECT fbrname FROM dbo.tblbranch WHERE fcoid = $1 AND fbrid = $2`,
+      [PstrCoID, document.header.fsttobrid]
+    );
+
+    toBranchName = String(toBranch.rows[0]?.fbrname ?? "").trim();
+  }
+
   return {
     header: {
       fconame: String(company.rows[0]?.fconame ?? "").trim(),
-      // d (the row's own branch = the From branch) and f (the To branch) of the procedure
+      // d (the row's own branch = the From branch) of the procedure
       fbrname: String(lines[0]?.fbrname ?? ""),
-      ftobrname: String(lines[0]?.ftobrname ?? ""),
+      ftobrname: toBranchName,
       fdocno: txtDocNo,
       fdate: document.header?.fdate ?? null,
       fnote: document.header?.fnote ?? null,

@@ -1,11 +1,11 @@
 import React, { useEffect, useRef, useState } from "react";
 import Select, { type SingleValue } from "react-select";
 import { toast } from "react-toastify";
-import { X } from "lucide-react";
 import { useEnterAsTab } from "../../../hooks/useEnterAsTab";
 import { useAltShortcuts } from "../../../hooks/useAltShortcuts";
 import { useButtonPermissions } from "../../../hooks/useButtonPermissions";
-import { useConfirm } from "../../../hooks/useConfirm";
+import { useConfirmModal } from "../../../hooks/useConfirmModal";
+import { useDeleteToast } from "../../../hooks/useDeleteToast";
 import selectComponents from "../../../components/sharecomponents/selectComponents";
 
 // ============================================================
@@ -199,7 +199,9 @@ const UserLogin: React.FC = () => {
   const [userStatusOptions, setUserStatusOptions] = useState<SelectOption[]>([]);
 
   const handleEnterAsTab = useEnterAsTab();
-  const { confirm, confirmDialog } = useConfirm();
+  // the common themed question window and the standard delete messages
+  const { confirm, dialog } = useConfirmModal();
+  const { deleted, notDeleted } = useDeleteToast("User Login");
 
   // ============================================================
   // WHAT EACH SAVED USER LOOKED LIKE WHEN LOADED
@@ -334,6 +336,14 @@ const UserLogin: React.FC = () => {
       }
 
       await loadUsers();
+
+      // the cursor starts on the User ID of the first empty row (after the last
+      // saved user), ready for a new one
+      const firstEmptyRow = Object.keys(loadedRowsRef.current).length;
+
+      window.setTimeout(() => {
+        document.getElementById(`txtUserID-${firstEmptyRow}`)?.focus();
+      }, 0);
     };
 
     loadPage();
@@ -499,7 +509,10 @@ const UserLogin: React.FC = () => {
       return;
     }
 
-    const shouldDelete = await confirm("Are you sure you want to delete?");
+    const shouldDelete = await confirm({
+      title: "User Login",
+      message: "Do you want to delete ?",
+    });
 
     if (!shouldDelete) {
       return;
@@ -533,7 +546,7 @@ const UserLogin: React.FC = () => {
       const result = await response.json();
 
       if (!response.ok || !result.success) {
-        toast.error(result.message || "User could not be deleted.");
+        notDeleted(result.message);
 
         if (result.field) {
           document.getElementById(result.field)?.focus();
@@ -542,12 +555,12 @@ const UserLogin: React.FC = () => {
         return;
       }
 
-      toast.success(result.message || "User deleted successfully.");
+      deleted();
 
       await loadUsers();
     } catch (error) {
       console.error("deleteUserLoginRow error:", error);
-      toast.error("Cannot connect to User Login API.");
+      notDeleted();
     }
   };
 
@@ -590,6 +603,7 @@ const UserLogin: React.FC = () => {
   // ============================================================
 
   return (
+    <>
     <div
       onKeyDown={handleEnterAsTab}
       className="flex min-h-screen w-full items-center justify-center bg-white"
@@ -664,7 +678,7 @@ const UserLogin: React.FC = () => {
 
                 <th
                   className="
-                    w-[25%]
+                    w-[21%]
                     border-b
                     border-r
                     border-[#b7e8cf]
@@ -697,7 +711,7 @@ const UserLogin: React.FC = () => {
 
                 <th
                   className="
-                    w-[19%]
+                    w-[18%]
                     border-b
                     border-r
                     border-[#b7e8cf]
@@ -731,7 +745,7 @@ const UserLogin: React.FC = () => {
 
                 <th
                   className="
-                    w-[10%]
+                    w-[15%]
                     border-b
                     border-[#b7e8cf]
                     px-2
@@ -784,31 +798,6 @@ const UserLogin: React.FC = () => {
                         autoComplete="off"
                         className={inputClass}
                       />
-
-                      {user.txtUserID.trim() !== "" &&
-                        (user.txtOriginal_UserID === "" || perms.delete) && (
-                        <button
-                          type="button"
-                          onClick={() => handleDeleteRow(index)}
-                          className="
-                            inline-flex
-                            h-[23px]
-                            w-[16px]
-                            shrink-0
-                            items-center
-                            justify-center
-                            rounded
-                            text-[#999999]
-                            hover:text-red-600
-                          "
-                          aria-label={`Delete ${user.txtUserID}`}
-                        >
-                          <X
-                            size={10}
-                            style={{ transform: "translateY(-3px)" }}
-                          />
-                        </button>
-                      )}
                     </div>
                   </td>
 
@@ -945,24 +934,54 @@ const UserLogin: React.FC = () => {
                       p-2
                     "
                   >
-                    <Select
-                      components={selectComponents}
-                      inputId={`lkpUserStatus-${index}`}
-                      options={userStatusOptions}
-                      value={
-                        userStatusOptions.find(
-                          (option) =>
-                            option.value === user.lkpUserStatus
-                        ) ?? null
-                      }
-                      onChange={(option) =>
-                        handleUserStatusChange(index, option)
-                      }
-                      isClearable={false}
-                      isSearchable={false}
-                      placeholder=""
-                      styles={selectStyles}
-                    />
+                    <div className="flex items-center gap-1">
+                      <div className="min-w-0 flex-1">
+                        <Select
+                          components={selectComponents}
+                          inputId={`lkpUserStatus-${index}`}
+                          options={userStatusOptions}
+                          value={
+                            userStatusOptions.find(
+                              (option) =>
+                                option.value === user.lkpUserStatus
+                            ) ?? null
+                          }
+                          onChange={(option) =>
+                            handleUserStatusChange(index, option)
+                          }
+                          isClearable={false}
+                          isSearchable={false}
+                          placeholder=""
+                          styles={selectStyles}
+                        />
+                      </div>
+
+                      {/* the X of the row, at the right end */}
+                      {user.txtUserID.trim() !== "" &&
+                        (user.txtOriginal_UserID === "" || perms.delete) && (
+                        <button
+                          type="button"
+                          tabIndex={-1}
+                          onClick={() => handleDeleteRow(index)}
+                          className="
+                            inline-flex
+                            h-[23px]
+                            w-[20px]
+                            text-[12px]
+                            leading-none
+                            shrink-0
+                            items-center
+                            justify-center
+                            rounded
+                            text-[#999999]
+                            hover:text-red-600
+                          "
+                          aria-label={`Delete ${user.txtUserID}`}
+                        >
+                          ✕
+                        </button>
+                      )}
+                    </div>
                   </td>
                 </tr>
               ))}
@@ -1008,8 +1027,12 @@ const UserLogin: React.FC = () => {
         </div>
       </div>
 
-      {confirmDialog}
     </div>
+
+    {/* the "Do you want to delete ?" question - outside the root div so the page's
+        Enter handling does not take the Enter of the Yes / No buttons */}
+    {dialog}
+    </>
   );
 };
 

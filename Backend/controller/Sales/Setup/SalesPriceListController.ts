@@ -303,7 +303,7 @@ export const modifySalesPriceList = async (
 
     return res.status(200).json({
       success: true,
-      message: "Modified",
+      message: "Sales Price List modified successfully",
       mode: result.mode,
       count: changedRows.length,
     });

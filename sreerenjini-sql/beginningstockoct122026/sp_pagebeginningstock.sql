@@ -33,12 +33,18 @@
 --     the note with M (a call to M without it would clear the notes).
 --   * fnote is varchar(100).
 --
--- ADDED: the saving transaction number (fsavingtransno)
---   * p_strsavingtransno is the document's saving number (from dbo.getnexttransno,
+-- ADDED: the saving number (fsavingno, renamed from fsavingtransno)
+--   * p_strsavingno is the document's saving number (from dbo.getnexttransno,
 --     asked once per document by the backend).
 --   * mode S writes it into the line it inserts;
 --   * mode M gives it to every line that has none yet (COALESCE): lines that
 --     already carry one keep it, so a Modify never renumbers the document.
+--
+-- ADDED: the item group of every line (tblstocktrans.fitemgroupid, varchar(12)):
+--   * modes S and M1 write dbo.getitemgroupid(co, item) on the line;
+--   * mode M gives it to every line that has none yet (COALESCE), so a document saved
+--     before the column existed is filled when it is modified.
+--   * Needs:  ALTER TABLE dbo.tblstocktrans ADD COLUMN fitemgroupid VARCHAR(12);  and dbo.getitemgroupid.
 --
 -- As in the original, the year is used ONLY by mode S (it writes fyear); every
 -- other mode finds its rows by company + branch + doc type (+ Sl.# for M1 / D1).
@@ -57,8 +63,12 @@
 -- make a SECOND procedure next to the old one and calls would become ambiguous.
 -- This drops the old argument list first (nothing happens if it is not there):
 DROP PROCEDURE IF EXISTS dbo.sp_pagebeginningstock(character varying, character varying, smallint, character varying, character varying, character varying, timestamp without time zone, boolean, character varying, smallint, character varying, character varying, numeric, numeric, numeric, smallint, character varying, character varying, refcursor);
--- ... the one before the saving transaction number was added (p_strnote, no p_strsavingtransno)
+-- ... the one before the saving transaction number was added (p_strnote, no p_strsavingno)
 DROP PROCEDURE IF EXISTS dbo.sp_pagebeginningstock(character varying, character varying, smallint, character varying, character varying, character varying, timestamp without time zone, boolean, character varying, smallint, character varying, character varying, numeric, numeric, numeric, smallint, character varying, character varying, character varying, refcursor);
+
+-- ... the version whose last input was named p_strsavingtransno (a parameter cannot be renamed
+-- with CREATE OR REPLACE, so the old one goes first)
+DROP PROCEDURE IF EXISTS dbo.sp_pagebeginningstock(character varying, character varying, character varying, character varying, character varying, character varying, timestamp without time zone, boolean, character varying, smallint, character varying, character varying, numeric, numeric, numeric, smallint, character varying, character varying, character varying, character varying, refcursor);
 
 -- ... and the version with the year as a smallint (p_pintyear), the one in use until now
 DROP PROCEDURE IF EXISTS dbo.sp_pagebeginningstock(character varying, character varying, smallint, character varying, character varying, character varying, timestamp without time zone, boolean, character varying, smallint, character varying, character varying, numeric, numeric, numeric, smallint, character varying, character varying, character varying, character varying, refcursor);
@@ -83,7 +93,7 @@ CREATE OR REPLACE PROCEDURE dbo.sp_pagebeginningstock(
     IN    p_pstruserid       character varying DEFAULT NULL::character varying,
     IN    p_strmenuname      character varying DEFAULT NULL::character varying,
     IN    p_strnote          character varying DEFAULT NULL::character varying,
-    IN    p_strsavingtransno character varying DEFAULT NULL::character varying,
+    IN    p_strsavingno character varying DEFAULT NULL::character varying,
     INOUT p_result_cursor    refcursor         DEFAULT 'cur_beginningstock'::refcursor)
  LANGUAGE plpgsql
 AS $procedure$
@@ -131,14 +141,15 @@ BEGIN
             fcoid, fyear, fbrid, fdoctype, fdocno, fdate, fslno,
             fitemid, funit, fqtyin, funitcost, ftotalcost,
             forigin, fpost, ftransno,
-            fcuserid, fcuserdate, fnote, fsavingtransno
+            fcuserid, fcuserdate, fnote, fsavingno, fitemgroupid
         )
         VALUES (
             p_pstrcoid, p_pstryear, p_strbrid, p_strdoctype, p_strdocno, p_dtpdate, p_intslno,
             p_stritemid, p_strunit,
             COALESCE(p_numqtyin, 0), COALESCE(p_numunitcost, 0), COALESCE(p_numtotalcost, 0),
             'UI', p_blnpost, p_strtransno,
-            p_pstruserid, now(), NULLIF(p_strnote, ''), p_strsavingtransno
+            p_pstruserid, now(), NULLIF(p_strnote, ''), p_strsavingno,
+            dbo.getitemgroupid(p_pstrcoid, p_stritemid)
         );
 
     ELSIF p_strmode = 'M' THEN
@@ -163,7 +174,8 @@ BEGIN
             fmuserid   = v_muserid,
             fmuserdate = v_muserdate,
             fnote      = NULLIF(p_strnote, ''),
-            fsavingtransno = COALESCE(fsavingtransno, p_strsavingtransno)
+            fsavingno  = COALESCE(fsavingno, p_strsavingno),
+            fitemgroupid = COALESCE(fitemgroupid, dbo.getitemgroupid(fcoid, fitemid))
         WHERE fcoid    = p_pstrcoid
           AND fbrid    = p_strbrid
           AND fdoctype = p_strdoctype;
@@ -173,6 +185,7 @@ BEGIN
         UPDATE dbo.tblstocktrans SET
             fslno      = p_intslno,
             fitemid    = p_stritemid,
+            fitemgroupid = dbo.getitemgroupid(p_pstrcoid, p_stritemid),
             funit      = p_strunit,
             fqtyin     = COALESCE(p_numqtyin, 0),
             funitcost  = COALESCE(p_numunitcost, 0),
