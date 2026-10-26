@@ -31,8 +31,6 @@ const getCoId = () => localStorage.getItem("PstrCoID") ?? "";
 
 const num = (v: string) => (Number.isFinite(Number(v)) ? Number(v) : 0);
 
-const norm = (v: string) => v.trim().toLowerCase();
-
 /* Recalculate one row. No foreign-currency price any more:
    the user types Unit Price, everything else follows from it. */
 const recalcRow = (row: PurchaseRow, rate: number): PurchaseRow => {
@@ -79,7 +77,6 @@ const PurchaseInvoicePage: React.FC = () => {
     [],
   );
 
-  console.log("rows", rows);
   const [invoiceTypes, setInvoiceTypes] = useState<InvoiceTypeOption[]>([]);
   const [currencies, setCurrencies] = useState<string[]>([]);
 
@@ -87,12 +84,27 @@ const PurchaseInvoicePage: React.FC = () => {
   // Default type is Cash (C), where the supplier name comes from Misc. Sup.
   const [miscSuppliers, setMiscSuppliers] = useState<CashSupplier[]>([]);
   const [miscMode, setMiscMode] = useState("No");
-  const [items, setItems] = useState<Item[]>([]);
+
+  // Items are stored together with the branch they were fetched for, so no
+  // synchronous reset is needed inside the effect. Items for a different
+  // branch (or no branch / no company) are simply not exposed.
+  const [itemsState, setItemsState] = useState<{ brId: string; list: Item[] }>({
+    brId: "",
+    list: [],
+  });
 
   const [suppliersById, setSuppliersById] = useState<SupplierLookup[]>([]);
   const [suppliersByName, setSuppliersByName] = useState<SupplierLookup[]>([]);
   const [expenseRows, setExpenseRows] =
     useState<PurchaseExpenseRow[]>(createExpenseRows);
+
+  const items = useMemo<Item[]>(
+    () =>
+      getCoId() && header.brId && itemsState.brId === header.brId
+        ? itemsState.list
+        : [],
+    [itemsState, header.brId],
+  );
 
   const totalExpense = useMemo(
     () => expenseRows.reduce((t, r) => t + num(r.amountSAR), 0),
@@ -189,20 +201,17 @@ const PurchaseInvoicePage: React.FC = () => {
   /* items of the selected branch */
   useEffect(() => {
     const coId = getCoId();
-
-    if (!coId || !header.brId) {
-      setItems([]);
-      return;
-    }
+    if (!coId || !header.brId) return; // nothing to fetch, no setState here
 
     let cancelled = false;
+    const brId = header.brId;
 
-    fetchItems(coId, header.brId)
+    fetchItems(coId, brId)
       .then((list) => {
-        if (!cancelled) setItems(list);
+        if (!cancelled) setItemsState({ brId, list });
       })
       .catch(() => {
-        if (!cancelled) setItems([]);
+        if (!cancelled) setItemsState({ brId, list: [] });
       });
 
     return () => {
@@ -277,6 +286,7 @@ const PurchaseInvoicePage: React.FC = () => {
     [branches, invoiceTypes, currencies, suppliersById, suppliersByName],
   );
 
+  /* Reload the Misc. Sup. combo (used after a new one is saved) */
   const loadMiscSuppliers = useCallback(async () => {
     try {
       setMiscSuppliers(await fetchCashSuppliers());
@@ -285,9 +295,23 @@ const PurchaseInvoicePage: React.FC = () => {
     }
   }, [fetchCashSuppliers]);
 
+  /* Initial load of Misc. suppliers: setState only inside the promise
+     callbacks, with a cancel guard */
   useEffect(() => {
-    void loadMiscSuppliers();
-  }, [loadMiscSuppliers]);
+    let cancelled = false;
+
+    fetchCashSuppliers()
+      .then((list) => {
+        if (!cancelled) setMiscSuppliers(list);
+      })
+      .catch(() => {
+        if (!cancelled) setMiscSuppliers([]);
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [fetchCashSuppliers]);
 
   /* The GET returns no supplier name, so when it is empty take it from the
      supplier lookup by ID. Defined before the handlers that use it. */

@@ -387,8 +387,9 @@ const RptChartOfAccountPage: React.FC<RptChartOfAccountPageProps> = ({
       const kind = asPdf ? "pdf" : "xlsx";
       const saved = await saveFile(blob, `${fileBase}.${kind}`, kind);
       if (saved) {
-        setPreview(null); // cancelled "Save as": the preview stays
+        
         toast.success(asPdf ? "PDF file downloaded" : "Excel file downloaded");
+        setPreview(null); // cancelled "Save as": the preview stays
       }
     } catch {
       toast.error(
