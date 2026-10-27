@@ -81,7 +81,7 @@ const useMatching = () => {
       setDivisionLoading(true);
       try {
         const result = await postJson(`${API}/Receipt/getDivID`, {
-          customerid: strCSAccountID,
+          accountId: strCSAccountID,
         });
 
         if (!Array.isArray(result?.data)) return [];

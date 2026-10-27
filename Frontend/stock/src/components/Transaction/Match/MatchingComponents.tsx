@@ -1,6 +1,7 @@
 import React, {
   forwardRef,
   useCallback,
+  useEffect,
   useImperativeHandle,
   useRef,
   useState,
@@ -489,6 +490,18 @@ const MatchingComponents = forwardRef<MatchingComponentsRef, Props>(
       DocumentOption[]
     >([]);
 
+    const resetResults = useCallback(() => {
+      setDocumentNoOptions([]);
+      onSearch([]); // MatchPage clears searchResults, receiptNo and the table rows
+    }, [onSearch]);
+
+    const canSearch = type.trim() !== "" && customerId.trim() !== "";
+
+    useEffect(() => {
+      setDocumentNoOptions([]);
+      onSearch([]); // MatchPage clears searchResults, receiptNo and the table rows
+    }, [customerId, type, divisionId]); // eslint-disable-line react-hooks/exhaustive-deps
+
     /* =====================================================
      FOCUS HELPERS
      (order matters: focusNote must be defined before
@@ -603,20 +616,18 @@ const MatchingComponents = forwardRef<MatchingComponentsRef, Props>(
 
     const handleCustomerIdChange = useCallback(
       async (id: string) => {
+        resetResults();
         setCustomerId(id);
         const customer = customerOptions.find((option) => option.value === id);
         setCustomerName(customer?.label ?? "");
         await getDiv(id);
       },
-      [customerOptions, setCustomerId, setCustomerName, getDiv],
+      [resetResults, customerOptions, setCustomerId, setCustomerName, getDiv],
     );
-
-    /* =====================================================
-     CUSTOMER NAME → CUSTOMER ID
-     ===================================================== */
 
     const handleCustomerNameChange = useCallback(
       async (name: string) => {
+        resetResults();
         setCustomerName(name);
 
         const customer = customerNameOptions.find(
@@ -627,7 +638,13 @@ const MatchingComponents = forwardRef<MatchingComponentsRef, Props>(
         setCustomerId(accountId);
         await getDiv(accountId);
       },
-      [customerNameOptions, setCustomerId, setCustomerName, getDiv],
+      [
+        resetResults,
+        customerNameOptions,
+        setCustomerId,
+        setCustomerName,
+        getDiv,
+      ],
     );
 
     /* =====================================================
@@ -642,11 +659,6 @@ const MatchingComponents = forwardRef<MatchingComponentsRef, Props>(
 
       if (!customerId.trim()) {
         console.warn("Please select 'Customer'");
-        return;
-      }
-
-      if (!divisionId.trim()) {
-        console.warn("Please select 'Division'");
         return;
       }
 
@@ -904,6 +916,7 @@ const MatchingComponents = forwardRef<MatchingComponentsRef, Props>(
           onDateEnter={() => focusNextTableCell(0, 0)}
           renderSelect={renderSelect}
           handleKeyboardAction={handleKeyboardAction}
+          canSearch={canSearch}
         />
 
         <MatchTable

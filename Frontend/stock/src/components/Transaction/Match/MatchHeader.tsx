@@ -49,6 +49,7 @@ export interface MatchHeaderProps {
   creditDocumentRef: React.RefObject<HTMLDivElement | null>;
   documentNoRef: React.RefObject<HTMLDivElement | null>;
   dateRef: React.RefObject<HTMLInputElement | null>;
+  canSearch: boolean;
 
   divisionLoading: boolean;
 
@@ -112,6 +113,7 @@ const MatchHeader: React.FC<MatchHeaderProps> = ({
   creditDocumentRef,
   documentNoRef,
   dateRef,
+  canSearch,
 
   handleCustomerIdChange,
   handleCustomerNameChange,
@@ -260,28 +262,33 @@ const MatchHeader: React.FC<MatchHeaderProps> = ({
           <button
             id="Searchbtn"
             type="button"
+            disabled={!canSearch}
             className="
-              h-7.25
-              rounded-[3px]
-              border
-              border-[#b7c7d7]
-              bg-linear-to-b
-              from-white
-              to-[#e7eef5]
-              px-3.5
-              text-[13px]
-              text-slate-700
-              hover:from-white
-              hover:to-[#dce8f1]
-              focus:border-[#9fdfbc]
-              focus:outline-none
-              focus:ring-1
-              focus:ring-[#9fdfbc]
-            "
+    h-7.25
+    rounded-[3px]
+    border
+    border-[#b7c7d7]
+    bg-linear-to-b
+    from-white
+    to-[#e7eef5]
+    px-3.5
+    text-[13px]
+    text-slate-700
+    hover:from-white
+    hover:to-[#dce8f1]
+    focus:border-[#9fdfbc]
+    focus:outline-none
+    focus:ring-1
+    focus:ring-[#9fdfbc]
+    disabled:cursor-not-allowed
+    disabled:opacity-50
+    disabled:hover:from-white
+    disabled:hover:to-[#e7eef5]
+  "
             onClick={handleSearch}
             onKeyDown={async (event) => {
-              if (event.key !== "Enter") return;
-              event.preventDefault(); // stop the native click, we search once here
+              if (event.key !== "Enter" || !canSearch) return;
+              event.preventDefault();
               await handleSearch();
               documentNoRef.current?.focus();
             }}
