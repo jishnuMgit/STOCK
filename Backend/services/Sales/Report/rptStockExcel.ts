@@ -4,11 +4,13 @@
 //             Qty. In / Qty. Out / Balance, and a Total row for each item.
 //   Summary:  Item ID / Item Name / Unit / Opening / Qty. In / Qty. Out / Closing, and a
 //             Total row at the end.
+// With more than one branch the report has one section per branch ("Branch : Jeddah", its items,
+// then the next branch ...); the Summary gives each branch its own Total row.
 import ExcelJS from "exceljs";
 
 import type {
-  DetailItem,
-  SummaryLine,
+  DetailBranch,
+  SummaryBranch,
   SummaryTotals,
 } from "./rptStockService.js";
 
@@ -20,10 +22,10 @@ export type StockReport = {
   txtBranch: string;
   // "<user>  dd/mm/yyyy hh:mm"
   txtReportInfo: string;
-  // the Detailed report
-  detail: DetailItem[];
-  // the Summary report
-  summary: { lines: SummaryLine[]; totals: SummaryTotals };
+  // the Detailed report: one entry per branch
+  detail: DetailBranch[];
+  // the Summary report: one entry per branch, and the Total of the report
+  summary: { branches: SummaryBranch[]; totals: SummaryTotals };
 };
 
 const BORDER_COLOR = { argb: "FFC7D1E4" };
@@ -132,85 +134,114 @@ export const buildStockWorkbook = async (report: StockReport): Promise<Buffer> =
   ws.views = [{ state: "frozen", ySplit: 4 }];
   ws.pageSetup.printTitlesRow = "1:4";
 
-  if (detailed) {
-    // ---- by item ----
-    for (const item of report.detail) {
-      const itemRow = ws.addRow([`Item : ${item.lkpItemID}   ${item.txtItemName}`]);
-      ws.mergeCells(itemRow.number, 1, itemRow.number, columns);
-      itemRow.getCell(1).font = { bold: true };
-      itemRow.getCell(1).alignment = { horizontal: "left" };
+  // "Branch : Jeddah" (one row over the whole width)
+  const addBranchRow = (name: string) => {
+    const row = ws.addRow([`Branch : ${name}`]);
+    ws.mergeCells(row.number, 1, row.number, columns);
+    row.getCell(1).font = { bold: true };
+    row.getCell(1).alignment = { horizontal: "left" };
+  };
 
-      for (const line of item.lines) {
+  if (detailed) {
+    // the branch sections only when there is more than one branch
+    const sections = report.detail.length > 1;
+
+    for (const branch of report.detail) {
+      if (sections) addBranchRow(branch.txtBranchName);
+
+      // ---- by item ----
+      for (const item of branch.items) {
+        const itemRow = ws.addRow([`Item : ${item.lkpItemID}   ${item.txtItemName}`]);
+        ws.mergeCells(itemRow.number, 1, itemRow.number, columns);
+        itemRow.getCell(1).font = { bold: true };
+        itemRow.getCell(1).alignment = { horizontal: "left" };
+
+        for (const line of item.lines) {
+          const row = ws.addRow([
+            ddmmmyy(line.txtDate),
+            line.txtDocType,
+            line.txtDocNo,
+            line.txtTxnNo,
+            line.txtUnitCost === null ? "" : line.txtUnitCost,
+            line.txtQtyIn,
+            line.txtQtyOut,
+            line.txtBalance,
+          ]);
+
+          row.eachCell({ includeEmpty: true }, (cell, col) => {
+            cell.border = thin;
+            cell.alignment = { horizontal: col >= rightFrom ? "right" : "left" };
+            if (col === 5) cell.numFmt = COST_FORMAT;
+            if (col >= 6) cell.numFmt = QTY_FORMAT;
+          });
+        }
+
+        // the Total row of the item: Qty. In, Qty. Out and the final balance
+        const total = ws.addRow([
+          "Total :",
+          "",
+          "",
+          "",
+          "",
+          item.txtTotalIn,
+          item.txtTotalOut,
+          item.txtTotalBalance,
+        ]);
+        ws.mergeCells(total.number, 1, total.number, 5);
+
+        total.eachCell({ includeEmpty: true }, (cell, col) => {
+          cell.border = thin;
+          cell.font = { bold: true };
+          cell.alignment = { horizontal: "right" };
+          if (col >= 6) cell.numFmt = QTY_FORMAT;
+        });
+      }
+    }
+  } else {
+    // the branch sections only when there is more than one branch
+    const sections = report.summary.branches.length > 1;
+
+    // a Total row: the label over the first 3 columns, then the 4 quantities
+    const addTotal = (label: string, t: SummaryTotals) => {
+      const total = ws.addRow([label, "", "", t.txtQtyOpening, t.txtQtyIn, t.txtQtyOut, t.txtQtyClosing]);
+      ws.mergeCells(total.number, 1, total.number, 3);
+
+      total.eachCell({ includeEmpty: true }, (cell, col) => {
+        cell.border = thin;
+        cell.font = { bold: true };
+        cell.alignment = { horizontal: "right" };
+        if (col >= 4) cell.numFmt = QTY_FORMAT;
+      });
+    };
+
+    for (const branch of report.summary.branches) {
+      if (sections) addBranchRow(branch.txtBranchName);
+
+      // ---- one row per item ----
+      for (const line of branch.lines) {
         const row = ws.addRow([
-          ddmmmyy(line.txtDate),
-          line.txtDocType,
-          line.txtDocNo,
-          line.txtTxnNo,
-          line.txtUnitCost === null ? "" : line.txtUnitCost,
+          line.lkpItemID,
+          line.txtItemName,
+          line.txtUnit,
+          line.txtQtyOpening,
           line.txtQtyIn,
           line.txtQtyOut,
-          line.txtBalance,
+          line.txtQtyClosing,
         ]);
 
         row.eachCell({ includeEmpty: true }, (cell, col) => {
           cell.border = thin;
           cell.alignment = { horizontal: col >= rightFrom ? "right" : "left" };
-          if (col === 5) cell.numFmt = COST_FORMAT;
-          if (col >= 6) cell.numFmt = QTY_FORMAT;
+          if (col >= 4) cell.numFmt = QTY_FORMAT;
         });
       }
 
-      // the Total row of the item: Qty. In, Qty. Out and the final balance
-      const total = ws.addRow([
-        "Total :",
-        "",
-        "",
-        "",
-        "",
-        item.txtTotalIn,
-        item.txtTotalOut,
-        item.txtTotalBalance,
-      ]);
-      ws.mergeCells(total.number, 1, total.number, 5);
-
-      total.eachCell({ includeEmpty: true }, (cell, col) => {
-        cell.border = thin;
-        cell.font = { bold: true };
-        cell.alignment = { horizontal: col === 1 ? "right" : "right" };
-        if (col >= 6) cell.numFmt = QTY_FORMAT;
-      });
-    }
-  } else {
-    // ---- one row per item ----
-    for (const line of report.summary.lines) {
-      const row = ws.addRow([
-        line.lkpItemID,
-        line.txtItemName,
-        line.txtUnit,
-        line.txtQtyOpening,
-        line.txtQtyIn,
-        line.txtQtyOut,
-        line.txtQtyClosing,
-      ]);
-
-      row.eachCell({ includeEmpty: true }, (cell, col) => {
-        cell.border = thin;
-        cell.alignment = { horizontal: col >= rightFrom ? "right" : "left" };
-        if (col >= 4) cell.numFmt = QTY_FORMAT;
-      });
+      // ---- the Total row of the branch ----
+      if (sections) addTotal("Total :", branch.totals);
     }
 
     // ---- the Total row of the report ----
-    const t = report.summary.totals;
-    const total = ws.addRow(["Total :", "", "", t.txtQtyOpening, t.txtQtyIn, t.txtQtyOut, t.txtQtyClosing]);
-    ws.mergeCells(total.number, 1, total.number, 3);
-
-    total.eachCell({ includeEmpty: true }, (cell, col) => {
-      cell.border = thin;
-      cell.font = { bold: true };
-      cell.alignment = { horizontal: "right" };
-      if (col >= 4) cell.numFmt = QTY_FORMAT;
-    });
+    addTotal(sections ? "Grand Total :" : "Total :", report.summary.totals);
   }
 
   return Buffer.from(await wb.xlsx.writeBuffer());

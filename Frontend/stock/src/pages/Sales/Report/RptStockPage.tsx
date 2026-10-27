@@ -7,6 +7,11 @@ import dayjs from "dayjs";
 import customParseFormat from "dayjs/plugin/customParseFormat";
 import { toast } from "react-toastify";
 import RadioGroup from "../../../components/common/RadioGroup";
+import { useEnterAsTab } from "../../../hooks/useEnterAsTab";
+import { useAltShortcuts } from "../../../hooks/useAltShortcuts";
+import { useGridCellFocus } from "../../../hooks/useGridCellFocus";
+import { useAdvanceAfterSelect } from "../../../hooks/useAdvanceAfterSelect";
+import { useInitialFocus } from "../../../hooks/useInitialFocus";
 import ReportPreview from "../../../components/common/ReportPreview";
 import { buildStockPdf } from "../../../components/Sales/Report/RptStock/RptStockPdf";
 import {
@@ -122,8 +127,12 @@ const groupNameComponents = makePairComponents("Group ID", "Group Name", true, t
 const itemIdComponents = makePairComponents("Item ID", "Item Name", false, true);
 const itemNameComponents = makePairComponents("Item ID", "Item Name", true, true);
 
-// how far the Group Name / Item Name list hangs past its box (its ID column)
+// how far the Group Name list hangs past its box (its Group ID column)
 const NAME_MENU_HANG = 120;
+
+// how far the Item Name list hangs past its box (its Item ID column): an Item ID can be long
+// (ACCSS-1.5MM-CABLE), so this column is wider
+const ITEM_NAME_MENU_HANG = 200;
 
 // how far the lists of the Item Range boxes hang past their box
 const RANGE_MENU_HANG = 210;
@@ -252,6 +261,15 @@ const AppDatePicker: React.FC<AppDatePickerProps> = ({
 );
 
 const RptStockPage: React.FC = () => {
+  // Enter moves on like Tab; the box the cursor is in is outlined; after a pick from a list the
+  // cursor goes on
+  const handleEnterAsTab = useEnterAsTab();
+  const { cellFocusClass } = useGridCellFocus();
+  const { advanceAfterPick, advanceOnEnter } = useAdvanceAfterSelect();
+
+  // the lookups have been asked for (found or not): the cursor can start
+  const [lookupsLoaded, setLookupsLoaded] = useState(false);
+
   const [rdgBranch, setRdgBranch] = useState("One Branch"); // rdgBranch
   const [branch, setBranch] = useState<Option | null>(null); // lkpBranch
 
@@ -315,7 +333,7 @@ const RptStockPage: React.FC = () => {
       }
     };
 
-    loadBranches();
+    loadBranches().finally(() => setLookupsLoaded(true));
   }, []);
   const [rdgByItem, setRdgByItem] = useState("By Item"); // rdgByItem: By Item / By Group
 
@@ -517,6 +535,15 @@ const RptStockPage: React.FC = () => {
     return response.blob();
   };
 
+  // the cursor starts on the Branch box
+  useInitialFocus(lookupsLoaded, "lkpBranch");
+
+  // Alt+P -> Print, Alt+C -> Clear (the underlined letters on the buttons)
+  useAltShortcuts({
+    p: handlePrint,
+    c: handleClear,
+  });
+
   const itemRadioDisabled = rdgByItem !== "By Item";
   const groupRadioDisabled = rdgByItem !== "By Group";
   const oneItemDisabled =
@@ -525,7 +552,10 @@ const RptStockPage: React.FC = () => {
   const groupDisabled = rdgByItem !== "By Group" || rdgItemGroup !== "One Item Group";
 
   return (
-    <div className="flex min-h-screen w-full items-start justify-center bg-white px-4 py-4">
+    <div
+      onKeyDown={handleEnterAsTab}
+      className="flex min-h-screen w-full items-start justify-center bg-white px-4 py-4"
+    >
       <div className="min-h-fit w-240 max-w-full bg-white p-0">
         <main className="w-full overflow-hidden border border-gray-400 bg-white">
            <header
@@ -555,6 +585,7 @@ const RptStockPage: React.FC = () => {
             <div className="grid grid-cols-[168px_1fr] gap-x-4 gap-y-3">
               {/* Branch */}
               <RadioGroup
+                className={cellFocusClass}
                 name="rdgBranch"
                 value={rdgBranch}
                 options={[
@@ -564,13 +595,19 @@ const RptStockPage: React.FC = () => {
                 onChange={setRdgBranch}
               />
               <div className="pt-3">
-                <div className="w-[250px]">
+                <div
+                  className={`w-[250px] ${cellFocusClass}`}
+                  onKeyDown={(event) => advanceOnEnter(event)}
+                >
                   <Select
                     inputId="lkpBranch"
                     instanceId="lkpBranch"
                     options={branchOptions}
                     value={branch}
-                    onChange={setBranch}
+                    onChange={(option) => {
+                      setBranch(option);
+                      if (option) advanceAfterPick("lkpBranch");
+                    }}
                     isDisabled={rdgBranch !== "One Branch"}
                     noOptionsMessage={() => "No Branch Found"}
                     {...branchProps}
@@ -580,6 +617,7 @@ const RptStockPage: React.FC = () => {
 
               {/* By Group / By Item selector */}
               <RadioGroup
+                className={cellFocusClass}
                 name="rdgByItem"
                 value={rdgByItem}
                 options={[
@@ -597,6 +635,7 @@ const RptStockPage: React.FC = () => {
 
               {/* Group filters: enabled only when By Group is selected */}
               <RadioGroup
+                className={cellFocusClass}
                 name="rdgItemGroup"
                 value={rdgItemGroup}
                 options={[
@@ -609,14 +648,20 @@ const RptStockPage: React.FC = () => {
               <div className="flex flex-col gap-3 pt-3">
                 {!groupDisabled && (
                   <div className="grid grid-cols-[190px_1fr]">
-                    <div>
+                    <div
+                      className={cellFocusClass}
+                      onKeyDown={(event) => advanceOnEnter(event, ["lkpOneItemGroupName"])}
+                    >
                       <Select<PairOption, false>
                         inputId="lkpOneItemGroupID"
                         instanceId="lkpOneItemGroupID"
                         name="lkpOneItemGroupID"
                         options={groupIdOptions}
                         value={groupIdOptions.find((o) => o.value === groupId) ?? null}
-                        onChange={(option) => setGroupId(option?.value ?? "")}
+                        onChange={(option) => {
+                          setGroupId(option?.value ?? "");
+                          if (option) advanceAfterPick("lkpOneItemGroupID", ["lkpOneItemGroupName"]);
+                        }}
                         isDisabled={groupDisabled}
                         components={groupIdComponents}
                         styles={makePairDividedMenuStyles(groupIdHang)}
@@ -627,14 +672,21 @@ const RptStockPage: React.FC = () => {
                         {...pairProps}
                       />
                     </div>
-                    <div className="-ml-px">
+                    <div
+                      className={`-ml-px ${cellFocusClass}`}
+                      style={{ marginRight: NAME_MENU_HANG }}
+                      onKeyDown={(event) => advanceOnEnter(event)}
+                    >
                       <Select<PairOption, false>
                         inputId="lkpOneItemGroupName"
                         instanceId="lkpOneItemGroupName"
                         name="lkpOneItemGroupName"
                         options={groupNameOptions}
                         value={groupNameOptions.find((o) => o.value === groupId) ?? null}
-                        onChange={(option) => setGroupId(option?.value ?? "")}
+                        onChange={(option) => {
+                          setGroupId(option?.value ?? "");
+                          if (option) advanceAfterPick("lkpOneItemGroupName");
+                        }}
                         isDisabled={groupDisabled}
                         components={groupNameComponents}
                         styles={makePairDividedMenuStyles(NAME_MENU_HANG)}
@@ -649,6 +701,7 @@ const RptStockPage: React.FC = () => {
 
               {/* Item filters: enabled only when By Item is selected */}
               <RadioGroup
+                className={cellFocusClass}
                 name="rdgItem"
                 value={rdgItem}
                 options={[
@@ -663,13 +716,17 @@ const RptStockPage: React.FC = () => {
                 {rdgItem !== "All Item" &&
                   (rdgItem === "Item Range" ? (
                     <div className="grid grid-cols-3 gap-2 w-[85%] mt-6">
-                      <Select<PairOption, false>
+                      <div className={cellFocusClass} onKeyDown={(event) => advanceOnEnter(event)}>
+                        <Select<PairOption, false>
                         inputId="lkpFromItem"
                         instanceId="lkpFromItem"
                         name="lkpFromItem"
                         options={itemIdOptions}
                         value={itemIdOptions.find((o) => o.value === fromItem) ?? null}
-                        onChange={(option) => setFromItem(option?.value ?? "")}
+                        onChange={(option) => {
+                          setFromItem(option?.value ?? "");
+                          if (option) advanceAfterPick("lkpFromItem");
+                        }}
                         isDisabled={itemRadioDisabled}
                         placeholder="From Item"
                         aria-label="From Item"
@@ -678,14 +735,20 @@ const RptStockPage: React.FC = () => {
                         noOptionsMessage={() => "No Item Found"}
                         {...pairProps}
                       />
+                      </div>
 
-                      <Select<PairOption, false>
+                      <div className={cellFocusClass} onKeyDown={(event) => advanceOnEnter(event)}>
+
+                        <Select<PairOption, false>
                         inputId="lkpToItem"
                         instanceId="lkpToItem"
                         name="lkpToItem"
                         options={itemIdOptions}
                         value={itemIdOptions.find((o) => o.value === toItem) ?? null}
-                        onChange={(option) => setToItem(option?.value ?? "")}
+                        onChange={(option) => {
+                          setToItem(option?.value ?? "");
+                          if (option) advanceAfterPick("lkpToItem");
+                        }}
                         isDisabled={itemRadioDisabled}
                         placeholder="To Item"
                         aria-label="To Item"
@@ -694,17 +757,25 @@ const RptStockPage: React.FC = () => {
                         noOptionsMessage={() => "No Item Found"}
                         {...pairProps}
                       />
+
+                      </div>
                     </div>
                   ) : (
                     <div className="grid grid-cols-[190px_1fr]">
-                      <div>
+                      <div
+                        className={cellFocusClass}
+                        onKeyDown={(event) => advanceOnEnter(event, ["lkpOneItemName"])}
+                      >
                         <Select<PairOption, false>
                           inputId="lkpOneItemID"
                           instanceId="lkpOneItemID"
                           name="lkpOneItemID"
                           options={itemIdOptions}
                           value={itemIdOptions.find((o) => o.value === oneItemId) ?? null}
-                          onChange={(option) => setOneItemId(option?.value ?? "")}
+                          onChange={(option) => {
+                            setOneItemId(option?.value ?? "");
+                            if (option) advanceAfterPick("lkpOneItemID", ["lkpOneItemName"]);
+                          }}
                           isDisabled={oneItemDisabled}
                           components={itemIdComponents}
                           styles={makePairDividedMenuStyles(itemIdHang)}
@@ -713,17 +784,24 @@ const RptStockPage: React.FC = () => {
                           {...pairProps}
                         />
                       </div>
-                      <div className="-ml-px">
+                      <div
+                        className={`-ml-px ${cellFocusClass}`}
+                        style={{ marginRight: ITEM_NAME_MENU_HANG }}
+                        onKeyDown={(event) => advanceOnEnter(event)}
+                      >
                         <Select<PairOption, false>
                           inputId="lkpOneItemName"
                           instanceId="lkpOneItemName"
                           name="lkpOneItemName"
                           options={itemNameOptions}
                           value={itemNameOptions.find((o) => o.value === oneItemId) ?? null}
-                          onChange={(option) => setOneItemId(option?.value ?? "")}
+                          onChange={(option) => {
+                            setOneItemId(option?.value ?? "");
+                            if (option) advanceAfterPick("lkpOneItemName");
+                          }}
                           isDisabled={oneItemDisabled}
                           components={itemNameComponents}
-                          styles={makePairDividedMenuStyles(NAME_MENU_HANG)}
+                          styles={makePairDividedMenuStyles(ITEM_NAME_MENU_HANG)}
                           noOptionsMessage={() => "No Item Found"}
                           {...pairProps}
                         />
@@ -735,19 +813,25 @@ const RptStockPage: React.FC = () => {
               {/* Post status */}
               <FieldLabel>Post Status :</FieldLabel>
               <div className="flex items-center justify-between">
-                <div className="w-[107px]">
+                <div
+                  className={`w-[107px] ${cellFocusClass}`}
+                  onKeyDown={(event) => advanceOnEnter(event)}
+                >
                   <Select
                     inputId="lkpPostStatus"
                     instanceId="lkpPostStatus"
                     options={postStatusOptions}
                     value={postStatus}
-                    onChange={setPostStatus}
+                    onChange={(option) => {
+                      setPostStatus(option);
+                      if (option) advanceAfterPick("lkpPostStatus");
+                    }}
                     {...selectProps}
                   />
                 </div>
                 <label
                   htmlFor="chkOrderbyTxnNo"
-                  className="flex h-[26px] cursor-pointer items-center gap-2 border border-[#e0e5ea] bg-white px-2 text-[12px] text-[#405066] select-none"
+                  className={`flex h-[26px] cursor-pointer items-center gap-2 border border-[#e0e5ea] bg-white px-2 text-[12px] text-[#405066] select-none ${cellFocusClass}`}
                 >
                   <input
                     id="chkOrderbyTxnNo"
@@ -762,6 +846,7 @@ const RptStockPage: React.FC = () => {
 
               {/* Detailed / Summary and period */}
               <RadioGroup
+                className={cellFocusClass}
                 name="rdgDetSum"
                 value={rdgDetSum}
                 options={[
@@ -772,18 +857,22 @@ const RptStockPage: React.FC = () => {
               />
               <div className="flex items-start gap-2">
                 <FieldLabel className="w-[140px]">Period :</FieldLabel>
-                <AppDatePicker
+                <div className={cellFocusClass}>
+                  <AppDatePicker
                   id="dtpFromDate"
                   label="From Date"
                   value={fromDate}
                   onChange={setFromDate}
                 />
-                <AppDatePicker
+                </div>
+                <div className={cellFocusClass}>
+                  <AppDatePicker
                   id="dtpToDate"
                   label="To Date"
                   value={toDate}
                   onChange={setToDate}
                 />
+                </div>
               </div>
             </div>
 

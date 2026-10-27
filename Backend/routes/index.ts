@@ -45,8 +45,10 @@ import RptTBRouter from "./Finance/Report/FinalAccounts/RptTBRouter.js";
 import RptSalesPriceListRouter from "./Purchase/Report/RptSalesPriceListRouter.js";
 import RptSOARouter from "./Finance/Report/A_RandA_P/RptSOARouter.js";
 import RptStockRouter from "./Sales/Report/RptStockRouter.js";
-const router = express.Router();
+import RptStockValuationRouter from "./Purchase/Report/RptStockValuationRouter.js";
 
+const router = express.Router();
+router.use("/RptStockValuation", RptStockValuationRouter);
 router.use("/Receipt", ReceiptRouter);
 router.use("/Match", MatchRouter);
 router.use("/auth", LoginRouter);

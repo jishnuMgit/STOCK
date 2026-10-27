@@ -32,12 +32,18 @@
 --   @strToDate      -> p_strtodate       DATE, the whole of that day counts
 --   @blnOrderBy     -> p_blnorderby      detailed only: order by Txn. No. instead of by date
 --
--- Detailed result columns: fitemid, fitemname, fdate, fdoctype, fdocno, ftxnno, funitcost,
+-- BY BRANCH: every row says its branch (fbrid) and the report is made PER BRANCH - the opening stock, the
+--   running balance and the totals of an item are those of ONE branch. With One Branch there is one branch;
+--   with All Branches the backend prints one section per branch ("Branch : Jeddah", its items, then the
+--   next branch ...). The rows come ordered by branch id, then item (the backend puts the branches in
+--   the order of the Branch screen).
+--
+-- Detailed result columns: fbrid, fitemid, fitemname, fdate, fdoctype, fdocno, ftxnno, funitcost,
 --   fqtyin, fqtyout. The first row of every item is its opening stock: fdoctype 'OP', no date,
 --   no document - the net of everything dated BEFORE the from date, shown as a Qty. In when it
 --   is positive and as a Qty. Out when it is negative. The running balance is made by the
 --   backend, in the order the rows come.
--- Summary result columns: fitemid, fitemname, funit, fqtyop, fqtyin, fqtyout, fqtycl.
+-- Summary result columns: fbrid, fitemid, fitemname, funit, fqtyop, fqtyin, fqtyout, fqtycl.
 --
 -- Differences from the SQL Server procedure - all forced by our table, or for safety:
 --   * Txn. No. is fpostingno (the posting number of the document, set when it is posted;
@@ -57,26 +63,32 @@ DROP PROCEDURE IF EXISTS dbo.sp_rptstock(character varying, integer, character v
 DROP PROCEDURE IF EXISTS dbo.sp_rptstock(character varying, integer, character varying, boolean, character varying, integer, character varying, character varying, character varying, character varying, date, date, boolean, refcursor);
 
 CREATE OR REPLACE PROCEDURE dbo.sp_rptstock(
-	IN p_strdetorsum character varying,
-	IN p_lkppoststatus integer,
-	IN p_pstrcoid character varying,
-	IN p_rdgbranch boolean,
-	IN p_strbrid character varying,
-	IN p_rdgbyitem boolean,
-	IN p_stritemgroupid character varying,
-	IN p_rdgitem integer,
-	IN p_stritemid character varying,
-	IN p_strfromitemid character varying,
-	IN p_strtoitemid character varying,
-	IN p_strfromdate date,
-	IN p_strtodate date,
-	IN p_blnorderby boolean,
+	IN p_strdetorsum character varying,     -- 'D' = Detailed, 'S' = Summary
+	IN p_lkppoststatus integer,             -- 0 = All, 1 = Posted, 2 = Non Posted
+	IN p_pstrcoid character varying,        -- the logged-in company
+	IN p_rdgbranch boolean,                 -- false (0) = One Branch, true (1) = All Branches
+	IN p_strbrid character varying,         -- the branch, used when p_rdgbranch is false
+	IN p_rdgbyitem boolean,                 -- false (0) = By Item Group, true (1) = By Item
+	IN p_stritemgroupid character varying,  -- the item group, used when p_rdgbyitem is false (NULL = every group)
+	IN p_rdgitem integer,                   -- 0 = One Item, 1 = Item Range, 2 = All Item
+	IN p_stritemid character varying,       -- the item, used when p_rdgitem = 0
+	IN p_strfromitemid character varying,   -- the first item of the range, used when p_rdgitem = 1
+	IN p_strtoitemid character varying,     -- the last item of the range, used when p_rdgitem = 1
+	IN p_strfromdate date,                  -- the From date
+	IN p_strtodate date,                    -- the To date (the whole of that day counts)
+	IN p_blnorderby boolean,                -- Detailed only: order by Txn. No. instead of by date
 	IN p_result_cursor refcursor DEFAULT 'cur_rptstock'::refcursor)
 LANGUAGE 'plpgsql'
 AS $BODY$
 DECLARE
     v_to_excl date := p_strtodate + 1;   -- the whole of the to date counts
 BEGIN
+
+    -- THE CODES (the same as the old SP_rptStock)
+    --   p_lkppoststatus  0 All            1 Posted          2 Non Posted
+    --   p_rdgbranch      false One Branch true All Branches
+    --   p_rdgbyitem      false By Item Group, true By Item
+    --   p_rdgitem        0 One Item       1 Item Range      2 All Item
 
     /* =====================================================
        D - DETAILED: opening row + every movement of the period
@@ -86,7 +98,8 @@ BEGIN
 
         OPEN p_result_cursor FOR
             WITH base AS (
-                SELECT a.fitemid,
+                SELECT a.fbrid,
+                       a.fitemid,
                        a.fdate,
                        a.fdoctype,
                        a.fdocno,
@@ -107,8 +120,9 @@ BEGIN
                    AND (p_lkppoststatus = 0 OR a.fpost = (p_lkppoststatus = 1))
             ),
             lines AS (
-                -- opening stock: the net of everything before the from date
-                SELECT fitemid,
+                -- opening stock: the net of everything before the from date (of each branch)
+                SELECT fbrid,
+                       fitemid,
                        NULL::timestamp        AS fdate,
                        'OP'::varchar          AS fdoctype,
                        NULL::varchar          AS fdocno,
@@ -120,18 +134,19 @@ BEGIN
                        0                      AS srt
                   FROM base
                  WHERE fdate < p_strfromdate
-                 GROUP BY fitemid
+                 GROUP BY fbrid, fitemid
 
                 UNION ALL
 
                 -- the movements of the period
-                SELECT fitemid, fdate, fdoctype, fdocno, fslno, ftxnno, funitcost,
+                SELECT fbrid, fitemid, fdate, fdoctype, fdocno, fslno, ftxnno, funitcost,
                        fqtyin, fqtyout, 1
                   FROM base
                  WHERE fdate >= p_strfromdate
                    AND fdate <  v_to_excl
             )
-            SELECT l.fitemid,
+            SELECT l.fbrid,
+                   l.fitemid,
                    h.fitemname,
                    l.fdate,
                    l.fdoctype,
@@ -143,7 +158,8 @@ BEGIN
               FROM lines l
               LEFT JOIN dbo.tblitemhd h
                 ON h.fcoid = p_pstrcoid AND h.fitemid = l.fitemid
-             ORDER BY l.fitemid,
+             ORDER BY l.fbrid,
+                      l.fitemid,
                       l.srt,
                       CASE WHEN p_blnorderby THEN l.ftxnno END NULLS FIRST,
                       l.fdate,
@@ -158,7 +174,8 @@ BEGIN
 
         OPEN p_result_cursor FOR
             WITH base AS (
-                SELECT a.fitemid,
+                SELECT a.fbrid,
+                       a.fitemid,
                        a.fdate,
                        COALESCE(a.fqtyin, 0)  AS fqtyin,
                        COALESCE(a.fqtyout, 0) AS fqtyout
@@ -175,14 +192,16 @@ BEGIN
                    AND a.fdate < v_to_excl
             ),
             sums AS (
-                SELECT fitemid,
+                SELECT fbrid,
+                       fitemid,
                        SUM(CASE WHEN fdate < p_strfromdate THEN fqtyin - fqtyout ELSE 0 END) AS fqtyop,
                        SUM(CASE WHEN fdate >= p_strfromdate THEN fqtyin  ELSE 0 END)         AS fqtyin,
                        SUM(CASE WHEN fdate >= p_strfromdate THEN fqtyout ELSE 0 END)         AS fqtyout
                   FROM base
-                 GROUP BY fitemid
+                 GROUP BY fbrid, fitemid
             )
-            SELECT s.fitemid,
+            SELECT s.fbrid,
+                   s.fitemid,
                    h.fitemname,
                    h.funit,
                    s.fqtyop,
@@ -192,7 +211,7 @@ BEGIN
               FROM sums s
               LEFT JOIN dbo.tblitemhd h
                 ON h.fcoid = p_pstrcoid AND h.fitemid = s.fitemid
-             ORDER BY s.fitemid;
+             ORDER BY s.fbrid, s.fitemid;
 
     ELSE
 

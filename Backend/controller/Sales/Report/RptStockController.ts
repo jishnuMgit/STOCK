@@ -28,6 +28,9 @@ import {
   isItemRangeReversed,
   getDetailed,
   getSummary,
+  type DetailBranch,
+  type SummaryBranch,
+  type SummaryTotals,
   type StockParams,
 } from "../../../services/Sales/Report/rptStockService.js";
 import {
@@ -260,17 +263,38 @@ const prepareReport = async (req: AuthenticatedRequest): Promise<Prepared> => {
     txnOrder: detailed && body.blnOrderBy === true,
   };
 
-  const detail = detailed ? await getDetailed(params) : [];
-  const summary = detailed
+  const detail: DetailBranch[] = detailed ? await getDetailed(params) : [];
+  const summary: { branches: SummaryBranch[]; totals: SummaryTotals } = detailed
     ? {
-        lines: [],
+        branches: [],
         totals: { txtQtyOpening: 0, txtQtyIn: 0, txtQtyOut: 0, txtQtyClosing: 0 },
       }
     : await getSummary(params);
 
-  if (detailed ? detail.length === 0 : summary.lines.length === 0) {
+  if (detailed ? detail.length === 0 : summary.branches.length === 0) {
     throw new ApiError(404, "No records found");
   }
+
+  // one section per branch, in the order of the Branch screen (Jeddah, then Meccah ...), each with
+  // the name of its branch
+  const allowed = await getBranches(CoID, userId);
+
+  const position = (id: string) => {
+    const index = allowed.findIndex((b) => b.brId === id);
+    return index < 0 ? allowed.length : index;
+  };
+
+  const byPosition = (a: { lkpBranch: string }, b: { lkpBranch: string }) =>
+    position(a.lkpBranch) - position(b.lkpBranch) || a.lkpBranch.localeCompare(b.lkpBranch);
+
+  const nameOf = (id: string) => allowed.find((b) => b.brId === id)?.brName || id;
+
+  for (const branch of [...detail, ...summary.branches]) {
+    branch.txtBranchName = nameOf(branch.lkpBranch);
+  }
+
+  detail.sort(byPosition);
+  summary.branches.sort(byPosition);
 
   const stamp = (() => {
     const d = new Date();
