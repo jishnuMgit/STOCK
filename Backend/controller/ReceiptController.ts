@@ -302,6 +302,8 @@ export const saveReceipt = async (
     const { lkpBranch, txtDocNo } = req.body;
 
     const existing = await GetData({
+      pstrCoID: ctx.pstrCoID,
+      pstrYear: ctx.pstrYear,
       lkpBranch: String(lkpBranch),
       lkpType: docType,
       txtDocNo: String(txtDocNo),
@@ -421,6 +423,8 @@ export async function GetDatas(req: Request, res: Response): Promise<Response> {
   try {
     const { lkpBranch, lkpType, txtDocNo } = req.query;
 
+    const { pstrCoID, pstrYear } = getCtx(res);
+
     const isBlank = (value: unknown): boolean =>
       value === undefined || value === null || String(value).trim() === "";
 
@@ -452,6 +456,8 @@ export async function GetDatas(req: Request, res: Response): Promise<Response> {
     }
 
     const result = await GetData({
+      pstrCoID,
+      pstrYear,
       lkpBranch: String(lkpBranch),
       lkpType: GetStrDocType(lkpType),
       txtDocNo: String(txtDocNo),
@@ -511,6 +517,8 @@ export const DeleteReceipt = async (
 
     // GET EXISTING RECEIPT BEFORE DELETE
     const receiptData = await GetData({
+      pstrCoID: ctx.pstrCoID,
+      pstrYear: ctx.pstrYear,
       lkpBranch,
       lkpType: docType,
       txtDocNo,

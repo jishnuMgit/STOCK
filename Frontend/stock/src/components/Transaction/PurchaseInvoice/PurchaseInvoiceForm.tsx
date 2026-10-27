@@ -1034,6 +1034,8 @@ const PurchaseForm: React.FC<Props> = ({
             <input
               id="dtpSupInvoiceDate"
               type="date"
+              value={header.piDate}
+              onChange={(e) => onChange("piDate", e.target.value)}
               className="input-style min-w-0 flex-1"
             />
           </div>
