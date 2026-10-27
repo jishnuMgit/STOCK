@@ -118,9 +118,8 @@ export const getUserIdList = async (
       return;
     }
 
-    // dbo.filluserid excludes ADMIN, same as the old VB
-    // FillCombos ("...Where fUserID<>'ADMIN'") - shared by
-    // every screen that picks a target user to view/manage.
+    // dbo.filluserid leaves out the Admin Users (type AU): they have every right already, so
+    // only Regular Users are listed - shared by the User Permission Menu and Branch screens.
     const result = await pool.query(
       `SELECT * FROM dbo.filluserid($1)`,
       [PstrCoID]

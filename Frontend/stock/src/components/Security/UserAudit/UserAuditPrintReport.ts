@@ -99,7 +99,7 @@ export const buildHtml = (r: PrintReport) => {
   .co   { font-size: 14pt; text-align: center; height: 24px; }
   .head { font-size: 12pt; text-align: center; height: 24px; }
   .user { height: 24px; padding-top: 6px; }
-  th { background: #eff3fa; border: 1px solid #c7d1e4; height: 24px;
+  th { border: 1px solid #c7d1e4; height: 24px;
        padding: 0 4px; font-weight: normal; text-align: left; }
   td { border: 1px solid #c7d1e4; border-top: 0; min-height: 22px; padding: 2px 4px;
        vertical-align: top; overflow-wrap: anywhere; }

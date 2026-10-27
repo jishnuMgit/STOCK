@@ -2,17 +2,19 @@
 // The Stock report (Sales > Report > Stock). The logged-in company and user come from the
 // SESSION (authenticate), never from the request.
 //
-// The body keys follow the page's element ids (the old rptStock form):
-//   rdgBranch      0 One Branch, 1 All Branch
-//   lkpBranch      the branch (One Branch)
-//   rdgItem        0 One Item, 1 One Item Group, 2 All Item, 3 Item Range
-//   lkpItemID      the item (One Item)
-//   lkpItemGroupID the item group (One Item Group)
-//   lkpItemIDFrom / lkpItemIDTo   the first and the last item (Item Range)
-//   lkpPostStatus  0 Non Posted, 1 Posted, 2 All
-//   rdgDetOrSum    0 Detailed, 1 Summary
-//   dtpFromDate / dtpToDate   yyyy-mm-dd
-//   chkTxnNo       Order by Txn. No. (Detailed only)
+// The body keys are the arguments of the old SP_rptStock (the page sends them as they are):
+//   strDetOrSum    D Detailed, S Summary
+//   lkpPostStatus  0 All, 1 Posted, 2 Non Posted
+//   rdgBranch      0 One Branch, 1 All Branches
+//   strBrID        the branch (One Branch)
+//   rdgByItem      0 By Item Group, 1 By Item
+//   strItemGroupID the item group (By Item Group; empty = every item)
+//   rdgItem        0 One Item, 1 Item Range, 2 All Item (By Item only)
+//   strItemID      the item (One Item)
+//   strFromItemID / strToItemID   the first and the last item (Item Range)
+//   strFromDate / strToDate       dd/mm/yyyy
+//   blnOrderBy     Order by Txn. No. (Detailed only)
+// The company and the user come from the session, never from the body.
 import { Response } from "express";
 
 import type { AuthenticatedRequest } from "../../../middleware/authMiddleware.js";
@@ -26,6 +28,9 @@ import {
   isItemRangeReversed,
   getDetailed,
   getSummary,
+  type DetailBranch,
+  type SummaryBranch,
+  type SummaryTotals,
   type StockParams,
 } from "../../../services/Sales/Report/rptStockService.js";
 import {
@@ -66,6 +71,12 @@ const isRealDate = (value: string) => {
     d.getMonth() === Number(m[2]) - 1 &&
     d.getDate() === Number(m[3])
   );
+};
+
+// dd/mm/yyyy text -> yyyy-mm-dd ("" when it is not in that shape)
+const toIsoDate = (value: string) => {
+  const m = /^(\d{2})\/(\d{2})\/(\d{4})$/.exec(value);
+  return m ? `${m[3]}-${m[2]}-${m[1]}` : "";
 };
 
 // the old objCommon.ReportInfo: "<user>  dd/mm/yyyy hh:mm"
@@ -148,55 +159,71 @@ const prepareReport = async (req: AuthenticatedRequest): Promise<Prepared> => {
   const body = req.body ?? {};
 
   const rdgBranch = Number(body.rdgBranch);
+  const rdgByItem = Number(body.rdgByItem);
   const rdgItem = Number(body.rdgItem);
-  const rdgDetOrSum = Number(body.rdgDetOrSum);
   const lkpPostStatus = Number(body.lkpPostStatus);
+  const strDetOrSum = String(body.strDetOrSum ?? "");
 
   if (![0, 1].includes(rdgBranch)) throw new ApiError(400, "Please select 'Branch'", "rdgBranch");
-  if (![0, 1, 2, 3].includes(rdgItem)) throw new ApiError(400, "Please select 'Item'", "rdgItem");
-  if (![0, 1].includes(rdgDetOrSum)) {
-    throw new ApiError(400, "Please select 'Detailed' or 'Summary'", "rdgDetOrSum");
+  if (![0, 1].includes(rdgByItem)) throw new ApiError(400, "Please select 'Item'", "rdgByItem");
+  if (rdgByItem === 1 && ![0, 1, 2].includes(rdgItem)) {
+    throw new ApiError(400, "Please select 'Item'", "rdgItem");
+  }
+  if (!["D", "S"].includes(strDetOrSum)) {
+    throw new ApiError(400, "Please select 'Detailed' or 'Summary'", "rdgDetSum");
   }
   if (![0, 1, 2].includes(lkpPostStatus)) {
     throw new ApiError(400, "Please select 'Post Status'", "lkpPostStatus");
   }
 
   const oneBranch = rdgBranch === 0;
-  const branchId = String(body.lkpBranch ?? "").trim();
-  const itemId = String(body.lkpItemID ?? "").trim();
-  const itemGroupId = String(body.lkpItemGroupID ?? "").trim();
-  const itemIdFrom = String(body.lkpItemIDFrom ?? "").trim();
-  const itemIdTo = String(body.lkpItemIDTo ?? "").trim();
-  const fromDate = String(body.dtpFromDate ?? "").trim();
-  const toDate = String(body.dtpToDate ?? "").trim();
+  const byGroup = rdgByItem === 0;
+  const branchId = String(body.strBrID ?? "").trim();
+  const itemId = String(body.strItemID ?? "").trim();
+  const itemGroupId = String(body.strItemGroupID ?? "").trim();
+  const itemIdFrom = String(body.strFromItemID ?? "").trim();
+  const itemIdTo = String(body.strToItemID ?? "").trim();
+  const fromDate = toIsoDate(String(body.strFromDate ?? "").trim());
+  const toDate = toIsoDate(String(body.strToDate ?? "").trim());
+
+  // the report service takes: 0 one item, 1 one item group, 2 all items, 3 item range
+  const itemMode: 0 | 1 | 2 | 3 = byGroup
+    ? itemGroupId === ""
+      ? 2
+      : 1
+    : rdgItem === 0
+      ? 0
+      : rdgItem === 1
+        ? 3
+        : 2;
 
   // ---- the old ValidateMe, in its order ----
   if (oneBranch && branchId === "") {
     throw new ApiError(400, "Please select 'Branch'", "lkpBranch");
   }
 
-  if (rdgItem === 0 && itemId === "") {
-    throw new ApiError(400, "Please select 'Item ID'", "lkpItemID");
+  if (itemMode === 0 && itemId === "") {
+    throw new ApiError(400, "Please select 'Item ID'", "lkpOneItemID");
   }
 
-  if (rdgItem === 1 && itemGroupId === "") {
-    throw new ApiError(400, "Please select 'Item Group'", "lkpItemGroupID");
+  if (itemMode === 3 && itemIdFrom === "") {
+    throw new ApiError(400, "Please select 'From Item ID'", "lkpFromItem");
   }
 
-  if (rdgItem === 3 && itemIdFrom === "") {
-    throw new ApiError(400, "Please select 'From Item ID'", "lkpItemIDFrom");
+  if (itemMode === 3 && itemIdTo === "") {
+    throw new ApiError(400, "Please select 'To Item ID'", "lkpToItem");
   }
 
-  if (rdgItem === 3 && itemIdTo === "") {
-    throw new ApiError(400, "Please select 'To Item ID'", "lkpItemIDTo");
+  if (itemMode === 3 && (await isItemRangeReversed(CoID, itemIdFrom, itemIdTo))) {
+    throw new ApiError(400, "'To Item ID' should be greater than 'From Item ID'", "lkpToItem");
   }
 
-  if (rdgItem === 3 && (await isItemRangeReversed(CoID, itemIdFrom, itemIdTo))) {
-    throw new ApiError(400, "'To Item ID' should be greater than 'From Item ID'", "lkpItemIDTo");
+  if (String(body.strFromDate ?? "").trim() === "") {
+    throw new ApiError(400, "Please enter 'From Date'", "dtpFromDate");
   }
-
-  if (fromDate === "") throw new ApiError(400, "Please enter 'From Date'", "dtpFromDate");
-  if (toDate === "") throw new ApiError(400, "Please enter 'To Date'", "dtpToDate");
+  if (String(body.strToDate ?? "").trim() === "") {
+    throw new ApiError(400, "Please enter 'To Date'", "dtpToDate");
+  }
 
   if (!isRealDate(fromDate)) throw new ApiError(400, "'From Date' is not a valid date", "dtpFromDate");
   if (!isRealDate(toDate)) throw new ApiError(400, "'To Date' is not a valid date", "dtpToDate");
@@ -218,35 +245,56 @@ const prepareReport = async (req: AuthenticatedRequest): Promise<Prepared> => {
     branchName = branch.brName || (await getBranchName(CoID, branchId));
   }
 
-  const detailed = rdgDetOrSum === 0;
+  const detailed = strDetOrSum === "D";
 
   const params: StockParams = {
     detOrSum: detailed ? "D" : "S",
-    postStatus: lkpPostStatus as 0 | 1 | 2,
+    postStatus: lkpPostStatus as 0 | 1 | 2, // 0 all, 1 posted, 2 non posted
     coId: CoID,
     oneBranch,
     branchId: oneBranch ? branchId : "",
-    itemMode: rdgItem as 0 | 1 | 2 | 3,
-    itemId: rdgItem === 0 ? itemId : "",
-    itemGroupId: rdgItem === 1 ? itemGroupId : "",
-    itemIdFrom: rdgItem === 3 ? itemIdFrom : "",
-    itemIdTo: rdgItem === 3 ? itemIdTo : "",
+    itemMode,
+    itemId: itemMode === 0 ? itemId : "",
+    itemGroupId: itemMode === 1 ? itemGroupId : "",
+    itemIdFrom: itemMode === 3 ? itemIdFrom : "",
+    itemIdTo: itemMode === 3 ? itemIdTo : "",
     fromDate,
     toDate,
-    txnOrder: detailed && body.chkTxnNo === true,
+    txnOrder: detailed && body.blnOrderBy === true,
   };
 
-  const detail = detailed ? await getDetailed(params) : [];
-  const summary = detailed
+  const detail: DetailBranch[] = detailed ? await getDetailed(params) : [];
+  const summary: { branches: SummaryBranch[]; totals: SummaryTotals } = detailed
     ? {
-        lines: [],
+        branches: [],
         totals: { txtQtyOpening: 0, txtQtyIn: 0, txtQtyOut: 0, txtQtyClosing: 0 },
       }
     : await getSummary(params);
 
-  if (detailed ? detail.length === 0 : summary.lines.length === 0) {
+  if (detailed ? detail.length === 0 : summary.branches.length === 0) {
     throw new ApiError(404, "No records found");
   }
+
+  // one section per branch, in the order of the Branch screen (Jeddah, then Meccah ...), each with
+  // the name of its branch
+  const allowed = await getBranches(CoID, userId);
+
+  const position = (id: string) => {
+    const index = allowed.findIndex((b) => b.brId === id);
+    return index < 0 ? allowed.length : index;
+  };
+
+  const byPosition = (a: { lkpBranch: string }, b: { lkpBranch: string }) =>
+    position(a.lkpBranch) - position(b.lkpBranch) || a.lkpBranch.localeCompare(b.lkpBranch);
+
+  const nameOf = (id: string) => allowed.find((b) => b.brId === id)?.brName || id;
+
+  for (const branch of [...detail, ...summary.branches]) {
+    branch.txtBranchName = nameOf(branch.lkpBranch);
+  }
+
+  detail.sort(byPosition);
+  summary.branches.sort(byPosition);
 
   const stamp = (() => {
     const d = new Date();

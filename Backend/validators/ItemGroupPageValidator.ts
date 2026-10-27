@@ -25,7 +25,7 @@ export interface ItemGroupPageData {
   lkpVATSlab?: unknown;
 }
 
-// tblitemgroup.fitemgroupid varchar(8), fitemgroupname varchar(60)
+// tblitemgroup.fitemgroupid varchar(12) (see sreerenjini-sql/itemgrouppageoct 7/alter_itemgroupid_length.sql), fitemgroupname varchar(60)
 const ITEM_GROUP_ID_LENGTH = 12;
 const ITEM_GROUP_NAME_LENGTH = 60;
 

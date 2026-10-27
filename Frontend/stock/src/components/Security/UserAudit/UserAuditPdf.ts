@@ -11,7 +11,6 @@ import { groupByUser, periodHeading, type PrintReport } from "./UserAuditPrintRe
 
 type RGB = [number, number, number];
 const BORDER: RGB = [199, 209, 228]; // #c7d1e4
-const HEAD_FILL: RGB = [239, 243, 250]; // #eff3fa
 const BLACK: RGB = [0, 0, 0];
 
 const PAGE_W = 297; // A4 landscape, mm
@@ -97,7 +96,6 @@ export const buildUserAuditPdf = (report: PrintReport): Blob => {
       textColor: BLACK,
     },
     headStyles: {
-      fillColor: HEAD_FILL,
       textColor: BLACK,
       fontStyle: "normal",
       valign: "middle",

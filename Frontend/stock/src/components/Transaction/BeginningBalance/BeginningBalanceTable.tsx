@@ -395,7 +395,7 @@ const BeginningBalanceTable: React.FC<Props> = ({
       className="
         mx-[16px]
         flex
-        h-[438px]
+        h-[376px]
         min-h-0
         flex-col
         overflow-hidden

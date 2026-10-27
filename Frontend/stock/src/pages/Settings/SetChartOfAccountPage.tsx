@@ -1,7 +1,7 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { toast } from "react-toastify";
 import { X } from "lucide-react";
-import { useConfirm } from "../../hooks/useConfirm";
+import { useConfirmModal } from "../../hooks/useConfirmModal";
 import { useAltShortcuts } from "../../hooks/useAltShortcuts";
 import { useEnterAsTab } from "../../hooks/useEnterAsTab";
 import { useButtonPermissions } from "../../hooks/useButtonPermissions";
@@ -291,7 +291,7 @@ const SetChartOfAccount: React.FC = () => {
   const [reloadKey, setReloadKey] = useState<number>(0);
 
   const perms = useButtonPermissions(MENU_ID);
-  const { confirm, confirmDialog } = useConfirm();
+  const { confirm, dialog } = useConfirmModal();
   const handleEnterAsTab = useEnterAsTab();
   // the cell the cursor is in is outlined
   const { cellFocusClass } = useGridCellFocus();
@@ -604,9 +604,10 @@ const SetChartOfAccount: React.FC = () => {
       return;
     }
 
-    const shouldDelete = await confirm(
-      "Are you sure you want to delete this account setting?"
-    );
+    const shouldDelete = await confirm({
+      title: "Set Chart Of Account",
+      message: "Do you want to delete ?",
+    });
 
     if (!shouldDelete) {
       return;
@@ -644,8 +645,6 @@ const SetChartOfAccount: React.FC = () => {
         toast.error(result.message || "Could not delete the account setting. Please try again.");
         return;
       }
-
-      toast.success(result.message || "Account setting deleted successfully.");
 
       setRows((previous) => previous.filter((item) => item !== row));
     } catch (error) {
@@ -821,6 +820,7 @@ const SetChartOfAccount: React.FC = () => {
   // ==========================================================
 
   return (
+    <>
     <div
       onKeyDown={handleEnterAsTab}
       className="flex min-h-screen w-full items-center justify-center bg-white text-slate-700"
@@ -1181,9 +1181,12 @@ const SetChartOfAccount: React.FC = () => {
           </button>
         </div>
       </div>
-
-      {confirmDialog}
     </div>
+
+    {/* the "Do you want to delete ?" question - outside the root div so the page's
+        Enter handling does not take the Enter of the buttons */}
+    {dialog}
+    </>
   );
 };
 
