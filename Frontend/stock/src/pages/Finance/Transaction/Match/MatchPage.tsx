@@ -14,6 +14,7 @@ import {
 } from "../../../../components/Transaction/Match/types";
 import MatchingComponents from "../../../../components/Transaction/Match/MatchingComponents";
 import useMatching from "../../../../hooks/useMatching";
+import { apiFetch, getSession } from "../../../../utils/session";
 
 interface CustomerAccount {
   fcsaccountid: string;
@@ -64,7 +65,7 @@ const blankRow = (id: number): ReceiptRow => ({
   credit: 0,
   match: false,
   matchAmount: 0,
-  raw: undefined
+  raw: undefined,
 });
 
 const createRows = (): ReceiptRow[] =>
@@ -164,7 +165,7 @@ const MatchPage: React.FC = () => {
   useEffect(() => {
     const load = async () => {
       try {
-        const response = await fetch(
+        const response = await apiFetch(
           `${import.meta.env.VITE_API_URL}/Match/getCSAccounts`,
         );
         if (!response.ok) throw new Error("Failed to load matching data");
@@ -226,7 +227,7 @@ const MatchPage: React.FC = () => {
 
     const brId = String(getField(selectedDoc, "fBrID") ?? "");
     const docType = String(getField(selectedDoc, "fDocType") ?? doctype);
-    const year = getField(selectedDoc, "fYear") ?? DEFAULT_YEAR;
+    const year = getField(selectedDoc, "fYear") ?? getSession().pstrYear;
 
     (async () => {
       try {
@@ -358,7 +359,7 @@ const MatchPage: React.FC = () => {
     try {
       const result = await saveMatch({
         strMode: SAVE_MODE,
-        year: getField(selectedDoc, "fYear") ?? DEFAULT_YEAR,
+        year: getField(selectedDoc, "fYear") ?? getSession().pstrYear,
         brId: String(getField(selectedDoc, "fBrID") ?? ""),
         docType: String(getField(selectedDoc, "fDocType") ?? doctype),
         docNo: receiptNo,

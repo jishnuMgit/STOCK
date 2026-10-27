@@ -1,4 +1,5 @@
 import { useCallback, useState } from "react";
+import { apiFetch } from "../utils/session";
 
 export interface SelectOption {
   value: string;
@@ -13,7 +14,7 @@ interface GetMatchAccountsParams {
   strDocType: string;
   strCSAccountID: string;
   strDivID: string;
-  gstrCoID: string;
+  year: string | number;
 }
 
 export interface GetDocumentsToMatchParams {
@@ -28,7 +29,6 @@ export interface GetDocumentsToMatchParams {
   debit: number;
   credit: number;
   matchDocAmt: number;
-  coId: string;
 }
 
 export interface SaveMatchPayload {
@@ -49,13 +49,12 @@ export interface SaveMatchPayload {
 const API = import.meta.env.VITE_API_URL;
 
 const postJson = async (url: string, body: unknown) => {
-  const response = await fetch(url, {
+  const response = await apiFetch(url, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(body),
   });
 
-  // Backend sends { success:false, message } on 400/500 – surface that message.
   const result = await response.json().catch(() => null);
 
   if (!response.ok || !result?.success) {
@@ -136,7 +135,7 @@ const useMatching = () => {
     async (params: GetDocumentsToMatchParams): Promise<MatchAccountRow[]> => {
       const result = await postJson(`${API}/Match/getDocumentsToMatch`, params);
 
-      // matchService's return shape isn't known to me – accept common keys.
+      // matchService's return shape isn't known to me - accept common keys.
       const rows =
         result.data ?? result.rows ?? result.documents ?? result.result ?? [];
       return Array.isArray(rows) ? rows : [];

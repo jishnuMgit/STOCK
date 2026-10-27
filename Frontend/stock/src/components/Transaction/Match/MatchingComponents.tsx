@@ -18,6 +18,7 @@ import {
 } from "../../../hooks/useMatchKeyboard";
 
 import useMatching from "../../../hooks/useMatching";
+import { getSession } from "../../../utils/session"; // adjust path if needed
 import MatchHeader from "./MatchHeader";
 import MatchTable from "./MatchTable";
 import MatchFooter from "./MatchFooter";
@@ -54,7 +55,6 @@ interface Props {
   onSave: () => void;
   clearForm: () => void;
   onSearch: (data?: any[]) => void;
-  gstrCoID?: string;
   branchOptions: SelectOption[];
   customerOptions: SelectOption[];
   customerNameOptions: SelectOption[];
@@ -455,7 +455,6 @@ const MatchingComponents = forwardRef<MatchingComponentsRef, Props>(
       onSave,
       clearForm,
       onSearch,
-      gstrCoID = import.meta.env.VITE_CO_ID ?? "",
       branchOptions,
       customerOptions,
       customerNameOptions,
@@ -651,11 +650,13 @@ const MatchingComponents = forwardRef<MatchingComponentsRef, Props>(
         return;
       }
 
+      // Company, year and user are also sent as x- headers by apiFetch.
+      // The year is passed in the body too, read from the login session.
       const data = await getMatchAccounts({
         strDocType: type,
         strCSAccountID: customerId,
         strDivID: divisionId,
-        gstrCoID,
+        year: getSession().pstrYear,
       });
 
       const searchResults: any[] = Array.isArray(data) ? data : [];
@@ -676,7 +677,7 @@ const MatchingComponents = forwardRef<MatchingComponentsRef, Props>(
         }));
 
       setDocumentNoOptions(options);
-    }, [type, customerId, divisionId, gstrCoID, getMatchAccounts, onSearch]);
+    }, [type, customerId, divisionId, getMatchAccounts, onSearch]);
 
     /* =====================================================
      SELECT STYLES
