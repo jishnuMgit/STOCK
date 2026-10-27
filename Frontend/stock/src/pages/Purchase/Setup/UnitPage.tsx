@@ -36,8 +36,8 @@ const UnitPage: React.FC = () => {
   const perms = useButtonPermissions(MENU_ID);
   // the common themed question window (the same as on the other screens)
   const { confirm, dialog } = useConfirmModal();
-  // the standard messages of a delete: "Unit deleted successfully"
-  const { deleted, notDeleted } = useDeleteToast("Unit");
+  // the standard message of a delete that failed
+  const { notDeleted } = useDeleteToast("Unit");
   // the cell the cursor is in is outlined (a typed-in box has its text selected)
   const { cellFocusClass, selectOnFocus } = useGridCellFocus();
 
@@ -579,7 +579,7 @@ const UnitPage: React.FC = () => {
         return;
       }
 
-      deleted();
+      // (no message for a deleted unit)
 
       setRows((previousRows) =>
         previousRows.filter((_, rowIndex) => rowIndex !== index),

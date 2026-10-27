@@ -584,7 +584,7 @@ const UserPermission: React.FC = () => {
   const handleEnterAsTab = useEnterAsTab();
   // the common themed question window and the standard delete messages
   const { confirm, dialog } = useConfirmModal();
-  const { deleted, notDeleted } = useDeleteToast("User Permission - Menu");
+  const { notDeleted } = useDeleteToast("User Permission - Menu");
 
   // no user is selected when the page opens
   const [lkpUserID, setLkpUserID] = useState("");
@@ -910,7 +910,7 @@ const UserPermission: React.FC = () => {
 
       setMenuTree((previous) => clearTree(previous));
 
-      deleted();
+      // (no message after a delete: the tree just clears)
     } catch (err) {
       console.error("Delete permissions failed:", err);
 

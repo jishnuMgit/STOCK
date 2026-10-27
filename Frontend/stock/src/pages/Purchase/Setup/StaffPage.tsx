@@ -44,8 +44,8 @@ const StaffPage: React.FC = () => {
   const perms = useButtonPermissions(MENU_ID);
   // the common themed question window (the same as on the other screens)
   const { confirm, dialog } = useConfirmModal();
-  // the standard messages of a delete: "Staff deleted successfully"
-  const { deleted, notDeleted } = useDeleteToast("Staff");
+  // the standard message of a delete that failed
+  const { notDeleted } = useDeleteToast("Staff");
   // the cell the cursor is in is outlined (a typed-in box has its text selected)
   const { cellFocusClass, selectOnFocus } = useGridCellFocus();
 
@@ -538,7 +538,7 @@ const StaffPage: React.FC = () => {
   // DELETE ROW (the X or Alt+D - Admin Users only)
   // A row typed and not saved just leaves the grid. A saved staff member goes from
   // the database at once, after the Delete right, the "used by transactions?" check
-  // (the old HaveTrans) and the question; the message is "Staff deleted successfully".
+  // (the old HaveTrans) and the question.
   // ============================================================
 
   const handleDeleteRow = async (index: number) => {
@@ -633,7 +633,7 @@ const StaffPage: React.FC = () => {
         return;
       }
 
-      deleted();
+      // (no message for a deleted staff)
 
       setRows((previousRows) =>
         previousRows.filter((_, rowIndex) => rowIndex !== index),

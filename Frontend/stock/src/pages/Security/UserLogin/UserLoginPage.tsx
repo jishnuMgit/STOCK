@@ -201,7 +201,7 @@ const UserLogin: React.FC = () => {
   const handleEnterAsTab = useEnterAsTab();
   // the common themed question window and the standard delete messages
   const { confirm, dialog } = useConfirmModal();
-  const { deleted, notDeleted } = useDeleteToast("User Login");
+  const { notDeleted } = useDeleteToast("User Login");
 
   // ============================================================
   // WHAT EACH SAVED USER LOOKED LIKE WHEN LOADED
@@ -554,8 +554,6 @@ const UserLogin: React.FC = () => {
 
         return;
       }
-
-      deleted();
 
       await loadUsers();
     } catch (error) {

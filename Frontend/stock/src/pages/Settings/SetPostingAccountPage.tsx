@@ -2,6 +2,7 @@ import React, { useEffect, useRef, useState } from "react";
 import Select, { type SingleValue, type StylesConfig } from "react-select";
 import { toast } from "react-toastify";
 import { useAltShortcuts } from "../../hooks/useAltShortcuts";
+import { useConfirmModal } from "../../hooks/useConfirmModal";
 import { useEnterAsTab } from "../../hooks/useEnterAsTab";
 import { useButtonPermissions } from "../../hooks/useButtonPermissions";
 import { useGridCellFocus } from "../../hooks/useGridCellFocus";
@@ -217,6 +218,7 @@ const selectStyles: StylesConfig<SelectOption, false> = {
 
 const SetPostingAccountPage: React.FC = () => {
   const perms = useButtonPermissions(MENU_ID);
+  const { confirm, dialog } = useConfirmModal();
   const handleEnterAsTab = useEnterAsTab();
   // the box the cursor is in is outlined
   const { cellFocusClass } = useGridCellFocus();
@@ -553,10 +555,26 @@ const SetPostingAccountPage: React.FC = () => {
   // account ID as the value, so picking from either fills both)
   // ----------------------------------------------------------
 
-  const handleAccountIdChange = (
+  const handleAccountIdChange = async (
     rowKey: string,
     selected: SingleValue<SelectOption>,
   ) => {
+    // taking an account away (the x of the box) asks first
+    const currentAccountId = (values as unknown as Record<string, string>)[
+      `lkp${rowKey}AccountID`
+    ];
+
+    if (!selected && currentAccountId) {
+      const shouldDelete = await confirm({
+        title: "Set Posting Account",
+        message: "Do you want to delete ?",
+      });
+
+      if (!shouldDelete) {
+        return;
+      }
+    }
+
     const account = getAccountOptions().find(
       (item) => item.lkpAccountID === (selected?.value ?? ""),
     );
@@ -676,6 +694,7 @@ const SetPostingAccountPage: React.FC = () => {
   // ----------------------------------------------------------
 
   return (
+    <>
     <div
       onKeyDown={handleEnterAsTab}
       className="flex min-h-screen w-full items-center justify-center bg-white"
@@ -1481,6 +1500,11 @@ const SetPostingAccountPage: React.FC = () => {
           </div>
       </div>
     </div>
+
+    {/* the "Do you want to delete ?" question - outside the root div so the page's
+        Enter handling does not take the Enter of the buttons */}
+    {dialog}
+    </>
   );
 };
 

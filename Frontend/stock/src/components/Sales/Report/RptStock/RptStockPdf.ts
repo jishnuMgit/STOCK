@@ -29,10 +29,9 @@ const PAD = 1.2;
 
 export const buildStockPdf = (report: PrintReport): Blob => {
   const detailed = report.txtMode === "D";
+  const sections = (detailed ? report.detail.length : report.summary.branches.length) > 1;
   const color = COLORS[report.txtMode];
   const lineColor = hexToRgb(color.line);
-  const headFill = hexToRgb(color.head);
-  const totalFill = hexToRgb(COLORS.total);
 
   const doc = new jsPDF({
     orientation: detailed ? "portrait" : "landscape",
@@ -46,7 +45,16 @@ export const buildStockPdf = (report: PrintReport): Blob => {
   const tableTop = margin.top + 27;
 
   const right = { halign: "right" as const };
-  const bold = { fillColor: totalFill, fontStyle: "bold" as const };
+  const bold = { fontStyle: "bold" as const };
+
+  // "Branch : Jeddah" (one row over the whole width)
+  const branchRow = (name: string, colSpan: number): CellDef[] => [
+    {
+      content: `Branch : ${name}`,
+      colSpan,
+      styles: { fontStyle: "bold" as const, lineWidth: 0, minCellHeight: 9, valign: "bottom" },
+    },
+  ];
 
   let head: CellDef[][];
   const body: CellDef[][] = [];
@@ -69,7 +77,12 @@ export const buildStockPdf = (report: PrintReport): Blob => {
       ),
     ];
 
-    for (const item of report.detail) {
+    for (const { branch, item } of report.detail.flatMap((b) =>
+      b.items.map((item) => ({ branch: b, item }))
+    )) {
+      // "Branch : Jeddah" before the first item of each branch
+      if (sections && item === branch.items[0]) body.push(branchRow(branch.txtBranchName, 8));
+
       body.push([
         {
           content: `Item : ${item.lkpItemID}   ${item.txtItemName}`,
@@ -115,27 +128,38 @@ export const buildStockPdf = (report: PrintReport): Blob => {
       ),
     ];
 
-    for (const l of report.summary.lines) {
-      body.push([
-        { content: l.lkpItemID },
-        { content: l.txtItemName },
-        { content: l.txtUnit },
-        { content: formatQty(l.txtQtyOpening), styles: right },
-        { content: formatQty(l.txtQtyIn), styles: right },
-        { content: formatQty(l.txtQtyOut), styles: right },
-        { content: formatQty(l.txtQtyClosing), styles: right },
-      ]);
-    }
-
-    const t = report.summary.totals;
-
-    body.push([
-      { content: "Total :", colSpan: 3, styles: { ...bold, ...right } },
+    // a Total row: the label over the first 3 columns, then the 4 quantities
+    const totalRow = (
+      label: string,
+      t: { txtQtyOpening: number; txtQtyIn: number; txtQtyOut: number; txtQtyClosing: number }
+    ): CellDef[] => [
+      { content: label, colSpan: 3, styles: { ...bold, ...right } },
       { content: formatQty(t.txtQtyOpening), styles: { ...bold, ...right } },
       { content: formatQty(t.txtQtyIn), styles: { ...bold, ...right } },
       { content: formatQty(t.txtQtyOut), styles: { ...bold, ...right } },
       { content: formatQty(t.txtQtyClosing), styles: { ...bold, ...right } },
-    ]);
+    ];
+
+    for (const branch of report.summary.branches) {
+      if (sections) body.push(branchRow(branch.txtBranchName, 7));
+
+      for (const l of branch.lines) {
+        body.push([
+          { content: l.lkpItemID },
+          { content: l.txtItemName },
+          { content: l.txtUnit },
+          { content: formatQty(l.txtQtyOpening), styles: right },
+          { content: formatQty(l.txtQtyIn), styles: right },
+          { content: formatQty(l.txtQtyOut), styles: right },
+          { content: formatQty(l.txtQtyClosing), styles: right },
+        ]);
+      }
+
+      // the Total of the branch
+      if (sections) body.push(totalRow("Total :", branch.totals));
+    }
+
+    body.push(totalRow(sections ? "Grand Total :" : "Total :", report.summary.totals));
   }
 
   // company / heading / branch + report info - drawn on every page
@@ -180,7 +204,6 @@ export const buildStockPdf = (report: PrintReport): Blob => {
       textColor: BLACK,
     },
     headStyles: {
-      fillColor: headFill,
       textColor: BLACK,
       fontStyle: "normal",
     },

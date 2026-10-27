@@ -8,8 +8,7 @@
 //   Summary  - A4 landscape, one row per item: Item ID / Item Name / Unit / Opening / Qty. In /
 //              Qty. Out / Closing, and a Total row at the end.
 //
-// The colours are the old reports' own: Detailed - ivory heading and light-steel-blue lines;
-// Summary - lavender-blush heading and burly-wood lines; the Total rows are gainsboro.
+// Plain: no fill on the heading row or the Total row, thin light lines (the same as the other prints).
 // "Page x of y" is top right of every page; the company, the heading, the branch and the report
 // info repeat at the top of every page.
 // Printed through components/common/printHtml (a hidden iframe).
@@ -56,14 +55,28 @@ export type SummaryTotals = {
   txtQtyClosing: number;
 };
 
+// one branch of the report: its name and its items (Detailed) or its rows and its Total (Summary)
+export type DetailBranch = {
+  lkpBranch: string;
+  txtBranchName: string;
+  items: DetailItem[];
+};
+
+export type SummaryBranch = {
+  lkpBranch: string;
+  txtBranchName: string;
+  lines: SummaryLine[];
+  totals: SummaryTotals;
+};
+
 export type PrintReport = {
   txtMode: "D" | "S";
   txtCoName: string;
   txtHeading: string;
   txtBranch: string;
   txtReportInfo: string;
-  detail: DetailItem[];
-  summary: { lines: SummaryLine[]; totals: SummaryTotals };
+  detail: DetailBranch[];
+  summary: { branches: SummaryBranch[]; totals: SummaryTotals };
 };
 
 // quantities: a whole number shows without decimals (the old #,#0), a fraction up to 3
@@ -86,11 +99,10 @@ export const formatCost = (value: number | null) =>
 export const formatDate = (value: string | null) =>
   value ? dayjs(value).format("DD-MMM-YY") : "";
 
-// the colours of the two reports
+// the colour of the lines of the two reports
 export const COLORS = {
-  D: { head: "#FFFFF0", line: "#B0C4DE" },
-  S: { head: "#FFF0F5", line: "#DEB887" },
-  total: "#DCDCDC",
+  D: { line: "#c7d1e4" },
+  S: { line: "#c7d1e4" },
 } as const;
 
 /* =========================================================
@@ -100,7 +112,7 @@ export const COLORS = {
 const detailItemHtml = (item: DetailItem) => `<tr><td colspan="8" class="item">Item&nbsp; : &nbsp;<b>${esc(item.lkpItemID)}</b>&nbsp;&nbsp;${esc(item.txtItemName)}</td></tr>
     ${item.lines
       .map(
-        (l) => `<tr>
+        (l, index) => `<tr${index === 0 ? ' class="first"' : ""}>
       <td>${esc(formatDate(l.txtDate))}</td>
       <td>${esc(l.txtDocType)}</td>
       <td>${esc(l.txtDocNo)}</td>
@@ -119,6 +131,14 @@ const detailItemHtml = (item: DetailItem) => `<tr><td colspan="8" class="item">I
       <td class="r"><b>${formatQty(item.txtTotalBalance)}</b></td>
     </tr>`;
 
+// "Branch : Jeddah" and its items (the heading only when the report holds more than one branch)
+const detailBranchHtml = (b: DetailBranch, sections: boolean) => `${
+  sections
+    ? `<tr><td colspan="8" class="branch">Branch&nbsp; : &nbsp;<b>${esc(b.txtBranchName)}</b></td></tr>
+    `
+    : ""
+}${b.items.map(detailItemHtml).join("\n    ")}`;
+
 const detailedHtml = (r: PrintReport) => `<table>
   <colgroup>
     <col style="width:13.6%" /><col style="width:7.2%" /><col style="width:13.3%" />
@@ -135,7 +155,7 @@ const detailedHtml = (r: PrintReport) => `<table>
     </tr>
   </thead>
   <tbody>
-    ${r.detail.map(detailItemHtml).join("\n    ")}
+    ${r.detail.map((b) => detailBranchHtml(b, r.detail.length > 1)).join("\n    ")}
   </tbody>
 </table>`;
 
@@ -143,8 +163,41 @@ const detailedHtml = (r: PrintReport) => `<table>
    SUMMARY
 ========================================================= */
 
+// "Branch : Jeddah", its rows and its Total (heading and Total only when the report holds more than one
+// branch)
+const summaryBranchHtml = (b: SummaryBranch, sections: boolean) => `${
+  sections
+    ? `<tr><td colspan="7" class="branch">Branch&nbsp; : &nbsp;<b>${esc(b.txtBranchName)}</b></td></tr>
+    `
+    : ""
+}${b.lines
+  .map(
+    (l, index) => `<tr${sections && index === 0 ? ' class="first"' : ""}>
+      <td>${esc(l.lkpItemID)}</td>
+      <td>${esc(l.txtItemName)}</td>
+      <td>${esc(l.txtUnit)}</td>
+      <td class="r">${formatQty(l.txtQtyOpening)}</td>
+      <td class="r">${formatQty(l.txtQtyIn)}</td>
+      <td class="r">${formatQty(l.txtQtyOut)}</td>
+      <td class="r">${formatQty(l.txtQtyClosing)}</td>
+    </tr>`
+  )
+  .join("\n    ")}${
+  sections
+    ? `
+    <tr class="tot">
+      <td colspan="3" class="r"><b>Total :</b></td>
+      <td class="r"><b>${formatQty(b.totals.txtQtyOpening)}</b></td>
+      <td class="r"><b>${formatQty(b.totals.txtQtyIn)}</b></td>
+      <td class="r"><b>${formatQty(b.totals.txtQtyOut)}</b></td>
+      <td class="r"><b>${formatQty(b.totals.txtQtyClosing)}</b></td>
+    </tr>`
+    : ""
+}`;
+
 const summaryHtml = (r: PrintReport) => {
   const t = r.summary.totals;
+  const sections = r.summary.branches.length > 1;
 
   return `<table>
   <colgroup>
@@ -162,21 +215,9 @@ const summaryHtml = (r: PrintReport) => {
     </tr>
   </thead>
   <tbody>
-    ${r.summary.lines
-      .map(
-        (l) => `<tr>
-      <td>${esc(l.lkpItemID)}</td>
-      <td>${esc(l.txtItemName)}</td>
-      <td>${esc(l.txtUnit)}</td>
-      <td class="r">${formatQty(l.txtQtyOpening)}</td>
-      <td class="r">${formatQty(l.txtQtyIn)}</td>
-      <td class="r">${formatQty(l.txtQtyOut)}</td>
-      <td class="r">${formatQty(l.txtQtyClosing)}</td>
-    </tr>`
-      )
-      .join("\n    ")}
+    ${r.summary.branches.map((b) => summaryBranchHtml(b, sections)).join("\n    ")}
     <tr class="tot">
-      <td colspan="3" class="r"><b>Total :</b></td>
+      <td colspan="3" class="r"><b>${sections ? "Grand Total :" : "Total :"}</b></td>
       <td class="r"><b>${formatQty(t.txtQtyOpening)}</b></td>
       <td class="r"><b>${formatQty(t.txtQtyIn)}</b></td>
       <td class="r"><b>${formatQty(t.txtQtyOut)}</b></td>
@@ -216,14 +257,14 @@ export const buildHtml = (r: PrintReport) => {
   .sub  { height: 24px; }
   .sub div { display: flex; justify-content: space-between; gap: 16px; }
   .sub .info { font-size: 8pt; }
-  th { background: ${color.head}; border: 1px solid ${color.line}; height: 25px;
+  th { border: 1px solid ${color.line}; height: 25px;
        padding: 0 4px; font-weight: normal; text-align: left; }
   th.r { text-align: right; }
   td { border: 1px solid ${color.line}; border-top: 0; height: 25px; padding: 0 4px;
        vertical-align: middle; overflow-wrap: anywhere; }
   .r { text-align: right; }
-  td.item { border: 0; height: 30px; padding-top: 8px; font-size: 10.5pt; }
-  tr.tot td { background: ${COLORS.total}; border-top: 1px solid ${color.line}; }
+  td.item, td.branch { border: 0; height: 30px; padding-top: 8px; font-size: 10.5pt; }
+  tr.tot td, tr.first td { border-top: 1px solid ${color.line}; }
 </style>
 </head>
 <body>
