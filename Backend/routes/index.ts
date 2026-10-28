@@ -46,7 +46,7 @@ import RptSalesPriceListRouter from "./Purchase/Report/RptSalesPriceListRouter.j
 import RptSOARouter from "./Finance/Report/A_RandA_P/RptSOARouter.js";
 import RptStockRouter from "./Sales/Report/RptStockRouter.js";
 import RptStockValuationRouter from "./Purchase/Report/RptStockValuationRouter.js";
-
+import RptStockVerificationRouter from "./Purchase/Report/RptStockVerificationRouter.js";
 const router = express.Router();
 router.use("/RptStockValuation", RptStockValuationRouter);
 router.use("/Receipt", ReceiptRouter);
@@ -96,4 +96,5 @@ router.use("/RptTB", RptTBRouter); // Trial Balance report
 router.use("/RptSalesPriceList", RptSalesPriceListRouter);
 router.use("/RptSOA", RptSOARouter);
 router.use("/RptStock", RptStockRouter);
+router.use("/RptStockVerification", RptStockVerificationRouter);
 export default router;

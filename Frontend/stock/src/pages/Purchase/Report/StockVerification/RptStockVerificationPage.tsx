@@ -1,51 +1,51 @@
-import React, { useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import Select from "react-select";
 import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
 import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
 import { DatePicker } from "@mui/x-date-pickers/DatePicker";
 import dayjs from "dayjs";
 import customParseFormat from "dayjs/plugin/customParseFormat";
-
+import { toast } from "react-toastify";
+import RadioGroup from "../../../../components/common/RadioGroup";
+import ReportPreview from "../../../../components/common/ReportPreview";
+import { buildStockVerificationPdf } from "../../../../components/Purchase/Report/RptStockVerification/RptStockVerificationPdf";
+import {
+  buildHtml,
+  printStockVerificationReport,
+  type PrintReport,
+} from "../../../../components/Purchase/Report/RptStockVerification/RptStockVerificationPrintReport";
+import { useEnterAsTab } from "../../../../hooks/useEnterAsTab";
+import { useAltShortcuts } from "../../../../hooks/useAltShortcuts";
+import { useGridCellFocus } from "../../../../hooks/useGridCellFocus";
+import { useAdvanceAfterSelect } from "../../../../hooks/useAdvanceAfterSelect";
+import { useInitialFocus } from "../../../../hooks/useInitialFocus";
+import {
+  BranchDividedMenuList,
+  BranchDividedOption,
+  branchMenuStyles,
+  filterLabelOrValue,
+} from "../../../../components/BranchSelect/branchSelectParts";
+import {
+  filterPairOption,
+  makePairComponents,
+  makePairDividedMenuStyles,
+  type PairOption,
+} from "../../../../components/PairSelect/pairSelectParts";
+import { usePairMenuHang } from "../../../../hooks/usePairMenuHang";
 dayjs.extend(customParseFormat);
 
 type Option = { value: string; label: string };
 
-type RadioOptionProps = {
-  name: string;
-  value: string;
-  label: string;
-  checked: boolean;
-  onChange: () => void;
-};
-
 const DATE_FORMAT = "DD-MM-YYYY";
 
 /* Replace these with data from your API */
-const branchOptions: Option[] = [
-  { value: "OFFICE", label: "OFFICE" },
-  { value: "BRANCH 1", label: "BRANCH 1" },
-  { value: "BRANCH 2", label: "BRANCH 2" },
-];
-const itemIdOptions: Option[] = [
-  { value: "1001", label: "1001" },
-  { value: "1002", label: "1002" },
-];
-const itemNameOptions: Option[] = [
-  { value: "1001", label: "Item One" },
-  { value: "1002", label: "Item Two" },
-];
-const groupIdOptions: Option[] = [
-  { value: "G1", label: "G1" },
-  { value: "G2", label: "G2" },
-];
-const groupNameOptions: Option[] = [
-  { value: "G1", label: "Group One" },
-  { value: "G2", label: "Group Two" },
-];
+const api = import.meta.env.VITE_API_URL;
+
+// the Post Status and its codes - the same as the other reports: 0 All, 1 Posted, 2 Non Posted
 const postStatusOptions: Option[] = [
-  { value: "ALL", label: "All" },
-  { value: "POSTED", label: "Posted" },
-  { value: "UNPOSTED", label: "Unposted" },
+  { value: "0", label: "All" },
+  { value: "1", label: "Posted" },
+  { value: "2", label: "Non Posted" },
 ];
 
 const selectClassNames = {
@@ -59,7 +59,7 @@ const selectClassNames = {
     !min-h-[25px] !h-[30px] !rounded-[4px] !border !shadow-none !text-[13px]
     hover:!border-[#aab8c5]
     ${isDisabled ? "!bg-[#f6f8fa]" : "!bg-white"}
-    ${isFocused ? "!border-[#91a7b9]" : "!border-[#cfd7df]"}
+    ${isFocused ? "!border-green-600" : "!border-[#cfd7df]"}
   `,
   valueContainer: () => "!h-[23px] !py-0 !px-[5px] !overflow-hidden",
   singleValue: () => "!m-0 !text-[13px] !text-[#24364d]",
@@ -92,46 +92,56 @@ const selectProps = {
   menuPosition: "fixed" as const,
   menuPortalTarget: typeof document !== "undefined" ? document.body : undefined,
 };
+// The Branch box: the "Branch | ID" list of the other screens, searchable on either column.
+const branchProps = {
+  ...selectProps,
+  isSearchable: true,
+  classNames: {
+    control: selectClassNames.control,
+    valueContainer: selectClassNames.valueContainer,
+    singleValue: selectClassNames.singleValue,
+    placeholder: selectClassNames.placeholder,
+    input: selectClassNames.input,
+    indicatorsContainer: selectClassNames.indicatorsContainer,
+    dropdownIndicator: selectClassNames.dropdownIndicator,
+    indicatorSeparator: selectClassNames.indicatorSeparator,
+    clearIndicator: selectClassNames.clearIndicator,
+    option: selectClassNames.option,
+  },
+  styles: branchMenuStyles,
+  components: { Option: BranchDividedOption, MenuList: BranchDividedMenuList },
+  filterOption: filterLabelOrValue,
+};
+// The Item Group boxes: the "ID | Name" lists of Beginning Stock - the Group ID box opens
+// "Group ID | Group Name", the Group Name box opens "Group Name | Group ID", both searchable on
+// either column, and picking from one fills the other. Created once, outside the page.
+const groupIdComponents = makePairComponents("Group ID", "Group Name", false, true);
+const groupNameComponents = makePairComponents("Group ID", "Group Name", true, true);
 
-const CustomRadio: React.FC<RadioOptionProps> = ({
-  name,
-  value,
-  label,
-  checked,
-  onChange,
-}) => (
-  <label className="flex cursor-pointer items-center gap-2.5 whitespace-nowrap select-none">
-    <input
-      type="radio"
-      name={name}
-      value={value}
-      checked={checked}
-      onChange={onChange}
-      className="sr-only"
-    />
-    <span
-      className={`flex h-[19px] w-[19px] shrink-0 items-center justify-center rounded-full border bg-white ${
-        checked ? "border-[#64d96e]" : "border-[#cbd3dc]"
-      }`}
-    >
-      <span
-        className={`h-2.5 w-2.5 rounded-full bg-[#64d96e] ${
-          checked ? "opacity-100" : "opacity-0"
-        }`}
-      />
-    </span>
-    <span className="text-[14px] font-normal text-[#35445a]">{label}</span>
-  </label>
-);
+// how far the Group Name list hangs past its box (its Group ID column)
+const NAME_MENU_HANG = 120;
 
-const RadioPanel: React.FC<{
-  children: React.ReactNode;
-  className?: string;
-}> = ({ children, className = "" }) => (
-  <div className={`border border-[#e0e5ea] bg-white px-3.5 py-3 ${className}`}>
-    <div className="flex flex-col gap-3">{children}</div>
-  </div>
-);
+// the look of the other boxes, but the open list is the pair list's own
+const pairProps = {
+  ...selectProps,
+  isSearchable: true,
+  classNames: {
+    control: selectClassNames.control,
+    valueContainer: selectClassNames.valueContainer,
+    singleValue: selectClassNames.singleValue,
+    placeholder: selectClassNames.placeholder,
+    input: selectClassNames.input,
+    indicatorsContainer: selectClassNames.indicatorsContainer,
+    dropdownIndicator: selectClassNames.dropdownIndicator,
+    indicatorSeparator: selectClassNames.indicatorSeparator,
+    clearIndicator: selectClassNames.clearIndicator,
+    option: ({ isFocused, isSelected }: { isFocused: boolean; isSelected: boolean }) =>
+      `!cursor-pointer !text-[#24364d] ${
+        isSelected ? "!bg-[#e7f7ed]" : isFocused ? "!bg-[#f2faf5]" : "!bg-white"
+      }`,
+  },
+  filterOption: filterPairOption,
+};
 
 const FieldLabel: React.FC<{
   children: React.ReactNode;
@@ -223,7 +233,7 @@ const AppDatePicker: React.FC<AppDatePickerProps> = ({
         "& .MuiPickersInputBase-root:hover .MuiPickersOutlinedInput-notchedOutline":
           { borderColor: "#B7C7D7 !important" },
         "& .MuiPickersInputBase-root.Mui-focused .MuiPickersOutlinedInput-notchedOutline":
-          { borderColor: "#B7C7D7 !important", borderWidth: "1px" },
+          { borderColor: "#16a34a !important", borderWidth: "1px" }, // green-600, as the cell outline
         "& .MuiPickersInputBase-root.Mui-error .MuiPickersOutlinedInput-notchedOutline":
           { borderColor: "#B7C7D7 !important" },
         "& .MuiPickersInputBase-root.Mui-error:hover .MuiPickersOutlinedInput-notchedOutline":
@@ -240,61 +250,228 @@ type RptStockVerificationPageProps = {
 };
 
 const RptStockVerificationPage: React.FC<RptStockVerificationPageProps> = ({ onClose }) => {
-  const [branchMode, setBranchMode] = useState("One Branch"); // optBranch
-  const [branch, setBranch] = useState<Option | null>(branchOptions[0]); // lkpBranch
+  // Enter moves on like Tab; the box the cursor is in is outlined; after a pick from a list the cursor
+  // goes on
+  const handleEnterAsTab = useEnterAsTab();
+  const { cellFocusClass } = useGridCellFocus();
+  const { advanceAfterPick, advanceOnEnter } = useAdvanceAfterSelect();
 
-  const [itemMode, setItemMode] = useState("One Item Group"); // optItem
-  const [itemId, setItemId] = useState<string | null>(null); // lkpOneItemID / lkpOneItemName
-  const [groupId, setGroupId] = useState<string | null>(null); // lkpOneItemGroupID / lkpOneItemGroupName
+  // the lookups have been asked for (found or not): the cursor can start
+  const [lookupsLoaded, setLookupsLoaded] = useState(false);
 
-  const [postStatus, setPostStatus] = useState<Option | null>(
+  const [rdgBranch, setRdgBranch] = useState("One Branch"); // rdgBranch
+  const [lkpBranch, setLkpBranch] = useState<Option | null>(null); // lkpBranch
+
+  // the branches the logged-in user has a right to, and the user's default branch
+  const [branchOptions, setBranchOptions] = useState<Option[]>([]);
+  const [defaultBranch, setDefaultBranch] = useState<Option | null>(null);
+
+  // the item groups of the company
+  const [groupRows, setGroupRows] = useState<
+    { lkpItemGroupID: string; txtItemGroupName: string }[]
+  >([]);
+
+  // the Group ID list covers the Group ID box AND the Group Name box next to it (measured when it opens)
+  const { hang: groupIdHang, measure: measureGroupIdHang } = usePairMenuHang();
+
+  useEffect(() => {
+    const loadLookups = async () => {
+      try {
+        const response = await fetch(`${api}/RptStockVerification/lookups`, {
+          credentials: "include",
+        });
+        const result = await response.json();
+
+        if (!response.ok || !result.success) {
+          toast.error(result.message || "Failed to load the Branches");
+          return;
+        }
+
+        const options: Option[] = (result.branches || []).map(
+          (row: { lkpBranch: string; txtBranchName: string }) => ({
+            value: row.lkpBranch,
+            label: row.txtBranchName,
+          }),
+        );
+
+        const initial =
+          options.find((option) => option.value === result.lkpDefaultBranch) ?? null;
+
+        setBranchOptions(options);
+        setDefaultBranch(initial);
+        setLkpBranch(initial);
+        setGroupRows(result.groups || []);
+      } catch (error: unknown) {
+        console.error("rptStockVerification lookups error:", error);
+        toast.error("Cannot connect to the Stock Verification API.");
+      }
+    };
+
+    loadLookups().finally(() => setLookupsLoaded(true));
+  }, []);
+
+  const [rdgItemGroup, setRdgItemGroup] = useState("One Item Group"); // rdgItemGroup
+  // one item group: the Group ID box and the Group Name box show the same choice
+  const [lkpOneItemGroupID, setLkpOneItemGroupID] = useState(""); // lkpOneItemGroupID / lkpOneItemGroupName
+
+  // All is what the old form starts with
+  const [lkpPostStatus, setLkpPostStatus] = useState<Option | null>(
     postStatusOptions[0],
   ); // lkpPostStatus
-  const [orderByTxnNo, setOrderByTxnNo] = useState(false); // chkOrderbyTxnNo
 
-  
-  const [fromDate, setFromDate] = useState(""); // dtpFromDate
-  const [toDate, setToDate] = useState(""); // dtpToDate
+  // the date the stock is counted as on (starts as today)
+  const [dtpAsOnDate, setDtpAsOnDate] = useState(dayjs().format(DATE_FORMAT)); // dtpAsOnDate
 
-  const selectedItemId = itemIdOptions.find((o) => o.value === itemId) ?? null;
-  const selectedItemName =
-    itemNameOptions.find((o) => o.value === itemId) ?? null;
-  const selectedGroupId =
-    groupIdOptions.find((o) => o.value === groupId) ?? null;
-  const selectedGroupName =
-    groupNameOptions.find((o) => o.value === groupId) ?? null;
+  // the Print Preview: the report the server sent, the name of the file, and what it was made from
+  // (the Excel file is made from the same values)
+  const [preview, setPreview] = useState<{
+    report: PrintReport;
+    fileBase: string;
+    params: Record<string, unknown>;
+  } | null>(null);
+  const [printing, setPrinting] = useState(false);
 
-  const handlePrint = () => {
-    console.log({
-      branchMode,
-      branch: branchMode === "One Branch" ? branch : null,
-      itemMode,
-      itemId: itemMode === "One Item" ? itemId : null,
-      groupId: itemMode === "One Item Group" ? groupId : null,
-      postStatus,
-      orderByTxnNo,
-   
-      fromDate,
-      toDate,
+  // the group boxes: ID | Name, and Name | ID (one group, two boxes)
+  const groupIdOptions = useMemo<PairOption[]>(
+    () =>
+      groupRows.map((row) => ({
+        value: row.lkpItemGroupID,
+        label: row.lkpItemGroupID,
+        id: row.lkpItemGroupID,
+        name: row.txtItemGroupName,
+      })),
+    [groupRows],
+  );
+
+  const groupNameOptions = useMemo<PairOption[]>(
+    () =>
+      [...groupRows]
+        .sort((a, b) => a.txtItemGroupName.localeCompare(b.txtItemGroupName))
+        .map((row) => ({
+          value: row.lkpItemGroupID,
+          label: row.txtItemGroupName,
+          id: row.lkpItemGroupID,
+          name: row.txtItemGroupName,
+        })),
+    [groupRows],
+  );
+
+  // what the server takes: the element ids of the page, the radios as their codes
+  const buildStockVerificationParams = () => ({
+    rdgBranch: rdgBranch === "One Branch" ? 0 : 1,
+    lkpBranch: rdgBranch === "One Branch" ? (lkpBranch?.value ?? "") : "",
+    rdgItemGroup: rdgItemGroup === "One Item Group" ? 0 : 1,
+    lkpOneItemGroupID: rdgItemGroup === "One Item Group" ? lkpOneItemGroupID : "",
+    lkpPostStatus: Number(lkpPostStatus?.value ?? "0"),
+    dtpAsOnDate: dayjs(dtpAsOnDate, DATE_FORMAT, true).isValid()
+      ? dayjs(dtpAsOnDate, DATE_FORMAT).format("YYYY-MM-DD")
+      : "",
+  });
+
+  // Print (the old cmdPrint): the checks of the old form, then the server sends the report and the Print
+  // Preview opens (Print = the browser's print window, Download = Excel / PDF)
+  const handlePrint = async () => {
+    if (printing || preview) return;
+
+    const warn = (message: string, id: string) => {
+      toast.warning(message);
+      document.getElementById(id)?.focus();
+    };
+
+    const params = buildStockVerificationParams();
+
+    if (params.rdgBranch === 0 && !params.lkpBranch) {
+      return warn("Please select 'Branch'", "lkpBranch");
+    }
+
+    if (params.rdgItemGroup === 0 && !params.lkpOneItemGroupID) {
+      return warn("Please select 'Item Group ID'", "lkpOneItemGroupID");
+    }
+
+    if (!params.dtpAsOnDate) {
+      return warn("Please enter 'Date'", "dtpAsOnDate");
+    }
+
+    setPrinting(true);
+
+    try {
+      const response = await fetch(`${api}/RptStockVerification/print`, {
+        method: "POST",
+        credentials: "include",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(params),
+      });
+
+      const result = await response.json();
+
+      if (!response.ok || !result.success) {
+        toast.warning(result.message || "The Stock Verification report could not be printed.");
+        if (result.field) document.getElementById(result.field)?.focus();
+        return;
+      }
+
+      setPreview({ report: result.report, fileBase: result.fileBase, params });
+    } catch (error: unknown) {
+      console.error("rptStockVerification print error:", error);
+      toast.error("Cannot connect to the Stock Verification API.");
+    } finally {
+      setPrinting(false);
+    }
+  };
+
+  // the Excel file of the Print Preview, made by the server (null after an error)
+  const fetchExcel = async (): Promise<Blob | null> => {
+    if (!preview) return null;
+
+    const response = await fetch(`${api}/RptStockVerification/excel`, {
+      method: "POST",
+      credentials: "include",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(preview.params),
     });
+
+    // an error comes back as JSON, the file as a blob
+    if (!response.ok) {
+      let message = "Could not create the Excel file";
+
+      try {
+        const result = await response.json();
+        message = result.message || message;
+      } catch {
+        message = `Could not create the Excel file (error ${response.status})`;
+      }
+
+      toast.error(message);
+      return null;
+    }
+
+    return response.blob();
   };
 
   const handleClose = () => {
-    setBranchMode("One Branch");
-    setBranch(branchOptions[0]);
-    setItemMode("One Item Group");
-    setItemId(null);
-    setGroupId(null);
-    setPostStatus(postStatusOptions[0]);
-    setOrderByTxnNo(false);
-   
-    setFromDate("");
-    setToDate("");
+    setRdgBranch("One Branch");
+    setLkpBranch(defaultBranch);
+    setRdgItemGroup("One Item Group");
+    setLkpOneItemGroupID("");
+    setLkpPostStatus(postStatusOptions[0]);
+    setDtpAsOnDate(dayjs().format(DATE_FORMAT));
     onClose?.();
   };
 
+  // the cursor starts on the Branch box
+  useInitialFocus(lookupsLoaded, "lkpBranch");
+
+  // Alt+P -> Print, Alt+C -> Close (the underlined letters on the buttons)
+  useAltShortcuts({
+    p: handlePrint,
+    c: handleClose,
+  });
+
   return (
-    <div className="flex min-h-full w-full items-start justify-center bg-white px-4 py-4">
+    <div
+      onKeyDown={handleEnterAsTab}
+      className="flex min-h-full w-full items-start justify-center bg-white px-4 py-4"
+    >
       <div className="min-h-fit w-205 max-w-full bg-white p-0">
         <main className="w-full overflow-hidden border border-gray-400 bg-white">
           <header className="flex h-7.5 items-center justify-start bg-[#9fdfbc]">
@@ -306,134 +483,132 @@ const RptStockVerificationPage: React.FC<RptStockVerificationPageProps> = ({ onC
           <section className="px-3.5 pb-6 pt-3">
             <div className="grid grid-cols-[168px_1fr] items-start gap-x-4 gap-y-3">
               {/* Branch */}
-              <RadioPanel>
-                <CustomRadio
-                  name="rdgBranch"
-                  value="One Branch"
-                  label="One Branch"
-                  checked={branchMode === "One Branch"}
-                  onChange={() => setBranchMode("One Branch")}
-                />
-                <CustomRadio
-                  name="rdgBranch"
-                  value="All Branch"
-                  label="All Branch"
-                  checked={branchMode === "All Branch"}
-                  onChange={() => setBranchMode("All Branch")}
-                />
-              </RadioPanel>
+              <RadioGroup
+                className={cellFocusClass}
+                name="rdgBranch"
+                value={rdgBranch}
+                options={[
+                  { value: "One Branch", label: "One Branch" },
+                  { value: "All Branch", label: "All Branch" },
+                ]}
+                onChange={setRdgBranch}
+              />
               <div className="pt-3">
-                <div className="w-[250px]">
+                <div
+                  className={`w-[250px] ${cellFocusClass}`}
+                  onKeyDown={(event) => advanceOnEnter(event)}
+                >
                   <Select
                     inputId="lkpBranch"
                     instanceId="lkpBranch"
                     options={branchOptions}
-                    value={branch}
-                    onChange={setBranch}
-                    isDisabled={branchMode !== "One Branch"}
-                    {...selectProps}
+                    value={lkpBranch}
+                    onChange={(option) => {
+                      setLkpBranch(option);
+                      if (option) advanceAfterPick("lkpBranch");
+                    }}
+                    isDisabled={rdgBranch !== "One Branch"}
+                    noOptionsMessage={() => "No Branch Found"}
+                    {...branchProps}
                   />
                 </div>
               </div>
 
-              {/* Item */}
-              <RadioPanel>
-               
-                <CustomRadio
-                  name="rdgItem"
-                  value="One Item Group"
-                  label="One Item Group"
-                  checked={itemMode === "One Item Group"}
-                  onChange={() => setItemMode("One Item Group")}
-                />
-                <CustomRadio
-                  name="rdgItem"
-                  value="All Item"
-                  label="All Item"
-                  checked={itemMode === "All Item"}
-                  onChange={() => setItemMode("All Item")}
-                />
-              </RadioPanel>
+              {/* Item Group */}
+              <RadioGroup
+                className={cellFocusClass}
+                name="rdgItemGroup"
+                value={rdgItemGroup}
+                options={[
+                  { value: "One Item Group", label: "One Item Group" },
+                  { value: "All Item Group", label: "All Item Group" },
+                ]}
+                onChange={setRdgItemGroup}
+              />
               <div className="pt-3">
-                {itemMode === "One Item" && (
-                  <div className="grid grid-cols-[135px_1fr] gap-2">
-                    <Select
-                      inputId="lkpOneItemID"
-                      instanceId="lkpOneItemID"
-                      options={itemIdOptions}
-                      value={selectedItemId}
-                      onChange={(option) => setItemId(option?.value ?? null)}
-                      {...selectProps}
-                    />
-                    <Select
-                      inputId="lkpOneItemName"
-                      instanceId="lkpOneItemName"
-                      options={itemNameOptions}
-                      value={selectedItemName}
-                      onChange={(option) => setItemId(option?.value ?? null)}
-                      {...selectProps}
-                    />
-                  </div>
-                )}
-                {itemMode === "One Item Group" && (
-                  <div className="grid grid-cols-[135px_1fr] gap-2">
-                    <Select
-                      inputId="lkpOneItemGroupID"
-                      instanceId="lkpOneItemGroupID"
-                      options={groupIdOptions}
-                      value={selectedGroupId}
-                      onChange={(option) => setGroupId(option?.value ?? null)}
-                      {...selectProps}
-                    />
-                    <Select
-                      inputId="lkpOneItemGroupName"
-                      instanceId="lkpOneItemGroupName"
-                      options={groupNameOptions}
-                      value={selectedGroupName}
-                      onChange={(option) => setGroupId(option?.value ?? null)}
-                      {...selectProps}
-                    />
+                {rdgItemGroup === "One Item Group" && (
+                  <div className="grid grid-cols-[135px_1fr]">
+                    <div
+                      className={cellFocusClass}
+                      onKeyDown={(event) => advanceOnEnter(event, ["lkpOneItemGroupName"])}
+                    >
+                      <Select<PairOption, false>
+                        inputId="lkpOneItemGroupID"
+                        instanceId="lkpOneItemGroupID"
+                        name="lkpOneItemGroupID"
+                        options={groupIdOptions}
+                        value={groupIdOptions.find((o) => o.value === lkpOneItemGroupID) ?? null}
+                        onChange={(option) => {
+                          setLkpOneItemGroupID(option?.value ?? "");
+                          if (option) advanceAfterPick("lkpOneItemGroupID", ["lkpOneItemGroupName"]);
+                        }}
+                        components={groupIdComponents}
+                        styles={makePairDividedMenuStyles(groupIdHang)}
+                        onMenuOpen={() =>
+                          measureGroupIdHang("lkpOneItemGroupID", "lkpOneItemGroupName")
+                        }
+                        noOptionsMessage={() => "No Item Group Found"}
+                        {...pairProps}
+                      />
+                    </div>
+                    <div
+                      className={`-ml-px ${cellFocusClass}`}
+                      style={{ marginRight: NAME_MENU_HANG }}
+                      onKeyDown={(event) => advanceOnEnter(event)}
+                    >
+                      <Select<PairOption, false>
+                        inputId="lkpOneItemGroupName"
+                        instanceId="lkpOneItemGroupName"
+                        name="lkpOneItemGroupName"
+                        options={groupNameOptions}
+                        value={groupNameOptions.find((o) => o.value === lkpOneItemGroupID) ?? null}
+                        onChange={(option) => {
+                          setLkpOneItemGroupID(option?.value ?? "");
+                          if (option) advanceAfterPick("lkpOneItemGroupName");
+                        }}
+                        components={groupNameComponents}
+                        styles={makePairDividedMenuStyles(NAME_MENU_HANG)}
+                        noOptionsMessage={() => "No Item Group Found"}
+                        {...pairProps}
+                      />
+                    </div>
                   </div>
                 )}
               </div>
-               <FieldLabel>Period :</FieldLabel>
+              <FieldLabel>As On Date :</FieldLabel>
               <div className="flex items-center justify-between gap-4">
-                <div className="w-[140px]">
-                   <AppDatePicker
-                    id="dtpFromDate"
-                    label="From Date"
-                    value={fromDate}
-                    onChange={setFromDate}
+                <div className={`w-[140px] ${cellFocusClass}`}>
+                  <AppDatePicker
+                    id="dtpAsOnDate"
+                    label="As On Date"
+                    value={dtpAsOnDate}
+                    onChange={setDtpAsOnDate}
                   />
-                 
                 </div>
-             
-                 
               </div>
-              
 
-              {/* Post status + order by txn no */}
+              {/* Post status */}
               <FieldLabel>Post Status :</FieldLabel>
               <div className="flex items-center justify-between gap-4">
-                <div className="w-[140px]">
+                <div
+                  className={`w-[140px] ${cellFocusClass}`}
+                  onKeyDown={(event) => advanceOnEnter(event)}
+                >
                   <Select
                     inputId="lkpPostStatus"
                     instanceId="lkpPostStatus"
                     options={postStatusOptions}
-                    value={postStatus}
-                    onChange={setPostStatus}
+                    value={lkpPostStatus}
+                    onChange={(option) => {
+                      setLkpPostStatus(option);
+                      if (option) advanceAfterPick("lkpPostStatus");
+                    }}
                     {...selectProps}
                   />
                 </div>
-             
-                 
               </div>
 
-           
-            
-
-
-              {/* Period and actions */}
+              {/* Actions */}
               <div className="flex flex-col gap-5">
                 <div className="flex items-center gap-2">
                   
@@ -462,6 +637,18 @@ const RptStockVerificationPage: React.FC<RptStockVerificationPageProps> = ({ onC
           </section>
         </main>
       </div>
+
+      {/* the Print Preview (after Print) */}
+      {preview && (
+        <ReportPreview
+          html={buildHtml(preview.report)}
+          fileBase={preview.fileBase}
+          onPrint={() => printStockVerificationReport(preview.report)}
+          buildPdf={() => buildStockVerificationPdf(preview.report)}
+          fetchExcel={fetchExcel}
+          onClose={() => setPreview(null)}
+        />
+      )}
     </div>
   );
 };

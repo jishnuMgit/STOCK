@@ -59,7 +59,7 @@ const selectClassNames = {
     !min-h-[25px] !h-[30px] !rounded-[4px] !border !shadow-none !text-[13px]
     hover:!border-[#aab8c5]
     ${isDisabled ? "!bg-[#f6f8fa]" : "!bg-white"}
-    ${isFocused ? "!border-[#91a7b9]" : "!border-[#cfd7df]"}
+    ${isFocused ? "!border-green-600" : "!border-[#cfd7df]"}
   `,
   valueContainer: () => "!h-[23px] !py-0 !px-[5px] !overflow-hidden",
   singleValue: () => "!m-0 !text-[13px] !text-[#24364d]",
@@ -248,7 +248,7 @@ const AppDatePicker: React.FC<AppDatePickerProps> = ({
         "& .MuiPickersInputBase-root:hover .MuiPickersOutlinedInput-notchedOutline":
           { borderColor: "#B7C7D7 !important" },
         "& .MuiPickersInputBase-root.Mui-focused .MuiPickersOutlinedInput-notchedOutline":
-          { borderColor: "#B7C7D7 !important", borderWidth: "1px" },
+          { borderColor: "#16a34a !important", borderWidth: "1px" }, // green-600, as the cell outline
         "& .MuiPickersInputBase-root.Mui-error .MuiPickersOutlinedInput-notchedOutline":
           { borderColor: "#B7C7D7 !important" },
         "& .MuiPickersInputBase-root.Mui-error:hover .MuiPickersOutlinedInput-notchedOutline":
