@@ -524,6 +524,6 @@ const RptSupplierPurchasePage: React.FC<RptSupplierPurchasePageProps> = ({
       </div>
     </div>
   );
-};
+}
 
 export default RptSupplierPurchasePage;
