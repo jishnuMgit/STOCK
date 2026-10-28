@@ -21,7 +21,7 @@
 --                                        pasted into the query; a list of ids does the same, safely.)
 --   @rdgItemGroup   -> p_rdgitemgroup    0 One Item Group, anything else All Item Group
 --   @strItemGroupID -> p_stritemgroupid  the item group, used when p_rdgitemgroup = 0
---   @strAsOnDate    -> p_strasondate     DATE (the old one was dd/mm/yyyy text); the whole of that day counts
+--   @strAsOnDate    -> p_dtpasondate     DATE (the old one was dd/mm/yyyy text); the whole of that day counts
 --   @cboPostStatus  -> p_lkppoststatus   0 All, 1 Posted, 2 Non Posted  (the codes of the Stock report;
 --                                        the old @cboPostStatus was 0 Non Posted, 1 Posted, 2 All)
 --   (new)           -> p_pstryear        the login year: which tblstockcontrol row gives the Unit Cost
@@ -48,14 +48,14 @@ CREATE OR REPLACE PROCEDURE dbo.sp_rptstockvalue(
 	IN p_strfilter character varying[],     -- the ticked branch ids, used when p_rdgbranch = 1
 	IN p_rdgitemgroup integer,              -- 0 = One Item Group, anything else = All Item Group
 	IN p_stritemgroupid character varying,  -- the item group, used when p_rdgitemgroup = 0
-	IN p_strasondate date,                  -- the As On Date (the whole of that day counts)
+	IN p_dtpasondate date,                  -- the As On Date (the whole of that day counts)
 	IN p_lkppoststatus integer,             -- 0 = All, 1 = Posted, 2 = Non Posted
 	IN p_pstryear character varying,        -- the login year (picks the tblstockcontrol row of the Unit Cost)
 	IN p_result_cursor refcursor DEFAULT 'cur_rptstockvalue'::refcursor)
 LANGUAGE 'plpgsql'
 AS $BODY$
 DECLARE
-    v_to_excl date := p_strasondate + 1;   -- the whole of the As On Date counts
+    v_to_excl date := p_dtpasondate + 1;   -- the whole of the As On Date counts
 BEGIN
 
     -- THE CODES (the same as the old SP_rptStockValue)

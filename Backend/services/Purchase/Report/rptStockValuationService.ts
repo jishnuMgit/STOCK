@@ -118,7 +118,7 @@ const callStockValue = async (p: StockValuationParams): Promise<DbRow[]> => {
         p.rdgBranch === 1 ? p.chkBranch : null, // p_strfilter
         p.rdgItemGroup, // p_rdgitemgroup
         p.rdgItemGroup === 0 ? p.lkpOneItemGroupID : null, // p_stritemgroupid
-        p.dtpAsOnDate, // p_strasondate
+        p.dtpAsOnDate, // p_dtpasondate
         p.lkpPostStatus, // p_lkppoststatus
         p.PstrYear, // p_pstryear
         cursor,
