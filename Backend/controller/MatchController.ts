@@ -294,15 +294,36 @@ const validateMatchRows = (
 };
 
 /* =====================================================
+   DATE HELPER
+   The SPs do TO_DATE(..., 'DD/MM/YYYY') on VARCHAR(10).
+   Slices the string instead of using Date, to avoid
+   timezone shifts. Put this near the other helpers
+   (getField, num, isTrue, isEmpty).
+===================================================== */
+
+const toDDMMYYYY = (v: unknown): string | null => {
+  if (isEmpty(v)) return null;
+  const s = String(v).trim();
+  if (/^\d{2}\/\d{2}\/\d{4}$/.test(s)) return s;
+  const m = s.match(/^(\d{4})-(\d{2})-(\d{2})/);
+  return m ? `${m[3]}/${m[2]}/${m[1]}` : null;
+};
+
+/* =====================================================
    SAVE MATCH  (port of clsMatchAccounts.Apply)
    POST /saveMatch
    body: {
-     strMode, year, brId, docType, docNo, intDocNo, docDate,
+     year, brId, docType, docNo, intDocNo, docDate,
      efDate, divId, totalAmount,
      data:  [...rows of the main doc grid  (dtData)],
      match: [...rows of the match grid     (dtMatch)]
    }
    coId and userId come from the session.
+
+   Per matched parent row:
+     1. dbo."SP_frmMatchAccounts"  (mode 'M')
+     2. dbo."SP_frmMatchRecords"   (mode 'S') for each child
+     3. dbo.sp_updatematchcloseddocs for each child
 ===================================================== */
 
 export const saveMatch = async (
@@ -313,7 +334,6 @@ export const saveMatch = async (
   const userId = req.user?.userId ?? null;
 
   const {
-    strMode,
     year,
     brId,
     docType,
@@ -321,7 +341,6 @@ export const saveMatch = async (
     intDocNo,
     docDate,
     efDate,
-    divId,
     totalAmount,
     data,
     match,
@@ -384,51 +403,63 @@ export const saveMatch = async (
         continue;
       }
 
-      /* ---------- 1. parent row : sp_pagesmatchaccounts ---------- */
-      const cursorName = `cur_save_${parentCount}`;
-
+      /* ---------- 1. parent row : SP_frmMatchAccounts (mode 'M') ---------- */
       await client.query(
         `
-        CALL dbo.sp_pagesmatchaccounts(
-          $1::varchar, $2::varchar, $3::varchar, $4::varchar,
-          $5::varchar, $6::varchar, $7::bigint,  $8::varchar,
-          $9::smallint, $10::smallint, $11::varchar, $12::varchar,
-          $13::varchar, $14::refcursor
+        CALL dbo."SP_frmMatchAccounts"(
+          $1::varchar,  $2::varchar,  $3::smallint, $4::varchar,
+          $5::varchar,  $6::varchar,  $7::bigint,   $8::varchar,
+          $9::smallint, $10::smallint, $11::varchar
         )
         `,
         [
-          strMode,
+          "M", // the SP only handles 'GetTL' and 'M'
           coId,
-          String(year),
+          num(year),
           brId,
           docType,
           docNo,
           num(intDocNo),
-          docDate,
+          toDDMMYYYY(docDate),
           slNo,
           slNoSub,
           userId,
-          accountId,
-          divId || null,
-          cursorName,
         ],
       );
       parentCount++;
 
-      /* ---------- 2. child rows : sp_pagematchrecords ---------- */
+      /* ---------- 2. child rows : SP_frmMatchRecords (mode 'S') ---------- */
       for (let i = 0; i < childRows.length; i++) {
         const c = childRows[i];
         const mSlNoSub = i + 1; // VB: intIndex_Match + 1
 
         await client.query(
           `
-          CALL dbo.sp_pagematchrecords(
-            $1::varchar,  $2::varchar,  $3::varchar,  $4::smallint,
-            $5::varchar,  $6::varchar,  $7::smallint, $8::smallint,
-            $9::bigint,   $10::varchar, $11::varchar, $12::varchar,
-            $13::varchar, $14::float8,  $15::float8,  $16::float8,
-            $17::smallint,$18::varchar, $19::varchar, $20::varchar,
-            $21::bigint,  $22::smallint,$23::smallint,$24::varchar
+          CALL dbo."SP_frmMatchRecords"(
+            "strMode"         => $1::varchar,
+            "gstrCoID"        => $2::varchar,
+            "strBrID"         => $3::varchar,
+            "intYear"         => $4::smallint,
+            "strDocType"      => $5::varchar,
+            "strDocNo"        => $6::varchar,
+            "intSlNo"         => $7::smallint,
+            "intSlNoSub"      => $8::smallint,
+            "IntDocNo"        => $9::bigint,
+            "dtpDate"         => $10::varchar,
+            "dtpEFDate"       => $11::varchar,
+            "strAccountID"    => $12::varchar,
+            "strDescription"  => $13::varchar,
+            "numDebit"        => $14::numeric,
+            "numCredit"       => $15::numeric,
+            "numMatchAmt"     => $16::numeric,
+            "intMYear"        => $17::smallint,
+            "strMBrID"        => $18::varchar,
+            "strMDocType"     => $19::varchar,
+            "strMDocNo"       => $20::varchar,
+            "intMDocNo"       => $21::integer,
+            "intMSlNo"        => $22::smallint,
+            "intMSlNoSub"     => $23::smallint,
+            "gstrUserID"      => $24::varchar
           )
           `,
           [
@@ -441,8 +472,8 @@ export const saveMatch = async (
             num(getField(c, "fSlNo")),
             num(getField(c, "fSlNoSub")),
             num(getField(c, "fIntDocNo")),
-            getField(c, "fDate"),
-            efDate,
+            toDDMMYYYY(getField(c, "fDate")),
+            toDDMMYYYY(efDate),
             getField(c, "fAccountID"),
             String(getField(dRow, "fDescription") ?? " ").substring(0, 100),
             num(getField(c, "fDebit")),
@@ -459,7 +490,7 @@ export const saveMatch = async (
           ],
         );
 
-        /* ---------- 3. close fully matched docs ---------- */
+        /* ---------- 3. close fully matched docs (unchanged) ---------- */
         await client.query(
           `
           CALL dbo.sp_updatematchcloseddocs(
