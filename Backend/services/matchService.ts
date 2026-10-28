@@ -1,8 +1,6 @@
+import { MatchTotalParams, MatchRow } from "../types/types.js";
 
-
-import {MatchTotalParams,MatchRow} from '../types/types.js'
-
-import {round2,getNumber,getDataMatch} from '../utils/helper.js'
+import { round2, getNumber, getDataMatch } from "../utils/helper.js";
 export function matchTotal(params: MatchTotalParams) {
   const {
     dtMatch,
@@ -26,7 +24,6 @@ export function matchTotal(params: MatchTotalParams) {
   // =====================================================
 
   if (customerAccountId) {
-
     // ===================================================
     // DEBIT ALLOCATED
     // ===================================================
@@ -35,23 +32,16 @@ export function matchTotal(params: MatchTotalParams) {
       .filter(
         (row) =>
           String(row.fCSAccountID ?? "") === customerAccountId &&
-          Number(row.fMAccountSlNo ?? 0) ===
-            matchAccountSlNo &&
-          Number(row.fMAccountSlNoSub ?? 0) ===
-            matchAccountSlNoSub &&
+          Number(row.fMAccountSlNo ?? 0) === matchAccountSlNo &&
+          Number(row.fMAccountSlNoSub ?? 0) === matchAccountSlNoSub &&
           Number(row.fDebit ?? 0) > 0 &&
           row.fMatch === true &&
-          Number(row.fMatchDocAmt ?? 0) !== 0
+          Number(row.fMatchDocAmt ?? 0) !== 0,
       )
-      .reduce(
-        (sum, row) =>
-          sum + Number(row.fAdjAmt ?? 0),
-        0
-      );
+      .reduce((sum, row) => sum + Number(row.fAdjAmt ?? 0), 0);
 
     numDrMatched += debitAllocated;
     numDrMatchedAmt += debitAllocated;
-
 
     // ===================================================
     // CREDIT ALLOCATED
@@ -61,36 +51,27 @@ export function matchTotal(params: MatchTotalParams) {
       .filter(
         (row) =>
           String(row.fCSAccountID ?? "") === customerAccountId &&
-          Number(row.fMAccountSlNo ?? 0) ===
-            matchAccountSlNo &&
-          Number(row.fMAccountSlNoSub ?? 0) ===
-            matchAccountSlNoSub &&
+          Number(row.fMAccountSlNo ?? 0) === matchAccountSlNo &&
+          Number(row.fMAccountSlNoSub ?? 0) === matchAccountSlNoSub &&
           Number(row.fCredit ?? 0) > 0 &&
           row.fMatch === true &&
-          Number(row.fMatchDocAmt ?? 0) !== 0
+          Number(row.fMatchDocAmt ?? 0) !== 0,
       )
-      .reduce(
-        (sum, row) =>
-          sum + Number(row.fAdjAmt ?? 0),
-        0
-      );
+      .reduce((sum, row) => sum + Number(row.fAdjAmt ?? 0), 0);
 
     numCrMatched += creditAllocated;
     numCrMatchedAmt += creditAllocated;
-
 
     // Same as VB.NET
     numCrMatched *= -1;
     numCrMatchedAmt *= -1;
   }
 
-
   // =====================================================
   // Non Matched Records
   // =====================================================
 
   if (strMode === "GNM") {
-
     if (numDebitForAllocate > 0) {
       numDrMatched += numDebitForAllocate;
     } else {
@@ -98,14 +79,12 @@ export function matchTotal(params: MatchTotalParams) {
     }
   }
 
-
   // =====================================================
   // Round
   // =====================================================
 
   numDrMatched = round2(numDrMatched);
   numCrMatched = round2(numCrMatched);
-
 
   // =====================================================
   // Calculate Match Amount
@@ -115,38 +94,23 @@ export function matchTotal(params: MatchTotalParams) {
   let matchBalance: number;
   let difference: number;
 
-
   if (numDebitForAllocate > 0) {
+    matchedAmount = round2(numCrMatchedAmt) - round2(numDrMatchedAmt);
 
-    matchedAmount =
-      round2(numCrMatchedAmt) -
-      round2(numDrMatchedAmt);
-
-    matchBalance =
-      amount - matchedAmount;
+    matchBalance = amount - matchedAmount;
 
     difference = round2(
-      matchedAmount -
-      round2(numCrMatchedAmt) +
-      round2(numDrMatchedAmt)
+      matchedAmount - round2(numCrMatchedAmt) + round2(numDrMatchedAmt),
     );
-
   } else {
+    matchedAmount = round2(numDrMatchedAmt) - round2(numCrMatchedAmt);
 
-    matchedAmount =
-      round2(numDrMatchedAmt) -
-      round2(numCrMatchedAmt);
-
-    matchBalance =
-      amount - matchedAmount;
+    matchBalance = amount - matchedAmount;
 
     difference = round2(
-      matchedAmount -
-      round2(numDrMatchedAmt) +
-      round2(numCrMatchedAmt)
+      matchedAmount - round2(numDrMatchedAmt) + round2(numCrMatchedAmt),
     );
   }
-
 
   return {
     drMatched: numDrMatched,
@@ -161,14 +125,11 @@ export function matchTotal(params: MatchTotalParams) {
   };
 }
 
-
-
-
-export const getDocumentsToMatch=async (
+export const getDocumentsToMatch = async (
   params: any,
   db: any,
-  coId: string
-)=> {
+  coId: string,
+) => {
   const {
     customerAccountId,
     docNo,
@@ -187,8 +148,7 @@ export const getDocumentsToMatch=async (
   // Equivalent:
   // strUMDKey = strYear & strBrID & strDocType & strDocNo
 
-  const strUMDKey =
-    `${year}${brId}${docType}${docNo}`;
+  const strUMDKey = `${year}${brId}${docType}${docNo}`;
 
   /*
    * Equivalent:
@@ -214,7 +174,7 @@ export const getDocumentsToMatch=async (
           strUMDKey,
         },
         db,
-        coId
+        coId,
       );
     }
   }
@@ -226,8 +186,8 @@ export const getDocumentsToMatch=async (
    */
 
   const debit = getNumber(params.debit);
-const credit = getNumber(params.credit);
-const matchDocAmt = getNumber(params.matchDocAmt);
+  const credit = getNumber(params.credit);
+  const matchDocAmt = getNumber(params.matchDocAmt);
 
   let blnDrForAllocate: boolean;
 
@@ -280,8 +240,7 @@ const matchDocAmt = getNumber(params.matchDocAmt);
     drCr = "Cr.";
   }
 
-  const numForAllocateValidate =
-    numDebitForAllocate + numCreditForAllocate;
+  const numForAllocateValidate = numDebitForAllocate + numCreditForAllocate;
 
   /*
    * Equivalent to:
@@ -317,4 +276,4 @@ const matchDocAmt = getNumber(params.matchDocAmt);
 
     blnDrForAllocate,
   };
-}
+};
