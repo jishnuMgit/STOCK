@@ -315,7 +315,7 @@ const tableSelectStyles: StylesConfig<SelectOption, false> = {
 // ============================================================
 
 const createInitialRows = (): StockRow[] =>
-  Array.from({ length: 15 }, (_, index) => ({
+  Array.from({ length: 11 }, (_, index) => ({
     id: index + 1,
     txtSlNo: index + 1,
     lkpItemID: null,
@@ -987,28 +987,11 @@ const StockAdjustmentPage: React.FC = () => {
   };
 
   // ----------------------------------------------------------
-  // KEYBOARD NAVIGATION: Enter in Qty. In goes to Qty. Out, Enter in Qty. Out
-  // goes to the next row's Item ID (a new row after the last one)
+  // KEYBOARD NAVIGATION: Enter in Qty. In or in Qty. Out goes to the next row's Item ID (a new
+  // row after the last one). Qty. Out is reached with Tab or the mouse.
   // ----------------------------------------------------------
 
-  const handleQtyInKeyDown = (
-    event: React.KeyboardEvent<HTMLInputElement>,
-    rowIndex: number,
-  ) => {
-    if (event.key !== "Enter") return;
-
-    event.preventDefault();
-    document.getElementById(`txtQtyOut-${rowIndex}`)?.focus();
-  };
-
-  const handleQtyOutKeyDown = (
-    event: React.KeyboardEvent<HTMLInputElement>,
-    rowIndex: number,
-  ) => {
-    if (event.key !== "Enter") return;
-
-    event.preventDefault();
-
+  const goToNextRow = (rowIndex: number) => {
     if (rowIndex < rows.length - 1) {
       setActiveRow(rowIndex + 1);
       document.getElementById(`lkpItemID-${rowIndex + 1}`)?.focus();
@@ -1019,6 +1002,16 @@ const StockAdjustmentPage: React.FC = () => {
         document.getElementById(`lkpItemID-${rowIndex + 1}`)?.focus();
       }, 0);
     }
+  };
+
+  const handleQtyKeyDown = (
+    event: React.KeyboardEvent<HTMLInputElement>,
+    rowIndex: number,
+  ) => {
+    if (event.key !== "Enter") return;
+
+    event.preventDefault();
+    goToNextRow(rowIndex);
   };
 
   // ----------------------------------------------------------
@@ -1678,7 +1671,7 @@ const StockAdjustmentPage: React.FC = () => {
 
   return (
     <div className="flex min-h-full w-full justify-center bg-gray-100 px-3 pb-5">
-    <main className="mt-5 flex h-fit min-h-[700px] w-full max-w-300 flex-col overflow-hidden border border-gray-400 bg-white text-[12px] text-slate-700">
+    <main className="mt-5 flex h-fit w-full max-w-300 flex-col overflow-hidden border border-gray-400 bg-white text-[12px] text-slate-700">
 
       {/* TITLE BAR */}
       <div className="flex h-[28px] w-full shrink-0 items-center bg-[#a7dfc0]">
@@ -1794,7 +1787,8 @@ const StockAdjustmentPage: React.FC = () => {
 <main className="customer-table-scroll flex min-h-0 flex-1 flex-col bg-white">
   <div
     ref={gridScroll.ref}
-    className="customer-table-scroll min-h-0 flex-1 overflow-auto border border-[#bfe8d0]"
+    // 11 rows show (the heading and 11 rows of 30px); a 12th row brings the scroll bar
+    className="customer-table-scroll h-[363px] shrink-0 overflow-auto border border-[#bfe8d0]"
   >
     <table className="customer-table-scroll w-full min-w-[900px] table-fixed border-collapse border border-[#bfe8d0]">
             <colgroup>
@@ -1944,7 +1938,7 @@ const StockAdjustmentPage: React.FC = () => {
                       onChange={(event) => updateQty(index, "txtQtyIn", event.target.value)}
                       onFocus={selectOnFocus}
                       onBlur={(event) => showQtyIn(index, event.target.value)}
-                      onKeyDown={(event) => handleQtyInKeyDown(event, index)}
+                      onKeyDown={(event) => handleQtyKeyDown(event, index)}
                       className="number-no-spinner h-[26px] w-full bg-transparent px-2 text-right outline-none focus:bg-[#f1f8ff]"
                     />
                   </td>
@@ -1962,7 +1956,7 @@ const StockAdjustmentPage: React.FC = () => {
                       onChange={(event) => updateQty(index, "txtQtyOut", event.target.value)}
                       onFocus={selectOnFocus}
                       onBlur={(event) => showQtyOut(index, event.target.value)}
-                      onKeyDown={(event) => handleQtyOutKeyDown(event, index)}
+                      onKeyDown={(event) => handleQtyKeyDown(event, index)}
                       className="number-no-spinner h-[26px] w-full bg-transparent px-2 text-right outline-none focus:bg-[#f1f8ff]"
                     />
                   </td>

@@ -61,8 +61,8 @@ console.log(onClose)
   const perms = useButtonPermissions(MENU_ID);
   // the common themed question window (the same as on the other screens)
   const { confirm, dialog } = useConfirmModal();
-  // the standard messages of a delete: "Currency deleted successfully"
-  const { deleted, notDeleted } = useDeleteToast("Currency");
+  // the standard message of a delete that failed
+  const { notDeleted } = useDeleteToast("Currency");
   // the cell the cursor is in is outlined (a typed-in box has its text selected)
   const { cellFocusClass, selectOnFocus } = useGridCellFocus();
 
@@ -279,7 +279,7 @@ console.log(onClose)
   // Here: Ctrl+Delete, or the x button on the selected row.
   // A row typed and not saved just leaves the grid. A saved currency goes from the
   // database at once, after the Delete right, the "used by transactions?" check and
-  // the question; the message is "Currency deleted successfully".
+  // the question.
   // ============================================================
 
   const deleteRow = async (index: number) => {
@@ -334,7 +334,7 @@ console.log(onClose)
           return;
         }
 
-        deleted();
+        // (no message for a deleted currency)
       } catch {
         notDeleted();
         return;

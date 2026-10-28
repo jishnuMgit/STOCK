@@ -295,7 +295,7 @@ const SetDocumentNo: React.FC = () => {
   const handleEnterAsTab = useEnterAsTab();
   // the common themed question window and the standard delete messages
   const { confirm, dialog } = useConfirmModal();
-  const { deleted, notDeleted } = useDeleteToast("Set Document No.");
+  const { notDeleted } = useDeleteToast("Set Document No.");
   // the cell the cursor is in is outlined (a typed-in box has its text selected)
   const { cellFocusClass, selectOnFocus } = useGridCellFocus();
   // after a dropdown pick (or Enter on a closed one) the cursor goes on in the row
@@ -888,8 +888,6 @@ const SetDocumentNo: React.FC = () => {
         notDeleted(result.message);
         return;
       }
-
-      deleted();
 
       setRows((previousRows) =>
         previousRows.map((r) =>

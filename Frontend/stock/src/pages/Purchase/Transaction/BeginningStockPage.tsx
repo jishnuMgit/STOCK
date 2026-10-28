@@ -444,7 +444,7 @@ const tableSelectStyles: StylesConfig<SelectOption, false> = {
 // ============================================================
 
 const createInitialRows = (): StockRow[] =>
-  Array.from({ length: 15 }, (_, index) => ({
+  Array.from({ length: 11 }, (_, index) => ({
     id: index + 1,
     txtSlNo: index + 1,
     lkpItemID: null,
@@ -1521,7 +1521,7 @@ const BeginningStockPage: React.FC = () => {
     // top. No minimum width (like the Purchase Invoice page): with the side menu
     // open it shrinks to the space it has instead of spilling out under the menu.
     <div className="flex min-h-full w-full justify-center bg-gray-100 px-3 pb-5">
-    <main className="mt-5 flex h-fit min-h-[700px] w-full max-w-300 flex-col overflow-hidden border border-gray-400 bg-white text-[12px] text-slate-700">
+    <main className="mt-5 flex h-fit w-full max-w-300 flex-col overflow-hidden border border-gray-400 bg-white text-[12px] text-slate-700">
 
       {/* TITLE BAR */}
       <div className="flex h-[28px] w-full shrink-0 items-center bg-[#a7dfc0]">
@@ -1606,7 +1606,8 @@ const BeginningStockPage: React.FC = () => {
 <main className="customer-table-scroll flex min-h-0 flex-1 flex-col bg-white">
   <div
     ref={gridScroll.ref}
-    className="customer-table-scroll min-h-0 flex-1 overflow-auto border border-[#bfe8d0]"
+    // 11 rows show (the heading and 11 rows of 30px); a 12th row brings the scroll bar
+    className="customer-table-scroll h-[363px] shrink-0 overflow-auto border border-[#bfe8d0]"
   >
     <table className="customer-table-scroll w-full min-w-[900px] table-fixed border-collapse border border-[#bfe8d0]">
             <colgroup>

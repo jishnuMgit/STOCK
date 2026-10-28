@@ -95,8 +95,8 @@ const MENU_ID = "010201";
   useInitialFocus(true, "txtItemID");
   // the common themed question window (the same as on the other screens)
   const { confirm, dialog } = useConfirmModal();
-  // the standard messages of a delete: "Item deleted successfully"
-  const { deleted, notDeleted } = useDeleteToast("Item");
+  // the standard message of a delete that failed
+  const { notDeleted } = useDeleteToast("Item");
 
   /* =========================================================
      FORM STATE
@@ -762,7 +762,7 @@ const MENU_ID = "010201";
         return;
       }
 
-      deleted();
+      // (no message for a deleted item)
       handleClear();
     } catch (error) {
       console.error("deleteItem error:", error);
@@ -833,7 +833,7 @@ const MENU_ID = "010201";
         return;
       }
 
-      deleted();
+      // (no message for a deleted item)
 
       updateRow(row.id, "lkpBranch", "");
       updateRow(row.id, "txtItemLocation", "");

@@ -26,11 +26,6 @@ export type UserAuditExcelReport = {
 };
 
 const BORDER_COLOR = { argb: "FFC7D1E4" };
-const HEAD_FILL = {
-  type: "pattern" as const,
-  pattern: "solid" as const,
-  fgColor: { argb: "FFEFF3FA" },
-};
 const thin = {
   top: { style: "thin" as const, color: BORDER_COLOR },
   left: { style: "thin" as const, color: BORDER_COLOR },
@@ -112,7 +107,6 @@ export const buildUserAuditWorkbook = async ({
   ];
   head.eachCell((cell) => {
     cell.font = { bold: true };
-    cell.fill = HEAD_FILL;
     cell.border = thin;
     cell.alignment = { horizontal: "left" };
   });

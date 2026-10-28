@@ -9,7 +9,7 @@ export type ItemGroup = { groupId: string; groupName: string };
 
 export type StockParams = {
   detOrSum: "D" | "S";
-  postStatus: 0 | 1 | 2; // 0 non posted, 1 posted, 2 all
+  postStatus: 0 | 1 | 2; // 0 all, 1 posted, 2 non posted (as in SP_rptStock)
   coId: string;
   oneBranch: boolean;
   branchId: string;
@@ -44,6 +44,13 @@ export type DetailItem = {
   txtTotalBalance: number;
 };
 
+// one branch of the Detailed report: its items (the branch name is put in by the controller)
+export type DetailBranch = {
+  lkpBranch: string;
+  txtBranchName: string;
+  items: DetailItem[];
+};
+
 // ---- Summary: one row per item ---------------------------------------------
 export type SummaryLine = {
   lkpItemID: string;
@@ -60,6 +67,14 @@ export type SummaryTotals = {
   txtQtyIn: number;
   txtQtyOut: number;
   txtQtyClosing: number;
+};
+
+// one branch of the Summary report: its rows and its Total
+export type SummaryBranch = {
+  lkpBranch: string;
+  txtBranchName: string;
+  lines: SummaryLine[];
+  totals: SummaryTotals;
 };
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -226,20 +241,22 @@ export const getBranchName = async (coId: string, branchId: string): Promise<str
 const fetchRows = (p: StockParams) =>
   callCursor(
     "sp_rptstock",
+    // the arguments of SP_rptStock, in its order
     [
-      p.detOrSum,
-      p.postStatus,
-      p.coId,
-      p.oneBranch,
-      p.branchId,
-      p.itemMode,
-      p.itemId,
-      p.itemGroupId,
-      p.itemIdFrom,
-      p.itemIdTo,
-      p.fromDate,
-      p.toDate,
-      p.txnOrder,
+      p.detOrSum, // strDetOrSum
+      p.postStatus, // lkpPostStatus
+      p.coId, // pstrCoID
+      !p.oneBranch, // rdgBranch: 0 one branch, 1 all branches
+      p.oneBranch ? p.branchId : null, // strBrID
+      p.itemMode !== 1, // rdgByItem: 0 by item group, 1 by item
+      p.itemMode === 1 ? p.itemGroupId : null, // strItemGroupID (null = every group)
+      p.itemMode === 0 ? 0 : p.itemMode === 3 ? 1 : 2, // rdgItem: 0 one item, 1 range, 2 all
+      p.itemMode === 0 ? p.itemId : null, // strItemID
+      p.itemMode === 3 ? p.itemIdFrom : null, // strFromItemID
+      p.itemMode === 3 ? p.itemIdTo : null, // strToItemID
+      p.fromDate, // strFromDate
+      p.toDate, // strToDate
+      p.txnOrder, // blnOrderBy
     ],
     [
       "varchar",
@@ -247,8 +264,9 @@ const fetchRows = (p: StockParams) =>
       "varchar",
       "boolean",
       "varchar",
-      "int",
+      "boolean",
       "varchar",
+      "int",
       "varchar",
       "varchar",
       "varchar",
@@ -258,15 +276,25 @@ const fetchRows = (p: StockParams) =>
     ]
   );
 
-// DETAILED: the rows come ordered by item; the running balance restarts for each item
-// (the old rptStockDetRpt: balance += In - Out, set back to 0 after each item's group)
-export const getDetailed = async (p: StockParams): Promise<DetailItem[]> => {
+// DETAILED: the rows come ordered by branch, then item; the running balance restarts for each item
+// of each branch (the old rptStockDetRpt: balance += In - Out, set back to 0 after each item's group)
+export const getDetailed = async (p: StockParams): Promise<DetailBranch[]> => {
   const rows = await fetchRows(p);
-  const items: DetailItem[] = [];
+  const branches: DetailBranch[] = [];
+  const items: DetailItem[] = []; // every item of every branch, for the footers below
 
   for (const r of rows) {
+    const branchId = text(r.fbrid).trim();
     const itemId = text(r.fitemid).trim();
-    let item = items[items.length - 1];
+
+    let branch = branches[branches.length - 1];
+
+    if (!branch || branch.lkpBranch !== branchId) {
+      branch = { lkpBranch: branchId, txtBranchName: branchId, items: [] };
+      branches.push(branch);
+    }
+
+    let item = branch.items[branch.items.length - 1];
 
     if (!item || item.lkpItemID !== itemId) {
       item = {
@@ -277,6 +305,7 @@ export const getDetailed = async (p: StockParams): Promise<DetailItem[]> => {
         txtTotalOut: 0,
         txtTotalBalance: 0,
       };
+      branch.items.push(item);
       items.push(item);
     }
 
@@ -304,35 +333,62 @@ export const getDetailed = async (p: StockParams): Promise<DetailItem[]> => {
     item.txtTotalOut = round4(item.lines.reduce((sum, l) => sum + l.txtQtyOut, 0));
   }
 
-  return items;
+  return branches;
 };
 
 // SUMMARY: one row per item, plus the totals of the report footer
 export const getSummary = async (
   p: StockParams
-): Promise<{ lines: SummaryLine[]; totals: SummaryTotals }> => {
+): Promise<{ branches: SummaryBranch[]; totals: SummaryTotals }> => {
   const rows = await fetchRows(p);
 
-  const lines: SummaryLine[] = rows.map((r) => ({
-    lkpItemID: text(r.fitemid).trim(),
-    txtItemName: text(r.fitemname),
-    txtUnit: text(r.funit),
-    txtQtyOpening: num(r.fqtyop),
-    txtQtyIn: num(r.fqtyin),
-    txtQtyOut: num(r.fqtyout),
-    txtQtyClosing: num(r.fqtycl),
-  }));
+  // the totals of a list of rows
+  const totalsOf = (list: SummaryLine[]): SummaryTotals => {
+    const sum = (pick: (l: SummaryLine) => number) =>
+      round4(list.reduce((total, l) => total + pick(l), 0));
 
-  const sum = (pick: (l: SummaryLine) => number) =>
-    round4(lines.reduce((total, l) => total + pick(l), 0));
-
-  return {
-    lines,
-    totals: {
+    return {
       txtQtyOpening: sum((l) => l.txtQtyOpening),
       txtQtyIn: sum((l) => l.txtQtyIn),
       txtQtyOut: sum((l) => l.txtQtyOut),
       txtQtyClosing: sum((l) => l.txtQtyClosing),
-    },
+    };
   };
+
+  // the rows come ordered by branch, then item: one section per branch
+  const branches: SummaryBranch[] = [];
+  const all: SummaryLine[] = [];
+
+  for (const r of rows) {
+    const branchId = text(r.fbrid).trim();
+
+    let branch = branches[branches.length - 1];
+
+    if (!branch || branch.lkpBranch !== branchId) {
+      branch = {
+        lkpBranch: branchId,
+        txtBranchName: branchId,
+        lines: [],
+        totals: { txtQtyOpening: 0, txtQtyIn: 0, txtQtyOut: 0, txtQtyClosing: 0 },
+      };
+      branches.push(branch);
+    }
+
+    const line: SummaryLine = {
+      lkpItemID: text(r.fitemid).trim(),
+      txtItemName: text(r.fitemname),
+      txtUnit: text(r.funit),
+      txtQtyOpening: num(r.fqtyop),
+      txtQtyIn: num(r.fqtyin),
+      txtQtyOut: num(r.fqtyout),
+      txtQtyClosing: num(r.fqtycl),
+    };
+
+    branch.lines.push(line);
+    all.push(line);
+  }
+
+  for (const branch of branches) branch.totals = totalsOf(branch.lines);
+
+  return { branches, totals: totalsOf(all) };
 };

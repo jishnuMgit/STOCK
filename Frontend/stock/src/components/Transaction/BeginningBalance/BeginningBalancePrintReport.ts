@@ -101,13 +101,13 @@ export const buildHtml = (r: PrintReport) => {
   .co   { font-size: 14pt; text-align: center; height: 24px; }
   .head { font-size: 12pt; text-align: center; height: 24px; }
   .br   { font-size: 9pt;  text-align: left;   height: 24px; }
-  th { background: #eff3fa; border: 1px solid #c7d1e4; height: 24px;
+  th { border: 1px solid #c7d1e4; height: 24px;
        padding: 0 6px; font-weight: normal; text-align: left; }
   th.r { text-align: right; }
   td { border: 1px solid #c7d1e4; border-top: 0; height: 24px; padding: 0 6px; }
   .name { white-space: pre; }                       /* keeps the level indent */
   .r { text-align: right; }
-  tr.tot td { background: #eff3fa; border-top: 1px solid #c7d1e4; }
+  tr.tot td { border-top: 1px solid #c7d1e4; }
 </style>
 </head>
 <body>
