@@ -329,25 +329,52 @@ const RptStockAgeingPage: React.FC<RptStockAgeingPageProps> = ({ onClose }) => {
   const [lkpFromItem, setLkpFromItem] = useState(""); // Item Range: From Item
   const [lkpToItem, setLkpToItem] = useState(""); // Item Range: To Item
 
-  // the items of the company (the Item ID / Item Name boxes and the Item Range boxes)
-  const [itemRows, setItemRows] = useState<{ lkpItemID: string; txtItemName: string }[]>([]);
+  // the items of every branch, one row per branch and item
+  const [itemRows, setItemRows] = useState<
+    { lkpBranch: string; lkpItemID: string; txtItemName: string }[]
+  >([]);
   const { hang: itemIdHang, measure: measureItemIdHang } = usePairMenuHang();
+
+  // the items of the chosen branch (One Branch), or every item once (All Branch)
+  const branchItems = useMemo(() => {
+    const rows =
+      rdgBranch === "One Branch" && lkpBranch
+        ? itemRows.filter((row) => row.lkpBranch === lkpBranch.value)
+        : itemRows;
+
+    const seen = new Set<string>();
+
+    return rows.filter((row) => {
+      if (seen.has(row.lkpItemID)) return false;
+      seen.add(row.lkpItemID);
+      return true;
+    });
+  }, [itemRows, rdgBranch, lkpBranch]);
+
+  // a chosen item that the new branch does not have is cleared
+  useEffect(() => {
+    const has = (id: string) => branchItems.some((row) => row.lkpItemID === id);
+
+    if (lkpItemID && !has(lkpItemID)) setLkpItemID("");
+    if (lkpFromItem && !has(lkpFromItem)) setLkpFromItem("");
+    if (lkpToItem && !has(lkpToItem)) setLkpToItem("");
+  }, [branchItems, lkpItemID, lkpFromItem, lkpToItem]);
 
   // the item boxes: ID | Name, and Name | ID (one item, two boxes)
   const itemIdOptions = useMemo<PairOption[]>(
     () =>
-      itemRows.map((row) => ({
+      branchItems.map((row) => ({
         value: row.lkpItemID,
         label: row.lkpItemID,
         id: row.lkpItemID,
         name: row.txtItemName,
       })),
-    [itemRows],
+    [branchItems],
   );
 
   const itemNameOptions = useMemo<PairOption[]>(
     () =>
-      [...itemRows]
+      [...branchItems]
         .sort((a, b) => a.txtItemName.localeCompare(b.txtItemName))
         .map((row) => ({
           value: row.lkpItemID,
@@ -355,7 +382,7 @@ const RptStockAgeingPage: React.FC<RptStockAgeingPageProps> = ({ onClose }) => {
           id: row.lkpItemID,
           name: row.txtItemName,
         })),
-    [itemRows],
+    [branchItems],
   );
 
   // the date the stock is aged as on (starts as today)

@@ -30,21 +30,19 @@ export const getDefaultBranch = async (PstrCoID: string, PstrUserID: string): Pr
   return text(rows[0]?.defaultBranch).trim();
 };
 
-export type Item = { itemId: string; itemName: string };
+export type Item = { itemId: string; itemName: string; brId: string };
 
-// the items of the company (the Item ID / Item Name boxes and the Item Range boxes)
+// the items of every branch (the Item ID / Item Name boxes and the Item Range boxes), one row per branch and
+// item, by Item ID: dbo.filllookupitemid, the same lookup the other screens use (tblitemtl - the items a branch
+// trades - with the name from tblitemhd). The screen shows the items of the branch that is chosen.
 export const getItems = async (PstrCoID: string): Promise<Item[]> => {
-  const { rows } = await pool.query(
-    `
-    SELECT fitemid, fitemname
-      FROM dbo.tblitemhd
-     WHERE fcoid = $1
-     ORDER BY fitemid
-    `,
-    [PstrCoID]
-  );
+  const { rows } = await pool.query(`SELECT * FROM dbo.filllookupitemid($1)`, [PstrCoID]);
 
-  return rows.map((r) => ({ itemId: text(r.fitemid).trim(), itemName: text(r.fitemname).trim() }));
+  return rows.map((r) => ({
+    itemId: text(r.fitemid).trim(),
+    itemName: text(r.fitemname).trim(),
+    brId: text(r.fbrid).trim(),
+  }));
 };
 
 export type AgeingMode = { ageingMode: string };

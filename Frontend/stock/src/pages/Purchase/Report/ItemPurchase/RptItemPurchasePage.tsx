@@ -1,39 +1,46 @@
-import React, { useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import Select from "react-select";
 import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
 import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
 import { DatePicker } from "@mui/x-date-pickers/DatePicker";
 import dayjs from "dayjs";
 import customParseFormat from "dayjs/plugin/customParseFormat";
+import { toast } from "react-toastify";
+import RadioGroup from "../../../../components/common/RadioGroup";
+import ReportPreview from "../../../../components/common/ReportPreview";
+import { buildItemPurchasePdf } from "../../../../components/Purchase/Report/RptItemPurchase/RptItemPurchasePdf";
+import {
+  buildHtml,
+  printItemPurchaseReport,
+  type PrintReport,
+} from "../../../../components/Purchase/Report/RptItemPurchase/RptItemPurchasePrintReport";
+import { useEnterAsTab } from "../../../../hooks/useEnterAsTab";
+import { useAltShortcuts } from "../../../../hooks/useAltShortcuts";
+import { useCtrlShortcuts } from "../../../../hooks/useCtrlShortcuts";
+import { useGridCellFocus } from "../../../../hooks/useGridCellFocus";
+import { useAdvanceAfterSelect } from "../../../../hooks/useAdvanceAfterSelect";
+import { useInitialFocus } from "../../../../hooks/useInitialFocus";
+import {
+  BranchDividedMenuList,
+  BranchDividedOption,
+  branchMenuStyles,
+  filterLabelOrValue,
+} from "../../../../components/BranchSelect/branchSelectParts";
+import {
+  filterPairOption,
+  makePairComponents,
+  makePairDividedMenuStyles,
+  type PairOption,
+} from "../../../../components/PairSelect/pairSelectParts";
+import { usePairMenuHang } from "../../../../hooks/usePairMenuHang";
 
 dayjs.extend(customParseFormat);
 
 type Option = { value: string; label: string };
 
-type RadioOptionProps = {
-  name: string;
-  value: string;
-  label: string;
-  checked: boolean;
-  onChange: () => void;
-};
-
 const DATE_FORMAT = "DD-MM-YYYY";
 
-/* Replace these with data from your API */
-const branchOptions: Option[] = [
-  { value: "OFFICE", label: "OFFICE" },
-  { value: "BRANCH 1", label: "BRANCH 1" },
-  { value: "BRANCH 2", label: "BRANCH 2" },
-];
-const itemIdOptions: Option[] = [
-  { value: "1001", label: "1001" },
-  { value: "1002", label: "1002" },
-];
-const itemNameOptions: Option[] = [
-  { value: "1001", label: "Item One" },
-  { value: "1002", label: "Item Two" },
-];
+const api = import.meta.env.VITE_API_URL;
 
 const selectClassNames = {
   control: ({
@@ -46,7 +53,7 @@ const selectClassNames = {
     !min-h-[25px] !h-[30px] !rounded-[4px] !border !shadow-none !text-[13px]
     hover:!border-[#aab8c5]
     ${isDisabled ? "!bg-[#f6f8fa]" : "!bg-white"}
-    ${isFocused ? "!border-[#91a7b9]" : "!border-[#cfd7df]"}
+    ${isFocused ? "!border-green-600" : "!border-[#cfd7df]"}
   `,
   valueContainer: () => "!h-[23px] !py-0 !px-[5px] !overflow-hidden",
   singleValue: () => "!m-0 !text-[13px] !text-[#24364d]",
@@ -80,45 +87,57 @@ const selectProps = {
   menuPortalTarget: typeof document !== "undefined" ? document.body : undefined,
 };
 
-const CustomRadio: React.FC<RadioOptionProps> = ({
-  name,
-  value,
-  label,
-  checked,
-  onChange,
-}) => (
-  <label className="flex cursor-pointer items-center gap-2.5 whitespace-nowrap select-none">
-    <input
-      type="radio"
-      name={name}
-      value={value}
-      checked={checked}
-      onChange={onChange}
-      className="sr-only"
-    />
-    <span
-      className={`flex h-[19px] w-[19px] shrink-0 items-center justify-center rounded-full border bg-white ${
-        checked ? "border-[#64d96e]" : "border-[#cbd3dc]"
-      }`}
-    >
-      <span
-        className={`h-2.5 w-2.5 rounded-full bg-[#64d96e] ${
-          checked ? "opacity-100" : "opacity-0"
-        }`}
-      />
-    </span>
-    <span className="text-[14px] font-normal text-[#35445a]">{label}</span>
-  </label>
-);
+// The Branch box: the "Branch | ID" list of the other screens, searchable on either column.
+const branchProps = {
+  ...selectProps,
+  isSearchable: true,
+  classNames: {
+    control: selectClassNames.control,
+    valueContainer: selectClassNames.valueContainer,
+    singleValue: selectClassNames.singleValue,
+    placeholder: selectClassNames.placeholder,
+    input: selectClassNames.input,
+    indicatorsContainer: selectClassNames.indicatorsContainer,
+    dropdownIndicator: selectClassNames.dropdownIndicator,
+    indicatorSeparator: selectClassNames.indicatorSeparator,
+    clearIndicator: selectClassNames.clearIndicator,
+    option: selectClassNames.option,
+  },
+  styles: branchMenuStyles,
+  components: { Option: BranchDividedOption, MenuList: BranchDividedMenuList },
+  filterOption: filterLabelOrValue,
+};
 
-const RadioPanel: React.FC<{
-  children: React.ReactNode;
-  className?: string;
-}> = ({ children, className = "" }) => (
-  <div className={`border border-[#e0e5ea] bg-white px-3.5 py-3 ${className}`}>
-    <div className="flex flex-col gap-3">{children}</div>
-  </div>
-);
+// The Item boxes: the "ID | Name" lists of the other screens - the Item ID box opens "Item ID | Item Name", the
+// Item Name box opens "Item Name | Item ID", both searchable on either column, and picking from one fills the
+// other. Created once, outside the page.
+const itemIdComponents = makePairComponents("Item ID", "Item Name", false, true);
+const itemNameComponents = makePairComponents("Item ID", "Item Name", true, true);
+
+// how far the Item Name list hangs past its box (its Item ID column): an Item ID can be long
+const ITEM_NAME_MENU_HANG = 200;
+
+// the look of the other boxes, but the open list is the pair list's own
+const pairProps = {
+  ...selectProps,
+  isSearchable: true,
+  classNames: {
+    control: selectClassNames.control,
+    valueContainer: selectClassNames.valueContainer,
+    singleValue: selectClassNames.singleValue,
+    placeholder: selectClassNames.placeholder,
+    input: selectClassNames.input,
+    indicatorsContainer: selectClassNames.indicatorsContainer,
+    dropdownIndicator: selectClassNames.dropdownIndicator,
+    indicatorSeparator: selectClassNames.indicatorSeparator,
+    clearIndicator: selectClassNames.clearIndicator,
+    option: ({ isFocused, isSelected }: { isFocused: boolean; isSelected: boolean }) =>
+      `!cursor-pointer !text-[#24364d] ${
+        isSelected ? "!bg-[#e7f7ed]" : isFocused ? "!bg-[#f2faf5]" : "!bg-white"
+      }`,
+  },
+  filterOption: filterPairOption,
+};
 
 const FieldLabel: React.FC<{ children: React.ReactNode }> = ({ children }) => (
   <div className="flex h-[30px] items-center border border-[#e0e5ea] bg-[#fafbfc] px-3 text-[14px] text-[#405066]">
@@ -205,7 +224,7 @@ const AppDatePicker: React.FC<AppDatePickerProps> = ({
         "& .MuiPickersInputBase-root:hover .MuiPickersOutlinedInput-notchedOutline":
           { borderColor: "#B7C7D7 !important" },
         "& .MuiPickersInputBase-root.Mui-focused .MuiPickersOutlinedInput-notchedOutline":
-          { borderColor: "#B7C7D7 !important", borderWidth: "1px" },
+          { borderColor: "#16a34a !important", borderWidth: "1px" }, // green-600, as the cell outline
         "& .MuiPickersInputBase-root.Mui-error .MuiPickersOutlinedInput-notchedOutline":
           { borderColor: "#B7C7D7 !important" },
         "& .MuiPickersInputBase-root.Mui-error:hover .MuiPickersOutlinedInput-notchedOutline":
@@ -224,44 +243,260 @@ type RptItemPurchasePageProps = {
 const RptItemPurchasePage: React.FC<RptItemPurchasePageProps> = ({
   onClose,
 }) => {
-  const [branchMode, setBranchMode] = useState("One Branch"); // optBranch
-  const [branch, setBranch] = useState<Option | null>(branchOptions[0]); // lkpBranch
+  // Enter moves on like Tab; the box the cursor is in is outlined; after a pick from a list the cursor
+  // goes on
+  const handleEnterAsTab = useEnterAsTab();
+  const { cellFocusClass } = useGridCellFocus();
+  const { advanceAfterPick, advanceOnEnter } = useAdvanceAfterSelect();
 
-  const [itemMode, setItemMode] = useState("One Item"); // optItem
-  const [itemId, setItemId] = useState<string | null>(null); // lkpItemID / lkpItemName
+  // the lookups have been asked for (found or not): the cursor can start
+  const [lookupsLoaded, setLookupsLoaded] = useState(false);
 
-  const [fromDate, setFromDate] = useState(""); // dtpFromDate
-  const [toDate, setToDate] = useState(""); // dtpToDate
+  const [rdgBranch, setRdgBranch] = useState("One Branch"); // rdgBranch
+  const [lkpBranch, setLkpBranch] = useState<Option | null>(null); // lkpBranch
 
-  const selectedItemId = itemIdOptions.find((o) => o.value === itemId) ?? null;
-  const selectedItemName =
-    itemNameOptions.find((o) => o.value === itemId) ?? null;
+  // the branches the logged-in user has a right to, and the user's default branch
+  const [branchOptions, setBranchOptions] = useState<Option[]>([]);
+  const [defaultBranch, setDefaultBranch] = useState<Option | null>(null);
 
-  const handlePrint = () => {
-    console.log({
-      branchMode,
-      branch: branchMode === "One Branch" ? branch : null,
-      itemMode,
-      itemId: itemMode === "One Item" ? itemId : null,
-      fromDate,
-      toDate,
+  useEffect(() => {
+    const loadLookups = async () => {
+      try {
+        const response = await fetch(`${api}/RptItemPurchase/lookups`, {
+          credentials: "include",
+        });
+        const result = await response.json();
+
+        if (!response.ok || !result.success) {
+          toast.error(result.message || "Failed to load the Branches");
+          return;
+        }
+
+        const options: Option[] = (result.branches || []).map(
+          (row: { lkpBranch: string; txtBranchName: string }) => ({
+            value: row.lkpBranch,
+            label: row.txtBranchName,
+          }),
+        );
+
+        const initial =
+          options.find((option) => option.value === result.lkpDefaultBranch) ?? null;
+
+        setBranchOptions(options);
+        setDefaultBranch(initial);
+        setLkpBranch(initial);
+        setItemRows(result.items || []);
+      } catch (error: unknown) {
+        console.error("rptItemPurchase lookups error:", error);
+        toast.error("Cannot connect to the Item Purchase API.");
+      }
+    };
+
+    loadLookups().finally(() => setLookupsLoaded(true));
+  }, []);
+
+  // the old form starts on All Item
+  const [rdgItem, setRdgItem] = useState("All Item"); // rdgItem
+  // one item: the Item ID box and the Item Name box show the same choice
+  const [lkpItemID, setLkpItemID] = useState(""); // lkpItemID / lkpItemName
+
+  // the items of every branch, one row per branch and item
+  const [itemRows, setItemRows] = useState<
+    { lkpBranch: string; lkpItemID: string; txtItemName: string }[]
+  >([]);
+  const { hang: itemIdHang, measure: measureItemIdHang } = usePairMenuHang();
+
+  // the items of the chosen branch (One Branch), or every item once (All Branch)
+  const branchItems = useMemo(() => {
+    const rows =
+      rdgBranch === "One Branch" && lkpBranch
+        ? itemRows.filter((row) => row.lkpBranch === lkpBranch.value)
+        : itemRows;
+
+    const seen = new Set<string>();
+
+    return rows.filter((row) => {
+      if (seen.has(row.lkpItemID)) return false;
+      seen.add(row.lkpItemID);
+      return true;
     });
+  }, [itemRows, rdgBranch, lkpBranch]);
+
+  // a chosen item that the new branch does not have is cleared
+  useEffect(() => {
+    if (lkpItemID && !branchItems.some((row) => row.lkpItemID === lkpItemID)) {
+      setLkpItemID("");
+    }
+  }, [branchItems, lkpItemID]);
+
+  // the item boxes: ID | Name, and Name | ID (one item, two boxes)
+  const itemIdOptions = useMemo<PairOption[]>(
+    () =>
+      branchItems.map((row) => ({
+        value: row.lkpItemID,
+        label: row.lkpItemID,
+        id: row.lkpItemID,
+        name: row.txtItemName,
+      })),
+    [branchItems],
+  );
+
+  const itemNameOptions = useMemo<PairOption[]>(
+    () =>
+      [...branchItems]
+        .sort((a, b) => a.txtItemName.localeCompare(b.txtItemName))
+        .map((row) => ({
+          value: row.lkpItemID,
+          label: row.txtItemName,
+          id: row.lkpItemID,
+          name: row.txtItemName,
+        })),
+    [branchItems],
+  );
+
+  // the period (starts as today)
+  const [dtpFromDate, setDtpFromDate] = useState(dayjs().format(DATE_FORMAT)); // dtpFromDate
+  const [dtpToDate, setDtpToDate] = useState(dayjs().format(DATE_FORMAT)); // dtpToDate
+
+  // the Print Preview: the report the server sent, the name of the file, and what it was made from
+  // (the Excel file is made from the same values)
+  const [preview, setPreview] = useState<{
+    report: PrintReport;
+    fileBase: string;
+    params: Record<string, unknown>;
+  } | null>(null);
+  const [printing, setPrinting] = useState(false);
+
+  // what the server takes: the element ids of the page, the radios as their codes
+  const buildItemPurchaseParams = () => {
+    const toIso = (value: string) =>
+      dayjs(value, DATE_FORMAT, true).isValid() ? dayjs(value, DATE_FORMAT).format("YYYY-MM-DD") : "";
+
+    return {
+      rdgBranch: rdgBranch === "One Branch" ? 0 : 1,
+      lkpBranch: rdgBranch === "One Branch" ? (lkpBranch?.value ?? "") : "",
+      rdgItem: rdgItem === "One Item" ? 0 : 1,
+      lkpItemID: rdgItem === "One Item" ? lkpItemID : "",
+      dtpFromDate: toIso(dtpFromDate),
+      dtpToDate: toIso(dtpToDate),
+    };
+  };
+
+  // Print (the old cmdPrint): the checks of the old form, then the server sends the report and the Print
+  // Preview opens (Print = the browser's print window, Download = Excel / PDF)
+  const handlePrint = async () => {
+    if (printing || preview) return;
+
+    const warn = (message: string, id: string) => {
+      toast.warning(message);
+      document.getElementById(id)?.focus();
+    };
+
+    const params = buildItemPurchaseParams();
+
+    if (params.rdgBranch === 0 && !params.lkpBranch) {
+      return warn("Please select 'Branch'", "lkpBranch");
+    }
+
+    if (params.rdgItem === 0 && !params.lkpItemID) {
+      return warn("Please select 'Item ID'", "lkpItemID");
+    }
+
+    if (!params.dtpFromDate) {
+      return warn("Please enter 'From Date'", "dtpFromDate");
+    }
+
+    if (!params.dtpToDate) {
+      return warn("Please enter 'To Date'", "dtpToDate");
+    }
+
+    if (params.dtpFromDate > params.dtpToDate) {
+      return warn("'To Date' should be greater than 'From Date'", "dtpToDate");
+    }
+
+    setPrinting(true);
+
+    try {
+      const response = await fetch(`${api}/RptItemPurchase/print`, {
+        method: "POST",
+        credentials: "include",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(params),
+      });
+
+      const result = await response.json();
+
+      if (!response.ok || !result.success) {
+        toast.warning(result.message || "The Item Purchase report could not be printed.");
+        if (result.field) document.getElementById(result.field)?.focus();
+        return;
+      }
+
+      setPreview({ report: result.report, fileBase: result.fileBase, params });
+    } catch (error: unknown) {
+      console.error("rptItemPurchase print error:", error);
+      toast.error("Cannot connect to the Item Purchase API.");
+    } finally {
+      setPrinting(false);
+    }
+  };
+
+  // the Excel file of the Print Preview, made by the server (null after an error)
+  const fetchExcel = async (): Promise<Blob | null> => {
+    if (!preview) return null;
+
+    const response = await fetch(`${api}/RptItemPurchase/excel`, {
+      method: "POST",
+      credentials: "include",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(preview.params),
+    });
+
+    // an error comes back as JSON, the file as a blob
+    if (!response.ok) {
+      let message = "Could not create the Excel file";
+
+      try {
+        const result = await response.json();
+        message = result.message || message;
+      } catch {
+        message = `Could not create the Excel file (error ${response.status})`;
+      }
+
+      toast.error(message);
+      return null;
+    }
+
+    return response.blob();
   };
 
   const handleClose = () => {
-    setBranchMode("One Branch");
-    setBranch(branchOptions[0]);
-    setItemMode("One Item");
-    setItemId(null);
-    setFromDate("");
-    setToDate("");
+    setRdgBranch("One Branch");
+    setLkpBranch(defaultBranch);
+    setRdgItem("All Item");
+    setLkpItemID("");
+    setDtpFromDate(dayjs().format(DATE_FORMAT));
+    setDtpToDate(dayjs().format(DATE_FORMAT));
     onClose?.();
   };
 
-  const itemDisabled = itemMode !== "One Item";
+  // the cursor starts on the Branch box
+  useInitialFocus(lookupsLoaded, "lkpBranch");
+
+  // Alt+P -> Print, Alt+C -> Close (the underlined letters on the buttons); Ctrl+P -> Print (the old forms' Ctrl+P)
+  useAltShortcuts({
+    p: handlePrint,
+    c: handleClose,
+  });
+  useCtrlShortcuts({
+    p: () => (preview ? printItemPurchaseReport(preview.report) : handlePrint()),
+  });
 
   return (
-    <div className="flex min-h-full w-full items-start justify-center bg-white px-4 py-4">
+    <div
+      onKeyDown={handleEnterAsTab}
+      className="flex min-h-full w-full items-start justify-center bg-white px-4 py-4"
+    >
       <div className="min-h-fit w-205 max-w-full bg-white p-0">
         <main className="w-full overflow-hidden border border-gray-400 bg-white">
           <header className="flex h-7.5 items-center justify-start bg-[#9fdfbc]">
@@ -273,92 +508,120 @@ const RptItemPurchasePage: React.FC<RptItemPurchasePageProps> = ({
           <section className="px-3.5 pb-6 pt-3">
             <div className="grid grid-cols-[168px_1fr] items-start gap-x-4 gap-y-3">
               {/* Branch */}
-              <RadioPanel>
-                <CustomRadio
-                  name="rdgBranch"
-                  value="One Branch"
-                  label="One Branch"
-                  checked={branchMode === "One Branch"}
-                  onChange={() => setBranchMode("One Branch")}
-                />
-                <CustomRadio
-                  name="rdgBranch"
-                  value="All Branch"
-                  label="All Branch"
-                  checked={branchMode === "All Branch"}
-                  onChange={() => setBranchMode("All Branch")}
-                />
-              </RadioPanel>
+              <RadioGroup
+                className={cellFocusClass}
+                name="rdgBranch"
+                value={rdgBranch}
+                options={[
+                  { value: "One Branch", label: "One Branch" },
+                  { value: "All Branch", label: "All Branch" },
+                ]}
+                onChange={setRdgBranch}
+              />
               <div className="pt-3">
-                <div className="w-[250px]">
+                <div
+                  className={`w-[250px] ${cellFocusClass}`}
+                  onKeyDown={(event) => advanceOnEnter(event)}
+                >
                   <Select
                     inputId="lkpBranch"
                     instanceId="lkpBranch"
                     options={branchOptions}
-                    value={branch}
-                    onChange={setBranch}
-                    isDisabled={branchMode !== "One Branch"}
-                    {...selectProps}
+                    value={lkpBranch}
+                    onChange={(option) => {
+                      setLkpBranch(option);
+                      if (option) advanceAfterPick("lkpBranch");
+                    }}
+                    isDisabled={rdgBranch !== "One Branch"}
+                    noOptionsMessage={() => "No Branch Found"}
+                    {...branchProps}
                   />
                 </div>
               </div>
 
               {/* Item */}
-              <RadioPanel>
-                <CustomRadio
-                  name="rdgItem"
-                  value="One Item"
-                  label="One Item"
-                  checked={itemMode === "One Item"}
-                  onChange={() => setItemMode("One Item")}
-                />
-                <CustomRadio
-                  name="rdgItem"
-                  value="All Item"
-                  label="All Item"
-                  checked={itemMode === "All Item"}
-                  onChange={() => setItemMode("All Item")}
-                />
-              </RadioPanel>
+              <RadioGroup
+                className={cellFocusClass}
+                name="rdgItem"
+                value={rdgItem}
+                options={[
+                  { value: "One Item", label: "One Item" },
+                  { value: "All Item", label: "All Item" },
+                ]}
+                onChange={(value) => {
+                  setRdgItem(value);
+                  // the old form clears the item when the choice changes
+                  setLkpItemID("");
+                }}
+              />
               <div className="pt-3">
-                {!itemDisabled &&<div className="grid grid-cols-[135px_1fr] gap-2">
-                  <Select
-                    inputId="lkpItemID"
-                    instanceId="lkpItemID"
-                    options={itemIdOptions}
-                    value={selectedItemId}
-                    onChange={(option) => setItemId(option?.value ?? null)}
-                    isDisabled={itemDisabled}
-                    {...selectProps}
-                  />
-                  <Select
-                    inputId="lkpItemName"
-                    instanceId="lkpItemName"
-                    options={itemNameOptions}
-                    value={selectedItemName}
-                    onChange={(option) => setItemId(option?.value ?? null)}
-                    isDisabled={itemDisabled}
-                    {...selectProps}
-                  />
-                </div>}
-                
+                {rdgItem === "One Item" && (
+                  <div className="grid grid-cols-[190px_1fr]">
+                    <div
+                      className={cellFocusClass}
+                      onKeyDown={(event) => advanceOnEnter(event, ["lkpItemName"])}
+                    >
+                      <Select<PairOption, false>
+                        inputId="lkpItemID"
+                        instanceId="lkpItemID"
+                        name="lkpItemID"
+                        options={itemIdOptions}
+                        value={itemIdOptions.find((o) => o.value === lkpItemID) ?? null}
+                        onChange={(option) => {
+                          setLkpItemID(option?.value ?? "");
+                          if (option) advanceAfterPick("lkpItemID", ["lkpItemName"]);
+                        }}
+                        components={itemIdComponents}
+                        styles={makePairDividedMenuStyles(itemIdHang)}
+                        onMenuOpen={() => measureItemIdHang("lkpItemID", "lkpItemName")}
+                        noOptionsMessage={() => "No Item Found"}
+                        {...pairProps}
+                      />
+                    </div>
+                    <div
+                      className={`-ml-px ${cellFocusClass}`}
+                      style={{ marginRight: ITEM_NAME_MENU_HANG }}
+                      onKeyDown={(event) => advanceOnEnter(event)}
+                    >
+                      <Select<PairOption, false>
+                        inputId="lkpItemName"
+                        instanceId="lkpItemName"
+                        name="lkpItemName"
+                        options={itemNameOptions}
+                        value={itemNameOptions.find((o) => o.value === lkpItemID) ?? null}
+                        onChange={(option) => {
+                          setLkpItemID(option?.value ?? "");
+                          if (option) advanceAfterPick("lkpItemName");
+                        }}
+                        components={itemNameComponents}
+                        styles={makePairDividedMenuStyles(ITEM_NAME_MENU_HANG)}
+                        noOptionsMessage={() => "No Item Found"}
+                        {...pairProps}
+                      />
+                    </div>
+                  </div>
+                )}
               </div>
 
               {/* Period */}
               <FieldLabel>Period :</FieldLabel>
               <div className="flex items-start gap-2">
-                <AppDatePicker
-                  id="dtpFromDate"
-                  label="From Date"
-                  value={fromDate}
-                  onChange={setFromDate}
-                />
-                <AppDatePicker
-                  id="dtpToDate"
-                  label="To Date"
-                  value={toDate}
-                  onChange={setToDate}
-                />
+                <div className={`w-[140px] ${cellFocusClass}`}>
+                  <AppDatePicker
+                    id="dtpFromDate"
+                    label="From Date"
+                    value={dtpFromDate}
+                    onChange={setDtpFromDate}
+                  />
+                </div>
+                <div className={`w-[140px] ${cellFocusClass}`}>
+                  <AppDatePicker
+                    id="dtpToDate"
+                    label="To Date"
+                    value={dtpToDate}
+                    onChange={setDtpToDate}
+                  />
+                </div>
               </div>
 
               {/* Actions */}
@@ -385,6 +648,18 @@ const RptItemPurchasePage: React.FC<RptItemPurchasePageProps> = ({
           </section>
         </main>
       </div>
+
+      {/* the Print Preview (after Print) */}
+      {preview && (
+        <ReportPreview
+          html={buildHtml(preview.report)}
+          fileBase={preview.fileBase}
+          onPrint={() => printItemPurchaseReport(preview.report)}
+          buildPdf={() => buildItemPurchasePdf(preview.report)}
+          fetchExcel={fetchExcel}
+          onClose={() => setPreview(null)}
+        />
+      )}
     </div>
   );
 };

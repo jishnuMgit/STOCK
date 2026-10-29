@@ -96,7 +96,8 @@ const sendError = (res: Response, error: unknown, what: string) => {
    GET /RptStockAgeing/lookups  -> what the screen needs to open
    branches            the branches the logged-in user has a right to
    lkpDefaultBranch    the user's default branch ("" when none is set)
-   items               the items of the company (Item ID and Item Name boxes, Item Range)
+   items               the items of every branch, one row per branch and item (Item ID and Item Name
+                       boxes, Item Range): the screen shows the items of the branch that is chosen
    ageingModes         the ageing modes the company has set up (tblageingperiod): Days and/or Month
 ========================================================= */
 
@@ -122,7 +123,11 @@ export const getLookups = async (
       success: true,
       branches: branches.map((b) => ({ lkpBranch: b.brId, txtBranchName: b.brName })),
       lkpDefaultBranch: defaultBranch,
-      items: items.map((i) => ({ lkpItemID: i.itemId, txtItemName: i.itemName })),
+      items: items.map((i) => ({
+        lkpBranch: i.brId,
+        lkpItemID: i.itemId,
+        txtItemName: i.itemName,
+      })),
       ageingModes: ageingModes.map((m) => ({ lkpAgeingMode: m.ageingMode })),
     });
   } catch (error: unknown) {
