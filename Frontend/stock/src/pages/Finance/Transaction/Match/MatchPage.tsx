@@ -15,6 +15,7 @@ import {
 import MatchingComponents from "../../../../components/Transaction/Match/MatchingComponents";
 import useMatching from "../../../../hooks/useMatching";
 import { apiFetch, getSession } from "../../../../utils/session";
+import { toast } from "react-toastify";
 
 interface CustomerAccount {
   fcsaccountid: string;
@@ -250,7 +251,7 @@ const MatchPage: React.FC = () => {
         console.error("Get documents to match error:", error);
         if (!cancelled) {
           setRows(createRows());
-          alert(
+          toast.error(
             error instanceof Error
               ? error.message
               : "Failed to load documents to match",
@@ -313,19 +314,19 @@ const MatchPage: React.FC = () => {
 
   const handleSave = useCallback(async () => {
     if (!selectedDoc) {
-      alert("Please select a 'Document No.'");
+      toast.error("Please select a 'Document No.'");
       return;
     }
 
     const matchedRows = rows.filter((r) => r.match && r.raw);
     if (matchedRows.length === 0) {
-      alert("No matched records to save");
+      toast.error("No matched records to save");
       return;
     }
 
     const efDate = dayjs(receiptDate, "DD-MM-YYYY", true);
     if (!efDate.isValid()) {
-      alert("Please select Match Date");
+      toast.error("Please select Match Date");
       return;
     }
 
@@ -372,10 +373,10 @@ const MatchPage: React.FC = () => {
         match,
       });
 
-      alert(result.message || "Match saved successfully");
+      toast.success(result.message || "Match saved successfully");
       clearForm();
     } catch (error) {
-      alert(error instanceof Error ? error.message : "Failed to save match");
+      toast.error(error instanceof Error ? error.message : "Failed to save match");
     }
   }, [
     selectedDoc,
