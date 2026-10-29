@@ -125,7 +125,7 @@ export const GetData = async (
 
     await client.query(
       `
-      CALL dbo.sp_pagesmatchaccounts(
+      CALL dbo.sp_getmatchfindocuments(
         $1::varchar,
         $2::varchar,
         $3::varchar,
@@ -440,7 +440,7 @@ export const saveMatch = async (
     p_strmode        => $1::varchar,
     p_pstrcoid       => $2::varchar,
     p_strbrid        => $3::varchar,
-    p_straccountid   => $4::varchar,
+    p_strcsaccountid   => $4::varchar,
     p_pstryear       => $5::varchar,
     p_strdoctype     => $6::varchar,
     p_strdocno       => $7::varchar,
