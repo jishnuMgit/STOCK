@@ -126,7 +126,8 @@ const ResponsiveSelect = ({
             style={{
               display: "grid",
               gridTemplateColumns:
-                "52px 105px 70px 105px 75px 85px minmax(0, 1fr)",
+                // "52px 105px 70px 105px 75px 85px minmax(0, 1fr)",
+                "52px 105px 105px 75px 85px minmax(0, 1fr)",
               width: "100%",
               minWidth: 0,
               alignItems: "center",
@@ -135,7 +136,7 @@ const ResponsiveSelect = ({
           >
             <span>{data.brId ?? ""}</span>
             <span>{data.date ?? ""}</span>
-            <span>{data.docType ?? ""}</span>
+            {/* <span>{data.docType ?? ""}</span> */}
             <span>{data.docNo ?? data.value ?? ""}</span>
             <span style={{ textAlign: "right", paddingRight: "8px" }}>
               {data.debit ?? ""}
@@ -270,7 +271,7 @@ const ResponsiveSelect = ({
       const headers = [
         "BrID",
         "Date",
-        "Doc. Type",
+        // "Doc. Type",
         "Doc. No.",
         "Debit",
         "Credit",
