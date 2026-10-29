@@ -351,6 +351,7 @@ export const saveMatch = async (
       .status(400)
       .json({ success: false, message: NO_COMPANY_MESSAGE });
   }
+
   if (isEmpty(efDate)) {
     return res
       .status(400)
@@ -406,8 +407,8 @@ export const saveMatch = async (
       /* ---------- 1. parent row : SP_frmMatchAccounts (mode 'M') ---------- */
       await client.query(
         `
-        CALL dbo."SP_frmMatchAccounts"(
-          $1::varchar,  $2::varchar,  $3::smallint, $4::varchar,
+        CALL dbo.sp_pageMatchAccounts(
+          $1::varchar,  $2::varchar,  $3::varchar, $4::varchar,
           $5::varchar,  $6::varchar,  $7::bigint,   $8::varchar,
           $9::smallint, $10::smallint, $11::varchar
         )
@@ -415,7 +416,7 @@ export const saveMatch = async (
         [
           "M", // the SP only handles 'GetTL' and 'M'
           coId,
-          num(year),
+          year,
           brId,
           docType,
           docNo,
@@ -435,58 +436,56 @@ export const saveMatch = async (
 
         await client.query(
           `
-          CALL dbo."SP_frmMatchRecords"(
-            "strMode"         => $1::varchar,
-            "gstrCoID"        => $2::varchar,
-            "strBrID"         => $3::varchar,
-            "intYear"         => $4::smallint,
-            "strDocType"      => $5::varchar,
-            "strDocNo"        => $6::varchar,
-            "intSlNo"         => $7::smallint,
-            "intSlNoSub"      => $8::smallint,
-            "IntDocNo"        => $9::bigint,
-            "dtpDate"         => $10::varchar,
-            "dtpEFDate"       => $11::varchar,
-            "strAccountID"    => $12::varchar,
-            "strDescription"  => $13::varchar,
-            "numDebit"        => $14::numeric,
-            "numCredit"       => $15::numeric,
-            "numMatchAmt"     => $16::numeric,
-            "intMYear"        => $17::smallint,
-            "strMBrID"        => $18::varchar,
-            "strMDocType"     => $19::varchar,
-            "strMDocNo"       => $20::varchar,
-            "intMDocNo"       => $21::integer,
-            "intMSlNo"        => $22::smallint,
-            "intMSlNoSub"     => $23::smallint,
-            "gstrUserID"      => $24::varchar
-          )
-          `,
+  CALL dbo.sp_pagematchrecords(
+    p_strmode        => $1::varchar,
+    p_pstrcoid       => $2::varchar,
+    p_strbrid        => $3::varchar,
+    p_straccountid   => $4::varchar,
+    p_pstryear       => $5::varchar,
+    p_strdoctype     => $6::varchar,
+    p_strdocno       => $7::varchar,
+    p_intslno        => $8::smallint,
+    p_intdocno       => $9::bigint,
+    p_dtpdate        => $10::varchar,
+    p_dtpefdate      => $11::varchar,
+    p_strdescription => $12::varchar,
+    p_numdebit       => $13::numeric,
+    p_numcredit      => $14::numeric,
+    p_nummatchamt    => $15::numeric,
+    p_pstrcyear      => $16::varchar,
+    p_strcbrid       => $17::varchar,
+    p_strcdoctype    => $18::varchar,
+    p_strcdocno      => $19::varchar,
+    p_intcdocno      => $20::integer,
+    p_intcslno       => $21::smallint,
+    p_intcslnosub    => $22::smallint,
+    p_pstruserid     => $23::varchar
+  )
+  `,
           [
-            "S",
-            coId,
-            getField(c, "fBrID"),
-            num(getField(c, "fYear")),
-            getField(c, "fDocType"),
-            getField(c, "fDocNo"),
-            num(getField(c, "fSlNo")),
-            num(getField(c, "fSlNoSub")),
-            num(getField(c, "fIntDocNo")),
-            toDDMMYYYY(getField(c, "fDate")),
-            toDDMMYYYY(efDate),
-            getField(c, "fAccountID"),
-            String(getField(dRow, "fDescription") ?? " ").substring(0, 100),
-            num(getField(c, "fDebit")),
-            num(getField(c, "fCredit")),
-            num(getField(c, "fMatchAmt")),
-            num(year),
-            brId,
-            docType,
-            docNo,
-            num(intDocNo),
-            slNo,
-            mSlNoSub,
-            userId,
+            "S", // $1  p_strmode
+            coId, // $2  p_pstrcoid
+            brId, // $3  p_strbrid        (parent)
+            getField(c, "fAccountID"), // $4  p_straccountid
+            String(year), // $5  p_pstryear       (parent)
+            docType, // $6  p_strdoctype     (parent)
+            docNo, // $7  p_strdocno       (parent)
+            slNo, // $8  p_intslno        (parent line)
+            num(intDocNo), // $9  p_intdocno
+            toDDMMYYYY(getField(c, "fDate")), // $10 p_dtpdate
+            toDDMMYYYY(efDate), // $11 p_dtpefdate
+            String(getField(dRow, "fDescription") ?? " ").substring(0, 100), // $12
+            num(getField(c, "fDebit")), // $13 p_numdebit
+            num(getField(c, "fCredit")), // $14 p_numcredit
+            num(getField(c, "fMatchAmt")), // $15 p_nummatchamt
+            String(getField(c, "fYear")), // $16 p_pstrcyear      (child)
+            getField(c, "fBrID"), // $17 p_strcbrid       (child)
+            getField(c, "fDocType"), // $18 p_strcdoctype    (child)
+            getField(c, "fDocNo"), // $19 p_strcdocno      (child)
+            num(getField(c, "fIntDocNo")), // $20 p_intcdocno
+            num(getField(c, "fSlNo")), // $21 p_intcslno       (child)
+            num(getField(c, "fSlNoSub")), // $22 p_intcslnosub    (child)
+            userId, // $23 p_pstruserid
           ],
         );
 
@@ -494,13 +493,13 @@ export const saveMatch = async (
         await client.query(
           `
           CALL dbo.sp_updatematchcloseddocs(
-            $1::varchar, $2::smallint, $3::varchar, $4::varchar,
+            $1::varchar, $2::varchar, $3::varchar, $4::varchar,
             $5::varchar, $6::varchar,  $7::smallint, $8::varchar
           )
           `,
           [
             coId,
-            num(getField(c, "fYear")),
+            getField(c, "fYear"),
             getField(c, "fBrID"),
             getField(c, "fDocType"),
             getField(c, "fDocNo"),
