@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
 import { DatePicker } from "@mui/x-date-pickers/DatePicker";
 import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
@@ -122,6 +122,20 @@ const MatchHeader: React.FC<MatchHeaderProps> = ({
 
   renderSelect,
 }) => {
+  /* loader state for the Search button */
+  const [searching, setSearching] = useState(false);
+
+  const runSearch = async () => {
+    if (searching || !canSearch) return;
+
+    setSearching(true);
+    try {
+      await handleSearch();
+    } finally {
+      setSearching(false);
+    }
+  };
+
   return (
     <>
       {/* TITLE */}
@@ -233,12 +247,12 @@ const MatchHeader: React.FC<MatchHeaderProps> = ({
               setDivisionId,
               () => creditDocumentRef.current?.focus(),
               divisionRef,
-              true,
-              ["Division Name", "Division ID"],
+              false, // ID column first (was true)
+              ["Div ID", "Div Name"], // header order matches the data
               undefined,
               !customerId || divisionLoading || divisionOptions.length === 0,
               false,
-              true,
+              false, // no column swap (was true)
             )}
           </div>
 
@@ -255,7 +269,7 @@ const MatchHeader: React.FC<MatchHeaderProps> = ({
             () => document.getElementById("Searchbtn")?.focus(),
             creditDocumentRef,
             true,
-            ["DocumentType ID", "DocumentType Name"],
+            ["ID", "Name"],
           )}
 
           {/* SEARCH */}
@@ -263,37 +277,50 @@ const MatchHeader: React.FC<MatchHeaderProps> = ({
             id="Searchbtn"
             type="button"
             disabled={!canSearch}
-            className="
-    h-7.25
-    rounded-[3px]
-    border
-    border-[#b7c7d7]
-    bg-linear-to-b
-    from-white
-    to-[#e7eef5]
-    px-3.5
-    text-[13px]
-    text-slate-700
-    hover:from-white
-    hover:to-[#dce8f1]
-    focus:border-[#9fdfbc]
-    focus:outline-none
-    focus:ring-1
-    focus:ring-[#9fdfbc]
-    disabled:cursor-not-allowed
-    disabled:opacity-50
-    disabled:hover:from-white
-    disabled:hover:to-[#e7eef5]
-  "
-            onClick={handleSearch}
+            aria-busy={searching}
+            className={`
+              flex
+              h-7.25
+              items-center
+              justify-center
+              rounded-[3px]
+              border
+              border-[#b7c7d7]
+              bg-linear-to-b
+              from-white
+              to-[#e7eef5]
+              px-3.5
+              text-[13px]
+              text-slate-700
+              hover:from-white
+              hover:to-[#dce8f1]
+              focus:border-[#9fdfbc]
+              focus:outline-none
+              focus:ring-1
+              focus:ring-[#9fdfbc]
+              disabled:cursor-not-allowed
+              disabled:opacity-50
+              disabled:hover:from-white
+              disabled:hover:to-[#e7eef5]
+              ${searching ? "cursor-wait" : ""}
+            `}
+            onClick={runSearch}
             onKeyDown={async (event) => {
               if (event.key !== "Enter" || !canSearch) return;
               event.preventDefault();
-              await handleSearch();
+              await runSearch();
               documentNoRef.current?.focus();
             }}
           >
-            Search
+            {searching ? (
+              <span
+                className="h-3.5 w-3.5 animate-spin rounded-full border-2 border-slate-300 border-t-[#00a83b]"
+                role="status"
+                aria-label="Searching"
+              />
+            ) : (
+              "Search"
+            )}
           </button>
 
           {/* MATCH AMOUNT */}
