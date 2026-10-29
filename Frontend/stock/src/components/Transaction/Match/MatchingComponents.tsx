@@ -127,7 +127,7 @@ const ResponsiveSelect = ({
               display: "grid",
               gridTemplateColumns:
                 // "52px 105px 70px 105px 75px 85px minmax(0, 1fr)",
-                "52px 105px 105px 75px 85px minmax(0, 1fr)",
+                "52px 105px 140px 75px 85px minmax(0, 1fr)",
               width: "100%",
               minWidth: 0,
               alignItems: "center",
@@ -137,7 +137,7 @@ const ResponsiveSelect = ({
             <span>{data.brId ?? ""}</span>
             <span>{data.date ?? ""}</span>
             {/* <span>{data.docType ?? ""}</span> */}
-            <span>{data.docNo ?? data.value ?? ""}</span>
+            <span>{data.docTypeNo ?? data.docNo ?? data.value ?? ""}</span>
             <span style={{ textAlign: "right", paddingRight: "8px" }}>
               {data.debit ?? ""}
             </span>
@@ -175,7 +175,8 @@ const ResponsiveSelect = ({
             style={{
               display: "grid",
               gridTemplateColumns:
-                "52px 105px 70px 105px 75px 85px minmax(0, 1fr)",
+                // "52px 105px 70px 105px 75px 85px minmax(0, 1fr)",
+                "52px 105px 140px 75px 85px minmax(0, 1fr)",
               width: "100%",
               minWidth: 0,
               alignItems: "center",
@@ -184,8 +185,8 @@ const ResponsiveSelect = ({
           >
             <div>{data.brId ?? ""}</div>
             <div>{data.date ?? ""}</div>
-            <div>{data.docType ?? ""}</div>
-            <div>{data.docNo ?? data.value ?? ""}</div>
+            {/* <div>{data.docType ?? ""}</div> */}
+            <div>{data.docTypeNo ?? data.docNo ?? data.value ?? ""}</div>
             <div style={{ textAlign: "right", paddingRight: "8px" }}>
               {data.debit ?? ""}
             </div>
@@ -283,7 +284,8 @@ const ResponsiveSelect = ({
             style={{
               display: "grid",
               gridTemplateColumns:
-                "52px 105px 70px 105px 75px 85px minmax(0, 1fr)",
+                // "52px 105px 70px 105px 75px 85px minmax(0, 1fr)",
+                "52px 105px 140px 75px 85px minmax(0, 1fr)",
               width: "100%",
               minWidth: 0,
               alignItems: "center",
@@ -303,7 +305,8 @@ const ResponsiveSelect = ({
                   paddingLeft: "6px",
                   paddingRight: "4px",
                   borderLeft: index === 0 ? "none" : "1px solid #c8c8c8",
-                  textAlign: index === 4 || index === 5 ? "right" : "left",
+                  // textAlign: index === 4 || index === 5 ? "right" : "left",
+                  textAlign: index === 3 || index === 4 ? "right" : "left",
                   overflow: "hidden",
                   whiteSpace: "nowrap",
                   textOverflow: "ellipsis",
@@ -679,12 +682,15 @@ const MatchingComponents = forwardRef<MatchingComponentsRef, Props>(
       const options: DocumentOption[] = searchResults
         .filter((item: any) => item.fdocno && String(item.fdocno).trim() !== "")
         .map((item: any) => ({
-          value: String(item.fdocno ?? ""),
+          value: String(item.fdocno ?? ""), // unchanged: used for selection
           label: String(item.fdocno ?? ""),
           brId: String(item.fbrid ?? ""),
           date: String(item.fdate ?? ""),
           docType: String(item.fdoctype ?? ""),
           docNo: String(item.fdocno ?? ""),
+          // display text, e.g. "BR RH-26000003"; falls back to fdocno when null
+          docTypeNo:
+            String(item.fdoctypeno ?? "").trim() || String(item.fdocno ?? ""),
           debit: String(item.fdebit ?? "0.00"),
           credit: String(item.fcredit ?? "0.00"),
           description: String(item.fdescription ?? ""),
@@ -767,6 +773,8 @@ const MatchingComponents = forwardRef<MatchingComponentsRef, Props>(
       }),
     };
 
+    /* Customer ID dropdown: from the left edge of the Account ID box to the
+       right edge of the Account Name box (measured when the menu opens). */
     const customerIdStyles: StylesConfig<SelectOption, false> = {
       ...selectStyles,
       menu: (base) => {
@@ -789,8 +797,8 @@ const MatchingComponents = forwardRef<MatchingComponentsRef, Props>(
     };
 
     /* Customer Name dropdown: the Account Name column ends exactly at the right
-   edge of the Account Name select, and the Account ID column (140px) sits
-   outside it, so the menu is select width + 140px. */
+       edge of the Account Name select, and the Account ID column (140px) sits
+       outside it, so the menu is select width (534px) + 140px. */
     const ID_COLUMN_WIDTH = 140;
 
     const customerNameStyles: StylesConfig<SelectOption, false> = {
@@ -824,8 +832,8 @@ const MatchingComponents = forwardRef<MatchingComponentsRef, Props>(
       }),
     };
 
-    /* Document Type dropdown: the ID column is exactly as wide as the select box,
-   and the Name column (140px) sits outside it. */
+    /* Document Type dropdown: the ID column is exactly as wide as the select box
+       (154px), and the Name column (140px) sits outside it. */
     const DOC_NAME_COLUMN_WIDTH = 140;
 
     const documentTypeStyles: StylesConfig<SelectOption, false> = {
@@ -843,6 +851,20 @@ const MatchingComponents = forwardRef<MatchingComponentsRef, Props>(
           left: 0,
         };
       },
+    };
+
+    /* Document No. dropdown: wider menu so the longer Doc. No. fits */
+    const documentNoStyles: StylesConfig<SelectOption, false> = {
+      ...selectStyles,
+      menu: (base) => ({
+        ...base,
+        zIndex: 9999,
+        fontSize: "14px",
+        width: 700,
+        minWidth: 700,
+        maxWidth: "calc(100vw - 24px)",
+        left: 0,
+      }),
     };
 
     /* =====================================================
@@ -880,7 +902,9 @@ const MatchingComponents = forwardRef<MatchingComponentsRef, Props>(
                 ? divisionStyles
                 : id === "lkpDocType"
                   ? documentTypeStyles
-                  : selectStyles)
+                  : id === "lkpDocNo."
+                    ? documentNoStyles
+                    : selectStyles)
         }
         reverseDropdown={reverseDropdown}
         columnHeaders={columnHeaders}
