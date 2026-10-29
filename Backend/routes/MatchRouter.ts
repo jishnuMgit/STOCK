@@ -6,8 +6,11 @@ import {
   saveMatch,
   getMatchDate,
 } from "../controller/MatchController.js";
+import { authenticate } from "../middleware/authMiddleware.js";
 
 const router = express.Router();
+
+router.use(authenticate);
 
 router.get("/getCSAccounts", getCSaccounts);
 router.post("/getMatchAccounts", GetData);

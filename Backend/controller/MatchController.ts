@@ -1,64 +1,66 @@
-import type { Request, Response } from "express";
+import type { Response } from "express";
 import pool from "../DB/db.js";
 import { getDocumentsToMatch } from "../services/matchService.js";
+import type { AuthenticatedRequest } from "../middleware/authMiddleware.js";
+
+/* =====================================================
+   HELPERS
+===================================================== */
+
+// Postgres folds column names to lowercase, VB used fMatchAmt etc.
+// This reads a field case-insensitively so both shapes work.
+const getField = (row: Record<string, any>, name: string): any => {
+  if (row == null) return undefined;
+  if (name in row) return row[name];
+  const key = Object.keys(row).find(
+    (k) => k.toLowerCase() === name.toLowerCase(),
+  );
+  return key ? row[key] : undefined;
+};
+
+const num = (v: unknown): number => {
+  const n = Number(v);
+  return Number.isFinite(n) ? n : 0;
+};
+
+const isTrue = (v: unknown): boolean =>
+  v === true || v === "true" || v === "True" || v === 1 || v === "1";
+
+const isEmpty = (v: unknown): boolean =>
+  v === null || v === undefined || String(v).trim() === "";
+
+const NO_COMPANY_MESSAGE = "Company ID is not available in session";
+
+/* =====================================================
+   LOAD DROPDOWN DATA
+   GET /getCSAccounts
+===================================================== */
 
 export const getCSaccounts = async (
-  req: Request,
+  req: AuthenticatedRequest,
   res: Response,
 ): Promise<Response> => {
   try {
-    const PstrCoID = process.env.PstrCoID;
+    const PstrCoID = req.user?.CoID;
 
     if (!PstrCoID) {
       return res.status(400).json({
         success: false,
-        message: "Company ID is not configured",
+        message: NO_COMPANY_MESSAGE,
       });
     }
 
-    /* =====================================================
-       LOAD ACCOUNTS
-    ===================================================== */
-
     const [AccountID, AccountName, DocType] = await Promise.all([
-      pool.query(
-        `
-        SELECT *
-        FROM dbo.filllookupcustomerid($1)
-        `,
-        [PstrCoID],
-      ),
-
-      pool.query(
-        `
-        SELECT *
-        FROM dbo.filllookupcustomername($1)
-        `,
-        [PstrCoID],
-      ),
-
-      pool.query(
-        `
-        SELECT *
-        FROM dbo.getdoctype($1,$2)
-        `,
-        [PstrCoID, "FIN"],
-      ),
+      pool.query(`SELECT * FROM dbo.filllookupcustomerid($1)`, [PstrCoID]),
+      pool.query(`SELECT * FROM dbo.filllookupcustomername($1)`, [PstrCoID]),
+      pool.query(`SELECT * FROM dbo.getdoctype($1,$2)`, [PstrCoID, "FIN"]),
     ]);
-
-    /* =====================================================
-       RESPONSE
-    ===================================================== */
 
     return res.status(200).json({
       success: true,
-
       AccountID: AccountID.rows,
-
       AccountName: AccountName.rows,
-
       DocType: DocType.rows,
-
       message: "Receipt data loaded successfully",
     });
   } catch (error: unknown) {
@@ -66,71 +68,64 @@ export const getCSaccounts = async (
 
     return res.status(500).json({
       success: false,
-
       message: "Failed to load receipt data",
-
       error: error instanceof Error ? error.message : String(error),
     });
   }
 };
 
+/* =====================================================
+   GET MATCH ACCOUNTS (GetTL)
+   POST /getMatchAccounts
+   body: { strDocType, strCSAccountID, strDivID, year }
+===================================================== */
+
 export const GetData = async (
-  req: Request,
+  req: AuthenticatedRequest,
   res: Response,
 ): Promise<Response> => {
+  const strCoID = req.user?.CoID;
+  const { strDocType, strCSAccountID, strDivID, year } = req.body;
+  const strYear = isEmpty(year) ? "" : String(year);
+
+  if (!strCoID) {
+    return res.status(400).json({
+      success: false,
+      message: NO_COMPANY_MESSAGE,
+    });
+  }
+
+  if (isEmpty(strYear)) {
+    return res.status(400).json({
+      success: false,
+      message: "Year is required",
+    });
+  }
+
+  if (isEmpty(strDocType)) {
+    return res.status(400).json({
+      success: false,
+      message: "Please input 'Document Type'",
+    });
+  }
+
+  if (isEmpty(strCSAccountID)) {
+    return res.status(400).json({
+      success: false,
+      message: "Please select 'Customer'",
+    });
+  }
+
   const client = await pool.connect();
 
   try {
-    console.log("===============================");
-    console.log(req.body);
-
-    console.log("===============================");
-
-    const strCoID = process.env.PstrCoID;
-    const strYear = process.env.PstrYear;
-    const { strDocType, strCSAccountID, strDivID } = req.body;
-    if (!strCoID) {
-      return res.status(500).json({
-        success: false,
-        message: "Company ID is not configured",
-      });
-    }
-
-    if (!strDocType || strDocType.trim() === "") {
-      return res.status(400).json({
-        success: false,
-        message: "Please input 'Document Type'",
-      });
-    }
-
-    if (!strCSAccountID || strCSAccountID.trim() === "") {
-      return res.status(400).json({
-        success: false,
-        message: "Please select 'Customer'",
-      });
-    }
-
-    /* =====================================================
-       CURSOR NAME
-    ===================================================== */
-
     const cursorName = "cur_matchaccounts";
 
-    /* =====================================================
-       START TRANSACTION
-    ===================================================== */
-
     await client.query("BEGIN");
-
-    /* =====================================================
-       CALL PROCEDURE
-       14 PARAMETERS
-    ===================================================== */
 
     await client.query(
       `
       CALL dbo.sp_pagesmatchaccounts(
-
         $1::varchar,
         $2::varchar,
         $3::varchar,
@@ -145,69 +140,27 @@ export const GetData = async (
         $12::varchar,
         $13::varchar,
         $14::refcursor
-
       )
       `,
       [
-        /* 1 - p_strmode */
-        "GetTL",
-
-        /* 2 - p_strcoid */
-        strCoID,
-
-        /* 3 - p_stryear */
-        strYear,
-
-        /* 4 - p_strbrid */
-        null,
-
-        /* 5 - p_strdoctype */
-        strDocType,
-
-        /* 6 - p_strdocno */
-        null,
-
-        /* 7 - p_intdocno */
-        0,
-
-        /* 8 - p_dtpdate */
-        null,
-
-        /* 9 - p_intslno */
-        0,
-
-        /* 10 - p_intslnosub */
-        0,
-
-        /* 11 - p_struserid */
-        null,
-
-        /* 12 - p_strcsaccountid */
-        strCSAccountID,
-
-        /* 13 - p_strdivid */
-        strDivID || null,
-
-        /* 14 - p_result_cursor */
-        cursorName,
+        "GetTL", // 1  p_strmode
+        strCoID, // 2  p_strcoid
+        strYear, // 3  p_stryear
+        null, // 4  p_strbrid
+        strDocType, // 5  p_strdoctype
+        null, // 6  p_strdocno
+        0, // 7  p_intdocno
+        null, // 8  p_dtpdate
+        0, // 9  p_intslno
+        0, // 10 p_intslnosub
+        req.user?.userId ?? null, // 11 p_struserid
+        strCSAccountID, // 12 p_strcsaccountid
+        strDivID || null, // 13 p_strdivid
+        cursorName, // 14 p_result_cursor
       ],
     );
 
-    /* =====================================================
-       FETCH CURSOR
-    ===================================================== */
-
     const result = await client.query(`FETCH ALL FROM "${cursorName}"`);
-
-    console.log("=================================");
-
-    console.log("Match Accounts Result:", result.rows);
-
-    console.log("=================================");
-
-    /* =====================================================
-       COMMIT
-    ===================================================== */
 
     await client.query("COMMIT");
 
@@ -231,11 +184,25 @@ export const GetData = async (
   }
 };
 
+/* =====================================================
+   GET DOCUMENTS TO MATCH (match grid)
+   POST /getDocumentsToMatch
+===================================================== */
+
 export async function getDocumentsToMatchController(
-  req: Request,
+  req: AuthenticatedRequest,
   res: Response,
-) {
+): Promise<Response> {
   try {
+    const coId = req.user?.CoID;
+
+    if (!coId) {
+      return res.status(400).json({
+        success: false,
+        message: NO_COMPANY_MESSAGE,
+      });
+    }
+
     const {
       customerAccountId,
       docNo,
@@ -265,8 +232,7 @@ export async function getDocumentsToMatchController(
         matchDocAmt,
       },
       pool,
-      // Use your actual company ID source here
-      req.body.coId,
+      coId, // from the session, not from the request body
     );
 
     return res.status(200).json({
@@ -279,35 +245,10 @@ export async function getDocumentsToMatchController(
     return res.status(500).json({
       success: false,
       message: "Failed to get documents to match",
+      error: error instanceof Error ? error.message : "Unknown error",
     });
   }
 }
-
-/* =====================================================
-   HELPERS
-===================================================== */
-
-// Postgres folds column names to lowercase, VB used fMatchAmt etc.
-// This reads a field case-insensitively so both shapes work.
-const getField = (row: Record<string, any>, name: string): any => {
-  if (row == null) return undefined;
-  if (name in row) return row[name];
-  const key = Object.keys(row).find(
-    (k) => k.toLowerCase() === name.toLowerCase(),
-  );
-  return key ? row[key] : undefined;
-};
-
-const num = (v: unknown): number => {
-  const n = Number(v);
-  return Number.isFinite(n) ? n : 0;
-};
-
-const isTrue = (v: unknown): boolean =>
-  v === true || v === "true" || v === "True" || v === 1 || v === "1";
-
-const isEmpty = (v: unknown): boolean =>
-  v === null || v === undefined || String(v).trim() === "";
 
 /* =====================================================
    VALIDATION (port of ValidateGrid + ValidateMe)
@@ -353,24 +294,46 @@ const validateMatchRows = (
 };
 
 /* =====================================================
+   DATE HELPER
+   The SPs do TO_DATE(..., 'DD/MM/YYYY') on VARCHAR(10).
+   Slices the string instead of using Date, to avoid
+   timezone shifts. Put this near the other helpers
+   (getField, num, isTrue, isEmpty).
+===================================================== */
+
+const toDDMMYYYY = (v: unknown): string | null => {
+  if (isEmpty(v)) return null;
+  const s = String(v).trim();
+  if (/^\d{2}\/\d{2}\/\d{4}$/.test(s)) return s;
+  const m = s.match(/^(\d{4})-(\d{2})-(\d{2})/);
+  return m ? `${m[3]}/${m[2]}/${m[1]}` : null;
+};
+
+/* =====================================================
    SAVE MATCH  (port of clsMatchAccounts.Apply)
    POST /saveMatch
    body: {
-     strMode, year, brId, docType, docNo, intDocNo, docDate,
-     efDate, divId, userId, totalAmount,
+     year, brId, docType, docNo, intDocNo, docDate,
+     efDate, divId, totalAmount,
      data:  [...rows of the main doc grid  (dtData)],
      match: [...rows of the match grid     (dtMatch)]
    }
+   coId and userId come from the session.
+
+   Per matched parent row:
+     1. dbo."SP_frmMatchAccounts"  (mode 'M')
+     2. dbo."SP_frmMatchRecords"   (mode 'S') for each child
+     3. dbo.sp_updatematchcloseddocs for each child
 ===================================================== */
 
 export const saveMatch = async (
-  req: Request,
+  req: AuthenticatedRequest,
   res: Response,
 ): Promise<Response> => {
-  const coId = process.env.PstrCoID;
+  const coId = req.user?.CoID;
+  const userId = req.user?.userId ?? null;
 
   const {
-    strMode,
     year,
     brId,
     docType,
@@ -378,18 +341,15 @@ export const saveMatch = async (
     intDocNo,
     docDate,
     efDate,
-    divId,
     totalAmount,
     data,
     match,
   } = req.body;
 
-  const userId = req.body.userId ?? process.env.PstrUserID ?? null;
-
   if (!coId) {
     return res
-      .status(500)
-      .json({ success: false, message: "Company ID is not configured" });
+      .status(400)
+      .json({ success: false, message: NO_COMPANY_MESSAGE });
   }
   if (isEmpty(efDate)) {
     return res
@@ -443,51 +403,63 @@ export const saveMatch = async (
         continue;
       }
 
-      /* ---------- 1. parent row : sp_pagesmatchaccounts ---------- */
-      const cursorName = `cur_save_${parentCount}`;
-
+      /* ---------- 1. parent row : SP_frmMatchAccounts (mode 'M') ---------- */
       await client.query(
         `
-        CALL dbo.sp_pagesmatchaccounts(
-          $1::varchar, $2::varchar, $3::varchar, $4::varchar,
-          $5::varchar, $6::varchar, $7::bigint,  $8::varchar,
-          $9::smallint, $10::smallint, $11::varchar, $12::varchar,
-          $13::varchar, $14::refcursor
+        CALL dbo."SP_frmMatchAccounts"(
+          $1::varchar,  $2::varchar,  $3::smallint, $4::varchar,
+          $5::varchar,  $6::varchar,  $7::bigint,   $8::varchar,
+          $9::smallint, $10::smallint, $11::varchar
         )
         `,
         [
-          strMode,
+          "M", // the SP only handles 'GetTL' and 'M'
           coId,
-          String(year),
+          num(year),
           brId,
           docType,
           docNo,
           num(intDocNo),
-          docDate,
+          toDDMMYYYY(docDate),
           slNo,
           slNoSub,
           userId,
-          accountId,
-          divId || null,
-          cursorName,
         ],
       );
       parentCount++;
 
-      /* ---------- 2. child rows : sp_pagematchrecords ---------- */
+      /* ---------- 2. child rows : SP_frmMatchRecords (mode 'S') ---------- */
       for (let i = 0; i < childRows.length; i++) {
         const c = childRows[i];
         const mSlNoSub = i + 1; // VB: intIndex_Match + 1
 
         await client.query(
           `
-          CALL dbo.sp_pagematchrecords(
-            $1::varchar,  $2::varchar,  $3::varchar,  $4::smallint,
-            $5::varchar,  $6::varchar,  $7::smallint, $8::smallint,
-            $9::bigint,   $10::varchar, $11::varchar, $12::varchar,
-            $13::varchar, $14::float8,  $15::float8,  $16::float8,
-            $17::smallint,$18::varchar, $19::varchar, $20::varchar,
-            $21::bigint,  $22::smallint,$23::smallint,$24::varchar
+          CALL dbo."SP_frmMatchRecords"(
+            "strMode"         => $1::varchar,
+            "gstrCoID"        => $2::varchar,
+            "strBrID"         => $3::varchar,
+            "intYear"         => $4::smallint,
+            "strDocType"      => $5::varchar,
+            "strDocNo"        => $6::varchar,
+            "intSlNo"         => $7::smallint,
+            "intSlNoSub"      => $8::smallint,
+            "IntDocNo"        => $9::bigint,
+            "dtpDate"         => $10::varchar,
+            "dtpEFDate"       => $11::varchar,
+            "strAccountID"    => $12::varchar,
+            "strDescription"  => $13::varchar,
+            "numDebit"        => $14::numeric,
+            "numCredit"       => $15::numeric,
+            "numMatchAmt"     => $16::numeric,
+            "intMYear"        => $17::smallint,
+            "strMBrID"        => $18::varchar,
+            "strMDocType"     => $19::varchar,
+            "strMDocNo"       => $20::varchar,
+            "intMDocNo"       => $21::integer,
+            "intMSlNo"        => $22::smallint,
+            "intMSlNoSub"     => $23::smallint,
+            "gstrUserID"      => $24::varchar
           )
           `,
           [
@@ -500,8 +472,8 @@ export const saveMatch = async (
             num(getField(c, "fSlNo")),
             num(getField(c, "fSlNoSub")),
             num(getField(c, "fIntDocNo")),
-            getField(c, "fDate"),
-            efDate,
+            toDDMMYYYY(getField(c, "fDate")),
+            toDDMMYYYY(efDate),
             getField(c, "fAccountID"),
             String(getField(dRow, "fDescription") ?? " ").substring(0, 100),
             num(getField(c, "fDebit")),
@@ -518,7 +490,7 @@ export const saveMatch = async (
           ],
         );
 
-        /* ---------- 3. close fully matched docs ---------- */
+        /* ---------- 3. close fully matched docs (unchanged) ---------- */
         await client.query(
           `
           CALL dbo.sp_updatematchcloseddocs(
@@ -569,17 +541,17 @@ export const saveMatch = async (
 ===================================================== */
 
 export const getMatchDate = async (
-  req: Request,
+  req: AuthenticatedRequest,
   res: Response,
 ): Promise<Response> => {
   try {
-    const coId = process.env.PstrCoID;
+    const coId = req.user?.CoID;
     const { year, brId, docType, docNo } = req.body;
 
     if (!coId) {
       return res
-        .status(500)
-        .json({ success: false, message: "Company ID is not configured" });
+        .status(400)
+        .json({ success: false, message: NO_COMPANY_MESSAGE });
     }
     if (isEmpty(year) || isEmpty(brId) || isEmpty(docType) || isEmpty(docNo)) {
       return res.status(400).json({
