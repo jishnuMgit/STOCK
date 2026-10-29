@@ -20,8 +20,8 @@ export type ReportRow = {
 const ACCOUNT_ID_MAX = 12; // VB: @strAccountID varchar(12)
 
 // sp_rptaccount 'G' prefixes the name with spaces by level so the printed
-// report shows the hierarchy: level 2 -> 4 spaces, 3 -> 8, 4 -> 13.
-const INDENT_BY_LEVEL: Record<number, number> = { 2: 4, 3: 8, 4: 13 };
+// report shows the hierarchy: level 2 -> 4 spaces, 3 -> 8, 4 -> 13, 5 -> 17.
+const INDENT_BY_LEVEL: Record<number, number> = { 2: 4, 3: 8, 4: 13, 5: 17 };
 const indentName = (name: string, level: number) =>
   " ".repeat(INDENT_BY_LEVEL[level] ?? 0) + (name ?? "");
 const MAX_IDS = 20000;
@@ -75,14 +75,30 @@ export const getReportRows = async (
   if (ids.length > MAX_IDS) throw new Error("Too many accounts selected");
 
   const { rows } = await pool.query(
-    `SELECT faccountid                  AS "accountId",
-            faccountname                AS "accountName",
-            faccountlevel               AS "accountLevel",
-            COALESCE(fhavecc, false)    AS "haveCC"
-       FROM dbo.tblaccount
-      WHERE fcoid = $1
-        AND faccountid = ANY($2::varchar[])
-      ORDER BY faccountid`,
+    // Ordered by the parent chain (path), not by the id alone, so every
+    // account is listed right under its parent whatever the numbers are.
+    // Roots: accounts whose group is empty or is the account itself.
+    `WITH RECURSIVE t AS (
+       SELECT faccountid, faccountname, faccountlevel, fhavecc,
+              faccountid::text AS path
+         FROM dbo.tblaccount
+        WHERE fcoid = $1
+          AND (faccountgroupid IS NULL OR faccountgroupid = faccountid)
+       UNION ALL
+       SELECT a.faccountid, a.faccountname, a.faccountlevel, a.fhavecc,
+              t.path || '/' || a.faccountid
+         FROM dbo.tblaccount a
+         JOIN t ON a.fcoid = $1
+               AND a.faccountgroupid = t.faccountid
+               AND a.faccountid <> t.faccountid
+     )
+     SELECT faccountid               AS "accountId",
+            faccountname             AS "accountName",
+            faccountlevel            AS "accountLevel",
+            COALESCE(fhavecc, false) AS "haveCC"
+       FROM t
+      WHERE faccountid = ANY($2::varchar[])
+      ORDER BY path`,
     [coId, ids],
   );
   return rows.map((r) => ({

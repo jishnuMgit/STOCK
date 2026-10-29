@@ -679,8 +679,9 @@ const RptTBPage: React.FC = () => {
         asPdf ? "pdf" : "xlsx",
       );
       if (saved) {
-        setPreview(null); // cancelled "Save as": the preview stays
+        
         toast.success(asPdf ? "PDF file downloaded" : "Excel file downloaded");
+        setPreview(null); // cancelled "Save as": the preview stays
       }
     } catch {
       toast.error(

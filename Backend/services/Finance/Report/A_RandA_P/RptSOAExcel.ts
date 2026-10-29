@@ -26,6 +26,35 @@ const thin = {
 
 const MONEY = "#,##0.00;-#,##0.00";
 
+// ---- images (Header_<CoID>.jpg / Footer.jpg arrive as data: URIs) ----
+type Img = { b64: string; w: number; h: number };
+
+// width / height of a JPEG (read from its SOF marker)
+const jpegSize = (buf: Buffer): { w: number; h: number } | null => {
+  let i = 2;
+  while (i + 9 < buf.length) {
+    if (buf[i] !== 0xff) {
+      i++;
+      continue;
+    }
+    const m = buf[i + 1];
+    if (m >= 0xc0 && m <= 0xcf && m !== 0xc4 && m !== 0xc8 && m !== 0xcc) {
+      return { h: buf.readUInt16BE(i + 5), w: buf.readUInt16BE(i + 7) };
+    }
+    i += 2 + buf.readUInt16BE(i + 2);
+  }
+  return null;
+};
+
+const toImg = (uri: string): Img | null => {
+  if (!uri) return null;
+  const b64 = uri.slice(uri.indexOf(",") + 1);
+  const size = jpegSize(Buffer.from(b64, "base64"));
+  return size ? { b64, ...size } : null;
+};
+
+const ROW_PX = 20; // default row height (15 pt)
+
 export const buildSoaWorkbook = async (report: SoaReport): Promise<Buffer> => {
   const wb = new ExcelJS.Workbook();
   const ws = wb.addWorksheet("Statement Of Account", {
@@ -57,18 +86,24 @@ export const buildSoaWorkbook = async (report: SoaReport): Promise<Buffer> => {
     return r;
   };
 
+  const logo = toImg(report.logo);
+  const footer = toImg(report.footerImage);
+  const logoId = logo ? wb.addImage({ base64: logo.b64, extension: "jpeg" }) : null;
+  const footerId = footer ? wb.addImage({ base64: footer.b64, extension: "jpeg" }) : null;
+
   report.accounts.forEach((a, idx) => {
     if (idx > 0) ws.addRow([]);
+    const headerRow0 = ws.rowCount; // 0-based index of the first header row
 
     // header: English on the left, Arabic on the right (like the VB header)
     const pair = (left: string, right: string, font: Partial<ExcelJS.Font>) => {
-      const r = ws.addRow([left, "", "", "", right]);
-      ws.mergeCells(r.number, 1, r.number, 4);
-      ws.mergeCells(r.number, 5, r.number, 8);
+      const r = ws.addRow([left, "", "", "", "", right]);
+      ws.mergeCells(r.number, 1, r.number, 4); // English
+      ws.mergeCells(r.number, 6, r.number, 8); // Arabic (column E is for the logo)
       r.getCell(1).font = { name: "Times New Roman", ...font };
-      r.getCell(5).font = { name: "Times New Roman", ...font };
+      r.getCell(6).font = { name: "Times New Roman", ...font };
       r.getCell(1).alignment = { horizontal: "left" };
-      r.getCell(5).alignment = { horizontal: "right", readingOrder: "rtl" };
+      r.getCell(6).alignment = { horizontal: "right", readingOrder: "rtl" };
     };
     pair(a.company.name || report.coName, a.company.nameAr, { size: 14, bold: true });
     const rows = Math.max(a.company.address.length, a.company.addressAr.length);
@@ -76,6 +111,16 @@ export const buildSoaWorkbook = async (report: SoaReport): Promise<Buffer> => {
       pair(a.company.address[i] ?? "", a.company.addressAr[i] ?? "", { size: 9 });
     }
     if (a.company.telephone) pair(a.company.telephone, a.company.telephone, { size: 9 });
+
+    // company logo in the middle column, fitted into the header rows
+    if (logo && logoId !== null) {
+      const rowsHigh = Math.max(ws.rowCount - headerRow0, 5);
+      const scale = Math.min(200 / logo.w, (rowsHigh * ROW_PX - 6) / logo.h);
+      ws.addImage(logoId, {
+        tl: { col: 4.15, row: headerRow0 + 0.1 },
+        ext: { width: logo.w * scale, height: logo.h * scale },
+      });
+    }
     merged(report.heading1, { size: 12, bold: true }, "center");
     merged(report.heading2, { size: 10 }, "center");
     if (report.branchLabel) merged(report.branchLabel, { size: 10 }, "left");
@@ -163,6 +208,15 @@ export const buildSoaWorkbook = async (report: SoaReport): Promise<Buffer> => {
       ).forEach(([k, v]) => ws.addRow([k, `: ${v}`]));
     }
     ws.addRow([`Prepared By : ${report.userId}`]);
+
+    // footer image (Footer.jpg) under every statement, across the table width
+    if (footer && footerId !== null) {
+      const width = 960;
+      const height = Math.round((width * footer.h) / footer.w);
+      const start0 = ws.rowCount;
+      for (let i = 0; i < Math.ceil(height / ROW_PX) + 1; i++) ws.addRow([]);
+      ws.addImage(footerId, { tl: { col: 0, row: start0 + 0.3 }, ext: { width, height } });
+    }
   });
 
   ws.addRow([]);
