@@ -37,75 +37,62 @@ export const menuRouteMap: Record<string, string> = {
      PURCHASE - TRANSACTION
   ========================================================= */
 
-
   mnuPurchaseInvoice: "/Purchase/Transaction/PurchaseInvoicePage",
-  mnuBeginningStock:"/Purchase/Transaction/BeginningStockPage",
+  mnuBeginningStock: "/Purchase/Transaction/BeginningStockPage",
 
-
-
-
-
-    /* =========================================================
+  /* =========================================================
      PURCHASE - SETUP
   ========================================================= */
 
-
-
   mnuItem: "/Purchase/Setup/ItemPage",
   mnuItemGroup: "/Purchase/Setup/ItemGroupPage",
-  mnuUnit:"/Purchase/Setup/UnitPage",
-  mnuStaff:"/Purchase/Setup/StaffPage",
-  mnuCurrency:"/Purchase/Setup/Currency",
-    /* =========================================================
+  mnuUnit: "/Purchase/Setup/UnitPage",
+  mnuStaff: "/Purchase/Setup/StaffPage",
+  mnuCurrency: "/Purchase/Setup/Currency",
+  /* =========================================================
      PURCHASE - REPORTS
   ========================================================= */
 
-  "mnuRrptSupplier Purchase":"/Purchase/Report/RptSupplierPurchase",
-  mnuRptItemPurchase:"/Purchase/Report/RptItemPurchase",
-  mnuRptPOSummary:"/Purchase/Report/RptPOSummary",
-  mnuRptStaffSales:"/Purchase/Report/RptStaffSales",
-  mnuRptSalesSummary:"/Purchase/Report/RptSalesSummary",
-  mnuRptItemMovement:"/Purchase/Report/RptItemMovement",
-  irptRptInvoicewiseProfit:"/Purchase/Report/RptInvoicewiseProfit",
-  mnuRptStockReport:"/Purchase/Report/RptStockReport",
-  mnuRptStockValuation:"/Purchase/Report/RptStockValuation",
-  mnuRptStockVerification:"/Purchase/Report/RptStockVerification",
-  mnuRptStockAgeing:"/Purchase/Report/RptStockAgeing",
-  mnuRptDocumentList:"/Purchase/Report/RptDocumentList",
-  mnuRptSalesPriceList:"/Purchase/Report/RptSalesPriceList",
-  mnuRptItemList:"/Purchase/Report/RptItemList",
-  mnuRptItemHistory:"/Purchase/Report/RptItemHistory",
+  "mnuRrptSupplier Purchase": "/Purchase/Report/RptSupplierPurchase",
+  mnuRptItemPurchase: "/Purchase/Report/RptItemPurchase",
+  mnuRptPOSummary: "/Purchase/Report/RptPOSummary",
+  mnuRptStaffSales: "/Purchase/Report/RptStaffSales",
+  mnuRptSalesSummary: "/Purchase/Report/RptSalesSummary",
+  mnuRptItemMovement: "/Purchase/Report/RptItemMovement",
+  irptRptInvoicewiseProfit: "/Purchase/Report/RptInvoicewiseProfit",
+  mnuRptStockReport: "/Purchase/Report/RptStockReport",
+  mnuRptStockValuation: "/Purchase/Report/RptStockValuation",
+  mnuRptStockVerification: "/Purchase/Report/RptStockVerification",
+  mnuRptStockAgeing: "/Purchase/Report/RptStockAgeing",
+  mnuRptDocumentList: "/Purchase/Report/RptDocumentList",
+  mnuRptSalesPriceList: "/Purchase/Report/RptSalesPriceList",
+  mnuRptItemList: "/Purchase/Report/RptItemList",
+  mnuRptItemHistory: "/Purchase/Report/RptItemHistory",
 
-
-
-
-
-/*============================================================
+  /*============================================================
 Sales-TRANSACTION
 =============================================================*/
 
   mnuSalesInvoice: "/Sales/Transaction/SalesInvoicePage",
-  mnuStockAdjustment:"/Sales/Transaction/StockAdjustment",
+  mnuStockAdjustment: "/Sales/Transaction/StockAdjustment",
   mnuStockTransfer: "/Sales/Transaction/StockTransferPage",
-  mnuStkDocumentPost:"/Sales/Transaction/StockDocumentPost",
-  mnuStkDocumentRePost:"/Sales/Transaction/StockDocumentRePost",
+  mnuStkDocumentPost: "/Sales/Transaction/StockDocumentPost",
+  mnuStkDocumentRePost: "/Sales/Transaction/StockDocumentRePost",
 
-
-/*============================================================
+  /*============================================================
 Sales-SETUP
 =============================================================*/
 
-  mnuItemEnquiry:"/Sales/Setup/ItemEnquiry",
-  mnuSalesPriceList:"/Sales/Setup/SalesPriceList",
- 
+  mnuItemEnquiry: "/Sales/Setup/ItemEnquiry",
+  mnuSalesPriceList: "/Sales/Setup/SalesPriceList",
 
-/*============================================================
+  /*============================================================
 Sales-REPORT
 =============================================================*/
-  mnuRptStock:"/Sales/Report/RptStock",
- "mnuRptStock Value": "/Sales/Reports/StockValue",
-  mnuRptCustomerSales:"/Sales/Reports/RptCustomerSales",
-  mnuRptItemSales:"/Sales/Reports/RptItemSales",
+  mnuRptStock: "/Sales/Report/RptStock",
+  "mnuRptStock Value": "/Sales/Reports/StockValue",
+  mnuRptCustomerSales: "/Sales/Reports/RptCustomerSales",
+  mnuRptItemSales: "/Sales/Reports/RptItemSales",
 
   /* =========================================================
      FINANCE 
@@ -117,102 +104,96 @@ Sales-REPORT
   mnuReceipt: "/Finance/Transaction/Receipt",
   mnuBeginningBalance: "/Finance/Transaction/BeginningBalance",
   mnuJournal: "/Finance/Transaction/journal",
-  mnuFinDocPost:"/Finance/Transaction/FinDocPost",
-  mnuFinDocPrint:"/Finance/Transaction/FinDocPrint",
+  mnuFinDocPost: "/Finance/Transaction/FinDocPost",
+  mnuFinDocPrint: "/Finance/Transaction/FinDocPrint",
+  mnuTransactionMatching: "/Finance/Transaction/Transaction-matching",
 
   /* =========================================================
      FINANCE - SETUP
   ========================================================= */
 
   mnuCustomer: "/Finance/Setup/CustomerPage",
-  mnuChartOfAccount:"/Finance/Setup/ChartOfAccountList",
-  mnuCostCenter:"/Finance/Setup/CostCenter",
- "mnuCustomer/Supplier Country":"/Finance/Setup/CustomerSupplierCountry",
-  mnuInactivateAccount:"/Finance/Setup/InactivateAccount",
+  mnuChartOfAccount: "/Finance/Setup/ChartOfAccountList",
+  mnuCostCenter: "/Finance/Setup/CostCenter",
+  "mnuCustomer/Supplier Country": "/Finance/Setup/CustomerSupplierCountry",
+  mnuInactivateAccount: "/Finance/Setup/InactivateAccount",
   /* =========================================================
      FINANCE - REPORTS
   ========================================================= */
 
-  mnuRptChartOfAccount:"/Finance/Reports/RptChartOfAccount",
-  mnuRptCustomerList:"/Finance/Reports/RptCustomerList",
-  mnuRptSupplierList:"/Finance/Reports/RptSupplierList",
-  mnuRptFinYearCloseBal:"/Finance/Reports/RptFinYearCloseBal",
-  mnuRptExpenseSum:"/Finance/Reports/RptExpenseSum",
-  mnuRptRVPVSum:"/Finance/Reports/RptRVPVSum",
-  mnuRptFinDocList:"/Finance/Reports/RptFinDocList",
-  mnuRptIncomeSum:"/Finance/Reports/RptIncomeSum",
-  mnuRptDocumentExport:"/Finance/Reports/RptDocumentExport",
- // FINANCE - REPORTS - A/R & A/P
+  mnuRptChartOfAccount: "/Finance/Reports/RptChartOfAccount",
+  mnuRptCustomerList: "/Finance/Reports/RptCustomerList",
+  mnuRptSupplierList: "/Finance/Reports/RptSupplierList",
+  mnuRptFinYearCloseBal: "/Finance/Reports/RptFinYearCloseBal",
+  mnuRptExpenseSum: "/Finance/Reports/RptExpenseSum",
+  mnuRptRVPVSum: "/Finance/Reports/RptRVPVSum",
+  mnuRptFinDocList: "/Finance/Reports/RptFinDocList",
+  mnuRptIncomeSum: "/Finance/Reports/RptIncomeSum",
+  mnuRptDocumentExport: "/Finance/Reports/RptDocumentExport",
+  // FINANCE - REPORTS - A/R & A/P
 
   mnuRptSOA: "/Finance/Reports/rptSOA",
-  mnuRptReceivables:"/Finance/Reports/RptReceivables",
-  mnuRptAgeingDr:"/Finance/Reports/RptAgeingDr",
-  mnuRptPayables:"/Finance/Reports/RptPayables",
-  mnuRptAgeingCr:"/Finance/Reports/RptAgeingCr",
+  mnuRptReceivables: "/Finance/Reports/RptReceivables",
+  mnuRptAgeingDr: "/Finance/Reports/RptAgeingDr",
+  mnuRptPayables: "/Finance/Reports/RptPayables",
+  mnuRptAgeingCr: "/Finance/Reports/RptAgeingCr",
 
   // FINANCE - REPORTS - GENERAL LEDGER
-  
-  mnuRptGL:"/Finance/Reports/rptGL",
-  mnuRptGLGroup:"/Finance/Reports/RptGLGroup",
-  mnuRptGLSum:"/Finance/Reports/RptGLSum",
-  
 
+  mnuRptGL: "/Finance/Reports/rptGL",
+  mnuRptGLGroup: "/Finance/Reports/RptGLGroup",
+  mnuRptGLSum: "/Finance/Reports/RptGLSum",
 
   // FINANCE - REPORTS - FINAL ACCOUNTS
 
-  mnuRptTB:"/Finance/Reports/rptTB",
-  mnuRptBS:"/Finance/Reports/RptBS",
-  mnuRptPL:"/Finance/Reports/RptPL",
-
-
+  mnuRptTB: "/Finance/Reports/rptTB",
+  mnuRptBS: "/Finance/Reports/RptBS",
+  mnuRptPL: "/Finance/Reports/RptPL",
 
   /* =========================================================
      SETTINGS
   ========================================================= */
 
-   mnuSetDocumentNo: "/Settings/SetDocumentNo",
-   mnuSetBranchInfo:"/Settings/SetBranchInfo",
-   mnuSetCompanyInfo: "/Settings/SetCompanyInfo",
-   mnuSetChartOfAccount: "/Settings/SetChartOfAccount",
-   mnuSetStockPostingAccount:"/Settings/SetPostingAccount",
-   mnuSetActivePeriod:"/Setting/SetActivePeriod",
-   mnuSetDefaultBranch:"/Setting/SetDefaultBranch",
-   mnuSetDrAgeingPeriod:"/Setting/SetDrAgeingPeriod",
-   mnuSetDatabaseBackupPath:"/Setting/SetDatabaseBackupPath",
-   mnuChangeLoginYear:"/Setting/ChangeLoginYear",
+  mnuSetDocumentNo: "/Settings/SetDocumentNo",
+  mnuSetBranchInfo: "/Settings/SetBranchInfo",
+  mnuSetCompanyInfo: "/Settings/SetCompanyInfo",
+  mnuSetChartOfAccount: "/Settings/SetChartOfAccount",
+  mnuSetStockPostingAccount: "/Settings/SetPostingAccount",
+  mnuSetActivePeriod: "/Setting/SetActivePeriod",
+  mnuSetDefaultBranch: "/Setting/SetDefaultBranch",
+  mnuSetDrAgeingPeriod: "/Setting/SetDrAgeingPeriod",
+  mnuSetDatabaseBackupPath: "/Setting/SetDatabaseBackupPath",
+  mnuChangeLoginYear: "/Setting/ChangeLoginYear",
 
   /* =========================================================
      SECURITY
   ========================================================= */
 
-  mnuUserLogin:"/Security/UserLogin",
-  mnuUserPermissionMenu:"/Security/UserPermissionMenu",
-  mnuUserPermissionBranch:"/Security/UserPermissionBranch",
-  mnuRptUserAudit:"/Security/UserAudit",
-  mnuRptUserTransactionAudit:"/Security/UserTransactionAudit",
+  mnuUserLogin: "/Security/UserLogin",
+  mnuUserPermissionMenu: "/Security/UserPermissionMenu",
+  mnuUserPermissionBranch: "/Security/UserPermissionBranch",
+  mnuRptUserAudit: "/Security/UserAudit",
+  mnuRptUserTransactionAudit: "/Security/UserTransactionAudit",
 
   /* =========================================================
      Utility
   ========================================================= */
 
-
-  mnuFinYearClose:"/Utility/FinYearClose",
-  mnuYearCloseStatus:"/Utility/YearCloseStatus",
-  mnuRptVerifyDocAccuracy:"/Utility/RptVerifyDocAccuracy",
-  mnuRptDocsAfterYearClose:"/Utility/RptDocsAfterYearClose",
-  mnuDatabaseBackup:"/Utility/DatabaseBackup",
+  mnuFinYearClose: "/Utility/FinYearClose",
+  mnuYearCloseStatus: "/Utility/YearCloseStatus",
+  mnuRptVerifyDocAccuracy: "/Utility/RptVerifyDocAccuracy",
+  mnuRptDocsAfterYearClose: "/Utility/RptDocsAfterYearClose",
+  mnuDatabaseBackup: "/Utility/DatabaseBackup",
 
   /* =========================================================
      ADMINISTRATION
   ========================================================= */
 
-
-
-mnuAdministration: "/Administration",
-mnuCompany: "/Administration/CompanyPage",
-mnuBranch:"/Administration/Branch",
-mnuYear:"/Administration/Year",
-mnuDocument:"/Administration/Document",
+  mnuAdministration: "/Administration",
+  mnuCompany: "/Administration/CompanyPage",
+  mnuBranch: "/Administration/Branch",
+  mnuYear: "/Administration/Year",
+  mnuDocument: "/Administration/Document",
 };
 
 /* =========================================================
@@ -248,14 +229,14 @@ export const ADMINISTRATION_NODE: MenuNode = {
       fmenubuttons: "0",
       children: [],
     },
-     {
+    {
       fmenuid: "9903",
       fmenuname: "mnuYear",
       fmenucaption: "Year",
       fmenubuttons: "0",
       children: [],
     },
-     {
+    {
       fmenuid: "9904",
       fmenuname: "mnuDocument",
       fmenucaption: "Document",
@@ -263,6 +244,17 @@ export const ADMINISTRATION_NODE: MenuNode = {
       children: [],
     },
   ],
+};
+
+/* Transaction Matching (synthetic node)
+   Injected as a child of Finance > Transaction (fmenuid "1101").
+   "110199" is outside the real 1101xx id space. */
+export const TRANSACTION_MATCHING_NODE: MenuNode = {
+  fmenuid: "110199",
+  fmenuname: "mnuTransactionMatching",
+  fmenucaption: "Match",
+  fmenubuttons: "0",
+  children: [],
 };
 
 /* Rpt Statement of Account (synthetic node)
@@ -287,9 +279,7 @@ export function injectChild(
   return nodes.map((node) => {
     if (node.fmenuid === parentId) {
       const exists = node.children.some((c) => c.fmenuid === child.fmenuid);
-      return exists
-        ? node
-        : { ...node, children: [...node.children, child] };
+      return exists ? node : { ...node, children: [...node.children, child] };
     }
     return { ...node, children: injectChild(node.children, parentId, child) };
   });
