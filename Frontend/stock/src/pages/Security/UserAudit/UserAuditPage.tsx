@@ -10,6 +10,7 @@ import dayjs from "dayjs";
 import { toast } from "react-toastify";
 import { useEnterAsTab } from "../../../hooks/useEnterAsTab";
 import { useAltShortcuts } from "../../../hooks/useAltShortcuts";
+import { useCtrlShortcuts } from "../../../hooks/useCtrlShortcuts";
 import { useButtonPermissions } from "../../../hooks/useButtonPermissions";
 import { useGridCellFocus } from "../../../hooks/useGridCellFocus";
 import { useAdvanceAfterSelect } from "../../../hooks/useAdvanceAfterSelect";
@@ -454,6 +455,11 @@ const UserAudit: React.FC = () => {
   useAltShortcuts(preview ? {} : {
     p: handlePrint,
     c: handleClear,
+  });
+
+  // Ctrl+P -> Print (the old forms' Ctrl+P). With the Print Preview open it prints the report that is shown.
+  useCtrlShortcuts({
+    p: () => (preview ? printUserAuditReport(preview.report) : handlePrint()),
   });
 
   // The old form's behaviour: Enter on a BUTTON presses it. Enter anywhere

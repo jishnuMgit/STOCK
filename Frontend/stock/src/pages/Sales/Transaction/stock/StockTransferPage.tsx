@@ -14,6 +14,7 @@ import { useScrollbarWidth } from "../../../../hooks/useScrollbarWidth";
 import { useAdvanceAfterSelect } from "../../../../hooks/useAdvanceAfterSelect";
 import { usePairMenuHang } from "../../../../hooks/usePairMenuHang";
 import { useAltShortcuts } from "../../../../hooks/useAltShortcuts";
+import { useCtrlShortcuts } from "../../../../hooks/useCtrlShortcuts";
 import { useInitialFocus } from "../../../../hooks/useInitialFocus";
 import { useGridCellFocus } from "../../../../hooks/useGridCellFocus";
 import { useDeleteToast } from "../../../../hooks/useDeleteToast";
@@ -1750,6 +1751,11 @@ const StockTransferPage: React.FC = () => {
     p: handlePrint,
     t: handlePost,
     c: clearForm,
+  });
+
+  // Ctrl+P -> Print (the old forms' Ctrl+P). With the Print Preview open it prints the report that is shown.
+  useCtrlShortcuts({
+    p: () => (preview ? printStockTransferReport(preview.report) : handlePrint()),
   });
 
   // ----------------------------------------------------------

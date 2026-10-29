@@ -247,12 +247,12 @@ const MatchHeader: React.FC<MatchHeaderProps> = ({
               setDivisionId,
               () => creditDocumentRef.current?.focus(),
               divisionRef,
-              true,
-              ["Division Name", "Division ID"],
+              false, // ID column first (was true)
+              ["Div ID", "Div Name"], // header order matches the data
               undefined,
               !customerId || divisionLoading || divisionOptions.length === 0,
               false,
-              true,
+              false, // no column swap (was true)
             )}
           </div>
 
@@ -269,7 +269,7 @@ const MatchHeader: React.FC<MatchHeaderProps> = ({
             () => document.getElementById("Searchbtn")?.focus(),
             creditDocumentRef,
             true,
-            ["DocumentType ID", "DocumentType Name"],
+            ["ID", "Name"],
           )}
 
           {/* SEARCH */}
