@@ -23,6 +23,7 @@ import {
   type Option,
 } from "../../../../components/Transaction/BeginningBalance/BeginningBalanceShared";
 import { useAltShortcuts } from "../../../../hooks/useAltShortcuts";
+import { useCtrlShortcuts } from "../../../../hooks/useCtrlShortcuts";
 import { useButtonPermissions } from "../../../../hooks/useButtonPermissions";
 import { useConfirmModal } from "../../../../hooks/useConfirmModal";
 import { useInitialFocus } from "../../../../hooks/useInitialFocus";
@@ -591,6 +592,11 @@ const BeginningBalance: React.FC = () => {
     p: handlePrint,
     t: handlePost,
     c: handleClear,
+  });
+
+  // Ctrl+P -> Print (the old forms' Ctrl+P). With the Print Preview open it prints the report that is shown.
+  useCtrlShortcuts({
+    p: () => (preview ? printBeginningBalanceReport(preview.report) : handlePrint()),
   });
 
   return (

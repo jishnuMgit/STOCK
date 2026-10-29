@@ -9,6 +9,7 @@ import { toast } from "react-toastify";
 import RadioGroup from "../../../components/common/RadioGroup";
 import { useEnterAsTab } from "../../../hooks/useEnterAsTab";
 import { useAltShortcuts } from "../../../hooks/useAltShortcuts";
+import { useCtrlShortcuts } from "../../../hooks/useCtrlShortcuts";
 import { useGridCellFocus } from "../../../hooks/useGridCellFocus";
 import { useAdvanceAfterSelect } from "../../../hooks/useAdvanceAfterSelect";
 import { useInitialFocus } from "../../../hooks/useInitialFocus";
@@ -297,7 +298,7 @@ const RptStockPage: React.FC = () => {
 
   // the items of the company (the Item ID / Item Name boxes and the Item Range boxes)
   const [itemRows, setItemRows] = useState<
-    { lkpItemID: string; txtItemName: string; lkpItemGroupID: string }[]
+    { lkpBranch: string; lkpItemID: string; txtItemName: string; lkpItemGroupID: string }[]
   >([]);
   const { hang: itemIdHang, measure: measureItemIdHang } = usePairMenuHang();
 
@@ -379,21 +380,46 @@ const RptStockPage: React.FC = () => {
     [groupRows],
   );
 
+  // the items of the chosen branch (One Branch), or every item once (All Branch)
+  const branchItems = useMemo(() => {
+    const rows =
+      rdgBranch === "One Branch" && branch
+        ? itemRows.filter((row) => row.lkpBranch === branch.value)
+        : itemRows;
+
+    const seen = new Set<string>();
+
+    return rows.filter((row) => {
+      if (seen.has(row.lkpItemID)) return false;
+      seen.add(row.lkpItemID);
+      return true;
+    });
+  }, [itemRows, rdgBranch, branch]);
+
+  // a chosen item that the new branch does not have is cleared
+  useEffect(() => {
+    const has = (id: string) => branchItems.some((row) => row.lkpItemID === id);
+
+    if (oneItemId && !has(oneItemId)) setOneItemId("");
+    if (fromItem && !has(fromItem)) setFromItem("");
+    if (toItem && !has(toItem)) setToItem("");
+  }, [branchItems, oneItemId, fromItem, toItem]);
+
   // the item boxes: ID | Name, and Name | ID (one item, two boxes)
   const itemIdOptions = useMemo<PairOption[]>(
     () =>
-      itemRows.map((row) => ({
+      branchItems.map((row) => ({
         value: row.lkpItemID,
         label: row.lkpItemID,
         id: row.lkpItemID,
         name: row.txtItemName,
       })),
-    [itemRows],
+    [branchItems],
   );
 
   const itemNameOptions = useMemo<PairOption[]>(
     () =>
-      [...itemRows]
+      [...branchItems]
         .sort((a, b) => a.txtItemName.localeCompare(b.txtItemName))
         .map((row) => ({
           value: row.lkpItemID,
@@ -401,7 +427,7 @@ const RptStockPage: React.FC = () => {
           id: row.lkpItemID,
           name: row.txtItemName,
         })),
-    [itemRows],
+    [branchItems],
   );
 
   const handleClear = () => {
@@ -542,6 +568,11 @@ const RptStockPage: React.FC = () => {
   useAltShortcuts({
     p: handlePrint,
     c: handleClear,
+  });
+
+  // Ctrl+P -> Print (the old forms' Ctrl+P). With the Print Preview open it prints the report that is shown.
+  useCtrlShortcuts({
+    p: () => (preview ? printStockReport(preview.report) : handlePrint()),
   });
 
   const itemRadioDisabled = rdgByItem !== "By Item";

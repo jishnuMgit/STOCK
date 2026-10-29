@@ -105,7 +105,8 @@ const sendError = (res: Response, error: unknown, what: string) => {
 };
 
 /* =========================================================
-   GET LOOKUPS (the old FillCombos): the user's branches and the default one, the items
+   GET LOOKUPS (the old FillCombos): the user's branches and the default one, the items of every
+   branch (one row per branch and item: the screen shows the items of the branch that is chosen)
    and the item groups
 ========================================================= */
 
@@ -132,6 +133,7 @@ export const getLookups = async (
       branches: branches.map((b) => ({ lkpBranch: b.brId, txtBranchName: b.brName })),
       lkpDefaultBranch: defaultBranch,
       items: items.map((i) => ({
+        lkpBranch: i.brId,
         lkpItemID: i.itemId,
         txtItemName: i.itemName,
         lkpItemGroupID: i.itemGroupId,

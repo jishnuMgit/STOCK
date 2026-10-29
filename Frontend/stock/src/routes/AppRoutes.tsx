@@ -53,7 +53,7 @@ import RptBalanceSheetPage from "../pages/Finance/Report/FinalAccounts/BalanceSh
 import RptChartOfAccountPage from "../pages/Finance/Report/ChartOfAccount/RptChartOfAccountPage";
 import RptCustomerListPage from "../pages/Finance/Report/CustomerList/RptCustomerListPage";
 import RptSupplierListPage from "../pages/Finance/Report/SupplierList/RptSupplierListPage";
-import RptSupplierPurchasePage from "../pages/Purchase/Report/SupplierPurchase/RptSupplierPurchasePager";
+import RptSupplierPurchasePage from "../pages/Purchase/Report/SupplierPurchase/RptSupplierPurchasePage";
 import RptItemPurchasePage from "../pages/Purchase/Report/ItemPurchase/RptItemPurchasePage";
 import RptPOSummaryPage from "../pages/Purchase/Report/POSummary/RptPOSummaryPage";
 import RptStaffSalesPage from "../pages/Purchase/Report/StaffSales/RptStaffSalesPage";

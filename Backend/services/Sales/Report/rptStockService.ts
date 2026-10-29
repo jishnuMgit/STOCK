@@ -4,7 +4,7 @@
 import pool from "../../../DB/db.js";
 
 export type Branch = { brId: string; brName: string };
-export type ItemLookup = { itemId: string; itemName: string; itemGroupId: string };
+export type ItemLookup = { itemId: string; itemName: string; itemGroupId: string; brId: string };
 export type ItemGroup = { groupId: string; groupName: string };
 
 export type StockParams = {
@@ -171,21 +171,17 @@ export const getDefaultBranch = async (coId: string, userId: string): Promise<st
   return text(rows[0]?.defaultBranch).trim();
 };
 
+// the items of every branch (the Item ID / Item Name boxes and the Item Range boxes), one row per branch and
+// item, by Item ID: dbo.filllookupitemid, the same lookup the other screens use (tblitemtl - the items a branch
+// trades - with the name and the group from tblitemhd). The screen shows the items of the branch that is chosen.
 export const getItems = async (coId: string): Promise<ItemLookup[]> => {
-  const { rows } = await pool.query(
-    `
-    SELECT fitemid, fitemname, fitemgroupid
-      FROM dbo.tblitemhd
-     WHERE fcoid = $1
-     ORDER BY fitemid
-    `,
-    [coId]
-  );
+  const { rows } = await pool.query(`SELECT * FROM dbo.filllookupitemid($1)`, [coId]);
 
   return rows.map((r) => ({
     itemId: text(r.fitemid).trim(),
     itemName: text(r.fitemname).trim(),
     itemGroupId: text(r.fitemgroupid).trim(),
+    brId: text(r.fbrid).trim(),
   }));
 };
 
