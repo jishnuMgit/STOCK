@@ -44,7 +44,7 @@ BEGIN
                 fsalescostaccountid,
                 fsalesretcostaccountid,
                 fstockadjaccountid,
-                frounfoffaccountid AS froundoffaccountid,   -- (the column is spelled so in tblstockposting)
+                froundoffaccountid AS froundoffaccountid,   -- (the column is spelled so in tblstockposting)
                 finputvataccountid,
                 foutputvataccountid
             FROM dbo.tblstockposting
@@ -64,7 +64,7 @@ BEGIN
             fcashsupplieraccountid, fcashcustomeraccountid,
             fstockaccountid, fsalesaccountid, fsalesretaccountid,
             fsalescostaccountid, fsalesretcostaccountid,
-            fstockadjaccountid, frounfoffaccountid,
+            fstockadjaccountid, froundoffaccountid,
             finputvataccountid, foutputvataccountid,
             fcuserid, fcuserdate
         )
@@ -96,7 +96,7 @@ BEGIN
             fsalescostaccountid    = p_strsalescostaccountid,
             fsalesretcostaccountid = p_strsalesretcostaccountid,
             fstockadjaccountid     = p_strstockadjaccountid,
-            frounfoffaccountid     = p_strroundoffaccountid,
+            froundoffaccountid     = p_strroundoffaccountid,
             finputvataccountid     = p_strinputvataccountid,
             foutputvataccountid    = p_stroutputvataccountid,
             fmuserid               = p_pstruserid,

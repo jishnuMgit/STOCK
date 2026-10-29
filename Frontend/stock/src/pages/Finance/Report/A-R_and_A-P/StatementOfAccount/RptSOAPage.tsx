@@ -544,9 +544,12 @@ const RptSOAPage: React.FC<RptSOAPageProps> = () => {
       const kind = asPdf ? "pdf" : "xlsx";
       const saved = await saveFile(blob, `${fileBase}.${kind}`, kind);
       if (saved) {
-        setPreview(null); // cancelled "Save as": the preview stays
+       
         toast.success(asPdf ? "PDF file downloaded" : "Excel file downloaded");
+         setPreview(null); // cancelled "Save as": the preview stays
       }
+      
+// saved === false -> you cancelled, so no toast
     } catch {
       toast.error(
         asPdf ? "Could not create the PDF file" : "Could not create the Excel file",
