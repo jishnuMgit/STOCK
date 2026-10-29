@@ -117,14 +117,14 @@ const callItemPurchase = async (p: ItemPurchaseParams): Promise<DbRow[]> => {
     await client.query(
       `
       CALL dbo.sp_rptitempurchase(
-        $1::varchar, $2::boolean, $3::varchar, $4::boolean, $5::varchar,
+        $1::varchar, $2::varchar, $3::boolean, $4::boolean, $5::varchar,
         $6::date, $7::date, $8::refcursor
       )
       `,
       [
         p.PstrCoID, // p_pstrcoid
-        p.rdgBranch === 1, // p_rdgbranch: false One Branch, true All Branch
         p.rdgBranch === 0 ? p.lkpBranch : null, // p_strbrid
+        p.rdgBranch === 1, // p_rdgbranch: false One Branch, true All Branch
         p.rdgItem === 1, // p_rdgitem: false One Item, true All Item
         p.rdgItem === 0 ? p.lkpItemID : null, // p_stritemid
         p.dtpFromDate, // p_dtpfromdate

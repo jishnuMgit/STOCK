@@ -14,7 +14,7 @@
 --
 -- Call (CALL and FETCH in one transaction):
 --   BEGIN;
---   CALL dbo.sp_rptitempurchase('01', true, NULL, true, NULL, '2026-10-01', '2026-10-31', 'cur_rptitempurchase');
+--   CALL dbo.sp_rptitempurchase('01', NULL, true, true, NULL, '2026-10-01', '2026-10-31', 'cur_rptitempurchase');
 --   FETCH ALL FROM "cur_rptitempurchase";
 --   COMMIT;
 --
@@ -44,8 +44,8 @@
 
 CREATE OR REPLACE PROCEDURE dbo.sp_rptitempurchase(
 	IN p_pstrcoid character varying,        -- the logged-in company
-	IN p_rdgbranch boolean,                 -- false (0) = One Branch, true (1) = All Branch
 	IN p_strbrid character varying,         -- the branch, used when p_rdgbranch is false
+	IN p_rdgbranch boolean,                 -- false (0) = One Branch, true (1) = All Branch
 	IN p_rdgitem boolean,                   -- false (0) = One Item, true (1) = All Item
 	IN p_stritemid character varying,       -- the item, used when p_rdgitem is false
 	IN p_dtpfromdate date,                  -- from this date (the whole day counts)
