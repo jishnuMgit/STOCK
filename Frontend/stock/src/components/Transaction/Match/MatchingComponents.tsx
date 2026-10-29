@@ -1,6 +1,7 @@
 import React, {
   forwardRef,
   useCallback,
+  useEffect,
   useImperativeHandle,
   useRef,
   useState,
@@ -18,6 +19,7 @@ import {
 } from "../../../hooks/useMatchKeyboard";
 
 import useMatching from "../../../hooks/useMatching";
+import { getSession } from "../../../utils/session"; // adjust path if needed
 import MatchHeader from "./MatchHeader";
 import MatchTable from "./MatchTable";
 import MatchFooter from "./MatchFooter";
@@ -54,7 +56,6 @@ interface Props {
   onSave: () => void;
   clearForm: () => void;
   onSearch: (data?: any[]) => void;
-  gstrCoID?: string;
   branchOptions: SelectOption[];
   customerOptions: SelectOption[];
   customerNameOptions: SelectOption[];
@@ -455,7 +456,6 @@ const MatchingComponents = forwardRef<MatchingComponentsRef, Props>(
       onSave,
       clearForm,
       onSearch,
-      gstrCoID = import.meta.env.VITE_CO_ID ?? "",
       branchOptions,
       customerOptions,
       customerNameOptions,
@@ -489,6 +489,18 @@ const MatchingComponents = forwardRef<MatchingComponentsRef, Props>(
     const [documentNoOptions, setDocumentNoOptions] = useState<
       DocumentOption[]
     >([]);
+
+    const resetResults = useCallback(() => {
+      setDocumentNoOptions([]);
+      onSearch([]); // MatchPage clears searchResults, receiptNo and the table rows
+    }, [onSearch]);
+
+    const canSearch = type.trim() !== "" && customerId.trim() !== "";
+
+    useEffect(() => {
+      setDocumentNoOptions([]);
+      onSearch([]); // MatchPage clears searchResults, receiptNo and the table rows
+    }, [customerId, type, divisionId]); // eslint-disable-line react-hooks/exhaustive-deps
 
     /* =====================================================
      FOCUS HELPERS
@@ -604,20 +616,18 @@ const MatchingComponents = forwardRef<MatchingComponentsRef, Props>(
 
     const handleCustomerIdChange = useCallback(
       async (id: string) => {
+        resetResults();
         setCustomerId(id);
         const customer = customerOptions.find((option) => option.value === id);
         setCustomerName(customer?.label ?? "");
         await getDiv(id);
       },
-      [customerOptions, setCustomerId, setCustomerName, getDiv],
+      [resetResults, customerOptions, setCustomerId, setCustomerName, getDiv],
     );
-
-    /* =====================================================
-     CUSTOMER NAME → CUSTOMER ID
-     ===================================================== */
 
     const handleCustomerNameChange = useCallback(
       async (name: string) => {
+        resetResults();
         setCustomerName(name);
 
         const customer = customerNameOptions.find(
@@ -628,7 +638,13 @@ const MatchingComponents = forwardRef<MatchingComponentsRef, Props>(
         setCustomerId(accountId);
         await getDiv(accountId);
       },
-      [customerNameOptions, setCustomerId, setCustomerName, getDiv],
+      [
+        resetResults,
+        customerNameOptions,
+        setCustomerId,
+        setCustomerName,
+        getDiv,
+      ],
     );
 
     /* =====================================================
@@ -646,16 +662,13 @@ const MatchingComponents = forwardRef<MatchingComponentsRef, Props>(
         return;
       }
 
-      if (!divisionId.trim()) {
-        console.warn("Please select 'Division'");
-        return;
-      }
-
+      // Company, year and user are also sent as x- headers by apiFetch.
+      // The year is passed in the body too, read from the login session.
       const data = await getMatchAccounts({
         strDocType: type,
         strCSAccountID: customerId,
         strDivID: divisionId,
-        gstrCoID,
+        year: getSession().pstrYear,
       });
 
       const searchResults: any[] = Array.isArray(data) ? data : [];
@@ -676,7 +689,7 @@ const MatchingComponents = forwardRef<MatchingComponentsRef, Props>(
         }));
 
       setDocumentNoOptions(options);
-    }, [type, customerId, divisionId, gstrCoID, getMatchAccounts, onSearch]);
+    }, [type, customerId, divisionId, getMatchAccounts, onSearch]);
 
     /* =====================================================
      SELECT STYLES
@@ -903,6 +916,7 @@ const MatchingComponents = forwardRef<MatchingComponentsRef, Props>(
           onDateEnter={() => focusNextTableCell(0, 0)}
           renderSelect={renderSelect}
           handleKeyboardAction={handleKeyboardAction}
+          canSearch={canSearch}
         />
 
         <MatchTable

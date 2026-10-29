@@ -38,6 +38,9 @@ const MatchTable: React.FC<MatchTableProps> = ({
     focus:ring-0
   `;
 
+  // Read-only cells: filled from the selected document, not editable
+  const readOnlyClass = `${tableInputClass} cursor-default bg-slate-50 focus:bg-slate-50`;
+
   return (
     <div
       className="
@@ -118,79 +121,63 @@ const MatchTable: React.FC<MatchTableProps> = ({
         <tbody>
           {rows.map((row, rowIndex) => (
             <tr key={row.id} className="h-6.75">
-              {/* BR ID */}
+              {/* BR ID (read-only) */}
               <td className="border border-[#bce8d2] p-0">
                 <input
                   id={rowIndex === 0 ? "txtBrID" : undefined}
                   ref={(element) => {
                     tableRefs.current[`${rowIndex}-brId`] = element;
                   }}
-                  className={tableInputClass}
+                  className={readOnlyClass}
                   value={row.brId}
-                  onChange={(event) =>
-                    handleRowChange(rowIndex, "brId", event.target.value)
-                  }
-                  onKeyDown={(event) =>
-                    handleTableKeyDown(event, rowIndex, "brId")
-                  }
+                  readOnly
+                  tabIndex={-1}
                 />
               </td>
 
-              {/* DATE */}
+              {/* DATE (read-only) */}
               <td className="border border-[#bce8d2] p-0">
                 <input
                   id={rowIndex === 0 ? "dtpDate" : undefined}
                   ref={(element) => {
                     tableRefs.current[`${rowIndex}-date`] = element;
                   }}
-                  className={tableInputClass}
+                  className={readOnlyClass}
                   value={row.date}
-                  onChange={(event) =>
-                    handleRowChange(rowIndex, "date", event.target.value)
-                  }
-                  onKeyDown={(event) =>
-                    handleTableKeyDown(event, rowIndex, "date")
-                  }
+                  readOnly
+                  tabIndex={-1}
                 />
               </td>
 
-              {/* DOCUMENT NO */}
+              {/* DOCUMENT NO (read-only) */}
               <td className="border border-[#bce8d2] p-0">
                 <input
                   id={rowIndex === 0 ? "txtDocNo." : undefined}
                   ref={(element) => {
                     tableRefs.current[`${rowIndex}-docNo`] = element;
                   }}
-                  className={tableInputClass}
+                  className={readOnlyClass}
                   value={row.docNo}
-                  onChange={(event) =>
-                    handleRowChange(rowIndex, "docNo", event.target.value)
-                  }
-                  onKeyDown={(event) =>
-                    handleTableKeyDown(event, rowIndex, "docNo")
-                  }
+                  readOnly
+                  tabIndex={-1}
                 />
               </td>
 
-              {/* DESCRIPTION */}
+              {/* DESCRIPTION (read-only) */}
               <td className="border border-[#bce8d2] p-0">
                 <input
                   id={rowIndex === 0 ? "txtDescription" : undefined}
                   ref={(element) => {
                     tableRefs.current[`${rowIndex}-description`] = element;
                   }}
-                  className={tableInputClass}
+                  className={readOnlyClass}
                   value={row.description}
-                  onChange={(event) =>
-                    handleRowChange(rowIndex, "description", event.target.value)
-                  }
-                  onKeyDown={(event) =>
-                    handleTableKeyDown(event, rowIndex, "description")
-                  }
+                  readOnly
+                  tabIndex={-1}
                 />
               </td>
 
-              {/* DOCUMENT AMOUNT */}
+              {/* DOCUMENT AMOUNT (read-only) */}
               <td className="border border-[#bce8d2] p-0">
                 <input
                   id={rowIndex === 0 ? "txtDocumenAmount" : undefined}
@@ -198,27 +185,15 @@ const MatchTable: React.FC<MatchTableProps> = ({
                   ref={(element) => {
                     tableRefs.current[`${rowIndex}-docAmt`] = element;
                   }}
-                  className={`${tableInputClass} text-right`}
+                  className={`${readOnlyClass} text-right`}
                   value={row.docAmount === 0 ? "" : row.docAmount}
                   placeholder="0.00"
-                  min="0"
-                  step="0.01"
-                  onChange={(event) =>
-                    handleRowChange(
-                      rowIndex,
-                      "docAmount",
-                      event.target.value === ""
-                        ? 0
-                        : Number(event.target.value),
-                    )
-                  }
-                  onKeyDown={(event) =>
-                    handleTableKeyDown(event, rowIndex, "docAmount")
-                  }
+                  readOnly
+                  tabIndex={-1}
                 />
               </td>
 
-              {/* DEBIT */}
+              {/* DEBIT (read-only) */}
               <td className="border border-[#bce8d2] p-0">
                 <input
                   id={rowIndex === 0 ? "txtDebit" : undefined}
@@ -226,27 +201,15 @@ const MatchTable: React.FC<MatchTableProps> = ({
                   ref={(element) => {
                     tableRefs.current[`${rowIndex}-debit`] = element;
                   }}
-                  className={`${tableInputClass} text-right`}
+                  className={`${readOnlyClass} text-right`}
                   value={row.debit === 0 ? "" : row.debit}
                   placeholder="0.00"
-                  min="0"
-                  step="0.01"
-                  onChange={(event) =>
-                    handleRowChange(
-                      rowIndex,
-                      "debit",
-                      event.target.value === ""
-                        ? 0
-                        : Number(event.target.value),
-                    )
-                  }
-                  onKeyDown={(event) =>
-                    handleTableKeyDown(event, rowIndex, "debit")
-                  }
+                  readOnly
+                  tabIndex={-1}
                 />
               </td>
 
-              {/* CREDIT */}
+              {/* CREDIT (read-only) */}
               <td className="border border-[#bce8d2] p-0">
                 <input
                   id={rowIndex === 0 ? "txtCredit" : undefined}
@@ -254,27 +217,15 @@ const MatchTable: React.FC<MatchTableProps> = ({
                   ref={(element) => {
                     tableRefs.current[`${rowIndex}-credit`] = element;
                   }}
-                  className={`${tableInputClass} text-right`}
+                  className={`${readOnlyClass} text-right`}
                   value={row.credit === 0 ? "" : row.credit}
                   placeholder="0.00"
-                  min="0"
-                  step="0.01"
-                  onChange={(event) =>
-                    handleRowChange(
-                      rowIndex,
-                      "credit",
-                      event.target.value === ""
-                        ? 0
-                        : Number(event.target.value),
-                    )
-                  }
-                  onKeyDown={(event) =>
-                    handleTableKeyDown(event, rowIndex, "credit")
-                  }
+                  readOnly
+                  tabIndex={-1}
                 />
               </td>
 
-              {/* MATCH */}
+              {/* MATCH (editable) */}
               <td className="border border-[#bce8d2] p-0 text-center">
                 <input
                   id={rowIndex === 0 ? "chkMatch" : undefined}
@@ -297,7 +248,7 @@ const MatchTable: React.FC<MatchTableProps> = ({
                 />
               </td>
 
-              {/* MATCH AMOUNT */}
+              {/* MATCH AMOUNT (editable only when the row is ticked) */}
               <td className="border border-[#bce8d2] p-0">
                 <input
                   id={rowIndex === 0 ? "txtMatchAmt" : undefined}
@@ -308,7 +259,6 @@ const MatchTable: React.FC<MatchTableProps> = ({
                   className={`${tableInputClass} text-right`}
                   value={row.matchAmount === 0 ? "" : row.matchAmount}
                   placeholder="0.00"
-                  min="0"
                   step="0.01"
                   disabled={!row.match}
                   onChange={(event) =>

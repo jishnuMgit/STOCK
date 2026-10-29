@@ -21,7 +21,7 @@ export function round2(value: number): number {
 
 export async function getDataMatch(
   params: GetDataMatchParams,
-  db: any,
+  db: any, // the pg Pool
   coId: string,
 ): Promise<MatchRow[]> {
   const {
@@ -34,33 +34,53 @@ export async function getDataMatch(
     strUMDKey,
   } = params;
 
-  const result = await db.query(
-    `
-      SELECT *
-      FROM dbo.sp_getpendingmatchdocs(
-        $1,
-        $2,
-        $3,
-        $4,
-        $5,
-        $6,
-        $7,
-        $8
-      )
-    `,
-    [
-      strMode,
-      coId,
-      strCSAccountID,
-      strDocType,
-      strDocNo,
-      intMAccountSlNo,
-      intMAccountSlNoSub,
-      strUMDKey,
-    ],
-  );
+  const client = await db.connect();
+  const cursorName = "cur_pendingmatchdocs";
 
-  return result.rows;
+  try {
+    await client.query("BEGIN");
+
+    await client.query(
+      `
+      CALL dbo.sp_getpendingmatchdocs(
+        $1::varchar,   -- p_strmode
+        $2::varchar,   -- p_strcoid
+        $3::varchar,   -- p_stryear (unused in GNM)
+        $4::varchar,   -- p_strbrid (unused in GNM)
+        $5::varchar,   -- p_strdoctype
+        $6::varchar,   -- p_strdocno
+        $7::varchar,   -- p_strcsaccountid
+        $8::smallint,  -- p_intmaccountslno
+        $9::smallint,  -- p_intmaccountslnosub
+        $10::varchar,  -- p_strumdkey
+        $11::refcursor -- p_result_cursor
+      )
+      `,
+      [
+        strMode,
+        coId,
+        "0",
+        null,
+        strDocType,
+        strDocNo,
+        strCSAccountID,
+        intMAccountSlNo,
+        intMAccountSlNoSub,
+        strUMDKey,
+        cursorName,
+      ],
+    );
+
+    const result = await client.query(`FETCH ALL FROM "${cursorName}"`);
+
+    await client.query("COMMIT");
+    return result.rows;
+  } catch (error) {
+    await client.query("ROLLBACK");
+    throw error;
+  } finally {
+    client.release();
+  }
 }
 
 import type { ReceiptData, ReceiptRow } from "../types/types.js";
@@ -171,7 +191,11 @@ export const CheckISdividISccid = async (
   }
 };
 
-export const isActivePeriod = async (pstrCoID: any, strBrID: any, dtpDate: any) => {
+export const isActivePeriod = async (
+  pstrCoID: any,
+  strBrID: any,
+  dtpDate: any,
+) => {
   const result = await pool.query(
     `
       SELECT dbo.isactiveperiod($1, $2, $3) AS is_active
