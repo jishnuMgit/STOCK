@@ -3,6 +3,7 @@ import Select from "react-select";
 import RadioGroup from "../../../../components/common/RadioGroup";
 import { useEnterAsTab } from "../../../../hooks/useEnterAsTab";
 import { useAltShortcuts } from "../../../../hooks/useAltShortcuts";
+import { useCtrlShortcuts } from "../../../../hooks/useCtrlShortcuts";
 import { useGridCellFocus } from "../../../../hooks/useGridCellFocus";
 import { useAdvanceAfterSelect } from "../../../../hooks/useAdvanceAfterSelect";
 import { useInitialFocus } from "../../../../hooks/useInitialFocus";
@@ -486,6 +487,11 @@ const RptStockValuationPage: React.FC<RptStockValuationPageProps> = ({ onClose }
   useAltShortcuts({
     p: handlePrint,
     c: handleClose,
+  });
+
+  // Ctrl+P -> Print (the old forms' Ctrl+P). With the Print Preview open it prints the report that is shown.
+  useCtrlShortcuts({
+    p: () => (preview ? printStockValuationReport(preview.report) : handlePrint()),
   });
 
   return (

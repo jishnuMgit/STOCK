@@ -7,8 +7,16 @@ import dayjs from "dayjs";
 import customParseFormat from "dayjs/plugin/customParseFormat";
 import { toast } from "react-toastify";
 import RadioGroup from "../../../../components/common/RadioGroup";
+import ReportPreview from "../../../../components/common/ReportPreview";
+import { buildSupplierPurchasePdf } from "../../../../components/Purchase/Report/RptSupplierPurchase/RptSupplierPurchasePdf";
+import {
+  buildHtml,
+  printSupplierPurchaseReport,
+  type PrintReport,
+} from "../../../../components/Purchase/Report/RptSupplierPurchase/RptSupplierPurchasePrintReport";
 import { useEnterAsTab } from "../../../../hooks/useEnterAsTab";
 import { useAltShortcuts } from "../../../../hooks/useAltShortcuts";
+import { useCtrlShortcuts } from "../../../../hooks/useCtrlShortcuts";
 import { useGridCellFocus } from "../../../../hooks/useGridCellFocus";
 import { useAdvanceAfterSelect } from "../../../../hooks/useAdvanceAfterSelect";
 import { useInitialFocus } from "../../../../hooks/useInitialFocus";
@@ -216,7 +224,7 @@ const AppDatePicker: React.FC<AppDatePickerProps> = ({
         "& .MuiPickersInputBase-root:hover .MuiPickersOutlinedInput-notchedOutline":
           { borderColor: "#B7C7D7 !important" },
         "& .MuiPickersInputBase-root.Mui-focused .MuiPickersOutlinedInput-notchedOutline":
-          { borderColor: "#B7C7D7 !important", borderWidth: "1px" },
+          { borderColor: "#16a34a !important", borderWidth: "1px" }, // green-600, as the cell outline
         "& .MuiPickersInputBase-root.Mui-error .MuiPickersOutlinedInput-notchedOutline":
           { borderColor: "#B7C7D7 !important" },
         "& .MuiPickersInputBase-root.Mui-error:hover .MuiPickersOutlinedInput-notchedOutline":
@@ -323,20 +331,125 @@ const RptSupplierPurchasePage: React.FC<RptSupplierPurchasePageProps> = ({
     loadLookups().finally(() => setLookupsLoaded(true));
   }, []);
 
-  const [fromDate, setFromDate] = useState(""); // dtpFromDate
-  const [toDate, setToDate] = useState(""); // dtpToDate
+  // the period (starts as today)
+  const [dtpFromDate, setDtpFromDate] = useState(dayjs().format(DATE_FORMAT)); // dtpFromDate
+  const [dtpToDate, setDtpToDate] = useState(dayjs().format(DATE_FORMAT)); // dtpToDate
   const [rdgDetOrSum, setRdgDetOrSum] = useState("Summary"); // rdgDetOrSum: the old form starts on Summary
+  // Detailed only: the documents to print - "PI" Purchase Invoice, "PR" Purchase Return
+  const [rdgDocType, setRdgDocType] = useState("PI"); // rdgDocType
 
-  const handlePrint = () => {
-    console.log({
-      rdgBranch,
-      lkpBranch: rdgBranch === "One Branch" ? lkpBranch : null,
-      rdgSupplier,
-      lkpSupplierID: rdgSupplier === "One Supplier" ? lkpSupplierID : null,
-      fromDate,
-      toDate,
-      rdgDetOrSum,
+  // the Print Preview: the report the server sent, the name of the file, and what it was made from
+  // (the Excel file is made from the same values)
+  const [preview, setPreview] = useState<{
+    report: PrintReport;
+    fileBase: string;
+    params: Record<string, unknown>;
+  } | null>(null);
+  const [printing, setPrinting] = useState(false);
+
+  // what the server takes: the element ids of the page, the radios as their codes
+  const buildSupplierPurchaseParams = () => {
+    const toIso = (value: string) =>
+      dayjs(value, DATE_FORMAT, true).isValid() ? dayjs(value, DATE_FORMAT).format("YYYY-MM-DD") : "";
+
+    return {
+      rdgBranch: rdgBranch === "One Branch" ? 0 : 1,
+      lkpBranch: rdgBranch === "One Branch" ? (lkpBranch?.value ?? "") : "",
+      rdgSupplier: rdgSupplier === "One Supplier" ? 0 : 1,
+      lkpSupplierID: rdgSupplier === "One Supplier" ? lkpSupplierID : "",
+      dtpFromDate: toIso(dtpFromDate),
+      dtpToDate: toIso(dtpToDate),
+      rdgDetOrSum: rdgDetOrSum === "Detailed" ? 0 : 1,
+      rdgDocType,
+    };
+  };
+
+  // Print (the old cmdPrint): the checks of the old form, then the server sends the report and the Print
+  // Preview opens (Print = the browser's print window, Download = Excel / PDF)
+  const handlePrint = async () => {
+    if (printing || preview) return;
+
+    const warn = (message: string, id: string) => {
+      toast.warning(message);
+      document.getElementById(id)?.focus();
+    };
+
+    const params = buildSupplierPurchaseParams();
+
+    if (params.rdgBranch === 0 && !params.lkpBranch) {
+      return warn("Please select 'Branch'", "lkpBranch");
+    }
+
+    if (params.rdgSupplier === 0 && !params.lkpSupplierID) {
+      return warn("Please select 'Supplier ID'", "lkpSupplierID");
+    }
+
+    if (!params.dtpFromDate) {
+      return warn("Please enter 'From Date'", "dtpFromDate");
+    }
+
+    if (!params.dtpToDate) {
+      return warn("Please enter 'To Date'", "dtpToDate");
+    }
+
+    if (params.dtpFromDate > params.dtpToDate) {
+      return warn("'To Date' should be greater than 'From Date'", "dtpToDate");
+    }
+
+    setPrinting(true);
+
+    try {
+      const response = await fetch(`${api}/RptSupplierPurchase/print`, {
+        method: "POST",
+        credentials: "include",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(params),
+      });
+
+      const result = await response.json();
+
+      if (!response.ok || !result.success) {
+        toast.warning(result.message || "The Supplier Purchase report could not be printed.");
+        if (result.field) document.getElementById(result.field)?.focus();
+        return;
+      }
+
+      setPreview({ report: result.report, fileBase: result.fileBase, params });
+    } catch (error: unknown) {
+      console.error("rptSupplierPurchase print error:", error);
+      toast.error("Cannot connect to the Supplier Purchase API.");
+    } finally {
+      setPrinting(false);
+    }
+  };
+
+  // the Excel file of the Print Preview, made by the server (null after an error)
+  const fetchExcel = async (): Promise<Blob | null> => {
+    if (!preview) return null;
+
+    const response = await fetch(`${api}/RptSupplierPurchase/excel`, {
+      method: "POST",
+      credentials: "include",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(preview.params),
     });
+
+    // an error comes back as JSON, the file as a blob
+    if (!response.ok) {
+      let message = "Could not create the Excel file";
+
+      try {
+        const result = await response.json();
+        message = result.message || message;
+      } catch {
+        message = `Could not create the Excel file (error ${response.status})`;
+      }
+
+      toast.error(message);
+      return null;
+    }
+
+    return response.blob();
   };
 
   const handleClose = () => {
@@ -344,9 +457,10 @@ const RptSupplierPurchasePage: React.FC<RptSupplierPurchasePageProps> = ({
     setLkpBranch(defaultBranch);
     setRdgSupplier("All Supplier");
     setLkpSupplierID("");
-    setFromDate("");
-    setToDate("");
+    setDtpFromDate(dayjs().format(DATE_FORMAT));
+    setDtpToDate(dayjs().format(DATE_FORMAT));
     setRdgDetOrSum("Summary");
+    setRdgDocType("PI");
     onClose?.();
   };
 
@@ -357,6 +471,11 @@ const RptSupplierPurchasePage: React.FC<RptSupplierPurchasePageProps> = ({
   useAltShortcuts({
     p: handlePrint,
     c: handleClose,
+  });
+
+  // Ctrl+P -> Print (the old forms' Ctrl+P). With the Print Preview open it prints the report that is shown.
+  useCtrlShortcuts({
+    p: () => (preview ? printSupplierPurchaseReport(preview.report) : handlePrint()),
   });
 
   const supplierDisabled = rdgSupplier !== "One Supplier";
@@ -475,18 +594,22 @@ const RptSupplierPurchasePage: React.FC<RptSupplierPurchasePageProps> = ({
               {/* Period */}
               <FieldLabel>Period :</FieldLabel>
               <div className="flex items-start gap-2">
-                <AppDatePicker
-                  id="dtpFromDate"
-                  label="From Date"
-                  value={fromDate}
-                  onChange={setFromDate}
-                />
-                <AppDatePicker
-                  id="dtpToDate"
-                  label="To Date"
-                  value={toDate}
-                  onChange={setToDate}
-                />
+                <div className={`w-[140px] ${cellFocusClass}`}>
+                  <AppDatePicker
+                    id="dtpFromDate"
+                    label="From Date"
+                    value={dtpFromDate}
+                    onChange={setDtpFromDate}
+                  />
+                </div>
+                <div className={`w-[140px] ${cellFocusClass}`}>
+                  <AppDatePicker
+                    id="dtpToDate"
+                    label="To Date"
+                    value={dtpToDate}
+                    onChange={setDtpToDate}
+                  />
+                </div>
               </div>
 
               {/* Report type + actions */}
@@ -501,6 +624,19 @@ const RptSupplierPurchasePage: React.FC<RptSupplierPurchasePageProps> = ({
                 onChange={setRdgDetOrSum}
               />
               <div className="flex items-end gap-3 self-stretch">
+                {/* Detailed only: the documents to print */}
+                {rdgDetOrSum === "Detailed" && (
+                  <RadioGroup
+                    className={`w-[190px] ${cellFocusClass}`}
+                    name="rdgDocType"
+                    value={rdgDocType}
+                    options={[
+                      { value: "PI", label: "Purchase Invoice" },
+                      { value: "PR", label: "Purchase Return" },
+                    ]}
+                    onChange={setRdgDocType}
+                  />
+                )}
                 <button
                   id="btnPrint"
                   type="button"
@@ -522,6 +658,18 @@ const RptSupplierPurchasePage: React.FC<RptSupplierPurchasePageProps> = ({
           </section>
         </main>
       </div>
+
+      {/* the Print Preview (after Print) */}
+      {preview && (
+        <ReportPreview
+          html={buildHtml(preview.report)}
+          fileBase={preview.fileBase}
+          onPrint={() => printSupplierPurchaseReport(preview.report)}
+          buildPdf={() => buildSupplierPurchasePdf(preview.report)}
+          fetchExcel={fetchExcel}
+          onClose={() => setPreview(null)}
+        />
+      )}
     </div>
   );
 }

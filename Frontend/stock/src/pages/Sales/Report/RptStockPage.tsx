@@ -9,6 +9,7 @@ import { toast } from "react-toastify";
 import RadioGroup from "../../../components/common/RadioGroup";
 import { useEnterAsTab } from "../../../hooks/useEnterAsTab";
 import { useAltShortcuts } from "../../../hooks/useAltShortcuts";
+import { useCtrlShortcuts } from "../../../hooks/useCtrlShortcuts";
 import { useGridCellFocus } from "../../../hooks/useGridCellFocus";
 import { useAdvanceAfterSelect } from "../../../hooks/useAdvanceAfterSelect";
 import { useInitialFocus } from "../../../hooks/useInitialFocus";
@@ -542,6 +543,11 @@ const RptStockPage: React.FC = () => {
   useAltShortcuts({
     p: handlePrint,
     c: handleClear,
+  });
+
+  // Ctrl+P -> Print (the old forms' Ctrl+P). With the Print Preview open it prints the report that is shown.
+  useCtrlShortcuts({
+    p: () => (preview ? printStockReport(preview.report) : handlePrint()),
   });
 
   const itemRadioDisabled = rdgByItem !== "By Item";

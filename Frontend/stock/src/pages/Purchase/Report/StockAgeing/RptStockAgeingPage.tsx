@@ -16,6 +16,7 @@ import {
 } from "../../../../components/Purchase/Report/RptStockAgeing/RptStockAgeingPrintReport";
 import { useEnterAsTab } from "../../../../hooks/useEnterAsTab";
 import { useAltShortcuts } from "../../../../hooks/useAltShortcuts";
+import { useCtrlShortcuts } from "../../../../hooks/useCtrlShortcuts";
 import { useGridCellFocus } from "../../../../hooks/useGridCellFocus";
 import { useAdvanceAfterSelect } from "../../../../hooks/useAdvanceAfterSelect";
 import { useInitialFocus } from "../../../../hooks/useInitialFocus";
@@ -505,6 +506,11 @@ const RptStockAgeingPage: React.FC<RptStockAgeingPageProps> = ({ onClose }) => {
   useAltShortcuts({
     p: handlePrint,
     c: handleClose,
+  });
+
+  // Ctrl+P -> Print (the old forms' Ctrl+P). With the Print Preview open it prints the report that is shown.
+  useCtrlShortcuts({
+    p: () => (preview ? printStockAgeingReport(preview.report) : handlePrint()),
   });
 
   return (
