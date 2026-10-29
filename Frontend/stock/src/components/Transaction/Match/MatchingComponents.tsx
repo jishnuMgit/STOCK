@@ -251,7 +251,7 @@ const ResponsiveSelect = ({
           <div
             style={{
               minWidth: 0,
-              borderLeft: "1px solid #d5dce3",
+              // borderLeft: "1px solid #d5dce3",
               paddingLeft: "10px",
               overflow: "hidden",
               whiteSpace: "nowrap",
@@ -404,6 +404,7 @@ const ResponsiveSelect = ({
         components={{
           Option: OptionComponent,
           SingleValue: CustomSingleValue,
+          IndicatorSeparator: () => null,
           ...(columnHeaders || documentMode
             ? { MenuList: CustomMenuList }
             : {}),
@@ -765,6 +766,84 @@ const MatchingComponents = forwardRef<MatchingComponentsRef, Props>(
       }),
     };
 
+    const customerIdStyles: StylesConfig<SelectOption, false> = {
+      ...selectStyles,
+      menu: (base) => {
+        const idBox = customerIdRef.current?.getBoundingClientRect();
+        const nameBox = customerNameRef.current?.getBoundingClientRect();
+
+        const width =
+          idBox && nameBox ? Math.max(nameBox.right - idBox.left, 360) : 685;
+
+        return {
+          ...base,
+          zIndex: 9999,
+          fontSize: "14px",
+          width,
+          minWidth: width,
+          maxWidth: "calc(100vw - 24px)",
+          left: 0,
+        };
+      },
+    };
+
+    /* Customer Name dropdown: the Account Name column ends exactly at the right
+   edge of the Account Name select, and the Account ID column (140px) sits
+   outside it, so the menu is select width + 140px. */
+    const ID_COLUMN_WIDTH = 140;
+
+    const customerNameStyles: StylesConfig<SelectOption, false> = {
+      ...selectStyles,
+      menu: (base) => {
+        const width = 534 + ID_COLUMN_WIDTH;
+
+        return {
+          ...base,
+          zIndex: 9999,
+          fontSize: "14px",
+          width,
+          minWidth: width,
+          maxWidth: "calc(100vw - 24px)",
+          left: 0,
+        };
+      },
+    };
+
+    /* Division dropdown: exactly as wide as the Division select box */
+    const divisionStyles: StylesConfig<SelectOption, false> = {
+      ...selectStyles,
+      menu: (base) => ({
+        ...base,
+        zIndex: 9999,
+        fontSize: "14px",
+        width: "100%",
+        minWidth: 0,
+        maxWidth: "100%",
+        left: 0,
+      }),
+    };
+
+    /* Document Type dropdown: the ID column is exactly as wide as the select box,
+   and the Name column (140px) sits outside it. */
+    const DOC_NAME_COLUMN_WIDTH = 140;
+
+    const documentTypeStyles: StylesConfig<SelectOption, false> = {
+      ...selectStyles,
+      menu: (base) => {
+        const width = 154 + DOC_NAME_COLUMN_WIDTH;
+
+        return {
+          ...base,
+          zIndex: 9999,
+          fontSize: "14px",
+          width,
+          minWidth: width,
+          maxWidth: "calc(100vw - 24px)",
+          left: 0,
+        };
+      },
+    };
+
     /* =====================================================
      SELECT HELPER
      ===================================================== */
@@ -790,7 +869,18 @@ const MatchingComponents = forwardRef<MatchingComponentsRef, Props>(
         onChange={onChange}
         next={next}
         selectRef={selectRef}
-        styles={customStyles ?? selectStyles}
+        styles={
+          customStyles ??
+          (id === "lkpCustomerID"
+            ? customerIdStyles
+            : id === "lkpCustomerName"
+              ? customerNameStyles
+              : id === "lkpDivision"
+                ? divisionStyles
+                : id === "lkpDocType"
+                  ? documentTypeStyles
+                  : selectStyles)
+        }
         reverseDropdown={reverseDropdown}
         columnHeaders={columnHeaders}
         disabled={disabled}
