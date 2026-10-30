@@ -116,7 +116,8 @@ Sales-REPORT
   mnuJournal: "/Finance/Transaction/journal",
   mnuFinDocPost: "/Finance/Transaction/FinDocPost",
   mnuFinDocPrint: "/Finance/Transaction/FinDocPrint",
-  mnuTransactionMatching: "/Finance/Transaction/Transaction-matching",
+  mnuMatching: "/Finance/Transaction/Transaction-matching",
+  mnuUnMatching: "/Finance/Transaction/Transaction-matching-reversal",
 
   /* =========================================================
      FINANCE - SETUP
@@ -256,16 +257,7 @@ export const ADMINISTRATION_NODE: MenuNode = {
   ],
 };
 
-/* Transaction Matching (synthetic node)
-   Injected as a child of Finance > Transaction (fmenuid "1101").
-   "110199" is outside the real 1101xx id space. */
-export const TRANSACTION_MATCHING_NODE: MenuNode = {
-  fmenuid: "110199",
-  fmenuname: "mnuTransactionMatching",
-  fmenucaption: "Match",
-  fmenubuttons: "0",
-  children: [],
-};
+
 
 /* Rpt Statement of Account (synthetic node)
    Hardcoded in the frontend, injected as a child of
