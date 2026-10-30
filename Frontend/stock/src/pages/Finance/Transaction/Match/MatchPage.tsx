@@ -28,8 +28,7 @@ interface DocType {
 
 const MIN_ROWS = 11;
 const CO_ID = import.meta.env.VITE_CO_ID ?? "";
-const DEFAULT_YEAR = import.meta.env.VITE_YEAR ?? "";
-// TODO: set to whatever strMode your old caller passed to SP_frmMatchAccounts
+
 const SAVE_MODE = "S";
 
 /* ---------- helpers ---------- */

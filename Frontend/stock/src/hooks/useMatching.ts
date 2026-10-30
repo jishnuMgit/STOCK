@@ -29,6 +29,7 @@ export interface GetDocumentsToMatchParams {
   debit: number;
   credit: number;
   matchDocAmt: number;
+  coId?: string;
 }
 
 export interface SaveMatchPayload {
