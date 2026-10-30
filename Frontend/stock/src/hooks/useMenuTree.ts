@@ -4,6 +4,8 @@ import { buildMenuTree } from "../utils/buildMenuTree";
 import {
   ADMINISTRATION_NODE,
   HIDDEN_MENU_NAMES,
+  TRANSACTION_MATCHING_NODE,
+  injectChild,
 } from "../config/menuConfig";
 
 export function useMenuTree() {
@@ -12,7 +14,7 @@ export function useMenuTree() {
   const userType = useMemo(() => localStorage.getItem("userType"), []);
 
   const menuTree = useMemo(() => {
-    const tree = buildMenuTree(
+    let tree = buildMenuTree(
       menus.filter((menu) => !HIDDEN_MENU_NAMES.includes(menu.fmenuname)),
     );
 
