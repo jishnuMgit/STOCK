@@ -1,9 +1,4 @@
 import pool from "../DB/db.js";
-import {
-  MatchRow,
-  GetDataMatchParams,
-  MatchTotalParams,
-} from "../types/types.js";
 
 export function getNumber(value: unknown): number {
   if (value === null || value === undefined || value === "") {
@@ -20,10 +15,10 @@ export function round2(value: number): number {
 }
 
 export async function getDataMatch(
-  params: GetDataMatchParams,
+  params: any,
   db: any, // the pg Pool
   coId: string,
-): Promise<MatchRow[]> {
+): Promise<any[]> {
   const {
     strMode,
     strDocType,
