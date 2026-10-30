@@ -1,1405 +1,380 @@
-import React, { useState } from "react";
-
-import Select, {
-  type StylesConfig,
-} from "react-select";
-
+import React, { useEffect, useMemo, useState } from "react";
 import dayjs from "dayjs";
+import { toast } from "react-toastify";
+import StockDocumentPostHeader from "../../../../components/Transaction/StockDocumentPost/StockDocumentPostHeader";
+import StockDocumentPostTable from "../../../../components/Transaction/StockDocumentPost/StockDocumentPostTable";
+import StockDocumentPostFooter from "../../../../components/Transaction/StockDocumentPost/StockDocumentPostFooter";
+import { type DocRow,type Option } from "../../../../components/Transaction/StockDocumentPost/StockDocumentPostShared";
+import { useAltShortcuts } from "../../../../hooks/useAltShortcuts";
+import { useButtonPermissions } from "../../../../hooks/useButtonPermissions";
+import { useEnterAsTab } from "../../../../hooks/useEnterAsTab";
+import { useInitialFocus } from "../../../../hooks/useInitialFocus";
 
-import {
-  AdapterDayjs,
-} from "@mui/x-date-pickers/AdapterDayjs";
+// dbo.tblmenu fmenuid of the Stock Document Post page
+const MENU_ID = "020105";
 
-import {
-  DatePicker,
-} from "@mui/x-date-pickers/DatePicker";
+// the title of the screen: the heading, and the name in its messages (as the other screens)
+const SCREEN_TITLE = "Stock Document Post";
 
-import {
-  LocalizationProvider,
-} from "@mui/x-date-pickers/LocalizationProvider";
+const api = import.meta.env.VITE_API_URL;
 
-// ============================================================
-// TYPES
-// ============================================================
-
-type Option = {
-  value: string;
-  label: string;
-};
-
-type TableRow = {
-  id: number;
-  documentNo: string;
-  date: string;
-  customerSupplierId: string;
-  documentAmount: string;
-  selected: boolean;
-};
-
-// ============================================================
-// OPTIONS
-// ============================================================
-
-const branchOptions: Option[] = [
-  {
-    value: "OFFICE",
-    label: "OFFICE",
-  },
-  {
-    value: "BRANCH 1",
-    label: "BRANCH 1",
-  },
-  {
-    value: "BRANCH 2",
-    label: "BRANCH 2",
-  },
+const MONTH_NAMES = [
+  "January",
+  "February",
+  "March",
+  "April",
+  "May",
+  "June",
+  "July",
+  "August",
+  "September",
+  "October",
+  "November",
+  "December",
 ];
+const monthOptions: Option[] = MONTH_NAMES.map((name, index) => ({
+  value: String(index + 1),
+  label: name,
+}));
 
-// ============================================================
-// SELECT STYLES
-// ============================================================
+// GetData's request: the documents that are not posted yet (no state here, so the page can set it from a .then)
+type UnpostedResult = { rows: DocRow[] } | { message: string };
 
-const selectStyles: StylesConfig<
-  Option,
-  false
-> = {
-  control: (base, state) => ({
-    ...base,
+const fetchUnposted = async (query: URLSearchParams): Promise<UnpostedResult> => {
+  const response = await fetch(`${api}/StockDocumentPost/list?${query.toString()}`, {
+    credentials: "include",
+  });
+  const result = await response.json();
 
-    minHeight: "30px",
-    height: "30px",
+  if (!response.ok || !result.success) {
+    return { message: result.message || "Failed to load the documents" };
+  }
 
-    width: "250px",
-
-    border: "1px solid #cbd5e1",
-
-    borderRadius: "4px",
-
-    boxShadow: "none",
-
-    backgroundColor: "#ffffff",
-
-    fontSize: "12px",
-
-    cursor: "text",
-
-    "&:hover": {
-      borderColor: "#94a3b8",
-    },
-
-    ...(state.isFocused && {
-      borderColor: "#94a3b8",
-      boxShadow: "none",
-    }),
-  }),
-
-  valueContainer: (base) => ({
-    ...base,
-
-    height: "28px",
-
-    padding: "0 8px",
-
-    overflow: "hidden",
-  }),
-
-  singleValue: (base) => ({
-    ...base,
-
-    color: "#344054",
-
-    fontSize: "12px",
-
-    margin: 0,
-
-    overflow: "hidden",
-
-    textOverflow: "ellipsis",
-
-    whiteSpace: "nowrap",
-  }),
-
-  placeholder: (base) => ({
-    ...base,
-
-    color: "#8b0000",
-
-    fontSize: "12px",
-
-    margin: 0,
-  }),
-
-  input: (base) => ({
-    ...base,
-
-    margin: 0,
-
-    padding: 0,
-
-    fontSize: "12px",
-
-    color: "#344054",
-  }),
-
-  indicatorsContainer: (base) => ({
-    ...base,
-
-    height: "28px",
-  }),
-
-  dropdownIndicator: (base) => ({
-    ...base,
-
-    padding: "3px",
-
-    color: "#64748b",
-  }),
-
-  indicatorSeparator: () => ({
-    display: "none",
-  }),
-
-  menuPortal: (base) => ({
-    ...base,
-
-    zIndex: 999999,
-  }),
-
-  menu: (base) => ({
-    ...base,
-
-    zIndex: 999999,
-
-    marginTop: "1px",
-
-    fontSize: "12px",
-
-    borderRadius: "0px",
-
-    boxShadow:
-      "0 3px 8px rgba(0,0,0,0.15)",
-  }),
-
-  menuList: (base) => ({
-    ...base,
-
-    padding: 0,
-
-    maxHeight: "180px",
-
-    overflowY: "auto",
-  }),
-
-  option: (
-    base,
-    state,
-  ) => ({
-    ...base,
-
-    padding:
-      "6px 8px",
-
-    fontSize: "12px",
-
-    color: "#344054",
-
-    cursor: "pointer",
-
-    backgroundColor:
-      state.isSelected
-        ? "#e8f5ee"
-        : state.isFocused
-          ? "#f0f8f3"
-          : "#ffffff",
-
-    "&:active": {
-      backgroundColor:
-        "#dff1e7",
-    },
-  }),
+  return {
+    rows: result.rows.map(
+      (r: { txtDocNo: string; txtDate: string; txtAccountID: string; txtDocAmt: number }) => ({
+        txtDocNo: r.txtDocNo,
+        txtDate: dayjs(r.txtDate).format("DD-MM-YYYY"),
+        txtAccountID: r.txtAccountID,
+        txtDocAmt: Number(r.txtDocAmt),
+      }),
+    ),
+  };
 };
 
-// ============================================================
-// HEADER DATE PICKER STYLE
-// ============================================================
-
-const datePickerSx = {
-  width: "140px",
-
-  "& .MuiPickersTextField-root": {
-    width: "140px",
-  },
-
-  "& .MuiPickersInputBase-root": {
-    width: "140px",
-    height: "30px",
-    minHeight: "30px",
-    boxSizing: "border-box",
-    borderRadius: "4px",
-    backgroundColor: "#ffffff",
-    fontSize: "12px",
-    padding: 0,
-    overflow: "hidden",
-  },
-
-  "& .MuiPickersInputBase-sectionsContainer": {
-    paddingLeft:
-      "10px !important",
-
-    paddingRight:
-      "0px !important",
-
-    marginBottom:
-      "-5px !important",
-
-    marginLeft:
-      "0px !important",
-
-    boxSizing:
-      "border-box",
-
-    overflow: "hidden",
-  },
-
-  "& .MuiPickersInputBase-sectionContent": {
-    fontSize: "12px",
-    color: "#344054",
-  },
-
-  "& .MuiPickersInputBase-input": {
-    minWidth: 0,
-    width: "100%",
-    fontSize: "12px",
-    padding: 0,
-    height: "30px",
-    boxSizing: "border-box",
-  },
-
-  "& .MuiInputAdornment-root": {
-    margin: 0,
-    padding: 0,
-  },
-
-  "& .MuiIconButton-root": {
-    width: "24px",
-    height: "24px",
-    padding: "2px",
-    margin: 0,
-  },
-
-  "& .MuiSvgIcon-root": {
-    fontSize: "16px",
-  },
-
-  "& .MuiPickersOutlinedInput-notchedOutline": {
-    borderColor:
-      "#B7C7D7 !important",
-  },
-
-  "& .MuiPickersInputBase-root:hover .MuiPickersOutlinedInput-notchedOutline":
-    {
-      borderColor:
-        "#B7C7D7 !important",
-    },
-
-  "& .MuiPickersInputBase-root.Mui-focused .MuiPickersOutlinedInput-notchedOutline":
-    {
-      borderColor:
-        "#B7C7D7 !important",
-
-      borderWidth: "1px",
-    },
-
-  "& .MuiPickersInputBase-root.Mui-error .MuiPickersOutlinedInput-notchedOutline":
-    {
-      borderColor:
-        "#B7C7D7 !important",
-    },
-
-  "& .MuiPickersInputBase-root.Mui-error:hover .MuiPickersOutlinedInput-notchedOutline":
-    {
-      borderColor:
-        "#B7C7D7 !important",
-    },
-
-  "& .MuiPickersInputBase-root.Mui-error.Mui-focused .MuiPickersOutlinedInput-notchedOutline":
-    {
-      borderColor:
-        "#B7C7D7 !important",
-    },
+type StockDocumentPostPageProps = {
+  onClose?: () => void;
 };
 
-// ============================================================
-// TABLE DATE PICKER STYLE
-// ============================================================
+const StockDocumentPostPage: React.FC<StockDocumentPostPageProps> = ({ onClose }) => {
+  const perms = useButtonPermissions(MENU_ID);
+  const enterAsTab = useEnterAsTab();
 
-const tableDatePickerSx = {
-  width: "100%",
+  // the boxes (names = the element ids and the server's keys)
+  const [branchOptions, setBranchOptions] = useState<Option[]>([]);
+  const [documentOptions, setDocumentOptions] = useState<Option[]>([]);
+  const [yearOptions, setYearOptions] = useState<Option[]>([]);
+  const [lkpBranch, setLkpBranch] = useState<Option | null>(null);
+  const [lkpDocument, setLkpDocument] = useState<Option | null>(null);
+  const [lkpYear, setLkpYear] = useState<Option | null>(null);
+  const [lkpMonth, setLkpMonth] = useState<Option | null>(
+    monthOptions[new Date().getMonth()],
+  );
 
-  "& .MuiPickersTextField-root": {
-    width: "100%",
-  },
+  // the documents that are not posted yet, and the ticked ones (by Doc. No.)
+  const [rows, setRows] = useState<DocRow[]>([]);
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [activeId, setActiveId] = useState<string | null>(null);
+  const [posting, setPosting] = useState(false);
+  const [lookupsLoaded, setLookupsLoaded] = useState(false);
 
-  "& .MuiPickersInputBase-root": {
-    width: "100%",
+  const allSelected = rows.length > 0 && selectedIds.size === rows.length;
+  const someSelected = selectedIds.size > 0;
 
-    height: "29px",
+  const selectedTotal = useMemo(
+    () =>
+      rows
+        .filter((row) => selectedIds.has(row.txtDocNo))
+        .reduce((sum, row) => sum + row.txtDocAmt, 0),
+    [rows, selectedIds],
+  );
 
-    minHeight: "29px",
+  // where the cursor starts: the Document box when the user's default branch is filled in, else the Branch box
+  useInitialFocus(lookupsLoaded, lkpBranch ? "lkpDocument" : "lkpBranch");
 
-    boxSizing: "border-box",
+  // the login year: the Year box has to be the same (the old "'Year' should be same as 'Login Year'")
+  const PstrYear = localStorage.getItem("PstrYear") ?? "";
 
-    borderRadius: "0px",
+  /* ---------------------------------------------------------
+     the lookups (frmStDocPost_Load / FillCombos)
+  --------------------------------------------------------- */
+  useEffect(() => {
+    const loadLookups = async () => {
+      try {
+        const response = await fetch(`${api}/StockDocumentPost/lookups`, {
+          credentials: "include",
+        });
+        const result = await response.json();
 
-    backgroundColor:
-      "transparent",
+        if (!response.ok || !result.success) {
+          toast.error(result.message || "Failed to load the lookups");
+          return;
+        }
 
-    fontSize: "14px",
+        const branches: Option[] = result.branches.map(
+          (b: { lkpBranch: string; txtBranchName: string }) => ({
+            value: b.lkpBranch,
+            label: b.txtBranchName,
+          }),
+        );
+        const documents: Option[] = result.documents.map(
+          (d: { lkpDocument: string; txtDocumentName: string }) => ({
+            value: d.lkpDocument,
+            label: d.txtDocumentName,
+          }),
+        );
+        const years: Option[] = result.years.map((y: { lkpYear: string }) => ({
+          value: y.lkpYear,
+          label: y.lkpYear,
+        }));
 
-    padding: 0,
+        setBranchOptions(branches);
+        setDocumentOptions(documents);
+        setYearOptions(years);
 
-    overflow: "hidden",
-  },
+        // the user's default branch, else the first one; the login year
+        setLkpBranch(
+          branches.find((b) => b.value === result.lkpDefaultBranch) ?? branches[0] ?? null,
+        );
+        setLkpYear(years.find((y) => y.value === PstrYear) ?? years[0] ?? null);
+      } catch {
+        toast.error(`Cannot connect to ${SCREEN_TITLE} API.`);
+      } finally {
+        setLookupsLoaded(true);
+      }
+    };
 
-  // ----------------------------------------------------------
-  // REMOVE DATE PICKER OUTLINE
-  // The table cell itself already provides the border.
-  // ----------------------------------------------------------
+    void loadLookups();
+  }, [PstrYear]);
 
-  "& .MuiPickersOutlinedInput-notchedOutline": {
-    border: "0 !important",
-  },
+  /* ---------------------------------------------------------
+     GetData: the documents that are not posted yet. It runs when the Branch, the Document, the Year or
+     the Month changes - and after a post (reloadKey). All the rows come back ticked.
+  --------------------------------------------------------- */
+  const [reloadKey, setReloadKey] = useState(0);
 
-  "& .MuiPickersInputBase-root:hover .MuiPickersOutlinedInput-notchedOutline":
-    {
-      border: "0 !important",
-    },
+  useEffect(() => {
+    // nothing to list until the four boxes are chosen (they cannot be cleared again)
+    if (!lkpBranch || !lkpDocument || !lkpYear || !lkpMonth) {
+      return;
+    }
 
-  "& .MuiPickersInputBase-root.Mui-focused .MuiPickersOutlinedInput-notchedOutline":
-    {
-      border: "0 !important",
-    },
+    let cancelled = false;
 
-  "& .MuiPickersInputBase-root.Mui-error .MuiPickersOutlinedInput-notchedOutline":
-    {
-      border: "0 !important",
-    },
+    fetchUnposted(
+      new URLSearchParams({
+        PstrYear,
+        lkpBranch: lkpBranch.value,
+        lkpDocument: lkpDocument.value,
+        lkpYear: lkpYear.value,
+        lkpMonth: lkpMonth.value,
+      }),
+    )
+      .then((result) => {
+        if (cancelled) return;
 
-  "& .MuiPickersInputBase-sectionsContainer": {
-    height: "29px",
+        if ("rows" in result) {
+          setRows(result.rows);
+          setSelectedIds(new Set(result.rows.map((d) => d.txtDocNo)));
+          setActiveId(result.rows[0]?.txtDocNo ?? null);
+        } else {
+          setRows([]);
+          setSelectedIds(new Set());
+          setActiveId(null);
+          toast.warning(result.message);
+        }
+      })
+      .catch(() => {
+        if (!cancelled) toast.error(`Cannot connect to ${SCREEN_TITLE} API.`);
+      });
 
-    paddingLeft:
-      "8px !important",
+    return () => {
+      cancelled = true;
+    };
+  }, [lkpBranch, lkpDocument, lkpYear, lkpMonth, PstrYear, reloadKey]);
 
-    paddingRight:
-      "0px !important",
+  /* ---------------------------------------------------------
+     the ticks
+  --------------------------------------------------------- */
+  const toggleRow = (txtDocNo: string) => {
+    setSelectedIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(txtDocNo)) next.delete(txtDocNo);
+      else next.add(txtDocNo);
+      return next;
+    });
+  };
 
-    margin: "0 !important",
+  const toggleAll = () => {
+    setSelectedIds(allSelected ? new Set() : new Set(rows.map((r) => r.txtDocNo)));
+  };
 
-    boxSizing:
-      "border-box",
+  /* ---------------------------------------------------------
+     the Post button (cmdPost_Click)
+  --------------------------------------------------------- */
+  const handlePost = async () => {
+    if (posting) return;
 
-    overflow:
-      "hidden",
+    if (!perms.post) {
+      toast.error("You do not have permission to Post.");
+      return;
+    }
 
-    display: "flex",
+    if (!lkpBranch) {
+      toast.warning("Please select a 'Branch'");
+      return;
+    }
 
-    alignItems:
-      "center",
-  },
+    if (!lkpDocument) {
+      toast.warning("Please select a 'Document'");
+      return;
+    }
 
-  "& .MuiPickersInputBase-sectionContent": {
-    fontSize: "14px",
+    if (!lkpYear) {
+      toast.warning("Please select 'Year'");
+      return;
+    }
 
-    color: "#344054",
-  },
+    if (!lkpMonth) {
+      toast.warning("Please select 'Month'");
+      return;
+    }
 
-  "& .MuiPickersInputBase-input": {
-    minWidth: 0,
+    if (lkpYear.value !== PstrYear) {
+      toast.warning("'Year' should be same as 'Login Year'");
+      return;
+    }
 
-    width: "100%",
+    const documents = rows
+      .filter((row) => selectedIds.has(row.txtDocNo))
+      .map((row) => ({ txtDocNo: row.txtDocNo }));
 
-    fontSize: "14px",
+    if (documents.length === 0) {
+      toast.warning("Please select a Document to post");
+      return;
+    }
 
-    padding: 0,
+    setPosting(true);
 
-    height: "29px",
+    try {
+      const response = await fetch(`${api}/StockDocumentPost/post`, {
+        method: "POST",
+        credentials: "include", // the server checks the session and the rights
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          PstrYear,
+          lkpBranch: lkpBranch.value,
+          lkpDocument: lkpDocument.value,
+          lkpYear: lkpYear.value,
+          lkpMonth: lkpMonth.value,
+          documents,
+        }),
+      });
+      const result = await response.json();
 
-    boxSizing:
-      "border-box",
-  },
+      if (!response.ok || !result.success) {
+        toast.error(result.message || "The documents could not be posted");
+        return;
+      }
 
-  "& .MuiInputAdornment-root": {
-    margin: 0,
+      // the post stopped at a document (its Purchase Invoice / Sales Invoice is not posted, or an
+      // item has no unit cost): say which, and put the cursor on it
+      if (result.txtStopMessage) {
+        toast.warning(result.txtStopMessage);
+        setActiveId(result.txtStopDocNo || null);
+      }
 
-    padding: 0,
-  },
+      // the documents the database refused to post, and why
+      if (result.txtErrorMessage) {
+        toast.error(<div style={{ whiteSpace: "pre-line" }}>{result.txtErrorMessage}</div>);
+      }
 
-  "& .MuiIconButton-root": {
-    width: "25px",
+      // green when something was posted, a warning when nothing was
+      const notice = <div style={{ whiteSpace: "pre-line" }}>{result.message}</div>;
 
-    height: "25px",
+      if (result.txtPostedCount > 0) toast.success(notice);
+      else toast.warning(notice);
 
-    padding: "2px",
+      setReloadKey((key) => key + 1);
+    } catch {
+      toast.error(`Cannot connect to ${SCREEN_TITLE} API.`);
+    } finally {
+      setPosting(false);
+    }
+  };
 
-    margin: 0,
-  },
+  const handleClose = () => {
+    setSelectedIds(new Set());
+    onClose?.();
+  };
 
-  "& .MuiSvgIcon-root": {
-    fontSize: "16px",
-  },
-};
+  // the underlined letters of the buttons: Alt+P Post, Alt+C Close
+  useAltShortcuts({ p: () => void handlePost(), c: handleClose });
 
-// ============================================================
-// CHECKBOX
-// ============================================================
-
-type GreenCheckboxProps = {
-  checked: boolean;
-
-  onChange: (
-    event: React.ChangeEvent<HTMLInputElement>,
-  ) => void;
-
-  id?: string;
-};
-
-const GreenCheckbox: React.FC<
-  GreenCheckboxProps
-> = ({
-  checked,
-  onChange,
-  id,
-}) => {
   return (
-    <label
-      className="
-        relative
-        inline-flex
-        h-[13px]
-        w-[13px]
-        cursor-pointer
-        items-center
-        justify-center
-      "
+    <div
+      className="flex min-h-full w-full items-start justify-center bg-white px-4 py-4"
+      onKeyDown={enterAsTab}
     >
-      <input
-        id={id}
-        type="checkbox"
-        checked={checked}
-        onChange={onChange}
-        className="
-          peer
-          absolute
-          h-[13px]
-          w-[13px]
-          cursor-pointer
-          appearance-none
-          rounded-[3px]
-          border
-          border-[#65d69a]
-          bg-white
-          outline-none
-        "
-      />
+      <div className="min-h-fit min-w-240 w-240 max-w-full bg-white p-0">
+        <main className="w-full overflow-hidden border border-gray-400 bg-white">
+          <header className="flex h-7.5 items-center justify-start bg-[#9fdfbc]">
+           <header className="flex h-6.5 items-center justify-start pl-2.5 bg-[#9fdfbc] text-[18px] font-semi-bold text-slate-700">
+      {SCREEN_TITLE}
+    </header>
+          </header>
 
-      <span
-        className="
-          pointer-events-none
-          absolute
-          left-0
-          top-0
-          flex
-          h-[13px]
-          w-[13px]
-          items-center
-          justify-center
-          rounded-[3px]
-          bg-[#65d69a]
-          opacity-0
-          peer-checked:opacity-100
-        "
-      >
-        <svg
-          xmlns="http://www.w3.org/2000/svg"
-          viewBox="0 0 16 16"
-          className="
-            h-[10px]
-            w-[10px]
-          "
-          fill="none"
-        >
-          <path
-            d="M3 8L6.5 11.5L13 4.5"
-            stroke="white"
-            strokeWidth="2"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-          />
-        </svg>
-      </span>
-    </label>
+          <section className="flex flex-col gap-3 px-3.5 pb-6 pt-3">
+            <StockDocumentPostHeader
+              branchOptions={branchOptions}
+              lkpBranch={lkpBranch}
+              onBranchChange={setLkpBranch}
+              documentOptions={documentOptions}
+              lkpDocument={lkpDocument}
+              onDocumentChange={setLkpDocument}
+              yearOptions={yearOptions}
+              lkpYear={lkpYear}
+              onYearChange={setLkpYear}
+              monthOptions={monthOptions}
+              lkpMonth={lkpMonth}
+              onMonthChange={setLkpMonth}
+              allSelected={allSelected}
+              someSelected={someSelected}
+              onToggleAll={toggleAll}
+              selectAllDisabled={rows.length === 0}
+            />
+
+            <div>
+              <StockDocumentPostTable
+                rows={rows}
+                selectedIds={selectedIds}
+                activeId={activeId}
+                onToggleRow={toggleRow}
+                onActivateRow={setActiveId}
+              />
+              <StockDocumentPostFooter
+                selectedCount={selectedIds.size}
+                selectedTotal={selectedTotal}
+                onPost={() => void handlePost()}
+                onClose={handleClose}
+                postDisabled={selectedIds.size === 0 || !perms.post || posting}
+              />
+            </div>
+          </section>
+        </main>
+      </div>
+    </div>
   );
 };
 
-// ============================================================
-// INITIAL ROWS
-// ============================================================
-
-const createInitialRows =
-  (): TableRow[] => {
-    return Array.from(
-      { length: 12 },
-      (_, index) => ({
-        id: index + 1,
-
-        documentNo: "",
-
-        date: "",
-
-        customerSupplierId:
-          "",
-
-        documentAmount: "",
-
-        selected: false,
-      }),
-    );
-  };
-
-// ============================================================
-// COMPONENT
-// ============================================================
-
-const StockDocumentPost: React.FC =
-  () => {
-    // ========================================================
-    // BRANCH
-    // ========================================================
-
-    const [branch, setBranch] =
-      useState<Option | null>(
-        branchOptions[0],
-      );
-
-    // ========================================================
-    // HEADER DATE
-    // ========================================================
-
-    const [
-      dtpAsOnDate,
-      setDtpAsOnDate,
-    ] = useState<string>("");
-
-    // ========================================================
-    // TABLE ROWS
-    // ========================================================
-
-    const [rows, setRows] =
-      useState<TableRow[]>(
-        createInitialRows(),
-      );
-
-    // ========================================================
-    // ALL SELECTED
-    // ========================================================
-
-    const allSelected =
-      rows.length > 0 &&
-      rows.every(
-        (row) =>
-          row.selected,
-      );
-
-    // ========================================================
-    // SELECT ALL
-    // ========================================================
-
-    const handleSelectAll = (
-      checked: boolean,
-    ) => {
-      setRows(
-        (currentRows) =>
-          currentRows.map(
-            (row) => ({
-              ...row,
-
-              selected:
-                checked,
-            }),
-          ),
-      );
-    };
-
-    // ========================================================
-    // ROW CHECKBOX
-    // ========================================================
-
-    const handleRowSelect = (
-      id: number,
-      checked: boolean,
-    ) => {
-      setRows(
-        (currentRows) =>
-          currentRows.map(
-            (row) =>
-              row.id === id
-                ? {
-                    ...row,
-
-                    selected:
-                      checked,
-                  }
-                : row,
-          ),
-      );
-    };
-
-    // ========================================================
-    // TABLE TEXT INPUT
-    // ========================================================
-
-    const handleRowChange = (
-      id: number,
-      field:
-        | "documentNo"
-        | "date"
-        | "customerSupplierId"
-        | "documentAmount",
-      value: string,
-    ) => {
-      setRows(
-        (currentRows) =>
-          currentRows.map(
-            (row) =>
-              row.id === id
-                ? {
-                    ...row,
-
-                    [field]:
-                      value,
-                  }
-                : row,
-          ),
-      );
-    };
-
-    // ========================================================
-    // TABLE DATE CHANGE
-    // ========================================================
-
-    const handleRowDateChange = (
-      id: number,
-      value: string,
-    ) => {
-      setRows(
-        (currentRows) =>
-          currentRows.map(
-            (row) =>
-              row.id === id
-                ? {
-                    ...row,
-
-                    date: value,
-                  }
-                : row,
-          ),
-      );
-    };
-
-    // ========================================================
-    // POST
-    // ========================================================
-
-    const handlePost = () => {
-      const selectedRows =
-        rows.filter(
-          (row) =>
-            row.selected,
-        );
-
-      console.log({
-        branch,
-        dtpAsOnDate,
-        selectedRows,
-      });
-    };
-
-    // ========================================================
-    // CLEAR
-    // ========================================================
-
-    const handleClear = () => {
-      setBranch(
-        branchOptions[0],
-      );
-
-      setDtpAsOnDate("");
-
-      setRows(
-        createInitialRows(),
-      );
-    };
-
-    // ========================================================
-    // RENDER
-    // ========================================================
-
-    return (
-      <div
-        className="
-          flex
-          min-h-full
-          w-full
-          items-center
-          justify-center
-          bg-white
-        "
-      >
-        <div
-          className="
-            w-full
-            min-w-[900px]
-            max-w-[900px]
-            border
-            border-gray-400
-            bg-white
-            pb-[12px]
-          "
-        >
-
-          {/* ==================================================
-              TITLE
-          ================================================== */}
-
-          <header
-            className="
-              flex
-              h-[36px]
-              items-center
-              justify-start
-              bg-[#9fdfbc]
-              pl-[12px]
-              text-[18px]
-              font-semibold
-              text-slate-700
-            "
-          >
-            Stock Document Post
-          </header>
-
-          {/* ==================================================
-              HEADER
-          ================================================== */}
-
-          <div
-            className="
-              px-[17px]
-              pt-[35px]
-            "
-          >
-            <div
-              className="
-                flex
-                w-full
-                items-center
-              "
-            >
-
-              {/* ==============================================
-                  BRANCH
-              ============================================== */}
-
-              <div
-                className="
-                  flex
-                  h-[30px]
-                  items-center
-                "
-              >
-                <label
-                  className="
-                    mr-[10px]
-                    whitespace-nowrap
-                    text-right
-                    text-[14px]
-                  "
-                >
-                  Branch :
-                </label>
-
-                <div
-                  className="relative"
-                >
-                  <Select<
-                    Option,
-                    false
-                  >
-                    inputId="lkpBranch"
-                    instanceId="lkpBranch"
-                    options={
-                      branchOptions
-                    }
-                    value={branch}
-                    onChange={
-                      setBranch
-                    }
-                    styles={
-                      selectStyles
-                    }
-                    isClearable={
-                      false
-                    }
-                    isSearchable={
-                      true
-                    }
-                    placeholder=""
-                    menuPosition="fixed"
-                    menuPortalTarget={
-                      typeof document !==
-                      "undefined"
-                        ? document.body
-                        : undefined
-                    }
-                  />
-                </div>
-              </div>
-
-              {/* ==============================================
-                  AS ON DATE
-              ============================================== */}
-
-              <div
-                className="
-                  ml-auto
-                  flex
-                  items-center
-                "
-              >
-                <label
-                  className="
-                    mr-[8px]
-                    whitespace-nowrap
-                    text-[14px]
-                  "
-                >
-                  As On Date :
-                </label>
-
-                <div
-                  className="relative"
-                >
-                  <LocalizationProvider
-                    dateAdapter={
-                      AdapterDayjs
-                    }
-                  >
-                    <DatePicker
-                      value={
-                        dtpAsOnDate
-                          ? dayjs(
-                              dtpAsOnDate,
-                              "DD-MM-YYYY",
-                            )
-                          : null
-                      }
-                      onChange={(
-                        newValue,
-                      ) => {
-                        if (
-                          newValue?.isValid()
-                        ) {
-                          setDtpAsOnDate(
-                            newValue.format(
-                              "DD-MM-YYYY",
-                            ),
-                          );
-                        } else {
-                          setDtpAsOnDate(
-                            "",
-                          );
-                        }
-                      }}
-                      format="DD-MM-YYYY"
-                      slotProps={{
-                        textField: {
-                          id: "dtpAsOnDate",
-                        },
-
-                        openPickerButton: {
-                          sx: {
-                            padding:
-                              "2px",
-                            margin: 0,
-                          },
-                        },
-
-                        inputAdornment: {
-                          sx: {
-                            margin: 0,
-                            padding: 0,
-                          },
-                        },
-                      }}
-                      sx={
-                        datePickerSx
-                      }
-                    />
-                  </LocalizationProvider>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          {/* ==================================================
-              SELECT ALL
-          ================================================== */}
-
-          <div
-            className="
-              px-[57px]
-              pt-[12px]
-              pb-[9px]
-            "
-          >
-            <GreenCheckbox
-              id="chkSelect"
-              checked={
-                allSelected
-              }
-              onChange={(
-                event,
-              ) =>
-                handleSelectAll(
-                  event.target
-                    .checked,
-                )
-              }
-            />
-          </div>
-
-          {/* ==================================================
-              TABLE
-          ================================================== */}
-
-          <div
-            className="
-              mx-[17px]
-              overflow-hidden
-              border
-              border-[#b9efd1]
-            "
-          >
-            <div
-              className="
-                max-h-[420px]
-                overflow-y-auto
-              "
-            >
-              <table
-                className="
-                  w-full
-                  table-fixed
-                  border-collapse
-                  text-[14px]
-                  text-[#344054]
-                "
-              >
-                <thead>
-                  <tr
-                    className="
-                      h-[30px]
-                      bg-[#eefbf4]
-                    "
-                  >
-                    <th
-                      className="
-                        w-[70px]
-                        border
-                        border-[#b9efd1]
-                        px-1
-                        font-normal
-                      "
-                    >
-                      Select
-                    </th>
-
-                    <th
-                      className="
-                        w-[160px]
-                        border
-                        border-[#b9efd1]
-                        px-2
-                        text-left
-                        font-normal
-                      "
-                    >
-                      Document No.
-                    </th>
-
-                    <th
-                      className="
-                        w-[160px]
-                        border
-                        border-[#b9efd1]
-                        px-2
-                        text-left
-                        font-normal
-                      "
-                    >
-                      Date
-                    </th>
-
-                    <th
-                      className="
-                        w-[160px]
-                        border
-                        border-[#b9efd1]
-                        px-2
-                        text-left
-                        font-normal
-                      "
-                    >
-                      Customer/Supplier ID
-                    </th>
-
-                    <th
-                      className="
-                        w-[180px]
-                        border
-                        border-[#b9efd1]
-                        px-2
-                        text-right
-                        font-normal
-                      "
-                    >
-                      Document Amt.
-                    </th>
-                  </tr>
-                </thead>
-
-                <tbody>
-                  {rows.map(
-                    (row) => (
-                      <tr
-                        key={
-                          row.id
-                        }
-                        className="
-                          h-[30px]
-                        "
-                      >
-
-                        {/* ==================================
-                            CHECKBOX
-                        ================================== */}
-
-                        <td
-                          className="
-                            border
-                            border-[#b9efd1]
-                            text-center
-                          "
-                        >
-                          <GreenCheckbox
-                            checked={
-                              row.selected
-                            }
-                            onChange={(
-                              event,
-                            ) =>
-                              handleRowSelect(
-                                row.id,
-                                event
-                                  .target
-                                  .checked,
-                              )
-                            }
-                          />
-                        </td>
-
-                        {/* ==================================
-                            DOCUMENT NO
-                        ================================== */}
-
-                        <td
-                          className="
-                            border
-                            border-[#b9efd1]
-                            p-0
-                          "
-                        >
-                          <input
-                            type="text"
-                            value={
-                              row.documentNo
-                            }
-                            onChange={(
-                              event,
-                            ) =>
-                              handleRowChange(
-                                row.id,
-                                "documentNo",
-                                event
-                                  .target
-                                  .value,
-                              )
-                            }
-                            className="
-                              h-[29px]
-                              w-full
-                              border-0
-                              bg-transparent
-                              px-2
-                              text-[14px]
-                              text-[#344054]
-                              outline-none
-                              focus:border-0
-                              focus:outline-none
-                            "
-                          />
-                        </td>
-
-                        {/* ==================================
-                            DATE PICKER
-                        ================================== */}
-
-                        <td
-                          className="
-                            border
-                            border-[#b9efd1]
-                            p-0
-                          "
-                        >
-                          <LocalizationProvider
-                            dateAdapter={
-                              AdapterDayjs
-                            }
-                          >
-                            <DatePicker
-                              value={
-                                row.date
-                                  ? dayjs(
-                                      row.date,
-                                      "DD-MM-YYYY",
-                                    )
-                                  : null
-                              }
-
-                              onChange={(
-                                newValue,
-                              ) => {
-                                if (
-                                  newValue?.isValid()
-                                ) {
-                                  handleRowDateChange(
-                                    row.id,
-                                    newValue.format(
-                                      "DD-MM-YYYY",
-                                    ),
-                                  );
-                                } else {
-                                  handleRowDateChange(
-                                    row.id,
-                                    "",
-                                  );
-                                }
-                              }}
-
-                              format="DD-MM-YYYY"
-
-                              slotProps={{
-                                textField: {
-                                  id: `dtpDate-${row.id}`,
-
-                                  variant:
-                                    "outlined",
-
-                                  size:
-                                    "small",
-                                },
-
-                                openPickerButton: {
-                                  sx: {
-                                    padding:
-                                      "2px",
-                                    margin: 0,
-                                  },
-                                },
-
-                                inputAdornment: {
-                                  sx: {
-                                    margin: 0,
-                                    padding: 0,
-                                  },
-                                },
-                              }}
-
-                              sx={
-                                tableDatePickerSx
-                              }
-                            />
-                          </LocalizationProvider>
-                        </td>
-
-                        {/* ==================================
-                            CUSTOMER / SUPPLIER ID
-                        ================================== */}
-
-                        <td
-                          className="
-                            border
-                            border-[#b9efd1]
-                            p-0
-                          "
-                        >
-                          <input
-                            type="text"
-                            value={
-                              row.customerSupplierId
-                            }
-                            onChange={(
-                              event,
-                            ) =>
-                              handleRowChange(
-                                row.id,
-                                "customerSupplierId",
-                                event
-                                  .target
-                                  .value,
-                              )
-                            }
-                            className="
-                              h-[29px]
-                              w-full
-                              border-0
-                              bg-transparent
-                              px-2
-                              text-[14px]
-                              text-[#344054]
-                              outline-none
-                              focus:border-0
-                              focus:outline-none
-                            "
-                          />
-                        </td>
-
-                        {/* ==================================
-                            DOCUMENT AMOUNT
-                        ================================== */}
-
-                        <td
-                          className="
-                            border
-                            border-[#b9efd1]
-                            p-0
-                          "
-                        >
-                          <input
-                            type="text"
-                            value={
-                              row.documentAmount
-                            }
-                            onChange={(
-                              event,
-                            ) =>
-                              handleRowChange(
-                                row.id,
-                                "documentAmount",
-                                event
-                                  .target
-                                  .value,
-                              )
-                            }
-                            className="
-                              h-[29px]
-                              w-full
-                              border-0
-                              bg-transparent
-                              px-2
-                              text-right
-                              text-[14px]
-                              text-[#344054]
-                              outline-none
-                              focus:border-0
-                              focus:outline-none
-                            "
-                          />
-                        </td>
-
-                      </tr>
-                    ),
-                  )}
-                </tbody>
-              </table>
-            </div>
-          </div>
-
-         
-
-          {/* ==================================================
-              DOCUMENT AMOUNT INPUT
-          ================================================== */}
-
-          <div
-            className="
-              flex
-              justify-end
-              px-[18px]
-              mt-[-30px]
-            "
-          >
-            <input
-              id="txtDocumentAmt"
-              type="text"
-              className="
-                mt-10
-                w-[210px]
-                input-style
-              "
-            />
-          </div>
-
-          {/* ==================================================
-              BUTTONS
-          ================================================== */}
-
-          <div
-            className="
-              flex
-              justify-center
-              gap-[15px]
-              pb-[14px]
-            "
-          >
-            <button
-              type="button"
-              onClick={
-                handlePost
-              }
-              className="
-                btn-style
-              "
-            >
-              <u>P</u>ost
-            </button>
-
-            <button
-              type="button"
-              onClick={
-                handleClear
-              }
-              className="
-                btn-style
-              "
-            >
-              <u>C</u>lear
-            </button>
-          </div>
-
-        </div>
-      </div>
-    );
-  };
-
-export default StockDocumentPost;
+export default StockDocumentPostPage;

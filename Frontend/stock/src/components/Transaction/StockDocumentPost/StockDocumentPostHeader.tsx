@@ -1,6 +1,13 @@
 import React, { useEffect, useRef } from "react";
 import Select from "react-select";
-import {type Option,  selectProps } from "./DocumentPostShared";
+import { useAdvanceAfterSelect } from "../../../hooks/useAdvanceAfterSelect";
+import { useGridCellFocus } from "../../../hooks/useGridCellFocus";
+import {
+  type Option,
+  branchSelectProps,
+  documentSelectProps,
+  selectProps,
+} from "./StockDocumentPostShared";
 const FieldLabel: React.FC<{
   children: React.ReactNode;
   className?: string;
@@ -12,21 +19,21 @@ const FieldLabel: React.FC<{
   </div>
 );
 
-type DocumentPostHeaderProps = {
+type StockDocumentPostHeaderProps = {
   branchOptions: Option[];
-  branch: Option | null;
+  lkpBranch: Option | null;
   onBranchChange: (option: Option | null) => void;
 
   documentOptions: Option[];
-  documentType: Option | null;
+  lkpDocument: Option | null;
   onDocumentChange: (option: Option | null) => void;
 
   yearOptions: Option[];
-  year: Option | null;
+  lkpYear: Option | null;
   onYearChange: (option: Option | null) => void;
 
   monthOptions: Option[];
-  month: Option | null;
+  lkpMonth: Option | null;
   onMonthChange: (option: Option | null) => void;
 
   allSelected: boolean;
@@ -35,18 +42,18 @@ type DocumentPostHeaderProps = {
   selectAllDisabled?: boolean;
 };
 
-const DocumentPostHeader: React.FC<DocumentPostHeaderProps> = ({
+const StockDocumentPostHeader: React.FC<StockDocumentPostHeaderProps> = ({
   branchOptions,
-  branch,
+  lkpBranch,
   onBranchChange,
   documentOptions,
-  documentType,
+  lkpDocument,
   onDocumentChange,
   yearOptions,
-  year,
+  lkpYear,
   onYearChange,
   monthOptions,
-  month,
+  lkpMonth,
   onMonthChange,
   allSelected,
   someSelected,
@@ -54,6 +61,12 @@ const DocumentPostHeader: React.FC<DocumentPostHeaderProps> = ({
   selectAllDisabled = false,
 }) => {
   const selectAllRef = useRef<HTMLInputElement>(null);
+
+  // Enter / a pick in a dropdown goes on to the next box (the other forms do the same)
+  const { advanceAfterPick, advanceOnEnter } = useAdvanceAfterSelect();
+
+  // the box the cursor is in gets the green outline (as the cells of the other grids)
+  const { cellFocusClass } = useGridCellFocus();
 
   useEffect(() => {
     if (selectAllRef.current) {
@@ -66,14 +79,21 @@ const DocumentPostHeader: React.FC<DocumentPostHeaderProps> = ({
       {/* Branch */}
       <div className="flex items-center gap-3 ">
         <FieldLabel className="w-27.5">Branch :</FieldLabel>
-        <div className="w-62.5">
+        <div
+          className={`w-62.5 ${cellFocusClass}`}
+          onKeyDown={(event) => advanceOnEnter(event)}
+        >
           <Select
             inputId="lkpBranch"
             instanceId="lkpBranch"
             options={branchOptions}
-            value={branch}
-            onChange={onBranchChange}
-            {...selectProps}
+            value={lkpBranch}
+            onChange={(option) => {
+              onBranchChange(option);
+              if (option) advanceAfterPick("lkpBranch");
+            }}
+            noOptionsMessage={() => "No Branch Found"}
+            {...branchSelectProps}
           />
         </div>
       </div>
@@ -82,38 +102,59 @@ const DocumentPostHeader: React.FC<DocumentPostHeaderProps> = ({
       <div className="flex flex-wrap items-center justify-between gap-x-6 gap-y-3">
         <div className="flex items-center gap-3">
           <FieldLabel className="w-27.5">Document :</FieldLabel>
-          <div className="w-62.5">
+          <div
+          className={`w-62.5 ${cellFocusClass}`}
+          onKeyDown={(event) => advanceOnEnter(event)}
+        >
             <Select
               inputId="lkpDocument"
               instanceId="lkpDocument"
               options={documentOptions}
-              value={documentType}
-              onChange={onDocumentChange}
-              {...selectProps}
+              value={lkpDocument}
+              onChange={(option) => {
+                onDocumentChange(option);
+                if (option) advanceAfterPick("lkpDocument");
+              }}
+              noOptionsMessage={() => "No Document Found"}
+              {...documentSelectProps}
             />
           </div>
         </div>
 
         <div className="flex items-center gap-2">
           <FieldLabel className="w-27.5">Year / Month :</FieldLabel>
-          <div className="w-25">
+          <div
+            className={`w-25 ${cellFocusClass}`}
+            onKeyDown={(event) => advanceOnEnter(event)}
+          >
             <Select
               inputId="lkpYear"
               instanceId="lkpYear"
               options={yearOptions}
-              value={year}
-              onChange={onYearChange}
+              value={lkpYear}
+              onChange={(option) => {
+                onYearChange(option);
+                if (option) advanceAfterPick("lkpYear");
+              }}
               {...selectProps}
+              isSearchable
             />
           </div>
-          <div className="w-37.5">
+          <div
+            className={`w-37.5 ${cellFocusClass}`}
+            onKeyDown={(event) => advanceOnEnter(event)}
+          >
             <Select
               inputId="lkpMonth"
               instanceId="lkpMonth"
               options={monthOptions}
-              value={month}
-              onChange={onMonthChange}
+              value={lkpMonth}
+              onChange={(option) => {
+                onMonthChange(option);
+                if (option) advanceAfterPick("lkpMonth");
+              }}
               {...selectProps}
+              isSearchable
             />
           </div>
         </div>
@@ -124,19 +165,21 @@ const DocumentPostHeader: React.FC<DocumentPostHeaderProps> = ({
         htmlFor="chkSelectAll"
         className="flex w-fit cursor-pointer items-center gap-2 text-[12px] text-[#405066] select-none"
       >
-        <input
-          ref={selectAllRef}
-          id="chkSelectAll"
-          type="checkbox"
-          checked={allSelected}
-          disabled={selectAllDisabled}
-          onChange={onToggleAll}
-          className="h-4 w-4 accent-[#64d96e]"
-        />
+        <span className={`inline-flex p-0.5 ${cellFocusClass}`}>
+          <input
+            ref={selectAllRef}
+            id="chkSelectAll"
+            type="checkbox"
+            checked={allSelected}
+            disabled={selectAllDisabled}
+            onChange={onToggleAll}
+            className="h-4 w-4 accent-[#64d96e]"
+          />
+        </span>
         Select All
       </label>
     </div>
   );
 };
 
-export default DocumentPostHeader;
+export default StockDocumentPostHeader;
