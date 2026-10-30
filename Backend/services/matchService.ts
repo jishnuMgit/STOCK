@@ -1,7 +1,5 @@
-import { MatchTotalParams, MatchRow } from "../types/types.js";
-
 import { round2, getNumber, getDataMatch } from "../utils/helper.js";
-export function matchTotal(params: MatchTotalParams) {
+export function matchTotal(params: any) {
   const {
     dtMatch,
     customerAccountId,
@@ -30,7 +28,7 @@ export function matchTotal(params: MatchTotalParams) {
 
     const debitAllocated = dtMatch
       .filter(
-        (row) =>
+        (row: any) =>
           String(row.fCSAccountID ?? "") === customerAccountId &&
           Number(row.fMAccountSlNo ?? 0) === matchAccountSlNo &&
           Number(row.fMAccountSlNoSub ?? 0) === matchAccountSlNoSub &&
@@ -38,7 +36,7 @@ export function matchTotal(params: MatchTotalParams) {
           row.fMatch === true &&
           Number(row.fMatchDocAmt ?? 0) !== 0,
       )
-      .reduce((sum, row) => sum + Number(row.fAdjAmt ?? 0), 0);
+      .reduce((sum: number, row: any) => sum + Number(row.fAdjAmt ?? 0), 0);
 
     numDrMatched += debitAllocated;
     numDrMatchedAmt += debitAllocated;
@@ -49,7 +47,7 @@ export function matchTotal(params: MatchTotalParams) {
 
     const creditAllocated = dtMatch
       .filter(
-        (row) =>
+        (row: any) =>
           String(row.fCSAccountID ?? "") === customerAccountId &&
           Number(row.fMAccountSlNo ?? 0) === matchAccountSlNo &&
           Number(row.fMAccountSlNoSub ?? 0) === matchAccountSlNoSub &&
@@ -57,7 +55,7 @@ export function matchTotal(params: MatchTotalParams) {
           row.fMatch === true &&
           Number(row.fMatchDocAmt ?? 0) !== 0,
       )
-      .reduce((sum, row) => sum + Number(row.fAdjAmt ?? 0), 0);
+      .reduce((sum: number, row: any) => sum + Number(row.fAdjAmt ?? 0), 0);
 
     numCrMatched += creditAllocated;
     numCrMatchedAmt += creditAllocated;
@@ -141,7 +139,7 @@ export const getDocumentsToMatch = async (
     matchAccountSlNoSub,
   } = params;
 
-  let dtMatch: MatchRow[] = [];
+  let dtMatch: any = [];
 
   let strMode = "";
 
