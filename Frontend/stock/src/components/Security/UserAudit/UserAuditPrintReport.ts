@@ -8,6 +8,7 @@
 import dayjs from "dayjs";
 
 import { cssStr, esc, printHtmlDocument } from "../../common/printHtml";
+import { documentPrintCss } from "../../common/reportStyle";
 
 // one report row, as the server sends it (names = the server's response keys)
 export type AuditLine = {
@@ -83,27 +84,17 @@ export const buildHtml = (r: PrintReport) => {
 <head>
 <meta charset="utf-8" />
 <title>${esc(REPORT_HEADING)}</title>
-<style>
-  @page {
-    size: A4 landscape;
-    margin: 12mm 10mm 14mm 15mm;
-    @top-right    { content: "Page " counter(page) " of " counter(pages); font: 8pt "Times New Roman", serif; }
-    @bottom-right { content: "${cssStr(r.txtReportInfo)}"; font: 8pt "Times New Roman", serif; }
-  }
-  * { box-sizing: border-box; }
-  body { margin: 0; font: 9pt "Times New Roman", serif; color: #000;
-         -webkit-print-color-adjust: exact; print-color-adjust: exact; }
-  table { width: 100%; border-collapse: collapse; table-layout: fixed; }
-  thead { display: table-header-group; }            /* header repeats on every page */
-  tr { page-break-inside: avoid; }
-  .co   { font-size: 14pt; text-align: center; height: 24px; }
-  .head { font-size: 12pt; text-align: center; height: 24px; }
+<style>${documentPrintCss({
+  orientation: "landscape",
+  margin: "12mm 10mm 14mm 15mm",
+  reportInfo: cssStr(r.txtReportInfo),
+  cellPaddingX: 4,
+  extra: `
   .user { height: 24px; padding-top: 6px; }
-  th { border: 1px solid #c7d1e4; height: 24px;
-       padding: 0 4px; font-weight: normal; text-align: left; }
-  td { border: 1px solid #c7d1e4; border-top: 0; min-height: 22px; padding: 2px 4px;
-       vertical-align: top; overflow-wrap: anywhere; }
+  td { vertical-align: top; }
   td.note { white-space: pre-wrap; }
+  `,
+})}
 </style>
 </head>
 <body>

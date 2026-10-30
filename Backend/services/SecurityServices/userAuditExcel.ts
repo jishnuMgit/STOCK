@@ -3,6 +3,7 @@
 // Year, Br. ID, Doc. Type, Doc. No., Screen, Action, Audit Note, Audit Date - by user,
 // "User ID : X" then that user's rows, Sl.# restarting for each user).
 import ExcelJS from "exceljs";
+import { REPORT_FONT_SIZE, applyReportFont, font, thin } from "../../utils/reportStyle.js";
 
 // one report row, under the response keys (the same rows the Print returns)
 export type UserAuditExcelRow = {
@@ -23,14 +24,6 @@ export type UserAuditExcelReport = {
   dtpToDate: string; // yyyy-mm-dd
   reportInfo: string;
   rows: UserAuditExcelRow[];
-};
-
-const BORDER_COLOR = { argb: "FFC7D1E4" };
-const thin = {
-  top: { style: "thin" as const, color: BORDER_COLOR },
-  left: { style: "thin" as const, color: BORDER_COLOR },
-  bottom: { style: "thin" as const, color: BORDER_COLOR },
-  right: { style: "thin" as const, color: BORDER_COLOR },
 };
 
 const MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
@@ -78,17 +71,17 @@ export const buildUserAuditWorkbook = async ({
   // ---- company / heading / info (rows 1-3) ----
   ws.mergeCells(`A1:${LAST_COLUMN}1`);
   ws.getCell("A1").value = companyName;
-  ws.getCell("A1").font = { name: "Times New Roman", size: 14, bold: true };
+  ws.getCell("A1").font = font(REPORT_FONT_SIZE.company, true);
   ws.getCell("A1").alignment = { horizontal: "center" };
 
   ws.mergeCells(`A2:${LAST_COLUMN}2`);
   ws.getCell("A2").value = `User Audit For The Period ${dmmy(dtpFromDate)} To ${dmmy(dtpToDate)}`;
-  ws.getCell("A2").font = { name: "Times New Roman", size: 12 };
+  ws.getCell("A2").font = font(REPORT_FONT_SIZE.heading);
   ws.getCell("A2").alignment = { horizontal: "center" };
 
   ws.mergeCells(`A3:${LAST_COLUMN}3`);
   ws.getCell("A3").value = reportInfo;
-  ws.getCell("A3").font = { name: "Times New Roman", size: 8 };
+  ws.getCell("A3").font = font(REPORT_FONT_SIZE.small);
   ws.getCell("A3").alignment = { horizontal: "right" };
 
   // ---- column labels (row 4) ----
@@ -148,6 +141,9 @@ export const buildUserAuditWorkbook = async ({
       cell.alignment = { horizontal: "left", vertical: "top", wrapText: true };
     });
   }
+
+  // the whole sheet in the report font (the table too, not only the title)
+  applyReportFont(ws);
 
   return Buffer.from(await wb.xlsx.writeBuffer());
 };

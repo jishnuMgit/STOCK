@@ -4,6 +4,7 @@
 // Total row at the end).
 // Needs:  npm i exceljs
 import ExcelJS from "exceljs";
+import { REPORT_FONT_SIZE, applyReportFont, font, thin } from "../../../utils/reportStyle.js";
 
 import type { BeginningBalancePrintLine } from "./beginningBalanceService.js";
 
@@ -18,19 +19,11 @@ export type BeginningBalanceExcelReport = {
 // the level of the accounts the report is made for (the old strInputAccountLevel)
 const INPUT_ACCOUNT_LEVEL = 4;
 
-const BORDER_COLOR = { argb: "FFC7D1E4" };
 const HEAD_FILL = {
   type: "pattern" as const,
   pattern: "solid" as const,
   fgColor: { argb: "FFEFF3FA" },
 };
-const thin = {
-  top: { style: "thin" as const, color: BORDER_COLOR },
-  left: { style: "thin" as const, color: BORDER_COLOR },
-  bottom: { style: "thin" as const, color: BORDER_COLOR },
-  right: { style: "thin" as const, color: BORDER_COLOR },
-};
-
 // the old Detail_BeforePrint: level 1 red, 2 green, 3 blue, the accounts black
 const levelColor = (level: number | null) =>
   Number(level) === 1
@@ -72,12 +65,12 @@ export const buildBeginningBalanceWorkbook = async (
   // ---- company / heading (rows 1-2) ----
   ws.mergeCells("A1:E1");
   ws.getCell("A1").value = report.coName;
-  ws.getCell("A1").font = { name: "Times New Roman", size: 14, bold: true };
+  ws.getCell("A1").font = font(REPORT_FONT_SIZE.company, true);
   ws.getCell("A1").alignment = { horizontal: "center" };
 
   ws.mergeCells("A2:E2");
   ws.getCell("A2").value = report.heading;
-  ws.getCell("A2").font = { name: "Times New Roman", size: 12 };
+  ws.getCell("A2").font = font(REPORT_FONT_SIZE.heading);
   ws.getCell("A2").alignment = { horizontal: "center" };
 
   // ---- branch (left) and report info (right) - row 3 ----
@@ -87,7 +80,7 @@ export const buildBeginningBalanceWorkbook = async (
 
   ws.mergeCells("D3:E3");
   ws.getCell("D3").value = report.reportInfo;
-  ws.getCell("D3").font = { name: "Times New Roman", size: 8 };
+  ws.getCell("D3").font = font(REPORT_FONT_SIZE.small);
   ws.getCell("D3").alignment = { horizontal: "right" };
 
   // ---- column labels (row 4) ----
@@ -142,6 +135,9 @@ export const buildBeginningBalanceWorkbook = async (
     cell.alignment = { horizontal: "right" };
     if (col >= 4) cell.numFmt = TOTAL_FORMAT;
   });
+
+  // the whole sheet in the report font (the table too, not only the title)
+  applyReportFont(ws);
 
   return Buffer.from(await wb.xlsx.writeBuffer());
 };

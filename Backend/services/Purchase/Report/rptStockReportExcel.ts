@@ -1,4 +1,4 @@
-// services/Sales/Report/rptStockExcel.ts
+// services/Purchase/Report/rptStockReportExcel.ts
 // The Stock report as an Excel file - the same columns as the printed report.
 //   Detailed: by item ("Item : id name"), Date / Type / Document No. / Txn.# / Unit Cost /
 //             Qty. In / Qty. Out / Balance, and a Total row for each item.
@@ -7,12 +7,13 @@
 // With more than one branch the report has one section per branch ("Branch : Jeddah", its items,
 // then the next branch ...); the Summary gives each branch its own Total row.
 import ExcelJS from "exceljs";
+import { addReportTitle, applyReportFont, thin } from "../../../utils/reportStyle.js";
 
 import type {
   DetailBranch,
   SummaryBranch,
   SummaryTotals,
-} from "./rptStockService.js";
+} from "./rptStockReportService.js";
 
 export type StockReport = {
   txtMode: "D" | "S";
@@ -26,14 +27,6 @@ export type StockReport = {
   detail: DetailBranch[];
   // the Summary report: one entry per branch, and the Total of the report
   summary: { branches: SummaryBranch[]; totals: SummaryTotals };
-};
-
-const BORDER_COLOR = { argb: "FFC7D1E4" };
-const thin = {
-  top: { style: "thin" as const, color: BORDER_COLOR },
-  left: { style: "thin" as const, color: BORDER_COLOR },
-  bottom: { style: "thin" as const, color: BORDER_COLOR },
-  right: { style: "thin" as const, color: BORDER_COLOR },
 };
 
 const MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
@@ -52,9 +45,7 @@ const ddmmmyy = (value: string | null): string => {
 const QTY_FORMAT = "#,##0.###";
 const COST_FORMAT = "#,##0.0000";
 
-const font = (size: number, bold = false) => ({ name: "Times New Roman", size, bold });
-
-export const buildStockWorkbook = async (report: StockReport): Promise<Buffer> => {
+export const buildStockReportWorkbook = async (report: StockReport): Promise<Buffer> => {
   const detailed = report.txtMode === "D";
 
   const wb = new ExcelJS.Workbook();
@@ -92,29 +83,8 @@ export const buildStockWorkbook = async (report: StockReport): Promise<Buffer> =
         { width: 14 }, // Closing
       ];
 
-  // ---- company / heading / branch + report info (rows 1-3) ----
-  ws.mergeCells(`A1:${last}1`);
-  ws.getCell("A1").value = report.txtCoName;
-  ws.getCell("A1").font = font(14, true);
-  ws.getCell("A1").alignment = { horizontal: "center" };
-
-  ws.mergeCells(`A2:${last}2`);
-  ws.getCell("A2").value = report.txtHeading;
-  ws.getCell("A2").font = font(12);
-  ws.getCell("A2").alignment = { horizontal: "center" };
-
-  const half = Math.floor(columns / 2);
-  const split = String.fromCharCode(64 + half);
-  const next = String.fromCharCode(65 + half);
-
-  ws.mergeCells(`A3:${split}3`);
-  ws.getCell("A3").value = report.txtBranch;
-  ws.getCell("A3").alignment = { horizontal: "left" };
-
-  ws.mergeCells(`${next}3:${last}3`);
-  ws.getCell(`${next}3`).value = report.txtReportInfo;
-  ws.getCell(`${next}3`).font = font(8);
-  ws.getCell(`${next}3`).alignment = { horizontal: "right" };
+  // ---- company / heading / branch + report info (rows 1-3): the same on every report ----
+  addReportTitle(ws, report, report.txtBranch, columns);
 
   // ---- column labels (row 4) ----
   const labels = detailed
@@ -243,6 +213,9 @@ export const buildStockWorkbook = async (report: StockReport): Promise<Buffer> =
     // ---- the Total row of the report ----
     addTotal(sections ? "Grand Total :" : "Total :", report.summary.totals);
   }
+
+  // the whole sheet in the report font (the table too, not only the title)
+  applyReportFont(ws);
 
   return Buffer.from(await wb.xlsx.writeBuffer());
 };

@@ -10,6 +10,7 @@
 //   info repeat at the top of every page.
 // Printed through components/common/printHtml (a hidden iframe).
 import { esc, printHtmlDocument } from "../../../common/printHtml";
+import { reportPrintCss } from "../../../common/reportStyle";
 
 // ---- what the server sends (names = the server's response keys) ----
 
@@ -46,8 +47,6 @@ export const formatCost = (value: number) =>
     maximumFractionDigits: 4,
   });
 
-// the colour of the lines
-export const LINE_COLOR = "#c7d1e4";
 
 // the column weights, as the old report: Item ID | Item Name | Item Group | Unit | Stock | Unit Cost |
 // the five age columns
@@ -75,31 +74,7 @@ export const buildHtml = (r: PrintReport) => `<!doctype html>
 <head>
 <meta charset="utf-8" />
 <title>Stock Ageing</title>
-<style>
-  @page {
-    size: A4 landscape;
-    margin: 12.7mm 10mm 12.7mm 12mm;
-    @top-right { content: "Page " counter(page) " of " counter(pages); font: 8pt "Times New Roman", serif; }
-  }
-  * { box-sizing: border-box; }
-  body { margin: 0; font: 9.75pt "Times New Roman", serif; color: #000;
-         -webkit-print-color-adjust: exact; print-color-adjust: exact; }
-  table { width: 100%; border-collapse: collapse; table-layout: fixed; }
-  thead { display: table-header-group; }            /* the heading repeats on every page */
-  tr { page-break-inside: avoid; }
-  .co   { font-size: 14pt; text-align: center; height: 26px; }
-  .head { font-size: 12pt; text-align: center; height: 26px; }
-  .sub  { height: 24px; }
-  .sub div { display: flex; justify-content: space-between; gap: 16px; }
-  .sub .info { font-size: 8pt; }
-  th { border: 1px solid ${LINE_COLOR}; height: 25px;
-       padding: 0 4px; font-weight: normal; text-align: left; }
-  th.r { text-align: right; }
-  th.c { text-align: center; }
-  td { border: 1px solid ${LINE_COLOR}; border-top: 0; height: 25px; padding: 0 4px;
-       vertical-align: middle; overflow-wrap: anywhere; }
-  .r { text-align: right; }
-  td.r, td.u { white-space: nowrap; }                /* a number or a unit is never split over two lines */
+<style>${reportPrintCss({ orientation: "landscape", marginLeft: "12mm", groupSelector: "td.group" })}
 </style>
 </head>
 <body>
