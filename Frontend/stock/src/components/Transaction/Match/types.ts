@@ -52,6 +52,7 @@ export interface DocumentOption extends SelectOption {
   brId: string;
   date: string;
   docType: string;
+  docTypeNo?: string;
   docNo: string;
   debit: string;
   credit: string;

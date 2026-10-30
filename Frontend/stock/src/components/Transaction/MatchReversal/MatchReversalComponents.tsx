@@ -652,7 +652,7 @@ const MatchReversalComponents = forwardRef<MatchingComponentsRef, Props>(
         strDocType: type,
         strCSAccountID: customerId,
         strDivID: divisionId,
-        gstrCoID,
+        year: new Date().getFullYear().toString(),
       });
 
       const searchResults: any[] = Array.isArray(data) ? data : [];

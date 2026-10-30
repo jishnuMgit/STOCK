@@ -28,8 +28,7 @@ interface DocType {
 
 const MIN_ROWS = 11;
 const CO_ID = import.meta.env.VITE_CO_ID ?? "";
-const DEFAULT_YEAR = import.meta.env.VITE_YEAR ?? "";
-// TODO: set to whatever strMode your old caller passed to SP_frmMatchAccounts
+
 const SAVE_MODE = "S";
 
 /* ---------- helpers ---------- */
@@ -78,7 +77,10 @@ const mapDocsToRows = (docs: Record<string, any>[]): ReceiptRow[] => {
     brId: String(getField(d, "fBrID") ?? ""),
     date: fmtDate(getField(d, "fDate")),
     type: String(getField(d, "fDocType") ?? ""),
-    docNo: String(getField(d, "fDocNo") ?? ""),
+    // show fdoctypeno (e.g. "CR RH-26000002"); fall back to fdocno when null
+    docNo:
+      String(getField(d, "fDocTypeNo") ?? "").trim() ||
+      String(getField(d, "fDocNo") ?? ""),
     description: String(getField(d, "fDescription") ?? ""),
     docAmount: num(getField(d, "fDocAmt")),
     debit: num(getField(d, "fDebit")),
@@ -376,7 +378,9 @@ const MatchPage: React.FC = () => {
       toast.success(result.message || "Match saved successfully");
       clearForm();
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : "Failed to save match");
+      toast.error(
+        error instanceof Error ? error.message : "Failed to save match",
+      );
     }
   }, [
     selectedDoc,

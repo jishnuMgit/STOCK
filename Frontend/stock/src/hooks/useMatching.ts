@@ -15,6 +15,7 @@ interface GetMatchAccountsParams {
   strCSAccountID: string;
   strDivID: string;
   year: string | number;
+  gstrCoID?: string;
 }
 
 export interface GetDocumentsToMatchParams {
@@ -29,6 +30,7 @@ export interface GetDocumentsToMatchParams {
   debit: number;
   credit: number;
   matchDocAmt: number;
+  coId?: string;
 }
 
 export interface SaveMatchPayload {
