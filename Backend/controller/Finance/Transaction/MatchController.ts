@@ -1,7 +1,7 @@
 import type { Response } from "express";
-import pool from "../DB/db.js";
-import { getDocumentsToMatch } from "../services/matchService.js";
-import type { AuthenticatedRequest } from "../middleware/authMiddleware.js";
+import pool from "../../../DB/db.js";
+import { getDocumentsToMatch } from "../../../services/Finance/Transaction/matchService.js";
+import type { AuthenticatedRequest } from "../../../middleware/authMiddleware.js";
 
 /* =====================================================
    HELPERS
