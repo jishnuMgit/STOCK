@@ -1,4 +1,4 @@
-// RptStockPrintReport.ts
+// RptStockReportPrintReport.ts
 // The printed Stock report (the old rptStockDetRpt and rptStockSumRpt).
 //
 //   Detailed - A4 portrait, by item: "Item : id name", then Date / Type / Document No. /
@@ -15,6 +15,7 @@
 import dayjs from "dayjs";
 
 import { esc, printHtmlDocument } from "../../../common/printHtml";
+import { REPORT_STYLE, reportPrintCss } from "../../../common/reportStyle";
 
 // ---- what the server sends (names = the server's response keys) ----
 
@@ -101,8 +102,8 @@ export const formatDate = (value: string | null) =>
 
 // the colour of the lines of the two reports
 export const COLORS = {
-  D: { line: "#c7d1e4" },
-  S: { line: "#c7d1e4" },
+  D: { line: REPORT_STYLE.lineColor },
+  S: { line: REPORT_STYLE.lineColor },
 } as const;
 
 /* =========================================================
@@ -233,38 +234,16 @@ const summaryHtml = (r: PrintReport) => {
 
 export const buildHtml = (r: PrintReport) => {
   const detailed = r.txtMode === "D";
-  const color = COLORS[r.txtMode];
-
   return `<!doctype html>
 <html>
 <head>
 <meta charset="utf-8" />
 <title>Stock</title>
-<style>
-  @page {
-    size: A4 ${detailed ? "portrait" : "landscape"};
-    margin: 12.7mm 10mm 12.7mm ${detailed ? "22.9mm" : "25.4mm"};
-    @top-right { content: "Page " counter(page) " of " counter(pages); font: 8pt "Times New Roman", serif; }
-  }
-  * { box-sizing: border-box; }
-  body { margin: 0; font: 9.75pt "Times New Roman", serif; color: #000;
-         -webkit-print-color-adjust: exact; print-color-adjust: exact; }
-  table { width: 100%; border-collapse: collapse; table-layout: fixed; }
-  thead { display: table-header-group; }            /* the heading repeats on every page */
-  tr { page-break-inside: avoid; }
-  .co   { font-size: 14pt; text-align: center; height: 26px; }
-  .head { font-size: 12pt; text-align: center; height: 26px; }
-  .sub  { height: 24px; }
-  .sub div { display: flex; justify-content: space-between; gap: 16px; }
-  .sub .info { font-size: 8pt; }
-  th { border: 1px solid ${color.line}; height: 25px;
-       padding: 0 4px; font-weight: normal; text-align: left; }
-  th.r { text-align: right; }
-  td { border: 1px solid ${color.line}; border-top: 0; height: 25px; padding: 0 4px;
-       vertical-align: middle; overflow-wrap: anywhere; }
-  .r { text-align: right; }
-  td.item, td.branch { border: 0; height: 30px; padding-top: 8px; font-size: 10.5pt; }
-  tr.tot td, tr.first td { border-top: 1px solid ${color.line}; }
+<style>${reportPrintCss({
+  orientation: detailed ? "portrait" : "landscape",
+  marginLeft: detailed ? "22.9mm" : "25.4mm",
+  groupSelector: "td.item, td.branch",
+})}
 </style>
 </head>
 <body>

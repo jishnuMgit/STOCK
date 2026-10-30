@@ -15,6 +15,7 @@
 //   info repeat at the top of every page.
 // Printed through components/common/printHtml (a hidden iframe).
 import { esc, printHtmlDocument } from "../../../common/printHtml";
+import { reportPrintCss } from "../../../common/reportStyle";
 
 // ---- what the server sends (names = the server's response keys) ----
 
@@ -55,8 +56,6 @@ export const formatStock = (value: number) =>
     maximumFractionDigits: 3,
   });
 
-// the colour of the lines
-export const LINE_COLOR = "#c7d1e4";
 
 // the branch sections (with their Total) only when the report holds more than one branch
 export const hasBranchSections = (r: PrintReport) => r.branches.length > 1;
@@ -106,31 +105,7 @@ export const buildHtml = (r: PrintReport) => {
 <head>
 <meta charset="utf-8" />
 <title>Stock Verification</title>
-<style>
-  @page {
-    size: A4 portrait;
-    margin: 12.7mm 10mm 12.7mm 20mm;
-    @top-right { content: "Page " counter(page) " of " counter(pages); font: 8pt "Times New Roman", serif; }
-  }
-  * { box-sizing: border-box; }
-  body { margin: 0; font: 9.75pt "Times New Roman", serif; color: #000;
-         -webkit-print-color-adjust: exact; print-color-adjust: exact; }
-  table { width: 100%; border-collapse: collapse; table-layout: fixed; }
-  thead { display: table-header-group; }            /* the heading repeats on every page */
-  tr { page-break-inside: avoid; }
-  .co   { font-size: 14pt; text-align: center; height: 26px; }
-  .head { font-size: 12pt; text-align: center; height: 26px; }
-  .sub  { height: 24px; }
-  .sub div { display: flex; justify-content: space-between; gap: 16px; }
-  .sub .info { font-size: 8pt; }
-  th { border: 1px solid ${LINE_COLOR}; height: 25px;
-       padding: 0 4px; font-weight: normal; text-align: left; }
-  th.r { text-align: right; }
-  td { border: 1px solid ${LINE_COLOR}; border-top: 0; height: 25px; padding: 0 4px;
-       vertical-align: middle; overflow-wrap: anywhere; }
-  .r { text-align: right; }
-  td.branch, td.group { border: 0; height: 30px; padding-top: 8px; font-size: 10.5pt; }
-  tr.tot td, tr.first td { border-top: 1px solid ${LINE_COLOR}; }
+<style>${reportPrintCss({ orientation: "portrait", marginLeft: "20mm", groupSelector: "td.branch, td.group" })}
 </style>
 </head>
 <body>

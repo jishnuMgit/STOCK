@@ -37,7 +37,7 @@ import UnMatchPage from "../pages/Finance/Transaction/MatchReversal/MatchReversa
 import CostCenterPage from "../pages/Finance/Setup/CostCenterPage";
 import MatchEnquiryPage from "../pages/Finance/Transaction/MatchEnquiry/MatchEnquiryPage";
 import RptTBPage from "../pages/Finance/Report/FinalAccounts/TrialBalance/RptTBPage";
-import RptStockPage from "../pages/Sales/Report/RptStockPage";
+import RptStockReportPage from "../pages/Purchase/Report/RptStockReport/RptStockReportPage";
 import RptStockValuePage from "../pages/Sales/Report/RptSVPage";
 import RptCustomerSalesPage from "../pages/Sales/Report/RptCustomerSalesPage";
 import RptItemSalesPage from "../pages/Sales/Report/RptItemSalesPage";
@@ -60,7 +60,6 @@ import RptStaffSalesPage from "../pages/Purchase/Report/StaffSales/RptStaffSales
 import RptSalesSummaryPage from "../pages/Purchase/Report/SalesSummary/RptSalesSummaryPage";
 import RptItemMovementPage from "../pages/Purchase/Report/ItemMovement/RptItemMovementPage";
 import RptInvoicewiseProfitPage from "../pages/Purchase/Report/InvoicewiseProfit/RptInvoicewiseProfitPage";
-import RptStockReportPage from "../pages/Purchase/Report/Stock/RptStockReportPage";
 import RptStockValuationPage from "../pages/Purchase/Report/StockValue/RptStockValuationPage";
 import RptStockVerificationPage from "../pages/Purchase/Report/StockVerification/RptStockVerificationPage";
 import RptStockAgeingPage from "../pages/Purchase/Report/StockAgeing/RptStockAgeingPage";
@@ -203,7 +202,6 @@ const AppRoutes = () => {
 
           {/* ================= SALES - REPORT ================= */}
 
-          <Route path="/Sales/Report/RptStock" element={<RptStockPage />} />
           <Route
             path="/Sales/Reports/StockValue"
             element={<RptStockValuePage />}
@@ -263,10 +261,7 @@ const AppRoutes = () => {
             path="/Purchase/Report/RptInvoicewiseProfit"
             element={<RptInvoicewiseProfitPage />}
           />
-          <Route
-            path="/Purchase/Report/RptStockReport"
-            element={<RptStockReportPage />}
-          />
+          <Route path="/Purchase/Report/RptStockReport" element={<RptStockReportPage />} />
           <Route
             path="/Purchase/Report/RptStockValuation"
             element={<RptStockValuationPage />}

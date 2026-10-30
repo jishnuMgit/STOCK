@@ -16,6 +16,7 @@
 //   page; the company, the heading and the report info repeat at the top of every page.
 // Printed through components/common/printHtml (a hidden iframe).
 import { esc, printHtmlDocument } from "../../../common/printHtml";
+import { REPORT_STYLE, reportPrintCss } from "../../../common/reportStyle";
 
 // ---- what the server sends (names = the server's response keys) ----
 
@@ -103,8 +104,6 @@ export const formatQty = (value: number) => fixed(value, 0); // #,#0
 export const formatPrice = (value: number) => fixed(value, 2); // #,#0.00
 export const formatCost = (value: number) => fixed(value, 4); // #,#0.0000
 
-// the colour of the lines
-export const LINE_COLOR = "#c7d1e4";
 
 // the column weights, as the old reports
 export const SUMMARY_WEIGHTS = [0.26, 0.15, 0.19, 0.205, 0.195]; // Date | Type | Document No. | Amount_FC | Amount
@@ -245,36 +244,17 @@ export const buildHtml = (r: PrintReport) => `<!doctype html>
 <head>
 <meta charset="utf-8" />
 <title>Supplier Purchase</title>
-<style>
-  @page {
-    size: ${r.rdgDetOrSum === 1 ? "A4 portrait" : "A4 landscape"};
-    margin: 12.7mm 10mm 12.7mm ${r.rdgDetOrSum === 1 ? "20mm" : "12mm"};
-    @top-right { content: "Page " counter(page) " of " counter(pages); font: 8pt "Times New Roman", serif; }
-  }
-  * { box-sizing: border-box; }
-  body { margin: 0; font: 9.75pt "Times New Roman", serif; color: #000;
-         -webkit-print-color-adjust: exact; print-color-adjust: exact; }
-  table { width: 100%; border-collapse: collapse; table-layout: fixed; }
-  thead { display: table-header-group; }            /* the heading repeats on every page */
-  tr { page-break-inside: avoid; }
-  .co   { font-size: 14pt; text-align: center; height: 26px; }
-  .head { font-size: 12pt; text-align: center; height: 26px; }
-  .sub  { height: 24px; }
-  .sub div { display: flex; justify-content: space-between; gap: 16px; }
-  .sub .info { font-size: 8pt; }
-  th { border: 1px solid ${LINE_COLOR}; height: 25px;
-       padding: 0 4px; font-weight: normal; text-align: left; }
-  th.r { text-align: right; }
-  td { border: 1px solid ${LINE_COLOR}; border-top: 0; height: 25px; padding: 0 4px;
-       vertical-align: middle; overflow-wrap: anywhere; }
-  .r { text-align: right; }
-  td.u, td.r { white-space: nowrap; }                /* a number or a unit is never split over two lines */
-  td.group { border: 0; height: 30px; padding-top: 8px; font-size: 10.5pt; }
-  tr.tot td, tr.first td { border-top: 1px solid ${LINE_COLOR}; }
+<style>${reportPrintCss({
+  orientation: r.rdgDetOrSum === 1 ? "portrait" : "landscape",
+  marginLeft: r.rdgDetOrSum === 1 ? "20mm" : "12mm",
+  groupSelector: "td.group",
+  // the Detailed layout: the header of a document, its column labels and its footer
+  extra: `
   tr.gap td { border: 0; height: 14px; }
   tr.info td { border: 0; height: 20px; }
-  tr.labels th { border: 1px solid ${LINE_COLOR}; }
-  tr.foot td { border: 0; height: 20px; }
+  tr.labels th { border: 1px solid ${REPORT_STYLE.lineColor}; }
+  tr.foot td { border: 0; height: 20px; }`,
+})}
 </style>
 </head>
 <body>

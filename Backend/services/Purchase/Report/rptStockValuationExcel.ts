@@ -4,6 +4,7 @@
 // With more than one branch the report has one section per branch ("Branch : Jeddah", its items and
 // its Total, then the next branch ...); a Grand Total row closes it.
 import ExcelJS from "exceljs";
+import { addReportTitle, applyReportFont, thin } from "../../../utils/reportStyle.js";
 
 import type { StockValuationBranch } from "./rptStockValuationService.js";
 
@@ -19,20 +20,10 @@ export type StockValuationReport = {
   totals: { txtStock: number; txtStockValue: number };
 };
 
-const BORDER_COLOR = { argb: "FFC7D1E4" };
-const thin = {
-  top: { style: "thin" as const, color: BORDER_COLOR },
-  left: { style: "thin" as const, color: BORDER_COLOR },
-  bottom: { style: "thin" as const, color: BORDER_COLOR },
-  right: { style: "thin" as const, color: BORDER_COLOR },
-};
-
 // the stock shows whole numbers without decimals and a fraction up to 3 decimals;
 // the Unit Cost and the Stock Value show 4 decimals (the old #,#0.0000 and n4)
 const QTY_FORMAT = "#,##0.###";
 const AMOUNT_FORMAT = "#,##0.0000";
-
-const font = (size: number, bold = false) => ({ name: "Times New Roman", size, bold });
 
 const COLUMNS = 7;
 
@@ -63,25 +54,8 @@ export const buildStockValuationWorkbook = async (
     { width: 18 }, // Stock Value
   ];
 
-  // ---- company / heading / branch + report info (rows 1-3) ----
-  ws.mergeCells("A1:G1");
-  ws.getCell("A1").value = report.txtCoName;
-  ws.getCell("A1").font = font(14, true);
-  ws.getCell("A1").alignment = { horizontal: "center" };
-
-  ws.mergeCells("A2:G2");
-  ws.getCell("A2").value = report.txtHeading;
-  ws.getCell("A2").font = font(12);
-  ws.getCell("A2").alignment = { horizontal: "center" };
-
-  ws.mergeCells("A3:C3");
-  ws.getCell("A3").value = report.txtBranch;
-  ws.getCell("A3").alignment = { horizontal: "left" };
-
-  ws.mergeCells("D3:G3");
-  ws.getCell("D3").value = report.txtReportInfo;
-  ws.getCell("D3").font = font(8);
-  ws.getCell("D3").alignment = { horizontal: "right" };
+  // ---- company / heading / branch + report info (rows 1-3): the same on every report ----
+  addReportTitle(ws, report, report.txtBranch, 7);
 
   // ---- column labels (row 4) ----
   const head = ws.getRow(4);
@@ -144,6 +118,9 @@ export const buildStockValuationWorkbook = async (
 
   // ---- the Grand Total row ----
   addTotal("Grand Total :", report.totals.txtStock, report.totals.txtStockValue);
+
+  // the whole sheet in the report font (the table too, not only the title)
+  applyReportFont(ws);
 
   return Buffer.from(await wb.xlsx.writeBuffer());
 };

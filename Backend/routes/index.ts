@@ -44,7 +44,7 @@ import RptItemListRouter from "./Purchase/Report/RptItemListRouter.js"
 import RptTBRouter from "./Finance/Report/FinalAccounts/RptTBRouter.js";
 import RptSalesPriceListRouter from "./Purchase/Report/RptSalesPriceListRouter.js";
 import RptSOARouter from "./Finance/Report/A_RandA_P/RptSOARouter.js";
-import RptStockRouter from "./Sales/Report/RptStockRouter.js";
+import RptStockReportRouter from "./Purchase/Report/RptStockReportRouter.js";
 import RptStockValuationRouter from "./Purchase/Report/RptStockValuationRouter.js";
 import RptStockVerificationRouter from "./Purchase/Report/RptStockVerificationRouter.js";
 import RptStockAgeingRouter from "./Purchase/Report/RptStockAgeingRouter.js";
@@ -98,7 +98,7 @@ router.use("/RptItemList", RptItemListRouter);
 router.use("/RptTB", RptTBRouter); // Trial Balance report
 router.use("/RptSalesPriceList", RptSalesPriceListRouter);
 router.use("/RptSOA", RptSOARouter);
-router.use("/RptStock", RptStockRouter);
+router.use("/RptStockReport", RptStockReportRouter);
 router.use("/RptStockVerification", RptStockVerificationRouter);
 router.use("/RptStockAgeing", RptStockAgeingRouter);
 router.use("/RptSupplierPurchase", RptSupplierPurchaseRouter);
