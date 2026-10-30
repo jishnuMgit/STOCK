@@ -19,7 +19,6 @@ export function useMenuTree() {
     );
 
     // Finance > Transaction > Match
-    tree = injectChild(tree, "1101", TRANSACTION_MATCHING_NODE);
 
     if (userType === "AU") {
       tree.push(ADMINISTRATION_NODE);
