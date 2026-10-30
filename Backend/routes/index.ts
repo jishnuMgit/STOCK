@@ -50,6 +50,7 @@ import RptStockVerificationRouter from "./Purchase/Report/RptStockVerificationRo
 import RptStockAgeingRouter from "./Purchase/Report/RptStockAgeingRouter.js";
 import RptSupplierPurchaseRouter from "./Purchase/Report/RptSupplierPurchaseRouter.js";
 import RptItemPurchaseRouter from "./Purchase/Report/RptItemPurchaseRouter.js";
+import RptReceivablesRouter from "./Finance/Report/A_RandA_P/RptReceivablesRouter.js";
 const router = express.Router();
 router.use("/RptStockValuation", RptStockValuationRouter);
 router.use("/Receipt", ReceiptRouter);
@@ -103,4 +104,5 @@ router.use("/RptStockVerification", RptStockVerificationRouter);
 router.use("/RptStockAgeing", RptStockAgeingRouter);
 router.use("/RptSupplierPurchase", RptSupplierPurchaseRouter);
 router.use("/RptItemPurchase", RptItemPurchaseRouter);
+router.use("/RptReceivables", RptReceivablesRouter);
 export default router;
