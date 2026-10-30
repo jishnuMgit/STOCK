@@ -5,8 +5,8 @@ import {
   getDocumentsToMatchController,
   saveMatch,
   getMatchDate,
-} from "../controller/MatchController.js";
-import { authenticate } from "../middleware/authMiddleware.js";
+} from "../../../controller/Finance/Transaction/MatchController.js";
+import { authenticate } from "../../../middleware/authMiddleware.js";
 
 const router = express.Router();
 
