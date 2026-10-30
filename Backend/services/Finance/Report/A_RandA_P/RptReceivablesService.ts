@@ -84,9 +84,7 @@ const callCursor = async (
 
 const q = (db: Db, sql: string, args: unknown[]) => db.query(sql, args);
 
-// ------------------------------------------------------------
-// LOOKUPS (VB FillCombos)
-// ------------------------------------------------------------
+
 
 // the branches the user may use (lkpBranch)
 export const getUserBranches = async (
