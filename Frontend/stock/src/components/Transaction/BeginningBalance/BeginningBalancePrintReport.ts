@@ -6,6 +6,7 @@
 // Printed through components/common/printHtml (a hidden iframe).
 
 import { cssStr, esc, printHtmlDocument } from "../../common/printHtml";
+import { documentPrintCss } from "../../common/reportStyle";
 
 // the level of the accounts the report is made for (the old strInputAccountLevel)
 export const INPUT_ACCOUNT_LEVEL = 4;
@@ -84,30 +85,17 @@ export const buildHtml = (r: PrintReport) => {
 <head>
 <meta charset="utf-8" />
 <title>${esc(REPORT_HEADING)}</title>
-<style>
-  @page {
-    size: A4;
-    margin: 12mm 10mm 14mm 12mm;
-    @top-right    { content: "Page " counter(page) " of " counter(pages); font: 8pt "Times New Roman", serif; }
-    @bottom-right { content: "${cssStr(r.txtReportInfo)}"; font: 8pt "Times New Roman", serif; }
-  }
-  * { box-sizing: border-box; }
-  body { margin: 0; font: 9pt "Times New Roman", serif; color: #000;
-         -webkit-print-color-adjust: exact; print-color-adjust: exact; }
-  table { width: 100%; border-collapse: collapse; table-layout: fixed;
-          margin-left: 0; margin-right: 0; }
-  thead { display: table-header-group; }            /* header repeats on every page */
-  tr { page-break-inside: avoid; }
-  .co   { font-size: 14pt; text-align: center; height: 24px; }
-  .head { font-size: 12pt; text-align: center; height: 24px; }
+<style>${documentPrintCss({
+  orientation: "portrait",
+  margin: "12mm 10mm 14mm 12mm",
+  reportInfo: cssStr(r.txtReportInfo),
+  cellPaddingX: 6,
+  extra: `
   .br   { font-size: 9pt;  text-align: left;   height: 24px; }
-  th { border: 1px solid #c7d1e4; height: 24px;
-       padding: 0 6px; font-weight: normal; text-align: left; }
-  th.r { text-align: right; }
-  td { border: 1px solid #c7d1e4; border-top: 0; height: 24px; padding: 0 6px; }
+  td { height: 24px; padding: 0 6px; vertical-align: middle; overflow-wrap: normal; }
   .name { white-space: pre; }                       /* keeps the level indent */
-  .r { text-align: right; }
-  tr.tot td { border-top: 1px solid #c7d1e4; }
+  `,
+})}
 </style>
 </head>
 <body>

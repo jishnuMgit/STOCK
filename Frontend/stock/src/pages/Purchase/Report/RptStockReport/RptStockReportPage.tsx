@@ -6,33 +6,33 @@ import { DatePicker } from "@mui/x-date-pickers/DatePicker";
 import dayjs from "dayjs";
 import customParseFormat from "dayjs/plugin/customParseFormat";
 import { toast } from "react-toastify";
-import RadioGroup from "../../../components/common/RadioGroup";
-import { useEnterAsTab } from "../../../hooks/useEnterAsTab";
-import { useAltShortcuts } from "../../../hooks/useAltShortcuts";
-import { useCtrlShortcuts } from "../../../hooks/useCtrlShortcuts";
-import { useGridCellFocus } from "../../../hooks/useGridCellFocus";
-import { useAdvanceAfterSelect } from "../../../hooks/useAdvanceAfterSelect";
-import { useInitialFocus } from "../../../hooks/useInitialFocus";
-import ReportPreview from "../../../components/common/ReportPreview";
-import { buildStockPdf } from "../../../components/Sales/Report/RptStock/RptStockPdf";
+import RadioGroup from "../../../../components/common/RadioGroup";
+import { useEnterAsTab } from "../../../../hooks/useEnterAsTab";
+import { useAltShortcuts } from "../../../../hooks/useAltShortcuts";
+import { useCtrlShortcuts } from "../../../../hooks/useCtrlShortcuts";
+import { useGridCellFocus } from "../../../../hooks/useGridCellFocus";
+import { useAdvanceAfterSelect } from "../../../../hooks/useAdvanceAfterSelect";
+import { useInitialFocus } from "../../../../hooks/useInitialFocus";
+import ReportPreview from "../../../../components/common/ReportPreview";
+import { buildStockReportPdf } from "../../../../components/Purchase/Report/RptStockReport/RptStockReportPdf";
 import {
   buildHtml,
   printStockReport,
   type PrintReport,
-} from "../../../components/Sales/Report/RptStock/RptStockPrintReport";
+} from "../../../../components/Purchase/Report/RptStockReport/RptStockReportPrintReport";
 import {
   filterPairOption,
   makePairComponents,
   makePairDividedMenuStyles,
   type PairOption,
-} from "../../../components/PairSelect/pairSelectParts";
-import { usePairMenuHang } from "../../../hooks/usePairMenuHang";
+} from "../../../../components/PairSelect/pairSelectParts";
+import { usePairMenuHang } from "../../../../hooks/usePairMenuHang";
 import {
   BranchDividedMenuList,
   BranchDividedOption,
   branchMenuStyles,
   filterLabelOrValue,
-} from "../../../components/BranchSelect/branchSelectParts";
+} from "../../../../components/BranchSelect/branchSelectParts";
 
 dayjs.extend(customParseFormat);
 
@@ -261,7 +261,7 @@ const AppDatePicker: React.FC<AppDatePickerProps> = ({
   </LocalizationProvider>
 );
 
-const RptStockPage: React.FC = () => {
+const RptStockReportPage: React.FC = () => {
   // Enter moves on like Tab; the box the cursor is in is outlined; after a pick from a list the
   // cursor goes on
   const handleEnterAsTab = useEnterAsTab();
@@ -305,7 +305,7 @@ const RptStockPage: React.FC = () => {
   useEffect(() => {
     const loadBranches = async () => {
       try {
-        const response = await fetch(`${api}/RptStock/lookups`, { credentials: "include" });
+        const response = await fetch(`${api}/RptStockReport/lookups`, { credentials: "include" });
         const result = await response.json();
 
         if (!response.ok || !result.success) {
@@ -329,7 +329,7 @@ const RptStockPage: React.FC = () => {
         setGroupRows(result.groups || []);
         setItemRows(result.items || []);
       } catch (error: unknown) {
-        console.error("rptStock branches error:", error);
+        console.error("rptStockReport branches error:", error);
         toast.error("Cannot connect to the Stock report API.");
       }
     };
@@ -508,7 +508,7 @@ const RptStockPage: React.FC = () => {
     setPrinting(true);
 
     try {
-      const response = await fetch(`${api}/RptStock/print`, {
+      const response = await fetch(`${api}/RptStockReport/print`, {
         method: "POST",
         credentials: "include",
         headers: { "Content-Type": "application/json" },
@@ -525,7 +525,7 @@ const RptStockPage: React.FC = () => {
 
       setPreview({ report: result.report, fileBase: result.fileBase, params });
     } catch (error: unknown) {
-      console.error("rptStock print error:", error);
+      console.error("rptStockReport print error:", error);
       toast.error("Cannot connect to the Stock report API.");
     } finally {
       setPrinting(false);
@@ -536,7 +536,7 @@ const RptStockPage: React.FC = () => {
   const fetchExcel = async (): Promise<Blob | null> => {
     if (!preview) return null;
 
-    const response = await fetch(`${api}/RptStock/excel`, {
+    const response = await fetch(`${api}/RptStockReport/excel`, {
       method: "POST",
       credentials: "include",
       headers: { "Content-Type": "application/json" },
@@ -936,7 +936,7 @@ const RptStockPage: React.FC = () => {
           html={buildHtml(preview.report)}
           fileBase={preview.fileBase}
           onPrint={() => printStockReport(preview.report)}
-          buildPdf={() => buildStockPdf(preview.report)}
+          buildPdf={() => buildStockReportPdf(preview.report)}
           fetchExcel={fetchExcel}
           onClose={() => setPreview(null)}
         />
@@ -945,4 +945,4 @@ const RptStockPage: React.FC = () => {
   );
 };
 
-export default RptStockPage;
+export default RptStockReportPage;

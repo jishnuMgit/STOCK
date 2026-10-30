@@ -4,6 +4,7 @@
 // Total row).
 // Needs:  npm i exceljs
 import ExcelJS from "exceljs";
+import { REPORT_FONT_SIZE, applyReportFont, font, thin } from "../../../utils/reportStyle.js";
 
 import type { StockAdjustmentPrint } from "./stockAdjustmentService.js";
 
@@ -11,14 +12,6 @@ export type StockAdjustmentExcelReport = {
   report: StockAdjustmentPrint;
   heading: string;
   reportInfo: string;
-};
-
-const BORDER_COLOR = { argb: "FFC7D1E4" };
-const thin = {
-  top: { style: "thin" as const, color: BORDER_COLOR },
-  left: { style: "thin" as const, color: BORDER_COLOR },
-  bottom: { style: "thin" as const, color: BORDER_COLOR },
-  right: { style: "thin" as const, color: BORDER_COLOR },
 };
 
 const MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
@@ -72,12 +65,12 @@ export const buildStockAdjustmentWorkbook = async ({
   // ---- company / heading (rows 1-2) ----
   ws.mergeCells("A1:H1");
   ws.getCell("A1").value = header.fconame;
-  ws.getCell("A1").font = { name: "Times New Roman", size: 14, bold: true };
+  ws.getCell("A1").font = font(REPORT_FONT_SIZE.company, true);
   ws.getCell("A1").alignment = { horizontal: "center" };
 
   ws.mergeCells("A2:H2");
   ws.getCell("A2").value = heading;
-  ws.getCell("A2").font = { name: "Times New Roman", size: 12 };
+  ws.getCell("A2").font = font(REPORT_FONT_SIZE.heading);
   ws.getCell("A2").alignment = { horizontal: "center" };
 
   // ---- branch (left) and report info (right) - row 3 ----
@@ -87,7 +80,7 @@ export const buildStockAdjustmentWorkbook = async ({
 
   ws.mergeCells("F3:H3");
   ws.getCell("F3").value = reportInfo;
-  ws.getCell("F3").font = { name: "Times New Roman", size: 8 };
+  ws.getCell("F3").font = font(REPORT_FONT_SIZE.small);
   ws.getCell("F3").alignment = { horizontal: "right" };
 
   // ---- entry no. / date - row 4, and the note when there is one - row 5 ----
@@ -168,6 +161,9 @@ export const buildStockAdjustmentWorkbook = async ({
     if (col === 5 || col === 6) cell.numFmt = QTY_FORMAT;
     if (col === 8) cell.numFmt = COST_FORMAT;
   });
+
+  // the whole sheet in the report font (the table too, not only the title)
+  applyReportFont(ws);
 
   return Buffer.from(await wb.xlsx.writeBuffer());
 };

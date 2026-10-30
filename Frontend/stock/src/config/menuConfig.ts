@@ -29,6 +29,17 @@ import type { MenuNode } from "../types/menu";
        Post/UnPost, a different feature)
 ========================================================= */
 
+/* =========================================================
+   HIDDEN MENU ROWS
+
+   tblmenu rows that exist in the database but must not show in the
+   sidebar. The Stock report lives only under Purchase > Reports
+   (mnuRptStockReport), so the Sales > Reports > Stock row
+   (mnuRptStock) is left out of the menu.
+========================================================= */
+
+export const HIDDEN_MENU_NAMES: readonly string[] = ["mnuRptStock"];
+
 export const menuRouteMap: Record<string, string> = {
   /* =========================================================
      PURCHASE
@@ -89,7 +100,6 @@ Sales-SETUP
   /*============================================================
 Sales-REPORT
 =============================================================*/
-  mnuRptStock: "/Sales/Report/RptStock",
   "mnuRptStock Value": "/Sales/Reports/StockValue",
   mnuRptCustomerSales: "/Sales/Reports/RptCustomerSales",
   mnuRptItemSales: "/Sales/Reports/RptItemSales",

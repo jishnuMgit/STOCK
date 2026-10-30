@@ -6,6 +6,7 @@
 //            (Sl / Item ID / Item Name / Unit / Qty / U Price (FC) / Tot. Price (FC) / Unit Price / Unit Cost /
 //            Total Cost) and its Total.
 import ExcelJS from "exceljs";
+import { addReportTitle, applyReportFont, thin } from "../../../utils/reportStyle.js";
 
 import type {
   SupplierPurchaseDocument,
@@ -38,47 +39,10 @@ export type SupplierPurchaseDetailedReport = ReportCommon & {
 
 export type SupplierPurchaseReport = SupplierPurchaseSummaryReport | SupplierPurchaseDetailedReport;
 
-const BORDER_COLOR = { argb: "FFC7D1E4" };
-const thin = {
-  top: { style: "thin" as const, color: BORDER_COLOR },
-  left: { style: "thin" as const, color: BORDER_COLOR },
-  bottom: { style: "thin" as const, color: BORDER_COLOR },
-  right: { style: "thin" as const, color: BORDER_COLOR },
-};
-
 // the old report: Amount_FC #,#0.0000, Amount n2, the quantity #,#0 (whole numbers)
 const FC_FORMAT = "#,##0.0000";
 const AMOUNT_FORMAT = "#,##0.00";
 const QTY_FORMAT = "#,##0";
-
-const font = (size: number, bold = false) => ({ name: "Times New Roman", size, bold });
-
-const lastColumn = (columns: number) => String.fromCharCode(64 + columns);
-
-// the company, the heading and the report info (rows 1-3)
-const addTitle = (ws: ExcelJS.Worksheet, report: ReportCommon, branch: string, columns: number) => {
-  const last = lastColumn(columns);
-  const half = Math.floor(columns / 2);
-
-  ws.mergeCells(`A1:${last}1`);
-  ws.getCell("A1").value = report.txtCoName;
-  ws.getCell("A1").font = font(14, true);
-  ws.getCell("A1").alignment = { horizontal: "center" };
-
-  ws.mergeCells(`A2:${last}2`);
-  ws.getCell("A2").value = report.txtHeading;
-  ws.getCell("A2").font = font(12);
-  ws.getCell("A2").alignment = { horizontal: "center" };
-
-  ws.mergeCells(`A3:${lastColumn(half)}3`);
-  ws.getCell("A3").value = branch;
-  ws.getCell("A3").alignment = { horizontal: "left" };
-
-  ws.mergeCells(`${lastColumn(half + 1)}3:${last}3`);
-  ws.getCell(`${lastColumn(half + 1)}3`).value = report.txtReportInfo;
-  ws.getCell(`${lastColumn(half + 1)}3`).font = font(8);
-  ws.getCell(`${lastColumn(half + 1)}3`).alignment = { horizontal: "right" };
-};
 
 const boxed = (row: ExcelJS.Row, numberFrom: number, formats: Record<number, string> = {}) => {
   row.eachCell({ includeEmpty: true }, (cell, col) => {
@@ -99,7 +63,7 @@ const buildSummary = (wb: ExcelJS.Workbook, report: SupplierPurchaseSummaryRepor
 
   ws.columns = [{ width: 14 }, { width: 10 }, { width: 22 }, { width: 18 }, { width: 18 }];
 
-  addTitle(ws, report, report.txtBranch, 5);
+  addReportTitle(ws, report, report.txtBranch, 5);
 
   const head = ws.getRow(4);
   head.values = ["Date", "Type", "Document No.", "Amount_FC", "Amount"];
@@ -133,6 +97,7 @@ const buildSummary = (wb: ExcelJS.Workbook, report: SupplierPurchaseSummaryRepor
       cell.alignment = { horizontal: "right" };
     });
   }
+  applyReportFont(ws);
 };
 
 /* ---------------------------------------------------------
@@ -157,7 +122,7 @@ const buildDetailed = (wb: ExcelJS.Workbook, report: SupplierPurchaseDetailedRep
     { width: 16 }, // Total Cost
   ];
 
-  addTitle(ws, report, "", 10);
+  addReportTitle(ws, report, "", 10);
 
   ws.views = [{ state: "frozen", ySplit: 3 }];
   ws.pageSetup.printTitlesRow = "1:3";
@@ -229,6 +194,7 @@ const buildDetailed = (wb: ExcelJS.Workbook, report: SupplierPurchaseDetailedRep
     ]);
     info([[`Note : ${doc.txtNote}`, 1, 10]]);
   }
+  applyReportFont(ws);
 };
 
 export const buildSupplierPurchaseWorkbook = async (report: SupplierPurchaseReport): Promise<Buffer> => {

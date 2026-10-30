@@ -1,5 +1,5 @@
-// services/Sales/Report/rptStockService.ts
-// Data access for the Stock report (Sales > Report > Stock; port of the rptStock form and
+// services/Purchase/Report/rptStockReportService.ts
+// Data access for the Stock report (Sales > Report > Stock; port of the rptStockReport form and
 // its two reports rptStockDetRpt / rptStockSumRpt -> dbo.sp_rptstock).
 import pool from "../../../DB/db.js";
 
@@ -7,7 +7,7 @@ export type Branch = { brId: string; brName: string };
 export type ItemLookup = { itemId: string; itemName: string; itemGroupId: string; brId: string };
 export type ItemGroup = { groupId: string; groupName: string };
 
-export type StockParams = {
+export type StockReportParams = {
   detOrSum: "D" | "S";
   postStatus: 0 | 1 | 2; // 0 all, 1 posted, 2 non posted (as in SP_rptStock)
   coId: string;
@@ -234,7 +234,7 @@ export const getBranchName = async (coId: string, branchId: string): Promise<str
    THE REPORT - dbo.sp_rptstock
 ========================================================= */
 
-const fetchRows = (p: StockParams) =>
+const fetchRows = (p: StockReportParams) =>
   callCursor(
     "sp_rptstock",
     // the arguments of SP_rptStock, in its order
@@ -274,7 +274,7 @@ const fetchRows = (p: StockParams) =>
 
 // DETAILED: the rows come ordered by branch, then item; the running balance restarts for each item
 // of each branch (the old rptStockDetRpt: balance += In - Out, set back to 0 after each item's group)
-export const getDetailed = async (p: StockParams): Promise<DetailBranch[]> => {
+export const getDetailed = async (p: StockReportParams): Promise<DetailBranch[]> => {
   const rows = await fetchRows(p);
   const branches: DetailBranch[] = [];
   const items: DetailItem[] = []; // every item of every branch, for the footers below
@@ -334,7 +334,7 @@ export const getDetailed = async (p: StockParams): Promise<DetailBranch[]> => {
 
 // SUMMARY: one row per item, plus the totals of the report footer
 export const getSummary = async (
-  p: StockParams
+  p: StockReportParams
 ): Promise<{ branches: SummaryBranch[]; totals: SummaryTotals }> => {
   const rows = await fetchRows(p);
 
