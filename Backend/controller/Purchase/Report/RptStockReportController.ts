@@ -1,5 +1,5 @@
-// controller/Sales/Report/RptStockController.ts
-// The Stock report (Sales > Report > Stock). The logged-in company and user come from the
+// controller/Purchase/Report/RptStockReportController.ts
+// The Stock report (Purchase > Report > Stock). The logged-in company and user come from the
 // SESSION (authenticate), never from the request.
 //
 // The body keys are the arguments of the old SP_rptStock (the page sends them as they are):
@@ -31,12 +31,12 @@ import {
   type DetailBranch,
   type SummaryBranch,
   type SummaryTotals,
-  type StockParams,
-} from "../../../services/Sales/Report/rptStockService.js";
+  type StockReportParams,
+} from "../../../services/Purchase/Report/rptStockReportService.js";
 import {
-  buildStockWorkbook,
+  buildStockReportWorkbook,
   type StockReport,
-} from "../../../services/Sales/Report/rptStockExcel.js";
+} from "../../../services/Purchase/Report/rptStockReportExcel.js";
 
 class ApiError extends Error {
   status: number;
@@ -95,7 +95,7 @@ const sendError = (res: Response, error: unknown, what: string) => {
     });
   }
 
-  console.error(`rptStock ${what} error:`, error);
+  console.error(`rptStockReport ${what} error:`, error);
 
   return res.status(500).json({
     success: false,
@@ -249,7 +249,7 @@ const prepareReport = async (req: AuthenticatedRequest): Promise<Prepared> => {
 
   const detailed = strDetOrSum === "D";
 
-  const params: StockParams = {
+  const params: StockReportParams = {
     detOrSum: detailed ? "D" : "S",
     postStatus: lkpPostStatus as 0 | 1 | 2, // 0 all, 1 posted, 2 non posted
     coId: CoID,
@@ -319,7 +319,7 @@ const prepareReport = async (req: AuthenticatedRequest): Promise<Prepared> => {
 };
 
 /* =========================================================
-   POST /RptStock/print  -> everything the preview, the printer and the PDF need
+   POST /RptStockReport/print  -> everything the preview, the printer and the PDF need
 ========================================================= */
 
 export const getPrintData = async (
@@ -336,7 +336,7 @@ export const getPrintData = async (
 };
 
 /* =========================================================
-   POST /RptStock/excel  (the same body) -> the .xlsx file
+   POST /RptStockReport/excel  (the same body) -> the .xlsx file
 ========================================================= */
 
 export const getExcel = async (
@@ -345,7 +345,7 @@ export const getExcel = async (
 ): Promise<Response> => {
   try {
     const { report, fileBase } = await prepareReport(req);
-    const buffer = await buildStockWorkbook(report);
+    const buffer = await buildStockReportWorkbook(report);
 
     res.setHeader(
       "Content-Type",

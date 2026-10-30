@@ -1,4 +1,4 @@
-// RptStockPdf.ts
+// RptStockReportPdf.ts
 // The Stock report as a PDF (returned as a Blob; saveFile.ts saves it).
 //   Detailed - A4 portrait, by item with a running balance and a Total row per item.
 //   Summary  - A4 landscape, one row per item and a Total row at the end.
@@ -8,30 +8,24 @@ import { jsPDF } from "jspdf";
 import autoTable, { type CellDef } from "jspdf-autotable";
 
 import {
-  COLORS,
+  PDF_BLACK,
+  addPageNumbers,
+  drawReportTitle,
+  pdfMargin,
+  pdfTableStyles,
+  pdfTableTop,
+} from "../../../common/reportPdf";
+
+import {
   formatCost,
   formatDate,
   formatQty,
   type PrintReport,
-} from "./RptStockPrintReport";
+} from "./RptStockReportPrintReport";
 
-type RGB = [number, number, number];
-
-const hexToRgb = (hex: string): RGB => [
-  parseInt(hex.slice(1, 3), 16),
-  parseInt(hex.slice(3, 5), 16),
-  parseInt(hex.slice(5, 7), 16),
-];
-
-const BLACK: RGB = [0, 0, 0];
-
-const PAD = 1.2;
-
-export const buildStockPdf = (report: PrintReport): Blob => {
+export const buildStockReportPdf = (report: PrintReport): Blob => {
   const detailed = report.txtMode === "D";
   const sections = (detailed ? report.detail.length : report.summary.branches.length) > 1;
-  const color = COLORS[report.txtMode];
-  const lineColor = hexToRgb(color.line);
 
   const doc = new jsPDF({
     orientation: detailed ? "portrait" : "landscape",
@@ -40,9 +34,9 @@ export const buildStockPdf = (report: PrintReport): Blob => {
   });
 
   const pageW = detailed ? 210 : 297;
-  const margin = { top: 12.7, right: 10, bottom: 12.7, left: detailed ? 22.9 : 25.4 };
+  const margin = pdfMargin(detailed ? 22.9 : 25.4);
   const usable = pageW - margin.left - margin.right;
-  const tableTop = margin.top + 27;
+  const tableTop = pdfTableTop(margin);
 
   const right = { halign: "right" as const };
   const bold = { fontStyle: "bold" as const };
@@ -163,22 +157,7 @@ export const buildStockPdf = (report: PrintReport): Blob => {
   }
 
   // company / heading / branch + report info - drawn on every page
-  const drawTitle = () => {
-    doc.setTextColor(0, 0, 0);
-    doc.setFont("times", "normal");
-
-    doc.setFontSize(14);
-    doc.text(report.txtCoName, pageW / 2, margin.top + 8, { align: "center" });
-
-    doc.setFontSize(12);
-    doc.text(report.txtHeading, pageW / 2, margin.top + 15, { align: "center" });
-
-    doc.setFontSize(9);
-    if (report.txtBranch) doc.text(report.txtBranch, margin.left, margin.top + 22);
-
-    doc.setFontSize(8);
-    doc.text(report.txtReportInfo, pageW - margin.right, margin.top + 22, { align: "right" });
-  };
+  const drawTitle = () => drawReportTitle(doc, pageW, margin, report, report.txtBranch);
 
   autoTable(doc, {
     theme: "plain",
@@ -192,19 +171,9 @@ export const buildStockPdf = (report: PrintReport): Blob => {
     tableWidth: usable,
     rowPageBreak: "avoid",
     showHead: "everyPage",
-    styles: {
-      font: "times",
-      fontSize: 9,
-      cellPadding: PAD,
-      lineColor,
-      lineWidth: 0.2,
-      minCellHeight: 7,
-      valign: "middle",
-      overflow: "linebreak",
-      textColor: BLACK,
-    },
+    styles: pdfTableStyles(),
     headStyles: {
-      textColor: BLACK,
+      textColor: PDF_BLACK,
       fontStyle: "normal",
     },
     columnStyles,
@@ -213,17 +182,7 @@ export const buildStockPdf = (report: PrintReport): Blob => {
     didDrawPage: drawTitle,
   });
 
-  // page numbers need the final page count, so they are added at the end
-  const pages = doc.getNumberOfPages();
-
-  doc.setFont("times", "normal");
-  doc.setFontSize(8);
-  doc.setTextColor(0, 0, 0);
-
-  for (let i = 1; i <= pages; i++) {
-    doc.setPage(i);
-    doc.text(`Page ${i} of ${pages}`, pageW - margin.right, margin.top, { align: "right" });
-  }
+  addPageNumbers(doc, pageW, margin);
 
   return doc.output("blob");
 };

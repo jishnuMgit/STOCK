@@ -1,5 +1,5 @@
-// routes/Sales/Report/RptStockRouter.ts
-// Mounted as /RptStock in routes/index.ts. Every route is behind the session check: the
+// routes/Purchase/Report/RptStockReportRouter.ts
+// Mounted as /RptStockReport in routes/index.ts. Every route is behind the session check: the
 // company, the user and the branches the user may use come from WHO is logged in.
 import { Router } from "express";
 
@@ -8,7 +8,7 @@ import {
   getLookups,
   getPrintData,
   getExcel,
-} from "../../../controller/Sales/Report/RptStockController.js";
+} from "../../../controller/Purchase/Report/RptStockReportController.js";
 
 const router = Router();
 

@@ -7,16 +7,18 @@
 import { jsPDF } from "jspdf";
 import autoTable, { type CellDef } from "jspdf-autotable";
 
+import { PDF_BLACK, hexToRgb } from "../../common/reportPdf";
+import { REPORT_STYLE } from "../../common/reportStyle";
+
 import { groupByUser, periodHeading, type PrintReport } from "./UserAuditPrintReport";
 
-type RGB = [number, number, number];
-const BORDER: RGB = [199, 209, 228]; // #c7d1e4
-const BLACK: RGB = [0, 0, 0];
+const BORDER = hexToRgb(REPORT_STYLE.lineColor);
+const BLACK = PDF_BLACK;
 
 const PAGE_W = 297; // A4 landscape, mm
 const MARGIN = { top: 12, right: 10, bottom: 14, left: 15 };
 
-const PAD = 1.2;
+const PAD = REPORT_STYLE.pdf.cellPadding;
 
 export const buildUserAuditPdf = (report: PrintReport): Blob => {
   const doc = new jsPDF({ orientation: "landscape", unit: "mm", format: "a4" });
@@ -64,11 +66,11 @@ export const buildUserAuditPdf = (report: PrintReport): Blob => {
   // company / heading - drawn on every page
   const drawTitle = () => {
     doc.setTextColor(0, 0, 0);
-    doc.setFont("times", "normal");
-    doc.setFontSize(14);
+    doc.setFont(REPORT_STYLE.pdfFont, "normal");
+    doc.setFontSize(REPORT_STYLE.size.company);
     doc.text(report.txtCompanyName, PAGE_W / 2, MARGIN.top + 8, { align: "center" });
 
-    doc.setFontSize(12);
+    doc.setFontSize(REPORT_STYLE.size.heading);
     doc.text(periodHeading(report), PAGE_W / 2, MARGIN.top + 15, { align: "center" });
   };
 
@@ -85,11 +87,11 @@ export const buildUserAuditPdf = (report: PrintReport): Blob => {
     rowPageBreak: "avoid",
     showHead: "everyPage",
     styles: {
-      font: "times",
-      fontSize: 9,
+      font: REPORT_STYLE.pdfFont,
+      fontSize: REPORT_STYLE.size.pdfBody,
       cellPadding: PAD,
       lineColor: BORDER,
-      lineWidth: 0.2,
+      lineWidth: REPORT_STYLE.pdf.lineWidth,
       minCellHeight: 7,
       valign: "top",
       overflow: "linebreak",
@@ -120,8 +122,8 @@ export const buildUserAuditPdf = (report: PrintReport): Blob => {
 
   // page numbers need the final page count, so they are added at the end
   const pages = doc.getNumberOfPages();
-  doc.setFont("times", "normal");
-  doc.setFontSize(8);
+  doc.setFont(REPORT_STYLE.pdfFont, "normal");
+  doc.setFontSize(REPORT_STYLE.size.small);
   doc.setTextColor(0, 0, 0);
   for (let i = 1; i <= pages; i++) {
     doc.setPage(i);

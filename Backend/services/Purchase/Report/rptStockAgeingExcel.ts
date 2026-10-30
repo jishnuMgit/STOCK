@@ -4,6 +4,7 @@
 // of the Item ID. No group headings and no totals. An item is one row: its stock is added up over all the
 // branches asked for.
 import ExcelJS from "exceljs";
+import { addReportTitle, applyReportFont, thin } from "../../../utils/reportStyle.js";
 
 import type { StockAgeingLine } from "./rptStockAgeingService.js";
 
@@ -19,19 +20,9 @@ export type StockAgeingReport = {
   lines: StockAgeingLine[];
 };
 
-const BORDER_COLOR = { argb: "FFC7D1E4" };
-const thin = {
-  top: { style: "thin" as const, color: BORDER_COLOR },
-  left: { style: "thin" as const, color: BORDER_COLOR },
-  bottom: { style: "thin" as const, color: BORDER_COLOR },
-  right: { style: "thin" as const, color: BORDER_COLOR },
-};
-
 // the old report: the Stock and the age columns as #,#0 (whole numbers), the Unit Cost as #,#0.0000
 const QTY_FORMAT = "#,##0";
 const COST_FORMAT = "#,##0.0000";
-
-const font = (size: number, bold = false) => ({ name: "Times New Roman", size, bold });
 
 const FIRST_NUMBER_COLUMN = 5; // Stock, Unit Cost and the age columns are numbers
 const COST_COLUMN = 6;
@@ -63,25 +54,8 @@ export const buildStockAgeingWorkbook = async (report: StockAgeingReport): Promi
     { width: 14 }, // the five age columns
   ];
 
-  // ---- company / heading / branch + report info (rows 1-3) ----
-  ws.mergeCells("A1:K1");
-  ws.getCell("A1").value = report.txtCoName;
-  ws.getCell("A1").font = font(14, true);
-  ws.getCell("A1").alignment = { horizontal: "center" };
-
-  ws.mergeCells("A2:K2");
-  ws.getCell("A2").value = report.txtHeading;
-  ws.getCell("A2").font = font(12);
-  ws.getCell("A2").alignment = { horizontal: "center" };
-
-  ws.mergeCells("A3:C3");
-  ws.getCell("A3").value = report.txtBranch;
-  ws.getCell("A3").alignment = { horizontal: "left" };
-
-  ws.mergeCells("D3:K3");
-  ws.getCell("D3").value = report.txtReportInfo;
-  ws.getCell("D3").font = font(8);
-  ws.getCell("D3").alignment = { horizontal: "right" };
+  // ---- company / heading / branch + report info (rows 1-3): the same on every report ----
+  addReportTitle(ws, report, report.txtBranch, 11, 3);
 
   // ---- column labels (row 4) ----
   const head = ws.getRow(4);
@@ -125,6 +99,9 @@ export const buildStockAgeingWorkbook = async (report: StockAgeingReport): Promi
       else if (col >= FIRST_NUMBER_COLUMN) cell.numFmt = QTY_FORMAT;
     });
   }
+
+  // the whole sheet in the report font (the table too, not only the title)
+  applyReportFont(ws);
 
   return Buffer.from(await wb.xlsx.writeBuffer());
 };

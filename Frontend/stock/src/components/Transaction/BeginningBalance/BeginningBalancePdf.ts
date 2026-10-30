@@ -6,6 +6,9 @@
 import { jsPDF } from "jspdf";
 import autoTable, { type CellDef } from "jspdf-autotable";
 
+import { PDF_BLACK, hexToRgb, type RGB } from "../../common/reportPdf";
+import { REPORT_STYLE } from "../../common/reportStyle";
+
 import {
   REPORT_HEADING,
   formatAmount,
@@ -14,9 +17,8 @@ import {
   type PrintReport,
 } from "./BeginningBalancePrintReport";
 
-type RGB = [number, number, number];
-const BORDER: RGB = [199, 209, 228]; // #c7d1e4
-const BLACK: RGB = [0, 0, 0];
+const BORDER = hexToRgb(REPORT_STYLE.lineColor);
+const BLACK = PDF_BLACK;
 
 // the old Detail_BeforePrint: level 1 red, 2 green, 3 blue, the accounts black
 const levelColor = (level: number | null): RGB => {
@@ -36,7 +38,7 @@ const PAGE_W = 210; // A4 portrait, mm
 const MARGIN = { top: 12, right: 10, bottom: 14, left: 12 };
 const TABLE_TOP = 38; // below company / heading / branch
 
-const PAD = 1.2;
+const PAD = REPORT_STYLE.pdf.cellPadding;
 const INDENT_PER_SPACE = 1.0; // mm: the leading spaces of the name become padding
 
 export const buildBeginningBalancePdf = (report: PrintReport): Blob => {
@@ -98,14 +100,14 @@ export const buildBeginningBalancePdf = (report: PrintReport): Blob => {
   // company / heading / branch - drawn on every page
   const drawTitle = () => {
     doc.setTextColor(0, 0, 0);
-    doc.setFont("times", "normal");
-    doc.setFontSize(14);
+    doc.setFont(REPORT_STYLE.pdfFont, "normal");
+    doc.setFontSize(REPORT_STYLE.size.company);
     doc.text(report.txtCoName, PAGE_W / 2, MARGIN.top + 8, { align: "center" });
 
-    doc.setFontSize(12);
+    doc.setFontSize(REPORT_STYLE.size.heading);
     doc.text(REPORT_HEADING, PAGE_W / 2, MARGIN.top + 15, { align: "center" });
 
-    doc.setFontSize(9);
+    doc.setFontSize(REPORT_STYLE.size.pdfBody);
     doc.text(`Branch : ${report.txtBranchName}`, MARGIN.left, MARGIN.top + 23);
   };
 
@@ -122,11 +124,11 @@ export const buildBeginningBalancePdf = (report: PrintReport): Blob => {
     rowPageBreak: "avoid",
     showHead: "everyPage",
     styles: {
-      font: "times",
-      fontSize: 9,
+      font: REPORT_STYLE.pdfFont,
+      fontSize: REPORT_STYLE.size.pdfBody,
       cellPadding: PAD,
       lineColor: BORDER,
-      lineWidth: 0.2,
+      lineWidth: REPORT_STYLE.pdf.lineWidth,
       minCellHeight: 7,
       valign: "middle",
       overflow: "ellipsize",
@@ -152,8 +154,8 @@ export const buildBeginningBalancePdf = (report: PrintReport): Blob => {
 
   // page numbers need the final page count, so they are added at the end
   const pages = doc.getNumberOfPages();
-  doc.setFont("times", "normal");
-  doc.setFontSize(8);
+  doc.setFont(REPORT_STYLE.pdfFont, "normal");
+  doc.setFontSize(REPORT_STYLE.size.small);
   doc.setTextColor(0, 0, 0);
   for (let i = 1; i <= pages; i++) {
     doc.setPage(i);
