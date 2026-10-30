@@ -28,7 +28,7 @@ import UnitPage from "../pages/Purchase/Setup/UnitPage";
 import StaffPage from "../pages/Purchase/Setup/StaffPage";
 import UserAudit from "../pages/Security/UserAudit/UserAuditPage";
 import UserTransactionAudit from "../pages/Security/UserTransactionAudit/UserTransactionAuditPage";
-import StockDocumentPost from "../pages/Sales/Transaction/stock/StockDocumentPostPage";
+import StockDocumentPostPage from "../pages/Sales/Transaction/stock/StockDocumentPostPage";
 import StockDocumentPostCancel from "../pages/Sales/Transaction/stock/StockDocumentPostCancel";
 import StockDocumentRePost from "../pages/Sales/Transaction/stock/StockDocumentRePost";
 import RptGLPage from "../pages/Finance/Report/GeneralLedger/GeneralLedger/RptGLPage";
@@ -192,7 +192,7 @@ const AppRoutes = () => {
           <Route path="/Sales/Transaction/SalesInvoicePage" element={<SalesInvoice />}/>
           <Route path="/Sales/Transaction/StockAdjustment"  element={<StockAdjustmentPage/>} />
           <Route path="/Sales/Transaction/StockTransferPage" element={<StockTransfer />}/>
-          <Route path="/Sales/Transaction/StockDocumentPost" element={<StockDocumentPost/>}/>
+          <Route path="/Sales/Transaction/StockDocumentPost" element={<StockDocumentPostPage/>}/>
           <Route path="/Sales/Transaction/StockDocumentRePost" element={<StockDocumentRePost/>}/>
 
           {/* ================= SALES - SETUP ================= */}

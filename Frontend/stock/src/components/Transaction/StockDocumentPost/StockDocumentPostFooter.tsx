@@ -1,7 +1,7 @@
 import React from "react";
-import { formatAmount } from "./DocumentPostShared";
+import { formatAmount } from "./StockDocumentPostShared";
 
-type DocumentPostFooterProps = {
+type StockDocumentPostFooterProps = {
   selectedCount: number;
   selectedTotal: number;
   onPost: () => void;
@@ -9,7 +9,7 @@ type DocumentPostFooterProps = {
   postDisabled?: boolean;
 };
 
-const DocumentPostFooter: React.FC<DocumentPostFooterProps> = ({
+const StockDocumentPostFooter: React.FC<StockDocumentPostFooterProps> = ({
   selectedCount,
   selectedTotal,
   onPost,
@@ -26,7 +26,7 @@ const DocumentPostFooter: React.FC<DocumentPostFooterProps> = ({
         readOnly
         aria-label="Selected total"
         value={selectedCount > 0 ? formatAmount(selectedTotal) : ""}
-        className="w-[190px] input-style "
+        className="w-[190px] input-style text-right"
       />
     </div>
 
@@ -53,4 +53,4 @@ const DocumentPostFooter: React.FC<DocumentPostFooterProps> = ({
   </div>
 );
 
-export default DocumentPostFooter;
+export default StockDocumentPostFooter;

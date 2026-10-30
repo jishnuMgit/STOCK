@@ -1,11 +1,13 @@
 import React from "react";
-import {type DocRow ,formatAmount } from "./DocumentPostShared";
+import { useGridCellFocus } from "../../../hooks/useGridCellFocus";
+import {type DocRow ,formatAmount } from "./StockDocumentPostShared";
 
 
 const MIN_ROWS = 16;
 
-type DocumentPostTableProps = {
+type StockDocumentPostTableProps = {
   rows: DocRow[];
+  // the Doc. No. of the ticked rows
   selectedIds: Set<string>;
   activeId: string | null;
   onToggleRow: (id: string) => void;
@@ -14,7 +16,7 @@ type DocumentPostTableProps = {
 
 const cell = "h-[26px] border border-[#B7ECD0] px-2";
 
-const DocumentPostTable: React.FC<DocumentPostTableProps> = ({
+const StockDocumentPostTable: React.FC<StockDocumentPostTableProps> = ({
   rows,
   selectedIds,
   activeId,
@@ -22,6 +24,9 @@ const DocumentPostTable: React.FC<DocumentPostTableProps> = ({
   onActivateRow,
 }) => {
   const emptyCount = Math.max(0, MIN_ROWS - rows.length);
+
+  // the cell the cursor is in gets the green outline (as in the other grids)
+  const { cellFocusClass } = useGridCellFocus();
 
   return (
     <div className="h-111.75 overflow-auto border border-[#cfd7df] bg-white">
@@ -56,12 +61,12 @@ const DocumentPostTable: React.FC<DocumentPostTableProps> = ({
         </thead>
         <tbody>
           {rows.map((row) => {
-            const active = row.id === activeId;
-            const checked = selectedIds.has(row.id);
+            const active = row.txtDocNo === activeId;
+            const checked = selectedIds.has(row.txtDocNo);
             return (
               <tr
-                key={row.id}
-                onClick={() => onActivateRow(row.id)}
+                key={row.txtDocNo}
+                onClick={() => onActivateRow(row.txtDocNo)}
                 className={
                   checked ? "bg-[#e7f7ed]" : active ? "bg-[#f2faf5]" : "bg-white"
                 }
@@ -69,21 +74,21 @@ const DocumentPostTable: React.FC<DocumentPostTableProps> = ({
                 <td className="h-6.5 border border-[#B7ECD0] bg-[#fafbfc] text-center text-[8px] text-[#405066]">
                   {active ? "▶" : ""}
                 </td>
-                <td className="h-6.5 border border-[#B7ECD0] text-center">
+                <td className={`h-6.5 border border-[#B7ECD0] text-center ${cellFocusClass}`}>
                   <input
                     type="checkbox"
-                    aria-label={`Select ${row.docNo}`}
+                    aria-label={`Select ${row.txtDocNo}`}
                     checked={checked}
-                    onChange={() => onToggleRow(row.id)}
+                    onChange={() => onToggleRow(row.txtDocNo)}
                     onClick={(event) => event.stopPropagation()}
                     className="h-4 w-4 align-middle accent-[#64d96e]"
                   />
                 </td>
-                <td className={cell}>{row.docNo}</td>
-                <td className={cell}>{row.date}</td>
-                <td className={cell}>{row.accountId}</td>
+                <td className={cell}>{row.txtDocNo}</td>
+                <td className={cell}>{row.txtDate}</td>
+                <td className={cell}>{row.txtAccountID}</td>
                 <td className={`${cell} text-right`}>
-                  {formatAmount(row.amount)}
+                  {formatAmount(row.txtDocAmt)}
                 </td>
               </tr>
             );
@@ -114,4 +119,4 @@ const DocumentPostTable: React.FC<DocumentPostTableProps> = ({
   );
 };
 
-export default DocumentPostTable;
+export default StockDocumentPostTable;
