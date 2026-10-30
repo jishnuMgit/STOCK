@@ -249,7 +249,6 @@ export const unmatchTransactions = async (
   }
 
   const client = await pool.connect();
-
   try {
     await client.query("BEGIN");
 
