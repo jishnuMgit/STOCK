@@ -1,4 +1,3 @@
-
 import React from "react";
 
 import dayjs from "dayjs";
@@ -51,6 +50,8 @@ export interface MatchHeaderProps {
   documentNoRef: React.RefObject<HTMLDivElement | null>;
   dateRef: React.RefObject<HTMLInputElement | null>;
 
+  handleDocNoChange: (docNo: string) => void;
+
   divisionLoading: boolean;
 
   handleCustomerIdChange: (id: string) => void | Promise<void>;
@@ -69,7 +70,7 @@ export interface MatchHeaderProps {
     customStyles?: StylesConfig<SelectOption, false>,
     disabled?: boolean,
     documentMode?: boolean,
-    swapColumns?: boolean
+    swapColumns?: boolean,
   ) => React.ReactNode;
 
   handleKeyboardAction: (
@@ -80,7 +81,7 @@ export interface MatchHeaderProps {
 }
 
 const MatchReversalHeader: React.FC<MatchHeaderProps> = ({
-    // branch,
+  // branch,
   customerId,
   customerName,
   divisionId,
@@ -112,6 +113,8 @@ const MatchReversalHeader: React.FC<MatchHeaderProps> = ({
   creditDocumentRef,
   documentNoRef,
   dateRef,
+
+  handleDocNoChange,
 
   handleCustomerIdChange,
   handleCustomerNameChange,
@@ -179,7 +182,7 @@ const MatchReversalHeader: React.FC<MatchHeaderProps> = ({
             () => customerNameRef.current?.focus(),
             customerIdRef,
             false,
-            ["Account ID", "Account Name"]
+            ["Account ID", "Account Name"],
           )}
 
           {/* CUSTOMER NAME */}
@@ -191,7 +194,7 @@ const MatchReversalHeader: React.FC<MatchHeaderProps> = ({
             () => divisionRef.current?.focus(),
             customerNameRef,
             true,
-            ["Account Name", "Account ID"]
+            ["Account Name", "Account ID"],
           )}
 
           {/* DOCUMENT AMOUNT */}
@@ -255,11 +258,9 @@ const MatchReversalHeader: React.FC<MatchHeaderProps> = ({
               true,
               ["Division Name", "Division ID"],
               undefined,
-              !customerId ||
-                divisionLoading ||
-                divisionOptions .length === 0,
+              !customerId || divisionLoading || divisionOptions.length === 0,
               false,
-              true
+              true,
             )}
           </div>
 
@@ -276,7 +277,7 @@ const MatchReversalHeader: React.FC<MatchHeaderProps> = ({
             () => documentNoRef.current?.focus(),
             creditDocumentRef,
             true,
-            ["DocumentType ID", "DocumentType Name"]
+            ["ID", "Name"],
           )}
 
           {/* SEARCH */}
@@ -311,7 +312,6 @@ const MatchReversalHeader: React.FC<MatchHeaderProps> = ({
           </button>
 
           {/* MATCH AMOUNT */}
-         
         </div>
 
         {/* HEADER ROW 3 */}
@@ -337,23 +337,20 @@ const MatchReversalHeader: React.FC<MatchHeaderProps> = ({
               "lkpDocNo.",
               receiptNo,
               documentNoOptions,
-              setReceiptNo,
+              handleDocNoChange,
               () => dateRef.current?.focus(),
               documentNoRef,
               false,
               undefined,
               undefined,
               false,
-              true
+              true,
             )}
           </div>
-
-         
 
           <div />
 
           {/* BALANCE */}
-          
         </div>
       </div>
     </>
