@@ -18,7 +18,11 @@ import {
 } from "../../../hooks/useMatchKeyboard";
 
 import useMatching from "../../../hooks/useMatching";
-import type { MatchReversalRow } from "../../../hooks/useMatchReversal";
+import { getSession } from "../../../utils/session";
+import type {
+  MatchReversalRow,
+  GetMatchAccountsParams,
+} from "../../../hooks/useMatchReversal";
 import MatchHeader from "./MatchReversalHeader";
 import MatchTable from "./MatchReversalTable";
 import MatchFooter from "./MatchReversalFooter";
@@ -48,6 +52,9 @@ interface Props {
   rows: MatchReversalRow[];
   toggleSelect: (rowIndex: number, value: boolean) => void;
   onDocumentSelect: (brId: string, docNo: string) => void;
+  getMatchAccounts: (
+    params: GetMatchAccountsParams,
+  ) => Promise<Record<string, any>[]>;
 
   onSave: () => void;
   clearForm: () => void;
@@ -430,6 +437,7 @@ const MatchReversalComponents = forwardRef<MatchingComponentsRef, Props>(
       rows,
       toggleSelect,
       onDocumentSelect,
+      getMatchAccounts,
       onSave,
       clearForm,
       onSearch,
@@ -461,8 +469,7 @@ const MatchReversalComponents = forwardRef<MatchingComponentsRef, Props>(
     MATCHING API
   ===================================================== */
 
-    const { divisionOptionsLocal, divisionLoading, getDiv, getMatchAccounts } =
-      useMatching();
+    const { divisionOptionsLocal, divisionLoading, getDiv } = useMatching();
 
     const [documentNoOptions, setDocumentNoOptions] = useState<
       DocumentOption[]
@@ -647,35 +654,43 @@ const MatchReversalComponents = forwardRef<MatchingComponentsRef, Props>(
         return;
       }
 
-      const data = await getMatchAccounts({
-        strDocType: type,
-        strCSAccountID: customerId,
-        strDivID: divisionId,
-        year: new Date().getFullYear().toString(),
-      });
+      try {
+        const data = await getMatchAccounts({
+          strDocType: type,
+          strCSAccountID: customerId,
+          strDivID: divisionId,
+          year: getSession().pstrYear,
+        });
 
-      const searchResults: any[] = Array.isArray(data) ? data : [];
-      onSearch(searchResults);
+        const searchResults: any[] = Array.isArray(data) ? data : [];
+        onSearch(searchResults);
 
-      const options: DocumentOption[] = searchResults
-        .filter((item: any) => item.fdocno && String(item.fdocno).trim() !== "")
+        const options: DocumentOption[] = searchResults
+          .filter(
+            (item: any) => item.fdocno && String(item.fdocno).trim() !== "",
+          )
+          .map((item: any) => ({
+            value: String(item.fdocno ?? ""),
+            label: String(item.fdocno ?? ""),
+            brId: String(item.fbrid ?? ""),
+            date: String(item.fdate ?? ""),
+            docType: String(item.fdoctype ?? ""),
+            docNo: String(item.fdocno ?? ""),
+            docTypeNo:
+              String(item.fdoctypeno ?? "").trim() || String(item.fdocno ?? ""),
+            debit: String(item.fdebit ?? "0.00"),
+            credit: String(item.fcredit ?? "0.00"),
+            description: String(item.fdescription ?? ""),
+          }));
 
-        .map((item: any) => ({
-          value: String(item.fdocno ?? ""),
-          label: String(item.fdocno ?? ""),
-          brId: String(item.fbrid ?? ""),
-          date: String(item.fdate ?? ""),
-          docType: String(item.fdoctype ?? ""),
-          docNo: String(item.fdocno ?? ""),
-          // display text, e.g. "BR RH-26000003"; falls back to fdocno when null
-          docTypeNo:
-            String(item.fdoctypeno ?? "").trim() || String(item.fdocno ?? ""),
-          debit: String(item.fdebit ?? "0.00"),
-          credit: String(item.fcredit ?? "0.00"),
-          description: String(item.fdescription ?? ""),
-        }));
-
-      setDocumentNoOptions(options);
+        setDocumentNoOptions(options);
+      } catch (error) {
+        alert(
+          error instanceof Error
+            ? error.message
+            : "Failed to load matched documents",
+        );
+      }
     }, [type, customerId, divisionId, gstrCoID, getMatchAccounts, onSearch]);
 
     /* =====================================================

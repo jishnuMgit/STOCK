@@ -7,7 +7,7 @@ import {
 
 import MatchingComponents from "../../../../components/Transaction/MatchReversal/MatchReversalComponents";
 import useMatchReversal from "../../../../hooks/useMatchReversal";
-import { apiFetch } from "../../../../utils/session";
+import { apiFetch, getSession } from "../../../../utils/session";
 import { toast } from "react-toastify";
 
 interface CustomerAccount {
@@ -46,6 +46,7 @@ const MatchReversalPage: React.FC = () => {
   const {
     rows,
     saving,
+    getMatchAccounts,
     getMatchedTransactions,
     toggleSelect,
     unmatch,
@@ -55,7 +56,7 @@ const MatchReversalPage: React.FC = () => {
   const matchingRef = useRef<MatchingComponentsRef | null>(null);
 
   // TODO: replace with the session's financial year if it differs from the calendar year
-  const year = new Date().getFullYear().toString();
+  const year = String(getSession().pstrYear);
 
   /* ---------- LOAD DOC TYPES + CUSTOMERS ---------- */
   /* ---------- LOAD CUSTOMERS + DOCUMENT TYPES (one request) ---------- */
@@ -229,6 +230,7 @@ const MatchReversalPage: React.FC = () => {
           setDivisionId={setDivisionId}
           rows={rows}
           toggleSelect={toggleSelect}
+          getMatchAccounts={getMatchAccounts}
           onDocumentSelect={handleDocumentSelect}
           onSave={handleUnmatch}
           clearForm={clearForm}

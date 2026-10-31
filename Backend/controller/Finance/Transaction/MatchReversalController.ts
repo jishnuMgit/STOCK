@@ -174,6 +174,109 @@ export const getMatchedTransactions = async (
 };
 
 /* =====================================================
+   GET MATCHED DOCUMENTS (mode 'GM' = get matched)
+   POST /getMatchAccounts
+   body: { strDocType, strCSAccountID, strDivID?, year }
+   (Match module sends the non-matched mode; reversal needs matched)
+===================================================== */
+
+export const getMatchAccounts = async (
+  req: AuthenticatedRequest,
+  res: Response,
+): Promise<Response> => {
+  const strCoID = req.user?.CoID;
+  const { strDocType, strCSAccountID, strDivID, year } = req.body;
+  const strYear = isEmpty(year) ? "" : String(year);
+
+  if (!strCoID) {
+    return res
+      .status(400)
+      .json({ success: false, message: NO_COMPANY_MESSAGE });
+  }
+  if (isEmpty(strYear)) {
+    return res
+      .status(400)
+      .json({ success: false, message: "Year is required" });
+  }
+  if (isEmpty(strDocType)) {
+    return res
+      .status(400)
+      .json({ success: false, message: "Please input 'Document Type'" });
+  }
+  if (isEmpty(strCSAccountID)) {
+    return res
+      .status(400)
+      .json({ success: false, message: "Please select 'Customer'" });
+  }
+
+  const client = await pool.connect();
+
+  try {
+    const cursorName = "cur_matchedaccounts";
+
+    await client.query("BEGIN");
+
+    await client.query(
+      `
+      CALL dbo.sp_getmatchfindocuments(
+        $1::varchar,
+        $2::varchar,
+        $3::varchar,
+        $4::varchar,
+        $5::varchar,
+        $6::varchar,
+        $7::bigint,
+        $8::varchar,
+        $9::smallint,
+        $10::smallint,
+        $11::varchar,
+        $12::varchar,
+        $13::varchar,
+        $14::refcursor
+      )
+      `,
+      [
+        "GM", // 1  p_strmode  (GM = get matched)
+        strCoID, // 2  p_strcoid
+        strYear, // 3  p_stryear
+        null, // 4  p_strbrid
+        strDocType, // 5  p_strdoctype
+        null, // 6  p_strdocno
+        0, // 7  p_intdocno
+        null, // 8  p_dtpdate
+        0, // 9  p_intslno
+        0, // 10 p_intslnosub
+        req.user?.userId ?? null, // 11 p_struserid
+        strCSAccountID, // 12 p_strcsaccountid
+        strDivID || null, // 13 p_strdivid
+        cursorName, // 14 p_result_cursor
+      ],
+    );
+
+    const result = await client.query(`FETCH ALL FROM "${cursorName}"`);
+
+    await client.query("COMMIT");
+
+    return res.status(200).json({
+      success: true,
+      data: result.rows,
+      message: "Matched documents loaded successfully",
+    });
+  } catch (error) {
+    await client.query("ROLLBACK");
+    console.error("getMatchAccounts (reversal) error:", error);
+
+    return res.status(500).json({
+      success: false,
+      message: "Failed to get matched documents",
+      error: error instanceof Error ? error.message : "Unknown error",
+    });
+  } finally {
+    client.release();
+  }
+};
+
+/* =====================================================
    UN-MATCH (mode 'U')
    POST /unmatch
    body: {

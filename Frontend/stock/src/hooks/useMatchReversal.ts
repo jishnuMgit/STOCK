@@ -6,7 +6,7 @@ import { apiFetch } from "../utils/session";
 ===================================================== */
 
 export interface SelectOption {
-  value: string;  
+  value: string;
   label: string;
 }
 
@@ -30,6 +30,13 @@ export interface GetMatchedTransactionsParams {
   docType: string;
   docNo: string;
   divId?: string;
+}
+
+export interface GetMatchAccountsParams {
+  strDocType: string;
+  strCSAccountID: string;
+  strDivID: string;
+  year: string | number;
 }
 
 export interface UnmatchPayload {
@@ -121,6 +128,15 @@ const useMatchReversal = () => {
     }
   }, []);
 
+  /* ---------- GET MATCHED DOCUMENTS (mode 'GM') ---------- */
+  const getMatchAccounts = useCallback(
+    async (params: GetMatchAccountsParams): Promise<Record<string, any>[]> => {
+      const result = await postJson(`${API}/getMatchAccounts`, params);
+      return Array.isArray(result?.data) ? result.data : [];
+    },
+    [],
+  );
+
   /* ---------- GET MATCHED TRANSACTIONS (GetTL) ---------- */
   const getMatchedTransactions = useCallback(
     async (
@@ -184,6 +200,7 @@ const useMatchReversal = () => {
     loading,
     saving,
     getLookups,
+    getMatchAccounts,
     getMatchedTransactions,
     toggleSelect,
     unmatch,
