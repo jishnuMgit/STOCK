@@ -18,7 +18,7 @@ export interface MatchHeaderProps {
   setDocType: React.Dispatch<React.SetStateAction<string>>;
 
   receiptNo: string;
-  setReceiptNo: React.Dispatch<React.SetStateAction<string>>;
+  // setReceiptNo: React.Dispatch<React.SetStateAction<string>>;
 
   receiptDate: string;
   setReceiptDate: React.Dispatch<React.SetStateAction<string>>;
@@ -91,7 +91,7 @@ const MatchReversalHeader: React.FC<MatchHeaderProps> = ({
 
   setDivisionId,
   setDocType,
-  setReceiptNo,
+  // setReceiptNo,
   // setReceiptDate,
   // setBranch,
 

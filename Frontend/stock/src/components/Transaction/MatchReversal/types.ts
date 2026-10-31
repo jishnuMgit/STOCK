@@ -32,8 +32,8 @@ export type TableField =
   | "debit"
   | "credit"
   | "match"
-  | "matchAmount";
-
+  | "matchAmount"
+  | "select";
 /* =========================================================
    SELECT OPTION
 ========================================================= */
@@ -52,6 +52,7 @@ export interface DocumentOption extends SelectOption {
   date: string;
   docType: string;
   docNo: string;
+  docTypeNo?: string;
   debit: string;
   credit: string;
   description: string;
