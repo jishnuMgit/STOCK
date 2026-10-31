@@ -1,6 +1,7 @@
 import express from "express";
 import ReceiptRouter from "./ReceiptRouter.js";
 import MatchRouter from "./Finance/Transaction/MatchRouter.js";
+import MatchReversalRouter from "./Finance/Transaction/MatchReversalRouter.js";
 import LoginRouter from "./AuthRouter.js";
 import CompanyRouter from "./CompanyRouter.js";
 import YearRouter from "./YearRouter.js";
@@ -52,12 +53,16 @@ import RptStockAgeingRouter from "./Purchase/Report/RptStockAgeingRouter.js";
 import RptSupplierPurchaseRouter from "./Purchase/Report/RptSupplierPurchaseRouter.js";
 import RptItemPurchaseRouter from "./Purchase/Report/RptItemPurchaseRouter.js";
 import RptReceivablesRouter from "./Finance/Report/A_RandA_P/RptReceivablesRouter.js";
+
 import RptPayablesRouter from "./Finance/Report/A_RandA_P/RptPayablesRouter.js";
 import RptGLRouter  from "./Finance/Report/GeneralLedger/RptGLRouter.js";
+
 const router = express.Router();
+
 router.use("/RptStockValuation", RptStockValuationRouter);
 router.use("/Receipt", ReceiptRouter);
 router.use("/Match", MatchRouter);
+router.use("/MatchReversal", MatchReversalRouter);
 router.use("/auth", LoginRouter);
 router.use("/companies", CompanyRouter);
 router.use("/years", YearRouter);
