@@ -19,7 +19,6 @@ import StockTransfer from "../pages/Sales/Transaction/stock/StockTransferPage";
 import BeginningBalance from "../pages/Finance/Transaction/BeginningBalance/BeginningBalancePage";
 import ItemGroupPage from "../pages/Purchase/Setup/ItemGroupPage";
 import CompanyPage from "../pages/Administration/CompanyPage";
-import ActivePeriodPage from "../pages/Settings/ActivePeriodPage";
 import StockAdjustmentPage from "../pages/Sales/Transaction/stock/StockAdjustmentPage";
 import SetDefaultBranch from "../pages/Settings/SetDefaultBranchPage";
 import SetActivePeriod from "../pages/Settings/SetActivePeriodPage";
@@ -28,7 +27,7 @@ import UnitPage from "../pages/Purchase/Setup/UnitPage";
 import StaffPage from "../pages/Purchase/Setup/StaffPage";
 import UserAudit from "../pages/Security/UserAudit/UserAuditPage";
 import UserTransactionAudit from "../pages/Security/UserTransactionAudit/UserTransactionAuditPage";
-import StockDocumentPost from "../pages/Sales/Transaction/stock/StockDocumentPostPage";
+import StockDocumentPostPage from "../pages/Sales/Transaction/stock/StockDocumentPostPage";
 import StockDocumentPostCancel from "../pages/Sales/Transaction/stock/StockDocumentPostCancel";
 import StockDocumentRePost from "../pages/Sales/Transaction/stock/StockDocumentRePost";
 import RptGLPage from "../pages/Finance/Report/GeneralLedger/GeneralLedger/RptGLPage";
@@ -427,10 +426,6 @@ const AppRoutes = () => {
           <Route
             path="/Settings/SetPostingAccount"
             element={<SetPostingAccountPage />}
-          />
-          <Route
-            path="/Setting/SetActivePeriod"
-            element={<ActivePeriodPage />}
           />
           <Route
             path="/Setting/SetDrAgeingPeriod"
