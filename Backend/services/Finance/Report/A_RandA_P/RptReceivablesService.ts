@@ -11,6 +11,7 @@ export type ReceivablesParams = {
   coId: string;
   allBranches: boolean;
   branchId: string;
+  forPeriod: boolean; // false = As On Date
   asOnDate: string; // DD/MM/YYYY - the As On Date (the end of the period too)
   fromDate: string | null; // DD/MM/YYYY - For A Period only (null = As On Date)
   toDate: string | null; // DD/MM/YYYY - For A Period only
@@ -107,10 +108,12 @@ export const getUserBranches = async (
 // ------------------------------------------------------------
 // THE REPORT - dbo.sp_rptreceivables (PROCEDURE with an INOUT refcursor)
 //   rdgbranch: 0 = ONE, 1 = ALL
+//   rdgperiod: 0 = As On Date, 1 = For A Period
 //   cbopoststatus: 0 non posted, 1 posted, 2 all
-//   strasondate: the As On Date (or the end of the period)
 //   strfromdate / strtodate: For A Period only (NULL = As On Date)
-//   columns: faccountid, faccountname, fdebit, fcredit
+//   strasondate: the As On Date (or the end of the period)
+//   chkorderbyacname: false = by account id, true = by account name
+//   columns: fcsaccountid, fcsaccountname, fdebit, fcredit (+ others)
 // ------------------------------------------------------------
 export const getReceivables = async (
   p: ReceivablesParams,
@@ -121,29 +124,31 @@ export const getReceivables = async (
       p.coId,
       p.allBranches ? 1 : 0,
       p.allBranches ? null : p.branchId,
-      p.asOnDate,
+      p.forPeriod ? 1 : 0, // p_rdgperiod
+      p.fromDate,
+      p.toDate,
+      p.asOnDate, // p_strasondate
       p.postStatus,
       p.print0Bal,
       false, // p_chkorderbyacname: by account id
-      p.fromDate,
-      p.toDate,
     ],
     [
       "varchar", // p_pstrcoid
       "smallint", // p_rdgbranch
       "varchar", // p_strbrid
+      "smallint", // p_rdgperiod
+      "varchar", // p_strfromdate
+      "varchar", // p_strtodate
       "varchar", // p_strasondate
       "smallint", // p_cbopoststatus
       "boolean", // p_blnprint0bal
       "boolean", // p_chkorderbyacname
-      "varchar", // p_strfromdate
-      "varchar", // p_strtodate
     ],
   );
 
   const list: ReceivableRow[] = rows.map((r) => ({
-    accountId: text(r.faccountid),
-    accountName: text(r.faccountname),
+    accountId: text(r.fcsaccountid),
+    accountName: text(r.fcsaccountname),
     debit: money(r.fdebit),
     credit: money(r.fcredit),
   }));

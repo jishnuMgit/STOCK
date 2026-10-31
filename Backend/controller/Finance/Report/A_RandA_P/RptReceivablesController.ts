@@ -174,6 +174,7 @@ const prepareReport = async (req: AuthenticatedRequest): Promise<Prepared> => {
     coId,
     allBranches,
     branchId,
+    forPeriod,
     asOnDate: asOnText,
     fromDate: forPeriod ? fromText : null,
     toDate: forPeriod ? asOnText : null,
