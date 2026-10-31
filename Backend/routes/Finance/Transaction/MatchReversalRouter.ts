@@ -1,5 +1,6 @@
 import { Router } from "express";
 import {
+  getMatchAccounts,
   getMatchedTransactions,
   getMatchReversalLookups,
   unmatchTransactions,
@@ -17,5 +18,8 @@ router.post("/getMatchedTransactions", getMatchedTransactions);
 
 // Un-match the selected lines (mode 'U')
 router.post("/unmatch", unmatchTransactions);
+
+// Matched documents list for the Document No. dropdown (mode 'GM')
+router.post("/getMatchAccounts", getMatchAccounts);
 
 export default router;
