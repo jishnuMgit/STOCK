@@ -8,6 +8,7 @@ import {
 import MatchingComponents from "../../../../components/Transaction/MatchReversal/MatchReversalComponents";
 import useMatchReversal from "../../../../hooks/useMatchReversal";
 import { apiFetch } from "../../../../utils/session";
+import { toast } from "react-toastify";
 
 interface CustomerAccount {
   fcsaccountid: string;
@@ -125,7 +126,7 @@ const MatchReversalPage: React.FC = () => {
           divId: divisionId || undefined,
         });
       } catch (error) {
-        alert(getErrorMessage(error));
+        toast.error(getErrorMessage(error));
       }
     },
     [getMatchedTransactions, year, doctype, divisionId],
@@ -151,11 +152,11 @@ const MatchReversalPage: React.FC = () => {
   const handleUnmatch = useCallback(async () => {
     if (saving) return;
 
-    if (!doctype) return alert("Please input 'Document'");
-    if (!receiptNo) return alert("Please input 'Document No.'");
-    if (!branch) return alert("Please select 'Branch'");
+    if (!doctype) return toast.error("Please input 'Document'");
+    if (!receiptNo) return toast.error("Please input 'Document No.'");
+    if (!branch) return toast.error("Please select 'Branch'");
     if (!rows.some((r) => r.select)) {
-      return alert("There is no Account selected for Un-Match");
+      return toast.error("There is no Account selected for Un-Match");
     }
     if (!window.confirm("Un-match the selected accounts?")) return;
 
@@ -169,10 +170,10 @@ const MatchReversalPage: React.FC = () => {
         rows,
       });
 
-      alert(result?.message ?? "Accounts Un-Matched");
+      toast.success(result?.message ?? "Accounts Un-Matched");
       await loadMatchedLines(branch, receiptNo); // refresh grid
     } catch (error) {
-      alert(getErrorMessage(error));
+      toast.error(getErrorMessage(error));
     }
   }, [
     saving,
