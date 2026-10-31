@@ -1,8 +1,21 @@
 -- =====================================================================
 -- dbo.sp_pagestockadjustmentpost   (Stock Adjustment - Post)
 --
--- Postgres port of the SQL Server SP_ADJPost, mode P (the form only posts; the
--- re-post mode R of the original is not used by the screen and is not ported).
+-- Postgres port of the SQL Server SP_ADJPost: mode P (post) and mode R (re-post, used by the Stock Document Re-Post
+-- screen).
+--
+-- WHAT CHANGED IN THIS VERSION (look for the markers "RE-POST CHANGE 1/2/3" and "SYNC" below):
+--   RE-POST CHANGE 1  the mode check accepts 'R' as well as 'P';
+--   RE-POST CHANGE 2  the lines it reads: P = lines not posted yet, R = lines already posted (the old fPost = 0 / fPost = 1);
+--   RE-POST CHANGE 3  a re-post UPDATES the two finance lines that are already there (the old "Reposting" branch) and
+--                     returns; it inserts no finance line, takes no posting number and does not touch the posted flag.
+--   SYNC              the finance INSERTs write fgaccountid (dbo.getgaccountid): the procedure in the database already
+--                     does, this file did not. Not part of the re-post.
+-- Mode P is NOT changed. In mode R the lines are processed exactly as in P (steps 1 to 4 below: the cost is written onto the
+-- line and the stock moves), as the old SP_ADJPost does.
+-- Differences from the old R mode, on purpose: the finance lines are found by the line number (1 = stock account,
+-- 2 = adjustment account) because the accounts of a branch can change after the posting; and both the debit and the credit
+-- of a line are set, so a line whose side changes keeps nothing of the old amount.
 --
 -- For every line that is not posted yet (in Sl.# order):
 --   1. the branch's tblstockcontrol row for the item is made when it is missing;
@@ -76,8 +89,9 @@ BEGIN
         RAISE EXCEPTION 'sp_pagestockadjustmentpost supports document type ADJ only';
     END IF;
 
-    IF upper(p_strmode) <> 'P' THEN
-        RAISE EXCEPTION 'Invalid mode %. Only P (post) is supported', p_strmode;
+    -- RE-POST CHANGE 1: 'R' (re-post) is accepted as well as 'P' (post)
+    IF upper(p_strmode) NOT IN ('P', 'R') THEN
+        RAISE EXCEPTION 'Invalid mode %. Use P (post) or R (re-post)', p_strmode;
     END IF;
 
     -- the branch's accounts first: without them nothing is posted
@@ -104,7 +118,8 @@ BEGIN
           AND t.fbrid    = p_strbrid
           AND t.fdoctype = p_strdoctype
           AND t.fdocno   = p_strdocno
-          AND COALESCE(t.fpost, false) = false
+          -- RE-POST CHANGE 2: P takes the lines not posted yet, R the lines already posted
+          AND COALESCE(t.fpost, false) = (upper(p_strmode) = 'R')
         ORDER BY t.fslno
     LOOP
         v_dtpdate     := v_row.fdate;
@@ -168,8 +183,36 @@ BEGIN
             p_pstrcoid, p_pstryear, p_strbrid, p_strdoctype, p_strdocno;
     END IF;
 
-    -- the finance lines
     v_stryear        := to_char(v_dtpdate, 'YYYY');
+
+    -- RE-POST CHANGE 3: a re-post (R) does not insert the finance lines again - it UPDATES the two that are there with
+    -- the new cost (line 1 the stock account, line 2 the adjustment account, the same sides as the post below). The
+    -- posting number and the posted flag stay as they are.
+    IF upper(p_strmode) = 'R' THEN
+        UPDATE dbo.tblfintrans
+           SET fdebit  = CASE WHEN v_numcostofstock < 0 THEN COALESCE(ABS(v_numcostofstock), 0) ELSE 0 END,
+               fcredit = CASE WHEN v_numcostofstock < 0 THEN 0 ELSE COALESCE(v_numcostofstock, 0) END
+         WHERE fcoid    = p_pstrcoid
+           AND fyear    = v_stryear
+           AND fbrid    = p_strbrid
+           AND fdoctype = p_strdoctype
+           AND fdocno   = p_strdocno
+           AND fslno    = 1;
+
+        UPDATE dbo.tblfintrans
+           SET fdebit  = CASE WHEN v_numcostofstock < 0 THEN 0 ELSE COALESCE(v_numcostofstock, 0) END,
+               fcredit = CASE WHEN v_numcostofstock < 0 THEN COALESCE(ABS(v_numcostofstock), 0) ELSE 0 END
+         WHERE fcoid    = p_pstrcoid
+           AND fyear    = v_stryear
+           AND fbrid    = p_strbrid
+           AND fdoctype = p_strdoctype
+           AND fdocno   = p_strdocno
+           AND fslno    = 2;
+
+        RETURN;
+    END IF;
+
+    -- the finance lines
     v_strdescription := 'Stock Adjustment ' || p_strdocno;
 
     -- line 1: the stock account
@@ -181,12 +224,12 @@ BEGIN
 
     INSERT INTO dbo.tblfintrans (
         fcoid, fyear, fbrid, fdoctype, fdocno, fdate, fdescription, fslno,
-        faccountid, fccid, fdebit, fcredit, fpost, forigin, fyearclose,
+        faccountid,fgaccountid, fccid, fdebit, fcredit, fpost, forigin, fyearclose,   -- SYNC: fgaccountid
         fcuserid, fcuserdate
     )
     VALUES (
         p_pstrcoid, v_stryear, p_strbrid, p_strdoctype, p_strdocno, v_dtpdate, v_strdescription, 1,
-        v_strstockaccountid, v_strccid,
+        v_strstockaccountid,dbo.getgaccountid(p_pstrcoid,v_strstockaccountid), v_strccid,
         CASE WHEN v_numcostofstock < 0 THEN COALESCE(ABS(v_numcostofstock), 0) ELSE 0 END,
         CASE WHEN v_numcostofstock < 0 THEN 0 ELSE COALESCE(v_numcostofstock, 0) END,
         true, 'GP', false,
@@ -202,12 +245,12 @@ BEGIN
 
     INSERT INTO dbo.tblfintrans (
         fcoid, fyear, fbrid, fdoctype, fdocno, fdate, fdescription, fslno,
-        faccountid, fccid, fdebit, fcredit, fpost, forigin, fyearclose,
+        faccountid,fgaccountid, fccid, fdebit, fcredit, fpost, forigin, fyearclose,   -- SYNC: fgaccountid
         fcuserid, fcuserdate
     )
     VALUES (
         p_pstrcoid, v_stryear, p_strbrid, p_strdoctype, p_strdocno, v_dtpdate, v_strdescription, 2,
-        v_stradjaccountid, v_strccid,
+        v_stradjaccountid,dbo.getgaccountid(p_pstrcoid,v_stradjaccountid), v_strccid,
         CASE WHEN v_numcostofstock < 0 THEN 0 ELSE COALESCE(v_numcostofstock, 0) END,
         CASE WHEN v_numcostofstock < 0 THEN COALESCE(ABS(v_numcostofstock), 0) ELSE 0 END,
         true, 'GP', false,

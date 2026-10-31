@@ -290,7 +290,7 @@ const AppRoutes = () => {
           />
           <Route
             path="/Sales/Transaction/StockDocumentPost"
-            element={<StockDocumentPost />}
+            element={<StockDocumentPostPage />}
           />
           <Route
             path="/Sales/Transaction/StockDocumentRePost"
