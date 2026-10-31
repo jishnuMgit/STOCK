@@ -28,7 +28,7 @@ import UnitPage from "../pages/Purchase/Setup/UnitPage";
 import StaffPage from "../pages/Purchase/Setup/StaffPage";
 import UserAudit from "../pages/Security/UserAudit/UserAuditPage";
 import UserTransactionAudit from "../pages/Security/UserTransactionAudit/UserTransactionAuditPage";
-import StockDocumentPostPage from "../pages/Sales/Transaction/stock/StockDocumentPostPage";
+import StockDocumentPost from "../pages/Sales/Transaction/stock/StockDocumentPostPage";
 import StockDocumentPostCancel from "../pages/Sales/Transaction/stock/StockDocumentPostCancel";
 import StockDocumentRePost from "../pages/Sales/Transaction/stock/StockDocumentRePost";
 import RptGLPage from "../pages/Finance/Report/GeneralLedger/GeneralLedger/RptGLPage";
