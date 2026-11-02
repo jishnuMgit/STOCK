@@ -1,10 +1,22 @@
-import React, { useState } from "react";
-import Select from "react-select";
+import React, { useEffect, useMemo, useRef, useState } from "react";
+import Select, {
+  components,
+  type MenuListProps,
+  type OptionProps,
+} from "react-select";
+import { toast } from "react-toastify";
 import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
 import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
 import { DatePicker } from "@mui/x-date-pickers/DatePicker";
 import dayjs from "dayjs";
 import customParseFormat from "dayjs/plugin/customParseFormat";
+import { buildPayablesPdf } from "./downloadPayablesPdf";
+import { saveFile } from "./saveFile";
+import {
+  buildHtml,
+  printPayablesReport,
+  type PrintReport,
+} from "./printPayablesReport";
 
 dayjs.extend(customParseFormat);
 
@@ -21,18 +33,29 @@ type RadioOptionProps = {
 const DATE_FORMAT = "DD-MM-YYYY";
 const TODAY = dayjs().format(DATE_FORMAT);
 
-/* Replace with data from your API */
-const branchOptions: Option[] = [
-  { value: "OFFICE", label: "OFFICE" },
-  { value: "BRANCH 1", label: "BRANCH 1" },
-  { value: "BRANCH 2", label: "BRANCH 2" },
-];
+const API = `${import.meta.env.VITE_API_URL}/RptPayables`;
+
+// Sends the login cookie, and the company / user kept at sign-in as a stopgap
+// (the server uses its session first and only falls back to these).
+const apiFetch = (url: string, init: RequestInit = {}) => {
+  const coId = localStorage.getItem("PstrCoID") ?? "";
+  const userId = localStorage.getItem("PstrUserID") ?? "";
+  const sep = url.includes("?") ? "&" : "?";
+
+  return fetch(
+    `${url}${sep}coId=${encodeURIComponent(coId)}&userId=${encodeURIComponent(userId)}`,
+    { credentials: "include", ...init },
+  );
+};
 
 const postStatusOptions: Option[] = [
   { value: "ALL", label: "All" },
   { value: "POSTED", label: "Posted" },
   { value: "UNPOSTED", label: "Unposted" },
 ];
+
+// what the procedure expects: 0 non posted, 1 posted, 2 all
+const POST_STATUS: Record<string, number> = { UNPOSTED: 0, POSTED: 1, ALL: 2 };
 
 const yesNoOptions: Option[] = [
   { value: "YES", label: "Yes" },
@@ -84,6 +107,63 @@ const selectProps = {
   menuPortalTarget: typeof document !== "undefined" ? document.body : undefined,
 };
 
+// ---- two-column lookup list (Branch | ID) ----
+type LookupOption = Option & { id: string; name: string };
+
+const lookupClassNames = (menuWidth: string) => ({
+  ...selectClassNames,
+  menu: () =>
+    `!mt-[1px] ${menuWidth} !rounded-none !border !border-[#cfd7df] !z-[999999] !shadow-md`,
+  menuList: () => "!p-0 !max-h-[240px]",
+  option: ({
+    isFocused,
+    isSelected,
+  }: {
+    isFocused: boolean;
+    isSelected: boolean;
+  }) => `
+    !cursor-pointer !p-0 !text-[13px] !text-[#24364d]
+    ${isSelected ? "!bg-[#e7f7ed]" : isFocused ? "!bg-[#f2faf5]" : "!bg-white"}
+  `,
+});
+
+const makeMenuList = (cols: string, first: string, second: string) => {
+  const LookupMenuList = (props: MenuListProps<LookupOption, false>) => (
+    <components.MenuList {...props}>
+      <div
+        className={`${cols} sticky top-0 z-[1] border-b border-[#cfd7df] bg-[#f5f6fa] text-[13px] font-semibold text-[#24364d]`}
+      >
+        <div className="border-r border-[#cfd7df] px-[8px] py-[7px]">
+          {first}
+        </div>
+        <div className="px-[8px] py-[7px]">{second}</div>
+      </div>
+      {props.children}
+    </components.MenuList>
+  );
+  return LookupMenuList;
+};
+
+const makeOptionRow = (cols: string) => {
+  const LookupOptionRow = (props: OptionProps<LookupOption, false>) => (
+    <components.Option {...props}>
+      <div className={cols}>
+        <div className="truncate px-[8px] py-[6px]">{props.data.name}</div>
+        <div className="truncate px-[8px] py-[6px]">{props.data.id}</div>
+      </div>
+    </components.Option>
+  );
+  return LookupOptionRow;
+};
+
+// Name (= box width) | ID hanging outside the box to the right
+const LOOKUP_COLS = "grid grid-cols-[1fr_55px]";
+const lookupBoxClassNames = lookupClassNames("!w-[calc(100%_+_55px)]");
+const branchComponents = {
+  MenuList: makeMenuList(LOOKUP_COLS, "Branch", "ID"),
+  Option: makeOptionRow(LOOKUP_COLS),
+};
+
 const CustomRadio: React.FC<RadioOptionProps> = ({
   name,
   value,
@@ -115,32 +195,15 @@ const CustomRadio: React.FC<RadioOptionProps> = ({
   </label>
 );
 
-// const CustomCheckbox: React.FC<{
-//   id: string;
-//   label: string;
-//   checked: boolean;
-//   onChange: (checked: boolean) => void;
-// }> = ({ id, label, checked, onChange }) => (
-//   <label
-//     htmlFor={id}
-//     className="flex h-7.5 cursor-pointer items-center gap-2 text-[14px] text-[#405066] select-none"
-//   >
-//     <input
-//       id={id}
-//       type="checkbox"
-//       checked={checked}
-//       onChange={(event) => onChange(event.target.checked)}
-//       className="h-4 w-4 accent-[#64d96e]"
-//     />
-//     {label}
-//   </label>
-// );
-
 const RadioPanel: React.FC<{
   children: React.ReactNode;
   className?: string;
-}> = ({ children, className = "" }) => (
-  <div className={`border border-[#e0e5ea] bg-white px-3.5 py-3 ${className}`}>
+  id?: string;
+}> = ({ children, className = "", id }) => (
+  <div
+    id={id}
+    className={`border border-[#e0e5ea] bg-white px-3.5 py-3 ${className}`}
+  >
     <div className="flex flex-col gap-3">{children}</div>
   </div>
 );
@@ -240,16 +303,27 @@ const AppDatePicker: React.FC<AppDatePickerProps> = ({
   </LocalizationProvider>
 );
 
+type PayablesRequest = {
+  allBranches: boolean;
+  branchId: string;
+  forPeriod: boolean; // false = As On Date
+  fromDate: string; // DD/MM/YYYY (For A Period only)
+  toDate: string; // DD/MM/YYYY (the As On Date, or the end of the period)
+  postStatus: number;
+  print0Bal: boolean;
+};
+
 type RptPayablesPageProps = {
   onClose?: () => void;
 };
 
 const RptPayablesPage: React.FC<RptPayablesPageProps> = ({ onClose }) => {
-  const [branchMode, setBranchMode] = useState("All Branch"); // optBranch
-  const [branch, setBranch] = useState<Option | null>(branchOptions[0]); // lkpBranch
-  const [accountName, setAccountName] = useState(false); // chkAccountName
+  const [branchOptions, setBranchOptions] = useState<LookupOption[]>([]);
 
-  const [dateMode, setDateMode] = useState("For A Period"); // optDate
+  const [branchMode, setBranchMode] = useState("All Branch"); // rdgBranch
+  const [branch, setBranch] = useState<LookupOption | null>(null); // lkpBranch
+
+  const [dateMode, setDateMode] = useState("For A Period"); // rdgDate
   const [fromDate, setFromDate] = useState(TODAY); // dtpFromDate (also used as the As On Date)
   const [toDate, setToDate] = useState(TODAY); // dtpToDate
 
@@ -262,30 +336,260 @@ const RptPayablesPage: React.FC<RptPayablesPageProps> = ({ onClose }) => {
 
   const isPeriod = dateMode === "For A Period";
 
-  const handlePrint = () => {
-    console.log({
-      branchMode,
-      branch: branchMode === "One Branch" ? branch : null,
-      accountName,
-      dateMode,
-      fromDate,
-      toDate: isPeriod ? toDate : null,
-      postStatus,
-      printZeroBalance,
-    });
+  const [printing, setPrinting] = useState(false);
+
+  // rdgReportFile (inside the Print Preview): what Download saves
+  const [reportFile, setReportFile] = useState("Excel"); // "Excel" | "PDF"
+
+  // print preview: shown after Print. Print there sends it to the printer,
+  // Download saves the "Report File" choice
+  const [preview, setPreview] = useState<{
+    report: PrintReport;
+    fileBase: string;
+    request: PayablesRequest;
+  } | null>(null);
+
+  // ------------------------------------------------------------
+  // LOAD THE LOOKUPS (VB FillCombos)
+  // ------------------------------------------------------------
+  useEffect(() => {
+    let cancelled = false;
+
+    const load = async () => {
+      try {
+        const res = await apiFetch(`${API}/lookups`);
+        const data = await res.json();
+
+        if (!res.ok || !data.success) {
+          toast.error(data.message || "Failed to load the lookups");
+          return;
+        }
+        if (cancelled) return;
+
+        const branches: LookupOption[] = (
+          data.branches as { brId: string; brName: string }[]
+        ).map((b) => ({
+          value: b.brId,
+          label: b.brName,
+          id: b.brId,
+          name: b.brName,
+        }));
+
+        setBranchOptions(branches);
+        setBranch(branches[0] ?? null);
+      } catch {
+        if (!cancelled) toast.error("Failed to load the lookups");
+      }
+    };
+
+    load();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  // VB ValidateMe: returns the request, or null after showing the message
+  const buildRequest = (): PayablesRequest | null => {
+    const oneBranch = branchMode === "One Branch";
+    const valid = (v: string) => !!v && dayjs(v, DATE_FORMAT, true).isValid();
+
+    if (oneBranch && !branch) {
+      toast.warning("Please select a 'Branch'", { toastId: "rc-branch" });
+      document.getElementById("lkpBranch")?.focus();
+      return null;
+    }
+
+    if (isPeriod) {
+      if (!valid(fromDate)) {
+        toast.warning("Please select 'From Date'", { toastId: "rc-from" });
+        document.getElementById("dtpFromDate")?.focus();
+        return null;
+      }
+      if (!valid(toDate)) {
+        toast.warning("Please select 'To Date'", { toastId: "rc-to" });
+        document.getElementById("dtpToDate")?.focus();
+        return null;
+      }
+      if (dayjs(fromDate, DATE_FORMAT).isAfter(dayjs(toDate, DATE_FORMAT))) {
+        toast.warning("'To Date' should be greater than 'From Date'", {
+          toastId: "rc-range",
+        });
+        document.getElementById("dtpToDate")?.focus();
+        return null;
+      }
+    } else if (!valid(fromDate)) {
+      toast.warning("Please Select 'As on Date'", { toastId: "rc-date" });
+      document.getElementById("dtpFromDate")?.focus();
+      return null;
+    }
+
+    const slash = (v: string) => v.replace(/-/g, "/"); // DD-MM-YYYY -> DD/MM/YYYY
+
+    return {
+      allBranches: !oneBranch,
+      branchId: oneBranch ? (branch?.value ?? "") : "",
+      forPeriod: isPeriod,
+      fromDate: isPeriod ? slash(fromDate) : "",
+      // As On Date uses the first date picker
+      toDate: slash(isPeriod ? toDate : fromDate),
+      postStatus: POST_STATUS[postStatus?.value ?? "ALL"] ?? 2,
+      print0Bal: printZeroBalance?.value === "YES",
+    };
   };
+
+  // gets the .xlsx made by the server (null after an error message)
+  const fetchExcel = async (
+    request: PayablesRequest,
+  ): Promise<Blob | null> => {
+    const res = await apiFetch(`${API}/excel`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(request),
+    });
+
+    // an error comes back as JSON, the file as a blob
+    if (!res.ok) {
+      let message = "Could not create the Excel file";
+      try {
+        const data = await res.json();
+        message = data.message || message;
+      } catch {
+        // not JSON: the server has no /excel route (404) or crashed (500)
+        message =
+          res.status === 404
+            ? "Excel is not available: the /excel route was not found (404)"
+            : `Could not create the Excel file (error ${res.status})`;
+      }
+      toast.error(message);
+      return null;
+    }
+
+    return res.blob();
+  };
+
+  // ------------------------------------------------------------
+  // PRINT (VB cmdPrint_Click): validates, gets the report and shows the
+  // Print Preview (Print = printer, Download = Excel / PDF file)
+  // ------------------------------------------------------------
+  const handlePrint = async () => {
+    if (printing || preview) return;
+
+    const request = buildRequest();
+    if (!request) return;
+
+    setPrinting(true);
+    try {
+      const res = await apiFetch(`${API}/print`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(request),
+      });
+      const data = await res.json();
+
+      if (!res.ok || !data.success) {
+        toast.error(data.message || "Could not prepare the report");
+        return;
+      }
+
+      setPreview({ report: data.report, fileBase: data.fileBase, request });
+    } catch {
+      toast.error("Could not prepare the report");
+    } finally {
+      setPrinting(false);
+    }
+  };
+
+  // Print in the preview: the browser print dialog (printer)
+  const handlePreviewPrint = () => {
+    if (!preview || printing) return;
+    try {
+      printPayablesReport(preview.report);
+    } catch {
+      toast.error("Could not open the print view");
+    }
+  };
+
+  // Download in the preview: saves the chosen file ("Save as" window, so the
+  // browser does not open it afterwards)
+  // a double click must not start two saves (state is not updated yet on the
+  // second click, so a ref is used)
+  const downloading = useRef(false);
+
+  const handlePreviewOk = async () => {
+    if (!preview || printing || downloading.current) return;
+    downloading.current = true;
+    const { report, fileBase, request } = preview;
+    const asPdf = reportFile === "PDF";
+
+    setPrinting(true);
+    try {
+      const blob = asPdf ? buildPayablesPdf(report) : await fetchExcel(request);
+      if (!blob) return; // the error is already shown
+
+      const kind = asPdf ? "pdf" : "xlsx";
+      const saved = await saveFile(blob, `${fileBase}.${kind}`, kind);
+      if (saved) {
+        setPreview(null); // cancelled "Save as": the preview stays
+        toast.success(asPdf ? "PDF file downloaded" : "Excel file downloaded");
+      }
+    } catch {
+      toast.error(
+        asPdf ? "Could not create the PDF file" : "Could not create the Excel file",
+      );
+    } finally {
+      downloading.current = false;
+      setPrinting(false);
+    }
+  };
+
+  const previewHtml = useMemo(
+    () =>
+      preview
+        ? // 40px left / 20px right margin for the preview only
+          buildHtml(preview.report).replace(
+            "</head>",
+            "<style>body{padding-left:40px;padding-right:20px}</style></head>",
+          )
+        : "",
+    [preview],
+  );
 
   const handleClose = () => {
     setBranchMode("All Branch");
-    setBranch(branchOptions[0]);
-    setAccountName(false);
+    setBranch(branchOptions[0] ?? null);
     setDateMode("For A Period");
     setFromDate(TODAY);
     setToDate(TODAY);
     setPostStatus(postStatusOptions[0]);
     setPrintZeroBalance(yesNoOptions[0]);
+    setReportFile("Excel");
+    setPreview(null);
     onClose?.();
   };
+
+  // Alt+P prints, Alt+C closes (Ctrl+P / Ctrl+L of the old form clash with the
+  // browser); Esc closes the preview. Re-attached every render so it always
+  // sees the latest state.
+  useEffect(() => {
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (preview) {
+        if (event.key === "Escape") setPreview(null);
+        return;
+      }
+      if (!event.altKey || event.ctrlKey || event.metaKey) return;
+
+      if (event.code === "KeyP") {
+        event.preventDefault();
+        handlePrint();
+      } else if (event.code === "KeyC") {
+        event.preventDefault();
+        handleClose();
+      }
+    };
+
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
+  });
 
   return (
     <div className="flex min-h-screen w-full items-start justify-center bg-white px-4 py-4">
@@ -300,7 +604,7 @@ const RptPayablesPage: React.FC<RptPayablesPageProps> = ({ onClose }) => {
           <section className="px-3.5 pb-6 pt-3">
             <div className="grid grid-cols-[168px_1fr] items-start gap-x-4 gap-y-3">
               {/* Branch */}
-              <RadioPanel>
+              <RadioPanel id="rdgBranch">
                 <CustomRadio
                   name="rdgBranch"
                   value="One Branch"
@@ -316,40 +620,34 @@ const RptPayablesPage: React.FC<RptPayablesPageProps> = ({ onClose }) => {
                   onChange={() => setBranchMode("All Branch")}
                 />
               </RadioPanel>
-              <div className="flex items-start justify-between pt-3">
-                {branchMode === "One Branch" ? (
+              <div className="pt-3">
+                {branchMode === "One Branch" && (
                   <div className="w-62.5">
-                    <Select
+                    <Select<LookupOption, false>
                       inputId="lkpBranch"
                       instanceId="lkpBranch"
                       options={branchOptions}
                       value={branch}
                       onChange={setBranch}
                       {...selectProps}
+                      classNames={lookupBoxClassNames}
+                      components={branchComponents}
                     />
                   </div>
-                ) : (
-                  <div />
                 )}
-                {/* <CustomCheckbox
-                  id="chkAccountName"
-                  label="Account Name"
-                  checked={accountName}
-                  onChange={setAccountName}
-                /> */}
               </div>
 
               {/* Date mode */}
-              <RadioPanel>
+              <RadioPanel id="rdgDate">
                 <CustomRadio
-                  name="rdgDateFrom"
+                  name="rdgDate"
                   value="As On Date"
                   label="As On Date"
                   checked={dateMode === "As On Date"}
                   onChange={() => setDateMode("As On Date")}
                 />
                 <CustomRadio
-                  name="dtpDateTo"
+                  name="rdgDate"
                   value="For A Period"
                   label="For A Period"
                   checked={dateMode === "For A Period"}
@@ -400,32 +698,107 @@ const RptPayablesPage: React.FC<RptPayablesPageProps> = ({ onClose }) => {
                   {...selectProps}
                 />
               </div>
-
-              {/* Actions */}
-              <div />
-              
             </div>
-            <div className="flex gap-3  justify-center ">
+
+            {/* Actions */}
+            <div className="mt-6 flex justify-center gap-3">
+              <button
+                id="btnPrint"
+                type="button"
+                onClick={handlePrint}
+                disabled={printing}
+                title="Alt+P"
+                className="btn-style disabled:cursor-not-allowed disabled:opacity-40"
+              >
+                <u>P</u>rint
+              </button>
+              <button
+                id="btnClose"
+                type="button"
+                onClick={handleClose}
+                title="Alt+C"
+                className="btn-style"
+              >
+                <u>C</u>lose
+              </button>
+            </div>
+          </section>
+        </main>
+      </div>
+
+      {/* Print preview */}
+      {preview && (
+        <div className="fixed inset-0 z-[99999] flex items-center justify-center bg-black/40 p-4">
+          <div className="flex h-[90vh] w-full max-w-250 flex-col overflow-hidden border border-gray-400 bg-white shadow-xl">
+            <header className="flex h-7.5 shrink-0 items-center bg-[#9fdfbc] pl-3 text-[17px] font-semibold text-slate-700">
+              Print Preview
+            </header>
+
+            <iframe
+              title="Print Preview"
+              srcDoc={previewHtml}
+              className="min-h-0 flex-1 border-0 bg-white"
+            />
+
+            <footer className="flex shrink-0 flex-wrap items-center justify-center gap-4 border-t border-[#e0e5ea] px-3 py-4">
+              <div className="flex gap-3">
                 <button
-                  id="btnPrint"
+                  id="btnPreviewPrint"
                   type="button"
-                  onClick={handlePrint}
-                  className="btn-style"
+                  onClick={handlePreviewPrint}
+                  disabled={printing}
+                  className="btn-style focus-visible:ring-2 focus-visible:ring-[#64d96e] disabled:cursor-not-allowed disabled:opacity-40"
                 >
                   <u>P</u>rint
                 </button>
                 <button
-                  id="btnClose"
+                  id="btnPreviewOk"
                   type="button"
-                  onClick={handleClose}
-                  className="btn-style"
+                  autoFocus
+                  onClick={handlePreviewOk}
+                  disabled={printing}
+                  className="btn-style focus-visible:ring-2 focus-visible:ring-[#64d96e] disabled:cursor-not-allowed disabled:opacity-40"
+                >
+                  <u>D</u>ownload
+                </button>
+                <button
+                  id="btnPreviewCancel"
+                  type="button"
+                  onClick={() => setPreview(null)}
+                  disabled={printing}
+                  className="btn-style focus-visible:ring-2 focus-visible:ring-[#64d96e] disabled:cursor-not-allowed disabled:opacity-40"
                 >
                   <u>C</u>lose
                 </button>
               </div>
-          </section>
-        </main>
-      </div>
+
+              {/* Report File: what Download saves */}
+              <div
+                id="rdgReportFile"
+                className="relative flex items-center gap-5 border border-[#e0e5ea] bg-white px-3.5 py-2.5"
+              >
+                <span className="absolute -top-2.5 left-2.5 bg-white px-1 text-[13px] text-[#405066]">
+                  Report File
+                </span>
+                <CustomRadio
+                  name="rdgReportFile"
+                  value="Excel"
+                  label="Excel"
+                  checked={reportFile === "Excel"}
+                  onChange={() => setReportFile("Excel")}
+                />
+                <CustomRadio
+                  name="rdgReportFile"
+                  value="PDF"
+                  label="PDF"
+                  checked={reportFile === "PDF"}
+                  onChange={() => setReportFile("PDF")}
+                />
+              </div>
+            </footer>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
