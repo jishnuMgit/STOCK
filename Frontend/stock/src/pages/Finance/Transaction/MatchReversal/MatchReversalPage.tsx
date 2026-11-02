@@ -6,6 +6,7 @@ import {
 } from "../../../../components/Transaction/MatchReversal/types";
 
 import MatchingComponents from "../../../../components/Transaction/MatchReversal/MatchReversalComponents";
+import ConfirmModal from "../../../../components/common/ConfirmModal";
 import useMatchReversal from "../../../../hooks/useMatchReversal";
 import { apiFetch, getSession } from "../../../../utils/session";
 import { toast } from "react-toastify";
@@ -33,6 +34,9 @@ const MatchReversalPage: React.FC = () => {
   const [customerName, setCustomerName] = useState("");
   const [divisionId, setDivisionId] = useState("");
 
+  /* ---------- CONFIRM MODAL ---------- */
+  const [confirmOpen, setConfirmOpen] = useState(false);
+
   /* ---------- OPTIONS ---------- */
   const [branchOptions] = useState<SelectOption[]>([]);
   const [customerOptions, setCustomerOptions] = useState<SelectOption[]>([]);
@@ -58,7 +62,6 @@ const MatchReversalPage: React.FC = () => {
   // TODO: replace with the session's financial year if it differs from the calendar year
   const year = String(getSession().pstrYear);
 
-  /* ---------- LOAD DOC TYPES + CUSTOMERS ---------- */
   /* ---------- LOAD CUSTOMERS + DOCUMENT TYPES (one request) ---------- */
   useEffect(() => {
     const loadLookups = async () => {
@@ -150,7 +153,9 @@ const MatchReversalPage: React.FC = () => {
   }, [clearRows]);
 
   /* ---------- UN-MATCH ---------- */
-  const handleUnmatch = useCallback(async () => {
+
+  // Step 1: validate, then ask for confirmation
+  const handleUnmatch = useCallback(() => {
     if (saving) return;
 
     if (!doctype) return toast.error("Please input 'Document'");
@@ -159,7 +164,13 @@ const MatchReversalPage: React.FC = () => {
     if (!rows.some((r) => r.select)) {
       return toast.error("There is no Account selected for Un-Match");
     }
-    if (!window.confirm("Un-match the selected accounts?")) return;
+
+    setConfirmOpen(true);
+  }, [saving, doctype, receiptNo, branch, rows]);
+
+  // Step 2: runs after the user clicks "Yes"
+  const performUnmatch = useCallback(async () => {
+    setConfirmOpen(false);
 
     try {
       const result = await unmatch({
@@ -177,7 +188,6 @@ const MatchReversalPage: React.FC = () => {
       toast.error(getErrorMessage(error));
     }
   }, [
-    saving,
     doctype,
     receiptNo,
     branch,
@@ -245,6 +255,17 @@ const MatchReversalPage: React.FC = () => {
           balance={balance}
         />
       </div>
+
+      <ConfirmModal
+        open={confirmOpen}
+        title="Un-Match"
+        message="Un-match the selected accounts?"
+        confirmLabel="Yes"
+        cancelLabel="No"
+        busy={saving}
+        onConfirm={performUnmatch}
+        onCancel={() => setConfirmOpen(false)}
+      />
     </div>
   );
 };
