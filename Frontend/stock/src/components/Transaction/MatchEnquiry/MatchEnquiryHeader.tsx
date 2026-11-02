@@ -1,4 +1,3 @@
-
 import React from "react";
 
 import dayjs from "dayjs";
@@ -40,10 +39,6 @@ export interface MatchHeaderProps {
   documentOptions: SelectOption[];
   documentNoOptions: DocumentOption[];
 
-  documentAmount: number;
-  totalMatchAmount: number;
-  balance: number;
-
   customerIdRef: React.RefObject<HTMLDivElement | null>;
   customerNameRef: React.RefObject<HTMLDivElement | null>;
   divisionRef: React.RefObject<HTMLDivElement | null>;
@@ -55,6 +50,7 @@ export interface MatchHeaderProps {
 
   handleCustomerIdChange: (id: string) => void | Promise<void>;
   handleCustomerNameChange: (name: string) => void | Promise<void>;
+  handleDocumentNoChange: (docNo: string) => void; // add this
   handleSearch: () => void | Promise<void>;
 
   renderSelect: (
@@ -69,7 +65,7 @@ export interface MatchHeaderProps {
     customStyles?: StylesConfig<SelectOption, false>,
     disabled?: boolean,
     documentMode?: boolean,
-    swapColumns?: boolean
+    swapColumns?: boolean,
   ) => React.ReactNode;
 
   handleKeyboardAction: (
@@ -80,7 +76,7 @@ export interface MatchHeaderProps {
 }
 
 const MatchEnquiryHeader: React.FC<MatchHeaderProps> = ({
-    // branch,
+  // branch,
   customerId,
   customerName,
   divisionId,
@@ -91,8 +87,6 @@ const MatchEnquiryHeader: React.FC<MatchHeaderProps> = ({
   setDivisionId,
   setDocType,
   setReceiptNo,
-  // setReceiptDate,
-  // setBranch,
 
   customerOptions,
   customerNameOptions,
@@ -101,10 +95,6 @@ const MatchEnquiryHeader: React.FC<MatchHeaderProps> = ({
   documentNoOptions,
 
   divisionLoading,
-
-  // documentAmount,
-  // totalMatchAmount,
-  // balance,
 
   customerIdRef,
   customerNameRef,
@@ -115,6 +105,7 @@ const MatchEnquiryHeader: React.FC<MatchHeaderProps> = ({
 
   handleCustomerIdChange,
   handleCustomerNameChange,
+  handleDocumentNoChange, // add this
   handleSearch,
 
   renderSelect,
@@ -179,7 +170,7 @@ const MatchEnquiryHeader: React.FC<MatchHeaderProps> = ({
             () => customerNameRef.current?.focus(),
             customerIdRef,
             false,
-            ["Account ID", "Account Name"]
+            ["Account ID", "Account Name"],
           )}
 
           {/* CUSTOMER NAME */}
@@ -191,11 +182,10 @@ const MatchEnquiryHeader: React.FC<MatchHeaderProps> = ({
             () => divisionRef.current?.focus(),
             customerNameRef,
             true,
-            ["Account Name", "Account ID"]
+            ["Account Name", "Account ID"],
           )}
 
           {/* DOCUMENT AMOUNT */}
-         
         </div>
 
         {/* HEADER ROW 2 */}
@@ -228,11 +218,9 @@ const MatchEnquiryHeader: React.FC<MatchHeaderProps> = ({
               true,
               ["Division Name", "Division ID"],
               undefined,
-              !customerId ||
-                divisionLoading ||
-                divisionOptions .length === 0,
+              !customerId || divisionLoading || divisionOptions.length === 0,
               false,
-              true
+              true,
             )}
           </div>
 
@@ -249,7 +237,7 @@ const MatchEnquiryHeader: React.FC<MatchHeaderProps> = ({
             () => documentNoRef.current?.focus(),
             creditDocumentRef,
             true,
-            ["DocumentType ID", "DocumentType Name"]
+            ["DocumentType ID", "DocumentType Name"],
           )}
 
           {/* SEARCH */}
@@ -284,7 +272,6 @@ const MatchEnquiryHeader: React.FC<MatchHeaderProps> = ({
           </button>
 
           {/* MATCH AMOUNT */}
-         
         </div>
 
         {/* HEADER ROW 3 */}
@@ -310,23 +297,20 @@ const MatchEnquiryHeader: React.FC<MatchHeaderProps> = ({
               "lkpDocNo.",
               receiptNo,
               documentNoOptions,
-              setReceiptNo,
+              handleDocumentNoChange, // was setReceiptNo
               () => dateRef.current?.focus(),
               documentNoRef,
               false,
               undefined,
               undefined,
               false,
-              true
+              true,
             )}
           </div>
-
-         
 
           <div />
 
           {/* BALANCE */}
-          
         </div>
       </div>
     </>

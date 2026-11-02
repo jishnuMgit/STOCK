@@ -2,6 +2,7 @@ import express from "express";
 import ReceiptRouter from "./ReceiptRouter.js";
 import MatchRouter from "./Finance/Transaction/MatchRouter.js";
 import MatchReversalRouter from "./Finance/Transaction/MatchReversalRouter.js";
+import MatchEnquiryRouter from "./Finance/Transaction/MatchEnquiryRouter.js";
 import LoginRouter from "./AuthRouter.js";
 import CompanyRouter from "./CompanyRouter.js";
 import YearRouter from "./YearRouter.js";
@@ -66,6 +67,7 @@ router.use("/RptStockValuation", RptStockValuationRouter);
 router.use("/Receipt", ReceiptRouter);
 router.use("/Match", MatchRouter);
 router.use("/MatchReversal", MatchReversalRouter);
+router.use("/MatchEnquiry", MatchEnquiryRouter);
 router.use("/auth", LoginRouter);
 router.use("/companies", CompanyRouter);
 router.use("/years", YearRouter);
@@ -122,4 +124,5 @@ router.use("/RptIncomeSum", RptIncomeSumRouter); // Income Summary report
 router.use("/RptReceivables", RptReceivablesRouter);
 router.use("/RptPayables", RptPayablesRouter);
 router.use("/RptGL", RptGLRouter);
+
 export default router;

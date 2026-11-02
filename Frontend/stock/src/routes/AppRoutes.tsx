@@ -162,6 +162,10 @@ const AppRoutes = () => {
             path="/Finance/Transaction/Transaction-matching-reversal"
             element={<MatchReversal />}
           />
+          <Route
+            path="/Finance/Transaction/Transaction-match-enquiry"
+            element={<MatchEnquiryPage />}
+          />
   
           <Route
             path="/Finance/Transaction/BeginningBalance"
@@ -498,7 +502,7 @@ const AppRoutes = () => {
           />
           <Route path="/dev/matchpage" element={<MatchingPage />} />
           <Route path="/dev/unmatchpage" element={<UnMatchPage />} />
-          <Route path="/dev/MatchEnquiryPage" element={<MatchEnquiryPage />} />
+          {/* <Route path="/dev/MatchEnquiryPage" element={<MatchEnquiryPage />} /> */}
 
           {/* Unknown URL -> back to "/" ("/" has its own element, so no loop) */}
           <Route path="*" element={<Navigate to="/" replace />} />
