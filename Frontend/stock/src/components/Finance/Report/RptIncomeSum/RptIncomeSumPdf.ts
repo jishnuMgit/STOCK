@@ -127,7 +127,8 @@ const addMonthPage = (
         doc,
         pageW,
         margin,
-        { txtCoName: report.txtCoName, txtHeading: heading, txtReportInfo: report.txtReportInfo },
+        // the user / date line is printed once: on the first page only
+        { txtCoName: report.txtCoName, txtHeading: heading, txtReportInfo: secondHalf ? "" : report.txtReportInfo },
         report.txtBranch
       ),
   });
@@ -136,7 +137,11 @@ const addMonthPage = (
 const buildMonthPdf = (report: MonthReport): Blob => {
   const doc = new jsPDF({ orientation: "landscape", unit: "mm", format: "a4" });
 
-  addMonthPage(doc, report, report.txtHeading, report.blnJulToDec, true);
+  addMonthPage(doc, report, report.txtHeading, false, true);
+
+  if (report.txtHeadingJulToDec !== "") {
+    addMonthPage(doc, report, report.txtHeadingJulToDec, true, false);
+  }
 
   addPageNumbers(doc, 297, pdfMargin(15));
 

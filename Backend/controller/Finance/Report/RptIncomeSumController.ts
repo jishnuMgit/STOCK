@@ -274,8 +274,8 @@ const prepareReport = async (req: AuthenticatedRequest): Promise<Prepared> => {
     .join("    ");
 
   if (rdgDate === 0) {
-    // the monthly report: ONE page - January to June when the month is not after June, July to December (with the
-    // January to June total as its Opening) when it is. The heading: "Income Summary Up to <Month> - 2026"
+    // the monthly report, as the old one: page 1 is January to June, page 2 is July to December (with the January to
+    // June total as its Opening) - page 2 only when the month is after June
     const { lines, totals } = await getIncomeSumMonthly(params);
 
     if (lines.length === 0) throw new ApiError(404, "No records found");
@@ -288,8 +288,10 @@ const prepareReport = async (req: AuthenticatedRequest): Promise<Prepared> => {
       report: {
         rdgDate: 0,
         txtCoName: await getCompanyName(PstrCoID),
-        txtHeading: upTo,
-        blnJulToDec: monthIndex > 5,
+        // page 1 (January to June): "Up to June" when the month is after June, else "Up to <Month>" and it is the only
+        // page; page 2 (July to December, with the January to June total as its Opening) only when the month is after June
+        txtHeading: monthIndex > 5 ? `Income Summary Up to June - ${year}` : upTo,
+        txtHeadingJulToDec: monthIndex > 5 ? upTo : "",
         txtBranch,
         txtReportInfo: reportInfo(PstrUserID),
         lines,

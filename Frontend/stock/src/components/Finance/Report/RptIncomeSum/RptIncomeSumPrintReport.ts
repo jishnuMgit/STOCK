@@ -52,11 +52,12 @@ export type IncomeSumMonthLine = {
 export type MonthReport = {
   rdgDate: 0;
   txtCoName: string;
-  // the heading of the page: "Income Summary Up to November - 2026"
+  // the heading of the January to June page: "Income Summary Up to June - 2026", or "... Up to March - 2026" when the
+  // month is not after June (then it is the only page)
   txtHeading: string;
-  // false: the January to June page (the month is not after June); true: the July to December page, with the
-  // January to June total as its Opening
-  blnJulToDec: boolean;
+  // the heading of the July to December page, with the January to June total as its Opening ("" when the month is
+  // not after June: that page is not printed)
+  txtHeadingJulToDec: string;
   txtBranch: string;
   txtReportInfo: string;
   lines: IncomeSumMonthLine[];
@@ -136,7 +137,7 @@ const lineHtml = (l: IncomeSumLine) => `<tr style="color:${levelCssColor(l.txtAc
       <td class="r">${formatAmount(l.txtClosing)}</td>
     </tr>`;
 
-// ---- the monthly report: ONE table - January to June, or July to December ----
+// ---- the monthly report: a table for January to June, then (after June) one for July to December, a page break between ----
 
 const monthLineHtml = (l: IncomeSumMonthLine, secondHalf: boolean) => `<tr style="color:${levelCssColor(l.txtAccountLevel)}">
       <td>${esc(l.lkpAccountID)}</td>
@@ -158,7 +159,7 @@ const monthTableHtml = (r: MonthReport, heading: string, secondHalf: boolean, pa
   <thead>
     <tr><td colspan="${labels.length}" class="co"   style="border:0">${esc(r.txtCoName)}</td></tr>
     <tr><td colspan="${labels.length}" class="head" style="border:0">${esc(heading)}</td></tr>
-    <tr><td colspan="${labels.length}" class="sub"  style="border:0"><div><span>${esc(r.txtBranch)}</span><span class="info">${esc(r.txtReportInfo)}</span></div></td></tr>
+    <tr><td colspan="${labels.length}" class="sub"  style="border:0"><div><span>${esc(r.txtBranch)}</span><span class="info">${secondHalf ? "" : esc(r.txtReportInfo)}</span></div></td></tr>
     <tr>${labels.map((label, i) => `<th${i >= FIRST_NUMBER_COLUMN ? ' class="r"' : ""}>${label}</th>`).join("")}</tr>
   </thead>
   <tbody>
@@ -182,7 +183,9 @@ const buildMonthHtml = (r: MonthReport) => `<!doctype html>
 </style>
 </head>
 <body>
-${monthTableHtml(r, r.txtHeading, r.blnJulToDec, false)}
+${monthTableHtml(r, r.txtHeading, false, false)}${
+  r.txtHeadingJulToDec === "" ? "" : `\n${monthTableHtml(r, r.txtHeadingJulToDec, true, true)}`
+}
 </body>
 </html>`;
 

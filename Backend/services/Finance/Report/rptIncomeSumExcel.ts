@@ -98,18 +98,18 @@ export const buildIncomeSumWorkbook = async (report: IncomeSumReport): Promise<B
 };
 
 /* =========================================================
-   THE MONTHLY REPORT ("Up to Month") as an Excel file: ONE sheet - January to June when the month is not after June,
-   July to December (with the January to June total as its Opening) when it is - the old rptIncomeSumJanToJunRpt and
-   rptIncomeSumJulToDecRpt, A4 landscape
+   THE MONTHLY REPORT ("Up to Month") as an Excel file, as the old one: a sheet for January to June, and a sheet for
+   July to December (with the January to June total as its Opening) when the month is after June - the old
+   rptIncomeSumJanToJunRpt and rptIncomeSumJulToDecRpt, A4 landscape
 ========================================================= */
 
 export type IncomeSumMonthReport = {
   txtCoName: string;
-  // the heading of the page: "Income Summary Up to March - 2026"
+  // the heading of the January to June page: "Income Summary Up to June - 2026", or "... Up to March - 2026" when the
+  // month is not after June (then it is the only page)
   txtHeading: string;
-  // false: the January to June page (the month is not after June); true: the July to December page, with the
-  // January to June total as its Opening
-  blnJulToDec: boolean;
+  // the heading of the July to December page ("" when the month is not after June: no second page)
+  txtHeadingJulToDec: string;
   txtBranch: string;
   txtReportInfo: string;
   lines: IncomeSumMonthLine[];
@@ -153,7 +153,8 @@ const addMonthSheet = (
 
   addReportTitle(
     ws,
-    { txtCoName: report.txtCoName, txtHeading: heading, txtReportInfo: report.txtReportInfo },
+    // the user / date line is printed once: on the first sheet only
+    { txtCoName: report.txtCoName, txtHeading: heading, txtReportInfo: secondHalf ? "" : report.txtReportInfo },
     report.txtBranch,
     labels.length,
     3
@@ -211,7 +212,11 @@ const addMonthSheet = (
 export const buildIncomeSumMonthWorkbook = async (report: IncomeSumMonthReport): Promise<Buffer> => {
   const wb = new ExcelJS.Workbook();
 
-  addMonthSheet(wb, report.blnJulToDec ? "Jul - Dec" : "Jan - Jun", report.txtHeading, report, report.blnJulToDec);
+  addMonthSheet(wb, "Jan - Jun", report.txtHeading, report, false);
+
+  if (report.txtHeadingJulToDec !== "") {
+    addMonthSheet(wb, "Jul - Dec", report.txtHeadingJulToDec, report, true);
+  }
 
   return Buffer.from(await wb.xlsx.writeBuffer());
 };
