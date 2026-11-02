@@ -99,7 +99,7 @@ export const rePost = async (
 
     return res.status(200).json({
       success: true,
-      message: `${SCREEN_NAME} posted successfully\n${result.message}`,
+      message: `${SCREEN_NAME} posted successfully`,
       txtRePostedCount: result.count,
     });
   } catch (error: unknown) {

@@ -11,22 +11,18 @@
 --
 -- Every document type is replayed by its own post procedure, called in mode 'R' (re-post):
 --      BG   dbo.sp_pagebeginningstockpost
---      PI   dbo.sp_pipost
---      ST   dbo.sp_pagestocktransferpost    (the STI lines of the To branch belong to the ST)
---      ADJ  dbo.sp_pagestockadjustmentpost
---   Added LATER (their blocks are commented out below, in the check of step 2 and in the replay of step 5 - switch the
---   three places on together, never one of them alone):
+--      PI   dbo.sp_pagepipost
 --      PR   dbo.sp_pageprpost
 --      SI   dbo.sp_pagesipost
 --      SR   dbo.sp_pagesrpost
---   Of these the Beginning Stock, Stock Transfer, Stock Adjustment and Purchase Invoice procedures can re-post (the last two once
---   their re-post versions - sp_pagestockadjustmentpost and sp_pipost with mode 'R' - are installed; a procedure that only
---   knows mode P stops the re-post with its own message and everything is undone). A procedure that does
+--      ST   dbo.sp_pagestocktransferpost    (the STI lines of the To branch belong to the ST)
+--      ADJ  dbo.sp_pageadjpost
+--      
+--   Of these only the Beginning Stock and the Stock Transfer procedures exist and can re-post today. A procedure that does
 --   not exist (yet) is NOT an error of this procedure: it checks, before anything is changed, that the procedure of every
 --   document type of the range exists, and if one does not it STOPS with "not available yet" - replaying only some of the
 --   documents after the stock is set to 0 would leave the stock wrong. The day the procedure is created (and re-posts in
---   mode 'R'), its document type works here with no change. A document type that is not in the list above (PR, SI, SR
---   until they are switched on, Damage, Assembly, Item Conversion, the legacy types) is always "not available yet".
+--   mode 'R'), its document type works here with no change.
 --
 -- Differences from the pasted sp_stockrepost - all forced by our tables, or for safety:
 --   * "update dbo.tblitemtl set fstock = 0" is left out: tblitemtl has no fstock column here (an item's total stock is
@@ -38,8 +34,7 @@
 --       - every document of the range can be re-posted (see above);
 --       - for every year + branch that is rebuilt, ALL its posted documents are in the range - a branch with a posted
 --         document that is outside the range, or that has no posting number (old documents have none), would lose it.
---   * the post procedures are called by the names the team uses (sp_page<document>post); the check of step 2 stops the
---     re-post, before anything is changed, when one of them does not exist yet.
+--   * the names of the post procedures are the ones that exist here.
 --
 -- The whole procedure runs in the caller's transaction: if one document fails, everything is undone.
 --
@@ -99,13 +94,13 @@ BEGIN
              WHERE n.nspname = 'dbo'
                AND p.proname = CASE t.fdoctype
                                  WHEN 'BG'  THEN 'sp_pagebeginningstockpost'
-                                 WHEN 'PI'  THEN 'sp_pipost'
-                                 -- to be added later (with their blocks in step 5):
-                                 -- WHEN 'PR'  THEN 'sp_pageprpost'
-                                 -- WHEN 'SI'  THEN 'sp_pagesipost'
-                                 -- WHEN 'SR'  THEN 'sp_pagesrpost'
+                                 WHEN 'PI'  THEN 'sp_pagepipost'
+                                 WHEN 'PR'  THEN 'sp_pageprpost'
+                                 WHEN 'SI'  THEN 'sp_pagesipost'
+                                 WHEN 'SR'  THEN 'sp_pagesrpost'
                                  WHEN 'ST'  THEN 'sp_pagestocktransferpost'
-                                 WHEN 'ADJ' THEN 'sp_pagestockadjustmentpost'
+                                 WHEN 'ADJ' THEN 'sp_pageadjpost'
+                                
                                END);
 
     IF v_unsupport IS NOT NULL THEN
@@ -159,7 +154,7 @@ BEGIN
          WHERE t.fcoid = p_pstrcoid
            AND t.fpost = true
            AND t.fpostingno BETWEEN p_strstartpostingno AND p_strendpostingno
-           AND t.fdoctype IN ('BG', 'PI', 'ST', 'ADJ')  -- add 'PR', 'SI', 'SR' here when their blocks are switched on
+           AND t.fdoctype IN ('BG', 'PI', 'PR', 'SI', 'SR', 'ST', 'ADJ', 'DM', 'ASM', 'IC')
          ORDER BY t.fpostingno, t.fdoctype, t.fdocno
     LOOP
 
@@ -173,20 +168,20 @@ BEGIN
             CALL dbo.sp_pipost(v_mode, p_pstrcoid, v_doc.fyear, v_doc.fbrid, v_doc.fdoctype, v_doc.fdocno, p_pstruserid);
         END IF;
 
-        -- Purchase Return - to be added later
-        -- IF v_doc.fdoctype = 'PR' THEN
-        --     CALL dbo.sp_pageprpost(v_mode, p_pstrcoid, v_doc.fyear, v_doc.fbrid, v_doc.fdoctype, v_doc.fdocno, p_pstruserid);
-        -- END IF;
+        -- Purchase Return
+        IF v_doc.fdoctype = 'PR' THEN
+            CALL dbo.sp_pageprpost(v_mode, p_pstrcoid, v_doc.fyear, v_doc.fbrid, v_doc.fdoctype, v_doc.fdocno, p_pstruserid);
+        END IF;
 
-        -- Sales Invoice - to be added later
-        -- IF v_doc.fdoctype = 'SI' THEN
-        --     CALL dbo.sp_pagesipost(v_mode, p_pstrcoid, v_doc.fyear, v_doc.fbrid, v_doc.fdoctype, v_doc.fdocno, p_pstruserid);
-        -- END IF;
+        -- Sales Invoice
+        IF v_doc.fdoctype = 'SI' THEN
+            CALL dbo.sp_pagesipost(v_mode, p_pstrcoid, v_doc.fyear, v_doc.fbrid, v_doc.fdoctype, v_doc.fdocno, p_pstruserid);
+        END IF;
 
-        -- Sales Return - to be added later
-        -- IF v_doc.fdoctype = 'SR' THEN
-        --     CALL dbo.sp_pagesrpost(v_mode, p_pstrcoid, v_doc.fyear, v_doc.fbrid, v_doc.fdoctype, v_doc.fdocno, p_pstruserid);
-        -- END IF;
+        -- Sales Return
+        IF v_doc.fdoctype = 'SR' THEN
+            CALL dbo.sp_pagesrpost(v_mode, p_pstrcoid, v_doc.fyear, v_doc.fbrid, v_doc.fdoctype, v_doc.fdocno, p_pstruserid);
+        END IF;
 
         -- Stock Transfer
         IF v_doc.fdoctype = 'ST' THEN
@@ -198,7 +193,6 @@ BEGIN
             CALL dbo.sp_pagestockadjustmentpost(v_mode, p_pstrcoid, v_doc.fyear, v_doc.fbrid, v_doc.fdoctype, v_doc.fdocno, p_pstruserid);
         END IF;
 
-        p_intrepostedcount := p_intrepostedcount + 1;
 
     END LOOP;
 
