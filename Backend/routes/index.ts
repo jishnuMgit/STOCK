@@ -34,6 +34,7 @@ import BeginningBalanceRouter from "./Finance/Transaction/BeginningBalanceRouter
 import StockTransferRouter from "./Sales/Transaction/StockTransferRouter.js";
 import StockAdjustmentRouter from "./Sales/Transaction/StockAdjustmentRouter.js";
 import StockDocumentPostRouter from "./Sales/Transaction/StockDocumentPostRouter.js";
+import StockDocumentRePostRouter from "./Sales/Transaction/StockDocumentRePostRouter.js";
 import branchRouter from "./common/BranchRouter.js";
 import chartOfAccountRouter from "./Finance/Setup/COARouter.js";
 import CostCenterRouter from "./Finance/Setup/CostCenterRouter.js";
@@ -51,8 +52,10 @@ import RptStockReportRouter from "./Purchase/Report/RptStockReportRouter.js";
 import RptStockValuationRouter from "./Purchase/Report/RptStockValuationRouter.js";
 import RptStockVerificationRouter from "./Purchase/Report/RptStockVerificationRouter.js";
 import RptStockAgeingRouter from "./Purchase/Report/RptStockAgeingRouter.js";
+import RptItemMovementRouter from "./Purchase/Report/RptItemMovementRouter.js";
 import RptSupplierPurchaseRouter from "./Purchase/Report/RptSupplierPurchaseRouter.js";
 import RptItemPurchaseRouter from "./Purchase/Report/RptItemPurchaseRouter.js";
+import RptIncomeSumRouter from "./Finance/Report/RptIncomeSumRouter.js";
 import RptReceivablesRouter from "./Finance/Report/A_RandA_P/RptReceivablesRouter.js";
 
 import RptPayablesRouter from "./Finance/Report/A_RandA_P/RptPayablesRouter.js";
@@ -96,6 +99,7 @@ router.use("/BeginningBalance", BeginningBalanceRouter);
 router.use("/StockTransfer", StockTransferRouter);
 router.use("/StockAdjustment", StockAdjustmentRouter);
 router.use("/StockDocumentPost", StockDocumentPostRouter);
+router.use("/StockDocumentRePost", StockDocumentRePostRouter);
 router.use("/branch", branchRouter);
 router.use("/coa", chartOfAccountRouter);
 router.use("/CostCenter", CostCenterRouter);
@@ -113,8 +117,10 @@ router.use("/RptSOA", RptSOARouter);
 router.use("/RptStockReport", RptStockReportRouter);
 router.use("/RptStockVerification", RptStockVerificationRouter);
 router.use("/RptStockAgeing", RptStockAgeingRouter);
+router.use("/RptItemMovement", RptItemMovementRouter);
 router.use("/RptSupplierPurchase", RptSupplierPurchaseRouter);
 router.use("/RptItemPurchase", RptItemPurchaseRouter);
+router.use("/RptIncomeSum", RptIncomeSumRouter); // Income Summary report
 router.use("/RptReceivables", RptReceivablesRouter);
 router.use("/RptPayables", RptPayablesRouter);
 router.use("/RptGL", RptGLRouter);
