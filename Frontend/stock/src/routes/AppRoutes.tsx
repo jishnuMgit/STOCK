@@ -281,7 +281,7 @@ const AppRoutes = () => {
           {/* ================= SALES - TRANSACTION ================= */}
 
           <Route
-            path="/Sales/Transaction/SalesInvoicePage"
+            path="/Sales/Transaction/SalesInvoice"
             element={<SalesInvoice />}
           />
           <Route

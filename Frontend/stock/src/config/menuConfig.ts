@@ -84,11 +84,11 @@ export const menuRouteMap: Record<string, string> = {
 Sales-TRANSACTION
 =============================================================*/
 
-  mnuSalesInvoice: "/Sales/Transaction/SalesInvoicePage",
   mnuStockAdjustment: "/Sales/Transaction/StockAdjustment",
   mnuStockTransfer: "/Sales/Transaction/StockTransferPage",
   mnuStkDocumentPost: "/Sales/Transaction/StockDocumentPost",
   mnuStkDocumentRePost: "/Sales/Transaction/StockDocumentRePost",
+  mnuSalesInvoice: "/Sales/Transaction/SalesInvoice",
 
   /*============================================================
 Sales-SETUP
