@@ -53,6 +53,7 @@ import RptStockAgeingRouter from "./Purchase/Report/RptStockAgeingRouter.js";
 import RptItemMovementRouter from "./Purchase/Report/RptItemMovementRouter.js";
 import RptSupplierPurchaseRouter from "./Purchase/Report/RptSupplierPurchaseRouter.js";
 import RptItemPurchaseRouter from "./Purchase/Report/RptItemPurchaseRouter.js";
+import RptIncomeSumRouter from "./Finance/Report/RptIncomeSumRouter.js";
 const router = express.Router();
 router.use("/RptStockValuation", RptStockValuationRouter);
 router.use("/Receipt", ReceiptRouter);
@@ -109,4 +110,5 @@ router.use("/RptStockAgeing", RptStockAgeingRouter);
 router.use("/RptItemMovement", RptItemMovementRouter);
 router.use("/RptSupplierPurchase", RptSupplierPurchaseRouter);
 router.use("/RptItemPurchase", RptItemPurchaseRouter);
+router.use("/RptIncomeSum", RptIncomeSumRouter); // Income Summary report
 export default router;
