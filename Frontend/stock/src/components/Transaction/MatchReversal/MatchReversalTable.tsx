@@ -31,7 +31,6 @@ const MatchTable: React.FC<MatchTableProps> = ({
       <table id="tblMatch" className="w-full table-fixed border-collapse">
         <thead className="bg-[#e8f8ef]">
           <tr>
-            <th className={`${th} w-[8%] text-center`}>Un-Match</th>
             <th className={`${th} w-[7%] text-left`}>Sl. No.</th>
             <th className={`${th} w-[12%] text-left`}>Account ID</th>
             <th className={`${th} w-[10%] text-left`}>Date</th>
@@ -39,12 +38,25 @@ const MatchTable: React.FC<MatchTableProps> = ({
             <th className={`${th} w-[11%] text-right`}>Document Amt.</th>
             <th className={`${th} w-[10%] text-right`}>Debit</th>
             <th className={`${th} w-[10%] text-right`}>Credit</th>
+            <th className={`${th} w-[8%] text-center`}>Un-Match</th>
           </tr>
         </thead>
 
         <tbody>
           {rows.map((row, rowIndex) => (
             <tr key={row.id} className="h-6.75">
+              <td className={td}>
+                {row.slNo}
+                {row.slNoSub ? `.${row.slNoSub}` : ""}
+              </td>
+              <td className={`${td} truncate`}>{row.csAccountId}</td>
+              <td className={td}>{row.date}</td>
+              <td className={`${td} truncate`} title={row.description}>
+                {row.description}
+              </td>
+              <td className={`${td} text-right`}>{fmt(row.docAmount)}</td>
+              <td className={`${td} text-right`}>{fmt(row.debit)}</td>
+              <td className={`${td} text-right`}>{fmt(row.credit)}</td>
               <td className="border border-[#bce8d2] p-0 text-center">
                 <input
                   type="checkbox"
@@ -59,18 +71,6 @@ const MatchTable: React.FC<MatchTableProps> = ({
                   className="h-3.75 w-3.75 accent-[#72c99a]"
                 />
               </td>
-              <td className={td}>
-                {row.slNo}
-                {row.slNoSub ? `.${row.slNoSub}` : ""}
-              </td>
-              <td className={`${td} truncate`}>{row.csAccountId}</td>
-              <td className={td}>{row.date}</td>
-              <td className={`${td} truncate`} title={row.description}>
-                {row.description}
-              </td>
-              <td className={`${td} text-right`}>{fmt(row.docAmount)}</td>
-              <td className={`${td} text-right`}>{fmt(row.debit)}</td>
-              <td className={`${td} text-right`}>{fmt(row.credit)}</td>
             </tr>
           ))}
 

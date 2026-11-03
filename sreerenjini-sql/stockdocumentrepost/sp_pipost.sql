@@ -1,28 +1,6 @@
--- =====================================================================
--- dbo.sp_pipost   (Purchase Invoice - Post AND Re-Post)
---
--- The same procedure as today, with the RE-POST mode R of the SQL Server SP_PIPostNew added. Post mode P is NOT changed.
---
--- WHAT THE OLD SP_PIPostNew DOES IN MODE R (re-post), and so what this does:
---   * it takes the lines of the document that are already POSTED (fPost = 1); P takes the lines not posted yet;
---   * for each line, exactly as in P: the stock row of the branch is made when missing, the previous stock and cost are kept,
---     the moving-average cost is worked out from the line's unit cost, and the stock and the cost are updated;
---   * the posting number, the posted flag of the lines, the finance rows and the AR / AP rows stay as they are (the old R
---     only sets fPostOrder on the finance rows - a column these tables do not have).
---
--- THE 3 CHANGES (look for "RE-POST CHANGE 1/2/3"; the lines marked "SYNC" are not part of the re-post):
---   RE-POST CHANGE 1  the mode check accepts 'R' as well as 'P';
---   RE-POST CHANGE 2  the lines it reads: fpost = (mode = 'R');
---   RE-POST CHANGE 3  a re-post returns after the loop, before the posting number and the posted flags are written
---                     (and the "not found" message says "not posted" for a re-post).
---   SYNC              the posting number is written to fpostingno (the database already does; this file still wrote ftransno).
---
--- NOTE for the team: the old SP_PIPostNew also sets fLastPurchaseCost = the line's unit cost. tblstockcontrol has a
--- flastpurchasecost column now, but neither this procedure (P) nor this re-post writes it - left as it is.
---
--- Used by:  dbo.sp_pagestockdocumentrepost (the Stock Document Re-Post screen)
--- Example:  CALL dbo.sp_pipost('R', '01', '2026', 'JD', 'PI', 'JD-2600013', 'ADMIN');
--- =====================================================================
+-- PROCEDURE: dbo.sp_pipost(character varying, character varying, character varying, character varying, character varying, character varying, character varying)
+
+-- DROP PROCEDURE IF EXISTS dbo.sp_pipost(character varying, character varying, character varying, character varying, character varying, character varying, character varying);
 
 CREATE OR REPLACE PROCEDURE dbo.sp_pipost(
 	IN p_strmode character varying,
@@ -202,3 +180,6 @@ BEGIN
 
 END;
 $BODY$;
+ALTER PROCEDURE dbo.sp_pipost(character varying, character varying, character varying, character varying, character varying, character varying, character varying)
+    OWNER TO postgres;
+

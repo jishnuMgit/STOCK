@@ -2,6 +2,7 @@ import express from "express";
 import ReceiptRouter from "./ReceiptRouter.js";
 import MatchRouter from "./Finance/Transaction/MatchRouter.js";
 import MatchReversalRouter from "./Finance/Transaction/MatchReversalRouter.js";
+import MatchEnquiryRouter from "./Finance/Transaction/MatchEnquiryRouter.js";
 import LoginRouter from "./AuthRouter.js";
 import CompanyRouter from "./CompanyRouter.js";
 import YearRouter from "./YearRouter.js";
@@ -54,6 +55,7 @@ import RptStockAgeingRouter from "./Purchase/Report/RptStockAgeingRouter.js";
 import RptItemMovementRouter from "./Purchase/Report/RptItemMovementRouter.js";
 import RptSupplierPurchaseRouter from "./Purchase/Report/RptSupplierPurchaseRouter.js";
 import RptItemPurchaseRouter from "./Purchase/Report/RptItemPurchaseRouter.js";
+import RptIncomeSumRouter from "./Finance/Report/RptIncomeSumRouter.js";
 import RptReceivablesRouter from "./Finance/Report/A_RandA_P/RptReceivablesRouter.js";
 
 import RptPayablesRouter from "./Finance/Report/A_RandA_P/RptPayablesRouter.js";
@@ -65,6 +67,7 @@ router.use("/RptStockValuation", RptStockValuationRouter);
 router.use("/Receipt", ReceiptRouter);
 router.use("/Match", MatchRouter);
 router.use("/MatchReversal", MatchReversalRouter);
+router.use("/MatchEnquiry", MatchEnquiryRouter);
 router.use("/auth", LoginRouter);
 router.use("/companies", CompanyRouter);
 router.use("/years", YearRouter);
@@ -117,7 +120,9 @@ router.use("/RptStockAgeing", RptStockAgeingRouter);
 router.use("/RptItemMovement", RptItemMovementRouter);
 router.use("/RptSupplierPurchase", RptSupplierPurchaseRouter);
 router.use("/RptItemPurchase", RptItemPurchaseRouter);
+router.use("/RptIncomeSum", RptIncomeSumRouter); // Income Summary report
 router.use("/RptReceivables", RptReceivablesRouter);
 router.use("/RptPayables", RptPayablesRouter);
 router.use("/RptGL", RptGLRouter);
+
 export default router;

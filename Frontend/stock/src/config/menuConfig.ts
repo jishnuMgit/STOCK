@@ -84,11 +84,11 @@ export const menuRouteMap: Record<string, string> = {
 Sales-TRANSACTION
 =============================================================*/
 
-  mnuSalesInvoice: "/Sales/Transaction/SalesInvoicePage",
   mnuStockAdjustment: "/Sales/Transaction/StockAdjustment",
   mnuStockTransfer: "/Sales/Transaction/StockTransferPage",
   mnuStkDocumentPost: "/Sales/Transaction/StockDocumentPost",
   mnuStkDocumentRePost: "/Sales/Transaction/StockDocumentRePost",
+  mnuSalesInvoice: "/Sales/Transaction/SalesInvoice",
 
   /*============================================================
 Sales-SETUP
@@ -118,6 +118,7 @@ Sales-REPORT
   mnuFinDocPrint: "/Finance/Transaction/FinDocPrint",
   mnuMatching: "/Finance/Transaction/Transaction-matching",
   mnuUnMatching: "/Finance/Transaction/Transaction-matching-reversal",
+  mnuMatchEnquiry: "/Finance/Transaction/Transaction-match-enquiry",
 
   /* =========================================================
      FINANCE - SETUP
@@ -256,8 +257,6 @@ export const ADMINISTRATION_NODE: MenuNode = {
     },
   ],
 };
-
-
 
 /* Rpt Statement of Account (synthetic node)
    Hardcoded in the frontend, injected as a child of

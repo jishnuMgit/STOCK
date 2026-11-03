@@ -1,438 +1,58 @@
-
 import React from "react";
-import type { ReceiptRow, TableField } from "./types";
+import type { MatchEnquiryRow } from "../../../hooks/useMatchEnquiry";
 
 interface MatchTableProps {
-  rows: ReceiptRow[];
-
-  handleRowChange: (
-    rowIndex: number,
-    field: keyof ReceiptRow,
-    value: string | number | boolean
-  ) => void;
-
-  tableRefs: React.MutableRefObject<
-    Record<string, HTMLElement | null>
-  >;
-
-  handleTableKeyDown: (
-    event: React.KeyboardEvent,
-    rowIndex: number,
-    field: TableField
-  ) => void;
+  rows: MatchEnquiryRow[];
 }
 
-const MatchEnquiryTable: React.FC<MatchTableProps> = ({
-  rows,
-  handleRowChange,
-  tableRefs,
-  handleTableKeyDown,
-}) => {
-  const tableInputClass = `
-    h-[27px]
-    w-full
-    border-0
-    bg-transparent
-    px-2
-    text-[13px]
-    text-slate-700
-    outline-none
-    focus:bg-white
-    focus:ring-0
-  `;
+const MIN_ROWS = 11;
+const COLUMNS = 9;
+const th = "border border-[#bce8d2] font-semibold px-1 py-1.25";
+const td = "border border-[#bce8d2] px-2 text-[13px] text-slate-700";
+const fmt = (n: number) => (n ? n.toFixed(2) : "");
+
+const MatchEnquiryTable: React.FC<MatchTableProps> = ({ rows }) => {
+  const fillerCount = Math.max(0, MIN_ROWS - rows.length);
 
   return (
-    <div
-      className="
-        mx-6.75
-        border
-        border-[#bce8d2]
-        max-[900px]:mx-2
-      "
-    >
-      <table
-        id="tblMatch"
-        className="w-full table-fixed border-collapse"
-      >
+    <div className="mx-6.75 border border-[#bce8d2] max-[900px]:mx-2">
+      <table id="tblMatch" className="w-full table-fixed border-collapse">
         <thead className="bg-[#e8f8ef]">
           <tr>
-            <th
-              id="txtParent/Child"
-              className="w-[10%] text-left border border-[#bce8d2] font-semibold px-1 py-1.25"
-            >
-              Parent/Child
-            </th>
-
-            <th
-              id="txtBrID"
-              className="w-[5%] text-left border border-[#bce8d2] font-semibold px-1 py-1.25"
-            >
-              Br. ID
-            </th>
-
-            <th
-              id="dtpDate"
-              className="w-[10%] text-left border border-[#bce8d2] font-semibold px-1 py-1.25"
-            >
-              Date
-            </th>
-
-            <th
-              id="txtType"
-              className="w-[5%] text-left border border-[#bce8d2] font-semibold px-1 py-1.25"
-            >
-              Type
-            </th>
-
-            <th
-              id="txtDocNo"
-              className="w-[10%] text-left border border-[#bce8d2] font-semibold px-1 py-1.25"
-            >
-              Documnet No.
-            </th>
-
-            <th
-              id="txtDescription"
-              className="w-auto text-left border border-[#bce8d2] font-semibold px-1 py-1.25"
-            >
-              Description
-            </th>
-
-
-            <th
-              id="txtDebit"
-              className="w-[10%] text-right border border-[#bce8d2] font-semibold px-1 py-1.25"
-            >
-              Debit
-            </th>
-
-            <th
-              id="txtCredit"
-              className="w-[10%] text-right border border-[#bce8d2] font-semibold px-1 py-1.25"
-            >
-              Credit
-            </th>
-
-            <th
-              id="dtpMatchApplyDate"
-              className="w-[12%] text-right border border-[#bce8d2] font-semibold px-1 py-1.25"
-            >
-              Match Apply Date
-            </th>
+            <th className={`${th} w-[10%] text-left`}>Parent/Child</th>
+            <th className={`${th} w-[6%] text-left`}>Br. ID</th>
+            <th className={`${th} w-[10%] text-left`}>Date</th>
+            <th className={`${th} w-[6%] text-left`}>Type</th>
+            <th className={`${th} w-[12%] text-left`}>Document No.</th>
+            <th className={`${th} w-auto text-left`}>Description</th>
+            <th className={`${th} w-[10%] text-right`}>Debit</th>
+            <th className={`${th} w-[10%] text-right`}>Credit</th>
+            <th className={`${th} w-[12%] text-left`}>Match Apply Date</th>
           </tr>
         </thead>
 
         <tbody>
-          {rows.map((row, rowIndex) => (
+          {rows.map((row) => (
             <tr key={row.id} className="h-6.75">
-              {/* PARENT / CHILD */}
-              <td className="border border-[#bce8d2] p-0">
-                <input
-                  id={
-                    rowIndex === 0
-                      ? "txtParent/Child"
-                      : undefined
-                  }
-                  ref={(element) => {
-                    tableRefs.current[
-                      `${rowIndex}-parentChild`
-                    ] = element;
-                  }}
-                  className={tableInputClass}
-                  value={row.parentChild ?? ""}
-                  onChange={(event) =>
-                    handleRowChange(
-                      rowIndex,
-                      "parentChild",
-                      event.target.value
-                    )
-                  }
-                  onKeyDown={(event) =>
-                    handleTableKeyDown(
-                      event,
-                      rowIndex,
-                      "parentChild"
-                    )
-                  }
-                />
+              <td className={td}>{row.pc}</td>
+              <td className={td}>{row.brId}</td>
+              <td className={td}>{row.date}</td>
+              <td className={td}>{row.docType}</td>
+              <td className={`${td} truncate`}>{row.docNo}</td>
+              <td className={`${td} truncate`} title={row.description}>
+                {row.description}
               </td>
+              <td className={`${td} text-right`}>{fmt(row.debit)}</td>
+              <td className={`${td} text-right`}>{fmt(row.credit)}</td>
+              <td className={td}>{row.effectiveDate}</td>
+            </tr>
+          ))}
 
-              {/* BR ID */}
-              <td className="border border-[#bce8d2] p-0">
-                <input
-                  id={
-                    rowIndex === 0
-                      ? "txtBrID"
-                      : undefined
-                  }
-                  ref={(element) => {
-                    tableRefs.current[
-                      `${rowIndex}-brId`
-                    ] = element;
-                  }}
-                  className={tableInputClass}
-                  value={row.brId}
-                  onChange={(event) =>
-                    handleRowChange(
-                      rowIndex,
-                      "brId",
-                      event.target.value
-                    )
-                  }
-                  onKeyDown={(event) =>
-                    handleTableKeyDown(
-                      event,
-                      rowIndex,
-                      "brId"
-                    )
-                  }
-                />
-              </td>
-
-              {/* DATE */}
-              <td className="border border-[#bce8d2] p-0">
-                <input
-                  id={
-                    rowIndex === 0
-                      ? "dtpDate"
-                      : undefined
-                  }
-                  ref={(element) => {
-                    tableRefs.current[
-                      `${rowIndex}-date`
-                    ] = element;
-                  }}
-                  className={tableInputClass}
-                  value={row.date}
-                  onChange={(event) =>
-                    handleRowChange(
-                      rowIndex,
-                      "date",
-                      event.target.value
-                    )
-                  }
-                  onKeyDown={(event) =>
-                    handleTableKeyDown(
-                      event,
-                      rowIndex,
-                      "date"
-                    )
-                  }
-                />
-              </td>
-
-              {/* TYPE */}
-              <td className="border border-[#bce8d2] p-0">
-                <input
-                  id={
-                    rowIndex === 0
-                      ? "txtType"
-                      : undefined
-                  }
-                  ref={(element) => {
-                    tableRefs.current[
-                      `${rowIndex}-type`
-                    ] = element;
-                  }}
-                  className={tableInputClass}
-                  value={row.type ?? ""}
-                  onChange={(event) =>
-                    handleRowChange(
-                      rowIndex,
-                      "type",
-                      event.target.value
-                    )
-                  }
-                  onKeyDown={(event) =>
-                    handleTableKeyDown(
-                      event,
-                      rowIndex,
-                      "type"
-                    )
-                  }
-                />
-              </td>
-
-              {/* DOCUMENT NO */}
-              <td className="border border-[#bce8d2] p-0">
-                <input
-                  id={
-                    rowIndex === 0
-                      ? "txtDocNo"
-                      : undefined
-                  }
-                  ref={(element) => {
-                    tableRefs.current[
-                      `${rowIndex}-docNo`
-                    ] = element;
-                  }}
-                  className={tableInputClass}
-                  value={row.docNo}
-                  onChange={(event) =>
-                    handleRowChange(
-                      rowIndex,
-                      "docNo",
-                      event.target.value
-                    )
-                  }
-                  onKeyDown={(event) =>
-                    handleTableKeyDown(
-                      event,
-                      rowIndex,
-                      "docNo"
-                    )
-                  }
-                />
-              </td>
-
-              {/* DESCRIPTION */}
-              <td className="border border-[#bce8d2] p-0">
-                <input
-                  id={
-                    rowIndex === 0
-                      ? "txtDescription"
-                      : undefined
-                  }
-                  ref={(element) => {
-                    tableRefs.current[
-                      `${rowIndex}-description`
-                    ] = element;
-                  }}
-                  className={tableInputClass}
-                  value={row.description}
-                  onChange={(event) =>
-                    handleRowChange(
-                      rowIndex,
-                      "description",
-                      event.target.value
-                    )
-                  }
-                  onKeyDown={(event) =>
-                    handleTableKeyDown(
-                      event,
-                      rowIndex,
-                      "description"
-                    )
-                  }
-                />
-              </td>
-
-            
-              {/* DEBIT */}
-              <td className="border border-[#bce8d2] p-0">
-                <input
-                  id={
-                    rowIndex === 0
-                      ? "txtDebit"
-                      : undefined
-                  }
-                  type="number"
-                  ref={(element) => {
-                    tableRefs.current[
-                      `${rowIndex}-debit`
-                    ] = element;
-                  }}
-                  className={`${tableInputClass} text-right`}
-                  value={
-                    row.debit === 0
-                      ? ""
-                      : row.debit
-                  }
-                  placeholder="0.00"
-                  min="0"
-                  step="0.01"
-                  onChange={(event) =>
-                    handleRowChange(
-                      rowIndex,
-                      "debit",
-                      event.target.value === ""
-                        ? 0
-                        : Number(event.target.value)
-                    )
-                  }
-                  onKeyDown={(event) =>
-                    handleTableKeyDown(
-                      event,
-                      rowIndex,
-                      "debit"
-                    )
-                  }
-                />
-              </td>
-
-              {/* CREDIT */}
-              <td className="border border-[#bce8d2] p-0">
-                <input
-                  id={
-                    rowIndex === 0
-                      ? "txtCredit"
-                      : undefined
-                  }
-                  type="number"
-                  ref={(element) => {
-                    tableRefs.current[
-                      `${rowIndex}-credit`
-                    ] = element;
-                  }}
-                  className={`${tableInputClass} text-right`}
-                  value={
-                    row.credit === 0
-                      ? ""
-                      : row.credit
-                  }
-                  placeholder="0.00"
-                  min="0"
-                  step="0.01"
-                  onChange={(event) =>
-                    handleRowChange(
-                      rowIndex,
-                      "credit",
-                      event.target.value === ""
-                        ? 0
-                        : Number(event.target.value)
-                    )
-                  }
-                  onKeyDown={(event) =>
-                    handleTableKeyDown(
-                      event,
-                      rowIndex,
-                      "credit"
-                    )
-                  }
-                />
-              </td>
-
-              {/* MATCH APPLY DATE */}
-              <td className="border border-[#bce8d2] p-0">
-                <input
-                  id={
-                    rowIndex === 0
-                      ? "dtpMatchApplyDate"
-                      : undefined
-                  }
-                  ref={(element) => {
-                    tableRefs.current[
-                      `${rowIndex}-matchApplyDate`
-                    ] = element;
-                  }}
-                  className={tableInputClass}
-                  value={row.matchApplyDate ?? ""}
-                  onChange={(event) =>
-                    handleRowChange(
-                      rowIndex,
-                      "matchApplyDate",
-                      event.target.value
-                    )
-                  }
-                  onKeyDown={(event) =>
-                    handleTableKeyDown(
-                      event,
-                      rowIndex,
-                      "matchApplyDate"
-                    )
-                  }
-                />
-              </td>
+          {Array.from({ length: fillerCount }).map((_, i) => (
+            <tr key={`filler-${i}`} className="h-6.75">
+              {Array.from({ length: COLUMNS }).map((__, c) => (
+                <td key={c} className="border border-[#bce8d2]" />
+              ))}
             </tr>
           ))}
         </tbody>
