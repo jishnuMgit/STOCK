@@ -1,50 +1,35 @@
-import React, {
-  useRef,
-  useState,
-} from "react";
-
+import React, { useRef, useState } from "react";
 import Select, {
+  components,
+  type FormatOptionLabelMeta,
+  type MenuListProps,
   type StylesConfig,
 } from "react-select";
-
 import dayjs from "dayjs";
-
 import customParseFormat from "dayjs/plugin/customParseFormat";
-
-import {
-  AdapterDayjs,
-} from "@mui/x-date-pickers/AdapterDayjs";
-
-import {
-  DatePicker,
-} from "@mui/x-date-pickers/DatePicker";
-
-import {
-  LocalizationProvider,
-} from "@mui/x-date-pickers/LocalizationProvider";
+import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
+import { DatePicker } from "@mui/x-date-pickers/DatePicker";
+import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
 import selectComponents from "../../sharecomponents/selectComponents";
+import type { Option } from "../../../hooks/useSalesInvoice"; // adjust path to your hook
 
 dayjs.extend(customParseFormat);
 
 // ============================================================
-// TYPES
+// PROPS
 // ============================================================
 
-type Option = {
-  value: string;
-  label: string;
+type SalesInvoiceHeaderProps = {
+  branchOptions: Option[];
+  branch: Option | null;
+  onBranchChange: (option: Option | null) => void;
+  branchLoading: boolean;
+  branchError: string | null;
 };
 
 // ============================================================
-// OPTIONS
+// OPTIONS (customer lookups still static until wired to API)
 // ============================================================
-
-const branchOptions: Option[] = [
-  {
-    value: "OFFICE",
-    label: "OFFICE",
-  },
-];
 
 const customerIdOptions: Option[] = [
   {
@@ -70,23 +55,13 @@ const selectStyles: StylesConfig<Option, false> = {
 
     minHeight: 30,
     height: 30,
-
     width: "100%",
-
     border: "1px solid #cbd5e1",
-
     borderRadius: 4,
-
     boxShadow: "none",
-
-    backgroundColor: state.isFocused
-      ? "#eff6ff"
-      : "#ffffff",
-
+    backgroundColor: state.isFocused ? "#eff6ff" : "#ffffff",
     cursor: "pointer",
-
     fontSize: 14,
-
     "&:hover": {
       borderColor: "#94a3b8",
     },
@@ -96,11 +71,8 @@ const selectStyles: StylesConfig<Option, false> = {
     ...base,
 
     height: 21,
-
     minHeight: 21,
-
     padding: "0 5px",
-
     overflow: "hidden",
   }),
 
@@ -108,15 +80,10 @@ const selectStyles: StylesConfig<Option, false> = {
     ...base,
 
     color: "#202020",
-
     fontSize: 14,
-
     margin: 0,
-
     overflow: "hidden",
-
     textOverflow: "ellipsis",
-
     whiteSpace: "nowrap",
   }),
 
@@ -124,9 +91,7 @@ const selectStyles: StylesConfig<Option, false> = {
     ...base,
 
     color: "#64748b",
-
     fontSize: 14,
-
     margin: 0,
   }),
 
@@ -134,9 +99,7 @@ const selectStyles: StylesConfig<Option, false> = {
     ...base,
 
     margin: 0,
-
     padding: 0,
-
     fontSize: 14,
   }),
 
@@ -150,7 +113,6 @@ const selectStyles: StylesConfig<Option, false> = {
     ...base,
 
     padding: "0 2px",
-
     color: "#64748b",
   }),
 
@@ -168,9 +130,7 @@ const selectStyles: StylesConfig<Option, false> = {
     ...base,
 
     zIndex: 999999,
-
     fontSize: 14,
-
     marginTop: 1,
   }),
 
@@ -178,7 +138,6 @@ const selectStyles: StylesConfig<Option, false> = {
     ...base,
 
     padding: 0,
-
     maxHeight: 180,
   }),
 
@@ -186,20 +145,106 @@ const selectStyles: StylesConfig<Option, false> = {
     ...base,
 
     padding: "5px 7px",
-
     fontSize: 14,
-
     color: "#202020",
-
     cursor: "pointer",
-
-    backgroundColor:
-      state.isSelected
-        ? "#dbeafe"
-        : state.isFocused
-          ? "#eff6ff"
-          : "#ffffff",
+    backgroundColor: state.isSelected
+      ? "#dbeafe"
+      : state.isFocused
+        ? "#eff6ff"
+        : "#ffffff",
   }),
+};
+
+// ============================================================
+// BRANCH LOOKUP MENU (two columns: Branch | ID, gray header row)
+// ============================================================
+
+const MENU_FONT_SIZE = 14;
+const BRANCH_COL_WIDTH = 150;
+
+const BranchMenuList = (props: MenuListProps<Option, false>) => (
+  <components.MenuList {...props}>
+    <div
+      style={{
+        display: "flex",
+        position: "sticky",
+        top: 0,
+        zIndex: 1,
+        background: "#eeeeee",
+        borderBottom: "1px solid #cfcfcf",
+        fontWeight: 600,
+        fontSize: MENU_FONT_SIZE,
+        color: "#202a36",
+      }}
+    >
+      <div
+        style={{
+          width: BRANCH_COL_WIDTH,
+          flexShrink: 0,
+          boxSizing: "border-box",
+          padding: "5px 8px",
+          borderRight: "1px solid #cfcfcf",
+        }}
+      >
+        Branch
+      </div>
+      <div style={{ flex: 1, padding: "5px 8px" }}>ID</div>
+    </div>
+    {props.children}
+  </components.MenuList>
+);
+
+// menu rows show two columns; the control shows only the branch name
+const formatBranch = (option: Option, meta: FormatOptionLabelMeta<Option>) => {
+  if (meta.context !== "menu") return option.label;
+
+  return (
+    <div style={{ display: "flex" }}>
+      <div
+        style={{
+          width: BRANCH_COL_WIDTH,
+          flexShrink: 0,
+          boxSizing: "border-box",
+          padding: "6px 8px",
+          borderRight: "1px solid #e3e8ef",
+        }}
+      >
+        {option.label}
+      </div>
+      <div style={{ flex: 1, padding: "6px 8px" }}>{option.value}</div>
+    </div>
+  );
+};
+
+const branchStyles: StylesConfig<Option, false> = {
+  ...selectStyles,
+  menu: (base, state) => ({
+    ...selectStyles.menu!(base, state),
+    width: 220,
+    minWidth: 220,
+    border: "none",
+    borderRadius: 0,
+    boxShadow: "0 0 0 1px #cfcfcf, 0 4px 10px rgba(0,0,0,0.15)",
+  }),
+  menuList: (base) => ({ ...base, padding: 0, maxHeight: 260 }),
+  option: (base, state) => ({
+    ...base,
+    padding: 0,
+    fontSize: MENU_FONT_SIZE,
+    color: "#263449",
+    cursor: "pointer",
+    backgroundColor: state.isSelected
+      ? "#cdeedd"
+      : state.isFocused
+        ? "#e6f6ee"
+        : "#ffffff",
+  }),
+};
+
+const branchComponents = {
+  ...selectComponents,
+  MenuList: BranchMenuList,
 };
 
 // ============================================================
@@ -213,53 +258,41 @@ const inputClass =
 // COMPONENT
 // ============================================================
 
-const SalesInvoiceHeader: React.FC = () => {
-
-  // ==========================================================
-  // BRANCH
-  // ==========================================================
-
-  const [branch, setBranch] =
-    useState<Option | null>(
-      branchOptions[0],
-    );
-
+const SalesInvoiceHeader: React.FC<SalesInvoiceHeaderProps> = ({
+  branchOptions,
+  branch,
+  onBranchChange,
+  branchLoading,
+  branchError,
+}) => {
   // ==========================================================
   // CUSTOMER ID
   // ==========================================================
 
-  const [customerId, setCustomerId] =
-    useState<Option | null>(
-      customerIdOptions[0],
-    );
+  const [customerId, setCustomerId] = useState<Option | null>(
+    customerIdOptions[0],
+  );
 
   // ==========================================================
   // CUSTOMER NAME
   // ==========================================================
 
-  const [customerName, setCustomerName] =
-    useState<Option | null>(
-      customerNameOptions[0],
-    );
+  const [customerName, setCustomerName] = useState<Option | null>(
+    customerNameOptions[0],
+  );
 
   // ==========================================================
   // DATE
   // ==========================================================
 
-  const [dtpDate, setDtpDate] =
-    useState<string>(
-      dayjs().format("DD-MM-YYYY"),
-    );
+  const [dtpDate, setDtpDate] = useState<string>(dayjs().format("DD-MM-YYYY"));
 
   // ==========================================================
   // REFS
   // ==========================================================
 
-  const dateRef =
-    useRef<HTMLInputElement | null>(null);
-
-  const receivedFromRef =
-    useRef<HTMLInputElement | null>(null);
+  const dateRef = useRef<HTMLInputElement | null>(null);
+  const receivedFromRef = useRef<HTMLInputElement | null>(null);
 
   // ==========================================================
   // ENTER KEY HANDLER
@@ -282,29 +315,12 @@ const SalesInvoiceHeader: React.FC = () => {
 
   return (
     <div className="w-full shrink-0">
-
       {/* ======================================================
           TITLE
       ====================================================== */}
 
-      <div
-        className="
-          flex
-          h-9
-          items-center
-          border-b
-          border-slate-300
-          bg-[#a3dfc0]
-        "
-      >
-        <span
-          className="
-            px-6
-            text-[17px]
-            font-semibold
-            text-slate-700
-          "
-        >
+      <div className="flex h-9 items-center border-b border-slate-300 bg-[#a3dfc0]">
+        <span className="px-6 text-[17px] font-semibold text-slate-700">
           Sales Invoice
         </span>
       </div>
@@ -314,21 +330,17 @@ const SalesInvoiceHeader: React.FC = () => {
       ====================================================== */}
 
       <div className="h-25 w-full px-3 pt-3 mb-3">
-
         <div className="grid h-full grid-cols-[56%_44%]">
-
           {/* ==================================================
               LEFT SIDE
           ================================================== */}
 
           <div className="pr-3.75">
-
             {/* -----------------------------------------------
                 BRANCH
             ------------------------------------------------ */}
 
             <div className="mb-2.5 flex h-7.5 items-center gap-2">
-
               <label
                 className="
                   w-20
@@ -343,27 +355,26 @@ const SalesInvoiceHeader: React.FC = () => {
               </label>
 
               <div className="w-55">
-
                 <Select<Option, false>
                   inputId="lkpBranch"
                   instanceId="lkpBranch"
                   options={branchOptions}
                   value={branch}
-                  onChange={setBranch}
-                  styles={selectStyles}
-                  components={selectComponents}
+                  onChange={onBranchChange}
+                  styles={branchStyles}
+                  components={branchComponents}
+                  formatOptionLabel={formatBranch}
                   isClearable={false}
                   isSearchable={false}
+                  isLoading={branchLoading}
+                  placeholder={branchLoading ? "Loading..." : "Select branch"}
+                  noOptionsMessage={() => branchError ?? "No branches found"}
                   menuPosition="fixed"
                   menuPortalTarget={
-                    typeof document !== "undefined"
-                      ? document.body
-                      : undefined
+                    typeof document !== "undefined" ? document.body : undefined
                   }
                 />
-
               </div>
-
             </div>
 
             {/* -----------------------------------------------
@@ -371,7 +382,6 @@ const SalesInvoiceHeader: React.FC = () => {
             ------------------------------------------------ */}
 
             <div className="mb-3.75 flex h-7.5 items-center gap-2  w-200 min-w-[600]">
-
               <label
                 className="
                   w-20
@@ -388,7 +398,6 @@ const SalesInvoiceHeader: React.FC = () => {
               {/* Customer ID */}
 
               <div className="w-35">
-
                 <Select<Option, false>
                   inputId="lkpCustomerID"
                   instanceId="lkpCustomerID"
@@ -401,18 +410,14 @@ const SalesInvoiceHeader: React.FC = () => {
                   isSearchable={false}
                   menuPosition="fixed"
                   menuPortalTarget={
-                    typeof document !== "undefined"
-                      ? document.body
-                      : undefined
+                    typeof document !== "undefined" ? document.body : undefined
                   }
                 />
-
               </div>
 
               {/* Customer Name */}
 
               <div className="-ml-1.25 w-117.5 min-w-75">
-
                 <Select<Option, false>
                   inputId="lkpCustomerName"
                   instanceId="lkpCustomerName"
@@ -425,14 +430,10 @@ const SalesInvoiceHeader: React.FC = () => {
                   isSearchable={false}
                   menuPosition="fixed"
                   menuPortalTarget={
-                    typeof document !== "undefined"
-                      ? document.body
-                      : undefined
+                    typeof document !== "undefined" ? document.body : undefined
                   }
                 />
-
               </div>
-
             </div>
 
             {/* -----------------------------------------------
@@ -440,7 +441,6 @@ const SalesInvoiceHeader: React.FC = () => {
             ------------------------------------------------ */}
 
             <div className="flex h-5.5 items-center gap-2">
-
               <label
                 className="
                   w-20
@@ -460,9 +460,7 @@ const SalesInvoiceHeader: React.FC = () => {
                 autoComplete="off"
                 className={`input-style w-55`}
               />
-
             </div>
-
           </div>
 
           {/* ==================================================
@@ -470,13 +468,11 @@ const SalesInvoiceHeader: React.FC = () => {
           ================================================== */}
 
           <div className="right-side ml-auto w-fit pl-1">
-
             {/* -----------------------------------------------
                 INVOICE NO + DATE
             ------------------------------------------------ */}
 
             <div className="mb-2.5 flex h-7.5 items-center">
-
               <label
                 className="
                   w-22.5
@@ -515,216 +511,135 @@ const SalesInvoiceHeader: React.FC = () => {
                   DATE PICKER
               ================================================== */}
 
-             <div className="">
-               <LocalizationProvider
-                dateAdapter={AdapterDayjs}
-              >
+              <div className="">
+                <LocalizationProvider dateAdapter={AdapterDayjs}>
+                  <DatePicker
+                    value={dtpDate ? dayjs(dtpDate, "DD-MM-YYYY") : null}
+                    onChange={(newValue) => {
+                      if (newValue?.isValid()) {
+                        setDtpDate(newValue.format("DD-MM-YYYY"));
+                      } else {
+                        setDtpDate("");
+                      }
+                    }}
+                    format="DD-MM-YYYY"
+                    inputRef={dateRef}
+                    slotProps={{
+                      textField: {
+                        id: "dtpDate",
 
-                <DatePicker
-                  value={
-                    dtpDate
-                      ? dayjs(
-                          dtpDate,
-                          "DD-MM-YYYY",
-                        )
-                      : null
-                  }
-
-                  onChange={(newValue) => {
-
-                    if (
-                      newValue?.isValid()
-                    ) {
-                      setDtpDate(
-                        newValue.format(
-                          "DD-MM-YYYY",
-                        ),
-                      );
-                    } else {
-                      setDtpDate("");
-                    }
-
-                  }}
-
-                  format="DD-MM-YYYY"
-
-                  inputRef={dateRef}
-
-                  slotProps={{
-                    textField: {
-
-                      id: "dtpDate",
-
-                      onKeyDown: (
-                        event,
-                      ) =>
-                        handleInputKeyDown(
-                          event,
-                          () =>
+                        onKeyDown: (event) =>
+                          handleInputKeyDown(event, () =>
                             receivedFromRef.current?.focus(),
-                        ),
-                    },
-
-                    openPickerButton: {
-                      sx: {
-                        padding: "2px",
-                        margin: 0,
+                          ),
                       },
-                    },
 
-                    inputAdornment: {
-                      sx: {
-                        margin: 0,
-                        padding: 0,
+                      openPickerButton: {
+                        sx: {
+                          padding: "2px",
+                          margin: 0,
+                        },
                       },
-                    },
-                  }}
 
-                  sx={{
+                      inputAdornment: {
+                        sx: {
+                          margin: 0,
+                          padding: 0,
+                        },
+                      },
+                    }}
+                    sx={{
+                      width: "140px",
 
-                    width: "140px",
-
-                    "& .MuiPickersTextField-root":
-                      {
+                      "& .MuiPickersTextField-root": {
                         width: "120px",
                       },
 
-                    "& .MuiPickersInputBase-root":
-                      {
+                      "& .MuiPickersInputBase-root": {
                         width: "140px",
-
                         height: "30px",
-
                         minHeight: "30px",
-
-                        boxSizing:
-                          "border-box",
-
+                        boxSizing: "border-box",
                         borderRadius: "4px",
-
-                        backgroundColor:
-                          "#ffffff",
-
+                        backgroundColor: "#ffffff",
                         fontSize: "12px",
-
                         padding: 0,
-
-                        overflow:
-                          "hidden",
+                        overflow: "hidden",
                       },
 
-                    "& .MuiPickersInputBase-sectionsContainer":
-                      {
-                        paddingLeft:
-                          "10px !important",
-
-                        paddingRight:
-                          "0px !important",
-
-                        marginBottom:
-                          "-5px !important",
-
-                        marginLeft:
-                          "0px !important",
-
-                        boxSizing:
-                          "border-box",
-
-                        overflow:
-                          "hidden",
+                      "& .MuiPickersInputBase-sectionsContainer": {
+                        paddingLeft: "10px !important",
+                        paddingRight: "0px !important",
+                        marginBottom: "-5px !important",
+                        marginLeft: "0px !important",
+                        boxSizing: "border-box",
+                        overflow: "hidden",
                       },
 
-                    "& .MuiPickersInputBase-sectionContent":
-                      {
+                      "& .MuiPickersInputBase-sectionContent": {
                         fontSize: "12px",
-
-                        color:
-                          "#344054",
+                        color: "#344054",
                       },
 
-                    "& .MuiPickersInputBase-input":
-                      {
+                      "& .MuiPickersInputBase-input": {
                         minWidth: 0,
-
                         width: "100%",
-
                         fontSize: "12px",
-
                         padding: 0,
-
                         height: "30px",
-
-                        boxSizing:
-                          "border-box",
+                        boxSizing: "border-box",
                       },
 
-                    "& .MuiInputAdornment-root":
-                      {
+                      "& .MuiInputAdornment-root": {
                         margin: 0,
-
                         padding: 0,
                       },
 
-                    "& .MuiIconButton-root":
-                      {
+                      "& .MuiIconButton-root": {
                         width: "24px",
-
                         height: "24px",
-
                         padding: "2px",
-
                         margin: 0,
                       },
 
-                    "& .MuiSvgIcon-root":
-                      {
+                      "& .MuiSvgIcon-root": {
                         fontSize: "16px",
                       },
 
-                    "& .MuiPickersOutlinedInput-notchedOutline":
-                      {
-                        borderColor:
-                          "#B7C7D7 !important",
+                      "& .MuiPickersOutlinedInput-notchedOutline": {
+                        borderColor: "#B7C7D7 !important",
                       },
 
-                    "& .MuiPickersInputBase-root:hover .MuiPickersOutlinedInput-notchedOutline":
-                      {
-                        borderColor:
-                          "#B7C7D7 !important",
-                      },
+                      "& .MuiPickersInputBase-root:hover .MuiPickersOutlinedInput-notchedOutline":
+                        {
+                          borderColor: "#B7C7D7 !important",
+                        },
 
-                    "& .MuiPickersInputBase-root.Mui-focused .MuiPickersOutlinedInput-notchedOutline":
-                      {
-                        borderColor:
-                          "#B7C7D7 !important",
+                      "& .MuiPickersInputBase-root.Mui-focused .MuiPickersOutlinedInput-notchedOutline":
+                        {
+                          borderColor: "#B7C7D7 !important",
 
-                        borderWidth: "1px",
-                      },
+                          borderWidth: "1px",
+                        },
 
-                    "& .MuiPickersInputBase-root.Mui-error .MuiPickersOutlinedInput-notchedOutline":
-                      {
-                        borderColor:
-                          "#B7C7D7 !important",
-                      },
+                      "& .MuiPickersInputBase-root.Mui-error .MuiPickersOutlinedInput-notchedOutline":
+                        {
+                          borderColor: "#B7C7D7 !important",
+                        },
 
-                    "& .MuiPickersInputBase-root.Mui-error:hover .MuiPickersOutlinedInput-notchedOutline":
-                      {
-                        borderColor:
-                          "#B7C7D7 !important",
-                      },
+                      "& .MuiPickersInputBase-root.Mui-error:hover .MuiPickersOutlinedInput-notchedOutline":
+                        {
+                          borderColor: "#B7C7D7 !important",
+                        },
 
-                    "& .MuiPickersInputBase-root.Mui-error.Mui-focused .MuiPickersOutlinedInput-notchedOutline":
-                      {
-                        borderColor:
-                          "#B7C7D7 !important",
-                      },
-
-                  }}
-                />
-
-              </LocalizationProvider>
-             </div>
-
+                      "& .MuiPickersInputBase-root.Mui-error.Mui-focused .MuiPickersOutlinedInput-notchedOutline":
+                        {
+                          borderColor: "#B7C7D7 !important",
+                        },
+                    }}
+                  />
+                </LocalizationProvider>
+              </div>
             </div>
 
             {/* -----------------------------------------------
@@ -732,7 +647,6 @@ const SalesInvoiceHeader: React.FC = () => {
             ------------------------------------------------ */}
 
             <div className="mb-2.5 flex h-7.5 items-center">
-
               <label
                 className="
                   w-22.5
@@ -752,7 +666,6 @@ const SalesInvoiceHeader: React.FC = () => {
                 autoComplete="off"
                 className={`input-style ml-1.75 w-90`}
               />
-
             </div>
 
             {/* -----------------------------------------------
@@ -760,7 +673,6 @@ const SalesInvoiceHeader: React.FC = () => {
             ------------------------------------------------ */}
 
             <div className="flex h-7.5 items-center">
-
               <button
                 id="BranchStockbtn"
                 type="button"
@@ -801,15 +713,10 @@ const SalesInvoiceHeader: React.FC = () => {
                 readOnly
                 className={`${inputClass} ml-1.75 w-19 text-center`}
               />
-
             </div>
-
           </div>
-
         </div>
-
       </div>
-
     </div>
   );
 };

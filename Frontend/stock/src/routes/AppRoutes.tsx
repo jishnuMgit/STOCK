@@ -89,6 +89,7 @@ import YearPage from "../pages/Administration/YearPage";
 import DocumentPage from "../pages/Administration/DocumentPage";
 import RptDocumentsAfterYearClosePage from "../pages/Utility/RptDocumentsAfterYearClosePage";
 import BackupPage from "../pages/Utility/BackupPage";
+import InvoicePage from "../pages/Sales/Transaction/Invoice/InvoicePage";
 
 const Login = lazy(() => import("../pages/Auth/LoginPage"));
 const ReceiptPage = lazy(
@@ -284,6 +285,11 @@ const AppRoutes = () => {
             path="/Sales/Transaction/SalesInvoice"
             element={<SalesInvoice />}
           />
+
+          <Route
+            path="/Sales/Transaction/Invoice"
+            element={<InvoicePage />} />
+            
           <Route
             path="/Sales/Transaction/StockAdjustment"
             element={<StockAdjustmentPage />}
