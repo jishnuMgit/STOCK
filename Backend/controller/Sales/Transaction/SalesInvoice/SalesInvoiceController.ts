@@ -16,7 +16,7 @@ interface SILine {
   slNo: number;
   itemId: string;
   unit?: string;
-  priceLevel?: string;
+  // priceLevel?: string;
   qtyOut: number;
   unitPrice: number;
   itemDiscAmt?: number; // per-unit discount
@@ -52,7 +52,11 @@ const getIntDocNo = (docNo: string): number => {
 };
 
 /* CALL <proc> with named args. All SP params start with "p_". */
-const callProc = (db: PgClient, proc: string, args: Record<string, unknown>) => {
+const callProc = (
+  db: PgClient,
+  proc: string,
+  args: Record<string, unknown>,
+) => {
   const keys = Object.keys(args);
   const sql = `CALL ${proc}(${keys
     .map((k, i) => `p_${k} => $${i + 1}`)
@@ -361,7 +365,11 @@ export const saveSalesInvoice = async (
       return bad("'Login Year' should be same as 'Transaction Year'");
     if (!customerId) return bad("Please select 'Customer ID'");
     if (!phone?.trim()) return bad("Please input 'Phone No.'");
-    if (vatPer === undefined || vatPer === null || !Number.isFinite(Number(vatPer)))
+    if (
+      vatPer === undefined ||
+      vatPer === null ||
+      !Number.isFinite(Number(vatPer))
+    )
       return bad("vatPer is required");
     if (mode === "M" && !Array.isArray(originalSlNos))
       return bad("originalSlNos is required for modify");
@@ -371,15 +379,18 @@ export const saveSalesInvoice = async (
       return bad("Discount % cannot exceed 100");
 
     const validLines = (lines ?? []).filter((l) => l.itemId);
-    if (validLines.length === 0) return bad("There is no information for saving.");
+    if (validLines.length === 0)
+      return bad("There is no information for saving.");
 
     for (const l of validLines) {
-      if (!l.priceLevel)
-        return bad(`Sl.# ${l.slNo} - Please select 'Item Price Level'`);
+      // if (!l.priceLevel)
+      //   return bad(`Sl.# ${l.slNo} - Please select 'Item Price Level'`);
       if (num(l.qtyOut) <= 0)
         return bad(`Sl.# ${l.slNo} - Qty. can't be less than or equal to 0.`);
       if (num(l.unitPrice) <= 0)
-        return bad(`Sl.# ${l.slNo} - Unit Price can't be less than or equal to 0.`);
+        return bad(
+          `Sl.# ${l.slNo} - Unit Price can't be less than or equal to 0.`,
+        );
     }
 
     /* ---------- totals ---------- */

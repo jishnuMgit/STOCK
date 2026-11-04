@@ -326,6 +326,165 @@ const typeComponents = {
 };
 
 // ============================================================
+// CUSTOMER LOOKUP MENUS (same look as the Supplier dropdowns
+// in the purchase invoice form)
+// ============================================================
+
+const CUSTOMER_ID_COL_WIDTH = 146;
+const CUSTOMER_NAME_COL_WIDTH = 300;
+
+/* gray sticky header row at the top of the menu */
+const createCustomerMenuList = (
+  firstTitle: string,
+  secondTitle: string,
+  firstWidth: number,
+) => {
+  const MenuList = (props: MenuListProps<Option, false>) => (
+    <components.MenuList {...props}>
+      <div
+        style={{
+          display: "flex",
+          position: "sticky",
+          top: 0,
+          zIndex: 1,
+          background: "#eeeeee",
+          borderBottom: "1px solid #cfcfcf",
+          fontWeight: 600,
+          fontSize: MENU_FONT_SIZE,
+          color: "#202a36",
+        }}
+      >
+        <div
+          style={{
+            width: firstWidth,
+            flexShrink: 0,
+            boxSizing: "border-box",
+            padding: "5px 8px",
+            borderRight: "1px solid #cfcfcf",
+          }}
+        >
+          {firstTitle}
+        </div>
+        <div style={{ flex: 1, padding: "5px 8px" }}>{secondTitle}</div>
+      </div>
+      {props.children}
+    </components.MenuList>
+  );
+  return MenuList;
+};
+
+const customerIdMenuComponents = {
+  ...selectComponents,
+  MenuList: createCustomerMenuList(
+    "Customer ID",
+    "Customer Name",
+    CUSTOMER_ID_COL_WIDTH,
+  ),
+};
+
+const customerNameMenuComponents = {
+  ...selectComponents,
+  MenuList: createCustomerMenuList(
+    "Customer Name",
+    "Customer ID",
+    CUSTOMER_NAME_COL_WIDTH,
+  ),
+};
+
+/* two-column row renderer; the control itself shows only its own label */
+const renderCustomerRow = (
+  first: string,
+  second: string,
+  firstWidth: number,
+) => (
+  <div style={{ display: "flex" }}>
+    <div
+      style={{
+        width: firstWidth,
+        flexShrink: 0,
+        boxSizing: "border-box",
+        padding: "6px 8px",
+        borderRight: "1px solid #e3e8ef",
+      }}
+    >
+      {first}
+    </div>
+    <div style={{ flex: 1, padding: "6px 8px" }}>{second}</div>
+  </div>
+);
+
+const lookupMenuStyles: StylesConfig<Option, false> = {
+  menuPortal: (base) => ({ ...base, zIndex: 999999 }),
+  menu: (base) => ({
+    ...base,
+    zIndex: 999999,
+    fontSize: MENU_FONT_SIZE,
+    marginTop: 1,
+    width: 480,
+    minWidth: 480,
+    border: "none",
+    borderRadius: 0,
+    boxShadow: "0 0 0 1px #cfcfcf, 0 4px 10px rgba(0,0,0,0.15)",
+  }),
+  menuList: (base) => ({ ...base, padding: 0, maxHeight: 260 }),
+  option: (base, state) => ({
+    ...base,
+    padding: 0,
+    fontSize: MENU_FONT_SIZE,
+    color: "#263449",
+    cursor: "pointer",
+    backgroundColor: state.isSelected
+      ? "#cdeedd"
+      : state.isFocused
+        ? "#e6f6ee"
+        : "#ffffff",
+  }),
+};
+
+/* menu starts at its own select and ends at the right edge of the box
+   with the given id (the paired name select) */
+const spanMenuStyles = (endBoxId: string): StylesConfig<Option, false> => ({
+  ...lookupMenuStyles,
+  menuPortal: (base) => {
+    const end =
+      typeof document !== "undefined"
+        ? document.getElementById(endBoxId)
+        : null;
+    const right = end?.getBoundingClientRect().right;
+    return {
+      ...base,
+      zIndex: 999999,
+      width: right ? Math.max(right - Number(base.left), 240) : 480,
+    };
+  },
+  menu: (base, state) => ({
+    ...lookupMenuStyles.menu!(base, state),
+    width: "100%",
+    minWidth: 0,
+  }),
+});
+
+/* menu exactly as wide as its own select */
+const fullWidthMenuStyles: StylesConfig<Option, false> = {
+  ...lookupMenuStyles,
+  menu: (base, state) => ({
+    ...lookupMenuStyles.menu!(base, state),
+    width: "100%",
+    minWidth: 0,
+  }),
+};
+
+const customerIdStyles: StylesConfig<Option, false> = {
+  ...selectStyles,
+  ...spanMenuStyles("customerNameBox"),
+};
+
+const customerNameStyles: StylesConfig<Option, false> = {
+  ...selectStyles,
+  ...fullWidthMenuStyles,
+};
+
+// ============================================================
 // INPUT STYLE
 // ============================================================
 
@@ -463,11 +622,6 @@ const SalesInvoiceHeader: React.FC<SalesInvoiceHeaderProps> = ({
     [customers],
   );
 
-  const priceLevelOptions = useMemo<Option[]>(
-    () => priceLevels.map((p) => ({ value: p.id, label: p.id })),
-    [priceLevels],
-  );
-
   // selected values (fall back to the saved invoice's customer if it is
   // not in the lookup list)
   const customerIdValue: Option | null = header.customerId
@@ -490,6 +644,48 @@ const SalesInvoiceHeader: React.FC<SalesInvoiceHeaderProps> = ({
         label: header.invoiceType,
       })
     : null;
+
+  // ==========================================================
+  // CUSTOMER LOOKUP HELPERS
+  // ==========================================================
+
+  // id -> name, so the ID dropdown can show the name column too
+  const customerNameById = useMemo(
+    () => new Map(customers.map((c) => [c.id, c.name])),
+    [customers],
+  );
+
+  const formatCustomerId = (
+    option: Option,
+    meta: FormatOptionLabelMeta<Option>,
+  ) =>
+    meta.context !== "menu"
+      ? option.label
+      : renderCustomerRow(
+          option.value,
+          customerNameById.get(option.value) ?? "",
+          CUSTOMER_ID_COL_WIDTH,
+        );
+
+  const formatCustomerName = (
+    option: Option,
+    meta: FormatOptionLabelMeta<Option>,
+  ) =>
+    meta.context !== "menu"
+      ? option.label
+      : renderCustomerRow(option.label, option.value, CUSTOMER_NAME_COL_WIDTH);
+
+  // typing searches both the id and the name
+  const filterCustomer = (option: { data: Option }, input: string): boolean => {
+    const text = input.trim().toLowerCase();
+    if (!text) return true;
+    return (
+      option.data.value.toLowerCase().includes(text) ||
+      (customerNameById.get(option.data.value) ?? "")
+        .toLowerCase()
+        .includes(text)
+    );
+  };
 
   // ==========================================================
   // REFS
@@ -536,61 +732,152 @@ const SalesInvoiceHeader: React.FC<SalesInvoiceHeaderProps> = ({
       ====================================================== */}
 
       <div className="w-full px-3 pt-3 mb-3">
+        {/* ----------------------------------------------------
+            ROW 1: BRANCH + INVOICE NO + TYPE + DATE
+        ----------------------------------------------------- */}
+
+        <div className="mb-2.5 flex h-7.5 items-center">
+          {/* Branch */}
+          <label htmlFor="lkpBranch" className={labelClass}>
+            Branch :
+          </label>
+
+          <div className="ml-2 w-55">
+            <Select<Option, false>
+              inputId="lkpBranch"
+              instanceId="lkpBranch"
+              options={branchOptions}
+              value={branch}
+              onChange={onBranchChange}
+              styles={branchStyles}
+              components={branchComponents}
+              formatOptionLabel={formatBranch}
+              isClearable={false}
+              isSearchable={false}
+              isLoading={branchLoading}
+              isDisabled={readOnly}
+              placeholder={branchLoading ? "Loading..." : "Select branch"}
+              noOptionsMessage={() => branchError ?? "No branches found"}
+              menuPosition="fixed"
+              menuPortalTarget={menuPortalTarget}
+            />
+          </div>
+
+          {/* Invoice No */}
+          <label
+            htmlFor="txtDocNo"
+            className="ml-8 shrink-0 whitespace-nowrap text-right text-[14px] text-[#202020]"
+          >
+            Invoice No. :
+          </label>
+
+          <input
+            id="txtDocNo"
+            type="text"
+            maxLength={15}
+            autoComplete="off"
+            value={header.docNo}
+            onChange={(e) => onHeaderChange({ docNo: e.target.value })}
+            onBlur={onDocNoBlur}
+            onKeyDown={(e) =>
+              handleInputKeyDown(e, () => e.currentTarget.blur())
+            }
+            className={`${inputClass} ml-2 w-40`}
+          />
+
+          {/* Type */}
+          <label
+            htmlFor="lkpType"
+            className="ml-4 mr-2 shrink-0 whitespace-nowrap text-[14px] text-[#202020]"
+          >
+            Type :
+          </label>
+
+          <div className="w-22">
+            <Select<Option, false>
+              inputId="lkpType"
+              instanceId="lkpType"
+              options={invoiceTypes}
+              value={invoiceTypeValue}
+              onChange={(option) =>
+                onHeaderChange({ invoiceType: option?.value ?? "" })
+              }
+              styles={typeStyles}
+              components={typeComponents}
+              formatOptionLabel={formatType}
+              isClearable={false}
+              isSearchable={false}
+              isDisabled={readOnly}
+              menuPosition="fixed"
+              menuPortalTarget={menuPortalTarget}
+            />
+          </div>
+
+          {/* Date */}
+          <label
+            htmlFor="dtpDate"
+            className="ml-4 mr-2 shrink-0 whitespace-nowrap text-[14px] text-[#202020]"
+          >
+            Date :
+          </label>
+
+          <LocalizationProvider dateAdapter={AdapterDayjs}>
+            <DatePicker
+              value={header.date ? dayjs(header.date, "YYYY-MM-DD") : null}
+              onChange={(newValue) => {
+                if (newValue === null) {
+                  onHeaderChange({ date: "" });
+                } else if (newValue.isValid()) {
+                  onHeaderChange({ date: newValue.format("YYYY-MM-DD") });
+                }
+                // partially typed dates are ignored until valid
+              }}
+              format="DD-MM-YYYY"
+              disabled={readOnly}
+              slotProps={{
+                textField: {
+                  id: "dtpDate",
+                  onKeyDown: (event) =>
+                    handleInputKeyDown(event, () =>
+                      referenceRef.current?.focus(),
+                    ),
+                },
+                openPickerButton: { sx: { padding: "2px", margin: 0 } },
+                inputAdornment: { sx: { margin: 0, padding: 0 } },
+              }}
+              sx={datePickerSx}
+            />
+          </LocalizationProvider>
+        </div>
+
+        {/* ----------------------------------------------------
+            ROWS 2+: CUSTOMER / ADDRESS / PHONE  |  REFERENCE / STOCK
+        ----------------------------------------------------- */}
+
         <div className="grid grid-cols-[56%_44%]">
           {/* ==================================================
               LEFT SIDE
           ================================================== */}
 
           <div className="pr-3.75">
-            {/* -----------------------------------------------
-                BRANCH
-            ------------------------------------------------ */}
-
-            <div className="mb-2.5 flex h-7.5 items-center gap-2">
-              <label className={labelClass}>Branch :</label>
-
-              <div className="w-55">
-                <Select<Option, false>
-                  inputId="lkpBranch"
-                  instanceId="lkpBranch"
-                  options={branchOptions}
-                  value={branch}
-                  onChange={onBranchChange}
-                  styles={branchStyles}
-                  components={branchComponents}
-                  formatOptionLabel={formatBranch}
-                  isClearable={false}
-                  isSearchable={false}
-                  isLoading={branchLoading}
-                  isDisabled={readOnly}
-                  placeholder={branchLoading ? "Loading..." : "Select branch"}
-                  noOptionsMessage={() => branchError ?? "No branches found"}
-                  menuPosition="fixed"
-                  menuPortalTarget={menuPortalTarget}
-                />
-              </div>
-            </div>
-
-            {/* -----------------------------------------------
-                CUSTOMER
-            ------------------------------------------------ */}
-
-            <div className="mb-2.5 flex h-7.5 items-center gap-2  w-200 min-w-[600]">
+            {/* CUSTOMER */}
+            <div className="mb-2.5 flex h-7.5 items-center gap-2 w-200 min-w-[600]">
               <label className={labelClass}>Customer :</label>
 
               {/* Customer ID */}
-
               <div className="w-35">
                 <Select<Option, false>
                   inputId="lkpCustomerID"
                   instanceId="lkpCustomerID"
                   options={customerIdOptions}
                   value={customerIdValue}
-                  components={selectComponents}
+                  components={customerIdMenuComponents}
+                  formatOptionLabel={formatCustomerId}
+                  filterOption={filterCustomer}
                   onChange={(option) =>
                     option && onCustomerSelect(option.value)
                   }
-                  styles={selectStyles}
+                  styles={customerIdStyles}
                   isClearable={false}
                   isSearchable
                   isDisabled={readOnly}
@@ -601,18 +888,19 @@ const SalesInvoiceHeader: React.FC<SalesInvoiceHeaderProps> = ({
               </div>
 
               {/* Customer Name */}
-
-              <div className="-ml-1.25 w-117.5 min-w-75">
+              <div id="customerNameBox" className="-ml-1.25 w-117.5 min-w-75">
                 <Select<Option, false>
                   inputId="lkpCustomerName"
                   instanceId="lkpCustomerName"
                   options={customerNameOptions}
                   value={customerNameValue}
-                  components={selectComponents}
+                  components={customerNameMenuComponents}
+                  formatOptionLabel={formatCustomerName}
+                  filterOption={filterCustomer}
                   onChange={(option) =>
                     option && onCustomerSelect(option.value)
                   }
-                  styles={selectStyles}
+                  styles={customerNameStyles}
                   isClearable={false}
                   isSearchable
                   isDisabled={readOnly}
@@ -623,12 +911,9 @@ const SalesInvoiceHeader: React.FC<SalesInvoiceHeaderProps> = ({
               </div>
             </div>
 
-            {/* -----------------------------------------------
-                ADDRESS
-            ------------------------------------------------ */}
-
+            {/* INVOICE TO */}
             <div className="mb-2.5 flex h-7.5 items-center gap-2">
-              <label htmlFor="txtAddress" className={labelClass}>
+              <label htmlFor="txtInvoiceTo" className={labelClass}>
                 Invoice To :
               </label>
 
@@ -644,10 +929,7 @@ const SalesInvoiceHeader: React.FC<SalesInvoiceHeaderProps> = ({
               />
             </div>
 
-            {/* -----------------------------------------------
-                PHONE
-            ------------------------------------------------ */}
-
+            {/* PHONE */}
             <div className="flex h-7.5 items-center gap-2">
               <label htmlFor="txtPhone" className={labelClass}>
                 Phone :
@@ -671,103 +953,7 @@ const SalesInvoiceHeader: React.FC<SalesInvoiceHeaderProps> = ({
           ================================================== */}
 
           <div className="right-side ml-auto w-fit pl-1">
-            {/* -----------------------------------------------
-    INVOICE NO + TYPE
------------------------------------------------- */}
-
-            <div className="mb-2.5 flex h-7.5 items-center">
-              <label htmlFor="txtDocNo" className={rightLabelClass}>
-                Invoice No. :
-              </label>
-
-              <input
-                id="txtDocNo"
-                type="text"
-                maxLength={15}
-                autoComplete="off"
-                value={header.docNo}
-                onChange={(e) => onHeaderChange({ docNo: e.target.value })}
-                onBlur={onDocNoBlur}
-                onKeyDown={(e) =>
-                  handleInputKeyDown(e, () => e.currentTarget.blur())
-                }
-                className={`${inputClass} ml-1.75 w-40`}
-              />
-
-              <label
-                htmlFor="lkpType"
-                className="ml-3.75 mr-1.25 shrink-0 whitespace-nowrap text-[14px] text-[#202020]"
-              >
-                Type :
-              </label>
-
-              <div className="w-22">
-                <Select<Option, false>
-                  inputId="lkpType"
-                  instanceId="lkpType"
-                  options={invoiceTypes}
-                  value={invoiceTypeValue}
-                  onChange={(option) =>
-                    onHeaderChange({ invoiceType: option?.value ?? "" })
-                  }
-                  styles={typeStyles}
-                  components={typeComponents}
-                  formatOptionLabel={formatType}
-                  isClearable={false}
-                  isSearchable={false}
-                  isDisabled={readOnly}
-                  menuPosition="fixed"
-                  menuPortalTarget={menuPortalTarget}
-                />
-              </div>
-            </div>
-
-            {/* -----------------------------------------------
-    DATE
------------------------------------------------- */}
-
-            <div className="mb-2.5 flex h-7.5 items-center">
-              <label htmlFor="dtpDate" className={rightLabelClass}>
-                Date :
-              </label>
-
-              <div className="ml-1.75">
-                <LocalizationProvider dateAdapter={AdapterDayjs}>
-                  <DatePicker
-                    value={
-                      header.date ? dayjs(header.date, "YYYY-MM-DD") : null
-                    }
-                    onChange={(newValue) => {
-                      if (newValue === null) {
-                        onHeaderChange({ date: "" });
-                      } else if (newValue.isValid()) {
-                        onHeaderChange({ date: newValue.format("YYYY-MM-DD") });
-                      }
-                      // partially typed dates are ignored until valid
-                    }}
-                    format="DD-MM-YYYY"
-                    disabled={readOnly}
-                    slotProps={{
-                      textField: {
-                        id: "dtpDate",
-                        onKeyDown: (event) =>
-                          handleInputKeyDown(event, () =>
-                            referenceRef.current?.focus(),
-                          ),
-                      },
-                      openPickerButton: { sx: { padding: "2px", margin: 0 } },
-                      inputAdornment: { sx: { margin: 0, padding: 0 } },
-                    }}
-                    sx={datePickerSx}
-                  />
-                </LocalizationProvider>
-              </div>
-            </div>
-
-            {/* -----------------------------------------------
-                REFERENCE
-            ------------------------------------------------ */}
-
+            {/* REFERENCE */}
             <div className="mb-2.5 flex h-7.5 items-center">
               <label htmlFor="txtReference" className={rightLabelClass}>
                 Reference :
@@ -788,10 +974,7 @@ const SalesInvoiceHeader: React.FC<SalesInvoiceHeaderProps> = ({
               />
             </div>
 
-            {/* -----------------------------------------------
-                STOCK + BRANCH STOCK BUTTON
-            ------------------------------------------------ */}
-
+            {/* STOCK BUTTON + STOCK */}
             <div className="flex h-7.5 items-center">
               <button
                 id="BranchStockbtn"
