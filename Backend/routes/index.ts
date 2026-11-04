@@ -57,6 +57,7 @@ import RptSupplierPurchaseRouter from "./Purchase/Report/RptSupplierPurchaseRout
 import RptItemPurchaseRouter from "./Purchase/Report/RptItemPurchaseRouter.js";
 import RptIncomeSumRouter from "./Finance/Report/RptIncomeSumRouter.js";
 import RptExpenseSumRouter from "./Finance/Report/RptExpenseSumRouter.js";
+import RptRVPVSumRouter from "./Finance/Report/RptRVPVSumRouter.js";
 import RptReceivablesRouter from "./Finance/Report/A_RandA_P/RptReceivablesRouter.js";
 
 import RptPayablesRouter from "./Finance/Report/A_RandA_P/RptPayablesRouter.js";
@@ -123,6 +124,7 @@ router.use("/RptSupplierPurchase", RptSupplierPurchaseRouter);
 router.use("/RptItemPurchase", RptItemPurchaseRouter);
 router.use("/RptIncomeSum", RptIncomeSumRouter); // Income Summary report
 router.use("/RptExpenseSum", RptExpenseSumRouter); // Expense Summary report
+router.use("/RptRVPVSum", RptRVPVSumRouter); // Receipt / Payment Summary report
 router.use("/RptReceivables", RptReceivablesRouter);
 router.use("/RptPayables", RptPayablesRouter);
 router.use("/RptGL", RptGLRouter);

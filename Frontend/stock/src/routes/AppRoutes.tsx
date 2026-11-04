@@ -73,7 +73,7 @@ import RptGeneralLedgerSummaryPage from "../pages/Finance/Report/GeneralLedger/G
 import DocumentPostPage from "../pages/Finance/Transaction/DocumentPost/DocumentPostPage";
 import RptDocumentPrintPage from "../pages/Finance/Transaction/DocumentPrint/RptDocumentPrintPage";
 import RptExpenseSumPage from "../pages/Finance/Report/ExpenseSummary/RptExpenseSumPage";
-import RptReceiptPaymentSumPage from "../pages/Finance/Report/ReceiptPaymentSum/RptReceiptPaymentSumPage";
+import RptRVPVSumPage from "../pages/Finance/Report/RVPVSum/RptRVPVSumPage";
 import RptFinDocList from "../pages/Finance/Report/DocumentsList/RptFinDocList";
 import SalesPriceListPage from "../pages/Sales/Setup/SalesPriceListPage";
 import RptIncomeSumPage from "../pages/Finance/Report/IncomeSummary/RptIncomeSumPage";
@@ -263,7 +263,7 @@ const AppRoutes = () => {
           />
           <Route
             path="/Finance/Reports/RptRVPVSum"
-            element={<RptReceiptPaymentSumPage />}
+            element={<RptRVPVSumPage />}
           />
           <Route
             path="/Finance/Reports/RptFinDocList"
