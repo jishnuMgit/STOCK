@@ -1,4 +1,4 @@
-import React, { useMemo, useRef } from "react";
+import React, { useEffect, useMemo } from "react";
 import Select, {
   components,
   type FormatOptionLabelMeta,
@@ -43,6 +43,14 @@ type SalesInvoiceHeaderProps = {
 };
 
 // ============================================================
+// FOCUS COLORS (same as the purchase invoice form)
+// ============================================================
+
+const BORDER_COLOR = "#d7dee7";
+const BORDER_HOVER_COLOR = "#aebdce";
+const BORDER_FOCUS_COLOR = "#9fdfbc";
+
+// ============================================================
 // SELECT STYLES
 // ============================================================
 
@@ -53,14 +61,14 @@ const selectStyles: StylesConfig<Option, false> = {
     minHeight: 30,
     height: 30,
     width: "100%",
-    border: "1px solid #cbd5e1",
     borderRadius: 4,
+    borderColor: state.isFocused ? BORDER_FOCUS_COLOR : BORDER_COLOR,
     boxShadow: "none",
-    backgroundColor: state.isFocused ? "#eff6ff" : "#ffffff",
-    cursor: "pointer",
+    backgroundColor: state.isDisabled ? "#f1f5f9" : "#ffffff",
+    cursor: state.isDisabled ? "not-allowed" : "pointer",
     fontSize: 14,
     "&:hover": {
-      borderColor: "#94a3b8",
+      borderColor: state.isFocused ? BORDER_FOCUS_COLOR : BORDER_HOVER_COLOR,
     },
   }),
 
@@ -489,7 +497,7 @@ const customerNameStyles: StylesConfig<Option, false> = {
 // ============================================================
 
 const inputClass =
-  "h-[30px] border border-[#cbd5e1] rounded-[4px] bg-white px-1 text-[14px] text-[#202020] outline-none focus:border-blue-400 focus:bg-blue-50";
+  "h-[30px] border border-[#d7dee7] rounded-[4px] bg-white px-2 text-[14px] text-[#334155] outline-none hover:border-[#aebdce] focus:border-[#9fdfbc] focus:shadow-[0_0_0_1px_#9fdfbc]";
 
 // ============================================================
 // DATE PICKER STYLE
@@ -554,32 +562,32 @@ const datePickerSx: SxProps<Theme> = {
   },
 
   "& .MuiPickersOutlinedInput-notchedOutline": {
-    borderColor: "#B7C7D7 !important",
+    borderColor: `${BORDER_COLOR} !important`,
   },
 
   "& .MuiPickersInputBase-root:hover .MuiPickersOutlinedInput-notchedOutline": {
-    borderColor: "#B7C7D7 !important",
+    borderColor: `${BORDER_HOVER_COLOR} !important`,
   },
 
   "& .MuiPickersInputBase-root.Mui-focused .MuiPickersOutlinedInput-notchedOutline":
     {
-      borderColor: "#B7C7D7 !important",
+      borderColor: `${BORDER_FOCUS_COLOR} !important`,
       borderWidth: "1px",
     },
 
   "& .MuiPickersInputBase-root.Mui-error .MuiPickersOutlinedInput-notchedOutline":
     {
-      borderColor: "#B7C7D7 !important",
+      borderColor: `${BORDER_COLOR} !important`,
     },
 
   "& .MuiPickersInputBase-root.Mui-error:hover .MuiPickersOutlinedInput-notchedOutline":
     {
-      borderColor: "#B7C7D7 !important",
+      borderColor: `${BORDER_HOVER_COLOR} !important`,
     },
 
   "& .MuiPickersInputBase-root.Mui-error.Mui-focused .MuiPickersOutlinedInput-notchedOutline":
     {
-      borderColor: "#B7C7D7 !important",
+      borderColor: `${BORDER_FOCUS_COLOR} !important`,
     },
 };
 
@@ -588,6 +596,57 @@ const labelClass =
 
 const rightLabelClass =
   "w-22.5 shrink-0 whitespace-nowrap text-right text-[14px] text-[#202020]";
+
+// ============================================================
+// ENTER KEY ORDER
+// Invoice No -> Type -> Date -> Customer ID -> Customer Name
+// -> Invoice To -> Phone -> Reference -> first row of the item table
+// ============================================================
+
+const FIELD_ORDER = [
+  "txtDocNo",
+  "lkpType",
+  "dtpDate",
+  "lkpCustomerID",
+  "lkpCustomerName",
+  "txtInvoiceTo",
+  "txtPhone",
+  "txtReference",
+];
+
+// the date picker is made of editable sections, so find the first one
+const getFieldElement = (fieldId: string): HTMLElement | null => {
+  if (fieldId === "dtpDate") {
+    return document.querySelector<HTMLElement>(
+      '#dtpDateBox [role="spinbutton"], #dtpDateBox input',
+    );
+  }
+  return document.getElementById(fieldId);
+};
+
+/* focus the next (or previous) enabled field in FIELD_ORDER */
+const focusField = (fromId: string, step: 1 | -1): boolean => {
+  const index = FIELD_ORDER.indexOf(fromId);
+
+  for (let i = index + step; i >= 0 && i < FIELD_ORDER.length; i += step) {
+    const el = getFieldElement(FIELD_ORDER[i]) as HTMLInputElement | null;
+
+    if (el && !el.disabled) {
+      el.focus();
+      if (el.tagName === "INPUT" && el.type === "text" && !el.readOnly) {
+        el.select();
+      }
+      return true;
+    }
+  }
+
+  return false;
+};
+
+/* after the last field, Enter jumps into the first item row */
+const focusTable = () => {
+  document.getElementById("lkpItemID-0")?.focus();
+};
 
 // ============================================================
 // COMPONENT
@@ -688,23 +747,52 @@ const SalesInvoiceHeader: React.FC<SalesInvoiceHeaderProps> = ({
   };
 
   // ==========================================================
-  // REFS
+  // INITIAL FOCUS: cursor starts in Invoice No. when the page loads
   // ==========================================================
 
-  const referenceRef = useRef<HTMLInputElement | null>(null);
+  useEffect(() => {
+    document.getElementById("txtDocNo")?.focus();
+  }, []);
 
   // ==========================================================
-  // ENTER KEY HANDLER
+  // ENTER KEY: next field, Shift+Enter: previous field
   // ==========================================================
 
-  const handleInputKeyDown = (
-    event: React.KeyboardEvent,
-    next?: () => void,
-  ) => {
-    if (event.key === "Enter") {
-      event.preventDefault();
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLElement>) => {
+    if (e.key !== "Enter") return;
 
-      next?.();
+    const target = e.target as HTMLElement;
+
+    // work out which field the key was pressed in
+    let fieldId = target.id;
+    if (!FIELD_ORDER.includes(fieldId)) {
+      if (target.closest("#dtpDateBox")) {
+        fieldId = "dtpDate";
+      } else {
+        return; // button, branch select, date popup, ...
+      }
+    }
+
+    const step = e.shiftKey ? -1 : 1;
+
+    // Enter that just picked an option from an open dropdown:
+    // wait one tick so the selection is applied before moving on
+    const pickedOption =
+      e.defaultPrevented && target.getAttribute("aria-expanded") === "true";
+
+    if (pickedOption) {
+      setTimeout(() => {
+        if (!focusField(fieldId, step) && step === 1) focusTable();
+      }, 0);
+      return;
+    }
+
+    if (e.defaultPrevented) return;
+
+    e.preventDefault();
+
+    if (!focusField(fieldId, step) && step === 1) {
+      focusTable();
     }
   };
 
@@ -716,13 +804,13 @@ const SalesInvoiceHeader: React.FC<SalesInvoiceHeaderProps> = ({
   // ==========================================================
 
   return (
-    <div className="w-full shrink-0">
+    <div className="w-full shrink-0" onKeyDown={handleKeyDown}>
       {/* ======================================================
           TITLE
       ====================================================== */}
 
       <div className="flex h-9 items-center border-b border-slate-300 bg-[#a3dfc0]">
-        <span className="px-6 text-[17px] font-semibold text-slate-700">
+        <span className="px-2 text-[17px] font-semibold text-slate-700">
           Sales Invoice
         </span>
       </div>
@@ -779,9 +867,6 @@ const SalesInvoiceHeader: React.FC<SalesInvoiceHeaderProps> = ({
             value={header.docNo}
             onChange={(e) => onHeaderChange({ docNo: e.target.value })}
             onBlur={onDocNoBlur}
-            onKeyDown={(e) =>
-              handleInputKeyDown(e, () => e.currentTarget.blur())
-            }
             className={`${inputClass} ml-2 w-40`}
           />
 
@@ -821,33 +906,29 @@ const SalesInvoiceHeader: React.FC<SalesInvoiceHeaderProps> = ({
             Date :
           </label>
 
-          <LocalizationProvider dateAdapter={AdapterDayjs}>
-            <DatePicker
-              value={header.date ? dayjs(header.date, "YYYY-MM-DD") : null}
-              onChange={(newValue) => {
-                if (newValue === null) {
-                  onHeaderChange({ date: "" });
-                } else if (newValue.isValid()) {
-                  onHeaderChange({ date: newValue.format("YYYY-MM-DD") });
-                }
-                // partially typed dates are ignored until valid
-              }}
-              format="DD-MM-YYYY"
-              disabled={readOnly}
-              slotProps={{
-                textField: {
-                  id: "dtpDate",
-                  onKeyDown: (event) =>
-                    handleInputKeyDown(event, () =>
-                      referenceRef.current?.focus(),
-                    ),
-                },
-                openPickerButton: { sx: { padding: "2px", margin: 0 } },
-                inputAdornment: { sx: { margin: 0, padding: 0 } },
-              }}
-              sx={datePickerSx}
-            />
-          </LocalizationProvider>
+          <div id="dtpDateBox">
+            <LocalizationProvider dateAdapter={AdapterDayjs}>
+              <DatePicker
+                value={header.date ? dayjs(header.date, "YYYY-MM-DD") : null}
+                onChange={(newValue) => {
+                  if (newValue === null) {
+                    onHeaderChange({ date: "" });
+                  } else if (newValue.isValid()) {
+                    onHeaderChange({ date: newValue.format("YYYY-MM-DD") });
+                  }
+                  // partially typed dates are ignored until valid
+                }}
+                format="DD-MM-YYYY"
+                disabled={readOnly}
+                slotProps={{
+                  textField: { id: "dtpDate" },
+                  openPickerButton: { sx: { padding: "2px", margin: 0 } },
+                  inputAdornment: { sx: { margin: 0, padding: 0 } },
+                }}
+                sx={datePickerSx}
+              />
+            </LocalizationProvider>
+          </div>
         </div>
 
         {/* ----------------------------------------------------
@@ -961,7 +1042,6 @@ const SalesInvoiceHeader: React.FC<SalesInvoiceHeaderProps> = ({
 
               <input
                 id="txtReference"
-                ref={referenceRef}
                 type="text"
                 maxLength={30}
                 autoComplete="off"
