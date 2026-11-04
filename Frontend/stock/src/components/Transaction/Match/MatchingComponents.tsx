@@ -244,7 +244,7 @@ const ResponsiveSelect = ({
 
   const CustomMenuList = (menuProps: any) => {
     if (documentMode) {
-      const headers = ["Doc. No.", "Date", "BrID", "Debit", "Credit"];
+      const headers = ["Document No.", "Date", "Br. ID", "Debit", "Credit"];
       return (
         <components.MenuList {...menuProps}>
           <div
