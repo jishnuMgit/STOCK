@@ -85,7 +85,7 @@ export const GetData = async (
   res: Response,
 ): Promise<Response> => {
   const strCoID = req.user?.CoID;
-  const { strDocType, strCSAccountID, strDivID, year } = req.body;
+  const { strCSAccountID, strDivID, year } = req.body;
   const strYear = isEmpty(year) ? "" : String(year);
 
   if (!strCoID) {
@@ -102,12 +102,6 @@ export const GetData = async (
     });
   }
 
-  if (isEmpty(strDocType)) {
-    return res.status(400).json({
-      success: false,
-      message: "Please input 'Document Type'",
-    });
-  }
 
   if (isEmpty(strCSAccountID)) {
     return res.status(400).json({
@@ -147,7 +141,6 @@ export const GetData = async (
         strCoID, // 2  p_strcoid
         strYear, // 3  p_stryear
         null, // 4  p_strbrid
-        strDocType, // 5  p_strdoctype
         null, // 6  p_strdocno
         0, // 7  p_intdocno
         null, // 8  p_dtpdate
