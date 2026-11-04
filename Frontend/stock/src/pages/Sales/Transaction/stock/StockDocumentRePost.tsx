@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect, useCallback, useRef } from "react";
 import { toast } from "react-toastify";
 import { useAltShortcuts } from "../../../../hooks/useAltShortcuts";
 import { useButtonPermissions } from "../../../../hooks/useButtonPermissions";
@@ -14,6 +14,22 @@ const SCREEN_TITLE = "Stock Document Re-Post";
 
 const api = import.meta.env.VITE_API_URL;
 
+// 7.4 sec / 2 min 5.3 sec / 1 hr 2 min 5 sec
+const formatElapsed = (ms: number | null): string => {
+  if (ms === null) return "-";
+
+  const totalSeconds = ms / 1000;
+  if (totalSeconds < 60) return `${totalSeconds.toFixed(1)} sec`;
+
+  const hours = Math.floor(totalSeconds / 3600);
+  const minutes = Math.floor((totalSeconds % 3600) / 60);
+  const seconds = Math.floor(totalSeconds % 60);
+
+  return hours > 0
+    ? `${hours} hr ${minutes} min ${seconds} sec`
+    : `${minutes} min ${seconds} sec`;
+};
+
 const StockDocumentRePost: React.FC = () => {
   const perms = useButtonPermissions(MENU_ID);
   const enterAsTab = useEnterAsTab();
@@ -23,6 +39,101 @@ const StockDocumentRePost: React.FC = () => {
   const [txtFromTxnNo, setTxtFromTxnNo] = useState("");
   const [txtToTxnNo, setTxtToTxnNo] = useState("");
   const [posting, setPosting] = useState(false);
+  const [totalPostedCount, setTotalPostedCount] = useState<number | null>(null);
+  const [defaultRange, setDefaultRange] = useState({ from: "", to: "" });
+  const [elapsedMs, setElapsedMs] = useState<number | null>(null);
+  const [currentDoc, setCurrentDoc] = useState("");
+  const startRef = useRef(0);
+  const timeFromServerRef = useRef<number | null>(null);
+
+  // the posting range comes from dbo.sp_getpostingrange (min, max and count of the posted documents)
+  const fetchRange = useCallback(async () => {
+    try {
+      // the login year (the same as the other screens)
+      const PstrYear = localStorage.getItem("PstrYear") ?? "";
+
+      if (!/^\d{4}$/.test(PstrYear)) {
+        toast.error("getRange: no PstrYear in localStorage");
+        return null;
+      }
+
+      const response = await fetch(
+        `${api}/StockDocumentRePost/getRange?PstrYear=${encodeURIComponent(PstrYear)}`,
+        {
+          credentials: "include",
+        }
+      );
+      const result = await response.json();
+
+      if (!response.ok || !result.success) {
+        toast.warning(result.message || `${SCREEN_TITLE} range could not be loaded`);
+        return null;
+      }
+
+      return {
+        from: result.minPostingNo ?? "",
+        to: result.maxPostingNo ?? "",
+        count: Number(result.totalPostedCount ?? 0),
+      };
+    } catch {
+      toast.error(`Cannot connect to ${SCREEN_TITLE} API.`);
+      return null;
+    }
+  }, []);
+
+  const loadRange = useCallback(async () => {
+    const range = await fetchRange();
+    if (!range) return;
+
+    setDefaultRange({ from: range.from, to: range.to });
+    setTxtFromTxnNo(range.from);
+    setTxtToTxnNo(range.to);
+    setTotalPostedCount(range.count);
+  }, [fetchRange]);
+
+  // on page load
+  useEffect(() => {
+    let active = true;
+
+    void fetchRange().then((range) => {
+      if (!range || !active) return;
+
+      setDefaultRange({ from: range.from, to: range.to });
+      setTxtFromTxnNo(range.from);
+      setTxtToTxnNo(range.to);
+      setTotalPostedCount(range.count);
+    });
+
+    return () => {
+      active = false;
+    };
+  }, [fetchRange]);
+
+  // while posting: the running time, and (every half second) the document being posted now
+  useEffect(() => {
+    if (!posting) return;
+
+    const clock = window.setInterval(() => {
+      setElapsedMs(Date.now() - startRef.current);
+    }, 200);
+
+    const poll = window.setInterval(async () => {
+      try {
+        const response = await fetch(`${api}/StockDocumentRePost/getProgress`, {
+          credentials: "include",
+        });
+        const result = await response.json();
+        if (result.success) setCurrentDoc(result.current ?? "");
+      } catch {
+        // a missed poll is fine: the next one follows
+      }
+    }, 500);
+
+    return () => {
+      window.clearInterval(clock);
+      window.clearInterval(poll);
+    };
+  }, [posting]);
 
   // the cursor starts on the From Txn. No. box
   useInitialFocus(true, "txtFromTxnNo");
@@ -50,6 +161,10 @@ const StockDocumentRePost: React.FC = () => {
     if (!from) return warn("Please enter 'From Txn. No.'", "txtFromTxnNo");
     if (!to) return warn("Please enter 'To Txn. No.'", "txtToTxnNo");
 
+    startRef.current = Date.now();
+    timeFromServerRef.current = null;
+    setElapsedMs(0);
+    setCurrentDoc("");
     setPosting(true);
 
     try {
@@ -67,10 +182,18 @@ const StockDocumentRePost: React.FC = () => {
         return;
       }
 
+      // the time the database took (the procedure's own clock) replaces the browser's running time
+      if (typeof result.txtTimeTakenSec === "number") {
+        timeFromServerRef.current = result.txtTimeTakenSec * 1000;
+      }
+
       toast.success(<div style={{ whiteSpace: "pre-line" }}>{result.message}</div>);
+      void loadRange();
     } catch {
       toast.error(`Cannot connect to ${SCREEN_TITLE} API.`);
     } finally {
+      setElapsedMs(timeFromServerRef.current ?? Date.now() - startRef.current);
+      setCurrentDoc("");
       setPosting(false);
     }
   };
@@ -80,8 +203,8 @@ const StockDocumentRePost: React.FC = () => {
   // ============================================================
 
   const handleClear = () => {
-    setTxtFromTxnNo("");
-    setTxtToTxnNo("");
+    setTxtFromTxnNo(defaultRange.from);
+    setTxtToTxnNo(defaultRange.to);
     document.getElementById("txtFromTxnNo")?.focus();
   };
 
@@ -107,7 +230,7 @@ const StockDocumentRePost: React.FC = () => {
 
       <div
         className="
-          w-[360px]
+          w-[400px]
           border
           border-[#707070]
           bg-white
@@ -159,7 +282,7 @@ const StockDocumentRePost: React.FC = () => {
             <label
               htmlFor="txtFromTxnNo"
               className="
-                w-[104px]
+                w-[150px]
                 shrink-0
                 pr-[7px]
                 text-right
@@ -167,7 +290,7 @@ const StockDocumentRePost: React.FC = () => {
                 whitespace-nowrap
               "
             >
-              From Txn No. :
+              From Posting No. :
             </label>
 
             <div className={`relative w-[214px] ${cellFocusClass}`}>
@@ -210,7 +333,7 @@ const StockDocumentRePost: React.FC = () => {
             <label
               htmlFor="txtToTxnNo"
               className="
-                 w-[104px]
+                w-[150px]
                 shrink-0
                 pr-[7px]
                 text-right
@@ -218,7 +341,7 @@ const StockDocumentRePost: React.FC = () => {
                 whitespace-nowrap
               "
             >
-              To Txn No. :
+              To Posting No. :
             </label>
 
             <div className={`relative w-[214px] ${cellFocusClass}`}>
@@ -245,6 +368,63 @@ const StockDocumentRePost: React.FC = () => {
                 "
               />
             </div>
+          </div>
+
+          {/* ==================================================
+              TOTAL POSTED COUNT
+          ================================================== */}
+
+          <div className="mt-[10px] flex h-[27px] items-center">
+            <label
+              htmlFor="lblTotalPostedCount"
+              className="w-[150px] shrink-0 pr-[7px] text-right text-[14px] whitespace-nowrap"
+            >
+              Total Documents :
+            </label>
+            <span
+              id="lblTotalPostedCount"
+              className="text-[14px] font-semibold text-slate-700"
+            >
+              {totalPostedCount === null ? "..." : totalPostedCount}
+            </span>
+          </div>
+
+          {/* ==================================================
+              POSTING DOCUMENT (the document being posted now)
+          ================================================== */}
+
+          <div className="mt-[6px] flex h-[27px] items-center">
+            <label
+              htmlFor="lblPostingDocument"
+              className="w-[150px] shrink-0 pr-[7px] text-right text-[14px] whitespace-nowrap"
+            >
+              Posting Document :
+            </label>
+            <span
+              id="lblPostingDocument"
+              className="text-[14px] font-semibold text-slate-700"
+            >
+              {posting ? currentDoc || "..." : "-"}
+            </span>
+          </div>
+
+          {/* ==================================================
+              TOTAL TIME TAKEN
+          ================================================== */}
+
+          <div className="mt-[6px] flex h-[27px] items-center">
+            <label
+              htmlFor="lblTimeTaken"
+              className="w-[150px] shrink-0 pr-[7px] text-right text-[14px] whitespace-nowrap"
+            >
+              Total Time Taken :
+            </label>
+            <span
+              id="lblTimeTaken"
+              className="text-[14px] font-semibold text-slate-700"
+            >
+              {formatElapsed(elapsedMs)}
+            </span>
           </div>
 
           {/* ==================================================

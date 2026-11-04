@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useRef, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "react-toastify";
 
 import BeginningBalanceHeader from "../../../../components/Transaction/BeginningBalance/BeginningBalanceHeader";
@@ -61,6 +61,7 @@ const BeginningBalance: React.FC = () => {
   const [lkpBranch, setLkpBranch] = useState<Option | null>(null);
   // the branch list and the user's default branch have been loaded (the cursor can start)
   const [branchesLoaded, setBranchesLoaded] = useState(false);
+  const handleBranchesLoaded = useCallback(() => setBranchesLoaded(true), []);
   // yyyy-mm-dd
   const [dtpDate, setDtpDate] = useState(() => defaultDate(PstrYear));
   const [rows, setRows] = useState<BeginningBalanceRow[]>(() => padRows([]));
@@ -609,7 +610,7 @@ const BeginningBalance: React.FC = () => {
             dtpDate={dtpDate}
             onDateChange={setDtpDate}
             disabled={chkPosted}
-            onBranchesLoaded={() => setBranchesLoaded(true)}
+            onBranchesLoaded={handleBranchesLoaded}
           />
 
           <BeginningBalanceTable
