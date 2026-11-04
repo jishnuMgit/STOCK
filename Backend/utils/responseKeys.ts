@@ -546,3 +546,42 @@ export const administrationDocumentGridKeys: KeyMap = {
   ftobepost: "chkToBePost",
   fpositionno: "txtPositionNo",
 };
+
+/* ---------- Finance / Transaction / MatchEnquiry ---------- */
+
+export const matchEnquiryCustomerKeys: KeyMap = {
+  fcsaccountid: "lkpCsAccountID",
+  fcsaccountname: "lkpCsAccountName",
+};
+
+export const matchEnquiryDivisionKeys: KeyMap = {
+  fdivid: "lkpDivision",
+  fdivname: "txtDivisionName",
+};
+
+// the Document No. list: one row for each document (dbo.fillmatchenquirydocuments)
+export const matchEnquiryDocumentKeys: KeyMap = {
+  fbrid: "lkpBranch",
+  fdoctype: "lkpDocType",
+  fdocno: "lkpDocNo",
+  fdoctypeno: "txtDocTypeNo",
+  fdate: "txtDate",
+  fdescription: "txtDescription",
+  fdebit: "txtDebit",
+  fcredit: "txtCredit",
+};
+
+// the lines of the enquiry (dbo.sp_pagematchenquiry)
+export const matchEnquiryLineKeys: KeyMap = {
+  fpc: "txtPC",
+  fbrid: "lkpBranch",
+  fdoctype: "lkpDocType",
+  fdocno: "lkpDocNo",
+  fdate: "txtDate",
+  faccountid: "lkpAccountID",
+  fdescription: "txtDescription",
+  fslno: "txtSlNo",
+  fdebit: "txtDebit",
+  fcredit: "txtCredit",
+  fmatchapplydate: "txtMatchApplyDate",
+};
