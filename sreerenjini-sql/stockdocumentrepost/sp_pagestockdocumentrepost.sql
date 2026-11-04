@@ -10,7 +10,7 @@
 --      its document type in mode 'R' (re-post).
 --
 -- Every document type is replayed by its own post procedure, called in mode 'R' (re-post):
---      BG   dbo.sp_pagebeginningstockpost
+--      BS   dbo.sp_pagebeginningstockpost
 --      PI   dbo.sp_pagepipost
 --      PR   dbo.sp_pageprpost
 --      SI   dbo.sp_pagesipost
@@ -93,7 +93,7 @@ BEGIN
               JOIN pg_namespace n ON n.oid = p.pronamespace
              WHERE n.nspname = 'dbo'
                AND p.proname = CASE t.fdoctype
-                                 WHEN 'BG'  THEN 'sp_pagebeginningstockpost'
+                                 WHEN 'BS'  THEN 'sp_pagebeginningstockpost'
                                  WHEN 'PI'  THEN 'sp_pagepipost'
                                  WHEN 'PR'  THEN 'sp_pageprpost'
                                  WHEN 'SI'  THEN 'sp_pagesipost'
@@ -154,12 +154,12 @@ BEGIN
          WHERE t.fcoid = p_pstrcoid
            AND t.fpost = true
            AND t.fpostingno BETWEEN p_strstartpostingno AND p_strendpostingno
-           AND t.fdoctype IN ('BG', 'PI', 'PR', 'SI', 'SR', 'ST', 'ADJ', 'DM', 'ASM', 'IC')
+           AND t.fdoctype IN ('BS', 'PI', 'PR', 'SI', 'SR', 'ST', 'ADJ', 'DM', 'ASM', 'IC')
          ORDER BY t.fpostingno, t.fdoctype, t.fdocno
     LOOP
 
         -- Beginning Stock
-        IF v_doc.fdoctype = 'BG' THEN
+        IF v_doc.fdoctype = 'BS' THEN
             CALL dbo.sp_pagebeginningstockpost(v_mode, p_pstrcoid, v_doc.fyear, v_doc.fbrid, v_doc.fdoctype, v_doc.fdocno, p_pstruserid);
         END IF;
 

@@ -55,7 +55,7 @@
 --
 -- Examples (cursor calls must run inside one transaction)
 --   BEGIN;
---   CALL dbo.sp_pagebeginningstock('GTL', '01', '2026', 'JD', 'BG', p_result_cursor => 'c1');
+--   CALL dbo.sp_pagebeginningstock('GTL', '01', '2026', 'JD', 'BS', p_result_cursor => 'c1');
 --   FETCH ALL FROM "c1";
 --   COMMIT;
 

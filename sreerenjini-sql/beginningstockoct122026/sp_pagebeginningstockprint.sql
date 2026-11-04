@@ -2,10 +2,10 @@
 -- dbo.sp_pagebeginningstockprint   (Beginning Stock - Print)
 --
 -- The old SP_rptStDocPrint, in the same shape, named sp_page<form>:
---   * p_strdoc     the document type (only 'BG' is active here; the other
+--   * p_strdoc     the document type (only 'BS' is active here; the other
 --                  document types of the old list are kept as a comment)
 --   * p_strfilter  the WHERE text, e.g.
---                  a.fcoid = '01' and a.fbrid = 'JD' and a.fdoctype = 'BG'
+--                  a.fcoid = '01' and a.fbrid = 'JD' and a.fdoctype = 'BS'
 --   * the query is built as text and run (the old sp_executesql), ordered by
 --     the document number and Sl.#
 --
@@ -26,8 +26,8 @@
 --
 -- Test:
 --   BEGIN;
---   CALL dbo.sp_pagebeginningstockprint('BG',
---        'a.fcoid = ''01'' and a.fbrid = ''JD'' and a.fdoctype = ''BG''',
+--   CALL dbo.sp_pagebeginningstockprint('BS',
+--        'a.fcoid = ''01'' and a.fbrid = ''JD'' and a.fdoctype = ''BS''',
 --        p_result_cursor => 'c1');
 --   FETCH ALL IN c1;
 --   COMMIT;
@@ -43,8 +43,8 @@ DECLARE
     v_strsql text;
 BEGIN
 
-    -- IF p_strdoc IN ('PI','PR','SIC','SIR','SRC','SRR','ST','STI','ADJ','BG','DM','ASM','IC') THEN
-    IF p_strdoc = 'BG' THEN
+    -- IF p_strdoc IN ('PI','PR','SIC','SIR','SRC','SRR','ST','STI','ADJ','BS','DM','ASM','IC') THEN
+    IF p_strdoc = 'BS' THEN
 
         v_strsql :=
             'SELECT a.*, b.fitemname, b.fpacking,
