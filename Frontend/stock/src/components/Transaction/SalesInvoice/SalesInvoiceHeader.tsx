@@ -1,4 +1,4 @@
-import React, { useRef, useState } from "react";
+import React, { useMemo, useRef } from "react";
 import Select, {
   components,
   type FormatOptionLabelMeta,
@@ -10,8 +10,14 @@ import customParseFormat from "dayjs/plugin/customParseFormat";
 import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
 import { DatePicker } from "@mui/x-date-pickers/DatePicker";
 import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
+import type { SxProps, Theme } from "@mui/material/styles";
 import selectComponents from "../../sharecomponents/selectComponents";
-import type { Option } from "../../../hooks/useSalesInvoice"; // adjust path to your hook
+import type {
+  CustomerLookup,
+  Option,
+  ParamLookup,
+  SalesHeader,
+} from "../../../hooks/useSalesInvoice"; // adjust path to your hook
 
 dayjs.extend(customParseFormat);
 
@@ -25,25 +31,16 @@ type SalesInvoiceHeaderProps = {
   onBranchChange: (option: Option | null) => void;
   branchLoading: boolean;
   branchError: string | null;
+
+  header: SalesHeader;
+  onHeaderChange: (patch: Partial<SalesHeader>) => void;
+  customers: CustomerLookup[];
+  priceLevels: ParamLookup[];
+  onCustomerSelect: (customerId: string) => void;
+  onDocNoBlur: () => void;
+  invoiceTypes?: Option[];
+  readOnly: boolean; // posted invoice
 };
-
-// ============================================================
-// OPTIONS (customer lookups still static until wired to API)
-// ============================================================
-
-const customerIdOptions: Option[] = [
-  {
-    value: "11010011",
-    label: "11010011",
-  },
-];
-
-const customerNameOptions: Option[] = [
-  {
-    value: "CASH CUSTOMER",
-    label: "CASH CUSTOMER",
-  },
-];
 
 // ============================================================
 // SELECT STYLES
@@ -248,11 +245,190 @@ const branchComponents = {
 };
 
 // ============================================================
+// TYPE LOOKUP MENU (two columns: Type | Name, gray header row)
+// ============================================================
+
+const TYPE_COL_WIDTH = 70;
+
+const TYPE_NAMES: Record<string, string> = { R: "CREDIT", C: "CASH" };
+
+// this screen is Sales Invoice (Credit), so only R is offered by default
+const defaultInvoiceTypes: Option[] = [{ value: "R", label: "R" }];
+
+const TypeMenuList = (props: MenuListProps<Option, false>) => (
+  <components.MenuList {...props}>
+    <div
+      style={{
+        display: "flex",
+        position: "sticky",
+        top: 0,
+        zIndex: 1,
+        background: "#eeeeee",
+        borderBottom: "1px solid #cfcfcf",
+        fontWeight: 600,
+        fontSize: MENU_FONT_SIZE,
+        color: "#202a36",
+      }}
+    >
+      <div
+        style={{
+          width: TYPE_COL_WIDTH,
+          flexShrink: 0,
+          boxSizing: "border-box",
+          padding: "5px 8px",
+          borderRight: "1px solid #cfcfcf",
+        }}
+      >
+        Type
+      </div>
+      <div style={{ flex: 1, padding: "5px 8px" }}>Name</div>
+    </div>
+    {props.children}
+  </components.MenuList>
+);
+
+// menu rows show Type | Name; the control shows only the type letter
+const formatType = (option: Option, meta: FormatOptionLabelMeta<Option>) => {
+  if (meta.context !== "menu") return option.label;
+
+  return (
+    <div style={{ display: "flex" }}>
+      <div
+        style={{
+          width: TYPE_COL_WIDTH,
+          flexShrink: 0,
+          boxSizing: "border-box",
+          padding: "6px 8px",
+          borderRight: "1px solid #e3e8ef",
+        }}
+      >
+        {option.value}
+      </div>
+      <div style={{ flex: 1, padding: "6px 8px" }}>
+        {TYPE_NAMES[option.value] ?? option.label}
+      </div>
+    </div>
+  );
+};
+
+const typeStyles: StylesConfig<Option, false> = {
+  ...branchStyles,
+  menu: (base, state) => ({
+    ...branchStyles.menu!(base, state),
+    width: 200,
+    minWidth: 200,
+  }),
+};
+
+const typeComponents = {
+  ...selectComponents,
+  MenuList: TypeMenuList,
+};
+
+// ============================================================
 // INPUT STYLE
 // ============================================================
 
 const inputClass =
   "h-[30px] border border-[#cbd5e1] rounded-[4px] bg-white px-1 text-[14px] text-[#202020] outline-none focus:border-blue-400 focus:bg-blue-50";
+
+// ============================================================
+// DATE PICKER STYLE
+// ============================================================
+
+const datePickerSx: SxProps<Theme> = {
+  width: "140px",
+
+  "& .MuiPickersTextField-root": {
+    width: "120px",
+  },
+
+  "& .MuiPickersInputBase-root": {
+    width: "140px",
+    height: "30px",
+    minHeight: "30px",
+    boxSizing: "border-box",
+    borderRadius: "4px",
+    backgroundColor: "#ffffff",
+    fontSize: "12px",
+    padding: 0,
+    overflow: "hidden",
+  },
+
+  "& .MuiPickersInputBase-sectionsContainer": {
+    paddingLeft: "10px !important",
+    paddingRight: "0px !important",
+    marginBottom: "-5px !important",
+    marginLeft: "0px !important",
+    boxSizing: "border-box",
+    overflow: "hidden",
+  },
+
+  "& .MuiPickersInputBase-sectionContent": {
+    fontSize: "12px",
+    color: "#344054",
+  },
+
+  "& .MuiPickersInputBase-input": {
+    minWidth: 0,
+    width: "100%",
+    fontSize: "12px",
+    padding: 0,
+    height: "30px",
+    boxSizing: "border-box",
+  },
+
+  "& .MuiInputAdornment-root": {
+    margin: 0,
+    padding: 0,
+  },
+
+  "& .MuiIconButton-root": {
+    width: "24px",
+    height: "24px",
+    padding: "2px",
+    margin: 0,
+  },
+
+  "& .MuiSvgIcon-root": {
+    fontSize: "16px",
+  },
+
+  "& .MuiPickersOutlinedInput-notchedOutline": {
+    borderColor: "#B7C7D7 !important",
+  },
+
+  "& .MuiPickersInputBase-root:hover .MuiPickersOutlinedInput-notchedOutline": {
+    borderColor: "#B7C7D7 !important",
+  },
+
+  "& .MuiPickersInputBase-root.Mui-focused .MuiPickersOutlinedInput-notchedOutline":
+    {
+      borderColor: "#B7C7D7 !important",
+      borderWidth: "1px",
+    },
+
+  "& .MuiPickersInputBase-root.Mui-error .MuiPickersOutlinedInput-notchedOutline":
+    {
+      borderColor: "#B7C7D7 !important",
+    },
+
+  "& .MuiPickersInputBase-root.Mui-error:hover .MuiPickersOutlinedInput-notchedOutline":
+    {
+      borderColor: "#B7C7D7 !important",
+    },
+
+  "& .MuiPickersInputBase-root.Mui-error.Mui-focused .MuiPickersOutlinedInput-notchedOutline":
+    {
+      borderColor: "#B7C7D7 !important",
+    },
+};
+
+const labelClass =
+  "w-20 shrink-0 text-right text-[14px] text-[#202020] whitespace-nowrap";
+
+const rightLabelClass =
+  "w-22.5 shrink-0 whitespace-nowrap text-right text-[14px] text-[#202020]";
 
 // ============================================================
 // COMPONENT
@@ -264,35 +440,62 @@ const SalesInvoiceHeader: React.FC<SalesInvoiceHeaderProps> = ({
   onBranchChange,
   branchLoading,
   branchError,
+  header,
+  onHeaderChange,
+  customers,
+  priceLevels,
+  onCustomerSelect,
+  onDocNoBlur,
+  invoiceTypes = defaultInvoiceTypes,
+  readOnly,
 }) => {
   // ==========================================================
-  // CUSTOMER ID
+  // LOOKUP OPTIONS
   // ==========================================================
 
-  const [customerId, setCustomerId] = useState<Option | null>(
-    customerIdOptions[0],
+  const customerIdOptions = useMemo<Option[]>(
+    () => customers.map((c) => ({ value: c.id, label: c.id })),
+    [customers],
   );
 
-  // ==========================================================
-  // CUSTOMER NAME
-  // ==========================================================
-
-  const [customerName, setCustomerName] = useState<Option | null>(
-    customerNameOptions[0],
+  const customerNameOptions = useMemo<Option[]>(
+    () => customers.map((c) => ({ value: c.id, label: c.name })),
+    [customers],
   );
 
-  // ==========================================================
-  // DATE
-  // ==========================================================
+  const priceLevelOptions = useMemo<Option[]>(
+    () => priceLevels.map((p) => ({ value: p.id, label: p.id })),
+    [priceLevels],
+  );
 
-  const [dtpDate, setDtpDate] = useState<string>(dayjs().format("DD-MM-YYYY"));
+  // selected values (fall back to the saved invoice's customer if it is
+  // not in the lookup list)
+  const customerIdValue: Option | null = header.customerId
+    ? (customerIdOptions.find((o) => o.value === header.customerId) ?? {
+        value: header.customerId,
+        label: header.customerId,
+      })
+    : null;
+
+  const customerNameValue: Option | null = header.customerId
+    ? (customerNameOptions.find((o) => o.value === header.customerId) ?? {
+        value: header.customerId,
+        label: header.customerName || header.customerId,
+      })
+    : null;
+
+  const invoiceTypeValue: Option | null = header.invoiceType
+    ? (invoiceTypes.find((o) => o.value === header.invoiceType) ?? {
+        value: header.invoiceType,
+        label: header.invoiceType,
+      })
+    : null;
 
   // ==========================================================
   // REFS
   // ==========================================================
 
-  const dateRef = useRef<HTMLInputElement | null>(null);
-  const receivedFromRef = useRef<HTMLInputElement | null>(null);
+  const referenceRef = useRef<HTMLInputElement | null>(null);
 
   // ==========================================================
   // ENTER KEY HANDLER
@@ -308,6 +511,9 @@ const SalesInvoiceHeader: React.FC<SalesInvoiceHeaderProps> = ({
       next?.();
     }
   };
+
+  const menuPortalTarget =
+    typeof document !== "undefined" ? document.body : undefined;
 
   // ==========================================================
   // RENDER
@@ -329,8 +535,8 @@ const SalesInvoiceHeader: React.FC<SalesInvoiceHeaderProps> = ({
           HEADER AREA
       ====================================================== */}
 
-      <div className="h-25 w-full px-3 pt-3 mb-3">
-        <div className="grid h-full grid-cols-[56%_44%]">
+      <div className="w-full px-3 pt-3 mb-3">
+        <div className="grid grid-cols-[56%_44%]">
           {/* ==================================================
               LEFT SIDE
           ================================================== */}
@@ -341,18 +547,7 @@ const SalesInvoiceHeader: React.FC<SalesInvoiceHeaderProps> = ({
             ------------------------------------------------ */}
 
             <div className="mb-2.5 flex h-7.5 items-center gap-2">
-              <label
-                className="
-                  w-20
-                  shrink-0
-                  text-right
-                  text-[14px]
-                  text-[#202020]
-                  whitespace-nowrap
-                "
-              >
-                Branch :
-              </label>
+              <label className={labelClass}>Branch :</label>
 
               <div className="w-55">
                 <Select<Option, false>
@@ -367,12 +562,11 @@ const SalesInvoiceHeader: React.FC<SalesInvoiceHeaderProps> = ({
                   isClearable={false}
                   isSearchable={false}
                   isLoading={branchLoading}
+                  isDisabled={readOnly}
                   placeholder={branchLoading ? "Loading..." : "Select branch"}
                   noOptionsMessage={() => branchError ?? "No branches found"}
                   menuPosition="fixed"
-                  menuPortalTarget={
-                    typeof document !== "undefined" ? document.body : undefined
-                  }
+                  menuPortalTarget={menuPortalTarget}
                 />
               </div>
             </div>
@@ -381,19 +575,8 @@ const SalesInvoiceHeader: React.FC<SalesInvoiceHeaderProps> = ({
                 CUSTOMER
             ------------------------------------------------ */}
 
-            <div className="mb-3.75 flex h-7.5 items-center gap-2  w-200 min-w-[600]">
-              <label
-                className="
-                  w-20
-                  shrink-0
-                  text-right
-                  text-[14px]
-                  text-[#202020]
-                  whitespace-nowrap
-                "
-              >
-                Customer :
-              </label>
+            <div className="mb-2.5 flex h-7.5 items-center gap-2  w-200 min-w-[600]">
+              <label className={labelClass}>Customer :</label>
 
               {/* Customer ID */}
 
@@ -402,16 +585,18 @@ const SalesInvoiceHeader: React.FC<SalesInvoiceHeaderProps> = ({
                   inputId="lkpCustomerID"
                   instanceId="lkpCustomerID"
                   options={customerIdOptions}
-                  value={customerId}
+                  value={customerIdValue}
                   components={selectComponents}
-                  onChange={setCustomerId}
+                  onChange={(option) =>
+                    option && onCustomerSelect(option.value)
+                  }
                   styles={selectStyles}
                   isClearable={false}
-                  isSearchable={false}
+                  isSearchable
+                  isDisabled={readOnly}
+                  placeholder=""
                   menuPosition="fixed"
-                  menuPortalTarget={
-                    typeof document !== "undefined" ? document.body : undefined
-                  }
+                  menuPortalTarget={menuPortalTarget}
                 />
               </div>
 
@@ -422,43 +607,61 @@ const SalesInvoiceHeader: React.FC<SalesInvoiceHeaderProps> = ({
                   inputId="lkpCustomerName"
                   instanceId="lkpCustomerName"
                   options={customerNameOptions}
-                  value={customerName}
+                  value={customerNameValue}
                   components={selectComponents}
-                  onChange={setCustomerName}
+                  onChange={(option) =>
+                    option && onCustomerSelect(option.value)
+                  }
                   styles={selectStyles}
                   isClearable={false}
-                  isSearchable={false}
+                  isSearchable
+                  isDisabled={readOnly}
+                  placeholder=""
                   menuPosition="fixed"
-                  menuPortalTarget={
-                    typeof document !== "undefined" ? document.body : undefined
-                  }
+                  menuPortalTarget={menuPortalTarget}
                 />
               </div>
             </div>
 
             {/* -----------------------------------------------
-                SQ NO
+                ADDRESS
             ------------------------------------------------ */}
 
-            <div className="flex h-5.5 items-center gap-2">
-              <label
-                className="
-                  w-20
-                  shrink-0
-                  text-right
-                  text-[14px]
-                  text-[#202020]
-                  whitespace-nowrap
-                "
-              >
-                S.Qtn. No :
+            <div className="mb-2.5 flex h-7.5 items-center gap-2">
+              <label htmlFor="txtAddress" className={labelClass}>
+                Invoice To :
               </label>
 
               <input
-                id="txtSQtnNo"
+                id="txtInvoiceTo"
                 type="text"
+                maxLength={150}
                 autoComplete="off"
-                className={`input-style w-55`}
+                disabled={readOnly}
+                value={header.address}
+                onChange={(e) => onHeaderChange({ address: e.target.value })}
+                className={`${inputClass} w-107.5`}
+              />
+            </div>
+
+            {/* -----------------------------------------------
+                PHONE
+            ------------------------------------------------ */}
+
+            <div className="flex h-7.5 items-center gap-2">
+              <label htmlFor="txtPhone" className={labelClass}>
+                Phone :
+              </label>
+
+              <input
+                id="txtPhone"
+                type="text"
+                maxLength={50}
+                autoComplete="off"
+                disabled={readOnly}
+                value={header.phone}
+                onChange={(e) => onHeaderChange({ phone: e.target.value })}
+                className={`${inputClass} w-55`}
               />
             </div>
           </div>
@@ -469,174 +672,93 @@ const SalesInvoiceHeader: React.FC<SalesInvoiceHeaderProps> = ({
 
           <div className="right-side ml-auto w-fit pl-1">
             {/* -----------------------------------------------
-                INVOICE NO + DATE
-            ------------------------------------------------ */}
+    INVOICE NO + TYPE
+------------------------------------------------ */}
 
             <div className="mb-2.5 flex h-7.5 items-center">
-              <label
-                className="
-                  w-22.5
-                  shrink-0
-                  whitespace-nowrap
-                  text-right
-                  text-[14px]
-                  text-[#202020]
-                "
-              >
+              <label htmlFor="txtDocNo" className={rightLabelClass}>
                 Invoice No. :
               </label>
 
               <input
                 id="txtDocNo"
                 type="text"
-                defaultValue="OC3"
+                maxLength={15}
                 autoComplete="off"
-                className={`input-style ml-1.75 w-40`}
+                value={header.docNo}
+                onChange={(e) => onHeaderChange({ docNo: e.target.value })}
+                onBlur={onDocNoBlur}
+                onKeyDown={(e) =>
+                  handleInputKeyDown(e, () => e.currentTarget.blur())
+                }
+                className={`${inputClass} ml-1.75 w-40`}
               />
 
               <label
-                className="
-                  ml-3.75
-                  mr-1.25
-                  shrink-0
-                  whitespace-nowrap
-                  text-[14px]
-                  text-[#202020]
-                "
+                htmlFor="lkpType"
+                className="ml-3.75 mr-1.25 shrink-0 whitespace-nowrap text-[14px] text-[#202020]"
               >
+                Type :
+              </label>
+
+              <div className="w-22">
+                <Select<Option, false>
+                  inputId="lkpType"
+                  instanceId="lkpType"
+                  options={invoiceTypes}
+                  value={invoiceTypeValue}
+                  onChange={(option) =>
+                    onHeaderChange({ invoiceType: option?.value ?? "" })
+                  }
+                  styles={typeStyles}
+                  components={typeComponents}
+                  formatOptionLabel={formatType}
+                  isClearable={false}
+                  isSearchable={false}
+                  isDisabled={readOnly}
+                  menuPosition="fixed"
+                  menuPortalTarget={menuPortalTarget}
+                />
+              </div>
+            </div>
+
+            {/* -----------------------------------------------
+    DATE
+------------------------------------------------ */}
+
+            <div className="mb-2.5 flex h-7.5 items-center">
+              <label htmlFor="dtpDate" className={rightLabelClass}>
                 Date :
               </label>
 
-              {/* ==================================================
-                  DATE PICKER
-              ================================================== */}
-
-              <div className="">
+              <div className="ml-1.75">
                 <LocalizationProvider dateAdapter={AdapterDayjs}>
                   <DatePicker
-                    value={dtpDate ? dayjs(dtpDate, "DD-MM-YYYY") : null}
+                    value={
+                      header.date ? dayjs(header.date, "YYYY-MM-DD") : null
+                    }
                     onChange={(newValue) => {
-                      if (newValue?.isValid()) {
-                        setDtpDate(newValue.format("DD-MM-YYYY"));
-                      } else {
-                        setDtpDate("");
+                      if (newValue === null) {
+                        onHeaderChange({ date: "" });
+                      } else if (newValue.isValid()) {
+                        onHeaderChange({ date: newValue.format("YYYY-MM-DD") });
                       }
+                      // partially typed dates are ignored until valid
                     }}
                     format="DD-MM-YYYY"
-                    inputRef={dateRef}
+                    disabled={readOnly}
                     slotProps={{
                       textField: {
                         id: "dtpDate",
-
                         onKeyDown: (event) =>
                           handleInputKeyDown(event, () =>
-                            receivedFromRef.current?.focus(),
+                            referenceRef.current?.focus(),
                           ),
                       },
-
-                      openPickerButton: {
-                        sx: {
-                          padding: "2px",
-                          margin: 0,
-                        },
-                      },
-
-                      inputAdornment: {
-                        sx: {
-                          margin: 0,
-                          padding: 0,
-                        },
-                      },
+                      openPickerButton: { sx: { padding: "2px", margin: 0 } },
+                      inputAdornment: { sx: { margin: 0, padding: 0 } },
                     }}
-                    sx={{
-                      width: "140px",
-
-                      "& .MuiPickersTextField-root": {
-                        width: "120px",
-                      },
-
-                      "& .MuiPickersInputBase-root": {
-                        width: "140px",
-                        height: "30px",
-                        minHeight: "30px",
-                        boxSizing: "border-box",
-                        borderRadius: "4px",
-                        backgroundColor: "#ffffff",
-                        fontSize: "12px",
-                        padding: 0,
-                        overflow: "hidden",
-                      },
-
-                      "& .MuiPickersInputBase-sectionsContainer": {
-                        paddingLeft: "10px !important",
-                        paddingRight: "0px !important",
-                        marginBottom: "-5px !important",
-                        marginLeft: "0px !important",
-                        boxSizing: "border-box",
-                        overflow: "hidden",
-                      },
-
-                      "& .MuiPickersInputBase-sectionContent": {
-                        fontSize: "12px",
-                        color: "#344054",
-                      },
-
-                      "& .MuiPickersInputBase-input": {
-                        minWidth: 0,
-                        width: "100%",
-                        fontSize: "12px",
-                        padding: 0,
-                        height: "30px",
-                        boxSizing: "border-box",
-                      },
-
-                      "& .MuiInputAdornment-root": {
-                        margin: 0,
-                        padding: 0,
-                      },
-
-                      "& .MuiIconButton-root": {
-                        width: "24px",
-                        height: "24px",
-                        padding: "2px",
-                        margin: 0,
-                      },
-
-                      "& .MuiSvgIcon-root": {
-                        fontSize: "16px",
-                      },
-
-                      "& .MuiPickersOutlinedInput-notchedOutline": {
-                        borderColor: "#B7C7D7 !important",
-                      },
-
-                      "& .MuiPickersInputBase-root:hover .MuiPickersOutlinedInput-notchedOutline":
-                        {
-                          borderColor: "#B7C7D7 !important",
-                        },
-
-                      "& .MuiPickersInputBase-root.Mui-focused .MuiPickersOutlinedInput-notchedOutline":
-                        {
-                          borderColor: "#B7C7D7 !important",
-
-                          borderWidth: "1px",
-                        },
-
-                      "& .MuiPickersInputBase-root.Mui-error .MuiPickersOutlinedInput-notchedOutline":
-                        {
-                          borderColor: "#B7C7D7 !important",
-                        },
-
-                      "& .MuiPickersInputBase-root.Mui-error:hover .MuiPickersOutlinedInput-notchedOutline":
-                        {
-                          borderColor: "#B7C7D7 !important",
-                        },
-
-                      "& .MuiPickersInputBase-root.Mui-error.Mui-focused .MuiPickersOutlinedInput-notchedOutline":
-                        {
-                          borderColor: "#B7C7D7 !important",
-                        },
-                    }}
+                    sx={datePickerSx}
                   />
                 </LocalizationProvider>
               </div>
@@ -647,24 +769,22 @@ const SalesInvoiceHeader: React.FC<SalesInvoiceHeaderProps> = ({
             ------------------------------------------------ */}
 
             <div className="mb-2.5 flex h-7.5 items-center">
-              <label
-                className="
-                  w-22.5
-                  shrink-0
-                  whitespace-nowrap
-                  text-right
-                  text-[14px]
-                  text-[#202020]
-                "
-              >
+              <label htmlFor="txtReference" className={rightLabelClass}>
                 Reference :
               </label>
 
               <input
                 id="txtReference"
+                ref={referenceRef}
                 type="text"
+                maxLength={30}
                 autoComplete="off"
-                className={`input-style ml-1.75 w-90`}
+                disabled={readOnly}
+                value={header.customerRef}
+                onChange={(e) =>
+                  onHeaderChange({ customerRef: e.target.value })
+                }
+                className={`${inputClass} ml-1.75 w-90`}
               />
             </div>
 
@@ -693,18 +813,7 @@ const SalesInvoiceHeader: React.FC<SalesInvoiceHeaderProps> = ({
                 Stock
               </button>
 
-              <label
-                className="
-                  w-22.5
-                  shrink-0
-                  whitespace-nowrap
-                  text-right
-                  text-[14px]
-                  text-[#202020]
-                "
-              >
-                Stock :
-              </label>
+              <label className={rightLabelClass}>Stock :</label>
 
               <input
                 id="txtStock"
