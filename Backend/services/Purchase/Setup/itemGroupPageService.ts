@@ -9,6 +9,7 @@ import pool from "../../../DB/db.js";
 export type ItemGroupRow = {
   fitemgroupid: string;
   fitemgroupname: string | null;
+  fsn: string | null; // S = Stock, N = Non-stock
   fvatslab: string | null;
   fvatper: string | null;
 };
@@ -73,6 +74,7 @@ export async function saveItemGroupPageService(
   PstrCoID: string,
   txtItemGroupID: string,
   txtItemGroupName: string,
+  lkpFSN: string,
   lkpVATSlab: string,
   PstrUserID: string
 ): Promise<{
@@ -106,6 +108,7 @@ export async function saveItemGroupPageService(
       PstrCoID,
       txtItemGroupID,
       txtItemGroupName,
+      lkpFSN,
       lkpVATSlab,
       txtVATPer,
       original: txtItemGroupID,
@@ -198,6 +201,7 @@ async function callSpItemGroupPage(
     PstrCoID: string;
     txtItemGroupID?: string;
     txtItemGroupName?: string;
+    lkpFSN?: string;
     lkpVATSlab?: string;
     txtVATPer?: string;
     original?: string;
@@ -212,11 +216,12 @@ async function callSpItemGroupPage(
       p_pstrcoid              => $2::varchar,
       p_stritemgroupid        => $3::varchar,
       p_stritemgroupname      => $4::varchar,
-      p_strvatslab            => $5::varchar,
-      p_numvatper             => $6::numeric,
-      p_original_fitemgroupid => $7::varchar,
-      p_pstruserid            => $8::varchar,
-      p_result_cursor         => $9::refcursor
+      p_lkpfsn                 => $5::varchar,
+      p_strvatslab            => $6::varchar,
+      p_numvatper             => $7::numeric,
+      p_original_fitemgroupid => $8::varchar,
+      p_pstruserid            => $9::varchar,
+      p_result_cursor         => $10::refcursor
     )
     `,
     [
@@ -224,6 +229,7 @@ async function callSpItemGroupPage(
       p.PstrCoID,
       p.txtItemGroupID ?? null,
       p.txtItemGroupName ?? null,
+      p.lkpFSN ?? null,
       p.lkpVATSlab ?? null,
       p.txtVATPer ?? 0,
       p.original ?? null,

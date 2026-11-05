@@ -14,14 +14,15 @@ import {
    that fails is returned, with the field to put the cursor on
    (the same name as the element id on the page).
 
-   All four boxes carry the red *: Item Group ID, Item Group Name,
-   VAT Slab (and the VAT % that comes with it).
+   All the boxes carry the red *: Item Group ID, Item Group Name,
+   Stock / Non-stock, VAT Slab (and the VAT % that comes with it).
 ========================================================= */
 
 export interface ItemGroupPageData {
   PstrUserID?: unknown;
   txtItemGroupID?: unknown;
   txtItemGroupName?: unknown;
+  lkpFSN?: unknown;
   lkpVATSlab?: unknown;
 }
 
@@ -65,7 +66,12 @@ export async function validateItemGroupPage(
     );
   }
 
-  // 4. VAT Slab
+  // 4. Stock / Non-stock (tblitemgroup.fsn; the controller checks it is one of the company's item group types)
+  if (isNullOrEmpty(data.lkpFSN)) {
+    return failed("Please select 'Stock / Non-stock'", "lkpFSN");
+  }
+
+  // 5. VAT Slab
   if (isNullOrEmpty(data.lkpVATSlab)) {
     return failed("Please select 'VAT Slab'", "lkpVATSlab");
   }

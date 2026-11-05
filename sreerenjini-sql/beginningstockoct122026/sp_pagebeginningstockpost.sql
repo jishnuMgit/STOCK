@@ -38,10 +38,10 @@
 --
 -- Test (rolled back):
 --   BEGIN;
---   CALL dbo.sp_pagebeginningstockpost('P', '01', '2026', 'JD', 'BG', 'BG', 'ADMIN');
+--   CALL dbo.sp_pagebeginningstockpost('P', '01', '2026', 'JD', 'BS', 'BS', 'ADMIN');
 --   SELECT * FROM dbo.tblStockControl;
 --   SELECT fslno, fitemid, fqtyin, funitcost, ftotalcost, fpost
---     FROM dbo.tblStockTrans WHERE fbrid = 'JD' AND fdoctype = 'BG' ORDER BY fslno;
+--     FROM dbo.tblStockTrans WHERE fbrid = 'JD' AND fdoctype = 'BS' ORDER BY fslno;
 --   ROLLBACK;
 -- =====================================================================
 
@@ -79,7 +79,7 @@ DECLARE
 
     v_row record;
 BEGIN
-    IF p_strdoctype = 'BG' THEN
+    IF p_strdoctype = 'BS' THEN
 
         FOR v_row IN
             SELECT

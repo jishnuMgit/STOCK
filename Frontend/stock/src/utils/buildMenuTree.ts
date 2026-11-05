@@ -16,7 +16,10 @@ import type { MenuNode, MenuRow } from "../types/menu";
    being silently dropped.
 ========================================================= */
 
-export function buildMenuTree(rows: MenuRow[]): MenuNode[] {
+export function buildMenuTree(
+  rows: MenuRow[],
+  placedAfter: Record<string, string> = {},
+): MenuNode[] {
   const sorted = [...rows].sort((a, b) => a.fmenuid.localeCompare(b.fmenuid));
 
   const map = new Map<string, MenuNode>();
@@ -37,6 +40,23 @@ export function buildMenuTree(rows: MenuRow[]): MenuNode[] {
       roots.push(node);
     }
   });
+
+  // a menu named in placedAfter is moved right after the menu it follows (the same folder); the rest keep the id order
+  const place = (nodes: MenuNode[]) => {
+    Object.entries(placedAfter).forEach(([name, afterName]) => {
+      const from = nodes.findIndex((n) => n.fmenuname === name);
+      const after = nodes.findIndex((n) => n.fmenuname === afterName);
+
+      if (from < 0 || after < 0) return;
+
+      const [moved] = nodes.splice(from, 1);
+      nodes.splice(nodes.findIndex((n) => n.fmenuname === afterName) + 1, 0, moved);
+    });
+
+    nodes.forEach((n) => place(n.children));
+  };
+
+  place(roots);
 
   return roots;
 }

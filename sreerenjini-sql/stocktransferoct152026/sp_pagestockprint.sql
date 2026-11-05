@@ -35,7 +35,7 @@ DECLARE
     v_strsql text;
 BEGIN
 
-     IF p_strdoc IN ('PI','PR','SIC','SIR','SRC','SRR','ST','STI','ADJ','BG','DM','ASM','IC') THEN
+     IF p_strdoc IN ('PI','PR','SIC','SIR','SRC','SRR','ST','STI','ADJ','BS','DM','ASM','IC') THEN
 
 
         v_strsql :=

@@ -3,12 +3,12 @@ import pool from "../../../DB/db.js";
 
 /* =========================================================
    BEGINNING STOCK - calls dbo.sp_pagebeginningstock
-   (the port of the old SP_frmBeginningStock; the document is doc type 'BG',
-   doc no 'BG', one per branch)
+   (the port of the old SP_frmBeginningStock; the document is doc type 'BS',
+   doc no 'BS', one per branch. 'BG' is the Finance Beginning Balance.)
 ========================================================= */
 
-const DOC_TYPE = "BG";
-const DOC_NO = "BG";
+const DOC_TYPE = "BS";
+const DOC_NO = "BS";
 
 /* =========================================================
    BRANCH LIST (the Branch box) - only the branches the logged-in user has a
@@ -834,7 +834,7 @@ export async function postBeginningStockService(p: {
 
 /* =========================================================
    PRINT (the Print button): dbo.sp_pagebeginningstockprint - the port of the old
-   SP_rptStDocPrint for doc type BG. Read only.
+   SP_rptStDocPrint for doc type BS. Read only.
 
    The procedure takes the WHERE text like the old one did, so it is built HERE,
    never taken from the browser: the company comes from the request but the

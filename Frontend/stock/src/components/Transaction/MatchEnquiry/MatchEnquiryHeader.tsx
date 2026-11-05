@@ -5,38 +5,39 @@ import customParseFormat from "dayjs/plugin/customParseFormat";
 
 import type { SelectOption, DocumentOption } from "./types";
 
-import { handleKeyboardAction } from "../../../hooks/useMatchKeyboard";
 import type { StylesConfig } from "react-select";
+import {
+  customerIdListStyles,
+  customerNameListStyles,
+  divisionListStyles,
+  documentNoListStyles,
+} from "./CustomSelectStyle";
 
 dayjs.extend(customParseFormat);
 
 export interface MatchHeaderProps {
-  branch: string;
-  setBranch: React.Dispatch<React.SetStateAction<string>>;
+  lkpBranch: string;
+  setLkpBranch: React.Dispatch<React.SetStateAction<string>>;
 
-  type: string;
-  setDocType: React.Dispatch<React.SetStateAction<string>>;
-
-  receiptNo: string;
-  setReceiptNo: React.Dispatch<React.SetStateAction<string>>;
+  lkpDocTypeNo: string;
+  setLkpDocTypeNo: React.Dispatch<React.SetStateAction<string>>;
 
   receiptDate: string;
   setReceiptDate: React.Dispatch<React.SetStateAction<string>>;
 
-  customerId: string;
-  setCustomerId: React.Dispatch<React.SetStateAction<string>>;
+  lkpCsAccountID: string;
+  setLkpCsAccountID: React.Dispatch<React.SetStateAction<string>>;
 
-  customerName: string;
-  setCustomerName: React.Dispatch<React.SetStateAction<string>>;
+  lkpCsAccountName: string;
+  setLkpCsAccountName: React.Dispatch<React.SetStateAction<string>>;
 
-  divisionId: string;
-  setDivisionId: React.Dispatch<React.SetStateAction<string>>;
+  lkpDivision: string;
+  setLkpDivision: React.Dispatch<React.SetStateAction<string>>;
 
   branchOptions: SelectOption[];
   customerOptions: SelectOption[];
   customerNameOptions: SelectOption[];
   divisionOptions: SelectOption[];
-  documentOptions: SelectOption[];
   documentNoOptions: DocumentOption[];
 
   customerIdRef: React.RefObject<HTMLDivElement | null>;
@@ -50,8 +51,7 @@ export interface MatchHeaderProps {
 
   handleCustomerIdChange: (id: string) => void | Promise<void>;
   handleCustomerNameChange: (name: string) => void | Promise<void>;
-  handleDocumentNoChange: (docNo: string) => void; // add this
-  handleSearch: () => void | Promise<void>;
+  handleDocumentNoChange: (docKey: string) => void;
 
   renderSelect: (
     id: string,
@@ -66,6 +66,8 @@ export interface MatchHeaderProps {
     disabled?: boolean,
     documentMode?: boolean,
     swapColumns?: boolean,
+    idColumnHang?: number,
+    alignToBox?: boolean,
   ) => React.ReactNode;
 
   handleKeyboardAction: (
@@ -77,21 +79,17 @@ export interface MatchHeaderProps {
 
 const MatchEnquiryHeader: React.FC<MatchHeaderProps> = ({
   // branch,
-  customerId,
-  customerName,
-  divisionId,
-  type,
-  receiptNo,
+  lkpCsAccountID,
+  lkpCsAccountName,
+  lkpDivision,
+  lkpDocTypeNo,
   // receiptDate,
 
-  setDivisionId,
-  setDocType,
-  setReceiptNo,
+  setLkpDivision,
 
   customerOptions,
   customerNameOptions,
   divisionOptions,
-  documentOptions,
   documentNoOptions,
 
   divisionLoading,
@@ -105,8 +103,7 @@ const MatchEnquiryHeader: React.FC<MatchHeaderProps> = ({
 
   handleCustomerIdChange,
   handleCustomerNameChange,
-  handleDocumentNoChange, // add this
-  handleSearch,
+  handleDocumentNoChange,
 
   renderSelect,
 }) => {
@@ -163,26 +160,37 @@ const MatchEnquiryHeader: React.FC<MatchHeaderProps> = ({
 
           {/* CUSTOMER ID */}
           {renderSelect(
-            "lkpCustomerID",
-            customerId,
+            "lkpCsAccountID",
+            lkpCsAccountID,
             customerOptions,
             handleCustomerIdChange,
             () => customerNameRef.current?.focus(),
             customerIdRef,
             false,
             ["Account ID", "Account Name"],
+            customerIdListStyles, // the list runs under the ID box and the Name box
+            false,
+            false,
+            false,
+            undefined,
+            true, // alignToBox: "Account Name" starts exactly under the Name box
           )}
 
           {/* CUSTOMER NAME */}
           {renderSelect(
-            "lkpCustomerName",
-            customerName,
+            "lkpCsAccountName",
+            lkpCsAccountName,
             customerNameOptions,
             handleCustomerNameChange,
             () => divisionRef.current?.focus(),
             customerNameRef,
-            true,
+            false,
             ["Account Name", "Account ID"],
+            customerNameListStyles, // the box's width plus the hanging ID column
+            false,
+            false,
+            false,
+            120, // the ID column hangs out past the box's right edge
           )}
 
           {/* DOCUMENT AMOUNT */}
@@ -210,66 +218,25 @@ const MatchEnquiryHeader: React.FC<MatchHeaderProps> = ({
           <div className="ml-0.5">
             {renderSelect(
               "lkpDivision",
-              divisionId,
+              lkpDivision,
               divisionOptions,
-              setDivisionId,
+              setLkpDivision,
               () => creditDocumentRef.current?.focus(),
               divisionRef,
-              true,
-              ["Division Name", "Division ID"],
-              undefined,
-              !customerId || divisionLoading || divisionOptions.length === 0,
               false,
-              true,
+              // swapColumns shows the headers in the reverse order of this pair: "Division Name | Division ID"
+              ["Division ID", "Division Name"],
+              divisionListStyles, // the box's width plus the hanging ID column
+              !lkpCsAccountID || divisionLoading || divisionOptions.length === 0,
+              false,
+              true, // swapColumns: the name first, then the ID
+              80, // the ID column (a division id is short) hangs out past the box's right edge
             )}
           </div>
 
-          {/* DOCUMENT TYPE */}
-          <label className="whitespace-nowrap text-right text-black font-semibold text-[14px]">
-            Document Type :
-          </label>
+        
 
-          {renderSelect(
-            "lkpDocType",
-            type,
-            documentOptions,
-            setDocType,
-            () => documentNoRef.current?.focus(),
-            creditDocumentRef,
-            true,
-            ["DocumentType ID", "DocumentType Name"],
-          )}
-
-          {/* SEARCH */}
-          <button
-            id="Searchbtn"
-            type="button"
-            className="
-              h-7.25
-              rounded-[3px]
-              border
-              border-[#b7c7d7]
-              bg-linear-to-b
-              from-white
-              to-[#e7eef5]
-              px-3.5
-              text-[13px]
-              text-slate-700
-              hover:from-white
-              hover:to-[#dce8f1]
-              focus:border-[#20884e]
-              focus:outline-none
-              focus:ring-0
-            "
-            onClick={handleSearch}
-            onKeyDown={(event) =>
-              handleKeyboardAction(event, {
-                onEnter: () => documentNoRef.current?.focus(),
-              })
-            }
-          >
-            Search
-          </button>
+         
 
           {/* MATCH AMOUNT */}
         </div>
@@ -294,15 +261,15 @@ const MatchEnquiryHeader: React.FC<MatchHeaderProps> = ({
 
           <div className="ml-px">
             {renderSelect(
-              "lkpDocNo.",
-              receiptNo,
+              "lkpDocTypeNo.",
+              lkpDocTypeNo,
               documentNoOptions,
               handleDocumentNoChange, // was setReceiptNo
               () => dateRef.current?.focus(),
               documentNoRef,
               false,
               undefined,
-              undefined,
+              documentNoListStyles, // only the document type and number, as wide as the box
               false,
               true,
             )}
