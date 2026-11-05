@@ -59,6 +59,11 @@
 --     saved before the column existed is filled when it is modified.
 --   * Needs:  ALTER TABLE dbo.tblstocktrans ADD COLUMN fitemgroupid VARCHAR(12);  and dbo.getitemgroupid.
 --
+-- ADDED: the Stock / Non-stock flag of every line (tblstocktrans.fsn, varchar(1)): always 'S' - a stock transfer moves
+--   stock items only. Written right after fitemgroupid: modes S and M1 on both rows (OUT and IN); mode M gives it to every
+--   row that has none yet (COALESCE).
+--   * Needs:  tblstocktrans.fsn.
+--
 -- Examples (cursor calls run inside one transaction)
 --   BEGIN;
 --   CALL dbo.sp_pagestocktransferpage('GTL', '01', '2026', 'JD', 'ST', 'STI', 'STJD-2600001', p_result_cursor => 'c1');
@@ -168,14 +173,14 @@ BEGIN
             fcoid, fyear, fbrid, fdoctype, fdocno, fstbrid, fsttobrid, fdate,
             fnote, fslno, fitemid, funit,   -- fstexpamt, fdnno: no such columns
             fqtyout, funitcost, ftotalcost, fdocamt, forigin, fpost,
-            fcuserid, fcuserdate, fsavingno, fitemgroupid
+            fcuserid, fcuserdate, fsavingno, fitemgroupid, fsn
         )
         VALUES (
             p_pstrcoid, p_pstryear, p_strstbrid, p_strdoctype, p_strdocno, p_strstbrid, p_strtobrid, p_dtpdate,
             NULLIF(p_strnote, ''), p_intslno, p_stritemid, p_strunit,
             COALESCE(p_numqtyout, 0), COALESCE(p_numunitcost, 0), COALESCE(p_numtotalcost, 0), COALESCE(p_numdocamt, 0),
             'UI', false,
-            p_pstruserid, now(), v_strsavingno, dbo.getitemgroupid(p_pstrcoid, p_stritemid)
+            p_pstruserid, now(), v_strsavingno, dbo.getitemgroupid(p_pstrcoid, p_stritemid), 'S'
         );
 
         -- the IN row (generated): the To branch
@@ -183,14 +188,14 @@ BEGIN
             fcoid, fyear, fbrid, fdoctype, fdocno, fstbrid, fsttobrid, fdate,
             fnote, fslno, fitemid, funit,   -- fstexpamt, fdnno: no such columns
             fqtyin, funitcost, ftotalcost, fdocamt, forigin, fpost,
-            fcuserid, fcuserdate, fsavingno, fitemgroupid
+            fcuserid, fcuserdate, fsavingno, fitemgroupid, fsn
         )
         VALUES (
             p_pstrcoid, p_pstryear, p_strtobrid, p_strdoctypeg, p_strdocno, p_strstbrid, p_strtobrid, p_dtpdate,
             NULLIF(p_strnote, ''), p_intslno, p_stritemid, p_strunit,
             COALESCE(p_numqtyout, 0), COALESCE(p_numunitcost, 0), COALESCE(p_numtotalcost, 0), COALESCE(p_numdocamt, 0),
             'GS', false,
-            p_pstruserid, now(), v_strsavingno, dbo.getitemgroupid(p_pstrcoid, p_stritemid)
+            p_pstruserid, now(), v_strsavingno, dbo.getitemgroupid(p_pstrcoid, p_stritemid), 'S'
         );
 
     ELSIF p_strmode = 'M' THEN
@@ -224,7 +229,8 @@ BEGIN
             fmuserid   = v_muserid,
             fmuserdate = v_muserdate,
             fsavingno = COALESCE(fsavingno, v_strsavingno),
-            fitemgroupid = COALESCE(fitemgroupid, dbo.getitemgroupid(fcoid, fitemid))
+            fitemgroupid = COALESCE(fitemgroupid, dbo.getitemgroupid(fcoid, fitemid)),
+            fsn = COALESCE(fsn, 'S')
         WHERE fcoid    = p_pstrcoid
           AND fyear    = p_pstryear
           AND fstbrid  = p_strstbrid
@@ -245,7 +251,8 @@ BEGIN
             fmuserid   = v_muserid,
             fmuserdate = v_muserdate,
             fsavingno = COALESCE(fsavingno, v_strsavingno),
-            fitemgroupid = COALESCE(fitemgroupid, dbo.getitemgroupid(fcoid, fitemid))
+            fitemgroupid = COALESCE(fitemgroupid, dbo.getitemgroupid(fcoid, fitemid)),
+            fsn = COALESCE(fsn, 'S')
         WHERE fcoid    = p_pstrcoid
           AND fyear    = p_pstryear
           AND fstbrid  = p_strstbrid
@@ -258,6 +265,7 @@ BEGIN
             fslno      = p_intslno,
             fitemid    = p_stritemid,
             fitemgroupid = dbo.getitemgroupid(p_pstrcoid, p_stritemid),
+            fsn        = 'S',
             funit      = p_strunit,
             fqtyout    = COALESCE(p_numqtyout, 0),
             funitcost  = COALESCE(p_numunitcost, 0),
@@ -273,6 +281,7 @@ BEGIN
             fslno      = p_intslno,
             fitemid    = p_stritemid,
             fitemgroupid = dbo.getitemgroupid(p_pstrcoid, p_stritemid),
+            fsn        = 'S',
             funit      = p_strunit,
             fqtyin     = COALESCE(p_numqtyout, 0),
             funitcost  = COALESCE(p_numunitcost, 0),

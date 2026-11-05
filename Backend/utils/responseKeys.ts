@@ -292,8 +292,15 @@ export const unitGridKeys: KeyMap = {
 export const itemGroupKeys: KeyMap = {
   fitemgroupid: "txtItemGroupID",
   fitemgroupname: "txtItemGroupName",
+  fsn: "lkpFSN",
   fvatslab: "lkpVATSlab",
   fvatper: "txtVATPer",
+};
+
+// the Stock / Non-stock dropdown (tblstockparam, fptype IGTP): fpid is what is saved, fpname what is shown
+export const itemGroupTypeListKeys: KeyMap = {
+  fpid: "lkpFSN",
+  fpname: "lkpFSNName",
 };
 
 export const vatSlabListKeys: KeyMap = {
@@ -545,4 +552,56 @@ export const administrationDocumentGridKeys: KeyMap = {
   fdocname: "txtDocName",
   ftobepost: "chkToBePost",
   fpositionno: "txtPositionNo",
+};
+
+/* ---------- Finance / Setup / CustomerDivision ---------- */
+
+export const customerDivisionCustomerKeys: KeyMap = {
+  fcsaccountid: "lkpCsAccountID",
+  fcsaccountname: "lkpCsAccountName",
+};
+
+export const customerDivisionRowKeys: KeyMap = {
+  fdivid: "txtDivisionID",
+  fdivname: "txtDivisionName",
+  fdivname_ar: "txtDivisionName_AR",
+};
+
+/* ---------- Finance / Transaction / MatchEnquiry ---------- */
+
+export const matchEnquiryCustomerKeys: KeyMap = {
+  fcsaccountid: "lkpCsAccountID",
+  fcsaccountname: "lkpCsAccountName",
+};
+
+export const matchEnquiryDivisionKeys: KeyMap = {
+  fdivid: "lkpDivision",
+  fdivname: "txtDivisionName",
+};
+
+// the Document No. list: one row for each document (dbo.fillmatchenquirydocuments)
+export const matchEnquiryDocumentKeys: KeyMap = {
+  fbrid: "lkpBranch",
+  fdoctype: "lkpDocType",
+  fdocno: "lkpDocNo",
+  fdoctypeno: "txtDocTypeNo",
+  fdate: "txtDate",
+  fdescription: "txtDescription",
+  fdebit: "txtDebit",
+  fcredit: "txtCredit",
+};
+
+// the lines of the enquiry (dbo.sp_pagematchenquiry)
+export const matchEnquiryLineKeys: KeyMap = {
+  fpc: "txtPC",
+  fbrid: "lkpBranch",
+  fdoctype: "lkpDocType",
+  fdocno: "lkpDocNo",
+  fdate: "txtDate",
+  faccountid: "lkpAccountID",
+  fdescription: "txtDescription",
+  fslno: "txtSlNo",
+  fdebit: "txtDebit",
+  fcredit: "txtCredit",
+  fmatchapplydate: "txtMatchApplyDate",
 };

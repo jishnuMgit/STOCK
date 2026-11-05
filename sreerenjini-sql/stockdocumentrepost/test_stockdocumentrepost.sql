@@ -29,8 +29,8 @@ INSERT INTO dbo.tblstocktrans
     (fcoid, fyear, fbrid, fdoctype, fdocno, fslno, fdate, fitemid, fqtyin, fqtyout, funitcost, ftotalcost,
      fpost, fpostingno, fstbrid, fsttobrid)
 VALUES
-    ('01', '2026', 'ZZ', 'BG',  'BG',   1, '2026-10-30', 'wire', 1000,   0, 2, 2000, true, '999000001', NULL, NULL),
-    ('01', '2026', 'YY', 'BG',  'BG',   1, '2026-10-30', 'wire',  200,   0, 2,  400, true, '999000001', NULL, NULL),
+    ('01', '2026', 'ZZ', 'BS',  'BS',   1, '2026-10-30', 'wire', 1000,   0, 2, 2000, true, '999000001', NULL, NULL),
+    ('01', '2026', 'YY', 'BS',  'BS',   1, '2026-10-30', 'wire',  200,   0, 2,  400, true, '999000001', NULL, NULL),
     ('01', '2026', 'ZZ', 'ST',  'STX1', 1, '2026-10-30', 'wire',    0, 300, 2, -600, true, '999000002', 'ZZ', 'YY'),
     ('01', '2026', 'YY', 'STI', 'STX1', 1, '2026-10-30', 'wire',  300,   0, 2,  600, true, '999000002', 'ZZ', 'YY');
 
@@ -79,7 +79,7 @@ LIMIT 3;
 INSERT INTO dbo.tblstocktrans
     (fcoid, fyear, fbrid, fdoctype, fdocno, fslno, fdate, fitemid, fqtyin, fqtyout, funitcost, ftotalcost,
      fpost, fpostingno)
-VALUES ('01', '2026', 'ZZ', 'BG', 'BG2', 1, '2026-10-30', 'wire', 1, 0, 2, 2, true, '999000009');
+VALUES ('01', '2026', 'ZZ', 'BS', 'BG2', 1, '2026-10-30', 'wire', 1, 0, 2, 2, true, '999000009');
 
 --    (and on your real data: From 260000001, To 260000017 is refused with "The re-post of the document type(s) ADJ, PI
 --     is not available yet")

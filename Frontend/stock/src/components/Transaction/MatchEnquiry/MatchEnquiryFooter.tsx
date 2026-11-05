@@ -27,23 +27,22 @@ const MatchEnquiryFooter: React.FC<MatchFooterProps> = ({
   return (
     <>
       {/* TOTALS */}
-      <div className="flex items-center justify-end px-6.75 pt-2.5 mr-33 gap-3 max-[900px]:flex-wrap max-[900px]:px-2">
-        <div className="flex items-center gap-1.75">
-          <div className="flex items-center gap-2">
-            <div className="mr-1 flex h-6.5 w-25 items-center justify-center border border-[#c8c8c8]">
-              Total
-            </div>
+      {/* The same columns as the table above (Parent/Child 10% | Br. ID 6% | Date 10% | Document No. 12% | Description |
+          Debit 10% | Credit 10% | Match Date 12%), so the Debit and the Credit total sit exactly under their columns */}
+      <div className="mx-6.75 grid grid-cols-[10%_6%_10%_12%_1fr_10%_10%_12%] items-center border border-transparent pt-2.5 max-[900px]:mx-2">
+        {/* TOTAL: at the right end of the Description column, next to the Debit total */}
+        <div className="col-start-5 mr-2 flex h-6.5 w-25 items-center justify-center justify-self-end border border-[#c8c8c8]">
+          Total
+        </div>
 
-            {/* DEBIT */}
-            <div className="flex h-6.5 w-27.5 items-center justify-end border border-[#c8c8c8] px-2">
-              {totalDebit.toFixed(2)}
-            </div>
-          </div>
+        {/* DEBIT (a small gap on each side keeps the two boxes apart; they still sit under their columns) */}
+        <div className="mr-1.5 flex h-6.5 items-center justify-end border border-[#c8c8c8] px-2">
+          {totalDebit.toFixed(2)}
+        </div>
 
-          {/* CREDIT */}
-          <div className="ml-0 flex h-6.5 w-27.5 items-center justify-end border border-[#c8c8c8] px-2">
-            {totalCredit.toFixed(2)}
-          </div>
+        {/* CREDIT */}
+        <div className="ml-1.5 flex h-6.5 items-center justify-end border border-[#c8c8c8] px-2">
+          {totalCredit.toFixed(2)}
         </div>
       </div>
 

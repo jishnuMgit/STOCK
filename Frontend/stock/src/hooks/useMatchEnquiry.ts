@@ -26,22 +26,17 @@ export interface MatchEnquiryRow {
   effectiveDate: string; // dd/MM/yyyy (fmatchapplydate)
 }
 
+// the keys are the element ids of the screen; the year is the logged-in year, the server takes it from the x-year header
 export interface GetMatchEnquiryParams {
-  year: string | number;
-  brId: string;
-  docType: string;
-  docNo: string;
+  lkpBranch: string;
+  lkpDocType: string;
+  lkpDocNo: string;
 }
 
-export interface GetMatchAccountsParams {
-  strDocType: string;
-  strCSAccountID: string;
-  strDivID: string;
-  year: string | number;
+export interface GetDocumentNosParams {
+  lkpCsAccountID: string;
+  lkpDivision: string;
 }
-
-// matched-documents list lives in the Match Reversal controller (mode 'GM')
-const MATCHED_DOCS_API = `${import.meta.env.VITE_API_URL}/MatchReversal`;
 
 /* =====================================================
    HELPERS
@@ -79,22 +74,23 @@ const postJson = (url: string, body: unknown) =>
     body: JSON.stringify(body),
   });
 
+// a line of the enquiry as the server sends it (the keys are the form field names)
 const normaliseRow = (r: any, index: number): MatchEnquiryRow => {
-  const pc = String(r.fpc ?? r.fPC ?? "").toUpperCase();
+  const pc = String(r.txtPC ?? "").toUpperCase();
 
   return {
     id: index + 1,
     pc: pc === "P" || pc === "C" ? pc : "",
-    brId: String(r.fbrid ?? r.fBrID ?? ""),
-    docType: String(r.fdoctype ?? r.fDocType ?? ""),
-    docNo: String(r.fdocno ?? r.fDocNo ?? ""),
-    date: formatDate(r.fdate ?? r.fDate),
-    accountId: String(r.faccountid ?? r.fAccountID ?? ""),
-    description: String(r.fdescription ?? r.fDescription ?? ""),
-    slNo: toNum(r.fslno ?? r.fSlNo),
-    debit: toNum(r.fdebit ?? r.fDebit),
-    credit: toNum(r.fcredit ?? r.fCredit),
-    effectiveDate: formatDate(r.fmatchapplydate ?? r.fMatchApplyDate),
+    brId: String(r.lkpBranch ?? ""),
+    docType: String(r.lkpDocType ?? ""),
+    docNo: String(r.lkpDocNo ?? ""),
+    date: formatDate(r.txtDate),
+    accountId: String(r.lkpAccountID ?? ""),
+    description: String(r.txtDescription ?? ""),
+    slNo: toNum(r.txtSlNo),
+    debit: toNum(r.txtDebit),
+    credit: toNum(r.txtCredit),
+    effectiveDate: formatDate(r.txtMatchApplyDate),
   };
 };
 
@@ -102,29 +98,55 @@ const normaliseRow = (r: any, index: number): MatchEnquiryRow => {
    HOOK
 ===================================================== */
 
+// a customer as the lookups send it
+interface Customer {
+  lkpCsAccountID: string;
+  lkpCsAccountName: string;
+}
+
 const useMatchEnquiry = () => {
-  const [docTypeOptions, setDocTypeOptions] = useState<SelectOption[]>([]);
+  // the Customer boxes: by account id (value = id, label = name) and by account name (value = name, label = id)
+  const [customerOptions, setCustomerOptions] = useState<SelectOption[]>([]);
+  const [customerNameOptions, setCustomerNameOptions] = useState<SelectOption[]>([]);
+  // the Division box: the divisions of the chosen customer (value = id, label = name)
+  const [divisionOptions, setDivisionOptions] = useState<SelectOption[]>([]);
+  const [divisionLoading, setDivisionLoading] = useState(false);
   const [rows, setRows] = useState<MatchEnquiryRow[]>([]);
   const [loading, setLoading] = useState(false);
 
-  /* ---------- LOOKUPS (document types) ---------- */
-  const getLookups = useCallback(async (): Promise<SelectOption[]> => {
+  /* ---------- LOOKUPS (the customers) ---------- */
+  const getLookups = useCallback(async (): Promise<void> => {
     try {
       const result = await request(`${API}/getLookups`);
 
-      const options: SelectOption[] = Array.isArray(result?.DocType)
-        ? result.DocType.map((d: any) => ({
-            value: String(d.fdoctype ?? ""),
-            label: String(d.fdocname ?? ""),
-          }))
-        : [];
+      setCustomerOptions(
+        Array.isArray(result?.customers)
+          ? (result.customers as Customer[])
+              .map((c) => ({ value: c.lkpCsAccountID, label: c.lkpCsAccountName }))
+              .sort((a, b) =>
+                a.value.localeCompare(b.value, undefined, {
+                  numeric: true,
+                  sensitivity: "base",
+                }),
+              )
+          : [],
+      );
 
-      setDocTypeOptions(options);
-      return options;
+      setCustomerNameOptions(
+        Array.isArray(result?.customers)
+          ? (result.customers as Customer[])
+              .map((c) => ({ value: c.lkpCsAccountName, label: c.lkpCsAccountID }))
+              .sort((a, b) =>
+                a.value.localeCompare(b.value, undefined, {
+                  sensitivity: "base",
+                }),
+              )
+          : [],
+      );
     } catch (error) {
       console.error("Get Match Enquiry Lookups Error:", error);
-      setDocTypeOptions([]);
-      return [];
+      setCustomerOptions([]);
+      setCustomerNameOptions([]);
     }
   }, []);
 
@@ -152,14 +174,43 @@ const useMatchEnquiry = () => {
     [],
   );
 
-  /* ---------- MATCHED DOCUMENTS (Document No. dropdown) ---------- */
-  const getMatchAccounts = useCallback(
-    async (params: GetMatchAccountsParams): Promise<Record<string, any>[]> => {
-      const result = await postJson(
-        `${MATCHED_DOCS_API}/getMatchAccounts`,
-        params,
-      );
-      return Array.isArray(result?.data) ? result.data : [];
+  /* ---------- DIVISIONS OF A CUSTOMER (Division box) ---------- */
+  const getDivisions = useCallback(
+    async (lkpCsAccountID: string): Promise<SelectOption[]> => {
+      setDivisionOptions([]);
+      if (!lkpCsAccountID?.trim()) return [];
+
+      setDivisionLoading(true);
+      try {
+        const result = await postJson(`${API}/getDivisions`, { lkpCsAccountID });
+
+        const options: SelectOption[] = Array.isArray(result?.divisions)
+          ? result.divisions
+              .map((d: any) => ({
+                value: String(d.lkpDivision ?? ""),
+                label: String(d.txtDivisionName ?? d.lkpDivision ?? ""),
+              }))
+              .filter((o: SelectOption) => o.value.trim() !== "")
+          : [];
+
+        setDivisionOptions(options);
+        return options;
+      } catch (error) {
+        console.error("Get Customer Division Error:", error);
+        setDivisionOptions([]);
+        return [];
+      } finally {
+        setDivisionLoading(false);
+      }
+    },
+    [],
+  );
+
+  /* ---------- DOCUMENT NO. LIST (the Search button) ---------- */
+  const getDocumentNos = useCallback(
+    async (params: GetDocumentNosParams): Promise<Record<string, any>[]> => {
+      const result = await postJson(`${API}/getDocumentNos`, params);
+      return Array.isArray(result?.documents) ? result.documents : [];
     },
     [],
   );
@@ -167,12 +218,16 @@ const useMatchEnquiry = () => {
   const clearRows = useCallback(() => setRows([]), []);
 
   return {
-    docTypeOptions,
+    customerOptions,
+    customerNameOptions,
+    divisionOptions,
+    divisionLoading,
     rows,
     loading,
     getLookups,
+    getDivisions,
     getMatchEnquiry,
-    getMatchAccounts,
+    getDocumentNos,
     clearRows,
   };
 };

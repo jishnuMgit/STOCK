@@ -43,6 +43,7 @@ import RptCustomerSalesPage from "../pages/Sales/Report/RptCustomerSalesPage";
 import RptItemSalesPage from "../pages/Sales/Report/RptItemSalesPage";
 import CustomerSupplierCountryPage from "../pages/Finance/Setup/CustomerSupplierCountryPage";
 import InactivateAccountPage from "../pages/Finance/Setup/InactivateAccountPage";
+import CustomerDivisionPage from "../pages/Finance/Setup/CustomerDivisionPage";
 import CurrencyPage from "../pages/Purchase/Setup/CurrencyPage";
 import RptReceivablesPage from "../pages/Finance/Report/A-R_and_A-P/Receivables/RptReceivablesPage";
 import RptAgeingReceivablesPage from "../pages/Finance/Report/A-R_and_A-P/AgeingOfReceivables/AgeingOfReceivablesPage";
@@ -73,7 +74,7 @@ import RptGeneralLedgerSummaryPage from "../pages/Finance/Report/GeneralLedger/G
 import DocumentPostPage from "../pages/Finance/Transaction/DocumentPost/DocumentPostPage";
 import RptDocumentPrintPage from "../pages/Finance/Transaction/DocumentPrint/RptDocumentPrintPage";
 import RptExpenseSumPage from "../pages/Finance/Report/ExpenseSummary/RptExpenseSumPage";
-import RptReceiptPaymentSumPage from "../pages/Finance/Report/ReceiptPaymentSum/RptReceiptPaymentSumPage";
+import RptRVPVSumPage from "../pages/Finance/Report/RVPVSum/RptRVPVSumPage";
 import RptFinDocList from "../pages/Finance/Report/DocumentsList/RptFinDocList";
 import SalesPriceListPage from "../pages/Sales/Setup/SalesPriceListPage";
 import RptIncomeSumPage from "../pages/Finance/Report/IncomeSummary/RptIncomeSumPage";
@@ -191,6 +192,10 @@ const AppRoutes = () => {
             element={<CustomerPage />}
           />
           <Route
+            path="/Finance/Setup/CustomerDivision"
+            element={<CustomerDivisionPage />}
+          />
+          <Route
             path="/Finance/Setup/ChartOfAccountList"
             element={<ChartOfAccountList />}
           />
@@ -263,7 +268,7 @@ const AppRoutes = () => {
           />
           <Route
             path="/Finance/Reports/RptRVPVSum"
-            element={<RptReceiptPaymentSumPage />}
+            element={<RptRVPVSumPage />}
           />
           <Route
             path="/Finance/Reports/RptFinDocList"

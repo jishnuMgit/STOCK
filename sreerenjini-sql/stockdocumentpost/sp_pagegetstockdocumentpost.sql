@@ -10,11 +10,11 @@
 --                                 its document type; p_intpostedcount comes back 1
 --
 -- 'G'   Doc. Amt. is MAX(fnetdocamt) for SI / SR and SUM(ftotalcost) for PI / PR / ST / ADJ (as the
---       old procedure) - and for BG (Beginning Stock), which the old list did not have: one document per
---       branch, doc no 'BG'. Account ID is the customer / supplier account (fcsaccountid). The old
+--       old procedure) - and for BS (Beginning Stock), which the old list did not have: one document per
+--       branch, doc no 'BS'. Account ID is the customer / supplier account (fcsaccountid). The old
 --       order was Date, Int Doc. No.; tblstocktrans has no fintdocno, so it is Date, Doc. No.
 --
--- 'P'   BG   dbo.sp_pagebeginningstockpost
+-- 'P'   BS   dbo.sp_pagebeginningstockpost
 --       PI   dbo.sp_pipost
 --       ADJ  dbo.sp_pagestockadjustmentpost
 --       ST   dbo.sp_pagestocktransferpost
@@ -69,7 +69,7 @@ BEGIN
                 GROUP BY t.fdocno
                 ORDER BY MAX(t.fdate), t.fdocno;
 
-        ELSIF p_strdoctype IN ('PI', 'PR', 'ST', 'ADJ', 'BG') THEN
+        ELSIF p_strdoctype IN ('PI', 'PR', 'ST', 'ADJ', 'BS') THEN
 
             OPEN p_result_cursor FOR
                 SELECT
@@ -107,7 +107,7 @@ BEGIN
 
         p_intpostedcount := 1;
 
-        IF p_strdoctype = 'BG' THEN
+        IF p_strdoctype = 'BS' THEN
 
             CALL dbo.sp_pagebeginningstockpost('P', p_pstrcoid, p_pstryear, p_strbrid, p_strdoctype, p_strdocno, p_pstruserid);
 

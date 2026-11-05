@@ -55,6 +55,8 @@ export interface DocumentOption extends SelectOption {
   date: string;
   docType: string;
   docNo: string;
+  // the document type and number as one text, e.g. "BR JD-26000002" (tblarap.fdoctypeno)
+  docTypeNo: string;
   debit: string;
   credit: string;
   description: string;

@@ -6,7 +6,8 @@ interface MatchTableProps {
 }
 
 const MIN_ROWS = 11;
-const COLUMNS = 9;
+// the columns of the table: Parent/Child, Br. ID, Date, Document No., Description, Debit, Credit, Match Date
+const COLUMNS = 8;
 const th = "border border-[#bce8d2] font-semibold px-1 py-1.25";
 const td = "border border-[#bce8d2] px-2 text-[13px] text-slate-700";
 const fmt = (n: number) => (n ? n.toFixed(2) : "");
@@ -22,12 +23,11 @@ const MatchEnquiryTable: React.FC<MatchTableProps> = ({ rows }) => {
             <th className={`${th} w-[10%] text-left`}>Parent/Child</th>
             <th className={`${th} w-[6%] text-left`}>Br. ID</th>
             <th className={`${th} w-[10%] text-left`}>Date</th>
-            <th className={`${th} w-[6%] text-left`}>Type</th>
             <th className={`${th} w-[12%] text-left`}>Document No.</th>
             <th className={`${th} w-auto text-left`}>Description</th>
             <th className={`${th} w-[10%] text-right`}>Debit</th>
             <th className={`${th} w-[10%] text-right`}>Credit</th>
-            <th className={`${th} w-[12%] text-left`}>Match Apply Date</th>
+            <th className={`${th} w-[12%] text-left`}>Match Date</th>
           </tr>
         </thead>
 
@@ -37,7 +37,6 @@ const MatchEnquiryTable: React.FC<MatchTableProps> = ({ rows }) => {
               <td className={td}>{row.pc}</td>
               <td className={td}>{row.brId}</td>
               <td className={td}>{row.date}</td>
-              <td className={td}>{row.docType}</td>
               <td className={`${td} truncate`}>{row.docNo}</td>
               <td className={`${td} truncate`} title={row.description}>
                 {row.description}
