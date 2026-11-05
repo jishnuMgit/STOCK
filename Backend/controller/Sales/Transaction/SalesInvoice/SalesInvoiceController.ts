@@ -237,7 +237,7 @@ export const getSalesInvoice = async (
               to_char(t.finvoicedate, 'YYYY-MM-DD HH24:MI:SS') AS finvoicedate,
               t.faccountid,
               a.faccountname,
-              t.faddress1, t.fphone, t.fcustomerref, t.fpricelevel, t.fnote,
+              t.fphone, t.fcustomerref, t.fpricelevel, t.fnote,
               t.fdisctype, t.fdiscper, t.fdiscamt,
               t.fnetdocamtwovat, t.fvatper, t.fvatamt, t.fnetdocamt,
               t.fpostorder, COALESCE(t.fpost, false) AS fpost,
