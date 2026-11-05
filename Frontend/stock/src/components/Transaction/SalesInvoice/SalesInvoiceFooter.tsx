@@ -1,5 +1,11 @@
-import React from "react";
+import React, { useMemo } from "react";
 import Select, { type StylesConfig } from "react-select";
+import type {
+  ParamLookup,
+  SalesHeader,
+  SalesTotals,
+  SalesUserInfo,
+} from "../../../hooks/useSalesInvoice"; // adjust path to your hook
 
 // ============================================================
 // TYPES
@@ -10,15 +16,36 @@ type Option = {
   label: string;
 };
 
+type SalesInvoiceFooterProps = {
+  header: SalesHeader;
+  totals: SalesTotals;
+  sums: { qty: number; disc: number; vat: number; total: number };
+  discTypes: ParamLookup[];
+  mode: "S" | "M";
+  posted: boolean;
+  busy: boolean;
+  userInfo: SalesUserInfo | null;
+
+  onNoteChange: (note: string) => void;
+  onDiscTypeChange: (type: "A" | "P") => void;
+  onDiscPerChange: (value: string) => void;
+  onDiscAmtChange: (value: string) => void;
+  onDiscCommit: () => void;
+
+  onSave: () => void;
+  onDelete: () => void;
+  onPrint: () => void;
+  onPost: () => void;
+  onClear: () => void;
+};
+
 // ============================================================
-// OPTIONS
+// FALLBACK OPTIONS (used until the lookup is loaded)
 // ============================================================
 
-const discountTypeOptions: Option[] = [
-  {
-    value: "A",
-    label: "A",
-  },
+const fallbackDiscountTypes: Option[] = [
+  { value: "A", label: "A" },
+  { value: "P", label: "P" },
 ];
 
 // ============================================================
@@ -130,16 +157,68 @@ const selectStyles: StylesConfig<Option, false> = {
 const inputClass =
   "h-[30px] border border-[#cbd5e1] rounded-[4px] bg-white px-2 text-[14px] text-[#202020] outline-none focus:border-blue-400 focus:bg-blue-50";
 
-// ============================================================
-// BUTTON STYLE
-// ============================================================
+const readOnlyInputClass = `${inputClass} bg-[#f8fafc]`;
 
+const btnClass = "btn-style disabled:cursor-not-allowed disabled:opacity-50";
+
+const fmt = (v: number, d = 2) => v.toFixed(d);
 
 // ============================================================
 // SALES INVOICE FOOTER
 // ============================================================
 
-const SalesInvoiceFooter: React.FC = () => {
+const SalesInvoiceFooter: React.FC<SalesInvoiceFooterProps> = ({
+  header,
+  totals,
+  sums,
+  discTypes,
+  mode,
+  posted,
+  busy,
+  userInfo,
+  onNoteChange,
+  onDiscTypeChange,
+  onDiscPerChange,
+  onDiscAmtChange,
+  onDiscCommit,
+  onSave,
+  onDelete,
+  onPrint,
+  onPost,
+  onClear,
+}) => {
+  const discountTypeOptions = useMemo<Option[]>(
+    () =>
+      discTypes.length > 0
+        ? discTypes.map((d) => ({ value: d.id, label: d.id }))
+        : fallbackDiscountTypes,
+    [discTypes],
+  );
+
+  const discountTypeValue =
+    discountTypeOptions.find((o) => o.value === header.discType) ?? null;
+
+  // only the field that matches the discount type can be typed in
+  const isPercent = header.discType === "P";
+
+  // accept digits and one decimal point only
+  const numeric = (value: string, set: (v: string) => void) => {
+    if (value === "" || /^\d*\.?\d*$/.test(value)) set(value);
+  };
+
+  const userText = userInfo
+    ? [
+        userInfo.savedBy &&
+          `Saved By : ${userInfo.savedBy} ${userInfo.savedAt}`.trim(),
+        userInfo.modifiedBy &&
+          `Last Modified By : ${userInfo.modifiedBy} ${userInfo.modifiedAt}`.trim(),
+        userInfo.postOrder > 0 && `Txn. # : ${userInfo.postOrder}`,
+        posted && "POSTED",
+      ]
+        .filter(Boolean)
+        .join("   |   ")
+    : "";
+
   return (
     <footer
       id="sales-invoice-footer"
@@ -164,31 +243,49 @@ const SalesInvoiceFooter: React.FC = () => {
             inputId="lkpDiscountType"
             instanceId="lkpDiscountType"
             options={discountTypeOptions}
-            defaultValue={discountTypeOptions[0]}
+            value={discountTypeValue}
+            onChange={(option) =>
+              option && onDiscTypeChange(option.value === "P" ? "P" : "A")
+            }
             styles={selectStyles}
             isClearable={false}
             isSearchable={false}
+            isDisabled={posted}
             menuPosition="fixed"
             menuPortalTarget={
-              typeof document !== "undefined"
-                ? document.body
-                : undefined
+              typeof document !== "undefined" ? document.body : undefined
             }
           />
         </div>
 
+        {/* Discount % */}
+
         <input
           id="txtDiscount"
           type="text"
-          defaultValue="0.00"
-          className={`${inputClass} ml-[9px] w-[65px] text-right`}
+          inputMode="decimal"
+          autoComplete="off"
+          aria-label="Discount percent"
+          readOnly={posted || !isPercent}
+          value={header.discPer}
+          onChange={(e) => numeric(e.target.value, onDiscPerChange)}
+          onBlur={onDiscCommit}
+          className={`${isPercent && !posted ? inputClass : readOnlyInputClass} ml-[9px] w-[65px] text-right`}
         />
+
+        {/* Discount amount */}
 
         <input
           id="txtDiscountAmount"
           type="text"
-          defaultValue="0.00"
-          className={`${inputClass} ml-[9px] w-[65px] text-right`}
+          inputMode="decimal"
+          autoComplete="off"
+          aria-label="Discount amount"
+          readOnly={posted || isPercent}
+          value={header.discAmt}
+          onChange={(e) => numeric(e.target.value, onDiscAmtChange)}
+          onBlur={onDiscCommit}
+          className={`${!isPercent && !posted ? inputClass : readOnlyInputClass} ml-[9px] w-[65px] text-right`}
         />
       </div>
 
@@ -197,9 +294,7 @@ const SalesInvoiceFooter: React.FC = () => {
       ====================================================== */}
 
       <div className="absolute left-[668px] top-[8px] flex h-[30px] items-center">
-        <label
-          className="mr-[7px] whitespace-nowrap text-[14px] text-[#202020]"
-        >
+        <label className="mr-[7px] whitespace-nowrap text-[14px] text-[#202020]">
           Total
         </label>
 
@@ -225,35 +320,39 @@ const SalesInvoiceFooter: React.FC = () => {
         <input
           id="txtTotal"
           type="text"
-          defaultValue="0.000"
-          className={`${inputClass} ml-[5px] w-[65px] text-right`}
+          readOnly
+          value={fmt(sums.qty, 3)}
+          className={`${readOnlyInputClass} ml-[5px] w-[65px] text-right`}
         />
       </div>
 
       {/* ======================================================
-          EXTRA TOTAL VALUES
+          EXTRA TOTAL VALUES (discount / VAT / total price)
       ====================================================== */}
 
       <div className="absolute right-[10px] top-[8px] flex h-[30px] items-center gap-[5px]">
         <input
           id="txtTotalValue1"
           type="text"
-          defaultValue="0.000"
-          className={`${inputClass} w-[70px] text-right`}
+          readOnly
+          value={fmt(sums.disc, 3)}
+          className={`${readOnlyInputClass} w-[70px] text-right`}
         />
 
         <input
           id="txtTotalValue2"
           type="text"
-          defaultValue="0.000"
-          className={`${inputClass} w-[70px] text-right`}
+          readOnly
+          value={fmt(sums.vat, 3)}
+          className={`${readOnlyInputClass} w-[70px] text-right`}
         />
 
         <input
           id="txtTotalValue3"
           type="text"
-          defaultValue="0.000"
-          className={`${inputClass} w-[90px] text-right`}
+          readOnly
+          value={fmt(sums.total, 3)}
+          className={`${readOnlyInputClass} w-[90px] text-right`}
         />
       </div>
 
@@ -275,8 +374,9 @@ const SalesInvoiceFooter: React.FC = () => {
           <input
             id="txtTotalAmt"
             type="text"
-            defaultValue="0.00"
-            className={`${inputClass} ml-[7px] w-[125px] text-right`}
+            readOnly
+            value={fmt(totals.netDocAmtWoVAT)}
+            className={`${readOnlyInputClass} ml-[7px] w-[125px] text-right`}
           />
         </div>
 
@@ -287,14 +387,15 @@ const SalesInvoiceFooter: React.FC = () => {
             htmlFor="txtVATAmt"
             className="w-[110px] whitespace-nowrap text-right text-[14px] text-[#202020]"
           >
-            VAT Amt. :
+            VAT Amt. ({header.vatPer}%) :
           </label>
 
           <input
             id="txtVATAmt"
             type="text"
-            defaultValue="0.00"
-            className={`${inputClass} ml-[7px] w-[125px] text-right`}
+            readOnly
+            value={fmt(totals.vatAmt)}
+            className={`${readOnlyInputClass} ml-[7px] w-[125px] text-right`}
           />
         </div>
 
@@ -311,12 +412,13 @@ const SalesInvoiceFooter: React.FC = () => {
           <input
             id="txtNetAmt"
             type="text"
-            defaultValue="0.00"
-            className={`${inputClass} ml-[7px] w-[125px] text-right`}
+            readOnly
+            value={fmt(totals.netDocAmt)}
+            className={`${readOnlyInputClass} ml-[7px] w-[125px] text-right`}
           />
         </div>
 
-        {/* PAID AMOUNT */}
+        {/* PAID AMOUNT (credit invoice: nothing paid at invoicing) */}
 
         <div className="flex h-[30px] items-center">
           <label
@@ -329,8 +431,9 @@ const SalesInvoiceFooter: React.FC = () => {
           <input
             id="txtPaidAmt"
             type="text"
-            defaultValue="0.00"
-            className={`${inputClass} ml-[7px] w-[125px] text-right`}
+            readOnly
+            value="0.00"
+            className={`${readOnlyInputClass} ml-[7px] w-[125px] text-right`}
           />
         </div>
       </div>
@@ -341,16 +444,20 @@ const SalesInvoiceFooter: React.FC = () => {
 
       <div className="absolute left-[7px] top-[43px] flex h-[30px] items-center">
         <label
-          htmlFor="txtNone"
+          htmlFor="txtNote"
           className="mr-[15px] whitespace-nowrap text-[14px] text-[#202020]"
         >
           Note :
         </label>
 
         <input
-          id="txtNone"
+          id="txtNote"
           type="text"
+          maxLength={100}
           autoComplete="off"
+          disabled={posted}
+          value={header.note}
+          onChange={(e) => onNoteChange(e.target.value)}
           className={`${inputClass} h-[30px] w-[600px]`}
         />
       </div>
@@ -363,15 +470,27 @@ const SalesInvoiceFooter: React.FC = () => {
         <button
           id="btnSave"
           type="button"
-          className='btn-style'
+          className={btnClass}
+          disabled={busy || posted}
+          onClick={onSave}
         >
-          <u>S</u>ave
+          {mode === "M" ? (
+            <>
+              <u>M</u>odify
+            </>
+          ) : (
+            <>
+              <u>S</u>ave
+            </>
+          )}
         </button>
 
         <button
           id="btnDelete"
           type="button"
-          className='btn-style'
+          className={btnClass}
+          disabled={busy || posted || mode !== "M"}
+          onClick={onDelete}
         >
           <u>D</u>elete
         </button>
@@ -379,7 +498,9 @@ const SalesInvoiceFooter: React.FC = () => {
         <button
           id="btnPrint"
           type="button"
-          className='btn-style'
+          className={btnClass}
+          disabled={busy || mode !== "M"}
+          onClick={onPrint}
         >
           <u>P</u>rint
         </button>
@@ -387,7 +508,9 @@ const SalesInvoiceFooter: React.FC = () => {
         <button
           id="btnPost"
           type="button"
-          className='btn-style'
+          className={btnClass}
+          disabled={busy || posted || mode !== "M"}
+          onClick={onPost}
         >
           <u>P</u>ost
         </button>
@@ -395,11 +518,23 @@ const SalesInvoiceFooter: React.FC = () => {
         <button
           id="btnClear"
           type="button"
-          className='btn-style'
+          className={btnClass}
+          disabled={busy}
+          onClick={onClear}
         >
           <u>C</u>lear
         </button>
       </div>
+
+      {/* ======================================================
+          USER INFO (VB lblUserInfo)
+      ====================================================== */}
+
+      {userText && (
+        <div className="absolute bottom-[2px] left-[7px] text-[11px] text-slate-500">
+          {userText}
+        </div>
+      )}
     </footer>
   );
 };

@@ -1,58 +1,166 @@
-import React, { useState } from "react";
-import Select, { type StylesConfig } from "react-select";
+import React, { useMemo, useState } from "react";
+import { Play } from "lucide-react";
+import Select, {
+  components,
+  type FormatOptionLabelMeta,
+  type MenuListProps,
+  type StylesConfig,
+} from "react-select";
 import selectComponents from "../../sharecomponents/selectComponents";
+import type { ItemLookup, SalesRow } from "../../../hooks/useSalesInvoice"; // adjust path to your hook
 
 // ============================================================
 // TYPES
 // ============================================================
 
 type Option = {
-  value: string;
-  label: string;
+  value: string; // item id
+  label: string; // what the control shows (the id or the name)
+  name: string; // item name, used for the menu text and for searching
 };
 
-type SalesInvoiceRow = {
-  itemId: Option | null;
-  itemName: Option | null;
-  unit: string;
-  qty: string;
-  unitPrice: string;
-  discountAmount: string;
-  vatAmount: string;
-  totalPrice: string;
+type EditableNumberField = "qty" | "unitPrice" | "itemDiscAmt";
+
+type SalesInvoiceTableProps = {
+  rows: SalesRow[];
+  items: ItemLookup[];
+  defaultPriceLevel: string; // customer price level, copied to new rows
+  readOnly: boolean; // posted invoice
+  /** recalc = true asks the page to recalculate totals on the server */
+  onRowsChange: (rows: SalesRow[], recalc: boolean) => void;
 };
 
 // ============================================================
-// CONSTANTS
+// ITEM LOOKUP MENU (two columns, gray header row)
+// same look as the purchase invoice table
 // ============================================================
 
-const ROW_COUNT = 11;
+// must match the Item ID column width in <colgroup> (200px)
+const ID_COL_WIDTH = 200;
 
-// ============================================================
-// OPTIONS
-// ============================================================
+// width of the first column in the Item Name dropdown
+const NAME_COL_WIDTH = 300;
 
-const itemOptions: Option[] = [];
+// font size of the dropdown menu (header row + options)
+const MENU_FONT_SIZE = 14;
 
+type MenuVariant = "id" | "name";
 
+const menuLayout: Record<
+  MenuVariant,
+  {
+    firstTitle: string;
+    secondTitle: string;
+    firstWidth: number;
+    first: (o: Option) => string;
+    second: (o: Option) => string;
+  }
+> = {
+  id: {
+    firstTitle: "Item ID",
+    secondTitle: "Item Name",
+    firstWidth: ID_COL_WIDTH,
+    first: (o) => o.value,
+    second: (o) => o.name,
+  },
+  name: {
+    firstTitle: "Item Name",
+    secondTitle: "Item ID",
+    firstWidth: NAME_COL_WIDTH,
+    first: (o) => o.name,
+    second: (o) => o.value,
+  },
+};
 
-// ============================================================
-// CREATE ROW
-// ============================================================
+/* gray header row at the top of the dropdown menu (sticky while scrolling) */
+const createMenuList = (variant: MenuVariant) => {
+  const layout = menuLayout[variant];
 
-const createRow = (): SalesInvoiceRow => ({
-  itemId: null,
-  itemName: null,
-  unit: "",
-  qty: "",
-  unitPrice: "",
-  discountAmount: "",
-  vatAmount: "",
-  totalPrice: "",
-});
+  const MenuList = (props: MenuListProps<Option, false>) => (
+    <components.MenuList {...props}>
+      <div
+        style={{
+          display: "flex",
+          position: "sticky",
+          top: 0,
+          zIndex: 1,
+          background: "#eeeeee",
+          borderBottom: "1px solid #cfcfcf",
+          fontWeight: 600,
+          fontSize: MENU_FONT_SIZE,
+          color: "#202a36",
+        }}
+      >
+        <div
+          style={{
+            width: layout.firstWidth,
+            flexShrink: 0,
+            boxSizing: "border-box",
+            padding: "5px 8px",
+            borderRight: "1px solid #cfcfcf",
+          }}
+        >
+          {layout.firstTitle}
+        </div>
+        <div style={{ flex: 1, padding: "5px 8px" }}>{layout.secondTitle}</div>
+      </div>
+      {props.children}
+    </components.MenuList>
+  );
 
-const createRows = (): SalesInvoiceRow[] =>
-  Array.from({ length: ROW_COUNT }, createRow);
+  return MenuList;
+};
+
+const idSelectComponents = {
+  ...selectComponents,
+  MenuList: createMenuList("id"),
+};
+
+const nameSelectComponents = {
+  ...selectComponents,
+  MenuList: createMenuList("name"),
+};
+
+/* menu rows show two columns; the control shows only its own label */
+const createFormatLabel =
+  (variant: MenuVariant) =>
+  (option: Option, meta: FormatOptionLabelMeta<Option>) => {
+    if (meta.context !== "menu") return option.label;
+
+    const layout = menuLayout[variant];
+
+    return (
+      <div style={{ display: "flex" }}>
+        <div
+          style={{
+            width: layout.firstWidth,
+            flexShrink: 0,
+            boxSizing: "border-box",
+            padding: "6px 8px",
+            borderRight: "1px solid #e3e8ef",
+          }}
+        >
+          {layout.first(option)}
+        </div>
+        <div style={{ flex: 1, padding: "6px 8px" }}>
+          {layout.second(option)}
+        </div>
+      </div>
+    );
+  };
+
+const formatIdLabel = createFormatLabel("id");
+const formatNameLabel = createFormatLabel("name");
+
+/* typing searches both the item id and the item name */
+const filterItem = (option: { data: Option }, input: string): boolean => {
+  const text = input.trim().toLowerCase();
+  if (!text) return true;
+  return (
+    option.data.value.toLowerCase().includes(text) ||
+    option.data.name.toLowerCase().includes(text)
+  );
+};
 
 // ============================================================
 // SELECT STYLES
@@ -67,11 +175,9 @@ const selectStyles: StylesConfig<Option, false> = {
     border: "none",
     borderRadius: 0,
     boxShadow: "none",
-    backgroundColor: state.isFocused
-      ? "#eff6ff"
-      : "transparent",
+    backgroundColor: state.isFocused ? "#eff6ff" : "transparent",
     cursor: "pointer",
-    fontSize: 13,
+    fontSize: 11,
 
     "&:hover": {
       border: "none",
@@ -90,7 +196,6 @@ const selectStyles: StylesConfig<Option, false> = {
     ...base,
     color: "#263449",
     margin: 0,
-    fontSize: 11,
     overflow: "hidden",
     textOverflow: "ellipsis",
     whiteSpace: "nowrap",
@@ -100,7 +205,6 @@ const selectStyles: StylesConfig<Option, false> = {
     ...base,
     margin: 0,
     color: "#64748b",
-    fontSize: 11,
   }),
 
   input: (base) => ({
@@ -108,7 +212,6 @@ const selectStyles: StylesConfig<Option, false> = {
     margin: 0,
     padding: 0,
     color: "#263449",
-    fontSize: 13,
   }),
 
   indicatorsContainer: (base) => ({
@@ -138,104 +241,153 @@ const selectStyles: StylesConfig<Option, false> = {
   menu: (base) => ({
     ...base,
     zIndex: 9999,
-    fontSize: 11,
+    fontSize: MENU_FONT_SIZE,
     marginTop: 1,
+    width: 542,
+    minWidth: 542,
+    border: "none",
+    borderRadius: 0,
+    boxShadow: "0 0 0 1px #cfcfcf, 0 4px 10px rgba(0,0,0,0.15)",
   }),
 
   menuList: (base) => ({
     ...base,
     padding: 0,
-    maxHeight: 180,
+    maxHeight: 260,
   }),
 
   option: (base, state) => ({
     ...base,
-    padding: "5px 8px",
-    fontSize: 11,
+    padding: 0,
+    fontSize: MENU_FONT_SIZE,
     color: "#263449",
     backgroundColor: state.isSelected
-      ? "#dbeafe"
+      ? "#cdeedd"
       : state.isFocused
-        ? "#eff6ff"
+        ? "#e6f6ee"
         : "#fff",
     cursor: "pointer",
   }),
 };
 
 // ============================================================
-// NUMBER INPUT STYLE
+// INPUT STYLES
 // ============================================================
 
 const numberInputClass =
   "number-no-spinner h-[20px] w-full min-w-0 border-0 bg-transparent px-1 text-right text-[14px] outline-none focus:bg-blue-50";
 
-// ============================================================
-// TEXT INPUT STYLE
-// ============================================================
+const calculatedInputClass =
+  "number-no-spinner h-[20px] w-full min-w-0 border-0 bg-[#f8fafc] px-1 text-right text-[14px] outline-none";
 
 const textInputClass =
   "h-[20px] w-full min-w-0 border-0 bg-transparent px-1 text-[14px] outline-none focus:bg-blue-50";
+
+const thClass =
+  "sticky top-0 z-20 h-7.5 whitespace-nowrap border border-[#dce5ef] bg-[#f1f6fc] px-1 py-0 align-middle font-semibold text-[#202a36]";
+
+const tdClass = "h-7.5 border border-[#dce5ef] p-0";
+
+/* cell that holds an input: outlined while the cursor is inside it */
+const editCellClass =
+  "h-7.5 border border-[#dce5ef] p-0 focus-within:outline-2 focus-within:-outline-offset-2 focus-within:outline-green-600";
 
 // ============================================================
 // TABLE
 // ============================================================
 
-const SalesInvoiceTable: React.FC = () => {
-  const [rows, setRows] =
-    useState<SalesInvoiceRow[]>(createRows);
-
+const SalesInvoiceTable: React.FC<SalesInvoiceTableProps> = ({
+  rows,
+  items,
+  defaultPriceLevel,
+  readOnly,
+  onRowsChange,
+}) => {
   const [activeRow, setActiveRow] = useState(0);
+
+  // which item dropdown (if any) currently has its menu open,
+  // e.g. "id-0" / "name-0"
+  const [openMenuKey, setOpenMenuKey] = useState<string | null>(null);
+
+  // ==========================================================
+  // ITEM OPTIONS
+  // ==========================================================
+
+  const itemIdOptions = useMemo<Option[]>(
+    () => items.map((i) => ({ value: i.id, label: i.id, name: i.name })),
+    [items],
+  );
+
+  const itemNameOptions = useMemo<Option[]>(
+    () => items.map((i) => ({ value: i.id, label: i.name, name: i.name })),
+    [items],
+  );
+
+  const itemById = useMemo(() => new Map(items.map((i) => [i.id, i])), [items]);
+
+  // selected values (fall back to the saved id if the item is not in the list)
+  const idValue = (itemId: string): Option | null =>
+    itemId
+      ? {
+          value: itemId,
+          label: itemId,
+          name: itemById.get(itemId)?.name ?? "",
+        }
+      : null;
+
+  const nameValue = (itemId: string): Option | null => {
+    if (!itemId) return null;
+    const name = itemById.get(itemId)?.name || itemId;
+    return { value: itemId, label: name, name };
+  };
 
   // ==========================================================
   // UPDATE ROW
   // ==========================================================
 
-  const updateRow = <K extends keyof SalesInvoiceRow>(
-    index: number,
-    field: K,
-    value: SalesInvoiceRow[K],
-  ) => {
-    setRows((previousRows) =>
-      previousRows.map((row, rowIndex) =>
-        rowIndex === index
-          ? {
-              ...row,
-              [field]: value,
-            }
-          : row,
-      ),
+  const patchRow = (index: number, patch: Partial<SalesRow>): SalesRow[] =>
+    rows.map((row, rowIndex) =>
+      rowIndex === index ? { ...row, ...patch } : row,
     );
+
+  // ==========================================================
+  // ITEM SELECTED (both Item ID and Item Name combos)
+  // Fills the unit from the item list (VB: GetUnit)
+  // ==========================================================
+
+  const handleItemSelect = (index: number, option: Option | null) => {
+    if (!option) return;
+
+    onRowsChange(
+      patchRow(index, {
+        itemId: option.value,
+        unit: itemById.get(option.value)?.unit ?? "",
+        priceLevel: rows[index].priceLevel || defaultPriceLevel,
+      }),
+      true,
+    );
+    setActiveRow(index);
   };
 
   // ==========================================================
-  // NUMBER CHANGE
+  // TEXT / NUMBER CHANGE
   // ==========================================================
+
+  const handleUnitChange = (index: number, value: string) => {
+    onRowsChange(patchRow(index, { unit: value }), false);
+  };
 
   const handleNumberChange = (
     index: number,
-    field:
-      | "qty"
-      | "unitPrice"
-      | "discountAmount"
-      | "vatAmount"
-      | "totalPrice",
+    field: EditableNumberField,
     value: string,
   ) => {
-    if (value === "") {
-      updateRow(index, field, value);
+    if (value !== "" && !/^\d*\.?\d*$/.test(value)) {
       return;
     }
 
-    if (!/^\d*\.?\d*$/.test(value)) {
-      return;
-    }
-
-    updateRow(index, field, value);
+    onRowsChange(patchRow(index, { [field]: value }), false);
   };
-
-  // ==========================================================
-  // FORMAT NUMBER
-  // ==========================================================
 
   const formatNumber = (value: string): string => {
     if (value.trim() === "") {
@@ -244,94 +396,127 @@ const SalesInvoiceTable: React.FC = () => {
 
     const number = Number(value);
 
-    if (!Number.isFinite(number)) {
-      return "";
-    }
+    return Number.isFinite(number) ? number.toFixed(2) : "";
+  };
 
-    return number.toFixed(2);
+  // format on blur, then ask the server to recalculate
+  const handleNumberBlur = (index: number, field: EditableNumberField) => {
+    const value = rows[index][field];
+
+    const next =
+      field === "qty" || value === ""
+        ? rows
+        : patchRow(index, { [field]: formatNumber(value) });
+
+    onRowsChange(next, true);
   };
 
   // ==========================================================
-  // NORMAL TEXT INPUT
+  // ENTER KEY NAVIGATION
+  //   Item ID / Item Name -> Qty -> Unit Price -> U.Disc Amt.
+  //   -> Item ID of the next row
+  //   Unit -> Qty
   // ==========================================================
 
-  const renderTextInput = (
+  const focusById = (id: string) => {
+    const el = document.getElementById(id) as HTMLInputElement | null;
+    if (!el) return;
+    el.focus();
+    if (el.type === "text" && !el.readOnly) el.select();
+  };
+
+  // Enter in an item dropdown: if the menu is closed and an item is already
+  // selected, go to that row's Qty. (When the menu is open, Enter just
+  // selects the highlighted option.)
+  const handleItemKeyDown = (
+    event: React.KeyboardEvent<HTMLDivElement>,
     index: number,
-    field: "unit",
-    id: string,
-    label: string,
+    menuKey: string,
   ) => {
-    return (
-      <input
-        id={`${id}-${index}`}
-        aria-label={`${label}, row ${index + 1}`}
-        type="text"
-        autoComplete="off"
-        value={rows[index][field]}
-        onFocus={() => {
-          setActiveRow(index);
-        }}
-        onChange={(event) => {
-          updateRow(
-            index,
-            field,
-            event.target.value,
-          );
-        }}
-        className={textInputClass}
-      />
+    if (event.key !== "Enter") return;
+    if (openMenuKey === menuKey) return; // let react-select pick the option
+    if (!rows[index].itemId) return; // nothing selected yet
+
+    event.preventDefault();
+    focusById(`txtQty-${index}`);
+  };
+
+  const handleEnterTo =
+    (nextId: string) => (event: React.KeyboardEvent<HTMLInputElement>) => {
+      if (event.key !== "Enter") return;
+      event.preventDefault();
+      focusById(nextId);
+    };
+
+  // ==========================================================
+  // F5 = delete row (same as VB)
+  // ==========================================================
+
+  const handleRowKeyDown = (
+    event: React.KeyboardEvent<HTMLTableRowElement>,
+    index: number,
+  ) => {
+    if (event.key !== "F5") return;
+
+    event.preventDefault(); // stop the browser refresh
+
+    if (readOnly || !rows[index].itemId) return;
+
+    onRowsChange(
+      rows.filter((_, rowIndex) => rowIndex !== index),
+      true,
     );
   };
 
   // ==========================================================
-  // NUMBER INPUT
+  // INPUTS
   // ==========================================================
 
   const renderNumberInput = (
     index: number,
-    field:
-      | "qty"
-      | "unitPrice"
-      | "discountAmount"
-      | "vatAmount"
-      | "totalPrice",
+    field: EditableNumberField,
     id: string,
     label: string,
-  ) => {
-    return (
-      <input
-        id={`${id}-${index}`}
-        aria-label={`${label}, row ${index + 1}`}
-        type="text"
-        inputMode="decimal"
-        autoComplete="off"
-        value={rows[index][field]}
-        onFocus={(event) => {
-          setActiveRow(index);
-          event.currentTarget.select();
-        }}
-        onChange={(event) => {
-          handleNumberChange(
-            index,
-            field,
-            event.target.value,
-          );
-        }}
-        onBlur={() => {
-          const value = rows[index][field];
+    nextId: string,
+  ) => (
+    <input
+      id={`${id}-${index}`}
+      aria-label={`${label}, row ${index + 1}`}
+      type="text"
+      inputMode="decimal"
+      autoComplete="off"
+      readOnly={readOnly}
+      value={rows[index][field]}
+      onFocus={(event) => {
+        setActiveRow(index);
+        event.currentTarget.select();
+      }}
+      onChange={(event) => handleNumberChange(index, field, event.target.value)}
+      onBlur={() => handleNumberBlur(index, field)}
+      onKeyDown={handleEnterTo(nextId)}
+      className={numberInputClass}
+    />
+  );
 
-          if (value !== "") {
-            updateRow(
-              index,
-              field,
-              formatNumber(value),
-            );
-          }
-        }}
-        className={numberInputClass}
-      />
-    );
-  };
+  const renderCalculatedInput = (
+    index: number,
+    value: string,
+    id: string,
+    label: string,
+  ) => (
+    <input
+      id={`${id}-${index}`}
+      aria-label={`${label}, row ${index + 1}`}
+      type="text"
+      readOnly
+      tabIndex={-1}
+      value={value}
+      className={calculatedInputClass}
+    />
+  );
+
+  const menuPortalTarget =
+    typeof document !== "undefined" ? document.body : undefined;
 
   // ==========================================================
   // RENDER
@@ -353,7 +538,7 @@ const SalesInvoiceTable: React.FC = () => {
         border-[#dce5ef]
       "
     >
-      <div className="customer-table-scroll min-h-0 flex-1 overflow-auto">
+      <div className="customer-table-scroll min-h-0 max-h-85 flex-1 overflow-auto">
         <table
           className="
             w-full
@@ -369,23 +554,14 @@ const SalesInvoiceTable: React.FC = () => {
 
           <colgroup>
             <col style={{ width: "14px" }} />
-
-            <col style={{ width: "28px" }} />
-
-            <col style={{ width: "200px" }} />
-
+            <col style={{ width: "38px" }} />
+            <col style={{ width: `${ID_COL_WIDTH}px` }} />
             <col style={{ width: "auto" }} />
-
             <col style={{ width: "56px" }} />
-
             <col style={{ width: "58px" }} />
-
             <col style={{ width: "75px" }} />
-
             <col style={{ width: "70px" }} />
-
             <col style={{ width: "70px" }} />
-
             <col style={{ width: "90px" }} />
           </colgroup>
 
@@ -395,227 +571,16 @@ const SalesInvoiceTable: React.FC = () => {
 
           <thead>
             <tr className="h-7.5">
-
-              {/* ROW INDICATOR */}
-
-              <th
-                className="
-                  sticky
-                  top-0
-                  z-20
-                  border
-                  border-[#dce5ef]
-                  bg-[#f1f6fc]
-                  p-0
-                "
-              />
-
-              {/* SL */}
-
-              <th
-                className="
-                  sticky
-                  top-0
-                  z-20
-                  h-7.5
-                  whitespace-nowrap
-                  border
-                  border-[#dce5ef]
-                  bg-[#f1f6fc]
-                  px-1
-                  py-0
-                  text-left
-                  align-middle
-                  font-semibold
-                  text-[#202a36]
-                "
-              >
-                Sl.
-              </th>
-
-              {/* ITEM ID */}
-
-              <th
-                className="
-                  sticky
-                  top-0
-                  z-20
-                  h-7.5
-                  whitespace-nowrap
-                  border
-                  border-[#dce5ef]
-                  bg-[#f1f6fc]
-                  px-1
-                  py-0
-                  text-left
-                  align-middle
-                  font-semibold
-                  text-[#202a36]
-                "
-              >
-                Item ID
-              </th>
-
-              {/* ITEM NAME */}
-
-              <th
-                className="
-                  sticky
-                  top-0
-                  z-20
-                  h-7.5
-                  whitespace-nowrap
-                  border
-                  border-[#dce5ef]
-                  bg-[#f1f6fc]
-                  px-1
-                  py-0
-                  text-left
-                  align-middle
-                  font-semibold
-                  text-[#202a36]
-                "
-              >
-                Item Name
-              </th>
-
-              {/* UNIT */}
-
-              <th
-                className="
-                  sticky
-                  top-0
-                  z-20
-                  h-7.5
-                  whitespace-nowrap
-                  border
-                  border-[#dce5ef]
-                  bg-[#f1f6fc]
-                  px-1
-                  py-0
-                  text-center
-                  align-middle
-                  font-semibold
-                  text-[#202a36]
-                "
-              >
-                Unit
-              </th>
-
-              {/* QTY */}
-
-              <th
-                className="
-                  sticky
-                  top-0
-                  z-20
-                  h-7.5
-                  whitespace-nowrap
-                  border
-                  border-[#dce5ef]
-                  bg-[#f1f6fc]
-                  px-1
-                  py-0
-                  text-right
-                  align-middle
-                  font-semibold
-                  text-[#202a36]
-                "
-              >
-                Qty.
-              </th>
-
-              {/* UNIT PRICE */}
-
-              <th
-                className="
-                  sticky
-                  top-0
-                  z-20
-                  h-7.5
-                  whitespace-nowrap
-                  border
-                  border-[#dce5ef]
-                  bg-[#f1f6fc]
-                  px-1
-                  py-0
-                  text-right
-                  align-middle
-                  font-semibold
-                  text-[#202a36]
-                "
-              >
-                Unit Price
-              </th>
-
-              {/* U.DISC AMT */}
-
-              <th
-                className="
-                  sticky
-                  top-0
-                  z-20
-                  h-7.5
-                  whitespace-nowrap
-                  border
-                  border-[#dce5ef]
-                  bg-[#f1f6fc]
-                  px-1
-                  py-0
-                  text-right
-                  align-middle
-                  font-semibold
-                  text-[#202a36]
-                "
-              >
-                U.Disc Amt.
-              </th>
-
-              {/* VAT AMT */}
-
-              <th
-                className="
-                  sticky
-                  top-0
-                  z-20
-                  h-7.5
-                  whitespace-nowrap
-                  border
-                  border-[#dce5ef]
-                  bg-[#f1f6fc]
-                  px-1
-                  py-0
-                  text-right
-                  align-middle
-                  font-semibold
-                  text-[#202a36]
-                "
-              >
-                VAT Amt.
-              </th>
-
-              {/* TOTAL PRICE */}
-
-              <th
-                className="
-                  sticky
-                  top-0
-                  z-20
-                  h-7.5
-                  whitespace-nowrap
-                  border
-                  border-[#dce5ef]
-                  bg-[#f1f6fc]
-                  px-1
-                  py-0
-                  text-right
-                  align-middle
-                  font-semibold
-                  text-[#202a36]
-                "
-              >
-                Total Price
-              </th>
+              <th className="sticky top-0 z-20 border border-[#dce5ef] bg-[#f1f6fc] p-0" />
+              <th className={`${thClass} text-left`}>Line</th>
+              <th className={`${thClass} text-left`}>Item ID</th>
+              <th className={`${thClass} text-left`}>Item Name</th>
+              <th className={`${thClass} text-center`}>Unit</th>
+              <th className={`${thClass} text-right`}>Qty.</th>
+              <th className={`${thClass} text-right`}>Unit Price</th>
+              <th className={`${thClass} text-right`}>U.Disc Amt.</th>
+              <th className={`${thClass} text-right`}>VAT Amt.</th>
+              <th className={`${thClass} text-right`}>Total Price</th>
             </tr>
           </thead>
 
@@ -628,258 +593,163 @@ const SalesInvoiceTable: React.FC = () => {
               <tr
                 key={index}
                 onClick={() => setActiveRow(index)}
-                onFocusCapture={() =>
-                  setActiveRow(index)
-                }
+                onFocusCapture={() => setActiveRow(index)}
+                onKeyDown={(event) => handleRowKeyDown(event, index)}
                 className={`
                   h-7.5
-                  ${
-                    activeRow === index
-                      ? "bg-[#f4f8fd]"
-                      : "bg-white"
-                  }
+                  ${activeRow === index ? "bg-[#f4f8fd]" : "bg-white"}
                   hover:bg-blue-50
                 `}
               >
-
-                {/* ==================================================
-                    ACTIVE ROW INDICATOR
-                ================================================== */}
+                {/* ACTIVE ROW INDICATOR */}
 
                 <td
-                  className="
-                    h-5.75
-                    border
-                    border-[#dce5ef]
-                    p-0
-                    text-center
-                    text-[9px]
-                    text-[#263449]
-                  "
-                  aria-label={
-                    activeRow === index
-                      ? "Active row"
-                      : undefined
-                  }
+                  className={`${tdClass} text-center text-[9px] text-[#263449]`}
+                  aria-label={activeRow === index ? "Active row" : undefined}
                 >
-                  {activeRow === index
-                    ? "▾"
-                    : ""}
+                  {activeRow === index ? <Play size={10} /> : ""}
                 </td>
 
-                {/* ==================================================
-                    SL NO
-                ================================================== */}
+                {/* LINE NO */}
 
-                <td
-                  className="
-                    h-5.75
-                    border
-                    border-[#dce5ef]
-                    p-0
-                    text-center
-                  "
-                >
-                  {index + 1}
-                </td>
+                <td className={`${tdClass} text-center`}>{index + 1}</td>
 
-                {/* ==================================================
-                    ITEM ID
-                ================================================== */}
+                {/* ITEM ID */}
 
-                <td
-                  className="
-                    h-5.75
-                    border
-                    border-[#dce5ef]
-                    p-0
-                  "
-                >
+                <td className={editCellClass}>
                   <Select<Option, false>
                     inputId={`lkpItemID-${index}`}
                     instanceId={`item-id-${index}`}
-                    options={itemOptions}
-                    components={selectComponents}
-                    value={row.itemId}
-                    onChange={(option) => {
-                      updateRow(
-                        index,
-                        "itemId",
-                        option,
-                      );
-
-                      setActiveRow(index);
-                    }}
+                    options={itemIdOptions}
+                    value={idValue(row.itemId)}
+                    onChange={(option) => handleItemSelect(index, option)}
+                    formatOptionLabel={formatIdLabel}
+                    filterOption={filterItem}
                     styles={selectStyles}
+                    components={idSelectComponents}
                     isClearable={false}
                     isSearchable
+                    isDisabled={readOnly}
                     menuPosition="fixed"
-                    menuPortalTarget={
-                      typeof document !== "undefined"
-                        ? document.body
-                        : undefined
-                    }
+                    menuPortalTarget={menuPortalTarget}
                     placeholder=""
                     className="w-full"
+                    onMenuOpen={() => setOpenMenuKey(`id-${index}`)}
+                    onMenuClose={() =>
+                      setOpenMenuKey((prev) =>
+                        prev === `id-${index}` ? null : prev,
+                      )
+                    }
+                    onKeyDown={(event) =>
+                      handleItemKeyDown(event, index, `id-${index}`)
+                    }
                   />
                 </td>
 
-                {/* ==================================================
-                    ITEM NAME
-                ================================================== */}
+                {/* ITEM NAME */}
 
-                <td
-                  className="
-                    h-5.75
-                    border
-                    border-[#dce5ef]
-                    p-0
-                  "
-                >
+                <td className={editCellClass}>
                   <Select<Option, false>
                     inputId={`lkpItemName-${index}`}
                     instanceId={`item-name-${index}`}
-                    options={itemOptions}
-                    components={selectComponents}
-                    value={row.itemName}
-                    onChange={(option) => {
-                      updateRow(
-                        index,
-                        "itemName",
-                        option,
-                      );
-
-                      setActiveRow(index);
-                    }}
+                    options={itemNameOptions}
+                    value={nameValue(row.itemId)}
+                    onChange={(option) => handleItemSelect(index, option)}
+                    formatOptionLabel={formatNameLabel}
+                    filterOption={filterItem}
                     styles={selectStyles}
+                    components={nameSelectComponents}
                     isClearable={false}
                     isSearchable
+                    isDisabled={readOnly}
                     menuPosition="fixed"
-                    menuPortalTarget={
-                      typeof document !== "undefined"
-                        ? document.body
-                        : undefined
-                    }
+                    menuPortalTarget={menuPortalTarget}
                     placeholder=""
                     className="w-full"
+                    onMenuOpen={() => setOpenMenuKey(`name-${index}`)}
+                    onMenuClose={() =>
+                      setOpenMenuKey((prev) =>
+                        prev === `name-${index}` ? null : prev,
+                      )
+                    }
+                    onKeyDown={(event) =>
+                      handleItemKeyDown(event, index, `name-${index}`)
+                    }
                   />
                 </td>
 
-                {/* ==================================================
-                    UNIT - NORMAL INPUT
-                ================================================== */}
+                {/* UNIT: Enter -> Qty */}
 
-                <td
-                  className="
-                    h-5.75
-                    border
-                    border-[#dce5ef]
-                    p-0
-                  "
-                >
-                  {renderTextInput(
-                    index,
-                    "unit",
-                    "txtUnit",
-                    "Unit",
-                  )}
+                <td className={editCellClass}>
+                  <input
+                    id={`txtUnit-${index}`}
+                    aria-label={`Unit, row ${index + 1}`}
+                    type="text"
+                    autoComplete="off"
+                    readOnly={readOnly}
+                    value={row.unit}
+                    onFocus={() => setActiveRow(index)}
+                    onChange={(event) =>
+                      handleUnitChange(index, event.target.value)
+                    }
+                    onKeyDown={handleEnterTo(`txtQty-${index}`)}
+                    className={textInputClass}
+                  />
                 </td>
 
-                {/* ==================================================
-                    QUANTITY
-                ================================================== */}
+                {/* QUANTITY: Enter -> Unit Price */}
 
-                <td
-                  className="
-                    h-5.75
-                    border
-                    border-[#dce5ef]
-                    p-0
-                  "
-                >
+                <td className={editCellClass}>
                   {renderNumberInput(
                     index,
                     "qty",
                     "txtQty",
                     "Quantity",
+                    `txtUnitPrice-${index}`,
                   )}
                 </td>
 
-                {/* ==================================================
-                    UNIT PRICE
-                ================================================== */}
+                {/* UNIT PRICE: Enter -> U.Disc Amt. */}
 
-                <td
-                  className="
-                    h-5.75
-                    border
-                    border-[#dce5ef]
-                    p-0
-                  "
-                >
+                <td className={editCellClass}>
                   {renderNumberInput(
                     index,
                     "unitPrice",
                     "txtUnitPrice",
                     "Unit price",
+                    `txtUDiscAmt-${index}`,
                   )}
                 </td>
 
-                {/* ==================================================
-                    DISCOUNT
-                ================================================== */}
+                {/* UNIT DISCOUNT: Enter -> next row Item ID */}
 
-                <td
-                  className="
-                    h-5.75
-                    border
-                    border-[#dce5ef]
-                    p-0
-                  "
-                >
+                <td className={editCellClass}>
                   {renderNumberInput(
                     index,
-                    "discountAmount",
+                    "itemDiscAmt",
                     "txtUDiscAmt",
                     "Unit discount amount",
+                    `lkpItemID-${index + 1}`,
                   )}
                 </td>
 
-                {/* ==================================================
-                    VAT
-                ================================================== */}
+                {/* VAT (calculated) */}
 
-                <td
-                  className="
-                    h-5.75
-                    border
-                    border-[#dce5ef]
-                    p-0
-                  "
-                >
-                  {renderNumberInput(
+                <td className={tdClass}>
+                  {renderCalculatedInput(
                     index,
-                    "vatAmount",
+                    row.itemVatAmt,
                     "txtVATAmt",
                     "VAT amount",
                   )}
                 </td>
 
-                {/* ==================================================
-                    TOTAL PRICE
-                ================================================== */}
+                {/* TOTAL PRICE incl. VAT (calculated) */}
 
-                <td
-                  className="
-                    h-5.75
-                    border
-                    border-[#dce5ef]
-                    p-0
-                  "
-                >
-                  {renderNumberInput(
+                <td className={tdClass}>
+                  {renderCalculatedInput(
                     index,
-                    "totalPrice",
+                    row.totalPriceV,
                     "txtTotalPrice",
                     "Total price",
                   )}

@@ -85,7 +85,7 @@ export const GetData = async (
   res: Response,
 ): Promise<Response> => {
   const strCoID = req.user?.CoID;
-  const { strDocType, strCSAccountID, strDivID, year } = req.body;
+  const { strCSAccountID, strDivID, year } = req.body;
   const strYear = isEmpty(year) ? "" : String(year);
 
   if (!strCoID) {
@@ -99,13 +99,6 @@ export const GetData = async (
     return res.status(400).json({
       success: false,
       message: "Year is required",
-    });
-  }
-
-  if (isEmpty(strDocType)) {
-    return res.status(400).json({
-      success: false,
-      message: "Please input 'Document Type'",
     });
   }
 
@@ -125,21 +118,20 @@ export const GetData = async (
 
     await client.query(
       `
-      CALL dbo.sp_getmatchfindocuments(
+      CALL dbo.sp_getparentdocuments(
         $1::varchar,
         $2::varchar,
         $3::varchar,
         $4::varchar,
         $5::varchar,
-        $6::varchar,
-        $7::bigint,
-        $8::varchar,
+        $6::bigint,
+        $7::varchar,
+        $8::smallint,
         $9::smallint,
-        $10::smallint,
+        $10::varchar,
         $11::varchar,
         $12::varchar,
-        $13::varchar,
-        $14::refcursor
+        $13::refcursor
       )
       `,
       [
@@ -147,7 +139,6 @@ export const GetData = async (
         strCoID, // 2  p_strcoid
         strYear, // 3  p_stryear
         null, // 4  p_strbrid
-        strDocType, // 5  p_strdoctype
         null, // 6  p_strdocno
         0, // 7  p_intdocno
         null, // 8  p_dtpdate
@@ -437,55 +428,57 @@ export const saveMatch = async (
         await client.query(
           `
   CALL dbo.sp_pagematchrecords(
-    p_strmode        => $1::varchar,
-    p_pstrcoid       => $2::varchar,
-    p_strbrid        => $3::varchar,
-    p_strcsaccountid   => $4::varchar,
-    p_pstryear       => $5::varchar,
-    p_strdoctype     => $6::varchar,
-    p_strdocno       => $7::varchar,
-    p_intslno        => $8::smallint,
-    p_intdocno       => $9::bigint,
-    p_dtpdate        => $10::varchar,
-    p_dtpmatchapplydate      => $11::varchar,
-    p_strdescription => $12::varchar,
-    p_numdebit       => $13::numeric,
-    p_numcredit      => $14::numeric,
-    p_nummatchamt    => $15::numeric,
-    p_pstrcyear      => $16::varchar,
-    p_strcbrid       => $17::varchar,
-    p_strcdoctype    => $18::varchar,
-    p_strcdocno      => $19::varchar,
-    p_intcdocno      => $20::integer,
-    p_intcslno       => $21::smallint,
-    p_intcslnosub    => $22::smallint,
-    p_pstruserid     => $23::varchar
+    p_strmode           => $1::varchar,
+    p_pstrcoid          => $2::varchar,
+    p_strbrid           => $3::varchar,
+    p_strcsaccountid    => $4::varchar,
+    p_pstryear          => $5::varchar,
+    p_strdoctype        => $6::varchar,
+    p_strdocno          => $7::varchar,
+    p_intslno           => $8::smallint,
+    p_intslnosub        => $9::smallint,
+    p_intdocno          => $10::bigint,
+    p_dtpdate           => $11::varchar,
+    p_dtpmatchapplydate => $12::varchar,
+    p_strdescription    => $13::varchar,
+    p_numdebit          => $14::numeric,
+    p_numcredit         => $15::numeric,
+    p_nummatchamt       => $16::numeric,
+    p_pstrcyear         => $17::varchar,
+    p_strcbrid          => $18::varchar,
+    p_strcdoctype       => $19::varchar,
+    p_strcdocno         => $20::varchar,
+    p_intcdocno         => $21::integer,
+    p_intcslno          => $22::smallint,
+    p_intcslnosub       => $23::smallint,
+    p_pstruserid        => $24::varchar
   )
   `,
           [
-            "S", // $1  p_strmode
-            coId, // $2  p_pstrcoid
-            brId, // $3  p_strbrid        (parent)
-            getField(c, "fAccountID"), // $4  p_straccountid
-            String(year), // $5  p_pstryear       (parent)
-            docType, // $6  p_strdoctype     (parent)
-            docNo, // $7  p_strdocno       (parent)
-            slNo, // $8  p_intslno        (parent line)
-            num(intDocNo), // $9  p_intdocno
-            toDDMMYYYY(getField(c, "fDate")), // $10 p_dtpdate
-            toDDMMYYYY(efDate), // $11 p_dtpefdate
-            String(getField(dRow, "fDescription") ?? " ").substring(0, 100), // $12
-            num(getField(c, "fDebit")), // $13 p_numdebit
-            num(getField(c, "fCredit")), // $14 p_numcredit
-            num(getField(c, "fMatchAmt")), // $15 p_nummatchamt
-            String(getField(c, "fYear")), // $16 p_pstrcyear      (child)
-            getField(c, "fBrID"), // $17 p_strcbrid       (child)
-            getField(c, "fDocType"), // $18 p_strcdoctype    (child)
-            getField(c, "fDocNo"), // $19 p_strcdocno      (child)
-            num(getField(c, "fIntDocNo")), // $20 p_intcdocno
-            num(getField(c, "fSlNo")), // $21 p_intcslno       (child)
-            num(getField(c, "fSlNoSub")), // $22 p_intcslnosub    (child)
-            userId, // $23 p_pstruserid
+            "S", // $1
+            coId, // $2
+            brId, // $3
+            getField(c, "fAccountID"), // $4
+            String(year), // $5
+            docType, // $6
+            docNo, // $7
+            slNo, // $8
+            slNoSub, // $9
+            num(intDocNo), // $10
+            toDDMMYYYY(getField(c, "fDate")), // $11
+            toDDMMYYYY(efDate), // $12
+            String(getField(dRow, "fDescription") ?? " ").substring(0, 100), // $13
+            num(getField(c, "fDebit")), // $14
+            num(getField(c, "fCredit")), // $15
+            num(getField(c, "fMatchAmt")), // $16
+            String(getField(c, "fYear")), // $17
+            getField(c, "fBrID"), // $18
+            getField(c, "fDocType"), // $19
+            getField(c, "fDocNo"), // $20
+            num(getField(c, "fIntDocNo")), // $21
+            num(getField(c, "fSlNo")), // $22
+            num(getField(c, "fSlNoSub")), // $23
+            userId, // $24
           ],
         );
 

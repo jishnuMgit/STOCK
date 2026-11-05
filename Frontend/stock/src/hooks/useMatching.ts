@@ -11,7 +11,6 @@ export interface MatchAccountRow {
 }
 
 interface GetMatchAccountsParams {
-  strDocType: string;
   strCSAccountID: string;
   strDivID: string;
   year: string | number;

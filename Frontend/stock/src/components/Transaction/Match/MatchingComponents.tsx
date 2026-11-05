@@ -125,33 +125,21 @@ const ResponsiveSelect = ({
           <div
             style={{
               display: "grid",
-              gridTemplateColumns:
-                // "52px 105px 70px 105px 75px 85px minmax(0, 1fr)",
-                "52px 105px 140px 75px 85px minmax(0, 1fr)",
+              gridTemplateColumns: "150px 105px 60px 100px 100px",
               width: "100%",
               minWidth: 0,
               alignItems: "center",
               fontSize: "14px",
             }}
           >
-            <span>{data.brId ?? ""}</span>
-            <span>{data.date ?? ""}</span>
-            {/* <span>{data.docType ?? ""}</span> */}
             <span>{data.docTypeNo ?? data.docNo ?? data.value ?? ""}</span>
+            <span>{data.date ?? ""}</span>
+            <span>{data.brId ?? ""}</span>
             <span style={{ textAlign: "right", paddingRight: "8px" }}>
               {data.debit ?? ""}
             </span>
             <span style={{ textAlign: "right", paddingRight: "8px" }}>
               {data.credit ?? ""}
-            </span>
-            <span
-              style={{
-                overflow: "hidden",
-                whiteSpace: "nowrap",
-                textOverflow: "ellipsis",
-              }}
-            >
-              {data.description ?? ""}
             </span>
           </div>
         </components.SingleValue>
@@ -174,39 +162,26 @@ const ResponsiveSelect = ({
           <div
             style={{
               display: "grid",
-              gridTemplateColumns:
-                // "52px 105px 70px 105px 75px 85px minmax(0, 1fr)",
-                "52px 105px 140px 75px 85px minmax(0, 1fr)",
+              gridTemplateColumns: "150px 105px 60px 100px 100px",
               width: "100%",
               minWidth: 0,
               alignItems: "center",
               fontSize: "12px",
             }}
           >
-            <div>{data.brId ?? ""}</div>
-            <div>{data.date ?? ""}</div>
-            {/* <div>{data.docType ?? ""}</div> */}
             <div>{data.docTypeNo ?? data.docNo ?? data.value ?? ""}</div>
+            <div>{data.date ?? ""}</div>
+            <div>{data.brId ?? ""}</div>
             <div style={{ textAlign: "right", paddingRight: "8px" }}>
               {data.debit ?? ""}
             </div>
             <div style={{ textAlign: "right", paddingRight: "8px" }}>
               {data.credit ?? ""}
             </div>
-            <div
-              style={{
-                overflow: "hidden",
-                whiteSpace: "nowrap",
-                textOverflow: "ellipsis",
-              }}
-            >
-              {data.description ?? ""}
-            </div>
           </div>
         </components.Option>
       );
     }
-
     if (!columnHeaders) {
       return (
         <components.Option {...optionProps}>
@@ -269,23 +244,13 @@ const ResponsiveSelect = ({
 
   const CustomMenuList = (menuProps: any) => {
     if (documentMode) {
-      const headers = [
-        "BrID",
-        "Date",
-        // "Doc. Type",
-        "Doc. No.",
-        "Debit",
-        "Credit",
-        "Description",
-      ];
+      const headers = ["Document No.", "Date", "Br. ID", "Debit", "Credit"];
       return (
         <components.MenuList {...menuProps}>
           <div
             style={{
               display: "grid",
-              gridTemplateColumns:
-                // "52px 105px 70px 105px 75px 85px minmax(0, 1fr)",
-                "52px 105px 140px 75px 85px minmax(0, 1fr)",
+              gridTemplateColumns: "150px 105px 60px 100px 100px",
               width: "100%",
               minWidth: 0,
               alignItems: "center",
@@ -657,10 +622,7 @@ const MatchingComponents = forwardRef<MatchingComponentsRef, Props>(
      ===================================================== */
 
     const handleSearch = useCallback(async () => {
-      if (!type.trim()) {
-        console.warn("Please input 'Document Type'");
-        return;
-      }
+  
 
       if (!customerId.trim()) {
         console.warn("Please select 'Customer'");
@@ -670,7 +632,7 @@ const MatchingComponents = forwardRef<MatchingComponentsRef, Props>(
       // Company, year and user are also sent as x- headers by apiFetch.
       // The year is passed in the body too, read from the login session.
       const data = await getMatchAccounts({
-        strDocType: type,
+        // strDocType: type,
         strCSAccountID: customerId,
         strDivID: divisionId,
         year: getSession().pstrYear,
@@ -860,8 +822,8 @@ const MatchingComponents = forwardRef<MatchingComponentsRef, Props>(
         ...base,
         zIndex: 9999,
         fontSize: "14px",
-        width: 700,
-        minWidth: 700,
+        width: 520,
+        minWidth: 520,
         maxWidth: "calc(100vw - 24px)",
         left: 0,
       }),
