@@ -301,6 +301,7 @@ export const savePurchaseInvoice = async (
       discAmt,
       vatAmt,
       menuName,
+      strSN,
       lines,
       originalSlNos,
       expenses,
@@ -324,6 +325,7 @@ export const savePurchaseInvoice = async (
       discAmt?: number;
       vatAmt?: number;
       menuName?: string;
+      strSN?: string;
       lines: PILine[];
       originalSlNos?: number[]; // sl.# of lines loaded from DB (modify only)
       expenses?: PIExpLine[]; // purchase expense rows (frmPIExp)
@@ -377,6 +379,11 @@ export const savePurchaseInvoice = async (
         success: false,
         message: "originalSlNos is required for modify",
       });
+
+    if (!strSN || !strSN.trim())
+      return res
+        .status(400)
+        .json({ success: false, message: "strSN is required" });
 
     const validLines = (lines ?? []).filter((l) => l.itemId);
     if (validLines.length === 0)
@@ -517,8 +524,8 @@ export const savePurchaseInvoice = async (
     const miscId = (miscSupId ?? "").trim();
     await client.query(
       `UPDATE dbo.tblstocktrans
-          SET fmisccs = $6, fmisccsaccountid = $7
-        WHERE fcoid=$1 AND fyear=$2 AND fbrid=$3 AND fdoctype=$4 AND fdocno=$5`,
+      SET fmisccs = $6, fmisccsaccountid = $7, fsn = $8
+    WHERE fcoid=$1 AND fyear=$2 AND fbrid=$3 AND fdoctype=$4 AND fdocno=$5`,
       [
         coId,
         Number(year),
@@ -527,6 +534,7 @@ export const savePurchaseInvoice = async (
         docNo,
         miscId !== "",
         miscId || null,
+        strSN!.trim(),
       ],
     );
 
