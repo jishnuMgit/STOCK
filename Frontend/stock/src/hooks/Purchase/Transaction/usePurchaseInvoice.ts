@@ -571,6 +571,7 @@ export const usePurchaseInvoice = () => {
         discAmt: n(header.discAmt),
         vatAmt: n(header.vatAmt),
         menuName: "frmPI",
+        strSN: "S",
         lines,
         expenses: expenseLines,
         originalSlNos: mode === "M" ? originalSlNos : undefined,

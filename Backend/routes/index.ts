@@ -24,6 +24,7 @@ import UserAuditRouter from "./SecurityRoutes/UserAuditRouter.js";
 import userpermission from "./SecurityRoutes/UserPermissionMenuRouter.js";
 import userpermissionBranch from "./SecurityRoutes/UserPermissionBranchRouter.js";
 import purchaseInvoiceRouter from "./Purchase/Transaction/PurchaseInvoiceRouter.js";
+import salesInvoiceRouter from "./Sales/Transaction/SalesInvoice/SalesInvoiceRouter.js";
 import BeginningStockRouter from "./Purchase/Transaction/BeginningStockRouter.js";
 import ItemEnquiryRouter from "./Sales/Setup/ItemEnquiryRouter.js";
 import SalesPriceListRouter from "./Sales/Setup/SalesPriceListRouter.js";
@@ -42,10 +43,11 @@ import InactivateAccountRouter from "./Finance/Setup/InactivateAccountRouter.js"
 import CustomerSupplierCountryRouter from "./Finance/Setup/CustomerSupplierCountryRouter.js";
 import CustomerDivisionRouter from "./Finance/Setup/CustomerDivisionRouter.js";
 import CurrencyRouter from "./Purchase/Setup/CurrencyRouter.js";
-import supplierRouter from "./common/SupplierRouter.js"; import RptCOARouter from "./Finance/Report/RptChartOfAccountRouter.js"
-import RptCustomerListRouter from "./Finance/Report/RptCustomerListRouter.js"
-import RptItemHistoryRouter from "./Purchase/Report/RptItemHistoryRouter.js"
-import RptItemListRouter from "./Purchase/Report/RptItemListRouter.js"
+import supplierRouter from "./common/SupplierRouter.js";
+import RptCOARouter from "./Finance/Report/RptChartOfAccountRouter.js";
+import RptCustomerListRouter from "./Finance/Report/RptCustomerListRouter.js";
+import RptItemHistoryRouter from "./Purchase/Report/RptItemHistoryRouter.js";
+import RptItemListRouter from "./Purchase/Report/RptItemListRouter.js";
 import RptTBRouter from "./Finance/Report/FinalAccounts/RptTBRouter.js";
 import RptSalesPriceListRouter from "./Purchase/Report/RptSalesPriceListRouter.js";
 import RptSOARouter from "./Finance/Report/A_RandA_P/RptSOARouter.js";
@@ -62,7 +64,7 @@ import RptRVPVSumRouter from "./Finance/Report/RptRVPVSumRouter.js";
 import RptReceivablesRouter from "./Finance/Report/A_RandA_P/RptReceivablesRouter.js";
 
 import RptPayablesRouter from "./Finance/Report/A_RandA_P/RptPayablesRouter.js";
-import RptGLRouter  from "./Finance/Report/GeneralLedger/RptGLRouter.js";
+import RptGLRouter from "./Finance/Report/GeneralLedger/RptGLRouter.js";
 
 const router = express.Router();
 
@@ -92,6 +94,7 @@ router.use("/UserAudit", UserAuditRouter);
 router.use("/user-permission", userpermission);
 router.use("/user-permission-branch", userpermissionBranch);
 router.use("/purchase-invoice", purchaseInvoiceRouter);
+router.use("/sales-invoice", salesInvoiceRouter);
 router.use("/BeginningStock", BeginningStockRouter);
 router.use("/ItemEnquiry", ItemEnquiryRouter);
 router.use("/SalesPriceList", SalesPriceListRouter);

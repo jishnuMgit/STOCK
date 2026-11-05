@@ -334,7 +334,7 @@ const MatchReversalHeader: React.FC<MatchHeaderProps> = ({
 
           <div className="ml-px">
             {renderSelect(
-              "lkpDocNo.",
+              "lkpDocTypeNo.",
               receiptNo,
               documentNoOptions,
               handleDocNoChange,
