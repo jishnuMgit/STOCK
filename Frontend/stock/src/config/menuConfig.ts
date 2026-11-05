@@ -12,6 +12,18 @@ import {
 import type { MenuNode } from "../types/menu";
 
 /* =========================================================
+   MENU ORDER
+
+   The sidebar lists the menus of a folder by their fmenuid. A menu that has to be listed right after another one of the
+   same folder (its own id sorts it later) is named here: fmenuname of the menu -> fmenuname of the menu it follows.
+   Customer Division (110207) is listed right after Customer (110202).
+========================================================= */
+
+export const MENU_PLACED_AFTER: Record<string, string> = {
+  mnuCustomerDivision: "mnuCustomer",
+};
+
+/* =========================================================
    ROUTE MAP
 
    Keyed by fmenuname (the stable, non-localized column),
@@ -125,6 +137,7 @@ Sales-REPORT
   ========================================================= */
 
   mnuCustomer: "/Finance/Setup/CustomerPage",
+  mnuCustomerDivision: "/Finance/Setup/CustomerDivision",
   mnuChartOfAccount: "/Finance/Setup/ChartOfAccountList",
   mnuCostCenter: "/Finance/Setup/CostCenter",
   "mnuCustomer/Supplier Country": "/Finance/Setup/CustomerSupplierCountry",

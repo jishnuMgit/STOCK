@@ -123,9 +123,10 @@ export const docSelectStyles: StylesConfig<
 
   menu: (base) => ({
     ...base,
-    width: "300px",
-    minWidth: "300px",
-   
+    // the box's width plus the ID column that hangs out past its right edge (the Branch list of the reports)
+    width: "calc(var(--select-width, 160px) + 70px)",
+    minWidth: "calc(var(--select-width, 160px) + 70px)",
+
     zIndex: 9999,
   }),
 };
@@ -166,6 +167,61 @@ export  const DocumnetNoSelectStyles: StylesConfig<
   menu: (base) => ({
     ...base,
     width: "700px",
+    zIndex: 9999,
+  }),
+};
+
+// The Customer ID box's list: it runs under the ID box and the Name box next to it (the ID box is 154px, the gap 11px,
+// the Name box 520px), so "Account ID" is as wide as the ID box and "Account Name" starts exactly under the Name box.
+export const customerIdListStyles: StylesConfig<SelectOption, false> = {
+  ...selectStyles,
+
+  menu: (base) => ({
+    ...base,
+    width: "calc(var(--select-width, 154px) + 11px + 520px)",
+    minWidth: "calc(var(--select-width, 154px) + 11px + 520px)",
+    maxWidth: "calc(100vw - 24px)",
+    zIndex: 9999,
+  }),
+};
+
+// The Customer Name box's list: "Account Name" as wide as the box, the ID column hanging out past its right edge, a
+// divider line between the two (the Branch list of the reports).
+export const customerNameListStyles: StylesConfig<SelectOption, false> = {
+  ...selectStyles,
+
+  menu: (base) => ({
+    ...base,
+    width: "calc(var(--select-width, 520px) + 120px)",
+    minWidth: "calc(var(--select-width, 520px) + 120px)",
+    maxWidth: "calc(100vw - 24px)",
+    zIndex: 9999,
+  }),
+};
+
+// The Division box's list: the same design - the name as wide as the box, the ID column hanging out past its right edge.
+export const divisionListStyles: StylesConfig<SelectOption, false> = {
+  ...selectStyles,
+
+  menu: (base) => ({
+    ...base,
+    width: "calc(var(--select-width, 300px) + 80px)",
+    minWidth: "calc(var(--select-width, 300px) + 80px)",
+    maxWidth: "calc(100vw - 24px)",
+    zIndex: 9999,
+  }),
+};
+
+// The Document No. box's list: BrID, Date, Document No. (type and number), Debit, Credit, Description - as wide as the Customer ID list above it - from the
+// left edge of the box to the right edge of the Customer Name box (the ID box 154px + the gap 11px + the Name box 520px).
+export const documentNoListStyles: StylesConfig<SelectOption, false> = {
+  ...selectStyles,
+
+  menu: (base) => ({
+    ...base,
+    width: "calc(154px + 11px + 520px)",
+    minWidth: "calc(154px + 11px + 520px)",
+    maxWidth: "calc(100vw - 24px)",
     zIndex: 9999,
   }),
 };

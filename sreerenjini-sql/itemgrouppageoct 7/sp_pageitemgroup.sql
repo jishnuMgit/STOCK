@@ -1,6 +1,9 @@
 -- PROCEDURE: dbo.sp_pageitemgroup
 --   (Postgres port of the SQL Server SP_frmItemGroup, with the VAT slab and
---    VAT % columns added: tblitemgroup.fvatslab / fvatper)
+--    VAT % columns added: tblitemgroup.fvatslab / fvatper, and the Stock /
+--    Non-stock flag: tblitemgroup.fsn  S = Stock, N = Non-stock)
+--
+-- Run sreerenjini-sql/itemgroup/alter_tblitemgroup_add_fsn.sql first (the column).
 --
 -- Modes
 --   G   all item groups of the company (the old 'G')
@@ -19,13 +22,16 @@
 --   FETCH ALL FROM "c1";
 --   COMMIT;
 
--- DROP PROCEDURE IF EXISTS dbo.sp_pageitemgroup(IN p_strmode character varying, IN p_pstrcoid character varying, IN p_stritemgroupid character varying, IN p_stritemgroupname character varying, IN p_strvatslab character varying, IN p_numvatper numeric, IN p_original_fitemgroupid character varying, IN p_pstruserid character varying, IN p_strmenuname character varying, IN p_strscreenname character varying, IN p_strmoduleid character varying, IN p_result_cursor refcursor);
+-- the signature changed (p_lkpfsn added): the old one is dropped first, or both would stay installed
+DROP PROCEDURE IF EXISTS dbo.sp_pageitemgroup(IN p_strmode character varying, IN p_pstrcoid character varying, IN p_stritemgroupid character varying, IN p_stritemgroupname character varying, IN p_strvatslab character varying, IN p_numvatper numeric, IN p_original_fitemgroupid character varying, IN p_pstruserid character varying, IN p_strmenuname character varying, IN p_strscreenname character varying, IN p_strmoduleid character varying, IN p_result_cursor refcursor);
+DROP PROCEDURE IF EXISTS dbo.sp_pageitemgroup(IN p_strmode character varying, IN p_pstrcoid character varying, IN p_stritemgroupid character varying, IN p_stritemgroupname character varying, IN p_lkpfsn character varying, IN p_strvatslab character varying, IN p_numvatper numeric, IN p_original_fitemgroupid character varying, IN p_pstruserid character varying, IN p_strmenuname character varying, IN p_strscreenname character varying, IN p_strmoduleid character varying, IN p_result_cursor refcursor);
 
 CREATE OR REPLACE PROCEDURE dbo.sp_pageitemgroup(
     IN p_strmode                character varying,
     IN p_pstrcoid               character varying,
     IN p_stritemgroupid         character varying DEFAULT NULL::character varying,
     IN p_stritemgroupname       character varying DEFAULT NULL::character varying,
+    IN p_lkpfsn                  character varying DEFAULT NULL::character varying,
     IN p_strvatslab             character varying DEFAULT NULL::character varying,
     IN p_numvatper              numeric           DEFAULT 0,
     IN p_original_fitemgroupid  character varying DEFAULT NULL::character varying,
@@ -44,6 +50,7 @@ BEGIN
             SELECT
                 fitemgroupid,
                 fitemgroupname,
+                fsn,
                 fvatslab,
                 fvatper
             FROM dbo.tblitemgroup
@@ -56,6 +63,7 @@ BEGIN
             SELECT
                 fitemgroupid,
                 fitemgroupname,
+                fsn,
                 fvatslab,
                 fvatper
             FROM dbo.tblitemgroup
@@ -66,12 +74,12 @@ BEGIN
 
         INSERT INTO dbo.tblitemgroup (
             fcoid, fitemgroupid, fitemgroupname,
-            fvatslab, fvatper,
+            fsn, fvatslab, fvatper,
             fcuserid, fcuserdate
         )
         VALUES (
             p_pstrcoid, p_stritemgroupid, p_stritemgroupname,
-            p_strvatslab, p_numvatper,
+            p_lkpfsn, p_strvatslab, p_numvatper,
             p_pstruserid, now()
         );
 
@@ -80,6 +88,7 @@ BEGIN
         UPDATE dbo.tblitemgroup SET
             fitemgroupid   = p_stritemgroupid,
             fitemgroupname = p_stritemgroupname,
+            fsn            = p_lkpfsn,
             fvatslab       = p_strvatslab,
             fvatper        = p_numvatper,
             fmuserid       = p_pstruserid,

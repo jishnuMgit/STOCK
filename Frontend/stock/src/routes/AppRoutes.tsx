@@ -28,7 +28,7 @@ import UnitPage from "../pages/Purchase/Setup/UnitPage";
 import StaffPage from "../pages/Purchase/Setup/StaffPage";
 import UserAudit from "../pages/Security/UserAudit/UserAuditPage";
 import UserTransactionAudit from "../pages/Security/UserTransactionAudit/UserTransactionAuditPage";
-import StockDocumentPost from "../pages/Sales/Transaction/stock/StockDocumentPostPage";
+import StockDocumentPostPage from "../pages/Sales/Transaction/stock/StockDocumentPostPage";
 import StockDocumentPostCancel from "../pages/Sales/Transaction/stock/StockDocumentPostCancel";
 import StockDocumentRePost from "../pages/Sales/Transaction/stock/StockDocumentRePost";
 import RptGLPage from "../pages/Finance/Report/GeneralLedger/GeneralLedger/RptGLPage";
@@ -43,6 +43,7 @@ import RptCustomerSalesPage from "../pages/Sales/Report/RptCustomerSalesPage";
 import RptItemSalesPage from "../pages/Sales/Report/RptItemSalesPage";
 import CustomerSupplierCountryPage from "../pages/Finance/Setup/CustomerSupplierCountryPage";
 import InactivateAccountPage from "../pages/Finance/Setup/InactivateAccountPage";
+import CustomerDivisionPage from "../pages/Finance/Setup/CustomerDivisionPage";
 import CurrencyPage from "../pages/Purchase/Setup/CurrencyPage";
 import RptReceivablesPage from "../pages/Finance/Report/A-R_and_A-P/Receivables/RptReceivablesPage";
 import RptAgeingReceivablesPage from "../pages/Finance/Report/A-R_and_A-P/AgeingOfReceivables/AgeingOfReceivablesPage";
@@ -73,7 +74,7 @@ import RptGeneralLedgerSummaryPage from "../pages/Finance/Report/GeneralLedger/G
 import DocumentPostPage from "../pages/Finance/Transaction/DocumentPost/DocumentPostPage";
 import RptDocumentPrintPage from "../pages/Finance/Transaction/DocumentPrint/RptDocumentPrintPage";
 import RptExpenseSumPage from "../pages/Finance/Report/ExpenseSummary/RptExpenseSumPage";
-import RptReceiptPaymentSumPage from "../pages/Finance/Report/ReceiptPaymentSum/RptReceiptPaymentSumPage";
+import RptRVPVSumPage from "../pages/Finance/Report/RVPVSum/RptRVPVSumPage";
 import RptFinDocList from "../pages/Finance/Report/DocumentsList/RptFinDocList";
 import SalesPriceListPage from "../pages/Sales/Setup/SalesPriceListPage";
 import RptIncomeSumPage from "../pages/Finance/Report/IncomeSummary/RptIncomeSumPage";
@@ -192,6 +193,10 @@ const AppRoutes = () => {
             element={<CustomerPage />}
           />
           <Route
+            path="/Finance/Setup/CustomerDivision"
+            element={<CustomerDivisionPage />}
+          />
+          <Route
             path="/Finance/Setup/ChartOfAccountList"
             element={<ChartOfAccountList />}
           />
@@ -264,7 +269,7 @@ const AppRoutes = () => {
           />
           <Route
             path="/Finance/Reports/RptRVPVSum"
-            element={<RptReceiptPaymentSumPage />}
+            element={<RptRVPVSumPage />}
           />
           <Route
             path="/Finance/Reports/RptFinDocList"
@@ -300,7 +305,7 @@ const AppRoutes = () => {
           />
           <Route
             path="/Sales/Transaction/StockDocumentPost"
-            element={<StockDocumentPost />}
+            element={<StockDocumentPostPage />}
           />
           <Route
             path="/Sales/Transaction/StockDocumentRePost"

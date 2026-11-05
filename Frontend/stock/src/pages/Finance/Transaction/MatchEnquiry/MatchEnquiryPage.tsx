@@ -8,96 +8,55 @@ import {
 
 import MatchingComponents from "../../../../components/Transaction/MatchEnquiry/MatchEnquiryComponents";
 import useMatchEnquiry from "../../../../hooks/useMatchEnquiry";
-import { apiFetch, getSession } from "../../../../utils/session";
+import { apiFetch } from "../../../../utils/session";
+import ReportPreview from "../../../../components/common/ReportPreview";
+import {
+  buildHtml,
+  printMatchEnquiryReport,
+  type PrintReport,
+} from "../../../../components/Transaction/MatchEnquiry/MatchEnquiryPrintReport";
+import { buildMatchEnquiryPdf } from "../../../../components/Transaction/MatchEnquiry/MatchEnquiryPdf";
 
-interface CustomerAccount {
-  fcsaccountid: string;
-  fcsaccountname: string;
-}
+const API = `${import.meta.env.VITE_API_URL}/MatchEnquiry`;
 
 const getErrorMessage = (error: unknown): string =>
   error instanceof Error ? error.message : "Something went wrong";
 
 const MatchEnquiryPage: React.FC = () => {
   /* ---------- HEADER STATE ---------- */
-  const [branch, setBranch] = useState("");
-  const [doctype, setDocType] = useState("");
-  const [receiptNo, setReceiptNo] = useState("");
+  const [lkpBranch, setLkpBranch] = useState("");
+  const [lkpDocType, setLkpDocType] = useState("");
+  const [lkpDocTypeNo, setLkpDocTypeNo] = useState(""); // the Document No. box: the key "branch|type|number"
   const [receiptDate, setReceiptDate] = useState("");
-  const [customerId, setCustomerId] = useState("");
-  const [customerName, setCustomerName] = useState("");
-  const [divisionId, setDivisionId] = useState("");
+  const [lkpCsAccountID, setLkpCsAccountID] = useState("");
+  const [lkpCsAccountName, setLkpCsAccountName] = useState("");
+  const [lkpDivision, setLkpDivision] = useState("");
 
   /* ---------- OPTIONS ---------- */
   const [branchOptions] = useState<SelectOption[]>([]);
-  const [customerOptions, setCustomerOptions] = useState<SelectOption[]>([]);
-  const [customerNameOptions, setCustomerNameOptions] = useState<
-    SelectOption[]
-  >([]);
-  const [divisionOptions] = useState<SelectOption[]>([]);
 
   /* ---------- API HOOK ---------- */
+  // every lookup of the screen comes from the Match Enquiry controller: the document types and the customers (one call),
+  // the divisions of the chosen customer, the Document No. list of the Search button
   const {
     rows,
-    docTypeOptions,
+    customerOptions,
+    customerNameOptions,
+    divisionOptions,
+    divisionLoading,
     getLookups,
-    getMatchAccounts,
+    getDivisions,
+    getDocumentNos,
     getMatchEnquiry,
     clearRows,
   } = useMatchEnquiry();
 
   const matchingRef = useRef<MatchingComponentsRef | null>(null);
 
-  // TODO: replace with the session's financial year if it differs
-  const year = String(getSession().pstrYear);
-
-  /* ---------- LOAD DOCUMENT TYPES (hook) ---------- */
+  /* ---------- LOAD THE LOOKUPS: the customers (hook) ---------- */
   useEffect(() => {
     getLookups();
   }, [getLookups]);
-
-  /* ---------- LOAD CUSTOMERS ---------- */
-  useEffect(() => {
-    const loadCustomers = async () => {
-      try {
-        const response = await apiFetch(
-          `${import.meta.env.VITE_API_URL}/Match/getCSAccounts`,
-        );
-        if (!response.ok) throw new Error("Failed to load customer accounts");
-
-        const data = await response.json();
-
-        if (Array.isArray(data?.AccountID)) {
-          setCustomerOptions(
-            (data.AccountID as CustomerAccount[])
-              .map((a) => ({ value: a.fcsaccountid, label: a.fcsaccountname }))
-              .sort((a, b) =>
-                a.value.localeCompare(b.value, undefined, {
-                  numeric: true,
-                  sensitivity: "base",
-                }),
-              ),
-          );
-        }
-
-        if (Array.isArray(data?.AccountName)) {
-          setCustomerNameOptions(
-            (data.AccountName as CustomerAccount[])
-              .map((a) => ({ value: a.fcsaccountname, label: a.fcsaccountid }))
-              .sort((a, b) =>
-                a.value.localeCompare(b.value, undefined, {
-                  sensitivity: "base",
-                }),
-              ),
-          );
-        }
-      } catch (error) {
-        console.error("Customer load error:", error);
-      }
-    };
-
-    loadCustomers();
-  }, []);
 
   useEffect(() => {
     requestAnimationFrame(() => matchingRef.current?.focusCustomerId());
@@ -105,50 +64,118 @@ const MatchEnquiryPage: React.FC = () => {
 
   /* ---------- LOAD ENQUIRY LINES ---------- */
   const loadEnquiry = useCallback(
-    async (brId: string, docNo: string) => {
+    async (lkpBranch: string, lkpDocNo: string, lkpDocType: string) => {
       try {
-        await getMatchEnquiry({ year, brId, docType: doctype, docNo });
+        await getMatchEnquiry({ lkpBranch, lkpDocType, lkpDocNo });
       } catch (error) {
         toast.error(getErrorMessage(error));
       }
     },
-    [getMatchEnquiry, year, doctype],
+    [getMatchEnquiry],
   );
 
-  // called by the Document No. dropdown
+  // called by the Document No. dropdown: the branch and the document type come with the document
   const handleDocumentSelect = useCallback(
-    (brId: string, docNo: string) => {
-      setBranch(brId);
-      loadEnquiry(brId, docNo);
+    (branchId: string, docNo: string, docType: string) => {
+      setLkpBranch(branchId);
+      loadEnquiry(branchId, docNo, docType);
     },
     [loadEnquiry],
   );
 
   // a new Search invalidates the previous document / lines
   const handleSearch = useCallback(() => {
-    setReceiptNo("");
-    setBranch("");
+    setLkpDocTypeNo("");
+    setLkpBranch("");
     clearRows();
   }, [clearRows]);
 
-  /* ---------- PRINT ---------- */
-  const handlePrint = useCallback(() => {
-    if (!branch || !receiptNo || rows.length === 0) {
+  /* ---------- PRINT (the  rptMatchEnquiryPrint) ---------- */
+  // the Print Preview (after Print) and the Print button while the server makes the report
+  const [printing, setPrinting] = useState(false);
+  const [preview, setPreview] = useState<{
+    report: PrintReport;
+    fileBase: string;
+    params: { lkpBranch: string; lkpDocType: string; lkpDocNo: string };
+  } | null>(null);
+
+  const handlePrint = useCallback(async () => {
+    if (printing || preview) return;
+
+    if (!lkpBranch || !lkpDocTypeNo || rows.length === 0) {
       toast.error("Please select a 'Document No.' to print");
       return;
     }
-    window.print(); // TODO: replace with a report/PDF export if needed
-  }, [branch, receiptNo, rows.length]);
+
+    // what the server takes: the branch, the document type and the document number of the screen
+    // receiptNo is the document's key "branch|type|number" (the same number can be used by two types)
+    const params = {
+      lkpBranch,
+      lkpDocType,
+      lkpDocNo: lkpDocTypeNo.split("|")[2] ?? lkpDocTypeNo,
+    };
+
+    setPrinting(true);
+
+    try {
+      const response = await apiFetch(`${API}/print`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(params),
+      });
+
+      const result = await response.json().catch(() => null);
+
+      if (!response.ok || !result?.success) {
+        toast.warning(result?.message || "The Match Enquiry report could not be printed.");
+        return;
+      }
+
+      setPreview({ report: result.report, fileBase: result.fileBase, params });
+    } catch (error) {
+      toast.error(getErrorMessage(error));
+    } finally {
+      setPrinting(false);
+    }
+  }, [printing, preview, lkpBranch, lkpDocTypeNo, rows.length, lkpDocType]);
+
+  // the Excel file of the Print Preview, made by the server (null after an error)
+  const fetchExcel = useCallback(async (): Promise<Blob | null> => {
+    if (!preview) return null;
+
+    const response = await apiFetch(`${API}/excel`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(preview.params),
+    });
+
+    // an error comes back as JSON, the file as a blob
+    if (!response.ok) {
+      let message = "Could not create the Excel file";
+
+      try {
+        const result = await response.json();
+        message = result.message || message;
+      } catch {
+        message = `Could not create the Excel file (error ${response.status})`;
+      }
+
+      toast.error(message);
+      return null;
+    }
+
+    return response.blob();
+  }, [preview]);
 
   /* ---------- CLEAR ---------- */
   const clearForm = useCallback(() => {
-    setBranch("");
-    setDocType("");
-    setReceiptNo("");
+    setLkpBranch("");
+    setLkpDocType("");
+    setLkpDocTypeNo("");
     setReceiptDate("");
-    setCustomerId("");
-    setCustomerName("");
-    setDivisionId("");
+    setLkpCsAccountID("");
+    setLkpCsAccountName("");
+    setLkpDivision("");
     clearRows();
     requestAnimationFrame(() => matchingRef.current?.focusCustomerId());
   }, [clearRows]);
@@ -162,23 +189,24 @@ const MatchEnquiryPage: React.FC = () => {
       <div className="w-full max-w-287.5 min-w-0 border border-gray-400 bg-white">
         <MatchingComponents
           ref={matchingRef}
-          year={year}
-          branch={branch}
-          setBranch={setBranch}
-          type={doctype}
-          setDocType={setDocType}
-          receiptNo={receiptNo}
-          setReceiptNo={setReceiptNo}
+          lkpBranch={lkpBranch}
+          setLkpBranch={setLkpBranch}
+          type={lkpDocType}
+          setLkpDocType={setLkpDocType}
+          lkpDocTypeNo={lkpDocTypeNo}
+          setLkpDocTypeNo={setLkpDocTypeNo}
           receiptDate={receiptDate}
           setReceiptDate={setReceiptDate}
-          customerId={customerId}
-          setCustomerId={setCustomerId}
-          customerName={customerName}
-          setCustomerName={setCustomerName}
-          divisionId={divisionId}
-          setDivisionId={setDivisionId}
+          lkpCsAccountID={lkpCsAccountID}
+          setLkpCsAccountID={setLkpCsAccountID}
+          lkpCsAccountName={lkpCsAccountName}
+          setLkpCsAccountName={setLkpCsAccountName}
+          lkpDivision={lkpDivision}
+          setLkpDivision={setLkpDivision}
           rows={rows}
-          getMatchAccounts={getMatchAccounts}
+          getDocumentNos={getDocumentNos}
+          getDivisions={getDivisions}
+          divisionLoading={divisionLoading}
           onDocumentSelect={handleDocumentSelect}
           onPrint={handlePrint}
           clearForm={clearForm}
@@ -187,11 +215,22 @@ const MatchEnquiryPage: React.FC = () => {
           customerOptions={customerOptions}
           customerNameOptions={customerNameOptions}
           divisionOptions={divisionOptions}
-          documentOptions={docTypeOptions}
           totalDebit={totalDebit}
           totalCredit={totalCredit}
         />
       </div>
+
+      {/* the Print Preview (after Print) */}
+      {preview && (
+        <ReportPreview
+          html={buildHtml(preview.report)}
+          fileBase={preview.fileBase}
+          onPrint={() => printMatchEnquiryReport(preview.report)}
+          buildPdf={() => buildMatchEnquiryPdf(preview.report)}
+          fetchExcel={fetchExcel}
+          onClose={() => setPreview(null)}
+        />
+      )}
     </div>
   );
 };

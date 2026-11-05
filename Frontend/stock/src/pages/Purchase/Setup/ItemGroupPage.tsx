@@ -1,5 +1,10 @@
 import React, { useEffect, useState } from "react";
-import Select, { type StylesConfig } from "react-select";
+import Select, {
+  components,
+  type MenuListProps,
+  type OptionProps,
+  type StylesConfig,
+} from "react-select";
 import { toast } from "react-toastify";
 import { useEnterAsTab } from "../../../hooks/useEnterAsTab";
 import { useAltShortcuts } from "../../../hooks/useAltShortcuts";
@@ -122,8 +127,72 @@ const selectStyles: StylesConfig<Option, false> = {
 };
 
 // ============================================================
+// STOCK / NON-STOCK LIST
+// The same list as the Branch list of the reports: the name first (as wide as the box), the ID in a column that hangs out
+// past the right edge of the box, a header line on top. The box shows the name (fpname); lkpFSN keeps the ID (fpid).
+// ============================================================
+
+const SN_COLS = "grid grid-cols-[1fr_55px]";
+
+const SnMenuList = (props: MenuListProps<Option, false>) => (
+  <components.MenuList {...props}>
+    <div
+      className={`${SN_COLS} sticky top-0 z-[1] border-b border-[#cfd7df] bg-[#f5f6fa] text-[13px] font-semibold text-[#24364d]`}
+    >
+      <div className="border-r border-[#cfd7df] px-[8px] py-[7px]">Type</div>
+      <div className="px-[8px] py-[7px]">ID</div>
+    </div>
+    {props.children}
+  </components.MenuList>
+);
+
+const SnOption = (props: OptionProps<Option, false>) => (
+  <components.Option {...props}>
+    <div className={SN_COLS}>
+      <div className="truncate border-r border-[#cfd7df] px-[8px] py-[6px]">
+        {props.data.label}
+      </div>
+      <div className="truncate px-[8px] py-[6px]">{props.data.value}</div>
+    </div>
+  </components.Option>
+);
+
+const snSelectComponents = {
+  ...selectComponents,
+  MenuList: SnMenuList,
+  Option: SnOption,
+};
+
+const snSelectStyles: StylesConfig<Option, false> = {
+  ...selectStyles,
+
+  // the box's width plus the ID column that hangs out past its right edge
+  menu: (base) => ({
+    ...base,
+    zIndex: 9999,
+    fontSize: 13,
+    marginTop: 1,
+    width: "calc(100% + 55px)",
+  }),
+
+  option: (base, state) => ({
+    ...base,
+    padding: 0,
+    fontSize: 13,
+    color: "#202020",
+    cursor: "pointer",
+    backgroundColor: state.isSelected
+      ? "#dbeafe"
+      : state.isFocused
+        ? "#eff6ff"
+        : "#ffffff",
+  }),
+};
+
+// ============================================================
 // ITEM GROUP
 // ============================================================
+
 
 // dbo.tblmenu fmenuid for the Item Group page (fmenucaption = "Item Group").
 const MENU_ID = "010202";
@@ -140,6 +209,10 @@ const ItemGroupPage: React.FC = () => {
 
   const [txtItemGroupID, setTxtItemGroupID] = useState("");
   const [txtItemGroupName, setTxtItemGroupName] = useState("");
+  const [lkpFSN, setLkpFSN] = useState(""); // Stock / Non-stock: the id that is saved (tblitemgroup.fsn)
+
+  // Stock / Non-stock list (tblstockparam, IGTP): the box shows the name, lkpFSN keeps the id
+  const [snOptions, setSnOptions] = useState<Option[]>([]);
 
   // Does the Item Group ID already exist? false -> the button says Save
   // (new group), true -> Modify. Set by the load (leaving the ID box),
@@ -204,6 +277,47 @@ const ItemGroupPage: React.FC = () => {
   }, []);
 
   // ==========================================================
+  // LOAD STOCK / NON-STOCK (lkpFSN dropdown)
+  // ==========================================================
+
+  useEffect(() => {
+    const loadItemGroupTypes = async () => {
+      try {
+        const PstrCoID = localStorage.getItem("PstrCoID");
+
+        if (!PstrCoID) {
+          toast.error("getItemGroupTypeList: no PstrCoID in localStorage");
+          return;
+        }
+
+        const response = await fetch(
+          `${import.meta.env.VITE_API_URL}/ItemGroup/getItemGroupTypeList?PstrCoID=${PstrCoID}`,
+        );
+        const result = await response.json();
+
+        if (!response.ok || !result.success) {
+          toast.error(result.message || "Failed to load Stock / Non-stock");
+          return;
+        }
+
+        setSnOptions(
+          (result.data || []).map(
+            (type: { lkpFSN: string; lkpFSNName: string }) => ({
+              value: type.lkpFSN,
+              label: type.lkpFSNName,
+            }),
+          ),
+        );
+      } catch (error) {
+        console.error("getItemGroupTypeList error:", error);
+        toast.error("Cannot connect to Item Group API.");
+      }
+    };
+
+    loadItemGroupTypes();
+  }, []);
+
+  // ==========================================================
   // VAT SLAB CHANGE
   // ==========================================================
 
@@ -249,6 +363,7 @@ const ItemGroupPage: React.FC = () => {
 
       setHasSavedItemGroup(true);
       setTxtItemGroupName(result.data.txtItemGroupName || "");
+      setLkpFSN(result.data.lkpFSN || "");
       setLkpVATSlab(result.data.lkpVATSlab || "");
       setTxtVATPer(Number(result.data.txtVATPer ?? 0).toFixed(2));
     } catch (error) {
@@ -279,6 +394,7 @@ const ItemGroupPage: React.FC = () => {
     const requiredBoxes: { id: string; value: string; message: string }[] = [
       { id: "txtItemGroupID", value: txtItemGroupID, message: "Please input 'Item Group ID'" },
       { id: "txtItemGroupName", value: txtItemGroupName, message: "Please input 'Item Group Name'" },
+      { id: "lkpFSN", value: lkpFSN, message: "Please select 'Stock / Non-stock'" },
       { id: "lkpVATSlab", value: lkpVATSlab, message: "Please select 'VAT Slab'" },
     ];
 
@@ -312,6 +428,7 @@ const ItemGroupPage: React.FC = () => {
             PstrUserID,
             txtItemGroupID,
             txtItemGroupName,
+            lkpFSN,
             lkpVATSlab,
           }),
         },
@@ -424,6 +541,7 @@ const ItemGroupPage: React.FC = () => {
     setHasSavedItemGroup(false);
     setTxtItemGroupID("");
     setTxtItemGroupName("");
+    setLkpFSN("");
     setLkpVATSlab("");
     setTxtVATPer("0.00");
   };
@@ -518,6 +636,38 @@ const ItemGroupPage: React.FC = () => {
                 value={txtItemGroupName}
                 onChange={(e) => setTxtItemGroupName(e.target.value)}
                 className="w-full input-style"
+              />
+            </div>
+          </div>
+
+          {/* STOCK / NON-STOCK */}
+
+          <div className="mb-[8px] grid grid-cols-[195px_1fr] items-center">
+            <label
+              htmlFor="lkpFSN"
+              className="relative pr-3 text-right text-[14px] text-gray-600"
+            >
+              <span className="absolute right-[15px] -top-0.5 h-[4px] w-[4px] text-red-500">*</span>
+              Stock / Non-stock :
+            </label>
+
+            <div className="w-[30%]">
+              <Select<Option, false>
+                components={snSelectComponents}
+                inputId="lkpFSN"
+                instanceId="lkpFSN"
+                name="lkpFSN"
+                options={snOptions}
+                value={snOptions.find((option) => option.value === lkpFSN) || null}
+                onChange={(option) => setLkpFSN(option?.value ?? "")}
+                styles={snSelectStyles}
+                isClearable={false}
+                isSearchable={false}
+                placeholder="Select..."
+                menuPosition="fixed"
+                menuPortalTarget={
+                  typeof document !== "undefined" ? document.body : undefined
+                }
               />
             </div>
           </div>

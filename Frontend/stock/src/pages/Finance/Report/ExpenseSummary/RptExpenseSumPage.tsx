@@ -1,5 +1,27 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import Select from "react-select";
+import { toast } from "react-toastify";
+import {
+  BranchDividedMenuList,
+  BranchDividedOption,
+  branchMenuStyles,
+  filterLabelOrValue,
+  makeNameIdMenuComponents,
+} from "../../../../components/BranchSelect/branchSelectParts";
+import { useInitialFocus } from "../../../../hooks/useInitialFocus";
+import { useGridCellFocus } from "../../../../hooks/useGridCellFocus";
+import { useEnterAsTab } from "../../../../hooks/useEnterAsTab";
+import { useAltShortcuts } from "../../../../hooks/useAltShortcuts";
+import { useCtrlShortcuts } from "../../../../hooks/useCtrlShortcuts";
+import { useAdvanceAfterSelect } from "../../../../hooks/useAdvanceAfterSelect";
+import RadioGroup from "../../../../components/common/RadioGroup";
+import ReportPreview from "../../../../components/common/ReportPreview";
+import {
+  buildHtml,
+  printExpenseSumReport,
+  type PrintReport,
+} from "../../../../components/Finance/Report/RptExpenseSum/RptExpenseSumPrintReport";
+import { buildExpenseSumPdf } from "../../../../components/Finance/Report/RptExpenseSum/RptExpenseSumPdf";
 import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
 import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
 import { DatePicker } from "@mui/x-date-pickers/DatePicker";
@@ -10,27 +32,12 @@ dayjs.extend(customParseFormat);
 
 type Option = { value: string; label: string };
 
-type RadioOptionProps = {
-  name: string;
-  value: string;
-  label: string;
-  checked: boolean;
-  onChange: () => void;
-};
-
 const DATE_FORMAT = "DD-MM-YYYY";
 const MONTH_FORMAT = "MM-YYYY";
 
+const api = import.meta.env.VITE_API_URL;
+
 /* Replace these with data from your API */
-const branchOptions: Option[] = [
-  { value: "OFFICE", label: "OFFICE" },
-  { value: "BRANCH 1", label: "BRANCH 1" },
-  { value: "BRANCH 2", label: "BRANCH 2" },
-];
-const costCenterOptions: Option[] = [
-  { value: "CC1", label: "COST CENTER 1" },
-  { value: "CC2", label: "COST CENTER 2" },
-];
 const postStatusOptions: Option[] = [
   { value: "ALL", label: "All" },
   { value: "POSTED", label: "Posted" },
@@ -86,48 +93,41 @@ const selectProps = {
   menuPortalTarget: typeof document !== "undefined" ? document.body : undefined,
 };
 
-const CustomRadio: React.FC<RadioOptionProps> = ({
-  name,
-  value,
-  label,
-  checked,
-  onChange,
-}) => (
-  <label className="flex cursor-pointer items-center gap-2.5 whitespace-nowrap select-none">
-    <input
-      type="radio"
-      name={name}
-      value={value}
-      checked={checked}
-      onChange={onChange}
-      className="sr-only"
-    />
-    <span
-      className={`flex h-4.75 w-4.75 shrink-0 items-center justify-center rounded-full border bg-white ${
-        checked ? "border-[#64d96e]" : "border-[#cbd3dc]"
-      }`}
-    >
-      <span
-        className={`h-2.5 w-2.5 rounded-full bg-[#64d96e] ${
-          checked ? "opacity-100" : "opacity-0"
-        }`}
-      />
-    </span>
-    <span className="text-[12px] font-normal text-[#35445a]">{label}</span>
-  </label>
-);
+// The Branch box: the "Branch | ID" list of the other screens, searchable on either column.
+const branchProps = {
+  ...selectProps,
+  isSearchable: true,
+  classNames: {
+    control: selectClassNames.control,
+    valueContainer: selectClassNames.valueContainer,
+    singleValue: selectClassNames.singleValue,
+    placeholder: selectClassNames.placeholder,
+    input: selectClassNames.input,
+    indicatorsContainer: selectClassNames.indicatorsContainer,
+    dropdownIndicator: selectClassNames.dropdownIndicator,
+    indicatorSeparator: selectClassNames.indicatorSeparator,
+    clearIndicator: selectClassNames.clearIndicator,
+    option: selectClassNames.option,
+  },
+  styles: branchMenuStyles,
+  components: { Option: BranchDividedOption, MenuList: BranchDividedMenuList },
+  filterOption: filterLabelOrValue,
+};
 
-const RadioPanel: React.FC<{
-  children: React.ReactNode;
-  className?: string;
-}> = ({ children, className = "" }) => (
-  <div className={`border border-[#e0e5ea] bg-white px-3.5 py-3 ${className}`}>
-    <div className="flex flex-col gap-3">{children}</div>
-  </div>
-);
+// The Cost Center box shows the cost center ID; its list is "Cost Center | ID" (name first), searchable on either, laid
+// out like the Branch list: the name column is as wide as the box, the ID column hangs out past the box's right edge.
+const costCenterMenuComponents = makeNameIdMenuComponents("Cost Center", true); // true: a divider line between the two columns
+const costCenterProps = {
+  ...branchProps,
+  components: {
+    Option: costCenterMenuComponents.Option,
+    MenuList: costCenterMenuComponents.MenuList,
+  },
+  getOptionLabel: (option: Option) => option.value,
+};
 
 const FieldLabel: React.FC<{ children: React.ReactNode }> = ({ children }) => (
-  <div className="flex h-7.5 items-center justify-end border border-[#e0e5ea] bg-[#fafbfc] pr-3 text-[12px] text-[#405066]">
+  <div className="flex h-7.5 items-center justify-start border border-[#e0e5ea] bg-[#fafbfc] pl-3 text-[12px] text-[#405066]">
     {children}
   </div>
 );
@@ -237,67 +237,265 @@ type RptExpenseSumPageProps = {
 const RptExpenseSumPage: React.FC<RptExpenseSumPageProps> = ({
   onClose,
 }) => {
-  const [branchMode, setBranchMode] = useState("One Branch"); // optBranch
-  const [branch, setBranch] = useState<Option | null>(branchOptions[0]); // lkpBranch
+  const handleEnterAsTab = useEnterAsTab();
+  const { cellFocusClass } = useGridCellFocus();
+  const { advanceAfterPick, advanceOnEnter } = useAdvanceAfterSelect();
 
-  const [costCenterMode, setCostCenterMode] = useState("One Cost Center"); // optCostCenter
-  const [costCenter, setCostCenter] = useState<Option | null>(null); // lkpCostCenter
+  const [rdgBranch, setRdgBranch] = useState("One Branch"); // rdgBranch
+  const [lkpBranch, setLkpBranch] = useState<Option | null>(null); // lkpBranch
 
-  const [dateMode, setDateMode] = useState("For A Period"); // optDate
-  const [month, setMonth] = useState(""); // dtpMonth
-  const [fromDate, setFromDate] = useState(""); // dtpFromDate
-  const [toDate, setToDate] = useState(""); // dtpToDate
+  // the branches the logged-in user has a right to, and the user's default branch (the old FillCombos)
+  const [branchOptions, setBranchOptions] = useState<Option[]>([]);
+  const [defaultBranch, setDefaultBranch] = useState<Option | null>(null);
 
-  const [accountLevel, setAccountLevel] = useState("4"); // txtAccountLevel
-  const [postStatus, setPostStatus] = useState<Option | null>(
+  // the lookups have been asked for (found or not): the cursor can start
+  const [lookupsLoaded, setLookupsLoaded] = useState(false);
+
+  useEffect(() => {
+    const loadLookups = async () => {
+      try {
+        const response = await fetch(`${api}/RptExpenseSum/lookups`, {
+          credentials: "include",
+        });
+        const result = await response.json();
+
+        if (!response.ok || !result.success) {
+          toast.error(result.message || "Failed to load the Branches");
+          return;
+        }
+
+        const options: Option[] = (result.branches || []).map(
+          (row: { lkpBranch: string; txtBranchName: string }) => ({
+            value: row.lkpBranch,
+            label: row.txtBranchName,
+          }),
+        );
+
+        const initial =
+          options.find((option) => option.value === result.lkpDefaultBranch) ?? null;
+
+        setBranchOptions(options);
+        setDefaultBranch(initial);
+        setLkpBranch(initial);
+
+        setCostCenterOptions(
+          (result.costCenters || []).map(
+            (row: { lkpCostCenter: string; txtCostCenterName: string }) => ({
+              value: row.lkpCostCenter,
+              label: row.txtCostCenterName,
+            }),
+          ),
+        );
+      } catch (error: unknown) {
+        console.error("rptExpenseSum lookups error:", error);
+        toast.error("Cannot connect to the Expense Summary API.");
+      }
+    };
+
+    loadLookups().finally(() => setLookupsLoaded(true));
+  }, []);
+
+  // the cursor starts on the Branch box
+  useInitialFocus(lookupsLoaded, "lkpBranch");
+
+  const [rdgCostCenter, setRdgCostCenter] = useState("One Cost Center"); // rdgCostCenter
+  const [lkpCostCenter, setLkpCostCenter] = useState<Option | null>(null); // lkpCostCenter
+
+  // the cost centers of the company (dbo.fillcostcenters)
+  const [costCenterOptions, setCostCenterOptions] = useState<Option[]>([]);
+
+  const [rdgDate, setRdgDate] = useState("For A Period"); // rdgDate
+  const [dtpMonth, setDtpMonth] = useState(dayjs().format(MONTH_FORMAT)); // dtpMonth
+  const [dtpFromDate, setDtpFromDate] = useState(dayjs().format(DATE_FORMAT)); // dtpFromDate
+  const [dtpToDate, setDtpToDate] = useState(dayjs().format(DATE_FORMAT)); // dtpToDate
+
+  const [txtAccountLevel, setTxtAccountLevel] = useState("4"); // txtAccountLevel
+  const [lkpPostStatus, setLkpPostStatus] = useState<Option | null>(
     postStatusOptions[1],
   ); // lkpPostStatus
-  const [printZeroBalance, setPrintZeroBalance] = useState<Option | null>(
+  const [lkpPrint0Balance, setLkpPrint0Balance] = useState<Option | null>(
     yesNoOptions[1],
   ); // lkpPrint0Balance
-  const [printAccountGroup, setPrintAccountGroup] = useState<Option | null>(
+  const [lkpPrintACGroup, setLkpPrintACGroup] = useState<Option | null>(
     yesNoOptions[0],
   ); // lkpPrintACGroup
 
-  const isPeriod = dateMode === "For A Period";
+  const isPeriod = rdgDate === "For A Period";
 
-  const handlePrint = () => {
-    console.log({
-      branchMode,
-      branch: branchMode === "One Branch" ? branch : null,
-      costCenterMode,
-      costCenter: costCenterMode === "One Cost Center" ? costCenter : null,
-      dateMode,
-      month: isPeriod ? null : month,
-      fromDate: isPeriod ? fromDate : null,
-      toDate: isPeriod ? toDate : null,
-      accountLevel,
-      postStatus,
-      printZeroBalance,
-      printAccountGroup,
+  // the Print Preview (after Print) and the Print button while the server makes the report
+  const [printing, setPrinting] = useState(false);
+  const [preview, setPreview] = useState<{
+    report: PrintReport;
+    fileBase: string;
+    params: ReturnType<typeof buildExpenseSumParams>;
+  } | null>(null);
+
+  // dd-mm-yyyy of the box -> yyyy-mm-dd ("" when it is not a date)
+  const toIsoDate = (value: string) =>
+    dayjs(value, DATE_FORMAT, true).isValid()
+      ? dayjs(value, DATE_FORMAT).format("YYYY-MM-DD")
+      : "";
+
+  // what the server takes: the element ids of the page, the radios and the lists as their codes
+  // mm-yyyy of the box -> yyyy-mm ("" when it is not a month)
+  const toIsoMonth = (value: string) =>
+    dayjs(value, MONTH_FORMAT, true).isValid()
+      ? dayjs(value, MONTH_FORMAT).format("YYYY-MM")
+      : "";
+
+  const buildExpenseSumParams = () => ({
+    rdgDate: rdgDate === "Up To Month" ? 0 : 1,
+    dtpMonth: rdgDate === "Up To Month" ? toIsoMonth(dtpMonth) : "",
+    rdgBranch: rdgBranch === "One Branch" ? 0 : 1,
+    lkpBranch: rdgBranch === "One Branch" ? (lkpBranch?.value ?? "") : "",
+    rdgCostCenter: rdgCostCenter === "One Cost Center" ? 0 : 1,
+    lkpCostCenter: rdgCostCenter === "One Cost Center" ? (lkpCostCenter?.value ?? "") : "",
+    dtpFromDate: rdgDate === "For A Period" ? toIsoDate(dtpFromDate) : "",
+    dtpToDate: rdgDate === "For A Period" ? toIsoDate(dtpToDate) : "",
+    txtAccountLevel: Number(txtAccountLevel),
+    lkpPostStatus: { ALL: 0, POSTED: 1, UNPOSTED: 2 }[lkpPostStatus?.value ?? "POSTED"] ?? 1,
+    lkpPrint0Balance: lkpPrint0Balance?.value === "YES" ? 1 : 0,
+    lkpPrintACGroup: lkpPrintACGroup?.value === "YES" ? 1 : 0,
+  });
+
+  // Print (the old cmdPrint): the checks of the old form, then the server sends the report and the Print Preview
+  // opens (Print = the browser's print window, Download = Excel / PDF)
+  const handlePrint = async () => {
+    if (printing || preview) return;
+
+    const warn = (message: string, id: string) => {
+      toast.warning(message);
+      document.getElementById(id)?.focus();
+    };
+
+    const params = buildExpenseSumParams();
+
+    if (params.rdgBranch === 0 && !params.lkpBranch) {
+      return warn("Please select 'Branch'", "lkpBranch");
+    }
+
+    if (params.rdgCostCenter === 0 && !params.lkpCostCenter) {
+      return warn("Please select 'Cost Center'", "lkpCostCenter");
+    }
+
+    if (params.rdgDate === 0) {
+      // Up to Month: the monthly report
+      if (!params.dtpMonth) {
+        return warn("Please enter 'Month'", "dtpMonth");
+      }
+    } else {
+      if (!params.dtpFromDate) {
+        return warn("Please enter 'From Date'", "dtpFromDate");
+      }
+
+      if (!params.dtpToDate) {
+        return warn("Please enter 'To Date'", "dtpToDate");
+      }
+
+      // yyyy-mm-dd texts compare as dates
+      if (params.dtpFromDate > params.dtpToDate) {
+        return warn("'To Date' should be greater than 'From Date'", "dtpToDate");
+      }
+
+      if (params.dtpFromDate.slice(0, 4) !== params.dtpToDate.slice(0, 4)) {
+        return warn("'From Date' and 'To Date' should be in the same year", "dtpToDate");
+      }
+    }
+
+    if (!Number.isInteger(params.txtAccountLevel) || params.txtAccountLevel < 1 || params.txtAccountLevel > 4) {
+      return warn("'Account Level' should be from 1 to 4", "txtAccountLevel");
+    }
+
+    setPrinting(true);
+
+    try {
+      const response = await fetch(`${api}/RptExpenseSum/print`, {
+        method: "POST",
+        credentials: "include",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(params),
+      });
+
+      const result = await response.json();
+
+      if (!response.ok || !result.success) {
+        toast.warning(result.message || "The Expense Summary report could not be printed.");
+        if (result.field) document.getElementById(result.field)?.focus();
+        return;
+      }
+
+      setPreview({ report: result.report, fileBase: result.fileBase, params });
+    } catch (error: unknown) {
+      console.error("rptExpenseSum print error:", error);
+      toast.error("Cannot connect to the Expense Summary API.");
+    } finally {
+      setPrinting(false);
+    }
+  };
+
+  // the Excel file of the Print Preview, made by the server (null after an error)
+  const fetchExcel = async (): Promise<Blob | null> => {
+    if (!preview) return null;
+
+    const response = await fetch(`${api}/RptExpenseSum/excel`, {
+      method: "POST",
+      credentials: "include",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(preview.params),
     });
+
+    // an error comes back as JSON, the file as a blob
+    if (!response.ok) {
+      let message = "Could not create the Excel file";
+
+      try {
+        const result = await response.json();
+        message = result.message || message;
+      } catch {
+        message = `Could not create the Excel file (error ${response.status})`;
+      }
+
+      toast.error(message);
+      return null;
+    }
+
+    return response.blob();
   };
 
   const handleClose = () => {
-    setBranchMode("One Branch");
-    setBranch(branchOptions[0]);
-    setCostCenterMode("One Cost Center");
-    setCostCenter(null);
-    setDateMode("For A Period");
-    setMonth("");
-    setFromDate("");
-    setToDate("");
-    setAccountLevel("4");
-    setPostStatus(postStatusOptions[1]);
-    setPrintZeroBalance(yesNoOptions[1]);
-    setPrintAccountGroup(yesNoOptions[0]);
+    setRdgBranch("One Branch");
+    setLkpBranch(defaultBranch);
+    setRdgCostCenter("One Cost Center");
+    setLkpCostCenter(null);
+    setRdgDate("For A Period");
+    setDtpMonth(dayjs().format(MONTH_FORMAT));
+    setDtpFromDate(dayjs().format(DATE_FORMAT));
+    setDtpToDate(dayjs().format(DATE_FORMAT));
+    setTxtAccountLevel("4");
+    setLkpPostStatus(postStatusOptions[1]);
+    setLkpPrint0Balance(yesNoOptions[1]);
+    setLkpPrintACGroup(yesNoOptions[0]);
     onClose?.();
   };
 
+  // Alt+P -> Print, Alt+C -> Close (the underlined letters on the buttons)
+  useAltShortcuts({
+    p: () => void handlePrint(),
+    c: handleClose,
+  });
+
+  // Ctrl+P -> Print (the old forms' Ctrl+P). With the Print Preview open it prints the report that is shown.
+  useCtrlShortcuts({
+    p: () => (preview ? printExpenseSumReport(preview.report) : void handlePrint()),
+  });
+
   return (
-    <div className="flex min-h-screen w-full items-start justify-center bg-white px-4 py-4">
+    <div
+      onKeyDown={handleEnterAsTab}
+      className="flex min-h-full w-full items-start justify-center bg-white px-4 py-4"
+    >
       <div className="min-h-fit w-175 max-w-full bg-white p-0">
-        <main className="w-full overflow-hidden border border-[#d5dce2] bg-white">
+        <main className="w-full overflow-hidden border border-gray-400 bg-white">
           <header className="flex h-7.5 items-center justify-start bg-[#9fdfbc]">
             <h1 className="m-0 ml-3.5 text-[17px] font-semibold text-[#24364d]">
               Expense Summary
@@ -307,159 +505,182 @@ const RptExpenseSumPage: React.FC<RptExpenseSumPageProps> = ({
           <section className="px-3.5 pb-6 pt-3">
             <div className="grid grid-cols-[168px_1fr] items-start gap-x-4 gap-y-3">
               {/* Branch */}
-              <RadioPanel>
-                <CustomRadio
-                  name="optBranch"
-                  value="One Branch"
-                  label="One Branch"
-                  checked={branchMode === "One Branch"}
-                  onChange={() => setBranchMode("One Branch")}
-                />
-                <CustomRadio
-                  name="optBranch"
-                  value="All Branch"
-                  label="All Branch"
-                  checked={branchMode === "All Branch"}
-                  onChange={() => setBranchMode("All Branch")}
-                />
-              </RadioPanel>
+              <RadioGroup
+                className={cellFocusClass}
+                name="rdgBranch"
+                value={rdgBranch}
+                options={[
+                  { value: "One Branch", label: "One Branch" },
+                  { value: "All Branch", label: "All Branch" },
+                ]}
+                onChange={setRdgBranch}
+              />
               <div className="pt-3">
-                <div className="w-62.5">
+                <div
+                  className={`w-62.5 ${cellFocusClass}`}
+                  onKeyDown={(event) => advanceOnEnter(event)}
+                >
                   <Select
                     inputId="lkpBranch"
                     instanceId="lkpBranch"
                     options={branchOptions}
-                    value={branch}
-                    onChange={setBranch}
-                    isDisabled={branchMode !== "One Branch"}
-                    {...selectProps}
+                    value={lkpBranch}
+                    onChange={(option) => {
+                      setLkpBranch(option);
+                      if (option) advanceAfterPick("lkpBranch");
+                    }}
+                    isDisabled={rdgBranch !== "One Branch"}
+                    noOptionsMessage={() => "No Branch Found"}
+                    {...branchProps}
                   />
                 </div>
               </div>
 
               {/* Cost center */}
-              <RadioPanel>
-                <CustomRadio
-                  name="optCostCenter"
-                  value="One Cost Center"
-                  label="One Cost Center"
-                  checked={costCenterMode === "One Cost Center"}
-                  onChange={() => setCostCenterMode("One Cost Center")}
-                />
-                <CustomRadio
-                  name="optCostCenter"
-                  value="All Cost Center"
-                  label="All Cost Center"
-                  checked={costCenterMode === "All Cost Center"}
-                  onChange={() => setCostCenterMode("All Cost Center")}
-                />
-              </RadioPanel>
+              <RadioGroup
+                className={cellFocusClass}
+                name="rdgCostCenter"
+                value={rdgCostCenter}
+                options={[
+                  { value: "One Cost Center", label: "One Cost Center" },
+                  { value: "All Cost Center", label: "All Cost Center" },
+                ]}
+                onChange={setRdgCostCenter}
+              />
               <div className="pt-3">
-                <div className="w-35">
+                <div
+                  className={`w-62.5 ${cellFocusClass}`}
+                  onKeyDown={(event) => advanceOnEnter(event)}
+                >
                   <Select
                     inputId="lkpCostCenter"
                     instanceId="lkpCostCenter"
                     options={costCenterOptions}
-                    value={costCenter}
-                    onChange={setCostCenter}
-                    isDisabled={costCenterMode !== "One Cost Center"}
-                    {...selectProps}
+                    value={lkpCostCenter}
+                    onChange={(option) => {
+                      setLkpCostCenter(option);
+                      if (option) advanceAfterPick("lkpCostCenter");
+                    }}
+                    isDisabled={rdgCostCenter !== "One Cost Center"}
+                    noOptionsMessage={() => "No Cost Center Found"}
+                    {...costCenterProps}
                   />
                 </div>
               </div>
 
               {/* Date mode */}
-              <RadioPanel>
-                <CustomRadio
-                  name="optDate"
-                  value="Up To Month"
-                  label="Up to Month"
-                  checked={dateMode === "Up To Month"}
-                  onChange={() => setDateMode("Up To Month")}
-                />
-                <CustomRadio
-                  name="optDate"
-                  value="For A Period"
-                  label="For a Period"
-                  checked={dateMode === "For A Period"}
-                  onChange={() => setDateMode("For A Period")}
-                />
-              </RadioPanel>
+              <RadioGroup
+                className={cellFocusClass}
+                name="rdgDate"
+                value={rdgDate}
+                options={[
+                  { value: "Up To Month", label: "Up to Month" },
+                  { value: "For A Period", label: "For a Period" },
+                ]}
+                onChange={setRdgDate}
+              />
               <div
                 className={`flex items-start gap-2 ${isPeriod ? "pt-9.5" : "pt-1.75"}`}
               >
                 {isPeriod ? (
                   <>
-                    <AppDatePicker
-                      id="dtpFromDate"
-                      label="From Date"
-                      value={fromDate}
-                      onChange={setFromDate}
-                    />
-                    <AppDatePicker
-                      id="dtpToDate"
-                      label="To Date"
-                      value={toDate}
-                      onChange={setToDate}
-                    />
+                    <div className={`w-35 ${cellFocusClass}`}>
+                      <AppDatePicker
+                        id="dtpFromDate"
+                        label="From Date"
+                        value={dtpFromDate}
+                        onChange={setDtpFromDate}
+                      />
+                    </div>
+                    <div className={`w-35 ${cellFocusClass}`}>
+                      <AppDatePicker
+                        id="dtpToDate"
+                        label="To Date"
+                        value={dtpToDate}
+                        onChange={setDtpToDate}
+                      />
+                    </div>
                   </>
                 ) : (
-                  <AppDatePicker
-                    id="dtpMonth"
-                    label="Up To Month"
-                    value={month}
-                    onChange={setMonth}
-                    monthOnly
-                  />
+                  <div className={`w-35 ${cellFocusClass}`}>
+                    <AppDatePicker
+                      id="dtpMonth"
+                      label="Up To Month"
+                      value={dtpMonth}
+                      onChange={setDtpMonth}
+                      monthOnly
+                    />
+                  </div>
                 )}
               </div>
 
               {/* Account level */}
               <FieldLabel>Account Level :</FieldLabel>
-              <input
-                id="txtAccountLevel"
-                type="number"
-                min="1"
-                value={accountLevel}
-                onChange={(event) => setAccountLevel(event.target.value)}
-                className="h-7.5 w-14 rounded-sm border border-[#cfd7df] bg-white px-2 text-[12px] text-[#24364d] outline-none focus:border-[#91a7b9]"
-              />
+              <div className={`w-14 ${cellFocusClass}`}>
+                <input
+                  id="txtAccountLevel"
+                  type="number"
+                  min="1"
+                  max="4"
+                  value={txtAccountLevel}
+                  onChange={(event) => setTxtAccountLevel(event.target.value)}
+                  className="h-7.5 w-14 rounded-sm border border-[#cfd7df] bg-white px-2 text-[12px] text-[#24364d] outline-none focus:border-[#91a7b9]"
+                />
+              </div>
 
               {/* Post status */}
               <FieldLabel>Post Status :</FieldLabel>
-              <div className="w-35">
+              <div
+                className={`w-35 ${cellFocusClass}`}
+                onKeyDown={(event) => advanceOnEnter(event)}
+              >
                 <Select
                   inputId="lkpPostStatus"
                   instanceId="lkpPostStatus"
                   options={postStatusOptions}
-                  value={postStatus}
-                  onChange={setPostStatus}
+                  value={lkpPostStatus}
+                  onChange={(option) => {
+                    setLkpPostStatus(option);
+                    if (option) advanceAfterPick("lkpPostStatus");
+                  }}
                   {...selectProps}
                 />
               </div>
 
               {/* Print 0 balance */}
               <FieldLabel>Print 0 Balance :</FieldLabel>
-              <div className="w-25">
+              <div
+                className={`w-25 ${cellFocusClass}`}
+                onKeyDown={(event) => advanceOnEnter(event)}
+              >
                 <Select
                   inputId="lkpPrint0Balance"
                   instanceId="lkpPrint0Balance"
                   options={yesNoOptions}
-                  value={printZeroBalance}
-                  onChange={setPrintZeroBalance}
+                  value={lkpPrint0Balance}
+                  onChange={(option) => {
+                    setLkpPrint0Balance(option);
+                    if (option) advanceAfterPick("lkpPrint0Balance");
+                  }}
                   {...selectProps}
                 />
               </div>
 
               {/* Print A/c group */}
               <FieldLabel>Print A/c Group :</FieldLabel>
-              <div className="w-25">
+              <div
+                className={`w-25 ${cellFocusClass}`}
+                onKeyDown={(event) => advanceOnEnter(event)}
+              >
                 <Select
                   inputId="lkpPrintACGroup"
                   instanceId="lkpPrintACGroup"
                   options={yesNoOptions}
-                  value={printAccountGroup}
-                  onChange={setPrintAccountGroup}
+                  value={lkpPrintACGroup}
+                  onChange={(option) => {
+                    setLkpPrintACGroup(option);
+                    if (option) advanceAfterPick("lkpPrintACGroup");
+                  }}
                   {...selectProps}
                 />
               </div>
@@ -470,8 +691,9 @@ const RptExpenseSumPage: React.FC<RptExpenseSumPageProps> = ({
               <button
                 id="btnPrint"
                 type="button"
-                onClick={handlePrint}
-                className="btn-style"
+                onClick={() => void handlePrint()}
+                disabled={printing}
+                className="btn-style disabled:cursor-not-allowed disabled:opacity-60"
               >
                 <u>P</u>rint
               </button>
@@ -487,6 +709,18 @@ const RptExpenseSumPage: React.FC<RptExpenseSumPageProps> = ({
           </section>
         </main>
       </div>
+
+      {/* the Print Preview (after Print) */}
+      {preview && (
+        <ReportPreview
+          html={buildHtml(preview.report)}
+          fileBase={preview.fileBase}
+          onPrint={() => printExpenseSumReport(preview.report)}
+          buildPdf={() => buildExpenseSumPdf(preview.report)}
+          fetchExcel={fetchExcel}
+          onClose={() => setPreview(null)}
+        />
+      )}
     </div>
   );
 };

@@ -1,6 +1,7 @@
 import React, {
   forwardRef,
   useCallback,
+  useEffect,
   useImperativeHandle,
   useRef,
   useState,
@@ -16,10 +17,9 @@ import { toast } from "react-toastify";
 
 import { handleKeyboardAction } from "../../../hooks/useMatchKeyboard";
 
-import useMatching from "../../../hooks/useMatching";
 
 import type {
-  GetMatchAccountsParams,
+  GetDocumentNosParams,
   MatchEnquiryRow,
 } from "../../../hooks/useMatchEnquiry";
 
@@ -35,36 +35,42 @@ import type {
 } from "./types";
 
 interface Props {
-  year: string;
-
-  branch: string;
-  setBranch: React.Dispatch<React.SetStateAction<string>>;
+  lkpBranch: string;
+  setLkpBranch: React.Dispatch<React.SetStateAction<string>>;
 
   type: string;
-  setDocType: React.Dispatch<React.SetStateAction<string>>;
+  setLkpDocType: React.Dispatch<React.SetStateAction<string>>;
 
-  receiptNo: string;
-  setReceiptNo: React.Dispatch<React.SetStateAction<string>>;
+  lkpDocTypeNo: string;
+  setLkpDocTypeNo: React.Dispatch<React.SetStateAction<string>>;
 
   receiptDate: string;
   setReceiptDate: React.Dispatch<React.SetStateAction<string>>;
 
-  customerId: string;
-  setCustomerId: React.Dispatch<React.SetStateAction<string>>;
+  lkpCsAccountID: string;
+  setLkpCsAccountID: React.Dispatch<React.SetStateAction<string>>;
 
-  customerName: string;
-  setCustomerName: React.Dispatch<React.SetStateAction<string>>;
+  lkpCsAccountName: string;
+  setLkpCsAccountName: React.Dispatch<React.SetStateAction<string>>;
 
-  divisionId: string;
-  setDivisionId: React.Dispatch<React.SetStateAction<string>>;
+  lkpDivision: string;
+  setLkpDivision: React.Dispatch<React.SetStateAction<string>>;
 
   rows: MatchEnquiryRow[];
 
-  getMatchAccounts: (
-    params: GetMatchAccountsParams,
+  getDocumentNos: (
+    params: GetDocumentNosParams,
   ) => Promise<Record<string, any>[]>;
 
-  onDocumentSelect: (brId: string, docNo: string) => void;
+  // the divisions of the chosen customer (loaded by the page from the Match Enquiry controller)
+  getDivisions: (lkpCsAccountID: string) => Promise<SelectOption[]>;
+  divisionLoading: boolean;
+
+  onDocumentSelect: (
+    lkpBranch: string,
+    lkpDocNo: string,
+    lkpDocType: string,
+  ) => void;
 
   onPrint: () => void;
 
@@ -76,11 +82,13 @@ interface Props {
   customerOptions: SelectOption[];
   customerNameOptions: SelectOption[];
   divisionOptions: SelectOption[];
-  documentOptions: SelectOption[];
 
   totalDebit: number;
   totalCredit: number;
 }
+
+// the Document No. list: BrID | Date | Document No. (the type and the number) | Debit | Credit | Description
+const DOCUMENT_LIST_COLUMNS = "60px 100px 150px 95px 95px minmax(0, 1fr)";
 
 interface ResponsiveSelectProps {
   id: string;
@@ -95,6 +103,12 @@ interface ResponsiveSelectProps {
   disabled?: boolean;
   documentMode?: boolean;
   swapColumns?: boolean;
+  // a list like the Branch list of the reports: the first column is as wide as the box, the second (the ID) hangs out
+  // past the box's right edge by this many px, with a divider line between the two
+  idColumnHang?: number;
+  // a list under two boxes (Customer ID + Customer Name): the first column is as wide as this box plus the gap to the
+  // next box (11px), so the second column starts exactly under the next box
+  alignToBox?: boolean;
   customOption?: React.ComponentType<OptionProps<SelectOption, false>>;
 }
 
@@ -111,6 +125,8 @@ const ResponsiveSelect = ({
   disabled = false,
   documentMode = false,
   swapColumns = false,
+  idColumnHang,
+  alignToBox = false,
   customOption,
 }: ResponsiveSelectProps) => {
   const wrapperRef = useRef<HTMLDivElement | null>(null);
@@ -138,44 +154,15 @@ const ResponsiveSelect = ({
     if (documentMode) {
       return (
         <components.SingleValue {...selectProps}>
-          <div
-            style={{
-              display: "grid",
-              gridTemplateColumns:
-                "52px 105px 70px 105px 75px 85px minmax(0, 1fr)",
-              width: "100%",
-              minWidth: 0,
-              alignItems: "center",
-              fontSize: "12px",
-            }}
-          >
-            <span>{data.brId ?? ""}</span>
-            <span>{data.date ?? ""}</span>
-            <span>{data.docType ?? ""}</span>
-            <span>{data.docNo ?? data.value ?? ""}</span>
-            <span style={{ textAlign: "right", paddingRight: "8px" }}>
-              {data.debit ?? ""}
-            </span>
-            <span style={{ textAlign: "right", paddingRight: "8px" }}>
-              {data.credit ?? ""}
-            </span>
-            <span
-              style={{
-                overflow: "hidden",
-                whiteSpace: "nowrap",
-                textOverflow: "ellipsis",
-              }}
-            >
-              {data.description ?? ""}
-            </span>
-          </div>
+          {data.docTypeNo ?? data.docNo ?? data.value}
         </components.SingleValue>
       );
     }
 
+    // a list whose first column is the name (swapColumns: the Division) shows that name in the box; the others show the value
     return (
       <components.SingleValue {...selectProps}>
-        {data.value}
+        {swapColumns ? data.label : data.value}
       </components.SingleValue>
     );
   };
@@ -189,8 +176,7 @@ const ResponsiveSelect = ({
           <div
             style={{
               display: "grid",
-              gridTemplateColumns:
-                "52px 105px 70px 105px 75px 85px minmax(0, 1fr)",
+              gridTemplateColumns: DOCUMENT_LIST_COLUMNS,
               width: "100%",
               minWidth: 0,
               alignItems: "center",
@@ -199,8 +185,7 @@ const ResponsiveSelect = ({
           >
             <div>{data.brId ?? ""}</div>
             <div>{data.date ?? ""}</div>
-            <div>{data.docType ?? ""}</div>
-            <div>{data.docNo ?? data.value ?? ""}</div>
+            <div>{data.docTypeNo ?? data.docNo ?? data.value ?? ""}</div>
             <div style={{ textAlign: "right", paddingRight: "8px" }}>
               {data.debit ?? ""}
             </div>
@@ -245,10 +230,17 @@ const ResponsiveSelect = ({
         <div
           style={{
             display: "grid",
+            // the option has 8px of padding on each side: the grid takes it back so its columns (and the divider line)
+            // sit exactly under the columns of the header
+            margin: "0 -8px",
+            width: "calc(100% + 16px)",
             gridTemplateColumns: reverseDropdown
               ? "minmax(0, 1fr) 132px"
-              : "140px minmax(0, 1fr)",
-            width: "100%",
+              : alignToBox
+                ? "calc(var(--select-width) + 11px) minmax(0, 1fr)"
+                : idColumnHang
+                  ? `var(--select-width) ${idColumnHang}px`
+                  : "140px minmax(0, 1fr)",
             minWidth: 0,
             alignItems: "center",
           }}
@@ -256,6 +248,7 @@ const ResponsiveSelect = ({
           <div
             style={{
               minWidth: 0,
+              paddingLeft: "8px",
               paddingRight: "8px",
               overflow: "hidden",
               whiteSpace: "nowrap",
@@ -286,8 +279,7 @@ const ResponsiveSelect = ({
       const headers = [
         "BrID",
         "Date",
-        "Doc. Type",
-        "Doc. No.",
+        "Document No.",
         "Debit",
         "Credit",
         "Description",
@@ -297,8 +289,7 @@ const ResponsiveSelect = ({
           <div
             style={{
               display: "grid",
-              gridTemplateColumns:
-                "52px 105px 70px 105px 75px 85px minmax(0, 1fr)",
+              gridTemplateColumns: DOCUMENT_LIST_COLUMNS,
               width: "100%",
               minWidth: 0,
               alignItems: "center",
@@ -318,7 +309,7 @@ const ResponsiveSelect = ({
                   paddingLeft: "6px",
                   paddingRight: "4px",
                   borderLeft: index === 0 ? "none" : "1px solid #c8c8c8",
-                  textAlign: index === 4 || index === 5 ? "right" : "left",
+                  textAlign: index === 3 || index === 4 ? "right" : "left",
                   overflow: "hidden",
                   whiteSpace: "nowrap",
                   textOverflow: "ellipsis",
@@ -341,7 +332,11 @@ const ResponsiveSelect = ({
               display: "grid",
               gridTemplateColumns: reverseDropdown
                 ? "minmax(0, 1fr) 140px"
-                : "148px minmax(0, 1fr)",
+                : alignToBox
+                  ? "calc(var(--select-width) + 11px) minmax(0, 1fr)"
+                  : idColumnHang
+                    ? `var(--select-width) ${idColumnHang}px`
+                    : "148px minmax(0, 1fr)",
               width: "100%",
               minWidth: 0,
               alignItems: "center",
@@ -405,6 +400,8 @@ const ResponsiveSelect = ({
         inputId={`${id}-input`}
         value={selected}
         components={{
+          // no divider line between the value and the dropdown arrow
+          IndicatorSeparator: () => null,
           Option: OptionComponent,
           SingleValue: CustomSingleValue,
           ...(columnHeaders || documentMode
@@ -424,23 +421,24 @@ const ResponsiveSelect = ({
 const MatchEnquiryComponents = forwardRef<MatchingComponentsRef, Props>(
   (props, ref) => {
     const {
-      year,
-      branch,
-      setBranch,
-      type,
-      setDocType,
-      receiptNo,
-      setReceiptNo,
+      lkpBranch,
+      setLkpBranch,
+      setLkpDocType,
+      lkpDocTypeNo,
+      setLkpDocTypeNo,
       receiptDate,
       setReceiptDate,
-      customerId,
-      setCustomerId,
-      customerName,
-      setCustomerName,
-      divisionId,
-      setDivisionId,
+      lkpCsAccountID,
+      setLkpCsAccountID,
+      lkpCsAccountName,
+      setLkpCsAccountName,
+      lkpDivision,
+      setLkpDivision,
       rows,
-      getMatchAccounts,
+      getDocumentNos,
+      getDivisions,
+      divisionLoading,
+      divisionOptions,
       onDocumentSelect,
       onPrint,
       clearForm,
@@ -448,7 +446,6 @@ const MatchEnquiryComponents = forwardRef<MatchingComponentsRef, Props>(
       branchOptions,
       customerOptions,
       customerNameOptions,
-      documentOptions,
       totalDebit,
       totalCredit,
     } = props;
@@ -465,12 +462,6 @@ const MatchEnquiryComponents = forwardRef<MatchingComponentsRef, Props>(
     const dateRef = useRef<HTMLInputElement | null>(null);
     const noteRef = useRef<HTMLInputElement | null>(null);
     const actionRefs = useRef<(HTMLButtonElement | null)[]>([]);
-
-    /* =====================================================
-       DIVISION API
-    ===================================================== */
-
-    const { divisionOptionsLocal, divisionLoading, getDiv } = useMatching();
 
     const [documentNoOptions, setDocumentNoOptions] = useState<
       DocumentOption[]
@@ -527,15 +518,15 @@ const MatchEnquiryComponents = forwardRef<MatchingComponentsRef, Props>(
 
     const handleCustomerIdChange = useCallback(
       async (id: string) => {
-        setCustomerId(id);
+        setLkpCsAccountID(id);
 
         const customer = customerOptions.find((option) => option.value === id);
 
-        setCustomerName(customer?.label ?? "");
+        setLkpCsAccountName(customer?.label ?? "");
 
-        await getDiv(id);
+        await getDivisions(id);
       },
-      [customerOptions, setCustomerId, setCustomerName, getDiv],
+      [customerOptions, setLkpCsAccountID, setLkpCsAccountName, getDivisions],
     );
 
     /* =====================================================
@@ -544,7 +535,7 @@ const MatchEnquiryComponents = forwardRef<MatchingComponentsRef, Props>(
 
     const handleCustomerNameChange = useCallback(
       async (name: string) => {
-        setCustomerName(name);
+        setLkpCsAccountName(name);
 
         const customer = customerNameOptions.find(
           (option) => option.value === name,
@@ -552,78 +543,103 @@ const MatchEnquiryComponents = forwardRef<MatchingComponentsRef, Props>(
 
         const accountId = customer?.label ?? "";
 
-        setCustomerId(accountId);
+        setLkpCsAccountID(accountId);
 
-        await getDiv(accountId);
+        await getDivisions(accountId);
       },
-      [customerNameOptions, setCustomerId, setCustomerName, getDiv],
+      [customerNameOptions, setLkpCsAccountID, setLkpCsAccountName, getDivisions],
     );
 
     /* =====================================================
-       SEARCH (fills the Document No. dropdown)
+       DOCUMENT NO. LIST: loaded when a Customer and a Division are chosen
+       (what the Search button did). The screen has no Document Type box: every matched document of the customer
+       and division is listed, each with its own type. The same number can be used by two types (a Bank Receipt and
+       a Cash Receipt), so the option's value is "lkpBranch|type|number" and its label the number.
     ===================================================== */
 
-    const handleSearch = useCallback(async () => {
-      if (!type.trim()) {
-        toast.error("Please input 'Document Type'");
-        return;
-      }
+    useEffect(() => {
+      // a new Customer / Division invalidates the previous document and lines
+      setDocumentNoOptions([]);
+      onSearch();
 
-      if (!customerId.trim()) {
-        toast.error("Please select 'Customer'");
-        return;
-      }
+      if (!lkpCsAccountID.trim() || !lkpDivision.trim()) return;
 
-      if (!divisionId.trim()) {
-        toast.error("Please select 'Division'");
-        return;
-      }
+      let cancelled = false;
 
-      try {
-        const data = await getMatchAccounts({
-          strDocType: type,
-          strCSAccountID: customerId,
-          strDivID: divisionId,
-          year,
-        });
+      const loadDocumentNos = async () => {
+        try {
+          const data = await getDocumentNos({
+            lkpCsAccountID,
+            lkpDivision,
+          });
 
-        const searchResults: any[] = Array.isArray(data) ? data : [];
-        onSearch(searchResults);
+          if (cancelled) return;
 
-        const options: DocumentOption[] = searchResults
-          .filter(
-            (item: any) => item.fdocno && String(item.fdocno).trim() !== "",
-          )
-          .map((item: any) => ({
-            value: String(item.fdocno ?? ""),
-            label: String(item.fdocno ?? ""),
-            brId: String(item.fbrid ?? ""),
-            date: String(item.fdate ?? ""),
-            docType: String(item.fdoctype ?? ""),
-            docNo: String(item.fdocno ?? ""),
-            debit: String(item.fdebit ?? "0.00"),
-            credit: String(item.fcredit ?? "0.00"),
-            description: String(item.fdescription ?? ""),
-          }));
+          const found: any[] = Array.isArray(data) ? data : [];
 
-        setDocumentNoOptions(options);
-      } catch (error) {
-        toast.error(error instanceof Error ? error.message : "Search failed");
-      }
-    }, [type, customerId, divisionId, year, getMatchAccounts, onSearch]);
+          const options: DocumentOption[] = found
+            .filter(
+              (item: any) => item.lkpDocNo && String(item.lkpDocNo).trim() !== "",
+            )
+            .map((item: any) => {
+              const brId = String(item.lkpBranch ?? "");
+              const docType = String(item.lkpDocType ?? "");
+              const docNo = String(item.lkpDocNo ?? "");
+
+              // "BR JD-26000002" (txtDocTypeNo); a document that has none shows its type and number
+              const docTypeNo =
+                String(item.txtDocTypeNo ?? "").trim() ||
+                `${docType} ${docNo}`.trim();
+
+              return {
+                value: `${brId}|${docType}|${docNo}`,
+                label: docTypeNo,
+                brId,
+                date: String(item.txtDate ?? ""),
+                docType,
+                docNo,
+                docTypeNo,
+                debit: String(item.txtDebit ?? "0.00"),
+                credit: String(item.txtCredit ?? "0.00"),
+                description: String(item.txtDescription ?? ""),
+              };
+            });
+
+          setDocumentNoOptions(options);
+        } catch (error) {
+          if (!cancelled) {
+            toast.error(
+              error instanceof Error
+                ? error.message
+                : "Failed to load the document numbers",
+            );
+          }
+        }
+      };
+
+      void loadDocumentNos();
+
+      return () => {
+        cancelled = true;
+      };
+    }, [lkpCsAccountID, lkpDivision, getDocumentNos, onSearch]);
 
     /* =====================================================
        DOCUMENT NO. SELECTED → LOAD ENQUIRY LINES
+       (the document's type comes with the document)
     ===================================================== */
 
     const handleDocumentNoChange = useCallback(
-      (docNo: string) => {
-        setReceiptNo(docNo);
+      (docKey: string) => {
+        const option = documentNoOptions.find((o) => o.value === docKey);
 
-        const option = documentNoOptions.find((o) => o.value === docNo);
-        if (option) onDocumentSelect(option.brId, docNo);
+        if (!option) return;
+
+        setLkpDocTypeNo(docKey);
+        setLkpDocType(option.docType);
+        onDocumentSelect(option.brId, option.docNo, option.docType);
       },
-      [documentNoOptions, setReceiptNo, onDocumentSelect],
+      [documentNoOptions, setLkpDocTypeNo, setLkpDocType, onDocumentSelect],
     );
 
     /* =====================================================
@@ -707,6 +723,8 @@ const MatchEnquiryComponents = forwardRef<MatchingComponentsRef, Props>(
       disabled = false,
       documentMode = false,
       swapColumns = false,
+      idColumnHang?: number,
+      alignToBox = false,
     ) => (
       <ResponsiveSelect
         id={id}
@@ -721,6 +739,8 @@ const MatchEnquiryComponents = forwardRef<MatchingComponentsRef, Props>(
         disabled={disabled}
         documentMode={documentMode}
         swapColumns={swapColumns}
+        idColumnHang={idColumnHang}
+        alignToBox={alignToBox}
       />
     );
 
@@ -805,25 +825,22 @@ const MatchEnquiryComponents = forwardRef<MatchingComponentsRef, Props>(
     return (
       <div className="w-full border border-[#9aa4ad] bg-white font-sans text-[13px] text-slate-700">
         <MatchEnquiryHeader
-          branch={branch}
-          setBranch={setBranch}
-          type={type}
-          setDocType={setDocType}
-          receiptNo={receiptNo}
-          setReceiptNo={setReceiptNo}
+          lkpBranch={lkpBranch}
+          setLkpBranch={setLkpBranch}
+          lkpDocTypeNo={lkpDocTypeNo}
+          setLkpDocTypeNo={setLkpDocTypeNo}
           receiptDate={receiptDate}
           setReceiptDate={setReceiptDate}
-          customerId={customerId}
-          setCustomerId={setCustomerId}
-          customerName={customerName}
-          setCustomerName={setCustomerName}
-          divisionId={divisionId}
-          setDivisionId={setDivisionId}
+          lkpCsAccountID={lkpCsAccountID}
+          setLkpCsAccountID={setLkpCsAccountID}
+          lkpCsAccountName={lkpCsAccountName}
+          setLkpCsAccountName={setLkpCsAccountName}
+          lkpDivision={lkpDivision}
+          setLkpDivision={setLkpDivision}
           branchOptions={branchOptions}
           customerOptions={customerOptions}
           customerNameOptions={customerNameOptions}
-          divisionOptions={divisionOptionsLocal}
-          documentOptions={documentOptions}
+          divisionOptions={divisionOptions}
           documentNoOptions={documentNoOptions}
           customerIdRef={customerIdRef}
           customerNameRef={customerNameRef}
@@ -835,7 +852,6 @@ const MatchEnquiryComponents = forwardRef<MatchingComponentsRef, Props>(
           handleCustomerIdChange={handleCustomerIdChange}
           handleCustomerNameChange={handleCustomerNameChange}
           handleDocumentNoChange={handleDocumentNoChange}
-          handleSearch={handleSearch}
           renderSelect={renderSelect}
           handleKeyboardAction={handleKeyboardAction}
         />
