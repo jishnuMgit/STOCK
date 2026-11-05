@@ -136,13 +136,18 @@ const StockDocumentRePost: React.FC = () => {
   }, [posting]);
 
   // the cursor starts on the From Txn. No. box
-  useInitialFocus(true, "txtFromTxnNo");
+  useInitialFocus(true, "btnRePost");
 
   // ============================================================
   // POST - the stock is built again from the posted documents between the two Txn. Nos.
   // ============================================================
 
-  const handlePost = async () => {
+  // the two Posting No. boxes take no focus: the cursor goes to the Post button
+  const focusRePost = () => {
+    window.setTimeout(() => document.getElementById("btnRePost")?.focus(), 0);
+  };
+
+  const handleRePost = async () => {
     if (posting) return;
 
     if (!perms.post) {
@@ -150,16 +155,16 @@ const StockDocumentRePost: React.FC = () => {
       return;
     }
 
-    const warn = (message: string, id: string) => {
+    const warn = (message: string) => {
       toast.warning(message);
-      document.getElementById(id)?.focus();
+      focusRePost();
     };
 
     const from = txtFromTxnNo.trim();
     const to = txtToTxnNo.trim();
 
-    if (!from) return warn("Please enter 'From Txn. No.'", "txtFromTxnNo");
-    if (!to) return warn("Please enter 'To Txn. No.'", "txtToTxnNo");
+    if (!from) return warn("Please enter 'From Txn. No.'");
+    if (!to) return warn("Please enter 'To Txn. No.'");
 
     // the login year (the same as the other screens)
     const PstrYear = localStorage.getItem("PstrYear") ?? "";
@@ -186,7 +191,7 @@ const StockDocumentRePost: React.FC = () => {
 
       if (!response.ok || !result.success) {
         toast.warning(result.message || `${SCREEN_TITLE} could not be done`);
-        if (result.field) document.getElementById(result.field)?.focus();
+        focusRePost();
         return;
       }
 
@@ -213,11 +218,11 @@ const StockDocumentRePost: React.FC = () => {
   const handleClear = () => {
     setTxtFromTxnNo(defaultRange.from);
     setTxtToTxnNo(defaultRange.to);
-    document.getElementById("txtFromTxnNo")?.focus();
+    focusRePost();
   };
 
   // Alt+P -> Post, Alt+C -> Clear (the underlined letters on the buttons)
-  useAltShortcuts({ p: () => void handlePost(), c: handleClear });
+  useAltShortcuts({ p: () => void handleRePost(), c: handleClear });
 
   return (
     <div
@@ -301,15 +306,17 @@ const StockDocumentRePost: React.FC = () => {
               From Posting No. :
             </label>
 
-            <div className={`relative w-[214px] ${cellFocusClass}`}>
+            <div className={`relative w-[140px] ${cellFocusClass}`}>
               <input
                 id="txtFromTxnNo"
                 name="txtFromTxnNo"
                 type="text"
                 value={txtFromTxnNo}
                 onFocus={selectOnFocus}
-                onChange={(event) => setTxtFromTxnNo(event.target.value)}
+                readOnly
+                tabIndex={-1}
                 className="
+                  pointer-events-none
                   h-[27px]
                   w-full
                   rounded-[3px]
@@ -352,15 +359,17 @@ const StockDocumentRePost: React.FC = () => {
               To Posting No. :
             </label>
 
-            <div className={`relative w-[214px] ${cellFocusClass}`}>
+            <div className={`relative w-[140px] ${cellFocusClass}`}>
               <input
                 id="txtToTxnNo"
                 name="txtToTxnNo"
                 type="text"
                 value={txtToTxnNo}
                 onFocus={selectOnFocus}
-                onChange={(event) => setTxtToTxnNo(event.target.value)}
+                readOnly
+                tabIndex={-1}
                 className="
+                  pointer-events-none
                   h-[27px]
                   w-full
                   rounded-[3px]
@@ -450,9 +459,9 @@ const StockDocumentRePost: React.FC = () => {
             {/* POST */}
 
             <button
-              id="btnPost"
+              id="btnRePost"
               type="button"
-              onClick={() => void handlePost()}
+              onClick={() => void handleRePost()}
               disabled={!perms.post || posting}
               className="
                 btn-style
@@ -460,7 +469,7 @@ const StockDocumentRePost: React.FC = () => {
                 disabled:opacity-60
               "
             >
-              <u>P</u>ost
+              <u>R</u>epost
             </button>
 
             {/* CLEAR */}
