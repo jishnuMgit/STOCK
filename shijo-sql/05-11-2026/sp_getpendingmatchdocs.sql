@@ -1,7 +1,3 @@
--- PROCEDURE: dbo.sp_getpendingmatchdocs(character varying, character varying, character varying, character varying, character varying, character varying, character varying, smallint, smallint, character varying, refcursor)
-
--- DROP PROCEDURE IF EXISTS dbo.sp_getpendingmatchdocs(character varying, character varying, character varying, character varying, character varying, character varying, character varying, smallint, smallint, character varying, refcursor);
-
 CREATE OR REPLACE PROCEDURE dbo.sp_getpendingmatchdocs(
 	IN p_strmode character varying,
 	IN p_strcoid character varying,
@@ -111,10 +107,13 @@ BEGIN
         ------------------------------------------------------------------
         -- 2) MATCHED AMOUNTS FROM tblmatchrecords, APPLIED TO WHICHEVER
         --    SIDE (PARENT or CHILD) IS STILL OPEN.
-        --    A match row stores the amount once (e.g. credit 1000):
-        --      - debit-side document  -> amount goes in as stored
-        --      - credit-side document -> debit/credit are swapped
-        --    so that SUM(fdebit - fcredit) falls by the matched amount.
+        --    A match row stores the matched amount once, in fdebit OR
+        --    fcredit - which column does not matter here. The amount
+        --    ALWAYS reduces the open balance of the document:
+        --      - debit document  (net >= 0) -> a credit is added
+        --      - credit document (net <  0) -> a debit is added
+        --    so that SUM(fdebit - fcredit) falls by the matched amount
+        --    (10000 debit - 8000 matched = 2000 debit left).
         --    "doc" is one row per open document line, so documents with
         --    several tblarap rows are not double counted.
         --
@@ -138,7 +137,7 @@ BEGIN
                    fpdoctype         AS dt,
                    fpdocno           AS dn,
                    NULL::smallint    AS sl,
-                   fdebit, fcredit
+                   GREATEST(COALESCE(fdebit, 0), COALESCE(fcredit, 0)) AS amt
             FROM dbo.tblmatchrecords
             WHERE fcoid = p_strcoid
               AND fcsaccountid = p_strcsaccountid
@@ -150,7 +149,7 @@ BEGIN
                    fdoctype,
                    fdocno,
                    fslno,
-                   fdebit, fcredit
+                   GREATEST(COALESCE(fdebit, 0), COALESCE(fcredit, 0)) AS amt
             FROM dbo.tblmatchrecords
             WHERE fcoid = p_strcoid
               AND fcsaccountid = p_strcsaccountid
@@ -163,10 +162,8 @@ BEGIN
         SELECT
             d.fcoid, d.fyear, d.fbrid, d.fdoctype, d.fdocno,
             d.fcsaccountid, d.fslno,
-            CASE WHEN d.net >= 0 THEN COALESCE(s.fdebit, 0)
-                 ELSE COALESCE(s.fcredit, 0) END,
-            CASE WHEN d.net >= 0 THEN COALESCE(s.fcredit, 0)
-                 ELSE COALESCE(s.fdebit, 0) END
+            CASE WHEN d.net >= 0 THEN 0 ELSE s.amt END,
+            CASE WHEN d.net >= 0 THEN s.amt ELSE 0 END
         FROM sides s
         JOIN doc d
           ON  d.fcoid = s.fcoid
