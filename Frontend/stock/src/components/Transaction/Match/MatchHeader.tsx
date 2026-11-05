@@ -331,7 +331,7 @@ const MatchHeader: React.FC<MatchHeaderProps> = ({
   const [searching, setSearching] = useState(false);
 
   const runSearch = async () => {
-    if (searching || !canSearch) return;
+    if (searching) return;
 
     setSearching(true);
     try {
@@ -470,7 +470,7 @@ const MatchHeader: React.FC<MatchHeaderProps> = ({
             <button
               id="Searchbtn"
               type="button"
-              disabled={!canSearch}
+              // disabled={!canSearch}
               aria-busy={searching}
               className={`
                 ml-1.5

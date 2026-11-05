@@ -622,10 +622,7 @@ const MatchingComponents = forwardRef<MatchingComponentsRef, Props>(
      ===================================================== */
 
     const handleSearch = useCallback(async () => {
-      if (!type.trim()) {
-        console.warn("Please input 'Document Type'");
-        return;
-      }
+  
 
       if (!customerId.trim()) {
         console.warn("Please select 'Customer'");
@@ -635,7 +632,7 @@ const MatchingComponents = forwardRef<MatchingComponentsRef, Props>(
       // Company, year and user are also sent as x- headers by apiFetch.
       // The year is passed in the body too, read from the login session.
       const data = await getMatchAccounts({
-        strDocType: type,
+        // strDocType: type,
         strCSAccountID: customerId,
         strDivID: divisionId,
         year: getSession().pstrYear,

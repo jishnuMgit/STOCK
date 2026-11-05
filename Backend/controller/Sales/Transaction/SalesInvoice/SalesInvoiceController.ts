@@ -6,8 +6,8 @@ const DOC_TYPE = "SIR"; // Sales Invoice (Credit)
 const INVOICE_TYPE = "R"; // VB always passed "R"
 
 /* VERIFY: procedure names (VB: SP_frmSI / SP_SIPost) */
-const SP_PAGE_SI = "dbo.sp_pagesi";
-const SP_SI_POST = "dbo.sp_sipost";
+const SP_PAGE_SI = 'dbo."SP_frmSI"';
+const SP_SI_POST = "dbo.sp_pagesipost";
 
 /* =========================================================
    Types
@@ -56,16 +56,20 @@ const callProc = (
   db: PgClient,
   proc: string,
   args: Record<string, unknown>,
+  prefix = "p_",
 ) => {
   const keys = Object.keys(args);
   const sql = `CALL ${proc}(${keys
-    .map((k, i) => `p_${k} => $${i + 1}`)
+    .map((k, i) => `${prefix}${k} => $${i + 1}`)
     .join(", ")})`;
   return db.query(
     sql,
     keys.map((k) => args[k]),
   );
 };
+
+const callSI = (db: PgClient, args: Record<string, unknown>) =>
+  callProc(db, SP_PAGE_SI, args, "");
 
 /* =========================================================
    Calculation  (port of CalcNetUnitPrice / CalcTotalPrice /
@@ -520,10 +524,10 @@ export const saveSalesInvoice = async (
 
     if (mode === "M") {
       // 1) update header on existing rows
-      await callProc(client, SP_PAGE_SI, { strmode: "M", ...base, ...header });
+      await callSI(client, { strmode: "M", ...base, ...header });
       // 2) remove old lines one by one
       for (const sl of originalSlNos ?? []) {
-        await callProc(client, SP_PAGE_SI, {
+        await callSI(client, {
           strmode: "D1",
           ...base,
           original_fslno: sl,
@@ -535,7 +539,7 @@ export const saveSalesInvoice = async (
     for (let i = 0; i < validLines.length; i++) {
       const l = validLines[i];
       const r = t.rows[i];
-      await callProc(client, SP_PAGE_SI, {
+      await callSI(client, {
         strmode: "S",
         ...base,
         ...header,
@@ -543,7 +547,6 @@ export const saveSalesInvoice = async (
         stritemid: l.itemId,
         numqtyout: num(l.qtyOut),
         strunit: l.unit ?? null,
-        stritempricelevel: l.priceLevel,
         numunitprice: num(l.unitPrice),
         numnetunitprice: r.netUnitPrice,
         numitemdiscamt: num(l.itemDiscAmt),
@@ -572,7 +575,7 @@ export const saveSalesInvoice = async (
        - deliveryNotes omitted -> existing links untouched
        - deliveryNotes: []     -> existing links cleared */
     if (Array.isArray(deliveryNotes)) {
-      await callProc(client, SP_PAGE_SI, {
+      await callSI(client, {
         strmode: "DD",
         gstrcoid: coId,
         strbrid: brId,
@@ -582,7 +585,7 @@ export const saveSalesInvoice = async (
 
       let sl = 1;
       for (const dn of deliveryNotes.filter((d) => d.dnNo && d.checked)) {
-        await callProc(client, SP_PAGE_SI, {
+        await callSI(client, {
           strmode: "SD",
           gstrcoid: coId,
           strbrid: brId,
