@@ -46,6 +46,8 @@ export const getPostingRange = async (p: {
 export const rePostDocuments = async (p: {
   PstrCoID: string;
   PstrUserID: string;
+  // the login year (the stock of this year is built again)
+  PstrYear: string;
   txtFromTxnNo: string;
   txtToTxnNo: string;
   // called with the text of every RAISE NOTICE of the procedure (it names the document being posted)
@@ -65,11 +67,11 @@ export const rePostDocuments = async (p: {
     const { rows } = await client.query(
       `
       CALL dbo.sp_stockrepost(
-        $1::varchar, 0, $2::varchar, $3::varchar, $4::varchar,
+        $1::varchar, 0, $2::varchar, $3::varchar, $4::varchar, $5::varchar,
         NULL::varchar, NULL::varchar, NULL::numeric
       )
       `,
-      [p.PstrCoID, p.PstrUserID, p.txtFromTxnNo, p.txtToTxnNo]
+      [p.PstrCoID, p.PstrUserID, p.PstrYear, p.txtFromTxnNo, p.txtToTxnNo]
     );
 
     await client.query("COMMIT");

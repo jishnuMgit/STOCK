@@ -46,7 +46,7 @@ export const getProgress = async (
 
 /* =========================================================
    POST /StockDocumentRePost/repost   (the Post button)
-   body: { txtFromTxnNo, txtToTxnNo }
+   body: { PstrYear, txtFromTxnNo, txtToTxnNo }
    Needs the Post right (T). The stock is built again from the posted documents between the two posting numbers
    (dbo.sp_pagestockdocumentrepost). It refuses, before changing anything, when it cannot do it safely: the range holds a
    document type that cannot be re-posted yet, or a branch has posted documents outside the range. The procedure's own
@@ -102,10 +102,21 @@ export const rePost = async (
     }
 
     const { CoID: PstrCoID, userId: PstrUserID } = req.user;
-    const body = (req.body ?? {}) as { txtFromTxnNo?: unknown; txtToTxnNo?: unknown };
+    const body = (req.body ?? {}) as {
+      PstrYear?: unknown;
+      txtFromTxnNo?: unknown;
+      txtToTxnNo?: unknown;
+    };
 
     const txtFromTxnNo = text(body.txtFromTxnNo);
     const txtToTxnNo = text(body.txtToTxnNo);
+
+    // the login year, sent as digits (the same as the other screens)
+    const PstrYear = text(body.PstrYear);
+
+    if (!/^\d+$/.test(PstrYear)) {
+      return res.status(400).json({ success: false, message: "Year is required" });
+    }
 
     const check = await validateStockDocumentRePost({ PstrUserID, txtFromTxnNo, txtToTxnNo });
 
@@ -135,6 +146,7 @@ export const rePost = async (
       result = await rePostDocuments({
         PstrCoID,
         PstrUserID,
+        PstrYear,
         txtFromTxnNo,
         txtToTxnNo,
         onNotice: (message) => {

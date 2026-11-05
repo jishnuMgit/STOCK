@@ -161,6 +161,14 @@ const StockDocumentRePost: React.FC = () => {
     if (!from) return warn("Please enter 'From Txn. No.'", "txtFromTxnNo");
     if (!to) return warn("Please enter 'To Txn. No.'", "txtToTxnNo");
 
+    // the login year (the same as the other screens)
+    const PstrYear = localStorage.getItem("PstrYear") ?? "";
+
+    if (!/^\d{4}$/.test(PstrYear)) {
+      toast.error("rePost: no PstrYear in localStorage");
+      return;
+    }
+
     startRef.current = Date.now();
     timeFromServerRef.current = null;
     setElapsedMs(0);
@@ -172,7 +180,7 @@ const StockDocumentRePost: React.FC = () => {
         method: "POST",
         credentials: "include", // the server checks the session and the rights
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ txtFromTxnNo: from, txtToTxnNo: to }),
+        body: JSON.stringify({ PstrYear, txtFromTxnNo: from, txtToTxnNo: to }),
       });
       const result = await response.json();
 
