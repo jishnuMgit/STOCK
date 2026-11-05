@@ -292,8 +292,15 @@ export const unitGridKeys: KeyMap = {
 export const itemGroupKeys: KeyMap = {
   fitemgroupid: "txtItemGroupID",
   fitemgroupname: "txtItemGroupName",
+  fsn: "lkpFSN",
   fvatslab: "lkpVATSlab",
   fvatper: "txtVATPer",
+};
+
+// the Stock / Non-stock dropdown (tblstockparam, fptype IGTP): fpid is what is saved, fpname what is shown
+export const itemGroupTypeListKeys: KeyMap = {
+  fpid: "lkpFSN",
+  fpname: "lkpFSNName",
 };
 
 export const vatSlabListKeys: KeyMap = {
@@ -545,6 +552,19 @@ export const administrationDocumentGridKeys: KeyMap = {
   fdocname: "txtDocName",
   ftobepost: "chkToBePost",
   fpositionno: "txtPositionNo",
+};
+
+/* ---------- Finance / Setup / CustomerDivision ---------- */
+
+export const customerDivisionCustomerKeys: KeyMap = {
+  fcsaccountid: "lkpCsAccountID",
+  fcsaccountname: "lkpCsAccountName",
+};
+
+export const customerDivisionRowKeys: KeyMap = {
+  fdivid: "txtDivisionID",
+  fdivname: "txtDivisionName",
+  fdivname_ar: "txtDivisionName_AR",
 };
 
 /* ---------- Finance / Transaction / MatchEnquiry ---------- */

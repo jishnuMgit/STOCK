@@ -43,6 +43,7 @@ import RptCustomerSalesPage from "../pages/Sales/Report/RptCustomerSalesPage";
 import RptItemSalesPage from "../pages/Sales/Report/RptItemSalesPage";
 import CustomerSupplierCountryPage from "../pages/Finance/Setup/CustomerSupplierCountryPage";
 import InactivateAccountPage from "../pages/Finance/Setup/InactivateAccountPage";
+import CustomerDivisionPage from "../pages/Finance/Setup/CustomerDivisionPage";
 import CurrencyPage from "../pages/Purchase/Setup/CurrencyPage";
 import RptReceivablesPage from "../pages/Finance/Report/A-R_and_A-P/Receivables/RptReceivablesPage";
 import RptAgeingReceivablesPage from "../pages/Finance/Report/A-R_and_A-P/AgeingOfReceivables/AgeingOfReceivablesPage";
@@ -189,6 +190,10 @@ const AppRoutes = () => {
           <Route
             path="/Finance/Setup/Add/Customer"
             element={<CustomerPage />}
+          />
+          <Route
+            path="/Finance/Setup/CustomerDivision"
+            element={<CustomerDivisionPage />}
           />
           <Route
             path="/Finance/Setup/ChartOfAccountList"

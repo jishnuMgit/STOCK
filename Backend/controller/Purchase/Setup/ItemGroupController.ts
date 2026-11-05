@@ -15,6 +15,7 @@ import {
   mapKeys,
   mapRows,
   itemGroupKeys,
+  itemGroupTypeListKeys,
   vatSlabListKeys,
 } from "../../../utils/responseKeys.js";
 
@@ -66,6 +67,49 @@ export const getVATSlabList = async (
   }
 };
 
+
+/* =========================================================
+   GET ITEM GROUP TYPE LIST (lkpFSN dropdown - Stock / Non-stock:
+   tblstockparam, fptype 'IGTP'; the box shows lkpFSNName, the page
+   keeps lkpFSN)
+========================================================= */
+
+export const getItemGroupTypeList = async (
+  req: Request,
+  res: Response
+): Promise<Response> => {
+  try {
+    const { PstrCoID } = req.query;
+
+    if (!PstrCoID) {
+      return res.status(400).json({
+        success: false,
+        message: "Company ID is required",
+      });
+    }
+
+    const result = await pool.query(
+      `SELECT * FROM dbo.fillitemgrouptype($1)`,
+      [PstrCoID]
+    );
+
+    return res.status(200).json({
+      success: true,
+      data: mapRows(result.rows, itemGroupTypeListKeys),
+    });
+  } catch (error: unknown) {
+    console.error("getItemGroupTypeList error:", error);
+
+    return res.status(500).json({
+      success: false,
+      message: "Failed to load the Stock / Non-stock list",
+      error:
+        error instanceof Error
+          ? error.message
+          : String(error),
+    });
+  }
+};
 
 /* =========================================================
    GET ITEM GROUP (mode 'G1') - prefills the form when an
@@ -138,6 +182,7 @@ export const saveItemGroup = async (
       PstrUserID,
       txtItemGroupID,
       txtItemGroupName,
+      lkpFSN,
       lkpVATSlab,
     }: {
       PstrCoID: string;
@@ -145,6 +190,7 @@ export const saveItemGroup = async (
       PstrUserID: string;
       txtItemGroupID: string;
       txtItemGroupName: string;
+      lkpFSN: string;
       lkpVATSlab: string;
     } = req.body;
 
@@ -175,6 +221,7 @@ export const saveItemGroup = async (
       PstrUserID,
       txtItemGroupID,
       txtItemGroupName,
+      lkpFSN,
       lkpVATSlab,
     });
 
@@ -183,6 +230,20 @@ export const saveItemGroup = async (
         success: false,
         message: check.message,
         field: check.field,
+      });
+    }
+
+    // the chosen Stock / Non-stock must be one of the company's item group types (tblstockparam, IGTP)
+    const types = await pool.query(
+      `SELECT 1 FROM dbo.fillitemgrouptype($1) WHERE fpid = $2`,
+      [PstrCoID, lkpFSN.trim()]
+    );
+
+    if (types.rows.length === 0) {
+      return res.status(400).json({
+        success: false,
+        message: "'Stock / Non-stock' is not valid",
+        field: "lkpFSN",
       });
     }
 
@@ -227,6 +288,7 @@ export const saveItemGroup = async (
       PstrCoID,
       txtItemGroupID.trim(),
       txtItemGroupName.trim(),
+      lkpFSN.trim(),
       lkpVATSlab,
       PstrUserID
     );
@@ -236,12 +298,15 @@ export const saveItemGroup = async (
     // =====================================================
 
     try {
-      const afterText = `${txtItemGroupName.trim()}, VAT Slab ${lkpVATSlab} (${Number(txtVATPer)}%)`;
+      const snText = (sn: string | null | undefined) =>
+        sn === "S" ? "Stock" : sn === "N" ? "Non-stock" : "";
+
+      const afterText = `${txtItemGroupName.trim()}, ${snText(lkpFSN.trim())}, VAT Slab ${lkpVATSlab} (${Number(txtVATPer)}%)`;
 
       const note =
         mode === "S"
           ? `Inserted item group '${txtItemGroupID.trim()}' (${afterText})`
-          : `Updated item group '${txtItemGroupID.trim()}': ${before?.fitemgroupname ?? ""}, VAT Slab ${before?.fvatslab ?? ""} (${Number(before?.fvatper ?? 0)}%) -> ${afterText}`;
+          : `Updated item group '${txtItemGroupID.trim()}': ${before?.fitemgroupname ?? ""}, ${snText(before?.fsn)}, VAT Slab ${before?.fvatslab ?? ""} (${Number(before?.fvatper ?? 0)}%) -> ${afterText}`;
 
       await UserAudit(
         PstrCoID,

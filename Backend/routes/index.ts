@@ -40,6 +40,7 @@ import chartOfAccountRouter from "./Finance/Setup/COARouter.js";
 import CostCenterRouter from "./Finance/Setup/CostCenterRouter.js";
 import InactivateAccountRouter from "./Finance/Setup/InactivateAccountRouter.js";
 import CustomerSupplierCountryRouter from "./Finance/Setup/CustomerSupplierCountryRouter.js";
+import CustomerDivisionRouter from "./Finance/Setup/CustomerDivisionRouter.js";
 import CurrencyRouter from "./Purchase/Setup/CurrencyRouter.js";
 import supplierRouter from "./common/SupplierRouter.js"; import RptCOARouter from "./Finance/Report/RptChartOfAccountRouter.js"
 import RptCustomerListRouter from "./Finance/Report/RptCustomerListRouter.js"
@@ -125,6 +126,7 @@ router.use("/RptItemPurchase", RptItemPurchaseRouter);
 router.use("/RptIncomeSum", RptIncomeSumRouter); // Income Summary report
 router.use("/RptExpenseSum", RptExpenseSumRouter); // Expense Summary report
 router.use("/RptRVPVSum", RptRVPVSumRouter); // Receipt / Payment Summary report
+router.use("/CustomerDivision", CustomerDivisionRouter); // Customer Division (Finance > Setup)
 router.use("/RptReceivables", RptReceivablesRouter);
 router.use("/RptPayables", RptPayablesRouter);
 router.use("/RptGL", RptGLRouter);
