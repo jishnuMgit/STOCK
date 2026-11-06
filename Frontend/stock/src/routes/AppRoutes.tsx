@@ -90,6 +90,7 @@ import DocumentPage from "../pages/Administration/DocumentPage";
 import RptDocumentsAfterYearClosePage from "../pages/Utility/RptDocumentsAfterYearClosePage";
 import BackupPage from "../pages/Utility/BackupPage";
 import InvoicePage from "../pages/Sales/Transaction/Invoice/InvoicePage";
+import Deletepage from "../pages/Deletepage";
 
 const Login = lazy(() => import("../pages/Auth/LoginPage"));
 const ReceiptPage = lazy(
@@ -145,8 +146,9 @@ const AppRoutes = () => {
           {/* Home */}
           <Route path="/" element={<Home />} />
 
-          {/* ================= FINANCE - TRANSACTION ================= */}
+          <Route path="/dev/delete" element={<Deletepage />} />
 
+          {/* ================= FINANCE - TRANSACTION ================= */}
           <Route
             path="/Finance/Transaction/Receipt"
             element={<ReceiptPage />}
@@ -167,7 +169,7 @@ const AppRoutes = () => {
             path="/Finance/Transaction/Transaction-match-enquiry"
             element={<MatchEnquiryPage />}
           />
-  
+
           <Route
             path="/Finance/Transaction/BeginningBalance"
             element={<BeginningBalance />}
@@ -290,10 +292,8 @@ const AppRoutes = () => {
             element={<SalesInvoice />}
           />
 
-          <Route
-            path="/Sales/Transaction/Invoice"
-            element={<InvoicePage />} />
-            
+          <Route path="/Sales/Transaction/Invoice" element={<InvoicePage />} />
+
           <Route
             path="/Sales/Transaction/StockAdjustment"
             element={<StockAdjustmentPage />}
@@ -389,7 +389,10 @@ const AppRoutes = () => {
             path="/Purchase/Report/RptInvoicewiseProfit"
             element={<RptInvoicewiseProfitPage />}
           />
-          <Route path="/Purchase/Report/RptStockReport" element={<RptStockReportPage />} />
+          <Route
+            path="/Purchase/Report/RptStockReport"
+            element={<RptStockReportPage />}
+          />
           <Route
             path="/Purchase/Report/RptStockValuation"
             element={<RptStockValuationPage />}

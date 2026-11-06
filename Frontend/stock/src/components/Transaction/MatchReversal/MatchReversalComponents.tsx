@@ -657,6 +657,17 @@ const MatchReversalComponents = forwardRef<MatchingComponentsRef, Props>(
     );
 
     /* =====================================================
+ REVERSE MATCH → untick every row (mark all as un-matched)
+ ===================================================== */
+
+    const handleReverseMatch = useCallback(() => {
+      rows.forEach((row, index) => {
+        if (!row.select) toggleSelect(index, true);
+      });
+      focusSave(); // move to the Reverse (save) button
+    }, [rows, toggleSelect, focusSave]);
+
+    /* =====================================================
      SEARCH
      ===================================================== */
 
@@ -906,7 +917,7 @@ const MatchReversalComponents = forwardRef<MatchingComponentsRef, Props>(
      FOOTER ACTIONS
      ===================================================== */
 
-    const buttons = ["Reverse", "Clear"];
+    const buttons = ["Save", "Clear"];
 
     const [activeButton, setActiveButton] = useState(0);
 
@@ -1024,6 +1035,7 @@ const MatchReversalComponents = forwardRef<MatchingComponentsRef, Props>(
         <MatchTable
           rows={rows}
           toggleSelect={toggleSelect}
+          onReverseMatch={handleReverseMatch}
           tableRefs={tableRefs}
           handleTableKeyDown={handleTableKeyDown}
         />
