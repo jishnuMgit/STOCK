@@ -99,11 +99,11 @@ export const getMatchedTransactions = async (
       .status(400)
       .json({ success: false, message: "Please select 'Branch'" });
   }
-  if (isEmpty(docType)) {
-    return res
-      .status(400)
-      .json({ success: false, message: "Please input 'Document'" });
-  }
+  // if (isEmpty(docType)) {
+  //   return res
+  //     .status(400)
+  //     .json({ success: false, message: "Please input 'Document'" });
+  // }
   if (isEmpty(docNo)) {
     return res
       .status(400)
@@ -124,14 +124,13 @@ export const getMatchedTransactions = async (
         p_pstrcoid       => $2::varchar,
         p_pstryear       => $3::varchar,
         p_strbrid        => $4::varchar,
-        p_strdoctype     => $5::varchar,
-        p_strdocno       => $6::varchar,
-        p_intslno        => $7::smallint,
-        p_intslnosub     => $8::smallint,
-        p_strcsaccountid => $9::varchar,
-        p_strdivid       => $10::varchar,
-        p_pstruserid     => $11::varchar,
-        p_result         => $12::refcursor
+        p_strdocno       => $5::varchar,
+        p_intslno        => $6::smallint,
+        p_intslnosub     => $7::smallint,
+        p_strcsaccountid => $8::varchar,
+        p_strdivid       => $9::varchar,
+        p_pstruserid     => $10::varchar,
+        p_result         => $11::refcursor
       )
       `,
       [
@@ -139,7 +138,6 @@ export const getMatchedTransactions = async (
         coId, // 2  p_pstrcoid
         String(year), // 3  p_pstryear
         brId, // 4  p_strbrid
-        docType, // 5  p_strdoctype
         String(docNo).trim(), // 6  p_strdocno
         0, // 7  p_intslno
         0, // 8  p_intslnosub
@@ -198,11 +196,11 @@ export const getMatchAccounts = async (
       .status(400)
       .json({ success: false, message: "Year is required" });
   }
-  if (isEmpty(strDocType)) {
-    return res
-      .status(400)
-      .json({ success: false, message: "Please input 'Document Type'" });
-  }
+  // if (isEmpty(strDocType)) {
+  //   return res
+  //     .status(400)
+  //     .json({ success: false, message: "Please input 'Document Type'" });
+  // }
   if (isEmpty(strCSAccountID)) {
     return res
       .status(400)
@@ -218,29 +216,27 @@ export const getMatchAccounts = async (
 
     await client.query(
       `
-      CALL dbo.sp_getmatchfindocuments(
+      CALL dbo.sp_getparentdocuments(
         $1::varchar,
         $2::varchar,
         $3::varchar,
         $4::varchar,
         $5::varchar,
-        $6::varchar,
-        $7::bigint,
-        $8::varchar,
+        $6::bigint,
+        $7::varchar,
+        $8::smallint,
         $9::smallint,
-        $10::smallint,
+        $10::varchar,
         $11::varchar,
         $12::varchar,
-        $13::varchar,
-        $14::refcursor
+        $13::refcursor
       )
       `,
       [
         "GM", // 1  p_strmode  (GM = get matched)
         strCoID, // 2  p_strcoid
         strYear, // 3  p_stryear
-        null, // 4  p_strbrid
-        strDocType, // 5  p_strdoctype
+        null, // 4  p_strbrid // 5  p_strdoctype
         null, // 6  p_strdocno
         0, // 7  p_intdocno
         null, // 8  p_dtpdate
@@ -298,6 +294,9 @@ export const unmatchTransactions = async (
   const userId = req.user?.userId ?? null;
   const { year, brId, docType, docNo, divId, data } = req.body;
 
+  // parent line (the line of the parent document being un-matched)
+  const parentSlNo = num(req.body.parentSlNo ?? req.body.slNo);
+
   if (!coId) {
     return res
       .status(400)
@@ -320,11 +319,7 @@ export const unmatchTransactions = async (
       .status(400)
       .json({ success: false, message: "Please select 'Branch'" });
   }
-  if (isEmpty(docType)) {
-    return res
-      .status(400)
-      .json({ success: false, message: "Please input 'Document'" });
-  }
+  // docType is optional (the SP ignores it when blank)
   if (isEmpty(docNo)) {
     return res
       .status(400)
@@ -335,14 +330,15 @@ export const unmatchTransactions = async (
       .status(400)
       .json({ success: false, message: "data must be an array" });
   }
+  if (!parentSlNo) {
+    return res
+      .status(400)
+      .json({ success: false, message: "Parent line (slNo) is required" });
+  }
 
   /* ---------- ValidateGrid ---------- */
-  // rows that have an account and are ticked "Un-Match"
-  const selectedRows = data.filter(
-    (r: any) =>
-      !isEmpty(getField(r, "fCSAccountID") ?? getField(r, "fAccountID")) &&
-      isTrue(getField(r, "fSelect")),
-  );
+  // child rows that are ticked "Un-Match"
+  const selectedRows = data.filter((r: any) => isTrue(getField(r, "fSelect")));
 
   if (selectedRows.length === 0) {
     return res.status(400).json({
@@ -359,14 +355,24 @@ export const unmatchTransactions = async (
     let count = 0;
 
     for (const row of selectedRows) {
-      const accountId = String(
-        getField(row, "fCSAccountID") ?? getField(row, "fAccountID"),
-      ).trim();
-      const slNo = num(getField(row, "fSlNo"));
-      const slNoSub = num(getField(row, "fSlNoSub"));
+      // child document key (returned by mode GetTL)
+      const cYear = String(getField(row, "fYear") ?? "").trim();
+      const cBrId = String(getField(row, "fBrID") ?? "").trim();
+      const cDocType = String(getField(row, "fDocType") ?? "").trim();
+      const cDocNo = String(getField(row, "fDocNo") ?? "").trim();
+      const cSlNo = num(getField(row, "fSlNo"));
 
-      // guard against the same line being sent twice
-      const key = `${accountId}|${slNo}|${slNoSub}`;
+      if (
+        isEmpty(cYear) ||
+        isEmpty(cBrId) ||
+        isEmpty(cDocType) ||
+        isEmpty(cDocNo)
+      ) {
+        throw new Error("Child document details missing in the selected row");
+      }
+
+      // guard against the same child line being sent twice
+      const key = `${cYear}|${cBrId}|${cDocType}|${cDocNo}|${cSlNo}`;
       if (processed.has(key)) continue;
       processed.add(key);
 
@@ -380,26 +386,32 @@ export const unmatchTransactions = async (
           p_strdoctype     => $5::varchar,
           p_strdocno       => $6::varchar,
           p_intslno        => $7::smallint,
-          p_intslnosub     => $8::smallint,
-          p_strcsaccountid => $9::varchar,
-          p_strdivid       => $10::varchar,
-          p_pstruserid     => $11::varchar,
-          p_result         => $12::refcursor
+          p_strdivid       => $8::varchar,
+          p_pstruserid     => $9::varchar,
+          p_result         => $10::refcursor,
+          p_strcyear       => $11::varchar,
+          p_strcbrid       => $12::varchar,
+          p_strcdoctype    => $13::varchar,
+          p_strcdocno      => $14::varchar,
+          p_intcslno       => $15::smallint
         )
         `,
         [
-          "U", // 1  p_strmode
+          "UC", // 1  p_strmode
           coId, // 2  p_pstrcoid
           String(year), // 3  p_pstryear
           brId, // 4  p_strbrid
-          docType, // 5  p_strdoctype
+          isEmpty(docType) ? null : String(docType).trim(), // 5  p_strdoctype
           String(docNo).trim(), // 6  p_strdocno
-          slNo, // 7  p_intslno
-          slNoSub, // 8  p_intslnosub
-          accountId, // 9  p_strcsaccountid
-          isEmpty(divId) ? null : divId, // 10 p_strdivid
-          userId, // 11 p_pstruserid
-          "cur_unmatch_dummy", // 12 p_result (not used by mode 'U')
+          parentSlNo, // 7  p_intslno (parent line)
+          isEmpty(divId) ? null : divId, // 8  p_strdivid
+          userId, // 9  p_pstruserid
+          "cur_unmatch_dummy", // 10 p_result (not used by mode 'UC')
+          cYear, // 11 p_strcyear
+          cBrId, // 12 p_strcbrid
+          cDocType, // 13 p_strcdoctype
+          cDocNo, // 14 p_strcdocno
+          cSlNo, // 15 p_intcslno
         ],
       );
 
