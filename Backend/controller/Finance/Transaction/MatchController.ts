@@ -274,12 +274,12 @@ const validateMatchRows = (
   }
 
   // VB: Math.Abs(sum of fMatchAmt) must equal txtAmount
-  if (
-    Math.round(Math.abs(totalMatchAmt) * 100) !==
-    Math.round(Math.abs(totalAmount) * 100)
-  ) {
-    return "'Total Match Amt.' must be equal to 'Selected Match Total Amt.'";
-  }
+  // if (
+  //   Math.round(Math.abs(totalMatchAmt) * 100) !==
+  //   Math.round(Math.abs(totalAmount) * 100)
+  // ) {
+  //   return "'Total Match Amt.' must be equal to 'Selected Match Total Amt.'";
+  // }
 
   return null;
 };
