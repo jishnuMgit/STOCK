@@ -1,6 +1,6 @@
 import { Play, X } from "lucide-react";
 import React, { useState } from "react";
-import type { InvoiceRow } from "../../../../hooks/Sales/Transaction/useInvoice";
+import type { InvoiceRow } from "../../../../hooks/useInvoice";
 import { useConfirmModal } from "../../../../hooks/useConfirmModal";
 
 /* Sl No is the row number; VAT Amt and Incl. VAT are calculated */
