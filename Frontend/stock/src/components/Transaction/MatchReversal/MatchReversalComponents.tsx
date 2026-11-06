@@ -1,6 +1,7 @@
 import React, {
   forwardRef,
   useCallback,
+  useEffect,
   useImperativeHandle,
   useRef,
   useState,
@@ -86,6 +87,9 @@ interface ResponsiveSelectProps {
   customOption?: React.ComponentType<OptionProps<SelectOption, false>>;
 }
 
+/* Document No. dropdown: Document No. first so the 154px select box shows it */
+const DOC_GRID = "150px 105px 60px 100px 100px minmax(0, 1fr)";
+
 const ResponsiveSelect = ({
   id,
   value,
@@ -129,16 +133,16 @@ const ResponsiveSelect = ({
           <div
             style={{
               display: "grid",
-              gridTemplateColumns: "52px 105px 140px 75px 85px minmax(0, 1fr)",
+              gridTemplateColumns: DOC_GRID,
               width: "100%",
               minWidth: 0,
               alignItems: "center",
               fontSize: "14px",
             }}
           >
-            <span>{data.brId ?? ""}</span>
-            <span>{data.date ?? ""}</span>
             <span>{data.docTypeNo ?? data.docNo ?? data.value ?? ""}</span>
+            <span>{data.date ?? ""}</span>
+            <span>{data.brId ?? ""}</span>
             <span style={{ textAlign: "right", paddingRight: "8px" }}>
               {data.debit ?? ""}
             </span>
@@ -175,16 +179,16 @@ const ResponsiveSelect = ({
           <div
             style={{
               display: "grid",
-              gridTemplateColumns: "52px 105px 140px 75px 85px minmax(0, 1fr)",
+              gridTemplateColumns: DOC_GRID,
               width: "100%",
               minWidth: 0,
               alignItems: "center",
               fontSize: "12px",
             }}
           >
-            <div>{data.brId ?? ""}</div>
-            <div>{data.date ?? ""}</div>
             <div>{data.docTypeNo ?? data.docNo ?? data.value ?? ""}</div>
+            <div>{data.date ?? ""}</div>
+            <div>{data.brId ?? ""}</div>
             <div style={{ textAlign: "right", paddingRight: "8px" }}>
               {data.debit ?? ""}
             </div>
@@ -251,7 +255,6 @@ const ResponsiveSelect = ({
           <div
             style={{
               minWidth: 0,
-              // borderLeft: "1px solid #d5dce3",
               paddingLeft: "10px",
               overflow: "hidden",
               whiteSpace: "nowrap",
@@ -268,9 +271,9 @@ const ResponsiveSelect = ({
   const CustomMenuList = (menuProps: any) => {
     if (documentMode) {
       const headers = [
-        "BrID",
+        "Document No.",
         "Date",
-        "Doc. No.",
+        "Br. ID",
         "Debit",
         "Credit",
         "Description",
@@ -280,7 +283,7 @@ const ResponsiveSelect = ({
           <div
             style={{
               display: "grid",
-              gridTemplateColumns: "52px 105px 140px 75px 85px minmax(0, 1fr)",
+              gridTemplateColumns: DOC_GRID,
               width: "100%",
               minWidth: 0,
               alignItems: "center",
@@ -453,7 +456,7 @@ const MatchReversalComponents = forwardRef<MatchingComponentsRef, Props>(
 
     /* =====================================================
      REFS
-   ===================================================== */
+     ===================================================== */
 
     const customerIdRef = useRef<HTMLDivElement | null>(null);
     const customerNameRef = useRef<HTMLDivElement | null>(null);
@@ -466,8 +469,8 @@ const MatchReversalComponents = forwardRef<MatchingComponentsRef, Props>(
     const actionRefs = useRef<(HTMLButtonElement | null)[]>([]);
 
     /* =====================================================
-    MATCHING API
-  ===================================================== */
+     MATCHING API
+     ===================================================== */
 
     const { divisionOptionsLocal, divisionLoading, getDiv } = useMatching();
 
@@ -475,16 +478,44 @@ const MatchReversalComponents = forwardRef<MatchingComponentsRef, Props>(
       DocumentOption[]
     >([]);
 
+    const resetResults = useCallback(() => {
+      setDocumentNoOptions([]);
+      onSearch([]); // parent clears searchResults, receiptNo and the table rows
+    }, [onSearch]);
+
+    const canSearch = customerId.trim() !== "" && divisionId.trim() !== "";
+
+    useEffect(() => {
+      setDocumentNoOptions([]);
+      onSearch([]);
+    }, [customerId, divisionId]); // eslint-disable-line react-hooks/exhaustive-deps
+
     /* =====================================================
      TABLE FIELD ORDER
      (the only keyboard-navigable cell is the Un-Match checkbox)
-  ===================================================== */
+     ===================================================== */
 
     const tableFieldOrder = ["select"] as TableField[];
+
+    /* =====================================================
+     FOCUS HELPERS
+     ===================================================== */
 
     const focusCustomerId = useCallback(() => {
       requestAnimationFrame(() => {
         customerIdRef.current?.focus();
+      });
+    }, []);
+
+    const focusNote = useCallback(() => {
+      requestAnimationFrame(() => {
+        noteRef.current?.focus();
+      });
+    }, []);
+
+    const focusSave = useCallback(() => {
+      requestAnimationFrame(() => {
+        actionRefs.current[0]?.focus();
       });
     }, []);
 
@@ -500,25 +531,12 @@ const MatchReversalComponents = forwardRef<MatchingComponentsRef, Props>(
           focusElement(element);
         }
       },
-
       [],
     );
 
-    const focusNote = useCallback(() => {
-      requestAnimationFrame(() => {
-        noteRef.current?.focus();
-      });
-    }, []);
-
-    const focusSave = useCallback(() => {
-      requestAnimationFrame(() => {
-        actionRefs.current[0]?.focus();
-      });
-    }, []);
-
     /* =====================================================
      EXPOSE METHODS TO THE PARENT
-  ===================================================== */
+     ===================================================== */
 
     useImperativeHandle(
       ref,
@@ -528,13 +546,12 @@ const MatchReversalComponents = forwardRef<MatchingComponentsRef, Props>(
         focusNote,
         focusSave,
       }),
-
       [focusCustomerId, focusTableField, focusNote, focusSave],
     );
 
     /* =====================================================
      TABLE KEYBOARD NAVIGATION
-  ===================================================== */
+     ===================================================== */
 
     const handleTableEscape = useCallback(() => {
       focusNote();
@@ -561,7 +578,6 @@ const MatchReversalComponents = forwardRef<MatchingComponentsRef, Props>(
         // Last cell → Note.
         focusNote();
       },
-
       // eslint-disable-next-line react-hooks/exhaustive-deps
       [rows.length, focusTableField, focusNote],
     );
@@ -579,10 +595,11 @@ const MatchReversalComponents = forwardRef<MatchingComponentsRef, Props>(
 
     /* =====================================================
      CUSTOMER ID → CUSTOMER NAME
-  ===================================================== */
+     ===================================================== */
 
     const handleCustomerIdChange = useCallback(
       async (id: string) => {
+        resetResults();
         setCustomerId(id);
 
         const customer = customerOptions.find((option) => option.value === id);
@@ -591,16 +608,16 @@ const MatchReversalComponents = forwardRef<MatchingComponentsRef, Props>(
 
         await getDiv(id);
       },
-
-      [customerOptions, setCustomerId, setCustomerName, getDiv],
+      [resetResults, customerOptions, setCustomerId, setCustomerName, getDiv],
     );
 
     /* =====================================================
      CUSTOMER NAME → CUSTOMER ID
-  ===================================================== */
+     ===================================================== */
 
     const handleCustomerNameChange = useCallback(
       async (name: string) => {
+        resetResults();
         setCustomerName(name);
 
         const customer = customerNameOptions.find(
@@ -613,13 +630,18 @@ const MatchReversalComponents = forwardRef<MatchingComponentsRef, Props>(
 
         await getDiv(accountId);
       },
-
-      [customerNameOptions, setCustomerId, setCustomerName, getDiv],
+      [
+        resetResults,
+        customerNameOptions,
+        setCustomerId,
+        setCustomerName,
+        getDiv,
+      ],
     );
 
     /* =====================================================
      DOCUMENT NO. → LOAD MATCHED LINES (GetTL)
-  ===================================================== */
+     ===================================================== */
 
     const handleDocNoChange = useCallback(
       (docNo: string) => {
@@ -636,14 +658,9 @@ const MatchReversalComponents = forwardRef<MatchingComponentsRef, Props>(
 
     /* =====================================================
      SEARCH
-  ===================================================== */
+     ===================================================== */
 
     const handleSearch = useCallback(async () => {
-      if (!type.trim()) {
-        console.warn("Please input 'Document Type'");
-        return;
-      }
-
       if (!customerId.trim()) {
         console.warn("Please select 'Customer'");
         return;
@@ -695,7 +712,7 @@ const MatchReversalComponents = forwardRef<MatchingComponentsRef, Props>(
 
     /* =====================================================
      SELECT STYLES
-  ===================================================== */
+     ===================================================== */
 
     const selectStyles: StylesConfig<SelectOption, false> = {
       control: (base, state) => ({
@@ -826,28 +843,7 @@ const MatchReversalComponents = forwardRef<MatchingComponentsRef, Props>(
       }),
     };
 
-    /* Document Type dropdown: the ID column is exactly as wide as the select box
-       (154px), and the Name column (140px) sits outside it. */
-    const DOC_NAME_COLUMN_WIDTH = 140;
-
-    const documentTypeStyles: StylesConfig<SelectOption, false> = {
-      ...selectStyles,
-      menu: (base) => {
-        const width = 154 + DOC_NAME_COLUMN_WIDTH;
-
-        return {
-          ...base,
-          zIndex: 9999,
-          fontSize: "14px",
-          width,
-          minWidth: width,
-          maxWidth: "calc(100vw - 24px)",
-          left: 0,
-        };
-      },
-    };
-
-    /* Document No. dropdown: wider menu so the longer Doc. No. fits */
+    /* Document No. dropdown: wider menu so Doc. No. + Description fit */
     const documentNoStyles: StylesConfig<SelectOption, false> = {
       ...selectStyles,
       menu: (base) => ({
@@ -863,7 +859,7 @@ const MatchReversalComponents = forwardRef<MatchingComponentsRef, Props>(
 
     /* =====================================================
      SELECT HELPER
-  ===================================================== */
+     ===================================================== */
 
     const renderSelect = (
       id: string,
@@ -894,11 +890,9 @@ const MatchReversalComponents = forwardRef<MatchingComponentsRef, Props>(
               ? customerNameStyles
               : id === "lkpDivision"
                 ? divisionStyles
-                : id === "lkpDocType"
-                  ? documentTypeStyles
-                  : id === "lkpDocNo."
-                    ? documentNoStyles
-                    : selectStyles)
+                : id === "lkpDocTypeNo."
+                  ? documentNoStyles
+                  : selectStyles)
         }
         reverseDropdown={reverseDropdown}
         columnHeaders={columnHeaders}
@@ -910,9 +904,9 @@ const MatchReversalComponents = forwardRef<MatchingComponentsRef, Props>(
 
     /* =====================================================
      FOOTER ACTIONS
-  ===================================================== */
+     ===================================================== */
 
-    const buttons = ["Un-Match", "Clear"];
+    const buttons = ["Reverse", "Clear"];
 
     const [activeButton, setActiveButton] = useState(0);
 
@@ -943,7 +937,6 @@ const MatchReversalComponents = forwardRef<MatchingComponentsRef, Props>(
             break;
         }
       },
-
       [onSave, clearForm],
     );
 
@@ -985,7 +978,7 @@ const MatchReversalComponents = forwardRef<MatchingComponentsRef, Props>(
 
     /* =====================================================
      RENDER
-  ===================================================== */
+     ===================================================== */
 
     return (
       <div className="w-full border border-[#9aa4ad] bg-white font-sans text-[13px] text-slate-700">
@@ -995,7 +988,6 @@ const MatchReversalComponents = forwardRef<MatchingComponentsRef, Props>(
           type={type}
           setDocType={setDocType}
           receiptNo={receiptNo}
-          // setReceiptNo={setReceiptNo}
           receiptDate={receiptDate}
           setReceiptDate={setReceiptDate}
           customerId={customerId}
@@ -1019,6 +1011,7 @@ const MatchReversalComponents = forwardRef<MatchingComponentsRef, Props>(
           creditDocumentRef={creditDocumentRef}
           documentNoRef={documentNoRef}
           dateRef={dateRef}
+          canSearch={canSearch}
           divisionLoading={divisionLoading}
           handleCustomerIdChange={handleCustomerIdChange}
           handleCustomerNameChange={handleCustomerNameChange}

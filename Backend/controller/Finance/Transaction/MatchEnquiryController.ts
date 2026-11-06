@@ -264,13 +264,13 @@ export const getMatchEnquiry = async (
       field: "lkpBranch",
     });
   }
-  if (isEmpty(lkpDocType)) {
-    return res.status(400).json({
-      success: false,
-      message: "Please input 'Document'",
-      field: "lkpDocType",
-    });
-  }
+  // if (isEmpty(lkpDocType)) {
+  //   return res.status(400).json({
+  //     success: false,
+  //     message: "Please input 'Document'",
+  //     field: "lkpDocType",
+  //   });
+  // }
   if (isEmpty(lkpDocNo)) {
     return res.status(400).json({
       success: false,
