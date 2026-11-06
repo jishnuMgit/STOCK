@@ -62,7 +62,7 @@ import RptIncomeSumRouter from "./Finance/Report/RptIncomeSumRouter.js";
 import RptExpenseSumRouter from "./Finance/Report/RptExpenseSumRouter.js";
 import RptRVPVSumRouter from "./Finance/Report/RptRVPVSumRouter.js";
 import RptReceivablesRouter from "./Finance/Report/A_RandA_P/RptReceivablesRouter.js";
-import TransactionDeleteRouter from "./transactionDeleteRouter.js";
+import TransactionDeleteRouter from "./TransactionDeleteRouter.js";
 
 import RptPayablesRouter from "./Finance/Report/A_RandA_P/RptPayablesRouter.js";
 import RptGLRouter from "./Finance/Report/GeneralLedger/RptGLRouter.js";
