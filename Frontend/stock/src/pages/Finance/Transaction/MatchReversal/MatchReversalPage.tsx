@@ -158,7 +158,6 @@ const MatchReversalPage: React.FC = () => {
   const handleUnmatch = useCallback(() => {
     if (saving) return;
 
-    if (!doctype) return toast.error("Please input 'Document'");
     if (!receiptNo) return toast.error("Please input 'Document No.'");
     if (!branch) return toast.error("Please select 'Branch'");
     if (!rows.some((r) => r.select)) {
@@ -166,7 +165,7 @@ const MatchReversalPage: React.FC = () => {
     }
 
     setConfirmOpen(true);
-  }, [saving, doctype, receiptNo, branch, rows]);
+  }, [saving, receiptNo, branch, rows]);
 
   // Step 2: runs after the user clicks "Yes"
   const performUnmatch = useCallback(async () => {
