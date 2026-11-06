@@ -917,7 +917,7 @@ const MatchReversalComponents = forwardRef<MatchingComponentsRef, Props>(
      FOOTER ACTIONS
      ===================================================== */
 
-    const buttons = ["Reverse", "Clear"];
+    const buttons = ["Save", "Clear"];
 
     const [activeButton, setActiveButton] = useState(0);
 
@@ -1031,7 +1031,7 @@ const MatchReversalComponents = forwardRef<MatchingComponentsRef, Props>(
           renderSelect={renderSelect}
           handleKeyboardAction={handleKeyboardAction}
         />
-        
+
         <MatchTable
           rows={rows}
           toggleSelect={toggleSelect}
