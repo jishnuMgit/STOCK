@@ -906,7 +906,7 @@ const MatchReversalComponents = forwardRef<MatchingComponentsRef, Props>(
      FOOTER ACTIONS
      ===================================================== */
 
-    const buttons = ["Un-Match", "Clear"];
+    const buttons = ["Reverse", "Clear"];
 
     const [activeButton, setActiveButton] = useState(0);
 

@@ -294,8 +294,10 @@ export const unmatchTransactions = async (
   const userId = req.user?.userId ?? null;
   const { year, brId, docType, docNo, divId, data } = req.body;
 
-  // parent line (the line of the parent document being un-matched)
-  const parentSlNo = num(req.body.parentSlNo ?? req.body.slNo);
+  // parent line is optional in the request; if missing it is looked up below
+  const rawParentSlNo = req.body.parentSlNo ?? req.body.slNo;
+  const hasParentSlNo =
+    rawParentSlNo !== undefined && rawParentSlNo !== null && rawParentSlNo !== "";
 
   if (!coId) {
     return res
@@ -330,11 +332,6 @@ export const unmatchTransactions = async (
       .status(400)
       .json({ success: false, message: "data must be an array" });
   }
-  if (!parentSlNo) {
-    return res
-      .status(400)
-      .json({ success: false, message: "Parent line (slNo) is required" });
-  }
 
   /* ---------- ValidateGrid ---------- */
   // child rows that are ticked "Un-Match"
@@ -347,34 +344,84 @@ export const unmatchTransactions = async (
     });
   }
 
+  const pDocType = isEmpty(docType) ? "" : String(docType).trim();
+  const pDocNo = String(docNo).trim();
+
   const client = await pool.connect();
   try {
     await client.query("BEGIN");
 
-    const processed = new Set<string>();
+    /* ---------- parent line (slno) ---------- */
+    let parentSlNo: number;
+
+    if (hasParentSlNo) {
+      parentSlNo = num(rawParentSlNo);
+    } else {
+      // not sent by the frontend: take it from the parent (P) row
+      const pRes = await client.query(
+        `
+        SELECT DISTINCT fslno
+          FROM dbo.tblmatchrecords
+         WHERE fpc = 'P'
+           AND fcoid = $1
+           AND fpyear = $2
+           AND fpbrid = $3
+           AND ($4 = '' OR fpdoctype = $4)
+           AND fpdocno = $5
+        `,
+        [coId, String(year), brId, pDocType, pDocNo],
+      );
+
+      if (pRes.rows.length === 0) {
+        throw new Error("No matched records found for this document");
+      }
+      if (pRes.rows.length > 1) {
+        throw new Error(
+          "Document has more than one matched line, parent line (slNo) is required",
+        );
+      }
+      parentSlNo = Number(pRes.rows[0].fslno);
+    }
+
+    const processed = new Set<number>();
     let count = 0;
 
     for (const row of selectedRows) {
-      // child document key (returned by mode GetTL)
-      const cYear = String(getField(row, "fYear") ?? "").trim();
-      const cBrId = String(getField(row, "fBrID") ?? "").trim();
-      const cDocType = String(getField(row, "fDocType") ?? "").trim();
-      const cDocNo = String(getField(row, "fDocNo") ?? "").trim();
-      const cSlNo = num(getField(row, "fSlNo"));
+      // the grid only sends the serial (fslno 1,2,3...) of the matched row
+      const serial = num(getField(row, "fSlNo"));
 
-      if (
-        isEmpty(cYear) ||
-        isEmpty(cBrId) ||
-        isEmpty(cDocType) ||
-        isEmpty(cDocNo)
-      ) {
-        throw new Error("Child document details missing in the selected row");
+      if (!serial) {
+        throw new Error("Serial no. missing in the selected row");
       }
 
-      // guard against the same child line being sent twice
-      const key = `${cYear}|${cBrId}|${cDocType}|${cDocNo}|${cSlNo}`;
-      if (processed.has(key)) continue;
-      processed.add(key);
+      // guard against the same row being sent twice
+      if (processed.has(serial)) continue;
+      processed.add(serial);
+
+      // child document key, read from the matched (C) row itself
+      const cRes = await client.query(
+        `
+        SELECT fyear, fbrid, fdoctype, fdocno
+          FROM dbo.tblmatchrecords
+         WHERE fpc = 'C'
+           AND fcoid = $1
+           AND fpyear = $2
+           AND fpbrid = $3
+           AND ($4 = '' OR fpdoctype = $4)
+           AND fpdocno = $5
+           AND fslno = $6
+        `,
+        [coId, String(year), brId, pDocType, pDocNo, serial],
+      );
+
+      if (cRes.rows.length === 0) {
+        throw new Error(`Matched row ${serial} not found`);
+      }
+
+      const cYear = String(cRes.rows[0].fyear).trim();
+      const cBrId = String(cRes.rows[0].fbrid).trim();
+      const cDocType = String(cRes.rows[0].fdoctype).trim();
+      const cDocNo = String(cRes.rows[0].fdocno).trim();
 
       await client.query(
         `
@@ -401,8 +448,8 @@ export const unmatchTransactions = async (
           coId, // 2  p_pstrcoid
           String(year), // 3  p_pstryear
           brId, // 4  p_strbrid
-          isEmpty(docType) ? null : String(docType).trim(), // 5  p_strdoctype
-          String(docNo).trim(), // 6  p_strdocno
+          pDocType === "" ? null : pDocType, // 5  p_strdoctype
+          pDocNo, // 6  p_strdocno
           parentSlNo, // 7  p_intslno (parent line)
           isEmpty(divId) ? null : divId, // 8  p_strdivid
           userId, // 9  p_pstruserid
@@ -411,7 +458,7 @@ export const unmatchTransactions = async (
           cBrId, // 12 p_strcbrid
           cDocType, // 13 p_strcdoctype
           cDocNo, // 14 p_strcdocno
-          cSlNo, // 15 p_intcslno
+          serial, // 15 p_intcslno (serial of the C row)
         ],
       );
 
