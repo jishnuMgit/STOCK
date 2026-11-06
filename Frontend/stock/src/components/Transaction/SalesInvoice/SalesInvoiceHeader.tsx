@@ -661,7 +661,6 @@ const SalesInvoiceHeader: React.FC<SalesInvoiceHeaderProps> = ({
   header,
   onHeaderChange,
   customers,
-  priceLevels,
   onCustomerSelect,
   onDocNoBlur,
   invoiceTypes = defaultInvoiceTypes,

@@ -7,7 +7,7 @@ import Select, {
   type StylesConfig,
 } from "react-select";
 import { RxTriangleDown } from "react-icons/rx";
-import type { InvoiceHeader } from "../../../../hooks/Sales/Transaction/useInvoice";
+import type { InvoiceHeader } from "../../../../hooks/useInvoice"
 
 type Option = { value: string; label: string; name?: string };
 
