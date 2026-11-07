@@ -1,0 +1,197 @@
+
+import Select, {
+  components,
+  type StylesConfig,
+  type OptionProps,
+  type MenuListProps,
+} from "react-select";
+import selectComponents from "./selectComponents";
+
+export interface TableSelectOption {
+  label: string;
+  value: string;
+  [key: string]: any;
+}
+
+interface Column {
+  key: string;
+  label: string;
+  width?: string;
+  align?: "left" | "center" | "right";
+}
+
+interface CommonTableSelectProps {
+  options: TableSelectOption[];
+  value: TableSelectOption | null;
+  onChange: (value: TableSelectOption | null) => void;
+  columns: Column[];
+  placeholder?: string;
+  width?: string;
+  menuWidth?: string;
+  isClearable?: boolean;
+  isSearchable?: boolean;
+  isDisabled?: boolean;
+  inputId?: string;
+    headerFontSize?: string;
+
+}
+
+const CommonTableSelect = ({
+  options,
+  value,
+  onChange,
+  columns,
+  placeholder = "Select...",
+  width = "250px",
+  menuWidth = "305px",
+  isClearable = false,
+  isSearchable = true,
+  isDisabled = false,
+  inputId,
+  headerFontSize= "13px",
+
+}: CommonTableSelectProps) => {
+
+  const gridTemplate = columns
+    .map((col) => col.width || "1fr")
+    .join(" ");
+
+  const customComponents = {
+    Option: (props: OptionProps<TableSelectOption, false>) => (
+      <components.Option {...props}>
+        <div
+          className="grid items-center w-full"
+          style={{ gridTemplateColumns: gridTemplate,fontSize: headerFontSize }}
+        >
+          {columns.map((col) => (
+            <span
+              key={col.key}
+              className={`truncate ${
+                col.align === "right"
+                  ? "text-right"
+                  : col.align === "center"
+                    ? "text-center"
+                    : "text-left"
+              }`}
+            >
+              {props.data[col.key] ?? "-"}
+            </span>
+          ))}
+        </div>
+      </components.Option>
+    ),
+
+    MenuList: (props: MenuListProps<TableSelectOption, false>) => (
+      <components.MenuList {...props}>
+        <div
+          className="grid items-center px-2.5 py-1.75 bg-[#F3F5F7] border-b border-[#D5DDE5] font-semibold text-[#334155]"
+          style={{ gridTemplateColumns: gridTemplate,fontSize: headerFontSize }}
+        >
+          {columns.map((col) => (
+            <span
+              key={col.key}
+              className={`truncate ${
+                col.align === "right"
+                  ? "text-right"
+                  : col.align === "center"
+                    ? "text-center"
+                    : "text-left"
+              }`}
+            >
+              {col.label}
+            </span>
+          ))}
+        </div>
+
+        {props.children}
+      </components.MenuList>
+    ),
+  };
+
+  const styles: StylesConfig<TableSelectOption, false> = {
+    control: (base) => ({
+      ...base,
+      minHeight: "31px",
+      height: "31px",
+      width: width,
+      borderColor: "#CBD5E1",
+      borderRadius: "4px",
+      boxShadow: "none",
+      fontSize: "13px",
+      "&:hover": {
+        borderColor: "#94A3B8",
+      },
+    }),
+
+    valueContainer: (base) => ({
+      ...base,
+      padding: "0 10px",
+    }),
+
+    indicatorsContainer: (base) => ({
+      ...base,
+      height: "30px",
+      display: "hidden"
+    }),
+
+    menu: (base) => ({
+      ...base,
+      width: menuWidth,
+      minWidth: menuWidth,
+      marginTop: "4px",
+      borderRadius: "4px",
+      border: "1px solid #E5E7EB",
+      boxShadow: "0 4px 10px rgba(0,0,0,0.12)",
+      zIndex: 9999,
+      overflow: "hidden",
+    }),
+
+    menuList: (base) => ({
+      ...base,
+      padding: 0,
+      maxHeight: "220px",
+      
+    }),
+
+    option: (base, state) => ({
+      ...base,
+      padding: "7px 10px",
+      fontSize: "13px",
+      color: "#334155",
+      backgroundColor: state.isSelected
+        ? "#EAF7F0"
+        : state.isFocused
+          ? "#F0F8F4"
+          : "#FFFFFF",
+      cursor: "pointer",
+      borderBottom: "1px solid #E5E7EB",
+      "&:active": {
+        backgroundColor: "#DDF2E7",
+      },
+    }),
+
+    singleValue: (base) => ({
+      ...base,
+      color: "#334155",
+    }),
+  };
+
+  return (
+    <Select<TableSelectOption, false>
+      inputId={inputId}
+      options={options}
+      value={value}
+      onChange={onChange}
+      placeholder={placeholder}
+      components={{ ...selectComponents, ...customComponents }}
+      styles={styles}
+      isClearable={isClearable}
+      isSearchable={isSearchable}
+      isDisabled={isDisabled}
+      getOptionLabel={(option) => option.label}
+      getOptionValue={(option) => option.value}
+    />
+  );
+};
+
+export default CommonTableSelect;

@@ -175,6 +175,22 @@ Sales-REPORT
   mnuRptBS: "/Finance/Reports/RptBS",
   mnuRptPL: "/Finance/Reports/RptPL",
 
+
+  /* =========================================================
+     ASSETS
+  ========================================================= */
+
+  // ASSETS - TRANSACTION
+
+// ASSETS - SETUP
+
+
+// ASSETS - REPORTS
+
+mnuAssetSchedule:"/Assets/Reports/AssetSchedule",
+
+
+
   /* =========================================================
      SETTINGS
   ========================================================= */

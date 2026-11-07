@@ -92,6 +92,9 @@ import RptDocumentsAfterYearClosePage from "../pages/Utility/RptDocumentsAfterYe
 import BackupPage from "../pages/Utility/BackupPage";
 import InvoicePage from "../pages/Sales/Transaction/Invoice/InvoicePage";
 import Deletepage from "../pages/Deletepage";
+import Budgetpage from "../pages/Finance/Setup/Budgetpage";
+import AssetPurchasePage from "../pages/Purchase/Setup/AssetPurchasePage";
+import AssetSchedule from "../pages/Assets/Reports/AssetSchedule";
 
 const Login = lazy(() => import("../pages/Auth/LoginPage"));
 const ReceiptPage = lazy(
@@ -423,6 +426,12 @@ const AppRoutes = () => {
             element={<RptItemHistoryPage />}
           />
 
+{/* ================= ASSETS  ================= */}
+
+          <Route path="/Assets/Reports/AssetSchedule" element={<AssetSchedule />} />
+
+
+
           {/* ================= SETTINGS ================= */}
 
           <Route path="/Settings/SetCompanyInfo" element={<SetCompanyInfo />} />
@@ -516,6 +525,8 @@ const AppRoutes = () => {
           />
           <Route path="/dev/matchpage" element={<MatchingPage />} />
           <Route path="/dev/unmatchpage" element={<UnMatchPage />} />
+          <Route path="/dev/BudgetPage" element={<Budgetpage />} />
+          <Route path="/dev/AssetPurchasePage" element={<AssetPurchasePage />} />
           {/* <Route path="/dev/MatchEnquiryPage" element={<MatchEnquiryPage />} /> */}
 
           {/* Unknown URL -> back to "/" ("/" has its own element, so no loop) */}
