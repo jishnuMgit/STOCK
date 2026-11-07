@@ -48,30 +48,38 @@ const CommonTableSelect = ({
   isSearchable = true,
   isDisabled = false,
   inputId,
-  headerFontSize= "13px",
-
+  headerFontSize = "13px",
 }: CommonTableSelectProps) => {
 
   const gridTemplate = columns
     .map((col) => col.width || "1fr")
     .join(" ");
 
+  // Column alignment
+  const getAlignment = (align?: string) => {
+    if (align === "right") return "text-right";
+    if (align === "center") return "text-center";
+    return "text-left";
+  };
+
   const customComponents = {
+    // DROPDOWN OPTION ROWS
     Option: (props: OptionProps<TableSelectOption, false>) => (
       <components.Option {...props}>
         <div
           className="grid items-center w-full"
-          style={{ gridTemplateColumns: gridTemplate,fontSize: headerFontSize }}
+          style={{
+            gridTemplateColumns: gridTemplate,
+            fontSize: headerFontSize,
+          }}
         >
-          {columns.map((col) => (
+          {columns.map((col, index) => (
             <span
               key={col.key}
-              className={`truncate ${
-                col.align === "right"
-                  ? "text-right"
-                  : col.align === "center"
-                    ? "text-center"
-                    : "text-left"
+              className={`truncate ${getAlignment(col.align)} ${
+                index > 0
+                  ? "border-l border-[#D5DDE5] pl-2 ml-5"
+                  : ""
               }`}
             >
               {props.data[col.key] ?? "-"}
@@ -81,21 +89,23 @@ const CommonTableSelect = ({
       </components.Option>
     ),
 
+    // DROPDOWN HEADER
     MenuList: (props: MenuListProps<TableSelectOption, false>) => (
       <components.MenuList {...props}>
         <div
           className="grid items-center px-2.5 py-1.75 bg-[#F3F5F7] border-b border-[#D5DDE5] font-semibold text-[#334155]"
-          style={{ gridTemplateColumns: gridTemplate,fontSize: headerFontSize }}
+          style={{
+            gridTemplateColumns: gridTemplate,
+            fontSize: headerFontSize,
+          }}
         >
-          {columns.map((col) => (
+          {columns.map((col, index) => (
             <span
               key={col.key}
-              className={`truncate ${
-                col.align === "right"
-                  ? "text-right"
-                  : col.align === "center"
-                    ? "text-center"
-                    : "text-left"
+              className={`truncate ${getAlignment(col.align)} ${
+                index > 0
+                  ? "border-l border-[#D5DDE5] pl-2 ml-5"
+                  : ""
               }`}
             >
               {col.label}
@@ -131,7 +141,7 @@ const CommonTableSelect = ({
     indicatorsContainer: (base) => ({
       ...base,
       height: "30px",
-      display: "hidden"
+      
     }),
 
     menu: (base) => ({
@@ -150,7 +160,6 @@ const CommonTableSelect = ({
       ...base,
       padding: 0,
       maxHeight: "220px",
-      
     }),
 
     option: (base, state) => ({
@@ -183,7 +192,10 @@ const CommonTableSelect = ({
       value={value}
       onChange={onChange}
       placeholder={placeholder}
-      components={{ ...selectComponents, ...customComponents }}
+      components={{
+        ...selectComponents,
+        ...customComponents,
+      }}
       styles={styles}
       isClearable={isClearable}
       isSearchable={isSearchable}
