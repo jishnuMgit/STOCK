@@ -291,7 +291,7 @@ const ActionButton: React.FC<{
 // ASSET SCHEDULE PAGE
 // ==================================================
 
-const AssetSchedule: React.FC = () => {
+const AssetSchedulePage: React.FC = () => {
   // Branch
   const [branchMode, setBranchMode] = useState("All Branch");
   const [branch, setBranch] = useState<Option | null>(null);
@@ -464,8 +464,8 @@ const AssetSchedule: React.FC = () => {
 
                 {costCenterMode === "One Cost Center" && (
                   <CustomLinkedPairSelect
-                    firstInputId="costCenterId"
-                    secondInputId="costCenterName"
+                    firstInputId="lkpCostCenterId"
+                    secondInputId="lkpCostCenterName"
                     options={costCenterPairOptions}
                     firstValue={costCenterId?.value ?? null}
                     secondValue={costCenterName?.value ?? null}
@@ -531,8 +531,8 @@ const AssetSchedule: React.FC = () => {
 
                 {assetMode === "One Asset" && (
                   <CustomLinkedPairSelect
-                    firstInputId="assetId"
-                    secondInputId="assetName"
+                    firstInputId="lkpAssetId"
+                    secondInputId="lkpAssetName" 
                     options={assetPairOptions}
                     firstValue={assetId?.value ?? null}
                     secondValue={assetName?.value ?? null}
@@ -662,4 +662,4 @@ const AssetSchedule: React.FC = () => {
   );
 };
 
-export default AssetSchedule;
+export default AssetSchedulePage;
