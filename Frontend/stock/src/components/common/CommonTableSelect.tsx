@@ -32,7 +32,9 @@ interface CommonTableSelectProps {
   isSearchable?: boolean;
   isDisabled?: boolean;
   inputId?: string;
-    headerFontSize?: string;
+  headerFontSize?: string;
+  menuPortalTarget?: HTMLElement;
+  controlHeight?: number;
 
 }
 
@@ -49,6 +51,8 @@ const CommonTableSelect = ({
   isDisabled = false,
   inputId,
   headerFontSize = "13px",
+  menuPortalTarget,
+  controlHeight = 31,
 }: CommonTableSelectProps) => {
 
   const gridTemplate = columns
@@ -121,8 +125,8 @@ const CommonTableSelect = ({
   const styles: StylesConfig<TableSelectOption, false> = {
     control: (base) => ({
       ...base,
-      minHeight: "31px",
-      height: "31px",
+      minHeight: `${controlHeight}px`,
+      height: `${controlHeight}px`,
       width: width,
       borderColor: "#CBD5E1",
       borderRadius: "4px",
@@ -140,7 +144,7 @@ const CommonTableSelect = ({
 
     indicatorsContainer: (base) => ({
       ...base,
-      height: "30px",
+      height: `${controlHeight - 1}px`,
       
     }),
 
@@ -152,8 +156,13 @@ const CommonTableSelect = ({
       borderRadius: "4px",
       border: "1px solid #E5E7EB",
       boxShadow: "0 4px 10px rgba(0,0,0,0.12)",
-      zIndex: 9999,
+      zIndex: 100000,
       overflow: "hidden",
+    }),
+
+    menuPortal: (base) => ({
+      ...base,
+      zIndex: 100000,
     }),
 
     menuList: (base) => ({
@@ -200,6 +209,8 @@ const CommonTableSelect = ({
       isClearable={isClearable}
       isSearchable={isSearchable}
       isDisabled={isDisabled}
+      menuPortalTarget={menuPortalTarget}
+      menuPosition={menuPortalTarget ? "fixed" : undefined}
       getOptionLabel={(option) => option.label}
       getOptionValue={(option) => option.value}
     />
