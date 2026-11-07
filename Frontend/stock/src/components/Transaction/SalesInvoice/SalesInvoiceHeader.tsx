@@ -18,6 +18,7 @@ import type {
   ParamLookup,
   SalesHeader,
 } from "../../../hooks/useSalesInvoice"; // adjust path to your hook
+import SelectDropdownIndicator from "../../common/SelectDropdownIndicator";
 
 dayjs.extend(customParseFormat);
 
@@ -249,6 +250,7 @@ const branchStyles: StylesConfig<Option, false> = {
 
 const branchComponents = {
   ...selectComponents,
+  DropdownIndicator: SelectDropdownIndicator,
   MenuList: BranchMenuList,
 };
 
@@ -383,6 +385,7 @@ const createCustomerMenuList = (
 
 const customerIdMenuComponents = {
   ...selectComponents,
+  DropdownIndicator: SelectDropdownIndicator,
   MenuList: createCustomerMenuList(
     "Customer ID",
     "Customer Name",
@@ -392,6 +395,7 @@ const customerIdMenuComponents = {
 
 const customerNameMenuComponents = {
   ...selectComponents,
+  DropdownIndicator: SelectDropdownIndicator,
   MenuList: createCustomerMenuList(
     "Customer Name",
     "Customer ID",
