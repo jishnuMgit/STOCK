@@ -98,6 +98,7 @@ import AssetSchedulePage from "../pages/Assets/Reports/AssetSchedulePage";
 import AssetItemListPage from "../pages/Assets/Reports/AssetItemListPage";
 import DepreciationHistoryPage from "../pages/Assets/Reports/DepreciationHistoryPage";
 import DepreciationSchedulePage from "../pages/Assets/Reports/DepreciationSchedulePage";
+import DisposalSchedulePage from "../pages/Assets/Reports/DisposalSchedulePage";
 
 const Login = lazy(() => import("../pages/Auth/LoginPage"));
 const ReceiptPage = lazy(
@@ -435,6 +436,7 @@ const AppRoutes = () => {
           <Route path="/Assets/Reports/AssetItemList" element={<AssetItemListPage />} />
           <Route path="/Assets/Reports/DepreciationHistory" element={<DepreciationHistoryPage />} />
           <Route path="/Assets/Reports/DepreciationSchedule" element={<DepreciationSchedulePage />} />
+          <Route path="/Assets/Reports/DisposalSchedule" element={<DisposalSchedulePage />} />
 
           {/* ================= SETTINGS ================= */}
 

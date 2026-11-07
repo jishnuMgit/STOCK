@@ -191,6 +191,7 @@ mnuAssetSchedule:"/Assets/Reports/AssetSchedule",
 mnuAssetItemList:"/Assets/Reports/AssetItemList",
 mnuDepreciationHistory:"/Assets/Reports/DepreciationHistory",
 mnuDepreciationSchedule:"/Assets/Reports/DepreciationSchedule",
+mnuDisposalSchedule:"/Assets/Reports/DisposalSchedule",
 
 
 
