@@ -219,8 +219,8 @@ export const documentNoListStyles: StylesConfig<SelectOption, false> = {
 
   menu: (base) => ({
     ...base,
-    width: "calc(154px + 11px + 520px)",
-    minWidth: "calc(154px + 11px + 520px)",
+    width: 470, // 455px of columns + 16px option padding, rounded
+    minWidth: 470,
     maxWidth: "calc(100vw - 24px)",
     zIndex: 9999,
   }),

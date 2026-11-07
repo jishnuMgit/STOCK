@@ -377,7 +377,9 @@ const sendPrintError = (res: Response, error: unknown, what: string) => {
   });
 };
 
-const prepareReport = async (req: AuthenticatedRequest): Promise<RptMatchEnquiryReport> => {
+const prepareReport = async (
+  req: AuthenticatedRequest,
+): Promise<RptMatchEnquiryReport> => {
   if (!req.user) throw new ApiError(401, "Authentication required");
 
   const { CoID: PstrCoID, userId: PstrUserID } = req.user;
@@ -388,17 +390,32 @@ const prepareReport = async (req: AuthenticatedRequest): Promise<RptMatchEnquiry
   const lkpDocNo = String(req.body?.lkpDocNo ?? "").trim();
 
   // ---- the checks of the old form (ValidateMe), in the order of the screen ----
-  if (!/^\d{4}$/.test(PstrYear)) throw new ApiError(400, "Please select 'Year'");
-  if (lkpBranch === "") throw new ApiError(400, "Please select 'Branch'", "lkpBranch");
-  if (lkpDocType === "") throw new ApiError(400, "Please input 'Document'", "lkpDocType");
-  if (lkpDocNo === "") throw new ApiError(400, "Please input 'Document No.'", "lkpDocNo");
+  if (!/^\d{4}$/.test(PstrYear))
+    throw new ApiError(400, "Please select 'Year'");
+  if (lkpBranch === "")
+    throw new ApiError(400, "Please select 'Branch'", "lkpBranch");
+  if (lkpDocType === "")
+    throw new ApiError(400, "Please input 'Document'", "lkpDocType");
+  if (lkpDocNo === "")
+    throw new ApiError(400, "Please input 'Document No.'", "lkpDocNo");
 
   // a branch may only be one the user has a right to
-  const branchName = await getAllowedBranchName(PstrCoID, PstrUserID, lkpBranch);
+  const branchName = await getAllowedBranchName(
+    PstrCoID,
+    PstrUserID,
+    lkpBranch,
+  );
 
-  if (branchName === null) throw new ApiError(403, "This branch is not allowed", "lkpBranch");
+  if (branchName === null)
+    throw new ApiError(403, "This branch is not allowed", "lkpBranch");
 
-  const groups = await getRptMatchEnquiry({ PstrCoID, PstrYear, lkpBranch, lkpDocType, lkpDocNo });
+  const groups = await getRptMatchEnquiry({
+    PstrCoID,
+    PstrYear,
+    lkpBranch,
+    lkpDocType,
+    lkpDocNo,
+  });
 
   if (groups.length === 0) throw new ApiError(404, "No records found");
 
@@ -422,7 +439,8 @@ export const getPrintData = async (
     return res.status(200).json({
       success: true,
       report,
-      fileBase: `Match Enquiry ${String(req.body?.lkpDocType ?? "").trim()} ${String(req.body?.lkpDocNo ?? "").trim()}`.trim(),
+      fileBase:
+        `Match Enquiry ${String(req.body?.lkpDocType ?? "").trim()} ${String(req.body?.lkpDocNo ?? "").trim()}`.trim(),
     });
   } catch (error: unknown) {
     return sendPrintError(res, error, "getPrintData");
@@ -436,15 +454,19 @@ export const getExcel = async (
   try {
     const report = await prepareReport(req);
     const buffer = await buildRptMatchEnquiryWorkbook(report);
-    const fileBase = `Match Enquiry ${String(req.body?.lkpDocType ?? "").trim()} ${String(req.body?.lkpDocNo ?? "").trim()}`
-      .trim()
-      .replace(/[\\/:*?"<>|]+/g, "-");
+    const fileBase =
+      `Match Enquiry ${String(req.body?.lkpDocType ?? "").trim()} ${String(req.body?.lkpDocNo ?? "").trim()}`
+        .trim()
+        .replace(/[\\/:*?"<>|]+/g, "-");
 
     res.setHeader(
       "Content-Type",
       "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
     );
-    res.setHeader("Content-Disposition", `attachment; filename="${fileBase}.xlsx"`);
+    res.setHeader(
+      "Content-Disposition",
+      `attachment; filename="${fileBase}.xlsx"`,
+    );
     res.setHeader("Access-Control-Expose-Headers", "Content-Disposition");
 
     return res.status(200).send(buffer);
