@@ -27,6 +27,7 @@ BEGIN
       AND a.fyear::varchar(4) = p_pstryear
       AND a.fcsaccountid = p_lkpcsaccountid
       AND a.fmatch = true
+	  AND a.fcredit >0
     GROUP BY a.fbrid, a.fdoctype, a.fdocno
     ORDER BY MIN(a.fdate), a.fbrid, a.fdoctype, a.fdocno;
 END;
