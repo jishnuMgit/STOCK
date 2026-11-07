@@ -96,6 +96,7 @@ import Budgetpage from "../pages/Finance/Setup/Budgetpage";
 import AssetPurchasePage from "../pages/Purchase/Setup/AssetPurchasePage";
 import AssetSchedulePage from "../pages/Assets/Reports/AssetSchedulePage";
 import AssetItemListPage from "../pages/Assets/Reports/AssetItemListPage";
+import DepreciationHistoryPage from "../pages/Assets/Reports/DepreciationHistoryPage";
 
 const Login = lazy(() => import("../pages/Auth/LoginPage"));
 const ReceiptPage = lazy(
@@ -431,8 +432,7 @@ const AppRoutes = () => {
 
           <Route path="/Assets/Reports/AssetSchedule" element={<AssetSchedulePage />} />
           <Route path="/Assets/Reports/AssetItemList" element={<AssetItemListPage />} />
-
-
+          <Route path="/Assets/Reports/DepreciationHistory" element={<DepreciationHistoryPage />} />
 
           {/* ================= SETTINGS ================= */}
 

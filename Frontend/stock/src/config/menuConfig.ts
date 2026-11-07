@@ -189,6 +189,7 @@ Sales-REPORT
 
 mnuAssetSchedule:"/Assets/Reports/AssetSchedule",
 mnuAssetItemList:"/Assets/Reports/AssetItemList",
+mnuDepreciationHistory:"/Assets/Reports/DepreciationHistory",
 
 
 

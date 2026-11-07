@@ -1,0 +1,748 @@
+
+import React, { useState } from "react";
+import {
+  LocalizationProvider,
+} from "@mui/x-date-pickers/LocalizationProvider";
+import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
+import { DatePicker } from "@mui/x-date-pickers/DatePicker";
+import dayjs from "dayjs";
+import customParseFormat from "dayjs/plugin/customParseFormat";
+
+import Header from "../../../components/common/Header";
+
+import CommonTableSelect, {
+  type TableSelectOption,
+} from "../../../components/common/CommonTableSelect";
+
+import CustomLinkedPairSelect, {
+  type PairSelectOption,
+} from "../../../components/common/CustomLinkedPairSelect";
+
+dayjs.extend(customParseFormat);
+
+type Option = {
+  value: string;
+  label: string;
+};
+
+const DATE_FORMAT = "DD/MM/YYYY";
+const TODAY = dayjs().format(DATE_FORMAT);
+
+// ==================================================
+// OPTIONS
+// ==================================================
+
+// Branch
+
+const branchOptions: Option[] = [
+  { value: "JD", label: "Jeddah" },
+  { value: "RH", label: "Riyadh" },
+];
+
+const branchColumns = [
+  { key: "label", label: "Branch", width: "1fr" },
+  { key: "value", label: "ID", width: "70px", align: "right" as const },
+];
+
+// Cost Center
+
+const costCenterIdOptions: Option[] = [
+  { value: "CC001", label: "CC001" },
+  { value: "CC002", label: "CC002" },
+];
+
+const costCenterNameOptions: Option[] = [
+  { value: "CC001", label: "Administration" },
+  { value: "CC002", label: "Finance" },
+];
+
+// Item
+
+const itemIdOptions: Option[] = [
+  { value: "IT001", label: "IT001" },
+  { value: "IT002", label: "IT002" },
+  { value: "IT003", label: "IT003" },
+];
+
+const itemNameOptions: Option[] = [
+  { value: "IT001", label: "Computer" },
+  { value: "IT002", label: "Printer" },
+  { value: "IT003", label: "Office Furniture" },
+];
+
+const itemIdColumns = [
+  { key: "label", label: "Item ID", width: "1fr" },
+];
+
+// ==================================================
+// CREATE LINKED PAIR OPTIONS
+// ==================================================
+
+const createPairOptions = (
+  idOptions: Option[],
+  nameOptions: Option[],
+): PairSelectOption[] => {
+  return idOptions.map((id) => ({
+    value: id.value,
+    firstLabel: id.label,
+    secondLabel:
+      nameOptions.find((item) => item.value === id.value)?.label ?? "",
+  }));
+};
+
+const costCenterPairOptions = createPairOptions(
+  costCenterIdOptions,
+  costCenterNameOptions,
+);
+
+const itemPairOptions = createPairOptions(
+  itemIdOptions,
+  itemNameOptions,
+);
+
+// ==================================================
+// CUSTOM RADIO
+// ==================================================
+
+type RadioProps = {
+  name: string;
+  value: string;
+  label: string;
+  checked: boolean;
+  onChange: () => void;
+  disabled?: boolean;
+};
+
+const CustomRadio: React.FC<RadioProps> = ({
+  name,
+  value,
+  label,
+  checked,
+  onChange,
+  disabled = false,
+}) => (
+  <label
+    className={`flex items-center gap-1.25 whitespace-nowrap select-none ${
+      disabled ? "cursor-not-allowed opacity-40" : "cursor-pointer"
+    }`}
+  >
+    <input
+      type="radio"
+      name={name}
+      value={value}
+      checked={checked}
+      onChange={onChange}
+      disabled={disabled}
+      className="sr-only"
+    />
+
+    <span
+      className={`flex h-4.75 w-4.75 shrink-0 items-center justify-center rounded-full border ${
+        checked ? "border-[#4ade80]" : "border-[#c3cbd3]"
+      } bg-white`}
+    >
+      {checked && (
+        <span className="h-2.25 w-2.25 rounded-full bg-[#4ade80]" />
+      )}
+    </span>
+
+    <span className="text-[12px] leading-4.25 text-[#172b43]">
+      {label}
+    </span>
+  </label>
+);
+
+// ==================================================
+// RADIO PANEL
+// ==================================================
+
+const RadioPanel: React.FC<{
+  children: React.ReactNode;
+  className?: string;
+}> = ({ children, className = "" }) => (
+  <div
+    className={`flex flex-col justify-center gap-1.5 border border-gray-300 rounded-sm bg-white px-1.75 py-1.75 ${className}`}
+  >
+    {children}
+  </div>
+);
+
+// ==================================================
+// DATE PICKER
+// ==================================================
+
+const AppDatePicker: React.FC<{
+  id: string;
+  label: string;
+  value: string;
+  onChange: (value: string) => void;
+}> = ({ id, label, value, onChange }) => (
+  <LocalizationProvider dateAdapter={AdapterDayjs}>
+    <DatePicker
+      value={value ? dayjs(value, DATE_FORMAT) : null}
+      onChange={(newValue) => {
+        onChange(
+          newValue?.isValid()
+            ? newValue.format(DATE_FORMAT)
+            : "",
+        );
+      }}
+      format={DATE_FORMAT}
+      slotProps={{
+        textField: {
+          id,
+          slotProps: {
+            htmlInput: { "aria-label": label },
+          },
+        },
+        openPickerButton: {
+          sx: { padding: "2px", margin: 0 },
+        },
+        inputAdornment: {
+          sx: { margin: 0, padding: 0 },
+        },
+      }}
+      sx={{
+        width: "100%",
+        minWidth: 0,
+
+        "& .MuiPickersTextField-root": {
+          width: "100%",
+        },
+
+        "& .MuiPickersInputBase-root": {
+          width: "100%",
+          height: "28px",
+          minHeight: "28px",
+          boxSizing: "border-box",
+          borderRadius: "4px",
+          backgroundColor: "#ffffff",
+          fontSize: "12px",
+          padding: 0,
+          overflow: "hidden",
+        },
+
+        "& .MuiPickersInputBase-sectionsContainer": {
+          paddingLeft: "8px !important",
+          paddingRight: "0px !important",
+          marginBottom: "-5px !important",
+          marginLeft: "0px !important",
+          boxSizing: "border-box",
+          overflow: "hidden",
+        },
+
+        "& .MuiPickersInputBase-sectionContent": {
+          fontSize: "12px",
+          color: "#344054",
+        },
+
+        "& .MuiPickersInputBase-input": {
+          minWidth: 0,
+          width: "100%",
+          fontSize: "12px",
+          padding: 0,
+          height: "28px",
+          boxSizing: "border-box",
+        },
+
+        "& .MuiInputAdornment-root": {
+          margin: 0,
+          padding: 0,
+        },
+
+        "& .MuiIconButton-root": {
+          width: "22px",
+          height: "22px",
+          padding: "2px",
+          margin: 0,
+        },
+
+        "& .MuiSvgIcon-root": {
+          fontSize: "15px",
+        },
+
+        "& .Mui-disabled": {
+          WebkitTextFillColor: "#24364d",
+        },
+
+        "& .MuiPickersOutlinedInput-notchedOutline": {
+          borderColor: "#B7C7D7 !important",
+        },
+
+        "& .MuiPickersInputBase-root:hover .MuiPickersOutlinedInput-notchedOutline":
+          {
+            borderColor: "#B7C7D7 !important",
+          },
+
+        "& .MuiPickersInputBase-root.Mui-focused .MuiPickersOutlinedInput-notchedOutline":
+          {
+            borderColor: "#B7C7D7 !important",
+            borderWidth: "1px",
+          },
+      }}
+    />
+  </LocalizationProvider>
+);
+
+// ==================================================
+// ACTION BUTTON
+// ==================================================
+
+const ActionButton: React.FC<{
+  children: React.ReactNode;
+  onClick: () => void;
+  className?: string;
+}> = ({ children, onClick, className = "" }) => (
+  <button
+    type="button"
+    onClick={onClick}
+    className={`min-w-20 btn-style ${className}`}
+  >
+    {children}
+  </button>
+);
+
+// ==================================================
+// DEPRECIATION HISTORY PAGE
+// ==================================================
+
+const DepreciationHistory: React.FC = () => {
+
+  // -----------------------------------------------
+  // Branch
+  // -----------------------------------------------
+
+  const [branchMode, setBranchMode] = useState("All Branch");
+  const [branch, setBranch] = useState<Option | null>(null);
+
+  // -----------------------------------------------
+  // Cost Center
+  // -----------------------------------------------
+
+  const [costCenterMode, setCostCenterMode] =
+    useState("All Cost Center");
+
+  const [costCenterId, setCostCenterId] =
+    useState<Option | null>(null);
+
+  const [costCenterName, setCostCenterName] =
+    useState<Option | null>(null);
+
+  // -----------------------------------------------
+  // Item Mode
+  // -----------------------------------------------
+
+  const [itemMode, setItemMode] = useState("All Item");
+
+  // One Item
+  const [itemId, setItemId] = useState<Option | null>(null);
+  const [itemName, setItemName] = useState<Option | null>(null);
+
+  // Range Item - From
+  const [fromItemId, setFromItemId] = useState<Option | null>(null);
+  const [fromItemName, setFromItemName] = useState<Option | null>(null);
+
+  // Range Item - To
+  const [toItemId, setToItemId] = useState<Option | null>(null);
+  const [toItemName, setToItemName] = useState<Option | null>(null);
+
+  // -----------------------------------------------
+  // Period
+  // -----------------------------------------------
+
+  const [fromDate, setFromDate] = useState("01/10/2026");
+  const [toDate, setToDate] = useState(TODAY);
+
+  // ==================================================
+  // PRINT
+  // ==================================================
+
+  const handlePrint = () => {
+
+    const reportData = {
+      branchMode,
+      branch:
+        branchMode === "One Branch" ? branch : null,
+
+      costCenterMode,
+      costCenterId:
+        costCenterMode === "One Cost Center"
+          ? costCenterId
+          : null,
+      costCenterName:
+        costCenterMode === "One Cost Center"
+          ? costCenterName
+          : null,
+
+      itemMode,
+
+      itemId:
+        itemMode === "One Item" ? itemId : null,
+
+      itemName:
+        itemMode === "One Item" ? itemName : null,
+
+      fromItemId:
+        itemMode === "Range Item" ? fromItemId : null,
+
+      fromItemName:
+        itemMode === "Range Item" ? fromItemName : null,
+
+      toItemId:
+        itemMode === "Range Item" ? toItemId : null,
+
+      toItemName:
+        itemMode === "Range Item" ? toItemName : null,
+
+      fromDate,
+      toDate,
+    };
+
+    console.log("Depreciation History Report:", reportData);
+  };
+
+  // ==================================================
+  // CLOSE
+  // ==================================================
+
+  const handleClose = () => {
+    window.history.back();
+  };
+
+  // ==================================================
+  // UI
+  // ==================================================
+
+  return (
+    <div className="min-h-screen w-full bg-white p-1 sm:p-2">
+
+      <main className="mx-auto w-full max-w-220 overflow-hidden rounded-[3px] border border-[#91a7bb] bg-white shadow-sm">
+
+        <Header Name="Depreciation History" />
+
+        <section className="relative min-h-96 px-3.5 pb-3.5 pt-3.5">
+
+          <div className="flex flex-col items-start gap-3.5">
+
+            {/* -------------------------------------- */}
+            {/* BRANCH */}
+            {/* -------------------------------------- */}
+
+            <div className="grid grid-cols-[130px_minmax(0,1fr)] items-center gap-x-4">
+
+              <RadioPanel className="h-17.5 w-33">
+
+                <CustomRadio
+                  name="rgdBranch"
+                  value="One Branch"
+                  label="One Branch"
+                  checked={branchMode === "One Branch"}
+                  onChange={() => setBranchMode("One Branch")}
+                />
+
+                <CustomRadio
+                  name="rgdBranch"
+                  value="All Branch"
+                  label="All Branch"
+                  checked={branchMode === "All Branch"}
+                  onChange={() => setBranchMode("All Branch")}
+                />
+
+              </RadioPanel>
+
+              <div className="pt-1">
+
+                {branchMode === "One Branch" && (
+                  <div className="w-62.5 max-w-full">
+
+                    <CommonTableSelect
+                      inputId="lkpBranch"
+                      options={branchOptions}
+                      value={branch}
+                      onChange={setBranch}
+                      columns={branchColumns}
+                      width="250px"
+                      menuWidth="305px"
+                      placeholder="Select Branch"
+                    />
+
+                  </div>
+                )}
+
+              </div>
+
+            </div>
+
+            {/* -------------------------------------- */}
+            {/* COST CENTER */}
+            {/* -------------------------------------- */}
+
+            <div className="grid grid-cols-[130px_minmax(0,1fr)] items-center gap-x-4">
+
+              <RadioPanel className="h-17.5 w-33">
+
+                <CustomRadio
+                  name="rgdCostCenter"
+                  value="One Cost Center"
+                  label="One Cost Center"
+                  checked={costCenterMode === "One Cost Center"}
+                  onChange={() =>
+                    setCostCenterMode("One Cost Center")
+                  }
+                />
+
+                <CustomRadio
+                  name="rgdCostCenter"
+                  value="All Cost Center"
+                  label="All Cost Center"
+                  checked={costCenterMode === "All Cost Center"}
+                  onChange={() =>
+                    setCostCenterMode("All Cost Center")
+                  }
+                />
+
+              </RadioPanel>
+
+              <div className="min-w-0 pt-1">
+
+                {costCenterMode === "One Cost Center" && (
+                  <CustomLinkedPairSelect
+                    firstInputId="lkpCostCenterId"
+                    secondInputId="lkpCostCenterName"
+                    options={costCenterPairOptions}
+                    firstValue={costCenterId?.value ?? null}
+                    secondValue={costCenterName?.value ?? null}
+                    firstHeader="Cost Center ID"
+                    secondHeader="Cost Center Name"
+                    firstWidth={120}
+                    secondWidth={450}
+                    gap={4}
+                    headerFontSize="12px"
+                    onChange={(option) => {
+                      setCostCenterId(
+                        option
+                          ? {
+                              value: option.value,
+                              label: option.firstLabel,
+                            }
+                          : null,
+                      );
+
+                      setCostCenterName(
+                        option
+                          ? {
+                              value: option.value,
+                              label: option.secondLabel,
+                            }
+                          : null,
+                      );
+                    }}
+                  />
+                )}
+
+              </div>
+
+            </div>
+
+            {/* -------------------------------------- */}
+            {/* ITEM */}
+            {/* -------------------------------------- */}
+
+            <div className="grid grid-cols-[130px_minmax(0,1fr)] items-start gap-x-4">
+
+              <RadioPanel className="h-22.5 w-33">
+
+                <CustomRadio
+                  name="rgdItem"
+                  value="One Item"
+                  label="One Item"
+                  checked={itemMode === "One Item"}
+                  onChange={() => setItemMode("One Item")}
+                />
+
+                <CustomRadio
+                  name="rgdItem"
+                  value="Range Item"
+                  label="Range Item"
+                  checked={itemMode === "Range Item"}
+                  onChange={() => setItemMode("Range Item")}
+                />
+
+                <CustomRadio
+                  name="rgdItem"
+                  value="All Item"
+                  label="All Item"
+                  checked={itemMode === "All Item"}
+                  onChange={() => setItemMode("All Item")}
+                />
+
+              </RadioPanel>
+
+              <div className="min-w-0 pt-1">
+
+                {/* ONE ITEM */}
+
+                {itemMode === "One Item" && (
+                  <CustomLinkedPairSelect
+                    firstInputId="lkpItemId"
+                    secondInputId="lkpItemName"
+                    options={itemPairOptions}
+                    firstValue={itemId?.value ?? null}
+                    secondValue={itemName?.value ?? null}
+                    firstHeader="Item ID"
+                    secondHeader="Item Name"
+                    firstWidth={120}
+                    secondWidth={450}
+                    gap={4}
+                    headerFontSize="12px"
+                    onChange={(option) => {
+                      setItemId(
+                        option
+                          ? {
+                              value: option.value,
+                              label: option.firstLabel,
+                            }
+                          : null,
+                      );
+
+                      setItemName(
+                        option
+                          ? {
+                              value: option.value,
+                              label: option.secondLabel,
+                            }
+                          : null,
+                      );
+                    }}
+                  />
+                )}
+
+                {/* RANGE ITEM */}
+
+                {itemMode === "Range Item" && (
+                  <div className="flex flex-row gap-2 mt-5" >
+
+                    <CommonTableSelect
+                      inputId="fromItemId"
+                      options={itemIdOptions}
+                      value={fromItemId}
+                      onChange={(option) => {
+                        setFromItemId(option);
+                        setFromItemName(
+                          option
+                            ? itemNameOptions.find(
+                                (item) => item.value === option.value,
+                              ) ?? null
+                            : null,
+                        );
+                      }}
+                      columns={itemIdColumns}
+                      width="120px"
+                      menuWidth="120px"
+                      placeholder=""
+                    />
+
+                    <CommonTableSelect
+                      inputId="toItemId"
+                      options={itemIdOptions}
+                      value={toItemId}
+                      onChange={(option) => {
+                        setToItemId(option);
+                        setToItemName(
+                          option
+                            ? itemNameOptions.find(
+                                (item) => item.value === option.value,
+                              ) ?? null
+                            : null,
+                        );
+                      }}
+                      columns={itemIdColumns}
+                      width="120px"
+                      menuWidth="120px"
+                      placeholder=""
+                    />
+
+                  </div>
+                )}
+
+              </div>
+
+            </div>
+
+            {/* -------------------------------------- */}
+            {/* PERIOD */}
+            {/* -------------------------------------- */}
+
+            <div className="grid grid-cols-[125px_minmax(0,1fr)] items-center gap-x-4">
+
+              <div className="flex h-7.5 w-28.25 items-center border border-gray-300 bg-[#FAFBFC] px-1.75">
+
+                <span className="text-[12px] text-[#172b43]">
+                  Period :
+                </span>
+
+              </div>
+
+              <div className="flex flex-wrap items-center gap-1.25">
+
+                <div className="w-36.5">
+                  <AppDatePicker
+                    id="dtpFromDate"
+                    label="Period start date"
+                    value={fromDate}
+                    onChange={setFromDate}
+                  />
+                </div>
+
+                <div className="w-36.5">
+                  <AppDatePicker
+                    id="dtpToDate"
+                    label="Period end date"
+                    value={toDate}
+                    onChange={setToDate}
+                  />
+                </div>
+
+              </div>
+
+            </div>
+
+            {/* -------------------------------------- */}
+            {/* BUTTONS */}
+            {/* -------------------------------------- */}
+
+            <div className="grid grid-cols-[125px_minmax(0,1fr)] gap-x-4">
+
+              <div />
+
+              <div className="flex items-center gap-1 pl-29.5">
+
+                <ActionButton
+                  onClick={handlePrint}
+                  className="h-9 w-20"
+                >
+                  <u>P</u>rint
+                </ActionButton>
+
+                <ActionButton
+                  onClick={handleClose}
+                  className="h-9 w-20"
+                >
+                  Close
+                </ActionButton>
+
+              </div>
+
+            </div>
+
+          </div>
+
+        </section>
+
+      </main>
+
+    </div>
+  );
+};
+
+export default DepreciationHistory;
