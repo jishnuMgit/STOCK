@@ -12,7 +12,7 @@ import Select, {
   type OptionProps,
   type StylesConfig,
 } from "react-select";
-
+import dayjs from "dayjs";
 import { toast } from "react-toastify";
 
 import { handleKeyboardAction } from "../../../hooks/useMatchKeyboard";
@@ -586,7 +586,9 @@ const MatchEnquiryComponents = forwardRef<MatchingComponentsRef, Props>(
                 value: `${brId}|${docType}|${docNo}`,
                 label: docTypeNo,
                 brId,
-                date: String(item.txtDate ?? ""),
+                date: item.txtDate
+                  ? dayjs(item.txtDate).format("DD/MM/YYYY")
+                  : "",
                 docType,
                 docNo,
                 docTypeNo,
