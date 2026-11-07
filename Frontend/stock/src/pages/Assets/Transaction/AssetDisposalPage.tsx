@@ -28,7 +28,7 @@ dayjs.extend(customParseFormat);
 type Option = { value: string; label: string };
 
 const DATE_FORMAT = "DD-MM-YYYY";
-const TODAY = dayjs().format(DATE_FORMAT);
+// const TODAY = dayjs().format(DATE_FORMAT);
 
 const statusOptions: Option[] = [
   { value: "Disposed", label: "Disposed" },

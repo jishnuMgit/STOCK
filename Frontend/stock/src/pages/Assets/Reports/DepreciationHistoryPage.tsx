@@ -11,7 +11,6 @@ import customParseFormat from "dayjs/plugin/customParseFormat";
 import Header from "../../../components/common/Header";
 
 import CommonTableSelect, {
-  type TableSelectOption,
 } from "../../../components/common/CommonTableSelect";
 
 import CustomLinkedPairSelect, {
