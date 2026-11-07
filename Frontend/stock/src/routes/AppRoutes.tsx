@@ -91,6 +91,13 @@ import RptDocumentsAfterYearClosePage from "../pages/Utility/RptDocumentsAfterYe
 import BackupPage from "../pages/Utility/BackupPage";
 import InvoicePage from "../pages/Sales/Transaction/Invoice/InvoicePage";
 import Deletepage from "../pages/Deletepage";
+import AssetPurchasePage from "../pages/Assets/Transaction/AssetPurchasePage";
+import AssetSchedulePage from "../pages/Assets/Reports/AssetSchedulePage";
+import AssetItemListPage from "../pages/Assets/Reports/AssetItemListPage";
+import DepreciationHistoryPage from "../pages/Assets/Reports/DepreciationHistoryPage";
+import DepreciationSchedulePage from "../pages/Assets/Reports/DepreciationSchedulePage";
+import DisposalSchedulePage from "../pages/Assets/Reports/DisposalSchedulePage";
+import AssetDisposalPage from "../pages/Assets/Transaction/AssetDisposalPage";
 
 const Login = lazy(() => import("../pages/Auth/LoginPage"));
 const ReceiptPage = lazy(
@@ -422,6 +429,19 @@ const AppRoutes = () => {
             element={<RptItemHistoryPage />}
           />
 
+{/* ================= ASSETS  ================= */}
+
+          <Route path="/Assets/Reports/AssetSchedule" element={<AssetSchedulePage />} />
+          <Route path="/Assets/Reports/AssetItemList" element={<AssetItemListPage />} />
+          <Route path="/Assets/Reports/DepreciationHistory" element={<DepreciationHistoryPage />} />
+          <Route path="/Assets/Reports/DepreciationSchedule" element={<DepreciationSchedulePage />} />
+          <Route path="/Assets/Reports/DisposalSchedule" element={<DisposalSchedulePage />} />
+
+
+                    <Route path="Assets/Setup/AssetPurchase" element={<AssetPurchasePage />} />
+                    <Route path="Assets/Transaction/AssetDisposal" element={<AssetDisposalPage />} />
+
+
           {/* ================= SETTINGS ================= */}
 
           <Route path="/Settings/SetCompanyInfo" element={<SetCompanyInfo />} />
@@ -511,6 +531,7 @@ const AppRoutes = () => {
           />
           <Route path="/dev/matchpage" element={<MatchingPage />} />
           <Route path="/dev/unmatchpage" element={<UnMatchPage />} />
+          
           {/* <Route path="/dev/MatchEnquiryPage" element={<MatchEnquiryPage />} /> */}
 
           {/* Unknown URL -> back to "/" ("/" has its own element, so no loop) */}

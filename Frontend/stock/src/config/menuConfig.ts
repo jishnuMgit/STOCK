@@ -175,6 +175,28 @@ Sales-REPORT
   mnuRptBS: "/Finance/Reports/RptBS",
   mnuRptPL: "/Finance/Reports/RptPL",
 
+
+  /* =========================================================
+     ASSETS
+  ========================================================= */
+
+  // ASSETS - TRANSACTION
+
+// ASSETS - SETUP
+
+
+// ASSETS - REPORTS
+
+mnuAssetSchedule:"/Assets/Reports/AssetSchedule",
+mnuAssetItemList:"/Assets/Reports/AssetItemList",
+mnuDepreciationHistory:"/Assets/Reports/DepreciationHistory",
+mnuDepreciationSchedule:"/Assets/Reports/DepreciationSchedule",
+mnuDisposalSchedule:"/Assets/Reports/DisposalSchedule",
+mnuAssetPurchase:"/Assets/Setup/AssetPurchase",
+mnuAssetDisposal:"/Assets/Transaction/AssetDisposal",
+
+
+
   /* =========================================================
      SETTINGS
   ========================================================= */
