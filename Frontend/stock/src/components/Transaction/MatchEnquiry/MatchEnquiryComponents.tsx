@@ -12,11 +12,10 @@ import Select, {
   type OptionProps,
   type StylesConfig,
 } from "react-select";
-
+import dayjs from "dayjs";
 import { toast } from "react-toastify";
 
 import { handleKeyboardAction } from "../../../hooks/useMatchKeyboard";
-
 
 import type {
   GetDocumentNosParams,
@@ -33,6 +32,7 @@ import type {
   DocumentOption,
   MatchingComponentsRef,
 } from "./types";
+import SelectDropdownIndicator from "../../common/SelectDropdownIndicator";
 
 interface Props {
   lkpBranch: string;
@@ -87,8 +87,8 @@ interface Props {
   totalCredit: number;
 }
 
-// the Document No. list: BrID | Date | Document No. (the type and the number) | Debit | Credit | Description
-const DOCUMENT_LIST_COLUMNS = "60px 100px 150px 95px 95px minmax(0, 1fr)";
+// the Document No. list: Document No. | Date | Br. ID | Debit | Credit (same as the Matching screen)
+const DOCUMENT_LIST_COLUMNS = "130px 90px 55px 90px 90px";
 
 interface ResponsiveSelectProps {
   id: string;
@@ -183,23 +183,14 @@ const ResponsiveSelect = ({
               fontSize: "12px",
             }}
           >
-            <div>{data.brId ?? ""}</div>
-            <div>{data.date ?? ""}</div>
             <div>{data.docTypeNo ?? data.docNo ?? data.value ?? ""}</div>
+            <div>{data.date ?? ""}</div>
+            <div>{data.brId ?? ""}</div>
             <div style={{ textAlign: "right", paddingRight: "8px" }}>
               {data.debit ?? ""}
             </div>
             <div style={{ textAlign: "right", paddingRight: "8px" }}>
               {data.credit ?? ""}
-            </div>
-            <div
-              style={{
-                overflow: "hidden",
-                whiteSpace: "nowrap",
-                textOverflow: "ellipsis",
-              }}
-            >
-              {data.description ?? ""}
             </div>
           </div>
         </components.Option>
@@ -276,14 +267,7 @@ const ResponsiveSelect = ({
 
   const CustomMenuList = (menuProps: any) => {
     if (documentMode) {
-      const headers = [
-        "BrID",
-        "Date",
-        "Document No.",
-        "Debit",
-        "Credit",
-        "Description",
-      ];
+      const headers = ["Document No.", "Date", "Br. ID", "Debit", "Credit"];
       return (
         <components.MenuList {...menuProps}>
           <div
@@ -402,6 +386,7 @@ const ResponsiveSelect = ({
         components={{
           // no divider line between the value and the dropdown arrow
           IndicatorSeparator: () => null,
+          DropdownIndicator: SelectDropdownIndicator,
           Option: OptionComponent,
           SingleValue: CustomSingleValue,
           ...(columnHeaders || documentMode
@@ -547,7 +532,12 @@ const MatchEnquiryComponents = forwardRef<MatchingComponentsRef, Props>(
 
         await getDivisions(accountId);
       },
-      [customerNameOptions, setLkpCsAccountID, setLkpCsAccountName, getDivisions],
+      [
+        customerNameOptions,
+        setLkpCsAccountID,
+        setLkpCsAccountName,
+        getDivisions,
+      ],
     );
 
     /* =====================================================
@@ -579,7 +569,8 @@ const MatchEnquiryComponents = forwardRef<MatchingComponentsRef, Props>(
 
           const options: DocumentOption[] = found
             .filter(
-              (item: any) => item.lkpDocNo && String(item.lkpDocNo).trim() !== "",
+              (item: any) =>
+                item.lkpDocNo && String(item.lkpDocNo).trim() !== "",
             )
             .map((item: any) => {
               const brId = String(item.lkpBranch ?? "");
@@ -595,7 +586,9 @@ const MatchEnquiryComponents = forwardRef<MatchingComponentsRef, Props>(
                 value: `${brId}|${docType}|${docNo}`,
                 label: docTypeNo,
                 brId,
-                date: String(item.txtDate ?? ""),
+                date: item.txtDate
+                  ? dayjs(item.txtDate).format("DD/MM/YYYY")
+                  : "",
                 docType,
                 docNo,
                 docTypeNo,
