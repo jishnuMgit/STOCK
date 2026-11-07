@@ -33,6 +33,7 @@ import type {
   DocumentOption,
   MatchingComponentsRef,
 } from "./types";
+import SelectDropdownIndicator from "../../common/SelectDropdownIndicator";
 
 interface Props {
   branch: string;
@@ -149,7 +150,6 @@ const ResponsiveSelect = ({
             <span style={{ textAlign: "right", paddingRight: "8px" }}>
               {data.credit ?? ""}
             </span>
-            
           </div>
         </components.SingleValue>
       );
@@ -187,7 +187,6 @@ const ResponsiveSelect = ({
             <div style={{ textAlign: "right", paddingRight: "8px" }}>
               {data.credit ?? ""}
             </div>
-           
           </div>
         </components.Option>
       );
@@ -254,13 +253,7 @@ const ResponsiveSelect = ({
 
   const CustomMenuList = (menuProps: any) => {
     if (documentMode) {
-      const headers = [
-        "Document No.",
-        "Date",
-        "Br. ID",
-        "Debit",
-        "Credit",
-      ];
+      const headers = ["Document No.", "Date", "Br. ID", "Debit", "Credit"];
       return (
         <components.MenuList {...menuProps}>
           <div
@@ -388,6 +381,7 @@ const ResponsiveSelect = ({
         components={{
           Option: OptionComponent,
           SingleValue: CustomSingleValue,
+          DropdownIndicator: SelectDropdownIndicator,
           IndicatorSeparator: () => null,
           ...(columnHeaders || documentMode
             ? { MenuList: CustomMenuList }
@@ -838,18 +832,18 @@ const MatchReversalComponents = forwardRef<MatchingComponentsRef, Props>(
     };
 
     /* Document No. dropdown: wider menu so Doc. No. + Description fit */
- const documentNoStyles: StylesConfig<SelectOption, false> = {
-  ...selectStyles,
-  menu: (base) => ({
-    ...base,
-    zIndex: 9999,
-    fontSize: "14px",
-    width: 530, // 515px of columns (DOC_GRID) + 16px option padding, rounded
-    minWidth: 530,
-    maxWidth: "calc(100vw - 24px)",
-    left: 0,
-  }),
-};
+    const documentNoStyles: StylesConfig<SelectOption, false> = {
+      ...selectStyles,
+      menu: (base) => ({
+        ...base,
+        zIndex: 9999,
+        fontSize: "14px",
+        width: 530, // 515px of columns (DOC_GRID) + 16px option padding, rounded
+        minWidth: 530,
+        maxWidth: "calc(100vw - 24px)",
+        left: 0,
+      }),
+    };
 
     /* =====================================================
      SELECT HELPER

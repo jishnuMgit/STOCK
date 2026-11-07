@@ -32,6 +32,7 @@ import type {
   DocumentOption,
   MatchingComponentsRef,
 } from "./types";
+import SelectDropdownIndicator from "../../common/SelectDropdownIndicator";
 
 interface Props {
   lkpBranch: string;
@@ -385,6 +386,7 @@ const ResponsiveSelect = ({
         components={{
           // no divider line between the value and the dropdown arrow
           IndicatorSeparator: () => null,
+          DropdownIndicator: SelectDropdownIndicator,
           Option: OptionComponent,
           SingleValue: CustomSingleValue,
           ...(columnHeaders || documentMode
