@@ -14,6 +14,8 @@ import Select, {
   type StylesConfig,
 } from "react-select";
 
+import SelectDropdownIndicator from "../../common/SelectDropdownIndicator";
+
 dayjs.extend(customParseFormat);
 
 export interface MatchHeaderProps {
@@ -177,6 +179,13 @@ const DivisionSelect: React.FC<DivisionSelectProps> = ({
       placeholder: (base) => ({ ...base, margin: 0 }),
       input: (base) => ({ ...base, margin: 0, padding: 0 }),
       indicatorsContainer: (base) => ({ ...base, height: 27 }),
+      // same spacing as the Purchase form's arrow
+      dropdownIndicator: (base) => ({
+        ...base,
+        padding: "0 6px",
+        color: "#64748b",
+        "&:hover": { color: "#334155" },
+      }),
       indicatorSeparator: () => ({ display: "none" }),
       menuPortal: (base) => ({ ...base, zIndex: 9999 }),
       menu: (base) => ({
@@ -264,7 +273,11 @@ const DivisionSelect: React.FC<DivisionSelectProps> = ({
         formatOptionLabel={formatLabel}
         filterOption={filter}
         styles={styles}
-        components={{ MenuList, IndicatorSeparator: () => null }}
+        components={{
+          MenuList,
+          DropdownIndicator: SelectDropdownIndicator,
+          IndicatorSeparator: () => null,
+        }}
         isClearable={false}
         isSearchable
         isDisabled={disabled}

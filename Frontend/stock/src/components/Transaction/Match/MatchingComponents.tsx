@@ -31,6 +31,7 @@ import type {
   DocumentOption,
   MatchingComponentsRef,
 } from "./types";
+import SelectDropdownIndicator from "../../common/SelectDropdownIndicator";
 
 interface Props {
   branch: string;
@@ -373,6 +374,7 @@ const ResponsiveSelect = ({
         components={{
           Option: OptionComponent,
           SingleValue: CustomSingleValue,
+          DropdownIndicator: SelectDropdownIndicator,
           IndicatorSeparator: () => null,
           ...(columnHeaders || documentMode
             ? { MenuList: CustomMenuList }
@@ -622,8 +624,6 @@ const MatchingComponents = forwardRef<MatchingComponentsRef, Props>(
      ===================================================== */
 
     const handleSearch = useCallback(async () => {
-  
-
       if (!customerId.trim()) {
         console.warn("Please select 'Customer'");
         return;
