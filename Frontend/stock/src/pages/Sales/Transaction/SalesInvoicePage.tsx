@@ -1,3 +1,5 @@
+
+
 import React, {
   useCallback,
   useEffect,
@@ -360,26 +362,26 @@ const SalesInvoice: React.FC = () => {
     }
 
     // VB posts automatically after a successful save
-    try {
-      await postInvoice(year, h.brId, h.docNo);
-      toast.success(
-        mode === "S"
-          ? "Sales Invoice saved and posted"
-          : "Sales Invoice modified and posted",
-      );
-      const fresh = resetForm(h.brId);
-      await loadNextDocNo(fresh.brId, fresh.date);
-    } catch (err) {
-      // saved but not posted: reload it so the user can fix and post
-      await loadInvoice(h.brId, h.date, h.docNo);
-      toast.error(
-        `Saved, but not posted: ${
-          err instanceof Error ? err.message : "try again"
-        }`,
-      );
-    } finally {
-      setBusy(false);
-    }
+    // try {
+    //   await postInvoice(year, h.brId, h.docNo);
+    //   toast.success(
+    //     mode === "S"
+    //       ? "Sales Invoice saved and posted"
+    //       : "Sales Invoice modified and posted",
+    //   );
+    //   const fresh = resetForm(h.brId);
+    //   await loadNextDocNo(fresh.brId, fresh.date);
+    // } catch (err) {
+    //   // saved but not posted: reload it so the user can fix and post
+    //   await loadInvoice(h.brId, h.date, h.docNo);
+    //   toast.error(
+    //     `Saved, but not posted: ${
+    //       err instanceof Error ? err.message : "try again"
+    //     }`,
+    //   );
+    // } finally {
+    //   setBusy(false);
+    // }
   };
 
   const handleDelete = async () => {
