@@ -505,7 +505,7 @@ const SalesInvoiceFooter: React.FC<SalesInvoiceFooterProps> = ({
           <u>P</u>rint
         </button>
 
-        <button
+        {/* <button
           id="btnPost"
           type="button"
           className={btnClass}
@@ -513,7 +513,7 @@ const SalesInvoiceFooter: React.FC<SalesInvoiceFooterProps> = ({
           onClick={onPost}
         >
           <u>P</u>ost
-        </button>
+        </button> */}
 
         <button
           id="btnClear"

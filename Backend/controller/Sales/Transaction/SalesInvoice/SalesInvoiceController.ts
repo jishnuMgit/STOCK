@@ -2,7 +2,7 @@ import { Response } from "express";
 import pool from "../../../../DB/db.js";
 import { AuthenticatedRequest } from "../../../../middleware/authMiddleware.js";
 
-const DOC_TYPE = "SIR"; // Sales Invoice (Credit)
+const DOC_TYPE = "SI"; // Sales Invoice (Credit)
 const INVOICE_TYPE = "R"; // VB always passed "R"
 
 /* VERIFY: procedure names (VB: SP_frmSI / SP_SIPost) */
@@ -232,22 +232,19 @@ export const getSalesInvoice = async (
 
     const header = await pool.query(
       `SELECT DISTINCT
-              to_char(t.fdate, 'YYYY-MM-DD') AS fdate,
-              t.fdate_h,
-              to_char(t.finvoicedate, 'YYYY-MM-DD HH24:MI:SS') AS finvoicedate,
-              t.faccountid,
-              a.faccountname,
-              t.fphone, t.fcustomerref, t.fpricelevel, t.fnote,
-              t.fdisctype, t.fdiscper, t.fdiscamt,
-              t.fnetdocamtwovat, t.fvatper, t.fvatamt, t.fnetdocamt,
-              t.fpostorder, COALESCE(t.fpost, false) AS fpost,
-              t.finvdatetime,
-              t.fcuserid, t.fcuserdate, t.fmuserid, t.fmuserdate
-         FROM dbo.tblstocktrans t
-         LEFT JOIN dbo.tblaccount a
-                ON a.fcoid = t.fcoid AND a.faccountid = t.faccountid
-        WHERE t.fcoid=$1 AND t.fyear=$2 AND t.fbrid=$3
-          AND t.fdoctype=$4 AND t.fdocno=$5`,
+          to_char(t.fdate, 'YYYY-MM-DD') AS fdate,
+          t.fcsaccountid AS faccountid,
+          a.faccountname,
+          t.fnote,
+          t.fdisctype, t.fdiscper, t.fdiscamt,
+          t.fnetdocamtwovat, t.fvatper, t.fvatamt, t.fnetdocamt,
+          COALESCE(t.fpost, false) AS fpost,
+          t.fcuserid, t.fcuserdate, t.fmuserid, t.fmuserdate
+     FROM dbo.tblstocktrans t
+     LEFT JOIN dbo.tblaccount a
+            ON a.fcoid = t.fcoid AND a.faccountid = t.fcsaccountid
+    WHERE t.fcoid=$1 AND t.fyear=$2 AND t.fbrid=$3
+      AND t.fdoctype=$4 AND t.fdocno=$5`,
       params,
     );
 
@@ -258,12 +255,13 @@ export const getSalesInvoice = async (
     }
 
     const lines = await pool.query(
-      `SELECT fslno, fitemid, funit, fpricelevel, fqtyout, funitprice,
-              fnetunitprice, fitemdiscamt, fitemvatamt, ftotalprice,
-              ftotalpricev, funitcost, ftotalcost, ftotitemdiscamt, fdnno
-         FROM dbo.tblstocktrans
-        WHERE fcoid=$1 AND fyear=$2 AND fbrid=$3 AND fdoctype=$4 AND fdocno=$5
-        ORDER BY fslno`,
+      `SELECT fslno, fitemid, funit, fqtyout, funitprice, fnetunitprice,
+          funitdiscamt AS fitemdiscamt, fitemvatamt, ftotalprice,
+          (ftotalprice + fitemvatamt) AS ftotalpricev,
+          funitcost, ftotalcost, ftotitemdiscamt
+     FROM dbo.tblstocktrans
+    WHERE fcoid=$1 AND fyear=$2 AND fbrid=$3 AND fdoctype=$4 AND fdocno=$5
+    ORDER BY fslno`,
       params,
     );
 
@@ -667,15 +665,14 @@ export const deleteSalesInvoice = async (
       });
     }
 
-    await callProc(client, SP_PAGE_SI, {
-      strmode: "D",
-      gstrcoid: coId,
-      intyear: Number(year),
+    await callProc(client, SP_SI_POST, {
+      strmode: "P",
+      pstrcoid: coId,
+      pstryear: String(year),
       strbrid: brId,
       strdoctype: DOC_TYPE,
       strdocno: docNo,
-      gstruserid: userId,
-      strmenuname: "pageSIR",
+      pstruserid: userId,
     });
 
     await client.query("COMMIT");
