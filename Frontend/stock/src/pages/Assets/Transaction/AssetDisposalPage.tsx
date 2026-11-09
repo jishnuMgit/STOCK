@@ -175,7 +175,7 @@ const selectClassNames = {
     isFocused: boolean;
     isDisabled: boolean;
   }) => `
-    !min-h-[28px] !h-[28px] !rounded-[4px] !border !shadow-none !text-[12px]
+    !min-h-[30px] !h-[30px] !rounded-[4px] !border !shadow-none !text-[12px]
     hover:!border-[#aab8c5]
     ${isDisabled ? "!bg-[#eef1f4]" : "!bg-white"}
     ${isFocused ? "!border-[#91a7b9]" : "!border-[#cfd7df]"}
@@ -213,10 +213,10 @@ const selectProps = {
 };
 
 const inputClass =
-  "h-[28px] w-full min-w-0 rounded-[4px] border border-[#cfd7df] bg-white px-2 text-[12px] text-[#24364d] outline-none focus:border-[#91a7b9]";
+  " w-full min-w-0 input-style";
 
 const readOnlyClass =
-  "h-[28px] w-full min-w-0 rounded-[4px] border border-[#cfd7df] bg-[#eef1f4] px-2 text-[12px] text-[#24364d] outline-none";
+  "h-[30px] w-full min-w-0 rounded-[4px] border border-[#cfd7df] bg-[#eef1f4] px-2 text-[12px] text-[#24364d] outline-none";
 
 const groupGrid =
   "grid grid-cols-1 items-center gap-x-6 gap-y-2.5 sm:grid-cols-2 lg:grid-cols-12";
@@ -301,8 +301,8 @@ const AppDatePicker: React.FC<{
         "& .MuiPickersTextField-root": { width: "100%" },
         "& .MuiPickersInputBase-root": {
           width: "100%",
-          height: "28px",
-          minHeight: "28px",
+          height: "30px",
+          minHeight: "30px",
           boxSizing: "border-box",
           borderRadius: "4px",
           backgroundColor: "#ffffff",
@@ -327,7 +327,7 @@ const AppDatePicker: React.FC<{
           width: "100%",
           fontSize: "12px",
           padding: 0,
-          height: "28px",
+          height: "30px",
           boxSizing: "border-box",
         },
         "& .MuiInputAdornment-root": { margin: 0, padding: 0 },
@@ -422,7 +422,7 @@ const AssetInfoRows: React.FC<{ asset: Asset | null }> = ({ asset }) => (
         />
       </div>
     </Field>
-    <Field label="Purchase Date :" labelClassName={LR} className="lg:col-span-6">
+    <Field label="Purchase Date :" labelClassName={LR} className="lg:col-span-6 lg:ml-44">
       <div className="w-[108px]">
         <ReadOnlyBox id="txtPurchaseDate" value={asset?.purchaseDate ?? ""} />
       </div>
@@ -451,7 +451,7 @@ const AssetInfoRows: React.FC<{ asset: Asset | null }> = ({ asset }) => (
     <Field
       label="Depr. calc. upto date :"
       labelClassName={LR}
-      className="lg:col-span-6"
+      className="lg:col-span-6 lg:ml-44"
     >
       <div className="w-[108px]">
         <ReadOnlyBox
@@ -477,7 +477,7 @@ const AssetInfoRows: React.FC<{ asset: Asset | null }> = ({ asset }) => (
     <Field
       label="Accumulated Depr. :"
       labelClassName={LR}
-      className="lg:col-span-6"
+      className="lg:col-span-6 lg:ml-44"
     >
       <div className="w-[108px]">
         <ReadOnlyBox
@@ -507,7 +507,7 @@ const DisposalRows: React.FC<{ form: FormState; set: SetField }> = ({
   set,
 }) => (
   <>
-    <Field label="Status :" labelClassName={LR} className="lg:col-span-6">
+    <Field label="Status :" labelClassName={LR} className="lg:col-span-6 lg:ml-43">
       <Combo
         id="lkpStatus"
         options={statusOptions}
@@ -532,7 +532,7 @@ const DisposalRows: React.FC<{ form: FormState; set: SetField }> = ({
         />
       </div>
     </Field>
-    <Field label="JV Date :" labelClassName={LR} className="lg:col-span-6">
+    <Field label="JV Date :" labelClassName={LR} className="lg:col-span-6 lg:ml-43">
       <div className="w-[108px]">
         <AppDatePicker
           id="dtpJvDate"
@@ -563,7 +563,7 @@ const DisposalRows: React.FC<{ form: FormState; set: SetField }> = ({
         />
       </div>
     </Field>
-    <Field label="Disposal Date :" labelClassName={LR} className="lg:col-span-6">
+    <Field label="Disposal Date :" labelClassName={LR} className="lg:col-span-6 lg:ml-43">
       <div className="w-[108px]">
         <AppDatePicker
           id="dtpDisposalDate"
@@ -736,16 +736,16 @@ const AssetDisposalPage: React.FC<AssetDisposalPageProps> = ({
   };
 
   return (
-    <div className="flex min-h-screen w-full items-start justify-center bg-white px-4 py-4">
+    <div className="flex min-h-full w-full items-start justify-center bg-white px-4 py-4">
       <div className="min-h-fit w-225 max-w-full bg-white p-0">
-        <main className="w-full overflow-hidden border border-[#d5dce2] bg-white">
+        <main className="w-full overflow-hidden border border-gray-400 bg-white">
           <header className="flex h-7.5 items-center justify-start bg-[#9fdfbc]">
             <h1 className="m-0 ml-3.5 text-[17px] font-semibold text-[#24364d]">
               {title}
             </h1>
           </header>
 
-          <section className="flex flex-col gap-4 px-3.5 pb-6 pt-3">
+          <section className="flex flex-col gap-4 px-3.5 pb-3 pt-3">
             <div className={groupGrid}>
               <ItemRows itemId={form.itemId} onItemChange={handleItemChange} />
               <AssetInfoRows asset={asset} />
