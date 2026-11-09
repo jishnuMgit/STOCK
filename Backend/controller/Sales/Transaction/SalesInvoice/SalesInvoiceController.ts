@@ -6,7 +6,7 @@ const DOC_TYPE = "SI"; // Sales Invoice (Credit)
 const INVOICE_TYPE = "R"; // VB always passed "R"
 
 /* VERIFY: procedure names (VB: SP_frmSI / SP_SIPost) */
-const SP_PAGE_SI = "dbo.sp_frmsi";
+const SP_PAGE_SI = "dbo.sp_pagesi";
 const SP_SI_POST = "dbo.sp_sipost";
 
 /* =========================================================
