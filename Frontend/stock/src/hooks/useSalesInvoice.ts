@@ -197,6 +197,7 @@ export interface SavePayload {
   originalSlNos: number[];
   /** omit to leave existing DN links untouched; [] clears them */
   deliveryNotes?: DeliveryNoteRow[];
+  userDate: string;
 }
 
 // ============================================================
@@ -632,6 +633,7 @@ const useSalesInvoice = () => {
       rows,
       originalSlNos,
       deliveryNotes,
+      userDate,
     }: SavePayload): Promise<SalesTotals | null> => {
       const result = await request<{
         data: {
@@ -664,6 +666,7 @@ const useSalesInvoice = () => {
         discAmt: n(header.discAmt),
         vatPer: n(header.vatPer),
         menuName: "frmSIR",
+        userDate,
         lines: toApiLines(rows),
         originalSlNos: mode === "M" ? originalSlNos : undefined,
         deliveryNotes: deliveryNotes?.map((d, i) => ({
@@ -700,11 +703,17 @@ const useSalesInvoice = () => {
   );
 
   const postInvoice = useCallback(
-    async (year: string, brId: string, docNo: string): Promise<void> => {
+    async (
+      year: string,
+      brId: string,
+      docNo: string,
+      userDate: string,
+    ): Promise<void> => {
       await request("POST", `${SALES_INVOICE_API}/post`, {
         year,
         brId,
         docNo,
+        userDate,
       });
     },
     [],

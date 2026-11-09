@@ -196,6 +196,12 @@ const SalesInvoice: React.FC = () => {
     };
   }, [branchId, getLookups, loadNextDocNo, resetForm]);
 
+  const nowLocal = (): string => {
+    const d = new Date();
+    const p = (v: number) => String(v).padStart(2, "0");
+    return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())} ${p(d.getHours())}:${p(d.getMinutes())}:${p(d.getSeconds())}`;
+  };
+
   // ==========================================================
   // RECALCULATE (server-side totals)
   // ==========================================================
@@ -352,7 +358,13 @@ const SalesInvoice: React.FC = () => {
           r.itemId ? { ...r, priceLevel: r.priceLevel || h.custPriceLevel } : r,
         ),
         originalSlNos,
+        userDate: nowLocal(),
       });
+      toast.success(
+        mode === "S" ? "Sales Invoice saved" : "Sales Invoice modified",
+      );
+      const fresh = resetForm(h.brId);
+      await loadNextDocNo(fresh.brId, fresh.date);
     } catch (err) {
       showError(err, "Not saved, try again");
       setBusy(false);
@@ -360,26 +372,26 @@ const SalesInvoice: React.FC = () => {
     }
 
     // VB posts automatically after a successful save
-    try {
-      await postInvoice(year, h.brId, h.docNo);
-      toast.success(
-        mode === "S"
-          ? "Sales Invoice saved and posted"
-          : "Sales Invoice modified and posted",
-      );
-      const fresh = resetForm(h.brId);
-      await loadNextDocNo(fresh.brId, fresh.date);
-    } catch (err) {
-      // saved but not posted: reload it so the user can fix and post
-      await loadInvoice(h.brId, h.date, h.docNo);
-      toast.error(
-        `Saved, but not posted: ${
-          err instanceof Error ? err.message : "try again"
-        }`,
-      );
-    } finally {
-      setBusy(false);
-    }
+    // try {
+    //   await postInvoice(year, h.brId, h.docNo);
+    //   toast.success(
+    //     mode === "S"
+    //       ? "Sales Invoice saved and posted"
+    //       : "Sales Invoice modified and posted",
+    //   );
+    //   const fresh = resetForm(h.brId);
+    //   await loadNextDocNo(fresh.brId, fresh.date);
+    // } catch (err) {
+    //   // saved but not posted: reload it so the user can fix and post
+    //   await loadInvoice(h.brId, h.date, h.docNo);
+    //   toast.error(
+    //     `Saved, but not posted: ${
+    //       err instanceof Error ? err.message : "try again"
+    //     }`,
+    //   );
+    // } finally {
+    //   setBusy(false);
+    // }
   };
 
   const handleDelete = async () => {
@@ -406,7 +418,7 @@ const SalesInvoice: React.FC = () => {
 
     setBusy(true);
     try {
-      await postInvoice(yearFor(h.date), h.brId, h.docNo);
+      await postInvoice(yearFor(h.date), h.brId, h.docNo, nowLocal());
       await loadInvoice(h.brId, h.date, h.docNo);
       toast.success("Sales Invoice posted");
     } catch (err) {

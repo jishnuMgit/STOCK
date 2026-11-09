@@ -6,8 +6,8 @@ const DOC_TYPE = "SI"; // Sales Invoice (Credit)
 const INVOICE_TYPE = "R"; // VB always passed "R"
 
 /* VERIFY: procedure names (VB: SP_frmSI / SP_SIPost) */
-const SP_PAGE_SI = 'dbo."SP_frmSI"';
-const SP_SI_POST = "dbo.sp_pagesipost";
+const SP_PAGE_SI = "dbo.sp_frmsi";
+const SP_SI_POST = "dbo.sp_sipost";
 
 /* =========================================================
    Types
@@ -327,6 +327,7 @@ export const saveSalesInvoice = async (
       lines,
       originalSlNos,
       deliveryNotes,
+      userDate, // client system time 'YYYY-MM-DD HH:mm:ss'
     } = req.body as {
       mode: "S" | "M";
       year: string;
@@ -349,6 +350,7 @@ export const saveSalesInvoice = async (
       lines: SILine[];
       originalSlNos?: number[]; // sl.# of lines loaded from DB (modify only)
       deliveryNotes?: DNLink[];
+      userDate: string;
     };
 
     /* ---------- validation (VB ValidateMe / ValidateGrid) ---------- */
@@ -375,6 +377,8 @@ export const saveSalesInvoice = async (
       return bad("vatPer is required");
     if (mode === "M" && !Array.isArray(originalSlNos))
       return bad("originalSlNos is required for modify");
+    if (!/^\d{4}-\d{2}-\d{2}[ T]\d{2}:\d{2}:\d{2}$/.test(userDate ?? ""))
+      return bad("userDate is required (YYYY-MM-DD HH:mm:ss)");
 
     const dType = discType === "P" ? "P" : "A";
     if (dType === "P" && num(discPer) > 100)
@@ -480,13 +484,14 @@ export const saveSalesInvoice = async (
 
     /* ---------- common SP args ---------- */
     const base = {
-      gstrcoid: coId,
-      intyear: Number(year),
+      pstrcoid: coId,
+      pstryear: String(year),
       strbrid: brId,
       strdoctype: DOC_TYPE,
       strdocno: docNo,
-      gstruserid: userId,
+      pstruserid: userId,
       strmenuname: menuName ?? "pageSIR",
+      dtpuserdate: userDate,
     };
 
     const header = {
@@ -563,9 +568,15 @@ export const saveSalesInvoice = async (
       await client.query(
         `UPDATE dbo.tblstocktrans
             SET fcuserid = $6, fcuserdate = $7,
-                fmuserid = $8, fmuserdate = now()
+                fmuserid = $8, fmuserdate = $9::timestamp
           WHERE fcoid=$1 AND fyear=$2 AND fbrid=$3 AND fdoctype=$4 AND fdocno=$5`,
-        [...docKey, origCreator.fcuserid, origCreator.fcuserdate, userId],
+        [
+          ...docKey,
+          origCreator.fcuserid,
+          origCreator.fcuserdate,
+          userId,
+          userDate,
+        ],
       );
     }
 
@@ -575,7 +586,7 @@ export const saveSalesInvoice = async (
     if (Array.isArray(deliveryNotes)) {
       await callSI(client, {
         strmode: "DD",
-        gstrcoid: coId,
+        pstrcoid: coId,
         strbrid: brId,
         strdoctype: DOC_TYPE,
         strdocno: docNo,
@@ -585,7 +596,7 @@ export const saveSalesInvoice = async (
       for (const dn of deliveryNotes.filter((d) => d.dnNo && d.checked)) {
         await callSI(client, {
           strmode: "SD",
-          gstrcoid: coId,
+          pstrcoid: coId,
           strbrid: brId,
           strdoctype: DOC_TYPE,
           strdocno: docNo,
@@ -593,7 +604,8 @@ export const saveSalesInvoice = async (
           intslno: sl++,
           strdnno: dn.dnNo,
           blnchecked: true,
-          gstruserid: userId,
+          pstruserid: userId,
+          dtpuserdate: userDate,
         });
       }
     }
@@ -702,10 +714,11 @@ export const postSalesInvoice = async (
   try {
     const coId = req.user?.CoID;
     const userId = req.user?.userId;
-    const { year, brId, docNo } = req.body as {
+    const { year, brId, docNo, userDate } = req.body as {
       year: string;
       brId: string;
       docNo: string;
+      userDate: string; // client system time 'YYYY-MM-DD HH:mm:ss'
     };
 
     if (!coId || !userId)
@@ -716,6 +729,11 @@ export const postSalesInvoice = async (
       return res.status(400).json({
         success: false,
         message: "year, brId and docNo are required",
+      });
+    if (!/^\d{4}-\d{2}-\d{2}[ T]\d{2}:\d{2}:\d{2}$/.test(userDate ?? ""))
+      return res.status(400).json({
+        success: false,
+        message: "userDate is required (YYYY-MM-DD HH:mm:ss)",
       });
 
     await client.query("BEGIN");
@@ -737,12 +755,13 @@ export const postSalesInvoice = async (
 
     await callProc(client, SP_SI_POST, {
       strmode: "P",
-      gstrcoid: coId,
-      gintyear: Number(year),
+      pstrcoid: coId,
+      pstryear: String(year),
       strbrid: brId,
       strdoctype: DOC_TYPE,
       strdocno: docNo,
-      gstruserid: userId,
+      pstruserid: userId,
+      dtpuserdate: userDate, // -> p_dtpuserdate
     });
 
     await client.query("COMMIT");

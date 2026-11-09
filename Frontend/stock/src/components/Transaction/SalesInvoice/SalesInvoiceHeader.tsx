@@ -1021,7 +1021,7 @@ const SalesInvoiceHeader: React.FC<SalesInvoiceHeaderProps> = ({
 
               <input
                 id="txtPhone"
-                type="number"
+                type="text"
                 accept="tel"
                 maxLength={50}
                 autoComplete="off"
