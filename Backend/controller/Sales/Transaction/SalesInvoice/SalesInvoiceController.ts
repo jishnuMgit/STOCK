@@ -6,8 +6,8 @@ const DOC_TYPE = "SI"; // Sales Invoice (Credit)
 const INVOICE_TYPE = "R"; // VB always passed "R"
 
 /* VERIFY: procedure names (VB: SP_frmSI / SP_SIPost) */
-const SP_PAGE_SI = 'dbo."SP_frmSI"';
-const SP_SI_POST = "dbo.sp_pagesipost";
+const SP_PAGE_SI = "dbo.sp_frmsi";
+const SP_SI_POST = "dbo.sp_sipost";
 
 /* =========================================================
    Types
@@ -480,12 +480,12 @@ export const saveSalesInvoice = async (
 
     /* ---------- common SP args ---------- */
     const base = {
-      gstrcoid: coId,
-      intyear: Number(year),
+      pstrcoid: coId,
+      pstryear: String(year),
       strbrid: brId,
       strdoctype: DOC_TYPE,
       strdocno: docNo,
-      gstruserid: userId,
+      pstruserid: userId,
       strmenuname: menuName ?? "pageSIR",
     };
 
@@ -575,7 +575,7 @@ export const saveSalesInvoice = async (
     if (Array.isArray(deliveryNotes)) {
       await callSI(client, {
         strmode: "DD",
-        gstrcoid: coId,
+        pstrcoid: coId,
         strbrid: brId,
         strdoctype: DOC_TYPE,
         strdocno: docNo,
@@ -585,7 +585,7 @@ export const saveSalesInvoice = async (
       for (const dn of deliveryNotes.filter((d) => d.dnNo && d.checked)) {
         await callSI(client, {
           strmode: "SD",
-          gstrcoid: coId,
+          pstrcoid: coId,
           strbrid: brId,
           strdoctype: DOC_TYPE,
           strdocno: docNo,
@@ -593,7 +593,7 @@ export const saveSalesInvoice = async (
           intslno: sl++,
           strdnno: dn.dnNo,
           blnchecked: true,
-          gstruserid: userId,
+          pstruserid: userId,
         });
       }
     }
@@ -737,12 +737,12 @@ export const postSalesInvoice = async (
 
     await callProc(client, SP_SI_POST, {
       strmode: "P",
-      gstrcoid: coId,
-      gintyear: Number(year),
+      pstrcoid: coId,
+      pstryear: String(year),
       strbrid: brId,
       strdoctype: DOC_TYPE,
       strdocno: docNo,
-      gstruserid: userId,
+      pstruserid: userId,
     });
 
     await client.query("COMMIT");
