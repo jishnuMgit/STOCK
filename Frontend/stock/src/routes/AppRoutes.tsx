@@ -99,6 +99,14 @@ import DepreciationHistoryPage from "../pages/Assets/Reports/DepreciationHistory
 import DepreciationSchedulePage from "../pages/Assets/Reports/DepreciationSchedulePage";
 import DisposalSchedulePage from "../pages/Assets/Reports/DisposalSchedulePage";
 import AssetDisposalPage from "../pages/Assets/Transaction/AssetDisposalPage";
+import DepreciationGenerationPage from "../pages/Assets/Transaction/DepreciationGenerationPage";
+import AssetSettingPage from "../pages/Assets/Setting/AssetSettingPage";
+import DepreciationBeginningBalancePage from "../pages/Assets/Transaction/DepreciationBeginningBalancePage";
+import DepreciationJournalListPage from "../pages/Assets/Transaction/DepreciationJournalList";
+import ZATCASubmission from "../pages/ZATCA/Transaction/ZATCASubmission";
+import RptZatcaPdfA3Generation from "../pages/ZATCA/Transaction/RptZatcaPdfA3Generation";
+import RptZatcaDocumentStatus from "../pages/ZATCA/Transaction/RptZatcaDocumentStatus";
+import SetZATCADocumentPath from "../pages/ZATCA/Setup/SetZATCADocumentPath";
 
 const Login = lazy(() => import("../pages/Auth/LoginPage"));
 const ReceiptPage = lazy(
@@ -430,6 +438,15 @@ const AppRoutes = () => {
             element={<RptItemHistoryPage />}
           />
 
+
+{/* ================= ZATCA ================= */}
+<Route path="/ZATCA/Transaction/ZATCASubmission" element={<ZATCASubmission />} />
+<Route path="/ZATCA/Transaction/RptZatcaPdfA3Generation" element={<RptZatcaPdfA3Generation />} />
+<Route path="/ZATCA/Transaction/RptZatcaDocumentStatus" element={<RptZatcaDocumentStatus />} />
+
+<Route path="/ZATCA/Setup/SetZATCADocumentPath" element={<SetZATCADocumentPath />} />
+
+
 {/* ================= ASSETS  ================= */}
 
           <Route path="/Assets/Reports/AssetSchedule" element={<AssetSchedulePage />} />
@@ -439,8 +456,14 @@ const AppRoutes = () => {
           <Route path="/Assets/Reports/DisposalSchedule" element={<DisposalSchedulePage />} />
 
 
-                    <Route path="Assets/Setup/AssetPurchase" element={<AssetPurchasePage />} />
+                    <Route path="Assets/Transaction/AssetPurchase" element={<AssetPurchasePage />} />
                     <Route path="Assets/Transaction/AssetDisposal" element={<AssetDisposalPage />} />
+
+                    <Route path="Assets/Transaction/DepreciationGeneration" element={<DepreciationGenerationPage />} />
+                    <Route path="Assets/Setting/AssetSetting" element={<AssetSettingPage />} />
+                    <Route path="Assets/Transaction/DepreciationBeginningBalance" element={<DepreciationBeginningBalancePage />} />
+                    <Route path="Assets/Transaction/DepreciationJournalList" element={<DepreciationJournalListPage />} />
+
 
 
           {/* ================= SETTINGS ================= */}

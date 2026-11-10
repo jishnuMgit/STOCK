@@ -629,7 +629,7 @@ const DepreciationGroup: React.FC<
         labelClassName={LR}
         className="lg:col-span-6"
       >
-        <div className="w-[108px]">
+        <div className="w-27">
           <AmountInput
             id="txtAccumulatedDepreciation"
             value={form.accumulatedDepreciation}
@@ -645,7 +645,7 @@ const DepreciationGroup: React.FC<
         labelClassName={LL}
         className="lg:col-span-6"
       >
-        <div className="w-[108px]">
+        <div className="w-27">
           <AmountInput
             id="txtSalvageValue"
             value={form.salvageValue}
@@ -654,7 +654,7 @@ const DepreciationGroup: React.FC<
         </div>
       </Field>
       <Field label="Book Value :" labelClassName={LR} className="lg:col-span-6">
-        <div className="w-[108px]">
+        <div className="w-27">
           <ReadOnlyBox
             id="txtBookValue"
             value={formatAmount(bookValue)}
@@ -688,7 +688,7 @@ const AssetOwner: React.FC<PartProps> = ({ form, set }) => (
         options={statusOptions}
         value={form.status}
         onChange={(v) => set("status", v)}
-        className="w-[108px] shrink-0"
+        className="w-27 shrink-0"
       />
     </Field>
 
@@ -820,7 +820,7 @@ const AssetPurchasePage: React.FC<AssetPurchasePageProps> = ({
   };
 
   return (
-    <div className="flex min-h-screen w-full items-start justify-center bg-white px-4 py-4">
+    <div className="flex min-h-full w-full items-start justify-center bg-white px-4 py-4">
       <div className="min-h-fit w-275 max-w-full bg-white p-0">
         <main className="w-full overflow-hidden border border-gray-400 bg-white">
           <header className="flex h-7.5 items-center justify-start bg-[#9fdfbc]">
