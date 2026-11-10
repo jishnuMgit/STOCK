@@ -748,6 +748,52 @@ export const postSalesInvoice = async (ctx: Ctx, input: Partial<PostInput>) => {
       ),
     });
 
+    /* stock check: every item must have stock > 0 in this branch.
+       Same rule as the Stock box (VB GetItemStock): In - Out of all
+       other documents, excluding this invoice. */
+    const itemIds = [
+      ...new Set(
+        l.rows.map((r: Record<string, unknown>) => String(r.fitemid ?? "")),
+      ),
+    ].filter(Boolean);
+
+    const stockRes = await client.query(
+      `SELECT fitemid,
+              COALESCE(SUM(COALESCE(fqtyin, 0)) - SUM(COALESCE(fqtyout, 0)), 0) AS stock
+         FROM dbo.tblstocktrans
+        WHERE fcoid = $1 AND fbrid = $2
+          AND fitemid = ANY($3::varchar[])
+          AND NOT (fdoctype = $4 AND fdocno = $5)
+        GROUP BY fitemid`,
+      [coId, brId, itemIds, DOC_TYPE, docNo],
+    );
+
+    const stockOf = new Map<string, number>(
+      stockRes.rows.map((r: { fitemid: string; stock: unknown }) => [
+        r.fitemid,
+        num(r.stock),
+      ]),
+    );
+
+    const noStock = l.rows
+      .filter((r: Record<string, unknown>) => r.fitemid)
+      .filter(
+        (r: Record<string, unknown>) =>
+          (stockOf.get(String(r.fitemid)) ?? 0) <= 0,
+      )
+      .map(
+        (r: Record<string, unknown>) =>
+          `Sl.# ${num(r.fslno)} - ${String(r.fitemid)} (stock: ${
+            stockOf.get(String(r.fitemid)) ?? 0
+          })`,
+      );
+
+    if (noStock.length > 0)
+      throw new ServiceError(
+        409,
+        `Cannot post, no stock available for: ${noStock.join(", ")}`,
+      );
+
     await callProc(client, SP_SI_POST, {
       strmode: SP_POST_MODE_POST,
       pstrcoid: coId,
