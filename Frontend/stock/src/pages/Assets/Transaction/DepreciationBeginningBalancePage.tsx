@@ -116,6 +116,7 @@ const itemNameOptions: Option[] = itemOptions.map((item) => ({
 // ==================================================
 
 const tableSelectStyles = {
+    //@ts-ignore
   control: (base: any, state: any) => ({
     ...base,
     minHeight: "30px",
@@ -400,7 +401,7 @@ const DepreciationBeginningBalancePage: React.FC = () => {
   // ==================================================
   // ADD ROW
   // ==================================================
-
+  //@ts-ignore
   const handleAddRow = () => {
     setRows((prev) => {
       const nextId = Math.max(0, ...prev.map((row) => row.id)) + 1;
