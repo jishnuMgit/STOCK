@@ -154,6 +154,18 @@ interface InvoiceHeaderApi {
   fmuserdate: string | null;
 }
 
+export interface InvoiceTypeOption {
+  value: string; // fPID, e.g. "R"
+  label: string;
+  name: string; // fPName, e.g. CREDIT
+}
+
+interface InvoiceTypeApi {
+  fptype: string;
+  fpid: string;
+  fpname: string | null;
+}
+
 interface InvoiceLineApi {
   fslno: number;
   fitemid: string | null;
@@ -253,6 +265,8 @@ const n = (v: unknown): number => {
 };
 const s = (v: unknown): string => (v == null ? "" : String(v));
 const fixed = (v: unknown, d: number) => n(v).toFixed(d);
+
+const TYPE_NAMES: Record<string, string> = { C: "CASH", R: "CREDIT" };
 
 const API = import.meta.env.VITE_API_URL;
 
@@ -386,6 +400,24 @@ const useSalesInvoice = () => {
     getBranches(controller.signal);
     return () => controller.abort();
   }, [getBranches]);
+
+  /* ======================================================
+     INVOICE TYPES  (/sales-invoice/invoice-types)
+  ====================================================== */
+  const fetchInvoiceTypes = useCallback(async (): Promise<
+    InvoiceTypeOption[]
+  > => {
+    const result = await request<{ data: InvoiceTypeApi[] }>(
+      "GET",
+      `${SALES_INVOICE_API}/invoice-types`,
+    );
+    return result.data.map((t) => ({
+      value: s(t.fpid),
+      label: s(t.fpid),
+      // name from the database, falling back to CASH / CREDIT
+      name: s(t.fpname) || TYPE_NAMES[s(t.fpid)] || s(t.fpid),
+    }));
+  }, []);
 
   /* ======================================================
      LOOKUPS
@@ -622,6 +654,21 @@ const useSalesInvoice = () => {
   );
 
   /* ======================================================
+     ITEM STOCK (branch stock of one item, excluding this invoice)
+  ====================================================== */
+  const getItemStock = useCallback(
+    async (brId: string, itemId: string, docNo: string): Promise<number> => {
+      const params = new URLSearchParams({ brId, itemId, docNo });
+      const result = await request<{ data: { stock: number } }>(
+        "GET",
+        `${SALES_INVOICE_API}/item-stock?${params}`,
+      );
+      return n(result.data.stock);
+    },
+    [],
+  );
+
+  /* ======================================================
      SAVE (new or modify). Throws on failure so the screen can show the
      message. Returns the totals the server calculated.
   ====================================================== */
@@ -729,11 +776,13 @@ const useSalesInvoice = () => {
     getBranches,
     // lookups
     lookups,
+    fetchInvoiceTypes,
     getLookups,
     // invoice
     getNextDocNo,
     calcTotals,
     fetchInvoice,
+    getItemStock,
     saveInvoice,
     deleteInvoice,
     postInvoice,

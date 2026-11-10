@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { Play } from "lucide-react";
 import Select, {
   components,
@@ -24,10 +24,11 @@ type EditableNumberField = "qty" | "unitPrice" | "itemDiscAmt";
 type SalesInvoiceTableProps = {
   rows: SalesRow[];
   items: ItemLookup[];
-  defaultPriceLevel: string; // customer price level, copied to new rows
-  readOnly: boolean; // posted invoice
-  /** recalc = true asks the page to recalculate totals on the server */
+  defaultPriceLevel: string;
+  readOnly: boolean;
   onRowsChange: (rows: SalesRow[], recalc: boolean) => void;
+  /** item id of the active row ("" when the row is empty) */
+  onActiveItemChange: (itemId: string) => void;
 };
 
 // ============================================================
@@ -302,12 +303,19 @@ const SalesInvoiceTable: React.FC<SalesInvoiceTableProps> = ({
   defaultPriceLevel,
   readOnly,
   onRowsChange,
+  onActiveItemChange,
 }) => {
   const [activeRow, setActiveRow] = useState(0);
 
   // which item dropdown (if any) currently has its menu open,
   // e.g. "id-0" / "name-0"
   const [openMenuKey, setOpenMenuKey] = useState<string | null>(null);
+
+  // report the item of the active row (VB: stock shown when a grid row is clicked)
+  const activeItemId = rows[activeRow]?.itemId ?? "";
+  useEffect(() => {
+    onActiveItemChange(activeItemId);
+  }, [activeItemId, onActiveItemChange]);
 
   // ==========================================================
   // ITEM OPTIONS
