@@ -478,7 +478,7 @@ const ZATCASubmission: React.FC = () => {
   return (
     <div className="min-h-full w-full bg-white p-1 sm:p-2">
 
-      <main className="mx-auto flex w-full max-w-292.5 flex-col overflow-hidden rounded-[3px] border border-[#91a7bb] bg-white shadow-sm">
+      <main className="mx-auto flex w-full max-w-292.5 min-w-292.5 flex-col overflow-hidden rounded-[3px] border border-[#91a7bb] bg-white shadow-sm">
 
         {/* WINDOW HEADER */}
 
@@ -490,7 +490,7 @@ const ZATCASubmission: React.FC = () => {
               TOP FILTER SECTION
           ========================================== */}
 
-          <div className="grid grid-cols-1 gap-x-2 gap-y-2 lg:grid-cols-[145px_minmax(180px,1fr)_130px_minmax(180px,1fr)_176px]">
+          <div className="grid grid-cols-1 gap-x-2 gap-y-2 lg:grid-cols-[145px_minmax(180px,1fr)_130px_minmax(330px,2fr)_176px]">
 
             {/* DOCUMENT MODE */}
 
@@ -535,31 +535,45 @@ const ZATCASubmission: React.FC = () => {
 
             {/* BRANCH MODE */}
 
-            <RadioPanel className="h-18.75">
+            <div className="flex min-w-0 flex-wrap items-center gap-2 lg:col-start-3 lg:row-start-1 lg:col-span-2 ml-30">
+              <RadioPanel className="h-18.75 shrink-0">
+                <CustomRadio
+                  name="branchMode"
+                  value="One Branch"
+                  label="One Branch"
+                  checked={branchMode === "One Branch"}
+                  onChange={() => setBranchMode("One Branch")}
+                />
 
-              <CustomRadio
-                name="branchMode"
-                value="One Branch"
-                label="One Branch"
-                checked={branchMode === "One Branch"}
-                onChange={() => setBranchMode("One Branch")}
-              />
+                <CustomRadio
+                  name="branchMode"
+                  value="All Branch"
+                  label="All Branches"
+                  checked={branchMode === "All Branch"}
+                  onChange={() => setBranchMode("All Branch")}
+                />
+              </RadioPanel>
 
-              <CustomRadio
-                name="branchMode"
-                value="All Branch"
-                label="All Branches"
-                checked={branchMode === "All Branch"}
-                onChange={() => setBranchMode("All Branch")}
-              />
-
-            </RadioPanel>
+              {branchMode === "One Branch" && (
+                <div className="min-w-0 max-w-60 flex-1">
+                  <CommonTableSelect
+                    inputId="branch"
+                    options={branchOptions}
+                    value={branch}
+                    onChange={setBranch}
+                    columns={branchColumns}
+                    width="100%"
+                    menuWidth="250px"
+                    placeholder="Select Branch"
+                  />
+                </div>
+              )}
+            </div>
 
             {/* CUSTOMER MODE */}
 
-            <div className="flex min-w-0 flex-col gap-2">
-
-              <RadioPanel className="h-18.75">
+            <div className="flex min-w-0 flex-nowrap items-center gap-2 lg:col-start-3 lg:row-start-2 lg:col-span-2 ml-30">
+              <RadioPanel className="h-18.75 shrink-0">
 
                 <CustomRadio
                   name="customerMode"
@@ -580,74 +594,45 @@ const ZATCASubmission: React.FC = () => {
               </RadioPanel>
 
               {customerMode === "One Customer" && (
-               <div className="absolute top-25 hidden lg:block"> <CustomLinkedPairSelect
-                  firstInputId="customerId"
-                  secondInputId="customerName"
-                  options={customerPairOptions}
-                  firstValue={customerId?.value ?? null}
-                  secondValue={customerName?.value ?? null}
-                  firstHeader="Customer ID"
-                  secondHeader="Customer Name"
-                  firstWidth={100}
-                  secondWidth={220}
-                  gap={4}
-                  headerFontSize="12px"
-                  onChange={(option) => {
-                    setCustomerId(
-                      option
-                        ? {
-                            value: option.value,
-                            label: option.firstLabel,
-                          }
-                        : null,
-                    );
+                <div className="min-w-0">
+                  <CustomLinkedPairSelect
+                    firstInputId="customerId"
+                    secondInputId="customerName"
+                    options={customerPairOptions}
+                    firstValue={customerId?.value ?? null}
+                    secondValue={customerName?.value ?? null}
+                    firstHeader="Customer ID"
+                    secondHeader="Customer Name"
+                    firstWidth={120}
+                    secondWidth={320}
+                    gap={4}
+                    headerFontSize="12px"
+                    menuZIndex={99999}
+                    menuPortalTarget={
+                      typeof document !== "undefined" ? document.body : undefined
+                    }
+                    onChange={(option) => {
+                      setCustomerId(
+                        option
+                          ? {
+                              value: option.value,
+                              label: option.firstLabel,
+                            }
+                          : null,
+                      );
 
-                    setCustomerName(
-                      option
-                        ? {
-                            value: option.value,
-                            label: option.secondLabel,
-                          }
-                        : null,
-                    );
-                  }}
-                /></div>
+                      setCustomerName(
+                        option
+                          ? {
+                              value: option.value,
+                              label: option.secondLabel,
+                            }
+                          : null,
+                      );
+                    }}
+                  />
+                </div>
               )}
-                {customerMode === "One Customer" && (
-               <div className="lg:hidden"> <CustomLinkedPairSelect
-                  firstInputId="customerId"
-                  secondInputId="customerName"
-                  options={customerPairOptions}
-                  firstValue={customerId?.value ?? null}
-                  secondValue={customerName?.value ?? null}
-                  firstHeader="Customer ID"
-                  secondHeader="Customer Name"
-                  firstWidth={100}
-                  secondWidth={220}
-                  gap={4}
-                  headerFontSize="12px"
-                  onChange={(option) => {
-                    setCustomerId(
-                      option
-                        ? {
-                            value: option.value,
-                            label: option.firstLabel,
-                          }
-                        : null,
-                    );
-
-                    setCustomerName(
-                      option
-                        ? {
-                            value: option.value,
-                            label: option.secondLabel,
-                          }
-                        : null,
-                    );
-                  }}
-                /></div>
-              )}
-
             </div>
 
             {/* DATE MODE */}
@@ -737,32 +722,13 @@ const ZATCASubmission: React.FC = () => {
 
             </div>
 
-            {/* BRANCH SELECT */}
-
-            <div className="pt-1">
-
-              {branchMode === "One Branch" && (
-                <CommonTableSelect
-                  inputId="branch"
-                  options={branchOptions}
-                  value={branch}
-                  onChange={setBranch}
-                  columns={branchColumns}
-                  width="100%"
-                  menuWidth="250px"
-                  placeholder="Select Branch"
-                />
-              )}
-
-            </div>
-
             {/* SEARCH BUTTON */}
 
-            <div className="flex items-start justify-end pt-1 lg:col-start-5">
+            <div className="flex items-start justify-end pt-1 lg:col-start-5 lg:row-start-2 absolute top-38 right-3">
 
               <ActionButton
                 onClick={handleSearch}
-                className="w-24"
+                className="w-24 "
               >
                 Search
               </ActionButton>
@@ -775,7 +741,7 @@ const ZATCASubmission: React.FC = () => {
               DOCUMENT TABLE
           ========================================== */}
 
-          <div className="mt-3 w-full overflow-hidden border border-[#B7ECD0]">
+          <div className="mt-3 w-full overflow-hidden border border-[#B7ECD0] mt-10">
 
             <div className="max-h-98.75 overflow-auto">
 
