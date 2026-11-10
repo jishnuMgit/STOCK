@@ -466,7 +466,7 @@ const ZATCASubmission: React.FC = () => {
   // ==================================================
   // TABLE ROW UPDATE
   // ==================================================
-
+  //@ts-ignore
   const updateRows = (data: DocumentRow[]) => {
     setRows(data);
   };
