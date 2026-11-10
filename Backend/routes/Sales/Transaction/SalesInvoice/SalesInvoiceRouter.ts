@@ -1,9 +1,15 @@
 import express from "express";
 
-
 import { authenticate } from "../../../../middleware/authMiddleware.js";
-import { calcSalesInvoice, deleteSalesInvoice, getSalesInvoice, getSalesInvoiceLookups, postSalesInvoice, saveSalesInvoice } from "../../../../controller/Sales/Transaction/SalesInvoice/SalesInvoiceController.js";
-import { getNextDocNo } from "../../../../controller/Purchase/Transaction/PurchaseInvoiceController.js";
+import {
+  calcSalesInvoice,
+  deleteSalesInvoice,
+  getSalesInvoice,
+  getSalesInvoiceLookups,
+  postSalesInvoice,
+  saveSalesInvoice,
+} from "../../../../controller/Sales/Transaction/SalesInvoice/SalesInvoiceController.js";
+import { getNextDocNo } from "../../../../controller/Sales/Transaction/SalesInvoice/SalesInvoiceController.js";
 
 const router = express.Router();
 
