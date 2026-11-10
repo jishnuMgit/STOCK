@@ -14,6 +14,7 @@ import SalesInvoiceFooter from "../../../components/Transaction/SalesInvoice/Sal
 import useSalesInvoice, {
   emptyHeader,
   emptyRow,
+  type InvoiceTypeOption,
   type SalesHeader,
   type SalesRow,
   type SalesTotals,
@@ -108,8 +109,10 @@ const SalesInvoice: React.FC = () => {
     lookups,
     getLookups,
     getNextDocNo,
+    fetchInvoiceTypes,
     calcTotals,
     fetchInvoice,
+    getItemStock,
     saveInvoice,
     deleteInvoice,
     postInvoice,
@@ -124,6 +127,9 @@ const SalesInvoice: React.FC = () => {
   const [posted, setPosted] = useState(false);
   const [userInfo, setUserInfo] = useState<SalesUserInfo | null>(null);
   const [busy, setBusy] = useState(false);
+  const [invoiceTypes, setInvoiceTypes] = useState<InvoiceTypeOption[]>([]);
+  const [activeItemId, setActiveItemId] = useState("");
+  const [stockResult, setStockResult] = useState({ key: "", value: 0 });
 
   // latest values for async handlers (synced after render, not during it)
   const headerRef = useRef(header);
@@ -140,6 +146,21 @@ const SalesInvoice: React.FC = () => {
   useEffect(() => {
     if (error) toast.error(error, { toastId: error });
   }, [error]);
+
+  // invoice types (R / C) from the server
+  useEffect(() => {
+    let cancelled = false;
+    fetchInvoiceTypes()
+      .then((list) => {
+        if (!cancelled) setInvoiceTypes(list);
+      })
+      .catch(() => {
+        if (!cancelled) setInvoiceTypes([]);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [fetchInvoiceTypes]);
 
   // ==========================================================
   // RESET / NEXT DOC NO
@@ -195,6 +216,26 @@ const SalesInvoice: React.FC = () => {
       cancelled = true;
     };
   }, [branchId, getLookups, loadNextDocNo, resetForm]);
+
+  const stockKey = `${branchId}|${activeItemId}`;
+  const stock = stockResult.key === stockKey ? stockResult.value : 0;
+
+  useEffect(() => {
+    if (!branchId || !activeItemId) return;
+    let cancelled = false;
+
+    getItemStock(branchId, activeItemId, headerRef.current.docNo)
+      .then((value) => {
+        if (!cancelled) setStockResult({ key: stockKey, value });
+      })
+      .catch(() => {
+        if (!cancelled) setStockResult({ key: stockKey, value: 0 });
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [branchId, activeItemId, stockKey, getItemStock]);
 
   const nowLocal = (): string => {
     const d = new Date();
@@ -461,7 +502,9 @@ const SalesInvoice: React.FC = () => {
             priceLevels={lookups.priceLevels}
             onCustomerSelect={handleCustomerSelect}
             onDocNoBlur={handleDocNoBlur}
+            invoiceTypes={invoiceTypes.length ? invoiceTypes : undefined}
             readOnly={posted}
+            stock={stock}
           />
 
           {/* Table */}
@@ -471,6 +514,7 @@ const SalesInvoice: React.FC = () => {
             defaultPriceLevel={header.custPriceLevel}
             readOnly={posted}
             onRowsChange={handleRowsChange}
+            onActiveItemChange={setActiveItemId}
           />
 
           {/* Footer */}

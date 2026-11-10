@@ -43,6 +43,23 @@ export const calcSalesInvoice = (
   }
 };
 
+export const getSalesInvoiceTypes = async (
+  req: AuthenticatedRequest,
+  res: Response,
+) => {
+  try {
+    const data = await svc.getInvoiceTypes(ctxOf(req));
+    return res.status(200).json({ success: true, data });
+  } catch (e) {
+    return fail(
+      res,
+      e,
+      "getSalesInvoiceTypes",
+      "Failed to fetch invoice types",
+    );
+  }
+};
+
 export const getSalesInvoice = async (
   req: AuthenticatedRequest,
   res: Response,
@@ -55,6 +72,18 @@ export const getSalesInvoice = async (
     return res.status(200).json({ success: true, data });
   } catch (e) {
     return fail(res, e, "getSalesInvoice", "Failed to fetch Sales Invoice");
+  }
+};
+
+export const getSalesItemStock = async (
+  req: AuthenticatedRequest,
+  res: Response,
+) => {
+  try {
+    const data = await svc.getItemStock(ctxOf(req), req.query);
+    return res.status(200).json({ success: true, data });
+  } catch (e) {
+    return fail(res, e, "getSalesItemStock", "Failed to fetch item stock");
   }
 };
 
