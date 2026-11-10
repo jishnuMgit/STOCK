@@ -12,3 +12,9 @@ ALTER TABLE IF EXISTS dbo.tblstocktrans
 
     ALTER TABLE IF EXISTS dbo.tblfintrans
     ADD COLUMN finvrcntype character varying(5);
+
+    ALTER TABLE IF EXISTS dbo.tblstocktrans
+    ADD COLUMN faddress1 character varying(150);
+
+    ALTER TABLE IF EXISTS dbo.tblstocktrans
+    ADD COLUMN fphone character varying(50);
