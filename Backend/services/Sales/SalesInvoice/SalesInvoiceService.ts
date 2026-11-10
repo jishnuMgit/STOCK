@@ -465,8 +465,10 @@ export const saveSalesInvoice = async (ctx: Ctx, input: SaveInput) => {
   const { dType, validLines, totals: t } = validateInvoice(input);
 
   return withTransaction(async (client) => {
-    let origInvoiceDate: string | null = null;
-    let origInvDateTime: string | null = null;
+    // finvoicedate / finvdatetime do not exist in tblstocktrans and
+    // sp_pagesi ignores them, so they are no longer read on modify
+    const origInvoiceDate: string | null = null;
+    const origInvDateTime: string | null = null;
     let origCreator:
       | { fcuserid: string | null; fcuserdate: Date | null }
       | undefined;
@@ -496,17 +498,13 @@ export const saveSalesInvoice = async (ctx: Ctx, input: SaveInput) => {
         );
 
       const orig = await client.query(
-        `SELECT fcuserid, fcuserdate,
-                to_char(finvoicedate, 'YYYY-MM-DD HH24:MI:SS') AS finvoicedate,
-                finvdatetime
+        `SELECT fcuserid, fcuserdate
            FROM dbo.tblstocktrans
           WHERE fcoid=$1 AND fyear=$2 AND fbrid=$3 AND fdoctype=$4 AND fdocno=$5
           LIMIT 1`,
         docKey,
       );
       origCreator = orig.rows[0];
-      origInvoiceDate = orig.rows[0]?.finvoicedate ?? null;
-      origInvDateTime = orig.rows[0]?.finvdatetime ?? null;
     }
 
     const inv = await client.query(
