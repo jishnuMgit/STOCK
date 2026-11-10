@@ -104,6 +104,9 @@ import AssetSettingPage from "../pages/Assets/Setting/AssetSettingPage";
 import DepreciationBeginningBalancePage from "../pages/Assets/Transaction/DepreciationBeginningBalancePage";
 import DepreciationJournalListPage from "../pages/Assets/Transaction/DepreciationJournalList";
 import ZATCASubmission from "../pages/ZATCA/Transaction/ZATCASubmission";
+import RptZatcaPdfA3Generation from "../pages/ZATCA/Transaction/RptZatcaPdfA3Generation";
+import RptZatcaDocumentStatus from "../pages/ZATCA/Transaction/RptZatcaDocumentStatus";
+import SetZATCADocumentPath from "../pages/ZATCA/Setup/SetZATCADocumentPath";
 
 const Login = lazy(() => import("../pages/Auth/LoginPage"));
 const ReceiptPage = lazy(
@@ -438,6 +441,10 @@ const AppRoutes = () => {
 
 {/* ================= ZATCA ================= */}
 <Route path="/ZATCA/Transaction/ZATCASubmission" element={<ZATCASubmission />} />
+<Route path="/ZATCA/Transaction/RptZatcaPdfA3Generation" element={<RptZatcaPdfA3Generation />} />
+<Route path="/ZATCA/Transaction/RptZatcaDocumentStatus" element={<RptZatcaDocumentStatus />} />
+
+<Route path="/ZATCA/Setup/SetZATCADocumentPath" element={<SetZATCADocumentPath />} />
 
 
 {/* ================= ASSETS  ================= */}

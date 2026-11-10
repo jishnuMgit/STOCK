@@ -476,7 +476,7 @@ const ZATCASubmission: React.FC = () => {
   // ==================================================
 
   return (
-    <div className="min-h-screen w-full bg-white p-1 sm:p-2">
+    <div className="min-h-full w-full bg-white p-1 sm:p-2">
 
       <main className="mx-auto flex w-full max-w-292.5 flex-col overflow-hidden rounded-[3px] border border-[#91a7bb] bg-white shadow-sm">
 
@@ -547,8 +547,8 @@ const ZATCASubmission: React.FC = () => {
 
               <CustomRadio
                 name="branchMode"
-                value="All Branches"
-                label="All Branch"
+                value="All Branch"
+                label="All Branches"
                 checked={branchMode === "All Branch"}
                 onChange={() => setBranchMode("All Branch")}
               />

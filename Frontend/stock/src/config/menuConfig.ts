@@ -121,6 +121,10 @@ Sales-REPORT
 
 // ZATCA
   iZATCADoxSubmission: "/ZATCA/Transaction/ZATCASubmission",
+  iZATCAPDFA3Generation: "/ZATCA/Transaction/RptZatcaPdfA3Generation",
+  irptZATCADoxStatus: "/ZATCA/Transaction/RptZatcaDocumentStatus",
+
+  iZATCADoxPath: "/ZATCA/Setup/SetZATCADocumentPath",
 
 
   /* =========================================================
