@@ -30,6 +30,7 @@ interface CustomLinkedPairSelectProps {
   optionFontSize?: string;
   isDisabled?: boolean;
   isSearchable?: boolean;
+  menuPortalTarget?: HTMLElement;
 }
 
 const CustomLinkedPairSelect: React.FC<CustomLinkedPairSelectProps> = ({
@@ -49,6 +50,7 @@ const CustomLinkedPairSelect: React.FC<CustomLinkedPairSelectProps> = ({
   optionFontSize = "12px",
   isDisabled = false,
   isSearchable = true,
+  menuPortalTarget,
 }) => {
   const menuWidth = firstWidth + gap + secondWidth;
 
@@ -162,9 +164,13 @@ const CustomLinkedPairSelect: React.FC<CustomLinkedPairSelectProps> = ({
       marginTop: "2px",
       border: "none",
       borderRadius: "3px",
-      zIndex: 9999,
+      zIndex: 100000,
       overflow: "hidden",
       boxSizing: "border-box",
+    }),
+    menuPortal: (base) => ({
+      ...base,
+      zIndex: 100000,
     }),
     menuList: (base) => ({
       ...base,
@@ -216,6 +222,8 @@ const CustomLinkedPairSelect: React.FC<CustomLinkedPairSelectProps> = ({
           isClearable={false}
           menuPlacement="auto"
           menuShouldScrollIntoView={false}
+          menuPortalTarget={menuPortalTarget}
+          menuPosition={menuPortalTarget ? "fixed" : undefined}
           classNamePrefix="linked-pair"
         />
       </div>
@@ -237,6 +245,8 @@ const CustomLinkedPairSelect: React.FC<CustomLinkedPairSelectProps> = ({
           isClearable={false}
           menuPlacement="auto"
           menuShouldScrollIntoView={false}
+          menuPortalTarget={menuPortalTarget}
+          menuPosition={menuPortalTarget ? "fixed" : undefined}
           classNamePrefix="linked-pair"
         />
       </div>

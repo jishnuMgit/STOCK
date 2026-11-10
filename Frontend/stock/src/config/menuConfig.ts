@@ -7,9 +7,11 @@ import {
   Settings,
   Wrench,
   Lock,
+  FileCheck ,
   ShieldCheck,
 } from "lucide-react";
 import type { MenuNode } from "../types/menu";
+
 
 /* =========================================================
    MENU ORDER
@@ -116,6 +118,15 @@ Sales-REPORT
   mnuRptCustomerSales: "/Sales/Reports/RptCustomerSales",
   mnuRptItemSales: "/Sales/Reports/RptItemSales",
 
+
+// ZATCA
+  iZATCADoxSubmission: "/ZATCA/Transaction/ZATCASubmission",
+  iZATCAPDFA3Generation: "/ZATCA/Transaction/RptZatcaPdfA3Generation",
+  irptZATCADoxStatus: "/ZATCA/Transaction/RptZatcaDocumentStatus",
+
+  iZATCADoxPath: "/ZATCA/Setup/SetZATCADocumentPath",
+
+
   /* =========================================================
      FINANCE 
   ========================================================= */
@@ -182,8 +193,11 @@ Sales-REPORT
 
   // ASSETS - TRANSACTION
 
-// ASSETS - SETUP
-
+mnuAssetPurchase:"/Assets/Transaction/AssetPurchase",
+mnuAssetDisposal:"/Assets/Transaction/AssetDisposal",
+mnuDeprGeneration:"/Assets/Transaction/DepreciationGeneration",
+mnuDeprBeginningBalance:"/Assets/Transaction/DepreciationBeginningBalance",
+mnuDeprJournalList:"/Assets/Transaction/DepreciationJournalList",
 
 // ASSETS - REPORTS
 
@@ -192,10 +206,9 @@ mnuAssetItemList:"/Assets/Reports/AssetItemList",
 mnuDepreciationHistory:"/Assets/Reports/DepreciationHistory",
 mnuDepreciationSchedule:"/Assets/Reports/DepreciationSchedule",
 mnuDisposalSchedule:"/Assets/Reports/DisposalSchedule",
-mnuAssetPurchase:"/Assets/Setup/AssetPurchase",
-mnuAssetDisposal:"/Assets/Transaction/AssetDisposal",
 
-
+// ASSETS - SETTING
+mnu12Setting:"/Assets/Setting/AssetSetting",
 
   /* =========================================================
      SETTINGS
@@ -336,6 +349,7 @@ export function injectChild(
 const topLevelIconMap: Record<string, React.ReactNode> = {
   mnuPurchase: React.createElement(ShoppingCart, { size: 18 }),
   mnuSales: React.createElement(TrendingUp, { size: 18 }),
+  mZATCA: React.createElement(FileCheck, { size: 18 }),
   mnuFinance: React.createElement(Wallet, { size: 18 }),
   mnu91Setting: React.createElement(Settings, { size: 18 }),
   mnuTools: React.createElement(Wrench, { size: 18 }), // caption: "Utility"
