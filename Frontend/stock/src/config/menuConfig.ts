@@ -120,11 +120,11 @@ Sales-REPORT
 
 
 // ZATCA
-  iZATCADoxSubmission: "/ZATCA/Transaction/ZATCASubmission",
-  iZATCAPDFA3Generation: "/ZATCA/Transaction/RptZatcaPdfA3Generation",
-  irptZATCADoxStatus: "/ZATCA/Transaction/RptZatcaDocumentStatus",
+  mnuZATCADoxSubmission: "/ZATCA/Transaction/ZATCASubmission",
+  mnuZATCAPDFA3Generation: "/ZATCA/Transaction/RptZatcaPdfA3Generation",
+  mnurptZATCADoxStatus: "/ZATCA/Transaction/RptZatcaDocumentStatus",
 
-  iZATCADoxPath: "/ZATCA/Setup/SetZATCADocumentPath",
+  mnuZATCADoxPath: "/ZATCA/Setup/SetZATCADocumentPath",
 
 
   /* =========================================================
@@ -349,7 +349,7 @@ export function injectChild(
 const topLevelIconMap: Record<string, React.ReactNode> = {
   mnuPurchase: React.createElement(ShoppingCart, { size: 18 }),
   mnuSales: React.createElement(TrendingUp, { size: 18 }),
-  mZATCA: React.createElement(FileCheck, { size: 18 }),
+  mnuZATCA: React.createElement(FileCheck, { size: 18 }),
   mnuFinance: React.createElement(Wallet, { size: 18 }),
   mnu91Setting: React.createElement(Settings, { size: 18 }),
   mnuTools: React.createElement(Wrench, { size: 18 }), // caption: "Utility"

@@ -48,6 +48,7 @@ const accountOptions: Option[] = [
 // ==================================================
 
 const tableSelectStyles = {
+  //@ts-ignore
   control: (base: any, state: any) => ({
     ...base,
     minHeight: "26px",
@@ -278,6 +279,7 @@ const AssetSettingPage: React.FC = () => {
   };
 
   // Add another row
+    //@ts-ignore
   const handleAddRow = () => {
     setRows((prev) => [
       ...prev,
