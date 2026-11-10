@@ -7,7 +7,6 @@ const INVOICE_TYPE = "R";
 const SP_PAGE_SI = "dbo.sp_pagesi";
 const SP_SI_POST = "dbo.sp_sipost";
 
-/* VERIFY: the mode your sp_sipost uses for delete (see notes) */
 const SP_POST_MODE_POST = "P";
 
 /* =========================================================
@@ -356,6 +355,7 @@ export const getSalesInvoice = async (ctx: Ctx, q: Partial<DocKeyInput>) => {
         a.faccountname,
         t.faddress1,
         t.fphone,
+        t.freference AS fcustomerref,
         t.fnote,
         t.fdisctype, t.fdiscper, t.fdiscamt,
         t.fnetdocamtwovat, t.fvatper, t.fvatamt, t.fnetdocamt,
@@ -465,8 +465,10 @@ export const saveSalesInvoice = async (ctx: Ctx, input: SaveInput) => {
   const { dType, validLines, totals: t } = validateInvoice(input);
 
   return withTransaction(async (client) => {
-    let origInvoiceDate: string | null = null;
-    let origInvDateTime: string | null = null;
+    // finvoicedate / finvdatetime do not exist in tblstocktrans and
+    // sp_pagesi ignores them, so they are no longer read on modify
+    const origInvoiceDate: string | null = null;
+    const origInvDateTime: string | null = null;
     let origCreator:
       | { fcuserid: string | null; fcuserdate: Date | null }
       | undefined;
@@ -496,17 +498,13 @@ export const saveSalesInvoice = async (ctx: Ctx, input: SaveInput) => {
         );
 
       const orig = await client.query(
-        `SELECT fcuserid, fcuserdate,
-                to_char(finvoicedate, 'YYYY-MM-DD HH24:MI:SS') AS finvoicedate,
-                finvdatetime
+        `SELECT fcuserid, fcuserdate
            FROM dbo.tblstocktrans
           WHERE fcoid=$1 AND fyear=$2 AND fbrid=$3 AND fdoctype=$4 AND fdocno=$5
           LIMIT 1`,
         docKey,
       );
       origCreator = orig.rows[0];
-      origInvoiceDate = orig.rows[0]?.finvoicedate ?? null;
-      origInvDateTime = orig.rows[0]?.finvdatetime ?? null;
     }
 
     const inv = await client.query(
@@ -716,7 +714,7 @@ export const postSalesInvoice = async (ctx: Ctx, input: Partial<PostInput>) => {
     );
     const l = await client.query(
       `SELECT fslno, fitemid, funit, fqtyout, funitprice,
-              funitdiscamt, funitcost
+              funitdiscamt, funitcost, fsn
          FROM dbo.tblstocktrans
         WHERE fcoid=$1 AND fyear=$2 AND fbrid=$3 AND fdoctype=$4 AND fdocno=$5
         ORDER BY fslno`,
@@ -748,14 +746,18 @@ export const postSalesInvoice = async (ctx: Ctx, input: Partial<PostInput>) => {
       ),
     });
 
-    /* stock check: every item must have stock > 0 in this branch.
-       Same rule as the Stock box (VB GetItemStock): In - Out of all
-       other documents, excluding this invoice. */
+    /* stock check: every STOCK item (fsn <> 'N') must have stock > 0 in
+       this branch. Same rule as the Stock box (VB GetItemStock):
+       In - Out of all other documents, excluding this invoice. */
+    const stockLines = l.rows.filter(
+      (r: Record<string, unknown>) => r.fitemid && r.fsn !== "N",
+    );
+
     const itemIds = [
       ...new Set(
-        l.rows.map((r: Record<string, unknown>) => String(r.fitemid ?? "")),
+        stockLines.map((r: Record<string, unknown>) => String(r.fitemid)),
       ),
-    ].filter(Boolean);
+    ];
 
     const stockRes = await client.query(
       `SELECT fitemid,
@@ -775,8 +777,7 @@ export const postSalesInvoice = async (ctx: Ctx, input: Partial<PostInput>) => {
       ]),
     );
 
-    const noStock = l.rows
-      .filter((r: Record<string, unknown>) => r.fitemid)
+    const noStock = stockLines
       .filter(
         (r: Record<string, unknown>) =>
           (stockOf.get(String(r.fitemid)) ?? 0) <= 0,

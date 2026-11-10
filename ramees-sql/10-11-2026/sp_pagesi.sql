@@ -1,7 +1,3 @@
--- PROCEDURE: dbo.sp_pagesi(character varying, character varying, character varying, character varying, character varying, character varying, integer, character varying, character varying, character varying, timestamp without time zone, character varying, character varying, character varying, character varying, character varying, character varying, character varying, character varying, character varying, character varying, character varying, smallint, boolean, character varying, numeric, character varying, numeric, numeric, numeric, numeric, numeric, numeric, numeric, numeric, numeric, character varying, numeric, numeric, numeric, numeric, numeric, numeric, numeric, numeric, numeric, numeric, numeric, numeric, numeric, numeric, smallint, character varying, character varying, character varying, boolean, boolean, timestamp without time zone)
-
--- DROP PROCEDURE IF EXISTS dbo.sp_pagesi(character varying, character varying, character varying, character varying, character varying, character varying, integer, character varying, character varying, character varying, timestamp without time zone, character varying, character varying, character varying, character varying, character varying, character varying, character varying, character varying, character varying, character varying, character varying, smallint, boolean, character varying, numeric, character varying, numeric, numeric, numeric, numeric, numeric, numeric, numeric, numeric, numeric, character varying, numeric, numeric, numeric, numeric, numeric, numeric, numeric, numeric, numeric, numeric, numeric, numeric, numeric, numeric, smallint, character varying, character varying, character varying, boolean, boolean, timestamp without time zone);
-
 CREATE OR REPLACE PROCEDURE dbo.sp_pagesi(
 	IN strmode character varying,
 	IN pstrcoid character varying,
@@ -119,8 +115,9 @@ BEGIN
             fcoid, fyear, fbrid, fdoctype, fdocno,
             fpisitype, fdate, fcsaccountid, fgaccountid,
             faddress1, fphone,
+            freference,                                          -- NEW
             fsqtno, fnote, fslno, fitemid,
-            fsn,                                                 -- NEW fsn
+            fsn,
             fqtyout,
             funit, funitprice, fnetunitprice,
             funitdiscamt, fitemvatamt, ftotalprice,
@@ -135,8 +132,9 @@ BEGIN
             strinvoicetype, dtpdate::date, straccountid,
             dbo.getparentcsaccountid(pstrcoid, straccountid),
             straddress1, strphone,
+            strcustref,                                          -- NEW
             strqtnno, strnote, intslno, stritemid,
-            dbo.getitemgroupsn(pstrcoid, stritemid),             -- NEW fsn
+            COALESCE(dbo.getitemgroupsn(pstrcoid, stritemid), 'S'),
             COALESCE(numqtyout, 0),
             strunit, COALESCE(numunitprice, 0),
             COALESCE(numnetunitprice, 0),
@@ -206,6 +204,7 @@ BEGIN
                fcsaccountid = straccountid,
                faddress1 = straddress1,
                fphone = strphone,
+               freference = strcustref,                          -- NEW
                fsqtno = strqtnno,
                fnote = strnote,
                fdisctype = strdisctype,
@@ -239,7 +238,7 @@ BEGIN
         UPDATE dbo.tblstocktrans
            SET fslno = intslno,
                fitemid = stritemid,
-               fsn = dbo.getitemgroupsn(pstrcoid, stritemid),    -- NEW fsn
+               fsn = COALESCE(dbo.getitemgroupsn(pstrcoid, stritemid), 'S'),
                fqtyout = COALESCE(numqtyout, 0),
                funit = strunit,
                funitprice = COALESCE(numunitprice, 0),
@@ -595,6 +594,6 @@ BEGIN
 
 END;
 $BODY$;
+
 ALTER PROCEDURE dbo.sp_pagesi(character varying, character varying, character varying, character varying, character varying, character varying, integer, character varying, character varying, character varying, timestamp without time zone, character varying, character varying, character varying, character varying, character varying, character varying, character varying, character varying, character varying, character varying, character varying, smallint, boolean, character varying, numeric, character varying, numeric, numeric, numeric, numeric, numeric, numeric, numeric, numeric, numeric, character varying, numeric, numeric, numeric, numeric, numeric, numeric, numeric, numeric, numeric, numeric, numeric, numeric, numeric, numeric, smallint, character varying, character varying, character varying, boolean, boolean, timestamp without time zone)
     OWNER TO postgres;
-
