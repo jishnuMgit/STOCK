@@ -31,6 +31,7 @@ interface CustomLinkedPairSelectProps {
   isDisabled?: boolean;
   isSearchable?: boolean;
   menuPortalTarget?: HTMLElement;
+  menuZIndex?: number;
 }
 
 const CustomLinkedPairSelect: React.FC<CustomLinkedPairSelectProps> = ({
@@ -51,6 +52,7 @@ const CustomLinkedPairSelect: React.FC<CustomLinkedPairSelectProps> = ({
   isDisabled = false,
   isSearchable = true,
   menuPortalTarget,
+  menuZIndex = 100000,
 }) => {
   const menuWidth = firstWidth + gap + secondWidth;
 
@@ -164,13 +166,13 @@ const CustomLinkedPairSelect: React.FC<CustomLinkedPairSelectProps> = ({
       marginTop: "2px",
       border: "none",
       borderRadius: "3px",
-      zIndex: 100000,
+      zIndex: menuZIndex,
       overflow: "hidden",
       boxSizing: "border-box",
     }),
     menuPortal: (base) => ({
       ...base,
-      zIndex: 100000,
+      zIndex: menuZIndex,
     }),
     menuList: (base) => ({
       ...base,
