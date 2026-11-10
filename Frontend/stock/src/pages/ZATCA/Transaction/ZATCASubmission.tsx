@@ -1,5 +1,5 @@
 
-import React, { useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import dayjs from "dayjs";
 import customParseFormat from "dayjs/plugin/customParseFormat";
 
@@ -43,7 +43,57 @@ type DocumentRow = {
   invoiceAmountExclVat: string;
   vatAmount: string;
   invoiceAmountInclVat: string;
+  // carried through to the submit call
+  customerId: string;
+  origDocType: string;
+  docType: string;
+  invRcnType: string;
+  docDateIso: string;
+  invDateTime: string;
 };
+
+type ApiRow = {
+  fbrid: string;
+  fdoctype: string;
+  forigdoctype: string | null;
+  fdocno: string;
+  fdate: string;
+  finvdatetime: string | null;
+  fcustomerid: string;
+  faccountname: string | null;
+  fbillingamtwovat: string | number;
+  fscvatamt: string | number;
+  fbillingamt: string | number;
+  finvrcntype: string | null;
+};
+
+// Router mount: app.use("/api/zatca-submission", zatcaSubmissionRouter)
+// If your other pages use an axios instance (token header, base URL), call it
+// inside http() instead of fetch.
+const API = import.meta.env.VITE_API_URL + "/zatca-submission";
+
+const http = async (path: string, init?: RequestInit): Promise<Response> =>
+  fetch(`${API}${path}`, {
+    credentials: "include",
+    headers: { "Content-Type": "application/json" },
+    ...init,
+  });
+
+const api = async <T,>(path: string, init?: RequestInit): Promise<T> => {
+  const res = await http(path, init);
+  const type = res.headers.get("content-type") ?? "";
+  if (!type.includes("application/json")) {
+    throw new Error(`Unexpected response from ${API}${path} (${res.status}): route not reachable`);
+  }
+  const json = await res.json();
+  if (!res.ok || json.success === false) {
+    throw new Error(json.message || `Request failed (${res.status})`);
+  }
+  return json as T;
+};
+
+const money = (v: string | number) => Number(v || 0).toFixed(2);
+const toIso = (ui: string) => dayjs(ui, DATE_FORMAT).format("YYYY-MM-DD");
 
 // ==================================================
 // CONSTANTS
@@ -53,35 +103,14 @@ const DATE_FORMAT = "DD/MM/YYYY";
 
 const TODAY = dayjs().format(DATE_FORMAT);
 
-const documentOptions: TableSelectOption[] = [
-  { value: "INV", label: "Sales Invoice", id: "INV" },
-  { value: "CRN", label: "Credit Note", id: "CRN" },
-  { value: "DBN", label: "Debit Note", id: "DBN" },
-];
-
 const documentColumns = [
   { key: "label", label: "Document Type", width: "1fr" },
   { key: "id", label: "ID", width: "65px", align: "right" as const },
 ];
 
-const branchOptions: TableSelectOption[] = [
-  { value: "JD", label: "JEDDAH", id: "JD" },
-  { value: "RH", label: "RIYADH", id: "RH" },
-];
-
 const branchColumns = [
   { key: "label", label: "Branch", width: "1fr" },
   { key: "id", label: "ID", width: "65px", align: "right" as const },
-];
-
-const customerIdOptions: Option[] = [
-  { value: "C001", label: "C001" },
-  { value: "C002", label: "C002" },
-];
-
-const customerNameOptions: Option[] = [
-  { value: "C001", label: "Customer One" },
-  { value: "C002", label: "Customer Two" },
 ];
 
 const createPairOptions = (
@@ -94,11 +123,6 @@ const createPairOptions = (
     secondLabel:
       nameOptions.find((name) => name.value === item.value)?.label ?? "",
   }));
-
-const customerPairOptions = createPairOptions(
-  customerIdOptions,
-  customerNameOptions,
-);
 
 // ==================================================
 // INITIAL TABLE ROWS
@@ -117,6 +141,12 @@ const createRows = (): DocumentRow[] =>
     invoiceAmountExclVat: "",
     vatAmount: "",
     invoiceAmountInclVat: "",
+    customerId: "",
+    origDocType: "",
+    docType: "",
+    invRcnType: "",
+    docDateIso: "",
+    invDateTime: "",
   }));
 
 // ==================================================
@@ -293,11 +323,13 @@ const ActionButton: React.FC<{
   children: React.ReactNode;
   onClick: () => void;
   className?: string;
-}> = ({ children, onClick, className = "" }) => (
+  disabled?: boolean;
+}> = ({ children, onClick, className = "", disabled = false }) => (
   <button
     type="button"
     onClick={onClick}
-    className={`min-w-20 btn-style ${className}`}
+    disabled={disabled}
+    className={`min-w-20 btn-style ${disabled ? "opacity-50" : ""} ${className}`}
   >
     {children}
   </button>
@@ -323,12 +355,28 @@ const ZATCASubmission: React.FC = () => {
 
   const [branchMode, setBranchMode] = useState("All Branch");
 
-  const [branch, setBranch] =
-    useState<TableSelectOption | null>(branchOptions[0]);
+  const [branch, setBranch] = useState<TableSelectOption | null>(null);
+
+  // LOOKUPS (loaded from the API)
+
+  const [documentOptions, setDocumentOptions] = useState<TableSelectOption[]>([]);
+  const [branchOptions, setBranchOptions] = useState<TableSelectOption[]>([]);
+  const [customerIdOptions, setCustomerIdOptions] = useState<Option[]>([]);
+  const [customerNameOptions, setCustomerNameOptions] = useState<Option[]>([]);
+
+  const customerPairOptions = useMemo(
+    () => createPairOptions(customerIdOptions, customerNameOptions),
+    [customerIdOptions, customerNameOptions],
+  );
+
+  // STATUS
+
+  const [busy, setBusy] = useState(false);
+  const [notice, setNotice] = useState<{ type: "ok" | "error"; text: string } | null>(null);
 
   // CUSTOMER
 
-  const [customerMode, setCustomerMode] = useState("All Customer");
+  const [customerMode, setCustomerMode] = useState("All Customers");
 
   const [customerId, setCustomerId] =
     useState<Option | null>(null);
@@ -341,7 +389,7 @@ const ZATCASubmission: React.FC = () => {
   const [dateMode, setDateMode] =
     useState("By Document Issue Date");
 
-  const [fromDate, setFromDate] = useState("09/11/2026");
+  const [fromDate, setFromDate] = useState(TODAY);
 
   const [toDate, setToDate] = useState(TODAY);
 
@@ -354,81 +402,161 @@ const ZATCASubmission: React.FC = () => {
   const [rows, setRows] = useState<DocumentRow[]>(createRows);
 
   // ==================================================
+  // LOAD LOOKUPS
+  // ==================================================
+
+  useEffect(() => {
+    Promise.all([
+      api<{ data: { fbrname: string; fbrid: string }[] }>("/getBranchList"),
+      api<{ data: { fcsaccountid: string; fcsaccountname: string }[] }>("/getCustomerList"),
+      api<{ data: { fpid: string; fpname: string }[] }>("/getDocumentTypeList"),
+    ])
+      .then(([branches, customers, documentTypes]) => {
+        setBranchOptions(
+          (branches.data ?? []).map((b) => ({ value: b.fbrid, label: b.fbrname, id: b.fbrid })),
+        );
+        setCustomerIdOptions(
+          (customers.data ?? []).map((c) => ({ value: c.fcsaccountid, label: c.fcsaccountid })),
+        );
+        setCustomerNameOptions(
+          (customers.data ?? []).map((c) => ({ value: c.fcsaccountid, label: c.fcsaccountname })),
+        );
+        setDocumentOptions(
+          (documentTypes.data ?? []).map((d) => ({ value: d.fpid, label: d.fpname, id: d.fpid })),
+        );
+      })
+      .catch((e: Error) => setNotice({ type: "error", text: e.message }));
+  }, []);
+
+  // ==================================================
   // SEARCH
   // ==================================================
 
-  const handleSearch = () => {
-    const searchParams = {
-      documentMode,
+  const handleSearch = async () => {
+    setNotice(null);
 
-      documentType:
-        documentMode === "One Document"
-          ? documentType
-          : null,
+    // same rules as ValidateMe
+    if (documentMode === "One Document" && !documentType) {
+      return setNotice({ type: "error", text: "Please input 'Document'" });
+    }
+    if (
+      documentMode === "One Document" &&
+      (documentType?.value === "DN" || documentType?.value === "CN") &&
+      branchMode !== "One Branch"
+    ) {
+      return setNotice({ type: "error", text: "Please select a 'Branch'" });
+    }
+    if (branchMode === "One Branch" && !branch) {
+      return setNotice({ type: "error", text: "Please select a 'Branch'" });
+    }
+    if (customerMode === "One Customer" && !customerId) {
+      return setNotice({ type: "error", text: "Please select 'Customer ID'" });
+    }
 
-      documentFilter,
+    const byNo =
+      documentFilter === "By Document No." && documentMode === "One Document";
 
-      documentNo:
-        documentFilter === "By Document No."
-          ? documentNo
-          : null,
+    if (byNo && !documentNo.trim()) {
+      return setNotice({ type: "error", text: "Please input 'From Invoice No.'" });
+    }
 
-      branchMode,
+    setBusy(true);
+    try {
+      const { data } = await api<{ data: ApiRow[] }>("/searchZATCASubmission", {
+        method: "POST",
+        body: JSON.stringify({
+          docMode: documentMode === "One Document" ? "one" : "all",
+          docType: documentMode === "One Document" ? documentType?.value : null,
+          branchId: branchMode === "One Branch" ? branch?.value : null,
+          customerId: customerMode === "One Customer" ? customerId?.value : null,
+          filterBy: byNo ? "no" : "date",
+          fromDocNo: byNo ? documentNo.trim() : null,
+          toDocNo: byNo ? documentNo.trim() : null,
+          dateBasis: dateMode === "By Document Issue Date" ? "issue" : "document",
+          fromDate: byNo ? null : toIso(fromDate),
+          toDate: byNo ? null : toIso(toDate),
+        }),
+      });
 
-      branch:
-        branchMode === "One Branch"
-          ? branch
-          : null,
+      const mapped: DocumentRow[] = data.map((r, i) => ({
+        id: i + 1,
+        selected: true, // the VB grid pre-ticks Select
+        branchId: r.fbrid,
+        documentType: r.fdoctype,
+        documentNo: r.fdocno,
+        documentDate: r.fdate ? dayjs(r.fdate).format(DATE_FORMAT) : "",
+        issueTime: r.finvdatetime ?? "",
+        customerName: r.faccountname ?? "",
+        invoiceAmountExclVat: money(r.fbillingamtwovat),
+        vatAmount: money(r.fscvatamt),
+        invoiceAmountInclVat: money(r.fbillingamt),
+        customerId: r.fcustomerid,
+        origDocType: r.forigdoctype ?? "",
+        docType: r.fdoctype,
+        invRcnType: r.finvrcntype ?? "",
+        docDateIso: r.fdate,
+        invDateTime: r.finvdatetime ?? "",
+      }));
 
-      customerMode,
+      // keep the empty filler rows so the grid height stays stable
+      const filler = createRows().slice(mapped.length);
+      setRows([...mapped, ...filler.map((f, i) => ({ ...f, id: mapped.length + i + 1 }))]);
 
-      customerId:
-        customerMode === "One Customer"
-          ? customerId
-          : null,
-
-      customerName:
-        customerMode === "One Customer"
-          ? customerName
-          : null,
-
-      dateMode,
-      fromDate,
-      toDate,
-    };
-
-    console.log("ZATCA Document Search:", searchParams);
-
-    // Connect your search API here.
+      if (!mapped.length) setNotice({ type: "ok", text: "No documents found." });
+    } catch (e) {
+      setNotice({ type: "error", text: (e as Error).message });
+    } finally {
+      setBusy(false);
+    }
   };
 
   // ==================================================
   // SUBMIT
   // ==================================================
 
-  const handleSubmit = () => {
-    const selectedDocuments = rows.filter(
-      (row) => row.selected && row.documentNo.trim() !== "",
-    );
+  const handleSubmit = async () => {
+    const selected = rows.filter((r) => r.selected && r.documentNo.trim() !== "");
+    if (!selected.length) {
+      return setNotice({ type: "error", text: "Please select at least one document" });
+    }
 
-    console.log("ZATCA Document Submission:", {
-      filters: {
-        documentMode,
-        documentType,
-        branchMode,
-        branch,
-        customerMode,
-        customerId,
-        customerName,
-        documentFilter,
-        dateMode,
-        fromDate,
-        toDate,
-      },
-      documents: selectedDocuments,
-    });
+    setBusy(true);
+    setNotice(null);
+    try {
+      const { message, data } = await api<{
+        message: string;
+        data: { rejected: number; results: { docNo: string; status: string; message?: string }[] };
+      }>("/submitZATCASubmission", {
+        method: "POST",
+        body: JSON.stringify({
+          documents: selected.map((r) => ({
+            brId: r.branchId,
+            docType: r.docType,
+            origDocType: r.origDocType,
+            docNo: r.documentNo,
+            invRcnType: r.invRcnType,
+            customerId: r.customerId,
+            docDate: r.docDateIso,
+            invDateTime: r.invDateTime,
+          })),
+        }),
+      });
 
-    // Connect your ZATCA submission API here.
+      const failed = data.results
+        .filter((x) => x.status === "REJECTED" || x.status === "ERROR")
+        .map((x) => `${x.docNo}: ${x.message ?? x.status}`);
+
+      setNotice({
+        type: data.rejected > 0 ? "error" : "ok",
+        text: failed.length ? `${message}\n${failed.join("\n")}` : message,
+      });
+      // ClearMe() after submit, as the VB form does
+      setRows(createRows());
+    } catch (e) {
+      setNotice({ type: "error", text: (e as Error).message });
+    } finally {
+      setBusy(false);
+    }
   };
 
   // ==================================================
@@ -442,9 +570,9 @@ const ZATCASubmission: React.FC = () => {
     setDocumentNo("");
 
     setBranchMode("All Branch");
-    setBranch(branchOptions[0]);
+    setBranch(null);
 
-    setCustomerMode("All Customer");
+    setCustomerMode("All Customers");
     setCustomerId(null);
     setCustomerName(null);
 
@@ -453,6 +581,7 @@ const ZATCASubmission: React.FC = () => {
     setToDate(TODAY);
 
     setRows(createRows());
+    setNotice(null);
   };
 
   // ==================================================
@@ -461,14 +590,6 @@ const ZATCASubmission: React.FC = () => {
 
   const handleClose = () => {
     window.history.back();
-  };
-
-  // ==================================================
-  // TABLE ROW UPDATE
-  // ==================================================
-  //@ts-ignore
-  const updateRows = (data: DocumentRow[]) => {
-    setRows(data);
   };
 
   // ==================================================
@@ -728,6 +849,7 @@ const ZATCASubmission: React.FC = () => {
 
               <ActionButton
                 onClick={handleSearch}
+                disabled={busy}
                 className="w-24 "
               >
                 Search
@@ -878,6 +1000,19 @@ const ZATCASubmission: React.FC = () => {
 
           </div>
 
+          {notice && (
+            <div
+              role="status"
+              className={`mt-2 whitespace-pre-line rounded-sm border px-2 py-1 text-[12px] ${
+                notice.type === "error"
+                  ? "border-red-300 bg-red-50 text-red-700"
+                  : "border-green-300 bg-green-50 text-green-800"
+              }`}
+            >
+              {notice.text}
+            </div>
+          )}
+
           {/* ==========================================
               BOTTOM BUTTONS
           ========================================== */}
@@ -886,6 +1021,7 @@ const ZATCASubmission: React.FC = () => {
 
             <ActionButton
               onClick={handleSubmit}
+              disabled={busy}
               className="w-20"
             >
               Submit
