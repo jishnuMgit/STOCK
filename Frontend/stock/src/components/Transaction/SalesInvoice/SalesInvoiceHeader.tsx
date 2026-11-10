@@ -26,6 +26,9 @@ dayjs.extend(customParseFormat);
 // PROPS
 // ============================================================
 
+/* invoice type option: value/label plus the name from the server (fPName) */
+type TypeOption = Option & { name?: string };
+
 type SalesInvoiceHeaderProps = {
   branchOptions: Option[];
   branch: Option | null;
@@ -39,7 +42,8 @@ type SalesInvoiceHeaderProps = {
   priceLevels: ParamLookup[];
   onCustomerSelect: (customerId: string) => void;
   onDocNoBlur: () => void;
-  invoiceTypes?: Option[];
+  invoiceTypes?: TypeOption[];
+  stock: number;
   readOnly: boolean; // posted invoice
 };
 
@@ -260,10 +264,11 @@ const branchComponents = {
 
 const TYPE_COL_WIDTH = 70;
 
+// fallback names when the server sends no name
 const TYPE_NAMES: Record<string, string> = { R: "CREDIT", C: "CASH" };
 
 // this screen is Sales Invoice (Credit), so only R is offered by default
-const defaultInvoiceTypes: Option[] = [{ value: "R", label: "R" }];
+const defaultInvoiceTypes: TypeOption[] = [{ value: "R", label: "R" }];
 
 const TypeMenuList = (props: MenuListProps<Option, false>) => (
   <components.MenuList {...props}>
@@ -296,30 +301,6 @@ const TypeMenuList = (props: MenuListProps<Option, false>) => (
     {props.children}
   </components.MenuList>
 );
-
-// menu rows show Type | Name; the control shows only the type letter
-const formatType = (option: Option, meta: FormatOptionLabelMeta<Option>) => {
-  if (meta.context !== "menu") return option.label;
-
-  return (
-    <div style={{ display: "flex" }}>
-      <div
-        style={{
-          width: TYPE_COL_WIDTH,
-          flexShrink: 0,
-          boxSizing: "border-box",
-          padding: "6px 8px",
-          borderRight: "1px solid #e3e8ef",
-        }}
-      >
-        {option.value}
-      </div>
-      <div style={{ flex: 1, padding: "6px 8px" }}>
-        {TYPE_NAMES[option.value] ?? option.label}
-      </div>
-    </div>
-  );
-};
 
 const typeStyles: StylesConfig<Option, false> = {
   ...branchStyles,
@@ -604,7 +585,7 @@ const rightLabelClass =
 // ============================================================
 // ENTER KEY ORDER
 // Invoice No -> Type -> Date -> Customer ID -> Customer Name
-// -> Invoice To -> Phone -> Reference -> first row of the item table
+// -> Address -> Phone -> Reference -> first row of the item table
 // ============================================================
 
 const FIELD_ORDER = [
@@ -613,7 +594,7 @@ const FIELD_ORDER = [
   "dtpDate",
   "lkpCustomerID",
   "lkpCustomerName",
-  "txtInvoiceTo",
+  "txtAddress",
   "txtPhone",
   "txtReference",
 ];
@@ -668,6 +649,7 @@ const SalesInvoiceHeader: React.FC<SalesInvoiceHeaderProps> = ({
   onCustomerSelect,
   onDocNoBlur,
   invoiceTypes = defaultInvoiceTypes,
+  stock,
   readOnly,
 }) => {
   // ==========================================================
@@ -706,6 +688,46 @@ const SalesInvoiceHeader: React.FC<SalesInvoiceHeaderProps> = ({
         label: header.invoiceType,
       })
     : null;
+
+  // ==========================================================
+  // INVOICE TYPE HELPERS
+  // ==========================================================
+
+  // value -> name from the server (fPName), falling back to CASH / CREDIT
+  const typeNameByValue = useMemo(
+    () =>
+      new Map(
+        invoiceTypes.map((t) => [
+          t.value,
+          t.name || TYPE_NAMES[t.value] || t.label,
+        ]),
+      ),
+    [invoiceTypes],
+  );
+
+  // menu rows show Type | Name; the control shows only the type letter
+  const formatType = (option: Option, meta: FormatOptionLabelMeta<Option>) => {
+    if (meta.context !== "menu") return option.label;
+
+    return (
+      <div style={{ display: "flex" }}>
+        <div
+          style={{
+            width: TYPE_COL_WIDTH,
+            flexShrink: 0,
+            boxSizing: "border-box",
+            padding: "6px 8px",
+            borderRight: "1px solid #e3e8ef",
+          }}
+        >
+          {option.value}
+        </div>
+        <div style={{ flex: 1, padding: "6px 8px" }}>
+          {typeNameByValue.get(option.value) ?? option.label}
+        </div>
+      </div>
+    );
+  };
 
   // ==========================================================
   // CUSTOMER LOOKUP HELPERS
@@ -995,14 +1017,14 @@ const SalesInvoiceHeader: React.FC<SalesInvoiceHeaderProps> = ({
               </div>
             </div>
 
-            {/* INVOICE TO */}
+            {/* ADDRESS */}
             <div className="mb-2.5 flex h-7.5 items-center gap-2">
-              <label htmlFor="txtInvoiceTo" className={labelClass}>
-                Invoice To :
+              <label htmlFor="txtAddress" className={labelClass}>
+                Address :
               </label>
 
               <input
-                id="txtInvoiceTo"
+                id="txtAddress"
                 type="text"
                 maxLength={150}
                 autoComplete="off"
@@ -1022,12 +1044,29 @@ const SalesInvoiceHeader: React.FC<SalesInvoiceHeaderProps> = ({
               <input
                 id="txtPhone"
                 type="text"
-                accept="tel"
+                inputMode="numeric"
                 maxLength={50}
                 autoComplete="off"
                 disabled={readOnly}
                 value={header.phone}
-                onChange={(e) => onHeaderChange({ phone: e.target.value })}
+                onChange={(e) =>
+                  onHeaderChange({ phone: e.target.value.replace(/\D/g, "") })
+                }
+                onPaste={(e) => {
+                  e.preventDefault();
+                  const digits = e.clipboardData
+                    .getData("text")
+                    .replace(/\D/g, "");
+                  const el = e.currentTarget;
+                  const start = el.selectionStart ?? header.phone.length;
+                  const end = el.selectionEnd ?? header.phone.length;
+                  const next = (
+                    header.phone.slice(0, start) +
+                    digits +
+                    header.phone.slice(end)
+                  ).slice(0, 50);
+                  onHeaderChange({ phone: next });
+                }}
                 className={`${inputClass} w-55`}
               />
             </div>
@@ -1085,7 +1124,7 @@ const SalesInvoiceHeader: React.FC<SalesInvoiceHeaderProps> = ({
               <input
                 id="txtStock"
                 type="text"
-                value="0"
+                value={String(stock)}
                 readOnly
                 className={`${inputClass} ml-1.75 w-19 text-center`}
               />

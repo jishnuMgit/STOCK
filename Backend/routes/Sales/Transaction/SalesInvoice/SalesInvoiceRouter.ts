@@ -6,6 +6,8 @@ import {
   deleteSalesInvoice,
   getSalesInvoice,
   getSalesInvoiceLookups,
+  getSalesInvoiceTypes,
+  getSalesItemStock,
   postSalesInvoice,
   saveSalesInvoice,
 } from "../../../../controller/Sales/Transaction/SalesInvoice/SalesInvoiceController.js";
@@ -19,6 +21,7 @@ router.use(authenticate);
 router.get("/", getSalesInvoice);
 router.post("/", saveSalesInvoice);
 router.delete("/", deleteSalesInvoice);
+router.get("/item-stock", getSalesItemStock);
 
 // post
 router.post("/post", postSalesInvoice);
@@ -28,6 +31,9 @@ router.post("/calc", calcSalesInvoice);
 
 // next invoice no.
 router.get("/next-doc-no", getNextDocNo);
+
+//invoice types
+router.get("/invoice-types", getSalesInvoiceTypes);
 
 // combos: customers, discount types, price levels, items
 router.get("/lookups", getSalesInvoiceLookups);
