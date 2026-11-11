@@ -274,7 +274,8 @@ const API = import.meta.env.VITE_API_URL;
 // e.g. app.use("/api/sales-invoice", salesInvoiceRoutes)
 const SALES_INVOICE_API = `${API}/sales-invoice`;
 
-// TODO: change "Branch" to the path where you mounted the branch router
+const DATETIME_API = `${API}/datetime`;
+
 const BRANCH_API = `${API}/Branch`;
 
 // shared item list, the same endpoint the purchase invoice uses
@@ -341,6 +342,17 @@ const useSalesInvoice = () => {
   });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+
+  /* ======================================================
+   SERVER DATE  ("YYYY-MM-DD HH:mm:ss") - VB objCommon.GetServerDate()
+====================================================== */
+  const getServerDate = useCallback(async (): Promise<string> => {
+    const result = await request<{ data: { serverDate: string } }>(
+      "GET",
+      `${DATETIME_API}/server-date`,
+    );
+    return s(result.data.serverDate);
+  }, []);
 
   /* ======================================================
      BRANCHES + DEFAULT BRANCH
@@ -778,6 +790,7 @@ const useSalesInvoice = () => {
     lookups,
     fetchInvoiceTypes,
     getLookups,
+    getServerDate,
     // invoice
     getNextDocNo,
     calcTotals,

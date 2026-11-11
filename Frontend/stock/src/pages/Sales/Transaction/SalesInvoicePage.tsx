@@ -108,6 +108,7 @@ const SalesInvoice: React.FC = () => {
     branchError,
     lookups,
     getLookups,
+    getServerDate,
     getNextDocNo,
     fetchInvoiceTypes,
     calcTotals,
@@ -236,12 +237,6 @@ const SalesInvoice: React.FC = () => {
       cancelled = true;
     };
   }, [branchId, activeItemId, stockKey, getItemStock]);
-
-  const nowLocal = (): string => {
-    const d = new Date();
-    const p = (v: number) => String(v).padStart(2, "0");
-    return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())} ${p(d.getHours())}:${p(d.getMinutes())}:${p(d.getSeconds())}`;
-  };
 
   // ==========================================================
   // RECALCULATE (server-side totals)
@@ -391,15 +386,19 @@ const SalesInvoice: React.FC = () => {
     setBusy(true);
 
     try {
+      // VB: picked date + server time of day
+      const serverNow = await getServerDate(); // "YYYY-MM-DD HH:mm:ss"
+      const invoiceDate = `${h.date} ${serverNow.slice(11)}`;
+
       await saveInvoice({
         mode,
         year,
-        header: { ...h, dateH: toHijri(h.date) },
+        header: { ...h, date: invoiceDate, dateH: toHijri(h.date) },
         rows: rowsRef.current.map((r) =>
           r.itemId ? { ...r, priceLevel: r.priceLevel || h.custPriceLevel } : r,
         ),
         originalSlNos,
-        userDate: nowLocal(),
+        userDate: serverNow,
       });
       toast.success(
         mode === "S" ? "Sales Invoice saved" : "Sales Invoice modified",
@@ -459,7 +458,8 @@ const SalesInvoice: React.FC = () => {
 
     setBusy(true);
     try {
-      await postInvoice(yearFor(h.date), h.brId, h.docNo, nowLocal());
+      const serverNow = await getServerDate();
+      await postInvoice(yearFor(h.date), h.brId, h.docNo, serverNow);
       await loadInvoice(h.brId, h.date, h.docNo);
       toast.success("Sales Invoice posted");
     } catch (err) {
