@@ -1,6 +1,7 @@
 
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import dayjs from "dayjs";
+import { toast } from "react-toastify";
 import customParseFormat from "dayjs/plugin/customParseFormat";
 
 import Header from "../../../components/common/Header";
@@ -9,27 +10,21 @@ import CommonTableSelect, {
   type TableSelectOption,
 } from "../../../components/common/CommonTableSelect";
 
-import CustomLinkedPairSelect, {
-  type PairSelectOption,
-} from "../../../components/common/CustomLinkedPairSelect";
-
 import {
   LocalizationProvider,
 } from "@mui/x-date-pickers/LocalizationProvider";
 
 import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
 import { DatePicker } from "@mui/x-date-pickers/DatePicker";
+import CustomLinkedPairSelect, {
+  type PairSelectOption,
+} from "../../../components/common/CustomLinkedPairSelect";
 
 dayjs.extend(customParseFormat);
 
 // ==================================================
 // TYPES
 // ==================================================
-
-type Option = {
-  value: string;
-  label: string;
-};
 
 type DocumentRow = {
   id: number;
@@ -43,7 +38,57 @@ type DocumentRow = {
   invoiceAmountExclVat: string;
   vatAmount: string;
   invoiceAmountInclVat: string;
+  // carried through to the submit call
+  customerId: string;
+  origDocType: string;
+  docType: string;
+  invRcnType: string;
+  docDateIso: string;
+  invDateTime: string;
 };
+
+type ApiRow = {
+  fbrid: string;
+  fdoctype: string;
+  forigdoctype: string | null;
+  fdocno: string;
+  fdate: string;
+  finvdatetime: string | null;
+  fcustomerid: string;
+  faccountname: string | null;
+  fbillingamtwovat: string | number;
+  fscvatamt: string | number;
+  fbillingamt: string | number;
+  finvrcntype: string | null;
+};
+
+// Router mount: app.use("/api/zatca-submission", zatcaSubmissionRouter)
+// If your other pages use an axios instance (token header, base URL), call it
+// inside http() instead of fetch.
+const API = import.meta.env.VITE_API_URL + "/zatca-submission";
+
+const http = async (path: string, init?: RequestInit): Promise<Response> =>
+  fetch(`${API}${path}`, {
+    credentials: "include",
+    headers: { "Content-Type": "application/json" },
+    ...init,
+  });
+
+const api = async <T,>(path: string, init?: RequestInit): Promise<T> => {
+  const res = await http(path, init);
+  const type = res.headers.get("content-type") ?? "";
+  if (!type.includes("application/json")) {
+    throw new Error(`Unexpected response from ${API}${path} (${res.status}): route not reachable`);
+  }
+  const json = await res.json();
+  if (!res.ok || json.success === false) {
+    throw new Error(json.message || `Request failed (${res.status})`);
+  }
+  return json as T;
+};
+
+const money = (v: string | number) => Number(v || 0).toFixed(2);
+const toIso = (ui: string) => dayjs(ui, DATE_FORMAT).format("YYYY-MM-DD");
 
 // ==================================================
 // CONSTANTS
@@ -53,20 +98,9 @@ const DATE_FORMAT = "DD/MM/YYYY";
 
 const TODAY = dayjs().format(DATE_FORMAT);
 
-const documentOptions: TableSelectOption[] = [
-  { value: "INV", label: "Sales Invoice", id: "INV" },
-  { value: "CRN", label: "Credit Note", id: "CRN" },
-  { value: "DBN", label: "Debit Note", id: "DBN" },
-];
-
 const documentColumns = [
   { key: "label", label: "Document Type", width: "1fr" },
   { key: "id", label: "ID", width: "65px", align: "right" as const },
-];
-
-const branchOptions: TableSelectOption[] = [
-  { value: "JD", label: "JEDDAH", id: "JD" },
-  { value: "RH", label: "RIYADH", id: "RH" },
 ];
 
 const branchColumns = [
@@ -74,31 +108,27 @@ const branchColumns = [
   { key: "id", label: "ID", width: "65px", align: "right" as const },
 ];
 
-const customerIdOptions: Option[] = [
-  { value: "C001", label: "C001" },
-  { value: "C002", label: "C002" },
-];
-
-const customerNameOptions: Option[] = [
-  { value: "C001", label: "Customer One" },
-  { value: "C002", label: "Customer Two" },
-];
-
 const createPairOptions = (
-  idOptions: Option[],
-  nameOptions: Option[],
+  ids: TableSelectOption[],
+  names: TableSelectOption[],
 ): PairSelectOption[] =>
-  idOptions.map((item) => ({
+  ids.map((item) => ({
     value: item.value,
     firstLabel: item.label,
-    secondLabel:
-      nameOptions.find((name) => name.value === item.value)?.label ?? "",
+    secondLabel: names.find((name) => name.value === item.value)?.label ?? "",
   }));
 
-const customerPairOptions = createPairOptions(
-  customerIdOptions,
-  customerNameOptions,
-);
+// width of the customer pair, so the Branch box lines up with it
+const CUSTOMER_ID_WIDTH = 120;
+const CUSTOMER_NAME_WIDTH = 320;
+const PAIR_GAP = 4;
+const BRANCH_WIDTH = 224; // lkpBranch: 320px reduced by 30%
+
+// radio panels: rdgCustomer is 10% wider than rdgBranch; the Branch box is
+// pushed right by the difference so both lookups still start on the same line
+const RDG_BRANCH_WIDTH = 112;
+const RDG_CUSTOMER_WIDTH = Math.round(RDG_BRANCH_WIDTH * 1.1); // 123
+const BRANCH_OFFSET = RDG_CUSTOMER_WIDTH - RDG_BRANCH_WIDTH;
 
 // ==================================================
 // INITIAL TABLE ROWS
@@ -117,6 +147,12 @@ const createRows = (): DocumentRow[] =>
     invoiceAmountExclVat: "",
     vatAmount: "",
     invoiceAmountInclVat: "",
+    customerId: "",
+    origDocType: "",
+    docType: "",
+    invRcnType: "",
+    docDateIso: "",
+    invDateTime: "",
   }));
 
 // ==================================================
@@ -293,11 +329,13 @@ const ActionButton: React.FC<{
   children: React.ReactNode;
   onClick: () => void;
   className?: string;
-}> = ({ children, onClick, className = "" }) => (
+  disabled?: boolean;
+}> = ({ children, onClick, className = "", disabled = false }) => (
   <button
     type="button"
     onClick={onClick}
-    className={`min-w-20 btn-style ${className}`}
+    disabled={disabled}
+    className={`min-w-20 btn-style ${disabled ? "opacity-50" : ""} ${className}`}
   >
     {children}
   </button>
@@ -323,25 +361,35 @@ const ZATCASubmission: React.FC = () => {
 
   const [branchMode, setBranchMode] = useState("All Branch");
 
-  const [branch, setBranch] =
-    useState<TableSelectOption | null>(branchOptions[0]);
+  const [branch, setBranch] = useState<TableSelectOption | null>(null);
+
+  // LOOKUPS (loaded from the API)
+
+  const [documentOptions, setDocumentOptions] = useState<TableSelectOption[]>([]);
+  const [branchOptions, setBranchOptions] = useState<TableSelectOption[]>([]);
+  const [customerIdOptions, setCustomerIdOptions] = useState<TableSelectOption[]>([]);
+  const [customerNameOptions, setCustomerNameOptions] = useState<TableSelectOption[]>([]);
+
+  // STATUS
+
+  const [busy, setBusy] = useState(false);
 
   // CUSTOMER
 
-  const [customerMode, setCustomerMode] = useState("All Customer");
+  const [customerMode, setCustomerMode] = useState("All Customers");
 
   const [customerId, setCustomerId] =
-    useState<Option | null>(null);
+    useState<TableSelectOption | null>(null);
 
   const [customerName, setCustomerName] =
-    useState<Option | null>(null);
+    useState<TableSelectOption | null>(null);
 
   // DATE FILTER
 
   const [dateMode, setDateMode] =
     useState("By Document Issue Date");
 
-  const [fromDate, setFromDate] = useState("09/11/2026");
+  const [fromDate, setFromDate] = useState(TODAY);
 
   const [toDate, setToDate] = useState(TODAY);
 
@@ -354,81 +402,170 @@ const ZATCASubmission: React.FC = () => {
   const [rows, setRows] = useState<DocumentRow[]>(createRows);
 
   // ==================================================
+  // LOAD LOOKUPS
+  // ==================================================
+
+  useEffect(() => {
+    Promise.all([
+      api<{ data: { fbrname: string; fbrid: string }[] }>("/getBranchList"),
+      api<{ data: { fcsaccountid: string; fcsaccountname: string }[] }>("/getCustomerList"),
+      api<{ data: { fpid: string; fpname: string }[] }>("/getDocumentTypeList"),
+      api<{ data: { fcsaccountid: string; fcsaccountname: string }[] }>("/getCustomerNameList"),
+    ])
+      .then(([branches, customers, documentTypes, customersByName]) => {
+        setBranchOptions(
+          (branches.data ?? []).map((b) => ({ value: b.fbrid, label: b.fbrname, id: b.fbrid })),
+        );
+        setCustomerIdOptions(
+          (customers.data ?? []).map((c) => ({
+            value: c.fcsaccountid,
+            label: c.fcsaccountid,
+            id: c.fcsaccountname,
+          })),
+        );
+        setCustomerNameOptions(
+          (customersByName.data ?? []).map((c) => ({
+            value: c.fcsaccountid,
+            label: c.fcsaccountname,
+            id: c.fcsaccountid,
+          })),
+        );
+        setDocumentOptions(
+          (documentTypes.data ?? []).map((d) => ({ value: d.fpid, label: d.fpname, id: d.fpid })),
+        );
+      })
+      .catch((e: Error) => toast.error(e.message));
+  }, []);
+
+  // ==================================================
   // SEARCH
   // ==================================================
 
-  const handleSearch = () => {
-    const searchParams = {
-      documentMode,
+  const handleSearch = async () => {
 
-      documentType:
-        documentMode === "One Document"
-          ? documentType
-          : null,
+    // same rules as ValidateMe
+    if (documentMode === "One Document" && !documentType) {
+      return toast.error("Please input 'Document'");
+    }
+    if (
+      documentMode === "One Document" &&
+      (documentType?.value === "DN" || documentType?.value === "CN") &&
+      branchMode !== "One Branch"
+    ) {
+      return toast.error("Please select a 'Branch'");
+    }
+    if (branchMode === "One Branch" && !branch) {
+      return toast.error("Please select a 'Branch'");
+    }
+    if (customerMode === "One Customer" && !customerId) {
+      return toast.error("Please select 'Customer ID'");
+    }
 
-      documentFilter,
+    const byNo =
+      documentFilter === "By Document No." && documentMode === "One Document";
 
-      documentNo:
-        documentFilter === "By Document No."
-          ? documentNo
-          : null,
+    if (byNo && !documentNo.trim()) {
+      return toast.error("Please input 'From Invoice No.'");
+    }
 
-      branchMode,
+    setBusy(true);
+    try {
+      const { data } = await api<{ data: ApiRow[] }>("/searchZATCASubmission", {
+        method: "POST",
+        body: JSON.stringify({
+          docMode: documentMode === "One Document" ? "one" : "all",
+          docType: documentMode === "One Document" ? documentType?.value : null,
+          branchId: branchMode === "One Branch" ? branch?.value : null,
+          customerId: customerMode === "One Customer" ? customerId?.value : null,
+          filterBy: byNo ? "no" : "date",
+          fromDocNo: byNo ? documentNo.trim() : null,
+          toDocNo: byNo ? documentNo.trim() : null,
+          dateBasis: dateMode === "By Document Issue Date" ? "issue" : "document",
+          fromDate: byNo ? null : toIso(fromDate),
+          toDate: byNo ? null : toIso(toDate),
+        }),
+      });
 
-      branch:
-        branchMode === "One Branch"
-          ? branch
-          : null,
+      const mapped: DocumentRow[] = data.map((r, i) => ({
+        id: i + 1,
+        selected: true, // the VB grid pre-ticks Select
+        branchId: r.fbrid,
+        documentType: r.fdoctype,
+        documentNo: r.fdocno,
+        documentDate: r.fdate ? dayjs(r.fdate).format(DATE_FORMAT) : "",
+        issueTime: r.finvdatetime ?? "",
+        customerName: r.faccountname ?? "",
+        invoiceAmountExclVat: money(r.fbillingamtwovat),
+        vatAmount: money(r.fscvatamt),
+        invoiceAmountInclVat: money(r.fbillingamt),
+        customerId: r.fcustomerid,
+        origDocType: r.forigdoctype ?? "",
+        docType: r.fdoctype,
+        invRcnType: r.finvrcntype ?? "",
+        docDateIso: r.fdate,
+        invDateTime: r.finvdatetime ?? "",
+      }));
 
-      customerMode,
+      // keep the empty filler rows so the grid height stays stable
+      const filler = createRows().slice(mapped.length);
+      setRows([...mapped, ...filler.map((f, i) => ({ ...f, id: mapped.length + i + 1 }))]);
 
-      customerId:
-        customerMode === "One Customer"
-          ? customerId
-          : null,
-
-      customerName:
-        customerMode === "One Customer"
-          ? customerName
-          : null,
-
-      dateMode,
-      fromDate,
-      toDate,
-    };
-
-    console.log("ZATCA Document Search:", searchParams);
-
-    // Connect your search API here.
+      if (!mapped.length) toast.info("No documents found");
+    } catch (e) {
+      toast.error((e as Error).message);
+    } finally {
+      setBusy(false);
+    }
   };
 
   // ==================================================
   // SUBMIT
   // ==================================================
 
-  const handleSubmit = () => {
-    const selectedDocuments = rows.filter(
-      (row) => row.selected && row.documentNo.trim() !== "",
-    );
+  const handleSubmit = async () => {
+    const selected = rows.filter((r) => r.selected && r.documentNo.trim() !== "");
+    if (!selected.length) {
+      return toast.error("Please select at least one document");
+    }
 
-    console.log("ZATCA Document Submission:", {
-      filters: {
-        documentMode,
-        documentType,
-        branchMode,
-        branch,
-        customerMode,
-        customerId,
-        customerName,
-        documentFilter,
-        dateMode,
-        fromDate,
-        toDate,
-      },
-      documents: selectedDocuments,
-    });
+    setBusy(true);
+    try {
+      const { message, data } = await api<{
+        message: string;
+        data: { rejected: number; results: { docNo: string; status: string; message?: string }[] };
+      }>("/submitZATCASubmission", {
+        method: "POST",
+        body: JSON.stringify({
+          documents: selected.map((r) => ({
+            brId: r.branchId,
+            docType: r.docType,
+            origDocType: r.origDocType,
+            docNo: r.documentNo,
+            invRcnType: r.invRcnType,
+            customerId: r.customerId,
+            docDate: r.docDateIso,
+            invDateTime: r.invDateTime,
+          })),
+        }),
+      });
 
-    // Connect your ZATCA submission API here.
+      const failed = data.results
+        .filter((x) => x.status === "REJECTED" || x.status === "ERROR")
+        .map((x) => `${x.docNo}: ${x.message ?? x.status}`);
+
+      if (data.rejected > 0) {
+        toast.error(message);
+        failed.forEach((f) => toast.error(f));
+      } else {
+        toast.success(message);
+      }
+      // ClearMe() after submit, as the VB form does
+      setRows(createRows());
+    } catch (e) {
+      toast.error((e as Error).message);
+    } finally {
+      setBusy(false);
+    }
   };
 
   // ==================================================
@@ -442,9 +579,9 @@ const ZATCASubmission: React.FC = () => {
     setDocumentNo("");
 
     setBranchMode("All Branch");
-    setBranch(branchOptions[0]);
+    setBranch(null);
 
-    setCustomerMode("All Customer");
+    setCustomerMode("All Customers");
     setCustomerId(null);
     setCustomerName(null);
 
@@ -461,14 +598,6 @@ const ZATCASubmission: React.FC = () => {
 
   const handleClose = () => {
     window.history.back();
-  };
-
-  // ==================================================
-  // TABLE ROW UPDATE
-  // ==================================================
-  //@ts-ignore
-  const updateRows = (data: DocumentRow[]) => {
-    setRows(data);
   };
 
   // ==================================================
@@ -535,8 +664,8 @@ const ZATCASubmission: React.FC = () => {
 
             {/* BRANCH MODE */}
 
-            <div className="flex min-w-0 flex-wrap items-center gap-2 lg:col-start-3 lg:row-start-1 lg:col-span-2 ml-30">
-              <RadioPanel className="h-18.75 shrink-0">
+            <div className="flex min-w-0 flex-nowrap items-center gap-2 lg:col-start-3 lg:row-start-1 lg:col-span-2 ml-30">
+              <RadioPanel className="h-18.75 w-[112px] shrink-0">
                 <CustomRadio
                   name="branchMode"
                   value="One Branch"
@@ -555,15 +684,15 @@ const ZATCASubmission: React.FC = () => {
               </RadioPanel>
 
               {branchMode === "One Branch" && (
-                <div className="min-w-0 max-w-60 flex-1">
+                <div className="min-w-0" style={{ width: BRANCH_WIDTH, marginLeft: BRANCH_OFFSET }}>
                   <CommonTableSelect
-                    inputId="branch"
+                    inputId="lkpBranch"
                     options={branchOptions}
                     value={branch}
                     onChange={setBranch}
                     columns={branchColumns}
                     width="100%"
-                    menuWidth="250px"
+                    menuWidth={`300px`}
                     placeholder="Select Branch"
                   />
                 </div>
@@ -573,7 +702,7 @@ const ZATCASubmission: React.FC = () => {
             {/* CUSTOMER MODE */}
 
             <div className="flex min-w-0 flex-nowrap items-center gap-2 lg:col-start-3 lg:row-start-2 lg:col-span-2 ml-30">
-              <RadioPanel className="h-18.75 shrink-0">
+              <RadioPanel className="h-18.75 w-[123px] shrink-0">
 
                 <CustomRadio
                   name="customerMode"
@@ -596,16 +725,16 @@ const ZATCASubmission: React.FC = () => {
               {customerMode === "One Customer" && (
                 <div className="min-w-0">
                   <CustomLinkedPairSelect
-                    firstInputId="customerId"
-                    secondInputId="customerName"
-                    options={customerPairOptions}
+                    firstInputId="lkpcustomerId"
+                    secondInputId="lkpcustomerName"
+                    options={createPairOptions(customerIdOptions, customerNameOptions)}
                     firstValue={customerId?.value ?? null}
                     secondValue={customerName?.value ?? null}
                     firstHeader="Customer ID"
                     secondHeader="Customer Name"
-                    firstWidth={120}
-                    secondWidth={320}
-                    gap={4}
+                    firstWidth={CUSTOMER_ID_WIDTH}
+                    secondWidth={CUSTOMER_NAME_WIDTH}
+                    gap={PAIR_GAP}
                     headerFontSize="12px"
                     menuZIndex={99999}
                     menuPortalTarget={
@@ -728,6 +857,7 @@ const ZATCASubmission: React.FC = () => {
 
               <ActionButton
                 onClick={handleSearch}
+                disabled={busy}
                 className="w-24 "
               >
                 Search
@@ -886,6 +1016,7 @@ const ZATCASubmission: React.FC = () => {
 
             <ActionButton
               onClick={handleSubmit}
+              disabled={busy}
               className="w-20"
             >
               Submit

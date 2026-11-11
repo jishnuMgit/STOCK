@@ -18,7 +18,7 @@ BEGIN
         a.fyear::varchar(4)      AS fyear,
         a.fbrid,
         a.fdoctype,
-        a.fdocno,
+        a.fdoctypeno as fdocno,
         a.fdate,
         a.fcsaccountid,
         b.fdescription,

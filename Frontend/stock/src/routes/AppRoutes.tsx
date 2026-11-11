@@ -19,7 +19,6 @@ import StockTransfer from "../pages/Sales/Transaction/stock/StockTransferPage";
 import BeginningBalance from "../pages/Finance/Transaction/BeginningBalance/BeginningBalancePage";
 import ItemGroupPage from "../pages/Purchase/Setup/ItemGroupPage";
 import CompanyPage from "../pages/Administration/CompanyPage";
-import ActivePeriodPage from "../pages/Settings/ActivePeriodPage";
 import StockAdjustmentPage from "../pages/Sales/Transaction/stock/StockAdjustmentPage";
 import SetDefaultBranch from "../pages/Settings/SetDefaultBranchPage";
 import SetActivePeriod from "../pages/Settings/SetActivePeriodPage";
@@ -30,7 +29,7 @@ import UserAudit from "../pages/Security/UserAudit/UserAuditPage";
 import UserTransactionAudit from "../pages/Security/UserTransactionAudit/UserTransactionAuditPage";
 import StockDocumentPostPage from "../pages/Sales/Transaction/stock/StockDocumentPostPage";
 import StockDocumentPostCancel from "../pages/Sales/Transaction/stock/StockDocumentPostCancel";
-import StockDocumentRePost from "../pages/Sales/Transaction/stock/StockDocumentRePost";
+import StockDocumentRePost from "../pages/Sales/Transaction/stock/StockDocumentRePostPage";
 import RptGLPage from "../pages/Finance/Report/GeneralLedger/GeneralLedger/RptGLPage";
 import MatchingPage from "../pages/Finance/Transaction/Match/MatchPage";
 import UnMatchPage from "../pages/Finance/Transaction/MatchReversal/MatchReversalPage";
@@ -103,7 +102,7 @@ import DepreciationGenerationPage from "../pages/Assets/Transaction/Depreciation
 import AssetSettingPage from "../pages/Assets/Setting/AssetSettingPage";
 import DepreciationBeginningBalancePage from "../pages/Assets/Transaction/DepreciationBeginningBalancePage";
 import DepreciationJournalListPage from "../pages/Assets/Transaction/DepreciationJournalList";
-import ZATCASubmission from "../pages/ZATCA/Transaction/ZATCASubmission";
+import ZATCASubmission from "../pages/ZATCA/Transaction/ZATCASubmissionPage";
 import RptZatcaPdfA3Generation from "../pages/ZATCA/Transaction/RptZatcaPdfA3Generation";
 import RptZatcaDocumentStatus from "../pages/ZATCA/Transaction/RptZatcaDocumentStatus";
 import SetZATCADocumentPath from "../pages/ZATCA/Setup/SetZATCADocumentPath";
@@ -488,10 +487,6 @@ const AppRoutes = () => {
           <Route
             path="/Settings/SetPostingAccount"
             element={<SetPostingAccountPage />}
-          />
-          <Route
-            path="/Setting/SetActivePeriod"
-            element={<ActivePeriodPage />}
           />
           <Route
             path="/Setting/SetDrAgeingPeriod"

@@ -35,7 +35,7 @@ interface CommonTableSelectProps {
   headerFontSize?: string;
   menuPortalTarget?: HTMLElement;
   controlHeight?: number;
-
+  menuZIndex?: number;
 }
 
 const CommonTableSelect = ({
@@ -53,13 +53,14 @@ const CommonTableSelect = ({
   headerFontSize = "13px",
   menuPortalTarget,
   controlHeight = 31,
+  menuZIndex = 100000,
 }: CommonTableSelectProps) => {
 
+  // Same column structure for header and option rows
   const gridTemplate = columns
     .map((col) => col.width || "1fr")
     .join(" ");
 
-  // Column alignment
   const getAlignment = (align?: string) => {
     if (align === "right") return "text-right";
     if (align === "center") return "text-center";
@@ -67,53 +68,83 @@ const CommonTableSelect = ({
   };
 
   const customComponents = {
-    // DROPDOWN OPTION ROWS
+
+    // OPTION ROW
     Option: (props: OptionProps<TableSelectOption, false>) => (
       <components.Option {...props}>
         <div
-          className="grid items-center w-full"
+          className="grid w-full items-stretch"
           style={{
             gridTemplateColumns: gridTemplate,
+            height: "32px",
+            boxSizing: "border-box",
+            padding: "0 10px",
             fontSize: headerFontSize,
           }}
         >
           {columns.map((col, index) => (
-            <span
+            <div
               key={col.key}
-              className={`truncate ${getAlignment(col.align)} ${
-                index > 0
-                  ? "border-l border-[#D5DDE5] pl-2 ml-5"
-                  : ""
-              }`}
+              className={`
+                flex min-w-0 h-full items-center
+                truncate
+                ${getAlignment(col.align)}
+                ${
+                  index > 0
+                    ? "border-l border-[#D5DDE5] pl-2"
+                    : ""
+                }
+              `}
+              style={{
+                boxSizing: "border-box",
+                overflow: "hidden",
+              }}
             >
               {props.data[col.key] ?? "-"}
-            </span>
+            </div>
           ))}
         </div>
       </components.Option>
     ),
 
-    // DROPDOWN HEADER
+    // HEADER ROW
     MenuList: (props: MenuListProps<TableSelectOption, false>) => (
       <components.MenuList {...props}>
         <div
-          className="grid items-center px-2.5 py-1.75 bg-[#F3F5F7] border-b border-[#D5DDE5] font-semibold text-[#334155]"
+          className="
+            grid w-full items-stretch
+            bg-[#F3F5F7]
+            border-b border-[#D5DDE5]
+            font-semibold text-[#334155]
+          "
           style={{
             gridTemplateColumns: gridTemplate,
+            height: "35px",
+            boxSizing: "border-box",
+            padding: "0 10px",
             fontSize: headerFontSize,
           }}
         >
           {columns.map((col, index) => (
-            <span
+            <div
               key={col.key}
-              className={`truncate ${getAlignment(col.align)} ${
-                index > 0
-                  ? "border-l border-[#D5DDE5] pl-2 ml-5"
-                  : ""
-              }`}
+              className={`
+                flex min-w-0 h-full items-center
+                truncate
+                ${getAlignment(col.align)}
+                ${
+                  index > 0
+                    ? "border-l border-[#D5DDE5] pl-2"
+                    : ""
+                }
+              `}
+              style={{
+                boxSizing: "border-box",
+                overflow: "hidden",
+              }}
             >
               {col.label}
-            </span>
+            </div>
           ))}
         </div>
 
@@ -123,6 +154,8 @@ const CommonTableSelect = ({
   };
 
   const styles: StylesConfig<TableSelectOption, false> = {
+
+    // CONTROL
     control: (base) => ({
       ...base,
       minHeight: `${controlHeight}px`,
@@ -145,9 +178,9 @@ const CommonTableSelect = ({
     indicatorsContainer: (base) => ({
       ...base,
       height: `${controlHeight - 1}px`,
-      
     }),
 
+    // MENU
     menu: (base) => ({
       ...base,
       width: menuWidth,
@@ -156,33 +189,45 @@ const CommonTableSelect = ({
       borderRadius: "4px",
       border: "1px solid #E5E7EB",
       boxShadow: "0 4px 10px rgba(0,0,0,0.12)",
-      zIndex: 100000,
+      zIndex: menuZIndex,
       overflow: "hidden",
     }),
 
     menuPortal: (base) => ({
       ...base,
-      zIndex: 100000,
+      zIndex: menuZIndex,
     }),
 
     menuList: (base) => ({
       ...base,
       padding: 0,
       maxHeight: "220px",
+      overflowX: "hidden",
     }),
 
+    // OPTION
     option: (base, state) => ({
       ...base,
-      padding: "7px 10px",
+
+      // Important: remove React Select default padding.
+      // Padding is controlled inside the grid.
+      padding: 0,
+
+      height: "32px",
+      minHeight: "32px",
+      boxSizing: "border-box",
+
       fontSize: "13px",
       color: "#334155",
+
       backgroundColor: state.isSelected
         ? "#EAF7F0"
         : state.isFocused
           ? "#F0F8F4"
           : "#FFFFFF",
+
       cursor: "pointer",
-      borderBottom: "1px solid #E5E7EB",
+
       "&:active": {
         backgroundColor: "#DDF2E7",
       },

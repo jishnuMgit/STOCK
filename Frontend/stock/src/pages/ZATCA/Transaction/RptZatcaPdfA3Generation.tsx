@@ -351,7 +351,7 @@ const RptZatcaPdfA3Generation: React.FC = () => {
             <div className="flex items-start gap-2">
               <RadioPanel className="w-32.5 min-h-18.75 shrink-0">
                 <CustomRadio
-                  name="documentMode"
+                  name="rdgDocument"
                   value="One Document"
                   label="One Document"
                   checked={documentMode === "One Document"}
@@ -359,7 +359,7 @@ const RptZatcaPdfA3Generation: React.FC = () => {
                 />
 
                 <CustomRadio
-                  name="documentMode"
+                  name="rdgDocument"
                   value="All Document"
                   label="All Document"
                   checked={documentMode === "All Document"}
@@ -390,7 +390,7 @@ const RptZatcaPdfA3Generation: React.FC = () => {
             <div className="flex items-start sm:justify-start">
               <RadioPanel className="w-30 min-h-18.75">
                 <CustomRadio
-                  name="branchMode"
+                  name="rdgBranch"
                   value="One Branch"
                   label="One Branch"
                   checked={branchMode === "One Branch"}
@@ -398,7 +398,7 @@ const RptZatcaPdfA3Generation: React.FC = () => {
                 />
 
                 <CustomRadio
-                  name="branchMode"
+                  name="rdgBranch"
                   value="All Branch"
                   label="All Branches"
                   checked={branchMode === "All Branch"}
@@ -429,7 +429,7 @@ const RptZatcaPdfA3Generation: React.FC = () => {
             <div className="flex justify-start sm:justify-end">
               <RadioPanel className="w-44 min-h-18.75">
                 <CustomRadio
-                  name="invoiceMode"
+                  name="rdgInvoice"
                   value="By Invoice No."
                   label="By Invoice No."
                   checked={invoiceMode === "By Invoice No."}
@@ -437,7 +437,7 @@ const RptZatcaPdfA3Generation: React.FC = () => {
                 />
 
                 <CustomRadio
-                  name="invoiceMode"
+                  name="rdgInvoice"
                   value="By Invoice Date"
                   label="By Invoice Date"
                   checked={invoiceMode === "By Invoice Date"}
@@ -487,7 +487,7 @@ const RptZatcaPdfA3Generation: React.FC = () => {
             <div className="flex items-start">
               <RadioPanel className="w-32.5 min-h-18.75">
                 <CustomRadio
-                  name="customerMode"
+                  name="rdgCustomer"
                   value="One Customer"
                   label="One Customer"
                   checked={customerMode === "One Customer"}
@@ -495,7 +495,7 @@ const RptZatcaPdfA3Generation: React.FC = () => {
                 />
 
                 <CustomRadio
-                  name="customerMode"
+                  name="rdgCustomer"
                   value="All Customer"
                   label="All Customers"
                   checked={customerMode === "All Customer"}

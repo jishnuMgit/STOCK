@@ -45,7 +45,7 @@
 --   ROLLBACK;
 -- =====================================================================
 
-DROP PROCEDURE IF EXISTS dbo.sp_bgpost(character varying, character varying, character varying, character varying, character varying, character varying, character varying);
+DROP PROCEDURE IF EXISTS dbo.sp_pagebeginningstockpost(character varying, character varying, character varying, character varying, character varying, character varying, character varying);
 
 CREATE OR REPLACE PROCEDURE dbo.sp_pagebeginningstockpost
 (

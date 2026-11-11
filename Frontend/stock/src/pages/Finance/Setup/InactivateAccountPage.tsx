@@ -12,7 +12,12 @@ type Option = { value: string; label: string };
 type Account = { accountId: string; accountName: string; isActive: boolean };
 
 // one account as a row of the lookup (the value is the account id in both lists)
-type AccountOption = { value: string; id: string; name: string };
+type AccountOption = {
+  value: string;
+  id: string;
+  name: string;
+  status: string;
+};
 
 const API = `${import.meta.env.VITE_API_URL}/InactivateAccount`;
 
@@ -99,7 +104,7 @@ const statusSelectProps = {
   classNames: { ...baseClassNames, menu: () => menuClass },
 };
 
-// account lookups: the list is much wider than the box and shows two columns
+// account lookups: the list is much wider than the box and shows three columns
 // (same look as the grid lookups on the other pages: gray header, light-green hover row)
 const lookupSelectProps = {
   ...commonSelectProps,
@@ -123,8 +128,8 @@ const lookupSelectProps = {
 
 // ============================================================
 // TWO-COLUMN LOOKUP (like the old DevExpress lookups)
-//   Account ID box   -> columns: Account ID | Account Name
-//   Account Name box -> columns: Account Name | Account ID
+//   Account ID box   -> columns: Account ID | Account Name | Status
+//   Account Name box -> columns: Account Name | Account ID | Status
 // The header row sticks to the top of the list.
 // ============================================================
 
@@ -138,34 +143,47 @@ const ROW_GAP = 8;
 // 120px in NAME_COLUMNS below)
 const ID_COL_WIDTH = 120;
 
-const ID_COLUMNS = "grid-cols-[120px_1fr]";
-const NAME_COLUMNS = "grid-cols-[1fr_120px]";
+// Status column on the right of both lists (keep equal to the 90px below)
+const STATUS_COL_WIDTH = 90;
+
+// the Account Name column in both lists is this much wider than the name box
+const NAME_COL_SCALE = 1.2;
+
+const ID_COLUMNS = "grid-cols-[120px_1fr_90px]";
+const NAME_COLUMNS = "grid-cols-[1fr_120px_90px]";
 
 // the first cell carries the vertical divider; the option rows have no padding
 // of their own, so the line runs the full height of header and rows
 const CELL_FIRST = "border-r border-[#cfd7df] px-[10px] py-[6px]";
-const CELL_SECOND = "px-[10px] py-[6px]";
+const CELL_SECOND = "border-r border-[#cfd7df] px-[10px] py-[6px]";
+const CELL_THIRD = "px-[10px] py-[6px]";
 
-const lookupHeader = (columns: string, first: string, second: string) => (
+const lookupHeader = (
+  columns: string,
+  first: string,
+  second: string,
+  third: string,
+) => (
   <div
     className={`sticky top-0 z-10 grid ${columns} border-b border-[#cfd7df] bg-[#ececec] text-[13px] font-semibold text-[#24364d]`}
   >
     <span className={CELL_FIRST}>{first}</span>
     <span className={CELL_SECOND}>{second}</span>
+    <span className={CELL_THIRD}>{third}</span>
   </div>
 );
 
 // defined outside the component so React does not remount the list on every render
 const IdMenuList = (props: MenuListProps<AccountOption, false>) => (
   <components.MenuList {...props}>
-    {lookupHeader(ID_COLUMNS, "Account ID", "Account Name")}
+    {lookupHeader(ID_COLUMNS, "Account ID", "Account Name", "Status")}
     {props.children}
   </components.MenuList>
 );
 
 const NameMenuList = (props: MenuListProps<AccountOption, false>) => (
   <components.MenuList {...props}>
-    {lookupHeader(NAME_COLUMNS, "Account Name", "Account ID")}
+    {lookupHeader(NAME_COLUMNS, "Account Name", "Account ID", "Status")}
     {props.children}
   </components.MenuList>
 );
@@ -206,6 +224,10 @@ const InactivateAccountPage: React.FC<InactivateAccountPageProps> = ({
   const [rowWidth, setRowWidth] = useState(430);
   const measureRow = () => setRowWidth(accountRowRef.current?.offsetWidth ?? 430);
 
+  // extra width given to the Account Name column (+20% of the name box)
+  const nameBoxWidth = rowWidth - ID_BOX_WIDTH - ROW_GAP;
+  const nameColExtra = Math.round(nameBoxWidth * (NAME_COL_SCALE - 1));
+
   // ============================================================
   // LOAD ACCOUNTS (VB: FillCombos / GetInactiveAccountData)
   // ============================================================
@@ -244,6 +266,7 @@ const InactivateAccountPage: React.FC<InactivateAccountPageProps> = ({
     value: a.accountId,
     id: a.accountId,
     name: a.accountName,
+    status: a.isActive ? "Active" : "Inactive",
   });
 
   const accountIdOptions: AccountOption[] = [...accounts]
@@ -409,7 +432,10 @@ const InactivateAccountPage: React.FC<InactivateAccountPageProps> = ({
                   onMenuOpen={measureRow}
                   styles={{
                     // starts at the left edge of the ID box, as wide as the whole Account row
-                    menu: (base) => ({ ...base, width: rowWidth }),
+                    menu: (base) => ({
+                      ...base,
+                      width: rowWidth + STATUS_COL_WIDTH + nameColExtra,
+                    }),
                   }}
                   getOptionLabel={(o) => o.id}
                   formatOptionLabel={(o, meta) =>
@@ -417,6 +443,7 @@ const InactivateAccountPage: React.FC<InactivateAccountPageProps> = ({
                       <div className={`grid ${ID_COLUMNS}`}>
                         <span className={CELL_FIRST}>{o.id}</span>
                         <span className={CELL_SECOND}>{o.name}</span>
+                        <span className={CELL_THIRD}>{o.status}</span>
                       </div>
                     ) : (
                       o.id
@@ -439,7 +466,11 @@ const InactivateAccountPage: React.FC<InactivateAccountPageProps> = ({
                     // column is as wide as the box, the ID column sticks out to its right
                     menu: (base) => ({
                       ...base,
-                      width: rowWidth - ID_BOX_WIDTH - ROW_GAP + ID_COL_WIDTH,
+                      width:
+                        nameBoxWidth +
+                        nameColExtra +
+                        ID_COL_WIDTH +
+                        STATUS_COL_WIDTH,
                     }),
                   }}
                   getOptionLabel={(o) => o.name}
@@ -448,6 +479,7 @@ const InactivateAccountPage: React.FC<InactivateAccountPageProps> = ({
                       <div className={`grid ${NAME_COLUMNS}`}>
                         <span className={CELL_FIRST}>{o.name}</span>
                         <span className={CELL_SECOND}>{o.id}</span>
+                        <span className={CELL_THIRD}>{o.status}</span>
                       </div>
                     ) : (
                       o.name
