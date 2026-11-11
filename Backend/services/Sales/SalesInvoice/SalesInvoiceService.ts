@@ -1,16 +1,13 @@
 import type { PoolClient } from "pg";
 import pool from "../../../DB/db.js";
 
-export const DOC_TYPE = "SI"; // Sales Invoice (Credit)
-const INVOICE_TYPE = "R"; // VB always passed "R"
+export const DOC_TYPE = "SI";
+const INVOICE_TYPE = "R";
 
-/* VERIFY: procedure names (VB: SP_frmSI / SP_SIPost) */
 const SP_PAGE_SI = "dbo.sp_pagesi";
 const SP_SI_POST = "dbo.sp_sipost";
 
-/* VERIFY: the mode your sp_sipost uses for delete (see notes) */
 const SP_POST_MODE_POST = "P";
-const SP_POST_MODE_DELETE = "D";
 
 /* =========================================================
    Types
@@ -217,6 +214,23 @@ export const computeTotals = (
   };
 };
 
+/* =========================================================
+   Invoice types (same idea as purchase: dbo.getpurchasestockparam)
+   VERIFY: function name, I assumed dbo.getsalesstockparam()
+   ========================================================= */
+export const getInvoiceTypes = async (ctx: Ctx) => {
+  if (!ctx.coId) throw new ServiceError(401, "Authentication required");
+
+  const result = await pool.query(
+    `SELECT fptype, fpid, fpname FROM dbo.getpurchasestockparam()`,
+  );
+  return result.rows as {
+    fptype: string;
+    fpid: string;
+    fpname: string | null;
+  }[];
+};
+
 export const calculate = (body: {
   lines: SILine[];
   vatPer?: number;
@@ -339,6 +353,9 @@ export const getSalesInvoice = async (ctx: Ctx, q: Partial<DocKeyInput>) => {
         to_char(t.fdate, 'YYYY-MM-DD') AS fdate,
         t.fcsaccountid AS faccountid,
         a.faccountname,
+        t.faddress1,
+        t.fphone,
+        t.freference AS fcustomerref,
         t.fnote,
         t.fdisctype, t.fdiscper, t.fdiscamt,
         t.fnetdocamtwovat, t.fvatper, t.fvatamt, t.fnetdocamt,
@@ -359,22 +376,57 @@ export const getSalesInvoice = async (ctx: Ctx, q: Partial<DocKeyInput>) => {
     `SELECT fslno, fitemid, funit, fqtyout, funitprice, fnetunitprice,
         funitdiscamt AS fitemdiscamt, fitemvatamt, ftotalprice,
         (ftotalprice + fitemvatamt) AS ftotalpricev,
-        funitcost, ftotalcost, ftotitemdiscamt, fdnno
+        funitcost, ftotalcost, ftotitemdiscamt
    FROM dbo.tblstocktrans
   WHERE fcoid=$1 AND fyear=$2 AND fbrid=$3 AND fdoctype=$4 AND fdocno=$5
   ORDER BY fslno`,
     params,
   );
 
-  const deliveryNotes = [
-    ...new Set(
-      lines.rows
-        .map((r: { fdnno: string | null }) => r.fdnno)
-        .filter((x: string | null): x is string => !!x),
-    ),
-  ].map((dnNo, i) => ({ slNo: i + 1, dnNo, checked: true }));
+  const dn = await pool.query(
+    `SELECT fslno, fdnno, fchecked
+       FROM dbo.tblstocktransdo
+      WHERE fcoid=$1 AND fbrid=$2 AND fdoctype=$3 AND fdocno=$4
+      ORDER BY fslno`,
+    [ctx.coId, q.brId, DOC_TYPE, q.docNo],
+  );
+  const deliveryNotes = dn.rows.map(
+    (r: { fslno: number; fdnno: string; fchecked: boolean | null }) => ({
+      slNo: r.fslno,
+      dnNo: r.fdnno,
+      checked: !!r.fchecked,
+    }),
+  );
 
   return { header: header.rows[0], lines: lines.rows, deliveryNotes };
+};
+
+/* =========================================================
+   Item stock in a branch (VB GetItemStock)
+   In - Out of every transaction of the item in the branch,
+   excluding the invoice currently open (so editing a saved
+   invoice doesn't count its own lines).
+   ========================================================= */
+export const getItemStock = async (
+  ctx: Ctx,
+  q: { brId?: unknown; itemId?: unknown; docNo?: unknown },
+) => {
+  if (!ctx.coId) throw new ServiceError(401, "Authentication required");
+  const brId = String(q.brId ?? "").trim();
+  const itemId = String(q.itemId ?? "").trim();
+  const docNo = String(q.docNo ?? "").trim();
+  if (!brId || !itemId)
+    throw new ServiceError(400, "brId and itemId are required");
+
+  const result = await pool.query(
+    `SELECT COALESCE(SUM(COALESCE(fqtyin, 0)) - SUM(COALESCE(fqtyout, 0)), 0) AS stock
+       FROM dbo.tblstocktrans
+      WHERE fcoid = $1 AND fbrid = $2 AND fitemid = $3
+        AND NOT (fdoctype = $4 AND fdocno = $5)`,
+    [ctx.coId, brId, itemId, DOC_TYPE, docNo],
+  );
+
+  return { stock: num(result.rows[0]?.stock) };
 };
 
 /* =========================================================
@@ -413,8 +465,10 @@ export const saveSalesInvoice = async (ctx: Ctx, input: SaveInput) => {
   const { dType, validLines, totals: t } = validateInvoice(input);
 
   return withTransaction(async (client) => {
-    let origInvoiceDate: string | null = null;
-    let origInvDateTime: string | null = null;
+    // finvoicedate / finvdatetime do not exist in tblstocktrans and
+    // sp_pagesi ignores them, so they are no longer read on modify
+    const origInvoiceDate: string | null = null;
+    const origInvDateTime: string | null = null;
     let origCreator:
       | { fcuserid: string | null; fcuserdate: Date | null }
       | undefined;
@@ -444,17 +498,13 @@ export const saveSalesInvoice = async (ctx: Ctx, input: SaveInput) => {
         );
 
       const orig = await client.query(
-        `SELECT fcuserid, fcuserdate,
-                to_char(finvoicedate, 'YYYY-MM-DD HH24:MI:SS') AS finvoicedate,
-                finvdatetime
+        `SELECT fcuserid, fcuserdate
            FROM dbo.tblstocktrans
           WHERE fcoid=$1 AND fyear=$2 AND fbrid=$3 AND fdoctype=$4 AND fdocno=$5
           LIMIT 1`,
         docKey,
       );
       origCreator = orig.rows[0];
-      origInvoiceDate = orig.rows[0]?.finvoicedate ?? null;
-      origInvDateTime = orig.rows[0]?.finvdatetime ?? null;
     }
 
     const inv = await client.query(
@@ -604,7 +654,7 @@ export const saveSalesInvoice = async (ctx: Ctx, input: SaveInput) => {
    DELETE
    ========================================================= */
 export const deleteSalesInvoice = async (ctx: Ctx, q: Partial<DocKeyInput>) => {
-  const { coId, userId } = requireAuth(ctx);
+  const { coId } = requireAuth(ctx);
   const { year, brId, docNo } = q;
   if (!year || !brId || !docNo)
     throw new ServiceError(400, "year, brId and docNo are required");
@@ -618,14 +668,15 @@ export const deleteSalesInvoice = async (ctx: Ctx, q: Partial<DocKeyInput>) => {
         "Sales Invoice is already posted and cannot be deleted",
       );
 
-    await callProc(client, SP_SI_POST, {
-      strmode: SP_POST_MODE_DELETE,
+    // sp_pagesi mode 'D' deletes tblstocktrans, tblstocktransdo,
+    // tblfintrans and tblarap rows of the invoice
+    await callSI(client, {
+      strmode: "D",
       pstrcoid: coId,
       pstryear: String(year),
       strbrid: brId,
       strdoctype: DOC_TYPE,
       strdocno: docNo,
-      pstruserid: userId,
     });
   });
 
@@ -653,7 +704,6 @@ export const postSalesInvoice = async (ctx: Ctx, input: Partial<PostInput>) => {
 
     const key = [coId, Number(year), brId, DOC_TYPE, docNo];
 
-    /* VERIFY: fphone column name */
     const h = await client.query(
       `SELECT DISTINCT
               to_char(fdate, 'YYYY-MM-DD') AS fdate,
@@ -664,7 +714,7 @@ export const postSalesInvoice = async (ctx: Ctx, input: Partial<PostInput>) => {
     );
     const l = await client.query(
       `SELECT fslno, fitemid, funit, fqtyout, funitprice,
-              funitdiscamt, funitcost
+              funitdiscamt, funitcost, fsn
          FROM dbo.tblstocktrans
         WHERE fcoid=$1 AND fyear=$2 AND fbrid=$3 AND fdoctype=$4 AND fdocno=$5
         ORDER BY fslno`,
@@ -695,6 +745,55 @@ export const postSalesInvoice = async (ctx: Ctx, input: Partial<PostInput>) => {
         }),
       ),
     });
+
+    /* stock check: every STOCK item (fsn <> 'N') must have stock > 0 in
+       this branch. Same rule as the Stock box (VB GetItemStock):
+       In - Out of all other documents, excluding this invoice. */
+    const stockLines = l.rows.filter(
+      (r: Record<string, unknown>) => r.fitemid && r.fsn !== "N",
+    );
+
+    const itemIds = [
+      ...new Set(
+        stockLines.map((r: Record<string, unknown>) => String(r.fitemid)),
+      ),
+    ];
+
+    const stockRes = await client.query(
+      `SELECT fitemid,
+              COALESCE(SUM(COALESCE(fqtyin, 0)) - SUM(COALESCE(fqtyout, 0)), 0) AS stock
+         FROM dbo.tblstocktrans
+        WHERE fcoid = $1 AND fbrid = $2
+          AND fitemid = ANY($3::varchar[])
+          AND NOT (fdoctype = $4 AND fdocno = $5)
+        GROUP BY fitemid`,
+      [coId, brId, itemIds, DOC_TYPE, docNo],
+    );
+
+    const stockOf = new Map<string, number>(
+      stockRes.rows.map((r: { fitemid: string; stock: unknown }) => [
+        r.fitemid,
+        num(r.stock),
+      ]),
+    );
+
+    const noStock = stockLines
+      .filter(
+        (r: Record<string, unknown>) =>
+          (stockOf.get(String(r.fitemid)) ?? 0) <= 0,
+      )
+      .map(
+        (r: Record<string, unknown>) =>
+          `Sl.# ${num(r.fslno)} - ${String(r.fitemid)} (stock: ${
+            stockOf.get(String(r.fitemid)) ?? 0
+          })`,
+      );
+
+    if (noStock.length > 0)
+      throw new ServiceError(
+        409,
+        `Cannot post, no stock available for: ${noStock.join(", ")}`,
+      );
 
     await callProc(client, SP_SI_POST, {
       strmode: SP_POST_MODE_POST,
