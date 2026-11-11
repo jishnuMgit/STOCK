@@ -228,7 +228,7 @@ async function saveHistory(
     [
       mode,
       ctx.coId,
-      Number(ctx.year),
+      ctx.year,
       doc.brId,
       doc.docType,
       doc.docNo,
