@@ -1,0 +1,6 @@
+CREATE OR REPLACE FUNCTION dbo.fn_getserverdate()
+RETURNS text
+LANGUAGE sql
+AS $$
+    SELECT to_char(CURRENT_TIMESTAMP, 'YYYY-MM-DD HH24:MI:SS');
+$$;
