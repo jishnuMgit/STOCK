@@ -1,5 +1,6 @@
 import type { PoolClient } from "pg";
 import pool from "../../../DB/db.js";
+import { getServerDate } from "../../common/DateTimeService.js";
 
 export const DOC_TYPE = "SI";
 const INVOICE_TYPE = "R";
@@ -452,23 +453,19 @@ export const saveSalesInvoice = async (ctx: Ctx, input: SaveInput) => {
     menuName,
     originalSlNos,
     deliveryNotes,
-    userDate,
   } = input;
 
   if (!["S", "M"].includes(mode))
     throw new ServiceError(400, "mode must be 'S' or 'M'");
   if (mode === "M" && !Array.isArray(originalSlNos))
     throw new ServiceError(400, "originalSlNos is required for modify");
-  if (!USER_DATE_RE.test(userDate ?? ""))
-    throw new ServiceError(400, "userDate is required (YYYY-MM-DD HH:mm:ss)");
 
   const { dType, validLines, totals: t } = validateInvoice(input);
 
   return withTransaction(async (client) => {
-    // finvoicedate / finvdatetime do not exist in tblstocktrans and
-    // sp_pagesi ignores them, so they are no longer read on modify
-    const origInvoiceDate: string | null = null;
-    const origInvDateTime: string | null = null;
+    // finvdatetime is written by sp_pagesi; on modify the original is read
+    // here and passed back so it is preserved
+    let origInvDateTime: string | null = null;
     let origCreator:
       | { fcuserid: string | null; fcuserdate: Date | null }
       | undefined;
@@ -498,24 +495,37 @@ export const saveSalesInvoice = async (ctx: Ctx, input: SaveInput) => {
         );
 
       const orig = await client.query(
-        `SELECT fcuserid, fcuserdate
+        `SELECT fcuserid, fcuserdate,
+                to_char(finvdatetime, 'YYYY-MM-DD HH24:MI:SS') AS finvdatetime
            FROM dbo.tblstocktrans
           WHERE fcoid=$1 AND fyear=$2 AND fbrid=$3 AND fdoctype=$4 AND fdocno=$5
           LIMIT 1`,
         docKey,
       );
       origCreator = orig.rows[0];
+      origInvDateTime = orig.rows[0]?.finvdatetime ?? null;
     }
 
-    const inv = await client.query(
-      `SELECT to_char(
-                CASE WHEN $1::date <> CURRENT_DATE
-                     THEN ($1::date + LOCALTIME)::timestamp
-                     ELSE COALESCE($2::timestamp, LOCALTIMESTAMP) END,
-                'YYYY-MM-DD HH24:MI:SS') AS d`,
-      [date, origInvoiceDate],
-    );
-    const invoiceDate: string = inv.rows[0].d;
+    // VB: dtpServerDate = objCommon.GetServerDate()
+    const serverNow = await getServerDate(client); // "YYYY-MM-DD HH:mm:ss"
+    const serverDay = serverNow.slice(0, 10);
+    const serverTime = serverNow.slice(11);
+    const invDay = String(date).slice(0, 10); // picked invoice date
+
+    // VB: picked date <> server date -> picked date + server time of day
+    //     same day, no original -> server date/time
+    //     same day, original exists -> keep original
+    const invoiceDate: string =
+      invDay !== serverDay
+        ? `${invDay} ${serverTime}`
+        : (origInvDateTime ?? serverNow);
+
+    // SP: IsNullorEmpty(@dtpCreatedInvUserDate) -> now, else keep the original
+    // sp_pagesi stores this in finvdatetime
+    const invUserDate: string = origInvDateTime ?? serverNow;
+
+    // fUserDate / fMUserDate come from the server clock
+    const userDate = serverNow;
 
     const base = {
       pstrcoid: coId,
@@ -531,7 +541,7 @@ export const saveSalesInvoice = async (ctx: Ctx, input: SaveInput) => {
     const header = {
       intdocno: getIntDocNo(docNo),
       strinvoicetype: INVOICE_TYPE,
-      dtpdate: date,
+      dtpdate: invDay, // plain yyyy-mm-dd, as VB @dtpDate VarChar(10)
       strdate_h: dateH ?? "",
       dtpinvoicedate: invoiceDate,
       straccountid: customerId,
@@ -556,7 +566,7 @@ export const saveSalesInvoice = async (ctx: Ctx, input: SaveInput) => {
       numcostofsaleamt: t.costOfSaleAmt,
       numnetitemdiscamt: t.netItemDiscAmt,
       numtotalpriceexclvat: t.totalPriceExclVAT,
-      dtpcreatedinvuserdate: origInvDateTime,
+      dtpcreatedinvuserdate: invUserDate,
     };
 
     if (mode === "M") {
