@@ -573,10 +573,10 @@ const ZATCASubmission: React.FC = () => {
             {/* CUSTOMER MODE */}
 
             <div className="flex min-w-0 flex-nowrap items-center gap-2 lg:col-start-3 lg:row-start-2 lg:col-span-2 ml-30">
-              <RadioPanel className="h-18.75 shrink-0">
+              <RadioPanel className="h-18.75 shrink-0" >
 
                 <CustomRadio
-                  name="customerMode"
+                  name="rdgCustomer"
                   value="One Customer"
                   label="One Customer"
                   checked={customerMode === "One Customer"}
@@ -584,7 +584,7 @@ const ZATCASubmission: React.FC = () => {
                 />
 
                 <CustomRadio
-                  name="customerMode"
+                  name="rdgCustomer"
                   value="All Customers"
                   label="All Customers"
                   checked={customerMode === "All Customers"}
@@ -596,15 +596,15 @@ const ZATCASubmission: React.FC = () => {
               {customerMode === "One Customer" && (
                 <div className="min-w-0">
                   <CustomLinkedPairSelect
-                    firstInputId="customerId"
-                    secondInputId="customerName"
+                    firstInputId="lkpcustomerId"
+                    secondInputId="lkpcustomerName"
                     options={customerPairOptions}
                     firstValue={customerId?.value ?? null}
                     secondValue={customerName?.value ?? null}
                     firstHeader="Customer ID"
                     secondHeader="Customer Name"
                     firstWidth={120}
-                    secondWidth={320}
+                    secondWidth={390}
                     gap={4}
                     headerFontSize="12px"
                     menuZIndex={99999}
@@ -640,7 +640,7 @@ const ZATCASubmission: React.FC = () => {
             <RadioPanel className="h-18.75">
 
               <CustomRadio
-                name="dateMode"
+                name="dtpDate"
                 value="By Document Issue Date"
                 label="By Document Issue Date"
                 checked={dateMode === "By Document Issue Date"}
@@ -650,7 +650,7 @@ const ZATCASubmission: React.FC = () => {
               />
 
               <CustomRadio
-                name="dateMode"
+                name="dtpDate"
                 value="By Document Date"
                 label="By Document Date"
                 checked={dateMode === "By Document Date"}
@@ -702,7 +702,7 @@ const ZATCASubmission: React.FC = () => {
                 <>
                   <div className="w-27.5">
                     <AppDatePicker
-                      id="fromDate"
+                      id="dtpFromDate"
                       label="From Date"
                       value={fromDate}
                       onChange={setFromDate}
@@ -711,7 +711,7 @@ const ZATCASubmission: React.FC = () => {
 
                   <div className="w-27.5">
                     <AppDatePicker
-                      id="toDate"
+                      id="dtpToDate"
                       label="To Date"
                       value={toDate}
                       onChange={setToDate}
@@ -755,39 +755,39 @@ const ZATCASubmission: React.FC = () => {
 
                     <th className="w-[3%] border-r border-b border-[#B7ECD0]" />
 
-                    <th className="w-[4%] border-r border-b border-[#B7ECD0] px-1 text-left text-[12px] font-normal text-[#172b43]">
+                    <th className="w-[4%] border-r border-b border-[#B7ECD0] px-1 text-left text-[12px] font-normal text-[#172b43]" id="txtSlNo">
                       Sl.No.
                     </th>
 
-                    <th className="w-[4.5%] border-r border-b border-[#B7ECD0] px-1 text-left text-[12px] font-normal text-[#172b43]">
+                    <th className="w-[4.5%] border-r border-b border-[#B7ECD0] px-1 text-left text-[12px] font-normal text-[#172b43]" id="txtBranchId">
                       Br. ID
                     </th>
 
-                    <th className="w-[12%] border-r border-b border-[#B7ECD0] px-1 text-left text-[12px] font-normal text-[#172b43]">
+                    <th className="w-[12%] border-r border-b border-[#B7ECD0] px-1 text-left text-[12px] font-normal text-[#172b43]" id="txtDocumentNo">
                       Document No.
                     </th>
 
-                    <th className="w-[9%] border-r border-b border-[#B7ECD0] px-1 text-left text-[12px] font-normal text-[#172b43]">
+                    <th className="w-[9%] border-r border-b border-[#B7ECD0] px-1 text-left text-[12px] font-normal text-[#172b43]" id="dtpDocumentDate">
                       Document Date
                     </th>
 
-                    <th className="w-[13%] border-r border-b border-[#B7ECD0] px-1 text-left text-[12px] font-normal text-[#172b43]">
+                    <th className="w-[13%] border-r border-b border-[#B7ECD0] px-1 text-left text-[12px] font-normal text-[#172b43]" id="txtDocumentIssueTime">
                       Document Issue Time
                     </th>
 
-                    <th className="w-[23%] border-r border-b border-[#B7ECD0] px-1 text-left text-[12px] font-normal text-[#172b43]">
+                    <th className="w-[23%] border-r border-b border-[#B7ECD0] px-1 text-left text-[12px] font-normal text-[#172b43]" id="txtCustomerName">
                       Customer Name
                     </th>
 
-                    <th className="w-[10.5%] border-r border-b border-[#B7ECD0] px-1 text-right text-[12px] font-normal text-[#172b43]">
+                    <th className="w-[10.5%] border-r border-b border-[#B7ECD0] px-1 text-right text-[12px] font-normal text-[#172b43]" id="txtInvoiceAmountExclVAT">
                       Inv. Amt. Excl. VAT
                     </th>
 
-                    <th className="w-[9%] border-r border-b border-[#B7ECD0] px-1 text-right text-[12px] font-normal text-[#172b43]">
+                    <th className="w-[9%] border-r border-b border-[#B7ECD0] px-1 text-right text-[12px] font-normal text-[#172b43]" id="txtVATAmount">
                       VAT Amt.
                     </th>
 
-                    <th className="w-[12%] border-b border-[#B7ECD0] px-1 text-right text-[12px] font-normal text-[#172b43]">
+                    <th className="w-[12%] border-b border-[#B7ECD0] px-1 text-right text-[12px] font-normal text-[#172b43]" id="txtInvoiceAmountInclVAT">
                       Inv. Amt. Incl. VAT
                     </th>
 
