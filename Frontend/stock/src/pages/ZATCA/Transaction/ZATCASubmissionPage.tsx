@@ -1,6 +1,7 @@
 
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useEffect, useState } from "react";
 import dayjs from "dayjs";
+import { toast } from "react-toastify";
 import customParseFormat from "dayjs/plugin/customParseFormat";
 
 import Header from "../../../components/common/Header";
@@ -8,10 +9,6 @@ import Header from "../../../components/common/Header";
 import CommonTableSelect, {
   type TableSelectOption,
 } from "../../../components/common/CommonTableSelect";
-
-import CustomLinkedPairSelect, {
-  type PairSelectOption,
-} from "../../../components/common/CustomLinkedPairSelect";
 
 import {
   LocalizationProvider,
@@ -25,11 +22,6 @@ dayjs.extend(customParseFormat);
 // ==================================================
 // TYPES
 // ==================================================
-
-type Option = {
-  value: string;
-  label: string;
-};
 
 type DocumentRow = {
   id: number;
@@ -113,16 +105,28 @@ const branchColumns = [
   { key: "id", label: "ID", width: "65px", align: "right" as const },
 ];
 
-const createPairOptions = (
-  idOptions: Option[],
-  nameOptions: Option[],
-): PairSelectOption[] =>
-  idOptions.map((item) => ({
-    value: item.value,
-    firstLabel: item.label,
-    secondLabel:
-      nameOptions.find((name) => name.value === item.value)?.label ?? "",
-  }));
+// customer lookups: the ID box lists customers by ID, the Name box by name
+const customerIdColumns = [
+  { key: "label", label: "Customer ID", width: "120px" },
+  { key: "id", label: "Customer Name", width: "1fr" },
+];
+
+const customerNameColumns = [
+  { key: "label", label: "Customer Name", width: "1fr" },
+  { key: "id", label: "Customer ID", width: "120px" },
+];
+
+// width of the customer pair, so the Branch box lines up with it
+const CUSTOMER_ID_WIDTH = 120;
+const CUSTOMER_NAME_WIDTH = 320;
+const PAIR_GAP = 4;
+const BRANCH_WIDTH = 224; // lkpBranch: 320px reduced by 30%
+
+// radio panels: rdgCustomer is 10% wider than rdgBranch; the Branch box is
+// pushed right by the difference so both lookups still start on the same line
+const RDG_BRANCH_WIDTH = 112;
+const RDG_CUSTOMER_WIDTH = Math.round(RDG_BRANCH_WIDTH * 1.1); // 123
+const BRANCH_OFFSET = RDG_CUSTOMER_WIDTH - RDG_BRANCH_WIDTH;
 
 // ==================================================
 // INITIAL TABLE ROWS
@@ -361,28 +365,33 @@ const ZATCASubmission: React.FC = () => {
 
   const [documentOptions, setDocumentOptions] = useState<TableSelectOption[]>([]);
   const [branchOptions, setBranchOptions] = useState<TableSelectOption[]>([]);
-  const [customerIdOptions, setCustomerIdOptions] = useState<Option[]>([]);
-  const [customerNameOptions, setCustomerNameOptions] = useState<Option[]>([]);
-
-  const customerPairOptions = useMemo(
-    () => createPairOptions(customerIdOptions, customerNameOptions),
-    [customerIdOptions, customerNameOptions],
-  );
+  const [customerIdOptions, setCustomerIdOptions] = useState<TableSelectOption[]>([]);
+  const [customerNameOptions, setCustomerNameOptions] = useState<TableSelectOption[]>([]);
 
   // STATUS
 
   const [busy, setBusy] = useState(false);
-  const [notice, setNotice] = useState<{ type: "ok" | "error"; text: string } | null>(null);
 
   // CUSTOMER
 
   const [customerMode, setCustomerMode] = useState("All Customers");
 
   const [customerId, setCustomerId] =
-    useState<Option | null>(null);
+    useState<TableSelectOption | null>(null);
 
   const [customerName, setCustomerName] =
-    useState<Option | null>(null);
+    useState<TableSelectOption | null>(null);
+
+  // picking in either box fills both
+  const pickCustomer = (accountId: string | null) => {
+    if (!accountId) {
+      setCustomerId(null);
+      setCustomerName(null);
+      return;
+    }
+    setCustomerId(customerIdOptions.find((o) => o.value === accountId) ?? null);
+    setCustomerName(customerNameOptions.find((o) => o.value === accountId) ?? null);
+  };
 
   // DATE FILTER
 
@@ -410,22 +419,31 @@ const ZATCASubmission: React.FC = () => {
       api<{ data: { fbrname: string; fbrid: string }[] }>("/getBranchList"),
       api<{ data: { fcsaccountid: string; fcsaccountname: string }[] }>("/getCustomerList"),
       api<{ data: { fpid: string; fpname: string }[] }>("/getDocumentTypeList"),
+      api<{ data: { fcsaccountid: string; fcsaccountname: string }[] }>("/getCustomerNameList"),
     ])
-      .then(([branches, customers, documentTypes]) => {
+      .then(([branches, customers, documentTypes, customersByName]) => {
         setBranchOptions(
           (branches.data ?? []).map((b) => ({ value: b.fbrid, label: b.fbrname, id: b.fbrid })),
         );
         setCustomerIdOptions(
-          (customers.data ?? []).map((c) => ({ value: c.fcsaccountid, label: c.fcsaccountid })),
+          (customers.data ?? []).map((c) => ({
+            value: c.fcsaccountid,
+            label: c.fcsaccountid,
+            id: c.fcsaccountname,
+          })),
         );
         setCustomerNameOptions(
-          (customers.data ?? []).map((c) => ({ value: c.fcsaccountid, label: c.fcsaccountname })),
+          (customersByName.data ?? []).map((c) => ({
+            value: c.fcsaccountid,
+            label: c.fcsaccountname,
+            id: c.fcsaccountid,
+          })),
         );
         setDocumentOptions(
           (documentTypes.data ?? []).map((d) => ({ value: d.fpid, label: d.fpname, id: d.fpid })),
         );
       })
-      .catch((e: Error) => setNotice({ type: "error", text: e.message }));
+      .catch((e: Error) => toast.error(e.message));
   }, []);
 
   // ==================================================
@@ -433,31 +451,30 @@ const ZATCASubmission: React.FC = () => {
   // ==================================================
 
   const handleSearch = async () => {
-    setNotice(null);
 
     // same rules as ValidateMe
     if (documentMode === "One Document" && !documentType) {
-      return setNotice({ type: "error", text: "Please input 'Document'" });
+      return toast.error("Please input 'Document'");
     }
     if (
       documentMode === "One Document" &&
       (documentType?.value === "DN" || documentType?.value === "CN") &&
       branchMode !== "One Branch"
     ) {
-      return setNotice({ type: "error", text: "Please select a 'Branch'" });
+      return toast.error("Please select a 'Branch'");
     }
     if (branchMode === "One Branch" && !branch) {
-      return setNotice({ type: "error", text: "Please select a 'Branch'" });
+      return toast.error("Please select a 'Branch'");
     }
     if (customerMode === "One Customer" && !customerId) {
-      return setNotice({ type: "error", text: "Please select 'Customer ID'" });
+      return toast.error("Please select 'Customer ID'");
     }
 
     const byNo =
       documentFilter === "By Document No." && documentMode === "One Document";
 
     if (byNo && !documentNo.trim()) {
-      return setNotice({ type: "error", text: "Please input 'From Invoice No.'" });
+      return toast.error("Please input 'From Invoice No.'");
     }
 
     setBusy(true);
@@ -502,9 +519,9 @@ const ZATCASubmission: React.FC = () => {
       const filler = createRows().slice(mapped.length);
       setRows([...mapped, ...filler.map((f, i) => ({ ...f, id: mapped.length + i + 1 }))]);
 
-      if (!mapped.length) setNotice({ type: "ok", text: "No documents found." });
+      if (!mapped.length) toast.info("No documents found");
     } catch (e) {
-      setNotice({ type: "error", text: (e as Error).message });
+      toast.error((e as Error).message);
     } finally {
       setBusy(false);
     }
@@ -517,11 +534,10 @@ const ZATCASubmission: React.FC = () => {
   const handleSubmit = async () => {
     const selected = rows.filter((r) => r.selected && r.documentNo.trim() !== "");
     if (!selected.length) {
-      return setNotice({ type: "error", text: "Please select at least one document" });
+      return toast.error("Please select at least one document");
     }
 
     setBusy(true);
-    setNotice(null);
     try {
       const { message, data } = await api<{
         message: string;
@@ -546,14 +562,16 @@ const ZATCASubmission: React.FC = () => {
         .filter((x) => x.status === "REJECTED" || x.status === "ERROR")
         .map((x) => `${x.docNo}: ${x.message ?? x.status}`);
 
-      setNotice({
-        type: data.rejected > 0 ? "error" : "ok",
-        text: failed.length ? `${message}\n${failed.join("\n")}` : message,
-      });
+      if (data.rejected > 0) {
+        toast.error(message);
+        failed.forEach((f) => toast.error(f));
+      } else {
+        toast.success(message);
+      }
       // ClearMe() after submit, as the VB form does
       setRows(createRows());
     } catch (e) {
-      setNotice({ type: "error", text: (e as Error).message });
+      toast.error((e as Error).message);
     } finally {
       setBusy(false);
     }
@@ -581,7 +599,6 @@ const ZATCASubmission: React.FC = () => {
     setToDate(TODAY);
 
     setRows(createRows());
-    setNotice(null);
   };
 
   // ==================================================
@@ -656,8 +673,8 @@ const ZATCASubmission: React.FC = () => {
 
             {/* BRANCH MODE */}
 
-            <div className="flex min-w-0 flex-wrap items-center gap-2 lg:col-start-3 lg:row-start-1 lg:col-span-2 ml-30">
-              <RadioPanel className="h-18.75 shrink-0">
+            <div className="flex min-w-0 flex-nowrap items-center gap-2 lg:col-start-3 lg:row-start-1 lg:col-span-2 ml-30">
+              <RadioPanel className="h-18.75 w-[112px] shrink-0">
                 <CustomRadio
                   name="branchMode"
                   value="One Branch"
@@ -676,15 +693,15 @@ const ZATCASubmission: React.FC = () => {
               </RadioPanel>
 
               {branchMode === "One Branch" && (
-                <div className="min-w-0 max-w-60 flex-1">
+                <div className="min-w-0" style={{ width: BRANCH_WIDTH, marginLeft: BRANCH_OFFSET }}>
                   <CommonTableSelect
-                    inputId="branch"
+                    inputId="lkpBranch"
                     options={branchOptions}
                     value={branch}
                     onChange={setBranch}
                     columns={branchColumns}
                     width="100%"
-                    menuWidth="250px"
+                    menuWidth={`${BRANCH_WIDTH}px`}
                     placeholder="Select Branch"
                   />
                 </div>
@@ -694,7 +711,7 @@ const ZATCASubmission: React.FC = () => {
             {/* CUSTOMER MODE */}
 
             <div className="flex min-w-0 flex-nowrap items-center gap-2 lg:col-start-3 lg:row-start-2 lg:col-span-2 ml-30">
-              <RadioPanel className="h-18.75 shrink-0">
+              <RadioPanel className="h-18.75 w-[123px] shrink-0">
 
                 <CustomRadio
                   name="customerMode"
@@ -715,42 +732,30 @@ const ZATCASubmission: React.FC = () => {
               </RadioPanel>
 
               {customerMode === "One Customer" && (
-                <div className="min-w-0">
-                  <CustomLinkedPairSelect
-                    firstInputId="customerId"
-                    secondInputId="customerName"
-                    options={customerPairOptions}
-                    firstValue={customerId?.value ?? null}
-                    secondValue={customerName?.value ?? null}
-                    firstHeader="Customer ID"
-                    secondHeader="Customer Name"
-                    firstWidth={120}
-                    secondWidth={320}
-                    gap={4}
-                    headerFontSize="12px"
-                    menuZIndex={99999}
-                    menuPortalTarget={
-                      typeof document !== "undefined" ? document.body : undefined
-                    }
-                    onChange={(option) => {
-                      setCustomerId(
-                        option
-                          ? {
-                              value: option.value,
-                              label: option.firstLabel,
-                            }
-                          : null,
-                      );
+                <div
+                  className="flex min-w-0 items-center"
+                  style={{ gap: PAIR_GAP }}
+                >
+                  <CommonTableSelect
+                    inputId="lkpCustomerId"
+                    options={customerIdOptions}
+                    value={customerId}
+                    onChange={(o) => pickCustomer(o?.value ?? null)}
+                    columns={customerIdColumns}
+                    width={`${CUSTOMER_ID_WIDTH}px`}
+                    menuWidth={`${CUSTOMER_ID_WIDTH + CUSTOMER_NAME_WIDTH}px`}
+                    placeholder=""
+                  />
 
-                      setCustomerName(
-                        option
-                          ? {
-                              value: option.value,
-                              label: option.secondLabel,
-                            }
-                          : null,
-                      );
-                    }}
+                  <CommonTableSelect
+                    inputId="lkpCustomerName"
+                    options={customerNameOptions}
+                    value={customerName}
+                    onChange={(o) => pickCustomer(o?.value ?? null)}
+                    columns={customerNameColumns}
+                    width={`${CUSTOMER_NAME_WIDTH}px`}
+                    menuWidth={`${CUSTOMER_ID_WIDTH + CUSTOMER_NAME_WIDTH}px`}
+                    placeholder=""
                   />
                 </div>
               )}
@@ -999,19 +1004,6 @@ const ZATCASubmission: React.FC = () => {
             <div className="h-7.25 border-t border-[#B7ECD0] bg-[#eeeeF2]" />
 
           </div>
-
-          {notice && (
-            <div
-              role="status"
-              className={`mt-2 whitespace-pre-line rounded-sm border px-2 py-1 text-[12px] ${
-                notice.type === "error"
-                  ? "border-red-300 bg-red-50 text-red-700"
-                  : "border-green-300 bg-green-50 text-green-800"
-              }`}
-            >
-              {notice.text}
-            </div>
-          )}
 
           {/* ==========================================
               BOTTOM BUTTONS

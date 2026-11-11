@@ -8,6 +8,7 @@ import {
 import {
   getZATCABranchListService,
   getZATCACustomerListService,
+  getZATCACustomerNameListService,
   getZATCADocumentTypeListService,
   getZATCASubmissionListService,
   submitZATCADocumentsService,
@@ -80,6 +81,37 @@ export const getCustomerList = async (
     return res.status(500).json({
       success: false,
       message: "Failed to load customer list",
+      error: errorText(error),
+    });
+  }
+};
+
+/* =========================================================
+   GET CUSTOMER NAME LIST (the Customer Name box) - sorted by customer name
+========================================================= */
+
+export const getCustomerNameList = async (
+  req: AuthenticatedRequest,
+  res: Response
+): Promise<Response> => {
+  try {
+    const coId = coIdOf(req);
+
+    if (!coId) {
+      return res.status(400).json({ success: false, message: "Company ID is required" });
+    }
+    if (!req.user) {
+      return res.status(401).json({ success: false, message: "Authentication required" });
+    }
+
+    const data = await getZATCACustomerNameListService(coId);
+
+    return res.status(200).json({ success: true, data });
+  } catch (error: unknown) {
+    console.error("getCustomerNameList (zatca submission) error:", error);
+    return res.status(500).json({
+      success: false,
+      message: "Failed to load customer name list",
       error: errorText(error),
     });
   }

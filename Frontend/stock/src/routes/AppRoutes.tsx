@@ -102,7 +102,7 @@ import DepreciationGenerationPage from "../pages/Assets/Transaction/Depreciation
 import AssetSettingPage from "../pages/Assets/Setting/AssetSettingPage";
 import DepreciationBeginningBalancePage from "../pages/Assets/Transaction/DepreciationBeginningBalancePage";
 import DepreciationJournalListPage from "../pages/Assets/Transaction/DepreciationJournalList";
-import ZATCASubmission from "../pages/ZATCA/Transaction/ZATCASubmission";
+import ZATCASubmission from "../pages/ZATCA/Transaction/ZATCASubmissionPage";
 import RptZatcaPdfA3Generation from "../pages/ZATCA/Transaction/RptZatcaPdfA3Generation";
 import RptZatcaDocumentStatus from "../pages/ZATCA/Transaction/RptZatcaDocumentStatus";
 import SetZATCADocumentPath from "../pages/ZATCA/Setup/SetZATCADocumentPath";

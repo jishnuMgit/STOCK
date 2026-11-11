@@ -80,6 +80,17 @@ export async function getZATCACustomerListService(
   return result.rows;
 }
 
+// sorted by customer name (dbo.filllookupcustomername) - the Customer Name box
+export async function getZATCACustomerNameListService(
+  PstrCoID: string
+): Promise<{ fcsaccountid: string; fcsaccountname: string }[]> {
+  const result = await pool.query(
+    `SELECT fcsaccountid, fcsaccountname FROM dbo.filllookupcustomername($1::varchar)`,
+    [PstrCoID]
+  );
+  return result.rows;
+}
+
 export async function getZATCADocumentTypeListService(
   PstrCoID: string
 ): Promise<{ fpid: string; fpname: string }[]> {
@@ -138,8 +149,7 @@ function buildFilters(p: ZatcaSearchParams) {
     const f = lit(asDate("from date", p.fromDate));
     const t = lit(asDate("to date", p.toDate));
     if (p.dateBasis === "issue") {
-      // stock.push(`finvdatetime::date >= ${f}::date`, `finvdatetime::date <= ${t}::date`);
-       stock.push(`fdate::date >= ${f}::date`, `fdate::date <= ${t}::date`);
+      stock.push(`finvdatetime::date >= ${f}::date`, `finvdatetime::date <= ${t}::date`);       
       fin.push(`fcuserdate::date >= ${f}::date`, `fcuserdate::date <= ${t}::date`);
     } else {
       stock.push(`fdate >= ${f}::date`, `fdate <= ${t}::date`);
@@ -149,7 +159,7 @@ function buildFilters(p: ZatcaSearchParams) {
 
   if (p.customerId) {
     const c = lit(asId("customer", p.customerId));
-    stock.push(`faccountid = ${c}`);
+    stock.push(`fcsaccountid = ${c}`);
     fin.push(`faccountid = ${c}`);
   }
 
@@ -304,7 +314,7 @@ export async function submitZATCADocumentsService(
         coId,
         doc.docType,
       ]);
-      const customerType = await scalar(`SELECT dbo.getcustomertype($1,$2)`, [
+      const customerType = await scalar(`SELECT dbo.getbusinesstype($1,$2)`, [
         coId,
         doc.customerId,
       ]);
