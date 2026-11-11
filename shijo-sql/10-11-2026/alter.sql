@@ -18,3 +18,6 @@ ALTER TABLE IF EXISTS dbo.tblstocktrans
 
     ALTER TABLE IF EXISTS dbo.tblstocktrans
     ADD COLUMN fphone character varying(50);
+
+    ALTER TABLE IF EXISTS dbo.tblstocktrans
+    ADD COLUMN freference character varying(100);

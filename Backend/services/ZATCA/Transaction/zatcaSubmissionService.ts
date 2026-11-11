@@ -138,7 +138,8 @@ function buildFilters(p: ZatcaSearchParams) {
     const f = lit(asDate("from date", p.fromDate));
     const t = lit(asDate("to date", p.toDate));
     if (p.dateBasis === "issue") {
-      stock.push(`finvdatetime::date >= ${f}::date`, `finvdatetime::date <= ${t}::date`);
+      // stock.push(`finvdatetime::date >= ${f}::date`, `finvdatetime::date <= ${t}::date`);
+       stock.push(`fdate::date >= ${f}::date`, `fdate::date <= ${t}::date`);
       fin.push(`fcuserdate::date >= ${f}::date`, `fcuserdate::date <= ${t}::date`);
     } else {
       stock.push(`fdate >= ${f}::date`, `fdate <= ${t}::date`);
@@ -213,7 +214,7 @@ async function saveHistory(
   } | null
 ): Promise<void> {
   await pool.query(
-    `CALL dbo.sp_frmzatcafilehistory($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12)`,
+    `CALL dbo.sp_pagezatcafilehistory($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12)`,
     [
       mode,
       ctx.coId,
