@@ -129,6 +129,17 @@ export interface SalesUserInfo {
   postOrder: number;
 }
 
+export interface BranchStockRow {
+  brId: string;
+  brName: string;
+  stock: number;
+}
+
+export interface BranchStockResult {
+  rows: BranchStockRow[];
+  total: number;
+}
+
 interface InvoiceHeaderApi {
   fdate: string | null;
   fdate_h: string | null;
@@ -681,6 +692,34 @@ const useSalesInvoice = () => {
   );
 
   /* ======================================================
+     ITEM STOCK IN ALL BRANCHES (VB GetItemStockDet, Stock button popup)
+     mode "S" = new invoice, "M" = modify (this invoice's lines excluded)
+  ====================================================== */
+  const getItemStockDetails = useCallback(
+    async (
+      mode: "S" | "M",
+      year: string,
+      itemId: string,
+      docNo: string,
+    ): Promise<BranchStockResult> => {
+      const params = new URLSearchParams({ mode, year, itemId, docNo });
+      const result = await request<{ data: BranchStockResult }>(
+        "GET",
+        `${SALES_INVOICE_API}/item-stock-details?${params}`,
+      );
+      return {
+        rows: (result.data.rows ?? []).map((r) => ({
+          brId: s(r.brId),
+          brName: s(r.brName),
+          stock: n(r.stock),
+        })),
+        total: n(result.data.total),
+      };
+    },
+    [],
+  );
+
+  /* ======================================================
      SAVE (new or modify). Throws on failure so the screen can show the
      message. Returns the totals the server calculated.
   ====================================================== */
@@ -796,6 +835,7 @@ const useSalesInvoice = () => {
     calcTotals,
     fetchInvoice,
     getItemStock,
+    getItemStockDetails,
     saveInvoice,
     deleteInvoice,
     postInvoice,

@@ -44,6 +44,7 @@ type SalesInvoiceHeaderProps = {
   onDocNoBlur: () => void;
   invoiceTypes?: TypeOption[];
   stock: number;
+  onStockClick: () => void;
   readOnly: boolean; // posted invoice
 };
 
@@ -687,6 +688,7 @@ const SalesInvoiceHeader: React.FC<SalesInvoiceHeaderProps> = ({
   onDocNoBlur,
   invoiceTypes = defaultInvoiceTypes,
   stock,
+  onStockClick,
   readOnly,
 }) => {
   // ==========================================================
@@ -1144,6 +1146,7 @@ const SalesInvoiceHeader: React.FC<SalesInvoiceHeaderProps> = ({
               <button
                 id="BranchStockbtn"
                 type="button"
+                onClick={onStockClick}
                 className="
                   ml-3.25
                   h-7.5
