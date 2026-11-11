@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState } from "react";
-import { Play } from "lucide-react";
+import { Play, X } from "lucide-react";
 import Select, {
   components,
   type FormatOptionLabelMeta,
@@ -8,6 +8,7 @@ import Select, {
 } from "react-select";
 import selectComponents from "../../sharecomponents/selectComponents";
 import type { ItemLookup, SalesRow } from "../../../hooks/useSalesInvoice"; // adjust path to your hook
+import { useConfirmModal } from "../../../hooks/useConfirmModal"; // adjust path
 
 // ============================================================
 // TYPES
@@ -306,6 +307,7 @@ const SalesInvoiceTable: React.FC<SalesInvoiceTableProps> = ({
   onActiveItemChange,
 }) => {
   const [activeRow, setActiveRow] = useState(0);
+  const { confirm, dialog } = useConfirmModal();
 
   // which item dropdown (if any) currently has its menu open,
   // e.g. "id-0" / "name-0"
@@ -457,8 +459,25 @@ const SalesInvoiceTable: React.FC<SalesInvoiceTableProps> = ({
     };
 
   // ==========================================================
-  // F5 = delete row (same as VB)
+  // DELETE ROW (X button and F5)
+  // Ask first, then remove the row and put the cursor back on its Item ID.
   // ==========================================================
+
+  const handleDeleteRow = async (index: number) => {
+    if (readOnly || !rows[index].itemId) return;
+
+    const ok = await confirm({
+      title: "Sales Invoice",
+      message: `Do you want to delete Line ${index + 1} ?`,
+    });
+    if (!ok) return;
+
+    onRowsChange(
+      rows.filter((_, rowIndex) => rowIndex !== index),
+      true,
+    );
+    setTimeout(() => focusById(`lkpItemID-${index}`), 0);
+  };
 
   const handleRowKeyDown = (
     event: React.KeyboardEvent<HTMLTableRowElement>,
@@ -467,13 +486,7 @@ const SalesInvoiceTable: React.FC<SalesInvoiceTableProps> = ({
     if (event.key !== "F5") return;
 
     event.preventDefault(); // stop the browser refresh
-
-    if (readOnly || !rows[index].itemId) return;
-
-    onRowsChange(
-      rows.filter((_, rowIndex) => rowIndex !== index),
-      true,
-    );
+    handleDeleteRow(index);
   };
 
   // ==========================================================
@@ -531,243 +544,267 @@ const SalesInvoiceTable: React.FC<SalesInvoiceTableProps> = ({
   // ==========================================================
 
   return (
-    <section
-      id="sales-invoice-table"
-      className="
-        mx-2.75
-        mb-0
-        mt-6
-        flex
-        h-fit
-        min-h-0
-        flex-col
-        overflow-hidden
-        border
-        border-[#dce5ef]
-      "
-    >
-      <div className="customer-table-scroll min-h-0 max-h-85 flex-1 overflow-auto">
-        <table
-          className="
-            w-full
-            min-w-225
-            table-fixed
-            border-collapse
-            text-[11px]
-          "
-        >
-          {/* ==================================================
-              COLUMN WIDTHS
-          ================================================== */}
+    <>
+      <section
+        id="sales-invoice-table"
+        className="
+          mx-2.75
+          mb-0
+          mt-6
+          flex
+          h-fit
+          min-h-0
+          flex-col
+          overflow-hidden
+          border
+          border-[#dce5ef]
+        "
+      >
+        <div className="customer-table-scroll min-h-0 max-h-85 flex-1 overflow-auto">
+          <table
+            className="
+              w-full
+              min-w-225
+              table-fixed
+              border-collapse
+              text-[11px]
+            "
+          >
+            {/* ==================================================
+                COLUMN WIDTHS
+            ================================================== */}
 
-          <colgroup>
-            <col style={{ width: "14px" }} />
-            <col style={{ width: "38px" }} />
-            <col style={{ width: `${ID_COL_WIDTH}px` }} />
-            <col style={{ width: "auto" }} />
-            <col style={{ width: "56px" }} />
-            <col style={{ width: "58px" }} />
-            <col style={{ width: "75px" }} />
-            <col style={{ width: "70px" }} />
-            <col style={{ width: "70px" }} />
-            <col style={{ width: "90px" }} />
-          </colgroup>
+            <colgroup>
+              <col style={{ width: "14px" }} />
+              <col style={{ width: "38px" }} />
+              <col style={{ width: `${ID_COL_WIDTH}px` }} />
+              <col style={{ width: "auto" }} />
+              <col style={{ width: "56px" }} />
+              <col style={{ width: "58px" }} />
+              <col style={{ width: "75px" }} />
+              <col style={{ width: "70px" }} />
+              <col style={{ width: "70px" }} />
+              <col style={{ width: "90px" }} />
+              {/* Delete button */}
+              <col style={{ width: "28px" }} />
+            </colgroup>
 
-          {/* ==================================================
-              HEADER
-          ================================================== */}
+            {/* ==================================================
+                HEADER
+            ================================================== */}
 
-          <thead>
-            <tr className="h-7.5">
-              <th className="sticky top-0 z-20 border border-[#dce5ef] bg-[#f1f6fc] p-0" />
-              <th className={`${thClass} text-left`}>Line</th>
-              <th className={`${thClass} text-left`}>Item ID</th>
-              <th className={`${thClass} text-left`}>Item Name</th>
-              <th className={`${thClass} text-left`}>Unit</th>
-              <th className={`${thClass} text-right`}>Qty.</th>
-              <th className={`${thClass} text-right`}>Unit Price</th>
-              <th className={`${thClass} text-right`}>U.Disc Amt.</th>
-              <th className={`${thClass} text-right`}>VAT Amt.</th>
-              <th className={`${thClass} text-right`}>Total Price</th>
-            </tr>
-          </thead>
-
-          {/* ==================================================
-              BODY
-          ================================================== */}
-
-          <tbody>
-            {rows.map((row, index) => (
-              <tr
-                key={index}
-                onClick={() => setActiveRow(index)}
-                onFocusCapture={() => setActiveRow(index)}
-                onKeyDown={(event) => handleRowKeyDown(event, index)}
-                className={`
-                  h-7.5
-                  ${activeRow === index ? "bg-[#f4f8fd]" : "bg-white"}
-                  hover:bg-blue-50
-                `}
-              >
-                {/* ACTIVE ROW INDICATOR */}
-
-                <td
-                  className={`${tdClass} text-center text-[9px] text-[#263449]`}
-                  aria-label={activeRow === index ? "Active row" : undefined}
-                >
-                  {activeRow === index ? <Play size={10} /> : ""}
-                </td>
-
-                {/* LINE NO */}
-
-                <td className={`${tdClass} text-center`}>{index + 1}</td>
-
-                {/* ITEM ID */}
-
-                <td className={editCellClass}>
-                  <Select<Option, false>
-                    inputId={`lkpItemID-${index}`}
-                    instanceId={`item-id-${index}`}
-                    options={itemIdOptions}
-                    value={idValue(row.itemId)}
-                    onChange={(option) => handleItemSelect(index, option)}
-                    formatOptionLabel={formatIdLabel}
-                    filterOption={filterItem}
-                    styles={selectStyles}
-                    components={idSelectComponents}
-                    isClearable={false}
-                    isSearchable
-                    isDisabled={readOnly}
-                    menuPosition="fixed"
-                    menuPortalTarget={menuPortalTarget}
-                    placeholder=""
-                    className="w-full"
-                    onMenuOpen={() => setOpenMenuKey(`id-${index}`)}
-                    onMenuClose={() =>
-                      setOpenMenuKey((prev) =>
-                        prev === `id-${index}` ? null : prev,
-                      )
-                    }
-                    onKeyDown={(event) =>
-                      handleItemKeyDown(event, index, `id-${index}`)
-                    }
-                  />
-                </td>
-
-                {/* ITEM NAME */}
-
-                <td className={editCellClass}>
-                  <Select<Option, false>
-                    inputId={`lkpItemName-${index}`}
-                    instanceId={`item-name-${index}`}
-                    options={itemNameOptions}
-                    value={nameValue(row.itemId)}
-                    onChange={(option) => handleItemSelect(index, option)}
-                    formatOptionLabel={formatNameLabel}
-                    filterOption={filterItem}
-                    styles={selectStyles}
-                    components={nameSelectComponents}
-                    isClearable={false}
-                    isSearchable
-                    isDisabled={readOnly}
-                    menuPosition="fixed"
-                    menuPortalTarget={menuPortalTarget}
-                    placeholder=""
-                    className="w-full"
-                    onMenuOpen={() => setOpenMenuKey(`name-${index}`)}
-                    onMenuClose={() =>
-                      setOpenMenuKey((prev) =>
-                        prev === `name-${index}` ? null : prev,
-                      )
-                    }
-                    onKeyDown={(event) =>
-                      handleItemKeyDown(event, index, `name-${index}`)
-                    }
-                  />
-                </td>
-
-                {/* UNIT: Enter -> Qty */}
-
-                <td className={editCellClass}>
-                  <input
-                    id={`txtUnit-${index}`}
-                    aria-label={`Unit, row ${index + 1}`}
-                    type="text"
-                    autoComplete="off"
-                    readOnly={readOnly}
-                    value={row.unit}
-                    onFocus={() => setActiveRow(index)}
-                    onChange={(event) =>
-                      handleUnitChange(index, event.target.value)
-                    }
-                    onKeyDown={handleEnterTo(`txtQty-${index}`)}
-                    className={textInputClass}
-                  />
-                </td>
-
-                {/* QUANTITY: Enter -> Unit Price */}
-
-                <td className={editCellClass}>
-                  {renderNumberInput(
-                    index,
-                    "qty",
-                    "txtQty",
-                    "Quantity",
-                    `txtUnitPrice-${index}`,
-                  )}
-                </td>
-
-                {/* UNIT PRICE: Enter -> U.Disc Amt. */}
-
-                <td className={editCellClass}>
-                  {renderNumberInput(
-                    index,
-                    "unitPrice",
-                    "txtUnitPrice",
-                    "Unit price",
-                    `txtUDiscAmt-${index}`,
-                  )}
-                </td>
-
-                {/* UNIT DISCOUNT: Enter -> next row Item ID */}
-
-                <td className={editCellClass}>
-                  {renderNumberInput(
-                    index,
-                    "itemDiscAmt",
-                    "txtUDiscAmt",
-                    "Unit discount amount",
-                    `lkpItemID-${index + 1}`,
-                  )}
-                </td>
-
-                {/* VAT (calculated) */}
-
-                <td className={tdClass}>
-                  {renderCalculatedInput(
-                    index,
-                    row.itemVatAmt,
-                    "txtVATAmt",
-                    "VAT amount",
-                  )}
-                </td>
-
-                {/* TOTAL PRICE incl. VAT (calculated) */}
-
-                <td className={tdClass}>
-                  {renderCalculatedInput(
-                    index,
-                    row.totalPriceV,
-                    "txtTotalPrice",
-                    "Total price",
-                  )}
-                </td>
+            <thead>
+              <tr className="h-7.5">
+                <th className="sticky top-0 z-20 border border-[#dce5ef] bg-[#f1f6fc] p-0" />
+                <th className={`${thClass} text-left`}>Line</th>
+                <th className={`${thClass} text-left`}>Item ID</th>
+                <th className={`${thClass} text-left`}>Item Name</th>
+                <th className={`${thClass} text-left`}>Unit</th>
+                <th className={`${thClass} text-right`}>Qty.</th>
+                <th className={`${thClass} text-right`}>Unit Price</th>
+                <th className={`${thClass} text-right`}>U.Disc Amt.</th>
+                <th className={`${thClass} text-right`}>VAT Amt.</th>
+                <th className={`${thClass} text-right`}>Total Price</th>
+                <th className="sticky top-0 z-20 border border-[#dce5ef] bg-[#f1f6fc] p-0" />
               </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
-    </section>
+            </thead>
+
+            {/* ==================================================
+                BODY
+            ================================================== */}
+
+            <tbody>
+              {rows.map((row, index) => (
+                <tr
+                  key={index}
+                  onClick={() => setActiveRow(index)}
+                  onFocusCapture={() => setActiveRow(index)}
+                  onKeyDown={(event) => handleRowKeyDown(event, index)}
+                  className={`
+                    h-7.5
+                    ${activeRow === index ? "bg-[#f4f8fd]" : "bg-white"}
+                    hover:bg-blue-50
+                  `}
+                >
+                  {/* ACTIVE ROW INDICATOR */}
+
+                  <td
+                    className={`${tdClass} text-center text-[9px] text-[#263449]`}
+                    aria-label={activeRow === index ? "Active row" : undefined}
+                  >
+                    {activeRow === index ? <Play size={10} /> : ""}
+                  </td>
+
+                  {/* LINE NO */}
+
+                  <td className={`${tdClass} text-center`}>{index + 1}</td>
+
+                  {/* ITEM ID */}
+
+                  <td className={editCellClass}>
+                    <Select<Option, false>
+                      inputId={`lkpItemID-${index}`}
+                      instanceId={`item-id-${index}`}
+                      options={itemIdOptions}
+                      value={idValue(row.itemId)}
+                      onChange={(option) => handleItemSelect(index, option)}
+                      formatOptionLabel={formatIdLabel}
+                      filterOption={filterItem}
+                      styles={selectStyles}
+                      components={idSelectComponents}
+                      isClearable={false}
+                      isSearchable
+                      isDisabled={readOnly}
+                      menuPosition="fixed"
+                      menuPortalTarget={menuPortalTarget}
+                      placeholder=""
+                      className="w-full"
+                      onMenuOpen={() => setOpenMenuKey(`id-${index}`)}
+                      onMenuClose={() =>
+                        setOpenMenuKey((prev) =>
+                          prev === `id-${index}` ? null : prev,
+                        )
+                      }
+                      onKeyDown={(event) =>
+                        handleItemKeyDown(event, index, `id-${index}`)
+                      }
+                    />
+                  </td>
+
+                  {/* ITEM NAME */}
+
+                  <td className={editCellClass}>
+                    <Select<Option, false>
+                      inputId={`lkpItemName-${index}`}
+                      instanceId={`item-name-${index}`}
+                      options={itemNameOptions}
+                      value={nameValue(row.itemId)}
+                      onChange={(option) => handleItemSelect(index, option)}
+                      formatOptionLabel={formatNameLabel}
+                      filterOption={filterItem}
+                      styles={selectStyles}
+                      components={nameSelectComponents}
+                      isClearable={false}
+                      isSearchable
+                      isDisabled={readOnly}
+                      menuPosition="fixed"
+                      menuPortalTarget={menuPortalTarget}
+                      placeholder=""
+                      className="w-full"
+                      onMenuOpen={() => setOpenMenuKey(`name-${index}`)}
+                      onMenuClose={() =>
+                        setOpenMenuKey((prev) =>
+                          prev === `name-${index}` ? null : prev,
+                        )
+                      }
+                      onKeyDown={(event) =>
+                        handleItemKeyDown(event, index, `name-${index}`)
+                      }
+                    />
+                  </td>
+
+                  {/* UNIT: Enter -> Qty */}
+
+                  <td className={editCellClass}>
+                    <input
+                      id={`txtUnit-${index}`}
+                      aria-label={`Unit, row ${index + 1}`}
+                      type="text"
+                      autoComplete="off"
+                      readOnly={readOnly}
+                      value={row.unit}
+                      onFocus={() => setActiveRow(index)}
+                      onChange={(event) =>
+                        handleUnitChange(index, event.target.value)
+                      }
+                      onKeyDown={handleEnterTo(`txtQty-${index}`)}
+                      className={textInputClass}
+                    />
+                  </td>
+
+                  {/* QUANTITY: Enter -> Unit Price */}
+
+                  <td className={editCellClass}>
+                    {renderNumberInput(
+                      index,
+                      "qty",
+                      "txtQty",
+                      "Quantity",
+                      `txtUnitPrice-${index}`,
+                    )}
+                  </td>
+
+                  {/* UNIT PRICE: Enter -> U.Disc Amt. */}
+
+                  <td className={editCellClass}>
+                    {renderNumberInput(
+                      index,
+                      "unitPrice",
+                      "txtUnitPrice",
+                      "Unit price",
+                      `txtUDiscAmt-${index}`,
+                    )}
+                  </td>
+
+                  {/* UNIT DISCOUNT: Enter -> next row Item ID */}
+
+                  <td className={editCellClass}>
+                    {renderNumberInput(
+                      index,
+                      "itemDiscAmt",
+                      "txtUDiscAmt",
+                      "Unit discount amount",
+                      `lkpItemID-${index + 1}`,
+                    )}
+                  </td>
+
+                  {/* VAT (calculated) */}
+
+                  <td className={tdClass}>
+                    {renderCalculatedInput(
+                      index,
+                      row.itemVatAmt,
+                      "txtVATAmt",
+                      "VAT amount",
+                    )}
+                  </td>
+
+                  {/* TOTAL PRICE incl. VAT (calculated) */}
+
+                  <td className={tdClass}>
+                    {renderCalculatedInput(
+                      index,
+                      row.totalPriceV,
+                      "txtTotalPrice",
+                      "Total price",
+                    )}
+                  </td>
+
+                  {/* DELETE: only for rows that have an item */}
+
+                  <td className={`${tdClass} text-center`}>
+                    {row.itemId && !readOnly && (
+                      <button
+                        type="button"
+                        tabIndex={-1}
+                        aria-label={`Delete item, row ${index + 1}`}
+                        title="Delete item"
+                        onClick={() => handleDeleteRow(index)}
+                        className="inline-flex h-5 w-5 cursor-pointer items-center justify-center rounded-sm text-slate-500 hover:bg-red-100 hover:text-red-600"
+                      >
+                        <X size={14} />
+                      </button>
+                    )}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      {dialog}
+    </>
   );
 };
 
