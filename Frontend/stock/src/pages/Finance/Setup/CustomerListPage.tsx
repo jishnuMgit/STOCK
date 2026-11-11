@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState } from "react";
-import { SquarePen, Trash } from "lucide-react";
+import { SquarePen, X } from "lucide-react";
 import { useCustomer, type Customer } from "../../../hooks/useCustomer";
 import CustomerPage from "./CustomerPage";
 
@@ -247,7 +247,7 @@ const CustomerList: React.FC = () => {
                           onClick={() => handleDelete(c)}
                           className="inline-flex h-6 w-6 items-center justify-center rounded-full text-[#FC0005] hover:bg-red-50 hover:text-red-600 focus:outline-none"
                         >
-                          <Trash width={16} height={16} />
+                          <X width={16} height={16} />
                         </button>
                       </td>
                     </tr>
