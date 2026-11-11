@@ -593,7 +593,7 @@ const ZATCASubmission: React.FC = () => {
   // CANCEL
   // ==================================================
 
-  const handleCancel = () => {
+  const handleClear = () => {
     setDocumentMode("One Document");
     setDocumentType(null);
     setDocumentFilter("By Document Date");
@@ -1045,10 +1045,10 @@ const ZATCASubmission: React.FC = () => {
             </ActionButton>
 
             <ActionButton
-              onClick={handleCancel}
+              onClick={handleClear}
               className="w-20"
             >
-              Cancel
+              Clear
             </ActionButton>
 
             <ActionButton

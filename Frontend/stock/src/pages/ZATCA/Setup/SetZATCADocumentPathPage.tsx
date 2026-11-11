@@ -150,7 +150,7 @@ const SetZATCADocumentPath: React.FC<SetZATCADocumentPathProps> = ({
   };
 
   const handleClose = () => {
-    onClose?.();
+    window.history.back();
   };
 
   const renderPathField = (
@@ -238,15 +238,7 @@ const SetZATCADocumentPath: React.FC<SetZATCADocumentPathProps> = ({
                   </>
                 )}
               </button>
-              <button
-                id="btnCancel"
-                type="button"
-                onClick={handleCancel}
-                disabled={loading}
-                className={buttonClass}
-              >
-                <u>C</u>ancel
-              </button>
+             
               <button
                 id="btnClose"
                 type="button"
