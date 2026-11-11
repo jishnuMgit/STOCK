@@ -322,13 +322,17 @@ const typeComponents = {
 // ============================================================
 
 const CUSTOMER_ID_COL_WIDTH = 146;
-const CUSTOMER_NAME_COL_WIDTH = 300;
+
+// Customer Name menu: the name column is as wide as the select,
+// the ID column sticks out to the right of it
+const NAME_MENU_ID_COL_WIDTH = 150;
 
 /* gray sticky header row at the top of the menu */
 const createCustomerMenuList = (
   firstTitle: string,
   secondTitle: string,
-  firstWidth: number,
+  firstWidth?: number, // omit to let the first column fill the rest
+  secondWidth?: number, // fixed width of the second column
 ) => {
   const MenuList = (props: MenuListProps<Option, false>) => (
     <components.MenuList {...props}>
@@ -347,8 +351,9 @@ const createCustomerMenuList = (
       >
         <div
           style={{
-            width: firstWidth,
-            flexShrink: 0,
+            ...(firstWidth
+              ? { width: firstWidth, flexShrink: 0 }
+              : { flex: 1 }),
             boxSizing: "border-box",
             padding: "5px 8px",
             borderRight: "1px solid #cfcfcf",
@@ -356,7 +361,17 @@ const createCustomerMenuList = (
         >
           {firstTitle}
         </div>
-        <div style={{ flex: 1, padding: "5px 8px" }}>{secondTitle}</div>
+        <div
+          style={{
+            ...(secondWidth
+              ? { width: secondWidth, flexShrink: 0 }
+              : { flex: 1 }),
+            boxSizing: "border-box",
+            padding: "5px 8px",
+          }}
+        >
+          {secondTitle}
+        </div>
       </div>
       {props.children}
     </components.MenuList>
@@ -380,7 +395,8 @@ const customerNameMenuComponents = {
   MenuList: createCustomerMenuList(
     "Customer Name",
     "Customer ID",
-    CUSTOMER_NAME_COL_WIDTH,
+    undefined,
+    NAME_MENU_ID_COL_WIDTH,
   ),
 };
 
@@ -388,13 +404,13 @@ const customerNameMenuComponents = {
 const renderCustomerRow = (
   first: string,
   second: string,
-  firstWidth: number,
+  firstWidth?: number,
+  secondWidth?: number,
 ) => (
   <div style={{ display: "flex" }}>
     <div
       style={{
-        width: firstWidth,
-        flexShrink: 0,
+        ...(firstWidth ? { width: firstWidth, flexShrink: 0 } : { flex: 1 }),
         boxSizing: "border-box",
         padding: "6px 8px",
         borderRight: "1px solid #e3e8ef",
@@ -402,7 +418,15 @@ const renderCustomerRow = (
     >
       {first}
     </div>
-    <div style={{ flex: 1, padding: "6px 8px" }}>{second}</div>
+    <div
+      style={{
+        ...(secondWidth ? { width: secondWidth, flexShrink: 0 } : { flex: 1 }),
+        boxSizing: "border-box",
+        padding: "6px 8px",
+      }}
+    >
+      {second}
+    </div>
   </div>
 );
 
@@ -475,6 +499,19 @@ const customerIdStyles: StylesConfig<Option, false> = {
 const customerNameStyles: StylesConfig<Option, false> = {
   ...selectStyles,
   ...fullWidthMenuStyles,
+  // portal = select width + the ID column that sticks out on the right
+  menuPortal: (base) => ({
+    ...base,
+    zIndex: 999999,
+    width: Number(base.width) + NAME_MENU_ID_COL_WIDTH,
+  }),
+  // menu fills the portal, so the Name column ends exactly at the select's
+  // right edge and the ID column (150px) sits outside it
+  menu: (base, state) => ({
+    ...lookupMenuStyles.menu!(base, state),
+    width: "100%",
+    minWidth: 0,
+  }),
 };
 
 // ============================================================
@@ -757,7 +794,12 @@ const SalesInvoiceHeader: React.FC<SalesInvoiceHeaderProps> = ({
   ) =>
     meta.context !== "menu"
       ? option.label
-      : renderCustomerRow(option.label, option.value, CUSTOMER_NAME_COL_WIDTH);
+      : renderCustomerRow(
+          option.label,
+          option.value,
+          undefined,
+          NAME_MENU_ID_COL_WIDTH,
+        );
 
   // typing searches both the id and the name
   const filterCustomer = (option: { data: Option }, input: string): boolean => {
