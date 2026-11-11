@@ -192,7 +192,7 @@ const TreeRow: React.FC<TreeRowProps> = ({
               type="button"
               title="Delete"
               onClick={() => onDelete(node)}
-              className="flex h-5 w-5 cursor-pointer items-center justify-center text-red-500 hover:text-red-600 focus:outline-none"
+              className="flex h-5 w-5 cursor-pointer items-center justify-center rounded-full text-slate-500 hover:bg-red-100 hover:text-red-600"
             >
               <X size={16} strokeWidth={2} />
             </button>

@@ -16,11 +16,13 @@ import useSalesInvoice, {
   emptyRow,
   type InvoiceTypeOption,
   type SalesHeader,
+  type BranchStockRow,
   type SalesRow,
   type SalesTotals,
   type SalesUserInfo,
 } from "../../../hooks/useSalesInvoice";
 import { getSession } from "../../../utils/session";
+import BranchStockModal from "../../../components/Transaction/SalesInvoice/BrandStockModal";
 
 // ============================================================
 // HELPERS
@@ -114,6 +116,7 @@ const SalesInvoice: React.FC = () => {
     calcTotals,
     fetchInvoice,
     getItemStock,
+    getItemStockDetails,
     saveInvoice,
     deleteInvoice,
     postInvoice,
@@ -131,6 +134,13 @@ const SalesInvoice: React.FC = () => {
   const [invoiceTypes, setInvoiceTypes] = useState<InvoiceTypeOption[]>([]);
   const [activeItemId, setActiveItemId] = useState("");
   const [stockResult, setStockResult] = useState({ key: "", value: 0 });
+  const [stockPopup, setStockPopup] = useState<{
+    open: boolean;
+    loading: boolean;
+    itemId: string;
+    rows: BranchStockRow[];
+    total: number;
+  }>({ open: false, loading: false, itemId: "", rows: [], total: 0 });
 
   // latest values for async handlers (synced after render, not during it)
   const headerRef = useRef(header);
@@ -469,6 +479,36 @@ const SalesInvoice: React.FC = () => {
     }
   };
 
+  // VB: Stock button -> stock of the active row's item in every branch
+  const handleStockClick = async () => {
+    if (!activeItemId) {
+      toast.info("Select an item first");
+      return;
+    }
+
+    const h = headerRef.current;
+    setStockPopup({
+      open: true,
+      loading: true,
+      itemId: activeItemId,
+      rows: [],
+      total: 0,
+    });
+
+    try {
+      const r = await getItemStockDetails(
+        mode,
+        yearFor(h.date),
+        activeItemId,
+        h.docNo,
+      );
+      setStockPopup((p) => ({ ...p, loading: false, ...r }));
+    } catch (err) {
+      setStockPopup((p) => ({ ...p, open: false, loading: false }));
+      showError(err, "Failed to load branch stock");
+    }
+  };
+
   const handlePrint = () => toast.info("Print is not available yet");
 
   // ==========================================================
@@ -505,6 +545,7 @@ const SalesInvoice: React.FC = () => {
             invoiceTypes={invoiceTypes.length ? invoiceTypes : undefined}
             readOnly={posted}
             stock={stock}
+            onStockClick={handleStockClick}
           />
 
           {/* Table */}
@@ -540,6 +581,15 @@ const SalesInvoice: React.FC = () => {
           />
         </div>
       </main>
+
+      <BranchStockModal
+        open={stockPopup.open}
+        loading={stockPopup.loading}
+        itemId={stockPopup.itemId}
+        rows={stockPopup.rows}
+        total={stockPopup.total}
+        onClose={() => setStockPopup((p) => ({ ...p, open: false }))}
+      />
     </div>
   );
 };

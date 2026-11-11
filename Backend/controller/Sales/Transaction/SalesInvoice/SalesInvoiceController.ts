@@ -87,6 +87,29 @@ export const getSalesItemStock = async (
   }
 };
 
+export const getSalesItemStockDetails = async (
+  req: AuthenticatedRequest,
+  res: Response,
+) => {
+  try {
+    const q = req.query as Record<string, string>;
+    const { data } = await svc.getItemStockDetails(ctxOf(req), {
+      mode: q.mode ?? "S",
+      year: q.year,
+      itemId: q.itemId,
+      docNo: q.docNo,
+    });
+    return res.status(200).json({ success: true, data });
+  } catch (e) {
+    return fail(
+      res,
+      e,
+      "getSalesItemStockDetails",
+      "Failed to fetch branch stock",
+    );
+  }
+};
+
 export const saveSalesInvoice = async (
   req: AuthenticatedRequest,
   res: Response,
