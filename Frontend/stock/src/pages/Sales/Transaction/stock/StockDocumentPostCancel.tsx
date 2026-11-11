@@ -105,7 +105,7 @@ const StockDocumentPostCancel: React.FC = () => {
                 whitespace-nowrap
               "
             >
-              From Txn No. :
+              From Posting No. :
             </label>
 
             <div className="relative w-[214px]">
@@ -158,7 +158,7 @@ const StockDocumentPostCancel: React.FC = () => {
                 whitespace-nowrap
               "
             >
-              To Txn No. :
+              To Posting No. :
             </label>
 
             <div className="relative w-[214px]">

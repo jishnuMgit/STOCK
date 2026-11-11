@@ -1,14 +1,16 @@
-DROP PROCEDURE IF EXISTS dbo.sp_rptmatchenquiry(character varying, character varying, character varying, character varying, character varying, refcursor);
+-- PROCEDURE: dbo.sp_rptmatchenquiry(character varying, character varying, character varying, character varying, character varying, refcursor)
+
+-- DROP PROCEDURE IF EXISTS dbo.sp_rptmatchenquiry(character varying, character varying, character varying, character varying, character varying, refcursor);
 
 CREATE OR REPLACE PROCEDURE dbo.sp_rptmatchenquiry(
-    IN    p_pstrcoid      character varying,
-    IN    p_pstryear      character varying,
-    IN    p_lkpbranch     character varying,
-    IN    p_lkpdoctype    character varying,
-    IN    p_lkpdocno      character varying,
-    INOUT p_cursor        refcursor)
- LANGUAGE plpgsql
-AS $procedure$
+	IN p_pstrcoid character varying,
+	IN p_pstryear character varying,
+	IN p_lkpbranch character varying,
+	IN p_lkpdoctype character varying,
+	IN p_lkpdocno character varying,
+	INOUT p_cursor refcursor)
+LANGUAGE 'plpgsql'
+AS $BODY$
 BEGIN
 
     OPEN p_cursor FOR
@@ -49,4 +51,7 @@ BEGIN
               m.fyear, m.fbrid, m.fdoctype, m.fdocno, m.fslno;
 
 END;
-$procedure$;
+$BODY$;
+ALTER PROCEDURE dbo.sp_rptmatchenquiry(character varying, character varying, character varying, character varying, character varying, refcursor)
+    OWNER TO postgres;
+

@@ -249,7 +249,7 @@ const BeginningBalanceHeader: React.FC<Props> = ({
     };
 
     loadBranches();
-  }, []);
+  }, [onBranchChange, onBranchesLoaded]);
 
   // ==========================================================
   // DATE: only a day of the login year (the old SetDate)

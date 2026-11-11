@@ -99,7 +99,7 @@ BEGIN
                                  WHEN 'SI'  THEN 'sp_pagesipost'
                                  WHEN 'SR'  THEN 'sp_pagesrpost'
                                  WHEN 'ST'  THEN 'sp_pagestocktransferpost'
-                                 WHEN 'ADJ' THEN 'sp_pageadjpost'
+                                 WHEN 'ADJ' THEN 'sp_pagestockadjustmentpost'
                                 
                                END);
 

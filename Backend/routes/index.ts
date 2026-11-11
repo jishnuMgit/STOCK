@@ -62,11 +62,11 @@ import RptIncomeSumRouter from "./Finance/Report/RptIncomeSumRouter.js";
 import RptExpenseSumRouter from "./Finance/Report/RptExpenseSumRouter.js";
 import RptRVPVSumRouter from "./Finance/Report/RptRVPVSumRouter.js";
 import RptReceivablesRouter from "./Finance/Report/A_RandA_P/RptReceivablesRouter.js";
-import TransactionDeleteRouter from "./transactionDeleteRouter.js";
+import TransactionDeleteRouter from "./TransactionDeleteRouter.js";
 
 import RptPayablesRouter from "./Finance/Report/A_RandA_P/RptPayablesRouter.js";
 import RptGLRouter from "./Finance/Report/GeneralLedger/RptGLRouter.js";
-
+import ZATCASubmissionRouter from "./ZATCA/Transaction/ZATCASubmissionRouter.js";
 const router = express.Router();
 
 router.use("/RptStockValuation", RptStockValuationRouter);
@@ -135,5 +135,6 @@ router.use("/RptReceivables", RptReceivablesRouter);
 router.use("/transaction-delete", TransactionDeleteRouter);
 router.use("/RptPayables", RptPayablesRouter);
 router.use("/RptGL", RptGLRouter);
+router.use("/zatca-submission", ZATCASubmissionRouter);
 
 export default router;

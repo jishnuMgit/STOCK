@@ -3,7 +3,7 @@ import pool from "../DB/db.js";
 import { isUserActive, idleUserMessage } from "../validators/common.js";
 
 export interface AuthenticatedRequest extends Request {
-  user?: { userId: string; userType: string; CoID: string };
+  user?: { userId: string; userType: string; CoID: string,Year?: string }; // Add the year property as optional
 }
 
 export const authenticate = async (

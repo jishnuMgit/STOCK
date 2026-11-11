@@ -59,7 +59,7 @@ BEGIN
         SET
             fmatch = true,
             fmatchapplydate = CURRENT_TIMESTAMP,
-            fclosed = true,
+            fmatchcompleted = true,
             fmatchuserid = p_pstruserid,
             fmatchuserdate = CURRENT_TIMESTAMP
         WHERE fcoid = p_pstrcoid
