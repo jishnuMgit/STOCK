@@ -125,6 +125,7 @@ BEGIN
             freference,                                          -- NEW
             fsqtno, fnote, fslno, fitemid,
             fsn,
+            fitemgroupid,                                        -- NEW
             fqtyout,
             funit, funitprice, fnetunitprice,
             funitdiscamt, fitemvatamt, ftotalprice,
@@ -143,6 +144,7 @@ BEGIN
             strcustref,                                          -- NEW
             strqtnno, strnote, intslno, stritemid,
             COALESCE(dbo.getitemgroupsn(pstrcoid, stritemid), 'S'),
+            dbo.getitemgroupid(pstrcoid, stritemid),             -- NEW
             COALESCE(numqtyout, 0),
             strunit, COALESCE(numunitprice, 0),
             COALESCE(numnetunitprice, 0),
@@ -249,6 +251,7 @@ BEGIN
            SET fslno = intslno,
                fitemid = stritemid,
                fsn = COALESCE(dbo.getitemgroupsn(pstrcoid, stritemid), 'S'),
+               fitemgroupid = dbo.getitemgroupid(pstrcoid, stritemid),   -- NEW
                fqtyout = COALESCE(numqtyout, 0),
                funit = strunit,
                funitprice = COALESCE(numunitprice, 0),
