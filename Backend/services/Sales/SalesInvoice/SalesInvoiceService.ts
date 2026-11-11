@@ -463,10 +463,9 @@ export const saveSalesInvoice = async (ctx: Ctx, input: SaveInput) => {
   const { dType, validLines, totals: t } = validateInvoice(input);
 
   return withTransaction(async (client) => {
-    // finvoicedate / finvdatetime do not exist in tblstocktrans and
-    // sp_pagesi ignores them, so they are not read on modify
-    const origInvoiceDate: string | null = null;
-    const origInvDateTime: string | null = null;
+    // finvdatetime is written by sp_pagesi; on modify the original is read
+    // here and passed back so it is preserved
+    let origInvDateTime: string | null = null;
     let origCreator:
       | { fcuserid: string | null; fcuserdate: Date | null }
       | undefined;
@@ -496,13 +495,15 @@ export const saveSalesInvoice = async (ctx: Ctx, input: SaveInput) => {
         );
 
       const orig = await client.query(
-        `SELECT fcuserid, fcuserdate
+        `SELECT fcuserid, fcuserdate,
+                to_char(finvdatetime, 'YYYY-MM-DD HH24:MI:SS') AS finvdatetime
            FROM dbo.tblstocktrans
           WHERE fcoid=$1 AND fyear=$2 AND fbrid=$3 AND fdoctype=$4 AND fdocno=$5
           LIMIT 1`,
         docKey,
       );
       origCreator = orig.rows[0];
+      origInvDateTime = orig.rows[0]?.finvdatetime ?? null;
     }
 
     // VB: dtpServerDate = objCommon.GetServerDate()
@@ -512,14 +513,15 @@ export const saveSalesInvoice = async (ctx: Ctx, input: SaveInput) => {
     const invDay = String(date).slice(0, 10); // picked invoice date
 
     // VB: picked date <> server date -> picked date + server time of day
-    //     same day, no original invoice date -> server date/time
+    //     same day, no original -> server date/time
     //     same day, original exists -> keep original
     const invoiceDate: string =
       invDay !== serverDay
         ? `${invDay} ${serverTime}`
-        : (origInvoiceDate ?? serverNow);
+        : (origInvDateTime ?? serverNow);
 
     // SP: IsNullorEmpty(@dtpCreatedInvUserDate) -> now, else keep the original
+    // sp_pagesi stores this in finvdatetime
     const invUserDate: string = origInvDateTime ?? serverNow;
 
     // fUserDate / fMUserDate come from the server clock
