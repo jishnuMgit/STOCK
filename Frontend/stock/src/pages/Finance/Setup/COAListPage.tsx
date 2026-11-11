@@ -1,12 +1,5 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
-import {
-  ChevronDown,
-  ChevronRight,
-  Plus,
-  SquarePen,
-  Trash2,
-  X,
-} from "lucide-react";
+import { ChevronDown, ChevronRight, Plus, SquarePen, X } from "lucide-react";
 
 import COAPage, { type CoaMode } from "./COAPage";
 import { useCoa, type CoaNode } from "../../../hooks/useCoa";
@@ -201,7 +194,7 @@ const TreeRow: React.FC<TreeRowProps> = ({
               onClick={() => onDelete(node)}
               className="flex h-5 w-5 cursor-pointer items-center justify-center text-red-500 hover:text-red-600 focus:outline-none"
             >
-              <Trash2 size={11} strokeWidth={2.5} />
+              <X size={16} strokeWidth={2} />
             </button>
           )}
         </div>
