@@ -39,7 +39,7 @@ const SetZATCADocumentPath: React.FC<SetZATCADocumentPathProps> = ({
 }) => {
   const [serverBackupPath, setServerBackupPath] = useState(DEFAULT_PATH);
   const [exists, setExists] = useState(false); // false => Save, true => Modify
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
   const [pickerOpen, setPickerOpen] = useState(false);
   const [listing, setListing] = useState<FolderListing | null>(null);
   const [pickerLoading, setPickerLoading] = useState(false);
@@ -58,7 +58,6 @@ const SetZATCADocumentPath: React.FC<SetZATCADocumentPathProps> = ({
 
   // page load + Cancel: the saved path of the company
   const loadData = useCallback(async () => {
-    setLoading(true);
     try {
       const { data } = await api<{ data: { filePath: string; exists: boolean } }>(
         "/getZATCAFilePath"
@@ -73,8 +72,34 @@ const SetZATCADocumentPath: React.FC<SetZATCADocumentPathProps> = ({
   }, []);
 
   useEffect(() => {
-    loadData();
-  }, [loadData]);
+    let active = true;
+
+    const loadInitialData = async () => {
+      try {
+        const { data } = await api<{
+          data: { filePath: string; exists: boolean };
+        }>("/getZATCAFilePath");
+        if (active) {
+          setServerBackupPath(data.exists ? data.filePath : DEFAULT_PATH);
+          setExists(data.exists);
+        }
+      } catch (e) {
+        if (active) toast.error((e as Error).message);
+      } finally {
+        if (active) setLoading(false);
+      }
+    };
+
+    void loadInitialData();
+    return () => {
+      active = false;
+    };
+  }, []);
+
+  const handleCancel = () => {
+    setLoading(true);
+    void loadData();
+  };
 
   // lists the sub-folders of a folder ON THE SERVER (the old FolderBrowserDialog)
   const openFolder = async (folder: string) => {
@@ -216,7 +241,7 @@ const SetZATCADocumentPath: React.FC<SetZATCADocumentPathProps> = ({
               <button
                 id="btnCancel"
                 type="button"
-                onClick={loadData}
+                onClick={handleCancel}
                 disabled={loading}
                 className={buttonClass}
               >
