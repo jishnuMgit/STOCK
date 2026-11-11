@@ -1,13 +1,9 @@
 import { Request, Response } from "express";
-import pool from "../../DB/db.js";
+import { getServerDate as fetchServerDate } from "../../services/common/DateTimeService.js";
 
 export const getServerDate = async (_req: Request, res: Response) => {
   try {
-    const result = await pool.query(
-      `SELECT dbo.fn_getserverdate() AS "fServerDate"`,
-    );
-    const serverDate: string = result.rows[0]?.fServerDate ?? "";
-
+    const serverDate = await fetchServerDate();
     return res.json({ success: true, data: { serverDate } });
   } catch (err) {
     console.error("getServerDate error:", err);
