@@ -16,6 +16,9 @@ import {
 
 import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
 import { DatePicker } from "@mui/x-date-pickers/DatePicker";
+import CustomLinkedPairSelect, {
+  type PairSelectOption,
+} from "../../../components/common/CustomLinkedPairSelect";
 
 dayjs.extend(customParseFormat);
 
@@ -105,16 +108,15 @@ const branchColumns = [
   { key: "id", label: "ID", width: "65px", align: "right" as const },
 ];
 
-// customer lookups: the ID box lists customers by ID, the Name box by name
-const customerIdColumns = [
-  { key: "label", label: "Customer ID", width: "120px" },
-  { key: "id", label: "Customer Name", width: "1fr" },
-];
-
-const customerNameColumns = [
-  { key: "label", label: "Customer Name", width: "1fr" },
-  { key: "id", label: "Customer ID", width: "120px" },
-];
+const createPairOptions = (
+  ids: TableSelectOption[],
+  names: TableSelectOption[],
+): PairSelectOption[] =>
+  ids.map((item) => ({
+    value: item.value,
+    firstLabel: item.label,
+    secondLabel: names.find((name) => name.value === item.value)?.label ?? "",
+  }));
 
 // width of the customer pair, so the Branch box lines up with it
 const CUSTOMER_ID_WIDTH = 120;
@@ -381,17 +383,6 @@ const ZATCASubmission: React.FC = () => {
 
   const [customerName, setCustomerName] =
     useState<TableSelectOption | null>(null);
-
-  // picking in either box fills both
-  const pickCustomer = (accountId: string | null) => {
-    if (!accountId) {
-      setCustomerId(null);
-      setCustomerName(null);
-      return;
-    }
-    setCustomerId(customerIdOptions.find((o) => o.value === accountId) ?? null);
-    setCustomerName(customerNameOptions.find((o) => o.value === accountId) ?? null);
-  };
 
   // DATE FILTER
 
@@ -701,7 +692,7 @@ const ZATCASubmission: React.FC = () => {
                     onChange={setBranch}
                     columns={branchColumns}
                     width="100%"
-                    menuWidth={`${BRANCH_WIDTH}px`}
+                    menuWidth={`300px`}
                     placeholder="Select Branch"
                   />
                 </div>
@@ -732,30 +723,42 @@ const ZATCASubmission: React.FC = () => {
               </RadioPanel>
 
               {customerMode === "One Customer" && (
-                <div
-                  className="flex min-w-0 items-center"
-                  style={{ gap: PAIR_GAP }}
-                >
-                  <CommonTableSelect
-                    inputId="lkpCustomerId"
-                    options={customerIdOptions}
-                    value={customerId}
-                    onChange={(o) => pickCustomer(o?.value ?? null)}
-                    columns={customerIdColumns}
-                    width={`${CUSTOMER_ID_WIDTH}px`}
-                    menuWidth={`${CUSTOMER_ID_WIDTH + CUSTOMER_NAME_WIDTH}px`}
-                    placeholder=""
-                  />
+                <div className="min-w-0">
+                  <CustomLinkedPairSelect
+                    firstInputId="lkpcustomerId"
+                    secondInputId="lkpcustomerName"
+                    options={createPairOptions(customerIdOptions, customerNameOptions)}
+                    firstValue={customerId?.value ?? null}
+                    secondValue={customerName?.value ?? null}
+                    firstHeader="Customer ID"
+                    secondHeader="Customer Name"
+                    firstWidth={CUSTOMER_ID_WIDTH}
+                    secondWidth={CUSTOMER_NAME_WIDTH}
+                    gap={PAIR_GAP}
+                    headerFontSize="12px"
+                    menuZIndex={99999}
+                    menuPortalTarget={
+                      typeof document !== "undefined" ? document.body : undefined
+                    }
+                    onChange={(option) => {
+                      setCustomerId(
+                        option
+                          ? {
+                              value: option.value,
+                              label: option.firstLabel,
+                            }
+                          : null,
+                      );
 
-                  <CommonTableSelect
-                    inputId="lkpCustomerName"
-                    options={customerNameOptions}
-                    value={customerName}
-                    onChange={(o) => pickCustomer(o?.value ?? null)}
-                    columns={customerNameColumns}
-                    width={`${CUSTOMER_NAME_WIDTH}px`}
-                    menuWidth={`${CUSTOMER_ID_WIDTH + CUSTOMER_NAME_WIDTH}px`}
-                    placeholder=""
+                      setCustomerName(
+                        option
+                          ? {
+                              value: option.value,
+                              label: option.secondLabel,
+                            }
+                          : null,
+                      );
+                    }}
                   />
                 </div>
               )}
