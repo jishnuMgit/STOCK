@@ -29,19 +29,19 @@ type Option = {
 // SELECT STYLES
 // ============================================================
 
-// Same select box as the Item page / Company page: 30px, #d1d5db border,
-// 4px radius, mint background when focused, 11px text.
+// The select box looks like the text boxes of this page (the .input-style class): 30px, #d7dee7 border,
+// 4px radius, mint background when focused, the same 14px text and colour.
 const selectStyles: StylesConfig<Option, false> = {
   control: (base, state) => ({
     ...base,
     minHeight: "30px",
     height: "30px",
     width: "100%",
-    border: "1px solid #d1d5db",
+    border: "1px solid #d7dee7",
     borderRadius: "4px",
     boxShadow: "none",
     backgroundColor: state.isFocused ? "#eefbf4" : "#ffffff",
-    fontSize: "11px",
+    fontSize: "14px",
     cursor: "pointer",
 
     "&:hover": {
@@ -59,23 +59,23 @@ const selectStyles: StylesConfig<Option, false> = {
   singleValue: (base) => ({
     ...base,
     margin: 0,
-    color: "#374151",
-    fontSize: "11px",
+    color: "#334155",
+    fontSize: "14px",
   }),
 
   placeholder: (base) => ({
     ...base,
     margin: 0,
     color: "#808080",
-    fontSize: "11px",
+    fontSize: "14px",
   }),
 
   input: (base) => ({
     ...base,
     margin: 0,
     padding: 0,
-    fontSize: "11px",
-    color: "#374151",
+    fontSize: "14px",
+    color: "#334155",
   }),
 
   indicatorsContainer: (base) => ({
@@ -101,7 +101,7 @@ const selectStyles: StylesConfig<Option, false> = {
   menu: (base) => ({
     ...base,
     zIndex: 9999,
-    fontSize: 13,
+    fontSize: 14,
     marginTop: 1,
   }),
 
@@ -114,7 +114,7 @@ const selectStyles: StylesConfig<Option, false> = {
   option: (base, state) => ({
     ...base,
     padding: "6px 8px",
-    fontSize: 13,
+    fontSize: 14,
     color: "#202020",
     cursor: "pointer",
 
@@ -137,7 +137,7 @@ const SN_COLS = "grid grid-cols-[1fr_55px]";
 const SnMenuList = (props: MenuListProps<Option, false>) => (
   <components.MenuList {...props}>
     <div
-      className={`${SN_COLS} sticky top-0 z-[1] border-b border-[#cfd7df] bg-[#f5f6fa] text-[13px] font-semibold text-[#24364d]`}
+      className={`${SN_COLS} sticky top-0 z-[1] border-b border-[#cfd7df] bg-[#f5f6fa] text-[14px] font-semibold text-[#24364d]`}
     >
       <div className="border-r border-[#cfd7df] px-[8px] py-[7px]">Type</div>
       <div className="px-[8px] py-[7px]">ID</div>
@@ -170,7 +170,7 @@ const snSelectStyles: StylesConfig<Option, false> = {
   menu: (base) => ({
     ...base,
     zIndex: 9999,
-    fontSize: 13,
+    fontSize: 14,
     marginTop: 1,
     width: "calc(100% + 55px)",
   }),
@@ -178,7 +178,7 @@ const snSelectStyles: StylesConfig<Option, false> = {
   option: (base, state) => ({
     ...base,
     padding: 0,
-    fontSize: 13,
+    fontSize: 14,
     color: "#202020",
     cursor: "pointer",
     backgroundColor: state.isSelected
@@ -337,16 +337,16 @@ const ItemGroupPage: React.FC = () => {
   // yet is the normal case for a new group, so a miss stays quiet.
   // ==========================================================
 
-  const findItemGroup = async (itemGroupId: string) => {
+  const findItemGroup = async (itemGroupId: string): Promise<boolean> => {
     if (!itemGroupId.trim()) {
-      return;
+      return false;
     }
 
     const PstrCoID = localStorage.getItem("PstrCoID");
 
     if (!PstrCoID) {
       toast.error("Company ID not found. Please log in again.");
-      return;
+      return false;
     }
 
     try {
@@ -358,7 +358,7 @@ const ItemGroupPage: React.FC = () => {
 
       if (!response.ok || !result.success) {
         setHasSavedItemGroup(false);
-        return;
+        return false;
       }
 
       setHasSavedItemGroup(true);
@@ -366,9 +366,33 @@ const ItemGroupPage: React.FC = () => {
       setLkpFSN(result.data.lkpFSN || "");
       setLkpVATSlab(result.data.lkpVATSlab || "");
       setTxtVATPer(Number(result.data.txtVATPer ?? 0).toFixed(2));
+      return true;
     } catch (error) {
       console.error("getItemGroup error:", error);
       toast.error("Cannot connect to Item Group API.");
+      return false;
+    }
+  };
+
+  // ==========================================================
+  // SEARCH (the Search button, Alt+E)
+  //
+  // Loads the Item Group of the typed Item Group ID: its name, Stock / Non-stock
+  // and VAT Slab fill in, and the button flips to Modify. (Leaving the ID box
+  // does the same quietly; here a miss says so.)
+  // ==========================================================
+
+  const handleSearch = async () => {
+    if (!txtItemGroupID.trim()) {
+      toast.warning("Enter an Item Group ID to search");
+      document.getElementById("txtItemGroupID")?.focus();
+      return;
+    }
+
+    const found = await findItemGroup(txtItemGroupID);
+
+    if (!found) {
+      toast.info("Item Group not found", { toastId: "ig-not-found" });
     }
   };
 
@@ -546,7 +570,7 @@ const ItemGroupPage: React.FC = () => {
     setTxtVATPer("0.00");
   };
 
-  // Alt+S -> Save (new group), Alt+M -> Modify (existing group),
+  // Alt+S -> Save (new group), Alt+M -> Modify (existing group), Alt+E -> Search,
   // Alt+D -> Delete, Alt+C -> Clear (the underlined letters on the buttons)
   useAltShortcuts({
     s: () => {
@@ -555,6 +579,7 @@ const ItemGroupPage: React.FC = () => {
     m: () => {
       if (hasSavedItemGroup) handleSave();
     },
+    e: handleSearch,
     d: handleDelete,
     c: handleClear,
   });
@@ -752,6 +777,17 @@ const ItemGroupPage: React.FC = () => {
                 {actionWord.charAt(0)}
               </span>
               {actionWord.slice(1)}
+            </button>
+
+            <button
+              id="btnSearch"
+              name="btnSearch"
+              type="button"
+              onClick={handleSearch}
+              title="Alt+E"
+              className="btn-style"
+            >
+              S<span className="underline underline-offset-2">e</span>arch
             </button>
 
             <button
