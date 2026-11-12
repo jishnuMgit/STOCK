@@ -111,6 +111,8 @@ DECLARE
     v_userdate timestamp;
     v_invdatetime timestamp;
 
+	 v_strsavingno character varying;
+
 BEGIN
 
     -- client system time; server time only as a fallback
@@ -143,6 +145,10 @@ BEGIN
 
     END IF;
 
+	  IF v_strsavingno IS NULL THEN
+            v_strsavingno := dbo.getnexttransno(pstrcoid, pstryear, strbrid, 'S');
+      END IF;
+
     ----------------------------------------------------------------
     -- S : INSERT SALES INVOICE ITEM
     ----------------------------------------------------------------
@@ -170,8 +176,8 @@ BEGIN
         )
         VALUES (
             pstrcoid, pstryear::integer, strbrid, strdoctype, strdocno,
-            strdoctype || strdocno,                              -- NEW (confirm format)
-            strsavingno,                                         -- NEW
+            strdoctype || ' '|| strdocno,                              -- NEW (confirm format)
+            v_strsavingno,                                         -- NEW
             strinvoicetype, dtpdate::date, straccountid,
             dbo.getparentcsaccountid(pstrcoid, straccountid),
             straddress1, strphone,
@@ -416,7 +422,7 @@ BEGIN
                     INSERT INTO dbo.tblfintrans (
                         fcoid, fyear, fbrid, fdoctype,
                         fdocno, fdate, fdescription,
-                        fslno, faccountid, fccid, fdebit,
+                        fslno, faccountid, fgaccountid, fccid, fdebit,
                         fcredit, fpost, fyearclose, forigin,
                         fcuserid, fcuserdate,
                         fmuserid, fmuserdate
@@ -424,7 +430,7 @@ BEGIN
                     VALUES (
                         pstrcoid, pstryear::integer, strbrid, strdoctype,
                         strdocno, dtpdate::date, v_strdescription,
-                        v_intslno, v_strcashaccountid, v_strccid,
+                        v_intslno, v_strcashaccountid, dbo.getgaccountid(pstrcoid,v_strcashaccountid),v_strccid,
                         COALESCE(numpaidamt, 0), 0, false, false, v_strorigin,
                         pstruserid, v_userdate,
                         v_strmuserid, v_dtpmuserdate
@@ -449,7 +455,7 @@ BEGIN
                         INSERT INTO dbo.tblarap (
                             fcoid, fyear, fbrid, fdoctype,
                             fdocno, fdate, fdescription,
-                            fslno, faccountid, fdebit, fcredit,
+                            fslno, faccountid, fgaccountid,fdebit, fcredit,
                             fdocamt, fpost, fstatus,
                             fcuserid, fcuserdate,
                             fmuserid, fmuserdate
@@ -457,7 +463,7 @@ BEGIN
                         VALUES (
                             pstrcoid, pstryear::integer, strbrid, strdoctype,
                             strdocno, dtpdate::date, v_strdescription,
-                            v_intslno, v_strpendingcashaccountid,
+                            v_intslno, v_strpendingcashaccountid, dbo.getgaccountid(pstrcoid,v_strpendingcashaccountid),
                             COALESCE(numpendingamt, 0), 0,
                             COALESCE(numpendingamt, 0), false, 'N',
                             pstruserid, v_userdate,
@@ -471,7 +477,7 @@ BEGIN
                     INSERT INTO dbo.tblfintrans (
                         fcoid, fyear, fbrid, fdoctype,
                         fdocno, fdate, fdescription,
-                        fslno, faccountid, fccid, fdebit,
+                        fslno, faccountid,fgaccountid, fccid, fdebit,
                         fcredit, fpost, fyearclose, forigin,
                         fcuserid, fcuserdate,
                         fmuserid, fmuserdate
@@ -479,7 +485,7 @@ BEGIN
                     VALUES (
                         pstrcoid, pstryear::integer, strbrid, strdoctype,
                         strdocno, dtpdate::date, v_strdescription,
-                        v_intslno, v_strpendingcashaccountid, v_strccid,
+                        v_intslno, v_strpendingcashaccountid,dbo.getgaccountid(pstrcoid,v_strpendingcashaccountid), v_strccid,
                         COALESCE(numpendingamt, 0), 0, false, false, v_strorigin,
                         pstruserid, v_userdate,
                         v_strmuserid, v_dtpmuserdate
@@ -502,7 +508,7 @@ BEGIN
                 INSERT INTO dbo.tblfintrans (
                     fcoid, fyear, fbrid, fdoctype,
                     fdocno, fdate, fdescription,
-                    fslno, faccountid, fccid, fdebit,
+                    fslno, faccountid,fgaccountid, fccid, fdebit,
                     fcredit, fpost, fyearclose, forigin,
                     fcuserid, fcuserdate,
                     fmuserid, fmuserdate
@@ -510,7 +516,7 @@ BEGIN
                 VALUES (
                     pstrcoid, pstryear::integer, strbrid, strdoctype,
                     strdocno, dtpdate::date, v_strdescription,
-                    v_intslno, v_strsiaccountid, v_strccid, 0,
+                    v_intslno, v_strsiaccountid,dbo.getgaccountid(pstrcoid,v_strsiaccountid), v_strccid, 0,
                     COALESCE(numnetdocamtwovat, 0), false, false, v_strorigin,
                     pstruserid, v_userdate,
                     v_strmuserid, v_dtpmuserdate
@@ -532,7 +538,7 @@ BEGIN
                 INSERT INTO dbo.tblfintrans (
                     fcoid, fyear, fbrid, fdoctype,
                     fdocno, fdate, fdescription,
-                    fslno, faccountid, fccid, fdebit,
+                    fslno, faccountid,fcsaccountid,fgaccountid, fccid, fdebit,
                     fcredit, fpost, fyearclose, forigin,
                     fcuserid, fcuserdate,
                     fmuserid, fmuserdate
@@ -540,7 +546,7 @@ BEGIN
                 VALUES (
                     pstrcoid, pstryear::integer, strbrid, strdoctype,
                     strdocno, dtpdate::date, v_strcustdescription,
-                    v_intslno, straccountid, v_strccid,
+                    v_intslno, straccountid, straccountid,  dbo.getparentcsaccountid(pstrcoid, straccountid),v_strccid,
                     COALESCE(numnetdocamt, 0), 0, false, false, v_strorigin,
                     pstruserid, v_userdate,
                     v_strmuserid, v_dtpmuserdate
@@ -551,16 +557,16 @@ BEGIN
 
                     INSERT INTO dbo.tblarap (
                         fcoid, fyear, fbrid, fdoctype,
-                        fdocno, fdate, fdescription,
-                        fslno, faccountid, fdebit, fcredit,
+                        fdocno,fdoctypeno, fdate, fdescription,
+                        fslno, faccountid,fcsaccountid,fgaccountid, fdebit, fcredit,
                         fdocamt, fpost, fstatus,
                         fcuserid, fcuserdate,
                         fmuserid, fmuserdate
                     )
                     VALUES (
                         pstrcoid, pstryear::integer, strbrid, strdoctype,
-                        strdocno, dtpdate::date, v_strcustdescription,
-                        v_intslno, straccountid,
+                        strdocno,strdoctype ||' ' || strdocno, dtpdate::date, v_strcustdescription,
+                        v_intslno, straccountid,straccountid, dbo.getparentcsaccountid(pstrcoid, straccountid),
                         COALESCE(numnetdocamt, 0), 0,
                         COALESCE(numnetdocamt, 0), false, 'N',
                         pstruserid, v_userdate,
@@ -584,7 +590,7 @@ BEGIN
                 INSERT INTO dbo.tblfintrans (
                     fcoid, fyear, fbrid, fdoctype,
                     fdocno, fdate, fdescription,
-                    fslno, faccountid, fccid, fdebit,
+                    fslno, faccountid,fgaccountid, fccid, fdebit,
                     fcredit, fpost, fyearclose, forigin,
                     fcuserid, fcuserdate,
                     fmuserid, fmuserdate
@@ -592,7 +598,7 @@ BEGIN
                 VALUES (
                     pstrcoid, pstryear::integer, strbrid, strdoctype,
                     strdocno, dtpdate::date, v_strdescription,
-                    v_intslno, v_strsiaccountid, v_strccid, 0,
+                    v_intslno, v_strsiaccountid,dbo.getgaccountid(pstrcoid,v_strsiaccountid), v_strccid, 0,
                     COALESCE(numnetdocamtwovat, 0), false, false, v_strorigin,
                     pstruserid, v_userdate,
                     v_strmuserid, v_dtpmuserdate
@@ -621,14 +627,14 @@ BEGIN
                 INSERT INTO dbo.tblfintrans (
                     fcoid, fyear, fbrid, fdoctype,
                     fdocno, fslno, fdate,
-                    faccountid, fccid, fdescription,
+                    faccountid,fgaccountid, fccid, fdescription,
                     fdebit, fcredit, fpost, fyearclose,
                     forigin, fcuserid, fcuserdate
                 )
                 VALUES (
                     pstrcoid, pstryear::integer, strbrid, strdoctype,
                     strdocno, v_intslno, dtpdate::date,
-                    v_straccountid, v_strccid, v_strdescription,
+                    v_straccountid,dbo.getgaccountid(pstrcoid,v_straccountid), v_strccid, v_strdescription,
                     COALESCE(v_numdebit, 0),
                     COALESCE(v_numcredit, 0),
                     false, false, v_strorigin,
