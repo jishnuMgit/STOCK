@@ -116,7 +116,7 @@ export const buildZatcaPdfA3Filter = (p: ZatcaPdfA3Params): string => {
     parts.push(`fdate::date >= ${dateLit(p.fromDate)}`, `fdate::date <= ${dateLit(p.toDate)}`);
   }
 
-  if (p.customerMode === "one") parts.push(`faccountid = ${lit(p.customerId ?? "")}`);
+  if (p.customerMode === "one") parts.push(`fcsaccountid = ${lit(p.customerId ?? "")}`);
 
   return parts.join(" AND ");
 };
