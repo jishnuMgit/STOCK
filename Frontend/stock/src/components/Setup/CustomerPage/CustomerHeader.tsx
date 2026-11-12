@@ -176,8 +176,8 @@ const CustomDropdownIndicator = (props: any) => {
 // First column = width of the input box (--ctrl-w, minus the 1px menu border),
 // so the divider sits exactly under the input's right edge.
 // 110px minimum keeps the narrow ID input's column readable.
-const ID_COLS = "max(calc(var(--ctrl-w, 140px) - 1px), 110px) 1fr";
-const NAME_COLS = ID_COLS;
+const ID_COLS = "120px 1fr";
+const NAME_COLS = "max(calc(var(--ctrl-w, 140px) - 1px), 110px) 1fr";
 
 // Wider menu so both columns fit even though the control itself is narrow.
 // Option padding moves into the cells so the divider spans the full row height.
@@ -192,8 +192,31 @@ const accountSelectStyles: StylesConfig<SelectOption, false> = {
   option: (base, state) => ({
     ...(selectStyles.option ? selectStyles.option(base, state) : base),
     padding: 0,
+    fontSize: "13px",
     borderBottom: "1px solid #f1f5f9",
   }),
+};
+
+// GL.Account ID dropdown: from the left edge of the ID box to the right
+// edge of the Name box (measured when the menu opens)
+const accountIdSelectStyles: StylesConfig<SelectOption, false> = {
+  ...accountSelectStyles,
+  menu: (base, state) => {
+    const idBox = document.getElementById("glIdBox")?.getBoundingClientRect();
+    const nameBox = document
+      .getElementById("glNameBox")
+      ?.getBoundingClientRect();
+
+    const width =
+      idBox && nameBox ? Math.round(nameBox.right - idBox.left) : 480;
+
+    return {
+      ...(selectStyles.menu ? selectStyles.menu(base, state) : base),
+      width,
+      minWidth: width,
+      maxWidth: "90vw",
+    };
+  },
 };
 
 // Open menu: two columns with a divider. Closed box: label only.
@@ -231,13 +254,13 @@ const makeAccountMenuList = (left: string, right: string, cols: string) => {
 const formatIdOption = makeAccountFormatter(ID_COLS);
 const formatNameOption = makeAccountFormatter(NAME_COLS);
 const AccountIdMenuList = makeAccountMenuList(
-  "GL.Account ID",
-  "GL.Account Name",
+  "GL. Account ID",
+  "GL. Account Name",
   ID_COLS,
 );
 const AccountNameMenuList = makeAccountMenuList(
-  "GL.Account Name",
-  "GL.Account ID",
+  "GL. Account Name",
+  "GL. Account ID",
   NAME_COLS,
 );
 
@@ -303,7 +326,7 @@ const CustomerHeader: React.FC<CustomerHeaderProps> = ({
   // INPUT STYLE
   // ==========================================================
 
-  const inputClass = `h-[30px] w-full rounded-[3px] border border-slate-400 bg-white px-2 text-[12px] text-slate-700 outline-none
+  const inputClass = `h-[30px] w-full rounded-[3px] border border-slate-400 px-2 text-[12px] outline-none
     focus:border-blue-500 focus:ring-1 focus:ring-blue-200`;
 
   return (
@@ -416,8 +439,8 @@ const CustomerHeader: React.FC<CustomerHeaderProps> = ({
               readOnly={idLocked || optNewCustomerID === "Auto"}
               className={`${inputClass} ${
                 idLocked || optNewCustomerID === "Auto"
-                  ? "cursor-not-allowed bg-slate-100 text-slate-500"
-                  : ""
+                  ? "cursor-not-allowed bg-slate-200 text-slate-500"
+                  : "bg-white text-slate-700"
               }`}
             />
           </div>
@@ -428,7 +451,7 @@ const CustomerHeader: React.FC<CustomerHeaderProps> = ({
           <div className="grid grid-cols-[30%_minmax(0,1fr)] items-end gap-2.5 sm:col-span-2 lg:col-span-1">
             {/* PARENT ACCOUNT ID */}
 
-            <div className="w-full">
+            <div id="glIdBox" className="w-full">
               <label
                 htmlFor="lkpGAccountID"
                 className="mb-1 block whitespace-nowrap text-[11px] text-slate-600"
@@ -444,7 +467,7 @@ const CustomerHeader: React.FC<CustomerHeaderProps> = ({
                 value={getOption(accountIdOptions, lkpGAccountID)}
                 onChange={handleAccountChange}
                 formatOptionLabel={formatIdOption}
-                styles={accountSelectStyles}
+                styles={accountIdSelectStyles}
                 components={{
                   DropdownIndicator: CustomDropdownIndicator,
                   MenuList: AccountIdMenuList,
@@ -457,7 +480,7 @@ const CustomerHeader: React.FC<CustomerHeaderProps> = ({
 
             {/* PARENT ACCOUNT NAME */}
 
-            <div className="w-full">
+            <div id="glNameBox" className="w-full">
               <label
                 htmlFor="lkpGAccountName"
                 className="mb-1 block whitespace-nowrap text-[11px] text-slate-600"
