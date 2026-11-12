@@ -228,7 +228,7 @@ async function saveHistory(
     [
       mode,
       ctx.coId,
-      Number(ctx.year),
+      ctx.year,
       doc.brId,
       doc.docType,
       doc.docNo,
@@ -320,6 +320,8 @@ export async function submitZATCADocumentsService(
       ]);
 
       const out = await submitToZatca({
+        coId,
+        year,
         doc,
         customerType,
         counterValue,
@@ -347,12 +349,14 @@ export async function submitZATCADocumentsService(
         results.push({ ...base, status: out.status });
       } else {
         rejected += 1;
+        // the history status column is varchar(100); the VB stored the short label
+        // (Unauthorized / BadRequest / ...), the full reason goes back to the page
         await saveHistory("S", ctx, doc, {
           invoiceHash: "",
           xmlHash: "",
           qrCode: "",
           sequenceNo: 0,
-          status: out.message ?? "Rejected",
+          status: (out.rejectStatus ?? out.message ?? "Rejected").slice(0, 100),
         });
         results.push({ ...base, status: "REJECTED", message: out.message });
       }

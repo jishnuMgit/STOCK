@@ -1,5 +1,5 @@
 
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import dayjs from "dayjs";
 import { toast } from "react-toastify";
 import customParseFormat from "dayjs/plugin/customParseFormat";
@@ -384,6 +384,27 @@ const ZATCASubmission: React.FC = () => {
   const [customerName, setCustomerName] =
     useState<TableSelectOption | null>(null);
 
+  const customerPairOptionsById = useMemo(
+    () =>
+      createPairOptions(customerIdOptions, customerNameOptions).sort((a, b) =>
+        a.firstLabel.localeCompare(b.firstLabel, undefined, {
+          numeric: true,
+          sensitivity: "base",
+        }),
+      ),
+    [customerIdOptions, customerNameOptions],
+  );
+  const customerPairOptionsByName = useMemo(
+    () =>
+      [...customerPairOptionsById].sort((a, b) =>
+        a.secondLabel.localeCompare(b.secondLabel, undefined, {
+          numeric: true,
+          sensitivity: "base",
+        }),
+      ),
+    [customerPairOptionsById],
+  );
+
   // DATE FILTER
 
   const [dateMode, setDateMode] =
@@ -572,7 +593,7 @@ const ZATCASubmission: React.FC = () => {
   // CANCEL
   // ==================================================
 
-  const handleCancel = () => {
+  const handleClear = () => {
     setDocumentMode("One Document");
     setDocumentType(null);
     setDocumentFilter("By Document Date");
@@ -727,7 +748,8 @@ const ZATCASubmission: React.FC = () => {
                   <CustomLinkedPairSelect
                     firstInputId="lkpcustomerId"
                     secondInputId="lkpcustomerName"
-                    options={createPairOptions(customerIdOptions, customerNameOptions)}
+                    options={customerPairOptionsById}
+                    secondOptions={customerPairOptionsByName}
                     firstValue={customerId?.value ?? null}
                     secondValue={customerName?.value ?? null}
                     firstHeader="Customer ID"
@@ -1023,10 +1045,10 @@ const ZATCASubmission: React.FC = () => {
             </ActionButton>
 
             <ActionButton
-              onClick={handleCancel}
+              onClick={handleClear}
               className="w-20"
             >
-              Cancel
+              Clear
             </ActionButton>
 
             <ActionButton

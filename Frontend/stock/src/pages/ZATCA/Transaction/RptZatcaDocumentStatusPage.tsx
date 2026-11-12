@@ -1,10 +1,20 @@
 
-import React, { useState } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
+import { toast } from "react-toastify";
 import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
 import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
 import { DatePicker } from "@mui/x-date-pickers/DatePicker";
 import dayjs from "dayjs";
 import customParseFormat from "dayjs/plugin/customParseFormat";
+
+import { saveFile } from "./saveFile";
+import {
+  buildPdfBlob,
+  buildReportHtml,
+  printZatcaDocumentStatusReport,
+  type ReportData,
+  type ReportRow,
+} from "./zatcaDocumentStatusReport";
 
 import Header from "../../../components/common/Header";
 import CommonTableSelect, {
@@ -16,10 +26,37 @@ dayjs.extend(customParseFormat);
 const DATE_FORMAT = "DD/MM/YYYY";
 const TODAY = dayjs().format(DATE_FORMAT);
 
-const branchOptions: TableSelectOption[] = [
-  { value: "JD", label: "JEDDAH", id: "JD" },
-  { value: "RH", label: "RIYADH", id: "RH" },
-];
+// Router mount: app.use("/api/zatca-document-status", zatcaDocumentStatusRouter)
+const API = import.meta.env.VITE_API_URL + "/zatca-document-status";
+
+const api = async <T,>(path: string, init?: RequestInit): Promise<T> => {
+  const res = await fetch(`${API}${path}`, {
+    credentials: "include",
+    headers: { "Content-Type": "application/json" },
+    ...init,
+  });
+  const type = res.headers.get("content-type") ?? "";
+  if (!type.includes("application/json")) {
+    throw new Error(`Unexpected response from ${API}${path} (${res.status}): route not reachable`);
+  }
+  const json = await res.json();
+  if (!res.ok || json.success === false) {
+    throw new Error(json.message || `Request failed (${res.status})`);
+  }
+  return json as T;
+};
+
+type ApiResult = {
+  data: {
+    coName: string;
+    heading: string;
+    branchLabel: string;
+    reportInfo: string;
+    rows: ReportRow[];
+    totals: { amountExVat: number; vatAmount: number; amountInVat: number };
+    fileBase: string;
+  };
+};
 
 const branchColumns = [
   { key: "label", label: "Branch", width: "1fr" },
@@ -197,11 +234,13 @@ const ActionButton: React.FC<{
   children: React.ReactNode;
   onClick: () => void;
   className?: string;
-}> = ({ children, onClick, className = "" }) => (
+  disabled?: boolean;
+}> = ({ children, onClick, className = "", disabled = false }) => (
   <button
     type="button"
     onClick={onClick}
-    className={`min-w-20 btn-style ${className}`}
+    disabled={disabled}
+    className={`min-w-20 btn-style ${disabled ? "opacity-50" : ""} ${className}`}
   >
     {children}
   </button>
@@ -220,23 +259,202 @@ const RptZatcaDocumentStatus: React.FC = () => {
 
   const [excludeInterCompany, setExcludeInterCompany] = useState(true);
 
-  const handlePrint = () => {
-    console.log("ZATCA Document Status", {
-      branchMode,
-      branch: branchMode === "One Branch" ? branch : null,
-      documentStatus,
-      dateMode,
+  const [branchOptions, setBranchOptions] = useState<TableSelectOption[]>([]);
+  const [busy, setBusy] = useState(false);
+
+  // rdgReportFile (inside the Print Preview): what Download saves
+  const [reportFile, setReportFile] = useState("Excel"); // "Excel" | "PDF"
+
+  // print preview: shown after Print. Print there sends it to the printer,
+  // Download saves the "File Format" choice
+  const [preview, setPreview] = useState<{
+    data: ReportData;
+    fileBase: string;
+    body: Record<string, unknown>;
+  } | null>(null);
+
+  useEffect(() => {
+    api<{ data: { fbrname: string; fbrid: string }[] }>("/getBranchList")
+      .then(({ data }) =>
+        setBranchOptions(
+          (data ?? []).map((b) => ({ value: b.fbrid, label: b.fbrname, id: b.fbrid })),
+        ),
+      )
+      .catch((e: Error) => toast.error(e.message));
+  }, []);
+
+  // ValidateMe_P (the server checks again) + one call for the report data
+  const loadReport = async (): Promise<{
+    data: ReportData;
+    fileBase: string;
+    body: Record<string, unknown>;
+  } | null> => {
+    if (branchMode === "One Branch" && !branch) {
+      toast.error("Please select 'Branch'");
+      return null;
+    }
+    if (!fromDate) {
+      toast.error("Please select 'From Date'");
+      return null;
+    }
+    if (!toDate) {
+      toast.error("Please select 'To Date'");
+      return null;
+    }
+    if (dayjs(fromDate, DATE_FORMAT).isAfter(dayjs(toDate, DATE_FORMAT))) {
+      toast.error("'To Date' should be greater than or equal to 'From Date'");
+      return null;
+    }
+
+    const body = {
+      branchMode: branchMode === "One Branch" ? "one" : "all",
+      branchId: branch?.value ?? null,
+      clearType: documentStatus === "Cleared" ? 0 : 1,
+      // rdgDate: 0 submission, 1 issue, 2 document
+      dateType:
+        dateMode === "By Submission Date" ? 0 : dateMode === "By Document Issue Date" ? 1 : 2,
+      excludeInterCompany,
       fromDate,
       toDate,
-      excludeInterCompany,
+    };
+
+    setBusy(true);
+    try {
+      const { data } = await api<ApiResult>("/getZATCADocumentStatus", {
+        method: "POST",
+        body: JSON.stringify(body),
+      });
+
+      // the heading, branch line and report info come from the server, so the
+      // preview, the PDF and the Excel file always carry the same text
+      const { fileBase, ...report } = data;
+      return { data: report, fileBase, body };
+    } catch (e) {
+      toast.error((e as Error).message);
+      return null;
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  // Print opens the preview, like the VB form (objRpt.ShowPreview);
+  // Print and Download are inside the preview
+  const handlePrint = async () => {
+    if (busy || preview) return;
+    const r = await loadReport();
+    if (r) setPreview({ data: r.data, fileBase: r.fileBase, body: r.body });
+  };
+
+  // Print in the preview: the browser print dialog (printer)
+  const handlePreviewPrint = () => {
+    if (!preview || busy) return;
+    try {
+      printZatcaDocumentStatusReport(preview.data);
+    } catch {
+      toast.error("Could not open the print view");
+    }
+  };
+
+  // gets the .xlsx made by the server (null after an error message)
+  const fetchExcel = async (body: Record<string, unknown>): Promise<Blob | null> => {
+    const res = await fetch(`${API}/downloadZATCADocumentStatusExcel`, {
+      method: "POST",
+      credentials: "include",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(body),
     });
 
-    // Connect your report API / Print function here.
+    // an error comes back as JSON, the file as a blob
+    if (!res.ok) {
+      let message = "Could not create the Excel file";
+      try {
+        const json = await res.json();
+        message = json.message || message;
+      } catch {
+        // not JSON: the server has no such route (404) or crashed (500)
+        message =
+          res.status === 404
+            ? "Excel is not available: the route was not found (404)"
+            : `Could not create the Excel file (error ${res.status})`;
+      }
+      toast.error(message);
+      return null;
+    }
+
+    return res.blob();
   };
 
+  // Download in the preview: saves the chosen file ("Save as" window, so the
+  // browser does not open it afterwards). A double click must not start two
+  // saves (state is not updated yet on the second click, so a ref is used)
+  const downloading = useRef(false);
+
+  const handlePreviewOk = async () => {
+    if (!preview || busy || downloading.current) return;
+    downloading.current = true;
+    const { data, fileBase, body } = preview;
+    const asPdf = reportFile === "PDF";
+
+    setBusy(true);
+    try {
+      const blob = asPdf ? await buildPdfBlob(data) : await fetchExcel(body);
+      if (!blob) return; // the error is already shown
+
+      const kind = asPdf ? "pdf" : "xlsx";
+      const saved = await saveFile(blob, `${fileBase}.${kind}`, kind);
+      if (saved) {
+        toast.success(asPdf ? "PDF file downloaded" : "Excel file downloaded");
+        setPreview(null); // cancelled "Save as": the preview stays
+      }
+    } catch {
+      toast.error(asPdf ? "Could not create the PDF file" : "Could not create the Excel file");
+    } finally {
+      downloading.current = false;
+      setBusy(false);
+    }
+  };
+
+  // 40px left / 20px right margin for the preview only
+  const previewHtml = useMemo(
+    () =>
+      preview
+        ? buildReportHtml(preview.data).replace(
+            "</head>",
+            "<style>body{padding-left:40px;padding-right:20px}</style></head>",
+          )
+        : "",
+    [preview],
+  );
+
   const handleClose = () => {
+    setReportFile("Excel");
+    setPreview(null);
     window.history.back();
   };
+
+  // Escape closes the preview. Alt+P prints, Alt+C closes (Ctrl+P of the old
+  // form clashes with the browser). Re-attached every render so it always sees
+  // the latest state.
+  useEffect(() => {
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (preview) {
+        if (event.key === "Escape") setPreview(null);
+        return;
+      }
+      if (!event.altKey || event.ctrlKey || event.metaKey) return;
+
+      if (event.code === "KeyP") {
+        event.preventDefault();
+        handlePrint();
+      } else if (event.code === "KeyC") {
+        event.preventDefault();
+        handleClose();
+      }
+    };
+
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
+  });
 
   return (
     <div className="min-h-full w-full bg-white p-1 sm:p-2">
@@ -369,6 +587,7 @@ const RptZatcaDocumentStatus: React.FC = () => {
             <div className="flex items-center justify-center gap-1 pt-0.5">
               <ActionButton
                 onClick={handlePrint}
+                disabled={busy}
                 className="h-9 w-20"
               >
                 <u>P</u>rint
@@ -403,6 +622,80 @@ const RptZatcaDocumentStatus: React.FC = () => {
           </div>
         </section>
       </main>
+
+      {/* Print preview */}
+      {preview && (
+        <div className="fixed inset-0 z-[99999] flex items-center justify-center bg-black/40 p-4">
+          <div className="flex h-[90vh] w-full max-w-300 flex-col overflow-hidden border border-gray-400 bg-white shadow-xl">
+            <header className="flex h-7.5 shrink-0 items-center bg-[#9fdfbc] pl-3 text-[17px] font-semibold text-slate-700">
+              Print Preview
+            </header>
+
+            <iframe
+              title="Print Preview"
+              srcDoc={previewHtml}
+              className="min-h-0 flex-1 border-0 bg-white"
+            />
+
+            <footer className="flex shrink-0 flex-wrap items-center justify-center gap-4 border-t border-[#e0e5ea] px-3 py-4">
+              <div className="flex gap-3">
+                <button
+                  id="btnPreviewPrint"
+                  type="button"
+                  onClick={handlePreviewPrint}
+                  disabled={busy}
+                  className="btn-style focus-visible:ring-2 focus-visible:ring-[#64d96e] disabled:cursor-not-allowed disabled:opacity-40"
+                >
+                  <u>P</u>rint
+                </button>
+                <button
+                  id="btnPreviewOk"
+                  type="button"
+                  autoFocus
+                  onClick={handlePreviewOk}
+                  disabled={busy}
+                  className="btn-style focus-visible:ring-2 focus-visible:ring-[#64d96e] disabled:cursor-not-allowed disabled:opacity-40"
+                >
+                  <u>D</u>ownload
+                </button>
+                <button
+                  id="btnPreviewCancel"
+                  type="button"
+                  onClick={() => setPreview(null)}
+                  disabled={busy}
+                  className="btn-style focus-visible:ring-2 focus-visible:ring-[#64d96e] disabled:cursor-not-allowed disabled:opacity-40"
+                >
+                  <u>C</u>lose
+                </button>
+              </div>
+
+              {/* File Format: what Download saves */}
+              <div
+                id="rdgReportFile"
+                className="relative flex items-center gap-5 border border-[#e0e5ea] bg-white px-10.5 py-2.5"
+              >
+                <span className="absolute -top-2.5 left-2.5 bg-white px-1 text-[13px] text-[#405066]">
+                  File Format
+                </span>
+                <CustomRadio
+                  name="rdgReportFile"
+                  value="Excel"
+                  label="Excel"
+                  checked={reportFile === "Excel"}
+                  onChange={() => setReportFile("Excel")}
+                />
+                <CustomRadio
+                  name="rdgReportFile"
+                  value="PDF"
+                  label="PDF"
+                  checked={reportFile === "PDF"}
+                  onChange={() => setReportFile("PDF")}
+                />
+              </div>
+            </footer>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
