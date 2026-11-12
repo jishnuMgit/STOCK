@@ -139,6 +139,25 @@ const callProc = (
 const callSI = (db: PoolClient, args: Record<string, unknown>) =>
   callProc(db, SP_PAGE_SI, args, "");
 
+const getNextSavingNo = async (
+  client: PoolClient,
+  coId: string,
+  year: string,
+  brId: string,
+): Promise<string> => {
+  // serialize concurrent saves for the same company/year/branch
+  await client.query(`SELECT pg_advisory_xact_lock(hashtext($1))`, [
+    `SI-SAVING-${coId}-${year}-${brId}`,
+  ]);
+  const r = await client.query(
+    `SELECT COALESCE(MAX(NULLIF(fsavingno, '')::bigint), 0) + 1 AS n
+       FROM dbo.tblstocktrans
+      WHERE fcoid=$1 AND fyear=$2 AND fbrid=$3 AND fdoctype=$4`,
+    [coId, Number(year), brId, DOC_TYPE],
+  );
+  return String(r.rows[0].n);
+};
+
 /* =========================================================
    Calculation
    ========================================================= */
@@ -489,6 +508,7 @@ export const getItemStockDetails = async (
 /* =========================================================
    SAVE (create or modify)
    ========================================================= */
+
 export const saveSalesInvoice = async (ctx: Ctx, input: SaveInput) => {
   const { coId, userId } = requireAuth(ctx);
   const {
@@ -526,6 +546,9 @@ export const saveSalesInvoice = async (ctx: Ctx, input: SaveInput) => {
       | { fcuserid: string | null; fcuserdate: Date | null }
       | undefined;
 
+    // NEW: fsavingno is created once on save and preserved on modify
+    let savingNo: string | null = null;
+
     const docKey = [coId, Number(year), brId, DOC_TYPE, docNo];
 
     if (mode === "S") {
@@ -540,6 +563,9 @@ export const saveSalesInvoice = async (ctx: Ctx, input: SaveInput) => {
           409,
           "Sales Invoice with the same 'Invoice No.' already exists",
         );
+
+      // NEW
+      savingNo = await getNextSavingNo(client, coId, year, brId);
     } else {
       const posted = await isPosted(client, coId, year, brId, docNo);
       if (posted === null)
@@ -551,7 +577,7 @@ export const saveSalesInvoice = async (ctx: Ctx, input: SaveInput) => {
         );
 
       const orig = await client.query(
-        `SELECT fcuserid, fcuserdate,
+        `SELECT fcuserid, fcuserdate, fsavingno,
                 to_char(finvdatetime, 'YYYY-MM-DD HH24:MI:SS') AS finvdatetime
            FROM dbo.tblstocktrans
           WHERE fcoid=$1 AND fyear=$2 AND fbrid=$3 AND fdoctype=$4 AND fdocno=$5
@@ -560,6 +586,12 @@ export const saveSalesInvoice = async (ctx: Ctx, input: SaveInput) => {
       );
       origCreator = orig.rows[0];
       origInvDateTime = orig.rows[0]?.finvdatetime ?? null;
+
+      // NEW: keep the original saving no; invoices saved before this
+      // feature have none, so give them one
+      savingNo =
+        orig.rows[0]?.fsavingno ||
+        (await getNextSavingNo(client, coId, year, brId));
     }
 
     // VB: dtpServerDate = objCommon.GetServerDate()
@@ -623,6 +655,7 @@ export const saveSalesInvoice = async (ctx: Ctx, input: SaveInput) => {
       numnetitemdiscamt: t.netItemDiscAmt,
       numtotalpriceexclvat: t.totalPriceExclVAT,
       dtpcreatedinvuserdate: invUserDate,
+      strsavingno: savingNo, // NEW
     };
 
     if (mode === "M") {
@@ -704,6 +737,7 @@ export const saveSalesInvoice = async (ctx: Ctx, input: SaveInput) => {
       message: mode === "S" ? "Saved" : "Modified",
       data: {
         docNo,
+        savingNo, // NEW (handy for the screen; remove if not needed)
         totals: {
           docAmt: t.docAmt,
           discAmt: t.discAmt,
