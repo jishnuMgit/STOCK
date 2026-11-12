@@ -504,14 +504,20 @@ const MatchEnquiryComponents = forwardRef<MatchingComponentsRef, Props>(
     const handleCustomerIdChange = useCallback(
       async (id: string) => {
         setLkpCsAccountID(id);
+        setLkpDivision(""); // NEW
 
         const customer = customerOptions.find((option) => option.value === id);
-
         setLkpCsAccountName(customer?.label ?? "");
 
         await getDivisions(id);
       },
-      [customerOptions, setLkpCsAccountID, setLkpCsAccountName, getDivisions],
+      [
+        customerOptions,
+        setLkpCsAccountID,
+        setLkpCsAccountName,
+        setLkpDivision,
+        getDivisions,
+      ], // NEW dep
     );
 
     /* =====================================================
@@ -521,30 +527,31 @@ const MatchEnquiryComponents = forwardRef<MatchingComponentsRef, Props>(
     const handleCustomerNameChange = useCallback(
       async (name: string) => {
         setLkpCsAccountName(name);
+        setLkpDivision(""); // NEW
 
         const customer = customerNameOptions.find(
           (option) => option.value === name,
         );
-
         const accountId = customer?.label ?? "";
 
         setLkpCsAccountID(accountId);
-
         await getDivisions(accountId);
       },
       [
         customerNameOptions,
         setLkpCsAccountID,
         setLkpCsAccountName,
+        setLkpDivision,
         getDivisions,
-      ],
+      ], // NEW dep
     );
 
+    const hasDivisions = divisionOptions.length > 0;
+
     /* =====================================================
-       DOCUMENT NO. LIST: loaded when a Customer and a Division are chosen
-       (what the Search button did). The screen has no Document Type box: every matched document of the customer
-       and division is listed, each with its own type. The same number can be used by two types (a Bank Receipt and
-       a Cash Receipt), so the option's value is "lkpBranch|type|number" and its label the number.
+       DOCUMENT NO. LIST: loaded when a Customer is chosen and, if the
+       customer has divisions, a Division is chosen too.
+       Replace the whole existing useEffect with this one.
     ===================================================== */
 
     useEffect(() => {
@@ -552,7 +559,13 @@ const MatchEnquiryComponents = forwardRef<MatchingComponentsRef, Props>(
       setDocumentNoOptions([]);
       onSearch();
 
-      if (!lkpCsAccountID.trim() || !lkpDivision.trim()) return;
+      if (!lkpCsAccountID.trim()) return;
+
+      // wait until the customer's divisions are known
+      if (divisionLoading) return;
+
+      // a division is mandatory only when the customer has divisions
+      if (hasDivisions && !lkpDivision.trim()) return;
 
       let cancelled = false;
 
@@ -615,7 +628,14 @@ const MatchEnquiryComponents = forwardRef<MatchingComponentsRef, Props>(
       return () => {
         cancelled = true;
       };
-    }, [lkpCsAccountID, lkpDivision, getDocumentNos, onSearch]);
+    }, [
+      lkpCsAccountID,
+      lkpDivision,
+      hasDivisions,
+      divisionLoading,
+      getDocumentNos,
+      onSearch,
+    ]);
 
     /* =====================================================
        DOCUMENT NO. SELECTED → LOAD ENQUIRY LINES
