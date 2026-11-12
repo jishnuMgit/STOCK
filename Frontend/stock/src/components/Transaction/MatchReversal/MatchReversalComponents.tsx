@@ -460,7 +460,13 @@ const MatchReversalComponents = forwardRef<MatchingComponentsRef, Props>(
       onSearch([]); // parent clears searchResults, receiptNo and the table rows
     }, [onSearch]);
 
-    const canSearch = customerId.trim() !== "" && divisionId.trim() !== "";
+    const hasDivisions = divisionOptionsLocal.length > 0;
+
+    // a division is mandatory only when the customer has divisions
+    const canSearch =
+      customerId.trim() !== "" &&
+      !divisionLoading &&
+      (!hasDivisions || divisionId.trim() !== "");
 
     useEffect(() => {
       setDocumentNoOptions([]);
@@ -578,14 +584,21 @@ const MatchReversalComponents = forwardRef<MatchingComponentsRef, Props>(
       async (id: string) => {
         resetResults();
         setCustomerId(id);
+        setDivisionId(""); // NEW
 
         const customer = customerOptions.find((option) => option.value === id);
-
         setCustomerName(customer?.label ?? "");
 
         await getDiv(id);
       },
-      [resetResults, customerOptions, setCustomerId, setCustomerName, getDiv],
+      [
+        resetResults,
+        customerOptions,
+        setCustomerId,
+        setCustomerName,
+        setDivisionId, // NEW
+        getDiv,
+      ],
     );
 
     /* =====================================================
@@ -596,15 +609,14 @@ const MatchReversalComponents = forwardRef<MatchingComponentsRef, Props>(
       async (name: string) => {
         resetResults();
         setCustomerName(name);
+        setDivisionId(""); // NEW
 
         const customer = customerNameOptions.find(
           (option) => option.value === name,
         );
-
         const accountId = customer?.label ?? "";
 
         setCustomerId(accountId);
-
         await getDiv(accountId);
       },
       [
@@ -612,6 +624,7 @@ const MatchReversalComponents = forwardRef<MatchingComponentsRef, Props>(
         customerNameOptions,
         setCustomerId,
         setCustomerName,
+        setDivisionId, // NEW
         getDiv,
       ],
     );
@@ -654,7 +667,9 @@ const MatchReversalComponents = forwardRef<MatchingComponentsRef, Props>(
         return;
       }
 
-      if (!divisionId.trim()) {
+      // a division is mandatory only when the customer has divisions
+      if (divisionLoading) return;
+      if (hasDivisions && !divisionId.trim()) {
         console.warn("Please select 'Division'");
         return;
       }
@@ -696,7 +711,16 @@ const MatchReversalComponents = forwardRef<MatchingComponentsRef, Props>(
             : "Failed to load matched documents",
         );
       }
-    }, [type, customerId, divisionId, gstrCoID, getMatchAccounts, onSearch]);
+    }, [
+      type,
+      customerId,
+      divisionId,
+      hasDivisions,
+      divisionLoading,
+      gstrCoID,
+      getMatchAccounts,
+      onSearch,
+    ]);
 
     /* =====================================================
      SELECT STYLES
