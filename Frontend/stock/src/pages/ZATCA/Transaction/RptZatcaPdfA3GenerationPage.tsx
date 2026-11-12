@@ -411,9 +411,30 @@ const RptZatcaPdfA3Generation: React.FC = () => {
 
     setBusy(true);
     try {
-      await api("/exportZATCAPDFA3", { method: "POST", body: JSON.stringify(body) });
-      toast.success("ZATCA PDF/A3 exported successfully");
-      setRows([]);
+      const { data } = await api<{
+        data: {
+          total: number;
+          exported: number;
+          failed: number;
+          results: { docNo: string; ok: boolean; message: string }[];
+        };
+      }>("/exportZATCAPDFA3", { method: "POST", body: JSON.stringify(body) });
+
+      if (data.failed === 0) {
+        toast.success(`ZATCA PDF/A3 exported: ${data.exported} document(s)`);
+        setRows([]);
+        return;
+      }
+
+      // keep the list; say which documents failed and why
+      const bad = data.results.filter((r) => !r.ok);
+      const shown = bad
+        .slice(0, 3)
+        .map((r) => `${r.docNo}: ${r.message}`)
+        .join(" | ");
+      toast.error(
+        `${data.exported} exported, ${data.failed} failed. ${shown}${bad.length > 3 ? " ..." : ""}`,
+      );
     } catch (e) {
       toast.error((e as Error).message);
     } finally {

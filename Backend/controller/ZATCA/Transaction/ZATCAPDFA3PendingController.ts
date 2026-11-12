@@ -9,12 +9,18 @@ import {
   getZatcaPdfA3PendingService,
   type ZatcaPdfA3Params,
 } from "../../../services/ZATCA/Transaction/zatcaPdfA3PendingService.js";
+import {
+  exportZatcaPdfA3Document,
+  getZatcaFilePathService,
+  type ExportDocResult,
+} from "../../../services/ZATCA/Transaction/zatcaPdfA3ExportService.js";
 
 const errorText = (error: unknown): string =>
   error instanceof Error ? error.message : String(error);
 
+// the company comes from the query when the page sends it, else from the session
 const coIdOf = (req: AuthenticatedRequest): string =>
-  String(req.user?.CoID ?? "").trim();
+  String(req.query.PstrCoID ?? req.body?.PstrCoID ?? req.user?.CoID ?? "").trim();
 
 /* =========================================================
    LOOKUPS (the Branch, Customer and Document boxes) - the branches are
@@ -35,17 +41,25 @@ export const getLookups = async (
       return res.status(401).json({ success: false, message: "Authentication required" });
     }
 
-    const [branches, customers, docTypes] = await Promise.all([
+    const [b, c, d] = await Promise.allSettled([
       getZatcaPdfA3BranchListService(coId, req.user.userId),
       getZatcaPdfA3CustomerListService(coId),
       getZatcaPdfA3DocTypeListService(coId),
     ]);
 
+    if (b.status === "rejected") console.error("zatca pdfa3 branches error:", b.reason);
+    if (c.status === "rejected") console.error("zatca pdfa3 customers error:", c.reason);
+    if (d.status === "rejected") console.error("zatca pdfa3 documents error:", d.reason);
+
+    if (b.status === "rejected" && c.status === "rejected" && d.status === "rejected") {
+      return res.status(500).json({ success: false, message: "Failed to load the lists" });
+    }
+
     return res.status(200).json({
       success: true,
-      branches,
-      customers,
-      docTypes,
+      branches: b.status === "fulfilled" ? b.value : [],
+      customers: c.status === "fulfilled" ? c.value : [],
+      docTypes: d.status === "fulfilled" ? d.value : [],
     });
   } catch (error: unknown) {
     console.error("getLookups (zatca pdfa3) error:", error);
@@ -94,8 +108,9 @@ const prepareParams = async (req: AuthenticatedRequest): Promise<Prepared> => {
 
   // the financial year of the login; by date it is the year of the dates (the form
   // makes both dates the same year)
+  const u = (req.user ?? {}) as unknown as Record<string, unknown>;
   const year =
-    str(req.user.Year) ||
+    str(u.Year ?? u.year ?? u.FinYear) ||
     (invoiceMode === "date" && /^\d{2}\/\d{2}\/\d{4}$/.test(fromDate) ? fromDate.slice(6) : "") ||
     String(new Date().getFullYear());
 
@@ -159,9 +174,9 @@ export const getZATCAPDFA3Pending = async (
 
 /* =========================================================
    EXPORT PDF/A3 (VB cmdExportPDFA3 / Export_A3PDFWithXMLAttach)
-   Not ported yet: it needs the invoice / credit note / debit note page layouts
-   (rptSIRTaxInvoicePrintRpt, rptSRRTaxInvoicePrintRpt, rptTaxCNPrint, rptTaxDNPrint)
-   drawn as an A3 PDF, and the signed XML of the document attached to it.
+   The same filters as Search; every listed document is drawn as an A3 PDF, the signed XML
+   is attached and the file is saved under <ZATCA file path>/PDF/<document folder>.
+   One failed document does not stop the others; the answer lists each result.
 ========================================================= */
 
 export const exportZATCAPDFA3 = async (
@@ -175,9 +190,45 @@ export const exportZATCAPDFA3 = async (
       return res.status(prepared.status).json(prepared.body);
     }
 
-    return res.status(501).json({
-      success: false,
-      message: "PDF/A3 export is not available yet",
+    const { params } = prepared;
+
+    const root = await getZatcaFilePathService(params.coId);
+    if (!root) {
+      return res
+        .status(400)
+        .json({ success: false, message: "ZATCA file path is not set for this company" });
+    }
+
+    const rows = await getZatcaPdfA3PendingService(params);
+    if (rows.length === 0) {
+      return res.status(404).json({ success: false, message: "No documents found" });
+    }
+
+    // one at a time: each one starts a page in the shared browser and reads the database
+    const results: ExportDocResult[] = [];
+    for (const r of rows) {
+      results.push(
+        await exportZatcaPdfA3Document(root, {
+          coId: params.coId,
+          year: params.year,
+          branchId: r.branchId,
+          docType: r.docType,
+          origDocType: r.origDocType,
+          docNo: r.docNo,
+        })
+      );
+    }
+
+    const exported = results.filter((x) => x.ok).length;
+
+    return res.status(200).json({
+      success: true,
+      data: {
+        total: results.length,
+        exported,
+        failed: results.length - exported,
+        results,
+      },
     });
   } catch (error: unknown) {
     console.error("exportZATCAPDFA3 error:", error);
