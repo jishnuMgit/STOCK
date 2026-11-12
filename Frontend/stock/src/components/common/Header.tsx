@@ -1,12 +1,24 @@
+import { IoMdClose } from "react-icons/io";
+import { useNavigate } from "react-router-dom";
 
 const Header = ({ Name }: { Name: string }) => {
-  return (
-    <header className="flex h-8.25 items-center bg-[#9fdfbc] text-gray-800">
-      <h1 className="ml-4 text-[17x] font-semibold ">
-         {Name}
-     </h1>
-   </header>
-  )
-}
+  const navigate = useNavigate();
 
-export default Header
+  return (
+    <header className="relative flex h-8.25 items-center bg-[#9fdfbc] text-gray-800">
+      <h1 className="ml-4 text-[17px] font-semibold">
+        {Name}
+      </h1>
+
+      <button
+        type="button"
+        className="absolute right-2 cursor-pointer rounded-md p-1 hover:bg-red-50"
+        onClick={() => navigate("/")}
+      >
+        <IoMdClose size={17} />
+      </button>
+    </header>
+  );
+};
+
+export default Header;
