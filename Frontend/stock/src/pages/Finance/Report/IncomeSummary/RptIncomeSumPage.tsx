@@ -250,6 +250,11 @@ const RptIncomeSumPage: React.FC<RptIncomeSumPageProps> = ({
 
   // the lookups have been asked for (found or not): the cursor can start
   const [lookupsLoaded, setLookupsLoaded] = useState(false);
+  const [rdgCostCenter, setRdgCostCenter] = useState("One Cost Center"); // rdgCostCenter
+  const [lkpCostCenter, setLkpCostCenter] = useState<Option | null>(null); // lkpCostCenter
+
+  // the cost centers of the company (dbo.fillcostcenters)
+  const [costCenterOptions, setCostCenterOptions] = useState<Option[]>([]);
 
   useEffect(() => {
     const loadLookups = async () => {
@@ -297,12 +302,6 @@ const RptIncomeSumPage: React.FC<RptIncomeSumPageProps> = ({
 
   // the cursor starts on the Branch box
   useInitialFocus(lookupsLoaded, "lkpBranch");
-
-  const [rdgCostCenter, setRdgCostCenter] = useState("One Cost Center"); // rdgCostCenter
-  const [lkpCostCenter, setLkpCostCenter] = useState<Option | null>(null); // lkpCostCenter
-
-  // the cost centers of the company (dbo.fillcostcenters)
-  const [costCenterOptions, setCostCenterOptions] = useState<Option[]>([]);
 
   const [rdgDate, setRdgDate] = useState("For A Period"); // rdgDate
   const [dtpMonth, setDtpMonth] = useState(dayjs().format(MONTH_FORMAT)); // dtpMonth

@@ -396,14 +396,11 @@ const RptStockReportPage: React.FC = () => {
     });
   }, [itemRows, rdgBranch, branch]);
 
-  // a chosen item that the new branch does not have is cleared
-  useEffect(() => {
-    const has = (id: string) => branchItems.some((row) => row.lkpItemID === id);
-
-    if (oneItemId && !has(oneItemId)) setOneItemId("");
-    if (fromItem && !has(fromItem)) setFromItem("");
-    if (toItem && !has(toItem)) setToItem("");
-  }, [branchItems, oneItemId, fromItem, toItem]);
+  const clearItemSelections = () => {
+    setOneItemId("");
+    setFromItem("");
+    setToItem("");
+  };
 
   // the item boxes: ID | Name, and Name | ID (one item, two boxes)
   const itemIdOptions = useMemo<PairOption[]>(
@@ -436,9 +433,7 @@ const RptStockReportPage: React.FC = () => {
     setRdgByItem("By Item");
     setRdgItem("One Item");
     setRdgItemGroup("One Item Group");
-    setOneItemId("");
-    setFromItem("");
-    setToItem("");
+    clearItemSelections();
     setGroupId("");
     setPostStatus(postStatusOptions[0]);
     setRdgDetSum("Detailed");
@@ -623,7 +618,10 @@ const RptStockReportPage: React.FC = () => {
                   { value: "One Branch", label: "One Branch" },
                   { value: "All Branches", label: "All Branches" },
                 ]}
-                onChange={setRdgBranch}
+                onChange={(value) => {
+                  if (value !== rdgBranch) clearItemSelections();
+                  setRdgBranch(value);
+                }}
               />
               <div className="pt-3">
                 <div
@@ -636,6 +634,7 @@ const RptStockReportPage: React.FC = () => {
                     options={branchOptions}
                     value={branch}
                     onChange={(option) => {
+                      if (option?.value !== branch?.value) clearItemSelections();
                       setBranch(option);
                       if (option) advanceAfterPick("lkpBranch");
                     }}
