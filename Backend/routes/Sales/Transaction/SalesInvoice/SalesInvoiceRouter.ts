@@ -8,6 +8,7 @@ import {
   getSalesInvoiceLookups,
   getSalesInvoiceTypes,
   getSalesItemStock,
+  getSalesItemStockDetails,
   postSalesInvoice,
   saveSalesInvoice,
 } from "../../../../controller/Sales/Transaction/SalesInvoice/SalesInvoiceController.js";
@@ -22,6 +23,7 @@ router.get("/", getSalesInvoice);
 router.post("/", saveSalesInvoice);
 router.delete("/", deleteSalesInvoice);
 router.get("/item-stock", getSalesItemStock);
+router.get("/item-stock-details", getSalesItemStockDetails);
 
 // post
 router.post("/post", postSalesInvoice);
