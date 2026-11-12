@@ -11,6 +11,7 @@ import {
   DeleteReceipt,
   GetDatas,
   getReceiptPrint,
+  getReceiptExcel,
 } from "../controller/ReceiptController.js";
 
 import { requireReceiptContext } from "../middleware/receiptContext.js";
@@ -39,5 +40,6 @@ router.get("/get/data", GetDatas);
 router.delete("/delete", DeleteReceipt);
 
 router.get("/print", getReceiptPrint);
+router.get("/excel", getReceiptExcel);
 
 export default router;

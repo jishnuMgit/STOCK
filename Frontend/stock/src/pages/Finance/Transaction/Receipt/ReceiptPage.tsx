@@ -27,9 +27,11 @@ import {
   type ReceiptRow,
   type AccountData,
   type ReceiptPrintData,
+  type ReceiptPrintResponse,
 } from "../../../../types/receiptypes";
 import { toast } from "react-toastify";
 import ReceiptPrint from "../../../../components/Transaction/Receipt/save/Receipt.print";
+import { buildReceiptPdf } from "../../../../components/Transaction/Receipt/save/ReceiptPdf";
 
 import { apiFetch } from "../../../../utils/session";
 import { GetStrDocType } from "../../../../utils/receiptHelpers";
@@ -332,24 +334,66 @@ const ReceiptPage: React.FC = () => {
 
   const handlePrint = async () => {
     try {
-      const response = await apiFetch(
-        `${import.meta.env.VITE_API_URL}/Receipt/print?lkpBranch=${lkpBranch}&lkpType=${lkpType}&txtDocNo=${txtDocNo}`,
-      );
-
-      if (!response.ok) {
-        throw new Error("Failed to fetch receipt print data");
+      if (!lkpBranch || !lkpType || !txtDocNo.trim()) {
+        toast.warning("Branch, receipt type, and receipt number are required.");
+        return;
       }
 
-      const result = await response.json();
+      const response = await apiFetch(
+        `${import.meta.env.VITE_API_URL}/Receipt/print?${new URLSearchParams({
+          lkpBranch,
+          lkpType,
+          txtDocNo: txtDocNo.trim(),
+        })}`,
+      );
 
-      if (!result.success || !result.data) {
-        throw new Error("Invalid receipt print response");
+      const result = (await response.json()) as ReceiptPrintResponse;
+
+      if (!response.ok || !result.success || !result.data) {
+        throw new Error(result.message || "Failed to fetch receipt print data.");
       }
 
       setPrintData(result.data);
       setIsPrint(true);
     } catch (error) {
       console.error("Print data fetch error:", error);
+      toast.error(
+        error instanceof Error
+          ? error.message
+          : "Cannot connect to the Receipt API.",
+      );
+    }
+  };
+
+  const fetchReceiptExcel = async (): Promise<Blob | null> => {
+    if (!printData) return null;
+
+    try {
+      const response = await apiFetch(
+        `${import.meta.env.VITE_API_URL}/Receipt/excel?${new URLSearchParams({
+          lkpBranch,
+          lkpType,
+          txtDocNo: printData.docNo,
+        })}`,
+      );
+
+      if (!response.ok) {
+        let message = "Could not create the Excel file.";
+        try {
+          const result = (await response.json()) as { message?: string };
+          message = result.message || message;
+        } catch {
+          message = `Could not create the Excel file (error ${response.status}).`;
+        }
+        toast.error(message);
+        return null;
+      }
+
+      return await response.blob();
+    } catch (error) {
+      console.error("Receipt Excel download error:", error);
+      toast.error("Cannot connect to the Receipt API.");
+      return null;
     }
   };
   /* =======================================================
@@ -1818,7 +1862,13 @@ const ReceiptPage: React.FC = () => {
       {isPrint && printData && (
         <ReceiptPrint
           data={printData}
-          onPrintComplete={() => {
+          fileBase={`Receipt-${printData.branchId}-${printData.docNo}`.replace(
+            /[^\w.-]+/g,
+            "_",
+          )}
+          buildPdf={buildReceiptPdf}
+          fetchExcel={fetchReceiptExcel}
+          onClose={() => {
             setIsPrint(false);
             setPrintData(null);
           }}
