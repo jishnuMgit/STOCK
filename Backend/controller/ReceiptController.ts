@@ -18,6 +18,7 @@ import { GetData } from "../services/GetDataService.js";
 import { UserAudit } from "../utils/UserAudit.js";
 import type { ReceiptContext } from "../middleware/receiptContext.js";
 import { GetStrDocType } from "../utils/docType.js";
+import { applyDocumentPosting } from "../utils/ApplyDocumentPosting.js";
 
 /* Set by requireReceiptContext middleware (headers sent from localStorage). */
 const getCtx = (res: Response): ReceiptContext =>
@@ -681,6 +682,51 @@ export const getReceiptExcel = async (
       success: false,
       message:
         error instanceof Error ? error.message : "Failed to create receipt Excel file",
+    });
+  }
+};
+
+
+
+export const applyReceiptPost = async (
+  req: Request,
+  res: Response
+): Promise<void> => {
+  try {
+    const {
+      PstrCoID,
+      PstrYear,
+      lkpBranch,
+      lkpDocType,
+      txtDocNo,
+      dtpDate,
+      PstrUserID
+    } = req.body;
+
+    const result = await applyDocumentPosting(
+    PstrCoID,
+    PstrYear,
+    lkpBranch,
+    lkpDocType,
+    0,
+    txtDocNo,
+    dtpDate,
+    PstrUserID
+
+    );
+
+    res.status(200).json({
+      success: true,
+      message: "Receipt posting completed successfully",
+      intDocPostCount: result.intDocPostCount
+    });
+
+  } catch (error) {
+    console.error("Receipt posting error:", error);
+
+    res.status(500).json({
+      success: false,
+      message: "Internal server error"
     });
   }
 };
