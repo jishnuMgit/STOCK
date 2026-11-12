@@ -46,7 +46,7 @@ const api = import.meta.env.VITE_API_URL;
 const postStatusOptions: Option[] = [
   { value: "ALL", label: "All" },
   { value: "POSTED", label: "Posted" },
-  { value: "UNPOSTED", label: "Unposted" },
+  { value: "UNPOSTED", label: "Not Posted" },
 ];
 
 const selectClassNames = {

@@ -135,7 +135,7 @@ const postStatusOptions: Option[] = [
   },
   {
     value: "UNPOSTED",
-    label: "Unposted",
+    label: "Not Posted",
   },
 ];
 const printZeroOptions: Option[] = [

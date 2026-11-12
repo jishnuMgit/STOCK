@@ -51,7 +51,7 @@ const apiFetch = (url: string, init: RequestInit = {}) => {
 const postStatusOptions: Option[] = [
   { value: "ALL", label: "All" },
   { value: "POSTED", label: "Posted" },
-  { value: "UNPOSTED", label: "Unposted" },
+  { value: "UNPOSTED", label: "Not Posted" },
 ];
 
 // what the procedure expects: 0 non posted, 1 posted, 2 all

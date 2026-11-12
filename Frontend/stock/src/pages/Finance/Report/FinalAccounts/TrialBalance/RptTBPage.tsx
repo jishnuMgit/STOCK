@@ -55,7 +55,7 @@ const apiFetch = (url: string, init: RequestInit = {}) =>
 const postStatusOptions: Option[] = [
   { value: "ALL", label: "All" },
   { value: "POSTED", label: "Posted" },
-  { value: "UNPOSTED", label: "Unposted" },
+  { value: "UNPOSTED", label: "Not Posted" },
 ];
 
 const yesNoOptions: Option[] = [
