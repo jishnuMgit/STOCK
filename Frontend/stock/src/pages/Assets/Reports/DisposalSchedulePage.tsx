@@ -138,7 +138,7 @@ const CustomRadio: React.FC<RadioProps> = ({
       )}
     </span>
 
-    <span className="text-[12px] leading-4.25 text-[#172b43]">
+    <span className="text-[14px] leading-4.25 text-[#172b43]">
       {label}
     </span>
   </label>

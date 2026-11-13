@@ -427,7 +427,7 @@ const DepreciationHistory: React.FC = () => {
             {/* BRANCH */}
             {/* -------------------------------------- */}
 
-            <div className="grid grid-cols-[130px_minmax(0,1fr)] items-center gap-x-4">
+            <div className="grid grid-cols-[150px_minmax(0,1fr)] items-center gap-x-4">
 
               <RadioPanel className="h-17.5 w-38">
 
@@ -476,7 +476,7 @@ const DepreciationHistory: React.FC = () => {
             {/* COST CENTER */}
             {/* -------------------------------------- */}
 
-            <div className="grid grid-cols-[130px_minmax(0,1fr)] items-center gap-x-4">
+            <div className="grid grid-cols-[150px_minmax(0,1fr)] items-center gap-x-4">
 
               <RadioPanel className="h-17.5 w-38">
 
@@ -550,7 +550,7 @@ const DepreciationHistory: React.FC = () => {
             {/* ITEM */}
             {/* -------------------------------------- */}
 
-            <div className="grid grid-cols-[130px_minmax(0,1fr)] items-start gap-x-4">
+            <div className="grid grid-cols-[150px_minmax(0,1fr)] items-start gap-x-4">
 
               <RadioPanel className="h-22.5 w-38">
 
