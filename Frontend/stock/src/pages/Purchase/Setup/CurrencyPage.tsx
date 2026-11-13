@@ -7,6 +7,7 @@ import CloseButton from "../../../components/common/CloseButton";
 import { useConfirmModal } from "../../../hooks/useConfirmModal";
 import { useDeleteToast } from "../../../hooks/useDeleteToast";
 import { useGridCellFocus } from "../../../hooks/useGridCellFocus";
+import Header from "../../../components/common/Header";
 
 // ============================================================
 // TYPES
@@ -600,16 +601,7 @@ console.log(onClose)
     >
       <div className="w-full max-w-100 border border-slate-400 bg-white shadow-sm">
         {/* TITLE */}
-        <div className="flex h-7 w-full items-center bg-[#a7dfc0] pr-2">
-          <h1 className="ml-1.25 text-[17px] font-semibold text-[#374151]">
-            Currency
-          </h1>
-
-          {/* close button (the common one, as on the Sales Invoice) */}
-          <div className="ml-auto">
-            <CloseButton onClose={() => (onClose ? onClose() : navigate("/"))} />
-          </div>
-        </div>
+        <Header Name="Currency" />
 
         {/* FORM */}
         <div className="p-3 m-3">

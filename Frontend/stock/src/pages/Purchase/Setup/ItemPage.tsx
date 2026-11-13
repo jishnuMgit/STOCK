@@ -26,6 +26,7 @@ import {
 import selectComponents, {
   SELECT_FONT_FAMILY,
 } from "../../../components/sharecomponents/selectComponents";
+import Header from "../../../components/common/Header";
 
 /* =========================================================
    TYPES
@@ -1218,16 +1219,7 @@ const MENU_ID = "010201";
               HEADER
           =================================================== */}
 
-          <div className="flex h-7 w-full items-center bg-[#a7dfc0] pr-2">
-            <h1 className="ml-1.25 text-[17px] font-semibold text-[#374151]">
-              Item
-            </h1>
-
-            {/* close button (the common one, as on the Sales Invoice) */}
-            <div className="ml-auto">
-              <CloseButton onClose={() => navigate("/")} />
-            </div>
-          </div>
+         <Header Name="Item" />
 
           {/* ===================================================
               FORM

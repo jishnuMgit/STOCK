@@ -5,6 +5,7 @@ import { validateZatcaPdfA3 } from "../../../validators/ZATCAPDFA3PendingValidat
 import {
   getZatcaPdfA3BranchListService,
   getZatcaPdfA3CustomerListService,
+  getZatcaPdfA3CustomerNameListService,
   getZatcaPdfA3DocTypeListService,
   getZatcaPdfA3PendingService,
   type ZatcaPdfA3Params,
@@ -41,17 +42,24 @@ export const getLookups = async (
       return res.status(401).json({ success: false, message: "Authentication required" });
     }
 
-    const [b, c, d] = await Promise.allSettled([
+    const [b, c, d, n] = await Promise.allSettled([
       getZatcaPdfA3BranchListService(coId, req.user.userId),
       getZatcaPdfA3CustomerListService(coId),
       getZatcaPdfA3DocTypeListService(coId),
+      getZatcaPdfA3CustomerNameListService(coId),
     ]);
 
     if (b.status === "rejected") console.error("zatca pdfa3 branches error:", b.reason);
     if (c.status === "rejected") console.error("zatca pdfa3 customers error:", c.reason);
     if (d.status === "rejected") console.error("zatca pdfa3 documents error:", d.reason);
+    if (n.status === "rejected") console.error("zatca pdfa3 customer names error:", n.reason);
 
-    if (b.status === "rejected" && c.status === "rejected" && d.status === "rejected") {
+    if (
+      b.status === "rejected" &&
+      c.status === "rejected" &&
+      d.status === "rejected" &&
+      n.status === "rejected"
+    ) {
       return res.status(500).json({ success: false, message: "Failed to load the lists" });
     }
 
@@ -59,6 +67,8 @@ export const getLookups = async (
       success: true,
       branches: b.status === "fulfilled" ? b.value : [],
       customers: c.status === "fulfilled" ? c.value : [],
+      // the same customers sorted by name (the Customer Name box)
+      customersByName: n.status === "fulfilled" ? n.value : [],
       docTypes: d.status === "fulfilled" ? d.value : [],
     });
   } catch (error: unknown) {

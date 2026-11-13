@@ -13,6 +13,7 @@ import {
   printSalesPriceListReport,
   type PriceListReport,
 } from "./PrintSalesPriceListReport";
+import Header from "../../../../components/common/Header";
 
 type Option = { value: string; label: string };
 
@@ -162,17 +163,15 @@ const CustomRadio: React.FC<RadioOptionProps> = ({
       className="sr-only"
     />
     <span
-      className={`flex h-[19px] w-[19px] shrink-0 items-center justify-center rounded-full border bg-white ${
-        checked ? "border-[#64d96e]" : "border-[#cbd3dc]"
-      }`}
+      className={`flex h-[19px] w-[19px] shrink-0 items-center justify-center rounded-full border bg-white ${checked ? "border-[#64d96e]" : "border-[#cbd3dc]"
+        }`}
     >
       <span
-        className={`h-2.5 w-2.5 rounded-full bg-[#64d96e] ${
-          checked ? "opacity-100" : "opacity-0"
-        }`}
+        className={`h-2.5 w-2.5 rounded-full bg-[#64d96e] ${checked ? "opacity-100" : "opacity-0"
+          }`}
       />
     </span>
-    <span className="text-[12px] font-normal text-[#35445a]">{label}</span>
+    <span className="text-[14px] font-normal text-[#35445a]">{label}</span>
   </label>
 );
 
@@ -575,9 +574,9 @@ const RptSalesPriceListPage: React.FC<RptSalesPriceListPageProps> = ({
       const kind = asPdf ? "pdf" : "xlsx";
       const saved = await saveFile(blob, `${fileBase}.${kind}`, kind);
       if (saved) {
-      
+
         toast.success(asPdf ? "PDF file downloaded" : "Excel file downloaded");
-          setPreview(null); // cancelled "Save as": the preview stays
+        setPreview(null); // cancelled "Save as": the preview stays
       }
     } catch {
       toast.error(
@@ -593,10 +592,10 @@ const RptSalesPriceListPage: React.FC<RptSalesPriceListPageProps> = ({
     () =>
       preview
         ? // 40px left / 20px right margin for the preview only
-          buildHtml(preview.report).replace(
-            "</head>",
-            "<style>body{padding-left:40px;padding-right:20px}</style></head>",
-          )
+        buildHtml(preview.report).replace(
+          "</head>",
+          "<style>body{padding-left:40px;padding-right:20px}</style></head>",
+        )
         : "",
     [preview],
   );
@@ -642,11 +641,7 @@ const RptSalesPriceListPage: React.FC<RptSalesPriceListPageProps> = ({
     <div className="flex min-h-full w-full items-start justify-center bg-white px-4 py-4">
       <div className="min-h-fit w-175 max-w-full bg-white p-0">
         <main className="w-full overflow-hidden border border-gray-400 bg-white">
-          <header className="flex h-7.5 items-center justify-start bg-[#9fdfbc]">
-            <h1 className="m-0 ml-3.5 text-[17px] font-semibold text-[#24364d]">
-              Sales Price List
-            </h1>
-          </header>
+          <Header Name="Sales Price List" />
 
           <section className="px-3.5 pb-6 pt-3">
             {/* Branch */}

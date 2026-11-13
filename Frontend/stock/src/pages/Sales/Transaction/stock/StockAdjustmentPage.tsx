@@ -38,6 +38,7 @@ import selectComponents, {
 } from "../../../../components/sharecomponents/selectComponents";
 import { useNavigate } from "react-router-dom";
 import CloseButton from "../../../../components/common/CloseButton";
+import Header from "../../../../components/common/Header";
 
 // ============================================================
 // STOCK ADJUSTMENT (the old frmADJ)
@@ -1695,16 +1696,7 @@ const StockAdjustmentPage: React.FC = () => {
     <main className="mt-5 flex h-fit w-full max-w-300 flex-col overflow-hidden border border-gray-400 bg-white text-[12px] text-slate-700">
 
       {/* TITLE BAR */}
-      <div className="flex h-[28px] w-full shrink-0 items-center bg-[#a7dfc0] pr-2">
-        <h1 className="ml-[5px] text-[17px] font-semibold text-[#374151]">
-          Stock Adjustment
-        </h1>
-
-        {/* close button (the common one, as on the Sales Invoice) */}
-        <div className="ml-auto">
-          <CloseButton onClose={() => navigate("/")} />
-        </div>
-      </div>
+      <Header Name="Stock Adjustment" />
 
       {/* FORM BODY */}
       <div className="m-[12px] flex min-h-0 flex-1 flex-col px-[12px] pb-[12px] pt-0">

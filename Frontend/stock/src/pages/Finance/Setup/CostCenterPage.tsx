@@ -5,6 +5,7 @@ import { useButtonPermissions } from "../../../hooks/useButtonPermissions";
 import { useGridCellFocus } from "../../../hooks/useGridCellFocus";
 import { useConfirmModal } from "../../../hooks/useConfirmModal";
 import { useDeleteToast } from "../../../hooks/useDeleteToast";
+import Header from "../../../components/common/Header";
 
 // ============================================================
 // TYPES
@@ -673,244 +674,240 @@ const CostCenterPage: React.FC = () => {
 
   return (
     <>
-    <div
-      onKeyDown={handlePageKeyDown}
-      className="flex min-h-screen w-full items-center justify-center bg-white"
-    >
-      <div className="w-full max-w-[640px] border border-slate-400 bg-white shadow-sm">
-        {/* ====================================================
+      <div
+        onKeyDown={handlePageKeyDown}
+        className="flex min-h-screen w-full items-center justify-center bg-white"
+      >
+        <div className="w-full max-w-[640px] border border-slate-400 bg-white shadow-sm">
+          {/* ====================================================
             TITLE
         ==================================================== */}
 
-        <div className="flex h-[28px] w-full items-center bg-[#a7dfc0]">
-          <h1 className="ml-[5px] text-[17px] font-semibold text-[#374151]">
-            Cost Center
-          </h1>
-        </div>
+          <Header Name="Cost Center" />
 
-        {/* ====================================================
+          {/* ====================================================
             FORM
         ==================================================== */}
 
-        <div className="p-[12px] m-[12px]">
-          {/* TABLE AREA */}
+          <div className="p-[12px] m-[12px]">
+            {/* TABLE AREA */}
 
-          <div className="h-[310px] overflow-hidden border border-[#bfe8d0]">
-            <div className="h-full overflow-y-auto overflow-x-hidden">
-              <table className="w-full table-fixed border-collapse text-[12px]">
-                <colgroup>
-                  <col className="w-[24px]" />
-                  <col className="w-[100px]" />
-                  <col />
-                  <col className="w-[140px]" />
-                </colgroup>
+            <div className="h-[310px] overflow-hidden border border-[#bfe8d0]">
+              <div className="h-full overflow-y-auto overflow-x-hidden">
+                <table className="w-full table-fixed border-collapse text-[12px]">
+                  <colgroup>
+                    <col className="w-[24px]" />
+                    <col className="w-[100px]" />
+                    <col />
+                    <col className="w-[140px]" />
+                  </colgroup>
 
-                <thead>
-                  <tr>
-                    <th className="sticky top-0 z-20 h-[34px] border border-[#bfe8d0] bg-[#edf9f2] p-0" />
+                  <thead>
+                    <tr>
+                      <th className="sticky top-0 z-20 h-[34px] border border-[#bfe8d0] bg-[#edf9f2] p-0" />
 
-                    <th className={`${headerCellClass} text-left`}>ID</th>
-                    <th className={`${headerCellClass} text-left`}>
-                      Cost Center
-                    </th>
-                    <th className={`${headerCellClass} text-right`}>
-                      Position No.
-                    </th>
-                  </tr>
-                </thead>
+                      <th className={`${headerCellClass} text-left`}>ID</th>
+                      <th className={`${headerCellClass} text-left`}>
+                        Cost Center
+                      </th>
+                      <th className={`${headerCellClass} text-right`}>
+                        Position No.
+                      </th>
+                    </tr>
+                  </thead>
 
-                <tbody>
-                  {displayRows.map((row, index) => (
-                    <tr
-                      key={index}
-                      className={`h-[34px] ${selectedRow === index ? "bg-[#f8fcfa]" : "bg-white"
-                        }`}
-                      onClick={() => setSelectedRow(index)}
-                    >
-                      {/* SELECTOR COLUMN: the arrow of the selected row */}
+                  <tbody>
+                    {displayRows.map((row, index) => (
+                      <tr
+                        key={index}
+                        className={`h-[34px] ${selectedRow === index ? "bg-[#f8fcfa]" : "bg-white"
+                          }`}
+                        onClick={() => setSelectedRow(index)}
+                      >
+                        {/* SELECTOR COLUMN: the arrow of the selected row */}
 
-                      <td className="h-[34px] border border-[#bfe8d0] bg-white p-0 text-center align-middle">
-                        {selectedRow === index && (
-                          <span className="text-[9px] text-[#222]">▶</span>
-                        )}
-                      </td>
+                        <td className="h-[34px] border border-[#bfe8d0] bg-white p-0 text-center align-middle">
+                          {selectedRow === index && (
+                            <span className="text-[9px] text-[#222]">▶</span>
+                          )}
+                        </td>
 
-                      {/* COST CENTER ID */}
+                        {/* COST CENTER ID */}
 
-                      <td className={`h-[34px] border border-l-0 border-[#bfe8d0] bg-white p-0 align-middle ${cellFocusClass}`}>
-                        <input
-                          id={`txtCCID-${index}`}
-                          name="txtCCID"
-                          type="text"
-                          value={row.txtCCID}
-                          maxLength={8}
-                          autoComplete="off"
-                          onFocus={(event) => {
-                            selectOnFocus(event);
-                            setSelectedRow(index);
-
-                            // find out early whether transactions use it
-                            if (row.txtOriginalCCID !== null) {
-                              isUsed(row.txtOriginalCCID);
-                            }
-                          }}
-                          onBlur={() => handleBlur(index, "txtCCID")}
-                          onChange={(event) =>
-                            updateRow(index, { txtCCID: event.target.value })
-                          }
-                          onPaste={(event) => {
-                            if (isEditBlocked(index, "txtCCID")) {
-                              event.preventDefault();
-                            }
-                          }}
-                          onKeyDown={(event) =>
-                            handleCellKeyDown(event, index, "txtCCID")
-                          }
-                          className={cellInputClass}
-                        />
-                      </td>
-
-                      {/* COST CENTER NAME */}
-
-                      <td className={`h-[34px] border border-l-0 border-[#bfe8d0] bg-white p-0 align-middle ${cellFocusClass}`}>
-                        <input
-                          id={`txtCCName-${index}`}
-                          name="txtCCName"
-                          type="text"
-                          value={row.txtCCName}
-                          maxLength={20}
-                          autoComplete="off"
-                          onFocus={(event) => {
-                            selectOnFocus(event);
-                            setSelectedRow(index);
-                          }}
-                          onBlur={() => handleBlur(index, "txtCCName")}
-                          onChange={(event) =>
-                            updateRow(index, { txtCCName: event.target.value })
-                          }
-                          onPaste={(event) => {
-                            if (isEditBlocked(index, "txtCCName")) {
-                              event.preventDefault();
-                            }
-                          }}
-                          onKeyDown={(event) =>
-                            handleCellKeyDown(event, index, "txtCCName")
-                          }
-                          className={cellInputClass}
-                        />
-                      </td>
-
-                      {/* POSITION NO. (whole numbers, smallint) */}
-
-                      <td className={`h-[34px] border border-l-0 border-[#bfe8d0] bg-white p-0 align-middle ${cellFocusClass}`}>
-                        <div className="flex h-[32px] items-center">
+                        <td className={`h-[34px] border border-l-0 border-[#bfe8d0] bg-white p-0 align-middle ${cellFocusClass}`}>
                           <input
-                            id={`txtPositionNo-${index}`}
-                            name="txtPositionNo"
+                            id={`txtCCID-${index}`}
+                            name="txtCCID"
                             type="text"
-                            inputMode="numeric"
-                            value={row.txtPositionNo}
-                            maxLength={5}
+                            value={row.txtCCID}
+                            maxLength={8}
+                            autoComplete="off"
+                            onFocus={(event) => {
+                              selectOnFocus(event);
+                              setSelectedRow(index);
+
+                              // find out early whether transactions use it
+                              if (row.txtOriginalCCID !== null) {
+                                isUsed(row.txtOriginalCCID);
+                              }
+                            }}
+                            onBlur={() => handleBlur(index, "txtCCID")}
+                            onChange={(event) =>
+                              updateRow(index, { txtCCID: event.target.value })
+                            }
+                            onPaste={(event) => {
+                              if (isEditBlocked(index, "txtCCID")) {
+                                event.preventDefault();
+                              }
+                            }}
+                            onKeyDown={(event) =>
+                              handleCellKeyDown(event, index, "txtCCID")
+                            }
+                            className={cellInputClass}
+                          />
+                        </td>
+
+                        {/* COST CENTER NAME */}
+
+                        <td className={`h-[34px] border border-l-0 border-[#bfe8d0] bg-white p-0 align-middle ${cellFocusClass}`}>
+                          <input
+                            id={`txtCCName-${index}`}
+                            name="txtCCName"
+                            type="text"
+                            value={row.txtCCName}
+                            maxLength={20}
                             autoComplete="off"
                             onFocus={(event) => {
                               selectOnFocus(event);
                               setSelectedRow(index);
                             }}
-                            onChange={(event) => {
-                              const digits = event.target.value
-                                .replace(/\D/g, "")
-                                .slice(0, 5);
-
-                              updateRow(index, {
-                                txtPositionNo:
-                                  digits !== "" && Number(digits) > 32767
-                                    ? "32767"
-                                    : digits,
-                              });
-                            }}
+                            onBlur={() => handleBlur(index, "txtCCName")}
+                            onChange={(event) =>
+                              updateRow(index, { txtCCName: event.target.value })
+                            }
                             onPaste={(event) => {
-                              if (isEditBlocked(index, "txtPositionNo")) {
+                              if (isEditBlocked(index, "txtCCName")) {
                                 event.preventDefault();
                               }
                             }}
                             onKeyDown={(event) =>
-                              handleCellKeyDown(event, index, "txtPositionNo")
+                              handleCellKeyDown(event, index, "txtCCName")
                             }
-                            className={`${cellInputClass} text-right`}
+                            className={cellInputClass}
                           />
+                        </td>
 
-                          {/* the X of the row, at the right end (the slot is always there so the
+                        {/* POSITION NO. (whole numbers, smallint) */}
+
+                        <td className={`h-[34px] border border-l-0 border-[#bfe8d0] bg-white p-0 align-middle ${cellFocusClass}`}>
+                          <div className="flex h-[32px] items-center">
+                            <input
+                              id={`txtPositionNo-${index}`}
+                              name="txtPositionNo"
+                              type="text"
+                              inputMode="numeric"
+                              value={row.txtPositionNo}
+                              maxLength={5}
+                              autoComplete="off"
+                              onFocus={(event) => {
+                                selectOnFocus(event);
+                                setSelectedRow(index);
+                              }}
+                              onChange={(event) => {
+                                const digits = event.target.value
+                                  .replace(/\D/g, "")
+                                  .slice(0, 5);
+
+                                updateRow(index, {
+                                  txtPositionNo:
+                                    digits !== "" && Number(digits) > 32767
+                                      ? "32767"
+                                      : digits,
+                                });
+                              }}
+                              onPaste={(event) => {
+                                if (isEditBlocked(index, "txtPositionNo")) {
+                                  event.preventDefault();
+                                }
+                              }}
+                              onKeyDown={(event) =>
+                                handleCellKeyDown(event, index, "txtPositionNo")
+                              }
+                              className={`${cellInputClass} text-right`}
+                            />
+
+                            {/* the X of the row, at the right end (the slot is always there so the
                               box does not change size) */}
-                          <span className="flex w-[32px] shrink-0 items-center justify-center">
-                            {selectedRow === index && rows[index] && (
-                              <button
-                                type="button"
-                                tabIndex={-1}
-                                title="Delete row (Ctrl+Delete)"
-                                onClick={() => deleteRow(index)}
-                                className="text-[12px] leading-none text-gray-400 hover:text-red-600"
-                              >
-                                ✕
-                              </button>
-                            )}
-                          </span>
-                        </div>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
+                            <span className="flex w-[32px] shrink-0 items-center justify-center">
+                              {selectedRow === index && rows[index] && (
+                                <button
+                                  type="button"
+                                  tabIndex={-1}
+                                  title="Delete row (Ctrl+Delete)"
+                                  onClick={() => deleteRow(index)}
+                                  className="text-[12px] leading-none text-gray-400 hover:text-red-600"
+                                >
+                                  ✕
+                                </button>
+                              )}
+                            </span>
+                          </div>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
             </div>
-          </div>
 
-          {/* ====================================================
+            {/* ====================================================
               BUTTONS
           ==================================================== */}
 
-          <div className="mt-[14px] flex justify-center gap-3">
-            <button
-              id="btnSave"
-              name="btnSave"
-              type="button"
-              onClick={handleSave}
-              disabled={!canSaveOrModify || saving}
-              title="Alt+S"
-              className="btn-style disabled:cursor-not-allowed disabled:opacity-40"
-            >
-              <span className="underline underline-offset-2">
-                {actionWord.charAt(0)}
-              </span>
-              {actionWord.slice(1)}
-            </button>
+            <div className="mt-[14px] flex justify-center gap-3">
+              <button
+                id="btnSave"
+                name="btnSave"
+                type="button"
+                onClick={handleSave}
+                disabled={!canSaveOrModify || saving}
+                title="Alt+S"
+                className="btn-style disabled:cursor-not-allowed disabled:opacity-40"
+              >
+                <span className="underline underline-offset-2">
+                  {actionWord.charAt(0)}
+                </span>
+                {actionWord.slice(1)}
+              </button>
 
-            <button
-              id="btnSearch"
-              name="btnSearch"
-              type="button"
-              title="Alt+F"
-              className="btn-style"
-            >
-              <span className="underline underline-offset-2">S</span>earch
-            </button>
+              <button
+                id="btnSearch"
+                name="btnSearch"
+                type="button"
+                title="Alt+F"
+                className="btn-style"
+              >
+                <span className="underline underline-offset-2">S</span>earch
+              </button>
 
-            <button
-              id="btnClear"
-              name="btnClear"
-              type="button"
-              onClick={handleClear}
-              title="Alt+C"
-              className="btn-style"
-            >
-              <span className="underline underline-offset-2">C</span>lear
-            </button>
+              <button
+                id="btnClear"
+                name="btnClear"
+                type="button"
+                onClick={handleClear}
+                title="Alt+C"
+                className="btn-style"
+              >
+                <span className="underline underline-offset-2">C</span>lear
+              </button>
+            </div>
           </div>
         </div>
-      </div>
 
-      {/* ====================================================
+        {/* ====================================================
           FIND BOX
       ==================================================== */}
-      {/* 
+        {/* 
       {findOpen && (
         <div
           className="fixed inset-0 z-50 flex items-start justify-center bg-black/20 pt-[120px]"
@@ -971,11 +968,11 @@ const CostCenterPage: React.FC = () => {
           </div>
         </div>
       )} */}
-    </div>
+      </div>
 
-    {/* the "Do you want to delete ?" question - outside the root div: the page's
+      {/* the "Do you want to delete ?" question - outside the root div: the page's
         Enter handling must not take the Enter of the Yes / No buttons */}
-    {dialog}
+      {dialog}
     </>
   );
 };

@@ -1,4 +1,5 @@
 import React, { useEffect, useMemo, useState } from "react";
+import Header from "../../components/common/Header";
 import { toast } from "react-toastify";
 import { X } from "lucide-react";
 import { useConfirmModal } from "../../hooks/useConfirmModal";
@@ -827,13 +828,7 @@ const SetChartOfAccount: React.FC = () => {
     >
       {/* no overflow-hidden on the card: dropdowns must remain visible */}
       <div className="w-[1350px] max-w-full border border-slate-400 bg-white shadow-sm">
-        {/* TITLE BAR */}
-
-        <div className="flex h-[28px] w-full items-center bg-[#a7dfc0]">
-          <h1 className="ml-[5px] text-[17px] font-semibold text-[#374151]">
-            Set Chart Of Account
-          </h1>
-        </div>
+        <Header Name="Set Chart Of Account" />
 
         {/* FORM */}
 
@@ -853,7 +848,7 @@ const SetChartOfAccount: React.FC = () => {
               <div className="h-[30px] border-r border-[#c8eadb]" />
 
               <div className={`${headerCellClass} justify-center`}>
-                Sl.
+                Line
               </div>
 
               <div className={headerCellClass}>

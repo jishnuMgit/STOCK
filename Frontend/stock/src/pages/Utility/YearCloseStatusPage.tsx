@@ -1,5 +1,6 @@
 
 import React, { useState } from "react";
+import Header from "../../components/common/Header";
 import Select from "react-select";
 import selectComponents from "../../components/sharecomponents/selectComponents";
 
@@ -324,11 +325,7 @@ const YearCloseStatusPage: React.FC<YearCloseStatusPageProps> = ({
       <div className="min-h-fit w-205 max-w-full bg-white p-0">
         <main className="w-full overflow-hidden border border-[#d5dce2] bg-white">
           {/* Header */}
-          <header className="flex h-7.5 items-center justify-start bg-[#9fdfbc]">
-            <h1 className="m-0 ml-3.5 text-[17px] font-semibold text-[#24364d]">
-              Year Close Status
-            </h1>
-          </header>
+          <Header Name="Year Close Status" />
 
           <section className="px-3.5 pb-6 pt-3">
             {/* Year */}

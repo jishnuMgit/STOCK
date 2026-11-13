@@ -11,6 +11,7 @@ import { useAltShortcuts } from "../../../../hooks/useAltShortcuts";
 import { useButtonPermissions } from "../../../../hooks/useButtonPermissions";
 import { useEnterAsTab } from "../../../../hooks/useEnterAsTab";
 import { useInitialFocus } from "../../../../hooks/useInitialFocus";
+import Header from "../../../../components/common/Header";
 
 // dbo.tblmenu fmenuid of the Stock Document Post page
 const MENU_ID = "020105";
@@ -331,16 +332,7 @@ const StockDocumentPostPage: React.FC<StockDocumentPostPageProps> = ({ onClose }
     >
       <div className="min-h-fit min-w-240 w-240 max-w-full bg-white p-0">
         <main className="w-full overflow-hidden border border-gray-400 bg-white">
-          <header className="flex h-7.5 items-center justify-start bg-[#9fdfbc] pr-2">
-           <header className="flex h-6.5 items-center justify-start pl-2.5 bg-[#9fdfbc] text-[18px] font-semi-bold text-slate-700">
-      {SCREEN_TITLE}
-    </header>
-
-            {/* close button (the common one, as on the Sales Invoice): the page's own onClose when it is given */}
-            <div className="ml-auto">
-              <CloseButton onClose={() => (onClose ? handleClose() : navigate("/"))} />
-            </div>
-          </header>
+          <Header Name="Stock Document Post" />
 
           <section className="flex flex-col gap-3 px-3.5 pb-6 pt-3">
             <StockDocumentPostHeader

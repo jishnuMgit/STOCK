@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import Header from "../../../../components/common/Header";
 import {
   LocalizationProvider,
 } from "@mui/x-date-pickers/LocalizationProvider";
@@ -328,12 +329,7 @@ const RptDocumentExportPage: React.FC<RptDocumentExportPageProps> = ({
     <div className="flex min-h-full w-full items-start justify-center bg-white px-3 py-3 sm:px-4 sm:py-4">
       <div className="w-full max-w-130 bg-white">
         <main className="w-full border border-gray-400 bg-white">
-          {/* Header */}
-          <header className="flex h-7.5 items-center bg-[#9fdfbc]">
-            <h1 className="ml-4 text-[14px] font-semibold text-[#24364d]">
-              Document Export
-            </h1>
-          </header>
+          <Header Name="Document Export" />
 
           {/* Form */}
           <section className="  pb-5 pt-5 sm:px-6">
