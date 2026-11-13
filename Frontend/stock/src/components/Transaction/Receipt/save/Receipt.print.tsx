@@ -8,7 +8,6 @@ import type {
  ReceiptPrintData,
    ReceiptPrintRow,
 } from "../../../../types/receiptypes";
-import Header from "../../../sharecomponents/Header";
 
 const FIRST_PAGE_ROWS = 7;
 const NEXT_PAGE_ROWS = 13;
@@ -468,7 +467,11 @@ const ReceiptPrint: React.FC<ReceiptPrintProps> = ({
           boxShadow: "0 20px 50px rgba(0, 0, 0, 0.3)",
         }}
       >
-   <Header Name="Receipt Print Preview"/>
+        <header className="relative flex h-8.25 items-center bg-[#9fdfbc] text-gray-800">
+      <h1 className="ml-4 text-[17px] font-semibold">
+        Receipt Print Preview
+      </h1>
+   </header >
       <iframe
         ref={frameRef}
         title="receipt-preview"
