@@ -17,6 +17,7 @@ import { useInitialFocus } from "../../../hooks/useInitialFocus";
 import selectComponents, {
   SELECT_FONT_FAMILY,
 } from "../../../components/sharecomponents/selectComponents";
+import Header from "../../../components/common/Header";
 
 // ============================================================
 // TYPES
@@ -475,9 +476,9 @@ const ItemGroupPage: React.FC = () => {
       if (!response.ok || !result.success) {
         toast.error(
           result.message ||
-            (hasSavedItemGroup
-              ? "Not modified, try again."
-              : "Not saved, try again."),
+          (hasSavedItemGroup
+            ? "Not modified, try again."
+            : "Not saved, try again."),
         );
 
         // the backend validator names the field that failed - same name as
@@ -491,9 +492,9 @@ const ItemGroupPage: React.FC = () => {
 
       toast.success(
         result.message ||
-          (hasSavedItemGroup
-            ? "Item group modified successfully."
-            : "Item group saved successfully."),
+        (hasSavedItemGroup
+          ? "Item group modified successfully."
+          : "Item group saved successfully."),
       );
 
       // load the group again: it now exists, so the button flips to Modify
@@ -598,244 +599,235 @@ const ItemGroupPage: React.FC = () => {
 
   return (
     <>
-    <div
-      onKeyDown={handleEnterAsTab}
-      className="flex min-h-screen w-full items-center justify-center bg-white"
-    >
-      {/* no overflow-hidden: the VAT Slab list must stay visible */}
-      <div className="w-[720px] max-w-full border border-slate-400 bg-white shadow-sm">
+      <div
+        onKeyDown={handleEnterAsTab}
+        className="flex min-h-screen w-full items-center justify-center bg-white"
+      >
+        {/* no overflow-hidden: the VAT Slab list must stay visible */}
+        <div className="w-[720px] max-w-full border border-slate-400 bg-white shadow-sm">
 
-        {/* ====================================================
+          {/* ====================================================
             TITLE
         ==================================================== */}
 
-        <div className="flex h-[28px] w-full items-center bg-[#a7dfc0] pr-2">
-          <h1 className="ml-[5px] text-[17px] font-semibold text-[#374151]">
-            Item Group
-          </h1>
+          <Header Name="Item Group" />
 
-          {/* close button (the common one, as on the Sales Invoice) */}
-          <div className="ml-auto">
-            <CloseButton onClose={() => navigate("/")} />
-          </div>
-        </div>
-
-        {/* ====================================================
+          {/* ====================================================
             FORM
         ==================================================== */}
 
-        <div className="p-[12px] m-[12px]">
+          <div className="p-[12px] m-[12px]">
 
-          {/* ITEM GROUP ID */}
+            {/* ITEM GROUP ID */}
 
-          <div className="mb-[8px] grid grid-cols-[195px_1fr] items-center">
-            <label
-              htmlFor="txtItemGroupID"
-              className="relative pr-3 text-right text-[14px] text-gray-600"
-            >
-              <span className="absolute right-[15px] -top-0.5 h-[4px] w-[4px] text-red-500">*</span>
-              Item Group ID :
-            </label>
+            <div className="mb-[8px] grid grid-cols-[195px_1fr] items-center">
+              <label
+                htmlFor="txtItemGroupID"
+                className="relative pr-3 text-right text-[14px] text-gray-600"
+              >
+                <span className="absolute right-[15px] -top-0.5 h-[4px] w-[4px] text-red-500">*</span>
+                Item Group ID :
+              </label>
 
-            <div className="relative">
-              <input
-                id="txtItemGroupID"
-                name="txtItemGroupID"
-                type="text"
-                autoComplete="off"
-                maxLength={12}
-                aria-required="true"
-                value={txtItemGroupID}
-                onChange={(e) => {
-                  setTxtItemGroupID(e.target.value);
-                  setHasSavedItemGroup(false);
-                }}
-                onBlur={() => findItemGroup(txtItemGroupID)}
-                className="w-[30%] input-style"
-              />
+              <div className="relative">
+                <input
+                  id="txtItemGroupID"
+                  name="txtItemGroupID"
+                  type="text"
+                  autoComplete="off"
+                  maxLength={12}
+                  aria-required="true"
+                  value={txtItemGroupID}
+                  onChange={(e) => {
+                    setTxtItemGroupID(e.target.value);
+                    setHasSavedItemGroup(false);
+                  }}
+                  onBlur={() => findItemGroup(txtItemGroupID)}
+                  className="w-[30%] input-style"
+                />
+              </div>
             </div>
-          </div>
 
-          {/* ITEM GROUP NAME */}
+            {/* ITEM GROUP NAME */}
 
-          <div className="mb-[8px] grid grid-cols-[195px_1fr] items-center">
-            <label
-              htmlFor="txtItemGroupName"
-              className="relative pr-3 text-right text-[14px] text-gray-600"
-            >
-              <span className="absolute right-[15px] -top-0.5 h-[4px] w-[4px] text-red-500">*</span>
-              Item Group Name :
-            </label>
+            <div className="mb-[8px] grid grid-cols-[195px_1fr] items-center">
+              <label
+                htmlFor="txtItemGroupName"
+                className="relative pr-3 text-right text-[14px] text-gray-600"
+              >
+                <span className="absolute right-[15px] -top-0.5 h-[4px] w-[4px] text-red-500">*</span>
+                Item Group Name :
+              </label>
 
-            <div className="relative">
-              <input
-                id="txtItemGroupName"
-                name="txtItemGroupName"
-                type="text"
-                autoComplete="off"
-                maxLength={60}
-                aria-required="true"
-                value={txtItemGroupName}
-                onChange={(e) => setTxtItemGroupName(e.target.value)}
-                className="w-full input-style"
-              />
+              <div className="relative">
+                <input
+                  id="txtItemGroupName"
+                  name="txtItemGroupName"
+                  type="text"
+                  autoComplete="off"
+                  maxLength={60}
+                  aria-required="true"
+                  value={txtItemGroupName}
+                  onChange={(e) => setTxtItemGroupName(e.target.value)}
+                  className="w-full input-style"
+                />
+              </div>
             </div>
-          </div>
 
-          {/* STOCK / NON-STOCK */}
+            {/* STOCK / NON-STOCK */}
 
-          <div className="mb-[8px] grid grid-cols-[195px_1fr] items-center">
-            <label
-              htmlFor="lkpFSN"
-              className="relative pr-3 text-right text-[14px] text-gray-600"
-            >
-              <span className="absolute right-[15px] -top-0.5 h-[4px] w-[4px] text-red-500">*</span>
-              Stock / Non-stock :
-            </label>
+            <div className="mb-[8px] grid grid-cols-[195px_1fr] items-center">
+              <label
+                htmlFor="lkpFSN"
+                className="relative pr-3 text-right text-[14px] text-gray-600"
+              >
+                <span className="absolute right-[15px] -top-0.5 h-[4px] w-[4px] text-red-500">*</span>
+                Stock / Non-stock :
+              </label>
 
-            <div className="w-[30%]">
-              <Select<Option, false>
-                components={snSelectComponents}
-                inputId="lkpFSN"
-                instanceId="lkpFSN"
-                name="lkpFSN"
-                options={snOptions}
-                value={snOptions.find((option) => option.value === lkpFSN) || null}
-                onChange={(option) => setLkpFSN(option?.value ?? "")}
-                styles={snSelectStyles}
-                isClearable={false}
-                isSearchable={false}
-                placeholder="Select..."
-                menuPosition="fixed"
-                menuPortalTarget={
-                  typeof document !== "undefined" ? document.body : undefined
-                }
-              />
+              <div className="w-[30%]">
+                <Select<Option, false>
+                  components={snSelectComponents}
+                  inputId="lkpFSN"
+                  instanceId="lkpFSN"
+                  name="lkpFSN"
+                  options={snOptions}
+                  value={snOptions.find((option) => option.value === lkpFSN) || null}
+                  onChange={(option) => setLkpFSN(option?.value ?? "")}
+                  styles={snSelectStyles}
+                  isClearable={false}
+                  isSearchable={false}
+                  placeholder="Select..."
+                  menuPosition="fixed"
+                  menuPortalTarget={
+                    typeof document !== "undefined" ? document.body : undefined
+                  }
+                />
+              </div>
             </div>
-          </div>
 
-          {/* VAT SLAB */}
+            {/* VAT SLAB */}
 
-          <div className="mb-[8px] grid grid-cols-[195px_1fr] items-center">
-            <label
-              htmlFor="lkpVATSlab"
-              className="relative pr-3 text-right text-[14px] text-gray-600"
-            >
-              <span className="absolute right-[15px] -top-0.5 h-[4px] w-[4px] text-red-500">*</span>
-              VAT Slab :
-            </label>
+            <div className="mb-[8px] grid grid-cols-[195px_1fr] items-center">
+              <label
+                htmlFor="lkpVATSlab"
+                className="relative pr-3 text-right text-[14px] text-gray-600"
+              >
+                <span className="absolute right-[15px] -top-0.5 h-[4px] w-[4px] text-red-500">*</span>
+                VAT Slab :
+              </label>
 
-            <div className="w-[30%]">
-              <Select<Option, false>
-                components={selectComponents}
-                inputId="lkpVATSlab"
-                instanceId="lkpVATSlab"
-                name="lkpVATSlab"
-                options={vatSlabOptions}
-                value={
-                  vatSlabOptions.find(
-                    (option) => option.value === lkpVATSlab,
-                  ) || null
-                }
-                onChange={handleVATSlabChange}
-                styles={selectStyles}
-                isClearable={false}
-                isSearchable={false}
-                placeholder="Select..."
-                menuPosition="fixed"
-                menuPortalTarget={
-                  typeof document !== "undefined"
-                    ? document.body
-                    : undefined
-                }
-              />
+              <div className="w-[30%]">
+                <Select<Option, false>
+                  components={selectComponents}
+                  inputId="lkpVATSlab"
+                  instanceId="lkpVATSlab"
+                  name="lkpVATSlab"
+                  options={vatSlabOptions}
+                  value={
+                    vatSlabOptions.find(
+                      (option) => option.value === lkpVATSlab,
+                    ) || null
+                  }
+                  onChange={handleVATSlabChange}
+                  styles={selectStyles}
+                  isClearable={false}
+                  isSearchable={false}
+                  placeholder="Select..."
+                  menuPosition="fixed"
+                  menuPortalTarget={
+                    typeof document !== "undefined"
+                      ? document.body
+                      : undefined
+                  }
+                />
+              </div>
             </div>
-          </div>
 
-          {/* VAT % (follows the slab) */}
+            {/* VAT % (follows the slab) */}
 
-          <div className="mb-[8px] grid grid-cols-[195px_1fr] items-center">
-            <label
-              htmlFor="txtVATPer"
-              className="relative pr-3 text-right text-[14px] text-gray-600"
-            >
-              <span className="absolute right-[15px] -top-0.5 h-[4px] w-[4px] text-red-500">*</span>
-              VAT % :
-            </label>
+            <div className="mb-[8px] grid grid-cols-[195px_1fr] items-center">
+              <label
+                htmlFor="txtVATPer"
+                className="relative pr-3 text-right text-[14px] text-gray-600"
+              >
+                <span className="absolute right-[15px] -top-0.5 h-[4px] w-[4px] text-red-500">*</span>
+                VAT % :
+              </label>
 
-            <div className="relative">
-              <input
-                id="txtVATPer"
-                name="txtVATPer"
-                type="text"
-                inputMode="decimal"
-                value={txtVATPer}
-                readOnly
-                tabIndex={-1}
-                className="w-[30%] input-style text-right"
-              />
+              <div className="relative">
+                <input
+                  id="txtVATPer"
+                  name="txtVATPer"
+                  type="text"
+                  inputMode="decimal"
+                  value={txtVATPer}
+                  readOnly
+                  tabIndex={-1}
+                  className="w-[30%] input-style text-right"
+                />
+              </div>
             </div>
-          </div>
 
-          {/* ==================================================
+            {/* ==================================================
               BUTTONS
           ================================================== */}
 
-          <div className="mt-[14px] flex justify-center gap-3">
-            <button
-              id={hasSavedItemGroup ? "btnModify" : "btnSave"}
-              name={hasSavedItemGroup ? "btnModify" : "btnSave"}
-              type="button"
-              onClick={handleSave}
-              disabled={!canSaveOrModify}
-              className="btn-style disabled:cursor-not-allowed disabled:opacity-40"
-            >
-              <span className="underline underline-offset-2">
-                {actionWord.charAt(0)}
-              </span>
-              {actionWord.slice(1)}
-            </button>
+            <div className="mt-[14px] flex justify-center gap-3">
+              <button
+                id={hasSavedItemGroup ? "btnModify" : "btnSave"}
+                name={hasSavedItemGroup ? "btnModify" : "btnSave"}
+                type="button"
+                onClick={handleSave}
+                disabled={!canSaveOrModify}
+                className="btn-style disabled:cursor-not-allowed disabled:opacity-40"
+              >
+                <span className="underline underline-offset-2">
+                  {actionWord.charAt(0)}
+                </span>
+                {actionWord.slice(1)}
+              </button>
 
-            <button
-              id="btnSearch"
-              name="btnSearch"
-              type="button"
-              onClick={handleSearch}
-              title="Alt+E"
-              className="btn-style"
-            >
-              S<span className="underline underline-offset-2">e</span>arch
-            </button>
+              <button
+                id="btnSearch"
+                name="btnSearch"
+                type="button"
+                onClick={handleSearch}
+                title="Alt+E"
+                className="btn-style"
+              >
+                S<span className="underline underline-offset-2">e</span>arch
+              </button>
 
-            <button
-              id="btnDelete"
-              name="btnDelete"
-              type="button"
-              onClick={handleDelete}
-              disabled={!perms.delete}
-              className="btn-style disabled:cursor-not-allowed disabled:opacity-40"
-            >
-              <span className="underline underline-offset-2">D</span>elete
-            </button>
+              <button
+                id="btnDelete"
+                name="btnDelete"
+                type="button"
+                onClick={handleDelete}
+                disabled={!perms.delete}
+                className="btn-style disabled:cursor-not-allowed disabled:opacity-40"
+              >
+                <span className="underline underline-offset-2">D</span>elete
+              </button>
 
-            <button
-              id="btnClear"
-              name="btnClear"
-              type="button"
-              onClick={handleClear}
-              className="btn-style"
-            >
-              <span className="underline underline-offset-2">C</span>lear
-            </button>
+              <button
+                id="btnClear"
+                name="btnClear"
+                type="button"
+                onClick={handleClear}
+                className="btn-style"
+              >
+                <span className="underline underline-offset-2">C</span>lear
+              </button>
+            </div>
           </div>
         </div>
+
       </div>
 
-    </div>
-
-    {/* the "Do you want to delete ?" question - outside the root div: the page's
+      {/* the "Do you want to delete ?" question - outside the root div: the page's
         Enter-as-Tab must not take the Enter of the Yes / No buttons */}
-    {dialog}
+      {dialog}
     </>
   );
 };

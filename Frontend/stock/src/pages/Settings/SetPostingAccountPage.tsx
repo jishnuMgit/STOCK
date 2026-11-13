@@ -1,4 +1,5 @@
 import React, { useEffect, useRef, useState } from "react";
+import Header from "../../components/common/Header";
 import Select, { type SingleValue, type StylesConfig } from "react-select";
 import { toast } from "react-toastify";
 import { useAltShortcuts } from "../../hooks/useAltShortcuts";
@@ -701,12 +702,7 @@ const SetPostingAccountPage: React.FC = () => {
     >
       <div className="w-[870px] overflow-hidden border border-slate-400 bg-white shadow-sm">
 
-          {/* HEADER */}
-          <div className="flex h-[28px] w-full items-center bg-[#a7dfc0]">
-            <h1 className="ml-[5px] text-[17px] font-semibold text-[#374151]">
-              Set Posting Account
-            </h1>
-          </div>
+          <Header Name="Set Posting Account" />
 
           {/* FORM BODY */}
           <div className="p-[12px] m-[12px]">

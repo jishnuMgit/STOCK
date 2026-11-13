@@ -1,4 +1,5 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
+import Header from "../../../../../components/common/Header";
 import Select, {
   components,
   type MenuListProps,
@@ -758,9 +759,7 @@ const RptTBPage: React.FC = () => {
     <div className="flex min-h-full  w-full items-start justify-center bg-white px-4 py-4">
       <div className="min-h-fit max-w-205 min-w-205 bg-white p-0">
         <main className="w-full overflow-hidden border border-gray-400 bg-white">
-          <header className="flex h-7.5 items-center justify-start bg-[#9fdfbc] pl-3 text-[17px] font-semibold text-slate-700">
-            Trial Balance
-          </header>
+          <Header Name="Trial Balance" />
 
           <section className="relative min-h-89.25 px-3.5 pb-5 pt-2.25">
             {/* Branch selection */}

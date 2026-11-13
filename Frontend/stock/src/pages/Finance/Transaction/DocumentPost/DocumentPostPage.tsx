@@ -17,6 +17,7 @@ import {
 import {
   LocalizationProvider,
 } from "@mui/x-date-pickers/LocalizationProvider";
+import Header from "../../../../components/common/Header";
 
 // ============================================================
 // TYPES
@@ -297,36 +298,36 @@ const datePickerSx = {
   },
 
   "& .MuiPickersInputBase-root:hover .MuiPickersOutlinedInput-notchedOutline":
-    {
-      borderColor:
-        "#B7C7D7 !important",
-    },
+  {
+    borderColor:
+      "#B7C7D7 !important",
+  },
 
   "& .MuiPickersInputBase-root.Mui-focused .MuiPickersOutlinedInput-notchedOutline":
-    {
-      borderColor:
-        "#B7C7D7 !important",
+  {
+    borderColor:
+      "#B7C7D7 !important",
 
-      borderWidth: "1px",
-    },
+    borderWidth: "1px",
+  },
 
   "& .MuiPickersInputBase-root.Mui-error .MuiPickersOutlinedInput-notchedOutline":
-    {
-      borderColor:
-        "#B7C7D7 !important",
-    },
+  {
+    borderColor:
+      "#B7C7D7 !important",
+  },
 
   "& .MuiPickersInputBase-root.Mui-error:hover .MuiPickersOutlinedInput-notchedOutline":
-    {
-      borderColor:
-        "#B7C7D7 !important",
-    },
+  {
+    borderColor:
+      "#B7C7D7 !important",
+  },
 
   "& .MuiPickersInputBase-root.Mui-error.Mui-focused .MuiPickersOutlinedInput-notchedOutline":
-    {
-      borderColor:
-        "#B7C7D7 !important",
-    },
+  {
+    borderColor:
+      "#B7C7D7 !important",
+  },
 };
 
 // ============================================================
@@ -371,19 +372,19 @@ const tableDatePickerSx = {
   },
 
   "& .MuiPickersInputBase-root:hover .MuiPickersOutlinedInput-notchedOutline":
-    {
-      border: "0 !important",
-    },
+  {
+    border: "0 !important",
+  },
 
   "& .MuiPickersInputBase-root.Mui-focused .MuiPickersOutlinedInput-notchedOutline":
-    {
-      border: "0 !important",
-    },
+  {
+    border: "0 !important",
+  },
 
   "& .MuiPickersInputBase-root.Mui-error .MuiPickersOutlinedInput-notchedOutline":
-    {
-      border: "0 !important",
-    },
+  {
+    border: "0 !important",
+  },
 
   "& .MuiPickersInputBase-sectionsContainer": {
     height: "29px",
@@ -471,9 +472,9 @@ const GreenCheckbox: React.FC<
   onChange,
   id,
 }) => {
-  return (
-    <label
-      className="
+    return (
+      <label
+        className="
         relative
         inline-flex
         h-[13px]
@@ -482,13 +483,13 @@ const GreenCheckbox: React.FC<
         items-center
         justify-center
       "
-    >
-      <input
-        id={id}
-        type="checkbox"
-        checked={checked}
-        onChange={onChange}
-        className="
+      >
+        <input
+          id={id}
+          type="checkbox"
+          checked={checked}
+          onChange={onChange}
+          className="
           peer
           absolute
           h-[13px]
@@ -501,10 +502,10 @@ const GreenCheckbox: React.FC<
           bg-white
           outline-none
         "
-      />
+        />
 
-      <span
-        className="
+        <span
+          className="
           pointer-events-none
           absolute
           left-0
@@ -519,28 +520,28 @@ const GreenCheckbox: React.FC<
           opacity-0
           peer-checked:opacity-100
         "
-      >
-        <svg
-          xmlns="http://www.w3.org/2000/svg"
-          viewBox="0 0 16 16"
-          className="
+        >
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            viewBox="0 0 16 16"
+            className="
             h-[10px]
             w-[10px]
           "
-          fill="none"
-        >
-          <path
-            d="M3 8L6.5 11.5L13 4.5"
-            stroke="white"
-            strokeWidth="2"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-          />
-        </svg>
-      </span>
-    </label>
-  );
-};
+            fill="none"
+          >
+            <path
+              d="M3 8L6.5 11.5L13 4.5"
+              stroke="white"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            />
+          </svg>
+        </span>
+      </label>
+    );
+  };
 
 // ============================================================
 // INITIAL ROWS
@@ -645,11 +646,11 @@ const DocumentPostPage: React.FC =
             (row) =>
               row.id === id
                 ? {
-                    ...row,
+                  ...row,
 
-                    selected:
-                      checked,
-                  }
+                  selected:
+                    checked,
+                }
                 : row,
           ),
       );
@@ -674,11 +675,11 @@ const DocumentPostPage: React.FC =
             (row) =>
               row.id === id
                 ? {
-                    ...row,
+                  ...row,
 
-                    [field]:
-                      value,
-                  }
+                  [field]:
+                    value,
+                }
                 : row,
           ),
       );
@@ -698,10 +699,10 @@ const DocumentPostPage: React.FC =
             (row) =>
               row.id === id
                 ? {
-                    ...row,
+                  ...row,
 
-                    date: value,
-                  }
+                  date: value,
+                }
                 : row,
           ),
       );
@@ -772,21 +773,7 @@ const DocumentPostPage: React.FC =
               TITLE
           ================================================== */}
 
-          <header
-            className="
-              flex
-              h-[36px]
-              items-center
-              justify-start
-              bg-[#9fdfbc]
-              pl-[12px]
-              text-[18px]
-              font-semibold
-              text-slate-700
-            "
-          >
-            Document Post
-          </header>
+          <Header Name="Document Post" />
 
           {/* ==================================================
               HEADER
@@ -857,7 +844,7 @@ const DocumentPostPage: React.FC =
                     menuPosition="fixed"
                     menuPortalTarget={
                       typeof document !==
-                      "undefined"
+                        "undefined"
                         ? document.body
                         : undefined
                     }
@@ -898,9 +885,9 @@ const DocumentPostPage: React.FC =
                       value={
                         dtpAsOnDate
                           ? dayjs(
-                              dtpAsOnDate,
-                              "DD-MM-YYYY",
-                            )
+                            dtpAsOnDate,
+                            "DD-MM-YYYY",
+                          )
                           : null
                       }
                       onChange={(
@@ -1180,9 +1167,9 @@ const DocumentPostPage: React.FC =
                               value={
                                 row.date
                                   ? dayjs(
-                                      row.date,
-                                      "DD-MM-YYYY",
-                                    )
+                                    row.date,
+                                    "DD-MM-YYYY",
+                                  )
                                   : null
                               }
 
@@ -1335,7 +1322,7 @@ const DocumentPostPage: React.FC =
             </div>
           </div>
 
-         
+
 
           {/* ==================================================
               DOCUMENT AMOUNT INPUT

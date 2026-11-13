@@ -5,6 +5,7 @@ import { useButtonPermissions } from "../../../hooks/useButtonPermissions";
 import { useConfirmModal } from "../../../hooks/useConfirmModal";
 import { useDeleteToast } from "../../../hooks/useDeleteToast";
 import { useGridCellFocus } from "../../../hooks/useGridCellFocus";
+import Header from "../../../components/common/Header";
 
 // ============================================================
 // TYPES
@@ -471,7 +472,7 @@ const CustomerCountryPage: React.FC<CustomerCountryPageProps> = ({ onClose }) =>
     focusCell("txtCountryID", 0);
   };
 
-  
+
   const handleSave = async () => {
     const inserted: {
       countryID: string;
@@ -634,7 +635,7 @@ const CustomerCountryPage: React.FC<CustomerCountryPageProps> = ({ onClose }) =>
           return;
         }
 
-        
+
       }
 
       if (
@@ -683,327 +684,322 @@ const CustomerCountryPage: React.FC<CustomerCountryPageProps> = ({ onClose }) =>
 
   return (
     <>
-    <div
-      onKeyDown={handlePageKeyDown}
-      className="flex min-h-screen w-full items-center justify-center bg-white"
-    >
-      <div className="w-full max-w-190 border border-slate-400 bg-white shadow-sm">
-        {/* TITLE */}
-        <div className="flex h-7.5 w-full items-center bg-[#a7dfc0]">
-          <h1 className="ml-1.25 text-[17px] font-semibold text-[#374151]">
-            Customer/Supplier Country
-          </h1>
-        </div>
+      <div
+        onKeyDown={handlePageKeyDown}
+        className="flex min-h-screen w-full items-center justify-center bg-white"
+      >
+        <div className="w-full max-w-190 border border-slate-400 bg-white shadow-sm"> 
+          {/* TITLE */}
+          <Header Name="Customer/Supplier Country" />
 
-        {/* FORM */}
-        <div className="p-3 m-3">
-          <div className="h-[310px] overflow-hidden border border-[#bfe8d0]">
-            <div className="h-full overflow-y-auto overflow-x-hidden">
-              <table className="w-full table-fixed border-collapse text-[12px]">
-                <colgroup>
-                  <col className="w-6" />
-                  <col className="w-20" />
-                  <col />
-                  <col />
-                  <col className="w-35" />
-                </colgroup>
+          {/* FORM */}
+          <div className="p-3 m-3">
+            <div className="h-[310px] overflow-hidden border border-[#bfe8d0]">
+              <div className="h-full overflow-y-auto overflow-x-hidden">
+                <table className="w-full table-fixed border-collapse text-[12px]">
+                  <colgroup>
+                    <col className="w-6" />
+                    <col className="w-20" />
+                    <col />
+                    <col />
+                    <col className="w-35" />
+                  </colgroup>
 
-                <thead>
-                  <tr>
-                    <th className="sticky top-0 z-20 h-8.5 border border-[#bfe8d0] bg-[#edf9f2] p-0" />
-                    <th className={`${headerCellClass} text-left`}>ID</th>
-                    <th className={`${headerCellClass} text-left`}>Country</th>
-                    <th className={`${headerCellClass} text-right`}>
-                      Country(Arabic)
-                    </th>
-                    <th className={`${headerCellClass} text-right`}>
-                      Position No.
-                    </th>
-                  </tr>
-                </thead>
+                  <thead>
+                    <tr>
+                      <th className="sticky top-0 z-20 h-8.5 border border-[#bfe8d0] bg-[#edf9f2] p-0" />
+                      <th className={`${headerCellClass} text-left`}>ID</th>
+                      <th className={`${headerCellClass} text-left`}>Country</th>
+                      <th className={`${headerCellClass} text-right`}>
+                        Country(Arabic)
+                      </th>
+                      <th className={`${headerCellClass} text-right`}>
+                        Position No.
+                      </th>
+                    </tr>
+                  </thead>
 
-                <tbody>
-                  {displayRows.map((row, index) => (
-                    <tr
-                      key={index}
-                      className={`h-8.5 ${
-                        selectedRow === index ? "bg-[#f8fcfa]" : "bg-white"
-                      }`}
-                      onClick={() => setSelectedRow(index)}
-                    >
-                      {/* SELECTOR COLUMN: the arrow of the selected row */}
-                      <td className="h-8.5 border border-[#bfe8d0] bg-white p-0 text-center align-middle">
-                        {selectedRow === index && (
-                          <span className="text-[9px] text-[#222]">▶</span>
-                        )}
-                      </td>
+                  <tbody>
+                    {displayRows.map((row, index) => (
+                      <tr
+                        key={index}
+                        className={`h-8.5 ${selectedRow === index ? "bg-[#f8fcfa]" : "bg-white"
+                          }`}
+                        onClick={() => setSelectedRow(index)}
+                      >
+                        {/* SELECTOR COLUMN: the arrow of the selected row */}
+                        <td className="h-8.5 border border-[#bfe8d0] bg-white p-0 text-center align-middle">
+                          {selectedRow === index && (
+                            <span className="text-[9px] text-[#222]">▶</span>
+                          )}
+                        </td>
 
-                      {/* COUNTRY ID (max 4) */}
-                      <td className={outlinedCellClass}>
-                        <input
-                          id={`txtCountryID-${index}`}
-                          name="txtCountryID"
-                          type="text"
-                          value={row.txtCountryID}
-                          maxLength={4}
-                          autoComplete="off"
-                          onFocus={(event) => {
-                            selectOnFocus(event);
-                            setSelectedRow(index);
-
-                            // find out early whether transactions use it
-                            if (row.txtOriginalCountryID !== null) {
-                              isUsed(row.txtOriginalCountryID);
-                            }
-                          }}
-                          onBlur={() => handleIdBlur(index)}
-                          onChange={(event) =>
-                            updateRow(index, { txtCountryID: event.target.value })
-                          }
-                          onPaste={(event) => {
-                            if (isEditBlocked(index, "txtCountryID")) {
-                              event.preventDefault();
-                            }
-                          }}
-                          onKeyDown={(event) =>
-                            handleCellKeyDown(event, index, "txtCountryID")
-                          }
-                          className={cellInputClass}
-                        />
-                      </td>
-
-                      {/* COUNTRY NAME (max 50) */}
-                      <td className={outlinedCellClass}>
-                        <input
-                          id={`txtCountryName-${index}`}
-                          name="txtCountryName"
-                          type="text"
-                          value={row.txtCountryName}
-                          maxLength={50}
-                          autoComplete="off"
-                          onFocus={(event) => {
-                            selectOnFocus(event);
-                            setSelectedRow(index);
-                          }}
-                          onChange={(event) =>
-                            updateRow(index, { txtCountryName: event.target.value })
-                          }
-                          onPaste={(event) => {
-                            if (isEditBlocked(index, "txtCountryName")) {
-                              event.preventDefault();
-                            }
-                          }}
-                          onKeyDown={(event) =>
-                            handleCellKeyDown(event, index, "txtCountryName")
-                          }
-                          className={cellInputClass}
-                        />
-                      </td>
-
-                      {/* COUNTRY NAME (ARABIC) (max 50, right to left) */}
-                      <td className={outlinedCellClass}>
-                        <input
-                          id={`txtCountryNameA-${index}`}
-                          name="txtCountryNameA"
-                          type="text"
-                          dir="rtl"
-                          value={row.txtCountryNameA}
-                          maxLength={50}
-                          autoComplete="off"
-                          onFocus={(event) => {
-                            selectOnFocus(event);
-                            setSelectedRow(index);
-                          }}
-                          onChange={(event) =>
-                            updateRow(index, { txtCountryNameA: event.target.value })
-                          }
-                          onPaste={(event) => {
-                            if (isEditBlocked(index, "txtCountryNameA")) {
-                              event.preventDefault();
-                            }
-                          }}
-                          onKeyDown={(event) =>
-                            handleCellKeyDown(event, index, "txtCountryNameA")
-                          }
-                          className={`${cellInputClass} text-right`}
-                        />
-                      </td>
-
-                      {/* POSITION # (whole numbers, smallint) and the X of the row */}
-                      <td className={outlinedCellClass}>
-                        <div className="flex h-8 items-center">
+                        {/* COUNTRY ID (max 4) */}
+                        <td className={outlinedCellClass}>
                           <input
-                            id={`txtPositionNo-${index}`}
-                            name="txtPositionNo"
+                            id={`txtCountryID-${index}`}
+                            name="txtCountryID"
                             type="text"
-                            inputMode="numeric"
-                            value={row.txtPositionNo}
-                            maxLength={5}
+                            value={row.txtCountryID}
+                            maxLength={4}
+                            autoComplete="off"
+                            onFocus={(event) => {
+                              selectOnFocus(event);
+                              setSelectedRow(index);
+
+                              // find out early whether transactions use it
+                              if (row.txtOriginalCountryID !== null) {
+                                isUsed(row.txtOriginalCountryID);
+                              }
+                            }}
+                            onBlur={() => handleIdBlur(index)}
+                            onChange={(event) =>
+                              updateRow(index, { txtCountryID: event.target.value })
+                            }
+                            onPaste={(event) => {
+                              if (isEditBlocked(index, "txtCountryID")) {
+                                event.preventDefault();
+                              }
+                            }}
+                            onKeyDown={(event) =>
+                              handleCellKeyDown(event, index, "txtCountryID")
+                            }
+                            className={cellInputClass}
+                          />
+                        </td>
+
+                        {/* COUNTRY NAME (max 50) */}
+                        <td className={outlinedCellClass}>
+                          <input
+                            id={`txtCountryName-${index}`}
+                            name="txtCountryName"
+                            type="text"
+                            value={row.txtCountryName}
+                            maxLength={50}
                             autoComplete="off"
                             onFocus={(event) => {
                               selectOnFocus(event);
                               setSelectedRow(index);
                             }}
-                            onChange={(event) => {
-                              const digits = event.target.value
-                                .replace(/\D/g, "")
-                                .slice(0, 5);
-
-                              updateRow(index, {
-                                txtPositionNo:
-                                  digits !== "" && Number(digits) > 32767
-                                    ? "32767"
-                                    : digits,
-                              });
-                            }}
+                            onChange={(event) =>
+                              updateRow(index, { txtCountryName: event.target.value })
+                            }
                             onPaste={(event) => {
-                              if (isEditBlocked(index, "txtPositionNo")) {
+                              if (isEditBlocked(index, "txtCountryName")) {
                                 event.preventDefault();
                               }
                             }}
                             onKeyDown={(event) =>
-                              handleCellKeyDown(event, index, "txtPositionNo")
+                              handleCellKeyDown(event, index, "txtCountryName")
+                            }
+                            className={cellInputClass}
+                          />
+                        </td>
+
+                        {/* COUNTRY NAME (ARABIC) (max 50, right to left) */}
+                        <td className={outlinedCellClass}>
+                          <input
+                            id={`txtCountryNameA-${index}`}
+                            name="txtCountryNameA"
+                            type="text"
+                            dir="rtl"
+                            value={row.txtCountryNameA}
+                            maxLength={50}
+                            autoComplete="off"
+                            onFocus={(event) => {
+                              selectOnFocus(event);
+                              setSelectedRow(index);
+                            }}
+                            onChange={(event) =>
+                              updateRow(index, { txtCountryNameA: event.target.value })
+                            }
+                            onPaste={(event) => {
+                              if (isEditBlocked(index, "txtCountryNameA")) {
+                                event.preventDefault();
+                              }
+                            }}
+                            onKeyDown={(event) =>
+                              handleCellKeyDown(event, index, "txtCountryNameA")
                             }
                             className={`${cellInputClass} text-right`}
                           />
+                        </td>
 
-                          {/* the X of the row, at the right end (the slot is always there so the
+                        {/* POSITION # (whole numbers, smallint) and the X of the row */}
+                        <td className={outlinedCellClass}>
+                          <div className="flex h-8 items-center">
+                            <input
+                              id={`txtPositionNo-${index}`}
+                              name="txtPositionNo"
+                              type="text"
+                              inputMode="numeric"
+                              value={row.txtPositionNo}
+                              maxLength={5}
+                              autoComplete="off"
+                              onFocus={(event) => {
+                                selectOnFocus(event);
+                                setSelectedRow(index);
+                              }}
+                              onChange={(event) => {
+                                const digits = event.target.value
+                                  .replace(/\D/g, "")
+                                  .slice(0, 5);
+
+                                updateRow(index, {
+                                  txtPositionNo:
+                                    digits !== "" && Number(digits) > 32767
+                                      ? "32767"
+                                      : digits,
+                                });
+                              }}
+                              onPaste={(event) => {
+                                if (isEditBlocked(index, "txtPositionNo")) {
+                                  event.preventDefault();
+                                }
+                              }}
+                              onKeyDown={(event) =>
+                                handleCellKeyDown(event, index, "txtPositionNo")
+                              }
+                              className={`${cellInputClass} text-right`}
+                            />
+
+                            {/* the X of the row, at the right end (the slot is always there so the
                               box does not change size) */}
-                          <span className="flex w-8 shrink-0 items-center justify-center">
-                            {selectedRow === index && rows[index] && (
-                              <button
-                                type="button"
-                                tabIndex={-1}
-                                title="Delete row (Ctrl+Delete)"
-                                onClick={() => deleteRow(index)}
-                                className="text-[12px] leading-none text-gray-400 hover:text-red-600"
-                              >
-                                ✕
-                              </button>
-                            )}
-                          </span>
-                        </div>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
+                            <span className="flex w-8 shrink-0 items-center justify-center">
+                              {selectedRow === index && rows[index] && (
+                                <button
+                                  type="button"
+                                  tabIndex={-1}
+                                  title="Delete row (Ctrl+Delete)"
+                                  onClick={() => deleteRow(index)}
+                                  className="text-[12px] leading-none text-gray-400 hover:text-red-600"
+                                >
+                                  ✕
+                                </button>
+                              )}
+                            </span>
+                          </div>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
             </div>
-          </div>
 
-          {/* BUTTONS */}
-          <div className="mt-3.5 flex justify-center gap-3">
-            <button
-              id="btnSave"
-              name="btnSave"
-              type="button"
-              onClick={handleSave}
-              disabled={!canSaveOrModify || saving}
-              title="Alt+S"
-              className="btn-style disabled:cursor-not-allowed disabled:opacity-40"
-            >
-              <span className="underline underline-offset-2">
-                {actionWord.charAt(0)}
-              </span>
-              {actionWord.slice(1)}
-            </button>
+            {/* BUTTONS */}
+            <div className="mt-3.5 flex justify-center gap-3">
+              <button
+                id="btnSave"
+                name="btnSave"
+                type="button"
+                onClick={handleSave}
+                disabled={!canSaveOrModify || saving}
+                title="Alt+S"
+                className="btn-style disabled:cursor-not-allowed disabled:opacity-40"
+              >
+                <span className="underline underline-offset-2">
+                  {actionWord.charAt(0)}
+                </span>
+                {actionWord.slice(1)}
+              </button>
 
-            <button
-              id="btnSearch"
-              name="btnSearch"
-              type="button"
-              // onClick={openFind}
-              title="Alt+F"
-              className="btn-style"
-            >
-             S<span className="underline underline-offset-2">e</span>arch
-            </button>
+              <button
+                id="btnSearch"
+                name="btnSearch"
+                type="button"
+                // onClick={openFind}
+                title="Alt+F"
+                className="btn-style"
+              >
+                S<span className="underline underline-offset-2">e</span>arch
+              </button>
 
-            <button
-              id="btnClear"
-              name="btnClear"
-              type="button"
-              onClick={handleClear}
-              title="Alt+N"
-              className="btn-style"
-            >
-              <span className="underline underline-offset-2">C</span>lear
-            </button>
+              <button
+                id="btnClear"
+                name="btnClear"
+                type="button"
+                onClick={handleClear}
+                title="Alt+N"
+                className="btn-style"
+              >
+                <span className="underline underline-offset-2">C</span>lear
+              </button>
 
-           
+
+            </div>
           </div>
         </div>
-      </div>
 
-      {/* FIND BOX */}
-      {findOpen && (
-        <div
-          className="fixed inset-0 z-50 flex items-start justify-center bg-black/20 pt-30"
-          onClick={(event) => {
-            if (event.target === event.currentTarget) closeFind();
-          }}
-          onKeyDown={(event) => {
-            // keep Enter / Escape inside the box (not the page's Enter-as-Tab)
-            event.stopPropagation();
-            if (event.key === "Escape") {
-              event.preventDefault();
-              closeFind();
-            }
-          }}
-        >
-          <div className="w-115 border border-slate-400 bg-white shadow-lg">
-            <div className="flex h-7 items-center bg-[#a7dfc0] px-2 text-[15px] font-semibold text-[#374151]">
-              Find Country
-            </div>
+        {/* FIND BOX */}
+        {findOpen && (
+          <div
+            className="fixed inset-0 z-50 flex items-start justify-center bg-black/20 pt-30"
+            onClick={(event) => {
+              if (event.target === event.currentTarget) closeFind();
+            }}
+            onKeyDown={(event) => {
+              // keep Enter / Escape inside the box (not the page's Enter-as-Tab)
+              event.stopPropagation();
+              if (event.key === "Escape") {
+                event.preventDefault();
+                closeFind();
+              }
+            }}
+          >
+            <div className="w-115 border border-slate-400 bg-white shadow-lg">
+              <div className="flex h-7 items-center bg-[#a7dfc0] px-2 text-[15px] font-semibold text-[#374151]">
+                Find Country
+              </div>
 
-            <div className="p-2.5">
-              <input
-                autoFocus
-                type="text"
-                value={findText}
-                placeholder="Type an ID or a name"
-                autoComplete="off"
-                onChange={(event) => setFindText(event.target.value)}
-                onKeyDown={(event) => {
-                  if (event.key === "Enter") {
-                    event.preventDefault();
-                    if (findMatches[0]) pickFound(findMatches[0].index);
-                  }
-                }}
-                className="input-style w-full"
-              />
+              <div className="p-2.5">
+                <input
+                  autoFocus
+                  type="text"
+                  value={findText}
+                  placeholder="Type an ID or a name"
+                  autoComplete="off"
+                  onChange={(event) => setFindText(event.target.value)}
+                  onKeyDown={(event) => {
+                    if (event.key === "Enter") {
+                      event.preventDefault();
+                      if (findMatches[0]) pickFound(findMatches[0].index);
+                    }
+                  }}
+                  className="input-style w-full"
+                />
 
-              <div className="mt-2 max-h-65 overflow-y-auto border border-[#bfe8d0]">
-                {findMatches.length === 0 ? (
-                  <div className="px-2.5 py-2 text-[12px] text-gray-500">
-                    No matching country
-                  </div>
-                ) : (
-                  findMatches.map(({ row, index }) => (
-                    <button
-                      key={index}
-                      type="button"
-                      onClick={() => pickFound(index)}
-                      className="grid w-full grid-cols-[60px_1fr_1fr] gap-2 px-2.5 py-1.5 text-left text-[12px] text-[#374151] hover:bg-[#eefbf4]"
-                    >
-                      <span>{row.txtCountryID}</span>
-                      <span>{row.txtCountryName}</span>
-                      <span dir="rtl" className="text-right">
-                        {row.txtCountryNameA}
-                      </span>
-                    </button>
-                  ))
-                )}
+                <div className="mt-2 max-h-65 overflow-y-auto border border-[#bfe8d0]">
+                  {findMatches.length === 0 ? (
+                    <div className="px-2.5 py-2 text-[12px] text-gray-500">
+                      No matching country
+                    </div>
+                  ) : (
+                    findMatches.map(({ row, index }) => (
+                      <button
+                        key={index}
+                        type="button"
+                        onClick={() => pickFound(index)}
+                        className="grid w-full grid-cols-[60px_1fr_1fr] gap-2 px-2.5 py-1.5 text-left text-[12px] text-[#374151] hover:bg-[#eefbf4]"
+                      >
+                        <span>{row.txtCountryID}</span>
+                        <span>{row.txtCountryName}</span>
+                        <span dir="rtl" className="text-right">
+                          {row.txtCountryNameA}
+                        </span>
+                      </button>
+                    ))
+                  )}
+                </div>
               </div>
             </div>
           </div>
-        </div>
-      )}
-    </div>
+        )}
+      </div>
 
-    {/* the "Do you want to delete ?" question - outside the root div: the page's
+      {/* the "Do you want to delete ?" question - outside the root div: the page's
         Enter handling must not take the Enter of the Yes / No buttons */}
-    {dialog}
+      {dialog}
     </>
   );
 };

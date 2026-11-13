@@ -8,6 +8,7 @@ import CloseButton from "../../../components/common/CloseButton";
 import { useConfirmModal } from "../../../hooks/useConfirmModal";
 import { useDeleteToast } from "../../../hooks/useDeleteToast";
 import { useGridCellFocus } from "../../../hooks/useGridCellFocus";
+import Header from "../../../components/common/Header";
 
 // ============================================================
 // TYPES
@@ -652,175 +653,165 @@ const UnitPage: React.FC = () => {
 
   return (
     <>
-    <div
-      onKeyDown={handlePageKeyDown}
-      className="flex min-h-screen w-full items-center justify-center bg-white"
-    >
-      <div className="w-full max-w-[530px] border border-slate-400 bg-white shadow-sm">
-        {/* ====================================================
+      <div
+        onKeyDown={handlePageKeyDown}
+        className="flex min-h-screen w-full items-center justify-center bg-white"
+      >
+        <div className="w-full max-w-[530px] border border-slate-400 bg-white shadow-sm">
+          {/* ====================================================
             TITLE
         ==================================================== */}
 
-        <div className="flex h-[28px] w-full items-center bg-[#a7dfc0] pr-2">
-          <h1 className="ml-[5px] text-[17px] font-semibold text-[#374151]">
-            Unit
-          </h1>
+          <Header Name="Unit" />
 
-          {/* close button (the common one, as on the Sales Invoice) */}
-          <div className="ml-auto">
-            <CloseButton onClose={() => navigate("/")} />
-          </div>
-        </div>
-
-        {/* ====================================================
+          {/* ====================================================
             FORM
         ==================================================== */}
 
-        <div className="p-[12px] m-[12px]">
-          {/* TABLE AREA */}
+          <div className="p-[12px] m-[12px]">
+            {/* TABLE AREA */}
 
-          <div className="h-[344px] overflow-hidden border border-[#bfe8d0]">
-            <div className="h-full overflow-y-auto overflow-x-hidden">
-              <table className="w-full table-fixed border-collapse text-[12px]">
-                <colgroup>
-                  <col className="w-[24px]" />
-                  <col />
-                </colgroup>
+            <div className="h-[344px] overflow-hidden border border-[#bfe8d0]">
+              <div className="h-full overflow-y-auto overflow-x-hidden">
+                <table className="w-full table-fixed border-collapse text-[12px]">
+                  <colgroup>
+                    <col className="w-[24px]" />
+                    <col />
+                  </colgroup>
 
-                <thead>
-                  <tr>
-                    <th className="sticky top-0 z-20 h-[34px] border border-[#bfe8d0] bg-[#edf9f2] p-0" />
+                  <thead>
+                    <tr>
+                      <th className="sticky top-0 z-20 h-[34px] border border-[#bfe8d0] bg-[#edf9f2] p-0" />
 
-                    <th className="sticky top-0 z-20 h-[34px] border border-l-0 border-[#bfe8d0] bg-[#edf9f2] px-[11px] py-0 text-left text-[14px] font-normal text-gray-600">
-                      Unit
-                    </th>
-                  </tr>
-                </thead>
+                      <th className="sticky top-0 z-20 h-[34px] border border-l-0 border-[#bfe8d0] bg-[#edf9f2] px-[11px] py-0 text-left text-[14px] font-normal text-gray-600">
+                        Unit
+                      </th>
+                    </tr>
+                  </thead>
 
-                <tbody>
-                  {displayRows.map((row, index) => {
+                  <tbody>
+                    {displayRows.map((row, index) => {
 
-                    // the X shows on a row that has a unit in it (Admin Users only):
-                    // a typed (unsaved) row can always go, a saved one needs the
-                    // Delete right
-                    const showDelete =
-                      isAdminUser &&
-                      row.txtUnit.trim() !== "" &&
-                      (row.txtOriginalUnit === null || perms.delete);
+                      // the X shows on a row that has a unit in it (Admin Users only):
+                      // a typed (unsaved) row can always go, a saved one needs the
+                      // Delete right
+                      const showDelete =
+                        isAdminUser &&
+                        row.txtUnit.trim() !== "" &&
+                        (row.txtOriginalUnit === null || perms.delete);
 
-                    return (
-                      <tr
-                        key={index}
-                        className={`h-[34px] ${
-                          selectedRow === index ? "bg-[#f8fcfa]" : "bg-white"
-                        }`}
-                        onClick={() => setSelectedRow(index)}
-                      >
-                        {/* SELECTOR COLUMN */}
+                      return (
+                        <tr
+                          key={index}
+                          className={`h-[34px] ${selectedRow === index ? "bg-[#f8fcfa]" : "bg-white"
+                            }`}
+                          onClick={() => setSelectedRow(index)}
+                        >
+                          {/* SELECTOR COLUMN */}
 
-                        <td className="h-[34px] w-[24px] border border-[#bfe8d0] bg-white p-0 text-center align-middle">
-                          {selectedRow === index && (
-                            <span className="text-[9px] text-[#222]">▶</span>
-                          )}
-                        </td>
+                          <td className="h-[34px] w-[24px] border border-[#bfe8d0] bg-white p-0 text-center align-middle">
+                            {selectedRow === index && (
+                              <span className="text-[9px] text-[#222]">▶</span>
+                            )}
+                          </td>
 
-                        {/* UNIT COLUMN */}
+                          {/* UNIT COLUMN */}
 
-                        <td className={`h-[34px] border border-l-0 border-[#bfe8d0] bg-white p-0 align-middle ${cellFocusClass}`}>
-                          <div className="flex h-[32px] items-center">
-                            <input
-                              id={`txtUnit-${index}`}
-                              name="txtUnit"
-                              type="text"
-                              value={row.txtUnit}
-                              maxLength={8}
-                              autoComplete="off"
-                              onFocus={(event) => {
-                                selectOnFocus(event);
-                                setSelectedRow(index);
+                          <td className={`h-[34px] border border-l-0 border-[#bfe8d0] bg-white p-0 align-middle ${cellFocusClass}`}>
+                            <div className="flex h-[32px] items-center">
+                              <input
+                                id={`txtUnit-${index}`}
+                                name="txtUnit"
+                                type="text"
+                                value={row.txtUnit}
+                                maxLength={8}
+                                autoComplete="off"
+                                onFocus={(event) => {
+                                  selectOnFocus(event);
+                                  setSelectedRow(index);
 
-                                if (row.txtOriginalUnit !== null) {
-                                  checkUnitUsed(row.txtOriginalUnit);
+                                  if (row.txtOriginalUnit !== null) {
+                                    checkUnitUsed(row.txtOriginalUnit);
+                                  }
+                                }}
+                                onBlur={() => handleUnitBlur(index)}
+                                onChange={(event) =>
+                                  updateUnit(index, event.target.value)
                                 }
-                              }}
-                              onBlur={() => handleUnitBlur(index)}
-                              onChange={(event) =>
-                                updateUnit(index, event.target.value)
-                              }
-                              onPaste={(event) => {
-                                if (isEditBlocked(index)) {
-                                  event.preventDefault();
+                                onPaste={(event) => {
+                                  if (isEditBlocked(index)) {
+                                    event.preventDefault();
+                                  }
+                                }}
+                                onKeyDown={(event) =>
+                                  handleUnitKeyDown(event, index)
                                 }
-                              }}
-                              onKeyDown={(event) =>
-                                handleUnitKeyDown(event, index)
-                              }
-                              className="h-[32px] min-w-0 flex-1 border-0 bg-transparent px-[11px] py-0 text-left text-[13px] text-[#374151] outline-none focus:bg-[#f1f8ff]"
-                            />
+                                className="h-[32px] min-w-0 flex-1 border-0 bg-transparent px-[11px] py-0 text-left text-[13px] text-[#374151] outline-none focus:bg-[#f1f8ff]"
+                              />
 
-                            {/* the X of the row, at the right end of the Unit box (the slot
+                              {/* the X of the row, at the right end of the Unit box (the slot
                                 is always there so the box does not change size) */}
-                            <span className="flex w-[32px] shrink-0 items-center justify-center">
-                              {selectedRow === index && showDelete && (
-                                <button
-                                  type="button"
-                                  tabIndex={-1}
-                                  title="Delete row"
-                                  onClick={() => handleDeleteRow(index)}
-                                  aria-label={`Delete ${row.txtUnit}`}
-                                  className="text-[12px] leading-none text-gray-400 hover:text-red-600"
-                                >
-                                  ✕
-                                </button>
-                              )}
-                            </span>
-                          </div>
-                        </td>
-                      </tr>
-                    );
-                  })}
-                </tbody>
-              </table>
+                              <span className="flex w-[32px] shrink-0 items-center justify-center">
+                                {selectedRow === index && showDelete && (
+                                  <button
+                                    type="button"
+                                    tabIndex={-1}
+                                    title="Delete row"
+                                    onClick={() => handleDeleteRow(index)}
+                                    aria-label={`Delete ${row.txtUnit}`}
+                                    className="text-[12px] leading-none text-gray-400 hover:text-red-600"
+                                  >
+                                    ✕
+                                  </button>
+                                )}
+                              </span>
+                            </div>
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
             </div>
-          </div>
 
-          {/* ====================================================
+            {/* ====================================================
               BUTTONS
           ==================================================== */}
 
-          <div className="mt-[14px] flex justify-center gap-3">
-            <button
-              id="btnSave"
-              name="btnSave"
-              type="button"
-              onClick={handleSave}
-              disabled={!canSaveOrModify || saving}
-              className="btn-style disabled:cursor-not-allowed disabled:opacity-40"
-            >
-              <span className="underline underline-offset-2">
-                {actionWord.charAt(0)}
-              </span>
-              {actionWord.slice(1)}
-            </button>
+            <div className="mt-[14px] flex justify-center gap-3">
+              <button
+                id="btnSave"
+                name="btnSave"
+                type="button"
+                onClick={handleSave}
+                disabled={!canSaveOrModify || saving}
+                className="btn-style disabled:cursor-not-allowed disabled:opacity-40"
+              >
+                <span className="underline underline-offset-2">
+                  {actionWord.charAt(0)}
+                </span>
+                {actionWord.slice(1)}
+              </button>
 
-            <button
-              id="btnClear"
-              name="btnClear"
-              type="button"
-              onClick={handleClear}
-              className="btn-style"
-            >
-              <span className="underline underline-offset-2">C</span>lear
-            </button>
+              <button
+                id="btnClear"
+                name="btnClear"
+                type="button"
+                onClick={handleClear}
+                className="btn-style"
+              >
+                <span className="underline underline-offset-2">C</span>lear
+              </button>
+            </div>
           </div>
         </div>
+
       </div>
 
-    </div>
-
-    {/* the "Do you want to delete ?" question - outside the root div: the page's
+      {/* the "Do you want to delete ?" question - outside the root div: the page's
         Enter handling must not take the Enter of the Yes / No buttons */}
-    {dialog}
+      {dialog}
     </>
   );
 };

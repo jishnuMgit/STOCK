@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import Header from "../../components/common/Header";
 import Select from "react-select";
 import selectComponents from "../../components/sharecomponents/selectComponents";
 type Option = { value: string; label: string };
@@ -171,11 +172,7 @@ const SetReceivableAgeingPeriod: React.FC<SetReceivableAgeingPeriodProps> = ({
     <div className="flex min-h-full w-full items-start justify-center bg-white px-4 py-4">
       <div className="min-h-fit w-120 min-w-120 max-w-full bg-white p-0">
         <main className="w-full overflow-hidden border border-gray-400 bg-white">
-          <header className="flex h-7.5 items-center justify-start bg-[#9fdfbc]">
-            <h1 className="m-0 ml-3.5 text-[17px] font-semibold text-[#24364d]">
-              Set Receivable  Ageing Period
-            </h1>
-          </header>
+          <Header Name="Set Receivable Ageing Period" />
 
           <section className="px-3.5 pb-6 pt-3">
             {/* Filters */}

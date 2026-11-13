@@ -38,6 +38,7 @@ import selectComponents, {
 } from "../../../../components/sharecomponents/selectComponents";
 import { useNavigate } from "react-router-dom";
 import CloseButton from "../../../../components/common/CloseButton";
+import Header from "../../../../components/common/Header";
 
 // ============================================================
 // STOCK TRANSFER (the old frmST)
@@ -376,7 +377,7 @@ const selectStyles = {
 
 const tableSelectStyles: StylesConfig<SelectOption, false> = {
   ...selectStyles,
-//@ts-ignore
+  //@ts-ignore
   control: (base, state) => ({
     ...base,
     minHeight: "26px",
@@ -804,7 +805,7 @@ const StockTransferPage: React.FC = () => {
       setTxtNote(result.header?.txtNote ?? "");
       setLkpToBranch(
         toOptions.find((option) => option.value === result.header?.lkpToBranch) ??
-          null,
+        null,
       );
 
       // "Saved By : X date / Last Modified By : Y date", as the old form showed
@@ -940,10 +941,10 @@ const StockTransferPage: React.FC = () => {
         previous.map((row) =>
           row.id === rowId
             ? {
-                ...row,
-                txtStock: stock,
-                txtUnitCost: Number(result.txtUnitCost).toFixed(4),
-              }
+              ...row,
+              txtStock: stock,
+              txtUnitCost: Number(result.txtUnitCost).toFixed(4),
+            }
             : row,
         ),
       );
@@ -1030,7 +1031,7 @@ const StockTransferPage: React.FC = () => {
 
           updated.lkpItemName = selected
             ? itemNameOptions.find((option) => option.value === selected.value) ??
-              null
+            null
             : null;
         }
 
@@ -1327,7 +1328,7 @@ const StockTransferPage: React.FC = () => {
       if (!response.ok || !result.success) {
         toast.error(
           result.message ||
-            (chkSaved ? "Not Modified,Try again" : "Not Saved,Try again"),
+          (chkSaved ? "Not Modified,Try again" : "Not Saved,Try again"),
         );
 
         // the backend names the box that failed - same name as the element id
@@ -1800,568 +1801,558 @@ const StockTransferPage: React.FC = () => {
 
   return (
     <div className="flex min-h-full w-full justify-center bg-gray-100 px-3 pb-5">
-    <main className="mt-5 flex h-fit w-full max-w-300 flex-col overflow-hidden border border-gray-400 bg-white text-[12px] text-slate-700">
+      <main className="mt-5 flex h-fit w-full max-w-300 flex-col overflow-hidden border border-gray-400 bg-white text-[12px] text-slate-700">
 
-      {/* TITLE BAR */}
-      <div className="flex h-[28px] w-full shrink-0 items-center bg-[#a7dfc0] pr-2">
-        <h1 className="ml-[5px] text-[17px] font-semibold text-[#374151]">
-          Stock Transfer
-        </h1>
+        {/* TITLE BAR */}
+        <Header Name="Stock Transfer" />
 
-        {/* close button (the common one, as on the Sales Invoice) */}
-        <div className="ml-auto">
-          <CloseButton onClose={() => navigate("/")} />
-        </div>
-      </div>
+        {/* FORM BODY */}
+        <div className="m-[12px] flex min-h-0 flex-1 flex-col px-[12px] pb-[12px] pt-0">
 
-      {/* FORM BODY */}
-      <div className="m-[12px] flex min-h-0 flex-1 flex-col px-[12px] pb-[12px] pt-0">
+          {/* HEADER FORM, row 1: Branch, Entry No., Date */}
+          <section className="mb-[10px] flex h-[30px] bg-white shrink-0 items-center justify-between gap-4">
 
-      {/* HEADER FORM, row 1: Branch, Entry No., Date */}
-      <section className="mb-[10px] flex h-[30px] bg-white shrink-0 items-center justify-between gap-4">
+            {/* Branch (From) */}
+            <div className="flex min-w-0 items-center gap-1">
+              <label htmlFor="lkpBranch" className="w-[92px] shrink-0 text-right text-[14px] text-gray-600">
+                Branch :
+              </label>
 
-        {/* Branch (From) */}
-        <div className="flex min-w-0 items-center gap-1">
-          <label htmlFor="lkpBranch" className="w-[92px] shrink-0 text-right text-[14px] text-gray-600">
-            Branch :
-          </label>
+              <div className="w-[220px] max-w-full" onKeyDown={(event) => advanceOnEnter(event)}>
+                <Select<SelectOption, false>
+                  inputId="lkpBranch"
+                  name="lkpBranch"
+                  options={branchOptions}
+                  value={lkpBranch}
+                  onChange={(option: SingleValue<SelectOption>) => {
+                    setLkpBranch(option);
 
-          <div className="w-[220px] max-w-full" onKeyDown={(event) => advanceOnEnter(event)}>
-            <Select<SelectOption, false>
-              inputId="lkpBranch"
-              name="lkpBranch"
-              options={branchOptions}
-              value={lkpBranch}
-              onChange={(option: SingleValue<SelectOption>) => {
-                setLkpBranch(option);
-
-                // a branch chosen: on to Entry No.
-                if (option) {
-                  window.setTimeout(
-                    () => document.getElementById("txtDocNo")?.focus(),
-                    0,
-                  );
-                }
-              }}
-              styles={branchSelectStyles}
-              components={{
-                ...selectComponents,
-                Option: BranchDividedOption,
-                MenuList: BranchDividedMenuList,
-              }}
-              filterOption={filterLabelOrValue}
-              noOptionsMessage={() => "No Branch Found"}
-              isSearchable
-              placeholder="Select Branch"
-              menuPortalTarget={document.body}
-              menuPosition="fixed"
-              menuPlacement="auto"
-            />
-          </div>
-        </div>
-
-        {/* Entry No. */}
-        <div className="flex shrink-0 items-center gap-3">
-          <label htmlFor="txtDocNo" className="text-[14px] text-gray-600">
-            Entry No. :
-          </label>
-
-          <input
-            id="txtDocNo"
-            name="txtDocNo"
-            value={txtDocNo}
-            maxLength={14}
-            onChange={(event) => setTxtDocNo(event.target.value)}
-            onBlur={() => {
-              if (
-                lkpBranch &&
-                txtDocNo.trim() !== "" &&
-                txtDocNo.trim() !== loadedDocNoRef.current
-              ) {
-                loadDocument(lkpBranch.value, txtDocNo);
-              }
-            }}
-            onKeyDown={(event) => {
-              if (event.key === "Enter") {
-                event.preventDefault();
-                (event.target as HTMLInputElement).blur();
-                document.getElementById("dtpDate")?.focus();
-              }
-            }}
-            className="input-style w-[150px]"
-          />
-        </div>
-
-        {/* Date */}
-        <div className="flex shrink-0 items-center gap-3">
-          <label htmlFor="dtpDate" className="text-[14px] text-gray-600">
-            Date :
-          </label>
-
-          <input
-            id="dtpDate"
-            name="dtpDate"
-            type="date"
-            value={dtpDate}
-            onChange={(event) => setDtpDate(event.target.value)}
-            onKeyDown={(event) => {
-              // Enter goes on to Transfer To (a date box does not move on by itself)
-              if (event.key === "Enter") {
-                event.preventDefault();
-                document.getElementById("lkpToBranch")?.focus();
-              }
-            }}
-            disabled={chkPosted}
-            className="input-style w-[142px]"
-          />
-        </div>
-      </section>
-
-      {/* HEADER FORM, row 2: Transfer To, Stock */}
-      <section className="mb-[12px] flex h-[30px] bg-white shrink-0 items-center justify-between gap-4">
-
-        {/* Transfer To */}
-        <div className="flex min-w-0 items-center gap-1">
-          <label htmlFor="lkpToBranch" className="w-[92px] shrink-0 text-right text-[14px] text-gray-600">
-            Transfer To :
-          </label>
-
-          <div className="w-[220px] max-w-full" onKeyDown={(event) => advanceOnEnter(event)}>
-            <Select<SelectOption, false>
-              inputId="lkpToBranch"
-              name="lkpToBranch"
-              options={toBranchOptions}
-              value={lkpToBranch}
-              onChange={(option: SingleValue<SelectOption>) => {
-                setLkpToBranch(option);
-
-                // a branch chosen: on to the first Item ID
-                if (option) advanceAfterPick("lkpToBranch");
-              }}
-              isDisabled={chkPosted}
-              styles={branchSelectStyles}
-              components={{
-                ...selectComponents,
-                Option: BranchDividedOption,
-                MenuList: BranchDividedMenuList,
-              }}
-              filterOption={filterLabelOrValue}
-              noOptionsMessage={() => "No Branch Found"}
-              isSearchable
-              placeholder="Select Branch"
-              menuPortalTarget={document.body}
-              menuPosition="fixed"
-              menuPlacement="auto"
-            />
-          </div>
-        </div>
-
-        {/* Stock of the item you are on */}
-        <div className="flex shrink-0 items-center gap-3">
-          <span className="text-[14px] text-gray-600">Stock :</span>
-
-          {/* a label, not a box: the stock of the item you are on - in the place of
-              the Date box above (same width, the text starts where the date starts) */}
-          <span
-            id="txtStock"
-            className="w-[142px] pl-[9px] text-left text-[14px] text-[#334155]"
-          >
-            {txtStock}
-          </span>
-        </div>
-      </section>
-
-      {/* STOCK TABLE */}
-<main className="customer-table-scroll flex shrink-0 flex-col bg-white">
-  <div
-    ref={gridScroll.ref}
-    // 11 rows show (the heading and 11 rows of 30px); a 12th row brings the scroll bar
-    className="customer-table-scroll h-[363px] shrink-0 overflow-auto border border-[#bfe8d0]"
-  >
-    <table className="customer-table-scroll w-full min-w-[900px] table-fixed border-collapse border border-[#bfe8d0]">
-            <colgroup>
-              <col style={{ width: "17px" }} />
-              <col style={{ width: "43px" }} />
-              <col style={{ width: "21%" }} />
-              <col style={{ width: "37%" }} />
-              <col style={{ width: "6.2%" }} />
-              <col style={{ width: "6.9%" }} />
-              <col style={{ width: "8.9%" }} />
-              <col style={{ width: "11.6%" }} />
-              <col style={{ width: "14.2%" }} />
-            </colgroup>
-
-            <thead className="sticky top-0 z-10 bg-[#edf9f2]">
-              <tr className="h-[30px] text-left text-[14px] text-gray-600">
-                <th className="border border-[#bfe8d0] px-1 font-normal"></th>
-                <th className="border border-[#bfe8d0] px-1 text-center font-normal">Line</th>
-                <th className="border border-[#bfe8d0] px-2 font-normal">Item ID</th>
-                <th className="border border-[#bfe8d0] px-2 font-normal">Item Name</th>
-                <th className="border border-[#bfe8d0] px-2 font-normal">Unit</th>
-                <th className="border border-[#bfe8d0] px-2 text-right font-normal">Packing</th>
-                <th className="border border-[#bfe8d0] px-2 text-right font-normal">Qty.</th>
-                <th className="border border-[#bfe8d0] px-2 text-right font-normal">Unit Cost</th>
-                <th className="border border-[#bfe8d0] px-2 text-right font-normal">Total Cost</th>
-              </tr>
-            </thead>
-
-            <tbody>
-              {rows.map((row, index) => (
-                <tr
-                  key={row.id}
-                  onClick={() => {
-                    setActiveRow(index);
-                    showRowStock(index);
+                    // a branch chosen: on to Entry No.
+                    if (option) {
+                      window.setTimeout(
+                        () => document.getElementById("txtDocNo")?.focus(),
+                        0,
+                      );
+                    }
                   }}
-                  className={`h-[30px] text-[14px] ${
-                    activeRow === index ? "bg-[#f8fcfa]" : "bg-white"
-                  }`}
-                >
-                  {/* ROW SELECTOR */}
-                  <td className="border border-[#bfe8d0] px-1 text-center">
-                    {activeRow === index && (
-                      <span className="text-[10px] text-slate-700">
-                        <Play size={10} />
-                      </span>
-                    )}
-                  </td>
+                  styles={branchSelectStyles}
+                  components={{
+                    ...selectComponents,
+                    Option: BranchDividedOption,
+                    MenuList: BranchDividedMenuList,
+                  }}
+                  filterOption={filterLabelOrValue}
+                  noOptionsMessage={() => "No Branch Found"}
+                  isSearchable
+                  placeholder="Select Branch"
+                  menuPortalTarget={document.body}
+                  menuPosition="fixed"
+                  menuPlacement="auto"
+                />
+              </div>
+            </div>
 
-                  {/* SERIAL NUMBER */}
-                  <td className="border border-[#bfe8d0] p-0">
-                    <input
-                      id={`txtSlNo-${index}`}
-                      name="txtSlNo"
-                      aria-label={`Serial number row ${index + 1}`}
-                      value={row.txtSlNo}
-                      readOnly
-                      className="h-[26px] w-full bg-transparent px-1 text-center outline-none"
-                    />
-                  </td>
+            {/* Entry No. */}
+            <div className="flex shrink-0 items-center gap-3">
+              <label htmlFor="txtDocNo" className="text-[14px] text-gray-600">
+                Entry No. :
+              </label>
 
-                  {/* ITEM ID */}
-                  <td className={`border border-[#bfe8d0] p-0 ${cellFocusClass}`}
-                    onKeyDown={(event) => advanceOnEnter(event, [`lkpItemName-${index}`])}
-                  >
-                    <Select<SelectOption, false>
-                      inputId={`lkpItemID-${index}`}
-                      name="lkpItemID"
-                      options={itemOptions}
-                      value={row.lkpItemID}
-                      onChange={(option: SingleValue<SelectOption>) =>
-                        pickItem(index, "lkpItemID", option)
-                      }
-                      onFocus={() => showRowStock(index)}
-                      styles={
-                        {
-                          ...tableSelectStyles,
-                          ...makePairDividedMenuStyles(idMenuHang),
-                        } as StylesConfig<SelectOption, false>
-                      }
-                      onMenuOpen={() =>
-                        measureIdMenuHang(`lkpItemID-${index}`, `lkpItemName-${index}`)
-                      }
-                      components={itemIdComponents}
-                      filterOption={filterPairOption}
-                      noOptionsMessage={() => "No Item Found"}
-                      isSearchable
-                      isClearable={false}
-                      isDisabled={chkPosted}
-                      placeholder=""
-                      menuPortalTarget={document.body}
-                      menuPosition="fixed"
-                      menuPlacement="auto"
-                      menuShouldScrollIntoView
-                    />
-                  </td>
+              <input
+                id="txtDocNo"
+                name="txtDocNo"
+                value={txtDocNo}
+                maxLength={14}
+                onChange={(event) => setTxtDocNo(event.target.value)}
+                onBlur={() => {
+                  if (
+                    lkpBranch &&
+                    txtDocNo.trim() !== "" &&
+                    txtDocNo.trim() !== loadedDocNoRef.current
+                  ) {
+                    loadDocument(lkpBranch.value, txtDocNo);
+                  }
+                }}
+                onKeyDown={(event) => {
+                  if (event.key === "Enter") {
+                    event.preventDefault();
+                    (event.target as HTMLInputElement).blur();
+                    document.getElementById("dtpDate")?.focus();
+                  }
+                }}
+                className="input-style w-[150px]"
+              />
+            </div>
 
-                  {/* ITEM NAME */}
-                  <td className={`border border-[#bfe8d0] p-0 ${cellFocusClass}`}
-                    onKeyDown={(event) => advanceOnEnter(event)}
-                  >
-                    <Select<SelectOption, false>
-                      inputId={`lkpItemName-${index}`}
-                      name="lkpItemName"
-                      options={itemNameOptions}
-                      value={row.lkpItemName}
-                      onChange={(option: SingleValue<SelectOption>) =>
-                        pickItem(index, "lkpItemName", option)
-                      }
-                      onFocus={() => showRowStock(index)}
-                      styles={
-                        {
-                          ...tableSelectStyles,
-                          ...makePairDividedMenuStyles(nameMenuHang),
-                        } as StylesConfig<SelectOption, false>
-                      }
-                      onMenuOpen={() =>
-                        measureNameMenuHang(`lkpItemName-${index}`, `txtQty-${index}`)
-                      }
-                      components={itemNameComponents}
-                      filterOption={filterPairOption}
-                      noOptionsMessage={() => "No Item Found"}
-                      isSearchable
-                      isClearable={false}
-                      isDisabled={chkPosted}
-                      placeholder=""
-                      menuPortalTarget={document.body}
-                      menuPosition="fixed"
-                      menuPlacement="auto"
-                      menuShouldScrollIntoView
-                    />
-                  </td>
+            {/* Date */}
+            <div className="flex shrink-0 items-center gap-3">
+              <label htmlFor="dtpDate" className="text-[14px] text-gray-600">
+                Date :
+              </label>
 
-                  {/* UNIT */}
-                  <td className="border border-[#bfe8d0] p-0">
-                    <input
-                      id={`txtUnit-${index}`}
-                      name="txtUnit"
-                      value={row.txtUnit}
-                      readOnly
-                      className="h-[26px] w-full bg-transparent px-2 outline-none"
-                    />
-                  </td>
+              <input
+                id="dtpDate"
+                name="dtpDate"
+                type="date"
+                value={dtpDate}
+                onChange={(event) => setDtpDate(event.target.value)}
+                onKeyDown={(event) => {
+                  // Enter goes on to Transfer To (a date box does not move on by itself)
+                  if (event.key === "Enter") {
+                    event.preventDefault();
+                    document.getElementById("lkpToBranch")?.focus();
+                  }
+                }}
+                disabled={chkPosted}
+                className="input-style w-[142px]"
+              />
+            </div>
+          </section>
 
-                  {/* PACKING */}
-                  <td className="border border-[#bfe8d0] p-0">
-                    <input
-                      id={`txtPacking-${index}`}
-                      name="txtPacking"
-                      value={row.txtPacking}
-                      readOnly
-                      className="h-[26px] w-full bg-transparent px-2 text-right outline-none"
-                    />
-                  </td>
+          {/* HEADER FORM, row 2: Transfer To, Stock */}
+          <section className="mb-[12px] flex h-[30px] bg-white shrink-0 items-center justify-between gap-4">
 
-                  {/* QUANTITY */}
-                  <td className={`border border-[#bfe8d0] p-0 ${cellFocusClass}`}>
-                    <input
-                      id={`txtQty-${index}`}
-                      name="txtQty"
-                      type="number"
-                      min="0"
-                      step="0.001"
-                      value={row.txtQty}
-                      readOnly={chkPosted}
-                      onChange={(event) => updateQty(index, event.target.value)}
-                      onFocus={(event) => {
+            {/* Transfer To */}
+            <div className="flex min-w-0 items-center gap-1">
+              <label htmlFor="lkpToBranch" className="w-[92px] shrink-0 text-right text-[14px] text-gray-600">
+                Transfer To :
+              </label>
+
+              <div className="w-[220px] max-w-full" onKeyDown={(event) => advanceOnEnter(event)}>
+                <Select<SelectOption, false>
+                  inputId="lkpToBranch"
+                  name="lkpToBranch"
+                  options={toBranchOptions}
+                  value={lkpToBranch}
+                  onChange={(option: SingleValue<SelectOption>) => {
+                    setLkpToBranch(option);
+
+                    // a branch chosen: on to the first Item ID
+                    if (option) advanceAfterPick("lkpToBranch");
+                  }}
+                  isDisabled={chkPosted}
+                  styles={branchSelectStyles}
+                  components={{
+                    ...selectComponents,
+                    Option: BranchDividedOption,
+                    MenuList: BranchDividedMenuList,
+                  }}
+                  filterOption={filterLabelOrValue}
+                  noOptionsMessage={() => "No Branch Found"}
+                  isSearchable
+                  placeholder="Select Branch"
+                  menuPortalTarget={document.body}
+                  menuPosition="fixed"
+                  menuPlacement="auto"
+                />
+              </div>
+            </div>
+
+            {/* Stock of the item you are on */}
+            <div className="flex shrink-0 items-center gap-3">
+              <span className="text-[14px] text-gray-600">Stock :</span>
+
+              {/* a label, not a box: the stock of the item you are on - in the place of
+              the Date box above (same width, the text starts where the date starts) */}
+              <span
+                id="txtStock"
+                className="w-[142px] pl-[9px] text-left text-[14px] text-[#334155]"
+              >
+                {txtStock}
+              </span>
+            </div>
+          </section>
+
+          {/* STOCK TABLE */}
+          <main className="customer-table-scroll flex shrink-0 flex-col bg-white">
+            <div
+              ref={gridScroll.ref}
+              // 11 rows show (the heading and 11 rows of 30px); a 12th row brings the scroll bar
+              className="customer-table-scroll h-[363px] shrink-0 overflow-auto border border-[#bfe8d0]"
+            >
+              <table className="customer-table-scroll w-full min-w-[900px] table-fixed border-collapse border border-[#bfe8d0]">
+                <colgroup>
+                  <col style={{ width: "17px" }} />
+                  <col style={{ width: "43px" }} />
+                  <col style={{ width: "21%" }} />
+                  <col style={{ width: "37%" }} />
+                  <col style={{ width: "6.2%" }} />
+                  <col style={{ width: "6.9%" }} />
+                  <col style={{ width: "8.9%" }} />
+                  <col style={{ width: "11.6%" }} />
+                  <col style={{ width: "14.2%" }} />
+                </colgroup>
+
+                <thead className="sticky top-0 z-10 bg-[#edf9f2]">
+                  <tr className="h-[30px] text-left text-[14px] text-gray-600">
+                    <th className="border border-[#bfe8d0] px-1 font-normal"></th>
+                    <th className="border border-[#bfe8d0] px-1 text-center font-normal">Line</th>
+                    <th className="border border-[#bfe8d0] px-2 font-normal">Item ID</th>
+                    <th className="border border-[#bfe8d0] px-2 font-normal">Item Name</th>
+                    <th className="border border-[#bfe8d0] px-2 font-normal">Unit</th>
+                    <th className="border border-[#bfe8d0] px-2 text-right font-normal">Packing</th>
+                    <th className="border border-[#bfe8d0] px-2 text-right font-normal">Qty.</th>
+                    <th className="border border-[#bfe8d0] px-2 text-right font-normal">Unit Cost</th>
+                    <th className="border border-[#bfe8d0] px-2 text-right font-normal">Total Cost</th>
+                  </tr>
+                </thead>
+
+                <tbody>
+                  {rows.map((row, index) => (
+                    <tr
+                      key={row.id}
+                      onClick={() => {
+                        setActiveRow(index);
                         showRowStock(index);
-                        selectOnFocus(event);
                       }}
-                      onBlur={(event) => showQty(index, event.target.value)}
-                      onKeyDown={(event) => handleQtyKeyDown(event, index)}
-                      className="number-no-spinner h-[26px] w-full bg-transparent px-2 text-right outline-none focus:bg-[#f1f8ff]"
-                    />
-                  </td>
-
-                  {/* UNIT COST (the branch's cost - not typed) */}
-                  <td className="border border-[#bfe8d0] p-0">
-                    <input
-                      id={`txtUnitCost-${index}`}
-                      name="txtUnitCost"
-                      value={row.txtUnitCost}
-                      readOnly
-                      className="h-[26px] w-full bg-transparent px-2 text-right outline-none"
-                    />
-                  </td>
-
-                  {/* TOTAL COST (with the x of the row after it) */}
-                  <td className="border border-[#bfe8d0] p-0">
-                    <div className="flex items-center">
-                      <input
-                        id={`txtTotalCost-${index}`}
-                        name="txtTotalCost"
-                        value={
-                          row.txtQty !== "" || row.txtUnitCost !== ""
-                            ? formatAmount(getTotalCost(row))
-                            : ""
-                        }
-                        readOnly
-                        className="h-[26px] min-w-0 flex-1 bg-transparent px-2 text-right outline-none"
-                      />
-
-                      {/* the slot is always there so the amounts do not move when the x shows */}
-                      <span className="flex w-6 shrink-0 items-center justify-center">
-                        {row.lkpItemID && !chkPosted && (
-                          <button
-                            id={`btnRemoveRow-${index}`}
-                            name="btnRemoveRow"
-                            type="button"
-                            tabIndex={-1}
-                            title="Remove row"
-                            aria-label={`Remove row ${index + 1}`}
-                            onClick={() => handleRemoveRow(index)}
-                            className="text-[12px] leading-none text-gray-400 hover:text-red-600"
-                          >
-                            ✕
-                          </button>
-                        )}
-                      </span>
-                    </div>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      </main>
-
-      {/* BOTTOM FORM: a one-row table with the SAME column widths as the grid
-          above, so the totals sit exactly under their columns */}
-      <section className="shrink-0 bg-white">
-        <div
-          className="border border-transparent"
-          style={{ paddingRight: gridScroll.width }}
-        >
-          <table className="w-full min-w-[900px] table-fixed border-collapse border border-transparent">
-            <colgroup>
-              <col style={{ width: "17px" }} />
-              <col style={{ width: "43px" }} />
-              <col style={{ width: "21%" }} />
-              <col style={{ width: "37%" }} />
-              <col style={{ width: "6.2%" }} />
-              <col style={{ width: "6.2%" }} />
-              <col style={{ width: "8.9%" }} />
-              <col style={{ width: "11.6%" }} />
-              <col style={{ width: "14.2%" }} />
-            </colgroup>
-
-            <tbody>
-              <tr className="h-[60px]">
-                {/* NOTE (under the first four columns: up to the end of Item Name) */}
-                <td colSpan={4} className="p-0">
-                  <div className="flex items-center gap-3">
-                    <label
-                      htmlFor="txtNote"
-                      className="w-[32px] shrink-0 text-[14px] text-gray-600"
+                      className={`h-[30px] text-[14px] ${activeRow === index ? "bg-[#f8fcfa]" : "bg-white"
+                        }`}
                     >
-                      Note
-                    </label>
+                      {/* ROW SELECTOR */}
+                      <td className="border border-[#bfe8d0] px-1 text-center">
+                        {activeRow === index && (
+                          <span className="text-[10px] text-slate-700">
+                            <Play size={10} />
+                          </span>
+                        )}
+                      </td>
 
-                    <input
-                      id="txtNote"
-                      name="txtNote"
-                      value={txtNote}
-                      maxLength={100}
-                      readOnly={chkPosted}
-                      onChange={(event) => setTxtNote(event.target.value)}
-                      className="input-style w-full min-w-0"
-                    />
-                  </div>
-                </td>
+                      {/* SERIAL NUMBER */}
+                      <td className="border border-[#bfe8d0] p-0">
+                        <input
+                          id={`txtSlNo-${index}`}
+                          name="txtSlNo"
+                          aria-label={`Serial number row ${index + 1}`}
+                          value={row.txtSlNo}
+                          readOnly
+                          className="h-[26px] w-full bg-transparent px-1 text-center outline-none"
+                        />
+                      </td>
 
-                {/* nothing under Unit */}
-                <td className="p-0" />
+                      {/* ITEM ID */}
+                      <td className={`border border-[#bfe8d0] p-0 ${cellFocusClass}`}
+                        onKeyDown={(event) => advanceOnEnter(event, [`lkpItemName-${index}`])}
+                      >
+                        <Select<SelectOption, false>
+                          inputId={`lkpItemID-${index}`}
+                          name="lkpItemID"
+                          options={itemOptions}
+                          value={row.lkpItemID}
+                          onChange={(option: SingleValue<SelectOption>) =>
+                            pickItem(index, "lkpItemID", option)
+                          }
+                          onFocus={() => showRowStock(index)}
+                          styles={
+                            {
+                              ...tableSelectStyles,
+                              ...makePairDividedMenuStyles(idMenuHang),
+                            } as StylesConfig<SelectOption, false>
+                          }
+                          onMenuOpen={() =>
+                            measureIdMenuHang(`lkpItemID-${index}`, `lkpItemName-${index}`)
+                          }
+                          components={itemIdComponents}
+                          filterOption={filterPairOption}
+                          noOptionsMessage={() => "No Item Found"}
+                          isSearchable
+                          isClearable={false}
+                          isDisabled={chkPosted}
+                          placeholder=""
+                          menuPortalTarget={document.body}
+                          menuPosition="fixed"
+                          menuPlacement="auto"
+                          menuShouldScrollIntoView
+                        />
+                      </td>
 
-                {/* TOTAL LABEL (under the Packing column) */}
-                <td className="p-0 px-[4px]">
-                  <div className="flex h-[30px] w-full items-center justify-center rounded border border-[#d7dee7] bg-white text-[14px] text-gray-600">
-                    Total
-                  </div>
-                </td>
+                      {/* ITEM NAME */}
+                      <td className={`border border-[#bfe8d0] p-0 ${cellFocusClass}`}
+                        onKeyDown={(event) => advanceOnEnter(event)}
+                      >
+                        <Select<SelectOption, false>
+                          inputId={`lkpItemName-${index}`}
+                          name="lkpItemName"
+                          options={itemNameOptions}
+                          value={row.lkpItemName}
+                          onChange={(option: SingleValue<SelectOption>) =>
+                            pickItem(index, "lkpItemName", option)
+                          }
+                          onFocus={() => showRowStock(index)}
+                          styles={
+                            {
+                              ...tableSelectStyles,
+                              ...makePairDividedMenuStyles(nameMenuHang),
+                            } as StylesConfig<SelectOption, false>
+                          }
+                          onMenuOpen={() =>
+                            measureNameMenuHang(`lkpItemName-${index}`, `txtQty-${index}`)
+                          }
+                          components={itemNameComponents}
+                          filterOption={filterPairOption}
+                          noOptionsMessage={() => "No Item Found"}
+                          isSearchable
+                          isClearable={false}
+                          isDisabled={chkPosted}
+                          placeholder=""
+                          menuPortalTarget={document.body}
+                          menuPosition="fixed"
+                          menuPlacement="auto"
+                          menuShouldScrollIntoView
+                        />
+                      </td>
 
-                {/* TOTAL QUANTITY (under the Qty. column) */}
-                <td className="p-0">
-                  <input
-                    id="txtTotalQty"
-                    name="txtTotalQty"
-                    value={formatQty(totalQty)}
-                    readOnly
-                    className="input-style w-full min-w-0 text-right"
-                  />
-                </td>
+                      {/* UNIT */}
+                      <td className="border border-[#bfe8d0] p-0">
+                        <input
+                          id={`txtUnit-${index}`}
+                          name="txtUnit"
+                          value={row.txtUnit}
+                          readOnly
+                          className="h-[26px] w-full bg-transparent px-2 outline-none"
+                        />
+                      </td>
 
-                {/* nothing under Unit Cost */}
-                <td className="p-0" />
+                      {/* PACKING */}
+                      <td className="border border-[#bfe8d0] p-0">
+                        <input
+                          id={`txtPacking-${index}`}
+                          name="txtPacking"
+                          value={row.txtPacking}
+                          readOnly
+                          className="h-[26px] w-full bg-transparent px-2 text-right outline-none"
+                        />
+                      </td>
 
-                {/* TOTAL COST (under the Total Cost column) */}
-                <td className="p-0">
-                  <input
-                    id="txtTotalCost"
-                    name="txtTotalCost"
-                    value={formatAmount(total)}
-                    readOnly
-                    className="input-style w-full min-w-0 text-right"
-                  />
-                </td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
-      </section>
+                      {/* QUANTITY */}
+                      <td className={`border border-[#bfe8d0] p-0 ${cellFocusClass}`}>
+                        <input
+                          id={`txtQty-${index}`}
+                          name="txtQty"
+                          type="number"
+                          min="0"
+                          step="0.001"
+                          value={row.txtQty}
+                          readOnly={chkPosted}
+                          onChange={(event) => updateQty(index, event.target.value)}
+                          onFocus={(event) => {
+                            showRowStock(index);
+                            selectOnFocus(event);
+                          }}
+                          onBlur={(event) => showQty(index, event.target.value)}
+                          onKeyDown={(event) => handleQtyKeyDown(event, index)}
+                          className="number-no-spinner h-[26px] w-full bg-transparent px-2 text-right outline-none focus:bg-[#f1f8ff]"
+                        />
+                      </td>
 
-      {/* the "Do you want to delete ?" question */}
-      {confirmDialog}
+                      {/* UNIT COST (the branch's cost - not typed) */}
+                      <td className="border border-[#bfe8d0] p-0">
+                        <input
+                          id={`txtUnitCost-${index}`}
+                          name="txtUnitCost"
+                          value={row.txtUnitCost}
+                          readOnly
+                          className="h-[26px] w-full bg-transparent px-2 text-right outline-none"
+                        />
+                      </td>
 
-      {/* the Print Preview (after Print) */}
-      {preview && (
-        <ReportPreview
-          html={buildHtml(preview.report)}
-          fileBase={preview.fileBase}
-          onPrint={() => printStockTransferReport(preview.report)}
-          buildPdf={() => buildStockTransferPdf(preview.report)}
-          fetchExcel={fetchExcel}
-          onClose={() => setPreview(null)}
-        />
-      )}
+                      {/* TOTAL COST (with the x of the row after it) */}
+                      <td className="border border-[#bfe8d0] p-0">
+                        <div className="flex items-center">
+                          <input
+                            id={`txtTotalCost-${index}`}
+                            name="txtTotalCost"
+                            value={
+                              row.txtQty !== "" || row.txtUnitCost !== ""
+                                ? formatAmount(getTotalCost(row))
+                                : ""
+                            }
+                            readOnly
+                            className="h-[26px] min-w-0 flex-1 bg-transparent px-2 text-right outline-none"
+                          />
 
-      {/* SAVED BY / LAST MODIFIED BY */}
-      {txtUserInfo !== "" && (
-        <table className="self-end border-collapse text-left text-[12px] text-gray-500">
-          <tbody>
-            {/* one row per line ("Saved By : ..." / "Last Modified By : ..."), in
+                          {/* the slot is always there so the amounts do not move when the x shows */}
+                          <span className="flex w-6 shrink-0 items-center justify-center">
+                            {row.lkpItemID && !chkPosted && (
+                              <button
+                                id={`btnRemoveRow-${index}`}
+                                name="btnRemoveRow"
+                                type="button"
+                                tabIndex={-1}
+                                title="Remove row"
+                                aria-label={`Remove row ${index + 1}`}
+                                onClick={() => handleRemoveRow(index)}
+                                className="text-[12px] leading-none text-gray-400 hover:text-red-600"
+                              >
+                                ✕
+                              </button>
+                            )}
+                          </span>
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </main>
+
+          {/* BOTTOM FORM: a one-row table with the SAME column widths as the grid
+          above, so the totals sit exactly under their columns */}
+          <section className="shrink-0 bg-white">
+            <div
+              className="border border-transparent"
+              style={{ paddingRight: gridScroll.width }}
+            >
+              <table className="w-full min-w-[900px] table-fixed border-collapse border border-transparent">
+                <colgroup>
+                  <col style={{ width: "17px" }} />
+                  <col style={{ width: "43px" }} />
+                  <col style={{ width: "21%" }} />
+                  <col style={{ width: "37%" }} />
+                  <col style={{ width: "6.2%" }} />
+                  <col style={{ width: "6.2%" }} />
+                  <col style={{ width: "8.9%" }} />
+                  <col style={{ width: "11.6%" }} />
+                  <col style={{ width: "14.2%" }} />
+                </colgroup>
+
+                <tbody>
+                  <tr className="h-[60px]">
+                    {/* NOTE (under the first four columns: up to the end of Item Name) */}
+                    <td colSpan={4} className="p-0">
+                      <div className="flex items-center gap-3">
+                        <label
+                          htmlFor="txtNote"
+                          className="w-[32px] shrink-0 text-[14px] text-gray-600"
+                        >
+                          Note
+                        </label>
+
+                        <input
+                          id="txtNote"
+                          name="txtNote"
+                          value={txtNote}
+                          maxLength={100}
+                          readOnly={chkPosted}
+                          onChange={(event) => setTxtNote(event.target.value)}
+                          className="input-style w-full min-w-0"
+                        />
+                      </div>
+                    </td>
+
+                    {/* nothing under Unit */}
+                    <td className="p-0" />
+
+                    {/* TOTAL LABEL (under the Packing column) */}
+                    <td className="p-0 px-[4px]">
+                      <div className="flex h-[30px] w-full items-center justify-center rounded border border-[#d7dee7] bg-white text-[14px] text-gray-600">
+                        Total
+                      </div>
+                    </td>
+
+                    {/* TOTAL QUANTITY (under the Qty. column) */}
+                    <td className="p-0">
+                      <input
+                        id="txtTotalQty"
+                        name="txtTotalQty"
+                        value={formatQty(totalQty)}
+                        readOnly
+                        className="input-style w-full min-w-0 text-right"
+                      />
+                    </td>
+
+                    {/* nothing under Unit Cost */}
+                    <td className="p-0" />
+
+                    {/* TOTAL COST (under the Total Cost column) */}
+                    <td className="p-0">
+                      <input
+                        id="txtTotalCost"
+                        name="txtTotalCost"
+                        value={formatAmount(total)}
+                        readOnly
+                        className="input-style w-full min-w-0 text-right"
+                      />
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </section>
+
+          {/* the "Do you want to delete ?" question */}
+          {confirmDialog}
+
+          {/* the Print Preview (after Print) */}
+          {preview && (
+            <ReportPreview
+              html={buildHtml(preview.report)}
+              fileBase={preview.fileBase}
+              onPrint={() => printStockTransferReport(preview.report)}
+              buildPdf={() => buildStockTransferPdf(preview.report)}
+              fetchExcel={fetchExcel}
+              onClose={() => setPreview(null)}
+            />
+          )}
+
+          {/* SAVED BY / LAST MODIFIED BY */}
+          {txtUserInfo !== "" && (
+            <table className="self-end border-collapse text-left text-[12px] text-gray-500">
+              <tbody>
+                {/* one row per line ("Saved By : ..." / "Last Modified By : ..."), in
                 three columns - label, colon, text - so the colons line up */}
-            {txtUserInfo.split("\n").map((line) => {
-              const [label, ...rest] = line.split(" : ");
+                {txtUserInfo.split("\n").map((line) => {
+                  const [label, ...rest] = line.split(" : ");
+
+                  return (
+                    <tr key={label}>
+                      <td className="whitespace-nowrap pr-[4px]">{label}</td>
+                      <td className="pr-[4px]">:</td>
+                      <td className="whitespace-nowrap">{rest.join(" : ")}</td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          )}
+
+          {/* ACTION BUTTONS */}
+          <footer className="mt-[14px] flex shrink-0 flex-wrap items-center justify-center gap-3">
+            {["Save", "Delete", "Print", "Post", "Clear"].map((action) => {
+              const isSave = action === "Save";
+              const label = isSave ? actionWord : action;
 
               return (
-                <tr key={label}>
-                  <td className="whitespace-nowrap pr-[4px]">{label}</td>
-                  <td className="pr-[4px]">:</td>
-                  <td className="whitespace-nowrap">{rest.join(" : ")}</td>
-                </tr>
+                <button
+                  key={action}
+                  id={isSave ? (chkSaved ? "btnModify" : "btnSave") : `btn${action}`}
+                  name={isSave ? (chkSaved ? "btnModify" : "btnSave") : `btn${action}`}
+                  type="button"
+                  onClick={() => handleAction(action)}
+                  disabled={
+                    isSave
+                      ? !canSaveOrModify || saving || chkPosted
+                      : action === "Delete"
+                        ? !chkSaved || chkPosted || !perms.delete || saving
+                        : action === "Print"
+                          ? !chkSaved || !perms.print || saving
+                          : action === "Post"
+                            ? !chkSaved || chkPosted || !perms.post || saving
+                            : false
+                  }
+                  className="btn-style disabled:cursor-not-allowed disabled:opacity-40"
+                >
+                  <span className="underline underline-offset-2">
+                    {label.charAt(0)}
+                  </span>
+                  {label.slice(1)}
+                </button>
               );
             })}
-          </tbody>
-        </table>
-      )}
+          </footer>
 
-      {/* ACTION BUTTONS */}
-      <footer className="mt-[14px] flex shrink-0 flex-wrap items-center justify-center gap-3">
-        {["Save", "Delete", "Print", "Post", "Clear"].map((action) => {
-          const isSave = action === "Save";
-          const label = isSave ? actionWord : action;
-
-          return (
-            <button
-              key={action}
-              id={isSave ? (chkSaved ? "btnModify" : "btnSave") : `btn${action}`}
-              name={isSave ? (chkSaved ? "btnModify" : "btnSave") : `btn${action}`}
-              type="button"
-              onClick={() => handleAction(action)}
-              disabled={
-                isSave
-                  ? !canSaveOrModify || saving || chkPosted
-                  : action === "Delete"
-                    ? !chkSaved || chkPosted || !perms.delete || saving
-                    : action === "Print"
-                      ? !chkSaved || !perms.print || saving
-                      : action === "Post"
-                        ? !chkSaved || chkPosted || !perms.post || saving
-                        : false
-              }
-              className="btn-style disabled:cursor-not-allowed disabled:opacity-40"
-            >
-              <span className="underline underline-offset-2">
-                {label.charAt(0)}
-              </span>
-              {label.slice(1)}
-            </button>
-          );
-        })}
-      </footer>
-
-      </div>
-    </main>
+        </div>
+      </main>
     </div>
   );
 };

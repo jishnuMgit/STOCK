@@ -3,6 +3,7 @@ import { ChevronDown, ChevronRight, Plus, SquarePen, X } from "lucide-react";
 
 import COAPage, { type CoaMode } from "./COAPage";
 import { useCoa, type CoaNode } from "../../../hooks/useCoa";
+import Header from "../../../components/common/Header";
 
 // ============================================================
 // HELPER - GET EXPANDED NODES FOR MINIMUM VISIBLE ROWS
@@ -351,14 +352,7 @@ const COAListPage: React.FC = () => {
         <div className="min-h-screen w-[1000px] mt-10 px-0 pt-0">
           <div className="w-full max-w-none overflow-hidden border border-slate-400 bg-white">
             {/* TITLE */}
-            <div className="flex h-7 w-full items-center border-b border-slate-400 bg-[#a3dfc0]">
-              <h1
-                id="ChartOfAccount"
-                className="ml-[10px] text-[17px] font-semibold text-slate-700"
-              >
-                Chart Of Account List
-              </h1>
-            </div>
+            <Header Name="Chart Of Account List" />
 
             {/* SEARCH */}
             <div className="px-3.5 pb-2 pt-3">

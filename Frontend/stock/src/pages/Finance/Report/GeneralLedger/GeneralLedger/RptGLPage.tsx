@@ -1,4 +1,5 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
+import Header from "../../../../../components/common/Header";
 import Select, {
   components,
   type MenuListProps,
@@ -735,11 +736,7 @@ const RptGLPage: React.FC<RptGLPageProps> = ({ onClose }) => {
     <div className="flex min-h-screen w-full items-start justify-center bg-white px-4 py-4">
       <div className="min-h-fit w-230 max-w-full bg-white p-0">
         <main className="w-full overflow-hidden border border-gray-400 bg-white">
-          <header className="flex h-7.5 items-center justify-start bg-[#9fdfbc]">
-            <h1 className="m-0 ml-3.5 text-[17px] font-semibold text-[#24364d]">
-              General Ledger
-            </h1>
-          </header>
+          <Header Name="General Ledger" />
 
           <section className="px-3.5 pb-6 pt-3">
             <div className="grid grid-cols-[168px_1fr] items-start gap-x-4 gap-y-3">

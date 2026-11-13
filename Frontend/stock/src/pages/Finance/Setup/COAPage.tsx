@@ -8,6 +8,7 @@ import Select, {
 import { toast } from "react-toastify";
 
 import { useCoa } from "../../../hooks/useCoa";
+import Header from "../../../components/common/Header";
 
 // ============================================================
 // TYPES
@@ -491,14 +492,7 @@ const COAPage: React.FC<COAPageProps> = ({
     <div className="flex min-h-fit items-start w-full justify-center bg-[#a3dfc0]">
       <div className="mt-0.5 w-full bg-white">
         {/* TITLE */}
-        <div className="flex h-7 w-full items-center border-b border-slate-400 bg-[#a3dfc0]">
-          <h1
-            id="ChartOfAccount"
-            className="ml-2.5 text-[17px] font-semibold text-slate-700"
-          >
-            Chart Of Account
-          </h1>
-        </div>
+        <Header Name="Chart Of Account" />
 
         {/* LOAD ERROR */}
         {loadError && (

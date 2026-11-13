@@ -14,6 +14,7 @@ import {
 import { buildSoaPdf } from "./downloadSoaPdf";
 import { saveFile } from "./saveFile";
 import GridSelect, { type GridOption } from "./GridSelect";
+import Header from "../../../../../components/common/Header";
 
 dayjs.extend(customParseFormat);
 
@@ -609,9 +610,7 @@ const RptSOAPage: React.FC<RptSOAPageProps> = () => {
     <div className="flex min-h-full w-full items-start justify-center bg-white px-4 py-4">
       {/* MAIN PAGE */}
       <div className="max-w-220 min-w-220 overflow-hidden border border-gray-400 bg-white">
-        <header className="flex h-7.5 items-center justify-start bg-[#9fdfbc] pl-3 text-[18px] font-semibold text-slate-700">
-          Statement Of Account
-        </header>
+       <Header Name="Statement Of Account" />
 
         <div className="relative px-5 pb-3.5 pt-3">
           {/* TOP ROW */}

@@ -1,6 +1,5 @@
 import React, { useCallback, useEffect, useRef, useState } from "react";
-import { useNavigate } from "react-router-dom";
-import CloseButton from "../../../components/common/CloseButton";
+import Header from "../../../components/common/Header";
 import Select, { type SingleValue, type StylesConfig } from "react-select";
 import { toast } from "react-toastify";
 import { useEnterAsTab } from "../../../hooks/useEnterAsTab";
@@ -582,7 +581,6 @@ function MenuRow({
 const MENU_ID = "9302";
 
 const UserPermission: React.FC = () => {
-  const navigate = useNavigate();
   const perms = useButtonPermissions(MENU_ID);
   const handleEnterAsTab = useEnterAsTab();
   // the common themed question window and the standard delete messages
@@ -968,17 +966,7 @@ const UserPermission: React.FC = () => {
       onKeyDown={handlePageKeyDown}
     >
       <main className="flex w-[calc(100%-32px)] max-w-[1000px] flex-col border border-slate-400 bg-white text-[12px] text-gray-700 shadow-sm">
-        {/* Title */}
-        <div className="flex h-[28px] w-full shrink-0 items-center bg-[#a7dfc0] pr-2">
-          <h1 className="ml-[5px] text-[17px] font-semibold text-[#374151]">
-            User Permission - Menu
-          </h1>
-
-          {/* close button (the common one, as on the Sales Invoice) */}
-          <div className="ml-auto">
-            <CloseButton onClose={() => navigate("/")} />
-          </div>
-        </div>
+        <Header Name="User Permission - Menu" />
 
         {/* Form */}
         <div className="p-[12px] m-[12px]">

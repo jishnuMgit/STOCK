@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from "react";
+import Header from "../../components/common/Header";
 import { toast } from "react-toastify";
 import { useEnterAsTab } from "../../hooks/useEnterAsTab";
 import { useAltShortcuts } from "../../hooks/useAltShortcuts";
@@ -254,15 +255,7 @@ const SetActivePeriodPage: React.FC = () => {
       className="flex min-h-screen w-full items-center justify-center bg-white"
     >
       <div className="w-full max-w-160 border border-slate-400 bg-white shadow-sm">
-        {/* ====================================================
-            TITLE
-        ==================================================== */}
-
-        <div className="flex h-7 w-full items-center bg-[#a7dfc0]">
-          <h1 className="ml-1.25 text-[17px] font-semibold text-[#374151]">
-            Set Active Period
-          </h1>
-        </div>
+        <Header Name="Set Active Period" />
 
         {/* ====================================================
             FORM

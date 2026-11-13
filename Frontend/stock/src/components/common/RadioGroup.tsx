@@ -76,7 +76,7 @@ const RadioGroup: React.FC<Props> = ({
                 }`}
               />
             </span>
-            <span className="text-[12px] font-normal text-[#35445a]">{option.label}</span>
+            <span className="text-[14px] font-normal text-[#35445a]">{option.label}</span>
           </label>
         );
       })}

@@ -1,4 +1,5 @@
 import React, { useEffect, useRef, useState } from "react";
+import Header from "../../components/common/Header";
 import Select, {
   type SingleValue,
   type StylesConfig,
@@ -948,15 +949,7 @@ const SetDocumentNo: React.FC = () => {
           lg:w-[75%]
         "
       >
-        {/* =====================================================
-            TITLE
-        ====================================================== */}
-
-        <div className="flex h-[28px] w-full items-center bg-[#a7dfc0]">
-          <h1 className="ml-[5px] text-[17px] font-semibold text-[#374151]">
-            Set Document No.
-          </h1>
-        </div>
+        <Header Name="Set Document No." />
 
         {/* =====================================================
             FORM
