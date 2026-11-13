@@ -1,4 +1,4 @@
-import type { ZatcaSearchParams } from "../services/ZATCA/Transaction/zatcaSubmissionService.js";
+import type { ZatcaSearchParams } from "../../../services/ZATCA/Transaction/zatcaSubmissionService.js";
 
 /* the old ValidateMe of frmZATCAFileSubmission; returns the message, or null */
 export const validateZATCASearch = (p: ZatcaSearchParams): string | null => {

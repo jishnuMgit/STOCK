@@ -682,7 +682,7 @@ const RptItemListPage: React.FC<RptItemListPageProps> = ({ onClose }) => {
 
     setPrinting(true);
     try {
-      const blob = asPdf ? buildItemListPdf(report) : await fetchExcel(request);
+      const blob = asPdf ? await buildItemListPdf(report) : await fetchExcel(request);
       if (!blob) return; // the error is already shown
 
       const kind = asPdf ? "pdf" : "xlsx";

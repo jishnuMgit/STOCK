@@ -2,11 +2,20 @@
 // The Item History as a PDF (returned as a Blob; saveFile.ts saves it):
 // A4 portrait, company name, heading, branch, then per item a header block,
 // the transactions (Date, Type, Document No., Account ID, Qty. In, Qty. Out,
-// Unit Cost, Unit Price) and a "Total :" row. Page number top right, report
-// info bottom right of every page.
+// Unit Cost, Unit Price) and a "Total :" row. Page number and the user and the time
+// top right of every page.
+//
+// The header block of an item is laid out exactly like the printed page (printItemHistoryReport.ts): label | colon |
+// value, the colons in a column of their own, the right-hand pair starting at the Unit Cost column and its value
+// ending at the right edge of the Unit Price column. The font and the sizes come from the shared look.
 // Needs:  npm i jspdf jspdf-autotable
 import { jsPDF } from "jspdf";
 import autoTable, { type CellDef } from "jspdf-autotable";
+import {
+  pdfLabelFontSize,
+  registerReportPdfFont,
+  type PdfLook,
+} from "../../../../components/common/reportPdf";
 import {
   dmy,
   fixed,
@@ -18,76 +27,137 @@ import {
 
 type RGB = [number, number, number];
 const BORDER: RGB = [199, 209, 228]; // #c7d1e4
-const HEAD_FILL: RGB = [239, 243, 250]; // #eff3fa
 
 // same column proportions as the printed page
-const COL_PCT = [11.6, 9.9, 13.4, 14.1, 10.4, 9.9, 14.7, 16];
+const COL_PCT = [11.6, 9.9, 17, 12.5, 10.4, 9.9, 13.2, 15.5]; // Document No. wide enough for its 14 px label
 
 const PAGE_W = 210; // A4 portrait, mm
+const PAGE_H = 297;
 const MARGIN = { top: 12, right: 10, bottom: 14, left: 12 };
 const TABLE_TOP = 36; // below company / heading / branch
 
-const plain = { lineWidth: 0, halign: "left" as const };
+// ---- the header block of an item: the same positions as the printed page (percent of the table width) ----
+const X = {
+  label: 0, // the left-hand label
+  colon: 26.33, // the colon (centred in its own narrow column)
+  value: 26.92, // the left-hand value
+  itemName: 48.98, // the item name, after the item id
+  rightLabel: 71.3, // the right-hand label: the Unit Cost column starts here
+  rightColon: 89.0,
+  rightValueEnd: 100, // the right-hand value ends at the right edge of the Unit Price column
+};
+const LINE_H = 5.3; // the height of one line of the block, mm
+const BLOCK_LINES = 5;
+const BLOCK_GAP = 1.6; // between the block and the column labels
 
-const label = (text: string, span = 2): CellDef => ({
-  content: text,
-  colSpan: span,
-  styles: plain,
-});
-const value = (text: string, span = 2): CellDef => ({
-  content: text,
-  colSpan: span,
-  styles: plain,
-});
+// draws the header block of one item at y; returns where the block ends
+const drawHeaderBlock = (doc: jsPDF, look: PdfLook, usable: number, g: HistoryGroup, y: number): number => {
+  const x = (percent: number) => MARGIN.left + (percent / 100) * usable;
 
-// header block of one item (VB XrTable1): label : value, two pairs per line
-const headerBlock = (g: HistoryGroup): CellDef[][] => [
-  [label("Item :"), value(`${g.itemId}   ${g.itemName}`, 6)],
-  [
-    label("Supplier :"),
-    value(g.supplier),
-    label("Last Sale Date :"),
-    value(dmy(g.lastSaleDate, true)),
-  ],
-  [
-    label("Last Purchase Date :"),
-    value(dmy(g.lastPurDate, true)),
-    label("Last Sale Unit Price :"),
-    value(fixed(g.lastSaleUnitPrice, 2)),
-  ],
-  [
-    label("Last Purchase Unit Price :"),
-    value(fixed(g.lastPurUnitPrice, 4)),
-    label("Current Stock :"),
-    value(whole(g.stock)),
-  ],
-  [
-    label("Last Purchase Unit Cost :"),
-    value(fixed(g.lastPurUnitCost, 4)),
-    { content: "", colSpan: 4, styles: plain },
-  ],
-];
+  doc.setTextColor(0, 0, 0);
+  doc.setFont(look.font, "normal");
+  doc.setFontSize(look.size.pdfBody);
 
-const labelsRow = (): CellDef[] =>
+  let line = 0;
+  const baseline = () => y + line * LINE_H + LINE_H * 0.72;
+
+  const left = (label: string, value: string, valueX = X.value) => {
+    doc.text(label, x(X.label), baseline());
+    doc.text(":", x(X.colon), baseline(), { align: "center" });
+    doc.text(value, x(valueX), baseline());
+  };
+
+  const right = (label: string, value: string) => {
+    doc.text(label, x(X.rightLabel), baseline());
+    doc.text(":", x(X.rightColon), baseline(), { align: "center" });
+    doc.text(value, x(X.rightValueEnd), baseline(), { align: "right" });
+  };
+
+  // Item : 2001   AC Compressor
+  doc.text("Item", x(X.label), baseline());
+  doc.text(":", x(X.colon), baseline(), { align: "center" });
+  doc.text(g.itemId, x(X.value), baseline());
+  doc.text(g.itemName, x(X.itemName), baseline());
+
+  line = 1;
+  left("Supplier", g.supplier);
+  right("Last Sale Date", dmy(g.lastSaleDate, true));
+
+  line = 2;
+  left("Last Purchase Date", dmy(g.lastPurDate, true));
+  right("Last Sale Unit Price", fixed(g.lastSaleUnitPrice, 2));
+
+  line = 3;
+  left("Last Purchase Unit Price", fixed(g.lastPurUnitPrice, 4));
+  right("Current Stock", whole(g.stock));
+
+  line = 4;
+  left("Last Purchase Unit Cost", fixed(g.lastPurUnitCost, 4));
+
+  return y + BLOCK_LINES * LINE_H + BLOCK_GAP;
+};
+
+const labelsRow = (look: PdfLook): CellDef[] =>
   ["Date", "Type", "Document No.", "Account ID", "Qty. In", "Qty. Out", "Unit Cost", "Unit Price"].map(
     (t, i) => ({
       content: t,
       styles: {
-        fillColor: HEAD_FILL,
+        fontSize: pdfLabelFontSize(look),
         halign: i >= 4 ? ("right" as const) : ("left" as const),
       },
     }),
   );
 
-export const buildItemHistoryPdf = (report: PrintReport): Blob => {
+export const buildItemHistoryPdf = async (report: PrintReport): Promise<Blob> => {
   const doc = new jsPDF({ orientation: "portrait", unit: "mm", format: "a4" });
+  const look = await registerReportPdfFont(doc, "inter"); // the font and the sizes of the look
   const usable = PAGE_W - MARGIN.left - MARGIN.right;
 
-  const body: CellDef[][] = [];
+  // company / heading / branch - drawn once on every page
+  const titled = new Set<number>();
+  const drawTitle = () => {
+    const page = doc.getCurrentPageInfo().pageNumber;
+    if (titled.has(page)) return;
+    titled.add(page);
+
+    doc.setTextColor(0, 0, 0);
+    doc.setFont(look.font, "normal");
+    doc.setFontSize(look.size.company);
+    doc.text(report.coName, PAGE_W / 2, MARGIN.top + 8, { align: "center" });
+
+    doc.setFontSize(look.size.heading);
+    doc.text(report.heading, PAGE_W / 2, MARGIN.top + 15, { align: "center" });
+
+    doc.setFontSize(look.size.pdfBody);
+    doc.text(report.branch, MARGIN.left, MARGIN.top + 22);
+
+    // the user and the time, on the right of the branch line
+    doc.setFontSize(look.size.small);
+    doc.text(report.reportInfo, PAGE_W - MARGIN.right, MARGIN.top + 22, { align: "right" });
+  };
+
+  const columnStyles: Record<number, { cellWidth: number }> = {};
+  COL_PCT.forEach((p, i) => {
+    columnStyles[i] = { cellWidth: (p / 100) * usable };
+  });
+
+  const lastY = () => (doc as unknown as { lastAutoTable: { finalY: number } }).lastAutoTable.finalY;
+
+  drawTitle();
+  let y = TABLE_TOP;
 
   for (const g of report.groups) {
-    body.push(...headerBlock(g));
-    body.push(labelsRow());
+    // the block and the first lines of its table must stay together: otherwise the item starts on a new page
+    const needed = BLOCK_LINES * LINE_H + BLOCK_GAP + 3 * 6.5;
+    if (y + needed > PAGE_H - MARGIN.bottom) {
+      doc.addPage();
+      drawTitle();
+      y = TABLE_TOP;
+    }
+
+    y = drawHeaderBlock(doc, look, usable, g, y);
+
+    const body: CellDef[][] = [labelsRow(look)];
 
     for (const r of g.rows) {
       const right = { halign: "right" as const };
@@ -115,76 +185,46 @@ export const buildItemHistoryPdf = (report: PrintReport): Blob => {
       { content: "" },
     ]);
 
-    // space before the next item
-    body.push([
-      {
-        content: "",
-        colSpan: 8,
-        styles: { lineWidth: 0, minCellHeight: 4, cellPadding: 0 },
+    autoTable(doc, {
+      theme: "plain",
+      startY: y,
+      margin: {
+        top: TABLE_TOP,
+        right: MARGIN.right,
+        bottom: MARGIN.bottom,
+        left: MARGIN.left,
       },
-    ]);
+      tableWidth: usable,
+      rowPageBreak: "avoid",
+      showHead: "never",
+      styles: {
+        font: look.font,
+        fontSize: look.size.pdfBody,
+        cellPadding: 1.2,
+        lineColor: BORDER,
+        lineWidth: 0.2,
+        minCellHeight: 6,
+        valign: "middle",
+        overflow: "ellipsize",
+        textColor: [0, 0, 0],
+      },
+      columnStyles,
+      body,
+      didDrawPage: drawTitle,
+    });
+
+    // space before the next item
+    y = lastY() + 4;
   }
-
-  // company / heading / branch - drawn on every page
-  const drawTitle = () => {
-    doc.setTextColor(0, 0, 0);
-    doc.setFont("times", "bold");
-    doc.setFontSize(14);
-    doc.text(report.coName, PAGE_W / 2, MARGIN.top + 8, { align: "center" });
-
-    doc.setFont("times", "normal");
-    doc.setFontSize(12);
-    doc.text(report.heading, PAGE_W / 2, MARGIN.top + 15, { align: "center" });
-
-    doc.setFontSize(9);
-    doc.text(report.branch, MARGIN.left, MARGIN.top + 22);
-  };
-
-  const columnStyles: Record<number, { cellWidth: number }> = {};
-  COL_PCT.forEach((p, i) => {
-    columnStyles[i] = { cellWidth: (p / 100) * usable };
-  });
-
-  autoTable(doc, {
-    theme: "plain",
-    startY: TABLE_TOP,
-    margin: {
-      top: TABLE_TOP,
-      right: MARGIN.right,
-      bottom: MARGIN.bottom,
-      left: MARGIN.left,
-    },
-    tableWidth: usable,
-    rowPageBreak: "avoid",
-    showHead: "never",
-    styles: {
-      font: "times",
-      fontSize: 9,
-      cellPadding: 1.2,
-      lineColor: BORDER,
-      lineWidth: 0.2,
-      minCellHeight: 6,
-      valign: "middle",
-      overflow: "ellipsize",
-      textColor: [0, 0, 0],
-    },
-    columnStyles,
-    body,
-    didDrawPage: drawTitle,
-  });
 
   // page numbers need the final page count, so they are added at the end
   const pages = doc.getNumberOfPages();
-  doc.setFont("times", "normal");
-  doc.setFontSize(8);
+  doc.setFont(look.font, "normal");
+  doc.setFontSize(look.size.small);
   doc.setTextColor(0, 0, 0);
   for (let i = 1; i <= pages; i++) {
     doc.setPage(i);
-    const h = doc.internal.pageSize.getHeight();
     doc.text(`Page ${i} of ${pages}`, PAGE_W - MARGIN.right, MARGIN.top, {
-      align: "right",
-    });
-    doc.text(report.reportInfo, PAGE_W - MARGIN.right, h - MARGIN.bottom + 6, {
       align: "right",
     });
   }

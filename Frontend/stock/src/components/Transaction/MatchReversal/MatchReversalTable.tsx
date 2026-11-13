@@ -47,7 +47,7 @@ const MatchTable: React.FC<MatchTableProps> = ({
         <table id="tblMatch" className="w-full table-fixed border-collapse">
           <thead className="bg-[#e8f8ef]">
             <tr>
-              <th className={`${th} w-[7%] text-left`}>Sl. No.</th>
+              <th className={`${th} w-[7%] text-left`}>Line</th>
               <th className={`${th} w-[12%] text-left`}>Account ID</th>
               <th className={`${th} w-[10%] text-left`}>Date</th>
               <th className={`${th} w-auto text-left`}>Description</th>

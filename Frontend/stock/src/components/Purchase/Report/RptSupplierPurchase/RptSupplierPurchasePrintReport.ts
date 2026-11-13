@@ -245,6 +245,7 @@ export const buildHtml = (r: PrintReport) => `<!doctype html>
 <meta charset="utf-8" />
 <title>Supplier Purchase</title>
 <style>${reportPrintCss({
+  look: "inter",
   orientation: r.rdgDetOrSum === 1 ? "portrait" : "landscape",
   marginLeft: r.rdgDetOrSum === 1 ? "20mm" : "12mm",
   groupSelector: "td.group",

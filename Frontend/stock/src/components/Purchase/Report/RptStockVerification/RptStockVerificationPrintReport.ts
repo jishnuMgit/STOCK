@@ -105,7 +105,7 @@ export const buildHtml = (r: PrintReport) => {
 <head>
 <meta charset="utf-8" />
 <title>Stock Verification</title>
-<style>${reportPrintCss({ orientation: "portrait", marginLeft: "20mm", groupSelector: "td.branch, td.group" })}
+<style>${reportPrintCss({ look: "inter", orientation: "portrait", marginLeft: "20mm", groupSelector: "td.branch, td.group" })}
 </style>
 </head>
 <body>
