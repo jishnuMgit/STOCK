@@ -75,6 +75,20 @@ export async function getZatcaPdfA3CustomerListService(
     .filter((c) => c.customerId !== "");
 }
 
+// the same customers sorted by customer name (dbo.filllookupcustomername) - the Customer Name box
+export async function getZatcaPdfA3CustomerNameListService(
+  coId: string
+): Promise<{ customerId: string; customerName: string }[]> {
+  // FUNCTION returning (fcsaccountid, fcsaccountname)
+  const { rows } = await pool.query(`SELECT * FROM dbo.filllookupcustomername($1::varchar)`, [coId]);
+  return rows
+    .map((r) => ({
+      customerId: text(r.fcsaccountid),
+      customerName: text(r.fcsaccountname),
+    }))
+    .filter((c) => c.customerId !== "");
+}
+
 export async function getZatcaPdfA3DocTypeListService(
   coId: string
 ): Promise<{ pId: string; pName: string }[]> {

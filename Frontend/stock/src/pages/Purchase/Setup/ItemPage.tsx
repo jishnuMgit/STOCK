@@ -1,6 +1,8 @@
 import React, { useEffect, useState } from "react";
 import Select, { type StylesConfig } from "react-select";
 import { toast } from "react-toastify";
+import { useNavigate } from "react-router-dom";
+import CloseButton from "../../../components/common/CloseButton";
 import { X } from "lucide-react";
 import { useEnterAsTab } from "../../../hooks/useEnterAsTab";
 import { useGridCellFocus } from "../../../hooks/useGridCellFocus";
@@ -21,7 +23,9 @@ import {
   makePairDividedMenuStyles,
   pairDividedNameMenuStyles,
 } from "../../../components/PairSelect/pairSelectParts";
-import selectComponents from "../../../components/sharecomponents/selectComponents";
+import selectComponents, {
+  SELECT_FONT_FAMILY,
+} from "../../../components/sharecomponents/selectComponents";
 
 /* =========================================================
    TYPES
@@ -87,6 +91,7 @@ const supplierNameComponents = makePairComponents(
 const MENU_ID = "010201";
 
   const ItemPage: React.FC = () => {
+  const navigate = useNavigate();
   const handleEnterAsTab = useEnterAsTab();
   const perms = useButtonPermissions(MENU_ID);
   // the cell the cursor is in is outlined (a typed-in box has its text selected)
@@ -935,19 +940,25 @@ const MENU_ID = "010201";
      REACT SELECT - FORM
   ========================================================= */
 
+  // the form selects look like the text boxes of this page (.input-style): 14px text, #334155, #d7dee7 border
   const reactSelectStyles: StylesConfig<
     SelectOption,
     false
   > = {
+    container: (provided) => ({
+      ...provided,
+      fontFamily: SELECT_FONT_FAMILY,
+    }),
+
     control: (provided, state) => ({
       ...provided,
       minHeight: "30px",
       height: "30px",
-      border: "1px solid #d1d5db",
+      border: "1px solid #d7dee7",
       borderRadius: "4px",
       boxShadow: "none",
       backgroundColor: state.isFocused ? "#eefbf4" : "#ffffff",
-      fontSize: "11px",
+      fontSize: "14px",
       cursor: "pointer",
 
       "&:hover": {
@@ -966,21 +977,21 @@ const MENU_ID = "010201";
       ...provided,
       margin: "0px",
       padding: "0px",
-      fontSize: "11px",
-      color: "#374151",
+      fontSize: "14px",
+      color: "#334155",
     }),
 
     singleValue: (provided) => ({
       ...provided,
       margin: 0,
-      fontSize: "11px",
-      color: "#374151",
+      fontSize: "14px",
+      color: "#334155",
     }),
 
     placeholder: (provided) => ({
       ...provided,
       margin: 0,
-      fontSize: "11px",
+      fontSize: "14px",
       color: "#808080",
     }),
 
@@ -1014,6 +1025,7 @@ const MENU_ID = "010201";
   menu: (provided) => ({
     ...provided,
     zIndex: 100,
+    fontFamily: SELECT_FONT_FAMILY,
     fontSize: "14px",
     borderRadius: "4px",
     marginTop: "2px",
@@ -1206,10 +1218,15 @@ const MENU_ID = "010201";
               HEADER
           =================================================== */}
 
-          <div className="flex h-7 w-full items-center bg-[#a7dfc0]">
+          <div className="flex h-7 w-full items-center bg-[#a7dfc0] pr-2">
             <h1 className="ml-1.25 text-[17px] font-semibold text-[#374151]">
               Item
             </h1>
+
+            {/* close button (the common one, as on the Sales Invoice) */}
+            <div className="ml-auto">
+              <CloseButton onClose={() => navigate("/")} />
+            </div>
           </div>
 
           {/* ===================================================

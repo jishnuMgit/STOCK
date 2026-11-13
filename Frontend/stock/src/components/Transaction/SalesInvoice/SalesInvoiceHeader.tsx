@@ -19,6 +19,8 @@ import type {
   SalesHeader,
 } from "../../../hooks/useSalesInvoice"; // adjust path to your hook
 import SelectDropdownIndicator from "../../common/SelectDropdownIndicator";
+import { useNavigate } from "react-router-dom";
+import CloseButton from "../../common/CloseButton";
 
 dayjs.extend(customParseFormat);
 
@@ -593,25 +595,25 @@ const datePickerSx: SxProps<Theme> = {
   },
 
   "& .MuiPickersInputBase-root.Mui-focused .MuiPickersOutlinedInput-notchedOutline":
-    {
-      borderColor: `${BORDER_FOCUS_COLOR} !important`,
-      borderWidth: "1px",
-    },
+  {
+    borderColor: `${BORDER_FOCUS_COLOR} !important`,
+    borderWidth: "1px",
+  },
 
   "& .MuiPickersInputBase-root.Mui-error .MuiPickersOutlinedInput-notchedOutline":
-    {
-      borderColor: `${BORDER_COLOR} !important`,
-    },
+  {
+    borderColor: `${BORDER_COLOR} !important`,
+  },
 
   "& .MuiPickersInputBase-root.Mui-error:hover .MuiPickersOutlinedInput-notchedOutline":
-    {
-      borderColor: `${BORDER_HOVER_COLOR} !important`,
-    },
+  {
+    borderColor: `${BORDER_HOVER_COLOR} !important`,
+  },
 
   "& .MuiPickersInputBase-root.Mui-error.Mui-focused .MuiPickersOutlinedInput-notchedOutline":
-    {
-      borderColor: `${BORDER_FOCUS_COLOR} !important`,
-    },
+  {
+    borderColor: `${BORDER_FOCUS_COLOR} !important`,
+  },
 };
 
 const labelClass =
@@ -705,27 +707,29 @@ const SalesInvoiceHeader: React.FC<SalesInvoiceHeaderProps> = ({
     [customers],
   );
 
+  const navigate = useNavigate();
+
   // selected values (fall back to the saved invoice's customer if it is
   // not in the lookup list)
   const customerIdValue: Option | null = header.customerId
     ? (customerIdOptions.find((o) => o.value === header.customerId) ?? {
-        value: header.customerId,
-        label: header.customerId,
-      })
+      value: header.customerId,
+      label: header.customerId,
+    })
     : null;
 
   const customerNameValue: Option | null = header.customerId
     ? (customerNameOptions.find((o) => o.value === header.customerId) ?? {
-        value: header.customerId,
-        label: header.customerName || header.customerId,
-      })
+      value: header.customerId,
+      label: header.customerName || header.customerId,
+    })
     : null;
 
   const invoiceTypeValue: Option | null = header.invoiceType
     ? (invoiceTypes.find((o) => o.value === header.invoiceType) ?? {
-        value: header.invoiceType,
-        label: header.invoiceType,
-      })
+      value: header.invoiceType,
+      label: header.invoiceType,
+    })
     : null;
 
   // ==========================================================
@@ -785,10 +789,10 @@ const SalesInvoiceHeader: React.FC<SalesInvoiceHeaderProps> = ({
     meta.context !== "menu"
       ? option.label
       : renderCustomerRow(
-          option.value,
-          customerNameById.get(option.value) ?? "",
-          CUSTOMER_ID_COL_WIDTH,
-        );
+        option.value,
+        customerNameById.get(option.value) ?? "",
+        CUSTOMER_ID_COL_WIDTH,
+      );
 
   const formatCustomerName = (
     option: Option,
@@ -797,11 +801,11 @@ const SalesInvoiceHeader: React.FC<SalesInvoiceHeaderProps> = ({
     meta.context !== "menu"
       ? option.label
       : renderCustomerRow(
-          option.label,
-          option.value,
-          undefined,
-          NAME_MENU_ID_COL_WIDTH,
-        );
+        option.label,
+        option.value,
+        undefined,
+        NAME_MENU_ID_COL_WIDTH,
+      );
 
   // typing searches both the id and the name
   const filterCustomer = (option: { data: Option }, input: string): boolean => {
@@ -878,10 +882,15 @@ const SalesInvoiceHeader: React.FC<SalesInvoiceHeaderProps> = ({
           TITLE
       ====================================================== */}
 
-      <div className="flex h-9 items-center border-b border-slate-300 bg-[#a3dfc0]">
+      <div className="flex h-9 items-center border-b border-slate-300 bg-[#a3dfc0] pr-2">
         <span className="px-2 text-[17px] font-semibold text-slate-700">
           Sales Invoice
         </span>
+
+        {/* close button */}
+        <div className="ml-auto">
+          <CloseButton onClose={() => navigate("/")} />
+        </div>
       </div>
 
       {/* ======================================================
@@ -968,35 +977,37 @@ const SalesInvoiceHeader: React.FC<SalesInvoiceHeaderProps> = ({
           </div>
 
           {/* Date */}
-          <label
-            htmlFor="dtpDate"
-            className="ml-4 mr-2 shrink-0 whitespace-nowrap text-[14px] text-[#202020]"
-          >
-            Date :
-          </label>
+          <div className="ml-auto flex items-center justify-center">
+            <label
+              htmlFor="dtpDate"
+              className="ml-4 mr-2 shrink-0 whitespace-nowrap text-[14px] text-[#202020]"
+            >
+              Date :
+            </label>
 
-          <div id="dtpDateBox">
-            <LocalizationProvider dateAdapter={AdapterDayjs}>
-              <DatePicker
-                value={header.date ? dayjs(header.date, "YYYY-MM-DD") : null}
-                onChange={(newValue) => {
-                  if (newValue === null) {
-                    onHeaderChange({ date: "" });
-                  } else if (newValue.isValid()) {
-                    onHeaderChange({ date: newValue.format("YYYY-MM-DD") });
-                  }
-                  // partially typed dates are ignored until valid
-                }}
-                format="DD-MM-YYYY"
-                disabled={readOnly}
-                slotProps={{
-                  textField: { id: "dtpDate" },
-                  openPickerButton: { sx: { padding: "2px", margin: 0 } },
-                  inputAdornment: { sx: { margin: 0, padding: 0 } },
-                }}
-                sx={datePickerSx}
-              />
-            </LocalizationProvider>
+            <div id="dtpDateBox">
+              <LocalizationProvider dateAdapter={AdapterDayjs}>
+                <DatePicker
+                  value={header.date ? dayjs(header.date, "YYYY-MM-DD") : null}
+                  onChange={(newValue) => {
+                    if (newValue === null) {
+                      onHeaderChange({ date: "" });
+                    } else if (newValue.isValid()) {
+                      onHeaderChange({ date: newValue.format("YYYY-MM-DD") });
+                    }
+                    // partially typed dates are ignored until valid
+                  }}
+                  format="DD-MM-YYYY"
+                  disabled={readOnly}
+                  slotProps={{
+                    textField: { id: "dtpDate" },
+                    openPickerButton: { sx: { padding: "2px", margin: 0 } },
+                    inputAdornment: { sx: { margin: 0, padding: 0 } },
+                  }}
+                  sx={datePickerSx}
+                />
+              </LocalizationProvider>
+            </div>
           </div>
         </div>
 

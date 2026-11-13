@@ -19,6 +19,7 @@ import {
 } from "../../../hooks/Purchase/Transaction/usePurchaseInvoice";
 import { toast } from "react-toastify";
 import { useConfirmModal } from "../../../hooks/useConfirmModal";
+import Header from "../../../components/common/Header";
 
 const ROW_COUNT = 11;
 const createRows = () => Array.from({ length: ROW_COUNT }, emptyRow);
@@ -593,11 +594,7 @@ const PurchaseInvoicePage: React.FC = () => {
 
   return (
     <main className="mx-auto flex h-fit w-full max-w-275 flex-col overflow-hidden border border-slate-400 bg-white text-[12px] text-slate-800">
-      <div className="flex h-7.5 w-full shrink-0 items-center border-b border-slate-300 bg-[#a5e0c3]">
-        <h1 className="ml-3.75 text-[17px] font-semibold text-slate-700">
-          Purchase Invoice
-        </h1>
-      </div>
+      <Header Name="Purchase Invoice" />
 
       <PurchaseForm
         header={header}

@@ -1,4 +1,6 @@
 import React, { useEffect, useRef, useState } from "react";
+import { useNavigate } from "react-router-dom";
+import CloseButton from "../../../components/common/CloseButton";
 
 import Select, {
   type StylesConfig,
@@ -160,6 +162,7 @@ const ALL_CHOICE = "*";
 const MENU_ID = "9304";
 
 const UserAudit: React.FC = () => {
+  const navigate = useNavigate();
   const handleEnterAsTab = useEnterAsTab();
   const perms = useButtonPermissions(MENU_ID);
 
@@ -491,10 +494,15 @@ const UserAudit: React.FC = () => {
             TITLE
         ==================================================== */}
 
-        <header className="flex h-[28px] w-full items-center bg-[#a7dfc0]">
+        <header className="flex h-[28px] w-full items-center bg-[#a7dfc0] pr-2">
           <h1 className="ml-[5px] text-[17px] font-semibold text-[#374151]">
             User Audit
           </h1>
+
+          {/* close button (the common one, as on the Sales Invoice) */}
+          <div className="ml-auto">
+            <CloseButton onClose={() => navigate("/")} />
+          </div>
         </header>
 
         {/* ====================================================

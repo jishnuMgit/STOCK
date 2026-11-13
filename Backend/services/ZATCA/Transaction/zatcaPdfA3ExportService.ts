@@ -25,6 +25,9 @@ export type ExportDocInput = {
   docType: string;
   origDocType: string;
   docNo: string;
+  // the XML file to attach, when the caller already knows it (right after a submission);
+  // without it the XML is searched for under the ZATCA file path
+  xmlPath?: string;
 };
 
 export type ExportDocResult = {
@@ -133,9 +136,10 @@ const findXml = async (
   root: string,
   folder: string,
   docNo: string
-): Promise<{ hit: XmlHit | null; seen: string[]; xmlCount: number }> => {
+): Promise<{ hit: XmlHit | null; seen: string[]; xmlCount: number; tree: string[] }> => {
   const wanted = norm(folder);
   const seen: string[] = [];
+  const tree: string[] = []; // the folders visited (for the error message)
   let xmlCount = 0;
 
   const startsWithDoc = (file: string): boolean => {
@@ -160,6 +164,7 @@ const findXml = async (
     for (const sub of await subFolders(dir)) {
       const name = path.basename(sub);
       if (depth === 0 && norm(name) === "pdf") continue; // the output folder
+      if (tree.length < 25) tree.push(path.relative(root, sub));
       if (norm(name) === wanted) seen.push(sub);
       const found = await walk(sub, depth + 1, inFolder || norm(name) === wanted);
       if (found) return found;
@@ -168,7 +173,7 @@ const findXml = async (
   };
 
   const hit = await walk(root, 0, false);
-  return { hit, seen, xmlCount };
+  return { hit, seen, xmlCount, tree };
 };
 
 /* =========================================================
@@ -324,15 +329,26 @@ export async function exportZatcaPdfA3Document(
     const spec = SPECS[d.docType];
     if (!spec) return result(false, `Document type '${d.docType}' has no PDF/A3 layout`);
 
-    const found = await findXml(root, spec.folder, d.docNo);
-    if (!found.hit) {
-      const where =
-        found.seen.length === 0
-          ? `no folder named '${spec.folder}' under ${root}`
-          : `${found.xmlCount} xml file(s) in ${found.seen.length} '${spec.folder}' folder(s), none starts with ${d.docNo}`;
-      return result(false, `XML file not found: ${where}`);
+    let xml: XmlHit;
+    if (d.xmlPath) {
+      xml = {
+        xmlPath: d.xmlPath,
+        xmlName: path.basename(d.xmlPath),
+        baseName: path.parse(d.xmlPath).name,
+      };
+    } else {
+      const found = await findXml(root, spec.folder, d.docNo);
+      if (!found.hit) {
+        const where =
+          found.seen.length === 0
+            ? `no folder named '${spec.folder}' under ${root}. Folders found: ${
+                found.tree.length ? found.tree.join(" | ") : "(none)"
+              }`
+            : `${found.xmlCount} xml file(s) in ${found.seen.length} '${spec.folder}' folder(s), none starts with ${d.docNo}`;
+        return result(false, `XML file not found: ${where}`);
+      }
+      xml = found.hit;
     }
-    const xml = found.hit;
 
     const rows = await fetchRows(spec, d);
     if (rows.length === 0) return result(false, "Document data not found");

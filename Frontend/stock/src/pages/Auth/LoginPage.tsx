@@ -87,7 +87,7 @@ const LoginPage: React.FC = () => {
         <div className="p-8 md:p-10">
           {/* Form Header */}
           <div className="mb-8 rounded-lg bg-linear-to-r from-emerald-100 to-emerald-50 px-7 h-10 py-1">
-            <p className="mt-2 text-[14px] font-medium tracking-[0.28em] text-slate-600">
+            <p className="mt-2 text-[14px] text-center font-medium tracking-[0.28em] text-slate-600">
               Please login to connect
             </p>
           </div>
@@ -111,14 +111,14 @@ const LoginPage: React.FC = () => {
                   value={userId}
                   name="userId"
                   maxLength={30}
-                  onChange={(e) => setUserId(e.target.value)}
+                  onChange={(e) => setUserId(e.target.value.toUpperCase())}
                   onKeyDown={(e) => {
                     if (e.key === "Enter") {
                       e.preventDefault();
                       passwordRef.current?.focus();
                     }
                   }}
-                  className="w-full bg-transparent px-4 text-[14px] text-slate-800 outline-none"
+                  className="w-full bg-transparent px-4 text-[14px] text-slate-800 outline-none uppercase"
                   autoFocus
                   required
                 />

@@ -33,7 +33,11 @@ import {
   branchMenuStyles,
   filterLabelOrValue,
 } from "../../../../components/BranchSelect/branchSelectParts";
-import selectComponents from "../../../../components/sharecomponents/selectComponents";
+import selectComponents, {
+  SELECT_FONT_FAMILY,
+} from "../../../../components/sharecomponents/selectComponents";
+import { useNavigate } from "react-router-dom";
+import CloseButton from "../../../../components/common/CloseButton";
 
 // ============================================================
 // STOCK TRANSFER (the old frmST)
@@ -96,15 +100,20 @@ const todayLocal = () => new Date().toLocaleDateString("en-CA");
 // ============================================================
 
 const branchSelectStyles: StylesConfig<SelectOption, false> = {
+  container: (base) => ({
+    ...base,
+    fontFamily: SELECT_FONT_FAMILY,
+  }),
+
   control: (base, state) => ({
     ...base,
     minHeight: "30px",
     height: "30px",
-    border: "1px solid #d1d5db",
+    border: "1px solid #d7dee7",
     borderRadius: "4px",
     boxShadow: "none",
     backgroundColor: state.isFocused ? "#eefbf4" : "#ffffff",
-    fontSize: "11px",
+    fontSize: "14px",
     cursor: "pointer",
 
     "&:hover": {
@@ -122,23 +131,23 @@ const branchSelectStyles: StylesConfig<SelectOption, false> = {
   singleValue: (base) => ({
     ...base,
     margin: 0,
-    color: "#374151",
-    fontSize: "11px",
+    color: "#334155",
+    fontSize: "14px",
   }),
 
   placeholder: (base) => ({
     ...base,
     margin: 0,
     color: "#808080",
-    fontSize: "11px",
+    fontSize: "14px",
   }),
 
   input: (base) => ({
     ...base,
     margin: 0,
     padding: 0,
-    fontSize: "11px",
-    color: "#374151",
+    fontSize: "14px",
+    color: "#334155",
   }),
 
   indicatorsContainer: (base) => ({
@@ -165,7 +174,7 @@ const branchSelectStyles: StylesConfig<SelectOption, false> = {
     ...base,
     minHeight: "30px",
     padding: "6px 10px",
-    fontSize: "13px",
+    fontSize: "14px",
     backgroundColor: state.isSelected
       ? "#dbeafe"
       : state.isFocused
@@ -198,6 +207,11 @@ const itemNameComponents = makePairComponents("Item ID", "Item Name", true, true
 // ============================================================
 
 const selectStyles = {
+  container: (base: any) => ({
+    ...base,
+    fontFamily: SELECT_FONT_FAMILY,
+  }),
+
   control: (
     base: any,
     state: any
@@ -480,6 +494,7 @@ const createInitialRows = (): StockRow[] =>
 // ============================================================
 
 const StockTransferPage: React.FC = () => {
+  const navigate = useNavigate();
   // the Branch (From) box: only the branches the user has a right to, with the
   // user's default branch selected when the page opens
   const [branchOptions, setBranchOptions] = useState<SelectOption[]>([]);
@@ -1788,10 +1803,15 @@ const StockTransferPage: React.FC = () => {
     <main className="mt-5 flex h-fit w-full max-w-300 flex-col overflow-hidden border border-gray-400 bg-white text-[12px] text-slate-700">
 
       {/* TITLE BAR */}
-      <div className="flex h-[28px] w-full shrink-0 items-center bg-[#a7dfc0]">
+      <div className="flex h-[28px] w-full shrink-0 items-center bg-[#a7dfc0] pr-2">
         <h1 className="ml-[5px] text-[17px] font-semibold text-[#374151]">
           Stock Transfer
         </h1>
+
+        {/* close button (the common one, as on the Sales Invoice) */}
+        <div className="ml-auto">
+          <CloseButton onClose={() => navigate("/")} />
+        </div>
       </div>
 
       {/* FORM BODY */}
