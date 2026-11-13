@@ -304,6 +304,7 @@ export const getCustomer = async (req: AuthenticatedRequest, res: Response) => {
       email: r.femail,
       businessTypeId: r.fbussinesstype,
       brId: r.fbrid,
+      staffId: r.fstaffid,
       creditLimit: r.fcreditlimit,
       creditDays: r.fcreditdays,
       ctaCardType: r.fctacardtype,
