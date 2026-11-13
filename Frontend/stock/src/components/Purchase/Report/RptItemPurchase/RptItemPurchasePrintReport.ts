@@ -51,7 +51,7 @@ export const formatPrice = (value: number) => fixed(value, 2);
 
 
 // the column weights, as the old report: Date | Type | Document No. | P.I. No. | Qty. | Unit Price | Supplier
-export const COLUMN_WEIGHTS = [0.117, 0.063, 0.138, 0.152, 0.09, 0.126, 0.314];
+export const COLUMN_WEIGHTS = [0.117, 0.063, 0.18, 0.14, 0.09, 0.126, 0.284]; // Document No. wide enough for its 14 px label on one line
 
 export const COLUMN_COUNT = COLUMN_WEIGHTS.length;
 
@@ -84,7 +84,7 @@ export const buildHtml = (r: PrintReport) => `<!doctype html>
 <head>
 <meta charset="utf-8" />
 <title>Item Purchase</title>
-<style>${reportPrintCss({ orientation: "portrait", marginLeft: "18mm", groupSelector: "td.group" })}
+<style>${reportPrintCss({ look: "inter", orientation: "portrait", marginLeft: "18mm", groupSelector: "td.group" })}
 </style>
 </head>
 <body>

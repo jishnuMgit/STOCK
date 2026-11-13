@@ -3,6 +3,7 @@
 // "branch" grouped by item group, "status", "allBranch").
 // Needs:  npm i exceljs
 import ExcelJS from "exceljs";
+import { applyReportFont, levelFont } from "../../../utils/reportStyle.js";
 import type { ItemListRow } from "./RptItemListService.js";
 
 export type Variant = "branch" | "status" | "allBranch";
@@ -54,12 +55,6 @@ const COLS: Record<Variant, ColDef[]> = {
 };
 
 const BORDER_COLOR = { argb: "FFC7D1E4" };
-const HEAD_FILL = {
-  type: "pattern" as const,
-  pattern: "solid" as const,
-  fgColor: { argb: "FFEFF3FA" },
-};
-
 const thin = {
   top: { style: "thin" as const, color: BORDER_COLOR },
   left: { style: "thin" as const, color: BORDER_COLOR },
@@ -79,7 +74,7 @@ export const buildItemListWorkbook = async (
     views: [{ state: "frozen", ySplit: 4 }],
     pageSetup: {
       paperSize: 9, // A4
-      orientation: grouped ? "landscape" : "portrait",
+      orientation: "portrait", // every layout on A4 portrait, like the printed page
       fitToPage: true,
       fitToWidth: 1,
       fitToHeight: 0,
@@ -92,27 +87,27 @@ export const buildItemListWorkbook = async (
   // ---- company / heading / branch (rows 1-3) ----
   ws.mergeCells(1, 1, 1, last);
   ws.getCell(1, 1).value = report.coName;
-  ws.getCell(1, 1).font = { name: "Times New Roman", size: 14, bold: true };
+  ws.getCell(1, 1).font = levelFont("company", true, "inter");
   ws.getCell(1, 1).alignment = { horizontal: "center" };
 
   ws.mergeCells(2, 1, 2, last);
   ws.getCell(2, 1).value = report.heading;
-  ws.getCell(2, 1).font = { name: "Times New Roman", size: 12 };
+  ws.getCell(2, 1).font = levelFont("heading", false, "inter");
   ws.getCell(2, 1).alignment = { horizontal: "center" };
 
   ws.mergeCells(3, 1, 3, 2);
   ws.getCell(3, 1).value = report.branch;
+  ws.getCell(3, 1).font = levelFont("body", false, "inter");
   ws.mergeCells(3, 3, 3, last);
   ws.getCell(3, 3).value = report.reportInfo;
-  ws.getCell(3, 3).font = { name: "Times New Roman", size: 8 };
+  ws.getCell(3, 3).font = levelFont("small", false, "inter");
   ws.getCell(3, 3).alignment = { horizontal: "right" };
 
   // ---- column labels (row 4) ----
   const head = ws.getRow(4);
   head.values = cols.map((c) => c.label);
   head.eachCell((cell, col) => {
-    cell.font = { bold: true };
-    cell.fill = HEAD_FILL;
+    cell.font = levelFont("columnHead", true, "inter");
     cell.border = thin;
     cell.alignment = { horizontal: cols[col - 1].right ? "right" : "left" };
   });
@@ -127,7 +122,7 @@ export const buildItemListWorkbook = async (
         `Item Group :  ${r.itemGroupId}   ${r.itemGroupName}`,
       ]);
       ws.mergeCells(gr.number, 1, gr.number, last);
-      gr.getCell(1).font = { name: "Times New Roman", size: 10, bold: true };
+      gr.getCell(1).font = levelFont("group", true, "inter");
       gr.getCell(1).border = { bottom: { style: "thin", color: BORDER_COLOR } };
     }
 
@@ -139,6 +134,9 @@ export const buildItemListWorkbook = async (
       if (def.right) cell.alignment = { horizontal: "right" };
     });
   }
+
+  // the whole sheet in the font of the shared look (the table too, not only the title)
+  applyReportFont(ws, "inter");
 
   return Buffer.from(await wb.xlsx.writeBuffer());
 };

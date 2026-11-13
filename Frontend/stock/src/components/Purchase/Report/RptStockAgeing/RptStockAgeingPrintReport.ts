@@ -51,7 +51,7 @@ export const formatCost = (value: number) =>
 // the column weights, as the old report: Item ID | Item Name | Item Group | Unit | Stock | Unit Cost |
 // the five age columns
 // (a little different from the old report so a number like 12,333,344 and the unit fit on one line)
-export const COLUMN_WEIGHTS = [0.12, 0.165, 0.08, 0.05, 0.09, 0.085, 0.082, 0.082, 0.082, 0.082, 0.082];
+export const COLUMN_WEIGHTS = [0.12, 0.155, 0.09, 0.05, 0.09, 0.085, 0.082, 0.082, 0.082, 0.082, 0.082]; // Item Group needs room for its 14 px label
 
 export const COLUMN_COUNT = COLUMN_WEIGHTS.length;
 
@@ -74,7 +74,7 @@ export const buildHtml = (r: PrintReport) => `<!doctype html>
 <head>
 <meta charset="utf-8" />
 <title>Stock Ageing</title>
-<style>${reportPrintCss({ orientation: "landscape", marginLeft: "12mm", groupSelector: "td.group" })}
+<style>${reportPrintCss({ look: "inter", orientation: "landscape", marginLeft: "12mm", groupSelector: "td.group" })}
 </style>
 </head>
 <body>

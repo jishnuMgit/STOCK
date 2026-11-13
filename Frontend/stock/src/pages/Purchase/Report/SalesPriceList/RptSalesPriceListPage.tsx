@@ -569,7 +569,7 @@ const RptSalesPriceListPage: React.FC<RptSalesPriceListPageProps> = ({
 
     setBusy(true);
     try {
-      const blob = asPdf ? buildSalesPriceListPdf(report) : await fetchExcel(request);
+      const blob = asPdf ? await buildSalesPriceListPdf(report) : await fetchExcel(request);
       if (!blob) return; // the error is already shown
 
       const kind = asPdf ? "pdf" : "xlsx";

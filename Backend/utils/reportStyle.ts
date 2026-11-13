@@ -20,6 +20,52 @@ export const REPORT_FONT_SIZE = {
   small: 8, // the report info (user and time)
 } as const;
 
+// THE LOOKS OF THE EXCEL REPORTS - the font and EVERY size, the same two looks as the print, the Print Preview and the
+// PDF of the browser (Frontend/stock/src/components/common/reportStyle.ts, REPORT_LOOKS - keep the two in step):
+//
+//     classic   the old look: Times New Roman, the sizes above
+//     inter     the app font and a text hierarchy:
+//                   company 13.5 pt (18 px) / heading 12 pt (16 px) / column labels 10.5 pt (14 px) /
+//                   block heading 9 pt (12 px) / table text 8.25 pt (11 px) / report info 8 pt
+//
+// A report picks its look in ONE word - "inter" - in addReportTitle, applyReportFont and levelFont, and never writes a font
+// name or a size:
+//
+//     addReportTitle(ws, report, branch, columns, undefined, "inter");
+//     head.eachCell((cell) => { cell.font = levelFont("columnHead", true, "inter"); ... });   // the column labels
+//     heading.getCell(1).font = levelFont("group", true, "inter");                           // a block heading
+//     applyReportFont(ws, "inter");                                                          // LAST: the font on every cell
+//
+// (Excel does not carry a font inside the file: the person who opens it sees Inter when Inter is installed on that
+// computer, and the closest font Excel has when it is not.)
+export type ReportLook = "classic" | "inter";
+
+export type ReportLevel = "company" | "heading" | "columnHead" | "group" | "body" | "small";
+
+type LookSizes = Record<ReportLevel, number>;
+
+export const REPORT_LOOKS: Record<ReportLook, { fontName: string; size: LookSizes }> = {
+  classic: {
+    fontName: REPORT_FONT_NAME,
+    // the classic look has no own column-label or block-heading size: they take the table text size
+    size: { ...REPORT_FONT_SIZE, columnHead: REPORT_FONT_SIZE.body, group: REPORT_FONT_SIZE.body },
+  },
+  inter: {
+    fontName: "Inter",
+    size: { company: 13.5, heading: 12, columnHead: 10.5, group: 9, body: 8.25, small: 8 },
+  },
+};
+
+// the font of one level of the text (a column label, a block heading ...) in a look
+export const levelFont = (level: ReportLevel, bold = false, look: ReportLook = "classic") => ({
+  name: REPORT_LOOKS[look].fontName,
+  size: REPORT_LOOKS[look].size[level],
+  bold,
+});
+
+const lookFont = (look: ReportLook) => REPORT_LOOKS[look].fontName;
+const lookSize = (look: ReportLook) => REPORT_LOOKS[look].size;
+
 // the colour of the thin lines of the tables (the print's #c7d1e4)
 export const REPORT_LINE_COLOR = { argb: "FFC7D1E4" };
 
@@ -30,8 +76,8 @@ export const thin = {
   right: { style: "thin" as const, color: REPORT_LINE_COLOR },
 };
 
-export const font = (size: number = REPORT_FONT_SIZE.body, bold = false) => ({
-  name: REPORT_FONT_NAME,
+export const font = (size: number = REPORT_FONT_SIZE.body, bold = false, look: ReportLook = "classic") => ({
+  name: lookFont(look),
   size,
   bold,
 });
@@ -57,41 +103,43 @@ export const addReportTitle = (
   report: TitleText,
   branch: string,
   columns: number,
-  branchColumns: number = Math.floor(columns / 2)
+  branchColumns: number = Math.floor(columns / 2),
+  look: ReportLook = "classic"
 ) => {
+  const size = lookSize(look);
   const last = columnLetter(columns);
   const infoFrom = columnLetter(branchColumns + 1);
 
   ws.mergeCells(`A1:${last}1`);
   ws.getCell("A1").value = report.txtCoName;
-  ws.getCell("A1").font = font(REPORT_FONT_SIZE.company, true);
+  ws.getCell("A1").font = font(size.company, true, look);
   ws.getCell("A1").alignment = { horizontal: "center" };
 
   ws.mergeCells(`A2:${last}2`);
   ws.getCell("A2").value = report.txtHeading;
-  ws.getCell("A2").font = font(REPORT_FONT_SIZE.heading);
+  ws.getCell("A2").font = font(size.heading, false, look);
   ws.getCell("A2").alignment = { horizontal: "center" };
 
   ws.mergeCells(`A3:${columnLetter(branchColumns)}3`);
   ws.getCell("A3").value = branch;
-  ws.getCell("A3").font = font(REPORT_FONT_SIZE.body);
+  ws.getCell("A3").font = font(size.body, false, look);
   ws.getCell("A3").alignment = { horizontal: "left" };
 
   ws.mergeCells(`${infoFrom}3:${last}3`);
   ws.getCell(`${infoFrom}3`).value = report.txtReportInfo;
-  ws.getCell(`${infoFrom}3`).font = font(REPORT_FONT_SIZE.small);
+  ws.getCell(`${infoFrom}3`).font = font(size.small, false, look);
   ws.getCell(`${infoFrom}3`).alignment = { horizontal: "right" };
 };
 
 // Call it LAST, when the worksheet is full: every cell gets the report font, so the table is in the same font
 // as the title (a cell keeps its own size and bold; one without a size gets the body size).
-export const applyReportFont = (ws: ExcelJS.Worksheet) => {
+export const applyReportFont = (ws: ExcelJS.Worksheet, look: ReportLook = "classic") => {
   ws.eachRow({ includeEmpty: true }, (row) => {
     row.eachCell({ includeEmpty: true }, (cell) => {
       cell.font = {
         ...cell.font,
-        name: REPORT_FONT_NAME,
-        size: cell.font?.size ?? REPORT_FONT_SIZE.body,
+        name: lookFont(look),
+        size: cell.font?.size ?? lookSize(look).body,
       };
     });
   });

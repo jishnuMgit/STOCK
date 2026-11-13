@@ -8,12 +8,14 @@ import { jsPDF } from "jspdf";
 import autoTable, { type CellDef } from "jspdf-autotable";
 
 import {
-  PDF_BLACK,
   addPageNumbers,
   drawReportTitle,
+  pdfGroupStyles,
+  pdfHeadStyles,
   pdfMargin,
   pdfTableStyles,
   pdfTableTop,
+  registerReportPdfFont,
 } from "../../../common/reportPdf";
 
 import {
@@ -23,7 +25,7 @@ import {
   type PrintReport,
 } from "./RptStockReportPrintReport";
 
-export const buildStockReportPdf = (report: PrintReport): Blob => {
+export const buildStockReportPdf = async (report: PrintReport): Promise<Blob> => {
   const detailed = report.txtMode === "D";
   const sections = (detailed ? report.detail.length : report.summary.branches.length) > 1;
 
@@ -32,6 +34,7 @@ export const buildStockReportPdf = (report: PrintReport): Blob => {
     unit: "mm",
     format: "a4",
   });
+  const look = await registerReportPdfFont(doc, "inter"); // the font and the sizes of the look
 
   const pageW = detailed ? 210 : 297;
   const margin = pdfMargin(detailed ? 22.9 : 25.4);
@@ -46,7 +49,7 @@ export const buildStockReportPdf = (report: PrintReport): Blob => {
     {
       content: `Branch : ${name}`,
       colSpan,
-      styles: { fontStyle: "bold" as const, lineWidth: 0, minCellHeight: 9, valign: "bottom" },
+      styles: { ...pdfGroupStyles(look), lineWidth: 0, minCellHeight: 9, valign: "bottom" },
     },
   ];
 
@@ -56,7 +59,7 @@ export const buildStockReportPdf = (report: PrintReport): Blob => {
 
   if (detailed) {
     // Date | Type | Document No. | Txn.# | Unit Cost | Qty. In | Qty. Out | Balance (the old weights)
-    const weights = [0.136, 0.072, 0.133, 0.107, 0.121, 0.145, 0.144, 0.142];
+    const weights = [0.136, 0.072, 0.175, 0.107, 0.121, 0.13, 0.13, 0.129]; // the Document No. label (14 px) needs room
 
     columnStyles = Object.fromEntries(
       weights.map((w, i) => [i, { cellWidth: w * usable, ...(i >= 4 ? right : {}) }])
@@ -81,7 +84,7 @@ export const buildStockReportPdf = (report: PrintReport): Blob => {
         {
           content: `Item : ${item.lkpItemID}   ${item.txtItemName}`,
           colSpan: 8,
-          styles: { fontStyle: "bold" as const, lineWidth: 0, minCellHeight: 9, valign: "bottom" },
+          styles: { ...pdfGroupStyles(look), lineWidth: 0, minCellHeight: 9, valign: "bottom" },
         },
       ]);
 
@@ -107,7 +110,7 @@ export const buildStockReportPdf = (report: PrintReport): Blob => {
     }
   } else {
     // Item ID | Item Name | Unit | Opening | Qty. In | Qty. Out | Closing (the old weights)
-    const weights = [0.174, 0.395, 0.048, 0.105, 0.093, 0.093, 0.093];
+    const weights = [0.174, 0.394, 0.048, 0.105, 0.093, 0.093, 0.093]; // (they add up to exactly 1)
 
     columnStyles = Object.fromEntries(
       weights.map((w, i) => [i, { cellWidth: w * usable, ...(i >= 3 ? right : {}) }])
@@ -157,7 +160,7 @@ export const buildStockReportPdf = (report: PrintReport): Blob => {
   }
 
   // company / heading / branch + report info - drawn on every page
-  const drawTitle = () => drawReportTitle(doc, pageW, margin, report, report.txtBranch);
+  const drawTitle = () => drawReportTitle(doc, pageW, margin, report, report.txtBranch, look);
 
   autoTable(doc, {
     theme: "plain",
@@ -171,18 +174,15 @@ export const buildStockReportPdf = (report: PrintReport): Blob => {
     tableWidth: usable,
     rowPageBreak: "avoid",
     showHead: "everyPage",
-    styles: pdfTableStyles(),
-    headStyles: {
-      textColor: PDF_BLACK,
-      fontStyle: "normal",
-    },
+    styles: pdfTableStyles(look),
+    headStyles: pdfHeadStyles(look),
     columnStyles,
     head,
     body,
     didDrawPage: drawTitle,
   });
 
-  addPageNumbers(doc, pageW, margin);
+  addPageNumbers(doc, pageW, margin, look);
 
   return doc.output("blob");
 };

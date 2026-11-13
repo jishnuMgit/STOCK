@@ -7,6 +7,12 @@
 // report to the printer (browser print dialog, hidden iframe - no pop-up).
 // The formatters are shared with the PDF file.
 
+import { printHtmlDocument } from "../../../../components/common/printHtml";
+import { reportLook } from "../../../../components/common/reportStyle";
+
+// the font and the sizes of the shared look (components/common/reportStyle.ts): the same in every report
+const LOOK = reportLook("inter");
+
 export type HistoryRow = {
   date: string | null; // YYYY-MM-DD
   docType: string;
@@ -36,7 +42,7 @@ export type PrintReport = {
   coName: string;
   heading: string;
   branch: string;
-  reportInfo: string; // "<user>  dd/mm/yyyy hh:mm" - bottom right of every page
+  reportInfo: string; // "<user>  dd/mm/yyyy hh:mm" - top right, on the branch line
   groups: HistoryGroup[];
 };
 
@@ -46,14 +52,6 @@ const esc = (v: unknown) =>
     .replace(/</g, "&lt;")
     .replace(/>/g, "&gt;")
     .replace(/"/g, "&quot;");
-
-// text placed inside a CSS string ("...") in the print stylesheet
-const cssStr = (v: unknown) =>
-  String(v ?? "")
-    .replace(/\\/g, "\\\\")
-    .replace(/"/g, '\\"')
-    .replace(/</g, "\\3C ")
-    .replace(/[\r\n]+/g, " ");
 
 // ---- VB number / date formats ----
 const MONTHS = [
@@ -85,9 +83,11 @@ export const raw = (v: number | null) => (v == null ? "" : String(v));
 
 // header block: label | : | value   (VB XrTable1, six rows)
 const COLS_ITEM = "25.74% 1.18% 22.06% 51.03%";
-const COLS_PAIR = "25.74% 1.18% 35.59% 18.38% 1.18% 17.94%";
+const COLS_PAIR = "25.74% 1.18% 44.38% 17.2% 1.0% 10.5%"; // the right-hand pair starts at the Unit Cost column (71.3%) and ends at the right edge of the Unit Price column
 
 const cell = (v: string) => `<div>${esc(v)}</div>`;
+// the value of the right-hand pair: right aligned, so it ends at the right edge of the Unit Price column
+const rcell = (v: string) => `<div class="rv">${esc(v)}</div>`;
 const colon = `<div class="c">:</div>`;
 
 const headerBlock = (g: HistoryGroup) => `
@@ -97,15 +97,15 @@ const headerBlock = (g: HistoryGroup) => `
   </div>
   <div class="g" style="grid-template-columns:${COLS_PAIR}">
     ${cell("Supplier")}${colon}${cell(g.supplier)}
-    ${cell("Last Sale Date")}${colon}${cell(dmy(g.lastSaleDate, true))}
+    ${cell("Last Sale Date")}${colon}${rcell(dmy(g.lastSaleDate, true))}
   </div>
   <div class="g" style="grid-template-columns:${COLS_PAIR}">
     ${cell("Last Purchase Date")}${colon}${cell(dmy(g.lastPurDate, true))}
-    ${cell("Last Sale Unit Price")}${colon}${cell(fixed(g.lastSaleUnitPrice, 2))}
+    ${cell("Last Sale Unit Price")}${colon}${rcell(fixed(g.lastSaleUnitPrice, 2))}
   </div>
   <div class="g" style="grid-template-columns:${COLS_PAIR}">
     ${cell("Last Purchase Unit Price")}${colon}${cell(fixed(g.lastPurUnitPrice, 4))}
-    ${cell("Current Stock")}${colon}${cell(whole(g.stock))}
+    ${cell("Current Stock")}${colon}${rcell(whole(g.stock))}
   </div>
   
   <div class="g" style="grid-template-columns:${COLS_PAIR}">
@@ -153,24 +153,25 @@ export const buildHtml = (r: PrintReport) => `<!doctype html>
 <head>
 <meta charset="utf-8" />
 <title>${esc(r.heading)}</title>
-<style>
+<style>${LOOK.css.importCss}
   @page {
     size: A4;
     margin: 12mm 10mm 14mm 12mm;
-    @top-right    { content: "Page " counter(page) " of " counter(pages); font: 8pt "Times New Roman", serif; }
-    @bottom-right { content: "${cssStr(r.reportInfo)}"; font: 8pt "Times New Roman", serif; }
+    @top-right    { content: "Page " counter(page) " of " counter(pages); font: ${LOOK.size.small}pt ${LOOK.css.family}; }
   }
   * { box-sizing: border-box; }
-  body { margin: 0; font: 9pt "Times New Roman", serif; color: #000;
+  body { margin: 0; font: ${LOOK.size.body}pt ${LOOK.css.family}; color: #000;
          -webkit-print-color-adjust: exact; print-color-adjust: exact; }
   table.main { width: 100%; border-collapse: collapse; table-layout: fixed; }
   thead { display: table-header-group; }            /* company / heading repeat on every page */
   tr { page-break-inside: avoid; }
-  .co   { font-size: 14pt; text-align: center; height: 24px; }
-  .head { font-size: 12pt; text-align: center; height: 22px; }
-  .br   { font-size: 9pt;  text-align: left;   height: 20px; }
-  th { background: #eff3fa; border: 1px solid #c7d1e4; height: 24px;
-       padding: 0 4px; font-weight: normal; text-align: left; }
+  .co   { font-size: ${LOOK.size.company}pt; text-align: center; height: 24px; }
+  .head { font-size: ${LOOK.size.heading}pt; text-align: center; height: 22px; }
+  .br   { font-size: ${LOOK.size.body}pt;  text-align: left;   height: 20px; }
+  .br div { display: flex; justify-content: space-between; gap: 16px; }
+  .br .info { font-size: ${LOOK.size.small}pt; }
+  th { border: 1px solid #c7d1e4; height: 24px;
+       padding: 0 4px; font-size: ${LOOK.size.columnHead ?? LOOK.size.body}pt; font-weight: normal; text-align: left; }
   td { border: 1px solid #c7d1e4; border-top: 0; height: 24px; padding: 0 4px; }
   .r { text-align: right; }
   .tot td { border-top: 1px solid #c7d1e4; font-weight: bold; }
@@ -178,6 +179,7 @@ export const buildHtml = (r: PrintReport) => `<!doctype html>
   .info .g { display: grid; min-height: 20px; align-items: center; }
   .info .g > div { padding: 1px 4px; }
   .info .c { text-align: center; padding: 1px 0; }
+  .info .rv { text-align: right; }
 </style>
 </head>
 <body>
@@ -185,17 +187,17 @@ export const buildHtml = (r: PrintReport) => `<!doctype html>
   <colgroup>
     <col style="width:11.6%" />  <!-- Date -->
     <col style="width:9.9%" />   <!-- Type -->
-    <col style="width:13.4%" />  <!-- Document No. -->
-    <col style="width:14.1%" />  <!-- Account ID -->
+    <col style="width:17%" />    <!-- Document No. (its 14 px label fits) -->
+    <col style="width:12.5%" />  <!-- Account ID -->
     <col style="width:10.4%" />  <!-- Qty. In -->
     <col style="width:9.9%" />   <!-- Qty. Out -->
-    <col style="width:14.7%" />  <!-- Unit Cost -->
-    <col style="width:16%" />    <!-- Unit Price -->
+    <col style="width:13.2%" />  <!-- Unit Cost -->
+    <col style="width:15.5%" />  <!-- Unit Price -->
   </colgroup>
   <thead>
     <tr><td colspan="8" class="co"   style="border:0">${esc(r.coName)}</td></tr>
     <tr><td colspan="8" class="head" style="border:0">${esc(r.heading)}</td></tr>
-    <tr><td colspan="8" class="br"   style="border:0">${esc(r.branch)}</td></tr>
+    <tr><td colspan="8" class="br"   style="border:0"><div><span>${esc(r.branch)}</span><span class="info">${esc(r.reportInfo)}</span></div></td></tr>
   </thead>
   <tbody>
     ${r.groups.map(groupHtml).join("\n")}
@@ -204,31 +206,5 @@ export const buildHtml = (r: PrintReport) => `<!doctype html>
 </body>
 </html>`;
 
-export const printItemHistoryReport = (report: PrintReport): void => {
-  const iframe = document.createElement("iframe");
-  iframe.style.cssText =
-    "position:fixed;right:0;bottom:0;width:0;height:0;border:0;visibility:hidden";
-  document.body.appendChild(iframe);
-
-  const doc = iframe.contentDocument;
-  const win = iframe.contentWindow;
-  if (!doc || !win) {
-    iframe.remove();
-    throw new Error("Could not open the print view");
-  }
-
-  doc.open();
-  doc.write(buildHtml(report));
-  doc.close();
-
-  const cleanup = () => setTimeout(() => iframe.remove(), 500);
-  win.addEventListener("afterprint", cleanup);
-
-  // let the iframe lay out before printing
-  setTimeout(() => {
-    win.focus();
-    win.print();
-    // some browsers never fire afterprint: remove it anyway after a minute
-    setTimeout(() => iframe.remove(), 60000);
-  }, 250);
-};
+export const printItemHistoryReport = (report: PrintReport): void =>
+  printHtmlDocument(buildHtml(report)); // waits for the Inter font before the print dialog opens
