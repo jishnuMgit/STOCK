@@ -106,7 +106,7 @@ export const buildPayablesPdf = (report: PrintReport): Blob => {
   for (let i = 1; i <= pages; i++) {
     doc.setPage(i);
     const h = doc.internal.pageSize.getHeight();
-    doc.text(`Page ${i} of ${pages}`, PAGE_W - MARGIN.right, MARGIN.top, {
+    doc.text(`Page ${i} / ${pages}`, PAGE_W - MARGIN.right, MARGIN.top, {
       align: "right",
     });
     doc.text(report.reportInfo, PAGE_W - MARGIN.right, h - MARGIN.bottom + 6, {

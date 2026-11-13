@@ -116,7 +116,7 @@ export const buildHtml = (r: PrintReport) => `<!doctype html>
 <head>
 <meta charset="utf-8" />
 <title>Match Enquiry</title>
-<style>${reportPrintCss({ orientation: "portrait", marginLeft: "15mm", groupSelector: "td.group" })}
+<style>${reportPrintCss({ reportInfo: r.txtReportInfo, orientation: "portrait", marginLeft: "15mm", groupSelector: "td.group" })}
 </style>
 </head>
 <body>

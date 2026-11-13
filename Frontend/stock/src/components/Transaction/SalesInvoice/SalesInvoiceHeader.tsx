@@ -19,8 +19,6 @@ import type {
   SalesHeader,
 } from "../../../hooks/useSalesInvoice"; // adjust path to your hook
 import SelectDropdownIndicator from "../../common/SelectDropdownIndicator";
-import { useNavigate } from "react-router-dom";
-import CloseButton from "../../common/CloseButton";
 import Header from "../../common/Header";
 
 dayjs.extend(customParseFormat);
@@ -708,7 +706,6 @@ const SalesInvoiceHeader: React.FC<SalesInvoiceHeaderProps> = ({
     [customers],
   );
 
-  const navigate = useNavigate();
 
   // selected values (fall back to the saved invoice's customer if it is
   // not in the lookup list)

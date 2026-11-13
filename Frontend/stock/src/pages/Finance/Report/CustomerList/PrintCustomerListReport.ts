@@ -63,7 +63,7 @@ export const buildHtml = (r: PrintReport) => `<!doctype html>
   @page {
     size: A4 landscape;
     margin: 12mm 10mm 14mm 15mm;
-    @top-right    { content: "Page " counter(page) " of " counter(pages); font: 8pt "Times New Roman", serif; }
+    @top-right    { content: "Page " counter(page) " / " counter(pages); font: 8pt "Times New Roman", serif; }
     @bottom-right { content: "${cssStr(r.reportInfo)}"; font: 8pt "Times New Roman", serif; }
   }
   * { box-sizing: border-box; }

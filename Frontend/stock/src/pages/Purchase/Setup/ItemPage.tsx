@@ -1,8 +1,6 @@
 import React, { useEffect, useState } from "react";
 import Select, { type StylesConfig } from "react-select";
 import { toast } from "react-toastify";
-import { useNavigate } from "react-router-dom";
-import CloseButton from "../../../components/common/CloseButton";
 import { X } from "lucide-react";
 import { useEnterAsTab } from "../../../hooks/useEnterAsTab";
 import { useGridCellFocus } from "../../../hooks/useGridCellFocus";
@@ -92,7 +90,6 @@ const supplierNameComponents = makePairComponents(
 const MENU_ID = "010201";
 
   const ItemPage: React.FC = () => {
-  const navigate = useNavigate();
   const handleEnterAsTab = useEnterAsTab();
   const perms = useButtonPermissions(MENU_ID);
   // the cell the cursor is in is outlined (a typed-in box has its text selected)

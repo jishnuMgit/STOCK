@@ -155,7 +155,7 @@ export const pdfGroupStyles = (look: PdfLook = CLASSIC) => ({
 
 type TitleText = { txtCoName: string; txtHeading: string; txtReportInfo: string };
 
-// the company, the heading, the branch (left) and the report info (right) - drawn at the top of every page
+// the company, the heading, the branch (left) - drawn at the top of every page; the report info at the bottom right
 export const drawReportTitle = (
   doc: jsPDF,
   pageW: number,
@@ -179,8 +179,11 @@ export const drawReportTitle = (
   doc.setFontSize(size.pdfBody);
   if (branch) doc.text(branch, margin.left, margin.top + 22 + gap);
 
+  // the user and the time: bottom right of every page
   doc.setFontSize(size.small);
-  doc.text(report.txtReportInfo, pageW - margin.right, margin.top + 22 + gap, { align: "right" });
+  doc.text(`Printed : ${report.txtReportInfo}`, pageW - margin.right, doc.internal.pageSize.getHeight() - margin.bottom + 6, {
+    align: "right",
+  });
 };
 
 // "Page x of y" top right of every page - it needs the final page count, so it is added at the end
@@ -193,6 +196,6 @@ export const addPageNumbers = (doc: jsPDF, pageW: number, margin: PdfMargin, loo
 
   for (let i = 1; i <= pages; i++) {
     doc.setPage(i);
-    doc.text(`Page ${i} of ${pages}`, pageW - margin.right, margin.top, { align: "right" });
+    doc.text(`Page ${i} / ${pages}`, pageW - margin.right, margin.top, { align: "right" });
   }
 };

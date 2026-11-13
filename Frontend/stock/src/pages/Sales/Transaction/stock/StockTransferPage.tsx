@@ -36,8 +36,6 @@ import {
 import selectComponents, {
   SELECT_FONT_FAMILY,
 } from "../../../../components/sharecomponents/selectComponents";
-import { useNavigate } from "react-router-dom";
-import CloseButton from "../../../../components/common/CloseButton";
 import Header from "../../../../components/common/Header";
 
 // ============================================================
@@ -495,7 +493,6 @@ const createInitialRows = (): StockRow[] =>
 // ============================================================
 
 const StockTransferPage: React.FC = () => {
-  const navigate = useNavigate();
   // the Branch (From) box: only the branches the user has a right to, with the
   // user's default branch selected when the page opens
   const [branchOptions, setBranchOptions] = useState<SelectOption[]>([]);

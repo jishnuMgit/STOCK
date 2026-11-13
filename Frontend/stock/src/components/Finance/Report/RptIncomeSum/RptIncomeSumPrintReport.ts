@@ -179,7 +179,7 @@ const buildMonthHtml = (r: MonthReport) => `<!doctype html>
 <head>
 <meta charset="utf-8" />
 <title>Income Summary</title>
-<style>${reportPrintCss({ orientation: "landscape", marginLeft: "15mm", groupSelector: "td.group" })}
+<style>${reportPrintCss({ reportInfo: r.txtReportInfo, orientation: "landscape", marginLeft: "15mm", groupSelector: "td.group" })}
 </style>
 </head>
 <body>
@@ -199,7 +199,7 @@ export const buildHtml = (r: PrintReport) => {
 <head>
 <meta charset="utf-8" />
 <title>Income Summary</title>
-<style>${reportPrintCss({ orientation: "portrait", marginLeft: "15mm", groupSelector: "td.group" })}
+<style>${reportPrintCss({ reportInfo: r.txtReportInfo, orientation: "portrait", marginLeft: "15mm", groupSelector: "td.group" })}
 </style>
 </head>
 <body>

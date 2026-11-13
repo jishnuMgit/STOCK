@@ -6,8 +6,6 @@ import Select, {
   type StylesConfig,
 } from "react-select";
 import { toast } from "react-toastify";
-import { useNavigate } from "react-router-dom";
-import CloseButton from "../../../components/common/CloseButton";
 import { useEnterAsTab } from "../../../hooks/useEnterAsTab";
 import { useAltShortcuts } from "../../../hooks/useAltShortcuts";
 import { useButtonPermissions } from "../../../hooks/useButtonPermissions";
@@ -210,7 +208,6 @@ const snSelectStyles: StylesConfig<Option, false> = {
 const MENU_ID = "010202";
 
 const ItemGroupPage: React.FC = () => {
-  const navigate = useNavigate();
   const handleEnterAsTab = useEnterAsTab();
   const perms = useButtonPermissions(MENU_ID);
   // the common themed question window (the same as on the other screens)

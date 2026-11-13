@@ -3,7 +3,7 @@
 // Sl.#, Item ID, Item Name, Unit, Qty., Unit Cost, Total Cost - and a Total row).
 // Needs:  npm i exceljs
 import ExcelJS from "exceljs";
-import { REPORT_FONT_SIZE, applyReportFont, font, thin } from "../../../utils/reportStyle.js";
+import { applyReportFont, levelFont, setPrintedFooter, thin } from "../../../utils/reportStyle.js";
 
 import type { BeginningStockPrint } from "./beginningStockService.js";
 
@@ -65,29 +65,28 @@ export const buildBeginningStockWorkbook = async ({
   // ---- company / heading (rows 1-2) ----
   ws.mergeCells("A1:G1");
   ws.getCell("A1").value = header.fconame;
-  ws.getCell("A1").font = font(REPORT_FONT_SIZE.company, true);
+  ws.getCell("A1").font = levelFont("company", true, "inter");
   ws.getCell("A1").alignment = { horizontal: "center" };
 
   ws.mergeCells("A2:G2");
   ws.getCell("A2").value = heading;
-  ws.getCell("A2").font = font(REPORT_FONT_SIZE.heading);
+  ws.getCell("A2").font = levelFont("heading", false, "inter");
   ws.getCell("A2").alignment = { horizontal: "center" };
 
   // ---- branch and date (left) and report info (right) - row 3 ----
-  ws.mergeCells("A3:D3");
+  ws.mergeCells("A3:G3");
   ws.getCell("A3").value = `Branch : ${header.fbrname}      Date : ${dmmy(header.fdate)}`;
+  ws.getCell("A3").font = levelFont("body", false, "inter");
   ws.getCell("A3").alignment = { horizontal: "left" };
 
-  ws.mergeCells("E3:G3");
-  ws.getCell("E3").value = reportInfo;
-  ws.getCell("E3").font = font(REPORT_FONT_SIZE.small);
-  ws.getCell("E3").alignment = { horizontal: "right" };
+  // the user and the time: bottom right of every printed page
+  setPrintedFooter(ws, reportInfo, "inter");
 
   // ---- column labels (row 4) ----
   const head = ws.getRow(4);
   head.values = ["Sl.#", "Item ID", "Item Name", "Unit", "Qty.", "Unit Cost", "Total Cost"];
   head.eachCell((cell, col) => {
-    cell.font = { bold: true };
+    cell.font = levelFont("columnHead", true, "inter");
     cell.border = thin;
     cell.alignment = { horizontal: col >= 5 ? "right" : "left" };
   });
@@ -133,7 +132,7 @@ export const buildBeginningStockWorkbook = async ({
   });
 
   // the whole sheet in the report font (the table too, not only the title)
-  applyReportFont(ws);
+  applyReportFont(ws, "inter");
 
   return Buffer.from(await wb.xlsx.writeBuffer());
 };

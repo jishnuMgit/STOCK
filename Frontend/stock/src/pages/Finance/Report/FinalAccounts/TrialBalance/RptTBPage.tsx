@@ -11,6 +11,7 @@ import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
 import { DatePicker } from "@mui/x-date-pickers/DatePicker";
 import dayjs from "dayjs";
 import customParseFormat from "dayjs/plugin/customParseFormat";
+import { previewPrintedLine } from "../../../../../components/common/printHtml";
 import { buildTrialBalancePdf } from "./downloadTrialBalancePdf";
 import { saveFile } from "./saveFile";
 import {
@@ -671,7 +672,7 @@ const RptTBPage: React.FC = () => {
 
     setBusy(true);
     try {
-      const blob = asPdf ? buildTrialBalancePdf(report) : await fetchExcel(request);
+      const blob = asPdf ? await buildTrialBalancePdf(report) : await fetchExcel(request);
       if (!blob) return; // the error is already shown
 
       const saved = await saveFile(
@@ -694,17 +695,21 @@ const RptTBPage: React.FC = () => {
     }
   };
 
-  const previewHtml = useMemo(
-    () =>
-      preview
-        ? // 40px left / 20px right margin for the preview only
-          buildHtml(preview.report).replace(
-            "</head>",
-            "<style>body{padding-left:40px;padding-right:20px}</style></head>",
-          )
-        : "",
-    [preview],
-  );
+  const previewHtml = useMemo(() => {
+    if (!preview) return "";
+
+    const html = buildHtml(preview.report);
+    // the user and the time at the bottom right (a browser draws the page margin box only when it prints)
+    const printed = previewPrintedLine(html);
+
+    return html
+      .replace(
+        "</head>",
+        // 40px left / 20px right margin for the preview only
+        `<style>body{padding-left:40px;padding-right:20px}${printed.css}</style></head>`,
+      )
+      .replace("</body>", `${printed.line}</body>`);
+  }, [preview]);
 
   // ------------------------------------------------------------
   // EXCEL button: always the .xlsx, whatever "Report File" says
