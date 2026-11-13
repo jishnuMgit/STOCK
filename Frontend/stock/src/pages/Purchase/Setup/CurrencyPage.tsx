@@ -2,8 +2,6 @@ import React, { useEffect, useState } from "react";
 import { toast } from "react-toastify";
 import { useEnterAsTab } from "../../../hooks/useEnterAsTab";
 import { useButtonPermissions } from "../../../hooks/useButtonPermissions";
-import { useNavigate } from "react-router-dom";
-import CloseButton from "../../../components/common/CloseButton";
 import { useConfirmModal } from "../../../hooks/useConfirmModal";
 import { useDeleteToast } from "../../../hooks/useDeleteToast";
 import { useGridCellFocus } from "../../../hooks/useGridCellFocus";
@@ -58,7 +56,6 @@ type CurrencyPageProps = {
 };
 
 const CurrencyPage: React.FC<CurrencyPageProps> = ({ onClose }) => {
-  const navigate = useNavigate();
 
 console.log(onClose)
   const handleEnterAsTab = useEnterAsTab();

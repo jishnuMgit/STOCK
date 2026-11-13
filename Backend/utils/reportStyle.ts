@@ -97,7 +97,7 @@ const columnLetter = (n: number) => String.fromCharCode(64 + n);
 
 type TitleText = { txtCoName: string; txtHeading: string; txtReportInfo: string };
 
-// rows 1-3: the company, the heading, and the branch (left) with the report info (right)
+// rows 1-3: the company, the heading, and the branch; the report info goes to the page footer (bottom right)
 export const addReportTitle = (
   ws: ExcelJS.Worksheet,
   report: TitleText,
@@ -108,7 +108,6 @@ export const addReportTitle = (
 ) => {
   const size = lookSize(look);
   const last = columnLetter(columns);
-  const infoFrom = columnLetter(branchColumns + 1);
 
   ws.mergeCells(`A1:${last}1`);
   ws.getCell("A1").value = report.txtCoName;
@@ -120,15 +119,21 @@ export const addReportTitle = (
   ws.getCell("A2").font = font(size.heading, false, look);
   ws.getCell("A2").alignment = { horizontal: "center" };
 
-  ws.mergeCells(`A3:${columnLetter(branchColumns)}3`);
+  ws.mergeCells(`A3:${last}3`);
   ws.getCell("A3").value = branch;
   ws.getCell("A3").font = font(size.body, false, look);
   ws.getCell("A3").alignment = { horizontal: "left" };
 
-  ws.mergeCells(`${infoFrom}3:${last}3`);
-  ws.getCell(`${infoFrom}3`).value = report.txtReportInfo;
-  ws.getCell(`${infoFrom}3`).font = font(size.small, false, look);
-  ws.getCell(`${infoFrom}3`).alignment = { horizontal: "right" };
+  // the user and the time: bottom right of every printed page
+  setPrintedFooter(ws, report.txtReportInfo, look);
+};
+
+// The report info ("<user>  dd/mm/yyyy hh:mm") at the bottom right of every printed page: "Printed : ..." in the page footer
+export const setPrintedFooter = (ws: ExcelJS.Worksheet, info: string, look: ReportLook = "classic") => {
+  const fontName = lookFont(look);
+  const size = lookSize(look).small;
+  // in a header / footer text an "&" has to be written twice
+  ws.headerFooter.oddFooter = `&R&"${fontName},Regular"&${size} Printed : ${String(info).replace(/&/g, "&&")}`;
 };
 
 // Call it LAST, when the worksheet is full: every cell gets the report font, so the table is in the same font

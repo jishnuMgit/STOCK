@@ -6,6 +6,8 @@
 // Needs:  npm i jspdf jspdf-autotable
 import { jsPDF } from "jspdf";
 import autoTable, { type CellDef } from "jspdf-autotable";
+import { pdfHeadStyles, pdfTableStyles, registerReportPdfFont } from "../../../../../components/common/reportPdf";
+import { REPORT_STYLE } from "../../../../../components/common/reportStyle";
 import type { PrintReport, TBRow } from "./printTrialBalanceReport";
 
 // VB {0:#,#.00;(#,#.00);0.00}: 1,234.50 / (1,234.50) / 0.00
@@ -27,24 +29,23 @@ const LEVEL_COLOR: Record<number, RGB> = {
   3: [200, 0, 222],
 };
 const DETAIL_COLOR: RGB = [49, 65, 88];
-const BORDER: RGB = [176, 196, 222];
-const HEAD_FILL: RGB = [239, 243, 250];
 
 // VB column weights (same as the print page)
 // Movement is a little narrower than Debit / Credit; Account Name gets the rest
-const COL_WIDTHS = [0.0798, 0.3796, 0.1101, 0.1101, 0.1101, 0.0951, 0.1152];
+const COL_WIDTHS = [0.09, 0.3694, 0.1101, 0.1101, 0.1101, 0.0951, 0.1152];
 
 const PAGE_W = 297; // A4 landscape, mm
 const MARGIN = { top: 12, right: 10, bottom: 12, left: 15 };
-const TABLE_TOP = 38; // below company / heading / branch
+const TABLE_TOP = 38 + REPORT_STYLE.pdf.titleGap; // below company / heading / branch
 
-export const buildTrialBalancePdf = (report: PrintReport): Blob => {
+export const buildTrialBalancePdf = async (report: PrintReport): Promise<Blob> => {
   const doc = new jsPDF({ orientation: "landscape", unit: "mm", format: "a4" });
+  const look = await registerReportPdfFont(doc, "inter"); // the font and the sizes of the look
   const usable = PAGE_W - MARGIN.left - MARGIN.right;
 
   // width of one space, to keep the A/C group indent (autoTable trims spaces)
-  doc.setFont("times", "normal");
-  doc.setFontSize(9);
+  doc.setFont(look.font, "normal");
+  doc.setFontSize(look.size.pdfBody);
   const spaceW = doc.getTextWidth(" ");
   const PAD = 1.2;
 
@@ -80,7 +81,6 @@ export const buildTrialBalancePdf = (report: PrintReport): Blob => {
   const t = report.totals;
   const totalStyle = {
     fontStyle: "bold" as const,
-    fillColor: HEAD_FILL,
     textColor: [0, 0, 0] as RGB,
     halign: "right" as const,
   };
@@ -96,16 +96,16 @@ export const buildTrialBalancePdf = (report: PrintReport): Blob => {
   // company / heading / branch - drawn on every page
   const drawTitle = () => {
     doc.setTextColor(0, 0, 0);
-    doc.setFont("times", "bold");
-    doc.setFontSize(14);
+    const gap = REPORT_STYLE.pdf.titleGap; // between the company name and the heading
+    doc.setFont(look.font, "normal");
+    doc.setFontSize(look.size.company);
     doc.text(report.coName, PAGE_W / 2, MARGIN.top + 8, { align: "center" });
 
-    doc.setFont("times", "normal");
-    doc.setFontSize(12);
-    doc.text(report.heading, PAGE_W / 2, MARGIN.top + 15, { align: "center" });
+    doc.setFontSize(look.size.heading);
+    doc.text(report.heading, PAGE_W / 2, MARGIN.top + 15 + gap, { align: "center" });
 
-    doc.setFontSize(9);
-    doc.text(report.branch, MARGIN.left, MARGIN.top + 22);
+    doc.setFontSize(look.size.group);
+    doc.text(report.branch, MARGIN.left, MARGIN.top + 22 + gap);
   };
 
   autoTable(doc, {
@@ -120,22 +120,8 @@ export const buildTrialBalancePdf = (report: PrintReport): Blob => {
     tableWidth: usable,
     rowPageBreak: "avoid",
     showHead: "everyPage",
-    styles: {
-      font: "times",
-      fontSize: 9,
-      cellPadding: PAD,
-      lineColor: BORDER,
-      lineWidth: 0.2,
-      minCellHeight: 6,
-      valign: "middle",
-      overflow: "hidden",
-    },
-    headStyles: {
-      fillColor: HEAD_FILL,
-      textColor: [0, 0, 0],
-      fontStyle: "normal",
-      valign: "bottom",
-    },
+    styles: { ...pdfTableStyles(look), cellPadding: PAD, minCellHeight: 6, overflow: "hidden" as const },
+    headStyles: { ...pdfHeadStyles(look), valign: "bottom" as const },
     columnStyles: {
       0: { cellWidth: COL_WIDTHS[0] * usable },
       1: { cellWidth: COL_WIDTHS[1] * usable },
@@ -165,16 +151,16 @@ export const buildTrialBalancePdf = (report: PrintReport): Blob => {
 
   // page numbers need the final page count, so they are added at the end
   const pages = doc.getNumberOfPages();
-  doc.setFont("times", "normal");
-  doc.setFontSize(8);
+  doc.setFont(look.font, "normal");
+  doc.setFontSize(look.size.small);
   doc.setTextColor(0, 0, 0);
   for (let i = 1; i <= pages; i++) {
     doc.setPage(i);
     const h = doc.internal.pageSize.getHeight();
-    doc.text(`Page ${i} of ${pages}`, PAGE_W - MARGIN.right, MARGIN.top, {
+    doc.text(`Page ${i} / ${pages}`, PAGE_W - MARGIN.right, MARGIN.top, {
       align: "right",
     });
-    doc.text(report.reportInfo, PAGE_W - MARGIN.right, h - MARGIN.bottom + 6, {
+    doc.text(`Printed : ${report.reportInfo}`, PAGE_W - MARGIN.right, h - MARGIN.bottom + 6, {
       align: "right",
     });
   }

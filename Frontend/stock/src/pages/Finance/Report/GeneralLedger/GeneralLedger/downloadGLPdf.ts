@@ -6,6 +6,8 @@
 // Needs:  npm i jspdf jspdf-autotable
 import { jsPDF } from "jspdf";
 import autoTable, { type CellDef } from "jspdf-autotable";
+import { pdfHeadStyles, pdfTableStyles, registerReportPdfFont } from "../../../../../components/common/reportPdf";
+import { REPORT_STYLE } from "../../../../../components/common/reportStyle";
 import {
   amount,
   COL_LABELS,
@@ -14,16 +16,13 @@ import {
   type PrintReport,
 } from "./printGLReport";
 
-type RGB = [number, number, number];
-const BORDER: RGB = [199, 209, 228]; // #c7d1e4
-const HEAD_FILL: RGB = [239, 243, 250]; // #eff3fa
-
 const PAGE_W = 297; // A4 landscape, mm
 const MARGIN = { top: 12.7, right: 10, bottom: 14, left: 19 };
-const TABLE_TOP = 47; // below company / heading / branch / account
+const TABLE_TOP = 47 + REPORT_STYLE.pdf.titleGap; // below company / heading / branch / account
 
-export const buildGLPdf = (report: PrintReport): Blob => {
+export const buildGLPdf = async (report: PrintReport): Promise<Blob> => {
   const doc = new jsPDF({ orientation: "landscape", unit: "mm", format: "a4" });
+  const look = await registerReportPdfFont(doc, "inter"); // the font and the sizes of the look
   const usable = PAGE_W - MARGIN.left - MARGIN.right;
 
   const columnStyles: Record<number, { cellWidth: number; halign?: "right" }> =
@@ -35,7 +34,6 @@ export const buildGLPdf = (report: PrintReport): Blob => {
   const tot = {
     halign: "right" as const,
     fontStyle: "bold" as const,
-    fillColor: HEAD_FILL,
   };
 
   // the account being drawn: company / heading / branch / account are drawn on every page
@@ -43,27 +41,28 @@ export const buildGLPdf = (report: PrintReport): Blob => {
 
   const drawTitle = () => {
     doc.setTextColor(0, 0, 0);
-    doc.setFont("helvetica", "bold");
-    doc.setFontSize(14);
+    const gap = REPORT_STYLE.pdf.titleGap; // between the company name and the heading
+    doc.setFont(look.font, "normal");
+    doc.setFontSize(look.size.company);
     doc.text(report.coName, PAGE_W / 2, MARGIN.top + 8, { align: "center" });
 
-    doc.setFont("helvetica", "normal");
-    doc.setFontSize(12);
-    doc.text(report.heading, PAGE_W / 2, MARGIN.top + 15, { align: "center" });
+    doc.setFontSize(look.size.heading);
+    doc.text(report.heading, PAGE_W / 2, MARGIN.top + 15 + gap, { align: "center" });
 
-    doc.setFontSize(8.5);
-    doc.text(report.branch, MARGIN.left, MARGIN.top + 22);
-    doc.text(report.reportInfo, PAGE_W - MARGIN.right, MARGIN.top + 22, {
-      align: "right",
-    });
+    doc.setFontSize(look.size.group);
+    doc.text(report.branch, MARGIN.left, MARGIN.top + 22 + gap);
 
-    doc.setFont("times", "normal");
-    doc.setFontSize(10.5);
     doc.text(
       `Account :   ${current.accountId}    ${current.accountName}`,
       MARGIN.left,
-      MARGIN.top + 29,
+      MARGIN.top + 29 + gap,
     );
+
+    // the user and the time: bottom right of every page
+    doc.setFontSize(look.size.small);
+    doc.text(`Printed : ${report.reportInfo}`, PAGE_W - MARGIN.right, doc.internal.pageSize.getHeight() - MARGIN.bottom + 6, {
+      align: "right",
+    });
   };
 
   // first page and last page of every account (for the page numbers)
@@ -104,22 +103,8 @@ export const buildGLPdf = (report: PrintReport): Blob => {
       tableWidth: usable,
       rowPageBreak: "avoid",
       showHead: "everyPage",
-      styles: {
-        font: "helvetica",
-        fontSize: 8,
-        cellPadding: 1.2,
-        lineColor: BORDER,
-        lineWidth: 0.2,
-        minCellHeight: 6,
-        valign: "middle",
-        overflow: "ellipsize",
-        textColor: [0, 0, 0],
-      },
-      headStyles: {
-        fillColor: HEAD_FILL,
-        textColor: [0, 0, 0],
-        fontStyle: "normal",
-      },
+      styles: { ...pdfTableStyles(look), minCellHeight: 6, overflow: "ellipsize" as const },
+      headStyles: pdfHeadStyles(look),
       columnStyles,
       head: [
         COL_LABELS.map((label, i) => ({
@@ -135,13 +120,13 @@ export const buildGLPdf = (report: PrintReport): Blob => {
   });
 
   // page numbers need the page count of each account, so they are added at the end
-  doc.setFont("helvetica", "normal");
-  doc.setFontSize(8);
+  doc.setFont(look.font, "normal");
+  doc.setFontSize(look.size.small);
   doc.setTextColor(0, 0, 0);
   for (const { start, end } of ranges) {
     for (let p = start; p <= end; p++) {
       doc.setPage(p);
-      doc.text(`Page ${p - start + 1} of ${end - start + 1}`, PAGE_W - MARGIN.right, MARGIN.top, {
+      doc.text(`Page ${p - start + 1} / ${end - start + 1}`, PAGE_W - MARGIN.right, MARGIN.top, {
         align: "right",
       });
     }

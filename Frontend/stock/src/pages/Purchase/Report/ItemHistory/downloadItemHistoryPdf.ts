@@ -131,9 +131,11 @@ export const buildItemHistoryPdf = async (report: PrintReport): Promise<Blob> =>
     doc.setFontSize(look.size.pdfBody);
     doc.text(report.branch, MARGIN.left, MARGIN.top + 22);
 
-    // the user and the time, on the right of the branch line
+    // the user and the time: bottom right of every page
     doc.setFontSize(look.size.small);
-    doc.text(report.reportInfo, PAGE_W - MARGIN.right, MARGIN.top + 22, { align: "right" });
+    doc.text(`Printed : ${report.reportInfo}`, PAGE_W - MARGIN.right, doc.internal.pageSize.getHeight() - MARGIN.bottom + 6, {
+      align: "right",
+    });
   };
 
   const columnStyles: Record<number, { cellWidth: number }> = {};
@@ -224,7 +226,7 @@ export const buildItemHistoryPdf = async (report: PrintReport): Promise<Blob> =>
   doc.setTextColor(0, 0, 0);
   for (let i = 1; i <= pages; i++) {
     doc.setPage(i);
-    doc.text(`Page ${i} of ${pages}`, PAGE_W - MARGIN.right, MARGIN.top, {
+    doc.text(`Page ${i} / ${pages}`, PAGE_W - MARGIN.right, MARGIN.top, {
       align: "right",
     });
   }

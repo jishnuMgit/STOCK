@@ -2,6 +2,7 @@
 // The General Ledger as an Excel file (same columns, account groups and totals
 // as the printed report). Needs:  npm i exceljs
 import ExcelJS from "exceljs";
+import { applyReportFont, levelFont, setPrintedFooter, thin } from "../../../../utils/reportStyle.js";
 import type { GLAccount } from "./RptGLService.js";
 
 export type GLReport = {
@@ -10,19 +11,6 @@ export type GLReport = {
   branch: string;
   reportInfo: string;
   accounts: GLAccount[];
-};
-
-const BORDER_COLOR = { argb: "FFC7D1E4" };
-const HEAD_FILL = {
-  type: "pattern" as const,
-  pattern: "solid" as const,
-  fgColor: { argb: "FFEFF3FA" },
-};
-const thin = {
-  top: { style: "thin" as const, color: BORDER_COLOR },
-  left: { style: "thin" as const, color: BORDER_COLOR },
-  bottom: { style: "thin" as const, color: BORDER_COLOR },
-  right: { style: "thin" as const, color: BORDER_COLOR },
 };
 
 const AMOUNT = "#,##0.00";
@@ -56,20 +44,20 @@ export const buildGLWorkbook = async (report: GLReport): Promise<Buffer> => {
   // ---- company / heading / branch (rows 1-3) ----
   ws.mergeCells(`A1:${LAST_COL}1`);
   ws.getCell("A1").value = report.coName;
-  ws.getCell("A1").font = { name: "Tahoma", size: 14, bold: true };
+  ws.getCell("A1").font = levelFont("company", false, "inter");
   ws.getCell("A1").alignment = { horizontal: "center" };
 
   ws.mergeCells(`A2:${LAST_COL}2`);
   ws.getCell("A2").value = report.heading;
-  ws.getCell("A2").font = { name: "Tahoma", size: 12 };
+  ws.getCell("A2").font = levelFont("heading", false, "inter");
   ws.getCell("A2").alignment = { horizontal: "center" };
 
-  ws.mergeCells("A3:E3");
+  ws.mergeCells(`A3:${LAST_COL}3`);
   ws.getCell("A3").value = report.branch;
-  ws.mergeCells(`F3:${LAST_COL}3`);
-  ws.getCell("F3").value = report.reportInfo;
-  ws.getCell("F3").font = { name: "Tahoma", size: 8.5 };
-  ws.getCell("F3").alignment = { horizontal: "right" };
+  ws.getCell("A3").font = levelFont("group", false, "inter");
+
+  // the user and the time: bottom right of every printed page
+  setPrintedFooter(ws, report.reportInfo, "inter");
 
   const labels = [
     "Date", "Br. ID", "Type", "Doc. No.", "Description",
@@ -88,14 +76,12 @@ export const buildGLWorkbook = async (report: GLReport): Promise<Buffer> => {
     // ---- account (VB group header) ----
     const accRow = ws.addRow([`Account :  ${acc.accountId}   ${acc.accountName}`]);
     ws.mergeCells(`A${accRow.number}:${LAST_COL}${accRow.number}`);
-    accRow.getCell(1).font = { bold: true, size: 10.5 };
-    accRow.getCell(1).fill = HEAD_FILL;
+    accRow.getCell(1).font = levelFont("group", true, "inter");
 
     // ---- column labels ----
     const head = ws.addRow(labels);
     head.eachCell((c, col) => {
-      c.font = { bold: true };
-      c.fill = HEAD_FILL;
+      c.font = levelFont("columnHead", true, "inter");
       c.border = thin;
       c.alignment = { horizontal: col >= 7 ? "right" : "left" };
     });
@@ -122,7 +108,6 @@ export const buildGLWorkbook = async (report: GLReport): Promise<Buffer> => {
     ]);
     total.eachCell({ includeEmpty: true }, (c, col) => {
       c.font = { bold: true };
-      c.fill = HEAD_FILL;
       c.border = thin;
       if (col === 6) c.alignment = { horizontal: "right" };
       if (col === 7 || col === 8) {
@@ -132,6 +117,9 @@ export const buildGLWorkbook = async (report: GLReport): Promise<Buffer> => {
       if (col === 9) c.alignment = { horizontal: "right" };
     });
   });
+
+  // the whole sheet in the report font (a cell keeps its own size and bold)
+  applyReportFont(ws, "inter");
 
   return Buffer.from(await wb.xlsx.writeBuffer());
 };

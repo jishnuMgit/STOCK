@@ -2,7 +2,7 @@
 // The Price List as an Excel file (same columns and groups as the printed
 // report). Needs:  npm i exceljs
 import ExcelJS from "exceljs";
-import { applyReportFont, levelFont } from "../../../utils/reportStyle.js";
+import { applyReportFont, levelFont, setPrintedFooter } from "../../../utils/reportStyle.js";
 import type { PriceGroup } from "./RptSalesPriceListService.js";
 
 export type PriceListReport = {
@@ -56,12 +56,9 @@ export const buildPriceListWorkbook = async (
   ws.getCell("A2").font = levelFont("heading", false, "inter");
   ws.getCell("A2").alignment = { horizontal: "center" };
 
-  ws.mergeCells("A3:B3");
+  ws.mergeCells("A3:E3");
   ws.getCell("A3").value = report.branch;
-  ws.mergeCells("C3:E3");
-  ws.getCell("C3").value = report.reportInfo;
-  ws.getCell("C3").font = levelFont("small", false, "inter");
-  ws.getCell("C3").alignment = { horizontal: "right" };
+  setPrintedFooter(ws, report.reportInfo, "inter"); // the user and the time: bottom right of every printed page
 
   // ---- column labels (row 4) ----
   const head = ws.getRow(4);

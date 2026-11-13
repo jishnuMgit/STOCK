@@ -6,7 +6,7 @@
 // buildHtml is used by the print preview; printSalesPriceListReport sends the
 // report to the printer (browser print dialog, hidden iframe - no pop-up).
 
-import { printHtmlDocument } from "../../../../components/common/printHtml";
+import { cssStr, printHtmlDocument } from "../../../../components/common/printHtml";
 import { reportLook } from "../../../../components/common/reportStyle";
 
 // the font and the sizes of the shared look (components/common/reportStyle.ts): the same in every report
@@ -30,7 +30,7 @@ export type PriceListReport = {
   coName: string;
   heading: string;
   branch: string;
-  reportInfo: string; // "<user>  dd/mm/yyyy hh:mm" - top right, on the branch line
+  reportInfo: string; // "<user>  dd/mm/yyyy hh:mm" - bottom right of every page, "Printed : ..."
   groups: PriceGroup[];
 };
 
@@ -77,7 +77,8 @@ export const buildHtml = (r: PriceListReport) => `<!doctype html>
   @page {
     size: A4 portrait;
     margin: 12mm 10mm 14mm 15mm;
-    @top-right    { content: "Page " counter(page) " of " counter(pages); font: ${LOOK.size.small}pt ${LOOK.css.family}; }
+    @top-right    { content: "Page " counter(page) " / " counter(pages); font: ${LOOK.size.small}pt ${LOOK.css.family}; }
+    @bottom-right { content: "Printed : ${cssStr(r.reportInfo)}"; font: ${LOOK.size.small}pt ${LOOK.css.family}; }
   }
   * { box-sizing: border-box; }
   body { margin: 0; font: ${LOOK.size.body}pt ${LOOK.css.family}; color: #000;
@@ -88,8 +89,6 @@ export const buildHtml = (r: PriceListReport) => `<!doctype html>
   .co   { font-size: ${LOOK.size.company}pt; text-align: center; height: 24px; }
   .head { font-size: ${LOOK.size.heading}pt; text-align: center; height: 24px; }
   .br   { font-size: ${LOOK.size.body}pt;  text-align: left;   height: 22px; }
-  .br div { display: flex; justify-content: space-between; gap: 16px; }
-  .br .info { font-size: ${LOOK.size.small}pt; }
   th { border: 1px solid #b0c4de; height: 24px;
        padding: 0 4px; font-size: ${LOOK.size.columnHead ?? LOOK.size.body}pt; font-weight: normal; text-align: left; }
   th.r { text-align: right; }
@@ -107,7 +106,7 @@ export const buildHtml = (r: PriceListReport) => `<!doctype html>
   <thead>
     <tr><td colspan="5" class="co"   style="border:0">${esc(r.coName)}</td></tr>
     <tr><td colspan="5" class="head" style="border:0">${esc(r.heading)}</td></tr>
-    <tr><td colspan="5" class="br"   style="border:0"><div><span>${esc(r.branch)}</span><span class="info">${esc(r.reportInfo)}</span></div></td></tr>
+    <tr><td colspan="5" class="br"   style="border:0">${esc(r.branch)}</td></tr>
     <tr>
       <th>Item ID</th><th>Item Name</th><th>Unit</th>
       <th class="r">Unit Cost</th><th class="r">Unit Price</th>
