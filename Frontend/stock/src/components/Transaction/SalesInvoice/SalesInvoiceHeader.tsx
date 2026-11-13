@@ -21,6 +21,7 @@ import type {
 import SelectDropdownIndicator from "../../common/SelectDropdownIndicator";
 import { useNavigate } from "react-router-dom";
 import CloseButton from "../../common/CloseButton";
+import Header from "../../common/Header";
 
 dayjs.extend(customParseFormat);
 
@@ -882,16 +883,7 @@ const SalesInvoiceHeader: React.FC<SalesInvoiceHeaderProps> = ({
           TITLE
       ====================================================== */}
 
-      <div className="flex h-9 items-center border-b border-slate-300 bg-[#a3dfc0] pr-2">
-        <span className="px-2 text-[17px] font-semibold text-slate-700">
-          Sales Invoice
-        </span>
-
-        {/* close button */}
-        <div className="ml-auto">
-          <CloseButton onClose={() => navigate("/")} />
-        </div>
-      </div>
+      <Header Name="Sales Invoice" />
 
       {/* ======================================================
           HEADER AREA

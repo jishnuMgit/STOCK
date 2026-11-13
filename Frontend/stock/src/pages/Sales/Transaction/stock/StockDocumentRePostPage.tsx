@@ -5,6 +5,7 @@ import { useButtonPermissions } from "../../../../hooks/useButtonPermissions";
 import { useEnterAsTab } from "../../../../hooks/useEnterAsTab";
 import { useGridCellFocus, selectOnFocus } from "../../../../hooks/useGridCellFocus";
 import { useInitialFocus } from "../../../../hooks/useInitialFocus";
+import Header from "../../../../components/common/Header";
 
 // dbo.tblmenu fmenuid of the Stock Document Re-Post page
 const MENU_ID = "020106";
@@ -253,21 +254,7 @@ const StockDocumentRePost: React.FC = () => {
             TITLE
         ==================================================== */}
 
-        <header
-          className="
-            flex
-            h-[36px]
-            items-center
-            justify-start
-            bg-[#9fdfbc]
-            pl-[12px]
-            text-[18px]
-            font-semibold
-            text-slate-700
-          "
-        >
-          {SCREEN_TITLE}
-        </header>
+        <Header Name="Stock Document Re-Post" />
 
         {/* ====================================================
             FORM

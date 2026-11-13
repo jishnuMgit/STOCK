@@ -31,6 +31,7 @@ import {
 import {
   AdapterDayjs,
 } from "@mui/x-date-pickers/AdapterDayjs";
+import Header from "../../common/Header";
 
 // ============================================================
 // TYPES
@@ -209,7 +210,7 @@ const BeginningBalanceHeader: React.FC<Props> = ({
         if (!response.ok || !result.success) {
           toast.error(
             result.message ||
-              "Failed to load the Branches",
+            "Failed to load the Branches",
           );
           return;
         }
@@ -301,27 +302,7 @@ const BeginningBalanceHeader: React.FC<Props> = ({
           TITLE
       ====================================================== */}
 
-      <div
-        className="
-          flex
-          h-9
-          items-center
-          border-b
-          border-slate-300
-          bg-[#a3dfc0]
-        "
-      >
-        <span
-          className="
-            px-4.5
-            text-[17px]
-            font-semibold
-            text-slate-700
-          "
-        >
-          Beginning Balance
-        </span>
-      </div>
+      <Header Name="Beginning Balance" />
 
       {/* ======================================================
           HEADER FORM
@@ -427,9 +408,9 @@ const BeginningBalanceHeader: React.FC<Props> = ({
                   value={
                     dtpDate
                       ? dayjs(
-                          dtpDate,
-                          "YYYY-MM-DD",
-                        )
+                        dtpDate,
+                        "YYYY-MM-DD",
+                      )
                       : null
                   }
 
@@ -494,119 +475,119 @@ const BeginningBalanceHeader: React.FC<Props> = ({
                     width: "140px",
 
                     "& .MuiPickersTextField-root":
-                      {
-                        width: "120px",
-                      },
+                    {
+                      width: "120px",
+                    },
 
                     "& .MuiPickersInputBase-root":
-                      {
-                        width: "140px",
-                        height: "30px",
-                        minHeight: "30px",
-                        boxSizing:
-                          "border-box",
-                        borderRadius: "4px",
-                        backgroundColor:
-                          "#ffffff",
-                        fontSize: "12px",
-                        padding: 0,
-                        overflow: "hidden",
-                      },
+                    {
+                      width: "140px",
+                      height: "30px",
+                      minHeight: "30px",
+                      boxSizing:
+                        "border-box",
+                      borderRadius: "4px",
+                      backgroundColor:
+                        "#ffffff",
+                      fontSize: "12px",
+                      padding: 0,
+                      overflow: "hidden",
+                    },
 
                     "& .MuiPickersInputBase-sectionsContainer":
-                      {
-                        paddingLeft:
-                          "10px !important",
+                    {
+                      paddingLeft:
+                        "10px !important",
 
-                        paddingRight:
-                          "0px !important",
+                      paddingRight:
+                        "0px !important",
 
-                        marginBottom:
-                          "-5px !important",
+                      marginBottom:
+                        "-5px !important",
 
-                        marginLeft:
-                          "0px !important",
+                      marginLeft:
+                        "0px !important",
 
-                        boxSizing:
-                          "border-box",
+                      boxSizing:
+                        "border-box",
 
-                        overflow:
-                          "hidden",
-                      },
+                      overflow:
+                        "hidden",
+                    },
 
                     "& .MuiPickersInputBase-sectionContent":
-                      {
-                        fontSize: "12px",
-                        color: "#344054",
-                      },
+                    {
+                      fontSize: "12px",
+                      color: "#344054",
+                    },
 
                     "& .MuiPickersInputBase-input":
-                      {
-                        minWidth: 0,
-                        width: "100%",
-                        fontSize: "12px",
-                        padding: 0,
-                        height: "30px",
-                        boxSizing:
-                          "border-box",
-                      },
+                    {
+                      minWidth: 0,
+                      width: "100%",
+                      fontSize: "12px",
+                      padding: 0,
+                      height: "30px",
+                      boxSizing:
+                        "border-box",
+                    },
 
                     "& .MuiInputAdornment-root":
-                      {
-                        margin: 0,
-                        padding: 0,
-                      },
+                    {
+                      margin: 0,
+                      padding: 0,
+                    },
 
                     "& .MuiIconButton-root":
-                      {
-                        width: "24px",
-                        height: "24px",
-                        padding: "2px",
-                        margin: 0,
-                      },
+                    {
+                      width: "24px",
+                      height: "24px",
+                      padding: "2px",
+                      margin: 0,
+                    },
 
                     "& .MuiSvgIcon-root":
-                      {
-                        fontSize: "16px",
-                      },
+                    {
+                      fontSize: "16px",
+                    },
 
                     "& .MuiPickersOutlinedInput-notchedOutline":
-                      {
-                        borderColor:
-                          "#B7C7D7 !important",
-                      },
+                    {
+                      borderColor:
+                        "#B7C7D7 !important",
+                    },
 
                     "& .MuiPickersInputBase-root:hover .MuiPickersOutlinedInput-notchedOutline":
-                      {
-                        borderColor:
-                          "#B7C7D7 !important",
-                      },
+                    {
+                      borderColor:
+                        "#B7C7D7 !important",
+                    },
 
                     "& .MuiPickersInputBase-root.Mui-focused .MuiPickersOutlinedInput-notchedOutline":
-                      {
-                        borderColor:
-                          "#B7C7D7 !important",
+                    {
+                      borderColor:
+                        "#B7C7D7 !important",
 
-                        borderWidth: "1px",
-                      },
+                      borderWidth: "1px",
+                    },
 
                     "& .MuiPickersInputBase-root.Mui-error .MuiPickersOutlinedInput-notchedOutline":
-                      {
-                        borderColor:
-                          "#B7C7D7 !important",
-                      },
+                    {
+                      borderColor:
+                        "#B7C7D7 !important",
+                    },
 
                     "& .MuiPickersInputBase-root.Mui-error:hover .MuiPickersOutlinedInput-notchedOutline":
-                      {
-                        borderColor:
-                          "#B7C7D7 !important",
-                      },
+                    {
+                      borderColor:
+                        "#B7C7D7 !important",
+                    },
 
                     "& .MuiPickersInputBase-root.Mui-error.Mui-focused .MuiPickersOutlinedInput-notchedOutline":
-                      {
-                        borderColor:
-                          "#B7C7D7 !important",
-                      },
+                    {
+                      borderColor:
+                        "#B7C7D7 !important",
+                    },
                   }}
                 />
 

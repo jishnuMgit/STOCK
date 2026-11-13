@@ -11,6 +11,7 @@ import {
 import type { PairOption } from "../../../components/PairSelect/pairSelectParts";
 import { useAltShortcuts } from "../../../hooks/useAltShortcuts";
 import { useButtonPermissions } from "../../../hooks/useButtonPermissions";
+import Header from "../../../components/common/Header";
 
 // ============================================================
 // SALES PRICE LIST (the old frmEditPriceList)
@@ -442,11 +443,7 @@ const SalesPriceListPage: React.FC<SalesPriceListPageProps> = ({ onClose }) => {
     <div className="flex min-h-full w-full items-start justify-center bg-white px-4 py-4">
       <div className="min-h-fit w-250 min-w-250 max-w-full bg-white p-0">
         <main className="w-full overflow-hidden border border-[#d5dce2] bg-white">
-          <header className="flex h-7.5 items-center justify-start bg-[#9fdfbc]">
-            <h1 className="m-0 ml-3.5 text-[17px] font-semibold text-[#24364d]">
-              Sales Price List
-            </h1>
-          </header>
+          <Header Name="Sales Price List" />
 
           <section className="flex flex-col gap-3 px-3.5 pb-6 pt-3">
             <SalesPriceListHeader
