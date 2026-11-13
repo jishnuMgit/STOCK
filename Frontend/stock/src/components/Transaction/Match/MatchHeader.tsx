@@ -15,6 +15,8 @@ import Select, {
 } from "react-select";
 
 import SelectDropdownIndicator from "../../common/SelectDropdownIndicator";
+import CloseButton from "../../common/CloseButton";
+import { useNavigate } from "react-router-dom";
 
 dayjs.extend(customParseFormat);
 
@@ -354,13 +356,19 @@ const MatchHeader: React.FC<MatchHeaderProps> = ({
     }
   };
 
+  const navigate = useNavigate();
+
   return (
     <>
       {/* TITLE */}
-      <div className="flex h-7.5 items-center border-b border-slate-300 bg-[#a3dfc0]">
+      <div className="flex h-9 items-center border-b border-slate-300 bg-[#a3dfc0] pr-2">
         <span className="px-3 text-[17px] font-semibold text-slate-700">
           Match
         </span>
+
+        <div className="ml-auto">
+          <CloseButton onClose={() => navigate("/")} />
+        </div>
       </div>
 
       {/* HEADER */}
@@ -702,9 +710,9 @@ const MatchHeader: React.FC<MatchHeaderProps> = ({
                 },
 
                 "& .MuiPickersInputBase-root:hover .MuiPickersOutlinedInput-notchedOutline":
-                  {
-                    borderColor: "#B7C7D7 !important",
-                  },
+                {
+                  borderColor: "#B7C7D7 !important",
+                },
 
                 /* focus look = .input-style:focus (green border + 1px ring) */
                 "& .MuiPickersInputBase-root.Mui-focused": {
@@ -712,25 +720,25 @@ const MatchHeader: React.FC<MatchHeaderProps> = ({
                 },
 
                 "& .MuiPickersInputBase-root.Mui-focused .MuiPickersOutlinedInput-notchedOutline":
-                  {
-                    borderColor: "#9fdfbc !important",
-                    borderWidth: "1px",
-                  },
+                {
+                  borderColor: "#9fdfbc !important",
+                  borderWidth: "1px",
+                },
 
                 "& .MuiPickersInputBase-root.Mui-error .MuiPickersOutlinedInput-notchedOutline":
-                  {
-                    borderColor: "#B7C7D7 !important",
-                  },
+                {
+                  borderColor: "#B7C7D7 !important",
+                },
 
                 "& .MuiPickersInputBase-root.Mui-error:hover .MuiPickersOutlinedInput-notchedOutline":
-                  {
-                    borderColor: "#B7C7D7 !important",
-                  },
+                {
+                  borderColor: "#B7C7D7 !important",
+                },
 
                 "& .MuiPickersInputBase-root.Mui-error.Mui-focused .MuiPickersOutlinedInput-notchedOutline":
-                  {
-                    borderColor: "#9fdfbc !important",
-                  },
+                {
+                  borderColor: "#9fdfbc !important",
+                },
               }}
             />
           </LocalizationProvider>

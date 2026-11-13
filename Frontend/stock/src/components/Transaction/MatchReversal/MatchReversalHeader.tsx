@@ -9,6 +9,8 @@ import Select, {
   type StylesConfig,
 } from "react-select";
 import SelectDropdownIndicator from "../../common/SelectDropdownIndicator";
+import { useNavigate } from "react-router-dom";
+import CloseButton from "../../common/CloseButton";
 
 export interface MatchHeaderProps {
   branch: string;
@@ -331,13 +333,19 @@ const MatchReversalHeader: React.FC<MatchHeaderProps> = ({
     }
   };
 
+  const navigate = useNavigate();
+
   return (
     <>
       {/* TITLE */}
-      <div className="flex h-7.5 items-center border-b border-slate-300 bg-[#a3dfc0]">
+      <div className="flex h-9 items-center border-b border-slate-300 bg-[#a3dfc0] pr-2">
         <span className="px-3 text-[17px] font-semibold text-slate-700">
           Match Reversal
         </span>
+
+        <div className="ml-auto">
+          <CloseButton onClose={() => navigate("/")} />
+        </div>
       </div>
 
       {/* HEADER */}

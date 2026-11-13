@@ -12,6 +12,8 @@ import {
   divisionListStyles,
   documentNoListStyles,
 } from "./CustomSelectStyle";
+import { useNavigate } from "react-router-dom";
+import CloseButton from "../../common/CloseButton";
 
 dayjs.extend(customParseFormat);
 
@@ -107,6 +109,9 @@ const MatchEnquiryHeader: React.FC<MatchHeaderProps> = ({
 
   renderSelect,
 }) => {
+
+  const navigate = useNavigate();
+
   return (
     <>
       {/* TITLE */}
@@ -118,6 +123,7 @@ const MatchEnquiryHeader: React.FC<MatchHeaderProps> = ({
           border-b
           border-slate-300
           bg-[#a3dfc0]
+          pr-2
         "
       >
         <span
@@ -130,6 +136,10 @@ const MatchEnquiryHeader: React.FC<MatchHeaderProps> = ({
         >
           Match Enquiry
         </span>
+
+        <div className="ml-auto">
+          <CloseButton onClose={() => navigate("/")} />
+        </div>
       </div>
 
       {/* HEADER */}
@@ -234,9 +244,9 @@ const MatchEnquiryHeader: React.FC<MatchHeaderProps> = ({
             )}
           </div>
 
-        
 
-         
+
+
 
           {/* MATCH AMOUNT */}
         </div>
