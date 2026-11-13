@@ -10,6 +10,49 @@ import { isNodeActive } from "../../utils/menuActive";
 import type { MenuNode } from "../../types/menu";
 import { clearStoredUser } from "../../utils/authStorage";
 
+const API_URL = import.meta.env.VITE_API_URL;
+
+type CompanyRow = Record<string, unknown>;
+
+// ADJUST these keys to match one object of the companies list
+const ID_KEYS = ["fCoID"];
+const SHORT_NAME_KEYS = ["fCoName_Short"];
+
+const firstValue = (row: CompanyRow, keys: string[]) => {
+  for (const key of keys) {
+    const v = row[key];
+    if (v !== undefined && v !== null && String(v).trim() !== "") {
+      return String(v).trim();
+    }
+  }
+  return "";
+};
+
+// tries both mount paths, since the route may be /company or /companies
+const COMPANY_LIST_PATHS = ["/companies"];
+
+const loadCompanyShortName = async (coId: string): Promise<string> => {
+  for (const path of COMPANY_LIST_PATHS) {
+    try {
+      const res = await fetch(`${API_URL}${path}`, {
+        credentials: "include",
+      });
+      if (!res.ok) continue;
+
+      const result = await res.json();
+      if (!result.success || !Array.isArray(result.companies)) continue;
+
+      const match = (result.companies as CompanyRow[]).find(
+        (c) => firstValue(c, ID_KEYS) === coId,
+      );
+      if (match) return firstValue(match, SHORT_NAME_KEYS);
+    } catch {
+      // try the next path
+    }
+  }
+  return "";
+};
+
 interface TopNavProps {
   menuTree: MenuNode[];
   loading: boolean;
@@ -34,6 +77,30 @@ export default function TopNav({
 
   const [openId, setOpenId] = useState<string | null>(null);
   const navRef = useRef<HTMLElement>(null);
+
+  const coId = localStorage.getItem("PstrCoID") ?? "";
+  const year = localStorage.getItem("PstrYear") ?? "";
+  const [coShortName, setCoShortName] = useState(
+    localStorage.getItem("coShortName") ?? "",
+  );
+
+  /* load the company short name once (cached so it doesn't flicker) */
+  useEffect(() => {
+    if (!coId) return;
+    let cancelled = false;
+
+    (async () => {
+      const name = await loadCompanyShortName(coId);
+      if (!cancelled && name) {
+        setCoShortName(name);
+        localStorage.setItem("coShortName", name);
+      }
+    })();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [coId]);
 
   /* close dropdown on outside click / Escape */
   useEffect(() => {
@@ -82,6 +149,7 @@ export default function TopNav({
     }
 
     clearStoredUser();
+    localStorage.removeItem("coShortName");
     toast.success("Logged out successfully");
     navigate("/login", { replace: true });
   };
@@ -107,9 +175,8 @@ export default function TopNav({
               <div className="top-nav-item" key={node.fmenuid}>
                 <button
                   type="button"
-                  className={`top-nav-button ${
-                    isActive ? "top-nav-button-active" : ""
-                  } ${isOpen ? "top-nav-button-open" : ""}`}
+                  className={`top-nav-button ${isActive ? "top-nav-button-active" : ""
+                    } ${isOpen ? "top-nav-button-open" : ""}`}
                   onClick={() => handleTopClick(node)}
                   aria-haspopup={hasChildren || undefined}
                   aria-expanded={hasChildren ? isOpen : undefined}
@@ -131,15 +198,13 @@ export default function TopNav({
                           type="button"
                           role="menuitem"
                           key={child.fmenuid}
-                          className={`top-nav-dropdown-item ${
-                            isNodeActive(child, activePath)
-                              ? "top-nav-dropdown-item-active"
-                              : ""
-                          } ${
-                            activeSectionId === child.fmenuid
+                          className={`top-nav-dropdown-item ${isNodeActive(child, activePath)
+                            ? "top-nav-dropdown-item-active"
+                            : ""
+                            } ${activeSectionId === child.fmenuid
                               ? "top-nav-dropdown-item-selected"
                               : ""
-                          } ${disabled ? "top-nav-dropdown-item-disabled" : ""}`}
+                            } ${disabled ? "top-nav-dropdown-item-disabled" : ""}`}
                           onClick={() => handleChildClick(node, child)}
                         >
                           <span>{child.fmenucaption}</span>
@@ -159,12 +224,10 @@ export default function TopNav({
           {(userId ?? "AD").slice(0, 2).toUpperCase()}
         </div>
         <div className="user-info">
-          <div className="user-name">{userId ?? "Administrator"}</div>
-          <div className="user-role">
-            {localStorage.getItem("userType") === "AU"
-              ? "Administrator"
-              : "System User"}
+          <div className="user-company">
+            {(coShortName || coId) + (year ? `-${year}` : "")}
           </div>
+          <div className="user-name">{userId ?? "Administrator"}</div>
         </div>
         <button
           type="button"
