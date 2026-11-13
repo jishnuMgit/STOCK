@@ -344,33 +344,55 @@ const CustomerPage: React.FC<CustomerPageProps> = ({
     }
 
     // numbers only + max length (also catches old records with bad data)
-    const numericChecks: [string, string, number][] = [
-      ["Building No", txtBuildingNo, 4],
-      ["Postal Code", txtPostalCode, 5],
-      ["Additional No", txtAdditionalNo, 4],
-      ["CR No", txtCRNo, 20],
-      ["VAT No", txtVATNo, 15],
-      ["Building No (AR)", txtBuildingNo_AR, 4],
-      ["Postal Code (AR)", txtPostalCode_AR, 5],
-      ["Additional No (AR)", txtAdditionalNo_AR, 4],
-      ["CR No (AR)", txtCRNo_AR, 20],
-      ["VAT No (AR)", txtVATNo_AR, 15],
-    ];
+    const isB2B = lkpBusinessType === "B2B";
 
-    for (const [label, value, max] of numericChecks) {
-      if (value && !/^\d+$/.test(value)) {
-        toast.warning(`${label} must contain numbers only`);
+    if (isB2B) {
+      const requiredFields: [string, string][] = [
+        ["Legal Name", txtLegalName],
+        ["Building No", txtBuildingNo],
+        ["Street Name", txtStreetName],
+        ["District", txtDistrict],
+        ["City", txtCity],
+        ["Country", lkpCountry],
+        ["Postal Code", txtPostalCode],
+        ["VAT No", txtVATNo],
+      ];
+
+      const missing = requiredFields.find(([, value]) => !value.trim());
+      if (missing) {
+        toast.warning(`${missing[0]} is required`);
         return;
       }
-      if (value.length > max) {
-        toast.warning(`${label} cannot be longer than ${max} digits`);
+
+      // numbers only + max length (B2B only)
+      const numericChecks: [string, string, number][] = [
+        ["Building No", txtBuildingNo, 4],
+        ["Postal Code", txtPostalCode, 5],
+        ["Additional No", txtAdditionalNo, 4],
+        ["CR No", txtCRNo, 20],
+        ["VAT No", txtVATNo, 15],
+        ["Building No (AR)", txtBuildingNo_AR, 4],
+        ["Postal Code (AR)", txtPostalCode_AR, 5],
+        ["Additional No (AR)", txtAdditionalNo_AR, 4],
+        ["CR No (AR)", txtCRNo_AR, 20],
+        ["VAT No (AR)", txtVATNo_AR, 15],
+      ];
+
+      for (const [label, value, max] of numericChecks) {
+        if (value && !/^\d+$/.test(value)) {
+          toast.warning(`${label} must contain numbers only`);
+          return;
+        }
+        if (value.length > max) {
+          toast.warning(`${label} cannot be longer than ${max} digits`);
+          return;
+        }
+      }
+
+      if (txtEMail && !/^\S+@\S+\.\S+$/.test(txtEMail)) {
+        toast.warning("Invalid e-mail");
         return;
       }
-    }
-
-    if (txtEMail && !/^\S+@\S+\.\S+$/.test(txtEMail)) {
-      toast.warning("Invalid e-mail");
-      return;
     }
 
     const payload: CustomerDetail = {
@@ -612,6 +634,7 @@ const CustomerPage: React.FC<CustomerPageProps> = ({
       <fieldset disabled={isDelete} className="m-0 min-w-0 border-0 p-0">
         {/* MIDDLE */}
         <CustomerMiddle
+        isB2B={lkpBusinessType === "B2B"}
           countries={countries}
           staffs={staffs}
           branchOptions={branchOptions}

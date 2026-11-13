@@ -7,6 +7,9 @@ import type { Country, Staff } from "../../../hooks/useCustomer";
 ========================================================= */
 
 interface CustomerMiddleProps {
+  /** B2B: address / legal / VAT fields are required. B2C: only Customer Name. */
+  isB2B: boolean;
+
   /* Lookup lists (from DB) */
   countries: Country[];
   staffs: Staff[];
@@ -233,11 +236,17 @@ const digitsOnly = (value: string, max: number) =>
     .replace(/\D/g, "")
     .slice(0, max);
 
+// red asterisk, shown only when the field is required
+const Star = ({ show }: { show: boolean }) =>
+  show ? <span className="text-red-500">*</span> : null;
+
 /* =========================================================
    COMPONENT
 ========================================================= */
 
 const CustomerMiddle: React.FC<CustomerMiddleProps> = ({
+  isB2B,
+
   /* =======================================================
      LOOKUP LISTS
   ======================================================= */
@@ -343,7 +352,7 @@ const CustomerMiddle: React.FC<CustomerMiddleProps> = ({
 
   txtPhone,
   setTxtPhone,
-  
+
   branchOptions,
   lkpBranch,
   setLkpBranch,
@@ -403,7 +412,7 @@ const CustomerMiddle: React.FC<CustomerMiddleProps> = ({
 
         <div className="min-w-0 -mt-2">
           <div className="space-y-1.5">
-            {/* CUSTOMER NAME */}
+            {/* CUSTOMER NAME (always required) */}
 
             <div className="grid grid-cols-[92px_minmax(0,1fr)] items-center gap-2">
               <label
@@ -435,7 +444,7 @@ const CustomerMiddle: React.FC<CustomerMiddleProps> = ({
                 className="text-[11px] text-slate-600"
               >
                 Legal Name
-                <span className="text-red-500">*</span>
+                <Star show={isB2B} />
               </label>
 
               <input
@@ -447,7 +456,7 @@ const CustomerMiddle: React.FC<CustomerMiddleProps> = ({
                 onChange={(e) => setTxtLegalName(e.target.value)}
                 className={inputClass}
                 style={{ width: "100%" }}
-                required
+                required={isB2B}
               />
             </div>
 
@@ -459,7 +468,7 @@ const CustomerMiddle: React.FC<CustomerMiddleProps> = ({
                 className="text-[11px] text-slate-600"
               >
                 Building No.
-                <span className="text-red-500">*</span>
+                <Star show={isB2B} />
               </label>
 
               <input
@@ -473,7 +482,7 @@ const CustomerMiddle: React.FC<CustomerMiddleProps> = ({
                   setTxtBuildingNo(digitsOnly(e.target.value, 4))
                 }
                 className={inputClass}
-                required
+                required={isB2B}
               />
             </div>
 
@@ -485,7 +494,7 @@ const CustomerMiddle: React.FC<CustomerMiddleProps> = ({
                 className="text-[11px] text-slate-600"
               >
                 Street Name
-                <span className="text-red-500">*</span>
+                <Star show={isB2B} />
               </label>
 
               <input
@@ -496,7 +505,7 @@ const CustomerMiddle: React.FC<CustomerMiddleProps> = ({
                 onChange={(e) => setTxtStreetName(e.target.value)}
                 maxLength={40}
                 className={inputClass}
-                required
+                required={isB2B}
               />
             </div>
 
@@ -508,7 +517,7 @@ const CustomerMiddle: React.FC<CustomerMiddleProps> = ({
                 className="text-[11px] text-slate-600"
               >
                 District
-                <span className="text-red-500">*</span>
+                <Star show={isB2B} />
               </label>
 
               <input
@@ -519,7 +528,7 @@ const CustomerMiddle: React.FC<CustomerMiddleProps> = ({
                 onChange={(e) => setTxtDistrict(e.target.value)}
                 maxLength={40}
                 className={inputClass}
-                required
+                required={isB2B}
               />
             </div>
 
@@ -528,7 +537,7 @@ const CustomerMiddle: React.FC<CustomerMiddleProps> = ({
             <div className="grid grid-cols-[92px_minmax(0,1fr)] items-center gap-2">
               <label htmlFor="txtCity" className="text-[11px] text-slate-600">
                 City
-                <span className="text-red-500">*</span>
+                <Star show={isB2B} />
               </label>
 
               <input
@@ -539,7 +548,7 @@ const CustomerMiddle: React.FC<CustomerMiddleProps> = ({
                 value={txtCity}
                 onChange={(e) => setTxtCity(e.target.value)}
                 className={inputClass}
-                required
+                required={isB2B}
               />
             </div>
 
@@ -551,7 +560,7 @@ const CustomerMiddle: React.FC<CustomerMiddleProps> = ({
                 className="text-[11px] text-slate-600"
               >
                 Country
-                <span className="text-red-500">*</span>
+                <Star show={isB2B} />
               </label>
 
               <div className="w-[80%]">
@@ -585,7 +594,7 @@ const CustomerMiddle: React.FC<CustomerMiddleProps> = ({
                 className="text-[11px] text-slate-600"
               >
                 Postal Code
-                <span className="text-red-500">*</span>
+                <Star show={isB2B} />
               </label>
 
               <input
@@ -599,7 +608,7 @@ const CustomerMiddle: React.FC<CustomerMiddleProps> = ({
                   setTxtPostalCode(digitsOnly(e.target.value, 5))
                 }
                 className={inputClass}
-                required
+                required={isB2B}
               />
             </div>
 
@@ -651,7 +660,7 @@ const CustomerMiddle: React.FC<CustomerMiddleProps> = ({
             <div className="grid grid-cols-[92px_minmax(0,1fr)] items-center gap-2">
               <label htmlFor="txtVATNo" className="text-[11px] text-slate-600">
                 VAT No.
-                <span className="text-red-500">*</span>
+                <Star show={isB2B} />
               </label>
 
               <input
@@ -663,7 +672,7 @@ const CustomerMiddle: React.FC<CustomerMiddleProps> = ({
                 value={txtVATNo}
                 onChange={(e) => setTxtVATNo(digitsOnly(e.target.value, 15))}
                 className={inputClass}
-                required
+                required={isB2B}
               />
             </div>
           </div>
@@ -683,7 +692,7 @@ const CustomerMiddle: React.FC<CustomerMiddleProps> = ({
                 className="text-left text-[11px] text-slate-600"
               >
                 اسم العميل
-                <span className="text-red-500">*</span>
+                <Star show={isB2B} />
               </label>
 
               <input
@@ -696,7 +705,7 @@ const CustomerMiddle: React.FC<CustomerMiddleProps> = ({
                 dir="rtl"
                 className={arabicInputClass}
                 style={{ width: "100%" }}
-                required
+                required={isB2B}
               />
             </div>
 
@@ -708,7 +717,7 @@ const CustomerMiddle: React.FC<CustomerMiddleProps> = ({
                 className="text-left text-[11px] text-slate-600"
               >
                 الاسم القانوني
-                <span className="text-red-500">*</span>
+                <Star show={isB2B} />
               </label>
 
               <input
@@ -721,7 +730,7 @@ const CustomerMiddle: React.FC<CustomerMiddleProps> = ({
                 dir="rtl"
                 className={arabicInputClass}
                 style={{ width: "100%" }}
-                required
+                required={isB2B}
               />
             </div>
 
@@ -733,7 +742,7 @@ const CustomerMiddle: React.FC<CustomerMiddleProps> = ({
                 className="text-left text-[11px] text-slate-600"
               >
                 رقم المبنى
-                <span className="text-red-500">*</span>
+                <Star show={isB2B} />
               </label>
 
               <input
@@ -748,7 +757,7 @@ const CustomerMiddle: React.FC<CustomerMiddleProps> = ({
                 maxLength={4}
                 dir="rtl"
                 className={arabicInputClass}
-                required
+                required={isB2B}
               />
             </div>
 
@@ -760,7 +769,7 @@ const CustomerMiddle: React.FC<CustomerMiddleProps> = ({
                 className="text-left text-[11px] text-slate-600"
               >
                 اسم الشارع
-                <span className="text-red-500">*</span>
+                <Star show={isB2B} />
               </label>
 
               <input
@@ -772,7 +781,7 @@ const CustomerMiddle: React.FC<CustomerMiddleProps> = ({
                 maxLength={40}
                 dir="rtl"
                 className={arabicInputClass}
-                required
+                required={isB2B}
               />
             </div>
 
@@ -784,7 +793,7 @@ const CustomerMiddle: React.FC<CustomerMiddleProps> = ({
                 className="text-left text-[11px] text-slate-600"
               >
                 الحي
-                <span className="text-red-500">*</span>
+                <Star show={isB2B} />
               </label>
 
               <input
@@ -796,7 +805,7 @@ const CustomerMiddle: React.FC<CustomerMiddleProps> = ({
                 maxLength={40}
                 dir="rtl"
                 className={arabicInputClass}
-                required
+                required={isB2B}
               />
             </div>
 
@@ -808,7 +817,7 @@ const CustomerMiddle: React.FC<CustomerMiddleProps> = ({
                 className="text-left text-[11px] text-slate-600"
               >
                 المدينة
-                <span className="text-red-500">*</span>
+                <Star show={isB2B} />
               </label>
 
               <input
@@ -820,7 +829,7 @@ const CustomerMiddle: React.FC<CustomerMiddleProps> = ({
                 maxLength={40}
                 dir="rtl"
                 className={arabicInputClass}
-                required
+                required={isB2B}
               />
             </div>
 
@@ -832,7 +841,7 @@ const CustomerMiddle: React.FC<CustomerMiddleProps> = ({
                 className="text-left text-[11px] text-slate-600"
               >
                 الدولة
-                <span className="text-red-500">*</span>
+                <Star show={isB2B} />
               </label>
 
               <div className="w-[80%]">
@@ -904,7 +913,7 @@ const CustomerMiddle: React.FC<CustomerMiddleProps> = ({
                 className="text-left text-[11px] text-slate-600"
               >
                 الرمز البريدي
-                <span className="text-red-500">*</span>
+                <Star show={isB2B} />
               </label>
 
               <input
@@ -916,7 +925,7 @@ const CustomerMiddle: React.FC<CustomerMiddleProps> = ({
                 maxLength={7}
                 dir="rtl"
                 className={arabicInputClass}
-                required
+                required={isB2B}
               />
             </div>
 
@@ -972,7 +981,7 @@ const CustomerMiddle: React.FC<CustomerMiddleProps> = ({
                 className="text-left text-[11px] text-slate-600"
               >
                 الرقم الضريبي
-                <span className="text-red-500">*</span>
+                <Star show={isB2B} />
               </label>
 
               <input
@@ -984,7 +993,7 @@ const CustomerMiddle: React.FC<CustomerMiddleProps> = ({
                 onChange={(e) => setTxtVATNo_AR(e.target.value)}
                 dir="rtl"
                 className={arabicInputClass}
-                required
+                required={isB2B}
               />
             </div>
           </div>
@@ -1072,7 +1081,7 @@ const CustomerMiddle: React.FC<CustomerMiddleProps> = ({
             STAFF
           ================================================= */}
 
-          <div className="grid grid-cols-[25px_minmax(0,1fr)] items-center gap-2">
+          <div className="grid grid-cols-[40px_minmax(0,1fr)] items-center gap-2">
             <label htmlFor="lkpStaff" className="text-[11px] text-slate-600">
               Staff
             </label>
@@ -1142,7 +1151,7 @@ const CustomerMiddle: React.FC<CustomerMiddleProps> = ({
 
           {/* =================================================
             E-MAIL - FULL WIDTH
-          ==== ============================================= */}
+          ================================================= */}
 
           <div className="lg:col-span-4 grid grid-cols-[92px_minmax(0,1fr)] items-center gap-2">
             <label htmlFor="txtEMail" className="text-[11px] text-slate-600">

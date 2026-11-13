@@ -187,6 +187,7 @@ const SP_PARAM_MAP: Record<string, string> = {
   interCompany: "p_blnintercompany",
   serviceChargePolicy: "p_blnservicechargepolicy",
   haveDivision: "p_blnhavedivision",
+  staffId: "p_strstaffid",
   shortName: "p_strshortname",
   csAccountCategoryId: "p_strcsaccountcategoryid",
   status: "p_blnstatus",
