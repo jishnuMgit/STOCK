@@ -15,7 +15,7 @@ import customParseFormat from "dayjs/plugin/customParseFormat";
 
 dayjs.extend(customParseFormat);
 
-const DATE_FORMAT = "DD/MM/YYYY";
+const DATE_FORMAT = "DD-MM-YYYY";
 
 const branchOptions: TableSelectOption[] = [
   { value: "JD", label: "JEDDAH", id: "JD" },
@@ -29,7 +29,7 @@ const FormField: React.FC<{
   label: string;
   children: React.ReactNode;
 }> = ({ label, children }) => (
-  <div className="grid grid-cols-[85px_110px] items-center gap-1">
+  <div className="grid grid-cols-[85px_140px] items-center gap-1">
     <label className="text-right whitespace-nowrap text-[12px] text-[#172b43]">
       {label} :
     </label>
@@ -125,14 +125,11 @@ const DepreciationGenerationPage: React.FC = () => {
     });
   };
 
-  const handleClose = () => {
-    window.history.back();
-  };
-
+ 
   return (
     <div className="min-h-full w-full bg-white p-1 mt-3 sm:p-2">
       <div className="">
-<main className="mx-auto w-full max-w-100 overflow-hidden rounded-[3px] border border-[#91a7bb] bg-white shadow-sm">
+<main className="mx-auto w-full max-w-130 overflow-hidden rounded-[3px] border border-[#91a7bb] bg-white shadow-sm">
 
         <Header Name="Depreciation Generation" />
 
@@ -155,8 +152,8 @@ const DepreciationGenerationPage: React.FC = () => {
                     align: "right",
                   },
                 ]}
-                width="220px"
-                menuWidth="280px"
+                width="250px"
+                menuWidth="320px"
                 placeholder="Select Branch"
               />
             </FormField>
@@ -187,12 +184,7 @@ const DepreciationGenerationPage: React.FC = () => {
               Generate Depr.
             </ActionButton>
 
-            <ActionButton
-              onClick={handleClose}
-              className="w-20"
-            >
-              Close
-            </ActionButton>
+         
           </div>
 
         </section>

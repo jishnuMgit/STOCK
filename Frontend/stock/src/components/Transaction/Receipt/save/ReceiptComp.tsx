@@ -3174,6 +3174,8 @@ interface ReceiptActionsProps {
 
   saveLabel?: string;
 
+  isPosted?: boolean;
+
   preventSearchNavigation?: boolean;
 }
 
@@ -3191,6 +3193,7 @@ export const ReceiptActions = forwardRef<
       onPost,
       onAttach,
       saveLabel = "Save",
+      isPosted = false,
       preventSearchNavigation = false,
     },
     ref,
@@ -3298,6 +3301,9 @@ export const ReceiptActions = forwardRef<
      btn-style
     `;
 
+    const disabledPostedActionClass =
+      "disabled:cursor-not-allowed disabled:opacity-50";
+
     const textClass = `
       bg-gradient-to-b
       from-[#145c34]
@@ -3324,7 +3330,10 @@ export const ReceiptActions = forwardRef<
         <button
           ref={saveRef}
           type="button"
-          className={buttonClass}
+          className={`${buttonClass} ${
+            isPosted && saveLabel === "Modify" ? disabledPostedActionClass : ""
+          }`}
+          disabled={isPosted && saveLabel === "Modify"}
           onFocus={() => handleFocus(0)}
           onKeyDown={handleKeyDown}
           onClick={onSave}
@@ -3362,7 +3371,10 @@ export const ReceiptActions = forwardRef<
         <button
           ref={deleteRef}
           type="button"
-          className={buttonClass}
+          className={`${buttonClass} ${
+            isPosted ? disabledPostedActionClass : ""
+          }`}
+          disabled={isPosted}
           onFocus={() => handleFocus(2)}
           onKeyDown={handleKeyDown}
           onClick={onDelete}
@@ -3389,7 +3401,10 @@ export const ReceiptActions = forwardRef<
         <button
           ref={postRef}
           type="button"
-          className={buttonClass}
+          className={`${buttonClass} ${
+            isPosted ? disabledPostedActionClass : ""
+          }`}
+          disabled={isPosted}
           onFocus={() => handleFocus(4)}
           onKeyDown={handleKeyDown}
           onClick={onPost}

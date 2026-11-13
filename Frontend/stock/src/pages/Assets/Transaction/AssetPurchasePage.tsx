@@ -6,6 +6,10 @@ import { DatePicker } from "@mui/x-date-pickers/DatePicker";
 import dayjs from "dayjs";
 import customParseFormat from "dayjs/plugin/customParseFormat";
 import selectComponents from "../../../components/common/selectComponents";
+import CustomLinkedPairSelect, {
+  type PairSelectOption,
+} from "../../../components/common/CustomLinkedPairSelect";
+import Header from "../../../components/sharecomponents/Header";
 
 dayjs.extend(customParseFormat);
 
@@ -15,7 +19,7 @@ dayjs.extend(customParseFormat);
    2. Shared building blocks
    3. Parts : AssetDetails (item, branch, purchase, supplier, JV, account),
               DepreciationGroup (the bordered box), AssetOwner (user, status,
-              note), AssetActions (Save, Find, Delete, Cancel, Close)
+              note), AssetActions (Save, Find, Delete, Cancel)
    4. AssetPurchasePage : owns the state and renders the parts
    ===================================================================== */
 
@@ -42,6 +46,15 @@ const accountNameOptions: Option[] = [
   { value: "1201002", label: "OFFICE EQUIPMENT" },
   { value: "1202001", label: "MOTOR VEHICLES" },
 ];
+const assetAccountPairOptions: PairSelectOption[] = accountIdOptions.map(
+  (option) => ({
+    value: option.value,
+    firstLabel: option.label,
+    secondLabel:
+      accountNameOptions.find((name) => name.value === option.value)?.label ??
+      "",
+  }),
+);
 const statusOptions = toOptions(["Active", "Inactive", "Disposed"]);
 
 type FormState = {
@@ -376,7 +389,7 @@ const AssetDetails: React.FC<PartProps> = ({ form, set }) => (
       labelClassName={LL}
       className="lg:col-span-6"
     >
-      <div className="w-[200px] max-w-full">
+      <div className="w-50 max-w-full">
         <input
           id="txtItemId"
           value={form.itemId}
@@ -406,7 +419,7 @@ const AssetDetails: React.FC<PartProps> = ({ form, set }) => (
       labelClassName={LL}
       className="lg:col-span-6"
     >
-      <div className="w-[108px]">
+      <div className="w-35">
         <input
           id="txtQty"
           inputMode="numeric"
@@ -442,7 +455,7 @@ const AssetDetails: React.FC<PartProps> = ({ form, set }) => (
       labelClassName={LL}
       className="lg:col-span-6"
     >
-      <div className="w-[108px]">
+      <div className="w-35">
         <AppDatePicker
           id="dtpPurchaseDate"
           label="Purchase Date"
@@ -457,7 +470,7 @@ const AssetDetails: React.FC<PartProps> = ({ form, set }) => (
       labelClassName={LR}
       className="lg:col-span-6"
     >
-      <div className="w-[108px]">
+      <div className="w-35">
         <AmountInput
           id="txtPurchasePrice"
           value={form.purchasePrice}
@@ -501,7 +514,7 @@ const AssetDetails: React.FC<PartProps> = ({ form, set }) => (
       labelClassName={LL}
       className="lg:col-span-6"
     >
-      <div className="w-[200px] max-w-full">
+      <div className="w-50 max-w-full">
         <input
           id="txtPurchaseJvNo"
           value={form.purchaseJvNo}
@@ -511,7 +524,7 @@ const AssetDetails: React.FC<PartProps> = ({ form, set }) => (
       </div>
     </Field>
     <Field label="JV Date :" labelClassName={LR} className="lg:col-span-6">
-      <div className="w-[108px]">
+      <div className="w-35">
         <AppDatePicker
           id="dtpJvDate"
           label="JV Date"
@@ -525,21 +538,20 @@ const AssetDetails: React.FC<PartProps> = ({ form, set }) => (
     <Field
       label="Asset Account :"
       labelClassName={LL}
-      className="sm:col-span-2 lg:col-span-10"
-    >
-      <Combo
-        id="lkpAssetAccountID"
-        options={accountIdOptions}
-        value={form.assetAccount}
-        onChange={(v) => set("assetAccount", v)}
-        className="w-[120px] shrink-0"
-      />
-      <Combo
-        id="lkpAssetAccountName"
-        options={accountNameOptions}
-        value={form.assetAccount}
-        onChange={(v) => set("assetAccount", v)}
-        className="flex-1 max-w-[560px]"
+      className="sm:col-span-2 lg:col-span-10" >
+      <CustomLinkedPairSelect
+        firstInputId="lkpAssetAccountID"
+        secondInputId="lkpAssetAccountName"
+        options={assetAccountPairOptions}
+        firstValue={form.assetAccount}
+        secondValue={form.assetAccount}
+        firstHeader="Asset Account ID"
+        secondHeader="Asset Account Name"
+        firstWidth={140}
+        secondWidth={570}
+        gap={4}
+        headerFontSize="12px"
+        onChange={(option) => set("assetAccount", option?.value ?? null)}
       />
     </Field>
   </div>
@@ -562,7 +574,7 @@ const DepreciationGroup: React.FC<
         labelClassName={LL}
         className="lg:col-span-6"
       >
-        <div className="w-[108px]">
+        <div className="w-35">
           <AmountInput
             id="txtDeprPercent"
             value={form.deprPercent}
@@ -575,7 +587,7 @@ const DepreciationGroup: React.FC<
         labelClassName={LR}
         className="lg:col-span-6"
       >
-        <div className="w-[108px]">
+        <div className="w-35">
           <ReadOnlyBox
             id="txtMonthlyDepreciation"
             value={formatAmount(monthly)}
@@ -590,7 +602,7 @@ const DepreciationGroup: React.FC<
         labelClassName={LL}
         className="lg:col-span-6"
       >
-        <div className="w-[108px]">
+        <div className="w-35">
           <AppDatePicker
             id="dtpDeprStartDate"
             label="Depreciation start date"
@@ -604,7 +616,7 @@ const DepreciationGroup: React.FC<
         labelClassName={LR}
         className="lg:col-span-6"
       >
-        <div className="w-[108px]">
+        <div className="w-35">
           <ReadOnlyBox id="txtDeprCalcUptoDate" value={form.deprCalcUptoDate} />
         </div>
       </Field>
@@ -615,7 +627,7 @@ const DepreciationGroup: React.FC<
         labelClassName={LL}
         className="lg:col-span-6"
       >
-        <div className="w-[108px]">
+        <div className="w-35">
           <ReadOnlyBox
             id="txtDeprBegBalance"
             value={formatAmount(toNumber(form.deprBegBalance))}
@@ -629,7 +641,7 @@ const DepreciationGroup: React.FC<
         labelClassName={LR}
         className="lg:col-span-6"
       >
-        <div className="w-27">
+        <div className="w-35">
           <AmountInput
             id="txtAccumulatedDepreciation"
             value={form.accumulatedDepreciation}
@@ -645,7 +657,7 @@ const DepreciationGroup: React.FC<
         labelClassName={LL}
         className="lg:col-span-6"
       >
-        <div className="w-27">
+        <div className="w-35">
           <AmountInput
             id="txtSalvageValue"
             value={form.salvageValue}
@@ -654,7 +666,7 @@ const DepreciationGroup: React.FC<
         </div>
       </Field>
       <Field label="Book Value :" labelClassName={LR} className="lg:col-span-6">
-        <div className="w-27">
+        <div className="w-35">
           <ReadOnlyBox
             id="txtBookValue"
             value={formatAmount(bookValue)}
@@ -688,7 +700,7 @@ const AssetOwner: React.FC<PartProps> = ({ form, set }) => (
         options={statusOptions}
         value={form.status}
         onChange={(v) => set("status", v)}
-        className="w-27 shrink-0"
+        className="w-35 shrink-0"
       />
     </Field>
 
@@ -712,17 +724,16 @@ const AssetOwner: React.FC<PartProps> = ({ form, set }) => (
 const AssetActions: React.FC<{
   canDelete: boolean;
   onSave: () => void;
-  onFind: () => void;
+  onSearch: () => void;
   onDelete: () => void;
   onCancel: () => void;
-  onClose: () => void;
-}> = ({ canDelete, onSave, onFind, onDelete, onCancel, onClose }) => (
+}> = ({ canDelete, onSave, onSearch, onDelete, onCancel }) => (
   <div className="flex justify-center gap-3">
     <button id="btnSave" type="button" onClick={onSave} className="btn-style">
       <u>S</u>ave
     </button>
-    <button id="btnFind" type="button" onClick={onFind} className="btn-style">
-      <u>F</u>ind
+    <button id="btnSearch" type="button" onClick={onSearch} className="btn-style">
+      <u>S</u>earch
     </button>
     <button
       id="btnDelete"
@@ -741,9 +752,7 @@ const AssetActions: React.FC<{
     >
       <u>C</u>ancel
     </button>
-    <button id="btnClose" type="button" onClick={onClose} className="btn-style">
-      Cl<u>o</u>se
-    </button>
+  
   </div>
 );
 
@@ -752,16 +761,14 @@ const AssetActions: React.FC<{
    --------------------------------------------------------------------- */
 type AssetPurchasePageProps = {
   title?: string;
-  onFind?: (itemId: string) => void;
+  onSearch?: (itemId: string) => void;
   onDelete?: (itemId: string) => void;
-  onClose?: () => void;
 };
 
 const AssetPurchasePage: React.FC<AssetPurchasePageProps> = ({
   title = "Asset Purchase",
-  onFind,
+  onSearch,
   onDelete,
-  onClose,
 }) => {
   const [form, setForm] = useState<FormState>(initialForm);
   const [isSaved, setIsSaved] = useState(false); // true once the asset exists
@@ -803,9 +810,9 @@ const AssetPurchasePage: React.FC<AssetPurchasePageProps> = ({
     setIsSaved(true);
   };
 
-  const handleFind = () => {
-    console.log("find asset", form.itemId);
-    onFind?.(form.itemId);
+  const handleSearch = () => {
+    console.log("Search asset", form.itemId);
+    onSearch?.(form.itemId);
   };
 
   const handleDelete = () => {
@@ -814,20 +821,13 @@ const AssetPurchasePage: React.FC<AssetPurchasePageProps> = ({
     reset();
   };
 
-  const handleClose = () => {
-    reset();
-    onClose?.();
-  };
+ 
 
   return (
     <div className="flex min-h-full w-full items-start justify-center bg-white px-4 py-4">
       <div className="min-h-fit w-275 max-w-full bg-white p-0">
         <main className="w-full overflow-hidden border border-gray-400 bg-white">
-          <header className="flex h-7.5 items-center justify-start bg-[#9fdfbc]">
-            <h1 className="m-0 ml-3.5 text-[17px] font-semibold text-[#24364d]">
-              {title}
-            </h1>
-          </header>
+          <Header Name={title}/>
 
           <section className="flex flex-col gap-3 px-3.5 pb-6 pt-3">
             <AssetDetails form={form} set={set} />
@@ -851,10 +851,9 @@ const AssetPurchasePage: React.FC<AssetPurchasePageProps> = ({
               <AssetActions
                 canDelete={isSaved}
                 onSave={handleSave}
-                onFind={handleFind}
+                onSearch={handleSearch}
                 onDelete={handleDelete}
                 onCancel={reset}
-                onClose={handleClose}
               />
             </div>
           </section>

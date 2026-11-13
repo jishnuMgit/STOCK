@@ -114,31 +114,25 @@ export interface ReceiptPrintRow {
   accountId: string;
   accountName: string;
   description: string;
-  creditAmt: number;
-  amount:number;
+  amount: number;
 }
 
 export interface ReceiptPrintData {
   coId: string;
-fop :string;
-  docType: string;
+  lkpType: string;
   heading: string;
-total: number;
-  brId: string;
+  branchId: string;
   docNo: string;
   date: string;
-preparedBy: string;
+  fop: string;
   receivedFrom: string;
   reference: string;
-  cbAccountName: string;
   note: string;
-preparedDate: string;
   currency: string;
-  totCreditAmt: number;
+  total: number;
   amountInWords: string;
-
-  CUserID: string;
-  CUserDate: string;
+  preparedBy: string;
+  preparedDate: string;
 
   company: {
     nameEn: string;

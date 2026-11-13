@@ -6,6 +6,7 @@ import { DatePicker } from "@mui/x-date-pickers/DatePicker";
 import dayjs from "dayjs";
 import customParseFormat from "dayjs/plugin/customParseFormat";
 import selectComponents from "../../../components/common/selectComponents";
+import Header from "../../../components/sharecomponents/Header";
 
 dayjs.extend(customParseFormat);
 
@@ -385,7 +386,7 @@ const ItemRows: React.FC<{
       options={itemIdOptions}
       value={itemId}
       onChange={onItemChange}
-      className="w-[110px] shrink-0"
+      className="w-27.5 shrink-0"
     />
     <Combo
       id="lkpItemName"
@@ -401,7 +402,7 @@ const ItemRows: React.FC<{
 const AssetInfoRows: React.FC<{ asset: Asset | null }> = ({ asset }) => (
   <>
     <Field label="Qty :" labelClassName={LL} className="lg:col-span-6">
-      <div className="w-[108px]">
+      <div className="w-35">
         <ReadOnlyBox
           id="txtQty"
           value={asset ? formatAmount(asset.qty) : ""}
@@ -414,7 +415,7 @@ const AssetInfoRows: React.FC<{ asset: Asset | null }> = ({ asset }) => (
     </Field>
 
     <Field label="Purchase Price :" labelClassName={LL} className="lg:col-span-6">
-      <div className="w-[108px]">
+      <div className="w-35">
         <ReadOnlyBox
           id="txtPurchasePrice"
           value={asset ? formatAmount(asset.purchasePrice) : ""}
@@ -422,8 +423,8 @@ const AssetInfoRows: React.FC<{ asset: Asset | null }> = ({ asset }) => (
         />
       </div>
     </Field>
-    <Field label="Purchase Date :" labelClassName={LR} className="lg:col-span-6 lg:ml-44">
-      <div className="w-[108px]">
+    <Field label="Purchase Date :" labelClassName={LR} className="lg:col-span-6 lg:ml-35">
+      <div className="w-35">
         <ReadOnlyBox id="txtPurchaseDate" value={asset?.purchaseDate ?? ""} />
       </div>
     </Field>
@@ -433,14 +434,14 @@ const AssetInfoRows: React.FC<{ asset: Asset | null }> = ({ asset }) => (
       labelClassName={LL}
       className="sm:col-span-2 lg:col-span-12"
     >
-      <div className="w-[110px] shrink-0">
+      <div className="w-27.5 shrink-0">
         <ReadOnlyBox id="txtAssetAccountID" value={asset?.accountId ?? ""} />
       </div>
       <ReadOnlyBox id="txtAssetAccountName" value={asset?.accountName ?? ""} />
     </Field>
 
     <Field label="Depreciation % :" labelClassName={LL} className="lg:col-span-6">
-      <div className="w-[108px]">
+      <div className="w-35">
         <ReadOnlyBox
           id="txtDeprPercent"
           value={asset ? formatAmount(asset.deprPercent) : ""}
@@ -451,9 +452,9 @@ const AssetInfoRows: React.FC<{ asset: Asset | null }> = ({ asset }) => (
     <Field
       label="Depr. calc. upto date :"
       labelClassName={LR}
-      className="lg:col-span-6 lg:ml-44"
+      className="lg:col-span-6 lg:ml-35"
     >
-      <div className="w-[108px]">
+      <div className="w-35">
         <ReadOnlyBox
           id="txtDeprCalcUptoDate"
           value={asset?.deprCalcUptoDate ?? ""}
@@ -466,7 +467,7 @@ const AssetInfoRows: React.FC<{ asset: Asset | null }> = ({ asset }) => (
       labelClassName={LL}
       className="lg:col-span-6"
     >
-      <div className="w-[108px]">
+      <div className="w-35">
         <ReadOnlyBox
           id="txtMonthlyDeprAmt"
           value={asset ? formatAmount(asset.monthlyDepr) : ""}
@@ -477,9 +478,9 @@ const AssetInfoRows: React.FC<{ asset: Asset | null }> = ({ asset }) => (
     <Field
       label="Accumulated Depr. :"
       labelClassName={LR}
-      className="lg:col-span-6 lg:ml-44"
+      className="lg:col-span-6 lg:ml-35"
     >
-      <div className="w-[108px]">
+      <div className="w-35">
         <ReadOnlyBox
           id="txtAccumulatedDepr"
           value={asset ? formatAmount(asset.accumulatedDepr) : ""}
@@ -490,7 +491,7 @@ const AssetInfoRows: React.FC<{ asset: Asset | null }> = ({ asset }) => (
 
     {/* Book Value shares its row with Status (first field of DisposalRows) */}
     <Field label="Book Value :" labelClassName={LL} className="lg:col-span-6">
-      <div className="w-[108px]">
+      <div className="w-35">
         <ReadOnlyBox
           id="txtBookValue"
           value={asset ? formatAmount(asset.bookValue) : ""}
@@ -507,13 +508,13 @@ const DisposalRows: React.FC<{ form: FormState; set: SetField }> = ({
   set,
 }) => (
   <>
-    <Field label="Status :" labelClassName={LR} className="lg:col-span-6 lg:ml-43">
+    <Field label="Status :" labelClassName={LR} className="lg:col-span-6 lg:ml-35">
       <Combo
         id="lkpStatus"
         options={statusOptions}
         value={form.status}
         onChange={(v) => set("status", v)}
-        className="w-[108px] shrink-0"
+        className="w-35 shrink-0"
       />
     </Field>
 
@@ -523,7 +524,7 @@ const DisposalRows: React.FC<{ form: FormState; set: SetField }> = ({
       labelClassName={LL}
       className="lg:col-span-6"
     >
-      <div className="w-[108px]">
+      <div className="w-35">
         <input
           id="txtDisposalJvNo"
           value={form.disposalJvNo}
@@ -532,8 +533,8 @@ const DisposalRows: React.FC<{ form: FormState; set: SetField }> = ({
         />
       </div>
     </Field>
-    <Field label="JV Date :" labelClassName={LR} className="lg:col-span-6 lg:ml-43">
-      <div className="w-[108px]">
+    <Field label="JV Date :" labelClassName={LR} className="lg:col-span-6 lg:ml-35">
+      <div className="w-35">
         <AppDatePicker
           id="dtpJvDate"
           label="JV Date"
@@ -549,7 +550,7 @@ const DisposalRows: React.FC<{ form: FormState; set: SetField }> = ({
       labelClassName={LL}
       className="lg:col-span-6"
     >
-      <div className="w-[108px]">
+      <div className="w-35">
         <input
           id="txtDisposalPrice"
           inputMode="decimal"
@@ -563,8 +564,8 @@ const DisposalRows: React.FC<{ form: FormState; set: SetField }> = ({
         />
       </div>
     </Field>
-    <Field label="Disposal Date :" labelClassName={LR} className="lg:col-span-6 lg:ml-43">
-      <div className="w-[108px]">
+    <Field label="Disposal Date :" labelClassName={LR} className="lg:col-span-6 lg:ml-35">
+      <div className="w-35">
         <AppDatePicker
           id="dtpDisposalDate"
           label="Disposal Date"
@@ -575,7 +576,7 @@ const DisposalRows: React.FC<{ form: FormState; set: SetField }> = ({
     </Field>
 
     <Field label="Depr. End Date :" labelClassName={LL} className="lg:col-span-6">
-      <div className="w-[108px]">
+      <div className="w-35">
         <AppDatePicker
           id="dtpDeprEndDate"
           label="Depr. End Date"
@@ -607,10 +608,9 @@ const DisposalActions: React.FC<{
   canRevert: boolean;
   onSave: () => void;
   onRevert: () => void;
-  onFind: () => void;
+  onSearch: () => void;
   onCancel: () => void;
-  onClose: () => void;
-}> = ({ canRevert, onSave, onRevert, onFind, onCancel, onClose }) => (
+}> = ({ canRevert, onSave, onRevert, onSearch, onCancel }) => (
   <div className="flex flex-wrap justify-center gap-3">
     <button id="btnSave" type="button" onClick={onSave} className="btn-style">
       <u>S</u>ave
@@ -624,8 +624,8 @@ const DisposalActions: React.FC<{
     >
       <u>R</u>evert Disposal
     </button>
-    <button id="btnFind" type="button" onClick={onFind} className="btn-style">
-      <u>F</u>ind
+    <button id="btnSearch" type="button" onClick={onSearch} className="btn-style">
+      <u>S</u>earch
     </button>
     <button
       id="btnCancel"
@@ -635,9 +635,7 @@ const DisposalActions: React.FC<{
     >
       <u>C</u>ancel
     </button>
-    <button id="btnClose" type="button" onClick={onClose} className="btn-style">
-      Cl<u>o</u>se
-    </button>
+    
   </div>
 );
 
@@ -646,14 +644,13 @@ const DisposalActions: React.FC<{
    --------------------------------------------------------------------- */
 type AssetDisposalPageProps = {
   title?: string;
-  onFind?: () => void;
-  onClose?: () => void;
+  onSearch?: () => void;
 };
 
 const AssetDisposalPage: React.FC<AssetDisposalPageProps> = ({
   title = "Asset Disposal",
-  onFind,
-  onClose,
+  onSearch,
+
 }) => {
   const [form, setForm] = useState<FormState>(initialForm);
   const [asset, setAsset] = useState<Asset | null>(null);
@@ -725,25 +722,18 @@ const AssetDisposalPage: React.FC<AssetDisposalPageProps> = ({
     setIsDisposed(false);
   };
 
-  const handleFind = () => {
+  const handleSearch = () => {
     console.log("find disposed asset");
-    onFind?.();
+    onSearch?.();
   };
 
-  const handleClose = () => {
-    reset();
-    onClose?.();
-  };
+ 
 
   return (
     <div className="flex min-h-full w-full items-start justify-center bg-white px-4 py-4">
       <div className="min-h-fit w-225 max-w-full bg-white p-0">
         <main className="w-full overflow-hidden border border-gray-400 bg-white">
-          <header className="flex h-7.5 items-center justify-start bg-[#9fdfbc]">
-            <h1 className="m-0 ml-3.5 text-[17px] font-semibold text-[#24364d]">
-              {title}
-            </h1>
-          </header>
+         <Header Name={title}/>
 
           <section className="flex flex-col gap-4 px-3.5 pb-3 pt-3">
             <div className={groupGrid}>
@@ -763,9 +753,9 @@ const AssetDisposalPage: React.FC<AssetDisposalPageProps> = ({
                 canRevert={isDisposed}
                 onSave={handleSave}
                 onRevert={handleRevert}
-                onFind={handleFind}
+                onSearch={handleSearch}
                 onCancel={reset}
-                onClose={handleClose}
+                
               />
             </div>
           </section>
