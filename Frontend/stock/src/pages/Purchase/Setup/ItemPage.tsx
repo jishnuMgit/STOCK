@@ -1,6 +1,8 @@
 import React, { useEffect, useState } from "react";
 import Select, { type StylesConfig } from "react-select";
 import { toast } from "react-toastify";
+import { useNavigate } from "react-router-dom";
+import CloseButton from "../../../components/common/CloseButton";
 import { X } from "lucide-react";
 import { useEnterAsTab } from "../../../hooks/useEnterAsTab";
 import { useGridCellFocus } from "../../../hooks/useGridCellFocus";
@@ -89,6 +91,7 @@ const supplierNameComponents = makePairComponents(
 const MENU_ID = "010201";
 
   const ItemPage: React.FC = () => {
+  const navigate = useNavigate();
   const handleEnterAsTab = useEnterAsTab();
   const perms = useButtonPermissions(MENU_ID);
   // the cell the cursor is in is outlined (a typed-in box has its text selected)
@@ -1215,10 +1218,15 @@ const MENU_ID = "010201";
               HEADER
           =================================================== */}
 
-          <div className="flex h-7 w-full items-center bg-[#a7dfc0]">
+          <div className="flex h-7 w-full items-center bg-[#a7dfc0] pr-2">
             <h1 className="ml-1.25 text-[17px] font-semibold text-[#374151]">
               Item
             </h1>
+
+            {/* close button (the common one, as on the Sales Invoice) */}
+            <div className="ml-auto">
+              <CloseButton onClose={() => navigate("/")} />
+            </div>
           </div>
 
           {/* ===================================================

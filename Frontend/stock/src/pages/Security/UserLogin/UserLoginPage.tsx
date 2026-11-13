@@ -1,4 +1,6 @@
 import React, { useEffect, useRef, useState } from "react";
+import { useNavigate } from "react-router-dom";
+import CloseButton from "../../../components/common/CloseButton";
 import Select, { type SingleValue } from "react-select";
 import { toast } from "react-toastify";
 import { useEnterAsTab } from "../../../hooks/useEnterAsTab";
@@ -193,6 +195,7 @@ const selectStyles = {
 const MENU_ID = "9301";
 
 const UserLogin: React.FC = () => {
+  const navigate = useNavigate();
   const perms = useButtonPermissions(MENU_ID);
   const [users, setUsers] = useState<UserRow[]>([]);
   const [userTypeOptions, setUserTypeOptions] = useState<SelectOption[]>([]);
@@ -616,10 +619,15 @@ const UserLogin: React.FC = () => {
             TITLE
         ============================================================ */}
 
-        <div className="flex h-[28px] w-full items-center bg-[#a7dfc0]">
+        <div className="flex h-[28px] w-full items-center bg-[#a7dfc0] pr-2">
           <h1 className="ml-[5px] text-[17px] font-semibold text-[#374151]">
             User Login
           </h1>
+
+          {/* close button (the common one, as on the Sales Invoice) */}
+          <div className="ml-auto">
+            <CloseButton onClose={() => navigate("/")} />
+          </div>
         </div>
 
         {/* ============================================================

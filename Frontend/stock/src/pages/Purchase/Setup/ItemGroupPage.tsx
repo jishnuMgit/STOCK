@@ -6,6 +6,8 @@ import Select, {
   type StylesConfig,
 } from "react-select";
 import { toast } from "react-toastify";
+import { useNavigate } from "react-router-dom";
+import CloseButton from "../../../components/common/CloseButton";
 import { useEnterAsTab } from "../../../hooks/useEnterAsTab";
 import { useAltShortcuts } from "../../../hooks/useAltShortcuts";
 import { useButtonPermissions } from "../../../hooks/useButtonPermissions";
@@ -207,6 +209,7 @@ const snSelectStyles: StylesConfig<Option, false> = {
 const MENU_ID = "010202";
 
 const ItemGroupPage: React.FC = () => {
+  const navigate = useNavigate();
   const handleEnterAsTab = useEnterAsTab();
   const perms = useButtonPermissions(MENU_ID);
   // the common themed question window (the same as on the other screens)
@@ -606,10 +609,15 @@ const ItemGroupPage: React.FC = () => {
             TITLE
         ==================================================== */}
 
-        <div className="flex h-[28px] w-full items-center bg-[#a7dfc0]">
+        <div className="flex h-[28px] w-full items-center bg-[#a7dfc0] pr-2">
           <h1 className="ml-[5px] text-[17px] font-semibold text-[#374151]">
             Item Group
           </h1>
+
+          {/* close button (the common one, as on the Sales Invoice) */}
+          <div className="ml-auto">
+            <CloseButton onClose={() => navigate("/")} />
+          </div>
         </div>
 
         {/* ====================================================

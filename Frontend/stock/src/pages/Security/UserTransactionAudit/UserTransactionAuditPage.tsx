@@ -1,4 +1,6 @@
 import React, { useState } from "react";
+import { useNavigate } from "react-router-dom";
+import CloseButton from "../../../components/common/CloseButton";
 import Select, { type StylesConfig } from "react-select";
 
 // ============================================================
@@ -211,6 +213,7 @@ const inputClass = `
 // ============================================================
 
 const UserTransactionAudit: React.FC = () => {
+  const navigate = useNavigate();
   const [branch, setBranch] =
     useState<Option | null>(null);
 
@@ -273,8 +276,14 @@ const UserTransactionAudit: React.FC = () => {
             TITLE
         ==================================================== */}
 
-        <div  className="  flex h-[36px]  items-center  border-b  border-slate-300  bg-[#a3dfc0]   " >
-        <span className="  px-3   text-[17px]  font-semibold text-slate-700  " >User Transaction Audit </span> </div>
+        <div  className="  flex h-[36px]  items-center  border-b  border-slate-300  bg-[#a3dfc0] pr-2  " >
+        <span className="  px-3   text-[17px]  font-semibold text-slate-700  " >User Transaction Audit </span>
+
+          {/* close button (the common one, as on the Sales Invoice) */}
+          <div className="ml-auto">
+            <CloseButton onClose={() => navigate("/")} />
+          </div>
+        </div>
 
 
         {/* ====================================================
