@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import Header from "../../../../../components/common/Header";
 import Select from "react-select";
 import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
 import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
@@ -299,9 +300,7 @@ const RptPLPage: React.FC<RptPLPageProps> = ({ onClose }) => {
     <div className="flex min-h-screen w-full items-start justify-center bg-white px-4 py-4">
       <div className="min-h-fit w-150 max-w-full bg-white p-0">
         <main className="w-full overflow-hidden border border-[#d5dce2] bg-white">
-         <header className="flex h-7.5 items-center justify-start bg-[#9fdfbc] pl-3 text-[17px] font-semibold text-slate-700">
-             Profit &amp; Loss
-          </header>
+         <Header Name="Profit & Loss" />
 
           <section className="px-3.5 pb-6 pt-3">
             <div className="grid grid-cols-[168px_1fr] items-start gap-x-4 gap-y-3">

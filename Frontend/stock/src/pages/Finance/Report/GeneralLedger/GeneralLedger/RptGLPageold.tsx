@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import Header from "../../../../../components/common/Header";
 import Select from "react-select";
 import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
 import { DatePicker } from "@mui/x-date-pickers/DatePicker";
@@ -676,11 +677,7 @@ const GeneralLedger: React.FC = () => {
       <div className="max-w-220 min-w-220 overflow-hidden border border-gray-400 bg-white">
         {/* TITLE */}
 
-        <header className="flex h-7.5 items-center justify-start bg-[#9fdfbc]">
-          <h1 className="m-0 ml-3.5 text-[17px] font-semibold text-[#24364d]">
-            General Ledger
-          </h1>
-        </header>
+        <Header Name="General Ledger" />
 
         {/* FORM */}
 

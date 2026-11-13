@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import Select from "react-select";
+import Header from "../../components/common/Header";
 import selectComponents from "../../components/sharecomponents/selectComponents";
 
 type Option = { value: string; label: string };
@@ -119,11 +120,7 @@ const ChangeLoginYear: React.FC<ChangeLoginYearProps> = ({
     <div className="flex min-h-full w-full items-center justify-center bg-white px-4 py-4">
       <div className="min-h-fit w-80 max-w-full bg-white p-0">
         <main className="w-full overflow-hidden border border-gray-400 bg-white">
-          <header className="flex h-7.5 items-center justify-start bg-[#9fdfbc]">
-            <h1 className="m-0 ml-3.5 text-[17px] font-semibold text-[#24364d]">
-              {title ?? selectedCompany?.name ?? "Select Company"}
-            </h1>
-          </header>
+          <Header Name={title ?? selectedCompany?.name ?? "Select Company"} />
 
           <section className="px-3.5 pb-6 pt-3">
             {/* Company grid */}

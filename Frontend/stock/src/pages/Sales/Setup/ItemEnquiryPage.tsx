@@ -9,6 +9,7 @@ import {
 } from "../../../components/PairSelect/pairSelectParts";
 import { useAltShortcuts } from "../../../hooks/useAltShortcuts";
 import { useGridCellFocus } from "../../../hooks/useGridCellFocus";
+import Header from "../../../components/common/Header";
 
 // ============================================================
 // ITEM ENQUIRY (the old frmItemEnquiry)
@@ -493,11 +494,7 @@ const ItemEnquiryPage: React.FC = () => {
     <div className="flex min-h-full w-full justify-center bg-gray-100 px-3 pb-5">
       <main className="mt-5 flex h-fit w-full max-w-225 flex-col overflow-hidden border border-gray-400 bg-white text-[12px] text-slate-700">
         {/* TITLE BAR */}
-        <div className="flex h-7 w-full shrink-0 items-center bg-[#a7dfc0]">
-          <h1 className="ml-1.25 text-[17px] font-semibold text-[#374151]">
-            Item Enquiry
-          </h1>
-        </div>
+        <Header Name="Item Enquiry" />
 
         <div className="m-3 flex flex-col gap-2.5 px-3 pb-3">
           {/* ITEM ID */}

@@ -12,6 +12,7 @@ import {
   printItemListReport,
   type PrintReport,
 } from "./printItemListReport";
+import Header from "../../../../components/common/Header";
 
 type Option = { value: string; label: string };
 
@@ -274,7 +275,7 @@ const CustomRadio: React.FC<RadioOptionProps> = ({
           }`}
       />
     </span>
-    <span className="text-[12px] font-normal text-[#35445a]">{label}</span>
+    <span className="text-[14px] font-normal text-[#35445a]">{label}</span>
   </label>
 );
 
@@ -687,9 +688,9 @@ const RptItemListPage: React.FC<RptItemListPageProps> = ({ onClose }) => {
       const kind = asPdf ? "pdf" : "xlsx";
       const saved = await saveFile(blob, `${fileBase}.${kind}`, kind);
       if (saved) {
-       
+
         toast.success(asPdf ? "PDF file downloaded" : "Excel file downloaded");
-         setPreview(null); // cancelled "Save as": the preview stays
+        setPreview(null); // cancelled "Save as": the preview stays
       }
     } catch {
       toast.error(
@@ -768,11 +769,7 @@ const RptItemListPage: React.FC<RptItemListPageProps> = ({ onClose }) => {
     <div className="flex min-h-full w-full items-start justify-center bg-white px-4 py-4">
       <div className="min-h-fit w-225 max-w-full bg-white p-0">
         <main className="w-full overflow-hidden border border-gray-400 bg-white">
-          <header className="flex h-7.5 items-center justify-start bg-[#9fdfbc]">
-            <h1 className="m-0 ml-3.5 text-[17px] font-semibold text-[#24364d]">
-              Item List
-            </h1>
-          </header>
+          <Header Name="Item List" />
 
           <section className="px-3.5 pb-6 pt-3">
             <div className="grid grid-cols-[168px_1fr_170px] items-start gap-x-4 gap-y-3 max-[760px]:grid-cols-[168px_1fr]">
@@ -1153,7 +1150,7 @@ const RptItemListPage: React.FC<RptItemListPageProps> = ({ onClose }) => {
                 className="relative flex items-center gap-5 border border-[#e0e5ea] bg-white px-10.5 py-2.5"
               >
                 <span className="absolute -top-2.5 left-2.5 bg-white px-1 text-[13px] text-[#405066]">
-                 File Format
+                  File Format
                 </span>
                 <CustomRadio
                   name="rdgReportFile"

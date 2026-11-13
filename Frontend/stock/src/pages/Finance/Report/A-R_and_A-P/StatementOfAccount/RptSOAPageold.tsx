@@ -3,6 +3,7 @@ import { DatePicker } from "@mui/x-date-pickers/DatePicker";
 import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
 import dayjs from "dayjs";
 import React, { useState } from "react";
+import Header from "../../../../../components/common/Header";
 import Select from "react-select";
 // TYPES
 type Option = {
@@ -366,9 +367,7 @@ const AppDatePicker: React.FC<AppDatePickerProps> = ({id,label,value,onChange,di
       {/*    MAIN PAGE     */}
       <div className=" max-w-220  min-w-220  overflow-hidden border border-gray-400 bg-white">
         {/*             TITLE      */}
-          <header  className=" flex h-7.5 items-center justify-start bg-[#9fdfbc] pl-3 text-[18px]  font-semibold text-slate-700" >
-            Statement Of Account
-          </header>
+          <Header Name="Statement Of Account" />
         {/*            MAIN FORM        */}
         <div  className=" relative  px-5 pb-3.5 pt-3 ">
           {/*

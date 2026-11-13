@@ -33,6 +33,7 @@ import {
   branchMenuStyles,
   filterLabelOrValue,
 } from "../../../../components/BranchSelect/branchSelectParts";
+import Header from "../../../../components/common/Header";
 
 dayjs.extend(customParseFormat);
 
@@ -584,28 +585,7 @@ const RptStockReportPage: React.FC = () => {
     >
       <div className="min-h-fit w-240 max-w-full bg-white p-0">
         <main className="w-full overflow-hidden border border-gray-400 bg-white">
-           <header
-          className="
-            flex
-            h-7.5
-            items-center
-            justify-start
-          
-            bg-[#9fdfbc]
-          "
-        >
-          <h1
-            className="
-              m-0
-                ml-3.5
-              text-[17px]
-              font-semibold
-              text-[#24364d]
-            "
-          >
-            Stock
-          </h1>
-        </header>
+          <Header Name="Stock" />
 
           <section className="px-3.5 pb-6 pt-3">
             <div className="grid grid-cols-[168px_1fr] gap-x-4 gap-y-3">
