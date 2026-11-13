@@ -1,13 +1,5 @@
 import { Plus } from "lucide-react";
 import React, { useEffect, useRef, useState } from "react";
-import Select, {
-  components,
-  type DropdownIndicatorProps,
-  type FormatOptionLabelMeta,
-  type MenuListProps,
-  type StylesConfig,
-} from "react-select";
-import { RxTriangleDown } from "react-icons/rx";
 import type {
   CashSupplier,
   PurchaseHeader,
@@ -17,11 +9,22 @@ import type { MiscSupplierData } from "./PurchaseInoviceMiscsup";
 import PurchaseInoviceMiscsup from "./PurchaseInoviceMiscsup";
 import { createPortal } from "react-dom";
 import PurchaseExpense from "./PurchaseInvoiceExpense";
+import CommonTableSelect from "../../common/CommonTableSelect";
+import CustomLinkedPairSelect, {
+  type PairSelectOption,
+} from "../../common/CustomLinkedPairSelect";
 
 type Option = { value: string; label: string; name?: string };
 
 const makeOptions = (values: string[]): Option[] =>
   values.map((value) => ({ value, label: value }));
+
+const toPairOptions = (options: Option[]): PairSelectOption[] =>
+  options.map((option) => ({
+    value: option.value,
+    firstLabel: option.value,
+    secondLabel: option.name ?? option.label,
+  }));
 
 /* Fallback options until the lookup endpoints load. */
 const defaultBranchOptions = makeOptions(["OFFICE"]);
@@ -29,503 +32,22 @@ const defaultInvoiceTypeOptions: Option[] = [
   { value: "C", label: "C", name: "CASH" },
   { value: "R", label: "R", name: "CREDIT" },
 ];
-const defaultSupplierIdOptions: Option[] = [];
-const defaultSupplierNameOptions: Option[] = [];
 const miscSupplierOptions = makeOptions(["No", "Yes"]);
 const defaultCurrencyOptions = makeOptions(["SAR"]);
+const branchColumns = [
+  { key: "label", label: "Branch" },
+  { key: "value", label: "ID", width: "90px", align: "right" as const },
+];
+const invoiceTypeColumns = [
+  { key: "label", label: "Type", width: "70px" },
+  { key: "name", label: "Name" },
+];
+const labelColumn = [{ key: "label", label: "Name" }];
 
 const pick = (options: Option[], value: string): Option | null =>
   options.find((o) => o.value === value) ?? null;
 
-/* custom arrow used by every dropdown on this form */
-const DropdownIndicator = (props: DropdownIndicatorProps<Option, false>) => (
-  <components.DropdownIndicator {...props}>
-    <RxTriangleDown size={18} color="#9d9e9d" />
-  </components.DropdownIndicator>
-);
-
-const selectComponents = {
-  DropdownIndicator,
-  IndicatorSeparator: () => null,
-};
-
-/* =========================================================
-   LABEL STYLE
-========================================================= */
-
 const labelClass = "shrink-0 whitespace-nowrap text-[14px] text-[#263449]";
-
-/* =========================================================
-   BASE SELECT STYLES
-========================================================= */
-
-const baseSelectStyles: StylesConfig<Option, false> = {
-  control: (base, state) => ({
-    ...base,
-    height: 30,
-    minHeight: 30,
-    width: "100%",
-    borderRadius: 4,
-    borderColor: state.isFocused ? "#80bdff" : "#d5dce5",
-    boxShadow: "none",
-    backgroundColor: state.isDisabled ? "#f1f5f9" : "#fff",
-    cursor: state.isDisabled ? "not-allowed" : "pointer",
-    fontSize: 12,
-    "&:hover": {
-      borderColor: "#aebdce",
-    },
-  }),
-
-  valueContainer: (base) => ({
-    ...base,
-    height: 25,
-    minWidth: 0,
-    padding: "0 8px",
-    overflow: "hidden",
-  }),
-
-  singleValue: (base) => ({
-    ...base,
-    color: "#263449",
-    margin: 0,
-  }),
-
-  placeholder: (base) => ({
-    ...base,
-    color: "#64748b",
-    margin: 0,
-  }),
-
-  input: (base) => ({
-    ...base,
-    margin: 0,
-    padding: 0,
-    color: "#263449",
-  }),
-
-  indicatorsContainer: (base) => ({
-    ...base,
-    height: 25,
-  }),
-
-  dropdownIndicator: (base) => ({
-    ...base,
-    padding: "0 6px",
-    color: "#64748b",
-    "&:hover": {
-      color: "#334155",
-    },
-  }),
-
-  indicatorSeparator: () => ({
-    display: "none",
-  }),
-
-  clearIndicator: (base) => ({
-    ...base,
-    padding: 3,
-  }),
-
-  menu: (base) => ({
-    ...base,
-    zIndex: 100,
-    fontSize: 12,
-    borderRadius: 4,
-    marginTop: 2,
-  }),
-
-  menuList: (base) => ({
-    ...base,
-    padding: 2,
-    maxHeight: 200,
-  }),
-
-  option: (base, state) => ({
-    ...base,
-    padding: "6px 8px",
-    cursor: "pointer",
-    fontSize: 12,
-    color: "#263449",
-    backgroundColor: state.isSelected
-      ? "#dbeafe"
-      : state.isFocused
-        ? "#eff6ff"
-        : "#fff",
-    "&:active": {
-      backgroundColor: "#dbeafe",
-    },
-  }),
-};
-
-/* =========================================================
-   INDIVIDUAL SELECT STYLES
-========================================================= */
-
-// 1. Branch
-const branchSelectStyles: StylesConfig<Option, false> = {
-  ...baseSelectStyles,
-  control: (base, state) => ({
-    ...baseSelectStyles.control!(base, state),
-    height: 30,
-    minHeight: 30,
-    borderRadius: 4,
-    borderColor: "#d7dee7",
-  }),
-};
-
-// 2. Invoice Type
-const invoiceTypeSelectStyles: StylesConfig<Option, false> = {
-  ...baseSelectStyles,
-  control: (base, state) => ({
-    ...baseSelectStyles.control!(base, state),
-    height: 30,
-    minHeight: 30,
-    fontSize: 14,
-  }),
-};
-
-// 3. Supplier ID
-const supplierIdSelectStyles: StylesConfig<Option, false> = {
-  ...baseSelectStyles,
-  control: (base, state) => ({
-    ...baseSelectStyles.control!(base, state),
-    height: 30,
-    minHeight: 30,
-    borderRadius: 4,
-  }),
-};
-
-// 4. Supplier Name
-const supplierNameSelectStyles: StylesConfig<Option, false> = {
-  ...baseSelectStyles,
-  control: (base, state) => ({
-    ...baseSelectStyles.control!(base, state),
-    height: 30,
-    minHeight: 30,
-    fontSize: 14,
-  }),
-};
-
-// 5. Miscellaneous Supplier
-const miscSupplierSelectStyles: StylesConfig<Option, false> = {
-  ...baseSelectStyles,
-  control: (base, state) => ({
-    ...baseSelectStyles.control!(base, state),
-    height: 30,
-    minHeight: 30,
-  }),
-};
-
-// 6. Miscellaneous Supplier ID
-const miscSupplierIdSelectStyles: StylesConfig<Option, false> = {
-  ...baseSelectStyles,
-  control: (base, state) => ({
-    ...baseSelectStyles.control!(base, state),
-    height: 30,
-    minHeight: 30,
-  }),
-};
-
-// 7. Miscellaneous Supplier Name
-const miscSupplierNameSelectStyles: StylesConfig<Option, false> = {
-  ...baseSelectStyles,
-  control: (base, state) => ({
-    ...baseSelectStyles.control!(base, state),
-    height: 30,
-    minHeight: 30,
-  }),
-};
-
-// 8. Currency
-const currencySelectStyles: StylesConfig<Option, false> = {
-  ...baseSelectStyles,
-  control: (base, state) => ({
-    ...baseSelectStyles.control!(base, state),
-    height: 30,
-    minHeight: 30,
-  }),
-};
-
-/* =========================================================
-   TWO-COLUMN LOOKUP MENU (same look as the item table dropdown)
-========================================================= */
-
-const MENU_FONT_SIZE = 14;
-const NAME_COL_WIDTH = 300;
-
-type MenuVariant =
-  | "supplierId"
-  | "supplierName"
-  | "miscId"
-  | "miscName"
-  | "type"
-  | "branch";
-
-const menuLayout: Record<
-  MenuVariant,
-  {
-    firstTitle: string;
-    secondTitle: string;
-    firstWidth: number;
-    first: (o: Option) => string;
-    second: (o: Option) => string;
-  }
-> = {
-  supplierId: {
-    firstTitle: "Supplier ID",
-    secondTitle: "Supplier Name",
-    firstWidth: 146,
-    first: (o) => o.value,
-    second: (o) => o.name ?? o.label,
-  },
-  supplierName: {
-    firstTitle: "Supplier Name",
-    secondTitle: "Supplier ID",
-    firstWidth: NAME_COL_WIDTH,
-    first: (o) => o.name ?? o.label,
-    second: (o) => o.value,
-  },
-  miscId: {
-    firstTitle: "Misc. Sup. ID",
-    secondTitle: "Misc. Sup. Name",
-    firstWidth: 146,
-    first: (o) => o.value,
-    second: (o) => o.name ?? o.label,
-  },
-  miscName: {
-    firstTitle: "Misc. Sup. Name",
-    secondTitle: "Misc. Sup. ID",
-    firstWidth: NAME_COL_WIDTH,
-    first: (o) => o.name ?? o.label,
-    second: (o) => o.value,
-  },
-  type: {
-    firstTitle: "Type",
-    secondTitle: "Name",
-    firstWidth: 70,
-    first: (o) => o.value,
-    second: (o) => o.name ?? o.label,
-  },
-  branch: {
-    firstTitle: "Branch",
-    secondTitle: "ID",
-    firstWidth: 150,
-    first: (o) => o.label,
-    second: (o) => o.value,
-  },
-};
-
-/* gray sticky header row at the top of the menu */
-const createMenuList = (variant: MenuVariant) => {
-  const layout = menuLayout[variant];
-
-  const MenuList = (props: MenuListProps<Option, false>) => (
-    <components.MenuList {...props}>
-      <div
-        style={{
-          display: "flex",
-          position: "sticky",
-          top: 0,
-          zIndex: 1,
-          background: "#eeeeee",
-          borderBottom: "1px solid #cfcfcf",
-          fontWeight: 600,
-          fontSize: MENU_FONT_SIZE,
-          color: "#202a36",
-        }}
-      >
-        <div
-          style={{
-            width: layout.firstWidth,
-            flexShrink: 0,
-            boxSizing: "border-box",
-            padding: "5px 8px",
-            borderRight: "1px solid #cfcfcf",
-          }}
-        >
-          {layout.firstTitle}
-        </div>
-        <div style={{ flex: 1, padding: "5px 8px" }}>{layout.secondTitle}</div>
-      </div>
-      {props.children}
-    </components.MenuList>
-  );
-
-  return MenuList;
-};
-
-/* menu rows show two columns; the control shows only its own label */
-const createFormatLabel =
-  (variant: MenuVariant) =>
-  (option: Option, meta: FormatOptionLabelMeta<Option>) => {
-    if (meta.context !== "menu") return option.label;
-
-    const layout = menuLayout[variant];
-
-    return (
-      <div style={{ display: "flex" }}>
-        <div
-          style={{
-            width: layout.firstWidth,
-            flexShrink: 0,
-            boxSizing: "border-box",
-            padding: "6px 8px",
-            borderRight: "1px solid #e3e8ef",
-          }}
-        >
-          {layout.first(option)}
-        </div>
-        <div style={{ flex: 1, padding: "6px 8px" }}>
-          {layout.second(option)}
-        </div>
-      </div>
-    );
-  };
-
-/* typing searches both the id and the name */
-const filterLookup = (option: { data: Option }, input: string): boolean => {
-  const text = input.trim().toLowerCase();
-  if (!text) return true;
-  return (
-    option.data.value.toLowerCase().includes(text) ||
-    (option.data.name ?? option.data.label).toLowerCase().includes(text)
-  );
-};
-
-const lookupMenuStyles: StylesConfig<Option, false> = {
-  menuPortal: (base) => ({ ...base, zIndex: 9999 }),
-  menu: (base) => ({
-    ...base,
-    zIndex: 9999,
-    fontSize: MENU_FONT_SIZE,
-    marginTop: 1,
-    width: 480,
-    minWidth: 480,
-    border: "none",
-    borderRadius: 0,
-    boxShadow: "0 0 0 1px #cfcfcf, 0 4px 10px rgba(0,0,0,0.15)",
-  }),
-  menuList: (base) => ({ ...base, padding: 0, maxHeight: 260 }),
-  option: (base, state) => ({
-    ...base,
-    padding: 0,
-    fontSize: MENU_FONT_SIZE,
-    color: "#263449",
-    backgroundColor: state.isSelected
-      ? "#cdeedd"
-      : state.isFocused
-        ? "#e6f6ee"
-        : "#fff",
-    cursor: "pointer",
-  }),
-};
-
-/* menu that starts at its own select and ends at the right edge of the
-   box with the given id (the paired name select) */
-const spanMenuStyles = (endBoxId: string): StylesConfig<Option, false> => ({
-  ...lookupMenuStyles,
-  menuPortal: (base) => {
-    const end =
-      typeof document !== "undefined"
-        ? document.getElementById(endBoxId)
-        : null;
-    const right = end?.getBoundingClientRect().right;
-    return {
-      ...base,
-      zIndex: 9999,
-      width: right ? Math.max(right - Number(base.left), 240) : 480,
-    };
-  },
-  menu: (base, state) => ({
-    ...lookupMenuStyles.menu!(base, state),
-    width: "100%",
-    minWidth: 0,
-  }),
-});
-
-/* menu exactly as wide as its own select (touches both edges) */
-const fullWidthMenuStyles: StylesConfig<Option, false> = {
-  ...lookupMenuStyles,
-  menu: (base, state) => ({
-    ...lookupMenuStyles.menu!(base, state),
-    width: "100%",
-    minWidth: 0,
-  }),
-};
-
-// ID selects: the menu stretches until the right edge of the name box
-const supplierIdStyles = {
-  ...supplierIdSelectStyles,
-  ...spanMenuStyles("supplierNameBox"),
-};
-const miscIdStyles = {
-  ...miscSupplierIdSelectStyles,
-  ...spanMenuStyles("miscNameBox"),
-};
-
-const supplierNameStyles = {
-  ...supplierNameSelectStyles,
-  ...fullWidthMenuStyles,
-};
-const miscNameStyles = {
-  ...miscSupplierNameSelectStyles,
-  ...fullWidthMenuStyles,
-};
-
-const typeStyles = {
-  ...invoiceTypeSelectStyles,
-  ...lookupMenuStyles,
-  menu: (base: any, state: any) => ({
-    ...lookupMenuStyles.menu!(base, state),
-    width: 220,
-    minWidth: 220,
-  }),
-};
-
-const typeComponents = {
-  ...selectComponents,
-  MenuList: createMenuList("type"),
-};
-
-const branchStyles = {
-  ...branchSelectStyles,
-  ...lookupMenuStyles,
-  menu: (base: any, state: any) => ({
-    ...lookupMenuStyles.menu!(base, state),
-    width: 200,
-    minWidth: 200,
-  }),
-};
-
-const branchComponents = {
-  ...selectComponents,
-  MenuList: createMenuList("branch"),
-};
-const formatBranch = createFormatLabel("branch");
-
-const formatType = createFormatLabel("type");
-
-const supplierIdComponents = {
-  ...selectComponents,
-  MenuList: createMenuList("supplierId"),
-};
-const supplierNameComponents = {
-  ...selectComponents,
-  MenuList: createMenuList("supplierName"),
-};
-const miscIdComponents = {
-  ...selectComponents,
-  MenuList: createMenuList("miscId"),
-};
-const miscNameComponents = {
-  ...selectComponents,
-  MenuList: createMenuList("miscName"),
-};
-
-const formatSupplierId = createFormatLabel("supplierId");
-const formatSupplierName = createFormatLabel("supplierName");
-const formatMiscId = createFormatLabel("miscId");
-const formatMiscName = createFormatLabel("miscName");
 
 const FIELD_ORDER = [
   "lkpBranch",
@@ -586,10 +108,13 @@ const PurchaseForm: React.FC<Props> = ({
   const [expenseOpen, setExpenseOpen] = useState(false);
   const branchOptions = lookups?.branches ?? defaultBranchOptions;
   const invoiceTypeOptions = lookups?.invoiceTypes ?? defaultInvoiceTypeOptions;
-  const supplierOptions = lookups?.supplierIds ?? defaultSupplierIdOptions;
-  const supplierNameOptions =
-    lookups?.supplierNames ?? defaultSupplierNameOptions;
+  const supplierOptions = lookups?.supplierIds ?? [];
+  const supplierNameOptions = lookups?.supplierNames ?? [];
   const currencyOptions = lookups?.currencies ?? defaultCurrencyOptions;
+  const supplierPairOptions = toPairOptions(supplierOptions);
+  const supplierNamePairOptions = toPairOptions(
+    supplierNameOptions.length ? supplierNameOptions : supplierOptions,
+  );
 
   const isMisc = miscMode === "Yes";
 
@@ -603,11 +128,7 @@ const PurchaseForm: React.FC<Props> = ({
     label: m.id,
     name: m.name,
   }));
-  const miscNameOptions: Option[] = miscSuppliers.map((m) => ({
-    value: m.id,
-    label: m.name,
-    name: m.name,
-  }));
+  const miscPairOptions = toPairOptions(miscIdOptions);
 
   /* menus render in document.body so the form never clips them */
   const portalTarget =
@@ -683,9 +204,13 @@ const PurchaseForm: React.FC<Props> = ({
   };
 
   /* Supplier ID and Supplier Name are one account: set both together */
-  const handleSupplierChange = (accountId: string) => {
+  const handleSupplierChange = (option: PairSelectOption | null) => {
+    const accountId = option?.value ?? "";
     const name =
-      supplierNameOptions.find((o) => o.value === accountId)?.label ?? "";
+      option?.secondLabel ??
+      supplierNameOptions.find((o) => o.value === accountId)?.label ??
+      supplierOptions.find((o) => o.value === accountId)?.name ??
+      "";
     onChange("supplierId", accountId);
     onChange("supplierName", name);
   };
@@ -731,16 +256,14 @@ const PurchaseForm: React.FC<Props> = ({
             Branch
           </label>
           <div className="min-w-0 flex-1">
-            <Select<Option, false>
+            <CommonTableSelect
               inputId="lkpBranch"
               options={branchOptions}
               value={pick(branchOptions, header.brId)}
               onChange={(o) => onChange("brId", o?.value ?? "")}
-              styles={branchStyles}
-              components={branchComponents}
-              formatOptionLabel={formatBranch}
-              filterOption={filterLookup}
-              menuPosition="fixed"
+              columns={branchColumns}
+              width="100%"
+              menuWidth="220px"
               menuPortalTarget={portalTarget}
               isClearable={false}
               isSearchable
@@ -767,13 +290,14 @@ const PurchaseForm: React.FC<Props> = ({
             Misc. Sup.
           </label>
           <div className="min-w-0 w-[50%]">
-            <Select<Option, false>
+            <CommonTableSelect
               inputId="lkpMiscSup"
               options={miscSupplierOptions}
               value={pick(miscSupplierOptions, miscMode)}
               onChange={(o) => handleMiscModeChange(o?.value ?? "No")}
-              styles={miscSupplierSelectStyles}
-              components={selectComponents}
+              columns={labelColumn}
+              width="100%"
+              menuWidth="140px"
               isClearable={false}
               isSearchable={false}
             />
@@ -786,13 +310,14 @@ const PurchaseForm: React.FC<Props> = ({
             Currency
           </label>
           <div className="min-w-0 w-[50%]">
-            <Select<Option, false>
+            <CommonTableSelect
               inputId="lkpCurrency"
               options={currencyOptions}
               value={pick(currencyOptions, header.currency)}
               onChange={(o) => onChange("currency", o?.value ?? "")}
-              styles={currencySelectStyles}
-              components={selectComponents}
+              columns={labelColumn}
+              width="100%"
+              menuWidth="160px"
               isClearable={false}
               isSearchable={false}
             />
@@ -802,7 +327,7 @@ const PurchaseForm: React.FC<Props> = ({
 
       {/* ==================================================
           GROUP 2
-          Entry No., Supplier ID, Misc. Sup. ID, Currency Rate
+          Entry No., Currency Rate, Purchase Expense
       ================================================== */}
       <div
         id="purchase-middle-group"
@@ -821,55 +346,6 @@ const PurchaseForm: React.FC<Props> = ({
             onBlur={onDocNoBlur}
             className="input-style min-w-0 flex-1"
           />
-        </div>
-
-        {/* Supplier ID */}
-        <div className="flex min-w-0 items-center gap-3">
-          <label htmlFor="lkpSupplierID" className={`${labelClass} w-23`}>
-            Supplier
-          </label>
-          <div className="min-w-0 flex-1">
-            <Select<Option, false>
-              inputId="lkpSupplierID"
-              options={supplierOptions}
-              value={pick(supplierOptions, header.supplierId)}
-              onChange={(o) => handleSupplierChange(o?.value ?? "")}
-              // isDisabled={isCash}
-              styles={supplierIdStyles}
-              components={supplierIdComponents}
-              formatOptionLabel={formatSupplierId}
-              filterOption={filterLookup}
-              menuPosition="fixed"
-              menuPortalTarget={portalTarget}
-              isClearable={false}
-              isSearchable
-            />
-          </div>
-        </div>
-
-        {/* Misc. Supplier ID */}
-        <div className="flex min-w-0 items-center gap-3">
-          <label htmlFor="lkpMiscSupID" className={`${labelClass} w-23`}>
-            Misc. Sup.
-          </label>
-          <div className="min-w-0 flex-1">
-            <Select<Option, false>
-              inputId="lkpMiscSupID"
-              options={miscIdOptions}
-              value={pick(miscIdOptions, header.miscSupId)}
-              onChange={(o) => handleMiscChange(o?.value ?? "")}
-              isDisabled={!isMisc}
-              placeholder=""
-              styles={miscIdStyles}
-              components={miscIdComponents}
-              formatOptionLabel={formatMiscId}
-              filterOption={filterLookup}
-              menuPosition="fixed"
-              menuPortalTarget={portalTarget}
-              isClearable={false}
-              isSearchable
-            />
-          </div>
         </div>
 
         {/* Currency Rate */}
@@ -925,15 +401,14 @@ const PurchaseForm: React.FC<Props> = ({
               Type
             </label>
             <div className="min-w-0 w-[26%]">
-              <Select<Option, false>
+              <CommonTableSelect
                 inputId="lkpType"
                 options={invoiceTypeOptions}
                 value={pick(invoiceTypeOptions, header.invoiceType)}
                 onChange={(o) => onChange("invoiceType", o?.value ?? "")}
-                styles={typeStyles}
-                components={typeComponents}
-                formatOptionLabel={formatType}
-                menuPosition="fixed"
+                columns={invoiceTypeColumns}
+                width="100%"
+                menuWidth="220px"
                 menuPortalTarget={portalTarget}
                 isClearable={false}
                 isSearchable={false}
@@ -956,45 +431,50 @@ const PurchaseForm: React.FC<Props> = ({
           </div>
         </div>
 
-        {/* Supplier Name */}
-        <div id="supplierNameBox" className="min-w-0">
-          <Select<Option, false>
-            inputId="lkpSupplierName"
-            options={supplierNameOptions}
-            value={pick(supplierNameOptions, header.supplierId)}
-            onChange={(o) => handleSupplierChange(o?.value ?? "")}
-            // isDisabled={isCash}
-            styles={supplierNameStyles}
-            components={supplierNameComponents}
-            formatOptionLabel={formatSupplierName}
-            filterOption={filterLookup}
-            menuPosition="fixed"
-            menuPortalTarget={portalTarget}
-            isClearable={false}
+        {/* Supplier ID and name are one linked lookup */}
+        <div className="flex min-w-0 items-center gap-2">
+          <label htmlFor="lkpSupplierID" className={`${labelClass} w-19`}>
+            Supplier
+          </label>
+          <CustomLinkedPairSelect
+            firstInputId="lkpSupplierID"
+            secondInputId="lkpSupplierName"
+            options={supplierPairOptions}
+            secondOptions={supplierNamePairOptions}
+            firstValue={header.supplierId || null}
+            secondValue={header.supplierId || null}
+            firstHeader="Supplier ID"
+            secondHeader="Supplier Name"
+            firstWidth={112}
+            secondWidth={260}
+            gap={4}
             isSearchable
+            menuPortalTarget={portalTarget}
+            onChange={handleSupplierChange}
           />
         </div>
 
-        {/* Misc. Supplier Name + Add */}
+        {/* Misc. Supplier ID and name + Add */}
         <div className="flex min-w-0 items-center gap-2">
-          <div id="miscNameBox" className="min-w-0 flex-1">
-            <Select<Option, false>
-              inputId="lkpMiscSupName"
-              options={miscNameOptions}
-              value={pick(miscNameOptions, header.miscSupId)}
-              onChange={(o) => handleMiscChange(o?.value ?? "")}
-              isDisabled={!isMisc}
-              placeholder=""
-              styles={miscNameStyles}
-              components={miscNameComponents}
-              formatOptionLabel={formatMiscName}
-              filterOption={filterLookup}
-              menuPosition="fixed"
-              menuPortalTarget={portalTarget}
-              isClearable={false}
-              isSearchable
-            />
-          </div>
+          <label htmlFor="lkpMiscSupID" className={`${labelClass} w-19`}>
+            Misc. Sup.
+          </label>
+          <CustomLinkedPairSelect
+            firstInputId="lkpMiscSupID"
+            secondInputId="lkpMiscSupName"
+            options={miscPairOptions}
+            firstValue={header.miscSupId || null}
+            secondValue={header.miscSupId || null}
+            firstHeader="Misc. Sup. ID"
+            secondHeader="Misc. Sup. Name"
+            firstWidth={112}
+            secondWidth={260}
+            gap={4}
+            isDisabled={!isMisc}
+            isSearchable
+            menuPortalTarget={portalTarget}
+            onChange={(option) => handleMiscChange(option?.value ?? "")}
+          />
           <button
             id="btnAddMiscSupplier"
             type="button"
