@@ -4,6 +4,7 @@ import {
   submitToZatca,
   type ZatcaSubmitDocument,
 } from "./zatcaGateway.js";
+import { exportZatcaPdfA3Document } from "./zatcaPdfA3ExportService.js";
 
 /* =========================================================
    ZATCA SUBMISSION - calls dbo.sp_pagezatcafilesubmission (mode G) for the
@@ -53,6 +54,9 @@ export type ZatcaSubmitResult = {
   brId: string;
   status: "CLEARED" | "REPORTED" | "ALREADY_SUBMITTED" | "REJECTED" | "ERROR";
   message?: string;
+  // the A3 PDF (with the XML attached) made after a good submission
+  pdfStatus?: "EXPORTED" | "FAILED";
+  pdfMessage?: string;
 };
 
 /* =========================================================
@@ -346,7 +350,25 @@ export async function submitZATCADocumentsService(
           status: out.status,
         });
         await saveHistory("M", ctx, doc, null);
-        results.push({ ...base, status: out.status });
+
+        // Export_A3PDFWithXMLAttach: the document is already with ZATCA, so a PDF problem
+        // must not turn it into a rejection - it is reported next to the result instead
+        const pdf = await exportZatcaPdfA3Document(folder.trim(), {
+          coId,
+          year,
+          branchId: doc.brId,
+          docType: doc.docType,
+          origDocType: doc.origDocType ?? "",
+          docNo: doc.docNo,
+          xmlPath: out.outputFile,
+        });
+
+        results.push({
+          ...base,
+          status: out.status,
+          pdfStatus: pdf.ok ? "EXPORTED" : "FAILED",
+          pdfMessage: pdf.ok ? undefined : pdf.message,
+        });
       } else {
         rejected += 1;
         // the history status column is varchar(100); the VB stored the short label
