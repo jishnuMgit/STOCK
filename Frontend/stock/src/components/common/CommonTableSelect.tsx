@@ -31,6 +31,8 @@ interface CommonTableSelectProps {
   isClearable?: boolean;
   isSearchable?: boolean;
   isDisabled?: boolean;
+  isLoading?: boolean;
+  noOptionsMessage?: () => string;
   inputId?: string;
   headerFontSize?: string;
   menuPortalTarget?: HTMLElement;
@@ -49,6 +51,8 @@ interface CommonTableSelectProps {
   isClearable = false,
   isSearchable = true,
   isDisabled = false,
+  isLoading = false,
+  noOptionsMessage,
   inputId,
   headerFontSize = "13px",
   menuPortalTarget,
@@ -254,6 +258,8 @@ interface CommonTableSelectProps {
       isClearable={isClearable}
       isSearchable={isSearchable}
       isDisabled={isDisabled}
+      isLoading={isLoading}
+      noOptionsMessage={noOptionsMessage}
       menuPortalTarget={menuPortalTarget}
       menuPosition={menuPortalTarget ? "fixed" : undefined}
       getOptionLabel={(option) => option.label}
