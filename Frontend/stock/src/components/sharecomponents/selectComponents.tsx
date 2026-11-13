@@ -19,6 +19,10 @@ const DropdownIndicator = (
   </components.DropdownIndicator>
 );
 
+// The font of the app (src/index.css: Inter). The React Select boxes and their lists name it in their `styles`, so a select
+// never falls back to the browser's own font.
+export const SELECT_FONT_FAMILY = "'Inter', sans-serif";
+
 // The shared dropdown look: a small triangle and no separator line.
 // Pass it as `components={selectComponents}`, or merge it with a page's own
 // parts: `components={{ ...selectComponents, MenuList, Option }}`.

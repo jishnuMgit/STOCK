@@ -12,7 +12,9 @@ import { useButtonPermissions } from "../../../hooks/useButtonPermissions";
 import { useConfirmModal } from "../../../hooks/useConfirmModal";
 import { useDeleteToast } from "../../../hooks/useDeleteToast";
 import { useInitialFocus } from "../../../hooks/useInitialFocus";
-import selectComponents from "../../../components/sharecomponents/selectComponents";
+import selectComponents, {
+  SELECT_FONT_FAMILY,
+} from "../../../components/sharecomponents/selectComponents";
 
 // ============================================================
 // TYPES
@@ -32,6 +34,11 @@ type Option = {
 // The select box looks like the text boxes of this page (the .input-style class): 30px, #d7dee7 border,
 // 4px radius, mint background when focused, the same 14px text and colour.
 const selectStyles: StylesConfig<Option, false> = {
+  container: (base) => ({
+    ...base,
+    fontFamily: SELECT_FONT_FAMILY,
+  }),
+
   control: (base, state) => ({
     ...base,
     minHeight: "30px",
@@ -101,6 +108,7 @@ const selectStyles: StylesConfig<Option, false> = {
   menu: (base) => ({
     ...base,
     zIndex: 9999,
+    fontFamily: SELECT_FONT_FAMILY,
     fontSize: 14,
     marginTop: 1,
   }),
@@ -170,6 +178,7 @@ const snSelectStyles: StylesConfig<Option, false> = {
   menu: (base) => ({
     ...base,
     zIndex: 9999,
+    fontFamily: SELECT_FONT_FAMILY,
     fontSize: 14,
     marginTop: 1,
     width: "calc(100% + 55px)",
