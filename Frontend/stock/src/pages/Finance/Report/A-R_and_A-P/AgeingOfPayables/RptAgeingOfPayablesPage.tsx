@@ -41,7 +41,7 @@ const ageingModeOptions: Option[] = [
 const postStatusOptions: Option[] = [
   { value: "ALL", label: "All" },
   { value: "POSTED", label: "Posted" },
-  { value: "UNPOSTED", label: "Unposted" },
+  { value: "UNPOSTED", label: "Not Posted" },
 ];
 const yesNoOptions: Option[] = [
   { value: "YES", label: "Yes" },

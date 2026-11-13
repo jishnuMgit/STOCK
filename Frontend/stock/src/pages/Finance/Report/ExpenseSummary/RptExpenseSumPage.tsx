@@ -41,7 +41,7 @@ const api = import.meta.env.VITE_API_URL;
 const postStatusOptions: Option[] = [
   { value: "ALL", label: "All" },
   { value: "POSTED", label: "Posted" },
-  { value: "UNPOSTED", label: "Unposted" },
+  { value: "UNPOSTED", label: "Not Posted" },
 ];
 const yesNoOptions: Option[] = [
   { value: "YES", label: "Yes" },
@@ -250,6 +250,11 @@ const RptExpenseSumPage: React.FC<RptExpenseSumPageProps> = ({
 
   // the lookups have been asked for (found or not): the cursor can start
   const [lookupsLoaded, setLookupsLoaded] = useState(false);
+  const [rdgCostCenter, setRdgCostCenter] = useState("One Cost Center"); // rdgCostCenter
+  const [lkpCostCenter, setLkpCostCenter] = useState<Option | null>(null); // lkpCostCenter
+
+  // the cost centers of the company (dbo.fillcostcenters)
+  const [costCenterOptions, setCostCenterOptions] = useState<Option[]>([]);
 
   useEffect(() => {
     const loadLookups = async () => {
@@ -297,12 +302,6 @@ const RptExpenseSumPage: React.FC<RptExpenseSumPageProps> = ({
 
   // the cursor starts on the Branch box
   useInitialFocus(lookupsLoaded, "lkpBranch");
-
-  const [rdgCostCenter, setRdgCostCenter] = useState("One Cost Center"); // rdgCostCenter
-  const [lkpCostCenter, setLkpCostCenter] = useState<Option | null>(null); // lkpCostCenter
-
-  // the cost centers of the company (dbo.fillcostcenters)
-  const [costCenterOptions, setCostCenterOptions] = useState<Option[]>([]);
 
   const [rdgDate, setRdgDate] = useState("For A Period"); // rdgDate
   const [dtpMonth, setDtpMonth] = useState(dayjs().format(MONTH_FORMAT)); // dtpMonth

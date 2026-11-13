@@ -908,7 +908,7 @@ const ZATCASubmission: React.FC = () => {
                     <th className="w-[3%] border-r border-b border-[#B7ECD0]" />
 
                     <th className="w-[4%] border-r border-b border-[#B7ECD0] px-1 text-left text-[12px] font-normal text-[#172b43]">
-                      Sl.No.
+                      Line
                     </th>
 
                     <th className="w-[4.5%] border-r border-b border-[#B7ECD0] px-1 text-left text-[12px] font-normal text-[#172b43]">
