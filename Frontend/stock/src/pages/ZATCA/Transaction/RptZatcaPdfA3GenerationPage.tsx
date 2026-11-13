@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { toast } from "react-toastify";
 import {
   LocalizationProvider,
@@ -67,6 +67,7 @@ type Row = {
 type LookupResult = {
   branches: { brId: string; brName: string }[];
   customers: { customerId: string; customerName: string }[];
+  customersByName: { customerId: string; customerName: string }[];
   docTypes: { pId: string; pName: string }[];
 };
 
@@ -291,7 +292,18 @@ const RptZatcaPdfA3Generation: React.FC = () => {
 
   const [branchOptions, setBranchOptions] = useState<TableSelectOption[]>([]);
   const [documentOptions, setDocumentOptions] = useState<TableSelectOption[]>([]);
-  const [customerOptions, setCustomerOptions] = useState<PairSelectOption[]>([]);
+  const [customerIdList, setCustomerIdList] = useState<PairSelectOption[]>([]);
+  const [customerNameList, setCustomerNameList] = useState<PairSelectOption[]>([]);
+
+  // Customer ID box: in ID order (dbo.filllookupcustomerid); Customer Name box: in name order
+  // (dbo.filllookupcustomername), the same as the ZATCA Submission page
+  const customerOptionsById = useMemo(
+    () =>
+      [...customerIdList].sort((a, b) =>
+        a.firstLabel.localeCompare(b.firstLabel, undefined, { numeric: true, sensitivity: "base" }),
+      ),
+    [customerIdList],
+  );
 
   const [rows, setRows] = useState<Row[]>([]);
   const [busy, setBusy] = useState(false);
@@ -313,13 +325,13 @@ const RptZatcaPdfA3Generation: React.FC = () => {
         setDocumentOptions(
           (d.docTypes ?? []).map((t) => ({ value: t.pId, label: t.pName, id: t.pId })),
         );
-        setCustomerOptions(
-          (d.customers ?? []).map((c) => ({
-            value: c.customerId,
-            firstLabel: c.customerId,
-            secondLabel: c.customerName,
-          })),
-        );
+        const pair = (c: { customerId: string; customerName: string }): PairSelectOption => ({
+          value: c.customerId,
+          firstLabel: c.customerId,
+          secondLabel: c.customerName,
+        });
+        setCustomerIdList((d.customers ?? []).map(pair));
+        setCustomerNameList((d.customersByName ?? []).map(pair));
       })
       .catch((e: Error) => toast.error(e.message));
   }, []);
@@ -652,7 +664,8 @@ const RptZatcaPdfA3Generation: React.FC = () => {
               {oneCustomer && (
                 <div className="min-w-0 pt-2.5 ml-3">
                   <CustomLinkedPairSelect
-                    options={customerOptions}
+                    options={customerOptionsById}
+                    secondOptions={customerNameList}
                     firstValue={customer?.value ?? null}
                     secondValue={customer?.value ?? null}
                     onChange={setCustomer}
@@ -660,8 +673,9 @@ const RptZatcaPdfA3Generation: React.FC = () => {
                     secondHeader="Customer Name"
                     firstWidth={120}
                     secondWidth={400}
-                    firstInputId="zatca-customer-id"
-                    secondInputId="zatca-customer-name"
+                    firstInputId="lkpcustomerId"
+                    secondInputId="lkpcustomerName"
+                    menuZIndex={99999}
                     placeholder="Select"
                     menuPortalTarget={
                       typeof document !== "undefined" ? document.body : undefined
