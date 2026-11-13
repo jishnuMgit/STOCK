@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import Header from "../../components/common/Header";
 import { HiOutlineDotsHorizontal } from "react-icons/hi";
 
 type DirectoryHandle = {
@@ -158,12 +159,7 @@ console.log(message)
     <div className="flex min-h-full w-full items-start justify-center bg-white px-3 py-3 sm:px-4 sm:py-4">
       <div className="w-full max-w-178.75 min-w-178.75  bg-white">
         <main className="w-full border border-gray-400 bg-white">
-          {/* Header */}
-          <header className="flex h-7.5 items-center bg-[#9fdfbc]">
-            <h1 className="ml-4 text-[17px]  font-semibold text-[#374151]">
-              Set Database Backup Path
-            </h1>
-          </header>
+          <Header Name="Set Database Backup Path" />
 
           {/* Form */}
           <section className="px-4 pb-5 pt-5 sm:px-6">

@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from "react";
+import Header from "../../components/common/Header";
 import Select, {
   type SingleValue,
   type StylesConfig,
@@ -788,15 +789,7 @@ const SetBranchInfo: React.FC = () => {
 
       <div className="w-[1300px] shrink-0 overflow-hidden border border-slate-400 bg-white shadow-sm">
 
-        {/* ===================================================
-            TITLE
-        ==================================================== */}
-
-        <div className="flex h-[28px] w-full items-center bg-[#a7dfc0]">
-          <h1 className="ml-[5px] text-[17px] font-semibold text-[#374151]">
-            Set Branch Info.
-          </h1>
-        </div>
+        <Header Name="Set Branch Info." />
 
         {/* ===================================================
             FORM

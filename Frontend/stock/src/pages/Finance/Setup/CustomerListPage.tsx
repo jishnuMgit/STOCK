@@ -2,6 +2,7 @@ import React, { useEffect, useMemo, useState } from "react";
 import { SquarePen, X } from "lucide-react";
 import { useCustomer, type Customer } from "../../../hooks/useCustomer";
 import CustomerPage from "./CustomerPage";
+import Header from "../../../components/common/Header";
 
 // ============================================================
 // STYLES & COLUMNS
@@ -84,11 +85,7 @@ const CustomerList: React.FC = () => {
     <div className="mx-auto flex min-h-screen w-375 items-start justify-center bg-white px-4 pt-4">
       <div className="w-full border border-slate-300 bg-white shadow-sm">
         {/* TITLE */}
-        <div className="flex h-7.5 w-full items-center border-b border-slate-300 bg-[#a5e0c3]">
-          <h1 className="ml-2.5 text-[17px] font-semibold text-slate-700">
-            Customer List
-          </h1>
-        </div>
+        <Header Name="Customer List" />
 
         {/* SEARCH + ADD */}
         <div className="w-full px-2.5 py-3">
@@ -134,9 +131,8 @@ const CustomerList: React.FC = () => {
                   {COLUMNS.map((col, i) => (
                     <th
                       key={col.label}
-                      className={`${TH} ${col.width} ${col.align} ${
-                        i < COLUMNS.length - 1 ? "border-r" : ""
-                      }`}
+                      className={`${TH} ${col.width} ${col.align} ${i < COLUMNS.length - 1 ? "border-r" : ""
+                        }`}
                     >
                       {col.label}
                     </th>

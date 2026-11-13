@@ -1,4 +1,5 @@
 import React, { useEffect, useRef, useState } from "react";
+import Header from "../../components/common/Header";
 import Select, { type StylesConfig } from "react-select";
 import { toast } from "react-toastify";
 import { useEnterAsTab } from "../../hooks/useEnterAsTab";
@@ -456,15 +457,7 @@ const SetDefaultBranchPage: React.FC = () => {
       className="flex min-h-screen w-full items-center justify-center bg-white"
     >
       <div className="w-full max-w-[640px] border border-slate-400 bg-white shadow-sm">
-        {/* ====================================================
-            TITLE
-        ==================================================== */}
-
-        <div className="flex h-[28px] w-full items-center bg-[#a7dfc0]">
-          <h1 className="ml-[5px] text-[17px] font-semibold text-[#374151]">
-            Set Default Branch
-          </h1>
-        </div>
+        <Header Name="Set Default Branch" />
 
         {/* ====================================================
             FORM

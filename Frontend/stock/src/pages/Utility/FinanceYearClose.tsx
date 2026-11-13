@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import Header from "../../components/common/Header";
 import Select, { type SingleValue } from "react-select";
 
 type Option = {
@@ -165,11 +166,7 @@ const FinanceYearClose: React.FC<FinanceYearCloseProps> = ({
       <div className="w-full max-w-[615px] bg-white">
         <main className="w-full border border-[#cfd7df] bg-white">
           {/* Header */}
-          <header className="flex h-[33px] items-center bg-[#9fdfbc]">
-            <h1 className="ml-4 text-[14px] font-semibold text-[#24364d]">
-             Finance Year Close
-            </h1>
-          </header>
+          <Header Name="Finance Year Close" />
 
           {/* Form */}
           <section className="px-4 pb-5 pt-5 sm:px-6">

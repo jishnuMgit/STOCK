@@ -1,4 +1,5 @@
 import React, { useRef, useState } from "react";
+import Header from "../../components/common/Header";
 
 type Status =
   | { kind: "idle" }
@@ -72,11 +73,7 @@ const BackupPage: React.FC<BackupPageProps> = ({
     <div className="flex min-h-screen w-full items-start justify-center bg-white px-4 py-4">
       <div className="min-h-fit w-125 max-w-full bg-white p-0">
         <main className="w-full overflow-hidden border border-[#d5dce2] bg-white">
-          <header className="flex h-7.5 items-center justify-start bg-[#9fdfbc]">
-            <h1 className="m-0 ml-3.5 text-[17px] font-semibold text-[#24364d]">
-              Backup
-            </h1>
-          </header>
+          <Header Name="Backup" />
 
           <section className="px-3.5 pb-6 pt-4">
             <p className="m-0 text-center text-[13px] font-medium text-[#c0392b]">

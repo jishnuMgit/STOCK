@@ -1,4 +1,3 @@
-import { IoMdClose } from "react-icons/io";
 import { useNavigate } from "react-router-dom";
 import CloseButton from "./CloseButton";
 

@@ -1,5 +1,6 @@
 import { Play } from "lucide-react";
 import React, { useState } from "react";
+import Header from "../../components/common/Header";
 
 import Select, {
   type StylesConfig,
@@ -287,33 +288,7 @@ const ActivePeriodPage: React.FC = () => {
           bg-white
         "
       >
-        {/* ======================================================
-            TITLE
-        ====================================================== */}
-
-       <div
-          className="
-            flex
-            h-9
-            items-center
-            border-b
-            border-slate-300
-            bg-[#a3dfc0]
-          "
-        >
-
-          <span
-            className="
-              px-3
-              text-[17px]
-              font-semibold
-              text-slate-700
-            "
-          >
-            Active Period
-          </span>
-
-        </div>
+        <Header Name="Active Period" />
 
         {/* ======================================================
             TABLE

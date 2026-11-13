@@ -3,6 +3,7 @@ import Select, { components, type MenuListProps } from "react-select";
 import { toast } from "react-toastify";
 import { useEnterAsTab } from "../../../hooks/useEnterAsTab";
 import { useButtonPermissions } from "../../../hooks/useButtonPermissions";
+import Header from "../../../components/common/Header";
 
 // ============================================================
 // TYPES
@@ -409,11 +410,7 @@ const InactivateAccountPage: React.FC<InactivateAccountPageProps> = ({
     >
       <div className="mx-auto min-h-full w-160 max-w-full bg-white p-0">
         <main className="w-full overflow-hidden border border-[#d5dce2] bg-white">
-          <header className="flex h-7.5 items-center justify-start bg-[#9fdfbc]">
-            <h1 className="m-0 ml-3.5 text-[17px] font-semibold text-[#24364d]">
-              Inactivate Account
-            </h1>
-          </header>
+          <Header Name="Inactive Account" />
 
           <section className="px-3.5 pb-6 pt-5">
             <div className="grid grid-cols-[100px_1fr] items-center gap-x-4 gap-y-4">
@@ -516,7 +513,7 @@ const InactivateAccountPage: React.FC<InactivateAccountPageProps> = ({
               >
                 <u>M</u>odify
               </button>
-             
+
             </div>
           </section>
         </main>
