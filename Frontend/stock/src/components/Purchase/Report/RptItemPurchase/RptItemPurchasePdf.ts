@@ -7,12 +7,14 @@ import { jsPDF } from "jspdf";
 import autoTable, { type CellDef } from "jspdf-autotable";
 
 import {
-  PDF_BLACK,
   addPageNumbers,
   drawReportTitle,
+  pdfGroupStyles,
+  pdfHeadStyles,
   pdfMargin,
   pdfTableStyles,
   pdfTableTop,
+  registerReportPdfFont,
 } from "../../../common/reportPdf";
 
 import {
@@ -24,9 +26,10 @@ import {
   type PrintReport,
 } from "./RptItemPurchasePrintReport";
 
-export const buildItemPurchasePdf = (report: PrintReport): Blob => {
+export const buildItemPurchasePdf = async (report: PrintReport): Promise<Blob> => {
 
   const doc = new jsPDF({ orientation: "portrait", unit: "mm", format: "a4" });
+  const look = await registerReportPdfFont(doc, "inter"); // the font and the sizes of the look
 
   const pageW = 210;
   const margin = pdfMargin(18);
@@ -61,7 +64,7 @@ export const buildItemPurchasePdf = (report: PrintReport): Blob => {
       {
         content: `Item : ${item.lkpItemID}   ${item.txtItemName}`,
         colSpan: COLUMN_COUNT,
-        styles: { ...bold, lineWidth: 0, minCellHeight: 9, valign: "bottom" },
+        styles: { ...pdfGroupStyles(look), lineWidth: 0, minCellHeight: 9, valign: "bottom" },
       },
     ]);
 
@@ -87,7 +90,7 @@ export const buildItemPurchasePdf = (report: PrintReport): Blob => {
   }
 
   // company / heading / branch + report info - drawn on every page
-  const drawTitle = () => drawReportTitle(doc, pageW, margin, report, report.txtBranch);
+  const drawTitle = () => drawReportTitle(doc, pageW, margin, report, report.txtBranch, look);
 
   autoTable(doc, {
     theme: "plain",
@@ -96,15 +99,15 @@ export const buildItemPurchasePdf = (report: PrintReport): Blob => {
     tableWidth: usable,
     rowPageBreak: "avoid",
     showHead: "everyPage",
-    styles: pdfTableStyles(),
-    headStyles: { textColor: PDF_BLACK, fontStyle: "normal" },
+    styles: pdfTableStyles(look),
+    headStyles: pdfHeadStyles(look),
     columnStyles,
     head,
     body,
     didDrawPage: drawTitle,
   });
 
-  addPageNumbers(doc, pageW, margin);
+  addPageNumbers(doc, pageW, margin, look);
 
   return doc.output("blob");
 };

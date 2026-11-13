@@ -5,6 +5,7 @@
 // Needs:  npm i jspdf jspdf-autotable
 import { jsPDF } from "jspdf";
 import autoTable, { type CellDef } from "jspdf-autotable";
+import { pdfGroupStyles, pdfLabelFontSize, registerReportPdfFont } from "../../../../components/common/reportPdf";
 import type { PriceListReport } from "./PrintSalesPriceListReport";
 
 const fixed = (v: number | null, digits: number) =>
@@ -17,7 +18,6 @@ const fixed = (v: number | null, digits: number) =>
 
 type RGB = [number, number, number];
 const BORDER: RGB = [176, 196, 222]; // LightSteelBlue
-const HEAD_FILL: RGB = [255, 255, 240]; // Ivory
 
 // VB column weights
 // Unit Cost and Unit Price share the same width
@@ -27,8 +27,9 @@ const PAGE_W = 210; // A4 portrait, mm
 const MARGIN = { top: 12, right: 10, bottom: 12, left: 15 };
 const TABLE_TOP = 38; // below company / heading / branch
 
-export const buildSalesPriceListPdf = (report: PriceListReport): Blob => {
+export const buildSalesPriceListPdf = async (report: PriceListReport): Promise<Blob> => {
   const doc = new jsPDF({ orientation: "portrait", unit: "mm", format: "a4" });
+  const look = await registerReportPdfFont(doc, "inter"); // the font and the sizes of the look
   const usable = PAGE_W - MARGIN.left - MARGIN.right;
 
   const body: CellDef[][] = [];
@@ -37,11 +38,8 @@ export const buildSalesPriceListPdf = (report: PriceListReport): Blob => {
       {
         content: `Item Group :  ${g.groupId}  ${g.groupName}`,
         colSpan: 5,
-        styles: {
-          fontSize: 10,
-          halign: "left",
-          lineWidth: { top: 0, right: 0, left: 0, bottom: 0.2 },
-        },
+        // space above the group line, no rule under it: as in the other reports
+        styles: { ...pdfGroupStyles(look), halign: "left", lineWidth: 0, minCellHeight: 9, valign: "bottom" },
       },
     ]);
     for (const it of g.items) {
@@ -58,16 +56,19 @@ export const buildSalesPriceListPdf = (report: PriceListReport): Blob => {
   // company / heading / branch - drawn on every page
   const drawTitle = () => {
     doc.setTextColor(0, 0, 0);
-    doc.setFont("times", "bold");
-    doc.setFontSize(14);
+    doc.setFont(look.font, "normal");
+    doc.setFontSize(look.size.company);
     doc.text(report.coName, PAGE_W / 2, MARGIN.top + 8, { align: "center" });
 
-    doc.setFont("times", "normal");
-    doc.setFontSize(12);
+    doc.setFontSize(look.size.heading);
     doc.text(report.heading, PAGE_W / 2, MARGIN.top + 15, { align: "center" });
 
-    doc.setFontSize(9);
+    doc.setFontSize(look.size.pdfBody);
     doc.text(report.branch, MARGIN.left, MARGIN.top + 22);
+
+    // the user and the time, on the right of the branch line
+    doc.setFontSize(look.size.small);
+    doc.text(report.reportInfo, PAGE_W - MARGIN.right, MARGIN.top + 22, { align: "right" });
   };
 
   autoTable(doc, {
@@ -83,8 +84,8 @@ export const buildSalesPriceListPdf = (report: PriceListReport): Blob => {
     rowPageBreak: "avoid",
     showHead: "everyPage",
     styles: {
-      font: "times",
-      fontSize: 9,
+      font: look.font,
+      fontSize: look.size.pdfBody,
       cellPadding: 1.2,
       lineColor: BORDER,
       lineWidth: 0.2,
@@ -94,9 +95,9 @@ export const buildSalesPriceListPdf = (report: PriceListReport): Blob => {
       textColor: [0, 0, 0],
     },
     headStyles: {
-      fillColor: HEAD_FILL,
       textColor: [0, 0, 0],
       fontStyle: "normal",
+      fontSize: pdfLabelFontSize(look),
     },
     columnStyles: {
       0: { cellWidth: COL_WIDTHS[0] * usable },
@@ -120,16 +121,12 @@ export const buildSalesPriceListPdf = (report: PriceListReport): Blob => {
 
   // page numbers need the final page count, so they are added at the end
   const pages = doc.getNumberOfPages();
-  doc.setFont("times", "normal");
-  doc.setFontSize(8);
+  doc.setFont(look.font, "normal");
+  doc.setFontSize(look.size.small);
   doc.setTextColor(0, 0, 0);
   for (let i = 1; i <= pages; i++) {
     doc.setPage(i);
-    const h = doc.internal.pageSize.getHeight();
     doc.text(`Page ${i} of ${pages}`, PAGE_W - MARGIN.right, MARGIN.top, {
-      align: "right",
-    });
-    doc.text(report.reportInfo, PAGE_W - MARGIN.right, h - MARGIN.bottom + 6, {
       align: "right",
     });
   }

@@ -1,27 +1,23 @@
 import React, { useEffect, useMemo } from "react";
-import Select, {
-  components,
-  type FormatOptionLabelMeta,
-  type MenuListProps,
-  type StylesConfig,
-} from "react-select";
 import dayjs from "dayjs";
 import customParseFormat from "dayjs/plugin/customParseFormat";
 import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
 import { DatePicker } from "@mui/x-date-pickers/DatePicker";
 import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
 import type { SxProps, Theme } from "@mui/material/styles";
-import selectComponents from "../../sharecomponents/selectComponents";
 import type {
   CustomerLookup,
   Option,
   ParamLookup,
   SalesHeader,
 } from "../../../hooks/useSalesInvoice"; // adjust path to your hook
-import SelectDropdownIndicator from "../../common/SelectDropdownIndicator";
 import { useNavigate } from "react-router-dom";
 import CloseButton from "../../common/CloseButton";
 import Header from "../../common/Header";
+import CommonTableSelect from "../../common/CommonTableSelect";
+import CustomLinkedPairSelect, {
+  type PairSelectOption,
+} from "../../common/CustomLinkedPairSelect";
 
 dayjs.extend(customParseFormat);
 
@@ -51,472 +47,23 @@ type SalesInvoiceHeaderProps = {
   readOnly: boolean; // posted invoice
 };
 
-// ============================================================
-// FOCUS COLORS (same as the purchase invoice form)
-// ============================================================
-
 const BORDER_COLOR = "#d7dee7";
 const BORDER_HOVER_COLOR = "#aebdce";
 const BORDER_FOCUS_COLOR = "#9fdfbc";
-
-// ============================================================
-// SELECT STYLES
-// ============================================================
-
-const selectStyles: StylesConfig<Option, false> = {
-  control: (base, state) => ({
-    ...base,
-
-    minHeight: 30,
-    height: 30,
-    width: "100%",
-    borderRadius: 4,
-    borderColor: state.isFocused ? BORDER_FOCUS_COLOR : BORDER_COLOR,
-    boxShadow: "none",
-    backgroundColor: state.isDisabled ? "#f1f5f9" : "#ffffff",
-    cursor: state.isDisabled ? "not-allowed" : "pointer",
-    fontSize: 14,
-    "&:hover": {
-      borderColor: state.isFocused ? BORDER_FOCUS_COLOR : BORDER_HOVER_COLOR,
-    },
-  }),
-
-  valueContainer: (base) => ({
-    ...base,
-
-    height: 21,
-    minHeight: 21,
-    padding: "0 5px",
-    overflow: "hidden",
-  }),
-
-  singleValue: (base) => ({
-    ...base,
-
-    color: "#202020",
-    fontSize: 14,
-    margin: 0,
-    overflow: "hidden",
-    textOverflow: "ellipsis",
-    whiteSpace: "nowrap",
-  }),
-
-  placeholder: (base) => ({
-    ...base,
-
-    color: "#64748b",
-    fontSize: 14,
-    margin: 0,
-  }),
-
-  input: (base) => ({
-    ...base,
-
-    margin: 0,
-    padding: 0,
-    fontSize: 14,
-  }),
-
-  indicatorsContainer: (base) => ({
-    ...base,
-
-    height: 20,
-  }),
-
-  dropdownIndicator: (base) => ({
-    ...base,
-
-    padding: "0 2px",
-    color: "#64748b",
-  }),
-
-  indicatorSeparator: () => ({
-    display: "none",
-  }),
-
-  menuPortal: (base) => ({
-    ...base,
-
-    zIndex: 999999,
-  }),
-
-  menu: (base) => ({
-    ...base,
-
-    zIndex: 999999,
-    fontSize: 14,
-    marginTop: 1,
-  }),
-
-  menuList: (base) => ({
-    ...base,
-
-    padding: 0,
-    maxHeight: 180,
-  }),
-
-  option: (base, state) => ({
-    ...base,
-
-    padding: "5px 7px",
-    fontSize: 14,
-    color: "#202020",
-    cursor: "pointer",
-    backgroundColor: state.isSelected
-      ? "#dbeafe"
-      : state.isFocused
-        ? "#eff6ff"
-        : "#ffffff",
-  }),
-};
-
-// ============================================================
-// BRANCH LOOKUP MENU (two columns: Branch | ID, gray header row)
-// ============================================================
-
-const MENU_FONT_SIZE = 14;
-const BRANCH_COL_WIDTH = 150;
-
-const BranchMenuList = (props: MenuListProps<Option, false>) => (
-  <components.MenuList {...props}>
-    <div
-      style={{
-        display: "flex",
-        position: "sticky",
-        top: 0,
-        zIndex: 1,
-        background: "#eeeeee",
-        borderBottom: "1px solid #cfcfcf",
-        fontWeight: 600,
-        fontSize: MENU_FONT_SIZE,
-        color: "#202a36",
-      }}
-    >
-      <div
-        style={{
-          width: BRANCH_COL_WIDTH,
-          flexShrink: 0,
-          boxSizing: "border-box",
-          padding: "5px 8px",
-          borderRight: "1px solid #cfcfcf",
-        }}
-      >
-        Branch
-      </div>
-      <div style={{ flex: 1, padding: "5px 8px" }}>ID</div>
-    </div>
-    {props.children}
-  </components.MenuList>
-);
-
-// menu rows show two columns; the control shows only the branch name
-const formatBranch = (option: Option, meta: FormatOptionLabelMeta<Option>) => {
-  if (meta.context !== "menu") return option.label;
-
-  return (
-    <div style={{ display: "flex" }}>
-      <div
-        style={{
-          width: BRANCH_COL_WIDTH,
-          flexShrink: 0,
-          boxSizing: "border-box",
-          padding: "6px 8px",
-          borderRight: "1px solid #e3e8ef",
-        }}
-      >
-        {option.label}
-      </div>
-      <div style={{ flex: 1, padding: "6px 8px" }}>{option.value}</div>
-    </div>
-  );
-};
-
-const branchStyles: StylesConfig<Option, false> = {
-  ...selectStyles,
-  menu: (base, state) => ({
-    ...selectStyles.menu!(base, state),
-    width: 220,
-    minWidth: 220,
-    border: "none",
-    borderRadius: 0,
-    boxShadow: "0 0 0 1px #cfcfcf, 0 4px 10px rgba(0,0,0,0.15)",
-  }),
-  menuList: (base) => ({ ...base, padding: 0, maxHeight: 260 }),
-  option: (base, state) => ({
-    ...base,
-    padding: 0,
-    fontSize: MENU_FONT_SIZE,
-    color: "#263449",
-    cursor: "pointer",
-    backgroundColor: state.isSelected
-      ? "#cdeedd"
-      : state.isFocused
-        ? "#e6f6ee"
-        : "#ffffff",
-  }),
-};
-
-const branchComponents = {
-  ...selectComponents,
-  DropdownIndicator: SelectDropdownIndicator,
-  MenuList: BranchMenuList,
-};
-
-// ============================================================
-// TYPE LOOKUP MENU (two columns: Type | Name, gray header row)
-// ============================================================
-
-const TYPE_COL_WIDTH = 70;
 
 // fallback names when the server sends no name
 const TYPE_NAMES: Record<string, string> = { R: "CREDIT", C: "CASH" };
 
 // this screen is Sales Invoice (Credit), so only R is offered by default
 const defaultInvoiceTypes: TypeOption[] = [{ value: "R", label: "R" }];
-
-const TypeMenuList = (props: MenuListProps<Option, false>) => (
-  <components.MenuList {...props}>
-    <div
-      style={{
-        display: "flex",
-        position: "sticky",
-        top: 0,
-        zIndex: 1,
-        background: "#eeeeee",
-        borderBottom: "1px solid #cfcfcf",
-        fontWeight: 600,
-        fontSize: MENU_FONT_SIZE,
-        color: "#202a36",
-      }}
-    >
-      <div
-        style={{
-          width: TYPE_COL_WIDTH,
-          flexShrink: 0,
-          boxSizing: "border-box",
-          padding: "5px 8px",
-          borderRight: "1px solid #cfcfcf",
-        }}
-      >
-        Type
-      </div>
-      <div style={{ flex: 1, padding: "5px 8px" }}>Name</div>
-    </div>
-    {props.children}
-  </components.MenuList>
-);
-
-const typeStyles: StylesConfig<Option, false> = {
-  ...branchStyles,
-  menu: (base, state) => ({
-    ...branchStyles.menu!(base, state),
-    width: 200,
-    minWidth: 200,
-  }),
-};
-
-const typeComponents = {
-  ...selectComponents,
-  MenuList: TypeMenuList,
-};
-
-// ============================================================
-// CUSTOMER LOOKUP MENUS (same look as the Supplier dropdowns
-// in the purchase invoice form)
-// ============================================================
-
-const CUSTOMER_ID_COL_WIDTH = 146;
-
-// Customer Name menu: the name column is as wide as the select,
-// the ID column sticks out to the right of it
-const NAME_MENU_ID_COL_WIDTH = 150;
-
-/* gray sticky header row at the top of the menu */
-const createCustomerMenuList = (
-  firstTitle: string,
-  secondTitle: string,
-  firstWidth?: number, // omit to let the first column fill the rest
-  secondWidth?: number, // fixed width of the second column
-) => {
-  const MenuList = (props: MenuListProps<Option, false>) => (
-    <components.MenuList {...props}>
-      <div
-        style={{
-          display: "flex",
-          position: "sticky",
-          top: 0,
-          zIndex: 1,
-          background: "#eeeeee",
-          borderBottom: "1px solid #cfcfcf",
-          fontWeight: 600,
-          fontSize: MENU_FONT_SIZE,
-          color: "#202a36",
-        }}
-      >
-        <div
-          style={{
-            ...(firstWidth
-              ? { width: firstWidth, flexShrink: 0 }
-              : { flex: 1 }),
-            boxSizing: "border-box",
-            padding: "5px 8px",
-            borderRight: "1px solid #cfcfcf",
-          }}
-        >
-          {firstTitle}
-        </div>
-        <div
-          style={{
-            ...(secondWidth
-              ? { width: secondWidth, flexShrink: 0 }
-              : { flex: 1 }),
-            boxSizing: "border-box",
-            padding: "5px 8px",
-          }}
-        >
-          {secondTitle}
-        </div>
-      </div>
-      {props.children}
-    </components.MenuList>
-  );
-  return MenuList;
-};
-
-const customerIdMenuComponents = {
-  ...selectComponents,
-  DropdownIndicator: SelectDropdownIndicator,
-  MenuList: createCustomerMenuList(
-    "Customer ID",
-    "Customer Name",
-    CUSTOMER_ID_COL_WIDTH,
-  ),
-};
-
-const customerNameMenuComponents = {
-  ...selectComponents,
-  DropdownIndicator: SelectDropdownIndicator,
-  MenuList: createCustomerMenuList(
-    "Customer Name",
-    "Customer ID",
-    undefined,
-    NAME_MENU_ID_COL_WIDTH,
-  ),
-};
-
-/* two-column row renderer; the control itself shows only its own label */
-const renderCustomerRow = (
-  first: string,
-  second: string,
-  firstWidth?: number,
-  secondWidth?: number,
-) => (
-  <div style={{ display: "flex" }}>
-    <div
-      style={{
-        ...(firstWidth ? { width: firstWidth, flexShrink: 0 } : { flex: 1 }),
-        boxSizing: "border-box",
-        padding: "6px 8px",
-        borderRight: "1px solid #e3e8ef",
-      }}
-    >
-      {first}
-    </div>
-    <div
-      style={{
-        ...(secondWidth ? { width: secondWidth, flexShrink: 0 } : { flex: 1 }),
-        boxSizing: "border-box",
-        padding: "6px 8px",
-      }}
-    >
-      {second}
-    </div>
-  </div>
-);
-
-const lookupMenuStyles: StylesConfig<Option, false> = {
-  menuPortal: (base) => ({ ...base, zIndex: 999999 }),
-  menu: (base) => ({
-    ...base,
-    zIndex: 999999,
-    fontSize: MENU_FONT_SIZE,
-    marginTop: 1,
-    width: 480,
-    minWidth: 480,
-    border: "none",
-    borderRadius: 0,
-    boxShadow: "0 0 0 1px #cfcfcf, 0 4px 10px rgba(0,0,0,0.15)",
-  }),
-  menuList: (base) => ({ ...base, padding: 0, maxHeight: 260 }),
-  option: (base, state) => ({
-    ...base,
-    padding: 0,
-    fontSize: MENU_FONT_SIZE,
-    color: "#263449",
-    cursor: "pointer",
-    backgroundColor: state.isSelected
-      ? "#cdeedd"
-      : state.isFocused
-        ? "#e6f6ee"
-        : "#ffffff",
-  }),
-};
-
-/* menu starts at its own select and ends at the right edge of the box
-   with the given id (the paired name select) */
-const spanMenuStyles = (endBoxId: string): StylesConfig<Option, false> => ({
-  ...lookupMenuStyles,
-  menuPortal: (base) => {
-    const end =
-      typeof document !== "undefined"
-        ? document.getElementById(endBoxId)
-        : null;
-    const right = end?.getBoundingClientRect().right;
-    return {
-      ...base,
-      zIndex: 999999,
-      width: right ? Math.max(right - Number(base.left), 240) : 480,
-    };
-  },
-  menu: (base, state) => ({
-    ...lookupMenuStyles.menu!(base, state),
-    width: "100%",
-    minWidth: 0,
-  }),
-});
-
-/* menu exactly as wide as its own select */
-const fullWidthMenuStyles: StylesConfig<Option, false> = {
-  ...lookupMenuStyles,
-  menu: (base, state) => ({
-    ...lookupMenuStyles.menu!(base, state),
-    width: "100%",
-    minWidth: 0,
-  }),
-};
-
-const customerIdStyles: StylesConfig<Option, false> = {
-  ...selectStyles,
-  ...spanMenuStyles("customerNameBox"),
-};
-
-const customerNameStyles: StylesConfig<Option, false> = {
-  ...selectStyles,
-  ...fullWidthMenuStyles,
-  // portal = select width + the ID column that sticks out on the right
-  menuPortal: (base) => ({
-    ...base,
-    zIndex: 999999,
-    width: Number(base.width) + NAME_MENU_ID_COL_WIDTH,
-  }),
-  // menu fills the portal, so the Name column ends exactly at the select's
-  // right edge and the ID column (150px) sits outside it
-  menu: (base, state) => ({
-    ...lookupMenuStyles.menu!(base, state),
-    width: "100%",
-    minWidth: 0,
-  }),
-};
+const branchColumns = [
+  { key: "label", label: "Branch" },
+  { key: "value", label: "ID", width: "70px", align: "right" as const },
+];
+const typeColumns = [
+  { key: "value", label: "Type", width: "70px" },
+  { key: "name", label: "Name" },
+];
 
 // ============================================================
 // INPUT STYLE
@@ -698,127 +245,47 @@ const SalesInvoiceHeader: React.FC<SalesInvoiceHeaderProps> = ({
   // LOOKUP OPTIONS
   // ==========================================================
 
-  const customerIdOptions = useMemo<Option[]>(
-    () => customers.map((c) => ({ value: c.id, label: c.id })),
-    [customers],
-  );
+  const customerPairOptions = useMemo<PairSelectOption[]>(() => {
+    const options = customers.map((customer) => ({
+      value: customer.id,
+      firstLabel: customer.id,
+      secondLabel: customer.name,
+    }));
 
-  const customerNameOptions = useMemo<Option[]>(
-    () => customers.map((c) => ({ value: c.id, label: c.name })),
-    [customers],
-  );
+    if (
+      header.customerId &&
+      !options.some((option) => option.value === header.customerId)
+    ) {
+      options.push({
+        value: header.customerId,
+        firstLabel: header.customerId,
+        secondLabel: header.customerName || header.customerId,
+      });
+    }
+
+    return options;
+  }, [customers, header.customerId, header.customerName]);
 
   const navigate = useNavigate();
 
-  // selected values (fall back to the saved invoice's customer if it is
-  // not in the lookup list)
-  const customerIdValue: Option | null = header.customerId
-    ? (customerIdOptions.find((o) => o.value === header.customerId) ?? {
-      value: header.customerId,
-      label: header.customerId,
-    })
-    : null;
-
-  const customerNameValue: Option | null = header.customerId
-    ? (customerNameOptions.find((o) => o.value === header.customerId) ?? {
-      value: header.customerId,
-      label: header.customerName || header.customerId,
-    })
-    : null;
-
-  const invoiceTypeValue: Option | null = header.invoiceType
-    ? (invoiceTypes.find((o) => o.value === header.invoiceType) ?? {
-      value: header.invoiceType,
-      label: header.invoiceType,
-    })
-    : null;
-
-  // ==========================================================
-  // INVOICE TYPE HELPERS
-  // ==========================================================
-
-  // value -> name from the server (fPName), falling back to CASH / CREDIT
-  const typeNameByValue = useMemo(
+  const invoiceTypeTableOptions = useMemo(
     () =>
-      new Map(
-        invoiceTypes.map((t) => [
-          t.value,
-          t.name || TYPE_NAMES[t.value] || t.label,
-        ]),
-      ),
+      invoiceTypes.map((option) => ({
+        ...option,
+        name: option.name || TYPE_NAMES[option.value] || option.label,
+      })),
     [invoiceTypes],
   );
 
-  // menu rows show Type | Name; the control shows only the type letter
-  const formatType = (option: Option, meta: FormatOptionLabelMeta<Option>) => {
-    if (meta.context !== "menu") return option.label;
-
-    return (
-      <div style={{ display: "flex" }}>
-        <div
-          style={{
-            width: TYPE_COL_WIDTH,
-            flexShrink: 0,
-            boxSizing: "border-box",
-            padding: "6px 8px",
-            borderRight: "1px solid #e3e8ef",
-          }}
-        >
-          {option.value}
-        </div>
-        <div style={{ flex: 1, padding: "6px 8px" }}>
-          {typeNameByValue.get(option.value) ?? option.label}
-        </div>
-      </div>
-    );
-  };
-
-  // ==========================================================
-  // CUSTOMER LOOKUP HELPERS
-  // ==========================================================
-
-  // id -> name, so the ID dropdown can show the name column too
-  const customerNameById = useMemo(
-    () => new Map(customers.map((c) => [c.id, c.name])),
-    [customers],
-  );
-
-  const formatCustomerId = (
-    option: Option,
-    meta: FormatOptionLabelMeta<Option>,
-  ) =>
-    meta.context !== "menu"
-      ? option.label
-      : renderCustomerRow(
-        option.value,
-        customerNameById.get(option.value) ?? "",
-        CUSTOMER_ID_COL_WIDTH,
-      );
-
-  const formatCustomerName = (
-    option: Option,
-    meta: FormatOptionLabelMeta<Option>,
-  ) =>
-    meta.context !== "menu"
-      ? option.label
-      : renderCustomerRow(
-        option.label,
-        option.value,
-        undefined,
-        NAME_MENU_ID_COL_WIDTH,
-      );
-
-  // typing searches both the id and the name
-  const filterCustomer = (option: { data: Option }, input: string): boolean => {
-    const text = input.trim().toLowerCase();
-    if (!text) return true;
-    return (
-      option.data.value.toLowerCase().includes(text) ||
-      (customerNameById.get(option.data.value) ?? "")
-        .toLowerCase()
-        .includes(text)
-    );
-  };
+  const invoiceTypeValue = header.invoiceType
+    ? (invoiceTypeTableOptions.find(
+        (option) => option.value === header.invoiceType,
+      ) ?? {
+        value: header.invoiceType,
+        label: header.invoiceType,
+        name: TYPE_NAMES[header.invoiceType] ?? header.invoiceType,
+      })
+    : null;
 
   // ==========================================================
   // INITIAL FOCUS: cursor starts in Invoice No. when the page loads
@@ -901,22 +368,21 @@ const SalesInvoiceHeader: React.FC<SalesInvoiceHeaderProps> = ({
           </label>
 
           <div className="ml-2 w-55">
-            <Select<Option, false>
+            <CommonTableSelect
               inputId="lkpBranch"
-              instanceId="lkpBranch"
               options={branchOptions}
               value={branch}
               onChange={onBranchChange}
-              styles={branchStyles}
-              components={branchComponents}
-              formatOptionLabel={formatBranch}
+              columns={branchColumns}
+              width="220px"
+              menuWidth="220px"
+              headerFontSize="14px"
               isClearable={false}
               isSearchable={false}
               isLoading={branchLoading}
               isDisabled={readOnly}
               placeholder={branchLoading ? "Loading..." : "Select branch"}
               noOptionsMessage={() => branchError ?? "No branches found"}
-              menuPosition="fixed"
               menuPortalTarget={menuPortalTarget}
             />
           </div>
@@ -949,21 +415,20 @@ const SalesInvoiceHeader: React.FC<SalesInvoiceHeaderProps> = ({
           </label>
 
           <div className="w-22">
-            <Select<Option, false>
+            <CommonTableSelect
               inputId="lkpType"
-              instanceId="lkpType"
-              options={invoiceTypes}
+              options={invoiceTypeTableOptions}
               value={invoiceTypeValue}
               onChange={(option) =>
                 onHeaderChange({ invoiceType: option?.value ?? "" })
               }
-              styles={typeStyles}
-              components={typeComponents}
-              formatOptionLabel={formatType}
+              columns={typeColumns}
+              width="88px"
+              menuWidth="200px"
+              headerFontSize="14px"
               isClearable={false}
               isSearchable={false}
               isDisabled={readOnly}
-              menuPosition="fixed"
               menuPortalTarget={menuPortalTarget}
             />
           </div>
@@ -1016,52 +481,25 @@ const SalesInvoiceHeader: React.FC<SalesInvoiceHeaderProps> = ({
             {/* CUSTOMER */}
             <div className="mb-2.5 flex h-7.5 items-center gap-2 w-200 min-w-[600]">
               <label className={labelClass}>Customer :</label>
-
-              {/* Customer ID */}
-              <div className="w-35">
-                <Select<Option, false>
-                  inputId="lkpCustomerID"
-                  instanceId="lkpCustomerID"
-                  options={customerIdOptions}
-                  value={customerIdValue}
-                  components={customerIdMenuComponents}
-                  formatOptionLabel={formatCustomerId}
-                  filterOption={filterCustomer}
-                  onChange={(option) =>
-                    option && onCustomerSelect(option.value)
-                  }
-                  styles={customerIdStyles}
-                  isClearable={false}
-                  isSearchable
-                  isDisabled={readOnly}
-                  placeholder=""
-                  menuPosition="fixed"
-                  menuPortalTarget={menuPortalTarget}
-                />
-              </div>
-
-              {/* Customer Name */}
-              <div id="customerNameBox" className="-ml-1.25 w-117.5 min-w-75">
-                <Select<Option, false>
-                  inputId="lkpCustomerName"
-                  instanceId="lkpCustomerName"
-                  options={customerNameOptions}
-                  value={customerNameValue}
-                  components={customerNameMenuComponents}
-                  formatOptionLabel={formatCustomerName}
-                  filterOption={filterCustomer}
-                  onChange={(option) =>
-                    option && onCustomerSelect(option.value)
-                  }
-                  styles={customerNameStyles}
-                  isClearable={false}
-                  isSearchable
-                  isDisabled={readOnly}
-                  placeholder=""
-                  menuPosition="fixed"
-                  menuPortalTarget={menuPortalTarget}
-                />
-              </div>
+              <CustomLinkedPairSelect
+                firstInputId="lkpCustomerID"
+                secondInputId="lkpCustomerName"
+                options={customerPairOptions}
+                firstValue={header.customerId || null}
+                secondValue={header.customerId || null}
+                firstHeader="Customer ID"
+                secondHeader="Customer Name"
+                firstWidth={140}
+                secondWidth={470}
+                gap={4}
+                headerFontSize="14px"
+                isSearchable
+                isDisabled={readOnly}
+                menuPortalTarget={menuPortalTarget}
+                onChange={(option) => {
+                  if (option) onCustomerSelect(option.value);
+                }}
+              />
             </div>
 
             {/* ADDRESS */}

@@ -7,7 +7,7 @@
 // With more than one branch the report has one section per branch ("Branch : Jeddah", its items,
 // then the next branch ...); the Summary gives each branch its own Total row.
 import ExcelJS from "exceljs";
-import { addReportTitle, applyReportFont, thin } from "../../../utils/reportStyle.js";
+import { addReportTitle, applyReportFont, levelFont, thin } from "../../../utils/reportStyle.js";
 
 import type {
   DetailBranch,
@@ -84,7 +84,7 @@ export const buildStockReportWorkbook = async (report: StockReport): Promise<Buf
       ];
 
   // ---- company / heading / branch + report info (rows 1-3): the same on every report ----
-  addReportTitle(ws, report, report.txtBranch, columns);
+  addReportTitle(ws, report, report.txtBranch, columns, undefined, "inter");
 
   // ---- column labels (row 4) ----
   const labels = detailed
@@ -96,7 +96,7 @@ export const buildStockReportWorkbook = async (report: StockReport): Promise<Buf
   const head = ws.getRow(4);
   head.values = labels;
   head.eachCell((cell, col) => {
-    cell.font = { bold: true };
+    cell.font = levelFont("columnHead", true, "inter");
     cell.border = thin;
     cell.alignment = { horizontal: col >= rightFrom ? "right" : "left" };
   });
@@ -108,7 +108,7 @@ export const buildStockReportWorkbook = async (report: StockReport): Promise<Buf
   const addBranchRow = (name: string) => {
     const row = ws.addRow([`Branch : ${name}`]);
     ws.mergeCells(row.number, 1, row.number, columns);
-    row.getCell(1).font = { bold: true };
+    row.getCell(1).font = levelFont("group", true, "inter");
     row.getCell(1).alignment = { horizontal: "left" };
   };
 
@@ -123,7 +123,7 @@ export const buildStockReportWorkbook = async (report: StockReport): Promise<Buf
       for (const item of branch.items) {
         const itemRow = ws.addRow([`Item : ${item.lkpItemID}   ${item.txtItemName}`]);
         ws.mergeCells(itemRow.number, 1, itemRow.number, columns);
-        itemRow.getCell(1).font = { bold: true };
+        itemRow.getCell(1).font = levelFont("group", true, "inter");
         itemRow.getCell(1).alignment = { horizontal: "left" };
 
         for (const line of item.lines) {
@@ -215,7 +215,7 @@ export const buildStockReportWorkbook = async (report: StockReport): Promise<Buf
   }
 
   // the whole sheet in the report font (the table too, not only the title)
-  applyReportFont(ws);
+  applyReportFont(ws, "inter");
 
   return Buffer.from(await wb.xlsx.writeBuffer());
 };

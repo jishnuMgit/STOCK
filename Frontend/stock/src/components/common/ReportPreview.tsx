@@ -19,7 +19,7 @@ type Props = {
   // Print: the browser's print window (the printer, or Save as PDF)
   onPrint: () => void;
   // the PDF file, made in the browser
-  buildPdf: () => Blob;
+  buildPdf: () => Blob | Promise<Blob>;
   // the Excel file made by the server (null after an error message)
   fetchExcel: () => Promise<Blob | null>;
   onClose: () => void;
@@ -105,7 +105,7 @@ const ReportPreview: React.FC<Props> = ({
 
     setBusy(true);
     try {
-      const blob = asPdf ? buildPdf() : await fetchExcel();
+      const blob = asPdf ? await buildPdf() : await fetchExcel();
       if (!blob) return; // the error is already shown
 
       const kind = asPdf ? "pdf" : "xlsx";

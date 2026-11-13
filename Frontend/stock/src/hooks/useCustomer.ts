@@ -27,6 +27,11 @@ export interface Staff {
   staffName: string;
 }
 
+export interface Branch {
+  brId: string;
+  brName: string;
+}
+
 // Full customer record: GET /customer/:csAccountId (response)
 // and POST / PUT body. Keys match the backend SP_PARAM_MAP.
 export interface CustomerDetail {
@@ -79,7 +84,7 @@ export interface CustomerDetail {
   interCompany?: boolean | null;
   doNotRound?: boolean | null;
   shortName?: string | null;
-   staffId?: string | null;
+  staffId?: string | null;
   csAccountCategoryId?: string | null;
 }
 
@@ -144,6 +149,7 @@ export const useCustomer = () => {
   const [parentAccounts, setParentAccounts] = useState<ParentAccount[]>([]);
   const [countries, setCountries] = useState<Country[]>([]);
   const [staffs, setStaffs] = useState<Staff[]>([]);
+  const [branches, setBranches] = useState<Branch[]>([]);
 
   const fetchCustomers = useCallback(async (): Promise<Customer[] | null> => {
     try {
@@ -257,6 +263,25 @@ export const useCustomer = () => {
     }
   }, []);
 
+  const fetchBranches = useCallback(async (): Promise<Branch[] | null> => {
+    try {
+      setError("");
+      const result = await apiGet<{
+        data: { fbrid: string; fbrname: string | null }[];
+      }>("/branch");
+      const list = (result.data ?? []).map((b) => ({
+        brId: b.fbrid,
+        brName: b.fbrname ?? "",
+      }));
+      setBranches(list);
+      return list;
+    } catch (err: unknown) {
+      console.error("Branches error:", err);
+      setError(err instanceof Error ? err.message : "Failed to fetch branches");
+      return null;
+    }
+  }, []);
+
   // ------------------------------------------------------------
   // Single-record calls. These THROW on failure (and don't touch the
   // shared `error` state, which the list page uses to hide the table)
@@ -311,6 +336,8 @@ export const useCustomer = () => {
     fetchCountries,
     staffs,
     fetchStaffs,
+    branches,
+    fetchBranches,
     fetchCustomer,
     saveCustomer,
     updateCustomer,

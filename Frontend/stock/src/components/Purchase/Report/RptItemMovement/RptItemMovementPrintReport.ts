@@ -52,7 +52,7 @@ export const isNonMoving = (r: PrintReport) => r.rdgItemMovement === 2;
 // the column weights, as the old reports
 //   Fast / Slow: Item ID | Item Name | Item Group Name | Moved Qty. | Moved Value | Stock
 //   Non Moving : Item ID | Item Name | Item Group | Stock
-export const MOVING_COLUMN_WEIGHTS = [0.19, 0.3, 0.17, 0.115, 0.13, 0.095];
+export const MOVING_COLUMN_WEIGHTS = [0.16, 0.27, 0.21, 0.125, 0.14, 0.095]; // the labels are 14 px: Item Group Name / Moved Value fit on one line
 export const NON_MOVING_COLUMN_WEIGHTS = [0.225, 0.42, 0.23, 0.125];
 
 export const columnWeights = (r: PrintReport) =>
@@ -87,7 +87,7 @@ export const buildHtml = (r: PrintReport) => {
 <head>
 <meta charset="utf-8" />
 <title>Item Movement</title>
-<style>${reportPrintCss({ orientation: "portrait", marginLeft: "15mm", groupSelector: "td.group" })}
+<style>${reportPrintCss({ look: "inter", orientation: "portrait", marginLeft: "15mm", groupSelector: "td.group" })}
 </style>
 </head>
 <body>

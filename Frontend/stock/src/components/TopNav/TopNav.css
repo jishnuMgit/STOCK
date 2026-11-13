@@ -138,3 +138,10 @@
     align-items: center;
     gap: 10px;
 }
+
+.user-company {
+    font-size: 11px;
+    font-weight: 600;
+    color: #475569;
+    line-height: 1.2;
+}
