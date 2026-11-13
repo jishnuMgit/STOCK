@@ -11,7 +11,7 @@ import customParseFormat from "dayjs/plugin/customParseFormat";
 import Header from "../../../components/common/Header";
 
 import CommonTableSelect, {
-  
+
 } from "../../../components/common/CommonTableSelect";
 
 import CustomLinkedPairSelect, {
@@ -114,9 +114,8 @@ const CustomRadio: React.FC<RadioProps> = ({
   disabled = false,
 }) => (
   <label
-    className={`flex items-center gap-1.25 whitespace-nowrap select-none ${
-      disabled ? "cursor-not-allowed opacity-40" : "cursor-pointer"
-    }`}
+    className={`flex items-center gap-1.25 whitespace-nowrap select-none ${disabled ? "cursor-not-allowed opacity-40" : "cursor-pointer"
+      }`}
   >
     <input
       type="radio"
@@ -129,9 +128,8 @@ const CustomRadio: React.FC<RadioProps> = ({
     />
 
     <span
-      className={`flex h-4.75 w-4.75 shrink-0 items-center justify-center rounded-full border ${
-        checked ? "border-[#4ade80]" : "border-[#c3cbd3]"
-      } bg-white`}
+      className={`flex h-4.75 w-4.75 shrink-0 items-center justify-center rounded-full border ${checked ? "border-[#4ade80]" : "border-[#c3cbd3]"
+        } bg-white`}
     >
       {checked && (
         <span className="h-2.25 w-2.25 rounded-full bg-[#4ade80]" />
@@ -262,15 +260,15 @@ const AppDatePicker: React.FC<{
         },
 
         "& .MuiPickersInputBase-root:hover .MuiPickersOutlinedInput-notchedOutline":
-          {
-            borderColor: "#B7C7D7 !important",
-          },
+        {
+          borderColor: "#B7C7D7 !important",
+        },
 
         "& .MuiPickersInputBase-root.Mui-focused .MuiPickersOutlinedInput-notchedOutline":
-          {
-            borderColor: "#B7C7D7 !important",
-            borderWidth: "1px",
-          },
+        {
+          borderColor: "#B7C7D7 !important",
+          borderWidth: "1px",
+        },
       }}
     />
   </LocalizationProvider>
@@ -516,18 +514,18 @@ const AssetItemList: React.FC = () => {
                       setCostCenterId(
                         option
                           ? {
-                              value: option.value,
-                              label: option.firstLabel,
-                            }
+                            value: option.value,
+                            label: option.firstLabel,
+                          }
                           : null,
                       );
 
                       setCostCenterName(
                         option
                           ? {
-                              value: option.value,
-                              label: option.secondLabel,
-                            }
+                            value: option.value,
+                            label: option.secondLabel,
+                          }
                           : null,
                       );
                     }}
@@ -583,18 +581,18 @@ const AssetItemList: React.FC = () => {
                       setAssetId(
                         option
                           ? {
-                              value: option.value,
-                              label: option.firstLabel,
-                            }
+                            value: option.value,
+                            label: option.firstLabel,
+                          }
                           : null,
                       );
 
                       setAssetName(
                         option
                           ? {
-                              value: option.value,
-                              label: option.secondLabel,
-                            }
+                            value: option.value,
+                            label: option.secondLabel,
+                          }
                           : null,
                       );
                     }}

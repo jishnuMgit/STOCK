@@ -29,7 +29,6 @@ const PRESERVED_KEYS = [
   "transType",
   "invMethod",
   "rcnMethod",
-  "brId",
   "ctaCardType",
   "ctaCardNo",
   "ctaExpiry",
@@ -109,6 +108,7 @@ const CustomerPage: React.FC<CustomerPageProps> = ({
   const [txtShortName, setTxtShortName] = useState("");
   const [lkpStaff, setLkpStaff] = useState("");
   const [txtContact, setTxtContact] = useState("");
+  const [lkpBranch, setLkpBranch] = useState("");
   const [txtEMail, setTxtEMail] = useState("");
   const [txtPhone, setTxtPhone] = useState("");
 
@@ -130,11 +130,18 @@ const CustomerPage: React.FC<CustomerPageProps> = ({
     fetchCountries,
     staffs,
     fetchStaffs,
+    branches,
+    fetchBranches,
     fetchCustomer,
     saveCustomer,
     updateCustomer,
     deleteCustomer,
   } = useCustomer();
+
+  const branchOptions = branches.map((b) => ({
+    value: b.brId,
+    label: b.brName,
+  }));
 
   // ============================================================
   // LOAD (add mode: defaults / edit mode: existing record)
@@ -146,6 +153,7 @@ const CustomerPage: React.FC<CustomerPageProps> = ({
       fetchParentAccounts(),
       fetchCountries(),
       fetchStaffs(),
+      fetchBranches(),
     ]);
 
     if (nextId) setTxtCustomerID(nextId);
@@ -162,7 +170,13 @@ const CustomerPage: React.FC<CustomerPageProps> = ({
       setLkpCountry(defaultCountry.countryId);
       setLkpCountry_AR(defaultCountry.countryId);
     }
-  }, [fetchNextCustomerId, fetchParentAccounts, fetchCountries, fetchStaffs]);
+  }, [
+    fetchNextCustomerId,
+    fetchParentAccounts,
+    fetchCountries,
+    fetchStaffs,
+    fetchBranches,
+  ]);
 
   // DB record -> form state
   const populate = useCallback((d: CustomerDetail) => {
@@ -200,6 +214,7 @@ const CustomerPage: React.FC<CustomerPageProps> = ({
     setTxtShortName(d.shortName ?? "");
     setLkpStaff(d.staffId ?? "");
     setTxtContact(d.contact ?? "");
+    setLkpBranch(d.brId ?? "");
     setTxtEMail(d.email ?? "");
     setTxtPhone(d.phone ?? "");
 
@@ -227,6 +242,7 @@ const CustomerPage: React.FC<CustomerPageProps> = ({
         fetchParentAccounts(),
         fetchCountries(),
         fetchStaffs(),
+        fetchBranches(),
       ]);
       populate(detail);
       const match = accounts?.find((a) => a.accountId === detail.gAccountId);
@@ -244,6 +260,7 @@ const CustomerPage: React.FC<CustomerPageProps> = ({
     fetchParentAccounts,
     fetchCountries,
     fetchStaffs,
+    fetchBranches,
     populate,
   ]);
 
@@ -327,33 +344,55 @@ const CustomerPage: React.FC<CustomerPageProps> = ({
     }
 
     // numbers only + max length (also catches old records with bad data)
-    const numericChecks: [string, string, number][] = [
-      ["Building No", txtBuildingNo, 4],
-      ["Postal Code", txtPostalCode, 5],
-      ["Additional No", txtAdditionalNo, 4],
-      ["CR No", txtCRNo, 20],
-      ["VAT No", txtVATNo, 15],
-      ["Building No (AR)", txtBuildingNo_AR, 4],
-      ["Postal Code (AR)", txtPostalCode_AR, 5],
-      ["Additional No (AR)", txtAdditionalNo_AR, 4],
-      ["CR No (AR)", txtCRNo_AR, 20],
-      ["VAT No (AR)", txtVATNo_AR, 15],
-    ];
+    const isB2B = lkpBusinessType === "B2B";
 
-    for (const [label, value, max] of numericChecks) {
-      if (value && !/^\d+$/.test(value)) {
-        toast.warning(`${label} must contain numbers only`);
+    if (isB2B) {
+      const requiredFields: [string, string][] = [
+        ["Legal Name", txtLegalName],
+        ["Building No", txtBuildingNo],
+        ["Street Name", txtStreetName],
+        ["District", txtDistrict],
+        ["City", txtCity],
+        ["Country", lkpCountry],
+        ["Postal Code", txtPostalCode],
+        ["VAT No", txtVATNo],
+      ];
+
+      const missing = requiredFields.find(([, value]) => !value.trim());
+      if (missing) {
+        toast.warning(`${missing[0]} is required`);
         return;
       }
-      if (value.length > max) {
-        toast.warning(`${label} cannot be longer than ${max} digits`);
+
+      // numbers only + max length (B2B only)
+      const numericChecks: [string, string, number][] = [
+        ["Building No", txtBuildingNo, 4],
+        ["Postal Code", txtPostalCode, 5],
+        ["Additional No", txtAdditionalNo, 4],
+        ["CR No", txtCRNo, 20],
+        ["VAT No", txtVATNo, 15],
+        ["Building No (AR)", txtBuildingNo_AR, 4],
+        ["Postal Code (AR)", txtPostalCode_AR, 5],
+        ["Additional No (AR)", txtAdditionalNo_AR, 4],
+        ["CR No (AR)", txtCRNo_AR, 20],
+        ["VAT No (AR)", txtVATNo_AR, 15],
+      ];
+
+      for (const [label, value, max] of numericChecks) {
+        if (value && !/^\d+$/.test(value)) {
+          toast.warning(`${label} must contain numbers only`);
+          return;
+        }
+        if (value.length > max) {
+          toast.warning(`${label} cannot be longer than ${max} digits`);
+          return;
+        }
+      }
+
+      if (txtEMail && !/^\S+@\S+\.\S+$/.test(txtEMail)) {
+        toast.warning("Invalid e-mail");
         return;
       }
-    }
-
-    if (txtEMail && !/^\S+@\S+\.\S+$/.test(txtEMail)) {
-      toast.warning("Invalid e-mail");
-      return;
     }
 
     const payload: CustomerDetail = {
@@ -395,6 +434,7 @@ const CustomerPage: React.FC<CustomerPageProps> = ({
       shortName: txtShortName,
       staffId: lkpStaff || undefined,
       contact: txtContact,
+      brId: lkpBranch,
       email: txtEMail,
       phone: txtPhone,
 
@@ -495,6 +535,7 @@ const CustomerPage: React.FC<CustomerPageProps> = ({
     setTxtShortName("");
     setLkpStaff("");
     setTxtContact("");
+    setLkpBranch("");
     setTxtEMail("");
     setTxtPhone("");
 
@@ -504,10 +545,6 @@ const CustomerPage: React.FC<CustomerPageProps> = ({
     setChkInactiveCustomer(false);
     setChkExcludeFromAgeing(false);
   };
-
-  // ============================================================
-  // JSX
-  // ============================================================
 
   // ============================================================
   // KEYBOARD: focus Customer ID on open, Enter = Tab
@@ -562,6 +599,10 @@ const CustomerPage: React.FC<CustomerPageProps> = ({
     }
   };
 
+  // ============================================================
+  // JSX
+  // ============================================================
+
   if (loadingRecord) {
     return (
       <div className="w-full bg-white p-6 text-center text-[12px] text-slate-500">
@@ -591,12 +632,12 @@ const CustomerPage: React.FC<CustomerPageProps> = ({
       />
       {/* Header + middle are locked in delete mode */}
       <fieldset disabled={isDelete} className="m-0 min-w-0 border-0 p-0">
-        {/* HEADER */}
-
         {/* MIDDLE */}
         <CustomerMiddle
+        isB2B={lkpBusinessType === "B2B"}
           countries={countries}
           staffs={staffs}
+          branchOptions={branchOptions}
           txtCustomerName={txtCustomerName}
           setTxtCustomerName={setTxtCustomerName}
           txtLegalName={txtLegalName}
@@ -651,6 +692,8 @@ const CustomerPage: React.FC<CustomerPageProps> = ({
           setLkpStaff={setLkpStaff}
           txtContact={txtContact}
           setTxtContact={setTxtContact}
+          lkpBranch={lkpBranch}
+          setLkpBranch={setLkpBranch}
           txtEMail={txtEMail}
           setTxtEMail={setTxtEMail}
           txtPhone={txtPhone}
