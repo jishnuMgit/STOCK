@@ -456,7 +456,7 @@ const AssetItemList: React.FC = () => {
                       onChange={setBranch}
                       columns={branchColumns}
                       width="250px"
-                      menuWidth="305px"
+                      menuWidth="330px"
                       placeholder="Select Branch"
                     />
 

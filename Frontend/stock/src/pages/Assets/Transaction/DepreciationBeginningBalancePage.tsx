@@ -474,13 +474,7 @@ const DepreciationBeginningBalancePage: React.FC = () => {
     setActiveRow(1);
   };
 
-  // ==================================================
-  // CLOSE
-  // ==================================================
-
-  const handleClose = () => {
-    window.history.back();
-  };
+ 
 
   // ==================================================
   // UI
@@ -661,7 +655,7 @@ const DepreciationBeginningBalancePage: React.FC = () => {
                   <th className="w-4 border border-[#B7ECD0]" />
 
                   <th className="w-[5%] border border-[#B7ECD0] text-center text-[12px] font-normal text-[#172b43]">
-                    Sl.#
+                    Sl.No.
                   </th>
 
                   <th className="w-[15%] border border-[#B7ECD0] px-1 text-left text-[12px] font-normal text-[#172b43]">
@@ -899,12 +893,7 @@ const DepreciationBeginningBalancePage: React.FC = () => {
               Cancel
             </ActionButton>
 
-            <ActionButton
-              onClick={handleClose}
-              className="w-20"
-            >
-              Close
-            </ActionButton>
+          
 
           </div>
 

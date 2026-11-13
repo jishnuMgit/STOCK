@@ -16,6 +16,7 @@
     "@mui/x-date-pickers": "^9.13.0",
     "@tailwindcss/vite": "^4.3.3",
     "dayjs": "^1.11.23",
+    "html2canvas": "^1.4.1",
     "jspdf": "^4.2.1",
     "jspdf-autotable": "^5.0.9",
     "lucide-react": "^1.44.0",

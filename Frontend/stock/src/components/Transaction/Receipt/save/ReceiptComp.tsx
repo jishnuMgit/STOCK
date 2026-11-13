@@ -14,7 +14,7 @@ import React, {
 import { apiFetch } from "../../../../utils/session";
 import { GetStrDocType } from "../../../../utils/receiptHelpers";
 
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { FaEye } from "react-icons/fa";
 
 import Select, {
@@ -68,6 +68,7 @@ import {
   type AccountOption,
   type AccountOptionProps,
 } from "../../../../types/receiptypes";
+import CloseButton from "../../../common/CloseButton";
 
 export type TableField =
   | "accountId"
@@ -85,9 +86,14 @@ export type SortField = "accountId" | "accountName";
 ========================================================= */
 
 export const ReceiptHeader: React.FC = () => {
+  const navigate = useNavigate();
   return (
-    <header className="flex h-6.5 items-center justify-start pl-2.5 bg-[#9fdfbc] text-[18px] font-semi-bold text-slate-700">
-      Receipt
+    <header className="flex h-9 items-center border-b border-slate-300 bg-[#a3dfc0] pr-2">
+      <span className="px-3 text-[17px] font-semibold text-slate-700">Receipt</span>
+
+      <div className="ml-auto">
+        <CloseButton onClose={() => navigate("/")} />
+      </div>
     </header>
   );
 };
@@ -315,15 +321,15 @@ export const ReceiptForm: React.FC<ReceiptFormProps> = ({
     return apiTypeOptions.length > 0
       ? apiTypeOptions
       : [
-          {
-            value: "Bank",
-            label: "B",
-          },
-          {
-            value: "Cash",
-            label: "C",
-          },
-        ];
+        {
+          value: "Bank",
+          label: "B",
+        },
+        {
+          value: "Cash",
+          label: "C",
+        },
+      ];
   }, [financialParameters]);
 
   /*
@@ -1306,31 +1312,31 @@ export const ReceiptForm: React.FC<ReceiptFormProps> = ({
                 },
 
                 "& .MuiPickersInputBase-root:hover .MuiPickersOutlinedInput-notchedOutline":
-                  {
-                    borderColor: "#B7C7D7 !important",
-                  },
+                {
+                  borderColor: "#B7C7D7 !important",
+                },
 
                 "& .MuiPickersInputBase-root.Mui-focused .MuiPickersOutlinedInput-notchedOutline":
-                  {
-                    borderColor: "#B7C7D7 !important",
+                {
+                  borderColor: "#B7C7D7 !important",
 
-                    borderWidth: "1px",
-                  },
+                  borderWidth: "1px",
+                },
 
                 "& .MuiPickersInputBase-root.Mui-error .MuiPickersOutlinedInput-notchedOutline":
-                  {
-                    borderColor: "#B7C7D7 !important",
-                  },
+                {
+                  borderColor: "#B7C7D7 !important",
+                },
 
                 "& .MuiPickersInputBase-root.Mui-error:hover .MuiPickersOutlinedInput-notchedOutline":
-                  {
-                    borderColor: "#B7C7D7 !important",
-                  },
+                {
+                  borderColor: "#B7C7D7 !important",
+                },
 
                 "& .MuiPickersInputBase-root.Mui-error.Mui-focused .MuiPickersOutlinedInput-notchedOutline":
-                  {
-                    borderColor: "#B7C7D7 !important",
-                  },
+                {
+                  borderColor: "#B7C7D7 !important",
+                },
               }}
             />
           </LocalizationProvider>
@@ -3052,7 +3058,7 @@ export const ReceiptBottomForm: React.FC<ReceiptBottomFormProps> = ({
   setDescription,
   descriptionRef,
   onDescriptionEnter,
-  onDescriptionClear = () => {},
+  onDescriptionClear = () => { },
   note,
   setNote,
   noteRef,
@@ -3168,6 +3174,8 @@ interface ReceiptActionsProps {
 
   saveLabel?: string;
 
+  isPosted?: boolean;
+
   preventSearchNavigation?: boolean;
 }
 
@@ -3185,6 +3193,7 @@ export const ReceiptActions = forwardRef<
       onPost,
       onAttach,
       saveLabel = "Save",
+      isPosted = false,
       preventSearchNavigation = false,
     },
     ref,
@@ -3292,6 +3301,9 @@ export const ReceiptActions = forwardRef<
      btn-style
     `;
 
+    const disabledPostedActionClass =
+      "disabled:cursor-not-allowed disabled:opacity-50";
+
     const textClass = `
       bg-gradient-to-b
       from-[#145c34]
@@ -3318,7 +3330,10 @@ export const ReceiptActions = forwardRef<
         <button
           ref={saveRef}
           type="button"
-          className={buttonClass}
+          className={`${buttonClass} ${
+            isPosted && saveLabel === "Modify" ? disabledPostedActionClass : ""
+          }`}
+          disabled={isPosted && saveLabel === "Modify"}
           onFocus={() => handleFocus(0)}
           onKeyDown={handleKeyDown}
           onClick={onSave}
@@ -3356,7 +3371,10 @@ export const ReceiptActions = forwardRef<
         <button
           ref={deleteRef}
           type="button"
-          className={buttonClass}
+          className={`${buttonClass} ${
+            isPosted ? disabledPostedActionClass : ""
+          }`}
+          disabled={isPosted}
           onFocus={() => handleFocus(2)}
           onKeyDown={handleKeyDown}
           onClick={onDelete}
@@ -3383,7 +3401,10 @@ export const ReceiptActions = forwardRef<
         <button
           ref={postRef}
           type="button"
-          className={buttonClass}
+          className={`${buttonClass} ${
+            isPosted ? disabledPostedActionClass : ""
+          }`}
+          disabled={isPosted}
           onFocus={() => handleFocus(4)}
           onKeyDown={handleKeyDown}
           onClick={onPost}

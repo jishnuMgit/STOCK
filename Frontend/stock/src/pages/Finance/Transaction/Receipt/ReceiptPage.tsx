@@ -27,11 +27,13 @@ import {
   type ReceiptRow,
   type AccountData,
   type ReceiptPrintData,
+  type ReceiptPrintResponse,
 } from "../../../../types/receiptypes";
 import { toast } from "react-toastify";
 import ReceiptPrint from "../../../../components/Transaction/Receipt/save/Receipt.print";
+import { buildReceiptPdf } from "../../../../components/Transaction/Receipt/save/ReceiptPdf";
 
-import { apiFetch } from "../../../../utils/session";
+import { apiFetch, getSession } from "../../../../utils/session";
 import { GetStrDocType } from "../../../../utils/receiptHelpers";
 
 /* =========================================================
@@ -96,6 +98,7 @@ interface ModifyReceiptResponse {
     lkpType?: string;
     docNo?: string;
     dtpDate?: string;
+    fpost?: boolean | string | number;
     // cbAccount?: string;
     cbAccountName?: string;
     CCID?: string;
@@ -160,6 +163,11 @@ const getTodayDate = () => {
   return `${day}/${month}/${year}`;
 };
 
+const isPostedFlag = (value: unknown) =>
+  value === true ||
+  value === 1 ||
+  ["true", "1", "t"].includes(String(value ?? "").trim().toLowerCase());
+
 /* =========================================================
    RECEIPT
 ========================================================= */
@@ -193,6 +201,7 @@ const ReceiptPage: React.FC = () => {
   ======================================================= */
 
   const [isModifyMode, setIsModifyMode] = useState(false);
+  const [isPosted, setIsPosted] = useState(false);
   const [, setReceiptMessage] = useState("");
 
   /* =======================================================
@@ -332,24 +341,66 @@ const ReceiptPage: React.FC = () => {
 
   const handlePrint = async () => {
     try {
-      const response = await apiFetch(
-        `${import.meta.env.VITE_API_URL}/Receipt/print?lkpBranch=${lkpBranch}&lkpType=${lkpType}&txtDocNo=${txtDocNo}`,
-      );
-
-      if (!response.ok) {
-        throw new Error("Failed to fetch receipt print data");
+      if (!lkpBranch || !lkpType || !txtDocNo.trim()) {
+        toast.warning("Branch, receipt type, and receipt number are required.");
+        return;
       }
 
-      const result = await response.json();
+      const response = await apiFetch(
+        `${import.meta.env.VITE_API_URL}/Receipt/print?${new URLSearchParams({
+          lkpBranch,
+          lkpType,
+          txtDocNo: txtDocNo.trim(),
+        })}`,
+      );
 
-      if (!result.success || !result.data) {
-        throw new Error("Invalid receipt print response");
+      const result = (await response.json()) as ReceiptPrintResponse;
+
+      if (!response.ok || !result.success || !result.data) {
+        throw new Error(result.message || "Failed to fetch receipt print data.");
       }
 
       setPrintData(result.data);
       setIsPrint(true);
     } catch (error) {
       console.error("Print data fetch error:", error);
+      toast.error(
+        error instanceof Error
+          ? error.message
+          : "Cannot connect to the Receipt API.",
+      );
+    }
+  };
+
+  const fetchReceiptExcel = async (): Promise<Blob | null> => {
+    if (!printData) return null;
+
+    try {
+      const response = await apiFetch(
+        `${import.meta.env.VITE_API_URL}/Receipt/excel?${new URLSearchParams({
+          lkpBranch,
+          lkpType,
+          txtDocNo: printData.docNo,
+        })}`,
+      );
+
+      if (!response.ok) {
+        let message = "Could not create the Excel file.";
+        try {
+          const result = (await response.json()) as { message?: string };
+          message = result.message || message;
+        } catch {
+          message = `Could not create the Excel file (error ${response.status}).`;
+        }
+        toast.error(message);
+        return null;
+      }
+
+      return await response.blob();
+    } catch (error) {
+      console.error("Receipt Excel download error:", error);
+      toast.error("Cannot connect to the Receipt API.");
+      return null;
     }
   };
   /* =======================================================
@@ -402,6 +453,7 @@ const ReceiptPage: React.FC = () => {
 
       if (!response.ok || !result.exists || !result.header) {
         setIsModifyMode(false);
+        setIsPosted(false);
 
         setReceiptMessage(
           result.message ||
@@ -471,6 +523,7 @@ const ReceiptPage: React.FC = () => {
       setRows(loadedRows);
       setDescription("");
       setActiveDescriptionRow(null);
+      setIsPosted(isPostedFlag(result.header.fpost));
 
       /* ===============================================
              MODIFY MODE
@@ -488,6 +541,7 @@ const ReceiptPage: React.FC = () => {
     } catch (error) {
       lastLookupKeyRef.current = "";
       setIsModifyMode(false);
+      setIsPosted(false);
       console.error("MODIFY LOOKUP ERROR:", error);
       setReceiptMessage(
         error instanceof Error ? error.message : "Unable to load receipt.",
@@ -521,6 +575,7 @@ const ReceiptPage: React.FC = () => {
     setDtpDate(getTodayDate());
 
     setIsModifyMode(false);
+    setIsPosted(false);
     setReceiptMessage("");
 
     lastLookupKeyRef.current = "";
@@ -1260,6 +1315,11 @@ const ReceiptPage: React.FC = () => {
   ======================================================= */
 
   const handleModify = useCallback(async () => {
+    if (isPosted) {
+      toast.warning("A posted receipt cannot be modified.");
+      return;
+    }
+
     /* ===============================================
            THIS MUST APPEAR IMMEDIATELY WHEN BUTTON IS CLICKED
         =============================================== */
@@ -1532,6 +1592,7 @@ const ReceiptPage: React.FC = () => {
     rows,
     total,
     resetTableAndLoadNextReceiptNumber,
+    isPosted,
   ]);
 
   /* =======================================================
@@ -1539,6 +1600,11 @@ const ReceiptPage: React.FC = () => {
    ======================================================= */
 
   const handledelete = useCallback(async () => {
+    if (isPosted) {
+      toast.warning("A posted receipt cannot be deleted.");
+      return;
+    }
+
     try {
       /* ===============================================
          VALIDATION
@@ -1649,7 +1715,7 @@ const ReceiptPage: React.FC = () => {
           : "Cannot connect to Receipt API.",
       );
     }
-  }, [lkpBranch, lkpType, txtDocNo, resetTableAndLoadNextReceiptNumber]);
+  }, [isPosted, lkpBranch, lkpType, txtDocNo, resetTableAndLoadNextReceiptNumber]);
 
   /* =======================================================
      CLEAR FORM
@@ -1660,6 +1726,148 @@ const ReceiptPage: React.FC = () => {
 
     setFocusReceiptNoAfterClear((current) => current + 1);
   }, [resetTableAndLoadNextReceiptNumber]);
+
+  /* =======================================================
+     POST
+  ======================================================= */
+
+  const postRequestInFlight = useRef(false);
+
+  const handlePost = useCallback(async () => {
+    if (postRequestInFlight.current) return;
+
+    if (isPosted) {
+      toast.warning("This receipt is already posted.");
+      return;
+    }
+
+    if (!lkpBranch) {
+      toast.warning("Please select 'Branch'.");
+      document.getElementById("lkpBranch")?.focus();
+      return;
+    }
+
+    if (!lkpType) {
+      toast.warning("Please select 'Type'.");
+      document.getElementById("lkpType")?.focus();
+      return;
+    }
+
+    if (!txtDocNo.trim()) {
+      toast.warning("Please enter 'Receipt No.'.");
+      document.getElementById("txtDocNo")?.focus();
+      return;
+    }
+
+    if (!isModifyMode) {
+      toast.warning("Load a saved receipt before posting.");
+      return;
+    }
+
+    const {
+      pstrCoID: PstrCoID,
+      pstrYear: PstrYear,
+      pstrUserID: PstrUserID,
+    } = getSession();
+
+    if (!PstrCoID || !PstrYear || !PstrUserID) {
+      toast.error("Company ID, year, or user ID is missing. Please log in again.");
+      return;
+    }
+
+    const dateMatch = /^(\d{2})\/(\d{2})\/(\d{4})$/.exec(dtpDate.trim());
+    if (!dateMatch) {
+      toast.warning("Please enter a valid receipt date.");
+      document.getElementById("dtpDate")?.focus();
+      return;
+    }
+
+    const [, day, month, year] = dateMatch;
+    const isoDate = `${year}-${month}-${day}`;
+    const parsedDate = new Date(`${isoDate}T00:00:00`);
+    if (
+      Number.isNaN(parsedDate.getTime()) ||
+      parsedDate.getFullYear() !== Number(year) ||
+      parsedDate.getMonth() + 1 !== Number(month) ||
+      parsedDate.getDate() !== Number(day)
+    ) {
+      toast.warning("Please enter a valid receipt date.");
+      document.getElementById("dtpDate")?.focus();
+      return;
+    }
+
+    if (!window.confirm("Do you want to post this receipt?")) return;
+
+    postRequestInFlight.current = true;
+
+    try {
+      const response = await apiFetch(
+        `${import.meta.env.VITE_API_URL}/Receipt/post`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            PstrCoID,
+            PstrYear,
+            lkpBranch,
+            lkpDocType: GetStrDocType(lkpType),
+            txtDocNo: txtDocNo.trim(),
+            dtpDate: isoDate,
+            PstrUserID,
+          }),
+        },
+      );
+
+      const responseText = await response.text();
+      let result: {
+        success?: boolean;
+        message?: string;
+        intDocPostCount?: number;
+      };
+
+      try {
+        result = JSON.parse(responseText) as {
+          success?: boolean;
+          message?: string;
+          intDocPostCount?: number;
+        };
+      } catch {
+        result = {
+          success: false,
+          message: responseText || "Receipt could not be posted.",
+        };
+      }
+
+      if (!response.ok || !result.success) {
+        toast.error(
+          result.message || `Receipt could not be posted (error ${response.status}).`,
+        );
+        return;
+      }
+
+      toast.success(result.message || "Receipt posting completed successfully.");
+      await resetTableAndLoadNextReceiptNumber();
+      setFocusReceiptNoAfterClear((current) => current + 1);
+    } catch (error) {
+      console.error("Receipt posting error:", error);
+      toast.error(
+        error instanceof Error
+          ? error.message
+          : "Cannot connect to the Receipt API.",
+      );
+    } finally {
+      postRequestInFlight.current = false;
+    }
+  }, [
+    dtpDate,
+    isPosted,
+    isModifyMode,
+    lkpBranch,
+    lkpType,
+    resetTableAndLoadNextReceiptNumber,
+    txtDocNo,
+  ]);
+
   /* =======================================================
      INITIAL FOCUS
   ======================================================= */
@@ -1808,9 +2016,11 @@ const ReceiptPage: React.FC = () => {
           ref={actionsRef}
           clearForm={clearForm}
           onPrint={handlePrint}
+          onPost={() => void handlePost()}
           onSave={isModifyMode ? handleModify : handleSave}
           onDelete={handledelete}
           saveLabel={isModifyMode ? "Modify" : "Save"}
+          isPosted={isPosted}
           preventSearchNavigation
         />
       </div>
@@ -1818,7 +2028,13 @@ const ReceiptPage: React.FC = () => {
       {isPrint && printData && (
         <ReceiptPrint
           data={printData}
-          onPrintComplete={() => {
+          fileBase={`Receipt-${printData.branchId}-${printData.docNo}`.replace(
+            /[^\w.-]+/g,
+            "_",
+          )}
+          buildPdf={buildReceiptPdf}
+          fetchExcel={fetchReceiptExcel}
+          onClose={() => {
             setIsPrint(false);
             setPrintData(null);
           }}

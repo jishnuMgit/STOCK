@@ -28,6 +28,7 @@ interface ReceiptHeader {
   note: any;
   DivID: any;
   totalCredit: number;
+  fpost:boolean
 }
 
 interface ReceiptDetailRow {
@@ -211,6 +212,10 @@ export async function GetData(input: GetDataInput): Promise<GetDataResult> {
 
   const dbHeader = headerRows[0];
 
+  console.log("headerRows",dbHeader)
+
+  const fpost=dbHeader.fpost
+
   /* ---------- DETAIL ROWS (signed amount from fdebitcredit) ---------- */
 
   const rows: ReceiptDetailRow[] = (detailRows || [])
@@ -259,6 +264,7 @@ export async function GetData(input: GetDataInput): Promise<GetDataResult> {
     note: dbHeader.fnote ?? "",
     DivID: dbHeader.fdivid ?? "",
     totalCredit: total,
+    fpost
   };
 
   return {
