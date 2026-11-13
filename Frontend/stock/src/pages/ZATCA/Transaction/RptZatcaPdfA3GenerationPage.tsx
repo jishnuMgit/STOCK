@@ -113,7 +113,7 @@ const CustomRadio: React.FC<RadioProps> = ({
       )}
     </span>
 
-    <span className="text-[12px] leading-4.25 text-[#172b43]">
+    <span className="text-[14px] leading-4.25 text-[#172b43]">
       {label}
     </span>
   </label>
@@ -174,7 +174,7 @@ const AppDatePicker: React.FC<{
           boxSizing: "border-box",
           borderRadius: "4px",
           backgroundColor: "#ffffff",
-          fontSize: "12px",
+          fontSize: "14px",
           padding: 0,
           overflow: "hidden",
         },
@@ -187,13 +187,13 @@ const AppDatePicker: React.FC<{
           overflow: "hidden",
         },
         "& .MuiPickersInputBase-sectionContent": {
-          fontSize: "12px",
+          fontSize: "14px",
           color: "#344054",
         },
         "& .MuiPickersInputBase-input": {
           minWidth: 0,
           width: "100%",
-          fontSize: "12px",
+          fontSize: "14px",
           padding: 0,
           height: "28px",
           boxSizing: "border-box",
@@ -489,7 +489,7 @@ const RptZatcaPdfA3Generation: React.FC = () => {
 
             {/* Document Selection */}
             <div className="flex items-start gap-2">
-              <RadioPanel className="w-32.5 min-h-18.75 shrink-0">
+              <RadioPanel className="w-35 min-h-18.75 shrink-0">
                 <CustomRadio
                   name="rdgDocument"
                   value="One Document"
@@ -528,7 +528,7 @@ const RptZatcaPdfA3Generation: React.FC = () => {
 
             {/* Branch Selection */}
             <div className="flex items-start sm:justify-start">
-              <RadioPanel className="w-30 min-h-18.75">
+              <RadioPanel className="w-35 min-h-18.75">
                 <CustomRadio
                   name="rdgBranch"
                   value="One Branch"
@@ -618,7 +618,7 @@ const RptZatcaPdfA3Generation: React.FC = () => {
                 </div>
               ) : (
                 <div className="flex flex-wrap items-center gap-1.25">
-                  <div className="w-27.5">
+                  <div className="w-35">
                     <AppDatePicker
                       id="dtpFromDate"
                       label="Invoice start date"
@@ -627,7 +627,7 @@ const RptZatcaPdfA3Generation: React.FC = () => {
                     />
                   </div>
 
-                  <div className="w-27.5">
+                  <div className="w-35">
                     <AppDatePicker
                       id="dtpToDate"
                       label="Invoice end date"
@@ -641,7 +641,7 @@ const RptZatcaPdfA3Generation: React.FC = () => {
 
             {/* Customer Selection */}
             <div className="flex items-start">
-              <RadioPanel className="w-32.5 min-h-18.75">
+              <RadioPanel className="w-35 min-h-18.75">
                 <CustomRadio
                   name="rdgCustomer"
                   value="One Customer"
@@ -672,7 +672,8 @@ const RptZatcaPdfA3Generation: React.FC = () => {
                     firstHeader="Customer ID"
                     secondHeader="Customer Name"
                     firstWidth={120}
-                    secondWidth={400}
+                    secondWidth={380}
+                    gap={10}
                     firstInputId="lkpcustomerId"
                     secondInputId="lkpcustomerName"
                     menuZIndex={99999}
