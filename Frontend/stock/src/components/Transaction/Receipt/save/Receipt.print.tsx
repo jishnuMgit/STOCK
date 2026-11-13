@@ -1,11 +1,14 @@
 import React, { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
+import { toast } from "react-toastify";
 import logo from "./global-network.png";
+import { saveFile } from "../../../../pages/Finance/Report/ChartOfAccount/saveFile";
 
 import type {
  ReceiptPrintData,
    ReceiptPrintRow,
 } from "../../../../types/receiptypes";
+import Header from "../../../sharecomponents/Header";
 
 const FIRST_PAGE_ROWS = 7;
 const NEXT_PAGE_ROWS = 13;
@@ -317,41 +320,41 @@ const InfoBox: React.FC<{
 
 interface ReceiptPrintProps {
   data: ReceiptPrintData;
-  onPrintComplete?: () => void;
+  fileBase: string;
+  buildPdf: (previewRoot: HTMLElement) => Promise<Blob>;
+  fetchExcel: () => Promise<Blob | null>;
+  onClose: () => void;
 }
 
-const ReceiptPrint: React.FC<
-  ReceiptPrintProps
-> = ({ data, onPrintComplete }) => {
+const ReceiptPrint: React.FC<ReceiptPrintProps> = ({
+  data,
+  fileBase,
+  buildPdf,
+  fetchExcel,
+  onClose,
+}) => {
   const pages = splitIntoPages(data.rows);
 
   const frameRef = useRef<HTMLIFrameElement>(null);
-  const onCompleteRef = useRef(onPrintComplete);
-  onCompleteRef.current = onPrintComplete;
+  const downloading = useRef(false);
+  const [fileFormat, setFileFormat] = useState<"Excel" | "PDF">("Excel");
+  const [busy, setBusy] = useState(false);
   const [mountNode, setMountNode] =
     useState<HTMLElement | null>(null);
 
-  /*
-   * The receipt is printed from its own hidden iframe.
-   *
-   * Printing the main window also prints the application
-   * layout (top bar, side bar, 100vh containers, min-widths),
-   * which shrinks the receipt and adds a blank extra page.
-   * An isolated iframe document contains only the receipt, so
-   * the A4 page size and margins below are the only layout.
-   */
+  // Create an isolated document inside the iframe. This prevents
+  // the application's header, sidebar and other layout from printing.
   useEffect(() => {
     const frame = frameRef.current;
     const frameDoc = frame?.contentDocument;
 
-    if (!frame || !frameDoc) {
-      return;
-    }
+    if (!frame || !frameDoc) return;
 
     frameDoc.open();
     frameDoc.write(
       "<!doctype html><html><head><meta charset=\"utf-8\" />" +
-        "<title>Receipt</title></head><body></body></html>"
+        "<meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\" />" +
+        "<title>Receipt Preview</title></head><body></body></html>"
     );
     frameDoc.close();
 
@@ -362,81 +365,127 @@ const ReceiptPrint: React.FC<
     };
   }, []);
 
-  useEffect(() => {
-    const frame = frameRef.current;
+  const handlePrint = async () => {
+    const frameWindow = frameRef.current?.contentWindow;
 
-    if (!mountNode || !frame?.contentWindow) {
-      return;
+    if (!frameWindow) return;
+
+    await waitForPreviewImages();
+
+    frameWindow.focus();
+    frameWindow.print();
+  };
+
+  const waitForPreviewImages = async () => {
+    const frameDoc = frameRef.current?.contentDocument;
+    if (!frameDoc) throw new Error("The receipt preview is not ready.");
+
+    await new Promise<void>((resolve) => {
+      let attempts = 0;
+      const timer = window.setInterval(() => {
+        attempts += 1;
+
+        const imagePending =
+          frameDoc.querySelector("[data-image-pending]") !== null ||
+          Array.from(frameDoc.images).some((image) => !image.complete);
+
+        if ((!imagePending && attempts >= 3) || attempts >= 50) {
+          window.clearInterval(timer);
+          resolve();
+        }
+      }, 100);
+    });
+  };
+
+  const handleDownload = async () => {
+    if (busy || downloading.current) return;
+    downloading.current = true;
+    setBusy(true);
+
+    try {
+      const isPdf = fileFormat === "PDF";
+      let blob: Blob | null;
+      if (isPdf) {
+        await waitForPreviewImages();
+        const previewRoot =
+          frameRef.current?.contentDocument?.querySelector<HTMLElement>(
+            ".receipt-preview-root",
+          );
+        if (!previewRoot) {
+          throw new Error("The receipt preview is not ready for PDF export.");
+        }
+        blob = await buildPdf(previewRoot);
+      } else {
+        blob = await fetchExcel();
+      }
+      if (!blob) return;
+
+      const kind = isPdf ? "pdf" : "xlsx";
+      const saved = await saveFile(blob, `${fileBase}.${kind}`, kind);
+      if (saved) {
+        toast.success(isPdf ? "PDF file downloaded" : "Excel file downloaded");
+        onClose();
+      }
+    } catch (error) {
+      console.error("Receipt download error:", error);
+      toast.error(
+        fileFormat === "PDF"
+          ? "Could not create the PDF file."
+          : "Could not create the Excel file.",
+      );
+    } finally {
+      downloading.current = false;
+      setBusy(false);
     }
-
-    const frameWindow = frame.contentWindow;
-    const frameDoc = frameWindow.document;
-
-    let finished = false;
-    let printed = false;
-    let attempts = 0;
-
-    const finish = () => {
-      if (finished) {
-        return;
-      }
-
-      finished = true;
-      onCompleteRef.current?.();
-    };
-
-    /* Wait until logo / footer images are loaded, then print. */
-    const timer = window.setInterval(() => {
-      attempts += 1;
-
-      const pending =
-        frameDoc.querySelector("[data-image-pending]") !== null ||
-        Array.from(frameDoc.images).some(
-          (image) => !image.complete
-        );
-
-      if ((!pending && attempts >= 3) || attempts >= 40) {
-        window.clearInterval(timer);
-        printed = true;
-
-        frameWindow.focus();
-        frameWindow.print();
-
-        /* Fallback when the browser does not fire afterprint. */
-        window.setTimeout(finish, 1000);
-      }
-    }, 100);
-
-    frameWindow.addEventListener("afterprint", finish);
-
-    return () => {
-      window.clearInterval(timer);
-      frameWindow.removeEventListener("afterprint", finish);
-
-      if (!printed) {
-        finished = true;
-      }
-    };
-  }, [mountNode]);
+  };
 
   return (
-    <iframe
-      ref={frameRef}
-      title="receipt-print"
-      aria-hidden="true"
+    <div
+      className="receipt-preview-overlay"
       style={{
         position: "fixed",
-        right: 0,
-        bottom: 0,
-        width: 0,
-        height: 0,
-        border: 0,
+        inset: 0,
+        zIndex: 99999,
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        padding: 16,
+        background: "rgba(0, 0, 0, 0.45)",
       }}
     >
-      {mountNode &&
-        createPortal(
-          <div className="receipt-print-root">
-            <div className="receipt-doc">
+      <div
+        role="dialog"
+        aria-modal="true"
+        aria-label="Receipt Print Preview"
+        style={{
+          display: "flex",
+          flexDirection: "column",
+          width: "min(1100px, 96vw)",
+          height: "min(850px, 90vh)",
+          overflow: "hidden",
+          border: "1px solid #9ca3af",
+          background: "#ffffff",
+          boxShadow: "0 20px 50px rgba(0, 0, 0, 0.3)",
+        }}
+      >
+   <Header Name="Receipt Print Preview"/>
+      <iframe
+        ref={frameRef}
+        title="receipt-preview"
+        className="receipt-preview-frame"
+        style={{
+          display: "block",
+          flex: 1,
+          width: "100%",
+          minHeight: 0,
+          border: 0,
+          background: "#60656a",
+        }}
+      >
+        {mountNode &&
+          createPortal(
+            <div className="receipt-preview-root">
+              <div className="receipt-doc">
         {pages.map(
           (pageRows, pageIndex) => {
             const isFirstPage =
@@ -446,10 +495,11 @@ const ReceiptPrint: React.FC<
               pageIndex === pages.length - 1;
 
             return (
-              <section
-                className="receipt-page"
+              <div
+                className="receipt-preview-sheet"
                 key={pageIndex}
               >
+                <section className="receipt-page">
                 <PageHeader data={data} />
 
                 {isFirstPage && (
@@ -483,21 +533,29 @@ const ReceiptPrint: React.FC<
                     />
                   </colgroup>
 
-                  {isFirstPage && (
-                    <thead>
-                      <tr>
-                        <th>Account ID</th>
+                {isFirstPage && (
+  <thead>
+    <tr>
+      <th>
+        <span className="receipt-th-label">
+          Account ID
+        </span>
+      </th>
 
-                        <th>
-                          Account Name / Description
-                        </th>
+      <th>
+        <span className="receipt-th-label">
+          Account Name / Description
+        </span>
+      </th>
 
-                        <th className="receipt-right">
-                          Credit Amount
-                        </th>
-                      </tr>
-                    </thead>
-                  )}
+      <th>
+        <span className="receipt-th-label receipt-th-label-right">
+          Credit Amount
+        </span>
+      </th>
+    </tr>
+  </thead>
+)}
 
                   <tbody>
                     {pageRows.map(
@@ -555,7 +613,7 @@ const ReceiptPrint: React.FC<
                       <tr>
                         <td
                           colSpan={2}
-                          className="receipt-right receipt-total-cell"
+                          className="receipt-right receipt-total-cell "
                         >
                           Total :
                         </td>
@@ -595,17 +653,19 @@ const ReceiptPrint: React.FC<
                   </div>
                 )}
 
-                <OptionalImage
-                  sources={[
-                    assetUrl("Footer.jpg"),
-                  ]}
-                  className="receipt-footer-image"
-                />
-              </section>
+                  <OptionalImage
+                    sources={[
+                      assetUrl("Footer.jpg"),
+                    ]}
+                    className="receipt-footer-image"
+                  />
+                </section>
+              </div>
             );
           }
         )}
       </div>
+      
 
       <style>{`
         /* =================================================
@@ -622,16 +682,48 @@ const ReceiptPrint: React.FC<
 
         html,
         body {
+          width: 100%;
+          min-height: 100%;
           margin: 0;
           padding: 0;
-          background: #ffffff;
+          background: white;
         }
 
-        .receipt-print-root {
+        body {
+          min-height: 100vh;
+          overflow: auto;
+          display: flex;
+          justify-content: center;
+        }
+
+        /* =================================================
+           PREVIEW WORKSPACE AND A4 PAPER
+        ================================================= */
+
+        .receipt-preview-root {
           display: block;
-          width: 190.5mm;
+          width: 210mm;
           margin: 0;
-          padding: 0;
+          padding: 16px 0 24px;
+          zoom: min(1, calc((100vw - 32px) / 793.7px));
+        }
+
+        .receipt-preview-sheet {
+          position: relative;
+          width: 210mm;
+          height: 297mm;
+          margin: 0 auto 14px;
+          overflow: hidden;
+          background: #ffffff;
+          border: 0.25mm solid #42464a;
+          box-shadow: 0 1px 8px rgba(0, 0, 0, 0.35);
+          break-after: page;
+          page-break-after: always;
+        }
+
+        .receipt-preview-sheet:last-child {
+          break-after: auto;
+          page-break-after: auto;
         }
 
         /* =================================================
@@ -639,9 +731,9 @@ const ReceiptPrint: React.FC<
         ================================================= */
 
         .receipt-doc {
-          width: 190.5mm;
+          width: 210mm;
           color: #000000;
-          background: #ffffff;
+          background: transparent;
           font-family: "Times New Roman",
             Times, serif;
           font-size: 10pt;
@@ -656,11 +748,12 @@ const ReceiptPrint: React.FC<
           position: relative;
           width: 190.5mm;
           min-height: 288mm;
-          break-after: page;
-          page-break-after: always;
+          margin: 5mm 0 0 12mm;
+          break-after: auto;
+          page-break-after: auto;
         }
 
-        .receipt-page:last-of-type {
+        .receipt-preview-sheet .receipt-page:last-of-type {
           break-after: auto;
           page-break-after: auto;
         }
@@ -825,13 +918,41 @@ const ReceiptPrint: React.FC<
           border-left: 0.25pt solid #000000;
         }
 
-        .receipt-lines th {
-          height: 7mm;
-          font-weight: normal;
-          text-align: left;
-          vertical-align: middle;
-          border-bottom: 0.25pt solid #000000;
-        }
+  .receipt-lines thead tr {
+  height: 7mm;
+}
+
+.receipt-lines thead th {
+  position: relative;
+  height: 7mm;
+  padding: 0 !important;
+  font-weight: normal;
+  vertical-align: middle;
+  border-bottom: 0.25pt solid #000000;
+}
+
+
+/* Precisely position heading text */
+.receipt-th-label {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 2mm;
+  right: 2mm;
+
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+
+  line-height: 1.2;
+  white-space: nowrap;
+  text-align: left;
+}
+
+.receipt-th-label-right {
+  justify-content: flex-end;
+  text-align: right;
+}
 
         /*
          * Data rows:
@@ -868,10 +989,10 @@ const ReceiptPrint: React.FC<
           font-size: 10pt;
         }
 
-        .receipt-total-cell {
-          padding-top: 0 !important;
-          padding-bottom: 0 !important;
-        }
+        // .receipt-total-cell {
+        //   padding-top: 0 !important;
+        //   padding-bottom: 0 !important;
+        // }
 
         /* =================================================
            PREPARED / CHECKED / APPROVED
@@ -922,8 +1043,52 @@ const ReceiptPrint: React.FC<
         ================================================= */
 
         @media print {
+          html,
+          body {
+            width: auto;
+            min-height: 0;
+            margin: 0;
+            padding: 0;
+            background: #ffffff;
+            overflow: visible;
+          }
+
+          .receipt-preview-root {
+            width: 190.5mm;
+            margin: 0;
+            padding: 0;
+            zoom: 1;
+          }
+
+          .receipt-doc {
+            width: 190.5mm;
+            background: #ffffff;
+          }
+
+          .receipt-preview-sheet {
+            width: auto;
+            height: auto;
+            margin: 0;
+            overflow: visible;
+            border: 0;
+            box-shadow: none;
+            background: #ffffff;
+            break-after: auto;
+            page-break-after: auto;
+          }
+
           .receipt-page {
+            width: 190.5mm;
+            min-height: 288mm;
+            margin: 0;
+            break-after: page;
+            page-break-after: always;
             break-inside: avoid;
+          }
+
+          .receipt-preview-sheet:last-child .receipt-page {
+            break-after: auto;
+            page-break-after: auto;
           }
 
           .receipt-company-header,
@@ -934,10 +1099,108 @@ const ReceiptPrint: React.FC<
           }
         }
       `}</style>
-    </div>,
-          mountNode
-        )}
-    </iframe>
+            </div>,
+            mountNode
+          )}
+      </iframe>
+       <div
+        className="receipt-preview-toolbar border-t border-gray-400"
+        style={{
+          minHeight: 56,
+          flexShrink: 0,
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          flexWrap: "wrap",
+          gap: 16,
+          padding: "8px 20px",
+          background: "#ffffff",
+          borderBottom: "1px solid #d1d5db",
+          boxSizing: "border-box",
+        }}
+      >
+      
+
+        <div className="receipt-preview-actions" style={{ display: "flex", alignItems: "center", gap: 8 }}>
+          <button
+            type="button"
+            className="btn-style"
+            onClick={handlePrint}
+            disabled={busy}
+            
+          >
+           <u> P</u>rint
+          </button>
+
+          <button
+            type="button"
+            className="btn-style"
+            onClick={handleDownload}
+            disabled={busy}
+            
+          >
+           <u> D</u>ownload
+          </button>
+ <button
+            type="button"
+            className="btn-style"
+            onClick={onClose}
+            disabled={busy}
+           
+          >
+           <u> C</u>lose
+          </button>
+          <fieldset
+            style={{
+              display: "flex",
+              alignItems: "center",
+              gap: 12,
+              margin: 0,
+              width:180,
+             
+              padding: "6px 10px",
+              border: "1px solid #d1d5db",
+              borderRadius: 4,
+              color: "#374151",
+              fontSize: 13,
+              marginBottom:10
+            }}
+          >
+            
+            <legend style={{ padding: "0 4px" }}>File Format</legend>
+            {(["Excel", "PDF"] as const).map((format) => (
+  <label
+    key={format}
+    style={{
+      display: "flex",
+      alignItems: "center",
+      gap: 4,
+       marginLeft:10,
+    }}
+  >
+    <input
+      type="radio"
+      name="receiptFileFormat"
+      value={format}
+      checked={fileFormat === format}
+      onChange={() => setFileFormat(format)}
+      disabled={busy}
+      style={{
+        accentColor: "#64D96E",
+        cursor: "pointer",
+      }}
+    />
+    {format}
+  </label>
+))}
+          </fieldset>
+
+         
+        </div>
+      </div>
+      </div>
+      
+    </div>
   );
 };
 

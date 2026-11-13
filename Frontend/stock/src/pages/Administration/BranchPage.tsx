@@ -4,6 +4,8 @@ import { useAltShortcuts } from "../../hooks/useAltShortcuts";
 import { useConfirmModal } from "../../hooks/useConfirmModal";
 import { useDeleteToast } from "../../hooks/useDeleteToast";
 import { useGridCellFocus } from "../../hooks/useGridCellFocus";
+import { useNavigate } from "react-router-dom";
+import CloseButton from "../../components/common/CloseButton";
 
 // ============================================================
 // BRANCH (Administration > Branch, the old frmBranch)
@@ -81,6 +83,7 @@ const focusField = (field?: string) => {
 };
 
 const BranchPage: React.FC = () => {
+  const navigate = useNavigate();
   const [rows, setRows] = useState<BranchRow[]>(() => padRows([]));
   const [selectedKey, setSelectedKey] = useState<number | null>(null);
   const [chkFindOpen, setChkFindOpen] = useState(false);
@@ -425,10 +428,15 @@ const BranchPage: React.FC = () => {
     <div className="flex min-h-screen w-full items-start justify-center bg-white px-4 py-4">
       <div className="min-h-fit w-150 max-w-full bg-white p-0">
         <main className="w-full overflow-hidden border border-[#d5dce2] bg-white">
-          <header className="flex h-7.5 items-center justify-start bg-[#9fdfbc]">
+          <header className="flex h-7.5 items-center justify-start bg-[#9fdfbc] pr-2">
             <h1 className="m-0 ml-3.5 text-[17px] font-semibold text-[#24364d]">
               Branch
             </h1>
+
+            {/* close button (the common one, as on the Sales Invoice) */}
+            <div className="ml-auto">
+              <CloseButton onClose={() => navigate("/")} />
+            </div>
           </header>
 
           <section className="px-3.5 pb-6 pt-3">

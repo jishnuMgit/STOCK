@@ -419,7 +419,7 @@ const AssetSchedulePage: React.FC = () => {
                       onChange={setBranch}
                       columns={branchColumns}
                       width="250px"
-                      menuWidth="305px"
+                      menuWidth="320px"
                       placeholder="Select Branch"
                     />
 

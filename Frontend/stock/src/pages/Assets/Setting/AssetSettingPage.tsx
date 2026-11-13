@@ -1,8 +1,8 @@
 
 import React, { useState } from "react";
-import Select from "react-select";
 
 import Header from "../../../components/common/Header";
+
 
 import {
   LocalizationProvider,
@@ -12,14 +12,11 @@ import { DatePicker } from "@mui/x-date-pickers/DatePicker";
 
 import dayjs from "dayjs";
 import customParseFormat from "dayjs/plugin/customParseFormat";
-import selectComponents from "../../../components/sharecomponents/selectComponents";
+import { CustomTableSelect, type TableSelectOption } from "../../../components/common/CommonTableSelect";
 
 dayjs.extend(customParseFormat);
 
-type Option = {
-  value: string;
-  label: string;
-};
+type Option = TableSelectOption;
 
 type AssetSettingRow = {
   id: number;
@@ -36,109 +33,29 @@ const DATE_FORMAT = "DD/MM/YYYY";
 // ==================================================
 
 const accountOptions: Option[] = [
-  { value: "1001", label: "1001 - Fixed Assets" },
-  { value: "1002", label: "1002 - Furniture" },
-  { value: "1003", label: "1003 - Computer Equipment" },
-  { value: "2001", label: "2001 - Accumulated Depreciation" },
-  { value: "3001", label: "3001 - Depreciation Expense" },
+  { value: "1001", label: "1001 - Fixed Assets", accountName: "Fixed Assets" },
+  { value: "1002", label: "1002 - Furniture", accountName: "Furniture" },
+  {
+    value: "1003",
+    label: "1003 - Computer Equipment",
+    accountName: "Computer Equipment",
+  },
+  {
+    value: "2001",
+    label: "2001 - Accumulated Depreciation",
+    accountName: "Accumulated Depreciation",
+  },
+  {
+    value: "3001",
+    label: "3001 - Depreciation Expense",
+    accountName: "Depreciation Expense",
+  },
 ];
 
-// ==================================================
-// REACT SELECT STYLES
-// ==================================================
-
-const tableSelectStyles = {
-  //@ts-ignore
-  control: (base: any, state: any) => ({
-    ...base,
-    minHeight: "26px",
-    height: "26px",
-    width: "100%",
-    border: "none",
-    borderRadius: "0px",
-    boxShadow: "none",
-    backgroundColor: "transparent",
-    cursor: "pointer",
-    fontSize: "12px",
-
-    "&:hover": {
-      borderColor: "#6b8fcf",
-    },
-  }),
-
-  valueContainer: (base: any) => ({
-    ...base,
-    height: "24px",
-    padding: "0px 5px",
-    overflow: "hidden",
-  }),
-
-  input: (base: any) => ({
-    ...base,
-    margin: 0,
-    padding: 0,
-    fontSize: "12px",
-  }),
-
-  singleValue: (base: any) => ({
-    ...base,
-    color: "#172b43",
-    fontSize: "12px",
-    margin: 0,
-  }),
-
-  placeholder: (base: any) => ({
-    ...base,
-    color: "#172b43",
-    fontSize: "12px",
-    margin: 0,
-  }),
-
-  indicatorsContainer: (base: any) => ({
-    ...base,
-    height: "24px",
-  }),
-
-  dropdownIndicator: (base: any) => ({
-    ...base,
-    padding: "3px",
-    color: "#75869a",
-  }),
-
-  clearIndicator: (base: any) => ({
-    ...base,
-    padding: "2px",
-  }),
-
-  indicatorSeparator: () => ({
-    display: "none",
-  }),
-
-  menu: (base: any) => ({
-    ...base,
-    zIndex: 100,
-    fontSize: "12px",
-    marginTop: "1px",
-  }),
-
-  menuPortal: (base: any) => ({
-    ...base,
-    zIndex: 9999,
-  }),
-
-  option: (base: any, state: any) => ({
-    ...base,
-    fontSize: "12px",
-    padding: "6px 8px",
-    backgroundColor: state.isSelected
-      ? "#dbeafe"
-      : state.isFocused
-        ? "#eff6ff"
-        : "#ffffff",
-    color: "#172b43",
-    cursor: "pointer",
-  }),
-};
+const accountColumns = [
+  { key: "accountName", label: "Account Name", width: "1fr" },
+  { key: "value", label: "ID", width: "70px", align: "right" as const },
+];
 
 // ==================================================
 // DATE PICKER
@@ -316,7 +233,7 @@ const AssetSettingPage: React.FC = () => {
   return (
     <div className="min-h-full w-full bg-white p-1 sm:p-2">
 
-      <main className="mx-auto w-full max-w-220 overflow-hidden rounded-[3px] border border-[#91a7bb] bg-white shadow-sm">
+      <main className="mx-auto w-full max-w-330 overflow-hidden rounded-[3px] border border-[#91a7bb] bg-white shadow-sm">
 
         <Header Name="Asset Setting" />
 
@@ -356,7 +273,7 @@ const AssetSettingPage: React.FC = () => {
 
                   <tr
                     key={row.id}
-                    className="h-[30px] bg-[#fbfcfd] hover:bg-[#f3f7ff]"
+                    className="h-7.5 bg-[#fbfcfd] hover:bg-[#f3f7ff]"
                   >
 
                     {/* ROW INDICATOR */}
@@ -368,10 +285,9 @@ const AssetSettingPage: React.FC = () => {
                     {/* ASSET ACCOUNT */}
 
                     <td className="border-r border-b border-[#B7ECD0] p-0">
-                      <Select<Option, false>
+                      <CustomTableSelect
                         inputId={`assetAccount-${row.id}`}
                         options={accountOptions}
-                        components={selectComponents}
                         value={row.assetAccount}
                         onChange={(option) =>
                           handleCellChange(
@@ -380,14 +296,16 @@ const AssetSettingPage: React.FC = () => {
                             option,
                           )
                         }
-                        styles={tableSelectStyles}
+                        columns={accountColumns}
+                        width="100%"
+                        menuWidth="119%"
+                        controlHeight={26}
                         menuPortalTarget={
                           typeof document !== "undefined"
                             ? document.body
                             : undefined
                         }
-                        menuPosition="fixed"
-                        isClearable
+                        
                         isSearchable
                         placeholder=""
                       />
@@ -396,10 +314,9 @@ const AssetSettingPage: React.FC = () => {
                     {/* ACCUMULATED DEPRECIATION ACCOUNT */}
 
                     <td className="border-r border-b border-[#B7ECD0] p-0">
-                      <Select<Option, false>
+                      <CustomTableSelect
                         inputId={`accumulatedAccount-${row.id}`}
                         options={accountOptions}
-                        components={selectComponents}
                         value={row.accumulatedDepreciationAccount}
                         onChange={(option) =>
                           handleCellChange(
@@ -408,14 +325,16 @@ const AssetSettingPage: React.FC = () => {
                             option,
                           )
                         }
-                        styles={tableSelectStyles}
+                        columns={accountColumns}
+                        width="100%"
+                        menuWidth="119%"
+                        controlHeight={26}
                         menuPortalTarget={
                           typeof document !== "undefined"
                             ? document.body
                             : undefined
                         }
-                        menuPosition="fixed"
-                        isClearable
+                        
                         isSearchable
                         placeholder=""
                       />
@@ -424,10 +343,9 @@ const AssetSettingPage: React.FC = () => {
                     {/* DEPRECIATION EXPENSE ACCOUNT */}
 
                     <td className="border-r border-b border-[#B7ECD0] p-0">
-                      <Select<Option, false>
+                      <CustomTableSelect
                         inputId={`expenseAccount-${row.id}`}
                         options={accountOptions}
-                        components={selectComponents}
                         value={row.depreciationExpenseAccount}
                         onChange={(option) =>
                           handleCellChange(
@@ -436,14 +354,16 @@ const AssetSettingPage: React.FC = () => {
                             option,
                           )
                         }
-                        styles={tableSelectStyles}
+                        columns={accountColumns}
+                        width="100%"
+                        menuWidth="119%"
+                        controlHeight={26}
                         menuPortalTarget={
                           typeof document !== "undefined"
                             ? document.body
                             : undefined
                         }
-                        menuPosition="fixed"
-                        isClearable
+                        
                         isSearchable
                         placeholder=""
                       />

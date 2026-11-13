@@ -1,5 +1,7 @@
 import { ChevronDown, ChevronRight } from "lucide-react";
 import React, { useEffect, useRef, useState } from "react";
+import { useNavigate } from "react-router-dom";
+import CloseButton from "../../../components/common/CloseButton";
 import Select, { type SingleValue, type StylesConfig } from "react-select";
 import { toast } from "react-toastify";
 import { useEnterAsTab } from "../../../hooks/useEnterAsTab";
@@ -204,6 +206,7 @@ function flattenChecked(nodes: CompanyNode[]): PermissionInput[] {
 const MENU_ID = "9303";
 
 const UserPermissionBranchPage: React.FC = () => {
+  const navigate = useNavigate();
   const perms = useButtonPermissions(MENU_ID);
   const handleEnterAsTab = useEnterAsTab();
   // the common themed question window and the standard delete messages
@@ -569,10 +572,15 @@ const UserPermissionBranchPage: React.FC = () => {
     >
       <div className="flex w-[calc(100%-32px)] max-w-[30%] min-w-100 flex-col border border-slate-400 bg-white text-[12px] text-gray-700 shadow-sm">
         {/* TITLE */}
-        <header className="flex h-[28px] w-full shrink-0 items-center bg-[#a7dfc0]">
+        <header className="flex h-[28px] w-full shrink-0 items-center bg-[#a7dfc0] pr-2">
           <h1 className="ml-[5px] text-[17px] font-semibold text-[#374151]">
             User Permission - Branch
           </h1>
+
+          {/* close button (the common one, as on the Sales Invoice) */}
+          <div className="ml-auto">
+            <CloseButton onClose={() => navigate("/")} />
+          </div>
         </header>
 
         {/* FORM */}

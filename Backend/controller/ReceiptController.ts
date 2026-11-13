@@ -13,10 +13,12 @@ import {
   isActivePeriod,
 } from "../utils/helper.js";
 import { getReceiptPrintData } from "../services/receiptPrintService.js";
+import { buildReceiptWorkbook } from "../services/Finance/Transaction/receiptExcel.js";
 import { GetData } from "../services/GetDataService.js";
 import { UserAudit } from "../utils/UserAudit.js";
 import type { ReceiptContext } from "../middleware/receiptContext.js";
 import { GetStrDocType } from "../utils/docType.js";
+import { applyDocumentPosting } from "../utils/ApplyDocumentPosting.js";
 
 /* Set by requireReceiptContext middleware (headers sent from localStorage). */
 const getCtx = (res: Response): ReceiptContext =>
@@ -623,6 +625,108 @@ export const getReceiptPrint = async (
         error instanceof Error
           ? error.message
           : "Failed to load receipt for printing",
+    });
+  }
+};
+
+export const getReceiptExcel = async (
+  req: Request,
+  res: Response,
+): Promise<Response> => {
+  try {
+    const { pstrCoID, pstrYear } = getCtx(res);
+
+    const asText = (value: unknown): string =>
+      typeof value === "string" ? value.trim() : "";
+
+    const branch = asText(req.query.lkpBranch);
+    const lkpType = GetStrDocType(asText(req.query.lkpType));
+    const docNo = asText(req.query.txtDocNo);
+
+    if (!branch || !lkpType || !docNo) {
+      return res.status(400).json({
+        success: false,
+        message: "Branch, receipt type and receipt number are required",
+      });
+    }
+
+    const data = await getReceiptPrintData({
+      coId: pstrCoID,
+      year: pstrYear,
+      branch,
+      lkpType,
+      docNo,
+    });
+
+    if (!data) {
+      return res.status(404).json({
+        success: false,
+        message: "Receipt not found. Save the receipt before downloading.",
+      });
+    }
+
+    const buffer = await buildReceiptWorkbook(data);
+    const fileName = `Receipt-${branch}-${docNo.replace(/[^A-Za-z0-9._-]/g, "_")}.xlsx`;
+
+    res.setHeader(
+      "Content-Type",
+      "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+    );
+    res.setHeader("Content-Disposition", `attachment; filename="${fileName}"`);
+
+    return res.status(200).send(buffer);
+  } catch (error: unknown) {
+    console.error("getReceiptExcel error:", error);
+
+    return res.status(500).json({
+      success: false,
+      message:
+        error instanceof Error ? error.message : "Failed to create receipt Excel file",
+    });
+  }
+};
+
+
+
+export const applyReceiptPost = async (
+  req: Request,
+  res: Response
+): Promise<void> => {
+  try {
+    const {
+      PstrCoID,
+      PstrYear,
+      lkpBranch,
+      lkpDocType,
+      txtDocNo,
+      dtpDate,
+      PstrUserID
+    } = req.body;
+
+    const result = await applyDocumentPosting(
+    PstrCoID,
+    PstrYear,
+    lkpBranch,
+    lkpDocType,
+    0,
+    txtDocNo,
+    dtpDate,
+    PstrUserID
+
+    );
+
+    res.status(200).json({
+      success: true,
+      message: "Receipt posting completed successfully",
+      intDocPostCount: result.intDocPostCount
+    });
+
+  } catch (error) {
+    console.error("Receipt posting error:", error);
+
+    res.status(500).json({
+      success: false,
+      message: "Internal server error"
     });
   }
 };
