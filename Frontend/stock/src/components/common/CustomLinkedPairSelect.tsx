@@ -15,6 +15,7 @@ export interface PairSelectOption {
 
 interface CustomLinkedPairSelectProps {
   options: PairSelectOption[];
+  secondOptions?: PairSelectOption[];
   firstValue: string | null;
   secondValue: string | null;
   onChange: (option: PairSelectOption | null) => void;
@@ -36,6 +37,7 @@ interface CustomLinkedPairSelectProps {
 
 const CustomLinkedPairSelect: React.FC<CustomLinkedPairSelectProps> = ({
   options,
+  secondOptions,
   firstValue,
   secondValue,
   onChange,
@@ -54,6 +56,7 @@ const CustomLinkedPairSelect: React.FC<CustomLinkedPairSelectProps> = ({
   menuPortalTarget,
   menuZIndex = 100000,
 }) => {
+  const nameOptions = secondOptions ?? options;
   const menuWidth = firstWidth + gap + secondWidth;
 
   // The blank middle grid column preserves the physical gap between the inputs.
@@ -63,7 +66,7 @@ const CustomLinkedPairSelect: React.FC<CustomLinkedPairSelectProps> = ({
   const selectedFirst =
     options.find((option) => option.value === firstValue) ?? null;
   const selectedSecond =
-    options.find((option) => option.value === secondValue) ?? null;
+    nameOptions.find((option) => option.value === secondValue) ?? null;
 
   const createComponents = (reverse: boolean) => {
     const gridColumns = reverse ? reverseColumns : normalColumns;
@@ -234,7 +237,7 @@ const CustomLinkedPairSelect: React.FC<CustomLinkedPairSelectProps> = ({
       <div className="relative shrink-0" style={{ width: secondWidth }}>
         <Select<PairSelectOption, false>
           inputId={secondInputId}
-          options={options}
+          options={nameOptions}
           value={selectedSecond}
           onChange={onChange}
           components={{ ...selectComponents, ...createComponents(true) }}

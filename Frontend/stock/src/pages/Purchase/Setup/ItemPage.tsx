@@ -21,7 +21,9 @@ import {
   makePairDividedMenuStyles,
   pairDividedNameMenuStyles,
 } from "../../../components/PairSelect/pairSelectParts";
-import selectComponents from "../../../components/sharecomponents/selectComponents";
+import selectComponents, {
+  SELECT_FONT_FAMILY,
+} from "../../../components/sharecomponents/selectComponents";
 
 /* =========================================================
    TYPES
@@ -935,19 +937,25 @@ const MENU_ID = "010201";
      REACT SELECT - FORM
   ========================================================= */
 
+  // the form selects look like the text boxes of this page (.input-style): 14px text, #334155, #d7dee7 border
   const reactSelectStyles: StylesConfig<
     SelectOption,
     false
   > = {
+    container: (provided) => ({
+      ...provided,
+      fontFamily: SELECT_FONT_FAMILY,
+    }),
+
     control: (provided, state) => ({
       ...provided,
       minHeight: "30px",
       height: "30px",
-      border: "1px solid #d1d5db",
+      border: "1px solid #d7dee7",
       borderRadius: "4px",
       boxShadow: "none",
       backgroundColor: state.isFocused ? "#eefbf4" : "#ffffff",
-      fontSize: "11px",
+      fontSize: "14px",
       cursor: "pointer",
 
       "&:hover": {
@@ -966,21 +974,21 @@ const MENU_ID = "010201";
       ...provided,
       margin: "0px",
       padding: "0px",
-      fontSize: "11px",
-      color: "#374151",
+      fontSize: "14px",
+      color: "#334155",
     }),
 
     singleValue: (provided) => ({
       ...provided,
       margin: 0,
-      fontSize: "11px",
-      color: "#374151",
+      fontSize: "14px",
+      color: "#334155",
     }),
 
     placeholder: (provided) => ({
       ...provided,
       margin: 0,
-      fontSize: "11px",
+      fontSize: "14px",
       color: "#808080",
     }),
 
@@ -1014,6 +1022,7 @@ const MENU_ID = "010201";
   menu: (provided) => ({
     ...provided,
     zIndex: 100,
+    fontFamily: SELECT_FONT_FAMILY,
     fontSize: "14px",
     borderRadius: "4px",
     marginTop: "2px",

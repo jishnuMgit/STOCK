@@ -1,5 +1,5 @@
-
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
+import { toast } from "react-toastify";
 import {
   LocalizationProvider,
 } from "@mui/x-date-pickers/LocalizationProvider";
@@ -21,20 +21,9 @@ dayjs.extend(customParseFormat);
 const DATE_FORMAT = "DD/MM/YYYY";
 const TODAY = dayjs().format(DATE_FORMAT);
 
-const documentOptions: TableSelectOption[] = [
-  { value: "INV", label: "Sales Invoice", id: "INV" },
-  { value: "CRN", label: "Credit Note", id: "CRN" },
-  { value: "DBN", label: "Debit Note", id: "DBN" },
-];
-
 const documentColumns = [
   { key: "label", label: "Document Type", width: "1fr" },
   { key: "id", label: "ID", width: "65px", align: "right" as const },
-];
-
-const branchOptions: TableSelectOption[] = [
-  { value: "JD", label: "JEDDAH", id: "JD" },
-  { value: "RH", label: "RIYADH", id: "RH" },
 ];
 
 const branchColumns = [
@@ -42,10 +31,44 @@ const branchColumns = [
   { key: "id", label: "ID", width: "65px", align: "right" as const },
 ];
 
-const customerOptions: PairSelectOption[] = [
-  { value: "C001", firstLabel: "C001", secondLabel: "Customer One" },
-  { value: "C002", firstLabel: "C002", secondLabel: "Customer Two" },
-];
+// Router mount: app.use("/api/zatca-pdfa3-pending", zatcaPdfA3PendingRouter)
+const API = import.meta.env.VITE_API_URL + "/zatca-pdfa3-pending";
+
+const api = async <T,>(path: string, init?: RequestInit): Promise<T> => {
+  const res = await fetch(`${API}${path}`, {
+    credentials: "include",
+    headers: { "Content-Type": "application/json" },
+    ...init,
+  });
+  const type = res.headers.get("content-type") ?? "";
+  if (!type.includes("application/json")) {
+    throw new Error(`Unexpected response from ${API}${path} (${res.status}): route not reachable`);
+  }
+  const json = await res.json();
+  if (!res.ok || json.success === false) {
+    throw new Error(json.message || `Request failed (${res.status})`);
+  }
+  return json as T;
+};
+
+type Row = {
+  slNo: number;
+  branchId: string;
+  docType: string;
+  docNo: string;
+  docDate: string;
+  issueTime: string;
+  customerName: string;
+  amountExVat: number;
+  vatAmount: number;
+  amountInVat: number;
+};
+
+type LookupResult = {
+  branches: { brId: string; brName: string }[];
+  customers: { customerId: string; customerName: string }[];
+  docTypes: { pId: string; pName: string }[];
+};
 
 type RadioProps = {
   name: string;
@@ -53,6 +76,7 @@ type RadioProps = {
   label: string;
   checked: boolean;
   onChange: () => void;
+  disabled?: boolean;
 };
 
 const CustomRadio: React.FC<RadioProps> = ({
@@ -61,14 +85,20 @@ const CustomRadio: React.FC<RadioProps> = ({
   label,
   checked,
   onChange,
+  disabled = false,
 }) => (
-  <label className="flex items-center gap-1.25 whitespace-nowrap select-none cursor-pointer">
+  <label
+    className={`flex items-center gap-1.25 whitespace-nowrap select-none ${
+      disabled ? "cursor-not-allowed opacity-40" : "cursor-pointer"
+    }`}
+  >
     <input
       type="radio"
       name={name}
       value={value}
       checked={checked}
       onChange={onChange}
+      disabled={disabled}
       className="sr-only"
     />
 
@@ -219,51 +249,29 @@ const ActionButton: React.FC<{
     type="button"
     onClick={onClick}
     disabled={disabled}
-    className={`min-w-20 btn-style ${className}`}
+    className={`min-w-20 btn-style ${disabled ? "opacity-50" : ""} ${className}`}
   >
     {children}
   </button>
 );
 
-type DocumentRow = {
-  id: number;
-  branchId: string;
-  documentType: string;
-  documentNo: string;
-  documentDate: string;
-  issueTime: string;
-  customerName: string;
-  exclusiveVat: string;
-  vatAmount: string;
-  inclusiveVat: string;
-};
-
 const columns = [
-  { key: "id", label: "Sl.No", width: "40px" },
+  { key: "slNo", label: "Sl.No", width: "40px" },
   { key: "branchId", label: "Br. ID", width: "50px" },
-  { key: "documentType", label: "Doc. Type", width: "68px" },
-  { key: "documentNo", label: "Doc. No.", width: "100px" },
-  { key: "documentDate", label: "Doc. Date", width: "98px" },
+  { key: "docType", label: "Doc. Type", width: "68px" },
+  { key: "docNo", label: "Doc. No.", width: "100px" },
+  { key: "docDate", label: "Doc. Date", width: "98px" },
   { key: "issueTime", label: "Document Issue Time", width: "140px" },
   { key: "customerName", label: "Customer Name", width: "255px" },
-  { key: "exclusiveVat", label: "Inv. Amt. Excl. VAT", width: "118px" },
-  { key: "vatAmount", label: "VAT Amt.", width: "98px" },
-  { key: "inclusiveVat", label: "Inv. Amt. Incl. VAT", width: "125px" },
-];
+  { key: "amountExVat", label: "Inv. Amt. Excl. VAT", width: "118px", right: true },
+  { key: "vatAmount", label: "VAT Amt.", width: "98px", right: true },
+  { key: "amountInVat", label: "Inv. Amt. Incl. VAT", width: "125px", right: true },
+] as const;
 
-const createEmptyRows = (): DocumentRow[] =>
-  Array.from({ length: 14 }, (_, index) => ({
-    id: index + 1,
-    branchId: "",
-    documentType: "",
-    documentNo: "",
-    documentDate: "",
-    issueTime: "",
-    customerName: "",
-    exclusiveVat: "",
-    vatAmount: "",
-    inclusiveVat: "",
-  }));
+const MIN_ROWS = 14; // the old grid always showed empty lines
+
+const money = (n: number): string =>
+  n.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 
 const RptZatcaPdfA3Generation: React.FC = () => {
   const [documentMode, setDocumentMode] = useState("All Document");
@@ -275,46 +283,163 @@ const RptZatcaPdfA3Generation: React.FC = () => {
     useState<TableSelectOption | null>(null);
   const [branch, setBranch] = useState<TableSelectOption | null>(null);
   const [customer, setCustomer] = useState<PairSelectOption | null>(null);
-  const [invoiceNo, setInvoiceNo] = useState("");
+  const [fromInvoiceNo, setFromInvoiceNo] = useState("");
+  const [toInvoiceNo, setToInvoiceNo] = useState("");
 
   const [fromDate, setFromDate] = useState(TODAY);
   const [toDate, setToDate] = useState(TODAY);
 
-  const [rows, setRows] = useState<DocumentRow[]>(createEmptyRows());
+  const [branchOptions, setBranchOptions] = useState<TableSelectOption[]>([]);
+  const [documentOptions, setDocumentOptions] = useState<TableSelectOption[]>([]);
+  const [customerOptions, setCustomerOptions] = useState<PairSelectOption[]>([]);
 
-  const handleSearch = () => {
-    console.log("ZATCA PDF/A3 Search", {
-      documentMode,
-      documentType: documentMode === "One Document" ? documentType : null,
-      branchMode,
-      branch: branchMode === "One Branch" ? branch : null,
-      customerMode,
-      customer: customerMode === "One Customer" ? customer : null,
-      invoiceMode,
-      invoiceNo: invoiceMode === "By Invoice No." ? invoiceNo : null,
-      fromDate: invoiceMode === "By Invoice Date" ? fromDate : null,
-      toDate: invoiceMode === "By Invoice Date" ? toDate : null,
-    });
+  const [rows, setRows] = useState<Row[]>([]);
+  const [busy, setBusy] = useState(false);
 
-    // Connect your search API here.
+  // the same rules as the VB form (rdgDocument / rdgBranch / rdgIDorDate / rdgCustomer):
+  // All Document = all branches, by date, all customers; All Branch = by date;
+  // By Invoice No. = all customers
+  const oneDocument = documentMode === "One Document";
+  const oneBranch = oneDocument && branchMode === "One Branch";
+  const byInvoiceNo = oneBranch && invoiceMode === "By Invoice No.";
+  const oneCustomer = oneDocument && !byInvoiceNo && customerMode === "One Customer";
+
+  useEffect(() => {
+    api<LookupResult>("/getLookups")
+      .then((d) => {
+        setBranchOptions(
+          (d.branches ?? []).map((b) => ({ value: b.brId, label: b.brName, id: b.brId })),
+        );
+        setDocumentOptions(
+          (d.docTypes ?? []).map((t) => ({ value: t.pId, label: t.pName, id: t.pId })),
+        );
+        setCustomerOptions(
+          (d.customers ?? []).map((c) => ({
+            value: c.customerId,
+            firstLabel: c.customerId,
+            secondLabel: c.customerName,
+          })),
+        );
+      })
+      .catch((e: Error) => toast.error(e.message));
+  }, []);
+
+  // the body of Search and Export; the server checks again (ValidateMe)
+  const buildBody = (): Record<string, unknown> | null => {
+    if (oneDocument && !documentType) {
+      toast.error("Please input 'Document'");
+      return null;
+    }
+    if (oneBranch && !branch) {
+      toast.error("Please select a 'Branch'");
+      return null;
+    }
+
+    if (byInvoiceNo) {
+      if (!fromInvoiceNo.trim()) {
+        toast.error("Please input 'From Invoice No.'");
+        return null;
+      }
+    } else {
+      if (!fromDate) {
+        toast.error("Please select 'Invoice From Date'");
+        return null;
+      }
+      if (!toDate) {
+        toast.error("Please select 'Invoice To Date'");
+        return null;
+      }
+      if (dayjs(fromDate, DATE_FORMAT).isAfter(dayjs(toDate, DATE_FORMAT))) {
+        toast.error("'To Date' should be greater than or equal to 'From Date'");
+        return null;
+      }
+      if (dayjs(fromDate, DATE_FORMAT).year() !== dayjs(toDate, DATE_FORMAT).year()) {
+        toast.error("'From Date' & 'To Date' should be in same year");
+        return null;
+      }
+      if (oneCustomer && !customer) {
+        toast.error("Please select 'Customer ID'");
+        return null;
+      }
+    }
+
+    return {
+      documentMode: oneDocument ? "one" : "all",
+      invType: oneDocument ? documentType?.value : null,
+      branchMode: oneBranch ? "one" : "all",
+      branchId: oneBranch ? branch?.value : null,
+      invoiceMode: byInvoiceNo ? "id" : "date",
+      fromInvoiceNo: fromInvoiceNo.trim(),
+      toInvoiceNo: toInvoiceNo.trim(),
+      fromDate,
+      toDate,
+      customerMode: oneCustomer ? "one" : "all",
+      customerId: oneCustomer ? customer?.value : null,
+    };
   };
 
-  const handleExport = () => {
-    console.log("Export PDF/A3", {
-      documentMode,
-      documentType: documentMode === "One Document" ? documentType : null,
-      branchMode,
-      branch: branchMode === "One Branch" ? branch : null,
-      customerMode,
-      customer: customerMode === "One Customer" ? customer : null,
-      invoiceMode,
-      invoiceNo: invoiceMode === "By Invoice No." ? invoiceNo : null,
-      fromDate: invoiceMode === "By Invoice Date" ? fromDate : null,
-      toDate: invoiceMode === "By Invoice Date" ? toDate : null,
-      rows,
-    });
+  // Search = the old Refresh button
+  const handleSearch = async () => {
+    if (busy) return;
+    const body = buildBody();
+    if (!body) return;
 
-    // Connect your PDF/A3 export function here.
+    setBusy(true);
+    try {
+      const { data } = await api<{ data: { rows: Row[] } }>("/getZATCAPDFA3Pending", {
+        method: "POST",
+        body: JSON.stringify(body),
+      });
+      setRows(data.rows);
+      if (data.rows.length === 0) toast.info("No documents found");
+    } catch (e) {
+      setRows([]);
+      toast.error((e as Error).message);
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const handleExport = async () => {
+    if (busy) return;
+    if (rows.length === 0) {
+      toast.error("No documents to export");
+      return;
+    }
+    const body = buildBody();
+    if (!body) return;
+
+    setBusy(true);
+    try {
+      const { data } = await api<{
+        data: {
+          total: number;
+          exported: number;
+          failed: number;
+          results: { docNo: string; ok: boolean; message: string }[];
+        };
+      }>("/exportZATCAPDFA3", { method: "POST", body: JSON.stringify(body) });
+
+      if (data.failed === 0) {
+        toast.success(`ZATCA PDF/A3 exported: ${data.exported} document(s)`);
+        setRows([]);
+        return;
+      }
+
+      // keep the list; say which documents failed and why
+      const bad = data.results.filter((r) => !r.ok);
+      const shown = bad
+        .slice(0, 3)
+        .map((r) => `${r.docNo}: ${r.message}`)
+        .join(" | ");
+      toast.error(
+        `${data.exported} exported, ${data.failed} failed. ${shown}${bad.length > 3 ? " ..." : ""}`,
+      );
+    } catch (e) {
+      toast.error((e as Error).message);
+    } finally {
+      setBusy(false);
+    }
   };
 
   const handleCancel = () => {
@@ -325,15 +450,18 @@ const RptZatcaPdfA3Generation: React.FC = () => {
     setDocumentType(null);
     setBranch(null);
     setCustomer(null);
-    setInvoiceNo("");
+    setFromInvoiceNo("");
+    setToInvoiceNo("");
     setFromDate(TODAY);
     setToDate(TODAY);
-    setRows(createEmptyRows());
+    setRows([]);
   };
 
   const handleClose = () => {
     window.history.back();
   };
+
+  const emptyCount = Math.max(0, MIN_ROWS - rows.length);
 
   return (
     <div className="min-h-full w-full bg-white p-1 sm:p-2">
@@ -367,7 +495,7 @@ const RptZatcaPdfA3Generation: React.FC = () => {
                 />
               </RadioPanel>
 
-              {documentMode === "One Document" && (
+              {oneDocument && (
                 <div className="w-full max-w-55 min-w-0 pt-2.5">
                   <CommonTableSelect
                     inputId="zatca-document-type"
@@ -393,7 +521,8 @@ const RptZatcaPdfA3Generation: React.FC = () => {
                   name="rdgBranch"
                   value="One Branch"
                   label="One Branch"
-                  checked={branchMode === "One Branch"}
+                  checked={oneBranch}
+                  disabled={!oneDocument}
                   onChange={() => setBranchMode("One Branch")}
                 />
 
@@ -401,12 +530,13 @@ const RptZatcaPdfA3Generation: React.FC = () => {
                   name="rdgBranch"
                   value="All Branch"
                   label="All Branches"
-                  checked={branchMode === "All Branch"}
+                  checked={!oneBranch}
+                  disabled={!oneDocument}
                   onChange={() => setBranchMode("All Branch")}
                 />
               </RadioPanel>
 
-              {branchMode === "One Branch" && (
+              {oneBranch && (
                 <div className="w-full max-w-55 min-w-0 pt-2.5 ml-3">
                   <CommonTableSelect
                     inputId="zatca-branch"
@@ -432,7 +562,8 @@ const RptZatcaPdfA3Generation: React.FC = () => {
                   name="rdgInvoice"
                   value="By Invoice No."
                   label="By Invoice No."
-                  checked={invoiceMode === "By Invoice No."}
+                  checked={byInvoiceNo}
+                  disabled={!oneBranch}
                   onChange={() => setInvoiceMode("By Invoice No.")}
                 />
 
@@ -440,7 +571,8 @@ const RptZatcaPdfA3Generation: React.FC = () => {
                   name="rdgInvoice"
                   value="By Invoice Date"
                   label="By Invoice Date"
-                  checked={invoiceMode === "By Invoice Date"}
+                  checked={!byInvoiceNo}
+                  disabled={!oneBranch}
                   onChange={() => setInvoiceMode("By Invoice Date")}
                 />
               </RadioPanel>
@@ -448,16 +580,28 @@ const RptZatcaPdfA3Generation: React.FC = () => {
 
             {/* Invoice Criteria */}
             <div className="flex flex-wrap items-center gap-2">
-              {invoiceMode === "By Invoice No." ? (
-                <div className="w-55">
+              {byInvoiceNo ? (
+                <div className="flex flex-wrap items-center gap-1.25">
                   <input
-                    id="zatca-invoice-number"
+                    id="zatca-from-invoice-number"
                     type="text"
-                    value={invoiceNo}
-                    onChange={(event) => setInvoiceNo(event.target.value)}
-                    placeholder="Enter Invoice No."
-                    aria-label="Invoice number"
-                    className="h-7.5 w-full rounded-[3px] border border-[#B7C7D7] bg-white px-2 text-[12px] text-[#172b43] outline-none"
+                    value={fromInvoiceNo}
+                    onChange={(event) => {
+                      setFromInvoiceNo(event.target.value);
+                      setToInvoiceNo(event.target.value); // To follows From (VB Leave event)
+                    }}
+                    placeholder="From Invoice No."
+                    aria-label="From invoice number"
+                    className="h-7.5 w-27.5 rounded-[3px] border border-[#B7C7D7] bg-white px-2 text-[12px] text-[#172b43] outline-none"
+                  />
+                  <input
+                    id="zatca-to-invoice-number"
+                    type="text"
+                    value={toInvoiceNo}
+                    onChange={(event) => setToInvoiceNo(event.target.value)}
+                    placeholder="To Invoice No."
+                    aria-label="To invoice number"
+                    className="h-7.5 w-27.5 rounded-[3px] border border-[#B7C7D7] bg-white px-2 text-[12px] text-[#172b43] outline-none"
                   />
                 </div>
               ) : (
@@ -490,7 +634,8 @@ const RptZatcaPdfA3Generation: React.FC = () => {
                   name="rdgCustomer"
                   value="One Customer"
                   label="One Customer"
-                  checked={customerMode === "One Customer"}
+                  checked={oneCustomer}
+                  disabled={!oneDocument || byInvoiceNo}
                   onChange={() => setCustomerMode("One Customer")}
                 />
 
@@ -498,12 +643,13 @@ const RptZatcaPdfA3Generation: React.FC = () => {
                   name="rdgCustomer"
                   value="All Customer"
                   label="All Customers"
-                  checked={customerMode === "All Customer"}
+                  checked={!oneCustomer}
+                  disabled={!oneDocument || byInvoiceNo}
                   onChange={() => setCustomerMode("All Customer")}
                 />
               </RadioPanel>
 
-              {customerMode === "One Customer" && (
+              {oneCustomer && (
                 <div className="min-w-0 pt-2.5 ml-3">
                   <CustomLinkedPairSelect
                     options={customerOptions}
@@ -529,6 +675,7 @@ const RptZatcaPdfA3Generation: React.FC = () => {
             <div className="flex items-center justify-end sm:col-start-3">
               <ActionButton
                 onClick={handleSearch}
+                disabled={busy}
                 className="h-7.5 w-25 mt-13"
               >
                 Search
@@ -560,7 +707,9 @@ const RptZatcaPdfA3Generation: React.FC = () => {
                     {columns.map((column) => (
                       <th
                         key={column.key}
-                        className="border border-[#B7ECD0] px-1 text-left font-semibold whitespace-nowrap"
+                        className={`border border-[#B7ECD0] px-1 font-semibold whitespace-nowrap ${
+                          "right" in column ? "text-right" : "text-left"
+                        }`}
                       >
                         {column.label}
                       </th>
@@ -571,39 +720,34 @@ const RptZatcaPdfA3Generation: React.FC = () => {
                 {/* Table Body */}
                 <tbody>
                   {rows.map((row, index) => (
-                    <tr
-                      key={row.id}
-                      className="h-6 bg-white"
-                    >
+                    <tr key={`${row.branchId}-${row.docType}-${row.docNo}`} className="h-6 bg-white">
                       {/* Row Indicator */}
                       <td className="border border-[#B7ECD0] bg-[#f7f7f9] text-center text-[11px]">
                         {index === 0 ? "›" : ""}
                       </td>
 
-                      <td className="border border-[#B7ECD0] px-1"></td>
+                      {columns.map((column) => {
+                        const v = row[column.key];
+                        return (
+                          <td
+                            key={column.key}
+                            className={`border border-[#B7ECD0] px-1 truncate ${
+                              "right" in column ? "text-right" : ""
+                            }`}
+                          >
+                            {typeof v === "number" && "right" in column ? money(v) : v}
+                          </td>
+                        );
+                      })}
+                    </tr>
+                  ))}
 
-                      <td className="border border-[#B7ECD0] px-1"></td>
-
-                      {/* Selected cell */}
-                      <td
-                        className={`border border-[#B7ECD0] px-1 ${
-                          index === 0 ? "" : ""
-                        }`}
-                      ></td>
-
-                      <td className="border border-[#B7ECD0] px-1"></td>
-
-                      <td className="border border-[#B7ECD0] px-1"></td>
-
-                      <td className="border border-[#B7ECD0] px-1"></td>
-
-                      <td className="border border-[#B7ECD0] px-1"></td>
-
-                      <td className="border border-[#B7ECD0] px-1"></td>
-
-                      <td className="border border-[#B7ECD0] px-1"></td>
-
-                      <td className="border border-[#B7ECD0] px-1"></td>
+                  {Array.from({ length: emptyCount }, (_, i) => (
+                    <tr key={`empty-${i}`} className="h-6 bg-white">
+                      <td className="border border-[#B7ECD0] bg-[#f7f7f9]"></td>
+                      {columns.map((column) => (
+                        <td key={column.key} className="border border-[#B7ECD0] px-1"></td>
+                      ))}
                     </tr>
                   ))}
                 </tbody>
@@ -615,6 +759,7 @@ const RptZatcaPdfA3Generation: React.FC = () => {
           <div className="flex flex-wrap items-center justify-center gap-1 pb-1 pt-1">
             <ActionButton
               onClick={handleExport}
+              disabled={busy || rows.length === 0}
               className="h-9 w-40"
             >
               Export PDF/A3

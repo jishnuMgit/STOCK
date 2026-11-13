@@ -66,7 +66,11 @@ import TransactionDeleteRouter from "./TransactionDeleteRouter.js";
 
 import RptPayablesRouter from "./Finance/Report/A_RandA_P/RptPayablesRouter.js";
 import RptGLRouter from "./Finance/Report/GeneralLedger/RptGLRouter.js";
-import ZATCASubmissionRouter from "./ZATCA/Transaction/ZATCASubmissionRouter.js";import DateTimeRouter from "./common/DateTimeRouter.js";
+import ZATCASubmissionRouter from "./ZATCA/Transaction/ZATCASubmissionRouter.js";
+import ZATCADocumentStatusRouter from "./ZATCA/Transaction/ZATCADocumentStatusRouter.js";
+import ZATCAPDFA3PendingRouter from "./ZATCA/Transaction/ZATCAPDFA3PendingRouter.js";
+import ZATCADocumentPathRouter from "./ZATCA/Setup/ZATCADocumentPathRouter.js";
+import DateTimeRouter from "./common/DateTimeRouter.js";
 
 const router = express.Router();
 
@@ -137,6 +141,9 @@ router.use("/transaction-delete", TransactionDeleteRouter);
 router.use("/RptPayables", RptPayablesRouter);
 router.use("/RptGL", RptGLRouter);
 router.use("/zatca-submission", ZATCASubmissionRouter);
+router.use("/zatca-document-status", ZATCADocumentStatusRouter);
+router.use("/zatca-pdfa3-pending", ZATCAPDFA3PendingRouter);
+router.use("/zatca-file-path", ZATCADocumentPathRouter);
 router.use("/datetime", DateTimeRouter);
 
 export default router;
