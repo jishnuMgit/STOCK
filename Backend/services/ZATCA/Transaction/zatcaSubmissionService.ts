@@ -3,7 +3,7 @@ import pool from "../../../DB/db.js";
 import {
   submitToZatca,
   type ZatcaSubmitDocument,
-} from "./zatcaGateway.js";
+} from "./test/zatcaGateway.js";
 import { exportZatcaPdfA3Document } from "./zatcaPdfA3ExportService.js";
 
 /* =========================================================
