@@ -239,6 +239,11 @@ export const submitZATCASubmission = async (
       message = `${out.accepted} Files Submitted Successfully`;
     }
 
+    const pdfFailed = out.results.filter((r) => r.pdfStatus === "FAILED").length;
+    if (pdfFailed > 0) {
+      message += `. PDF/A3 could not be created for ${pdfFailed} file(s)`;
+    }
+
     return res.status(200).json({ success: true, message, data: out });
   } catch (error: unknown) {
     console.error("submitZATCASubmission error:", error);
