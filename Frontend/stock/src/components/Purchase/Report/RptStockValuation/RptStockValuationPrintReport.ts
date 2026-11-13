@@ -65,7 +65,7 @@ export const hasBranchSections = (r: PrintReport) => r.branches.length > 1;
 
 // the column weights: Item ID | Item Name | Item Group | Unit | Stock | Unit Cost | Stock Value
 // (a wide Stock Value, so a value like 2,468,986,421.0000 stays on one line)
-export const COLUMN_WEIGHTS = [0.15, 0.27, 0.15, 0.06, 0.09, 0.1, 0.18];
+export const COLUMN_WEIGHTS = [0.15, 0.26, 0.15, 0.06, 0.09, 0.11, 0.18]; // the labels are 14 px: Unit Cost needs a little more room
 
 const branchHtml = (b: StockValuationBranch, sections: boolean) => `${
   sections
@@ -105,7 +105,7 @@ export const buildHtml = (r: PrintReport) => {
 <head>
 <meta charset="utf-8" />
 <title>Stock Valuation</title>
-<style>${reportPrintCss({ orientation: "portrait", marginLeft: "15mm", groupSelector: "td.branch" })}
+<style>${reportPrintCss({ look: "inter", orientation: "portrait", marginLeft: "15mm", groupSelector: "td.branch" })}
 </style>
 </head>
 <body>

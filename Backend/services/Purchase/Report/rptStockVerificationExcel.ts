@@ -4,7 +4,7 @@
 // each group with its Total; with more than one branch one section per branch ("Branch : Jeddah", its item
 // groups, "Branch Total :"); a Grand Total row closes the report.
 import ExcelJS from "exceljs";
-import { addReportTitle, applyReportFont, thin } from "../../../utils/reportStyle.js";
+import { addReportTitle, applyReportFont, levelFont, thin } from "../../../utils/reportStyle.js";
 
 import type { StockVerificationBranch } from "./rptStockVerificationService.js";
 
@@ -48,13 +48,13 @@ export const buildStockVerificationWorkbook = async (
   ];
 
   // ---- company / heading / branch + report info (rows 1-3): the same on every report ----
-  addReportTitle(ws, report, report.txtBranch, 5);
+  addReportTitle(ws, report, report.txtBranch, 5, undefined, "inter");
 
   // ---- column labels (row 4) ----
   const head = ws.getRow(4);
   head.values = ["Item ID", "Item Name", "Unit", "Comp. Stock", "Phys. Stock"];
   head.eachCell((cell, col) => {
-    cell.font = { bold: true };
+    cell.font = levelFont("columnHead", true, "inter");
     cell.border = thin;
     cell.alignment = { horizontal: col >= 4 ? "right" : "left" };
   });
@@ -82,7 +82,7 @@ export const buildStockVerificationWorkbook = async (
     if (sections) {
       const branchRow = ws.addRow([`Branch : ${branch.txtBranchName}`]);
       ws.mergeCells(branchRow.number, 1, branchRow.number, COLUMNS);
-      branchRow.getCell(1).font = { bold: true };
+      branchRow.getCell(1).font = levelFont("group", true, "inter");
       branchRow.getCell(1).alignment = { horizontal: "left" };
     }
 
@@ -90,7 +90,7 @@ export const buildStockVerificationWorkbook = async (
       // ---- "Item Group : 01   Tiles" ----
       const groupRow = ws.addRow([`Item Group : ${group.lkpItemGroupID}   ${group.txtItemGroupName}`]);
       ws.mergeCells(groupRow.number, 1, groupRow.number, COLUMNS);
-      groupRow.getCell(1).font = { bold: true };
+      groupRow.getCell(1).font = levelFont("group", true, "inter");
       groupRow.getCell(1).alignment = { horizontal: "left" };
 
       // ---- one row per item: the books' quantity, and an empty box for the counted one ----
@@ -115,7 +115,7 @@ export const buildStockVerificationWorkbook = async (
   addTotal("Grand Total :", report.totals.txtStock);
 
   // the whole sheet in the report font (the table too, not only the title)
-  applyReportFont(ws);
+  applyReportFont(ws, "inter");
 
   return Buffer.from(await wb.xlsx.writeBuffer());
 };

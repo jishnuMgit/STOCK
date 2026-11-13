@@ -4,7 +4,7 @@
 // With more than one branch the report has one section per branch ("Branch : Jeddah", its items and
 // its Total, then the next branch ...); a Grand Total row closes it.
 import ExcelJS from "exceljs";
-import { addReportTitle, applyReportFont, thin } from "../../../utils/reportStyle.js";
+import { addReportTitle, applyReportFont, levelFont, thin } from "../../../utils/reportStyle.js";
 
 import type { StockValuationBranch } from "./rptStockValuationService.js";
 
@@ -55,13 +55,13 @@ export const buildStockValuationWorkbook = async (
   ];
 
   // ---- company / heading / branch + report info (rows 1-3): the same on every report ----
-  addReportTitle(ws, report, report.txtBranch, 7);
+  addReportTitle(ws, report, report.txtBranch, 7, undefined, "inter");
 
   // ---- column labels (row 4) ----
   const head = ws.getRow(4);
   head.values = ["Item ID", "Item Name", "Item Group", "Unit", "Stock", "Unit Cost", "Stock Value"];
   head.eachCell((cell, col) => {
-    cell.font = { bold: true };
+    cell.font = levelFont("columnHead", true, "inter");
     cell.border = thin;
     cell.alignment = { horizontal: col >= 5 ? "right" : "left" };
   });
@@ -88,7 +88,7 @@ export const buildStockValuationWorkbook = async (
     if (sections) {
       const branchRow = ws.addRow([`Branch : ${branch.txtBranchName}`]);
       ws.mergeCells(branchRow.number, 1, branchRow.number, COLUMNS);
-      branchRow.getCell(1).font = { bold: true };
+      branchRow.getCell(1).font = levelFont("group", true, "inter");
       branchRow.getCell(1).alignment = { horizontal: "left" };
     }
 
@@ -120,7 +120,7 @@ export const buildStockValuationWorkbook = async (
   addTotal("Grand Total :", report.totals.txtStock, report.totals.txtStockValue);
 
   // the whole sheet in the report font (the table too, not only the title)
-  applyReportFont(ws);
+  applyReportFont(ws, "inter");
 
   return Buffer.from(await wb.xlsx.writeBuffer());
 };

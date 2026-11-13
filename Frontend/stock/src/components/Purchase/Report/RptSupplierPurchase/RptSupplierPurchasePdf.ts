@@ -7,12 +7,16 @@ import { jsPDF } from "jspdf";
 import autoTable, { type CellDef } from "jspdf-autotable";
 
 import {
-  PDF_BLACK,
   addPageNumbers,
   drawReportTitle,
+  pdfGroupStyles,
+  pdfHeadStyles,
+  pdfLabelFontSize,
   pdfMargin,
   pdfTableStyles,
   pdfTableTop,
+  registerReportPdfFont,
+  type PdfLook,
 } from "../../../common/reportPdf";
 
 import {
@@ -43,7 +47,8 @@ const draw = (
   head: CellDef[][] | undefined,
   body: CellDef[][],
   columnWeights: number[],
-  firstNumberColumn: number
+  firstNumberColumn: number,
+  look: PdfLook
 ) => {
   const usable = pageW - margin.left - margin.right;
   const tableTop = pdfTableTop(margin);
@@ -53,7 +58,7 @@ const draw = (
   );
 
   // company / heading / branch + report info - drawn on every page
-  const drawTitle = () => drawReportTitle(doc, pageW, margin, report, branch);
+  const drawTitle = () => drawReportTitle(doc, pageW, margin, report, branch, look);
 
   autoTable(doc, {
     theme: "plain",
@@ -62,15 +67,15 @@ const draw = (
     tableWidth: usable,
     rowPageBreak: "avoid",
     showHead: head ? "everyPage" : "never",
-    styles: pdfTableStyles(),
-    headStyles: { textColor: PDF_BLACK, fontStyle: "normal" },
+    styles: pdfTableStyles(look),
+    headStyles: pdfHeadStyles(look),
     columnStyles,
     ...(head ? { head } : {}),
     body,
     didDrawPage: drawTitle,
   });
 
-  addPageNumbers(doc, pageW, margin);
+  addPageNumbers(doc, pageW, margin, look);
 };
 
 // a row of one text over the whole width, no lines
@@ -82,8 +87,9 @@ const textRow = (content: string, colSpan: number, styles: Record<string, unknow
    Summary
 --------------------------------------------------------- */
 
-const buildSummary = (report: SummaryReport): Blob => {
+const buildSummary = async (report: SummaryReport): Promise<Blob> => {
   const doc = new jsPDF({ orientation: "portrait", unit: "mm", format: "a4" });
+  const look = await registerReportPdfFont(doc, "inter"); // the font and the sizes of the look
 
   const head: CellDef[][] = [
     ["Date", "Type", "Document No.", "Amount_FC", "Amount"].map((content, i) => ({
@@ -97,7 +103,7 @@ const buildSummary = (report: SummaryReport): Blob => {
   for (const s of report.suppliers) {
     body.push(
       textRow(`Supplier : ${s.lkpSupplierID}   ${s.txtSupplierName}`, 5, {
-        ...bold,
+        ...pdfGroupStyles(look),
         minCellHeight: 9,
         valign: "bottom",
       })
@@ -120,7 +126,7 @@ const buildSummary = (report: SummaryReport): Blob => {
     ]);
   }
 
-  draw(doc, 210, pdfMargin(20), report, report.txtBranch, head, body, SUMMARY_WEIGHTS, 3);
+  draw(doc, 210, pdfMargin(20), report, report.txtBranch, head, body, SUMMARY_WEIGHTS, 3, look);
 
   return doc.output("blob");
 };
@@ -129,8 +135,9 @@ const buildSummary = (report: SummaryReport): Blob => {
    Detailed
 --------------------------------------------------------- */
 
-const buildDetailed = (report: DetailedReport): Blob => {
+const buildDetailed = async (report: DetailedReport): Promise<Blob> => {
   const doc = new jsPDF({ orientation: "landscape", unit: "mm", format: "a4" });
+  const look = await registerReportPdfFont(doc, "inter"); // the font and the sizes of the look
 
   const body: CellDef[][] = [];
 
@@ -156,7 +163,7 @@ const buildDetailed = (report: DetailedReport): Blob => {
     body.push(
       DETAIL_LABELS.map((content, i) => ({
         content,
-        styles: { halign: i >= DETAIL_FIRST_NUMBER ? ("right" as const) : ("left" as const) },
+        styles: { halign: i >= DETAIL_FIRST_NUMBER ? ("right" as const) : ("left" as const), fontSize: pdfLabelFontSize(look) },
       }))
     );
 
@@ -192,10 +199,10 @@ const buildDetailed = (report: DetailedReport): Blob => {
     body.push(textRow(`Note : ${d.txtNote}`, 10));
   }
 
-  draw(doc, 297, pdfMargin(12), report, "", undefined, body, DETAIL_WEIGHTS, DETAIL_FIRST_NUMBER);
+  draw(doc, 297, pdfMargin(12), report, "", undefined, body, DETAIL_WEIGHTS, DETAIL_FIRST_NUMBER, look);
 
   return doc.output("blob");
 };
 
-export const buildSupplierPurchasePdf = (report: PrintReport): Blob =>
+export const buildSupplierPurchasePdf = (report: PrintReport): Promise<Blob> =>
   report.rdgDetOrSum === 1 ? buildSummary(report) : buildDetailed(report);

@@ -670,7 +670,7 @@ const RptItemHistoryPage: React.FC<RptItemHistoryPageProps> = ({ onClose }) => {
 
     setPrinting(true);
     try {
-      const blob = asPdf ? buildItemHistoryPdf(report) : await fetchExcel(request);
+      const blob = asPdf ? await buildItemHistoryPdf(report) : await fetchExcel(request);
       if (!blob) return; // the error is already shown
 
       const kind = asPdf ? "pdf" : "xlsx";

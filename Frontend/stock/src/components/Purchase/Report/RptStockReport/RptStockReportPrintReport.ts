@@ -142,9 +142,9 @@ const detailBranchHtml = (b: DetailBranch, sections: boolean) => `${
 
 const detailedHtml = (r: PrintReport) => `<table>
   <colgroup>
-    <col style="width:13.6%" /><col style="width:7.2%" /><col style="width:13.3%" />
-    <col style="width:10.7%" /><col style="width:12.1%" /><col style="width:14.5%" />
-    <col style="width:14.4%" /><col style="width:14.2%" />
+    <col style="width:13.6%" /><col style="width:7.2%" /><col style="width:17.5%" />
+    <col style="width:10.7%" /><col style="width:12.1%" /><col style="width:13%" />
+    <col style="width:13%" /><col style="width:12.9%" />
   </colgroup>
   <thead>
     <tr><td colspan="8" class="co"   style="border:0">${esc(r.txtCoName)}</td></tr>
@@ -240,6 +240,7 @@ export const buildHtml = (r: PrintReport) => {
 <meta charset="utf-8" />
 <title>Stock</title>
 <style>${reportPrintCss({
+  look: "inter",
   orientation: detailed ? "portrait" : "landscape",
   marginLeft: detailed ? "22.9mm" : "25.4mm",
   groupSelector: "td.item, td.branch",
