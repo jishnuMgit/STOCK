@@ -887,6 +887,7 @@ const SalesInvoiceHeader: React.FC<SalesInvoiceHeaderProps> = ({
           Sales Invoice
         </span>
 
+        {/* close button */}
         <div className="ml-auto">
           <CloseButton onClose={() => navigate("/")} />
         </div>
