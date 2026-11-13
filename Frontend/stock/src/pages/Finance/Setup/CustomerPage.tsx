@@ -29,7 +29,6 @@ const PRESERVED_KEYS = [
   "transType",
   "invMethod",
   "rcnMethod",
-  "brId",
   "ctaCardType",
   "ctaCardNo",
   "ctaExpiry",
@@ -109,6 +108,7 @@ const CustomerPage: React.FC<CustomerPageProps> = ({
   const [txtShortName, setTxtShortName] = useState("");
   const [lkpStaff, setLkpStaff] = useState("");
   const [txtContact, setTxtContact] = useState("");
+  const [lkpBranch, setLkpBranch] = useState("");
   const [txtEMail, setTxtEMail] = useState("");
   const [txtPhone, setTxtPhone] = useState("");
 
@@ -130,11 +130,18 @@ const CustomerPage: React.FC<CustomerPageProps> = ({
     fetchCountries,
     staffs,
     fetchStaffs,
+    branches,
+    fetchBranches,
     fetchCustomer,
     saveCustomer,
     updateCustomer,
     deleteCustomer,
   } = useCustomer();
+
+  const branchOptions = branches.map((b) => ({
+    value: b.brId,
+    label: b.brName,
+  }));
 
   // ============================================================
   // LOAD (add mode: defaults / edit mode: existing record)
@@ -146,6 +153,7 @@ const CustomerPage: React.FC<CustomerPageProps> = ({
       fetchParentAccounts(),
       fetchCountries(),
       fetchStaffs(),
+      fetchBranches(),
     ]);
 
     if (nextId) setTxtCustomerID(nextId);
@@ -162,7 +170,13 @@ const CustomerPage: React.FC<CustomerPageProps> = ({
       setLkpCountry(defaultCountry.countryId);
       setLkpCountry_AR(defaultCountry.countryId);
     }
-  }, [fetchNextCustomerId, fetchParentAccounts, fetchCountries, fetchStaffs]);
+  }, [
+    fetchNextCustomerId,
+    fetchParentAccounts,
+    fetchCountries,
+    fetchStaffs,
+    fetchBranches,
+  ]);
 
   // DB record -> form state
   const populate = useCallback((d: CustomerDetail) => {
@@ -200,6 +214,7 @@ const CustomerPage: React.FC<CustomerPageProps> = ({
     setTxtShortName(d.shortName ?? "");
     setLkpStaff(d.staffId ?? "");
     setTxtContact(d.contact ?? "");
+    setLkpBranch(d.brId ?? "");
     setTxtEMail(d.email ?? "");
     setTxtPhone(d.phone ?? "");
 
@@ -227,6 +242,7 @@ const CustomerPage: React.FC<CustomerPageProps> = ({
         fetchParentAccounts(),
         fetchCountries(),
         fetchStaffs(),
+        fetchBranches(),
       ]);
       populate(detail);
       const match = accounts?.find((a) => a.accountId === detail.gAccountId);
@@ -244,6 +260,7 @@ const CustomerPage: React.FC<CustomerPageProps> = ({
     fetchParentAccounts,
     fetchCountries,
     fetchStaffs,
+    fetchBranches,
     populate,
   ]);
 
@@ -395,6 +412,7 @@ const CustomerPage: React.FC<CustomerPageProps> = ({
       shortName: txtShortName,
       staffId: lkpStaff || undefined,
       contact: txtContact,
+      brId: lkpBranch,
       email: txtEMail,
       phone: txtPhone,
 
@@ -495,6 +513,7 @@ const CustomerPage: React.FC<CustomerPageProps> = ({
     setTxtShortName("");
     setLkpStaff("");
     setTxtContact("");
+    setLkpBranch("");
     setTxtEMail("");
     setTxtPhone("");
 
@@ -504,10 +523,6 @@ const CustomerPage: React.FC<CustomerPageProps> = ({
     setChkInactiveCustomer(false);
     setChkExcludeFromAgeing(false);
   };
-
-  // ============================================================
-  // JSX
-  // ============================================================
 
   // ============================================================
   // KEYBOARD: focus Customer ID on open, Enter = Tab
@@ -562,6 +577,10 @@ const CustomerPage: React.FC<CustomerPageProps> = ({
     }
   };
 
+  // ============================================================
+  // JSX
+  // ============================================================
+
   if (loadingRecord) {
     return (
       <div className="w-full bg-white p-6 text-center text-[12px] text-slate-500">
@@ -591,12 +610,11 @@ const CustomerPage: React.FC<CustomerPageProps> = ({
       />
       {/* Header + middle are locked in delete mode */}
       <fieldset disabled={isDelete} className="m-0 min-w-0 border-0 p-0">
-        {/* HEADER */}
-
         {/* MIDDLE */}
         <CustomerMiddle
           countries={countries}
           staffs={staffs}
+          branchOptions={branchOptions}
           txtCustomerName={txtCustomerName}
           setTxtCustomerName={setTxtCustomerName}
           txtLegalName={txtLegalName}
@@ -651,6 +669,8 @@ const CustomerPage: React.FC<CustomerPageProps> = ({
           setLkpStaff={setLkpStaff}
           txtContact={txtContact}
           setTxtContact={setTxtContact}
+          lkpBranch={lkpBranch}
+          setLkpBranch={setLkpBranch}
           txtEMail={txtEMail}
           setTxtEMail={setTxtEMail}
           txtPhone={txtPhone}

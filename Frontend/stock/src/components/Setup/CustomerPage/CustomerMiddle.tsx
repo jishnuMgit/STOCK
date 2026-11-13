@@ -100,6 +100,10 @@ interface CustomerMiddleProps {
 
   txtPhone: string;
   setTxtPhone: React.Dispatch<React.SetStateAction<string>>;
+
+  branchOptions: { value: string; label: string }[];
+  lkpBranch: string;
+  setLkpBranch: React.Dispatch<React.SetStateAction<string>>;
 }
 
 /* =========================================================
@@ -339,6 +343,10 @@ const CustomerMiddle: React.FC<CustomerMiddleProps> = ({
 
   txtPhone,
   setTxtPhone,
+  
+  branchOptions,
+  lkpBranch,
+  setLkpBranch,
 }) => {
   /* =======================================================
      OPTIONS (built from DB data)
@@ -1091,15 +1099,11 @@ const CustomerMiddle: React.FC<CustomerMiddleProps> = ({
             </div>
           </div>
 
-          {/* =================================================
-             CONTACT - FULL WIDTH
-          ================================================= */}
-
-          <div className="lg:col-span-4 grid grid-cols-[92px_minmax(0,1fr)] items-center gap-2">
+          {/* CONTACT */}
+          <div className="lg:col-span-3 grid grid-cols-[92px_minmax(0,1fr)] items-center gap-2">
             <label htmlFor="txtContact" className="text-[11px] text-slate-600">
               Contact
             </label>
-
             <input
               maxLength={80}
               id="txtContact"
@@ -1110,6 +1114,30 @@ const CustomerMiddle: React.FC<CustomerMiddleProps> = ({
               className={inputClass}
               style={{ width: "100%" }}
             />
+          </div>
+
+          {/* BRANCH */}
+          <div className="grid grid-cols-[40px_minmax(0,1fr)] items-center gap-2">
+            <label htmlFor="lkpBranch" className="text-[11px] text-slate-600">
+              Branch
+            </label>
+            <div className="w-full min-w-0">
+              <Select
+                inputId="lkpBranch"
+                name="lkpBranch"
+                options={branchOptions}
+                value={branchOptions.find((o) => o.value === lkpBranch) || null}
+                onChange={(selected) => setLkpBranch(selected?.value || "")}
+                styles={selectStyles}
+                components={{
+                  DropdownIndicator: CustomDropdownIndicator,
+                  IndicatorSeparator: () => null,
+                }}
+                menuPortalTarget={document.body}
+                menuPosition="fixed"
+                isSearchable
+              />
+            </div>
           </div>
 
           {/* =================================================
