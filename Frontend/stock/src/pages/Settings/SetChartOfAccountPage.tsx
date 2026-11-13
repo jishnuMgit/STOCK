@@ -853,7 +853,7 @@ const SetChartOfAccount: React.FC = () => {
               <div className="h-[30px] border-r border-[#c8eadb]" />
 
               <div className={`${headerCellClass} justify-center`}>
-                Sl.
+                Line
               </div>
 
               <div className={headerCellClass}>

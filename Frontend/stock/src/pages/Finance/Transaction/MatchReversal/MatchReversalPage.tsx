@@ -257,8 +257,8 @@ const MatchReversalPage: React.FC = () => {
 
       <ConfirmModal
         open={confirmOpen}
-        title="Un-Match"
-        message="Un-match the selected accounts?"
+        title="Match Reversal"
+        message="Do you want to reverse the match for the selected accounts?"
         confirmLabel="Yes"
         cancelLabel="No"
         busy={saving}

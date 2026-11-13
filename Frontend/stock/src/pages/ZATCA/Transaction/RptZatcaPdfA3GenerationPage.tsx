@@ -256,7 +256,7 @@ const ActionButton: React.FC<{
 );
 
 const columns = [
-  { key: "slNo", label: "Sl.No", width: "40px" },
+  { key: "slNo", label: "Line", width: "40px" },
   { key: "branchId", label: "Br. ID", width: "50px" },
   { key: "docType", label: "Doc. Type", width: "68px" },
   { key: "docNo", label: "Doc. No.", width: "100px" },
