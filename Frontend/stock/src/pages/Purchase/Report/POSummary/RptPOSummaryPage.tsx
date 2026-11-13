@@ -5,6 +5,7 @@ import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
 import { DatePicker } from "@mui/x-date-pickers/DatePicker";
 import dayjs from "dayjs";
 import customParseFormat from "dayjs/plugin/customParseFormat";
+import Header from "../../../../components/common/Header";
 
 dayjs.extend(customParseFormat);
 
@@ -264,11 +265,7 @@ const RptPOSummaryPage: React.FC<RptPOSummaryPageProps> = ({
     <div className="flex min-h-full w-full items-start justify-center bg-white px-4 py-4">
       <div className="min-h-fit w-205 max-w-full bg-white p-0">
         <main className="w-full overflow-hidden border border-gray-400 bg-white">
-          <header className="flex h-7.5 items-center justify-start bg-[#9fdfbc]">
-            <h1 className="m-0 ml-3.5 text-[17px] font-semibold text-[#24364d]">
-              P.O. Summary
-            </h1>
-          </header>
+        <Header Name="P.O. Summary" />
 
           <section className="px-3.5 pb-6 pt-3">
             <div className="grid grid-cols-[168px_1fr] items-start gap-x-4 gap-y-3">
