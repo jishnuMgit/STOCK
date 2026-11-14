@@ -38,9 +38,9 @@ const DepreciationJournalListPage: React.FC = () => {
     console.log("Print Summary Journal:", row);
   };
 
-  const handleClose = () => {
-    window.history.back();
-  };
+  // const handleClose = () => {
+  //   window.history.back();
+  // };
 
   return (
     <div className="min-h-screen w-full bg-white p-1 sm:p-2">

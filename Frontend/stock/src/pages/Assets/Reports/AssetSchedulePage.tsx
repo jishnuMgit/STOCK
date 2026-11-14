@@ -360,9 +360,9 @@ const AssetSchedulePage: React.FC = () => {
   // Close
   // ------------------------------------------------
 
-  const handleClose = () => {
-    window.history.back();
-  };
+  // const handleClose = () => {
+  //   window.history.back();
+  // };
 
   // ==================================================
   // UI

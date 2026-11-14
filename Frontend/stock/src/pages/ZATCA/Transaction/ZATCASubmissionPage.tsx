@@ -617,9 +617,9 @@ const ZATCASubmission: React.FC = () => {
   // CLOSE
   // ==================================================
 
-  const handleClose = () => {
-    window.history.back();
-  };
+  // const handleClose = () => {
+  //   window.history.back();
+  // };
 
   // ==================================================
   // UI

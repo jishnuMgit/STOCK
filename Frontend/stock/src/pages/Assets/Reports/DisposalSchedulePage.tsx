@@ -346,9 +346,9 @@ const DisposalSchedulePage: React.FC = () => {
     });
   };
 
-  const handleClose = () => {
-    window.history.back();
-  };
+  // const handleClose = () => {
+  //   window.history.back();
+  // };
 
   return (
     <div className="min-h-screen w-full bg-white p-1 sm:p-2">

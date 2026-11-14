@@ -469,9 +469,9 @@ const RptZatcaPdfA3Generation: React.FC = () => {
     setRows([]);
   };
 
-  const handleClose = () => {
-    window.history.back();
-  };
+  // const handleClose = () => {
+  //   window.history.back();
+  // };
 
   const emptyCount = Math.max(0, MIN_ROWS - rows.length);
 
