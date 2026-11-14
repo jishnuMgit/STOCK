@@ -176,15 +176,15 @@ const selectClassNames = {
     isFocused: boolean;
     isDisabled: boolean;
   }) => `
-    !min-h-[30px] !h-[30px] !rounded-[4px] !border !shadow-none !text-[12px]
+    !min-h-[30px] !h-[30px] !rounded-[4px] !border !shadow-none !text-[14px]
     hover:!border-[#aab8c5]
     ${isDisabled ? "!bg-[#eef1f4]" : "!bg-white"}
     ${isFocused ? "!border-[#91a7b9]" : "!border-[#cfd7df]"}
   `,
   valueContainer: () => "!h-[26px] !py-0 !px-[5px] !overflow-hidden",
-  singleValue: () => "!m-0 !text-[12px] !text-[#24364d]",
-  placeholder: () => "!m-0 !text-[12px] !text-[#7a8794]",
-  input: () => "!m-0 !p-0 !text-[12px] !text-[#24364d]",
+  singleValue: () => "!m-0 !text-[14px] !text-[#24364d]",
+  placeholder: () => "!m-0 !text-[14px] !text-[#7a8794]",
+  input: () => "!m-0 !p-0 !text-[14px] !text-[#24364d]",
   indicatorsContainer: () => "!h-[26px]",
   dropdownIndicator: () => "!p-[2px] !text-[#657486]",
   indicatorSeparator: () => "!hidden",
@@ -199,7 +199,7 @@ const selectClassNames = {
     isFocused: boolean;
     isSelected: boolean;
   }) => `
-    !cursor-pointer !px-[6px] !py-[4px] !text-[12px] !text-[#24364d]
+    !cursor-pointer !px-[6px] !py-[4px] !text-[14px] !text-[#24364d]
     ${isSelected ? "!bg-[#e7f7ed]" : isFocused ? "!bg-[#f2faf5]" : "!bg-white"}
   `,
 };
@@ -217,7 +217,7 @@ const inputClass =
   " w-full min-w-0 input-style";
 
 const readOnlyClass =
-  "h-[30px] w-full min-w-0 rounded-[4px] border border-[#cfd7df] bg-[#eef1f4] px-2 text-[12px] text-[#24364d] outline-none";
+  "h-[30px] w-full min-w-0 rounded-[4px] border border-[#cfd7df] bg-[#eef1f4] px-2 text-[14px] text-[#24364d] outline-none";
 
 const groupGrid =
   "grid grid-cols-1 items-center gap-x-6 gap-y-2.5 sm:grid-cols-2 lg:grid-cols-12";
@@ -233,7 +233,7 @@ const Field: React.FC<{
   <div className={`flex min-w-0 items-center gap-2 ${className}`}>
     <label
       htmlFor={htmlFor}
-      className={`shrink-0 whitespace-nowrap text-right text-[12px] text-[#405066] ${labelClassName}`}
+      className={`shrink-0 whitespace-nowrap text-right text-[14px] text-[#405066] ${labelClassName}`}
     >
       {label}
     </label>
@@ -307,7 +307,7 @@ const AppDatePicker: React.FC<{
           boxSizing: "border-box",
           borderRadius: "4px",
           backgroundColor: "#ffffff",
-          fontSize: "12px",
+          fontSize: "14px",
           padding: 0,
           overflow: "hidden",
         },
@@ -320,13 +320,13 @@ const AppDatePicker: React.FC<{
           overflow: "hidden",
         },
         "& .MuiPickersInputBase-sectionContent": {
-          fontSize: "12px",
+          fontSize: "14px",
           color: "#344054",
         },
         "& .MuiPickersInputBase-input": {
           minWidth: 0,
           width: "100%",
-          fontSize: "12px",
+          fontSize: "14px",
           padding: 0,
           height: "30px",
           boxSizing: "border-box",
@@ -386,14 +386,14 @@ const ItemRows: React.FC<{
       options={itemIdOptions}
       value={itemId}
       onChange={onItemChange}
-      className="w-27.5 shrink-0"
+      className="w-27.5 shrink-0 "
     />
     <Combo
       id="lkpItemName"
       options={itemNameOptions}
       value={itemId}
       onChange={onItemChange}
-      className="flex-1"
+      className="flex-1 ml-[5px]"
     />
   </Field>
 );
@@ -743,7 +743,7 @@ const AssetDisposalPage: React.FC<AssetDisposalPageProps> = ({
             </div>
 
             {error && (
-              <p role="alert" className="m-0 text-[12px] text-[#c0392b]">
+              <p role="alert" className="m-0 text-[14px] text-[#c0392b]">
                 {error}
               </p>
             )}

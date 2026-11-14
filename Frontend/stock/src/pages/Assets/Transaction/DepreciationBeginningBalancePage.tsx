@@ -126,7 +126,7 @@ const tableSelectStyles = {
     borderRadius: "0px",
     boxShadow: "none",
     backgroundColor: "transparent",
-    fontSize: "12px",
+    fontSize: "14px",
     cursor: "pointer",
     // "&:hover": {
     //   borderColor: "#6b8fcf",
@@ -144,19 +144,19 @@ const tableSelectStyles = {
     ...base,
     margin: 0,
     padding: 0,
-    fontSize: "12px",
+    fontSize: "14px",
   }),
 
   singleValue: (base: any) => ({
     ...base,
-    fontSize: "12px",
+    fontSize: "14px",
     color: "#172b43",
     margin: 0,
   }),
 
   placeholder: (base: any) => ({
     ...base,
-    fontSize: "12px",
+    fontSize: "14px",
     margin: 0,
   }),
 
@@ -183,7 +183,7 @@ const tableSelectStyles = {
   menu: (base: any) => ({
     ...base,
     zIndex: 100,
-    fontSize: "12px",
+    fontSize: "14px",
   }),
 
   menuPortal: (base: any) => ({
@@ -193,7 +193,7 @@ const tableSelectStyles = {
 
   option: (base: any, state: any) => ({
     ...base,
-    fontSize: "12px",
+    fontSize: "14px",
     padding: "6px 8px",
     backgroundColor: state.isSelected
       ? "#dbeafe"
@@ -257,7 +257,7 @@ const AppDatePicker: React.FC<{
           minHeight: "30px",
           borderRadius: "4px",
           backgroundColor: "#fff",
-          fontSize: "12px",
+          fontSize: "14px",
           padding: 0,
         },
         "& .MuiPickersInputBase-sectionsContainer": {
@@ -266,7 +266,7 @@ const AppDatePicker: React.FC<{
           marginBottom: "-5px !important",
         },
         "& .MuiPickersInputBase-sectionContent": {
-          fontSize: "12px",
+          fontSize: "14px",
           color: "#172b43",
         },
         "& .MuiIconButton-root": {
@@ -499,7 +499,7 @@ const DepreciationBeginningBalancePage: React.FC = () => {
 
             <div className="grid grid-cols-[165px_minmax(0,1fr)] items-center gap-1 sm:col-span-2">
 
-              <label className="text-right text-[12px] text-[#172b43]">
+              <label className="text-right text-[14px] text-[#172b43]">
                 Asset Account :
               </label>
 
@@ -535,7 +535,7 @@ const DepreciationBeginningBalancePage: React.FC = () => {
 
             <div className="grid grid-cols-[165px_minmax(0,1fr)] items-center gap-1">
 
-              <label className="text-right text-[12px] text-[#172b43]">
+              <label className="text-right text-[14px] text-[#172b43]">
                 Branch :
               </label>
 
@@ -556,7 +556,7 @@ const DepreciationBeginningBalancePage: React.FC = () => {
 
             <div className="grid grid-cols-[140px_minmax(0,1fr)] items-center gap-1">
 
-              <label className="text-right text-[12px] text-[#172b43]">
+              <label className="text-right text-[14px] text-[#172b43]">
                 Date :
               </label>
 
@@ -574,7 +574,7 @@ const DepreciationBeginningBalancePage: React.FC = () => {
 
             <div className="grid grid-cols-[165px_minmax(0,1fr)] items-center gap-1 sm:col-span-2">
 
-              <label className="text-right whitespace-nowrap text-[12px] text-[#172b43]">
+              <label className="text-right whitespace-nowrap text-[14px] text-[#172b43] -ml-10">
                 Accumulated Depr. Account :
               </label>
 
@@ -608,7 +608,7 @@ const DepreciationBeginningBalancePage: React.FC = () => {
 
             <div className="grid grid-cols-[165px_minmax(0,1fr)] items-center gap-1 sm:col-span-2">
 
-              <label className="text-right whitespace-nowrap text-[12px] text-[#172b43]">
+              <label className="text-right whitespace-nowrap text-[14px] text-[#172b43]">
                 Depr. Expense Account :
               </label>
 

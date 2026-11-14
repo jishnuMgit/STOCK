@@ -105,7 +105,7 @@ const CustomRadio: React.FC<RadioProps> = ({
       )}
     </span>
 
-    <span className="text-[12px] leading-4.25 text-[#172b43]">
+    <span className="text-[14px] leading-4.25 text-[#172b43]">
       {label}
     </span>
   </label>
@@ -164,7 +164,7 @@ const AppDatePicker: React.FC<{
           boxSizing: "border-box",
           borderRadius: "4px",
           backgroundColor: "#ffffff",
-          fontSize: "12px",
+          fontSize: "14px",
           padding: 0,
           overflow: "hidden",
         },
@@ -177,13 +177,13 @@ const AppDatePicker: React.FC<{
           overflow: "hidden",
         },
         "& .MuiPickersInputBase-sectionContent": {
-          fontSize: "12px",
+          fontSize: "14px",
           color: "#344054",
         },
         "& .MuiPickersInputBase-input": {
           minWidth: 0,
           width: "100%",
-          fontSize: "12px",
+          fontSize: "14px",
           padding: 0,
           height: "28px",
           boxSizing: "border-box",
@@ -458,7 +458,7 @@ const RptZatcaDocumentStatus: React.FC = () => {
 
   return (
     <div className="min-h-full w-full bg-white p-1 sm:p-2">
-      <main className="mx-auto w-full max-w-145 overflow-hidden rounded-[3px] border border-[#91a7bb] bg-white shadow-sm">
+      <main className="mx-auto w-full max-w-165 overflow-hidden rounded-[3px] border border-[#91a7bb] bg-white shadow-sm">
 
         {/* Header */}
         <Header Name="ZATCA Status" />
@@ -469,7 +469,7 @@ const RptZatcaDocumentStatus: React.FC = () => {
 
             {/* Branch Selection */}
             <div className="flex min-w-0 items-start gap-2">
-              <RadioPanel className="h-17.5 w-27.25">
+              <RadioPanel className="h-17.5 w-30">
                 <CustomRadio
                   name="rgdBranch"
                   value="One Branch"
@@ -507,8 +507,8 @@ const RptZatcaDocumentStatus: React.FC = () => {
             </div>
 
             {/* Document Status */}
-            <div className="flex justify-end">
-              <RadioPanel className="h-17.5 w-43">
+            <div className="flex justify-end mr-">
+              <RadioPanel className="h-17.5 w-43 ">
                 <CustomRadio
                   name="rgdStatus"
                   value="Cleared"
@@ -529,13 +529,13 @@ const RptZatcaDocumentStatus: React.FC = () => {
 
             {/* Period */}
             <div className="flex min-w-0 items-center gap-1.25">
-              <div className="flex h-7.5 w-26.25 shrink-0 items-center justify-end border border-gray-300 bg-[#FAFBFC] px-1.75">
-                <span className="text-[12px] text-[#172b43]">
+              <div className="flex h-7.5 w-30 shrink-0 items-center justify-end border border-gray-300 bg-[#FAFBFC] px-1.75">
+                <span className="text-[14px] text-[#172b43]">
                   Period :
                 </span>
               </div>
 
-              <div className="w-27.5 min-w-0">
+              <div className="w-[140px] min-w-0">
                 <AppDatePicker
                   id="dtpFromDate"
                   label="Period start date"
@@ -544,7 +544,7 @@ const RptZatcaDocumentStatus: React.FC = () => {
                 />
               </div>
 
-              <div className="w-27.5 min-w-0">
+              <div className="w-[140px] min-w-0">
                 <AppDatePicker
                   id="dtpToDate"
                   label="Period end date"
@@ -555,8 +555,8 @@ const RptZatcaDocumentStatus: React.FC = () => {
             </div>
 
             {/* Date Selection */}
-            <div className="flex justify-end">
-              <RadioPanel className="min-h-22.5 w-43">
+            <div className="flex justify-end mr-0">
+              <RadioPanel className="min-h-22.5 w-55">
                 <CustomRadio
                   name="rdgDate"
                   value="By Submission Date"
@@ -613,7 +613,7 @@ const RptZatcaDocumentStatus: React.FC = () => {
                   className="h-3.5 w-3.5 accent-[#64748b]"
                 />
 
-                <span className="whitespace-nowrap text-[12px] text-[#172b43]">
+                <span className="whitespace-nowrap text-[14px] text-[#172b43]">
                   Exclude Inter Company
                 </span>
               </label>

@@ -3,7 +3,7 @@
 
      CreateZATCAFile  -> pick the builder, fetch the data, write the UBL XML
      RearrangeXML     -> IssueTime cut to HH:mm:ss (done inside the builder)
-     doSigning        -> sign with the ZATCA SDK, read UUID / invoice hash
+     doSigning        -> sign with the ZATCA .NET SDK (zatcaSigner), read UUID / invoice hash
      doClearXML       -> B2B  : POST clearance, save the cleared XML
      doReportXML      -> other: POST reporting, keep the signed XML
 
@@ -23,7 +23,7 @@ import {
   type DataProc,
   type Row,
 } from "./zatcaXmlBuilder.js";
-import { getZatcaSigner } from "./zatcaSigner.js";
+import { getZatcaSigner, type SignResult } from "./zatcaSigner.js";
 
 export type ZatcaSubmitDocument = {
   brId: string;
@@ -277,8 +277,10 @@ export async function submitToZatca(input: ZatcaSubmitInput): Promise<ZatcaSubmi
 
   try {
     /* ---- 2. sign (doSigning) ---- */
+    const signer = getZatcaSigner();
+    let signed: SignResult | void;
     try {
-      await getZatcaSigner().sign({
+      signed = await signer.sign({
         unsignedPath,
         signedPath,
         certificate: input.certificate,
@@ -291,8 +293,9 @@ export async function submitToZatca(input: ZatcaSubmitInput): Promise<ZatcaSubmi
     const signedBytes = await readFile(signedPath);
     const signedXml = signedBytes.toString("utf8");
 
-    const uuid = uuidOf(signedXml);
-    const invoiceHash = invoiceHashOf(signedXml);
+    // the SDK's own answer first (GenerateEInvoiceHashing); the XML is only the fallback
+    const uuid = (signed && signed.uuid) || uuidOf(signedXml);
+    const invoiceHash = (signed && signed.invoiceHash) || invoiceHashOf(signedXml);
     const xmlHash = signedBytes.toString("base64");
 
     if (!uuid || !invoiceHash) {
@@ -341,11 +344,24 @@ export async function submitToZatca(input: ZatcaSubmitInput): Promise<ZatcaSubmi
     const finalXml = await readFile(outFile, "utf8");
     await rm(signedPath, { force: true });
 
+    // QR: GenerateEInvoiceQRCode on the cleared / reported file, like the VB. The invoice
+    // is already accepted by ZATCA here, so a QR problem must not reject it: fall back
+    // to the QR embedded in the XML.
+    let qrCode = "";
+    if (signer.qrCode) {
+      try {
+        qrCode = await signer.qrCode(outFile);
+      } catch {
+        qrCode = "";
+      }
+    }
+    if (!qrCode) qrCode = qrOf(finalXml);
+
     return {
       status,
       xmlHash,
       invoiceHash,
-      qrCode: qrOf(finalXml),
+      qrCode,
       outputFile: outFile,
     };
   } finally {

@@ -1,6 +1,8 @@
-
+import type { KeyboardEventHandler, Ref } from "react";
 import Select, {
   components,
+  type Props as SelectProps,
+  type SelectInstance,
   type StylesConfig,
   type OptionProps,
   type MenuListProps,
@@ -38,9 +40,19 @@ interface CommonTableSelectProps {
   menuPortalTarget?: HTMLElement;
   controlHeight?: number;
   menuZIndex?: number;
+  selectRef?: Ref<SelectInstance<TableSelectOption, false>>;
+  onKeyDown?: KeyboardEventHandler;
+  onMenuOpen?: () => void;
+  onMenuClose?: () => void;
+  filterOption?: SelectProps<TableSelectOption, false>["filterOption"];
+  controlFontSize?: string;
+  borderColor?: string;
+  hoverBorderColor?: string;
+  menuMaxHeight?: string;
+  valueKey?: string;
 }
 
- const CommonTableSelect = ({
+const CommonTableSelect = ({
   options,
   value,
   onChange,
@@ -54,10 +66,20 @@ interface CommonTableSelectProps {
   isLoading = false,
   noOptionsMessage,
   inputId,
-  headerFontSize = "13px",
+  headerFontSize = "14px",
   menuPortalTarget,
   controlHeight = 31,
   menuZIndex = 100000,
+  selectRef,
+  onKeyDown,
+  onMenuOpen,
+  onMenuClose,
+  filterOption,
+  controlFontSize = "13px",
+  borderColor = "#CBD5E1",
+  hoverBorderColor = "#94A3B8",
+  menuMaxHeight = "220px",
+  valueKey,
 }: CommonTableSelectProps) => {
 
   // Same column structure for header and option rows
@@ -93,10 +115,9 @@ interface CommonTableSelectProps {
                 flex min-w-0 h-full items-center
                 truncate
                 ${getAlignment(col.align)}
-                ${
-                  index > 0
-                    ? "border-l border-[#D5DDE5] pl-2"
-                    : ""
+                ${index > 0
+                  ? "border-l border-[#D5DDE5] pl-2"
+                  : ""
                 }
               `}
               style={{
@@ -136,10 +157,9 @@ interface CommonTableSelectProps {
                 flex min-w-0 h-full items-center
                 truncate
                 ${getAlignment(col.align)}
-                ${
-                  index > 0
-                    ? "border-l border-[#D5DDE5] pl-2"
-                    : ""
+                ${index > 0
+                  ? "border-l border-[#D5DDE5] pl-2"
+                  : ""
                 }
               `}
               style={{
@@ -165,12 +185,12 @@ interface CommonTableSelectProps {
       minHeight: `${controlHeight}px`,
       height: `${controlHeight}px`,
       width: width,
-      borderColor: "#CBD5E1",
+      borderColor: borderColor,
       borderRadius: "4px",
       boxShadow: "none",
-      fontSize: "13px",
+      fontSize: "14px",
       "&:hover": {
-        borderColor: "#94A3B8",
+        borderColor: hoverBorderColor,
       },
     }),
 
@@ -205,7 +225,7 @@ interface CommonTableSelectProps {
     menuList: (base) => ({
       ...base,
       padding: 0,
-      maxHeight: "220px",
+      maxHeight: menuMaxHeight,
       overflowX: "hidden",
     }),
 
@@ -221,7 +241,7 @@ interface CommonTableSelectProps {
       minHeight: "32px",
       boxSizing: "border-box",
 
-      fontSize: "13px",
+      fontSize: "14px",
       color: "#334155",
 
       backgroundColor: state.isSelected
@@ -245,10 +265,15 @@ interface CommonTableSelectProps {
 
   return (
     <Select<TableSelectOption, false>
+      ref={selectRef}
       inputId={inputId}
       options={options}
       value={value}
       onChange={onChange}
+      onKeyDown={onKeyDown}
+      onMenuOpen={onMenuOpen}
+      onMenuClose={onMenuClose}
+      filterOption={filterOption}
       placeholder={placeholder}
       components={{
         ...selectComponents,
@@ -262,13 +287,16 @@ interface CommonTableSelectProps {
       noOptionsMessage={noOptionsMessage}
       menuPortalTarget={menuPortalTarget}
       menuPosition={menuPortalTarget ? "fixed" : undefined}
-      getOptionLabel={(option) => option.label}
+      getOptionLabel={(option) =>
+        String(valueKey ? (option[valueKey] ?? option.label) : option.label)
+      }
       getOptionValue={(option) => option.value}
     />
   );
 };
 
-export default CommonTableSelect
+export default CommonTableSelect;
+
 export const CustomTableSelect = ({
   options,
   value,
@@ -281,7 +309,7 @@ export const CustomTableSelect = ({
   isSearchable = true,
   isDisabled = false,
   inputId,
-  headerFontSize = "13px",
+  headerFontSize = "14px",
   menuPortalTarget,
   controlHeight = 31,
   menuZIndex = 100000,
@@ -387,7 +415,7 @@ export const CustomTableSelect = ({
       borderColor: "transparent",
       borderRadius: "4px",
       boxShadow: "none",
-      fontSize: "13px",
+      fontSize: "14px",
       "&:hover": {
         borderColor: "transparent",
       },
@@ -439,7 +467,7 @@ export const CustomTableSelect = ({
       height: "32px",
       minHeight: "32px",
       boxSizing: "border-box",
-      fontSize: "13px",
+      fontSize: "14px",
       color: "#334155",
 
       backgroundColor: state.isSelected

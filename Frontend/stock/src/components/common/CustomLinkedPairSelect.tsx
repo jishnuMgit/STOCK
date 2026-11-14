@@ -3,8 +3,10 @@ import Select, {
   components,
   type MenuListProps,
   type OptionProps,
+  type SelectInstance,
   type StylesConfig,
 } from "react-select";
+import type { KeyboardEventHandler, Ref } from "react";
 import selectComponents from "./selectComponents";
 
 export interface PairSelectOption {
@@ -33,6 +35,11 @@ interface CustomLinkedPairSelectProps {
   isSearchable?: boolean;
   menuPortalTarget?: HTMLElement;
   menuZIndex?: number;
+  firstSelectRef?: Ref<SelectInstance<PairSelectOption, false>>;
+  onKeyDown?: KeyboardEventHandler;
+  onMenuOpen?: () => void;
+  onMenuClose?: () => void;
+  noOptionsMessage?: () => string;
 }
 
 const CustomLinkedPairSelect: React.FC<CustomLinkedPairSelectProps> = ({
@@ -43,18 +50,23 @@ const CustomLinkedPairSelect: React.FC<CustomLinkedPairSelectProps> = ({
   onChange,
   firstHeader,
   secondHeader,
-  firstWidth = 120,
+  firstWidth = 140,
   secondWidth = 450,
   gap = 4,
   firstInputId,
   secondInputId,
   placeholder = "",
-  headerFontSize = "12px",
-  optionFontSize = "12px",
+  headerFontSize = "14px",
+  optionFontSize = "14px",
   isDisabled = false,
   isSearchable = true,
   menuPortalTarget,
   menuZIndex = 100000,
+  firstSelectRef,
+  onKeyDown,
+  onMenuOpen,
+  onMenuClose,
+  noOptionsMessage,
 }) => {
   const nameOptions = secondOptions ?? options;
   const menuWidth = firstWidth + gap + secondWidth;
@@ -134,7 +146,7 @@ const CustomLinkedPairSelect: React.FC<CustomLinkedPairSelectProps> = ({
       borderColor: "#CBD5E1",
       borderRadius: "3px",
       boxShadow: "none",
-      fontSize: "12px",
+      fontSize: "14px",
       backgroundColor: "#FFFFFF",
       "&:hover": {
         borderColor: "#94A3B8",
@@ -181,6 +193,7 @@ const CustomLinkedPairSelect: React.FC<CustomLinkedPairSelectProps> = ({
       ...base,
       padding: 0,
       maxHeight: "200px",
+      overflowX: "hidden",
     }),
     option: (base, state) => ({
       ...base,
@@ -212,6 +225,7 @@ const CustomLinkedPairSelect: React.FC<CustomLinkedPairSelectProps> = ({
       {/* First input: ID/code. Its menu shows ID first, then Name. */}
       <div className="relative shrink-0" style={{ width: firstWidth }}>
         <Select<PairSelectOption, false>
+          ref={firstSelectRef}
           inputId={firstInputId}
           options={options}
           value={selectedFirst}
@@ -225,6 +239,10 @@ const CustomLinkedPairSelect: React.FC<CustomLinkedPairSelectProps> = ({
         
           isSearchable={isSearchable}
           isClearable={false}
+          onKeyDown={onKeyDown}
+          onMenuOpen={onMenuOpen}
+          onMenuClose={onMenuClose}
+          noOptionsMessage={noOptionsMessage}
           menuPlacement="auto"
           menuShouldScrollIntoView={false}
           menuPortalTarget={menuPortalTarget}
@@ -248,6 +266,10 @@ const CustomLinkedPairSelect: React.FC<CustomLinkedPairSelectProps> = ({
           isDisabled={isDisabled}
           isSearchable={isSearchable}
           isClearable={false}
+          onKeyDown={onKeyDown}
+          onMenuOpen={onMenuOpen}
+          onMenuClose={onMenuClose}
+          noOptionsMessage={noOptionsMessage}
           menuPlacement="auto"
           menuShouldScrollIntoView={false}
           menuPortalTarget={menuPortalTarget}

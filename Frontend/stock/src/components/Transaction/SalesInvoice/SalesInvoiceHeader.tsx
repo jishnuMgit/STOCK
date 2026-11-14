@@ -10,9 +10,9 @@ import type {
   Option,
   ParamLookup,
   SalesHeader,
-} from "../../../hooks/useSalesInvoice"; // adjust path to your hook
-import { useNavigate } from "react-router-dom";
-import CloseButton from "../../common/CloseButton";
+
+} from "../../../hooks/useSalesInvoice";
+
 import Header from "../../common/Header";
 import CommonTableSelect from "../../common/CommonTableSelect";
 import CustomLinkedPairSelect, {
@@ -278,12 +278,12 @@ const SalesInvoiceHeader: React.FC<SalesInvoiceHeaderProps> = ({
 
   const invoiceTypeValue = header.invoiceType
     ? (invoiceTypeTableOptions.find(
-        (option) => option.value === header.invoiceType,
-      ) ?? {
-        value: header.invoiceType,
-        label: header.invoiceType,
-        name: TYPE_NAMES[header.invoiceType] ?? header.invoiceType,
-      })
+      (option) => option.value === header.invoiceType,
+    ) ?? {
+      value: header.invoiceType,
+      label: header.invoiceType,
+      name: TYPE_NAMES[header.invoiceType] ?? header.invoiceType,
+    })
     : null;
 
   // ==========================================================
