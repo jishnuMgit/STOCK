@@ -69,6 +69,7 @@ import {
   type AccountOptionProps,
 } from "../../../../types/receiptypes";
 import CloseButton from "../../../common/CloseButton";
+import CommonTableSelect from "../../../common/CommonTableSelect";
 
 export type TableField =
   | "accountId"
@@ -841,90 +842,37 @@ export const ReceiptForm: React.FC<ReceiptFormProps> = ({
             Branch :
           </label>
 
-          <Select<SelectOption, false>
-            ref={branchRef}
-            id="lkpBranch"
+          <CommonTableSelect
+            selectRef={branchRef as any}
+            inputId="lkpBranch"
             value={selectedBranch}
+            options={branchOptions}
+            columns={[
+              { key: "value", label: "ID", width: "70px" },
+              { key: "label", label: "Branch" },
+            ]}
+            placeholder="Select Branch"
+            width="250px"
+            menuWidth="304px"
+            controlFontSize="14px"
+            headerFontSize="12px"
+            borderColor="#d7dee7"
+            hoverBorderColor="#9fdfbc"
+            filterOption={filterOption}
+            noOptionsMessage={() => "No Branch Found"}
+            menuZIndex={99999}
             onKeyDown={(event) =>
-              handleSelectKeyDown(event, "branch", () =>
-                typeRef.current?.focus(),
-              )
+              handleSelectKeyDown(event, "branch", () => typeRef.current?.focus())
             }
             onMenuOpen={() => setOpenSelect("branch")}
             onMenuClose={() => setOpenSelect(null)}
             onChange={(option) => {
               const selectedBranch = option?.value || "";
-
               setLkpBranch(selectedBranch);
-
               if (!isModifyMode) {
                 getReceiptDocNumber(selectedBranch, lkpType || "B");
               }
             }}
-            options={branchOptions}
-            placeholder="Select Branch"
-            components={{
-              Option: BranchOption,
-              MenuList: BranchMenuList,
-            }}
-            filterOption={filterOption}
-            styles={{
-              ...selectStylesLocal,
-
-              control: (base: any) => ({
-                ...base,
-
-                minHeight: "30px",
-                height: "30px",
-
-                width: "250px",
-
-                borderColor: "#d7dee7",
-
-                borderRadius: "4px",
-
-                boxShadow: "none",
-
-                fontSize: "14px",
-
-                cursor: "text",
-
-                "&:hover": {
-                  borderColor: "#9fdfbc",
-                },
-              }),
-
-              menu: (base: any) => ({
-                ...base,
-
-                width: "304px",
-
-                zIndex: 99999,
-              }),
-
-              menuPortal: (base: any) => ({
-                ...base,
-
-                zIndex: 99999,
-              }),
-
-              option: (base: any, state: any) => ({
-                ...base,
-
-                padding: "6px 10px",
-
-                fontSize: "12px",
-
-                backgroundColor: state.isFocused ? "#eef8f3" : "#fff",
-
-                color: "#222",
-
-                cursor: "pointer",
-              }),
-            }}
-            isSearchable
-            isClearable={false}
-            noOptionsMessage={() => "No Branch Found"}
           />
         </div>
 
@@ -935,92 +883,38 @@ export const ReceiptForm: React.FC<ReceiptFormProps> = ({
             Type :
           </label>
 
-          <Select<SelectOption, false>
-            ref={typeRef}
+          <CommonTableSelect
+            selectRef={typeRef as any}
             inputId="lkpType"
             value={selectedType}
+            options={typeOptions}
+            columns={[
+              { key: "label", label: "ID", width: "40px" },
+              { key: "value", label: "Name" },
+            ]}
+            placeholder="Select"
+            width="80px"
+            menuWidth="150px"
+            controlFontSize="12px"
+            headerFontSize="12px"
+            borderColor="#d7dee7"
+            hoverBorderColor="#9fdfbc"
+            filterOption={filterOption}
+            noOptionsMessage={() => "No Type Found"}
+            menuZIndex={99999}
             onKeyDown={(event) =>
-              handleSelectKeyDown(event, "type", () =>
-                documentNoRef.current?.focus(),
-              )
+              handleSelectKeyDown(event, "type", () => documentNoRef.current?.focus())
             }
             onMenuOpen={() => setOpenSelect("type")}
             onMenuClose={() => setOpenSelect(null)}
             onChange={(option) => {
               const selectedType = option?.label || option?.value || "B";
-
               setLkpType(selectedType);
-
               loadAccounts(selectedType);
-
               if (lkpBranch && !isModifyMode) {
                 getReceiptDocNumber(lkpBranch, selectedType);
               }
             }}
-            options={typeOptions}
-            placeholder="Select"
-            components={{
-              Option: TypeOption,
-              MenuList: TypeMenuList,
-            }}
-            filterOption={filterOption}
-            styles={{
-              ...selectStylesLocal,
-
-              control: (base: any) => ({
-                ...base,
-
-                minHeight: "30px",
-                height: "30px",
-
-                width: "80px",
-                minWidth: "80px",
-
-                borderColor: "#d7dee7",
-
-                borderRadius: "4px",
-
-                boxShadow: "none",
-
-                fontSize: "12px",
-
-                cursor: "text",
-
-                "&:hover": {
-                  borderColor: "#9fdfbc",
-                },
-              }),
-
-              menu: (base: any) => ({
-                ...base,
-                width: "150px",
-                minWidth: "150px",
-                zIndex: 99999,
-              }),
-
-              option: (base: any, state: any) => ({
-                ...base,
-                // was "6px 10px"; the cells handle padding now
-                padding: "6px 10px",
-
-                fontSize: "12px",
-
-                backgroundColor: state.isFocused ? "#eef8f3" : "#fff",
-
-                color: "#222",
-
-                cursor: "pointer",
-              }),
-
-              menuPortal: (base: any) => ({
-                ...base,
-
-                zIndex: 99999,
-              }),
-            }}
-            isSearchable
-            isClearable={false}
-            noOptionsMessage={() => "No Type Found"}
           />
         </div>
 
@@ -1105,99 +999,36 @@ export const ReceiptForm: React.FC<ReceiptFormProps> = ({
             {selectedType?.value} :
           </label>
 
-          <Select<SelectOption, false>
-            ref={cbAccountRef}
-            id="lkpCBAccountName"
+          <CommonTableSelect
+            selectRef={cbAccountRef as any}
+            inputId="lkpCBAccountName"
             value={selectedCbAccount}
+            options={cbAccountOptions}
+            columns={[
+              { key: "value", label: "Account ID", width: "110px" },
+              { key: "label", label: "Account Name" },
+            ]}
+            placeholder={accountsLoading ? "Loading..." : "Select"}
+            width="400px"
+            menuWidth="490px"
+            controlFontSize="12px"
+            headerFontSize="12px"
+            borderColor="#d7dee7"
+            hoverBorderColor="#9fdfbc"
+            menuMaxHeight="600px"
+            filterOption={filterOption}
+            isDisabled={accountsLoading || cbAccountOptions.length === 0}
+            noOptionsMessage={() => "No Cash/Bank Found"}
+            menuZIndex={99999}
             onKeyDown={(event) =>
-              handleSelectKeyDown(event, "cbAccount", () =>
-                dateRef.current?.focus(),
-              )
+              handleSelectKeyDown(event, "cbAccount", () => dateRef.current?.focus())
             }
             onMenuOpen={() => setOpenSelect("cbAccount")}
             onMenuClose={() => setOpenSelect(null)}
             onChange={(option) => {
               setCbAccountName(option?.value || "");
-
-              /*
-               * A value was picked - the user is done with
-               * this field, so stop trying to refocus it on
-               * future loading-state changes.
-               */
               keepCbAccountFocus.current = false;
             }}
-            options={cbAccountOptions}
-            placeholder={accountsLoading ? "Loading..." : "Select"}
-            components={{
-              Option: BankCashOption,
-
-              MenuList: BankCashMenuList,
-            }}
-            filterOption={filterOption}
-            styles={{
-              ...selectStylesLocal,
-
-              control: (base: any) => ({
-                ...base,
-
-                minHeight: "30px",
-                height: "30px",
-
-                width: "400px",
-
-                borderColor: "#d7dee7",
-
-                borderRadius: "4px",
-
-                boxShadow: "none",
-
-                fontSize: "12px",
-
-                cursor: "text",
-
-                "&:hover": {
-                  borderColor: "#9fdfbc",
-                },
-              }),
-
-              menu: (base: any) => ({
-                ...base,
-
-                width: "490px",
-
-                zIndex: 99999,
-              }),
-
-              menuPortal: (base: any) => ({
-                ...base,
-
-                zIndex: 99999,
-              }),
-
-              option: (base: any, state: any) => ({
-                ...base,
-
-                padding: "6px 10px",
-
-                fontSize: "12px",
-
-                backgroundColor: state.isFocused ? "#eef8f3" : "#fff",
-
-                color: "#222",
-
-                cursor: "pointer",
-              }),
-
-              menuList: (base: any) => ({
-                ...base,
-
-                maxHeight: "600px",
-              }),
-            }}
-            isSearchable
-            isClearable={false}
-            isDisabled={accountsLoading || cbAccountOptions.length === 0}
-            noOptionsMessage={() => "No Cash/Bank Found"}
           />
         </div>
 
@@ -3330,9 +3161,8 @@ export const ReceiptActions = forwardRef<
         <button
           ref={saveRef}
           type="button"
-          className={`${buttonClass} ${
-            isPosted && saveLabel === "Modify" ? disabledPostedActionClass : ""
-          }`}
+          className={`${buttonClass} ${isPosted && saveLabel === "Modify" ? disabledPostedActionClass : ""
+            }`}
           disabled={isPosted && saveLabel === "Modify"}
           onFocus={() => handleFocus(0)}
           onKeyDown={handleKeyDown}
@@ -3371,9 +3201,8 @@ export const ReceiptActions = forwardRef<
         <button
           ref={deleteRef}
           type="button"
-          className={`${buttonClass} ${
-            isPosted ? disabledPostedActionClass : ""
-          }`}
+          className={`${buttonClass} ${isPosted ? disabledPostedActionClass : ""
+            }`}
           disabled={isPosted}
           onFocus={() => handleFocus(2)}
           onKeyDown={handleKeyDown}
@@ -3401,9 +3230,8 @@ export const ReceiptActions = forwardRef<
         <button
           ref={postRef}
           type="button"
-          className={`${buttonClass} ${
-            isPosted ? disabledPostedActionClass : ""
-          }`}
+          className={`${buttonClass} ${isPosted ? disabledPostedActionClass : ""
+            }`}
           disabled={isPosted}
           onFocus={() => handleFocus(4)}
           onKeyDown={handleKeyDown}

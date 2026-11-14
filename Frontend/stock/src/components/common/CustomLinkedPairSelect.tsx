@@ -3,8 +3,10 @@ import Select, {
   components,
   type MenuListProps,
   type OptionProps,
+  type SelectInstance,
   type StylesConfig,
 } from "react-select";
+import type { KeyboardEventHandler, Ref } from "react";
 import selectComponents from "./selectComponents";
 
 export interface PairSelectOption {
@@ -33,6 +35,11 @@ interface CustomLinkedPairSelectProps {
   isSearchable?: boolean;
   menuPortalTarget?: HTMLElement;
   menuZIndex?: number;
+  firstSelectRef?: Ref<SelectInstance<PairSelectOption, false>>;
+  onKeyDown?: KeyboardEventHandler;
+  onMenuOpen?: () => void;
+  onMenuClose?: () => void;
+  noOptionsMessage?: () => string;
 }
 
 const CustomLinkedPairSelect: React.FC<CustomLinkedPairSelectProps> = ({
@@ -55,6 +62,11 @@ const CustomLinkedPairSelect: React.FC<CustomLinkedPairSelectProps> = ({
   isSearchable = true,
   menuPortalTarget,
   menuZIndex = 100000,
+  firstSelectRef,
+  onKeyDown,
+  onMenuOpen,
+  onMenuClose,
+  noOptionsMessage,
 }) => {
   const nameOptions = secondOptions ?? options;
   const menuWidth = firstWidth + gap + secondWidth;
@@ -212,6 +224,7 @@ const CustomLinkedPairSelect: React.FC<CustomLinkedPairSelectProps> = ({
       {/* First input: ID/code. Its menu shows ID first, then Name. */}
       <div className="relative shrink-0" style={{ width: firstWidth }}>
         <Select<PairSelectOption, false>
+          ref={firstSelectRef}
           inputId={firstInputId}
           options={options}
           value={selectedFirst}
@@ -225,6 +238,10 @@ const CustomLinkedPairSelect: React.FC<CustomLinkedPairSelectProps> = ({
         
           isSearchable={isSearchable}
           isClearable={false}
+          onKeyDown={onKeyDown}
+          onMenuOpen={onMenuOpen}
+          onMenuClose={onMenuClose}
+          noOptionsMessage={noOptionsMessage}
           menuPlacement="auto"
           menuShouldScrollIntoView={false}
           menuPortalTarget={menuPortalTarget}
@@ -248,6 +265,10 @@ const CustomLinkedPairSelect: React.FC<CustomLinkedPairSelectProps> = ({
           isDisabled={isDisabled}
           isSearchable={isSearchable}
           isClearable={false}
+          onKeyDown={onKeyDown}
+          onMenuOpen={onMenuOpen}
+          onMenuClose={onMenuClose}
+          noOptionsMessage={noOptionsMessage}
           menuPlacement="auto"
           menuShouldScrollIntoView={false}
           menuPortalTarget={menuPortalTarget}

@@ -6,6 +6,8 @@ import React, {
   useState,
 } from "react";
 import type { SelectInstance } from "react-select";
+import type { TableSelectOption } from "../../../../components/common/CommonTableSelect";
+import type { PairSelectOption } from "../../../../components/common/CustomLinkedPairSelect";
 
 import {
   ReceiptHeader,
@@ -248,10 +250,10 @@ const ReceiptPage: React.FC = () => {
      REFS
   ======================================================= */
 
-  const branchRef = useRef<SelectInstance<SelectOption, false>>(null);
-  const typeRef = useRef<SelectInstance<SelectOption, false>>(null);
+  const branchRef = useRef<SelectInstance<TableSelectOption, false>>(null);
+  const typeRef = useRef<SelectInstance<TableSelectOption, false>>(null);
   const documentNoRef = useRef<HTMLInputElement>(null);
-  const cbAccountRef = useRef<SelectInstance<SelectOption, false>>(null);
+  const cbAccountRef = useRef<SelectInstance<PairSelectOption, false>>(null);
   const dateRef = useRef<HTMLInputElement>(null);
   const receivedFromRef = useRef<HTMLInputElement>(null);
   const referenceRef = useRef<HTMLInputElement>(null);
