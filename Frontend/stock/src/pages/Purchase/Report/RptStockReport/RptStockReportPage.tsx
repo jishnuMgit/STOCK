@@ -657,7 +657,7 @@ const RptStockReportPage: React.FC = () => {
               />
               <div className="flex flex-col gap-3 pt-3">
                 {!groupDisabled && (
-                  <div className="grid grid-cols-[190px_1fr]">
+                  <div className="grid grid-cols-[190px_1fr] gap-2">
                     <div
                       className={cellFocusClass}
                       onKeyDown={(event) => advanceOnEnter(event, ["lkpOneItemGroupName"])}
@@ -683,7 +683,7 @@ const RptStockReportPage: React.FC = () => {
                       />
                     </div>
                     <div
-                      className={`-ml-px ${cellFocusClass}`}
+                      className={cellFocusClass}
                       style={{ marginRight: NAME_MENU_HANG }}
                       onKeyDown={(event) => advanceOnEnter(event)}
                     >
@@ -771,7 +771,7 @@ const RptStockReportPage: React.FC = () => {
                       </div>
                     </div>
                   ) : (
-                    <div className="grid grid-cols-[190px_1fr]">
+                    <div className="grid grid-cols-[190px_1fr] gap-2">
                       <div
                         className={cellFocusClass}
                         onKeyDown={(event) => advanceOnEnter(event, ["lkpOneItemName"])}
@@ -795,7 +795,7 @@ const RptStockReportPage: React.FC = () => {
                         />
                       </div>
                       <div
-                        className={`-ml-px ${cellFocusClass}`}
+                        className={cellFocusClass}
                         style={{ marginRight: ITEM_NAME_MENU_HANG }}
                         onKeyDown={(event) => advanceOnEnter(event)}
                       >
