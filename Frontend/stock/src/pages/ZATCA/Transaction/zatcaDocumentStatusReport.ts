@@ -1,3 +1,6 @@
+
+import { REPORT_STYLE } from "../../../components/common/reportStyle";
+import { PDF_CELL_PADDING } from "../../../components/common/reportPdf";
 /* =========================================================
    ZATCA DOCUMENT STATUS - the printed report (port of rptZATCADoxStatusrpt)
    Same design as the Item History report: Times New Roman, light-blue borders,
@@ -126,15 +129,15 @@ export const buildReportHtml = (d: ReportData): string => {
   table.main { width: 100%; border-collapse: collapse; table-layout: fixed; }
   thead { display: table-header-group; }            /* company / heading repeat on every page */
   tr { page-break-inside: avoid; }
-  .co   { font-size: 14pt; text-align: center; height: 24px; }
-  .head { font-size: 12pt; text-align: center; height: 22px; }
-  .br   { font-size: 9pt;  text-align: left;   height: 20px; }
-  th { background: #eff3fa; border: 1px solid #c7d1e4; height: 24px;
-       padding: 0 4px; font-weight: normal; text-align: left; }
-  td { border: 1px solid #c7d1e4; border-top: 0; min-height: 24px; padding: 2px 4px;
+  .co   { font-size: 14pt; text-align: center; height: ${REPORT_STYLE.html.companyHeight}px; vertical-align: top; }
+  .head { font-size: 12pt; text-align: center; height: ${REPORT_STYLE.html.headingHeight}px; }
+  .br   { font-size: 9pt;  text-align: left;   height: ${REPORT_STYLE.html.subHeight + REPORT_STYLE.html.tableGap}px; vertical-align: top; }
+  th { border: 1px solid ${REPORT_STYLE.lineColor}; height: ${REPORT_STYLE.html.rowHeight}px;
+       padding: 0 ${REPORT_STYLE.html.cellPaddingX}px; font-weight: normal; text-align: left; }
+  td { border: 1px solid ${REPORT_STYLE.lineColor}; border-top: 0; height: ${REPORT_STYLE.html.rowHeight}px; padding: 2px ${REPORT_STYLE.html.cellPaddingX}px;
        word-wrap: break-word; overflow-wrap: anywhere; }
   .r { text-align: right; }
-  .tot td { border-top: 1px solid #c7d1e4; font-weight: bold; }
+  .tot td { border-top: 1px solid ${REPORT_STYLE.lineColor}; font-weight: bold; }
 </style>
 </head>
 <body>
@@ -201,8 +204,7 @@ export const printZatcaDocumentStatusReport = (report: ReportData): void => {
 --------------------------------------------------------- */
 
 type RGB = [number, number, number];
-const BORDER: RGB = [199, 209, 228]; // #c7d1e4
-const HEAD_FILL: RGB = [239, 243, 250]; // #eff3fa
+const BORDER: RGB = [199, 209, 228]; // ${REPORT_STYLE.lineColor}
 
 const PAGE_W = 297; // A4 landscape, mm
 const MARGIN = { top: 12, right: 10, bottom: 14, left: 12 };
@@ -257,15 +259,15 @@ export const buildPdfBlob = async (d: ReportData): Promise<Blob> => {
     styles: {
       font: "times",
       fontSize: 9,
-      cellPadding: 1.2,
+      cellPadding: PDF_CELL_PADDING,
       lineColor: BORDER,
       lineWidth: 0.2,
-      minCellHeight: 6,
+      minCellHeight: REPORT_STYLE.pdf.minCellHeight,
       valign: "middle",
       overflow: "linebreak",
       textColor: [0, 0, 0],
     },
-    headStyles: { fillColor: HEAD_FILL, fontStyle: "normal", textColor: [0, 0, 0] },
+    headStyles: { fontStyle: "normal", textColor: [0, 0, 0] },
     footStyles: { fontStyle: "bold", textColor: [0, 0, 0] },
     columnStyles,
     didParseCell: (h) => {

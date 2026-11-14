@@ -39,12 +39,15 @@ export const REPORT_STYLE = {
     headingHeight: 26,
     subHeight: 24,
     groupHeight: 30,
-    cellPaddingX: 4,
+    cellPaddingX: 8, // the space left and right inside a cell
+    tableGap: 8, // the space between the branch / info line and the table
   },
 
   // PDF, in millimetres
   pdf: {
-    cellPadding: 1.2,
+    cellPadding: 1.2, // top and bottom inside a cell
+    cellPaddingX: 2, // left and right inside a cell
+    tableGap: 2.2, // the space between the branch / info line and the table (8 px)
     lineWidth: 0.2,
     minCellHeight: 7,
     margin: { top: 12.7, right: 10, bottom: 12.7 },
@@ -175,7 +178,7 @@ export const reportPrintCss = ({ look = "classic", orientation, marginLeft, grou
   tr { page-break-inside: avoid; }
   .co   { font-size: ${size.company}pt; text-align: center; height: ${html.companyHeight}px; vertical-align: top; }
   .head { font-size: ${size.heading}pt; text-align: center; height: ${html.headingHeight}px; }
-  .sub  { height: ${html.subHeight}px; }
+  .sub  { height: ${html.subHeight + html.tableGap}px; vertical-align: top; } /* the gap under it is the space before the table */
   .sub div { display: flex; justify-content: space-between; gap: 16px; }
   .sub .info { ${reportInfo ? "display: none; " : ""}font-size: ${size.small}pt; } /* with a reportInfo it is printed at the bottom right of the page */
   th { border: 1px solid ${lineColor}; height: ${html.rowHeight}px;
@@ -213,10 +216,10 @@ export const documentPrintCss = ({
   orientation,
   margin,
   reportInfo,
-  cellPaddingX = 4,
+  cellPaddingX = REPORT_STYLE.html.cellPaddingX,
   extra = "",
 }: DocumentPrintCssOptions) => {
-  const { lineColor } = REPORT_STYLE;
+  const { lineColor, html } = REPORT_STYLE;
   const { css, size } = reportLook(look);
   const { family: font, importCss } = css;
 
@@ -233,14 +236,15 @@ export const documentPrintCss = ({
   table { width: 100%; border-collapse: collapse; table-layout: fixed; }
   thead { display: table-header-group; }            /* the header repeats on every page */
   tr { page-break-inside: avoid; }
-  .co   { font-size: ${size.company}pt; text-align: center; height: 34px; vertical-align: top; }
-  .head { font-size: ${size.heading}pt; text-align: center; height: 24px; }
-  .info { height: 22px; }
+  /* the same spacing as a report (reportPrintCss): the company row, the heading, the info line and the rows */
+  .co   { font-size: ${size.company}pt; text-align: center; height: ${html.companyHeight}px; vertical-align: top; }
+  .head { font-size: ${size.heading}pt; text-align: center; height: ${html.headingHeight}px; }
+  .info { height: ${html.subHeight + html.tableGap}px; vertical-align: top; }
   .info div { display: flex; justify-content: space-between; gap: 16px; }
-  th { border: 1px solid ${lineColor}; height: 24px;
+  th { border: 1px solid ${lineColor}; height: ${html.rowHeight}px;
        padding: 0 ${cellPaddingX}px; ${columnHeadCss(size)}font-weight: normal; text-align: left; }
   th.r { text-align: right; }
-  td { border: 1px solid ${lineColor}; border-top: 0; min-height: 22px; padding: 2px ${cellPaddingX}px;
+  td { border: 1px solid ${lineColor}; border-top: 0; height: ${html.rowHeight}px; padding: 0 ${cellPaddingX}px;
        vertical-align: middle; overflow-wrap: anywhere; }
   .r { text-align: right; }
   tr.tot td { border-top: 1px solid ${lineColor}; }

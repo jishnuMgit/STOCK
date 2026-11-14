@@ -11,11 +11,7 @@
 // Needs:  npm i jspdf jspdf-autotable
 import { jsPDF } from "jspdf";
 import autoTable, { type CellDef } from "jspdf-autotable";
-import {
-  pdfLabelFontSize,
-  registerReportPdfFont,
-  type PdfLook,
-} from "../../../../components/common/reportPdf";
+import { pdfLabelFontSize, registerReportPdfFont, type PdfLook, PDF_CELL_PADDING } from "../../../../components/common/reportPdf";
 import {
   dmy,
   fixed,
@@ -25,6 +21,7 @@ import {
   type HistoryGroup,
 } from "./printItemHistoryReport";
 
+import { REPORT_STYLE } from "../../../../components/common/reportStyle";
 type RGB = [number, number, number];
 const BORDER: RGB = [199, 209, 228]; // #c7d1e4
 
@@ -34,7 +31,7 @@ const COL_PCT = [11.6, 9.9, 17, 12.5, 10.4, 9.9, 13.2, 15.5]; // Document No. wi
 const PAGE_W = 210; // A4 portrait, mm
 const PAGE_H = 297;
 const MARGIN = { top: 12, right: 10, bottom: 14, left: 12 };
-const TABLE_TOP = 36; // below company / heading / branch
+const TABLE_TOP = 36 + REPORT_STYLE.pdf.tableGap; // below company / heading / branch
 
 // ---- the header block of an item: the same positions as the printed page (percent of the table width) ----
 const X = {
@@ -202,10 +199,10 @@ export const buildItemHistoryPdf = async (report: PrintReport): Promise<Blob> =>
       styles: {
         font: look.font,
         fontSize: look.size.pdfBody,
-        cellPadding: 1.2,
+        cellPadding: PDF_CELL_PADDING,
         lineColor: BORDER,
         lineWidth: 0.2,
-        minCellHeight: 6,
+        minCellHeight: REPORT_STYLE.pdf.minCellHeight,
         valign: "middle",
         overflow: "ellipsize",
         textColor: [0, 0, 0],

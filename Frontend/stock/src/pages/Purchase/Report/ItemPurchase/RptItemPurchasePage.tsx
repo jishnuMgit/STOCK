@@ -649,6 +649,7 @@ const RptItemPurchasePage: React.FC<RptItemPurchasePageProps> = ({
       {/* the Print Preview (after Print) */}
       {preview && (
         <ReportPreview
+          showClose={false}
           html={buildHtml(preview.report)}
           fileBase={preview.fileBase}
           onPrint={() => printItemPurchaseReport(preview.report)}

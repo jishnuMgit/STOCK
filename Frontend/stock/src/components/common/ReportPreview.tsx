@@ -24,6 +24,8 @@ type Props = {
   // the Excel file made by the server (null after an error message)
   fetchExcel: () => Promise<Blob | null>;
   onClose: () => void;
+  // false: no Close button (Esc / Alt+C still close the preview); the Purchase pages and the stock documents use it
+  showClose?: boolean;
 };
 
 type FileFormat = "Excel" | "PDF";
@@ -68,6 +70,7 @@ const ReportPreview: React.FC<Props> = ({
   buildPdf,
   fetchExcel,
   onClose,
+  showClose = true,
 }) => {
   const [rdgReportFile, setRdgReportFile] = useState<FileFormat>("Excel");
   const [busy, setBusy] = useState(false);
@@ -194,15 +197,17 @@ const ReportPreview: React.FC<Props> = ({
             >
               <u>D</u>ownload
             </button>
-            <button
-              id="btnPreviewClose"
-              type="button"
-              onClick={onClose}
-              disabled={busy}
-              className="btn-style focus-visible:ring-2 focus-visible:ring-[#64d96e] disabled:cursor-not-allowed disabled:opacity-40"
-            >
-              <u>C</u>lose
-            </button>
+            {showClose && (
+              <button
+                id="btnPreviewClose"
+                type="button"
+                onClick={onClose}
+                disabled={busy}
+                className="btn-style focus-visible:ring-2 focus-visible:ring-[#64d96e] disabled:cursor-not-allowed disabled:opacity-40"
+              >
+                <u>C</u>lose
+              </button>
+            )}
           </div>
 
           {/* File Format: what Download saves */}

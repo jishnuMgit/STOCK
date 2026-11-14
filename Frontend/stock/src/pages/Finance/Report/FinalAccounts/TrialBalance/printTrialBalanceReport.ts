@@ -95,16 +95,16 @@ export const buildHtml = (r: PrintReport) => {
   table.main { width: 100%; border-collapse: collapse; table-layout: fixed; }
   thead { display: table-header-group; }   /* company / heading / labels repeat on every page */
   tr { page-break-inside: avoid; }
-  .co   { font-size: ${size.company}pt; text-align: center; height: 34px; vertical-align: top; }
-  .head { font-size: ${size.heading}pt; text-align: center; height: 26px; }
-  .br   { font-size: ${size.group}pt; text-align: left; height: 22px; }
-  th { border: 1px solid ${lineColor}; height: 24px; font-size: ${size.columnHead}pt;
-       padding: 0 4px; font-weight: normal; text-align: left; }
+  .co   { font-size: ${size.company}pt; text-align: center; height: ${REPORT_STYLE.html.companyHeight}px; vertical-align: top; }
+  .head { font-size: ${size.heading}pt; text-align: center; height: ${REPORT_STYLE.html.headingHeight}px; }
+  .br   { font-size: ${size.group}pt; text-align: left; height: ${REPORT_STYLE.html.subHeight + REPORT_STYLE.html.tableGap}px; vertical-align: top; }
+  th { border: 1px solid ${lineColor}; height: ${REPORT_STYLE.html.rowHeight}px; font-size: ${size.columnHead}pt;
+       padding: 0 ${REPORT_STYLE.html.cellPaddingX}px; font-weight: normal; text-align: left; }
   th { vertical-align: bottom; }   /* spanning labels sit on the same line as Debit / Credit / Movement */
   th.r { text-align: right; }
   th.c { text-align: center; }
   th.m { vertical-align: middle; }          /* Account ID / Account Name: centred between the two lines */
-  td { border: 1px solid ${lineColor}; border-top: 0; height: 24px; padding: 0 4px;
+  td { border: 1px solid ${lineColor}; border-top: 0; height: ${REPORT_STYLE.html.rowHeight}px; padding: 0 ${REPORT_STYLE.html.cellPaddingX}px;
        overflow: hidden; white-space: nowrap; }
   td.name { white-space: pre; }            /* keeps the A/C group indent */
   td.r { text-align: right; }

@@ -48,7 +48,7 @@ class ApiError extends Error {
 
 const pad = (n: number) => String(n).padStart(2, "0");
 
-// VB objCommon.ReportInfo - assumed: "<user>  dd/mm/yyyy hh:mm"
+// VB objCommon.ReportInfo - assumed: "<user>  DD-MM-YYYY hh:mm"
 const reportInfo = (userId: string) => {
   const d = new Date();
   return `${userId}  ${pad(d.getDate())}/${pad(d.getMonth() + 1)}/${d.getFullYear()} ${pad(d.getHours())}:${pad(d.getMinutes())}`;
@@ -59,7 +59,7 @@ const MONTHS = [
   "Jul", "Aug", "Sep", "Oct", "Nov", "Dec",
 ];
 
-// "DD/MM/YYYY" -> { d, mo, y } or null when it is not a real date
+// "DD-MM-YYYY" -> { d, mo, y } or null when it is not a real date
 const parseDMY = (s: string) => {
   const m = /^(\d{2})\/(\d{2})\/(\d{4})$/.exec(s);
   if (!m) return null;
@@ -143,11 +143,11 @@ const prepareReport = async (req: AuthenticatedRequest): Promise<Prepared> => {
   }
 
   const asOn = parseDMY(asOnText);
-  if (!asOn) throw new ApiError(400, "Date must be DD/MM/YYYY");
+  if (!asOn) throw new ApiError(400, "Date must be DD-MM-YYYY");
 
   const from = forPeriod ? parseDMY(fromText) : null;
   if (forPeriod) {
-    if (!from) throw new ApiError(400, "From Date must be DD/MM/YYYY");
+    if (!from) throw new ApiError(400, "From Date must be DD-MM-YYYY");
     if (
       new Date(from.y, from.mo - 1, from.d).getTime() >
       new Date(asOn.y, asOn.mo - 1, asOn.d).getTime()
@@ -210,8 +210,8 @@ const prepareReport = async (req: AuthenticatedRequest): Promise<Prepared> => {
 // POST /api/RptReceivables/print
 // body: { allBranches: boolean, branchId?: string,
 //         forPeriod: boolean,            (false = As On Date)
-//         fromDate?: "DD/MM/YYYY",       (For A Period only)
-//         toDate: "DD/MM/YYYY",          (the As On Date / end of the period)
+//         fromDate?: "DD-MM-YYYY",       (For A Period only)
+//         toDate: "DD-MM-YYYY",          (the As On Date / end of the period)
 //         postStatus: 0 non posted | 1 posted | 2 all,
 //         print0Bal: boolean }
 // -> everything the preview / printer / PDF needs

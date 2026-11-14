@@ -756,15 +756,6 @@ const RptReceivablesPage: React.FC<RptReceivablesPageProps> = ({ onClose }) => {
                 >
                   <u>D</u>ownload
                 </button>
-                <button
-                  id="btnPreviewCancel"
-                  type="button"
-                  onClick={() => setPreview(null)}
-                  disabled={printing}
-                  className="btn-style focus-visible:ring-2 focus-visible:ring-[#64d96e] disabled:cursor-not-allowed disabled:opacity-40"
-                >
-                  <u>C</u>lose
-                </button>
               </div>
 
               {/* Report File: what Download saves */}

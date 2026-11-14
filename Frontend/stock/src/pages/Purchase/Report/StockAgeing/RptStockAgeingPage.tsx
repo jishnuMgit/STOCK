@@ -789,6 +789,7 @@ const RptStockAgeingPage: React.FC<RptStockAgeingPageProps> = ({ onClose }) => {
       {/* the Print Preview (after Print) */}
       {preview && (
         <ReportPreview
+          showClose={false}
           html={buildHtml(preview.report)}
           fileBase={preview.fileBase}
           onPrint={() => printStockAgeingReport(preview.report)}

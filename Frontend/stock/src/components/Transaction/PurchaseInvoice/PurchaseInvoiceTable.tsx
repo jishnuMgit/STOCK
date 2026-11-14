@@ -10,6 +10,7 @@ import Select, {
 import { RxTriangleDown } from "react-icons/rx";
 import type { PurchaseRow } from "../../../hooks/Purchase/Transaction/usePurchaseInvoice";
 import { useConfirmModal } from "../../../hooks/useConfirmModal";
+import SingleSelect from "../../common/SingleSelect";
 
 type Option = {
   value: string; // item id
@@ -491,34 +492,35 @@ const PurchaseTable: React.FC<Props> = ({
 
                   {/* Item ID */}
                   <td className={editCellClass}>
-                    <Select<Option, false>
-                      inputId={`lkpItemID-${index}`}
-                      instanceId={`item-id-${index}`}
-                      options={itemIdOptions}
-                      value={
-                        itemIdOptions.find((o) => o.value === row.itemId) ??
-                        null
-                      }
-                      onChange={(option) => handleItemChange(index, option)}
-                      formatOptionLabel={formatIdLabel}
-                      filterOption={filterItem}
-                      styles={selectStyles}
-                      components={idSelectComponents}
-                      isClearable={false}
-                      isSearchable
-                      menuPosition="fixed"
-                      menuPortalTarget={portalTarget}
-                      placeholder=""
-                      className="w-full"
-                      onMenuOpen={() => setOpenMenuKey(`id-${index}`)}
-                      onMenuClose={() =>
-                        setOpenMenuKey((prev) =>
-                          prev === `id-${index}` ? null : prev,
-                        )
-                      }
-                      onKeyDown={(event) =>
-                        handleItemKeyDown(event, index, `id-${index}`)
-                      }
+                    <SingleSelect<Option>
+                      mode="item"
+                      selectProps={{
+                        inputId: `lkpItemID-${index}`,
+                        instanceId: `item-id-${index}`,
+                        options: itemIdOptions,
+                        value:
+                          itemIdOptions.find((o) => o.value === row.itemId) ??
+                          null,
+                        onChange: (option) =>
+                          handleItemChange(index, option),
+                        formatOptionLabel: formatIdLabel,
+                        filterOption: filterItem,
+                        styles: selectStyles,
+                        components: idSelectComponents,
+                        isClearable: false,
+                        isSearchable: true,
+                        menuPosition: "fixed",
+                        menuPortalTarget: portalTarget,
+                        placeholder: "",
+                        className: "w-full",
+                        onMenuOpen: () => setOpenMenuKey(`id-${index}`),
+                        onMenuClose: () =>
+                          setOpenMenuKey((prev) =>
+                            prev === `id-${index}` ? null : prev,
+                          ),
+                        onKeyDown: (event) =>
+                          handleItemKeyDown(event, index, `id-${index}`),
+                      }}
                     />
                   </td>
 
