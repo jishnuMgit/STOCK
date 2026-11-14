@@ -25,7 +25,7 @@ type AssetSettingRow = {
   depreciationExpenseAccount: Option | null;
 };
 
-const DATE_FORMAT = "DD/MM/YYYY";
+const DATE_FORMAT = "DD-MM-YYYY";
 
 // ==================================================
 // SAMPLE ACCOUNT OPTIONS

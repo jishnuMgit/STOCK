@@ -50,6 +50,7 @@ interface CommonTableSelectProps {
   hoverBorderColor?: string;
   menuMaxHeight?: string;
   valueKey?: string;
+  showHeader?: boolean;
 }
 
 const CommonTableSelect = ({
@@ -75,11 +76,11 @@ const CommonTableSelect = ({
   onMenuOpen,
   onMenuClose,
   filterOption,
-  controlFontSize = "13px",
   borderColor = "#CBD5E1",
   hoverBorderColor = "#94A3B8",
   menuMaxHeight = "220px",
   valueKey,
+  showHeader = true,
 }: CommonTableSelectProps) => {
 
   // Same column structure for header and option rows
@@ -135,42 +136,38 @@ const CommonTableSelect = ({
     // HEADER ROW
     MenuList: (props: MenuListProps<TableSelectOption, false>) => (
       <components.MenuList {...props}>
-        <div
-          className="
-            grid w-full items-stretch
-            bg-[#F3F5F7]
-            border-b border-[#D5DDE5]
-            font-semibold text-[#334155]
-          "
-          style={{
-            gridTemplateColumns: gridTemplate,
-            height: "35px",
-            boxSizing: "border-box",
-            padding: "0 10px",
-            fontSize: headerFontSize,
-          }}
-        >
-          {columns.map((col, index) => (
-            <div
-              key={col.key}
-              className={`
-                flex min-w-0 h-full items-center
-                truncate
-                ${getAlignment(col.align)}
-                ${index > 0
-                  ? "border-l border-[#D5DDE5] pl-2"
-                  : ""
-                }
-              `}
-              style={{
-                boxSizing: "border-box",
-                overflow: "hidden",
-              }}
-            >
-              {col.label}
-            </div>
-          ))}
-        </div>
+        {showHeader && (
+          <div
+            className="
+              grid w-full items-stretch
+              bg-[#F3F5F7]
+              border-b border-[#D5DDE5]
+              font-semibold text-[#334155]
+            "
+            style={{
+              gridTemplateColumns: gridTemplate,
+              height: "35px",
+              boxSizing: "border-box",
+              padding: "0 10px",
+              fontSize: headerFontSize,
+            }}
+          >
+            {columns.map((col, index) => (
+              <div
+                key={col.key}
+                className={`
+                  flex min-w-0 h-full items-center
+                  truncate
+                  ${getAlignment(col.align)}
+                  ${index > 0 ? "border-l border-[#D5DDE5] pl-2" : ""}
+                `}
+                style={{ boxSizing: "border-box", overflow: "hidden" }}
+              >
+                {col.label}
+              </div>
+            ))}
+          </div>
+        )}
 
         {props.children}
       </components.MenuList>
@@ -204,11 +201,11 @@ const CommonTableSelect = ({
       height: `${controlHeight - 1}px`,
     }),
 
-    // MENU
     menu: (base) => ({
       ...base,
-      width: menuWidth,
-      minWidth: menuWidth,
+      width: menuWidth === "100%" ? "100%" : `max(100%, ${menuWidth})`,
+      minWidth: "100%",
+      maxWidth: "calc(100vw - 16px)",
       marginTop: "4px",
       borderRadius: "4px",
       border: "1px solid #E5E7EB",

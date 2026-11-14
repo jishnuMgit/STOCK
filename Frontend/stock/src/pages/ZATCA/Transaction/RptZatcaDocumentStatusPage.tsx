@@ -23,7 +23,7 @@ import CommonTableSelect, {
 
 dayjs.extend(customParseFormat);
 
-const DATE_FORMAT = "DD/MM/YYYY";
+const DATE_FORMAT = "DD-MM-YYYY";
 const TODAY = dayjs().format(DATE_FORMAT);
 
 // Router mount: app.use("/api/zatca-document-status", zatcaDocumentStatusRouter)

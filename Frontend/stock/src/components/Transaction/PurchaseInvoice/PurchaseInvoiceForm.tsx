@@ -10,21 +10,11 @@ import PurchaseInoviceMiscsup from "./PurchaseInoviceMiscsup";
 import { createPortal } from "react-dom";
 import PurchaseExpense from "./PurchaseInvoiceExpense";
 import CommonTableSelect from "../../common/CommonTableSelect";
-import CustomLinkedPairSelect, {
-  type PairSelectOption,
-} from "../../common/CustomLinkedPairSelect";
 
 type Option = { value: string; label: string; name?: string };
 
 const makeOptions = (values: string[]): Option[] =>
   values.map((value) => ({ value, label: value }));
-
-const toPairOptions = (options: Option[]): PairSelectOption[] =>
-  options.map((option) => ({
-    value: option.value,
-    firstLabel: option.value,
-    secondLabel: option.name ?? option.label,
-  }));
 
 /* Fallback options until the lookup endpoints load. */
 const defaultBranchOptions = makeOptions(["OFFICE"]);
@@ -43,6 +33,29 @@ const invoiceTypeColumns = [
   { key: "name", label: "Name" },
 ];
 const labelColumn = [{ key: "label", label: "Name" }];
+
+/* Linked ID / Name selects: both show the same two columns,
+   one is searched by ID and the other by name. */
+const supplierIdColumns = [
+  { key: "label", label: "Supplier ID", width: "120px" },
+  { key: "name", label: "Supplier Name" },
+];
+const supplierNameColumns = [
+  { key: "id", label: "Supplier ID", width: "120px" },
+  { key: "label", label: "Supplier Name" },
+];
+const miscIdColumns = [
+  { key: "label", label: "Misc. Sup. ID", width: "120px" },
+  { key: "name", label: "Misc. Sup. Name" },
+];
+const miscNameColumns = [
+  { key: "id", label: "Misc. Sup. ID", width: "120px" },
+  { key: "label", label: "Misc. Sup. Name" },
+];
+
+/* same records, but the visible label is the name (value stays the ID) */
+const toNameOptions = (options: Option[]) =>
+  options.map((o) => ({ value: o.value, label: o.name ?? o.label, id: o.value }));
 
 const pick = (options: Option[], value: string): Option | null =>
   options.find((o) => o.value === value) ?? null;
@@ -111,10 +124,13 @@ const PurchaseForm: React.FC<Props> = ({
   const supplierOptions = lookups?.supplierIds ?? [];
   const supplierNameOptions = lookups?.supplierNames ?? [];
   const currencyOptions = lookups?.currencies ?? defaultCurrencyOptions;
-  const supplierPairOptions = toPairOptions(supplierOptions);
-  const supplierNamePairOptions = toPairOptions(
-    supplierNameOptions.length ? supplierNameOptions : supplierOptions,
-  );
+  const supplierNameSelectOptions = supplierNameOptions.length
+    ? supplierNameOptions.map((o) => ({
+      value: o.value,
+      label: o.label,
+      id: o.value,
+    }))
+    : toNameOptions(supplierOptions);
 
   const isMisc = miscMode === "Yes";
 
@@ -128,7 +144,7 @@ const PurchaseForm: React.FC<Props> = ({
     label: m.id,
     name: m.name,
   }));
-  const miscPairOptions = toPairOptions(miscIdOptions);
+  const miscNameOptions = toNameOptions(miscIdOptions);
 
   /* menus render in document.body so the form never clips them */
   const portalTarget =
@@ -204,12 +220,10 @@ const PurchaseForm: React.FC<Props> = ({
   };
 
   /* Supplier ID and Supplier Name are one account: set both together */
-  const handleSupplierChange = (option: PairSelectOption | null) => {
-    const accountId = option?.value ?? "";
+  const handleSupplierChange = (accountId: string) => {
     const name =
-      option?.secondLabel ??
-      supplierNameOptions.find((o) => o.value === accountId)?.label ??
       supplierOptions.find((o) => o.value === accountId)?.name ??
+      supplierNameOptions.find((o) => o.value === accountId)?.label ??
       "";
     onChange("supplierId", accountId);
     onChange("supplierName", name);
@@ -263,7 +277,7 @@ const PurchaseForm: React.FC<Props> = ({
               onChange={(o) => onChange("brId", o?.value ?? "")}
               columns={branchColumns}
               width="100%"
-              menuWidth="220px"
+              menuWidth="calc(100% + 100px)"
               menuPortalTarget={portalTarget}
               isClearable={false}
               isSearchable
@@ -297,9 +311,10 @@ const PurchaseForm: React.FC<Props> = ({
               onChange={(o) => handleMiscModeChange(o?.value ?? "No")}
               columns={labelColumn}
               width="100%"
-              menuWidth="140px"
+              menuWidth="100%"
               isClearable={false}
               isSearchable={false}
+              showHeader={false}
             />
           </div>
         </div>
@@ -317,24 +332,33 @@ const PurchaseForm: React.FC<Props> = ({
               onChange={(o) => onChange("currency", o?.value ?? "")}
               columns={labelColumn}
               width="100%"
-              menuWidth="160px"
+              menuWidth="100%"
               isClearable={false}
               isSearchable={false}
+              showHeader={false}
             />
           </div>
         </div>
       </div>
 
       {/* ==================================================
-          GROUP 2
-          Entry No., Currency Rate, Purchase Expense
+          GROUPS 2 + 3 (one shared grid, so Supplier and Misc. Sup.
+          can start at the middle column and fill the whole width)
+          Row 1: Entry No.          | Type, Date
+          Row 2: Supplier (full width)
+          Row 3: Misc. Sup. (full width) + Add
+          Row 4: Currency Rate      | Sup. Invoice No., Sup. Invoice Date
+          Row 5: Purchase Expense   | Calculate Unit Cost, Sup. Amount
       ================================================== */}
       <div
-        id="purchase-middle-group"
-        className="flex min-w-0 flex-col gap-2 pr-2"
+        id="purchase-right-group"
+        className="grid min-w-0 grid-cols-1 gap-y-2 xl:col-span-2 xl:grid-cols-[minmax(0,1fr)_minmax(0,2.15fr)]"
       >
-        {/* Entry No. */}
-        <div className="flex min-w-0 items-center gap-3">
+        {/* Row 1, left: Entry No. */}
+        <div
+          id="purchase-middle-group"
+          className="flex min-w-0 items-center gap-3 pr-2"
+        >
           <label htmlFor="txtDocNo" className={`${labelClass} w-23`}>
             Entry No.
           </label>
@@ -348,8 +372,133 @@ const PurchaseForm: React.FC<Props> = ({
           />
         </div>
 
-        {/* Currency Rate */}
-        <div className="flex min-w-0 items-center gap-3">
+        {/* Row 1, right: Invoice Type and Date */}
+        <div className="grid min-w-0 grid-cols-[minmax(0,1fr)_minmax(0,1fr)] gap-3">
+          <div className="flex min-w-0 items-center gap-3">
+            <label htmlFor="lkpType" className={`${labelClass} w-19`}>
+              Type
+            </label>
+            <div className="min-w-0 w-[26%]">
+              <CommonTableSelect
+                inputId="lkpType"
+                options={invoiceTypeOptions}
+                value={pick(invoiceTypeOptions, header.invoiceType)}
+                onChange={(o) => onChange("invoiceType", o?.value ?? "")}
+                columns={invoiceTypeColumns}
+                width="115%"
+                menuWidth="180px"
+                menuPortalTarget={portalTarget}
+                isClearable={false}
+                isSearchable={false}
+              />
+            </div>
+          </div>
+
+          <div className="ml-auto flex min-w-0 items-center justify-end gap-2">
+            <label htmlFor="dtpDate" className={`${labelClass} w-9`}>
+              Date
+            </label>
+            <input
+              id="dtpDate"
+              type="date"
+              value={header.date}
+              onChange={(e) => onChange("date", e.target.value)}
+              className="input-style"
+              style={{ width: "140px" }}
+            />
+          </div>
+        </div>
+
+        {/* Row 2: Supplier, full width (right padding matches the
+            Misc. Sup. row's + button so both selects end together) */}
+        <div className="flex min-w-0 items-center gap-3 xl:col-span-2">
+          <label htmlFor="lkpSupplierID" className={`${labelClass} w-23`}>
+            Supplier
+          </label>
+          <div className="flex min-w-0 flex-1 gap-2.5 pr-9.5">
+            <div className="w-28 shrink-0">
+              <CommonTableSelect
+                inputId="lkpSupplierID"
+                options={supplierOptions}
+                value={pick(supplierOptions, header.supplierId)}
+                onChange={(o) => handleSupplierChange(o?.value ?? "")}
+                columns={supplierIdColumns}
+                width="100%"
+                menuWidth="calc(100% + 560px)"
+                menuPortalTarget={portalTarget}
+                isClearable={false}
+                isSearchable
+              />
+            </div>
+            <div className="min-w-0 flex-1">
+              <CommonTableSelect
+                inputId="lkpSupplierName"
+                options={supplierNameSelectOptions}
+                value={pick(supplierNameSelectOptions, header.supplierId)}
+                onChange={(o) => handleSupplierChange(o?.value ?? "")}
+                columns={supplierNameColumns}
+                width="100%"
+                menuWidth="480px"
+                menuPortalTarget={portalTarget}
+                isClearable={false}
+                isSearchable
+              />
+            </div>
+          </div>
+        </div>
+
+        {/* Row 3: Misc. Supplier, full width + Add */}
+        <div className="flex min-w-0 items-center gap-3 xl:col-span-2">
+          <label htmlFor="lkpMiscSupID" className={`${labelClass} w-23`}>
+            Misc. Sup.
+          </label>
+          <div className="flex min-w-0 flex-1 items-center gap-2">
+            <div className="flex min-w-0 flex-1 gap-2.5">
+              <div className="w-28 shrink-0">
+                <CommonTableSelect
+                  inputId="lkpMiscSupID"
+                  options={miscIdOptions}
+                  value={pick(miscIdOptions, header.miscSupId)}
+                  onChange={(o) => handleMiscChange(o?.value ?? "")}
+                  columns={miscIdColumns}
+                  width="100%"
+                  menuWidth="calc(100% + 560px)"
+                  menuPortalTarget={portalTarget}
+                  isClearable={false}
+                  isSearchable
+                  isDisabled={!isMisc}
+                />
+              </div>
+              <div className="min-w-0 flex-1">
+                <CommonTableSelect
+                  inputId="lkpMiscSupName"
+                  options={miscNameOptions}
+                  value={pick(miscNameOptions, header.miscSupId)}
+                  onChange={(o) => handleMiscChange(o?.value ?? "")}
+                  columns={miscNameColumns}
+                  width="100%"
+                  menuWidth="480px"
+                  menuPortalTarget={portalTarget}
+                  isClearable={false}
+                  isSearchable
+                  isDisabled={!isMisc}
+                />
+              </div>
+            </div>
+            <button
+              id="btnAddMiscSupplier"
+              type="button"
+              aria-label="Add miscellaneous supplier"
+              onClick={() => setMiscOpen(true)}
+              className="flex h-7.5 w-7.5 cursor-pointer shrink-0 items-center justify-center rounded-full bg-[#28a745] text-[20px] font-bold leading-none text-white hover:bg-green-700"
+            >
+              <Plus />
+            </button>
+          </div>
+        </div>
+
+        {/* Row 4, left: Currency Rate (same row as Currency) */}
+        <div className="flex min-w-0 items-center gap-3 pr-2">
           <label htmlFor="txtCurrencyRate" className={`${labelClass} w-23`}>
             Currency Rate
           </label>
@@ -376,117 +525,7 @@ const PurchaseForm: React.FC<Props> = ({
           />
         </div>
 
-        {/* Purchase Expense */}
-        <div className="flex justify-end">
-          <button
-            id="btnPurchaseExpense"
-            type="button"
-            onClick={() => setExpenseOpen(true)}
-            className="h-7.5 w-30 whitespace-nowrap cursor-pointer rounded-sm border border-[#cbd1d9] bg-linear-to-b from-white to-[#e8e8e8] px-2.5 text-[11px] text-[#222] hover:bg-slate-100"
-          >
-            Purchase Expense
-          </button>
-        </div>
-      </div>
-
-      {/* ==================================================
-          GROUP 3
-          Remaining fields and action buttons
-      ================================================== */}
-      <div id="purchase-right-group" className="flex min-w-0 flex-col gap-2">
-        {/* Invoice Type and Date */}
-        <div className="grid min-w-0 grid-cols-[minmax(0,1fr)_minmax(0,1fr)] gap-3">
-          <div className="flex min-w-0 items-center gap-3">
-            <label htmlFor="lkpType" className={`${labelClass} w-19`}>
-              Type
-            </label>
-            <div className="min-w-0 w-[26%]">
-              <CommonTableSelect
-                inputId="lkpType"
-                options={invoiceTypeOptions}
-                value={pick(invoiceTypeOptions, header.invoiceType)}
-                onChange={(o) => onChange("invoiceType", o?.value ?? "")}
-                columns={invoiceTypeColumns}
-                width="100%"
-                menuWidth="220px"
-                menuPortalTarget={portalTarget}
-                isClearable={false}
-                isSearchable={false}
-              />
-            </div>
-          </div>
-
-          <div className="ml-auto flex min-w-0 items-center justify-end gap-2">
-            <label htmlFor="dtpDate" className={`${labelClass} w-9`}>
-              Date
-            </label>
-            <input
-              id="dtpDate"
-              type="date"
-              value={header.date}
-              onChange={(e) => onChange("date", e.target.value)}
-              className="input-style"
-              style={{ width: "140px" }}
-            />
-          </div>
-        </div>
-
-        {/* Supplier ID and name are one linked lookup */}
-        <div className="flex min-w-0 items-center gap-2">
-          <label htmlFor="lkpSupplierID" className={`${labelClass} w-19`}>
-            Supplier
-          </label>
-          <CustomLinkedPairSelect
-            firstInputId="lkpSupplierID"
-            secondInputId="lkpSupplierName"
-            options={supplierPairOptions}
-            secondOptions={supplierNamePairOptions}
-            firstValue={header.supplierId || null}
-            secondValue={header.supplierId || null}
-            firstHeader="Supplier ID"
-            secondHeader="Supplier Name"
-            firstWidth={112}
-            secondWidth={260}
-            gap={4}
-            isSearchable
-            menuPortalTarget={portalTarget}
-            onChange={handleSupplierChange}
-          />
-        </div>
-
-        {/* Misc. Supplier ID and name + Add */}
-        <div className="flex min-w-0 items-center gap-2">
-          <label htmlFor="lkpMiscSupID" className={`${labelClass} w-19`}>
-            Misc. Sup.
-          </label>
-          <CustomLinkedPairSelect
-            firstInputId="lkpMiscSupID"
-            secondInputId="lkpMiscSupName"
-            options={miscPairOptions}
-            firstValue={header.miscSupId || null}
-            secondValue={header.miscSupId || null}
-            firstHeader="Misc. Sup. ID"
-            secondHeader="Misc. Sup. Name"
-            firstWidth={112}
-            secondWidth={260}
-            gap={4}
-            isDisabled={!isMisc}
-            isSearchable
-            menuPortalTarget={portalTarget}
-            onChange={(option) => handleMiscChange(option?.value ?? "")}
-          />
-          <button
-            id="btnAddMiscSupplier"
-            type="button"
-            aria-label="Add miscellaneous supplier"
-            onClick={() => setMiscOpen(true)}
-            className="flex h-7.5 w-7.5 cursor-pointer shrink-0 items-center justify-center rounded-full bg-[#28a745] text-[20px] font-bold leading-none text-white hover:bg-green-700"
-          >
-            <Plus />
-          </button>
-        </div>
-
-        {/* Supplier Invoice No. and Date */}
+        {/* Row 4, right: Supplier Invoice No. and Date */}
         <div className="grid min-w-0 grid-cols-[minmax(0,1fr)_minmax(0,1fr)] gap-3">
           <div className="flex min-w-0 items-center gap-2">
             <label
@@ -521,8 +560,20 @@ const PurchaseForm: React.FC<Props> = ({
           </div>
         </div>
 
-        {/* Calculate Unit Cost and Supplier Amount */}
-        <div className="flex justify-between gap-2">
+        {/* Row 5, left: Purchase Expense */}
+        <div className="flex min-h-9.5 min-w-0 items-center justify-end pr-2">
+          <button
+            id="btnPurchaseExpense"
+            type="button"
+            onClick={() => setExpenseOpen(true)}
+            className="h-7.5 w-30 whitespace-nowrap cursor-pointer rounded-sm border border-[#cbd1d9] bg-linear-to-b from-white to-[#e8e8e8] px-2.5 text-[11px] text-[#222] hover:bg-slate-100"
+          >
+            Purchase Expense
+          </button>
+        </div>
+
+        {/* Row 5, right: Calculate Unit Cost and Supplier Amount */}
+        <div className="flex min-h-9.5 min-w-0 items-center justify-between gap-2">
           <button
             id="btnCalculateUnitCost"
             type="button"
