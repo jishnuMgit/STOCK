@@ -75,7 +75,6 @@ const CommonTableSelect = ({
   onMenuOpen,
   onMenuClose,
   filterOption,
-  controlFontSize = "13px",
   borderColor = "#CBD5E1",
   hoverBorderColor = "#94A3B8",
   menuMaxHeight = "220px",
