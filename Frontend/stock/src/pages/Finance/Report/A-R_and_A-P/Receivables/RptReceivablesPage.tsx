@@ -10,6 +10,7 @@ import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
 import { DatePicker } from "@mui/x-date-pickers/DatePicker";
 import dayjs from "dayjs";
 import customParseFormat from "dayjs/plugin/customParseFormat";
+import { previewPrintedLine } from "../../../../../components/common/printHtml";
 import { buildReceivablesPdf } from "./downloadReceivablesPdf";
 import { saveFile } from "./saveFile";
 import {
@@ -522,7 +523,7 @@ const RptReceivablesPage: React.FC<RptReceivablesPageProps> = ({ onClose }) => {
 
     setPrinting(true);
     try {
-      const blob = asPdf ? buildReceivablesPdf(report) : await fetchExcel(request);
+      const blob = asPdf ? await buildReceivablesPdf(report) : await fetchExcel(request);
       if (!blob) return; // the error is already shown
 
       const kind = asPdf ? "pdf" : "xlsx";
@@ -541,17 +542,21 @@ const RptReceivablesPage: React.FC<RptReceivablesPageProps> = ({ onClose }) => {
     }
   };
 
-  const previewHtml = useMemo(
-    () =>
-      preview
-        ? // 40px left / 20px right margin for the preview only
-        buildHtml(preview.report).replace(
-          "</head>",
-          "<style>body{padding-left:40px;padding-right:20px}</style></head>",
-        )
-        : "",
-    [preview],
-  );
+  const previewHtml = useMemo(() => {
+    if (!preview) return "";
+
+    const html = buildHtml(preview.report);
+    // the user and the time at the bottom right (a browser draws the page margin box only when it prints)
+    const printed = previewPrintedLine(html);
+
+    return html
+      .replace(
+        "</head>",
+        // 40px left / 20px right margin for the preview only
+        `<style>body{padding-left:40px;padding-right:20px}${printed.css}</style></head>`,
+      )
+      .replace("</body>", `${printed.line}</body>`);
+  }, [preview]);
 
   const handleClose = () => {
     setBranchMode("All Branch");

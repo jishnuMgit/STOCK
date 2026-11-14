@@ -3,10 +3,12 @@
 // heading, branch, columns Account ID, Account Name, Debit, Credit and a
 // "Total :" row at the end.
 // Page number top right, user id + date bottom right of every page.
+// The font, the sizes and the line colour are the "inter" look of components/common/reportStyle.ts.
 // buildHtml is used by the print preview; printPayablesReport sends the
 // report to the printer (browser print dialog, hidden iframe - no pop-up).
 
-import { REPORT_STYLE } from "../../../../../components/common/reportStyle";
+import { cssStr, esc, printHtmlDocument } from "../../../../../components/common/printHtml";
+import { REPORT_STYLE, reportLook } from "../../../../../components/common/reportStyle";
 
 export type PayableRow = {
   accountId: string;
@@ -25,21 +27,6 @@ export type PrintReport = {
   totalCredit: number;
 };
 
-const esc = (v: unknown) =>
-  String(v ?? "")
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;")
-    .replace(/"/g, "&quot;");
-
-// text placed inside a CSS string ("...") in the print stylesheet
-const cssStr = (v: unknown) =>
-  String(v ?? "")
-    .replace(/\\/g, "\\\\")
-    .replace(/"/g, '\\"')
-    .replace(/</g, "\\3C ")
-    .replace(/[\r\n]+/g, " ");
-
 // VB {0:#,#0.00}
 export const amount = (v: number) =>
   v.toLocaleString("en-US", {
@@ -57,34 +44,40 @@ const rowHtml = (r: PayableRow) => `<tr>
   <td class="r">${amount(r.credit)}</td>
 </tr>`;
 
-export const buildHtml = (r: PrintReport) => `<!doctype html>
+export const buildHtml = (r: PrintReport) => {
+  // the font and the sizes come from the shared look (components/common/reportStyle.ts)
+  const { css, size } = reportLook("inter");
+  const font = css.family;
+  const { lineColor, html } = REPORT_STYLE;
+
+  return `<!doctype html>
 <html>
 <head>
 <meta charset="utf-8" />
 <title>${esc(r.heading)}</title>
-<style>
+<style>${css.importCss}
   @page {
     size: A4;
     margin: 12.7mm 10mm 14mm 25.4mm;
-    @top-right    { content: "Page " counter(page) " / " counter(pages); font: 8pt "Times New Roman", serif; }
-    @bottom-right { content: "${cssStr(r.reportInfo)}"; font: 8pt "Times New Roman", serif; }
+    @top-right    { content: "Page " counter(page) " / " counter(pages); font: ${size.small}pt ${font}; }
+    @bottom-right { content: "Printed : ${cssStr(r.reportInfo)}"; font: ${size.small}pt ${font}; }
   }
   * { box-sizing: border-box; }
-  body { margin: 0; font: 9pt "Times New Roman", serif; color: #000;
+  body { margin: 0; font: ${size.body}pt ${font}; color: #000;
          -webkit-print-color-adjust: exact; print-color-adjust: exact; }
   table { width: 100%; border-collapse: collapse; table-layout: fixed; }
   thead { display: table-header-group; }   /* header repeats on every page */
   tr { page-break-inside: avoid; }
-  .co   { font-size: 14pt; font-weight: bold; text-align: center; height: ${REPORT_STYLE.html.companyHeight}px; vertical-align: top; }
-  .head { font-size: 12pt; text-align: center; height: ${REPORT_STYLE.html.headingHeight}px; }
-  .br   { font-size: 9pt;  text-align: left;   height: ${REPORT_STYLE.html.subHeight + REPORT_STYLE.html.tableGap}px; vertical-align: top; }
-  th { border: 1px solid ${REPORT_STYLE.lineColor}; height: ${REPORT_STYLE.html.rowHeight}px;
-       padding: 0 ${REPORT_STYLE.html.cellPaddingX}px; font-weight: normal; text-align: left; }
+  .co   { font-size: ${size.company}pt; text-align: center; height: ${html.companyHeight}px; vertical-align: top; }
+  .head { font-size: ${size.heading}pt; text-align: center; height: ${html.headingHeight}px; }
+  .br   { font-size: ${size.group}pt; text-align: left; height: ${html.subHeight + html.tableGap}px; vertical-align: top; }
+  th { border: 1px solid ${lineColor}; height: ${html.rowHeight}px; font-size: ${size.columnHead}pt;
+       padding: 0 ${html.cellPaddingX}px; font-weight: normal; text-align: left; }
   th.r { text-align: right; }
-  td { border: 1px solid ${REPORT_STYLE.lineColor}; border-top: 0; height: ${REPORT_STYLE.html.rowHeight}px; padding: 0 ${REPORT_STYLE.html.cellPaddingX}px;
+  td { border: 1px solid ${lineColor}; border-top: 0; height: ${html.rowHeight}px; padding: 0 ${html.cellPaddingX}px;
        overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
   td.r { text-align: right; }
-  tr.tot td { font-weight: bold; border-top: 1px solid ${REPORT_STYLE.lineColor}; }
+  tr.tot td { font-weight: bold; border-top: 1px solid ${lineColor}; }
 </style>
 </head>
 <body>
@@ -112,32 +105,6 @@ export const buildHtml = (r: PrintReport) => `<!doctype html>
 </table>
 </body>
 </html>`;
-
-export const printPayablesReport = (report: PrintReport): void => {
-  const iframe = document.createElement("iframe");
-  iframe.style.cssText =
-    "position:fixed;right:0;bottom:0;width:0;height:0;border:0;visibility:hidden";
-  document.body.appendChild(iframe);
-
-  const doc = iframe.contentDocument;
-  const win = iframe.contentWindow;
-  if (!doc || !win) {
-    iframe.remove();
-    throw new Error("Could not open the print view");
-  }
-
-  doc.open();
-  doc.write(buildHtml(report));
-  doc.close();
-
-  const cleanup = () => setTimeout(() => iframe.remove(), 500);
-  win.addEventListener("afterprint", cleanup);
-
-  // let the iframe lay out before printing
-  setTimeout(() => {
-    win.focus();
-    win.print();
-    // some browsers never fire afterprint: remove it anyway after a minute
-    setTimeout(() => iframe.remove(), 60000);
-  }, 250);
 };
+
+export const printPayablesReport = (report: PrintReport): void => printHtmlDocument(buildHtml(report));

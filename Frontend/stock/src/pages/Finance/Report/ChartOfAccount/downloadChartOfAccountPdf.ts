@@ -8,11 +8,9 @@ import { jsPDF } from "jspdf";
 import autoTable, { type CellDef } from "jspdf-autotable";
 import type { PrintReport } from "./PrintChartOfAccountReport";
 
-import { PDF_CELL_PADDING } from "../../../../components/common/reportPdf";
+import { pdfHeadStyles, pdfTableStyles, registerReportPdfFont } from "../../../../components/common/reportPdf";
 import { REPORT_STYLE } from "../../../../components/common/reportStyle";
 type RGB = [number, number, number];
-const BORDER: RGB = [199, 209, 228]; // #c7d1e4
-const BLACK: RGB = [0, 0, 0];
 
 // level colours as on the tree: 1 green, 2 blue, 3 purple, else dark slate
 const LEVEL_COLOR: Record<number, RGB> = {
@@ -29,14 +27,15 @@ const TABLE_TOP = 30 + REPORT_STYLE.pdf.tableGap; // below company / heading
 const PAD = 1.2;
 const INDENT_PER_SPACE = 1.0; // mm: the leading spaces of the name become padding
 
-export const buildChartOfAccountPdf = (report: PrintReport): Blob => {
+export const buildChartOfAccountPdf = async (report: PrintReport): Promise<Blob> => {
   const doc = new jsPDF({ orientation: "portrait", unit: "mm", format: "a4" });
+  const look = await registerReportPdfFont(doc, "inter"); // the font and the sizes of the look
   const usable = PAGE_W - MARGIN.left - MARGIN.right;
 
   // Account ID | Account Name (the rest) | C.C | Level
-  const idW = 23;
-  const ccW = 11;
-  const lvW = 15;
+  const idW = 28; // wide enough for the 14 px label with the cell padding
+  const ccW = 14;
+  const lvW = 17;
   const columnStyles = {
     0: { cellWidth: idW },
     1: { cellWidth: usable - idW - ccW - lvW },
@@ -73,13 +72,12 @@ export const buildChartOfAccountPdf = (report: PrintReport): Blob => {
   // company / heading - drawn on every page
   const drawTitle = () => {
     doc.setTextColor(0, 0, 0);
-    doc.setFont("times", "bold");
-    doc.setFontSize(14);
+    doc.setFont(look.font, "normal");
+    doc.setFontSize(look.size.company);
     doc.text(report.coName, PAGE_W / 2, MARGIN.top + 8, { align: "center" });
 
-    doc.setFont("times", "normal");
-    doc.setFontSize(12);
-    doc.text(report.heading, PAGE_W / 2, MARGIN.top + 15, { align: "center" });
+    doc.setFontSize(look.size.heading);
+    doc.text(report.heading, PAGE_W / 2, MARGIN.top + 15 + REPORT_STYLE.pdf.titleGap, { align: "center" });
   };
 
   autoTable(doc, {
@@ -94,21 +92,8 @@ export const buildChartOfAccountPdf = (report: PrintReport): Blob => {
     tableWidth: usable,
     rowPageBreak: "avoid",
     showHead: "everyPage",
-    styles: {
-      font: "times",
-      fontSize: 10,
-      cellPadding: PDF_CELL_PADDING,
-      lineColor: BORDER,
-      lineWidth: 0.2,
-      minCellHeight: REPORT_STYLE.pdf.minCellHeight,
-      valign: "middle",
-      overflow: "ellipsize",
-      textColor: BLACK,
-    },
-    headStyles: {
-      textColor: BLACK,
-      fontStyle: "normal",
-    },
+    styles: { ...pdfTableStyles(look), overflow: "ellipsize" as const },
+    headStyles: pdfHeadStyles(look),
     columnStyles,
     head: [
       [
@@ -124,8 +109,8 @@ export const buildChartOfAccountPdf = (report: PrintReport): Blob => {
 
   // page numbers need the final page count, so they are added at the end
   const pages = doc.getNumberOfPages();
-  doc.setFont("times", "normal");
-  doc.setFontSize(8);
+  doc.setFont(look.font, "normal");
+  doc.setFontSize(look.size.small);
   doc.setTextColor(0, 0, 0);
   for (let i = 1; i <= pages; i++) {
     doc.setPage(i);
@@ -133,7 +118,7 @@ export const buildChartOfAccountPdf = (report: PrintReport): Blob => {
     doc.text(`Page ${i} / ${pages}`, PAGE_W - MARGIN.right, MARGIN.top, {
       align: "right",
     });
-    doc.text(report.reportInfo, PAGE_W - MARGIN.right, h - MARGIN.bottom + 6, {
+    doc.text(`Printed : ${report.reportInfo}`, PAGE_W - MARGIN.right, h - MARGIN.bottom + 6, {
       align: "right",
     });
   }

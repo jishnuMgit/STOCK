@@ -93,9 +93,10 @@ export const monthPageNumbers = (
 // the column weights of a monthly page (they add up to 1)
 export const monthPageWeights = (secondHalf: boolean) => {
   // the Account Name column is the wide one: the names are long and a group's name is indented by up to 12 spaces
+  // (the number columns have to hold a 7-figure amount with the cell padding)
   const raw = secondHalf
-    ? [0.095, 0.28, 0.085, 0.08, 0.08, 0.08, 0.08, 0.08, 0.08, 0.095]
-    : [0.095, 0.28, 0.08, 0.08, 0.08, 0.08, 0.08, 0.08, 0.1];
+    ? [0.095, 0.16, 0.1, 0.09, 0.09, 0.09, 0.09, 0.09, 0.09, 0.105]
+    : [0.1, 0.19, 0.095, 0.095, 0.095, 0.095, 0.095, 0.095, 0.14];
   const sum = raw.reduce((s, w) => s + w, 0);
 
   return raw.map((w) => w / sum);
@@ -124,7 +125,8 @@ export const levelCssColor = (level: number) => {
 };
 
 // the column weights, as the old report: Account ID 80 | Account Name 250 | Opening 104 | Current 104 | Closing 122
-export const COLUMN_WEIGHTS = [80 / 660, 250 / 660, 104 / 660, 104 / 660, 122 / 660];
+// (Account ID a little wider than the old report: its 14 px label has to fit)
+export const COLUMN_WEIGHTS = [100 / 660, 230 / 660, 104 / 660, 104 / 660, 122 / 660];
 
 // the first column that is a number
 export const FIRST_NUMBER_COLUMN = 2;
@@ -179,7 +181,7 @@ const buildMonthHtml = (r: MonthReport) => `<!doctype html>
 <head>
 <meta charset="utf-8" />
 <title>Income Summary</title>
-<style>${reportPrintCss({ reportInfo: r.txtReportInfo, orientation: "landscape", marginLeft: "15mm", groupSelector: "td.group" })}
+<style>${reportPrintCss({ look: "inter", reportInfo: r.txtReportInfo, orientation: "landscape", marginLeft: "15mm", groupSelector: "td.group" })}
 </style>
 </head>
 <body>
@@ -199,7 +201,7 @@ export const buildHtml = (r: PrintReport) => {
 <head>
 <meta charset="utf-8" />
 <title>Income Summary</title>
-<style>${reportPrintCss({ reportInfo: r.txtReportInfo, orientation: "portrait", marginLeft: "15mm", groupSelector: "td.group" })}
+<style>${reportPrintCss({ look: "inter", reportInfo: r.txtReportInfo, orientation: "portrait", marginLeft: "15mm", groupSelector: "td.group" })}
 </style>
 </head>
 <body>

@@ -9,12 +9,14 @@ import { jsPDF } from "jspdf";
 import autoTable, { type CellDef } from "jspdf-autotable";
 
 import {
-  PDF_BLACK,
   addPageNumbers,
   drawReportTitle,
+  pdfHeadStyles,
   pdfMargin,
   pdfTableStyles,
   pdfTableTop,
+  registerReportPdfFont,
+  type PdfLook,
 } from "../../../common/reportPdf";
 
 import {
@@ -33,7 +35,7 @@ import {
 
 import { REPORT_STYLE } from "../../../common/reportStyle";
 // the cell padding of the report (mm) and the width of one leading space of the name
-const CELL_PADDING = 1.2;
+const CELL_PADDING = REPORT_STYLE.pdf.cellPadding;
 const SPACE_WIDTH = 0.9;
 
 // the name of a line, indented by the spaces the server put in front of it
@@ -62,7 +64,8 @@ const addMonthPage = (
   report: MonthReport,
   heading: string,
   secondHalf: boolean,
-  first: boolean
+  first: boolean,
+  look: PdfLook
 ) => {
   const pageW = 297;
   const margin = pdfMargin(15);
@@ -118,8 +121,8 @@ const addMonthPage = (
     tableWidth: usable,
     rowPageBreak: "avoid",
     showHead: "everyPage",
-    styles: pdfTableStyles(),
-    headStyles: { textColor: PDF_BLACK, fontStyle: "normal" },
+    styles: pdfTableStyles(look),
+    headStyles: pdfHeadStyles(look),
     columnStyles,
     head,
     body,
@@ -128,34 +131,36 @@ const addMonthPage = (
         doc,
         pageW,
         margin,
-        // the user / date line is printed once: on the first page only
-        { txtCoName: report.txtCoName, txtHeading: heading, txtReportInfo: secondHalf ? "" : report.txtReportInfo },
-        report.txtBranch
+        { txtCoName: report.txtCoName, txtHeading: heading, txtReportInfo: report.txtReportInfo },
+        report.txtBranch,
+        look
       ),
   });
 };
 
-const buildMonthPdf = (report: MonthReport): Blob => {
+const buildMonthPdf = async (report: MonthReport): Promise<Blob> => {
   const doc = new jsPDF({ orientation: "landscape", unit: "mm", format: "a4" });
+  const look = await registerReportPdfFont(doc, "inter"); // the font and the sizes of the look
 
-  addMonthPage(doc, report, report.txtHeading, false, true);
+  addMonthPage(doc, report, report.txtHeading, false, true, look);
 
   if (report.txtHeadingJulToDec !== "") {
-    addMonthPage(doc, report, report.txtHeadingJulToDec, true, false);
+    addMonthPage(doc, report, report.txtHeadingJulToDec, true, false, look);
   }
 
-  addPageNumbers(doc, 297, pdfMargin(15));
+  addPageNumbers(doc, 297, pdfMargin(15), look);
 
   return doc.output("blob");
 };
 
-export const buildIncomeSumPdf = (report: PrintReport): Blob =>
+export const buildIncomeSumPdf = (report: PrintReport): Promise<Blob> =>
   report.rdgDate === 0 ? buildMonthPdf(report) : buildPeriodPdf(report);
 
 // ---- For a Period: A4 portrait, Opening / Current / Closing ----
 
-const buildPeriodPdf = (report: PeriodReport): Blob => {
+const buildPeriodPdf = async (report: PeriodReport): Promise<Blob> => {
   const doc = new jsPDF({ orientation: "portrait", unit: "mm", format: "a4" });
+  const look = await registerReportPdfFont(doc, "inter"); // the font and the sizes of the look
 
   const pageW = 210;
   const margin = pdfMargin(15);
@@ -216,7 +221,7 @@ const buildPeriodPdf = (report: PeriodReport): Blob => {
   ]);
 
   // company / heading / branch + report info - drawn on every page
-  const drawTitle = () => drawReportTitle(doc, pageW, margin, report, report.txtBranch);
+  const drawTitle = () => drawReportTitle(doc, pageW, margin, report, report.txtBranch, look);
 
   autoTable(doc, {
     theme: "plain",
@@ -230,18 +235,15 @@ const buildPeriodPdf = (report: PeriodReport): Blob => {
     tableWidth: usable,
     rowPageBreak: "avoid",
     showHead: "everyPage",
-    styles: pdfTableStyles(),
-    headStyles: {
-      textColor: PDF_BLACK,
-      fontStyle: "normal",
-    },
+    styles: pdfTableStyles(look),
+    headStyles: pdfHeadStyles(look),
     columnStyles,
     head,
     body,
     didDrawPage: drawTitle,
   });
 
-  addPageNumbers(doc, pageW, margin);
+  addPageNumbers(doc, pageW, margin, look);
 
   return doc.output("blob");
 };
