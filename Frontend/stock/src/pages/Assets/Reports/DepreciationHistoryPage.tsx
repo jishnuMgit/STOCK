@@ -729,12 +729,7 @@ const DepreciationHistory: React.FC = () => {
                   <u>P</u>rint
                 </ActionButton>
 
-                <ActionButton
-                  onClick={handleClose}
-                  className="h-9 w-20"
-                >
-                  Close
-                </ActionButton>
+                
 
               </div>
 

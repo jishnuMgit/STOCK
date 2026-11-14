@@ -745,12 +745,12 @@ const AssetActions: React.FC<{
       <u>D</u>elete
     </button>
     <button
-      id="btnCancel"
+      id="btnClear"
       type="button"
       onClick={onCancel}
       className="btn-style"
     >
-      <u>C</u>ancel
+      <u>C</u>lear
     </button>
   
   </div>

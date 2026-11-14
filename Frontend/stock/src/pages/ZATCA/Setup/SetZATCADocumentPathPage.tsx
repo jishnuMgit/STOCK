@@ -249,17 +249,10 @@ const SetZATCADocumentPath: React.FC<SetZATCADocumentPathProps> = ({
                 disabled={loading}
                 className={buttonClass}
               >
-                <u>C</u>ancel
+                <u>C</u>lear
               </button>
              
-              <button
-                id="btnClose"
-                type="button"
-                onClick={handleClose}
-                className={buttonClass}
-              >
-                <u>C</u>lose
-              </button>
+           
             </div>
           </section>
         </main>
@@ -325,7 +318,7 @@ const SetZATCADocumentPath: React.FC<SetZATCADocumentPathProps> = ({
                   onClick={() => setPickerOpen(false)}
                   className={buttonClass}
                 >
-                  <u>C</u>ancel
+                  <u>C</u>lear
                 </button>
               </div>
             </div>
