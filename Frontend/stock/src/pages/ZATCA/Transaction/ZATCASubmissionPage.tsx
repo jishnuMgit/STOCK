@@ -121,7 +121,7 @@ const createPairOptions = (
 // width of the customer pair, so the Branch box lines up with it
 const CUSTOMER_ID_WIDTH = 120;
 const CUSTOMER_NAME_WIDTH = 320;
-const PAIR_GAP = 4;
+const PAIR_GAP = 10;
 const BRANCH_WIDTH = 224; // lkpBranch: 320px reduced by 30%
 
 // radio panels: rdgCustomer is 10% wider than rdgBranch; the Branch box is
@@ -203,7 +203,7 @@ const CustomRadio: React.FC<RadioProps> = ({
       )}
     </span>
 
-    <span className="text-[12px] leading-4.25 text-[#172b43]">
+    <span className="text-[14px] leading-4.25 text-[#172b43]">
       {label}
     </span>
   </label>
@@ -280,7 +280,7 @@ const AppDatePicker: React.FC<{
           boxSizing: "border-box",
           borderRadius: "3px",
           backgroundColor: "#ffffff",
-          fontSize: "12px",
+          fontSize: "14px",
           padding: 0,
           overflow: "hidden",
         },
@@ -293,7 +293,7 @@ const AppDatePicker: React.FC<{
         },
 
         "& .MuiPickersInputBase-sectionContent": {
-          fontSize: "12px",
+          fontSize: "14px",
           color: "#344054",
         },
 
@@ -640,7 +640,7 @@ const ZATCASubmission: React.FC = () => {
               TOP FILTER SECTION
           ========================================== */}
 
-          <div className="grid grid-cols-1 gap-x-2 gap-y-2 lg:grid-cols-[145px_minmax(180px,1fr)_130px_minmax(330px,2fr)_176px]">
+          <div className="grid grid-cols-1 gap-x-2 gap-y-2 lg:grid-cols-[165px_minmax(180px,1fr)_130px_minmax(330px,2fr)_176px]">
 
             {/* DOCUMENT MODE */}
 
@@ -686,7 +686,7 @@ const ZATCASubmission: React.FC = () => {
             {/* BRANCH MODE */}
 
             <div className="flex min-w-0 flex-nowrap items-center gap-2 lg:col-start-3 lg:row-start-1 lg:col-span-2 ml-30">
-              <RadioPanel className="h-18.75 w-[112px] shrink-0">
+              <RadioPanel className="h-18.75 w-[132px] shrink-0">
                 <CustomRadio
                   name="branchMode"
                   value="One Branch"
@@ -723,7 +723,7 @@ const ZATCASubmission: React.FC = () => {
             {/* CUSTOMER MODE */}
 
             <div className="flex min-w-0 flex-nowrap items-center gap-2 lg:col-start-3 lg:row-start-2 lg:col-span-2 ml-30">
-              <RadioPanel className="h-18.75 w-[123px] shrink-0">
+              <RadioPanel className="h-18.75 w-[133px] shrink-0">
 
                 <CustomRadio
                   name="customerMode"
@@ -788,7 +788,7 @@ const ZATCASubmission: React.FC = () => {
 
             {/* DATE MODE */}
 
-            <RadioPanel className="h-18.75">
+            <RadioPanel className="h-18.75 -ml-10">
 
               <CustomRadio
                 name="dateMode"
@@ -851,7 +851,7 @@ const ZATCASubmission: React.FC = () => {
                 />
               ) : (
                 <>
-                  <div className="w-27.5">
+                  <div className="w-[140px]">
                     <AppDatePicker
                       id="fromDate"
                       label="From Date"
@@ -860,7 +860,7 @@ const ZATCASubmission: React.FC = () => {
                     />
                   </div>
 
-                  <div className="w-27.5">
+                  <div className="w-[140px]">
                     <AppDatePicker
                       id="toDate"
                       label="To Date"

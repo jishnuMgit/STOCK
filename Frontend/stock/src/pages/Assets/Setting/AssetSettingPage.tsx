@@ -103,7 +103,7 @@ const AppDatePicker: React.FC<{
           minHeight: "30px",
           borderRadius: "4px",
           backgroundColor: yellow ? "#ffffd9" : "#ffffff",
-          fontSize: "12px",
+          fontSize: "14px",
           padding: 0,
         },
         "& .MuiPickersInputBase-sectionsContainer": {
@@ -111,7 +111,7 @@ const AppDatePicker: React.FC<{
           marginBottom: "-5px !important",
         },
         "& .MuiPickersInputBase-sectionContent": {
-          fontSize: "12px",
+          fontSize: "14px",
           color: "#172b43",
         },
         "& .MuiIconButton-root": {
@@ -405,9 +405,9 @@ const AssetSettingPage: React.FC = () => {
 
           <div className="mt-3.5 grid grid-cols-1 gap-3 sm:grid-cols-2">
 
-            <div className="grid grid-cols-[145px_minmax(0,140px)] items-center gap-1">
+            <div className="grid grid-cols-[165px_minmax(0,140px)] items-center gap-1">
 
-              <label className="whitespace-nowrap text-[12px] text-[#172b43]">
+              <label className="whitespace-nowrap text-[14px] text-[#172b43]">
                 Depreciation Start Date :
               </label>
 
@@ -419,9 +419,9 @@ const AssetSettingPage: React.FC = () => {
 
             </div>
 
-            <div className="grid grid-cols-[175px_minmax(0,140px)] items-center gap-1">
+            <div className="grid grid-cols-[200px_minmax(0,140px)] items-center gap-1">
 
-              <label className="whitespace-nowrap text-[12px] text-[#172b43]">
+              <label className="whitespace-nowrap text-[14px] text-[#172b43]">
                 Depreciation Gen. Start Date :
               </label>
 

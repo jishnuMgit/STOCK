@@ -54,7 +54,7 @@ interface CommonTableSelectProps {
   isLoading = false,
   noOptionsMessage,
   inputId,
-  headerFontSize = "13px",
+  headerFontSize = "14px",
   menuPortalTarget,
   controlHeight = 31,
   menuZIndex = 100000,
@@ -168,7 +168,7 @@ interface CommonTableSelectProps {
       borderColor: "#CBD5E1",
       borderRadius: "4px",
       boxShadow: "none",
-      fontSize: "13px",
+      fontSize: "14px",
       "&:hover": {
         borderColor: "#94A3B8",
       },
@@ -221,7 +221,7 @@ interface CommonTableSelectProps {
       minHeight: "32px",
       boxSizing: "border-box",
 
-      fontSize: "13px",
+      fontSize: "14px",
       color: "#334155",
 
       backgroundColor: state.isSelected
@@ -281,7 +281,7 @@ export const CustomTableSelect = ({
   isSearchable = true,
   isDisabled = false,
   inputId,
-  headerFontSize = "13px",
+  headerFontSize = "14px",
   menuPortalTarget,
   controlHeight = 31,
   menuZIndex = 100000,
@@ -387,7 +387,7 @@ export const CustomTableSelect = ({
       borderColor: "transparent",
       borderRadius: "4px",
       boxShadow: "none",
-      fontSize: "13px",
+      fontSize: "14px",
       "&:hover": {
         borderColor: "transparent",
       },
@@ -439,7 +439,7 @@ export const CustomTableSelect = ({
       height: "32px",
       minHeight: "32px",
       boxSizing: "border-box",
-      fontSize: "13px",
+      fontSize: "14px",
       color: "#334155",
 
       backgroundColor: state.isSelected

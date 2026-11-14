@@ -138,7 +138,7 @@ const CustomRadio: React.FC<RadioProps> = ({
       )}
     </span>
 
-    <span className="text-[12px] leading-4.25 text-[#172b43]">
+    <span className="text-[14px] leading-4.25 text-[#172b43]">
       {label}
     </span>
   </label>
@@ -209,7 +209,7 @@ const AppDatePicker: React.FC<{
           boxSizing: "border-box",
           borderRadius: "4px",
           backgroundColor: "#ffffff",
-          fontSize: "12px",
+          fontSize:"14px",
           padding: 0,
           overflow: "hidden",
         },
@@ -224,14 +224,14 @@ const AppDatePicker: React.FC<{
         },
 
         "& .MuiPickersInputBase-sectionContent": {
-          fontSize: "12px",
+          fontSize: "14px",
           color: "#344054",
         },
 
         "& .MuiPickersInputBase-input": {
           minWidth: 0,
           width: "100%",
-          fontSize: "12px",
+          fontSize: "14px",
           padding: 0,
           height: "28px",
           boxSizing: "border-box",
@@ -360,8 +360,8 @@ const DisposalSchedulePage: React.FC = () => {
           <div className="flex flex-col items-start gap-3.5">
 
             {/* BRANCH */}
-            <div className="grid grid-cols-[130px_minmax(0,1fr)] items-center gap-x-4">
-              <RadioPanel className="h-17.5 w-33">
+            <div className="grid grid-cols-[150px_minmax(0,1fr)] items-center gap-x-4">
+              <RadioPanel className="h-17.5 w-38">
                 <CustomRadio
                   name="rgdBranch"
                   value="One Branch"
@@ -397,8 +397,8 @@ const DisposalSchedulePage: React.FC = () => {
             </div>
 
             {/* COST CENTER */}
-            <div className="grid grid-cols-[130px_minmax(0,1fr)] items-center gap-x-4">
-              <RadioPanel className="h-17.5 w-33">
+            <div className="grid grid-cols-[150px_minmax(0,1fr)] items-center gap-x-4">
+              <RadioPanel className="h-17.5 w-38">
                 <CustomRadio
                   name="rgdCostCenter"
                   value="One Cost Center"
@@ -427,7 +427,10 @@ const DisposalSchedulePage: React.FC = () => {
                     secondHeader="Cost Center Name"
                     firstWidth={120}
                     secondWidth={450}
-                    gap={4}
+                    gap={10}
+                     menuPortalTarget={
+                      typeof document !== "undefined" ? document.body : undefined
+                    }
                     headerFontSize="12px"
                     onChange={(option) => {
                       setCostCenterId(
@@ -447,8 +450,8 @@ const DisposalSchedulePage: React.FC = () => {
             </div>
 
             {/* ASSET */}
-            <div className="grid grid-cols-[130px_minmax(0,1fr)] items-center gap-x-4">
-              <RadioPanel className="h-17.5 w-33">
+            <div className="grid grid-cols-[150px_minmax(0,1fr)] items-center gap-x-4">
+              <RadioPanel className="h-17.5 w-38">
                 <CustomRadio
                   name="rgdAsset"
                   value="One Asset"
@@ -477,7 +480,10 @@ const DisposalSchedulePage: React.FC = () => {
                     secondHeader="Asset Name"
                     firstWidth={120}
                     secondWidth={450}
-                    gap={4}
+                    gap={10}
+                     menuPortalTarget={
+                      typeof document !== "undefined" ? document.body : undefined
+                    }
                     headerFontSize="12px"
                     onChange={(option) => {
                       setAssetId(
@@ -497,9 +503,9 @@ const DisposalSchedulePage: React.FC = () => {
             </div>
 
             {/* PERIOD */}
-            <div className="grid grid-cols-[130px_minmax(0,1fr)] items-center gap-x-4">
-              <div className="flex h-7.5 w-33 items-center border border-gray-300 bg-[#FAFBFC] px-1.75">
-                <span className="text-[12px] text-[#172b43]">
+            <div className="grid grid-cols-[150px_minmax(0,1fr)] items-center gap-x-4">
+              <div className="flex h-7.5 w-38 items-center border border-gray-300 bg-[#FAFBFC] px-1.75">
+                <span className="text-[14px] text-[#172b43]">
                   Period :
                 </span>
               </div>
@@ -525,8 +531,8 @@ const DisposalSchedulePage: React.FC = () => {
             </div>
 
             {/* DETAILS AND BUTTONS */}
-            <div className="grid grid-cols-[130px_minmax(0,1fr)] items-start gap-x-4">
-              <RadioPanel className="h-17.5 w-33">
+            <div className="grid grid-cols-[150px_minmax(0,1fr)] items-start gap-x-4">
+              <RadioPanel className="h-17.5 w-38">
                 <CustomRadio
                   name="rgdDetails"
                   value="Detailed"
@@ -543,7 +549,7 @@ const DisposalSchedulePage: React.FC = () => {
                 />
               </RadioPanel>
 
-              <div className="flex items-center gap-1 pt-8.5 pl-6">
+              <div className="flex items-center gap-1 pt-8.5 pl-6 -mt-1.5">
                 <ActionButton
                   onClick={handlePrint}
                   className="h-9 w-20"
