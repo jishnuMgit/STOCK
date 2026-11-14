@@ -896,14 +896,14 @@ const RptStockReportPage: React.FC = () => {
               >
                 <u>P</u>rint
               </button>
-              <button
+              {/* <button
                 id="btnClear"
                 type="button"
                 onClick={handleClear}
                 className="btn-style"
               >
                 <u>C</u>lear
-              </button>
+              </button> */}
             </div>
           </section>
         </main>

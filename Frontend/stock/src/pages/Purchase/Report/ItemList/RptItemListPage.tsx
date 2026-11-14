@@ -1083,7 +1083,7 @@ const RptItemListPage: React.FC<RptItemListPageProps> = ({ onClose }) => {
                 >
                   <u>P</u>rint
                 </button>
-                <button
+                {/* <button
                   id="btnClose"
                   type="button"
                   onClick={handleClose}
@@ -1091,7 +1091,7 @@ const RptItemListPage: React.FC<RptItemListPageProps> = ({ onClose }) => {
                   className="btn-style focus-visible:ring-2 focus-visible:ring-[#64d96e]"
                 >
                   <u>C</u>lose
-                </button>
+                </button> */}
               </div>
             </div>
           </section>

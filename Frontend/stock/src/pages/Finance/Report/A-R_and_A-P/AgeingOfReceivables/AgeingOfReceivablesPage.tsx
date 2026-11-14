@@ -233,13 +233,7 @@ const AppDatePicker: React.FC<AppDatePickerProps> = ({
   </LocalizationProvider>
 );
 
-type RptAgeingReceivablesPageProps = {
-  onClose?: () => void;
-};
-
-const RptAgeingReceivablesPage: React.FC<RptAgeingReceivablesPageProps> = ({
-  onClose,
-}) => {
+const RptAgeingReceivablesPage: React.FC = () => {
   const [branchMode, setBranchMode] = useState("One Branch"); // optBranch
   const [branch, setBranch] = useState<Option | null>(branchOptions[0]); // lkpBranch
 
@@ -275,19 +269,6 @@ const RptAgeingReceivablesPage: React.FC<RptAgeingReceivablesPageProps> = ({
       printZeroBalance,
       balanceType,
     });
-  };
-
-  const handleClose = () => {
-    setBranchMode("One Branch");
-    setBranch(branchOptions[0]);
-    setParentMode("One Parent Account");
-    setParentId(null);
-    setAsOnDate("");
-    setAgeingMode(ageingModeOptions[0]);
-    setPostStatus(postStatusOptions[0]);
-    setPrintZeroBalance(yesNoOptions[1]);
-    setBalanceType("All");
-    onClose?.();
   };
 
   const parentDisabled = parentMode !== "One Parent Account";
@@ -428,14 +409,6 @@ const RptAgeingReceivablesPage: React.FC<RptAgeingReceivablesPageProps> = ({
                     className="btn-style"
                   >
                     <u>P</u>rint
-                  </button>
-                  <button
-                    id="btnClose"
-                    type="button"
-                    onClick={handleClose}
-                    className="btn-style"
-                  >
-                    <u>C</u>lose
                   </button>
                 </div>
               </div>

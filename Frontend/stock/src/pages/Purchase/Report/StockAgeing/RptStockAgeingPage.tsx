@@ -273,6 +273,9 @@ const RptStockAgeingPage: React.FC<RptStockAgeingPageProps> = ({ onClose }) => {
   // the branches the logged-in user has a right to, and the user's default branch
   const [branchOptions, setBranchOptions] = useState<Option[]>([]);
   const [defaultBranch, setDefaultBranch] = useState<Option | null>(null);
+  const [itemRows, setItemRows] = useState<
+    { lkpBranch: string; lkpItemID: string; txtItemName: string }[]
+  >([]);
 
   // the ageing modes the company has set up (tblageingperiod): Days and/or Month, Days first
   const [ageingModeOptions, setAgeingModeOptions] = useState<Option[]>([]);
@@ -330,10 +333,6 @@ const RptStockAgeingPage: React.FC<RptStockAgeingPageProps> = ({ onClose }) => {
   const [lkpFromItem, setLkpFromItem] = useState(""); // Item Range: From Item
   const [lkpToItem, setLkpToItem] = useState(""); // Item Range: To Item
 
-  // the items of every branch, one row per branch and item
-  const [itemRows, setItemRows] = useState<
-    { lkpBranch: string; lkpItemID: string; txtItemName: string }[]
-  >([]);
   const { hang: itemIdHang, measure: measureItemIdHang } = usePairMenuHang();
 
   // the items of the chosen branch (One Branch), or every item once (All Branch)
@@ -352,14 +351,20 @@ const RptStockAgeingPage: React.FC<RptStockAgeingPageProps> = ({ onClose }) => {
     });
   }, [itemRows, rdgBranch, lkpBranch]);
 
-  // a chosen item that the new branch does not have is cleared
-  useEffect(() => {
-    const has = (id: string) => branchItems.some((row) => row.lkpItemID === id);
+  const itemExistsInBranch = (itemId: string, branchId: string) =>
+    itemRows.some(
+      (row) => row.lkpItemID === itemId && row.lkpBranch === branchId,
+    );
 
-    if (lkpItemID && !has(lkpItemID)) setLkpItemID("");
-    if (lkpFromItem && !has(lkpFromItem)) setLkpFromItem("");
-    if (lkpToItem && !has(lkpToItem)) setLkpToItem("");
-  }, [branchItems, lkpItemID, lkpFromItem, lkpToItem]);
+  const clearItemsNotInBranch = (branchId: string) => {
+    if (lkpItemID && !itemExistsInBranch(lkpItemID, branchId)) setLkpItemID("");
+    if (lkpFromItem && !itemExistsInBranch(lkpFromItem, branchId)) {
+      setLkpFromItem("");
+    }
+    if (lkpToItem && !itemExistsInBranch(lkpToItem, branchId)) {
+      setLkpToItem("");
+    }
+  };
 
   // the item boxes: ID | Name, and Name | ID (one item, two boxes)
   const itemIdOptions = useMemo<PairOption[]>(
@@ -561,7 +566,12 @@ const RptStockAgeingPage: React.FC<RptStockAgeingPageProps> = ({ onClose }) => {
                   { value: "One Branch", label: "One Branch" },
                   { value: "All Branch", label: "All Branch" },
                 ]}
-                onChange={setRdgBranch}
+                onChange={(mode) => {
+                  setRdgBranch(mode);
+                  if (mode === "One Branch" && lkpBranch) {
+                    clearItemsNotInBranch(lkpBranch.value);
+                  }
+                }}
               />
               <div className="pt-3">
                 <div
@@ -575,6 +585,9 @@ const RptStockAgeingPage: React.FC<RptStockAgeingPageProps> = ({ onClose }) => {
                     value={lkpBranch}
                     onChange={(option) => {
                       setLkpBranch(option);
+                      if (rdgBranch === "One Branch" && option) {
+                        clearItemsNotInBranch(option.value);
+                      }
                       if (option) advanceAfterPick("lkpBranch");
                     }}
                     isDisabled={rdgBranch !== "One Branch"}
@@ -771,14 +784,6 @@ const RptStockAgeingPage: React.FC<RptStockAgeingPageProps> = ({ onClose }) => {
                   className="btn-style"
                 >
                   <u>P</u>rint
-                </button>
-                <button
-                  id="btnClose"
-                  type="button"
-                  onClick={handleClose}
-                  className="btn-style"
-                >
-                  <u>C</u>lose
                 </button>
               </div>
             </div>

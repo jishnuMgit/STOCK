@@ -213,11 +213,7 @@ const AppDatePicker: React.FC<AppDatePickerProps> = ({
   </LocalizationProvider>
 );
 
-type RptStaffSalesPageProps = {
-  onClose?: () => void;
-};
-
-const RptStaffSalesPage: React.FC<RptStaffSalesPageProps> = ({ onClose }) => {
+const RptStaffSalesPage: React.FC = () => {
   const [branchMode, setBranchMode] = useState("One Branch"); // optBranch
   const [branch, setBranch] = useState<Option | null>(branchOptions[0]); // lkpBranch
 
@@ -238,17 +234,6 @@ const RptStaffSalesPage: React.FC<RptStaffSalesPageProps> = ({ onClose }) => {
       toDate,
       postStatus,
     });
-  };
-
-  const handleClose = () => {
-    setBranchMode("One Branch");
-    setBranch(branchOptions[0]);
-    setUserMode("One User");
-    setUser(null);
-    setFromDate("");
-    setToDate("");
-    setPostStatus("All");
-    onClose?.();
   };
 
   return (
@@ -373,14 +358,6 @@ const RptStaffSalesPage: React.FC<RptStaffSalesPageProps> = ({ onClose }) => {
                 className="btn-style"
               >
                 <u>P</u>rint
-              </button>
-              <button
-                id="btnClose"
-                type="button"
-                onClick={handleClose}
-                className="btn-style"
-              >
-                <u>C</u>lose
               </button>
             </div>
           </section>
