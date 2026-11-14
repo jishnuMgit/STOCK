@@ -634,7 +634,7 @@ const CustomerPage: React.FC<CustomerPageProps> = ({
       <fieldset disabled={isDelete} className="m-0 min-w-0 border-0 p-0">
         {/* MIDDLE */}
         <CustomerMiddle
-        isB2B={lkpBusinessType === "B2B"}
+          isB2B={lkpBusinessType === "B2B"}
           countries={countries}
           staffs={staffs}
           branchOptions={branchOptions}
@@ -715,6 +715,8 @@ const CustomerPage: React.FC<CustomerPageProps> = ({
         setChkExcludeFromAgeing={setChkExcludeFromAgeing}
         saveLabel={isEdit ? "Modify" : "Save"}
         saveDisabled={isDelete}
+        deleteDisabled={!isDelete}
+        clearDisabled={isDelete}
         onSave={handleSave}
         onDelete={handleDelete}
         onClear={handleClear}

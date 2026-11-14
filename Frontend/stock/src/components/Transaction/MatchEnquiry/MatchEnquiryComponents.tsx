@@ -7,9 +7,7 @@ import React, {
   useState,
 } from "react";
 
-import Select, {
-  components,
-  type OptionProps,
+import {
   type StylesConfig,
 } from "react-select";
 import dayjs from "dayjs";
@@ -32,7 +30,7 @@ import type {
   DocumentOption,
   MatchingComponentsRef,
 } from "./types";
-import SelectDropdownIndicator from "../../common/SelectDropdownIndicator";
+import CommonTableSelect, { type TableSelectOption } from "../../common/CommonTableSelect";
 
 interface Props {
   lkpBranch: string;
@@ -87,8 +85,7 @@ interface Props {
   totalCredit: number;
 }
 
-// the Document No. list: Document No. | Date | Br. ID | Debit | Credit (same as the Matching screen)
-const DOCUMENT_LIST_COLUMNS = "130px 90px 55px 90px 90px";
+
 
 interface ResponsiveSelectProps {
   id: string;
@@ -97,19 +94,14 @@ interface ResponsiveSelectProps {
   onChange: (value: string) => void;
   next: () => void;
   selectRef: React.RefObject<HTMLDivElement | null>;
-  styles: StylesConfig<SelectOption, false>;
   reverseDropdown?: boolean;
   columnHeaders?: [string, string];
   disabled?: boolean;
   documentMode?: boolean;
   swapColumns?: boolean;
-  // a list like the Branch list of the reports: the first column is as wide as the box, the second (the ID) hangs out
-  // past the box's right edge by this many px, with a divider line between the two
   idColumnHang?: number;
-  // a list under two boxes (Customer ID + Customer Name): the first column is as wide as this box plus the gap to the
-  // next box (11px), so the second column starts exactly under the next box
   alignToBox?: boolean;
-  customOption?: React.ComponentType<OptionProps<SelectOption, false>>;
+  getMenuWidth?: () => number;
 }
 
 const ResponsiveSelect = ({
@@ -119,7 +111,6 @@ const ResponsiveSelect = ({
   onChange,
   next,
   selectRef,
-  styles,
   reverseDropdown = false,
   columnHeaders,
   disabled = false,
@@ -127,10 +118,11 @@ const ResponsiveSelect = ({
   swapColumns = false,
   idColumnHang,
   alignToBox = false,
-  customOption,
+  getMenuWidth,
 }: ResponsiveSelectProps) => {
   const wrapperRef = useRef<HTMLDivElement | null>(null);
-  const [selectWidth, setSelectWidth] = useState("100%");
+  const [boxWidth, setBoxWidth] = useState(0);
+  const [menuWidth, setMenuWidth] = useState(0);
 
   React.useEffect(() => {
     const element = wrapperRef.current;
@@ -138,7 +130,7 @@ const ResponsiveSelect = ({
 
     const updateWidth = () => {
       const width = element.getBoundingClientRect().width;
-      if (width > 0) setSelectWidth(`${width}px`);
+      if (width > 0) setBoxWidth(Math.round(width));
     };
 
     updateWidth();
@@ -148,223 +140,61 @@ const ResponsiveSelect = ({
     return () => observer.disconnect();
   }, []);
 
-  const CustomSingleValue = (selectProps: any) => {
-    const data = selectProps.data as SelectOption & Partial<DocumentOption>;
-
+  const columns = React.useMemo(() => {
     if (documentMode) {
-      return (
-        <components.SingleValue {...selectProps}>
-          {data.docTypeNo ?? data.docNo ?? data.value}
-        </components.SingleValue>
-      );
+      return [
+        { key: "docTypeNo", label: "Document No.", width: "130px" },
+        { key: "date", label: "Date", width: "90px" },
+        { key: "brId", label: "Br. ID", width: "55px" },
+        { key: "debit", label: "Debit", width: "90px", align: "right" as const },
+        { key: "credit", label: "Credit", width: "1fr", align: "right" as const },
+      ];
     }
-
-    // a list whose first column is the name (swapColumns: the Division) shows that name in the box; the others show the value
-    return (
-      <components.SingleValue {...selectProps}>
-        {swapColumns ? data.label : data.value}
-      </components.SingleValue>
-    );
-  };
-
-  const DefaultOption = (optionProps: OptionProps<SelectOption, false>) => {
-    const data = optionProps.data as SelectOption & Partial<DocumentOption>;
-
-    if (documentMode) {
-      return (
-        <components.Option {...optionProps}>
-          <div
-            style={{
-              display: "grid",
-              gridTemplateColumns: DOCUMENT_LIST_COLUMNS,
-              width: "100%",
-              minWidth: 0,
-              alignItems: "center",
-              fontSize: "12px",
-            }}
-          >
-            <div>{data.docTypeNo ?? data.docNo ?? data.value ?? ""}</div>
-            <div>{data.date ?? ""}</div>
-            <div>{data.brId ?? ""}</div>
-            <div style={{ textAlign: "right", paddingRight: "8px" }}>
-              {data.debit ?? ""}
-            </div>
-            <div style={{ textAlign: "right", paddingRight: "8px" }}>
-              {data.credit ?? ""}
-            </div>
-          </div>
-        </components.Option>
-      );
-    }
-
     if (!columnHeaders) {
-      return (
-        <components.Option {...optionProps}>
-          <div
-            style={{
-              whiteSpace: "nowrap",
-              overflow: "hidden",
-              textOverflow: "ellipsis",
-              width: "100%",
-            }}
-          >
-            {data.value}
-          </div>
-        </components.Option>
-      );
+      return [{ key: "value", label: "", width: "1fr" }];
     }
 
-    const firstColumn = swapColumns ? data.label : data.value;
-    const secondColumn = swapColumns ? data.value : data.label;
-    return (
-      <components.Option {...optionProps}>
-        <div
-          style={{
-            display: "grid",
-            // the option has 8px of padding on each side: the grid takes it back so its columns (and the divider line)
-            // sit exactly under the columns of the header
-            margin: "0 -8px",
-            width: "calc(100% + 16px)",
-            gridTemplateColumns: reverseDropdown
-              ? "minmax(0, 1fr) 132px"
-              : alignToBox
-                ? "calc(var(--select-width) + 11px) minmax(0, 1fr)"
-                : idColumnHang
-                  ? `var(--select-width) ${idColumnHang}px`
-                  : "140px minmax(0, 1fr)",
-            minWidth: 0,
-            alignItems: "center",
-          }}
-        >
-          <div
-            style={{
-              minWidth: 0,
-              paddingLeft: "8px",
-              paddingRight: "8px",
-              overflow: "hidden",
-              whiteSpace: "nowrap",
-              textOverflow: "ellipsis",
-            }}
-          >
-            {firstColumn}
-          </div>
-          <div
-            style={{
-              minWidth: 0,
-              borderLeft: "1px solid #d5dce3",
-              paddingLeft: "10px",
-              overflow: "hidden",
-              whiteSpace: "nowrap",
-              textOverflow: "ellipsis",
-            }}
-          >
-            {secondColumn}
-          </div>
-        </div>
-      </components.Option>
-    );
+    const firstWidth = alignToBox
+      ? `${boxWidth + 11}px`
+      : idColumnHang
+        ? `${boxWidth}px`
+        : reverseDropdown
+          ? "1fr"
+          : "140px";
+    const secondWidth = !alignToBox && !idColumnHang && reverseDropdown
+      ? "140px"
+      : "1fr";
+
+    // swapColumns: name (label) first, id (value) second; headers are reversed
+    return swapColumns
+      ? [
+        { key: "label", label: columnHeaders[1], width: firstWidth },
+        { key: "value", label: columnHeaders[0], width: secondWidth },
+      ]
+      : [
+        { key: "value", label: columnHeaders[0], width: firstWidth },
+        { key: "label", label: columnHeaders[1], width: secondWidth },
+      ];
+  }, [documentMode, columnHeaders, swapColumns, alignToBox, idColumnHang, reverseDropdown, boxWidth]);
+
+  const calcMenuWidth = () => {
+    if (getMenuWidth) return getMenuWidth();
+    if (documentMode) return 460;
+    if (idColumnHang) return boxWidth + idColumnHang;
+    return Math.max(boxWidth, 360);
   };
 
-  const CustomMenuList = (menuProps: any) => {
-    if (documentMode) {
-      const headers = ["Document No.", "Date", "Br. ID", "Debit", "Credit"];
-      return (
-        <components.MenuList {...menuProps}>
-          <div
-            style={{
-              display: "grid",
-              gridTemplateColumns: DOCUMENT_LIST_COLUMNS,
-              width: "100%",
-              minWidth: 0,
-              alignItems: "center",
-              height: "28px",
-              boxSizing: "border-box",
-              backgroundColor: "#eeeeee",
-              borderBottom: "1px solid #c8c8c8",
-              color: "#222",
-              fontSize: "12px",
-            }}
-          >
-            {headers.map((header, index) => (
-              <div
-                key={header}
-                style={{
-                  minWidth: 0,
-                  paddingLeft: "6px",
-                  paddingRight: "4px",
-                  borderLeft: index === 0 ? "none" : "1px solid #c8c8c8",
-                  textAlign: index === 3 || index === 4 ? "right" : "left",
-                  overflow: "hidden",
-                  whiteSpace: "nowrap",
-                  textOverflow: "ellipsis",
-                }}
-              >
-                {header}
-              </div>
-            ))}
-          </div>
-          {menuProps.children}
-        </components.MenuList>
-      );
-    }
-
-    return (
-      <components.MenuList {...menuProps}>
-        {columnHeaders && (
-          <div
-            style={{
-              display: "grid",
-              gridTemplateColumns: reverseDropdown
-                ? "minmax(0, 1fr) 140px"
-                : alignToBox
-                  ? "calc(var(--select-width) + 11px) minmax(0, 1fr)"
-                  : idColumnHang
-                    ? `var(--select-width) ${idColumnHang}px`
-                    : "148px minmax(0, 1fr)",
-              width: "100%",
-              minWidth: 0,
-              alignItems: "center",
-              height: "28px",
-              boxSizing: "border-box",
-              backgroundColor: "#eeeeee",
-              borderBottom: "1px solid #c8c8c8",
-              color: "#222",
-              fontSize: "13px",
-            }}
-          >
-            <div
-              style={{
-                minWidth: 0,
-                paddingLeft: "8px",
-                paddingRight: "8px",
-                overflow: "hidden",
-                whiteSpace: "nowrap",
-                textOverflow: "ellipsis",
-              }}
-            >
-              {swapColumns ? columnHeaders[1] : columnHeaders[0]}
-            </div>
-            <div
-              style={{
-                minWidth: 0,
-                borderLeft: "1px solid #c8c8c8",
-                paddingLeft: "10px",
-                overflow: "hidden",
-                whiteSpace: "nowrap",
-                textOverflow: "ellipsis",
-              }}
-            >
-              {swapColumns ? columnHeaders[0] : columnHeaders[1]}
-            </div>
-          </div>
-        )}
-        {menuProps.children}
-      </components.MenuList>
+  // the closed box shows one field, the search matches both
+  const filter = (option: { data: TableSelectOption }, input: string) => {
+    const text = input.trim().toLowerCase();
+    if (!text) return true;
+    const d = option.data;
+    return [d.value, d.label, d.docTypeNo].some((v) =>
+      String(v ?? "").toLowerCase().includes(text),
     );
   };
 
   const selected = options.find((option) => option.value === value) ?? null;
-  const OptionComponent = customOption ?? DefaultOption;
 
   return (
     <div
@@ -376,27 +206,26 @@ const ResponsiveSelect = ({
       }}
       tabIndex={0}
       onKeyDown={(event) => handleKeyboardAction(event, { onEnter: next })}
-      style={
-        { "--select-width": selectWidth, width: "100%" } as React.CSSProperties
-      }
+      style={{ width: "100%" } as React.CSSProperties}
     >
-      <Select<SelectOption, false>
+      <CommonTableSelect
         inputId={`${id}-input`}
-        value={selected}
-        components={{
-          // no divider line between the value and the dropdown arrow
-          IndicatorSeparator: () => null,
-          DropdownIndicator: SelectDropdownIndicator,
-          Option: OptionComponent,
-          SingleValue: CustomSingleValue,
-          ...(columnHeaders || documentMode
-            ? { MenuList: CustomMenuList }
-            : {}),
-        }}
-        options={options}
-        styles={styles}
-        isSearchable={!disabled}
+        value={selected as TableSelectOption | null}
+        options={options as TableSelectOption[]}
+        columns={columns}
+        valueKey={documentMode ? "docTypeNo" : swapColumns ? "label" : "value"}
+        width="100%"
+        menuWidth={`${menuWidth || calcMenuWidth()}px`}
+        controlHeight={29}
+        controlFontSize="13px"
+        headerFontSize="13px"
+        borderColor="#b7c7d7"
+        hoverBorderColor="#b7c7d7"
+        menuZIndex={9999}
+        filterOption={filter}
         isDisabled={disabled}
+        isSearchable={!disabled}
+        onMenuOpen={() => setMenuWidth(calcMenuWidth())}
         onChange={(option) => onChange(option?.value ?? "")}
       />
     </div>
@@ -655,73 +484,6 @@ const MatchEnquiryComponents = forwardRef<MatchingComponentsRef, Props>(
       [documentNoOptions, setLkpDocTypeNo, setLkpDocType, onDocumentSelect],
     );
 
-    /* =====================================================
-       SELECT STYLES
-    ===================================================== */
-
-    const selectStyles: StylesConfig<SelectOption, false> = {
-      control: (base) => ({
-        ...base,
-        minHeight: "29px",
-        height: "29px",
-        borderRadius: "3px",
-        borderColor: "#b7c7d7",
-        boxShadow: "none",
-        fontSize: "13px",
-        backgroundColor: "#ffffff",
-      }),
-
-      valueContainer: (base) => ({
-        ...base,
-        height: "29px",
-        padding: "0 8px",
-      }),
-
-      indicatorsContainer: (base) => ({
-        ...base,
-        height: "29px",
-      }),
-
-      dropdownIndicator: (base) => ({
-        ...base,
-        padding: "4px",
-      }),
-
-      clearIndicator: (base) => ({
-        ...base,
-        padding: "4px",
-      }),
-
-      menu: (base) => ({
-        ...base,
-        zIndex: 9999,
-        fontSize: "13px",
-        width: "min(520px, calc(100vw - 24px))",
-        minWidth: "min(360px, calc(100vw - 24px))",
-        maxWidth: "calc(100vw - 24px)",
-        left: 0,
-      }),
-
-      menuList: (base) => ({
-        ...base,
-        padding: 0,
-        maxWidth: "100%",
-        overflowX: "hidden",
-      }),
-
-      option: (base, state) => ({
-        ...base,
-        fontSize: "13px",
-        padding: "6px 8px",
-        backgroundColor: state.isFocused ? "#EEF8F3" : "#ffffff",
-        color: "#222",
-        cursor: "pointer",
-      }),
-    };
-
-    /* =====================================================
-       SELECT HELPER
-    ===================================================== */
 
     const renderSelect = (
       id: string,
@@ -732,7 +494,7 @@ const MatchEnquiryComponents = forwardRef<MatchingComponentsRef, Props>(
       selectRef: React.RefObject<HTMLDivElement | null>,
       reverseDropdown = false,
       columnHeaders?: [string, string],
-      customStyles?: StylesConfig<SelectOption, false>,
+      _customStyles?: StylesConfig<SelectOption, false>,
       disabled = false,
       documentMode = false,
       swapColumns = false,
@@ -746,7 +508,6 @@ const MatchEnquiryComponents = forwardRef<MatchingComponentsRef, Props>(
         onChange={onChange}
         next={next}
         selectRef={selectRef}
-        styles={customStyles ?? selectStyles}
         reverseDropdown={reverseDropdown}
         columnHeaders={columnHeaders}
         disabled={disabled}
@@ -754,6 +515,17 @@ const MatchEnquiryComponents = forwardRef<MatchingComponentsRef, Props>(
         swapColumns={swapColumns}
         idColumnHang={idColumnHang}
         alignToBox={alignToBox}
+        getMenuWidth={
+          alignToBox
+            ? () => {
+              const idBox = customerIdRef.current?.getBoundingClientRect();
+              const nameBox = customerNameRef.current?.getBoundingClientRect();
+              return idBox && nameBox
+                ? Math.max(nameBox.right - idBox.left, 360)
+                : 685;
+            }
+            : undefined
+        }
       />
     );
 
