@@ -30,7 +30,7 @@ const FormField: React.FC<{
   children: React.ReactNode;
 }> = ({ label, children }) => (
   <div className="grid grid-cols-[85px_140px] items-center gap-1">
-    <label className="text-right whitespace-nowrap text-[12px] text-[#172b43]">
+    <label className="text-right whitespace-nowrap text-[14px] text-[#172b43]">
       {label} :
     </label>
     {children}
@@ -67,7 +67,7 @@ const AppDatePicker: React.FC<{
           minHeight: "30px",
           borderRadius: "4px",
           backgroundColor: "#ffffff",
-          fontSize: "12px",
+          fontSize: "14px",
           padding: 0,
         },
         "& .MuiPickersInputBase-sectionsContainer": {
@@ -75,7 +75,7 @@ const AppDatePicker: React.FC<{
           marginBottom: "-5px !important",
         },
         "& .MuiPickersInputBase-sectionContent": {
-          fontSize: "12px",
+          fontSize: "14px",
           color: "#344054",
         },
         "& .MuiIconButton-root": {
