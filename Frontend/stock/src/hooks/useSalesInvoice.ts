@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { apiFetch, getSession } from "../utils/session";
 
 // ============================================================
@@ -27,6 +27,8 @@ export interface CustomerLookup {
   address: string;
   phone: string;
 }
+
+export type DivisionOption = SelectOption & { name: string };
 
 export interface ParamLookup {
   id: string; // fPID
@@ -78,6 +80,7 @@ export interface SalesHeader {
   dateH: string; // hijri, computed by the UI
   customerId: string;
   customerName: string;
+  divId: string;
   address: string;
   phone: string;
   customerRef: string;
@@ -145,6 +148,7 @@ interface InvoiceHeaderApi {
   fdate_h: string | null;
   faccountid: string | null;
   faccountname: string | null;
+  fdivid: string | null;
   faddress1: string | null;
   fphone: string | null;
   fcustomerref: string | null;
@@ -255,6 +259,7 @@ export const emptyHeader = (): SalesHeader => ({
   dateH: "",
   customerId: "",
   customerName: "",
+  divId: "",
   address: "",
   phone: "",
   customerRef: "",
@@ -343,6 +348,9 @@ const useSalesInvoice = () => {
   const [branch, setBranch] = useState<SelectOption | null>(null);
   const [branchLoading, setBranchLoading] = useState(false);
   const [branchError, setBranchError] = useState<string | null>(null);
+  const [divisionOptions, setDivisionOptions] = useState<DivisionOption[]>([]);
+  const [divisionLoading, setDivisionLoading] = useState(false);
+  const divisionReq = useRef(0);
 
   /* ---------- invoice state ---------- */
   const [lookups, setLookups] = useState<SalesLookups>({
@@ -396,8 +404,8 @@ const useSalesInvoice = () => {
         const def = String(defResult?.data ?? "").trim();
         setBranch(
           options.find((o) => o.value === def || o.label === def) ??
-            options[0] ??
-            null,
+          options[0] ??
+          null,
         );
 
         return options;
@@ -440,6 +448,51 @@ const useSalesInvoice = () => {
       // name from the database, falling back to CASH / CREDIT
       name: s(t.fpname) || TYPE_NAMES[s(t.fpid)] || s(t.fpid),
     }));
+  }, []);
+
+
+  const getDivisions = useCallback(
+    async (accountId: string): Promise<DivisionOption[]> => {
+      const reqId = ++divisionReq.current;
+      setDivisionOptions([]);
+
+      if (!accountId?.trim()) {
+        setDivisionLoading(false);
+        return [];
+      }
+
+      setDivisionLoading(true);
+      try {
+        const result = await request<any>("POST", `${API}/Receipt/getDivID`, {
+          accountId,
+        });
+
+        const options: DivisionOption[] = Array.isArray(result?.data)
+          ? result.data
+            .map((d: any) => {
+              const id = String(d.fdivid ?? d.fDivID ?? "");
+              const name = String(d.fdivname ?? d.fDivName ?? id);
+              return { value: id, label: name, name };
+            })
+            .filter((o: DivisionOption) => o.value.trim() !== "")
+          : [];
+
+        if (reqId === divisionReq.current) setDivisionOptions(options);
+        return options;
+      } catch (err) {
+        console.error("Get Division Error:", err);
+        return [];
+      } finally {
+        if (reqId === divisionReq.current) setDivisionLoading(false);
+      }
+    },
+    [],
+  );
+
+  const clearDivisions = useCallback(() => {
+    divisionReq.current++;
+    setDivisionOptions([]);
+    setDivisionLoading(false);
   }, []);
 
   /* ======================================================
@@ -620,6 +673,7 @@ const useSalesInvoice = () => {
             dateH: s(h.fdate_h),
             customerId: s(h.faccountid),
             customerName: s(h.faccountname),
+            divId: s(h.fdivid),
             address: s(h.faddress1),
             phone: s(h.fphone),
             customerRef: s(h.fcustomerref),
@@ -754,6 +808,7 @@ const useSalesInvoice = () => {
         dateH: header.dateH,
         customerId: header.customerId,
         customerName: header.customerName,
+        divId: header.divId,
         address: header.address,
         phone: header.phone,
         customerRef: header.customerRef,
@@ -777,13 +832,13 @@ const useSalesInvoice = () => {
       const t = result.data.totals;
       return t
         ? {
-            docAmt: n(t.docAmt),
-            discPer: n(header.discPer),
-            discAmt: n(t.discAmt),
-            netDocAmtWoVAT: n(t.netDocAmtWoVAT),
-            vatAmt: n(t.vatAmt),
-            netDocAmt: n(t.netDocAmt),
-          }
+          docAmt: n(t.docAmt),
+          discPer: n(header.discPer),
+          discAmt: n(t.discAmt),
+          netDocAmtWoVAT: n(t.netDocAmtWoVAT),
+          vatAmt: n(t.vatAmt),
+          netDocAmt: n(t.netDocAmt),
+        }
         : null;
     },
     [],
@@ -830,6 +885,11 @@ const useSalesInvoice = () => {
     fetchInvoiceTypes,
     getLookups,
     getServerDate,
+    // division
+    divisionOptions,
+    divisionLoading,
+    getDivisions,
+    clearDivisions,
     // invoice
     getNextDocNo,
     calcTotals,
