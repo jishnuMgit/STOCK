@@ -912,6 +912,7 @@ const RptStockReportPage: React.FC = () => {
       {/* the Print Preview (after Print) */}
       {preview && (
         <ReportPreview
+          showClose={false}
           html={buildHtml(preview.report)}
           fileBase={preview.fileBase}
           onPrint={() => printStockReport(preview.report)}

@@ -28,7 +28,7 @@ export const buildStockAdjustmentPdf = async (report: PrintReport): Promise<Blob
   const usable = PAGE_W - MARGIN.left - MARGIN.right;
 
   // below company / heading / the Branch line (and the note)
-  const tableTop = MARGIN.top + (report.txtNote ? 36 : 30) + REPORT_STYLE.pdf.titleGap;
+  const tableTop = MARGIN.top + (report.txtNote ? 36 : 30) + REPORT_STYLE.pdf.titleGap + REPORT_STYLE.pdf.tableGap;
 
   // Sl.# | Item ID | Item Name (the rest) | Unit | Qty. In | Qty. Out | Unit Cost | Total Cost
   const slW = 14;
@@ -64,7 +64,7 @@ export const buildStockAdjustmentPdf = async (report: PrintReport): Promise<Blob
   const totals = totalsOf(report.rows);
   const bold = { fontStyle: "bold" as const };
   body.push([
-    { content: "Total :", colSpan: 4, styles: bold },
+    { content: "Total :", colSpan: 4, styles: { ...bold, halign: "right" as const } },
     { content: formatQty(totals.qtyIn), styles: { ...bold, ...right } },
     { content: formatQty(totals.qtyOut), styles: { ...bold, ...right } },
     { content: "", styles: bold },

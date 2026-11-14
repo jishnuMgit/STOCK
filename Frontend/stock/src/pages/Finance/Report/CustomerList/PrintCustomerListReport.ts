@@ -5,6 +5,8 @@
 // Page number top right, user id + date bottom right of every page.
 // Opens the browser print dialog from a hidden iframe (no pop-up to block).
 
+import { REPORT_STYLE } from "../../../../components/common/reportStyle";
+
 export type PrintRow = {
   accountId: string;
   accountName: string;
@@ -72,11 +74,11 @@ export const buildHtml = (r: PrintReport) => `<!doctype html>
   table { width: 100%; border-collapse: collapse; table-layout: fixed; }
   thead { display: table-header-group; }            /* header repeats on every page */
   tr { page-break-inside: avoid; }
-  .co   { font-size: 14pt; text-align: center; height: 24px; }
-  .head { font-size: 12pt; text-align: center; height: 24px; }
-  th { background: #eff3fa; border: 1px solid #c7d1e4; height: 24px;
-       padding: 0 4px; font-weight: normal; text-align: left; }
-  td { border: 1px solid #c7d1e4; border-top: 0; min-height: 22px; padding: 2px 4px;
+  .co   { font-size: 14pt; text-align: center; height: ${REPORT_STYLE.html.companyHeight}px; vertical-align: top; }
+  .head { font-size: 12pt; text-align: center; height: ${REPORT_STYLE.html.headingHeight}px; }
+  th { border: 1px solid ${REPORT_STYLE.lineColor}; height: ${REPORT_STYLE.html.rowHeight}px;
+       padding: 0 ${REPORT_STYLE.html.cellPaddingX}px; font-weight: normal; text-align: left; }
+  td { border: 1px solid ${REPORT_STYLE.lineColor}; border-top: 0; height: ${REPORT_STYLE.html.rowHeight}px; padding: 2px ${REPORT_STYLE.html.cellPaddingX}px;
        vertical-align: middle; overflow-wrap: anywhere; }
   .name { white-space: pre-wrap; }                  /* keeps the level 4 indent */
   .r { text-align: right; }

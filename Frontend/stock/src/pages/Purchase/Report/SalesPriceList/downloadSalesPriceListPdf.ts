@@ -5,9 +5,10 @@
 // Needs:  npm i jspdf jspdf-autotable
 import { jsPDF } from "jspdf";
 import autoTable, { type CellDef } from "jspdf-autotable";
-import { pdfGroupStyles, pdfLabelFontSize, registerReportPdfFont } from "../../../../components/common/reportPdf";
+import { pdfGroupStyles, pdfLabelFontSize, registerReportPdfFont, PDF_CELL_PADDING } from "../../../../components/common/reportPdf";
 import type { PriceListReport } from "./PrintSalesPriceListReport";
 
+import { REPORT_STYLE } from "../../../../components/common/reportStyle";
 const fixed = (v: number | null, digits: number) =>
   v == null
     ? ""
@@ -25,7 +26,7 @@ const COL_WIDTHS = [0.232, 0.4291, 0.0686, 0.13515, 0.13515];
 
 const PAGE_W = 210; // A4 portrait, mm
 const MARGIN = { top: 12, right: 10, bottom: 12, left: 15 };
-const TABLE_TOP = 38; // below company / heading / branch
+const TABLE_TOP = 38 + REPORT_STYLE.pdf.tableGap; // below company / heading / branch
 
 export const buildSalesPriceListPdf = async (report: PriceListReport): Promise<Blob> => {
   const doc = new jsPDF({ orientation: "portrait", unit: "mm", format: "a4" });
@@ -88,10 +89,10 @@ export const buildSalesPriceListPdf = async (report: PriceListReport): Promise<B
     styles: {
       font: look.font,
       fontSize: look.size.pdfBody,
-      cellPadding: 1.2,
+      cellPadding: PDF_CELL_PADDING,
       lineColor: BORDER,
       lineWidth: 0.2,
-      minCellHeight: 6,
+      minCellHeight: REPORT_STYLE.pdf.minCellHeight,
       valign: "middle",
       overflow: "ellipsize",
       textColor: [0, 0, 0],

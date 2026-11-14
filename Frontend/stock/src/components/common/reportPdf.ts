@@ -28,6 +28,14 @@ export const hexToRgb = (hex: string): RGB => [
 
 export const PDF_BLACK: RGB = [0, 0, 0];
 
+// the space inside a cell: 1.2 mm above and below, 2 mm left and right (REPORT_STYLE.pdf)
+export const PDF_CELL_PADDING = {
+  top: REPORT_STYLE.pdf.cellPadding,
+  bottom: REPORT_STYLE.pdf.cellPadding,
+  left: REPORT_STYLE.pdf.cellPaddingX,
+  right: REPORT_STYLE.pdf.cellPaddingX,
+};
+
 /* ---------------------------------------------------------
    THE FONT IN A PDF
 
@@ -122,13 +130,13 @@ export type PdfMargin = { top: number; right: number; bottom: number; left: numb
 export const pdfMargin = (left: number): PdfMargin => ({ ...REPORT_STYLE.pdf.margin, left });
 
 // where the table starts: below the company, the heading and the branch line
-export const pdfTableTop = (margin: PdfMargin) => margin.top + REPORT_STYLE.pdf.headerHeight;
+export const pdfTableTop = (margin: PdfMargin) => margin.top + REPORT_STYLE.pdf.headerHeight + REPORT_STYLE.pdf.tableGap;
 
 // the `styles` of jspdf-autotable: the font, its size, the padding, the thin light lines
 export const pdfTableStyles = (look: PdfLook = CLASSIC) => ({
   font: look.font,
   fontSize: look.size.pdfBody,
-  cellPadding: REPORT_STYLE.pdf.cellPadding,
+  cellPadding: PDF_CELL_PADDING,
   lineColor: hexToRgb(REPORT_STYLE.lineColor),
   lineWidth: REPORT_STYLE.pdf.lineWidth,
   minCellHeight: REPORT_STYLE.pdf.minCellHeight,

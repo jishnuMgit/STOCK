@@ -2283,6 +2283,7 @@ const StockTransferPage: React.FC = () => {
           {/* the Print Preview (after Print) */}
           {preview && (
             <ReportPreview
+              showClose={false}
               html={buildHtml(preview.report)}
               fileBase={preview.fileBase}
               onPrint={() => printStockTransferReport(preview.report)}

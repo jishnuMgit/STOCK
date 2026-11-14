@@ -8,9 +8,10 @@ import { jsPDF } from "jspdf";
 import autoTable, { type CellDef } from "jspdf-autotable";
 import type { PrintReport } from "./PrintChartOfAccountReport";
 
+import { PDF_CELL_PADDING } from "../../../../components/common/reportPdf";
+import { REPORT_STYLE } from "../../../../components/common/reportStyle";
 type RGB = [number, number, number];
 const BORDER: RGB = [199, 209, 228]; // #c7d1e4
-const HEAD_FILL: RGB = [239, 243, 250]; // #eff3fa
 const BLACK: RGB = [0, 0, 0];
 
 // level colours as on the tree: 1 green, 2 blue, 3 purple, else dark slate
@@ -23,7 +24,7 @@ const LEVEL_OTHER: RGB = [49, 65, 88]; // #314158
 
 const PAGE_W = 210; // A4 portrait, mm
 const MARGIN = { top: 12, right: 10, bottom: 14, left: 12 };
-const TABLE_TOP = 30; // below company / heading
+const TABLE_TOP = 30 + REPORT_STYLE.pdf.tableGap; // below company / heading
 
 const PAD = 1.2;
 const INDENT_PER_SPACE = 1.0; // mm: the leading spaces of the name become padding
@@ -56,8 +57,8 @@ export const buildChartOfAccountPdf = (report: PrintReport): Blob => {
           cellPadding: {
             top: PAD,
             bottom: PAD,
-            right: PAD,
-            left: PAD + lead * INDENT_PER_SPACE,
+            right: REPORT_STYLE.pdf.cellPaddingX,
+            left: REPORT_STYLE.pdf.cellPaddingX + lead * INDENT_PER_SPACE,
           },
         },
       },
@@ -96,16 +97,15 @@ export const buildChartOfAccountPdf = (report: PrintReport): Blob => {
     styles: {
       font: "times",
       fontSize: 10,
-      cellPadding: PAD,
+      cellPadding: PDF_CELL_PADDING,
       lineColor: BORDER,
       lineWidth: 0.2,
-      minCellHeight: 7,
+      minCellHeight: REPORT_STYLE.pdf.minCellHeight,
       valign: "middle",
       overflow: "ellipsize",
       textColor: BLACK,
     },
     headStyles: {
-      fillColor: HEAD_FILL,
       textColor: BLACK,
       fontStyle: "normal",
     },

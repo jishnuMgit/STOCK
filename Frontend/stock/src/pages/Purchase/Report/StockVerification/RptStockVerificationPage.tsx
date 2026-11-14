@@ -643,6 +643,7 @@ const RptStockVerificationPage: React.FC<RptStockVerificationPageProps> = ({ onC
       {/* the Print Preview (after Print) */}
       {preview && (
         <ReportPreview
+          showClose={false}
           html={buildHtml(preview.report)}
           fileBase={preview.fileBase}
           onPrint={() => printStockVerificationReport(preview.report)}
