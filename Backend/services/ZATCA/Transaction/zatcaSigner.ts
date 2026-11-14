@@ -1,21 +1,27 @@
 /* =========================================================
-   ZATCA SIGNER - replaces _IEInvoiceSigningLogic.SignDocument from the .NET SDK
-   (SDKNETFrameWorkLib). It takes the unsigned UBL file and writes the signed
-   one (XAdES signature + embedded QR).
+   ZATCA SIGNER - replaces _IEInvoiceSigningLogic.SignDocument,
+   _IHashingValidator.GenerateEInvoiceHashing and _IQRValidator.GenerateEInvoiceQRCode
+   from the .NET SDK (SDKNETFrameWorkLib.dll) used by the VB code.
 
-   The default implementation runs the official ZATCA SDK command line tool
-   ("fatoora", Java 11-14) that ships in the same SDK the .NET wrapper was built
-   on. Swap it for a sidecar service by passing your own ZatcaSigner to
-   setZatcaSigner().
+   DEFAULT: DotNetSdkSigner - runs ZatcaSdkBridge.exe (zatca-bridge/), a tiny console
+   program that calls the very same SDKNETFrameWorkLib.dll the VB used. Same signing,
+   same hash, same QR, so the output is identical to the old application.
 
-   Environment:
+   OPTIONAL: FatooraCliSigner - the official Java SDK command line tool
+   (set ZATCA_SIGNER=fatoora). Swap in your own with setZatcaSigner().
+
+   Environment (DotNetSdkSigner):
+     ZATCA_BRIDGE_EXE       path of ZatcaSdkBridge.exe
+                            (default <cwd>/zatca-bridge/ZatcaSdkBridge.exe)
+     ZATCA_MONO_CMD         only on Linux / macOS: the mono launcher (default "mono")
+     ZATCA_SIGN_TIMEOUT_MS  optional, default 60000
+
+   Environment (FatooraCliSigner):
      ZATCA_SDK_HOME         folder of the unzipped ZATCA SDK (contains Apps/, Configuration/, Data/)
      ZATCA_FATOORA_CMD      optional, full path of the fatoora launcher
-                            (default <ZATCA_SDK_HOME>/Apps/fatoora or fatoora.bat on Windows)
-     ZATCA_SIGN_TIMEOUT_MS  optional, default 60000
 ========================================================= */
 
-import { execFile } from "node:child_process";
+import { execFile, spawn } from "node:child_process";
 import { access, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
@@ -27,8 +33,15 @@ export type SignInput = {
   privateKey: string; // dbo.getzatcaprivatekey
 };
 
+export type SignResult = {
+  invoiceHash?: string; // what the SDK's hashing returns for the signed file
+  uuid?: string; // invoice UUID as read from the signed file
+};
+
 export interface ZatcaSigner {
-  sign(input: SignInput): Promise<void>;
+  sign(input: SignInput): Promise<SignResult | void>;
+  /** QR code of an XML file as the SDK builds it (GenerateEInvoiceQRCode) - optional */
+  qrCode?(xmlPath: string): Promise<string>;
 }
 
 // PEM headers / line breaks are not part of what the SDK reads when usePemFile=false
@@ -136,7 +149,117 @@ export class FatooraCliSigner implements ZatcaSigner {
   }
 }
 
-let signer: ZatcaSigner = new FatooraCliSigner();
+/* =========================================================
+   .NET SDK (SDKNETFrameWorkLib.dll) through ZatcaSdkBridge.exe
+========================================================= */
+
+type BridgeReply = {
+  ok: boolean;
+  error?: string;
+  invoiceHash?: string;
+  qrCode?: string;
+  uuid?: string;
+};
+
+const bridgeExe = (): string =>
+  process.env.ZATCA_BRIDGE_EXE?.trim() ||
+  path.resolve(process.cwd(), "zatca-bridge", "ZatcaSdkBridge.exe");
+
+function runBridge(args: string[], stdin?: string): Promise<BridgeReply> {
+  const exe = bridgeExe();
+  const timeout = Number(process.env.ZATCA_SIGN_TIMEOUT_MS) || 60_000;
+
+  // the exe is a .NET Framework program: native on Windows, through mono elsewhere
+  const windows = process.platform === "win32";
+  const cmd = windows ? exe : process.env.ZATCA_MONO_CMD?.trim() || "mono";
+  const cmdArgs = windows ? args : [exe, ...args];
+
+  return exists(exe).then(
+    (found) =>
+      new Promise<BridgeReply>((resolve, reject) => {
+        if (!found) {
+          reject(
+            new Error(
+              `ZATCA SDK bridge not found at ${exe}. Copy the zatca-bridge folder next to the server or set ZATCA_BRIDGE_EXE`
+            )
+          );
+          return;
+        }
+
+        // the SDK loads BouncyCastle.Crypto.dll etc. from its own folder
+        const child = spawn(cmd, cmdArgs, { cwd: path.dirname(exe), windowsHide: true });
+        let out = "";
+        let err = "";
+        let settled = false;
+
+        const finish = (fn: () => void) => {
+          if (settled) return;
+          settled = true;
+          clearTimeout(timer);
+          fn();
+        };
+
+        const timer = setTimeout(() => {
+          child.kill();
+          finish(() => reject(new Error(`ZATCA SDK bridge timed out after ${timeout} ms`)));
+        }, timeout);
+
+        child.stdout.on("data", (d: Buffer) => (out += d.toString("utf8")));
+        child.stderr.on("data", (d: Buffer) => (err += d.toString("utf8")));
+        child.on("error", (e: Error) =>
+          finish(() => reject(new Error(`Could not start the ZATCA SDK bridge (${cmd}): ${e.message}`)))
+        );
+        child.on("close", () =>
+          finish(() => {
+            const line = out.trim().split(/\r?\n/).filter(Boolean).pop() ?? "";
+            try {
+              resolve(JSON.parse(line) as BridgeReply);
+            } catch {
+              // not our JSON: .NET crashed before the program could answer (missing DLL, wrong runtime ...)
+              const detail = (err || out).trim().slice(0, 600);
+              reject(new Error(`ZATCA SDK bridge failed: ${detail || "no output"}`));
+            }
+          })
+        );
+
+        child.stdin.on("error", () => undefined);
+        child.stdin.end(stdin ?? "");
+      })
+  );
+}
+
+export class DotNetSdkSigner implements ZatcaSigner {
+  async sign({ unsignedPath, signedPath, certificate, privateKey }: SignInput): Promise<SignResult> {
+    if (!certificate.trim() || !privateKey.trim()) {
+      throw new Error("ZATCA certificate / private key is not configured for this company");
+    }
+
+    // certificate and key go in exactly as stored - the VB passed them to SignDocument untouched
+    const reply = await runBridge(
+      ["sign"],
+      JSON.stringify({
+        xmlPath: path.resolve(unsignedPath),
+        signedPath: path.resolve(signedPath),
+        certificate,
+        privateKey,
+      })
+    );
+
+    if (!reply.ok) throw new Error(reply.error || "ZATCA signing failed");
+    return { invoiceHash: reply.invoiceHash, uuid: reply.uuid };
+  }
+
+  async qrCode(xmlPath: string): Promise<string> {
+    const reply = await runBridge(["qr", path.resolve(xmlPath)]);
+    if (!reply.ok) throw new Error(reply.error || "ZATCA QR generation failed");
+    return reply.qrCode ?? "";
+  }
+}
+
+let signer: ZatcaSigner =
+  (process.env.ZATCA_SIGNER ?? "dotnet").trim().toLowerCase() === "fatoora"
+    ? new FatooraCliSigner()
+    : new DotNetSdkSigner();
 
 export const getZatcaSigner = (): ZatcaSigner => signer;
 export const setZatcaSigner = (s: ZatcaSigner): void => {
