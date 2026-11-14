@@ -2,6 +2,7 @@
 // The printed page (port of rptChartofAccountRpt: company name, heading, report
 // info, Account ID / Account Name / C.C / Level, coloured by level).
 // Opens the browser print dialog from a hidden iframe (no pop-up to be blocked).
+import { REPORT_STYLE } from "../../../../components/common/reportStyle";
 
 export type PrintRow = {
   accountId: string;
@@ -56,12 +57,12 @@ export const buildHtml = (r: PrintReport) => `<!doctype html>
           margin-left: 0; margin-right: 0; }
   thead { display: table-header-group; }            /* header repeats on every page */
   tr { page-break-inside: avoid; }
-  .co   { font-size: 14pt; text-align: center; height: 24px; }
-  .head { font-size: 12pt; text-align: center; height: 24px; }
+  .co   { font-size: 14pt; text-align: center; height: ${REPORT_STYLE.html.companyHeight}px; vertical-align: top; }
+  .head { font-size: 12pt; text-align: center; height: ${REPORT_STYLE.html.headingHeight}px; }
   .info { font-size: 8pt;  text-align: right;  height: 24px; }
-  th { background: #eff3fa; border: 1px solid #c7d1e4; height: 24px;
+  th { border: 1px solid ${REPORT_STYLE.lineColor}; height: ${REPORT_STYLE.html.rowHeight}px;
        padding: 0 6px; font-weight: normal; text-align: left; }
-  td { border: 1px solid #c7d1e4; border-top: 0; height: 30px; padding: 0 6px; }
+  td { border: 1px solid ${REPORT_STYLE.lineColor}; border-top: 0; height: ${REPORT_STYLE.html.rowHeight}px; padding: 0 ${REPORT_STYLE.html.cellPaddingX}px; }
   .name { white-space: pre; }                       /* keeps the level indent */
   .c-id { width: 86px; } .c-cc { width: 42px; } .c-lv { width: 55px; text-align: right; }
   .l1 { color: #00a63e; } .l2 { color: #155dfc; } .l3 { color: #c800de; } .l4 { color: #314158; }

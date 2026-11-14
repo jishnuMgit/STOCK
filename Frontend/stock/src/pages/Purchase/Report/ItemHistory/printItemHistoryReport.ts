@@ -8,7 +8,7 @@
 // The formatters are shared with the PDF file.
 
 import { cssStr, printHtmlDocument } from "../../../../components/common/printHtml";
-import { reportLook } from "../../../../components/common/reportStyle";
+import { reportLook, REPORT_STYLE } from "../../../../components/common/reportStyle";
 
 // the font and the sizes of the shared look (components/common/reportStyle.ts): the same in every report
 const LOOK = reportLook("inter");
@@ -166,14 +166,14 @@ export const buildHtml = (r: PrintReport) => `<!doctype html>
   table.main { width: 100%; border-collapse: collapse; table-layout: fixed; }
   thead { display: table-header-group; }            /* company / heading repeat on every page */
   tr { page-break-inside: avoid; }
-  .co   { font-size: ${LOOK.size.company}pt; text-align: center; height: 24px; }
-  .head { font-size: ${LOOK.size.heading}pt; text-align: center; height: 22px; }
-  .br   { font-size: ${LOOK.size.body}pt;  text-align: left;   height: 20px; }
-  th { border: 1px solid #c7d1e4; height: 24px;
-       padding: 0 4px; font-size: ${LOOK.size.columnHead ?? LOOK.size.body}pt; font-weight: normal; text-align: left; }
-  td { border: 1px solid #c7d1e4; border-top: 0; height: 24px; padding: 0 4px; }
+  .co   { font-size: ${LOOK.size.company}pt; text-align: center; height: ${REPORT_STYLE.html.companyHeight}px; vertical-align: top; }
+  .head { font-size: ${LOOK.size.heading}pt; text-align: center; height: ${REPORT_STYLE.html.headingHeight}px; }
+  .br   { font-size: ${LOOK.size.body}pt;  text-align: left;   height: ${REPORT_STYLE.html.subHeight + REPORT_STYLE.html.tableGap}px; vertical-align: top; }
+  th { border: 1px solid ${REPORT_STYLE.lineColor}; height: ${REPORT_STYLE.html.rowHeight}px;
+       padding: 0 ${REPORT_STYLE.html.cellPaddingX}px; font-size: ${LOOK.size.columnHead ?? LOOK.size.body}pt; font-weight: normal; text-align: left; }
+  td { border: 1px solid ${REPORT_STYLE.lineColor}; border-top: 0; height: ${REPORT_STYLE.html.rowHeight}px; padding: 0 ${REPORT_STYLE.html.cellPaddingX}px; }
   .r { text-align: right; }
-  .tot td { border-top: 1px solid #c7d1e4; font-weight: bold; }
+  .tot td { border-top: 1px solid ${REPORT_STYLE.lineColor}; font-weight: bold; }
   .info { margin-bottom: 6px; }
   .info .g { display: grid; min-height: 20px; align-items: center; }
   .info .g > div { padding: 1px 4px; }

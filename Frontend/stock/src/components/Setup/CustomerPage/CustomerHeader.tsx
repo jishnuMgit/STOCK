@@ -270,7 +270,7 @@ const CustomerHeader: React.FC<CustomerHeaderProps> = ({
                 ]}
                 valueKey="label"
                 width="100%"
-                menuWidth={`${idMenuWidth}px`}
+                menuWidth={`${Math.max(idMenuWidth, 360)}px`}
                 onMenuOpen={() => {
                   const idBox = document.getElementById("glIdBox")?.getBoundingClientRect();
                   const nameBox = document.getElementById("glNameBox")?.getBoundingClientRect();
@@ -299,11 +299,11 @@ const CustomerHeader: React.FC<CustomerHeaderProps> = ({
                 options={accountNameOptions as TableSelectOption[]}
                 columns={[
                   { key: "label", label: "GL. Account Name", width: `${Math.max(nameBoxWidth, 110)}px` },
-                  { key: "secondary", label: "GL. Account ID" },
+                  { key: "secondary", label: "GL. Account ID", width: "130px" },
                 ]}
                 valueKey="label"
                 width="100%"
-                menuWidth="480px"
+                menuWidth={`${Math.max(nameBoxWidth, 110) + 130}px`}
                 onMenuOpen={() => {
                   const w = document.getElementById("glNameBox")?.getBoundingClientRect().width;
                   if (w) setNameBoxWidth(Math.round(w));

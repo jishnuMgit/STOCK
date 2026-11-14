@@ -77,7 +77,6 @@ export const buildHtml = (r: PrintReport) => {
   orientation: "landscape",
   margin: "12mm 10mm 14mm 15mm",
   reportInfo: cssStr(r.txtReportInfo),
-  cellPaddingX: 4,
 })}
 </style>
 </head>
@@ -103,7 +102,7 @@ export const buildHtml = (r: PrintReport) => {
   <tbody>
     ${r.rows.map(rowHtml).join("\n    ")}
     <tr class="tot">
-      <td colspan="4"><b>Total :</b></td>
+      <td colspan="4" class="r"><b>Total :</b></td>
       <td class="r"><b>${formatQty(totals.qty)}</b></td>
       <td></td>
       <td class="r"><b>${formatCost(totals.cost)}</b></td>

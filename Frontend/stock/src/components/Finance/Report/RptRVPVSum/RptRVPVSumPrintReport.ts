@@ -42,9 +42,9 @@ export const formatAmount = (value: number) => {
   return value < 0 ? `(${text})` : text;
 };
 
-// the column weights, as the old report: Entry No. 0.097 | Date 0.130 | Cash/Bank Account Name 0.253 |
-// Received From/Paid To 0.374 | Amount 0.146
-export const COLUMN_WEIGHTS = [0.0968, 0.13, 0.2529, 0.3743, 0.146];
+// the column weights (the old report's, widened where the 14 px column labels need room): Entry No. | Date |
+// Cash/Bank Account Name | Received From/Paid To | Amount
+export const COLUMN_WEIGHTS = [0.125, 0.14, 0.285, 0.295, 0.155];
 
 // the column of the amount (the only number)
 export const AMOUNT_COLUMN = 4;
@@ -62,7 +62,7 @@ export const buildHtml = (r: PrintReport) => `<!doctype html>
 <head>
 <meta charset="utf-8" />
 <title>Receipt / Payment Summary</title>
-<style>${reportPrintCss({ reportInfo: r.txtReportInfo, orientation: "portrait", marginLeft: "15mm", groupSelector: "td.group" })}
+<style>${reportPrintCss({ look: "inter", reportInfo: r.txtReportInfo, orientation: "portrait", marginLeft: "15mm", groupSelector: "td.group" })}
 </style>
 </head>
 <body>

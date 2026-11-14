@@ -23,7 +23,7 @@ const PAGE_H = 297;
 const MARGIN = { top: 14, right: 10, bottom: 16, left: 12 };
 
 // same column proportions as the printed page
-const COL_PCT = [11, 7, 7, 15, 30, 10, 10, 10];
+const COL_PCT = [11, 9, 7.5, 14, 18.5, 13, 13.5, 13.5]; // wide enough for the 14 px labels and a 6-figure amount, with the cell padding
 
 // Arabic needs a font with Arabic letters. jsPDF cannot use the system fonts, so
 // the file public/fonts/ArabicPdf.ttf (a small DejaVu Sans subset) is fetched
@@ -182,7 +182,7 @@ export const buildSoaPdf = async (report: PrintReport): Promise<Blob> => {
       tableWidth: usable,
       rowPageBreak: "avoid",
       showHead: "everyPage",
-      styles: { ...pdfTableStyles(look), minCellHeight: 6 },
+      styles: pdfTableStyles(look),
       headStyles: pdfHeadStyles(look),
       columnStyles,
       head: [

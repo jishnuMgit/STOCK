@@ -6,6 +6,8 @@
 // buildHtml is used by the print preview; printReceivablesReport sends the
 // report to the printer (browser print dialog, hidden iframe - no pop-up).
 
+import { REPORT_STYLE } from "../../../../../components/common/reportStyle";
+
 export type ReceivableRow = {
   accountId: string;
   accountName: string;
@@ -73,16 +75,16 @@ export const buildHtml = (r: PrintReport) => `<!doctype html>
   table { width: 100%; border-collapse: collapse; table-layout: fixed; }
   thead { display: table-header-group; }   /* header repeats on every page */
   tr { page-break-inside: avoid; }
-  .co   { font-size: 14pt; font-weight: bold; text-align: center; height: 24px; }
-  .head { font-size: 12pt; text-align: center; height: 22px; }
-  .br   { font-size: 9pt;  text-align: left;   height: 20px; }
-  th { background: #eff3fa; border: 1px solid #c7d1e4; height: 24px;
-       padding: 0 4px; font-weight: normal; text-align: left; }
+  .co   { font-size: 14pt; font-weight: bold; text-align: center; height: ${REPORT_STYLE.html.companyHeight}px; vertical-align: top; }
+  .head { font-size: 12pt; text-align: center; height: ${REPORT_STYLE.html.headingHeight}px; }
+  .br   { font-size: 9pt;  text-align: left;   height: ${REPORT_STYLE.html.subHeight + REPORT_STYLE.html.tableGap}px; vertical-align: top; }
+  th { border: 1px solid ${REPORT_STYLE.lineColor}; height: ${REPORT_STYLE.html.rowHeight}px;
+       padding: 0 ${REPORT_STYLE.html.cellPaddingX}px; font-weight: normal; text-align: left; }
   th.r { text-align: right; }
-  td { border: 1px solid #c7d1e4; border-top: 0; height: 24px; padding: 0 4px;
+  td { border: 1px solid ${REPORT_STYLE.lineColor}; border-top: 0; height: ${REPORT_STYLE.html.rowHeight}px; padding: 0 ${REPORT_STYLE.html.cellPaddingX}px;
        overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
   td.r { text-align: right; }
-  tr.tot td { background: #eff3fa; font-weight: bold; border-top: 1px solid #c7d1e4; }
+  tr.tot td { font-weight: bold; border-top: 1px solid ${REPORT_STYLE.lineColor}; }
 </style>
 </head>
 <body>
