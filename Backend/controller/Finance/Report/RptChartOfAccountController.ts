@@ -55,7 +55,7 @@ class ApiError extends Error {
 
 const pad = (n: number) => String(n).padStart(2, "0");
 
-// VB objCommon.ReportInfo - assumed: "<user>  dd/mm/yyyy hh:mm"
+// VB objCommon.ReportInfo - assumed: "<user>  DD-MM-YYYY hh:mm"
 const reportInfo = (userId: string) => {
   const d = new Date();
   return `${userId}  ${pad(d.getDate())}/${pad(d.getMonth() + 1)}/${d.getFullYear()} ${pad(d.getHours())}:${pad(d.getMinutes())}`;
