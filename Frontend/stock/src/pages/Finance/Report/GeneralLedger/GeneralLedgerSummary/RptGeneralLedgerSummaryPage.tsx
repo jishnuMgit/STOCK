@@ -230,13 +230,7 @@ const AppDatePicker: React.FC<AppDatePickerProps> = ({
   </LocalizationProvider>
 );
 
-type RptGeneralLedgerSummaryPageProps = {
-  onClose?: () => void;
-};
-
-const RptGeneralLedgerSummaryPage: React.FC<
-  RptGeneralLedgerSummaryPageProps
-> = ({ onClose }) => {
+const RptGeneralLedgerSummaryPage: React.FC = () => {
   const [branchMode, setBranchMode] = useState("One Branch"); // optBranch
   const [branch, setBranch] = useState<Option | null>(branchOptions[0]); // lkpBranch
 
@@ -267,17 +261,6 @@ const RptGeneralLedgerSummaryPage: React.FC<
       toDate,
       postStatus,
     });
-  };
-
-  const handleClose = () => {
-    setBranchMode("One Branch");
-    setBranch(branchOptions[0]);
-    setAccountId(accountIdOptions[0].value);
-    setCostCenter(costCenterOptions[0]);
-    setFromDate("");
-    setToDate("");
-    setPostStatus(postStatusOptions[0]);
-    onClose?.();
   };
 
   return (
@@ -393,14 +376,6 @@ const RptGeneralLedgerSummaryPage: React.FC<
                 className="btn-style"
               >
                 <u>P</u>rint
-              </button>
-              <button
-                id="btnClose"
-                type="button"
-                onClick={handleClose}
-                className="btn-style"
-              >
-                <u>C</u>lose
               </button>
             </div>
           </section>

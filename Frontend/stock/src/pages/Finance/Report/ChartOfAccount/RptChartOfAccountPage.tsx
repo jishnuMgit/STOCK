@@ -573,7 +573,7 @@ const RptChartOfAccountPage: React.FC<RptChartOfAccountPageProps> = ({
                 <u>P</u>rint
               </button>
 
-              <button
+              {/* <button
                 id="btnClose"
                 type="button"
                 onClick={handleClose}
@@ -581,7 +581,7 @@ const RptChartOfAccountPage: React.FC<RptChartOfAccountPageProps> = ({
                 className="btn-style"
               >
                 <u>C</u>lose
-              </button>
+              </button> */}
             </div>
           </section>
         </main>

@@ -219,13 +219,7 @@ const AppDatePicker: React.FC<AppDatePickerProps> = ({
   </LocalizationProvider>
 );
 
-type RptBalanceSheetPageProps = {
-  onClose?: () => void;
-};
-
-const RptBalanceSheetPage: React.FC<RptBalanceSheetPageProps> = ({
-  onClose,
-}) => {
+const RptBalanceSheetPage: React.FC = () => {
   const [branchMode, setBranchMode] = useState("One Branch"); // optBranch
   const [branch, setBranch] = useState<Option | null>(branchOptions[0]); // lkpBranch
   const [asOnDate, setAsOnDate] = useState(""); // dtpAsOnDate
@@ -250,17 +244,6 @@ const RptBalanceSheetPage: React.FC<RptBalanceSheetPageProps> = ({
       printZeroBalance,
       printAccountGroup,
     });
-  };
-
-  const handleClose = () => {
-    setBranchMode("One Branch");
-    setBranch(branchOptions[0]);
-    setAsOnDate("");
-    setAccountLevel("4");
-    setPostStatus(postStatusOptions[1]);
-    setPrintZeroBalance(yesNoOptions[1]);
-    setPrintAccountGroup(yesNoOptions[0]);
-    onClose?.();
   };
 
   return (
@@ -371,14 +354,6 @@ const RptBalanceSheetPage: React.FC<RptBalanceSheetPageProps> = ({
                 className="btn-style"
               >
                 <u>P</u>rint
-              </button>
-              <button
-                id="btnClose"
-                type="button"
-                onClick={handleClose}
-                className="btn-style"
-              >
-                <u>C</u>lose
               </button>
             </div>
           </section>

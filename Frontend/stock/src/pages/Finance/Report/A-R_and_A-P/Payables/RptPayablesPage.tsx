@@ -712,7 +712,7 @@ const RptPayablesPage: React.FC<RptPayablesPageProps> = ({ onClose }) => {
               >
                 <u>P</u>rint
               </button>
-              <button
+              {/* <button
                 id="btnClose"
                 type="button"
                 onClick={handleClose}
@@ -720,7 +720,7 @@ const RptPayablesPage: React.FC<RptPayablesPageProps> = ({ onClose }) => {
                 className="btn-style"
               >
                 <u>C</u>lose
-              </button>
+              </button> */}
             </div>
           </section>
         </main>

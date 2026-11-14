@@ -953,7 +953,7 @@ const RptGLPage: React.FC<RptGLPageProps> = ({ onClose }) => {
               >
                 <u>P</u>rint
               </button>
-              <button
+              {/* <button
                 id="btnClose"
                 type="button"
                 onClick={handleClose}
@@ -961,7 +961,7 @@ const RptGLPage: React.FC<RptGLPageProps> = ({ onClose }) => {
                 className="btn-style"
               >
                 <u>C</u>lose
-              </button>
+              </button> */}
             </div>
           </section>
         </main>

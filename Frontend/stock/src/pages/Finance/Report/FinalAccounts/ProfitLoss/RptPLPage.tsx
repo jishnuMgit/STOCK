@@ -231,11 +231,7 @@ const AppDatePicker: React.FC<AppDatePickerProps> = ({
   );
 };
 
-type RptPLPageProps = {
-  onClose?: () => void;
-};
-
-const RptPLPage: React.FC<RptPLPageProps> = ({ onClose }) => {
+const RptPLPage: React.FC = () => {
   const [branchMode, setBranchMode] = useState("One Branch"); // optBranch
   const [branch, setBranch] = useState<Option | null>(branchOptions[0]); // lkpBranch
 
@@ -251,7 +247,6 @@ const RptPLPage: React.FC<RptPLPageProps> = ({ onClose }) => {
   const [postStatus, setPostStatus] = useState<Option | null>(
     postStatusOptions[1],
   ); // lkpPostStatus
-  const [costCenterWise, setCostCenterWise] = useState(false); // chkCostCenterWise
   const [printZeroBalance, setPrintZeroBalance] = useState<Option | null>(
     yesNoOptions[1],
   ); // lkpPrint0Balance
@@ -273,27 +268,9 @@ const RptPLPage: React.FC<RptPLPageProps> = ({ onClose }) => {
       toDate: isPeriod ? toDate : null,
       accountLevel,
       postStatus,
-      costCenterWise,
       printZeroBalance,
       printAccountGroup,
     });
-  };
-
-  const handleClose = () => {
-    setBranchMode("One Branch");
-    setBranch(branchOptions[0]);
-    setCostCenterMode("All Cost Center");
-    setCostCenter(null);
-    setDateMode("For A Period");
-    setMonth("");
-    setFromDate("");
-    setToDate("");
-    setAccountLevel("4");
-    setPostStatus(postStatusOptions[1]);
-    setCostCenterWise(false);
-    setPrintZeroBalance(yesNoOptions[1]);
-    setPrintAccountGroup(yesNoOptions[0]);
-    onClose?.();
   };
 
   return (
@@ -476,14 +453,6 @@ const RptPLPage: React.FC<RptPLPageProps> = ({ onClose }) => {
                 className="btn-style"
               >
                 <u>P</u>rint
-              </button>
-              <button
-                id="btnClose"
-                type="button"
-                onClick={handleClose}
-                className="btn-style"
-              >
-                <u>C</u>lose
               </button>
             </div>
           </section>
