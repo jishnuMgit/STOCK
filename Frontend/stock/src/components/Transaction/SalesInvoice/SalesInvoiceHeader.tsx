@@ -10,7 +10,8 @@ import type {
   Option,
   ParamLookup,
   SalesHeader,
-} from "../../../hooks/useSalesInvoice"; // adjust path to your hook
+
+} from "../../../hooks/useSalesInvoice";
 
 import Header from "../../common/Header";
 import CommonTableSelect from "../../common/CommonTableSelect";
@@ -277,12 +278,12 @@ const SalesInvoiceHeader: React.FC<SalesInvoiceHeaderProps> = ({
 
   const invoiceTypeValue = header.invoiceType
     ? (invoiceTypeTableOptions.find(
-        (option) => option.value === header.invoiceType,
-      ) ?? {
-        value: header.invoiceType,
-        label: header.invoiceType,
-        name: TYPE_NAMES[header.invoiceType] ?? header.invoiceType,
-      })
+      (option) => option.value === header.invoiceType,
+    ) ?? {
+      value: header.invoiceType,
+      label: header.invoiceType,
+      name: TYPE_NAMES[header.invoiceType] ?? header.invoiceType,
+    })
     : null;
 
   // ==========================================================

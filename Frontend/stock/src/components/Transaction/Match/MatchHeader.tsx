@@ -6,17 +6,15 @@ import dayjs from "dayjs";
 import customParseFormat from "dayjs/plugin/customParseFormat";
 
 import type { SelectOption, DocumentOption } from "./types";
-import Select, {
-  components,
-  type FormatOptionLabelMeta,
-  type MenuListProps,
+import {
   type SelectInstance,
   type StylesConfig,
 } from "react-select";
 
-import SelectDropdownIndicator from "../../common/SelectDropdownIndicator";
 import CloseButton from "../../common/CloseButton";
 import { useNavigate } from "react-router-dom";
+import type { TableSelectOption } from "../../common/CommonTableSelect";
+import CommonTableSelect from "../../common/CommonTableSelect";
 
 dayjs.extend(customParseFormat);
 
@@ -104,7 +102,6 @@ const ID_COL_WIDTH = 110;
 const divName = (o: SelectOption) =>
   (o as SelectOption & { name?: string }).name ?? o.label;
 
-const menuRowBorder = "1px solid #cfcfcf";
 
 type DivisionSelectProps = {
   value: string;
@@ -123,136 +120,26 @@ const DivisionSelect: React.FC<DivisionSelectProps> = ({
   boxRef,
   disabled,
 }) => {
-  const selectRef = React.useRef<SelectInstance<SelectOption, false>>(null);
+  const selectRef = React.useRef<SelectInstance<TableSelectOption, false>>(null);
   const [boxWidth, setBoxWidth] = useState(300);
   const [menuOpen, setMenuOpen] = useState(false);
 
-  const MenuList = React.useMemo(() => {
-    const List = (props: MenuListProps<SelectOption, false>) => (
-      <components.MenuList {...props}>
-        <div
-          style={{
-            display: "flex",
-            position: "sticky",
-            top: 0,
-            zIndex: 1,
-            background: "#eeeeee",
-            borderBottom: menuRowBorder,
-            fontWeight: 600,
-            fontSize: 14,
-            color: "#202a36",
-          }}
-        >
-          <div
-            style={{
-              width: boxWidth,
-              flexShrink: 0,
-              boxSizing: "border-box",
-              padding: "5px 8px",
-              borderRight: menuRowBorder,
-            }}
-          >
-            Div. Name
-          </div>
-          <div style={{ flex: 1, padding: "5px 8px" }}>Div. ID</div>
-        </div>
-        {props.children}
-      </components.MenuList>
-    );
-    return List;
-  }, [boxWidth]);
-
-  const styles = React.useMemo<StylesConfig<SelectOption, false>>(
-    () => ({
-      control: (base, state) => ({
-        ...base,
-        minHeight: 29,
-        height: 29,
-        borderRadius: 4,
-        borderColor: state.isFocused ? "#9fdfbc" : "#d7dee7",
-        boxShadow: state.isFocused ? "0 0 0 1px #9fdfbc" : "none",
-        backgroundColor: state.isDisabled ? "#f1f5f9" : "#fff",
-        cursor: state.isDisabled ? "not-allowed" : "pointer",
-        fontSize: 14,
-        "&:hover": { borderColor: state.isFocused ? "#9fdfbc" : "#aebdce" },
-      }),
-      valueContainer: (base) => ({ ...base, height: 27, padding: "0 8px" }),
-      singleValue: (base) => ({ ...base, margin: 0, color: "#334155" }),
-      placeholder: (base) => ({ ...base, margin: 0 }),
-      input: (base) => ({ ...base, margin: 0, padding: 0 }),
-      indicatorsContainer: (base) => ({ ...base, height: 27 }),
-      // same spacing as the Purchase form's arrow
-      dropdownIndicator: (base) => ({
-        ...base,
-        padding: "0 6px",
-        color: "#64748b",
-        "&:hover": { color: "#334155" },
-      }),
-      indicatorSeparator: () => ({ display: "none" }),
-      menuPortal: (base) => ({ ...base, zIndex: 9999 }),
-      menu: (base) => ({
-        ...base,
-        zIndex: 9999,
-        marginTop: 1,
-        width: boxWidth + ID_COL_WIDTH,
-        minWidth: boxWidth + ID_COL_WIDTH,
-        border: "none",
-        borderRadius: 0,
-        boxShadow: "0 0 0 1px #cfcfcf, 0 4px 10px rgba(0,0,0,0.15)",
-      }),
-      menuList: (base) => ({ ...base, padding: 0, maxHeight: 260 }),
-      option: (base, state) => ({
-        ...base,
-        padding: 0,
-        fontSize: 14,
-        color: "#263449",
-        cursor: "pointer",
-        backgroundColor: state.isSelected
-          ? "#cdeedd"
-          : state.isFocused
-            ? "#e6f6ee"
-            : "#fff",
-      }),
-    }),
-    [boxWidth],
+  const rows = React.useMemo<TableSelectOption[]>(
+    () => options.map((o) => ({ ...o, divName: divName(o) })),
+    [options],
   );
+  const selected = rows.find((o) => o.value === value) ?? null;
 
-  const formatLabel = (
-    option: SelectOption,
-    meta: FormatOptionLabelMeta<SelectOption>,
-  ) => {
-    if (meta.context !== "menu") return divName(option); // control shows the name
-
-    return (
-      <div style={{ display: "flex" }}>
-        <div
-          style={{
-            width: boxWidth,
-            flexShrink: 0,
-            boxSizing: "border-box",
-            padding: "6px 8px",
-            borderRight: "1px solid #e3e8ef",
-          }}
-        >
-          {divName(option)}
-        </div>
-        <div style={{ flex: 1, padding: "6px 8px" }}>{option.value}</div>
-      </div>
-    );
-  };
-
-  // typing searches both the name and the id
-  const filter = (option: { data: SelectOption }, input: string) => {
+  const filter = (option: { data: TableSelectOption }, input: string) => {
     const text = input.trim().toLowerCase();
     if (!text) return true;
     return (
       option.data.value.toLowerCase().includes(text) ||
-      divName(option.data).toLowerCase().includes(text)
+      String(option.data.divName).toLowerCase().includes(text)
     );
   };
 
   return (
-    // the parent calls divisionRef.current?.focus(), so forward that to the select
     <div
       ref={boxRef}
       tabIndex={-1}
@@ -261,33 +148,34 @@ const DivisionSelect: React.FC<DivisionSelectProps> = ({
       }}
       className="min-w-0 flex-1 outline-none"
     >
-      <Select<SelectOption, false>
-        ref={selectRef}
+      <CommonTableSelect
+        selectRef={selectRef}
         inputId="lkpDivision"
-        instanceId="lkpDivision"
-        options={options}
-        value={options.find((o) => o.value === value) ?? null}
+        value={selected}
+        options={rows}
+        columns={[
+          { key: "divName", label: "Div. Name", width: `${boxWidth}px` },
+          { key: "value", label: "Div. ID", width: "1fr" },
+        ]}
+        valueKey="divName"
+        placeholder="Select..."
+        width="100%"
+        menuWidth={`${boxWidth + ID_COL_WIDTH}px`}
+        controlHeight={29}
+        controlFontSize="14px"
+        headerFontSize="13px"
+        borderColor="#d7dee7"
+        hoverBorderColor="#9fdfbc"
+        menuZIndex={9999}
+        menuMaxHeight="260px"
+        menuPortalTarget={typeof document !== "undefined" ? document.body : undefined}
+        filterOption={filter}
+        isDisabled={disabled}
         onChange={(option) => {
           if (!option) return;
           onChange(option.value);
           setTimeout(next, 0);
         }}
-        formatOptionLabel={formatLabel}
-        filterOption={filter}
-        styles={styles}
-        components={{
-          MenuList,
-          DropdownIndicator: SelectDropdownIndicator,
-          IndicatorSeparator: () => null,
-        }}
-        isClearable={false}
-        isSearchable
-        isDisabled={disabled}
-        placeholder="Select..."
-        menuPosition="fixed"
-        menuPortalTarget={
-          typeof document !== "undefined" ? document.body : undefined
-        }
         onMenuOpen={() => {
           setMenuOpen(true);
           const w = boxRef.current?.getBoundingClientRect().width;
@@ -295,7 +183,6 @@ const DivisionSelect: React.FC<DivisionSelectProps> = ({
         }}
         onMenuClose={() => setMenuOpen(false)}
         onKeyDown={(event) => {
-          // Enter with the menu closed and a value chosen -> next field
           if (event.key === "Enter" && !menuOpen && value) {
             event.preventDefault();
             next();

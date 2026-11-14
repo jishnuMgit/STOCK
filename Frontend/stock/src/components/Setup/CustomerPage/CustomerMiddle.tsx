@@ -1,6 +1,6 @@
 import React from "react";
-import Select, { components } from "react-select";
 import type { Country, Staff } from "../../../hooks/useCustomer";
+import CommonTableSelect from "../../common/CommonTableSelect";
 
 /* =========================================================
    TYPES
@@ -109,117 +109,6 @@ interface CustomerMiddleProps {
   setLkpBranch: React.Dispatch<React.SetStateAction<string>>;
 }
 
-/* =========================================================
-   SELECT STYLES
-========================================================= */
-
-const selectStyles = {
-  control: (base: any, state: any) => ({
-    ...base,
-    minHeight: "27px",
-    height: "30px",
-    borderRadius: "4px",
-    borderColor: state.isFocused ? "#9fdfbc" : "#9fdfbc",
-    boxShadow: "none",
-    outline: "none",
-    fontSize: "12px",
-    backgroundColor: "#ffffff",
-    cursor: "pointer",
-
-    "&:hover": {
-      borderColor: "#9fdfbc",
-    },
-
-    "&:focus": {
-      borderColor: "#9fdfbc",
-      boxShadow: "none",
-      outline: "none",
-    },
-  }),
-
-  valueContainer: (base: any) => ({
-    ...base,
-    height: "30px",
-    padding: "0 8px",
-  }),
-
-  input: (base: any) => ({
-    ...base,
-    margin: "0px",
-    padding: "0px",
-    fontSize: "12px",
-  }),
-
-  singleValue: (base: any) => ({
-    ...base,
-    fontSize: "12px",
-    color: "#334155",
-  }),
-
-  placeholder: (base: any) => ({
-    ...base,
-    fontSize: "12px",
-    color: "#94a3b8",
-  }),
-
-  indicatorsContainer: (base: any) => ({
-    ...base,
-    height: "30px",
-  }),
-
-  dropdownIndicator: (base: any) => ({
-    ...base,
-    padding: "4px 6px",
-  }),
-
-  clearIndicator: (base: any) => ({
-    ...base,
-    padding: "4px",
-  }),
-
-  menu: (base: any) => ({
-    ...base,
-    zIndex: 9999,
-    fontSize: "12px",
-  }),
-
-  menuPortal: (base: any) => ({
-    ...base,
-    zIndex: 99999,
-  }),
-
-  option: (base: any, state: any) => ({
-    ...base,
-    fontSize: "12px",
-    padding: "6px 8px",
-    backgroundColor: state.isFocused ? "#e2e8f0" : "#ffffff",
-    color: "#334155",
-    cursor: "pointer",
-  }),
-};
-
-/* =========================================================
-   CUSTOM DROPDOWN INDICATOR
-========================================================= */
-
-const CustomDropdownIndicator = (props: any) => {
-  return (
-    <components.DropdownIndicator {...props}>
-      <span
-        style={{
-          fontSize: "9px",
-          color: "#64748b",
-        }}
-      >
-        ▼
-      </span>
-    </components.DropdownIndicator>
-  );
-};
-
-/* =========================================================
-   INPUT CLASSES
-========================================================= */
 
 const inputClass = ` w-full md:w-[80%] input-style`;
 
@@ -357,6 +246,19 @@ const CustomerMiddle: React.FC<CustomerMiddleProps> = ({
   lkpBranch,
   setLkpBranch,
 }) => {
+
+  const commonProps = {
+    controlHeight: 30,
+    controlFontSize: "12px",
+    headerFontSize: "12px",
+    borderColor: "#9fdfbc",
+    hoverBorderColor: "#9fdfbc",
+    menuZIndex: 99999,
+    menuPortalTarget: document.body,
+    width: "100%",
+    menuWidth: "300px",
+  };
+
   /* =======================================================
      OPTIONS (built from DB data)
   ======================================================= */
@@ -564,24 +466,16 @@ const CustomerMiddle: React.FC<CustomerMiddleProps> = ({
               </label>
 
               <div className="w-[80%]">
-                <Select
+                <CommonTableSelect
+                  {...commonProps}
                   inputId="lkpCountry"
-                  name="lkpCountry"
                   options={countryOptions}
-                  value={
-                    countryOptions.find(
-                      (option) => option.value === lkpCountry,
-                    ) || null
-                  }
+                  value={countryOptions.find((o) => o.value === lkpCountry) || null}
+                  columns={[
+                    { key: "value", label: "ID", width: "80px" },
+                    { key: "label", label: "Country" },
+                  ]}
                   onChange={(selected) => setLkpCountry(selected?.value || "")}
-                  styles={selectStyles}
-                  components={{
-                    DropdownIndicator: CustomDropdownIndicator,
-                    IndicatorSeparator: () => null,
-                  }}
-                  menuPortalTarget={document.body}
-                  menuPosition="fixed"
-                  isSearchable
                 />
               </div>
             </div>
@@ -845,62 +739,16 @@ const CustomerMiddle: React.FC<CustomerMiddleProps> = ({
               </label>
 
               <div className="w-[80%]">
-                <Select
+                <CommonTableSelect
+                  {...commonProps}
                   inputId="lkpCountry_AR"
-                  name="lkpCountry_AR"
                   options={countryArabicOptions}
-                  value={
-                    countryArabicOptions.find(
-                      (option) => option.value === lkpCountry_AR,
-                    ) || null
-                  }
-                  onChange={(selected) =>
-                    setLkpCountry_AR(selected?.value || "")
-                  }
-                  styles={{
-                    ...selectStyles,
-
-                    singleValue: (base: any) => ({
-                      ...base,
-                      fontSize: "12px",
-                      color: "#334155",
-                      direction: "rtl",
-                      textAlign: "right",
-                    }),
-
-                    placeholder: (base: any) => ({
-                      ...base,
-                      fontSize: "12px",
-                      color: "#94a3b8",
-                      direction: "rtl",
-                      textAlign: "right",
-                    }),
-
-                    input: (base: any) => ({
-                      ...base,
-                      direction: "rtl",
-                      textAlign: "right",
-                      width: "70%",
-                    }),
-
-                    option: (base: any, state: any) => ({
-                      ...base,
-                      fontSize: "12px",
-                      padding: "6px 8px",
-                      backgroundColor: state.isFocused ? "#e2e8f0" : "#ffffff",
-                      color: "#334155",
-                      cursor: "pointer",
-                      direction: "rtl",
-                      textAlign: "right",
-                    }),
-                  }}
-                  components={{
-                    DropdownIndicator: CustomDropdownIndicator,
-                    IndicatorSeparator: () => null,
-                  }}
-                  menuPortalTarget={document.body}
-                  menuPosition="fixed"
-                  isSearchable
+                  value={countryArabicOptions.find((o) => o.value === lkpCountry_AR) || null}
+                  columns={[
+                    { key: "value", label: "ID", width: "80px" },
+                    { key: "label", label: "الدولة" },
+                  ]}
+                  onChange={(selected) => setLkpCountry_AR(selected?.value || "")}
                 />
               </div>
             </div>
@@ -1057,7 +905,7 @@ const CustomerMiddle: React.FC<CustomerMiddleProps> = ({
             SHORT NAME
           ================================================= */}
 
-          <div className="relative -left-[95px] grid grid-cols-[60px_minmax(0,1fr)] items-center gap-2">
+          <div className="relative -left-23.75 grid grid-cols-[60px_minmax(0,1fr)] items-center gap-2">
             <label
               htmlFor="txtShortName"
               className="text-[11px] text-slate-600 whitespace-nowrap"
@@ -1087,23 +935,16 @@ const CustomerMiddle: React.FC<CustomerMiddleProps> = ({
             </label>
 
             <div className="w-full min-w-0">
-              <Select
+              <CommonTableSelect
+                {...commonProps}
                 inputId="lkpStaff"
-                name="lkpStaff"
                 options={staffOptions}
-                value={
-                  staffOptions.find((option) => option.value === lkpStaff) ||
-                  null
-                }
+                value={staffOptions.find((o) => o.value === lkpStaff) || null}
+                columns={[
+                  { key: "value", label: "ID", width: "80px" },
+                  { key: "label", label: "Staff Name" },
+                ]}
                 onChange={(selected) => setLkpStaff(selected?.value || "")}
-                styles={selectStyles}
-                components={{
-                  DropdownIndicator: CustomDropdownIndicator,
-                  IndicatorSeparator: () => null,
-                }}
-                menuPortalTarget={document.body}
-                menuPosition="fixed"
-                isSearchable
               />
             </div>
           </div>
@@ -1131,20 +972,16 @@ const CustomerMiddle: React.FC<CustomerMiddleProps> = ({
               Branch
             </label>
             <div className="w-full min-w-0">
-              <Select
+              <CommonTableSelect
+                {...commonProps}
                 inputId="lkpBranch"
-                name="lkpBranch"
                 options={branchOptions}
                 value={branchOptions.find((o) => o.value === lkpBranch) || null}
+                columns={[
+                  { key: "value", label: "ID", width: "80px" },
+                  { key: "label", label: "Branch" },
+                ]}
                 onChange={(selected) => setLkpBranch(selected?.value || "")}
-                styles={selectStyles}
-                components={{
-                  DropdownIndicator: CustomDropdownIndicator,
-                  IndicatorSeparator: () => null,
-                }}
-                menuPortalTarget={document.body}
-                menuPosition="fixed"
-                isSearchable
               />
             </div>
           </div>

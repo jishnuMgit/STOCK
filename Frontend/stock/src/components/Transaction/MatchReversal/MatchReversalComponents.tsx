@@ -7,9 +7,7 @@ import React, {
   useState,
 } from "react";
 
-import Select, {
-  components,
-  type OptionProps,
+import {
   type StylesConfig,
 } from "react-select";
 
@@ -33,7 +31,7 @@ import type {
   DocumentOption,
   MatchingComponentsRef,
 } from "./types";
-import SelectDropdownIndicator from "../../common/SelectDropdownIndicator";
+import CommonTableSelect, { type TableSelectOption } from "../../common/CommonTableSelect";
 
 interface Props {
   branch: string;
@@ -79,17 +77,12 @@ interface ResponsiveSelectProps {
   onChange: (value: string) => void;
   next: () => void;
   selectRef: React.RefObject<HTMLDivElement | null>;
-  styles: StylesConfig<SelectOption, false>;
   reverseDropdown?: boolean;
   columnHeaders?: [string, string];
   disabled?: boolean;
   documentMode?: boolean;
-  swapColumns?: boolean;
-  customOption?: React.ComponentType<OptionProps<SelectOption, false>>;
+  getMenuWidth: () => number;
 }
-
-/* Document No. dropdown: Document No. | Date | Br. ID | Debit | Credit */
-const DOC_GRID = "150px 105px 60px 100px 100px";
 
 const ResponsiveSelect = ({
   id,
@@ -98,16 +91,15 @@ const ResponsiveSelect = ({
   onChange,
   next,
   selectRef,
-  styles,
   reverseDropdown = false,
   columnHeaders,
   disabled = false,
   documentMode = false,
-  swapColumns = false,
-  customOption,
+  getMenuWidth,
 }: ResponsiveSelectProps) => {
   const wrapperRef = useRef<HTMLDivElement | null>(null);
   const [selectWidth, setSelectWidth] = useState("100%");
+  const [menuWidth, setMenuWidth] = useState(() => getMenuWidth());
 
   React.useEffect(() => {
     const element = wrapperRef.current;
@@ -125,228 +117,31 @@ const ResponsiveSelect = ({
     return () => observer.disconnect();
   }, []);
 
-  const CustomSingleValue = (selectProps: any) => {
-    const data = selectProps.data as SelectOption & Partial<DocumentOption>;
-
+  const columns = React.useMemo(() => {
     if (documentMode) {
-      return (
-        <components.SingleValue {...selectProps}>
-          <div
-            style={{
-              display: "grid",
-              gridTemplateColumns: DOC_GRID,
-              width: "100%",
-              minWidth: 0,
-              alignItems: "center",
-              fontSize: "14px",
-            }}
-          >
-            <span>{data.docTypeNo ?? data.docNo ?? data.value ?? ""}</span>
-            <span>{data.date ?? ""}</span>
-            <span>{data.brId ?? ""}</span>
-            <span style={{ textAlign: "right", paddingRight: "8px" }}>
-              {data.debit ?? ""}
-            </span>
-            <span style={{ textAlign: "right", paddingRight: "8px" }}>
-              {data.credit ?? ""}
-            </span>
-          </div>
-        </components.SingleValue>
-      );
+      return [
+        { key: "docTypeNo", label: "Document No.", width: "150px" },
+        { key: "date", label: "Date", width: "105px" },
+        { key: "brId", label: "Br. ID", width: "60px" },
+        { key: "debit", label: "Debit", width: "100px", align: "right" as const },
+        { key: "credit", label: "Credit", width: "1fr", align: "right" as const },
+      ];
     }
-
-    return (
-      <components.SingleValue {...selectProps}>
-        {data.value}
-      </components.SingleValue>
-    );
-  };
-
-  const DefaultOption = (optionProps: OptionProps<SelectOption, false>) => {
-    const data = optionProps.data as SelectOption & Partial<DocumentOption>;
-
-    if (documentMode) {
-      return (
-        <components.Option {...optionProps}>
-          <div
-            style={{
-              display: "grid",
-              gridTemplateColumns: DOC_GRID,
-              width: "100%",
-              minWidth: 0,
-              alignItems: "center",
-              fontSize: "12px",
-            }}
-          >
-            <div>{data.docTypeNo ?? data.docNo ?? data.value ?? ""}</div>
-            <div>{data.date ?? ""}</div>
-            <div>{data.brId ?? ""}</div>
-            <div style={{ textAlign: "right", paddingRight: "8px" }}>
-              {data.debit ?? ""}
-            </div>
-            <div style={{ textAlign: "right", paddingRight: "8px" }}>
-              {data.credit ?? ""}
-            </div>
-          </div>
-        </components.Option>
-      );
+    if (columnHeaders) {
+      return reverseDropdown
+        ? [
+          { key: "value", label: columnHeaders[0], width: "1fr" },
+          { key: "label", label: columnHeaders[1], width: "140px" },
+        ]
+        : [
+          { key: "value", label: columnHeaders[0], width: "140px" },
+          { key: "label", label: columnHeaders[1], width: "1fr" },
+        ];
     }
-
-    if (!columnHeaders) {
-      return (
-        <components.Option {...optionProps}>
-          <div
-            style={{
-              whiteSpace: "nowrap",
-              overflow: "hidden",
-              textOverflow: "ellipsis",
-              width: "100%",
-            }}
-          >
-            {data.value}
-          </div>
-        </components.Option>
-      );
-    }
-
-    const firstColumn = swapColumns ? data.label : data.value;
-    const secondColumn = swapColumns ? data.value : data.label;
-    return (
-      <components.Option {...optionProps}>
-        <div
-          style={{
-            display: "grid",
-            gridTemplateColumns: reverseDropdown
-              ? "minmax(0, 1fr) 132px"
-              : "140px minmax(0, 1fr)",
-            width: "100%",
-            minWidth: 0,
-            alignItems: "center",
-          }}
-        >
-          <div
-            style={{
-              minWidth: 0,
-              paddingRight: "8px",
-              overflow: "hidden",
-              whiteSpace: "nowrap",
-              textOverflow: "ellipsis",
-            }}
-          >
-            {firstColumn}
-          </div>
-          <div
-            style={{
-              minWidth: 0,
-              paddingLeft: "10px",
-              overflow: "hidden",
-              whiteSpace: "nowrap",
-              textOverflow: "ellipsis",
-            }}
-          >
-            {secondColumn}
-          </div>
-        </div>
-      </components.Option>
-    );
-  };
-
-  const CustomMenuList = (menuProps: any) => {
-    if (documentMode) {
-      const headers = ["Document No.", "Date", "Br. ID", "Debit", "Credit"];
-      return (
-        <components.MenuList {...menuProps}>
-          <div
-            style={{
-              display: "grid",
-              gridTemplateColumns: DOC_GRID,
-              width: "100%",
-              minWidth: 0,
-              alignItems: "center",
-              height: "28px",
-              boxSizing: "border-box",
-              backgroundColor: "#eeeeee",
-              borderBottom: "1px solid #c8c8c8",
-              color: "#222",
-              fontSize: "14px",
-            }}
-          >
-            {headers.map((header, index) => (
-              <div
-                key={header}
-                style={{
-                  minWidth: 0,
-                  paddingLeft: "6px",
-                  paddingRight: "4px",
-                  borderLeft: index === 0 ? "none" : "1px solid #c8c8c8",
-                  textAlign: index === 3 || index === 4 ? "right" : "left",
-                  overflow: "hidden",
-                  whiteSpace: "nowrap",
-                  textOverflow: "ellipsis",
-                }}
-              >
-                {header}
-              </div>
-            ))}
-          </div>
-          {menuProps.children}
-        </components.MenuList>
-      );
-    }
-
-    return (
-      <components.MenuList {...menuProps}>
-        {columnHeaders && (
-          <div
-            style={{
-              display: "grid",
-              gridTemplateColumns: reverseDropdown
-                ? "minmax(0, 1fr) 140px"
-                : "148px minmax(0, 1fr)",
-              width: "100%",
-              minWidth: 0,
-              alignItems: "center",
-              height: "28px",
-              boxSizing: "border-box",
-              backgroundColor: "#eeeeee",
-              borderBottom: "1px solid #c8c8c8",
-              color: "#222",
-              fontSize: "14px",
-            }}
-          >
-            <div
-              style={{
-                minWidth: 0,
-                paddingLeft: "8px",
-                paddingRight: "8px",
-                overflow: "hidden",
-                whiteSpace: "nowrap",
-                textOverflow: "ellipsis",
-              }}
-            >
-              {swapColumns ? columnHeaders[1] : columnHeaders[0]}
-            </div>
-            <div
-              style={{
-                minWidth: 0,
-                borderLeft: "1px solid #c8c8c8",
-                paddingLeft: "10px",
-                overflow: "hidden",
-                whiteSpace: "nowrap",
-                textOverflow: "ellipsis",
-              }}
-            >
-              {swapColumns ? columnHeaders[0] : columnHeaders[1]}
-            </div>
-          </div>
-        )}
-        {menuProps.children}
-      </components.MenuList>
-    );
-  };
+    return [{ key: "value", label: "", width: "1fr" }];
+  }, [documentMode, columnHeaders, reverseDropdown]);
 
   const selected = options.find((option) => option.value === value) ?? null;
-  const OptionComponent = customOption ?? DefaultOption;
 
   return (
     <div
@@ -358,12 +153,10 @@ const ResponsiveSelect = ({
       }}
       tabIndex={-1}
       onFocus={(event) => {
-        // someone called ref.focus() on the wrapper: pass focus to the real input
         if (event.target !== event.currentTarget) return;
         wrapperRef.current?.querySelector<HTMLInputElement>("input")?.focus();
       }}
       onKeyDown={(event) => {
-        // react-select already used this Enter to pick an option
         if (event.defaultPrevented) return;
         handleKeyboardAction(event, { onEnter: next });
       }}
@@ -375,22 +168,23 @@ const ResponsiveSelect = ({
         } as React.CSSProperties
       }
     >
-      <Select<SelectOption, false>
+      <CommonTableSelect
         inputId={`${id}-input`}
-        value={selected}
-        components={{
-          Option: OptionComponent,
-          SingleValue: CustomSingleValue,
-          DropdownIndicator: SelectDropdownIndicator,
-          IndicatorSeparator: () => null,
-          ...(columnHeaders || documentMode
-            ? { MenuList: CustomMenuList }
-            : {}),
-        }}
-        options={options}
-        styles={styles}
-        isSearchable={!disabled}
+        value={selected as TableSelectOption | null}
+        options={options as TableSelectOption[]}
+        columns={columns}
+        valueKey={documentMode ? "docTypeNo" : "value"}
+        width="100%"
+        menuWidth={`${menuWidth}px`}
+        controlHeight={30}
+        controlFontSize="14px"
+        headerFontSize="13px"
+        borderColor="#9fdfbc"
+        hoverBorderColor="#9fdfbc"
+        menuZIndex={9999}
         isDisabled={disabled}
+        isSearchable={!disabled}
+        onMenuOpen={() => setMenuWidth(getMenuWidth())}
         onChange={(option) => onChange(option?.value ?? "")}
       />
     </div>
@@ -722,156 +516,7 @@ const MatchReversalComponents = forwardRef<MatchingComponentsRef, Props>(
       onSearch,
     ]);
 
-    /* =====================================================
-     SELECT STYLES
-     ===================================================== */
-
-    const selectStyles: StylesConfig<SelectOption, false> = {
-      control: (base, state) => ({
-        ...base,
-        minHeight: "30px",
-        height: "30px",
-        borderRadius: "4px",
-        border: "1px solid #9fdfbc",
-        boxShadow: "none",
-        fontSize: "14px",
-        outline: "none",
-        backgroundColor: "#ffffff",
-
-        "&:hover": {
-          borderColor: "#9fdfbc",
-        },
-
-        ...(state.isFocused && {
-          borderColor: "#9fdfbc",
-          boxShadow: "0 0 0 1px #9fdfbc",
-        }),
-      }),
-
-      valueContainer: (base) => ({
-        ...base,
-        height: "30px",
-        padding: "0 8px",
-      }),
-
-      indicatorsContainer: (base) => ({
-        ...base,
-        height: "30px",
-      }),
-
-      dropdownIndicator: (base) => ({
-        ...base,
-        padding: "4px",
-      }),
-
-      clearIndicator: (base) => ({
-        ...base,
-        padding: "4px",
-      }),
-
-      menu: (base) => ({
-        ...base,
-        zIndex: 9999,
-        fontSize: "14px",
-        width: "min(520px, calc(100vw - 24px))",
-        minWidth: "min(360px, calc(100vw - 24px))",
-        maxWidth: "calc(100vw - 24px)",
-        left: 0,
-      }),
-
-      menuList: (base) => ({
-        ...base,
-        padding: 0,
-        maxWidth: "100%",
-        overflowX: "hidden",
-      }),
-
-      option: (base, state) => ({
-        ...base,
-        fontSize: "14px",
-        padding: "6px 8px",
-        backgroundColor: state.isFocused ? "#EEF8F3" : "#ffffff",
-        color: "#222",
-        cursor: "pointer",
-      }),
-    };
-
-    /* Customer ID dropdown: from the left edge of the Account ID box to the
-       right edge of the Account Name box (measured when the menu opens). */
-    const customerIdStyles: StylesConfig<SelectOption, false> = {
-      ...selectStyles,
-      menu: (base) => {
-        const idBox = customerIdRef.current?.getBoundingClientRect();
-        const nameBox = customerNameRef.current?.getBoundingClientRect();
-
-        const width =
-          idBox && nameBox ? Math.max(nameBox.right - idBox.left, 360) : 685;
-
-        return {
-          ...base,
-          zIndex: 9999,
-          fontSize: "14px",
-          width,
-          minWidth: width,
-          maxWidth: "calc(100vw - 24px)",
-          left: 0,
-        };
-      },
-    };
-
-    /* Customer Name dropdown: the Account Name column ends exactly at the right
-       edge of the Account Name select, and the Account ID column (140px) sits
-       outside it, so the menu is select width (534px) + 140px. */
     const ID_COLUMN_WIDTH = 140;
-
-    const customerNameStyles: StylesConfig<SelectOption, false> = {
-      ...selectStyles,
-      menu: (base) => {
-        const width = 534 + ID_COLUMN_WIDTH;
-
-        return {
-          ...base,
-          zIndex: 9999,
-          fontSize: "14px",
-          width,
-          minWidth: width,
-          maxWidth: "calc(100vw - 24px)",
-          left: 0,
-        };
-      },
-    };
-
-    /* Division dropdown: exactly as wide as the Division select box */
-    const divisionStyles: StylesConfig<SelectOption, false> = {
-      ...selectStyles,
-      menu: (base) => ({
-        ...base,
-        zIndex: 9999,
-        fontSize: "14px",
-        width: "100%",
-        minWidth: 0,
-        maxWidth: "100%",
-        left: 0,
-      }),
-    };
-
-    /* Document No. dropdown: wider menu so Doc. No. + Description fit */
-    const documentNoStyles: StylesConfig<SelectOption, false> = {
-      ...selectStyles,
-      menu: (base) => ({
-        ...base,
-        zIndex: 9999,
-        fontSize: "14px",
-        width: 530, // 515px of columns (DOC_GRID) + 16px option padding, rounded
-        minWidth: 530,
-        maxWidth: "calc(100vw - 24px)",
-        left: 0,
-      }),
-    };
-
-    /* =====================================================
-     SELECT HELPER
-     ===================================================== */
 
     const renderSelect = (
       id: string,
@@ -882,37 +527,40 @@ const MatchReversalComponents = forwardRef<MatchingComponentsRef, Props>(
       selectRef: React.RefObject<HTMLDivElement | null>,
       reverseDropdown = false,
       columnHeaders?: [string, string],
-      customStyles?: StylesConfig<SelectOption, false>,
+      _customStyles?: StylesConfig<SelectOption, false>,
       disabled = false,
       documentMode = false,
-      swapColumns = false,
-    ) => (
-      <ResponsiveSelect
-        id={id}
-        value={value}
-        options={options}
-        onChange={onChange}
-        next={next}
-        selectRef={selectRef}
-        styles={
-          customStyles ??
-          (id === "lkpCustomerID"
-            ? customerIdStyles
-            : id === "lkpCustomerName"
-              ? customerNameStyles
-              : id === "lkpDivision"
-                ? divisionStyles
-                : id === "lkpDocTypeNo."
-                  ? documentNoStyles
-                  : selectStyles)
+      _swapColumns = false,
+    ) => {
+      const getMenuWidth = () => {
+        if (id === "lkpCustomerID") {
+          const idBox = customerIdRef.current?.getBoundingClientRect();
+          const nameBox = customerNameRef.current?.getBoundingClientRect();
+          return idBox && nameBox ? Math.max(nameBox.right - idBox.left, 360) : 685;
         }
-        reverseDropdown={reverseDropdown}
-        columnHeaders={columnHeaders}
-        disabled={disabled}
-        documentMode={documentMode}
-        swapColumns={swapColumns}
-      />
-    );
+        if (id === "lkpCustomerName") return 534 + ID_COLUMN_WIDTH;
+        if (id === "lkpDivision") {
+          return Math.round(divisionRef.current?.getBoundingClientRect().width ?? 300);
+        }
+        return documentMode ? 530 : 360;
+      };
+
+      return (
+        <ResponsiveSelect
+          id={id}
+          value={value}
+          options={options}
+          onChange={onChange}
+          next={next}
+          selectRef={selectRef}
+          reverseDropdown={reverseDropdown}
+          columnHeaders={columnHeaders}
+          disabled={disabled}
+          documentMode={documentMode}
+          getMenuWidth={getMenuWidth}
+        />
+      );
+    };
 
     /* =====================================================
      FOOTER ACTIONS
