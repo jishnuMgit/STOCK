@@ -181,6 +181,7 @@ const CustomLinkedPairSelect: React.FC<CustomLinkedPairSelectProps> = ({
       ...base,
       padding: 0,
       maxHeight: "200px",
+      overflowX: "hidden",
     }),
     option: (base, state) => ({
       ...base,
