@@ -141,7 +141,7 @@ export const buildStockTransferWorkbook = async ({
   total.eachCell({ includeEmpty: true }, (cell, col) => {
     cell.border = thin;
     cell.font = { bold: true };
-    cell.alignment = { horizontal: col === 1 ? "left" : "right" };
+    cell.alignment = { horizontal: "right" };
     if (col === 5) cell.numFmt = QTY_FORMAT;
     if (col === 7) cell.numFmt = COST_FORMAT;
   });

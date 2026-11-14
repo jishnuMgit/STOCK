@@ -31,6 +31,7 @@ import {
   type PrintReport,
 } from "./RptExpenseSumPrintReport";
 
+import { REPORT_STYLE } from "../../../common/reportStyle";
 // the cell padding of the report (mm) and the width of one leading space of the name
 const CELL_PADDING = 1.2;
 const SPACE_WIDTH = 0.9;
@@ -46,9 +47,9 @@ const nameStyles = (color: [number, number, number], name: string) => {
       textColor: color,
       cellPadding: {
         top: CELL_PADDING,
-        right: CELL_PADDING,
+        right: REPORT_STYLE.pdf.cellPaddingX,
         bottom: CELL_PADDING,
-        left: CELL_PADDING + indent,
+        left: REPORT_STYLE.pdf.cellPaddingX + indent,
       },
     },
   };
@@ -192,9 +193,9 @@ const buildPeriodPdf = (report: PeriodReport): Blob => {
           textColor: color,
           cellPadding: {
             top: CELL_PADDING,
-            right: CELL_PADDING,
+            right: REPORT_STYLE.pdf.cellPaddingX,
             bottom: CELL_PADDING,
-            left: CELL_PADDING + indent,
+            left: REPORT_STYLE.pdf.cellPaddingX + indent,
           },
         },
       },

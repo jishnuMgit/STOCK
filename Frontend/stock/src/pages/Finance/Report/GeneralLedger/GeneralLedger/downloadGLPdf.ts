@@ -18,7 +18,7 @@ import {
 
 const PAGE_W = 297; // A4 landscape, mm
 const MARGIN = { top: 12.7, right: 10, bottom: 14, left: 19 };
-const TABLE_TOP = 47 + REPORT_STYLE.pdf.titleGap; // below company / heading / branch / account
+const TABLE_TOP = 47 + REPORT_STYLE.pdf.titleGap + REPORT_STYLE.pdf.tableGap; // below company / heading / branch / account
 
 export const buildGLPdf = async (report: PrintReport): Promise<Blob> => {
   const doc = new jsPDF({ orientation: "landscape", unit: "mm", format: "a4" });
@@ -103,7 +103,7 @@ export const buildGLPdf = async (report: PrintReport): Promise<Blob> => {
       tableWidth: usable,
       rowPageBreak: "avoid",
       showHead: "everyPage",
-      styles: { ...pdfTableStyles(look), minCellHeight: 6, overflow: "ellipsize" as const },
+      styles: { ...pdfTableStyles(look), minCellHeight: REPORT_STYLE.pdf.minCellHeight, overflow: "ellipsize" as const },
       headStyles: pdfHeadStyles(look),
       columnStyles,
       head: [
