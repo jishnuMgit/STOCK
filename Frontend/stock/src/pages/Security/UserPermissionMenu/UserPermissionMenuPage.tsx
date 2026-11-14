@@ -9,7 +9,9 @@ import { useConfirmModal } from "../../../hooks/useConfirmModal";
 import { useDeleteToast } from "../../../hooks/useDeleteToast";
 import { GRID_CELL_FOCUS_CLASS } from "../../../hooks/useGridCellFocus";
 import { useInitialFocus } from "../../../hooks/useInitialFocus";
-import selectComponents from "../../../components/sharecomponents/selectComponents";
+import selectComponents, {
+  SELECT_FONT_FAMILY,
+} from "../../../components/sharecomponents/selectComponents";
 
 const API_URL = `${import.meta.env.VITE_API_URL}/user-permission`;
 
@@ -67,6 +69,7 @@ interface MenuRowProps {
 const userIdSelectStyles: StylesConfig<SelectOption, false> = {
   container: (base) => ({
     ...base,
+    fontFamily: SELECT_FONT_FAMILY,
     width: "min(340px, 55%)",
   }),
 
@@ -78,7 +81,7 @@ const userIdSelectStyles: StylesConfig<SelectOption, false> = {
     borderRadius: "4px",
     boxShadow: "none",
     backgroundColor: state.isFocused ? "#eefbf4" : "#ffffff",
-    fontSize: "11px",
+    fontSize: "14px",
     cursor: "pointer",
 
     "&:hover": {
@@ -97,21 +100,21 @@ const userIdSelectStyles: StylesConfig<SelectOption, false> = {
     ...base,
     margin: 0,
     color: "#374151",
-    fontSize: "11px",
+    fontSize: "14px",
   }),
 
   placeholder: (base) => ({
     ...base,
     margin: 0,
     color: "#808080",
-    fontSize: "11px",
+    fontSize: "14px",
   }),
 
   input: (base) => ({
     ...base,
     margin: 0,
     padding: 0,
-    fontSize: "11px",
+    fontSize: "14px",
     color: "#374151",
   }),
 
@@ -146,7 +149,8 @@ const userIdSelectStyles: StylesConfig<SelectOption, false> = {
 
   menu: (base) => ({
     ...base,
-    fontSize: "12px",
+    fontFamily: SELECT_FONT_FAMILY,
+    fontSize: "14px",
     zIndex: 9999,
     marginTop: "2px",
     borderRadius: "4px",
@@ -162,14 +166,14 @@ const userIdSelectStyles: StylesConfig<SelectOption, false> = {
 
   option: (base, state) => ({
     ...base,
-    fontSize: "12px",
+    fontSize: "14px",
     cursor: "pointer",
 
     backgroundColor:
       state.isSelected || state.isFocused ? "#eefbf4" : "#ffffff",
 
     color: "#344054",
-    padding: "7px 10px",
+    padding: "6px 8px",
 
     "&:active": {
       backgroundColor: "#dff5e9",

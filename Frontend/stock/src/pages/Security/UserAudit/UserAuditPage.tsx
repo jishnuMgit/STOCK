@@ -23,7 +23,9 @@ import {
   printUserAuditReport,
   type PrintReport,
 } from "../../../components/Security/UserAudit/UserAuditPrintReport";
-import selectComponents from "../../../components/sharecomponents/selectComponents";
+import selectComponents, {
+  SELECT_FONT_FAMILY,
+} from "../../../components/sharecomponents/selectComponents";
 
 // ============================================================
 // TYPES
@@ -43,6 +45,11 @@ type Option = {
 // ============================================================
 
 const selectStyles: StylesConfig<Option, false> = {
+  container: (base) => ({
+    ...base,
+    fontFamily: SELECT_FONT_FAMILY,
+  }),
+
   control: (base, state) => ({
     ...base,
     minHeight: "30px",
@@ -51,7 +58,7 @@ const selectStyles: StylesConfig<Option, false> = {
     borderRadius: "4px",
     boxShadow: "none",
     backgroundColor: state.isFocused ? "#eefbf4" : "#ffffff",
-    fontSize: "11px",
+    fontSize: "14px",
     cursor: "pointer",
 
     "&:hover": {
@@ -70,21 +77,21 @@ const selectStyles: StylesConfig<Option, false> = {
     ...base,
     margin: 0,
     color: "#374151",
-    fontSize: "11px",
+    fontSize: "14px",
   }),
 
   placeholder: (base) => ({
     ...base,
     margin: 0,
     color: "#808080",
-    fontSize: "11px",
+    fontSize: "14px",
   }),
 
   input: (base) => ({
     ...base,
     margin: 0,
     padding: 0,
-    fontSize: "11px",
+    fontSize: "14px",
     color: "#374151",
   }),
 
@@ -114,7 +121,8 @@ const selectStyles: StylesConfig<Option, false> = {
 
   menu: (base) => ({
     ...base,
-    fontSize: "12px",
+    fontFamily: SELECT_FONT_FAMILY,
+    fontSize: "14px",
     zIndex: 9999,
     marginTop: "2px",
     borderRadius: "4px",
@@ -132,14 +140,14 @@ const selectStyles: StylesConfig<Option, false> = {
 
   option: (base, state) => ({
     ...base,
-    fontSize: "12px",
+    fontSize: "14px",
     cursor: "pointer",
 
     backgroundColor:
       state.isSelected || state.isFocused ? "#eefbf4" : "#ffffff",
 
     color: "#344054",
-    padding: "7px 10px",
+    padding: "6px 8px",
 
     "&:active": {
       backgroundColor: "#dff5e9",
