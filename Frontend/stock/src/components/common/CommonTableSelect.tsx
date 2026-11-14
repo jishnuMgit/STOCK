@@ -204,11 +204,11 @@ const CommonTableSelect = ({
       height: `${controlHeight - 1}px`,
     }),
 
-    // MENU
     menu: (base) => ({
       ...base,
-      width: menuWidth,
-      minWidth: menuWidth,
+      width: menuWidth === "100%" ? "100%" : `max(100%, ${menuWidth})`,
+      minWidth: "100%",
+      maxWidth: "calc(100vw - 16px)",
       marginTop: "4px",
       borderRadius: "4px",
       border: "1px solid #E5E7EB",
