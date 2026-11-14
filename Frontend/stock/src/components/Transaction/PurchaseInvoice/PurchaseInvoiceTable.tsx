@@ -10,7 +10,9 @@ import Select, {
 import { RxTriangleDown } from "react-icons/rx";
 import type { PurchaseRow } from "../../../hooks/Purchase/Transaction/usePurchaseInvoice";
 import { useConfirmModal } from "../../../hooks/useConfirmModal";
-import SingleSelect from "../../common/SingleSelect";
+import SingleSelect, {
+  SingleSelectMenuColumns,
+} from "../../common/SingleSelect";
 
 type Option = {
   value: string; // item id
@@ -49,12 +51,6 @@ const DropdownIndicator = (props: DropdownIndicatorProps<Option, false>) => (
   </components.DropdownIndicator>
 );
 
-// must match the Item ID column width in `columns` (158px)
-const ID_COL_WIDTH = 158;
-
-// width of the first column in the Item Name dropdown
-const NAME_COL_WIDTH = 300;
-
 // font size of the dropdown menu (header row + options)
 const MENU_FONT_SIZE = 14;
 
@@ -65,7 +61,6 @@ const menuLayout: Record<
   {
     firstTitle: string;
     secondTitle: string;
-    firstWidth: number;
     first: (o: Option) => string;
     second: (o: Option) => string;
   }
@@ -73,14 +68,12 @@ const menuLayout: Record<
   id: {
     firstTitle: "Item ID",
     secondTitle: "Item Name",
-    firstWidth: ID_COL_WIDTH,
     first: (o) => o.value,
     second: (o) => o.name,
   },
   name: {
     firstTitle: "Item Name",
     secondTitle: "Item ID",
-    firstWidth: NAME_COL_WIDTH,
     first: (o) => o.name,
     second: (o) => o.value,
   },
@@ -94,7 +87,6 @@ const createMenuList = (variant: MenuVariant) => {
     <components.MenuList {...props}>
       <div
         style={{
-          display: "flex",
           position: "sticky",
           top: 0,
           zIndex: 1,
@@ -105,18 +97,33 @@ const createMenuList = (variant: MenuVariant) => {
           color: "#202a36",
         }}
       >
-        <div
-          style={{
-            width: layout.firstWidth,
-            flexShrink: 0,
-            boxSizing: "border-box",
-            padding: "5px 8px",
-            borderRight: "1px solid #cfcfcf",
-          }}
-        >
-          {layout.firstTitle}
-        </div>
-        <div style={{ flex: 1, padding: "5px 8px" }}>{layout.secondTitle}</div>
+        <SingleSelectMenuColumns>
+          <div
+            style={{
+              minWidth: 0,
+              overflow: "hidden",
+              textOverflow: "ellipsis",
+              whiteSpace: "nowrap",
+              boxSizing: "border-box",
+              padding: "5px 8px",
+              borderRight: "1px solid #cfcfcf",
+            }}
+          >
+            {layout.firstTitle}
+          </div>
+          <div
+            style={{
+              minWidth: 0,
+              overflow: "hidden",
+              textOverflow: "ellipsis",
+              whiteSpace: "nowrap",
+              boxSizing: "border-box",
+              padding: "5px 8px",
+            }}
+          >
+            {layout.secondTitle}
+          </div>
+        </SingleSelectMenuColumns>
       </div>
       {props.children}
     </components.MenuList>
@@ -146,11 +153,13 @@ const createFormatLabel =
     const layout = menuLayout[variant];
 
     return (
-      <div style={{ display: "flex" }}>
+      <SingleSelectMenuColumns>
         <div
           style={{
-            width: layout.firstWidth,
-            flexShrink: 0,
+            minWidth: 0,
+            overflow: "hidden",
+            textOverflow: "ellipsis",
+            whiteSpace: "nowrap",
             boxSizing: "border-box",
             padding: "6px 8px",
             borderRight: "1px solid #e3e8ef",
@@ -158,10 +167,19 @@ const createFormatLabel =
         >
           {layout.first(option)}
         </div>
-        <div style={{ flex: 1, padding: "6px 8px" }}>
+        <div
+          style={{
+            minWidth: 0,
+            overflow: "hidden",
+            textOverflow: "ellipsis",
+            whiteSpace: "nowrap",
+            boxSizing: "border-box",
+            padding: "6px 8px",
+          }}
+        >
           {layout.second(option)}
         </div>
-      </div>
+      </SingleSelectMenuColumns>
     );
   };
 
@@ -494,6 +512,7 @@ const PurchaseTable: React.FC<Props> = ({
                   <td className={editCellClass}>
                     <SingleSelect<Option>
                       mode="item"
+                      menuColumnWidths={["158px", "1fr"]}
                       selectProps={{
                         inputId: `lkpItemID-${index}`,
                         instanceId: `item-id-${index}`,
@@ -526,34 +545,36 @@ const PurchaseTable: React.FC<Props> = ({
 
                   {/* Item Name (same itemId) */}
                   <td className={editCellClass}>
-                    <Select<Option, false>
-                      inputId={`lkpItemName-${index}`}
-                      instanceId={`item-name-${index}`}
-                      options={itemNameOptions}
-                      value={
-                        itemNameOptions.find((o) => o.value === row.itemId) ??
-                        null
-                      }
-                      onChange={(option) => handleItemChange(index, option)}
-                      formatOptionLabel={formatNameLabel}
-                      filterOption={filterItem}
-                      styles={nameSelectStyles}
-                      components={nameSelectComponents}
-                      isClearable={false}
-                      isSearchable
-                      menuPosition="fixed"
-                      menuPortalTarget={portalTarget}
-                      placeholder=""
-                      className="w-full"
-                      onMenuOpen={() => setOpenMenuKey(`name-${index}`)}
-                      onMenuClose={() =>
-                        setOpenMenuKey((prev) =>
-                          prev === `name-${index}` ? null : prev,
-                        )
-                      }
-                      onKeyDown={(event) =>
-                        handleItemKeyDown(event, index, `name-${index}`)
-                      }
+                    <SingleSelect<Option>
+                      mode="item"
+                      menuColumnWidths={["1fr", "142px"]}
+                      selectProps={{
+                        inputId: `lkpItemName-${index}`,
+                        instanceId: `item-name-${index}`,
+                        options: itemNameOptions,
+                        value:
+                          itemNameOptions.find((o) => o.value === row.itemId) ??
+                          null,
+                        onChange: (option) =>
+                          handleItemChange(index, option),
+                        formatOptionLabel: formatNameLabel,
+                        filterOption: filterItem,
+                        styles: nameSelectStyles,
+                        components: nameSelectComponents,
+                        isClearable: false,
+                        isSearchable: true,
+                        menuPosition: "fixed",
+                        menuPortalTarget: portalTarget,
+                        placeholder: "",
+                        className: "w-full",
+                        onMenuOpen: () => setOpenMenuKey(`name-${index}`),
+                        onMenuClose: () =>
+                          setOpenMenuKey((prev) =>
+                            prev === `name-${index}` ? null : prev,
+                          ),
+                        onKeyDown: (event) =>
+                          handleItemKeyDown(event, index, `name-${index}`),
+                      }}
                     />
                   </td>
 
