@@ -113,9 +113,9 @@ const accountHtml = (r: PrintReport, a: PrintAccount, index: number, total: numb
 
   <table class="grid">
     <colgroup>
-      <col style="width:11%" /><col style="width:7%" /><col style="width:7%" />
-      <col style="width:15%" /><col style="width:30%" />
-      <col style="width:10%" /><col style="width:10%" /><col style="width:10%" />
+      <col style="width:11%" /><col style="width:9%" /><col style="width:7.5%" />
+      <col style="width:14%" /><col style="width:18.5%" />
+      <col style="width:13%" /><col style="width:13.5%" /><col style="width:13.5%" />
     </colgroup>
     <thead>
       <tr>
@@ -214,14 +214,14 @@ export const buildHtml = (r: PrintReport) => {
   .info .k { font-weight: bold; }
   .info .c { text-align: center; padding: 1px 0; }
   .info .v { text-align: right; }
-  th { border: 1px solid ${lineColor}; height: 22px; font-size: ${size.columnHead}pt;
-       padding: 0 4px; font-weight: normal; text-align: left; }
-  .grid td { border: 1px solid ${lineColor}; border-top: 0; padding: 2px 4px; font-size: ${size.body}pt;
+  th { border: 1px solid ${lineColor}; height: ${REPORT_STYLE.html.rowHeight}px; font-size: ${size.columnHead}pt;
+       padding: 0 ${REPORT_STYLE.html.cellPaddingX}px; font-weight: normal; text-align: left; }
+  .grid td { border: 1px solid ${lineColor}; border-top: 0; padding: 2px ${REPORT_STYLE.html.cellPaddingX}px; font-size: ${size.body}pt;
              vertical-align: middle; overflow-wrap: anywhere; }
   .r { text-align: right; }
   .tot td { font-weight: bold; }
   .age { margin-top: 12px; }
-  .age th, .age td { border: 1px solid ${lineColor}; padding: 3px 4px; text-align: right; }
+  .age th, .age td { border: 1px solid ${lineColor}; padding: 3px ${REPORT_STYLE.html.cellPaddingX}px; text-align: right; }
   .age td { font-size: ${size.body}pt; }
   .note { margin-top: 12px; font-size: ${size.small}pt; }
   .bank { margin-top: 8px; page-break-inside: avoid; }

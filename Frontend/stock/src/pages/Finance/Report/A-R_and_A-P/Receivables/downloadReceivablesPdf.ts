@@ -7,13 +7,14 @@ import { jsPDF } from "jspdf";
 import autoTable, { type CellDef } from "jspdf-autotable";
 import { amount, COL_WIDTHS, type PrintReport } from "./printReceivablesReport";
 
+import { PDF_CELL_PADDING } from "../../../../../components/common/reportPdf";
+import { REPORT_STYLE } from "../../../../../components/common/reportStyle";
 type RGB = [number, number, number];
 const BORDER: RGB = [199, 209, 228]; // #c7d1e4
-const HEAD_FILL: RGB = [239, 243, 250]; // #eff3fa
 
 const PAGE_W = 210; // A4 portrait, mm
 const MARGIN = { top: 12.7, right: 10, bottom: 14, left: 25.4 };
-const TABLE_TOP = 38; // below company / heading / branch
+const TABLE_TOP = 38 + REPORT_STYLE.pdf.tableGap; // below company / heading / branch
 
 export const buildReceivablesPdf = (report: PrintReport): Blob => {
   const doc = new jsPDF({ orientation: "portrait", unit: "mm", format: "a4" });
@@ -22,7 +23,6 @@ export const buildReceivablesPdf = (report: PrintReport): Blob => {
   const tot = {
     halign: "right" as const,
     fontStyle: "bold" as const,
-    fillColor: HEAD_FILL,
   };
 
   const body: CellDef[][] = report.rows.map((r) => [
@@ -72,16 +72,15 @@ export const buildReceivablesPdf = (report: PrintReport): Blob => {
     styles: {
       font: "times",
       fontSize: 9,
-      cellPadding: 1.2,
+      cellPadding: PDF_CELL_PADDING,
       lineColor: BORDER,
       lineWidth: 0.2,
-      minCellHeight: 6,
+      minCellHeight: REPORT_STYLE.pdf.minCellHeight,
       valign: "middle",
       overflow: "ellipsize",
       textColor: [0, 0, 0],
     },
     headStyles: {
-      fillColor: HEAD_FILL,
       textColor: [0, 0, 0],
       fontStyle: "normal",
     },

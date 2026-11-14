@@ -6,13 +6,14 @@
 // Needs:  npm i jspdf jspdf-autotable
 import { jsPDF } from "jspdf";
 import autoTable, { type CellDef } from "jspdf-autotable";
-import { pdfGroupStyles, pdfLabelFontSize, registerReportPdfFont } from "../../../../components/common/reportPdf";
+import { pdfGroupStyles, pdfLabelFontSize, registerReportPdfFont, PDF_CELL_PADDING } from "../../../../components/common/reportPdf";
 import { COLS, type PrintReport } from "./printItemListReport";
 
+import { REPORT_STYLE } from "../../../../components/common/reportStyle";
 type RGB = [number, number, number];
 const BORDER: RGB = [199, 209, 228]; // #c7d1e4
 
-const TABLE_TOP = 38; // below company / heading / branch
+const TABLE_TOP = 38 + REPORT_STYLE.pdf.tableGap; // below company / heading / branch
 
 export const buildItemListPdf = async (report: PrintReport): Promise<Blob> => {
   // A4 portrait for every layout, with the margins of the Item History
@@ -93,10 +94,10 @@ export const buildItemListPdf = async (report: PrintReport): Promise<Blob> => {
     styles: {
       font: look.font,
       fontSize: look.size.pdfBody,
-      cellPadding: 1.2,
+      cellPadding: PDF_CELL_PADDING,
       lineColor: BORDER,
       lineWidth: 0.2,
-      minCellHeight: 6,
+      minCellHeight: REPORT_STYLE.pdf.minCellHeight,
       valign: "middle",
       overflow: "linebreak",
       textColor: [0, 0, 0],

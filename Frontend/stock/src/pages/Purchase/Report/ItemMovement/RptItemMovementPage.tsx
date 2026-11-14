@@ -781,6 +781,7 @@ const RptItemMovementPage: React.FC<RptItemMovementPageProps> = ({ onClose }) =>
       {/* the Print Preview (after Print) */}
       {preview && (
         <ReportPreview
+          showClose={false}
           html={buildHtml(preview.report)}
           fileBase={preview.fileBase}
           onPrint={() => printItemMovementReport(preview.report)}

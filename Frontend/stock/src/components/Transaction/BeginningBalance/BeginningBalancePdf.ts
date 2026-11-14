@@ -6,7 +6,7 @@
 import { jsPDF } from "jspdf";
 import autoTable, { type CellDef } from "jspdf-autotable";
 
-import { PDF_BLACK, hexToRgb, type RGB } from "../../common/reportPdf";
+import { PDF_BLACK, hexToRgb, type RGB, PDF_CELL_PADDING } from "../../common/reportPdf";
 import { REPORT_STYLE } from "../../common/reportStyle";
 
 import {
@@ -36,7 +36,7 @@ const levelColor = (level: number | null): RGB => {
 
 const PAGE_W = 210; // A4 portrait, mm
 const MARGIN = { top: 12, right: 10, bottom: 14, left: 12 };
-const TABLE_TOP = 38; // below company / heading / branch
+const TABLE_TOP = 38 + REPORT_STYLE.pdf.tableGap; // below company / heading / branch
 
 const PAD = REPORT_STYLE.pdf.cellPadding;
 const INDENT_PER_SPACE = 1.0; // mm: the leading spaces of the name become padding
@@ -71,8 +71,8 @@ export const buildBeginningBalancePdf = (report: PrintReport): Blob => {
           cellPadding: {
             top: PAD,
             bottom: PAD,
-            right: PAD,
-            left: PAD + lead * INDENT_PER_SPACE,
+            right: REPORT_STYLE.pdf.cellPaddingX,
+            left: REPORT_STYLE.pdf.cellPaddingX + lead * INDENT_PER_SPACE,
           },
         },
       },
@@ -126,10 +126,10 @@ export const buildBeginningBalancePdf = (report: PrintReport): Blob => {
     styles: {
       font: REPORT_STYLE.pdfFont,
       fontSize: REPORT_STYLE.size.pdfBody,
-      cellPadding: PAD,
+      cellPadding: PDF_CELL_PADDING,
       lineColor: BORDER,
       lineWidth: REPORT_STYLE.pdf.lineWidth,
-      minCellHeight: 7,
+      minCellHeight: REPORT_STYLE.pdf.minCellHeight,
       valign: "middle",
       overflow: "ellipsize",
       textColor: BLACK,

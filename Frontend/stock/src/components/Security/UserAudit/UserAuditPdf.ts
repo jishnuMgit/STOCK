@@ -7,7 +7,7 @@
 import { jsPDF } from "jspdf";
 import autoTable, { type CellDef } from "jspdf-autotable";
 
-import { PDF_BLACK, hexToRgb } from "../../common/reportPdf";
+import { PDF_BLACK, hexToRgb, PDF_CELL_PADDING } from "../../common/reportPdf";
 import { REPORT_STYLE } from "../../common/reportStyle";
 
 import { groupByUser, periodHeading, type PrintReport } from "./UserAuditPrintReport";
@@ -18,14 +18,13 @@ const BLACK = PDF_BLACK;
 const PAGE_W = 297; // A4 landscape, mm
 const MARGIN = { top: 12, right: 10, bottom: 14, left: 15 };
 
-const PAD = REPORT_STYLE.pdf.cellPadding;
 
 export const buildUserAuditPdf = (report: PrintReport): Blob => {
   const doc = new jsPDF({ orientation: "landscape", unit: "mm", format: "a4" });
   const usable = PAGE_W - MARGIN.left - MARGIN.right;
 
   // below the company name and the heading
-  const tableTop = MARGIN.top + 22;
+  const tableTop = MARGIN.top + 22 + REPORT_STYLE.pdf.tableGap;
 
   // Sl.# | Year | Br. ID | Doc. Type | Doc. No. | Screen | Action | Audit Note (the rest) | Audit Date
   const widths = [12, 14, 14, 20, 30, 40, 16, 0, 38];
@@ -89,10 +88,10 @@ export const buildUserAuditPdf = (report: PrintReport): Blob => {
     styles: {
       font: REPORT_STYLE.pdfFont,
       fontSize: REPORT_STYLE.size.pdfBody,
-      cellPadding: PAD,
+      cellPadding: PDF_CELL_PADDING,
       lineColor: BORDER,
       lineWidth: REPORT_STYLE.pdf.lineWidth,
-      minCellHeight: 7,
+      minCellHeight: REPORT_STYLE.pdf.minCellHeight,
       valign: "top",
       overflow: "linebreak",
       textColor: BLACK,

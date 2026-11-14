@@ -698,6 +698,7 @@ const RptStockValuationPage: React.FC<RptStockValuationPageProps> = ({ onClose }
       {/* the Print Preview (after Print) */}
       {preview && (
         <ReportPreview
+          showClose={false}
           html={buildHtml(preview.report)}
           fileBase={preview.fileBase}
           onPrint={() => printStockValuationReport(preview.report)}

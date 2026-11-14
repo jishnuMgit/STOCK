@@ -88,7 +88,6 @@ export const buildHtml = (r: PrintReport) => {
   orientation: "landscape",
   margin: "12mm 10mm 14mm 15mm",
   reportInfo: cssStr(r.txtReportInfo),
-  cellPaddingX: 4,
   extra: `
   .user { height: 24px; padding-top: 6px; }
   td { vertical-align: top; }

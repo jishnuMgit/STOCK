@@ -6,7 +6,7 @@
 // Needs:  npm i jspdf jspdf-autotable
 import { jsPDF } from "jspdf";
 import autoTable, { type CellDef } from "jspdf-autotable";
-import { pdfHeadStyles, pdfTableStyles, registerReportPdfFont } from "../../../../../components/common/reportPdf";
+import { pdfHeadStyles, pdfTableStyles, registerReportPdfFont, PDF_CELL_PADDING } from "../../../../../components/common/reportPdf";
 import { REPORT_STYLE } from "../../../../../components/common/reportStyle";
 import type { PrintReport, TBRow } from "./printTrialBalanceReport";
 
@@ -36,7 +36,7 @@ const COL_WIDTHS = [0.09, 0.3694, 0.1101, 0.1101, 0.1101, 0.0951, 0.1152];
 
 const PAGE_W = 297; // A4 landscape, mm
 const MARGIN = { top: 12, right: 10, bottom: 12, left: 15 };
-const TABLE_TOP = 38 + REPORT_STYLE.pdf.titleGap; // below company / heading / branch
+const TABLE_TOP = 38 + REPORT_STYLE.pdf.titleGap + REPORT_STYLE.pdf.tableGap; // below company / heading / branch
 
 export const buildTrialBalancePdf = async (report: PrintReport): Promise<Blob> => {
   const doc = new jsPDF({ orientation: "landscape", unit: "mm", format: "a4" });
@@ -65,8 +65,8 @@ export const buildTrialBalancePdf = async (report: PrintReport): Promise<Blob> =
           cellPadding: {
             top: PAD,
             bottom: PAD,
-            right: PAD,
-            left: PAD + indent * spaceW,
+            right: REPORT_STYLE.pdf.cellPaddingX,
+            left: REPORT_STYLE.pdf.cellPaddingX + indent * spaceW,
           },
         },
       },
@@ -120,7 +120,7 @@ export const buildTrialBalancePdf = async (report: PrintReport): Promise<Blob> =
     tableWidth: usable,
     rowPageBreak: "avoid",
     showHead: "everyPage",
-    styles: { ...pdfTableStyles(look), cellPadding: PAD, minCellHeight: 6, overflow: "hidden" as const },
+    styles: { ...pdfTableStyles(look), cellPadding: PDF_CELL_PADDING, minCellHeight: REPORT_STYLE.pdf.minCellHeight, overflow: "hidden" as const },
     headStyles: { ...pdfHeadStyles(look), valign: "bottom" as const },
     columnStyles: {
       0: { cellWidth: COL_WIDTHS[0] * usable },

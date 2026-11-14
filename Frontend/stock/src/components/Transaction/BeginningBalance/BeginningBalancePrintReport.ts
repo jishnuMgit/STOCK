@@ -6,7 +6,7 @@
 // Printed through components/common/printHtml (a hidden iframe).
 
 import { cssStr, esc, printHtmlDocument } from "../../common/printHtml";
-import { documentPrintCss } from "../../common/reportStyle";
+import { documentPrintCss, REPORT_STYLE } from "../../common/reportStyle";
 
 // the level of the accounts the report is made for (the old strInputAccountLevel)
 export const INPUT_ACCOUNT_LEVEL = 4;
@@ -89,10 +89,9 @@ export const buildHtml = (r: PrintReport) => {
   orientation: "portrait",
   margin: "12mm 10mm 14mm 12mm",
   reportInfo: cssStr(r.txtReportInfo),
-  cellPaddingX: 6,
   extra: `
-  .br   { font-size: 9pt;  text-align: left;   height: 24px; }
-  td { height: 24px; padding: 0 6px; vertical-align: middle; overflow-wrap: normal; }
+  .br   { font-size: 9pt;  text-align: left;   height: ${REPORT_STYLE.html.subHeight + REPORT_STYLE.html.tableGap}px; vertical-align: top; }
+  td { height: ${REPORT_STYLE.html.rowHeight}px; padding: 0 ${REPORT_STYLE.html.cellPaddingX}px; vertical-align: middle; overflow-wrap: normal; }
   .name { white-space: pre; }                       /* keeps the level indent */
   `,
 })}

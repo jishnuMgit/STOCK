@@ -9,9 +9,10 @@ import { jsPDF } from "jspdf";
 import autoTable, { type CellDef } from "jspdf-autotable";
 import type { PrintReport } from "./PrintCustomerListReport";
 
+import { PDF_CELL_PADDING } from "../../../../components/common/reportPdf";
+import { REPORT_STYLE } from "../../../../components/common/reportStyle";
 type RGB = [number, number, number];
 const BORDER: RGB = [199, 209, 228]; // #c7d1e4
-const HEAD_FILL: RGB = [239, 243, 250]; // #eff3fa
 const BLACK: RGB = [0, 0, 0];
 
 // VB Detail_BeforePrint: level 1 red, 2 green, 3 blue, else black
@@ -23,7 +24,7 @@ const LEVEL_COLOR: Record<number, RGB> = {
 
 const PAGE_W = 297; // A4 landscape, mm
 const MARGIN = { top: 12, right: 10, bottom: 14, left: 15 };
-const TABLE_TOP = 30; // below company / heading
+const TABLE_TOP = 30 + REPORT_STYLE.pdf.tableGap; // below company / heading
 
 // same column proportions as the printed page
 const COL_PCT = [7.4, 24.4, 18.2, 14.9, 10.7, 10.5, 7.1, 6.8];
@@ -68,8 +69,8 @@ export const buildCustomerListPdf = (report: PrintReport): Blob => {
           cellPadding: {
             top: PAD,
             bottom: PAD,
-            right: PAD,
-            left: PAD + lead * INDENT_PER_SPACE,
+            right: REPORT_STYLE.pdf.cellPaddingX,
+            left: REPORT_STYLE.pdf.cellPaddingX + lead * INDENT_PER_SPACE,
           },
         },
       },
@@ -120,16 +121,15 @@ export const buildCustomerListPdf = (report: PrintReport): Blob => {
     styles: {
       font: "times",
       fontSize: 9,
-      cellPadding: PAD,
+      cellPadding: PDF_CELL_PADDING,
       lineColor: BORDER,
       lineWidth: 0.2,
-      minCellHeight: 6.5,
+      minCellHeight: REPORT_STYLE.pdf.minCellHeight,
       valign: "middle",
       overflow: "linebreak", // long addresses wrap, like the printed page
       textColor: BLACK,
     },
     headStyles: {
-      fillColor: HEAD_FILL,
       textColor: BLACK,
       fontStyle: "normal",
     },

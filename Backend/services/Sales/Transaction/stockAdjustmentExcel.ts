@@ -156,7 +156,7 @@ export const buildStockAdjustmentWorkbook = async ({
   total.eachCell({ includeEmpty: true }, (cell, col) => {
     cell.border = thin;
     cell.font = { bold: true };
-    cell.alignment = { horizontal: col === 1 ? "left" : "right" };
+    cell.alignment = { horizontal: "right" };
     if (col === 5 || col === 6) cell.numFmt = QTY_FORMAT;
     if (col === 8) cell.numFmt = COST_FORMAT;
   });
