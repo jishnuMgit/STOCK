@@ -30,7 +30,7 @@ export type ReportData = {
   coName: string;
   heading: string;
   branchLabel: string; // "" when All Branch
-  reportInfo: string; // "<user>  dd/mm/yyyy hh:mm" - bottom right of every page
+  reportInfo: string; // "<user>  DD-MM-YYYY hh:mm" - bottom right of every page
   rows: ReportRow[];
   totals: { amountExVat: number; vatAmount: number; amountInVat: number };
 };

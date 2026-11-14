@@ -47,6 +47,7 @@ export interface SaveInput extends DocKeyInput {
   dateH?: string;
   customerId: string;
   customerName?: string;
+  divId?: string;
   address?: string;
   phone: string;
   customerRef?: string;
@@ -373,6 +374,7 @@ export const getSalesInvoice = async (ctx: Ctx, q: Partial<DocKeyInput>) => {
         to_char(t.fdate, 'YYYY-MM-DD') AS fdate,
         t.fcsaccountid AS faccountid,
         a.faccountname,
+        t.fdivid,
         t.faddress1,
         t.fphone,
         t.freference AS fcustomerref,
@@ -520,6 +522,7 @@ export const saveSalesInvoice = async (ctx: Ctx, input: SaveInput) => {
     dateH,
     customerId,
     customerName,
+    divId,
     address,
     phone,
     customerRef,
@@ -634,6 +637,7 @@ export const saveSalesInvoice = async (ctx: Ctx, input: SaveInput) => {
       dtpinvoicedate: invoiceDate,
       straccountid: customerId,
       straccountname: customerName ?? "",
+      strdivid: divId?.trim() || null,
       straddress1: address ?? "",
       strphone: phone.trim(),
       strcustref: customerRef ?? "",
@@ -884,8 +888,7 @@ export const postSalesInvoice = async (ctx: Ctx, input: Partial<PostInput>) => {
       )
       .map(
         (r: Record<string, unknown>) =>
-          `Sl.# ${num(r.fslno)} - ${String(r.fitemid)} (stock: ${
-            stockOf.get(String(r.fitemid)) ?? 0
+          `Sl.# ${num(r.fslno)} - ${String(r.fitemid)} (stock: ${stockOf.get(String(r.fitemid)) ?? 0
           })`,
       );
 

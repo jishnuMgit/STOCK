@@ -476,6 +476,8 @@ const CustomerMiddle: React.FC<CustomerMiddleProps> = ({
                     { key: "label", label: "Country" },
                   ]}
                   onChange={(selected) => setLkpCountry(selected?.value || "")}
+                  width="100%"
+                  menuWidth="100%"
                 />
               </div>
             </div>
@@ -749,6 +751,8 @@ const CustomerMiddle: React.FC<CustomerMiddleProps> = ({
                     { key: "label", label: "الدولة" },
                   ]}
                   onChange={(selected) => setLkpCountry_AR(selected?.value || "")}
+                  width="100%"
+                  menuWidth="100%"
                 />
               </div>
             </div>
@@ -941,10 +945,12 @@ const CustomerMiddle: React.FC<CustomerMiddleProps> = ({
                 options={staffOptions}
                 value={staffOptions.find((o) => o.value === lkpStaff) || null}
                 columns={[
-                  { key: "value", label: "ID", width: "80px" },
                   { key: "label", label: "Staff Name" },
+                  { key: "value", label: "ID", width: "80px" },
                 ]}
                 onChange={(selected) => setLkpStaff(selected?.value || "")}
+                width="100%"
+                menuWidth="calc(100% + 90px)"
               />
             </div>
           </div>
@@ -978,10 +984,12 @@ const CustomerMiddle: React.FC<CustomerMiddleProps> = ({
                 options={branchOptions}
                 value={branchOptions.find((o) => o.value === lkpBranch) || null}
                 columns={[
-                  { key: "value", label: "ID", width: "80px" },
                   { key: "label", label: "Branch" },
+                  { key: "value", label: "ID", width: "80px" },
                 ]}
                 onChange={(selected) => setLkpBranch(selected?.value || "")}
+                width="100%"
+                menuWidth="calc(100% + 90px)"
               />
             </div>
           </div>

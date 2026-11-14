@@ -24,7 +24,7 @@ type Option = {
   label: string;
 };
 
-const DATE_FORMAT = "DD/MM/YYYY";
+const DATE_FORMAT = "DD-MM-YYYY";
 const TODAY = dayjs().format(DATE_FORMAT);
 
 // ==================================================

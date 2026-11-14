@@ -43,7 +43,7 @@ type BeginningBalanceRow = {
 // CONSTANTS
 // ==================================================
 
-const DATE_FORMAT = "DD/MM/YYYY";
+const DATE_FORMAT = "DD-MM-YYYY";
 
 const branchOptions: TableSelectOption[] = [
   { value: "JD", label: "JEDDAH", id: "JD" },

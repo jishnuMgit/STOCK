@@ -94,7 +94,7 @@ const toIso = (ui: string) => dayjs(ui, DATE_FORMAT).format("YYYY-MM-DD");
 // CONSTANTS
 // ==================================================
 
-const DATE_FORMAT = "DD/MM/YYYY";
+const DATE_FORMAT = "DD-MM-YYYY";
 
 const TODAY = dayjs().format(DATE_FORMAT);
 
