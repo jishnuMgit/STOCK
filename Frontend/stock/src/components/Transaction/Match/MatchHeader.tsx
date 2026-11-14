@@ -6,15 +6,11 @@ import dayjs from "dayjs";
 import customParseFormat from "dayjs/plugin/customParseFormat";
 
 import type { SelectOption, DocumentOption } from "./types";
-import Select, {
-  components,
-  type FormatOptionLabelMeta,
-  type MenuListProps,
+import {
   type SelectInstance,
   type StylesConfig,
 } from "react-select";
 
-import SelectDropdownIndicator from "../../common/SelectDropdownIndicator";
 import CloseButton from "../../common/CloseButton";
 import { useNavigate } from "react-router-dom";
 import type { TableSelectOption } from "../../common/CommonTableSelect";

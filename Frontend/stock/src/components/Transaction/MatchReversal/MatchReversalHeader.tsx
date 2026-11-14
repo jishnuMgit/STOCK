@@ -1,14 +1,10 @@
 import React, { useState } from "react";
 
 import type { SelectOption, DocumentOption } from "./types";
-import Select, {
-  components,
-  type FormatOptionLabelMeta,
-  type MenuListProps,
+import {
   type SelectInstance,
   type StylesConfig,
 } from "react-select";
-import SelectDropdownIndicator from "../../common/SelectDropdownIndicator";
 import { useNavigate } from "react-router-dom";
 import CloseButton from "../../common/CloseButton";
 import type { TableSelectOption } from "../../common/CommonTableSelect";
@@ -90,8 +86,6 @@ const ID_COL_WIDTH = 110;
 
 const divName = (o: SelectOption) =>
   (o as SelectOption & { name?: string }).name ?? o.label;
-
-const menuRowBorder = "1px solid #cfcfcf";
 
 type DivisionSelectProps = {
   value: string;

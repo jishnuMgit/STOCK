@@ -25,6 +25,8 @@ interface CustomerFooterProps {
   setChkExcludeFromAgeing: React.Dispatch<React.SetStateAction<boolean>>;
   saveLabel?: string;
   saveDisabled?: boolean;
+  deleteDisabled?: boolean;
+  clearDisabled?: boolean;
 
   // ==========================================================
   // BUTTONS
@@ -57,6 +59,8 @@ const CustomerFooter: React.FC<CustomerFooterProps> = ({
   chkExcludeFromAgeing,
   setChkExcludeFromAgeing,
   saveDisabled = false,
+  deleteDisabled = false,
+  clearDisabled = false,
 
   // BUTTONS
   onSave,
@@ -153,10 +157,6 @@ const CustomerFooter: React.FC<CustomerFooterProps> = ({
       ====================================================== */}
 
       <div className="flex flex-wrap justify-center gap-2 border-t border-slate-200 px-3 py-3 sm:gap-3">
-        {/* ====================================================
-            SAVE
-        ==================================================== */}
-
         <button
           id="Save"
           name="Save"
@@ -164,37 +164,34 @@ const CustomerFooter: React.FC<CustomerFooterProps> = ({
           onClick={onSave}
           disabled={saveDisabled}
           className="h-9 w-23.75 rounded-[3px] border border-slate-400 bg-linear-to-b from-white to-slate-100 text-[14px]
-            text-green-600 shadow-sm transition hover:from-slate-50 hover:to-slate-100 active:translate-y-px"
+    text-green-600 shadow-sm transition hover:from-slate-50 hover:to-slate-100 active:translate-y-px
+    disabled:cursor-not-allowed disabled:opacity-50 disabled:active:translate-y-0"
         >
           {saveLabel}
         </button>
-
-        {/* ====================================================
-            DELETE
-        ==================================================== */}
 
         <button
           id="Delete"
           name="Delete"
           type="button"
           onClick={onDelete}
+          disabled={deleteDisabled}
           className="h-9 w-23.75 rounded-[3px] border border-slate-400 bg-linear-to-b from-white to-slate-100 text-[14px]
-            text-green-600 shadow-sm transition hover:from-slate-50 hover:to-slate-100 active:translate-y-px"
+    text-green-600 shadow-sm transition hover:from-slate-50 hover:to-slate-100 active:translate-y-px
+    disabled:cursor-not-allowed disabled:opacity-50 disabled:active:translate-y-0"
         >
           Delete
         </button>
-
-        {/* ====================================================
-            CLEAR
-        ==================================================== */}
 
         <button
           id="Clear"
           name="Clear"
           type="button"
           onClick={onClear}
+          disabled={clearDisabled}
           className="h-9 w-23.75 rounded-[3px] border border-slate-400 bg-linear-to-b from-white to-slate-100 text-[14px]
-            text-green-600 shadow-sm transition hover:from-slate-50 hover:to-slate-100 active:translate-y-px"
+    text-green-600 shadow-sm transition hover:from-slate-50 hover:to-slate-100 active:translate-y-px
+    disabled:cursor-not-allowed disabled:opacity-50 disabled:active:translate-y-0"
         >
           Clear
         </button>

@@ -7,7 +7,6 @@ import React, {
 } from "react";
 import type { SelectInstance } from "react-select";
 import type { TableSelectOption } from "../../../../components/common/CommonTableSelect";
-import type { PairSelectOption } from "../../../../components/common/CustomLinkedPairSelect";
 
 import {
   ReceiptHeader,
@@ -253,7 +252,7 @@ const ReceiptPage: React.FC = () => {
   const branchRef = useRef<SelectInstance<TableSelectOption, false>>(null);
   const typeRef = useRef<SelectInstance<TableSelectOption, false>>(null);
   const documentNoRef = useRef<HTMLInputElement>(null);
-  const cbAccountRef = useRef<SelectInstance<PairSelectOption, false>>(null);
+  const cbAccountRef = useRef<SelectInstance<TableSelectOption, false>>(null);
   const dateRef = useRef<HTMLInputElement>(null);
   const receivedFromRef = useRef<HTMLInputElement>(null);
   const referenceRef = useRef<HTMLInputElement>(null);
@@ -459,7 +458,7 @@ const ReceiptPage: React.FC = () => {
 
         setReceiptMessage(
           result.message ||
-            "Receipt not found. New receipt mode remains active.",
+          "Receipt not found. New receipt mode remains active.",
         );
 
         return;
@@ -846,12 +845,12 @@ const ReceiptPage: React.FC = () => {
           const result =
             field === "accountId"
               ? firstValue.localeCompare(secondValue, undefined, {
-                  numeric: true,
-                  sensitivity: "base",
-                })
+                numeric: true,
+                sensitivity: "base",
+              })
               : firstValue.localeCompare(secondValue, undefined, {
-                  sensitivity: "base",
-                });
+                sensitivity: "base",
+              });
 
           return direction === "asc" ? result : -result;
         }),
@@ -870,9 +869,9 @@ const ReceiptPage: React.FC = () => {
         currentRows.map((row) =>
           row.id === id
             ? {
-                ...row,
-                [field]: value,
-              }
+              ...row,
+              [field]: value,
+            }
             : row,
         ),
       );
@@ -1006,9 +1005,9 @@ const ReceiptPage: React.FC = () => {
         currentRows.map((row) =>
           row.id === activeRowId
             ? {
-                ...row,
-                description: value,
-              }
+              ...row,
+              description: value,
+            }
             : row,
         ),
       );
@@ -1524,7 +1523,7 @@ const ReceiptPage: React.FC = () => {
       if (!response.ok) {
         throw new Error(
           result.message ||
-            `Receipt could not be modified. HTTP ${response.status}`,
+          `Receipt could not be modified. HTTP ${response.status}`,
         );
       }
 
@@ -1990,7 +1989,7 @@ const ReceiptPage: React.FC = () => {
             id="txtTotCreditAmt"
             value={total.toFixed(2)}
             readOnly
-            className="ml-1 h-[30px] w-25 rounded border border-gray-300 px-2 text-right outline-none text-[#344054]"
+            className="ml-1 h-7.5 w-25 rounded border border-gray-300 px-2 text-right outline-none text-[#344054]"
           />
         </div>
 

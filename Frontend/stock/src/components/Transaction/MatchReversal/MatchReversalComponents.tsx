@@ -7,9 +7,7 @@ import React, {
   useState,
 } from "react";
 
-import Select, {
-  components,
-  type OptionProps,
+import {
   type StylesConfig,
 } from "react-select";
 
@@ -33,7 +31,6 @@ import type {
   DocumentOption,
   MatchingComponentsRef,
 } from "./types";
-import SelectDropdownIndicator from "../../common/SelectDropdownIndicator";
 import CommonTableSelect, { type TableSelectOption } from "../../common/CommonTableSelect";
 
 interface Props {
@@ -518,103 +515,6 @@ const MatchReversalComponents = forwardRef<MatchingComponentsRef, Props>(
       getMatchAccounts,
       onSearch,
     ]);
-
-    /* =====================================================
-     SELECT STYLES
-     ===================================================== */
-
-    const selectStyles: StylesConfig<SelectOption, false> = {
-      control: (base, state) => ({
-        ...base,
-        minHeight: "30px",
-        height: "30px",
-        borderRadius: "4px",
-        border: "1px solid #9fdfbc",
-        boxShadow: "none",
-        fontSize: "14px",
-        outline: "none",
-        backgroundColor: "#ffffff",
-
-        "&:hover": {
-          borderColor: "#9fdfbc",
-        },
-
-        ...(state.isFocused && {
-          borderColor: "#9fdfbc",
-          boxShadow: "0 0 0 1px #9fdfbc",
-        }),
-      }),
-
-      valueContainer: (base) => ({
-        ...base,
-        height: "30px",
-        padding: "0 8px",
-      }),
-
-      indicatorsContainer: (base) => ({
-        ...base,
-        height: "30px",
-      }),
-
-      dropdownIndicator: (base) => ({
-        ...base,
-        padding: "4px",
-      }),
-
-      clearIndicator: (base) => ({
-        ...base,
-        padding: "4px",
-      }),
-
-      menu: (base) => ({
-        ...base,
-        zIndex: 9999,
-        fontSize: "14px",
-        width: "min(520px, calc(100vw - 24px))",
-        minWidth: "min(360px, calc(100vw - 24px))",
-        maxWidth: "calc(100vw - 24px)",
-        left: 0,
-      }),
-
-      menuList: (base) => ({
-        ...base,
-        padding: 0,
-        maxWidth: "100%",
-        overflowX: "hidden",
-      }),
-
-      option: (base, state) => ({
-        ...base,
-        fontSize: "14px",
-        padding: "6px 8px",
-        backgroundColor: state.isFocused ? "#EEF8F3" : "#ffffff",
-        color: "#222",
-        cursor: "pointer",
-      }),
-    };
-
-    /* Customer ID dropdown: from the left edge of the Account ID box to the
-       right edge of the Account Name box (measured when the menu opens). */
-    const customerIdStyles: StylesConfig<SelectOption, false> = {
-      ...selectStyles,
-      menu: (base) => {
-        const idBox = customerIdRef.current?.getBoundingClientRect();
-        const nameBox = customerNameRef.current?.getBoundingClientRect();
-
-        const width =
-          idBox && nameBox ? Math.max(nameBox.right - idBox.left, 360) : 685;
-
-        return {
-          ...base,
-          zIndex: 9999,
-          fontSize: "14px",
-          width,
-          minWidth: width,
-          maxWidth: "calc(100vw - 24px)",
-          left: 0,
-        };
-      },
-    };
 
     const ID_COLUMN_WIDTH = 140;
 

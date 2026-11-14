@@ -7,9 +7,7 @@ import React, {
   useState,
 } from "react";
 
-import Select, {
-  components,
-  type OptionProps,
+import {
   type StylesConfig,
 } from "react-select";
 import dayjs from "dayjs";
@@ -32,7 +30,6 @@ import type {
   DocumentOption,
   MatchingComponentsRef,
 } from "./types";
-import SelectDropdownIndicator from "../../common/SelectDropdownIndicator";
 import CommonTableSelect, { type TableSelectOption } from "../../common/CommonTableSelect";
 
 interface Props {
@@ -88,8 +85,7 @@ interface Props {
   totalCredit: number;
 }
 
-// the Document No. list: Document No. | Date | Br. ID | Debit | Credit (same as the Matching screen)
-const DOCUMENT_LIST_COLUMNS = "130px 90px 55px 90px 90px";
+
 
 interface ResponsiveSelectProps {
   id: string;

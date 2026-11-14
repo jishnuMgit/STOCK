@@ -1,12 +1,10 @@
 import React from "react";
-import Select, {
-  components,
-  type MenuListProps,
+import {
   type SingleValue,
-  type StylesConfig,
 } from "react-select";
 import { X } from "lucide-react";
 import type { ParentAccount } from "../../../hooks/useCustomer";
+import CommonTableSelect, { type TableSelectOption } from "../../common/CommonTableSelect";
 
 // ============================================================
 // TYPES
@@ -56,217 +54,6 @@ const businessTypeOptions: SelectOption[] = [
   { value: "B2C", label: "B2C" },
 ];
 
-// ============================================================
-// SELECT STYLES
-// ============================================================
-
-const selectStyles: StylesConfig<SelectOption, false> = {
-  control: (base, state) => ({
-    ...base,
-
-    minHeight: "28px",
-    height: "28px",
-    borderRadius: "3px",
-    borderColor: state.isFocused ? "#64748b" : "#aeb7c2",
-    boxShadow: "none",
-    fontSize: "12px",
-    backgroundColor: "#ffffff",
-    cursor: "pointer",
-    "&:hover": {
-      borderColor: "#94a3b8",
-    },
-  }),
-
-  // fixes the hidden dropdown
-  // also exposes the input's width as --ctrl-w so the GL dropdowns can
-  // line their column divider up with the input's right edge
-  menuPortal: (base, state: any) =>
-    ({
-      ...base,
-      zIndex: 9999,
-      "--ctrl-w": `${state?.rect?.width ?? 0}px`,
-    }) as any,
-
-  valueContainer: (base) => ({
-    ...base,
-    height: "28px",
-    padding: "0 8px",
-  }),
-
-  menu: (base) => ({
-    ...base,
-    fontSize: "12px",
-    zIndex: 9999,
-    borderRadius: "6px",
-    border: "1px solid #d9e2dc",
-    boxShadow: "0 6px 18px rgba(15, 23, 42, 0.12)",
-    overflow: "hidden",
-    marginTop: "4px",
-  }),
-
-  input: (base) => ({
-    ...base,
-    margin: 0,
-    padding: 0,
-    fontSize: "12px",
-  }),
-
-  singleValue: (base) => ({
-    ...base,
-    color: "#334155",
-    fontSize: "12px",
-  }),
-
-  placeholder: (base) => ({
-    ...base,
-    color: "#64748b",
-    fontSize: "12px",
-  }),
-
-  indicatorsContainer: (base) => ({
-    ...base,
-    height: "28px",
-  }),
-
-  dropdownIndicator: (base) => ({
-    ...base,
-    padding: "4px 6px",
-    color: "#475569",
-  }),
-
-  indicatorSeparator: () => ({
-    display: "none",
-  }),
-
-  menuList: (base) => ({
-    ...base,
-    padding: 0,
-  }),
-
-  option: (base, state) => ({
-    ...base,
-    padding: "8px 12px",
-    fontSize: "13px",
-    backgroundColor: state.isSelected
-      ? "#dff0e6"
-      : state.isFocused
-        ? "#edf7f1"
-        : "#ffffff",
-    color: "#334155",
-    cursor: "pointer",
-  }),
-};
-
-// ============================================================
-// CUSTOM DROPDOWN INDICATOR
-// ============================================================
-
-const CustomDropdownIndicator = (props: any) => {
-  return (
-    <components.DropdownIndicator {...props}>
-      <span className="text-[9px] text-slate-500">▼</span>
-    </components.DropdownIndicator>
-  );
-};
-
-// ============================================================
-// GL ACCOUNT DROPDOWN (table style: header row, two columns, divider)
-// ============================================================
-
-// First column = width of the input box (--ctrl-w, minus the 1px menu border),
-// so the divider sits exactly under the input's right edge.
-// 110px minimum keeps the narrow ID input's column readable.
-const ID_COLS = "120px 1fr";
-const NAME_COLS = "max(calc(var(--ctrl-w, 140px) - 1px), 110px) 1fr";
-
-// Wider menu so both columns fit even though the control itself is narrow.
-// Option padding moves into the cells so the divider spans the full row height.
-const accountSelectStyles: StylesConfig<SelectOption, false> = {
-  ...selectStyles,
-  menu: (base, state) => ({
-    ...(selectStyles.menu ? selectStyles.menu(base, state) : base),
-    width: "480px",
-    minWidth: "100%",
-    maxWidth: "90vw",
-  }),
-  option: (base, state) => ({
-    ...(selectStyles.option ? selectStyles.option(base, state) : base),
-    padding: 0,
-    fontSize: "13px",
-    borderBottom: "1px solid #f1f5f9",
-  }),
-};
-
-// GL.Account ID dropdown: from the left edge of the ID box to the right
-// edge of the Name box (measured when the menu opens)
-const accountIdSelectStyles: StylesConfig<SelectOption, false> = {
-  ...accountSelectStyles,
-  menu: (base, state) => {
-    const idBox = document.getElementById("glIdBox")?.getBoundingClientRect();
-    const nameBox = document
-      .getElementById("glNameBox")
-      ?.getBoundingClientRect();
-
-    const width =
-      idBox && nameBox ? Math.round(nameBox.right - idBox.left) : 480;
-
-    return {
-      ...(selectStyles.menu ? selectStyles.menu(base, state) : base),
-      width,
-      minWidth: width,
-      maxWidth: "90vw",
-    };
-  },
-};
-
-// Open menu: two columns with a divider. Closed box: label only.
-const makeAccountFormatter =
-  (cols: string) =>
-  (option: SelectOption, { context }: { context: "menu" | "value" }) =>
-    context === "menu" && option.secondary ? (
-      <div className="grid" style={{ gridTemplateColumns: cols }}>
-        <span className="truncate border-r border-slate-200 px-3 py-2">
-          {option.label}
-        </span>
-        <span className="truncate px-3 py-2">{option.secondary}</span>
-      </div>
-    ) : (
-      option.label
-    );
-
-// Sticky header row above the options (same grid, so the divider lines up)
-const makeAccountMenuList = (left: string, right: string, cols: string) => {
-  const AccountMenuList = (props: MenuListProps<SelectOption, false>) => (
-    <components.MenuList {...props}>
-      <div
-        className="sticky top-0 z-[1] grid border-b border-slate-300 bg-slate-100 text-[13px] font-semibold text-slate-800"
-        style={{ gridTemplateColumns: cols }}
-      >
-        <span className="border-r border-slate-300 px-3 py-2">{left}</span>
-        <span className="px-3 py-2">{right}</span>
-      </div>
-      {props.children}
-    </components.MenuList>
-  );
-  return AccountMenuList;
-};
-
-const formatIdOption = makeAccountFormatter(ID_COLS);
-const formatNameOption = makeAccountFormatter(NAME_COLS);
-const AccountIdMenuList = makeAccountMenuList(
-  "GL. Account ID",
-  "GL. Account Name",
-  ID_COLS,
-);
-const AccountNameMenuList = makeAccountMenuList(
-  "GL. Account Name",
-  "GL. Account ID",
-  NAME_COLS,
-);
-
-// ============================================================
-// COMPONENT
-// ============================================================
 
 const CustomerHeader: React.FC<CustomerHeaderProps> = ({
   txtCustomerID,
@@ -320,6 +107,20 @@ const CustomerHeader: React.FC<CustomerHeaderProps> = ({
     const account = parentAccounts.find((a) => a.accountId === option?.value);
     setlkpGAccountID(account?.accountId ?? "");
     setlkpGAccountName(account?.accountName ?? "");
+  };
+
+  const [idMenuWidth, setIdMenuWidth] = React.useState(480);
+  const [nameBoxWidth, setNameBoxWidth] = React.useState(140);
+
+  const commonProps = {
+    controlHeight: 28,
+    controlFontSize: "12px",
+    headerFontSize: "12px",
+    borderColor: "#aeb7c2",
+    hoverBorderColor: "#94a3b8",
+    menuZIndex: 9999,
+    isSearchable: false,
+    menuPortalTarget: document.body,
   };
 
   // ==========================================================
@@ -437,11 +238,10 @@ const CustomerHeader: React.FC<CustomerHeaderProps> = ({
               maxLength={12}
               onChange={(e) => setTxtCustomerID(e.target.value)}
               readOnly={idLocked || optNewCustomerID === "Auto"}
-              className={`${inputClass} ${
-                idLocked || optNewCustomerID === "Auto"
-                  ? "cursor-not-allowed bg-slate-200 text-slate-500"
-                  : "bg-white text-slate-700"
-              }`}
+              className={`${inputClass} ${idLocked || optNewCustomerID === "Auto"
+                ? "cursor-not-allowed bg-slate-200 text-slate-500"
+                : "bg-white text-slate-700"
+                }`}
             />
           </div>
 
@@ -459,22 +259,26 @@ const CustomerHeader: React.FC<CustomerHeaderProps> = ({
                 GL. Account ID
               </label>
 
-              <Select
+              <CommonTableSelect
+                {...commonProps}
                 inputId="lkpGAccountID"
-                instanceId="lkpGAccountID"
-                name="lkpGAccountID"
-                options={accountIdOptions}
-                value={getOption(accountIdOptions, lkpGAccountID)}
-                onChange={handleAccountChange}
-                formatOptionLabel={formatIdOption}
-                styles={accountIdSelectStyles}
-                components={{
-                  DropdownIndicator: CustomDropdownIndicator,
-                  MenuList: AccountIdMenuList,
+                value={getOption(accountIdOptions, lkpGAccountID) as TableSelectOption | null}
+                options={accountIdOptions as TableSelectOption[]}
+                columns={[
+                  { key: "label", label: "GL. Account ID", width: "120px" },
+                  { key: "secondary", label: "GL. Account Name" },
+                ]}
+                valueKey="label"
+                width="100%"
+                menuWidth={`${idMenuWidth}px`}
+                onMenuOpen={() => {
+                  const idBox = document.getElementById("glIdBox")?.getBoundingClientRect();
+                  const nameBox = document.getElementById("glNameBox")?.getBoundingClientRect();
+                  setIdMenuWidth(
+                    idBox && nameBox ? Math.round(nameBox.right - idBox.left) : 480,
+                  );
                 }}
-                isSearchable={false}
-                menuPortalTarget={document.body}
-                menuPosition="fixed"
+                onChange={handleAccountChange}
               />
             </div>
 
@@ -488,22 +292,23 @@ const CustomerHeader: React.FC<CustomerHeaderProps> = ({
                 GL. Account Name
               </label>
 
-              <Select
+              <CommonTableSelect
+                {...commonProps}
                 inputId="lkpGAccountName"
-                instanceId="lkpGAccountName"
-                name="lkpGAccountName"
-                options={accountNameOptions}
-                value={getOption(accountNameOptions, lkpGAccountID)}
-                onChange={handleAccountChange}
-                formatOptionLabel={formatNameOption}
-                styles={accountSelectStyles}
-                components={{
-                  DropdownIndicator: CustomDropdownIndicator,
-                  MenuList: AccountNameMenuList,
+                value={getOption(accountNameOptions, lkpGAccountID) as TableSelectOption | null}
+                options={accountNameOptions as TableSelectOption[]}
+                columns={[
+                  { key: "label", label: "GL. Account Name", width: `${Math.max(nameBoxWidth, 110)}px` },
+                  { key: "secondary", label: "GL. Account ID" },
+                ]}
+                valueKey="label"
+                width="100%"
+                menuWidth="480px"
+                onMenuOpen={() => {
+                  const w = document.getElementById("glNameBox")?.getBoundingClientRect().width;
+                  if (w) setNameBoxWidth(Math.round(w));
                 }}
-                isSearchable={false}
-                menuPortalTarget={document.body}
-                menuPosition="fixed"
+                onChange={handleAccountChange}
               />
             </div>
           </div>
@@ -520,22 +325,15 @@ const CustomerHeader: React.FC<CustomerHeaderProps> = ({
               Division
             </label>
 
-            <Select
+            <CommonTableSelect
+              {...commonProps}
               inputId="lkpHaveDivision"
-              instanceId="lkpHaveDivision"
-              name="lkpHaveDivision"
-              options={haveDivisionOptions}
-              value={getOption(haveDivisionOptions, lkpHaveDivision)}
-              onChange={(option: SingleValue<SelectOption>) =>
-                setLkpHaveDivision(option?.value ?? "")
-              }
-              styles={selectStyles}
-              components={{
-                DropdownIndicator: CustomDropdownIndicator,
-              }}
-              isSearchable={false}
-              menuPortalTarget={document.body}
-              menuPosition="fixed"
+              value={getOption(haveDivisionOptions, lkpHaveDivision) as TableSelectOption | null}
+              options={haveDivisionOptions as TableSelectOption[]}
+              columns={[{ key: "label", label: "Division" }]}
+              width="100%"
+              menuWidth="100%"
+              onChange={(option) => setLkpHaveDivision(option?.value ?? "")}
             />
           </div>
 
@@ -551,22 +349,15 @@ const CustomerHeader: React.FC<CustomerHeaderProps> = ({
               Business Type
             </label>
 
-            <Select
+            <CommonTableSelect
+              {...commonProps}
               inputId="lkpBusinessType"
-              instanceId="lkpBusinessType"
-              name="lkpBusinessType"
-              options={businessTypeOptions}
-              value={getOption(businessTypeOptions, lkpBusinessType)}
-              onChange={(option: SingleValue<SelectOption>) =>
-                setLkpBusinessType(option?.value ?? "")
-              }
-              styles={selectStyles}
-              components={{
-                DropdownIndicator: CustomDropdownIndicator,
-              }}
-              isSearchable={false}
-              menuPortalTarget={document.body}
-              menuPosition="fixed"
+              value={getOption(businessTypeOptions, lkpBusinessType) as TableSelectOption | null}
+              options={businessTypeOptions as TableSelectOption[]}
+              columns={[{ key: "label", label: "Business Type" }]}
+              width="100%"
+              menuWidth="100%"
+              onChange={(option) => setLkpBusinessType(option?.value ?? "")}
             />
           </div>
         </div>
