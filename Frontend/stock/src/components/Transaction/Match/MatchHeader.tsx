@@ -106,7 +106,6 @@ const ID_COL_WIDTH = 110;
 const divName = (o: SelectOption) =>
   (o as SelectOption & { name?: string }).name ?? o.label;
 
-const menuRowBorder = "1px solid #cfcfcf";
 
 type DivisionSelectProps = {
   value: string;
