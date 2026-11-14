@@ -66,6 +66,7 @@ import CloseButton from "../../../common/CloseButton";
 import CommonTableSelect, {
   type TableSelectOption,
 } from "../../../common/CommonTableSelect";
+import SingleSelect from "../../../common/SingleSelect";
 
 export type TableField =
   | "accountId"
@@ -1171,7 +1172,7 @@ const CustomDropdownIndicator = (props: CustomDropdownIndicatorProps) => {
   );
 };
 
-const AccountDropdownOption = ({
+export const AccountDropdownOption = ({
   displayMode,
   ...props
 }: AccountOptionProps) => {
@@ -1207,7 +1208,7 @@ interface AccountMenuListProps extends MenuListProps<AccountOption, false> {
   displayMode: "id" | "name";
 }
 
-const AccountDropdownMenuList = ({
+export const AccountDropdownMenuList = ({
   displayMode,
   ...props
 }: AccountMenuListProps) => {
@@ -1379,7 +1380,7 @@ interface AccountSingleValueProps extends SingleValueProps<
   displayMode: "id" | "name";
 }
 
-const AccountDropdownSingleValue = ({
+export const AccountDropdownSingleValue = ({
   displayMode,
   ...props
 }: AccountSingleValueProps) => {
@@ -1611,11 +1612,6 @@ const ReceiptRow = memo(
     /* Local instance refs + controlled search text per field,
        used only for the "edit selected value via Backspace"
        fix. See handleEditableSelectBackspace above. */
-
-    const accountIdSelectRef = useRef<SelectInstance<
-      AccountOption,
-      false
-    > | null>(null);
 
     const accountNameSelectRef = useRef<SelectInstance<
       AccountOption,
@@ -1998,92 +1994,33 @@ const ReceiptRow = memo(
         <td className="receipt-cell serial-cell">{index + 1}</td>
 
         <td className={`receipt-cell ${activeCellClass}`}>
-          <Select<AccountOption, false>
-            inputId={`lkpAccountId-${row.id}`}
-            ref={(instance) => {
-              accountIdSelectRef.current = instance;
-
-              setRowRef(index, "accountId", instance);
-            }}
-            value={isAccountIdEditing ? null : selectedAccount}
-            inputValue={accountIdSearchText}
-            onInputChange={(newValue, actionMeta) => {
-              if (actionMeta.action === "input-change") {
-                setAccountIdSearchText(newValue);
-                setIsAccountIdEditing(true);
-              }
-
-              return newValue;
-            }}
-            backspaceRemovesValue={false}
-            onKeyDown={(event) => {
-              const handled = handleEditableSelectBackspace(
-                event,
-                selectedAccount?.label ?? "",
-                accountIdSearchText,
-                setAccountIdSearchText,
-                setIsAccountIdEditing,
-                accountIdSelectRef,
-              );
-
-              if (handled) {
-                return;
-              }
-
-              handleSelectKeyDown(event, "accountId", accountIdMenuOpenRef);
-            }}
-            onMenuOpen={() => {
-              setAccountIdMenuLayout(getMenuLayout(`lkpAccountId-${row.id}`));
-              handleAccountIdMenuOpen();
-            }}
-            onMenuClose={() => {
-              handleAccountIdMenuClose();
-              setAccountIdSearchText("");
-              setIsAccountIdEditing(false);
-            }}
-            onChange={(option: SingleValue<AccountOption>) => {
-              if (!option) {
-                return;
-              }
-
-              setIsAccountIdEditing(false);
-              setAccountIdSearchText("");
-
-              void handleAccountChange(option);
-            }}
-            options={accountIdOptions}
-            placeholder=""
-            styles={accountDropdownStyles}
-            components={{
-              DropdownIndicator: RowAccountIdIndicator,
-
-              SingleValue: (props) => (
-                <AccountDropdownSingleValue {...props} displayMode="id" />
-              ),
-
-              Option: (props) => (
-                <AccountDropdownOption {...props} displayMode="id" />
-              ),
-
-              MenuList: (props) => (
-                <AccountDropdownMenuList {...props} displayMode="id" />
-              ),
-            }}
-            filterOption={accountFilterOption}
-            isSearchable
-            isClearable={false}
-            menuPlacement={accountIdMenuLayout.placement}
-            menuPosition="fixed"
-            maxMenuHeight={accountIdMenuLayout.maxHeight} // 27 header + 375 options + borders
-            menuPortalTarget={document.body}
-            menuShouldScrollIntoView={false}
-            captureMenuScroll={false}
-            menuShouldBlockScroll={false}
-            closeMenuOnSelect
-            blurInputOnSelect={false}
-            tabSelectsValue={false}
-            noOptionsMessage={() => "No Account Found"}
-          />
+          <SingleSelect
+  row={row}
+  index={index}
+  selectedAccount={selectedAccount}
+  isAccountIdEditing={isAccountIdEditing}
+  setIsAccountIdEditing={setIsAccountIdEditing}
+  accountIdSearchText={accountIdSearchText}
+  setAccountIdSearchText={setAccountIdSearchText}
+  accountIdOptions={accountIdOptions}
+  accountIdMenuLayout={accountIdMenuLayout}
+  setAccountIdMenuLayout={setAccountIdMenuLayout}
+  setRowRef={(rowIndex, field, instance) =>
+    setRowRef(rowIndex, field as TableField, instance as RowRefValue)
+  }
+  handleAccountChange={(option) =>
+    void handleAccountChange(option as unknown as AccountOption)
+  }
+  handleAccountIdMenuOpen={handleAccountIdMenuOpen}
+  handleAccountIdMenuClose={handleAccountIdMenuClose}
+  handleEditableSelectBackspace={handleEditableSelectBackspace}
+  handleSelectKeyDown={handleSelectKeyDown}
+  getMenuLayout={getMenuLayout}
+  accountFilterOption={accountFilterOption}
+  accountDropdownStyles={accountDropdownStyles}
+  accountIdMenuOpenRef={accountIdMenuOpenRef}
+  accountIdDropdownIndicator={RowAccountIdIndicator}
+/>
         </td>
 
         <td className={`receipt-cell ${activeCellClass}`}>
