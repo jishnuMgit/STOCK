@@ -1,6 +1,6 @@
 import { Play, X } from "lucide-react";
 import React, { useState } from "react";
-import Select, {
+import {
   components,
   type DropdownIndicatorProps,
   type FormatOptionLabelMeta,
