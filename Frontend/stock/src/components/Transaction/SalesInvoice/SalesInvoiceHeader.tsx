@@ -249,7 +249,6 @@ const SalesInvoiceHeader: React.FC<SalesInvoiceHeaderProps> = ({
   header,
   onHeaderChange,
   customers,
-  division = "",
   divisionOptions = [],
   divisionLoading = false,
   onDivisionChange,
