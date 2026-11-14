@@ -239,7 +239,7 @@ export const buildHtml = (r: PrintReport) => {
 <head>
 <meta charset="utf-8" />
 <title>Stock</title>
-<style>${reportPrintCss({
+<style>${reportPrintCss({ reportInfo: r.txtReportInfo,
   look: "inter",
   orientation: detailed ? "portrait" : "landscape",
   marginLeft: detailed ? "22.9mm" : "25.4mm",

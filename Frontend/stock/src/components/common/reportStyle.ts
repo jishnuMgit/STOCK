@@ -10,6 +10,8 @@
 //
 // A report still decides what it shows (its columns, its blocks, its numbers); this file decides how it looks.
 
+import { cssStr } from "./printHtml";
+
 export const REPORT_STYLE = {
   // the font of every report: the HTML print uses fontFamily (then fontFallback), jsPDF its built-in pdfFont
   fontFamily: "Times New Roman",
@@ -142,6 +144,8 @@ type PrintCssOptions = {
   marginLeft: string;
   // the cells that are a block heading ("Item : ...", "Branch : ..."): a CSS selector list, e.g. "td.group"
   groupSelector: string;
+  // the report info ("<user>  dd/mm/yyyy hh:mm"): printed as  "Printed : ..."  at the bottom right of every page
+  reportInfo?: string;
   // anything this report needs on top
   extra?: string;
 };
@@ -151,7 +155,7 @@ type PrintCssOptions = {
 //   .co .head .sub (.info)       the title rows         th / th.r      the column labels (.r = right)
 //   td / td.r / td.u             a cell, a number, a unit (a number or a unit is never split over two lines)
 //   the group selector           a block heading        tr.tot / tr.first   a Total row / the first line of a block
-export const reportPrintCss = ({ look = "classic", orientation, marginLeft, groupSelector, extra = "" }: PrintCssOptions) => {
+export const reportPrintCss = ({ look = "classic", orientation, marginLeft, groupSelector, reportInfo, extra = "" }: PrintCssOptions) => {
   const { lineColor, html } = REPORT_STYLE;
   const { css, size } = reportLook(look);
   const { family: font, importCss } = css;
@@ -160,7 +164,8 @@ export const reportPrintCss = ({ look = "classic", orientation, marginLeft, grou
   @page {
     size: A4 ${orientation};
     margin: 12.7mm 10mm 12.7mm ${marginLeft};
-    @top-right { content: "Page " counter(page) " of " counter(pages); font: ${size.small}pt ${font}; }
+    @top-right { content: "Page " counter(page) " / " counter(pages); font: ${size.small}pt ${font}; }
+    ${reportInfo ? `@bottom-right { content: "Printed : ${cssStr(reportInfo)}"; font: ${size.small}pt ${font}; }` : ""}
   }
   * { box-sizing: border-box; }
   body { margin: 0; font: ${size.body}pt ${font}; color: #000;
@@ -172,7 +177,7 @@ export const reportPrintCss = ({ look = "classic", orientation, marginLeft, grou
   .head { font-size: ${size.heading}pt; text-align: center; height: ${html.headingHeight}px; }
   .sub  { height: ${html.subHeight}px; }
   .sub div { display: flex; justify-content: space-between; gap: 16px; }
-  .sub .info { font-size: ${size.small}pt; }
+  .sub .info { ${reportInfo ? "display: none; " : ""}font-size: ${size.small}pt; } /* with a reportInfo it is printed at the bottom right of the page */
   th { border: 1px solid ${lineColor}; height: ${html.rowHeight}px;
        padding: 0 ${html.cellPaddingX}px; ${columnHeadCss(size)}font-weight: normal; text-align: left; }
   th.r { text-align: right; }
@@ -219,8 +224,8 @@ export const documentPrintCss = ({
   @page {
     size: A4 ${orientation};
     margin: ${margin};
-    @top-right    { content: "Page " counter(page) " of " counter(pages); font: ${size.small}pt ${font}; }
-    @bottom-right { content: "${reportInfo}"; font: ${size.small}pt ${font}; }
+    @top-right    { content: "Page " counter(page) " / " counter(pages); font: ${size.small}pt ${font}; }
+    @bottom-right { content: "Printed : ${reportInfo}"; font: ${size.small}pt ${font}; }
   }
   * { box-sizing: border-box; }
   body { margin: 0; font: ${size.docBody}pt ${font}; color: #000;

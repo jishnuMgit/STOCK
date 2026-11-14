@@ -266,7 +266,6 @@ const SalesInvoiceHeader: React.FC<SalesInvoiceHeaderProps> = ({
     return options;
   }, [customers, header.customerId, header.customerName]);
 
-  const navigate = useNavigate();
 
   const invoiceTypeTableOptions = useMemo(
     () =>

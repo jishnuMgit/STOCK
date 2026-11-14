@@ -2,6 +2,7 @@
 // The Trial Balance as an Excel file (same columns, colours and totals as the
 // printed report). Needs:  npm i exceljs
 import ExcelJS from "exceljs";
+import { applyReportFont, levelFont, setPrintedFooter, thin } from "../../../../utils/reportStyle.js";
 import type { TBRow, TBTotals } from "./RptTBService.js";
 
 export type TBReport = {
@@ -24,19 +25,6 @@ const LEVEL_COLOR: Record<number, string> = {
 const DETAIL_COLOR = "FF314158";
 
 const NUM_FMT = "#,##0.00;(#,##0.00);0.00";
-const BORDER_COLOR = { argb: "FFB0C4DE" }; // LightSteelBlue
-const HEAD_FILL = {
-  type: "pattern" as const,
-  pattern: "solid" as const,
-  fgColor: { argb: "FFEFF3FA" },
-};
-
-const thin = {
-  top: { style: "thin" as const, color: BORDER_COLOR },
-  left: { style: "thin" as const, color: BORDER_COLOR },
-  bottom: { style: "thin" as const, color: BORDER_COLOR },
-  right: { style: "thin" as const, color: BORDER_COLOR },
-};
 
 export const buildTrialBalanceWorkbook = async (
   report: TBReport,
@@ -66,20 +54,20 @@ export const buildTrialBalanceWorkbook = async (
   // ---- company / heading / branch (rows 1-3) ----
   ws.mergeCells("A1:G1");
   ws.getCell("A1").value = report.coName;
-  ws.getCell("A1").font = { name: "Times New Roman", size: 14, bold: true };
+  ws.getCell("A1").font = levelFont("company", false, "inter");
   ws.getCell("A1").alignment = { horizontal: "center" };
 
   ws.mergeCells("A2:G2");
   ws.getCell("A2").value = report.heading;
-  ws.getCell("A2").font = { name: "Times New Roman", size: 12 };
+  ws.getCell("A2").font = levelFont("heading", false, "inter");
   ws.getCell("A2").alignment = { horizontal: "center" };
 
-  ws.mergeCells("A3:D3");
+  ws.mergeCells("A3:G3");
   ws.getCell("A3").value = report.branch;
-  ws.mergeCells("E3:G3");
-  ws.getCell("E3").value = report.reportInfo;
-  ws.getCell("E3").font = { name: "Times New Roman", size: 8 };
-  ws.getCell("E3").alignment = { horizontal: "right" };
+  ws.getCell("A3").font = levelFont("group", false, "inter");
+
+  // the user and the time: bottom right of every printed page
+  setPrintedFooter(ws, report.reportInfo, "inter");
 
   // ---- two-line column labels (rows 4-5) ----
   //   Account ID | Account Name | Opening | Transactions            | Closing
@@ -94,8 +82,7 @@ export const buildTrialBalanceWorkbook = async (
   for (let r = 4; r <= 5; r++) {
     for (let c = 1; c <= 7; c++) {
       const cell = ws.getCell(r, c);
-      cell.font = { bold: true };
-      cell.fill = HEAD_FILL;
+      cell.font = levelFont("columnHead", true, "inter");
       cell.border = thin;
       cell.alignment = { horizontal: "right", vertical: "bottom" };
     }
@@ -159,7 +146,6 @@ export const buildTrialBalanceWorkbook = async (
   ]);
   total.eachCell((c, col) => {
     c.font = { bold: true };
-    c.fill = HEAD_FILL;
     c.border = thin;
     if (col === 2) c.alignment = { horizontal: "right" };
     if (col >= 3) {
@@ -167,6 +153,9 @@ export const buildTrialBalanceWorkbook = async (
       c.alignment = { horizontal: "right" };
     }
   });
+
+  // the whole sheet in the report font (a cell keeps its own size, bold and colour)
+  applyReportFont(ws, "inter");
 
   return Buffer.from(await wb.xlsx.writeBuffer());
 };

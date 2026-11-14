@@ -1,8 +1,6 @@
 import React, { useEffect, useMemo, useState } from "react";
 import dayjs from "dayjs";
 import { toast } from "react-toastify";
-import { useNavigate } from "react-router-dom";
-import CloseButton from "../../../../components/common/CloseButton";
 import StockDocumentPostHeader from "../../../../components/Transaction/StockDocumentPost/StockDocumentPostHeader";
 import StockDocumentPostTable from "../../../../components/Transaction/StockDocumentPost/StockDocumentPostTable";
 import StockDocumentPostFooter from "../../../../components/Transaction/StockDocumentPost/StockDocumentPostFooter";
@@ -70,7 +68,6 @@ type StockDocumentPostPageProps = {
 };
 
 const StockDocumentPostPage: React.FC<StockDocumentPostPageProps> = ({ onClose }) => {
-  const navigate = useNavigate();
   const perms = useButtonPermissions(MENU_ID);
   const enterAsTab = useEnterAsTab();
 

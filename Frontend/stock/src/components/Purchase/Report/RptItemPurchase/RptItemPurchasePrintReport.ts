@@ -84,7 +84,7 @@ export const buildHtml = (r: PrintReport) => `<!doctype html>
 <head>
 <meta charset="utf-8" />
 <title>Item Purchase</title>
-<style>${reportPrintCss({ look: "inter", orientation: "portrait", marginLeft: "18mm", groupSelector: "td.group" })}
+<style>${reportPrintCss({ reportInfo: r.txtReportInfo, look: "inter", orientation: "portrait", marginLeft: "18mm", groupSelector: "td.group" })}
 </style>
 </head>
 <body>

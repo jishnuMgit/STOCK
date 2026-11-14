@@ -18,6 +18,25 @@ export const cssStr = (v: unknown) =>
     .replace(/</g, "\\3C ")
     .replace(/[\r\n]+/g, " ");
 
+// The Print Preview shows the page on screen, and a browser draws the @page margin boxes ("Page x / y", "Printed : ...")
+// only when it prints. So the preview shows the user and the time itself: this returns the preview's extra CSS and the
+// line "Printed : ..." (bottom right, in the font of the page's own margin box), taken from the page's @bottom-right rule.
+// Put the style before </head> and the line before </body>; a page without a "Printed" rule gets nothing.
+export const previewPrintedLine = (html: string): { css: string; line: string } => {
+  const rule = /@bottom-right\s*\{\s*content:\s*"Printed : ((?:[^"\\]|\\.)*)";\s*font:\s*([^;}]+);/.exec(html);
+  if (!rule) return { css: "", line: "" };
+
+  // undo cssStr(): \3C = "<", \" = ", \\ = \
+  const text = rule[1]
+    .replace(/\\3C /g, "<")
+    .replace(/\\(["\\])/g, "$1");
+
+  return {
+    css: `.preview-printed{text-align:right;margin:16px 0 8px;font:${rule[2]};color:#000}`,
+    line: `<div class="preview-printed">Printed : ${esc(text)}</div>`,
+  };
+};
+
 // A report in the app font (Inter) loads it itself, in its own CSS. The print dialog must not open before the font is
 // there, or the page would print in the fallback font: wait for the page to load, then for the font, but never longer than
 // a few seconds (offline: the fallback font prints).
