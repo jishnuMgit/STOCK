@@ -2,7 +2,7 @@
 // The Expense Summary report as an Excel file - the same layout as the printed report (the old rptExpenseSumRpt), A4
 // portrait: Account ID / Account Name / Opening / Current / Closing, and a Total row.
 import ExcelJS from "exceljs";
-import { addReportTitle, applyReportFont, thin } from "../../../utils/reportStyle.js";
+import { addReportTitle, applyReportFont, levelFont, thin } from "../../../utils/reportStyle.js";
 
 import type { ExpenseSumLine, ExpenseSumMonthLine } from "./rptExpenseSumService.js";
 
@@ -38,14 +38,14 @@ export const buildExpenseSumWorkbook = async (report: ExpenseSumReport): Promise
   ws.columns = [{ width: 14 }, { width: 46 }, { width: 16 }, { width: 16 }, { width: 18 }];
 
   // ---- company / heading / branch + report info (rows 1-3): the same on every report ----
-  addReportTitle(ws, report, report.txtBranch, 5, 2);
+  addReportTitle(ws, report, report.txtBranch, 5, 2, "inter");
 
   // ---- column labels (row 4) ----
   const head = ws.getRow(4);
   head.values = ["Account ID", "Account Name", "Opening", "Current", "Closing"];
 
   head.eachCell((cell, col) => {
-    cell.font = { bold: true };
+    cell.font = levelFont("columnHead", true, "inter");
     cell.border = thin;
     cell.alignment = { horizontal: col >= 3 ? "right" : "left" };
   });
@@ -92,7 +92,7 @@ export const buildExpenseSumWorkbook = async (report: ExpenseSumReport): Promise
   });
 
   // the whole sheet in the report font (the table too, not only the title)
-  applyReportFont(ws);
+  applyReportFont(ws, "inter");
 
   return Buffer.from(await wb.xlsx.writeBuffer());
 };
@@ -153,17 +153,17 @@ const addMonthSheet = (
 
   addReportTitle(
     ws,
-    // the user / date line is printed once: on the first sheet only
-    { txtCoName: report.txtCoName, txtHeading: heading, txtReportInfo: secondHalf ? "" : report.txtReportInfo },
+    { txtCoName: report.txtCoName, txtHeading: heading, txtReportInfo: report.txtReportInfo },
     report.txtBranch,
     labels.length,
-    3
+    3,
+    "inter"
   );
 
   const head = ws.getRow(4);
   head.values = labels;
   head.eachCell((cell, col) => {
-    cell.font = { bold: true };
+    cell.font = levelFont("columnHead", true, "inter");
     cell.border = thin;
     cell.alignment = { horizontal: col >= firstNumberColumn ? "right" : "left" };
   });
@@ -206,7 +206,7 @@ const addMonthSheet = (
     if (col >= firstNumberColumn) cell.numFmt = AMOUNT_FORMAT;
   });
 
-  applyReportFont(ws);
+  applyReportFont(ws, "inter");
 };
 
 export const buildExpenseSumMonthWorkbook = async (report: ExpenseSumMonthReport): Promise<Buffer> => {

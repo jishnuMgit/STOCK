@@ -9,10 +9,9 @@ import { jsPDF } from "jspdf";
 import autoTable, { type CellDef } from "jspdf-autotable";
 import type { PrintReport } from "./PrintCustomerListReport";
 
-import { PDF_CELL_PADDING } from "../../../../components/common/reportPdf";
+import { pdfHeadStyles, pdfTableStyles, registerReportPdfFont } from "../../../../components/common/reportPdf";
 import { REPORT_STYLE } from "../../../../components/common/reportStyle";
 type RGB = [number, number, number];
-const BORDER: RGB = [199, 209, 228]; // #c7d1e4
 const BLACK: RGB = [0, 0, 0];
 
 // VB Detail_BeforePrint: level 1 red, 2 green, 3 blue, else black
@@ -27,7 +26,7 @@ const MARGIN = { top: 12, right: 10, bottom: 14, left: 15 };
 const TABLE_TOP = 30 + REPORT_STYLE.pdf.tableGap; // below company / heading
 
 // same column proportions as the printed page
-const COL_PCT = [7.4, 24.4, 18.2, 14.9, 10.7, 10.5, 7.1, 6.8];
+const COL_PCT = [10.5, 18, 14.5, 12.5, 10.5, 12.5, 11, 10.5]; // wide enough for the 14 px labels with the cell padding
 
 const PAD = 1.2;
 const INDENT_PER_SPACE = 1.0; // mm: the leading spaces of the name become padding
@@ -42,8 +41,9 @@ const money = (v: number | null) =>
 const whole = (v: number | null) =>
   v == null ? "" : v.toLocaleString("en-US", { maximumFractionDigits: 0 });
 
-export const buildCustomerListPdf = (report: PrintReport): Blob => {
+export const buildCustomerListPdf = async (report: PrintReport): Promise<Blob> => {
   const doc = new jsPDF({ orientation: "landscape", unit: "mm", format: "a4" });
+  const look = await registerReportPdfFont(doc, "inter"); // the font and the sizes of the look
   const usable = PAGE_W - MARGIN.left - MARGIN.right;
 
   const columnStyles: Record<number, { cellWidth: number; halign?: "right" }> = {};
@@ -86,13 +86,12 @@ export const buildCustomerListPdf = (report: PrintReport): Blob => {
   // company / heading - drawn on every page
   const drawTitle = () => {
     doc.setTextColor(0, 0, 0);
-    doc.setFont("times", "bold");
-    doc.setFontSize(14);
+    doc.setFont(look.font, "normal");
+    doc.setFontSize(look.size.company);
     doc.text(report.coName, PAGE_W / 2, MARGIN.top + 8, { align: "center" });
 
-    doc.setFont("times", "normal");
-    doc.setFontSize(12);
-    doc.text(report.heading, PAGE_W / 2, MARGIN.top + 15, { align: "center" });
+    doc.setFontSize(look.size.heading);
+    doc.text(report.heading, PAGE_W / 2, MARGIN.top + 15 + REPORT_STYLE.pdf.titleGap, { align: "center" });
   };
 
   const labels = [
@@ -118,21 +117,8 @@ export const buildCustomerListPdf = (report: PrintReport): Blob => {
     tableWidth: usable,
     rowPageBreak: "avoid",
     showHead: "everyPage",
-    styles: {
-      font: "times",
-      fontSize: 9,
-      cellPadding: PDF_CELL_PADDING,
-      lineColor: BORDER,
-      lineWidth: 0.2,
-      minCellHeight: REPORT_STYLE.pdf.minCellHeight,
-      valign: "middle",
-      overflow: "linebreak", // long addresses wrap, like the printed page
-      textColor: BLACK,
-    },
-    headStyles: {
-      textColor: BLACK,
-      fontStyle: "normal",
-    },
+    styles: pdfTableStyles(look), // long addresses wrap, like the printed page
+    headStyles: pdfHeadStyles(look),
     columnStyles,
     head: [
       labels.map((t, i) => ({
@@ -146,8 +132,8 @@ export const buildCustomerListPdf = (report: PrintReport): Blob => {
 
   // page numbers need the final page count, so they are added at the end
   const pages = doc.getNumberOfPages();
-  doc.setFont("times", "normal");
-  doc.setFontSize(8);
+  doc.setFont(look.font, "normal");
+  doc.setFontSize(look.size.small);
   doc.setTextColor(0, 0, 0);
   for (let i = 1; i <= pages; i++) {
     doc.setPage(i);
@@ -155,7 +141,7 @@ export const buildCustomerListPdf = (report: PrintReport): Blob => {
     doc.text(`Page ${i} / ${pages}`, PAGE_W - MARGIN.right, MARGIN.top, {
       align: "right",
     });
-    doc.text(report.reportInfo, PAGE_W - MARGIN.right, h - MARGIN.bottom + 6, {
+    doc.text(`Printed : ${report.reportInfo}`, PAGE_W - MARGIN.right, h - MARGIN.bottom + 6, {
       align: "right",
     });
   }

@@ -2,7 +2,9 @@
 // The printed page (port of rptChartofAccountRpt: company name, heading, report
 // info, Account ID / Account Name / C.C / Level, coloured by level).
 // Opens the browser print dialog from a hidden iframe (no pop-up to be blocked).
-import { REPORT_STYLE } from "../../../../components/common/reportStyle";
+// The font, the sizes and the line colour are the "inter" look of components/common/reportStyle.ts.
+import { cssStr, esc, printHtmlDocument } from "../../../../components/common/printHtml";
+import { REPORT_STYLE, reportLook } from "../../../../components/common/reportStyle";
 
 export type PrintRow = {
   accountId: string;
@@ -19,52 +21,42 @@ export type PrintReport = {
   rows: PrintRow[];
 };
 
-const esc = (v: unknown) =>
-  String(v ?? "")
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;")
-    .replace(/"/g, "&quot;");
-
-// text placed inside a CSS string ("...") in the print stylesheet
-const cssStr = (v: unknown) =>
-  String(v ?? "")
-    .replace(/\\/g, "\\\\")
-    .replace(/"/g, '\\"')
-    .replace(/</g, "\\3C ")
-    .replace(/[\r\n]+/g, " ");
-
 // level colours as on the tree: 1 green, 2 blue, 3 purple, else dark slate
 const levelClass = (level: number) =>
   level === 1 ? "l1" : level === 2 ? "l2" : level === 3 ? "l3" : "l4";
 
-export const buildHtml = (r: PrintReport) => `<!doctype html>
+export const buildHtml = (r: PrintReport) => {
+  // the font and the sizes come from the shared look (components/common/reportStyle.ts)
+  const { css, size } = reportLook("inter");
+  const font = css.family;
+  const { lineColor, html } = REPORT_STYLE;
+
+  return `<!doctype html>
 <html>
 <head>
 <meta charset="utf-8" />
 <title>${esc(r.heading)}</title>
-<style>
+<style>${css.importCss}
   @page {
     size: A4;
     margin: 12mm 10mm 14mm 12mm;
-    @top-right    { content: "Page " counter(page) " / " counter(pages); font: 8pt "Times New Roman", serif; }
-    @bottom-right { content: "${cssStr(r.reportInfo)}"; font: 8pt "Times New Roman", serif; }
+    @top-right    { content: "Page " counter(page) " / " counter(pages); font: ${size.small}pt ${font}; }
+    @bottom-right { content: "Printed : ${cssStr(r.reportInfo)}"; font: ${size.small}pt ${font}; }
   }
   * { box-sizing: border-box; }
-  body { margin: 0; font: 10pt "Times New Roman", serif; color: #000;
+  body { margin: 0; font: ${size.body}pt ${font}; color: #000;
          -webkit-print-color-adjust: exact; print-color-adjust: exact; }
   table { width: 100%; border-collapse: collapse; table-layout: fixed;
           margin-left: 0; margin-right: 0; }
   thead { display: table-header-group; }            /* header repeats on every page */
   tr { page-break-inside: avoid; }
-  .co   { font-size: 14pt; text-align: center; height: ${REPORT_STYLE.html.companyHeight}px; vertical-align: top; }
-  .head { font-size: 12pt; text-align: center; height: ${REPORT_STYLE.html.headingHeight}px; }
-  .info { font-size: 8pt;  text-align: right;  height: 24px; }
-  th { border: 1px solid ${REPORT_STYLE.lineColor}; height: ${REPORT_STYLE.html.rowHeight}px;
-       padding: 0 6px; font-weight: normal; text-align: left; }
-  td { border: 1px solid ${REPORT_STYLE.lineColor}; border-top: 0; height: ${REPORT_STYLE.html.rowHeight}px; padding: 0 ${REPORT_STYLE.html.cellPaddingX}px; }
+  .co   { font-size: ${size.company}pt; text-align: center; height: ${html.companyHeight}px; vertical-align: top; }
+  .head { font-size: ${size.heading}pt; text-align: center; height: ${html.headingHeight + html.tableGap}px; vertical-align: top; }
+  th { border: 1px solid ${lineColor}; height: ${html.rowHeight}px; font-size: ${size.columnHead}pt;
+       padding: 0 ${html.cellPaddingX}px; font-weight: normal; text-align: left; }
+  td { border: 1px solid ${lineColor}; border-top: 0; height: ${html.rowHeight}px; padding: 0 ${html.cellPaddingX}px; }
   .name { white-space: pre; }                       /* keeps the level indent */
-  .c-id { width: 86px; } .c-cc { width: 42px; } .c-lv { width: 55px; text-align: right; }
+  .c-id { width: 112px; } .c-cc { width: 58px; } .c-lv { width: 66px; text-align: right; }
   .l1 { color: #00a63e; } .l2 { color: #155dfc; } .l3 { color: #c800de; } .l4 { color: #314158; }
 </style>
 </head>
@@ -94,32 +86,6 @@ export const buildHtml = (r: PrintReport) => `<!doctype html>
 </table>
 </body>
 </html>`;
-
-export const printChartOfAccountReport = (report: PrintReport): void => {
-  const iframe = document.createElement("iframe");
-  iframe.style.cssText =
-    "position:fixed;right:0;bottom:0;width:0;height:0;border:0;visibility:hidden";
-  document.body.appendChild(iframe);
-
-  const doc = iframe.contentDocument;
-  const win = iframe.contentWindow;
-  if (!doc || !win) {
-    iframe.remove();
-    throw new Error("Could not open the print view");
-  }
-
-  doc.open();
-  doc.write(buildHtml(report));
-  doc.close();
-
-  const cleanup = () => setTimeout(() => iframe.remove(), 500);
-  win.addEventListener("afterprint", cleanup);
-
-  // let the iframe lay out before printing
-  setTimeout(() => {
-    win.focus();
-    win.print();
-    // some browsers never fire afterprint: remove it anyway after a minute
-    setTimeout(() => iframe.remove(), 60000);
-  }, 250);
 };
+
+export const printChartOfAccountReport = (report: PrintReport): void => printHtmlDocument(buildHtml(report));
