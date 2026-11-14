@@ -11,8 +11,7 @@ import type {
   ParamLookup,
   SalesHeader,
 } from "../../../hooks/useSalesInvoice"; // adjust path to your hook
-import { useNavigate } from "react-router-dom";
-import CloseButton from "../../common/CloseButton";
+
 import Header from "../../common/Header";
 import CommonTableSelect from "../../common/CommonTableSelect";
 import CustomLinkedPairSelect, {
