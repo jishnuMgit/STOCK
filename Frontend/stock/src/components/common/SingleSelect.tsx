@@ -1,9 +1,17 @@
 
-import { useRef, type ComponentType } from "react";
+import {
+  createContext,
+  useContext,
+  useRef,
+  type CSSProperties,
+  type ComponentType,
+  type ReactNode,
+} from "react";
 import Select, {
   type DropdownIndicatorProps,
   type Props as ReactSelectProps,
   type SingleValue,
+  type StylesConfig,
 } from "react-select";
 import selectComponents from './selectComponents'
 import {
@@ -17,6 +25,46 @@ interface SelectOption {
   label: string;
   value: string;
 }
+
+export type MenuColumnWidth =
+  | `${number}px`
+  | `${number}%`
+  | `${number}fr`;
+
+const MenuColumnWidthsContext = createContext<
+  readonly MenuColumnWidth[] | undefined
+>(undefined);
+
+export const SingleSelectMenuColumns = ({
+  children,
+  className,
+  style,
+}: {
+  children: ReactNode;
+  className?: string;
+  style?: CSSProperties;
+}) => {
+  const columnWidths = useContext(MenuColumnWidthsContext);
+
+  return (
+    <div
+      className={className}
+      style={{
+        display: "grid",
+        gridTemplateColumns: columnWidths
+          ?.map((width) => `minmax(0, ${width})`)
+          .join(" "),
+        width: "100%",
+        minWidth: 0,
+        overflow: "hidden",
+        boxSizing: "border-box",
+        ...style,
+      }}
+    >
+      {children}
+    </div>
+  );
+};
 
 interface AccountSelectProps {
   row: any;
@@ -75,6 +123,8 @@ type SingleSelectProps<Option extends SelectOption> =
   | {
       mode: "item";
       selectProps: ReactSelectProps<Option, false>;
+      menuColumnWidths?: readonly MenuColumnWidth[];
+      menuWidth?: string | number;
     };
 
 const SingleSelect = <Option extends SelectOption = AccountOption>(
@@ -83,7 +133,28 @@ const SingleSelect = <Option extends SelectOption = AccountOption>(
   const accountIdSelectRef = useRef<any>(null);
 
   if ("mode" in props) {
-    return <Select<Option, false> {...props.selectProps} />;
+    const { menuColumnWidths, menuWidth, selectProps } = props;
+    const itemSelectProps =
+      menuWidth === undefined
+        ? selectProps
+        : {
+            ...selectProps,
+            styles: {
+              ...selectProps.styles,
+              menu: (base, state) => ({
+                ...selectProps.styles?.menu?.(base, state),
+                width: menuWidth,
+                minWidth: menuWidth,
+                maxWidth: menuWidth,
+              }),
+            } satisfies StylesConfig<Option, false>,
+          };
+
+    return (
+      <MenuColumnWidthsContext.Provider value={menuColumnWidths}>
+        <Select<Option, false> {...itemSelectProps} />
+      </MenuColumnWidthsContext.Provider>
+    );
   }
 
   const {
