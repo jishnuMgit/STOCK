@@ -86,13 +86,7 @@ const TreeCheckbox: React.FC<TreeCheckboxProps> = ({
   );
 };
 
-type RptSupplierListPageProps = {
-  onClose?: () => void;
-};
-
-const RptSupplierListPage: React.FC<
-  RptSupplierListPageProps
-> = ({ onClose }) => {
+const RptSupplierListPage: React.FC = () => {
   const [checked, setChecked] = useState<Set<string>>(
     () => new Set(allLeafIds()),
   );
@@ -171,13 +165,6 @@ const [expanded, setExpanded] = useState<Set<string>>(
       .filter(Boolean);
 
     console.log(selected);
-  };
-
-  const handleClose = () => {
-    setChecked(new Set(allLeafIds()));
-    setExpanded(new Set(accountTree.map((node) => node.id)));
-    setSelectedId(accountTree[0]?.id ?? null);
-    onClose?.();
   };
 
   const renderRow = (node: AccountNode, level: 1 | 2) => {
@@ -302,14 +289,6 @@ const [expanded, setExpanded] = useState<Set<string>>(
                 <u>P</u>rint
               </button>
 
-              <button
-                id="btnClose"
-                type="button"
-                onClick={handleClose}
-                className="btn-style"
-              >
-                <u>C</u>lose
-              </button>
             </div>
           </section>
         </main>

@@ -1051,12 +1051,7 @@ const ZATCASubmission: React.FC = () => {
               Clear
             </ActionButton>
 
-            <ActionButton
-              onClick={handleClose}
-              className="w-20"
-            >
-              Close
-            </ActionButton>
+        
 
           </div>
 

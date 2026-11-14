@@ -141,9 +141,7 @@ const AppDatePicker: React.FC<AppDatePickerProps> = ({id,label,value,onChange,})
   </LocalizationProvider>
 );
 
-type RptGeneralLedgerGroupPageProps = { onClose?: () => void;};
-
-const RptGeneralLedgerGroupPage: React.FC<RptGeneralLedgerGroupPageProps> = ({  onClose,}) => {
+const RptGeneralLedgerGroupPage: React.FC = () => {
   const [branchMode, setBranchMode] = useState("One Branch"); // optBranch
   const [branch, setBranch] = useState<Option | null>(branchOptions[0]); // lkpBranch
   const [accountGroupId, setAccountGroupId] = useState<string | null>(null); // lkpAccountGroupID / lkpAccountGroupName
@@ -167,18 +165,6 @@ const RptGeneralLedgerGroupPage: React.FC<RptGeneralLedgerGroupPageProps> = ({  
       postStatus,
       printZeroBalance,
     });
-  };
-
-  const handleClose = () => {
-    setBranchMode("One Branch");
-    setBranch(branchOptions[0]);
-    setAccountGroupId(null);
-    setDateMode("As On Date");
-    setFromDate(TODAY);
-    setToDate(TODAY);
-    setPostStatus(postStatusOptions[0]);
-    setPrintZeroBalance(yesNoOptions[0]);
-    onClose?.();
   };
 
   return (
@@ -234,7 +220,6 @@ const RptGeneralLedgerGroupPage: React.FC<RptGeneralLedgerGroupPageProps> = ({  
             {/* Actions */}
             <div className="mt-6 flex justify-center gap-3">
               <button id="btnPrint" type="button" onClick={handlePrint} className="btn-style"><u>P</u>rint</button>
-              <button  id="btnClose"  type="button" onClick={handleClose} className="btn-style" ><u>C</u>lose</button>
             </div>
           </section>
         </main>

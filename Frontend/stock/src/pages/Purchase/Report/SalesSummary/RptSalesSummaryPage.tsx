@@ -221,13 +221,7 @@ const AppDatePicker: React.FC<AppDatePickerProps> = ({
   </LocalizationProvider>
 );
 
-type RptSalesSummaryPageProps = {
-  onClose?: () => void;
-};
-
-const RptSalesSummaryPage: React.FC<RptSalesSummaryPageProps> = ({
-  onClose,
-}) => {
+const RptSalesSummaryPage: React.FC = () => {
   const [branchMode, setBranchMode] = useState("One Branch"); // rdgBranch
   const [branch, setBranch] = useState<Option | null>(branchOptions[0]); // lkpBranch
 
@@ -259,19 +253,6 @@ const RptSalesSummaryPage: React.FC<RptSalesSummaryPageProps> = ({
       avoidPendingCashSales,
       reportType,
     });
-  };
-
-  const handleClose = () => {
-    setBranchMode("One Branch");
-    setBranch(branchOptions[0]);
-    setCustomerMode("All Customer");
-    setCustomerId(null);
-    setFromDate("");
-    setToDate("");
-    setPostStatus(postStatusOptions[0]);
-    setAvoidPendingCashSales(false);
-    setReportType("Summary");
-    onClose?.();
   };
 
   return (
@@ -436,14 +417,6 @@ const RptSalesSummaryPage: React.FC<RptSalesSummaryPageProps> = ({
                   className="btn-style"
                 >
                   <u>P</u>rint
-                </button>
-                <button
-                  id="btnClose"
-                  type="button"
-                  onClick={handleClose}
-                  className="btn-style"
-                >
-                  <u>C</u>lose
                 </button>
               </div>
             </div>

@@ -119,13 +119,7 @@ const FieldLabel: React.FC<{ children: React.ReactNode }> = ({ children }) => (
   </div>
 );
 
-type RptFinYearCloseBalPageProps = {
-  onClose?: () => void;
-};
-
-const RptFinYearCloseBalPage: React.FC<RptFinYearCloseBalPageProps> = ({
-  onClose,
-}) => {
+const RptFinYearCloseBalPage: React.FC = () => {
   const [branchMode, setBranchMode] = useState("One Branch"); // optBranch
   const [branch, setBranch] = useState<Option | null>(branchOptions[0]); // lkpBranch
 
@@ -146,16 +140,6 @@ const RptFinYearCloseBalPage: React.FC<RptFinYearCloseBalPageProps> = ({
       accountLevel,
       printAccountGroup,
     });
-  };
-
-  const handleClose = () => {
-    setBranchMode("One Branch");
-    setBranch(branchOptions[0]);
-    setBalanceMode("Year Close Balance");
-    setYear(null);
-    setAccountLevel("4");
-    setPrintAccountGroup(yesNoOptions[0]);
-    onClose?.();
   };
 
   return (
@@ -262,14 +246,6 @@ const RptFinYearCloseBalPage: React.FC<RptFinYearCloseBalPageProps> = ({
                 className="btn-style"
               >
                 <u>P</u>rint
-              </button>
-              <button
-                id="btnClose"
-                type="button"
-                onClick={handleClose}
-                className="btn-style"
-              >
-                <u>C</u>lose
               </button>
             </div>
           </section>

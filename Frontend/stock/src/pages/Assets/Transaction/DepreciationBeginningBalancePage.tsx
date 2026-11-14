@@ -890,7 +890,7 @@ const DepreciationBeginningBalancePage: React.FC = () => {
               onClick={handleCancel}
               className="w-20"
             >
-              Cancel
+              Clear
             </ActionButton>
 
           

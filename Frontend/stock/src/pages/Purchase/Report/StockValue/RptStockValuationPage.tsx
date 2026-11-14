@@ -680,14 +680,14 @@ const RptStockValuationPage: React.FC<RptStockValuationPageProps> = ({ onClose }
                   >
                     <u>P</u>rint
                   </button>
-                  <button
+                  {/* <button
                     id="btnClose"
                     type="button"
                     onClick={handleClose}
                     className="btn-style"
                   >
                     <u>C</u>lose
-                  </button>
+                  </button> */}
                 </div>
               </div>
             </div>

@@ -221,13 +221,7 @@ const AppDatePicker: React.FC<AppDatePickerProps> = ({
   </LocalizationProvider>
 );
 
-type RptInvoicewiseProfitPageProps = {
-  onClose?: () => void;
-};
-
-const RptInvoicewiseProfitPage: React.FC<RptInvoicewiseProfitPageProps> = ({
-  onClose,
-}) => {
+const RptInvoicewiseProfitPage: React.FC = () => {
   const [branchMode, setBranchMode] = useState("One Branch"); // optBranch
   const [branch, setBranch] = useState<Option | null>(branchOptions[0]); // lkpBranch
 
@@ -255,17 +249,6 @@ const RptInvoicewiseProfitPage: React.FC<RptInvoicewiseProfitPageProps> = ({
       toDate,
       postStatus,
     });
-  };
-
-  const handleClose = () => {
-    setBranchMode("One Branch");
-    setBranch(branchOptions[0]);
-    setCustomerMode("One Customer");
-    setCustomerId(null);
-    setFromDate("");
-    setToDate("");
-    setPostStatus(postStatusOptions[0]);
-    onClose?.();
   };
 
   const customerDisabled = customerMode !== "One Customer";
@@ -389,14 +372,6 @@ const RptInvoicewiseProfitPage: React.FC<RptInvoicewiseProfitPageProps> = ({
                   className="btn-style"
                 >
                   <u>P</u>rint
-                </button>
-                <button
-                  id="btnClose"
-                  type="button"
-                  onClick={handleClose}
-                  className="btn-style"
-                >
-                  <u>C</u>lose
                 </button>
               </div>
             </div>

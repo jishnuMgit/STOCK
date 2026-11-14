@@ -784,15 +784,10 @@ const RptZatcaPdfA3Generation: React.FC = () => {
               onClick={handleCancel}
               className="h-9 w-20"
             >
-              Cancel
+              Clear
             </ActionButton>
 
-            <ActionButton
-              onClick={handleClose}
-              className="h-9 w-20"
-            >
-              Close
-            </ActionButton>
+          
           </div>
 
         </section>

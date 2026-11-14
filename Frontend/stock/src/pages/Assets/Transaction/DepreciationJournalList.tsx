@@ -201,13 +201,7 @@ const DepreciationJournalListPage: React.FC = () => {
               Print
             </button>
 
-            <button
-              type="button"
-              onClick={handleClose}
-              className="w-20 btn-style"
-            >
-              Close
-            </button>
+          
 
           </div>
 

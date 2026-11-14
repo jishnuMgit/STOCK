@@ -866,7 +866,7 @@ const RptItemHistoryPage: React.FC<RptItemHistoryPageProps> = ({ onClose }) => {
                 >
                   <u>P</u>rint
                 </button>
-                <button
+                {/* <button
                   id="btnClose"
                   type="button"
                   onClick={handleClose}
@@ -874,7 +874,7 @@ const RptItemHistoryPage: React.FC<RptItemHistoryPageProps> = ({ onClose }) => {
                   className="btn-style focus-visible:ring-2 focus-visible:ring-[#64d96e]"
                 >
                   <u>C</u>lose
-                </button>
+                </button> */}
               </div>
             </div>
           </section>
@@ -885,9 +885,7 @@ const RptItemHistoryPage: React.FC<RptItemHistoryPageProps> = ({ onClose }) => {
       {preview && (
         <div className="fixed inset-0 z-[99999] flex items-center justify-center bg-black/40 p-4">
           <div className="flex h-[90vh] w-full max-w-250 flex-col overflow-hidden border border-gray-400 bg-white shadow-xl">
-            <header className="flex h-7.5 shrink-0 items-center bg-[#9fdfbc] pl-3 text-[17px] font-semibold text-slate-700">
-              Print Preview
-            </header>
+            <Header Name="Print Preview" />
 
             <iframe
               title="Print Preview"

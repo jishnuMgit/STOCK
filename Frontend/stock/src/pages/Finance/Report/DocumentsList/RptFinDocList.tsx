@@ -223,13 +223,7 @@ const AppDatePicker: React.FC<AppDatePickerProps> = ({
   </LocalizationProvider>
 );
 
-type RptFinDocListProps = {
-  onClose?: () => void;
-};
-
-const RptFinDocList: React.FC<RptFinDocListProps> = ({
-  onClose,
-}) => {
+const RptFinDocList: React.FC = () => {
   const [branch, setBranch] = useState<Option | null>(branchOptions[0]); // lkpBranch
   const [documentType, setDocumentType] = useState<Option | null>(null); // lkpDocument
 
@@ -256,18 +250,6 @@ const RptFinDocList: React.FC<RptFinDocListProps> = ({
       toDate: byDocNo ? null : toDate,
       postStatus,
     });
-  };
-
-  const handleClose = () => {
-    setBranch(branchOptions[0]);
-    setDocumentType(null);
-    setFilterMode("By Document No.");
-    setFromDocNo("");
-    setToDocNo("");
-    setFromDate("");
-    setToDate("");
-    setPostStatus(postStatusOptions[1]);
-    onClose?.();
   };
 
   return (
@@ -384,14 +366,6 @@ const RptFinDocList: React.FC<RptFinDocListProps> = ({
                 className="btn-style"
               >
                 <u>P</u>rint
-              </button>
-              <button
-                id="btnClose"
-                type="button"
-                onClick={handleClose}
-                className="btn-style"
-              >
-                <u>C</u>lose
               </button>
             </div>
           </section>

@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { Play, X } from "lucide-react";
-import Select, {
+import {
   components,
   type FormatOptionLabelMeta,
   type MenuListProps,
@@ -9,6 +9,9 @@ import Select, {
 import selectComponents from "../../sharecomponents/selectComponents";
 import type { ItemLookup, SalesRow } from "../../../hooks/useSalesInvoice"; // adjust path to your hook
 import { useConfirmModal } from "../../../hooks/useConfirmModal"; // adjust path
+import SingleSelect, {
+  SingleSelectMenuColumns,
+} from "../../common/SingleSelect";
 
 // ============================================================
 // TYPES
@@ -40,9 +43,6 @@ type SalesInvoiceTableProps = {
 // must match the Item ID column width in <colgroup> (200px)
 const ID_COL_WIDTH = 200;
 
-// width of the first column in the Item Name dropdown
-const NAME_COL_WIDTH = 300;
-
 // font size of the dropdown menu (header row + options)
 const MENU_FONT_SIZE = 14;
 
@@ -53,7 +53,6 @@ const menuLayout: Record<
   {
     firstTitle: string;
     secondTitle: string;
-    firstWidth: number;
     first: (o: Option) => string;
     second: (o: Option) => string;
   }
@@ -61,14 +60,12 @@ const menuLayout: Record<
   id: {
     firstTitle: "Item ID",
     secondTitle: "Item Name",
-    firstWidth: ID_COL_WIDTH,
     first: (o) => o.value,
     second: (o) => o.name,
   },
   name: {
     firstTitle: "Item Name",
     secondTitle: "Item ID",
-    firstWidth: NAME_COL_WIDTH,
     first: (o) => o.name,
     second: (o) => o.value,
   },
@@ -82,7 +79,6 @@ const createMenuList = (variant: MenuVariant) => {
     <components.MenuList {...props}>
       <div
         style={{
-          display: "flex",
           position: "sticky",
           top: 0,
           zIndex: 1,
@@ -93,18 +89,33 @@ const createMenuList = (variant: MenuVariant) => {
           color: "#202a36",
         }}
       >
-        <div
-          style={{
-            width: layout.firstWidth,
-            flexShrink: 0,
-            boxSizing: "border-box",
-            padding: "5px 8px",
-            borderRight: "1px solid #cfcfcf",
-          }}
-        >
-          {layout.firstTitle}
-        </div>
-        <div style={{ flex: 1, padding: "5px 8px" }}>{layout.secondTitle}</div>
+        <SingleSelectMenuColumns>
+          <div
+            style={{
+              minWidth: 0,
+              overflow: "hidden",
+              textOverflow: "ellipsis",
+              whiteSpace: "nowrap",
+              boxSizing: "border-box",
+              padding: "5px 8px",
+              borderRight: "1px solid #cfcfcf",
+            }}
+          >
+            {layout.firstTitle}
+          </div>
+          <div
+            style={{
+              minWidth: 0,
+              overflow: "hidden",
+              textOverflow: "ellipsis",
+              whiteSpace: "nowrap",
+              boxSizing: "border-box",
+              padding: "5px 8px",
+            }}
+          >
+            {layout.secondTitle}
+          </div>
+        </SingleSelectMenuColumns>
       </div>
       {props.children}
     </components.MenuList>
@@ -132,11 +143,13 @@ const createFormatLabel =
     const layout = menuLayout[variant];
 
     return (
-      <div style={{ display: "flex" }}>
+      <SingleSelectMenuColumns>
         <div
           style={{
-            width: layout.firstWidth,
-            flexShrink: 0,
+            minWidth: 0,
+            overflow: "hidden",
+            textOverflow: "ellipsis",
+            whiteSpace: "nowrap",
             boxSizing: "border-box",
             padding: "6px 8px",
             borderRight: "1px solid #e3e8ef",
@@ -144,10 +157,19 @@ const createFormatLabel =
         >
           {layout.first(option)}
         </div>
-        <div style={{ flex: 1, padding: "6px 8px" }}>
+        <div
+          style={{
+            minWidth: 0,
+            overflow: "hidden",
+            textOverflow: "ellipsis",
+            whiteSpace: "nowrap",
+            boxSizing: "border-box",
+            padding: "6px 8px",
+          }}
+        >
           {layout.second(option)}
         </div>
-      </div>
+      </SingleSelectMenuColumns>
     );
   };
 
@@ -245,7 +267,7 @@ const selectStyles: StylesConfig<Option, false> = {
     zIndex: 9999,
     fontSize: MENU_FONT_SIZE,
     marginTop: 1,
-    width: 542,
+    width: 665,
     minWidth: 542,
     border: "none",
     borderRadius: 0,
@@ -642,64 +664,68 @@ const SalesInvoiceTable: React.FC<SalesInvoiceTableProps> = ({
                   {/* ITEM ID */}
 
                   <td className={editCellClass}>
-                    <Select<Option, false>
-                      inputId={`lkpItemID-${index}`}
-                      instanceId={`item-id-${index}`}
-                      options={itemIdOptions}
-                      value={idValue(row.itemId)}
-                      onChange={(option) => handleItemSelect(index, option)}
-                      formatOptionLabel={formatIdLabel}
-                      filterOption={filterItem}
-                      styles={selectStyles}
-                      components={idSelectComponents}
-                      isClearable={false}
-                      isSearchable
-                      isDisabled={readOnly}
-                      menuPosition="fixed"
-                      menuPortalTarget={menuPortalTarget}
-                      placeholder=""
-                      className="w-full"
-                      onMenuOpen={() => setOpenMenuKey(`id-${index}`)}
-                      onMenuClose={() =>
-                        setOpenMenuKey((prev) =>
-                          prev === `id-${index}` ? null : prev,
-                        )
-                      }
-                      onKeyDown={(event) =>
-                        handleItemKeyDown(event, index, `id-${index}`)
-                      }
+                    <SingleSelect<Option>
+                      mode="item"
+                      menuColumnWidths={["200px", "1fr"]}
+                      selectProps={{
+                        inputId: `lkpItemID-${index}`,
+                        instanceId: `item-id-${index}`,
+                        options: itemIdOptions,
+                        value: idValue(row.itemId),
+                        onChange: (option) => handleItemSelect(index, option),
+                        formatOptionLabel: formatIdLabel,
+                        filterOption: filterItem,
+                        styles: selectStyles,
+                        components: idSelectComponents,
+                        isClearable: false,
+                        isSearchable: true,
+                        isDisabled: readOnly,
+                        menuPosition: "fixed",
+                        menuPortalTarget,
+                        placeholder: "",
+                        className: "w-full",
+                        onMenuOpen: () => setOpenMenuKey(`id-${index}`),
+                        onMenuClose: () =>
+                          setOpenMenuKey((prev) =>
+                            prev === `id-${index}` ? null : prev,
+                          ),
+                        onKeyDown: (event) =>
+                          handleItemKeyDown(event, index, `id-${index}`),
+                      }}
                     />
                   </td>
 
                   {/* ITEM NAME */}
 
                   <td className={editCellClass}>
-                    <Select<Option, false>
-                      inputId={`lkpItemName-${index}`}
-                      instanceId={`item-name-${index}`}
-                      options={itemNameOptions}
-                      value={nameValue(row.itemId)}
-                      onChange={(option) => handleItemSelect(index, option)}
-                      formatOptionLabel={formatNameLabel}
-                      filterOption={filterItem}
-                      styles={selectStyles}
-                      components={nameSelectComponents}
-                      isClearable={false}
-                      isSearchable
-                      isDisabled={readOnly}
-                      menuPosition="fixed"
-                      menuPortalTarget={menuPortalTarget}
-                      placeholder=""
-                      className="w-full"
-                      onMenuOpen={() => setOpenMenuKey(`name-${index}`)}
-                      onMenuClose={() =>
-                        setOpenMenuKey((prev) =>
-                          prev === `name-${index}` ? null : prev,
-                        )
-                      }
-                      onKeyDown={(event) =>
-                        handleItemKeyDown(event, index, `name-${index}`)
-                      }
+                    <SingleSelect<Option>
+                      mode="item"
+                      menuColumnWidths={["1fr", "185px"]}
+                      selectProps={{
+                        inputId: `lkpItemName-${index}`,
+                        instanceId: `item-name-${index}`,
+                        options: itemNameOptions,
+                        value: nameValue(row.itemId),
+                        onChange: (option) => handleItemSelect(index, option),
+                        formatOptionLabel: formatNameLabel,
+                        filterOption: filterItem,
+                        styles: selectStyles,
+                        components: nameSelectComponents,
+                        isClearable: false,
+                        isSearchable: true,
+                        isDisabled: readOnly,
+                        menuPosition: "fixed",
+                        menuPortalTarget,
+                        placeholder: "",
+                        className: "w-full",
+                        onMenuOpen: () => setOpenMenuKey(`name-${index}`),
+                        onMenuClose: () =>
+                          setOpenMenuKey((prev) =>
+                            prev === `name-${index}` ? null : prev,
+                          ),
+                        onKeyDown: (event) =>
+                          handleItemKeyDown(event, index, `name-${index}`),
+                      }}
                     />
                   </td>
 
