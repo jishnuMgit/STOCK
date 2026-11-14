@@ -447,12 +447,7 @@ const AssetSettingPage: React.FC = () => {
               Save
             </ActionButton>
 
-            <ActionButton
-              onClick={handleClose}
-              className="w-20"
-            >
-              Close
-            </ActionButton>
+            
 
           </div>
 

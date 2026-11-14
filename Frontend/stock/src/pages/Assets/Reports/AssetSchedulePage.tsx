@@ -647,12 +647,7 @@ const AssetSchedulePage: React.FC = () => {
                   <u>P</u>rint
                 </ActionButton>
 
-                <ActionButton
-                  onClick={handleClose}
-                  className="w-20 h-9"
-                >
-                  Close
-                </ActionButton>
+              
 
               </div>
 

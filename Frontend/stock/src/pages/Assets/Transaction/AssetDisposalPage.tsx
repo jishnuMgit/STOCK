@@ -628,12 +628,12 @@ const DisposalActions: React.FC<{
       <u>S</u>earch
     </button>
     <button
-      id="btnCancel"
+      id="btnClear"
       type="button"
       onClick={onCancel}
       className="btn-style"
     >
-      <u>C</u>ancel
+      <u>C</u>lear
     </button>
     
   </div>
