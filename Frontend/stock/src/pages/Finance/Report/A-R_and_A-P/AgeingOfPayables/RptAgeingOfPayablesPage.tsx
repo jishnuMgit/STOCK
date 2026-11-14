@@ -27,14 +27,6 @@ const branchOptions: Option[] = [
   { value: "RIYADH", label: "RIYADH" },
   { value: "DAMMAM", label: "DAMMAM" },
 ];
-// const parentIdOptions: Option[] = [
-//   { value: "1100", label: "1100" },
-//   { value: "1200", label: "1200" },
-// ];
-// const parentNameOptions: Option[] = [
-//   { value: "1100", label: "Trade Receivables" },
-//   { value: "1200", label: "Other Receivables" },
-// ];
 const ageingModeOptions: Option[] = [
   { value: "MONTH", label: "Month" },
   { value: "DAYS", label: "Days" },
@@ -233,18 +225,9 @@ const AppDatePicker: React.FC<AppDatePickerProps> = ({
   </LocalizationProvider>
 );
 
-type RptAgeingOfPayablesPageProps = {
-  onClose?: () => void;
-};
-
-const RptAgeingOfPayablesPage: React.FC<RptAgeingOfPayablesPageProps> = ({
-  onClose,
-}) => {
+const RptAgeingOfPayablesPage: React.FC = () => {
   const [branchMode, setBranchMode] = useState("One Branch"); // optBranch
   const [branch, setBranch] = useState<Option | null>(branchOptions[0]); // lkpBranch
-
-  const [parentMode, setParentMode] = useState("One Parent Account"); // optParentAccount
-  const [parentId, setParentId] = useState<string | null>(null); // lkpParentAccountID / lkpParentAccountName
 
   const [asOnDate, setAsOnDate] = useState(""); // dtpAsOnDate
   const [ageingMode, setAgeingMode] = useState<Option | null>(
@@ -256,42 +239,23 @@ const RptAgeingOfPayablesPage: React.FC<RptAgeingOfPayablesPageProps> = ({
   const [printZeroBalance, setPrintZeroBalance] = useState<Option | null>(
     yesNoOptions[1],
   ); // lkpPrint0Balance
-  const [balanceType, setBalanceType] = useState("All"); // optBalanceType
-
 
   const handlePrint = () => {
     console.log({
       branchMode,
       branch: branchMode === "One Branch" ? branch : null,
-      parentMode,
-      parentId: parentMode === "One Parent Account" ? parentId : null,
       asOnDate,
       ageingMode,
       postStatus,
       printZeroBalance,
-      balanceType,
     });
   };
-
-  const handleClose = () => {
-    setBranchMode("One Branch");
-    setBranch(branchOptions[0]);
-    setParentMode("One Parent Account");
-    setParentId(null);
-    setAsOnDate("");
-    setAgeingMode(ageingModeOptions[0]);
-    setPostStatus(postStatusOptions[0]);
-    setPrintZeroBalance(yesNoOptions[1]);
-    setBalanceType("All");
-    onClose?.();
-  };
-
 
   return (
     <div className="flex min-h-screen w-full items-start justify-center bg-white px-4 py-4">
       <div className="min-h-fit w-145 max-w-full bg-white p-0">
         <main className="w-full overflow-hidden border border-[#d5dce2] bg-white">
-          <Header Name="Ageing of Receivables" />
+          <Header Name="Ageing of Payables" />
 
           <section className="px-3.5 pb-6 pt-3">
             <div className="grid grid-cols-[185px_1fr] items-start gap-x-4 gap-y-3">
@@ -325,8 +289,6 @@ const RptAgeingOfPayablesPage: React.FC<RptAgeingOfPayablesPageProps> = ({
                   />
                 </div>
               </div>
-
-              {/* Parent account */}
 
             </div>
 
@@ -387,18 +349,8 @@ const RptAgeingOfPayablesPage: React.FC<RptAgeingOfPayablesPageProps> = ({
                   >
                     <u>P</u>rint
                   </button>
-                  <button
-                    id="btnClose"
-                    type="button"
-                    onClick={handleClose}
-                    className="btn-style"
-                  >
-                    <u>C</u>lose
-                  </button>
                 </div>
               </div>
-
-
             </div>
           </section>
         </main>

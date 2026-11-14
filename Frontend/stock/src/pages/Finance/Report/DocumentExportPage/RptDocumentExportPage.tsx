@@ -21,10 +21,6 @@ type DirectoryPickerWindow = Window & {
   showDirectoryPicker?: () => Promise<DirectoryHandle>;
 };
 
-type RptDocumentExportPageProps = {
-  onClose?: () => void;
-};
-
 type AppDatePickerProps = {
   id: string;
   label: string;
@@ -185,9 +181,7 @@ const AppDatePicker: React.FC<AppDatePickerProps> = ({
   </LocalizationProvider>
 );
 
-const RptDocumentExportPage: React.FC<RptDocumentExportPageProps> = ({
-  onClose,
-}) => {
+const RptDocumentExportPage: React.FC = () => {
   const [exportPath, setExportPath] = useState("");
   const [directoryHandle, setDirectoryHandle] =
     useState<DirectoryHandle | null>(null);
@@ -315,16 +309,6 @@ const RptDocumentExportPage: React.FC<RptDocumentExportPageProps> = ({
     toast.success("Export settings validated successfully.")
   };
 
-  /* Close / Reset */
-  const handleClose = () => {
-    setExportPath("");
-    setDirectoryHandle(null);
-    setFromDate("");
-    setToDate("");
-    setMessage("");
-    onClose?.();
-  };
-
   return (
     <div className="flex min-h-full w-full items-start justify-center bg-white px-3 py-3 sm:px-4 sm:py-4">
       <div className="w-full max-w-130 bg-white">
@@ -412,14 +396,6 @@ const RptDocumentExportPage: React.FC<RptDocumentExportPageProps> = ({
                 <u>E</u>xport
               </button>
 
-              <button
-                id="btnClose"
-                type="button"
-                onClick={handleClose}
-                className={buttonClass}
-              >
-                <u>C</u>lose
-              </button>
             </div>
           </section>
         </main>

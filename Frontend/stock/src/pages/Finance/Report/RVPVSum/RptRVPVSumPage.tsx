@@ -737,14 +737,14 @@ const RptRVPVSumPage: React.FC<RptRVPVSumPageProps> = ({
               >
                 <u>P</u>rint
               </button>
-              <button
+              {/* <button
                 id="btnClose"
                 type="button"
                 onClick={handleClose}
                 className="btn-style"
               >
                 <u>C</u>lose
-              </button>
+              </button> */}
             </div>
           </section>
         </main>

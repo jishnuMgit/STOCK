@@ -259,6 +259,9 @@ const RptItemPurchasePage: React.FC<RptItemPurchasePageProps> = ({
   // the branches the logged-in user has a right to, and the user's default branch
   const [branchOptions, setBranchOptions] = useState<Option[]>([]);
   const [defaultBranch, setDefaultBranch] = useState<Option | null>(null);
+  const [itemRows, setItemRows] = useState<
+    { lkpBranch: string; lkpItemID: string; txtItemName: string }[]
+  >([]);
 
   useEffect(() => {
     const loadLookups = async () => {
@@ -301,10 +304,6 @@ const RptItemPurchasePage: React.FC<RptItemPurchasePageProps> = ({
   // one item: the Item ID box and the Item Name box show the same choice
   const [lkpItemID, setLkpItemID] = useState(""); // lkpItemID / lkpItemName
 
-  // the items of every branch, one row per branch and item
-  const [itemRows, setItemRows] = useState<
-    { lkpBranch: string; lkpItemID: string; txtItemName: string }[]
-  >([]);
   const { hang: itemIdHang, measure: measureItemIdHang } = usePairMenuHang();
 
   // the items of the chosen branch (One Branch), or every item once (All Branch)
@@ -323,12 +322,10 @@ const RptItemPurchasePage: React.FC<RptItemPurchasePageProps> = ({
     });
   }, [itemRows, rdgBranch, lkpBranch]);
 
-  // a chosen item that the new branch does not have is cleared
-  useEffect(() => {
-    if (lkpItemID && !branchItems.some((row) => row.lkpItemID === lkpItemID)) {
-      setLkpItemID("");
-    }
-  }, [branchItems, lkpItemID]);
+  const itemExistsInBranch = (itemId: string, branchId: string) =>
+    itemRows.some(
+      (row) => row.lkpItemID === itemId && row.lkpBranch === branchId,
+    );
 
   // the item boxes: ID | Name, and Name | ID (one item, two boxes)
   const itemIdOptions = useMemo<PairOption[]>(
@@ -513,7 +510,17 @@ const RptItemPurchasePage: React.FC<RptItemPurchasePageProps> = ({
                   { value: "One Branch", label: "One Branch" },
                   { value: "All Branch", label: "All Branch" },
                 ]}
-                onChange={setRdgBranch}
+                onChange={(mode) => {
+                  setRdgBranch(mode);
+                  if (
+                    mode === "One Branch" &&
+                    lkpBranch &&
+                    lkpItemID &&
+                    !itemExistsInBranch(lkpItemID, lkpBranch.value)
+                  ) {
+                    setLkpItemID("");
+                  }
+                }}
               />
               <div className="pt-3">
                 <div
@@ -527,6 +534,14 @@ const RptItemPurchasePage: React.FC<RptItemPurchasePageProps> = ({
                     value={lkpBranch}
                     onChange={(option) => {
                       setLkpBranch(option);
+                      if (
+                        rdgBranch === "One Branch" &&
+                        option &&
+                        lkpItemID &&
+                        !itemExistsInBranch(lkpItemID, option.value)
+                      ) {
+                        setLkpItemID("");
+                      }
                       if (option) advanceAfterPick("lkpBranch");
                     }}
                     isDisabled={rdgBranch !== "One Branch"}
@@ -632,14 +647,14 @@ const RptItemPurchasePage: React.FC<RptItemPurchasePageProps> = ({
                 >
                   <u>P</u>rint
                 </button>
-                <button
+                {/* <button
                   id="btnClose"
                   type="button"
                   onClick={handleClose}
                   className="btn-style"
                 >
                   <u>C</u>lose
-                </button>
+                </button> */}
               </div>
             </div>
           </section>

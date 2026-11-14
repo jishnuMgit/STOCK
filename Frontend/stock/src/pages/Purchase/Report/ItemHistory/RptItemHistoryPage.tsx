@@ -866,7 +866,7 @@ const RptItemHistoryPage: React.FC<RptItemHistoryPageProps> = ({ onClose }) => {
                 >
                   <u>P</u>rint
                 </button>
-                <button
+                {/* <button
                   id="btnClose"
                   type="button"
                   onClick={handleClose}
@@ -874,7 +874,7 @@ const RptItemHistoryPage: React.FC<RptItemHistoryPageProps> = ({ onClose }) => {
                   className="btn-style focus-visible:ring-2 focus-visible:ring-[#64d96e]"
                 >
                   <u>C</u>lose
-                </button>
+                </button> */}
               </div>
             </div>
           </section>

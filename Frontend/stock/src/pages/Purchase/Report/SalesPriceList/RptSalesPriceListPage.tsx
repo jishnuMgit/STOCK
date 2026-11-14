@@ -779,7 +779,7 @@ const RptSalesPriceListPage: React.FC<RptSalesPriceListPageProps> = ({
               >
                 <u>P</u>rint
               </button>
-              <button
+              {/* <button
                 id="btnClose"
                 type="button"
                 onClick={handleClose}
@@ -787,7 +787,7 @@ const RptSalesPriceListPage: React.FC<RptSalesPriceListPageProps> = ({
                 className="btn-style"
               >
                 <u>C</u>lose
-              </button>
+              </button> */}
             </div>
           </section>
         </main>
