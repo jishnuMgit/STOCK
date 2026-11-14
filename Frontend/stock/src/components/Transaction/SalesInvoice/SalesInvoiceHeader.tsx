@@ -10,11 +10,10 @@ import type {
   Option,
   ParamLookup,
   SalesHeader,
-
 } from "../../../hooks/useSalesInvoice";
 
 import Header from "../../common/Header";
-import CommonTableSelect from "../../common/CommonTableSelect";
+import CommonTableSelect, { type TableSelectOption } from "../../common/CommonTableSelect";
 import CustomLinkedPairSelect, {
   type PairSelectOption,
 } from "../../common/CustomLinkedPairSelect";
@@ -28,6 +27,9 @@ dayjs.extend(customParseFormat);
 /* invoice type option: value/label plus the name from the server (fPName) */
 type TypeOption = Option & { name?: string };
 
+/* division option: value = division id, name = division name */
+type DivisionOption = Option & { name?: string };
+
 type SalesInvoiceHeaderProps = {
   branchOptions: Option[];
   branch: Option | null;
@@ -39,6 +41,13 @@ type SalesInvoiceHeaderProps = {
   onHeaderChange: (patch: Partial<SalesHeader>) => void;
   customers: CustomerLookup[];
   priceLevels: ParamLookup[];
+
+  /* division: loaded after a customer is selected */
+  division?: string;
+  divisionOptions?: DivisionOption[];
+  divisionLoading?: boolean;
+  onDivisionChange?: (divisionId: string) => void;
+
   onCustomerSelect: (customerId: string) => void;
   onDocNoBlur: () => void;
   invoiceTypes?: TypeOption[];
@@ -63,6 +72,10 @@ const branchColumns = [
 const typeColumns = [
   { key: "value", label: "Type", width: "70px" },
   { key: "name", label: "Name" },
+];
+const divisionColumns = [
+  { key: "divName", label: "Div. Name", width: "260px" },
+  { key: "value", label: "Div. ID", width: "1fr" },
 ];
 
 // ============================================================
@@ -173,7 +186,8 @@ const rightLabelClass =
 // ============================================================
 // ENTER KEY ORDER
 // Invoice No -> Type -> Date -> Customer ID -> Customer Name
-// -> Address -> Phone -> Reference -> first row of the item table
+// -> Division -> Address -> Phone -> Reference
+// -> first row of the item table
 // ============================================================
 
 const FIELD_ORDER = [
@@ -182,6 +196,7 @@ const FIELD_ORDER = [
   "dtpDate",
   "lkpCustomerID",
   "lkpCustomerName",
+  "lkpDivision",
   "txtAddress",
   "txtPhone",
   "txtReference",
@@ -234,6 +249,9 @@ const SalesInvoiceHeader: React.FC<SalesInvoiceHeaderProps> = ({
   header,
   onHeaderChange,
   customers,
+  divisionOptions = [],
+  divisionLoading = false,
+  onDivisionChange,
   onCustomerSelect,
   onDocNoBlur,
   invoiceTypes = defaultInvoiceTypes,
@@ -266,6 +284,32 @@ const SalesInvoiceHeader: React.FC<SalesInvoiceHeaderProps> = ({
     return options;
   }, [customers, header.customerId, header.customerName]);
 
+  const divisionRows = useMemo(
+    () => divisionOptions.map((o) => ({ ...o, divName: o.name ?? o.label })),
+    [divisionOptions],
+  );
+
+  const divisionValue: TableSelectOption | null = header.divId
+    ? (divisionRows.find((o) => o.value === header.divId) ?? {
+      value: header.divId,
+      label: header.divId,
+      divName: header.divId,
+    })
+    : null;
+
+  const divisionFilter = (
+    option: { data: TableSelectOption },
+    input: string,
+  ) => {
+    const text = input.trim().toLowerCase();
+    if (!text) return true;
+    return (
+      option.data.value.toLowerCase().includes(text) ||
+      String(option.data.divName ?? option.data.label)
+        .toLowerCase()
+        .includes(text)
+    );
+  };
 
   const invoiceTypeTableOptions = useMemo(
     () =>
@@ -373,8 +417,8 @@ const SalesInvoiceHeader: React.FC<SalesInvoiceHeaderProps> = ({
               value={branch}
               onChange={onBranchChange}
               columns={branchColumns}
-              width="220px"
-              menuWidth="220px"
+              width="100%"
+              menuWidth="calc(100% + 80px)"
               headerFontSize="14px"
               isClearable={false}
               isSearchable={false}
@@ -468,7 +512,8 @@ const SalesInvoiceHeader: React.FC<SalesInvoiceHeaderProps> = ({
         </div>
 
         {/* ----------------------------------------------------
-            ROWS 2+: CUSTOMER / ADDRESS / PHONE  |  REFERENCE / STOCK
+            ROWS 2+: CUSTOMER / ADDRESS / PHONE
+                     |  DIVISION / REFERENCE / STOCK
         ----------------------------------------------------- */}
 
         <div className="grid grid-cols-[56%_44%]">
@@ -561,7 +606,48 @@ const SalesInvoiceHeader: React.FC<SalesInvoiceHeaderProps> = ({
           ================================================== */}
 
           <div className="right-side ml-auto w-fit pl-1">
-            {/* REFERENCE */}
+            {/* DIVISION (aligned with Customer row) */}
+            <div className="mb-2.5 flex h-7.5 items-center">
+              <label htmlFor="lkpDivision" className={rightLabelClass}>
+                Division :
+              </label>
+
+              <div className="ml-1.75 w-90">
+                <CommonTableSelect
+                  inputId="lkpDivision"
+                  options={divisionRows}
+                  value={divisionValue}
+                  onChange={(option) =>
+                    onDivisionChange?.(option?.value ?? "")
+                  }
+                  columns={divisionColumns}
+                  valueKey="divName"
+                  width="360px"
+                  menuWidth="360px"
+                  headerFontSize="14px"
+                  isClearable={false}
+                  isSearchable
+                  filterOption={divisionFilter}
+                  isLoading={divisionLoading}
+                  isDisabled={
+                    readOnly ||
+                    !header.customerId ||
+                    divisionLoading ||
+                    divisionOptions.length === 0
+                  }
+                  placeholder={
+                    !header.customerId
+                      ? "Select customer first"
+                      : divisionLoading
+                        ? "Loading..."
+                        : "Select division"
+                  }
+                  menuPortalTarget={menuPortalTarget}
+                />
+              </div>
+            </div>
+
+            {/* REFERENCE (aligned with Address row) */}
             <div className="mb-2.5 flex h-7.5 items-center">
               <label htmlFor="txtReference" className={rightLabelClass}>
                 Reference :
@@ -581,7 +667,7 @@ const SalesInvoiceHeader: React.FC<SalesInvoiceHeaderProps> = ({
               />
             </div>
 
-            {/* STOCK BUTTON + STOCK */}
+            {/* STOCK BUTTON + STOCK (aligned with Phone row) */}
             <div className="flex h-7.5 items-center">
               <button
                 id="BranchStockbtn"

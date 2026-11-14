@@ -111,7 +111,8 @@ export const addReportTitle = (
 
   ws.mergeCells(`A1:${last}1`);
   ws.getCell("A1").value = report.txtCoName;
-  ws.getCell("A1").font = font(size.company, true, look);
+  // the company name: normal weight in the Inter look (as in the print and the PDF), bold in the classic look
+  ws.getCell("A1").font = font(size.company, look === "classic", look);
   ws.getCell("A1").alignment = { horizontal: "center" };
 
   ws.mergeCells(`A2:${last}2`);

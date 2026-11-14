@@ -4,8 +4,10 @@
 // VAT No. / Credit Limit / Credit Days, coloured by account level.
 // Page number top right, user id + date bottom right of every page.
 // Opens the browser print dialog from a hidden iframe (no pop-up to block).
+// The font, the sizes and the line colour are the "inter" look of components/common/reportStyle.ts.
 
-import { REPORT_STYLE } from "../../../../components/common/reportStyle";
+import { cssStr, esc, printHtmlDocument } from "../../../../components/common/printHtml";
+import { REPORT_STYLE, reportLook } from "../../../../components/common/reportStyle";
 
 export type PrintRow = {
   accountId: string;
@@ -26,21 +28,6 @@ export type PrintReport = {
   rows: PrintRow[];
 };
 
-const esc = (v: unknown) =>
-  String(v ?? "")
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;")
-    .replace(/"/g, "&quot;");
-
-// text placed inside a CSS string ("...") in the print stylesheet
-const cssStr = (v: unknown) =>
-  String(v ?? "")
-    .replace(/\\/g, "\\\\")
-    .replace(/"/g, '\\"')
-    .replace(/</g, "\\3C ")
-    .replace(/[\r\n]+/g, " ");
-
 // VB Detail_BeforePrint: level 1 red, 2 green, 3 blue, else black
 const levelClass = (level: number) =>
   level === 1 ? "l1" : level === 2 ? "l2" : level === 3 ? "l3" : "l4";
@@ -56,29 +43,35 @@ const money = (v: number | null) =>
 const whole = (v: number | null) =>
   v == null ? "" : v.toLocaleString("en-US", { maximumFractionDigits: 0 });
 
-export const buildHtml = (r: PrintReport) => `<!doctype html>
+export const buildHtml = (r: PrintReport) => {
+  // the font and the sizes come from the shared look (components/common/reportStyle.ts)
+  const { css, size } = reportLook("inter");
+  const font = css.family;
+  const { lineColor, html } = REPORT_STYLE;
+
+  return `<!doctype html>
 <html>
 <head>
 <meta charset="utf-8" />
 <title>${esc(r.heading)}</title>
-<style>
+<style>${css.importCss}
   @page {
     size: A4 landscape;
     margin: 12mm 10mm 14mm 15mm;
-    @top-right    { content: "Page " counter(page) " / " counter(pages); font: 8pt "Times New Roman", serif; }
-    @bottom-right { content: "${cssStr(r.reportInfo)}"; font: 8pt "Times New Roman", serif; }
+    @top-right    { content: "Page " counter(page) " / " counter(pages); font: ${size.small}pt ${font}; }
+    @bottom-right { content: "Printed : ${cssStr(r.reportInfo)}"; font: ${size.small}pt ${font}; }
   }
   * { box-sizing: border-box; }
-  body { margin: 0; font: 9pt "Times New Roman", serif; color: #000;
+  body { margin: 0; font: ${size.body}pt ${font}; color: #000;
          -webkit-print-color-adjust: exact; print-color-adjust: exact; }
   table { width: 100%; border-collapse: collapse; table-layout: fixed; }
   thead { display: table-header-group; }            /* header repeats on every page */
   tr { page-break-inside: avoid; }
-  .co   { font-size: 14pt; text-align: center; height: ${REPORT_STYLE.html.companyHeight}px; vertical-align: top; }
-  .head { font-size: 12pt; text-align: center; height: ${REPORT_STYLE.html.headingHeight}px; }
-  th { border: 1px solid ${REPORT_STYLE.lineColor}; height: ${REPORT_STYLE.html.rowHeight}px;
-       padding: 0 ${REPORT_STYLE.html.cellPaddingX}px; font-weight: normal; text-align: left; }
-  td { border: 1px solid ${REPORT_STYLE.lineColor}; border-top: 0; height: ${REPORT_STYLE.html.rowHeight}px; padding: 2px ${REPORT_STYLE.html.cellPaddingX}px;
+  .co   { font-size: ${size.company}pt; text-align: center; height: ${html.companyHeight}px; vertical-align: top; }
+  .head { font-size: ${size.heading}pt; text-align: center; height: ${html.headingHeight + html.tableGap}px; vertical-align: top; }
+  th { border: 1px solid ${lineColor}; height: ${html.rowHeight}px; font-size: ${size.columnHead}pt;
+       padding: 0 ${html.cellPaddingX}px; font-weight: normal; text-align: left; }
+  td { border: 1px solid ${lineColor}; border-top: 0; height: ${html.rowHeight}px; padding: 2px ${html.cellPaddingX}px;
        vertical-align: middle; overflow-wrap: anywhere; }
   .name { white-space: pre-wrap; }                  /* keeps the level 4 indent */
   .r { text-align: right; }
@@ -88,14 +81,14 @@ export const buildHtml = (r: PrintReport) => `<!doctype html>
 <body>
 <table>
   <colgroup>
-    <col style="width:7.4%" />   <!-- Customer ID -->
-    <col style="width:24.4%" />  <!-- Customer Name -->
-    <col style="width:18.2%" />  <!-- Address -->
-    <col style="width:14.9%" />  <!-- Contact -->
-    <col style="width:10.7%" />  <!-- Phone -->
-    <col style="width:10.5%" />  <!-- VAT No. -->
-    <col style="width:7.1%" />   <!-- Credit Limit -->
-    <col style="width:6.8%" />   <!-- Credit Days -->
+    <col style="width:10.5%" />   <!-- Customer ID -->
+    <col style="width:18%" />    <!-- Customer Name -->
+    <col style="width:14.5%" />  <!-- Address -->
+    <col style="width:12.5%" />    <!-- Contact -->
+    <col style="width:10.5%" />  <!-- Phone -->
+    <col style="width:12.5%" />    <!-- VAT No. -->
+    <col style="width:11%" />  <!-- Credit Limit -->
+    <col style="width:10.5%" />    <!-- Credit Days -->
   </colgroup>
   <thead>
     <tr><td colspan="8" class="co"   style="border:0">${esc(r.coName)}</td></tr>
@@ -125,32 +118,6 @@ export const buildHtml = (r: PrintReport) => `<!doctype html>
 </table>
 </body>
 </html>`;
-
-export const printCustomerListReport = (report: PrintReport): void => {
-  const iframe = document.createElement("iframe");
-  iframe.style.cssText =
-    "position:fixed;right:0;bottom:0;width:0;height:0;border:0;visibility:hidden";
-  document.body.appendChild(iframe);
-
-  const doc = iframe.contentDocument;
-  const win = iframe.contentWindow;
-  if (!doc || !win) {
-    iframe.remove();
-    throw new Error("Could not open the print view");
-  }
-
-  doc.open();
-  doc.write(buildHtml(report));
-  doc.close();
-
-  const cleanup = () => setTimeout(() => iframe.remove(), 500);
-  win.addEventListener("afterprint", cleanup);
-
-  // let the iframe lay out before printing
-  setTimeout(() => {
-    win.focus();
-    win.print();
-    // some browsers never fire afterprint: remove it anyway after a minute
-    setTimeout(() => iframe.remove(), 60000);
-  }, 250);
 };
+
+export const printCustomerListReport = (report: PrintReport): void => printHtmlDocument(buildHtml(report));

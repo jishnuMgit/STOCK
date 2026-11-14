@@ -120,6 +120,10 @@ const SalesInvoice: React.FC = () => {
     saveInvoice,
     deleteInvoice,
     postInvoice,
+    divisionOptions,
+    divisionLoading,
+    getDivisions,
+    clearDivisions,
     error,
   } = useSalesInvoice();
 
@@ -177,22 +181,26 @@ const SalesInvoice: React.FC = () => {
   // RESET / NEXT DOC NO
   // ==========================================================
 
-  const resetForm = useCallback((brId: string, docNo = ""): SalesHeader => {
-    const fresh: SalesHeader = {
-      ...emptyHeader(),
-      brId,
-      docNo,
-      vatPer: headerRef.current.vatPer,
-    };
-    setHeader(fresh);
-    setRows(padRows([]));
-    setTotals(zeroTotals);
-    setMode("S");
-    setOriginalSlNos([]);
-    setPosted(false);
-    setUserInfo(null);
-    return fresh;
-  }, []);
+  const resetForm = useCallback(
+    (brId: string, docNo = ""): SalesHeader => {
+      const fresh: SalesHeader = {
+        ...emptyHeader(),
+        brId,
+        docNo,
+        vatPer: headerRef.current.vatPer,
+      };
+      setHeader(fresh);
+      setRows(padRows([]));
+      setTotals(zeroTotals);
+      setMode("S");
+      setOriginalSlNos([]);
+      setPosted(false);
+      setUserInfo(null);
+      clearDivisions(); // new
+      return fresh;
+    },
+    [clearDivisions],
+  );
 
   const loadNextDocNo = useCallback(
     async (brId: string, date: string) => {
@@ -308,15 +316,26 @@ const SalesInvoice: React.FC = () => {
   const handleHeaderChange = (patch: Partial<SalesHeader>) =>
     setHeader((h) => ({ ...h, ...patch }));
 
-  const handleCustomerSelect = (id: string) => {
+  const handleCustomerSelect = async (id: string) => {
     const c = lookups.customers.find((x) => x.id === id);
     if (!c) return;
+
     handleHeaderChange({
       customerId: c.id,
       customerName: c.name,
       address: c.address,
       phone: c.phone,
+      divId: "", // never keep the previous customer's division
     });
+
+    const divs = await getDivisions(c.id);
+
+    // ignore the result if the user picked another customer meanwhile
+    if (headerRef.current.customerId !== c.id) return;
+
+    if (divs.length === 1) {
+      handleHeaderChange({ divId: divs[0].value }); // auto-select
+    }
   };
 
   const loadInvoice = async (
@@ -338,6 +357,7 @@ const SalesInvoice: React.FC = () => {
     setPosted(r.posted);
     setUserInfo(r.userInfo);
     lastDocNo.current = docNo;
+    void getDivisions(r.header.customerId); // new
     return true;
   };
 
@@ -546,6 +566,10 @@ const SalesInvoice: React.FC = () => {
             readOnly={posted}
             stock={stock}
             onStockClick={handleStockClick}
+            division={header.divId}
+            divisionOptions={divisionOptions}
+            divisionLoading={divisionLoading}
+            onDivisionChange={(divId) => handleHeaderChange({ divId })}
           />
 
           {/* Table */}
