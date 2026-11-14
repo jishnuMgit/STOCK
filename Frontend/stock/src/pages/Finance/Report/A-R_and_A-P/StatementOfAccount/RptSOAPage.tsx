@@ -11,6 +11,7 @@ import {
   printSoaReport,
   type PrintReport,
 } from "./PrintSOAReport";
+import { previewPrintedLine } from "../../../../../components/common/printHtml";
 import { buildSoaPdf } from "./downloadSoaPdf";
 import { saveFile } from "./saveFile";
 import GridSelect, { type GridOption } from "./GridSelect";
@@ -561,17 +562,25 @@ const RptSOAPage: React.FC<RptSOAPageProps> = () => {
     }
   };
 
-  const previewHtml = useMemo(
-    () =>
-      preview
-        ? // 40px left / 20px right margin for the preview only
-          buildHtml(preview.report).replace(
-            "</head>",
-            "<style>body{padding-left:40px;padding-right:20px}</style></head>",
-          )
-        : "",
-    [preview],
-  );
+  const previewHtml = useMemo(() => {
+    if (!preview) return "";
+
+    const html = buildHtml(preview.report);
+    // the user and the time at the bottom right (a browser draws the page margin box only when it prints)
+    const printed = previewPrintedLine(html);
+
+    return html
+      .replace(
+        "</head>",
+        // 40px left / 20px right margin for the preview only
+        "<style>body{padding-left:40px;padding-right:20px}" +
+          // the preview has no page breaks: a band shows where the next customer's statement starts
+          ".acc + .acc::before{content:attr(data-stmt);display:block;margin:28px -20px 20px -40px;padding:6px 40px;" +
+          "background:#eef1f6;border-top:1px dashed #8a97b0;border-bottom:1px dashed #8a97b0;color:#44506a;font-size:11px;font-weight:600}" +
+          `${printed.css}</style></head>`,
+      )
+      .replace("</body>", `${printed.line}</body>`);
+  }, [preview]);
 
   // Alt+P prints, Alt+C clears, Escape closes the preview. Re-attached every
   // render so it always sees the latest state.

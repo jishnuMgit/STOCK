@@ -117,7 +117,7 @@ export const buildReportHtml = (d: ReportData): string => {
   @page {
     size: A4 landscape;
     margin: 12mm 10mm 14mm 12mm;
-    @top-right    { content: "Page " counter(page) " of " counter(pages); font: 8pt "Times New Roman", serif; }
+    @top-right    { content: "Page " counter(page) " / " counter(pages); font: 8pt "Times New Roman", serif; }
     @bottom-right { content: "${cssStr(d.reportInfo)}"; font: 8pt "Times New Roman", serif; }
   }
   * { box-sizing: border-box; }
@@ -282,7 +282,7 @@ export const buildPdfBlob = async (d: ReportData): Promise<Blob> => {
   for (let i = 1; i <= pages; i += 1) {
     doc.setPage(i);
     const h = doc.internal.pageSize.getHeight();
-    doc.text(`Page ${i} of ${pages}`, PAGE_W - MARGIN.right, MARGIN.top, { align: "right" });
+    doc.text(`Page ${i} / ${pages}`, PAGE_W - MARGIN.right, MARGIN.top, { align: "right" });
     doc.text(d.reportInfo, PAGE_W - MARGIN.right, h - MARGIN.bottom + 6, { align: "right" });
   }
 

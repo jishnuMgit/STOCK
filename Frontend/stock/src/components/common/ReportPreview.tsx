@@ -2,6 +2,7 @@ import React, { useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "react-toastify";
 
 import { saveFile } from "../../pages/Finance/Report/ChartOfAccount/saveFile";
+import { previewPrintedLine } from "./printHtml";
 
 // ============================================================
 // THE PRINT PREVIEW (the same window as the Chart Of Account report)
@@ -76,14 +77,17 @@ const ReportPreview: React.FC<Props> = ({
   const downloading = useRef(false);
 
   // 40px left / 20px right margin for the preview only
-  const previewHtml = useMemo(
-    () =>
-      html.replace(
+  const previewHtml = useMemo(() => {
+    // the user and the time at the bottom right (a browser draws the page margin box only when it prints)
+    const printed = previewPrintedLine(html);
+
+    return html
+      .replace(
         "</head>",
-        "<style>body{padding-left:40px;padding-right:20px}</style></head>",
-      ),
-    [html],
-  );
+        `<style>body{padding-left:40px;padding-right:20px}${printed.css}</style></head>`,
+      )
+      .replace("</body>", `${printed.line}</body>`);
+  }, [html]);
 
   const handlePrint = () => {
     if (busy) return;

@@ -74,7 +74,7 @@ export const buildHtml = (r: PrintReport) => `<!doctype html>
 <head>
 <meta charset="utf-8" />
 <title>Stock Ageing</title>
-<style>${reportPrintCss({ look: "inter", orientation: "landscape", marginLeft: "12mm", groupSelector: "td.group" })}
+<style>${reportPrintCss({ reportInfo: r.txtReportInfo, look: "inter", orientation: "landscape", marginLeft: "12mm", groupSelector: "td.group" })}
 </style>
 </head>
 <body>

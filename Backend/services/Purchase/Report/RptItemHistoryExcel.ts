@@ -3,7 +3,7 @@
 // item a header block, the transactions and a "Total :" row).
 // Needs:  npm i exceljs
 import ExcelJS from "exceljs";
-import { applyReportFont, levelFont } from "../../../utils/reportStyle.js";
+import { applyReportFont, levelFont, setPrintedFooter } from "../../../utils/reportStyle.js";
 import type { HistoryGroup } from "./RptItemHistoryService.js";
 
 export type ItemHistoryReport = {
@@ -76,12 +76,9 @@ export const buildItemHistoryWorkbook = async (
   ws.getCell("A2").font = levelFont("heading", false, "inter");
   ws.getCell("A2").alignment = { horizontal: "center" };
 
-  ws.mergeCells("A3:D3");
+  ws.mergeCells("A3:H3");
   ws.getCell("A3").value = report.branch;
-  ws.mergeCells("E3:H3");
-  ws.getCell("E3").value = report.reportInfo;
-  ws.getCell("E3").font = levelFont("small", false, "inter");
-  ws.getCell("E3").alignment = { horizontal: "right" };
+  setPrintedFooter(ws, report.reportInfo, "inter"); // the user and the time: bottom right of every printed page
 
   // the colon of the header block, written by the number format of the value: ": " in front of the value, which stays
   // a real number / text (an empty value still shows the colon)

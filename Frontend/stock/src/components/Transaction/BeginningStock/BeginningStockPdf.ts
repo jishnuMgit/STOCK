@@ -6,7 +6,7 @@
 import { jsPDF } from "jspdf";
 import autoTable, { type CellDef } from "jspdf-autotable";
 
-import { PDF_BLACK, hexToRgb } from "../../common/reportPdf";
+import { pdfHeadStyles, pdfTableStyles, registerReportPdfFont } from "../../common/reportPdf";
 import { REPORT_STYLE } from "../../common/reportStyle";
 
 import {
@@ -18,20 +18,16 @@ import {
   type PrintReport,
 } from "./BeginningStockPrintReport";
 
-const BORDER = hexToRgb(REPORT_STYLE.lineColor);
-const BLACK = PDF_BLACK;
-
 const PAGE_W = 297; // A4 landscape, mm
 const MARGIN = { top: 12, right: 10, bottom: 14, left: 15 };
 
-const PAD = REPORT_STYLE.pdf.cellPadding;
-
-export const buildBeginningStockPdf = (report: PrintReport): Blob => {
+export const buildBeginningStockPdf = async (report: PrintReport): Promise<Blob> => {
   const doc = new jsPDF({ orientation: "landscape", unit: "mm", format: "a4" });
+  const look = await registerReportPdfFont(doc, "inter"); // the font and the sizes of the look
   const usable = PAGE_W - MARGIN.left - MARGIN.right;
 
   // below company / heading / the Branch line
-  const tableTop = MARGIN.top + 30;
+  const tableTop = MARGIN.top + 30 + REPORT_STYLE.pdf.titleGap;
 
   // Sl.# | Item ID | Item Name (the rest) | Unit | Qty. | Unit Cost | Total Cost
   const slW = 14;
@@ -72,15 +68,15 @@ export const buildBeginningStockPdf = (report: PrintReport): Blob => {
   // company / heading / the info line - drawn on every page
   const drawTitle = () => {
     doc.setTextColor(0, 0, 0);
-    doc.setFont(REPORT_STYLE.pdfFont, "normal");
-    doc.setFontSize(REPORT_STYLE.size.company);
+    doc.setFont(look.font, "normal");
+    doc.setFontSize(look.size.company);
     doc.text(report.txtCoName, PAGE_W / 2, MARGIN.top + 8, { align: "center" });
 
-    doc.setFontSize(REPORT_STYLE.size.heading);
-    doc.text(REPORT_HEADING, PAGE_W / 2, MARGIN.top + 15, { align: "center" });
+    doc.setFontSize(look.size.heading);
+    doc.text(REPORT_HEADING, PAGE_W / 2, MARGIN.top + 15 + REPORT_STYLE.pdf.titleGap, { align: "center" });
 
-    doc.setFontSize(REPORT_STYLE.size.pdfBody);
-    const y = MARGIN.top + 23;
+    doc.setFontSize(look.size.pdfBody);
+    const y = MARGIN.top + 23 + REPORT_STYLE.pdf.titleGap;
     doc.text(`Branch : ${report.txtBranchName}`, MARGIN.left, y);
     doc.text(`Date : ${formatDate(report.dtpDate)}`, PAGE_W - MARGIN.right, y, {
       align: "right",
@@ -99,21 +95,8 @@ export const buildBeginningStockPdf = (report: PrintReport): Blob => {
     tableWidth: usable,
     rowPageBreak: "avoid",
     showHead: "everyPage",
-    styles: {
-      font: REPORT_STYLE.pdfFont,
-      fontSize: REPORT_STYLE.size.pdfBody,
-      cellPadding: PAD,
-      lineColor: BORDER,
-      lineWidth: REPORT_STYLE.pdf.lineWidth,
-      minCellHeight: 7,
-      valign: "middle",
-      overflow: "ellipsize",
-      textColor: BLACK,
-    },
-    headStyles: {
-      textColor: BLACK,
-      fontStyle: "normal",
-    },
+    styles: { ...pdfTableStyles(look), overflow: "ellipsize" as const },
+    headStyles: pdfHeadStyles(look),
     columnStyles,
     head: [
       [
@@ -132,16 +115,16 @@ export const buildBeginningStockPdf = (report: PrintReport): Blob => {
 
   // page numbers need the final page count, so they are added at the end
   const pages = doc.getNumberOfPages();
-  doc.setFont(REPORT_STYLE.pdfFont, "normal");
-  doc.setFontSize(REPORT_STYLE.size.small);
+  doc.setFont(look.font, "normal");
+  doc.setFontSize(look.size.small);
   doc.setTextColor(0, 0, 0);
   for (let i = 1; i <= pages; i++) {
     doc.setPage(i);
     const h = doc.internal.pageSize.getHeight();
-    doc.text(`Page ${i} of ${pages}`, PAGE_W - MARGIN.right, MARGIN.top, {
+    doc.text(`Page ${i} / ${pages}`, PAGE_W - MARGIN.right, MARGIN.top, {
       align: "right",
     });
-    doc.text(report.txtReportInfo, PAGE_W - MARGIN.right, h - MARGIN.bottom + 6, {
+    doc.text(`Printed : ${report.txtReportInfo}`, PAGE_W - MARGIN.right, h - MARGIN.bottom + 6, {
       align: "right",
     });
   }

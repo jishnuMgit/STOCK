@@ -73,6 +73,7 @@ export const buildHtml = (r: PrintReport) => {
 <meta charset="utf-8" />
 <title>${esc(REPORT_HEADING)}</title>
 <style>${documentPrintCss({
+  look: "inter",
   orientation: "landscape",
   margin: "12mm 10mm 14mm 15mm",
   reportInfo: cssStr(r.txtReportInfo),

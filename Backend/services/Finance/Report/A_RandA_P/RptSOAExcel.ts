@@ -3,6 +3,7 @@
 // columns as the printed report).
 // Needs:  npm i exceljs
 import ExcelJS from "exceljs";
+import { applyReportFont, levelFont, setPrintedFooter } from "../../../../utils/reportStyle.js";
 import type { SoaReportData } from "./RptSOAService.js";
 
 export type SoaReport = SoaReportData & {
@@ -12,11 +13,6 @@ export type SoaReport = SoaReportData & {
 };
 
 const BORDER_COLOR = { argb: "FFC7D1E4" };
-const HEAD_FILL = {
-  type: "pattern" as const,
-  pattern: "solid" as const,
-  fgColor: { argb: "FFEFF3FA" },
-};
 const thin = {
   top: { style: "thin" as const, color: BORDER_COLOR },
   left: { style: "thin" as const, color: BORDER_COLOR },
@@ -81,7 +77,7 @@ export const buildSoaWorkbook = async (report: SoaReport): Promise<Buffer> => {
   const merged = (text: string, font: Partial<ExcelJS.Font>, align: "center" | "right" | "left") => {
     const r = ws.addRow([text]);
     ws.mergeCells(r.number, 1, r.number, 8);
-    r.getCell(1).font = { name: "Times New Roman", ...font };
+    r.getCell(1).font = font;
     r.getCell(1).alignment = { horizontal: align };
     return r;
   };
@@ -92,7 +88,8 @@ export const buildSoaWorkbook = async (report: SoaReport): Promise<Buffer> => {
   const footerId = footer ? wb.addImage({ base64: footer.b64, extension: "jpeg" }) : null;
 
   report.accounts.forEach((a, idx) => {
-    if (idx > 0) ws.addRow([]);
+    // every customer starts on a new printed page
+    if (idx > 0) ws.addRow([]).addPageBreak();
     const headerRow0 = ws.rowCount; // 0-based index of the first header row
 
     // header: English on the left, Arabic on the right (like the VB header)
@@ -100,17 +97,17 @@ export const buildSoaWorkbook = async (report: SoaReport): Promise<Buffer> => {
       const r = ws.addRow([left, "", "", "", "", right]);
       ws.mergeCells(r.number, 1, r.number, 4); // English
       ws.mergeCells(r.number, 6, r.number, 8); // Arabic (column E is for the logo)
-      r.getCell(1).font = { name: "Times New Roman", ...font };
-      r.getCell(6).font = { name: "Times New Roman", ...font };
+      r.getCell(1).font = font;
+      r.getCell(6).font = font;
       r.getCell(1).alignment = { horizontal: "left" };
       r.getCell(6).alignment = { horizontal: "right", readingOrder: "rtl" };
     };
-    pair(a.company.name || report.coName, a.company.nameAr, { size: 14, bold: true });
+    pair(a.company.name || report.coName, a.company.nameAr, levelFont("company", true, "inter"));
     const rows = Math.max(a.company.address.length, a.company.addressAr.length);
     for (let i = 0; i < rows; i++) {
-      pair(a.company.address[i] ?? "", a.company.addressAr[i] ?? "", { size: 9 });
+      pair(a.company.address[i] ?? "", a.company.addressAr[i] ?? "", levelFont("group", false, "inter"));
     }
-    if (a.company.telephone) pair(a.company.telephone, a.company.telephone, { size: 9 });
+    if (a.company.telephone) pair(a.company.telephone, a.company.telephone, levelFont("group", false, "inter"));
 
     // company logo in the middle column, fitted into the header rows
     if (logo && logoId !== null) {
@@ -121,27 +118,32 @@ export const buildSoaWorkbook = async (report: SoaReport): Promise<Buffer> => {
         ext: { width: logo.w * scale, height: logo.h * scale },
       });
     }
-    merged(report.heading1, { size: 12, bold: true }, "center");
-    merged(report.heading2, { size: 10 }, "center");
-    if (report.branchLabel) merged(report.branchLabel, { size: 10 }, "left");
+    merged(report.heading1, levelFont("heading", true, "inter"), "center");
+    merged(report.heading2, levelFont("columnHead", false, "inter"), "center");
+    if (report.branchLabel) merged(report.branchLabel, levelFont("group", false, "inter"), "left");
     ws.addRow([]);
 
+    // the right-hand pair starts at the Debit column (F), like the printed page, and its value ends at the right edge of
+    // the Balance column (G:H merged, right aligned)
     const info = (l1: string, v1: string | number, l2: string, v2: string | number) => {
-      const r = ws.addRow([l1, v1, "", "", l2, v2]);
-      r.getCell(1).font = { bold: true };
-      r.getCell(5).font = { bold: true };
-      r.getCell(5).alignment = { horizontal: "right" };
+      const r = ws.addRow([l1, v1, "", "", "", `${l2} :`, v2]);
+      ws.mergeCells(r.number, 7, r.number, 8);
+      r.getCell(1).font = levelFont("group", true, "inter");
+      r.getCell(2).font = levelFont("group", false, "inter");
+      r.getCell(6).font = levelFont("group", true, "inter");
+      r.getCell(7).font = levelFont("group", false, "inter");
+      r.getCell(6).alignment = { horizontal: "left" };
+      r.getCell(7).alignment = { horizontal: "right" };
       return r;
     };
     info("Customer ID", a.accountId, "Customer Name", a.accountName);
-    info("Payment Terms", `${a.paymentDays} DAYS`, "Credit Limit", a.creditLimit).getCell(6).numFmt = MONEY;
+    info("Payment Terms", `${a.paymentDays} DAYS`, "Credit Limit", a.creditLimit).getCell(7).numFmt = MONEY;
     info("Division", a.division, "Currency", report.currency);
     ws.addRow([]);
 
     const head = ws.addRow(["Date", "Br. ID", "Type", "Doc. No.", "Description", "Debit", "Credit", "Balance"]);
     head.eachCell((cell, col) => {
-      cell.font = { bold: true };
-      cell.fill = HEAD_FILL;
+      cell.font = levelFont("columnHead", true, "inter");
       cell.border = thin;
       cell.alignment = { horizontal: col >= 6 ? "right" : "left" };
     });
@@ -180,8 +182,7 @@ export const buildSoaWorkbook = async (report: SoaReport): Promise<Buffer> => {
       ws.addRow([]);
       const h = ws.addRow(["", ...report.ageingHeadings, "Total"]);
       h.eachCell({ includeEmpty: false }, (cell) => {
-        cell.font = { bold: true };
-        cell.fill = HEAD_FILL;
+        cell.font = levelFont("columnHead", true, "inter");
         cell.border = thin;
         cell.alignment = { horizontal: "right" };
       });
@@ -193,10 +194,10 @@ export const buildSoaWorkbook = async (report: SoaReport): Promise<Buffer> => {
     }
 
     ws.addRow([]);
-    merged(report.statementNote, { size: 9 }, "left");
+    merged(report.statementNote, levelFont("small", false, "inter"), "left");
 
     if (a.bank.accountNo || a.bank.iban) {
-      merged("Please transfer to our below bank account :", { size: 9, bold: true }, "left");
+      merged("Please transfer to our below bank account :", levelFont("group", true, "inter"), "left");
       (
         [
           ["Account Name", a.bank.beneficiary],
@@ -219,8 +220,11 @@ export const buildSoaWorkbook = async (report: SoaReport): Promise<Buffer> => {
     }
   });
 
-  ws.addRow([]);
-  merged(report.reportInfo, { size: 8 }, "right");
+  // the user and the time: bottom right of every printed page
+  setPrintedFooter(ws, report.reportInfo, "inter");
+
+  // the whole sheet in the report font (a cell keeps its own size and bold)
+  applyReportFont(ws, "inter");
 
   return Buffer.from(await wb.xlsx.writeBuffer());
 };

@@ -3,7 +3,7 @@
 // "branch" grouped by item group, "status", "allBranch").
 // Needs:  npm i exceljs
 import ExcelJS from "exceljs";
-import { applyReportFont, levelFont } from "../../../utils/reportStyle.js";
+import { applyReportFont, levelFont, setPrintedFooter } from "../../../utils/reportStyle.js";
 import type { ItemListRow } from "./RptItemListService.js";
 
 export type Variant = "branch" | "status" | "allBranch";
@@ -95,13 +95,10 @@ export const buildItemListWorkbook = async (
   ws.getCell(2, 1).font = levelFont("heading", false, "inter");
   ws.getCell(2, 1).alignment = { horizontal: "center" };
 
-  ws.mergeCells(3, 1, 3, 2);
+  ws.mergeCells(3, 1, 3, last);
   ws.getCell(3, 1).value = report.branch;
   ws.getCell(3, 1).font = levelFont("body", false, "inter");
-  ws.mergeCells(3, 3, 3, last);
-  ws.getCell(3, 3).value = report.reportInfo;
-  ws.getCell(3, 3).font = levelFont("small", false, "inter");
-  ws.getCell(3, 3).alignment = { horizontal: "right" };
+  setPrintedFooter(ws, report.reportInfo, "inter"); // the user and the time: bottom right of every printed page
 
   // ---- column labels (row 4) ----
   const head = ws.getRow(4);
