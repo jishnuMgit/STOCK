@@ -539,7 +539,7 @@ const RptSupplierPurchasePage: React.FC<RptSupplierPurchasePageProps> = ({
                 }}
               />
               <div className="pt-3">
-                <div className="grid grid-cols-[190px_1fr]">
+                <div className="grid grid-cols-[190px_1fr] gap-2">
                   <div
                     className={cellFocusClass}
                     onKeyDown={(event) => advanceOnEnter(event, ["lkpSupplierName"])}
@@ -563,7 +563,7 @@ const RptSupplierPurchasePage: React.FC<RptSupplierPurchasePageProps> = ({
                     />
                   </div>
                   <div
-                    className={`-ml-px ${cellFocusClass}`}
+                    className={cellFocusClass}
                     style={{ marginRight: SUPPLIER_NAME_MENU_HANG }}
                     onKeyDown={(event) => advanceOnEnter(event)}
                   >
