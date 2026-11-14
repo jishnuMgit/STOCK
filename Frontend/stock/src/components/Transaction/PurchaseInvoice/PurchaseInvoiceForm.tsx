@@ -277,7 +277,7 @@ const PurchaseForm: React.FC<Props> = ({
               onChange={(o) => onChange("brId", o?.value ?? "")}
               columns={branchColumns}
               width="100%"
-              menuWidth="220px"
+              menuWidth="calc(100% + 100px)"
               menuPortalTarget={portalTarget}
               isClearable={false}
               isSearchable
@@ -311,9 +311,10 @@ const PurchaseForm: React.FC<Props> = ({
               onChange={(o) => handleMiscModeChange(o?.value ?? "No")}
               columns={labelColumn}
               width="100%"
-              menuWidth="140px"
+              menuWidth="100%"
               isClearable={false}
               isSearchable={false}
+              showHeader={false}
             />
           </div>
         </div>
@@ -331,9 +332,10 @@ const PurchaseForm: React.FC<Props> = ({
               onChange={(o) => onChange("currency", o?.value ?? "")}
               columns={labelColumn}
               width="100%"
-              menuWidth="160px"
+              menuWidth="100%"
               isClearable={false}
               isSearchable={false}
+              showHeader={false}
             />
           </div>
         </div>
@@ -383,8 +385,8 @@ const PurchaseForm: React.FC<Props> = ({
                 value={pick(invoiceTypeOptions, header.invoiceType)}
                 onChange={(o) => onChange("invoiceType", o?.value ?? "")}
                 columns={invoiceTypeColumns}
-                width="100%"
-                menuWidth="220px"
+                width="115%"
+                menuWidth="180px"
                 menuPortalTarget={portalTarget}
                 isClearable={false}
                 isSearchable={false}
