@@ -625,6 +625,11 @@ const ZATCASubmission: React.FC = () => {
   // UI
   // ==================================================
 
+  const totalRecords = rows.filter((row) => row.documentNo.trim() !== "").length;
+  const tickedRecords = rows.filter(
+    (row) => row.selected && row.documentNo.trim() !== "",
+  ).length;
+
   return (
     <div className="min-h-full w-full bg-white p-1 sm:p-2">
 
@@ -1026,11 +1031,20 @@ const ZATCASubmission: React.FC = () => {
 
             {/* TABLE FOOTER */}
 
-            <div className="h-7.25 border-t border-[#B7ECD0] bg-[#eeeeF2]" />
+            <div
+              id="divShowCountofRecords"
+              className="flex h-7.25 items-center justify-between border-t border-[#B7ECD0] bg-[#eeeeF2] px-3 text-[12px] text-[#172b43]"
+            >
+              <span>Total Records: {totalRecords}</span>
+              <span>Ticked Records: {tickedRecords}</span>
+            </div>
 
-          </div>
+            </div>
 
-          {/* ==========================================
+          <div className="mt-1.5 text-right text-[12px] text-[#172b43]">
+
+            </div>
+                     {/* ==========================================
               BOTTOM BUTTONS
           ========================================== */}
 

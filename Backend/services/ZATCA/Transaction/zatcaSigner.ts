@@ -62,7 +62,9 @@ const stripCertificate = (s: string): string =>
 //   3. decoded once (stored value is the double-encoded binarySecurityToken "TUlJ...")
 //   4. encoded once (stored value is the plain certificate "MII...")
 //   5. full PEM: BEGIN/END lines around the 64-column body (some builds only read that form)
-const certificateCandidates = (stored: string): string[] => {
+// pemFirst: mono (Linux / macOS) only reads the full PEM form, so it goes first there and
+// the other forms are not tried (and no extra process is started) on every document.
+const certificateCandidates = (stored: string, pemFirst = false): string[] => {
   const list: string[] = [stored];
   const add = (v: string): void => {
     if (v && !list.includes(v)) list.push(v);
@@ -82,7 +84,26 @@ const certificateCandidates = (stored: string): string[] => {
   if (body.startsWith("MII")) {
     add(`-----BEGIN CERTIFICATE-----\n${(body.match(/.{1,64}/g) ?? []).join("\n")}\n-----END CERTIFICATE-----`);
   }
+
+  if (pemFirst) {
+    const i = list.findIndex((c) => c.startsWith("-----BEGIN"));
+    if (i > 0) list.unshift(...list.splice(i, 1));
+  }
   return list;
+};
+
+// The SDK copies the certificate text into <ds:X509Certificate> exactly as it was given. Given
+// the PEM form (which mono needs), the BEGIN/END lines end up inside a base64Binary element and
+// ZATCA answers XSD_ZATCA_INVALID. That element sits in KeyInfo, outside both signed digests
+// (the invoice and xades:SignedProperties), so replacing its text with the plain base64 body
+// leaves the signature, the invoice hash and the QR valid.
+const cleanEmbeddedCertificate = async (signedPath: string): Promise<void> => {
+  const xml = await readFile(signedPath, "utf8");
+  const fixed = xml.replace(
+    /(<(?:\w+:)?X509Certificate\b[^>]*>)([\s\S]*?)(<\/(?:\w+:)?X509Certificate>)/g,
+    (_m: string, open: string, body: string, close: string) => `${open}${stripCertificate(body)}${close}`
+  );
+  if (fixed !== xml) await writeFile(signedPath, fixed, "utf8");
 };
 
 // safe diagnostics: never logs the value itself
@@ -283,7 +304,7 @@ export class DotNetSdkSigner implements ZatcaSigner {
     describeSecret("privateKey (stored)", privateKey);
 
     let lastError = "ZATCA signing failed";
-    const candidates = certificateCandidates(certificate);
+    const candidates = certificateCandidates(certificate, process.platform !== "win32");
 
     for (let i = 0; i < candidates.length; i += 1) {
       const reply = await runBridge(
@@ -297,6 +318,7 @@ export class DotNetSdkSigner implements ZatcaSigner {
       );
 
       if (reply.ok) {
+        await cleanEmbeddedCertificate(signedPath);
         console.log(`[zatca] signed with certificate form #${i + 1} of ${candidates.length}`);
         return { invoiceHash: reply.invoiceHash, uuid: reply.uuid };
       }
