@@ -26,7 +26,7 @@ const miscSupplierOptions = makeOptions(["No", "Yes"]);
 const defaultCurrencyOptions = makeOptions(["SAR"]);
 const branchColumns = [
   { key: "label", label: "Branch" },
-  { key: "value", label: "ID", width: "90px", align: "right" as const },
+  { key: "value", label: "ID", width: "40px"},
 ];
 const invoiceTypeColumns = [
   { key: "label", label: "Type", width: "70px" },
@@ -277,7 +277,7 @@ const PurchaseForm: React.FC<Props> = ({
               onChange={(o) => onChange("brId", o?.value ?? "")}
               columns={branchColumns}
               width="100%"
-              menuWidth="calc(100% + 100px)"
+              menuWidth="calc(100% + 41px)"
               menuPortalTarget={portalTarget}
               isClearable={false}
               controlFontSize="14px"

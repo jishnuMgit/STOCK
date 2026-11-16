@@ -721,11 +721,11 @@ export const ReceiptForm: React.FC<ReceiptFormProps> = ({
             options={branchTableOptions}
             columns={[
               { key: "label", label: "Branch" },
-              { key: "value", label: "ID", width: "70px" },
+              { key: "value", label: "ID", width: "40px" },
             ]}
             placeholder="Select Branch"
             width="250px"
-            menuWidth="320px"
+            menuWidth="290px"
             controlFontSize="14px"
             headerFontSize="12px"
             borderColor="#d7dee7"
