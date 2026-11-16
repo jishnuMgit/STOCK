@@ -594,7 +594,7 @@ export const ReceiptForm: React.FC<ReceiptFormProps> = ({
 
   // 5px left padding for all plain text inputs
   const inputClass =
-    "h-[30px] rounded border border-[#d7dee7] bg-white pl-[5px] pr-2 text-[14px] text-slate-700 outline-none focus:border-[#9fdfbc] focus:ring-1 focus:ring-[#9fdfbc]";
+    "h-[30px] rounded border border-[#d7dee7] bg-white pl-[2px] pr-2 text-[14px] text-slate-700 outline-none focus:border-[#9fdfbc] focus:ring-1 focus:ring-[#9fdfbc]";
 
 
 
@@ -761,7 +761,7 @@ export const ReceiptForm: React.FC<ReceiptFormProps> = ({
             value={selectedType}
             options={typeOptions}
             columns={[
-              { key: "label", label: "ID", width: "55px" },
+              { key: "label", label: "ID", width: "48px" },
               { key: "value", label: "Name" },
             ]}
             placeholder="Select"
@@ -967,7 +967,7 @@ export const ReceiptForm: React.FC<ReceiptFormProps> = ({
                 },
 
                 "& .MuiPickersInputBase-sectionsContainer": {
-                  paddingLeft: "5px !important",
+                  paddingLeft: "2px !important",
 
                   paddingRight: "0px !important",
 
@@ -2512,7 +2512,7 @@ export const ReceiptBottomForm: React.FC<ReceiptBottomFormProps> = ({
             rounded
             border
             border-gray-300
-            pl-[5px]
+            pl-[2px]
             pr-2
             text-[14px]
             outline-none
@@ -2545,7 +2545,7 @@ export const ReceiptBottomForm: React.FC<ReceiptBottomFormProps> = ({
             border
             border-gray-300
             py-2
-            pl-[5px]
+            pl-[2px]
             pr-2
             text-[14px]
             outline-none

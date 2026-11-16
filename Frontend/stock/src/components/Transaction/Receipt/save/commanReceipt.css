@@ -1067,10 +1067,10 @@
 .account-lookup__id,
 .account-lookup__name,
 .account-lookup__empty {
-  padding-left: 3px !important;
-  padding-right: 3px !important;
+  padding-left: 2px !important;
+  padding-right: 2px !important;
 }
 
 .account-lookup__input {
-  padding-left: 3px !important;
+  padding-left: 2px !important;
 }
