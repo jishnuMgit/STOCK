@@ -7,13 +7,12 @@ import React, {
     useMemo,
     useRef,
     useState,
-    useLayoutEffect,
 } from "react";
 
 import { apiFetch } from "../../../utils/session";
-import { GetStrDocType } from "../../../utils/receiptHelpers";
+import { GetStrDocType } from "../../../utils/PaymentHelpers";
 
-import { Link, useNavigate } from "react-router-dom";
+import { Link } from "react-router-dom";
 import { FaEye } from "react-icons/fa";
 
 import Select, {
@@ -1047,7 +1046,7 @@ export const PaymentForm: React.FC<PaymentFormProps> = ({
 
                 <div className="flex items-center gap-2">
                     <label className="w-22.5 text-right ml-3 -mr-3 text-[14px] whitespace-nowrap">
-                        Paid to :
+                        Paid To :
                     </label>
 
                     <input
@@ -2390,7 +2389,7 @@ export const PaymentTable = forwardRef<PaymentTableRef, PaymentTableProps>(
                             <th id="lkpDivID">Div. ID</th>
                             <th id="lkpCCID">CC. ID</th>
                             <th id="txtDebitCredit" className="text-right">
-                                Credit Amt.
+                                Debit Amt.
                             </th>
                             <th id="ckhMatch" className="text-center">
                                 Match

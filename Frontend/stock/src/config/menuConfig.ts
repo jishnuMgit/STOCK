@@ -135,6 +135,7 @@ Sales-REPORT
   ========================================================= */
 
   mnuReceipt: "/Finance/Transaction/Receipt",
+  mnuPayment: "/Finance/Transaction/Payment",
   mnuBeginningBalance: "/Finance/Transaction/BeginningBalance",
   mnuJournal: "/Finance/Transaction/journal",
   mnuFinDocPost: "/Finance/Transaction/FinDocPost",
