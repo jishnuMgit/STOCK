@@ -19,6 +19,7 @@ import CustomLinkedPairSelect, {
 dayjs.extend(customParseFormat);
 
 const DATE_FORMAT = "DD-MM-YYYY";
+const API_DATE_FORMAT = "DD/MM/YYYY";
 const TODAY = dayjs().format(DATE_FORMAT);
 
 const documentColumns = [
@@ -138,7 +139,7 @@ const AppDatePicker: React.FC<{
 }> = ({ id, label, value, onChange }) => (
   <LocalizationProvider dateAdapter={AdapterDayjs}>
     <DatePicker
-      value={value ? dayjs(value, DATE_FORMAT) : null}
+      value={value ? dayjs(value, DATE_FORMAT, true) : null}
       onChange={(newValue) => {
         onChange(
           newValue?.isValid()
@@ -361,11 +362,21 @@ const RptZatcaPdfA3Generation: React.FC = () => {
         toast.error("Please select 'Invoice To Date'");
         return null;
       }
-      if (dayjs(fromDate, DATE_FORMAT).isAfter(dayjs(toDate, DATE_FORMAT))) {
+      const parsedFromDate = dayjs(fromDate, DATE_FORMAT, true);
+      const parsedToDate = dayjs(toDate, DATE_FORMAT, true);
+      if (!parsedFromDate.isValid()) {
+        toast.error("Invalid 'Invoice From Date'");
+        return null;
+      }
+      if (!parsedToDate.isValid()) {
+        toast.error("Invalid 'Invoice To Date'");
+        return null;
+      }
+      if (parsedFromDate.isAfter(parsedToDate)) {
         toast.error("'To Date' should be greater than or equal to 'From Date'");
         return null;
       }
-      if (dayjs(fromDate, DATE_FORMAT).year() !== dayjs(toDate, DATE_FORMAT).year()) {
+      if (parsedFromDate.year() !== parsedToDate.year()) {
         toast.error("'From Date' & 'To Date' should be in same year");
         return null;
       }
@@ -383,8 +394,12 @@ const RptZatcaPdfA3Generation: React.FC = () => {
       invoiceMode: byInvoiceNo ? "id" : "date",
       fromInvoiceNo: fromInvoiceNo.trim(),
       toInvoiceNo: toInvoiceNo.trim(),
-      fromDate,
-      toDate,
+      fromDate: byInvoiceNo
+        ? ""
+        : dayjs(fromDate, DATE_FORMAT, true).format(API_DATE_FORMAT),
+      toDate: byInvoiceNo
+        ? ""
+        : dayjs(toDate, DATE_FORMAT, true).format(API_DATE_FORMAT),
       customerMode: oneCustomer ? "one" : "all",
       customerId: oneCustomer ? customer?.value : null,
     };
