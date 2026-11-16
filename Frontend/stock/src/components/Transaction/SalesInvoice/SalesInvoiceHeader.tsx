@@ -67,7 +67,7 @@ const TYPE_NAMES: Record<string, string> = { R: "CREDIT", C: "CASH" };
 const defaultInvoiceTypes: TypeOption[] = [{ value: "R", label: "R" }];
 const branchColumns = [
   { key: "label", label: "Branch" },
-  { key: "value", label: "ID", width: "70px", align: "right" as const },
+  { key: "value", label: "ID", width: "50px" },
 ];
 const typeColumns = [
   { key: "value", label: "Type", width: "70px" },
@@ -418,8 +418,9 @@ const SalesInvoiceHeader: React.FC<SalesInvoiceHeaderProps> = ({
               onChange={onBranchChange}
               columns={branchColumns}
               width="100%"
-              menuWidth="calc(100% + 80px)"
-              headerFontSize="14px"
+              menuWidth="calc(100% + 51px)"
+              headerFontSize="12px"
+              controlFontSize="14px"
               isClearable={false}
               isSearchable={false}
               isLoading={branchLoading}
