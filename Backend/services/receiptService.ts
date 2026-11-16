@@ -361,8 +361,6 @@ export async function getReceiptHeader({
   const client = await pool.connect();
 
   try {
-    await client.query("BEGIN");
-
     const rows = await callReceiptProcedure(client, {
       strMode: "GETHD",
 
@@ -382,8 +380,6 @@ export async function getReceiptHeader({
 
       details: null,
     });
-
-    await client.query("COMMIT");
 
     return rows;
   } catch (error: unknown) {
