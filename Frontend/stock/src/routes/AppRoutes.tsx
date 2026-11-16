@@ -111,6 +111,9 @@ const Login = lazy(() => import("../pages/Auth/LoginPage"));
 const ReceiptPage = lazy(
   () => import("../pages/Finance/Transaction/Receipt/ReceiptPage"),
 );
+const PaymentPage = lazy(
+  () => import("../pages/Finance/Transaction/Payment/PaymentPage"),
+);
 const Journalpage = lazy(
   () => import("../pages/Finance/Transaction/Journal/Journalpage"),
 );
@@ -167,6 +170,10 @@ const AppRoutes = () => {
           <Route
             path="/Finance/Transaction/Receipt"
             element={<ReceiptPage />}
+          />
+          <Route
+            path="/Finance/Transaction/Payment"
+            element={<PaymentPage />}
           />
           <Route
             path="/Finance/Transaction/journal"

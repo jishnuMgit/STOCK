@@ -65,6 +65,7 @@ import CommonTableSelect, {
   type TableSelectOption,
 } from "../../../common/CommonTableSelect";
 import SingleSelect from "../../../common/SingleSelect";
+import Header from "../../../common/Header";
 
 export type TableField =
   | "accountId"
@@ -82,15 +83,8 @@ export type SortField = "accountId" | "accountName";
 ========================================================= */
 
 export const ReceiptHeader: React.FC = () => {
-  const navigate = useNavigate();
   return (
-    <header className="flex h-9 items-center border-b border-slate-300 bg-[#a3dfc0] pr-2">
-      <span className="px-3 text-[17px] font-semibold text-slate-700">Receipt</span>
-
-      <div className="ml-auto">
-        <CloseButton onClose={() => navigate("/")} />
-      </div>
-    </header>
+    <Header Name="Receipt" />
   );
 };
 
@@ -721,11 +715,11 @@ export const ReceiptForm: React.FC<ReceiptFormProps> = ({
             options={branchTableOptions}
             columns={[
               { key: "label", label: "Branch" },
-              { key: "value", label: "ID", width: "40px" },
+              { key: "value", label: "ID", width: "50px" },
             ]}
             placeholder="Select Branch"
             width="250px"
-            menuWidth="290px"
+            menuWidth="300px"
             controlFontSize="14px"
             headerFontSize="12px"
             borderColor="#d7dee7"

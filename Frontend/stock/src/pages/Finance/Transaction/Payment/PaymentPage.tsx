@@ -1,0 +1,2049 @@
+import React, {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
+import type { SelectInstance } from "react-select";
+import type { TableSelectOption } from "../../../../components/common/CommonTableSelect";
+
+import {
+  ReceiptHeader,
+  ReceiptForm,
+  ReceiptTable,
+  ReceiptBottomForm,
+  ReceiptActions,
+  type TableField,
+  type ReceiptTableRef,
+  type SortField,
+  type ReceiptActionsRef,
+} from "../../../../components/Transaction/Receipt/save/ReceiptComp";
+
+import {
+  type SelectOption,
+  type Branch,
+  type FinancialParameter,
+  type CostCenter,
+  type ReceiptRow,
+  type AccountData,
+  type ReceiptPrintData,
+  type ReceiptPrintResponse,
+} from "../../../../types/receiptypes";
+import { toast } from "react-toastify";
+import ReceiptPrint from "../../../../components/Transaction/Receipt/save/Receipt.print";
+import { buildReceiptPdf } from "../../../../components/Transaction/Receipt/save/ReceiptPdf";
+
+import { apiFetch, getSession } from "../../../../utils/session";
+import { GetStrDocType } from "../../../../utils/receiptHelpers";
+import { PaymentActions, PaymentBottomForm, PaymentForm, PaymentHeader, PaymentTable } from "../../../../components/Transaction/Payment/PaymentComponents";
+
+/* =========================================================
+   CREATE INITIAL ROWS
+========================================================= */
+
+const createRows = (): ReceiptRow[] =>
+  Array.from({ length: 9 }, (_, index) => ({
+    id: index + 1,
+    slNo: index + 1,
+    accountId: "",
+    accountName: "",
+    fgcs: "",
+    haveCc: false,
+    haveDivision: false,
+    DivID: "",
+    CCID: "",
+    txtDebitCredit: "",
+    amount: 0,
+    match: false,
+    description: "",
+  }));
+
+/* =========================================================
+   TABLE FIELD ORDER
+========================================================= */
+
+const tableFieldOrder: TableField[] = [
+  "accountId",
+  "accountName",
+  "DivID",
+  "CCID",
+  "txtDebitCredit",
+];
+
+/* =========================================================
+   INITIAL API RESPONSE
+========================================================= */
+
+interface ReceiptsResponse {
+  success: boolean;
+  message: string;
+  data: Branch[];
+  finparam: FinancialParameter[];
+  accounts: AccountData[];
+  accountsortbyId: AccountData[];
+  costCenters: CostCenter[];
+  defaultBranch: string | null;
+  txtDocNo: string;
+  receiptNo: string;
+  receiptType?: string | null;
+}
+/* =========================================================
+   MODIFY LOOKUP RESPONSE
+========================================================= */
+
+interface ModifyReceiptResponse {
+  exists: boolean;
+
+  header: {
+    lkpBranch?: string;
+    lkpType?: string;
+    docNo?: string;
+    dtpDate?: string;
+    fpost?: boolean | string | number;
+    // cbAccount?: string;
+    cbAccountName?: string;
+    CCID?: string;
+    receivedFrom?: string;
+    reference?: string;
+    note?: string;
+  } | null;
+
+  rows: Array<{
+    id?: number;
+    AccountID?: string;
+    AccountName?: string;
+    fgcs?: string;
+    DivID?: string;
+    CCID?: string;
+    txtDebitCredit?: string | number;
+    creditAmt?: string | number;
+    match?: boolean | string | number;
+    description?: string;
+  }>;
+
+  total?: number;
+
+  message?: string;
+}
+
+/* =========================================================
+   DATE FORMAT
+
+   YYYY-MM-DD -> DD/MM/YYYY
+========================================================= */
+
+const formatReceiptDate = (value?: string) => {
+  if (!value) {
+    return "";
+  }
+
+  const datePart = value.slice(0, 10);
+
+  if (/^\d{4}-\d{2}-\d{2}$/.test(datePart)) {
+    const [year, month, day] = datePart.split("-");
+
+    return `${day}/${month}/${year}`;
+  }
+
+  return value;
+};
+
+/* =========================================================
+   TODAY DATE
+========================================================= */
+
+/* =========================================================
+   TODAY DATE
+========================================================= */
+
+const getTodayDate = () => {
+  const today = new Date();
+  const day = String(today.getDate()).padStart(2, "0");
+  const month = String(today.getMonth() + 1).padStart(2, "0");
+  const year = today.getFullYear();
+  return `${day}/${month}/${year}`;
+};
+
+const isPostedFlag = (value: unknown) =>
+  value === true ||
+  value === 1 ||
+  ["true", "1", "t"].includes(String(value ?? "").trim().toLowerCase());
+
+/* =========================================================
+   RECEIPT
+========================================================= */
+
+const PaymentPage: React.FC = () => {
+  /* =======================================================
+     HEADER FORM STATE
+  ======================================================= */
+  const [isPrint, setIsPrint] = useState(false);
+  const [printData, setPrintData] = useState<ReceiptPrintData | null>(null);
+  const [lkpBranch, setLkpBranch] = useState("");
+  const [lkpType, setLkpType] = useState("");
+  const [cbAccountName, setCbAccountName] = useState("");
+  const [receivedFrom, setReceivedFrom] = useState("");
+  const [reference, setReference] = useState("");
+  const [cbCcId, setCbCcId] = useState("");
+
+  const [txtDocNo, setTxtDocNo] = useState("");
+
+  const [focusReceiptNoAfterClear, setFocusReceiptNoAfterClear] = useState(0);
+  const [dtpDate, setDtpDate] = useState(getTodayDate);
+
+  /* =======================================================
+     NOTE
+  ======================================================= */
+
+  const [note, setNote] = useState("");
+
+  /* =======================================================
+     MODE
+  ======================================================= */
+
+  const [isModifyMode, setIsModifyMode] = useState(false);
+  const [isPosted, setIsPosted] = useState(false);
+  const [, setReceiptMessage] = useState("");
+
+  /* =======================================================
+     MODIFY LOOKUP TRACKING
+  ======================================================= */
+
+  const lastLookupKeyRef = useRef("");
+
+  /* =======================================================
+     TABLE ROWS
+  ======================================================= */
+
+  const [rows, setRows] = useState<ReceiptRow[]>(createRows);
+
+  /* =======================================================
+     API OPTIONS
+  ======================================================= */
+
+  const [branchOptions, setBranchOptions] = useState<Branch[]>([]);
+  const [accountOptions, setAccountOptions] = useState<AccountData[]>([]);
+  const [accountSortByIdOptions, setAccountSortByIdOptions] = useState<
+    AccountData[]
+  >([]);
+  const [financialParameters, setFinancialParameters] = useState<
+    FinancialParameter[]
+  >([]);
+  const [costCenters, setCostCenters] = useState<CostCenter[]>([]);
+
+  /* =======================================================
+     ACTIVE DESCRIPTION ROW
+  ======================================================= */
+
+  const [activeDescriptionRow, setActiveDescriptionRow] = useState<
+    number | null
+  >(null);
+
+  /* =======================================================
+     DESCRIPTION
+  ======================================================= */
+
+  const [description, setDescription] = useState("");
+
+  /* =======================================================
+     REFS
+  ======================================================= */
+
+  const branchRef = useRef<SelectInstance<TableSelectOption, false>>(null);
+  const typeRef = useRef<SelectInstance<TableSelectOption, false>>(null);
+  const documentNoRef = useRef<HTMLInputElement>(null);
+  const cbAccountRef = useRef<SelectInstance<TableSelectOption, false>>(null);
+  const dateRef = useRef<HTMLInputElement>(null);
+  const receivedFromRef = useRef<HTMLInputElement>(null);
+  const referenceRef = useRef<HTMLInputElement>(null);
+  const receiptTableRef = useRef<ReceiptTableRef>(null);
+  const descriptionRef = useRef<HTMLInputElement>(null);
+  const noteRef = useRef<HTMLTextAreaElement>(null);
+  const actionsRef = useRef<ReceiptActionsRef>(null);
+
+  /* =======================================================
+     LOAD RECEIPT DATA
+  ======================================================= */
+
+  useEffect(() => {
+    const controller = new AbortController();
+
+    const loadReceiptData = async () => {
+      try {
+        const response = await apiFetch(
+          `${import.meta.env.VITE_API_URL}/Receipt/getReceipt`,
+          {
+            method: "GET",
+            signal: controller.signal,
+          },
+        );
+
+        if (!response.ok) {
+          throw new Error(`HTTP Error: ${response.status}`);
+        }
+
+        const result = (await response.json()) as ReceiptsResponse;
+
+        console.log("Receipt Response:", result);
+
+        if (!result.success) {
+          console.error("Receipt API failed:", result.message);
+
+          return;
+        }
+        if (result.defaultBranch) {
+          setLkpBranch(result.defaultBranch);
+        }
+
+        setBranchOptions(result.data || []);
+
+        setFinancialParameters(result.finparam || []);
+
+        setAccountOptions(result.accounts || []);
+        setAccountSortByIdOptions(result.accountsortbyId || []);
+
+        setCostCenters(result.costCenters || []);
+
+        if (result.txtDocNo || result.receiptNo) {
+          setTxtDocNo(result.txtDocNo || result.receiptNo);
+        }
+
+        setTimeout(() => {
+          const input = documentNoRef.current;
+
+          if (!input) {
+            console.log("Document No input not found");
+            return;
+          }
+
+          input.focus();
+
+          const value = input.value;
+
+          input.setSelectionRange(value.length, value.length);
+
+          console.log("Receipt No focused:", document.activeElement === input);
+        }, 100);
+      } catch (error) {
+        if (error instanceof DOMException && error.name === "AbortError") {
+          return;
+        }
+
+        console.error("Receipt API Error:", error);
+      }
+    };
+
+    loadReceiptData();
+
+    return () => {
+      controller.abort();
+    };
+  }, []);
+
+  const handlePrint = async () => {
+    try {
+      if (!lkpBranch || !lkpType || !txtDocNo.trim()) {
+        toast.warning("Branch, receipt type, and receipt number are required.");
+        return;
+      }
+
+      const response = await apiFetch(
+        `${import.meta.env.VITE_API_URL}/Receipt/print?${new URLSearchParams({
+          lkpBranch,
+          lkpType,
+          txtDocNo: txtDocNo.trim(),
+        })}`,
+      );
+
+      const result = (await response.json()) as ReceiptPrintResponse;
+
+      if (!response.ok || !result.success || !result.data) {
+        throw new Error(result.message || "Failed to fetch receipt print data.");
+      }
+
+      setPrintData(result.data);
+      setIsPrint(true);
+    } catch (error) {
+      console.error("Print data fetch error:", error);
+      toast.error(
+        error instanceof Error
+          ? error.message
+          : "Cannot connect to the Receipt API.",
+      );
+    }
+  };
+
+  const fetchReceiptExcel = async (): Promise<Blob | null> => {
+    if (!printData) return null;
+
+    try {
+      const response = await apiFetch(
+        `${import.meta.env.VITE_API_URL}/Receipt/excel?${new URLSearchParams({
+          lkpBranch,
+          lkpType,
+          txtDocNo: printData.docNo,
+        })}`,
+      );
+
+      if (!response.ok) {
+        let message = "Could not create the Excel file.";
+        try {
+          const result = (await response.json()) as { message?: string };
+          message = result.message || message;
+        } catch {
+          message = `Could not create the Excel file (error ${response.status}).`;
+        }
+        toast.error(message);
+        return null;
+      }
+
+      return await response.blob();
+    } catch (error) {
+      console.error("Receipt Excel download error:", error);
+      toast.error("Cannot connect to the Receipt API.");
+      return null;
+    }
+  };
+  /* =======================================================
+     LOAD RECEIPT FOR MODIFY
+  ======================================================= */
+
+  const getReceipt = useCallback(async () => {
+    const requestedDocumentNo = txtDocNo.trim();
+
+    if (!lkpBranch || !requestedDocumentNo) {
+      console.log("Modify lookup skipped:", {
+        lkpBranch,
+        requestedDocumentNo,
+      });
+
+      return;
+    }
+
+    const lookupKey = `${lkpBranch}|${GetStrDocType(
+      lkpType,
+    )}|${requestedDocumentNo}`;
+
+    if (lastLookupKeyRef.current === lookupKey) {
+      return;
+    }
+
+    lastLookupKeyRef.current = lookupKey;
+
+    setReceiptMessage("");
+
+    try {
+      const query = new URLSearchParams({
+        lkpBranch: lkpBranch,
+        lkpType: GetStrDocType(lkpType),
+        txtDocNo: requestedDocumentNo,
+      });
+
+      const url = `${import.meta.env.VITE_API_URL}/Receipt/get/data?${query.toString()}`;
+      const response = await apiFetch(url);
+      const responseText = await response.text();
+      let result: ModifyReceiptResponse;
+
+      try {
+        result = JSON.parse(responseText) as ModifyReceiptResponse;
+      } catch {
+        throw new Error(
+          responseText || "Invalid response from receipt lookup API.",
+        );
+      }
+
+      if (!response.ok || !result.exists || !result.header) {
+        setIsModifyMode(false);
+        setIsPosted(false);
+
+        setReceiptMessage(
+          result.message ||
+          "Receipt not found. New receipt mode remains active.",
+        );
+
+        return;
+      }
+
+      const loadedRows = createRows();
+
+      result.rows.slice(0, loadedRows.length).forEach((loadedRow, index) => {
+        const account = accountOptions.find(
+          (option) => option.faccountid === loadedRow.AccountID,
+        );
+
+        /* new API field first, fall back to the old one */
+        const loadedAmount = loadedRow.txtDebitCredit ?? loadedRow.creditAmt;
+
+        loadedRows[index] = {
+          id: index + 1,
+          slNo: index + 1,
+
+          accountId: loadedRow.AccountID || "",
+          accountName: loadedRow.AccountName || account?.faccountname || "",
+          fgcs: loadedRow.fgcs || account?.fgcs || "",
+          haveCc: account?.fhavecc === true,
+          haveDivision: Boolean(loadedRow.DivID),
+          DivID: loadedRow.DivID || "",
+          CCID: loadedRow.CCID || "",
+
+          txtDebitCredit:
+            loadedAmount === undefined || loadedAmount === null
+              ? ""
+              : String(loadedAmount),
+          amount: Number(loadedAmount) || 0,
+
+          match:
+            loadedRow.match === true ||
+            loadedRow.match === 1 ||
+            loadedRow.match === "1" ||
+            loadedRow.match === "true",
+          description: loadedRow.description || "",
+        };
+      });
+
+      /* ===============================================
+             HEADER
+          =============================================== */
+
+      setLkpBranch(result.header.lkpBranch || lkpBranch);
+
+      setLkpType(
+        result.header.lkpType === "CR" || result.header.lkpType === "C"
+          ? "C"
+          : "B",
+      );
+
+      setTxtDocNo(result.header.docNo || requestedDocumentNo);
+
+      setDtpDate(formatReceiptDate(result.header.dtpDate) || getTodayDate());
+      setCbAccountName(result.header.cbAccountName || "");
+      setCbCcId(result.header.CCID || "");
+      setReceivedFrom(result.header.receivedFrom || "");
+      setReference(result.header.reference || "");
+      setNote(result.header.note || "");
+      setRows(loadedRows);
+      setDescription("");
+      setActiveDescriptionRow(null);
+      setIsPosted(isPostedFlag(result.header.fpost));
+
+      /* ===============================================
+             MODIFY MODE
+          =============================================== */
+
+      setIsModifyMode(true);
+      setReceiptMessage("Receipt loaded successfully.");
+      console.log("✅ RECEIPT LOADED FOR MODIFY");
+      console.log("LOADED HEADER:", result.header);
+      console.log("LOADED ROWS:", loadedRows);
+
+      // toast.success(
+      //   "Receipt loaded successfully."
+      // );
+    } catch (error) {
+      lastLookupKeyRef.current = "";
+      setIsModifyMode(false);
+      setIsPosted(false);
+      console.error("MODIFY LOOKUP ERROR:", error);
+      setReceiptMessage(
+        error instanceof Error ? error.message : "Unable to load receipt.",
+      );
+    }
+  }, [accountOptions, lkpBranch, txtDocNo, lkpType]);
+
+  /* =======================================================
+     RESET TABLE + LOAD NEXT DOCUMENT NUMBER
+  ======================================================= */
+
+  /* =======================================================
+   RESET TABLE + LOAD NEXT DOCUMENT NUMBER
+======================================================= */
+
+  const resetTableAndLoadNextReceiptNumber = useCallback(async () => {
+    /* =====================================================
+       CLEAR ALL FORM DATA
+    ===================================================== */
+
+    setRows(createRows());
+
+    setCbAccountName("");
+    setCbCcId("");
+    setReceivedFrom("");
+    setReference("");
+    setNote("");
+    setDescription("");
+    setActiveDescriptionRow(null);
+
+    setDtpDate(getTodayDate());
+
+    setIsModifyMode(false);
+    setIsPosted(false);
+    setReceiptMessage("");
+
+    lastLookupKeyRef.current = "";
+
+    /*
+     * IMPORTANT:
+     * Clear the old receipt number immediately.
+     *
+     * This prevents the previously saved/modified/deleted
+     * receipt number from remaining visible while the
+     * new receipt number is being requested.
+     */
+    setTxtDocNo("");
+
+    try {
+      /* =====================================================
+         GET NEW RECEIPT DEFAULTS
+      ===================================================== */
+
+      const response = await apiFetch(
+        `${import.meta.env.VITE_API_URL}/Receipt/getReceipt`,
+        {
+          method: "GET",
+        },
+      );
+
+      if (!response.ok) {
+        throw new Error(
+          `Receipt defaults could not be reloaded. Status: ${response.status}`,
+        );
+      }
+
+      const result = (await response.json()) as ReceiptsResponse;
+
+      console.log("========================================");
+
+      console.log("GET RECEIPT AFTER RESET");
+
+      console.log("GET RECEIPT RESPONSE:", result);
+
+      console.log("API txtDocNo:", result.txtDocNo);
+
+      console.log("API receiptNo:", result.receiptNo);
+
+      console.log("========================================");
+
+      if (!result.success) {
+        throw new Error(
+          result.message || "Receipt defaults could not be reloaded.",
+        );
+      }
+
+      /* =====================================================
+         RESTORE API OPTIONS
+      ===================================================== */
+
+      setBranchOptions(result.data || []);
+      setFinancialParameters(result.finparam || []);
+      setAccountOptions(result.accounts || []);
+      setAccountSortByIdOptions(result.accountsortbyId || []);
+      setCostCenters(result.costCenters || []);
+
+      /* =====================================================
+         DEFAULT BRANCH
+      ===================================================== */
+
+      const defaultBranch =
+        result.defaultBranch || result.data?.[0]?.fbrid || "";
+
+      setLkpBranch(defaultBranch);
+
+      /* =====================================================
+         DEFAULT RECEIPT TYPE
+      ===================================================== */
+
+      const defaultReceiptType = result.receiptType || "";
+
+      if (defaultReceiptType) {
+        const normalizedType = defaultReceiptType.trim().toUpperCase();
+
+        const uiReceiptType =
+          normalizedType === "BR"
+            ? "B"
+            : normalizedType === "CR"
+              ? "C"
+              : normalizedType;
+
+        setLkpType(uiReceiptType);
+      }
+
+      /* =====================================================
+         GET NEW RECEIPT NUMBER
+      ===================================================== */
+
+      /*
+       * IMPORTANT:
+       *
+       * Your API response can return:
+       *
+       *     receiptNo
+       *
+       * or:
+       *
+       *     txtReceiptNo
+       *
+       * So check BOTH.
+       */
+
+      const newReceiptNo = result.receiptNo || result.txtDocNo || "";
+
+      console.log("NEW RECEIPT NUMBER:", newReceiptNo);
+
+      /* =====================================================
+         SET NEW RECEIPT NUMBER
+      ===================================================== */
+
+      if (newReceiptNo) {
+        setTxtDocNo(newReceiptNo);
+      } else {
+        console.error("❌ NEW RECEIPT NUMBER WAS NOT RETURNED BY API");
+
+        setTxtDocNo("");
+      }
+
+      /* =====================================================
+         FOCUS RECEIPT NO AFTER REACT RENDER
+      ===================================================== */
+
+      requestAnimationFrame(() => {
+        requestAnimationFrame(() => {
+          const input = documentNoRef.current;
+
+          if (!input) {
+            console.warn("Receipt No input not found");
+
+            return;
+          }
+
+          input.focus();
+
+          /*
+           * Do NOT manually assign:
+           *
+           * input.value = newReceiptNo
+           *
+           * because documentNo is a controlled
+           * React state value.
+           */
+
+          const value = input.value || "";
+          input.setSelectionRange(value.length, value.length);
+        });
+      });
+    } catch (error) {
+      console.error("Receipt defaults reload error:", error);
+
+      /*
+       * Keep Receipt No empty if the new number
+       * could not be loaded.
+       */
+
+      setTxtDocNo("");
+
+      setReceiptMessage(
+        error instanceof Error
+          ? error.message
+          : "Receipt defaults could not be reloaded.",
+      );
+    }
+  }, []);
+
+  /* =======================================================
+     BRANCH SELECT OPTIONS
+  ======================================================= */
+
+  const branchSelectOptions = useMemo<SelectOption[]>(
+    () =>
+      branchOptions.map((item) => ({
+        value: item.fbrid,
+        label: item.fbrname,
+      })),
+    [branchOptions],
+  );
+
+  /* =======================================================
+     FOCUS TABLE FIELD
+  ======================================================= */
+
+  const focusTableField = useCallback((rowIndex: number, field: TableField) => {
+    receiptTableRef.current?.focusField(rowIndex, field);
+  }, []);
+
+  /* =======================================================
+     CLEAR ROW
+  ======================================================= */
+
+  const handleClearRow = useCallback(
+    (id: number) => {
+      setRows((currentRows) => {
+        const remainingRows = currentRows
+          .filter((row) => row.id !== id)
+          .map((row, index) => ({
+            ...row,
+            id: index + 1,
+          }));
+
+        const emptyRow: ReceiptRow = {
+          id: remainingRows.length + 1,
+          slNo: remainingRows.length + 1,
+          accountId: "",
+          accountName: "",
+          fgcs: "",
+          haveCc: false,
+          haveDivision: false,
+          DivID: "",
+          CCID: "",
+          txtDebitCredit: "",
+          amount: 0,
+          match: false,
+          description: "",
+        };
+
+        return [...remainingRows, emptyRow];
+      });
+
+      if (
+        activeDescriptionRow !== null &&
+        rows[activeDescriptionRow]?.id === id
+      ) {
+        setDescription("");
+        setActiveDescriptionRow(null);
+      }
+    },
+    [activeDescriptionRow, rows],
+  );
+  /* =======================================================
+     CLEAR DESCRIPTION ROW
+  ======================================================= */
+
+  const handleClearDescriptionRow = useCallback(() => {
+    if (activeDescriptionRow === null) {
+      return;
+    }
+
+    const row = rows[activeDescriptionRow];
+
+    if (row) {
+      handleClearRow(row.id);
+    }
+  }, [activeDescriptionRow, handleClearRow, rows]);
+
+  /* =======================================================
+     SORT ROWS
+  ======================================================= */
+
+  const handleSortRows = useCallback(
+    (field: SortField, direction: "asc" | "desc") => {
+      setRows((currentRows) =>
+        [...currentRows].sort((first, second) => {
+          const firstValue =
+            field === "accountId" ? first.accountId : first.accountName;
+
+          const secondValue =
+            field === "accountId" ? second.accountId : second.accountName;
+
+          const result =
+            field === "accountId"
+              ? firstValue.localeCompare(secondValue, undefined, {
+                numeric: true,
+                sensitivity: "base",
+              })
+              : firstValue.localeCompare(secondValue, undefined, {
+                sensitivity: "base",
+              });
+
+          return direction === "asc" ? result : -result;
+        }),
+      );
+    },
+    [],
+  );
+
+  /* =======================================================
+     ROW CHANGE
+  ======================================================= */
+
+  const handleRowChange = useCallback(
+    (id: number, field: keyof ReceiptRow, value: string | boolean) => {
+      setRows((currentRows) =>
+        currentRows.map((row) =>
+          row.id === id
+            ? {
+              ...row,
+              [field]: value,
+            }
+            : row,
+        ),
+      );
+    },
+    [],
+  );
+
+  /* =======================================================
+     TABLE ESCAPE -> NOTE
+  ======================================================= */
+
+  const handleTableEscape = useCallback(() => {
+    setActiveDescriptionRow(null);
+
+    requestAnimationFrame(() => {
+      const note = noteRef.current;
+
+      if (!note) {
+        return;
+      }
+      note.focus();
+      const position = note.value.length;
+      note.setSelectionRange(position, position);
+    });
+  }, []);
+
+  /* =======================================================
+     TABLE ENTER
+  ======================================================= */
+
+  const handleTableEnter = useCallback(
+    (rowIndex: number, field: TableField) => {
+      const row = rows[rowIndex];
+
+      /* ===============================================
+           ACCOUNT ID REQUIRED
+        =============================================== */
+
+      if (field === "accountId" && !row?.accountId.trim()) {
+        toast.warning("Account ID is required.");
+        focusTableField(rowIndex, "accountId");
+        return;
+      }
+
+      /* ===============================================
+           CREDIT REQUIRED
+        =============================================== */
+
+      if (
+        field === "txtDebitCredit" &&
+        !Number.isFinite(parseFloat(row?.txtDebitCredit ?? ""))
+      ) {
+        toast.warning("Credit Amount is required.");
+        focusTableField(rowIndex, "txtDebitCredit");
+        return;
+      }
+
+      /* ===============================================
+           CREDIT -> DESCRIPTION
+        =============================================== */
+
+      if (field === "txtDebitCredit") {
+        setActiveDescriptionRow(rowIndex);
+
+        // Only load the selected row's description
+        // when that row already has one.
+        //
+        // If the row has no description, keep the
+        // existing Description value visible.
+        if (row?.description?.trim()) {
+          setDescription(row.description);
+        }
+
+        requestAnimationFrame(() => {
+          const input = descriptionRef.current;
+
+          if (!input) {
+            return;
+          }
+
+          input.focus();
+
+          input.setSelectionRange(input.value.length, input.value.length);
+        });
+
+        return;
+      }
+
+      /* ===============================================
+           AVAILABLE FIELDS
+        =============================================== */
+
+      const availableFields = tableFieldOrder
+        .filter((nextField) => nextField !== "DivID" || row?.haveDivision)
+        .filter((nextField) => nextField !== "CCID" || row?.haveCc);
+
+      const fieldIndex = availableFields.indexOf(field);
+
+      const nextField = availableFields[fieldIndex + 1];
+
+      if (nextField) {
+        focusTableField(rowIndex, nextField);
+      }
+    },
+    [focusTableField, rows],
+  );
+
+  /* =======================================================
+     DESCRIPTION CHANGE
+
+     Description is stored inside the active row.
+  ======================================================= */
+
+  const handleDescriptionChange = useCallback(
+    (value: string) => {
+      setDescription(value);
+
+      if (activeDescriptionRow === null) {
+        return;
+      }
+
+      const activeRow = rows[activeDescriptionRow];
+
+      if (!activeRow) {
+        return;
+      }
+
+      const activeRowId = activeRow.id;
+
+      setRows((currentRows) =>
+        currentRows.map((row) =>
+          row.id === activeRowId
+            ? {
+              ...row,
+              description: value,
+            }
+            : row,
+        ),
+      );
+    },
+    [activeDescriptionRow, rows],
+  );
+
+  /* =======================================================
+     DESCRIPTION ENTER
+  ======================================================= */
+
+  const handleDescriptionEnter = useCallback(
+    (event: React.KeyboardEvent<HTMLInputElement>) => {
+      if (event.key !== "Enter") {
+        return;
+      }
+
+      event.preventDefault();
+      event.stopPropagation();
+
+      /* ===============================================
+           NO ACTIVE ROW
+        =============================================== */
+
+      if (activeDescriptionRow === null) {
+        focusTableField(0, "accountId");
+
+        return;
+      }
+
+      /* ===============================================
+           NEXT ROW
+        =============================================== */
+
+      const nextRow = activeDescriptionRow + 1;
+
+      /* ===============================================
+           LAST ROW -> NOTE
+        =============================================== */
+
+      if (nextRow >= rows.length) {
+        setActiveDescriptionRow(null);
+
+        requestAnimationFrame(() => {
+          const note = noteRef.current;
+
+          if (!note) {
+            return;
+          }
+
+          note.focus();
+
+          const position = note.value.length;
+
+          note.setSelectionRange(position, position);
+        });
+
+        return;
+      }
+
+      /* ===============================================
+           NEXT ROW ACCOUNT ID
+        =============================================== */
+
+      focusTableField(nextRow, "accountId");
+    },
+    [activeDescriptionRow, focusTableField, rows.length],
+  );
+
+  /* =======================================================
+     NOTE ENTER -> SAVE / MODIFY
+  ======================================================= */
+
+  const handleNoteEnter = useCallback(
+    (event: React.KeyboardEvent<HTMLTextAreaElement>) => {
+      if (event.key !== "Enter" || event.shiftKey) {
+        return;
+      }
+
+      event.preventDefault();
+      event.stopPropagation();
+
+      requestAnimationFrame(() => {
+        actionsRef.current?.focusSave();
+      });
+    },
+    [],
+  );
+
+  /* =======================================================
+     TOTAL
+  ======================================================= */
+
+  const total = useMemo(
+    () => rows.reduce((sum, row) => sum + (Number(row.txtDebitCredit) || 0), 0),
+    [rows],
+  );
+
+  /* =======================================================
+     SAVE RECEIPT
+  ======================================================= */
+
+  /* =======================================================
+   SAVE RECEIPT
+======================================================= */
+
+  const handleSave = useCallback(async () => {
+    try {
+      /* =====================================================
+       GET VALID ROWS
+    ===================================================== */
+
+      const validRows = rows.filter(
+        (row) => row.accountId && row.accountId.trim() !== "",
+      );
+
+      /* =====================================================
+       VALIDATION
+    ===================================================== */
+
+      const validationFailed =
+        !lkpBranch ||
+        !lkpType ||
+        !txtDocNo.trim() ||
+        !dtpDate ||
+        !cbAccountName ||
+        validRows.length === 0;
+
+      if (validationFailed) {
+        toast.warning(
+          "Branch, type, receipt number, date, cash/bank, and one account row are required.",
+        );
+
+        return;
+      }
+
+      /* =====================================================
+       SUBMIT CONFIRMATION
+    ===================================================== */
+
+      const shouldSubmit = true;
+
+      if (!shouldSubmit) {
+        console.log("❌ SAVE CANCELLED BY USER");
+
+        return;
+      }
+
+      /* =====================================================
+       CREATE SAVE PAYLOAD
+    ===================================================== */
+
+      const receiptData = {
+        lkpBranch,
+        lkpType,
+        cbAccountName,
+        cbCcId,
+
+        txtDocNo,
+
+        dtpDate,
+        receivedFrom,
+        reference,
+        rows: validRows.map((row, index) => ({
+          id: row.id,
+          slNo: index + 1,
+          accountId: row.accountId,
+          accountName: row.accountName,
+          fgcs: row.fgcs,
+          DivID: row.DivID,
+          CCID: row.CCID,
+          txtDebitCredit: Number(row.txtDebitCredit) || 0,
+          match: row.match,
+          description: row.description || "",
+        })),
+        total,
+        note,
+      };
+
+      /* =====================================================
+       CONVERT UI TYPE TO DATABASE TYPE
+    ===================================================== */
+
+      const saveType =
+        lkpType === "B" ? "BR" : lkpType === "C" ? "CR" : lkpType;
+      console.log("========== SAVE RECEIPT ==========");
+
+      console.log("OLD RECEIPT NUMBER:", txtDocNo);
+
+      console.log("SAVE TYPE:", saveType);
+      console.log("SENDING RECEIPT:", receiptData);
+
+      /* =====================================================
+       SAVE API
+    ===================================================== */
+
+      const response = await apiFetch(
+        `${import.meta.env.VITE_API_URL}/Receipt/saveReceipt`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            ...receiptData,
+            lkpType: saveType,
+          }),
+        },
+      );
+
+      /* =====================================================
+       READ RESPONSE
+    ===================================================== */
+
+      const text = await response.text();
+
+      let result: {
+        success?: boolean;
+        message?: string;
+        receiptNoChanged?: boolean;
+        newReceiptNo?: string;
+      };
+
+      try {
+        result = JSON.parse(text);
+      } catch {
+        result = {
+          success: false,
+          message: text,
+        };
+      }
+
+      console.log("SAVE API RESPONSE:", result);
+
+      // Receipt No was taken by another user: swap in the new one, keep all data
+      if (
+        response.status === 409 &&
+        result.receiptNoChanged &&
+        result.newReceiptNo
+      ) {
+        lastLookupKeyRef.current = ""; // lets the Receipt No lookup run again
+        setTxtDocNo(result.newReceiptNo);
+
+        toast.warning(
+          `Receipt No ${txtDocNo} was already used by another user. Changed to ${result.newReceiptNo}. Please click Save again.`,
+        );
+
+        requestAnimationFrame(() => actionsRef.current?.focusSave());
+        return; // no reset, the form data stays
+      }
+
+      /* =====================================================
+       SAVE ERROR
+    ===================================================== */
+
+      if (!response.ok) {
+        toast.error(
+          result.message || `Save failed. Status: ${response.status}`,
+        );
+
+        return;
+      }
+
+      /* =====================================================
+       SAVE SUCCESS
+    ===================================================== */
+
+      toast.success(result.message || "Saved successfully");
+
+      console.log("✅ SAVE SUCCESS");
+
+      console.log("OLD SAVED RECEIPT:", txtDocNo);
+
+      /* =====================================================
+       CLEAR + LOAD COMPLETELY NEW RECEIPT NUMBER
+    ===================================================== */
+
+      await resetTableAndLoadNextReceiptNumber();
+
+      console.log("✅ RESET COMPLETED AFTER SAVE");
+    } catch (error) {
+      console.error("SAVE ERROR:", error);
+
+      toast.error(
+        error instanceof Error
+          ? error.message
+          : "Cannot connect to Receipt API.",
+      );
+    }
+  }, [
+    lkpBranch,
+    lkpType,
+    cbAccountName,
+    cbCcId,
+    txtDocNo,
+    dtpDate,
+    receivedFrom,
+    reference,
+    rows,
+    total,
+    note,
+    resetTableAndLoadNextReceiptNumber,
+  ]);
+  /* =======================================================
+     MODIFY RECEIPT
+  ======================================================= */
+
+  const handleModify = useCallback(async () => {
+    if (isPosted) {
+      toast.warning("A posted receipt cannot be modified.");
+      return;
+    }
+
+    /* ===============================================
+           THIS MUST APPEAR IMMEDIATELY WHEN BUTTON IS CLICKED
+        =============================================== */
+
+    console.log("========================================");
+
+    console.log("🔥 MODIFY FUNCTION CALLED");
+
+    console.log("========================================");
+
+    /* ===============================================
+           FILTER VALID ROWS
+        =============================================== */
+
+    const validRows = rows.filter(
+      (row) => row.accountId && row.accountId.trim() !== "",
+    );
+
+    console.log("MODIFY CURRENT VALUES:", {
+      lkpBranch,
+      lkpType,
+      cbAccountName,
+      cbCcId,
+      txtDocNo,
+      dtpDate,
+      receivedFrom,
+      reference,
+      note,
+    });
+
+    console.log("MODIFY VALID ROWS:", validRows);
+
+    /* ===============================================
+           VALIDATION
+        =============================================== */
+
+    const validationFailed =
+      !lkpBranch ||
+      !lkpType ||
+      !txtDocNo.trim() ||
+      !dtpDate ||
+      !cbAccountName ||
+      validRows.length === 0;
+
+    if (validationFailed) {
+      console.error("❌ MODIFY STOPPED BY VALIDATION");
+
+      console.error("Validation values:", {
+        lkpBranch: !!lkpBranch,
+        lkpType: !!lkpType,
+        txtDocNo: !!txtDocNo.trim(),
+        dtpDate: !!dtpDate,
+        cbAccountName: !!cbAccountName,
+        validRows: validRows.length,
+      });
+
+      const validationMessage =
+        "Branch, type, receipt number, date, cash/bank, and one account row are required.";
+
+      setReceiptMessage(validationMessage);
+
+      toast.warning(validationMessage);
+
+      return;
+    }
+
+    /* ===============================================
+           SUBMIT CONFIRMATION
+  
+           IMPORTANT:
+           This happens BEFORE the API call.
+  
+           NO  → no API call, no reset, stay in edit mode.
+           YES → continue to API.
+        =============================================== */
+
+    const shouldSubmit = true;
+    // window.confirm(
+    //   "Do you want to submit?"
+    // );
+
+    if (!shouldSubmit) {
+      console.log("❌ MODIFY CANCELLED BY USER");
+      console.log("❌ NO API CALL WAS MADE");
+      return;
+    }
+
+    console.log("✅ MODIFY SUBMISSION CONFIRMED");
+
+    /* ===============================================
+           CREATE MODIFY PAYLOAD
+        =============================================== */
+
+    const modifyPayload = {
+      lkpBranch,
+      lkpType: GetStrDocType(lkpType),
+      cbAccountName: cbAccountName,
+      cbCcId,
+
+      /* IMPORTANT:
+             Keep the loaded receipt number.
+             Do NOT generate a new number.
+          */
+      txtDocNo: txtDocNo.trim(),
+
+      dtpDate: dtpDate,
+      receivedFrom,
+      reference,
+      note,
+      rows: validRows.map((row, index) => ({
+        id: row.id,
+        slNo: index + 1,
+        accountId: row.accountId,
+        accountName: row.accountName,
+        fgcs: row.fgcs,
+        DivID: row.DivID,
+        CCID: row.CCID,
+        txtDebitCredit: Number(row.txtDebitCredit) || 0,
+        match: row.match,
+        description: row.description || "",
+      })),
+
+      total,
+    };
+
+    /* ===============================================
+           DEBUG PAYLOAD
+        =============================================== */
+
+    console.log("🔥 MODIFY PAYLOAD:");
+    console.log(JSON.stringify(modifyPayload, null, 2));
+    console.log("MODIFY DOC TYPE:", modifyPayload.lkpType);
+
+    console.log("MODIFY DOC NO:", modifyPayload.txtDocNo);
+
+    /* ===============================================
+           CALL API
+  
+           This is reached ONLY when user selected YES.
+        =============================================== */
+
+    try {
+      console.log(
+        "🔥 CALLING:",
+        `${import.meta.env.VITE_API_URL}i/Receipt/modifyReceipt`,
+      );
+
+      const response = await apiFetch(
+        `${import.meta.env.VITE_API_URL}/Receipt/modifyReceipt`,
+        {
+          method: "POST",
+
+          headers: {
+            "Content-Type": "application/json",
+          },
+
+          body: JSON.stringify(modifyPayload),
+        },
+      );
+
+      console.log("🔥 MODIFY API STATUS:", response.status);
+
+      console.log("🔥 MODIFY API OK:", response.ok);
+
+      /* =============================================
+             READ RESPONSE AS TEXT FIRST
+          ============================================= */
+
+      const responseText = await response.text();
+
+      console.log("🔥 MODIFY RAW RESPONSE:");
+
+      console.log(responseText);
+
+      let result: {
+        success?: boolean;
+        message?: string;
+        data?: unknown;
+      };
+
+      try {
+        result = JSON.parse(responseText) as {
+          success?: boolean;
+          message?: string;
+          data?: unknown;
+        };
+      } catch {
+        result = {
+          success: response.ok,
+          message: responseText,
+        };
+      }
+
+      console.log("🔥 MODIFY PARSED RESPONSE:", result);
+
+      /* =============================================
+             HTTP ERROR
+          ============================================= */
+
+      if (!response.ok) {
+        throw new Error(
+          result.message ||
+          `Receipt could not be modified. HTTP ${response.status}`,
+        );
+      }
+
+      /* =============================================
+             SUCCESS
+  
+             DO NOT CHECK:
+               result.success !== true
+  
+             because the backend response currently
+             returns message/data without necessarily
+             returning success:true.
+          ============================================= */
+
+      console.log("✅ MODIFY API SUCCESS");
+
+      setReceiptMessage(result.message || "modified successfully.");
+
+      toast.success(result.message || "modified");
+
+      /* =============================================
+             CLEAR FORM + RECALL RECEIPT DATA
+  
+             This happens ONLY after successful Modify.
+  
+             It will:
+             - clear table data
+             - clear Received From
+             - clear Reference
+             - clear Description
+             - clear Note
+             - load default Branch
+             - load default Type
+             - fetch a NEW Receipt No
+             - exit modify mode
+          ============================================= */
+
+      await resetTableAndLoadNextReceiptNumber();
+
+      setFocusReceiptNoAfterClear((current) => current + 1);
+    } catch (error) {
+      /* =============================================
+             MODIFY ERROR
+          ============================================= */
+
+      console.error("🔥 MODIFY ERROR:", error);
+
+      const errorMessage =
+        error instanceof Error
+          ? error.message
+          : "Receipt could not be modified.";
+
+      setReceiptMessage(errorMessage);
+
+      toast.error(errorMessage);
+    }
+  }, [
+    lkpBranch,
+    lkpType,
+    cbAccountName,
+    cbCcId,
+    txtDocNo,
+    dtpDate,
+    receivedFrom,
+    reference,
+    note,
+    rows,
+    total,
+    resetTableAndLoadNextReceiptNumber,
+    isPosted,
+  ]);
+
+  /* =======================================================
+      Delete RECEIPT
+   ======================================================= */
+
+  const handledelete = useCallback(async () => {
+    if (isPosted) {
+      toast.warning("A posted receipt cannot be deleted.");
+      return;
+    }
+
+    try {
+      /* ===============================================
+         VALIDATION
+      =============================================== */
+
+      const validationFailed = !lkpBranch || !lkpType || !txtDocNo.trim();
+
+      if (validationFailed) {
+        toast.warning("Branch, type, and receipt number are required.");
+        return;
+      }
+
+      /* ===============================================
+         DELETE CONFIRMATION
+      =============================================== */
+
+      const shouldDelete = window.confirm("Do you want to Delete?");
+
+      if (!shouldDelete) {
+        console.log("❌ MODIFY CANCELLED BY USER");
+
+        console.log("❌ NO API CALL WAS MADE");
+
+        return;
+      }
+
+      /* ===============================================
+         CREATE DELETE PAYLOAD
+      =============================================== */
+
+      const receiptData = {
+        lkpBranch: lkpBranch,
+        lkpType: lkpType + "R",
+        txtDocNo: txtDocNo.trim(),
+      };
+
+      console.log("DELETE RECEIPT:", receiptData);
+
+      /* ===============================================
+         DELETE API
+      =============================================== */
+
+      const response = await apiFetch(
+        `${import.meta.env.VITE_API_URL}/Receipt/delete`,
+        {
+          method: "DELETE",
+
+          headers: {
+            "Content-Type": "application/json",
+          },
+
+          body: JSON.stringify(receiptData),
+        },
+      );
+
+      const text = await response.text();
+
+      console.log("DELETE STATUS:", response.status);
+
+      console.log("DELETE RAW RESPONSE:", text);
+
+      let result: {
+        success?: boolean;
+        message?: string;
+      };
+
+      try {
+        result = JSON.parse(text);
+      } catch {
+        result = {
+          success: false,
+          message: text,
+        };
+      }
+
+      console.log("DELETE API RESPONSE:", result);
+
+      /* ===============================================
+         API ERROR
+      =============================================== */
+
+      if (!response.ok) {
+        toast.error(
+          result.message || `Delete failed. Status: ${response.status}`,
+        );
+
+        return;
+      }
+
+      /* ===============================================
+         SUCCESS
+      =============================================== */
+
+      toast.success(result.message || "Receipt deleted successfully");
+
+      /* ===============================================
+         CLEAR FORM + LOAD NEXT RECEIPT
+      =============================================== */
+      await resetTableAndLoadNextReceiptNumber();
+
+      setFocusReceiptNoAfterClear((current) => current + 1);
+    } catch (error) {
+      console.error("DELETE ERROR:", error);
+
+      toast.error(
+        error instanceof Error
+          ? error.message
+          : "Cannot connect to Receipt API.",
+      );
+    }
+  }, [isPosted, lkpBranch, lkpType, txtDocNo, resetTableAndLoadNextReceiptNumber]);
+
+  /* =======================================================
+     CLEAR FORM
+  ======================================================= */
+
+  const clearForm = useCallback(async () => {
+    await resetTableAndLoadNextReceiptNumber();
+
+    setFocusReceiptNoAfterClear((current) => current + 1);
+  }, [resetTableAndLoadNextReceiptNumber]);
+
+  /* =======================================================
+     POST
+  ======================================================= */
+
+  const postRequestInFlight = useRef(false);
+
+  const handlePost = useCallback(async () => {
+    if (postRequestInFlight.current) return;
+
+    if (isPosted) {
+      toast.warning("This receipt is already posted.");
+      return;
+    }
+
+    if (!lkpBranch) {
+      toast.warning("Please select 'Branch'.");
+      document.getElementById("lkpBranch")?.focus();
+      return;
+    }
+
+    if (!lkpType) {
+      toast.warning("Please select 'Type'.");
+      document.getElementById("lkpType")?.focus();
+      return;
+    }
+
+    if (!txtDocNo.trim()) {
+      toast.warning("Please enter 'Receipt No.'.");
+      document.getElementById("txtDocNo")?.focus();
+      return;
+    }
+
+    if (!isModifyMode) {
+      toast.warning("Load a saved receipt before posting.");
+      return;
+    }
+
+    const {
+      pstrCoID: PstrCoID,
+      pstrYear: PstrYear,
+      pstrUserID: PstrUserID,
+    } = getSession();
+
+    if (!PstrCoID || !PstrYear || !PstrUserID) {
+      toast.error("Company ID, year, or user ID is missing. Please log in again.");
+      return;
+    }
+
+    const dateMatch = /^(\d{2})\/(\d{2})\/(\d{4})$/.exec(dtpDate.trim());
+    if (!dateMatch) {
+      toast.warning("Please enter a valid receipt date.");
+      document.getElementById("dtpDate")?.focus();
+      return;
+    }
+
+    const [, day, month, year] = dateMatch;
+    const isoDate = `${year}-${month}-${day}`;
+    const parsedDate = new Date(`${isoDate}T00:00:00`);
+    if (
+      Number.isNaN(parsedDate.getTime()) ||
+      parsedDate.getFullYear() !== Number(year) ||
+      parsedDate.getMonth() + 1 !== Number(month) ||
+      parsedDate.getDate() !== Number(day)
+    ) {
+      toast.warning("Please enter a valid receipt date.");
+      document.getElementById("dtpDate")?.focus();
+      return;
+    }
+
+    if (!window.confirm("Do you want to post this receipt?")) return;
+
+    postRequestInFlight.current = true;
+
+    try {
+      const response = await apiFetch(
+        `${import.meta.env.VITE_API_URL}/Receipt/post`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            PstrCoID,
+            PstrYear,
+            lkpBranch,
+            lkpDocType: GetStrDocType(lkpType),
+            txtDocNo: txtDocNo.trim(),
+            dtpDate: isoDate,
+            PstrUserID,
+          }),
+        },
+      );
+
+      const responseText = await response.text();
+      let result: {
+        success?: boolean;
+        message?: string;
+        intDocPostCount?: number;
+      };
+
+      try {
+        result = JSON.parse(responseText) as {
+          success?: boolean;
+          message?: string;
+          intDocPostCount?: number;
+        };
+      } catch {
+        result = {
+          success: false,
+          message: responseText || "Receipt could not be posted.",
+        };
+      }
+
+      if (!response.ok || !result.success) {
+        toast.error(
+          result.message || `Receipt could not be posted (error ${response.status}).`,
+        );
+        return;
+      }
+
+      toast.success(result.message || "Receipt posting completed successfully.");
+      await resetTableAndLoadNextReceiptNumber();
+      setFocusReceiptNoAfterClear((current) => current + 1);
+    } catch (error) {
+      console.error("Receipt posting error:", error);
+      toast.error(
+        error instanceof Error
+          ? error.message
+          : "Cannot connect to the Receipt API.",
+      );
+    } finally {
+      postRequestInFlight.current = false;
+    }
+  }, [
+    dtpDate,
+    isPosted,
+    isModifyMode,
+    lkpBranch,
+    lkpType,
+    resetTableAndLoadNextReceiptNumber,
+    txtDocNo,
+  ]);
+
+  /* =======================================================
+     INITIAL FOCUS
+  ======================================================= */
+
+  useEffect(() => {
+    const frame = requestAnimationFrame(() => {
+      documentNoRef.current?.focus();
+
+      const value = documentNoRef.current?.value ?? "";
+
+      documentNoRef.current?.setSelectionRange(value.length, value.length);
+    });
+
+    return () => {
+      cancelAnimationFrame(frame);
+    };
+  }, []);
+
+  /* =======================================================
+     RETURN
+  ======================================================= */
+
+  return (
+    <div className="min-h-fit mt-3 bg-slate-100 px-5 py-2 flex flex-col justify-center items-center gap-2.5">
+      <div className="receipt-screen mx-auto lg:w-275 md:w-[55%] max-w-362.5 min-w-212.5 border border-gray-400 bg-white">
+        {/* =================================================
+            HEADER
+        ================================================= */}
+
+        <PaymentHeader />
+
+        {/* =================================================
+            HEADER FORM
+        ================================================= */}
+
+        <PaymentForm
+          lkpBranch={lkpBranch}
+          setLkpBranch={setLkpBranch}
+          lkpType={lkpType}
+          setLkpType={setLkpType}
+          cbAccountName={cbAccountName}
+          setCbAccountName={setCbAccountName}
+          reference={reference}
+          setReference={setReference}
+          receivedFrom={receivedFrom}
+          setReceivedFrom={setReceivedFrom}
+          documentNo={txtDocNo}
+          setDocumentNo={setTxtDocNo}
+          dtpDate={dtpDate}
+          setDtpDate={setDtpDate}
+          branchRef={branchRef}
+          typeRef={typeRef}
+          documentNoRef={documentNoRef}
+          cbAccountRef={cbAccountRef}
+          dateRef={dateRef}
+          receivedFromRef={receivedFromRef}
+          referenceRef={referenceRef}
+          focusFirstAccountId={() => focusTableField(0, "accountId")}
+          branchOptions={branchSelectOptions}
+          financialParameters={financialParameters}
+          isModifyMode={isModifyMode}
+          documentNoEditable
+          txtDocNo={getReceipt}
+          preserveCbAccountOnLoad={isModifyMode}
+          focusReceiptNoAfterClear={focusReceiptNoAfterClear}
+        />
+
+        {/* =================================================
+            TABLE
+        ================================================= */}
+
+        <PaymentTable
+          ref={receiptTableRef}
+          url={`${import.meta.env.BASE_URL}/Receipt/getDivID`}
+          rows={rows}
+          handleRowChange={handleRowChange}
+          onFieldEnter={handleTableEnter}
+          onTableEscape={handleTableEscape}
+          onClearRow={handleClearRow}
+          onSortRows={handleSortRows}
+          accountOptions={accountOptions}
+          accountSortByIdOptions={accountSortByIdOptions}
+          onRowSelect={(id, row) => {
+            const rowIndex = rows.findIndex((item) => item.id === id);
+
+            if (rowIndex === -1) {
+              return;
+            }
+
+            setActiveDescriptionRow(rowIndex);
+
+            setDescription((currentDescription) => {
+              // If this row already has its own description,
+              // display that description.
+              if (row.description?.trim()) {
+                return row.description;
+              }
+
+              // If the new row has no description yet,
+              // keep the previous description visible.
+              return currentDescription;
+            });
+          }}
+          costCenters={costCenters}
+        />
+
+        {/* =================================================
+            TOTAL
+        ================================================= */}
+
+        <div
+          className="mt-2.5 mr-16.5 ml-auto flex w-55 items-center gap-2 text-[13px]
+          "
+        >
+          <label className="whitespace-nowrap text-[14px]">Total :</label>
+
+          <input
+            id="txtTotCreditAmt"
+            value={total.toFixed(2)}
+            readOnly
+            className="ml-1 h-7.5 w-25 rounded border border-gray-300 px-2 text-right outline-none text-[#344054]"
+          />
+        </div>
+
+        {/* =================================================
+            BOTTOM FORM
+        ================================================= */}
+
+        <PaymentBottomForm
+          description={description}
+          setDescription={handleDescriptionChange}
+          note={note}
+          setNote={setNote}
+          noteRef={noteRef}
+          descriptionRef={descriptionRef}
+          onNoteEnter={handleNoteEnter}
+          onDescriptionEnter={handleDescriptionEnter}
+          onDescriptionClear={handleClearDescriptionRow}
+        />
+
+        {/* =================================================
+            ACTIONS
+        ================================================= */}
+
+        <PaymentActions
+          ref={actionsRef}
+          clearForm={clearForm}
+          onPrint={handlePrint}
+          onPost={() => void handlePost()}
+          onSave={isModifyMode ? handleModify : handleSave}
+          onDelete={handledelete}
+          saveLabel={isModifyMode ? "Modify" : "Save"}
+          isPosted={isPosted}
+          preventSearchNavigation
+        />
+      </div>
+
+      {isPrint && printData && (
+        <ReceiptPrint
+          data={printData}
+          fileBase={`Receipt-${printData.branchId}-${printData.docNo}`.replace(
+            /[^\w.-]+/g,
+            "_",
+          )}
+          buildPdf={buildReceiptPdf}
+          fetchExcel={fetchReceiptExcel}
+          onClose={() => {
+            setIsPrint(false);
+            setPrintData(null);
+          }}
+        />
+      )}
+    </div>
+  );
+};
+
+export default PaymentPage;
