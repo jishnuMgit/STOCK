@@ -786,7 +786,7 @@ export const PaymentForm: React.FC<PaymentFormProps> = ({
 
                 <div className="flex items-center gap-2 -mr-2">
                     <label className="text-right text-[14px] whitespace-nowrap">
-                        Receipt No. :
+                        Payment No. :
                     </label>
 
                     <input
@@ -1046,8 +1046,8 @@ export const PaymentForm: React.FC<PaymentFormProps> = ({
                 {/* ================= RECEIVED FROM ================= */}
 
                 <div className="flex items-center gap-2">
-                    <label className="w-22.5 text-right text-[14px] whitespace-nowrap">
-                        Received From :
+                    <label className="w-22.5 text-right ml-3 -mr-3 text-[14px] whitespace-nowrap">
+                        Paid to :
                     </label>
 
                     <input
