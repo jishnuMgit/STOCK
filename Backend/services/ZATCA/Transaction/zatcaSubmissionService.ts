@@ -225,10 +225,11 @@ async function saveHistory(
     qrCode: string;
     sequenceNo: number;
     status: string;
+    errorMsg?: string; // full reason from ZATCA, saved in ferrormsg
   } | null
 ): Promise<void> {
   await pool.query(
-    `CALL dbo.sp_pagezatcafilehistory($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12)`,
+    `CALL dbo.sp_pagezatcafilehistory($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13)`,
     [
       mode,
       ctx.coId,
@@ -236,12 +237,13 @@ async function saveHistory(
       doc.brId,
       doc.docType,
       doc.docNo,
+      h?.xmlHash ?? null, // p_strxmlhash comes BEFORE p_strinvoicehash in the proc
       h?.invoiceHash ?? null,
-      h?.xmlHash ?? null,
       h?.qrCode ?? null,
       h?.sequenceNo ?? null,
       h?.status ?? null,
       ctx.userId,
+      h?.errorMsg ? h.errorMsg.slice(0, 500) : null, // ferrormsg is varchar(500)
     ]
   );
 }
@@ -379,6 +381,7 @@ export async function submitZATCADocumentsService(
           qrCode: "",
           sequenceNo: 0,
           status: (out.rejectStatus ?? out.message ?? "Rejected").slice(0, 100),
+          errorMsg: out.message ?? "",
         });
         results.push({ ...base, status: "REJECTED", message: out.message });
       }
