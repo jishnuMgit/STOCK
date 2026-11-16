@@ -154,6 +154,43 @@ const w = (name: string, inner: string, attrs?: Attrs): string =>
 
 const b64 = (s: string): string => Buffer.from(s, "utf8").toString("base64");
 
+/* ---------- indentation ----------
+   The ZATCA .NET SDK re-saves the signed XML indented. A document built on ONE line is
+   hashed (and the hash put in the QR) as one line, but ZATCA then hashes the indented
+   file it receives -> invoiceHash_QRCODE_INVALID. The VB serializer wrote indented XML,
+   so the document is indented here too: 4 spaces, one element per line, leaf elements
+   (<a>text</a>) on one line. */
+export function prettyXml(xml: string): string {
+  const decl = /^<\?xml[^>]*\?>/.exec(xml)?.[0] ?? "";
+  const tokens = xml.slice(decl.length).match(/<[^>]+>|[^<]+/g) ?? [];
+  const out: string[] = [];
+  let depth = 0;
+
+  for (let i = 0; i < tokens.length; i += 1) {
+    const tok = tokens[i];
+    const next = tokens[i + 1];
+    const pad = "    ".repeat(depth);
+
+    if (tok.startsWith("</")) {
+      depth -= 1;
+      out.push("    ".repeat(depth) + tok);
+    } else if (tok.endsWith("/>")) {
+      out.push(pad + tok);
+    } else if (next !== undefined && !next.startsWith("<") && tokens[i + 2]?.startsWith("</")) {
+      out.push(pad + tok + next + tokens[i + 2]); // <a>text</a>
+      i += 2;
+    } else if (next?.startsWith("</")) {
+      out.push(pad + tok + next); // <a></a>
+      i += 1;
+    } else {
+      out.push(pad + tok);
+      depth += 1;
+    }
+  }
+
+  return decl + "\n" + out.join("\n");
+}
+
 /* ---------- builder ---------- */
 
 export type BuildOptions = {
@@ -399,7 +436,7 @@ export function buildInvoiceXml(kind: InvoiceKind, rows: Row[], opts: BuildOptio
     legalMonetaryTotal +
     lines;
 
-  return (
+  return prettyXml(
     `<?xml version="1.0" encoding="utf-8"?>` +
     `<Invoice xmlns="urn:oasis:names:specification:ubl:schema:xsd:Invoice-2"` +
     ` xmlns:cac="urn:oasis:names:specification:ubl:schema:xsd:CommonAggregateComponents-2"` +
