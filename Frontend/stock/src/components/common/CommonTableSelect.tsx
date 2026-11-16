@@ -26,6 +26,10 @@ interface CommonTableSelectProps {
   options: TableSelectOption[];
   value: TableSelectOption | null;
   onChange: (value: TableSelectOption | null) => void;
+  inputValue?: string;
+  onInputChange?: SelectProps<TableSelectOption, false>["onInputChange"];
+  backspaceRemovesValue?: boolean;
+  blurInputOnSelect?: boolean;
   columns: Column[];
   placeholder?: string;
   width?: string;
@@ -44,6 +48,7 @@ interface CommonTableSelectProps {
   onKeyDown?: KeyboardEventHandler;
   onMenuOpen?: () => void;
   onMenuClose?: () => void;
+  menuPlacement?: SelectProps<TableSelectOption, false>["menuPlacement"];
   filterOption?: SelectProps<TableSelectOption, false>["filterOption"];
   controlFontSize?: string;
   borderColor?: string;
@@ -57,6 +62,10 @@ const CommonTableSelect = ({
   options,
   value,
   onChange,
+  inputValue,
+  onInputChange,
+  backspaceRemovesValue,
+  blurInputOnSelect,
   columns,
   placeholder = "Select...",
   width = "250px",
@@ -75,6 +84,7 @@ const CommonTableSelect = ({
   onKeyDown,
   onMenuOpen,
   onMenuClose,
+  menuPlacement,
   filterOption,
   borderColor = "#CBD5E1",
   hoverBorderColor = "#94A3B8",
@@ -267,9 +277,14 @@ const CommonTableSelect = ({
       options={options}
       value={value}
       onChange={onChange}
+      inputValue={inputValue}
+      onInputChange={onInputChange}
+      backspaceRemovesValue={backspaceRemovesValue}
+      blurInputOnSelect={blurInputOnSelect}
       onKeyDown={onKeyDown}
       onMenuOpen={onMenuOpen}
       onMenuClose={onMenuClose}
+      menuPlacement={menuPlacement}
       filterOption={filterOption}
       placeholder={placeholder}
       components={{

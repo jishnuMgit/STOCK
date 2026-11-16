@@ -1449,7 +1449,7 @@ const selectFilterOption = (
   option: {
     label: string;
     value: string;
-    data: SelectOption;
+    data: TableSelectOption;
   },
   inputValue: string,
 ) => {
@@ -1516,7 +1516,7 @@ const handleEditableSelectBackspace = (
 
 type RowRefValue =
   | SelectInstance<AccountOption, false>
-  | SelectInstance<SelectOption, false>
+  | SelectInstance<TableSelectOption, false>
   | HTMLInputElement
   | HTMLButtonElement
   | null;
@@ -1536,7 +1536,7 @@ interface ReceiptRowProps {
 
   accountIdOptions: AccountOption[];
 
-  ccIdOptions: SelectOption[];
+  ccIdOptions: TableSelectOption[];
 
   setSelectedRowId: (id: number) => void;
 
@@ -1619,13 +1619,12 @@ const ReceiptRow = memo(
     > | null>(null);
 
     const divisionSelectRef = useRef<SelectInstance<
-      SelectOption,
+      TableSelectOption,
       false
     > | null>(null);
 
-    const ccIdSelectRef = useRef<SelectInstance<SelectOption, false> | null>(
-      null,
-    );
+    const ccIdSelectRef =
+      useRef<SelectInstance<TableSelectOption, false> | null>(null);
 
     const [accountIdSearchText, setAccountIdSearchText] = useState("");
 
@@ -1745,11 +1744,13 @@ const ReceiptRow = memo(
       [row.id, handleRowChange],
     );
 
-    const divisionOptions = useMemo<SelectOption[]>(
+    const divisionOptions = useMemo<TableSelectOption[]>(
       () =>
         DivID.map((division) => ({
           value: division.fdivid,
           label: division.fdivname,
+          id: division.fdivid,
+          name: division.fdivname,
         })),
       [DivID],
     );
@@ -2116,9 +2117,9 @@ const ReceiptRow = memo(
         </td>
 
         <td className={`receipt-cell ${activeCellClass}`}>
-          <Select<SelectOption, false>
+          <CommonTableSelect
             inputId={`lkpDivision-${row.id}`}
-            ref={(instance) => {
+            selectRef={(instance) => {
               divisionSelectRef.current = instance;
 
               setRowRef(index, "DivID", instance);
@@ -2134,6 +2135,35 @@ const ReceiptRow = memo(
               return newValue;
             }}
             backspaceRemovesValue={false}
+            blurInputOnSelect={false}
+            options={divisionOptions}
+            columns={[
+              { key: "id", label: "ID", width: "64px" },
+              { key: "name", label: "Division" },
+            ]}
+            placeholder=""
+            width="100%"
+            menuWidth="170px"
+            menuMaxHeight="300px"
+            valueKey="value"
+            isSearchable
+            isClearable={false}
+            isDisabled={
+              !row.accountId ||
+              divisionLoading ||
+              !row.haveDivision ||
+              divisionOptions.length === 0
+            }
+            menuPlacement="auto"
+            menuPortalTarget={document.body}
+            filterOption={selectFilterOption}
+            noOptionsMessage={() => "No Division Found"}
+            onMenuOpen={handleDivisionMenuOpen}
+            onMenuClose={() => {
+              handleDivisionMenuClose();
+              setDivisionSearchText("");
+              setIsDivisionEditing(false);
+            }}
             onKeyDown={(event) => {
               const handled = handleEditableSelectBackspace(
                 event,
@@ -2144,19 +2174,11 @@ const ReceiptRow = memo(
                 divisionSelectRef,
               );
 
-              if (handled) {
-                return;
+              if (!handled) {
+                handleSelectKeyDown(event, "DivID", divisionMenuOpenRef);
               }
-
-              handleSelectKeyDown(event, "DivID", divisionMenuOpenRef);
             }}
-            onMenuOpen={handleDivisionMenuOpen}
-            onMenuClose={() => {
-              handleDivisionMenuClose();
-              setDivisionSearchText("");
-              setIsDivisionEditing(false);
-            }}
-            onChange={(option: SingleValue<SelectOption>) => {
+            onChange={(option) => {
               handleRowChange(row.id, "DivID", option?.value || "");
 
               setDivisionSearchText("");
@@ -2164,65 +2186,13 @@ const ReceiptRow = memo(
 
               setSelectedRowId(row.id);
             }}
-            blurInputOnSelect={false}
-            options={divisionOptions}
-            placeholder=""
-            styles={{
-              ...selectStyles,
-              menu: (base: any) => ({
-                ...base,
-                minWidth: "260px",
-                width: "260px",
-              }),
-              menuList: (base: any) => ({
-                ...base,
-                minWidth: "260px",
-                width: "260px",
-                overflowX: "hidden",
-              }),
-            }}
-            components={{
-              DropdownIndicator: RowNormalDropdownIndicator,
-
-              SingleValue: (props) => <LabeledDropdownSingleValue {...props} />,
-
-              Option: (props) => (
-                <LabeledDropdownOption
-                  {...props}
-                  idHeader="ID"
-                  nameHeader="Division"
-                />
-              ),
-
-              MenuList: (props) => (
-                <LabeledDropdownMenuList
-                  {...props}
-                  idHeader="ID"
-                  nameHeader="Division"
-                />
-              ),
-            }}
-            isSearchable
-            isClearable={false}
-            isDisabled={
-              !row.accountId ||
-              divisionLoading ||
-              !row.haveDivision ||
-              divisionOptions.length === 0
-            }
-            menuPlacement="auto"
-            menuPosition="fixed"
-            menuPortalTarget={document.body}
-            menuShouldScrollIntoView={false}
-            filterOption={selectFilterOption}
-            noOptionsMessage={() => "No Division Found"}
           />
         </td>
 
         <td className={`receipt-cell ${activeCellClass}`}>
-          <Select<SelectOption, false>
+          <CommonTableSelect
             inputId={`lkpCCId-${row.id}`}
-            ref={(instance) => {
+            selectRef={(instance) => {
               ccIdSelectRef.current = instance;
 
               setRowRef(index, "CCID", instance);
@@ -2238,6 +2208,24 @@ const ReceiptRow = memo(
               return newValue;
             }}
             backspaceRemovesValue={false}
+            blurInputOnSelect={false}
+            options={ccIdOptions}
+            columns={[
+              { key: "id", label: "ID", width: "64px" },
+              { key: "name", label: "Cost Center" },
+            ]}
+            placeholder=""
+            width="100%"
+            menuWidth="260px"
+            menuMaxHeight="300px"
+            valueKey="value"
+            isSearchable
+            isClearable={false}
+            isDisabled={!row.haveCc || ccIdOptions.length === 0}
+            menuPlacement="auto"
+            menuPortalTarget={document.body}
+            filterOption={selectFilterOption}
+            noOptionsMessage={() => "No CC ID Found"}
             onKeyDown={(event) => {
               const handled = handleEditableSelectBackspace(
                 event,
@@ -2248,11 +2236,9 @@ const ReceiptRow = memo(
                 ccIdSelectRef,
               );
 
-              if (handled) {
-                return;
+              if (!handled) {
+                handleSelectKeyDown(event, "CCID", ccIdMenuOpenRef);
               }
-
-              handleSelectKeyDown(event, "CCID", ccIdMenuOpenRef);
             }}
             onMenuOpen={handleCcMenuOpen}
             onMenuClose={() => {
@@ -2260,7 +2246,7 @@ const ReceiptRow = memo(
               setCcIdSearchText("");
               setIsCcIdEditing(false);
             }}
-            onChange={(option: SingleValue<SelectOption>) => {
+            onChange={(option) => {
               handleRowChange(row.id, "CCID", option?.value || "");
 
               setCcIdSearchText("");
@@ -2268,52 +2254,6 @@ const ReceiptRow = memo(
 
               setSelectedRowId(row.id);
             }}
-            blurInputOnSelect={false}
-            options={ccIdOptions}
-            placeholder=""
-            styles={{
-              ...selectStyles,
-              menu: (base: any) => ({
-                ...base,
-                minWidth: "260px",
-                width: "260px",
-              }),
-              menuList: (base: any) => ({
-                ...base,
-                minWidth: "260px",
-                width: "260px",
-                overflowX: "hidden",
-              }),
-            }}
-            components={{
-              DropdownIndicator: RowNormalDropdownIndicator,
-              SingleValue: CcIdSingleValue,
-
-              Option: (props) => (
-                <LabeledDropdownOption
-                  {...props}
-                  idHeader="ID"
-                  nameHeader="Cost Center"
-                />
-              ),
-
-              MenuList: (props) => (
-                <LabeledDropdownMenuList
-                  {...props}
-                  idHeader="ID"
-                  nameHeader="Cost Center"
-                />
-              ),
-            }}
-            isSearchable
-            isClearable={false}
-            isDisabled={!row.haveCc || ccIdOptions.length === 0}
-            menuPlacement="auto"
-            menuPosition="fixed"
-            menuPortalTarget={document.body}
-            menuShouldScrollIntoView={false}
-            filterOption={selectFilterOption}
-            noOptionsMessage={() => "No CC ID Found"}
           />
         </td>
 
@@ -2546,7 +2486,7 @@ export const ReceiptTable = forwardRef<ReceiptTableRef, ReceiptTableProps>(
         }));
     }, [accountSortByIdOptions]);
 
-    const ccIdOptions = useMemo<SelectOption[]>(() => {
+    const ccIdOptions = useMemo<TableSelectOption[]>(() => {
       if (!Array.isArray(costCenters)) {
         return [];
       }
@@ -2560,6 +2500,8 @@ export const ReceiptTable = forwardRef<ReceiptTableRef, ReceiptTableProps>(
                      has no separate name field so the column
                      never renders blank. */
           label: (costCenter as any).fccname || costCenter.fccid,
+          id: costCenter.fccid,
+          name: (costCenter as any).fccname || costCenter.fccid,
         }));
     }, [costCenters]);
 
