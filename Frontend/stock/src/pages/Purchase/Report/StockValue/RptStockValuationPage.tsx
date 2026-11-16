@@ -1,31 +1,20 @@
 import React, { useEffect, useMemo, useState } from "react";
-import Select from "react-select";
-import RadioGroup from "../../../../components/common/RadioGroup";
 import { useEnterAsTab } from "../../../../hooks/useEnterAsTab";
 import { useAltShortcuts } from "../../../../hooks/useAltShortcuts";
 import { useCtrlShortcuts } from "../../../../hooks/useCtrlShortcuts";
-import { useGridCellFocus } from "../../../../hooks/useGridCellFocus";
-import { useAdvanceAfterSelect } from "../../../../hooks/useAdvanceAfterSelect";
 import { useInitialFocus } from "../../../../hooks/useInitialFocus";
-import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
-import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
-import { DatePicker } from "@mui/x-date-pickers/DatePicker";
 import dayjs from "dayjs";
 import customParseFormat from "dayjs/plugin/customParseFormat";
 import { toast } from "react-toastify";
+import type { PairSelectOption } from "../../../../components/common/CustomLinkedPairSelect";
 import {
-  BranchDividedMenuList,
-  BranchDividedOption,
-  branchMenuStyles,
-  filterLabelOrValue,
-} from "../../../../components/BranchSelect/branchSelectParts";
-import {
-  filterPairOption,
-  makePairComponents,
-  makePairDividedMenuStyles,
-  type PairOption,
-} from "../../../../components/PairSelect/pairSelectParts";
-import { usePairMenuHang } from "../../../../hooks/usePairMenuHang";
+  BranchFilter,
+  DateFilter,
+  PairFilter,
+  PostStatusFilter,
+  ReportForm,
+  ReportPrintRow,
+} from "../../../../components/common/ReportFilters";
 import ReportPreview from "../../../../components/common/ReportPreview";
 import { buildStockValuationPdf } from "../../../../components/Purchase/Report/RptStockValuation/RptStockValuationPdf";
 import {
@@ -33,7 +22,6 @@ import {
   printStockValuationReport,
   type PrintReport,
 } from "../../../../components/Purchase/Report/RptStockValuation/RptStockValuationPrintReport";
-import Header from "../../../../components/common/Header";
 dayjs.extend(customParseFormat);
 
 type Option = { value: string; label: string };
@@ -50,202 +38,6 @@ const postStatusOptions: Option[] = [
   { value: "2", label: "Non Posted" },
 ];
 
-const selectClassNames = {
-  control: ({
-    isFocused,
-    isDisabled,
-  }: {
-    isFocused: boolean;
-    isDisabled: boolean;
-  }) => `
-    !min-h-[25px] !h-[30px] !rounded-[4px] !border !shadow-none !text-[13px]
-    hover:!border-[#aab8c5]
-    ${isDisabled ? "!bg-[#f6f8fa]" : "!bg-white"}
-    ${isFocused ? "!border-green-600" : "!border-[#cfd7df]"}
-  `,
-  valueContainer: () => "!h-[23px] !py-0 !px-[5px] !overflow-hidden",
-  singleValue: () => "!m-0 !text-[13px] !text-[#24364d]",
-  placeholder: () => "!m-0 !text-[13px] !text-[#7a8794]",
-  input: () => "!m-0 !p-0 !text-[13px] !text-[#24364d]",
-  indicatorsContainer: () => "!h-[23px]",
-  dropdownIndicator: () => "!p-[3px] !text-[#657486]",
-  indicatorSeparator: () => "!hidden",
-  clearIndicator: () => "!p-[3px]",
-  menu: () =>
-    "!mt-[1px] !rounded-none !border !border-[#cfd7df] !z-[999999] !shadow-md",
-  menuList: () => "!p-0 !max-h-[180px]",
-  option: ({
-    isFocused,
-    isSelected,
-  }: {
-    isFocused: boolean;
-    isSelected: boolean;
-  }) => `
-    !cursor-pointer !px-[6px] !py-[5px] !text-[13px] !text-[#24364d]
-    ${isSelected ? "!bg-[#e7f7ed]" : isFocused ? "!bg-[#f2faf5]" : "!bg-white"}
-  `,
-};
-
-const selectProps = {
-  isSearchable: false,
-  isClearable: false,
-  placeholder: "",
-  classNames: selectClassNames,
-  menuPosition: "fixed" as const,
-  menuPortalTarget: typeof document !== "undefined" ? document.body : undefined,
-};
-// The Branch box: the "Branch | ID" list of the other screens, searchable on either column.
-const branchProps = {
-  ...selectProps,
-  isSearchable: true,
-  classNames: {
-    control: selectClassNames.control,
-    valueContainer: selectClassNames.valueContainer,
-    singleValue: selectClassNames.singleValue,
-    placeholder: selectClassNames.placeholder,
-    input: selectClassNames.input,
-    indicatorsContainer: selectClassNames.indicatorsContainer,
-    dropdownIndicator: selectClassNames.dropdownIndicator,
-    indicatorSeparator: selectClassNames.indicatorSeparator,
-    clearIndicator: selectClassNames.clearIndicator,
-    option: selectClassNames.option,
-  },
-  styles: branchMenuStyles,
-  components: { Option: BranchDividedOption, MenuList: BranchDividedMenuList },
-  filterOption: filterLabelOrValue,
-};
-// The Item Group boxes: the "ID | Name" lists of Beginning Stock - the Group ID box opens
-// "Group ID | Group Name", the Group Name box opens "Group Name | Group ID", both searchable on
-// either column, and picking from one fills the other. Created once, outside the page.
-const groupIdComponents = makePairComponents("Group ID", "Group Name", false, true);
-const groupNameComponents = makePairComponents("Group ID", "Group Name", true, true);
-
-// how far the Group Name list hangs past its box (its Group ID column)
-const NAME_MENU_HANG = 120;
-
-// the look of the other boxes, but the open list is the pair list's own
-const pairProps = {
-  ...selectProps,
-  isSearchable: true,
-  classNames: {
-    control: selectClassNames.control,
-    valueContainer: selectClassNames.valueContainer,
-    singleValue: selectClassNames.singleValue,
-    placeholder: selectClassNames.placeholder,
-    input: selectClassNames.input,
-    indicatorsContainer: selectClassNames.indicatorsContainer,
-    dropdownIndicator: selectClassNames.dropdownIndicator,
-    indicatorSeparator: selectClassNames.indicatorSeparator,
-    clearIndicator: selectClassNames.clearIndicator,
-    option: ({ isFocused, isSelected }: { isFocused: boolean; isSelected: boolean }) =>
-      `!cursor-pointer !text-[#24364d] ${isSelected ? "!bg-[#e7f7ed]" : isFocused ? "!bg-[#f2faf5]" : "!bg-white"
-      }`,
-  },
-  filterOption: filterPairOption,
-};
-
-const FieldLabel: React.FC<{
-  children: React.ReactNode;
-  className?: string;
-}> = ({ children, className = "" }) => (
-  <div
-    className={`flex h-[30px] items-center border border-[#e0e5ea] bg-[#fafbfc] px-3 text-[14px] text-[#405066] ${className}`}
-  >
-    {children}
-  </div>
-);
-
-type AppDatePickerProps = {
-  id: string;
-  label: string;
-  value: string;
-  onChange: (value: string) => void;
-};
-
-const AppDatePicker: React.FC<AppDatePickerProps> = ({
-  id,
-  label,
-  value,
-  onChange,
-}) => (
-  <LocalizationProvider dateAdapter={AdapterDayjs}>
-    <DatePicker
-      value={value ? dayjs(value, DATE_FORMAT) : null}
-      onChange={(newValue) => {
-        onChange(newValue?.isValid() ? newValue.format(DATE_FORMAT) : "");
-      }}
-      format={DATE_FORMAT}
-      slotProps={{
-        textField: { id, slotProps: { htmlInput: { "aria-label": label } } },
-        openPickerButton: { sx: { padding: "2px", margin: 0 } },
-        inputAdornment: { sx: { margin: 0, padding: 0 } },
-      }}
-      sx={{
-        width: "140px",
-        "& .MuiPickersTextField-root": { width: "120px" },
-        "& .MuiPickersInputBase-root": {
-          width: "140px",
-          height: "30px",
-          minHeight: "30px",
-          boxSizing: "border-box",
-          borderRadius: "4px",
-          backgroundColor: "#ffffff",
-          fontSize: "14px",
-          padding: 0,
-          overflow: "hidden",
-        },
-        "& .MuiPickersInputBase-sectionsContainer": {
-          paddingLeft: "10px !important",
-          paddingRight: "0px !important",
-          marginBottom: "-5px !important",
-          marginLeft: "0px !important",
-          boxSizing: "border-box",
-          overflow: "hidden",
-        },
-        "& .MuiPickersInputBase-sectionContent": {
-          fontSize: "14px",
-          color: "#344054",
-        },
-        "& .MuiPickersInputBase-input": {
-          minWidth: 0,
-          width: "100%",
-          fontSize: "14px",
-          padding: 0,
-          height: "30px",
-          boxSizing: "border-box",
-        },
-        "& .MuiInputAdornment-root": { margin: 0, padding: 0 },
-        "& .MuiIconButton-root": {
-          width: "24px",
-          height: "24px",
-          padding: "2px",
-          margin: 0,
-        },
-        "& .MuiSvgIcon-root": { fontSize: "16px" },
-        // blank look (no "DD-MM-YYYY" hint) while empty and not focused
-        ...(!value && {
-          "&:not(:focus-within) .MuiPickersInputBase-sectionsContainer *": {
-            color: "transparent",
-          },
-        }),
-        "& .MuiPickersOutlinedInput-notchedOutline": {
-          borderColor: "#B7C7D7 !important",
-        },
-        "& .MuiPickersInputBase-root:hover .MuiPickersOutlinedInput-notchedOutline":
-          { borderColor: "#B7C7D7 !important" },
-        "& .MuiPickersInputBase-root.Mui-focused .MuiPickersOutlinedInput-notchedOutline":
-          { borderColor: "#16a34a !important", borderWidth: "1px" }, // green-600, as the cell outline
-        "& .MuiPickersInputBase-root.Mui-error .MuiPickersOutlinedInput-notchedOutline":
-          { borderColor: "#B7C7D7 !important" },
-        "& .MuiPickersInputBase-root.Mui-error:hover .MuiPickersOutlinedInput-notchedOutline":
-          { borderColor: "#B7C7D7 !important" },
-        "& .MuiPickersInputBase-root.Mui-error.Mui-focused .MuiPickersOutlinedInput-notchedOutline":
-          { borderColor: "#B7C7D7 !important" },
-      }}
-    />
-  </LocalizationProvider>
-);
-
 type RptStockValuationPageProps = {
   onClose?: () => void;
 };
@@ -254,8 +46,6 @@ const RptStockValuationPage: React.FC<RptStockValuationPageProps> = ({ onClose }
   // Enter moves on like Tab; the box the cursor is in is outlined; after a pick from a list the
   // cursor goes on
   const handleEnterAsTab = useEnterAsTab();
-  const { cellFocusClass } = useGridCellFocus();
-  const { advanceAfterPick, advanceOnEnter } = useAdvanceAfterSelect();
 
   // the lookups have been asked for (found or not): the cursor can start
   const [lookupsLoaded, setLookupsLoaded] = useState(false);
@@ -274,9 +64,6 @@ const RptStockValuationPage: React.FC<RptStockValuationPageProps> = ({ onClose }
   const [groupRows, setGroupRows] = useState<
     { lkpItemGroupID: string; txtItemGroupName: string }[]
   >([]);
-
-  // the Group ID list covers the Group ID box AND the Group Name box next to it (measured when it opens)
-  const { hang: groupIdHang, measure: measureGroupIdHang } = usePairMenuHang();
 
   useEffect(() => {
     const loadLookups = async () => {
@@ -341,28 +128,14 @@ const RptStockValuationPage: React.FC<RptStockValuationPageProps> = ({ onClose }
   } | null>(null);
   const [printing, setPrinting] = useState(false);
 
-  // the group boxes: ID | Name, and Name | ID (one group, two boxes)
-  const groupIdOptions = useMemo<PairOption[]>(
+  // the group boxes: one list, "ID | Name" in the ID box and "Name | ID" in the Name box
+  const groupPairOptions = useMemo<PairSelectOption[]>(
     () =>
       groupRows.map((row) => ({
         value: row.lkpItemGroupID,
-        label: row.lkpItemGroupID,
-        id: row.lkpItemGroupID,
-        name: row.txtItemGroupName,
+        firstLabel: row.lkpItemGroupID,
+        secondLabel: row.txtItemGroupName,
       })),
-    [groupRows],
-  );
-
-  const groupNameOptions = useMemo<PairOption[]>(
-    () =>
-      [...groupRows]
-        .sort((a, b) => a.txtItemGroupName.localeCompare(b.txtItemGroupName))
-        .map((row) => ({
-          value: row.lkpItemGroupID,
-          label: row.txtItemGroupName,
-          id: row.lkpItemGroupID,
-          name: row.txtItemGroupName,
-        })),
     [groupRows],
   );
 
@@ -495,219 +268,51 @@ const RptStockValuationPage: React.FC<RptStockValuationPageProps> = ({ onClose }
   });
 
   return (
-    <div
+    <ReportForm
+      title="Stock Valuation"
       onKeyDown={handleEnterAsTab}
-      className="flex min-h-full w-full items-start justify-center bg-white px-4 py-4"
+      overlay={
+        // the Print Preview (after Print)
+        preview && (
+          <ReportPreview
+            showClose={false}
+            html={buildHtml(preview.report)}
+            fileBase={preview.fileBase}
+            onPrint={() => printStockValuationReport(preview.report)}
+            buildPdf={() => buildStockValuationPdf(preview.report)}
+            fetchExcel={fetchExcel}
+            onClose={() => setPreview(null)}
+          />
+        )
+      }
     >
-      <div className="min-h-fit w-205 max-w-full bg-white p-0">
-        <main className="w-full overflow-hidden border border-gray-400 bg-white">
-          <Header Name="Stock Valuation" />
+      <BranchFilter
+        withSelected
+        mode={rdgBranch}
+        onModeChange={setRdgBranch}
+        options={branchOptions}
+        value={lkpBranch}
+        onChange={setLkpBranch}
+        selectedIds={chkBranch}
+        onTick={handleBranchTick}
+      />
 
-          <section className="px-3.5 pb-6 pt-3">
-            <div className="grid grid-cols-[168px_1fr] items-start gap-x-4 gap-y-3">
-              {/* Branch */}
-              <RadioGroup
-                className={cellFocusClass}
-                name="rdgBranch"
-                value={rdgBranch}
-                options={[
-                  { value: "One Branch", label: "One Branch" },
-                  { value: "Selected Branch", label: "Selected Branch" },
-                  { value: "All Branch", label: "All Branch" },
-                ]}
-                onChange={setRdgBranch}
-              />
-              <div className="pt-3">
-                <div
-                  className={`w-[250px] ${cellFocusClass}`}
-                  onKeyDown={(event) => advanceOnEnter(event)}
-                >
-                  <Select
-                    inputId="lkpBranch"
-                    instanceId="lkpBranch"
-                    options={branchOptions}
-                    value={lkpBranch}
-                    onChange={(option) => {
-                      setLkpBranch(option);
-                      if (option) advanceAfterPick("lkpBranch");
-                    }}
-                    isDisabled={rdgBranch !== "One Branch"}
-                    noOptionsMessage={() => "No Branch Found"}
-                    {...branchProps}
-                  />
-                </div>
+      <PairFilter
+        name="Item Group"
+        mode={rdgItemGroup}
+        onModeChange={setRdgItemGroup}
+        options={groupPairOptions}
+        value={lkpOneItemGroupID}
+        onChange={setLkpOneItemGroupID}
+        ids={{ radio: "rdgItemGroup", first: "lkpOneItemGroupID", second: "lkpOneItemGroupName" }}
+      />
 
-                {rdgBranch === "Selected Branch" && (
-                  <div
-                    id="chkBranchList"
-                    // 5 branches show; more of them scroll inside the list, so the page below does not move
-                    className={`customer-table-scroll mt-3 flex max-h-[136px] w-[250px] flex-col gap-1 overflow-y-auto border border-[#e0e5ea] p-2 ${cellFocusClass}`}
-                  >
-                    {branchOptions.map((option) => (
-                      <label
-                        key={option.value}
-                        className="flex items-center gap-2 text-[13px] text-[#35445a]"
-                      >
-                        <input
-                          id={`chkBranch_${option.value}`}
-                          name="chkBranch"
-                          type="checkbox"
-                          checked={chkBranch.includes(option.value)}
-                          onChange={(event) =>
-                            handleBranchTick(option.value, event.target.checked)
-                          }
-                        />
-                        {option.label}
-                      </label>
-                    ))}
-                  </div>
-                )}
-              </div>
+      <DateFilter label="As On Date" id="dtpAsOnDate" value={dtpAsOnDate} onChange={setDtpAsOnDate} />
 
+      <PostStatusFilter options={postStatusOptions} value={lkpPostStatus} onChange={setLkpPostStatus} />
 
-              {/* Item */}
-              <RadioGroup
-                className={cellFocusClass}
-                name="rdgItemGroup"
-                value={rdgItemGroup}
-                options={[
-                  { value: "One Item Group", label: "One Item Group" },
-                  { value: "All Item Group", label: "All Item Group" },
-                ]}
-                onChange={setRdgItemGroup}
-              />
-              <div className="pt-3">
-                {rdgItemGroup === "One Item Group" && (
-                  <div className="grid grid-cols-[135px_1fr] gap-2">
-                    <div
-                      className={cellFocusClass}
-                      onKeyDown={(event) => advanceOnEnter(event, ["lkpOneItemGroupName"])}
-                    >
-                      <Select<PairOption, false>
-                        inputId="lkpOneItemGroupID"
-                        instanceId="lkpOneItemGroupID"
-                        name="lkpOneItemGroupID"
-                        options={groupIdOptions}
-                        value={groupIdOptions.find((o) => o.value === lkpOneItemGroupID) ?? null}
-                        onChange={(option) => {
-                          setLkpOneItemGroupID(option?.value ?? "");
-                          if (option) advanceAfterPick("lkpOneItemGroupID", ["lkpOneItemGroupName"]);
-                        }}
-                        components={groupIdComponents}
-                        styles={makePairDividedMenuStyles(groupIdHang)}
-                        onMenuOpen={() =>
-                          measureGroupIdHang("lkpOneItemGroupID", "lkpOneItemGroupName")
-                        }
-                        noOptionsMessage={() => "No Item Group Found"}
-                        {...pairProps}
-                      />
-                    </div>
-                    <div
-                      className={cellFocusClass}
-                      style={{ marginRight: NAME_MENU_HANG }}
-                      onKeyDown={(event) => advanceOnEnter(event)}
-                    >
-                      <Select<PairOption, false>
-                        inputId="lkpOneItemGroupName"
-                        instanceId="lkpOneItemGroupName"
-                        name="lkpOneItemGroupName"
-                        options={groupNameOptions}
-                        value={groupNameOptions.find((o) => o.value === lkpOneItemGroupID) ?? null}
-                        onChange={(option) => {
-                          setLkpOneItemGroupID(option?.value ?? "");
-                          if (option) advanceAfterPick("lkpOneItemGroupName");
-                        }}
-                        components={groupNameComponents}
-                        styles={makePairDividedMenuStyles(NAME_MENU_HANG)}
-                        noOptionsMessage={() => "No Item Group Found"}
-                        {...pairProps}
-                      />
-                    </div>
-                  </div>
-                )}
-              </div>
-              <FieldLabel>As On Date :</FieldLabel>
-              <div className="flex items-center justify-between gap-4">
-                <div className={`w-[140px] ${cellFocusClass}`}>
-                  <AppDatePicker
-                    id="dtpAsOnDate"
-                    label="As On Date"
-                    value={dtpAsOnDate}
-                    onChange={setDtpAsOnDate}
-                  />
-                </div>
-              </div>
-
-              {/* Post status */}
-              <FieldLabel>Post Status :</FieldLabel>
-              <div className="flex items-center justify-between gap-4">
-                <div
-                  className={`w-[140px] ${cellFocusClass}`}
-                  onKeyDown={(event) => advanceOnEnter(event)}
-                >
-                  <Select
-                    inputId="lkpPostStatus"
-                    instanceId="lkpPostStatus"
-                    options={postStatusOptions}
-                    value={lkpPostStatus}
-                    onChange={(option) => {
-                      setLkpPostStatus(option);
-                      if (option) advanceAfterPick("lkpPostStatus");
-                    }}
-                    {...selectProps}
-                  />
-                </div>
-
-
-              </div>
-
-
-
-
-
-              {/* Period and actions */}
-              <div className="flex flex-col gap-5">
-                <div className="flex items-center gap-2">
-
-
-                </div>
-                <div className="flex gap-3 pl-[88px]">
-                  <button
-                    id="btnPrint"
-                    type="button"
-                    onClick={handlePrint}
-                    className="btn-style"
-                  >
-                    <u>P</u>rint
-                  </button>
-                  {/* <button
-                    id="btnClose"
-                    type="button"
-                    onClick={handleClose}
-                    className="btn-style"
-                  >
-                    <u>C</u>lose
-                  </button> */}
-                </div>
-              </div>
-            </div>
-          </section>
-        </main>
-      </div>
-
-      {/* the Print Preview (after Print) */}
-      {preview && (
-        <ReportPreview
-          showClose={false}
-          html={buildHtml(preview.report)}
-          fileBase={preview.fileBase}
-          onPrint={() => printStockValuationReport(preview.report)}
-          buildPdf={() => buildStockValuationPdf(preview.report)}
-          fetchExcel={fetchExcel}
-          onClose={() => setPreview(null)}
-        />
-      )}
-    </div>
+      <ReportPrintRow onPrint={handlePrint} />
+    </ReportForm>
   );
 };
 

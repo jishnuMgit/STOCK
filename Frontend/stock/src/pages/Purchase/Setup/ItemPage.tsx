@@ -9,18 +9,11 @@ import { useConfirmModal } from "../../../hooks/useConfirmModal";
 import { useDeleteToast } from "../../../hooks/useDeleteToast";
 import { useAltShortcuts } from "../../../hooks/useAltShortcuts";
 import { useButtonPermissions } from "../../../hooks/useButtonPermissions";
-import {
-  filterLabelOrValue,
-  BranchDividedMenuList,
-  BranchDividedOption,
-  branchMenuStyles,
-} from "../../../components/BranchSelect/branchSelectParts";
-import {
-  makePairComponents,
-  filterPairOption,
-  makePairDividedMenuStyles,
-  pairDividedNameMenuStyles,
-} from "../../../components/PairSelect/pairSelectParts";
+import { filterLabelOrValue } from "../../../components/BranchSelect/branchSelectParts";
+import CommonTableSelect from "../../../components/common/CommonTableSelect";
+import CustomLinkedPairSelect, {
+  type PairSelectOption,
+} from "../../../components/common/CustomLinkedPairSelect";
 import selectComponents, {
   SELECT_FONT_FAMILY,
 } from "../../../components/sharecomponents/selectComponents";
@@ -55,32 +48,12 @@ interface SelectOption {
    components/PairSelect/pairSelectParts.tsx.
 ========================================================= */
 
-// Created once (not inside the component) so react-select doesn't
-// remount the menu on every render.
-const itemGroupIdComponents = makePairComponents(
-  "Item Group ID",
-  "Item Group Name",
-  false,
-  true // divider between the columns
-);
-const itemGroupNameComponents = makePairComponents(
-  "Item Group ID",
-  "Item Group Name",
-  true,
-  true // divider between the columns
-);
-const supplierIdComponents = makePairComponents(
-  "Supplier ID",
-  "Supplier Name",
-  false,
-  true // divider between the columns
-);
-const supplierNameComponents = makePairComponents(
-  "Supplier ID",
-  "Supplier Name",
-  true,
-  true // divider between the columns
-);
+// The Branch list of a row of the grid: "Branch | ID", as on every other screen (components/common/CommonTableSelect.tsx).
+// With the 70 px ID column the list is as wide as the cell plus 70 px, so the ID column hangs out to the right.
+const BRANCH_COLUMNS = [
+  { key: "label", label: "Branch", width: "1fr" },
+  { key: "value", label: "ID", width: "70px", align: "right" as const },
+];
 
 /* =========================================================
    ITEM PAGE
@@ -104,38 +77,6 @@ const MENU_ID = "010201";
   /* =========================================================
      FORM STATE
   ========================================================= */
-
-  // How far the Item Group / Supplier ID lists hang past their box: they cover
-  // the ID box AND the Name box next to it (to the Name box's right edge), so it
-  // is measured from the two boxes when the page shows and when a list opens.
-  const [idMenuHang, setIdMenuHang] = useState(330);
-
-  const measureIdMenuHang = (idInputId: string, nameInputId: string) => {
-    const boxOf = (inputId: string) =>
-      document.getElementById(inputId)?.closest('div[class$="-control"]');
-
-    const idBox = boxOf(idInputId);
-    const nameBox = boxOf(nameInputId);
-
-    if (idBox && nameBox) {
-      setIdMenuHang(
-        Math.round(
-          nameBox.getBoundingClientRect().right -
-            idBox.getBoundingClientRect().right,
-        ),
-      );
-    }
-  };
-
-  useEffect(() => {
-    const measure = () =>
-      measureIdMenuHang("lkpItemGroupID", "lkpItemGroupName");
-
-    measure();
-    window.addEventListener("resize", measure);
-
-    return () => window.removeEventListener("resize", measure);
-  }, []);
 
   const [txtItemID, setTxtItemID] = useState("");
 
@@ -315,25 +256,12 @@ const MENU_ID = "010201";
     loadItemGroupList();
   }, []);
 
-  // Both selects use the ID as their value; only the text shown in
-  // the box differs (ID in the first box, name in the second).
-  const itemGroupIDOptions: SelectOption[] = itemGroupList.map(
-    (group) => ({
-      value: group.lkpItemGroupID,
-      label: group.lkpItemGroupID,
-      id: group.lkpItemGroupID,
-      name: group.txtItemGroupName,
-    })
-  );
-
-  const itemGroupNameOptions: SelectOption[] = itemGroupList.map(
-    (group) => ({
-      value: group.lkpItemGroupID,
-      label: group.txtItemGroupName,
-      id: group.lkpItemGroupID,
-      name: group.txtItemGroupName,
-    })
-  );
+  // the Item Group boxes: one list, "ID | Name" in the ID box and "Name | ID" in the Name box
+  const itemGroupPairOptions: PairSelectOption[] = itemGroupList.map((group) => ({
+    value: group.lkpItemGroupID,
+    firstLabel: group.lkpItemGroupID,
+    secondLabel: group.txtItemGroupName,
+  }));
 
   const selectItemGroup = (itemGroupID: string) => {
     const matchedGroup = itemGroupList.find(
@@ -389,23 +317,12 @@ const MENU_ID = "010201";
     loadSupplierList();
   }, []);
 
-  const supplierIDOptions: SelectOption[] = supplierList.map(
-    (supplier) => ({
-      value: supplier.lkpSupplierID,
-      label: supplier.lkpSupplierID,
-      id: supplier.lkpSupplierID,
-      name: supplier.txtSupplierName,
-    })
-  );
-
-  const supplierNameOptions: SelectOption[] = supplierList.map(
-    (supplier) => ({
-      value: supplier.lkpSupplierID,
-      label: supplier.txtSupplierName,
-      id: supplier.lkpSupplierID,
-      name: supplier.txtSupplierName,
-    })
-  );
+  // the Supplier boxes: one list, "ID | Name" in the ID box and "Name | ID" in the Name box
+  const supplierPairOptions: PairSelectOption[] = supplierList.map((supplier) => ({
+    value: supplier.lkpSupplierID,
+    firstLabel: supplier.lkpSupplierID,
+    secondLabel: supplier.txtSupplierName,
+  }));
 
   const selectSupplier = (supplierID: string) => {
     const matchedSupplier = supplierList.find(
@@ -1049,113 +966,6 @@ const MENU_ID = "010201";
 };
 
   /* =========================================================
-     REACT SELECT - TABLE
-  ========================================================= */
-
-  const tableSelectStyles: StylesConfig<
-    SelectOption,
-    false
-  > = {
-    ...reactSelectStyles,
-
-    control: (base) => ({
-      ...base,
-      minHeight: "28px",
-      height: "28px",
-      width: "100%",
-      border: "none",
-      borderRadius: "0px",
-      boxShadow: "none",
-      backgroundColor: "transparent",
-      fontSize: "12px",
-      cursor: "pointer",
-
-      "&:hover": {
-        border: "none",
-      },
-    }),
-
-    valueContainer: (base) => ({
-      ...base,
-      height: "28px",
-      minWidth: 0,
-      padding: "0 8px",
-      overflow: "hidden",
-    }),
-
-    input: (base) => ({
-      ...base,
-      margin: 0,
-      padding: 0,
-      fontSize: "12px",
-    }),
-
-    singleValue: (base) => ({
-      ...base,
-      color: "#334155",
-      fontSize: "12px",
-      maxWidth: "100%",
-      overflow: "hidden",
-      textOverflow: "ellipsis",
-      whiteSpace: "nowrap",
-    }),
-
-    placeholder: (base) => ({
-      ...base,
-      color: "#64748b",
-      fontSize: "12px",
-    }),
-
-    indicatorsContainer: (base) => ({
-      ...base,
-      height: "28px",
-      flexShrink: 0,
-    }),
-
-    dropdownIndicator: (base) => ({
-      ...base,
-      padding: "4px",
-      color: "#64748b",
-    }),
-
-    clearIndicator: (base) => ({
-      ...base,
-      padding: "4px",
-    }),
-
-    indicatorSeparator: () => ({
-      display: "none",
-    }),
-
-    menu: (base) => ({
-      ...base,
-      zIndex: 9999,
-      fontSize: "12px",
-    }),
-
-    menuList: (base) => ({
-      ...base,
-      padding: "3px 0",
-    }),
-
-    option: (base, state) => ({
-      ...base,
-      minHeight: "30px",
-      padding: "6px 8px",
-      fontSize: "12px",
-
-      backgroundColor: state.isSelected
-        ? "#dbeafe"
-        : state.isFocused
-          ? "#eff6ff"
-          : "#ffffff",
-
-      color: "#475569",
-      cursor: "pointer",
-    }),
-  };
-
-  /* =========================================================
      JSX
   ========================================================= */
 
@@ -1416,7 +1226,7 @@ const MENU_ID = "010201";
               className="
                 mb-2
                 grid
-                grid-cols-[130px_155px_minmax(0,1fr)]
+                grid-cols-[130px_minmax(0,1fr)]
                 items-center
                 gap-2
               "
@@ -1429,55 +1239,23 @@ const MENU_ID = "010201";
                 Item Group :
               </label>
 
-              <Select
-                required
-                inputId="lkpItemGroupID"
-                name="lkpItemGroupID"
-                options={itemGroupIDOptions}
-                value={
-                  itemGroupIDOptions.find(
-                    (option) => option.value === lkpItemGroupID,
-                  ) || null
-                }
-                onChange={(option) =>
-                  selectItemGroup(option?.value || "")
-                }
-                styles={{
-                  ...reactSelectStyles,
-                  ...makePairDividedMenuStyles(idMenuHang),
-                }}
-                onMenuOpen={() =>
-                  measureIdMenuHang("lkpItemGroupID", "lkpItemGroupName")
-                }
-                components={itemGroupIdComponents}
-                filterOption={filterPairOption}
-                noOptionsMessage={() => "No Item Group Found"}
+              <CustomLinkedPairSelect
+                firstInputId="lkpItemGroupID"
+                secondInputId="lkpItemGroupName"
+                options={itemGroupPairOptions}
+                firstValue={lkpItemGroupID || null}
+                secondValue={lkpItemGroupID || null}
+                firstHeader="Item Group ID"
+                secondHeader="Item Group Name"
+                // the same boxes as on the report pages: 120 px for the ID, 450 px for the Name, 10 px between
+                firstWidth={120}
+                secondWidth={450}
+                gap={10}
+                menuZIndex={999999}
                 menuPortalTarget={document.body}
-                menuPosition="fixed"
-                isSearchable
-                isClearable
-              />
-
-              <Select
-                inputId="lkpItemGroupName"
-                name="lkpItemGroupName"
-                options={itemGroupNameOptions}
-                value={
-                  itemGroupNameOptions.find(
-                    (option) => option.value === lkpItemGroupID,
-                  ) || null
-                }
-                onChange={(option) =>
-                  selectItemGroup(option?.value || "")
-                }
-                styles={{ ...reactSelectStyles, ...pairDividedNameMenuStyles }}
-                components={itemGroupNameComponents}
-                filterOption={filterPairOption}
+                headerFontSize="12px"
                 noOptionsMessage={() => "No Item Group Found"}
-                menuPortalTarget={document.body}
-                menuPosition="fixed"
-                isSearchable
-                isClearable
+                onChange={(option) => selectItemGroup(option?.value || "")}
               />
             </div>
 
@@ -1489,7 +1267,7 @@ const MENU_ID = "010201";
               className="
                 mb-2
                 grid
-                grid-cols-[130px_155px_minmax(0,1fr)]
+                grid-cols-[130px_minmax(0,1fr)]
                 items-center
                 gap-2
               "
@@ -1499,55 +1277,23 @@ const MENU_ID = "010201";
                 Supplier :
               </label>
 
-              <Select
-                required
-                inputId="lkpSupplierID"
-                name="lkpSupplierID"
-                options={supplierIDOptions}
-                value={
-                  supplierIDOptions.find(
-                    (option) => option.value === lkpSupplierID,
-                  ) || null
-                }
-                onChange={(option) =>
-                  selectSupplier(option?.value || "")
-                }
-                styles={{
-                  ...reactSelectStyles,
-                  ...makePairDividedMenuStyles(idMenuHang),
-                }}
-                onMenuOpen={() =>
-                  measureIdMenuHang("lkpSupplierID", "lkpSupplierName")
-                }
-                components={supplierIdComponents}
-                filterOption={filterPairOption}
-                noOptionsMessage={() => "No Supplier Found"}
+              <CustomLinkedPairSelect
+                firstInputId="lkpSupplierID"
+                secondInputId="lkpSupplierName"
+                options={supplierPairOptions}
+                firstValue={lkpSupplierID || null}
+                secondValue={lkpSupplierID || null}
+                firstHeader="Supplier ID"
+                secondHeader="Supplier Name"
+                // the same boxes as on the report pages: 120 px for the ID, 450 px for the Name, 10 px between
+                firstWidth={120}
+                secondWidth={450}
+                gap={10}
+                menuZIndex={999999}
                 menuPortalTarget={document.body}
-                menuPosition="fixed"
-                isSearchable
-                isClearable
-              />
-
-              <Select
-                inputId="lkpSupplierName"
-                name="lkpSupplierName"
-                options={supplierNameOptions}
-                value={
-                  supplierNameOptions.find(
-                    (option) => option.value === lkpSupplierID,
-                  ) || null
-                }
-                onChange={(option) =>
-                  selectSupplier(option?.value || "")
-                }
-                styles={{ ...reactSelectStyles, ...pairDividedNameMenuStyles }}
-                components={supplierNameComponents}
-                filterOption={filterPairOption}
+                headerFontSize="12px"
                 noOptionsMessage={() => "No Supplier Found"}
-                menuPortalTarget={document.body}
-                menuPosition="fixed"
-                isSearchable
-                isClearable
+                onChange={(option) => selectSupplier(option?.value || "")}
               />
             </div>
 
@@ -1830,9 +1576,8 @@ const MENU_ID = "010201";
                       >
                         <div className="flex h-8 items-stretch">
                           <div className="flex-1 overflow-hidden">
-                            <Select
+                            <CommonTableSelect
                               inputId={`lkpBranch_${row.id}`}
-                              name={`lkpBranch_${row.id}`}
                               options={branchOptions}
                               value={
                                 branchOptions.find(
@@ -1859,24 +1604,14 @@ const MENU_ID = "010201";
                                   );
                                 }
                               }}
-                              styles={{
-                                ...tableSelectStyles,
-                                ...branchMenuStyles,
-                              }}
-                              components={{
-                                ...selectComponents,
-                                Option: BranchDividedOption,
-                                MenuList: BranchDividedMenuList,
-                              }}
+                              columns={BRANCH_COLUMNS}
+                              width="100%"
+                              menuWidth="calc(100% + 70px)"
+                              borderColor="transparent"
+                              hoverBorderColor="transparent"
                               filterOption={filterLabelOrValue}
                               noOptionsMessage={() => "No Branch Found"}
-                              isSearchable
-                              minMenuHeight={150}
-                              menuPortalTarget={
-                                document.body
-                              }
-                              menuPosition="fixed"
-                              menuPlacement="auto"
+                              menuPortalTarget={document.body}
                             />
                           </div>
 
