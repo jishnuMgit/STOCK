@@ -280,6 +280,8 @@ const PurchaseForm: React.FC<Props> = ({
               menuWidth="calc(100% + 100px)"
               menuPortalTarget={portalTarget}
               isClearable={false}
+              controlFontSize="14px"
+              headerFontSize="12px"
               isSearchable
             />
           </div>
@@ -388,6 +390,8 @@ const PurchaseForm: React.FC<Props> = ({
                 width="115%"
                 menuWidth="180px"
                 menuPortalTarget={portalTarget}
+                controlFontSize="14px"
+                headerFontSize="12px"
                 isClearable={false}
                 isSearchable={false}
               />
@@ -464,6 +468,8 @@ const PurchaseForm: React.FC<Props> = ({
                   width="100%"
                   menuWidth="calc(100% + 560px)"
                   menuPortalTarget={portalTarget}
+                  controlFontSize="14px"
+                  headerFontSize="12px"
                   isClearable={false}
                   isSearchable
                   isDisabled={!isMisc}
@@ -480,6 +486,8 @@ const PurchaseForm: React.FC<Props> = ({
                   menuWidth="480px"
                   menuPortalTarget={portalTarget}
                   isClearable={false}
+                  controlFontSize="14px"
+                  headerFontSize="12px"
                   isSearchable
                   isDisabled={!isMisc}
                 />
