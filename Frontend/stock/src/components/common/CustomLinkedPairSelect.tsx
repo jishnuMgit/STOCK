@@ -93,13 +93,14 @@ const CustomLinkedPairSelect: React.FC<CustomLinkedPairSelectProps> = ({
             style={{ gridTemplateColumns: gridColumns }}
           >
             <span
-              className="min-w-0 truncate px-2.5 py-1.75"
+              className="min-w-0 truncate pl-[5px] pr-[5px] py-1.75"
               style={{ gridColumn: 1 }}
             >
               {reverse ? props.data.secondLabel : props.data.firstLabel}
             </span>
+            {/* Divider sits at the start of the second column (column 3) */}
             <span
-              className="min-w-0 truncate border-l border-[#E5E7EB] px-2.5 py-1.75"
+              className="min-w-0 truncate border-l border-[#E5E7EB] pl-[5px] pr-[5px] py-1.75"
               style={{ gridColumn: 3 }}
             >
               {reverse ? props.data.firstLabel : props.data.secondLabel}
@@ -117,13 +118,13 @@ const CustomLinkedPairSelect: React.FC<CustomLinkedPairSelectProps> = ({
             }}
           >
             <span
-              className="min-w-0 truncate px-2.5 py-1.75"
+              className="min-w-0 truncate pl-[5px] pr-[5px] py-1.75"
               style={{ gridColumn: 1 }}
             >
               {firstColumnLabel}
             </span>
             <span
-              className="min-w-0 truncate border-l border-[#CBD5E1] px-2.5 py-1.75"
+              className="min-w-0 truncate border-l border-[#CBD5E1] pl-[5px] pr-[5px] py-1.75"
               style={{ gridColumn: 3 }}
             >
               {secondColumnLabel}
@@ -155,7 +156,7 @@ const CustomLinkedPairSelect: React.FC<CustomLinkedPairSelectProps> = ({
     valueContainer: (base) => ({
       ...base,
       minWidth: 0,
-      padding: "0 8px",
+      padding: "0 5px",
       overflow: "hidden",
     }),
     indicatorsContainer: (base) => ({
@@ -213,10 +214,17 @@ const CustomLinkedPairSelect: React.FC<CustomLinkedPairSelectProps> = ({
     singleValue: (base) => ({
       ...base,
       color: "#344054",
+      marginLeft: 0,
     }),
     placeholder: (base) => ({
       ...base,
       color: "#94A3B8",
+      marginLeft: 0,
+    }),
+    input: (base) => ({
+      ...base,
+      margin: 0,
+      padding: 0,
     }),
   });
 
@@ -236,7 +244,6 @@ const CustomLinkedPairSelect: React.FC<CustomLinkedPairSelectProps> = ({
           getOptionLabel={(option) => option.firstLabel}
           placeholder={placeholder}
           isDisabled={isDisabled}
-
           isSearchable={isSearchable}
           isClearable={false}
           onKeyDown={onKeyDown}
