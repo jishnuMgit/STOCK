@@ -7,7 +7,7 @@ import Select, {
   type OptionProps,
   type MenuListProps,
 } from "react-select";
-import selectComponents from "./selectComponents";
+import selectComponents, { SELECT_FONT_FAMILY } from "./selectComponents";
 
 export interface TableSelectOption {
   label: string;
@@ -176,6 +176,12 @@ const CommonTableSelect = ({
 
   const styles: StylesConfig<TableSelectOption, false> = {
 
+    // the font of the app, never the browser\'s
+    container: (base) => ({
+      ...base,
+      fontFamily: SELECT_FONT_FAMILY,
+    }),
+
     // CONTROL
     control: (base) => ({
       ...base,
@@ -203,6 +209,7 @@ const CommonTableSelect = ({
 
     menu: (base) => ({
       ...base,
+      fontFamily: SELECT_FONT_FAMILY,
       width: menuWidth === "100%" ? "100%" : `max(100%, ${menuWidth})`,
       minWidth: "100%",
       maxWidth: "calc(100vw - 16px)",
@@ -222,7 +229,8 @@ const CommonTableSelect = ({
     menuList: (base) => ({
       ...base,
       padding: 0,
-      maxHeight: menuMaxHeight,
+      // never taller than the room react-select found (above or below), nor than menuMaxHeight
+      maxHeight: Math.min(Number(base.maxHeight) || parseFloat(menuMaxHeight), parseFloat(menuMaxHeight)),
       overflowX: "hidden",
     }),
 
@@ -284,6 +292,11 @@ const CommonTableSelect = ({
       noOptionsMessage={noOptionsMessage}
       menuPortalTarget={menuPortalTarget}
       menuPosition={menuPortalTarget ? "fixed" : undefined}
+      // opens upward when there is not room below (the list is tall: header + up to 10 rows), like the pair select
+      menuPlacement="auto"
+      // opens upward unless the whole list fits below (react-select otherwise shrinks it into the space left below)
+      minMenuHeight={parseFloat(menuMaxHeight)}
+      menuShouldScrollIntoView={false}
       getOptionLabel={(option) =>
         String(valueKey ? (option[valueKey] ?? option.label) : option.label)
       }
@@ -403,6 +416,12 @@ export const CustomTableSelect = ({
 
   const styles: StylesConfig<TableSelectOption, false> = {
 
+    // the font of the app, never the browser\'s
+    container: (base) => ({
+      ...base,
+      fontFamily: SELECT_FONT_FAMILY,
+    }),
+
     // CONTROL - TRANSPARENT BORDER
     control: (base, state) => ({
       ...base,
@@ -435,6 +454,7 @@ export const CustomTableSelect = ({
     // MENU - TRANSPARENT BORDER
     menu: (base) => ({
       ...base,
+      fontFamily: SELECT_FONT_FAMILY,
       width: menuWidth,
       minWidth: menuWidth,
       marginTop: "4px",
@@ -453,7 +473,7 @@ export const CustomTableSelect = ({
     menuList: (base) => ({
       ...base,
       padding: 0,
-      maxHeight: "220px",
+      maxHeight: Math.min(Number(base.maxHeight) || 220, 220),
       overflowX: "hidden",
     }),
 
@@ -503,6 +523,10 @@ export const CustomTableSelect = ({
       isDisabled={isDisabled}
       menuPortalTarget={menuPortalTarget}
       menuPosition={menuPortalTarget ? "fixed" : undefined}
+      // opens upward when there is not room below (the list is tall: header + up to 10 rows), like the pair select
+      menuPlacement="auto"
+      minMenuHeight={220}
+      menuShouldScrollIntoView={false}
       getOptionLabel={(option) => option.label}
       getOptionValue={(option) => option.value}
     />
