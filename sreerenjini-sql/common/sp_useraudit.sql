@@ -33,7 +33,7 @@ BEGIN
         p_straction,
         p_strnote,
         p_struserid,
-        CURRENT_TIMESTAMP
+        now()
     );
 
 END;

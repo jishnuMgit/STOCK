@@ -26,7 +26,7 @@ const StockDocumentPostFooter: React.FC<StockDocumentPostFooterProps> = ({
         readOnly
         aria-label="Selected total"
         value={selectedCount > 0 ? formatAmount(selectedTotal) : ""}
-        className="w-[190px] input-style text-right"
+        className="h-7.5 w-[190px] rounded border border-gray-300 bg-white px-2 text-right text-[14px] text-[#344054] outline-none"
       />
     </div>
 
