@@ -1247,10 +1247,10 @@ const MENU_ID = "010201";
                 secondValue={lkpItemGroupID || null}
                 firstHeader="Item Group ID"
                 secondHeader="Item Group Name"
-                // the same boxes as on the report pages: 120 px for the ID, 450 px for the Name, 10 px between
+                // the same boxes as on the report pages: 120 px for the ID, 450 px for the Name, 5 px between
                 firstWidth={120}
                 secondWidth={450}
-                gap={10}
+                gap={5}
                 menuZIndex={999999}
                 menuPortalTarget={document.body}
                 headerFontSize="12px"
@@ -1285,10 +1285,10 @@ const MENU_ID = "010201";
                 secondValue={lkpSupplierID || null}
                 firstHeader="Supplier ID"
                 secondHeader="Supplier Name"
-                // the same boxes as on the report pages: 120 px for the ID, 450 px for the Name, 10 px between
+                // the same boxes as on the report pages: 120 px for the ID, 450 px for the Name, 5 px between
                 firstWidth={120}
                 secondWidth={450}
-                gap={10}
+                gap={5}
                 menuZIndex={999999}
                 menuPortalTarget={document.body}
                 headerFontSize="12px"
