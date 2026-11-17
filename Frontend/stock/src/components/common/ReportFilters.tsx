@@ -27,6 +27,10 @@ import Header from "./Header";
 // rdgItem / lkpItemID / lkpItemName, dtpFromDate / dtpToDate, btnPrint.
 // ============================================================
 
+// The space between two boxes on the same row: 5 px, everywhere (the two dates of a Period, the ID box and the Name box of a
+// pair, the From and To boxes of a range, a box and the tick box beside it). One value, so it is changed in one place.
+export const FILTER_GAP = 5;
+
 // ---------- the form: the card, its header, the section and the 14 px between the rows ----------
 
 export const ReportForm: React.FC<{
@@ -348,7 +352,7 @@ export const PairFilter: React.FC<{
             secondHeader={`${name} Name`}
             firstWidth={firstWidth}
             secondWidth={secondWidth}
-            gap={10}
+            gap={FILTER_GAP}
             menuZIndex={999999}
             menuPortalTarget={typeof document !== "undefined" ? document.body : undefined}
             headerFontSize="12px"
@@ -361,7 +365,11 @@ export const PairFilter: React.FC<{
         </div>
       )}
       {!disabled && range && mode === rangeMode && (
-        <div className="flex flex-wrap items-center gap-2" onKeyDown={(event) => advanceOnEnter(event)}>
+        <div
+          className="flex flex-wrap items-center"
+          style={{ gap: FILTER_GAP }}
+          onKeyDown={(event) => advanceOnEnter(event)}
+        >
           {(
             [
               { id: fromId, label: "From", value: range.from, set: range.onFromChange },
@@ -542,7 +550,11 @@ export const LabelSelectFilter: React.FC<{
     <div className="grid grid-cols-[150px_minmax(0,1fr)] items-center gap-x-4">
       <FilterLabel>{label} :</FilterLabel>
 
-      <div className="flex min-w-0 flex-wrap items-center gap-8" onKeyDown={(event) => advanceOnEnter(event)}>
+      <div
+        className="flex min-w-0 flex-wrap items-center"
+        style={{ gap: FILTER_GAP }}
+        onKeyDown={(event) => advanceOnEnter(event)}
+      >
         <div className="w-35">
           <CommonTableSelect
             inputId={id}
@@ -606,7 +618,7 @@ export const PeriodFilter: React.FC<{
   <div className="grid grid-cols-[150px_minmax(0,1fr)] items-center gap-x-4">
     <FilterLabel>Period :</FilterLabel>
 
-    <div className="flex min-w-0 flex-wrap items-center gap-1.25">
+    <div className="flex min-w-0 flex-wrap items-center" style={{ gap: FILTER_GAP }}>
       <div className="w-38.5">
         <ReportDatePicker id="dtpFromDate" label="From Date" value={from} onChange={onFromChange} />
       </div>

@@ -34,23 +34,24 @@ const invoiceTypeColumns = [
 ];
 const labelColumn = [{ key: "label", label: "Name" }];
 
-/* Linked ID / Name selects: both show the same two columns,
-   one is searched by ID and the other by name. */
+/* Linked ID / Name selects: the ID box lists "ID | Name", the Name box lists "Name | ID"; one is searched by ID and the
+   other by name. */
 const supplierIdColumns = [
   { key: "label", label: "Supplier ID", width: "120px" },
   { key: "name", label: "Supplier Name" },
 ];
+// the Name box lists the name first, then the ID (the ID box lists the ID first)
 const supplierNameColumns = [
-  { key: "id", label: "Supplier ID", width: "120px" },
   { key: "label", label: "Supplier Name" },
+  { key: "id", label: "Supplier ID", width: "120px" },
 ];
 const miscIdColumns = [
   { key: "label", label: "Misc. Sup. ID", width: "120px" },
   { key: "name", label: "Misc. Sup. Name" },
 ];
 const miscNameColumns = [
-  { key: "id", label: "Misc. Sup. ID", width: "120px" },
   { key: "label", label: "Misc. Sup. Name" },
+  { key: "id", label: "Misc. Sup. ID", width: "120px" },
 ];
 
 /* same records, but the visible label is the name (value stays the ID) */
