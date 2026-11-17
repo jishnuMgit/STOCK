@@ -26,7 +26,7 @@ const miscSupplierOptions = makeOptions(["No", "Yes"]);
 const defaultCurrencyOptions = makeOptions(["SAR"]);
 const branchColumns = [
   { key: "label", label: "Branch" },
-  { key: "value", label: "ID", width: "90px", align: "right" as const },
+  { key: "value", label: "ID", width: "50px"},
 ];
 const invoiceTypeColumns = [
   { key: "label", label: "Type", width: "70px" },
@@ -278,9 +278,11 @@ const PurchaseForm: React.FC<Props> = ({
               onChange={(o) => onChange("brId", o?.value ?? "")}
               columns={branchColumns}
               width="100%"
-              menuWidth="calc(100% + 100px)"
+              menuWidth="calc(100% + 51px)"
               menuPortalTarget={portalTarget}
               isClearable={false}
+              controlFontSize="14px"
+              headerFontSize="12px"
               isSearchable
             />
           </div>
@@ -389,6 +391,8 @@ const PurchaseForm: React.FC<Props> = ({
                 width="115%"
                 menuWidth="180px"
                 menuPortalTarget={portalTarget}
+                controlFontSize="14px"
+                headerFontSize="12px"
                 isClearable={false}
                 isSearchable={false}
               />
@@ -465,6 +469,8 @@ const PurchaseForm: React.FC<Props> = ({
                   width="100%"
                   menuWidth="calc(100% + 560px)"
                   menuPortalTarget={portalTarget}
+                  controlFontSize="14px"
+                  headerFontSize="12px"
                   isClearable={false}
                   isSearchable
                   isDisabled={!isMisc}
@@ -481,6 +487,8 @@ const PurchaseForm: React.FC<Props> = ({
                   menuWidth="480px"
                   menuPortalTarget={portalTarget}
                   isClearable={false}
+                  controlFontSize="14px"
+                  headerFontSize="12px"
                   isSearchable
                   isDisabled={!isMisc}
                 />

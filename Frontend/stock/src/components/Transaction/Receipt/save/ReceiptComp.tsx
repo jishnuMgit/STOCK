@@ -22,7 +22,6 @@ import Select, {
   type SingleValue,
   type SingleValueProps,
   type DropdownIndicatorProps,
-  type OptionProps,
   type MenuListProps,
   type SelectInstance,
 } from "react-select";
@@ -35,7 +34,6 @@ import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
 import { DatePicker } from "@mui/x-date-pickers/DatePicker";
 
 import {
-  selectStyles,
   accountDropdownStyles,
 } from "./ReactSelectStyles";
 
@@ -67,6 +65,7 @@ import CommonTableSelect, {
   type TableSelectOption,
 } from "../../../common/CommonTableSelect";
 import SingleSelect from "../../../common/SingleSelect";
+import Header from "../../../common/Header";
 
 export type TableField =
   | "accountId"
@@ -84,15 +83,8 @@ export type SortField = "accountId" | "accountName";
 ========================================================= */
 
 export const ReceiptHeader: React.FC = () => {
-  const navigate = useNavigate();
   return (
-    <header className="flex h-9 items-center border-b border-slate-300 bg-[#a3dfc0] pr-2">
-      <span className="px-3 text-[17px] font-semibold text-slate-700">Receipt</span>
-
-      <div className="ml-auto">
-        <CloseButton onClose={() => navigate("/")} />
-      </div>
-    </header>
+    <Header Name="Receipt" />
   );
 };
 
@@ -594,8 +586,9 @@ export const ReceiptForm: React.FC<ReceiptFormProps> = ({
     focusNext();
   };
 
+  // 5px left padding for all plain text inputs
   const inputClass =
-    "h-[30px] rounded border border-[#d7dee7] bg-white px-2 text-[14px] text-slate-700 outline-none focus:border-[#9fdfbc] focus:ring-1 focus:ring-[#9fdfbc]";
+    "h-[30px] rounded border border-[#d7dee7] bg-white pl-[2px] pr-2 text-[14px] text-slate-700 outline-none focus:border-[#9fdfbc] focus:ring-1 focus:ring-[#9fdfbc]";
 
 
 
@@ -721,12 +714,12 @@ export const ReceiptForm: React.FC<ReceiptFormProps> = ({
             value={selectedBranch}
             options={branchTableOptions}
             columns={[
-              { key: "value", label: "ID", width: "70px" },
               { key: "label", label: "Branch" },
+              { key: "value", label: "ID", width: "50px" },
             ]}
             placeholder="Select Branch"
             width="250px"
-            menuWidth="304px"
+            menuWidth="300px"
             controlFontSize="14px"
             headerFontSize="12px"
             borderColor="#d7dee7"
@@ -762,12 +755,12 @@ export const ReceiptForm: React.FC<ReceiptFormProps> = ({
             value={selectedType}
             options={typeOptions}
             columns={[
-              { key: "label", label: "ID", width: "40px" },
+              { key: "label", label: "ID", width: "48px" },
               { key: "value", label: "Name" },
             ]}
             placeholder="Select"
-            width="80px"
-            menuWidth="150px"
+            width="100%"
+            menuWidth="140px"
             controlFontSize="12px"
             headerFontSize="12px"
             borderColor="#d7dee7"
@@ -878,12 +871,12 @@ export const ReceiptForm: React.FC<ReceiptFormProps> = ({
             value={selectedCbAccount}
             options={cbAccountOptions}
             columns={[
-              { key: "value", label: "Account ID", width: "110px" },
-              { key: "label", label: "Account Name" },
+              { key: "label", label: "Account Name", width: "398px" },
+              { key: "value", label: "Account ID" },
             ]}
             placeholder={accountsLoading ? "Loading..." : "Select"}
             width="400px"
-            menuWidth="490px"
+            menuWidth="500px"
             controlFontSize="12px"
             headerFontSize="12px"
             borderColor="#d7dee7"
@@ -968,7 +961,7 @@ export const ReceiptForm: React.FC<ReceiptFormProps> = ({
                 },
 
                 "& .MuiPickersInputBase-sectionsContainer": {
-                  paddingLeft: "10px !important",
+                  paddingLeft: "2px !important",
 
                   paddingRight: "0px !important",
 
@@ -1139,14 +1132,6 @@ interface ReceiptTableProps {
   onRowSelect?: (id: number, row: ReceiptRow) => void;
 }
 
-const CcIdSingleValue = (props: SingleValueProps<SelectOption, false>) => {
-  return (
-    <components.SingleValue {...props}>
-      {props.data.value}
-    </components.SingleValue>
-  );
-};
-
 export interface ReceiptTableRef {
   focusFirstAccountId: () => void;
 
@@ -1245,134 +1230,6 @@ export const AccountDropdownMenuList = ({
   );
 };
 
-interface LabeledOptionProps extends OptionProps<SelectOption, false> {
-  idHeader: string;
-  nameHeader: string;
-}
-
-/* Generic two-column option row (value / label) used by
-   Division and CC.ID dropdowns so the user can see both
-   the code and its description while picking. */
-const LabeledDropdownOption = ({
-  idHeader,
-  nameHeader,
-  ...props
-}: LabeledOptionProps) => {
-  const optionId = String(props.data.value ?? "");
-
-  const optionName = String(props.data.label ?? "");
-
-  return (
-    <components.Option {...props}>
-      <div
-        className="account-dropdown-row"
-        title={`${optionId} - ${optionName}`}
-        style={{
-          display: "grid",
-          gridTemplateColumns: "80px 1fr",
-          width: "260px",
-          minWidth: "260px",
-          gap: "8px",
-          alignItems: "center",
-        }}
-      >
-        <div
-          className="account-dropdown-id"
-          title={optionId}
-          style={{
-            overflow: "hidden",
-            textOverflow: "ellipsis",
-            whiteSpace: "nowrap",
-          }}
-        >
-          {optionId}
-        </div>
-
-        <div
-          className="account-dropdown-name"
-          title={optionName}
-          style={{
-            overflow: "hidden",
-            textOverflow: "ellipsis",
-            whiteSpace: "nowrap",
-          }}
-        >
-          {optionName}
-        </div>
-      </div>
-    </components.Option>
-  );
-};
-
-interface LabeledMenuListProps extends MenuListProps<SelectOption, false> {
-  idHeader: string;
-  nameHeader: string;
-}
-
-const LabeledDropdownMenuList = ({
-  idHeader,
-  nameHeader,
-  ...props
-}: LabeledMenuListProps) => {
-  return (
-    <components.MenuList
-      {...props}
-      innerProps={{
-        ...props.innerProps,
-        style: {
-          ...props.innerProps.style,
-          minWidth: "260px",
-          width: "260px",
-        },
-      }}
-    >
-      <div
-        className="account-dropdown-header"
-        style={{
-          display: "grid",
-          gridTemplateColumns: "80px 1fr",
-          width: "260px",
-          minWidth: "260px",
-          gap: "8px",
-          alignItems: "center",
-        }}
-      >
-        <div className="account-dropdown-header-id">{idHeader}</div>
-
-        <div
-          className="account-dropdown-header-name"
-          style={{
-            position: "relative",
-          }}
-        >
-          <span
-            style={{
-              height: "35px",
-              position: "absolute",
-              left: "-14px",
-              top: "-10px",
-              bottom: "-10px",
-              borderLeft: "2px solid #d0d0d0",
-            }}
-          />
-
-          {nameHeader}
-        </div>
-      </div>
-
-      <div
-        className="account-dropdown-options"
-        style={{
-          width: "260px",
-          minWidth: "260px",
-        }}
-      >
-        {props.children}
-      </div>
-    </components.MenuList>
-  );
-};
-
 interface AccountSingleValueProps extends SingleValueProps<
   AccountOption,
   false
@@ -1390,32 +1247,6 @@ export const AccountDropdownSingleValue = ({
     <components.SingleValue {...props}>
       <span title={`${data.accountId} - ${data.accountName}`}>
         {displayMode === "id" ? data.accountId : data.accountName}
-      </span>
-    </components.SingleValue>
-  );
-};
-
-type LabeledSingleValueProps = SingleValueProps<SelectOption, false>;
-
-const LabeledDropdownSingleValue = (props: LabeledSingleValueProps) => {
-  const data = props.data as SelectOption;
-
-  const value = String(data.value ?? "");
-
-  const label = String(data.label ?? "");
-
-  return (
-    <components.SingleValue {...props}>
-      <span
-        title={`${value} - ${label}`}
-        style={{
-          display: "block",
-          overflow: "hidden",
-          textOverflow: "ellipsis",
-          whiteSpace: "nowrap",
-        }}
-      >
-        {value}
       </span>
     </components.SingleValue>
   );
@@ -1449,7 +1280,7 @@ const selectFilterOption = (
   option: {
     label: string;
     value: string;
-    data: SelectOption;
+    data: TableSelectOption;
   },
   inputValue: string,
 ) => {
@@ -1516,7 +1347,7 @@ const handleEditableSelectBackspace = (
 
 type RowRefValue =
   | SelectInstance<AccountOption, false>
-  | SelectInstance<SelectOption, false>
+  | SelectInstance<TableSelectOption, false>
   | HTMLInputElement
   | HTMLButtonElement
   | null;
@@ -1536,7 +1367,7 @@ interface ReceiptRowProps {
 
   accountIdOptions: AccountOption[];
 
-  ccIdOptions: SelectOption[];
+  ccIdOptions: TableSelectOption[];
 
   setSelectedRowId: (id: number) => void;
 
@@ -1619,13 +1450,12 @@ const ReceiptRow = memo(
     > | null>(null);
 
     const divisionSelectRef = useRef<SelectInstance<
-      SelectOption,
+      TableSelectOption,
       false
     > | null>(null);
 
-    const ccIdSelectRef = useRef<SelectInstance<SelectOption, false> | null>(
-      null,
-    );
+    const ccIdSelectRef =
+      useRef<SelectInstance<TableSelectOption, false> | null>(null);
 
     const [accountIdSearchText, setAccountIdSearchText] = useState("");
 
@@ -1745,11 +1575,13 @@ const ReceiptRow = memo(
       [row.id, handleRowChange],
     );
 
-    const divisionOptions = useMemo<SelectOption[]>(
+    const divisionOptions = useMemo<TableSelectOption[]>(
       () =>
         DivID.map((division) => ({
           value: division.fdivid,
           label: division.fdivname,
+          id: division.fdivid,
+          name: division.fdivname,
         })),
       [DivID],
     );
@@ -1974,15 +1806,6 @@ const ReceiptRow = memo(
       [isSelected],
     );
 
-    const RowNormalDropdownIndicator = useCallback(
-      (props: DropdownIndicatorProps<SelectOption, false>) => (
-        <components.DropdownIndicator {...props}>
-          <span className="receipt-dropdown-arrow">▼</span>
-        </components.DropdownIndicator>
-      ),
-      [],
-    );
-
     return (
       <tr
         className={isSelected ? "receipt-row-selected" : ""}
@@ -1995,32 +1818,32 @@ const ReceiptRow = memo(
 
         <td className={`receipt-cell ${activeCellClass}`}>
           <SingleSelect
-  row={row}
-  index={index}
-  selectedAccount={selectedAccount}
-  isAccountIdEditing={isAccountIdEditing}
-  setIsAccountIdEditing={setIsAccountIdEditing}
-  accountIdSearchText={accountIdSearchText}
-  setAccountIdSearchText={setAccountIdSearchText}
-  accountIdOptions={accountIdOptions}
-  accountIdMenuLayout={accountIdMenuLayout}
-  setAccountIdMenuLayout={setAccountIdMenuLayout}
-  setRowRef={(rowIndex, field, instance) =>
-    setRowRef(rowIndex, field as TableField, instance as RowRefValue)
-  }
-  handleAccountChange={(option) =>
-    void handleAccountChange(option as unknown as AccountOption)
-  }
-  handleAccountIdMenuOpen={handleAccountIdMenuOpen}
-  handleAccountIdMenuClose={handleAccountIdMenuClose}
-  handleEditableSelectBackspace={handleEditableSelectBackspace}
-  handleSelectKeyDown={handleSelectKeyDown}
-  getMenuLayout={getMenuLayout}
-  accountFilterOption={accountFilterOption}
-  accountDropdownStyles={accountDropdownStyles}
-  accountIdMenuOpenRef={accountIdMenuOpenRef}
-  accountIdDropdownIndicator={RowAccountIdIndicator}
-/>
+            row={row}
+            index={index}
+            selectedAccount={selectedAccount}
+            isAccountIdEditing={isAccountIdEditing}
+            setIsAccountIdEditing={setIsAccountIdEditing}
+            accountIdSearchText={accountIdSearchText}
+            setAccountIdSearchText={setAccountIdSearchText}
+            accountIdOptions={accountIdOptions}
+            accountIdMenuLayout={accountIdMenuLayout}
+            setAccountIdMenuLayout={setAccountIdMenuLayout}
+            setRowRef={(rowIndex, field, instance) =>
+              setRowRef(rowIndex, field as TableField, instance as RowRefValue)
+            }
+            handleAccountChange={(option) =>
+              void handleAccountChange(option as unknown as AccountOption)
+            }
+            handleAccountIdMenuOpen={handleAccountIdMenuOpen}
+            handleAccountIdMenuClose={handleAccountIdMenuClose}
+            handleEditableSelectBackspace={handleEditableSelectBackspace}
+            handleSelectKeyDown={handleSelectKeyDown}
+            getMenuLayout={getMenuLayout}
+            accountFilterOption={accountFilterOption}
+            accountDropdownStyles={accountDropdownStyles}
+            accountIdMenuOpenRef={accountIdMenuOpenRef}
+            accountIdDropdownIndicator={RowAccountIdIndicator}
+          />
         </td>
 
         <td className={`receipt-cell ${activeCellClass}`}>
@@ -2116,9 +1939,9 @@ const ReceiptRow = memo(
         </td>
 
         <td className={`receipt-cell ${activeCellClass}`}>
-          <Select<SelectOption, false>
+          <CommonTableSelect
             inputId={`lkpDivision-${row.id}`}
-            ref={(instance) => {
+            selectRef={(instance) => {
               divisionSelectRef.current = instance;
 
               setRowRef(index, "DivID", instance);
@@ -2134,6 +1957,35 @@ const ReceiptRow = memo(
               return newValue;
             }}
             backspaceRemovesValue={false}
+            blurInputOnSelect={false}
+            options={divisionOptions}
+            columns={[
+              { key: "id", label: "ID", width: "72px" },
+              { key: "name", label: "Division" },
+            ]}
+            placeholder=""
+            width="100%"
+            menuWidth="170px"
+            menuMaxHeight="300px"
+            valueKey="value"
+            isSearchable
+            isClearable={false}
+            isDisabled={
+              !row.accountId ||
+              divisionLoading ||
+              !row.haveDivision ||
+              divisionOptions.length === 0
+            }
+            menuPlacement="auto"
+            menuPortalTarget={document.body}
+            filterOption={selectFilterOption}
+            noOptionsMessage={() => "No Division Found"}
+            onMenuOpen={handleDivisionMenuOpen}
+            onMenuClose={() => {
+              handleDivisionMenuClose();
+              setDivisionSearchText("");
+              setIsDivisionEditing(false);
+            }}
             onKeyDown={(event) => {
               const handled = handleEditableSelectBackspace(
                 event,
@@ -2144,19 +1996,11 @@ const ReceiptRow = memo(
                 divisionSelectRef,
               );
 
-              if (handled) {
-                return;
+              if (!handled) {
+                handleSelectKeyDown(event, "DivID", divisionMenuOpenRef);
               }
-
-              handleSelectKeyDown(event, "DivID", divisionMenuOpenRef);
             }}
-            onMenuOpen={handleDivisionMenuOpen}
-            onMenuClose={() => {
-              handleDivisionMenuClose();
-              setDivisionSearchText("");
-              setIsDivisionEditing(false);
-            }}
-            onChange={(option: SingleValue<SelectOption>) => {
+            onChange={(option) => {
               handleRowChange(row.id, "DivID", option?.value || "");
 
               setDivisionSearchText("");
@@ -2164,65 +2008,13 @@ const ReceiptRow = memo(
 
               setSelectedRowId(row.id);
             }}
-            blurInputOnSelect={false}
-            options={divisionOptions}
-            placeholder=""
-            styles={{
-              ...selectStyles,
-              menu: (base: any) => ({
-                ...base,
-                minWidth: "260px",
-                width: "260px",
-              }),
-              menuList: (base: any) => ({
-                ...base,
-                minWidth: "260px",
-                width: "260px",
-                overflowX: "hidden",
-              }),
-            }}
-            components={{
-              DropdownIndicator: RowNormalDropdownIndicator,
-
-              SingleValue: (props) => <LabeledDropdownSingleValue {...props} />,
-
-              Option: (props) => (
-                <LabeledDropdownOption
-                  {...props}
-                  idHeader="ID"
-                  nameHeader="Division"
-                />
-              ),
-
-              MenuList: (props) => (
-                <LabeledDropdownMenuList
-                  {...props}
-                  idHeader="ID"
-                  nameHeader="Division"
-                />
-              ),
-            }}
-            isSearchable
-            isClearable={false}
-            isDisabled={
-              !row.accountId ||
-              divisionLoading ||
-              !row.haveDivision ||
-              divisionOptions.length === 0
-            }
-            menuPlacement="auto"
-            menuPosition="fixed"
-            menuPortalTarget={document.body}
-            menuShouldScrollIntoView={false}
-            filterOption={selectFilterOption}
-            noOptionsMessage={() => "No Division Found"}
           />
         </td>
 
         <td className={`receipt-cell ${activeCellClass}`}>
-          <Select<SelectOption, false>
+          <CommonTableSelect
             inputId={`lkpCCId-${row.id}`}
-            ref={(instance) => {
+            selectRef={(instance) => {
               ccIdSelectRef.current = instance;
 
               setRowRef(index, "CCID", instance);
@@ -2238,6 +2030,24 @@ const ReceiptRow = memo(
               return newValue;
             }}
             backspaceRemovesValue={false}
+            blurInputOnSelect={false}
+            options={ccIdOptions}
+            columns={[
+              { key: "id", label: "ID", width: "72px" },
+              { key: "name", label: "Cost Center" },
+            ]}
+            placeholder=""
+            width="100%"
+            menuWidth="200px"
+            menuMaxHeight="300px"
+            valueKey="value"
+            isSearchable
+            isClearable={false}
+            isDisabled={!row.haveCc || ccIdOptions.length === 0}
+            menuPlacement="auto"
+            menuPortalTarget={document.body}
+            filterOption={selectFilterOption}
+            noOptionsMessage={() => "No CC ID Found"}
             onKeyDown={(event) => {
               const handled = handleEditableSelectBackspace(
                 event,
@@ -2248,11 +2058,9 @@ const ReceiptRow = memo(
                 ccIdSelectRef,
               );
 
-              if (handled) {
-                return;
+              if (!handled) {
+                handleSelectKeyDown(event, "CCID", ccIdMenuOpenRef);
               }
-
-              handleSelectKeyDown(event, "CCID", ccIdMenuOpenRef);
             }}
             onMenuOpen={handleCcMenuOpen}
             onMenuClose={() => {
@@ -2260,7 +2068,7 @@ const ReceiptRow = memo(
               setCcIdSearchText("");
               setIsCcIdEditing(false);
             }}
-            onChange={(option: SingleValue<SelectOption>) => {
+            onChange={(option) => {
               handleRowChange(row.id, "CCID", option?.value || "");
 
               setCcIdSearchText("");
@@ -2268,52 +2076,6 @@ const ReceiptRow = memo(
 
               setSelectedRowId(row.id);
             }}
-            blurInputOnSelect={false}
-            options={ccIdOptions}
-            placeholder=""
-            styles={{
-              ...selectStyles,
-              menu: (base: any) => ({
-                ...base,
-                minWidth: "260px",
-                width: "260px",
-              }),
-              menuList: (base: any) => ({
-                ...base,
-                minWidth: "260px",
-                width: "260px",
-                overflowX: "hidden",
-              }),
-            }}
-            components={{
-              DropdownIndicator: RowNormalDropdownIndicator,
-              SingleValue: CcIdSingleValue,
-
-              Option: (props) => (
-                <LabeledDropdownOption
-                  {...props}
-                  idHeader="ID"
-                  nameHeader="Cost Center"
-                />
-              ),
-
-              MenuList: (props) => (
-                <LabeledDropdownMenuList
-                  {...props}
-                  idHeader="ID"
-                  nameHeader="Cost Center"
-                />
-              ),
-            }}
-            isSearchable
-            isClearable={false}
-            isDisabled={!row.haveCc || ccIdOptions.length === 0}
-            menuPlacement="auto"
-            menuPosition="fixed"
-            menuPortalTarget={document.body}
-            menuShouldScrollIntoView={false}
-            filterOption={selectFilterOption}
-            noOptionsMessage={() => "No CC ID Found"}
           />
         </td>
 
@@ -2546,7 +2308,7 @@ export const ReceiptTable = forwardRef<ReceiptTableRef, ReceiptTableProps>(
         }));
     }, [accountSortByIdOptions]);
 
-    const ccIdOptions = useMemo<SelectOption[]>(() => {
+    const ccIdOptions = useMemo<TableSelectOption[]>(() => {
       if (!Array.isArray(costCenters)) {
         return [];
       }
@@ -2560,6 +2322,8 @@ export const ReceiptTable = forwardRef<ReceiptTableRef, ReceiptTableProps>(
                      has no separate name field so the column
                      never renders blank. */
           label: (costCenter as any).fccname || costCenter.fccid,
+          id: costCenter.fccid,
+          name: (costCenter as any).fccname || costCenter.fccid,
         }));
     }, [costCenters]);
 
@@ -2742,7 +2506,8 @@ export const ReceiptBottomForm: React.FC<ReceiptBottomFormProps> = ({
             rounded
             border
             border-gray-300
-            px-2
+            pl-[2px]
+            pr-2
             text-[14px]
             outline-none
             focus:border-[#9fdfbc]
@@ -2773,13 +2538,15 @@ export const ReceiptBottomForm: React.FC<ReceiptBottomFormProps> = ({
             rounded
             border
             border-gray-300
-            p-2
+            py-2
+            pl-[2px]
+            pr-2
             text-[14px]
             outline-none
             focus:border-[#9fdfbc]
             focus:ring-1
             focus:ring-[#9fdfbc]
-             text-[#344054]
+            text-[#344054]
           "
         />
       </div>

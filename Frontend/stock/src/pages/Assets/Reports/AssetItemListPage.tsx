@@ -387,9 +387,9 @@ const AssetItemList: React.FC = () => {
   // ==================================================
 
   return (
-    <div className="min-h-screen w-full bg-white p-1 sm:p-2">
+    <div className="min-h-screen w-full bg-white p-1">
 
-      <main className="mx-auto w-full max-w-220 overflow-hidden rounded-[3px] border border-[#91a7bb] bg-white shadow-sm">
+      <main className="mx-auto w-full max-w-230 overflow-hidden rounded-[3px] border border-[#91a7bb] bg-white shadow-sm">
 
         <Header Name="Asset Item List" />
 
@@ -434,8 +434,8 @@ const AssetItemList: React.FC = () => {
 
                 <CustomRadio
                   name="rgdBranch"
-                  value="All Branch"
-                  label="All Branch"
+                  value="All Branches"
+                  label="All Branches"
                   checked={branchMode === "All Branch"}
                   onChange={() => setBranchMode("All Branch")}
                 />
@@ -485,8 +485,8 @@ const AssetItemList: React.FC = () => {
 
                 <CustomRadio
                   name="rgdCostCenter"
-                  value="All Cost Center"
-                  label="All Cost Center"
+                  value="All Cost Centers"
+                  label="All Cost Centers"
                   checked={costCenterMode === "All Cost Center"}
                   onChange={() =>
                     setCostCenterMode("All Cost Center")
@@ -558,8 +558,8 @@ const AssetItemList: React.FC = () => {
 
                 <CustomRadio
                   name="rgdAsset"
-                  value="All Asset"
-                  label="All Asset"
+                  value="All Assets"
+                  label="All Assets"
                   checked={assetMode === "All Asset"}
                   onChange={() => setAssetMode("All Asset")}
                 />
@@ -577,9 +577,9 @@ const AssetItemList: React.FC = () => {
                     secondValue={assetName?.value ?? null}
                     firstHeader="Asset ID"
                     secondHeader="Asset Name"
-                    firstWidth={120}
-                    secondWidth={450}
-                    gap={10}
+                    firstWidth={160}
+                    secondWidth={545}
+                    gap={5}
                     menuZIndex={999999}
                     menuPortalTarget={
                       typeof document !== "undefined" ? document.body : undefined
@@ -621,8 +621,8 @@ const AssetItemList: React.FC = () => {
 
                 <CustomRadio
                   name="rgdPeriod"
-                  value="For a Period"
-                  label="For a Period"
+                  value="Period"
+                  label="Period"
                   checked={periodMode === "For a Period"}
                   onChange={() => setPeriodMode("For a Period")}
                 />
