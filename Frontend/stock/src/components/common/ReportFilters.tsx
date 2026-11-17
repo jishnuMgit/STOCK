@@ -38,14 +38,27 @@ export const ReportForm: React.FC<{
   onKeyDown?: React.KeyboardEventHandler;
   // what is drawn over the form (the Print Preview)
   overlay?: React.ReactNode;
+  // the width of the label column in px: 150 on every page (the radio panels and the labels are 152 px). A page whose radio
+  // text is longer (Ageing of Receivables: "One Parent Account") gives more: the column AND every panel / label of the
+  // page get that width, so they all end at the same place and the boxes still line up
+  labelWidth?: number;
   children: React.ReactNode;
-}> = ({ title, onKeyDown, overlay, children }) => (
+}> = ({ title, onKeyDown, overlay, labelWidth, children }) => (
   <div onKeyDown={onKeyDown} className="min-h-full w-full bg-white p-1 sm:p-2">
     <main className="mx-auto w-full max-w-220 overflow-hidden rounded-[3px] border border-[#91a7bb] bg-white shadow-sm">
       <Header Name={title} />
 
       <section className="relative px-3.5 pb-3.5 pt-3.5">
-        <div className="flex flex-col items-start gap-3.5">{children}</div>
+        <div
+          className="flex flex-col items-start gap-3.5"
+          style={
+            labelWidth
+              ? ({ "--filter-label": `${labelWidth}px`, "--filter-panel": `${labelWidth}px` } as React.CSSProperties)
+              : undefined
+          }
+        >
+          {children}
+        </div>
       </section>
     </main>
 
@@ -59,7 +72,7 @@ export const FilterRow: React.FC<{
   panel: React.ReactNode;
   children?: React.ReactNode;
 }> = ({ panel, children }) => (
-  <div className="grid grid-cols-[150px_minmax(0,1fr)] items-center gap-x-4">
+  <div className="grid grid-cols-[var(--filter-label,150px)_minmax(0,1fr)] items-center gap-x-4">
     {panel}
     <div className="min-w-0 pt-1">{children}</div>
   </div>
@@ -69,7 +82,7 @@ export const FilterRow: React.FC<{
 
 type BranchOption = { value: string; label: string };
 
-// the ID column is 70 px: with the 330 px list under the 250 px box it starts exactly where the box ends
+// the ID column is 70 px: with the 320 px list (250 px box + 70 px) the ID column starts exactly where the box ends, the divider on its edge
 const BRANCH_COLUMNS = [
   { key: "label", label: "Branch", width: "1fr" },
   { key: "value", label: "ID", width: "70px", align: "right" as const },
@@ -96,40 +109,13 @@ export const BranchFilter: React.FC<{
   onTick?: (branchId: string, checked: boolean) => void;
   // "All Branch" cannot be chosen (a company with one branch)
   allDisabled?: boolean;
-}> = ({ mode, onModeChange, options, value, onChange, withSelected = false, selectedIds = [], onTick, allDisabled = false }) => {
+  // something at the right end of the row, always shown (Customer Sales: "Order By Amount")
+  aside?: React.ReactNode;
+}> = ({ mode, onModeChange, options, value, onChange, withSelected = false, selectedIds = [], onTick, allDisabled = false, aside }) => {
   const { advanceAfterPick, advanceOnEnter } = useAdvanceAfterSelect();
 
-  return (
-    <FilterRow
-      panel={
-        <RadioPanel id="rdgBranch" className={`${withSelected ? "h-22.5" : "h-17.5"} w-38`}>
-          <CustomRadio
-            name="rdgBranch"
-            value="One Branch"
-            label="One Branch"
-            checked={mode === "One Branch"}
-            onChange={() => onModeChange("One Branch")}
-          />
-          {withSelected && (
-            <CustomRadio
-              name="rdgBranch"
-              value="Selected Branch"
-              label="Selected Branch"
-              checked={mode === "Selected Branch"}
-              onChange={() => onModeChange("Selected Branch")}
-            />
-          )}
-          <CustomRadio
-            name="rdgBranch"
-            value="All Branch"
-            label="All Branch"
-            checked={mode === "All Branch"}
-            disabled={allDisabled}
-            onChange={() => onModeChange("All Branch")}
-          />
-        </RadioPanel>
-      }
-    >
+  const content = (
+    <>
       {mode === "One Branch" && (
         <div className="w-62.5 max-w-full" onKeyDown={(event) => advanceOnEnter(event)}>
           <CommonTableSelect
@@ -142,7 +128,7 @@ export const BranchFilter: React.FC<{
             }}
             columns={BRANCH_COLUMNS}
             width="250px"
-            menuWidth="330px"
+            menuWidth="320px"
             placeholder="Select Branch"
             filterOption={filterLabelOrValue}
             menuPortalTarget={typeof document !== "undefined" ? document.body : undefined}
@@ -171,6 +157,48 @@ export const BranchFilter: React.FC<{
           ))}
         </div>
       )}
+    </>
+  );
+
+  return (
+    <FilterRow
+      panel={
+        <RadioPanel id="rdgBranch" className={`${withSelected ? "h-22.5" : "h-17.5"} w-[var(--filter-panel,9.5rem)]`}>
+          <CustomRadio
+            name="rdgBranch"
+            value="One Branch"
+            label="One Branch"
+            checked={mode === "One Branch"}
+            onChange={() => onModeChange("One Branch")}
+          />
+          {withSelected && (
+            <CustomRadio
+              name="rdgBranch"
+              value="Selected Branch"
+              label="Selected Branch"
+              checked={mode === "Selected Branch"}
+              onChange={() => onModeChange("Selected Branch")}
+            />
+          )}
+          <CustomRadio
+            name="rdgBranch"
+            value="All Branch"
+            label="All Branch"
+            checked={mode === "All Branch"}
+            disabled={allDisabled}
+            onChange={() => onModeChange("All Branch")}
+          />
+        </RadioPanel>
+      }
+    >
+      {aside ? (
+        <div className="flex min-w-0 items-center justify-between gap-4">
+          <div className="min-w-0">{content}</div>
+          {aside}
+        </div>
+      ) : (
+        content
+      )}
     </FilterRow>
   );
 };
@@ -185,7 +213,7 @@ export const BranchOnlyFilter: React.FC<{
   const { advanceAfterPick, advanceOnEnter } = useAdvanceAfterSelect();
 
   return (
-    <div className="grid grid-cols-[150px_minmax(0,1fr)] items-center gap-x-4">
+    <div className="grid grid-cols-[var(--filter-label,150px)_minmax(0,1fr)] items-center gap-x-4">
       <FilterLabel>Branch :</FilterLabel>
 
       <div className="w-62.5 max-w-full" onKeyDown={(event) => advanceOnEnter(event)}>
@@ -199,7 +227,7 @@ export const BranchOnlyFilter: React.FC<{
           }}
           columns={BRANCH_COLUMNS}
           width="250px"
-          menuWidth="330px"
+          menuWidth="320px"
           placeholder="Select Branch"
           filterOption={filterLabelOrValue}
           menuPortalTarget={typeof document !== "undefined" ? document.body : undefined}
@@ -212,7 +240,7 @@ export const BranchOnlyFilter: React.FC<{
 
 // ---------- one box: Document, Staff type ... (a list of names only) ----------
 // name = "Document" gives the radio "One Document / All Document" (rdgDocument), the box lkpDocument, the list header
-// "Document" and the placeholder "Select Document". The box is 250 px, like the Branch box.
+// "Document" and no placeholder (blank until a document is picked). The box is 250 px, like the Branch box.
 
 export const SingleFilter: React.FC<{
   name: string;
@@ -221,7 +249,9 @@ export const SingleFilter: React.FC<{
   options: BranchOption[];
   value: BranchOption | null;
   onChange: (option: BranchOption | null) => void;
-}> = ({ name, mode, onModeChange, options, value, onChange }) => {
+  // the box is always needed (Finance Document List: "Document :"): a label instead of the One / All radios
+  required?: boolean;
+}> = ({ name, mode, onModeChange, options, value, onChange, required = false }) => {
   const { advanceAfterPick, advanceOnEnter } = useAdvanceAfterSelect();
 
   const key = name.replace(/\s+/g, "");
@@ -232,25 +262,29 @@ export const SingleFilter: React.FC<{
   return (
     <FilterRow
       panel={
-        <RadioPanel id={`rdg${key}`} className="h-17.5 w-38">
-          <CustomRadio
-            name={`rdg${key}`}
-            value={one}
-            label={one}
-            checked={mode === one}
-            onChange={() => onModeChange(one)}
-          />
-          <CustomRadio
-            name={`rdg${key}`}
-            value={all}
-            label={all}
-            checked={mode === all}
-            onChange={() => onModeChange(all)}
-          />
-        </RadioPanel>
+        required ? (
+          <FilterLabel>{name} :</FilterLabel>
+        ) : (
+          <RadioPanel id={`rdg${key}`} className="h-17.5 w-[var(--filter-panel,9.5rem)]">
+            <CustomRadio
+              name={`rdg${key}`}
+              value={one}
+              label={one}
+              checked={mode === one}
+              onChange={() => onModeChange(one)}
+            />
+            <CustomRadio
+              name={`rdg${key}`}
+              value={all}
+              label={all}
+              checked={mode === all}
+              onChange={() => onModeChange(all)}
+            />
+          </RadioPanel>
+        )
       }
     >
-      {mode === one && (
+      {(required || mode === one) && (
         <div className="w-62.5 max-w-full" onKeyDown={(event) => advanceOnEnter(event)}>
           <CommonTableSelect
             inputId={inputId}
@@ -263,7 +297,9 @@ export const SingleFilter: React.FC<{
             columns={[{ key: "label", label: name }]}
             width="250px"
             menuWidth="250px"
-            placeholder={`Select ${name}`}
+            // the list shows up to 11 rows (header 35 px + 11 x 32 px) before it gets a scroll bar
+            menuMaxHeight="387px"
+            placeholder=""
             menuPortalTarget={typeof document !== "undefined" ? document.body : undefined}
             noOptionsMessage={() => `No ${name} Found`}
           />
@@ -306,7 +342,7 @@ export const PairFilter: React.FC<{
   aside?: React.ReactNode;
   // the record is always needed (Item History: "Item :"): a label instead of the One / All radios, the boxes always shown
   required?: boolean;
-}> = ({ name, mode, onModeChange, options, value, onChange, firstWidth = 120, range, disabled = false, ids, secondWidth = 450, aside, required = false }) => {
+}> = ({ name, mode, onModeChange, options, value, onChange, firstWidth = 120, range, disabled = false, ids, secondWidth = 450, aside, required = false, }) => {
   const { advanceAfterPick, advanceOnEnter } = useAdvanceAfterSelect();
 
   const one = `One ${name}`;
@@ -406,7 +442,7 @@ export const PairFilter: React.FC<{
         required ? (
           <FilterLabel>{name} :</FilterLabel>
         ) : (
-          <RadioPanel id={radioId} className={`${range ? "h-22.5" : "h-17.5"} w-38`}>
+          <RadioPanel id={radioId} className={`${range ? "h-22.5" : "h-17.5"} w-[var(--filter-panel,9.5rem)]`}>
             <CustomRadio
               name={radioId}
               value={one}
@@ -456,14 +492,19 @@ const DATE_FORMAT = "DD-MM-YYYY";
 export const ReportDatePicker: React.FC<{
   id: string;
   label: string;
-  value: string; // DD-MM-YYYY, "" = empty
+  value: string; // DD-MM-YYYY (MM-YYYY with monthOnly), "" = empty
   onChange: (value: string) => void;
-}> = ({ id, label, value, onChange }) => (
+  // a month and a year only (Income Summary: "Up to Month")
+  monthOnly?: boolean;
+}> = ({ id, label, value, onChange, monthOnly = false }) => (
   <LocalizationProvider dateAdapter={AdapterDayjs}>
     <DatePicker
-      value={value ? dayjs(value, DATE_FORMAT) : null}
-      onChange={(newValue) => onChange(newValue?.isValid() ? newValue.format(DATE_FORMAT) : "")}
-      format={DATE_FORMAT}
+      value={value ? dayjs(value, monthOnly ? "MM-YYYY" : DATE_FORMAT) : null}
+      onChange={(newValue) =>
+        onChange(newValue?.isValid() ? newValue.format(monthOnly ? "MM-YYYY" : DATE_FORMAT) : "")
+      }
+      format={monthOnly ? "MM-YYYY" : DATE_FORMAT}
+      views={monthOnly ? ["year", "month"] : ["year", "month", "day"]}
       slotProps={{
         textField: { id, slotProps: { htmlInput: { "aria-label": label } } },
         openPickerButton: { sx: { padding: "2px", margin: 0 } },
@@ -527,7 +568,7 @@ export const ReportDatePicker: React.FC<{
 // ---------- the label box on the left of a row that has no radio ("Period :", "Post Status :") ----------
 
 export const FilterLabel: React.FC<{ children: React.ReactNode }> = ({ children }) => (
-  <div className="flex h-7.5 w-38 items-center rounded-sm border border-gray-300 bg-[#fafbfc] px-1.75 text-[14px] text-[#172b43]">
+  <div className="flex h-7.5 w-[var(--filter-panel,9.5rem)] items-center rounded-sm border border-gray-300 bg-[#fafbfc] px-1.75 text-[14px] text-[#172b43]">
     {children}
   </div>
 );
@@ -542,12 +583,20 @@ export const LabelSelectFilter: React.FC<{
   value: BranchOption | null;
   onChange: (option: BranchOption | null) => void;
   noOptionsMessage?: string;
+  // the box is switched off (Ageing Mode while there is no ageing)
+  disabled?: boolean;
+  // a list of more than one column (General Ledger Cost Center: "ID | Cost Center"): the columns (their keys are fields of
+  // the options), the list width and the search; the box is wider too (boxWidth, 140 px by default)
+  columns?: { key: string; label: string; width?: string; align?: "left" | "right" | "center" }[];
+  menuWidth?: string;
+  boxWidth?: number;
+  filterOption?: (option: never, input: string) => boolean;
   children?: React.ReactNode;
-}> = ({ label, id, options, value, onChange, noOptionsMessage, children }) => {
+}> = ({ label, id, options, value, onChange, noOptionsMessage, disabled = false, columns, menuWidth, boxWidth = 140, filterOption, children }) => {
   const { advanceAfterPick, advanceOnEnter } = useAdvanceAfterSelect();
 
   return (
-    <div className="grid grid-cols-[150px_minmax(0,1fr)] items-center gap-x-4">
+    <div className="grid grid-cols-[var(--filter-label,150px)_minmax(0,1fr)] items-center gap-x-4">
       <FilterLabel>{label} :</FilterLabel>
 
       <div
@@ -555,7 +604,7 @@ export const LabelSelectFilter: React.FC<{
         style={{ gap: FILTER_GAP }}
         onKeyDown={(event) => advanceOnEnter(event)}
       >
-        <div className="w-35">
+        <div style={{ width: boxWidth }}>
           <CommonTableSelect
             inputId={id}
             options={options}
@@ -564,10 +613,12 @@ export const LabelSelectFilter: React.FC<{
               onChange(option);
               if (option) advanceAfterPick(id);
             }}
-            columns={[{ key: "label", label }]}
-            showHeader={false}
-            width="140px"
-            menuWidth="140px"
+            columns={columns ?? [{ key: "label", label }]}
+            showHeader={!!columns}
+            isDisabled={disabled}
+            width={`${boxWidth}px`}
+            menuWidth={menuWidth ?? `${boxWidth}px`}
+            filterOption={filterOption as never}
             menuPortalTarget={typeof document !== "undefined" ? document.body : undefined}
             noOptionsMessage={noOptionsMessage ? () => noOptionsMessage : undefined}
           />
@@ -598,7 +649,7 @@ export const DateFilter: React.FC<{
   value: string;
   onChange: (value: string) => void;
 }> = ({ label, id, value, onChange }) => (
-  <div className="grid grid-cols-[150px_minmax(0,1fr)] items-center gap-x-4">
+  <div className="grid grid-cols-[var(--filter-label,150px)_minmax(0,1fr)] items-center gap-x-4">
     <FilterLabel>{label} :</FilterLabel>
 
     <div className="w-38.5">
@@ -615,7 +666,7 @@ export const PeriodFilter: React.FC<{
   onFromChange: (value: string) => void;
   onToChange: (value: string) => void;
 }> = ({ from, to, onFromChange, onToChange }) => (
-  <div className="grid grid-cols-[150px_minmax(0,1fr)] items-center gap-x-4">
+  <div className="grid grid-cols-[var(--filter-label,150px)_minmax(0,1fr)] items-center gap-x-4">
     <FilterLabel>Period :</FilterLabel>
 
     <div className="flex min-w-0 flex-wrap items-center" style={{ gap: FILTER_GAP }}>
@@ -631,8 +682,13 @@ export const PeriodFilter: React.FC<{
 
 // ---------- the Print button row ----------
 
-export const ReportPrintRow: React.FC<{ onPrint: () => void; disabled?: boolean }> = ({ onPrint, disabled = false }) => (
-  <div className="grid grid-cols-[150px_minmax(0,1fr)] gap-x-4">
+export const ReportPrintRow: React.FC<{
+  onPrint: () => void;
+  disabled?: boolean;
+  // more buttons beside Print (Clear)
+  children?: React.ReactNode;
+}> = ({ onPrint, disabled = false, children }) => (
+  <div className="grid grid-cols-[var(--filter-label,150px)_minmax(0,1fr)] gap-x-4">
     <div />
     <div className="flex items-center gap-1">
       <button
@@ -645,6 +701,7 @@ export const ReportPrintRow: React.FC<{ onPrint: () => void; disabled?: boolean 
       >
         <u>P</u>rint
       </button>
+      {children}
     </div>
   </div>
 );

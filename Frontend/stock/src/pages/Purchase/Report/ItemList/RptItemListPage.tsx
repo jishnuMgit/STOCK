@@ -556,8 +556,10 @@ const RptItemListPage: React.FC<RptItemListPageProps> = ({ onClose }) => {
         value={groupId ?? ""}
         onChange={(id) => handleGroupChange(id || null)}
         ids={{ radio: "rdgCategory", first: "lkpItemGroupID", second: "lkpItemGroupName" }}
-        // the Name box is narrower here so that Sales Below Cost fits at the right end of the row, where it always was
-        secondWidth={330}
+        // the same ID box width as the Item row below (so the two Name boxes start together); the Name box is narrower here
+        // so that Sales Below Cost fits at the right end of the row, where it always was (190 + 5 + 290 + the checkbox)
+        firstWidth={190}
+        secondWidth={290}
         aside={
           <label
             htmlFor="chkSalesBelowCost"

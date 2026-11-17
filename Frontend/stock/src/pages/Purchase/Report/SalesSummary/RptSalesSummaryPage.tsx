@@ -83,6 +83,8 @@ const RptSalesSummaryPage: React.FC = () => {
         options={customerPairOptions}
         value={customerId}
         onChange={setCustomerId}
+        // the same ID box width as the Item rows of the other reports, so every ID + Name pair looks the same
+        firstWidth={190}
       />
 
       <PeriodFilter

@@ -1,5 +1,9 @@
 import React, { useEffect, useState } from "react";
-import Select, { type StylesConfig } from "react-select";
+import Select, {
+  components,
+  type ClearIndicatorProps,
+  type StylesConfig,
+} from "react-select";
 import { toast } from "react-toastify";
 import { X } from "lucide-react";
 import { useEnterAsTab } from "../../../hooks/useEnterAsTab";
@@ -18,6 +22,16 @@ import selectComponents, {
   SELECT_FONT_FAMILY,
 } from "../../../components/sharecomponents/selectComponents";
 import Header from "../../../components/common/Header";
+
+// The clear mark of the Unit box: the same small grey x as the one on a Branch row (not react-select's big dark one)
+const unitSelectComponents = {
+  ...selectComponents,
+  ClearIndicator: (props: ClearIndicatorProps<any, false>) => (
+    <components.ClearIndicator {...props}>
+      <X size={12} />
+    </components.ClearIndicator>
+  ),
+};
 
 /* =========================================================
    TYPES
@@ -924,12 +938,13 @@ const MENU_ID = "010201";
     },
   }),
 
+  // the same small grey x as on a Branch row (text-slate-400, red on hover)
   clearIndicator: (provided) => ({
     ...provided,
     padding: "4px 6px",
-    color: "#64748b",
+    color: "#94a3b8",
     "&:hover": {
-      color: "#64748b",
+      color: "#ef4444",
     },
   }),
 
@@ -1151,7 +1166,7 @@ const MENU_ID = "010201";
               </label>
 
               <Select
-                components={selectComponents}
+                components={unitSelectComponents}
                 required
                 inputId="lkpUnit"
                 name="lkpUnit"
@@ -1161,6 +1176,7 @@ const MENU_ID = "010201";
                 }
                 onChange={(option) => setLkpUnit(option?.value || "")}
                 styles={reactSelectStyles}
+                placeholder=""
                 isClearable
                  
                                 />
@@ -1247,8 +1263,8 @@ const MENU_ID = "010201";
                 secondValue={lkpItemGroupID || null}
                 firstHeader="Item Group ID"
                 secondHeader="Item Group Name"
-                // the same boxes as on the report pages: 120 px for the ID, 450 px for the Name, 5 px between
-                firstWidth={120}
+                // the same boxes as on the report pages: 190 px for the ID, 450 px for the Name, 5 px between
+                firstWidth={190}
                 secondWidth={450}
                 gap={5}
                 menuZIndex={999999}
@@ -1285,8 +1301,8 @@ const MENU_ID = "010201";
                 secondValue={lkpSupplierID || null}
                 firstHeader="Supplier ID"
                 secondHeader="Supplier Name"
-                // the same boxes as on the report pages: 120 px for the ID, 450 px for the Name, 5 px between
-                firstWidth={120}
+                // the same boxes as on the report pages: 190 px for the ID, 450 px for the Name, 5 px between
+                firstWidth={190}
                 secondWidth={450}
                 gap={5}
                 menuZIndex={999999}
@@ -1607,6 +1623,7 @@ const MENU_ID = "010201";
                               columns={BRANCH_COLUMNS}
                               width="100%"
                               menuWidth="calc(100% + 70px)"
+                              placeholder=""
                               borderColor="transparent"
                               hoverBorderColor="transparent"
                               filterOption={filterLabelOrValue}
