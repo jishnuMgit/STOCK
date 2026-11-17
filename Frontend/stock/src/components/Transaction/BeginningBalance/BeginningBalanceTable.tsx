@@ -125,7 +125,8 @@ const selectStyles: StylesConfig<AccountOption, false> = {
 
   option: (base, state) => ({
     ...base,
-    padding: "5px 7px",
+    // no side padding: the cells of the list have their own 5px (makePairComponents, last argument)
+    padding: "5px 0",
     fontSize: 11,
     color: "#202020",
     cursor: "pointer",
@@ -143,12 +144,12 @@ const selectStyles: StylesConfig<AccountOption, false> = {
 // AND the Name box next to it; the Account Name list is exactly as wide as its box
 // with the Account ID after it, out to the Debit column (both measured when the
 // list opens, see usePairMenuHang)
-const accountIdComponents = makePairComponents("Account ID", "Account Name", false, true);
-const accountNameComponents = makePairComponents("Account ID", "Account Name", true, true);
+const accountIdComponents = makePairComponents("Account ID", "Account Name", false, true, undefined, 5);
+const accountNameComponents = makePairComponents("Account ID", "Account Name", true, true, undefined, 5);
 
 // the C.C. ID box is narrow: its list hangs a fixed 200px past it
 const CC_MENU_HANG = 200;
-const ccComponents = makePairComponents("C.C. ID", "C.C. Name", false, true, CC_MENU_HANG);
+const ccComponents = makePairComponents("C.C. ID", "C.C. Name", false, true, CC_MENU_HANG, 5);
 const ccStyles = {
   ...selectStyles,
   ...makePairDividedMenuStyles(CC_MENU_HANG),

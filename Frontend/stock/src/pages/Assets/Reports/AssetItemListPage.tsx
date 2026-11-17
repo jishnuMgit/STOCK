@@ -454,7 +454,7 @@ const AssetItemList: React.FC = () => {
                       onChange={setBranch}
                       columns={branchColumns}
                       width="250px"
-                      menuWidth="330px"
+                      menuWidth="320px"
                       placeholder="Select Branch"
                     />
 
@@ -506,9 +506,9 @@ const AssetItemList: React.FC = () => {
                     secondValue={costCenterName?.value ?? null}
                     firstHeader="Cost Center ID"
                     secondHeader="Cost Center Name"
-                    firstWidth={120}
+                    firstWidth={190}
                     secondWidth={450}
-                    gap={10}
+                    gap={5}
                     menuZIndex={999999}
                     menuPortalTarget={
                       typeof document !== "undefined" ? document.body : undefined
@@ -577,8 +577,8 @@ const AssetItemList: React.FC = () => {
                     secondValue={assetName?.value ?? null}
                     firstHeader="Asset ID"
                     secondHeader="Asset Name"
-                    firstWidth={160}
-                    secondWidth={545}
+                    firstWidth={190}
+                    secondWidth={450}
                     gap={5}
                     menuZIndex={999999}
                     menuPortalTarget={

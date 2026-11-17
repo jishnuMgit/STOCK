@@ -356,7 +356,7 @@ const RptDocumentExportPage: React.FC = () => {
               </label>
 
               {/* Date Pickers */}
-              <div className="flex min-w-0 flex-wrap items-center gap-2">
+              <div className="flex min-w-0 flex-wrap items-center gap-1.25">
                 <AppDatePicker
                   id="fromDate"
                   label="From Date"

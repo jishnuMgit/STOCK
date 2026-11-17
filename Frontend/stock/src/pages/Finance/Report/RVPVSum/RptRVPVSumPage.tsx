@@ -1,47 +1,34 @@
 import React, { useEffect, useMemo, useState } from "react";
-import Select, { type StylesConfig } from "react-select";
 import { toast } from "react-toastify";
-import {
-  BranchDividedMenuList,
-  BranchDividedOption,
-  branchMenuStyles,
-  filterLabelOrValue,
-  makeNameIdMenuComponents,
-} from "../../../../components/BranchSelect/branchSelectParts";
-import {
-  filterPairOption,
-  makePairComponents,
-  makePairDividedMenuStyles,
-  type PairOption,
-} from "../../../../components/PairSelect/pairSelectParts";
-import { usePairMenuHang } from "../../../../hooks/usePairMenuHang";
+import type { PairSelectOption } from "../../../../components/common/CustomLinkedPairSelect";
 import { useInitialFocus } from "../../../../hooks/useInitialFocus";
-import { useGridCellFocus } from "../../../../hooks/useGridCellFocus";
 import { useEnterAsTab } from "../../../../hooks/useEnterAsTab";
 import { useAltShortcuts } from "../../../../hooks/useAltShortcuts";
 import { useCtrlShortcuts } from "../../../../hooks/useCtrlShortcuts";
-import { useAdvanceAfterSelect } from "../../../../hooks/useAdvanceAfterSelect";
-import RadioGroup from "../../../../components/common/RadioGroup";
 import ReportPreview from "../../../../components/common/ReportPreview";
+import {
+  BranchFilter,
+  PairFilter,
+  PeriodFilter,
+  PostStatusFilter,
+  ReportForm,
+  ReportPrintRow,
+  SingleFilter,
+} from "../../../../components/common/ReportFilters";
 import {
   buildHtml,
   printRVPVSumReport,
   type PrintReport,
 } from "../../../../components/Finance/Report/RptRVPVSum/RptRVPVSumPrintReport";
 import { buildRVPVSumPdf } from "../../../../components/Finance/Report/RptRVPVSum/RptRVPVSumPdf";
-import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
-import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
-import { DatePicker } from "@mui/x-date-pickers/DatePicker";
 import dayjs from "dayjs";
 import customParseFormat from "dayjs/plugin/customParseFormat";
-import Header from "../../../../components/common/Header";
 
 dayjs.extend(customParseFormat);
 
 type Option = { value: string; label: string };
 
 const DATE_FORMAT = "DD-MM-YYYY";
-const MONTH_FORMAT = "MM-YYYY";
 
 const api = import.meta.env.VITE_API_URL;
 
@@ -52,237 +39,6 @@ const postStatusOptions: Option[] = [
   { value: "UNPOSTED", label: "Not Posted" },
 ];
 
-const selectClassNames = {
-  control: ({
-    isFocused,
-    isDisabled,
-  }: {
-    isFocused: boolean;
-    isDisabled: boolean;
-  }) => `
-    !min-h-[25px] !h-[30px] !rounded-[4px] !border !shadow-none !text-[13px]
-    hover:!border-[#aab8c5]
-    ${isDisabled ? "!bg-[#f6f8fa]" : "!bg-white"}
-    ${isFocused ? "!border-[#91a7b9]" : "!border-[#cfd7df]"}
-  `,
-  valueContainer: () => "!h-[23px] !py-0 !px-[5px] !overflow-hidden",
-  singleValue: () => "!m-0 !text-[13px] !text-[#24364d]",
-  placeholder: () => "!m-0 !text-[13px] !text-[#7a8794]",
-  input: () => "!m-0 !p-0 !text-[13px] !text-[#24364d]",
-  indicatorsContainer: () => "!h-[23px]",
-  dropdownIndicator: () => "!p-[3px] !text-[#657486]",
-  indicatorSeparator: () => "!hidden",
-  clearIndicator: () => "!p-[3px]",
-  menu: () =>
-    "!mt-[1px] !rounded-none !border !border-[#cfd7df] !z-[999999] !shadow-md",
-  menuList: () => "!p-0 !max-h-[180px]",
-  option: ({
-    isFocused,
-    isSelected,
-  }: {
-    isFocused: boolean;
-    isSelected: boolean;
-  }) => `
-    !cursor-pointer !px-[6px] !py-[5px] !text-[13px] !text-[#24364d]
-    ${isSelected ? "!bg-[#e7f7ed]" : isFocused ? "!bg-[#f2faf5]" : "!bg-white"}
-  `,
-};
-
-const selectProps = {
-  isSearchable: false,
-  isClearable: false,
-  placeholder: "",
-  classNames: selectClassNames,
-  menuPosition: "fixed" as const,
-  menuPortalTarget: typeof document !== "undefined" ? document.body : undefined,
-};
-
-// The Branch box: the "Branch | ID" list of the other screens, searchable on either column.
-const branchProps = {
-  ...selectProps,
-  isSearchable: true,
-  classNames: {
-    control: selectClassNames.control,
-    valueContainer: selectClassNames.valueContainer,
-    singleValue: selectClassNames.singleValue,
-    placeholder: selectClassNames.placeholder,
-    input: selectClassNames.input,
-    indicatorsContainer: selectClassNames.indicatorsContainer,
-    dropdownIndicator: selectClassNames.dropdownIndicator,
-    indicatorSeparator: selectClassNames.indicatorSeparator,
-    clearIndicator: selectClassNames.clearIndicator,
-    option: selectClassNames.option,
-  },
-  styles: branchMenuStyles,
-  components: { Option: BranchDividedOption, MenuList: BranchDividedMenuList },
-  filterOption: filterLabelOrValue,
-};
-
-// The Document box shows the document name; its list is "Document | ID" (name first), searchable on either.
-const documentMenuComponents = makeNameIdMenuComponents("Document", true); // true: a divider line between the two columns
-const documentProps = {
-  ...branchProps,
-  components: {
-    Option: documentMenuComponents.Option,
-    MenuList: documentMenuComponents.MenuList,
-  },
-};
-
-// The Selected Branch box (the old checked combo): the same "Branch | ID" list, any number of branches ticked. The box
-// grows with the branches ticked, so the names stay readable.
-const chkBranchProps = {
-  ...branchProps,
-  isMulti: true as const,
-  // the Branch list's look, typed for a list of many
-  styles: branchMenuStyles as unknown as StylesConfig<Option, true>,
-  closeMenuOnSelect: false,
-  hideSelectedOptions: false,
-  classNames: {
-    ...branchProps.classNames,
-    control: () =>
-      "!min-h-[30px] !h-auto !rounded-[4px] !border !shadow-none !text-[13px] !bg-white !border-[#cfd7df] hover:!border-[#aab8c5]",
-    valueContainer: () => "!h-auto !min-h-[23px] !py-0 !px-[5px] gap-[2px]",
-    multiValue: () => "!m-0 !rounded-[3px] !bg-[#e7f7ed]",
-    multiValueLabel: () => "!text-[12px] !text-[#24364d] !py-0",
-    multiValueRemove: () => "!px-[3px] !text-[#657486] hover:!bg-[#cfeedd]",
-  },
-};
-
-// The Account boxes: the "ID | Name" lists of the other screens - the Account ID box opens "Account ID | Account Name",
-// the Account Name box opens "Account Name | Account ID", both searchable on either column, and picking from one fills
-// the other. Created once, outside the page.
-const accountIdComponents = makePairComponents("Account ID", "Account Name", false, true);
-const accountNameComponents = makePairComponents("Account ID", "Account Name", true, true);
-
-// how far the Account Name list hangs past its box (its Account ID column)
-const ACCOUNT_NAME_MENU_HANG = 150;
-
-// the look of the other boxes, but the open list is the pair list's own
-const pairProps = {
-  ...selectProps,
-  isSearchable: true,
-  classNames: {
-    control: selectClassNames.control,
-    valueContainer: selectClassNames.valueContainer,
-    singleValue: selectClassNames.singleValue,
-    placeholder: selectClassNames.placeholder,
-    input: selectClassNames.input,
-    indicatorsContainer: selectClassNames.indicatorsContainer,
-    dropdownIndicator: selectClassNames.dropdownIndicator,
-    indicatorSeparator: selectClassNames.indicatorSeparator,
-    clearIndicator: selectClassNames.clearIndicator,
-    option: ({ isFocused, isSelected }: { isFocused: boolean; isSelected: boolean }) =>
-      `!cursor-pointer !text-[#24364d] ${
-        isSelected ? "!bg-[#e7f7ed]" : isFocused ? "!bg-[#f2faf5]" : "!bg-white"
-      }`,
-  },
-  filterOption: filterPairOption,
-};
-
-const FieldLabel: React.FC<{ children: React.ReactNode }> = ({ children }) => (
-  <div className="flex h-7.5 items-center justify-start border border-[#e0e5ea] bg-[#fafbfc] pl-3 text-[12px] text-[#405066]">
-    {children}
-  </div>
-);
-
-type AppDatePickerProps = {
-  id: string;
-  label: string;
-  value: string;
-  onChange: (value: string) => void;
-  monthOnly?: boolean;
-};
-
-const AppDatePicker: React.FC<AppDatePickerProps> = ({
-  id,
-  label,
-  value,
-  onChange,
-  monthOnly = false,
-}) => {
-  const format = monthOnly ? MONTH_FORMAT : DATE_FORMAT;
-
-  return (
-    <LocalizationProvider dateAdapter={AdapterDayjs}>
-      <DatePicker
-        value={value ? dayjs(value, format) : null}
-        onChange={(newValue) => {
-          onChange(newValue?.isValid() ? newValue.format(format) : "");
-        }}
-        format={format}
-        views={monthOnly ? ["year", "month"] : ["year", "month", "day"]}
-        slotProps={{
-          textField: { id, slotProps: { htmlInput: { "aria-label": label } } },
-          openPickerButton: { sx: { padding: "2px", margin: 0 } },
-          inputAdornment: { sx: { margin: 0, padding: 0 } },
-        }}
-        sx={{
-          width: "140px",
-          "& .MuiPickersTextField-root": { width: "120px" },
-          "& .MuiPickersInputBase-root": {
-            width: "140px",
-            height: "30px",
-            minHeight: "30px",
-            boxSizing: "border-box",
-            borderRadius: "4px",
-            backgroundColor: "#ffffff",
-            fontSize: "12px",
-            padding: 0,
-            overflow: "hidden",
-          },
-          "& .MuiPickersInputBase-sectionsContainer": {
-            paddingLeft: "10px !important",
-            paddingRight: "0px !important",
-            marginBottom: "-5px !important",
-            marginLeft: "0px !important",
-            boxSizing: "border-box",
-            overflow: "hidden",
-          },
-          "& .MuiPickersInputBase-sectionContent": {
-            fontSize: "12px",
-            color: "#344054",
-          },
-          "& .MuiPickersInputBase-input": {
-            minWidth: 0,
-            width: "100%",
-            fontSize: "12px",
-            padding: 0,
-            height: "30px",
-            boxSizing: "border-box",
-          },
-          "& .MuiInputAdornment-root": { margin: 0, padding: 0 },
-          "& .MuiIconButton-root": {
-            width: "24px",
-            height: "24px",
-            padding: "2px",
-            margin: 0,
-          },
-          "& .MuiSvgIcon-root": { fontSize: "16px" },
-          // blank look (no format hint) while empty and not focused
-          ...(!value && {
-            "&:not(:focus-within) .MuiPickersInputBase-sectionsContainer *": {
-              color: "transparent",
-            },
-          }),
-          "& .MuiPickersOutlinedInput-notchedOutline": {
-            borderColor: "#B7C7D7 !important",
-          },
-          "& .MuiPickersInputBase-root:hover .MuiPickersOutlinedInput-notchedOutline":
-            { borderColor: "#B7C7D7 !important" },
-          "& .MuiPickersInputBase-root.Mui-focused .MuiPickersOutlinedInput-notchedOutline":
-            { borderColor: "#B7C7D7 !important", borderWidth: "1px" },
-          "& .MuiPickersInputBase-root.Mui-error .MuiPickersOutlinedInput-notchedOutline":
-            { borderColor: "#B7C7D7 !important" },
-          "& .MuiPickersInputBase-root.Mui-error:hover .MuiPickersOutlinedInput-notchedOutline":
-            { borderColor: "#B7C7D7 !important" },
-          "& .MuiPickersInputBase-root.Mui-error.Mui-focused .MuiPickersOutlinedInput-notchedOutline":
-            { borderColor: "#B7C7D7 !important" },
-        }}
-      />
-    </LocalizationProvider>
-  );
-};
-
 type RptRVPVSumPageProps = {
   onClose?: () => void;
 };
@@ -291,13 +47,16 @@ const RptRVPVSumPage: React.FC<RptRVPVSumPageProps> = ({
   onClose,
 }) => {
   const handleEnterAsTab = useEnterAsTab();
-  const { cellFocusClass } = useGridCellFocus();
-  const { advanceAfterPick, advanceOnEnter } = useAdvanceAfterSelect();
-  const { hang: accountIdHang, measure: measureAccountIdHang } = usePairMenuHang();
 
   const [rdgBranch, setRdgBranch] = useState("One Branch"); // rdgBranch
   const [lkpBranch, setLkpBranch] = useState<Option | null>(null); // lkpBranch
-  const [chkBranch, setChkBranch] = useState<Option[]>([]); // chkBranch (Selected Branch)
+  const [chkBranch, setChkBranch] = useState<string[]>([]); // chkBranch (Selected Branch): the ids of the branches ticked
+
+  const handleBranchTick = (branchId: string, checked: boolean) => {
+    setChkBranch((current) =>
+      checked ? [...current, branchId] : current.filter((id) => id !== branchId),
+    );
+  };
 
   // the branches the logged-in user has a right to, and the user's default branch (the old FillCombos)
   const [branchOptions, setBranchOptions] = useState<Option[]>([]);
@@ -364,27 +123,15 @@ const RptRVPVSumPage: React.FC<RptRVPVSumPageProps> = ({
   const [rdgAccount, setRdgAccount] = useState("All Account"); // rdgAccount (the old form starts on All Account)
   const [lkpAccountID, setLkpAccountID] = useState(""); // lkpAccountID / lkpAccountName
 
-  // the account boxes: ID | Name, and Name | ID (one account, two boxes)
-  const accountIdOptions = useMemo<PairOption[]>(
-    () =>
-      accountRows.map((row) => ({
-        value: row.lkpAccountID,
-        label: row.lkpAccountID,
-        id: row.lkpAccountID,
-        name: row.txtAccountName,
-      })),
-    [accountRows],
-  );
-
-  const accountNameOptions = useMemo<PairOption[]>(
+  // the account boxes: one list, "ID | Name" in the ID box and "Name | ID" in the Name box
+  const accountPairOptions = useMemo<PairSelectOption[]>(
     () =>
       [...accountRows]
         .sort((a, b) => a.txtAccountName.localeCompare(b.txtAccountName))
         .map((row) => ({
           value: row.lkpAccountID,
-          label: row.txtAccountName,
-          id: row.lkpAccountID,
-          name: row.txtAccountName,
+          firstLabel: row.lkpAccountID,
+          secondLabel: row.txtAccountName,
         })),
     [accountRows],
   );
@@ -413,7 +160,7 @@ const RptRVPVSumPage: React.FC<RptRVPVSumPageProps> = ({
   const buildRVPVSumParams = () => ({
     rdgBranch: { "One Branch": 0, "Selected Branch": 1, "All Branch": 2 }[rdgBranch] ?? 0,
     lkpBranch: rdgBranch === "One Branch" ? (lkpBranch?.value ?? "") : "",
-    chkBranch: rdgBranch === "Selected Branch" ? chkBranch.map((option) => option.value) : [],
+    chkBranch: rdgBranch === "Selected Branch" ? chkBranch : [],
     lkpDocument: lkpDocument?.value ?? "",
     rdgAccount: rdgAccount === "One Account" ? 0 : 1,
     lkpAccountID: rdgAccount === "One Account" ? lkpAccountID : "",
@@ -443,7 +190,7 @@ const RptRVPVSumPage: React.FC<RptRVPVSumPageProps> = ({
     }
 
     if (params.rdgBranch === 1 && params.chkBranch.length === 0) {
-      return warn("Please select atleast one 'Branch'", "chkBranch");
+      return warn("Please select atleast one 'Branch'", "chkBranchList");
     }
 
     if (params.rdgAccount === 0 && !params.lkpAccountID) {
@@ -548,221 +295,71 @@ const RptRVPVSumPage: React.FC<RptRVPVSumPageProps> = ({
   });
 
   return (
-    <div
+    <ReportForm
+      title="Receipt / Payment Summary"
       onKeyDown={handleEnterAsTab}
-      className="flex min-h-full w-full items-start justify-center bg-white px-4 py-4"
+      overlay={
+        // the Print Preview (after Print)
+        preview && (
+          <ReportPreview
+            showClose={false}
+            html={buildHtml(preview.report)}
+            fileBase={preview.fileBase}
+            onPrint={() => printRVPVSumReport(preview.report)}
+            buildPdf={() => buildRVPVSumPdf(preview.report)}
+            fetchExcel={fetchExcel}
+            onClose={() => setPreview(null)}
+          />
+        )
+      }
     >
-      <div className="min-h-fit min-w-205 w-220 max-w-full bg-white p-0">
-        <main className="w-full overflow-hidden border border-gray-400 bg-white">
-         <Header Name="Receipt / Payment Summary" />
+      <BranchFilter
+        withSelected
+        mode={rdgBranch}
+        onModeChange={setRdgBranch}
+        options={branchOptions}
+        value={lkpBranch}
+        onChange={setLkpBranch}
+        selectedIds={chkBranch}
+        onTick={handleBranchTick}
+      />
 
-          <section className="px-3.5 pb-6 pt-3">
-            <div className="grid grid-cols-[168px_1fr] items-start gap-x-4 gap-y-3">
-              {/* Branch: One Branch / Selected Branch / All Branch */}
-              <RadioGroup
-                className={cellFocusClass}
-                name="rdgBranch"
-                value={rdgBranch}
-                options={[
-                  { value: "One Branch", label: "One Branch" },
-                  { value: "Selected Branch", label: "Selected Branch" },
-                  { value: "All Branch", label: "All Branch" },
-                ]}
-                onChange={setRdgBranch}
-              />
-              <div className="pt-3">
-                {rdgBranch === "One Branch" && (
-                  <div
-                    className={`w-62.5 ${cellFocusClass}`}
-                    onKeyDown={(event) => advanceOnEnter(event)}
-                  >
-                    <Select
-                      inputId="lkpBranch"
-                      instanceId="lkpBranch"
-                      options={branchOptions}
-                      value={lkpBranch}
-                      onChange={(option) => {
-                        setLkpBranch(option);
-                        if (option) advanceAfterPick("lkpBranch");
-                      }}
-                      noOptionsMessage={() => "No Branch Found"}
-                      {...branchProps}
-                    />
-                  </div>
-                )}
-                {rdgBranch === "Selected Branch" && (
-                  <div className={`w-62.5 ${cellFocusClass}`}>
-                    <Select<Option, true>
-                      inputId="chkBranch"
-                      instanceId="chkBranch"
-                      options={branchOptions}
-                      value={chkBranch}
-                      onChange={(options) => setChkBranch([...options])}
-                      noOptionsMessage={() => "No Branch Found"}
-                      {...chkBranchProps}
-                    />
-                  </div>
-                )}
-              </div>
+      <SingleFilter
+        required
+        name="Document"
+        mode="One Document"
+        onModeChange={() => undefined}
+        options={documentOptions}
+        value={lkpDocument}
+        onChange={setLkpDocument}
+      />
 
-              {/* Document */}
-              <FieldLabel>Document :</FieldLabel>
-              <div
-                className={`w-62.5 ${cellFocusClass}`}
-                onKeyDown={(event) => advanceOnEnter(event)}
-              >
-                <Select
-                  inputId="lkpDocument"
-                  instanceId="lkpDocument"
-                  options={documentOptions}
-                  value={lkpDocument}
-                  onChange={(option) => {
-                    setLkpDocument(option);
-                    if (option) advanceAfterPick("lkpDocument");
-                  }}
-                  noOptionsMessage={() => "No Document Found"}
-                  {...documentProps}
-                />
-              </div>
+      <PairFilter
+        name="Account"
+        mode={rdgAccount}
+        onModeChange={(mode) => {
+          setRdgAccount(mode);
+          // the old form clears the account when the choice changes
+          setLkpAccountID("");
+        }}
+        options={accountPairOptions}
+        value={lkpAccountID}
+        onChange={setLkpAccountID}
+        // the same ID box width as every other ID + Name pair on the report pages
+        firstWidth={190}
+      />
 
-              {/* Account: One Account / All Account */}
-              <RadioGroup
-                className={cellFocusClass}
-                name="rdgAccount"
-                value={rdgAccount}
-                options={[
-                  { value: "One Account", label: "One Account" },
-                  { value: "All Account", label: "All Account" },
-                ]}
-                onChange={setRdgAccount}
-              />
-              <div className="pt-3">
-                {rdgAccount === "One Account" && (
-                  <div className="grid grid-cols-[150px_1fr]">
-                    <div
-                      className={cellFocusClass}
-                      onKeyDown={(event) => advanceOnEnter(event, ["lkpAccountName"])}
-                    >
-                      <Select<PairOption, false>
-                        inputId="lkpAccountID"
-                        instanceId="lkpAccountID"
-                        name="lkpAccountID"
-                        options={accountIdOptions}
-                        value={accountIdOptions.find((o) => o.value === lkpAccountID) ?? null}
-                        onChange={(option) => {
-                          setLkpAccountID(option?.value ?? "");
-                          if (option) advanceAfterPick("lkpAccountID", ["lkpAccountName"]);
-                        }}
-                        components={accountIdComponents}
-                        styles={makePairDividedMenuStyles(accountIdHang)}
-                        onMenuOpen={() => measureAccountIdHang("lkpAccountID", "lkpAccountName")}
-                        noOptionsMessage={() => "No Account Found"}
-                        {...pairProps}
-                      />
-                    </div>
-                    <div
-                      className={`-ml-px ${cellFocusClass}`}
-                      style={{ marginRight: ACCOUNT_NAME_MENU_HANG }}
-                      onKeyDown={(event) => advanceOnEnter(event)}
-                    >
-                      <Select<PairOption, false>
-                        inputId="lkpAccountName"
-                        instanceId="lkpAccountName"
-                        name="lkpAccountName"
-                        options={accountNameOptions}
-                        value={accountNameOptions.find((o) => o.value === lkpAccountID) ?? null}
-                        onChange={(option) => {
-                          setLkpAccountID(option?.value ?? "");
-                          if (option) advanceAfterPick("lkpAccountName");
-                        }}
-                        components={accountNameComponents}
-                        styles={makePairDividedMenuStyles(ACCOUNT_NAME_MENU_HANG)}
-                        noOptionsMessage={() => "No Account Found"}
-                        {...pairProps}
-                      />
-                    </div>
-                  </div>
-                )}
-              </div>
+      <PeriodFilter
+        from={dtpFromDate}
+        to={dtpToDate}
+        onFromChange={setDtpFromDate}
+        onToChange={setDtpToDate}
+      />
 
-              {/* Period */}
-              <FieldLabel>Period :</FieldLabel>
-              <div className="flex items-start gap-2">
-                <div className={`w-35 ${cellFocusClass}`}>
-                  <AppDatePicker
-                    id="dtpFromDate"
-                    label="From Date"
-                    value={dtpFromDate}
-                    onChange={setDtpFromDate}
-                  />
-                </div>
-                <div className={`w-35 ${cellFocusClass}`}>
-                  <AppDatePicker
-                    id="dtpToDate"
-                    label="To Date"
-                    value={dtpToDate}
-                    onChange={setDtpToDate}
-                  />
-                </div>
-              </div>
+      <PostStatusFilter options={postStatusOptions} value={lkpPostStatus} onChange={setLkpPostStatus} />
 
-              {/* Post status */}
-              <FieldLabel>Post Status :</FieldLabel>
-              <div
-                className={`w-35 ${cellFocusClass}`}
-                onKeyDown={(event) => advanceOnEnter(event)}
-              >
-                <Select
-                  inputId="lkpPostStatus"
-                  instanceId="lkpPostStatus"
-                  options={postStatusOptions}
-                  value={lkpPostStatus}
-                  onChange={(option) => {
-                    setLkpPostStatus(option);
-                    if (option) advanceAfterPick("lkpPostStatus");
-                  }}
-                  {...selectProps}
-                />
-              </div>
-            </div>
-
-            {/* Actions */}
-            <div className="mt-6 flex justify-center gap-3">
-              <button
-                id="btnPrint"
-                type="button"
-                onClick={() => void handlePrint()}
-                disabled={printing}
-                className="btn-style disabled:cursor-not-allowed disabled:opacity-60"
-              >
-                <u>P</u>rint
-              </button>
-              {/* <button
-                id="btnClose"
-                type="button"
-                onClick={handleClose}
-                className="btn-style"
-              >
-                <u>C</u>lose
-              </button> */}
-            </div>
-          </section>
-        </main>
-      </div>
-
-      {/* the Print Preview (after Print) */}
-      {preview && (
-        <ReportPreview
-          showClose={false}
-          html={buildHtml(preview.report)}
-          fileBase={preview.fileBase}
-          onPrint={() => printRVPVSumReport(preview.report)}
-          buildPdf={() => buildRVPVSumPdf(preview.report)}
-          fetchExcel={fetchExcel}
-          onClose={() => setPreview(null)}
-        />
-      )}
-    </div>
+      <ReportPrintRow onPrint={() => void handlePrint()} disabled={printing} />
+    </ReportForm>
   );
 };
 

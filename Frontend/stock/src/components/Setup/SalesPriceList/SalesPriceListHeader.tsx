@@ -1,31 +1,19 @@
 import React, { useMemo } from "react";
-import Select from "react-select";
-import { type Option, selectProps } from "./SalesPriceListShared";
-import {
-  type PairOption,
-  filterPairOption,
-  makePairComponents,
-  makePairDividedMenuStyles,
-} from "../../PairSelect/pairSelectParts";
-import {
-  BranchDividedMenuList,
-  BranchDividedOption,
-  branchMenuStyles,
-  filterLabelOrValue,
-} from "../../BranchSelect/branchSelectParts";
-import selectComponents from "../../sharecomponents/selectComponents";
-import { usePairMenuHang } from "../../../hooks/usePairMenuHang";
+import { type Option } from "./SalesPriceListShared";
+import type { PairOption } from "../../PairSelect/pairSelectParts";
+import { filterLabelOrValue } from "../../BranchSelect/branchSelectParts";
+import CommonTableSelect from "../../common/CommonTableSelect";
+import CustomLinkedPairSelect, {
+  type PairSelectOption,
+} from "../../common/CustomLinkedPairSelect";
+import { FILTER_GAP } from "../../common/ReportFilters";
 
-// the Item Group ID box shows "ID | Name", the Item Group Name box "Name | ID",
-// both with the divider line
-const groupIdComponents = makePairComponents("ID", "Name", false, true);
-const groupNameComponents = makePairComponents("ID", "Name", true, true);
-
-const branchComponents = {
-  ...selectComponents,
-  MenuList: BranchDividedMenuList,
-  Option: BranchDividedOption,
-};
+// The Branch list: "Branch | ID", as on every other screen. With the 70 px ID column and a list of box + 70 px, the ID
+// column starts exactly where the 250 px box ends.
+const BRANCH_COLUMNS = [
+  { key: "label", label: "Branch", width: "1fr" },
+  { key: "value", label: "ID", width: "70px", align: "right" as const },
+];
 
 type RadioOptionProps = {
   name: string;
@@ -134,7 +122,6 @@ const SalesPriceListHeader: React.FC<SalesPriceListHeaderProps> = ({
   rdgItemGroup,
   onRdgItemGroupChange,
   groupIdOptions,
-  groupNameOptions,
   lkpItemGroupID,
   onItemGroupChange,
   txtIncreasePercent,
@@ -146,19 +133,17 @@ const SalesPriceListHeader: React.FC<SalesPriceListHeaderProps> = ({
   txtFind,
   onTxtFindChange,
 }) => {
-  const selectedGroupId =
-    groupIdOptions.find((o) => o.value === lkpItemGroupID) ?? null;
-  const selectedGroupName =
-    groupNameOptions.find((o) => o.value === lkpItemGroupID) ?? null;
   const oneItemGroup = rdgItemGroup === 0;
 
-  // the Item Group ID list covers the ID box AND the Name box next to it, to the
-  // Name box's right edge (measured when the list opens)
-  const { hang: idMenuHang, measure: measureIdMenuHang } = usePairMenuHang();
-
-  const groupIdStyles = useMemo(
-    () => makePairDividedMenuStyles(idMenuHang),
-    [idMenuHang]
+  // the Item Group boxes: one list, "ID | Name" in the ID box and "Name | ID" in the Name box
+  const groupPairOptions = useMemo<PairSelectOption[]>(
+    () =>
+      groupIdOptions.map((o: PairOption) => ({
+        value: o.value,
+        firstLabel: o.id ?? o.value,
+        secondLabel: o.name ?? o.label,
+      })),
+    [groupIdOptions],
   );
 
   return (
@@ -168,19 +153,17 @@ const SalesPriceListHeader: React.FC<SalesPriceListHeaderProps> = ({
         <div className="flex items-center gap-3">
           <FieldLabel className="w-27.5">Branch :</FieldLabel>
           <div className="w-62.5">
-            <Select
+            <CommonTableSelect
               inputId="lkpBranch"
-              instanceId="lkpBranch"
-              name="lkpBranch"
               options={branchOptions}
               value={lkpBranch}
               onChange={onBranchChange}
-              {...selectProps}
+              columns={BRANCH_COLUMNS}
+              width="250px"
+              menuWidth="320px"
               placeholder="Select Branch"
-              isSearchable
-              components={branchComponents}
-              styles={branchMenuStyles}
               filterOption={filterLabelOrValue}
+              menuPortalTarget={document.body}
               noOptionsMessage={() => "No Branch Found"}
             />
           </div>
@@ -217,39 +200,25 @@ const SalesPriceListHeader: React.FC<SalesPriceListHeaderProps> = ({
 
           {/* the Item Group boxes are only for One Item Group */}
           {oneItemGroup && (
-            <div className="grid grid-cols-[110px_350px] gap-2 pt-3">
-              <Select<PairOption, false>
-                inputId="lkpItemGroupID"
-                instanceId="lkpItemGroupID"
-                name="lkpItemGroupID"
-                options={groupIdOptions}
-                value={selectedGroupId}
-                onChange={(option) => onItemGroupChange(option?.value ?? "")}
-                {...selectProps}
-                placeholder="Select"
-                isSearchable
-                components={groupIdComponents}
-                styles={groupIdStyles}
-                filterOption={filterPairOption}
-                onMenuOpen={() =>
-                  measureIdMenuHang("lkpItemGroupID", "lkpItemGroupName")
-                }
+            <div className="pt-3">
+              <CustomLinkedPairSelect
+                firstInputId="lkpItemGroupID"
+                secondInputId="lkpItemGroupName"
+                options={groupPairOptions}
+                firstValue={lkpItemGroupID || null}
+                secondValue={lkpItemGroupID || null}
+                firstHeader="Item Group ID"
+                secondHeader="Item Group Name"
+                // the same boxes as on the report pages: 190 px for the ID, 5 px between; the Name box is a little
+                // narrower (380 px) so that Apply to Unit Price still fits on this row
+                firstWidth={190}
+                secondWidth={380}
+                gap={FILTER_GAP}
+                menuZIndex={999999}
+                menuPortalTarget={document.body}
+                headerFontSize="12px"
                 noOptionsMessage={() => "No Item Group Found"}
-              />
-              <Select<PairOption, false>
-                inputId="lkpItemGroupName"
-                instanceId="lkpItemGroupName"
-                name="lkpItemGroupName"
-                options={groupNameOptions}
-                value={selectedGroupName}
                 onChange={(option) => onItemGroupChange(option?.value ?? "")}
-                {...selectProps}
-                placeholder="Select"
-                isSearchable
-                components={groupNameComponents}
-                styles={makePairDividedMenuStyles(100)}
-                filterOption={filterPairOption}
-                noOptionsMessage={() => "No Item Group Found"}
               />
             </div>
           )}

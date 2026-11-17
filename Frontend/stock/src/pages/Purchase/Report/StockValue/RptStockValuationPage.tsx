@@ -304,6 +304,8 @@ const RptStockValuationPage: React.FC<RptStockValuationPageProps> = ({ onClose }
         options={groupPairOptions}
         value={lkpOneItemGroupID}
         onChange={setLkpOneItemGroupID}
+        // the same ID box width as every other ID + Name pair on the report pages
+        firstWidth={190}
         ids={{ radio: "rdgItemGroup", first: "lkpOneItemGroupID", second: "lkpOneItemGroupName" }}
       />
 
