@@ -1,6 +1,7 @@
 import React, { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { toast } from "react-toastify";
+import Header from "../../../common/Header";
 import logo from "./global-network.png";
 import { saveFile } from "../../../../pages/Finance/Report/ChartOfAccount/saveFile";
 
@@ -341,6 +342,16 @@ const ReceiptPrint: React.FC<ReceiptPrintProps> = ({
   const [mountNode, setMountNode] =
     useState<HTMLElement | null>(null);
 
+  // Esc closes the Print Preview (the other previews do the same)
+  useEffect(() => {
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") onClose();
+    };
+
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
+  }, [onClose]);
+
   // Create an isolated document inside the iframe. This prevents
   // the application's header, sidebar and other layout from printing.
   useEffect(() => {
@@ -467,11 +478,8 @@ const ReceiptPrint: React.FC<ReceiptPrintProps> = ({
           boxShadow: "0 20px 50px rgba(0, 0, 0, 0.3)",
         }}
       >
-        <header className="relative flex h-8.25 items-center bg-[#9fdfbc] text-gray-800">
-      <h1 className="ml-4 text-[17px] font-semibold">
-        Receipt Print Preview
-      </h1>
-   </header >
+        {/* the shared title bar of every Print Preview: its X closes the screen */}
+        <Header Name="Print Preview" />
       <iframe
         ref={frameRef}
         title="receipt-preview"
@@ -1143,15 +1151,6 @@ const ReceiptPrint: React.FC<ReceiptPrintProps> = ({
             
           >
            <u> D</u>ownload
-          </button>
- <button
-            type="button"
-            className="btn-style"
-            onClick={onClose}
-            disabled={busy}
-           
-          >
-           <u> C</u>lose
           </button>
           <fieldset
             style={{

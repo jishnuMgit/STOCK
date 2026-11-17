@@ -4,8 +4,9 @@ import React from "react";
 // INPUT STYLE
 // ============================================================
 
+// the Receipt screen's Total box: 30 px, grey border, 14 px dark text, read only
 const inputClass =
-  "input-style ";
+  "h-7.5 rounded border border-gray-300 bg-white px-2 text-[14px] text-[#344054] outline-none";
 
 // ============================================================
 // PROPS: the totals and the buttons belong to the page
@@ -146,10 +147,11 @@ const BeginningBalanceFooter: React.FC<Props> = ({
           readOnly
           tabIndex={-1}
           className={`
-            h-[30px]
+            h-7.5
             w-[154px]
+            rounded
             border
-            border-[#cbd5e1]
+            border-gray-300
             bg-white
             px-2
             text-right

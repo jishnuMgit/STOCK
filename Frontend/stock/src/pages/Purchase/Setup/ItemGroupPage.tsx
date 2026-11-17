@@ -1,10 +1,4 @@
 import React, { useEffect, useState } from "react";
-import Select, {
-  components,
-  type MenuListProps,
-  type OptionProps,
-  type StylesConfig,
-} from "react-select";
 import { toast } from "react-toastify";
 import { useEnterAsTab } from "../../../hooks/useEnterAsTab";
 import { useAltShortcuts } from "../../../hooks/useAltShortcuts";
@@ -12,9 +6,7 @@ import { useButtonPermissions } from "../../../hooks/useButtonPermissions";
 import { useConfirmModal } from "../../../hooks/useConfirmModal";
 import { useDeleteToast } from "../../../hooks/useDeleteToast";
 import { useInitialFocus } from "../../../hooks/useInitialFocus";
-import selectComponents, {
-  SELECT_FONT_FAMILY,
-} from "../../../components/sharecomponents/selectComponents";
+import CommonTableSelect from "../../../components/common/CommonTableSelect";
 import Header from "../../../components/common/Header";
 
 // ============================================================
@@ -29,175 +21,18 @@ type Option = {
 };
 
 // ============================================================
-// SELECT STYLES
-// ============================================================
-
-// The select box looks like the text boxes of this page (the .input-style class): 30px, #d7dee7 border,
-// 4px radius, mint background when focused, the same 14px text and colour.
-const selectStyles: StylesConfig<Option, false> = {
-  container: (base) => ({
-    ...base,
-    fontFamily: SELECT_FONT_FAMILY,
-  }),
-
-  control: (base, state) => ({
-    ...base,
-    minHeight: "30px",
-    height: "30px",
-    width: "100%",
-    border: "1px solid #d7dee7",
-    borderRadius: "4px",
-    boxShadow: "none",
-    backgroundColor: state.isFocused ? "#eefbf4" : "#ffffff",
-    fontSize: "14px",
-    cursor: "pointer",
-
-    "&:hover": {
-      borderColor: "#9fdfbc",
-    },
-  }),
-
-  valueContainer: (base) => ({
-    ...base,
-    height: "23px",
-    minHeight: "23px",
-    padding: "0 6px",
-  }),
-
-  singleValue: (base) => ({
-    ...base,
-    margin: 0,
-    color: "#334155",
-    fontSize: "14px",
-  }),
-
-  placeholder: (base) => ({
-    ...base,
-    margin: 0,
-    color: "#808080",
-    fontSize: "14px",
-  }),
-
-  input: (base) => ({
-    ...base,
-    margin: 0,
-    padding: 0,
-    fontSize: "14px",
-    color: "#334155",
-  }),
-
-  indicatorsContainer: (base) => ({
-    ...base,
-    height: "23px",
-  }),
-
-  dropdownIndicator: (base) => ({
-    ...base,
-    padding: "4px",
-    color: "#64748b",
-  }),
-
-  indicatorSeparator: () => ({
-    display: "none",
-  }),
-
-  menuPortal: (base) => ({
-    ...base,
-    zIndex: 9999,
-  }),
-
-  menu: (base) => ({
-    ...base,
-    zIndex: 9999,
-    fontFamily: SELECT_FONT_FAMILY,
-    fontSize: 14,
-    marginTop: 1,
-  }),
-
-  menuList: (base) => ({
-    ...base,
-    padding: 0,
-    maxHeight: 180,
-  }),
-
-  option: (base, state) => ({
-    ...base,
-    padding: "6px 8px",
-    fontSize: 14,
-    color: "#202020",
-    cursor: "pointer",
-
-    backgroundColor: state.isSelected
-      ? "#dbeafe"
-      : state.isFocused
-        ? "#eff6ff"
-        : "#ffffff",
-  }),
-};
-
-// ============================================================
 // STOCK / NON-STOCK LIST
-// The same list as the Branch list of the reports: the name first (as wide as the box), the ID in a column that hangs out
+// The same list as the Branch list of the reports: the name first (as wide as the box), the ID in a 70 px column that hangs out
 // past the right edge of the box, a header line on top. The box shows the name (fpname); lkpFSN keeps the ID (fpid).
 // ============================================================
 
-const SN_COLS = "grid grid-cols-[1fr_55px]";
+const SN_COLUMNS = [
+  { key: "label", label: "Type", width: "1fr" },
+  { key: "value", label: "ID", width: "70px", align: "right" as const },
+];
 
-const SnMenuList = (props: MenuListProps<Option, false>) => (
-  <components.MenuList {...props}>
-    <div
-      className={`${SN_COLS} sticky top-0 z-[1] border-b border-[#cfd7df] bg-[#f5f6fa] text-[14px] font-semibold text-[#24364d]`}
-    >
-      <div className="border-r border-[#cfd7df] px-[8px] py-[7px]">Type</div>
-      <div className="px-[8px] py-[7px]">ID</div>
-    </div>
-    {props.children}
-  </components.MenuList>
-);
-
-const SnOption = (props: OptionProps<Option, false>) => (
-  <components.Option {...props}>
-    <div className={SN_COLS}>
-      <div className="truncate border-r border-[#cfd7df] px-[8px] py-[6px]">
-        {props.data.label}
-      </div>
-      <div className="truncate px-[8px] py-[6px]">{props.data.value}</div>
-    </div>
-  </components.Option>
-);
-
-const snSelectComponents = {
-  ...selectComponents,
-  MenuList: SnMenuList,
-  Option: SnOption,
-};
-
-const snSelectStyles: StylesConfig<Option, false> = {
-  ...selectStyles,
-
-  // the box's width plus the ID column that hangs out past its right edge
-  menu: (base) => ({
-    ...base,
-    zIndex: 9999,
-    fontFamily: SELECT_FONT_FAMILY,
-    fontSize: 14,
-    marginTop: 1,
-    width: "calc(100% + 55px)",
-  }),
-
-  option: (base, state) => ({
-    ...base,
-    padding: 0,
-    fontSize: 14,
-    color: "#202020",
-    cursor: "pointer",
-    backgroundColor: state.isSelected
-      ? "#dbeafe"
-      : state.isFocused
-        ? "#eff6ff"
-        : "#ffffff",
-  }),
-};
+// the VAT slab list: the names only
+const VAT_SLAB_COLUMNS = [{ key: "label", label: "VAT Slab" }];
 
 // ============================================================
 // ITEM GROUP
@@ -683,19 +518,16 @@ const ItemGroupPage: React.FC = () => {
               </label>
 
               <div className="w-[30%]">
-                <Select<Option, false>
-                  components={snSelectComponents}
+                <CommonTableSelect
                   inputId="lkpFSN"
-                  instanceId="lkpFSN"
-                  name="lkpFSN"
                   options={snOptions}
                   value={snOptions.find((option) => option.value === lkpFSN) || null}
                   onChange={(option) => setLkpFSN(option?.value ?? "")}
-                  styles={snSelectStyles}
-                  isClearable={false}
+                  columns={SN_COLUMNS}
+                  width="100%"
+                  menuWidth="calc(100% + 70px)"
                   isSearchable={false}
-                  placeholder="Select..."
-                  menuPosition="fixed"
+                  placeholder=""
                   menuPortalTarget={
                     typeof document !== "undefined" ? document.body : undefined
                   }
@@ -715,27 +547,23 @@ const ItemGroupPage: React.FC = () => {
               </label>
 
               <div className="w-[30%]">
-                <Select<Option, false>
-                  components={selectComponents}
+                <CommonTableSelect
                   inputId="lkpVATSlab"
-                  instanceId="lkpVATSlab"
-                  name="lkpVATSlab"
                   options={vatSlabOptions}
                   value={
                     vatSlabOptions.find(
                       (option) => option.value === lkpVATSlab,
                     ) || null
                   }
-                  onChange={handleVATSlabChange}
-                  styles={selectStyles}
-                  isClearable={false}
+                  onChange={(option) => handleVATSlabChange(option as Option | null)}
+                  columns={VAT_SLAB_COLUMNS}
+                  showHeader={false}
+                  width="100%"
+                  menuWidth="100%"
                   isSearchable={false}
-                  placeholder="Select..."
-                  menuPosition="fixed"
+                  placeholder=""
                   menuPortalTarget={
-                    typeof document !== "undefined"
-                      ? document.body
-                      : undefined
+                    typeof document !== "undefined" ? document.body : undefined
                   }
                 />
               </div>

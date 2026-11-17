@@ -6,17 +6,8 @@ import React, {
 
 import { toast } from "react-toastify";
 
-import {
-  BranchDividedMenuList,
-  BranchDividedOption,
-  branchMenuStyles,
-  filterLabelOrValue,
-} from "../../BranchSelect/branchSelectParts";
-import selectComponents from "../../sharecomponents/selectComponents";
-
-import Select, {
-  type StylesConfig,
-} from "react-select";
+import { filterLabelOrValue } from "../../BranchSelect/branchSelectParts";
+import CommonTableSelect from "../../common/CommonTableSelect";
 
 import dayjs from "dayjs";
 
@@ -43,110 +34,6 @@ type Option = {
 };
 
 const api = import.meta.env.VITE_API_URL;
-
-// ============================================================
-// SELECT STYLES
-// ============================================================
-
-const selectStyles: StylesConfig<Option, false> = {
-  control: (base, state) => ({
-    ...base,
-    minHeight: 30,
-    height: 30,
-    width: "100%",
-    border: "1px solid #cbd5e1",
-    borderRadius: 4,
-    boxShadow: "none",
-    backgroundColor: state.isFocused
-      ? "#eff6ff"
-      : "#ffffff",
-    cursor: "pointer",
-    fontSize: 13,
-
-    "&:hover": {
-      borderColor: "#94a3b8",
-    },
-  }),
-
-  valueContainer: (base) => ({
-    ...base,
-    height: 30,
-    minHeight: 30,
-    padding: "0 7px",
-    overflow: "hidden",
-  }),
-
-  singleValue: (base) => ({
-    ...base,
-    color: "#202020",
-    fontSize: 13,
-    margin: 0,
-    overflow: "hidden",
-    textOverflow: "ellipsis",
-    whiteSpace: "nowrap",
-  }),
-
-  placeholder: (base) => ({
-    ...base,
-    color: "#64748b",
-    fontSize: 13,
-    margin: 0,
-  }),
-
-  input: (base) => ({
-    ...base,
-    margin: 0,
-    padding: 0,
-    fontSize: 13,
-  }),
-
-  indicatorsContainer: (base) => ({
-    ...base,
-    height: 30,
-  }),
-
-  dropdownIndicator: (base) => ({
-    ...base,
-    padding: "0 3px",
-    color: "#64748b",
-  }),
-
-  indicatorSeparator: () => ({
-    display: "none",
-  }),
-
-  menuPortal: (base) => ({
-    ...base,
-    zIndex: 9999,
-  }),
-
-  menu: (base) => ({
-    ...base,
-    zIndex: 9999,
-    fontSize: 13,
-    marginTop: 1,
-  }),
-
-  menuList: (base) => ({
-    ...base,
-    padding: 0,
-    maxHeight: 180,
-  }),
-
-  option: (base, state) => ({
-    ...base,
-    padding: "6px 8px",
-    fontSize: 13,
-    color: "#202020",
-    cursor: "pointer",
-
-    backgroundColor: state.isSelected
-      ? "#dbeafe"
-      : state.isFocused
-        ? "#eff6ff"
-        : "#ffffff",
-  }),
-};
 
 // ============================================================
 // INPUT STYLE
@@ -315,11 +202,11 @@ const BeginningBalanceHeader: React.FC<Props> = ({
               BRANCH
           ================================================== */}
 
-          <div className="absolute left-0 top-0 flex h-7.5 items-center">
+          <div className="absolute left-4 top-0 flex h-7.5 items-center gap-2">
 
             <label
               className="
-                w-12.75
+                w-22.5
                 shrink-0
                 whitespace-nowrap
                 text-right
@@ -331,7 +218,7 @@ const BeginningBalanceHeader: React.FC<Props> = ({
             </label>
 
             <div
-              className="ml-2 w-58.75"
+              className="w-62.5"
               onKeyDown={(event) => {
                 // Enter on a closed Branch box that has a value goes on to Date
                 if (event.key === "Enter" && !event.defaultPrevented && lkpBranch) {
@@ -341,9 +228,8 @@ const BeginningBalanceHeader: React.FC<Props> = ({
               }}
             >
 
-              <Select<Option, false>
+              <CommonTableSelect
                 inputId="lkpBranch"
-                instanceId="lkpBranch"
                 options={branchOptions}
                 value={lkpBranch}
                 onChange={(option) => {
@@ -354,24 +240,20 @@ const BeginningBalanceHeader: React.FC<Props> = ({
                     window.setTimeout(() => document.getElementById("dtpDate")?.focus(), 0);
                   }
                 }}
-                styles={{
-                  ...selectStyles,
-                  ...branchMenuStyles,
-                }}
-                components={{
-                  ...selectComponents,
-                  Option: BranchDividedOption,
-                  MenuList: BranchDividedMenuList,
-                }}
-                filterOption={filterLabelOrValue}
-                isClearable={false}
-                isSearchable
-                menuPlacement="auto"
+                columns={[
+                  { key: "label", label: "Branch" },
+                  { key: "value", label: "ID", width: "50px" },
+                ]}
                 placeholder="Select Branch"
-                noOptionsMessage={() =>
-                  "No Branch Found"
-                }
-                menuPosition="fixed"
+                width="250px"
+                menuWidth="300px"
+                controlFontSize="14px"
+                headerFontSize="12px"
+                borderColor="#d7dee7"
+                hoverBorderColor="#9fdfbc"
+                filterOption={filterLabelOrValue}
+                noOptionsMessage={() => "No Branch Found"}
+                menuZIndex={99999}
                 menuPortalTarget={
                   typeof document !== "undefined"
                     ? document.body

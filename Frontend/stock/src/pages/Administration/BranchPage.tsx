@@ -89,7 +89,7 @@ const BranchPage: React.FC = () => {
   const [saving, setSaving] = useState(false);
   // the common themed question window and the standard delete messages
   const { confirm, dialog } = useConfirmModal();
-  const { deleted, notDeleted } = useDeleteToast("Branch");
+  const { notDeleted } = useDeleteToast("Branch");
   // the cell the cursor is in is outlined (a typed-in box has its text selected)
   const { cellFocusClass, selectOnFocus } = useGridCellFocus();
 
@@ -371,7 +371,7 @@ const BranchPage: React.FC = () => {
         return;
       }
 
-      deleted();
+      // (no message for a deleted branch: the row just leaves the grid)
 
       setRows((previous) =>
         padRows(previous.filter((item) => item.key !== row.key)),

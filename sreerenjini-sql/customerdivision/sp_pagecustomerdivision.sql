@@ -94,7 +94,7 @@ BEGIN
 
         INSERT INTO dbo.tblcustdivision
                (fcoid, fcustomerid, fdivid, fdivname, fdivname_ar, fcuserid, fcuserdate)
-        VALUES (p_pstrcoid, p_lkpcsaccountid, p_txtdivisionid, v_name, v_name_ar, p_pstruserid, CURRENT_TIMESTAMP);
+        VALUES (p_pstrcoid, p_lkpcsaccountid, p_txtdivisionid, v_name, v_name_ar, p_pstruserid, now());
 
         v_note := 'Customer ID : ' || p_lkpcsaccountid
                || CHR(13) || CHR(10) || 'Division ID : ' || p_txtdivisionid
@@ -137,7 +137,7 @@ BEGIN
                fdivname   = v_name,
                fdivname_ar = v_name_ar,
                fmuserid   = p_pstruserid,
-               fmuserdate = CURRENT_TIMESTAMP
+               fmuserdate = now()
          WHERE fcoid = p_pstrcoid
            AND fcustomerid = p_lkpcsaccountid
            AND fdivid = p_txtoriginaldivisionid;

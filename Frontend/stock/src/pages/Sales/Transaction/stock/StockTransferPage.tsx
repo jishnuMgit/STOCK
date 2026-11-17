@@ -1,18 +1,18 @@
 import { Play } from "lucide-react";
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import Select, {
+  components,
+  type DropdownIndicatorProps,
+  type MenuListProps,
+  type OptionProps,
   type SingleValue,
   type StylesConfig,
 } from "react-select";
 import { toast } from "react-toastify";
-import {
-  makePairComponents,
-  filterPairOption,
-  makePairDividedMenuStyles,
-} from "../../../../components/PairSelect/pairSelectParts";
+import { filterPairOption } from "../../../../components/PairSelect/pairSelectParts";
+import { accountDropdownStyles } from "../../../../components/Transaction/Receipt/save/ReactSelectStyles";
 import { useScrollbarWidth } from "../../../../hooks/useScrollbarWidth";
 import { useAdvanceAfterSelect } from "../../../../hooks/useAdvanceAfterSelect";
-import { usePairMenuHang } from "../../../../hooks/usePairMenuHang";
 import { useAltShortcuts } from "../../../../hooks/useAltShortcuts";
 import { useCtrlShortcuts } from "../../../../hooks/useCtrlShortcuts";
 import { useInitialFocus } from "../../../../hooks/useInitialFocus";
@@ -27,16 +27,10 @@ import {
   type PrintReport,
 } from "../../../../components/Transaction/StockTransfer/StockTransferPrintReport";
 import { useButtonPermissions } from "../../../../hooks/useButtonPermissions";
-import {
-  BranchDividedMenuList,
-  BranchDividedOption,
-  branchMenuStyles,
-  filterLabelOrValue,
-} from "../../../../components/BranchSelect/branchSelectParts";
-import selectComponents, {
-  SELECT_FONT_FAMILY,
-} from "../../../../components/sharecomponents/selectComponents";
+import { filterLabelOrValue } from "../../../../components/BranchSelect/branchSelectParts";
+import { SELECT_FONT_FAMILY } from "../../../../components/sharecomponents/selectComponents";
 import Header from "../../../../components/common/Header";
+import CommonTableSelect from "../../../../components/common/CommonTableSelect";
 
 // ============================================================
 // STOCK TRANSFER (the old frmST)
@@ -93,101 +87,6 @@ const SCREEN_TITLE = "Stock Transfer";
 const todayLocal = () => new Date().toLocaleDateString("en-CA");
 
 // ============================================================
-// BRANCH SELECT STYLE
-// The project's Branch box (as on Set Document No / Set Branch Info): 30px, light
-// border, mint when focused, the filled arrow, and a "Branch | ID" list.
-// ============================================================
-
-const branchSelectStyles: StylesConfig<SelectOption, false> = {
-  container: (base) => ({
-    ...base,
-    fontFamily: SELECT_FONT_FAMILY,
-  }),
-
-  control: (base, state) => ({
-    ...base,
-    minHeight: "30px",
-    height: "30px",
-    border: "1px solid #d7dee7",
-    borderRadius: "4px",
-    boxShadow: "none",
-    backgroundColor: state.isFocused ? "#eefbf4" : "#ffffff",
-    fontSize: "14px",
-    cursor: "pointer",
-
-    "&:hover": {
-      borderColor: "#9fdfbc",
-    },
-  }),
-
-  valueContainer: (base) => ({
-    ...base,
-    height: "23px",
-    minHeight: "23px",
-    padding: "0 6px",
-  }),
-
-  singleValue: (base) => ({
-    ...base,
-    margin: 0,
-    color: "#334155",
-    fontSize: "14px",
-  }),
-
-  placeholder: (base) => ({
-    ...base,
-    margin: 0,
-    color: "#808080",
-    fontSize: "14px",
-  }),
-
-  input: (base) => ({
-    ...base,
-    margin: 0,
-    padding: 0,
-    fontSize: "14px",
-    color: "#334155",
-  }),
-
-  indicatorsContainer: (base) => ({
-    ...base,
-    height: "23px",
-  }),
-
-  dropdownIndicator: (base) => ({
-    ...base,
-    padding: "4px 7px",
-    color: "#64748b",
-  }),
-
-  indicatorSeparator: () => ({
-    display: "none",
-  }),
-
-  menuPortal: (base) => ({
-    ...base,
-    zIndex: 99999,
-  }),
-
-  option: (base, state) => ({
-    ...base,
-    minHeight: "30px",
-    padding: "6px 10px",
-    fontSize: "14px",
-    backgroundColor: state.isSelected
-      ? "#dbeafe"
-      : state.isFocused
-        ? "#eff6ff"
-        : "#ffffff",
-    color: "#475569",
-    cursor: "pointer",
-  }),
-
-  // the wide menu and the flush "Branch | ID" header
-  ...branchMenuStyles,
-};
-
-// ============================================================
 // ITEM ID | ITEM NAME LISTS
 // The same two-column list as the Supplier boxes on the Item page (shared in
 // components/PairSelect/pairSelectParts.tsx): the Item ID box opens "Item ID |
@@ -195,11 +94,79 @@ const branchSelectStyles: StylesConfig<SelectOption, false> = {
 // both searchable on either column, and picking from one fills the other.
 // ============================================================
 
-const itemIdComponents = makePairComponents("Item ID", "Item Name", false, true);
-// The Item Name box's list reaches the right edge of the Qty. column: the part past
-// the Item Name box is its Item ID column, measured when the list opens (see
-// usePairMenuHang), so it is wide enough for a whole ID on one line.
-const itemNameComponents = makePairComponents("Item ID", "Item Name", true, true);
+// The lists are the Receipt screen's Account ID / Account Name lists (components/Transaction/Receipt/save): 663 px wide, a grey
+// header "ID | Name", rows of 30 px with a thin line between the two columns (ID 105 px, Name 558 px). The Item ID list is "ID |
+// Name", the Item Name list "Name | ID".
+const ITEM_LIST_ROW_TITLE = (data: SelectOption) => `${data.id ?? data.value} - ${data.name ?? data.label}`;
+
+const ItemDropdownOption = ({
+  displayMode,
+  ...props
+}: OptionProps<SelectOption, false> & { displayMode: "id" | "name" }) => (
+  <components.Option {...props}>
+    <div className="account-dropdown-row" title={ITEM_LIST_ROW_TITLE(props.data)}>
+      {displayMode === "id" ? (
+        <>
+          <div className="account-dropdown-id">{props.data.id ?? props.data.value}</div>
+          <div className="account-dropdown-name">{props.data.name ?? props.data.label}</div>
+        </>
+      ) : (
+        <>
+          <div className="account-dropdown-name">{props.data.name ?? props.data.label}</div>
+          <div className="account-dropdown-id">{props.data.id ?? props.data.value}</div>
+        </>
+      )}
+    </div>
+  </components.Option>
+);
+
+const ItemDropdownMenuList = ({
+  displayMode,
+  ...props
+}: MenuListProps<SelectOption, false> & { displayMode: "id" | "name" }) => {
+  const HEADER_HEIGHT = 30;
+  const optionsMaxHeight = Math.max(Math.min(375, (props.maxHeight ?? 405) - HEADER_HEIGHT), 81);
+
+  return (
+    <components.MenuList {...props}>
+      <div className="account-dropdown-header">
+        {displayMode === "id" ? (
+          <>
+            <div className="account-dropdown-header-id">Item ID</div>
+            <div className="account-dropdown-header-name">Item Name</div>
+          </>
+        ) : (
+          <>
+            <div className="account-dropdown-header-name">Item Name</div>
+            <div className="account-dropdown-header-id">Item ID</div>
+          </>
+        )}
+      </div>
+
+      <div className="account-dropdown-options" style={{ maxHeight: optionsMaxHeight }}>
+        {props.children}
+      </div>
+    </components.MenuList>
+  );
+};
+
+// The arrow of the Receipt grid: a small grey ▼, shown only on the row the cursor is on, or in the cell it is in (the cell hides it otherwise)
+const ItemDropdownIndicator = (props: DropdownIndicatorProps<SelectOption, false>) => (
+  <components.DropdownIndicator {...props}>
+    <span className="item-list-arrow block translate-y-px text-[8px] leading-2 text-[#999999]">▼</span>
+  </components.DropdownIndicator>
+);
+
+const itemIdComponents = {
+  DropdownIndicator: ItemDropdownIndicator,
+  Option: (props: OptionProps<SelectOption, false>) => <ItemDropdownOption {...props} displayMode="id" />,
+  MenuList: (props: MenuListProps<SelectOption, false>) => <ItemDropdownMenuList {...props} displayMode="id" />,
+};
+const itemNameComponents = {
+  DropdownIndicator: ItemDropdownIndicator,
+  Option: (props: OptionProps<SelectOption, false>) => <ItemDropdownOption {...props} displayMode="name" />,
+  MenuList: (props: MenuListProps<SelectOption, false>) => <ItemDropdownMenuList {...props} displayMode="name" />,
+};
 
 // ============================================================
 // REACT SELECT STYLES
@@ -385,7 +352,7 @@ const tableSelectStyles: StylesConfig<SelectOption, false> = {
     boxShadow: "none",
     outline: "none",
     backgroundColor: "transparent",
-    fontSize: "13px",
+    fontSize: "12px",
     cursor: "pointer",
 
     "&:hover": {
@@ -402,14 +369,14 @@ const tableSelectStyles: StylesConfig<SelectOption, false> = {
   singleValue: (base) => ({
     ...base,
     margin: 0,
-    fontSize: "13px",
+    fontSize: "12px",
     color: "#374151",
   }),
 
   placeholder: (base) => ({
     ...base,
     margin: 0,
-    fontSize: "13px",
+    fontSize: "12px",
     color: "#94a3b8",
   }),
 
@@ -417,7 +384,7 @@ const tableSelectStyles: StylesConfig<SelectOption, false> = {
     ...base,
     margin: 0,
     padding: 0,
-    fontSize: "13px",
+    fontSize: "12px",
   }),
 
   indicatorsContainer: (base) => ({
@@ -440,7 +407,7 @@ const tableSelectStyles: StylesConfig<SelectOption, false> = {
   menu: (base) => ({
     ...base,
     zIndex: 99999,
-    fontSize: "13px",
+    fontSize: "12px",
     marginTop: "1px",
   }),
 
@@ -458,7 +425,7 @@ const tableSelectStyles: StylesConfig<SelectOption, false> = {
   option: (base, state) => ({
     ...base,
     padding: "7px 8px",
-    fontSize: "13px",
+    fontSize: "12px",
     color: "#374151",
     cursor: "pointer",
     backgroundColor: state.isSelected
@@ -469,6 +436,63 @@ const tableSelectStyles: StylesConfig<SelectOption, false> = {
   }),
 };
 
+
+// The lists have the Receipt screen's look (colours, borders, 30 px rows, scroll bar), but their columns follow the grid: the first
+// column is exactly as wide as the cell the list opens from (so the Name values of the Item ID list start where the Item Name
+// column starts), and the second column is the rest.
+//   Item ID list:   ID (the Item ID cell)   | Name (the rest, 663 px in all)
+//   Item Name list: Name (the Item Name cell) | ID (a 150 px column that hangs out past the cell)
+const ITEM_LIST_TOTAL = 663;
+const ITEM_LIST_HANG_ID = 150;
+
+// the Receipt style of a column, with the width of this screen
+const withColumnWidth = (style: any, width: number) => ({
+  ...style,
+  flex: `0 0 ${width}px`,
+  width: `${width}px`,
+  minWidth: `${width}px`,
+  maxWidth: `${width}px`,
+});
+
+const makeItemListStyles = (firstWidth: number, secondWidth: number, idFirst: boolean) => {
+  const total = firstWidth + secondWidth;
+  const idWidth = idFirst ? firstWidth : secondWidth;
+  const nameWidth = idFirst ? secondWidth : firstWidth;
+
+  return {
+    ...tableSelectStyles,
+    menu: (base: any) => withColumnWidth({ ...accountDropdownStyles.menu(base), flex: undefined }, total),
+    menuPortal: accountDropdownStyles.menuPortal,
+    menuList: (base: any) => {
+      const list = accountDropdownStyles.menuList(base) as any;
+      return {
+        ...withColumnWidth(list, total),
+        "& .account-dropdown-header": withColumnWidth(list["& .account-dropdown-header"], total),
+        "& .account-dropdown-header-id": withColumnWidth(list["& .account-dropdown-header-id"], idWidth),
+        "& .account-dropdown-header-name": withColumnWidth(list["& .account-dropdown-header-name"], nameWidth),
+        "& .account-dropdown-options": withColumnWidth(list["& .account-dropdown-options"], total),
+        "& .account-dropdown-row": withColumnWidth(list["& .account-dropdown-row"], total),
+        "& .account-dropdown-row .account-dropdown-id": withColumnWidth(
+          list["& .account-dropdown-row .account-dropdown-id"],
+          idWidth,
+        ),
+        "& .account-dropdown-row .account-dropdown-name": withColumnWidth(
+          list["& .account-dropdown-row .account-dropdown-name"],
+          nameWidth,
+        ),
+      };
+    },
+    option: (base: any, state: any) => {
+      const option = accountDropdownStyles.option(base, state) as any;
+      return {
+        ...withColumnWidth(option, total),
+        "& .account-dropdown-row": withColumnWidth(option["& .account-dropdown-row"], total),
+        "& .account-dropdown-id": withColumnWidth(option["& .account-dropdown-id"], idWidth),
+        "& .account-dropdown-name": withColumnWidth(option["& .account-dropdown-name"], nameWidth),
+      };
+    },
+  } as StylesConfig<SelectOption, false>;
+};
 
 // ============================================================
 // INITIAL ROWS
@@ -545,8 +569,21 @@ const StockTransferPage: React.FC = () => {
 
   const [saving, setSaving] = useState(false);
 
-  // the Item ID list covers the Item ID box AND the Item Name box next to it
-  const { hang: idMenuHang, measure: measureIdMenuHang } = usePairMenuHang();
+  // the first column of an Item list is as wide as the cell it opens from (measured when the list opens)
+  const [idCellWidth, setIdCellWidth] = useState(214);
+  const [nameCellWidth, setNameCellWidth] = useState(380);
+  const itemIdListStyles = useMemo(
+    () => makeItemListStyles(idCellWidth, Math.max(ITEM_LIST_TOTAL - idCellWidth, 300), true),
+    [idCellWidth],
+  );
+  const itemNameListStyles = useMemo(
+    () => makeItemListStyles(nameCellWidth, ITEM_LIST_HANG_ID, false),
+    [nameCellWidth],
+  );
+  const measureCell = (inputId: string, set: (width: number) => void) => {
+    const cell = document.getElementById(inputId)?.closest("td");
+    if (cell) set(Math.round(cell.getBoundingClientRect().width));
+  };
 
   // Enter / Tab / click on a dropdown goes on to the next box of the row
   const { advanceAfterPick, advanceOnEnter } = useAdvanceAfterSelect();
@@ -555,8 +592,6 @@ const StockTransferPage: React.FC = () => {
   // the standard messages of a delete (the same on every screen)
   // only the failure message is used: a delete that worked shows none
   const { notDeleted } = useDeleteToast(SCREEN_TITLE);
-  // ... and the Item Name list covers the columns up to Qty.
-  const { hang: nameMenuHang, measure: measureNameMenuHang } = usePairMenuHang(210);
 
   // the grid's scroll bar narrows its columns; the totals row below gets the same
   // amount as padding so its boxes end where the grid's columns end
@@ -1807,21 +1842,20 @@ const StockTransferPage: React.FC = () => {
         <div className="m-[12px] flex min-h-0 flex-1 flex-col px-[12px] pb-[12px] pt-0">
 
           {/* HEADER FORM, row 1: Branch, Entry No., Date */}
-          <section className="mb-[10px] flex h-[30px] bg-white shrink-0 items-center justify-between gap-4">
+          <section className="mb-2 flex h-[30px] bg-white shrink-0 items-center justify-between gap-8">
 
             {/* Branch (From) */}
-            <div className="flex min-w-0 items-center gap-1">
-              <label htmlFor="lkpBranch" className="w-[92px] shrink-0 text-right text-[14px] text-gray-600">
+            <div className="ml-4 flex min-w-0 items-center gap-2">
+              <label htmlFor="lkpBranch" className="w-22.5 shrink-0 text-right text-[14px] whitespace-nowrap text-gray-600">
                 Branch :
               </label>
 
-              <div className="w-[220px] max-w-full" onKeyDown={(event) => advanceOnEnter(event)}>
-                <Select<SelectOption, false>
+              <div className="w-62.5 max-w-full" onKeyDown={(event) => advanceOnEnter(event)}>
+                <CommonTableSelect
                   inputId="lkpBranch"
-                  name="lkpBranch"
                   options={branchOptions}
                   value={lkpBranch}
-                  onChange={(option: SingleValue<SelectOption>) => {
+                  onChange={(option) => {
                     setLkpBranch(option);
 
                     // a branch chosen: on to Entry No.
@@ -1832,25 +1866,27 @@ const StockTransferPage: React.FC = () => {
                       );
                     }
                   }}
-                  styles={branchSelectStyles}
-                  components={{
-                    ...selectComponents,
-                    Option: BranchDividedOption,
-                    MenuList: BranchDividedMenuList,
-                  }}
+                  columns={[
+                    { key: "label", label: "Branch" },
+                    { key: "value", label: "ID", width: "50px" },
+                  ]}
+                  placeholder="Select Branch"
+                  width="250px"
+                  menuWidth="300px"
+                  controlFontSize="14px"
+                  headerFontSize="12px"
+                  borderColor="#d7dee7"
+                  hoverBorderColor="#9fdfbc"
                   filterOption={filterLabelOrValue}
                   noOptionsMessage={() => "No Branch Found"}
-                  isSearchable
-                  placeholder="Select Branch"
+                  menuZIndex={99999}
                   menuPortalTarget={document.body}
-                  menuPosition="fixed"
-                  menuPlacement="auto"
                 />
               </div>
             </div>
 
             {/* Entry No. */}
-            <div className="flex shrink-0 items-center gap-3">
+            <div className="flex shrink-0 items-center gap-2">
               <label htmlFor="txtDocNo" className="text-[14px] text-gray-600">
                 Entry No. :
               </label>
@@ -1882,7 +1918,7 @@ const StockTransferPage: React.FC = () => {
             </div>
 
             {/* Date */}
-            <div className="flex shrink-0 items-center gap-3">
+            <div className="flex shrink-0 items-center gap-2">
               <label htmlFor="dtpDate" className="text-[14px] text-gray-600">
                 Date :
               </label>
@@ -1907,46 +1943,47 @@ const StockTransferPage: React.FC = () => {
           </section>
 
           {/* HEADER FORM, row 2: Transfer To, Stock */}
-          <section className="mb-[12px] flex h-[30px] bg-white shrink-0 items-center justify-between gap-4">
+          <section className="mb-3 flex h-[30px] bg-white shrink-0 items-center justify-between gap-8">
 
             {/* Transfer To */}
-            <div className="flex min-w-0 items-center gap-1">
-              <label htmlFor="lkpToBranch" className="w-[92px] shrink-0 text-right text-[14px] text-gray-600">
+            <div className="ml-4 flex min-w-0 items-center gap-2">
+              <label htmlFor="lkpToBranch" className="w-22.5 shrink-0 text-right text-[14px] whitespace-nowrap text-gray-600">
                 Transfer To :
               </label>
 
-              <div className="w-[220px] max-w-full" onKeyDown={(event) => advanceOnEnter(event)}>
-                <Select<SelectOption, false>
+              <div className="w-62.5 max-w-full" onKeyDown={(event) => advanceOnEnter(event)}>
+                <CommonTableSelect
                   inputId="lkpToBranch"
-                  name="lkpToBranch"
                   options={toBranchOptions}
                   value={lkpToBranch}
-                  onChange={(option: SingleValue<SelectOption>) => {
+                  onChange={(option) => {
                     setLkpToBranch(option);
 
                     // a branch chosen: on to the first Item ID
                     if (option) advanceAfterPick("lkpToBranch");
                   }}
                   isDisabled={chkPosted}
-                  styles={branchSelectStyles}
-                  components={{
-                    ...selectComponents,
-                    Option: BranchDividedOption,
-                    MenuList: BranchDividedMenuList,
-                  }}
+                  columns={[
+                    { key: "label", label: "Branch" },
+                    { key: "value", label: "ID", width: "50px" },
+                  ]}
+                  placeholder="Select Branch"
+                  width="250px"
+                  menuWidth="300px"
+                  controlFontSize="14px"
+                  headerFontSize="12px"
+                  borderColor="#d7dee7"
+                  hoverBorderColor="#9fdfbc"
                   filterOption={filterLabelOrValue}
                   noOptionsMessage={() => "No Branch Found"}
-                  isSearchable
-                  placeholder="Select Branch"
+                  menuZIndex={99999}
                   menuPortalTarget={document.body}
-                  menuPosition="fixed"
-                  menuPlacement="auto"
                 />
               </div>
             </div>
 
             {/* Stock of the item you are on */}
-            <div className="flex shrink-0 items-center gap-3">
+            <div className="flex shrink-0 items-center gap-2">
               <span className="text-[14px] text-gray-600">Stock :</span>
 
               {/* a label, not a box: the stock of the item you are on - in the place of
@@ -1964,8 +2001,8 @@ const StockTransferPage: React.FC = () => {
           <main className="customer-table-scroll flex shrink-0 flex-col bg-white">
             <div
               ref={gridScroll.ref}
-              // 11 rows show (the heading and 11 rows of 30px); a 12th row brings the scroll bar
-              className="customer-table-scroll h-[363px] shrink-0 overflow-auto border border-[#bfe8d0]"
+              // 11 rows show (the heading and 11 rows of 28px, as the Receipt grid); a 12th row brings the scroll bar
+              className="customer-table-scroll h-[339px] shrink-0 overflow-auto border border-[#bfe8d0]"
             >
               <table className="customer-table-scroll w-full min-w-[900px] table-fixed border-collapse border border-[#bfe8d0]">
                 <colgroup>
@@ -1981,16 +2018,16 @@ const StockTransferPage: React.FC = () => {
                 </colgroup>
 
                 <thead className="sticky top-0 z-10 bg-[#edf9f2]">
-                  <tr className="h-[30px] text-left text-[14px] text-gray-600">
-                    <th className="border border-[#bfe8d0] px-1 font-normal"></th>
-                    <th className="border border-[#bfe8d0] px-1 text-center font-normal">Line</th>
-                    <th className="border border-[#bfe8d0] px-2 font-normal">Item ID</th>
-                    <th className="border border-[#bfe8d0] px-2 font-normal">Item Name</th>
-                    <th className="border border-[#bfe8d0] px-2 font-normal">Unit</th>
-                    <th className="border border-[#bfe8d0] px-2 text-right font-normal">Packing</th>
-                    <th className="border border-[#bfe8d0] px-2 text-right font-normal">Qty.</th>
-                    <th className="border border-[#bfe8d0] px-2 text-right font-normal">Unit Cost</th>
-                    <th className="border border-[#bfe8d0] px-2 text-right font-normal">Total Cost</th>
+                  <tr className="h-7 text-left text-[12px] text-[#344054]">
+                    <th className="border border-[#bfe8d0] px-1 font-medium"></th>
+                    <th className="border border-[#bfe8d0] px-1 text-center font-medium">Line</th>
+                    <th className="border border-[#bfe8d0] px-2 font-medium">Item ID</th>
+                    <th className="border border-[#bfe8d0] px-2 font-medium">Item Name</th>
+                    <th className="border border-[#bfe8d0] px-2 font-medium">Unit</th>
+                    <th className="border border-[#bfe8d0] px-2 text-right font-medium">Packing</th>
+                    <th className="border border-[#bfe8d0] px-2 text-right font-medium">Qty.</th>
+                    <th className="border border-[#bfe8d0] px-2 text-right font-medium">Unit Cost</th>
+                    <th className="border border-[#bfe8d0] px-2 text-right font-medium">Total Cost</th>
                   </tr>
                 </thead>
 
@@ -2002,7 +2039,9 @@ const StockTransferPage: React.FC = () => {
                         setActiveRow(index);
                         showRowStock(index);
                       }}
-                      className={`h-[30px] text-[14px] ${activeRow === index ? "bg-[#f8fcfa]" : "bg-white"
+                      // the highlighted row follows the cursor (any box of the row), as on the Receipt screen
+                      onFocus={() => setActiveRow(index)}
+                      className={`h-7 text-[12px] ${activeRow === index ? "bg-[#f9fffc]" : "bg-white"
                         }`}
                     >
                       {/* ROW SELECTOR */}
@@ -2027,7 +2066,7 @@ const StockTransferPage: React.FC = () => {
                       </td>
 
                       {/* ITEM ID */}
-                      <td className={`border border-[#bfe8d0] p-0 ${cellFocusClass}`}
+                      <td className={`border border-[#bfe8d0] p-0 ${cellFocusClass} ${activeRow === index ? "" : "[&:not(:focus-within)_.item-list-arrow]:hidden"}`}
                         onKeyDown={(event) => advanceOnEnter(event, [`lkpItemName-${index}`])}
                       >
                         <Select<SelectOption, false>
@@ -2039,15 +2078,8 @@ const StockTransferPage: React.FC = () => {
                             pickItem(index, "lkpItemID", option)
                           }
                           onFocus={() => showRowStock(index)}
-                          styles={
-                            {
-                              ...tableSelectStyles,
-                              ...makePairDividedMenuStyles(idMenuHang),
-                            } as StylesConfig<SelectOption, false>
-                          }
-                          onMenuOpen={() =>
-                            measureIdMenuHang(`lkpItemID-${index}`, `lkpItemName-${index}`)
-                          }
+                          styles={itemIdListStyles}
+                          onMenuOpen={() => measureCell(`lkpItemID-${index}`, setIdCellWidth)}
                           components={itemIdComponents}
                           filterOption={filterPairOption}
                           noOptionsMessage={() => "No Item Found"}
@@ -2063,7 +2095,7 @@ const StockTransferPage: React.FC = () => {
                       </td>
 
                       {/* ITEM NAME */}
-                      <td className={`border border-[#bfe8d0] p-0 ${cellFocusClass}`}
+                      <td className={`border border-[#bfe8d0] p-0 ${cellFocusClass} ${activeRow === index ? "" : "[&:not(:focus-within)_.item-list-arrow]:hidden"}`}
                         onKeyDown={(event) => advanceOnEnter(event)}
                       >
                         <Select<SelectOption, false>
@@ -2075,15 +2107,8 @@ const StockTransferPage: React.FC = () => {
                             pickItem(index, "lkpItemName", option)
                           }
                           onFocus={() => showRowStock(index)}
-                          styles={
-                            {
-                              ...tableSelectStyles,
-                              ...makePairDividedMenuStyles(nameMenuHang),
-                            } as StylesConfig<SelectOption, false>
-                          }
-                          onMenuOpen={() =>
-                            measureNameMenuHang(`lkpItemName-${index}`, `txtQty-${index}`)
-                          }
+                          styles={itemNameListStyles}
+                          onMenuOpen={() => measureCell(`lkpItemName-${index}`, setNameCellWidth)}
                           components={itemNameComponents}
                           filterOption={filterPairOption}
                           noOptionsMessage={() => "No Item Found"}
@@ -2242,7 +2267,7 @@ const StockTransferPage: React.FC = () => {
 
                     {/* TOTAL LABEL (under the Packing column) */}
                     <td className="p-0 px-[4px]">
-                      <div className="flex h-[30px] w-full items-center justify-center rounded border border-[#d7dee7] bg-white text-[14px] text-gray-600">
+                      <div className="flex h-7.5 w-full items-center justify-center rounded border border-gray-300 bg-white text-[14px] text-[#344054]">
                         Total
                       </div>
                     </td>
@@ -2254,7 +2279,7 @@ const StockTransferPage: React.FC = () => {
                         name="txtTotalQty"
                         value={formatQty(totalQty)}
                         readOnly
-                        className="input-style w-full min-w-0 text-right"
+                        className="h-7.5 w-full min-w-0 rounded border border-gray-300 bg-white px-2 text-right text-[14px] text-[#344054] outline-none"
                       />
                     </td>
 
@@ -2268,7 +2293,7 @@ const StockTransferPage: React.FC = () => {
                         name="txtTotalCost"
                         value={formatAmount(total)}
                         readOnly
-                        className="input-style w-full min-w-0 text-right"
+                        className="h-7.5 w-full min-w-0 rounded border border-gray-300 bg-white px-2 text-right text-[14px] text-[#344054] outline-none"
                       />
                     </td>
                   </tr>
