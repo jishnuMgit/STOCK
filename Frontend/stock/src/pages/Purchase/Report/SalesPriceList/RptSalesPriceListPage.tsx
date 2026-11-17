@@ -442,6 +442,8 @@ const RptSalesPriceListPage: React.FC<RptSalesPriceListPageProps> = ({
         options={groupPairOptions}
         value={groupId ?? ""}
         onChange={(id) => handleGroupChange(id || null)}
+        // the same ID box width as the Item row below it, so the two Name boxes start at the same place
+        firstWidth={190}
         ids={{ radio: "rdgItemGroup", first: "lkpItemGroupID", second: "lkpItemGroupName" }}
       />
 

@@ -295,6 +295,8 @@ const RptSupplierPurchasePage: React.FC<RptSupplierPurchasePageProps> = ({
         options={supplierPairOptions}
         value={lkpSupplierID}
         onChange={setLkpSupplierID}
+        // the same ID box width as every other ID + Name pair on the report pages
+        firstWidth={190}
       />
 
       <PeriodFilter

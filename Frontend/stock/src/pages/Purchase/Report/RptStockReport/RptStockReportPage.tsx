@@ -386,6 +386,8 @@ const RptStockReportPage: React.FC = () => {
         value={groupId}
         onChange={setGroupId}
         disabled={groupRadioDisabled}
+        // the same ID box width as the Item row below it, so the two Name boxes start at the same place
+        firstWidth={190}
         ids={{ radio: "rdgItemGroup", first: "lkpOneItemGroupID", second: "lkpOneItemGroupName" }}
       />
 

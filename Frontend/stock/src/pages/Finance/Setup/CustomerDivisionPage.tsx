@@ -3,7 +3,8 @@ import { toast } from "react-toastify";
 
 import CustomLinkedPairSelect, {
   type PairSelectOption,
-} from "../../../components/sharecomponents/CustomLinkedPairSelect";
+} from "../../../components/common/CustomLinkedPairSelect";
+import { FILTER_GAP } from "../../../components/common/ReportFilters";
 import Header from "../../../components/sharecomponents/Header";
 import { useButtonPermissions } from "../../../hooks/useButtonPermissions";
 import { useConfirmModal } from "../../../hooks/useConfirmModal";
@@ -621,11 +622,14 @@ const CustomerDivisionPage: React.FC<CustomerDivisionPageProps> = ({
                     secondValue={lkpCsAccountID}
                     firstHeader="Customer ID"
                     secondHeader="Customer Name"
-                    firstWidth={120}
-                    secondWidth={400}
-                    gap={4}
+                    // the same boxes as on the report pages: 190 px for the ID, 450 px for the Name, 5 px between, blank
+                    // while empty
+                    firstWidth={190}
+                    secondWidth={450}
+                    gap={FILTER_GAP}
+                    menuZIndex={999999}
+                    menuPortalTarget={document.body}
                     headerFontSize="12px"
-                    placeholder="Select"
                     onChange={(option) => selectCustomer(option?.value ?? null)}
                   />
                 </div>

@@ -96,17 +96,26 @@ const ellipsisStyle = {
 //             box (the width of the second column). Left out, the lists keep
 //             their usual sizes (330px for an ID box, 100px for a Name box);
 //             give the SAME number to makePairDividedMenuStyles below.
+// cellPadding = only with the divider: the space (px) inside every cell, on both sides of the line (the report pages' lists
+//             have 5). The header and the rows then have no padding of their own - the page's `option` style must give the
+//             option 0 side padding - and the first column is exactly as wide as the box.
 export const makePairComponents = (
   idHeader: string,
   nameHeader: string,
   nameFirst: boolean,
   divider = false,
-  hang?: number
+  hang?: number,
+  cellPadding?: number
 ) => {
+  const padded = divider && cellPadding !== undefined;
   // With the divider the first column is exactly as wide as the box the
   // list belongs to (the line sits at the box's right edge) - see
   // pairDividedIdMenuStyles / pairDividedNameMenuStyles below.
-  const columns = divider
+  const columns = padded
+    ? hang !== undefined
+      ? `calc(100% - ${hang}px) 1fr`
+      : `calc(100% - var(--pair-hang, ${nameFirst ? DIVIDED_HANG_NAME : DIVIDED_HANG_ID}px)) 1fr`
+    : divider
     ? hang !== undefined
       ? `calc(100% - ${hang - 8}px) 1fr`
       : nameFirst
@@ -115,7 +124,7 @@ export const makePairComponents = (
     : nameFirst
       ? PAIR_GRID_COLUMNS_NAME_FIRST
       : PAIR_GRID_COLUMNS;
-  const headerPadding = divider ? "6px 8px" : "6px 10px";
+  const headerPadding = padded ? "6px 0" : divider ? "6px 8px" : "6px 10px";
 
   // The line is the first cell's right border. The cell grows by the
   // container's vertical padding (negative margin + padding) so the line
@@ -126,10 +135,16 @@ export const makePairComponents = (
       ? {
           borderRight: line,
           margin: `-${verticalPadding}px 0`,
-          padding: `${verticalPadding}px 0`,
+          padding: padded ? `${verticalPadding}px ${cellPadding}px` : `${verticalPadding}px 0`,
+          boxSizing: "border-box" as const,
+          minWidth: 0,
         }
       : {};
-  const secondCell = divider ? { paddingLeft: "8px" } : {};
+  const secondCell = divider
+    ? padded
+      ? { paddingLeft: `${cellPadding}px`, paddingRight: `${cellPadding}px`, minWidth: 0 }
+      : { paddingLeft: "8px" }
+    : {};
 
   return {
     ...selectComponents,
