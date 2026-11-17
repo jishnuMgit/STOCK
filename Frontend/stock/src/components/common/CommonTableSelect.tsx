@@ -84,7 +84,7 @@ const CommonTableSelect = ({
   onKeyDown,
   onMenuOpen,
   onMenuClose,
-  menuPlacement,
+  menuPlacement = "auto", // opens upward when there is not room below (the list is tall: header + up to 10 rows)
   filterOption,
   borderColor = "#CBD5E1",
   hoverBorderColor = "#94A3B8",
@@ -312,8 +312,6 @@ const CommonTableSelect = ({
       noOptionsMessage={noOptionsMessage}
       menuPortalTarget={menuPortalTarget}
       menuPosition={menuPortalTarget ? "fixed" : undefined}
-      // opens upward when there is not room below (the list is tall: header + up to 10 rows), like the pair select
-      menuPlacement="auto"
       // opens upward unless the whole list fits below (react-select otherwise shrinks it into the space left below)
       minMenuHeight={parseFloat(menuMaxHeight)}
       menuShouldScrollIntoView={false}
