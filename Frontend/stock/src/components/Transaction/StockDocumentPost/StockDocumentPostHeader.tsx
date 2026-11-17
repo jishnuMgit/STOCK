@@ -1,20 +1,22 @@
 import React, { useEffect, useRef } from "react";
-import Select from "react-select";
+import CommonTableSelect from "../../common/CommonTableSelect";
+import { filterLabelOrValue } from "../../BranchSelect/branchSelectParts";
 import { useAdvanceAfterSelect } from "../../../hooks/useAdvanceAfterSelect";
 import { useGridCellFocus } from "../../../hooks/useGridCellFocus";
-import {
-  type Option,
-  branchSelectProps,
-  documentSelectProps,
-  selectProps,
-} from "./StockDocumentPostShared";
+import { type Option } from "./StockDocumentPostShared";
+
+// The Branch and Document lists: "Branch | ID" / "Document | ID" (the old fBrName / fBrID and fDocName / fDocType columns)
+const NAME_ID_COLUMNS = (name: string) => [
+  { key: "label", label: name },
+  { key: "value", label: "ID", width: "70px" },
+];
+
+// the label of a box, as on the Receipt screen: 90 px, right aligned
 const FieldLabel: React.FC<{
   children: React.ReactNode;
   className?: string;
 }> = ({ children, className = "" }) => (
-  <div
-    className={`flex h-7.5 items-center justify-end  pr-3 text-[14px] text-[#405066] ${className}`}
-  >
+  <div className={`text-right text-[14px] whitespace-nowrap text-[#405066] ${className}`}>
     {children}
   </div>
 );
@@ -76,85 +78,91 @@ const StockDocumentPostHeader: React.FC<StockDocumentPostHeaderProps> = ({
 
   return (
     <div className="flex flex-col gap-3 ">
-      {/* Branch */}
-      <div className="flex items-center gap-3 ">
-        <FieldLabel className="w-27.5">Branch :</FieldLabel>
-        <div
-          className={`w-62.5 ${cellFocusClass}`}
-          onKeyDown={(event) => advanceOnEnter(event)}
-        >
-          <Select
+      {/* Branch: laid out as the Receipt screen (16 px in, a 90 px label, 8 px, the 250 px "Branch | ID" box) */}
+      <div className="ml-4 flex items-center gap-2">
+        <FieldLabel className="w-22.5">Branch :</FieldLabel>
+        <div className="w-62.5" onKeyDown={(event) => advanceOnEnter(event)}>
+          <CommonTableSelect
             inputId="lkpBranch"
-            instanceId="lkpBranch"
             options={branchOptions}
             value={lkpBranch}
             onChange={(option) => {
               onBranchChange(option);
               if (option) advanceAfterPick("lkpBranch");
             }}
+            columns={NAME_ID_COLUMNS("Branch")}
+            placeholder="Select Branch"
+            width="250px"
+            menuWidth="320px"
+            filterOption={filterLabelOrValue}
             noOptionsMessage={() => "No Branch Found"}
-            {...branchSelectProps}
+            menuPortalTarget={typeof document !== "undefined" ? document.body : undefined}
           />
         </div>
       </div>
 
       {/* Document + year / month */}
-      <div className="flex flex-wrap items-center justify-between gap-x-6 gap-y-3">
-        <div className="flex items-center gap-3">
-          <FieldLabel className="w-27.5">Document :</FieldLabel>
-          <div
-          className={`w-62.5 ${cellFocusClass}`}
-          onKeyDown={(event) => advanceOnEnter(event)}
-        >
-            <Select
+      <div className="flex flex-wrap items-center justify-between gap-x-8 gap-y-3">
+        <div className="ml-4 flex items-center gap-2">
+          <FieldLabel className="w-22.5">Document :</FieldLabel>
+          <div className="w-62.5" onKeyDown={(event) => advanceOnEnter(event)}>
+            <CommonTableSelect
               inputId="lkpDocument"
-              instanceId="lkpDocument"
               options={documentOptions}
               value={lkpDocument}
               onChange={(option) => {
                 onDocumentChange(option);
                 if (option) advanceAfterPick("lkpDocument");
               }}
+              columns={NAME_ID_COLUMNS("Document")}
+              width="250px"
+              menuWidth="320px"
+              // the list shows up to 11 rows (header 35 px + 11 x 32 px) before it gets a scroll bar
+              menuMaxHeight="387px"
+              placeholder=""
+              filterOption={filterLabelOrValue}
               noOptionsMessage={() => "No Document Found"}
-              {...documentSelectProps}
+              menuPortalTarget={typeof document !== "undefined" ? document.body : undefined}
             />
           </div>
         </div>
 
         <div className="flex items-center gap-2">
-          <FieldLabel className="w-27.5">Year / Month :</FieldLabel>
-          <div
-            className={`w-25 ${cellFocusClass}`}
-            onKeyDown={(event) => advanceOnEnter(event)}
-          >
-            <Select
+          <FieldLabel>Year / Month :</FieldLabel>
+          <div className="w-25" onKeyDown={(event) => advanceOnEnter(event)}>
+            <CommonTableSelect
               inputId="lkpYear"
-              instanceId="lkpYear"
               options={yearOptions}
               value={lkpYear}
               onChange={(option) => {
                 onYearChange(option);
                 if (option) advanceAfterPick("lkpYear");
               }}
-              {...selectProps}
-              isSearchable
+              columns={[{ key: "label", label: "Year" }]}
+              showHeader={false}
+              width="100px"
+              menuWidth="100px"
+              placeholder=""
+              noOptionsMessage={() => "No Year Found"}
+              menuPortalTarget={typeof document !== "undefined" ? document.body : undefined}
             />
           </div>
-          <div
-            className={`w-37.5 ${cellFocusClass}`}
-            onKeyDown={(event) => advanceOnEnter(event)}
-          >
-            <Select
+          <div className="w-37.5" onKeyDown={(event) => advanceOnEnter(event)}>
+            <CommonTableSelect
               inputId="lkpMonth"
-              instanceId="lkpMonth"
               options={monthOptions}
               value={lkpMonth}
               onChange={(option) => {
                 onMonthChange(option);
                 if (option) advanceAfterPick("lkpMonth");
               }}
-              {...selectProps}
-              isSearchable
+              columns={[{ key: "label", label: "Month" }]}
+              showHeader={false}
+              width="150px"
+              menuWidth="150px"
+              placeholder=""
+              noOptionsMessage={() => "No Month Found"}
+              menuPortalTarget={typeof document !== "undefined" ? document.body : undefined}
             />
           </div>
         </div>

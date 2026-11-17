@@ -14,7 +14,7 @@ type StockDocumentPostTableProps = {
   onActivateRow: (id: string) => void;
 };
 
-const cell = "h-[26px] border border-[#B7ECD0] px-2";
+const cell = "h-7 border border-[#B7ECD0] px-2";
 
 const StockDocumentPostTable: React.FC<StockDocumentPostTableProps> = ({
   rows,
@@ -29,7 +29,7 @@ const StockDocumentPostTable: React.FC<StockDocumentPostTableProps> = ({
   const { cellFocusClass } = useGridCellFocus();
 
   return (
-    <div className="h-111.75 overflow-auto border border-[#cfd7df] bg-white">
+    <div className="h-[479px] overflow-auto border border-[#cfd7df] bg-white">
       <table className="w-full table-fixed border-collapse border-[#B7ECD0] text-[12px] text-[#24364d]">
         <colgroup>
           <col className="w-5.5" />
@@ -40,21 +40,21 @@ const StockDocumentPostTable: React.FC<StockDocumentPostTableProps> = ({
           <col className="w-47.5" />
         </colgroup>
         <thead className="sticky top-0 z-0">
-          <tr className="bg-[#EEFBF4] text-[#405066]">
+          <tr className="bg-[#EEFBF4] text-[#344054]">
             <th className="h-7 border border-[#B7ECD0]" />
-            <th className="h-7 border border-[#B7ECD0] px-2 text-left font-semibold">
+            <th className="h-7 border border-[#B7ECD0] px-2 text-left font-medium">
               Select
             </th>
-            <th className="h-7 border border-[#B7ECD0] px-2 text-left font-semibold">
+            <th className="h-7 border border-[#B7ECD0] px-2 text-left font-medium">
               Doc. No.
             </th>
-            <th className="h-7 border border-[#B7ECD0] px-2 text-left font-semibold">
+            <th className="h-7 border border-[#B7ECD0] px-2 text-left font-medium">
               Date
             </th>
-            <th className="h-7 border border-[#B7ECD0] px-2 text-left font-semibold">
+            <th className="h-7 border border-[#B7ECD0] px-2 text-left font-medium">
               Account ID
             </th>
-            <th className="h-7 border border-[#B7ECD0] px-2 text-right font-semibold">
+            <th className="h-7 border border-[#B7ECD0] px-2 text-right font-medium">
               Doc. Amt.
             </th>
           </tr>
@@ -67,14 +67,16 @@ const StockDocumentPostTable: React.FC<StockDocumentPostTableProps> = ({
               <tr
                 key={row.txtDocNo}
                 onClick={() => onActivateRow(row.txtDocNo)}
+                // the highlighted row follows the cursor (as on the Receipt screen)
+                onFocus={() => onActivateRow(row.txtDocNo)}
                 className={
-                  checked ? "bg-[#e7f7ed]" : active ? "bg-[#f2faf5]" : "bg-white"
+                  checked ? "bg-[#e7f7ed]" : active ? "bg-[#f9fffc]" : "bg-white"
                 }
               >
-                <td className="h-6.5 border border-[#B7ECD0] bg-[#fafbfc] text-center text-[8px] text-[#405066]">
+                <td className="h-7 border border-[#B7ECD0] bg-[#fafbfc] text-center text-[8px] text-[#405066]">
                   {active ? "▶" : ""}
                 </td>
-                <td className={`h-6.5 border border-[#B7ECD0] text-center ${cellFocusClass}`}>
+                <td className={`h-7 border border-[#B7ECD0] text-center ${cellFocusClass}`}>
                   <input
                     type="checkbox"
                     aria-label={`Select ${row.txtDocNo}`}
@@ -97,8 +99,8 @@ const StockDocumentPostTable: React.FC<StockDocumentPostTableProps> = ({
           {/* empty filler rows */}
           {Array.from({ length: emptyCount }).map((_, index) => (
             <tr key={`empty-${index}`} className="bg-white">
-              <td className="h-6.5 border border-[#B7ECD0] bg-[#fafbfc]" />
-              <td className="h-6.5 border border-[#B7ECD0] text-center">
+              <td className="h-7 border border-[#B7ECD0] bg-[#fafbfc]" />
+              <td className="h-7 border border-[#B7ECD0] text-center">
                 <input
                   type="checkbox"
                   disabled
