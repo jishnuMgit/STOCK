@@ -18,7 +18,7 @@ const makeOptions = (values: string[]): Option[] =>
 
 /* Fallback options until the lookup endpoints load. */
 const defaultBranchOptions = makeOptions(["OFFICE"]);
-const defaultInvoiceTypeOptions: Option[] = [
+const defaulttypeOptions: Option[] = [
   { value: "C", label: "C", name: "CASH" },
   { value: "R", label: "R", name: "CREDIT" },
 ];
@@ -29,7 +29,7 @@ const branchColumns = [
   { key: "value", label: "ID", width: "50px"},
 ];
 const invoiceTypeColumns = [
-  { key: "label", label: "Type", width: "70px" },
+  { key: "label", label: "ID", width: "70px" },
   { key: "name", label: "Name" },
 ];
 const labelColumn = [{ key: "label", label: "Name" }];
@@ -121,7 +121,7 @@ const PurchaseForm: React.FC<Props> = ({
   const [miscOpen, setMiscOpen] = useState(false);
   const [expenseOpen, setExpenseOpen] = useState(false);
   const branchOptions = lookups?.branches ?? defaultBranchOptions;
-  const invoiceTypeOptions = lookups?.invoiceTypes ?? defaultInvoiceTypeOptions;
+  const typeOptions = lookups?.invoiceTypes ?? defaulttypeOptions;
   const supplierOptions = lookups?.supplierIds ?? [];
   const supplierNameOptions = lookups?.supplierNames ?? [];
   const currencyOptions = lookups?.currencies ?? defaultCurrencyOptions;
@@ -384,8 +384,8 @@ const PurchaseForm: React.FC<Props> = ({
             <div className="min-w-0 w-[26%]">
               <CommonTableSelect
                 inputId="lkpType"
-                options={invoiceTypeOptions}
-                value={pick(invoiceTypeOptions, header.invoiceType)}
+                options={typeOptions}
+                value={pick(typeOptions, header.invoiceType)}
                 onChange={(o) => onChange("invoiceType", o?.value ?? "")}
                 columns={invoiceTypeColumns}
                 width="100%"
