@@ -1394,7 +1394,7 @@ const PaymentPage: React.FC = () => {
       /* DELETE CONFIRMATION */
 
       const shouldDelete = await confirm({
-        title: "Delete Payment",
+        title: "Payment",
         message: "Do you want to Delete?",
         confirmLabel: "Delete",
         cancelLabel: "Cancel",

@@ -477,7 +477,7 @@ const CustomerPage: React.FC<CustomerPageProps> = ({
       return;
     }
     const shouldDelete = await confirm({
-      title: "Delete Customer",
+      title: "Customer",
       message: `Delete customer "${txtCustomerName}"?`,
       confirmLabel: "Delete",
       cancelLabel: "Cancel",

@@ -1626,7 +1626,7 @@ const ReceiptPage: React.FC = () => {
       =============================================== */
 
       const shouldDelete = await confirm({
-        title: "Delete Receipt",
+        title: "Receipt",
         message: "Do you want to Delete?",
         confirmLabel: "Delete",
         cancelLabel: "Cancel",
