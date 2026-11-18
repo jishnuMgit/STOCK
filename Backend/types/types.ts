@@ -30,6 +30,7 @@ export interface ReceiptProcedureParams {
 export interface ReceiptRow {
   txtslNo?: number | string;
   lkpAccountID?: string;
+  lkpAccountName?: string;
   strGCS?: string;
   lkpCCID?: string;
   lkpDivID?: string;
