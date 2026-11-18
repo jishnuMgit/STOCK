@@ -4,6 +4,8 @@ import SetDocumentNo from "../pages/Settings/SetDocumentNoPage";
 import ProtectedRoute from "./ProtectedRoutes";
 import SetBranchInfo from "../pages/Settings/SetBranchInfoPage";
 import PublicRoute from "./PublicRoute";
+import GeneralDashboard from "../pages/Dashboard/General/index";
+import SalesDashboard from "../pages/Dashboard/Sales/index";
 import CustomerList from "../pages/Finance/Setup/CustomerListPage";
 import ChartOfAccountList from "../pages/Finance/Setup/COAListPage";
 import UserLogin from "../pages/Security/UserLogin/UserLoginPage";
@@ -165,6 +167,10 @@ const AppRoutes = () => {
           <Route path="/" element={<Home />} />
 
           <Route path="/dev/delete" element={<Deletepage />} />
+
+          {/* DASHBOARD */}
+          <Route path="/dashboard/general" element={<GeneralDashboard />} />
+          <Route path="/dashboard/sales" element={<SalesDashboard />} />
 
           {/* ================= FINANCE - TRANSACTION ================= */}
           <Route

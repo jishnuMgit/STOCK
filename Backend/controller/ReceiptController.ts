@@ -704,14 +704,14 @@ export const applyReceiptPost = async (
     } = req.body;
 
     const result = await applyDocumentPosting(
-    PstrCoID,
-    PstrYear,
-    lkpBranch,
-    lkpDocType,
-    0,
-    txtDocNo,
-    dtpDate,
-    PstrUserID
+      PstrCoID,
+      PstrYear,
+      lkpBranch,
+      lkpDocType,
+      0,
+      txtDocNo,
+      dtpDate,
+      PstrUserID
 
     );
 
