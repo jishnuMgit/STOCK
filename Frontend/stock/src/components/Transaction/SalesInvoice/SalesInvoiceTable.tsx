@@ -43,8 +43,14 @@ type SalesInvoiceTableProps = {
 // must match the Item ID column width in <colgroup> (200px)
 const ID_COL_WIDTH = 200;
 
+// width of the second column (Item ID) in the Item Name dropdown menu
+const NAME_MENU_ID_COL_WIDTH = 185;
+
 // font size of the dropdown menu (header row + options)
 const MENU_FONT_SIZE = 14;
+
+// padding of the header cells and the option cells (keeps them aligned)
+const MENU_CELL_PADDING = "5px 2px";
 
 type MenuVariant = "id" | "name";
 
@@ -70,8 +76,6 @@ const menuLayout: Record<
     second: (o) => o.value,
   },
 };
-
-const MENU_CELL_PADDING = "5px 2px";
 
 /* gray header row at the top of the dropdown menu (sticky while scrolling) */
 const createMenuList = (variant: MenuVariant) => {
@@ -139,41 +143,41 @@ const nameSelectComponents = {
 /* menu rows show two columns; the control shows only its own label */
 const createFormatLabel =
   (variant: MenuVariant) =>
-    (option: Option, meta: FormatOptionLabelMeta<Option>) => {
-      if (meta.context !== "menu") return option.label;
+  (option: Option, meta: FormatOptionLabelMeta<Option>) => {
+    if (meta.context !== "menu") return option.label;
 
-      const layout = menuLayout[variant];
+    const layout = menuLayout[variant];
 
-      return (
-        <SingleSelectMenuColumns>
-          <div
-            style={{
-              minWidth: 0,
-              overflow: "hidden",
-              textOverflow: "ellipsis",
-              whiteSpace: "nowrap",
-              boxSizing: "border-box",
-              padding: MENU_CELL_PADDING,
-              borderRight: "1px solid #e3e8ef",
-            }}
-          >
-            {layout.first(option)}
-          </div>
-          <div
-            style={{
-              minWidth: 0,
-              overflow: "hidden",
-              textOverflow: "ellipsis",
-              whiteSpace: "nowrap",
-              boxSizing: "border-box",
-              padding: MENU_CELL_PADDING,
-            }}
-          >
-            {layout.second(option)}
-          </div>
-        </SingleSelectMenuColumns>
-      );
-    };
+    return (
+      <SingleSelectMenuColumns>
+        <div
+          style={{
+            minWidth: 0,
+            overflow: "hidden",
+            textOverflow: "ellipsis",
+            whiteSpace: "nowrap",
+            boxSizing: "border-box",
+            padding: MENU_CELL_PADDING,
+            borderRight: "1px solid #e3e8ef",
+          }}
+        >
+          {layout.first(option)}
+        </div>
+        <div
+          style={{
+            minWidth: 0,
+            overflow: "hidden",
+            textOverflow: "ellipsis",
+            whiteSpace: "nowrap",
+            boxSizing: "border-box",
+            padding: MENU_CELL_PADDING,
+          }}
+        >
+          {layout.second(option)}
+        </div>
+      </SingleSelectMenuColumns>
+    );
+  };
 
 const formatIdLabel = createFormatLabel("id");
 const formatNameLabel = createFormatLabel("name");
@@ -337,6 +341,10 @@ const SalesInvoiceTable: React.FC<SalesInvoiceTableProps> = ({
   // e.g. "id-0" / "name-0"
   const [openMenuKey, setOpenMenuKey] = useState<string | null>(null);
 
+  // width of the Item Name column, measured when its menu opens, so the
+  // menu divider lines up with the right edge of that column
+  const [nameColWidth, setNameColWidth] = useState(480);
+
   // report the item of the active row (VB: stock shown when a grid row is clicked)
   const activeItemId = rows[activeRow]?.itemId ?? "";
   useEffect(() => {
@@ -359,14 +367,27 @@ const SalesInvoiceTable: React.FC<SalesInvoiceTableProps> = ({
 
   const itemById = useMemo(() => new Map(items.map((i) => [i.id, i])), [items]);
 
+  // Item Name dropdown: menu = Item Name column width + Item ID column
+  const nameStyles = useMemo<StylesConfig<Option, false>>(
+    () => ({
+      ...selectStyles,
+      menu: (base, props) => ({
+        ...selectStyles.menu!(base, props),
+        width: nameColWidth + NAME_MENU_ID_COL_WIDTH,
+        minWidth: nameColWidth + NAME_MENU_ID_COL_WIDTH,
+      }),
+    }),
+    [nameColWidth],
+  );
+
   // selected values (fall back to the saved id if the item is not in the list)
   const idValue = (itemId: string): Option | null =>
     itemId
       ? {
-        value: itemId,
-        label: itemId,
-        name: itemById.get(itemId)?.name ?? "",
-      }
+          value: itemId,
+          label: itemId,
+          name: itemById.get(itemId)?.name ?? "",
+        }
       : null;
 
   const nameValue = (itemId: string): Option | null => {
@@ -702,7 +723,7 @@ const SalesInvoiceTable: React.FC<SalesInvoiceTableProps> = ({
                   <td className={editCellClass}>
                     <SingleSelect<Option>
                       mode="item"
-                      menuColumnWidths={["1fr", "185px"]}
+                      menuColumnWidths={["1fr", `${NAME_MENU_ID_COL_WIDTH}px`]}
                       selectProps={{
                         inputId: `lkpItemName-${index}`,
                         instanceId: `item-name-${index}`,
@@ -711,7 +732,7 @@ const SalesInvoiceTable: React.FC<SalesInvoiceTableProps> = ({
                         onChange: (option) => handleItemSelect(index, option),
                         formatOptionLabel: formatNameLabel,
                         filterOption: filterItem,
-                        styles: selectStyles,
+                        styles: nameStyles,
                         components: nameSelectComponents,
                         isClearable: false,
                         isSearchable: true,
@@ -720,7 +741,19 @@ const SalesInvoiceTable: React.FC<SalesInvoiceTableProps> = ({
                         menuPortalTarget,
                         placeholder: "",
                         className: "w-full",
-                        onMenuOpen: () => setOpenMenuKey(`name-${index}`),
+                        onMenuOpen: () => {
+                          setOpenMenuKey(`name-${index}`);
+                          // measure the Item Name column so the menu divider
+                          // lines up with the column's right edge
+                          const cell = document
+                            .getElementById(`lkpItemName-${index}`)
+                            ?.closest("td");
+                          if (cell) {
+                            setNameColWidth(
+                              Math.round(cell.getBoundingClientRect().width),
+                            );
+                          }
+                        },
                         onMenuClose: () =>
                           setOpenMenuKey((prev) =>
                             prev === `name-${index}` ? null : prev,
@@ -836,4 +869,4 @@ const SalesInvoiceTable: React.FC<SalesInvoiceTableProps> = ({
   );
 };
 
-export default SalesInvoiceTable;
+export default SalesInvoiceTable; 
