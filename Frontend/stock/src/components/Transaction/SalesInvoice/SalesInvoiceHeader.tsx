@@ -467,8 +467,8 @@ const SalesInvoiceHeader: React.FC<SalesInvoiceHeaderProps> = ({
                 onHeaderChange({ invoiceType: option?.value ?? "" })
               }
               columns={typeColumns}
-              width="88px"
-              menuWidth="200px"
+              width="80%"
+              menuWidth="calc(100% + 75px)"
               headerFontSize="14px"
               isClearable={false}
               isSearchable={false}
