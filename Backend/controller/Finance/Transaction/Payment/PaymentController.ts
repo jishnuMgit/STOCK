@@ -85,20 +85,23 @@ export const getPayment = async (
         let paymentNo: string | number | null = null;
 
         if (defaultBranch) {
-            const paymentNoResult = await pool.query(
-                `SELECT * FROM dbo.getnextdocno($1, $2, $3, $4)`,
-                [pstrCoID, year, defaultBranch, paymentType],
-            );
+            try {
+                const paymentNoResult = await pool.query(
+                    `SELECT * FROM dbo.getnextdocno($1, $2, $3, $4)`,
+                    [pstrCoID, year, defaultBranch, paymentType],
+                );
 
-            paymentNo =
-                paymentNoResult.rows[0]?.getnextdocno ||
-                paymentNoResult.rows[0]?.fdocno ||
-                paymentNoResult.rows[0]?.docno ||
-                null;
-        } else {
-            console.warn(
-                "Default branch not found. Payment number was not generated.",
-            );
+                paymentNo =
+                    paymentNoResult.rows[0]?.getnextdocno ||
+                    paymentNoResult.rows[0]?.fdocno ||
+                    paymentNoResult.rows[0]?.docno ||
+                    null;
+            } catch (error: unknown) {
+                console.warn(
+                    "Payment number generation failed:",
+                    error instanceof Error ? error.message : String(error),
+                );
+            }
         }
 
         return res.status(200).json({
