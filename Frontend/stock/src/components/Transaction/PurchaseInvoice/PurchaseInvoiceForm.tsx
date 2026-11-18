@@ -416,11 +416,11 @@ const PurchaseForm: React.FC<Props> = ({
 
         {/* Row 2: Supplier, full width (right padding matches the
             Misc. Sup. row's + button so both selects end together) */}
-        <div className="flex min-w-0 items-center gap-[10px] xl:col-span-2">
+        <div className="flex min-w-0 items-center gap-2.5 xl:col-span-2">
           <label htmlFor="lkpSupplierID" className={`${labelClass} w-23`}>
             Supplier
           </label>
-          <div className="flex min-w-0 flex-1 gap-[10px] pr-9.5">
+          <div className="flex min-w-0 flex-1 gap-2.5 pr-9.5">
             <div className="w-28 shrink-0">
               <CommonTableSelect
                 inputId="lkpSupplierID"
@@ -458,7 +458,7 @@ const PurchaseForm: React.FC<Props> = ({
             Misc. Sup.
           </label>
           <div className="flex min-w-0 flex-1 items-center gap-2">
-            <div className="flex min-w-0 flex-1 gap-[7px]">
+            <div className="flex min-w-0 flex-1 gap-1.75">
               <div className="w-28 shrink-0">
                 <CommonTableSelect
                   inputId="lkpMiscSupID"
