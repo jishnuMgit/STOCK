@@ -336,7 +336,7 @@ export const PaymentForm: React.FC<PaymentFormProps> = ({
             setDocumentNoLoading(true);
 
             const response = await apiFetch(
-                `${import.meta.env.VITE_API_URL}/Receipt/getDocNo`,
+                `${import.meta.env.VITE_API_URL}/Payment/getDocNo`,
                 {
                     method: "POST",
                     headers: {
