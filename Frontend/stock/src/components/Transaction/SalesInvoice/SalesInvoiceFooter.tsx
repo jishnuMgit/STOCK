@@ -222,16 +222,16 @@ const SalesInvoiceFooter: React.FC<SalesInvoiceFooterProps> = ({
   return (
     <footer
       id="sales-invoice-footer"
-      className="relative h-[184px] w-full shrink-0 overflow-hidden bg-white"
+      className="relative h-46 w-full shrink-0 overflow-hidden bg-white"
     >
       {/* ======================================================
           DISCOUNT SECTION
       ====================================================== */}
 
-      <div className="absolute left-[7px] top-[8px] flex h-[30px] items-center">
+      <div className="absolute left-1.75 top-2 flex h-7.5 items-center">
         <label
           htmlFor="lkpDiscountType"
-          className="mr-[7px] whitespace-nowrap text-[14px] text-[#202020]"
+          className="mr-1.75 whitespace-nowrap text-[14px] text-[#202020]"
         >
           Discount Type :
         </label>
@@ -293,8 +293,8 @@ const SalesInvoiceFooter: React.FC<SalesInvoiceFooterProps> = ({
           TOTAL
       ====================================================== */}
 
-      <div className="absolute left-[668px] top-[8px] flex h-[30px] items-center">
-        <label className="mr-[7px] whitespace-nowrap text-[14px] text-[#202020]">
+      <div className="absolute left-167 top-2 flex h-7.5 items-center">
+        <label className="mr-1.75 whitespace-nowrap text-[14px] text-[#202020]">
           Total
         </label>
 
@@ -330,13 +330,13 @@ const SalesInvoiceFooter: React.FC<SalesInvoiceFooterProps> = ({
           EXTRA TOTAL VALUES (discount / VAT / total price)
       ====================================================== */}
 
-      <div className="absolute right-[10px] top-[8px] flex h-[30px] items-center gap-[5px]">
+      <div className="absolute right-2.5 top-2 flex h-7.5 items-center gap-1.25">
         <input
           id="txtTotalValue1"
           type="text"
           readOnly
           value={fmt(sums.disc, 3)}
-          className={`${readOnlyInputClass} w-[70px] text-right`}
+          className={`${readOnlyInputClass} w-17.5 text-right`}
         />
 
         <input
@@ -344,7 +344,7 @@ const SalesInvoiceFooter: React.FC<SalesInvoiceFooterProps> = ({
           type="text"
           readOnly
           value={fmt(sums.vat, 3)}
-          className={`${readOnlyInputClass} w-[70px] text-right`}
+          className={`${readOnlyInputClass} w-17.5 text-right`}
         />
 
         <input
@@ -352,7 +352,7 @@ const SalesInvoiceFooter: React.FC<SalesInvoiceFooterProps> = ({
           type="text"
           readOnly
           value={fmt(sums.total, 3)}
-          className={`${readOnlyInputClass} w-[90px] text-right`}
+          className={`${readOnlyInputClass} w-22.5 text-right`}
         />
       </div>
 
@@ -360,13 +360,13 @@ const SalesInvoiceFooter: React.FC<SalesInvoiceFooterProps> = ({
           RIGHT SIDE AMOUNTS
       ====================================================== */}
 
-      <div className="absolute right-[5px] top-[43px] w-[245px]">
+      <div className="absolute right-1.25 top-10.75 w-61.25">
         {/* TOTAL AMOUNT */}
 
-        <div className="mb-[6px] flex h-[30px] items-center">
+        <div className="mb-1.5 flex h-7.5 items-center">
           <label
             htmlFor="txtTotalAmt"
-            className="w-[110px] whitespace-nowrap text-right text-[14px] text-[#202020]"
+            className="w-27.5 whitespace-nowrap text-right text-[14px] text-[#202020]"
           >
             Total Amt. :
           </label>
@@ -376,16 +376,16 @@ const SalesInvoiceFooter: React.FC<SalesInvoiceFooterProps> = ({
             type="text"
             readOnly
             value={fmt(totals.netDocAmtWoVAT)}
-            className={`${readOnlyInputClass} ml-[7px] w-[125px] text-right`}
+            className={`${readOnlyInputClass} ml-1.75 w-31.25 text-right`}
           />
         </div>
 
         {/* VAT AMOUNT */}
 
-        <div className="mb-[6px] flex h-[30px] items-center">
+        <div className="mb-1.5 flex h-7.5 items-center">
           <label
             htmlFor="txtVATAmt"
-            className="w-[110px] whitespace-nowrap text-right text-[14px] text-[#202020]"
+            className="w-27.5 whitespace-nowrap text-right text-[14px] text-[#202020]"
           >
             VAT Amt. ({header.vatPer}%) :
           </label>
