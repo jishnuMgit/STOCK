@@ -26,7 +26,7 @@ const miscSupplierOptions = makeOptions(["No", "Yes"]);
 const defaultCurrencyOptions = makeOptions(["SAR"]);
 const branchColumns = [
   { key: "label", label: "Branch" },
-  { key: "value", label: "ID", width: "90px", align: "right" as const },
+  { key: "value", label: "ID", width: "50px"},
 ];
 const invoiceTypeColumns = [
   { key: "label", label: "Type", width: "70px" },
@@ -34,23 +34,24 @@ const invoiceTypeColumns = [
 ];
 const labelColumn = [{ key: "label", label: "Name" }];
 
-/* Linked ID / Name selects: both show the same two columns,
-   one is searched by ID and the other by name. */
+/* Linked ID / Name selects: the ID box lists "ID | Name", the Name box lists "Name | ID"; one is searched by ID and the
+   other by name. */
 const supplierIdColumns = [
   { key: "label", label: "Supplier ID", width: "120px" },
   { key: "name", label: "Supplier Name" },
 ];
+// the Name box lists the name first, then the ID (the ID box lists the ID first)
 const supplierNameColumns = [
-  { key: "id", label: "Supplier ID", width: "120px" },
   { key: "label", label: "Supplier Name" },
+  { key: "id", label: "Supplier ID", width: "120px" },
 ];
 const miscIdColumns = [
   { key: "label", label: "Misc. Sup. ID", width: "120px" },
   { key: "name", label: "Misc. Sup. Name" },
 ];
 const miscNameColumns = [
-  { key: "id", label: "Misc. Sup. ID", width: "120px" },
   { key: "label", label: "Misc. Sup. Name" },
+  { key: "id", label: "Misc. Sup. ID", width: "120px" },
 ];
 
 /* same records, but the visible label is the name (value stays the ID) */
@@ -277,9 +278,11 @@ const PurchaseForm: React.FC<Props> = ({
               onChange={(o) => onChange("brId", o?.value ?? "")}
               columns={branchColumns}
               width="100%"
-              menuWidth="calc(100% + 100px)"
+              menuWidth="calc(100% + 51px)"
               menuPortalTarget={portalTarget}
               isClearable={false}
+              controlFontSize="14px"
+              headerFontSize="12px"
               isSearchable
             />
           </div>
@@ -388,6 +391,8 @@ const PurchaseForm: React.FC<Props> = ({
                 width="115%"
                 menuWidth="180px"
                 menuPortalTarget={portalTarget}
+                controlFontSize="14px"
+                headerFontSize="12px"
                 isClearable={false}
                 isSearchable={false}
               />
@@ -464,6 +469,8 @@ const PurchaseForm: React.FC<Props> = ({
                   width="100%"
                   menuWidth="calc(100% + 560px)"
                   menuPortalTarget={portalTarget}
+                  controlFontSize="14px"
+                  headerFontSize="12px"
                   isClearable={false}
                   isSearchable
                   isDisabled={!isMisc}
@@ -480,6 +487,8 @@ const PurchaseForm: React.FC<Props> = ({
                   menuWidth="480px"
                   menuPortalTarget={portalTarget}
                   isClearable={false}
+                  controlFontSize="14px"
+                  headerFontSize="12px"
                   isSearchable
                   isDisabled={!isMisc}
                 />

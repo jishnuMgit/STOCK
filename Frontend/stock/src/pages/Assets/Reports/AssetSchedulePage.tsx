@@ -471,9 +471,9 @@ const AssetSchedulePage: React.FC = () => {
                     secondValue={costCenterName?.value ?? null}
                     firstHeader="Cost Center ID"
                     secondHeader="Cost Center Name"
-                    firstWidth={120}
+                    firstWidth={190}
                     secondWidth={450}
-                    gap={10}
+                    gap={5}
                      menuPortalTarget={
                       typeof document !== "undefined" ? document.body : undefined
                     }
@@ -541,9 +541,9 @@ const AssetSchedulePage: React.FC = () => {
                     secondValue={assetName?.value ?? null}
                     firstHeader="Asset ID"
                     secondHeader="Asset Name"
-                    firstWidth={120}
+                    firstWidth={190}
                     secondWidth={450}
-                    gap={10}
+                    gap={5}
                      menuPortalTarget={
                       typeof document !== "undefined" ? document.body : undefined
                     }

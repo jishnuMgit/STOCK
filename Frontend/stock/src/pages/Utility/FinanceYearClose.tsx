@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import Header from "../../components/common/Header";
-import Select, { type SingleValue } from "react-select";
+import CommonTableSelect from "../../components/common/CommonTableSelect";
+import { filterLabelOrValue } from "../../components/BranchSelect/branchSelectParts";
 
 type Option = {
   value: string;
@@ -22,6 +23,13 @@ const branchOptions: Option[] = [
   { value: "OFFICE", label: "OFFICE" },
   { value: "BRANCH_1", label: "BRANCH 1" },
   { value: "BRANCH_2", label: "BRANCH 2" },
+];
+
+// the Branch list: "Branch | ID", as on every other screen. With the 70 px ID column and a list of box + 70 px, the ID
+// column starts exactly where the 250 px box ends.
+const branchColumns = [
+  { key: "label", label: "Branch", width: "1fr" },
+  { key: "value", label: "ID", width: "70px", align: "right" as const },
 ];
 
 const currentYear = new Date().getFullYear();
@@ -51,68 +59,6 @@ const FinanceYearClose: React.FC<FinanceYearCloseProps> = ({
     "Temporary" | "Final"
   >("Temporary");
   const [message, setMessage] = useState("");
-
-  const selectStyles = {
-    control: (base: object) => ({
-      ...base,
-      minHeight: "30px",
-      height: "30px",
-      borderRadius: "4px",
-      borderColor: "#cfd7df",
-      boxShadow: "none",
-      fontSize: "14px",
-      "&:hover": {
-        borderColor: "#aab8c5",
-      },
-    }),
-    valueContainer: (base: object) => ({
-      ...base,
-      padding: "0 6px",
-      height: "28px",
-    }),
-    singleValue: (base: object) => ({
-      ...base,
-      color: "#24364d",
-      margin: 0,
-    }),
-    indicatorsContainer: (base: object) => ({
-      ...base,
-      height: "28px",
-    }),
-    dropdownIndicator: (base: object) => ({
-      ...base,
-      padding: "4px",
-      color: "#657486",
-    }),
-    indicatorSeparator: () => ({
-      display: "none",
-    }),
-    menu: (base: object) => ({
-      ...base,
-      zIndex: 9999,
-      marginTop: "2px",
-      fontSize: "14px",
-    }),
-    option: (
-      base: object,
-      state: { isFocused: boolean; isSelected: boolean },
-    ) => ({
-      ...base,
-      fontSize: "14px",
-      padding: "6px 8px",
-      color: "#24364d",
-      backgroundColor: state.isSelected
-        ? "#e7f7ed"
-        : state.isFocused
-          ? "#f2faf5"
-          : "#ffffff",
-    }),
-  };
-
-  const inputClass =
-    "h-[30px] rounded-[4px] border border-[#cfd7df] " +
-    "bg-white px-2 text-[14px] text-[#24364d] outline-none " +
-    "focus:border-[#91a7b9]";
 
   const buttonClass =
     "btn-style inline-flex h-[34px] min-w-[80px] items-center " +
@@ -170,7 +116,9 @@ const FinanceYearClose: React.FC<FinanceYearCloseProps> = ({
 
           {/* Form */}
           <section className="px-4 pb-5 pt-5 sm:px-6">
-            <div className="grid grid-cols-1 items-start gap-x-4 gap-y-4 sm:grid-cols-[100px_minmax(0,1fr)_150px]">
+            {/* the two rows are on their own, so the Year Close Type panel (taller than both) cannot stretch the space between them */}
+            <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+            <div className="grid grid-cols-1 items-start gap-x-2 gap-y-3.5 sm:grid-cols-[100px_250px]">
               {/* Branch */}
               <label
                 htmlFor="branch"
@@ -180,23 +128,54 @@ const FinanceYearClose: React.FC<FinanceYearCloseProps> = ({
               </label>
 
               <div className="min-w-0 w-[250px]">
-                <Select<Option, false>
+                <CommonTableSelect
                   inputId="branch"
                   options={branchOptions}
                   value={branch}
-                  onChange={(option: SingleValue<Option>) => {
+                  onChange={(option) => {
                     setBranch(option);
                     setMessage("");
                   }}
-                  styles={selectStyles}
-                  isSearchable
-                  isClearable={false}
-                  menuPosition="fixed"
+                  columns={branchColumns}
+                  width="250px"
+                  menuWidth="320px"
+                  placeholder="Select Branch"
+                  filterOption={filterLabelOrValue}
+                  menuPortalTarget={typeof document !== "undefined" ? document.body : undefined}
+                  noOptionsMessage={() => "No Branch Found"}
                 />
               </div>
 
+              {/* Year to Close */}
+              <label
+                htmlFor="year"
+                className="flex h-[30px] items-center text-[14px] text-[#405066] sm:justify-end"
+              >
+                Year to Close :
+              </label>
+
+              <div className="w-27.5">
+                <CommonTableSelect
+                  inputId="year"
+                  options={yearOptions}
+                  value={yearOptions.find((option) => option.value === year) ?? null}
+                  onChange={(option) => {
+                    setYear(option?.value ?? "");
+                    setMessage("");
+                  }}
+                  columns={[{ key: "label", label: "Year" }]}
+                  showHeader={false}
+                  width="110px"
+                  menuWidth="110px"
+                  placeholder=""
+                  menuPortalTarget={typeof document !== "undefined" ? document.body : undefined}
+                  noOptionsMessage={() => "No Year Found"}
+                />
+              </div>
+            </div>
+
               {/* Closing panel */}
-              <fieldset className="row-span-2 rounded-[4px] border border-[#e0e5ea]">
+              <fieldset className="w-37.5 shrink-0 rounded-[4px] border border-[#e0e5ea]">
                 <legend className="px-2 text-[14px] text-[#405066]">
                   Year Close Type
                 </legend>
@@ -233,35 +212,6 @@ const FinanceYearClose: React.FC<FinanceYearCloseProps> = ({
                   </label>
                 </div>
               </fieldset>
-
-              {/* Year to Close */}
-              <label
-                htmlFor="year"
-                className="flex h-[30px] items-center text-[14px] text-[#405066] sm:justify-end"
-              >
-                Year to Close :
-              </label>
-
-              <div>
-                <select
-                  id="year"
-                  value={year}
-                  onChange={(event) => {
-                    setYear(event.target.value);
-                    setMessage("");
-                  }}
-                  className={`${inputClass} w-[100px]`}
-                >
-                  {yearOptions.map((option) => (
-                    <option
-                      key={option.value}
-                      value={option.value}
-                    >
-                      {option.label}
-                    </option>
-                  ))}
-                </select>
-              </div>
             </div>
 
             {/* Status */}

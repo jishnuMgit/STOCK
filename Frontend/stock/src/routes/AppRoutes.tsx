@@ -4,6 +4,8 @@ import SetDocumentNo from "../pages/Settings/SetDocumentNoPage";
 import ProtectedRoute from "./ProtectedRoutes";
 import SetBranchInfo from "../pages/Settings/SetBranchInfoPage";
 import PublicRoute from "./PublicRoute";
+import GeneralDashboard from "../pages/Dashboard/General/index";
+import SalesDashboard from "../pages/Dashboard/Sales/index";
 import CustomerList from "../pages/Finance/Setup/CustomerListPage";
 import ChartOfAccountList from "../pages/Finance/Setup/COAListPage";
 import UserLogin from "../pages/Security/UserLogin/UserLoginPage";
@@ -111,6 +113,9 @@ const Login = lazy(() => import("../pages/Auth/LoginPage"));
 const ReceiptPage = lazy(
   () => import("../pages/Finance/Transaction/Receipt/ReceiptPage"),
 );
+const PaymentPage = lazy(
+  () => import("../pages/Finance/Transaction/Payment/PaymentPage"),
+);
 const Journalpage = lazy(
   () => import("../pages/Finance/Transaction/Journal/Journalpage"),
 );
@@ -163,10 +168,18 @@ const AppRoutes = () => {
 
           <Route path="/dev/delete" element={<Deletepage />} />
 
+          {/* DASHBOARD */}
+          <Route path="/dashboard/general" element={<GeneralDashboard />} />
+          <Route path="/dashboard/sales" element={<SalesDashboard />} />
+
           {/* ================= FINANCE - TRANSACTION ================= */}
           <Route
             path="/Finance/Transaction/Receipt"
             element={<ReceiptPage />}
+          />
+          <Route
+            path="/Finance/Transaction/Payment"
+            element={<PaymentPage />}
           />
           <Route
             path="/Finance/Transaction/journal"

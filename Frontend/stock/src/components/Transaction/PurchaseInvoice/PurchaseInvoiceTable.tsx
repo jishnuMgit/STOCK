@@ -105,7 +105,7 @@ const createMenuList = (variant: MenuVariant) => {
               textOverflow: "ellipsis",
               whiteSpace: "nowrap",
               boxSizing: "border-box",
-              padding: "5px 8px",
+              padding: "5px 8px 5px 2px",
               borderRight: "1px solid #cfcfcf",
             }}
           >
@@ -118,7 +118,7 @@ const createMenuList = (variant: MenuVariant) => {
               textOverflow: "ellipsis",
               whiteSpace: "nowrap",
               boxSizing: "border-box",
-              padding: "5px 8px",
+              padding: "5px 8px 5px 2px",
             }}
           >
             {layout.secondTitle}
@@ -147,41 +147,41 @@ const nameSelectComponents = {
 /* menu rows show two columns; the control shows only its own label */
 const createFormatLabel =
   (variant: MenuVariant) =>
-  (option: Option, meta: FormatOptionLabelMeta<Option>) => {
-    if (meta.context !== "menu") return option.label;
+    (option: Option, meta: FormatOptionLabelMeta<Option>) => {
+      if (meta.context !== "menu") return option.label;
 
-    const layout = menuLayout[variant];
+      const layout = menuLayout[variant];
 
-    return (
-      <SingleSelectMenuColumns>
-        <div
-          style={{
-            minWidth: 0,
-            overflow: "hidden",
-            textOverflow: "ellipsis",
-            whiteSpace: "nowrap",
-            boxSizing: "border-box",
-            padding: "6px 8px",
-            borderRight: "1px solid #e3e8ef",
-          }}
-        >
-          {layout.first(option)}
-        </div>
-        <div
-          style={{
-            minWidth: 0,
-            overflow: "hidden",
-            textOverflow: "ellipsis",
-            whiteSpace: "nowrap",
-            boxSizing: "border-box",
-            padding: "6px 8px",
-          }}
-        >
-          {layout.second(option)}
-        </div>
-      </SingleSelectMenuColumns>
-    );
-  };
+      return (
+        <SingleSelectMenuColumns>
+          <div
+            style={{
+              minWidth: 0,
+              overflow: "hidden",
+              textOverflow: "ellipsis",
+              whiteSpace: "nowrap",
+              boxSizing: "border-box",
+              padding: "6px 8px 6px 2px",
+              borderRight: "1px solid #e3e8ef",
+            }}
+          >
+            {layout.first(option)}
+          </div>
+          <div
+            style={{
+              minWidth: 0,
+              overflow: "hidden",
+              textOverflow: "ellipsis",
+              whiteSpace: "nowrap",
+              boxSizing: "border-box",
+              padding: "6px 8px 6px 2px",
+            }}
+          >
+            {layout.second(option)}
+          </div>
+        </SingleSelectMenuColumns>
+      );
+    };
 
 const formatIdLabel = createFormatLabel("id");
 const formatNameLabel = createFormatLabel("name");
@@ -219,7 +219,7 @@ const selectStyles: StylesConfig<Option, false> = {
     ...base,
     minHeight: 20,
     height: 20,
-    padding: "0 4px",
+    padding: "0 2px",
     overflow: "hidden",
   }),
 
@@ -471,11 +471,10 @@ const PurchaseTable: React.FC<Props> = ({
                 {columns.map((column) => (
                   <th
                     key={column.name}
-                    className={`sticky top-0 z-20 h-[30px] whitespace-nowrap border border-[#dce5ef] bg-[#f1f6fc] px-1 py-0 align-middle font-semibold text-[#202a36] ${
-                      numericColumns.includes(column.name)
-                        ? "text-right"
-                        : "text-left"
-                    }`}
+                    className={`sticky top-0 z-20 h-[30px] whitespace-nowrap border border-[#dce5ef] bg-[#f1f6fc] pl-[2px] pr-1 py-0 align-middle font-semibold text-[#202a36] ${numericColumns.includes(column.name)
+                      ? "text-right"
+                      : "text-left"
+                      }`}
                   >
                     {column.name}
                   </th>
@@ -491,9 +490,8 @@ const PurchaseTable: React.FC<Props> = ({
                   key={index}
                   onClick={() => setActiveRow(index)}
                   onFocusCapture={() => setActiveRow(index)}
-                  className={`h-[30px] ${
-                    activeRow === index ? "bg-[#f4f8fd]" : "bg-white"
-                  } hover:bg-blue-50`}
+                  className={`h-[30px] ${activeRow === index ? "bg-[#f4f8fd]" : "bg-white"
+                    } hover:bg-blue-50`}
                 >
                   {/* Active row indicator */}
                   <td
@@ -593,7 +591,7 @@ const PurchaseTable: React.FC<Props> = ({
                           document.getElementById(`txtQty-${index}`)?.focus();
                         }
                       }}
-                      className="h-[20px] w-full min-w-0 border-0 bg-slate-100 px-1 outline-none focus:bg-blue-50"
+                      className="h-[20px] w-full min-w-0 border-0 bg-slate-100 pl-[2px] pr-1 outline-none focus:bg-blue-50"
                     />
                   </td>
 

@@ -5,7 +5,7 @@ import Select, {
   type OptionProps,
   type StylesConfig,
 } from "react-select";
-import selectComponents from "./selectComponents";
+import selectComponents, { SELECT_FONT_FAMILY } from "./selectComponents";
 
 export interface PairSelectOption {
   value: string;
@@ -139,6 +139,11 @@ const CustomLinkedPairSelect: React.FC<CustomLinkedPairSelectProps> = ({
   const createStyles = (
     reverse: boolean,
   ): StylesConfig<PairSelectOption, false> => ({
+    // the font of the app, never the browser's
+    container: (base) => ({
+      ...base,
+      fontFamily: SELECT_FONT_FAMILY,
+    }),
     control: (base) => ({
       ...base,
       width: `${reverse ? secondWidth : firstWidth}px`,
@@ -173,6 +178,7 @@ const CustomLinkedPairSelect: React.FC<CustomLinkedPairSelectProps> = ({
     }),
     menu: (base) => ({
       ...base,
+      fontFamily: SELECT_FONT_FAMILY,
       position: "absolute",
       left: 0,
       right: "auto",
@@ -191,7 +197,7 @@ const CustomLinkedPairSelect: React.FC<CustomLinkedPairSelectProps> = ({
     menuList: (base) => ({
       ...base,
       padding: 0,
-      maxHeight: `${HEADER_HEIGHT + maxVisibleRows * ROW_HEIGHT}px`,
+      maxHeight: Math.min(Number(base.maxHeight) || HEADER_HEIGHT + maxVisibleRows * ROW_HEIGHT, HEADER_HEIGHT + maxVisibleRows * ROW_HEIGHT),
       overflowX: "hidden",
     }),
     option: (base, state) => ({
@@ -239,6 +245,7 @@ const CustomLinkedPairSelect: React.FC<CustomLinkedPairSelectProps> = ({
           filterOption={matchesEitherColumn}
           isClearable={false}
           menuPlacement="auto"
+          minMenuHeight={HEADER_HEIGHT + maxVisibleRows * ROW_HEIGHT}
           menuShouldScrollIntoView={false}
           classNamePrefix="linked-pair"
         />
@@ -261,6 +268,7 @@ const CustomLinkedPairSelect: React.FC<CustomLinkedPairSelectProps> = ({
           filterOption={matchesEitherColumn}
           isClearable={false}
           menuPlacement="auto"
+          minMenuHeight={HEADER_HEIGHT + maxVisibleRows * ROW_HEIGHT}
           menuShouldScrollIntoView={false}
           classNamePrefix="linked-pair"
         />

@@ -28,7 +28,7 @@ interface ReceiptHeader {
   note: any;
   DivID: any;
   totalCredit: number;
-  fpost:boolean
+  fpost: boolean
 }
 
 interface ReceiptDetailRow {
@@ -99,8 +99,9 @@ async function callGetProcedure(
       $5::varchar,  $6::varchar,  $7::smallint, $8::varchar,
       $9::varchar,  $10::varchar, $11::varchar, $12::varchar,
       $13::varchar, $14::varchar, $15::varchar, $16::numeric,
-      $17::numeric, $18::varchar, $19::varchar, $20::boolean,
-      $21::varchar, $22::varchar, $23::jsonb,   $24::refcursor
+      $17::numeric, $18::numeric, $19::varchar, $20::varchar,
+      $21::boolean, $22::varchar, $23::varchar, $24::jsonb,
+      $25::refcursor
     )
   `;
 
@@ -120,15 +121,16 @@ async function callGetProcedure(
     null, // $13
     null, // $14
     null, // $15
-    0, // $16
-    0, // $17
-    null, // $18
-    null, // $19
-    false, // $20
-    clean(pstrUserID), // $21
-    null, // $22
-    null, // $23 details
-    cursorName, // $24 cursor
+    0, // $16 debit
+    0, // $17 credit
+    null, // $18 NEW: debitcredit (not used by GETHD / GETTL)
+    null, // $19 description
+    null, // $20 note
+    false, // $21 match
+    clean(pstrUserID), // $22
+    null, // $23 user date
+    null, // $24 details
+    cursorName, // $25 cursor
   ];
 
   await client.query(sql, values);
@@ -212,9 +214,9 @@ export async function GetData(input: GetDataInput): Promise<GetDataResult> {
 
   const dbHeader = headerRows[0];
 
-  console.log("headerRows",dbHeader)
+  console.log("headerRows", dbHeader)
 
-  const fpost=dbHeader.fpost
+  const fpost = dbHeader.fpost
 
   /* ---------- DETAIL ROWS (signed amount from fdebitcredit) ---------- */
 

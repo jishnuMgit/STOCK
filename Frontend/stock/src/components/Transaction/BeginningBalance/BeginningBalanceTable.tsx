@@ -1,13 +1,17 @@
 import React, { useMemo, useState } from "react";
 import { Play } from "lucide-react";
-import Select, { type StylesConfig } from "react-select";
+import Select, {
+  components,
+  type DropdownIndicatorProps,
+  type MenuListProps,
+  type OptionProps,
+  type StylesConfig,
+} from "react-select";
 
 import {
   filterPairOption,
-  makePairComponents,
-  makePairDividedMenuStyles,
 } from "../../PairSelect/pairSelectParts";
-import { usePairMenuHang } from "../../../hooks/usePairMenuHang";
+import { accountDropdownStyles } from "../Receipt/save/ReactSelectStyles";
 import { useAdvanceAfterSelect } from "../../../hooks/useAdvanceAfterSelect";
 import { useGridCellFocus } from "../../../hooks/useGridCellFocus";
 import {
@@ -51,7 +55,7 @@ const selectStyles: StylesConfig<AccountOption, false> = {
       ? "#eff6ff"
       : "transparent",
     cursor: "pointer",
-    fontSize: 11,
+    fontSize: 12,
 
     "&:hover": {
       border: "none",
@@ -69,7 +73,7 @@ const selectStyles: StylesConfig<AccountOption, false> = {
   singleValue: (base) => ({
     ...base,
     color: "#202020",
-    fontSize: 11,
+    fontSize: 12,
     margin: 0,
     overflow: "hidden",
     textOverflow: "ellipsis",
@@ -79,7 +83,7 @@ const selectStyles: StylesConfig<AccountOption, false> = {
   placeholder: (base) => ({
     ...base,
     color: "#64748b",
-    fontSize: 11,
+    fontSize: 12,
     margin: 0,
   }),
 
@@ -87,7 +91,7 @@ const selectStyles: StylesConfig<AccountOption, false> = {
     ...base,
     margin: 0,
     padding: 0,
-    fontSize: 11,
+    fontSize: 12,
   }),
 
   indicatorsContainer: (base) => ({
@@ -113,7 +117,7 @@ const selectStyles: StylesConfig<AccountOption, false> = {
   menu: (base) => ({
     ...base,
     zIndex: 9999,
-    fontSize: 11,
+    fontSize: 12,
     marginTop: 1,
   }),
 
@@ -125,8 +129,9 @@ const selectStyles: StylesConfig<AccountOption, false> = {
 
   option: (base, state) => ({
     ...base,
-    padding: "5px 7px",
-    fontSize: 11,
+    // no side padding: the cells of the list have their own 5px (makePairComponents, last argument)
+    padding: "5px 0",
+    fontSize: 12,
     color: "#202020",
     cursor: "pointer",
 
@@ -138,28 +143,161 @@ const selectStyles: StylesConfig<AccountOption, false> = {
   }),
 };
 
-// ID | Name lists with the divider, the same as the Item ID / Item Name boxes of
-// Beginning Stock (components/PairSelect): the Account ID list covers the ID box
-// AND the Name box next to it; the Account Name list is exactly as wide as its box
-// with the Account ID after it, out to the Debit column (both measured when the
-// list opens, see usePairMenuHang)
-const accountIdComponents = makePairComponents("Account ID", "Account Name", false, true);
-const accountNameComponents = makePairComponents("Account ID", "Account Name", true, true);
+// The lists are the Receipt screen's Account ID / Account Name lists (components/Transaction/Receipt/save): 663 px wide, a grey
+// header "ID | Name", rows of 30 px with a thin line between the two columns (ID 105 px, Name 558 px). The Account ID list is "ID |
+// Name", the Account Name list "Name | ID".
+const ACCOUNT_LIST_ROW_TITLE = (data: AccountOption) => `${data.id ?? data.value} - ${data.name ?? data.label}`;
 
-// the C.C. ID box is narrow: its list hangs a fixed 200px past it
-const CC_MENU_HANG = 200;
-const ccComponents = makePairComponents("C.C. ID", "C.C. Name", false, true, CC_MENU_HANG);
-const ccStyles = {
-  ...selectStyles,
-  ...makePairDividedMenuStyles(CC_MENU_HANG),
-} as StylesConfig<AccountOption, false>;
+const AccountListOption = ({
+  displayMode,
+  ...props
+}: OptionProps<AccountOption, false> & { displayMode: "id" | "name" }) => (
+  <components.Option {...props}>
+    <div className="account-dropdown-row" title={ACCOUNT_LIST_ROW_TITLE(props.data)}>
+      {displayMode === "id" ? (
+        <>
+          <div className="account-dropdown-id">{props.data.id ?? props.data.value}</div>
+          <div className="account-dropdown-name">{props.data.name ?? props.data.label}</div>
+        </>
+      ) : (
+        <>
+          <div className="account-dropdown-name">{props.data.name ?? props.data.label}</div>
+          <div className="account-dropdown-id">{props.data.id ?? props.data.value}</div>
+        </>
+      )}
+    </div>
+  </components.Option>
+);
+
+const AccountListMenuList = ({
+  displayMode,
+  idHeader = "Account ID",
+  nameHeader = "Account Name",
+  ...props
+}: MenuListProps<AccountOption, false> & {
+  displayMode: "id" | "name";
+  idHeader?: string;
+  nameHeader?: string;
+}) => {
+  const HEADER_HEIGHT = 30;
+  const optionsMaxHeight = Math.max(Math.min(375, (props.maxHeight ?? 405) - HEADER_HEIGHT), 81);
+
+  return (
+    <components.MenuList {...props}>
+      <div className="account-dropdown-header">
+        {displayMode === "id" ? (
+          <>
+            <div className="account-dropdown-header-id">{idHeader}</div>
+            <div className="account-dropdown-header-name">{nameHeader}</div>
+          </>
+        ) : (
+          <>
+            <div className="account-dropdown-header-name">{nameHeader}</div>
+            <div className="account-dropdown-header-id">{idHeader}</div>
+          </>
+        )}
+      </div>
+
+      <div className="account-dropdown-options" style={{ maxHeight: optionsMaxHeight }}>
+        {props.children}
+      </div>
+    </components.MenuList>
+  );
+};
+
+// The arrow of the Receipt grid: a small grey ▼, shown only on the row the cursor is on, or in the cell it is in (the cell hides it otherwise)
+const AccountListIndicator = (props: DropdownIndicatorProps<AccountOption, false>) => (
+  <components.DropdownIndicator {...props}>
+    <span className="item-list-arrow block translate-y-px text-[8px] leading-2 text-[#999999]">▼</span>
+  </components.DropdownIndicator>
+);
+
+const accountIdComponents = {
+  DropdownIndicator: AccountListIndicator,
+  Option: (props: OptionProps<AccountOption, false>) => <AccountListOption {...props} displayMode="id" />,
+  MenuList: (props: MenuListProps<AccountOption, false>) => <AccountListMenuList {...props} displayMode="id" />,
+};
+const accountNameComponents = {
+  DropdownIndicator: AccountListIndicator,
+  Option: (props: OptionProps<AccountOption, false>) => <AccountListOption {...props} displayMode="name" />,
+  MenuList: (props: MenuListProps<AccountOption, false>) => <AccountListMenuList {...props} displayMode="name" />,
+};
+
+
+// The lists have the Receipt screen's look (colours, borders, 30 px rows, scroll bar), but their columns follow the grid: the first
+// column is exactly as wide as the cell the list opens from (so the Name values of the Account ID list start where the Item Name
+// column starts), and the second column is the rest.
+//   Account ID list:   ID (the Account ID cell)   | Name (the rest, 663 px in all)
+//   Account Name list: Name (the Account Name cell) | ID (a 150 px column that hangs out past the cell)
+const ACCOUNT_LIST_TOTAL = 663;
+const ACCOUNT_LIST_HANG_ID = 150;
+
+// the Receipt style of a column, with the width of this screen
+const withColumnWidth = (style: any, width: number) => ({
+  ...style,
+  flex: `0 0 ${width}px`,
+  width: `${width}px`,
+  minWidth: `${width}px`,
+  maxWidth: `${width}px`,
+});
+
+const makeAccountListStyles = (firstWidth: number, secondWidth: number, idFirst: boolean) => {
+  const total = firstWidth + secondWidth;
+  const idWidth = idFirst ? firstWidth : secondWidth;
+  const nameWidth = idFirst ? secondWidth : firstWidth;
+
+  return {
+    ...selectStyles,
+    menu: (base: any) => withColumnWidth({ ...accountDropdownStyles.menu(base), flex: undefined }, total),
+    menuPortal: accountDropdownStyles.menuPortal,
+    menuList: (base: any) => {
+      const list = accountDropdownStyles.menuList(base) as any;
+      return {
+        ...withColumnWidth(list, total),
+        "& .account-dropdown-header": withColumnWidth(list["& .account-dropdown-header"], total),
+        "& .account-dropdown-header-id": withColumnWidth(list["& .account-dropdown-header-id"], idWidth),
+        "& .account-dropdown-header-name": withColumnWidth(list["& .account-dropdown-header-name"], nameWidth),
+        "& .account-dropdown-options": withColumnWidth(list["& .account-dropdown-options"], total),
+        "& .account-dropdown-row": withColumnWidth(list["& .account-dropdown-row"], total),
+        "& .account-dropdown-row .account-dropdown-id": withColumnWidth(
+          list["& .account-dropdown-row .account-dropdown-id"],
+          idWidth,
+        ),
+        "& .account-dropdown-row .account-dropdown-name": withColumnWidth(
+          list["& .account-dropdown-row .account-dropdown-name"],
+          nameWidth,
+        ),
+      };
+    },
+    option: (base: any, state: any) => {
+      const option = accountDropdownStyles.option(base, state) as any;
+      return {
+        ...withColumnWidth(option, total),
+        "& .account-dropdown-row": withColumnWidth(option["& .account-dropdown-row"], total),
+        "& .account-dropdown-id": withColumnWidth(option["& .account-dropdown-id"], idWidth),
+        "& .account-dropdown-name": withColumnWidth(option["& .account-dropdown-name"], nameWidth),
+      };
+    },
+  } as StylesConfig<AccountOption, false>;
+};
+
+// the C.C. list: the same Receipt look, "C.C. ID | C.C. Name" (the C.C. ID box is narrow, so the ID column is at least 100 px)
+const CC_LIST_TOTAL = 420;
+const CC_LIST_MIN_ID = 100;
+const ccComponents = {
+  DropdownIndicator: AccountListIndicator,
+  Option: (props: OptionProps<AccountOption, false>) => <AccountListOption {...props} displayMode="id" />,
+  MenuList: (props: MenuListProps<AccountOption, false>) => (
+    <AccountListMenuList {...props} displayMode="id" idHeader="C.C. ID" nameHeader="C.C. Name" />
+  ),
+};
 
 // ============================================================
 // NUMBER INPUT
 // ============================================================
 
 const numberInputClass =
-  "h-[30px] w-full border-0 bg-transparent px-2 text-right text-[11px] text-[#202020] outline-none focus:bg-blue-50";
+  "h-[30px] w-full border-0 bg-transparent px-2 text-right text-[12px] text-[#202020] outline-none focus:bg-blue-50";
 
 // ============================================================
 // TABLE
@@ -184,17 +322,26 @@ const BeginningBalanceTable: React.FC<Props> = ({
   const { advanceAfterPick, advanceOnEnter } =
     useAdvanceAfterSelect();
 
-  // the Account ID list covers the ID box AND the Name box next to it ...
-  const {
-    hang: idMenuHang,
-    measure: measureIdMenuHang,
-  } = usePairMenuHang();
-
-  // ... and the Account Name list reaches the right edge of the Debit column
-  const {
-    hang: nameMenuHang,
-    measure: measureNameMenuHang,
-  } = usePairMenuHang(170);
+  // the first column of an Account list is as wide as the cell it opens from (measured when the list opens)
+  const [idCellWidth, setIdCellWidth] = useState(105);
+  const [nameCellWidth, setNameCellWidth] = useState(380);
+  const [ccCellWidth, setCcCellWidth] = useState(68);
+  const ccListStyles = useMemo(() => {
+    const idWidth = Math.max(ccCellWidth, CC_LIST_MIN_ID);
+    return makeAccountListStyles(idWidth, CC_LIST_TOTAL - idWidth, true);
+  }, [ccCellWidth]);
+  const accountIdListStyles = useMemo(
+    () => makeAccountListStyles(idCellWidth, Math.max(ACCOUNT_LIST_TOTAL - idCellWidth, 300), true),
+    [idCellWidth],
+  );
+  const accountNameListStyles = useMemo(
+    () => makeAccountListStyles(nameCellWidth, ACCOUNT_LIST_HANG_ID, false),
+    [nameCellWidth],
+  );
+  const measureCell = (inputId: string, set: (width: number) => void) => {
+    const cell = document.getElementById(inputId)?.closest("td");
+    if (cell) set(Math.round(cell.getBoundingClientRect().width));
+  };
 
   // the option of an account / cost center, by its ID (the value of the row)
   const accountIdByCode = useMemo(
@@ -411,7 +558,7 @@ const BeginningBalanceTable: React.FC<Props> = ({
             min-w-[850px]
             table-fixed
             border-collapse
-            text-[11px]
+            text-[12px]
           "
         >
 
@@ -450,7 +597,7 @@ const BeginningBalanceTable: React.FC<Props> = ({
           ================================================== */}
 
           <thead>
-            <tr className="h-[30px]">
+            <tr className="h-7">
 
               {/* Empty selector */}
 
@@ -479,8 +626,8 @@ const BeginningBalanceTable: React.FC<Props> = ({
                   px-2
                   py-0
                   text-left
-                  font-semibold
-                  text-[#30435b]
+                  font-medium
+                  text-[#344054]
                 "
               >
                 Account ID
@@ -499,8 +646,8 @@ const BeginningBalanceTable: React.FC<Props> = ({
                   px-2
                   py-0
                   text-left
-                  font-semibold
-                  text-[#30435b]
+                  font-medium
+                  text-[#344054]
                 "
               >
                 Account Name
@@ -519,8 +666,8 @@ const BeginningBalanceTable: React.FC<Props> = ({
                   px-2
                   py-0
                   text-center
-                  font-semibold
-                  text-[#30435b]
+                  font-medium
+                  text-[#344054]
                 "
               >
                 C.C. ID
@@ -539,8 +686,8 @@ const BeginningBalanceTable: React.FC<Props> = ({
                   px-2
                   py-0
                   text-center
-                  font-semibold
-                  text-[#30435b]
+                  font-medium
+                  text-[#344054]
                 "
               >
                 Debit
@@ -559,8 +706,8 @@ const BeginningBalanceTable: React.FC<Props> = ({
                   px-2
                   py-0
                   text-center
-                  font-semibold
-                  text-[#30435b]
+                  font-medium
+                  text-[#344054]
                 "
               >
                 Credit
@@ -583,10 +730,10 @@ const BeginningBalanceTable: React.FC<Props> = ({
                   setActiveRow(index)
                 }
                 className={`
-                  h-[30px]
+                  h-7
                   ${
                     activeRow === index
-                      ? "bg-[#f8fcfa]"
+                      ? "bg-[#f9fffc]"
                       : "bg-white"
                   }
                   hover:bg-[#f1faf6]
@@ -599,7 +746,7 @@ const BeginningBalanceTable: React.FC<Props> = ({
 
                 <td
                   className="
-                    h-[30px]
+                    h-7
                     border
                     border-[#bdebd4]
                     p-0
@@ -621,7 +768,7 @@ const BeginningBalanceTable: React.FC<Props> = ({
 
                 <td
                   className={`
-                    h-[30px] border border-[#bdebd4] p-0 ${cellFocusClass}
+                    h-7 border border-[#bdebd4] p-0 ${cellFocusClass} ${activeRow === index ? "" : "[&:not(:focus-within)_.item-list-arrow]:hidden"}
                   `}
                 >
                   <div
@@ -655,19 +802,9 @@ const BeginningBalanceTable: React.FC<Props> = ({
                           );
                         }
                       }}
-                      styles={
-                        {
-                          ...selectStyles,
-                          ...makePairDividedMenuStyles(
-                            idMenuHang,
-                          ),
-                        } as StylesConfig<AccountOption, false>
-                      }
+                      styles={accountIdListStyles}
                       onMenuOpen={() =>
-                        measureIdMenuHang(
-                          `lkpAccountID-${index}`,
-                          `lkpAccountName-${index}`,
-                        )
+                        measureCell(`lkpAccountID-${index}`, setIdCellWidth)
                       }
                       components={accountIdComponents}
                       filterOption={filterPairOption}
@@ -695,7 +832,7 @@ const BeginningBalanceTable: React.FC<Props> = ({
 
                 <td
                   className={`
-                    h-[30px] border border-[#bdebd4] p-0 ${cellFocusClass}
+                    h-7 border border-[#bdebd4] p-0 ${cellFocusClass} ${activeRow === index ? "" : "[&:not(:focus-within)_.item-list-arrow]:hidden"}
                   `}
                 >
                   <div
@@ -726,19 +863,9 @@ const BeginningBalanceTable: React.FC<Props> = ({
                           );
                         }
                       }}
-                      styles={
-                        {
-                          ...selectStyles,
-                          ...makePairDividedMenuStyles(
-                            nameMenuHang,
-                          ),
-                        } as StylesConfig<AccountOption, false>
-                      }
+                      styles={accountNameListStyles}
                       onMenuOpen={() =>
-                        measureNameMenuHang(
-                          `lkpAccountName-${index}`,
-                          `txtDebit-${index}`,
-                        )
+                        measureCell(`lkpAccountName-${index}`, setNameCellWidth)
                       }
                       components={accountNameComponents}
                       filterOption={filterPairOption}
@@ -766,7 +893,7 @@ const BeginningBalanceTable: React.FC<Props> = ({
 
                 <td
                   className={`
-                    h-[30px] border border-[#bdebd4] p-0 ${cellFocusClass}
+                    h-7 border border-[#bdebd4] p-0 ${cellFocusClass} ${activeRow === index ? "" : "[&:not(:focus-within)_.item-list-arrow]:hidden"}
                   `}
                 >
                   <div
@@ -806,7 +933,10 @@ const BeginningBalanceTable: React.FC<Props> = ({
                           row.lkpAccountID,
                         )?.chkHaveCC
                       }
-                      styles={ccStyles}
+                      styles={ccListStyles}
+                      onMenuOpen={() =>
+                        measureCell(`lkpCCID-${index}`, setCcCellWidth)
+                      }
                       components={ccComponents}
                       filterOption={filterPairOption}
                       noOptionsMessage={() =>
@@ -832,7 +962,7 @@ const BeginningBalanceTable: React.FC<Props> = ({
 
                 <td
                   className={`
-                    h-[30px] border border-[#bdebd4] p-0 ${cellFocusClass}
+                    h-7 border border-[#bdebd4] p-0 ${cellFocusClass}
                   `}
                 >
                   {renderNumberInput(
@@ -849,7 +979,7 @@ const BeginningBalanceTable: React.FC<Props> = ({
 
                 <td
                   className={`
-                    h-[30px] border border-[#bdebd4] p-0 ${cellFocusClass}
+                    h-7 border border-[#bdebd4] p-0 ${cellFocusClass}
                   `}
                 >
                   <div className="flex items-center">

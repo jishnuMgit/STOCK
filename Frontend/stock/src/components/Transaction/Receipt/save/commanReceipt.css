@@ -777,8 +777,7 @@
     The second column automatically takes remaining space.
   */
   grid-template-columns:
-    var(--lookup-id-width, 115px)
-    minmax(0, 1fr);
+    var(--lookup-id-width, 115px) minmax(0, 1fr);
 
   width: 100%;
 
@@ -1015,10 +1014,8 @@
 
 @media (max-width: 768px) {
   .account-lookup__popup {
-    width: min(
-      var(--lookup-popup-width, 530px),
-      calc(100vw - 20px)
-    );
+    width: min(var(--lookup-popup-width, 530px),
+        calc(100vw - 20px));
   }
 }
 
@@ -1032,8 +1029,7 @@
 
   .account-lookup__row {
     grid-template-columns:
-      100px
-      minmax(0, 1fr);
+      100px minmax(0, 1fr);
   }
 
   .account-lookup__id,
@@ -1041,6 +1037,7 @@
     font-size: 11px;
   }
 }
+
 /* =========================================================
    MOBILE
 ========================================================= */
@@ -1061,4 +1058,19 @@
     min-width: 760px;
   }
 
+}
+
+.account-dropdown-header-id,
+.account-dropdown-header-name,
+.account-dropdown-id,
+.account-dropdown-name,
+.account-lookup__id,
+.account-lookup__name,
+.account-lookup__empty {
+  padding-left: 2px !important;
+  padding-right: 2px !important;
+}
+
+.account-lookup__input {
+  padding-left: 2px !important;
 }

@@ -7,7 +7,7 @@ import Select, {
   type OptionProps,
   type MenuListProps,
 } from "react-select";
-import selectComponents from "./selectComponents";
+import selectComponents, { SELECT_FONT_FAMILY } from "./selectComponents";
 
 export interface TableSelectOption {
   label: string;
@@ -26,6 +26,10 @@ interface CommonTableSelectProps {
   options: TableSelectOption[];
   value: TableSelectOption | null;
   onChange: (value: TableSelectOption | null) => void;
+  inputValue?: string;
+  onInputChange?: SelectProps<TableSelectOption, false>["onInputChange"];
+  backspaceRemovesValue?: boolean;
+  blurInputOnSelect?: boolean;
   columns: Column[];
   placeholder?: string;
   width?: string;
@@ -44,6 +48,7 @@ interface CommonTableSelectProps {
   onKeyDown?: KeyboardEventHandler;
   onMenuOpen?: () => void;
   onMenuClose?: () => void;
+  menuPlacement?: SelectProps<TableSelectOption, false>["menuPlacement"];
   filterOption?: SelectProps<TableSelectOption, false>["filterOption"];
   controlFontSize?: string;
   borderColor?: string;
@@ -57,6 +62,10 @@ const CommonTableSelect = ({
   options,
   value,
   onChange,
+  inputValue,
+  onInputChange,
+  backspaceRemovesValue,
+  blurInputOnSelect,
   columns,
   placeholder = "Select...",
   width = "250px",
@@ -75,6 +84,7 @@ const CommonTableSelect = ({
   onKeyDown,
   onMenuOpen,
   onMenuClose,
+  menuPlacement = "auto", // opens upward when there is not room below (the list is tall: header + up to 10 rows)
   filterOption,
   borderColor = "#CBD5E1",
   hoverBorderColor = "#94A3B8",
@@ -82,11 +92,8 @@ const CommonTableSelect = ({
   valueKey,
   showHeader = true,
 }: CommonTableSelectProps) => {
-
   // Same column structure for header and option rows
-  const gridTemplate = columns
-    .map((col) => col.width || "1fr")
-    .join(" ");
+  const gridTemplate = columns.map((col) => col.width || "1fr").join(" ");
 
   const getAlignment = (align?: string) => {
     if (align === "right") return "text-right";
@@ -95,7 +102,6 @@ const CommonTableSelect = ({
   };
 
   const customComponents = {
-
     // OPTION ROW
     Option: (props: OptionProps<TableSelectOption, false>) => (
       <components.Option {...props}>
@@ -105,7 +111,7 @@ const CommonTableSelect = ({
             gridTemplateColumns: gridTemplate,
             height: "32px",
             boxSizing: "border-box",
-            padding: "0 10px",
+            padding: 0, // padding is applied per column below
             fontSize: headerFontSize,
           }}
         >
@@ -114,12 +120,9 @@ const CommonTableSelect = ({
               key={col.key}
               className={`
                 flex min-w-0 h-full items-center
-                truncate
+                truncate pl-[2px] pr-[5px]
                 ${getAlignment(col.align)}
-                ${index > 0
-                  ? "border-l border-[#D5DDE5] pl-2"
-                  : ""
-                }
+                ${index > 0 ? "border-l border-[#D5DDE5]" : ""}
               `}
               style={{
                 boxSizing: "border-box",
@@ -148,7 +151,7 @@ const CommonTableSelect = ({
               gridTemplateColumns: gridTemplate,
               height: "35px",
               boxSizing: "border-box",
-              padding: "0 10px",
+              padding: 0, // padding is applied per column below
               fontSize: headerFontSize,
             }}
           >
@@ -157,9 +160,9 @@ const CommonTableSelect = ({
                 key={col.key}
                 className={`
                   flex min-w-0 h-full items-center
-                  truncate
+                  truncate pl-[2px] pr-[5px]
                   ${getAlignment(col.align)}
-                  ${index > 0 ? "border-l border-[#D5DDE5] pl-2" : ""}
+                  ${index > 0 ? "border-l border-[#D5DDE5]" : ""}
                 `}
                 style={{ boxSizing: "border-box", overflow: "hidden" }}
               >
@@ -175,6 +178,12 @@ const CommonTableSelect = ({
   };
 
   const styles: StylesConfig<TableSelectOption, false> = {
+
+    // the font of the app, never the browser\'s
+    container: (base) => ({
+      ...base,
+      fontFamily: SELECT_FONT_FAMILY,
+    }),
 
     // CONTROL
     control: (base) => ({
@@ -193,7 +202,7 @@ const CommonTableSelect = ({
 
     valueContainer: (base) => ({
       ...base,
-      padding: "0 10px",
+      padding: "0 2px",
     }),
 
     indicatorsContainer: (base) => ({
@@ -203,6 +212,7 @@ const CommonTableSelect = ({
 
     menu: (base) => ({
       ...base,
+      fontFamily: SELECT_FONT_FAMILY,
       width: menuWidth === "100%" ? "100%" : `max(100%, ${menuWidth})`,
       minWidth: "100%",
       maxWidth: "calc(100vw - 16px)",
@@ -222,7 +232,8 @@ const CommonTableSelect = ({
     menuList: (base) => ({
       ...base,
       padding: 0,
-      maxHeight: menuMaxHeight,
+      // never taller than the room react-select found (above or below), nor than menuMaxHeight
+      maxHeight: Math.min(Number(base.maxHeight) || parseFloat(menuMaxHeight), parseFloat(menuMaxHeight)),
       overflowX: "hidden",
     }),
 
@@ -231,7 +242,7 @@ const CommonTableSelect = ({
       ...base,
 
       // Important: remove React Select default padding.
-      // Padding is controlled inside the grid.
+      // Padding is controlled inside the grid columns.
       padding: 0,
 
       height: "32px",
@@ -257,6 +268,18 @@ const CommonTableSelect = ({
     singleValue: (base) => ({
       ...base,
       color: "#334155",
+      marginLeft: 0,
+    }),
+
+    placeholder: (base) => ({
+      ...base,
+      marginLeft: 0,
+    }),
+
+    input: (base) => ({
+      ...base,
+      margin: 0,
+      padding: 0,
     }),
   };
 
@@ -267,9 +290,14 @@ const CommonTableSelect = ({
       options={options}
       value={value}
       onChange={onChange}
+      inputValue={inputValue}
+      onInputChange={onInputChange}
+      backspaceRemovesValue={backspaceRemovesValue}
+      blurInputOnSelect={blurInputOnSelect}
       onKeyDown={onKeyDown}
       onMenuOpen={onMenuOpen}
       onMenuClose={onMenuClose}
+      menuPlacement={menuPlacement}
       filterOption={filterOption}
       placeholder={placeholder}
       components={{
@@ -284,6 +312,9 @@ const CommonTableSelect = ({
       noOptionsMessage={noOptionsMessage}
       menuPortalTarget={menuPortalTarget}
       menuPosition={menuPortalTarget ? "fixed" : undefined}
+      // opens upward unless the whole list fits below (react-select otherwise shrinks it into the space left below)
+      minMenuHeight={parseFloat(menuMaxHeight)}
+      menuShouldScrollIntoView={false}
       getOptionLabel={(option) =>
         String(valueKey ? (option[valueKey] ?? option.label) : option.label)
       }
@@ -311,11 +342,8 @@ export const CustomTableSelect = ({
   controlHeight = 31,
   menuZIndex = 100000,
 }: CommonTableSelectProps) => {
-
   // Same column structure for header and option rows
-  const gridTemplate = columns
-    .map((col) => col.width || "1fr")
-    .join(" ");
+  const gridTemplate = columns.map((col) => col.width || "1fr").join(" ");
 
   const getAlignment = (align?: string) => {
     if (align === "right") return "text-right";
@@ -324,7 +352,6 @@ export const CustomTableSelect = ({
   };
 
   const customComponents = {
-
     // OPTION ROW
     Option: (props: OptionProps<TableSelectOption, false>) => (
       <components.Option {...props}>
@@ -334,7 +361,7 @@ export const CustomTableSelect = ({
             gridTemplateColumns: gridTemplate,
             height: "32px",
             boxSizing: "border-box",
-            padding: "0 10px",
+            padding: 0, // padding is applied per column below
             fontSize: headerFontSize,
           }}
         >
@@ -343,9 +370,9 @@ export const CustomTableSelect = ({
               key={col.key}
               className={`
                 flex min-w-0 h-full items-center
-                truncate
+                truncate pl-[5px] pr-[5px]
                 ${getAlignment(col.align)}
-                ${index > 0 ? "border-l border-[#D5DDE5] pl-2" : ""}
+                ${index > 0 ? "border-l border-[#D5DDE5]" : ""}
               `}
               style={{
                 boxSizing: "border-box",
@@ -373,7 +400,7 @@ export const CustomTableSelect = ({
             gridTemplateColumns: gridTemplate,
             height: "35px",
             boxSizing: "border-box",
-            padding: "0 10px",
+            padding: 0, // padding is applied per column below
             fontSize: headerFontSize,
           }}
         >
@@ -382,9 +409,9 @@ export const CustomTableSelect = ({
               key={col.key}
               className={`
                 flex min-w-0 h-full items-center
-                truncate
+                truncate pl-[5px] pr-[5px]
                 ${getAlignment(col.align)}
-                ${index > 0 ? "border-l border-[#D5DDE5] pl-2" : ""}
+                ${index > 0 ? "border-l border-[#D5DDE5]" : ""}
               `}
               style={{
                 boxSizing: "border-box",
@@ -402,6 +429,12 @@ export const CustomTableSelect = ({
   };
 
   const styles: StylesConfig<TableSelectOption, false> = {
+
+    // the font of the app, never the browser\'s
+    container: (base) => ({
+      ...base,
+      fontFamily: SELECT_FONT_FAMILY,
+    }),
 
     // CONTROL - TRANSPARENT BORDER
     control: (base, state) => ({
@@ -424,7 +457,7 @@ export const CustomTableSelect = ({
 
     valueContainer: (base) => ({
       ...base,
-      padding: "0 10px",
+      padding: "0 5px",
     }),
 
     indicatorsContainer: (base) => ({
@@ -435,6 +468,7 @@ export const CustomTableSelect = ({
     // MENU - TRANSPARENT BORDER
     menu: (base) => ({
       ...base,
+      fontFamily: SELECT_FONT_FAMILY,
       width: menuWidth,
       minWidth: menuWidth,
       marginTop: "4px",
@@ -453,7 +487,7 @@ export const CustomTableSelect = ({
     menuList: (base) => ({
       ...base,
       padding: 0,
-      maxHeight: "220px",
+      maxHeight: Math.min(Number(base.maxHeight) || 220, 220),
       overflowX: "hidden",
     }),
 
@@ -483,6 +517,18 @@ export const CustomTableSelect = ({
     singleValue: (base) => ({
       ...base,
       color: "#334155",
+      marginLeft: 0,
+    }),
+
+    placeholder: (base) => ({
+      ...base,
+      marginLeft: 0,
+    }),
+
+    input: (base) => ({
+      ...base,
+      margin: 0,
+      padding: 0,
     }),
   };
 
@@ -503,6 +549,10 @@ export const CustomTableSelect = ({
       isDisabled={isDisabled}
       menuPortalTarget={menuPortalTarget}
       menuPosition={menuPortalTarget ? "fixed" : undefined}
+      // opens upward when there is not room below (the list is tall: header + up to 10 rows), like the pair select
+      menuPlacement="auto"
+      minMenuHeight={220}
+      menuShouldScrollIntoView={false}
       getOptionLabel={(option) => option.label}
       getOptionValue={(option) => option.value}
     />

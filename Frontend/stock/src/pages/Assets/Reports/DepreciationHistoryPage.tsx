@@ -513,9 +513,9 @@ const DepreciationHistory: React.FC = () => {
                     secondValue={costCenterName?.value ?? null}
                     firstHeader="Cost Center ID"
                     secondHeader="Cost Center Name"
-                    firstWidth={120}
+                    firstWidth={190}
                     secondWidth={450}
-                    gap={10}
+                    gap={5}
                      menuPortalTarget={
                       typeof document !== "undefined" ? document.body : undefined
                     }
@@ -593,9 +593,9 @@ const DepreciationHistory: React.FC = () => {
                     secondValue={itemName?.value ?? null}
                     firstHeader="Item ID"
                     secondHeader="Item Name"
-                    firstWidth={120}
+                    firstWidth={190}
                     secondWidth={450}
-                    gap={10}
+                    gap={5}
                      menuPortalTarget={
                       typeof document !== "undefined" ? document.body : undefined
                     }
@@ -625,7 +625,7 @@ const DepreciationHistory: React.FC = () => {
                 {/* RANGE ITEM */}
 
                 {itemMode === "Range Item" && (
-                  <div className="flex flex-row gap-2 mt-5" >
+                  <div className="flex flex-row gap-1.25 mt-5" >
 
                     <CommonTableSelect
                       inputId="fromItemId"
@@ -642,8 +642,8 @@ const DepreciationHistory: React.FC = () => {
                         );
                       }}
                       columns={itemIdColumns}
-                      width="120px"
-                      menuWidth="120px"
+                      width="190px"
+                      menuWidth="190px"
                       placeholder=""
                     />
 
@@ -662,8 +662,8 @@ const DepreciationHistory: React.FC = () => {
                         );
                       }}
                       columns={itemIdColumns}
-                      width="120px"
-                      menuWidth="120px"
+                      width="190px"
+                      menuWidth="190px"
                       placeholder=""
                     />
 

@@ -1,12 +1,9 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
-import Select, { type SingleValue, type StylesConfig } from "react-select";
 import { toast } from "react-toastify";
-import {
-  makePairComponents,
-  filterPairOption,
-  makePairDividedMenuStyles,
-  pairDividedIdMenuStyles,
-} from "../../../components/PairSelect/pairSelectParts";
+import CustomLinkedPairSelect, {
+  type PairSelectOption,
+} from "../../../components/common/CustomLinkedPairSelect";
+import { FILTER_GAP } from "../../../components/common/ReportFilters";
 import { useAltShortcuts } from "../../../hooks/useAltShortcuts";
 import { useGridCellFocus } from "../../../hooks/useGridCellFocus";
 import Header from "../../../components/common/Header";
@@ -84,103 +81,6 @@ const plainNumber = (value: string | null | undefined) =>
     ? ""
     : String(Number(value));
 
-// ============================================================
-// ITEM ID | ITEM NAME DROPDOWNS (shared parts)
-// ============================================================
-
-// The Item ID box is 300px wide (the longest ID, ACCSS-INSULATION-1/2, would be
-// cut off in a narrower one). The Item Name box's list hangs 210px past the box:
-// that is the Item ID column, wide enough for a whole ID on one line.
-const NAME_LIST_HANG = 210;
-
-const itemIdComponents = makePairComponents("Item ID", "Item Name", false, true);
-const itemNameComponents = makePairComponents(
-  "Item ID",
-  "Item Name",
-  true,
-  true,
-  NAME_LIST_HANG,
-);
-const itemNameMenuStyles = makePairDividedMenuStyles(NAME_LIST_HANG);
-
-const selectStyles = {
-  control: (base: any, state: any) => ({
-    ...base,
-    minHeight: "30px",
-    height: "30px",
-    borderColor: "#99a1af",
-    borderRadius: "4px",
-    boxShadow: "none",
-    fontSize: "14px",
-    backgroundColor: "#ffffff",
-    cursor: "text",
-    "&:hover": { borderColor: "#20884e" },
-    ...(state.isFocused && {
-      borderColor: "#20884e",
-      boxShadow: "none",
-      outline: "none",
-    }),
-  }),
-  valueContainer: (base: any) => ({
-    ...base,
-    height: "30px",
-    padding: "0 8px",
-    overflow: "hidden",
-  }),
-  singleValue: (base: any) => ({
-    ...base,
-    color: "#344054",
-    fontSize: "14px",
-    margin: 0,
-  }),
-  placeholder: (base: any) => ({
-    ...base,
-    color: "#8b96a3",
-    fontSize: "14px",
-    margin: 0,
-  }),
-  input: (base: any) => ({
-    ...base,
-    margin: 0,
-    padding: 0,
-    fontSize: "14px",
-    color: "#344054",
-  }),
-  indicatorsContainer: (base: any) => ({ ...base, height: "28px" }),
-  dropdownIndicator: (base: any) => ({
-    ...base,
-    color: "#aeb8c2",
-    padding: "4px",
-    "&:hover": { color: "#808080" },
-  }),
-  indicatorSeparator: () => ({ display: "none" }),
-  menu: (base: any) => ({
-    ...base,
-    fontSize: "14px",
-    zIndex: 999999,
-    marginTop: "2px",
-    borderRadius: "3px",
-    overflow: "hidden",
-    boxShadow: "0 4px 12px rgba(0,0,0,0.12)",
-  }),
-  menuPortal: (base: any) => ({ ...base, zIndex: 999999 }),
-  menuList: (base: any) => ({
-    ...base,
-    padding: "3px 0",
-    maxHeight: "200px",
-    overflowY: "auto",
-  }),
-  option: (base: any, state: any) => ({
-    ...base,
-    fontSize: "12px",
-    cursor: "pointer",
-    backgroundColor: state.isFocused || state.isSelected ? "#eefbf4" : "#ffffff",
-    color: "#344054",
-    padding: "7px 10px",
-    "&:active": { backgroundColor: "#dff5e9" },
-  }),
-};
-
 const labelClass = "w-[120px] shrink-0 text-right text-[14px] text-gray-600";
 const readOnlyClass = "input-style bg-gray-50";
 
@@ -203,6 +103,17 @@ const ItemEnquiryPage: React.FC = () => {
   const [itemNameOptions, setItemNameOptions] = useState<SelectOption[]>([]);
   const [lkpItemID, setLkpItemID] = useState<SelectOption | null>(null);
   const [lkpItemName, setLkpItemName] = useState<SelectOption | null>(null);
+
+  // the item boxes: one list, "ID | Name" in the ID box and "Name | ID" in the Name box
+  const itemPairOptions: PairSelectOption[] = useMemo(
+    () =>
+      itemIdOptions.map((option) => ({
+        value: option.value,
+        firstLabel: option.id ?? option.value,
+        secondLabel: option.name ?? option.label,
+      })),
+    [itemIdOptions],
+  );
 
   // the item's details
   const [txtUnit, setTxtUnit] = useState("");
@@ -497,72 +408,30 @@ const ItemEnquiryPage: React.FC = () => {
         <Header Name="Item Enquiry" />
 
         <div className="m-3 flex flex-col gap-2.5 px-3 pb-3">
-          {/* ITEM ID */}
+          {/* ITEM: the ID box and the Name box (one item, two boxes) */}
           <div className="flex items-center gap-3">
             <label htmlFor="lkpItemID" className={labelClass}>
-              Item ID :
+              Item :
             </label>
 
-            <div className="w-75 max-w-full" onKeyDown={handleItemBoxEnter}>
-              <Select<SelectOption, false>
-                inputId="lkpItemID"
-                name="lkpItemID"
-                options={itemIdOptions}
-                value={lkpItemID}
-                onChange={(option: SingleValue<SelectOption>) =>
-                  pickItem(option?.value ?? null)
-                }
-                styles={
-                  {
-                    ...selectStyles,
-                    ...pairDividedIdMenuStyles,
-                  } as StylesConfig<SelectOption, false>
-                }
-                components={itemIdComponents}
-                filterOption={filterPairOption}
-                noOptionsMessage={() => "No Item Found"}
-                isSearchable
-                isClearable
-                placeholder="Select"
+            <div className="min-w-0" onKeyDown={handleItemBoxEnter}>
+              <CustomLinkedPairSelect
+                firstInputId="lkpItemID"
+                secondInputId="lkpItemName"
+                options={itemPairOptions}
+                firstValue={lkpItemID?.value ?? null}
+                secondValue={lkpItemName?.value ?? null}
+                firstHeader="Item ID"
+                secondHeader="Item Name"
+                // the same boxes as on the report pages: 190 px for the ID, 450 px for the Name, 5 px between
+                firstWidth={190}
+                secondWidth={450}
+                gap={FILTER_GAP}
+                menuZIndex={999999}
                 menuPortalTarget={document.body}
-                menuPosition="fixed"
-                menuPlacement="auto"
-                menuShouldScrollIntoView
-              />
-            </div>
-          </div>
-
-          {/* ITEM NAME */}
-          <div className="flex items-center gap-3">
-            <label htmlFor="lkpItemName" className={labelClass}>
-              Item Name :
-            </label>
-
-            <div className="w-130 max-w-full" onKeyDown={handleItemBoxEnter}>
-              <Select<SelectOption, false>
-                inputId="lkpItemName"
-                name="lkpItemName"
-                options={itemNameOptions}
-                value={lkpItemName}
-                onChange={(option: SingleValue<SelectOption>) =>
-                  pickItem(option?.value ?? null)
-                }
-                styles={
-                  {
-                    ...selectStyles,
-                    ...itemNameMenuStyles,
-                  } as StylesConfig<SelectOption, false>
-                }
-                components={itemNameComponents}
-                filterOption={filterPairOption}
+                headerFontSize="12px"
                 noOptionsMessage={() => "No Item Found"}
-                isSearchable
-                isClearable={false}
-                placeholder="Select"
-                menuPortalTarget={document.body}
-                menuPosition="fixed"
-                menuPlacement="auto"
-                menuShouldScrollIntoView
+                onChange={(option) => pickItem(option?.value ?? null)}
               />
             </div>
           </div>

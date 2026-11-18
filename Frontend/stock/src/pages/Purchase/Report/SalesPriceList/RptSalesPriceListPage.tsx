@@ -1,10 +1,4 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
-import Select, {
-  components,
-  createFilter,
-  type MenuListProps,
-  type OptionProps,
-} from "react-select";
 import { toast } from "react-toastify";
 import { buildSalesPriceListPdf } from "./downloadSalesPriceListPdf";
 import { saveFile } from "./saveFile";
@@ -13,17 +7,27 @@ import {
   printSalesPriceListReport,
   type PriceListReport,
 } from "./PrintSalesPriceListReport";
+import type { PairSelectOption } from "../../../../components/common/CustomLinkedPairSelect";
+import { CustomRadio } from "../../../../components/common/ReportFormParts";
+import {
+  BranchOnlyFilter,
+  PairFilter,
+  ReportForm,
+  ReportPrintRow,
+} from "../../../../components/common/ReportFilters";
 import Header from "../../../../components/common/Header";
 
 type Option = { value: string; label: string };
 
-type RadioOptionProps = {
-  name: string;
-  value: string;
-  label: string;
-  checked: boolean;
-  onChange: () => void;
-};
+// a branch of the list (the Branch | ID list: the name is the label, the ID the value)
+type BranchOption = Option;
+
+// the items and the item groups of the lookups
+type LookupItem = { id: string; name: string; groupId?: string };
+
+// one record as the two boxes of the pair filter: "ID | Name" in the ID box, "Name | ID" in the Name box
+const toPairOptions = (list: LookupItem[]): PairSelectOption[] =>
+  list.map((i) => ({ value: i.id, firstLabel: i.id, secondLabel: i.name }));
 
 const API = `${import.meta.env.VITE_API_URL}/RptSalesPriceList`;
 
@@ -37,289 +41,6 @@ const apiFetch = (url: string, init: RequestInit = {}) => {
   return fetch(
     `${url}${sep}coId=${encodeURIComponent(coId)}&userId=${encodeURIComponent(userId)}`,
     { credentials: "include", ...init },
-  );
-};
-
-const selectClassNames = {
-  control: ({
-    isFocused,
-    isDisabled,
-  }: {
-    isFocused: boolean;
-    isDisabled: boolean;
-  }) => `
-    !min-h-[25px] !h-[30px] !rounded-[4px] !border !shadow-none !text-[13px]
-    hover:!border-[#aab8c5]
-    ${isDisabled ? "!bg-[#f6f8fa]" : "!bg-white"}
-    ${isFocused ? "!border-[#91a7b9]" : "!border-[#cfd7df]"}
-  `,
-  valueContainer: () => "!h-[23px] !py-0 !px-[5px] !overflow-hidden",
-  singleValue: () => "!m-0 !text-[13px] !text-[#24364d]",
-  placeholder: () => "!m-0 !text-[13px] !text-[#7a8794]",
-  input: () => "!m-0 !p-0 !text-[13px] !text-[#24364d]",
-  indicatorsContainer: () => "!h-[23px]",
-  dropdownIndicator: () => "!p-[3px] !text-[#657486]",
-  indicatorSeparator: () => "!hidden",
-  clearIndicator: () => "!p-[3px]",
-  menu: () =>
-    "!mt-[1px] !rounded-none !border !border-[#cfd7df] !z-[999999] !shadow-md",
-  menuList: () => "!p-0 !max-h-[180px]",
-  option: ({
-    isFocused,
-    isSelected,
-  }: {
-    isFocused: boolean;
-    isSelected: boolean;
-  }) => `
-    !cursor-pointer !px-[6px] !py-[5px] !text-[13px] !text-[#24364d]
-    ${isSelected ? "!bg-[#e7f7ed]" : isFocused ? "!bg-[#f2faf5]" : "!bg-white"}
-  `,
-};
-
-const selectProps = {
-  isSearchable: false,
-  isClearable: false,
-  placeholder: "",
-  classNames: selectClassNames,
-  menuPosition: "fixed" as const,
-  menuPortalTarget: typeof document !== "undefined" ? document.body : undefined,
-};
-
-// ---- two-column lookup lists (header row + ID | Name rows) ----
-type LookupOption = Option & { id: string; name: string };
-type BranchOption = LookupOption;
-
-const lookupClassNames = (menuWidth: string) => ({
-  ...selectClassNames,
-  menu: () =>
-    `!mt-[1px] ${menuWidth} !rounded-none !border !border-[#cfd7df] !z-[999999] !shadow-md`,
-  menuList: () => "!p-0 !max-h-[240px]",
-  option: ({
-    isFocused,
-    isSelected,
-  }: {
-    isFocused: boolean;
-    isSelected: boolean;
-  }) => `
-    !cursor-pointer !p-0 !text-[13px] !text-[#24364d]
-    ${isSelected ? "!bg-[#e7f7ed]" : isFocused ? "!bg-[#f2faf5]" : "!bg-white"}
-  `,
-});
-
-const makeMenuList = (cols: string, first: string, second: string) => {
-  const LookupMenuList = (props: MenuListProps<LookupOption, false>) => (
-    <components.MenuList {...props}>
-      <div
-        className={`${cols} sticky top-0 z-[1] border-b border-[#cfd7df] bg-[#f5f6fa] text-[13px] font-semibold text-[#24364d]`}
-      >
-        <div className="border-r border-[#cfd7df] px-[8px] py-[7px]">
-          {first}
-        </div>
-        <div className="px-[8px] py-[7px]">{second}</div>
-      </div>
-      {props.children}
-    </components.MenuList>
-  );
-  return LookupMenuList;
-};
-
-const makeOptionRow = (cols: string, idFirst: boolean) => {
-  const LookupOptionRow = (props: OptionProps<LookupOption, false>) => {
-    const { id, name } = props.data;
-    return (
-      <components.Option {...props}>
-        <div className={cols}>
-          <div className="truncate px-[8px] py-[6px]">{idFirst ? id : name}</div>
-          <div className="truncate px-[8px] py-[6px]">{idFirst ? name : id}</div>
-        </div>
-      </components.Option>
-    );
-  };
-  return LookupOptionRow;
-};
-
-// lkpBranch: Branch (= box width) | ID hanging outside the box to the right
-const BRANCH_COLS = "grid grid-cols-[1fr_55px]";
-const branchClassNames = lookupClassNames("!w-[calc(100%_+_55px)]");
-const branchComponents = {
-  MenuList: makeMenuList(BRANCH_COLS, "Branch", "ID"),
-  Option: makeOptionRow(BRANCH_COLS, false),
-};
-
-const CustomRadio: React.FC<RadioOptionProps> = ({
-  name,
-  value,
-  label,
-  checked,
-  onChange,
-}) => (
-  <label className="flex cursor-pointer items-center gap-2.5 whitespace-nowrap select-none">
-    <input
-      type="radio"
-      name={name}
-      value={value}
-      checked={checked}
-      onChange={onChange}
-      className="sr-only"
-    />
-    <span
-      className={`flex h-[19px] w-[19px] shrink-0 items-center justify-center rounded-full border bg-white ${checked ? "border-[#64d96e]" : "border-[#cbd3dc]"
-        }`}
-    >
-      <span
-        className={`h-2.5 w-2.5 rounded-full bg-[#64d96e] ${checked ? "opacity-100" : "opacity-0"
-          }`}
-      />
-    </span>
-    <span className="text-[14px] font-normal text-[#35445a]">{label}</span>
-  </label>
-);
-
-const RadioPanel: React.FC<{
-  children: React.ReactNode;
-  className?: string;
-  id?: string;
-}> = ({ children, className = "", id }) => (
-  <div
-    id={id}
-    className={`relative border border-[#e0e5ea] bg-white px-3.5 py-3 ${className}`}
-  >
-    <div className="flex flex-col gap-3">{children}</div>
-  </div>
-);
-
-const FieldLabel: React.FC<{
-  children: React.ReactNode;
-  className?: string;
-}> = ({ children, className = "" }) => (
-  <div
-    className={`flex h-[30px] items-center   bg-[#fafbfc] px-3 text-[14px] text-[#405066] ${className}`}
-  >
-    {children}
-  </div>
-);
-
-// ---- Item Group / Item lookups ----
-type LookupItem = { id: string; name: string; groupId?: string };
-
-// the same rules as the other selects, but typeable and clearable
-const pairProps = {
-  ...selectProps,
-  isSearchable: true,
-  isClearable: true,
-};
-
-// typing searches the ID and the name
-const lookupFilter = createFilter<LookupOption>({
-  ignoreCase: true,
-  ignoreAccents: true,
-  matchFrom: "any",
-  stringify: (o) => `${o.data.id} ${o.data.name}`,
-});
-
-// ID box: its list spans both boxes (ID | Name).
-// Name box: Name = box width, the ID column hangs outside to the right.
-const ID_COLS = "grid grid-cols-[143px_1fr]";
-const NAME_COLS = "grid grid-cols-[1fr_110px]";
-const idClassNames = lookupClassNames("!w-[490px]");
-const nameClassNames = lookupClassNames("!w-[calc(100%_+_110px)]");
-const rangeClassNames = lookupClassNames("!w-[450px]");
-
-const lookupKit = (idHead: string, nameHead: string) => ({
-  id: {
-    MenuList: makeMenuList(ID_COLS, idHead, nameHead),
-    Option: makeOptionRow(ID_COLS, true),
-  },
-  name: {
-    MenuList: makeMenuList(NAME_COLS, nameHead, idHead),
-    Option: makeOptionRow(NAME_COLS, false),
-  },
-});
-const groupKit = lookupKit("ID", "Group Name");
-const itemKit = lookupKit("Item ID", "Item Name");
-
-const toOptions = (list: LookupItem[], labelIsId: boolean): LookupOption[] =>
-  list.map((i) => ({
-    value: i.id,
-    label: labelIsId ? i.id : i.name,
-    id: i.id,
-    name: i.name,
-  }));
-
-// ID box + Name box bound to one value
-const LookupPair: React.FC<{
-  idInputId: string;
-  nameInputId: string;
-  kit: typeof groupKit;
-  items: LookupItem[];
-  value: string | null;
-  onChange: (id: string | null) => void;
-  disabled?: boolean;
-}> = ({ idInputId, nameInputId, kit, items, value, onChange, disabled = false }) => {
-  const idOptions = useMemo(() => toOptions(items, true), [items]);
-  const nameOptions = useMemo(() => toOptions(items, false), [items]);
-
-  const idValue = idOptions.find((o) => o.value === value) ?? null;
-  const nameValue = nameOptions.find((o) => o.value === value) ?? null;
-
-  return (
-    <div className="flex gap-2">
-      <div className="w-[135px] shrink-0">
-        <Select<LookupOption, false>
-          inputId={idInputId}
-          instanceId={idInputId}
-          options={idOptions}
-          value={idValue}
-          onChange={(o) => onChange(o?.value ?? null)}
-          isDisabled={disabled}
-          filterOption={lookupFilter}
-          {...pairProps}
-          classNames={idClassNames}
-          components={kit.id}
-        />
-      </div>
-      <div className="min-w-0 flex-1">
-        <Select<LookupOption, false>
-          inputId={nameInputId}
-          instanceId={nameInputId}
-          options={nameOptions}
-          value={nameValue}
-          onChange={(o) => onChange(o?.value ?? null)}
-          isDisabled={disabled}
-          filterOption={lookupFilter}
-          {...pairProps}
-          classNames={nameClassNames}
-          components={kit.name}
-        />
-      </div>
-    </div>
-  );
-};
-
-// ID box only (Range Item: From ID  to  To ID)
-const LookupId: React.FC<{
-  inputId: string;
-  items: LookupItem[];
-  value: string | null;
-  onChange: (id: string | null) => void;
-}> = ({ inputId, items, value, onChange }) => {
-  const idOptions = useMemo(() => toOptions(items, true), [items]);
-  const idValue = idOptions.find((o) => o.value === value) ?? null;
-
-  return (
-    <div className="w-[135px] shrink-0">
-      <Select<LookupOption, false>
-        inputId={inputId}
-        instanceId={inputId}
-        options={idOptions}
-        value={idValue}
-        onChange={(o) => onChange(o?.value ?? null)}
-        filterOption={lookupFilter}
-        {...pairProps}
-        classNames={rangeClassNames}
-        components={itemKit.id}
-      />
-    </div>
   );
 };
 
@@ -355,6 +76,8 @@ const RptSalesPriceListPage: React.FC<RptSalesPriceListPageProps> = ({
   const [itemFrom, setItemFrom] = useState<string | null>(null);
   const [itemTo, setItemTo] = useState<string | null>(null);
 
+  const groupPairOptions = useMemo(() => toPairOptions(itemGroups), [itemGroups]);
+
   // the Item lookups only list the items of the selected Item Group
   const itemChoices = useMemo(
     () =>
@@ -363,6 +86,8 @@ const RptSalesPriceListPage: React.FC<RptSalesPriceListPageProps> = ({
         : items,
     [items, groupMode, groupId],
   );
+
+  const itemPairOptions = useMemo(() => toPairOptions(itemChoices), [itemChoices]);
 
   const handleGroupChange = (nextGroupId: string | null) => {
     setGroupId(nextGroupId);
@@ -409,8 +134,6 @@ const RptSalesPriceListPage: React.FC<RptSalesPriceListPageProps> = ({
         ).map((b) => ({
           value: b.brId,
           label: b.brName,
-          id: b.brId,
-          name: b.brName,
         }));
 
         setBranchOptions(options);
@@ -487,12 +210,12 @@ const RptSalesPriceListPage: React.FC<RptSalesPriceListPageProps> = ({
       return warn("Please select 'Item'", "lkpItemID");
     }
     if (itemMode === "Range") {
-      if (!itemFrom) return warn("Please select 'From Item'", "lkpItemFromID");
-      if (!itemTo) return warn("Please select 'To Item'", "lkpItemToID");
+      if (!itemFrom) return warn("Please select 'From Item'", "lkpFromItem");
+      if (!itemTo) return warn("Please select 'To Item'", "lkpToItem");
       if (itemFrom > itemTo) {
         return warn(
           "'To Item' should be greater than 'From Item'",
-          "lkpItemToID",
+          "lkpToItem",
         );
       }
     }
@@ -638,224 +361,122 @@ const RptSalesPriceListPage: React.FC<RptSalesPriceListPageProps> = ({
   });
 
   return (
-    <div className="flex min-h-full w-full items-start justify-center bg-white px-4 py-4">
-      <div className="min-h-fit w-175 max-w-full bg-white p-0">
-        <main className="w-full overflow-hidden border border-gray-400 bg-white">
-          <Header Name="Sales Price List" />
+    <ReportForm
+      title="Sales Price List"
+      overlay={
+        // Print preview
+        preview && (
 
-          <section className="px-3.5 pb-6 pt-3">
-            {/* Branch */}
-            <div className="flex items-start justify-between gap-4 max-[560px]:flex-col">
-              <div className="flex items-center gap-3 pt-3">
-                <FieldLabel className="w-fit">Branch :</FieldLabel>
-                <div className="w-[220px] ">
-                  <Select
-                    inputId="lkpBranch"
-                    instanceId="lkpBranch"
-                    options={branchOptions}
-                    value={branch}
-                    onChange={setBranch}
-                    {...selectProps}
-                    classNames={branchClassNames}
-                    components={branchComponents}
-                  />
-                </div>
-              </div>
+          <div className="fixed inset-0 z-[99999] flex items-center justify-center bg-black/40 p-4">
+            <div className="flex h-[90vh] w-full max-w-250 flex-col overflow-hidden border border-gray-400 bg-white shadow-xl">
+              <Header Name="Print Preview" />
 
-            </div>
+              <iframe
+                title="Print Preview"
+                srcDoc={previewHtml}
+                className="min-h-0 flex-1 border-0 bg-white"
+              />
 
-            {/* Item Group / Item filters */}
-            <div className="mt-4 flex gap-3 max-[560px]:flex-col">
-              <div className="flex w-[168px] shrink-0 flex-col gap-3">
-                <RadioPanel id="rdgItemGroup" className="h-[76px]">
-                  <CustomRadio
-                    name="rdgItemGroup"
-                    value="One"
-                    label="One Item Group"
-                    checked={groupMode === "One"}
-                    onChange={() => setGroupMode("One")}
-                  />
-                  <CustomRadio
-                    name="rdgItemGroup"
-                    value="All"
-                    label="All Item Group"
-                    checked={groupMode === "All"}
-                    onChange={() => {
-                      setGroupMode("All");
-                      setGroupId(null);
-                    }}
-                  />
-                </RadioPanel>
-
-                <RadioPanel id="rdgItem" className="h-[108px]">
-                  <CustomRadio
-                    name="rdgItem"
-                    value="One"
-                    label="One Item"
-                    checked={itemMode === "One"}
-                    onChange={() => setItemMode("One")}
-                  />
-                  <CustomRadio
-                    name="rdgItem"
-                    value="Range"
-                    label="Range Item"
-                    checked={itemMode === "Range"}
-                    onChange={() => setItemMode("Range")}
-                  />
-                  <CustomRadio
-                    name="rdgItem"
-                    value="All"
-                    label="All Item"
-                    checked={itemMode === "All"}
-                    onChange={() => {
-                      setItemMode("All");
-                      setItemId(null);
-                      setItemFrom(null);
-                      setItemTo(null);
-                    }}
-                  />
-                </RadioPanel>
-              </div>
-
-              <div className="flex min-w-0 flex-1 flex-col gap-3">
-                {/* Item Group: ID | Name (same height as its radio panel) */}
-                <div className="h-[76px] pt-3">
-                  {/* hidden while All Item Group is selected */}
-                  {groupMode === "One" && (
-                    <LookupPair
-                      idInputId="lkpItemGroupID"
-                      nameInputId="lkpItemGroupName"
-                      kit={groupKit}
-                      items={itemGroups}
-                      value={groupId}
-                      onChange={handleGroupChange}
-                    />
-                  )}
+              <footer className="flex shrink-0 flex-wrap items-center justify-center gap-4 border-t border-[#e0e5ea] px-3 py-4">
+                <div className="flex gap-3">
+                  <button
+                    id="btnPreviewPrint"
+                    type="button"
+                    onClick={handlePreviewPrint}
+                    disabled={busy}
+                    className="btn-style focus-visible:ring-2 focus-visible:ring-[#64d96e] disabled:cursor-not-allowed disabled:opacity-40"
+                  >
+                    <u>P</u>rint
+                  </button>
+                  <button
+                    id="btnPreviewOk"
+                    type="button"
+                    autoFocus
+                    onClick={handlePreviewOk}
+                    disabled={busy}
+                    className="btn-style focus-visible:ring-2 focus-visible:ring-[#64d96e] disabled:cursor-not-allowed disabled:opacity-40"
+                  >
+                    <u>D</u>ownload
+                  </button>
                 </div>
 
-                {/* Item: One Item = ID + Name, Range Item = ID to ID,
-                    All Item = nothing */}
-                <div className="min-h-[108px] pt-3">
-                  {itemMode === "One" && (
-                    <LookupPair
-                      idInputId="lkpItemID"
-                      nameInputId="lkpItemName"
-                      kit={itemKit}
-                      items={itemChoices}
-                      value={itemId}
-                      onChange={setItemId}
-                    />
-                  )}
-                  {itemMode === "Range" && (
-                    <div className="flex items-center gap-2">
-                      <LookupId
-                        inputId="lkpItemFromID"
-                        items={itemChoices}
-                        value={itemFrom}
-                        onChange={setItemFrom}
-                      />
-                      <span className="text-[12px] text-[#405066]">to</span>
-                      <LookupId
-                        inputId="lkpItemToID"
-                        items={itemChoices}
-                        value={itemTo}
-                        onChange={setItemTo}
-                      />
-                    </div>
-                  )}
-                </div>
-              </div>
-            </div>
-
-            {/* actions */}
-            <div className="mt-4 flex gap-3 pl-[180px] max-[560px]:pl-0">
-              <button
-                id="btnPrint"
-                type="button"
-                onClick={handlePrint}
-                disabled={busy}
-                title="Alt+P"
-                className="btn-style disabled:cursor-not-allowed disabled:opacity-40"
-              >
-                <u>P</u>rint
-              </button>
-              {/* <button
-                id="btnClose"
-                type="button"
-                onClick={handleClose}
-                title="Alt+C"
-                className="btn-style"
-              >
-                <u>C</u>lose
-              </button> */}
-            </div>
-          </section>
-        </main>
-      </div>
-
-      {/* Print preview */}
-      {preview && (
-        <div className="fixed inset-0 z-[99999] flex items-center justify-center bg-black/40 p-4">
-          <div className="flex h-[90vh] w-full max-w-250 flex-col overflow-hidden border border-gray-400 bg-white shadow-xl">
-            <Header Name="Print Preview" />
-
-            <iframe
-              title="Print Preview"
-              srcDoc={previewHtml}
-              className="min-h-0 flex-1 border-0 bg-white"
-            />
-
-            <footer className="flex shrink-0 flex-wrap items-center justify-center gap-4 border-t border-[#e0e5ea] px-3 py-4">
-              <div className="flex gap-3">
-                <button
-                  id="btnPreviewPrint"
-                  type="button"
-                  onClick={handlePreviewPrint}
-                  disabled={busy}
-                  className="btn-style focus-visible:ring-2 focus-visible:ring-[#64d96e] disabled:cursor-not-allowed disabled:opacity-40"
+                {/* Report File: what Download saves */}
+                <div
+                  id="rdgReportFile"
+                  className="relative flex items-center gap-5 border border-[#e0e5ea] bg-white px-10.5 py-2.5"
                 >
-                  <u>P</u>rint
-                </button>
-                <button
-                  id="btnPreviewOk"
-                  type="button"
-                  autoFocus
-                  onClick={handlePreviewOk}
-                  disabled={busy}
-                  className="btn-style focus-visible:ring-2 focus-visible:ring-[#64d96e] disabled:cursor-not-allowed disabled:opacity-40"
-                >
-                  <u>D</u>ownload
-                </button>
-              </div>
-
-              {/* Report File: what Download saves */}
-              <div
-                id="rdgReportFile"
-                className="relative flex items-center gap-5 border border-[#e0e5ea] bg-white px-10.5 py-2.5"
-              >
-                <span className="absolute -top-2.5 left-2.5 bg-white px-1 text-[13px] text-[#405066]">
-                  File Format
-                </span>
-                <CustomRadio
-                  name="rdgReportFile"
-                  value="Excel"
-                  label="Excel"
-                  checked={reportFile === "Excel"}
-                  onChange={() => setReportFile("Excel")}
-                />
-                <CustomRadio
-                  name="rdgReportFile"
-                  value="PDF"
-                  label="PDF"
-                  checked={reportFile === "PDF"}
-                  onChange={() => setReportFile("PDF")}
-                />
-              </div>
-            </footer>
+                  <span className="absolute -top-2.5 left-2.5 bg-white px-1 text-[13px] text-[#405066]">
+                    File Format
+                  </span>
+                  <CustomRadio
+                    name="rdgReportFile"
+                    value="Excel"
+                    label="Excel"
+                    checked={reportFile === "Excel"}
+                    onChange={() => setReportFile("Excel")}
+                  />
+                  <CustomRadio
+                    name="rdgReportFile"
+                    value="PDF"
+                    label="PDF"
+                    checked={reportFile === "PDF"}
+                    onChange={() => setReportFile("PDF")}
+                  />
+                </div>
+              </footer>
+            </div>
           </div>
-        </div>
-      )}
-    </div>
+        )
+      }
+    >
+      <BranchOnlyFilter options={branchOptions} value={branch} onChange={setBranch} />
+
+      <PairFilter
+        name="Item Group"
+        mode={groupMode === "One" ? "One Item Group" : "All Item Group"}
+        onModeChange={(mode) => {
+          const next = mode === "One Item Group" ? "One" : "All";
+          setGroupMode(next);
+          if (next === "All") setGroupId(null);
+        }}
+        options={groupPairOptions}
+        value={groupId ?? ""}
+        onChange={(id) => handleGroupChange(id || null)}
+        // the same ID box width as the Item row below it, so the two Name boxes start at the same place
+        firstWidth={190}
+        ids={{ radio: "rdgItemGroup", first: "lkpItemGroupID", second: "lkpItemGroupName" }}
+      />
+
+      <PairFilter
+        name="Item"
+        mode={{ One: "One Item", Range: "Range Item", All: "All Item" }[itemMode]}
+        onModeChange={(mode) => {
+          const next = ({ "One Item": "One", "Range Item": "Range", "All Item": "All" } as const)[
+            mode as "One Item" | "Range Item" | "All Item"
+          ];
+          setItemMode(next);
+          if (next === "All") {
+            setItemId(null);
+            setItemFrom(null);
+            setItemTo(null);
+          }
+        }}
+        options={itemPairOptions}
+        value={itemId ?? ""}
+        onChange={(id) => setItemId(id || null)}
+        // an Item ID can be long (ACCSS-1.5MM-CABLE)
+        firstWidth={190}
+        ids={{ radio: "rdgItem", first: "lkpItemID", second: "lkpItemName" }}
+        range={{
+          from: itemFrom ?? "",
+          to: itemTo ?? "",
+          onFromChange: (id) => setItemFrom(id || null),
+          onToChange: (id) => setItemTo(id || null),
+        }}
+      />
+
+      <ReportPrintRow onPrint={handlePrint} />
+    </ReportForm>
   );
 };
 

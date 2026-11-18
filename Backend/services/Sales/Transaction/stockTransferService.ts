@@ -10,8 +10,8 @@ import pool from "../../../DB/db.js";
    type STI, in the To branch, generated). The Entry No. is the same on both.
 ========================================================= */
 
-const DOC_TYPE = "ST";
-const DOC_TYPE_G = "STI";
+const strDocType = "ST";
+const strDocType_G = "STI";
 
 /* =========================================================
    BRANCH LISTS
@@ -119,7 +119,7 @@ export async function getStockTransferItemStockService(
       AND fitemid = $3
       AND NOT (fdoctype = $4 AND fdocno = $5)
     `,
-    [PstrCoID, lkpBranch, lkpItemID, DOC_TYPE, txtDocNo]
+    [PstrCoID, lkpBranch, lkpItemID, strDocType, txtDocNo]
   );
 
   const costResult = await pool.query(
@@ -168,12 +168,12 @@ export async function getStockTransferNextDocNoService(
       AND fdoctype = $4
     LIMIT 1
     `,
-    [PstrCoID, String(PstrYear), lkpBranch, DOC_TYPE]
+    [PstrCoID, String(PstrYear), lkpBranch, strDocType]
   );
 
   const next = await pool.query(
     `SELECT fdocno FROM dbo.getnextdocno($1::varchar, $2::varchar, $3::varchar, $4::varchar)`,
-    [PstrCoID, String(PstrYear), lkpBranch, DOC_TYPE]
+    [PstrCoID, String(PstrYear), lkpBranch, strDocType]
   );
 
   return {
@@ -350,7 +350,7 @@ export function buildStockTransferDeleteAuditNote(
   const total = lines.reduce((sum, line) => sum + Number(line.ftotalcost), 0);
 
   const head =
-    `DocType : ${DOC_TYPE} - DocNo : ${txtDocNo}; Branch : ${lkpBranch}` +
+    `DocType : ${strDocType} - DocNo : ${txtDocNo}; Branch : ${lkpBranch}` +
     (lkpToBranch ? ` To : ${lkpToBranch}` : "") +
     (dtpDate ? ` Date : ${showDate(dtpDate)}` : "") +
     `; Lines : ${lines.length}; Total Cost : ${total.toFixed(4)}`;
@@ -425,7 +425,7 @@ export async function saveStockTransferService(p: {
         WHERE fcoid = $1 AND fyear = $2 AND fbrid = $3 AND fdoctype = $4
         LIMIT 1
         `,
-        [p.PstrCoID, String(p.PstrYear), p.lkpBranch, DOC_TYPE]
+        [p.PstrCoID, String(p.PstrYear), p.lkpBranch, strDocType]
       );
 
       if (String(setting.rows[0]?.fseqnoincrementmode ?? "") !== "Auto") {
@@ -436,7 +436,7 @@ export async function saveStockTransferService(p: {
 
       const next = await client.query(
         `SELECT fdocno FROM dbo.getnextdocno($1::varchar, $2::varchar, $3::varchar, $4::varchar)`,
-        [p.PstrCoID, String(p.PstrYear), p.lkpBranch, DOC_TYPE]
+        [p.PstrCoID, String(p.PstrYear), p.lkpBranch, strDocType]
       );
 
       txtDocNo = String(next.rows[0].fdocno);
@@ -794,7 +794,7 @@ export function buildStockTransferLineDeleteAuditNote(
   linesBefore: number
 ): string {
   const head =
-    `DocType : ${DOC_TYPE} - DocNo : ${txtDocNo}; Branch : ${lkpBranch}` +
+    `DocType : ${strDocType} - DocNo : ${txtDocNo}; Branch : ${lkpBranch}` +
     (lkpToBranch ? ` To : ${lkpToBranch}` : "") +
     `; Lines : ${linesBefore} -> ${linesBefore - 1}`;
 
@@ -849,7 +849,7 @@ export async function postStockTransferService(p: {
         p_pstruserid => $7::varchar
       )
       `,
-      ["P", p.PstrCoID, String(p.PstrYear), p.lkpBranch, DOC_TYPE, p.txtDocNo, p.PstrUserID]
+      ["P", p.PstrCoID, String(p.PstrYear), p.lkpBranch, strDocType, p.txtDocNo, p.PstrUserID]
     );
 
     const after = await fetchCursor<StockTransferLine>(
@@ -948,16 +948,12 @@ export async function getStockTransferPrintService(
     txtDocNo
   );
 
-  // The lines come from the TL's dbo.sp_pagestockprint (the old SP_rptStDocPrint),
-  // which takes the WHERE text. The filter is built HERE, from values the
-  // controller has already validated, each one quoted - never from the browser.
-  // (The old report's filter: company, year, branch, doc type and Entry No.)
-  const quote = (value: string) => value.replace(/'/g, "''");
+
 
   const strFilter =
-    `a.fcoid = '${quote(PstrCoID)}' and a.fyear = '${Math.trunc(Number(PstrYear))}' ` +
-    `and a.fbrid = '${quote(lkpBranch)}' and a.fdoctype = '${DOC_TYPE}' ` +
-    `and a.fdocno = '${quote(txtDocNo)}'`;
+    `a.fcoid = '$PstrCoID' and a.fyear = '$PstrYear' ` +
+    `and a.fbrid = $lkpBranch and a.fdoctype = '${strDocType}' ` +
+    `and a.fdocno = $txtDocNo`;
 
   const cursorName =
     `cur_stocktransferprint_${Date.now()}_${Math.floor(Math.random() * 100000)}`;
@@ -975,7 +971,7 @@ export async function getStockTransferPrintService(
          p_strfilter     => $2::text,
          p_result_cursor => $3::refcursor
        )`,
-      [DOC_TYPE, strFilter, cursorName]
+      [strDocType, strFilter, cursorName]
     );
 
     const result = await client.query(`FETCH ALL FROM "${cursorName}"`);
@@ -1107,8 +1103,8 @@ async function callSpStockTransfer(
       p.PstrCoID,
       String(p.PstrYear),
       p.lkpBranch,
-      DOC_TYPE,
-      DOC_TYPE_G,
+      strDocType,
+      strDocType_G,
       p.txtDocNo,
       p.lkpToBranch ?? null,
       p.dtpDate ?? null,

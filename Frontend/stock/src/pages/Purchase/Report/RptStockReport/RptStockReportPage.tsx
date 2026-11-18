@@ -1,17 +1,11 @@
 import React, { useEffect, useMemo, useState } from "react";
-import Select from "react-select";
-import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
-import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
-import { DatePicker } from "@mui/x-date-pickers/DatePicker";
 import dayjs from "dayjs";
 import customParseFormat from "dayjs/plugin/customParseFormat";
 import { toast } from "react-toastify";
-import RadioGroup from "../../../../components/common/RadioGroup";
+import { CustomRadio, RadioPanel } from "../../../../components/common/ReportFormParts";
 import { useEnterAsTab } from "../../../../hooks/useEnterAsTab";
 import { useAltShortcuts } from "../../../../hooks/useAltShortcuts";
 import { useCtrlShortcuts } from "../../../../hooks/useCtrlShortcuts";
-import { useGridCellFocus } from "../../../../hooks/useGridCellFocus";
-import { useAdvanceAfterSelect } from "../../../../hooks/useAdvanceAfterSelect";
 import { useInitialFocus } from "../../../../hooks/useInitialFocus";
 import ReportPreview from "../../../../components/common/ReportPreview";
 import { buildStockReportPdf } from "../../../../components/Purchase/Report/RptStockReport/RptStockReportPdf";
@@ -20,20 +14,16 @@ import {
   printStockReport,
   type PrintReport,
 } from "../../../../components/Purchase/Report/RptStockReport/RptStockReportPrintReport";
+import type { PairSelectOption } from "../../../../components/common/CustomLinkedPairSelect";
 import {
-  filterPairOption,
-  makePairComponents,
-  makePairDividedMenuStyles,
-  type PairOption,
-} from "../../../../components/PairSelect/pairSelectParts";
-import { usePairMenuHang } from "../../../../hooks/usePairMenuHang";
-import {
-  BranchDividedMenuList,
-  BranchDividedOption,
-  branchMenuStyles,
-  filterLabelOrValue,
-} from "../../../../components/BranchSelect/branchSelectParts";
-import Header from "../../../../components/common/Header";
+  BranchFilter,
+  FilterRow,
+  PairFilter,
+  PeriodFilter,
+  PostStatusFilter,
+  ReportForm,
+  ReportPrintRow,
+} from "../../../../components/common/ReportFilters";
 
 dayjs.extend(customParseFormat);
 
@@ -50,224 +40,10 @@ const postStatusOptions: Option[] = [
   { value: "UNPOSTED", label: "Not Posted" },
 ];
 
-const selectClassNames = {
-  control: ({
-    isFocused,
-    isDisabled,
-  }: {
-    isFocused: boolean;
-    isDisabled: boolean;
-  }) => `
-    !min-h-[25px] !h-[30px] !rounded-[4px] !border !shadow-none !text-[13px]
-    hover:!border-[#aab8c5]
-    ${isDisabled ? "!bg-[#f6f8fa]" : "!bg-white"}
-    ${isFocused ? "!border-green-600" : "!border-[#cfd7df]"}
-  `,
-  valueContainer: () => "!h-[23px] !py-0 !px-[5px] !overflow-hidden",
-  singleValue: () => "!m-0 !text-[13px] !text-[#24364d]",
-  placeholder: () => "!m-0 !text-[13px] !text-[#7a8794]",
-  input: () => "!m-0 !p-0 !text-[13px] !text-[#24364d]",
-  indicatorsContainer: () => "!h-[23px]",
-  dropdownIndicator: () => "!p-[3px] !text-[#657486]",
-  indicatorSeparator: () => "!hidden",
-  clearIndicator: () => "!p-[3px]",
-  menu: () =>
-    "!mt-[1px] !rounded-none !border !border-[#cfd7df] !z-[999999] !shadow-md",
-  menuList: () => "!p-0 !max-h-[180px]",
-  option: ({
-    isFocused,
-    isSelected,
-  }: {
-    isFocused: boolean;
-    isSelected: boolean;
-  }) => `
-    !cursor-pointer !px-[6px] !py-[5px] !text-[13px] !text-[#24364d]
-    ${isSelected ? "!bg-[#e7f7ed]" : isFocused ? "!bg-[#f2faf5]" : "!bg-white"}
-  `,
-};
-
-const selectProps = {
-  isSearchable: false,
-  isClearable: false,
-  classNames: selectClassNames,
-  menuPosition: "fixed" as const,
-  menuPortalTarget: typeof document !== "undefined" ? document.body : undefined,
-};
-
-// The Branch box: the same "Branch | ID" list as the Branch boxes of the other screens (grey
-// header, a divider, the ID of every branch next to its name; searchable on either). Only its
-// list differs from the other boxes, so the menu / list / row looks of selectClassNames are left out.
-const branchProps = {
-  ...selectProps,
-  isSearchable: true,
-  classNames: {
-    control: selectClassNames.control,
-    valueContainer: selectClassNames.valueContainer,
-    singleValue: selectClassNames.singleValue,
-    placeholder: selectClassNames.placeholder,
-    input: selectClassNames.input,
-    indicatorsContainer: selectClassNames.indicatorsContainer,
-    dropdownIndicator: selectClassNames.dropdownIndicator,
-    indicatorSeparator: selectClassNames.indicatorSeparator,
-    clearIndicator: selectClassNames.clearIndicator,
-    option: selectClassNames.option,
-  },
-  styles: branchMenuStyles,
-  components: { Option: BranchDividedOption, MenuList: BranchDividedMenuList },
-  filterOption: filterLabelOrValue,
-};
-
-// The Item Group boxes: the same two-column "ID | Name" lists as the Item boxes of Beginning
-// Stock (components/PairSelect): the Group ID box opens "Group ID | Group Name", the Group
-// Name box opens "Group Name | Group ID", both with a divider, both searchable on either
-// column, and picking from one fills the other. Created once, outside the page.
-const groupIdComponents = makePairComponents("Group ID", "Group Name", false, true);
-const groupNameComponents = makePairComponents("Group ID", "Group Name", true, true);
-
-// The Item boxes: the same "ID | Name" lists as the Item Group boxes (the Item ID box opens
-// "Item ID | Item Name", the Item Name box opens "Item Name | Item ID").
-const itemIdComponents = makePairComponents("Item ID", "Item Name", false, true);
-const itemNameComponents = makePairComponents("Item ID", "Item Name", true, true);
-
-// how far the Group Name list hangs past its box (its Group ID column)
-const NAME_MENU_HANG = 120;
-
-// how far the Item Name list hangs past its box (its Item ID column): an Item ID can be long
-// (ACCSS-1.5MM-CABLE), so this column is wider
-const ITEM_NAME_MENU_HANG = 200;
-
-// how far the lists of the Item Range boxes hang past their box
-const RANGE_MENU_HANG = 210;
-
-// the look of the other boxes, but the open list is the pair list's own (its menu, rows and
-// header come from the components and the divided styles); only the row colours are kept
-const pairProps = {
-  ...selectProps,
-  isSearchable: true,
-  classNames: {
-    control: selectClassNames.control,
-    valueContainer: selectClassNames.valueContainer,
-    singleValue: selectClassNames.singleValue,
-    placeholder: selectClassNames.placeholder,
-    input: selectClassNames.input,
-    indicatorsContainer: selectClassNames.indicatorsContainer,
-    dropdownIndicator: selectClassNames.dropdownIndicator,
-    indicatorSeparator: selectClassNames.indicatorSeparator,
-    clearIndicator: selectClassNames.clearIndicator,
-    option: ({ isFocused, isSelected }: { isFocused: boolean; isSelected: boolean }) =>
-      `!cursor-pointer !text-[#24364d] ${
-        isSelected ? "!bg-[#e7f7ed]" : isFocused ? "!bg-[#f2faf5]" : "!bg-white"
-      }`,
-  },
-  filterOption: filterPairOption,
-};
-
-const FieldLabel: React.FC<{
-  children: React.ReactNode;
-  className?: string;
-}> = ({ children, className = "" }) => (
-  <div
-    className={`flex h-[30px] items-center border border-[#e0e5ea] bg-[#fafbfc] px-3 text-[12px] text-[#405066] ${className}`}
-  >
-    {children}
-  </div>
-);
-
-type AppDatePickerProps = {
-  id: string;
-  label: string;
-  value: string;
-  onChange: (value: string) => void;
-  disabled?: boolean;
-};
-
-const AppDatePicker: React.FC<AppDatePickerProps> = ({
-  id,
-  label,
-  value,
-  onChange,
-  disabled = false,
-}) => (
-  <LocalizationProvider dateAdapter={AdapterDayjs}>
-    <DatePicker
-      value={value ? dayjs(value, DATE_FORMAT) : null}
-      onChange={(newValue) => {
-        onChange(newValue?.isValid() ? newValue.format(DATE_FORMAT) : "");
-      }}
-      format={DATE_FORMAT}
-      disabled={disabled}
-      slotProps={{
-        textField: { id, slotProps: { htmlInput: { "aria-label": label } } },
-        openPickerButton: { sx: { padding: "2px", margin: 0 } },
-        inputAdornment: { sx: { margin: 0, padding: 0 } },
-      }}
-      sx={{
-        width: "140px",
-        "& .MuiPickersTextField-root": { width: "120px" },
-        "& .MuiPickersInputBase-root": {
-          width: "140px",
-          height: "30px",
-          minHeight: "30px",
-          boxSizing: "border-box",
-          borderRadius: "4px",
-          backgroundColor: "#ffffff",
-          fontSize: "12px",
-          padding: 0,
-          overflow: "hidden",
-        },
-        "& .MuiPickersInputBase-sectionsContainer": {
-          paddingLeft: "10px !important",
-          paddingRight: "0px !important",
-          marginBottom: "-5px !important",
-          marginLeft: "0px !important",
-          boxSizing: "border-box",
-          overflow: "hidden",
-        },
-        "& .MuiPickersInputBase-sectionContent": {
-          fontSize: "12px",
-          color: "#344054",
-        },
-        "& .MuiPickersInputBase-input": {
-          minWidth: 0,
-          width: "100%",
-          fontSize: "12px",
-          padding: 0,
-          height: "30px",
-          boxSizing: "border-box",
-        },
-        "& .MuiInputAdornment-root": { margin: 0, padding: 0 },
-        "& .MuiIconButton-root": {
-          width: "24px",
-          height: "24px",
-          padding: "2px",
-          margin: 0,
-        },
-        "& .MuiSvgIcon-root": { fontSize: "16px" },
-        "& .Mui-disabled": { WebkitTextFillColor: "#24364d" },
-        "& .MuiPickersOutlinedInput-notchedOutline": {
-          borderColor: "#B7C7D7 !important",
-        },
-        "& .MuiPickersInputBase-root:hover .MuiPickersOutlinedInput-notchedOutline":
-          { borderColor: "#B7C7D7 !important" },
-        "& .MuiPickersInputBase-root.Mui-focused .MuiPickersOutlinedInput-notchedOutline":
-          { borderColor: "#16a34a !important", borderWidth: "1px" }, // green-600, as the cell outline
-        "& .MuiPickersInputBase-root.Mui-error .MuiPickersOutlinedInput-notchedOutline":
-          { borderColor: "#B7C7D7 !important" },
-        "& .MuiPickersInputBase-root.Mui-error:hover .MuiPickersOutlinedInput-notchedOutline":
-          { borderColor: "#B7C7D7 !important" },
-        "& .MuiPickersInputBase-root.Mui-error.Mui-focused .MuiPickersOutlinedInput-notchedOutline":
-          { borderColor: "#B7C7D7 !important" },
-      }}
-    />
-  </LocalizationProvider>
-);
-
 const RptStockReportPage: React.FC = () => {
   // Enter moves on like Tab; the box the cursor is in is outlined; after a pick from a list the
   // cursor goes on
   const handleEnterAsTab = useEnterAsTab();
-  const { cellFocusClass } = useGridCellFocus();
-  const { advanceAfterPick, advanceOnEnter } = useAdvanceAfterSelect();
 
   // the lookups have been asked for (found or not): the cursor can start
   const [lookupsLoaded, setLookupsLoaded] = useState(false);
@@ -284,10 +60,6 @@ const RptStockReportPage: React.FC = () => {
     { lkpItemGroupID: string; txtItemGroupName: string }[]
   >([]);
 
-  // the Group ID list covers the Group ID box AND the Group Name box next to it (measured
-  // when it opens)
-  const { hang: groupIdHang, measure: measureGroupIdHang } = usePairMenuHang();
-
   // the Print Preview: the report the server sent, the name of the file, and the arguments it was
   // made from (the Excel file is made from the same ones)
   const [preview, setPreview] = useState<{
@@ -301,7 +73,6 @@ const RptStockReportPage: React.FC = () => {
   const [itemRows, setItemRows] = useState<
     { lkpBranch: string; lkpItemID: string; txtItemName: string; lkpItemGroupID: string }[]
   >([]);
-  const { hang: itemIdHang, measure: measureItemIdHang } = usePairMenuHang();
 
   useEffect(() => {
     const loadBranches = async () => {
@@ -356,28 +127,14 @@ const RptStockReportPage: React.FC = () => {
   const [toDate, setToDate] = useState(TODAY); // dtpToDate
   const [orderByTxnNo, setOrderByTxnNo] = useState(false); // chkOrderbyTxnNo
 
-  // the group boxes: ID | Name, and Name | ID (one group, two boxes)
-  const groupIdOptions = useMemo<PairOption[]>(
+  // the group boxes: one list, "ID | Name" in the ID box and "Name | ID" in the Name box
+  const groupPairOptions = useMemo<PairSelectOption[]>(
     () =>
       groupRows.map((row) => ({
         value: row.lkpItemGroupID,
-        label: row.lkpItemGroupID,
-        id: row.lkpItemGroupID,
-        name: row.txtItemGroupName,
+        firstLabel: row.lkpItemGroupID,
+        secondLabel: row.txtItemGroupName,
       })),
-    [groupRows],
-  );
-
-  const groupNameOptions = useMemo<PairOption[]>(
-    () =>
-      [...groupRows]
-        .sort((a, b) => a.txtItemGroupName.localeCompare(b.txtItemGroupName))
-        .map((row) => ({
-          value: row.lkpItemGroupID,
-          label: row.txtItemGroupName,
-          id: row.lkpItemGroupID,
-          name: row.txtItemGroupName,
-        })),
     [groupRows],
   );
 
@@ -403,28 +160,14 @@ const RptStockReportPage: React.FC = () => {
     setToItem("");
   };
 
-  // the item boxes: ID | Name, and Name | ID (one item, two boxes)
-  const itemIdOptions = useMemo<PairOption[]>(
+  // the item boxes: one list, "ID | Name" in the ID box and "Name | ID" in the Name box
+  const itemPairOptions = useMemo<PairSelectOption[]>(
     () =>
       branchItems.map((row) => ({
         value: row.lkpItemID,
-        label: row.lkpItemID,
-        id: row.lkpItemID,
-        name: row.txtItemName,
+        firstLabel: row.lkpItemID,
+        secondLabel: row.txtItemName,
       })),
-    [branchItems],
-  );
-
-  const itemNameOptions = useMemo<PairOption[]>(
-    () =>
-      [...branchItems]
-        .sort((a, b) => a.txtItemName.localeCompare(b.txtItemName))
-        .map((row) => ({
-          value: row.lkpItemID,
-          label: row.txtItemName,
-          id: row.lkpItemID,
-          name: row.txtItemName,
-        })),
     [branchItems],
   );
 
@@ -571,357 +314,151 @@ const RptStockReportPage: React.FC = () => {
     p: () => (preview ? printStockReport(preview.report) : handlePrint()),
   });
 
+  // the item filters work with By Item, the group filters with By Item Group: the other one is switched off
   const itemRadioDisabled = rdgByItem !== "By Item";
   const groupRadioDisabled = rdgByItem !== "By Group";
-  const oneItemDisabled =
-    rdgByItem !== "By Item" ||
-    (rdgItem !== "One Item" && rdgItem !== "Item Range");
-  const groupDisabled = rdgByItem !== "By Group" || rdgItemGroup !== "One Item Group";
 
   return (
-    <div
+    <ReportForm
+      title="Stock"
       onKeyDown={handleEnterAsTab}
-      className="flex min-h-screen w-full items-start justify-center bg-white px-4 py-4"
+      overlay={
+        // the Print Preview (after Print)
+        preview && (
+          <ReportPreview
+            showClose={false}
+            html={buildHtml(preview.report)}
+            fileBase={preview.fileBase}
+            onPrint={() => printStockReport(preview.report)}
+            buildPdf={() => buildStockReportPdf(preview.report)}
+            fetchExcel={fetchExcel}
+            onClose={() => setPreview(null)}
+          />
+        )
+      }
     >
-      <div className="min-h-fit w-240 max-w-full bg-white p-0">
-        <main className="w-full overflow-hidden border border-gray-400 bg-white">
-          <Header Name="Stock" />
+      <BranchFilter
+        mode={rdgBranch}
+        onModeChange={(mode) => {
+          if (mode !== rdgBranch) clearItemSelections();
+          setRdgBranch(mode);
+        }}
+        options={branchOptions}
+        value={branch}
+        onChange={(option) => {
+          if (option?.value !== branch?.value) clearItemSelections();
+          setBranch(option);
+        }}
+      />
 
-          <section className="px-3.5 pb-6 pt-3">
-            <div className="grid grid-cols-[168px_1fr] gap-x-4 gap-y-3">
-              {/* Branch */}
-              <RadioGroup
-                className={cellFocusClass}
-                name="rdgBranch"
-                value={rdgBranch}
-                options={[
-                  { value: "One Branch", label: "One Branch" },
-                  { value: "All Branches", label: "All Branches" },
-                ]}
-                onChange={(value) => {
-                  if (value !== rdgBranch) clearItemSelections();
-                  setRdgBranch(value);
-                }}
-              />
-              <div className="pt-3">
-                <div
-                  className={`w-[250px] ${cellFocusClass}`}
-                  onKeyDown={(event) => advanceOnEnter(event)}
-                >
-                  <Select
-                    inputId="lkpBranch"
-                    instanceId="lkpBranch"
-                    options={branchOptions}
-                    value={branch}
-                    onChange={(option) => {
-                      if (option?.value !== branch?.value) clearItemSelections();
-                      setBranch(option);
-                      if (option) advanceAfterPick("lkpBranch");
-                    }}
-                    isDisabled={rdgBranch !== "One Branch"}
-                    noOptionsMessage={() => "No Branch Found"}
-                    {...branchProps}
-                  />
-                </div>
-              </div>
+      {/* By Item Group / By Item */}
+      <FilterRow
+        panel={
+          <RadioPanel id="rdgByItem" className="h-17.5 w-38">
+            <CustomRadio
+              name="rdgByItem"
+              value="By Group"
+              label="By Item Group"
+              checked={rdgByItem === "By Group"}
+              onChange={() => {
+                setRdgByItem("By Group");
+                // By Item Group chosen: One Item Group is what is switched on
+                setRdgItemGroup("One Item Group");
+              }}
+            />
+            <CustomRadio
+              name="rdgByItem"
+              value="By Item"
+              label="By Item"
+              checked={rdgByItem === "By Item"}
+              onChange={() => setRdgByItem("By Item")}
+            />
+          </RadioPanel>
+        }
+      />
 
-              {/* By Group / By Item selector */}
-              <RadioGroup
-                className={cellFocusClass}
-                name="rdgByItem"
-                value={rdgByItem}
-                options={[
-                  { value: "By Group", label: "By Item Group" },
-                  { value: "By Item", label: "By Item" },
-                ]}
-                onChange={(value) => {
-                  setRdgByItem(value);
+      {/* Item Group: One / All, with By Item Group */}
+      <PairFilter
+        name="Item Group"
+        mode={rdgItemGroup}
+        onModeChange={setRdgItemGroup}
+        options={groupPairOptions}
+        value={groupId}
+        onChange={setGroupId}
+        disabled={groupRadioDisabled}
+        // the same ID box width as the Item row below it, so the two Name boxes start at the same place
+        firstWidth={190}
+        ids={{ radio: "rdgItemGroup", first: "lkpOneItemGroupID", second: "lkpOneItemGroupName" }}
+      />
 
-                  // By Item Group chosen: One Item Group is what is switched on
-                  if (value === "By Group") setRdgItemGroup("One Item Group");
-                }}
-              />
-              <div aria-hidden="true" />
+      {/* Item: One / Item Range / All, with By Item */}
+      <PairFilter
+        name="Item"
+        mode={rdgItem}
+        onModeChange={setRdgItem}
+        options={itemPairOptions}
+        value={oneItemId}
+        onChange={setOneItemId}
+        disabled={itemRadioDisabled}
+        // an Item ID can be long (ACCSS-1.5MM-CABLE)
+        firstWidth={190}
+        ids={{ radio: "rdgItem", first: "lkpOneItemID", second: "lkpOneItemName" }}
+        range={{
+          from: fromItem,
+          to: toItem,
+          onFromChange: setFromItem,
+          onToChange: setToItem,
+          label: "Item Range",
+        }}
+      />
 
-              {/* Group filters: enabled only when By Group is selected */}
-              <RadioGroup
-                className={cellFocusClass}
-                name="rdgItemGroup"
-                value={rdgItemGroup}
-                options={[
-                  { value: "One Item Group", label: "One Item Group" },
-                  { value: "All Item Group", label: "All Item Group" },
-                ]}
-                onChange={setRdgItemGroup}
-                disabled={groupRadioDisabled}
-              />
-              <div className="flex flex-col gap-3 pt-3">
-                {!groupDisabled && (
-                  <div className="grid grid-cols-[190px_1fr]">
-                    <div
-                      className={cellFocusClass}
-                      onKeyDown={(event) => advanceOnEnter(event, ["lkpOneItemGroupName"])}
-                    >
-                      <Select<PairOption, false>
-                        inputId="lkpOneItemGroupID"
-                        instanceId="lkpOneItemGroupID"
-                        name="lkpOneItemGroupID"
-                        options={groupIdOptions}
-                        value={groupIdOptions.find((o) => o.value === groupId) ?? null}
-                        onChange={(option) => {
-                          setGroupId(option?.value ?? "");
-                          if (option) advanceAfterPick("lkpOneItemGroupID", ["lkpOneItemGroupName"]);
-                        }}
-                        isDisabled={groupDisabled}
-                        components={groupIdComponents}
-                        styles={makePairDividedMenuStyles(groupIdHang)}
-                        onMenuOpen={() =>
-                          measureGroupIdHang("lkpOneItemGroupID", "lkpOneItemGroupName")
-                        }
-                        noOptionsMessage={() => "No Item Group Found"}
-                        {...pairProps}
-                      />
-                    </div>
-                    <div
-                      className={`-ml-px ${cellFocusClass}`}
-                      style={{ marginRight: NAME_MENU_HANG }}
-                      onKeyDown={(event) => advanceOnEnter(event)}
-                    >
-                      <Select<PairOption, false>
-                        inputId="lkpOneItemGroupName"
-                        instanceId="lkpOneItemGroupName"
-                        name="lkpOneItemGroupName"
-                        options={groupNameOptions}
-                        value={groupNameOptions.find((o) => o.value === groupId) ?? null}
-                        onChange={(option) => {
-                          setGroupId(option?.value ?? "");
-                          if (option) advanceAfterPick("lkpOneItemGroupName");
-                        }}
-                        isDisabled={groupDisabled}
-                        components={groupNameComponents}
-                        styles={makePairDividedMenuStyles(NAME_MENU_HANG)}
-                        noOptionsMessage={() => "No Item Group Found"}
-                        {...pairProps}
-                      />
-                    </div>
-                  </div>
-                )}
-                
-              </div>
+      <PostStatusFilter options={postStatusOptions} value={postStatus} onChange={setPostStatus}>
+        <label
+          htmlFor="chkOrderbyTxnNo"
+          className="flex h-7.5 cursor-pointer items-center gap-2 rounded-sm border border-gray-300 bg-white px-2 text-[14px] text-[#172b43] select-none"
+        >
+          <input
+            id="chkOrderbyTxnNo"
+            type="checkbox"
+            checked={orderByTxnNo}
+            onChange={(event) => setOrderByTxnNo(event.target.checked)}
+            className="h-4 w-4 accent-[#4ade80]"
+          />
+          Order by Posting No.
+        </label>
+      </PostStatusFilter>
 
-              {/* Item filters: enabled only when By Item is selected */}
-              <RadioGroup
-                className={cellFocusClass}
-                name="rdgItem"
-                value={rdgItem}
-                options={[
-                  { value: "One Item", label: "One Item" },
-                  { value: "Item Range", label: "Item Range" },
-                  { value: "All Item", label: "All Item" },
-                ]}
-                onChange={setRdgItem}
-                disabled={itemRadioDisabled}
-              />
-              <div className="flex flex-col gap-3 pt-3">
-                {rdgItem !== "All Item" &&
-                  (rdgItem === "Item Range" ? (
-                    <div className="grid grid-cols-3 gap-2 w-[85%] mt-6">
-                      <div className={cellFocusClass} onKeyDown={(event) => advanceOnEnter(event)}>
-                        <Select<PairOption, false>
-                        inputId="lkpFromItem"
-                        instanceId="lkpFromItem"
-                        name="lkpFromItem"
-                        options={itemIdOptions}
-                        value={itemIdOptions.find((o) => o.value === fromItem) ?? null}
-                        onChange={(option) => {
-                          setFromItem(option?.value ?? "");
-                          if (option) advanceAfterPick("lkpFromItem");
-                        }}
-                        isDisabled={itemRadioDisabled}
-                        placeholder="From Item"
-                        aria-label="From Item"
-                        components={itemIdComponents}
-                        styles={makePairDividedMenuStyles(RANGE_MENU_HANG)}
-                        noOptionsMessage={() => "No Item Found"}
-                        {...pairProps}
-                      />
-                      </div>
+      {/* Detailed / Summary */}
+      <FilterRow
+        panel={
+          <RadioPanel id="rdgDetSum" className="h-17.5 w-38">
+            <CustomRadio
+              name="rdgDetSum"
+              value="Detailed"
+              label="Detailed"
+              checked={rdgDetSum === "Detailed"}
+              onChange={() => setRdgDetSum("Detailed")}
+            />
+            <CustomRadio
+              name="rdgDetSum"
+              value="Summary"
+              label="Summary"
+              checked={rdgDetSum === "Summary"}
+              onChange={() => setRdgDetSum("Summary")}
+            />
+          </RadioPanel>
+        }
+      />
 
-                      <div className={cellFocusClass} onKeyDown={(event) => advanceOnEnter(event)}>
+      <PeriodFilter
+        from={fromDate}
+        to={toDate}
+        onFromChange={setFromDate}
+        onToChange={setToDate}
+      />
 
-                        <Select<PairOption, false>
-                        inputId="lkpToItem"
-                        instanceId="lkpToItem"
-                        name="lkpToItem"
-                        options={itemIdOptions}
-                        value={itemIdOptions.find((o) => o.value === toItem) ?? null}
-                        onChange={(option) => {
-                          setToItem(option?.value ?? "");
-                          if (option) advanceAfterPick("lkpToItem");
-                        }}
-                        isDisabled={itemRadioDisabled}
-                        placeholder="To Item"
-                        aria-label="To Item"
-                        components={itemIdComponents}
-                        styles={makePairDividedMenuStyles(RANGE_MENU_HANG)}
-                        noOptionsMessage={() => "No Item Found"}
-                        {...pairProps}
-                      />
-
-                      </div>
-                    </div>
-                  ) : (
-                    <div className="grid grid-cols-[190px_1fr]">
-                      <div
-                        className={cellFocusClass}
-                        onKeyDown={(event) => advanceOnEnter(event, ["lkpOneItemName"])}
-                      >
-                        <Select<PairOption, false>
-                          inputId="lkpOneItemID"
-                          instanceId="lkpOneItemID"
-                          name="lkpOneItemID"
-                          options={itemIdOptions}
-                          value={itemIdOptions.find((o) => o.value === oneItemId) ?? null}
-                          onChange={(option) => {
-                            setOneItemId(option?.value ?? "");
-                            if (option) advanceAfterPick("lkpOneItemID", ["lkpOneItemName"]);
-                          }}
-                          isDisabled={oneItemDisabled}
-                          components={itemIdComponents}
-                          styles={makePairDividedMenuStyles(itemIdHang)}
-                          onMenuOpen={() => measureItemIdHang("lkpOneItemID", "lkpOneItemName")}
-                          noOptionsMessage={() => "No Item Found"}
-                          {...pairProps}
-                        />
-                      </div>
-                      <div
-                        className={`-ml-px ${cellFocusClass}`}
-                        style={{ marginRight: ITEM_NAME_MENU_HANG }}
-                        onKeyDown={(event) => advanceOnEnter(event)}
-                      >
-                        <Select<PairOption, false>
-                          inputId="lkpOneItemName"
-                          instanceId="lkpOneItemName"
-                          name="lkpOneItemName"
-                          options={itemNameOptions}
-                          value={itemNameOptions.find((o) => o.value === oneItemId) ?? null}
-                          onChange={(option) => {
-                            setOneItemId(option?.value ?? "");
-                            if (option) advanceAfterPick("lkpOneItemName");
-                          }}
-                          isDisabled={oneItemDisabled}
-                          components={itemNameComponents}
-                          styles={makePairDividedMenuStyles(ITEM_NAME_MENU_HANG)}
-                          noOptionsMessage={() => "No Item Found"}
-                          {...pairProps}
-                        />
-                      </div>
-                    </div>
-                  ))}
-              </div>
-
-              {/* Post status */}
-              <FieldLabel>Post Status :</FieldLabel>
-              <div className="flex items-center justify-between">
-                <div
-                  className={`w-[107px] ${cellFocusClass}`}
-                  onKeyDown={(event) => advanceOnEnter(event)}
-                >
-                  <Select
-                    inputId="lkpPostStatus"
-                    instanceId="lkpPostStatus"
-                    options={postStatusOptions}
-                    value={postStatus}
-                    onChange={(option) => {
-                      setPostStatus(option);
-                      if (option) advanceAfterPick("lkpPostStatus");
-                    }}
-                    {...selectProps}
-                  />
-                </div>
-                <label
-                  htmlFor="chkOrderbyTxnNo"
-                  className={`flex h-[26px] cursor-pointer items-center gap-2 border border-[#e0e5ea] bg-white px-2 text-[12px] text-[#405066] select-none ${cellFocusClass}`}
-                >
-                  <input
-                    id="chkOrderbyTxnNo"
-                    type="checkbox"
-                    checked={orderByTxnNo}
-                    onChange={(event) => setOrderByTxnNo(event.target.checked)}
-                    className="h-4 w-4 accent-[#64d96e]"
-                  />
-                  Order by Posting No.
-                </label>
-              </div>
-
-              {/* Detailed / Summary and period */}
-              <RadioGroup
-                className={cellFocusClass}
-                name="rdgDetSum"
-                value={rdgDetSum}
-                options={[
-                  { value: "Detailed", label: "Detailed" },
-                  { value: "Summary", label: "Summary" },
-                ]}
-                onChange={setRdgDetSum}
-              />
-              <div className="flex items-start gap-2">
-                <FieldLabel className="w-[140px]">Period :</FieldLabel>
-                <div className={cellFocusClass}>
-                  <AppDatePicker
-                  id="dtpFromDate"
-                  label="From Date"
-                  value={fromDate}
-                  onChange={setFromDate}
-                />
-                </div>
-                <div className={cellFocusClass}>
-                  <AppDatePicker
-                  id="dtpToDate"
-                  label="To Date"
-                  value={toDate}
-                  onChange={setToDate}
-                />
-                </div>
-              </div>
-            </div>
-
-            {/* Actions */}
-            <div className="mt-6 flex justify-center gap-3">
-              <button
-                id="btnPrint"
-                type="button"
-                onClick={handlePrint}
-                className="btn-style"
-              >
-                <u>P</u>rint
-              </button>
-              {/* <button
-                id="btnClear"
-                type="button"
-                onClick={handleClear}
-                className="btn-style"
-              >
-                <u>C</u>lear
-              </button> */}
-            </div>
-          </section>
-        </main>
-      </div>
-
-      {/* the Print Preview (after Print) */}
-      {preview && (
-        <ReportPreview
-          showClose={false}
-          html={buildHtml(preview.report)}
-          fileBase={preview.fileBase}
-          onPrint={() => printStockReport(preview.report)}
-          buildPdf={() => buildStockReportPdf(preview.report)}
-          fetchExcel={fetchExcel}
-          onClose={() => setPreview(null)}
-        />
-      )}
-    </div>
+      <ReportPrintRow onPrint={handlePrint} />
+    </ReportForm>
   );
 };
 
