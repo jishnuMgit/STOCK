@@ -1,29 +1,17 @@
-import React, {
-  useEffect,
-  useMemo,
-  useState,
-} from "react";
+import React, { useEffect, useMemo, useState, type Ref } from "react";
 
-import Select, {
-  components,
-  type SelectInstance,
-  type OptionProps,
-} from "react-select";
+import { type SelectInstance } from "react-select";
 
 import dayjs from "dayjs";
 import customParseFormat from "dayjs/plugin/customParseFormat";
 
-import {
-  LocalizationProvider,
-} from "@mui/x-date-pickers/LocalizationProvider";
+import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
+import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
+import { DatePicker } from "@mui/x-date-pickers/DatePicker";
 
-import {
-  AdapterDayjs,
-} from "@mui/x-date-pickers/AdapterDayjs";
-
-import {
-  DatePicker,
-} from "@mui/x-date-pickers/DatePicker";
+import CommonTableSelect, {
+  type TableSelectOption,
+} from "../../common/CommonTableSelect";
 
 import "../Receipt/save/commanReceipt.css";
 
@@ -33,197 +21,77 @@ dayjs.extend(customParseFormat);
    TYPES
 ========================================================= */
 
+/* type alias (not interface) so it fits TableSelectOption's index signature */
+type SelectOption = {
+  value: string;
+  label: string;
+};
+
+type SelectRef = Ref<SelectInstance<TableSelectOption, false>>;
+
 export interface JournalFormProps {
-  /* =======================================================
-     BRANCH
-  ======================================================= */
-
   branch: string;
-
-  setBranch: (
-    value: string
-  ) => void;
-
-  /* =======================================================
-     TYPE
-  ======================================================= */
+  setBranch: (value: string) => void;
 
   type: string;
-
-  setType: (
-    value: string
-  ) => void;
-
-  /* =======================================================
-     JOURNAL NUMBER
-  ======================================================= */
+  setType: (value: string) => void;
 
   journalNo: string;
-
-  setJournalNo: (
-    value: string
-  ) => void;
-
-  /* =======================================================
-     DATE
-  ======================================================= */
+  setJournalNo: (value: string) => void;
 
   journalDate: string;
+  setJournalDate: (value: string) => void;
 
-  setJournalDate: (
-    value: string
-  ) => void;
+  branchRef: React.RefObject<SelectInstance<SelectOption, false> | null>;
+  typeRef: React.RefObject<SelectInstance<SelectOption, false> | null>;
+  journalNoRef: React.RefObject<HTMLInputElement | null>;
+  dateRef: React.RefObject<HTMLInputElement | null>;
 
-  /* =======================================================
-     REFS
-  ======================================================= */
-
-  branchRef: React.RefObject<
-    SelectInstance<
-      SelectOption,
-      false
-    > | null
-  >;
-
-  typeRef: React.RefObject<
-    SelectInstance<
-      SelectOption,
-      false
-    > | null
-  >;
-
-  journalNoRef: React.RefObject<
-    HTMLInputElement | null
-  >;
-
-  dateRef: React.RefObject<
-    HTMLInputElement | null
-  >;
-
-  /* =======================================================
-     AFTER DATE
-
-     Move focus to first Account ID.
-  ======================================================= */
-
+  /* after Date: move focus to the first Account ID */
   focusFirstAccountId: () => void;
-
-  /* =======================================================
-     BRANCH OPTIONS
-  ======================================================= */
 
   branchOptions: SelectOption[];
 }
 
-/* =========================================================
-   SELECT OPTION
-========================================================= */
-
-interface SelectOption {
-  value: string;
-  label: string;
-}
-
-/* =========================================================
-   JOURNAL TYPE
-========================================================= */
-
-interface JournalType {
-  value: string;
-  label: string;
-}
-
-/* =========================================================
-   API RESPONSE
-========================================================= */
-
 interface JournalDocNumberResponse {
   success: boolean;
-
   data: {
     getnextdocno: string;
   }[];
-
   message?: string;
 }
 
 /* =========================================================
-   CUSTOM OPTION
+   LOOKUP COLUMNS (same table-style menu as sales / purchase)
 ========================================================= */
 
-const CustomOption = (
-  props: OptionProps<
-    SelectOption,
-    false
-  >
-) => {
-  const { data } = props;
+const branchColumns = [
+  { key: "label", label: "Branch", width: "250px" },
+  { key: "value", label: "ID", width: "50px" },
+];
 
-  return (
-    <components.Option
-      {...props}
-    >
-      <div
-        className="
-          flex
-          w-full
-          items-center
-          justify-between
-          gap-3
-        "
-      >
-        <span
-          className="
-            truncate
-            text-xs
-            text-slate-700
-          "
-        >
-          {data.label}
-        </span>
-
-        <span
-          className="
-            shrink-0
-            text-[11px]
-            text-gray-400
-          "
-        >
-          {data.value}
-        </span>
-      </div>
-    </components.Option>
-  );
-};
+const typeColumns = [
+  { key: "label", label: "Name", width: "250px" },
+  { key: "value", label: "ID", width: "50px" },
+];
 
 /* =========================================================
-   SEARCH FILTER
+   SEARCH FILTER (searches both id and name)
 ========================================================= */
 
 const filterOption = (
-  option: {
-    label: string;
-    value: string;
-    data: SelectOption;
-  },
-  inputValue: string
+  option: { data: SelectOption },
+  inputValue: string,
 ) => {
-  const search =
-    inputValue
-      .toLowerCase()
-      .trim();
+  const search = inputValue.toLowerCase().trim();
 
   if (!search) {
     return true;
   }
 
   return (
-    option.data.label
-      .toLowerCase()
-      .includes(search) ||
-    option.data.value
-      .toLowerCase()
-      .includes(search)
+    option.data.label.toLowerCase().includes(search) ||
+    option.data.value.toLowerCase().includes(search)
   );
 };
 
@@ -231,9 +99,7 @@ const filterOption = (
    JOURNAL FORM
 ========================================================= */
 
-const JournalForm: React.FC<
-  JournalFormProps
-> = ({
+const JournalForm: React.FC<JournalFormProps> = ({
   branch,
   setBranch,
 
@@ -260,147 +126,97 @@ const JournalForm: React.FC<
      STATE
   ======================================================= */
 
-  const [
-    openSelect,
-    setOpenSelect,
-  ] = useState<
-    "branch" | "type" | null
-  >(null);
+  const [openSelect, setOpenSelect] = useState<"branch" | "type" | null>(null);
 
-  const [
-    journalNoLoading,
-    setJournalNoLoading,
-  ] = useState(false);
+  const [journalNoLoading, setJournalNoLoading] = useState(false);
 
   /* =======================================================
      TYPE OPTIONS
   ======================================================= */
 
-  const typeOptions: JournalType[] =
-    useMemo(
-      () => [
-        {
-          value: "S",
-          label: "Standard",
-        },
-      ],
-      []
-    );
+  const typeOptions: SelectOption[] = useMemo(
+    () => [
+      {
+        value: "S",
+        label: "Standard",
+      },
+    ],
+    [],
+  );
+
+  const menuPortalTarget =
+    typeof document !== "undefined" ? document.body : undefined;
 
   /* =======================================================
      GET JOURNAL DOCUMENT NUMBER
   ======================================================= */
 
-  const getJournalDocNumber =
-    async (
-      fbrid: string,
-      typeId: string
-    ) => {
-      if (!fbrid) {
-        setJournalNo("");
-        return;
-      }
+  const getJournalDocNumber = async (fbrid: string, typeId: string) => {
+    if (!fbrid) {
+      setJournalNo("");
+      return;
+    }
 
-      try {
-        setJournalNoLoading(
-          true
-        );
+    try {
+      setJournalNoLoading(true);
 
-        console.log(
-          "Getting Journal Number:",
-          {
+      const response = await fetch(
+        `${import.meta.env.VITE_API_URL}/getJournalDocNumber`,
+        {
+          method: "POST",
+
+          headers: {
+            "Content-Type": "application/json",
+          },
+
+          body: JSON.stringify({
             fbrid,
-            typeId,
-          }
-        );
+            fptype: typeId,
+          }),
+        },
+      );
 
-        const response =
-          await fetch(
-            `${import.meta.env.VITE_API_URL}/getJournalDocNumber`,
-            {
-              method: "POST",
+      if (!response.ok) {
+        throw new Error(`HTTP Error: ${response.status}`);
+      }
 
-              headers: {
-                "Content-Type":
-                  "application/json",
-              },
+      const result = (await response.json()) as JournalDocNumberResponse;
 
-              body:
-                JSON.stringify({
-                  fbrid,
-                  fptype: typeId,
-                }),
-            }
-          );
+      if (
+        result.success &&
+        Array.isArray(result.data) &&
+        result.data.length > 0
+      ) {
+        const newJournalNo = result.data[0]?.getnextdocno;
 
-        if (!response.ok) {
-          throw new Error(
-            `HTTP Error: ${response.status}`
-          );
-        }
-
-        const result =
-          (await response.json()) as
-            JournalDocNumberResponse;
-
-        console.log(
-          "Journal Document Number Response:",
-          result
-        );
-
-        if (
-          result.success &&
-          Array.isArray(
-            result.data
-          ) &&
-          result.data.length > 0
-        ) {
-          const newJournalNo =
-            result.data[0]
-              ?.getnextdocno;
-
-          setJournalNo(
-            newJournalNo || ""
-          );
-        } else {
-          console.error(
-            "Journal number was not returned:",
-            result
-          );
-
-          setJournalNo("");
-        }
-      } catch (error) {
-        console.error(
-          "Journal Document Number API Error:",
-          error
-        );
+        setJournalNo(newJournalNo || "");
+      } else {
+        console.error("Journal number was not returned:", result);
 
         setJournalNo("");
-      } finally {
-        setJournalNoLoading(
-          false
-        );
       }
-    };
+    } catch (error) {
+      console.error("Journal Document Number API Error:", error);
+
+      setJournalNo("");
+    } finally {
+      setJournalNoLoading(false);
+    }
+  };
 
   /* =======================================================
      DEFAULT INITIALIZATION
   ======================================================= */
 
   useEffect(() => {
-    const defaultType =
-      type || "S";
+    const defaultType = type || "S";
 
     if (!type) {
       setType("S");
     }
 
     if (branch) {
-      getJournalDocNumber(
-        branch,
-        defaultType
-      );
+      getJournalDocNumber(branch, defaultType);
     }
 
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -416,13 +232,7 @@ const JournalForm: React.FC<
       return;
     }
 
-    const currentType =
-      type || "S";
-
-    getJournalDocNumber(
-      branch,
-      currentType
-    );
+    getJournalDocNumber(branch, type || "S");
 
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [branch]);
@@ -436,13 +246,7 @@ const JournalForm: React.FC<
       return;
     }
 
-    const currentType =
-      type || "S";
-
-    getJournalDocNumber(
-      branch,
-      currentType
-    );
+    getJournalDocNumber(branch, type || "S");
 
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [type]);
@@ -453,25 +257,15 @@ const JournalForm: React.FC<
 
   const handleSelectKeyDown = (
     event: React.KeyboardEvent,
-    selectName:
-      | "branch"
-      | "type",
-    focusNext: () => void
+    selectName: "branch" | "type",
+    focusNext: () => void,
   ) => {
-    if (
-      event.key !== "Enter"
-    ) {
+    if (event.key !== "Enter") {
       return;
     }
 
-    /*
-     * When dropdown is open,
-     * react-select handles Enter.
-     */
-    if (
-      openSelect ===
-      selectName
-    ) {
+    /* when the dropdown is open, react-select handles Enter */
+    if (openSelect === selectName) {
       return;
     }
 
@@ -485,16 +279,10 @@ const JournalForm: React.FC<
   ======================================================= */
 
   const handleInputKeyDown = (
-    event: Pick<
-      React.KeyboardEvent,
-      "key" |
-      "preventDefault"
-    >,
-    focusNext: () => void
+    event: Pick<React.KeyboardEvent, "key" | "preventDefault">,
+    focusNext: () => void,
   ) => {
-    if (
-      event.key !== "Enter"
-    ) {
+    if (event.key !== "Enter") {
       return;
     }
 
@@ -513,7 +301,8 @@ const JournalForm: React.FC<
     border
     border-[#d7dee7]
     bg-white
-    px-2
+    pl-[2px]
+    pr-2
     text-xs
     text-slate-700
     outline-none
@@ -523,165 +312,14 @@ const JournalForm: React.FC<
   `;
 
   /* =======================================================
-     COMMON SELECT STYLE
-  ======================================================= */
-
-const selectStyles = {
-  control: (
-    base: any,
-    state: any
-  ) => ({
-    ...base,
-
-    minHeight: "30px",
-    height: "30px",
-
-    borderColor: "#99a1af",
-
-    borderRadius: "4px",
-
-    // Remove React Select's blue focus outline
-    boxShadow: "none",
-
-    fontSize: "12px",
-
-    backgroundColor: "#ffffff",
-
-    cursor: "text",
-
-    "&:hover": {
-      borderColor: "#20884e",
-    },
-
-    ...(state.isFocused && {
-      borderColor: "#20884e",
-      boxShadow: "none",
-      outline: "none",
-    }),
-  }),
-
-  valueContainer: (base: any) => ({
-    ...base,
-    height: "28px",
-    padding: "0 8px",
-    overflow: "hidden",
-  }),
-
-  singleValue: (base: any) => ({
-    ...base,
-    color: "#344054",
-    fontSize: "12px",
-    margin: 0,
-  }),
-
-  placeholder: (base: any) => ({
-    ...base,
-    color: "#8b96a3",
-    fontSize: "12px",
-    margin: 0,
-  }),
-
-  input: (base: any) => ({
-    ...base,
-    margin: 0,
-    padding: 0,
-    fontSize: "12px",
-    color: "#344054",
-  }),
-
-  indicatorsContainer: (base: any) => ({
-    ...base,
-    height: "28px",
-  }),
-
-  dropdownIndicator: (base: any) => ({
-    ...base,
-    color: "#aeb8c2",
-    padding: "4px",
-
-    "&:hover": {
-      color: "#808080",
-    },
-  }),
-
-  indicatorSeparator: () => ({
-    display: "none",
-  }),
-
-  clearIndicator: (base: any) => ({
-    ...base,
-    color: "#aeb8c2",
-    padding: "4px",
-
-    "&:hover": {
-      color: "#808080",
-    },
-  }),
-
-  menu: (base: any) => ({
-    ...base,
-    fontSize: "12px",
-    zIndex: 9999,
-    marginTop: "2px",
-    borderRadius: "3px",
-    overflow: "hidden",
-    boxShadow: "0 4px 12px rgba(0,0,0,0.12)",
-  }),
-
-  menuList: (base: any) => ({
-    ...base,
-    padding: "3px 0",
-    maxHeight: "200px",
-    overflowY: "auto",
-  }),
-
-  option: (
-    base: any,
-    state: any
-  ) => ({
-    ...base,
-
-    fontSize: "12px",
-
-    cursor: "pointer",
-
-    backgroundColor: state.isSelected
-      ? "#eefbf4"
-      : state.isFocused
-        ? "#eefbf4"
-        : "#ffffff",
-
-    color: "#344054",
-
-    padding: "7px 10px",
-
-    "&:active": {
-      backgroundColor: "#dff5e9",
-    },
-  }),
-};
-
-  /* =======================================================
-     SELECTED BRANCH
+     SELECTED VALUES
   ======================================================= */
 
   const selectedBranch =
-    branchOptions.find(
-      (option) =>
-        option.value ===
-        branch
-    ) || null;
-
-  /* =======================================================
-     SELECTED TYPE
-  ======================================================= */
+    branchOptions.find((option) => option.value === branch) || null;
 
   const selectedType =
-    typeOptions.find(
-      (option) =>
-        option.value ===
-        (type || "S")
-    ) || null;
+    typeOptions.find((option) => option.value === (type || "S")) || null;
 
   /* =======================================================
      RETURN
@@ -699,8 +337,6 @@ const selectStyles = {
     >
       {/* ==================================================
           FORM GRID
-
-          Same visual arrangement as reference:
 
           Branch                 Journal No.
           Type                   Date
@@ -731,77 +367,40 @@ const selectStyles = {
               shrink-0
               text-right
               text-[14px]
-             
             "
           >
             Branch :
           </label>
 
-        <Select<SelectOption, false>
-  ref={branchRef}
+          <CommonTableSelect
+            selectRef={branchRef as unknown as SelectRef}
+            options={branchOptions}
+            value={selectedBranch}
+            onChange={(option) => {
+              const selected = option?.value || "";
 
-  value={selectedBranch}
+              setBranch(selected);
 
-  onKeyDown={(event) =>
-    handleSelectKeyDown(
-      event,
-      "branch",
-      () => typeRef.current?.focus()
-    )
-  }
-
-  onMenuOpen={() =>
-    setOpenSelect("branch")
-  }
-
-  onMenuClose={() =>
-    setOpenSelect(null)
-  }
-
-  onChange={(option) => {
-    const selected =
-      option?.value || "";
-
-    setBranch(selected);
-
-    getJournalDocNumber(
-      selected,
-      type || "S"
-    );
-  }}
-
-  options={branchOptions}
-
-  placeholder="Select"
-
-  components={{
-    Option: CustomOption,
-  }}
-
-  filterOption={filterOption}
-
-  styles={{
-    ...selectStyles,
-
-    control: (base: any, state: any) => ({
-      // Keep ALL your original control styles
-      ...selectStyles.control(base, state),
-
-      // Only override the size
-      width: "250px",
-      minHeight: "30px",
-      height: "30px",
-    }),
-  }}
-
-  isSearchable
-
-  isClearable={false}
-
-  noOptionsMessage={() =>
-    "No Branch Found"
-  }
-/>
+              getJournalDocNumber(selected, type || "S");
+            }}
+            columns={branchColumns}
+            placeholder="Select"
+            width="250px"
+            menuWidth="310px"
+            controlHeight={30}
+            borderColor="#99a1af"
+            hoverBorderColor="#20884e"
+            filterOption={filterOption}
+            noOptionsMessage={() => "No Branch Found"}
+            menuPortalTarget={menuPortalTarget}
+            onKeyDown={(event) =>
+              handleSelectKeyDown(event, "branch", () =>
+                typeRef.current?.focus(),
+              )
+            }
+            onMenuOpen={() => setOpenSelect("branch")}
+            onMenuClose={() => setOpenSelect(null)}
+          />
         </div>
 
         {/* =================================================
@@ -827,35 +426,18 @@ const selectStyles = {
               whitespace-nowrap
               text-right
               text-[14px]
-            
             "
           >
             Journal No. :
           </label>
 
           <input
-            ref={
-              journalNoRef
-            }
-
-            value={
-              journalNoLoading
-                ? "Loading..."
-                : journalNo
-            }
-
+            ref={journalNoRef}
+            value={journalNoLoading ? "Loading..." : journalNo}
             readOnly
-
-            onKeyDown={(
-              event
-            ) =>
-              handleInputKeyDown(
-                event,
-                () =>
-                  dateRef.current?.focus()
-              )
+            onKeyDown={(event) =>
+              handleInputKeyDown(event, () => dateRef.current?.focus())
             }
-
             className={`
               ${inputClass}
               w-35
@@ -880,84 +462,42 @@ const selectStyles = {
               shrink-0
               text-right
               text-[14px]
-             
             "
           >
             Type :
           </label>
 
-        <Select<SelectOption, false>
-  ref={typeRef}
+          <CommonTableSelect
+            selectRef={typeRef as unknown as SelectRef}
+            options={typeOptions}
+            value={selectedType}
+            onChange={(option) => {
+              const selected = option?.value || "S";
 
-  value={selectedType}
+              setType(selected);
 
-  onKeyDown={(event) =>
-    handleSelectKeyDown(
-      event,
-      "type",
-      () =>
-        journalNoRef.current?.focus()
-    )
-  }
-
-  onMenuOpen={() =>
-    setOpenSelect("type")
-  }
-
-  onMenuClose={() =>
-    setOpenSelect(null)
-  }
-
-  onChange={(option) => {
-    const selected =
-      option?.value || "S";
-
-    setType(selected);
-
-    if (branch) {
-      getJournalDocNumber(
-        branch,
-        selected
-      );
-    }
-  }}
-
-  options={typeOptions}
-
-  placeholder="Select"
-
-  components={{
-    Option: CustomOption,
-  }}
-
-  filterOption={filterOption}
-
-  styles={{
-    ...selectStyles,
-
-    control: (
-      base: any,
-      state: any
-    ) => ({
-      ...selectStyles.control(
-        base,
-        state
-      ),
-
-      width: "250px",
-      minHeight: "30px",
-      height: "30px",
-    }),
-  }}
-
-  isSearchable
-
-  isClearable={false}
-
-  noOptionsMessage={() =>
-    "No Type Found"
-  }
-/>
+              if (branch) {
+                getJournalDocNumber(branch, selected);
+              }
+            }}
+            columns={typeColumns}
+            placeholder="Select"
+            width="250px"
+            menuWidth="310px"
+            controlHeight={30}
+            borderColor="#99a1af"
+            hoverBorderColor="#20884e"
+            filterOption={filterOption}
+            noOptionsMessage={() => "No Type Found"}
+            menuPortalTarget={menuPortalTarget}
+            onKeyDown={(event) =>
+              handleSelectKeyDown(event, "type", () =>
+                journalNoRef.current?.focus(),
+              )
+            }
+            onMenuOpen={() => setOpenSelect("type")}
+            onMenuClose={() => setOpenSelect(null)}
+          />
         </div>
 
         {/* =================================================
@@ -982,169 +522,136 @@ const selectStyles = {
             className="
               whitespace-nowrap
               text-right
-              text-[14px  ]
-             
+              text-[14px]
             "
           >
             Date :
           </label>
 
-    <LocalizationProvider dateAdapter={AdapterDayjs}>
-                <DatePicker
-                  value={
-                journalDate
-                  ? dayjs(
-                      journalDate,
-                      "DD/MM/YYYY"
-                    )
-                  : null
+          <LocalizationProvider dateAdapter={AdapterDayjs}>
+            <DatePicker
+              value={
+                journalDate ? dayjs(journalDate, "DD/MM/YYYY") : null
               }
-
-              onChange={(
-                newValue
-              ) => {
-                if (
-                  newValue?.isValid()
-                ) {
-                  setJournalDate(
-                    newValue.format(
-                      "DD/MM/YYYY"
-                    )
-                  );
+              onChange={(newValue) => {
+                if (newValue?.isValid()) {
+                  setJournalDate(newValue.format("DD/MM/YYYY"));
                 } else {
-                  setJournalDate(
-                    ""
-                  );
+                  setJournalDate("");
                 }
               }}
-
               format="DD/MM/YYYY"
-
-              inputRef={
-                dateRef
-              }
-
+              inputRef={dateRef}
               slotProps={{
                 textField: {
-                  onKeyDown: (
-                    event
-                  ) =>
-                    handleInputKeyDown(
-                      event,
-                      focusFirstAccountId
-                    ),
+                  onKeyDown: (event) =>
+                    handleInputKeyDown(event, focusFirstAccountId),
                 },
-    
-                    openPickerButton: {
-                      sx: {
-                        padding: "2px",
-                        margin: 0,
-                      },
-                    },
-    
-                    inputAdornment: {
-                      sx: {
-                        margin: 0,
-                        padding: 0,
-                      },
-                    },
-                  }}
-                  sx={{
-                    width: "140px",
-    
-                    "& .MuiPickersTextField-root": {
-                      width: "120px",
-                    },
-    
-                    "& .MuiPickersInputBase-root": {
-                      width: "140px",
-                      height: "30px",
-                      minHeight: "30px",
-                      boxSizing: "border-box",
-                      borderRadius: "4px",
-                      backgroundColor: "#ffffff",
-                      fontSize: "12px",
-                      padding: 0,
-                      overflow: "hidden",
-                    },
-    
-                    "& .MuiPickersInputBase-sectionsContainer": {
-                      paddingLeft: "10px !important",
-    
-                      paddingRight: "0px !important",
-    
-                      marginBottom: "-5px !important",
-    
-                      marginLeft: "0px !important",
-    
-                      boxSizing: "border-box",
-    
-                      overflow: "hidden",
-                    },
-    
-                    "& .MuiPickersInputBase-sectionContent": {
-                      fontSize: "12px",
-                      color: "#344054",
-                    },
-    
-                    "& .MuiPickersInputBase-input": {
-                      minWidth: 0,
-                      width: "100%",
-                      fontSize: "12px",
-                      padding: 0,
-                      height: "30px",
-                      boxSizing: "border-box",
-                    },
-    
-                    "& .MuiInputAdornment-root": {
-                      margin: 0,
-                      padding: 0,
-                    },
-    
-                    "& .MuiIconButton-root": {
-                      width: "24px",
-                      height: "24px",
-                      padding: "2px",
-                      margin: 0,
-                    },
-    
-                    "& .MuiSvgIcon-root": {
-                      fontSize: "16px",
-                    },
-    
-                    "& .MuiPickersOutlinedInput-notchedOutline": {
-                      borderColor: "#B7C7D7 !important",
-                    },
-    
-                    "& .MuiPickersInputBase-root:hover .MuiPickersOutlinedInput-notchedOutline":
-                      {
-                        borderColor: "#B7C7D7 !important",
-                      },
-    
-                    "& .MuiPickersInputBase-root.Mui-focused .MuiPickersOutlinedInput-notchedOutline":
-                      {
-                        borderColor: "#B7C7D7 !important",
-    
-                        borderWidth: "1px",
-                      },
-    
-                    "& .MuiPickersInputBase-root.Mui-error .MuiPickersOutlinedInput-notchedOutline":
-                      {
-                        borderColor: "#B7C7D7 !important",
-                      },
-    
-                    "& .MuiPickersInputBase-root.Mui-error:hover .MuiPickersOutlinedInput-notchedOutline":
-                      {
-                        borderColor: "#B7C7D7 !important",
-                      },
-    
-                    "& .MuiPickersInputBase-root.Mui-error.Mui-focused .MuiPickersOutlinedInput-notchedOutline":
-                      {
-                        borderColor: "#B7C7D7 !important",
-                      },
-                  }}
-                />
-              </LocalizationProvider>
+
+                openPickerButton: {
+                  sx: {
+                    padding: "2px",
+                    margin: 0,
+                  },
+                },
+
+                inputAdornment: {
+                  sx: {
+                    margin: 0,
+                    padding: 0,
+                  },
+                },
+              }}
+              sx={{
+                width: "140px",
+
+                "& .MuiPickersTextField-root": {
+                  width: "120px",
+                },
+
+                "& .MuiPickersInputBase-root": {
+                  width: "140px",
+                  height: "30px",
+                  minHeight: "30px",
+                  boxSizing: "border-box",
+                  borderRadius: "4px",
+                  backgroundColor: "#ffffff",
+                  fontSize: "12px",
+                  padding: 0,
+                  overflow: "hidden",
+                },
+
+                "& .MuiPickersInputBase-sectionsContainer": {
+                  paddingLeft: "2px !important",
+                  paddingRight: "0px !important",
+                  marginBottom: "-5px !important",
+                  marginLeft: "0px !important",
+                  boxSizing: "border-box",
+                  overflow: "hidden",
+                },
+
+                "& .MuiPickersInputBase-sectionContent": {
+                  fontSize: "12px",
+                  color: "#344054",
+                },
+
+                "& .MuiPickersInputBase-input": {
+                  minWidth: 0,
+                  width: "100%",
+                  fontSize: "12px",
+                  padding: 0,
+                  height: "30px",
+                  boxSizing: "border-box",
+                },
+
+                "& .MuiInputAdornment-root": {
+                  margin: 0,
+                  padding: 0,
+                },
+
+                "& .MuiIconButton-root": {
+                  width: "24px",
+                  height: "24px",
+                  padding: "2px",
+                  margin: 0,
+                },
+
+                "& .MuiSvgIcon-root": {
+                  fontSize: "16px",
+                },
+
+                "& .MuiPickersOutlinedInput-notchedOutline": {
+                  borderColor: "#B7C7D7 !important",
+                },
+
+                "& .MuiPickersInputBase-root:hover .MuiPickersOutlinedInput-notchedOutline":
+                {
+                  borderColor: "#B7C7D7 !important",
+                },
+
+                "& .MuiPickersInputBase-root.Mui-focused .MuiPickersOutlinedInput-notchedOutline":
+                {
+                  borderColor: "#B7C7D7 !important",
+                  borderWidth: "1px",
+                },
+
+                "& .MuiPickersInputBase-root.Mui-error .MuiPickersOutlinedInput-notchedOutline":
+                {
+                  borderColor: "#B7C7D7 !important",
+                },
+
+                "& .MuiPickersInputBase-root.Mui-error:hover .MuiPickersOutlinedInput-notchedOutline":
+                {
+                  borderColor: "#B7C7D7 !important",
+                },
+
+                "& .MuiPickersInputBase-root.Mui-error.Mui-focused .MuiPickersOutlinedInput-notchedOutline":
+                {
+                  borderColor: "#B7C7D7 !important",
+                },
+              }}
+            />
+          </LocalizationProvider>
         </div>
       </div>
     </div>

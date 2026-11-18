@@ -155,7 +155,7 @@ const selectStyles: StylesConfig<Option, false> = {
 // ============================================================
 
 const inputClass =
-  "h-[30px] border border-[#cbd5e1] rounded-[4px] bg-white px-2 text-[14px] text-[#202020] outline-none focus:border-blue-400 focus:bg-blue-50";
+  "h-[30px] border border-[#cbd5e1] rounded-[4px] bg-white pl-[2px] pr-2 text-[14px] text-[#202020] outline-none focus:border-blue-400 focus:bg-blue-50";
 
 const readOnlyInputClass = `${inputClass} bg-[#f8fafc]`;
 
