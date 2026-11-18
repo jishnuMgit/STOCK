@@ -70,7 +70,7 @@ const branchColumns = [
   { key: "value", label: "ID", width: "50px" },
 ];
 const typeColumns = [
-  { key: "value", label: "Type", width: "70px" },
+  { key: "value", label: "ID", width: "70px" },
   { key: "name", label: "Name" },
 ];
 const divisionColumns = [
@@ -311,7 +311,7 @@ const SalesInvoiceHeader: React.FC<SalesInvoiceHeaderProps> = ({
     );
   };
 
-  const invoiceTypeTableOptions = useMemo(
+  const typeTableOptions = useMemo(
     () =>
       invoiceTypes.map((option) => ({
         ...option,
@@ -321,7 +321,7 @@ const SalesInvoiceHeader: React.FC<SalesInvoiceHeaderProps> = ({
   );
 
   const invoiceTypeValue = header.invoiceType
-    ? (invoiceTypeTableOptions.find(
+    ? (typeTableOptions.find(
       (option) => option.value === header.invoiceType,
     ) ?? {
       value: header.invoiceType,
@@ -461,7 +461,7 @@ const SalesInvoiceHeader: React.FC<SalesInvoiceHeaderProps> = ({
           <div className="w-22">
             <CommonTableSelect
               inputId="lkpType"
-              options={invoiceTypeTableOptions}
+              options={typeTableOptions}
               value={invoiceTypeValue}
               onChange={(option) =>
                 onHeaderChange({ invoiceType: option?.value ?? "" })
