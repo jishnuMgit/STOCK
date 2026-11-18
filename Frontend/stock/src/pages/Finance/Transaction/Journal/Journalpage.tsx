@@ -91,7 +91,7 @@ const JournalPage: React.FC = () => {
   ======================================================= */
 
   const [branch, setBranch] =
-    useState("JEDDAH");
+    useState("Jeddah");
 
   /* =======================================================
      JOURNAL TYPE
@@ -171,18 +171,18 @@ const JournalPage: React.FC = () => {
     useMemo<Branch[]>(
       () => [
         {
-          fbrid: "JEDDAH",
-          fbrname: "JEDDAH",
+          fbrid: "JD",
+          fbrname: "Jeddah",
         },
 
         {
-          fbrid: "RIYADH",
-          fbrname: "RIYADH",
+          fbrid: "RH",
+          fbrname: "Riyadh",
         },
 
         {
-          fbrid: "DAMMAM",
-          fbrname: "DAMMAM",
+          fbrid: "DMM",
+          fbrname: "Dammam",
         },
       ],
       []
@@ -267,19 +267,19 @@ const JournalPage: React.FC = () => {
       () => [
         {
           fccid: "RH",
-          fccname: "RIYADH",
+          fccname: "Riyadh",
           fpositionno: 1,
         },
 
         {
           fccid: "JD",
-          fccname: "JEDDAH",
+          fccname: "Jeddah",
           fpositionno: 2,
         },
 
         {
           fccid: "DM",
-          fccname: "DAMMAM",
+          fccname: "Dammam",
           fpositionno: 3,
         },
       ],
@@ -381,9 +381,9 @@ const JournalPage: React.FC = () => {
               (row) =>
                 row.id === id
                   ? {
-                      ...row,
-                      [field]: value,
-                    }
+                    ...row,
+                    [field]: value,
+                  }
                   : row
             )
         );
@@ -484,7 +484,7 @@ const JournalPage: React.FC = () => {
 
         const nextField =
           tableFieldOrder[
-            fieldIndex + 1
+          fieldIndex + 1
           ];
 
         if (nextField) {
@@ -538,7 +538,7 @@ const JournalPage: React.FC = () => {
 
         const activeRow =
           rows[
-            activeDescriptionRow
+          activeDescriptionRow
           ];
 
         if (!activeRow) {
@@ -553,12 +553,12 @@ const JournalPage: React.FC = () => {
             currentRows.map(
               (row) =>
                 row.id ===
-                activeRowId
+                  activeRowId
                   ? {
-                      ...row,
-                      description:
-                        value,
-                    }
+                    ...row,
+                    description:
+                      value,
+                  }
                   : row
             )
         );
@@ -852,7 +852,7 @@ const JournalPage: React.FC = () => {
 
   const clearForm =
     useCallback(() => {
-      setBranch("JEDDAH");
+      setBranch("Jeddah");
 
       setType("Standard");
 
@@ -986,40 +986,40 @@ const JournalPage: React.FC = () => {
             JOURNAL TABLE
         ================================================= */}
 
-       <div className="p-3">
-         <JournalTable
-          ref={journalTableRef}
+        <div className="p-3">
+          <JournalTable
+            ref={journalTableRef}
 
-          rows={rows}
+            rows={rows}
 
-          handleRowChange={
-            handleRowChange
-          }
+            handleRowChange={
+              handleRowChange
+            }
 
-          onFieldEnter={
-            handleTableEnter
-          }
+            onFieldEnter={
+              handleTableEnter
+            }
 
-          onTableEscape={
-            handleTableEscape
-          }
+            onTableEscape={
+              handleTableEscape
+            }
 
-          accountOptions={
-            accountOptions
-          }
+            accountOptions={
+              accountOptions
+            }
 
-          costCenters={
-            costCenters
-          }
-        />
-       </div>
+            costCenters={
+              costCenters
+            }
+          />
+        </div>
 
         {/* =================================================
             TOTALS
         ================================================= */}
 
         <div
-  className="
+          className="
     mt-2
     px-3
     mr-32
@@ -1031,22 +1031,22 @@ const JournalPage: React.FC = () => {
     gap-2
     text-xs
   "
->
-  {/* =================================================
+        >
+          {/* =================================================
       TOTAL ROW
   ================================================= */}
 
-  <div
-    className="
+          <div
+            className="
       flex
       items-center
       gap-1
     "
-  >
-    <input
-      value="Total"
-      readOnly
-      className="
+          >
+            <input
+              value="Total"
+              readOnly
+              className="
         h-7
         w-18
         rounded
@@ -1056,12 +1056,12 @@ const JournalPage: React.FC = () => {
         text-center
         outline-none
       "
-    />
+            />
 
-    <input
-      value={debitTotal.toFixed(2)}
-      readOnly
-      className="
+            <input
+              value={debitTotal.toFixed(2)}
+              readOnly
+              className="
         h-7
         w-25
         rounded
@@ -1071,12 +1071,12 @@ const JournalPage: React.FC = () => {
         text-right
         outline-none
       "
-    />
+            />
 
-    <input
-      value={creditTotal.toFixed(2)}
-      readOnly
-      className="
+            <input
+              value={creditTotal.toFixed(2)}
+              readOnly
+              className="
         h-7
         w-25
         rounded
@@ -1086,37 +1086,37 @@ const JournalPage: React.FC = () => {
         text-right
         outline-none
       "
-    />
-  </div>
+            />
+          </div>
 
-  {/* =================================================
+          {/* =================================================
       DR - CR
   ================================================= */}
 
-  <div
-    className="
+          <div
+            className="
       flex
       items-center
       gap-1
     "
-  >
-    <label
-      className="
+          >
+            <label
+              className="
         whitespace-nowrap
         text-xs
         text-slate-600
       "
-    >
-      Dr- Cr:
-    </label>
+            >
+              Dr- Cr:
+            </label>
 
-    <input
-      value={(
-        debitTotal -
-        creditTotal
-      ).toFixed(2)}
-      readOnly
-      className="
+            <input
+              value={(
+                debitTotal -
+                creditTotal
+              ).toFixed(2)}
+              readOnly
+              className="
         h-7
         w-25
         rounded
@@ -1126,9 +1126,9 @@ const JournalPage: React.FC = () => {
         text-right
         outline-none
       "
-    />
-  </div>
-</div>
+            />
+          </div>
+        </div>
         {/* =================================================
             BOTTOM FORM
         ================================================= */}
