@@ -138,7 +138,7 @@ interface ModifyPaymentResponse {
     cbAccountName?: string;
     CCID?: string;
     /* holds the "Paid To" value */
-    receivedFrom?: string;
+    paidTo?: string;
     reference?: string;
     note?: string;
   } | null;
@@ -211,8 +211,8 @@ const PaymentPage: React.FC = () => {
   const [lkpBranch, setLkpBranch] = useState("");
   const [lkpType, setLkpType] = useState("");
   const [cbAccountName, setCbAccountName] = useState("");
-  /* UI label is "Paid To"; the state/payload key stays receivedFrom */
-  const [receivedFrom, setReceivedFrom] = useState("");
+  /* UI label is "Paid To"; the state/payload key stays paidTo */
+  const [paidTo, setPaidTo] = useState("");
   const [reference, setReference] = useState("");
   const [cbCcId, setCbCcId] = useState("");
 
@@ -284,7 +284,7 @@ const PaymentPage: React.FC = () => {
   const documentNoRef = useRef<HTMLInputElement>(null);
   const cbAccountRef = useRef<SelectInstance<TableSelectOption, false>>(null);
   const dateRef = useRef<HTMLInputElement>(null);
-  const receivedFromRef = useRef<HTMLInputElement>(null);
+  const paidToRef = useRef<HTMLInputElement>(null);
   const referenceRef = useRef<HTMLInputElement>(null);
   const paymentTableRef = useRef<PaymentTableRef>(null);
   const descriptionRef = useRef<HTMLInputElement>(null);
@@ -501,7 +501,7 @@ const PaymentPage: React.FC = () => {
       setDtpDate(formatPaymentDate(result.header.dtpDate) || getTodayDate());
       setCbAccountName(result.header.cbAccountName || "");
       setCbCcId(result.header.CCID || "");
-      setReceivedFrom(result.header.receivedFrom || "");
+      setPaidTo(result.header.paidTo || "");
       setReference(result.header.reference || "");
       setNote(result.header.note || "");
       setRows(loadedRows);
@@ -540,7 +540,7 @@ const PaymentPage: React.FC = () => {
 
     setCbAccountName("");
     setCbCcId("");
-    setReceivedFrom("");
+    setPaidTo("");
     setReference("");
     setNote("");
     setDescription("");
@@ -1037,7 +1037,7 @@ const PaymentPage: React.FC = () => {
         txtDocNo,
 
         dtpDate,
-        receivedFrom,
+        paidTo,
         reference,
         rows: validRows.map((row, index) => ({
           id: row.id,
@@ -1157,7 +1157,7 @@ const PaymentPage: React.FC = () => {
     cbCcId,
     txtDocNo,
     dtpDate,
-    receivedFrom,
+    paidTo,
     reference,
     rows,
     total,
@@ -1190,7 +1190,7 @@ const PaymentPage: React.FC = () => {
       cbCcId,
       txtDocNo,
       dtpDate,
-      receivedFrom,
+      paidTo,
       reference,
       note,
     });
@@ -1242,7 +1242,7 @@ const PaymentPage: React.FC = () => {
       txtDocNo: txtDocNo.trim(),
 
       dtpDate: dtpDate,
-      receivedFrom,
+      paidTo,
       reference,
       note,
       rows: validRows.map((row, index) => ({
@@ -1359,7 +1359,7 @@ const PaymentPage: React.FC = () => {
     cbCcId,
     txtDocNo,
     dtpDate,
-    receivedFrom,
+    paidTo,
     reference,
     note,
     rows,
@@ -1668,8 +1668,8 @@ const PaymentPage: React.FC = () => {
           setCbAccountName={setCbAccountName}
           reference={reference}
           setReference={setReference}
-          receivedFrom={receivedFrom}
-          setReceivedFrom={setReceivedFrom}
+          paidTo={paidTo}
+          setPaidTo={setPaidTo}
           documentNo={txtDocNo}
           setDocumentNo={setTxtDocNo}
           dtpDate={dtpDate}
@@ -1679,7 +1679,7 @@ const PaymentPage: React.FC = () => {
           documentNoRef={documentNoRef}
           cbAccountRef={cbAccountRef}
           dateRef={dateRef}
-          receivedFromRef={receivedFromRef}
+          paidToRef={paidToRef}
           referenceRef={referenceRef}
           focusFirstAccountId={() => focusTableField(0, "accountId")}
           branchOptions={branchSelectOptions}

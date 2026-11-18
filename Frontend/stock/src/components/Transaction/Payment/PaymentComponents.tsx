@@ -102,8 +102,8 @@ interface PaymentFormProps {
     reference: string;
     setReference: (value: string) => void;
 
-    receivedFrom: string;
-    setReceivedFrom: (value: string) => void;
+    paidTo: string;
+    setPaidTo: (value: string) => void;
 
     documentNo: string;
     setDocumentNo: (value: string) => void;
@@ -116,7 +116,7 @@ interface PaymentFormProps {
     documentNoRef: React.RefObject<HTMLInputElement | null>;
     cbAccountRef: React.RefObject<SelectInstance<TableSelectOption, false> | null>;
     dateRef: React.RefObject<HTMLInputElement | null>;
-    receivedFromRef: React.RefObject<HTMLInputElement | null>;
+    paidToRef: React.RefObject<HTMLInputElement | null>;
     referenceRef: React.RefObject<HTMLInputElement | null>;
 
     focusFirstAccountId: () => void;
@@ -168,8 +168,8 @@ export const PaymentForm: React.FC<PaymentFormProps> = ({
     reference,
     setReference,
 
-    receivedFrom,
-    setReceivedFrom,
+    paidTo,
+    setPaidTo,
 
     documentNo,
     setDocumentNo,
@@ -182,7 +182,7 @@ export const PaymentForm: React.FC<PaymentFormProps> = ({
     documentNoRef,
     cbAccountRef,
     dateRef,
-    receivedFromRef,
+    paidToRef,
     referenceRef,
 
     focusFirstAccountId,
@@ -920,7 +920,7 @@ export const PaymentForm: React.FC<PaymentFormProps> = ({
 
                                     onKeyDown: (event) =>
                                         handleInputKeyDown(event, () =>
-                                            receivedFromRef.current?.focus(),
+                                            paidToRef.current?.focus(),
                                         ),
                                 },
 
@@ -1051,10 +1051,10 @@ export const PaymentForm: React.FC<PaymentFormProps> = ({
 
                     <input
                         maxLength={100}
-                        ref={receivedFromRef}
-                        id="txtReceivedFrom"
-                        value={receivedFrom}
-                        onChange={(event) => setReceivedFrom(event.target.value)}
+                        ref={paidToRef}
+                        id="txtpaidTo"
+                        value={paidTo}
+                        onChange={(event) => setPaidTo(event.target.value)}
                         onKeyDown={(event) =>
                             handleInputKeyDown(event, () => referenceRef.current?.focus())
                         }
