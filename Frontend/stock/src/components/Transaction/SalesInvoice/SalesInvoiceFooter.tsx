@@ -208,15 +208,15 @@ const SalesInvoiceFooter: React.FC<SalesInvoiceFooterProps> = ({
 
   const userText = userInfo
     ? [
-        userInfo.savedBy &&
-          `Saved By : ${userInfo.savedBy} ${userInfo.savedAt}`.trim(),
-        userInfo.modifiedBy &&
-          `Last Modified By : ${userInfo.modifiedBy} ${userInfo.modifiedAt}`.trim(),
-        userInfo.postOrder > 0 && `Txn. # : ${userInfo.postOrder}`,
-        posted && "POSTED",
-      ]
-        .filter(Boolean)
-        .join("   |   ")
+      userInfo.savedBy &&
+      `Saved By : ${userInfo.savedBy} ${userInfo.savedAt}`.trim(),
+      userInfo.modifiedBy &&
+      `Last Modified By : ${userInfo.modifiedBy} ${userInfo.modifiedAt}`.trim(),
+      userInfo.postOrder > 0 && `Txn. # : ${userInfo.postOrder}`,
+      posted && "POSTED",
+    ]
+      .filter(Boolean)
+      .join("   |   ")
     : "";
 
   return (
@@ -293,7 +293,7 @@ const SalesInvoiceFooter: React.FC<SalesInvoiceFooterProps> = ({
           TOTAL
       ====================================================== */}
 
-      <div className="absolute left-167 top-2 flex h-7.5 items-center">
+      <div className="absolute left-167 top-2 flex h-7.5 items-center ml-5">
         <label className="mr-1.75 whitespace-nowrap text-[14px] text-[#202020]">
           Total
         </label>
@@ -309,7 +309,7 @@ const SalesInvoiceFooter: React.FC<SalesInvoiceFooterProps> = ({
             border
             border-[#cbd5e1]
             bg-white
-            px-1
+            px-1            
             text-center
             text-[11px]
             text-[#202020]
@@ -330,7 +330,7 @@ const SalesInvoiceFooter: React.FC<SalesInvoiceFooterProps> = ({
           EXTRA TOTAL VALUES (discount / VAT / total price)
       ====================================================== */}
 
-      <div className="absolute right-2.5 top-2 flex h-7.5 items-center gap-1.25">
+      <div className="absolute right-2.5 top-2 flex h-7.5 items-center gap-1.25 mr-1">
         <input
           id="txtTotalValue1"
           type="text"
@@ -360,7 +360,7 @@ const SalesInvoiceFooter: React.FC<SalesInvoiceFooterProps> = ({
           RIGHT SIDE AMOUNTS
       ====================================================== */}
 
-      <div className="absolute right-1.25 top-10.75 w-61.25">
+      <div className="absolute right-1.25 top-10.75 w-61.25 mr-1">
         {/* TOTAL AMOUNT */}
 
         <div className="mb-1.5 flex h-7.5 items-center">
