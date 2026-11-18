@@ -1,5 +1,5 @@
 import { Play, X } from "lucide-react";
-import React, { useState } from "react";
+import React, { useMemo, useState } from "react";
 import {
   components,
   type DropdownIndicatorProps,
@@ -53,6 +53,9 @@ const DropdownIndicator = (props: DropdownIndicatorProps<Option, false>) => (
 
 // font size of the dropdown menu (header row + options)
 const MENU_FONT_SIZE = 14;
+
+// width of the second column (Item ID) in the Item Name dropdown menu
+const NAME_MENU_ID_COL_WIDTH = 142;
 
 type MenuVariant = "id" | "name";
 
@@ -300,8 +303,6 @@ const selectStyles: StylesConfig<Option, false> = {
   }),
 };
 
-const nameSelectStyles: StylesConfig<Option, false> = selectStyles;
-
 const numberInputClass =
   "number-no-spinner h-[20px] w-full min-w-0 border-0 bg-transparent px-1 text-right outline-none focus:bg-blue-50";
 
@@ -334,8 +335,25 @@ const PurchaseTable: React.FC<Props> = ({
   // e.g. "id-0" / "name-0"
   const [openMenuKey, setOpenMenuKey] = useState<string | null>(null);
 
+  // width of the Item Name column, measured when its menu opens, so the
+  // menu divider lines up with the right edge of that column
+  const [nameColWidth, setNameColWidth] = useState(400);
+
   const itemIdOptions = lookups?.itemIds ?? EMPTY;
   const itemNameOptions = lookups?.itemNames ?? EMPTY;
+
+  // Item Name dropdown: menu = Item Name column width + Item ID column
+  const nameSelectStyles = useMemo<StylesConfig<Option, false>>(
+    () => ({
+      ...selectStyles,
+      menu: (base, props) => ({
+        ...selectStyles.menu!(base, props),
+        width: nameColWidth + NAME_MENU_ID_COL_WIDTH,
+        minWidth: nameColWidth + NAME_MENU_ID_COL_WIDTH,
+      }),
+    }),
+    [nameColWidth],
+  );
 
   const portalTarget =
     typeof document !== "undefined" ? document.body : undefined;
@@ -472,8 +490,8 @@ const PurchaseTable: React.FC<Props> = ({
                   <th
                     key={column.name}
                     className={`sticky top-0 z-20 h-[30px] whitespace-nowrap border border-[#dce5ef] bg-[#f1f6fc] pl-[2px] pr-1 py-0 align-middle font-semibold text-[#202a36] ${numericColumns.includes(column.name)
-                      ? "text-right"
-                      : "text-left"
+                        ? "text-right"
+                        : "text-left"
                       }`}
                   >
                     {column.name}
@@ -518,8 +536,7 @@ const PurchaseTable: React.FC<Props> = ({
                         value:
                           itemIdOptions.find((o) => o.value === row.itemId) ??
                           null,
-                        onChange: (option) =>
-                          handleItemChange(index, option),
+                        onChange: (option) => handleItemChange(index, option),
                         formatOptionLabel: formatIdLabel,
                         filterOption: filterItem,
                         styles: selectStyles,
@@ -545,7 +562,7 @@ const PurchaseTable: React.FC<Props> = ({
                   <td className={editCellClass}>
                     <SingleSelect<Option>
                       mode="item"
-                      menuColumnWidths={["1fr", "142px"]}
+                      menuColumnWidths={["1fr", `${NAME_MENU_ID_COL_WIDTH}px`]}
                       selectProps={{
                         inputId: `lkpItemName-${index}`,
                         instanceId: `item-name-${index}`,
@@ -553,8 +570,7 @@ const PurchaseTable: React.FC<Props> = ({
                         value:
                           itemNameOptions.find((o) => o.value === row.itemId) ??
                           null,
-                        onChange: (option) =>
-                          handleItemChange(index, option),
+                        onChange: (option) => handleItemChange(index, option),
                         formatOptionLabel: formatNameLabel,
                         filterOption: filterItem,
                         styles: nameSelectStyles,
@@ -565,7 +581,19 @@ const PurchaseTable: React.FC<Props> = ({
                         menuPortalTarget: portalTarget,
                         placeholder: "",
                         className: "w-full",
-                        onMenuOpen: () => setOpenMenuKey(`name-${index}`),
+                        onMenuOpen: () => {
+                          setOpenMenuKey(`name-${index}`);
+                          // measure the Item Name column so the menu divider
+                          // lines up with the column's right edge
+                          const cell = document
+                            .getElementById(`lkpItemName-${index}`)
+                            ?.closest("td");
+                          if (cell) {
+                            setNameColWidth(
+                              Math.round(cell.getBoundingClientRect().width),
+                            );
+                          }
+                        },
                         onMenuClose: () =>
                           setOpenMenuKey((prev) =>
                             prev === `name-${index}` ? null : prev,
