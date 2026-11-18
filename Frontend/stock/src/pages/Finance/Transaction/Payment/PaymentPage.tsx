@@ -40,6 +40,7 @@ import { toast } from "react-toastify";
  */
 
 import { apiFetch, getSession } from "../../../../utils/session";
+import { useConfirmModal } from "../../../../hooks/useConfirmModal";
 
 /* =========================================================
    PAYMENT DOC TYPE
@@ -205,6 +206,8 @@ const isPostedFlag = (value: unknown) =>
 ========================================================= */
 
 const PaymentPage: React.FC = () => {
+  const { confirm, dialog } = useConfirmModal();
+
   /* =======================================================
      HEADER FORM STATE
   ======================================================= */
@@ -1390,7 +1393,12 @@ const PaymentPage: React.FC = () => {
 
       /* DELETE CONFIRMATION */
 
-      const shouldDelete = window.confirm("Do you want to Delete?");
+      const shouldDelete = await confirm({
+        title: "Delete Payment",
+        message: "Do you want to Delete?",
+        confirmLabel: "Delete",
+        cancelLabel: "Cancel",
+      });
 
       if (!shouldDelete) {
         console.log("❌ DELETE CANCELLED BY USER");
@@ -1475,7 +1483,14 @@ const PaymentPage: React.FC = () => {
           : "Cannot connect to Payment API.",
       );
     }
-  }, [isPosted, lkpBranch, lkpType, txtDocNo, resetTableAndLoadNextPaymentNumber]);
+  }, [
+    confirm,
+    isPosted,
+    lkpBranch,
+    lkpType,
+    txtDocNo,
+    resetTableAndLoadNextPaymentNumber,
+  ]);
 
   /* =======================================================
      CLEAR FORM
@@ -1773,6 +1788,7 @@ const PaymentPage: React.FC = () => {
       </div>
 
       {/* TODO: Payment print preview goes here once the backend exists. */}
+      {dialog}
     </div>
   );
 };

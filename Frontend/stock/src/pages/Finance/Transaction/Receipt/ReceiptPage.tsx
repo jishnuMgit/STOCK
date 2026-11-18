@@ -36,6 +36,7 @@ import { buildReceiptPdf } from "../../../../components/Transaction/Receipt/save
 
 import { apiFetch, getSession } from "../../../../utils/session";
 import { GetStrDocType } from "../../../../utils/receiptHelpers";
+import { useConfirmModal } from "../../../../hooks/useConfirmModal";
 
 /* =========================================================
    CREATE INITIAL ROWS
@@ -174,6 +175,8 @@ const isPostedFlag = (value: unknown) =>
 ========================================================= */
 
 const ReceiptPage: React.FC = () => {
+  const { confirm, dialog } = useConfirmModal();
+
   /* =======================================================
      HEADER FORM STATE
   ======================================================= */
@@ -1622,7 +1625,12 @@ const ReceiptPage: React.FC = () => {
          DELETE CONFIRMATION
       =============================================== */
 
-      const shouldDelete = window.confirm("Do you want to Delete?");
+      const shouldDelete = await confirm({
+        title: "Delete Receipt",
+        message: "Do you want to Delete?",
+        confirmLabel: "Delete",
+        cancelLabel: "Cancel",
+      });
 
       if (!shouldDelete) {
         console.log("❌ MODIFY CANCELLED BY USER");
@@ -1716,7 +1724,14 @@ const ReceiptPage: React.FC = () => {
           : "Cannot connect to Receipt API.",
       );
     }
-  }, [isPosted, lkpBranch, lkpType, txtDocNo, resetTableAndLoadNextReceiptNumber]);
+  }, [
+    confirm,
+    isPosted,
+    lkpBranch,
+    lkpType,
+    txtDocNo,
+    resetTableAndLoadNextReceiptNumber,
+  ]);
 
   /* =======================================================
      CLEAR FORM
@@ -2041,6 +2056,7 @@ const ReceiptPage: React.FC = () => {
           }}
         />
       )}
+      {dialog}
     </div>
   );
 };
