@@ -83,7 +83,7 @@ const divisionColumns = [
 // ============================================================
 
 const inputClass =
-  "h-[30px] border border-[#d7dee7] rounded-[4px] bg-white px-2 text-[14px] text-[#334155] outline-none hover:border-[#aebdce] focus:border-[#9fdfbc] focus:shadow-[0_0_0_1px_#9fdfbc]";
+  "h-[30px] border border-[#d7dee7] rounded-[4px] bg-white pl-[2px] pr-2 text-[14px] text-[#334155] outline-none hover:border-[#aebdce] focus:border-[#9fdfbc] focus:shadow-[0_0_0_1px_#9fdfbc]";
 
 // ============================================================
 // DATE PICKER STYLE

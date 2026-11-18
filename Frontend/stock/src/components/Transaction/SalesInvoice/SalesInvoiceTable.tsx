@@ -71,6 +71,8 @@ const menuLayout: Record<
   },
 };
 
+const MENU_CELL_PADDING = "5px 2px";
+
 /* gray header row at the top of the dropdown menu (sticky while scrolling) */
 const createMenuList = (variant: MenuVariant) => {
   const layout = menuLayout[variant];
@@ -97,7 +99,7 @@ const createMenuList = (variant: MenuVariant) => {
               textOverflow: "ellipsis",
               whiteSpace: "nowrap",
               boxSizing: "border-box",
-              padding: "5px 8px",
+              padding: MENU_CELL_PADDING,
               borderRight: "1px solid #cfcfcf",
             }}
           >
@@ -110,7 +112,7 @@ const createMenuList = (variant: MenuVariant) => {
               textOverflow: "ellipsis",
               whiteSpace: "nowrap",
               boxSizing: "border-box",
-              padding: "5px 8px",
+              padding: MENU_CELL_PADDING,
             }}
           >
             {layout.secondTitle}
@@ -137,41 +139,41 @@ const nameSelectComponents = {
 /* menu rows show two columns; the control shows only its own label */
 const createFormatLabel =
   (variant: MenuVariant) =>
-  (option: Option, meta: FormatOptionLabelMeta<Option>) => {
-    if (meta.context !== "menu") return option.label;
+    (option: Option, meta: FormatOptionLabelMeta<Option>) => {
+      if (meta.context !== "menu") return option.label;
 
-    const layout = menuLayout[variant];
+      const layout = menuLayout[variant];
 
-    return (
-      <SingleSelectMenuColumns>
-        <div
-          style={{
-            minWidth: 0,
-            overflow: "hidden",
-            textOverflow: "ellipsis",
-            whiteSpace: "nowrap",
-            boxSizing: "border-box",
-            padding: "6px 8px",
-            borderRight: "1px solid #e3e8ef",
-          }}
-        >
-          {layout.first(option)}
-        </div>
-        <div
-          style={{
-            minWidth: 0,
-            overflow: "hidden",
-            textOverflow: "ellipsis",
-            whiteSpace: "nowrap",
-            boxSizing: "border-box",
-            padding: "6px 8px",
-          }}
-        >
-          {layout.second(option)}
-        </div>
-      </SingleSelectMenuColumns>
-    );
-  };
+      return (
+        <SingleSelectMenuColumns>
+          <div
+            style={{
+              minWidth: 0,
+              overflow: "hidden",
+              textOverflow: "ellipsis",
+              whiteSpace: "nowrap",
+              boxSizing: "border-box",
+              padding: MENU_CELL_PADDING,
+              borderRight: "1px solid #e3e8ef",
+            }}
+          >
+            {layout.first(option)}
+          </div>
+          <div
+            style={{
+              minWidth: 0,
+              overflow: "hidden",
+              textOverflow: "ellipsis",
+              whiteSpace: "nowrap",
+              boxSizing: "border-box",
+              padding: MENU_CELL_PADDING,
+            }}
+          >
+            {layout.second(option)}
+          </div>
+        </SingleSelectMenuColumns>
+      );
+    };
 
 const formatIdLabel = createFormatLabel("id");
 const formatNameLabel = createFormatLabel("name");
@@ -361,10 +363,10 @@ const SalesInvoiceTable: React.FC<SalesInvoiceTableProps> = ({
   const idValue = (itemId: string): Option | null =>
     itemId
       ? {
-          value: itemId,
-          label: itemId,
-          name: itemById.get(itemId)?.name ?? "",
-        }
+        value: itemId,
+        label: itemId,
+        name: itemById.get(itemId)?.name ?? "",
+      }
       : null;
 
   const nameValue = (itemId: string): Option | null => {
