@@ -181,7 +181,7 @@ const JournalPage: React.FC = () => {
 
         const journalTypes: JournalType[] = types.length
           ? types
-          : [{ value: "JB", label: "Journal" }];
+          : [{ value: "JV", label: "Journal" }];
 
         defaultTypeRef.current = journalTypes[0].value;
 

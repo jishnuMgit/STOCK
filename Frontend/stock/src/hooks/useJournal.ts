@@ -195,7 +195,7 @@ export const useJournal = () => {
         }));
     }, []);
 
-    /* next journal number for a branch (doc type JB is fixed on the server) */
+    /* next journal number for a branch (doc type JV is fixed on the server) */
     const fetchNextDocNo = useCallback(
         async (brId: string): Promise<string> => {
             const params = new URLSearchParams({ brId });

@@ -70,7 +70,7 @@ export class JournalError extends Error {
 }
 
 /* journal doc type used by the API (receipt uses BR / CR) */
-export const JOURNAL_DOC_TYPE = "JB";
+export const JOURNAL_DOC_TYPE = "JV";
 
 /* =========================================================
    HELPERS
