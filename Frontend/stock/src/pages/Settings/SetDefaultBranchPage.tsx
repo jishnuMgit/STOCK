@@ -1,16 +1,14 @@
 import React, { useEffect, useRef, useState } from "react";
 import Header from "../../components/common/Header";
-import Select, { type StylesConfig } from "react-select";
+import CommonTableSelect, {
+  type TableSelectOption,
+} from "../../components/common/CommonTableSelect";
 import { toast } from "react-toastify";
 import { useEnterAsTab } from "../../hooks/useEnterAsTab";
 import { useAltShortcuts } from "../../hooks/useAltShortcuts";
 import { useGridCellFocus } from "../../hooks/useGridCellFocus";
 import { useButtonPermissions } from "../../hooks/useButtonPermissions";
-import {
-  filterLabelOrValue,
-  makeNameIdMenuComponents,
-  branchMenuStyles,
-} from "../../components/BranchSelect/branchSelectParts";
+import { filterLabelOrValue } from "../../components/BranchSelect/branchSelectParts";
 
 // dbo.tblmenu fmenuid of the Set Default Branch page
 const MENU_ID = "9101";
@@ -19,10 +17,7 @@ const MENU_ID = "9101";
 // TYPES
 // ============================================================
 
-type Option = {
-  value: string;
-  label: string;
-};
+type Option = TableSelectOption;
 
 // One row = one user. The grid lists EVERY user the server gives (the user ID
 // ADMIN gets everyone, anyone else gets only themselves), each with the
@@ -35,109 +30,11 @@ type DefaultBranchRow = {
   lkpOriginalDefaultBranch: string;
 };
 
-// ============================================================
-// SELECT STYLE
-// The dropdown sits inside a grid cell: no border, transparent, like the
-// text columns of the other grids.
-// ============================================================
-
-const gridSelectStyles: StylesConfig<Option, false> = {
-  control: (base) => ({
-    ...base,
-    minHeight: "32px",
-    height: "32px",
-    width: "100%",
-    border: "none",
-    borderRadius: "0px",
-    boxShadow: "none",
-    backgroundColor: "transparent",
-    fontSize: "13px",
-    cursor: "pointer",
-  }),
-
-  valueContainer: (base) => ({
-    ...base,
-    height: "32px",
-    padding: "0 11px",
-  }),
-
-  singleValue: (base) => ({
-    ...base,
-    margin: 0,
-    fontSize: "13px",
-    color: "#374151",
-  }),
-
-  placeholder: (base) => ({
-    ...base,
-    margin: 0,
-    fontSize: "13px",
-    color: "#94a3b8",
-  }),
-
-  input: (base) => ({
-    ...base,
-    margin: 0,
-    padding: 0,
-    fontSize: "13px",
-  }),
-
-  indicatorsContainer: (base) => ({
-    ...base,
-    height: "32px",
-  }),
-
-  indicatorSeparator: () => ({
-    display: "none",
-  }),
-
-  dropdownIndicator: (base) => ({
-    ...base,
-    padding: "4px",
-    color: "#64748b",
-  }),
-
-  clearIndicator: (base) => ({
-    ...base,
-    padding: "4px",
-    color: "#94a3b8",
-  }),
-
-  menuPortal: (base) => ({
-    ...base,
-    zIndex: 9999,
-  }),
-
-  menu: (base) => ({
-    ...base,
-    zIndex: 9999,
-    fontSize: "13px",
-    marginTop: "1px",
-  }),
-
-  option: (base, state) => ({
-    ...base,
-    padding: "6px 10px",
-    fontSize: "13px",
-    color: "#374151",
-    cursor: "pointer",
-    backgroundColor: state.isSelected
-      ? "#dbeafe"
-      : state.isFocused
-        ? "#eff6ff"
-        : "#ffffff",
-  }),
-};
-
-// The open Branch list: "Branch | ID" with a divider between the columns -
-// the same list the Branch dropdown has on the other pages. Created once,
-// outside the page component, so react-select doesn't remount the menu.
-const branchComponents = makeNameIdMenuComponents("Branch", true);
-
-const branchSelectStyles: StylesConfig<Option, false> = {
-  ...gridSelectStyles,
-  ...branchMenuStyles,
-};
+// The open Branch list: "Branch | ID", as on the other screens
+const BRANCH_COLUMNS = [
+  { key: "label", label: "Branch", width: "1fr" },
+  { key: "value", label: "ID", width: "70px", align: "right" as const },
+];
 
 // ============================================================
 // COMPONENT
@@ -479,11 +376,11 @@ const SetDefaultBranchPage: React.FC = () => {
                   <tr>
                     <th className="sticky top-0 z-20 h-[34px] border border-[#bfe8d0] bg-[#edf9f2] p-0" />
 
-                    <th className="sticky top-0 z-20 h-[34px] border border-l-0 border-[#bfe8d0] bg-[#edf9f2] px-[11px] py-0 text-left text-[14px] font-normal text-gray-600">
+                    <th className="sticky pl-[2px] top-0 z-20 h-[34px] border border-l-0 border-[#bfe8d0] bg-[#edf9f2] pr-[11px] py-0 text-left text-[14px] font-normal text-gray-600">
                       User ID
                     </th>
 
-                    <th className="sticky top-0 z-20 h-[34px] border border-l-0 border-[#bfe8d0] bg-[#edf9f2] px-[11px] py-0 text-left text-[14px] font-normal text-gray-600">
+                    <th className="sticky pl-[2px] top-0 z-20 h-[34px] border border-l-0 border-[#bfe8d0] bg-[#edf9f2] pr-[11px] py-0 text-left text-[14px] font-normal text-gray-600">
                       Default Branch
                     </th>
                   </tr>
@@ -493,9 +390,8 @@ const SetDefaultBranchPage: React.FC = () => {
                   {rows.map((row, index) => (
                     <tr
                       key={row.txtUserID}
-                      className={`h-[34px] ${
-                        selectedRow === index ? "bg-[#f8fcfa]" : "bg-white"
-                      }`}
+                      className={`h-[34px] ${selectedRow === index ? "bg-[#f8fcfa]" : "bg-white"
+                        }`}
                       onClick={() => setSelectedRow(index)}
                     >
                       {/* SELECTOR COLUMN */}
@@ -516,7 +412,7 @@ const SetDefaultBranchPage: React.FC = () => {
                           value={row.txtUserID}
                           readOnly
                           tabIndex={-1}
-                          className="h-[32px] w-full min-w-0 border-0 bg-transparent px-[11px] py-0 text-left text-[13px] text-[#374151] outline-none"
+                          className="h-[32px] w-full min-w-0 border-0 bg-transparent pl-[2px] pr-[11px] py-0 text-left text-[13px] text-[#374151] outline-none"
                         />
                       </td>
 
@@ -524,73 +420,79 @@ const SetDefaultBranchPage: React.FC = () => {
                           right to; no clear (x) button, a branch is only changed to another one */}
 
                       <td className={`h-[34px] border border-l-0 border-[#bfe8d0] bg-white p-0 align-middle ${cellFocusClass}`}>
-                        <Select<Option, false>
-                          inputId={`lkpDefaultBranch-${index}`}
-                          instanceId={`lkpDefaultBranch-${index}`}
-                          name="lkpDefaultBranch"
-                          options={branchOptionsByUser[row.txtUserID] ?? []}
-                          value={
-                            (branchOptionsByUser[row.txtUserID] ?? []).find(
-                              (option) => option.value === row.lkpDefaultBranch,
-                            ) ||
-                            (row.lkpDefaultBranch
-                              ? {
-                                  value: row.lkpDefaultBranch,
-                                  label: row.lkpDefaultBranch,
-                                }
-                              : null)
-                          }
-                          onChange={(option) =>
-                            updateRow(index, {
-                              lkpDefaultBranch: option?.value ?? "",
-                            })
-                          }
+                        {/* onFocus bubbles from the select's input: marks the row
+                            and loads this user's branches */}
+                        <div
                           onFocus={() => {
                             setSelectedRow(index);
                             loadBranchesForUser(row.txtUserID);
                           }}
-                          onMenuOpen={() => {
-                            menuOpenRef.current = true;
-                          }}
-                          onMenuClose={() => {
-                            menuOpenRef.current = false;
-                          }}
-                          onKeyDown={(event) => {
-                            // Enter with the list open: react-select picks the
-                            // highlighted branch and stays here - then go on to
-                            // the next row's Default Branch (or the buttons),
-                            // like Tab. With nothing to pick, the page's
-                            // Enter-as-Tab has already moved on, so do nothing.
-                            if (event.key !== "Enter" || !menuOpenRef.current) {
-                              return;
+                        >
+                          <CommonTableSelect
+                            inputId={`lkpDefaultBranch-${index}`}
+                            options={branchOptionsByUser[row.txtUserID] ?? []}
+                            value={
+                              (branchOptionsByUser[row.txtUserID] ?? []).find(
+                                (option) => option.value === row.lkpDefaultBranch,
+                              ) ||
+                              (row.lkpDefaultBranch
+                                ? {
+                                  value: row.lkpDefaultBranch,
+                                  label: row.lkpDefaultBranch,
+                                }
+                                : null)
                             }
-
-                            const here = `lkpDefaultBranch-${index}`;
-
-                            setTimeout(() => {
-                              if (document.activeElement?.id !== here) return;
-
-                              const next =
-                                document.getElementById(`lkpDefaultBranch-${index + 1}`) ??
-                                document.getElementById("btnSave");
-
-                              if (next && !(next as HTMLButtonElement).disabled) {
-                                next.focus();
-                              } else {
-                                document.getElementById("btnClear")?.focus();
+                            onChange={(option) =>
+                              updateRow(index, {
+                                lkpDefaultBranch: option?.value ?? "",
+                              })
+                            }
+                            onMenuOpen={() => {
+                              menuOpenRef.current = true;
+                            }}
+                            onMenuClose={() => {
+                              menuOpenRef.current = false;
+                            }}
+                            onKeyDown={(event) => {
+                              // Enter with the list open: react-select picks the
+                              // highlighted branch and stays here - then go on to
+                              // the next row's Default Branch (or the buttons),
+                              // like Tab. With nothing to pick, the page's
+                              // Enter-as-Tab has already moved on, so do nothing.
+                              if (event.key !== "Enter" || !menuOpenRef.current) {
+                                return;
                               }
-                            }, 0);
-                          }}
-                          styles={branchSelectStyles}
-                          components={branchComponents}
-                          filterOption={filterLabelOrValue}
-                          isClearable={false}
-                          isSearchable
-                          placeholder=""
-                          noOptionsMessage={() => "This user has no Branch Permissions."}
-                          menuPortalTarget={document.body}
-                          menuPosition="fixed"
-                        />
+
+                              const here = `lkpDefaultBranch-${index}`;
+
+                              setTimeout(() => {
+                                if (document.activeElement?.id !== here) return;
+
+                                const next =
+                                  document.getElementById(`lkpDefaultBranch-${index + 1}`) ??
+                                  document.getElementById("btnSave");
+
+                                if (next && !(next as HTMLButtonElement).disabled) {
+                                  next.focus();
+                                } else {
+                                  document.getElementById("btnClear")?.focus();
+                                }
+                              }, 0);
+                            }}
+                            columns={BRANCH_COLUMNS}
+                            width="100%"
+                            menuWidth="calc(100% + 70px)"
+                            controlHeight={32}
+                            borderColor="transparent"
+                            hoverBorderColor="transparent"
+                            filterOption={filterLabelOrValue}
+                            isClearable={false}
+                            isSearchable
+                            placeholder=""
+                            noOptionsMessage={() => "This user has no Branch Permissions."}
+                            menuPortalTarget={document.body}
+                          />
+                        </div>
                       </td>
                     </tr>
                   ))}
