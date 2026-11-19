@@ -4,10 +4,11 @@
 -- The old SP_rptStDocPrint, in the same shape, named sp_page<form>:
 --   * p_strdoc     the document type (only 'BS' is active here; the other
 --                  document types of the old list are kept as a comment)
---   * p_strfilter  the WHERE text, e.g.
---                  a.fcoid = '01' and a.fbrid = 'JD' and a.fdoctype = 'BS'
---   * the query is built as text and run (the old sp_executesql), ordered by
---     the document number and Sl.#
+--   * p_pstrcoid   the company
+--   * p_lkpbranch  the branch
+--   * the lines of the branch's document are read with a plain query (the old
+--     one built the query as text and ran it with sp_executesql), ordered by the
+--     document number and Sl.#
 --
 -- What is commented out (not used for the Beginning Stock print - switch it on
 -- when it is needed):
@@ -20,34 +21,36 @@
 -- The company name is NOT returned: the old report got it from the application
 -- (CoName); the backend reads it from tblcompany.
 --
--- The filter is joined into the query as text, exactly like the old one, so it
--- must NEVER come from the browser: the backend builds it itself from the
--- company and the branch it has already validated.
+-- The document is found with real parameters - there is no filter text joined into
+-- the query (the old p_strfilter was), so nothing has to be quoted and nothing a
+-- user types can change the query.
+--
+-- The signature changed (the filter text became these arguments), so the old
+-- procedure is dropped first.
 --
 -- Test:
 --   BEGIN;
---   CALL dbo.sp_pagebeginningstockprint('BS',
---        'a.fcoid = ''01'' and a.fbrid = ''JD'' and a.fdoctype = ''BS''',
---        p_result_cursor => 'c1');
+--   CALL dbo.sp_pagebeginningstockprint('BS', '01', 'JD', p_result_cursor => 'c1');
 --   FETCH ALL IN c1;
 --   COMMIT;
 -- =====================================================================
 
+DROP PROCEDURE IF EXISTS dbo.sp_pagebeginningstockprint(character varying, text, refcursor);
+
 CREATE OR REPLACE PROCEDURE dbo.sp_pagebeginningstockprint(
     IN    p_strdoc           character varying,
-    IN    p_strfilter        text,
+    IN    p_pstrcoid         character varying,
+    IN    p_lkpbranch        character varying,
     INOUT p_result_cursor    refcursor DEFAULT 'cur_pagebeginningstockprint'::refcursor)
 LANGUAGE plpgsql
 AS $procedure$
-DECLARE
-    v_strsql text;
 BEGIN
 
     -- IF p_strdoc IN ('PI','PR','SIC','SIR','SRC','SRR','ST','STI','ADJ','BS','DM','ASM','IC') THEN
     IF p_strdoc = 'BS' THEN
 
-        v_strsql :=
-            'SELECT a.*, b.fitemname, b.fpacking,
+        OPEN p_result_cursor FOR
+            SELECT a.*, b.fitemname, b.fpacking,
                     -- c.fAccountName,
                     d.fbrname,
                     -- e.fBrName AS fFromBrName,
@@ -73,18 +76,18 @@ BEGIN
                     ON a.fcoid = g.fcoid AND a.fstaffid = g.fstaffid
              -- LEFT OUTER JOIN dbo.tblbranch h
              --        ON a.fCoID = h.fCoID AND a.fFromBrID = h.fBrID
-             WHERE ' || p_strfilter || '
+             WHERE a.fcoid    = p_pstrcoid
+               AND a.fbrid    = p_lkpbranch
+               AND a.fdoctype = p_strdoc
              -- ORDER BY fintdocno, fslno
-             ORDER BY a.fdocno, a.fslno';
-
-        OPEN p_result_cursor FOR EXECUTE v_strsql;
+             ORDER BY a.fdocno, a.fslno;
 
     END IF;
 
     -- IF p_strdoc = 'DLN' THEN
     --     (tbldo - not ported: SELECT a.fDNNo AS fDocNo, a.fInvoiceType, fSlNo, a.fIntDNNo, fDate, ...
     --      FROM tblDO a LEFT OUTER JOIN tblItemHD b ... tblBranch d ... tblDeliveryNoteFooter e ...
-    --      tblAccount f ... WHERE <p_strfilter> ORDER BY fIntDNNo, fSlNo)
+    --      tblAccount f ... WHERE <the filter> ORDER BY fIntDNNo, fSlNo)
     -- END IF;
 
     -- IF p_strdoc = 'DLR' THEN
