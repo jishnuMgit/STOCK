@@ -11,7 +11,7 @@ import pool from "../../../DB/db.js";
    goes down). The total cost of a line is (Qty. In - Qty. Out) x unit cost.
 ========================================================= */
 
-const DOC_TYPE = "ADJ";
+const strDocType = "ADJ";
 
 /* =========================================================
    BRANCH LIST: only the branches the logged-in user has a right to, plus the
@@ -102,7 +102,7 @@ export async function getStockAdjustmentItemStockService(
       AND fitemid = $3
       AND NOT (fdoctype = $4 AND fdocno = $5)
     `,
-    [PstrCoID, lkpBranch, lkpItemID, DOC_TYPE, txtDocNo]
+    [PstrCoID, lkpBranch, lkpItemID, strDocType, txtDocNo]
   );
 
   const costResult = await pool.query(
@@ -151,12 +151,12 @@ export async function getStockAdjustmentNextDocNoService(
       AND fdoctype = $4
     LIMIT 1
     `,
-    [PstrCoID, String(PstrYear), lkpBranch, DOC_TYPE]
+    [PstrCoID, String(PstrYear), lkpBranch, strDocType]
   );
 
   const next = await pool.query(
     `SELECT fdocno FROM dbo.getnextdocno($1::varchar, $2::varchar, $3::varchar, $4::varchar)`,
-    [PstrCoID, String(PstrYear), lkpBranch, DOC_TYPE]
+    [PstrCoID, String(PstrYear), lkpBranch, strDocType]
   );
 
   return {
@@ -266,7 +266,7 @@ export async function getStockAdjustmentFindListService(
     ORDER BY MIN(fdate) DESC, fdocno DESC
     LIMIT 500
     `,
-    [PstrCoID, String(PstrYear), lkpBranch, DOC_TYPE]
+    [PstrCoID, String(PstrYear), lkpBranch, strDocType]
   );
 
   return result.rows;
@@ -379,7 +379,7 @@ export function buildStockAdjustmentDeleteAuditNote(
   const total = lines.reduce((sum, line) => sum + Number(line.ftotalcost), 0);
 
   const head =
-    `DocType : ${DOC_TYPE} - DocNo : ${txtDocNo}; Branch : ${lkpBranch}` +
+    `DocType : ${strDocType} - DocNo : ${txtDocNo}; Branch : ${lkpBranch}` +
     (dtpDate ? ` Date : ${showDate(dtpDate)}` : "") +
     `; Lines : ${lines.length}; Total Cost : ${total.toFixed(4)}`;
 
@@ -466,7 +466,7 @@ export async function saveStockAdjustmentService(p: {
         WHERE fcoid = $1 AND fyear = $2 AND fbrid = $3 AND fdoctype = $4
         LIMIT 1
         `,
-        [p.PstrCoID, String(p.PstrYear), p.lkpBranch, DOC_TYPE]
+        [p.PstrCoID, String(p.PstrYear), p.lkpBranch, strDocType]
       );
 
       if (String(setting.rows[0]?.fseqnoincrementmode ?? "") !== "Auto") {
@@ -477,7 +477,7 @@ export async function saveStockAdjustmentService(p: {
 
       const next = await client.query(
         `SELECT fdocno FROM dbo.getnextdocno($1::varchar, $2::varchar, $3::varchar, $4::varchar)`,
-        [p.PstrCoID, String(p.PstrYear), p.lkpBranch, DOC_TYPE]
+        [p.PstrCoID, String(p.PstrYear), p.lkpBranch, strDocType]
       );
 
       txtDocNo = String(next.rows[0].fdocno);
@@ -837,7 +837,7 @@ export function buildStockAdjustmentLineDeleteAuditNote(
   linesBefore: number
 ): string {
   const head =
-    `DocType : ${DOC_TYPE} - DocNo : ${txtDocNo}; Branch : ${lkpBranch}` +
+    `DocType : ${strDocType} - DocNo : ${txtDocNo}; Branch : ${lkpBranch}` +
     `; Lines : ${linesBefore} -> ${linesBefore - 1}`;
 
   const note = `${head}\nDeleted line: ${savedLineText(line)}`;
@@ -889,7 +889,7 @@ export async function postStockAdjustmentService(p: {
         p_pstruserid => $7::varchar
       )
       `,
-      ["P", p.PstrCoID, String(p.PstrYear), p.lkpBranch, DOC_TYPE, p.txtDocNo, p.PstrUserID]
+      ["P", p.PstrCoID, String(p.PstrYear), p.lkpBranch, strDocType, p.txtDocNo, p.PstrUserID]
     );
 
     const after = await fetchCursor<StockAdjustmentLine>(
@@ -957,15 +957,6 @@ export async function getStockAdjustmentPrintService(
     txtDocNo
   );
 
-  // The filter is built HERE, from values the controller has already validated,
-  // each one quoted - never from the browser (the procedure joins it as text).
-  const quote = (value: string) => value.replace(/'/g, "''");
-
-  const strFilter =
-    `a.fcoid = '${quote(PstrCoID)}' and a.fyear = '${Math.trunc(Number(PstrYear))}' ` +
-    `and a.fbrid = '${quote(lkpBranch)}' and a.fdoctype = '${DOC_TYPE}' ` +
-    `and a.fdocno = '${quote(txtDocNo)}'`;
-
   const cursorName =
     `cur_stockadjustmentprint_${Date.now()}_${Math.floor(Math.random() * 100000)}`;
 
@@ -979,10 +970,13 @@ export async function getStockAdjustmentPrintService(
     await client.query(
       `CALL dbo.sp_pagestockprint(
          p_strdoc        => $1::varchar,
-         p_strfilter     => $2::text,
-         p_result_cursor => $3::refcursor
+         p_pstrcoid      => $2::varchar,
+         p_pstryear      => $3::varchar,
+         p_lkpbranch     => $4::varchar,
+         p_txtdocno      => $5::varchar,
+         p_result_cursor => $6::refcursor
        )`,
-      [DOC_TYPE, strFilter, cursorName]
+      [strDocType, PstrCoID, String(PstrYear), lkpBranch, txtDocNo, cursorName]
     );
 
     const result = await client.query(`FETCH ALL FROM "${cursorName}"`);
@@ -1094,7 +1088,7 @@ async function callSpStockAdjustment(
       p.PstrCoID,
       String(p.PstrYear),
       p.lkpBranch,
-      DOC_TYPE,
+      strDocType,
       p.txtDocNo,
       p.dtpDate ?? null,
       p.txtNote ?? null,

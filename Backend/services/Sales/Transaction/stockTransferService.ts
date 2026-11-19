@@ -11,7 +11,7 @@ import pool from "../../../DB/db.js";
 ========================================================= */
 
 const strDocType = "ST";
-const strDocType_G = "STI";
+const strDocTypeG = "STI";
 
 /* =========================================================
    BRANCH LISTS
@@ -948,13 +948,6 @@ export async function getStockTransferPrintService(
     txtDocNo
   );
 
-
-
-  const strFilter =
-    `a.fcoid = '$PstrCoID' and a.fyear = '$PstrYear' ` +
-    `and a.fbrid = $lkpBranch and a.fdoctype = '${strDocType}' ` +
-    `and a.fdocno = $txtDocNo`;
-
   const cursorName =
     `cur_stocktransferprint_${Date.now()}_${Math.floor(Math.random() * 100000)}`;
 
@@ -968,10 +961,13 @@ export async function getStockTransferPrintService(
     await client.query(
       `CALL dbo.sp_pagestockprint(
          p_strdoc        => $1::varchar,
-         p_strfilter     => $2::text,
-         p_result_cursor => $3::refcursor
+         p_pstrcoid      => $2::varchar,
+         p_pstryear      => $3::varchar,
+         p_lkpbranch     => $4::varchar,
+         p_txtdocno      => $5::varchar,
+         p_result_cursor => $6::refcursor
        )`,
-      [strDocType, strFilter, cursorName]
+      [strDocType, PstrCoID, String(PstrYear), lkpBranch, txtDocNo, cursorName]
     );
 
     const result = await client.query(`FETCH ALL FROM "${cursorName}"`);
@@ -1104,7 +1100,7 @@ async function callSpStockTransfer(
       String(p.PstrYear),
       p.lkpBranch,
       strDocType,
-      strDocType_G,
+      strDocTypeG,
       p.txtDocNo,
       p.lkpToBranch ?? null,
       p.dtpDate ?? null,
