@@ -34,9 +34,7 @@ type SetZATCADocumentPathProps = {
 
 const DEFAULT_PATH = "C:\\";
 
-const SetZATCADocumentPath: React.FC<SetZATCADocumentPathProps> = ({
-  onClose,
-}) => {
+const SetZATCADocumentPath: React.FC<SetZATCADocumentPathProps> = () => {
   const [serverBackupPath, setServerBackupPath] = useState(DEFAULT_PATH);
   const [exists, setExists] = useState(false); // false => Save, true => Modify
   const [loading, setLoading] = useState(true);
@@ -149,13 +147,6 @@ console.log(onClose)
     }
   };
 
-  // const handleClose = () => {
-  //   if (onClose) {
-  //     onClose();
-  //     return;
-  //   }
-  //   window.history.back();
-  // };
 
   const renderPathField = (
     id: string,
@@ -193,7 +184,7 @@ console.log(onClose)
           title="Browse folder"
           className="absolute right-px top-px flex h-7 w-8.5 items-center justify-center rounded-r-[3px] bg-white text-[14px] text-[#657486] hover:bg-[#f3f7f5] disabled:cursor-not-allowed disabled:bg-[#f3f5f7]"
         >
-       <HiOutlineDotsHorizontal />
+          <HiOutlineDotsHorizontal />
 
         </button>
       </div>
@@ -251,8 +242,8 @@ console.log(onClose)
               >
                 <u>C</u>lear
               </button>
-             
-           
+
+
             </div>
           </section>
         </main>

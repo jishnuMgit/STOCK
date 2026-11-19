@@ -400,13 +400,6 @@ const DepreciationHistory: React.FC = () => {
     console.log("Depreciation History Report:", reportData);
   };
 
-  // ==================================================
-  // CLOSE
-  // ==================================================
-
-  // const handleClose = () => {
-  //   window.history.back();
-  // };
 
   // ==================================================
   // UI

@@ -371,13 +371,6 @@ const DepreciationSchedulePage: React.FC = () => {
     console.log("Depreciation Schedule Report:", reportData);
   };
 
-  // ==================================================
-  // CLOSE
-  // ==================================================
-
-  // const handleClose = () => {
-  //   window.history.back();
-  // };
 
   // ==================================================
   // UI
