@@ -957,15 +957,6 @@ export async function getStockAdjustmentPrintService(
     txtDocNo
   );
 
-  // The filter is built HERE, from values the controller has already validated,
-  // each one quoted - never from the browser (the procedure joins it as text).
-  const quote = (value: string) => value.replace(/'/g, "''");
-
-  const strFilter =
-    `a.fcoid = '${quote(PstrCoID)}' and a.fyear = '${Math.trunc(Number(PstrYear))}' ` +
-    `and a.fbrid = '${quote(lkpBranch)}' and a.fdoctype = '${strDocType}' ` +
-    `and a.fdocno = '${quote(txtDocNo)}'`;
-
   const cursorName =
     `cur_stockadjustmentprint_${Date.now()}_${Math.floor(Math.random() * 100000)}`;
 
@@ -979,10 +970,13 @@ export async function getStockAdjustmentPrintService(
     await client.query(
       `CALL dbo.sp_pagestockprint(
          p_strdoc        => $1::varchar,
-         p_strfilter     => $2::text,
-         p_result_cursor => $3::refcursor
+         p_pstrcoid      => $2::varchar,
+         p_pstryear      => $3::varchar,
+         p_lkpbranch     => $4::varchar,
+         p_txtdocno      => $5::varchar,
+         p_result_cursor => $6::refcursor
        )`,
-      [strDocType, strFilter, cursorName]
+      [strDocType, PstrCoID, String(PstrYear), lkpBranch, txtDocNo, cursorName]
     );
 
     const result = await client.query(`FETCH ALL FROM "${cursorName}"`);

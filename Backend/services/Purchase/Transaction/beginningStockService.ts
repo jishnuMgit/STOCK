@@ -836,10 +836,9 @@ export async function postBeginningStockService(p: {
    PRINT (the Print button): dbo.sp_pagebeginningstockprint - the port of the old
    SP_rptStDocPrint for doc type BS. Read only.
 
-   The procedure takes the WHERE text like the old one did, so it is built HERE,
-   never taken from the browser: the company comes from the request but the
-   controller has already checked the branch exists and the user has a right to
-   it; every value is quoted anyway.
+   The procedure takes the company and the branch as parameters (no filter text is
+   built): the controller has already checked the branch exists and the user has a
+   right to it.
 ========================================================= */
 
 export type BeginningStockPrintLine = {
@@ -868,12 +867,6 @@ export async function getBeginningStockPrintService(
   PstrCoID: string,
   lkpBranch: string
 ): Promise<BeginningStockPrint> {
-  const quote = (value: string) => value.replace(/'/g, "''");
-
-  const strFilter =
-    `a.fcoid = '${quote(PstrCoID)}' and a.fbrid = '${quote(lkpBranch)}' ` +
-    `and a.fdoctype = '${strDocType}'`;
-
   const cursorName =
     `cur_beginningstockprint_${Date.now()}_${Math.floor(Math.random() * 100000)}`;
 
@@ -887,10 +880,11 @@ export async function getBeginningStockPrintService(
     await client.query(
       `CALL dbo.sp_pagebeginningstockprint(
          p_strdoc        => $1::varchar,
-         p_strfilter     => $2::text,
-         p_result_cursor => $3::refcursor
+         p_pstrcoid      => $2::varchar,
+         p_lkpbranch     => $3::varchar,
+         p_result_cursor => $4::refcursor
        )`,
-      [strDocType, strFilter, cursorName]
+      [strDocType, PstrCoID, lkpBranch, cursorName]
     );
 
     const result = await client.query(`FETCH ALL FROM "${cursorName}"`);
