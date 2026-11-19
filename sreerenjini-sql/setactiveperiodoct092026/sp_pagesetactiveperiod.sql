@@ -17,6 +17,13 @@
 --   FETCH ALL FROM "c1";
 --   COMMIT;
 
+-- ADDED: p_dtpserverdate - the time written on the rows (fmuserdate). The page gets it from the database server's clock
+-- (GET /datetime/server-date) and the backend checks it and passes it, so every row of one save carries the same time.
+-- NULL = the procedure's own now(). It sits before the cursor argument, so the earlier signature is dropped first.
+
+DROP PROCEDURE IF EXISTS dbo.sp_pagesetactiveperiod(character varying, character varying, character varying, date, date, character varying, refcursor);
+
+-- (the earlier signature, for reference)
 -- DROP PROCEDURE IF EXISTS dbo.sp_pagesetactiveperiod(IN p_strmode character varying, IN p_pstrcoid character varying, IN p_strbrid character varying, IN p_dtpfromdate date, IN p_dtptodate date, IN p_pstruserid character varying, IN p_result_cursor refcursor);
 
 CREATE OR REPLACE PROCEDURE dbo.sp_pagesetactiveperiod(
@@ -26,6 +33,7 @@ CREATE OR REPLACE PROCEDURE dbo.sp_pagesetactiveperiod(
     IN p_dtpfromdate   date              DEFAULT NULL::date,
     IN p_dtptodate     date              DEFAULT NULL::date,
     IN p_pstruserid    character varying DEFAULT NULL::character varying,
+    IN p_dtpserverdate timestamp without time zone DEFAULT NULL::timestamp without time zone,
     IN p_result_cursor refcursor         DEFAULT 'cur_activeperiod'::refcursor)
  LANGUAGE plpgsql
 AS $procedure$
@@ -50,7 +58,7 @@ BEGIN
             factivefromdate = p_dtpfromdate,
             factivetodate   = p_dtptodate,
             fmuserid        = p_pstruserid,
-            fmuserdate      = now()
+            fmuserdate      = coalesce(p_dtpserverdate, now())
         WHERE fcoid = p_pstrcoid
           AND fbrid = p_strbrid;
 

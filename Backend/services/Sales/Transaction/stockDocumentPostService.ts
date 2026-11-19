@@ -247,6 +247,8 @@ export const postDocument = async (p: {
   lkpDocument: string;
   lkpYear: string;
   txtDocNo: string;
+  // the time written on the rows of the post (null = the procedures' own now())
+  dtpServerDate?: string;
 }): Promise<number> => {
   const client: PoolClient = await pool.connect();
 
@@ -262,10 +264,11 @@ export const postDocument = async (p: {
         p_strbrid    => $3::varchar,
         p_strdoctype => $4::varchar,
         p_strdocno   => $5::varchar,
-        p_pstruserid => $6::varchar
+        p_pstruserid => $6::varchar,
+        p_dtpserverdate => $7::timestamp
       )
       `,
-      [p.PstrCoID, p.lkpYear, p.lkpBranch, p.lkpDocument, p.txtDocNo, p.PstrUserID]
+      [p.PstrCoID, p.lkpYear, p.lkpBranch, p.lkpDocument, p.txtDocNo, p.PstrUserID, p.dtpServerDate ?? null]
     );
 
     await client.query("COMMIT");

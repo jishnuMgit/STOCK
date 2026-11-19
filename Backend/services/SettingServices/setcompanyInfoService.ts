@@ -1,5 +1,6 @@
 import type { PoolClient } from "pg";
 import pool from "../../DB/db.js";
+import { resolveServerDate } from "../common/DateTimeService.js";
 
 /* =========================================================
    The procedure is called with NAMED arguments (p_xxx => value),
@@ -67,6 +68,8 @@ export async function updateCompanyInfoService(
     txtCoVATNo_AR: string | null;
     txtCoStatus: string | null;
     PstrUserID: string;
+  // the time the page got from /datetime/server-date (checked here; the server's own time when it is missing or wrong)
+    dtpServerDate?: string;
   }
 ): Promise<void> {
   const client: PoolClient = await pool.connect();
@@ -78,6 +81,9 @@ export async function updateCompanyInfoService(
 
   try {
     await client.query("BEGIN");
+
+    // the time written on the row
+    const serverDate = await resolveServerDate(client, payload.dtpServerDate);
 
     await client.query(
       `
@@ -92,7 +98,8 @@ export async function updateCompanyInfoService(
         p_strcovatno_ar   => $8::varchar,
         p_strcostatus     => $9::varchar,
         p_pstruserid      => $10::varchar,
-        p_result_cursor   => $11::refcursor
+        p_dtpserverdate   => $11::timestamp,
+        p_result_cursor   => $12::refcursor
       )
       `,
       [
@@ -106,6 +113,7 @@ export async function updateCompanyInfoService(
         payload.txtCoVATNo_AR,
         payload.txtCoStatus,
         payload.PstrUserID,
+        serverDate,
         cursorName
       ]
     );

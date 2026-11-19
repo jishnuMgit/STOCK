@@ -13,6 +13,14 @@ import { useGridCellFocus } from "../../hooks/useGridCellFocus";
 import { useAdvanceAfterSelect } from "../../hooks/useAdvanceAfterSelect";
 import { useAltShortcuts } from "../../hooks/useAltShortcuts";
 import { useButtonPermissions } from "../../hooks/useButtonPermissions";
+import { tryGetServerDate } from "../../utils/serverDate";
+import {
+  filterLabelOrValue,
+  BranchDividedMenuList,
+  BranchDividedOption,
+  branchMenuStyles,
+} from "../../components/BranchSelect/branchSelectParts";
+import selectComponents from "../../components/sharecomponents/selectComponents";
 
 // ============================================================
 // TYPES
@@ -516,6 +524,9 @@ const SetDocumentNo: React.FC = () => {
     }
 
     try {
+      // the time of the save: the database server's clock (the common /datetime/server-date), written on every row
+      const dtpServerDate = await tryGetServerDate();
+
       const response = await fetch(
         `${import.meta.env.VITE_API_URL}/DocumentNo/saveDocumentNo`,
         {
@@ -528,6 +539,7 @@ const SetDocumentNo: React.FC = () => {
             lkpBranch,
             lkpModule,
             PstrUserID,
+            dtpServerDate,
             rows: validRows.map((row) => ({
               lkpDocument: row.lkpDocument,
               txtDocPrefix: row.txtDocPrefix || null,

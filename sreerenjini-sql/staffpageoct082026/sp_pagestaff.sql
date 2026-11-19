@@ -17,6 +17,11 @@
 -- The user audit (the old SP_UserAudit calls) is written by the backend
 -- through dbo.sp_useraudit, as on the other screens - it is not done in here.
 --
+-- ADDED: p_dtpserverdate - the time written on the row (fcuserdate on a new staff member, fmuserdate on a change). The page gets
+--   it from the database server's clock (GET /datetime/server-date) and the backend checks it and passes it, so every row of
+--   one save carries the same time. NULL = the procedure's own now() (a caller that sends none works as before).
+--   The signature changed (a new argument), so the earlier version is dropped first.
+--
 -- Examples (cursor calls must run inside one transaction)
 --   BEGIN;
 --   CALL dbo.sp_pagestaff('G', '01', p_result_cursor => 'c1');
@@ -24,6 +29,8 @@
 --   COMMIT;
 
 -- DROP PROCEDURE IF EXISTS dbo.sp_pagestaff(IN p_strmode character varying, IN p_pstrcoid character varying, IN p_strstaffid character varying, IN p_strstaffname character varying, IN p_blnispurchase boolean, IN p_blnissales boolean, IN p_original_fstaffid character varying, IN p_pstruserid character varying, IN p_result_cursor refcursor);
+
+DROP PROCEDURE IF EXISTS dbo.sp_pagestaff(character varying, character varying, character varying, character varying, boolean, boolean, character varying, character varying, refcursor);
 
 CREATE OR REPLACE PROCEDURE dbo.sp_pagestaff(
     IN p_strmode              character varying,
@@ -34,6 +41,7 @@ CREATE OR REPLACE PROCEDURE dbo.sp_pagestaff(
     IN p_blnissales           boolean           DEFAULT false,
     IN p_original_fstaffid    character varying DEFAULT NULL::character varying,
     IN p_pstruserid           character varying DEFAULT NULL::character varying,
+    IN p_dtpserverdate        timestamp without time zone DEFAULT NULL::timestamp without time zone,
     IN p_result_cursor        refcursor         DEFAULT 'cur_staff'::refcursor)
  LANGUAGE plpgsql
 AS $procedure$
@@ -61,7 +69,7 @@ BEGIN
         VALUES (
             p_pstrcoid, p_strstaffid, p_strstaffname,
             COALESCE(p_blnispurchase, false), COALESCE(p_blnissales, false),
-            p_pstruserid, now()
+            p_pstruserid, COALESCE(p_dtpserverdate, now())
         );
 
     ELSIF p_strmode = 'M' THEN
@@ -72,7 +80,7 @@ BEGIN
             fispurchase = COALESCE(p_blnispurchase, false),
             fissales    = COALESCE(p_blnissales, false),
             fmuserid    = p_pstruserid,
-            fmuserdate  = now()
+            fmuserdate  = COALESCE(p_dtpserverdate, now())
         WHERE fcoid = p_pstrcoid
           AND fstaffid = p_original_fstaffid;
 

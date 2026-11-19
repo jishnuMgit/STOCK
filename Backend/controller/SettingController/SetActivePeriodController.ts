@@ -84,10 +84,13 @@ export const saveActivePeriod = async (
     const {
       PstrCoID,
       PstrYear,
+      dtpServerDate,
       rows = [],
     }: {
       PstrCoID: string;
       PstrYear: string;
+      // the time the page got from /datetime/server-date (the service checks it)
+      dtpServerDate?: string;
       rows: (ActivePeriodRowPayload & { txtGridRow?: number })[];
     } = req.body;
 
@@ -143,7 +146,8 @@ export const saveActivePeriod = async (
         dtpFromDate: String(row.dtpFromDate ?? ""),
         dtpToDate: String(row.dtpToDate ?? ""),
       })),
-      PstrUserID
+      PstrUserID,
+      dtpServerDate
     );
 
     if (!result.anything) {

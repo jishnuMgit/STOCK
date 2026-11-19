@@ -1,5 +1,6 @@
 import type { PoolClient } from "pg";
 import pool from "../../../DB/db.js";
+import { resolveServerDate } from "../../common/DateTimeService.js";
 
 /* =========================================================
    STOCK ADJUSTMENT - calls dbo.sp_pagestockadjustment and
@@ -439,11 +440,16 @@ export async function saveStockAdjustmentService(p: {
   chkSaved: boolean;
   rows: StockAdjustmentRowPayload[];
   PstrUserID: string;
+  // the time the page got from /datetime/server-date (checked here; the server's own time when it is missing or wrong)
+  dtpServerDate?: string;
 }): Promise<StockAdjustmentSaveResult> {
   const client: PoolClient = await pool.connect();
 
   try {
     await client.query("BEGIN");
+
+    // one time for every row of this save
+    const serverDate = await resolveServerDate(client, p.dtpServerDate);
 
     let txtDocNo = p.txtDocNo;
     let docNoChanged = false;
@@ -559,6 +565,7 @@ export async function saveStockAdjustmentService(p: {
       dtpDate: p.dtpDate,
       txtNote: p.txtNote,
       PstrUserID: p.PstrUserID,
+      dtpServerDate: serverDate,
     };
 
     // removed lines first
@@ -859,6 +866,8 @@ export async function postStockAdjustmentService(p: {
   lkpBranch: string;
   txtDocNo: string;
   PstrUserID: string;
+  // the time the page got from /datetime/server-date (checked here; the server's own time when it is missing or wrong)
+  dtpServerDate?: string;
 }): Promise<{
   header: StockAdjustmentHeader | null;
   after: StockAdjustmentLine[];
@@ -867,6 +876,9 @@ export async function postStockAdjustmentService(p: {
 
   try {
     await client.query("BEGIN");
+
+    // one time for every row of this post
+    const serverDate = await resolveServerDate(client, p.dtpServerDate);
 
     const header = await fetchCursor<StockAdjustmentHeader>(
       client,
@@ -886,10 +898,11 @@ export async function postStockAdjustmentService(p: {
         p_strbrid    => $4::varchar,
         p_strdoctype => $5::varchar,
         p_strdocno   => $6::varchar,
-        p_pstruserid => $7::varchar
+        p_pstruserid => $7::varchar,
+        p_dtpserverdate => $8::timestamp
       )
       `,
-      ["P", p.PstrCoID, String(p.PstrYear), p.lkpBranch, strDocType, p.txtDocNo, p.PstrUserID]
+      ["P", p.PstrCoID, String(p.PstrYear), p.lkpBranch, strDocType, p.txtDocNo, p.PstrUserID, serverDate]
     );
 
     const after = await fetchCursor<StockAdjustmentLine>(
@@ -1057,6 +1070,8 @@ async function callSpStockAdjustment(
     totalCost?: number;
     originalSlNo?: number;
     PstrUserID?: string;
+    // the time written on the rows (fcuserdate / fmuserdate); null = the procedure's own now()
+    dtpServerDate?: string;
     cursorName?: string;
   }
 ): Promise<void> {
@@ -1080,7 +1095,8 @@ async function callSpStockAdjustment(
       p_numtotalcost   => $15::numeric,
       p_original_fslno => $16::smallint,
       p_pstruserid     => $17::varchar,
-      p_result_cursor  => $18::refcursor
+      p_dtpserverdate  => $18::timestamp,
+      p_result_cursor  => $19::refcursor
     )
     `,
     [
@@ -1101,6 +1117,7 @@ async function callSpStockAdjustment(
       p.totalCost ?? 0,
       p.originalSlNo ?? 0,
       p.PstrUserID ?? null,
+      p.dtpServerDate ?? null,
       p.cursorName ??
         `cur_stockadjustment_${Date.now()}_${Math.floor(Math.random() * 100000)}`,
     ]

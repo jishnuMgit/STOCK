@@ -214,6 +214,7 @@ export const modifySalesPriceList = async (
       rdgItemGroup,
       lkpItemGroupID = "",
       chkApplyToAllBranches = false,
+      dtpServerDate,
       rows = [],
     }: {
       PstrCoID: string;
@@ -222,6 +223,8 @@ export const modifySalesPriceList = async (
       rdgItemGroup: number;
       lkpItemGroupID?: string;
       chkApplyToAllBranches?: boolean;
+      // the time the page got from /datetime/server-date (the service checks it)
+      dtpServerDate?: string;
       rows: SalesPriceListRowPayload[];
     } = req.body;
 
@@ -274,6 +277,7 @@ export const modifySalesPriceList = async (
       lkpBranch: String(lkpBranch).trim(),
       chkApplyToAllBranches: Boolean(chkApplyToAllBranches),
       rows: changedRows,
+      dtpServerDate,
     });
 
     // =====================================================

@@ -146,6 +146,7 @@ export const saveCustomerDivisions = async (
       PstrCoID: user.CoID,
       PstrUserID: user.userId,
       lkpCsAccountID: String(req.body?.lkpCsAccountID ?? "").trim(),
+      dtpServerDate: req.body?.dtpServerDate,
       inserted: req.body?.inserted,
       updated: req.body?.updated,
       deleted: req.body?.deleted,

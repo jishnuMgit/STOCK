@@ -397,6 +397,7 @@ export const saveStockTransfer = async (
       txtDocNo,
       lkpToBranch,
       dtpDate,
+      dtpServerDate,
       txtNote = "",
       chkSaved = false,
       rows = [],
@@ -407,6 +408,8 @@ export const saveStockTransfer = async (
       txtDocNo: string;
       lkpToBranch: string;
       dtpDate: string;
+      // the time the page got from /datetime/server-date (the service checks it)
+      dtpServerDate?: string;
       txtNote?: string;
       chkSaved?: boolean;
       rows: (StockTransferRowPayload & { txtGridRow?: number })[];
@@ -506,6 +509,7 @@ export const saveStockTransfer = async (
       chkSaved: Boolean(chkSaved),
       rows,
       PstrUserID,
+      dtpServerDate,
     });
 
     // =====================================================
@@ -1049,8 +1053,15 @@ export const postStockTransfer = async (
       PstrYear,
       lkpBranch,
       txtDocNo,
-    }: { PstrCoID: string; PstrYear: string; lkpBranch: string; txtDocNo: string } =
-      req.body;
+      dtpServerDate,
+    }: {
+      PstrCoID: string;
+      PstrYear: string;
+      lkpBranch: string;
+      txtDocNo: string;
+      // the time the page got from /datetime/server-date (the service checks it)
+      dtpServerDate?: string;
+    } = req.body;
 
     if (!PstrCoID) {
       return res.status(400).json({
@@ -1150,6 +1161,7 @@ export const postStockTransfer = async (
       lkpBranch,
       txtDocNo: docNo,
       PstrUserID,
+      dtpServerDate,
     });
 
     // =====================================================

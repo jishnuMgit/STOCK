@@ -1,5 +1,6 @@
 import type { PoolClient } from "pg";
 import pool from "../../DB/db.js";
+import { resolveServerDate } from "../common/DateTimeService.js";
 
 /* =========================================================
    SET DEFAULT BRANCH - calls dbo.filluserlogin and
@@ -115,7 +116,9 @@ export interface DefaultBranchRowPayload {
 export async function saveDefaultBranchService(
   PstrCoID: string,
   rows: DefaultBranchRowPayload[],
-  PstrUserID: string
+  PstrUserID: string,
+  // the time the page got from /datetime/server-date (checked here; the server's own time when it is missing or wrong)
+  dtpServerDate?: string
 ): Promise<{
   inserted: { txtUserID: string; lkpDefaultBranch: string }[];
   changed: { txtUserID: string; before: string; lkpDefaultBranch: string }[];
@@ -126,6 +129,9 @@ export async function saveDefaultBranchService(
 
   try {
     await client.query("BEGIN");
+
+    // one time for every row of this save
+    const serverDate = await resolveServerDate(client, dtpServerDate);
 
     // what is saved, for the users this login may see (all of them for ADMIN)
     const saved = await fetchDefaultBranchRows(client, PstrCoID, PstrUserID);
@@ -178,6 +184,7 @@ export async function saveDefaultBranchService(
         lkpDefaultBranch: row.lkpDefaultBranch,
         txtOriginalUserID: row.txtUserID,
         PstrUserID,
+        serverDate,
       });
     }
 
@@ -188,6 +195,7 @@ export async function saveDefaultBranchService(
         txtUserID: row.txtUserID,
         lkpDefaultBranch: row.lkpDefaultBranch,
         PstrUserID,
+        serverDate,
       });
     }
 
@@ -222,6 +230,8 @@ async function callSpDefaultBranch(
     lkpDefaultBranch?: string;
     txtOriginalUserID?: string;
     PstrUserID?: string;
+    // the time written on the row; null = the procedure's own now()
+    serverDate?: string | null;
     cursorName?: string;
   }
 ): Promise<void> {
@@ -234,7 +244,8 @@ async function callSpDefaultBranch(
       p_strdefbrid       => $4::varchar,
       p_original_fuserid => $5::varchar,
       p_pstruserid       => $6::varchar,
-      p_result_cursor    => $7::refcursor
+      p_dtpserverdate    => $7::timestamp,
+      p_result_cursor    => $8::refcursor
     )
     `,
     [
@@ -244,6 +255,7 @@ async function callSpDefaultBranch(
       p.lkpDefaultBranch ?? null,
       p.txtOriginalUserID ?? null,
       p.PstrUserID ?? null,
+      p.serverDate ?? null,
       p.cursorName ??
         `cur_setdefaultbranch_${Date.now()}_${Math.floor(Math.random() * 100000)}`,
     ]

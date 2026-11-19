@@ -16,6 +16,7 @@ import CustomLinkedPairSelect, {
   type PairSelectOption,
 } from "../../../components/common/CustomLinkedPairSelect";
 import Header from "../../../components/common/Header";
+import { tryGetServerDate } from "../../../utils/serverDate";
 
 /* =========================================================
    TYPES
@@ -454,6 +455,9 @@ const ItemPage: React.FC = () => {
     }
 
     try {
+      // the time of the save: the database server's clock (the common /datetime/server-date), written on the row(s)
+      const dtpServerDate = await tryGetServerDate();
+
       const response = await fetch(
         `${import.meta.env.VITE_API_URL}/Item/saveItem`,
         {
@@ -463,6 +467,7 @@ const ItemPage: React.FC = () => {
           body: JSON.stringify({
             PstrCoID,
             PstrUserID,
+            dtpServerDate,
             txtItemID,
             txtItemName,
             txtItemDescription: txtItemDescription || null,

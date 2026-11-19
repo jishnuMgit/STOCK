@@ -16,6 +16,10 @@
 -- The table (dbo.tblcustdivision): fcoid, fcustomerid, fdivid varchar(8), fdivname varchar(60), fdivname_ar varchar(60),
 -- fcuserid / fcuserdate = created by, fmuserid / fmuserdate = modified by.
 --
+-- p_dtpserverdate - the time written on the row (fcuserdate on a new division, fmuserdate on a modify). The page gets it from
+-- the database server's clock (GET /datetime/server-date) and the backend checks it and passes it, so every row of one save
+-- carries the same time. NULL = the procedure's own now().
+--
 -- Parameter order: the name of the screen and the user that works are last (p_pstruserid just before the cursor).
 -- A different signature than an older install -> the old one is dropped first (CREATE OR REPLACE cannot rename or
 -- move arguments).
@@ -37,6 +41,7 @@ CREATE OR REPLACE PROCEDURE dbo.sp_pagecustomerdivision
     IN    p_txtoriginaldivisionname_ar    varchar(60) DEFAULT NULL,
     IN    p_pstrscreenname               varchar(50) DEFAULT NULL,
     IN    p_pstruserid                   varchar(20) DEFAULT NULL,
+    IN    p_dtpserverdate                timestamp   DEFAULT NULL,
     INOUT p_result                       refcursor   DEFAULT 'custdivision_cursor'
 )
 LANGUAGE plpgsql
@@ -94,7 +99,7 @@ BEGIN
 
         INSERT INTO dbo.tblcustdivision
                (fcoid, fcustomerid, fdivid, fdivname, fdivname_ar, fcuserid, fcuserdate)
-        VALUES (p_pstrcoid, p_lkpcsaccountid, p_txtdivisionid, v_name, v_name_ar, p_pstruserid, now());
+        VALUES (p_pstrcoid, p_lkpcsaccountid, p_txtdivisionid, v_name, v_name_ar, p_pstruserid, COALESCE(p_dtpserverdate, now()));
 
         v_note := 'Customer ID : ' || p_lkpcsaccountid
                || CHR(13) || CHR(10) || 'Division ID : ' || p_txtdivisionid
@@ -137,7 +142,7 @@ BEGIN
                fdivname   = v_name,
                fdivname_ar = v_name_ar,
                fmuserid   = p_pstruserid,
-               fmuserdate = now()
+               fmuserdate = COALESCE(p_dtpserverdate, now())
          WHERE fcoid = p_pstrcoid
            AND fcustomerid = p_lkpcsaccountid
            AND fdivid = p_txtoriginaldivisionid;

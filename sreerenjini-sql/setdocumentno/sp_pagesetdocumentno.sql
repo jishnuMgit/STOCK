@@ -1,8 +1,12 @@
 -- PROCEDURE: dbo.sp_pagesetdocumentno(IN p_strmode character varying, IN p_pstrcoid character varying, IN p_pstryear character varying, IN p_strbrid character varying, IN p_strmoduleid character varying, IN p_strdoctype character varying, IN p_strdocnoprefix character varying, IN p_strstartseqno character varying, IN p_blnstrictserialseqno boolean, IN p_strseqnoincrementmode character varying, IN p_strseqnoresetmode character varying, IN p_blnprintaftersave smallint, IN p_intpositionno smallint, IN p_original_fdoctype character varying, IN p_pstruserid character varying, IN p_result_cursor refcursor)
 
--- DROP PROCEDURE IF EXISTS dbo.sp_pagesetdocumentno(IN p_strmode character varying, IN p_pstrcoid character varying, IN p_pstryear character varying, IN p_strbrid character varying, IN p_strmoduleid character varying, IN p_strdoctype character varying, IN p_strdocnoprefix character varying, IN p_strstartseqno character varying, IN p_blnstrictserialseqno boolean, IN p_strseqnoincrementmode character varying, IN p_strseqnoresetmode character varying, IN p_blnprintaftersave smallint, IN p_intpositionno smallint, IN p_original_fdoctype character varying, IN p_pstruserid character varying, IN p_result_cursor refcursor);
+-- ADDED: p_dtpserverdate - the time written on the rows (fcuserdate on a new rule, fmuserdate on a modify). The page gets it from the database server's clock
+-- (GET /datetime/server-date) and the backend checks it and passes it, so every row of one save carries the same time.
+-- NULL = the procedure's own now(). It sits before the cursor argument, so the earlier signature is dropped first.
 
-CREATE OR REPLACE PROCEDURE dbo.sp_pagesetdocumentno(IN p_strmode character varying, IN p_pstrcoid character varying, IN p_pstryear character varying, IN p_strbrid character varying, IN p_strmoduleid character varying, IN p_strdoctype character varying DEFAULT NULL::character varying, IN p_strdocnoprefix character varying DEFAULT NULL::character varying, IN p_strstartseqno character varying DEFAULT NULL::character varying, IN p_blnstrictserialseqno boolean DEFAULT false, IN p_strseqnoincrementmode character varying DEFAULT NULL::character varying, IN p_strseqnoresetmode character varying DEFAULT NULL::character varying, IN p_blnprintaftersave smallint DEFAULT 0, IN p_intpositionno smallint DEFAULT 1, IN p_original_fdoctype character varying DEFAULT NULL::character varying, IN p_pstruserid character varying DEFAULT NULL::character varying, IN p_result_cursor refcursor DEFAULT 'cur_setdocumentno'::refcursor)
+DROP PROCEDURE IF EXISTS dbo.sp_pagesetdocumentno(IN p_strmode character varying, IN p_pstrcoid character varying, IN p_pstryear character varying, IN p_strbrid character varying, IN p_strmoduleid character varying, IN p_strdoctype character varying, IN p_strdocnoprefix character varying, IN p_strstartseqno character varying, IN p_blnstrictserialseqno boolean, IN p_strseqnoincrementmode character varying, IN p_strseqnoresetmode character varying, IN p_blnprintaftersave smallint, IN p_intpositionno smallint, IN p_original_fdoctype character varying, IN p_pstruserid character varying, IN p_result_cursor refcursor);
+
+CREATE OR REPLACE PROCEDURE dbo.sp_pagesetdocumentno(IN p_strmode character varying, IN p_pstrcoid character varying, IN p_pstryear character varying, IN p_strbrid character varying, IN p_strmoduleid character varying, IN p_strdoctype character varying DEFAULT NULL::character varying, IN p_strdocnoprefix character varying DEFAULT NULL::character varying, IN p_strstartseqno character varying DEFAULT NULL::character varying, IN p_blnstrictserialseqno boolean DEFAULT false, IN p_strseqnoincrementmode character varying DEFAULT NULL::character varying, IN p_strseqnoresetmode character varying DEFAULT NULL::character varying, IN p_blnprintaftersave smallint DEFAULT 0, IN p_intpositionno smallint DEFAULT 1, IN p_original_fdoctype character varying DEFAULT NULL::character varying, IN p_pstruserid character varying DEFAULT NULL::character varying, IN p_dtpserverdate timestamp without time zone DEFAULT NULL::timestamp without time zone, IN p_result_cursor refcursor DEFAULT 'cur_setdocumentno'::refcursor)
  LANGUAGE plpgsql
 AS $procedure$
 DECLARE
@@ -96,7 +100,7 @@ BEGIN
             p_strseqnoresetmode,
             COALESCE(p_blnprintaftersave, 0),
             p_pstruserid,
-            now()
+            coalesce(p_dtpserverdate, now())
         );
 
     END IF;
@@ -119,7 +123,7 @@ BEGIN
             fseqnoresetmode     = p_strseqnoresetmode,
             fprintaftersave     = COALESCE(p_blnprintaftersave, 0),
             fmuserid            = p_pstruserid,
-            fmuserdate          = now()
+            fmuserdate          = coalesce(p_dtpserverdate, now())
         WHERE fcoid = p_pstrcoid
           AND fyear = p_pstryear
           AND fbrid = p_strbrid
