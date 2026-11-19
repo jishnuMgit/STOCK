@@ -593,7 +593,7 @@ const PurchaseInvoicePage: React.FC = () => {
   ]);
 
   return (
-    <main className="mx-auto flex h-fit w-full max-w-275 flex-col overflow-hidden border border-slate-400 bg-white text-[12px] text-slate-800">
+    <main className="mx-auto mt-4 flex h-fit w-full max-w-275 flex-col overflow-hidden border border-slate-400 bg-white text-[12px] text-slate-800">
       <Header Name="Purchase Invoice" />
 
       <PurchaseForm

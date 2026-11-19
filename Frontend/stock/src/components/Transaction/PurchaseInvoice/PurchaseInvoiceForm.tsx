@@ -18,7 +18,7 @@ const makeOptions = (values: string[]): Option[] =>
 
 /* Fallback options until the lookup endpoints load. */
 const defaultBranchOptions = makeOptions(["OFFICE"]);
-const defaultInvoiceTypeOptions: Option[] = [
+const defaulttypeOptions: Option[] = [
   { value: "C", label: "C", name: "CASH" },
   { value: "R", label: "R", name: "CREDIT" },
 ];
@@ -29,7 +29,7 @@ const branchColumns = [
   { key: "value", label: "ID", width: "50px"},
 ];
 const invoiceTypeColumns = [
-  { key: "label", label: "Type", width: "70px" },
+  { key: "label", label: "ID", width: "70px" },
   { key: "name", label: "Name" },
 ];
 const labelColumn = [{ key: "label", label: "Name" }];
@@ -121,7 +121,7 @@ const PurchaseForm: React.FC<Props> = ({
   const [miscOpen, setMiscOpen] = useState(false);
   const [expenseOpen, setExpenseOpen] = useState(false);
   const branchOptions = lookups?.branches ?? defaultBranchOptions;
-  const invoiceTypeOptions = lookups?.invoiceTypes ?? defaultInvoiceTypeOptions;
+  const typeOptions = lookups?.invoiceTypes ?? defaulttypeOptions;
   const supplierOptions = lookups?.supplierIds ?? [];
   const supplierNameOptions = lookups?.supplierNames ?? [];
   const currencyOptions = lookups?.currencies ?? defaultCurrencyOptions;
@@ -384,11 +384,11 @@ const PurchaseForm: React.FC<Props> = ({
             <div className="min-w-0 w-[26%]">
               <CommonTableSelect
                 inputId="lkpType"
-                options={invoiceTypeOptions}
-                value={pick(invoiceTypeOptions, header.invoiceType)}
+                options={typeOptions}
+                value={pick(typeOptions, header.invoiceType)}
                 onChange={(o) => onChange("invoiceType", o?.value ?? "")}
                 columns={invoiceTypeColumns}
-                width="115%"
+                width="100%"
                 menuWidth="180px"
                 menuPortalTarget={portalTarget}
                 controlFontSize="14px"
@@ -416,7 +416,7 @@ const PurchaseForm: React.FC<Props> = ({
 
         {/* Row 2: Supplier, full width (right padding matches the
             Misc. Sup. row's + button so both selects end together) */}
-        <div className="flex min-w-0 items-center gap-3 xl:col-span-2">
+        <div className="flex min-w-0 items-center gap-2.5 xl:col-span-2">
           <label htmlFor="lkpSupplierID" className={`${labelClass} w-23`}>
             Supplier
           </label>
@@ -428,7 +428,7 @@ const PurchaseForm: React.FC<Props> = ({
                 value={pick(supplierOptions, header.supplierId)}
                 onChange={(o) => handleSupplierChange(o?.value ?? "")}
                 columns={supplierIdColumns}
-                width="100%"
+                width="102%"
                 menuWidth="calc(100% + 560px)"
                 menuPortalTarget={portalTarget}
                 isClearable={false}
@@ -458,7 +458,7 @@ const PurchaseForm: React.FC<Props> = ({
             Misc. Sup.
           </label>
           <div className="flex min-w-0 flex-1 items-center gap-2">
-            <div className="flex min-w-0 flex-1 gap-2.5">
+            <div className="flex min-w-0 flex-1 gap-1.75">
               <div className="w-28 shrink-0">
                 <CommonTableSelect
                   inputId="lkpMiscSupID"

@@ -7,7 +7,7 @@ import {
   Settings,
   Wrench,
   Lock,
-  FileCheck ,
+  FileCheck,
   ShieldCheck,
 } from "lucide-react";
 import type { MenuNode } from "../types/menu";
@@ -119,12 +119,19 @@ Sales-REPORT
   mnuRptItemSales: "/Sales/Reports/RptItemSales",
 
 
-// ZATCA
+  // ZATCA
   mnuZATCADoxSubmission: "/ZATCA/Transaction/ZATCASubmission",
   mnuZATCAPDFA3Generation: "/ZATCA/Transaction/RptZatcaPdfA3Generation",
   mnurptZATCADoxStatus: "/ZATCA/Transaction/RptZatcaDocumentStatus",
 
   mnuZATCADoxPath: "/ZATCA/Setup/SetZATCADocumentPath",
+
+  /* =========================================================
+   DASHBOARD
+========================================================= */
+
+  mnuGeneralDashboard: "/dashboard/general",
+  mnuSalesDashboard: "/dashboard/sales",
 
 
   /* =========================================================
@@ -134,7 +141,9 @@ Sales-REPORT
      FINANCE - TRANSACTION
   ========================================================= */
 
+
   mnuReceipt: "/Finance/Transaction/Receipt",
+  mnuPayment: "/Finance/Transaction/Payment",
   mnuBeginningBalance: "/Finance/Transaction/BeginningBalance",
   mnuJournal: "/Finance/Transaction/journal",
   mnuFinDocPost: "/Finance/Transaction/FinDocPost",
@@ -193,22 +202,22 @@ Sales-REPORT
 
   // ASSETS - TRANSACTION
 
-mnuAssetPurchase:"/Assets/Transaction/AssetPurchase",
-mnuAssetDisposal:"/Assets/Transaction/AssetDisposal",
-mnuDeprGeneration:"/Assets/Transaction/DepreciationGeneration",
-mnuDeprBeginningBalance:"/Assets/Transaction/DepreciationBeginningBalance",
-mnuDeprJournalList:"/Assets/Transaction/DepreciationJournalList",
+  mnuAssetPurchase: "/Assets/Transaction/AssetPurchase",
+  mnuAssetDisposal: "/Assets/Transaction/AssetDisposal",
+  mnuDeprGeneration: "/Assets/Transaction/DepreciationGeneration",
+  mnuDeprBeginningBalance: "/Assets/Transaction/DepreciationBeginningBalance",
+  mnuDeprJournalList: "/Assets/Transaction/DepreciationJournalList",
 
-// ASSETS - REPORTS
+  // ASSETS - REPORTS
 
-mnuAssetSchedule:"/Assets/Reports/AssetSchedule",
-mnuAssetItemList:"/Assets/Reports/AssetItemList",
-mnuDepreciationHistory:"/Assets/Reports/DepreciationHistory",
-mnuDepreciationSchedule:"/Assets/Reports/DepreciationSchedule",
-mnuDisposalSchedule:"/Assets/Reports/DisposalSchedule",
+  mnuAssetSchedule: "/Assets/Reports/AssetSchedule",
+  mnuAssetItemList: "/Assets/Reports/AssetItemList",
+  mnuDepreciationHistory: "/Assets/Reports/DepreciationHistory",
+  mnuDepreciationSchedule: "/Assets/Reports/DepreciationSchedule",
+  mnuDisposalSchedule: "/Assets/Reports/DisposalSchedule",
 
-// ASSETS - SETTING
-mnu12Setting:"/Assets/Setting/AssetSetting",
+  // ASSETS - SETTING
+  mnu12Setting: "/Assets/Setting/AssetSetting",
 
   /* =========================================================
      SETTINGS

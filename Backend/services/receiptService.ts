@@ -10,8 +10,6 @@ import type {
   ReceiptRow,
   ReceiptHeaderParams,
   ReceiptDocumentParams,
-  SaveReceiptLineParams,
-  SaveGeneratedEntryParams,
 } from "../types/types.js";
 
 /* =========================================================
@@ -26,10 +24,11 @@ interface ServiceResult {
   data?: DbRow;
 }
 
-/* The control entry may now be a debit when the net total is negative. */
-type SaveGeneratedEntryWithDebit = SaveGeneratedEntryParams & {
-  numDebit?: DbValue;
-};
+/* Input for saveReceiptLine / saveGeneratedEntry (ctx fields come from ctx). */
+type LineInput = Omit<
+  ReceiptProcedureParams,
+  "strMode" | "pstrCoID" | "pstrYear" | "PstrUserID"
+>;
 
 /* =========================================================
    HELPERS
@@ -71,16 +70,6 @@ function toBoolean(value: DbValue): boolean {
   );
 }
 
-function toSmallInt(value: DbValue, defaultValue: number = 0): number {
-  const number = Number(value);
-
-  if (!Number.isInteger(number)) {
-    return defaultValue;
-  }
-
-  return number;
-}
-
 /*
    if txtDebitCredit > 0
       numCredit = txtDebitCredit, numDebit = 0
@@ -98,6 +87,15 @@ function AssignDebitCredit(value: DbValue): {
   }
 
   return { numDebit: Math.abs(txtDebitCredit), numCredit: 0 };
+}
+
+/*
+   Signed value stored in fdebitcredit for a control row:
+   the exact opposite of the total signed detail amount.
+   (avoids sending -0)
+*/
+function oppositeOf(total: number): number {
+  return total === 0 ? 0 : -total;
 }
 
 /* =========================================================
@@ -133,14 +131,6 @@ function normalizeDate(value: DbValue): string | null {
   return dateString;
 }
 
-function normalizeCreatedDate(value: DbValue): string | null {
-  if (isEmpty(value)) {
-    return null;
-  }
-
-  return String(value).trim();
-}
-
 /* =========================================================
    PROCEDURE CALL
 
@@ -162,13 +152,14 @@ function normalizeCreatedDate(value: DbValue): string | null {
       15  p_strccid varchar
       16  p_numdebit numeric
       17  p_numcredit numeric
-      18  p_strdescription varchar
-      19  p_strnote varchar
-      20  p_blnmatch boolean
-      21  p_pstruserid varchar
-      22  p_struserdate varchar
-      23  p_strdetails jsonb
-      24  p_result_cursor refcursor
+      18  p_numdebitcredit numeric      <-- NEW
+      19  p_strdescription varchar
+      20  p_strnote varchar
+      21  p_blnmatch boolean
+      22  p_pstruserid varchar
+      23  p_struserdate varchar
+      24  p_strdetails jsonb
+      25  p_result_cursor refcursor
   )
 ========================================================= */
 
@@ -209,6 +200,9 @@ async function callReceiptProcedure(
 
     numCredit = 0,
 
+    /* NULL by default: the SP rejects S / SC / M calls that forget it. */
+    numDebitCredit = null,
+
     txtDescription = null,
 
     txtNote = null,
@@ -222,11 +216,7 @@ async function callReceiptProcedure(
     details = null,
   }: ReceiptProcedureParams,
 ): Promise<any[]> {
-  const coId = clean(pstrCoID);
-
-  const year = clean(pstrYear);
-
-  if (!coId || !year) {
+  if (!pstrCoID || !pstrYear) {
     throw new Error("Company ID and financial year are required");
   }
 
@@ -243,51 +233,53 @@ async function callReceiptProcedure(
   const values = [
     strMode, // $1
 
-    coId, // $2
+    pstrCoID, // $2
 
-    year, // $3
+    pstrYear, // $3
 
-    clean(lkpBranch), // $4
+    lkpBranch, // $4
 
-    clean(strDocType), // $5
+    strDocType, // $5
 
-    clean(txtDocNo), // $6
+    txtDocNo, // $6
 
-    toSmallInt(txtSlNo), // $7
+    txtSlNo, // $7
 
-    normalizeDate(dtpDate), // $8
+    dtpDate, // $8
 
-    clean(lkpCBAccountName), // $9
+    lkpCBAccountName, // $9
 
-    clean(txtReceivedFrom), // $10
+    txtReceivedFrom, // $10
 
-    clean(txtReference), // $11
+    txtReference, // $11
 
-    clean(lkpAccountID), // $12
+    lkpAccountID, // $12
 
-    clean(strGCS), // $13
+    strGCS, // $13
 
-    clean(lkpDivID), // $14
+    lkpDivID, // $14
 
-    clean(lkpCCID), // $15
+    lkpCCID, // $15
 
-    toNumber(numDebit), // $16
+    numDebit, // $16
 
-    toNumber(numCredit), // $17
+    numCredit, // $17
 
-    clean(txtDescription), // $18
+    numDebitCredit, // $18  (NEW)
 
-    clean(txtNote), // $19
+    txtDescription, // $19
 
-    toBoolean(chkMatch), // $20
+    txtNote, // $20
 
-    clean(PstrUserID), // $21
+    chkMatch, // $21
 
-    normalizeCreatedDate(strUserDate), // $22
+    PstrUserID, // $22
 
-    jsonDetails, // $23
+    strUserDate, // $23
 
-    cursorName, // $24
+    jsonDetails, // $24
+
+    cursorName, // $25
   ];
 
   const sql = `
@@ -309,25 +301,16 @@ async function callReceiptProcedure(
       $15::varchar,
       $16::numeric,
       $17::numeric,
-      $18::varchar,
+      $18::numeric,
       $19::varchar,
-      $20::boolean,
-      $21::varchar,
+      $20::varchar,
+      $21::boolean,
       $22::varchar,
-      $23::jsonb,
-      $24::refcursor
+      $23::varchar,
+      $24::jsonb,
+      $25::refcursor
     )
   `;
-
-  console.log("sp_pagesreceipt_det", {
-    strMode,
-    coId,
-    year,
-    lkpBranch,
-    strDocType,
-    txtDocNo,
-    txtSlNo,
-  });
 
   await client.query(sql, values);
 
@@ -346,9 +329,6 @@ async function callReceiptProcedure(
 
 /* =========================================================
    GET RECEIPT HEADER
-
-   pstrCoID / pstrYear must now be passed by the caller
-   (GetData service) - they are no longer read from .env.
 ========================================================= */
 
 export async function getReceiptHeader({
@@ -453,89 +433,19 @@ export async function getReceiptLines({
 
 async function saveReceiptLine(
   client: PoolClient,
-  ctx: ReceiptContext,
-  {
-    lkpBranch,
-
-    strDocType,
-
-    txtDocNo,
-
-    dtpDate,
-
-    txtReceivedFrom,
-
-    txtReference,
-
-    txtSlNo,
-
-    lkpCBAccountName,
-
-    lkpAccountID,
-
-    strGCS,
-
-    lkpCCID,
-
-    numDebit,
-
-    numCredit,
-
-    txtDescription,
-
-    txtNote,
-
-    lkpDivID,
-
-    chkMatch,
-
-    strUserDate,
-  }: SaveReceiptLineParams,
+  { pstrCoID, pstrYear, pstrUserID }: ReceiptContext,
+  line: LineInput,
 ): Promise<any[]> {
   return callReceiptProcedure(client, {
+    ...line,
+
     strMode: "S",
 
-    pstrCoID: ctx.pstrCoID,
+    pstrCoID,
 
-    pstrYear: ctx.pstrYear,
+    pstrYear,
 
-    lkpBranch,
-
-    strDocType,
-
-    txtDocNo,
-
-    txtSlNo,
-
-    dtpDate,
-
-    lkpCBAccountName,
-
-    txtReceivedFrom,
-
-    txtReference,
-
-    lkpAccountID,
-
-    strGCS,
-
-    lkpDivID,
-
-    lkpCCID,
-
-    numDebit,
-
-    numCredit,
-
-    txtDescription,
-
-    txtNote,
-
-    chkMatch,
-
-    PstrUserID: ctx.pstrUserID,
-
-    strUserDate: strUserDate,
+    PstrUserID: pstrUserID,
 
     details: null,
   });
@@ -547,89 +457,27 @@ async function saveReceiptLine(
 
 async function saveGeneratedEntry(
   client: PoolClient,
-  ctx: ReceiptContext,
-  {
-    lkpBranch,
-
-    strDocType,
-
-    txtDocNo,
-
-    dtpDate,
-
-    txtReceivedFrom,
-
-    txtReference,
-
-    lkpCBAccountName,
-
-    strGCS,
-
-    lkpCCID,
-
-    numDebit = 0,
-
-    numCredit,
-
-    txtDescription,
-
-    strNote,
-
-    lkpDivID,
-
-    chkMatch,
-
-    strUserDate,
-  }: SaveGeneratedEntryWithDebit,
+  { pstrCoID, pstrYear, pstrUserID }: ReceiptContext,
+  entry: LineInput,
 ): Promise<any[]> {
   return callReceiptProcedure(client, {
+    ...entry,
+
     strMode: "SC",
 
-    pstrCoID: ctx.pstrCoID,
+    pstrCoID,
 
-    pstrYear: ctx.pstrYear,
-
-    lkpBranch,
-
-    strDocType,
-
-    txtDocNo,
+    pstrYear,
 
     /* SC always uses fslno = 0. */
 
     txtSlNo: 0,
 
-    dtpDate,
-
-    lkpCBAccountName,
-
-    txtReceivedFrom,
-
-    txtReference,
-
     /* The SP uses faccountid = p_strlkpCBAccountID for SC. */
 
-    lkpAccountID: lkpCBAccountName,
+    lkpAccountID: entry.lkpCBAccountName,
 
-    strGCS,
-
-    lkpDivID,
-
-    lkpCCID,
-
-    numDebit,
-
-    numCredit,
-
-    txtDescription,
-
-    txtNote: strNote,
-
-    chkMatch,
-
-    PstrUserID: ctx.pstrUserID,
-
-    strUserDate: strUserDate,
+    PstrUserID: pstrUserID,
 
     details: null,
   });
@@ -641,15 +489,15 @@ async function saveGeneratedEntry(
 
 async function deleteReceiptInternal(
   client: PoolClient,
-  ctx: ReceiptContext,
+  { pstrCoID, pstrYear, pstrUserID }: ReceiptContext,
   { lkpBranch, strDocType, txtDocNo }: ReceiptHeaderParams,
 ): Promise<any[]> {
   return callReceiptProcedure(client, {
     strMode: "D",
 
-    pstrCoID: ctx.pstrCoID,
+    pstrCoID,
 
-    pstrYear: ctx.pstrYear,
+    pstrYear,
 
     lkpBranch,
 
@@ -659,7 +507,7 @@ async function deleteReceiptInternal(
 
     txtSlNo: 0,
 
-    PstrUserID: ctx.pstrUserID,
+    PstrUserID: pstrUserID,
 
     details: null,
   });
@@ -676,6 +524,8 @@ export async function saveReceiptService(
   manageTransaction: boolean = true,
 ): Promise<ServiceResult> {
   const client: PoolClient = existingClient || (await pool.connect());
+
+  const { pstrCoID, pstrYear } = ctx;
 
   try {
     const {
@@ -748,10 +598,13 @@ export async function saveReceiptService(
 
       const { numDebit, numCredit } = AssignDebitCredit(row.txtDebitCredit);
 
+      /* signed user-entered amount, saved as-is in fdebitcredit */
+      const numDebitCredit = toNumber(row.txtDebitCredit);
+
       await saveReceiptLine(client, ctx, {
         lkpBranch,
 
-        strDocType: strDocType,
+        strDocType,
 
         txtDocNo,
 
@@ -763,7 +616,7 @@ export async function saveReceiptService(
 
         txtSlNo,
 
-        lkpCBAccountName: lkpCBAccountName,
+        lkpCBAccountName,
 
         lkpAccountID: row.lkpAccountID,
 
@@ -774,6 +627,8 @@ export async function saveReceiptService(
         numDebit,
 
         numCredit,
+
+        numDebitCredit,
 
         txtDescription: row.txtDescription || "",
 
@@ -797,6 +652,9 @@ export async function saveReceiptService(
 
     const control = AssignDebitCredit(TottxtDebitCredit);
 
+    /* control fdebitcredit = opposite of the total signed detail amount */
+    const controlDebitCredit = oppositeOf(TottxtDebitCredit);
+
     await saveGeneratedEntry(client, ctx, {
       lkpBranch,
 
@@ -810,21 +668,19 @@ export async function saveReceiptService(
 
       txtReference,
 
-      lkpCBAccountName: lkpCBAccountName,
+      lkpCBAccountName,
 
       strGCS: firstRow.strGCS || "",
-
-      // lkpDivID: firstRow.lkpDivID || "",
-
-      // lkpCCID: firstRow.lkpCCID || "",
 
       numDebit: control.numDebit,
 
       numCredit: control.numCredit,
 
+      numDebitCredit: controlDebitCredit,
+
       txtDescription: generatedDescription,
 
-      strNote: strNote || "",
+      txtNote: strNote || "",
 
       chkMatch: toBoolean(firstRow.ckhMatch),
 
@@ -839,13 +695,13 @@ export async function saveReceiptService(
       message: "saved ",
 
       data: {
-        pstrCoID: ctx.pstrCoID,
+        pstrCoID,
 
-        year: ctx.pstrYear,
+        pstrYear,
 
         lkpBranch,
 
-        strDocType: strDocType,
+        strDocType,
 
         txtDocNo,
 
@@ -885,6 +741,8 @@ export async function deleteReceiptService(
 ): Promise<ServiceResult> {
   const client = await pool.connect();
 
+  const { pstrCoID, pstrYear } = ctx;
+
   try {
     if (isEmpty(lkpBranch)) {
       throw new Error("Branch is required");
@@ -904,7 +762,7 @@ export async function deleteReceiptService(
 
     await deleteReceiptInternal(client, ctx, {
       lkpBranch,
-      strDocType: strDocType,
+      strDocType,
       txtDocNo,
     });
 
@@ -914,9 +772,9 @@ export async function deleteReceiptService(
       message: "Receipt deleted successfully",
 
       data: {
-        pstrCoID: ctx.pstrCoID,
+        pstrCoID,
 
-        year: ctx.pstrYear,
+        pstrYear,
 
         lkpBranch,
 
@@ -948,6 +806,8 @@ export async function updateReceiptService(
   receipt: ReceiptData,
   ctx: ReceiptContext,
 ): Promise<ServiceResult> {
+  const { pstrCoID, pstrYear, pstrUserID } = ctx;
+
   const {
     lkpBranch,
     lkpType,
@@ -1014,16 +874,19 @@ export async function updateReceiptService(
 
     const control = AssignDebitCredit(TottxtDebitCredit);
 
+    /* control fdebitcredit = opposite of the total signed detail amount */
+    const controlDebitCredit = oppositeOf(TottxtDebitCredit);
+
     await callReceiptProcedure(client, {
       strMode: "M",
 
-      pstrCoID: ctx.pstrCoID,
+      pstrCoID,
 
-      pstrYear: ctx.pstrYear,
+      pstrYear,
 
       lkpBranch,
 
-      strDocType: strDocType,
+      strDocType,
 
       txtDocNo: clean(txtDocNo),
 
@@ -1031,7 +894,7 @@ export async function updateReceiptService(
 
       dtpDate,
 
-      lkpCBAccountName: lkpCBAccountName,
+      lkpCBAccountName,
 
       txtReceivedFrom,
 
@@ -1049,6 +912,8 @@ export async function updateReceiptService(
 
       numCredit: control.numCredit,
 
+      numDebitCredit: controlDebitCredit,
+
       txtDescription: [txtReference, txtReceivedFrom]
         .filter((value) => !isEmpty(value))
         .join(" - "),
@@ -1057,7 +922,7 @@ export async function updateReceiptService(
 
       chkMatch: toBoolean(validRows[0]?.ckhMatch),
 
-      PstrUserID: ctx.pstrUserID,
+      PstrUserID: pstrUserID,
 
       strUserDate: new Date().toISOString(),
 
@@ -1095,6 +960,9 @@ export async function updateReceiptService(
 
         credit: numCredit,
 
+        /* signed user-entered amount, saved as-is in fdebitcredit */
+        debitcredit: toNumber(row.txtDebitCredit),
+
         description: row.txtDescription || "",
 
         note: strNote || "",
@@ -1105,18 +973,20 @@ export async function updateReceiptService(
 
     /*
        3. MODIFY ALL DETAIL ROWS (M + details JSON)
+       numDebitCredit is not used on this call; each row carries
+       its own "debitcredit" inside the JSON.
     */
 
     await callReceiptProcedure(client, {
       strMode: "M",
 
-      pstrCoID: ctx.pstrCoID,
+      pstrCoID,
 
-      pstrYear: ctx.pstrYear,
+      pstrYear,
 
       lkpBranch,
 
-      strDocType: strDocType,
+      strDocType,
 
       txtDocNo: clean(txtDocNo),
 
@@ -1124,7 +994,7 @@ export async function updateReceiptService(
 
       dtpDate,
 
-      lkpCBAccountName: lkpCBAccountName,
+      lkpCBAccountName,
 
       txtReceivedFrom,
 
@@ -1142,13 +1012,15 @@ export async function updateReceiptService(
 
       numCredit: 0,
 
+      numDebitCredit: 0,
+
       txtDescription: null,
 
       txtNote: null,
 
       chkMatch: false,
 
-      PstrUserID: ctx.pstrUserID,
+      PstrUserID: pstrUserID,
 
       strUserDate: new Date().toISOString(),
 
@@ -1161,13 +1033,13 @@ export async function updateReceiptService(
       message: "Receipt modified successfully",
 
       data: {
-        pstrCoID: ctx.pstrCoID,
+        pstrCoID,
 
-        year: ctx.pstrYear,
+        pstrYear,
 
         lkpBranch,
 
-        strDocType: strDocType,
+        strDocType,
 
         txtDocNo,
 

@@ -1,12 +1,10 @@
 type DbValue = unknown;
-type DbRow = Record<string, any>;
 
 export interface ReceiptProcedureParams {
   strMode: string;
   pstrCoID?: string;
   pstrYear: string;
   lkpBranch?: DbValue;
-  lkpType?: DbValue;
   strDocType?: DbValue;
   txtDocNo?: DbValue;
   dtpDate?: DbValue;
@@ -20,6 +18,7 @@ export interface ReceiptProcedureParams {
   lkpCCID?: DbValue;
   numDebit?: DbValue;
   numCredit?: DbValue;
+  numDebitCredit?: DbValue;
   txtDescription?: DbValue;
   txtNote?: DbValue;
   chkMatch?: DbValue;
@@ -36,10 +35,7 @@ export interface ReceiptRow {
   lkpCCID?: string;
   lkpDivID?: string;
   txtDebitCredit?: string | number;
-  numDebit?: string | number;
-  numCredit?: string | number;
   txtDescription?: string;
-  txtNote?: string;
   ckhMatch?: boolean | string | number;
 }
 
@@ -52,15 +48,8 @@ export interface ReceiptData {
   txtReceivedFrom?: DbValue;
   txtReference?: DbValue;
   strNote?: DbValue;
-  // txtDocNo?:DbValue;
   cbCcId?: DbValue;
   rows?: ReceiptRow[];
-}
-
-export interface DeleteReceiptData {
-  lkpBranch?: DbValue;
-  type?: DbValue;
-  txtDocNo?: DbValue;
 }
 
 export interface ReceiptHeaderParams {
@@ -78,51 +67,7 @@ export interface ReceiptDocumentParams {
   txtDocNo?: DbValue;
 }
 
-export interface SaveReceiptLineParams {
-  pstrCoID?: any;
-  pstrYear?: any;
-  lkpBranch?: DbValue;
-  lkpType?: DbValue;
-  strDocType?: DbValue;
-  txtDocNo?: DbValue;
-  dtpDate?: DbValue;
-  lkpCBAccountName?: DbValue;
-  txtReceivedFrom?: DbValue;
-  txtReference?: DbValue;
-  txtSlNo?: DbValue;
-  lkpAccountID?: DbValue;
-  strGCS?: DbValue;
-  lkpDivID?: DbValue;
-  lkpCCID?: DbValue;
-  numDebit?: DbValue;
-  numCredit?: DbValue;
-  txtDescription?: DbValue;
-  txtNote?: DbValue;
-  chkMatch?: DbValue;
-  strUserDate?: DbValue;
-}
-
-export interface SaveGeneratedEntryParams {
-  pstrCoID?: string;
-  pstrYear?: string;
-  lkpBranch?: DbValue;
-  lkpType?: DbValue;
-  strDocType?: DbValue;
-  txtDocNo?: DbValue;
-  dtpDate?: DbValue;
-  txtReceivedFrom?: DbValue;
-  txtReference?: DbValue;
-  lkpCBAccountName?: DbValue;
-  strGCS?: DbValue;
-  lkpCCID?: DbValue;
-  numCredit?: DbValue;
-  txtDescription?: DbValue;
-  strNote?: DbValue;
-  lkpDivID?: DbValue;
-  chkMatch?: DbValue;
-  strUserDate?: DbValue;
-}
-
+/* kept because GetData service (not shown) likely imports it */
 export interface GetDataParams {
   pstrCoID: unknown;
   pstrYear: unknown;

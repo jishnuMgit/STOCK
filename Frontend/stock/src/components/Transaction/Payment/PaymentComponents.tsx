@@ -7,13 +7,12 @@ import React, {
     useMemo,
     useRef,
     useState,
-    useLayoutEffect,
 } from "react";
 
 import { apiFetch } from "../../../utils/session";
-import { GetStrDocType } from "../../../utils/receiptHelpers";
+import { GetStrDocType } from "../../../utils/PaymentHelpers";
 
-import { Link, useNavigate } from "react-router-dom";
+import { Link } from "react-router-dom";
 import { FaEye } from "react-icons/fa";
 
 import Select, {
@@ -103,8 +102,8 @@ interface PaymentFormProps {
     reference: string;
     setReference: (value: string) => void;
 
-    receivedFrom: string;
-    setReceivedFrom: (value: string) => void;
+    paidTo: string;
+    setPaidTo: (value: string) => void;
 
     documentNo: string;
     setDocumentNo: (value: string) => void;
@@ -117,7 +116,7 @@ interface PaymentFormProps {
     documentNoRef: React.RefObject<HTMLInputElement | null>;
     cbAccountRef: React.RefObject<SelectInstance<TableSelectOption, false> | null>;
     dateRef: React.RefObject<HTMLInputElement | null>;
-    receivedFromRef: React.RefObject<HTMLInputElement | null>;
+    paidToRef: React.RefObject<HTMLInputElement | null>;
     referenceRef: React.RefObject<HTMLInputElement | null>;
 
     focusFirstAccountId: () => void;
@@ -169,8 +168,8 @@ export const PaymentForm: React.FC<PaymentFormProps> = ({
     reference,
     setReference,
 
-    receivedFrom,
-    setReceivedFrom,
+    paidTo,
+    setPaidTo,
 
     documentNo,
     setDocumentNo,
@@ -183,7 +182,7 @@ export const PaymentForm: React.FC<PaymentFormProps> = ({
     documentNoRef,
     cbAccountRef,
     dateRef,
-    receivedFromRef,
+    paidToRef,
     referenceRef,
 
     focusFirstAccountId,
@@ -337,7 +336,7 @@ export const PaymentForm: React.FC<PaymentFormProps> = ({
             setDocumentNoLoading(true);
 
             const response = await apiFetch(
-                `${import.meta.env.VITE_API_URL}/Receipt/getDocNo`,
+                `${import.meta.env.VITE_API_URL}/Payment/getDocNo`,
                 {
                     method: "POST",
                     headers: {
@@ -921,7 +920,7 @@ export const PaymentForm: React.FC<PaymentFormProps> = ({
 
                                     onKeyDown: (event) =>
                                         handleInputKeyDown(event, () =>
-                                            receivedFromRef.current?.focus(),
+                                            paidToRef.current?.focus(),
                                         ),
                                 },
 
@@ -1047,15 +1046,15 @@ export const PaymentForm: React.FC<PaymentFormProps> = ({
 
                 <div className="flex items-center gap-2">
                     <label className="w-22.5 text-right ml-3 -mr-3 text-[14px] whitespace-nowrap">
-                        Paid to :
+                        Paid To :
                     </label>
 
                     <input
                         maxLength={100}
-                        ref={receivedFromRef}
-                        id="txtReceivedFrom"
-                        value={receivedFrom}
-                        onChange={(event) => setReceivedFrom(event.target.value)}
+                        ref={paidToRef}
+                        id="txtpaidTo"
+                        value={paidTo}
+                        onChange={(event) => setPaidTo(event.target.value)}
                         onKeyDown={(event) =>
                             handleInputKeyDown(event, () => referenceRef.current?.focus())
                         }
@@ -2390,7 +2389,7 @@ export const PaymentTable = forwardRef<PaymentTableRef, PaymentTableProps>(
                             <th id="lkpDivID">Div. ID</th>
                             <th id="lkpCCID">CC. ID</th>
                             <th id="txtDebitCredit" className="text-right">
-                                Credit Amt.
+                                Debit Amt.
                             </th>
                             <th id="ckhMatch" className="text-center">
                                 Match

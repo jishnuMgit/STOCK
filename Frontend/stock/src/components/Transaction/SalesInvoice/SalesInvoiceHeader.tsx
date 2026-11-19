@@ -70,7 +70,7 @@ const branchColumns = [
   { key: "value", label: "ID", width: "50px" },
 ];
 const typeColumns = [
-  { key: "value", label: "Type", width: "70px" },
+  { key: "value", label: "ID", width: "70px" },
   { key: "name", label: "Name" },
 ];
 const divisionColumns = [
@@ -83,7 +83,7 @@ const divisionColumns = [
 // ============================================================
 
 const inputClass =
-  "h-[30px] border border-[#d7dee7] rounded-[4px] bg-white px-2 text-[14px] text-[#334155] outline-none hover:border-[#aebdce] focus:border-[#9fdfbc] focus:shadow-[0_0_0_1px_#9fdfbc]";
+  "h-[30px] border border-[#d7dee7] rounded-[4px] bg-white pl-[2px] pr-2 text-[14px] text-[#334155] outline-none hover:border-[#aebdce] focus:border-[#9fdfbc] focus:shadow-[0_0_0_1px_#9fdfbc]";
 
 // ============================================================
 // DATE PICKER STYLE
@@ -311,7 +311,7 @@ const SalesInvoiceHeader: React.FC<SalesInvoiceHeaderProps> = ({
     );
   };
 
-  const invoiceTypeTableOptions = useMemo(
+  const typeTableOptions = useMemo(
     () =>
       invoiceTypes.map((option) => ({
         ...option,
@@ -321,7 +321,7 @@ const SalesInvoiceHeader: React.FC<SalesInvoiceHeaderProps> = ({
   );
 
   const invoiceTypeValue = header.invoiceType
-    ? (invoiceTypeTableOptions.find(
+    ? (typeTableOptions.find(
       (option) => option.value === header.invoiceType,
     ) ?? {
       value: header.invoiceType,
@@ -461,14 +461,14 @@ const SalesInvoiceHeader: React.FC<SalesInvoiceHeaderProps> = ({
           <div className="w-22">
             <CommonTableSelect
               inputId="lkpType"
-              options={invoiceTypeTableOptions}
+              options={typeTableOptions}
               value={invoiceTypeValue}
               onChange={(option) =>
                 onHeaderChange({ invoiceType: option?.value ?? "" })
               }
               columns={typeColumns}
-              width="88px"
-              menuWidth="200px"
+              width="80%"
+              menuWidth="calc(100% + 75px)"
               headerFontSize="14px"
               isClearable={false}
               isSearchable={false}

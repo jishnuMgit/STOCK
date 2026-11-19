@@ -948,15 +948,11 @@ export async function getStockTransferPrintService(
     txtDocNo
   );
 
-  // The lines come from the TL's dbo.sp_pagestockprint (the old SP_rptStDocPrint),
-  // which takes the WHERE text. The filter is built HERE, from values the
-  // controller has already validated, each one quoted - never from the browser.
-  // (The old report's filter: company, year, branch, doc type and Entry No.)
-  const quote = (value: string) => value.replace(/'/g, "''");
+
 
   const strFilter =
     `a.fcoid = '${quote(PstrCoID)}' and a.fyear = '${Math.trunc(Number(PstrYear))}' ` +
-    `and a.fbrid = '${quote(lkpBranch)}' and a.fdoctype = '${strDocType}' ` +
+    `and a.fbrid = '${quote(lkpBranch)}' and a.fdoctype = '${DOC_TYPE}' ` +
     `and a.fdocno = '${quote(txtDocNo)}'`;
 
   const cursorName =
@@ -1107,8 +1103,8 @@ async function callSpStockTransfer(
       p.PstrCoID,
       String(p.PstrYear),
       p.lkpBranch,
-      strDocType,
-      strDocTypeG,
+      DOC_TYPE,
+      DOC_TYPE_G,
       p.txtDocNo,
       p.lkpToBranch ?? null,
       p.dtpDate ?? null,

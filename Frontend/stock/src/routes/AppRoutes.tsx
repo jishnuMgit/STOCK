@@ -4,6 +4,8 @@ import SetDocumentNo from "../pages/Settings/SetDocumentNoPage";
 import ProtectedRoute from "./ProtectedRoutes";
 import SetBranchInfo from "../pages/Settings/SetBranchInfoPage";
 import PublicRoute from "./PublicRoute";
+import GeneralDashboard from "../pages/Dashboard/General/index";
+import SalesDashboard from "../pages/Dashboard/Sales/index";
 import CustomerList from "../pages/Finance/Setup/CustomerListPage";
 import ChartOfAccountList from "../pages/Finance/Setup/COAListPage";
 import UserLogin from "../pages/Security/UserLogin/UserLoginPage";
@@ -162,9 +164,14 @@ const AppRoutes = () => {
         {/* Protected - everything below requires login */}
         <Route element={<ProtectedRoute />}>
           {/* Home */}
-          <Route path="/" element={<Home />} />
+          {/* Home -> dashboard */}
+          <Route path="/" element={<Navigate to="/dashboard/general" replace />} />
 
           <Route path="/dev/delete" element={<Deletepage />} />
+
+          {/* DASHBOARD */}
+          <Route path="/dashboard/general" element={<GeneralDashboard />} />
+          <Route path="/dashboard/sales" element={<SalesDashboard />} />
 
           {/* ================= FINANCE - TRANSACTION ================= */}
           <Route
@@ -445,15 +452,15 @@ const AppRoutes = () => {
           />
 
 
-{/* ================= ZATCA ================= */}
-<Route path="/ZATCA/Transaction/ZATCASubmission" element={<ZATCASubmission />} />
-<Route path="/ZATCA/Transaction/RptZatcaPdfA3Generation" element={<RptZatcaPdfA3Generation />} />
-<Route path="/ZATCA/Transaction/RptZatcaDocumentStatus" element={<RptZatcaDocumentStatus />} />
+          {/* ================= ZATCA ================= */}
+          <Route path="/ZATCA/Transaction/ZATCASubmission" element={<ZATCASubmission />} />
+          <Route path="/ZATCA/Transaction/RptZatcaPdfA3Generation" element={<RptZatcaPdfA3Generation />} />
+          <Route path="/ZATCA/Transaction/RptZatcaDocumentStatus" element={<RptZatcaDocumentStatus />} />
 
-<Route path="/ZATCA/Setup/SetZATCADocumentPath" element={<SetZATCADocumentPath />} />
+          <Route path="/ZATCA/Setup/SetZATCADocumentPath" element={<SetZATCADocumentPath />} />
 
 
-{/* ================= ASSETS  ================= */}
+          {/* ================= ASSETS  ================= */}
 
           <Route path="/Assets/Reports/AssetSchedule" element={<AssetSchedulePage />} />
           <Route path="/Assets/Reports/AssetItemList" element={<AssetItemListPage />} />
@@ -462,13 +469,13 @@ const AppRoutes = () => {
           <Route path="/Assets/Reports/DisposalSchedule" element={<DisposalSchedulePage />} />
 
 
-                    <Route path="Assets/Transaction/AssetPurchase" element={<AssetPurchasePage />} />
-                    <Route path="Assets/Transaction/AssetDisposal" element={<AssetDisposalPage />} />
+          <Route path="Assets/Transaction/AssetPurchase" element={<AssetPurchasePage />} />
+          <Route path="Assets/Transaction/AssetDisposal" element={<AssetDisposalPage />} />
 
-                    <Route path="Assets/Transaction/DepreciationGeneration" element={<DepreciationGenerationPage />} />
-                    <Route path="Assets/Setting/AssetSetting" element={<AssetSettingPage />} />
-                    <Route path="Assets/Transaction/DepreciationBeginningBalance" element={<DepreciationBeginningBalancePage />} />
-                    <Route path="Assets/Transaction/DepreciationJournalList" element={<DepreciationJournalListPage />} />
+          <Route path="Assets/Transaction/DepreciationGeneration" element={<DepreciationGenerationPage />} />
+          <Route path="Assets/Setting/AssetSetting" element={<AssetSettingPage />} />
+          <Route path="Assets/Transaction/DepreciationBeginningBalance" element={<DepreciationBeginningBalancePage />} />
+          <Route path="Assets/Transaction/DepreciationJournalList" element={<DepreciationJournalListPage />} />
 
 
 
@@ -561,7 +568,7 @@ const AppRoutes = () => {
           />
           <Route path="/dev/matchpage" element={<MatchingPage />} />
           <Route path="/dev/unmatchpage" element={<UnMatchPage />} />
-          
+
           {/* <Route path="/dev/MatchEnquiryPage" element={<MatchEnquiryPage />} /> */}
 
           {/* Unknown URL -> back to "/" ("/" has its own element, so no loop) */}

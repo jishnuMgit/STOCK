@@ -4,6 +4,7 @@ import CustomerHeader from "../../../components/Setup/CustomerPage/CustomerHeade
 import CustomerMiddle from "../../../components/Setup/CustomerPage/CustomerMiddle";
 import CustomerFooter from "../../../components/Setup/CustomerPage/CustomerFooter";
 import { useCustomer, type CustomerDetail } from "../../../hooks/useCustomer";
+import { useConfirmModal } from "../../../hooks/useConfirmModal";
 import { toast } from "react-toastify";
 
 interface CustomerPageProps {
@@ -49,6 +50,7 @@ const CustomerPage: React.FC<CustomerPageProps> = ({
 }) => {
   const isEdit = !!customerId;
   const isDelete = isEdit && mode === "delete";
+  const { confirm, dialog } = useConfirmModal();
 
   const formRef = useRef<HTMLDivElement>(null);
 
@@ -474,7 +476,13 @@ const CustomerPage: React.FC<CustomerPageProps> = ({
       toast.warning("Open an existing customer to delete it");
       return;
     }
-    if (!window.confirm(`Delete customer "${txtCustomerName}"?`)) return;
+    const shouldDelete = await confirm({
+      title: "Customer",
+      message: `Delete customer "${txtCustomerName}"?`,
+      confirmLabel: "Delete",
+      cancelLabel: "Cancel",
+    });
+    if (!shouldDelete) return;
 
     try {
       setSaving(true);
@@ -612,7 +620,8 @@ const CustomerPage: React.FC<CustomerPageProps> = ({
   }
 
   return (
-    <div ref={formRef} onKeyDown={handleEnterAsTab} className="w-full bg-white">
+    <>
+      <div ref={formRef} onKeyDown={handleEnterAsTab} className="w-full bg-white">
       <CustomerHeader
         txtCustomerID={txtCustomerID}
         setTxtCustomerID={setTxtCustomerID}
@@ -721,7 +730,9 @@ const CustomerPage: React.FC<CustomerPageProps> = ({
         onDelete={handleDelete}
         onClear={handleClear}
       />
-    </div>
+      </div>
+      {dialog}
+    </>
   );
 };
 

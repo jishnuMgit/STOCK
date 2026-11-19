@@ -9,17 +9,18 @@ import type { SelectInstance } from "react-select";
 import type { TableSelectOption } from "../../../../components/common/CommonTableSelect";
 
 import {
-  ReceiptHeader,
-  ReceiptForm,
-  ReceiptTable,
-  ReceiptBottomForm,
-  ReceiptActions,
+  PaymentActions,
+  PaymentBottomForm,
+  PaymentForm,
+  PaymentHeader,
+  PaymentTable,
   type TableField,
-  type ReceiptTableRef,
+  type PaymentTableRef,
   type SortField,
-  type ReceiptActionsRef,
-} from "../../../../components/Transaction/Receipt/save/ReceiptComp";
+  type PaymentActionsRef,
+} from "../../../../components/Transaction/Payment/PaymentComponents";
 
+/* Shared types (payment uses the same row/option shapes as receipt). */
 import {
   type SelectOption,
   type Branch,
@@ -27,16 +28,46 @@ import {
   type CostCenter,
   type ReceiptRow,
   type AccountData,
-  type ReceiptPrintData,
-  type ReceiptPrintResponse,
 } from "../../../../types/receiptypes";
 import { toast } from "react-toastify";
-import ReceiptPrint from "../../../../components/Transaction/Receipt/save/Receipt.print";
-import { buildReceiptPdf } from "../../../../components/Transaction/Receipt/save/ReceiptPdf";
+
+/*
+ * TODO (Payment Print / Excel):
+ * The backend has no /Payment/print or /Payment/excel yet.
+ * When it exists, restore: the print/excel state, handlePrint,
+ * fetchPaymentExcel, the print preview component + PDF builder,
+ * and the ReceiptPrintData / ReceiptPrintResponse types.
+ */
 
 import { apiFetch, getSession } from "../../../../utils/session";
-import { GetStrDocType } from "../../../../utils/receiptHelpers";
-import { PaymentActions, PaymentBottomForm, PaymentForm, PaymentHeader, PaymentTable } from "../../../../components/Transaction/Payment/PaymentComponents";
+import { useConfirmModal } from "../../../../hooks/useConfirmModal";
+
+/* =========================================================
+   PAYMENT DOC TYPE
+
+   UI "B" -> "BP" (Bank Payment)
+   UI "C" -> "CP" (Cash Payment)
+   Also accepts "BP" / "CP". Never appends "R".
+========================================================= */
+
+const getPaymentStrDocType = (type: string): string => {
+  const value = String(type ?? "").trim().toUpperCase();
+
+  if (value === "B" || value === "BP") return "BP";
+  if (value === "C" || value === "CP") return "CP";
+
+  return value;
+};
+
+/* BP / CP / B / C -> UI value B / C */
+const toUiPaymentType = (type: string | null | undefined): string => {
+  const value = String(type ?? "").trim().toUpperCase();
+
+  if (value === "BP" || value === "B") return "B";
+  if (value === "CP" || value === "C") return "C";
+
+  return value;
+};
 
 /* =========================================================
    CREATE INITIAL ROWS
@@ -72,10 +103,10 @@ const tableFieldOrder: TableField[] = [
 ];
 
 /* =========================================================
-   INITIAL API RESPONSE
+   INITIAL API RESPONSE  (GET /Payment/getPayment)
 ========================================================= */
 
-interface ReceiptsResponse {
+interface PaymentsResponse {
   success: boolean;
   message: string;
   data: Branch[];
@@ -84,27 +115,31 @@ interface ReceiptsResponse {
   accountsortbyId: AccountData[];
   costCenters: CostCenter[];
   defaultBranch: string | null;
-  txtDocNo: string;
-  receiptNo: string;
-  receiptType?: string | null;
+  paymentNo?: string | null;
+  /* same value as paymentNo, kept by the backend */
+  receiptNo?: string | null;
+  /* "BP" / "CP" */
+  paymentType?: string | null;
 }
+
 /* =========================================================
-   MODIFY LOOKUP RESPONSE
+   MODIFY LOOKUP RESPONSE  (GET /Payment/get/data)
 ========================================================= */
 
-interface ModifyReceiptResponse {
+interface ModifyPaymentResponse {
   exists: boolean;
 
   header: {
     lkpBranch?: string;
     lkpType?: string;
+    txtDocNo?: string;
     docNo?: string;
     dtpDate?: string;
     fpost?: boolean | string | number;
-    // cbAccount?: string;
     cbAccountName?: string;
     CCID?: string;
-    receivedFrom?: string;
+    /* holds the "Paid To" value */
+    paidTo?: string;
     reference?: string;
     note?: string;
   } | null;
@@ -116,8 +151,8 @@ interface ModifyReceiptResponse {
     fgcs?: string;
     DivID?: string;
     CCID?: string;
+    /* signed: positive = Debit, negative = Credit */
     txtDebitCredit?: string | number;
-    creditAmt?: string | number;
     match?: boolean | string | number;
     description?: string;
   }>;
@@ -133,7 +168,7 @@ interface ModifyReceiptResponse {
    YYYY-MM-DD -> DD/MM/YYYY
 ========================================================= */
 
-const formatReceiptDate = (value?: string) => {
+const formatPaymentDate = (value?: string) => {
   if (!value) {
     return "";
   }
@@ -153,10 +188,6 @@ const formatReceiptDate = (value?: string) => {
    TODAY DATE
 ========================================================= */
 
-/* =========================================================
-   TODAY DATE
-========================================================= */
-
 const getTodayDate = () => {
   const today = new Date();
   const day = String(today.getDate()).padStart(2, "0");
@@ -171,25 +202,26 @@ const isPostedFlag = (value: unknown) =>
   ["true", "1", "t"].includes(String(value ?? "").trim().toLowerCase());
 
 /* =========================================================
-   RECEIPT
+   PAYMENT
 ========================================================= */
 
 const PaymentPage: React.FC = () => {
+  const { confirm, dialog } = useConfirmModal();
+
   /* =======================================================
      HEADER FORM STATE
   ======================================================= */
-  const [isPrint, setIsPrint] = useState(false);
-  const [printData, setPrintData] = useState<ReceiptPrintData | null>(null);
   const [lkpBranch, setLkpBranch] = useState("");
   const [lkpType, setLkpType] = useState("");
   const [cbAccountName, setCbAccountName] = useState("");
-  const [receivedFrom, setReceivedFrom] = useState("");
+  /* UI label is "Paid To"; the state/payload key stays paidTo */
+  const [paidTo, setPaidTo] = useState("");
   const [reference, setReference] = useState("");
   const [cbCcId, setCbCcId] = useState("");
 
   const [txtDocNo, setTxtDocNo] = useState("");
 
-  const [focusReceiptNoAfterClear, setFocusReceiptNoAfterClear] = useState(0);
+  const [focusPaymentNoAfterClear, setFocusPaymentNoAfterClear] = useState(0);
   const [dtpDate, setDtpDate] = useState(getTodayDate);
 
   /* =======================================================
@@ -204,7 +236,7 @@ const PaymentPage: React.FC = () => {
 
   const [isModifyMode, setIsModifyMode] = useState(false);
   const [isPosted, setIsPosted] = useState(false);
-  const [, setReceiptMessage] = useState("");
+  const [, setPaymentMessage] = useState("");
 
   /* =======================================================
      MODIFY LOOKUP TRACKING
@@ -255,24 +287,24 @@ const PaymentPage: React.FC = () => {
   const documentNoRef = useRef<HTMLInputElement>(null);
   const cbAccountRef = useRef<SelectInstance<TableSelectOption, false>>(null);
   const dateRef = useRef<HTMLInputElement>(null);
-  const receivedFromRef = useRef<HTMLInputElement>(null);
+  const paidToRef = useRef<HTMLInputElement>(null);
   const referenceRef = useRef<HTMLInputElement>(null);
-  const receiptTableRef = useRef<ReceiptTableRef>(null);
+  const paymentTableRef = useRef<PaymentTableRef>(null);
   const descriptionRef = useRef<HTMLInputElement>(null);
   const noteRef = useRef<HTMLTextAreaElement>(null);
-  const actionsRef = useRef<ReceiptActionsRef>(null);
+  const actionsRef = useRef<PaymentActionsRef>(null);
 
   /* =======================================================
-     LOAD RECEIPT DATA
+     LOAD PAYMENT DATA
   ======================================================= */
 
   useEffect(() => {
     const controller = new AbortController();
 
-    const loadReceiptData = async () => {
+    const loadPaymentData = async () => {
       try {
         const response = await apiFetch(
-          `${import.meta.env.VITE_API_URL}/Receipt/getReceipt`,
+          `${import.meta.env.VITE_API_URL}/Payment/getPayment`,
           {
             method: "GET",
             signal: controller.signal,
@@ -283,12 +315,12 @@ const PaymentPage: React.FC = () => {
           throw new Error(`HTTP Error: ${response.status}`);
         }
 
-        const result = (await response.json()) as ReceiptsResponse;
+        const result = (await response.json()) as PaymentsResponse;
 
-        console.log("Receipt Response:", result);
+        console.log("Payment Response:", result);
 
         if (!result.success) {
-          console.error("Receipt API failed:", result.message);
+          console.error("Payment API failed:", result.message);
 
           return;
         }
@@ -305,8 +337,10 @@ const PaymentPage: React.FC = () => {
 
         setCostCenters(result.costCenters || []);
 
-        if (result.txtDocNo || result.receiptNo) {
-          setTxtDocNo(result.txtDocNo || result.receiptNo);
+        const initialPaymentNo = result.paymentNo || result.receiptNo;
+
+        if (initialPaymentNo) {
+          setTxtDocNo(String(initialPaymentNo));
         }
 
         setTimeout(() => {
@@ -323,93 +357,41 @@ const PaymentPage: React.FC = () => {
 
           input.setSelectionRange(value.length, value.length);
 
-          console.log("Receipt No focused:", document.activeElement === input);
+          console.log("Payment No focused:", document.activeElement === input);
         }, 100);
       } catch (error) {
         if (error instanceof DOMException && error.name === "AbortError") {
           return;
         }
 
-        console.error("Receipt API Error:", error);
+        console.error("Payment API Error:", error);
       }
     };
 
-    loadReceiptData();
+    loadPaymentData();
 
     return () => {
       controller.abort();
     };
   }, []);
 
-  const handlePrint = async () => {
-    try {
-      if (!lkpBranch || !lkpType || !txtDocNo.trim()) {
-        toast.warning("Branch, receipt type, and receipt number are required.");
-        return;
-      }
-
-      const response = await apiFetch(
-        `${import.meta.env.VITE_API_URL}/Receipt/print?${new URLSearchParams({
-          lkpBranch,
-          lkpType,
-          txtDocNo: txtDocNo.trim(),
-        })}`,
-      );
-
-      const result = (await response.json()) as ReceiptPrintResponse;
-
-      if (!response.ok || !result.success || !result.data) {
-        throw new Error(result.message || "Failed to fetch receipt print data.");
-      }
-
-      setPrintData(result.data);
-      setIsPrint(true);
-    } catch (error) {
-      console.error("Print data fetch error:", error);
-      toast.error(
-        error instanceof Error
-          ? error.message
-          : "Cannot connect to the Receipt API.",
-      );
-    }
-  };
-
-  const fetchReceiptExcel = async (): Promise<Blob | null> => {
-    if (!printData) return null;
-
-    try {
-      const response = await apiFetch(
-        `${import.meta.env.VITE_API_URL}/Receipt/excel?${new URLSearchParams({
-          lkpBranch,
-          lkpType,
-          txtDocNo: printData.docNo,
-        })}`,
-      );
-
-      if (!response.ok) {
-        let message = "Could not create the Excel file.";
-        try {
-          const result = (await response.json()) as { message?: string };
-          message = result.message || message;
-        } catch {
-          message = `Could not create the Excel file (error ${response.status}).`;
-        }
-        toast.error(message);
-        return null;
-      }
-
-      return await response.blob();
-    } catch (error) {
-      console.error("Receipt Excel download error:", error);
-      toast.error("Cannot connect to the Receipt API.");
-      return null;
-    }
-  };
   /* =======================================================
-     LOAD RECEIPT FOR MODIFY
+     PRINT (NOT AVAILABLE YET)
+
+     TODO: Payment print / Excel backend does not exist yet.
+     Do NOT call /Payment/print or /Payment/excel until it does.
+     The Print button stays in the layout but only shows a notice.
   ======================================================= */
 
-  const getReceipt = useCallback(async () => {
+  const handlePrint = useCallback(() => {
+    toast.info("Print is not available for Payment yet.");
+  }, []);
+
+  /* =======================================================
+     LOAD PAYMENT FOR MODIFY
+  ======================================================= */
+
+  const getPayment = useCallback(async () => {
     const requestedDocumentNo = txtDocNo.trim();
 
     if (!lkpBranch || !requestedDocumentNo) {
@@ -421,7 +403,7 @@ const PaymentPage: React.FC = () => {
       return;
     }
 
-    const lookupKey = `${lkpBranch}|${GetStrDocType(
+    const lookupKey = `${lkpBranch}|${getPaymentStrDocType(
       lkpType,
     )}|${requestedDocumentNo}`;
 
@@ -431,25 +413,25 @@ const PaymentPage: React.FC = () => {
 
     lastLookupKeyRef.current = lookupKey;
 
-    setReceiptMessage("");
+    setPaymentMessage("");
 
     try {
       const query = new URLSearchParams({
         lkpBranch: lkpBranch,
-        lkpType: GetStrDocType(lkpType),
+        lkpType: getPaymentStrDocType(lkpType),
         txtDocNo: requestedDocumentNo,
       });
 
-      const url = `${import.meta.env.VITE_API_URL}/Receipt/get/data?${query.toString()}`;
+      const url = `${import.meta.env.VITE_API_URL}/Payment/get/data?${query.toString()}`;
       const response = await apiFetch(url);
       const responseText = await response.text();
-      let result: ModifyReceiptResponse;
+      let result: ModifyPaymentResponse;
 
       try {
-        result = JSON.parse(responseText) as ModifyReceiptResponse;
+        result = JSON.parse(responseText) as ModifyPaymentResponse;
       } catch {
         throw new Error(
-          responseText || "Invalid response from receipt lookup API.",
+          responseText || "Invalid response from payment lookup API.",
         );
       }
 
@@ -457,9 +439,9 @@ const PaymentPage: React.FC = () => {
         setIsModifyMode(false);
         setIsPosted(false);
 
-        setReceiptMessage(
+        setPaymentMessage(
           result.message ||
-          "Receipt not found. New receipt mode remains active.",
+          "Payment not found. New payment mode remains active.",
         );
 
         return;
@@ -472,8 +454,8 @@ const PaymentPage: React.FC = () => {
           (option) => option.faccountid === loadedRow.AccountID,
         );
 
-        /* new API field first, fall back to the old one */
-        const loadedAmount = loadedRow.txtDebitCredit ?? loadedRow.creditAmt;
+        /* signed amount: +Dr / -Cr, exactly as saved */
+        const loadedAmount = loadedRow.txtDebitCredit;
 
         loadedRows[index] = {
           id: index + 1,
@@ -503,23 +485,26 @@ const PaymentPage: React.FC = () => {
       });
 
       /* ===============================================
-             HEADER
-          =============================================== */
+         HEADER
+      =============================================== */
 
       setLkpBranch(result.header.lkpBranch || lkpBranch);
 
+      /* CP / C -> Cash, otherwise Bank */
       setLkpType(
-        result.header.lkpType === "CR" || result.header.lkpType === "C"
+        result.header.lkpType === "CP" || result.header.lkpType === "C"
           ? "C"
           : "B",
       );
 
-      setTxtDocNo(result.header.docNo || requestedDocumentNo);
+      setTxtDocNo(
+        result.header.txtDocNo || result.header.docNo || requestedDocumentNo,
+      );
 
-      setDtpDate(formatReceiptDate(result.header.dtpDate) || getTodayDate());
+      setDtpDate(formatPaymentDate(result.header.dtpDate) || getTodayDate());
       setCbAccountName(result.header.cbAccountName || "");
       setCbCcId(result.header.CCID || "");
-      setReceivedFrom(result.header.receivedFrom || "");
+      setPaidTo(result.header.paidTo || "");
       setReference(result.header.reference || "");
       setNote(result.header.note || "");
       setRows(loadedRows);
@@ -528,25 +513,21 @@ const PaymentPage: React.FC = () => {
       setIsPosted(isPostedFlag(result.header.fpost));
 
       /* ===============================================
-             MODIFY MODE
-          =============================================== */
+         MODIFY MODE
+      =============================================== */
 
       setIsModifyMode(true);
-      setReceiptMessage("Receipt loaded successfully.");
-      console.log("✅ RECEIPT LOADED FOR MODIFY");
+      setPaymentMessage("Payment loaded successfully.");
+      console.log("✅ PAYMENT LOADED FOR MODIFY");
       console.log("LOADED HEADER:", result.header);
       console.log("LOADED ROWS:", loadedRows);
-
-      // toast.success(
-      //   "Receipt loaded successfully."
-      // );
     } catch (error) {
       lastLookupKeyRef.current = "";
       setIsModifyMode(false);
       setIsPosted(false);
       console.error("MODIFY LOOKUP ERROR:", error);
-      setReceiptMessage(
-        error instanceof Error ? error.message : "Unable to load receipt.",
+      setPaymentMessage(
+        error instanceof Error ? error.message : "Unable to load payment.",
       );
     }
   }, [accountOptions, lkpBranch, txtDocNo, lkpType]);
@@ -555,20 +536,14 @@ const PaymentPage: React.FC = () => {
      RESET TABLE + LOAD NEXT DOCUMENT NUMBER
   ======================================================= */
 
-  /* =======================================================
-   RESET TABLE + LOAD NEXT DOCUMENT NUMBER
-======================================================= */
-
-  const resetTableAndLoadNextReceiptNumber = useCallback(async () => {
-    /* =====================================================
-       CLEAR ALL FORM DATA
-    ===================================================== */
+  const resetTableAndLoadNextPaymentNumber = useCallback(async () => {
+    /* CLEAR ALL FORM DATA */
 
     setRows(createRows());
 
     setCbAccountName("");
     setCbCcId("");
-    setReceivedFrom("");
+    setPaidTo("");
     setReference("");
     setNote("");
     setDescription("");
@@ -578,27 +553,22 @@ const PaymentPage: React.FC = () => {
 
     setIsModifyMode(false);
     setIsPosted(false);
-    setReceiptMessage("");
+    setPaymentMessage("");
 
     lastLookupKeyRef.current = "";
 
     /*
-     * IMPORTANT:
-     * Clear the old receipt number immediately.
-     *
-     * This prevents the previously saved/modified/deleted
-     * receipt number from remaining visible while the
-     * new receipt number is being requested.
+     * Clear the old payment number immediately so the previously
+     * saved/modified/deleted number is not visible while the new
+     * number is being requested.
      */
     setTxtDocNo("");
 
     try {
-      /* =====================================================
-         GET NEW RECEIPT DEFAULTS
-      ===================================================== */
+      /* GET NEW PAYMENT DEFAULTS */
 
       const response = await apiFetch(
-        `${import.meta.env.VITE_API_URL}/Receipt/getReceipt`,
+        `${import.meta.env.VITE_API_URL}/Payment/getPayment`,
         {
           method: "GET",
         },
@@ -606,33 +576,21 @@ const PaymentPage: React.FC = () => {
 
       if (!response.ok) {
         throw new Error(
-          `Receipt defaults could not be reloaded. Status: ${response.status}`,
+          `Payment defaults could not be reloaded. Status: ${response.status}`,
         );
       }
 
-      const result = (await response.json()) as ReceiptsResponse;
+      const result = (await response.json()) as PaymentsResponse;
 
-      console.log("========================================");
-
-      console.log("GET RECEIPT AFTER RESET");
-
-      console.log("GET RECEIPT RESPONSE:", result);
-
-      console.log("API txtDocNo:", result.txtDocNo);
-
-      console.log("API receiptNo:", result.receiptNo);
-
-      console.log("========================================");
+      console.log("GET PAYMENT AFTER RESET:", result);
 
       if (!result.success) {
         throw new Error(
-          result.message || "Receipt defaults could not be reloaded.",
+          result.message || "Payment defaults could not be reloaded.",
         );
       }
 
-      /* =====================================================
-         RESTORE API OPTIONS
-      ===================================================== */
+      /* RESTORE API OPTIONS */
 
       setBranchOptions(result.data || []);
       setFinancialParameters(result.finparam || []);
@@ -640,111 +598,62 @@ const PaymentPage: React.FC = () => {
       setAccountSortByIdOptions(result.accountsortbyId || []);
       setCostCenters(result.costCenters || []);
 
-      /* =====================================================
-         DEFAULT BRANCH
-      ===================================================== */
+      /* DEFAULT BRANCH */
 
       const defaultBranch =
         result.defaultBranch || result.data?.[0]?.fbrid || "";
 
       setLkpBranch(defaultBranch);
 
-      /* =====================================================
-         DEFAULT RECEIPT TYPE
-      ===================================================== */
+      /* DEFAULT PAYMENT TYPE ("BP"/"CP" -> "B"/"C") */
 
-      const defaultReceiptType = result.receiptType || "";
-
-      if (defaultReceiptType) {
-        const normalizedType = defaultReceiptType.trim().toUpperCase();
-
-        const uiReceiptType =
-          normalizedType === "BR"
-            ? "B"
-            : normalizedType === "CR"
-              ? "C"
-              : normalizedType;
-
-        setLkpType(uiReceiptType);
+      if (result.paymentType) {
+        setLkpType(toUiPaymentType(result.paymentType));
       }
 
-      /* =====================================================
-         GET NEW RECEIPT NUMBER
-      ===================================================== */
+      /* NEW PAYMENT NUMBER */
 
-      /*
-       * IMPORTANT:
-       *
-       * Your API response can return:
-       *
-       *     receiptNo
-       *
-       * or:
-       *
-       *     txtReceiptNo
-       *
-       * So check BOTH.
-       */
+      const newPaymentNo = result.paymentNo || result.receiptNo || "";
 
-      const newReceiptNo = result.receiptNo || result.txtDocNo || "";
+      console.log("NEW PAYMENT NUMBER:", newPaymentNo);
 
-      console.log("NEW RECEIPT NUMBER:", newReceiptNo);
-
-      /* =====================================================
-         SET NEW RECEIPT NUMBER
-      ===================================================== */
-
-      if (newReceiptNo) {
-        setTxtDocNo(newReceiptNo);
+      if (newPaymentNo) {
+        setTxtDocNo(String(newPaymentNo));
       } else {
-        console.error("❌ NEW RECEIPT NUMBER WAS NOT RETURNED BY API");
+        console.error("❌ NEW PAYMENT NUMBER WAS NOT RETURNED BY API");
 
         setTxtDocNo("");
       }
 
-      /* =====================================================
-         FOCUS RECEIPT NO AFTER REACT RENDER
-      ===================================================== */
+      /* FOCUS PAYMENT NO AFTER REACT RENDER */
 
       requestAnimationFrame(() => {
         requestAnimationFrame(() => {
           const input = documentNoRef.current;
 
           if (!input) {
-            console.warn("Receipt No input not found");
+            console.warn("Payment No input not found");
 
             return;
           }
 
           input.focus();
 
-          /*
-           * Do NOT manually assign:
-           *
-           * input.value = newReceiptNo
-           *
-           * because documentNo is a controlled
-           * React state value.
-           */
+          /* Do NOT assign input.value: it is controlled React state. */
 
           const value = input.value || "";
           input.setSelectionRange(value.length, value.length);
         });
       });
     } catch (error) {
-      console.error("Receipt defaults reload error:", error);
-
-      /*
-       * Keep Receipt No empty if the new number
-       * could not be loaded.
-       */
+      console.error("Payment defaults reload error:", error);
 
       setTxtDocNo("");
 
-      setReceiptMessage(
+      setPaymentMessage(
         error instanceof Error
           ? error.message
-          : "Receipt defaults could not be reloaded.",
+          : "Payment defaults could not be reloaded.",
       );
     }
   }, []);
@@ -767,7 +676,7 @@ const PaymentPage: React.FC = () => {
   ======================================================= */
 
   const focusTableField = useCallback((rowIndex: number, field: TableField) => {
-    receiptTableRef.current?.focusField(rowIndex, field);
+    paymentTableRef.current?.focusField(rowIndex, field);
   }, []);
 
   /* =======================================================
@@ -813,6 +722,7 @@ const PaymentPage: React.FC = () => {
     },
     [activeDescriptionRow, rows],
   );
+
   /* =======================================================
      CLEAR DESCRIPTION ROW
   ======================================================= */
@@ -907,9 +817,7 @@ const PaymentPage: React.FC = () => {
     (rowIndex: number, field: TableField) => {
       const row = rows[rowIndex];
 
-      /* ===============================================
-           ACCOUNT ID REQUIRED
-        =============================================== */
+      /* ACCOUNT ID REQUIRED */
 
       if (field === "accountId" && !row?.accountId.trim()) {
         toast.warning("Account ID is required.");
@@ -917,31 +825,24 @@ const PaymentPage: React.FC = () => {
         return;
       }
 
-      /* ===============================================
-           CREDIT REQUIRED
-        =============================================== */
+      /* AMOUNT REQUIRED */
 
       if (
         field === "txtDebitCredit" &&
         !Number.isFinite(parseFloat(row?.txtDebitCredit ?? ""))
       ) {
-        toast.warning("Credit Amount is required.");
+        toast.warning("Amount is required.");
         focusTableField(rowIndex, "txtDebitCredit");
         return;
       }
 
-      /* ===============================================
-           CREDIT -> DESCRIPTION
-        =============================================== */
+      /* AMOUNT -> DESCRIPTION */
 
       if (field === "txtDebitCredit") {
         setActiveDescriptionRow(rowIndex);
 
-        // Only load the selected row's description
-        // when that row already has one.
-        //
-        // If the row has no description, keep the
-        // existing Description value visible.
+        // Only load the selected row's description when that row
+        // already has one; otherwise keep the current value visible.
         if (row?.description?.trim()) {
           setDescription(row.description);
         }
@@ -961,9 +862,7 @@ const PaymentPage: React.FC = () => {
         return;
       }
 
-      /* ===============================================
-           AVAILABLE FIELDS
-        =============================================== */
+      /* AVAILABLE FIELDS */
 
       const availableFields = tableFieldOrder
         .filter((nextField) => nextField !== "DivID" || row?.haveDivision)
@@ -1029,9 +928,7 @@ const PaymentPage: React.FC = () => {
       event.preventDefault();
       event.stopPropagation();
 
-      /* ===============================================
-           NO ACTIVE ROW
-        =============================================== */
+      /* NO ACTIVE ROW */
 
       if (activeDescriptionRow === null) {
         focusTableField(0, "accountId");
@@ -1039,15 +936,11 @@ const PaymentPage: React.FC = () => {
         return;
       }
 
-      /* ===============================================
-           NEXT ROW
-        =============================================== */
+      /* NEXT ROW */
 
       const nextRow = activeDescriptionRow + 1;
 
-      /* ===============================================
-           LAST ROW -> NOTE
-        =============================================== */
+      /* LAST ROW -> NOTE */
 
       if (nextRow >= rows.length) {
         setActiveDescriptionRow(null);
@@ -1069,9 +962,7 @@ const PaymentPage: React.FC = () => {
         return;
       }
 
-      /* ===============================================
-           NEXT ROW ACCOUNT ID
-        =============================================== */
+      /* NEXT ROW ACCOUNT ID */
 
       focusTableField(nextRow, "accountId");
     },
@@ -1099,7 +990,7 @@ const PaymentPage: React.FC = () => {
   );
 
   /* =======================================================
-     TOTAL
+     TOTAL  (sum of the signed amounts)
   ======================================================= */
 
   const total = useMemo(
@@ -1108,26 +999,18 @@ const PaymentPage: React.FC = () => {
   );
 
   /* =======================================================
-     SAVE RECEIPT
+     SAVE PAYMENT
   ======================================================= */
-
-  /* =======================================================
-   SAVE RECEIPT
-======================================================= */
 
   const handleSave = useCallback(async () => {
     try {
-      /* =====================================================
-       GET VALID ROWS
-    ===================================================== */
+      /* GET VALID ROWS */
 
       const validRows = rows.filter(
         (row) => row.accountId && row.accountId.trim() !== "",
       );
 
-      /* =====================================================
-       VALIDATION
-    ===================================================== */
+      /* VALIDATION */
 
       const validationFailed =
         !lkpBranch ||
@@ -1139,29 +1022,16 @@ const PaymentPage: React.FC = () => {
 
       if (validationFailed) {
         toast.warning(
-          "Branch, type, receipt number, date, cash/bank, and one account row are required.",
+          "Branch, type, payment number, date, cash/bank, and one account row are required.",
         );
 
         return;
       }
 
-      /* =====================================================
-       SUBMIT CONFIRMATION
-    ===================================================== */
+      /* CREATE SAVE PAYLOAD
+         (keys are identical to the receipt payload on purpose) */
 
-      const shouldSubmit = true;
-
-      if (!shouldSubmit) {
-        console.log("❌ SAVE CANCELLED BY USER");
-
-        return;
-      }
-
-      /* =====================================================
-       CREATE SAVE PAYLOAD
-    ===================================================== */
-
-      const receiptData = {
+      const paymentData = {
         lkpBranch,
         lkpType,
         cbAccountName,
@@ -1170,7 +1040,7 @@ const PaymentPage: React.FC = () => {
         txtDocNo,
 
         dtpDate,
-        receivedFrom,
+        paidTo,
         reference,
         rows: validRows.map((row, index) => ({
           id: row.id,
@@ -1188,40 +1058,32 @@ const PaymentPage: React.FC = () => {
         note,
       };
 
-      /* =====================================================
-       CONVERT UI TYPE TO DATABASE TYPE
-    ===================================================== */
+      /* CONVERT UI TYPE TO DATABASE TYPE (B -> BP, C -> CP) */
 
-      const saveType =
-        lkpType === "B" ? "BR" : lkpType === "C" ? "CR" : lkpType;
-      console.log("========== SAVE RECEIPT ==========");
+      const saveType = getPaymentStrDocType(lkpType);
 
-      console.log("OLD RECEIPT NUMBER:", txtDocNo);
-
+      console.log("========== SAVE PAYMENT ==========");
+      console.log("OLD PAYMENT NUMBER:", txtDocNo);
       console.log("SAVE TYPE:", saveType);
-      console.log("SENDING RECEIPT:", receiptData);
+      console.log("SENDING PAYMENT:", paymentData);
 
-      /* =====================================================
-       SAVE API
-    ===================================================== */
+      /* SAVE API */
 
       const response = await apiFetch(
-        `${import.meta.env.VITE_API_URL}/Receipt/saveReceipt`,
+        `${import.meta.env.VITE_API_URL}/Payment/savePayment`,
         {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
           },
           body: JSON.stringify({
-            ...receiptData,
+            ...paymentData,
             lkpType: saveType,
           }),
         },
       );
 
-      /* =====================================================
-       READ RESPONSE
-    ===================================================== */
+      /* READ RESPONSE */
 
       const text = await response.text();
 
@@ -1243,26 +1105,24 @@ const PaymentPage: React.FC = () => {
 
       console.log("SAVE API RESPONSE:", result);
 
-      // Receipt No was taken by another user: swap in the new one, keep all data
+      // Payment No was taken by another user: swap in the new one, keep all data
       if (
         response.status === 409 &&
         result.receiptNoChanged &&
         result.newReceiptNo
       ) {
-        lastLookupKeyRef.current = ""; // lets the Receipt No lookup run again
+        lastLookupKeyRef.current = ""; // lets the Payment No lookup run again
         setTxtDocNo(result.newReceiptNo);
 
         toast.warning(
-          `Receipt No ${txtDocNo} was already used by another user. Changed to ${result.newReceiptNo}. Please click Save again.`,
+          `Payment No ${txtDocNo} was already used by another user. Changed to ${result.newReceiptNo}. Please click Save again.`,
         );
 
         requestAnimationFrame(() => actionsRef.current?.focusSave());
         return; // no reset, the form data stays
       }
 
-      /* =====================================================
-       SAVE ERROR
-    ===================================================== */
+      /* SAVE ERROR */
 
       if (!response.ok) {
         toast.error(
@@ -1272,21 +1132,16 @@ const PaymentPage: React.FC = () => {
         return;
       }
 
-      /* =====================================================
-       SAVE SUCCESS
-    ===================================================== */
+      /* SAVE SUCCESS */
 
       toast.success(result.message || "Saved successfully");
 
       console.log("✅ SAVE SUCCESS");
+      console.log("OLD SAVED PAYMENT:", txtDocNo);
 
-      console.log("OLD SAVED RECEIPT:", txtDocNo);
+      /* CLEAR + LOAD COMPLETELY NEW PAYMENT NUMBER */
 
-      /* =====================================================
-       CLEAR + LOAD COMPLETELY NEW RECEIPT NUMBER
-    ===================================================== */
-
-      await resetTableAndLoadNextReceiptNumber();
+      await resetTableAndLoadNextPaymentNumber();
 
       console.log("✅ RESET COMPLETED AFTER SAVE");
     } catch (error) {
@@ -1295,7 +1150,7 @@ const PaymentPage: React.FC = () => {
       toast.error(
         error instanceof Error
           ? error.message
-          : "Cannot connect to Receipt API.",
+          : "Cannot connect to Payment API.",
       );
     }
   }, [
@@ -1305,36 +1160,27 @@ const PaymentPage: React.FC = () => {
     cbCcId,
     txtDocNo,
     dtpDate,
-    receivedFrom,
+    paidTo,
     reference,
     rows,
     total,
     note,
-    resetTableAndLoadNextReceiptNumber,
+    resetTableAndLoadNextPaymentNumber,
   ]);
+
   /* =======================================================
-     MODIFY RECEIPT
+     MODIFY PAYMENT
   ======================================================= */
 
   const handleModify = useCallback(async () => {
     if (isPosted) {
-      toast.warning("A posted receipt cannot be modified.");
+      toast.warning("A posted payment cannot be modified.");
       return;
     }
 
-    /* ===============================================
-           THIS MUST APPEAR IMMEDIATELY WHEN BUTTON IS CLICKED
-        =============================================== */
-
-    console.log("========================================");
-
     console.log("🔥 MODIFY FUNCTION CALLED");
 
-    console.log("========================================");
-
-    /* ===============================================
-           FILTER VALID ROWS
-        =============================================== */
+    /* FILTER VALID ROWS */
 
     const validRows = rows.filter(
       (row) => row.accountId && row.accountId.trim() !== "",
@@ -1347,16 +1193,14 @@ const PaymentPage: React.FC = () => {
       cbCcId,
       txtDocNo,
       dtpDate,
-      receivedFrom,
+      paidTo,
       reference,
       note,
     });
 
     console.log("MODIFY VALID ROWS:", validRows);
 
-    /* ===============================================
-           VALIDATION
-        =============================================== */
+    /* VALIDATION */
 
     const validationFailed =
       !lkpBranch ||
@@ -1379,56 +1223,29 @@ const PaymentPage: React.FC = () => {
       });
 
       const validationMessage =
-        "Branch, type, receipt number, date, cash/bank, and one account row are required.";
+        "Branch, type, payment number, date, cash/bank, and one account row are required.";
 
-      setReceiptMessage(validationMessage);
+      setPaymentMessage(validationMessage);
 
       toast.warning(validationMessage);
 
       return;
     }
 
-    /* ===============================================
-           SUBMIT CONFIRMATION
-  
-           IMPORTANT:
-           This happens BEFORE the API call.
-  
-           NO  → no API call, no reset, stay in edit mode.
-           YES → continue to API.
-        =============================================== */
-
-    const shouldSubmit = true;
-    // window.confirm(
-    //   "Do you want to submit?"
-    // );
-
-    if (!shouldSubmit) {
-      console.log("❌ MODIFY CANCELLED BY USER");
-      console.log("❌ NO API CALL WAS MADE");
-      return;
-    }
-
-    console.log("✅ MODIFY SUBMISSION CONFIRMED");
-
-    /* ===============================================
-           CREATE MODIFY PAYLOAD
-        =============================================== */
+    /* CREATE MODIFY PAYLOAD
+       (keys are identical to the receipt payload on purpose) */
 
     const modifyPayload = {
       lkpBranch,
-      lkpType: GetStrDocType(lkpType),
+      lkpType: getPaymentStrDocType(lkpType),
       cbAccountName: cbAccountName,
       cbCcId,
 
-      /* IMPORTANT:
-             Keep the loaded receipt number.
-             Do NOT generate a new number.
-          */
+      /* IMPORTANT: keep the loaded payment number. Do NOT generate a new one. */
       txtDocNo: txtDocNo.trim(),
 
       dtpDate: dtpDate,
-      receivedFrom,
+      paidTo,
       reference,
       note,
       rows: validRows.map((row, index) => ({
@@ -1447,30 +1264,21 @@ const PaymentPage: React.FC = () => {
       total,
     };
 
-    /* ===============================================
-           DEBUG PAYLOAD
-        =============================================== */
-
     console.log("🔥 MODIFY PAYLOAD:");
     console.log(JSON.stringify(modifyPayload, null, 2));
     console.log("MODIFY DOC TYPE:", modifyPayload.lkpType);
-
     console.log("MODIFY DOC NO:", modifyPayload.txtDocNo);
 
-    /* ===============================================
-           CALL API
-  
-           This is reached ONLY when user selected YES.
-        =============================================== */
+    /* CALL API */
 
     try {
       console.log(
         "🔥 CALLING:",
-        `${import.meta.env.VITE_API_URL}i/Receipt/modifyReceipt`,
+        `${import.meta.env.VITE_API_URL}/Payment/modifyPayment`,
       );
 
       const response = await apiFetch(
-        `${import.meta.env.VITE_API_URL}/Receipt/modifyReceipt`,
+        `${import.meta.env.VITE_API_URL}/Payment/modifyPayment`,
         {
           method: "POST",
 
@@ -1483,17 +1291,13 @@ const PaymentPage: React.FC = () => {
       );
 
       console.log("🔥 MODIFY API STATUS:", response.status);
-
       console.log("🔥 MODIFY API OK:", response.ok);
 
-      /* =============================================
-             READ RESPONSE AS TEXT FIRST
-          ============================================= */
+      /* READ RESPONSE AS TEXT FIRST */
 
       const responseText = await response.text();
 
       console.log("🔥 MODIFY RAW RESPONSE:");
-
       console.log(responseText);
 
       let result: {
@@ -1517,67 +1321,37 @@ const PaymentPage: React.FC = () => {
 
       console.log("🔥 MODIFY PARSED RESPONSE:", result);
 
-      /* =============================================
-             HTTP ERROR
-          ============================================= */
+      /* HTTP ERROR */
 
       if (!response.ok) {
         throw new Error(
           result.message ||
-          `Receipt could not be modified. HTTP ${response.status}`,
+          `Payment could not be modified. HTTP ${response.status}`,
         );
       }
 
-      /* =============================================
-             SUCCESS
-  
-             DO NOT CHECK:
-               result.success !== true
-  
-             because the backend response currently
-             returns message/data without necessarily
-             returning success:true.
-          ============================================= */
+      /* SUCCESS */
 
       console.log("✅ MODIFY API SUCCESS");
 
-      setReceiptMessage(result.message || "modified successfully.");
+      setPaymentMessage(result.message || "modified successfully.");
 
       toast.success(result.message || "modified");
 
-      /* =============================================
-             CLEAR FORM + RECALL RECEIPT DATA
-  
-             This happens ONLY after successful Modify.
-  
-             It will:
-             - clear table data
-             - clear Received From
-             - clear Reference
-             - clear Description
-             - clear Note
-             - load default Branch
-             - load default Type
-             - fetch a NEW Receipt No
-             - exit modify mode
-          ============================================= */
+      /* CLEAR FORM + LOAD NEXT PAYMENT NUMBER (only after successful modify) */
 
-      await resetTableAndLoadNextReceiptNumber();
+      await resetTableAndLoadNextPaymentNumber();
 
-      setFocusReceiptNoAfterClear((current) => current + 1);
+      setFocusPaymentNoAfterClear((current) => current + 1);
     } catch (error) {
-      /* =============================================
-             MODIFY ERROR
-          ============================================= */
-
       console.error("🔥 MODIFY ERROR:", error);
 
       const errorMessage =
         error instanceof Error
           ? error.message
-          : "Receipt could not be modified.";
+          : "Payment could not be modified.";
 
-      setReceiptMessage(errorMessage);
+      setPaymentMessage(errorMessage);
 
       toast.error(errorMessage);
     }
@@ -1588,69 +1362,66 @@ const PaymentPage: React.FC = () => {
     cbCcId,
     txtDocNo,
     dtpDate,
-    receivedFrom,
+    paidTo,
     reference,
     note,
     rows,
     total,
-    resetTableAndLoadNextReceiptNumber,
+    resetTableAndLoadNextPaymentNumber,
     isPosted,
   ]);
 
   /* =======================================================
-      Delete RECEIPT
-   ======================================================= */
+     DELETE PAYMENT
+  ======================================================= */
 
   const handledelete = useCallback(async () => {
     if (isPosted) {
-      toast.warning("A posted receipt cannot be deleted.");
+      toast.warning("A posted payment cannot be deleted.");
       return;
     }
 
     try {
-      /* ===============================================
-         VALIDATION
-      =============================================== */
+      /* VALIDATION */
 
       const validationFailed = !lkpBranch || !lkpType || !txtDocNo.trim();
 
       if (validationFailed) {
-        toast.warning("Branch, type, and receipt number are required.");
+        toast.warning("Branch, type, and payment number are required.");
         return;
       }
 
-      /* ===============================================
-         DELETE CONFIRMATION
-      =============================================== */
+      /* DELETE CONFIRMATION */
 
-      const shouldDelete = window.confirm("Do you want to Delete?");
+      const shouldDelete = await confirm({
+        title: "Payment",
+        message: "Do you want to Delete?",
+        confirmLabel: "Delete",
+        cancelLabel: "Cancel",
+      });
 
       if (!shouldDelete) {
-        console.log("❌ MODIFY CANCELLED BY USER");
+        console.log("❌ DELETE CANCELLED BY USER");
 
         console.log("❌ NO API CALL WAS MADE");
 
         return;
       }
 
-      /* ===============================================
-         CREATE DELETE PAYLOAD
-      =============================================== */
+      /* CREATE DELETE PAYLOAD (B -> BP, C -> CP) */
 
-      const receiptData = {
+      const paymentData = {
         lkpBranch: lkpBranch,
-        lkpType: lkpType + "R",
+        lkpType: getPaymentStrDocType(lkpType),
         txtDocNo: txtDocNo.trim(),
       };
 
-      console.log("DELETE RECEIPT:", receiptData);
+      console.log("DELETE PAYMENT:", paymentData);
 
-      /* ===============================================
-         DELETE API
-      =============================================== */
+      /* DELETE API */
 
       const response = await apiFetch(
-        `${import.meta.env.VITE_API_URL}/Receipt/delete`,
+        `${import.meta.env.VITE_API_URL}/Payment/delete`,
         {
           method: "DELETE",
 
@@ -1658,7 +1429,7 @@ const PaymentPage: React.FC = () => {
             "Content-Type": "application/json",
           },
 
-          body: JSON.stringify(receiptData),
+          body: JSON.stringify(paymentData),
         },
       );
 
@@ -1684,9 +1455,7 @@ const PaymentPage: React.FC = () => {
 
       console.log("DELETE API RESPONSE:", result);
 
-      /* ===============================================
-         API ERROR
-      =============================================== */
+      /* API ERROR */
 
       if (!response.ok) {
         toast.error(
@@ -1696,38 +1465,42 @@ const PaymentPage: React.FC = () => {
         return;
       }
 
-      /* ===============================================
-         SUCCESS
-      =============================================== */
+      /* SUCCESS */
 
-      toast.success(result.message || "Receipt deleted successfully");
+      toast.success(result.message || "Payment deleted successfully");
 
-      /* ===============================================
-         CLEAR FORM + LOAD NEXT RECEIPT
-      =============================================== */
-      await resetTableAndLoadNextReceiptNumber();
+      /* CLEAR FORM + LOAD NEXT PAYMENT */
 
-      setFocusReceiptNoAfterClear((current) => current + 1);
+      await resetTableAndLoadNextPaymentNumber();
+
+      setFocusPaymentNoAfterClear((current) => current + 1);
     } catch (error) {
       console.error("DELETE ERROR:", error);
 
       toast.error(
         error instanceof Error
           ? error.message
-          : "Cannot connect to Receipt API.",
+          : "Cannot connect to Payment API.",
       );
     }
-  }, [isPosted, lkpBranch, lkpType, txtDocNo, resetTableAndLoadNextReceiptNumber]);
+  }, [
+    confirm,
+    isPosted,
+    lkpBranch,
+    lkpType,
+    txtDocNo,
+    resetTableAndLoadNextPaymentNumber,
+  ]);
 
   /* =======================================================
      CLEAR FORM
   ======================================================= */
 
   const clearForm = useCallback(async () => {
-    await resetTableAndLoadNextReceiptNumber();
+    await resetTableAndLoadNextPaymentNumber();
 
-    setFocusReceiptNoAfterClear((current) => current + 1);
-  }, [resetTableAndLoadNextReceiptNumber]);
+    setFocusPaymentNoAfterClear((current) => current + 1);
+  }, [resetTableAndLoadNextPaymentNumber]);
 
   /* =======================================================
      POST
@@ -1739,7 +1512,7 @@ const PaymentPage: React.FC = () => {
     if (postRequestInFlight.current) return;
 
     if (isPosted) {
-      toast.warning("This receipt is already posted.");
+      toast.warning("This payment is already posted.");
       return;
     }
 
@@ -1756,13 +1529,13 @@ const PaymentPage: React.FC = () => {
     }
 
     if (!txtDocNo.trim()) {
-      toast.warning("Please enter 'Receipt No.'.");
+      toast.warning("Please enter 'Payment No.'.");
       document.getElementById("txtDocNo")?.focus();
       return;
     }
 
     if (!isModifyMode) {
-      toast.warning("Load a saved receipt before posting.");
+      toast.warning("Load a saved payment before posting.");
       return;
     }
 
@@ -1779,7 +1552,7 @@ const PaymentPage: React.FC = () => {
 
     const dateMatch = /^(\d{2})\/(\d{2})\/(\d{4})$/.exec(dtpDate.trim());
     if (!dateMatch) {
-      toast.warning("Please enter a valid receipt date.");
+      toast.warning("Please enter a valid payment date.");
       document.getElementById("dtpDate")?.focus();
       return;
     }
@@ -1793,18 +1566,18 @@ const PaymentPage: React.FC = () => {
       parsedDate.getMonth() + 1 !== Number(month) ||
       parsedDate.getDate() !== Number(day)
     ) {
-      toast.warning("Please enter a valid receipt date.");
+      toast.warning("Please enter a valid payment date.");
       document.getElementById("dtpDate")?.focus();
       return;
     }
 
-    if (!window.confirm("Do you want to post this receipt?")) return;
+    if (!window.confirm("Do you want to post this payment?")) return;
 
     postRequestInFlight.current = true;
 
     try {
       const response = await apiFetch(
-        `${import.meta.env.VITE_API_URL}/Receipt/post`,
+        `${import.meta.env.VITE_API_URL}/Payment/post`,
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -1812,7 +1585,7 @@ const PaymentPage: React.FC = () => {
             PstrCoID,
             PstrYear,
             lkpBranch,
-            lkpDocType: GetStrDocType(lkpType),
+            lkpDocType: getPaymentStrDocType(lkpType),
             txtDocNo: txtDocNo.trim(),
             dtpDate: isoDate,
             PstrUserID,
@@ -1836,26 +1609,26 @@ const PaymentPage: React.FC = () => {
       } catch {
         result = {
           success: false,
-          message: responseText || "Receipt could not be posted.",
+          message: responseText || "Payment could not be posted.",
         };
       }
 
       if (!response.ok || !result.success) {
         toast.error(
-          result.message || `Receipt could not be posted (error ${response.status}).`,
+          result.message || `Payment could not be posted (error ${response.status}).`,
         );
         return;
       }
 
-      toast.success(result.message || "Receipt posting completed successfully.");
-      await resetTableAndLoadNextReceiptNumber();
-      setFocusReceiptNoAfterClear((current) => current + 1);
+      toast.success(result.message || "Payment posting completed successfully.");
+      await resetTableAndLoadNextPaymentNumber();
+      setFocusPaymentNoAfterClear((current) => current + 1);
     } catch (error) {
-      console.error("Receipt posting error:", error);
+      console.error("Payment posting error:", error);
       toast.error(
         error instanceof Error
           ? error.message
-          : "Cannot connect to the Receipt API.",
+          : "Cannot connect to the Payment API.",
       );
     } finally {
       postRequestInFlight.current = false;
@@ -1866,7 +1639,7 @@ const PaymentPage: React.FC = () => {
     isModifyMode,
     lkpBranch,
     lkpType,
-    resetTableAndLoadNextReceiptNumber,
+    resetTableAndLoadNextPaymentNumber,
     txtDocNo,
   ]);
 
@@ -1895,15 +1668,11 @@ const PaymentPage: React.FC = () => {
   return (
     <div className="min-h-fit mt-3 bg-slate-100 px-5 py-2 flex flex-col justify-center items-center gap-2.5">
       <div className="receipt-screen mx-auto lg:w-275 md:w-[55%] max-w-362.5 min-w-212.5 border border-gray-400 bg-white">
-        {/* =================================================
-            HEADER
-        ================================================= */}
+        {/* HEADER */}
 
         <PaymentHeader />
 
-        {/* =================================================
-            HEADER FORM
-        ================================================= */}
+        {/* HEADER FORM */}
 
         <PaymentForm
           lkpBranch={lkpBranch}
@@ -1914,8 +1683,8 @@ const PaymentPage: React.FC = () => {
           setCbAccountName={setCbAccountName}
           reference={reference}
           setReference={setReference}
-          receivedFrom={receivedFrom}
-          setReceivedFrom={setReceivedFrom}
+          paidTo={paidTo}
+          setPaidTo={setPaidTo}
           documentNo={txtDocNo}
           setDocumentNo={setTxtDocNo}
           dtpDate={dtpDate}
@@ -1925,25 +1694,23 @@ const PaymentPage: React.FC = () => {
           documentNoRef={documentNoRef}
           cbAccountRef={cbAccountRef}
           dateRef={dateRef}
-          receivedFromRef={receivedFromRef}
+          paidToRef={paidToRef}
           referenceRef={referenceRef}
           focusFirstAccountId={() => focusTableField(0, "accountId")}
           branchOptions={branchSelectOptions}
           financialParameters={financialParameters}
           isModifyMode={isModifyMode}
           documentNoEditable
-          txtDocNo={getReceipt}
+          txtDocNo={getPayment}
           preserveCbAccountOnLoad={isModifyMode}
-          focusReceiptNoAfterClear={focusReceiptNoAfterClear}
+          focusReceiptNoAfterClear={focusPaymentNoAfterClear}
         />
 
-        {/* =================================================
-            TABLE
-        ================================================= */}
+        {/* TABLE */}
 
         <PaymentTable
-          ref={receiptTableRef}
-          url={`${import.meta.env.BASE_URL}/Receipt/getDivID`}
+          ref={paymentTableRef}
+          url={`${import.meta.env.VITE_API_URL}/Payment/getDivID`}
           rows={rows}
           handleRowChange={handleRowChange}
           onFieldEnter={handleTableEnter}
@@ -1962,23 +1729,19 @@ const PaymentPage: React.FC = () => {
             setActiveDescriptionRow(rowIndex);
 
             setDescription((currentDescription) => {
-              // If this row already has its own description,
-              // display that description.
+              // If this row already has its own description, show it.
               if (row.description?.trim()) {
                 return row.description;
               }
 
-              // If the new row has no description yet,
-              // keep the previous description visible.
+              // Otherwise keep the previous description visible.
               return currentDescription;
             });
           }}
           costCenters={costCenters}
         />
 
-        {/* =================================================
-            TOTAL
-        ================================================= */}
+        {/* TOTAL */}
 
         <div
           className="mt-2.5 mr-16.5 ml-auto flex w-55 items-center gap-2 text-[13px]
@@ -1994,9 +1757,7 @@ const PaymentPage: React.FC = () => {
           />
         </div>
 
-        {/* =================================================
-            BOTTOM FORM
-        ================================================= */}
+        {/* BOTTOM FORM */}
 
         <PaymentBottomForm
           description={description}
@@ -2010,9 +1771,8 @@ const PaymentPage: React.FC = () => {
           onDescriptionClear={handleClearDescriptionRow}
         />
 
-        {/* =================================================
-            ACTIONS
-        ================================================= */}
+        {/* ACTIONS
+            TODO: Print is a placeholder until /Payment/print exists. */}
 
         <PaymentActions
           ref={actionsRef}
@@ -2027,21 +1787,8 @@ const PaymentPage: React.FC = () => {
         />
       </div>
 
-      {isPrint && printData && (
-        <ReceiptPrint
-          data={printData}
-          fileBase={`Receipt-${printData.branchId}-${printData.docNo}`.replace(
-            /[^\w.-]+/g,
-            "_",
-          )}
-          buildPdf={buildReceiptPdf}
-          fetchExcel={fetchReceiptExcel}
-          onClose={() => {
-            setIsPrint(false);
-            setPrintData(null);
-          }}
-        />
-      )}
+      {/* TODO: Payment print preview goes here once the backend exists. */}
+      {dialog}
     </div>
   );
 };
