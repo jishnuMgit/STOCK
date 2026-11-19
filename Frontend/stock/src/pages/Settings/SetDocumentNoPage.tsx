@@ -710,47 +710,15 @@ const SetDocumentNo: React.FC = () => {
           MAIN CONTAINER
       ====================================================== */}
 
-        {/* no overflow-hidden: the Year / Branch / Module lists must stay visible */}
-        <div
-          className="
-          mx-auto
-          w-full
-          border
-          border-slate-400
-          bg-white
-          shadow-sm
-          sm:w-[75%]
-          lg:w-[75%]
+        <div className="mx-auto w-full border border-slate-400 bg-white shadow-sm sm:w-[75%] lg:w-[75%]
         "
         >
           <Header Name="Set Document No." />
 
-          {/* =====================================================
-            FORM
-        ====================================================== */}
-
           <div className="p-[12px] m-[12px]">
 
-            {/* =====================================================
-            HEADER
-        ====================================================== */}
-
-            <div
-              className="
-            grid
-            grid-cols-1
-            gap-3
-            border-b
-            border-slate-200
-            pb-3
-
-            sm:grid-cols-2
-
-            lg:grid-cols-[200px_1fr_1fr]
-            lg:items-center
-            lg:gap-4
-          "
-            >
+            <div className="grid grid-cols-1 gap-3 border-b border-slate-200 pb-3 sm:grid-cols-2
+             lg:grid-cols-[200px_1fr_1fr] lg:items-center lg:gap-4">
               {/* ===================================================
               YEAR
           ==================================================== */}
@@ -785,17 +753,9 @@ const SetDocumentNo: React.FC = () => {
 
               {/* ===================================================
               BRANCH
-          ==================================================== */}
+              =============================================== */}
 
-              <div
-                className="
-              flex
-              w-full
-              items-center
-              gap-2
-              sm:justify-center
-            "
-              >
+              <div className="flex w-full items-center gap-2 sm:justify-center">
                 <label
                   htmlFor="lkpBranch"
                   className="shrink-0 pr-3 text-right text-[14px] text-gray-600"
@@ -803,11 +763,7 @@ const SetDocumentNo: React.FC = () => {
                   Branch :
                 </label>
 
-                <div
-                  className="
-                w-full
-                sm:w-[180px]
-                lg:w-[212px]
+                <div className="w-full sm:w-[180px] lg:w-[212px]
               "
                 >
                   <CommonTableSelect
@@ -836,17 +792,9 @@ const SetDocumentNo: React.FC = () => {
 
               {/* ===================================================
               MODULE
-          ==================================================== */}
+              ==================================================== */}
 
-              <div
-                className="
-              flex
-              w-full
-              items-center
-              gap-2
-              sm:justify-center
-            "
-              >
+              <div className="flex w-full items-center gap-2 sm:justify-center">
                 <label
                   htmlFor="lkpModule"
                   className="shrink-0 pr-3 text-right text-[14px] text-gray-600"
@@ -854,13 +802,7 @@ const SetDocumentNo: React.FC = () => {
                   Module :
                 </label>
 
-                <div
-                  className="
-                w-full
-                sm:w-[120px]
-                lg:w-[150px]
-              "
-                >
+                <div className="w-full lg:w-[150px]">
                   <CommonTableSelect
                     inputId="lkpModule"
                     options={moduleOptions}
@@ -881,158 +823,65 @@ const SetDocumentNo: React.FC = () => {
             </div>
 
             <div>
-              <div
-                className="
-              w-full
-              border-l
-              border-r
-              border-b
-              border-slate-200
-            "
-              >
+
+              <div className="w-full border-l border-r border-b border-slate-200">
+
                 {/* =================================================
-    TABLE
-================================================= */}
+                 TABLE
+                ================================================= */}
 
                 <div className="mt-2 w-full">
 
-                  <table
-                    className="
-      w-full
-      table-fixed
-      border-collapse
-      border
-      border-slate-200
-      text-[11px]
-    "
+                  <table className="w-full table-fixed border-collapse border border-slate-200 text-[11px]"
                   >
-                    {/* =================================================
-        TABLE HEADER
-    ================================================= */}
-
                     <thead>
-                      <tr
-                        className="
-          h-9
-          bg-slate-50
-          text-left
-          text-[14px]
-          text-gray-600
-        "
+                      <tr className="h-9 bg-slate-50 text-left text-[14px] text-gray-600"
                       >
                         {/* DOCUMENT */}
 
-                        <th
-                          className="
-            w-[20%]
-            border-r
-            border-slate-200
-            px-1
-            whitespace-nowrap
-          "
-                        >
+                        <th className="w-[20%] border-r border-slate-200 px-1 whitespace-nowrap">
                           Document
                         </th>
 
                         {/* PREFIX */}
 
-                        <th
-                          className="
-            w-[9%]
-            border-r
-            border-slate-200
-            px-1
-            whitespace-nowrap
-          "
-                        >
+                        <th className="w-[9%] border-r border-slate-200 px-1 whitespace-nowrap">
                           Prefix
                         </th>
 
                         {/* START SEQ NO */}
 
-                        <th
-                          className="
-            w-[13%]
-            border-r
-            border-slate-200
-            px-1
-            text-left
-            whitespace-nowrap
-          "
-                        >
+                        <th className="w-[13%] border-r border-slate-200 px-1 text-left whitespace-nowrap">
                           Start Seq. No.
                         </th>
 
                         {/* STRICT SERIAL */}
 
-                        <th
-                          className="
-            w-[12%]
-            border-r
-            border-slate-200
-            px-1
-            text-left
-            whitespace-nowrap
-          "
-                        >
+                        <th className="w-[12%] border-r border-slate-200 px-1 text-left whitespace-nowrap">
                           Strict Serial
                         </th>
 
                         {/* MODE */}
 
-                        <th
-                          className="
-            w-[10%]
-            border-r
-            border-slate-200
-            px-1
-            text-left
-            whitespace-nowrap
-          "
-                        >
+                        <th className="w-[10%] border-r border-slate-200 px-1 text-left whitespace-nowrap">
                           + Mode
                         </th>
 
                         {/* RESET */}
 
-                        <th
-                          className="
-            w-[10%]
-            border-r
-            border-slate-200
-            px-1
-            text-left
-            whitespace-nowrap
-          "
-                        >
+                        <th className="w-[10%] border-r border-slate-200 px-1 text-left whitespace-nowrap">
                           Reset No.
                         </th>
 
                         {/* PRINT AFTER SAVE */}
 
-                        <th
-                          className="
-            w-[15%]
-            border-r
-            border-slate-200
-            px-1
-            text-center
-            whitespace-nowrap
-          "
-                        >
+                        <th className=" w-[15%] border-r border-slate-200 px-1 text-centerwhitespace-nowrap">
                           Print After Save
                         </th>
 
                         {/* POSITION NO */}
 
-                        <th
-                          className="
-            w-[13%]
-            px-1
-            text-center
-            whitespace-nowrap
-          "
-                        >
+                        <th className="w-[13%] px-1 text-center whitespace-nowrap">
                           Position No.
                         </th>
                       </tr>
@@ -1046,24 +895,13 @@ const SetDocumentNo: React.FC = () => {
                       {rows.map((row, index) => (
                         <tr
                           key={row.id}
-                          className={`
-            h-[34px]
-            ${index === 0 ? "bg-[#edf4fc]" : "bg-white"}
-            hover:bg-slate-50
-          `}
+                          className={`h-[34px] ${index === 0 ? "bg-[#edf4fc]" : "bg-white"} hover:bg-slate-50`}
                         >
                           {/* =================================================
               DOCUMENT
           ================================================= */}
 
-                          <td
-                            className={`
-              border-r
-              border-t
-              border-slate-200
-              p-0
-             ${cellFocusClass}`}
-                          >
+                          <td className={`border-r border-t border-slate-200 p-0 ${cellFocusClass}`}>
 
                             <div className="flex h-[36px] items-stretch">
 
@@ -1109,14 +947,7 @@ const SetDocumentNo: React.FC = () => {
               PREFIX
           ================================================= */}
 
-                          <td
-                            className={`
-              border-r
-              border-t
-              border-slate-200
-              px-1
-             ${cellFocusClass}`}
-                          >
+                          <td className={`border-r border-t border-slate-200 px-1 ${cellFocusClass}`}>
                             <input
                               id={`txtDocPrefix_${row.id}`}
                               onFocus={selectOnFocus}
@@ -1130,14 +961,7 @@ const SetDocumentNo: React.FC = () => {
                                   e.target.value,
                                 )
                               }
-                              className="
-                w-full
-                bg-transparent
-                text-left
-                text-[13px]
-                text-slate-600
-                outline-none
-              "
+                              className="w-full bg-transparent text-left text-[13px] text-slate-600 outline-none"
                             />
                           </td>
 
@@ -1145,14 +969,7 @@ const SetDocumentNo: React.FC = () => {
               START SEQ NO
           ================================================= */}
 
-                          <td
-                            className={`
-              border-r
-              border-t
-              border-slate-200
-              px-1
-             ${cellFocusClass}`}
-                          >
+                          <td className={`border-r border-t border-slate-200 px-1 ${cellFocusClass}`}>
                             <input
                               id={`txtStartSeqNo_${row.id}`}
                               onFocus={selectOnFocus}
@@ -1166,14 +983,7 @@ const SetDocumentNo: React.FC = () => {
                                   e.target.value,
                                 )
                               }
-                              className="
-                w-full
-                bg-transparent
-                text-center
-                text-[13px]
-                text-slate-600
-                outline-none
-              "
+                              className="w-full bg-transparent text-center text-[13px] text-slate-600 outline-none"
                             />
                           </td>
 
@@ -1181,13 +991,7 @@ const SetDocumentNo: React.FC = () => {
               STRICT SERIAL
           ================================================= */}
 
-                          <td
-                            className={`
-              border-r
-              border-t
-              border-slate-200
-              text-center
-             ${cellFocusClass}`}
+                          <td className={`border-r border-t border-slate-200 text-center ${cellFocusClass}`}
                           >
                             <input
                               id={`chkStrictSerial_${row.id}`}
@@ -1201,12 +1005,7 @@ const SetDocumentNo: React.FC = () => {
                                   e.target.checked,
                                 )
                               }
-                              className="
-                h-[16px]
-                w-[16px]
-                cursor-pointer
-                accent-blue-600
-              "
+                              className="h-[16px] w-[16px] cursor-pointer accent-blue-600"
                             />
                           </td>
 
@@ -1214,13 +1013,7 @@ const SetDocumentNo: React.FC = () => {
               MODE
           ================================================= */}
 
-                          <td
-                            className={`
-              border-r
-              border-t
-              border-slate-200
-              p-0
-             ${cellFocusClass}`}
+                          <td className={`border-r border-t border-slate-200 p-0 ${cellFocusClass}`}
                           >
                             <CustomTableSelect
                               inputId={`lkpMode_${row.id}`}
@@ -1248,13 +1041,7 @@ const SetDocumentNo: React.FC = () => {
               RESET NO
           ================================================= */}
 
-                          <td
-                            className={`
-              border-r
-              border-t
-              border-slate-200
-              p-0
-             ${cellFocusClass}`}
+                          <td className={`border-r border-t border-slate-200 p-0 ${cellFocusClass}`}
                           >
                             <CustomTableSelect
                               inputId={`lkpResetNo_${row.id}`}
@@ -1282,13 +1069,7 @@ const SetDocumentNo: React.FC = () => {
               PRINT AFTER SAVE
           ================================================= */}
 
-                          <td
-                            className={`
-              border-r
-              border-t
-              border-slate-200
-              text-center
-             ${cellFocusClass}`}
+                          <td className={`border-r border-t border-slate-200 text-center ${cellFocusClass}`}
                           >
                             <input
                               id={`chkPrintAfterSave_${row.id}`}
@@ -1302,12 +1083,7 @@ const SetDocumentNo: React.FC = () => {
                                   e.target.checked,
                                 )
                               }
-                              className="
-                h-[16px]
-                w-[16px]
-                cursor-pointer
-                accent-blue-600
-              "
+                              className="h-[16px] w-[16px] cursor-pointer accent-blue-600"
                             />
                           </td>
 
@@ -1315,13 +1091,7 @@ const SetDocumentNo: React.FC = () => {
               POSITION NO
           ================================================= */}
 
-                          <td
-                            className={`
-              border-t
-              border-slate-200
-              px-1
-              text-center
-             ${cellFocusClass}`}
+                          <td className={`border-t border-slate-200 px-1 text-center ${cellFocusClass}`}
                           >
                             <div className="flex items-center">
                               <input
@@ -1337,14 +1107,7 @@ const SetDocumentNo: React.FC = () => {
                                     Number(e.target.value),
                                   )
                                 }
-                                className="
-                w-full
-                bg-transparent
-                text-right
-                text-[13px]
-                text-slate-600
-                outline-none
-              "
+                                className="w-full bg-transparent text-right text-[13px] text-slate-600 outline-none"
                               />
 
                               {/* the X of the row, at the right end */}
