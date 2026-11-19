@@ -1,10 +1,14 @@
 import type { Request, Response } from "express";
 
+import pool from "../../../../DB/db.js";
+
 import type { ReceiptContext } from "../../../../middleware/receiptContext.js";
 
 import {
     JournalError,
+    JOURNAL_DOC_TYPE,
     getJournalService,
+    getJournalTypesService,
     saveJournalService,
     updateJournalService,
     deleteJournalService,
@@ -28,6 +32,84 @@ function handleError(res: Response, error: unknown, fallback: string) {
         success: false,
         message: error instanceof Error ? error.message : fallback,
     });
+}
+
+/* GET /api/journal/lookups  (same functions the receipt screen uses) */
+export async function getJournalLookups(_req: Request, res: Response) {
+    try {
+        const { pstrCoID } = getCtx(res);
+
+        const accountsResult = await pool.query(
+            `SELECT * FROM dbo.filllookupaccountname($1)`,
+            [pstrCoID],
+        );
+
+        let costCenters: any[] = [];
+
+        try {
+            const costCenterResult = await pool.query(
+                `SELECT * FROM dbo.fillcostcenters($1)`,
+                [pstrCoID],
+            );
+
+            costCenters = costCenterResult.rows;
+        } catch (error: unknown) {
+            console.warn(
+                "Cost center loading failed:",
+                error instanceof Error ? error.message : String(error),
+            );
+        }
+
+        return res.status(200).json({
+            success: true,
+            data: { accounts: accountsResult.rows || [], costCenters },
+        });
+    } catch (error: unknown) {
+        return handleError(res, error, "Failed to load journal lookups");
+    }
+}
+
+/* GET /api/journal/next-doc-no?brId=JD */
+export async function getJournalDocNo(req: Request, res: Response) {
+    try {
+        const { pstrCoID, pstrYear } = getCtx(res);
+
+        const brId = String(req.query.brId ?? "").trim();
+
+        if (!brId) {
+            return res
+                .status(400)
+                .json({ success: false, message: "Branch is required" });
+        }
+
+        const result = await pool.query(
+            `SELECT * FROM dbo.getnextdocno($1, $2, $3, $4)`,
+            [pstrCoID, Number(pstrYear), brId, JOURNAL_DOC_TYPE],
+        );
+
+        const docNo = result.rows[0]?.getnextdocno;
+
+        if (!docNo) {
+            return res
+                .status(500)
+                .json({ success: false, message: "Failed to generate Journal No." });
+        }
+
+        return res.status(200).json({ success: true, data: { docNo } });
+    } catch (error: unknown) {
+        return handleError(res, error, "Failed to generate Journal No.");
+    }
+}
+
+/* GET /api/journal/types */
+export async function getJournalTypes(_req: Request, res: Response) {
+    try {
+        return res
+            .status(200)
+            .json({ success: true, data: getJournalTypesService() });
+    } catch (error: unknown) {
+        return handleError(res, error, "Failed to load journal types");
+    }
 }
 
 /* GET /api/journal?lkpBranch=001&txtDocNo=JV0001 */

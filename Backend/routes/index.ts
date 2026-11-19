@@ -1,6 +1,7 @@
 import express from "express";
 import ReceiptRouter from "./ReceiptRouter.js";
 import PaymentRouter from "./Finance/Transaction/Payment/PaymentRouter.js";
+import JournalRouter from "./Finance/Transaction/Journal/JournalRouter.js"
 import MatchRouter from "./Finance/Transaction/MatchRouter.js";
 import MatchReversalRouter from "./Finance/Transaction/MatchReversalRouter.js";
 import MatchEnquiryRouter from "./Finance/Transaction/MatchEnquiryRouter.js";
@@ -78,6 +79,7 @@ const router = express.Router();
 router.use("/RptStockValuation", RptStockValuationRouter);
 router.use("/Receipt", ReceiptRouter);
 router.use("/payment", PaymentRouter)
+router.use("/journal", JournalRouter)
 router.use("/Match", MatchRouter);
 router.use("/MatchReversal", MatchReversalRouter);
 router.use("/MatchEnquiry", MatchEnquiryRouter);

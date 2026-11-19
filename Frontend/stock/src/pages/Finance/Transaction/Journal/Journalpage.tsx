@@ -8,7 +8,6 @@ import React, {
 
 import type { SelectInstance } from "react-select";
 
-
 import JournalTable, {
   type TableField,
   type JournalTableRef,
@@ -16,55 +15,56 @@ import JournalTable, {
   type AccountData,
   type CostCenter,
 } from "../../../../components/Transaction/Journal/JournalTable";
-//@ts-ignore
-import JournalBottomForm, {
-
-} from "../../../../components/Transaction/Journal/JournalForm";
-//@ts-ignore
-
-import JournalActions from "../../../../components/Transaction/Journal/JournalTable";
 import JournalForm from "../../../../components/Transaction/Journal/JournalForm";
 import JournalHeader from "../../../../components/Transaction/Journal/JournalHeader";
-import { ReceiptActions, ReceiptBottomForm, type ReceiptActionsRef } from "../../../../components/Transaction/Receipt/save/ReceiptComp";
+import JournalBottomForm from "../../../../components/Transaction/Journal/JournalBottomForm";
+import JournalActions, {
+  type JournalActionsRef,
+} from "../../../../components/Transaction/Journal/JournalActions";
+
+// TODO: adjust the path to where useJournal.ts is placed
+import {
+  useJournal,
+  type Branch,
+  type JournalType,
+} from "../../../../hooks/useJournal";
 
 /* =========================================================
-   TYPES
-========================================================= */
-
-interface Branch {
-  fbrid: string;
-  fbrname: string;
-}
-
-/* =========================================================
-   CREATE INITIAL ROWS
+   HELPERS
 ========================================================= */
 
 const createRows = (): JournalRow[] =>
-  Array.from(
-    { length: 11 },
-    (_, index) => ({
-      id: index + 1,
+  Array.from({ length: 11 }, (_, index) => ({
+    id: index + 1,
+    accountId: "",
+    accountName: "",
+    fgcs: "",
+    division: "",
+    ccId: "",
+    debitAmount: "",
+    creditAmount: "",
+    match: false,
+    description: "",
+  }));
 
-      accountId: "",
+const todayDDMMYYYY = (): string => {
+  const today = new Date();
 
-      accountName: "",
+  const day = String(today.getDate()).padStart(2, "0");
+  const month = String(today.getMonth() + 1).padStart(2, "0");
 
-      fgcs: "",
+  return `${day}/${month}/${today.getFullYear()}`;
+};
 
-      division: "",
+/* DD/MM/YYYY -> YYYY-MM-DD (what useJournal / the API expects) */
+const toIsoDate = (value: string): string => {
+  const [day, month, year] = value.split("/");
 
-      ccId: "",
+  return day && month && year ? `${year}-${month}-${day}` : "";
+};
 
-      debitAmount: "",
-
-      creditAmount: "",
-
-      match: false,
-
-      description: "",
-    })
-  );
+const round2 = (value: number): number =>
+  Math.round((value + Number.EPSILON) * 100) / 100;
 
 /* =========================================================
    TABLE FIELD ORDER
@@ -86,830 +86,506 @@ const tableFieldOrder: TableField[] = [
 ========================================================= */
 
 const JournalPage: React.FC = () => {
-  /* =======================================================
-     BRANCH
-  ======================================================= */
-
-  const [branch, setBranch] =
-    useState("Jeddah");
-
-  /* =======================================================
-     JOURNAL TYPE
-  ======================================================= */
-
-  const [type, setType] =
-    useState("Standard");
+  const {
+    fetchBranches,
+    fetchDefaultBranch,
+    fetchJournalTypes,
+    fetchNextDocNo,
+    fetchLookups,
+    saveJournal,
+  } = useJournal();
 
   /* =======================================================
-     JOURNAL NUMBER
+     STATE
   ======================================================= */
 
-  const [journalNo, setJournalNo] =
-    useState("JD26000033");
+  const [branch, setBranch] = useState("");
+  const [type, setType] = useState("");
+  const [journalNo, setJournalNo] = useState("");
+  const [journalDate, setJournalDate] = useState(todayDDMMYYYY);
+  const [note, setNote] = useState("");
+  const [rows, setRows] = useState<JournalRow[]>(createRows);
 
-  /* =======================================================
-     JOURNAL DATE
-  ======================================================= */
+  const [activeDescriptionRow, setActiveDescriptionRow] = useState<
+    number | null
+  >(null);
 
-  const [journalDate, setJournalDate] =
-    useState(() => {
-      const today = new Date();
+  const [description, setDescription] = useState("");
 
-      const day = String(
-        today.getDate()
-      ).padStart(2, "0");
+  const [saving, setSaving] = useState(false);
 
-      const month = String(
-        today.getMonth() + 1
-      ).padStart(2, "0");
+  /* journal number loading + manual refresh (after save / clear) */
+  const [journalNoLoading, setJournalNoLoading] = useState(false);
+  const [docNoRefresh, setDocNoRefresh] = useState(0);
 
-      const year =
-        today.getFullYear();
+  /* lookups from the API */
+  const [branchList, setBranchList] = useState<Branch[]>([]);
+  const [typeList, setTypeList] = useState<JournalType[]>([]);
+  const [accountOptions, setAccountOptions] = useState<AccountData[]>([]);
+  const [costCenters, setCostCenters] = useState<CostCenter[]>([]);
 
-      return `${day}/${month}/${year}`;
-    });
-
-  /* =======================================================
-     NOTE
-  ======================================================= */
-
-  const [note, setNote] =
-    useState("");
-
-  /* =======================================================
-     TABLE ROWS
-  ======================================================= */
-
-  const [rows, setRows] =
-    useState<JournalRow[]>(
-      createRows
-    );
-
-  /* =======================================================
-     ACTIVE DESCRIPTION ROW
-  ======================================================= */
-
-  const [
-    activeDescriptionRow,
-    setActiveDescriptionRow,
-  ] = useState<number | null>(null);
-
-  /* =======================================================
-     DESCRIPTION VALUE
-  ======================================================= */
-
-  const [
-    description,
-    setDescription,
-  ] = useState("");
-
-  /* =======================================================
-     DUMMY BRANCH DATA
-  ======================================================= */
-
-  const branchOptions =
-    useMemo<Branch[]>(
-      () => [
-        {
-          fbrid: "JD",
-          fbrname: "Jeddah",
-        },
-
-        {
-          fbrid: "RH",
-          fbrname: "Riyadh",
-        },
-
-        {
-          fbrid: "DMM",
-          fbrname: "Dammam",
-        },
-      ],
-      []
-    );
-
-  /* =======================================================
-     DUMMY ACCOUNT DATA
-  ======================================================= */
-
-  const accountOptions =
-    useMemo<AccountData[]>(
-      () => [
-        {
-          fcoid: "001",
-          faccountid: "60001",
-          faccountgroupid: "60",
-          fgph: "P",
-          fgcs: "C",
-          faccountname:
-            "ABC TRADING",
-        },
-
-        {
-          fcoid: "001",
-          faccountid: "1101001",
-          faccountgroupid: "11",
-          fgph: "B",
-          fgcs: "C",
-          faccountname:
-            "PETTY CASH",
-        },
-
-        {
-          fcoid: "001",
-          faccountid: "1102002",
-          faccountgroupid: "11",
-          fgph: "B",
-          fgcs: "C",
-          faccountname:
-            "SAUDI NATIONAL BANK - SNB",
-        },
-
-        {
-          fcoid: "001",
-          faccountid: "41001",
-          faccountgroupid: "41",
-          fgph: "P",
-          fgcs: "R",
-          faccountname:
-            "SALES REVENUE",
-        },
-
-        {
-          fcoid: "001",
-          faccountid: "51001",
-          faccountgroupid: "51",
-          fgph: "P",
-          fgcs: "E",
-          faccountname:
-            "OFFICE EXPENSE",
-        },
-
-        {
-          fcoid: "001",
-          faccountid: "61001",
-          faccountgroupid: "61",
-          fgph: "P",
-          fgcs: "E",
-          faccountname:
-            "TRAVEL EXPENSE",
-        },
-      ],
-      []
-    );
-
-  /* =======================================================
-     DUMMY COST CENTERS
-  ======================================================= */
-
-  const costCenters =
-    useMemo<CostCenter[]>(
-      () => [
-        {
-          fccid: "RH",
-          fccname: "Riyadh",
-          fpositionno: 1,
-        },
-
-        {
-          fccid: "JD",
-          fccname: "Jeddah",
-          fpositionno: 2,
-        },
-
-        {
-          fccid: "DM",
-          fccname: "Dammam",
-          fpositionno: 3,
-        },
-      ],
-      []
-    );
+  const defaultBranchRef = useRef("");
+  const defaultTypeRef = useRef("");
 
   /* =======================================================
      REFS
   ======================================================= */
 
-  const branchRef =
-    useRef<
-      SelectInstance<
-        {
-          value: string;
-          label: string;
-        },
-        false
-      >
-    >(null);
+  const branchRef = useRef<SelectInstance<
+    { value: string; label: string },
+    false
+  > | null>(null);
 
-  const typeRef =
-    useRef<
-      SelectInstance<
-        {
-          value: string;
-          label: string;
-        },
-        false
-      >
-    >(null);
+  const typeRef = useRef<SelectInstance<
+    { value: string; label: string },
+    false
+  > | null>(null);
 
-  const journalNoRef =
-    useRef<HTMLInputElement>(null);
-
-  const dateRef =
-    useRef<HTMLInputElement>(null);
-
-  const journalTableRef =
-    useRef<JournalTableRef>(null);
-
-  const noteRef =
-    useRef<HTMLTextAreaElement>(null);
-
-  const descriptionRef =
-    useRef<HTMLInputElement>(null);
-
-  const actionsRef =
-    useRef<ReceiptActionsRef>(null);
+  const journalNoRef = useRef<HTMLInputElement | null>(null);
+  const dateRef = useRef<HTMLInputElement | null>(null);
+  const journalTableRef = useRef<JournalTableRef>(null);
+  const noteRef = useRef<HTMLTextAreaElement | null>(null);
+  const descriptionRef = useRef<HTMLInputElement | null>(null);
+  const actionsRef = useRef<JournalActionsRef>(null);
 
   /* =======================================================
-     BRANCH SELECT OPTIONS
+     LOAD BRANCHES / DEFAULT BRANCH / LOOKUPS
   ======================================================= */
 
-  const branchSelectOptions =
-    useMemo(
-      () =>
-        branchOptions.map(
-          (item) => ({
-            value: item.fbrid,
-            label: item.fbrname,
-          })
-        ),
-      [branchOptions]
-    );
+  useEffect(() => {
+    let active = true;
+
+    const loadLookups = async () => {
+      try {
+        const [branches, defaultBranch, types, lookups] = await Promise.all([
+          fetchBranches(),
+          fetchDefaultBranch(),
+          // if the types call fails, fall back to the single "Standard" type
+          fetchJournalTypes().catch((): JournalType[] => []),
+          fetchLookups(),
+        ]);
+
+        if (!active) {
+          return;
+        }
+
+        setBranchList(branches);
+
+        const initialBranch = branches.some((b) => b.id === defaultBranch)
+          ? defaultBranch
+          : (branches[0]?.id ?? "");
+
+        defaultBranchRef.current = initialBranch;
+
+        setBranch(initialBranch);
+
+        const journalTypes: JournalType[] = types.length
+          ? types
+          : [{ value: "JB", label: "Journal" }];
+
+        defaultTypeRef.current = journalTypes[0].value;
+
+        setTypeList(journalTypes);
+
+        setType((current) =>
+          journalTypes.some((item) => item.value === current)
+            ? current
+            : journalTypes[0].value,
+        );
+
+        setAccountOptions(lookups.accounts);
+
+        setCostCenters(lookups.costCenters);
+      } catch (error: unknown) {
+        // TODO: replace with the project's toast / message component
+        alert(error instanceof Error ? error.message : "Failed to load data");
+      }
+    };
+
+    loadLookups();
+
+    branchRef.current?.focus();
+
+    return () => {
+      active = false;
+    };
+  }, [fetchBranches, fetchDefaultBranch, fetchJournalTypes, fetchLookups]);
+
+  /* =======================================================
+     NEXT JOURNAL NUMBER (branch / type change, after clear)
+  ======================================================= */
+
+  useEffect(() => {
+    if (!branch || !type) {
+      setJournalNo("");
+      return;
+    }
+
+    let active = true;
+
+    setJournalNoLoading(true);
+
+    fetchNextDocNo(branch)
+      .then((docNo) => {
+        if (active) {
+          setJournalNo(docNo);
+        }
+      })
+      .catch((error: unknown) => {
+        if (active) {
+          setJournalNo("");
+
+          // TODO: replace with the project's toast / message component
+          alert(
+            error instanceof Error
+              ? error.message
+              : "Failed to get journal number",
+          );
+        }
+      })
+      .finally(() => {
+        if (active) {
+          setJournalNoLoading(false);
+        }
+      });
+
+    return () => {
+      active = false;
+    };
+  }, [branch, type, docNoRefresh, fetchNextDocNo]);
+
+  /* =======================================================
+     BRANCH / TYPE SELECT OPTIONS
+  ======================================================= */
+
+  const branchSelectOptions = useMemo(
+    () => branchList.map((item) => ({ value: item.id, label: item.name })),
+    [branchList],
+  );
+
+  const typeSelectOptions = useMemo(
+    () => typeList.map((item) => ({ value: item.value, label: item.label })),
+    [typeList],
+  );
 
   /* =======================================================
      FOCUS TABLE FIELD
   ======================================================= */
 
-  const focusTableField =
-    useCallback(
-      (
-        rowIndex: number,
-        field: TableField
-      ) => {
-        journalTableRef.current?.focusField(
-          rowIndex,
-          field
-        );
-      },
-      []
-    );
+  const focusTableField = useCallback((rowIndex: number, field: TableField) => {
+    journalTableRef.current?.focusField(rowIndex, field);
+  }, []);
+
+  const focusNote = useCallback(() => {
+    requestAnimationFrame(() => {
+      const noteInput = noteRef.current;
+
+      if (!noteInput) {
+        return;
+      }
+
+      noteInput.focus();
+
+      const position = noteInput.value.length;
+
+      noteInput.setSelectionRange(position, position);
+    });
+  }, []);
 
   /* =======================================================
      ROW CHANGE
   ======================================================= */
 
-  const handleRowChange =
-    useCallback(
-      (
-        id: number,
-        field: keyof JournalRow,
-        value: string | boolean
-      ) => {
-        setRows(
-          (currentRows) =>
-            currentRows.map(
-              (row) =>
-                row.id === id
-                  ? {
-                    ...row,
-                    [field]: value,
-                  }
-                  : row
-            )
-        );
-      },
-      []
-    );
+  const handleRowChange = useCallback(
+    (id: number, field: keyof JournalRow, value: string | boolean) => {
+      setRows((currentRows) =>
+        currentRows.map((row) =>
+          row.id === id ? { ...row, [field]: value } : row,
+        ),
+      );
+    },
+    [],
+  );
 
   /* =======================================================
      TABLE ESCAPE -> NOTE
   ======================================================= */
 
-  const handleTableEscape =
-    useCallback(() => {
-      setActiveDescriptionRow(null);
+  const handleTableEscape = useCallback(() => {
+    setActiveDescriptionRow(null);
 
-      requestAnimationFrame(() => {
-        const note =
-          noteRef.current;
-
-        if (!note) {
-          return;
-        }
-
-        note.focus();
-
-        const position =
-          note.value.length;
-
-        note.setSelectionRange(
-          position,
-          position
-        );
-      });
-    }, []);
+    focusNote();
+  }, [focusNote]);
 
   /* =======================================================
      TABLE ENTER
   ======================================================= */
 
-  const handleTableEnter =
-    useCallback(
-      (
-        rowIndex: number,
-        field: TableField
-      ) => {
-        /* ================================================
-           VIEW -> DESCRIPTION
-        ================================================= */
+  const handleTableEnter = useCallback(
+    (rowIndex: number, field: TableField) => {
+      /* VIEW -> DESCRIPTION */
 
-        if (field === "view") {
-          setActiveDescriptionRow(
-            rowIndex
-          );
+      if (field === "view") {
+        setActiveDescriptionRow(rowIndex);
 
-          const row =
-            rows[rowIndex];
+        const row = rows[rowIndex];
 
-          if (
-            row &&
-            row.description &&
-            row.description.trim() !== ""
-          ) {
-            setDescription(
-              row.description
-            );
+        setDescription(row?.description?.trim() ? row.description : "");
+
+        requestAnimationFrame(() => {
+          const input = descriptionRef.current;
+
+          if (!input) {
+            return;
           }
 
-          requestAnimationFrame(() => {
-            const input =
-              descriptionRef.current;
+          input.focus();
 
-            if (!input) {
-              return;
-            }
+          const position = input.value.length;
 
-            input.focus();
+          input.setSelectionRange(position, position);
+        });
 
-            const position =
-              input.value.length;
+        return;
+      }
 
-            input.setSelectionRange(
-              position,
-              position
-            );
-          });
+      /* NEXT FIELD */
 
-          return;
-        }
+      const nextField = tableFieldOrder[tableFieldOrder.indexOf(field) + 1];
 
-        /* ================================================
-           NEXT FIELD
-        ================================================= */
+      if (nextField) {
+        focusTableField(rowIndex, nextField);
+        return;
+      }
 
-        const fieldIndex =
-          tableFieldOrder.indexOf(
-            field
-          );
-
-        const nextField =
-          tableFieldOrder[
-          fieldIndex + 1
-          ];
-
-        if (nextField) {
-          focusTableField(
-            rowIndex,
-            nextField
-          );
-          return;
-        }
-
-        /* ================================================
-           END OF ROW
-
-           If View is the last field,
-           View itself handles Description.
-        ================================================= */
-
-        if (
-          rowIndex + 1 <
-          rows.length
-        ) {
-          focusTableField(
-            rowIndex + 1,
-            "accountId"
-          );
-        }
-      },
-      [
-        focusTableField,
-        rows,
-      ]
-    );
+      if (rowIndex + 1 < rows.length) {
+        focusTableField(rowIndex + 1, "accountId");
+      }
+    },
+    [focusTableField, rows],
+  );
 
   /* =======================================================
      DESCRIPTION CHANGE
   ======================================================= */
 
-  const handleDescriptionChange =
-    useCallback(
-      (value: string) => {
-        setDescription(
-          value
-        );
+  const handleDescriptionChange = useCallback(
+    (value: string) => {
+      setDescription(value);
 
-        if (
-          activeDescriptionRow ===
-          null
-        ) {
-          return;
-        }
+      if (activeDescriptionRow === null) {
+        return;
+      }
 
-        const activeRow =
-          rows[
-          activeDescriptionRow
-          ];
+      const activeRow = rows[activeDescriptionRow];
 
-        if (!activeRow) {
-          return;
-        }
+      if (!activeRow) {
+        return;
+      }
 
-        const activeRowId =
-          activeRow.id;
+      const activeRowId = activeRow.id;
 
-        setRows(
-          (currentRows) =>
-            currentRows.map(
-              (row) =>
-                row.id ===
-                  activeRowId
-                  ? {
-                    ...row,
-                    description:
-                      value,
-                  }
-                  : row
-            )
-        );
-      },
-      [
-        activeDescriptionRow,
-        rows,
-      ]
-    );
+      setRows((currentRows) =>
+        currentRows.map((row) =>
+          row.id === activeRowId ? { ...row, description: value } : row,
+        ),
+      );
+    },
+    [activeDescriptionRow, rows],
+  );
 
   /* =======================================================
      DESCRIPTION ENTER
   ======================================================= */
 
-  const handleDescriptionEnter =
-    useCallback(
-      (
-        event: React.KeyboardEvent<HTMLInputElement>
-      ) => {
-        if (
-          event.key !== "Enter"
-        ) {
-          return;
-        }
+  const handleDescriptionEnter = useCallback(
+    (event: React.KeyboardEvent<HTMLInputElement>) => {
+      if (event.key !== "Enter") {
+        return;
+      }
 
-        event.preventDefault();
-        event.stopPropagation();
+      event.preventDefault();
+      event.stopPropagation();
 
-        /* ==============================================
-           NO ACTIVE ROW
-        ============================================== */
+      if (activeDescriptionRow === null) {
+        focusTableField(0, "accountId");
+        return;
+      }
 
-        if (
-          activeDescriptionRow ===
-          null
-        ) {
-          focusTableField(
-            0,
-            "accountId"
-          );
+      const nextRow = activeDescriptionRow + 1;
 
-          return;
-        }
+      /* LAST ROW -> NOTE */
 
-        /* ==============================================
-           CURRENT ROW
-        ============================================== */
+      if (nextRow >= rows.length) {
+        setActiveDescriptionRow(null);
 
-        const currentRow =
-          activeDescriptionRow;
+        focusNote();
 
-        const nextRow =
-          currentRow + 1;
+        return;
+      }
 
-        /* ==============================================
-           LAST ROW -> NOTE
-        ============================================== */
+      /* NEXT ROW -> ACCOUNT ID */
 
-        if (
-          nextRow >=
-          rows.length
-        ) {
-          setActiveDescriptionRow(
-            null
-          );
-
-          requestAnimationFrame(() => {
-            const note =
-              noteRef.current;
-
-            if (!note) {
-              return;
-            }
-
-            note.focus();
-
-            const position =
-              note.value.length;
-
-            note.setSelectionRange(
-              position,
-              position
-            );
-          });
-
-          return;
-        }
-
-        /* ==============================================
-           NEXT ROW -> ACCOUNT ID
-        ============================================== */
-
-        focusTableField(
-          nextRow,
-          "accountId"
-        );
-      },
-      [
-        activeDescriptionRow,
-        focusTableField,
-        rows.length,
-      ]
-    );
+      focusTableField(nextRow, "accountId");
+    },
+    [activeDescriptionRow, focusTableField, focusNote, rows.length],
+  );
 
   /* =======================================================
      NOTE ENTER -> SAVE
   ======================================================= */
 
-  const handleNoteEnter =
-    useCallback(
-      (
-        event: React.KeyboardEvent<HTMLTextAreaElement>
-      ) => {
-        if (
-          event.key !== "Enter" ||
-          event.shiftKey
-        ) {
-          return;
-        }
+  const handleNoteEnter = useCallback(
+    (event: React.KeyboardEvent<HTMLTextAreaElement>) => {
+      if (event.key !== "Enter" || event.shiftKey) {
+        return;
+      }
 
-        event.preventDefault();
-        event.stopPropagation();
+      event.preventDefault();
+      event.stopPropagation();
 
-        requestAnimationFrame(() => {
-          actionsRef.current?.focusSave();
-        });
-      },
-      []
-    );
+      requestAnimationFrame(() => {
+        actionsRef.current?.focusSave();
+      });
+    },
+    [],
+  );
 
   /* =======================================================
-     DEBIT TOTAL
+     TOTALS
   ======================================================= */
 
-  const debitTotal =
-    useMemo(
-      () =>
-        rows.reduce(
-          (
-            sum,
-            row
-          ) =>
-            sum +
-            (
-              Number(
-                row.debitAmount
-              ) || 0
-            ),
-          0
-        ),
-      [rows]
-    );
+  const debitTotal = useMemo(
+    () => rows.reduce((sum, row) => sum + (Number(row.debitAmount) || 0), 0),
+    [rows],
+  );
+
+  const creditTotal = useMemo(
+    () => rows.reduce((sum, row) => sum + (Number(row.creditAmount) || 0), 0),
+    [rows],
+  );
 
   /* =======================================================
-     CREDIT TOTAL
+     VALIDATION (same rules as the VB form / backend)
   ======================================================= */
 
-  const creditTotal =
-    useMemo(
-      () =>
-        rows.reduce(
-          (
-            sum,
-            row
-          ) =>
-            sum +
-            (
-              Number(
-                row.creditAmount
-              ) || 0
-            ),
-          0
-        ),
-      [rows]
-    );
+  const validateJournal = useCallback((): string => {
+    if (!branch) {
+      return "Please select a 'Branch'";
+    }
 
-  /* =======================================================
-     SAVE JOURNAL
-  ======================================================= */
+    if (!journalNo.trim()) {
+      return "Please input 'Journal No.'";
+    }
 
-  const handleSave =
-    useCallback(
-      async () => {
-        const journalData = {
-          branch,
+    if (!journalDate) {
+      return "Please select 'Date'";
+    }
 
-          type,
+    const filledRows = rows.filter((row) => row.accountId.trim() !== "");
 
-          journalNo,
+    if (filledRows.length === 0) {
+      return "There is no information for saving.";
+    }
 
-          journalDate,
+    for (let index = 0; index < filledRows.length; index++) {
+      const debit = Number(filledRows[index].debitAmount) || 0;
+      const credit = Number(filledRows[index].creditAmount) || 0;
 
-          rows:
-            rows
-              .filter(
-                (row) =>
-                  row.accountId &&
-                  row.accountId.trim() !== ""
-              )
-              .map(
-                (
-                  row,
-                  index
-                ) => ({
-                  id:
-                    row.id,
+      if (debit < 0 || credit < 0) {
+        return `Sl.# : ${index + 1} - Amount cannot be negative`;
+      }
 
-                  slNo:
-                    index + 1,
+      if (debit !== 0 && credit !== 0) {
+        return `Sl.# : ${index + 1} - Please input either 'Debit' or 'Credit'`;
+      }
+    }
 
-                  accountId:
-                    row.accountId,
+    if (round2(debitTotal) !== round2(creditTotal)) {
+      return "'Total Credit' must be equal to 'Total Debit'";
+    }
 
-                  accountName:
-                    row.accountName,
-
-                  fgcs:
-                    row.fgcs,
-
-                  division:
-                    row.division,
-
-                  ccId:
-                    row.ccId,
-
-                  debitAmount:
-                    Number(
-                      row.debitAmount
-                    ) || 0,
-
-                  creditAmount:
-                    Number(
-                      row.creditAmount
-                    ) || 0,
-
-                  match:
-                    row.match,
-
-                  description:
-                    row.description ||
-                    "",
-                })
-              ),
-
-          debitTotal,
-
-          creditTotal,
-
-          note,
-        };
-
-        console.log(
-          "================================"
-        );
-
-        console.log(
-          "JOURNAL DATA"
-        );
-
-        console.log(
-          "================================"
-        );
-
-        console.log(
-          journalData
-        );
-
-        console.log(
-          "================================"
-        );
-
-        // alert(
-        //   "Dummy Journal Save"
-        // );
-      },
-      [
-        branch,
-        type,
-        journalNo,
-        journalDate,
-        rows,
-        debitTotal,
-        creditTotal,
-        note,
-      ]
-    );
+    return "";
+  }, [branch, journalNo, journalDate, rows, debitTotal, creditTotal]);
 
   /* =======================================================
      CLEAR FORM
   ======================================================= */
 
-  const clearForm =
-    useCallback(() => {
-      setBranch("Jeddah");
+  const clearForm = useCallback(() => {
+    setBranch(defaultBranchRef.current);
+    setType(defaultTypeRef.current);
+    setJournalNo("");
+    setJournalDate(todayDDMMYYYY());
+    setNote("");
+    setDescription("");
+    setActiveDescriptionRow(null);
+    setRows(createRows());
+    setDocNoRefresh((count) => count + 1);
 
-      setType("Standard");
-
-      setJournalNo(
-        "JD26000033"
-      );
-
-      setJournalDate(() => {
-        const today =
-          new Date();
-
-        const day =
-          String(
-            today.getDate()
-          ).padStart(
-            2,
-            "0"
-          );
-
-        const month =
-          String(
-            today.getMonth() + 1
-          ).padStart(
-            2,
-            "0"
-          );
-
-        const year =
-          today.getFullYear();
-
-        return `${day}/${month}/${year}`;
-      });
-
-      setNote("");
-
-      setDescription("");
-
-      setActiveDescriptionRow(
-        null
-      );
-
-      setRows(
-        createRows()
-      );
-
-      requestAnimationFrame(() => {
-        branchRef.current?.focus();
-      });
-    }, []);
+    requestAnimationFrame(() => {
+      branchRef.current?.focus();
+    });
+  }, []);
 
   /* =======================================================
-     INITIAL FOCUS
+     SAVE JOURNAL
   ======================================================= */
 
-  useEffect(() => {
-    branchRef.current?.focus();
-  }, []);
+  const handleSave = useCallback(async () => {
+    if (saving) {
+      return;
+    }
+
+    const message = validateJournal();
+
+    if (message) {
+      // TODO: replace with the project's toast / message component
+      alert(message);
+      return;
+    }
+
+    try {
+      setSaving(true);
+
+      await saveJournal({
+        mode: "S",
+
+        header: {
+          brId: branch,
+          docNo: journalNo,
+          date: toIsoDate(journalDate),
+          note,
+        },
+
+        rows: rows.map((row) => ({
+          accountId: row.accountId,
+          ccId: row.ccId,
+          description: row.description || "",
+          debit: row.debitAmount || "0",
+          credit: row.creditAmount || "0",
+        })),
+      });
+
+      alert("Saved");
+
+      clearForm();
+    } catch (error: unknown) {
+      alert(error instanceof Error ? error.message : "Not Saved, try again");
+    } finally {
+      setSaving(false);
+    }
+  }, [
+    saving,
+    validateJournal,
+    saveJournal,
+    branch,
+    journalNo,
+    journalDate,
+    note,
+    rows,
+    clearForm,
+  ]);
 
   /* =======================================================
      RETURN
@@ -936,240 +612,109 @@ const JournalPage: React.FC = () => {
           md:w-[55%]
           max-w-362.5
           min-w-212.5
-         
+
           border
           border-gray-400
           bg-white
         "
       >
-        {/* =================================================
-            HEADER
-        ================================================= */}
-
         <JournalHeader />
-
-        {/* =================================================
-            JOURNAL FORM
-        ================================================= */}
 
         <JournalForm
           branch={branch}
           setBranch={setBranch}
-
           type={type}
           setType={setType}
-
           journalNo={journalNo}
           setJournalNo={setJournalNo}
-
           journalDate={journalDate}
           setJournalDate={setJournalDate}
-
           branchRef={branchRef}
           typeRef={typeRef}
           journalNoRef={journalNoRef}
           dateRef={dateRef}
-
-          focusFirstAccountId={() =>
-            focusTableField(
-              0,
-              "accountId"
-            )
-          }
-
-          branchOptions={
-            branchSelectOptions
-          }
+          focusFirstAccountId={() => focusTableField(0, "accountId")}
+          branchOptions={branchSelectOptions}
+          typeOptions={typeSelectOptions}
+          journalNoLoading={journalNoLoading}
         />
-
-        {/* =================================================
-            JOURNAL TABLE
-        ================================================= */}
 
         <div className="p-3">
           <JournalTable
             ref={journalTableRef}
-
             rows={rows}
-
-            handleRowChange={
-              handleRowChange
-            }
-
-            onFieldEnter={
-              handleTableEnter
-            }
-
-            onTableEscape={
-              handleTableEscape
-            }
-
-            accountOptions={
-              accountOptions
-            }
-
-            costCenters={
-              costCenters
-            }
+            handleRowChange={handleRowChange}
+            onFieldEnter={handleTableEnter}
+            onTableEscape={handleTableEscape}
+            accountOptions={accountOptions}
+            costCenters={costCenters}
           />
         </div>
 
-        {/* =================================================
-            TOTALS
-        ================================================= */}
+        {/* TOTALS */}
 
         <div
           className="
-    mt-2
-    px-3
-    mr-32
-    ml-auto
-    flex
-    w-55
-    flex-col
-    items-end
-    gap-2
-    text-xs
-  "
+            mt-2
+            px-3
+            mr-32
+            ml-auto
+            flex
+            w-55
+            flex-col
+            items-end
+            gap-2
+            text-xs
+          "
         >
-          {/* =================================================
-      TOTAL ROW
-  ================================================= */}
-
-          <div
-            className="
-      flex
-      items-center
-      gap-1
-    "
-          >
+          <div className="flex items-center gap-1">
             <input
               value="Total"
               readOnly
-              className="
-        h-7
-        w-18
-        rounded
-        border
-        border-gray-300
-        px-2
-        text-center
-        outline-none
-      "
+              className="h-7 w-18 rounded border border-gray-300 px-2 text-center outline-none"
             />
 
             <input
               value={debitTotal.toFixed(2)}
               readOnly
-              className="
-        h-7
-        w-25
-        rounded
-        border
-        border-gray-300
-        px-2
-        text-right
-        outline-none
-      "
+              className="h-7 w-25 rounded border border-gray-300 px-2 text-right outline-none"
             />
 
             <input
               value={creditTotal.toFixed(2)}
               readOnly
-              className="
-        h-7
-        w-25
-        rounded
-        border
-        border-gray-300
-        px-2
-        text-right
-        outline-none
-      "
+              className="h-7 w-25 rounded border border-gray-300 px-2 text-right outline-none"
             />
           </div>
 
-          {/* =================================================
-      DR - CR
-  ================================================= */}
-
-          <div
-            className="
-      flex
-      items-center
-      gap-1
-    "
-          >
-            <label
-              className="
-        whitespace-nowrap
-        text-xs
-        text-slate-600
-      "
-            >
+          <div className="flex items-center gap-1">
+            <label className="whitespace-nowrap text-xs text-slate-600">
               Dr- Cr:
             </label>
 
             <input
-              value={(
-                debitTotal -
-                creditTotal
-              ).toFixed(2)}
+              value={(debitTotal - creditTotal).toFixed(2)}
               readOnly
-              className="
-        h-7
-        w-25
-        rounded
-        border
-        border-gray-300
-        px-2
-        text-right
-        outline-none
-      "
+              className="h-7 w-25 rounded border border-gray-300 px-2 text-right outline-none"
             />
           </div>
         </div>
-        {/* =================================================
-            BOTTOM FORM
-        ================================================= */}
 
-        <ReceiptBottomForm
-          description={
-            description
-          }
-
-          setDescription={
-            handleDescriptionChange
-          }
-
+        <JournalBottomForm
+          description={description}
+          setDescription={handleDescriptionChange}
+          descriptionRef={descriptionRef}
+          onDescriptionEnter={handleDescriptionEnter}
+          onDescriptionClear={() => handleDescriptionChange("")}
           note={note}
-
           setNote={setNote}
-
           noteRef={noteRef}
-
-          descriptionRef={
-            descriptionRef
-          }
-
-          onNoteEnter={
-            handleNoteEnter
-          }
-
-          onDescriptionEnter={
-            handleDescriptionEnter
-          }
+          onNoteEnter={handleNoteEnter}
         />
 
-        {/* =================================================
-            ACTIONS
-        ================================================= */}
-
-        <ReceiptActions
+        <JournalActions
           ref={actionsRef}
-
           clearForm={clearForm}
-
           onSave={handleSave}
         />
       </div>

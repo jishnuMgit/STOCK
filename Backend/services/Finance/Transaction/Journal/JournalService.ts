@@ -69,7 +69,8 @@ export class JournalError extends Error {
     }
 }
 
-const JV_DOC_TYPE = "JV";
+/* journal doc type used by the API (receipt uses BR / CR) */
+export const JOURNAL_DOC_TYPE = "JB";
 
 /* =========================================================
    HELPERS
@@ -216,7 +217,7 @@ async function fetchHeader(
 ): Promise<DbRow | null> {
     const result = await client.query(
         `SELECT DISTINCT
-        fdate, fnote, fpost,
+        to_char(fdate, 'YYYY-MM-DD') AS fdate, fnote, fpost,
         fuserid, fuserdate,
         fsuserid, fsuserdate,
         fmuserid, fmuserdate
@@ -226,7 +227,7 @@ async function fetchHeader(
         AND fbrid = $3
         AND fdoctype = $4
         AND fdocno = $5`,
-        [pstrCoID, Number(pstrYear), lkpBranch, JV_DOC_TYPE, txtDocNo],
+        [pstrCoID, Number(pstrYear), lkpBranch, JOURNAL_DOC_TYPE, txtDocNo],
     );
 
     return result.rows[0] ?? null;
@@ -246,7 +247,7 @@ async function fetchLines(
         AND fdoctype = $4
         AND fdocno = $5
       ORDER BY fslno`,
-        [pstrCoID, Number(pstrYear), lkpBranch, JV_DOC_TYPE, txtDocNo],
+        [pstrCoID, Number(pstrYear), lkpBranch, JOURNAL_DOC_TYPE, txtDocNo],
     );
 
     return result.rows;
@@ -344,7 +345,7 @@ async function insertLines(
 
             lkpBranch,
 
-            strDocType: JV_DOC_TYPE,
+            strDocType: JOURNAL_DOC_TYPE,
 
             txtDocNo,
 
@@ -373,6 +374,15 @@ async function insertLines(
             strCreatedUserDate: created.userDate,
         });
     }
+}
+
+/* =========================================================
+   JOURNAL TYPES
+   Journal has a single doc type: JB.
+========================================================= */
+
+export function getJournalTypesService(): { fpid: string; fpname: string }[] {
+    return [{ fpid: JOURNAL_DOC_TYPE, fpname: "Journal" }];
 }
 
 /* =========================================================
@@ -450,7 +460,7 @@ export async function saveJournalService(
 
                 lkpBranch: journal.lkpBranch,
 
-                strDocType: JV_DOC_TYPE,
+                strDocType: JOURNAL_DOC_TYPE,
 
                 txtDocNo: journal.txtDocNo,
 
@@ -519,7 +529,7 @@ export async function updateJournalService(
 
             lkpBranch: journal.lkpBranch,
 
-            strDocType: JV_DOC_TYPE,
+            strDocType: JOURNAL_DOC_TYPE,
 
             txtDocNo: journal.txtDocNo,
 
@@ -543,7 +553,7 @@ export async function updateJournalService(
 
                 lkpBranch: journal.lkpBranch,
 
-                strDocType: JV_DOC_TYPE,
+                strDocType: JOURNAL_DOC_TYPE,
 
                 txtDocNo: journal.txtDocNo,
 
@@ -611,7 +621,7 @@ export async function deleteJournalService(
 
             lkpBranch: key.lkpBranch,
 
-            strDocType: JV_DOC_TYPE,
+            strDocType: JOURNAL_DOC_TYPE,
 
             txtDocNo: key.txtDocNo,
 
@@ -630,7 +640,7 @@ export async function deleteJournalService(
 
                 lkpBranch: key.lkpBranch,
 
-                strDocType: JV_DOC_TYPE,
+                strDocType: JOURNAL_DOC_TYPE,
 
                 txtDocNo: key.txtDocNo,
             },
