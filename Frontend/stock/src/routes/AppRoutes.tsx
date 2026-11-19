@@ -149,8 +149,6 @@ const PageLoader = () => (
   </div>
 );
 
-// Shown at "/" - replace with your real home/dashboard later
-const Home = () => <div className="p-4 text-[13px] text-slate-600" />;
 
 const AppRoutes = () => {
   return (

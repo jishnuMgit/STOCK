@@ -1,9 +1,4 @@
 import React, { useEffect, useState } from "react";
-import Select, {
-  components,
-  type ClearIndicatorProps,
-  type StylesConfig,
-} from "react-select";
 import { toast } from "react-toastify";
 import { X } from "lucide-react";
 import { useEnterAsTab } from "../../../hooks/useEnterAsTab";
@@ -14,25 +9,14 @@ import { useDeleteToast } from "../../../hooks/useDeleteToast";
 import { useAltShortcuts } from "../../../hooks/useAltShortcuts";
 import { useButtonPermissions } from "../../../hooks/useButtonPermissions";
 import { filterLabelOrValue } from "../../../components/BranchSelect/branchSelectParts";
-import CommonTableSelect from "../../../components/common/CommonTableSelect";
+import CommonTableSelect, {
+  type TableSelectOption,
+} from "../../../components/common/CommonTableSelect";
 import CustomLinkedPairSelect, {
   type PairSelectOption,
 } from "../../../components/common/CustomLinkedPairSelect";
-import selectComponents, {
-  SELECT_FONT_FAMILY,
-} from "../../../components/sharecomponents/selectComponents";
 import Header from "../../../components/common/Header";
 import { tryGetServerDate } from "../../../utils/serverDate";
-
-// The clear mark of the Unit box: the same small grey x as the one on a Branch row (not react-select's big dark one)
-const unitSelectComponents = {
-  ...selectComponents,
-  ClearIndicator: (props: ClearIndicatorProps<any, false>) => (
-    <components.ClearIndicator {...props}>
-      <X size={12} />
-    </components.ClearIndicator>
-  ),
-};
 
 /* =========================================================
    TYPES
@@ -69,6 +53,7 @@ const BRANCH_COLUMNS = [
   { key: "label", label: "Branch", width: "1fr" },
   { key: "value", label: "ID", width: "70px", align: "right" as const },
 ];
+const UNIT_COLUMNS = [{ key: "label", label: "Unit", width: "1fr" }];
 
 /* =========================================================
    ITEM PAGE
@@ -77,7 +62,7 @@ const BRANCH_COLUMNS = [
 // dbo.tblmenu fmenuid for the Item page (fmenucaption = "Item").
 const MENU_ID = "010201";
 
-  const ItemPage: React.FC = () => {
+const ItemPage: React.FC = () => {
   const handleEnterAsTab = useEnterAsTab();
   const perms = useButtonPermissions(MENU_ID);
   // the cell the cursor is in is outlined (a typed-in box has its text selected)
@@ -177,7 +162,7 @@ const MENU_ID = "010201";
      SELECT OPTIONS
   ========================================================= */
 
-  const [unitOptions, setUnitOptions] = useState<SelectOption[]>([]);
+  const [unitOptions, setUnitOptions] = useState<TableSelectOption[]>([]);
 
   /* =========================================================
      LOAD UNIT LIST (lkpUnit dropdown)
@@ -209,7 +194,7 @@ const MENU_ID = "010201";
           return;
         }
 
-        const options: SelectOption[] = (result.data || []).map(
+        const options: TableSelectOption[] = (result.data || []).map(
           (row: { lkpUnit: string }) => ({
             value: row.lkpUnit,
             label: row.lkpUnit,
@@ -411,9 +396,9 @@ const MENU_ID = "010201";
       currentRows.map((row) =>
         row.id === id
           ? {
-              ...row,
-              [field]: value,
-            }
+            ...row,
+            [field]: value,
+          }
           : row,
       ),
     );
@@ -509,7 +494,7 @@ const MENU_ID = "010201";
       if (!response.ok || !result.success) {
         toast.error(
           result.message ||
-            (hasSavedItem ? "Not modified, try again." : "Not saved, try again.")
+          (hasSavedItem ? "Not modified, try again." : "Not saved, try again.")
         );
 
         // the backend validator names the field that failed - same name as
@@ -523,7 +508,7 @@ const MENU_ID = "010201";
 
       toast.success(
         result.message ||
-          (hasSavedItem ? "Item modified successfully." : "Item saved successfully.")
+        (hasSavedItem ? "Item modified successfully." : "Item saved successfully.")
       );
 
       // load the item again: it now exists, so the button flips to Modify
@@ -871,121 +856,6 @@ const MENU_ID = "010201";
   );
 
   /* =========================================================
-     REACT SELECT - FORM
-  ========================================================= */
-
-  // the form selects look like the text boxes of this page (.input-style): 14px text, #334155, #d7dee7 border
-  const reactSelectStyles: StylesConfig<
-    SelectOption,
-    false
-  > = {
-    container: (provided) => ({
-      ...provided,
-      fontFamily: SELECT_FONT_FAMILY,
-    }),
-
-    control: (provided, state) => ({
-      ...provided,
-      minHeight: "30px",
-      height: "30px",
-      border: "1px solid #d7dee7",
-      borderRadius: "4px",
-      boxShadow: "none",
-      backgroundColor: state.isFocused ? "#eefbf4" : "#ffffff",
-      fontSize: "14px",
-      cursor: "pointer",
-
-      "&:hover": {
-        borderColor: "#9fdfbc",
-      },
-    }),
-
-    valueContainer: (provided) => ({
-      ...provided,
-      height: "23px",
-      minHeight: "23px",
-      padding: "0 6px",
-    }),
-
-    input: (provided) => ({
-      ...provided,
-      margin: "0px",
-      padding: "0px",
-      fontSize: "14px",
-      color: "#334155",
-    }),
-
-    singleValue: (provided) => ({
-      ...provided,
-      margin: 0,
-      fontSize: "14px",
-      color: "#334155",
-    }),
-
-    placeholder: (provided) => ({
-      ...provided,
-      margin: 0,
-      fontSize: "14px",
-      color: "#808080",
-    }),
-
-    indicatorsContainer: (provided) => ({
-      ...provided,
-      height: "23px",
-    }),
-
-  dropdownIndicator: (provided) => ({
-    ...provided,
-    padding: "4px 6px",
-    color: "#64748b",
-    "&:hover": {
-      color: "#64748b",
-    },
-  }),
-
-  // the same small grey x as on a Branch row (text-slate-400, red on hover)
-  clearIndicator: (provided) => ({
-    ...provided,
-    padding: "4px 6px",
-    color: "#94a3b8",
-    "&:hover": {
-      color: "#ef4444",
-    },
-  }),
-
-  indicatorSeparator: () => ({
-    display: "none",
-  }),
-
-  menu: (provided) => ({
-    ...provided,
-    zIndex: 100,
-    fontFamily: SELECT_FONT_FAMILY,
-    fontSize: "14px",
-    borderRadius: "4px",
-    marginTop: "2px",
-  }),
-
-  menuList: (provided) => ({
-    ...provided,
-    padding: "3px 0",
-  }),
-
-  option: (provided, state) => ({
-    ...provided,
-    fontSize: "14px",
-    padding: "7px 8px",
-    backgroundColor: state.isSelected
-      ? "#dbeafe"
-      : state.isFocused
-        ? "#eff6ff"
-        : "#ffffff",
-    color: "#334155",
-    cursor: "pointer",
-  }),
-};
-
-  /* =========================================================
      JSX
   ========================================================= */
 
@@ -999,9 +869,9 @@ const MENU_ID = "010201";
       recenter this page.
     */
     <>
-    <div
-      onKeyDown={handleEnterAsTab}
-      className="
+      <div
+        onKeyDown={handleEnterAsTab}
+        className="
         min-h-screen
         w-full
         overflow-x-auto
@@ -1010,14 +880,14 @@ const MENU_ID = "010201";
         items-center
         bg-white
       "
-    >
+      >
 
-      {/* =====================================================
+        {/* =====================================================
           FIXED CONTENT WIDTH
       ====================================================== */}
 
-      <div
-        className="
+        <div
+          className="
           w-240
           min-w-240
           max-w-240
@@ -1026,386 +896,386 @@ const MENU_ID = "010201";
           bg-white
           p-0
         "
-      >
+        >
 
-        {/* =====================================================
+          {/* =====================================================
             MAIN CONTAINER
         ====================================================== */}
 
-        {/* no overflow-hidden: the dropdown lists must stay visible */}
-        <div
-          className="
+          {/* no overflow-hidden: the dropdown lists must stay visible */}
+          <div
+            className="
             w-full
             border
             border-slate-400
             shadow-sm
           "
-        >
+          >
 
-          {/* ===================================================
+            {/* ===================================================
               HEADER
           =================================================== */}
 
-         <Header Name="Item" />
+            <Header Name="Item" />
 
-          {/* ===================================================
+            {/* ===================================================
               FORM
           =================================================== */}
 
-          <div className="p-3 m-3">
-            {/* =================================================
+            <div className="p-3 m-3">
+              {/* =================================================
                 ITEM ID
             ================================================= */}
 
-            <div
-              className="
+              <div
+                className="
                 mb-2
                 grid
                 grid-cols-[130px_minmax(0,1fr)]
                 items-center
                 gap-2
               "
-            >
-              <label
-                htmlFor="txtItemID"
-                className={labelClass}
               >
-                {requiredDot}
-                Item ID :
-              </label>
+                <label
+                  htmlFor="txtItemID"
+                  className={labelClass}
+                >
+                  {requiredDot}
+                  Item ID :
+                </label>
 
-              <input
-                required
-                id="txtItemID"
-                name="txtItemID"
-                type="text"
-                autoComplete="off"
-                value={txtItemID}
-                onChange={(e) => {
-                  setTxtItemID(e.target.value);
-                  setHasSavedItem(false);
-                }}
-                onBlur={handleItemIDBlur}
-                className="w-56.25 input-style"
-              />
-            </div>
+                <input
+                  required
+                  id="txtItemID"
+                  name="txtItemID"
+                  type="text"
+                  autoComplete="off"
+                  value={txtItemID}
+                  onChange={(e) => {
+                    setTxtItemID(e.target.value);
+                    setHasSavedItem(false);
+                  }}
+                  onBlur={handleItemIDBlur}
+                  className="w-56.25 input-style"
+                />
+              </div>
 
-            {/* =================================================
+              {/* =================================================
                 ITEM NAME
             ================================================= */}
 
-            <div
-              className="
+              <div
+                className="
                 mb-2
                 grid
                 grid-cols-[130px_minmax(0,1fr)]
                 items-center
                 gap-2
               "
-            >
-              <label
-                htmlFor="txtItemName"
-                className={labelClass}
               >
-                {requiredDot}
-                Item Name :
-              </label>
+                <label
+                  htmlFor="txtItemName"
+                  className={labelClass}
+                >
+                  {requiredDot}
+                  Item Name :
+                </label>
 
-              <input
-                required
-                id="txtItemName"
-                name="txtItemName"
-                type="text"
-                value={txtItemName}
-                onChange={(e) => setTxtItemName(e.target.value)}
-                className="input-style"
-              />
-            </div>
+                <input
+                  required
+                  id="txtItemName"
+                  name="txtItemName"
+                  type="text"
+                  value={txtItemName}
+                  onChange={(e) => setTxtItemName(e.target.value)}
+                  className="input-style"
+                />
+              </div>
 
-            {/* =================================================
+              {/* =================================================
                 DESCRIPTION
             ================================================= */}
 
-            <div
-              className="
+              <div
+                className="
                 mb-2
                 grid
                 grid-cols-[130px_minmax(0,1fr)]
                 items-center
                 gap-2
               "
-            >
-              <label htmlFor="txtItemDescription" className={labelClass}>
-                Description :
-              </label>
+              >
+                <label htmlFor="txtItemDescription" className={labelClass}>
+                  Description :
+                </label>
 
-              <input
-                id="txtItemDescription"
-                name="txtItemDescription"
-                type="text"
-                value={txtItemDescription}
-                onChange={(e) => setTxtItemDescription(e.target.value)}
-                className="input-style"
-              />
-            </div>
+                <input
+                  id="txtItemDescription"
+                  name="txtItemDescription"
+                  type="text"
+                  value={txtItemDescription}
+                  onChange={(e) => setTxtItemDescription(e.target.value)}
+                  className="input-style"
+                />
+              </div>
 
-            {/* =================================================
+              {/* =================================================
                 UNIT
             ================================================= */}
 
-            <div
-              className="
+              <div
+                className="
                 mb-2
                 grid
                 grid-cols-[130px_155px]
                 items-center
                 gap-2
               "
-            >
-              <label
-                htmlFor="lkpUnit"
-                className={labelClass}
               >
-                {requiredDot}
-                Unit :
-              </label>
+                <label
+                  htmlFor="lkpUnit"
+                  className={labelClass}
+                >
+                  {requiredDot}
+                  Unit :
+                </label>
 
-              <Select
-                components={unitSelectComponents}
-                required
-                inputId="lkpUnit"
-                name="lkpUnit"
-                options={unitOptions}
-                value={
-                  unitOptions.find((option) => option.value === lkpUnit) || null
-                }
-                onChange={(option) => setLkpUnit(option?.value || "")}
-                styles={reactSelectStyles}
-                placeholder=""
-                isClearable
-                 
-                                />
-            </div>
+                <CommonTableSelect
+                  inputId="lkpUnit"
+                  options={unitOptions}
+                  value={
+                    unitOptions.find((option) => option.value === lkpUnit) || null
+                  }
+                  onChange={(option) => setLkpUnit(option?.value || "")}
+                  columns={UNIT_COLUMNS}
+                  width="155px"
+                  menuWidth="155px"
+                  controlHeight={30}
+                  showHeader={false}
+                  placeholder=""
+                  isClearable
+                />
+              </div>
 
-            {/* =================================================
+              {/* =================================================
                 PACKING + CBM
             ================================================= */}
 
-            <div
-              className="
+              <div
+                className="
                 mb-2
                 grid
                 grid-cols-[130px_155px_65px_120px]
                 items-center
                 gap-2
               "
-            >
-              <label htmlFor="txtPacking" className={labelClass}>
-                Packing :
-              </label>
+              >
+                <label htmlFor="txtPacking" className={labelClass}>
+                  Packing :
+                </label>
 
-              <input
-                id="txtPacking"
-                name="txtPacking"
-                type="text"
-                value={txtPacking}
-                style={{
-                  textAlign: "right",
-                }}
-                onChange={(e) =>
-                  setTxtPacking(e.target.value)
-                }
-                className="input-style"
-              />
+                <input
+                  id="txtPacking"
+                  name="txtPacking"
+                  type="text"
+                  value={txtPacking}
+                  style={{
+                    textAlign: "right",
+                  }}
+                  onChange={(e) =>
+                    setTxtPacking(e.target.value)
+                  }
+                  className="input-style"
+                />
 
-              <label htmlFor="txtCBM" className={labelClass}>
-                CBM :
-              </label>
+                <label htmlFor="txtCBM" className={labelClass}>
+                  CBM :
+                </label>
 
-              <input
-                id="txtCBM"
-                name="txtCBM"
-                
-                type="text"
-                value={txtCBM}
-                style={{
-                  textAlign: "right",
-                  width:'85%'
-                }}
-                onChange={(e) =>
-                  setTxtCBM(e.target.value)
-                }
-                className="input-style"
-              />
-            </div>
+                <input
+                  id="txtCBM"
+                  name="txtCBM"
 
-            {/* =================================================
+                  type="text"
+                  value={txtCBM}
+                  style={{
+                    textAlign: "right",
+                    width: '85%'
+                  }}
+                  onChange={(e) =>
+                    setTxtCBM(e.target.value)
+                  }
+                  className="input-style"
+                />
+              </div>
+
+              {/* =================================================
                 ITEM GROUP
             ================================================= */}
 
-            <div
-              className="
+              <div
+                className="
                 mb-2
                 grid
                 grid-cols-[130px_minmax(0,1fr)]
                 items-center
                 gap-2
               "
-            >
-              <label
-                htmlFor="lkpItemGroupID"
-                className={labelClass}
               >
-                {requiredDot}
-                Item Group :
-              </label>
+                <label
+                  htmlFor="lkpItemGroupID"
+                  className={labelClass}
+                >
+                  {requiredDot}
+                  Item Group :
+                </label>
 
-              <CustomLinkedPairSelect
-                firstInputId="lkpItemGroupID"
-                secondInputId="lkpItemGroupName"
-                options={itemGroupPairOptions}
-                firstValue={lkpItemGroupID || null}
-                secondValue={lkpItemGroupID || null}
-                firstHeader="Item Group ID"
-                secondHeader="Item Group Name"
-                // the same boxes as on the report pages: 190 px for the ID, 450 px for the Name, 5 px between
-                firstWidth={190}
-                secondWidth={450}
-                gap={5}
-                menuZIndex={999999}
-                menuPortalTarget={document.body}
-                headerFontSize="12px"
-                noOptionsMessage={() => "No Item Group Found"}
-                onChange={(option) => selectItemGroup(option?.value || "")}
-              />
-            </div>
+                <CustomLinkedPairSelect
+                  firstInputId="lkpItemGroupID"
+                  secondInputId="lkpItemGroupName"
+                  options={itemGroupPairOptions}
+                  firstValue={lkpItemGroupID || null}
+                  secondValue={lkpItemGroupID || null}
+                  firstHeader="Item Group ID"
+                  secondHeader="Item Group Name"
+                  // the same boxes as on the report pages: 190 px for the ID, 450 px for the Name, 5 px between
+                  firstWidth={190}
+                  secondWidth={450}
+                  gap={5}
+                  menuZIndex={999999}
+                  menuPortalTarget={document.body}
+                  headerFontSize="12px"
+                  noOptionsMessage={() => "No Item Group Found"}
+                  onChange={(option) => selectItemGroup(option?.value || "")}
+                />
+              </div>
 
-            {/* =================================================
+              {/* =================================================
                 SUPPLIER
             ================================================= */}
 
-            <div
-              className="
+              <div
+                className="
                 mb-2
                 grid
                 grid-cols-[130px_minmax(0,1fr)]
                 items-center
                 gap-2
               "
-            >
-              <label htmlFor="lkpSupplierID" className={labelClass}>
-                {requiredDot}
-                Supplier :
-              </label>
+              >
+                <label htmlFor="lkpSupplierID" className={labelClass}>
+                  {requiredDot}
+                  Supplier :
+                </label>
 
-              <CustomLinkedPairSelect
-                firstInputId="lkpSupplierID"
-                secondInputId="lkpSupplierName"
-                options={supplierPairOptions}
-                firstValue={lkpSupplierID || null}
-                secondValue={lkpSupplierID || null}
-                firstHeader="Supplier ID"
-                secondHeader="Supplier Name"
-                // the same boxes as on the report pages: 190 px for the ID, 450 px for the Name, 5 px between
-                firstWidth={190}
-                secondWidth={450}
-                gap={5}
-                menuZIndex={999999}
-                menuPortalTarget={document.body}
-                headerFontSize="12px"
-                noOptionsMessage={() => "No Supplier Found"}
-                onChange={(option) => selectSupplier(option?.value || "")}
-              />
-            </div>
+                <CustomLinkedPairSelect
+                  firstInputId="lkpSupplierID"
+                  secondInputId="lkpSupplierName"
+                  options={supplierPairOptions}
+                  firstValue={lkpSupplierID || null}
+                  secondValue={lkpSupplierID || null}
+                  firstHeader="Supplier ID"
+                  secondHeader="Supplier Name"
+                  // the same boxes as on the report pages: 190 px for the ID, 450 px for the Name, 5 px between
+                  firstWidth={190}
+                  secondWidth={450}
+                  gap={5}
+                  menuZIndex={999999}
+                  menuPortalTarget={document.body}
+                  headerFontSize="12px"
+                  noOptionsMessage={() => "No Supplier Found"}
+                  onChange={(option) => selectSupplier(option?.value || "")}
+                />
+              </div>
 
-            {/* =================================================
+              {/* =================================================
                 SUPPLIER ITEM ID
             ================================================= */}
 
-            <div
-              className="
+              <div
+                className="
                 mb-2
                 grid
                 grid-cols-[130px_minmax(0,1fr)]
                 items-center
                 gap-2
               "
-            >
-              <label
-                htmlFor="txtSupplierItemID"
-                className={labelClass}
               >
-                {requiredDot}
-                Supplier Item ID :
-              </label>
+                <label
+                  htmlFor="txtSupplierItemID"
+                  className={labelClass}
+                >
+                  {requiredDot}
+                  Supplier Item ID :
+                </label>
 
-              <input
-                id="txtSupplierItemID"
-                name="txtSupplierItemID"
-                type="text"
-                value={txtSupplierItemID}
-                onChange={(e) => setTxtSupplierItemID(e.target.value)}
-                className="w-68.75 input-style"
-              />
-            </div>
+                <input
+                  id="txtSupplierItemID"
+                  name="txtSupplierItemID"
+                  type="text"
+                  value={txtSupplierItemID}
+                  onChange={(e) => setTxtSupplierItemID(e.target.value)}
+                  className="w-68.75 input-style"
+                />
+              </div>
 
-            {/* =================================================
+              {/* =================================================
                 REORDER LEVEL
             ================================================= */}
 
-            <div
-              className="
+              <div
+                className="
                 mb-2
                 grid
                 grid-cols-[130px_155px]
                 items-center
                 gap-2
               "
-            >
-              <label htmlFor="txtReorderLevel" className={labelClass}>
-                Reorder Level :
-              </label>
+              >
+                <label htmlFor="txtReorderLevel" className={labelClass}>
+                  Reorder Level :
+                </label>
 
-              <input
-                id="txtReorderLevel"
-                name="txtReorderLevel"
-                type="text"
-                value={txtReorderLevel}
-                onChange={(e) => setTxtReorderLevel(e.target.value)}
-                className="input-style"
-              />
-            </div>
+                <input
+                  id="txtReorderLevel"
+                  name="txtReorderLevel"
+                  type="text"
+                  value={txtReorderLevel}
+                  onChange={(e) => setTxtReorderLevel(e.target.value)}
+                  className="input-style"
+                />
+              </div>
 
-            {/* =================================================
+              {/* =================================================
                 REORDER QTY + ALL BRANCHES
             ================================================= */}
 
-            <div
-              className="
+              <div
+                className="
                 mb-3
                 grid
                 grid-cols-[130px_155px_minmax(0,1fr)]
                 items-center
                 gap-2
               "
-            >
-              <label htmlFor="txtReoderQty" className={labelClass}>
-                Reorder Qty :
-              </label>
+              >
+                <label htmlFor="txtReoderQty" className={labelClass}>
+                  Reorder Qty :
+                </label>
 
-              <input
-                id="txtReoderQty"
-                name="txtReoderQty"
-                type="text"
-                value={txtReorderQty}
-                onChange={(e) => setTxtReorderQty(e.target.value)}
-                className="input-style"
-              />
+                <input
+                  id="txtReoderQty"
+                  name="txtReoderQty"
+                  type="text"
+                  value={txtReorderQty}
+                  onChange={(e) => setTxtReorderQty(e.target.value)}
+                  className="input-style"
+                />
 
-              {/* ALL BRANCHES */}
+                {/* ALL BRANCHES */}
 
-              <div
-                className="
+                <div
+                  className="
                   ml-8.75
                   flex
                   w-36.25
@@ -1416,69 +1286,69 @@ const MENU_ID = "010201";
                   p-1
                   whitespace-nowrap
                 "
-              >
-                <input
-                  id="chkAllBranches"
-                  name="chkAllBranches"
-                  type="checkbox"
-                  checked={chkAllBranches}
-                  onChange={(e) => {
-                    const checked = e.target.checked;
-                    setChkAllBranches(checked);
+                >
+                  <input
+                    id="chkAllBranches"
+                    name="chkAllBranches"
+                    type="checkbox"
+                    checked={chkAllBranches}
+                    onChange={(e) => {
+                      const checked = e.target.checked;
+                      setChkAllBranches(checked);
 
-                    if (checked) {
-                      setRows((currentRows) => {
-                        const filledRows: BranchRow[] = branchOptions.map(
-                          (branch, index) => ({
-                            id: currentRows[index]?.id ?? index + 1,
-                            lkpBranch: branch.value,
-                            txtItemLocation: "",
-                            chkAllowSaleBelowCost: false,
-                            chkInactive: false,
-                          })
-                        );
+                      if (checked) {
+                        setRows((currentRows) => {
+                          const filledRows: BranchRow[] = branchOptions.map(
+                            (branch, index) => ({
+                              id: currentRows[index]?.id ?? index + 1,
+                              lkpBranch: branch.value,
+                              txtItemLocation: "",
+                              chkAllowSaleBelowCost: false,
+                              chkInactive: false,
+                            })
+                          );
 
-                        const blankRows: BranchRow[] = currentRows
-                          .slice(branchOptions.length)
-                          .map((row) => ({
-                            ...row,
-                            lkpBranch: "",
-                            txtItemLocation: "",
-                            chkAllowSaleBelowCost: false,
-                            chkInactive: false,
-                          }));
+                          const blankRows: BranchRow[] = currentRows
+                            .slice(branchOptions.length)
+                            .map((row) => ({
+                              ...row,
+                              lkpBranch: "",
+                              txtItemLocation: "",
+                              chkAllowSaleBelowCost: false,
+                              chkInactive: false,
+                            }));
 
-                        return [...filledRows, ...blankRows];
-                      });
-                    }
-                  }}
-                  className="
+                          return [...filledRows, ...blankRows];
+                        });
+                      }
+                    }}
+                    className="
                     h-3.75
                     w-3.75
                     accent-blue-600
                   "
-                />
+                  />
 
-                <label
-                  htmlFor="chkAllBranches"
-                  className="
+                  <label
+                    htmlFor="chkAllBranches"
+                    className="
                     text-[12px]
                     text-slate-700
                   "
-                >
-                  All Branches
-                </label>
+                  >
+                    All Branches
+                  </label>
+                </div>
               </div>
-            </div>
 
-            {/* =================================================
+              {/* =================================================
                 BRANCH OPTIONS
             ================================================= */}
 
-            <div className="mt-2">
+              <div className="mt-2">
 
-              <table
-                className="
+                <table
+                  className="
                   w-full
                   table-fixed
                   border-collapse
@@ -1486,24 +1356,24 @@ const MENU_ID = "010201";
                   border-slate-300
                   text-[11px]
                 "
-              >
-                <thead>
+                >
+                  <thead>
 
-                  <tr
-                    className="
+                    <tr
+                      className="
                       h-7.5
                       bg-[#eef9f3]
                       text-[14px]
                       text-gray-600
                     "
-                  >
+                    >
 
-                    {/* =========================================
+                      {/* =========================================
                         BRANCH
                     ========================================== */}
 
-                    <th
-                      className="
+                      <th
+                        className="
                         w-[28%]
                         border
                         border-slate-300
@@ -1511,20 +1381,20 @@ const MENU_ID = "010201";
                         text-left
                         font-normal
                       "
-                    >
-                      <span className="relative inline-block">
-                        Branch
+                      >
+                        <span className="relative inline-block">
+                          Branch
 
-                        <span className="text-red-500">*</span>
-                      </span>
-                    </th>
+                          <span className="text-red-500">*</span>
+                        </span>
+                      </th>
 
-                    {/* =========================================
+                      {/* =========================================
                         ITEM LOCATION
                     ========================================== */}
 
-                    <th
-                      className="
+                      <th
+                        className="
                         w-[32%]
                         border
                         border-slate-300
@@ -1532,16 +1402,16 @@ const MENU_ID = "010201";
                         text-left
                         font-normal
                       "
-                    >
-                      Item Location
-                    </th>
+                      >
+                        Item Location
+                      </th>
 
-                    {/* =========================================
+                      {/* =========================================
                         ALLOW SALE BELOW COST
                     ========================================== */}
 
-                    <th
-                      className="
+                      <th
+                        className="
                         w-[24%]
                         border
                         border-slate-300
@@ -1550,16 +1420,16 @@ const MENU_ID = "010201";
                         font-normal
                         whitespace-nowrap
                       "
-                    >
-                      Allow Sale Below Cost
-                    </th>
+                      >
+                        Allow Sale Below Cost
+                      </th>
 
-                    {/* =========================================
+                      {/* =========================================
                         INACTIVE
                     ========================================== */}
 
-                    <th
-                      className="
+                      <th
+                        className="
                         w-[16%]
                         border
                         border-slate-300
@@ -1568,83 +1438,83 @@ const MENU_ID = "010201";
                         font-normal
                         whitespace-nowrap
                       "
-                    >
-                      Inactive
-                    </th>
-                  </tr>
+                      >
+                        Inactive
+                      </th>
+                    </tr>
 
-                </thead>
+                  </thead>
 
-                <tbody>
-                  {rows.map((row) => (
+                  <tbody>
+                    {rows.map((row) => (
 
-                    <tr
-                      key={row.id}
-                      className="h-8"
-                    >
+                      <tr
+                        key={row.id}
+                        className="h-8"
+                      >
 
-                      {/* =====================================
+                        {/* =====================================
                           BRANCH
                       ===================================== */}
 
-                      <td
-                        className={`
+                        <td
+                          className={`
                           border
                           border-slate-300
                           p-0
                           ${cellFocusClass}
                         `}
-                      >
-                        <div className="flex h-8 items-stretch">
-                          <div className="flex-1 overflow-hidden">
-                            <CommonTableSelect
-                              inputId={`lkpBranch_${row.id}`}
-                              options={branchOptions}
-                              value={
-                                branchOptions.find(
-                                  (option) =>
-                                    option.value ===
-                                    row.lkpBranch,
-                                ) || null
-                              }
-                              onChange={(option) => {
-                                updateRow(
-                                  row.id,
-                                  "lkpBranch",
-                                  option?.value || "",
-                                );
-
-                                // a branch chosen: on to its Item Location
-                                if (option) {
-                                  window.setTimeout(
-                                    () =>
-                                      document
-                                        .getElementById(`txtItemLocation_${row.id}`)
-                                        ?.focus(),
-                                    0,
-                                  );
+                        >
+                          <div className="flex h-8 items-stretch">
+                            <div className="flex-1 overflow-hidden">
+                              <CommonTableSelect
+                                inputId={`lkpBranch_${row.id}`}
+                                options={branchOptions}
+                                value={
+                                  branchOptions.find(
+                                    (option) =>
+                                      option.value ===
+                                      row.lkpBranch,
+                                  ) || null
                                 }
-                              }}
-                              columns={BRANCH_COLUMNS}
-                              width="100%"
-                              menuWidth="calc(100% + 70px)"
-                              placeholder=""
-                              borderColor="transparent"
-                              hoverBorderColor="transparent"
-                              filterOption={filterLabelOrValue}
-                              noOptionsMessage={() => "No Branch Found"}
-                              menuPortalTarget={document.body}
-                            />
-                          </div>
+                                onChange={(option) => {
+                                  updateRow(
+                                    row.id,
+                                    "lkpBranch",
+                                    option?.value || "",
+                                  );
 
-                          {row.lkpBranch && perms.delete && (
-                            <button
-                              type="button"
-                              tabIndex={-1}
-                              onClick={() =>
-                                handleDeleteBranchRow(row)
-                              }
-                              className="
+                                  // a branch chosen: on to its Item Location
+                                  if (option) {
+                                    window.setTimeout(
+                                      () =>
+                                        document
+                                          .getElementById(`txtItemLocation_${row.id}`)
+                                          ?.focus(),
+                                      0,
+                                    );
+                                  }
+                                }}
+                                columns={BRANCH_COLUMNS}
+                                width="100%"
+                                menuWidth="calc(100% + 70px)"
+                                placeholder=""
+                                borderColor="transparent"
+                                hoverBorderColor="transparent"
+                                filterOption={filterLabelOrValue}
+                                noOptionsMessage={() => "No Branch Found"}
+                                menuPortalTarget={document.body}
+                              />
+                            </div>
+
+                            {row.lkpBranch && perms.delete && (
+                              <button
+                                type="button"
+                                tabIndex={-1}
+                                onClick={() =>
+                                  handleDeleteBranchRow(row)
+                                }
+                                className="
                                 h-full
                                 w-5
                                 self-stretch
@@ -1654,151 +1524,153 @@ const MENU_ID = "010201";
                                 text-slate-400
                                 hover:text-red-500
                               "
-                            >
-                              <X size={12} />
-                            </button>
-                          )}
-                        </div>
-                      </td>
+                              >
+                                <X size={12} />
+                              </button>
+                            )}
+                          </div>
+                        </td>
 
-                      {/* =====================================
+                        {/* =====================================
                           ITEM LOCATION
                       ===================================== */}
 
-                      <td
-                        className={`
+                        <td
+                          className={`
                           border
                           border-slate-300
                           p-0
                           ${cellFocusClass}
                         `}
-                      >
-                        <input
-                          id={`txtItemLocation_${row.id}`}
-                          name={`txtItemLocation_${row.id}`}
-                          type="text"
-                          value={row.txtItemLocation}
-                          onFocus={selectOnFocus}
-                          onChange={(e) =>
-                            updateRow(row.id, "txtItemLocation", e.target.value)
-                          }
-                          className="h-6.75 w-full border-0 px-2 text-[11px] outline-none"
-                        />
-                      </td>
+                        >
+                          <input
+                            id={`txtItemLocation_${row.id}`}
+                            name={`txtItemLocation_${row.id}`}
+                            type="text"
+                            value={row.txtItemLocation}
+                            onFocus={selectOnFocus}
+                            onChange={(e) =>
+                              updateRow(row.id, "txtItemLocation", e.target.value)
+                            }
+                            className="h-6.75 w-full border-0 px-2 text-[11px] outline-none"
+                          />
+                        </td>
 
-                      {/* =====================================
+                        {/* =====================================
                           ALLOW SALE BELOW COST
                       ===================================== */}
 
-                      <td className={`border border-slate-300 text-center ${cellFocusClass}`}>
-                        <input
-                          id={`chkAllowSaleBelowCost_${row.id}`}
-                          name={`chkAllowSaleBelowCost_${row.id}`}
-                          type="checkbox"
-                          checked={row.chkAllowSaleBelowCost}
-                          onChange={(e) =>
-                            updateRow(
-                              row.id,
-                              "chkAllowSaleBelowCost",
-                              e.target.checked,
-                            )
-                          }
-                          className="h-3.5 w-3.5 accent-blue-600"
-                        />
-                      </td>
+                        <td className={`border border-slate-300 text-center ${cellFocusClass}`}>
+                          <input
+                            id={`chkAllowSaleBelowCost_${row.id}`}
+                            name={`chkAllowSaleBelowCost_${row.id}`}
+                            type="checkbox"
+                            checked={row.chkAllowSaleBelowCost}
+                            onChange={(e) =>
+                              updateRow(
+                                row.id,
+                                "chkAllowSaleBelowCost",
+                                e.target.checked,
+                              )
+                            }
+                            className="h-3.5 w-3.5 accent-blue-600"
+                          />
+                        </td>
 
-                      {/* =====================================
+                        {/* =====================================
                           INACTIVE
                       ===================================== */}
 
-                      <td className={`border border-slate-300 text-center ${cellFocusClass}`}>
-                        <input
-                          id={`chkInactive_${row.id}`}
-                          name={`chkInactive_${row.id}`}
-                          type="checkbox"
-                          checked={
-                            row.chkInactive
-                          }
-                          onChange={(e) =>
-                            updateRow(
-                              row.id,
-                              "chkInactive",
-                              e.target.checked,
-                            )
-                          }
-                          className="h-3.5 w-3.5 accent-blue-600"
-                        />
-                      </td>
-                    </tr>
+                        <td className={`border border-slate-300 text-center ${cellFocusClass}`}>
+                          <input
+                            id={`chkInactive_${row.id}`}
+                            name={`chkInactive_${row.id}`}
+                            type="checkbox"
+                            checked={
+                              row.chkInactive
+                            }
+                            onChange={(e) =>
+                              updateRow(
+                                row.id,
+                                "chkInactive",
+                                e.target.checked,
+                              )
+                            }
+                            className="h-3.5 w-3.5 accent-blue-600"
+                          />
+                        </td>
+                      </tr>
 
-                  ))}
+                    ))}
 
-                </tbody>
+                  </tbody>
 
-              </table>
+                </table>
 
-            </div>
+              </div>
 
-          {/* ===================================================
+              {/* ===================================================
               ACTION BUTTONS
           =================================================== */}
 
-          <div className="mt-3.5 flex justify-center gap-3">
+              <div className="mt-3.5 flex justify-center gap-3">
 
-            {/* SAVE */}
+                {/* SAVE */}
 
-            <button
-              type="button"
-              className="btn-style disabled:cursor-not-allowed disabled:opacity-40"
-              onClick={handleSave}
-              disabled={!canSaveOrModify}
-              id={hasSavedItem ? "Modifybtn" : "Savebtn"}
-              name={hasSavedItem ? "Modifybtn" : "Savebtn"}
-            >
-              <span className="underline underline-offset-2">
-                {actionWord.charAt(0)}
-              </span>
-              {actionWord.slice(1)}
-            </button>
+                <button
+                  type="button"
+                  className="btn-style disabled:cursor-not-allowed disabled:opacity-40"
+                  onClick={handleSave}
+                  disabled={!canSaveOrModify}
+                  id={hasSavedItem ? "Modifybtn" : "Savebtn"}
+                  name={hasSavedItem ? "Modifybtn" : "Savebtn"}
+                >
+                  <span className="underline underline-offset-2">
+                    {actionWord.charAt(0)}
+                  </span>
+                  {actionWord.slice(1)}
+                </button>
 
-            {/* FIND */}
+                {/* FIND */}
 
-            <button
-              type="button"
-              className="btn-style"
-              onClick={handleFind}
-              id="Findbtn"
-              name="Findbtn"
-            >
-              <span className="underline underline-offset-2">S</span>earch
-            </button>
+                <button
+                  type="button"
+                  className="btn-style"
+                  onClick={handleFind}
+                  id="Findbtn"
+                  name="Findbtn"
+                >
+                  <span className="underline underline-offset-2">S</span>earch
+                </button>
 
-            {/* DELETE */}
+                {/* DELETE */}
 
-            <button
-              type="button"
-              className="btn-style disabled:cursor-not-allowed disabled:opacity-40"
-              onClick={handleDelete}
-              disabled={!perms.delete}
-              id="Deletebtn"
-              name="Deletebtn"
-            >
-              <span className="underline underline-offset-2">D</span>elete
-            </button>
+                <button
+                  type="button"
+                  className="btn-style disabled:cursor-not-allowed disabled:opacity-40"
+                  onClick={handleDelete}
+                  disabled={!perms.delete}
+                  id="Deletebtn"
+                  name="Deletebtn"
+                >
+                  <span className="underline underline-offset-2">D</span>elete
+                </button>
 
-            {/* CLEAR */}
+                {/* CLEAR */}
 
-            <button
-              type="button"
-              className="btn-style"
-              onClick={handleClear}
-              id="Clearbtn"
-              name="Clearbtn"
-            >
-              <span className="underline underline-offset-2">C</span>lear
-            </button>
+                <button
+                  type="button"
+                  className="btn-style"
+                  onClick={handleClear}
+                  id="Clearbtn"
+                  name="Clearbtn"
+                >
+                  <span className="underline underline-offset-2">C</span>lear
+                </button>
 
-          </div>
+              </div>
+
+            </div>
 
           </div>
 
@@ -1806,11 +1678,9 @@ const MENU_ID = "010201";
 
       </div>
 
-    </div>
-
-    {/* the "Do you want to delete ?" question - outside the root div: the page's
+      {/* the "Do you want to delete ?" question - outside the root div: the page's
         Enter-as-Tab must not take the Enter of the Yes / No buttons */}
-    {dialog}
+      {dialog}
     </>
   );
 };
