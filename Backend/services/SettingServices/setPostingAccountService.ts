@@ -1,5 +1,6 @@
 import type { PoolClient } from "pg";
 import pool from "../../DB/db.js";
+import { resolveServerDate } from "../common/DateTimeService.js";
 
 /* =========================================================
    PAYLOAD (keys = form field names)
@@ -100,12 +101,17 @@ export async function savePostingAccountService(
   PstrCoID: string,
   lkpBranch: string,
   payload: PostingAccountPayload,
-  PstrUserID: string
+  PstrUserID: string,
+  // the time the page got from /datetime/server-date (checked here; the server's own time when it is missing or wrong)
+  dtpServerDate?: string
 ): Promise<{ mode: "S" | "M"; before: Record<string, string | null> | null }> {
   const client: PoolClient = await pool.connect();
 
   try {
     await client.query("BEGIN");
+
+    // one time for this save
+    const serverDate = await resolveServerDate(client, dtpServerDate);
 
     // what the row held before this save - the audit note shows
     // exactly what changed
@@ -118,6 +124,7 @@ export async function savePostingAccountService(
       lkpBranch,
       ...payload,
       PstrUserID,
+      serverDate,
     });
 
     await client.query("COMMIT");
@@ -145,6 +152,8 @@ async function callSpPostingAccount(
       PstrCoID: string;
       lkpBranch: string;
       PstrUserID: string | null;
+      // the time written on the row; null = the procedure's own now()
+      serverDate: string | null;
       cursorName: string;
     }
   >
@@ -165,6 +174,7 @@ async function callSpPostingAccount(
     lkpInputVATAccountID: null,
     lkpOutputVATAccountID: null,
     PstrUserID: null,
+    serverDate: null,
     cursorName:
       `cur_postingaccount_${Date.now()}_${Math.floor(Math.random() * 100000)}`,
     ...overrides,
@@ -176,7 +186,7 @@ async function callSpPostingAccount(
       $1::varchar, $2::varchar, $3::varchar, $4::varchar, $5::varchar,
       $6::varchar, $7::varchar, $8::varchar, $9::varchar, $10::varchar,
       $11::varchar, $12::varchar, $13::varchar, $14::varchar, $15::varchar,
-      $16::refcursor
+      $16::timestamp, $17::refcursor
     )
     `,
     [
@@ -195,6 +205,7 @@ async function callSpPostingAccount(
       p.lkpInputVATAccountID,
       p.lkpOutputVATAccountID,
       p.PstrUserID,
+      p.serverDate,
       p.cursorName,
     ]
   );

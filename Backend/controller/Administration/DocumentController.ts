@@ -99,12 +99,15 @@ export const saveDocument = async (
       PstrCoID,
       PstrYear = null,
       lkpModule,
+      dtpServerDate,
       rows = [],
       deletedRows = [],
     }: {
       PstrCoID: string;
       PstrYear?: string | null;
       lkpModule: string;
+      // the time the page got from /datetime/server-date (the service checks it)
+      dtpServerDate?: string;
       rows: AdministrationDocumentRowPayload[];
       deletedRows?: { txtDocType: string }[];
     } = req.body;
@@ -144,6 +147,7 @@ export const saveDocument = async (
       lkpModule: String(lkpModule).trim(),
       rows,
       deletedRows,
+      dtpServerDate,
     });
 
     // =====================================================

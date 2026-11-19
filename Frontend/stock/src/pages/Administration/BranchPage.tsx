@@ -4,6 +4,7 @@ import { useAltShortcuts } from "../../hooks/useAltShortcuts";
 import { useConfirmModal } from "../../hooks/useConfirmModal";
 import { useDeleteToast } from "../../hooks/useDeleteToast";
 import { useGridCellFocus } from "../../hooks/useGridCellFocus";
+import { tryGetServerDate } from "../../utils/serverDate";
 import Header from "../../components/common/Header";
 
 // ============================================================
@@ -290,6 +291,9 @@ const BranchPage: React.FC = () => {
     setSaving(true);
 
     try {
+      // the time of the save: the database server's clock (the common /datetime/server-date), written on every row
+      const dtpServerDate = await tryGetServerDate();
+
       const response = await fetch(`${api}/AdministrationBranch/saveBranch`, {
         method: "POST",
         credentials: "include", // the server checks the session and the user type
@@ -297,6 +301,7 @@ const BranchPage: React.FC = () => {
         body: JSON.stringify({
           PstrCoID: localStorage.getItem("PstrCoID"),
           PstrYear: localStorage.getItem("PstrYear"),
+          dtpServerDate,
           rows: changedRows.map((row) => ({
             txtBrID: row.txtBrID.trim(),
             txtBrName: row.txtBrName.trim(),

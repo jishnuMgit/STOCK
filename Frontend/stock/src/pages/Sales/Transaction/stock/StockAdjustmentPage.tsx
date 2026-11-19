@@ -31,6 +31,7 @@ import { useButtonPermissions } from "../../../../hooks/useButtonPermissions";
 import { filterLabelOrValue } from "../../../../components/BranchSelect/branchSelectParts";
 import { SELECT_FONT_FAMILY } from "../../../../components/sharecomponents/selectComponents";
 import Header from "../../../../components/common/Header";
+import { tryGetServerDate } from "../../../../utils/serverDate";
 
 // ============================================================
 // STOCK ADJUSTMENT (the old frmADJ)
@@ -1134,6 +1135,9 @@ const StockAdjustmentPage: React.FC = () => {
     setSaving(true);
 
     try {
+      // the time of the save: the database server's clock (the common /datetime/server-date), written on every row
+      const dtpServerDate = await tryGetServerDate();
+
       const response = await fetch(`${api}/StockAdjustment/saveStockAdjustment`, {
         method: "POST",
         credentials: "include", // the server checks the session and the rights
@@ -1144,6 +1148,7 @@ const StockAdjustmentPage: React.FC = () => {
           lkpBranch: lkpBranch.value,
           txtDocNo: txtDocNo.trim(),
           dtpDate,
+          dtpServerDate,
           txtNote,
           chkSaved,
           rows: filledRows.map(({ row, index }) => ({
@@ -1435,6 +1440,9 @@ const StockAdjustmentPage: React.FC = () => {
     setSaving(true);
 
     try {
+      // the time of the post: the database server's clock (the common /datetime/server-date)
+      const dtpServerDate = await tryGetServerDate();
+
       const response = await fetch(`${api}/StockAdjustment/postStockAdjustment`, {
         method: "POST",
         credentials: "include", // the server checks the session and the rights
@@ -1444,6 +1452,7 @@ const StockAdjustmentPage: React.FC = () => {
           PstrYear,
           lkpBranch: lkpBranch.value,
           txtDocNo: txtDocNo.trim(),
+          dtpServerDate,
         }),
       });
 

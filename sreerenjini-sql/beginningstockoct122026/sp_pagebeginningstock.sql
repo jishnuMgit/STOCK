@@ -58,6 +58,10 @@
 -- smallint), like the year of the other screens' procedures, because
 -- tblstocktrans.fyear is varchar(4). The DROP below removes the smallint version.
 --
+-- ADDED: p_dtpserverdate - the time written on the lines (fcuserdate on a new line, fmuserdate on a modify). The page gets it
+--   from the database server's clock (GET /datetime/server-date) and the backend checks it and passes it, so every line of
+--   one save carries the same time. NULL = the procedure's own now() (a caller that sends none works as before).
+--
 -- Examples (cursor calls must run inside one transaction)
 --   BEGIN;
 --   CALL dbo.sp_pagebeginningstock('GTL', '01', '2026', 'JD', 'BS', p_result_cursor => 'c1');
@@ -77,6 +81,9 @@ DROP PROCEDURE IF EXISTS dbo.sp_pagebeginningstock(character varying, character 
 
 -- ... and the version with the year as a smallint (p_pintyear), the one in use until now
 DROP PROCEDURE IF EXISTS dbo.sp_pagebeginningstock(character varying, character varying, smallint, character varying, character varying, character varying, timestamp without time zone, boolean, character varying, smallint, character varying, character varying, numeric, numeric, numeric, smallint, character varying, character varying, character varying, character varying, refcursor);
+
+-- ... and the version before p_dtpserverdate was added
+DROP PROCEDURE IF EXISTS dbo.sp_pagebeginningstock(character varying, character varying, character varying, character varying, character varying, character varying, timestamp without time zone, boolean, character varying, smallint, character varying, character varying, numeric, numeric, numeric, smallint, character varying, character varying, character varying, character varying, refcursor);
 
 CREATE OR REPLACE PROCEDURE dbo.sp_pagebeginningstock(
     IN    p_strmode          character varying,
@@ -99,6 +106,7 @@ CREATE OR REPLACE PROCEDURE dbo.sp_pagebeginningstock(
     IN    p_strmenuname      character varying DEFAULT NULL::character varying,
     IN    p_strnote          character varying DEFAULT NULL::character varying,
     IN    p_strsavingno character varying DEFAULT NULL::character varying,
+    IN    p_dtpserverdate    timestamp without time zone DEFAULT NULL::timestamp without time zone,
     INOUT p_result_cursor    refcursor         DEFAULT 'cur_beginningstock'::refcursor)
  LANGUAGE plpgsql
 AS $procedure$
@@ -153,14 +161,14 @@ BEGIN
             p_stritemid, p_strunit,
             COALESCE(p_numqtyin, 0), COALESCE(p_numunitcost, 0), COALESCE(p_numtotalcost, 0),
             'UI', p_blnpost, p_strtransno,
-            p_pstruserid, now(), NULLIF(p_strnote, ''), p_strsavingno,
+            p_pstruserid, COALESCE(p_dtpserverdate, now()), NULLIF(p_strnote, ''), p_strsavingno,
             dbo.getitemgroupid(p_pstrcoid, p_stritemid), 'S'
         );
 
     ELSIF p_strmode = 'M' THEN
 
         v_muserid   := p_pstruserid;
-        v_muserdate := now();
+        v_muserdate := COALESCE(p_dtpserverdate, now());
 
         -- the saved-by of the existing lines (the first line's)
         SELECT fcuserid, fcuserdate

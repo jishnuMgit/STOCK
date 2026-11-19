@@ -98,10 +98,13 @@ export const saveYear = async (
     const {
       PstrCoID,
       PstrYear = null,
+      dtpServerDate,
       rows = [],
     }: {
       PstrCoID: string;
       PstrYear?: string | null;
+      // the time the page got from /datetime/server-date (the service checks it)
+      dtpServerDate?: string;
       rows: AdministrationYearRowPayload[];
     } = req.body;
 
@@ -135,6 +138,7 @@ export const saveYear = async (
       PstrCoID,
       PstrUserID,
       rows,
+      dtpServerDate,
     });
 
     // =====================================================

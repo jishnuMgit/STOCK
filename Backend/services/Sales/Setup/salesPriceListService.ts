@@ -1,5 +1,6 @@
 import type { PoolClient } from "pg";
 import pool from "../../../DB/db.js";
+import { resolveServerDate } from "../../common/DateTimeService.js";
 
 /* =========================================================
    SALES PRICE LIST - calls dbo.sp_pagesalespricelist (the port of the old
@@ -141,12 +142,17 @@ export async function modifySalesPriceListService(data: {
   lkpBranch: string;
   chkApplyToAllBranches: boolean;
   rows: SalesPriceListRowPayload[];
+  // the time the page got from /datetime/server-date (checked here; the server's own time when it is missing or wrong)
+  dtpServerDate?: string;
 }): Promise<{ mode: "MTL" | "MTLA" }> {
   const mode = data.chkApplyToAllBranches ? "MTLA" : "MTL";
   const client: PoolClient = await pool.connect();
 
   try {
     await client.query("BEGIN");
+
+    // one time for every item of this modify
+    const serverDate = await resolveServerDate(client, data.dtpServerDate);
 
     for (const row of data.rows) {
       await client.query(
@@ -162,7 +168,8 @@ export async function modifySalesPriceListService(data: {
           p_original_numunitprice => $7::numeric,
           p_pstruserid            => $8::varchar,
           p_strscreenname         => $9::varchar,
-          p_strmoduleid           => $10::varchar
+          p_strmoduleid           => $10::varchar,
+          p_dtpserverdate         => $11::timestamp
         )
         `,
         [
@@ -176,6 +183,7 @@ export async function modifySalesPriceListService(data: {
           data.PstrUserID,
           SCREEN_NAME,
           MODULE_ID,
+          serverDate,
         ]
       );
     }

@@ -1,6 +1,7 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "react-toastify";
 
+import { tryGetServerDate } from "../../../../utils/serverDate";
 import BeginningBalanceHeader from "../../../../components/Transaction/BeginningBalance/BeginningBalanceHeader";
 import BeginningBalanceTable from "../../../../components/Transaction/BeginningBalance/BeginningBalanceTable";
 import BeginningBalanceFooter from "../../../../components/Transaction/BeginningBalance/BeginningBalanceFooter";
@@ -294,6 +295,9 @@ const BeginningBalance: React.FC = () => {
     setSaving(true);
 
     try {
+      // the time of the save: the database server's clock (the common /datetime/server-date), written on every line
+      const dtpServerDate = await tryGetServerDate();
+
       const response = await fetch(`${api}/BeginningBalance/saveBeginningBalance`, {
         method: "POST",
         credentials: "include", // the server checks the session, the user and the rights
@@ -303,6 +307,7 @@ const BeginningBalance: React.FC = () => {
           PstrYear,
           lkpBranch: lkpBranch.value,
           dtpDate,
+          dtpServerDate,
           rows: filled.map(({ row, index }) => ({
             txtGridRow: index,
             lkpAccountID: row.lkpAccountID,

@@ -114,12 +114,15 @@ export const saveStaff = async (
       PstrCoID,
       PstrYear,
       PstrUserID,
+      dtpServerDate,
       rows = [],
       deletedRows = [],
     }: {
       PstrCoID: string;
       PstrYear: string;
       PstrUserID: string;
+      // the time the page got from /datetime/server-date (the service checks it)
+      dtpServerDate?: string;
       rows: (StaffRowPayload & { txtGridRow?: number })[];
       deletedRows: StaffDeletedRowPayload[];
     } = req.body;
@@ -241,7 +244,8 @@ export const saveStaff = async (
         txtOriginalStaffID: row.txtOriginalStaffID ?? null,
       })),
       deletedRows,
-      PstrUserID
+      PstrUserID,
+      dtpServerDate
     );
 
     if (!result.anything) {
