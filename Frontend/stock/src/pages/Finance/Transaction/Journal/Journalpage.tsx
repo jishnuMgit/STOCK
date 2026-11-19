@@ -592,32 +592,8 @@ const JournalPage: React.FC = () => {
   ======================================================= */
 
   return (
-    <div
-      className="
-        min-h-full
-        bg-slate-100
-        px-3
-        py-3
-        flex
-        flex-col
-        justify-center
-        items-center
-        gap-2.5
-      "
-    >
-      <div
-        className="
-          mx-auto
-          lg:w-275
-          md:w-[55%]
-          max-w-362.5
-          min-w-212.5
-
-          border
-          border-gray-400
-          bg-white
-        "
-      >
+    <div className="min-h-full bg-slate-100 px-3 py-3 flex flex-col justify-center items-center gap-2.5">
+      <div className=" mx-auto lg:w-275 md:w-[55%] max-w-362.5 min-w-212.5 border border-gray-400 bg-white">
         <JournalHeader />
 
         <JournalForm
@@ -653,20 +629,7 @@ const JournalPage: React.FC = () => {
 
         {/* TOTALS */}
 
-        <div
-          className="
-            mt-2
-            px-3
-            mr-32
-            ml-auto
-            flex
-            w-55
-            flex-col
-            items-end
-            gap-2
-            text-xs
-          "
-        >
+        <div className="mt-2 px-3 mr-32 ml-auto flex w-55 flex-col items-end gap-2 text-xs">
           <div className="flex items-center gap-1">
             <input
               value="Total"
