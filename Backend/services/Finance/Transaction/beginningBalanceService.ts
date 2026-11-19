@@ -12,7 +12,7 @@ import { toAmount } from "../../../validators/BeginningBalanceValidator.js";
    document no BG, one line for each account (and cost center).
 ========================================================= */
 
-const DOC_TYPE = "BG";
+const strDocType = "BG";
 const DOC_NO = "BG";
 
 export type BeginningBalanceBranch = { fbrid: string; fbrname: string };
@@ -156,7 +156,7 @@ async function fetchCursor<T>(
       p_result_cursor => $6::refcursor
     )
     `,
-    [strmode, PstrCoID, PstrYear, lkpBranch, DOC_TYPE, cursorName]
+    [strmode, PstrCoID, PstrYear, lkpBranch, strDocType, cursorName]
   );
 
   const result = await client.query(`FETCH ALL FROM "${cursorName}"`);
@@ -247,7 +247,7 @@ async function callSp(
       a.PstrCoID,
       a.PstrYear,
       a.lkpBranch,
-      DOC_TYPE,
+      strDocType,
       DOC_NO,
       a.slNo ?? 0,
       a.dtpDate ?? null,
@@ -621,7 +621,7 @@ export async function postBeginningBalanceService(p: {
         p_intdocpostcount => 0
       )
       `,
-      [p.PstrCoID, p.PstrYear, p.lkpBranch, DOC_TYPE, p.PstrUserID]
+      [p.PstrCoID, p.PstrYear, p.lkpBranch, strDocType, p.PstrUserID]
     );
 
     await client.query("COMMIT");
@@ -717,7 +717,7 @@ export async function getBeginningBalancePrintService(
         p_result_cursor   => $5::refcursor
       )
       `,
-      [PstrCoID, lkpBranch, DOC_TYPE, year, cursorName]
+      [PstrCoID, lkpBranch, strDocType, year, cursorName]
     );
 
     const result = await client.query(`FETCH ALL FROM "${cursorName}"`);
