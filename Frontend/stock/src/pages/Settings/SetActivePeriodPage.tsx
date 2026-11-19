@@ -26,7 +26,7 @@ type ActivePeriodRow = {
 // a date box inside a grid cell: no border, transparent, like the text columns
 // of the other grids
 const dateInputClass =
-  "h-[32px] w-full min-w-0 border-0 bg-transparent px-[11px] py-0 text-left text-[13px] text-[#374151] outline-none focus:bg-[#f1f8ff]";
+  "h-[32px] w-full min-w-0 border-0 bg-transparent pl-[2px] pr-[11px] py-0 text-left text-[13px] text-[#374151] outline-none focus:bg-[#f1f8ff]";
 
 // ============================================================
 // COMPONENT
@@ -278,15 +278,15 @@ const SetActivePeriodPage: React.FC = () => {
                   <tr>
                     <th className="sticky top-0 z-20 h-8.5 border border-[#bfe8d0] bg-[#edf9f2] p-0" />
 
-                    <th className="sticky top-0 z-20 h-8.5 border border-l-0 border-[#bfe8d0] bg-[#edf9f2] px-2.75 py-0 text-left text-[14px] font-normal text-gray-600">
+                    <th className="sticky top-0 z-20 h-8.5 border border-l-0 border-[#bfe8d0] bg-[#edf9f2] pl-[2px] pr-2.75 py-0 text-left text-[14px] font-normal text-gray-600">
                       Branch
                     </th>
 
-                    <th className="sticky top-0 z-20 h-8.5 border border-l-0 border-[#bfe8d0] bg-[#edf9f2] px-2.75 py-0 text-left text-[14px] font-normal text-gray-600">
+                    <th className="sticky top-0 z-20 h-8.5 border border-l-0 border-[#bfe8d0] bg-[#edf9f2] pl-[2px] pr-2.75 py-0 text-left text-[14px] font-normal text-gray-600">
                       From Date
                     </th>
 
-                    <th className="sticky top-0 z-20 h-8.5 border border-l-0 border-[#bfe8d0] bg-[#edf9f2] px-2.75 py-0 text-left text-[14px] font-normal text-gray-600">
+                    <th className="sticky top-0 z-20 h-8.5 border border-l-0 border-[#bfe8d0] bg-[#edf9f2] pl-[2px] pr-2.75 py-0 text-left text-[14px] font-normal text-gray-600">
                       To Date
                     </th>
                   </tr>
@@ -296,9 +296,8 @@ const SetActivePeriodPage: React.FC = () => {
                   {rows.map((row, index) => (
                     <tr
                       key={row.txtBranchID}
-                      className={`h-8.5 ${
-                        selectedRow === index ? "bg-[#f8fcfa]" : "bg-white"
-                      }`}
+                      className={`h-8.5 ${selectedRow === index ? "bg-[#f8fcfa]" : "bg-white"
+                        }`}
                       onClick={() => setSelectedRow(index)}
                     >
                       {/* SELECTOR COLUMN */}
@@ -311,7 +310,7 @@ const SetActivePeriodPage: React.FC = () => {
 
                       {/* BRANCH - the branch of this row (fixed text, the name) */}
 
-                      <td className="h-8.5 border border-l-0 border-[#bfe8d0] bg-white p-0 align-middle">
+                      <td className="h-8.5 border border-l-0 border-[#bfe8d0] bg-white p-0  align-middle">
                         <input
                           id={`txtBranchName-${index}`}
                           name="txtBranchName"
@@ -319,7 +318,7 @@ const SetActivePeriodPage: React.FC = () => {
                           value={row.txtBranchName}
                           readOnly
                           tabIndex={-1}
-                          className="h-8 w-full min-w-0 border-0 bg-transparent px-2.75 py-0 text-left text-[13px] text-[#374151] outline-none"
+                          className="h-8 w-full min-w-0 border-0 bg-transparent pl-[2px] pr-2.75 py-0 text-left text-[13px] text-[#374151] outline-none"
                         />
                       </td>
 
