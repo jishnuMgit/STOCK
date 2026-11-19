@@ -11,7 +11,7 @@ import pool from "../../../DB/db.js";
 ========================================================= */
 
 const strDocType = "ST";
-const strDocType_G = "STI";
+const strDocTypeG = "STI";
 
 /* =========================================================
    BRANCH LISTS
@@ -948,12 +948,14 @@ export async function getStockTransferPrintService(
     txtDocNo
   );
 
-
+  // The filter is built HERE, from values the controller has already validated,
+  // each one quoted - never from the browser (the procedure joins it as text).
+  const quote = (value: string) => value.replace(/'/g, "''");
 
   const strFilter =
-    `a.fcoid = '$PstrCoID' and a.fyear = '$PstrYear' ` +
-    `and a.fbrid = $lkpBranch and a.fdoctype = '${strDocType}' ` +
-    `and a.fdocno = $txtDocNo`;
+    `a.fcoid = '${quote(PstrCoID)}' and a.fyear = '${Math.trunc(Number(PstrYear))}' ` +
+    `and a.fbrid = '${quote(lkpBranch)}' and a.fdoctype = '${strDocType}' ` +
+    `and a.fdocno = '${quote(txtDocNo)}'`;
 
   const cursorName =
     `cur_stocktransferprint_${Date.now()}_${Math.floor(Math.random() * 100000)}`;
@@ -1104,7 +1106,7 @@ async function callSpStockTransfer(
       String(p.PstrYear),
       p.lkpBranch,
       strDocType,
-      strDocType_G,
+      strDocTypeG,
       p.txtDocNo,
       p.lkpToBranch ?? null,
       p.dtpDate ?? null,
