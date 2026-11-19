@@ -1,9 +1,10 @@
 import React, { useEffect, useRef, useState } from "react";
 import Header from "../../components/common/Header";
-import Select, {
-  type SingleValue,
-  type StylesConfig,
-} from "react-select";
+import CommonTableSelect, {
+  CustomTableSelect,
+  type TableSelectOption,
+} from "../../components/common/CommonTableSelect";
+import { filterLabelOrValue } from "../../components/BranchSelect/branchSelectParts";
 import { toast } from "react-toastify";
 import { useEnterAsTab } from "../../hooks/useEnterAsTab";
 import { useConfirmModal } from "../../hooks/useConfirmModal";
@@ -12,13 +13,6 @@ import { useGridCellFocus } from "../../hooks/useGridCellFocus";
 import { useAdvanceAfterSelect } from "../../hooks/useAdvanceAfterSelect";
 import { useAltShortcuts } from "../../hooks/useAltShortcuts";
 import { useButtonPermissions } from "../../hooks/useButtonPermissions";
-import {
-  filterLabelOrValue,
-  BranchDividedMenuList,
-  BranchDividedOption,
-  branchMenuStyles,
-} from "../../components/BranchSelect/branchSelectParts";
-import selectComponents from "../../components/sharecomponents/selectComponents";
 
 // ============================================================
 // TYPES
@@ -45,226 +39,6 @@ interface DocumentRow {
 }
 
 // ============================================================
-// CUSTOM SELECT STYLES
-// ============================================================
-
-const selectStyles: StylesConfig<SelectOption, false> = {
-  control: (base, state) => ({
-    ...base,
-    minHeight: "28px",
-    height: "28px",
-    borderRadius: "4px",
-    borderColor: state.isFocused ? "#3b82f6" : "#cbd5e1",
-    boxShadow: "none",
-    fontSize: "13px",
-    backgroundColor: "#ffffff",
-    cursor: "pointer",
-
-    "&:hover": {
-      borderColor: "#94a3b8",
-    },
-  }),
-
-  valueContainer: (base) => ({
-    ...base,
-    height: "28px",
-    padding: "0 8px",
-  }),
-
-  input: (base) => ({
-    ...base,
-    margin: 0,
-    padding: 0,
-    fontSize: "13px",
-  }),
-
-  singleValue: (base) => ({
-    ...base,
-    color: "#475569",
-    fontSize: "13px",
-  }),
-
-  placeholder: (base) => ({
-    ...base,
-    color: "#64748b",
-    fontSize: "13px",
-  }),
-
-  indicatorsContainer: (base) => ({
-    ...base,
-    height: "28px",
-  }),
-
-  dropdownIndicator: (base) => ({
-    ...base,
-    padding: "4px 7px",
-    color: "#64748b",
-  }),
-
-  indicatorSeparator: () => ({
-    display: "none",
-  }),
-
-  menu: (base) => ({
-    ...base,
-    zIndex: 9999,
-    fontSize: "13px",
-  }),
-
-  menuList: (base) => ({
-    ...base,
-    padding: "3px 0",
-  }),
-
-  option: (base, state) => ({
-    ...base,
-    minHeight: "30px",
-    padding: "6px 10px",
-    fontSize: "13px",
-
-    backgroundColor: state.isSelected
-      ? "#dbeafe"
-      : state.isFocused
-        ? "#eff6ff"
-        : "#ffffff",
-
-    color: "#475569",
-    cursor: "pointer",
-  }),
-};
-
-// ============================================================
-// YEAR / BRANCH / MODULE BOXES - same box as the Company page select
-// (30px, #d1d5db border, mint background when focused)
-// ============================================================
-
-const headerSelectStyles: StylesConfig<SelectOption, false> = {
-  ...selectStyles,
-
-  control: (base, state) => ({
-    ...base,
-    minHeight: "30px",
-    height: "30px",
-    border: "1px solid #d1d5db",
-    borderRadius: "4px",
-    boxShadow: "none",
-    backgroundColor: state.isFocused ? "#eefbf4" : "#ffffff",
-    fontSize: "11px",
-    cursor: "pointer",
-
-    "&:hover": {
-      borderColor: "#9fdfbc",
-    },
-  }),
-
-  valueContainer: (base) => ({
-    ...base,
-    height: "23px",
-    minHeight: "23px",
-    padding: "0 6px",
-  }),
-
-  singleValue: (base) => ({
-    ...base,
-    margin: 0,
-    color: "#374151",
-    fontSize: "11px",
-  }),
-
-  placeholder: (base) => ({
-    ...base,
-    margin: 0,
-    color: "#808080",
-    fontSize: "11px",
-  }),
-
-  input: (base) => ({
-    ...base,
-    margin: 0,
-    padding: 0,
-    fontSize: "11px",
-    color: "#374151",
-  }),
-
-  indicatorsContainer: (base) => ({
-    ...base,
-    height: "23px",
-  }),
-};
-
-// ============================================================
-// TABLE SELECT STYLES
-// ============================================================
-
-const tableSelectStyles: StylesConfig<SelectOption, false> = {
-  ...selectStyles,
-
-  control: (base) => ({
-    ...base,
-    minHeight: "32px",
-    height: "36px",
-    width: "100%",
-    border: "none",
-    borderRadius: 0,
-    boxShadow: "none",
-    backgroundColor: "transparent",
-    fontSize: "13px",
-    cursor: "pointer",
-
-    "&:hover": {
-      border: "none",
-    },
-  }),
-
-  valueContainer: (base) => ({
-    ...base,
-    height: "26px",
-    minWidth: 0,
-    padding: "0 3px",
-    overflow: "hidden",
-  }),
-
-  singleValue: (base) => ({
-    ...base,
-    color: "#475569",
-    fontSize: "11px",
-    maxWidth: "100%",
-    overflow: "hidden",
-    textOverflow: "ellipsis",
-    whiteSpace: "nowrap",
-  }),
-
-  indicatorsContainer: (base) => ({
-    ...base,
-    height: "26px",
-    flexShrink: 0,
-  }),
-
-  // Keep the default React Select dropdown arrow
-  indicatorSeparator: () => ({
-    display: "none",
-  }),
-
-  menu: (base) => ({
-    ...base,
-    zIndex: 9999,
-    fontSize: "11px",
-  }),
-
-  option: (base, state) => ({
-    ...base,
-    minHeight: "26px",
-    padding: "5px 6px",
-    fontSize: "11px",
-    backgroundColor: state.isSelected
-      ? "#dbeafe"
-      : state.isFocused
-        ? "#eff6ff"
-        : "#ffffff",
-    color: "#475569",
-  }),
-};
-// ============================================================
 // OPTIONS
 // ============================================================
 
@@ -279,11 +53,11 @@ const resetOptions: SelectOption[] = [
   { value: "Monthly", label: "Monthly" },
 ];
 
-// ============================================================
-// CUSTOM DROPDOWN INDICATOR
-// (Branch menu / filter / arrow are shared with SetBranchInfo —
-//  see components/BranchSelect/branchSelectParts.tsx)
-// ============================================================
+// Branch list: "Branch | ID", as on the other screens
+const BRANCH_COLUMNS = [
+  { key: "label", label: "Branch", width: "1fr" },
+  { key: "value", label: "ID", width: "70px", align: "right" as const },
+];
 
 // ============================================================
 // COMPONENT
@@ -680,9 +454,9 @@ const SetDocumentNo: React.FC = () => {
       previousRows.map((row) =>
         row.id === id
           ? {
-              ...row,
-              [field]: value,
-            }
+            ...row,
+            [field]: value,
+          }
           : row,
       ),
     );
@@ -773,7 +547,7 @@ const SetDocumentNo: React.FC = () => {
       if (!response.ok || !result.success) {
         toast.error(
           result.message ||
-            "Not saved, try again.",
+          "Not saved, try again.",
         );
 
         // the backend validator names the field that failed - same name as
@@ -801,7 +575,7 @@ const SetDocumentNo: React.FC = () => {
   // ==========================================================
   // CLEAR
   // ==========================================================
-//@ts-ignore
+  //@ts-ignore
   const handleClear = () => {
     setLkpYear("");
     setLkpBranch("");
@@ -894,14 +668,14 @@ const SetDocumentNo: React.FC = () => {
         previousRows.map((r) =>
           r.id === row.id
             ? {
-                ...r,
-                lkpMode: "Auto",
-                txtDocPrefix: "",
-                txtStartSeqNo: "",
-                chkStrictSerial: false,
-                lkpResetNo: "Never",
-                chkPrintAfterSave: false,
-              }
+              ...r,
+              lkpMode: "Auto",
+              txtDocPrefix: "",
+              txtStartSeqNo: "",
+              chkStrictSerial: false,
+              lkpResetNo: "Never",
+              chkPrintAfterSave: false,
+            }
             : r,
         ),
       );
@@ -928,17 +702,17 @@ const SetDocumentNo: React.FC = () => {
 
   return (
     <>
-    <div
-      onKeyDown={handleEnterAsTab}
-      className="flex min-h-screen w-full items-center justify-center bg-white text-[13px] text-slate-700"
-    >
-      {/* =====================================================
+      <div
+        onKeyDown={handleEnterAsTab}
+        className="flex min-h-screen w-full items-center justify-center bg-white text-[13px] text-slate-700"
+      >
+        {/* =====================================================
           MAIN CONTAINER
       ====================================================== */}
 
-      {/* no overflow-hidden: the Year / Branch / Module lists must stay visible */}
-      <div
-        className="
+        {/* no overflow-hidden: the Year / Branch / Module lists must stay visible */}
+        <div
+          className="
           mx-auto
           w-full
           border
@@ -948,21 +722,21 @@ const SetDocumentNo: React.FC = () => {
           sm:w-[75%]
           lg:w-[75%]
         "
-      >
-        <Header Name="Set Document No." />
+        >
+          <Header Name="Set Document No." />
 
-        {/* =====================================================
+          {/* =====================================================
             FORM
         ====================================================== */}
 
-        <div className="p-[12px] m-[12px]">
+          <div className="p-[12px] m-[12px]">
 
-        {/* =====================================================
+            {/* =====================================================
             HEADER
         ====================================================== */}
 
-        <div
-          className="
+            <div
+              className="
             grid
             grid-cols-1
             gap-3
@@ -976,166 +750,154 @@ const SetDocumentNo: React.FC = () => {
             lg:items-center
             lg:gap-4
           "
-        >
-          {/* ===================================================
+            >
+              {/* ===================================================
               YEAR
           ==================================================== */}
 
-          <div className="flex w-full items-center gap-2">
-            <label
-              htmlFor="lkpYear"
-              className="w-[56px] shrink-0 pr-3 text-right text-[14px] text-gray-600"
-            >
-              Year :
-            </label>
+              <div className="flex w-full items-center gap-2">
+                <label
+                  htmlFor="lkpYear"
+                  className="w-[56px] shrink-0 pr-3 text-right text-[14px] text-gray-600"
+                >
+                  Year :
+                </label>
 
-            <div className="w-[108px] shrink-0">
-              <Select
-                inputId="lkpYear"
-                instanceId="lkpYear"
-                name="lkpYear"
-                options={yearOptions}
-                value={getOption(yearOptions, lkpYear)}
-                onChange={(option: SingleValue<SelectOption>) =>
-                  setLkpYear(option?.value ?? "")
-                }
-                styles={headerSelectStyles}
-                components={{
-                  ...selectComponents,
-                }}
-                filterOption={filterLabelOrValue}
-                noOptionsMessage={() => "No Year Found"}
-                isSearchable
-                menuPlacement="auto"
-              />
-            </div>
-          </div>
+                <div className="w-[108px] shrink-0">
+                  <CommonTableSelect
+                    inputId="lkpYear"
+                    options={yearOptions}
+                    value={getOption(yearOptions, lkpYear)}
+                    onChange={(option: TableSelectOption | null) =>
+                      setLkpYear(option?.value ?? "")
+                    }
+                    columns={[{ key: "label", label: "Year", width: "1fr" }]}
+                    width="108px"
+                    menuWidth="108px"
+                    noOptionsMessage={() => "No Year Found"}
+                    isSearchable
+                    controlHeight={30}
+                    menuPortalTarget={document.body}
+                    showHeader={false}
+                  />
+                </div>
+              </div>
 
-          {/* ===================================================
+              {/* ===================================================
               BRANCH
           ==================================================== */}
 
-          <div
-            className="
+              <div
+                className="
               flex
               w-full
               items-center
               gap-2
               sm:justify-center
             "
-          >
-            <label
-              htmlFor="lkpBranch"
-              className="shrink-0 pr-3 text-right text-[14px] text-gray-600"
-            >
-              Branch :
-            </label>
+              >
+                <label
+                  htmlFor="lkpBranch"
+                  className="shrink-0 pr-3 text-right text-[14px] text-gray-600"
+                >
+                  Branch :
+                </label>
 
-            <div
-              className="
+                <div
+                  className="
                 w-full
                 sm:w-[180px]
                 lg:w-[212px]
               "
-            >
-              <Select
-                inputId="lkpBranch"
-                instanceId="lkpBranch"
-                name="lkpBranch"
-                options={branchOptions}
-                value={getOption(
-                  branchOptions,
-                  lkpBranch
-                )}
-                onChange={(
-                  option: SingleValue<SelectOption>
-                ) =>
-                  setLkpBranch(
-                    option?.value ?? ""
-                  )
-                }
-                styles={{
-                  ...headerSelectStyles,
-                  ...branchMenuStyles,
-                }}
-                components={{
-                  ...selectComponents,
-                  Option: BranchDividedOption,
-                  MenuList: BranchDividedMenuList,
-                }}
-                filterOption={filterLabelOrValue}
-                noOptionsMessage={() => "No Branch Found"}
-                isSearchable
-                menuPlacement="auto"
-              />
-            </div>
-          </div>
+                >
+                  <CommonTableSelect
+                    inputId="lkpBranch"
+                    options={branchOptions}
+                    value={getOption(
+                      branchOptions,
+                      lkpBranch
+                    )}
+                    onChange={(option: TableSelectOption | null) =>
+                      setLkpBranch(
+                        option?.value ?? ""
+                      )
+                    }
+                    columns={BRANCH_COLUMNS}
+                    width="100%"
+                    menuWidth="calc(100% + 70px)"
+                    filterOption={filterLabelOrValue}
+                    noOptionsMessage={() => "No Branch Found"}
+                    isSearchable
+                    controlHeight={30}
+                    menuPortalTarget={document.body}
+                  />
+                </div>
+              </div>
 
-          {/* ===================================================
+              {/* ===================================================
               MODULE
           ==================================================== */}
 
-          <div
-            className="
+              <div
+                className="
               flex
               w-full
               items-center
               gap-2
               sm:justify-center
             "
-          >
-            <label
-              htmlFor="lkpModule"
-              className="shrink-0 pr-3 text-right text-[14px] text-gray-600"
-            >
-              Module :
-            </label>
+              >
+                <label
+                  htmlFor="lkpModule"
+                  className="shrink-0 pr-3 text-right text-[14px] text-gray-600"
+                >
+                  Module :
+                </label>
 
-            <div
-              className="
+                <div
+                  className="
                 w-full
                 sm:w-[120px]
                 lg:w-[150px]
               "
-            >
-              <Select
-                inputId="lkpModule"
-                instanceId="lkpModule"
-                name="lkpModule"
-                options={moduleOptions}
-                value={getOption(moduleOptions, lkpModule)}
-                onChange={(option: SingleValue<SelectOption>) =>
-                  setLkpModule(option?.value ?? "")
-                }
-                styles={headerSelectStyles}
-                components={{
-                  ...selectComponents,
-                }}
-                isSearchable={false}
-                menuPlacement="auto"
-              />
+                >
+                  <CommonTableSelect
+                    inputId="lkpModule"
+                    options={moduleOptions}
+                    value={getOption(moduleOptions, lkpModule)}
+                    onChange={(option: TableSelectOption | null) =>
+                      setLkpModule(option?.value ?? "")
+                    }
+                    columns={[{ key: "label", label: "Module", width: "1fr" }]}
+                    width="100%"
+                    menuWidth="150px"
+                    isSearchable={false}
+                    controlHeight={30}
+                    menuPortalTarget={document.body}
+                    showHeader={false}
+                  />
+                </div>
+              </div>
             </div>
-          </div>
-        </div>
 
-        <div>
-          <div
-            className="
+            <div>
+              <div
+                className="
               w-full
               border-l
               border-r
               border-b
               border-slate-200
             "
-          >
-            {/* =================================================
+              >
+                {/* =================================================
     TABLE
 ================================================= */}
 
-<div className="mt-2 w-full">
+                <div className="mt-2 w-full">
 
-  <table
-    className="
+                  <table
+                    className="
       w-full
       table-fixed
       border-collapse
@@ -1143,53 +905,53 @@ const SetDocumentNo: React.FC = () => {
       border-slate-200
       text-[11px]
     "
-              >
-                {/* =================================================
+                  >
+                    {/* =================================================
         TABLE HEADER
     ================================================= */}
 
-                <thead>
-                  <tr
-                    className="
+                    <thead>
+                      <tr
+                        className="
           h-9
           bg-slate-50
           text-left
           text-[14px]
           text-gray-600
         "
-                  >
-                    {/* DOCUMENT */}
+                      >
+                        {/* DOCUMENT */}
 
-        <th
-          className="
+                        <th
+                          className="
             w-[20%]
             border-r
             border-slate-200
             px-1
             whitespace-nowrap
           "
-                    >
-                      Document
-                    </th>
+                        >
+                          Document
+                        </th>
 
-                    {/* PREFIX */}
+                        {/* PREFIX */}
 
-        <th
-          className="
+                        <th
+                          className="
             w-[9%]
             border-r
             border-slate-200
             px-1
             whitespace-nowrap
           "
-                    >
-                      Prefix
-                    </th>
+                        >
+                          Prefix
+                        </th>
 
-                    {/* START SEQ NO */}
+                        {/* START SEQ NO */}
 
-        <th
-          className="
+                        <th
+                          className="
             w-[13%]
             border-r
             border-slate-200
@@ -1197,14 +959,14 @@ const SetDocumentNo: React.FC = () => {
             text-center
             whitespace-nowrap
           "
-                    >
-                      Start Seq. No.
-                    </th>
+                        >
+                          Start Seq. No.
+                        </th>
 
-                    {/* STRICT SERIAL */}
+                        {/* STRICT SERIAL */}
 
-        <th
-          className="
+                        <th
+                          className="
             w-[12%]
             border-r
             border-slate-200
@@ -1212,14 +974,14 @@ const SetDocumentNo: React.FC = () => {
             text-center
             whitespace-nowrap
           "
-                    >
-                      Strict Serial
-                    </th>
+                        >
+                          Strict Serial
+                        </th>
 
-                    {/* MODE */}
+                        {/* MODE */}
 
-        <th
-          className="
+                        <th
+                          className="
             w-[10%]
             border-r
             border-slate-200
@@ -1227,14 +989,14 @@ const SetDocumentNo: React.FC = () => {
             text-center
             whitespace-nowrap
           "
-                    >
-                      + Mode
-                    </th>
+                        >
+                          + Mode
+                        </th>
 
-                    {/* RESET */}
+                        {/* RESET */}
 
-        <th
-          className="
+                        <th
+                          className="
             w-[10%]
             border-r
             border-slate-200
@@ -1242,14 +1004,14 @@ const SetDocumentNo: React.FC = () => {
             text-center
             whitespace-nowrap
           "
-                    >
-                      Reset No.
-                    </th>
+                        >
+                          Reset No.
+                        </th>
 
-                    {/* PRINT AFTER SAVE */}
+                        {/* PRINT AFTER SAVE */}
 
-        <th
-          className="
+                        <th
+                          className="
             w-[15%]
             border-r
             border-slate-200
@@ -1258,135 +1020,118 @@ const SetDocumentNo: React.FC = () => {
             text-center
             whitespace-nowrap
           "
-                    >
-                      Print After Save
-                    </th>
+                        >
+                          Print After Save
+                        </th>
 
-                    {/* POSITION NO */}
+                        {/* POSITION NO */}
 
-        <th
-          className="
+                        <th
+                          className="
             w-[13%]
             px-1
             text-center
             whitespace-nowrap
           "
-                    >
-                      Position No.
-                    </th>
-                  </tr>
-                </thead>
+                        >
+                          Position No.
+                        </th>
+                      </tr>
+                    </thead>
 
-                {/* =================================================
+                    {/* =================================================
         TABLE BODY
     ================================================= */}
 
-                <tbody>
-                  {rows.map((row, index) => (
-                    <tr
-                      key={row.id}
-                      className={`
+                    <tbody>
+                      {rows.map((row, index) => (
+                        <tr
+                          key={row.id}
+                          className={`
             h-[34px]
             ${index === 0 ? "bg-[#edf4fc]" : "bg-white"}
             hover:bg-slate-50
           `}
-                    >
-                      {/* =================================================
+                        >
+                          {/* =================================================
               DOCUMENT
           ================================================= */}
 
-                      <td
-                        className={`
+                          <td
+                            className={`
               border-r
               border-t
               border-slate-200
               p-0
              ${cellFocusClass}`}
-          >
+                          >
 
-            <div className="flex h-[36px] items-stretch">
+                            <div className="flex h-[36px] items-stretch">
 
-              <div
-                className="min-w-0 flex-1 overflow-hidden"
-                onKeyDown={(event) => advanceOnEnter(event)}
-              >
+                              <div
+                                className="min-w-0 flex-1 overflow-hidden"
+                                onKeyDown={(event) => advanceOnEnter(event)}
+                              >
 
-                <Select
-                  inputId={`lkpDocument_${row.id}`}
-                  instanceId={`lkpDocument_${row.id}`}
-                  name="lkpDocument"
-                  options={documentOptions}
-                  value={getOption(
-                    documentOptions,
-                    row.lkpDocument,
-                  )}
-                  onChange={(
-                    option: SingleValue<SelectOption>,
-                  ) => {
-                    handleRowChange(
-                      row.id,
-                      "lkpDocument",
-                      option?.value ?? "",
-                    );
-                    if (option) advanceAfterPick(`lkpDocument_${row.id}`);
-                  }}
-                  styles={{
-                    ...tableSelectStyles,
-                    dropdownIndicator: (base) => ({
-                      ...base,
-                      width: "18px",
-                      height: "26px",
-                      padding: 0,
-                      display: "flex",
-                      alignItems: "center",
-                      justifyContent: "center",
-                      flexShrink: 0,
-                    }),
-                  }}
-                  components={{
-                    ...selectComponents,
-                  }}
-                  filterOption={filterLabelOrValue}
-                  noOptionsMessage={() => "No Document Found"}
-                  isSearchable
-                  menuPortalTarget={document.body}
-                  menuPosition="fixed"
-                />
+                                <CustomTableSelect
+                                  inputId={`lkpDocument_${row.id}`}
+                                  options={documentOptions}
+                                  value={getOption(
+                                    documentOptions,
+                                    row.lkpDocument,
+                                  )}
+                                  onChange={(option: TableSelectOption | null) => {
+                                    handleRowChange(
+                                      row.id,
+                                      "lkpDocument",
+                                      option?.value ?? "",
+                                    );
+                                    if (option) advanceAfterPick(`lkpDocument_${row.id}`);
+                                  }}
+                                  columns={[{ key: "label", label: "Document", width: "1fr" }]}
+                                  width="100%"
+                                  menuWidth="220px"
+                                  noOptionsMessage={() => "No Document Found"}
+                                  isSearchable
+                                  menuPortalTarget={document.body}
+                                  controlHeight={36}
+                                  showHeader={false}
+                                />
 
-              </div>
+                              </div>
 
 
-            </div>
+                            </div>
 
-          </td>
+                          </td>
 
 
-                      {/* =================================================
+                          {/* =================================================
               PREFIX
           ================================================= */}
 
-                      <td
-                        className={`
+                          <td
+                            className={`
               border-r
               border-t
               border-slate-200
               px-1
              ${cellFocusClass}`}
-                      >
-                        <input
-                          id={`txtDocPrefix_${row.id}`}
-                          onFocus={selectOnFocus}
-                          name="txtDocPrefix"
-                          type="text"
-                          value={row.txtDocPrefix}
-                          onChange={(e) =>
-                            handleRowChange(
-                              row.id,
-                              "txtDocPrefix",
-                              e.target.value,
-                            )
-                          }
-                          className="
+                          >
+                            <input
+                              id={`txtDocPrefix_${row.id}`}
+                              onFocus={selectOnFocus}
+                              name="txtDocPrefix"
+                              type="text"
+                              value={row.txtDocPrefix}
+                              onChange={(e) =>
+                                handleRowChange(
+                                  row.id,
+                                  "txtDocPrefix",
+                                  e.target.value,
+                                )
+                              }
+                              className="
                 w-full
                 bg-transparent
                 text-left
@@ -1394,35 +1139,35 @@ const SetDocumentNo: React.FC = () => {
                 text-slate-600
                 outline-none
               "
-                        />
-                      </td>
+                            />
+                          </td>
 
-                      {/* =================================================
+                          {/* =================================================
               START SEQ NO
           ================================================= */}
 
-                      <td
-                        className={`
+                          <td
+                            className={`
               border-r
               border-t
               border-slate-200
               px-1
              ${cellFocusClass}`}
-                      >
-                        <input
-                          id={`txtStartSeqNo_${row.id}`}
-                          onFocus={selectOnFocus}
-                          name="txtStartSeqNo"
-                          type="text"
-                          value={row.txtStartSeqNo}
-                          onChange={(e) =>
-                            handleRowChange(
-                              row.id,
-                              "txtStartSeqNo",
-                              e.target.value,
-                            )
-                          }
-                          className="
+                          >
+                            <input
+                              id={`txtStartSeqNo_${row.id}`}
+                              onFocus={selectOnFocus}
+                              name="txtStartSeqNo"
+                              type="text"
+                              value={row.txtStartSeqNo}
+                              onChange={(e) =>
+                                handleRowChange(
+                                  row.id,
+                                  "txtStartSeqNo",
+                                  e.target.value,
+                                )
+                              }
+                              className="
                 w-full
                 bg-transparent
                 text-center
@@ -1430,174 +1175,170 @@ const SetDocumentNo: React.FC = () => {
                 text-slate-600
                 outline-none
               "
-                        />
-                      </td>
+                            />
+                          </td>
 
-                      {/* =================================================
+                          {/* =================================================
               STRICT SERIAL
           ================================================= */}
 
-                      <td
-                        className={`
+                          <td
+                            className={`
               border-r
               border-t
               border-slate-200
               text-center
              ${cellFocusClass}`}
-                      >
-                        <input
-                          id={`chkStrictSerial_${row.id}`}
-                          name="chkStrictSerial"
-                          type="checkbox"
-                          checked={row.chkStrictSerial}
-                          onChange={(e) =>
-                            handleRowChange(
-                              row.id,
-                              "chkStrictSerial",
-                              e.target.checked,
-                            )
-                          }
-                          className="
+                          >
+                            <input
+                              id={`chkStrictSerial_${row.id}`}
+                              name="chkStrictSerial"
+                              type="checkbox"
+                              checked={row.chkStrictSerial}
+                              onChange={(e) =>
+                                handleRowChange(
+                                  row.id,
+                                  "chkStrictSerial",
+                                  e.target.checked,
+                                )
+                              }
+                              className="
                 h-[16px]
                 w-[16px]
                 cursor-pointer
                 accent-blue-600
               "
-                        />
-                      </td>
+                            />
+                          </td>
 
-                      {/* =================================================
+                          {/* =================================================
               MODE
           ================================================= */}
 
-                      <td
-                        className={`
+                          <td
+                            className={`
               border-r
               border-t
               border-slate-200
               p-0
              ${cellFocusClass}`}
-                      >
-                        <Select
-                          inputId={`lkpMode_${row.id}`}
-                          instanceId={`lkpMode_${row.id}`}
-                          name="lkpMode"
-                          options={modeOptions}
-                          value={getOption(modeOptions, row.lkpMode)}
-                          onChange={(option: SingleValue<SelectOption>) => {
-                            handleRowChange(
-                              row.id,
-                              "lkpMode",
-                              option?.value ?? "",
-                            );
-                            if (option) advanceAfterPick(`lkpMode_${row.id}`);
-                          }}
-                          styles={tableSelectStyles}
-                          components={{
-                            ...selectComponents,
-                          }}
-                          isSearchable={false}
-                          menuPortalTarget={document.body}
-                          menuPosition="fixed"
-                        />
-                      </td>
+                          >
+                            <CustomTableSelect
+                              inputId={`lkpMode_${row.id}`}
+                              options={modeOptions}
+                              value={getOption(modeOptions, row.lkpMode)}
+                              onChange={(option: TableSelectOption | null) => {
+                                handleRowChange(
+                                  row.id,
+                                  "lkpMode",
+                                  option?.value ?? "",
+                                );
+                                if (option) advanceAfterPick(`lkpMode_${row.id}`);
+                              }}
+                              columns={[{ key: "label", label: "Mode", width: "1fr" }]}
+                              width="100%"
+                              menuWidth="180px"
+                              isSearchable={false}
+                              menuPortalTarget={document.body}
+                              controlHeight={36}
+                              showHeader={false}
+                            />
+                          </td>
 
-                      {/* =================================================
+                          {/* =================================================
               RESET NO
           ================================================= */}
 
-                      <td
-                        className={`
+                          <td
+                            className={`
               border-r
               border-t
               border-slate-200
               p-0
              ${cellFocusClass}`}
-                      >
-                        <Select
-                          inputId={`lkpResetNo_${row.id}`}
-                          instanceId={`lkpResetNo_${row.id}`}
-                          name="lkpResetNo"
-                          options={resetOptions}
-                          value={getOption(resetOptions, row.lkpResetNo)}
-                          onChange={(option: SingleValue<SelectOption>) => {
-                            handleRowChange(
-                              row.id,
-                              "lkpResetNo",
-                              option?.value ?? "",
-                            );
-                            if (option) advanceAfterPick(`lkpResetNo_${row.id}`);
-                          }}
-                          styles={tableSelectStyles}
-                          components={{
-                            ...selectComponents,
-                          }}
-                          isSearchable={false}
-                          menuPortalTarget={document.body}
-                          menuPosition="fixed"
-                        />
-                      </td>
+                          >
+                            <CustomTableSelect
+                              inputId={`lkpResetNo_${row.id}`}
+                              options={resetOptions}
+                              value={getOption(resetOptions, row.lkpResetNo)}
+                              onChange={(option: TableSelectOption | null) => {
+                                handleRowChange(
+                                  row.id,
+                                  "lkpResetNo",
+                                  option?.value ?? "",
+                                );
+                                if (option) advanceAfterPick(`lkpResetNo_${row.id}`);
+                              }}
+                              columns={[{ key: "label", label: "Reset No", width: "1fr" }]}
+                              width="100%"
+                              menuWidth="180px"
+                              isSearchable={false}
+                              menuPortalTarget={document.body}
+                              controlHeight={36}
+                              showHeader={false}
+                            />
+                          </td>
 
-                      {/* =================================================
+                          {/* =================================================
               PRINT AFTER SAVE
           ================================================= */}
 
-                      <td
-                        className={`
+                          <td
+                            className={`
               border-r
               border-t
               border-slate-200
               text-center
              ${cellFocusClass}`}
-                      >
-                        <input
-                          id={`chkPrintAfterSave_${row.id}`}
-                          name="chkPrintAfterSave"
-                          type="checkbox"
-                          checked={row.chkPrintAfterSave}
-                          onChange={(e) =>
-                            handleRowChange(
-                              row.id,
-                              "chkPrintAfterSave",
-                              e.target.checked,
-                            )
-                          }
-                          className="
+                          >
+                            <input
+                              id={`chkPrintAfterSave_${row.id}`}
+                              name="chkPrintAfterSave"
+                              type="checkbox"
+                              checked={row.chkPrintAfterSave}
+                              onChange={(e) =>
+                                handleRowChange(
+                                  row.id,
+                                  "chkPrintAfterSave",
+                                  e.target.checked,
+                                )
+                              }
+                              className="
                 h-[16px]
                 w-[16px]
                 cursor-pointer
                 accent-blue-600
               "
-                        />
-                      </td>
+                            />
+                          </td>
 
-                      {/* =================================================
+                          {/* =================================================
               POSITION NO
           ================================================= */}
 
-                      <td
-                        className={`
+                          <td
+                            className={`
               border-t
               border-slate-200
               px-1
               text-center
              ${cellFocusClass}`}
-                      >
-                        <div className="flex items-center">
-                        <input
-                          id={`txtPositionNo_${row.id}`}
-                          onFocus={selectOnFocus}
-                          name="txtPositionNo"
-                          type="number"
-                          value={row.txtPositionNo}
-                          onChange={(e) =>
-                            handleRowChange(
-                              row.id,
-                              "txtPositionNo",
-                              Number(e.target.value),
-                            )
-                          }
-                          className="
+                          >
+                            <div className="flex items-center">
+                              <input
+                                id={`txtPositionNo_${row.id}`}
+                                onFocus={selectOnFocus}
+                                name="txtPositionNo"
+                                type="number"
+                                value={row.txtPositionNo}
+                                onChange={(e) =>
+                                  handleRowChange(
+                                    row.id,
+                                    "txtPositionNo",
+                                    Number(e.target.value),
+                                  )
+                                }
+                                className="
                 w-full
                 bg-transparent
                 text-right
@@ -1605,68 +1346,68 @@ const SetDocumentNo: React.FC = () => {
                 text-slate-600
                 outline-none
               "
-                        />
+                              />
 
-                        {/* the X of the row, at the right end */}
-                        {perms.delete && (
-                          <button
-                            type="button"
-                            tabIndex={-1}
-                            onClick={() => handleDeleteRow(row)}
-                            className="ml-1 inline-flex h-[24px] w-[20px] shrink-0 items-center justify-center text-[12px] leading-none text-[#999999] hover:text-red-600"
-                            aria-label={`Delete ${row.lkpDocument}`}
-                          >
-                            ✕
-                          </button>
-                        )}
-                        </div>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
+                              {/* the X of the row, at the right end */}
+                              {perms.delete && (
+                                <button
+                                  type="button"
+                                  tabIndex={-1}
+                                  onClick={() => handleDeleteRow(row)}
+                                  className="ml-1 inline-flex h-[24px] w-[20px] shrink-0 items-center justify-center text-[12px] leading-none text-[#999999] hover:text-red-600"
+                                  aria-label={`Delete ${row.lkpDocument}`}
+                                >
+                                  ✕
+                                </button>
+                              )}
+                            </div>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
             </div>
-          </div>
-        </div>
 
-        {/* =====================================================
+            {/* =====================================================
             BUTTONS
         ====================================================== */}
 
-        <div className="mt-[14px] flex justify-center gap-3">
-          <button
-            id="Save"
-            name="Save"
-            type="button"
-            onClick={handleSave}
-            disabled={!canSaveOrModify}
-            className="btn-style disabled:cursor-not-allowed disabled:opacity-40"
-          >
-            <span className="underline underline-offset-2">
-              {actionWord.charAt(0)}
-            </span>
-            {actionWord.slice(1)}
-          </button>
+            <div className="mt-[14px] flex justify-center gap-3">
+              <button
+                id="Save"
+                name="Save"
+                type="button"
+                onClick={handleSave}
+                disabled={!canSaveOrModify}
+                className="btn-style disabled:cursor-not-allowed disabled:opacity-40"
+              >
+                <span className="underline underline-offset-2">
+                  {actionWord.charAt(0)}
+                </span>
+                {actionWord.slice(1)}
+              </button>
 
-          <button
-            id="CopyToNextYearbtn"
-            name="CopyToNextYearbtn"
-            type="button"
-            onClick={() => setCopyToNextYearbtn(!CopyToNextYearbtn)}
-            className="btn-style"
-          >
-            <span className="underline underline-offset-2">C</span>opy To Next Year
-          </button>
+              <button
+                id="CopyToNextYearbtn"
+                name="CopyToNextYearbtn"
+                type="button"
+                onClick={() => setCopyToNextYearbtn(!CopyToNextYearbtn)}
+                className="btn-style"
+              >
+                <span className="underline underline-offset-2">C</span>opy To Next Year
+              </button>
+            </div>
+
+          </div>
         </div>
 
-        </div>
       </div>
 
-    </div>
-
-    {/* the "Do you want to delete ?" question - outside the root div so the page's
+      {/* the "Do you want to delete ?" question - outside the root div so the page's
         Enter handling does not take the Enter of the Yes / No buttons */}
-    {dialog}
+      {dialog}
     </>
   );
 };
