@@ -1,5 +1,6 @@
 import type { PoolClient } from "pg";
 import pool from "../../../DB/db.js";
+import { resolveServerDate } from "../../common/DateTimeService.js";
 
 /* =========================================================
    UNIT PAGE - calls dbo.sp_pageunit
@@ -109,7 +110,9 @@ export async function saveUnitPageService(
   PstrCoID: string,
   rows: UnitRowPayload[],
   deletedRows: UnitDeletedRowPayload[],
-  PstrUserID: string
+  PstrUserID: string,
+  // the time the page got from /datetime/server-date (checked here; the server's own time when it is missing or wrong)
+  dtpServerDate?: string
 ): Promise<{
   inserted: string[];
   renamed: UnitRename[];
@@ -120,6 +123,9 @@ export async function saveUnitPageService(
 
   try {
     await client.query("BEGIN");
+
+    // one time for every row of this save
+    const serverDate = await resolveServerDate(client, dtpServerDate);
 
     const saved = (await fetchUnitRows(client, PstrCoID)).map((row) => row.funit);
     const savedLower = new Set(saved.map((unit) => unit.toLowerCase()));
@@ -175,6 +181,7 @@ export async function saveUnitPageService(
     // deletes first, so a removed name can be used again in the same save
     for (const unit of deleted) {
       await callSpUnitPage(client, {
+        dtpServerDate: serverDate,
         strmode: "D",
         PstrCoID,
         txtOriginalUnit: unit,
@@ -184,6 +191,7 @@ export async function saveUnitPageService(
     // renames, pass 1: out of the way
     for (const [index, item] of renamed.entries()) {
       await callSpUnitPage(client, {
+        dtpServerDate: serverDate,
         strmode: "M",
         PstrCoID,
         txtUnit: `~~${String(index).padStart(5, "0")}`,
@@ -195,6 +203,7 @@ export async function saveUnitPageService(
     // renames, pass 2: into the new names
     for (const [index, item] of renamed.entries()) {
       await callSpUnitPage(client, {
+        dtpServerDate: serverDate,
         strmode: "M",
         PstrCoID,
         txtUnit: item.after,
@@ -205,6 +214,7 @@ export async function saveUnitPageService(
 
     for (const unit of inserted) {
       await callSpUnitPage(client, {
+        dtpServerDate: serverDate,
         strmode: "S",
         PstrCoID,
         txtUnit: unit,
@@ -242,6 +252,8 @@ async function callSpUnitPage(
     txtUnit?: string;
     txtOriginalUnit?: string;
     PstrUserID?: string;
+    // the time written on the row (fcuserdate / fmuserdate); null = the procedure's own now()
+    dtpServerDate?: string;
     cursorName?: string;
   }
 ): Promise<void> {
@@ -253,7 +265,8 @@ async function callSpUnitPage(
       p_strunit        => $3::varchar,
       p_original_funit => $4::varchar,
       p_pstruserid     => $5::varchar,
-      p_result_cursor  => $6::refcursor
+      p_dtpserverdate  => $6::timestamp,
+      p_result_cursor  => $7::refcursor
     )
     `,
     [
@@ -262,6 +275,7 @@ async function callSpUnitPage(
       p.txtUnit ?? null,
       p.txtOriginalUnit ?? null,
       p.PstrUserID ?? null,
+      p.dtpServerDate ?? null,
       p.cursorName ??
         `cur_unitpage_${Date.now()}_${Math.floor(Math.random() * 100000)}`,
     ]

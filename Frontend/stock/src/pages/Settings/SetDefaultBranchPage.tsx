@@ -8,7 +8,12 @@ import { useEnterAsTab } from "../../hooks/useEnterAsTab";
 import { useAltShortcuts } from "../../hooks/useAltShortcuts";
 import { useGridCellFocus } from "../../hooks/useGridCellFocus";
 import { useButtonPermissions } from "../../hooks/useButtonPermissions";
-import { filterLabelOrValue } from "../../components/BranchSelect/branchSelectParts";
+import { tryGetServerDate } from "../../utils/serverDate";
+import {
+  filterLabelOrValue,
+  makeNameIdMenuComponents,
+  branchMenuStyles,
+} from "../../components/BranchSelect/branchSelectParts";
 
 // dbo.tblmenu fmenuid of the Set Default Branch page
 const MENU_ID = "9101";
@@ -272,6 +277,9 @@ const SetDefaultBranchPage: React.FC = () => {
     setSaving(true);
 
     try {
+      // the time of the save: the database server's clock (the common /datetime/server-date), written on every row
+      const dtpServerDate = await tryGetServerDate();
+
       const response = await fetch(
         `${import.meta.env.VITE_API_URL}/DefaultBranch/saveDefaultBranch`,
         {
@@ -281,6 +289,7 @@ const SetDefaultBranchPage: React.FC = () => {
           body: JSON.stringify({
             PstrCoID,
             PstrYear,
+            dtpServerDate,
             rows: rows.map((row, index) => ({
               txtGridRow: index, // where the row sits in the grid (for the focus)
               txtUserID: row.txtUserID,

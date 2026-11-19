@@ -1,6 +1,10 @@
 -- PROCEDURE: dbo.sp_pagesetcompanyinfo(character varying, character varying, character varying, character varying, character varying, character varying, character varying, character varying, character varying, character varying, refcursor)
 
--- DROP PROCEDURE IF EXISTS dbo.sp_pagesetcompanyinfo(character varying, character varying, character varying, character varying, character varying, character varying, character varying, character varying, character varying, character varying, refcursor);
+-- ADDED: p_dtpserverdate - the time written on the row (fmuserdate). The page gets it from the database server's clock
+-- (GET /datetime/server-date) and the backend checks it and passes it, so every row of one save carries the same time.
+-- NULL = the procedure's own now(). It sits before the cursor argument, so the earlier signature is dropped first.
+
+DROP PROCEDURE IF EXISTS dbo.sp_pagesetcompanyinfo(character varying, character varying, character varying, character varying, character varying, character varying, character varying, character varying, character varying, character varying, refcursor);
 
 CREATE OR REPLACE PROCEDURE dbo.sp_pagesetcompanyinfo(
 	IN p_strmode character varying,
@@ -13,6 +17,7 @@ CREATE OR REPLACE PROCEDURE dbo.sp_pagesetcompanyinfo(
 	IN p_strcovatno_ar character varying DEFAULT NULL::character varying,
 	IN p_strcostatus character varying DEFAULT NULL::character varying,
 	IN p_pstruserid character varying DEFAULT NULL::character varying,
+	IN p_dtpserverdate timestamp without time zone DEFAULT NULL::timestamp without time zone,
 	IN p_result_cursor refcursor DEFAULT 'cur_setcompanyinfo'::refcursor)
 LANGUAGE 'plpgsql'
 AS $BODY$
@@ -56,13 +61,13 @@ BEGIN
             fcovatno_ar       = p_strcovatno_ar,
             fcostatus         = COALESCE(p_strcostatus, fcostatus),
             fmuserid          = p_pstruserid,
-            fmuserdate        = now()
+            fmuserdate        = coalesce(p_dtpserverdate, now())
         WHERE fcoid = p_pstrcoid;
 
     END IF;
 
 END;
 $BODY$;
-ALTER PROCEDURE dbo.sp_pagesetcompanyinfo(character varying, character varying, character varying, character varying, character varying, character varying, character varying, character varying, character varying, character varying, refcursor)
+ALTER PROCEDURE dbo.sp_pagesetcompanyinfo(character varying, character varying, character varying, character varying, character varying, character varying, character varying, character varying, character varying, character varying, timestamp without time zone, refcursor)
     OWNER TO postgres;
 

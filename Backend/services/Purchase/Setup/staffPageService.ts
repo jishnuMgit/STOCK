@@ -1,5 +1,6 @@
 import type { PoolClient } from "pg";
 import pool from "../../../DB/db.js";
+import { resolveServerDate } from "../../common/DateTimeService.js";
 
 /* =========================================================
    STAFF PAGE - calls dbo.sp_pagestaff
@@ -123,7 +124,9 @@ export async function saveStaffPageService(
   PstrCoID: string,
   rows: StaffRowPayload[],
   deletedRows: StaffDeletedRowPayload[],
-  PstrUserID: string
+  PstrUserID: string,
+  // the time the page got from /datetime/server-date (checked here; the server's own time when it is missing or wrong)
+  dtpServerDate?: string
 ): Promise<{
   inserted: StaffChange["after"][];
   changed: StaffChange[];
@@ -134,6 +137,9 @@ export async function saveStaffPageService(
 
   try {
     await client.query("BEGIN");
+
+    // one time for every row of this save
+    const serverDate = await resolveServerDate(client, dtpServerDate);
 
     const saved = await fetchStaffRows(client, PstrCoID);
     const savedById = new Map(saved.map((row) => [row.fstaffid, row]));
@@ -213,6 +219,7 @@ export async function saveStaffPageService(
     // deletes first, so a removed id can be used again in the same save
     for (const row of deleted) {
       await callSpStaffPage(client, {
+        dtpServerDate: serverDate,
         strmode: "D",
         PstrCoID,
         txtOriginalStaffID: row.fstaffid,
@@ -224,6 +231,7 @@ export async function saveStaffPageService(
 
     for (const [index, item] of changed.entries()) {
       await callSpStaffPage(client, {
+        dtpServerDate: serverDate,
         strmode: "M",
         PstrCoID,
         txtStaffID: tempId(index),
@@ -238,6 +246,7 @@ export async function saveStaffPageService(
     // changes, pass 2: into the new ids
     for (const [index, item] of changed.entries()) {
       await callSpStaffPage(client, {
+        dtpServerDate: serverDate,
         strmode: "M",
         PstrCoID,
         txtStaffID: item.after.txtStaffID,
@@ -251,6 +260,7 @@ export async function saveStaffPageService(
 
     for (const after of inserted) {
       await callSpStaffPage(client, {
+        dtpServerDate: serverDate,
         strmode: "S",
         PstrCoID,
         txtStaffID: after.txtStaffID,
@@ -294,6 +304,8 @@ async function callSpStaffPage(
     chkIsSales?: boolean;
     txtOriginalStaffID?: string;
     PstrUserID?: string;
+    // the time written on the row (fcuserdate / fmuserdate); null = the procedure's own now()
+    dtpServerDate?: string;
     cursorName?: string;
   }
 ): Promise<void> {
@@ -308,7 +320,8 @@ async function callSpStaffPage(
       p_blnissales        => $6::boolean,
       p_original_fstaffid => $7::varchar,
       p_pstruserid        => $8::varchar,
-      p_result_cursor     => $9::refcursor
+      p_dtpserverdate     => $9::timestamp,
+      p_result_cursor     => $10::refcursor
     )
     `,
     [
@@ -320,6 +333,7 @@ async function callSpStaffPage(
       p.chkIsSales ?? false,
       p.txtOriginalStaffID ?? null,
       p.PstrUserID ?? null,
+      p.dtpServerDate ?? null,
       p.cursorName ??
         `cur_staffpage_${Date.now()}_${Math.floor(Math.random() * 100000)}`,
     ]

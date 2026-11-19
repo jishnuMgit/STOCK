@@ -180,6 +180,7 @@ export const saveItemGroup = async (
       PstrCoID,
       PstrYear,
       PstrUserID,
+      dtpServerDate,
       txtItemGroupID,
       txtItemGroupName,
       lkpFSN,
@@ -188,6 +189,8 @@ export const saveItemGroup = async (
       PstrCoID: string;
       PstrYear: string;
       PstrUserID: string;
+      // the time the page got from /datetime/server-date (the service checks it)
+      dtpServerDate?: string;
       txtItemGroupID: string;
       txtItemGroupName: string;
       lkpFSN: string;
@@ -290,7 +293,8 @@ export const saveItemGroup = async (
       txtItemGroupName.trim(),
       lkpFSN.trim(),
       lkpVATSlab,
-      PstrUserID
+      PstrUserID,
+      dtpServerDate
     );
 
     // =====================================================

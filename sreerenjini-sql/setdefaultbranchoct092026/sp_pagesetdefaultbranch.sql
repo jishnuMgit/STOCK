@@ -24,6 +24,12 @@
 
 -- DROP PROCEDURE IF EXISTS dbo.sp_pagesetdefaultbranch(IN p_strmode character varying, IN p_pstrcoid character varying, IN p_struserid character varying, IN p_strdefbrid character varying, IN p_original_fuserid character varying, IN p_pstruserid character varying, IN p_result_cursor refcursor);
 
+-- ADDED: p_dtpserverdate - the time written on the rows (fcuserdate). The page gets it from the database server's clock
+-- (GET /datetime/server-date) and the backend checks it and passes it, so every row of one save carries the same time.
+-- NULL = the procedure's own now(). It sits before the cursor argument, so the earlier signature is dropped first.
+
+DROP PROCEDURE IF EXISTS dbo.sp_pagesetdefaultbranch(character varying, character varying, character varying, character varying, character varying, character varying, refcursor);
+
 CREATE OR REPLACE PROCEDURE dbo.sp_pagesetdefaultbranch(
     IN p_strmode           character varying,
     IN p_pstrcoid          character varying,
@@ -31,6 +37,7 @@ CREATE OR REPLACE PROCEDURE dbo.sp_pagesetdefaultbranch(
     IN p_strdefbrid        character varying DEFAULT NULL::character varying,
     IN p_original_fuserid  character varying DEFAULT NULL::character varying,
     IN p_pstruserid        character varying DEFAULT NULL::character varying,
+    IN p_dtpserverdate     timestamp without time zone DEFAULT NULL::timestamp without time zone,
     IN p_result_cursor     refcursor         DEFAULT 'cur_defaultbranch'::refcursor)
  LANGUAGE plpgsql
 AS $procedure$
@@ -54,7 +61,7 @@ BEGIN
             fcoid, fuserid, fdefbrid, fcuserid, fcuserdate
         )
         VALUES (
-            p_pstrcoid, p_struserid, p_strdefbrid, p_pstruserid, now()
+            p_pstrcoid, p_struserid, p_strdefbrid, p_pstruserid, coalesce(p_dtpserverdate, now())
         );
 
     ELSIF p_strmode = 'M' THEN
@@ -63,7 +70,7 @@ BEGIN
             fuserid    = p_struserid,
             fdefbrid   = p_strdefbrid,
             fcuserid   = p_pstruserid,
-            fcuserdate = now()
+            fcuserdate = coalesce(p_dtpserverdate, now())
         WHERE fcoid = p_pstrcoid
           AND fuserid = p_original_fuserid;
 

@@ -1,5 +1,6 @@
 import type { PoolClient } from "pg";
 import pool from "../../../DB/db.js";
+import { resolveServerDate } from "../../common/DateTimeService.js";
 
 /* =========================================================
    ITEM GROUP PAGE - calls dbo.sp_pageitemgroup
@@ -76,7 +77,9 @@ export async function saveItemGroupPageService(
   txtItemGroupName: string,
   lkpFSN: string,
   lkpVATSlab: string,
-  PstrUserID: string
+  PstrUserID: string,
+  // the time the page got from /datetime/server-date (checked here; the server's own time when it is missing or wrong)
+  dtpServerDate?: string
 ): Promise<{
   mode: "S" | "M";
   before: ItemGroupRow | null;
@@ -86,6 +89,9 @@ export async function saveItemGroupPageService(
 
   try {
     await client.query("BEGIN");
+
+    // one time for the rows of this save
+    const serverDate = await resolveServerDate(client, dtpServerDate);
 
     // the percentage that belongs to the chosen slab
     const slab = await client.query(
@@ -104,6 +110,7 @@ export async function saveItemGroupPageService(
     const mode = before ? "M" : "S";
 
     await callSpItemGroupPage(client, {
+        dtpServerDate: serverDate,
       strmode: mode,
       PstrCoID,
       txtItemGroupID,
@@ -206,6 +213,8 @@ async function callSpItemGroupPage(
     txtVATPer?: string;
     original?: string;
     PstrUserID?: string;
+    // the time written on the row (fcuserdate / fmuserdate); null = the procedure's own now()
+    dtpServerDate?: string;
     cursorName?: string;
   }
 ): Promise<void> {
@@ -221,7 +230,8 @@ async function callSpItemGroupPage(
       p_numvatper             => $7::numeric,
       p_original_fitemgroupid => $8::varchar,
       p_pstruserid            => $9::varchar,
-      p_result_cursor         => $10::refcursor
+      p_dtpserverdate         => $10::timestamp,
+      p_result_cursor         => $11::refcursor
     )
     `,
     [
@@ -234,6 +244,7 @@ async function callSpItemGroupPage(
       p.txtVATPer ?? 0,
       p.original ?? null,
       p.PstrUserID ?? null,
+      p.dtpServerDate ?? null,
       p.cursorName ??
         `cur_itemgrouppage_${Date.now()}_${Math.floor(Math.random() * 100000)}`,
     ]

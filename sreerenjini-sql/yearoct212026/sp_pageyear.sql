@@ -23,6 +23,10 @@
 -- (validators/AdministrationYearValidator.ts) before this is called.
 -- =====================================================================
 
+-- ADDED: p_dtpserverdate - the time written on the row (fcuserdate on a newly opened year, fmuserdate when an existing row is set to Open). The page gets it from the database server's clock
+-- (GET /datetime/server-date) and the backend checks it and passes it, so every row of one save carries the same time.
+-- NULL = the procedure's own now(). It sits before the cursor argument; the drop below removes the earlier signature.
+
 drop procedure if exists dbo.sp_pageyear(
     varchar, varchar, varchar, smallint, varchar, refcursor
 );
@@ -33,6 +37,7 @@ create or replace procedure dbo.sp_pageyear(
     in p_strbrid varchar(3) default null,
     in p_intyear smallint default 0,
     in p_pstruserid varchar(30) default null,
+    in p_dtpserverdate timestamp default null,
     inout p_result_cursor refcursor default 'cur_year'
 )
 language plpgsql
@@ -63,7 +68,7 @@ begin
             set fyearclosestatus = 'Open',
                 fyearclosestatusid = 'O',
                 fmuserid = p_pstruserid,
-                fmuserdate = now()
+                fmuserdate = coalesce(p_dtpserverdate, now())
             where fcoid = p_pstrcoid
               and fyear = p_intyear
               and fbrid = p_strbrid;
@@ -75,7 +80,7 @@ begin
                  fcuserid, fcuserdate)
             values
                 (p_pstrcoid, p_intyear, p_strbrid, 'Open', 'O',
-                 p_pstruserid, now());
+                 p_pstruserid, coalesce(p_dtpserverdate, now()));
 
         end if;
 

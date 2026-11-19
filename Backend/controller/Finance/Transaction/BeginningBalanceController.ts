@@ -256,12 +256,15 @@ export const saveBeginningBalance = async (
       PstrYear,
       lkpBranch,
       dtpDate,
+      dtpServerDate,
       rows = [],
     }: {
       PstrCoID: string;
       PstrYear: string;
       lkpBranch: string;
       dtpDate: string;
+      // the time the page got from /datetime/server-date (the service checks it)
+      dtpServerDate?: string;
       rows: BeginningBalanceRowPayload[];
     } = req.body;
 
@@ -342,6 +345,7 @@ export const saveBeginningBalance = async (
       dtpDate,
       rows,
       PstrUserID,
+      dtpServerDate,
     });
 
     // =====================================================

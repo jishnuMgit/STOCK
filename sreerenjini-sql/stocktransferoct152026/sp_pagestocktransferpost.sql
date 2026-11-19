@@ -47,6 +47,10 @@
 --   * the quantity variables are numeric(18,3) (the original had 18,2): the page and the
 --     table have 3 decimals.
 --
+-- ADDED: p_dtpserverdate - the time written on the rows this post creates (fcuserdate of the stock and finance rows). The
+--   page gets it from the database server's clock (GET /datetime/server-date) and the backend checks it and passes it, so
+--   every row of one post carries the same time. NULL = the procedure's own now() (a caller that sends none works as before).
+--
 -- Argument names cannot be changed by CREATE OR REPLACE, so the DROPs below remove the earlier
 -- versions first.
 --
@@ -69,7 +73,8 @@ CREATE OR REPLACE PROCEDURE dbo.sp_pagestocktransferpost(
     IN p_strbrid    varchar(3),
     IN p_strdoctype varchar(5),
     IN p_strdocno   varchar(15),
-    IN p_pstruserid varchar(20) DEFAULT NULL
+    IN p_pstruserid varchar(20) DEFAULT NULL,
+    IN p_dtpserverdate timestamp DEFAULT NULL
 )
 LANGUAGE plpgsql
 AS $$
@@ -133,7 +138,7 @@ BEGIN
         -- ST -------------------------------------------------------------
         -- 1. the From branch's stock row, and its current unit cost
         INSERT INTO dbo.tblstockcontrol (fcoid, fyear, fbrid, fitemid, fcuserid, fcuserdate)
-        SELECT p_pstrcoid, v_stryear, p_strbrid, v_stritemid, p_pstruserid, now()
+        SELECT p_pstrcoid, v_stryear, p_strbrid, v_stritemid, p_pstruserid, COALESCE(p_dtpserverdate, now())
         WHERE NOT EXISTS (
             SELECT 1 FROM dbo.tblstockcontrol
             WHERE fcoid = p_pstrcoid AND fyear = v_stryear
@@ -183,7 +188,7 @@ BEGIN
         -- STI ------------------------------------------------------------
         -- 4. the To branch's stock row, its previous values, the average cost, the stock
         INSERT INTO dbo.tblstockcontrol (fcoid, fyear, fbrid, fitemid, funitcost, fcuserid, fcuserdate)
-        SELECT p_pstrcoid, v_stryear, v_strtobrid, v_stritemid, 0, p_pstruserid, now()
+        SELECT p_pstrcoid, v_stryear, v_strtobrid, v_stritemid, 0, p_pstruserid, COALESCE(p_dtpserverdate, now())
         WHERE NOT EXISTS (
             SELECT 1 FROM dbo.tblstockcontrol
             WHERE fcoid = p_pstrcoid AND fyear = v_stryear
@@ -282,7 +287,7 @@ BEGIN
         VALUES (
             p_pstrcoid, p_pstryear, p_strbrid, p_strdoctype, p_strdocno, v_dtpdate, v_strdescription, 1,
             v_strstockfrombraccountid, v_strccid, 0, COALESCE(v_numcostofstock, 0), false, false, 'GP',
-            p_pstruserid, now()
+            p_pstruserid, COALESCE(p_dtpserverdate, now())
         );
 
         IF dbo.isincomeorexpense(p_pstrcoid, v_strstocktobraccountid) THEN
@@ -300,7 +305,7 @@ BEGIN
         VALUES (
             p_pstrcoid, p_pstryear, p_strbrid, p_strdoctype, p_strdocno, v_dtpdate, v_strdescription, 2,
             v_strstocktobraccountid, v_strccid, COALESCE(v_numcostofstock, 0), 0, false, false, 'GP',
-            p_pstruserid, now()
+            p_pstruserid, COALESCE(p_dtpserverdate, now())
         );
 
         -- the posting transaction number: one for the whole document

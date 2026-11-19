@@ -43,12 +43,20 @@
 --     saved before the column existed is filled when it is modified.
 --   * Needs:  ALTER TABLE dbo.tblstocktrans ADD COLUMN fitemgroupid VARCHAR(12);  and dbo.getitemgroupid.
 --
+-- ADDED: p_dtpserverdate - the time written on the rows (fcuserdate on a new line, fmuserdate on a modify). The page gets it from
+--   the database server's clock (GET /datetime/server-date) and the backend checks it and passes it, so every row of one save
+--   carries the same time. NULL = the procedure's own now() (a caller that sends none works as before).
+--   The signature changed (a new argument), so the earlier version is dropped first.
+--
 -- Examples (cursor calls run inside one transaction)
 --   BEGIN;
 --   CALL dbo.sp_pagestockadjustment('GTL', '01', '2026', 'JD', 'ADJ', 'ADJ0001', p_result_cursor => 'c1');
 --   FETCH ALL FROM "c1";
 --   COMMIT;
 -- =====================================================================
+
+-- the version before p_dtpserverdate was added
+DROP PROCEDURE IF EXISTS dbo.sp_pagestockadjustment(character varying, character varying, character varying, character varying, character varying, character varying, timestamp without time zone, character varying, smallint, character varying, character varying, numeric, numeric, numeric, numeric, smallint, character varying, refcursor);
 
 CREATE OR REPLACE PROCEDURE dbo.sp_pagestockadjustment(
     IN    p_strmode          character varying,
@@ -68,6 +76,7 @@ CREATE OR REPLACE PROCEDURE dbo.sp_pagestockadjustment(
     IN    p_numtotalcost     numeric           DEFAULT 0,
     IN    p_original_fslno   smallint          DEFAULT 0,
     IN    p_pstruserid       character varying DEFAULT NULL::character varying,
+    IN    p_dtpserverdate    timestamp without time zone DEFAULT NULL::timestamp without time zone,
     INOUT p_result_cursor    refcursor         DEFAULT 'cur_stockadjustment'::refcursor)
  LANGUAGE plpgsql
 AS $procedure$
@@ -149,13 +158,13 @@ BEGIN
             COALESCE(p_numqtyout, 0), COALESCE(p_numqtyin, 0),
             COALESCE(p_numunitcost, 0), COALESCE(p_numtotalcost, 0),
             'UI', false,
-            p_pstruserid, now(), v_strsavingno, dbo.getitemgroupid(p_pstrcoid, p_stritemid)
+            p_pstruserid, COALESCE(p_dtpserverdate, now()), v_strsavingno, dbo.getitemgroupid(p_pstrcoid, p_stritemid)
         );
 
     ELSIF p_strmode = 'M' THEN
 
         v_muserid   := p_pstruserid;
-        v_muserdate := now();
+        v_muserdate := COALESCE(p_dtpserverdate, now());
 
         -- the saved-by of the existing rows (the first one's)
         SELECT fcuserid, fcuserdate

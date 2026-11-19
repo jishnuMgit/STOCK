@@ -214,10 +214,13 @@ export const saveDefaultBranch = async (
     const {
       PstrCoID,
       PstrYear,
+      dtpServerDate,
       rows = [],
     }: {
       PstrCoID: string;
       PstrYear: string;
+      // the time the page got from /datetime/server-date (the service checks it)
+      dtpServerDate?: string;
       rows: (DefaultBranchRowPayload & { txtGridRow?: number })[];
     } = req.body;
 
@@ -299,7 +302,8 @@ export const saveDefaultBranch = async (
         txtUserID: String(row.txtUserID ?? ""),
         lkpDefaultBranch: String(row.lkpDefaultBranch ?? ""),
       })),
-      PstrUserID
+      PstrUserID,
+      dtpServerDate
     );
 
     if (!result.anything) {

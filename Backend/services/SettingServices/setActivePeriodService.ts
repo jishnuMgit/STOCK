@@ -1,5 +1,6 @@
 import type { PoolClient } from "pg";
 import pool from "../../DB/db.js";
+import { resolveServerDate } from "../common/DateTimeService.js";
 
 /* =========================================================
    SET ACTIVE PERIOD - calls dbo.sp_pagesetactiveperiod
@@ -92,12 +93,17 @@ async function fetchActivePeriodRows(
 export async function saveActivePeriodService(
   PstrCoID: string,
   rows: ActivePeriodRowPayload[],
-  PstrUserID: string
+  PstrUserID: string,
+  // the time the page got from /datetime/server-date (checked here; the server's own time when it is missing or wrong)
+  dtpServerDate?: string
 ): Promise<{ changed: ActivePeriodChange[]; anything: boolean }> {
   const client: PoolClient = await pool.connect();
 
   try {
     await client.query("BEGIN");
+
+    // one time for every branch of this save
+    const serverDate = await resolveServerDate(client, dtpServerDate);
 
     const saved = await fetchActivePeriodRows(client, PstrCoID, PstrUserID);
     const savedByBranch = new Map(saved.map((row) => [row.fbrid, row]));
@@ -137,6 +143,7 @@ export async function saveActivePeriodService(
         dtpFromDate: item.dtpFromDate,
         dtpToDate: item.dtpToDate,
         PstrUserID,
+        serverDate,
       });
     }
 
@@ -166,6 +173,8 @@ async function callSpActivePeriod(
     dtpFromDate?: string;
     dtpToDate?: string;
     PstrUserID?: string;
+    // the time written on the row (fmuserdate); null = the procedure's own now()
+    serverDate?: string | null;
     cursorName?: string;
   }
 ): Promise<void> {
@@ -178,7 +187,8 @@ async function callSpActivePeriod(
       p_dtpfromdate   => $4::date,
       p_dtptodate     => $5::date,
       p_pstruserid    => $6::varchar,
-      p_result_cursor => $7::refcursor
+      p_dtpserverdate => $7::timestamp,
+      p_result_cursor => $8::refcursor
     )
     `,
     [
@@ -188,6 +198,7 @@ async function callSpActivePeriod(
       p.dtpFromDate ?? null,
       p.dtpToDate ?? null,
       p.PstrUserID ?? null,
+      p.serverDate ?? null,
       p.cursorName ??
         `cur_setactiveperiod_${Date.now()}_${Math.floor(Math.random() * 100000)}`,
     ]

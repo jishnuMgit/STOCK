@@ -1,5 +1,6 @@
 import type { PoolClient } from "pg";
 import pool from "../../DB/db.js";
+import { resolveServerDate } from "../common/DateTimeService.js";
 
 /* =========================================================
    ADMINISTRATION > BRANCH - calls dbo.sp_pagebranch (the port of the old
@@ -135,12 +136,17 @@ export async function saveAdministrationBranchService(data: {
   rows: AdministrationBranchRowPayload[];
   // the branches the user took out of the list (deleted only now)
   deletedRows?: { txtBrID: string }[];
+  // the time the page got from /datetime/server-date (checked here; the server's own time when it is missing or wrong)
+  dtpServerDate?: string;
 }): Promise<AdministrationBranchSaved[]> {
   const client: PoolClient = await pool.connect();
   const done: AdministrationBranchSaved[] = [];
 
   try {
     await client.query("BEGIN");
+
+    // one time for every row of this save
+    const serverDate = await resolveServerDate(client, data.dtpServerDate);
 
     // what the branches are now (for "changed from ... to ...")
     const current = await fetchCursor<AdministrationBranchRow>(
@@ -230,7 +236,8 @@ export async function saveAdministrationBranchService(data: {
           p_strbrname      => $4::varchar,
           p_intpositionno  => $5::smallint,
           p_pstruserid     => $6::varchar,
-          p_stroriginal_brid => $7::varchar
+          p_stroriginal_brid => $7::varchar,
+          p_dtpserverdate  => $8::timestamp
         )
         `,
         [
@@ -241,6 +248,7 @@ export async function saveAdministrationBranchService(data: {
           txtPositionNo,
           data.PstrUserID,
           before?.fbrid ?? null,
+          serverDate,
         ]
       );
 

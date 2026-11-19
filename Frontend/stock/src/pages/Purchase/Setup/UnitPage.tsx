@@ -7,6 +7,7 @@ import { useConfirmModal } from "../../../hooks/useConfirmModal";
 import { useDeleteToast } from "../../../hooks/useDeleteToast";
 import { useGridCellFocus } from "../../../hooks/useGridCellFocus";
 import Header from "../../../components/common/Header";
+import { tryGetServerDate } from "../../../utils/serverDate";
 
 // ============================================================
 // TYPES
@@ -432,6 +433,9 @@ const UnitPage: React.FC = () => {
     setSaving(true);
 
     try {
+      // the time of the save: the database server's clock (the common /datetime/server-date), written on every row
+      const dtpServerDate = await tryGetServerDate();
+
       const response = await fetch(
         `${import.meta.env.VITE_API_URL}/Unit/saveUnit`,
         {
@@ -442,6 +446,7 @@ const UnitPage: React.FC = () => {
             PstrCoID,
             PstrYear,
             PstrUserID,
+            dtpServerDate,
             rows: filledRows.map(({ row, index }) => ({
               txtGridRow: index, // where the row sits in the grid (for the focus)
               txtUnit: row.txtUnit.trim(),

@@ -8,6 +8,7 @@ import { useDeleteToast } from "../../../hooks/useDeleteToast";
 import { useInitialFocus } from "../../../hooks/useInitialFocus";
 import CommonTableSelect from "../../../components/common/CommonTableSelect";
 import Header from "../../../components/common/Header";
+import { tryGetServerDate } from "../../../utils/serverDate";
 
 // ============================================================
 // TYPES
@@ -285,6 +286,9 @@ const ItemGroupPage: React.FC = () => {
     }
 
     try {
+      // the time of the save: the database server's clock (the common /datetime/server-date), written on the row(s)
+      const dtpServerDate = await tryGetServerDate();
+
       const response = await fetch(
         `${import.meta.env.VITE_API_URL}/ItemGroup/saveItemGroup`,
         {
@@ -295,6 +299,7 @@ const ItemGroupPage: React.FC = () => {
             PstrCoID,
             PstrYear,
             PstrUserID,
+            dtpServerDate,
             txtItemGroupID,
             txtItemGroupName,
             lkpFSN,

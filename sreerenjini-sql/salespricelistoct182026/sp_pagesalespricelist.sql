@@ -15,6 +15,11 @@
 --   * the update also stamps fmuserid / fmuserdate of the tblitemtl row, and
 --     the grid is ordered by item id
 --
+-- ADDED: p_dtpserverdate - the time written on fmuserdate (modes MTL / MTLA). The page gets it from the database server's
+--   clock (GET /datetime/server-date), the backend checks it and passes it, so every item of one Modify carries the same time.
+--   NULL = the procedure's own now(). It sits before the cursor argument, so this is no longer exactly the TL's signature
+--   (one optional argument more); the DROP below removes the TL's version first.
+--
 -- Modes
 --   GBTL  the grid: the items of the branch (p_strbrid) with unit, cost and
 --         price. p_rd_itemgroup = 0 -> only the item group p_stritemgroupid,
@@ -45,6 +50,7 @@ create or replace procedure dbo.sp_pagesalespricelist(
     in p_pstruserid varchar(20) default null,
     in p_strscreenname varchar(50) default null,
     in p_strmoduleid varchar(4) default null,
+    in p_dtpserverdate timestamp default null,
     inout p_result_cursor refcursor default 'cur_editpricelistnew'
 )
 language plpgsql
@@ -106,7 +112,7 @@ begin
             update dbo.tblitemtl
             set funitprice = coalesce(p_numunitprice, 0),
                 fmuserid = p_pstruserid,
-                fmuserdate = now()
+                fmuserdate = coalesce(p_dtpserverdate, now())
             where fcoid = p_pstrcoid
               and fbrid = p_strbrid
               and fitemid = p_stritemid;
@@ -118,7 +124,7 @@ begin
             update dbo.tblitemtl
             set funitprice = coalesce(p_numunitprice, 0),
                 fmuserid = p_pstruserid,
-                fmuserdate = now()
+                fmuserdate = coalesce(p_dtpserverdate, now())
             where fcoid = p_pstrcoid
               and fitemid = p_stritemid;
         end if;

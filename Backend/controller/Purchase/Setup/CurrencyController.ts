@@ -95,6 +95,7 @@ export const saveCurrencies = async (
       coId,
       year,
       userId,
+      dtpServerDate: body.dtpServerDate,
       inserted: body.inserted,
       updated: body.updated,
       deleted: body.deleted,

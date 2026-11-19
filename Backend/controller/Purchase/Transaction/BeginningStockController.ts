@@ -240,6 +240,7 @@ export const saveBeginningStock = async (
       PstrYear,
       lkpBranch,
       dtpDate,
+      dtpServerDate,
       txtNote = "",
       rows = [],
     }: {
@@ -247,6 +248,8 @@ export const saveBeginningStock = async (
       PstrYear: string;
       lkpBranch: string;
       dtpDate: string;
+      // the time the page got from /datetime/server-date (the service checks it)
+      dtpServerDate?: string;
       txtNote?: string;
       rows: (BeginningStockRowPayload & { txtGridRow?: number })[];
     } = req.body;
@@ -330,6 +333,7 @@ export const saveBeginningStock = async (
       txtNote: String(txtNote ?? "").trim(),
       rows,
       PstrUserID,
+      dtpServerDate,
     });
 
     // =====================================================
@@ -704,7 +708,14 @@ export const postBeginningStock = async (
       PstrCoID,
       PstrYear,
       lkpBranch,
-    }: { PstrCoID: string; PstrYear: string; lkpBranch: string } = req.body;
+      dtpServerDate,
+    }: {
+      PstrCoID: string;
+      PstrYear: string;
+      lkpBranch: string;
+      // the time the page got from /datetime/server-date (the service checks it)
+      dtpServerDate?: string;
+    } = req.body;
 
     if (!PstrCoID) {
       return res.status(400).json({
@@ -783,6 +794,7 @@ export const postBeginningStock = async (
       PstrYear: Number(PstrYear),
       lkpBranch,
       PstrUserID,
+      dtpServerDate,
     });
 
     // =====================================================

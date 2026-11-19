@@ -1,8 +1,12 @@
 -- PROCEDURE: dbo.sp_pagesetchartofaccount(IN p_strmode character varying, IN p_pstrcoid character varying, IN p_intslno smallint, IN p_strtype character varying, IN p_straccountid character varying, IN p_strgph character varying, IN p_intoriginal_slno smallint, IN p_stroriginal_type character varying, IN p_pstruserid character varying, IN p_result_cursor refcursor)
 
--- DROP PROCEDURE IF EXISTS dbo.sp_pagesetchartofaccount(IN p_strmode character varying, IN p_pstrcoid character varying, IN p_intslno smallint, IN p_strtype character varying, IN p_straccountid character varying, IN p_strgph character varying, IN p_intoriginal_slno smallint, IN p_stroriginal_type character varying, IN p_pstruserid character varying, IN p_result_cursor refcursor);
+-- ADDED: p_dtpserverdate - the time written on the row (fcuserdate on a new row, fmuserdate on a modified row). The page gets it from the database server's clock
+-- (GET /datetime/server-date) and the backend checks it and passes it, so every row of one save carries the same time.
+-- NULL = the procedure's own now(). It sits before the cursor argument, so the earlier signature is dropped first.
 
-CREATE OR REPLACE PROCEDURE dbo.sp_pagesetchartofaccount(IN p_strmode character varying, IN p_pstrcoid character varying, IN p_intslno smallint DEFAULT 0, IN p_strtype character varying DEFAULT NULL::character varying, IN p_straccountid character varying DEFAULT NULL::character varying, IN p_strgph character varying DEFAULT NULL::character varying, IN p_intoriginal_slno smallint DEFAULT 0, IN p_stroriginal_type character varying DEFAULT NULL::character varying, IN p_pstruserid character varying DEFAULT NULL::character varying, IN p_result_cursor refcursor DEFAULT 'cur_setchartofaccount'::refcursor)
+DROP PROCEDURE IF EXISTS dbo.sp_pagesetchartofaccount(IN p_strmode character varying, IN p_pstrcoid character varying, IN p_intslno smallint, IN p_strtype character varying, IN p_straccountid character varying, IN p_strgph character varying, IN p_intoriginal_slno smallint, IN p_stroriginal_type character varying, IN p_pstruserid character varying, IN p_result_cursor refcursor);
+
+CREATE OR REPLACE PROCEDURE dbo.sp_pagesetchartofaccount(IN p_strmode character varying, IN p_pstrcoid character varying, IN p_intslno smallint DEFAULT 0, IN p_strtype character varying DEFAULT NULL::character varying, IN p_straccountid character varying DEFAULT NULL::character varying, IN p_strgph character varying DEFAULT NULL::character varying, IN p_intoriginal_slno smallint DEFAULT 0, IN p_stroriginal_type character varying DEFAULT NULL::character varying, IN p_pstruserid character varying DEFAULT NULL::character varying, IN p_dtpserverdate timestamp without time zone DEFAULT NULL::timestamp without time zone, IN p_result_cursor refcursor DEFAULT 'cur_setchartofaccount'::refcursor)
  LANGUAGE plpgsql
 AS $procedure$
 BEGIN
@@ -21,7 +25,7 @@ BEGIN
         )
         VALUES (
             p_pstrcoid, p_intslno, p_strtype, p_straccountid, p_strgph,
-            p_pstruserid, now()
+            p_pstruserid, coalesce(p_dtpserverdate, now())
         );
     END IF;
 
@@ -32,7 +36,7 @@ BEGIN
             fgaccountid = p_straccountid,
             fgph        = p_strgph,
             fmuserid    = p_pstruserid,
-            fmuserdate  = now()
+            fmuserdate  = coalesce(p_dtpserverdate, now())
         WHERE fcoid = p_pstrcoid
           AND ftype = p_stroriginal_type
           AND fslno = p_intoriginal_slno;
