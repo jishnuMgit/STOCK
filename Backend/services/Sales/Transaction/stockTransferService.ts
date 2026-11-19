@@ -948,11 +948,13 @@ export async function getStockTransferPrintService(
     txtDocNo
   );
 
-
+  // The filter is built HERE, from values the controller has already validated,
+  // each one quoted - never from the browser (the procedure joins it as text).
+  const quote = (value: string) => value.replace(/'/g, "''");
 
   const strFilter =
     `a.fcoid = '${quote(PstrCoID)}' and a.fyear = '${Math.trunc(Number(PstrYear))}' ` +
-    `and a.fbrid = '${quote(lkpBranch)}' and a.fdoctype = '${DOC_TYPE}' ` +
+    `and a.fbrid = '${quote(lkpBranch)}' and a.fdoctype = '${strDocType}' ` +
     `and a.fdocno = '${quote(txtDocNo)}'`;
 
   const cursorName =
@@ -1103,8 +1105,8 @@ async function callSpStockTransfer(
       p.PstrCoID,
       String(p.PstrYear),
       p.lkpBranch,
-      DOC_TYPE,
-      DOC_TYPE_G,
+      strDocType,
+      strDocTypeG,
       p.txtDocNo,
       p.lkpToBranch ?? null,
       p.dtpDate ?? null,
