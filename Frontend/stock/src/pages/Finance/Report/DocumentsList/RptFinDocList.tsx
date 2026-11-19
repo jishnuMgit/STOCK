@@ -67,7 +67,7 @@ const RptFinDocList: React.FC = () => {
   };
 
   return (
-    <ReportForm title="Document List">
+    <ReportForm title="Document List" labelWidth={176}>
       <BranchOnlyFilter options={branchOptions} value={branch} onChange={setBranch} />
 
       <SingleFilter
@@ -83,7 +83,7 @@ const RptFinDocList: React.FC = () => {
       {/* Filter mode: by document number or by document date */}
       <FilterRow
         panel={
-          <RadioPanel id="rdgFilter" className="h-17.5 w-38">
+          <RadioPanel id="rdgFilter" className="h-17.5 w-[var(--filter-panel,9.5rem)]">
             <CustomRadio
               name="rdgFilter"
               value="By Document No."

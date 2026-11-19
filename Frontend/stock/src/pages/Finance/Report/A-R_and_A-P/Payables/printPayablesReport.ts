@@ -59,7 +59,7 @@ export const buildHtml = (r: PrintReport) => {
   @page {
     size: A4;
     margin: 12.7mm 10mm 14mm 25.4mm;
-    @top-right    { content: "Page " counter(page) " / " counter(pages); font: ${size.small}pt ${font}; }
+    @top-right    { content: "Page " counter(page) " of " counter(pages); font: ${size.small}pt ${font}; }
     @bottom-right { content: "Printed : ${cssStr(r.reportInfo)}"; font: ${size.small}pt ${font}; }
   }
   * { box-sizing: border-box; }

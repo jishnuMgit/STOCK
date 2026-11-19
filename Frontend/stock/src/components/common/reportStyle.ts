@@ -167,7 +167,7 @@ export const reportPrintCss = ({ look = "classic", orientation, marginLeft, grou
   @page {
     size: A4 ${orientation};
     margin: 12.7mm 10mm 12.7mm ${marginLeft};
-    @top-right { content: "Page " counter(page) " / " counter(pages); font: ${size.small}pt ${font}; }
+    @top-right { content: "Page " counter(page) " of " counter(pages); font: ${size.small}pt ${font}; }
     ${reportInfo ? `@bottom-right { content: "Printed : ${cssStr(reportInfo)}"; font: ${size.small}pt ${font}; }` : ""}
   }
   * { box-sizing: border-box; }
@@ -227,7 +227,7 @@ export const documentPrintCss = ({
   @page {
     size: A4 ${orientation};
     margin: ${margin};
-    @top-right    { content: "Page " counter(page) " / " counter(pages); font: ${size.small}pt ${font}; }
+    @top-right    { content: "Page " counter(page) " of " counter(pages); font: ${size.small}pt ${font}; }
     @bottom-right { content: "Printed : ${reportInfo}"; font: ${size.small}pt ${font}; }
   }
   * { box-sizing: border-box; }

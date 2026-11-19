@@ -3,7 +3,7 @@ import { toast } from "react-toastify";
 
 import { saveFile } from "../../pages/Finance/Report/ChartOfAccount/saveFile";
 import Header from "./Header";
-import { previewPrintedLine } from "./printHtml";
+import { previewPrintedLine, printPdfBlob } from "./printHtml";
 
 // ============================================================
 // THE PRINT PREVIEW (the same window as the Chart Of Account report)
@@ -93,13 +93,24 @@ const ReportPreview: React.FC<Props> = ({
       .replace("</body>", `${printed.line}</body>`);
   }, [html]);
 
-  const handlePrint = () => {
-    if (busy) return;
+  // Print: the PDF of the report goes to the browser's print window - the same page as Download (the page number on
+  // the branch line, the report info at the bottom). When the PDF cannot be made or opened, the web page is printed.
+  const handlePrint = async () => {
+    if (busy || downloading.current) return;
+    downloading.current = true;
 
+    setBusy(true);
     try {
-      onPrint();
+      await printPdfBlob(await buildPdf());
     } catch {
-      toast.error("Could not open the print view");
+      try {
+        onPrint();
+      } catch {
+        toast.error("Could not open the print view");
+      }
+    } finally {
+      downloading.current = false;
+      setBusy(false);
     }
   };
 

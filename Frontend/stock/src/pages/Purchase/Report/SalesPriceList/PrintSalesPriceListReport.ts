@@ -77,7 +77,7 @@ export const buildHtml = (r: PriceListReport) => `<!doctype html>
   @page {
     size: A4 portrait;
     margin: 12mm 10mm 14mm 15mm;
-    @top-right    { content: "Page " counter(page) " / " counter(pages); font: ${LOOK.size.small}pt ${LOOK.css.family}; }
+    @top-right    { content: "Page " counter(page) " of " counter(pages); font: ${LOOK.size.small}pt ${LOOK.css.family}; }
     @bottom-right { content: "Printed : ${cssStr(r.reportInfo)}"; font: ${LOOK.size.small}pt ${LOOK.css.family}; }
   }
   * { box-sizing: border-box; }

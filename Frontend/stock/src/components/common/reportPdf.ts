@@ -204,6 +204,6 @@ export const addPageNumbers = (doc: jsPDF, pageW: number, margin: PdfMargin, loo
 
   for (let i = 1; i <= pages; i++) {
     doc.setPage(i);
-    doc.text(`Page ${i} / ${pages}`, pageW - margin.right, margin.top, { align: "right" });
+    doc.text(`Page ${i} of ${pages}`, pageW - margin.right, margin.top + 22 + REPORT_STYLE.pdf.titleGap, { align: "right" });
   }
 };

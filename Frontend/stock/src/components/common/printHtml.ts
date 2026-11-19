@@ -100,3 +100,42 @@ export const printHtmlDocument = (html: string): void => {
     else openPrintDialog();
   }, 250);
 };
+
+// Prints a PDF file (what jsPDF made) through the browser's print window, from a hidden iframe. The PDF has the page
+// number, the branch and the report info exactly where the report puts them (a browser can draw "Page x of y" only in
+// the page margin when it prints a web page, never on the branch line).
+export const printPdfBlob = (blob: Blob): Promise<void> =>
+  new Promise((resolve, reject) => {
+    const url = URL.createObjectURL(blob);
+    const iframe = document.createElement("iframe");
+    iframe.style.cssText = "position:fixed;right:0;bottom:0;width:1px;height:1px;border:0;opacity:0;pointer-events:none";
+
+    const cleanup = () => {
+      iframe.remove();
+      URL.revokeObjectURL(url);
+    };
+
+    iframe.onload = () => {
+      // the browser's PDF viewer needs a moment after the load before it can print
+      setTimeout(() => {
+        try {
+          iframe.contentWindow?.focus();
+          iframe.contentWindow?.print();
+          resolve();
+          // some browsers never say when the printing is over: remove it after a minute
+          setTimeout(cleanup, 60000);
+        } catch (error) {
+          cleanup();
+          reject(error);
+        }
+      }, 500);
+    };
+
+    iframe.onerror = () => {
+      cleanup();
+      reject(new Error("Could not open the PDF"));
+    };
+
+    iframe.src = url;
+    document.body.appendChild(iframe);
+  });
