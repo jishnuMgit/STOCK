@@ -7,7 +7,7 @@ import pool from "../../../DB/db.js";
    doc no 'BS', one per branch. 'BG' is the Finance Beginning Balance.)
 ========================================================= */
 
-const DOC_TYPE = "BS";
+const strDocType = "BS";
 const DOC_NO = "BS";
 
 /* =========================================================
@@ -147,7 +147,7 @@ export async function isBeginningStockPostedService(
       AND fpost = true
     LIMIT 1
     `,
-    [PstrCoID, lkpBranch, DOC_TYPE]
+    [PstrCoID, lkpBranch, strDocType]
   );
 
   return (result.rowCount ?? 0) > 0;
@@ -361,7 +361,7 @@ export async function saveBeginningStockService(p: {
         AND fdoctype = $4
         AND fdocno   = $5
       `,
-      [p.PstrCoID, p.PstrYear, p.lkpBranch, DOC_TYPE, DOC_NO]
+      [p.PstrCoID, p.PstrYear, p.lkpBranch, strDocType, DOC_NO]
     );
 
     const savingTransNo: string =
@@ -751,7 +751,7 @@ export async function postBeginningStockService(p: {
         AND fdocno   = $5
         AND fpost    = false
       `,
-      [p.PstrCoID, p.PstrYear, p.lkpBranch, DOC_TYPE, DOC_NO]
+      [p.PstrCoID, p.PstrYear, p.lkpBranch, strDocType, DOC_NO]
     );
 
     if (!unposted.rows[0]?.count) {
@@ -775,7 +775,7 @@ export async function postBeginningStockService(p: {
         p.PstrCoID,
         String(p.PstrYear),
         p.lkpBranch,
-        DOC_TYPE,
+        strDocType,
         DOC_NO,
         p.PstrUserID,
       ]
@@ -803,7 +803,7 @@ export async function postBeginningStockService(p: {
         )
       LIMIT 1
       `,
-      [p.PstrCoID, p.PstrYear, p.lkpBranch, DOC_TYPE, DOC_NO]
+      [p.PstrCoID, p.PstrYear, p.lkpBranch, strDocType, DOC_NO]
     );
 
     if ((missing.rowCount ?? 0) > 0) {
@@ -872,7 +872,7 @@ export async function getBeginningStockPrintService(
 
   const strFilter =
     `a.fcoid = '${quote(PstrCoID)}' and a.fbrid = '${quote(lkpBranch)}' ` +
-    `and a.fdoctype = '${DOC_TYPE}'`;
+    `and a.fdoctype = '${strDocType}'`;
 
   const cursorName =
     `cur_beginningstockprint_${Date.now()}_${Math.floor(Math.random() * 100000)}`;
@@ -890,7 +890,7 @@ export async function getBeginningStockPrintService(
          p_strfilter     => $2::text,
          p_result_cursor => $3::refcursor
        )`,
-      [DOC_TYPE, strFilter, cursorName]
+      [strDocType, strFilter, cursorName]
     );
 
     const result = await client.query(`FETCH ALL FROM "${cursorName}"`);
@@ -1004,7 +1004,7 @@ async function callSpBeginningStock(
       p.PstrCoID,
       String(p.PstrYear),
       p.lkpBranch,
-      DOC_TYPE,
+      strDocType,
       DOC_NO,
       p.dtpDate ?? null,
       p.intSlNo ?? 0,
