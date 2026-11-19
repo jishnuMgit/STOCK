@@ -22,6 +22,7 @@ import selectComponents, {
   SELECT_FONT_FAMILY,
 } from "../../../components/sharecomponents/selectComponents";
 import Header from "../../../components/common/Header";
+import { tryGetServerDate } from "../../../utils/serverDate";
 
 // The clear mark of the Unit box: the same small grey x as the one on a Branch row (not react-select's big dark one)
 const unitSelectComponents = {
@@ -469,6 +470,9 @@ const MENU_ID = "010201";
     }
 
     try {
+      // the time of the save: the database server's clock (the common /datetime/server-date), written on the row(s)
+      const dtpServerDate = await tryGetServerDate();
+
       const response = await fetch(
         `${import.meta.env.VITE_API_URL}/Item/saveItem`,
         {
@@ -478,6 +482,7 @@ const MENU_ID = "010201";
           body: JSON.stringify({
             PstrCoID,
             PstrUserID,
+            dtpServerDate,
             txtItemID,
             txtItemName,
             txtItemDescription: txtItemDescription || null,

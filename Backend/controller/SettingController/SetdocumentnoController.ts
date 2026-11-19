@@ -274,6 +274,7 @@ export const saveDocumentNo = async (
       lkpBranch,
       lkpModule,
       PstrUserID,
+      dtpServerDate,
       rows,
     }: {
       PstrCoID: string;
@@ -281,6 +282,8 @@ export const saveDocumentNo = async (
       lkpBranch: string;
       lkpModule: string;
       PstrUserID: string;
+      // the time the page got from /datetime/server-date (the service checks it)
+      dtpServerDate?: string;
       rows: DocumentNoRowPayload[];
     } = req.body;
 
@@ -360,7 +363,8 @@ export const saveDocumentNo = async (
       lkpBranch,
       lkpModule,
       PstrUserID,
-      rows
+      rows,
+      dtpServerDate
     );
 
     return res.status(200).json({

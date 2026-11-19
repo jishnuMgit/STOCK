@@ -3,6 +3,7 @@ import { Response } from "express";
 import type { AuthenticatedRequest } from "../../../middleware/authMiddleware.js";
 import { UserAudit } from "../../../utils/UserAudit.js";
 import { hasButtonRight } from "../../../utils/buttonRights.js";
+import { resolveServerDate } from "../../../services/common/DateTimeService.js";
 import { validateStockDocumentPost } from "../../../validators/StockDocumentPostValidator.js";
 import {
   getBranches,
@@ -193,6 +194,8 @@ export const postDocuments = async (
       lkpDocument?: unknown;
       lkpYear?: unknown;
       lkpMonth?: unknown;
+      // the time the page got from /datetime/server-date (checked by resolveServerDate)
+      dtpServerDate?: unknown;
       documents?: { txtDocNo?: unknown }[];
     };
 
@@ -258,6 +261,10 @@ export const postDocuments = async (
         field: "lkpDocument",
       });
     }
+
+    // ONE time for the whole post: the page's server date (checked), or this server's own time. Every document posted below
+    // - each in its own transaction - carries it.
+    const serverDate = await resolveServerDate(undefined, body.dtpServerDate);
 
     let postedCount = 0;
     let outOfStockCount = 0;
@@ -349,7 +356,7 @@ export const postDocuments = async (
       }
 
       try {
-        postedCount += await postDocument({ ...doc, PstrUserID });
+        postedCount += await postDocument({ ...doc, PstrUserID, dtpServerDate: serverDate });
       } catch (error: unknown) {
         // a document that could not be posted: the others go on, as the old form did. The reason is the
         // database's own message (e.g. "The Stock Account of the Branch SA is not set"), and it is shown

@@ -36,6 +36,10 @@
 --   The post order (fPostOrder / fPostOrderC / getnextpostorder) is NOT used
 --   for now: all its lines stay commented, exactly as pasted.
 --
+-- ADDED: p_dtpserverdate - the time written on the stock rows this post creates (fcuserdate). The page gets it from the
+--   database server's clock (GET /datetime/server-date) and the backend checks it and passes it. NULL = the procedure's own
+--   now() (a caller that sends none works as before).
+--
 -- Test (rolled back):
 --   BEGIN;
 --   CALL dbo.sp_pagebeginningstockpost('P', '01', '2026', 'JD', 'BS', 'BS', 'ADMIN');
@@ -55,7 +59,8 @@ CREATE OR REPLACE PROCEDURE dbo.sp_pagebeginningstockpost
     IN p_strbrid varchar(3),
     IN p_strdoctype varchar(5),
     IN p_strdocno varchar(15),
-    IN p_gstruserid varchar(20) DEFAULT NULL
+    IN p_gstruserid varchar(20) DEFAULT NULL,
+    IN p_dtpserverdate timestamp DEFAULT NULL
 )
 LANGUAGE plpgsql
 AS $$
@@ -125,7 +130,7 @@ BEGIN
                 (fCoID, fItemID, fYear, fBrID, fPreviousStock, fStock,
                  fPreviousUnitCost, fUnitCost, fCUserID, fCUserDate)
             SELECT p_pstrcoid, v_stritemid, p_pstryear, p_strbrid, 0, 0,
-                   0, 0, p_gstruserid, now()
+                   0, 0, p_gstruserid, COALESCE(p_dtpserverdate, now())
             WHERE NOT EXISTS (
                 SELECT 1 FROM dbo.tblStockControl
                 WHERE fCoID = p_pstrcoid

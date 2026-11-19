@@ -32,6 +32,7 @@ import { useButtonPermissions } from "../../../hooks/useButtonPermissions";
 import { filterLabelOrValue } from "../../../components/BranchSelect/branchSelectParts";
 import { SELECT_FONT_FAMILY } from "../../../components/sharecomponents/selectComponents";
 import Header from "../../../components/common/Header";
+import { tryGetServerDate } from "../../../utils/serverDate";
 
 interface SelectOption {
   value: string;
@@ -1076,6 +1077,9 @@ const BeginningStockPage: React.FC = () => {
     setSaving(true);
 
     try {
+      // the time of the save: the database server's clock (the common /datetime/server-date), written on every line
+      const dtpServerDate = await tryGetServerDate();
+
       const response = await fetch(
         `${import.meta.env.VITE_API_URL}/BeginningStock/saveBeginningStock`,
         {
@@ -1087,6 +1091,7 @@ const BeginningStockPage: React.FC = () => {
             PstrYear,
             lkpBranch: lkpBranch.value,
             dtpDate,
+            dtpServerDate,
             txtNote,
             rows: filledRows.map(({ row, index }) => ({
               txtGridRow: index, // where the row sits in the grid (for the focus)
@@ -1272,6 +1277,9 @@ const BeginningStockPage: React.FC = () => {
     setSaving(true);
 
     try {
+      // the time of the post: the database server's clock (the common /datetime/server-date)
+      const dtpServerDate = await tryGetServerDate();
+
       const response = await fetch(
         `${import.meta.env.VITE_API_URL}/BeginningStock/postBeginningStock`,
         {
@@ -1282,6 +1290,7 @@ const BeginningStockPage: React.FC = () => {
             PstrCoID,
             PstrYear,
             lkpBranch: lkpBranch.value,
+            dtpServerDate,
           }),
         },
       );

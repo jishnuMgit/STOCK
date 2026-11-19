@@ -7,6 +7,7 @@ import { useAltShortcuts } from "../../hooks/useAltShortcuts";
 import { useEnterAsTab } from "../../hooks/useEnterAsTab";
 import { useButtonPermissions } from "../../hooks/useButtonPermissions";
 import { useGridCellFocus } from "../../hooks/useGridCellFocus";
+import { tryGetServerDate } from "../../utils/serverDate";
 import { useAdvanceAfterSelect } from "../../hooks/useAdvanceAfterSelect";
 import Select, {
   components,
@@ -722,6 +723,9 @@ const SetChartOfAccount: React.FC = () => {
     setSaving(true);
 
     try {
+      // the time of the save: the database server's clock (the common /datetime/server-date), written on every row
+      const dtpServerDate = await tryGetServerDate();
+
       const response = await fetch(
         `${import.meta.env.VITE_API_URL}/SetChartOfAccount/saveChartOfAccount`,
         {
@@ -732,6 +736,7 @@ const SetChartOfAccount: React.FC = () => {
             PstrCoID,
             PstrYear,
             PstrUserID,
+            dtpServerDate,
             rows: filledRows.map(({ row, rowNo }, index) => ({
               txtGridRow: rowNo - 1, // where the row sits in the grid (for the focus)
               txtSlNo: index + 1,

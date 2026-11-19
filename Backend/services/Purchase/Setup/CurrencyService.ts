@@ -2,6 +2,7 @@
 // Data access + business rules for the Currency page.
 import type { PoolClient } from "pg";
 import pool from "../../../DB/db.js";
+import { resolveServerDate } from "../../common/DateTimeService.js";
 
 const SCREEN_NAME = "pageCurrency";
 const MENU_NAME = "Currency";
@@ -25,6 +26,8 @@ export type SavePayload = {
   coId: string;
   year: string;
   userId: string;
+  // the time the page got from /datetime/server-date (checked here; the server's own time when it is missing or wrong)
+  dtpServerDate?: string;
   inserted?: unknown[];
   updated?: unknown[];
   deleted?: unknown[];
@@ -88,7 +91,7 @@ const cleanRow = (row: any): NewRow => {
 
 const callProc = (
   db: Db,
-  p: { coId: string; yearNo: number; userId: string },
+  p: { coId: string; yearNo: number; userId: string; serverDate: string | null },
   mode: "S" | "M" | "D",
   currency: string | null,
   originalCurrency: string | null,
@@ -103,7 +106,8 @@ const callProc = (
        p_pstruserid          => $6::varchar,
        p_strmenuname         => $7::varchar,
        p_strscreenname       => $8::varchar,
-       p_strmoduleid         => $9::varchar)`,
+       p_strmoduleid         => $9::varchar,
+       p_dtpserverdate       => $10::timestamp)`,
     [
       mode,
       p.coId,
@@ -114,6 +118,7 @@ const callProc = (
       MENU_NAME,
       SCREEN_NAME,
       MODULE_ID,
+      p.serverDate,
     ],
   );
 
@@ -137,12 +142,17 @@ export const saveCurrencies = async (p: SavePayload): Promise<void> => {
     coId: p.coId,
     yearNo: Number(p.year) || 0,
     userId: p.userId,
+    // the time written on every row of this save (set after the transaction starts)
+    serverDate: null as string | null,
   };
 
   const client = await pool.connect();
 
   try {
     await client.query("BEGIN");
+
+    // one time for every row of this save
+    ctx.serverDate = await resolveServerDate(client, p.dtpServerDate);
 
     // 1) removed rows
     //    (the currency is sent as p_strcurrency too: the procedure's delete

@@ -12,6 +12,7 @@ import type { PairOption } from "../../../components/PairSelect/pairSelectParts"
 import { useAltShortcuts } from "../../../hooks/useAltShortcuts";
 import { useButtonPermissions } from "../../../hooks/useButtonPermissions";
 import Header from "../../../components/common/Header";
+import { tryGetServerDate } from "../../../utils/serverDate";
 
 // ============================================================
 // SALES PRICE LIST (the old frmEditPriceList)
@@ -392,6 +393,9 @@ const SalesPriceListPage: React.FC<SalesPriceListPageProps> = ({ onClose }) => {
     setSaving(true);
 
     try {
+      // the time of the modify: the database server's clock (the common /datetime/server-date), written on every item
+      const dtpServerDate = await tryGetServerDate();
+
       const response = await fetch(`${api}/SalesPriceList/modifySalesPriceList`, {
         method: "POST",
         credentials: "include", // the server checks the session and the rights
@@ -403,6 +407,7 @@ const SalesPriceListPage: React.FC<SalesPriceListPageProps> = ({ onClose }) => {
           rdgItemGroup,
           lkpItemGroupID: rdgItemGroup === 0 ? lkpItemGroupID : "",
           chkApplyToAllBranches,
+          dtpServerDate,
           rows: changedRows.map((row) => ({
             lkpItemID: row.lkpItemID,
             txtUnitPrice: row.txtUnitPrice,

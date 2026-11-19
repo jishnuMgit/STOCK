@@ -5,7 +5,11 @@
 
 -- PROCEDURE: dbo.sp_pagesetpostingaccount(character varying, character varying, character varying, character varying, character varying, character varying, character varying, character varying, character varying, character varying, character varying, character varying, character varying, character varying, character varying, refcursor)
 
--- DROP PROCEDURE IF EXISTS dbo.sp_pagesetpostingaccount(character varying, character varying, character varying, character varying, character varying, character varying, character varying, character varying, character varying, character varying, character varying, character varying, character varying, character varying, character varying, refcursor);
+-- ADDED: p_dtpserverdate - the time written on the row (fcuserdate on a new row, fmuserdate on a modify). The page gets it from the database server's clock
+-- (GET /datetime/server-date) and the backend checks it and passes it, so every row of one save carries the same time.
+-- NULL = the procedure's own now(). It sits before the cursor argument, so the earlier signature is dropped first.
+
+DROP PROCEDURE IF EXISTS dbo.sp_pagesetpostingaccount(character varying, character varying, character varying, character varying, character varying, character varying, character varying, character varying, character varying, character varying, character varying, character varying, character varying, character varying, character varying, refcursor);
 
 CREATE OR REPLACE PROCEDURE dbo.sp_pagesetpostingaccount(
 	IN p_strmode character varying,
@@ -23,6 +27,7 @@ CREATE OR REPLACE PROCEDURE dbo.sp_pagesetpostingaccount(
 	IN p_strinputvataccountid character varying DEFAULT NULL::character varying,
 	IN p_stroutputvataccountid character varying DEFAULT NULL::character varying,
 	IN p_pstruserid character varying DEFAULT NULL::character varying,
+	IN p_dtpserverdate timestamp without time zone DEFAULT NULL::timestamp without time zone,
 	IN p_result_cursor refcursor DEFAULT 'cur_setpostingaccount'::refcursor)
 LANGUAGE 'plpgsql'
 AS $BODY$
@@ -75,7 +80,7 @@ BEGIN
             p_strsalescostaccountid, p_strsalesretcostaccountid,
             p_strstockadjaccountid, p_strroundoffaccountid,
             p_strinputvataccountid, p_stroutputvataccountid,
-            p_pstruserid, now()
+            p_pstruserid, coalesce(p_dtpserverdate, now())
         );
 
     END IF;
@@ -100,7 +105,7 @@ BEGIN
             finputvataccountid     = p_strinputvataccountid,
             foutputvataccountid    = p_stroutputvataccountid,
             fmuserid               = p_pstruserid,
-            fmuserdate             = now()
+            fmuserdate             = coalesce(p_dtpserverdate, now())
         WHERE fcoid = p_pstrcoid
           AND fbrid = p_strbrid;
 
@@ -108,6 +113,6 @@ BEGIN
 
 END;
 $BODY$;
-ALTER PROCEDURE dbo.sp_pagesetpostingaccount(character varying, character varying, character varying, character varying, character varying, character varying, character varying, character varying, character varying, character varying, character varying, character varying, character varying, character varying, character varying, refcursor)
+ALTER PROCEDURE dbo.sp_pagesetpostingaccount(character varying, character varying, character varying, character varying, character varying, character varying, character varying, character varying, character varying, character varying, character varying, character varying, character varying, character varying, character varying, timestamp without time zone, refcursor)
     OWNER TO postgres;
 

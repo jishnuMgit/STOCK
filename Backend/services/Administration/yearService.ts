@@ -1,5 +1,6 @@
 import type { PoolClient } from "pg";
 import pool from "../../DB/db.js";
+import { resolveServerDate } from "../common/DateTimeService.js";
 
 /* =========================================================
    ADMINISTRATION > YEAR - calls dbo.sp_pageyear (the port of the old
@@ -93,12 +94,17 @@ export async function saveAdministrationYearService(data: {
   PstrCoID: string;
   PstrUserID: string;
   rows: AdministrationYearRowPayload[];
+  // the time the page got from /datetime/server-date (checked here; the server's own time when it is missing or wrong)
+  dtpServerDate?: string;
 }): Promise<{ done: AdministrationYearDone[]; wasEmpty: boolean }> {
   const client: PoolClient = await pool.connect();
   const done: AdministrationYearDone[] = [];
 
   try {
     await client.query("BEGIN");
+
+    // one time for every year of this save
+    const serverDate = await resolveServerDate(client, data.dtpServerDate);
 
     const open = await fetchOpenYears(client, data.PstrCoID);
 
@@ -124,10 +130,11 @@ export async function saveAdministrationYearService(data: {
           p_pstrcoid   => $2::varchar,
           p_strbrid    => $3::varchar,
           p_intyear    => $4::smallint,
-          p_pstruserid => $5::varchar
+          p_pstruserid => $5::varchar,
+          p_dtpserverdate => $6::timestamp
         )
         `,
-        [mode, data.PstrCoID, branch, year, data.PstrUserID]
+        [mode, data.PstrCoID, branch, year, data.PstrUserID, serverDate]
       );
 
     // the open years that are not in the grid any more

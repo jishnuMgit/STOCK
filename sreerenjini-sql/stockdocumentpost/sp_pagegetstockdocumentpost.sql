@@ -21,8 +21,14 @@
 --       PR / SI / SR  the post procedures of these are not built yet: the post stops with a
 --                     message and nothing changes. Add the CALL here when they exist.
 --
+-- ADDED: p_dtpserverdate - the time written on the rows of a post (fcuserdate). The page gets it from the database server's
+--   clock (GET /datetime/server-date), the backend checks it and passes it, so every document posted by one click carries the
+--   same time. Mode P hands it on to the post procedures that take it (ST, ADJ and BS; the others still use their own now()).
+--   NULL = the procedures' own now(). The argument sits before p_intpostedcount, so call it with names (see below).
+--
 -- Called from the backend:  Backend/services/Sales/Transaction/stockDocumentPostService.ts
---   CALL dbo.sp_pagegetstockdocumentpost('G', '01', '2026', 'JD', 'PI', NULL, 10, 'ADMIN', 0, 'cur_x');
+--   CALL dbo.sp_pagegetstockdocumentpost(p_strmode => 'G', p_pstrcoid => '01', p_pstryear => '2026', p_strbrid => 'JD',
+--        p_strdoctype => 'PI', p_intmonth => 10::smallint, p_result_cursor => 'cur_x');
 --   FETCH ALL FROM cur_x;
 -- =====================================================================
 
@@ -40,6 +46,7 @@ CREATE OR REPLACE PROCEDURE dbo.sp_pagegetstockdocumentpost(
     IN    p_strdocno         character varying DEFAULT NULL::character varying,
     IN    p_intmonth         smallint          DEFAULT NULL::smallint,
     IN    p_pstruserid       character varying DEFAULT NULL::character varying,
+    IN    p_dtpserverdate    timestamp without time zone DEFAULT NULL::timestamp without time zone,
     INOUT p_intpostedcount   integer           DEFAULT 0,
     INOUT p_result_cursor    refcursor         DEFAULT 'cur_stockdocumentpost'::refcursor)
  LANGUAGE plpgsql
@@ -109,7 +116,7 @@ BEGIN
 
         IF p_strdoctype = 'BS' THEN
 
-            CALL dbo.sp_pagebeginningstockpost('P', p_pstrcoid, p_pstryear, p_strbrid, p_strdoctype, p_strdocno, p_pstruserid);
+            CALL dbo.sp_pagebeginningstockpost('P', p_pstrcoid, p_pstryear, p_strbrid, p_strdoctype, p_strdocno, p_pstruserid, p_dtpserverdate);
 
         ELSIF p_strdoctype = 'PI' THEN
 
@@ -117,11 +124,11 @@ BEGIN
 
         ELSIF p_strdoctype = 'ADJ' THEN
 
-            CALL dbo.sp_pagestockadjustmentpost('P', p_pstrcoid, p_pstryear, p_strbrid, p_strdoctype, p_strdocno, p_pstruserid);
+            CALL dbo.sp_pagestockadjustmentpost('P', p_pstrcoid, p_pstryear, p_strbrid, p_strdoctype, p_strdocno, p_pstruserid, p_dtpserverdate);
 
         ELSIF p_strdoctype = 'ST' THEN
 
-            CALL dbo.sp_pagestocktransferpost('P', p_pstrcoid, p_pstryear, p_strbrid, p_strdoctype, p_strdocno, p_pstruserid);
+            CALL dbo.sp_pagestocktransferpost('P', p_pstrcoid, p_pstryear, p_strbrid, p_strdoctype, p_strdocno, p_pstruserid, p_dtpserverdate);
 
         ELSIF p_strdoctype IN ('PR', 'SI', 'SR') THEN
 

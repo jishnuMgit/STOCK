@@ -6,6 +6,11 @@ drop procedure if exists dbo.sp_pagebeginningbalance(
     varchar, varchar, numeric, numeric, varchar, varchar, timestamp, refcursor
 );
 
+-- ... and the version before p_dtpserverdate was added
+-- (ADDED p_dtpserverdate: the time written on the lines - fcuserdate on a new balance, fmuserdate on a modify. The page gets
+--  it from the database server's clock (GET /datetime/server-date) and the backend checks it and passes it, so every line of
+--  one save carries the same time. NULL = the procedure's own now().)
+
 create or replace procedure dbo.sp_pagebeginningbalance(
     in p_strmode varchar(5),
     in p_pstrcoid varchar(3),
@@ -22,6 +27,7 @@ create or replace procedure dbo.sp_pagebeginningbalance(
     in p_pstruserid varchar(30) default null,
     in p_strcuserid varchar(30) default null,
     in p_dtpcuserdate timestamp default null,
+    in p_dtpserverdate timestamp default null,
     inout p_result_cursor refcursor default 'cur_beginningbalance'
 )
 language plpgsql
@@ -79,9 +85,9 @@ begin
              coalesce(p_numdebit, 0), coalesce(p_numcredit, 0),
              'UI', false, false,
              case when v_modify then p_strcuserid else p_pstruserid end,
-             case when v_modify then p_dtpcuserdate else now() end,
+             case when v_modify then p_dtpcuserdate else coalesce(p_dtpserverdate, now()) end,
              case when v_modify then p_pstruserid else null end,
-             case when v_modify then now() else null end);
+             case when v_modify then coalesce(p_dtpserverdate, now()) else null end);
 
         select coalesce(c.fbg2arap, false)
           into v_bg2arap
@@ -100,9 +106,9 @@ begin
                  coalesce(p_numdebit, 0) - coalesce(p_numcredit, 0),
                  coalesce(p_numdebit, 0), coalesce(p_numcredit, 0), false,
                  case when v_modify then p_strcuserid else p_pstruserid end,
-                 case when v_modify then p_dtpcuserdate else now() end,
+                 case when v_modify then p_dtpcuserdate else coalesce(p_dtpserverdate, now()) end,
                  case when v_modify then p_pstruserid else null end,
-                 case when v_modify then now() else null end);
+                 case when v_modify then coalesce(p_dtpserverdate, now()) else null end);
 
         end if;
 

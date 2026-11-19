@@ -7,6 +7,7 @@
 // request), the f... columns of the table stay in this file.
 import type { PoolClient } from "pg";
 import pool from "../../../DB/db.js";
+import { resolveServerDate } from "../../common/DateTimeService.js";
 import { customerDivisionRowKeys, mapRows } from "../../../utils/responseKeys.js";
 
 const SCREEN_NAME = "Customer Division"; // the caption of the menu (the audit trail names the screen)
@@ -46,6 +47,8 @@ export type SaveCustomerDivisionPayload = {
   PstrCoID: string;
   PstrUserID: string;
   lkpCsAccountID: string;
+  // the time the page got from /datetime/server-date (checked here; the server's own time when it is missing or wrong)
+  dtpServerDate?: string;
   inserted?: unknown[];
   updated?: unknown[];
   deleted?: unknown[];
@@ -188,6 +191,7 @@ const callCustomerDivisionProc = (
   strMode: "S" | "M" | "D",
   now: DivisionValues,
   original: DivisionValues,
+  serverDate: string | null,
 ) =>
   db.query(
     `CALL dbo.sp_pagecustomerdivision(
@@ -201,7 +205,8 @@ const callCustomerDivisionProc = (
        p_txtoriginaldivisionname     => $8::varchar,
        p_txtoriginaldivisionname_ar   => $9::varchar,
        p_pstrscreenname              => $10::varchar,
-       p_pstruserid                  => $11::varchar)`,
+       p_pstruserid                  => $11::varchar,
+       p_dtpserverdate               => $12::timestamp)`,
     [
       strMode,
       payload.PstrCoID,
@@ -214,6 +219,7 @@ const callCustomerDivisionProc = (
       original.txtDivisionName_AR,
       SCREEN_NAME,
       payload.PstrUserID || null,
+      serverDate,
     ],
   );
 
@@ -227,6 +233,9 @@ export const saveCustomerDivisionChanges = async (
   try {
     await client.query("BEGIN");
 
+    // one time for every row of this save
+    const serverDate = await resolveServerDate(client, payload.dtpServerDate);
+
     // 1) removed rows
     for (const txtDivisionID of changes.deleted) {
       const saved = await getSavedCustomerDivision(client, PstrCoID, lkpCsAccountID, txtDivisionID);
@@ -236,7 +245,7 @@ export const saveCustomerDivisionChanges = async (
         txtDivisionID: saved.fdivid,
         txtDivisionName: saved.fdivname,
         txtDivisionName_AR: saved.fdivname_ar,
-      });
+      }, serverDate);
     }
 
     // 2) changed rows
@@ -252,12 +261,12 @@ export const saveCustomerDivisionChanges = async (
         txtDivisionID: row.txtOriginalDivisionID,
         txtDivisionName: saved?.fdivname ?? null,
         txtDivisionName_AR: saved?.fdivname_ar ?? null,
-      });
+      }, serverDate);
     }
 
     // 3) new rows
     for (const row of changes.inserted) {
-      await callCustomerDivisionProc(client, payload, "S", row, noValues);
+      await callCustomerDivisionProc(client, payload, "S", row, noValues, serverDate);
     }
 
     await client.query("COMMIT");

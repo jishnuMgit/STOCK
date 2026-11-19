@@ -30,6 +30,7 @@ import { useButtonPermissions } from "../../../../hooks/useButtonPermissions";
 import { filterLabelOrValue } from "../../../../components/BranchSelect/branchSelectParts";
 import { SELECT_FONT_FAMILY } from "../../../../components/sharecomponents/selectComponents";
 import Header from "../../../../components/common/Header";
+import { tryGetServerDate } from "../../../../utils/serverDate";
 import CommonTableSelect from "../../../../components/common/CommonTableSelect";
 
 // ============================================================
@@ -1332,6 +1333,9 @@ const StockTransferPage: React.FC = () => {
     setSaving(true);
 
     try {
+      // the time of the save: the database server's clock (the common /datetime/server-date), written on every row
+      const dtpServerDate = await tryGetServerDate();
+
       const response = await fetch(`${api}/StockTransfer/saveStockTransfer`, {
         method: "POST",
         credentials: "include", // the server checks the session and the rights
@@ -1343,6 +1347,7 @@ const StockTransferPage: React.FC = () => {
           txtDocNo: txtDocNo.trim(),
           lkpToBranch: lkpToBranch.value,
           dtpDate,
+          dtpServerDate,
           txtNote,
           chkSaved,
           rows: filledRows.map(({ row, index }) => ({
@@ -1541,6 +1546,9 @@ const StockTransferPage: React.FC = () => {
     setSaving(true);
 
     try {
+      // the time of the post: the database server's clock (the common /datetime/server-date)
+      const dtpServerDate = await tryGetServerDate();
+
       const response = await fetch(`${api}/StockTransfer/postStockTransfer`, {
         method: "POST",
         credentials: "include", // the server checks the session and the rights
@@ -1550,6 +1558,7 @@ const StockTransferPage: React.FC = () => {
           PstrYear,
           lkpBranch: lkpBranch.value,
           txtDocNo: txtDocNo.trim(),
+          dtpServerDate,
         }),
       });
 

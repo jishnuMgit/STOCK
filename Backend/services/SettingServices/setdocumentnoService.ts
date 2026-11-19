@@ -1,5 +1,6 @@
 import type { PoolClient } from "pg";
 import pool from "../../DB/db.js";
+import { resolveServerDate } from "../common/DateTimeService.js";
 
 /* =========================================================
    GET DOCUMENT NO LIST (mode 'G')
@@ -27,7 +28,7 @@ export async function getDocumentNoListService(
         $1::varchar, $2::varchar, $3::varchar, $4::varchar, $5::varchar,
         $6::varchar, $7::varchar, $8::varchar, $9::boolean, $10::varchar,
         $11::varchar, $12::smallint, $13::smallint, $14::varchar,
-        $15::varchar, $16::refcursor
+        $15::varchar, $16::timestamp, $17::refcursor
       )
       `,
       [
@@ -38,6 +39,7 @@ export async function getDocumentNoListService(
         lkpModule,
         null, null, null, null, null,
         null, null, null, null,
+        null,
         null,
         cursorName,
       ]
@@ -81,12 +83,17 @@ export async function saveDocumentNoListService(
   lkpBranch: string,
   lkpModule: string,
   PstrUserID: string,
-  rows: DocumentNoRowPayload[]
+  rows: DocumentNoRowPayload[],
+  // the time the page got from /datetime/server-date (checked here; the server's own time when it is missing or wrong)
+  dtpServerDate?: string
 ): Promise<void> {
   const client: PoolClient = await pool.connect();
 
   try {
     await client.query("BEGIN");
+
+    // one time for every row of this save
+    const serverDate = await resolveServerDate(client, dtpServerDate);
 
     for (const row of rows) {
       const existing = await client.query(
@@ -111,7 +118,7 @@ export async function saveDocumentNoListService(
           $1::varchar, $2::varchar, $3::varchar, $4::varchar, $5::varchar,
           $6::varchar, $7::varchar, $8::varchar, $9::boolean, $10::varchar,
           $11::varchar, $12::smallint, $13::smallint, $14::varchar,
-          $15::varchar, $16::refcursor
+          $15::varchar, $16::timestamp, $17::refcursor
         )
         `,
         [
@@ -130,6 +137,7 @@ export async function saveDocumentNoListService(
           row.txtPositionNo,
           mode === "M" ? row.lkpDocument : null,
           PstrUserID,
+          serverDate,
           cursorName,
         ]
       );
@@ -172,7 +180,7 @@ export async function deleteDocumentNoRowService(
         $1::varchar, $2::varchar, $3::varchar, $4::varchar, $5::varchar,
         $6::varchar, $7::varchar, $8::varchar, $9::boolean, $10::varchar,
         $11::varchar, $12::smallint, $13::smallint, $14::varchar,
-        $15::varchar, $16::refcursor
+        $15::varchar, $16::timestamp, $17::refcursor
       )
       `,
       [
@@ -184,6 +192,7 @@ export async function deleteDocumentNoRowService(
         null, null, null, null, null,
         null, null, null,
         lkpDocument,
+        null,
         null,
         cursorName,
       ]

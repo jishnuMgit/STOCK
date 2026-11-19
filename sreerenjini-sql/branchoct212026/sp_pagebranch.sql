@@ -24,6 +24,10 @@
 -- that names its arguments would not know which one to run.
 -- =====================================================================
 
+-- ADDED: p_dtpserverdate - the time written on the row (fcuserdate on a new branch, fmuserdate on a change). The page gets it from the database server's clock
+-- (GET /datetime/server-date) and the backend checks it and passes it, so every row of one save carries the same time.
+-- NULL = the procedure's own now(). It sits before the cursor argument; the drop below removes the earlier signature.
+
 drop procedure if exists dbo.sp_pagebranch(
     varchar, varchar, varchar, varchar, smallint, varchar, refcursor
 );
@@ -51,6 +55,7 @@ create or replace procedure dbo.sp_pagebranch(
     in p_intpositionno smallint default null,
     in p_pstruserid varchar(30) default null,
     in p_stroriginal_brid varchar(3) default null,
+    in p_dtpserverdate timestamp default null,
     inout p_result_cursor refcursor default 'cur_branch'
 )
 language plpgsql
@@ -85,7 +90,7 @@ begin
             (fcoid, fbrid, fbrname, fpositionno, fcuserid, fcuserdate)
         values
             (p_pstrcoid, p_strbrid, p_strbrname, p_intpositionno,
-             p_pstruserid, now());
+             p_pstruserid, coalesce(p_dtpserverdate, now()));
 
     elsif p_strmode = 'M' then
 
@@ -96,7 +101,7 @@ begin
             fbrname = p_strbrname,
             fpositionno = p_intpositionno,
             fmuserid = p_pstruserid,
-            fmuserdate = now()
+            fmuserdate = coalesce(p_dtpserverdate, now())
         where fcoid = p_pstrcoid
           and fbrid = v_original;
 

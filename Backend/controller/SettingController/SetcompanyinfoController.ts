@@ -120,6 +120,8 @@ export const saveCompanyDetails = async (
       txtCoVATNo,
       txtCoVATNo_AR,
       txtCoStatus,
+      // the time the page got from /datetime/server-date (the service checks it)
+      dtpServerDate,
     } = req.body;
 
     if (!PstrUserID) {
@@ -159,6 +161,7 @@ export const saveCompanyDetails = async (
       txtCoVATNo_AR: txtCoVATNo_AR || null,
       txtCoStatus: txtCoStatus || null,
       PstrUserID,
+      dtpServerDate,
     });
 
     return res.status(200).json({

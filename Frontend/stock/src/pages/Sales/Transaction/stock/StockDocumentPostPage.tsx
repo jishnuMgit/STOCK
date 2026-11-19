@@ -10,6 +10,7 @@ import { useButtonPermissions } from "../../../../hooks/useButtonPermissions";
 import { useEnterAsTab } from "../../../../hooks/useEnterAsTab";
 import { useInitialFocus } from "../../../../hooks/useInitialFocus";
 import Header from "../../../../components/common/Header";
+import { tryGetServerDate } from "../../../../utils/serverDate";
 
 // dbo.tblmenu fmenuid of the Stock Document Post page
 const MENU_ID = "020105";
@@ -268,6 +269,10 @@ const StockDocumentPostPage: React.FC<StockDocumentPostPageProps> = ({ onClose }
     setPosting(true);
 
     try {
+      // the time of this post: the database server's clock (the common /datetime/server-date). Every document posted
+      // now carries this one time, even though each document is posted in its own transaction.
+      const dtpServerDate = await tryGetServerDate();
+
       const response = await fetch(`${api}/StockDocumentPost/post`, {
         method: "POST",
         credentials: "include", // the server checks the session and the rights
@@ -278,6 +283,7 @@ const StockDocumentPostPage: React.FC<StockDocumentPostPageProps> = ({ onClose }
           lkpDocument: lkpDocument.value,
           lkpYear: lkpYear.value,
           lkpMonth: lkpMonth.value,
+          dtpServerDate,
           documents,
         }),
       });
