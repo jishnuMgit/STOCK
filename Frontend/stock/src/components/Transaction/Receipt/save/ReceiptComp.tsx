@@ -14,7 +14,7 @@ import React, {
 import { apiFetch } from "../../../../utils/session";
 import { GetStrDocType } from "../../../../utils/receiptHelpers";
 
-import { Link, useNavigate } from "react-router-dom";
+import { Link } from "react-router-dom";
 import { FaEye } from "react-icons/fa";
 
 import Select, {
@@ -60,7 +60,6 @@ import {
   type AccountOption,
   type AccountOptionProps,
 } from "../../../../types/receiptypes";
-import CloseButton from "../../../common/CloseButton";
 import CommonTableSelect, {
   type TableSelectOption,
 } from "../../../common/CommonTableSelect";

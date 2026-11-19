@@ -225,10 +225,6 @@ const AssetSettingPage: React.FC = () => {
     console.log("Asset Setting:", data);
   };
 
-  // Close
-  const handleClose = () => {
-    window.history.back();
-  };
 
   return (
     <div className="min-h-full w-full bg-white p-1 sm:p-2">
