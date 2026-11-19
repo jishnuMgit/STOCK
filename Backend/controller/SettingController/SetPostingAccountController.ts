@@ -227,12 +227,15 @@ export const savePostingAccount = async (
       PstrYear,
       PstrUserID,
       lkpBranch,
+      dtpServerDate,
       ...payload
     }: {
       PstrCoID: string;
       PstrYear: string;
       PstrUserID: string;
       lkpBranch: string;
+      // the time the page got from /datetime/server-date (the service checks it)
+      dtpServerDate?: string;
     } & PostingAccountPayload = req.body;
 
     if (!PstrCoID) {
@@ -315,7 +318,8 @@ export const savePostingAccount = async (
       PstrCoID,
       lkpBranch,
       payload,
-      PstrUserID
+      PstrUserID,
+      dtpServerDate
     );
 
     // =====================================================

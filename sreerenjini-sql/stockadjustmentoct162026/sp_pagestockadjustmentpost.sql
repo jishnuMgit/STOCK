@@ -48,6 +48,10 @@
 --     columns); fcuserid / fcuserdate are used on the finance lines.
 --   * the original cursor and its dynamic filter are a plain FOR loop.
 --
+-- ADDED: p_dtpserverdate - the time written on the rows this post creates (fcuserdate of the stock and finance rows). The
+--   page gets it from the database server's clock (GET /datetime/server-date) and the backend checks it and passes it, so
+--   every row of one post carries the same time. NULL = the procedure's own now() (a caller that sends none works as before).
+--
 -- THE USER ARGUMENT is p_pstruserid (it was p_gstruserid), the name the other screens'
 -- procedures use; the DROP below removes the version with the old name first (CREATE OR
 -- REPLACE cannot rename an argument).
@@ -65,7 +69,8 @@ CREATE OR REPLACE PROCEDURE dbo.sp_pagestockadjustmentpost(
     IN p_strbrid    varchar(3),
     IN p_strdoctype varchar(5),
     IN p_strdocno   varchar(15),
-    IN p_pstruserid varchar(20) DEFAULT NULL
+    IN p_pstruserid varchar(20) DEFAULT NULL,
+    IN p_dtpserverdate timestamp DEFAULT NULL
 )
 LANGUAGE plpgsql
 AS $$
@@ -130,7 +135,7 @@ BEGIN
 
         -- 1. the stock row of the branch, when missing
         INSERT INTO dbo.tblstockcontrol (fcoid, fyear, fbrid, fitemid, fcuserid, fcuserdate)
-        SELECT p_pstrcoid, p_pstryear, p_strbrid, v_stritemid, p_pstruserid, now()
+        SELECT p_pstrcoid, p_pstryear, p_strbrid, v_stritemid, p_pstruserid, COALESCE(p_dtpserverdate, now())
         WHERE NOT EXISTS (
             SELECT 1 FROM dbo.tblstockcontrol
             WHERE fcoid = p_pstrcoid AND fyear = p_pstryear
@@ -233,7 +238,7 @@ BEGIN
         CASE WHEN v_numcostofstock < 0 THEN COALESCE(ABS(v_numcostofstock), 0) ELSE 0 END,
         CASE WHEN v_numcostofstock < 0 THEN 0 ELSE COALESCE(v_numcostofstock, 0) END,
         true, 'GP', false,
-        p_pstruserid, now()
+        p_pstruserid, COALESCE(p_dtpserverdate, now())
     );
 
     -- line 2: the stock adjustment account (the opposite side)
@@ -254,7 +259,7 @@ BEGIN
         CASE WHEN v_numcostofstock < 0 THEN 0 ELSE COALESCE(v_numcostofstock, 0) END,
         CASE WHEN v_numcostofstock < 0 THEN COALESCE(ABS(v_numcostofstock), 0) ELSE 0 END,
         true, 'GP', false,
-        p_pstruserid, now()
+        p_pstruserid, COALESCE(p_dtpserverdate, now())
     );
 
     -- the posting transaction number: one for the whole document

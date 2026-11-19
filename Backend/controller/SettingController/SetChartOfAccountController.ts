@@ -212,11 +212,14 @@ export const saveChartOfAccount = async (
       PstrCoID,
       PstrYear,
       PstrUserID,
+      dtpServerDate,
       rows,
     }: {
       PstrCoID: string;
       PstrYear: string;
       PstrUserID: string;
+      // the time the page got from /datetime/server-date (the service checks it)
+      dtpServerDate?: string;
       rows: ChartOfAccountRowPayload[];
     } = req.body;
 
@@ -282,7 +285,12 @@ export const saveChartOfAccount = async (
       });
     }
 
-    const result = await saveChartOfAccountService(PstrCoID, rows, PstrUserID);
+    const result = await saveChartOfAccountService(
+      PstrCoID,
+      rows,
+      PstrUserID,
+      dtpServerDate
+    );
 
     if (!result.changed) {
       return res.status(200).json({

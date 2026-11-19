@@ -269,6 +269,7 @@ export const saveItem = async (
     const {
       PstrCoID,
       PstrUserID,
+      dtpServerDate,
       txtItemID,
       txtItemName,
       txtItemDescription,
@@ -284,6 +285,8 @@ export const saveItem = async (
     }: {
       PstrCoID: string;
       PstrUserID: string;
+      // the time the page got from /datetime/server-date (the service checks it)
+      dtpServerDate?: string;
       txtItemID: string;
       txtItemName: string;
       txtItemDescription: string | null;
@@ -388,6 +391,7 @@ export const saveItem = async (
       Number(txtReorderQty) || 0,
       PstrUserID,
       branchRows,
+      dtpServerDate,
     );
 
     return res.status(200).json({

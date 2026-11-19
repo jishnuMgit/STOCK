@@ -1,5 +1,6 @@
 import type { PoolClient } from "pg";
 import pool from "../../DB/db.js";
+import { resolveServerDate } from "../common/DateTimeService.js";
 
 /* =========================================================
    GET BRANCH INFO (mode 'G')
@@ -79,12 +80,17 @@ export async function saveBranchInfoService(
   PstrCoID: string,
   lkpBranch: string,
   payload: BranchInfoPayload,
-  PstrUserID: string
+  PstrUserID: string,
+  // the time the page got from /datetime/server-date (checked here; the server's own time when it is missing or wrong)
+  dtpServerDate?: string
 ): Promise<void> {
   const client: PoolClient = await pool.connect();
 
   try {
     await client.query("BEGIN");
+
+    // one time for this save
+    const serverDate = await resolveServerDate(client, dtpServerDate);
 
     await callSpBranchInfo(client, {
       strmode: "M",
@@ -92,6 +98,7 @@ export async function saveBranchInfoService(
       lkpBranch,
       ...payload,
       PstrUserID,
+      serverDate,
     });
 
     await client.query("COMMIT");
@@ -146,6 +153,8 @@ async function callSpBranchInfo(
     txtBrAddress4_AR: string | null;
     chkHo: boolean;
     PstrUserID: string | null;
+    // the time written on the row; null = the procedure's own now()
+    serverDate: string | null;
     cursorName: string;
   }>
 ): Promise<void> {
@@ -184,6 +193,7 @@ async function callSpBranchInfo(
     txtBrAddress4_AR: null,
     chkHo: false,
     PstrUserID: null,
+    serverDate: null,
     cursorName:
       `cur_branchinfo_${Date.now()}_${Math.floor(Math.random() * 100000)}`,
     ...overrides,
@@ -198,7 +208,7 @@ async function callSpBranchInfo(
       $16::varchar, $17::varchar, $18::varchar, $19::varchar, $20::varchar,
       $21::varchar, $22::varchar, $23::varchar, $24::varchar, $25::varchar,
       $26::varchar, $27::varchar, $28::varchar, $29::varchar, $30::varchar,
-      $31::varchar, $32::varchar, $33::boolean, $34::varchar, $35::refcursor
+      $31::varchar, $32::varchar, $33::boolean, $34::varchar, $35::timestamp, $36::refcursor
     )
     `,
     [
@@ -208,7 +218,7 @@ async function callSpBranchInfo(
       p.txtStreetName_AR, p.txtDistrict_AR, p.txtCity_AR, p.txtCountry_AR, p.txtPostalCode_AR,
       p.txtAdditionalNo_AR, p.txtCRNo_AR, p.txtLicenseNo_AR, p.txtLicenseCategory_AR, p.txtBrAddress1,
       p.txtBrAddress2, p.txtBrAddress3, p.txtBrAddress4, p.txtBrAddress1_AR, p.txtBrAddress2_AR,
-      p.txtBrAddress3_AR, p.txtBrAddress4_AR, p.chkHo, p.PstrUserID, p.cursorName,
+      p.txtBrAddress3_AR, p.txtBrAddress4_AR, p.chkHo, p.PstrUserID, p.serverDate, p.cursorName,
     ]
   );
 }

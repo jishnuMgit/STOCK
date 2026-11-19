@@ -99,11 +99,14 @@ export const saveBranch = async (
     const {
       PstrCoID,
       PstrYear = null,
+      dtpServerDate,
       rows = [],
       deletedRows = [],
     }: {
       PstrCoID: string;
       PstrYear?: string | null;
+      // the time the page got from /datetime/server-date (the service checks it)
+      dtpServerDate?: string;
       rows: AdministrationBranchRowPayload[];
       deletedRows?: { txtBrID: string }[];
     } = req.body;
@@ -141,6 +144,7 @@ export const saveBranch = async (
       PstrUserID,
       rows,
       deletedRows,
+      dtpServerDate,
     });
 
     // =====================================================

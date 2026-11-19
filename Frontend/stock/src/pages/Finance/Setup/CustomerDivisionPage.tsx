@@ -12,6 +12,7 @@ import { useDeleteToast } from "../../../hooks/useDeleteToast";
 import { useEnterAsTab } from "../../../hooks/useEnterAsTab";
 import { useGridCellFocus } from "../../../hooks/useGridCellFocus";
 import { apiFetch } from "../../../utils/session";
+import { tryGetServerDate } from "../../../utils/serverDate";
 
 /* =========================================================
    CUSTOMER DIVISION (Finance > Setup > Customer Division)
@@ -519,10 +520,13 @@ const CustomerDivisionPage: React.FC<CustomerDivisionPageProps> = ({
 
     setIsSaving(true);
     try {
+      // the time of the save: the database server's clock (the common /datetime/server-date), written on every row
+      const dtpServerDate = await tryGetServerDate();
+
       const response = await apiFetch(`${CUSTOMER_DIVISION_API}/save`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ lkpCsAccountID, inserted, updated, deleted: [] }),
+        body: JSON.stringify({ lkpCsAccountID, dtpServerDate, inserted, updated, deleted: [] }),
       });
       const result = await response.json();
 

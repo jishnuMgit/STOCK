@@ -1,5 +1,6 @@
 import type { PoolClient } from "pg";
 import pool from "../../../DB/db.js";
+import { resolveServerDate } from "../../common/DateTimeService.js";
 
 /* =========================================================
    GET ITEM (header mode 'GHD', branch rows mode 'GTL')
@@ -102,12 +103,17 @@ export async function saveItemPageService(
   txtReorderLevel: number,
   txtReorderQty: number,
   PstrUserID: string,
-  rows: ItemBranchRowPayload[]
+  rows: ItemBranchRowPayload[],
+  // the time the page got from /datetime/server-date (checked here; the server's own time when it is missing or wrong)
+  dtpServerDate?: string
 ): Promise<void> {
   const client: PoolClient = await pool.connect();
 
   try {
     await client.query("BEGIN");
+
+    // one time for the header and every branch row of this save
+    const serverDate = await resolveServerDate(client, dtpServerDate);
 
     /* =====================================================
        HEADER — decide SHD (insert) vs MHD (update)
@@ -124,6 +130,7 @@ export async function saveItemPageService(
     const headerMode = existingHeader.rows.length > 0 ? "MHD" : "SHD";
 
     await callSpItemPage(client, {
+      dtpServerDate: serverDate,
       strmode: headerMode,
       PstrCoID,
       txtItemID,
@@ -157,6 +164,7 @@ export async function saveItemPageService(
       const rowMode = existingRow.rows.length > 0 ? "MTL" : "STL";
 
       await callSpItemPage(client, {
+      dtpServerDate: serverDate,
         strmode: rowMode,
         PstrCoID,
         txtItemID,
@@ -296,6 +304,8 @@ async function callSpItemPage(
     chkAllowSaleBelowCost: boolean;
     chkInactive: boolean;
     PstrUserID: string | null;
+    // the time written on the rows (fcuserdate / fmuserdate); null = the procedure's own now()
+    dtpServerDate: string | null;
   }>
 ): Promise<void> {
   const params = {
@@ -318,6 +328,7 @@ async function callSpItemPage(
     chkAllowSaleBelowCost: false,
     chkInactive: false,
     PstrUserID: null,
+    dtpServerDate: null,
     ...overrides,
   };
 
@@ -331,7 +342,7 @@ async function callSpItemPage(
       $6::varchar, $7::varchar, $8::varchar, $9::numeric, $10::numeric,
       $11::varchar, $12::varchar, $13::varchar, $14::integer, $15::integer,
       $16::varchar, $17::boolean, $18::boolean, $19::varchar,
-      $20::varchar, $21::varchar, $22::varchar, $23::refcursor
+      $20::varchar, $21::varchar, $22::varchar, $23::timestamp, $24::refcursor
     )
     `,
     [
@@ -357,6 +368,7 @@ async function callSpItemPage(
       null,
       null,
       null,
+      params.dtpServerDate,
       cursorName,
     ]
   );

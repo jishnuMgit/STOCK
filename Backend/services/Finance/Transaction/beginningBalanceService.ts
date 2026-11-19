@@ -1,5 +1,6 @@
 import type { PoolClient } from "pg";
 import pool from "../../../DB/db.js";
+import { resolveServerDate } from "../../common/DateTimeService.js";
 import { toAmount } from "../../../validators/BeginningBalanceValidator.js";
 
 /* =========================================================
@@ -220,6 +221,8 @@ async function callSp(
     credit?: number;
     savedBy?: string | null;
     savedOn?: string | null;
+    // the time written on the line (fcuserdate / fmuserdate); null = the procedure's own now()
+    serverDate?: string | null;
   }
 ): Promise<void> {
   await client.query(
@@ -239,7 +242,8 @@ async function callSp(
       p_numcredit     => $12::numeric,
       p_pstruserid    => $13::varchar,
       p_strcuserid    => $14::varchar,
-      p_dtpcuserdate  => $15::timestamp
+      p_dtpcuserdate  => $15::timestamp,
+      p_dtpserverdate => $16::timestamp
     )
     `,
     [
@@ -258,6 +262,7 @@ async function callSp(
       a.PstrUserID,
       a.savedBy ?? null,
       a.savedOn ?? null,
+      a.serverDate ?? null,
     ]
   );
 }
@@ -317,11 +322,16 @@ export async function saveBeginningBalanceService(p: {
   dtpDate: string;
   rows: BeginningBalanceRowPayload[];
   PstrUserID: string;
+  // the time the page got from /datetime/server-date (checked here; the server's own time when it is missing or wrong)
+  dtpServerDate?: string;
 }): Promise<BeginningBalanceSaveResult> {
   const client: PoolClient = await pool.connect();
 
   try {
     await client.query("BEGIN");
+
+    // one time for every line of this save
+    const serverDate = await resolveServerDate(client, p.dtpServerDate);
 
     // what the branch has now: the header (the creator) and the lines (for the
     // audit note)
@@ -388,6 +398,7 @@ export async function saveBeginningBalanceService(p: {
         // a Modify hands the creator back in
         savedBy: header?.fcuserid ?? null,
         savedOn: header?.fcuserdateraw ?? null,
+        serverDate,
       });
 
       after.push({ account, costCenter, debit, credit });

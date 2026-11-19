@@ -1,5 +1,6 @@
 import type { PoolClient } from "pg";
 import pool from "../../../DB/db.js";
+import { resolveServerDate } from "../../common/DateTimeService.js";
 
 /* =========================================================
    BEGINNING STOCK - calls dbo.sp_pagebeginningstock
@@ -289,11 +290,16 @@ export async function saveBeginningStockService(p: {
   txtNote: string;
   rows: BeginningStockRowPayload[];
   PstrUserID: string;
+  // the time the page got from /datetime/server-date (checked here; the server's own time when it is missing or wrong)
+  dtpServerDate?: string;
 }): Promise<BeginningStockSaveResult> {
   const client: PoolClient = await pool.connect();
 
   try {
     await client.query("BEGIN");
+
+    // one time for every line of this save
+    const serverDate = await resolveServerDate(client, p.dtpServerDate);
 
     const saved = await fetchCursor<BeginningStockLine>(
       client,
@@ -390,6 +396,7 @@ export async function saveBeginningStockService(p: {
       txtNote: p.txtNote,
       PstrUserID: p.PstrUserID,
       savingTransNo,
+      dtpServerDate: serverDate,
     };
 
     // removed lines first
@@ -712,6 +719,8 @@ export async function postBeginningStockService(p: {
   PstrYear: number;
   lkpBranch: string;
   PstrUserID: string;
+  // the time the page got from /datetime/server-date (checked here; the server's own time when it is missing or wrong)
+  dtpServerDate?: string;
 }): Promise<{
   before: BeginningStockLine[];
   after: BeginningStockLine[];
@@ -721,6 +730,9 @@ export async function postBeginningStockService(p: {
 
   try {
     await client.query("BEGIN");
+
+    // one time for every row of this post
+    const serverDate = await resolveServerDate(client, p.dtpServerDate);
 
     const before = await fetchCursor<BeginningStockLine>(
       client,
@@ -767,7 +779,8 @@ export async function postBeginningStockService(p: {
         p_strbrid    => $4::varchar,
         p_strdoctype => $5::varchar,
         p_strdocno   => $6::varchar,
-        p_gstruserid => $7::varchar
+        p_gstruserid => $7::varchar,
+        p_dtpserverdate => $8::timestamp
       )
       `,
       [
@@ -778,6 +791,7 @@ export async function postBeginningStockService(p: {
         strDocType,
         DOC_NO,
         p.PstrUserID,
+        serverDate,
       ]
     );
 
@@ -965,6 +979,8 @@ async function callSpBeginningStock(
     originalSlNo?: number;
     PstrUserID?: string;
     savingTransNo?: string;
+    // the time written on the lines (fcuserdate / fmuserdate); null = the procedure's own now()
+    dtpServerDate?: string;
     cursorName?: string;
   }
 ): Promise<void> {
@@ -990,7 +1006,8 @@ async function callSpBeginningStock(
       p_pstruserid     => $15::varchar,
       p_strnote        => $16::varchar,
       p_strsavingno => $17::varchar,
-      p_result_cursor  => $18::refcursor
+      p_dtpserverdate  => $18::timestamp,
+      p_result_cursor  => $19::refcursor
     )
     `,
     [
@@ -1011,6 +1028,7 @@ async function callSpBeginningStock(
       p.PstrUserID ?? null,
       p.txtNote ?? null,
       p.savingTransNo ?? null,
+      p.dtpServerDate ?? null,
       p.cursorName ??
         `cur_beginningstock_${Date.now()}_${Math.floor(Math.random() * 100000)}`,
     ]

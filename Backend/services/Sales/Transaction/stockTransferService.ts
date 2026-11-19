@@ -1,5 +1,6 @@
 import type { PoolClient } from "pg";
 import pool from "../../../DB/db.js";
+import { resolveServerDate } from "../../common/DateTimeService.js";
 
 /* =========================================================
    STOCK TRANSFER - calls dbo.sp_pagestocktransferpage
@@ -398,11 +399,16 @@ export async function saveStockTransferService(p: {
   chkSaved: boolean;
   rows: StockTransferRowPayload[];
   PstrUserID: string;
+  // the time the page got from /datetime/server-date (checked here; the server's own time when it is missing or wrong)
+  dtpServerDate?: string;
 }): Promise<StockTransferSaveResult> {
   const client: PoolClient = await pool.connect();
 
   try {
     await client.query("BEGIN");
+
+    // one time for every row of this save
+    const serverDate = await resolveServerDate(client, p.dtpServerDate);
 
     let txtDocNo = p.txtDocNo;
     let docNoChanged = false;
@@ -518,6 +524,7 @@ export async function saveStockTransferService(p: {
       txtNote: p.txtNote,
       docAmt,
       PstrUserID: p.PstrUserID,
+      dtpServerDate: serverDate,
     };
 
     // removed lines first
@@ -819,6 +826,8 @@ export async function postStockTransferService(p: {
   lkpBranch: string;
   txtDocNo: string;
   PstrUserID: string;
+  // the time the page got from /datetime/server-date (checked here; the server's own time when it is missing or wrong)
+  dtpServerDate?: string;
 }): Promise<{
   header: StockTransferHeader | null;
   after: StockTransferLine[];
@@ -827,6 +836,9 @@ export async function postStockTransferService(p: {
 
   try {
     await client.query("BEGIN");
+
+    // one time for every row of this post
+    const serverDate = await resolveServerDate(client, p.dtpServerDate);
 
     const header = await fetchCursor<StockTransferHeader>(
       client,
@@ -846,10 +858,11 @@ export async function postStockTransferService(p: {
         p_strbrid    => $4::varchar,
         p_strdoctype => $5::varchar,
         p_strdocno   => $6::varchar,
-        p_pstruserid => $7::varchar
+        p_pstruserid => $7::varchar,
+        p_dtpserverdate => $8::timestamp
       )
       `,
-      ["P", p.PstrCoID, String(p.PstrYear), p.lkpBranch, strDocType, p.txtDocNo, p.PstrUserID]
+      ["P", p.PstrCoID, String(p.PstrYear), p.lkpBranch, strDocType, p.txtDocNo, p.PstrUserID, serverDate]
     );
 
     const after = await fetchCursor<StockTransferLine>(
@@ -1066,6 +1079,8 @@ async function callSpStockTransfer(
     totalCost?: number;
     originalSlNo?: number;
     PstrUserID?: string;
+    // the time written on the rows (fcuserdate / fmuserdate); null = the procedure's own now()
+    dtpServerDate?: string;
     cursorName?: string;
   }
 ): Promise<void> {
@@ -1091,7 +1106,8 @@ async function callSpStockTransfer(
       p_original_fslno => $17::smallint,
       p_strnote        => $18::varchar,
       p_pstruserid     => $19::varchar,
-      p_result_cursor  => $20::refcursor
+      p_dtpserverdate  => $20::timestamp,
+      p_result_cursor  => $21::refcursor
     )
     `,
     [
@@ -1114,6 +1130,7 @@ async function callSpStockTransfer(
       p.originalSlNo ?? 0,
       p.txtNote ?? null,
       p.PstrUserID ?? null,
+      p.dtpServerDate ?? null,
       p.cursorName ??
         `cur_stocktransfer_${Date.now()}_${Math.floor(Math.random() * 100000)}`,
     ]

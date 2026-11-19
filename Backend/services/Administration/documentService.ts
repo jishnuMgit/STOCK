@@ -1,5 +1,6 @@
 import type { PoolClient } from "pg";
 import pool from "../../DB/db.js";
+import { resolveServerDate } from "../common/DateTimeService.js";
 
 /* =========================================================
    ADMINISTRATION > DOCUMENT - calls dbo.sp_pagedocument (the port of the old
@@ -123,12 +124,17 @@ export async function saveAdministrationDocumentService(data: {
   lkpModule: string;
   rows: AdministrationDocumentRowPayload[];
   deletedRows?: { txtDocType: string }[];
+  // the time the page got from /datetime/server-date (checked here; the server's own time when it is missing or wrong)
+  dtpServerDate?: string;
 }): Promise<AdministrationDocumentSaved[]> {
   const client: PoolClient = await pool.connect();
   const done: AdministrationDocumentSaved[] = [];
 
   try {
     await client.query("BEGIN");
+
+    // one time for every row of this save
+    const serverDate = await resolveServerDate(client, data.dtpServerDate);
 
     // what the documents of the module are now (for "changed from ... to ...")
     const current = await fetchDocuments(client, data.PstrCoID, data.lkpModule);
@@ -152,7 +158,8 @@ export async function saveAdministrationDocumentService(data: {
           p_blntobepost          => $6::boolean,
           p_intposition          => $7::smallint,
           p_stroriginal_doctype  => $8::varchar,
-          p_pstruserid           => $9::varchar
+          p_pstruserid           => $9::varchar,
+          p_dtpserverdate        => $10::timestamp
         )
         `,
         [
@@ -165,6 +172,7 @@ export async function saveAdministrationDocumentService(data: {
           position,
           originalDocType,
           data.PstrUserID,
+          serverDate,
         ]
       );
 

@@ -372,6 +372,7 @@ export const saveStockAdjustment = async (
       lkpBranch,
       txtDocNo,
       dtpDate,
+      dtpServerDate,
       txtNote = "",
       chkSaved = false,
       rows = [],
@@ -381,6 +382,8 @@ export const saveStockAdjustment = async (
       lkpBranch: string;
       txtDocNo: string;
       dtpDate: string;
+      // the time the page got from /datetime/server-date (the service checks it)
+      dtpServerDate?: string;
       txtNote?: string;
       chkSaved?: boolean;
       rows: (StockAdjustmentRowPayload & { txtGridRow?: number })[];
@@ -458,6 +461,7 @@ export const saveStockAdjustment = async (
       chkSaved: Boolean(chkSaved),
       rows,
       PstrUserID,
+      dtpServerDate,
     });
 
     // =====================================================
@@ -947,8 +951,15 @@ export const postStockAdjustment = async (
       PstrYear,
       lkpBranch,
       txtDocNo,
-    }: { PstrCoID: string; PstrYear: string; lkpBranch: string; txtDocNo: string } =
-      req.body;
+      dtpServerDate,
+    }: {
+      PstrCoID: string;
+      PstrYear: string;
+      lkpBranch: string;
+      txtDocNo: string;
+      // the time the page got from /datetime/server-date (the service checks it)
+      dtpServerDate?: string;
+    } = req.body;
 
     if (!PstrCoID) {
       return reject(res, 400, "Company ID is required");
@@ -1018,6 +1029,7 @@ export const postStockAdjustment = async (
       lkpBranch,
       txtDocNo: docNo,
       PstrUserID,
+      dtpServerDate,
     });
 
     // =====================================================

@@ -181,11 +181,14 @@ export const saveBranchInfo = async (
       PstrCoID,
       PstrUserID,
       lkpBranch,
+      dtpServerDate,
       ...payload
     }: {
       PstrCoID: string;
       PstrUserID: string;
       lkpBranch: string;
+      // the time the page got from /datetime/server-date (the service checks it)
+      dtpServerDate?: string;
     } & BranchInfoPayload = req.body;
 
     if (!PstrCoID) {
@@ -230,7 +233,13 @@ export const saveBranchInfo = async (
       });
     }
 
-    await saveBranchInfoService(PstrCoID, lkpBranch, payload, PstrUserID);
+    await saveBranchInfoService(
+      PstrCoID,
+      lkpBranch,
+      payload,
+      PstrUserID,
+      dtpServerDate
+    );
 
     return res.status(200).json({
       success: true,

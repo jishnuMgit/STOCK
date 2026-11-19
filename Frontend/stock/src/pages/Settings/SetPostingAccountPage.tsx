@@ -7,6 +7,7 @@ import { useConfirmModal } from "../../hooks/useConfirmModal";
 import { useEnterAsTab } from "../../hooks/useEnterAsTab";
 import { useButtonPermissions } from "../../hooks/useButtonPermissions";
 import { useGridCellFocus } from "../../hooks/useGridCellFocus";
+import { tryGetServerDate } from "../../utils/serverDate";
 import { usePairMenuHang } from "../../hooks/usePairMenuHang";
 import {
   filterLabelOrValue,
@@ -638,6 +639,9 @@ const SetPostingAccountPage: React.FC = () => {
     );
 
     try {
+      // the time of the save: the database server's clock (the common /datetime/server-date), written on every row
+      const dtpServerDate = await tryGetServerDate();
+
       const response = await fetch(
         `${import.meta.env.VITE_API_URL}/PostingAccount/savePostingAccount`,
         {
@@ -648,6 +652,7 @@ const SetPostingAccountPage: React.FC = () => {
             PstrCoID,
             PstrYear,
             PstrUserID,
+            dtpServerDate,
             lkpBranch: values.lkpBranch,
             ...accountPayload,
           }),

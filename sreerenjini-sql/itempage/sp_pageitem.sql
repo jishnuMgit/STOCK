@@ -2,7 +2,13 @@
 
 -- DROP PROCEDURE IF EXISTS dbo.sp_pageitem(IN p_strmode character varying, IN p_pstrcoid character varying, IN p_stritemid character varying, IN p_strbrid character varying, IN p_original_fbrid character varying, IN p_stritemname character varying, IN p_stritemdescription character varying, IN p_strunit character varying, IN p_numpacking numeric, IN p_numcbm numeric, IN p_stritemgroupid character varying, IN p_strsupplierid character varying, IN p_strsupplieritemid character varying, IN p_intreorderlevel integer, IN p_intreorderqty integer, IN p_stritemlocation character varying, IN p_blnallowsalebelowcost boolean, IN p_blninactive boolean, IN p_pstruserid character varying, IN p_strmenuname character varying, IN p_strscreenname character varying, IN p_strmoduleid character varying, IN p_result_cursor refcursor);
 
-CREATE OR REPLACE PROCEDURE dbo.sp_pageitem(IN p_strmode character varying, IN p_pstrcoid character varying, IN p_stritemid character varying, IN p_strbrid character varying DEFAULT NULL::character varying, IN p_original_fbrid character varying DEFAULT NULL::character varying, IN p_stritemname character varying DEFAULT NULL::character varying, IN p_stritemdescription character varying DEFAULT NULL::character varying, IN p_strunit character varying DEFAULT NULL::character varying, IN p_numpacking numeric DEFAULT 0, IN p_numcbm numeric DEFAULT 0, IN p_stritemgroupid character varying DEFAULT NULL::character varying, IN p_strsupplierid character varying DEFAULT NULL::character varying, IN p_strsupplieritemid character varying DEFAULT NULL::character varying, IN p_intreorderlevel integer DEFAULT 0, IN p_intreorderqty integer DEFAULT 0, IN p_stritemlocation character varying DEFAULT NULL::character varying, IN p_blnallowsalebelowcost boolean DEFAULT false, IN p_blninactive boolean DEFAULT false, IN p_pstruserid character varying DEFAULT NULL::character varying, IN p_strmenuname character varying DEFAULT NULL::character varying, IN p_strscreenname character varying DEFAULT NULL::character varying, IN p_strmoduleid character varying DEFAULT NULL::character varying, IN p_result_cursor refcursor DEFAULT 'cur_item'::refcursor)
+-- ADDED: p_dtpserverdate - the time written on the rows (fcuserdate on a new item / branch row, fmuserdate on a change). The page gets
+--   it from the database server's clock (GET /datetime/server-date) and the backend checks it and passes it, so the header and
+--   every branch row of one save carry the same time. NULL = the procedure's own now() (a caller that sends none works as before).
+--   The signature changed (a new argument), so the earlier version is dropped first.
+DROP PROCEDURE IF EXISTS dbo.sp_pageitem(character varying, character varying, character varying, character varying, character varying, character varying, character varying, character varying, numeric, numeric, character varying, character varying, character varying, integer, integer, character varying, boolean, boolean, character varying, character varying, character varying, character varying, refcursor);
+
+CREATE OR REPLACE PROCEDURE dbo.sp_pageitem(IN p_strmode character varying, IN p_pstrcoid character varying, IN p_stritemid character varying, IN p_strbrid character varying DEFAULT NULL::character varying, IN p_original_fbrid character varying DEFAULT NULL::character varying, IN p_stritemname character varying DEFAULT NULL::character varying, IN p_stritemdescription character varying DEFAULT NULL::character varying, IN p_strunit character varying DEFAULT NULL::character varying, IN p_numpacking numeric DEFAULT 0, IN p_numcbm numeric DEFAULT 0, IN p_stritemgroupid character varying DEFAULT NULL::character varying, IN p_strsupplierid character varying DEFAULT NULL::character varying, IN p_strsupplieritemid character varying DEFAULT NULL::character varying, IN p_intreorderlevel integer DEFAULT 0, IN p_intreorderqty integer DEFAULT 0, IN p_stritemlocation character varying DEFAULT NULL::character varying, IN p_blnallowsalebelowcost boolean DEFAULT false, IN p_blninactive boolean DEFAULT false, IN p_pstruserid character varying DEFAULT NULL::character varying, IN p_strmenuname character varying DEFAULT NULL::character varying, IN p_strscreenname character varying DEFAULT NULL::character varying, IN p_strmoduleid character varying DEFAULT NULL::character varying, IN p_dtpserverdate timestamp without time zone DEFAULT NULL::timestamp without time zone, IN p_result_cursor refcursor DEFAULT 'cur_item'::refcursor)
  LANGUAGE plpgsql
 AS $procedure$
 BEGIN
@@ -34,7 +40,7 @@ BEGIN
         VALUES (
             p_pstrcoid, p_stritemid, p_stritemname, p_stritemdescription, p_strunit,
             p_numpacking, p_numcbm, p_stritemgroupid, p_strsupplierid, p_strsupplieritemid,
-            p_intreorderlevel, p_intreorderqty, p_pstruserid, now()
+            p_intreorderlevel, p_intreorderqty, p_pstruserid, COALESCE(p_dtpserverdate, now())
         );
 
     ELSIF p_strmode = 'MHD' THEN
@@ -51,7 +57,7 @@ BEGIN
             freorderlevel    = p_intreorderlevel,
             freorderqty      = p_intreorderqty,
             fmuserid         = p_pstruserid,
-            fmuserdate       = now()
+            fmuserdate       = COALESCE(p_dtpserverdate, now())
         WHERE fcoid = p_pstrcoid AND fitemid = p_stritemid;
 
     ELSIF p_strmode = 'STL' THEN
@@ -63,7 +69,7 @@ BEGIN
         VALUES (
             p_pstrcoid, p_strbrid, p_stritemid, p_stritemlocation,
             COALESCE(p_blninactive, false), COALESCE(p_blnallowsalebelowcost, false),
-            p_pstruserid, now()
+            p_pstruserid, COALESCE(p_dtpserverdate, now())
         );
 
     ELSIF p_strmode = 'MTL' THEN
@@ -74,7 +80,7 @@ BEGIN
             fallowsalebelowcost = COALESCE(p_blnallowsalebelowcost, false),
             finactive           = COALESCE(p_blninactive, false),
             fmuserid            = p_pstruserid,
-            fmuserdate          = now()
+            fmuserdate          = COALESCE(p_dtpserverdate, now())
         WHERE fcoid = p_pstrcoid AND fbrid = p_original_fbrid AND fitemid = p_stritemid;
 
     ELSIF p_strmode = 'D' THEN

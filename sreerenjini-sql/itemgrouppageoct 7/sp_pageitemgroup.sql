@@ -16,6 +16,11 @@
 -- The user audit (the old SP_UserAudit call in 'D') is written by the backend
 -- through dbo.sp_useraudit, as on the other screens - it is not done in here.
 --
+-- ADDED: p_dtpserverdate - the time written on the row (fcuserdate on a new item group, fmuserdate on a change). The page gets it
+--   from the database server's clock (GET /datetime/server-date) and the backend checks it and passes it, so every row of one
+--   save carries the same time. NULL = the procedure's own now() (a caller that sends none works as before).
+--   The signature changed (a new argument): the second DROP below removes the version without it.
+--
 -- Examples (cursor calls must run inside one transaction)
 --   BEGIN;
 --   CALL dbo.sp_pageitemgroup('G', '01', p_result_cursor => 'c1');
@@ -39,6 +44,7 @@ CREATE OR REPLACE PROCEDURE dbo.sp_pageitemgroup(
     IN p_strmenuname            character varying DEFAULT NULL::character varying,
     IN p_strscreenname          character varying DEFAULT NULL::character varying,
     IN p_strmoduleid            character varying DEFAULT NULL::character varying,
+    IN p_dtpserverdate          timestamp without time zone DEFAULT NULL::timestamp without time zone,
     IN p_result_cursor          refcursor         DEFAULT 'cur_itemgroup'::refcursor)
  LANGUAGE plpgsql
 AS $procedure$
@@ -80,7 +86,7 @@ BEGIN
         VALUES (
             p_pstrcoid, p_stritemgroupid, p_stritemgroupname,
             p_lkpfsn, p_strvatslab, p_numvatper,
-            p_pstruserid, now()
+            p_pstruserid, COALESCE(p_dtpserverdate, now())
         );
 
     ELSIF p_strmode = 'M' THEN
@@ -92,7 +98,7 @@ BEGIN
             fvatslab       = p_strvatslab,
             fvatper        = p_numvatper,
             fmuserid       = p_pstruserid,
-            fmuserdate     = now()
+            fmuserdate     = COALESCE(p_dtpserverdate, now())
         WHERE fcoid = p_pstrcoid
           AND fitemgroupid = p_original_fitemgroupid;
 

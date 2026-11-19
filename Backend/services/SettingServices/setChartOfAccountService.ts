@@ -1,5 +1,6 @@
 import type { PoolClient } from "pg";
 import pool from "../../DB/db.js";
+import { resolveServerDate } from "../common/DateTimeService.js";
 import { mapRows, chartOfAccountKeys } from "../../utils/responseKeys.js";
 
 /* =========================================================
@@ -101,12 +102,17 @@ const sameRow = (a: ChartOfAccountRow, b: ChartOfAccountRow) =>
 export async function saveChartOfAccountService(
   PstrCoID: string,
   rows: ChartOfAccountRowPayload[],
-  PstrUserID: string
+  PstrUserID: string,
+  // the time the page got from /datetime/server-date (checked here; the server's own time when it is missing or wrong)
+  dtpServerDate?: string
 ): Promise<ChartOfAccountSaveResult> {
   const client: PoolClient = await pool.connect();
 
   try {
     await client.query("BEGIN");
+
+    // one time for every row of this save
+    const serverDate = await resolveServerDate(client, dtpServerDate);
 
     const existing = await fetchChartOfAccountRows(client, PstrCoID);
     const existingByKey = new Map(
@@ -223,6 +229,7 @@ export async function saveChartOfAccountService(
         txtOriginalSlNo: before.txtSlNo,
         lkpOriginalParameterType: before.lkpParameterType,
         PstrUserID,
+        serverDate,
       });
     }
 
@@ -237,6 +244,7 @@ export async function saveChartOfAccountService(
         txtOriginalSlNo: -after.txtSlNo,
         lkpOriginalParameterType: before.lkpParameterType,
         PstrUserID,
+        serverDate,
       });
     }
 
@@ -250,6 +258,7 @@ export async function saveChartOfAccountService(
         lkpAccountID: row.lkpAccountID,
         txtGPH: row.txtGPH,
         PstrUserID,
+        serverDate,
       });
     }
 
@@ -334,6 +343,8 @@ async function callSpChartOfAccount(
     txtOriginalSlNo: number;
     lkpOriginalParameterType: string | null;
     PstrUserID: string | null;
+    // the time written on the row; null = the procedure's own now()
+    serverDate: string | null;
     cursorName: string;
   }>
 ): Promise<void> {
@@ -347,6 +358,7 @@ async function callSpChartOfAccount(
     txtOriginalSlNo: 0,
     lkpOriginalParameterType: null,
     PstrUserID: null,
+    serverDate: null,
     cursorName:
       `cur_finsetting_${Date.now()}_${Math.floor(Math.random() * 100000)}`,
     ...overrides,
@@ -356,7 +368,8 @@ async function callSpChartOfAccount(
     `
     CALL dbo.sp_pagesetchartofaccount(
       $1::varchar, $2::varchar, $3::smallint, $4::varchar, $5::varchar,
-      $6::varchar, $7::smallint, $8::varchar, $9::varchar, $10::refcursor
+      $6::varchar, $7::smallint, $8::varchar, $9::varchar, $10::timestamp,
+      $11::refcursor
     )
     `,
     [
@@ -369,6 +382,7 @@ async function callSpChartOfAccount(
       p.txtOriginalSlNo,
       p.lkpOriginalParameterType,
       p.PstrUserID,
+      p.serverDate,
       p.cursorName,
     ]
   );
