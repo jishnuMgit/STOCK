@@ -956,7 +956,7 @@ const SetDocumentNo: React.FC = () => {
             border-r
             border-slate-200
             px-1
-            text-center
+            text-left
             whitespace-nowrap
           "
                         >
@@ -971,7 +971,7 @@ const SetDocumentNo: React.FC = () => {
             border-r
             border-slate-200
             px-1
-            text-center
+            text-left
             whitespace-nowrap
           "
                         >
@@ -986,7 +986,7 @@ const SetDocumentNo: React.FC = () => {
             border-r
             border-slate-200
             px-1
-            text-center
+            text-left
             whitespace-nowrap
           "
                         >
@@ -1001,7 +1001,7 @@ const SetDocumentNo: React.FC = () => {
             border-r
             border-slate-200
             px-1
-            text-center
+            text-left
             whitespace-nowrap
           "
                         >
@@ -1015,7 +1015,6 @@ const SetDocumentNo: React.FC = () => {
             w-[15%]
             border-r
             border-slate-200
-            text-left
             px-1
             text-center
             whitespace-nowrap
