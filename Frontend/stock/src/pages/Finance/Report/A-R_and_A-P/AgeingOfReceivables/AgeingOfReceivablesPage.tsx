@@ -4,7 +4,6 @@ import { CustomRadio, RadioPanel } from "../../../../../components/common/Report
 import {
   BranchFilter,
   DateFilter,
-  FilterRow,
   LabelSelectFilter,
   PairFilter,
   PostStatusFilter,
@@ -107,19 +106,9 @@ const RptAgeingReceivablesPage: React.FC = () => {
         onChange={setAgeingMode}
       />
 
-      <PostStatusFilter options={postStatusOptions} value={postStatus} onChange={setPostStatus} />
-
-      <LabelSelectFilter
-        label="Print 0 Balance"
-        id="lkpPrint0Balance"
-        options={yesNoOptions}
-        value={printZeroBalance}
-        onChange={setPrintZeroBalance}
-      />
-
-      {/* Balance type */}
-      <FilterRow
-        panel={
+      {/* Post Status, and the Balance type at the right end of the same row */}
+      <PostStatusFilter className="w-full" options={postStatusOptions} value={postStatus} onChange={setPostStatus}>
+        <div className="ml-auto">
           <RadioPanel id="rdgBalanceType" className="h-22.5 w-[var(--filter-panel,9.5rem)]">
             <CustomRadio
               name="rdgBalanceType"
@@ -143,7 +132,15 @@ const RptAgeingReceivablesPage: React.FC = () => {
               onChange={() => setBalanceType("All")}
             />
           </RadioPanel>
-        }
+        </div>
+      </PostStatusFilter>
+
+      <LabelSelectFilter
+        label="Print 0 Balance"
+        id="lkpPrint0Balance"
+        options={yesNoOptions}
+        value={printZeroBalance}
+        onChange={setPrintZeroBalance}
       />
 
       <ReportPrintRow onPrint={handlePrint} />

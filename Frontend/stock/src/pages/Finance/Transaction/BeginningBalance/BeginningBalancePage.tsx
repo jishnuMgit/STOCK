@@ -2,6 +2,7 @@ import React, { useCallback, useEffect, useMemo, useRef, useState } from "react"
 import { toast } from "react-toastify";
 
 import { tryGetServerDate } from "../../../../utils/serverDate";
+import { buildFileName } from "../../../../utils/fileName";
 import BeginningBalanceHeader from "../../../../components/Transaction/BeginningBalance/BeginningBalanceHeader";
 import BeginningBalanceTable from "../../../../components/Transaction/BeginningBalance/BeginningBalanceTable";
 import BeginningBalanceFooter from "../../../../components/Transaction/BeginningBalance/BeginningBalanceFooter";
@@ -23,7 +24,6 @@ import {
   type BeginningBalanceRow,
   type Option,
 } from "../../../../components/Transaction/BeginningBalance/BeginningBalanceShared";
-import { useAltShortcuts } from "../../../../hooks/useAltShortcuts";
 import { useCtrlShortcuts } from "../../../../hooks/useCtrlShortcuts";
 import { useButtonPermissions } from "../../../../hooks/useButtonPermissions";
 import { useConfirmModal } from "../../../../hooks/useConfirmModal";
@@ -505,16 +505,12 @@ const BeginningBalance: React.FC = () => {
         return;
       }
 
-      // a name that is never the name of a file that is still open
-      const now = new Date();
-      const pad = (value: number) => String(value).padStart(2, "0");
-      const stamp = `${now.getFullYear()}${pad(now.getMonth() + 1)}${pad(now.getDate())}_${pad(now.getHours())}${pad(now.getMinutes())}${pad(now.getSeconds())}`;
-
       setPreview({
         report: { ...result.header, rows: result.data || [] },
         lkpBranch: lkpBranch.value,
         dtpDate,
-        fileBase: `BeginningBalance_${lkpBranch.value}_${stamp}`,
+        // the document type and the branch, as the other documents ("ST JD-2600001"): "BG JD"
+        fileBase: buildFileName("BG", lkpBranch.value),
       });
     } catch (error: unknown) {
       console.error("printBeginningBalance error:", error);
@@ -585,25 +581,13 @@ const BeginningBalance: React.FC = () => {
     setTimeout(() => document.getElementById(`lkpAccountID-${index}`)?.focus(), 0);
   };
 
-  // Alt+S Save, Alt+M Modify, Alt+D Delete, Alt+P Print, Alt+T Post, Alt+C Clear.
-  // Off while the Print Preview is open: it has its own Alt+P, Alt+D and Alt+C.
-  useAltShortcuts(preview ? {} : {
-    s: () => {
-      if (!chkSaved) handleSave();
-    },
-    m: () => {
-      if (chkSaved) handleSave();
-    },
-    d: handleDelete,
-    p: handlePrint,
-    t: handlePost,
-    c: handleClear,
-  });
-
-  // Ctrl+P -> Print (the old forms' Ctrl+P). With the Print Preview open it prints the report that is shown.
-  useCtrlShortcuts({
-    p: () => (preview ? printBeginningBalanceReport(preview.report) : handlePrint()),
-  });
+  // Ctrl+S Save (nothing saved yet) or Modify (saved), Ctrl+D Delete, Ctrl+P Print (the old forms' Ctrl+P).
+  // With the Print Preview open only Ctrl+P works: it prints the report that is shown (Save and Delete are off).
+  useCtrlShortcuts(
+    preview
+      ? { p: () => printBeginningBalanceReport(preview.report) }
+      : { s: handleSave, d: handleDelete, p: handlePrint }
+  );
 
   return (
     <div className="flex min-h-full w-full items-start justify-center bg-[#eeeeee] pb-5">

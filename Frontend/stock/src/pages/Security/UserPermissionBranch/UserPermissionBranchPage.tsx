@@ -5,6 +5,7 @@ import Select, { type SingleValue, type StylesConfig } from "react-select";
 import { toast } from "react-toastify";
 import { useEnterAsTab } from "../../../hooks/useEnterAsTab";
 import { useAltShortcuts } from "../../../hooks/useAltShortcuts";
+import { useCtrlShortcuts } from "../../../hooks/useCtrlShortcuts";
 import { useButtonPermissions } from "../../../hooks/useButtonPermissions";
 import { useConfirmModal } from "../../../hooks/useConfirmModal";
 import { useDeleteToast } from "../../../hooks/useDeleteToast";
@@ -542,13 +543,15 @@ const UserPermissionBranchPage: React.FC = () => {
 
   // ==========================================================
   // KEYBOARD SHORTCUTS
-  // Alt+S -> Save, Alt+D -> Delete, Alt+C -> Clear (matches
-  // the underlined accelerator letters on the buttons).
+  // Ctrl+S -> Save, Ctrl+D -> Delete, Alt+C -> Clear (Clear matches
+  // the underlined letter on its button).
   // ==========================================================
 
-  useAltShortcuts({
+  useCtrlShortcuts({
     s: handleSave,
     d: handleDelete,
+  });
+  useAltShortcuts({
     c: handleClear,
   });
 
@@ -750,7 +753,7 @@ const UserPermissionBranchPage: React.FC = () => {
               disabled={saving || loading || !perms.save}
               className={`${buttonClass} disabled:cursor-not-allowed disabled:opacity-40`}
             >
-              <span className="underline underline-offset-2">S</span>ave
+              Save
             </button>
 
             {/* DELETE */}
@@ -762,7 +765,7 @@ const UserPermissionBranchPage: React.FC = () => {
               disabled={saving || loading || !perms.delete}
               className={`${buttonClass} disabled:cursor-not-allowed disabled:opacity-40`}
             >
-              <span className="underline underline-offset-2">D</span>elete
+              Delete
             </button>
 
             {/* CLEAR */}

@@ -146,6 +146,11 @@ const selectStyles: StylesConfig<AccountOption, false> = {
 // The lists are the Receipt screen's Account ID / Account Name lists (components/Transaction/Receipt/save): 663 px wide, a grey
 // header "ID | Name", rows of 30 px with a thin line between the two columns (ID 105 px, Name 558 px). The Account ID list is "ID |
 // Name", the Account Name list "Name | ID".
+// the line between the two columns: the Receipt style draws it on the ID cell only, so in the Name | ID list (Account Name box)
+// it is moved to the Name cell - it must sit BETWEEN the two columns, as in the Stock Transfer lists
+const LIST_HEADER_DIVIDER = "1px solid #cccccc";
+const LIST_ROW_DIVIDER = "1px solid #eeeeee";
+
 const ACCOUNT_LIST_ROW_TITLE = (data: AccountOption) => `${data.id ?? data.value} - ${data.name ?? data.label}`;
 
 const AccountListOption = ({
@@ -161,8 +166,12 @@ const AccountListOption = ({
         </>
       ) : (
         <>
-          <div className="account-dropdown-name">{props.data.name ?? props.data.label}</div>
-          <div className="account-dropdown-id">{props.data.id ?? props.data.value}</div>
+          <div className="account-dropdown-name" style={{ borderRight: LIST_ROW_DIVIDER }}>
+            {props.data.name ?? props.data.label}
+          </div>
+          <div className="account-dropdown-id" style={{ borderRight: "none" }}>
+            {props.data.id ?? props.data.value}
+          </div>
         </>
       )}
     </div>
@@ -192,8 +201,12 @@ const AccountListMenuList = ({
           </>
         ) : (
           <>
-            <div className="account-dropdown-header-name">{nameHeader}</div>
-            <div className="account-dropdown-header-id">{idHeader}</div>
+            <div className="account-dropdown-header-name" style={{ borderRight: LIST_HEADER_DIVIDER }}>
+              {nameHeader}
+            </div>
+            <div className="account-dropdown-header-id" style={{ borderRight: "none" }}>
+              {idHeader}
+            </div>
           </>
         )}
       </div>

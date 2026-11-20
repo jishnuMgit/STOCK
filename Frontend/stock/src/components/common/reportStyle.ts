@@ -158,6 +158,9 @@ type PrintCssOptions = {
 //   .co .head .sub (.info)       the title rows         th / th.r      the column labels (.r = right)
 //   td / td.r / td.u             a cell, a number, a unit (a number or a unit is never split over two lines)
 //   the group selector           a block heading        tr.tot / tr.first   a Total row / the first line of a block
+//   tbody.keep                   a block that must not be split over two pages: it starts on the next page when it does
+//                                not fit in what is left of this one (a block taller than a page still splits)
+//   tbody.newpage                a block that always starts on a new page (add it to every block but the first)
 export const reportPrintCss = ({ look = "classic", orientation, marginLeft, groupSelector, reportInfo, extra = "" }: PrintCssOptions) => {
   const { lineColor, html } = REPORT_STYLE;
   const { css, size } = reportLook(look);
@@ -190,6 +193,8 @@ export const reportPrintCss = ({ look = "classic", orientation, marginLeft, grou
   td.r, td.u { white-space: nowrap; }                /* a number or a unit is never split over two lines */
   ${groupSelector} { border: 0; height: ${html.groupHeight}px; padding-top: 8px; font-size: ${size.group}pt; }
   tr.tot td, tr.first td { border-top: 1px solid ${lineColor}; }
+  tbody.newpage { break-before: page; page-break-before: always; } /* a block that starts on a new page (not the first one) */
+  tbody.keep { break-inside: avoid; page-break-inside: avoid; } /* a block (<tbody class="keep">) is never split over two pages */
   ${extra}`;
 };
 

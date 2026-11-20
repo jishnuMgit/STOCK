@@ -3,6 +3,7 @@ import Header from "../../components/common/Header";
 import { toast } from "react-toastify";
 import { useEnterAsTab } from "../../hooks/useEnterAsTab";
 import { useAltShortcuts } from "../../hooks/useAltShortcuts";
+import { useCtrlShortcuts } from "../../hooks/useCtrlShortcuts";
 import { useButtonPermissions } from "../../hooks/useButtonPermissions";
 import { useGridCellFocus } from "../../hooks/useGridCellFocus";
 import { tryGetServerDate } from "../../utils/serverDate";
@@ -230,9 +231,11 @@ const SetActivePeriodPage: React.FC = () => {
     setReloadKey((key) => key + 1);
   };
 
-  // Alt+S -> Save, Alt+C -> Clear (the underlined letters on the buttons)
-  useAltShortcuts({
+  // Ctrl+S -> Save, Alt+C -> Clear (the underlined letter on its button)
+  useCtrlShortcuts({
     s: handleSave,
+  });
+  useAltShortcuts({
     c: handleClear,
   });
 
@@ -384,7 +387,7 @@ const SetActivePeriodPage: React.FC = () => {
               disabled={!perms.modify || saving}
               className="btn-style disabled:cursor-not-allowed disabled:opacity-40"
             >
-              <span className="underline underline-offset-2">S</span>ave
+              Save
             </button>
 
             <button

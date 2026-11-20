@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 import { toast } from "react-toastify";
 import { useEnterAsTab } from "../../../hooks/useEnterAsTab";
 import { useAltShortcuts } from "../../../hooks/useAltShortcuts";
+import { useCtrlShortcuts } from "../../../hooks/useCtrlShortcuts";
 import { useButtonPermissions } from "../../../hooks/useButtonPermissions";
 import { useConfirmModal } from "../../../hooks/useConfirmModal";
 import { useDeleteToast } from "../../../hooks/useDeleteToast";
@@ -659,13 +660,15 @@ const StaffPage: React.FC = () => {
     setReloadKey((key) => key + 1);
   };
 
-  // Alt+S -> Save, Alt+D -> Delete the row the cursor is on (same as the X),
-  // Alt+C -> Clear (the underlined letters on the buttons)
-  useAltShortcuts({
+  // Ctrl+S -> Save / Modify, Ctrl+D -> Delete the row the cursor is on (same as the X),
+  // Alt+C -> Clear (the underlined letter on the button)
+  useCtrlShortcuts({
     s: handleSave,
     d: () => {
       handleDeleteRow(selectedRow);
     },
+  });
+  useAltShortcuts({
     c: handleClear,
   });
 
@@ -689,7 +692,7 @@ const StaffPage: React.FC = () => {
   // ============================================================
 
   const cellInputClass =
-    "h-[32px] w-full min-w-0 border-0 bg-transparent px-[11px] py-0 text-left text-[13px] text-[#374151] outline-none focus:bg-[#f1f8ff]";
+    "h-[32px] w-full min-w-0 border-0 bg-transparent pl-[2px] pr-[11px] py-0 text-left text-[13px] text-[#374151] outline-none focus:bg-[#f1f8ff]";
 
   const headerCellClass =
     "sticky top-0 z-20 h-[34px] border border-l-0 border-[#bfe8d0] bg-[#edf9f2] px-[11px] py-0 text-[14px] font-normal text-gray-600";
@@ -729,8 +732,8 @@ const StaffPage: React.FC = () => {
                     <tr>
                       <th className="sticky top-0 z-20 h-[34px] border border-[#bfe8d0] bg-[#edf9f2] p-0" />
 
-                      <th className={`${headerCellClass} text-left`}>ID</th>
-                      <th className={`${headerCellClass} text-left`}>Staff</th>
+                      <th className={`${headerCellClass} text-left !pl-[2px]`}>ID</th>
+                      <th className={`${headerCellClass} text-left !pl-[2px]`}>Staff</th>
                       <th className={`${headerCellClass} text-center`}>Purchase</th>
                       <th className={`${headerCellClass} text-center`}>Sales</th>
                     </tr>
@@ -905,10 +908,7 @@ const StaffPage: React.FC = () => {
                 disabled={!canSaveOrModify || saving}
                 className="btn-style disabled:cursor-not-allowed disabled:opacity-40"
               >
-                <span className="underline underline-offset-2">
-                  {actionWord.charAt(0)}
-                </span>
-                {actionWord.slice(1)}
+                {actionWord}
               </button>
 
               <button

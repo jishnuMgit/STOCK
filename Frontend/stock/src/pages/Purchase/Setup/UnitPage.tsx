@@ -1,7 +1,9 @@
 import React, { useEffect, useState } from "react";
 import { toast } from "react-toastify";
+import { X } from "lucide-react";
 import { useEnterAsTab } from "../../../hooks/useEnterAsTab";
 import { useAltShortcuts } from "../../../hooks/useAltShortcuts";
+import { useCtrlShortcuts } from "../../../hooks/useCtrlShortcuts";
 import { useButtonPermissions } from "../../../hooks/useButtonPermissions";
 import { useConfirmModal } from "../../../hooks/useConfirmModal";
 import { useDeleteToast } from "../../../hooks/useDeleteToast";
@@ -606,32 +608,16 @@ const UnitPage: React.FC = () => {
     setReloadKey((key) => key + 1);
   };
 
-  // Alt+S -> Save, Alt+D -> Delete the row the cursor is on (same as the X),
-  // Alt+C -> Clear (the underlined letters on the buttons)
-  useAltShortcuts({
+  // Ctrl+S -> Save / Modify, Ctrl+D -> Delete the row the cursor is on (same as the X),
+  // Alt+C -> Clear (the underlined letter on the button)
+  useCtrlShortcuts({
     s: handleSave,
     d: () => {
       handleDeleteRow(selectedRow);
     },
-    c: handleClear,
   });
-
-  // Ctrl+D -> Delete the row the cursor is on. Window level, like the Alt
-  // keys, so it works wherever the focus is; preventDefault stops the
-  // browser's own "bookmark this page" for Ctrl+D.
-  useEffect(() => {
-    const handleCtrlD = (event: KeyboardEvent) => {
-      if (event.ctrlKey && !event.altKey && event.key.toLowerCase() === "d") {
-        event.preventDefault();
-        handleDeleteRow(selectedRow);
-      }
-    };
-
-    window.addEventListener("keydown", handleCtrlD);
-
-    return () => {
-      window.removeEventListener("keydown", handleCtrlD);
-    };
+  useAltShortcuts({
+    c: handleClear,
   });
 
   // Enter on a BUTTON presses it (the old form's behaviour: Enter on an empty
@@ -685,7 +671,7 @@ const UnitPage: React.FC = () => {
                     <tr>
                       <th className="sticky top-0 z-20 h-[34px] border border-[#bfe8d0] bg-[#edf9f2] p-0" />
 
-                      <th className="sticky top-0 z-20 h-[34px] border border-l-0 border-[#bfe8d0] bg-[#edf9f2] px-[11px] py-0 text-left text-[14px] font-normal text-gray-600">
+                      <th className="sticky top-0 z-20 h-[34px] border border-l-0 border-[#bfe8d0] bg-[#edf9f2] pl-[2px] pr-[11px] py-0 text-left text-[14px] font-normal text-gray-600">
                         Unit
                       </th>
                     </tr>
@@ -748,7 +734,7 @@ const UnitPage: React.FC = () => {
                                 onKeyDown={(event) =>
                                   handleUnitKeyDown(event, index)
                                 }
-                                className="h-[32px] min-w-0 flex-1 border-0 bg-transparent px-[11px] py-0 text-left text-[13px] text-[#374151] outline-none focus:bg-[#f1f8ff]"
+                                className="h-[32px] min-w-0 flex-1 border-0 bg-transparent pl-[2px] pr-[11px] py-0 text-left text-[13px] text-[#374151] outline-none focus:bg-[#f1f8ff]"
                               />
 
                               {/* the X of the row, at the right end of the Unit box (the slot
@@ -761,9 +747,9 @@ const UnitPage: React.FC = () => {
                                     title="Delete row"
                                     onClick={() => handleDeleteRow(index)}
                                     aria-label={`Delete ${row.txtUnit}`}
-                                    className="text-[12px] leading-none text-gray-400 hover:text-red-600"
+                                    className="inline-flex items-center justify-center text-slate-400 hover:text-red-500"
                                   >
-                                    ✕
+                                    <X size={12} />
                                   </button>
                                 )}
                               </span>
@@ -790,10 +776,7 @@ const UnitPage: React.FC = () => {
                 disabled={!canSaveOrModify || saving}
                 className="btn-style disabled:cursor-not-allowed disabled:opacity-40"
               >
-                <span className="underline underline-offset-2">
-                  {actionWord.charAt(0)}
-                </span>
-                {actionWord.slice(1)}
+                {actionWord}
               </button>
 
               <button

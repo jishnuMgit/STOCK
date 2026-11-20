@@ -15,7 +15,6 @@ import { accountDropdownStyles } from "../../../components/Transaction/Receipt/s
 import CommonTableSelect from "../../../components/common/CommonTableSelect";
 import { useScrollbarWidth } from "../../../hooks/useScrollbarWidth";
 import { useAdvanceAfterSelect } from "../../../hooks/useAdvanceAfterSelect";
-import { useAltShortcuts } from "../../../hooks/useAltShortcuts";
 import { useCtrlShortcuts } from "../../../hooks/useCtrlShortcuts";
 import { useConfirmModal } from "../../../hooks/useConfirmModal";
 import { useGridCellFocus } from "../../../hooks/useGridCellFocus";
@@ -33,6 +32,7 @@ import { filterLabelOrValue } from "../../../components/BranchSelect/branchSelec
 import { SELECT_FONT_FAMILY } from "../../../components/sharecomponents/selectComponents";
 import Header from "../../../components/common/Header";
 import { tryGetServerDate } from "../../../utils/serverDate";
+import { buildFileName } from "../../../utils/fileName";
 
 interface SelectOption {
   value: string;
@@ -74,6 +74,11 @@ const todayLocal = () => new Date().toLocaleDateString("en-CA");
 // The lists are the Receipt screen's Account ID / Account Name lists (components/Transaction/Receipt/save): 663 px wide, a grey
 // header "ID | Name", rows of 30 px with a thin line between the two columns (ID 105 px, Name 558 px). The Item ID list is "ID |
 // Name", the Item Name list "Name | ID".
+// the line between the two columns: the Receipt style draws it on the ID cell only, so in the Name | ID list (Item Name box) it
+// is moved to the Name cell - it must sit BETWEEN the two columns, as in the Stock Transfer lists
+const LIST_HEADER_DIVIDER = "1px solid #cccccc";
+const LIST_ROW_DIVIDER = "1px solid #eeeeee";
+
 const ITEM_LIST_ROW_TITLE = (data: SelectOption) => `${data.id ?? data.value} - ${data.name ?? data.label}`;
 
 const ItemDropdownOption = ({
@@ -89,8 +94,12 @@ const ItemDropdownOption = ({
         </>
       ) : (
         <>
-          <div className="account-dropdown-name">{props.data.name ?? props.data.label}</div>
-          <div className="account-dropdown-id">{props.data.id ?? props.data.value}</div>
+          <div className="account-dropdown-name" style={{ borderRight: LIST_ROW_DIVIDER }}>
+            {props.data.name ?? props.data.label}
+          </div>
+          <div className="account-dropdown-id" style={{ borderRight: "none" }}>
+            {props.data.id ?? props.data.value}
+          </div>
         </>
       )}
     </div>
@@ -114,8 +123,12 @@ const ItemDropdownMenuList = ({
           </>
         ) : (
           <>
-            <div className="account-dropdown-header-name">Item Name</div>
-            <div className="account-dropdown-header-id">Item ID</div>
+            <div className="account-dropdown-header-name" style={{ borderRight: LIST_HEADER_DIVIDER }}>
+              Item Name
+            </div>
+            <div className="account-dropdown-header-id" style={{ borderRight: "none" }}>
+              Item ID
+            </div>
           </>
         )}
       </div>
@@ -1375,15 +1388,11 @@ const BeginningStockPage: React.FC = () => {
         return;
       }
 
-      // a name that is never the name of a file that is still open
-      const now = new Date();
-      const pad = (value: number) => String(value).padStart(2, "0");
-      const stamp = `${now.getFullYear()}${pad(now.getMonth() + 1)}${pad(now.getDate())}_${pad(now.getHours())}${pad(now.getMinutes())}${pad(now.getSeconds())}`;
-
       setPreview({
         report: { ...result.header, rows: result.data || [] },
         lkpBranch: lkpBranch.value,
-        fileBase: `BeginningStock_${lkpBranch.value.replace(/[^A-Za-z0-9_-]/g, "_")}_${stamp}`,
+        // the document type and the branch, as the other documents ("ST JD-2600001"): "BS JD"
+        fileBase: buildFileName("BS", lkpBranch.value),
       });
     } catch (error) {
       console.error("printBeginningStock error:", error);
@@ -1525,26 +1534,13 @@ const BeginningStockPage: React.FC = () => {
     window.setTimeout(() => document.getElementById(`lkpItemID-${index}`)?.focus(), 0);
   };
 
-  // Alt+S -> Save (nothing saved yet), Alt+M -> Modify (saved), Alt+D -> Delete,
-  // Alt+P -> Print, Alt+T -> Post (the old Ctrl+T), Alt+C -> Clear. Off while the
-  // Print Preview is open: it has its own Alt+P, Alt+D and Alt+C.
-  useAltShortcuts(preview ? {} : {
-    s: () => {
-      if (!chkSaved) handleSave();
-    },
-    m: () => {
-      if (chkSaved) handleSave();
-    },
-    d: handleDelete,
-    p: handlePrint,
-    t: handlePost,
-    c: clearForm,
-  });
-
-  // Ctrl+P -> Print (the old forms' Ctrl+P). With the Print Preview open it prints the report that is shown.
-  useCtrlShortcuts({
-    p: () => (preview ? printBeginningStockReport(preview.report) : handlePrint()),
-  });
+  // Ctrl+S -> Save (nothing saved yet) or Modify (saved), Ctrl+D -> Delete, Ctrl+P -> Print (the old forms' Ctrl+P).
+  // With the Print Preview open only Ctrl+P works: it prints the report that is shown (Save and Delete are off).
+  useCtrlShortcuts(
+    preview
+      ? { p: () => printBeginningStockReport(preview.report) }
+      : { s: handleSave, d: handleDelete, p: handlePrint }
+  );
 
   // ----------------------------------------------------------
   // ACTION BUTTONS
@@ -2053,10 +2049,7 @@ const BeginningStockPage: React.FC = () => {
                   }
                   className="btn-style disabled:cursor-not-allowed disabled:opacity-40"
                 >
-                  <span className="underline underline-offset-2">
-                    {label.charAt(0)}
-                  </span>
-                  {label.slice(1)}
+                  {label}
                 </button>
               );
             })}

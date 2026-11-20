@@ -15,7 +15,6 @@ import type { PairSelectOption } from "../../../../../components/common/CustomLi
 import { CustomRadio, RadioPanel } from "../../../../../components/common/ReportFormParts";
 import {
   BranchFilter,
-  FilterRow,
   LabelSelectFilter,
   PairFilter,
   PeriodFilter,
@@ -537,25 +536,16 @@ const RptGLPage: React.FC<RptGLPageProps> = ({ onClose }) => {
         onToChange={setToDate}
       />
 
+      {/* Post Status, and the Entry type at the right end of the same row */}
       <LabelSelectFilter
+        className="w-full"
         label="Post Status"
         id="cboPostStatus"
         options={postStatusOptions}
         value={postStatus}
         onChange={setPostStatus}
-      />
-
-      <LabelSelectFilter
-        label="Print 0 Balance"
-        id="cboPrint0Bal"
-        options={yesNoOptions}
-        value={printZeroBalance}
-        onChange={setPrintZeroBalance}
-      />
-
-      {/* Entry type */}
-      <FilterRow
-        panel={
+      >
+        <div className="ml-auto">
           <RadioPanel id="rdgTransType" className="h-22.5 w-[var(--filter-panel,9.5rem)]">
             {["Generated Entries", "Manual Entries", "All"].map((v) => (
               <CustomRadio
@@ -568,7 +558,15 @@ const RptGLPage: React.FC<RptGLPageProps> = ({ onClose }) => {
               />
             ))}
           </RadioPanel>
-        }
+        </div>
+      </LabelSelectFilter>
+
+      <LabelSelectFilter
+        label="Print 0 Balance"
+        id="cboPrint0Bal"
+        options={yesNoOptions}
+        value={printZeroBalance}
+        onChange={setPrintZeroBalance}
       />
 
       <ReportPrintRow onPrint={() => void handlePrint()} disabled={printing} />

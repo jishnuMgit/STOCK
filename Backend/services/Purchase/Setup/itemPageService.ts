@@ -25,7 +25,7 @@ export async function getItemPageService(
         $6::varchar, $7::varchar, $8::varchar, $9::numeric, $10::numeric,
         $11::varchar, $12::varchar, $13::varchar, $14::integer, $15::integer,
         $16::varchar, $17::boolean, $18::boolean, $19::varchar,
-        $20::varchar, $21::varchar, $22::varchar, $23::refcursor
+        $20::varchar, $21::varchar, $22::varchar, $23::timestamp, $24::refcursor
       )
       `,
       [
@@ -33,7 +33,7 @@ export async function getItemPageService(
         null, null, null, 0, 0,
         null, null, null, 0, 0,
         null, false, false, null,
-        null, null, null, headerCursor,
+        null, null, null, null, headerCursor,
       ]
     );
 
@@ -49,7 +49,7 @@ export async function getItemPageService(
         $6::varchar, $7::varchar, $8::varchar, $9::numeric, $10::numeric,
         $11::varchar, $12::varchar, $13::varchar, $14::integer, $15::integer,
         $16::varchar, $17::boolean, $18::boolean, $19::varchar,
-        $20::varchar, $21::varchar, $22::varchar, $23::refcursor
+        $20::varchar, $21::varchar, $22::varchar, $23::timestamp, $24::refcursor
       )
       `,
       [
@@ -57,7 +57,7 @@ export async function getItemPageService(
         null, null, null, 0, 0,
         null, null, null, 0, 0,
         null, false, false, null,
-        null, null, null, rowsCursor,
+        null, null, null, null, rowsCursor,
       ]
     );
 

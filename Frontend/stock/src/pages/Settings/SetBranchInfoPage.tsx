@@ -7,6 +7,7 @@ import Select, {
 import { toast } from "react-toastify";
 import { useEnterAsTab } from "../../hooks/useEnterAsTab";
 import { useAltShortcuts } from "../../hooks/useAltShortcuts";
+import { useCtrlShortcuts } from "../../hooks/useCtrlShortcuts";
 import { useButtonPermissions } from "../../hooks/useButtonPermissions";
 import { useGridCellFocus } from "../../hooks/useGridCellFocus";
 import { tryGetServerDate } from "../../utils/serverDate";
@@ -451,26 +452,28 @@ const SetBranchInfo: React.FC = () => {
       ...base,
 
       width: `${width}px`,
-      minHeight: "32px",
-      height: "32px",
+      minHeight: "30px",
+      height: "30px",
 
       borderRadius: "6px",
 
+      // the cursor in the box: the same mint line as the text boxes of the form (.input-style:focus in index.css), not
+      // react-select's blue
       borderColor: state.isFocused
-        ? "#3b82f6"
+        ? "#9fdfbc"
         : "#cbd5e1",
 
-      boxShadow: "none",
+      boxShadow: state.isFocused ? "0 0 0 1px #9fdfbc" : "none",
 
       backgroundColor: "#ffffff",
 
-      fontSize: "13px",
+      fontSize: "14px",
 
       cursor: "pointer",
 
       "&:hover": {
         borderColor: state.isFocused
-          ? "#3b82f6"
+          ? "#9fdfbc"
           : "#94a3b8",
       },
     }),
@@ -478,7 +481,7 @@ const SetBranchInfo: React.FC = () => {
     valueContainer: (base) => ({
       ...base,
 
-      height: "32px",
+      height: "30px",
 
       padding:
         direction === "rtl"
@@ -497,7 +500,7 @@ const SetBranchInfo: React.FC = () => {
       margin: 0,
       padding: 0,
 
-      fontSize: "13px",
+      fontSize: "14px",
 
       textAlign:
         direction === "rtl"
@@ -512,7 +515,7 @@ const SetBranchInfo: React.FC = () => {
 
       color: "#334155",
 
-      fontSize: "13px",
+      fontSize: "14px",
 
       textAlign:
         direction === "rtl"
@@ -527,7 +530,7 @@ const SetBranchInfo: React.FC = () => {
 
       color: "#64748b",
 
-      fontSize: "13px",
+      fontSize: "14px",
 
       textAlign:
         direction === "rtl"
@@ -537,7 +540,7 @@ const SetBranchInfo: React.FC = () => {
 
     indicatorsContainer: (base) => ({
       ...base,
-      height: "32px",
+      height: "30px",
     }),
 
     dropdownIndicator: (base) => ({
@@ -559,7 +562,7 @@ const SetBranchInfo: React.FC = () => {
 
       width: `${width}px`,
 
-      fontSize: "13px",
+      fontSize: "14px",
     }),
 
     menuList: (base) => ({
@@ -570,11 +573,11 @@ const SetBranchInfo: React.FC = () => {
     option: (base, state) => ({
       ...base,
 
-      minHeight: "32px",
+      minHeight: "30px",
 
       padding: "7px 10px",
 
-      fontSize: "13px",
+      fontSize: "14px",
 
       textAlign:
         direction === "rtl"
@@ -763,15 +766,17 @@ const SetBranchInfo: React.FC = () => {
 
   /* =========================================================
      KEYBOARD SHORTCUTS
-     Alt+S -> Save, Alt+C -> Clear (matches the underlined
-     accelerator letters on the buttons).
+     Ctrl+S -> Save, Alt+C -> Clear (Clear matches the
+     underlined letter on its button).
   ========================================================= */
 
   // the cursor starts on the Branch box
   useInitialFocus(branchDefaultLoaded, "lkpBranch");
 
-  useAltShortcuts({
+  useCtrlShortcuts({
     s: handleSave,
+  });
+  useAltShortcuts({
     c: () => handleClear(true),
   });
 
@@ -782,7 +787,9 @@ const SetBranchInfo: React.FC = () => {
   return (
    <div
   onKeyDown={handleEnterAsTab}
-  className="flex min-h-screen w-full items-center justify-center overflow-x-auto bg-white"
+  // overflow-x-auto makes this a scroller; Chrome lets a scroller take the keyboard focus and draws its blue focus ring
+  // (the blue line along the left edge while the page loads) - no ring on the page itself, the boxes show their own
+  className="flex min-h-screen w-full items-center justify-center overflow-x-auto bg-white outline-none focus:outline-none"
 >
 
       {/* =====================================================
@@ -1236,10 +1243,7 @@ const SetBranchInfo: React.FC = () => {
     className={`${buttonClass} disabled:cursor-not-allowed disabled:opacity-40`}
   >
      <span className={textClass}>
-                <span className="underline decoration-2 underline-offset-1">
-                  S
-                </span>
-                ave
+                Save
               </span>
   </button>
 

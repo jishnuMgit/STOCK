@@ -3,17 +3,19 @@ import { useEffect } from "react";
 /* =========================================================
    CTRL+KEY SHORTCUTS
 
-   The twin of useAltShortcuts, for the Ctrl keys of the old VB forms: Ctrl+P = Print on the report
-   screens. Ctrl+P is also the browser's own "print this page", so the default is cancelled - the
-   report screen decides what is printed.
+   The same as useAltShortcuts (hooks/useAltShortcuts.ts), but for
+   Ctrl+key: Ctrl+S Save / Modify, Ctrl+D Delete, Ctrl+P Print.
 
-   Window-level for the same reason as useAltShortcuts: react-select renders its open menu into a portal
-   outside the page's DOM, so the key must be heard on window to work wherever focus is.
+   Window-level, so it works wherever the focus is (also inside an
+   open react-select list). The browser's own meaning of the key
+   (save the page, bookmark, print) is stopped with preventDefault.
+   Alt and Meta must not be held, so Alt+Ctrl keys are left alone.
 
-   No dependency array: runs after every render, so it always attaches with the latest handlers.
+   No dependency array: runs after every render, so it always
+   attaches with the latest handlers passed in.
 
    Usage:
-     useCtrlShortcuts({ p: handlePrint });
+     useCtrlShortcuts({ s: handleSave, d: handleDelete, p: handlePrint });
 ========================================================= */
 
 type ShortcutMap = Record<string, () => void>;
@@ -21,8 +23,7 @@ type ShortcutMap = Record<string, () => void>;
 export function useCtrlShortcuts(shortcuts: ShortcutMap) {
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
-      // Ctrl alone (not Ctrl+Alt, not Ctrl+Shift), and not while a key is held down
-      if (!event.ctrlKey || event.altKey || event.shiftKey || event.repeat) {
+      if (!event.ctrlKey || event.altKey || event.metaKey) {
         return;
       }
 

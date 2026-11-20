@@ -6,21 +6,17 @@ import CommonTableSelect, {
 } from "../../components/common/CommonTableSelect";
 import { filterLabelOrValue } from "../../components/BranchSelect/branchSelectParts";
 import { toast } from "react-toastify";
+import { X } from "lucide-react";
 import { useEnterAsTab } from "../../hooks/useEnterAsTab";
 import { useConfirmModal } from "../../hooks/useConfirmModal";
 import { useDeleteToast } from "../../hooks/useDeleteToast";
 import { useGridCellFocus } from "../../hooks/useGridCellFocus";
 import { useAdvanceAfterSelect } from "../../hooks/useAdvanceAfterSelect";
 import { useAltShortcuts } from "../../hooks/useAltShortcuts";
+import { useCtrlShortcuts } from "../../hooks/useCtrlShortcuts";
 import { useButtonPermissions } from "../../hooks/useButtonPermissions";
 import { tryGetServerDate } from "../../utils/serverDate";
-import {
-  filterLabelOrValue,
-  BranchDividedMenuList,
-  BranchDividedOption,
-  branchMenuStyles,
-} from "../../components/BranchSelect/branchSelectParts";
-import selectComponents from "../../components/sharecomponents/selectComponents";
+
 
 // ============================================================
 // TYPES
@@ -604,8 +600,10 @@ const SetDocumentNo: React.FC = () => {
   // on the buttons).
   // ==========================================================
 
-  useAltShortcuts({
+  useCtrlShortcuts({
     s: () => handleSave(),
+  });
+  useAltShortcuts({
     c: () => setCopyToNextYearbtn((previous) => !previous),
   });
 
@@ -851,37 +849,37 @@ const SetDocumentNo: React.FC = () => {
                       >
                         {/* DOCUMENT */}
 
-                        <th className="w-[20%] border-r border-slate-200 px-1 whitespace-nowrap">
+                        <th className="w-[20%] border-r border-slate-200 pl-[2px] pr-1 whitespace-nowrap">
                           Document
                         </th>
 
                         {/* PREFIX */}
 
-                        <th className="w-[9%] border-r border-slate-200 px-1 whitespace-nowrap">
+                        <th className="w-[9%] border-r border-slate-200 pl-[2px] pr-1 whitespace-nowrap">
                           Prefix
                         </th>
 
                         {/* START SEQ NO */}
 
-                        <th className="w-[13%] border-r border-slate-200 px-1 text-left whitespace-nowrap">
+                        <th className="w-[13%] border-r border-slate-200 pl-[2px] pr-1 text-left whitespace-nowrap">
                           Start Seq. No.
                         </th>
 
                         {/* STRICT SERIAL */}
 
-                        <th className="w-[12%] border-r border-slate-200 px-1 text-left whitespace-nowrap">
+                        <th className="w-[12%] border-r border-slate-200 pl-[2px] pr-1 text-left whitespace-nowrap">
                           Strict Serial
                         </th>
 
                         {/* MODE */}
 
-                        <th className="w-[10%] border-r border-slate-200 px-1 text-left whitespace-nowrap">
+                        <th className="w-[10%] border-r border-slate-200 pl-[2px] pr-1 text-left whitespace-nowrap">
                           + Mode
                         </th>
 
                         {/* RESET */}
 
-                        <th className="w-[10%] border-r border-slate-200 px-1 text-left whitespace-nowrap">
+                        <th className="w-[10%] border-r border-slate-200 pl-[2px] pr-1 text-left whitespace-nowrap">
                           Reset No.
                         </th>
 
@@ -923,6 +921,7 @@ const SetDocumentNo: React.FC = () => {
                               >
 
                                 <CustomTableSelect
+                                  valuePadding="0 2px"
                                   inputId={`lkpDocument_${row.id}`}
                                   options={documentOptions}
                                   value={getOption(
@@ -959,7 +958,7 @@ const SetDocumentNo: React.FC = () => {
               PREFIX
           ================================================= */}
 
-                          <td className={`border-r border-t border-slate-200 px-1 ${cellFocusClass}`}>
+                          <td className={`border-r border-t border-slate-200 pl-[2px] pr-1 ${cellFocusClass}`}>
                             <input
                               id={`txtDocPrefix_${row.id}`}
                               onFocus={selectOnFocus}
@@ -1028,6 +1027,7 @@ const SetDocumentNo: React.FC = () => {
                           <td className={`border-r border-t border-slate-200 p-0 ${cellFocusClass}`}
                           >
                             <CustomTableSelect
+                              valuePadding="0 2px"
                               inputId={`lkpMode_${row.id}`}
                               options={modeOptions}
                               value={getOption(modeOptions, row.lkpMode)}
@@ -1056,6 +1056,7 @@ const SetDocumentNo: React.FC = () => {
                           <td className={`border-r border-t border-slate-200 p-0 ${cellFocusClass}`}
                           >
                             <CustomTableSelect
+                              valuePadding="0 2px"
                               inputId={`lkpResetNo_${row.id}`}
                               options={resetOptions}
                               value={getOption(resetOptions, row.lkpResetNo)}
@@ -1128,10 +1129,10 @@ const SetDocumentNo: React.FC = () => {
                                   type="button"
                                   tabIndex={-1}
                                   onClick={() => handleDeleteRow(row)}
-                                  className="ml-1 inline-flex h-[24px] w-[20px] shrink-0 items-center justify-center text-[12px] leading-none text-[#999999] hover:text-red-600"
+                                  className="ml-1 inline-flex h-[24px] w-[20px] shrink-0 items-center justify-center text-slate-400 hover:text-red-500"
                                   aria-label={`Delete ${row.lkpDocument}`}
                                 >
-                                  ✕
+                                  <X size={12} />
                                 </button>
                               )}
                             </div>
@@ -1157,10 +1158,7 @@ const SetDocumentNo: React.FC = () => {
                 disabled={!canSaveOrModify}
                 className="btn-style disabled:cursor-not-allowed disabled:opacity-40"
               >
-                <span className="underline underline-offset-2">
-                  {actionWord.charAt(0)}
-                </span>
-                {actionWord.slice(1)}
+                {actionWord}
               </button>
 
               <button

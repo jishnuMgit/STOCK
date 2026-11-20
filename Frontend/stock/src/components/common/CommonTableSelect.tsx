@@ -6,7 +6,9 @@ import Select, {
   type StylesConfig,
   type OptionProps,
   type MenuListProps,
+  type ClearIndicatorProps,
 } from "react-select";
+import { X } from "lucide-react";
 import selectComponents, { SELECT_FONT_FAMILY } from "./selectComponents";
 
 export interface TableSelectOption {
@@ -56,6 +58,13 @@ interface CommonTableSelectProps {
   menuMaxHeight?: string;
   valueKey?: string;
   showHeader?: boolean;
+  // the space left and right of the chosen text in the box, CustomTableSelect only (default "0 5px")
+  valuePadding?: string;
+  // the size (px) of the little x that clears the box, the same x as the one that deletes a row of a grid (12): a slate grey,
+  // red on hover. Without it the box keeps react-select's own, bigger x. CommonTableSelect only.
+  clearIconSize?: number;
+  // the colours of the open list: "receipt" = the Receipt screen's list (grey header, thin grey lines, mint hover row)
+  listLook?: "receipt";
 }
 
 const CommonTableSelect = ({
@@ -91,7 +100,11 @@ const CommonTableSelect = ({
   menuMaxHeight = "220px",
   valueKey,
   showHeader = true,
+  listLook,
+  clearIconSize,
 }: CommonTableSelectProps) => {
+  const receipt = listLook === "receipt";
+
   // Same column structure for header and option rows
   const gridTemplate = columns.map((col) => col.width || "1fr").join(" ");
 
@@ -102,6 +115,17 @@ const CommonTableSelect = ({
   };
 
   const customComponents = {
+    // the little x that clears the box (only when the page asks for a size)
+    ...(clearIconSize
+      ? {
+          ClearIndicator: (props: ClearIndicatorProps<TableSelectOption, false>) => (
+            <components.ClearIndicator {...props}>
+              <X size={clearIconSize} />
+            </components.ClearIndicator>
+          ),
+        }
+      : {}),
+
     // OPTION ROW
     Option: (props: OptionProps<TableSelectOption, false>) => (
       <components.Option {...props}>
@@ -122,7 +146,7 @@ const CommonTableSelect = ({
                 flex min-w-0 h-full items-center
                 truncate pl-[2px] pr-[5px]
                 ${getAlignment(col.align)}
-                ${index > 0 ? "border-l border-[#D5DDE5]" : ""}
+                ${index > 0 ? (receipt ? "border-l border-[#EEEEEE]" : "border-l border-[#D5DDE5]") : ""}
               `}
               style={{
                 boxSizing: "border-box",
@@ -141,12 +165,14 @@ const CommonTableSelect = ({
       <components.MenuList {...props}>
         {showHeader && (
           <div
-            className="
+            className={`
               grid w-full items-stretch
-              bg-[#F3F5F7]
-              border-b border-[#D5DDE5]
-              font-semibold text-[#334155]
-            "
+              ${
+                receipt
+                  ? "border-b border-[#CCCCCC] bg-[#EEEEEE] font-medium text-[#222222]"
+                  : "border-b border-[#D5DDE5] bg-[#F3F5F7] font-semibold text-[#334155]"
+              }
+            `}
             style={{
               gridTemplateColumns: gridTemplate,
               height: "35px",
@@ -162,7 +188,7 @@ const CommonTableSelect = ({
                   flex min-w-0 h-full items-center
                   truncate pl-[2px] pr-[5px]
                   ${getAlignment(col.align)}
-                  ${index > 0 ? "border-l border-[#D5DDE5]" : ""}
+                  ${index > 0 ? (receipt ? "border-l border-[#CCCCCC]" : "border-l border-[#D5DDE5]") : ""}
                 `}
                 style={{ boxSizing: "border-box", overflow: "hidden" }}
               >
@@ -217,9 +243,9 @@ const CommonTableSelect = ({
       minWidth: "100%",
       maxWidth: "calc(100vw - 16px)",
       marginTop: "4px",
-      borderRadius: "4px",
-      border: "1px solid #E5E7EB",
-      boxShadow: "0 4px 10px rgba(0,0,0,0.12)",
+      borderRadius: receipt ? 0 : "4px",
+      border: receipt ? "1px solid #aaaaaa" : "1px solid #E5E7EB",
+      boxShadow: receipt ? "2px 2px 5px rgba(0, 0, 0, 0.18)" : "0 4px 10px rgba(0,0,0,0.12)",
       zIndex: menuZIndex,
       overflow: "hidden",
     }),
@@ -252,18 +278,34 @@ const CommonTableSelect = ({
       fontSize: "14px",
       color: "#334155",
 
-      backgroundColor: state.isSelected
-        ? "#EAF7F0"
-        : state.isFocused
-          ? "#F0F8F4"
-          : "#FFFFFF",
+      backgroundColor: receipt
+        ? state.isFocused
+          ? "#EEFBF4"
+          : "#FFFFFF"
+        : state.isSelected
+          ? "#EAF7F0"
+          : state.isFocused
+            ? "#F0F8F4"
+            : "#FFFFFF",
 
       cursor: "pointer",
 
       "&:active": {
-        backgroundColor: "#DDF2E7",
+        backgroundColor: receipt ? "#dff5e9" : "#DDF2E7",
       },
     }),
+
+    ...(clearIconSize
+      ? {
+          clearIndicator: (base) => ({
+            ...base,
+            padding: "0 4px",
+            color: "#94A3B8",
+            cursor: "pointer",
+            "&:hover": { color: "#EF4444" },
+          }),
+        }
+      : {}),
 
     singleValue: (base) => ({
       ...base,
@@ -341,6 +383,7 @@ export const CustomTableSelect = ({
   menuPortalTarget,
   controlHeight = 31,
   menuZIndex = 100000,
+  valuePadding = "0 5px",
 }: CommonTableSelectProps) => {
   // Same column structure for header and option rows
   const gridTemplate = columns.map((col) => col.width || "1fr").join(" ");
@@ -457,7 +500,7 @@ export const CustomTableSelect = ({
 
     valueContainer: (base) => ({
       ...base,
-      padding: "0 5px",
+      padding: valuePadding,
     }),
 
     indicatorsContainer: (base) => ({

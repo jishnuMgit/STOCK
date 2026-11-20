@@ -598,14 +598,25 @@ const RptSOAPage: React.FC<RptSOAPageProps> = () => {
 
       <LabelSelectFilter label="Ageing" id="lkpAgeing" options={ageingOptions} value={ageing} onChange={setAgeing} />
 
+      {/* Ageing Mode, and the SOA type at the right end of the same row */}
       <LabelSelectFilter
+        className="w-full"
         label="Ageing Mode"
         id="lkpAgeingMode"
         options={ageingModeOptions}
         value={ageingMode}
         onChange={setAgeingMode}
         disabled={ageing?.value !== "WITH"}
-      />
+      >
+        <div className="ml-auto">
+          <RadioPanel id="rdgSOAType" className="h-17.5 w-40">
+            <CustomRadio name="rdgSOAType" value="Outstanding SOA" label="Outstanding SOA"
+              checked={status === "Outstanding"} onChange={() => setStatus("Outstanding")} />
+            <CustomRadio name="rdgSOAType" value="SOA" label="SOA"
+              checked={status === "All"} onChange={() => setStatus("All")} />
+          </RadioPanel>
+        </div>
+      </LabelSelectFilter>
 
       <PostStatusFilter options={postStatusOptions} value={postStatus} onChange={setPostStatus} />
 
@@ -615,18 +626,6 @@ const RptSOAPage: React.FC<RptSOAPageProps> = () => {
         options={printZeroOptions}
         value={printZeroBalance}
         onChange={setPrintZeroBalance}
-      />
-
-      {/* SOA type */}
-      <FilterRow
-        panel={
-          <RadioPanel id="rdgSOAType" className="h-17.5 w-40">
-            <CustomRadio name="rdgSOAType" value="Outstanding SOA" label="Outstanding SOA"
-              checked={status === "Outstanding"} onChange={() => setStatus("Outstanding")} />
-            <CustomRadio name="rdgSOAType" value="SOA" label="SOA"
-              checked={status === "All"} onChange={() => setStatus("All")} />
-          </RadioPanel>
-        }
       />
 
       <ReportPrintRow onPrint={() => void handlePrint()} disabled={printing}>

@@ -2,8 +2,10 @@ import React, { useEffect, useRef, useState } from "react";
 import Header from "../../../components/common/Header";
 import Select, { type SingleValue } from "react-select";
 import { toast } from "react-toastify";
+import { X } from "lucide-react";
 import { useEnterAsTab } from "../../../hooks/useEnterAsTab";
 import { useAltShortcuts } from "../../../hooks/useAltShortcuts";
+import { useCtrlShortcuts } from "../../../hooks/useCtrlShortcuts";
 import { useButtonPermissions } from "../../../hooks/useButtonPermissions";
 import { useConfirmModal } from "../../../hooks/useConfirmModal";
 import { useDeleteToast } from "../../../hooks/useDeleteToast";
@@ -573,12 +575,14 @@ const UserLogin: React.FC = () => {
 
   // ============================================================
   // KEYBOARD SHORTCUTS
-  // Alt+S -> Save, Alt+C -> Clear (matches the underlined
-  // accelerator letters on the buttons).
+  // Ctrl+S -> Save, Alt+C -> Clear (Clear matches the underlined
+  // letter on its button).
   // ============================================================
 
-  useAltShortcuts({
+  useCtrlShortcuts({
     s: handleSave,
+  });
+  useAltShortcuts({
     c: handleClear,
   });
 
@@ -656,7 +660,8 @@ const UserLogin: React.FC = () => {
                     border-b
                     border-r
                     border-[#b7e8cf]
-                    px-2
+                    pl-[2px]
+                    pr-2
                     text-left
                     text-[14px]
                     font-normal
@@ -673,7 +678,8 @@ const UserLogin: React.FC = () => {
                     border-b
                     border-r
                     border-[#b7e8cf]
-                    px-2
+                    pl-[2px]
+                    pr-2
                     text-left
                     text-[14px]
                     font-normal
@@ -690,7 +696,8 @@ const UserLogin: React.FC = () => {
                     border-b
                     border-r
                     border-[#b7e8cf]
-                    px-2
+                    pl-[2px]
+                    pr-2
                     text-left
                     text-[14px]
                     font-normal
@@ -706,7 +713,8 @@ const UserLogin: React.FC = () => {
                     border-b
                     border-r
                     border-[#b7e8cf]
-                    px-2
+                    pl-[2px]
+                    pr-2
                     text-left
                     text-[14px]
                     font-normal
@@ -723,7 +731,8 @@ const UserLogin: React.FC = () => {
                     border-b
                     border-r
                     border-[#b7e8cf]
-                    px-2
+                    pl-[2px]
+                    pr-2
                     text-left
                     text-[14px]
                     font-normal
@@ -739,7 +748,8 @@ const UserLogin: React.FC = () => {
                     w-[15%]
                     border-b
                     border-[#b7e8cf]
-                    px-2
+                    pl-[2px]
+                    pr-2
                     text-left
                     text-[14px]
                     font-normal
@@ -769,7 +779,8 @@ const UserLogin: React.FC = () => {
                       border-b
                       border-r
                       border-[#b7e8cf]
-                      px-2
+                      pl-[2px]
+                      pr-2
                     "
                   >
                     <div className="flex h-full items-center gap-1">
@@ -799,7 +810,8 @@ const UserLogin: React.FC = () => {
                       border-b
                       border-r
                       border-[#b7e8cf]
-                      px-2
+                      pl-[2px]
+                      pr-2
                     "
                   >
                     <input
@@ -825,7 +837,8 @@ const UserLogin: React.FC = () => {
                       border-b
                       border-r
                       border-[#b7e8cf]
-                      px-2
+                      pl-[2px]
+                      pr-2
                     "
                   >
                     <input
@@ -859,7 +872,8 @@ const UserLogin: React.FC = () => {
                       border-b
                       border-r
                       border-[#b7e8cf]
-                      px-2
+                      pl-[2px]
+                      pr-2
                     "
                   >
                     <input
@@ -893,7 +907,9 @@ const UserLogin: React.FC = () => {
                       border-b
                       border-r
                       border-[#b7e8cf]
-                      p-2
+                      py-2
+                      pl-[2px]
+                      pr-2
                     "
                   >
                     <Select
@@ -922,7 +938,9 @@ const UserLogin: React.FC = () => {
                     className="
                       border-b
                       border-[#b7e8cf]
-                      p-2
+                      py-2
+                      pl-[2px]
+                      pr-2
                     "
                   >
                     <div className="flex items-center gap-1">
@@ -958,18 +976,16 @@ const UserLogin: React.FC = () => {
                             inline-flex
                             h-[23px]
                             w-[20px]
-                            text-[12px]
-                            leading-none
                             shrink-0
                             items-center
                             justify-center
                             rounded
-                            text-[#999999]
-                            hover:text-red-600
+                            text-slate-400
+                            hover:text-red-500
                           "
                           aria-label={`Delete ${user.txtUserID}`}
                         >
-                          ✕
+                          <X size={12} />
                         </button>
                       )}
                     </div>
@@ -994,10 +1010,7 @@ const UserLogin: React.FC = () => {
             disabled={!perms.save}
             className={`${buttonClass} disabled:cursor-not-allowed disabled:opacity-40`}
           >
-            <span className="underline underline-offset-2">
-              S
-            </span>
-            ave
+            Save
           </button>
 
           {/* CLEAR */}

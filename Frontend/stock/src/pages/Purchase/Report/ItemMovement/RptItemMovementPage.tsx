@@ -370,6 +370,7 @@ const RptItemMovementPage: React.FC<RptItemMovementPageProps> = ({ onClose }) =>
 
       {/* Fast / Slow / Non Moving, and Order by (it does not apply to Non Moving) */}
       <FilterRow
+        className="w-full"
         panel={
           <RadioPanel id="rdgItemMovement" className="h-22.5 w-38">
             {["Fast Moving", "Slow Moving", "Non Moving"].map((label) => (
@@ -385,23 +386,26 @@ const RptItemMovementPage: React.FC<RptItemMovementPageProps> = ({ onClose }) =>
           </RadioPanel>
         }
       >
+        {/* Order by - at the right end of the row */}
         {rdgItemMovement !== "Non Moving" && (
-          <RadioPanel id="rdgOrderBy" className="h-17.5 w-48">
-            <CustomRadio
-              name="rdgOrderBy"
-              value="Qty"
-              label="Order by Qty."
-              checked={rdgOrderBy === "Qty"}
-              onChange={() => setRdgOrderBy("Qty")}
-            />
-            <CustomRadio
-              name="rdgOrderBy"
-              value="Value"
-              label="Order by Value"
-              checked={rdgOrderBy === "Value"}
-              onChange={() => setRdgOrderBy("Value")}
-            />
-          </RadioPanel>
+          <div className="flex justify-end">
+            <RadioPanel id="rdgOrderBy" className="h-17.5 w-48">
+              <CustomRadio
+                name="rdgOrderBy"
+                value="Qty"
+                label="Order by Qty."
+                checked={rdgOrderBy === "Qty"}
+                onChange={() => setRdgOrderBy("Qty")}
+              />
+              <CustomRadio
+                name="rdgOrderBy"
+                value="Value"
+                label="Order by Value"
+                checked={rdgOrderBy === "Value"}
+                onChange={() => setRdgOrderBy("Value")}
+              />
+            </RadioPanel>
+          </div>
         )}
       </FilterRow>
 

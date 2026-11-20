@@ -7,6 +7,7 @@ import { useInitialFocus } from "../../../hooks/useInitialFocus";
 import { useConfirmModal } from "../../../hooks/useConfirmModal";
 import { useDeleteToast } from "../../../hooks/useDeleteToast";
 import { useAltShortcuts } from "../../../hooks/useAltShortcuts";
+import { useCtrlShortcuts } from "../../../hooks/useCtrlShortcuts";
 import { useButtonPermissions } from "../../../hooks/useButtonPermissions";
 import { filterLabelOrValue } from "../../../components/BranchSelect/branchSelectParts";
 import CommonTableSelect, {
@@ -806,20 +807,16 @@ const ItemPage: React.FC = () => {
 
   /* =========================================================
      KEYBOARD SHORTCUTS
-     Alt+S -> Save, Alt+C -> Clear (matches the underlined
-     accelerator letters on the buttons).
+     Ctrl+S -> Save / Modify, Ctrl+D -> Delete, Alt+C -> Clear
+     (Clear matches the underlined letter on its button).
   ========================================================= */
 
-  // Alt+S -> Save (new item), Alt+M -> Modify (existing item),
-  // Alt+D -> Delete, Alt+C -> Clear
-  useAltShortcuts({
-    s: () => {
-      if (!hasSavedItem) handleSave();
-    },
-    m: () => {
-      if (hasSavedItem) handleSave();
-    },
+  // Ctrl+S -> Save (new item) or Modify (existing item), Ctrl+D -> Delete, Alt+C -> Clear
+  useCtrlShortcuts({
+    s: handleSave,
     d: handleDelete,
+  });
+  useAltShortcuts({
     c: handleClear,
   });
 
@@ -1041,6 +1038,7 @@ const ItemPage: React.FC = () => {
                 </label>
 
                 <CommonTableSelect
+                  listLook="receipt"
                   inputId="lkpUnit"
                   options={unitOptions}
                   value={
@@ -1048,6 +1046,7 @@ const ItemPage: React.FC = () => {
                   }
                   onChange={(option) => setLkpUnit(option?.value || "")}
                   columns={UNIT_COLUMNS}
+                  clearIconSize={12}
                   width="155px"
                   menuWidth="155px"
                   controlHeight={30}
@@ -1131,6 +1130,9 @@ const ItemPage: React.FC = () => {
                 </label>
 
                 <CustomLinkedPairSelect
+                  listLook="receipt"
+                  // 6 rows (not the 10 of the report pages): the list is ~250 px tall, so it opens downward in most windows
+                  maxVisibleRows={6}
                   firstInputId="lkpItemGroupID"
                   secondInputId="lkpItemGroupName"
                   options={itemGroupPairOptions}
@@ -1169,6 +1171,9 @@ const ItemPage: React.FC = () => {
                 </label>
 
                 <CustomLinkedPairSelect
+                  listLook="receipt"
+                  // 6 rows (not the 10 of the report pages): the list is ~250 px tall, so it opens downward in most windows
+                  maxVisibleRows={6}
                   firstInputId="lkpSupplierID"
                   secondInputId="lkpSupplierName"
                   options={supplierPairOptions}
@@ -1468,6 +1473,7 @@ const ItemPage: React.FC = () => {
                           <div className="flex h-8 items-stretch">
                             <div className="flex-1 overflow-hidden">
                               <CommonTableSelect
+                                listLook="receipt"
                                 inputId={`lkpBranch_${row.id}`}
                                 options={branchOptions}
                                 value={
@@ -1625,10 +1631,7 @@ const ItemPage: React.FC = () => {
                   id={hasSavedItem ? "Modifybtn" : "Savebtn"}
                   name={hasSavedItem ? "Modifybtn" : "Savebtn"}
                 >
-                  <span className="underline underline-offset-2">
-                    {actionWord.charAt(0)}
-                  </span>
-                  {actionWord.slice(1)}
+                  {actionWord}
                 </button>
 
                 {/* FIND */}
@@ -1653,7 +1656,7 @@ const ItemPage: React.FC = () => {
                   id="Deletebtn"
                   name="Deletebtn"
                 >
-                  <span className="underline underline-offset-2">D</span>elete
+                  Delete
                 </button>
 
                 {/* CLEAR */}
