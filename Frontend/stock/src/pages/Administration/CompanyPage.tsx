@@ -5,6 +5,7 @@ import Select, {
 } from "react-select";
 import { toast } from "react-toastify";
 import Header from "../../components/common/Header";
+import selectComponents from "../../components/common/selectComponents";
 import { useCtrlShortcuts } from "../../hooks/useCtrlShortcuts";
 
 type Option = {
@@ -656,6 +657,7 @@ const CompanyPage: React.FC = () => {
               onMenuOpen={() => (menuOpenRef.current = true)}
               onMenuClose={() => (menuOpenRef.current = false)}
               styles={selectStyles1}
+              components={selectComponents}
               isClearable={false}
               isSearchable={false}
               placeholder=""
@@ -683,6 +685,7 @@ const CompanyPage: React.FC = () => {
               onMenuOpen={() => (menuOpenRef.current = true)}
               onMenuClose={() => (menuOpenRef.current = false)}
               styles={selectStyles1}
+              components={selectComponents}
               isClearable={false}
               isSearchable={false}
               placeholder=""
