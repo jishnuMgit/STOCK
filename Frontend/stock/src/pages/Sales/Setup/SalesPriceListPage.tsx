@@ -10,6 +10,7 @@ import {
 } from "../../../components/Setup/SalesPriceList/SalesPriceListShared";
 import type { PairOption } from "../../../components/PairSelect/pairSelectParts";
 import { useAltShortcuts } from "../../../hooks/useAltShortcuts";
+import { useCtrlShortcuts } from "../../../hooks/useCtrlShortcuts";
 import { useButtonPermissions } from "../../../hooks/useButtonPermissions";
 import Header from "../../../components/common/Header";
 import { tryGetServerDate } from "../../../utils/serverDate";
@@ -436,9 +437,9 @@ const SalesPriceListPage: React.FC<SalesPriceListPageProps> = ({ onClose }) => {
     }
   };
 
-  // Alt+M Modify, Alt+F Find, Alt+C Cancel, Alt+O Close
+  // Ctrl+S Modify (Save), Alt+F Find, Alt+C Cancel, Alt+O Close
+  useCtrlShortcuts({ s: handleModify });
   useAltShortcuts({
-    m: handleModify,
     f: handleFind,
     c: handleCancel,
     o: handleClose,

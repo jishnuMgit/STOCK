@@ -6,6 +6,7 @@ import CommonTableSelect, {
 import { toast } from "react-toastify";
 import { useEnterAsTab } from "../../hooks/useEnterAsTab";
 import { useAltShortcuts } from "../../hooks/useAltShortcuts";
+import { useCtrlShortcuts } from "../../hooks/useCtrlShortcuts";
 import { useGridCellFocus } from "../../hooks/useGridCellFocus";
 import { useButtonPermissions } from "../../hooks/useButtonPermissions";
 import { tryGetServerDate } from "../../utils/serverDate";
@@ -333,9 +334,11 @@ const SetDefaultBranchPage: React.FC = () => {
     setReloadKey((key) => key + 1);
   };
 
-  // Alt+S -> Save, Alt+C -> Clear (the underlined letters on the buttons)
-  useAltShortcuts({
+  // Ctrl+S -> Save, Alt+C -> Clear (the underlined letter on its button)
+  useCtrlShortcuts({
     s: handleSave,
+  });
+  useAltShortcuts({
     c: handleClear,
   });
 
@@ -523,10 +526,7 @@ const SetDefaultBranchPage: React.FC = () => {
               disabled={!canSaveOrModify || saving}
               className="btn-style disabled:cursor-not-allowed disabled:opacity-40"
             >
-              <span className="underline underline-offset-2">
-                {actionWord.charAt(0)}
-              </span>
-              {actionWord.slice(1)}
+              {actionWord}
             </button>
 
             <button

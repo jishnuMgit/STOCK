@@ -1,8 +1,15 @@
 import React, { useEffect, useRef, useState } from "react";
 import Header from "../../components/common/Header";
-import Select, { type SingleValue, type StylesConfig } from "react-select";
+import Select, {
+  components as selectParts,
+  type ClearIndicatorProps,
+  type SingleValue,
+  type StylesConfig,
+} from "react-select";
+import { X } from "lucide-react";
 import { toast } from "react-toastify";
 import { useAltShortcuts } from "../../hooks/useAltShortcuts";
+import { useCtrlShortcuts } from "../../hooks/useCtrlShortcuts";
 import { useConfirmModal } from "../../hooks/useConfirmModal";
 import { useEnterAsTab } from "../../hooks/useEnterAsTab";
 import { useButtonPermissions } from "../../hooks/useButtonPermissions";
@@ -28,8 +35,21 @@ import {
 // header and a divider between the columns (the Name box shows
 // "Account Name | Account ID"). Created once,
 // outside the page component, so react-select doesn't remount the menu.
-const accountIdComponents = makePairComponents("Account ID", "Account Name", false, true);
-const accountNameComponents = makePairComponents("Account ID", "Account Name", true, true);
+// the little x that clears a box: the same 12px x as the delete x of the grids (slate grey, red on hover)
+const SmallClearIndicator = (props: ClearIndicatorProps<any, false>) => (
+  <selectParts.ClearIndicator {...props}>
+    <X size={12} />
+  </selectParts.ClearIndicator>
+);
+
+const accountIdComponents = {
+  ...makePairComponents("Account ID", "Account Name", false, true),
+  ClearIndicator: SmallClearIndicator,
+};
+const accountNameComponents = {
+  ...makePairComponents("Account ID", "Account Name", true, true),
+  ClearIndicator: SmallClearIndicator,
+};
 // ============================================================
 // TYPES
 // ============================================================
@@ -130,7 +150,7 @@ const selectStyles: StylesConfig<SelectOption, false> = {
     border: "1px solid #d1d5db",
     boxShadow: "none",
     backgroundColor: state.isFocused ? "#eefbf4" : "#ffffff",
-    fontSize: "11px",
+    fontSize: "13px",
     cursor: "pointer",
     "&:hover": {
       borderColor: "#9fdfbc",
@@ -141,26 +161,27 @@ const selectStyles: StylesConfig<SelectOption, false> = {
     ...base,
     height: "23px",
     minHeight: "23px",
-    padding: "0 6px",
+    // the text starts 2px in, as in the other Settings grids (Default Branch, Document No, Chart Of Account)
+    padding: "0 6px 0 2px",
   }),
 
   input: (base) => ({
     ...base,
     margin: "0",
     padding: "0",
-    fontSize: "11px",
+    fontSize: "13px",
   }),
 
   singleValue: (base) => ({
     ...base,
     color: "#263449",
-    fontSize: "11px",
+    fontSize: "13px",
   }),
 
   placeholder: (base) => ({
     ...base,
     color: "#737b86",
-    fontSize: "11px",
+    fontSize: "13px",
     whiteSpace: "nowrap",
     overflow: "hidden",
     textOverflow: "ellipsis",
@@ -179,7 +200,10 @@ const selectStyles: StylesConfig<SelectOption, false> = {
 
   clearIndicator: (base) => ({
     ...base,
-    padding: "2px",
+    padding: "0 4px",
+    color: "#94a3b8",
+    cursor: "pointer",
+    "&:hover": { color: "#ef4444" },
   }),
 
   indicatorSeparator: () => ({
@@ -189,7 +213,7 @@ const selectStyles: StylesConfig<SelectOption, false> = {
   menu: (base) => ({
     ...base,
     zIndex: 100,
-    fontSize: "11px",
+    fontSize: "13px",
     marginTop: "1px",
     borderRadius: "2px",
   }),
@@ -202,7 +226,7 @@ const selectStyles: StylesConfig<SelectOption, false> = {
 
   option: (base, state) => ({
     ...base,
-    fontSize: "11px",
+    fontSize: "13px",
     padding: "5px 8px",
     backgroundColor: state.isSelected
       ? "#dce9f7"
@@ -688,9 +712,11 @@ const SetPostingAccountPage: React.FC = () => {
     }
   };
 
-  // Alt+S -> Save, Alt+C -> Clear (the underlined letters on the buttons)
-  useAltShortcuts({
+  // Ctrl+S -> Save, Alt+C -> Clear (the underlined letter on its button)
+  useCtrlShortcuts({
     s: handleSave,
+  });
+  useAltShortcuts({
     c: handleClear,
   });
 
@@ -1481,10 +1507,7 @@ const SetPostingAccountPage: React.FC = () => {
                 disabled={!canSaveOrModify}
                 className={`${buttonClass} disabled:cursor-not-allowed disabled:opacity-40`}
               >
-                <span className="underline underline-offset-2">
-                  {actionWord.charAt(0)}
-                </span>
-                {actionWord.slice(1)}
+                {actionWord}
               </button>
 
               <button

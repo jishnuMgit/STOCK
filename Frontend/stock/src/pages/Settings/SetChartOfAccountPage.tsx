@@ -4,6 +4,7 @@ import { toast } from "react-toastify";
 import { X } from "lucide-react";
 import { useConfirmModal } from "../../hooks/useConfirmModal";
 import { useAltShortcuts } from "../../hooks/useAltShortcuts";
+import { useCtrlShortcuts } from "../../hooks/useCtrlShortcuts";
 import { useEnterAsTab } from "../../hooks/useEnterAsTab";
 import { useButtonPermissions } from "../../hooks/useButtonPermissions";
 import { useGridCellFocus } from "../../hooks/useGridCellFocus";
@@ -83,10 +84,10 @@ const createMenuList = (
       <div
         className="
           sticky top-0 z-[2]
-          grid h-[27px]
+          grid h-[30px]
           border-b border-slate-300
           bg-[#eeeeee]
-          text-[12px] font-medium text-slate-800
+          text-[14px] font-medium text-slate-800
         "
         style={{ gridTemplateColumns: gridColumns }}
       >
@@ -150,8 +151,8 @@ const createSelectStyles = (
 
   control: (base, state) => ({
     ...base,
-    minHeight: "30px",
-    height: "30px",
+    minHeight: "34px",
+    height: "34px",
     width: "100%",
     border: "none",
     borderRadius: 0,
@@ -170,9 +171,9 @@ const createSelectStyles = (
 
   valueContainer: (base) => ({
     ...base,
-    height: "30px",
+    height: "34px",
     minWidth: 0,
-    padding: "0 7px",
+    padding: "0 7px 0 2px",
     overflow: "hidden",
   }),
 
@@ -181,39 +182,39 @@ const createSelectStyles = (
     margin: 0,
     padding: 0,
     color: "#334155",
-    fontSize: "11px",
+    fontSize: "13px",
   }),
 
   singleValue: (base) => ({
     ...base,
     margin: 0,
     color: "#334155",
-    fontSize: "11px",
-    lineHeight: "30px",
+    fontSize: "13px",
+    lineHeight: "34px",
   }),
 
   placeholder: (base) => ({
     ...base,
     margin: 0,
     color: "#94a3b8",
-    fontSize: "11px",
+    fontSize: "13px",
   }),
 
   indicatorsContainer: (base) => ({
     ...base,
     width: "17px",
-    height: "30px",
+    height: "34px",
     flexShrink: 0,
   }),
 
   dropdownIndicator: (base) => ({
     ...base,
-    // centre the arrow in the 30px row (same line as the text and the X)
+    // centre the arrow in the 34px row (same line as the text and the X)
     display: "flex",
     alignItems: "center",
     justifyContent: "center",
     width: "17px",
-    height: "30px",
+    height: "34px",
     padding: 0,
     color: "#64748b",
 
@@ -263,14 +264,14 @@ const createSelectStyles = (
     display: "grid",
     gridTemplateColumns: gridColumns,
     alignItems: "center",
-    minHeight: "27px",
-    height: "27px",
+    minHeight: "30px",
+    height: "30px",
     padding: 0,
     backgroundColor: state.isFocused
       ? "#eef9f3"
       : "#ffffff",
     color: "#334155",
-    fontSize: "12px",
+    fontSize: "14px",
     cursor: "pointer",
 
     "&:active": {
@@ -459,9 +460,9 @@ const SetChartOfAccount: React.FC = () => {
   );
 
   // height of the Parameter list when ALL of it is shown (the header and one
-  // 27px row per parameter) - so it never needs a scroll bar, however many
+  // 30px row per parameter) - so it never needs a scroll bar, however many
   // parameters there are
-  const parameterMenuHeight = (parameterList.length + 1) * 27 + 2;
+  const parameterMenuHeight = (parameterList.length + 1) * 30 + 2;
 
   // Both account dropdowns save the account ID (value). They only
   // differ in what they show: the ID list shows the ID, the Name
@@ -789,9 +790,11 @@ const SetChartOfAccount: React.FC = () => {
     setReloadKey((key) => key + 1);
   };
 
-  // Alt+S -> Save, Alt+C -> Clear (the underlined letters on the buttons)
-  useAltShortcuts({
+  // Ctrl+S -> Save, Alt+C -> Clear (the underlined letter on its button)
+  useCtrlShortcuts({
     s: handleSave,
+  });
+  useAltShortcuts({
     c: handleClear,
   });
 
@@ -816,10 +819,10 @@ const SetChartOfAccount: React.FC = () => {
     "18px 34px 266px 120px minmax(180px, 1fr) 58px";
 
   const headerCellClass =
-    "flex h-[30px] min-w-0 items-center border-r border-[#c8eadb] px-[7px] text-[14px] text-gray-600";
+    "flex h-[34px] min-w-0 items-center border-r border-[#bfe8d0] pl-[2px] pr-[7px] text-[14px] text-gray-600";
 
   const cellClass =
-    `relative h-[30px] min-w-0 border-r border-[#c8eadb] p-0 ${cellFocusClass}`;
+    `relative h-[34px] min-w-0 border-r border-[#bfe8d0] p-0 ${cellFocusClass}`;
 
   // ==========================================================
   // RENDER
@@ -842,15 +845,15 @@ const SetChartOfAccount: React.FC = () => {
         {/* TABLE */}
         {/* Do not add overflow-hidden here: dropdowns must remain visible. */}
 
-        <div className="overflow-visible border border-[#b9e8d2]">
+        <div className="overflow-visible border border-[#bfe8d0]">
           <div className="w-full">
             {/* TABLE HEADINGS */}
 
             <div
-              className="grid border-b border-[#b9e8d2] bg-[#eef9f3]"
+              className="grid border-b border-[#bfe8d0] bg-[#edf9f2]"
               style={{ gridTemplateColumns: columns }}
             >
-              <div className="h-[30px] border-r border-[#c8eadb]" />
+              <div className="h-[34px] border-r border-[#bfe8d0]" />
 
               <div className={`${headerCellClass} justify-center`}>
                 Line
@@ -868,7 +871,7 @@ const SetChartOfAccount: React.FC = () => {
                 Account Name
               </div>
 
-              <div className="flex h-[30px] min-w-0 items-center px-[5px] text-[14px] text-gray-600">
+              <div className="flex h-[34px] min-w-0 items-center pl-[2px] pr-[5px] text-[14px] text-gray-600">
                 G/P/H
               </div>
             </div>
@@ -904,18 +907,18 @@ const SetChartOfAccount: React.FC = () => {
               return (
                 <div
                   key={`coa-row-${index}`}
-                  className="grid border-b border-[#b9e8d2] bg-white text-[11px]"
+                  className="grid border-b border-[#bfe8d0] bg-white text-[13px]"
                   style={{ gridTemplateColumns: columns }}
                 >
                   {/* ROW SELECTOR */}
 
-                  <div className="h-[30px] border-r border-[#c8eadb]" />
+                  <div className="h-[34px] border-r border-[#bfe8d0]" />
 
                   {/* SERIAL NUMBER */}
 
                   <div
                     id={`txtSlNo-${index}`}
-                    className="flex h-[30px] items-center justify-center border-r border-[#c8eadb]"
+                    className="flex h-[34px] items-center justify-center border-r border-[#bfe8d0]"
                   >
                     {index + 1}
                   </div>
@@ -946,7 +949,7 @@ const SetChartOfAccount: React.FC = () => {
                           option.label
                         ) : (
                           <div
-                            className="grid h-[27px] w-full items-center"
+                            className="grid h-[30px] w-full items-center"
                             style={{
                               gridTemplateColumns:
                                 "266px minmax(120px, 1fr)",
@@ -991,14 +994,14 @@ const SetChartOfAccount: React.FC = () => {
                         disabled={!perms.delete}
                         aria-label={`Delete row ${index + 1}`}
                         className="
-                          relative inline-flex h-full w-[27px] shrink-0
+                          relative inline-flex h-full w-5 shrink-0
                           items-center justify-center self-stretch rounded
-                          text-[#999999] hover:text-red-600
+                          text-slate-400 hover:text-red-500
                           disabled:cursor-not-allowed disabled:opacity-30
-                          disabled:hover:text-[#999999]
+                          disabled:hover:text-slate-400
                         "
                       >
-                        <X size={13} />
+                        <X size={12} />
                       </button>
                     )}
                   </div>
@@ -1035,7 +1038,7 @@ const SetChartOfAccount: React.FC = () => {
                           option.label
                         ) : (
                           <div
-                            className="grid h-[27px] w-full items-center"
+                            className="grid h-[30px] w-full items-center"
                             style={{
                               gridTemplateColumns:
                                 "120px minmax(200px, 1fr)",
@@ -1093,7 +1096,7 @@ const SetChartOfAccount: React.FC = () => {
                           option.label
                         ) : (
                           <div
-                            className="grid h-[27px] w-full items-center"
+                            className="grid h-[30px] w-full items-center"
                             style={{
                               gridTemplateColumns:
                                 "minmax(0, 1fr) 120px",
@@ -1128,7 +1131,7 @@ const SetChartOfAccount: React.FC = () => {
 
                   {/* GROUP / HEAD */}
 
-                  <div className="h-[30px] min-w-0">
+                  <div className="h-[34px] min-w-0">
                     <input
                       id={`txtGPH-${index}`}
                       name="txtGPH"
@@ -1139,7 +1142,7 @@ const SetChartOfAccount: React.FC = () => {
                       className="
                         h-full w-full min-w-0
                         border-0 bg-transparent
-                        px-[7px] text-[11px] text-slate-700
+                        pl-[2px] pr-[7px] text-[13px] text-slate-700
                         outline-none
                         focus:bg-transparent
                       "
@@ -1164,10 +1167,7 @@ const SetChartOfAccount: React.FC = () => {
             disabled={!canSaveOrModify || saving}
             className="btn-style disabled:cursor-not-allowed disabled:opacity-40"
           >
-            <span className="underline underline-offset-2">
-              {actionWord.charAt(0)}
-            </span>
-            {actionWord.slice(1)}
+            {actionWord}
           </button>
 
           <button

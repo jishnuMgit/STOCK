@@ -3,14 +3,14 @@
 //
 //   Summary  (the old rptSupplierPurchaseRpt), A4 portrait:
 //       Supplier : 70000   supplier1          <- a block per supplier
-//       Date / Type / Document No. / Amount_FC / Amount, one line per document
-//       Total :                               <- the Amount_FC and the Amount of the supplier
+//       Date / Type / Document No. / Amount, one line per document
+//       Total :                               <- the Amount of the supplier
 //
 //   Detailed (the old rptPIprint / rptPRprint), A4 landscape: a block per document
 //       Branch / Entry No. / Date, Supplier / P. Invoice No. (or P. Entry No.) / Supplier Amt.,
 //       Currency / P.O. No. / Currency Rate
-//       Sl. # / Item ID / Item Name / Unit / Qty. / U Price (FC) / Tot. Price(FC) / Unit Price / Unit Cost /
-//       Total Cost - one line per item, then Total :, Disc. Amt.(FC), Disc. Amt. and the Note
+//       Sl. # / Item ID / Item Name / Unit / Qty. / Unit Price / Unit Cost /
+//       Total Cost - one line per item, then Total :, Disc. Amt. and the Note
 //
 //   Plain: no fill on the heading rows or the Total rows, thin light lines. "Page x of y" is top right of every
 //   page; the company, the heading and the report info repeat at the top of every page.
@@ -106,10 +106,10 @@ export const formatCost = (value: number) => fixed(value, 4); // #,#0.0000
 
 
 // the column weights, as the old reports
-export const SUMMARY_WEIGHTS = [0.26, 0.15, 0.19, 0.205, 0.195]; // Date | Type | Document No. | Amount_FC | Amount
+export const SUMMARY_WEIGHTS = [0.3, 0.18, 0.27, 0.25]; // Date | Type | Document No. | Amount
 
-// Sl. # | Item ID | Item Name | Unit | Qty. | U Price (FC) | Tot. Price(FC) | Unit Price | Unit Cost | Total Cost
-export const DETAIL_WEIGHTS = [0.04, 0.13, 0.24, 0.05, 0.07, 0.09, 0.1, 0.08, 0.09, 0.11];
+// Sl. # | Item ID | Item Name | Unit | Qty. | Unit Price | Unit Cost | Total Cost
+export const DETAIL_WEIGHTS = [0.05, 0.15, 0.3, 0.06, 0.08, 0.1, 0.12, 0.14];
 
 export const DETAIL_LABELS = [
   "Sl. #",
@@ -117,8 +117,6 @@ export const DETAIL_LABELS = [
   "Item Name",
   "Unit",
   "Qty.",
-  "U Price (FC)",
-  "Tot. Price(FC)",
   "Unit Price",
   "Unit Cost",
   "Total Cost",
@@ -131,21 +129,19 @@ export const DETAIL_FIRST_NUMBER = 4;
    Summary
 --------------------------------------------------------- */
 
-const supplierHtml = (s: SupplierPurchaseSupplier) => `<tr><td colspan="5" class="group">Supplier&nbsp; : &nbsp;<b>${esc(s.lkpSupplierID)}</b>&nbsp;&nbsp;${esc(s.txtSupplierName)}</td></tr>
+const supplierHtml = (s: SupplierPurchaseSupplier) => `<tr><td colspan="4" class="group">Supplier&nbsp; : &nbsp;<b>${esc(s.lkpSupplierID)}</b>&nbsp;&nbsp;${esc(s.txtSupplierName)}</td></tr>
     ${s.lines
       .map(
         (l, index) => `<tr${index === 0 ? ' class="first"' : ""}>
       <td>${esc(l.txtDate)}</td>
       <td>${esc(l.txtDocType)}</td>
       <td>${esc(l.txtDocNo)}</td>
-      <td class="r">${formatAmountFC(l.txtAmountFC)}</td>
       <td class="r">${formatAmount(l.txtAmount)}</td>
     </tr>`
       )
       .join("\n    ")}
     <tr class="tot">
       <td colspan="3" class="r"><b>Total :</b></td>
-      <td class="r"><b>${formatAmountFC(s.totals.txtAmountFC)}</b></td>
       <td class="r"><b>${formatAmount(s.totals.txtAmount)}</b></td>
     </tr>`;
 
@@ -154,12 +150,12 @@ const summaryHtml = (r: SummaryReport) => `<table>
     ${SUMMARY_WEIGHTS.map((w) => `<col style="width:${(w * 100).toFixed(1)}%" />`).join("")}
   </colgroup>
   <thead>
-    <tr><td colspan="5" class="co"   style="border:0">${esc(r.txtCoName)}</td></tr>
-    <tr><td colspan="5" class="head" style="border:0">${esc(r.txtHeading)}</td></tr>
-    <tr><td colspan="5" class="sub"  style="border:0"><div><span>${esc(r.txtBranch)}</span><span class="info">${esc(r.txtReportInfo)}</span></div></td></tr>
+    <tr><td colspan="4" class="co"   style="border:0">${esc(r.txtCoName)}</td></tr>
+    <tr><td colspan="4" class="head" style="border:0">${esc(r.txtHeading)}</td></tr>
+    <tr><td colspan="4" class="sub"  style="border:0"><div><span>${esc(r.txtBranch)}</span><span class="info">${esc(r.txtReportInfo)}</span></div></td></tr>
     <tr>
       <th>Date</th><th>Type</th><th>Document No.</th>
-      <th class="r">Amount_FC</th><th class="r">Amount</th>
+      <th class="r">Amount</th>
     </tr>
   </thead>
   <tbody>
@@ -177,28 +173,26 @@ const detailLineHtml = (l: SupplierPurchaseDetailLine) => `<tr>
       <td>${esc(l.txtItemName)}</td>
       <td class="u">${esc(l.txtUnit)}</td>
       <td class="r">${formatQty(l.txtQty)}</td>
-      <td class="r">${formatCost(l.txtUnitPriceFC)}</td>
-      <td class="r">${formatCost(l.txtTotalPriceFC)}</td>
       <td class="r">${formatPrice(l.txtUnitPrice)}</td>
       <td class="r">${formatCost(l.txtUnitCost)}</td>
       <td class="r">${formatCost(l.txtTotalCost)}</td>
     </tr>`;
 
-const documentHtml = (d: SupplierPurchaseDocument, piLabel: string) => `<tr class="gap"><td colspan="10"></td></tr>
+const documentHtml = (d: SupplierPurchaseDocument, piLabel: string) => `<tr class="gap"><td colspan="8"></td></tr>
     <tr class="info">
       <td colspan="3">Branch : <b>${esc(d.txtBranchName)}</b></td>
-      <td colspan="4">Entry No. : <b>${esc(d.txtDocNo)}</b></td>
-      <td colspan="3">Date : <b>${esc(d.txtDate)}</b></td>
+      <td colspan="3">Entry No. : <b>${esc(d.txtDocNo)}</b></td>
+      <td colspan="2">Date : <b>${esc(d.txtDate)}</b></td>
     </tr>
     <tr class="info">
       <td colspan="3">Supplier : <b>${esc(d.lkpSupplierID)}</b> ${esc(d.txtSupplierName)}</td>
-      <td colspan="4">${esc(piLabel)} : <b>${esc(d.txtPINo)}</b></td>
-      <td colspan="3">Supplier Amt. : <b>${formatAmount(d.txtSupplierAmt)}</b></td>
+      <td colspan="3">${esc(piLabel)} : <b>${esc(d.txtPINo)}</b></td>
+      <td colspan="2">Supplier Amt. : <b>${formatAmount(d.txtSupplierAmt)}</b></td>
     </tr>
     <tr class="info">
       <td colspan="3">Currency : <b>${esc(d.txtCurrency)}</b></td>
-      <td colspan="4">P.O. No. : <b>${esc(d.txtPONo)}</b></td>
-      <td colspan="3">Currency Rate : <b>${d.txtCurrencyRate}</b></td>
+      <td colspan="3">P.O. No. : <b>${esc(d.txtPONo)}</b></td>
+      <td colspan="2">Currency Rate : <b>${d.txtCurrencyRate}</b></td>
     </tr>
     <tr class="labels">
       ${DETAIL_LABELS.map((label, i) => `<th class="${i >= DETAIL_FIRST_NUMBER ? "r" : ""}">${esc(label)}</th>`).join("")}
@@ -208,17 +202,14 @@ const documentHtml = (d: SupplierPurchaseDocument, piLabel: string) => `<tr clas
       <td colspan="4" class="r"><b>Total :</b></td>
       <td class="r"><b>${formatQty(d.totals.txtQty)}</b></td>
       <td></td>
-      <td class="r"><b>${formatCost(d.totals.txtTotalPriceFC)}</b></td>
-      <td></td>
       <td></td>
       <td class="r"><b>${formatCost(d.totals.txtTotalCost)}</b></td>
     </tr>
     <tr class="foot">
-      <td colspan="4">Disc. Amt.(FC) : <b>${formatCost(d.txtDiscAmtFC)}</b></td>
-      <td colspan="6">Disc. Amt. : <b>${formatPrice(d.txtDiscAmt)}</b></td>
+      <td colspan="8">Disc. Amt. : <b>${formatPrice(d.txtDiscAmt)}</b></td>
     </tr>
     <tr class="foot">
-      <td colspan="10">Note : ${esc(d.txtNote)}</td>
+      <td colspan="8">Note : ${esc(d.txtNote)}</td>
     </tr>`;
 
 const detailedHtml = (r: DetailedReport) => `<table>
@@ -226,13 +217,11 @@ const detailedHtml = (r: DetailedReport) => `<table>
     ${DETAIL_WEIGHTS.map((w) => `<col style="width:${(w * 100).toFixed(1)}%" />`).join("")}
   </colgroup>
   <thead>
-    <tr><td colspan="10" class="co"   style="border:0">${esc(r.txtCoName)}</td></tr>
-    <tr><td colspan="10" class="head" style="border:0">${esc(r.txtHeading)}</td></tr>
-    <tr><td colspan="10" class="sub"  style="border:0"><div><span></span><span class="info">${esc(r.txtReportInfo)}</span></div></td></tr>
+    <tr><td colspan="8" class="co"   style="border:0">${esc(r.txtCoName)}</td></tr>
+    <tr><td colspan="8" class="head" style="border:0">${esc(r.txtHeading)}</td></tr>
+    <tr><td colspan="8" class="sub"  style="border:0"><div><span></span><span class="info">${esc(r.txtReportInfo)}</span></div></td></tr>
   </thead>
-  <tbody>
-    ${r.documents.map((d) => documentHtml(d, r.txtPINoLabel)).join("\n    ")}
-  </tbody>
+  ${r.documents.map((d, index) => `<tbody class="keep${index > 0 ? " newpage" : ""}">${documentHtml(d, r.txtPINoLabel)}</tbody>`).join("\n  ")}
 </table>`;
 
 /* ---------------------------------------------------------

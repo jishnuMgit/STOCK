@@ -44,6 +44,8 @@ interface CustomLinkedPairSelectProps {
   onMenuOpen?: () => void;
   onMenuClose?: () => void;
   noOptionsMessage?: () => string;
+  // the colours of the open list: "receipt" = the Receipt screen's list (grey header, thin grey lines, mint hover row)
+  listLook?: "receipt";
 }
 
 // The search of both boxes looks in BOTH columns: a name typed in the ID box finds the record by its name, an ID typed in
@@ -88,7 +90,9 @@ const CustomLinkedPairSelect: React.FC<CustomLinkedPairSelectProps> = ({
   onMenuOpen,
   onMenuClose,
   noOptionsMessage,
+  listLook,
 }) => {
+  const receipt = listLook === "receipt";
   const nameOptions = secondOptions ?? options;
   const menuWidth = firstWidth + gap + secondWidth;
 
@@ -126,7 +130,7 @@ const CustomLinkedPairSelect: React.FC<CustomLinkedPairSelectProps> = ({
             </span>
             {/* Divider sits at the start of the second column (column 3) */}
             <span
-              className="min-w-0 truncate border-l border-[#E5E7EB] pl-[5px] pr-[5px] py-1.75"
+              className={`min-w-0 truncate border-l pl-[5px] pr-[5px] py-1.75 ${receipt ? "border-[#EEEEEE]" : "border-[#E5E7EB]"}`}
               style={{ gridColumn: 3 }}
             >
               {reverse ? props.data.firstLabel : props.data.secondLabel}
@@ -137,7 +141,11 @@ const CustomLinkedPairSelect: React.FC<CustomLinkedPairSelectProps> = ({
       MenuList: (props: MenuListProps<PairSelectOption, false>) => (
         <components.MenuList {...props}>
           <div
-            className="grid items-center border-b border-[#CBD5E1] bg-[#F3F5F7] font-semibold text-[#344054]"
+            className={`grid items-center border-b ${
+              receipt
+                ? "border-[#CCCCCC] bg-[#EEEEEE] font-medium text-[#222222]"
+                : "border-[#CBD5E1] bg-[#F3F5F7] font-semibold text-[#344054]"
+            }`}
             style={{
               gridTemplateColumns: gridColumns,
               fontSize: headerFontSize,
@@ -150,7 +158,7 @@ const CustomLinkedPairSelect: React.FC<CustomLinkedPairSelectProps> = ({
               {firstColumnLabel}
             </span>
             <span
-              className="min-w-0 truncate border-l border-[#CBD5E1] pl-[5px] pr-[5px] py-1.75"
+              className={`min-w-0 truncate border-l pl-[5px] pr-[5px] py-1.75 ${receipt ? "border-[#CCCCCC]" : "border-[#CBD5E1]"}`}
               style={{ gridColumn: 3 }}
             >
               {secondColumnLabel}
@@ -223,8 +231,9 @@ const CustomLinkedPairSelect: React.FC<CustomLinkedPairSelectProps> = ({
             { width: `${rowWidth || menuWidth}px`, minWidth: `${rowWidth || menuWidth}px`, maxWidth: "none" }
         : { width: `${menuWidth}px`, minWidth: `${menuWidth}px`, maxWidth: `${menuWidth}px` }),
       marginTop: "2px",
-      border: "none",
-      borderRadius: "3px",
+      border: receipt ? "1px solid #aaaaaa" : "none",
+      borderRadius: receipt ? 0 : "3px",
+      ...(receipt ? { boxShadow: "2px 2px 5px rgba(0, 0, 0, 0.18)" } : {}),
       zIndex: menuZIndex,
       overflow: "hidden",
       boxSizing: "border-box",
@@ -245,14 +254,18 @@ const CustomLinkedPairSelect: React.FC<CustomLinkedPairSelectProps> = ({
       padding: 0,
       fontSize: optionFontSize,
       color: "#344054",
-      backgroundColor: state.isSelected
-        ? "#EAF7F0"
-        : state.isFocused
-          ? "#F0F8F4"
-          : "#FFFFFF",
+      backgroundColor: receipt
+        ? state.isFocused
+          ? "#EEFBF4"
+          : "#FFFFFF"
+        : state.isSelected
+          ? "#EAF7F0"
+          : state.isFocused
+            ? "#F0F8F4"
+            : "#FFFFFF",
       cursor: "pointer",
       "&:active": {
-        backgroundColor: "#DDF2E7",
+        backgroundColor: receipt ? "#dff5e9" : "#DDF2E7",
       },
     }),
     singleValue: (base) => ({

@@ -286,7 +286,7 @@ export const buildSoaPdf = async (report: PrintReport): Promise<Blob> => {
         // an unreadable image is skipped
       }
     }
-    doc.text(`Page ${i} / ${pages}`, PAGE_W - MARGIN.right, MARGIN.top - 4, { align: "right" });
+    doc.text(`Page ${i} of ${pages}`, PAGE_W - MARGIN.right, MARGIN.top - 4, { align: "right" });
     doc.text(`Printed : ${report.reportInfo}`, PAGE_W - MARGIN.right, PAGE_H - MARGIN.bottom + 8, {
       align: "right",
     });

@@ -1,5 +1,6 @@
 import React, { useCallback, useEffect, useState } from "react";
 import { toast } from "react-toastify";
+import { X } from "lucide-react";
 
 import CustomLinkedPairSelect, {
   type PairSelectOption,
@@ -11,6 +12,7 @@ import { useConfirmModal } from "../../../hooks/useConfirmModal";
 import { useDeleteToast } from "../../../hooks/useDeleteToast";
 import { useEnterAsTab } from "../../../hooks/useEnterAsTab";
 import { useGridCellFocus } from "../../../hooks/useGridCellFocus";
+import { useCtrlShortcuts } from "../../../hooks/useCtrlShortcuts";
 import { apiFetch } from "../../../utils/session";
 import { tryGetServerDate } from "../../../utils/serverDate";
 
@@ -96,10 +98,10 @@ const niceScrollbar = [
 ].join(" ");
 
 const cellInputClass =
-  "h-[26px] w-full bg-transparent px-2 text-[12px] text-[#24364d] outline-none focus:bg-[#f1f8ff]";
+  "h-[26px] w-full bg-transparent pl-[2px] pr-2 text-[12px] text-[#24364d] outline-none focus:bg-[#f1f8ff]";
 
 const thClass =
-  "h-[28px] border border-[#B7ECD0] bg-[#EEFBF4] px-2 font-semibold text-[#405066]";
+  "h-[28px] border border-[#B7ECD0] bg-[#EEFBF4] pl-[2px] pr-2 font-semibold text-[#405066]";
 
 type CustomerDivisionPageProps = {
   onClose?: () => void;
@@ -555,7 +557,8 @@ const CustomerDivisionPage: React.FC<CustomerDivisionPageProps> = ({
   const canDeleteDivisionRow = (row: DivisionRow) => !isEmptyDivisionRow(row);
 
   /* ---------------------------------------- KEYBOARD SHORTCUTS (page wide)
-     Alt+S   Save
+     Ctrl+S   Save / Modify
+     Ctrl+D   delete the selected row
      Alt+N   Cancel
      Alt+C   Close
      Ctrl+Delete   delete the selected row (also when the cursor is not in a box; in a box the box does it)
@@ -565,12 +568,6 @@ const CustomerDivisionPage: React.FC<CustomerDivisionPageProps> = ({
   useEffect(() => {
     const onKeyDown = (event: KeyboardEvent) => {
       if (event.altKey && !event.ctrlKey && !event.metaKey) {
-        if (event.code === "KeyS") {
-          event.preventDefault();
-          if (!isSaving && (perms.save || perms.modify)) void handleSave();
-          return;
-        }
-
         if (event.code === "KeyN") {
           event.preventDefault();
           handleCancel();
@@ -597,6 +594,16 @@ const CustomerDivisionPage: React.FC<CustomerDivisionPageProps> = ({
 
     window.addEventListener("keydown", onKeyDown);
     return () => window.removeEventListener("keydown", onKeyDown);
+  });
+
+  // Ctrl+S -> Save / Modify, Ctrl+D -> Delete the selected row
+  useCtrlShortcuts({
+    s: () => {
+      if (!isSaving && (perms.save || perms.modify)) void handleSave();
+    },
+    d: () => {
+      if (selectedRowKey !== null) void deleteDivisionRow(selectedRowKey);
+    },
   });
 
   return (
@@ -749,9 +756,9 @@ const CustomerDivisionPage: React.FC<CustomerDivisionPageProps> = ({
                                 tabIndex={-1}
                                 title="Delete row (Ctrl+Delete)"
                                 onClick={() => void deleteDivisionRow(row.key)}
-                                className="text-[12px] leading-none text-gray-400 hover:text-red-600"
+                                className="inline-flex items-center justify-center text-slate-400 hover:text-red-500"
                               >
-                                ✕
+                                <X size={12} />
                               </button>
                             )}
                           </td>
@@ -769,11 +776,11 @@ const CustomerDivisionPage: React.FC<CustomerDivisionPageProps> = ({
                   name="btnSave"
                   type="button"
                   onClick={() => void handleSave()}
-                  title="Alt+S"
+                  title="Ctrl+S"
                   disabled={isSaving || !(perms.save || perms.modify)}
                   className="btn-style disabled:cursor-not-allowed disabled:opacity-40"
                 >
-                  <u>S</u>ave
+                  Save
                 </button>
                 <button
                   id="btnCancel"

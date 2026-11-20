@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 import { toast } from "react-toastify";
 import { useEnterAsTab } from "../../../hooks/useEnterAsTab";
 import { useAltShortcuts } from "../../../hooks/useAltShortcuts";
+import { useCtrlShortcuts } from "../../../hooks/useCtrlShortcuts";
 import { useButtonPermissions } from "../../../hooks/useButtonPermissions";
 import { useConfirmModal } from "../../../hooks/useConfirmModal";
 import { useDeleteToast } from "../../../hooks/useDeleteToast";
@@ -420,17 +421,14 @@ const ItemGroupPage: React.FC = () => {
     setTxtVATPer("0.00");
   };
 
-  // Alt+S -> Save (new group), Alt+M -> Modify (existing group), Alt+E -> Search,
-  // Alt+D -> Delete, Alt+C -> Clear (the underlined letters on the buttons)
-  useAltShortcuts({
-    s: () => {
-      if (!hasSavedItemGroup) handleSave();
-    },
-    m: () => {
-      if (hasSavedItemGroup) handleSave();
-    },
-    e: handleSearch,
+  // Ctrl+S -> Save (new group) or Modify (existing group), Ctrl+D -> Delete,
+  // Alt+E -> Search, Alt+C -> Clear (the underlined letters on the buttons)
+  useCtrlShortcuts({
+    s: handleSave,
     d: handleDelete,
+  });
+  useAltShortcuts({
+    e: handleSearch,
     c: handleClear,
   });
 
@@ -524,6 +522,7 @@ const ItemGroupPage: React.FC = () => {
 
               <div className="w-[30%]">
                 <CommonTableSelect
+                  listLook="receipt"
                   inputId="lkpFSN"
                   options={snOptions}
                   value={snOptions.find((option) => option.value === lkpFSN) || null}
@@ -553,6 +552,7 @@ const ItemGroupPage: React.FC = () => {
 
               <div className="w-[30%]">
                 <CommonTableSelect
+                  listLook="receipt"
                   inputId="lkpVATSlab"
                   options={vatSlabOptions}
                   value={
@@ -612,10 +612,7 @@ const ItemGroupPage: React.FC = () => {
                 disabled={!canSaveOrModify}
                 className="btn-style disabled:cursor-not-allowed disabled:opacity-40"
               >
-                <span className="underline underline-offset-2">
-                  {actionWord.charAt(0)}
-                </span>
-                {actionWord.slice(1)}
+                {actionWord}
               </button>
 
               <button
@@ -637,7 +634,7 @@ const ItemGroupPage: React.FC = () => {
                 disabled={!perms.delete}
                 className="btn-style disabled:cursor-not-allowed disabled:opacity-40"
               >
-                <span className="underline underline-offset-2">D</span>elete
+                Delete
               </button>
 
               <button

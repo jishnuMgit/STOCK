@@ -459,10 +459,9 @@ const UserAudit: React.FC = () => {
     window.setTimeout(() => document.getElementById("lkpUserID")?.focus(), 0);
   };
 
-  // Alt+P -> Print, Alt+C -> Clear (the underlined letters on the buttons). Off while
-  // the Print Preview is open: it has its own Alt+P, Alt+D and Alt+C.
+  // Alt+C -> Clear (the underlined letter on its button). Off while the Print Preview is open:
+  // it has its own Alt+P, Alt+D and Alt+C.
   useAltShortcuts(preview ? {} : {
-    p: handlePrint,
     c: handleClear,
   });
 
@@ -641,7 +640,7 @@ const UserAudit: React.FC = () => {
               disabled={!perms.print || printing}
               className="btn-style disabled:cursor-not-allowed disabled:opacity-40"
             >
-              <u>P</u>rint
+              Print
             </button>
 
             {/* CLEAR */}

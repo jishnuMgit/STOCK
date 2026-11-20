@@ -1,9 +1,9 @@
 // services/Purchase/Report/rptSupplierPurchaseExcel.ts
 // The Supplier Purchase report as an Excel file - the same layout as the printed report:
-//   Summary  (the old rptSupplierPurchaseRpt): Date / Type / Document No. / Amount_FC / Amount, a block per
+//   Summary  (the old rptSupplierPurchaseRpt): Date / Type / Document No. / Amount, a block per
 //            supplier ("Supplier : 70000   supplier1") with its Total;
 //   Detailed (the old rptPIprint / rptPRprint): a block per document - its header, its item lines
-//            (Sl / Item ID / Item Name / Unit / Qty / U Price (FC) / Tot. Price (FC) / Unit Price / Unit Cost /
+//            (Sl / Item ID / Item Name / Unit / Qty / Unit Price / Unit Cost /
 //            Total Cost) and its Total.
 import ExcelJS from "exceljs";
 import { addReportTitle, applyReportFont, levelFont, thin } from "../../../utils/reportStyle.js";
@@ -61,12 +61,12 @@ const buildSummary = (wb: ExcelJS.Workbook, report: SupplierPurchaseSummaryRepor
     pageSetup: { paperSize: 9, orientation: "portrait", fitToPage: true, fitToWidth: 1, fitToHeight: 0 },
   });
 
-  ws.columns = [{ width: 14 }, { width: 10 }, { width: 22 }, { width: 18 }, { width: 18 }];
+  ws.columns = [{ width: 14 }, { width: 10 }, { width: 22 }, { width: 18 }];
 
-  addReportTitle(ws, report, report.txtBranch, 5, undefined, "inter");
+  addReportTitle(ws, report, report.txtBranch, 4, undefined, "inter");
 
   const head = ws.getRow(4);
-  head.values = ["Date", "Type", "Document No.", "Amount_FC", "Amount"];
+  head.values = ["Date", "Type", "Document No.", "Amount"];
   head.eachCell((cell, col) => {
     cell.font = levelFont("columnHead", true, "inter");
     cell.border = thin;
@@ -79,19 +79,19 @@ const buildSummary = (wb: ExcelJS.Workbook, report: SupplierPurchaseSummaryRepor
   for (const supplier of report.suppliers) {
     // ---- "Supplier : 70000   supplier1" ----
     const heading = ws.addRow([`Supplier : ${supplier.lkpSupplierID}   ${supplier.txtSupplierName}`]);
-    ws.mergeCells(heading.number, 1, heading.number, 5);
+    ws.mergeCells(heading.number, 1, heading.number, 4);
     heading.getCell(1).font = levelFont("group", true, "inter");
     heading.getCell(1).alignment = { horizontal: "left" };
 
     for (const line of supplier.lines) {
-      const row = ws.addRow([line.txtDate, line.txtDocType, line.txtDocNo, line.txtAmountFC, line.txtAmount]);
-      boxed(row, 4, { 4: FC_FORMAT, 5: AMOUNT_FORMAT });
+      const row = ws.addRow([line.txtDate, line.txtDocType, line.txtDocNo, line.txtAmount]);
+      boxed(row, 4, { 4: AMOUNT_FORMAT });
     }
 
     // ---- the Total of the supplier ----
-    const total = ws.addRow(["Total :", "", "", supplier.totals.txtAmountFC, supplier.totals.txtAmount]);
+    const total = ws.addRow(["Total :", "", "", supplier.totals.txtAmount]);
     ws.mergeCells(total.number, 1, total.number, 3);
-    boxed(total, 4, { 4: FC_FORMAT, 5: AMOUNT_FORMAT });
+    boxed(total, 4, { 4: AMOUNT_FORMAT });
     total.eachCell({ includeEmpty: true }, (cell) => {
       cell.font = { bold: true };
       cell.alignment = { horizontal: "right" };
@@ -115,14 +115,12 @@ const buildDetailed = (wb: ExcelJS.Workbook, report: SupplierPurchaseDetailedRep
     { width: 36 }, // Item Name
     { width: 8 }, // Unit
     { width: 10 }, // Qty
-    { width: 14 }, // U Price (FC)
-    { width: 16 }, // Tot. Price (FC)
     { width: 12 }, // Unit Price
     { width: 14 }, // Unit Cost
     { width: 16 }, // Total Cost
   ];
 
-  addReportTitle(ws, report, "", 10, undefined, "inter");
+  addReportTitle(ws, report, "", 8, undefined, "inter");
 
   ws.views = [{ state: "frozen", ySplit: 3 }];
   ws.pageSetup.printTitlesRow = "1:3";
@@ -144,24 +142,24 @@ const buildDetailed = (wb: ExcelJS.Workbook, report: SupplierPurchaseDetailedRep
     // ---- the header of the document ----
     info([
       [`Branch : ${doc.txtBranchName}`, 1, 3],
-      [`Entry No. : ${doc.txtDocNo}`, 4, 7],
-      [`Date : ${doc.txtDate}`, 8, 10],
+      [`Entry No. : ${doc.txtDocNo}`, 4, 6],
+      [`Date : ${doc.txtDate}`, 7, 8],
     ]);
     info([
       [`Supplier : ${doc.lkpSupplierID}   ${doc.txtSupplierName}`, 1, 3],
-      [`${report.txtPINoLabel} : ${doc.txtPINo}`, 4, 7],
-      [`Supplier Amt. : ${doc.txtSupplierAmt.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`, 8, 10],
+      [`${report.txtPINoLabel} : ${doc.txtPINo}`, 4, 6],
+      [`Supplier Amt. : ${doc.txtSupplierAmt.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`, 7, 8],
     ]);
     info([
       [`Currency : ${doc.txtCurrency}`, 1, 3],
-      [`P.O. No. : ${doc.txtPONo}`, 4, 7],
-      [`Currency Rate : ${doc.txtCurrencyRate}`, 8, 10],
+      [`P.O. No. : ${doc.txtPONo}`, 4, 6],
+      [`Currency Rate : ${doc.txtCurrencyRate}`, 7, 8],
     ]);
 
     // ---- the column labels ----
     const head = ws.addRow([
       "Sl. #", "Item ID", "Item Name", "Unit", "Qty.",
-      "U Price (FC)", "Tot. Price(FC)", "Unit Price", "Unit Cost", "Total Cost",
+      "Unit Price", "Unit Cost", "Total Cost",
     ]);
     head.eachCell((cell, col) => {
       cell.font = levelFont("columnHead", true, "inter");
@@ -173,26 +171,23 @@ const buildDetailed = (wb: ExcelJS.Workbook, report: SupplierPurchaseDetailedRep
     for (const l of doc.lines) {
       const row = ws.addRow([
         l.txtSlNo, l.lkpItemID, l.txtItemName, l.txtUnit, l.txtQty,
-        l.txtUnitPriceFC, l.txtTotalPriceFC, l.txtUnitPrice, l.txtUnitCost, l.txtTotalCost,
+        l.txtUnitPrice, l.txtUnitCost, l.txtTotalCost,
       ]);
-      boxed(row, 5, { 5: QTY_FORMAT, 6: FC_FORMAT, 7: FC_FORMAT, 8: AMOUNT_FORMAT, 9: FC_FORMAT, 10: FC_FORMAT });
+      boxed(row, 5, { 5: QTY_FORMAT, 6: AMOUNT_FORMAT, 7: FC_FORMAT, 8: FC_FORMAT });
     }
 
     // ---- the Total of the document ----
-    const total = ws.addRow(["Total :", "", "", "", doc.totals.txtQty, "", doc.totals.txtTotalPriceFC, "", "", doc.totals.txtTotalCost]);
+    const total = ws.addRow(["Total :", "", "", "", doc.totals.txtQty, "", "", doc.totals.txtTotalCost]);
     ws.mergeCells(total.number, 1, total.number, 4);
-    boxed(total, 5, { 5: QTY_FORMAT, 7: FC_FORMAT, 10: FC_FORMAT });
+    boxed(total, 5, { 5: QTY_FORMAT, 8: FC_FORMAT });
     total.eachCell({ includeEmpty: true }, (cell) => {
       cell.font = { bold: true };
       cell.alignment = { horizontal: "right" };
     });
 
     // ---- the discount and the note ----
-    info([
-      [`Disc. Amt.(FC) : ${doc.txtDiscAmtFC.toFixed(4)}`, 1, 4],
-      [`Disc. Amt. : ${doc.txtDiscAmt.toFixed(2)}`, 5, 10],
-    ]);
-    info([[`Note : ${doc.txtNote}`, 1, 10]]);
+    info([[`Disc. Amt. : ${doc.txtDiscAmt.toFixed(2)}`, 1, 8]]);
+    info([[`Note : ${doc.txtNote}`, 1, 8]]);
   }
   applyReportFont(ws, "inter");
 };
