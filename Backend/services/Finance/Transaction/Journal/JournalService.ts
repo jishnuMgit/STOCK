@@ -130,7 +130,7 @@ function getIntDocNo(txtDocNo: string): number {
 
 /* =========================================================
    PROCEDURE CALL : dbo.sp_frmjv
-   (modes S and D only - GetHD / GetTL are read with plain SELECTs
+   (modes S and D only - header / lines are read with plain SELECTs
     because the procedure has no refcursor / OUT parameter)
 ========================================================= */
 
@@ -187,7 +187,7 @@ async function callJournalProcedure(
     await client.query(sql, [
         strMode, // $1
         pstrCoID, // $2
-        Number(pstrYear), // $3
+        pstrYear, // $3
         lkpBranch, // $4
         strDocType, // $5
         txtDocNo, // $6
@@ -207,7 +207,7 @@ async function callJournalProcedure(
 }
 
 /* =========================================================
-   READ HELPERS (same filters as GetHD / GetTL in the SP)
+   READ HELPERS (same filters as the SP)
 ========================================================= */
 
 async function fetchHeader(
@@ -218,8 +218,7 @@ async function fetchHeader(
     const result = await client.query(
         `SELECT DISTINCT
         to_char(fdate, 'YYYY-MM-DD') AS fdate, fnote, fpost,
-        fuserid, fuserdate,
-        fsuserid, fsuserdate,
+        fcuserid, fcuserdate,
         fmuserid, fmuserdate
        FROM dbo.tblfintrans
       WHERE fcoid = $1
@@ -378,7 +377,7 @@ async function insertLines(
 
 /* =========================================================
    JOURNAL TYPES
-   Journal has a single doc type: JB.
+   Journal has a single doc type: JV.
 ========================================================= */
 
 export function getJournalTypesService(): { fpid: string; fpname: string }[] {
@@ -513,11 +512,11 @@ export async function updateJournalService(
             throw new JournalError("Posted document cannot be modified");
         }
 
-        /* keep the original "saved by" so the SP stamps fmuserid / fmuserdate */
-        const createdUserID = existing.fsuserid ?? pstrUserID;
+        /* keep the original "created by" so the SP stamps fmuserid / fmuserdate */
+        const createdUserID = existing.fcuserid ?? pstrUserID;
 
-        const createdUserDate = existing.fsuserdate
-            ? new Date(existing.fsuserdate).toISOString()
+        const createdUserDate = existing.fcuserdate
+            ? new Date(existing.fcuserdate).toISOString()
             : new Date().toISOString();
 
         await callJournalProcedure(client, {
