@@ -91,7 +91,7 @@ export const buildPayablesPdf = async (report: PrintReport): Promise<Blob> => {
   for (let i = 1; i <= pages; i++) {
     doc.setPage(i);
     const h = doc.internal.pageSize.getHeight();
-    doc.text(`Page ${i} / ${pages}`, PAGE_W - MARGIN.right, MARGIN.top, {
+    doc.text(`Page ${i} of ${pages}`, PAGE_W - MARGIN.right, MARGIN.top + 22 + REPORT_STYLE.pdf.titleGap, {
       align: "right",
     });
     doc.text(`Printed : ${report.reportInfo}`, PAGE_W - MARGIN.right, h - MARGIN.bottom + 6, {

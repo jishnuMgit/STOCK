@@ -2,6 +2,7 @@ import React, {
   memo,
   forwardRef,
   useCallback,
+  useEffect,
   useImperativeHandle,
   useMemo,
   useRef,
@@ -27,60 +28,32 @@ import {
 import "../Receipt/save/commanReceipt.css";
 
 /* =========================================================
-   JOURNAL ROW
+   TYPES
 ========================================================= */
 
 export interface JournalRow {
   id: number;
-
   accountId: string;
-
   accountName: string;
-
-  /* =======================================================
-     FGCS
-  ======================================================= */
-
   fgcs: string;
-
   division: string;
-
   ccId: string;
-
   debitAmount: string;
-
   creditAmount: string;
-
   match: boolean;
-
   description?: string;
 }
 
-/* =========================================================
-   COST CENTER
-========================================================= */
-
 export interface CostCenter {
   fccid: string;
-
   fccname: string;
-
   fpositionno: number;
 }
 
-/* =========================================================
-   CUSTOMER DIVISION
-========================================================= */
-
 export interface CustomerDivision {
   fdivid: string;
-
   fdivname: string;
 }
-
-/* =========================================================
-   TABLE FIELD
-========================================================= */
 
 export type TableField =
   | "accountId"
@@ -92,65 +65,30 @@ export type TableField =
   | "match"
   | "view";
 
-/* =========================================================
-   ACCOUNT DATA
-========================================================= */
-
 export interface AccountData {
   fcoid: string;
-
   faccountid: string;
-
   faccountgroupid?: string;
-
   fgph: string;
-
   fgcs: string;
-
   faccountname: string;
+  /* cost center allowed for this account */
+  fhavecc?: boolean;
 }
-
-/* =========================================================
-   SELECT OPTIONS
-========================================================= */
 
 interface AccountOption {
   value: string;
-
   label: string;
-
   accountId: string;
-
   accountName: string;
-
-  /* =======================================================
-     FGCS
-  ======================================================= */
-
   fgcs: string;
+  haveCc: boolean;
 }
 
 interface SelectOption {
   value: string;
-
   label: string;
 }
-
-/* =========================================================
-   CUSTOMER DIVISION API RESPONSE
-========================================================= */
-
-// interface CustomerDivisionResponse {
-//   success: boolean;
-
-//   message?: string;
-
-//   data: CustomerDivision[];
-// }
-
-/* =========================================================
-   TABLE PROPS
-========================================================= */
 
 interface JournalTableProps {
   rows: JournalRow[];
@@ -161,29 +99,21 @@ interface JournalTableProps {
     value: string | boolean
   ) => void;
 
-  onFieldEnter: (
-    rowIndex: number,
-    field: TableField
-  ) => void;
+  onFieldEnter: (rowIndex: number, field: TableField) => void;
 
   onTableEscape: () => void;
 
   accountOptions?: AccountData[];
 
   costCenters?: CostCenter[];
-}
 
-/* =========================================================
-   TABLE REF
-========================================================= */
+  /* customer divisions of an account (useJournal.fetchDivisions) */
+  fetchDivisions?: (accountId: string) => Promise<CustomerDivision[]>;
+}
 
 export interface JournalTableRef {
   focusFirstAccountId: () => void;
-
-  focusField: (
-    rowIndex: number,
-    field: TableField
-  ) => void;
+  focusField: (rowIndex: number, field: TableField) => void;
 }
 
 /* =========================================================
@@ -195,28 +125,23 @@ interface CustomDropdownIndicatorProps
   showArrow: boolean;
 }
 
-const CustomDropdownIndicator = (
-  props: CustomDropdownIndicatorProps
-) => {
+const CustomDropdownIndicator = (props: CustomDropdownIndicatorProps) => {
   if (!props.showArrow) {
     return null;
   }
 
   return (
     <components.DropdownIndicator {...props}>
-      <span className="receipt-dropdown-arrow">
-        ▼
-      </span>
+      <span className="receipt-dropdown-arrow">▼</span>
     </components.DropdownIndicator>
   );
 };
 
 /* =========================================================
-   ACCOUNT DROPDOWN OPTION
+   ACCOUNT DROPDOWN OPTION / MENU LIST
 ========================================================= */
 
-interface AccountOptionProps
-  extends OptionProps<AccountOption, false> {
+interface AccountOptionProps extends OptionProps<AccountOption, false> {
   displayMode: "id" | "name";
 }
 
@@ -227,12 +152,9 @@ const AccountDropdownOption = ({
   return (
     <components.Option {...props}>
       <div className="account-dropdown-row">
-
         {displayMode === "id" ? (
           <>
-            <div className="account-dropdown-id">
-              {props.data.accountId}
-            </div>
+            <div className="account-dropdown-id">{props.data.accountId}</div>
 
             <div className="account-dropdown-name">
               {props.data.accountName}
@@ -244,23 +166,15 @@ const AccountDropdownOption = ({
               {props.data.accountName}
             </div>
 
-            <div className="account-dropdown-id">
-              {props.data.accountId}
-            </div>
+            <div className="account-dropdown-id">{props.data.accountId}</div>
           </>
         )}
-
       </div>
     </components.Option>
   );
 };
 
-/* =========================================================
-   ACCOUNT MENU LIST
-========================================================= */
-
-interface AccountMenuListProps
-  extends MenuListProps<AccountOption, false> {
+interface AccountMenuListProps extends MenuListProps<AccountOption, false> {
   displayMode: "id" | "name";
 }
 
@@ -270,113 +184,63 @@ const AccountDropdownMenuList = ({
 }: AccountMenuListProps) => {
   return (
     <components.MenuList {...props}>
-
       <div className="account-dropdown-header">
-
         {displayMode === "id" ? (
           <>
-            <div className="account-dropdown-header-id">
-              Account ID
-            </div>
-
-            <div className="account-dropdown-header-name">
-              Account Name
-            </div>
+            <div className="account-dropdown-header-id">Account ID</div>
+            <div className="account-dropdown-header-name">Account Name</div>
           </>
         ) : (
           <>
-            <div className="account-dropdown-header-name">
-              Account Name
-            </div>
-
-            <div className="account-dropdown-header-id">
-              Account ID
-            </div>
+            <div className="account-dropdown-header-name">Account Name</div>
+            <div className="account-dropdown-header-id">Account ID</div>
           </>
         )}
-
       </div>
 
-      <div className="account-dropdown-options">
-        {props.children}
-      </div>
-
+      <div className="account-dropdown-options">{props.children}</div>
     </components.MenuList>
   );
 };
 
 /* =========================================================
-   ACCOUNT FILTER
+   FILTERS
 ========================================================= */
 
 const accountFilterOption = (
-  option: {
-    label: string;
-
-    value: string;
-
-    data: AccountOption;
-  },
-
+  option: { label: string; value: string; data: AccountOption },
   inputValue: string
 ) => {
-  const search =
-    inputValue
-      .toLowerCase()
-      .trim();
+  const search = inputValue.toLowerCase().trim();
 
   if (!search) {
     return true;
   }
 
   return (
-    option.data.accountId
-      .toLowerCase()
-      .includes(search) ||
-
-    option.data.accountName
-      .toLowerCase()
-      .includes(search)
+    option.data.accountId.toLowerCase().includes(search) ||
+    option.data.accountName.toLowerCase().includes(search)
   );
 };
-
-/* =========================================================
-   NORMAL FILTER
-========================================================= */
 
 const selectFilterOption = (
-  option: {
-    label: string;
-
-    value: string;
-
-    data: SelectOption;
-  },
-
+  option: { label: string; value: string; data: SelectOption },
   inputValue: string
 ) => {
-  const search =
-    inputValue
-      .toLowerCase()
-      .trim();
+  const search = inputValue.toLowerCase().trim();
 
   if (!search) {
     return true;
   }
 
   return (
-    option.data.label
-      .toLowerCase()
-      .includes(search) ||
-
-    option.data.value
-      .toLowerCase()
-      .includes(search)
+    option.data.label.toLowerCase().includes(search) ||
+    option.data.value.toLowerCase().includes(search)
   );
 };
 
 /* =========================================================
-   ROW REF
+   ROW REFS
 ========================================================= */
 
 type RowRefValue =
@@ -386,52 +250,29 @@ type RowRefValue =
   | HTMLButtonElement
   | null;
 
-type RowRefs = Partial<
-  Record<TableField, RowRefValue>
->;
+type RowRefs = Partial<Record<TableField, RowRefValue>>;
 
 /* =========================================================
-   JOURNAL ROW PROPS
+   JOURNAL ROW
 ========================================================= */
 
 interface JournalRowProps {
   row: JournalRow;
-
   index: number;
-
   isSelected: boolean;
-
   realAccountOptions: AccountOption[];
-
   ccIdOptions: SelectOption[];
-
-  setSelectedRowId: (
-    id: number
-  ) => void;
-
-  setRowRef: (
-    rowIndex: number,
-    field: TableField,
-    value: RowRefValue
-  ) => void;
-
+  fetchDivisions?: (accountId: string) => Promise<CustomerDivision[]>;
+  setSelectedRowId: (id: number) => void;
+  setRowRef: (rowIndex: number, field: TableField, value: RowRefValue) => void;
   handleRowChange: (
     id: number,
     field: keyof JournalRow,
     value: string | boolean
   ) => void;
-
-  onFieldEnter: (
-    rowIndex: number,
-    field: TableField
-  ) => void;
-
+  onFieldEnter: (rowIndex: number, field: TableField) => void;
   onTableEscape: () => void;
 }
-
-/* =========================================================
-   JOURNAL ROW
-========================================================= */
 
 const JournalRow = memo(
   ({
@@ -440,953 +281,404 @@ const JournalRow = memo(
     isSelected,
     realAccountOptions,
     ccIdOptions,
+    fetchDivisions,
     setSelectedRowId,
     setRowRef,
     handleRowChange,
     onFieldEnter,
     onTableEscape,
   }: JournalRowProps) => {
+    /* MENU OPEN REFS */
+
+    const accountIdMenuOpenRef = useRef(false);
+    const accountNameMenuOpenRef = useRef(false);
+    const divisionMenuOpenRef = useRef(false);
+    const ccIdMenuOpenRef = useRef(false);
 
     /* =====================================================
-       MENU OPEN REFS
+       DIVISIONS (from the API, per selected account)
     ===================================================== */
 
-    const accountIdMenuOpenRef =
-      useRef(false);
+    const [divisions, setDivisions] = useState<CustomerDivision[]>([]);
 
-    const accountNameMenuOpenRef =
-      useRef(false);
+    const [divisionLoading, setDivisionLoading] = useState(false);
 
-    const divisionMenuOpenRef =
-      useRef(false);
+    useEffect(() => {
+      let active = true;
 
-    const ccIdMenuOpenRef =
-      useRef(false);
+      if (!row.accountId || !fetchDivisions) {
+        setDivisions([]);
+        setDivisionLoading(false);
 
-    /* =====================================================
-       DIVISION STATE
-    ===================================================== */
+        return;
+      }
 
-    const [divisions] =
-      useState<CustomerDivision[]>([
-        {
-          fdivid: "01",
-          fdivname: "MAIN",
-        },
-        {
-          fdivid: "02",
-          fdivname: "SALES",
-        },
-        {
-          fdivid: "03",
-          fdivname: "ADMIN",
-        },
-      ]);
+      setDivisionLoading(true);
 
-    const divisionLoading = false;
+      fetchDivisions(row.accountId)
+        .then((list) => {
+          if (!active) {
+            return;
+          }
 
-    /* =====================================================
-       DIVISION OPTIONS
-    ===================================================== */
+          setDivisions(list);
 
-    const divisionOptions =
-      useMemo<SelectOption[]>(
-        () =>
-          divisions.map(
-            (division) => ({
-              value:
-                division.fdivid,
+          if (list.length === 0) {
+            /* account has no divisions */
+            handleRowChange(row.id, "division", "");
+          } else if (list.length === 1) {
+            /* a single division is selected automatically */
+            handleRowChange(row.id, "division", String(list[0].fdivid));
+          } else if (
+            row.division &&
+            !list.some((item) => String(item.fdivid) === String(row.division))
+          ) {
+            /* saved division no longer belongs to this account */
+            handleRowChange(row.id, "division", "");
+          }
+        })
+        .catch((error: unknown) => {
+          console.error("Get Customer Divisions Error:", error);
 
-              label:
-                division.fdivname,
-            })
-          ),
-        [divisions]
-      );
+          if (active) {
+            setDivisions([]);
+          }
+        })
+        .finally(() => {
+          if (active) {
+            setDivisionLoading(false);
+          }
+        });
 
-    /* =====================================================
-       SELECTED ACCOUNT
-    ===================================================== */
+      return () => {
+        active = false;
+      };
+      // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [row.accountId, fetchDivisions]);
 
-    const selectedAccount =
-      useMemo(
-        () =>
-          realAccountOptions.find(
-            (account) =>
-              account.accountId ===
-              row.accountId
-          ) || null,
-        [
-          realAccountOptions,
-          row.accountId,
-        ]
-      );
+    const divisionOptions = useMemo<SelectOption[]>(
+      () =>
+        divisions.map((division) => ({
+          value: String(division.fdivid),
+          label: division.fdivname,
+        })),
+      [divisions]
+    );
 
-    /* =====================================================
-       ACCOUNT ID
-    ===================================================== */
+    /* SELECTED VALUES */
 
-    const selectedAccountId =
-      selectedAccount;
+    const selectedAccount = useMemo(
+      () =>
+        realAccountOptions.find(
+          (account) => account.accountId === row.accountId
+        ) || null,
+      [realAccountOptions, row.accountId]
+    );
 
-    /* =====================================================
-       ACCOUNT NAME
-    ===================================================== */
+    const selectedAccountName = useMemo(() => {
+      if (!selectedAccount) {
+        return null;
+      }
 
-    const selectedAccountName =
-      useMemo(() => {
+      return {
+        value: selectedAccount.accountId,
+        label: selectedAccount.accountName,
+        accountId: selectedAccount.accountId,
+        accountName: selectedAccount.accountName,
+        fgcs: selectedAccount.fgcs,
+        haveCc: selectedAccount.haveCc,
+      };
+    }, [selectedAccount]);
 
-        if (!selectedAccount) {
-          return null;
+    const selectedDivision = useMemo(
+      () =>
+        divisionOptions.find(
+          (option) => option.value === String(row.division)
+        ) || null,
+      [divisionOptions, row.division]
+    );
+
+    const selectedCcId = useMemo(
+      () => ccIdOptions.find((option) => option.value === row.ccId) || null,
+      [ccIdOptions, row.ccId]
+    );
+
+    /* ACCOUNT CHANGE */
+
+    const handleAccountChange = useCallback(
+      (option: AccountOption) => {
+        setSelectedRowId(row.id);
+
+        handleRowChange(row.id, "accountId", option.accountId);
+        handleRowChange(row.id, "accountName", option.accountName);
+        handleRowChange(row.id, "fgcs", option.fgcs);
+
+        /* division is reloaded by the effect above */
+        handleRowChange(row.id, "division", "");
+        handleRowChange(row.id, "ccId", "");
+      },
+      [row.id, setSelectedRowId, handleRowChange]
+    );
+
+    /* KEY DOWN (selects) */
+
+    const handleSelectKeyDown = useCallback(
+      (
+        event: React.KeyboardEvent,
+        field: TableField,
+        menuOpenRef: React.MutableRefObject<boolean>
+      ) => {
+        if (event.key === "Escape") {
+          if (menuOpenRef.current) {
+            return;
+          }
+
+          event.preventDefault();
+          event.stopPropagation();
+
+          onTableEscape();
+
+          return;
         }
 
-        return {
-          value:
-            selectedAccount.accountId,
+        if (event.key !== "Enter") {
+          return;
+        }
 
-          label:
-            selectedAccount.accountName,
+        if (menuOpenRef.current) {
+          return;
+        }
 
-          accountId:
-            selectedAccount.accountId,
+        event.preventDefault();
+        event.stopPropagation();
 
-          accountName:
-            selectedAccount.accountName,
+        onFieldEnter(index, field);
+      },
+      [index, onFieldEnter, onTableEscape]
+    );
 
-          /* =============================================
-             FGCS
-          ============================================= */
+    /* KEY DOWN (inputs / buttons) */
 
-          fgcs:
-            selectedAccount.fgcs,
-        };
-
-      }, [selectedAccount]);
-
-    /* =====================================================
-       SELECTED DIVISION
-    ===================================================== */
-
-    const selectedDivision =
-      useMemo(
-        () =>
-          divisionOptions.find(
-            (option) =>
-              option.value ===
-              row.division
-          ) || null,
-        [
-          divisionOptions,
-          row.division,
-        ]
-      );
-
-    /* =====================================================
-       SELECTED CC
-    ===================================================== */
-
-    const selectedCcId =
-      useMemo(
-        () =>
-          ccIdOptions.find(
-            (option) =>
-              option.value ===
-              row.ccId
-          ) || null,
-        [
-          ccIdOptions,
-          row.ccId,
-        ]
-      );
-
-    /* =====================================================
-       ACCOUNT CHANGE
-    ===================================================== */
-
-    const handleAccountChange =
-      useCallback(
-        (
-          option: AccountOption
-        ) => {
-
-          const accountId =
-            option.accountId;
-
-          const accountName =
-            option.accountName;
-
-          /* =============================================
-             GET FGCS
-          ============================================= */
-
-          const fgcs =
-            option.fgcs;
-
-          console.log(
-            "================================="
-          );
-
-          console.log(
-            "ACCOUNT SELECTED"
-          );
-
-          console.log(
-            "ROW ID:",
-            row.id
-          );
-
-          console.log(
-            "ACCOUNT ID:",
-            accountId
-          );
-
-          console.log(
-            "ACCOUNT NAME:",
-            accountName
-          );
-
-          console.log(
-            "FGCS:",
-            fgcs
-          );
-
-          console.log(
-            "================================="
-          );
-
-          setSelectedRowId(
-            row.id
-          );
-
-          /* =============================================
-             ACCOUNT ID
-          ============================================= */
-
-          handleRowChange(
-            row.id,
-            "accountId",
-            accountId
-          );
-
-          /* =============================================
-             ACCOUNT NAME
-          ============================================= */
-
-          handleRowChange(
-            row.id,
-            "accountName",
-            accountName
-          );
-
-          /* =============================================
-             FGCS
-          ============================================= */
-
-          handleRowChange(
-            row.id,
-            "fgcs",
-            fgcs
-          );
-
-          /* =============================================
-             CLEAR DIVISION
-          ============================================= */
-
-          handleRowChange(
-            row.id,
-            "division",
-            ""
-          );
-
-        },
-        [
-          row.id,
-          setSelectedRowId,
-          handleRowChange,
-        ]
-      );
-
-    /* =====================================================
-       SELECT KEY DOWN
-    ===================================================== */
-
-    const handleSelectKeyDown =
-      useCallback(
-        (
-          event: React.KeyboardEvent,
-          field: TableField,
-          menuOpenRef:
-            React.MutableRefObject<boolean>
-        ) => {
-
-          /* =============================================
-             ESC
-          ============================================= */
-
-          if (
-            event.key === "Escape"
-          ) {
-
-            if (
-              menuOpenRef.current
-            ) {
-              return;
-            }
-
-            event.preventDefault();
-
-            event.stopPropagation();
-
-            onTableEscape();
-
-            return;
-          }
-
-          /* =============================================
-             ENTER
-          ============================================= */
-
-          if (
-            event.key !== "Enter"
-          ) {
-            return;
-          }
-
-          if (
-            menuOpenRef.current
-          ) {
-            return;
-          }
-
+    const handleControlKeyDown = useCallback(
+      (event: React.KeyboardEvent, field: TableField) => {
+        if (event.key === "Escape") {
           event.preventDefault();
-
           event.stopPropagation();
 
-          onFieldEnter(
-            index,
-            field
-          );
-
-        },
-        [
-          index,
-          onFieldEnter,
-          onTableEscape,
-        ]
-      );
-
-    /* =====================================================
-       NORMAL INPUT KEY DOWN
-    ===================================================== */
-
-    const handleControlKeyDown =
-      useCallback(
-        (
-          event: React.KeyboardEvent,
-          field: TableField
-        ) => {
-
-          if (
-            event.key === "Escape"
-          ) {
-
-            event.preventDefault();
-
-            event.stopPropagation();
-
-            onTableEscape();
-
-            return;
-          }
-
-          if (
-            event.key !== "Enter"
-          ) {
-            return;
-          }
-
-          event.preventDefault();
-
-          event.stopPropagation();
-
-          onFieldEnter(
-            index,
-            field
-          );
-
-        },
-        [
-          index,
-          onFieldEnter,
-          onTableEscape,
-        ]
-      );
-
-    /* =====================================================
-       ROW CLICK
-    ===================================================== */
-
-    const handleRowClick =
-      useCallback(() => {
-
-        setSelectedRowId(
-          row.id
-        );
-
-      }, [
-        row.id,
-        setSelectedRowId,
-      ]);
-
-    /* =====================================================
-       ACCOUNT ID MENU
-    ===================================================== */
-
-    const handleAccountIdMenuOpen =
-      useCallback(() => {
-
-        accountIdMenuOpenRef.current =
-          true;
-
-        setSelectedRowId(
-          row.id
-        );
-
-      }, [
-        row.id,
-        setSelectedRowId,
-      ]);
-
-    const handleAccountIdMenuClose =
-      useCallback(() => {
-
-        accountIdMenuOpenRef.current =
-          false;
-
-      }, []);
-
-    /* =====================================================
-       ACCOUNT NAME MENU
-    ===================================================== */
-
-    const handleAccountNameMenuOpen =
-      useCallback(() => {
-
-        accountNameMenuOpenRef.current =
-          true;
-
-        setSelectedRowId(
-          row.id
-        );
-
-      }, [
-        row.id,
-        setSelectedRowId,
-      ]);
-
-    const handleAccountNameMenuClose =
-      useCallback(() => {
-
-        accountNameMenuOpenRef.current =
-          false;
-
-      }, []);
-
-    /* =====================================================
-       DIVISION MENU
-    ===================================================== */
-
-    const handleDivisionMenuOpen =
-      useCallback(() => {
-
-        divisionMenuOpenRef.current =
-          true;
-
-        setSelectedRowId(
-          row.id
-        );
-
-      }, [
-        row.id,
-        setSelectedRowId,
-      ]);
-
-    const handleDivisionMenuClose =
-      useCallback(() => {
-
-        divisionMenuOpenRef.current =
-          false;
-
-      }, []);
-
-    /* =====================================================
-       CC MENU
-    ===================================================== */
-
-    const handleCcMenuOpen =
-      useCallback(() => {
-
-        ccIdMenuOpenRef.current =
-          true;
-
-        setSelectedRowId(
-          row.id
-        );
-
-      }, [
-        row.id,
-        setSelectedRowId,
-      ]);
-
-    const handleCcMenuClose =
-      useCallback(() => {
-
-        ccIdMenuOpenRef.current =
-          false;
-
-      }, []);
-
-    /* =====================================================
-       ACCOUNT ID INDICATOR
-    ===================================================== */
-
-    const RowAccountIdIndicator =
-      useCallback(
-        (
-          props: DropdownIndicatorProps<
-            AccountOption,
-            false
-          >
-        ) => (
-
-          <CustomDropdownIndicator
-            {...props}
-            showArrow={
-              isSelected
-            }
-          />
-
-        ),
-        [isSelected]
-      );
-
-    /* =====================================================
-       ACCOUNT NAME INDICATOR
-    ===================================================== */
-
-    const RowAccountNameIndicator =
-      useCallback(
-        (
-          props: DropdownIndicatorProps<
-            AccountOption,
-            false
-          >
-        ) => (
-
-          <CustomDropdownIndicator
-            {...props}
-            showArrow={
-              isSelected
-            }
-          />
-
-        ),
-        [isSelected]
-      );
-
-    /* =====================================================
-       NORMAL INDICATOR
-    ===================================================== */
-
-    const RowNormalDropdownIndicator =
-      useCallback(
-        (
-          props: DropdownIndicatorProps<
-            SelectOption,
-            false
-          >
-        ) => (
-
-          <components.DropdownIndicator
-            {...props}
-          >
-
-            <span className="receipt-dropdown-arrow">
-              ▼
-            </span>
-
-          </components.DropdownIndicator>
-
-        ),
-        []
-      );
-
-    /* =====================================================
-       RETURN
-    ===================================================== */
+          onTableEscape();
+
+          return;
+        }
+
+        if (event.key !== "Enter") {
+          return;
+        }
+
+        event.preventDefault();
+        event.stopPropagation();
+
+        onFieldEnter(index, field);
+      },
+      [index, onFieldEnter, onTableEscape]
+    );
+
+    const handleRowClick = useCallback(() => {
+      setSelectedRowId(row.id);
+    }, [row.id, setSelectedRowId]);
+
+    /* MENU OPEN / CLOSE */
+
+    const handleAccountIdMenuOpen = useCallback(() => {
+      accountIdMenuOpenRef.current = true;
+      setSelectedRowId(row.id);
+    }, [row.id, setSelectedRowId]);
+
+    const handleAccountIdMenuClose = useCallback(() => {
+      accountIdMenuOpenRef.current = false;
+    }, []);
+
+    const handleAccountNameMenuOpen = useCallback(() => {
+      accountNameMenuOpenRef.current = true;
+      setSelectedRowId(row.id);
+    }, [row.id, setSelectedRowId]);
+
+    const handleAccountNameMenuClose = useCallback(() => {
+      accountNameMenuOpenRef.current = false;
+    }, []);
+
+    const handleDivisionMenuOpen = useCallback(() => {
+      divisionMenuOpenRef.current = true;
+      setSelectedRowId(row.id);
+    }, [row.id, setSelectedRowId]);
+
+    const handleDivisionMenuClose = useCallback(() => {
+      divisionMenuOpenRef.current = false;
+    }, []);
+
+    const handleCcMenuOpen = useCallback(() => {
+      ccIdMenuOpenRef.current = true;
+      setSelectedRowId(row.id);
+    }, [row.id, setSelectedRowId]);
+
+    const handleCcMenuClose = useCallback(() => {
+      ccIdMenuOpenRef.current = false;
+    }, []);
+
+    /* INDICATORS */
+
+    const RowAccountIdIndicator = useCallback(
+      (props: DropdownIndicatorProps<AccountOption, false>) => (
+        <CustomDropdownIndicator {...props} showArrow={isSelected} />
+      ),
+      [isSelected]
+    );
+
+    const RowAccountNameIndicator = useCallback(
+      (props: DropdownIndicatorProps<AccountOption, false>) => (
+        <CustomDropdownIndicator {...props} showArrow={isSelected} />
+      ),
+      [isSelected]
+    );
+
+    const RowNormalDropdownIndicator = useCallback(
+      (props: DropdownIndicatorProps<SelectOption, false>) => (
+        <components.DropdownIndicator {...props}>
+          <span className="receipt-dropdown-arrow">▼</span>
+        </components.DropdownIndicator>
+      ),
+      []
+    );
 
     return (
-
       <tr
-        onClick={
-          handleRowClick
-        }
-
-        className={
-          isSelected
-            ? "receipt-row-selected"
-            : ""
-        }
+        onClick={handleRowClick}
+        className={isSelected ? "receipt-row-selected" : ""}
       >
+        {/* SERIAL */}
 
-        {/* =================================================
-            SERIAL
-        ================================================= */}
+        <td className="receipt-cell serial-cell">{index + 1}</td>
 
-        <td className="receipt-cell serial-cell">
-          {index + 1}
-        </td>
-
-        {/* =================================================
-            ACCOUNT ID
-        ================================================= */}
+        {/* ACCOUNT ID */}
 
         <td className="receipt-cell">
-
-          <Select<
-            AccountOption,
-            false
-          >
-
-            ref={(instance) =>
-              setRowRef(
-                index,
-                "accountId",
-                instance
-              )
-            }
-
-            value={
-              selectedAccountId
-            }
-
+          <Select<AccountOption, false>
+            ref={(instance) => setRowRef(index, "accountId", instance)}
+            value={selectedAccount}
             onKeyDown={(event) =>
-              handleSelectKeyDown(
-                event,
-                "accountId",
-                accountIdMenuOpenRef
-              )
+              handleSelectKeyDown(event, "accountId", accountIdMenuOpenRef)
             }
-
-            onMenuOpen={
-              handleAccountIdMenuOpen
-            }
-
-            onMenuClose={
-              handleAccountIdMenuClose
-            }
-
-            onChange={(
-              option: SingleValue<AccountOption>
-            ) => {
-
+            onMenuOpen={handleAccountIdMenuOpen}
+            onMenuClose={handleAccountIdMenuClose}
+            onChange={(option: SingleValue<AccountOption>) => {
               if (!option) {
                 return;
               }
 
-              handleAccountChange(
-                option
-              );
-
+              handleAccountChange(option);
             }}
-
-            options={
-              realAccountOptions
-            }
-
+            options={realAccountOptions}
             placeholder=""
-
-            styles={
-              accountDropdownStyles
-            }
-
+            styles={accountDropdownStyles}
             components={{
-
-              DropdownIndicator:
-                RowAccountIdIndicator,
+              DropdownIndicator: RowAccountIdIndicator,
 
               Option: (props) => (
-
-                <AccountDropdownOption
-                  {...props}
-                  displayMode="id"
-                />
-
+                <AccountDropdownOption {...props} displayMode="id" />
               ),
 
               MenuList: (props) => (
-
-                <AccountDropdownMenuList
-                  {...props}
-                  displayMode="id"
-                />
-
+                <AccountDropdownMenuList {...props} displayMode="id" />
               ),
-
             }}
-
-            filterOption={
-              accountFilterOption
-            }
-
+            filterOption={accountFilterOption}
             isSearchable
-
             isClearable={false}
-
             menuPlacement="auto"
-
             menuPosition="fixed"
-
-            menuPortalTarget={
-              document.body
-            }
-
-            menuShouldScrollIntoView={
-              false
-            }
-
+            menuPortalTarget={document.body}
+            menuShouldScrollIntoView={false}
             closeMenuOnSelect
-
             tabSelectsValue={false}
-
-            noOptionsMessage={() =>
-              "No Account Found"
-            }
-
+            noOptionsMessage={() => "No Account Found"}
           />
-
         </td>
 
-        {/* =================================================
-            ACCOUNT NAME
-        ================================================= */}
+        {/* ACCOUNT NAME */}
 
         <td className="receipt-cell">
-
-          <Select<
-            AccountOption,
-            false
-          >
-
-            ref={(instance) =>
-              setRowRef(
-                index,
-                "accountName",
-                instance
-              )
-            }
-
-            value={
-              selectedAccountName
-            }
-
+          <Select<AccountOption, false>
+            ref={(instance) => setRowRef(index, "accountName", instance)}
+            value={selectedAccountName}
             onKeyDown={(event) =>
-              handleSelectKeyDown(
-                event,
-                "accountName",
-                accountNameMenuOpenRef
-              )
+              handleSelectKeyDown(event, "accountName", accountNameMenuOpenRef)
             }
-
-            onMenuOpen={
-              handleAccountNameMenuOpen
-            }
-
-            onMenuClose={
-              handleAccountNameMenuClose
-            }
-
-            onChange={(
-              option: SingleValue<AccountOption>
-            ) => {
-
+            onMenuOpen={handleAccountNameMenuOpen}
+            onMenuClose={handleAccountNameMenuClose}
+            onChange={(option: SingleValue<AccountOption>) => {
               if (!option) {
                 return;
               }
 
-              handleAccountChange(
-                option
-              );
-
+              handleAccountChange(option);
             }}
-
-            options={
-              realAccountOptions
-            }
-
+            options={realAccountOptions}
             placeholder=""
-
-            styles={
-              accountDropdownStyles
-            }
-
+            styles={accountDropdownStyles}
             components={{
-
-              DropdownIndicator:
-                RowAccountNameIndicator,
+              DropdownIndicator: RowAccountNameIndicator,
 
               Option: (props) => (
-
-                <AccountDropdownOption
-                  {...props}
-                  displayMode="name"
-                />
-
+                <AccountDropdownOption {...props} displayMode="name" />
               ),
 
               MenuList: (props) => (
-
-                <AccountDropdownMenuList
-                  {...props}
-                  displayMode="name"
-                />
-
+                <AccountDropdownMenuList {...props} displayMode="name" />
               ),
-
             }}
-
-            filterOption={
-              accountFilterOption
-            }
-
+            filterOption={accountFilterOption}
             isSearchable
-
             isClearable={false}
-
             menuPlacement="auto"
-
             menuPosition="fixed"
-
-            menuPortalTarget={
-              document.body
-            }
-
-            menuShouldScrollIntoView={
-              false
-            }
-
+            menuPortalTarget={document.body}
+            menuShouldScrollIntoView={false}
             closeMenuOnSelect
-
             tabSelectsValue={false}
-
-            noOptionsMessage={() =>
-              "No Account Found"
-            }
-
+            noOptionsMessage={() => "No Account Found"}
           />
-
         </td>
 
-        {/* =================================================
-            DIVISION
-        ================================================= */}
+        {/* DIVISION (enabled only when the account has divisions) */}
 
         <td className="receipt-cell">
-
-          <Select<
-            SelectOption,
-            false
-          >
-
-            ref={(instance) =>
-              setRowRef(
-                index,
-                "division",
-                instance
-              )
-            }
-
-            value={
-              selectedDivision
-            }
-
+          <Select<SelectOption, false>
+            ref={(instance) => setRowRef(index, "division", instance)}
+            value={selectedDivision}
             onKeyDown={(event) =>
-              handleSelectKeyDown(
-                event,
-                "division",
-                divisionMenuOpenRef
-              )
+              handleSelectKeyDown(event, "division", divisionMenuOpenRef)
             }
+            onMenuOpen={handleDivisionMenuOpen}
+            onMenuClose={handleDivisionMenuClose}
+            onChange={(option: SingleValue<SelectOption>) => {
+              handleRowChange(row.id, "division", option?.value || "");
 
-            onMenuOpen={
-              handleDivisionMenuOpen
-            }
-
-            onMenuClose={
-              handleDivisionMenuClose
-            }
-
-            onChange={(
-              option: SingleValue<SelectOption>
-            ) => {
-
-              const divisionId =
-                option?.value || "";
-
-              handleRowChange(
-                row.id,
-                "division",
-                divisionId
-              );
-
-              setSelectedRowId(
-                row.id
-              );
-
+              setSelectedRowId(row.id);
             }}
-
-            options={
-              divisionOptions
-            }
-
+            options={divisionOptions}
             placeholder=""
-
-            styles={
-              selectStyles
-            }
-
-            components={{
-              DropdownIndicator:
-                RowNormalDropdownIndicator,
-            }}
-
+            styles={selectStyles}
+            components={{ DropdownIndicator: RowNormalDropdownIndicator }}
             isSearchable
-
             isClearable={false}
-
             isDisabled={
-              !row.accountId ||
-              divisionLoading
+              !row.accountId || divisionLoading || divisionOptions.length === 0
             }
-
             menuPlacement="auto"
-
             menuPosition="fixed"
-
-            menuPortalTarget={
-              document.body
-            }
-
-            menuShouldScrollIntoView={
-              false
-            }
-
-            filterOption={
-              selectFilterOption
-            }
-
+            menuPortalTarget={document.body}
+            menuShouldScrollIntoView={false}
+            filterOption={selectFilterOption}
             noOptionsMessage={() => {
-
               if (!row.accountId) {
                 return "Select Account First";
               }
@@ -1396,337 +688,132 @@ const JournalRow = memo(
               }
 
               return "No Division Found";
-
             }}
-
           />
-
         </td>
 
-        {/* =================================================
-            CC ID
-        ================================================= */}
+        {/* CC ID (enabled only when the account allows a cost center) */}
 
         <td className="receipt-cell">
-
-          <Select<
-            SelectOption,
-            false
-          >
-
-            ref={(instance) =>
-              setRowRef(
-                index,
-                "ccId",
-                instance
-              )
-            }
-
-            value={
-              selectedCcId
-            }
-
+          <Select<SelectOption, false>
+            ref={(instance) => setRowRef(index, "ccId", instance)}
+            value={selectedCcId}
             onKeyDown={(event) =>
-              handleSelectKeyDown(
-                event,
-                "ccId",
-                ccIdMenuOpenRef
-              )
+              handleSelectKeyDown(event, "ccId", ccIdMenuOpenRef)
             }
+            onMenuOpen={handleCcMenuOpen}
+            onMenuClose={handleCcMenuClose}
+            onChange={(option: SingleValue<SelectOption>) => {
+              handleRowChange(row.id, "ccId", option?.value || "");
 
-            onMenuOpen={
-              handleCcMenuOpen
-            }
-
-            onMenuClose={
-              handleCcMenuClose
-            }
-
-            onChange={(
-              option: SingleValue<SelectOption>
-            ) => {
-
-              const ccId =
-                option?.value || "";
-
-              handleRowChange(
-                row.id,
-                "ccId",
-                ccId
-              );
-
-              setSelectedRowId(
-                row.id
-              );
-
+              setSelectedRowId(row.id);
             }}
-
-            options={
-              ccIdOptions
-            }
-
+            options={ccIdOptions}
             placeholder=""
-
-            styles={
-              selectStyles
-            }
-
-            components={{
-              DropdownIndicator:
-                RowNormalDropdownIndicator,
-            }}
-
+            styles={selectStyles}
+            components={{ DropdownIndicator: RowNormalDropdownIndicator }}
             isSearchable
-
             isClearable={false}
-
+            isDisabled={
+              !selectedAccount?.haveCc || ccIdOptions.length === 0
+            }
             menuPlacement="auto"
-
             menuPosition="fixed"
-
-            menuPortalTarget={
-              document.body
-            }
-
-            menuShouldScrollIntoView={
-              false
-            }
-
-            filterOption={
-              selectFilterOption
-            }
-
-            noOptionsMessage={() =>
-              "No CC ID Found"
-            }
-
+            menuPortalTarget={document.body}
+            menuShouldScrollIntoView={false}
+            filterOption={selectFilterOption}
+            noOptionsMessage={() => "No CC ID Found"}
           />
-
         </td>
 
-        {/* =================================================
-            DEBIT AMOUNT
-        ================================================= */}
+        {/* DEBIT AMOUNT */}
 
         <td className="receipt-cell">
-
           <input
-            ref={(element) =>
-              setRowRef(
-                index,
-                "debitAmount",
-                element
-              )
-            }
-
+            ref={(element) => setRowRef(index, "debitAmount", element)}
             type="number"
-
             min="0"
-
             step="0.01"
-
-            value={
-              row.debitAmount
-            }
-
+            value={row.debitAmount}
             onChange={(event) => {
-
-              handleRowChange(
-                row.id,
-                "debitAmount",
-                event.target.value
-              );
-
+              handleRowChange(row.id, "debitAmount", event.target.value);
             }}
-
             onFocus={() => {
-
-              setSelectedRowId(
-                row.id
-              );
-
+              setSelectedRowId(row.id);
             }}
-
-            onKeyDown={(event) =>
-              handleControlKeyDown(
-                event,
-                "debitAmount"
-              )
-            }
-
+            onKeyDown={(event) => handleControlKeyDown(event, "debitAmount")}
             className="receipt-grid-input"
           />
-
         </td>
 
-        {/* =================================================
-            CREDIT AMOUNT
-        ================================================= */}
+        {/* CREDIT AMOUNT */}
 
         <td className="receipt-cell">
-
           <input
-            ref={(element) =>
-              setRowRef(
-                index,
-                "creditAmount",
-                element
-              )
-            }
-
+            ref={(element) => setRowRef(index, "creditAmount", element)}
             type="number"
-
             min="0"
-
             step="0.01"
-
-            value={
-              row.creditAmount
-            }
-
+            value={row.creditAmount}
             onChange={(event) => {
-
-              handleRowChange(
-                row.id,
-                "creditAmount",
-                event.target.value
-              );
-
+              handleRowChange(row.id, "creditAmount", event.target.value);
             }}
-
             onFocus={() => {
-
-              setSelectedRowId(
-                row.id
-              );
-
+              setSelectedRowId(row.id);
             }}
-
-            onKeyDown={(event) =>
-              handleControlKeyDown(
-                event,
-                "creditAmount"
-              )
-            }
-
+            onKeyDown={(event) => handleControlKeyDown(event, "creditAmount")}
             className="receipt-grid-input"
           />
-
         </td>
 
-        {/* =================================================
-            MATCH
-        ================================================= */}
+        {/* MATCH */}
 
         <td className="receipt-cell">
-
           <div className="receipt-checkbox-wrapper">
-
             <input
-              ref={(element) =>
-                setRowRef(
-                  index,
-                  "match",
-                  element
-                )
-              }
-
+              ref={(element) => setRowRef(index, "match", element)}
               type="checkbox"
-
-              checked={
-                row.match
-              }
-
+              checked={row.match}
               onChange={(event) => {
+                setSelectedRowId(row.id);
 
-                setSelectedRowId(
-                  row.id
-                );
-
-                handleRowChange(
-                  row.id,
-                  "match",
-                  event.target.checked
-                );
-
+                handleRowChange(row.id, "match", event.target.checked);
               }}
-
-              onKeyDown={(event) =>
-                handleControlKeyDown(
-                  event,
-                  "match"
-                )
-              }
-
+              onKeyDown={(event) => handleControlKeyDown(event, "match")}
             />
-
           </div>
-
         </td>
 
-        {/* =================================================
-            VIEW
-        ================================================= */}
+        {/* VIEW */}
 
         <td className="receipt-cell">
-
           <button
-            ref={(element) =>
-              setRowRef(
-                index,
-                "view",
-                element
-              )
-            }
-
+            ref={(element) => setRowRef(index, "view", element)}
             type="button"
-
             onClick={(event) => {
-
               event.stopPropagation();
 
-              setSelectedRowId(
-                row.id
-              );
-
+              setSelectedRowId(row.id);
             }}
-
-            onKeyDown={(event) =>
-              handleControlKeyDown(
-                event,
-                "view"
-              )
-            }
-
-            className="
-              receipt-view-button
-            "
-
+            onKeyDown={(event) => handleControlKeyDown(event, "view")}
+            className="receipt-view-button"
             tabIndex={0}
           >
-
             <FaEye size={12} />
-
           </button>
-
         </td>
-
       </tr>
     );
   }
 );
 
-JournalRow.displayName =
-  "JournalRow";
+JournalRow.displayName = "JournalRow";
 
 /* =========================================================
    MAIN JOURNAL TABLE
 ========================================================= */
 
-const JournalTable = forwardRef<
-  JournalTableRef,
-  JournalTableProps
->(
+const JournalTable = forwardRef<JournalTableRef, JournalTableProps>(
   (
     {
       rows,
@@ -1735,378 +822,129 @@ const JournalTable = forwardRef<
       onTableEscape,
       accountOptions = [],
       costCenters = [],
+      fetchDivisions,
     },
-
     ref
   ) => {
-
-    /* =====================================================
-       SELECTED ROW
-    ===================================================== */
-
-    const [
-      selectedRowId,
-      setSelectedRowIdState,
-    ] = useState<number | null>(
+    const [selectedRowId, setSelectedRowIdState] = useState<number | null>(
       null
     );
 
-    /* =====================================================
-       ROW REFS
-    ===================================================== */
+    const rowRefs = useRef<RowRefs[]>([]);
 
-    const rowRefs =
-      useRef<RowRefs[]>([]);
+    const setSelectedRowId = useCallback((id: number) => {
+      setSelectedRowIdState(id);
+    }, []);
 
-    /* =====================================================
-       SET SELECTED ROW
-    ===================================================== */
+    const setRowRef = useCallback(
+      (rowIndex: number, field: TableField, value: RowRefValue) => {
+        if (!rowRefs.current[rowIndex]) {
+          rowRefs.current[rowIndex] = {};
+        }
 
-    const setSelectedRowId =
-      useCallback(
-        (id: number) => {
+        if (value) {
+          rowRefs.current[rowIndex][field] = value;
+        } else {
+          delete rowRefs.current[rowIndex][field];
+        }
+      },
+      []
+    );
 
-          setSelectedRowIdState(
-            id
-          );
+    /* ACCOUNT OPTIONS */
 
-        },
-        []
-      );
+    const realAccountOptions = useMemo<AccountOption[]>(() => {
+      if (!Array.isArray(accountOptions)) {
+        return [];
+      }
 
-    /* =====================================================
-       SET ROW REF
-    ===================================================== */
+      return accountOptions
+        .filter((account) => Boolean(account && account.faccountid))
+        .map((account) => ({
+          value: account.faccountid,
+          label: account.faccountid,
+          accountId: account.faccountid,
+          accountName: account.faccountname || "",
+          fgcs: account.fgcs || "",
+          haveCc: account.fhavecc === true,
+        }));
+    }, [accountOptions]);
 
-    const setRowRef =
-      useCallback(
-        (
-          rowIndex: number,
-          field: TableField,
-          value: RowRefValue
-        ) => {
+    /* COST CENTER OPTIONS */
 
-          if (
-            !rowRefs.current[
-              rowIndex
-            ]
-          ) {
+    const ccIdOptions = useMemo<SelectOption[]>(() => {
+      if (!Array.isArray(costCenters)) {
+        return [];
+      }
 
-            rowRefs.current[
-              rowIndex
-            ] = {};
+      return [...costCenters]
+        .sort((first, second) => first.fpositionno - second.fpositionno)
+        .map((costCenter) => ({
+          value: costCenter.fccid,
+          label: costCenter.fccid,
+        }));
+    }, [costCenters]);
 
+    /* FOCUS FIELD */
+
+    const focusField = useCallback((rowIndex: number, field: TableField) => {
+      const element = rowRefs.current[rowIndex]?.[field];
+
+      if (!element) {
+        console.warn("JournalTable: field not found:", { rowIndex, field });
+
+        return;
+      }
+
+      requestAnimationFrame(() => {
+        element.focus();
+
+        if (element instanceof HTMLInputElement) {
+          if (element.type !== "checkbox") {
+            element.select();
           }
-
-          if (value) {
-
-            rowRefs.current[
-              rowIndex
-            ][field] = value;
-
-          } else {
-
-            delete rowRefs.current[
-              rowIndex
-            ][field];
-
-          }
-
-        },
-        []
-      );
-
-    /* =====================================================
-       ACCOUNT OPTIONS
-    ===================================================== */
-
-    const realAccountOptions =
-      useMemo<AccountOption[]>(
-        () => {
-
-          if (
-            !Array.isArray(
-              accountOptions
-            )
-          ) {
-            return [];
-          }
-
-          return accountOptions
-            .filter(
-              (account) =>
-                Boolean(
-                  account &&
-                  account.faccountid
-                )
-            )
-            .map(
-              (account) => ({
-
-                value:
-                  account.faccountid,
-
-                label:
-                  account.faccountid,
-
-                accountId:
-                  account.faccountid,
-
-                accountName:
-                  account.faccountname ||
-                  "",
-
-                /* =========================================
-                   FGCS
-                ========================================= */
-
-                fgcs:
-                  account.fgcs || "",
-
-              })
-            );
-
-        },
-
-        [accountOptions]
-      );
-
-    /* =====================================================
-       COST CENTER OPTIONS
-    ===================================================== */
-
-    const ccIdOptions =
-      useMemo<SelectOption[]>(
-        () => {
-
-          if (
-            !Array.isArray(
-              costCenters
-            )
-          ) {
-            return [];
-          }
-
-          return [
-            ...costCenters,
-          ]
-
-            .sort(
-              (
-                first,
-                second
-              ) =>
-                first.fpositionno -
-                second.fpositionno
-            )
-
-            .map(
-              (costCenter) => ({
-
-                value:
-                  costCenter.fccid,
-
-                label:
-                  costCenter.fccid,
-
-              })
-            );
-
-        },
-
-        [costCenters]
-      );
-
-    /* =====================================================
-       FOCUS FIELD
-    ===================================================== */
-
-    const focusField =
-      useCallback(
-        (
-          rowIndex: number,
-          field: TableField
-        ) => {
-
-          const element =
-            rowRefs.current[
-              rowIndex
-            ]?.[field];
-
-          if (!element) {
-
-            console.warn(
-              "JournalTable: field not found:",
-              {
-                rowIndex,
-                field,
-              }
-            );
-
-            return;
-          }
-
-          requestAnimationFrame(
-            () => {
-
-              element.focus();
-
-              if (
-                element instanceof
-                HTMLInputElement
-              ) {
-
-                if (
-                  element.type !==
-                  "checkbox"
-                ) {
-
-                  element.select();
-
-                }
-
-              }
-
-            }
-          );
-
-        },
-
-        []
-      );
-
-    /* =====================================================
-       IMPERATIVE HANDLE
-    ===================================================== */
+        }
+      });
+    }, []);
 
     useImperativeHandle(
       ref,
-
       () => ({
-
         focusFirstAccountId: () => {
-
-          focusField(
-            0,
-            "accountId"
-          );
-
+          focusField(0, "accountId");
         },
 
         focusField,
-
       }),
-
       [focusField]
     );
 
-    /* =====================================================
-       RETURN
-    ===================================================== */
-
     return (
-
-      <div
-        className="
-          receipt-table-wrapper 
-        "
-      >
-
-        <table
-          className="
-            receipt-table
-          "
-        >
-
-          {/* =================================================
-              COLUMN WIDTHS
-          ================================================= */}
-
+      <div className="receipt-table-wrapper">
+        <table className="receipt-table">
           <colgroup>
-
-            <col
-              style={{
-                width: "38px",
-              }}
-            />
-
-            <col
-              style={{
-                width: "105px",
-              }}
-            />
-
-            <col
-              style={{
-                width: "auto",
-              }}
-            />
-
-            <col
-              style={{
-                width: "75px",
-              }}
-            />
-
-            <col
-              style={{
-                width: "75px",
-              }}
-            />
-
-            <col
-              style={{
-                width: "100px",
-              }}
-            />
-
-            <col
-              style={{
-                width: "100px",
-              }}
-            />
-
-            <col
-              style={{
-                width: "60px",
-              }}
-            />
-
-            <col
-              style={{
-                width: "60px",
-              }}
-            />
-
+            <col style={{ width: "38px" }} />
+            <col style={{ width: "105px" }} />
+            <col style={{ width: "auto" }} />
+            <col style={{ width: "75px" }} />
+            <col style={{ width: "75px" }} />
+            <col style={{ width: "100px" }} />
+            <col style={{ width: "100px" }} />
+            <col style={{ width: "60px" }} />
+            <col style={{ width: "60px" }} />
           </colgroup>
 
-          {/* =================================================
-              HEADER
-          ================================================= */}
-
           <thead>
-
             <tr>
+              <th className="text-right">Sl.</th>
 
-              <th className="text-right">
-                Sl.
-              </th>
+              <th>Account ID</th>
 
-              <th>
-                Account ID
-              </th>
+              <th>Account Name</th>
 
-              <th>
-                Account Name
-              </th>
+              <th id="lkpDivID">Div.ID</th>
 
-              <th id="lkpDivID">
-                Div.ID
-              </th>
-
-              <th id="lkpCCID">
-                CC. ID
-              </th>
+              <th id="lkpCCID">CC. ID</th>
 
               <th id="txtDebitAmount" className="text-right">
                 Debit Amt.
@@ -2123,85 +961,33 @@ const JournalTable = forwardRef<
               <th id="Viewbtn" className="text-center">
                 View
               </th>
-
             </tr>
-
           </thead>
 
-          {/* =================================================
-              BODY
-          ================================================= */}
-
           <tbody>
-
-            {rows.map(
-              (
-                row,
-                index
-              ) => (
-
-                <JournalRow
-
-                  key={
-                    row.id
-                  }
-
-                  row={
-                    row
-                  }
-
-                  index={
-                    index
-                  }
-
-                  isSelected={
-                    selectedRowId ===
-                    row.id
-                  }
-
-                  realAccountOptions={
-                    realAccountOptions
-                  }
-
-                  ccIdOptions={
-                    ccIdOptions
-                  }
-
-                  setSelectedRowId={
-                    setSelectedRowId
-                  }
-
-                  setRowRef={
-                    setRowRef
-                  }
-
-                  handleRowChange={
-                    handleRowChange
-                  }
-
-                  onFieldEnter={
-                    onFieldEnter
-                  }
-
-                  onTableEscape={
-                    onTableEscape
-                  }
-
-                />
-
-              )
-            )}
-
+            {rows.map((row, index) => (
+              <JournalRow
+                key={row.id}
+                row={row}
+                index={index}
+                isSelected={selectedRowId === row.id}
+                realAccountOptions={realAccountOptions}
+                ccIdOptions={ccIdOptions}
+                fetchDivisions={fetchDivisions}
+                setSelectedRowId={setSelectedRowId}
+                setRowRef={setRowRef}
+                handleRowChange={handleRowChange}
+                onFieldEnter={onFieldEnter}
+                onTableEscape={onTableEscape}
+              />
+            ))}
           </tbody>
-
         </table>
-
       </div>
     );
   }
 );
 
-JournalTable.displayName =
-  "JournalTable";
+JournalTable.displayName = "JournalTable";
 
 export default JournalTable;

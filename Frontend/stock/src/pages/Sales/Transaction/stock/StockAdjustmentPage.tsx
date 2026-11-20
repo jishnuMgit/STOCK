@@ -1670,27 +1670,18 @@ const StockAdjustmentPage: React.FC = () => {
     return () => window.removeEventListener("keydown", onKeyDown);
   }, [chkFindOpen]);
 
-  // Alt+S -> Save (new), Alt+M -> Modify (saved), Alt+E -> Search, Alt+D ->
-  // Delete, Alt+P -> Print, Alt+T -> Post (the old Ctrl+T), Alt+C -> Clear. Off
-  // while the Print Preview is open: it has its own Alt+P, Alt+D and Alt+C.
+  // Alt+E -> Search. Off while the Print Preview is open: it has its own Alt+P, Alt+D and Alt+C.
   useAltShortcuts(preview ? {} : {
-    s: () => {
-      if (!chkSaved) handleSave();
-    },
-    m: () => {
-      if (chkSaved) handleSave();
-    },
     e: handleSearch,
-    d: handleDelete,
-    p: handlePrint,
-    t: handlePost,
-    c: clearForm,
   });
 
-  // Ctrl+P -> Print (the old forms' Ctrl+P). With the Print Preview open it prints the report that is shown.
-  useCtrlShortcuts({
-    p: () => (preview ? printStockAdjustmentReport(preview.report) : handlePrint()),
-  });
+  // Ctrl+S -> Save (new) or Modify (saved), Ctrl+D -> Delete, Ctrl+P -> Print (the old forms' Ctrl+P).
+  // With the Print Preview open only Ctrl+P works: it prints the report that is shown (Save and Delete are off).
+  useCtrlShortcuts(
+    preview
+      ? { p: () => printStockAdjustmentReport(preview.report) }
+      : { s: handleSave, d: handleDelete, p: handlePrint }
+  );
 
   // ----------------------------------------------------------
   // ACTION BUTTONS
@@ -2216,12 +2207,7 @@ const StockAdjustmentPage: React.FC = () => {
                   arch
                 </>
               ) : (
-                <>
-                  <span className="underline underline-offset-2">
-                    {label.charAt(0)}
-                  </span>
-                  {label.slice(1)}
-                </>
+                label
               )}
             </button>
           );

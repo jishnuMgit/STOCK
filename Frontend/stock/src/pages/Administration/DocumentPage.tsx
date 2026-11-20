@@ -1,12 +1,14 @@
 import React, { useEffect, useRef, useState } from "react";
 import Select from "react-select";
 import { toast } from "react-toastify";
+import { X } from "lucide-react";
 import {
   branchMenuStyles,
   filterLabelOrValue,
   makeNameIdMenuComponents,
 } from "../../components/BranchSelect/branchSelectParts";
 import { useAltShortcuts } from "../../hooks/useAltShortcuts";
+import { useCtrlShortcuts } from "../../hooks/useCtrlShortcuts";
 import { useConfirmModal } from "../../hooks/useConfirmModal";
 import { useDeleteToast } from "../../hooks/useDeleteToast";
 import { useGridCellFocus } from "../../hooks/useGridCellFocus";
@@ -91,7 +93,7 @@ const FieldLabel: React.FC<{ children: React.ReactNode }> = ({ children }) => (
 );
 
 const cellInputClass =
-  "h-[26px] w-full bg-transparent px-2 text-[12px] text-[#24364d] outline-none focus:bg-white ";
+  "h-[34px] w-full bg-transparent pl-[2px] pr-2 text-[13px] text-[#24364d] outline-none focus:bg-white ";
 
 let keyCounter = 0;
 const nextKey = () => ++keyCounter;
@@ -531,9 +533,9 @@ const DocumentPage: React.FC = () => {
     setReloadKey((previous) => previous + 1);
   };
 
-  // Alt+S Save, Alt+F Find, Alt+C Clear
+  // Ctrl+S Save, Alt+F Find, Alt+C Clear
+  useCtrlShortcuts({ s: handleSave });
   useAltShortcuts({
-    s: handleSave,
     f: handleFind,
     c: handleClear,
   });
@@ -615,18 +617,18 @@ const DocumentPage: React.FC = () => {
                   <col className="w-27" />
                 </colgroup>
                 <thead className="sticky top-0 z-10">
-                  <tr className="bg-[#EDF9F2] text-[#405066]">
-                    <th className="h-7 border border-[#BFE8D0]" />
-                    <th className="h-7 border border-[#BFE8D0] px-2 text-left font-normal">
+                  <tr className="bg-[#EDF9F2] text-[14px] text-gray-600">
+                    <th className="h-[34px] border border-[#BFE8D0]" />
+                    <th className="h-[34px] border border-[#BFE8D0] pl-[2px] pr-2 text-left font-normal">
                       ID
                     </th>
-                    <th className="h-7 border border-[#BFE8D0] px-2 text-left font-normal">
+                    <th className="h-[34px] border border-[#BFE8D0] pl-[2px] pr-2 text-left font-normal">
                       Document
                     </th>
-                    <th className="h-7 border border-[#BFE8D0] px-2 text-center font-normal">
+                    <th className="h-[34px] border border-[#BFE8D0] px-2 text-center font-normal">
                       To Be Post
                     </th>
-                    <th className="h-7 border border-[#BFE8D0] px-2 text-right font-normal">
+                    <th className="h-[34px] border border-[#BFE8D0] px-2 text-right font-normal">
                       Position No.
                     </th>
                   </tr>
@@ -644,7 +646,7 @@ const DocumentPage: React.FC = () => {
                         onClick={() => setSelectedKey(row.key)}
                         className={selected ? "bg-[#f2faf5]" : "bg-white"}
                       >
-                        <td className="h-6.5 border border-[#BFE8D0] bg-[#fafbfc] text-center text-[10px] text-[#405066]">
+                        <td className="h-[34px] border border-[#BFE8D0] bg-[#fafbfc] text-center text-[10px] text-[#405066]">
                           {selected ? "▶" : ""}
                         </td>
                         <td
@@ -719,7 +721,7 @@ const DocumentPage: React.FC = () => {
                         <td
                           className={`border border-[#BFE8D0] p-0 ${cellFocusClass} ${changed ? "bg-[#fff6d6]" : ""}`}
                         >
-                          <div className="flex h-[26px] items-center">
+                          <div className="flex h-[34px] items-center">
                             <input
                               id={`txtPositionNo-${index}`}
                               name="txtPositionNo"
@@ -740,7 +742,7 @@ const DocumentPage: React.FC = () => {
                               onKeyDown={(event) =>
                                 handleCellKeyDown(event, index, "txtPositionNo")
                               }
-                              className="h-[26px] min-w-0 flex-1 bg-transparent px-2 text-right text-[12px] text-[#24364d] outline-none focus:bg-white"
+                              className="h-[34px] min-w-0 flex-1 bg-transparent px-2 text-right text-[13px] text-[#24364d] outline-none focus:bg-white"
                             />
                             {/* the slot is always there so the numbers do not move when the x shows */}
                             <span className="flex w-6 shrink-0 items-center justify-center">
@@ -754,9 +756,9 @@ const DocumentPage: React.FC = () => {
                                   onClick={() => handleDeleteRow(row)}
                                   disabled={saving}
                                   aria-label={`Delete document ${row.txtDocType || "row"}`}
-                                  className="text-[12px] leading-none text-gray-400 hover:text-red-600 disabled:cursor-not-allowed disabled:opacity-30"
+                                  className="inline-flex items-center justify-center text-slate-400 hover:text-red-500 disabled:cursor-not-allowed disabled:opacity-30"
                                 >
-                                  ✕
+                                  <X size={12} />
                                 </button>
                               )}
                             </span>
@@ -780,7 +782,7 @@ const DocumentPage: React.FC = () => {
                 title="Alt+S"
                 className="btn-style disabled:cursor-not-allowed disabled:opacity-60"
               >
-                <u>S</u>ave
+                Save
               </button>
               <button
                 id="btnFind"

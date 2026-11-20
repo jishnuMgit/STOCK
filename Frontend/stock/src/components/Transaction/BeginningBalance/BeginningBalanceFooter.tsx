@@ -209,11 +209,10 @@ const BeginningBalanceFooter: React.FC<Props> = ({
           type="button"
           onClick={onSave}
           disabled={!canSaveOrModify || saving || chkPosted}
-          title={chkSaved ? "Alt+M" : "Alt+S"}
+          title="Ctrl+S"
           className="btn-style disabled:cursor-not-allowed disabled:opacity-40"
         >
-          <u>{actionWord.charAt(0)}</u>
-          {actionWord.slice(1)}
+          {actionWord}
         </button>
 
         {/* DELETE */}
@@ -224,10 +223,10 @@ const BeginningBalanceFooter: React.FC<Props> = ({
           type="button"
           onClick={onDelete}
           disabled={!chkSaved || chkPosted || !canDelete || saving}
-          title="Alt+D"
+          title="Ctrl+D"
           className="btn-style disabled:cursor-not-allowed disabled:opacity-40"
         >
-          <u>D</u>elete
+          Delete
         </button>
 
         {/* PRINT (at any time: it needs a branch and a date, not a saved balance) */}
@@ -238,10 +237,10 @@ const BeginningBalanceFooter: React.FC<Props> = ({
           type="button"
           onClick={onPrint}
           disabled={!canPrint || saving}
-          title="Alt+P"
+          title="Ctrl+P"
           className="btn-style disabled:cursor-not-allowed disabled:opacity-40"
         >
-          <u>P</u>rint
+          Print
         </button>
 
         {/* POST (the balance is final after it: the page is locked) */}
@@ -252,10 +251,9 @@ const BeginningBalanceFooter: React.FC<Props> = ({
           type="button"
           onClick={onPost}
           disabled={!chkSaved || chkPosted || !canPost || saving}
-          title="Alt+T"
           className="btn-style disabled:cursor-not-allowed disabled:opacity-40"
         >
-          Pos<u>t</u>
+          Post
         </button>
 
         {/* CLEAR */}
@@ -266,10 +264,9 @@ const BeginningBalanceFooter: React.FC<Props> = ({
           type="button"
           onClick={onClear}
           disabled={saving}
-          title="Alt+C"
           className="btn-style disabled:cursor-not-allowed disabled:opacity-40"
         >
-          <u>C</u>lear
+          Clear
         </button>
       </div>
     </footer>

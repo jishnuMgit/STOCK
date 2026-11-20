@@ -5,6 +5,7 @@ import Select from "react-select";
 import type { SelectOption } from "../../types/receiptypes";
 import { useEnterAsTab } from "../../hooks/useEnterAsTab";
 import { useAltShortcuts } from "../../hooks/useAltShortcuts";
+import { useCtrlShortcuts } from "../../hooks/useCtrlShortcuts";
 import { useButtonPermissions } from "../../hooks/useButtonPermissions";
 import { useGridCellFocus } from "../../hooks/useGridCellFocus";
 import { tryGetServerDate } from "../../utils/serverDate";
@@ -33,11 +34,12 @@ const companySelectStyles = {
     ...base,
     minHeight: "30px",
     height: "30px",
-    border: "1px solid #d1d5db",
+    // the cursor in the box: the same mint line as the text boxes of the form (.input-style:focus in index.css)
+    border: `1px solid ${state.isFocused ? "#9fdfbc" : "#d1d5db"}`,
     borderRadius: "4px",
-    boxShadow: "none",
+    boxShadow: state.isFocused ? "0 0 0 1px #9fdfbc" : "none",
     backgroundColor: state.isFocused ? "#eefbf4" : "#ffffff",
-    fontSize: "11px",
+    fontSize: "14px",
     cursor: "pointer",
 
     "&:hover": {
@@ -56,21 +58,21 @@ const companySelectStyles = {
     ...base,
     margin: 0,
     color: "#374151",
-    fontSize: "11px",
+    fontSize: "14px",
   }),
 
   placeholder: (base: any) => ({
     ...base,
     margin: 0,
     color: "#808080",
-    fontSize: "11px",
+    fontSize: "14px",
   }),
 
   input: (base: any) => ({
     ...base,
     margin: 0,
     padding: 0,
-    fontSize: "11px",
+    fontSize: "14px",
     color: "#374151",
   }),
 
@@ -105,7 +107,7 @@ const companySelectStyles = {
 
   menu: (base: any) => ({
     ...base,
-    fontSize: "12px",
+    fontSize: "14px",
     zIndex: 100,
     marginTop: "2px",
     borderRadius: "4px",
@@ -121,7 +123,7 @@ const companySelectStyles = {
 
   option: (base: any, state: any) => ({
     ...base,
-    fontSize: "12px",
+    fontSize: "14px",
     cursor: "pointer",
 
     backgroundColor:
@@ -415,15 +417,17 @@ const SetCompanyInfo = () => {
 
   /* =======================================================
      KEYBOARD SHORTCUTS
-     Alt+S -> Save, Alt+C -> Clear (matches the underlined
-     accelerator letters on the buttons).
+     Ctrl+S -> Save, Alt+C -> Clear (Clear matches the
+     underlined letter on its button).
   ======================================================= */
 
   // the cursor starts on the Company Name box
   useInitialFocus(companyListLoaded, "lkpCoName");
 
-  useAltShortcuts({
+  useCtrlShortcuts({
     s: handleSave,
+  });
+  useAltShortcuts({
     c: handleClear,
   });
 
@@ -637,7 +641,7 @@ const SetCompanyInfo = () => {
                 disabled:opacity-40
               "
             >
-              <span className="underline underline-offset-2">S</span>ave
+              Save
             </button>
 
             <button

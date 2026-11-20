@@ -32,10 +32,10 @@ const SalesPriceListFooter: React.FC<SalesPriceListFooterProps> = ({
         type="button"
         onClick={onModify}
         disabled={!canModify}
-        title="Alt+M"
+        title="Ctrl+S"
         className="btn-style disabled:cursor-not-allowed disabled:opacity-60"
       >
-        <u>M</u>odify
+        Modify
       </button>
       <button
         id="btnFind"

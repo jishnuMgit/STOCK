@@ -133,7 +133,7 @@ export const buildStockAdjustmentPdf = async (report: PrintReport): Promise<Blob
   for (let i = 1; i <= pages; i++) {
     doc.setPage(i);
     const h = doc.internal.pageSize.getHeight();
-    doc.text(`Page ${i} / ${pages}`, PAGE_W - MARGIN.right, MARGIN.top, {
+    doc.text(`Page ${i} of ${pages}`, PAGE_W - MARGIN.right, MARGIN.top + 23 + REPORT_STYLE.pdf.titleGap, {
       align: "right",
     });
     doc.text(`Printed : ${report.txtReportInfo}`, PAGE_W - MARGIN.right, h - MARGIN.bottom + 6, {

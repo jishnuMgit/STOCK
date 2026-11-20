@@ -8,6 +8,7 @@ import autoTable, { type CellDef } from "jspdf-autotable";
 
 import {
   addPageNumbers,
+  autoTableKeepBlocks,
   drawReportTitle,
   pdfGroupStyles,
   pdfHeadStyles,
@@ -25,7 +26,6 @@ import {
   DETAIL_WEIGHTS,
   SUMMARY_WEIGHTS,
   formatAmount,
-  formatAmountFC,
   formatCost,
   formatPrice,
   formatQty,
@@ -48,7 +48,12 @@ const draw = (
   body: CellDef[][],
   columnWeights: number[],
   firstNumberColumn: number,
-  look: PdfLook
+  look: PdfLook,
+  // blocks that must not be split over two pages (a block that does not fit in the rest of the page starts on the next
+  // page); when given, they are drawn instead of `body`
+  blocks?: CellDef[][][],
+  // true: every block starts on a new page
+  pagePerBlock = false
 ) => {
   const usable = pageW - margin.left - margin.right;
   const tableTop = pdfTableTop(margin);
@@ -60,20 +65,24 @@ const draw = (
   // company / heading / branch + report info - drawn on every page
   const drawTitle = () => drawReportTitle(doc, pageW, margin, report, branch, look);
 
-  autoTable(doc, {
-    theme: "plain",
+  const options = {
+    theme: "plain" as const,
     startY: tableTop,
     margin: { top: tableTop, right: margin.right, bottom: margin.bottom, left: margin.left },
     tableWidth: usable,
-    rowPageBreak: "avoid",
-    showHead: head ? "everyPage" : "never",
+    rowPageBreak: "avoid" as const,
+    showHead: head ? ("everyPage" as const) : ("never" as const),
     styles: pdfTableStyles(look),
     headStyles: pdfHeadStyles(look),
     columnStyles,
     ...(head ? { head } : {}),
-    body,
-    didDrawPage: drawTitle,
-  });
+  };
+
+  if (blocks) {
+    autoTableKeepBlocks(doc, blocks, options, drawTitle, pagePerBlock);
+  } else {
+    autoTable(doc, { ...options, body, didDrawPage: drawTitle });
+  }
 
   addPageNumbers(doc, pageW, margin, look);
 };
@@ -92,7 +101,7 @@ const buildSummary = async (report: SummaryReport): Promise<Blob> => {
   const look = await registerReportPdfFont(doc, "inter"); // the font and the sizes of the look
 
   const head: CellDef[][] = [
-    ["Date", "Type", "Document No.", "Amount_FC", "Amount"].map((content, i) => ({
+    ["Date", "Type", "Document No.", "Amount"].map((content, i) => ({
       content,
       styles: { halign: i >= 3 ? ("right" as const) : ("left" as const) },
     })),
@@ -102,7 +111,7 @@ const buildSummary = async (report: SummaryReport): Promise<Blob> => {
 
   for (const s of report.suppliers) {
     body.push(
-      textRow(`Supplier : ${s.lkpSupplierID}   ${s.txtSupplierName}`, 5, {
+      textRow(`Supplier : ${s.lkpSupplierID}   ${s.txtSupplierName}`, 4, {
         ...pdfGroupStyles(look),
         minCellHeight: 9,
         valign: "bottom",
@@ -114,14 +123,12 @@ const buildSummary = async (report: SummaryReport): Promise<Blob> => {
         { content: l.txtDate },
         { content: l.txtDocType },
         { content: l.txtDocNo },
-        { content: formatAmountFC(l.txtAmountFC), styles: right },
         { content: formatAmount(l.txtAmount), styles: right },
       ]);
     }
 
     body.push([
       { content: "Total :", colSpan: 3, styles: { ...bold, ...right } },
-      { content: formatAmountFC(s.totals.txtAmountFC), styles: { ...bold, ...right } },
       { content: formatAmount(s.totals.txtAmount), styles: { ...bold, ...right } },
     ]);
   }
@@ -139,17 +146,21 @@ const buildDetailed = async (report: DetailedReport): Promise<Blob> => {
   const doc = new jsPDF({ orientation: "landscape", unit: "mm", format: "a4" });
   const look = await registerReportPdfFont(doc, "inter"); // the font and the sizes of the look
 
-  const body: CellDef[][] = [];
+  // one block per document: every document (Entry No.) starts on its own page
+  const blocks: CellDef[][][] = [];
 
-  // three texts over the 10 columns: 3 + 4 + 3
+  // three texts over the 8 columns: 3 + 3 + 2
   const infoRow = (a: string, b: string, c: string): CellDef[] => [
     { content: a, colSpan: 3, styles: { lineWidth: 0, minCellHeight: 6 } },
-    { content: b, colSpan: 4, styles: { lineWidth: 0, minCellHeight: 6 } },
-    { content: c, colSpan: 3, styles: { lineWidth: 0, minCellHeight: 6 } },
+    { content: b, colSpan: 3, styles: { lineWidth: 0, minCellHeight: 6 } },
+    { content: c, colSpan: 2, styles: { lineWidth: 0, minCellHeight: 6 } },
   ];
 
   for (const d of report.documents) {
-    body.push(textRow("", 10, { minCellHeight: 4 }));
+    const body: CellDef[][] = [];
+    blocks.push(body);
+
+    body.push(textRow("", 8, { minCellHeight: 4 }));
     body.push(infoRow(`Branch : ${d.txtBranchName}`, `Entry No. : ${d.txtDocNo}`, `Date : ${d.txtDate}`));
     body.push(
       infoRow(
@@ -174,8 +185,6 @@ const buildDetailed = async (report: DetailedReport): Promise<Blob> => {
         { content: l.txtItemName },
         { content: l.txtUnit },
         { content: formatQty(l.txtQty), styles: right },
-        { content: formatCost(l.txtUnitPriceFC), styles: right },
-        { content: formatCost(l.txtTotalPriceFC), styles: right },
         { content: formatPrice(l.txtUnitPrice), styles: right },
         { content: formatCost(l.txtUnitCost), styles: right },
         { content: formatCost(l.txtTotalCost), styles: right },
@@ -186,20 +195,17 @@ const buildDetailed = async (report: DetailedReport): Promise<Blob> => {
       { content: "Total :", colSpan: 4, styles: { ...bold, ...right } },
       { content: formatQty(d.totals.txtQty), styles: { ...bold, ...right } },
       { content: "" },
-      { content: formatCost(d.totals.txtTotalPriceFC), styles: { ...bold, ...right } },
-      { content: "" },
       { content: "" },
       { content: formatCost(d.totals.txtTotalCost), styles: { ...bold, ...right } },
     ]);
 
     body.push([
-      { content: `Disc. Amt.(FC) : ${formatCost(d.txtDiscAmtFC)}`, colSpan: 4, styles: { lineWidth: 0, minCellHeight: 6 } },
-      { content: `Disc. Amt. : ${formatPrice(d.txtDiscAmt)}`, colSpan: 6, styles: { lineWidth: 0, minCellHeight: 6 } },
+      { content: `Disc. Amt. : ${formatPrice(d.txtDiscAmt)}`, colSpan: 8, styles: { lineWidth: 0, minCellHeight: 6 } },
     ]);
-    body.push(textRow(`Note : ${d.txtNote}`, 10));
+    body.push(textRow(`Note : ${d.txtNote}`, 8));
   }
 
-  draw(doc, 297, pdfMargin(12), report, "", undefined, body, DETAIL_WEIGHTS, DETAIL_FIRST_NUMBER, look);
+  draw(doc, 297, pdfMargin(12), report, "", undefined, [], DETAIL_WEIGHTS, DETAIL_FIRST_NUMBER, look, blocks, true);
 
   return doc.output("blob");
 };

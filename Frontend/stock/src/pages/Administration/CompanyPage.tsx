@@ -5,6 +5,8 @@ import Select, {
 } from "react-select";
 import { toast } from "react-toastify";
 import Header from "../../components/common/Header";
+import selectComponents from "../../components/common/selectComponents";
+import { useCtrlShortcuts } from "../../hooks/useCtrlShortcuts";
 
 type Option = {
   value: string;
@@ -95,7 +97,7 @@ const CompanyPage: React.FC = () => {
       borderRadius: "4px",
       boxShadow: "none",
       backgroundColor: state.isFocused ? "#eefbf4" : "#ffffff",
-      fontSize: "11px",
+      fontSize: "14px",
       cursor: "pointer",
 
       "&:hover": {
@@ -114,21 +116,21 @@ const CompanyPage: React.FC = () => {
       ...base,
       margin: 0,
       color: "#374151",
-      fontSize: "11px",
+      fontSize: "14px",
     }),
 
     placeholder: (base) => ({
       ...base,
       margin: 0,
       color: "#808080",
-      fontSize: "11px",
+      fontSize: "14px",
     }),
 
     input: (base) => ({
       ...base,
       margin: 0,
       padding: 0,
-      fontSize: "11px",
+      fontSize: "14px",
       color: "#374151",
     }),
 
@@ -155,7 +157,7 @@ const CompanyPage: React.FC = () => {
       ...base,
       zIndex: 9999,
       marginTop: "2px",
-      fontSize: "11px",
+      fontSize: "14px",
       borderRadius: "2px",
       overflow: "hidden",
     }),
@@ -169,7 +171,7 @@ const CompanyPage: React.FC = () => {
     option: (base, state) => ({
       ...base,
       padding: "5px 8px",
-      fontSize: "11px",
+      fontSize: "14px",
       color: "#374151",
       cursor: "pointer",
 
@@ -460,9 +462,6 @@ const CompanyPage: React.FC = () => {
       if (!e.altKey || e.ctrlKey || e.metaKey) return;
 
       const actions: Record<string, () => void> = {
-        KeyS: () => actionsRef.current.save(),
-        KeyM: () => actionsRef.current.modify(),
-        KeyD: () => actionsRef.current.del(),
         KeyC: () => actionsRef.current.clear(),
         KeyE: () => actionsRef.current.search(),
       };
@@ -477,6 +476,15 @@ const CompanyPage: React.FC = () => {
     window.addEventListener("keydown", onKeyDown);
     return () => window.removeEventListener("keydown", onKeyDown);
   }, []);
+
+  // Ctrl+S -> Save (a new company) or Modify (a saved one) - only one of the two runs - and Ctrl+D -> Delete
+  useCtrlShortcuts({
+    s: () => {
+      actionsRef.current.save();
+      actionsRef.current.modify();
+    },
+    d: () => actionsRef.current.del(),
+  });
 
   // ============================================================
   // RENDER
@@ -649,6 +657,7 @@ const CompanyPage: React.FC = () => {
               onMenuOpen={() => (menuOpenRef.current = true)}
               onMenuClose={() => (menuOpenRef.current = false)}
               styles={selectStyles1}
+              components={selectComponents}
               isClearable={false}
               isSearchable={false}
               placeholder=""
@@ -676,6 +685,7 @@ const CompanyPage: React.FC = () => {
               onMenuOpen={() => (menuOpenRef.current = true)}
               onMenuClose={() => (menuOpenRef.current = false)}
               styles={selectStyles1}
+              components={selectComponents}
               isClearable={false}
               isSearchable={false}
               placeholder=""
@@ -694,13 +704,11 @@ const CompanyPage: React.FC = () => {
             >
               {originalCoID ? (
                 <>
-                  <span className="underline underline-offset-2">M</span>
-                  odify
+                  Modify
                 </>
               ) : (
                 <>
-                  <span className="underline underline-offset-2">S</span>
-                  ave
+                  Save
                 </>
               )}
             </button>
@@ -724,8 +732,7 @@ const CompanyPage: React.FC = () => {
               title="Alt+D"
               className="btn-style"
             >
-              <span className="underline underline-offset-2">D</span>
-              elete
+              Delete
             </button>
 
             <button

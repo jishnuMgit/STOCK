@@ -126,7 +126,7 @@ export const buildGLPdf = async (report: PrintReport): Promise<Blob> => {
   for (const { start, end } of ranges) {
     for (let p = start; p <= end; p++) {
       doc.setPage(p);
-      doc.text(`Page ${p - start + 1} / ${end - start + 1}`, PAGE_W - MARGIN.right, MARGIN.top, {
+      doc.text(`Page ${p - start + 1} of ${end - start + 1}`, PAGE_W - MARGIN.right, MARGIN.top + 22 + REPORT_STYLE.pdf.titleGap, {
         align: "right",
       });
     }

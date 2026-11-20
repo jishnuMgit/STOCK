@@ -15,6 +15,7 @@
 //
 // A report never writes a font name or a size: they all come from the look.
 import type { jsPDF } from "jspdf";
+import autoTable, { type CellDef, type UserOptions } from "jspdf-autotable";
 
 import { REPORT_STYLE, reportLook, type ReportLook, type ReportSizes } from "./reportStyle";
 
@@ -204,6 +205,37 @@ export const addPageNumbers = (doc: jsPDF, pageW: number, margin: PdfMargin, loo
 
   for (let i = 1; i <= pages; i++) {
     doc.setPage(i);
-    doc.text(`Page ${i} / ${pages}`, pageW - margin.right, margin.top, { align: "right" });
+    doc.text(`Page ${i} of ${pages}`, pageW - margin.right, margin.top + 22 + REPORT_STYLE.pdf.titleGap, { align: "right" });
   }
+};
+
+// A table made of BLOCKS that must not be split over two pages (a document, a branch, a supplier ...): every block is its
+// own table, and a block that does not fit in what is left of the page starts on the next page (a block taller than a
+// whole page still splits). `options` are the options of the table (styles, margin, column styles ...); `drawTitle`
+// draws the title once on every page - also on a page that a block opened.
+export const autoTableKeepBlocks = (
+  doc: jsPDF,
+  blocks: CellDef[][][],
+  options: UserOptions,
+  drawTitle: () => void,
+  // true: every block starts on a new page (the first one stays on the first page)
+  pagePerBlock = false
+) => {
+  const titled = new Set<number>();
+  const lastY = () => (doc as unknown as { lastAutoTable: { finalY: number } }).lastAutoTable.finalY;
+
+  blocks.forEach((body, index) => {
+    autoTable(doc, {
+      ...options,
+      body,
+      startY: index === 0 ? options.startY : lastY(),
+      pageBreak: pagePerBlock && index > 0 ? "always" : "avoid",
+      didDrawPage: () => {
+        const page = doc.getCurrentPageInfo().pageNumber;
+        if (titled.has(page)) return;
+        titled.add(page);
+        drawTitle();
+      },
+    });
+  });
 };

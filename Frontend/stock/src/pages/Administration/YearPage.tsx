@@ -1,12 +1,14 @@
 import React, { useEffect, useRef, useState } from "react";
 import Select from "react-select";
 import { toast } from "react-toastify";
+import { X } from "lucide-react";
 import {
   branchMenuStyles,
   filterLabelOrValue,
   makeNameIdMenuComponents,
 } from "../../components/BranchSelect/branchSelectParts";
 import { useAltShortcuts } from "../../hooks/useAltShortcuts";
+import { useCtrlShortcuts } from "../../hooks/useCtrlShortcuts";
 import { useAdvanceAfterSelect } from "../../hooks/useAdvanceAfterSelect";
 import { useConfirmModal } from "../../hooks/useConfirmModal";
 import { useDeleteToast } from "../../hooks/useDeleteToast";
@@ -43,15 +45,15 @@ const cellSelectProps = {
   menuPortalTarget: typeof document !== "undefined" ? document.body : undefined,
   classNames: {
     control: ({ isFocused }: { isFocused: boolean }) => `
-      !min-h-[26px] !h-[26px] !rounded-none !border-0 !shadow-none !text-[12px]
+      !min-h-[34px] !h-[34px] !rounded-none !border-0 !shadow-none !text-[13px]
       !bg-transparent
       ${isFocused ? "!bg-white !ring-1 !ring-inset !ring-[#91a7b9]" : ""}
     `,
-    valueContainer: () => "!h-[26px] !py-0 !px-[8px] !overflow-hidden",
-    singleValue: () => "!m-0 !text-[12px] !text-[#24364d]",
-    placeholder: () => "!m-0 !text-[12px] !text-[#7a8794]",
-    input: () => "!m-0 !p-0 !text-[12px] !text-[#24364d]",
-    indicatorsContainer: () => "!h-[26px]",
+    valueContainer: () => "!h-[34px] !py-0 !pl-[2px] !pr-[8px] !overflow-hidden",
+    singleValue: () => "!m-0 !text-[13px] !text-[#24364d]",
+    placeholder: () => "!m-0 !text-[13px] !text-[#7a8794]",
+    input: () => "!m-0 !p-0 !text-[13px] !text-[#24364d]",
+    indicatorsContainer: () => "!h-[34px]",
     dropdownIndicator: () => "!p-[3px] !text-[#657486]",
     indicatorSeparator: () => "!hidden",
     menu: () =>
@@ -64,7 +66,7 @@ const cellSelectProps = {
       isFocused: boolean;
       isSelected: boolean;
     }) => `
-      !cursor-pointer !px-[6px] !py-[5px] !text-[12px] !text-[#24364d]
+      !cursor-pointer !px-[6px] !py-[5px] !text-[14px] !text-[#24364d]
       ${isSelected ? "!bg-[#F2FAF5]" : isFocused ? "!bg-[#f2faf5]" : "!bg-white"}
     `,
   },
@@ -458,9 +460,9 @@ const YearPage: React.FC = () => {
     setReloadKey((previous) => previous + 1);
   };
 
-  // Alt+S Save, Alt+C Clear
+  // Ctrl+S Save, Alt+C Clear
+  useCtrlShortcuts({ s: handleSave });
   useAltShortcuts({
-    s: handleSave,
     c: handleClear,
   });
 
@@ -480,12 +482,12 @@ const YearPage: React.FC = () => {
                   <col className="w-[110px]" />
                 </colgroup>
                 <thead className="sticky top-0 z-10">
-                  <tr className="bg-[#EDF9F2] text-[#405066]">
-                    <th className="h-[28px] border border-[#BFE8D0]" />
-                    <th className="h-[28px] border border-[#BFE8D0] px-2 text-left font-normal">
+                  <tr className="bg-[#EDF9F2] text-[14px] text-gray-600">
+                    <th className="h-[34px] border border-[#BFE8D0]" />
+                    <th className="h-[34px] border border-[#BFE8D0] pl-[2px] pr-2 text-left font-normal">
                       Branch
                     </th>
-                    <th className="h-[28px] border border-[#BFE8D0] px-2 text-right font-normal">
+                    <th className="h-[34px] border border-[#BFE8D0] px-2 text-right font-normal">
                       Year
                     </th>
                   </tr>
@@ -508,7 +510,7 @@ const YearPage: React.FC = () => {
                         onClick={() => setSelectedKey(row.key)}
                         className={selected ? "bg-[#f2faf5]" : "bg-white"}
                       >
-                        <td className="h-[26px] border border-[#BFE8D0] bg-[#fafbfc] text-center text-[10px] text-[#405066]">
+                        <td className="h-[34px] border border-[#BFE8D0] bg-[#fafbfc] text-center text-[10px] text-[#405066]">
                           {selected ? "▶" : ""}
                         </td>
                         <td
@@ -539,7 +541,7 @@ const YearPage: React.FC = () => {
                         <td
                           className={`border border-[#BFE8D0] p-0 ${cellFocusClass} ${changed ? "bg-[#fff6d6]" : ""}`}
                         >
-                          <div className="flex h-[26px] items-center">
+                          <div className="flex h-[34px] items-center">
                             <input
                               id={`txtYear-${index}`}
                               name="txtYear"
@@ -559,7 +561,7 @@ const YearPage: React.FC = () => {
                                 )
                               }
                               onKeyDown={(event) => handleYearKeyDown(event, index)}
-                              className="h-[26px] min-w-0 flex-1 bg-transparent px-2 text-right text-[12px] text-[#24364d] outline-none focus:bg-white"
+                              className="h-[34px] min-w-0 flex-1 bg-transparent px-2 text-right text-[13px] text-[#24364d] outline-none focus:bg-white"
                             />
                             {/* the slot is always there so the years do not move when the x shows */}
                             <span className="flex w-6 shrink-0 items-center justify-center">
@@ -573,9 +575,9 @@ const YearPage: React.FC = () => {
                                   onClick={() => handleDeleteRow(row)}
                                   disabled={saving}
                                   aria-label={`Delete year ${row.txtYear || "row"}`}
-                                  className="text-[12px] leading-none text-gray-400 hover:text-red-600 disabled:cursor-not-allowed disabled:opacity-30"
+                                  className="inline-flex items-center justify-center text-slate-400 hover:text-red-500 disabled:cursor-not-allowed disabled:opacity-30"
                                 >
-                                  ✕
+                                  <X size={12} />
                                 </button>
                               )}
                             </span>
@@ -599,7 +601,7 @@ const YearPage: React.FC = () => {
                 title="Alt+S"
                 className="btn-style disabled:cursor-not-allowed disabled:opacity-60"
               >
-                <u>S</u>ave
+                Save
               </button>
               <button
                 id="btnClear"

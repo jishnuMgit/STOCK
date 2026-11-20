@@ -129,7 +129,7 @@ export const buildSalesPriceListPdf = async (report: PriceListReport): Promise<B
   doc.setTextColor(0, 0, 0);
   for (let i = 1; i <= pages; i++) {
     doc.setPage(i);
-    doc.text(`Page ${i} / ${pages}`, PAGE_W - MARGIN.right, MARGIN.top, {
+    doc.text(`Page ${i} of ${pages}`, PAGE_W - MARGIN.right, MARGIN.top + 22, {
       align: "right",
     });
   }

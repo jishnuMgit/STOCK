@@ -144,7 +144,7 @@ export const buildHtml = (r: PrintReport) => {
   @page {
     size: ${page.split(";")[0]};
     margin: ${page.split("margin:")[1].trim()};
-    @top-right    { content: "Page " counter(page) " / " counter(pages); font: ${LOOK.size.small}pt ${LOOK.css.family}; }
+    @top-right    { content: "Page " counter(page) " of " counter(pages); font: ${LOOK.size.small}pt ${LOOK.css.family}; }
     @bottom-right { content: "Printed : ${cssStr(r.reportInfo)}"; font: ${LOOK.size.small}pt ${LOOK.css.family}; }
   }
   * { box-sizing: border-box; }

@@ -1,8 +1,10 @@
 import React, { useEffect, useState } from "react";
 import { toast } from "react-toastify";
+import { X } from "lucide-react";
 import { useEnterAsTab } from "../../../hooks/useEnterAsTab";
 import { useButtonPermissions } from "../../../hooks/useButtonPermissions";
 import { useGridCellFocus } from "../../../hooks/useGridCellFocus";
+import { useCtrlShortcuts } from "../../../hooks/useCtrlShortcuts";
 import { useConfirmModal } from "../../../hooks/useConfirmModal";
 import { useDeleteToast } from "../../../hooks/useDeleteToast";
 import Header from "../../../components/common/Header";
@@ -594,9 +596,9 @@ const CostCenterPage: React.FC = () => {
 
   // ============================================================
   // KEYBOARD SHORTCUTS (page wide)
-  //  Alt+S  Save
+  //  Ctrl+S  Save / Modify
+  //  Ctrl+D  delete the selected row (also Ctrl+Delete; also works when focus is not in a box)
   //  Alt+C  Clear
-  //  Ctrl+Delete  delete the selected row (also works when focus is not in a box)
   // The listener is added once; the ref always holds the latest handlers,
   // so it never uses old rows / permissions.
   // ============================================================
@@ -608,15 +610,6 @@ const CostCenterPage: React.FC = () => {
     const onKeyDown = (event: KeyboardEvent) => {
       // Alt + letter (event.code also works on Mac, where Option+S types "ß")
       if (event.altKey && !event.ctrlKey && !event.metaKey) {
-        if (event.code === "KeyS") {
-          event.preventDefault();
-
-          if (!canSaveOrModify || saving) return;
-
-          handleSave();
-          return;
-        }
-
         if (event.code === "KeyC") {
           event.preventDefault();
           handleClear();
@@ -647,6 +640,15 @@ const CostCenterPage: React.FC = () => {
     return () => window.removeEventListener("keydown", onKeyDown);
   });
 
+  // Ctrl+S -> Save / Modify, Ctrl+D -> Delete the selected row
+  useCtrlShortcuts({
+    s: () => {
+      if (!canSaveOrModify || saving) return;
+      handleSave();
+    },
+    d: () => deleteRow(selectedRow),
+  });
+
   // Enter on a BUTTON presses it (the old form's behaviour: Enter on an empty
   // id goes to Save, and Enter there saves). Enter anywhere else moves on to
   // the next box, as on the other pages.
@@ -667,10 +669,10 @@ const CostCenterPage: React.FC = () => {
   // ============================================================
 
   const cellInputClass =
-    "h-[32px] w-full min-w-0 border-0 bg-transparent px-[11px] py-0 text-left text-[13px] text-[#374151] outline-none focus:bg-[#f1f8ff]";
+    "h-[32px] w-full min-w-0 border-0 bg-transparent pl-[2px] pr-[11px] py-0 text-left text-[13px] text-[#374151] outline-none focus:bg-[#f1f8ff]";
 
   const headerCellClass =
-    "sticky top-0 z-20 h-[34px] border border-l-0 border-[#bfe8d0] bg-[#edf9f2] px-[11px] py-0 text-[14px] font-normal text-gray-600";
+    "sticky top-0 z-20 h-[34px] border border-l-0 border-[#bfe8d0] bg-[#edf9f2] pl-[2px] pr-[11px] py-0 text-[14px] font-normal text-gray-600";
 
   return (
     <>
@@ -845,9 +847,9 @@ const CostCenterPage: React.FC = () => {
                                   tabIndex={-1}
                                   title="Delete row (Ctrl+Delete)"
                                   onClick={() => deleteRow(index)}
-                                  className="text-[12px] leading-none text-gray-400 hover:text-red-600"
+                                  className="inline-flex items-center justify-center text-slate-400 hover:text-red-500"
                                 >
-                                  ✕
+                                  <X size={12} />
                                 </button>
                               )}
                             </span>
@@ -871,13 +873,10 @@ const CostCenterPage: React.FC = () => {
                 type="button"
                 onClick={handleSave}
                 disabled={!canSaveOrModify || saving}
-                title="Alt+S"
+                title="Ctrl+S"
                 className="btn-style disabled:cursor-not-allowed disabled:opacity-40"
               >
-                <span className="underline underline-offset-2">
-                  {actionWord.charAt(0)}
-                </span>
-                {actionWord.slice(1)}
+                {actionWord}
               </button>
 
               <button

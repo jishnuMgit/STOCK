@@ -71,8 +71,10 @@ export const ReportForm: React.FC<{
 export const FilterRow: React.FC<{
   panel: React.ReactNode;
   children?: React.ReactNode;
-}> = ({ panel, children }) => (
-  <div className="grid grid-cols-[var(--filter-label,150px)_minmax(0,1fr)] items-center gap-x-4">
+  // extra classes of the row, e.g. "w-full" to let the row (and what is pushed to its right end) use the whole width
+  className?: string;
+}> = ({ panel, children, className = "" }) => (
+  <div className={`grid grid-cols-[var(--filter-label,150px)_minmax(0,1fr)] items-center gap-x-4 ${className}`}>
     {panel}
     <div className="min-w-0 pt-1">{children}</div>
   </div>
@@ -338,7 +340,7 @@ export const PairFilter: React.FC<{
   ids?: { radio?: string; first?: string; second?: string };
   // the Name box is 450 px; a row that has something at its right end (aside) gives less
   secondWidth?: number;
-  // something at the right end of the row, always shown (Item List: "Sales Below Cost")
+  // something at the right end of the row (the end of the form), always shown (Item List: "Sales Below Cost")
   aside?: React.ReactNode;
   // the record is always needed (Item History: "Item :"): a label instead of the One / All radios, the boxes always shown
   required?: boolean;
@@ -438,6 +440,8 @@ export const PairFilter: React.FC<{
 
   return (
     <FilterRow
+      // a row with something at its right end (aside) uses the whole width, so that it really is at the right end
+      className={aside ? "w-full" : ""}
       panel={
         required ? (
           <FilterLabel>{name} :</FilterLabel>
@@ -591,12 +595,14 @@ export const LabelSelectFilter: React.FC<{
   menuWidth?: string;
   boxWidth?: number;
   filterOption?: (option: never, input: string) => boolean;
+  // extra classes of the row, e.g. "w-full" so that a child with "ml-auto" goes to the right end of the row
+  className?: string;
   children?: React.ReactNode;
-}> = ({ label, id, options, value, onChange, noOptionsMessage, disabled = false, columns, menuWidth, boxWidth = 140, filterOption, children }) => {
+}> = ({ label, id, options, value, onChange, noOptionsMessage, disabled = false, columns, menuWidth, boxWidth = 140, filterOption, className = "", children }) => {
   const { advanceAfterPick, advanceOnEnter } = useAdvanceAfterSelect();
 
   return (
-    <div className="grid grid-cols-[var(--filter-label,150px)_minmax(0,1fr)] items-center gap-x-4">
+    <div className={`grid grid-cols-[var(--filter-label,150px)_minmax(0,1fr)] items-center gap-x-4 ${className}`}>
       <FilterLabel>{label} :</FilterLabel>
 
       <div
@@ -634,9 +640,11 @@ export const PostStatusFilter: React.FC<{
   options: BranchOption[];
   value: BranchOption | null;
   onChange: (option: BranchOption | null) => void;
+  // extra classes of the row, e.g. "w-full" so that a child with "ml-auto" goes to the right end of the row
+  className?: string;
   children?: React.ReactNode;
-}> = ({ options, value, onChange, children }) => (
-  <LabelSelectFilter label="Post Status" id="lkpPostStatus" options={options} value={value} onChange={onChange}>
+}> = ({ options, value, onChange, className, children }) => (
+  <LabelSelectFilter label="Post Status" id="lkpPostStatus" options={options} value={value} onChange={onChange} className={className}>
     {children}
   </LabelSelectFilter>
 );

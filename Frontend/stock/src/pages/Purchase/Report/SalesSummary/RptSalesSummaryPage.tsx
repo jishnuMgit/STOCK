@@ -95,10 +95,10 @@ const RptSalesSummaryPage: React.FC = () => {
       />
 
       {/* Post status + avoid pending cash sales */}
-      <PostStatusFilter options={postStatusOptions} value={postStatus} onChange={setPostStatus}>
+      <PostStatusFilter className="w-full" options={postStatusOptions} value={postStatus} onChange={setPostStatus}>
         <label
           htmlFor="chkAvoidPendingCashSales"
-          className="flex h-7.5 cursor-pointer items-center gap-2 rounded-sm border border-gray-300 bg-white px-2 text-[14px] text-[#172b43] select-none"
+          className="ml-auto flex h-7.5 cursor-pointer items-center gap-2 rounded-sm border border-gray-300 bg-white px-2 text-[14px] text-[#172b43] select-none"
         >
           <input
             id="chkAvoidPendingCashSales"

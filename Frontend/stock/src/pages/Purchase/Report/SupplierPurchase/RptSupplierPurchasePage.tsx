@@ -308,6 +308,7 @@ const RptSupplierPurchasePage: React.FC<RptSupplierPurchasePageProps> = ({
 
       {/* Report type (Detailed: and the documents to print) */}
       <FilterRow
+        className="w-full"
         panel={
           <RadioPanel id="rdgDetOrSum" className="h-17.5 w-38">
             <CustomRadio
@@ -327,24 +328,26 @@ const RptSupplierPurchasePage: React.FC<RptSupplierPurchasePageProps> = ({
           </RadioPanel>
         }
       >
-        {/* Detailed only: the documents to print */}
+        {/* Detailed only: the documents to print - at the right end of the row */}
         {rdgDetOrSum === "Detailed" && (
-          <RadioPanel id="rdgDocType" className="h-17.5 w-48">
-            <CustomRadio
-              name="rdgDocType"
-              value="PI"
-              label="Purchase Invoice"
-              checked={rdgDocType === "PI"}
-              onChange={() => setRdgDocType("PI")}
-            />
-            <CustomRadio
-              name="rdgDocType"
-              value="PR"
-              label="Purchase Return"
-              checked={rdgDocType === "PR"}
-              onChange={() => setRdgDocType("PR")}
-            />
-          </RadioPanel>
+          <div className="flex justify-end">
+            <RadioPanel id="rdgDocType" className="h-17.5 w-48">
+              <CustomRadio
+                name="rdgDocType"
+                value="PI"
+                label="Purchase Invoice"
+                checked={rdgDocType === "PI"}
+                onChange={() => setRdgDocType("PI")}
+              />
+              <CustomRadio
+                name="rdgDocType"
+                value="PR"
+                label="Purchase Return"
+                checked={rdgDocType === "PR"}
+                onChange={() => setRdgDocType("PR")}
+              />
+            </RadioPanel>
+          </div>
         )}
       </FilterRow>
 

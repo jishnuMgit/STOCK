@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { toast } from "react-toastify";
+import { X } from "lucide-react";
 import { useEnterAsTab } from "../../../hooks/useEnterAsTab";
 import { useButtonPermissions } from "../../../hooks/useButtonPermissions";
 import { useConfirmModal } from "../../../hooks/useConfirmModal";
@@ -524,26 +525,32 @@ console.log(onClose)
 
   // ============================================================
   // KEYBOARD SHORTCUTS (page wide)
-  //  Alt+S  Save
+  //  Ctrl+S  Save / Modify
+  //  Ctrl+D  delete the selected row (also Ctrl+Delete; also when focus is not in a box)
   //  Alt+F  Find
-  //  Alt+C  Close
-  //  Ctrl+Delete  delete the selected row (also when focus is not in a box)
+  //  Alt+C  Clear
   // No dependency array on purpose: the listener is re-attached after every
   // render, so it always sees the latest rows / permissions / handlers.
   // ============================================================
 
   useEffect(() => {
     const onKeyDown = (event: KeyboardEvent) => {
+      if (event.ctrlKey && !event.altKey && !event.metaKey && event.code === "KeyS") {
+        event.preventDefault();
+
+        if (!canSaveOrModify || saving) return;
+
+        handleSave();
+        return;
+      }
+
+      if (event.ctrlKey && !event.altKey && !event.metaKey && event.code === "KeyD") {
+        event.preventDefault();
+        deleteRow(selectedRow);
+        return;
+      }
+
       if (event.altKey && !event.ctrlKey && !event.metaKey) {
-        if (event.code === "KeyS") {
-          event.preventDefault();
-
-          if (!canSaveOrModify || saving) return;
-
-          handleSave();
-          return;
-        }
-
         if (event.code === "KeyF") {
           event.preventDefault();
           openFind();
@@ -590,7 +597,7 @@ console.log(onClose)
   // ============================================================
 
   const cellInputClass =
-    "h-[32px] w-full min-w-0 border-0 bg-transparent px-[11px] py-0 text-left text-[13px] uppercase text-[#374151] outline-none focus:bg-[#f1f8ff]";
+    "h-[32px] w-full min-w-0 border-0 bg-transparent pl-[2px] pr-[11px] py-0 text-left text-[13px] uppercase text-[#374151] outline-none focus:bg-[#f1f8ff]";
 
   const headerCellClass =
     "sticky top-0 z-20 h-[34px] border border-l-0 border-[#bfe8d0] bg-[#edf9f2] px-[11px] py-0 text-[14px] font-normal text-gray-600";
@@ -618,7 +625,7 @@ console.log(onClose)
                 <thead>
                   <tr>
                     <th className="sticky top-0 z-20 h-8.5 border border-[#bfe8d0] bg-[#edf9f2] p-0" />
-                    <th className={`${headerCellClass} text-left`}>Currency</th>
+                    <th className={`${headerCellClass} text-left !pl-[2px]`}>Currency</th>
                   </tr>
                 </thead>
 
@@ -681,9 +688,9 @@ console.log(onClose)
                                 tabIndex={-1}
                                 title="Delete row (Ctrl+Delete)"
                                 onClick={() => deleteRow(index)}
-                                className="text-[12px] leading-none text-gray-400 hover:text-red-600"
+                                className="inline-flex items-center justify-center text-slate-400 hover:text-red-500"
                               >
-                                ✕
+                                <X size={12} />
                               </button>
                             )}
                           </span>
@@ -704,13 +711,10 @@ console.log(onClose)
               type="button"
               onClick={handleSave}
               disabled={!canSaveOrModify || saving}
-              title="Alt+S"
+              title="Ctrl+S"
               className="btn-style disabled:cursor-not-allowed disabled:opacity-40"
             >
-              <span className="underline underline-offset-2">
-                {actionWord.charAt(0)}
-              </span>
-              {actionWord.slice(1)}
+              {actionWord}
             </button>
 
             <button

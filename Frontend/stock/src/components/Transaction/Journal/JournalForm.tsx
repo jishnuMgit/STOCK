@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState, type Ref } from "react";
+import React, { useState, type Ref } from "react";
 
 import { type SelectInstance } from "react-select";
 
@@ -50,15 +50,12 @@ export interface JournalFormProps {
   /* after Date: move focus to the first Account ID */
   focusFirstAccountId: () => void;
 
+  /* both lists come from the API (useJournal) through the page */
   branchOptions: SelectOption[];
-}
+  typeOptions: SelectOption[];
 
-interface JournalDocNumberResponse {
-  success: boolean;
-  data: {
-    getnextdocno: string;
-  }[];
-  message?: string;
+  /* journal number is fetched by the page (useJournal.fetchNextDocNo) */
+  journalNoLoading?: boolean;
 }
 
 /* =========================================================
@@ -107,7 +104,6 @@ const JournalForm: React.FC<JournalFormProps> = ({
   setType,
 
   journalNo,
-  setJournalNo,
 
   journalDate,
   setJournalDate,
@@ -121,6 +117,9 @@ const JournalForm: React.FC<JournalFormProps> = ({
   focusFirstAccountId,
 
   branchOptions,
+  typeOptions,
+
+  journalNoLoading = false,
 }) => {
   /* =======================================================
      STATE
@@ -128,128 +127,8 @@ const JournalForm: React.FC<JournalFormProps> = ({
 
   const [openSelect, setOpenSelect] = useState<"branch" | "type" | null>(null);
 
-  const [journalNoLoading, setJournalNoLoading] = useState(false);
-
-  /* =======================================================
-     TYPE OPTIONS
-  ======================================================= */
-
-  const typeOptions: SelectOption[] = useMemo(
-    () => [
-      {
-        value: "S",
-        label: "Standard",
-      },
-    ],
-    [],
-  );
-
   const menuPortalTarget =
     typeof document !== "undefined" ? document.body : undefined;
-
-  /* =======================================================
-     GET JOURNAL DOCUMENT NUMBER
-  ======================================================= */
-
-  const getJournalDocNumber = async (fbrid: string, typeId: string) => {
-    if (!fbrid) {
-      setJournalNo("");
-      return;
-    }
-
-    try {
-      setJournalNoLoading(true);
-
-      const response = await fetch(
-        `${import.meta.env.VITE_API_URL}/getJournalDocNumber`,
-        {
-          method: "POST",
-
-          headers: {
-            "Content-Type": "application/json",
-          },
-
-          body: JSON.stringify({
-            fbrid,
-            fptype: typeId,
-          }),
-        },
-      );
-
-      if (!response.ok) {
-        throw new Error(`HTTP Error: ${response.status}`);
-      }
-
-      const result = (await response.json()) as JournalDocNumberResponse;
-
-      if (
-        result.success &&
-        Array.isArray(result.data) &&
-        result.data.length > 0
-      ) {
-        const newJournalNo = result.data[0]?.getnextdocno;
-
-        setJournalNo(newJournalNo || "");
-      } else {
-        console.error("Journal number was not returned:", result);
-
-        setJournalNo("");
-      }
-    } catch (error) {
-      console.error("Journal Document Number API Error:", error);
-
-      setJournalNo("");
-    } finally {
-      setJournalNoLoading(false);
-    }
-  };
-
-  /* =======================================================
-     DEFAULT INITIALIZATION
-  ======================================================= */
-
-  useEffect(() => {
-    const defaultType = type || "S";
-
-    if (!type) {
-      setType("S");
-    }
-
-    if (branch) {
-      getJournalDocNumber(branch, defaultType);
-    }
-
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
-
-  /* =======================================================
-     BRANCH CHANGE
-  ======================================================= */
-
-  useEffect(() => {
-    if (!branch) {
-      setJournalNo("");
-      return;
-    }
-
-    getJournalDocNumber(branch, type || "S");
-
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [branch]);
-
-  /* =======================================================
-     TYPE CHANGE
-  ======================================================= */
-
-  useEffect(() => {
-    if (!branch) {
-      return;
-    }
-
-    getJournalDocNumber(branch, type || "S");
-
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [type]);
 
   /* =======================================================
      SELECT ENTER HANDLER
@@ -319,7 +198,7 @@ const JournalForm: React.FC<JournalFormProps> = ({
     branchOptions.find((option) => option.value === branch) || null;
 
   const selectedType =
-    typeOptions.find((option) => option.value === (type || "S")) || null;
+    typeOptions.find((option) => option.value === type) || null;
 
   /* =======================================================
      RETURN
@@ -376,13 +255,7 @@ const JournalForm: React.FC<JournalFormProps> = ({
             selectRef={branchRef as unknown as SelectRef}
             options={branchOptions}
             value={selectedBranch}
-            onChange={(option) => {
-              const selected = option?.value || "";
-
-              setBranch(selected);
-
-              getJournalDocNumber(selected, type || "S");
-            }}
+            onChange={(option) => setBranch(option?.value || "")}
             columns={branchColumns}
             placeholder="Select"
             width="250px"
@@ -471,15 +344,7 @@ const JournalForm: React.FC<JournalFormProps> = ({
             selectRef={typeRef as unknown as SelectRef}
             options={typeOptions}
             value={selectedType}
-            onChange={(option) => {
-              const selected = option?.value || "S";
-
-              setType(selected);
-
-              if (branch) {
-                getJournalDocNumber(branch, selected);
-              }
-            }}
+            onChange={(option) => setType(option?.value || "")}
             columns={typeColumns}
             placeholder="Select"
             width="250px"
