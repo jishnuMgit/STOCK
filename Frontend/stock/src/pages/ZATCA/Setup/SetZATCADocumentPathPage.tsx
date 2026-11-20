@@ -41,7 +41,7 @@ const SetZATCADocumentPath: React.FC<SetZATCADocumentPathProps> = () => {
   const [pickerOpen, setPickerOpen] = useState(false);
   const [listing, setListing] = useState<FolderListing | null>(null);
   const [pickerLoading, setPickerLoading] = useState(false);
-console.log(onClose)
+
   const inputClass =
     "h-[30px] w-full rounded-[4px] border border-[#cfd7df] " +
     "bg-white px-2 pr-[38px] text-[14px] text-[#24364d] " +
