@@ -84,6 +84,8 @@ const ItemPage: React.FC = () => {
   // Does the Item ID already exist? false -> the button says Save (new item),
   // true -> Modify. Set by the load (blur / Search), reset when the ID is typed.
   const [hasSavedItem, setHasSavedItem] = useState(false);
+  // transactions already use the loaded item: its Item ID cannot be typed over (everything else can be modified)
+  const [haveTrans, setHaveTrans] = useState(false);
   const [txtItemName, setTxtItemName] = useState("");
   const [txtItemDescription, setTxtItemDescription] = useState("");
   const [lkpUnit, setLkpUnit] = useState("");
@@ -559,6 +561,7 @@ const ItemPage: React.FC = () => {
 
       if (!response.ok || !result.success) {
         setHasSavedItem(false);
+        setHaveTrans(false);
 
         if (!silent) {
           toast.error(result.message || "Item not found.");
@@ -567,6 +570,7 @@ const ItemPage: React.FC = () => {
       }
 
       setHasSavedItem(true);
+      setHaveTrans(Boolean(result.haveTrans));
 
       const header = result.header;
 
@@ -772,6 +776,7 @@ const ItemPage: React.FC = () => {
 
   const handleClear = () => {
     setHasSavedItem(false);
+    setHaveTrans(false);
     setTxtItemID("");
     setTxtItemName("");
     setTxtItemDescription("");
@@ -948,12 +953,15 @@ const ItemPage: React.FC = () => {
                   type="text"
                   autoComplete="off"
                   value={txtItemID}
+                  // transactions already use this item: the Item ID cannot be changed (Clear lets another one be typed)
+                  readOnly={hasSavedItem && haveTrans}
+                  title={hasSavedItem && haveTrans ? "Transactions already entered with this Item - the Item ID cannot be changed" : undefined}
                   onChange={(e) => {
                     setTxtItemID(e.target.value);
                     setHasSavedItem(false);
                   }}
                   onBlur={handleItemIDBlur}
-                  className="w-56.25 input-style"
+                  className={`w-56.25 input-style ${hasSavedItem && haveTrans ? "cursor-not-allowed bg-slate-50 text-slate-500" : ""}`}
                 />
               </div>
 
