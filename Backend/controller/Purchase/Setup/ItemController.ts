@@ -242,6 +242,8 @@ export const getItem = async (
       success: true,
       header: header ? mapKeys(header, itemHeaderKeys) : null,
       rows: mapRows(rows, itemBranchRowKeys),
+      // transactions already use this item: the page locks the Item ID box (and Delete is refused)
+      haveTrans: await haveItemTransService(String(PstrCoID), String(txtItemID)),
     });
   } catch (error: unknown) {
     console.error("getItem error:", error);
@@ -363,18 +365,9 @@ export const saveItem = async (
       });
     }
 
-    // an item that transactions already use cannot be modified (the old
-    // HaveTrans check on the Item ID)
-    if (
-      wantedMode === "M" &&
-      (await haveItemTransService(PstrCoID, txtItemID))
-    ) {
-      return res.status(409).json({
-        success: false,
-        message: `You can't Modify. Transactions already entered with this Item '${txtItemID}'`,
-        field: "txtItemID",
-      });
-    }
+    // An item that transactions already use CAN be modified (its name, unit, group ... and its branches). Only the
+    // Item ID is locked then - the page does not let it be typed over (see haveTrans in getItem) - and the item
+    // cannot be deleted (see deleteItem, which still checks HaveTrans).
 
     await saveItemPageService(
       PstrCoID,
