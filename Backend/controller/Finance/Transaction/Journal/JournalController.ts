@@ -73,9 +73,9 @@ export async function getJournalLookups(_req: Request, res: Response) {
 export async function getJournalDocNo(req: Request, res: Response) {
     try {
         const { pstrCoID, pstrYear } = getCtx(res);
-
+        
         const brId = String(req.query.brId ?? "").trim();
-
+        
         if (!brId) {
             return res
                 .status(400)
@@ -84,10 +84,10 @@ export async function getJournalDocNo(req: Request, res: Response) {
 
         const result = await pool.query(
             `SELECT * FROM dbo.getnextdocno($1, $2, $3, $4)`,
-            [pstrCoID, Number(pstrYear), brId, JOURNAL_DOC_TYPE],
+            [pstrCoID, pstrYear, brId, JOURNAL_DOC_TYPE],
         );
 
-        const docNo = result.rows[0]?.getnextdocno;
+        const docNo = result.rows[0]?.fdocno;
 
         if (!docNo) {
             return res
