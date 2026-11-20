@@ -2699,6 +2699,27 @@ export const ReceiptActions = forwardRef<
       setActiveIndex(index);
     };
 
+    useEffect(() => {
+      const handleGlobalKeyDown = (event: KeyboardEvent) => {
+        if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === "s") {
+          // stop the browser's "Save page as..." dialog
+          event.preventDefault();
+          event.stopPropagation();
+
+          // respect the same disabled rule as the Save/Modify button
+          if (isPosted && saveLabel === "Modify") return;
+
+          onSave();
+        }
+      };
+
+      window.addEventListener("keydown", handleGlobalKeyDown);
+
+      return () => {
+        window.removeEventListener("keydown", handleGlobalKeyDown);
+      };
+    }, [onSave, isPosted, saveLabel]);
+
     const buttonClass = `
      btn-style
     `;
