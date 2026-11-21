@@ -1,6 +1,7 @@
 import React, {
     forwardRef,
     useCallback,
+    useEffect,
     useImperativeHandle,
     useRef,
     useState,
@@ -9,6 +10,7 @@ import React, {
 import { Link } from "react-router-dom";
 
 import "../Receipt/save/commanReceipt.css";
+import ActionButton from "../../common/ActionButton";
 
 /* =========================================================
    TYPES
@@ -146,145 +148,130 @@ const JournalActions = forwardRef<JournalActionsRef, JournalActionsProps>(
             setActiveIndex(index);
         };
 
-        const buttonClass = `
-     btn-style
-    `;
+        useEffect(() => {
+            const handleGlobalKeyDown = (event: KeyboardEvent) => {
+                if (!(event.ctrlKey || event.metaKey)) return;
 
-        const disabledPostedActionClass =
-            "disabled:cursor-not-allowed disabled:opacity-50";
+                switch (event.key.toLowerCase()) {
+                    case "s":
+                        event.preventDefault();
+                        event.stopPropagation();
+                        if (isPosted && saveLabel === "Modify") return;
+                        onSave?.();
+                        break;
 
-        const textClass = `
-      bg-gradient-to-b
-      from-[#145c34]
-      via-[#20884e]
-      to-[#8fd9ad]
-      bg-clip-text
-      text-transparent
-      font-medium
-    `;
+                    case "f":
+                        event.preventDefault();
+                        event.stopPropagation();
+                        searchRef.current?.click();
+                        break;
+
+                    case "d":
+                        event.preventDefault();
+                        event.stopPropagation();
+                        if (isPosted) return;
+                        onDelete?.();
+                        break;
+
+                    case "p":
+                        event.preventDefault();
+                        event.stopPropagation();
+                        onPrint?.();
+                        break;
+
+                    case "t":
+                        event.preventDefault();
+                        event.stopPropagation();
+                        if (isPosted) return;
+                        onPost?.();
+                        break;
+                }
+            };
+
+            window.addEventListener("keydown", handleGlobalKeyDown);
+            return () => window.removeEventListener("keydown", handleGlobalKeyDown);
+        }, [onSave, onDelete, onPrint, onPost, isPosted, saveLabel]);
 
         return (
-            <div
-                className="
-          my-5
-          flex
-          w-full
-          pb-2
-          flex-wrap
-          items-center
-          justify-center
-          gap-2.75
-        "
-            >
-                <button
+            <div className="my-5 flex w-full pb-2 flex-wrap items-center justify-center gap-2.75">
+                <ActionButton
                     ref={saveRef}
-                    type="button"
-                    className={`${buttonClass} ${isPosted && saveLabel === "Modify" ? disabledPostedActionClass : ""
-                        }`}
+                    id={saveLabel === "Modify" ? "btnModify" : "btnSave"}
+                    label={saveLabel}
+                    underlineIndex={0}
                     disabled={isPosted && saveLabel === "Modify"}
                     onFocus={() => handleFocus(0)}
                     onKeyDown={handleKeyDown}
                     onClick={onSave}
-                    id={saveLabel === "Modify" ? "btnModify" : "btnSave"}
-                >
-                    <span className={textClass}>
-                        <span className="underline decoration-2 underline-offset-1">
-                            {saveLabel === "Save" ? "S" : "M"}
-                        </span>
-
-                        {saveLabel.slice(1)}
-                    </span>
-                </button>
+                />
 
                 <Link to="/Transaction/journal/modify">
-                    <button
+                    <ActionButton
                         ref={searchRef}
-                        type="button"
-                        className={buttonClass}
+                        id="btnSearch"
+                        label="Find"
+                        underlineIndex={0}
                         onFocus={() => handleFocus(1)}
                         onKeyDown={handleKeyDown}
                         onClick={(event) => {
                             if (preventSearchNavigation) {
                                 event.preventDefault();
                             }
-
                             onSearch?.();
                         }}
-                        id="btnSearch"
-                    >
-                        <span className={textClass}>Search</span>
-                    </button>
+                    />
                 </Link>
 
-                <button
+                <ActionButton
                     ref={deleteRef}
-                    type="button"
-                    className={`${buttonClass} ${isPosted ? disabledPostedActionClass : ""
-                        }`}
+                    id="btnDelete"
+                    label="Delete"
+                    underlineIndex={0}
                     disabled={isPosted}
                     onFocus={() => handleFocus(2)}
                     onKeyDown={handleKeyDown}
                     onClick={onDelete}
-                    id="btnDelete"
-                >
-                    <span className={textClass}>
-                        <span className="underline decoration-2 underline-offset-1">D</span>
-                        elete
-                    </span>
-                </button>
+                />
 
-                <button
+                <ActionButton
                     ref={printRef}
-                    type="button"
-                    className={buttonClass}
+                    id="btnPrint"
+                    label="Print"
+                    underlineIndex={0}
                     onFocus={() => handleFocus(3)}
                     onKeyDown={handleKeyDown}
                     onClick={onPrint}
-                    id="btnPrint"
-                >
-                    <span className={textClass}>Print</span>
-                </button>
+                />
 
-                <button
+                <ActionButton
                     ref={postRef}
-                    type="button"
-                    className={`${buttonClass} ${isPosted ? disabledPostedActionClass : ""
-                        }`}
+                    id="btnPost"
+                    label="Post"
+                    underlineIndex={3}
                     disabled={isPosted}
                     onFocus={() => handleFocus(4)}
                     onKeyDown={handleKeyDown}
                     onClick={onPost}
-                    id="btnPost"
-                >
-                    <span className={textClass}>Post</span>
-                </button>
+                />
 
-                <button
+                <ActionButton
                     ref={attachRef}
-                    type="button"
-                    className={buttonClass}
+                    id="btnAttach"
+                    label="Attach"
                     onFocus={() => handleFocus(5)}
                     onKeyDown={handleKeyDown}
                     onClick={onAttach}
-                    id="btnAttach"
-                >
-                    <span className={textClass}>Attach</span>
-                </button>
+                />
 
-                <button
+                <ActionButton
                     ref={clearRef}
-                    type="button"
-                    className={buttonClass}
+                    id="btnClear"
+                    label="Clear"
+                    underlineIndex={0}
                     onFocus={() => handleFocus(6)}
                     onKeyDown={handleKeyDown}
                     onClick={clearForm}
-                    id="btnClear"
-                >
-                    <span className={textClass}>
-                        <span className="underline decoration-2 underline-offset-1">C</span>
-                        lear
-                    </span>
-                </button>
+                />
             </div>
         );
     },
