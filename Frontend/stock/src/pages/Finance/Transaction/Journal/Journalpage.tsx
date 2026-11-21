@@ -28,7 +28,7 @@ import {
   type Branch,
   type JournalType,
 } from "../../../../hooks/useJournal";
-import { toast } from "react-toastify";
+import { useMessageModal } from "../../../../hooks/useMessageModal";
 
 /* =========================================================
    HELPERS
@@ -139,6 +139,8 @@ const JournalPage: React.FC = () => {
   const defaultBranchRef = useRef("");
   const defaultTypeRef = useRef("");
 
+  const { notify, dialog: messageDialog } = useMessageModal("Journal");
+
   /* =======================================================
      REFS
   ======================================================= */
@@ -209,8 +211,8 @@ const JournalPage: React.FC = () => {
 
         setCostCenters(lookups.costCenters);
       } catch (error: unknown) {
-        // TODO: replace with the project's toast / message component
-        toast.error(error instanceof Error ? error.message : "Failed to load data");
+        // TODO: replace with the project's notify / message component
+        notify.error(error instanceof Error ? error.message : "Failed to load data");
       }
     };
 
@@ -249,8 +251,8 @@ const JournalPage: React.FC = () => {
         if (active) {
           setJournalNo("");
 
-          // TODO: replace with the project's toast / message component
-          toast.error(
+          // TODO: replace with the project's notify / message component
+          notify.error(
             error instanceof Error
               ? error.message
               : "Failed to get journal number",
@@ -616,7 +618,7 @@ const JournalPage: React.FC = () => {
     const message = validateJournal();
 
     if (message) {
-      toast.success(message);
+      notify.success(message);
       return;
     }
 
@@ -642,11 +644,11 @@ const JournalPage: React.FC = () => {
         })),
       });
 
-      toast.success(isExisting ? "Modified" : "Saved");
+      notify.success(isExisting ? "Modified" : "Saved");
 
       clearForm();
     } catch (error: unknown) {
-      toast.error(error instanceof Error ? error.message : "Not Saved, try again");
+      notify.error(error instanceof Error ? error.message : "Not Saved, try again");
     } finally {
       setSaving(false);
     }
@@ -759,6 +761,7 @@ const JournalPage: React.FC = () => {
           onSave={handleSave}
         />
       </div>
+      {messageDialog}
     </div>
   );
 };
