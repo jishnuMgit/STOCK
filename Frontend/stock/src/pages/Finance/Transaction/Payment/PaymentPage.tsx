@@ -207,7 +207,7 @@ const isPostedFlag = (value: unknown) =>
 
 const PaymentPage: React.FC = () => {
   const { confirm, dialog } = useConfirmModal();
-  const { notify, dialog: messageDialog } = useMessageModal();
+  const { notify, dialog: messageDialog } = useMessageModal("Payment");
 
   /* =======================================================
      HEADER FORM STATE

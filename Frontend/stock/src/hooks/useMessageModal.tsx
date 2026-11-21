@@ -9,7 +9,7 @@ interface QueuedMessage {
     message: string;
 }
 
-export const useMessageModal = () => {
+export const useMessageModal = (title?: string) => {
     const [queue, setQueue] = useState<QueuedMessage[]>([]);
     const idRef = useRef(0);
 
@@ -39,6 +39,7 @@ export const useMessageModal = () => {
             key={current?.id}
             open={!!current}
             type={current?.type}
+            title={title}
             message={current?.message ?? ""}
             onClose={close}
         />

@@ -5,6 +5,7 @@ export type MessageType = "success" | "error" | "warning" | "info";
 interface MessageModalProps {
     open: boolean;
     type?: MessageType;
+    title?: string;
     message: React.ReactNode;
     onClose: () => void;
 }
@@ -29,6 +30,7 @@ const focusStyle =
 const MessageModal: React.FC<MessageModalProps> = ({
     open,
     type = "info",
+    title,
     message,
     onClose,
 }) => {
@@ -89,11 +91,8 @@ const MessageModal: React.FC<MessageModalProps> = ({
                 <div
                     className={`flex h-7.5 items-center justify-between border-b border-slate-300 px-3 ${HEADER_BG[type]}`}
                 >
-                    <h2
-                        id="message-modal-title"
-                        className="text-[15px] font-semibold text-slate-700"
-                    >
-                        {TITLES[type]}
+                    <h2 id="message-modal-title" className="text-[15px] font-semibold text-slate-700">
+                        {title ?? TITLES[type]}
                     </h2>
                     <button
                         ref={closeRef}

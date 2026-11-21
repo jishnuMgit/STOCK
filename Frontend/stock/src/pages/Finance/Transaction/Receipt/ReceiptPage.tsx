@@ -176,7 +176,7 @@ const isPostedFlag = (value: unknown) =>
 
 const ReceiptPage: React.FC = () => {
   const { confirm, dialog } = useConfirmModal();
-  const { notify, dialog: messageDialog } = useMessageModal();
+  const { notify, dialog: messageDialog } = useMessageModal("Receipt");
 
   /* =======================================================
      HEADER FORM STATE
