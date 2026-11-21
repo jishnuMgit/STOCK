@@ -1,4 +1,5 @@
 import React, { useEffect, useRef } from "react";
+import CloseButton from "./CloseButton";
 
 export type MessageType = "success" | "error" | "warning" | "info";
 
@@ -101,7 +102,7 @@ const MessageModal: React.FC<MessageModalProps> = ({
                         onClick={onClose}
                         className={`flex h-5 w-5 items-center justify-center text-[16px] leading-none text-slate-700 hover:text-black ${focusStyle}`}
                     >
-                        ×
+                    <CloseButton onClose={() => {}} />
                     </button>
                 </div>
 
