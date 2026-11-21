@@ -29,7 +29,6 @@ import {
   type ReceiptRow,
   type AccountData,
 } from "../../../../types/receiptypes";
-import { toast } from "react-toastify";
 
 /*
  * TODO (Payment Print / Excel):
@@ -41,6 +40,7 @@ import { toast } from "react-toastify";
 
 import { apiFetch, getSession } from "../../../../utils/session";
 import { useConfirmModal } from "../../../../hooks/useConfirmModal";
+import { useMessageModal } from "../../../../hooks/useMessageModal";
 
 /* =========================================================
    PAYMENT DOC TYPE
@@ -207,6 +207,7 @@ const isPostedFlag = (value: unknown) =>
 
 const PaymentPage: React.FC = () => {
   const { confirm, dialog } = useConfirmModal();
+  const { notify, dialog: messageDialog } = useMessageModal();
 
   /* =======================================================
      HEADER FORM STATE
@@ -384,7 +385,7 @@ const PaymentPage: React.FC = () => {
   ======================================================= */
 
   const handlePrint = useCallback(() => {
-    toast.info("Print is not available for Payment yet.");
+    notify.info("Print is not available for Payment yet.");
   }, []);
 
   /* =======================================================
@@ -820,7 +821,7 @@ const PaymentPage: React.FC = () => {
       /* ACCOUNT ID REQUIRED */
 
       if (field === "accountId" && !row?.accountId.trim()) {
-        toast.warning("Account ID is required.");
+        notify.warning("Account ID is required.");
         focusTableField(rowIndex, "accountId");
         return;
       }
@@ -831,7 +832,7 @@ const PaymentPage: React.FC = () => {
         field === "txtDebitCredit" &&
         !Number.isFinite(parseFloat(row?.txtDebitCredit ?? ""))
       ) {
-        toast.warning("Amount is required.");
+        notify.warning("Amount is required.");
         focusTableField(rowIndex, "txtDebitCredit");
         return;
       }
@@ -1021,7 +1022,7 @@ const PaymentPage: React.FC = () => {
         validRows.length === 0;
 
       if (validationFailed) {
-        toast.warning(
+        notify.warning(
           "Branch, type, payment number, date, cash/bank, and one account row are required.",
         );
 
@@ -1114,7 +1115,7 @@ const PaymentPage: React.FC = () => {
         lastLookupKeyRef.current = ""; // lets the Payment No lookup run again
         setTxtDocNo(result.newReceiptNo);
 
-        toast.warning(
+        notify.warning(
           `Payment No ${txtDocNo} was already used by another user. Changed to ${result.newReceiptNo}. Please click Save again.`,
         );
 
@@ -1125,7 +1126,7 @@ const PaymentPage: React.FC = () => {
       /* SAVE ERROR */
 
       if (!response.ok) {
-        toast.error(
+        notify.error(
           result.message || `Save failed. Status: ${response.status}`,
         );
 
@@ -1134,7 +1135,7 @@ const PaymentPage: React.FC = () => {
 
       /* SAVE SUCCESS */
 
-      toast.success(result.message || "Saved successfully");
+      notify.success(result.message || "Saved successfully");
 
       console.log("✅ SAVE SUCCESS");
       console.log("OLD SAVED PAYMENT:", txtDocNo);
@@ -1147,7 +1148,7 @@ const PaymentPage: React.FC = () => {
     } catch (error) {
       console.error("SAVE ERROR:", error);
 
-      toast.error(
+      notify.error(
         error instanceof Error
           ? error.message
           : "Cannot connect to Payment API.",
@@ -1174,7 +1175,7 @@ const PaymentPage: React.FC = () => {
 
   const handleModify = useCallback(async () => {
     if (isPosted) {
-      toast.warning("A posted payment cannot be modified.");
+      notify.warning("A posted payment cannot be modified.");
       return;
     }
 
@@ -1227,7 +1228,7 @@ const PaymentPage: React.FC = () => {
 
       setPaymentMessage(validationMessage);
 
-      toast.warning(validationMessage);
+      notify.warning(validationMessage);
 
       return;
     }
@@ -1336,7 +1337,7 @@ const PaymentPage: React.FC = () => {
 
       setPaymentMessage(result.message || "modified successfully.");
 
-      toast.success(result.message || "modified");
+      notify.success(result.message || "modified");
 
       /* CLEAR FORM + LOAD NEXT PAYMENT NUMBER (only after successful modify) */
 
@@ -1353,7 +1354,7 @@ const PaymentPage: React.FC = () => {
 
       setPaymentMessage(errorMessage);
 
-      toast.error(errorMessage);
+      notify.error(errorMessage);
     }
   }, [
     lkpBranch,
@@ -1377,7 +1378,7 @@ const PaymentPage: React.FC = () => {
 
   const handledelete = useCallback(async () => {
     if (isPosted) {
-      toast.warning("A posted payment cannot be deleted.");
+      notify.warning("A posted payment cannot be deleted.");
       return;
     }
 
@@ -1387,7 +1388,7 @@ const PaymentPage: React.FC = () => {
       const validationFailed = !lkpBranch || !lkpType || !txtDocNo.trim();
 
       if (validationFailed) {
-        toast.warning("Branch, type, and payment number are required.");
+        notify.warning("Branch, type, and payment number are required.");
         return;
       }
 
@@ -1458,7 +1459,7 @@ const PaymentPage: React.FC = () => {
       /* API ERROR */
 
       if (!response.ok) {
-        toast.error(
+        notify.error(
           result.message || `Delete failed. Status: ${response.status}`,
         );
 
@@ -1467,7 +1468,7 @@ const PaymentPage: React.FC = () => {
 
       /* SUCCESS */
 
-      toast.success(result.message || "Payment deleted successfully");
+      notify.success(result.message || "Payment deleted successfully");
 
       /* CLEAR FORM + LOAD NEXT PAYMENT */
 
@@ -1477,7 +1478,7 @@ const PaymentPage: React.FC = () => {
     } catch (error) {
       console.error("DELETE ERROR:", error);
 
-      toast.error(
+      notify.error(
         error instanceof Error
           ? error.message
           : "Cannot connect to Payment API.",
@@ -1512,30 +1513,30 @@ const PaymentPage: React.FC = () => {
     if (postRequestInFlight.current) return;
 
     if (isPosted) {
-      toast.warning("This payment is already posted.");
+      notify.warning("This payment is already posted.");
       return;
     }
 
     if (!lkpBranch) {
-      toast.warning("Please select 'Branch'.");
+      notify.warning("Please select 'Branch'.");
       document.getElementById("lkpBranch")?.focus();
       return;
     }
 
     if (!lkpType) {
-      toast.warning("Please select 'Type'.");
+      notify.warning("Please select 'Type'.");
       document.getElementById("lkpType")?.focus();
       return;
     }
 
     if (!txtDocNo.trim()) {
-      toast.warning("Please enter 'Payment No.'.");
+      notify.warning("Please enter 'Payment No.'.");
       document.getElementById("txtDocNo")?.focus();
       return;
     }
 
     if (!isModifyMode) {
-      toast.warning("Load a saved payment before posting.");
+      notify.warning("Load a saved payment before posting.");
       return;
     }
 
@@ -1546,13 +1547,13 @@ const PaymentPage: React.FC = () => {
     } = getSession();
 
     if (!PstrCoID || !PstrYear || !PstrUserID) {
-      toast.error("Company ID, year, or user ID is missing. Please log in again.");
+      notify.error("Company ID, year, or user ID is missing. Please log in again.");
       return;
     }
 
     const dateMatch = /^(\d{2})\/(\d{2})\/(\d{4})$/.exec(dtpDate.trim());
     if (!dateMatch) {
-      toast.warning("Please enter a valid payment date.");
+      notify.warning("Please enter a valid payment date.");
       document.getElementById("dtpDate")?.focus();
       return;
     }
@@ -1566,7 +1567,7 @@ const PaymentPage: React.FC = () => {
       parsedDate.getMonth() + 1 !== Number(month) ||
       parsedDate.getDate() !== Number(day)
     ) {
-      toast.warning("Please enter a valid payment date.");
+      notify.warning("Please enter a valid payment date.");
       document.getElementById("dtpDate")?.focus();
       return;
     }
@@ -1614,18 +1615,18 @@ const PaymentPage: React.FC = () => {
       }
 
       if (!response.ok || !result.success) {
-        toast.error(
+        notify.error(
           result.message || `Payment could not be posted (error ${response.status}).`,
         );
         return;
       }
 
-      toast.success(result.message || "Payment posting completed successfully.");
+      notify.success(result.message || "Payment posting completed successfully.");
       await resetTableAndLoadNextPaymentNumber();
       setFocusPaymentNoAfterClear((current) => current + 1);
     } catch (error) {
       console.error("Payment posting error:", error);
-      toast.error(
+      notify.error(
         error instanceof Error
           ? error.message
           : "Cannot connect to the Payment API.",
@@ -1789,6 +1790,7 @@ const PaymentPage: React.FC = () => {
 
       {/* TODO: Payment print preview goes here once the backend exists. */}
       {dialog}
+      {messageDialog}
     </div>
   );
 };

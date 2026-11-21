@@ -30,13 +30,13 @@ import {
   type ReceiptPrintData,
   type ReceiptPrintResponse,
 } from "../../../../types/receiptypes";
-import { toast } from "react-toastify";
 import ReceiptPrint from "../../../../components/Transaction/Receipt/save/Receipt.print";
 import { buildReceiptPdf } from "../../../../components/Transaction/Receipt/save/ReceiptPdf";
 
 import { apiFetch, getSession } from "../../../../utils/session";
 import { GetStrDocType } from "../../../../utils/receiptHelpers";
 import { useConfirmModal } from "../../../../hooks/useConfirmModal";
+import { useMessageModal } from "../../../../hooks/useMessageModal";
 
 /* =========================================================
    CREATE INITIAL ROWS
@@ -176,6 +176,7 @@ const isPostedFlag = (value: unknown) =>
 
 const ReceiptPage: React.FC = () => {
   const { confirm, dialog } = useConfirmModal();
+  const { notify, dialog: messageDialog } = useMessageModal();
 
   /* =======================================================
      HEADER FORM STATE
@@ -346,7 +347,7 @@ const ReceiptPage: React.FC = () => {
   const handlePrint = async () => {
     try {
       if (!lkpBranch || !lkpType || !txtDocNo.trim()) {
-        toast.warning("Branch, receipt type, and receipt number are required.");
+        notify.warning("Branch, receipt type, and receipt number are required.");
         return;
       }
 
@@ -368,7 +369,7 @@ const ReceiptPage: React.FC = () => {
       setIsPrint(true);
     } catch (error) {
       console.error("Print data fetch error:", error);
-      toast.error(
+      notify.error(
         error instanceof Error
           ? error.message
           : "Cannot connect to the Receipt API.",
@@ -396,14 +397,14 @@ const ReceiptPage: React.FC = () => {
         } catch {
           message = `Could not create the Excel file (error ${response.status}).`;
         }
-        toast.error(message);
+        notify.error(message);
         return null;
       }
 
       return await response.blob();
     } catch (error) {
       console.error("Receipt Excel download error:", error);
-      toast.error("Cannot connect to the Receipt API.");
+      notify.error("Cannot connect to the Receipt API.");
       return null;
     }
   };
@@ -539,7 +540,7 @@ const ReceiptPage: React.FC = () => {
       console.log("LOADED HEADER:", result.header);
       console.log("LOADED ROWS:", loadedRows);
 
-      // toast.success(
+      // notify.success(
       //   "Receipt loaded successfully."
       // );
     } catch (error) {
@@ -914,7 +915,7 @@ const ReceiptPage: React.FC = () => {
         =============================================== */
 
       if (field === "accountId" && !row?.accountId.trim()) {
-        toast.warning("Account ID is required.");
+        notify.warning("Account ID is required.");
         focusTableField(rowIndex, "accountId");
         return;
       }
@@ -927,7 +928,7 @@ const ReceiptPage: React.FC = () => {
         field === "txtDebitCredit" &&
         !Number.isFinite(parseFloat(row?.txtDebitCredit ?? ""))
       ) {
-        toast.warning("Credit Amount is required.");
+        notify.warning("Credit Amount is required.");
         focusTableField(rowIndex, "txtDebitCredit");
         return;
       }
@@ -1140,7 +1141,7 @@ const ReceiptPage: React.FC = () => {
         validRows.length === 0;
 
       if (validationFailed) {
-        toast.warning(
+        notify.warning(
           "Branch, type, receipt number, date, cash/bank, and one account row are required.",
         );
 
@@ -1254,7 +1255,7 @@ const ReceiptPage: React.FC = () => {
         lastLookupKeyRef.current = ""; // lets the Receipt No lookup run again
         setTxtDocNo(result.newReceiptNo);
 
-        toast.warning(
+        notify.warning(
           `Receipt No ${txtDocNo} was already used by another user. Changed to ${result.newReceiptNo}. Please click Save again.`,
         );
 
@@ -1267,7 +1268,7 @@ const ReceiptPage: React.FC = () => {
     ===================================================== */
 
       if (!response.ok) {
-        toast.error(
+        notify.error(
           result.message || `Save failed. Status: ${response.status}`,
         );
 
@@ -1278,7 +1279,7 @@ const ReceiptPage: React.FC = () => {
        SAVE SUCCESS
     ===================================================== */
 
-      toast.success(result.message || "Saved successfully");
+      notify.success(result.message || "Saved successfully");
 
       console.log("✅ SAVE SUCCESS");
 
@@ -1294,7 +1295,7 @@ const ReceiptPage: React.FC = () => {
     } catch (error) {
       console.error("SAVE ERROR:", error);
 
-      toast.error(
+      notify.error(
         error instanceof Error
           ? error.message
           : "Cannot connect to Receipt API.",
@@ -1320,7 +1321,7 @@ const ReceiptPage: React.FC = () => {
 
   const handleModify = useCallback(async () => {
     if (isPosted) {
-      toast.warning("A posted receipt cannot be modified.");
+      notify.warning("A posted receipt cannot be modified.");
       return;
     }
 
@@ -1385,7 +1386,7 @@ const ReceiptPage: React.FC = () => {
 
       setReceiptMessage(validationMessage);
 
-      toast.warning(validationMessage);
+      notify.warning(validationMessage);
 
       return;
     }
@@ -1545,7 +1546,7 @@ const ReceiptPage: React.FC = () => {
 
       setReceiptMessage(result.message || "modified successfully.");
 
-      toast.success(result.message || "modified");
+      notify.success(result.message || "modified");
 
       /* =============================================
              CLEAR FORM + RECALL RECEIPT DATA
@@ -1581,7 +1582,7 @@ const ReceiptPage: React.FC = () => {
 
       setReceiptMessage(errorMessage);
 
-      toast.error(errorMessage);
+      notify.error(errorMessage);
     }
   }, [
     lkpBranch,
@@ -1605,7 +1606,7 @@ const ReceiptPage: React.FC = () => {
 
   const handledelete = useCallback(async () => {
     if (isPosted) {
-      toast.warning("A posted receipt cannot be deleted.");
+      notify.warning("A posted receipt cannot be deleted.");
       return;
     }
 
@@ -1617,7 +1618,7 @@ const ReceiptPage: React.FC = () => {
       const validationFailed = !lkpBranch || !lkpType || !txtDocNo.trim();
 
       if (validationFailed) {
-        toast.warning("Branch, type, and receipt number are required.");
+        notify.warning("Branch, type, and receipt number are required.");
         return;
       }
 
@@ -1696,7 +1697,7 @@ const ReceiptPage: React.FC = () => {
       =============================================== */
 
       if (!response.ok) {
-        toast.error(
+        notify.error(
           result.message || `Delete failed. Status: ${response.status}`,
         );
 
@@ -1707,7 +1708,7 @@ const ReceiptPage: React.FC = () => {
          SUCCESS
       =============================================== */
 
-      toast.success(result.message || "Receipt deleted successfully");
+      notify.success(result.message || "Receipt deleted successfully");
 
       /* ===============================================
          CLEAR FORM + LOAD NEXT RECEIPT
@@ -1718,7 +1719,7 @@ const ReceiptPage: React.FC = () => {
     } catch (error) {
       console.error("DELETE ERROR:", error);
 
-      toast.error(
+      notify.error(
         error instanceof Error
           ? error.message
           : "Cannot connect to Receipt API.",
@@ -1753,30 +1754,30 @@ const ReceiptPage: React.FC = () => {
     if (postRequestInFlight.current) return;
 
     if (isPosted) {
-      toast.warning("This receipt is already posted.");
+      notify.warning("This receipt is already posted.");
       return;
     }
 
     if (!lkpBranch) {
-      toast.warning("Please select 'Branch'.");
+      notify.warning("Please select 'Branch'.");
       document.getElementById("lkpBranch")?.focus();
       return;
     }
 
     if (!lkpType) {
-      toast.warning("Please select 'Type'.");
+      notify.warning("Please select 'Type'.");
       document.getElementById("lkpType")?.focus();
       return;
     }
 
     if (!txtDocNo.trim()) {
-      toast.warning("Please enter 'Receipt No.'.");
+      notify.warning("Please enter 'Receipt No.'.");
       document.getElementById("txtDocNo")?.focus();
       return;
     }
 
     if (!isModifyMode) {
-      toast.warning("Load a saved receipt before posting.");
+      notify.warning("Load a saved receipt before posting.");
       return;
     }
 
@@ -1787,13 +1788,13 @@ const ReceiptPage: React.FC = () => {
     } = getSession();
 
     if (!PstrCoID || !PstrYear || !PstrUserID) {
-      toast.error("Company ID, year, or user ID is missing. Please log in again.");
+      notify.error("Company ID, year, or user ID is missing. Please log in again.");
       return;
     }
 
     const dateMatch = /^(\d{2})\/(\d{2})\/(\d{4})$/.exec(dtpDate.trim());
     if (!dateMatch) {
-      toast.warning("Please enter a valid receipt date.");
+      notify.warning("Please enter a valid receipt date.");
       document.getElementById("dtpDate")?.focus();
       return;
     }
@@ -1807,7 +1808,7 @@ const ReceiptPage: React.FC = () => {
       parsedDate.getMonth() + 1 !== Number(month) ||
       parsedDate.getDate() !== Number(day)
     ) {
-      toast.warning("Please enter a valid receipt date.");
+      notify.warning("Please enter a valid receipt date.");
       document.getElementById("dtpDate")?.focus();
       return;
     }
@@ -1855,18 +1856,18 @@ const ReceiptPage: React.FC = () => {
       }
 
       if (!response.ok || !result.success) {
-        toast.error(
+        notify.error(
           result.message || `Receipt could not be posted (error ${response.status}).`,
         );
         return;
       }
 
-      toast.success(result.message || "Receipt posting completed successfully.");
+      notify.success(result.message || "Receipt posting completed successfully.");
       await resetTableAndLoadNextReceiptNumber();
       setFocusReceiptNoAfterClear((current) => current + 1);
     } catch (error) {
       console.error("Receipt posting error:", error);
-      toast.error(
+      notify.error(
         error instanceof Error
           ? error.message
           : "Cannot connect to the Receipt API.",
@@ -2057,6 +2058,7 @@ const ReceiptPage: React.FC = () => {
         />
       )}
       {dialog}
+      {messageDialog}
     </div>
   );
 };
