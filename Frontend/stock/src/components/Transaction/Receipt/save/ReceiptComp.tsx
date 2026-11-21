@@ -2439,21 +2439,13 @@ ReceiptTable.displayName = "ReceiptTable";
 
 interface ReceiptBottomFormProps {
   description: string;
-
   setDescription: (value: string) => void;
-
   descriptionRef: React.RefObject<HTMLInputElement | null>;
-
   onDescriptionEnter: (event: React.KeyboardEvent<HTMLInputElement>) => void;
-
   onDescriptionClear?: () => void;
-
   note: string;
-
   setNote: (value: string) => void;
-
   noteRef: React.RefObject<HTMLTextAreaElement | null>;
-
   onNoteEnter: (event: React.KeyboardEvent<HTMLTextAreaElement>) => void;
 }
 
@@ -2562,23 +2554,14 @@ export interface ReceiptActionsRef {
 
 interface ReceiptActionsProps {
   clearForm: () => void;
-
   onSave: () => void;
-
   onSearch?: () => void;
-
   onDelete?: () => void;
-
   onPrint?: () => void;
-
   onPost?: () => void;
-
   onAttach?: () => void;
-
   saveLabel?: string;
-
   isPosted?: boolean;
-
   preventSearchNavigation?: boolean;
 }
 
@@ -2602,19 +2585,12 @@ export const ReceiptActions = forwardRef<
     ref,
   ) => {
     const saveRef = useRef<HTMLButtonElement | null>(null);
-
     const searchRef = useRef<HTMLButtonElement | null>(null);
-
     const deleteRef = useRef<HTMLButtonElement | null>(null);
-
     const printRef = useRef<HTMLButtonElement | null>(null);
-
     const postRef = useRef<HTMLButtonElement | null>(null);
-
     const attachRef = useRef<HTMLButtonElement | null>(null);
-
     const clearRef = useRef<HTMLButtonElement | null>(null);
-
     const [activeIndex, setActiveIndex] = useState(0);
 
     const buttonRefs = [
@@ -2744,7 +2720,6 @@ export const ReceiptActions = forwardRef<
       window.addEventListener("keydown", handleGlobalKeyDown);
       return () => window.removeEventListener("keydown", handleGlobalKeyDown);
     }, [onSave, onPrint, onPost, onDelete, isPosted, saveLabel]);
-
 
 
     return (
