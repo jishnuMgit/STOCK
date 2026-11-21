@@ -28,6 +28,7 @@ import {
   type Branch,
   type JournalType,
 } from "../../../../hooks/useJournal";
+import { toast } from "react-toastify";
 
 /* =========================================================
    HELPERS
@@ -209,7 +210,7 @@ const JournalPage: React.FC = () => {
         setCostCenters(lookups.costCenters);
       } catch (error: unknown) {
         // TODO: replace with the project's toast / message component
-        alert(error instanceof Error ? error.message : "Failed to load data");
+        toast.error(error instanceof Error ? error.message : "Failed to load data");
       }
     };
 
@@ -249,7 +250,7 @@ const JournalPage: React.FC = () => {
           setJournalNo("");
 
           // TODO: replace with the project's toast / message component
-          alert(
+          toast.error(
             error instanceof Error
               ? error.message
               : "Failed to get journal number",
@@ -615,8 +616,7 @@ const JournalPage: React.FC = () => {
     const message = validateJournal();
 
     if (message) {
-      // TODO: replace with the project's toast / message component
-      alert(message);
+      toast.success(message);
       return;
     }
 
@@ -642,11 +642,11 @@ const JournalPage: React.FC = () => {
         })),
       });
 
-      alert(isExisting ? "Modified" : "Saved");
+      toast.success(isExisting ? "Modified" : "Saved");
 
       clearForm();
     } catch (error: unknown) {
-      alert(error instanceof Error ? error.message : "Not Saved, try again");
+      toast.error(error instanceof Error ? error.message : "Not Saved, try again");
     } finally {
       setSaving(false);
     }
