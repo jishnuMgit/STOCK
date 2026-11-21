@@ -497,6 +497,14 @@ const JournalPage: React.FC = () => {
     [activeDescriptionRow, focusTableField, focusNote, rows.length],
   );
 
+  const handleRowFocus = useCallback(
+    (rowIndex: number) => {
+      setActiveDescriptionRow(rowIndex);
+      setDescription(rows[rowIndex]?.description ?? "");
+    },
+    [rows],
+  );
+
   /* =======================================================
      NOTE ENTER -> SAVE
   ======================================================= */
@@ -691,6 +699,7 @@ const JournalPage: React.FC = () => {
             handleRowChange={handleRowChange}
             onFieldEnter={handleTableEnter}
             onTableEscape={handleTableEscape}
+            onRowFocus={handleRowFocus}
             accountOptions={accountOptions}
             costCenters={costCenters}
           />

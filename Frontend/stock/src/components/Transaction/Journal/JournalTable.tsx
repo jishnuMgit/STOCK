@@ -103,6 +103,9 @@ interface JournalTableProps {
 
   onTableEscape: () => void;
 
+  /* called when focus enters a row (loads that row's description) */
+  onRowFocus?: (rowIndex: number) => void;
+
   accountOptions?: AccountData[];
 
   costCenters?: CostCenter[];
@@ -272,6 +275,7 @@ interface JournalRowProps {
   ) => void;
   onFieldEnter: (rowIndex: number, field: TableField) => void;
   onTableEscape: () => void;
+  onRowFocus?: (rowIndex: number) => void;
 }
 
 const JournalRow = memo(
@@ -287,6 +291,7 @@ const JournalRow = memo(
     handleRowChange,
     onFieldEnter,
     onTableEscape,
+    onRowFocus,
   }: JournalRowProps) => {
     /* MENU OPEN REFS */
 
@@ -486,6 +491,12 @@ const JournalRow = memo(
       setSelectedRowId(row.id);
     }, [row.id, setSelectedRowId]);
 
+    /* focus anywhere in the row (bubbles from every select / input) */
+    const handleRowFocus = useCallback(() => {
+      setSelectedRowId(row.id);
+      onRowFocus?.(index);
+    }, [row.id, index, setSelectedRowId, onRowFocus]);
+
     /* MENU OPEN / CLOSE */
 
     const handleAccountIdMenuOpen = useCallback(() => {
@@ -552,6 +563,7 @@ const JournalRow = memo(
     return (
       <tr
         onClick={handleRowClick}
+        onFocus={handleRowFocus}
         className={isSelected ? "receipt-row-selected" : ""}
       >
         {/* SERIAL */}
@@ -820,6 +832,7 @@ const JournalTable = forwardRef<JournalTableRef, JournalTableProps>(
       handleRowChange,
       onFieldEnter,
       onTableEscape,
+      onRowFocus,
       accountOptions = [],
       costCenters = [],
       fetchDivisions,
@@ -979,6 +992,7 @@ const JournalTable = forwardRef<JournalTableRef, JournalTableProps>(
                 handleRowChange={handleRowChange}
                 onFieldEnter={onFieldEnter}
                 onTableEscape={onTableEscape}
+                onRowFocus={onRowFocus}
               />
             ))}
           </tbody>
