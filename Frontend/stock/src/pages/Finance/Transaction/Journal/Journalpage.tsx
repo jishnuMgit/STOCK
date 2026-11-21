@@ -28,6 +28,7 @@ import {
   type Branch,
   type JournalType,
 } from "../../../../hooks/useJournal";
+import { useMessageModal } from "../../../../hooks/useMessageModal";
 
 /* =========================================================
    HELPERS
@@ -63,6 +64,13 @@ const toIsoDate = (value: string): string => {
   return day && month && year ? `${year}-${month}-${day}` : "";
 };
 
+/* YYYY-MM-DD -> DD/MM/YYYY */
+const fromIsoDate = (value: string): string => {
+  const [year, month, day] = value.split("-");
+
+  return year && month && day ? `${day}/${month}/${year}` : "";
+};
+
 const round2 = (value: number): number =>
   Math.round((value + Number.EPSILON) * 100) / 100;
 
@@ -92,6 +100,7 @@ const JournalPage: React.FC = () => {
     fetchJournalTypes,
     fetchNextDocNo,
     fetchLookups,
+    fetchJournal,
     saveJournal,
   } = useJournal();
 
@@ -114,6 +123,9 @@ const JournalPage: React.FC = () => {
 
   const [saving, setSaving] = useState(false);
 
+  /* true when the typed journal no. was loaded from the database */
+  const [isExisting, setIsExisting] = useState(false);
+
   /* journal number loading + manual refresh (after save / clear) */
   const [journalNoLoading, setJournalNoLoading] = useState(false);
   const [docNoRefresh, setDocNoRefresh] = useState(0);
@@ -126,6 +138,8 @@ const JournalPage: React.FC = () => {
 
   const defaultBranchRef = useRef("");
   const defaultTypeRef = useRef("");
+
+  const { notify, dialog: messageDialog } = useMessageModal("Journal");
 
   /* =======================================================
      REFS
@@ -197,8 +211,8 @@ const JournalPage: React.FC = () => {
 
         setCostCenters(lookups.costCenters);
       } catch (error: unknown) {
-        // TODO: replace with the project's toast / message component
-        alert(error instanceof Error ? error.message : "Failed to load data");
+        // TODO: replace with the project's notify / message component
+        notify.error(error instanceof Error ? error.message : "Failed to load data");
       }
     };
 
@@ -216,6 +230,8 @@ const JournalPage: React.FC = () => {
   ======================================================= */
 
   useEffect(() => {
+    setIsExisting(false);
+
     if (!branch || !type) {
       setJournalNo("");
       return;
@@ -235,8 +251,8 @@ const JournalPage: React.FC = () => {
         if (active) {
           setJournalNo("");
 
-          // TODO: replace with the project's toast / message component
-          alert(
+          // TODO: replace with the project's notify / message component
+          notify.error(
             error instanceof Error
               ? error.message
               : "Failed to get journal number",
@@ -291,6 +307,59 @@ const JournalPage: React.FC = () => {
       noteInput.setSelectionRange(position, position);
     });
   }, []);
+
+  /* =======================================================
+     JOURNAL NO. CHANGE / ENTER (load existing journal)
+  ======================================================= */
+
+  const handleJournalNoChange = useCallback((value: string) => {
+    setJournalNo(value);
+    setIsExisting(false);
+  }, []);
+
+  const handleJournalNoEnter = useCallback(async () => {
+    const docNo = journalNo.trim();
+
+    if (!branch || !docNo) {
+      dateRef.current?.focus();
+      return;
+    }
+
+    const result = await fetchJournal(branch, docNo);
+
+    /* not found = new journal */
+    if (!result) {
+      setIsExisting(false);
+      dateRef.current?.focus();
+      return;
+    }
+
+    const loaded: JournalRow[] = result.rows.map((line, index) => {
+      const account = accountOptions.find(
+        (item) => item.faccountid === line.accountId,
+      );
+
+      return {
+        id: index + 1,
+        accountId: line.accountId,
+        accountName: account?.faccountname ?? "",
+        fgcs: account?.fgcs ?? "",
+        division: "",
+        ccId: line.ccId,
+        debitAmount: Number(line.debit) ? line.debit : "",
+        creditAmount: Number(line.credit) ? line.credit : "",
+        match: false,
+        description: line.description,
+      };
+    });
+
+    setRows([...loaded, ...createRows().slice(loaded.length)]);
+    setJournalDate(fromIsoDate(result.header.date));
+    setNote(result.header.note);
+    setIsExisting(true);
+
+    focusTableField(0, "accountId");
+  }, [branch, journalNo, fetchJournal, accountOptions, focusTableField]);
 
   /* =======================================================
      ROW CHANGE
@@ -431,6 +500,14 @@ const JournalPage: React.FC = () => {
     [activeDescriptionRow, focusTableField, focusNote, rows.length],
   );
 
+  const handleRowFocus = useCallback(
+    (rowIndex: number) => {
+      setActiveDescriptionRow(rowIndex);
+      setDescription(rows[rowIndex]?.description ?? "");
+    },
+    [rows],
+  );
+
   /* =======================================================
      NOTE ENTER -> SAVE
   ======================================================= */
@@ -521,6 +598,7 @@ const JournalPage: React.FC = () => {
     setDescription("");
     setActiveDescriptionRow(null);
     setRows(createRows());
+    setIsExisting(false);
     setDocNoRefresh((count) => count + 1);
 
     requestAnimationFrame(() => {
@@ -540,8 +618,7 @@ const JournalPage: React.FC = () => {
     const message = validateJournal();
 
     if (message) {
-      // TODO: replace with the project's toast / message component
-      alert(message);
+      notify.success(message);
       return;
     }
 
@@ -549,7 +626,7 @@ const JournalPage: React.FC = () => {
       setSaving(true);
 
       await saveJournal({
-        mode: "S",
+        mode: isExisting ? "M" : "S",
 
         header: {
           brId: branch,
@@ -567,16 +644,17 @@ const JournalPage: React.FC = () => {
         })),
       });
 
-      alert("Saved");
+      notify.success(isExisting ? "Modified" : "Saved");
 
       clearForm();
     } catch (error: unknown) {
-      alert(error instanceof Error ? error.message : "Not Saved, try again");
+      notify.error(error instanceof Error ? error.message : "Not Saved, try again");
     } finally {
       setSaving(false);
     }
   }, [
     saving,
+    isExisting,
     validateJournal,
     saveJournal,
     branch,
@@ -602,7 +680,8 @@ const JournalPage: React.FC = () => {
           type={type}
           setType={setType}
           journalNo={journalNo}
-          setJournalNo={setJournalNo}
+          setJournalNo={handleJournalNoChange}
+          onJournalNoEnter={handleJournalNoEnter}
           journalDate={journalDate}
           setJournalDate={setJournalDate}
           branchRef={branchRef}
@@ -622,6 +701,7 @@ const JournalPage: React.FC = () => {
             handleRowChange={handleRowChange}
             onFieldEnter={handleTableEnter}
             onTableEscape={handleTableEscape}
+            onRowFocus={handleRowFocus}
             accountOptions={accountOptions}
             costCenters={costCenters}
           />
@@ -681,6 +761,7 @@ const JournalPage: React.FC = () => {
           onSave={handleSave}
         />
       </div>
+      {messageDialog}
     </div>
   );
 };

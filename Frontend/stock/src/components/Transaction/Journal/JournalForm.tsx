@@ -50,6 +50,9 @@ export interface JournalFormProps {
   /* after Date: move focus to the first Account ID */
   focusFirstAccountId: () => void;
 
+  /* Enter on Journal No.: load the journal (falls back to focusing Date) */
+  onJournalNoEnter?: () => void;
+
   /* both lists come from the API (useJournal) through the page */
   branchOptions: SelectOption[];
   typeOptions: SelectOption[];
@@ -104,6 +107,7 @@ const JournalForm: React.FC<JournalFormProps> = ({
   setType,
 
   journalNo,
+  setJournalNo,
 
   journalDate,
   setJournalDate,
@@ -115,6 +119,7 @@ const JournalForm: React.FC<JournalFormProps> = ({
   dateRef,
 
   focusFirstAccountId,
+  onJournalNoEnter,
 
   branchOptions,
   typeOptions,
@@ -307,9 +312,13 @@ const JournalForm: React.FC<JournalFormProps> = ({
           <input
             ref={journalNoRef}
             value={journalNoLoading ? "Loading..." : journalNo}
-            readOnly
+            onChange={(event) => setJournalNo(event.target.value)}
+            readOnly={journalNoLoading}
             onKeyDown={(event) =>
-              handleInputKeyDown(event, () => dateRef.current?.focus())
+              handleInputKeyDown(
+                event,
+                onJournalNoEnter ?? (() => dateRef.current?.focus()),
+              )
             }
             className={`
               ${inputClass}

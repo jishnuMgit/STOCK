@@ -65,6 +65,7 @@ import CommonTableSelect, {
 } from "../../../common/CommonTableSelect";
 import SingleSelect from "../../../common/SingleSelect";
 import Header from "../../../common/Header";
+import ActionButton from "../../../common/ActionButton";
 
 export type TableField =
   | "accountId"
@@ -2438,21 +2439,13 @@ ReceiptTable.displayName = "ReceiptTable";
 
 interface ReceiptBottomFormProps {
   description: string;
-
   setDescription: (value: string) => void;
-
   descriptionRef: React.RefObject<HTMLInputElement | null>;
-
   onDescriptionEnter: (event: React.KeyboardEvent<HTMLInputElement>) => void;
-
   onDescriptionClear?: () => void;
-
   note: string;
-
   setNote: (value: string) => void;
-
   noteRef: React.RefObject<HTMLTextAreaElement | null>;
-
   onNoteEnter: (event: React.KeyboardEvent<HTMLTextAreaElement>) => void;
 }
 
@@ -2561,23 +2554,14 @@ export interface ReceiptActionsRef {
 
 interface ReceiptActionsProps {
   clearForm: () => void;
-
   onSave: () => void;
-
   onSearch?: () => void;
-
   onDelete?: () => void;
-
   onPrint?: () => void;
-
   onPost?: () => void;
-
   onAttach?: () => void;
-
   saveLabel?: string;
-
   isPosted?: boolean;
-
   preventSearchNavigation?: boolean;
 }
 
@@ -2600,20 +2584,14 @@ export const ReceiptActions = forwardRef<
     },
     ref,
   ) => {
+    const copyRef = useRef<HTMLButtonElement | null>(null);
     const saveRef = useRef<HTMLButtonElement | null>(null);
-
     const searchRef = useRef<HTMLButtonElement | null>(null);
-
     const deleteRef = useRef<HTMLButtonElement | null>(null);
-
     const printRef = useRef<HTMLButtonElement | null>(null);
-
     const postRef = useRef<HTMLButtonElement | null>(null);
-
     const attachRef = useRef<HTMLButtonElement | null>(null);
-
     const clearRef = useRef<HTMLButtonElement | null>(null);
-
     const [activeIndex, setActiveIndex] = useState(0);
 
     const buttonRefs = [
@@ -2701,164 +2679,139 @@ export const ReceiptActions = forwardRef<
 
     useEffect(() => {
       const handleGlobalKeyDown = (event: KeyboardEvent) => {
-        if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === "s") {
-          // stop the browser's "Save page as..." dialog
-          event.preventDefault();
-          event.stopPropagation();
+        if (!(event.ctrlKey || event.metaKey)) return;
 
-          // respect the same disabled rule as the Save/Modify button
-          if (isPosted && saveLabel === "Modify") return;
+        switch (event.key.toLowerCase()) {
+          case "s":
+            event.preventDefault();
+            event.stopPropagation();
+            if (isPosted && saveLabel === "Modify") return;
+            onSave();
+            break;
 
-          onSave();
+          case "f":
+            event.preventDefault();
+            event.stopPropagation();
+            // click the button so the <Link> navigates + onSearch runs
+            searchRef.current?.click();
+            break;
+
+          case "p":
+            event.preventDefault();
+            event.stopPropagation();
+            onPrint?.();
+            break;
+
+          case "t":
+            event.preventDefault();
+            event.stopPropagation();
+            if (isPosted) return;
+            onPost?.();
+            break;
+
+          case "d":
+            event.preventDefault();
+            event.stopPropagation();
+            if (isPosted) return;
+            onDelete?.();
+            break;
         }
       };
 
       window.addEventListener("keydown", handleGlobalKeyDown);
+      return () => window.removeEventListener("keydown", handleGlobalKeyDown);
+    }, [onSave, onPrint, onPost, onDelete, isPosted, saveLabel]);
 
-      return () => {
-        window.removeEventListener("keydown", handleGlobalKeyDown);
-      };
-    }, [onSave, isPosted, saveLabel]);
-
-    const buttonClass = `
-     btn-style
-    `;
-
-    const disabledPostedActionClass =
-      "disabled:cursor-not-allowed disabled:opacity-50";
-
-    const textClass = `
-      bg-gradient-to-b
-      from-[#145c34]
-      via-[#20884e]
-      to-[#8fd9ad]
-      bg-clip-text
-      text-transparent
-      font-medium
-    `;
 
     return (
-      <div
-        className="
-          my-5
-          flex
-          w-full
-          pb-2
-          flex-wrap
-          items-center
-          justify-center
-          gap-2.75
-        "
-      >
-        <button
+      <div className="my-5 flex w-full pb-2 flex-wrap items-center justify-center gap-2.75">
+        <ActionButton
+          ref={copyRef}
+          id="btnCopy"
+          label="Copy"
+          // underlineIndex={0}
+          disabled={isPosted}
+          onFocus={() => handleFocus(2)}
+          onKeyDown={handleKeyDown}
+          onClick={() => { }}
+        />
+        <ActionButton
           ref={saveRef}
-          type="button"
-          className={`${buttonClass} ${isPosted && saveLabel === "Modify" ? disabledPostedActionClass : ""
-            }`}
+          id={saveLabel === "Modify" ? "btnModify" : "btnSave"}
+          label={saveLabel}
+          underlineIndex={0}
           disabled={isPosted && saveLabel === "Modify"}
           onFocus={() => handleFocus(0)}
           onKeyDown={handleKeyDown}
           onClick={onSave}
-          id={saveLabel === "Modify" ? "btnModify" : "btnSave"}
-        >
-          <span className={textClass}>
-            <span className="underline decoration-2 underline-offset-1">
-              {saveLabel === "Save" ? "S" : "M"}
-            </span>
-
-            {saveLabel.slice(1)}
-          </span>
-        </button>
+        />
 
         <Link to="/Transaction/receipt/modify">
-          <button
+          <ActionButton
             ref={searchRef}
-            type="button"
-            className={buttonClass}
+            id="btnSearch"
+            label="Find"
+            underlineIndex={0}
             onFocus={() => handleFocus(1)}
             onKeyDown={handleKeyDown}
             onClick={(event) => {
               if (preventSearchNavigation) {
                 event.preventDefault();
               }
-
               onSearch?.();
             }}
-            id="btnSearch"
-          >
-            <span className={textClass}>Search</span>
-          </button>
+          />
         </Link>
 
-        <button
+        <ActionButton
           ref={deleteRef}
-          type="button"
-          className={`${buttonClass} ${isPosted ? disabledPostedActionClass : ""
-            }`}
+          id="btnDelete"
+          label="Delete"
+          underlineIndex={0}
           disabled={isPosted}
           onFocus={() => handleFocus(2)}
           onKeyDown={handleKeyDown}
           onClick={onDelete}
-          id="btnDelete"
-        >
-          <span className={textClass}>
-            <span className="underline decoration-2 underline-offset-1">D</span>
-            elete
-          </span>
-        </button>
+        />
 
-        <button
+        <ActionButton
           ref={printRef}
-          type="button"
-          className={buttonClass}
+          id="btnPrint"
+          label="Print"
+          underlineIndex={0}
           onFocus={() => handleFocus(3)}
           onKeyDown={handleKeyDown}
           onClick={onPrint}
-          id="btnPrint"
-        >
-          <span className={textClass}>Print</span>
-        </button>
+        />
 
-        <button
+        <ActionButton
           ref={postRef}
-          type="button"
-          className={`${buttonClass} ${isPosted ? disabledPostedActionClass : ""
-            }`}
+          id="btnPost"
+          label="Post"
+          underlineIndex={3}
           disabled={isPosted}
           onFocus={() => handleFocus(4)}
           onKeyDown={handleKeyDown}
           onClick={onPost}
-          id="btnPost"
-        >
-          <span className={textClass}>Post</span>
-        </button>
+        />
 
-        <button
+        <ActionButton
           ref={attachRef}
-          type="button"
-          className={buttonClass}
+          id="btnAttach"
+          label="Attach"
           onFocus={() => handleFocus(5)}
           onKeyDown={handleKeyDown}
           onClick={onAttach}
-          id="btnAttach"
-        >
-          <span className={textClass}>Attach</span>
-        </button>
+        />
 
-        <button
+        <ActionButton
           ref={clearRef}
-          type="button"
-          className={buttonClass}
+          id="btnClear"
+          label="Clear"
           onFocus={() => handleFocus(6)}
           onKeyDown={handleKeyDown}
           onClick={clearForm}
-          id="btnClear"
-        >
-          <span className={textClass}>
-            <span className="underline decoration-2 underline-offset-1">C</span>
-            lear
-          </span>
-        </button>
+        />
       </div>
     );
   },

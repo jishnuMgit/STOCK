@@ -692,7 +692,7 @@ export async function saveReceiptService(
     }
 
     return {
-      message: "saved ",
+      message: "Receipt saved successfully",
 
       data: {
         pstrCoID,
