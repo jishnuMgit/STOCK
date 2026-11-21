@@ -2584,6 +2584,7 @@ export const ReceiptActions = forwardRef<
     },
     ref,
   ) => {
+    const copyRef = useRef<HTMLButtonElement | null>(null);
     const saveRef = useRef<HTMLButtonElement | null>(null);
     const searchRef = useRef<HTMLButtonElement | null>(null);
     const deleteRef = useRef<HTMLButtonElement | null>(null);
@@ -2724,6 +2725,16 @@ export const ReceiptActions = forwardRef<
 
     return (
       <div className="my-5 flex w-full pb-2 flex-wrap items-center justify-center gap-2.75">
+        <ActionButton
+          ref={copyRef}
+          id="btnCopy"
+          label="Copy"
+          // underlineIndex={0}
+          disabled={isPosted}
+          onFocus={() => handleFocus(2)}
+          onKeyDown={handleKeyDown}
+          onClick={() => { }}
+        />
         <ActionButton
           ref={saveRef}
           id={saveLabel === "Modify" ? "btnModify" : "btnSave"}
