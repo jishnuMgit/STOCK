@@ -10,11 +10,7 @@ import { useCtrlShortcuts } from "../../hooks/useCtrlShortcuts";
 import { useGridCellFocus } from "../../hooks/useGridCellFocus";
 import { useButtonPermissions } from "../../hooks/useButtonPermissions";
 import { tryGetServerDate } from "../../utils/serverDate";
-import {
-  filterLabelOrValue,
-  makeNameIdMenuComponents,
-  branchMenuStyles,
-} from "../../components/BranchSelect/branchSelectParts";
+import { filterLabelOrValue } from "../../components/BranchSelect/branchSelectParts";
 
 // dbo.tblmenu fmenuid of the Set Default Branch page
 const MENU_ID = "9101";

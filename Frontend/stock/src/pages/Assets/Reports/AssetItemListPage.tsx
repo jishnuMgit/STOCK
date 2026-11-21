@@ -374,6 +374,13 @@ const AssetItemList: React.FC = () => {
     console.log("Asset Item List Report:", reportData);
   };
 
+  // ==================================================
+  // CLOSE
+  // ==================================================
+
+  // const handleClose = () => {
+  //   window.history.back();
+  // };
 
   // ==================================================
   // UI

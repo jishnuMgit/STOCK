@@ -51,6 +51,69 @@ const rawKeyMaterial = (s: string): string =>
     .replace(/-----END [^-]+-----/g, "")
     .replace(/\s+/g, "");
 
+// ---- certificate handling for the .NET SDK bridge ----
+// headers first: removing whitespace first would turn "BEGIN CERTIFICATE" into "BEGINCERTIFICATE"
+const stripCertificate = (s: string): string =>
+  s.replace(/-----(BEGIN|END) CERTIFICATE-----/g, "").replace(/["'\s]/g, "");
+
+// The forms the SDK may expect the certificate in, tried in this order:
+//   1. exactly as stored (what the VB sent)
+//   2. cleaned: no headers / quotes / whitespace
+//   3. decoded once (stored value is the double-encoded binarySecurityToken "TUlJ...")
+//   4. encoded once (stored value is the plain certificate "MII...")
+//   5. full PEM: BEGIN/END lines around the 64-column body (some builds only read that form)
+// pemFirst: mono (Linux / macOS) only reads the full PEM form, so it goes first there and
+// the other forms are not tried (and no extra process is started) on every document.
+const certificateCandidates = (stored: string, pemFirst = false): string[] => {
+  const list: string[] = [stored];
+  const add = (v: string): void => {
+    if (v && !list.includes(v)) list.push(v);
+  };
+  const clean = stripCertificate(stored);
+  add(clean);
+  if (clean.startsWith("TUlJ")) {
+    add(stripCertificate(Buffer.from(clean, "base64").toString("utf8")));
+  } else if (clean.startsWith("MII")) {
+    add(Buffer.from(clean, "utf8").toString("base64"));
+  }
+
+  // the plain certificate body (MII...), whichever way it was stored
+  const body = clean.startsWith("TUlJ")
+    ? stripCertificate(Buffer.from(clean, "base64").toString("utf8"))
+    : clean;
+  if (body.startsWith("MII")) {
+    add(`-----BEGIN CERTIFICATE-----\n${(body.match(/.{1,64}/g) ?? []).join("\n")}\n-----END CERTIFICATE-----`);
+  }
+
+  if (pemFirst) {
+    const i = list.findIndex((c) => c.startsWith("-----BEGIN"));
+    if (i > 0) list.unshift(...list.splice(i, 1));
+  }
+  return list;
+};
+
+// The SDK copies the certificate text into <ds:X509Certificate> exactly as it was given. Given
+// the PEM form (which mono needs), the BEGIN/END lines end up inside a base64Binary element and
+// ZATCA answers XSD_ZATCA_INVALID. That element sits in KeyInfo, outside both signed digests
+// (the invoice and xades:SignedProperties), so replacing its text with the plain base64 body
+// leaves the signature, the invoice hash and the QR valid.
+const cleanEmbeddedCertificate = async (signedPath: string): Promise<void> => {
+  const xml = await readFile(signedPath, "utf8");
+  const fixed = xml.replace(
+    /(<(?:\w+:)?X509Certificate\b[^>]*>)([\s\S]*?)(<\/(?:\w+:)?X509Certificate>)/g,
+    (_m: string, open: string, body: string, close: string) => `${open}${stripCertificate(body)}${close}`
+  );
+  if (fixed !== xml) await writeFile(signedPath, fixed, "utf8");
+};
+
+// safe diagnostics: never logs the value itself
+const describeSecret = (label: string, s: string): void => {
+  console.log(
+    `[zatca] ${label}: len=${s.length} start=${s.slice(0, 6)} ` +
+      `header=${/-----BEGIN/.test(s)} ws=${/\s/.test(s)} quotes=${/["']/.test(s)}`
+  );
+};
+
 const exists = async (p: string): Promise<boolean> => {
   try {
     await access(p);
@@ -234,19 +297,39 @@ export class DotNetSdkSigner implements ZatcaSigner {
       throw new Error("ZATCA certificate / private key is not configured for this company");
     }
 
-    // certificate and key go in exactly as stored - the VB passed them to SignDocument untouched
-    const reply = await runBridge(
-      ["sign"],
-      JSON.stringify({
-        xmlPath: path.resolve(unsignedPath),
-        signedPath: path.resolve(signedPath),
-        certificate,
-        privateKey,
-      })
-    );
+    // the bridge README: the key is the EC private key as base64 text WITHOUT the BEGIN/END lines
+    const key = rawKeyMaterial(privateKey);
 
-    if (!reply.ok) throw new Error(reply.error || "ZATCA signing failed");
-    return { invoiceHash: reply.invoiceHash, uuid: reply.uuid };
+    describeSecret("certificate (stored)", certificate);
+    describeSecret("privateKey (stored)", privateKey);
+
+    let lastError = "ZATCA signing failed";
+    const candidates = certificateCandidates(certificate, process.platform !== "win32");
+
+    for (let i = 0; i < candidates.length; i += 1) {
+      const reply = await runBridge(
+        ["sign"],
+        JSON.stringify({
+          xmlPath: path.resolve(unsignedPath),
+          signedPath: path.resolve(signedPath),
+          certificate: candidates[i],
+          privateKey: key,
+        })
+      );
+
+      if (reply.ok) {
+        await cleanEmbeddedCertificate(signedPath);
+        console.log(`[zatca] signed with certificate form #${i + 1} of ${candidates.length}`);
+        return { invoiceHash: reply.invoiceHash, uuid: reply.uuid };
+      }
+
+      lastError = reply.error || lastError;
+      // only a certificate-decoding failure is worth retrying with another certificate form
+      if (!/decode certificate/i.test(lastError)) break;
+      console.log(`[zatca] certificate form #${i + 1} rejected: ${lastError}`);
+    }
+
+    throw new Error(lastError);
   }
 
   async qrCode(xmlPath: string): Promise<string> {
