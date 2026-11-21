@@ -20,87 +20,105 @@ CREATE OR REPLACE PROCEDURE dbo.sp_frmjv(
 LANGUAGE 'plpgsql'
 AS $BODY$
 DECLARE
-    v_cuserid VARCHAR(20);
+    v_cuserid   VARCHAR(20);
     v_cuserdate TIMESTAMP;
-    v_muserid VARCHAR(20);
+    v_muserid   VARCHAR(20);
     v_muserdate TIMESTAMP;
-    v_date DATE;
+    v_date      DATE;
+    v_year      VARCHAR(10) := p_gintyear::varchar;
 BEGIN
 
-    -- Audit: new document -> created only; modified -> keep original creator + stamp modifier
-    IF dbo.isnullorempty(p_strcreateduserid)::int = 1 THEN
-        v_cuserid := p_gstruserid;
-        v_cuserdate := NOW();
-        v_muserid := NULL;
-        v_muserdate := NULL;
-    ELSE
-        v_cuserid := p_strcreateduserid;
-        v_cuserdate := p_dtpcreateduserdate::TIMESTAMP;
-        v_muserid := p_gstruserid;
-        v_muserdate := NOW();
+    IF p_strmode NOT IN ('S', 'D') THEN
+        RAISE EXCEPTION 'sp_frmjv: invalid mode %', p_strmode;
     END IF;
 
-    -- Date conversion (DD/MM/YYYY)
-    IF p_dtpdate IS NOT NULL THEN
-        v_date := TO_DATE(p_dtpdate, 'DD/MM/YYYY');
-    END IF;
-
-    IF p_strmode = 'S' THEN
-
-        INSERT INTO dbo.tblfintrans
-        (
-            fcoid, fyear, fbrid, fdoctype, fdocno, fslno,
-            fdoctypeno,
-            fdate, fnote, faccountid, fccid, fdescription,
-            fdebit, fcredit, forigin, fpost, fyearclose,
-            fcuserid, fcuserdate, fmuserid, fmuserdate
-        )
-        VALUES
-        (
-            p_gstrcoid, p_gintyear::varchar, p_strbrid, p_strdoctype, p_strdocno, p_intslno,
-            p_intdocno::varchar,
-            v_date, p_strnote, p_straccountid, p_strccid, COALESCE(p_strdescription, ''),
-            COALESCE(p_numdebit, 0), COALESCE(p_numcredit, 0), 'UI', false, false,
-            v_cuserid, v_cuserdate, v_muserid, v_muserdate
-        );
-
-        IF dbo.isarap(p_gstrcoid, p_straccountid)::int = 1 THEN
-
-            INSERT INTO dbo.tblarap
-            (
-                fcoid, fyear, fbrid, fdoctype, fdocno, fslno, fslnosub,
-                fdoctypeno,
-                fdate, faccountid, fccid, fdescription,
-                fdocamt, fdebit, fcredit, fstatus, fpost,
-                fcuserid, fcuserdate, fmuserid, fmuserdate
-            )
-            VALUES
-            (
-                p_gstrcoid, p_gintyear::varchar, p_strbrid, p_strdoctype, p_strdocno, p_intslno, 0,
-                p_intdocno::varchar,
-                v_date, p_straccountid, p_strccid, COALESCE(p_strdescription, ''),
-                (COALESCE(p_numdebit, 0) - COALESCE(p_numcredit, 0)),
-                COALESCE(p_numdebit, 0), COALESCE(p_numcredit, 0), 'N', false,
-                v_cuserid, v_cuserdate, v_muserid, v_muserdate
-            );
-
-        END IF;
-
-    ELSIF p_strmode = 'D' THEN
+    /* ---------------------------------------------------------
+       DELETE (also the first step of a modify)
+    --------------------------------------------------------- */
+    IF p_strmode = 'D' THEN
 
         DELETE FROM dbo.tblfintrans
         WHERE fcoid = p_gstrcoid
-          AND fyear = p_gintyear::varchar
+          AND fyear = v_year
           AND fbrid = p_strbrid
           AND fdoctype = p_strdoctype
           AND fdocno = p_strdocno;
 
         DELETE FROM dbo.tblarap
         WHERE fcoid = p_gstrcoid
-          AND fyear = p_gintyear::varchar
+          AND fyear = v_year
           AND fbrid = p_strbrid
           AND fdoctype = p_strdoctype
           AND fdocno = p_strdocno;
+
+        RETURN;
+    END IF;
+
+    /* ---------------------------------------------------------
+       SAVE (one line per call)
+    --------------------------------------------------------- */
+    IF dbo.isnullorempty(p_straccountid)::int = 1 THEN
+        RAISE EXCEPTION 'sp_frmjv: account id is required';
+    END IF;
+
+    IF NULLIF(TRIM(p_dtpdate), '') IS NULL THEN
+        RAISE EXCEPTION 'sp_frmjv: date is required';
+    END IF;
+
+    v_date := TO_DATE(TRIM(p_dtpdate), 'DD/MM/YYYY');
+
+    /* Audit: new document -> created only;
+       modified -> keep original creator + stamp modifier */
+    IF dbo.isnullorempty(p_strcreateduserid)::int = 1 THEN
+        v_cuserid   := p_gstruserid;
+        v_cuserdate := NOW();
+        v_muserid   := NULL;
+        v_muserdate := NULL;
+    ELSE
+        v_cuserid   := p_strcreateduserid;
+        v_cuserdate := COALESCE(NULLIF(TRIM(p_dtpcreateduserdate), '')::TIMESTAMP, NOW());
+        v_muserid   := p_gstruserid;
+        v_muserdate := NOW();
+    END IF;
+
+    INSERT INTO dbo.tblfintrans
+    (
+        fcoid, fyear, fbrid, fdoctype, fdocno, fslno,
+        fdoctypeno,
+        fdate, fnote, faccountid, fccid, fdescription,
+        fdebit, fcredit, forigin, fpost, fyearclose,
+        fcuserid, fcuserdate, fmuserid, fmuserdate
+    )
+    VALUES
+    (
+        p_gstrcoid, v_year, p_strbrid, p_strdoctype, p_strdocno, p_intslno,
+        p_intdocno::varchar,
+        v_date, p_strnote, p_straccountid, p_strccid, COALESCE(p_strdescription, ''),
+        COALESCE(p_numdebit, 0), COALESCE(p_numcredit, 0), 'UI', false, false,
+        v_cuserid, v_cuserdate, v_muserid, v_muserdate
+    );
+
+    IF dbo.isarap(p_gstrcoid, p_straccountid)::int = 1 THEN
+
+        INSERT INTO dbo.tblarap
+        (
+            fcoid, fyear, fbrid, fdoctype, fdocno, fslno, fslnosub,
+            fdoctypeno,
+            fdate, faccountid, fccid, fdescription,
+            fdocamt, fdebit, fcredit, fstatus, fpost,
+            fuserid, fuserdate,
+            fcuserid, fcuserdate, fmuserid, fmuserdate
+        )
+        VALUES
+        (
+            p_gstrcoid, v_year, p_strbrid, p_strdoctype, p_strdocno, p_intslno, 0,
+            p_intdocno::varchar,
+            v_date, p_straccountid, p_strccid, COALESCE(p_strdescription, ''),
+            (COALESCE(p_numdebit, 0) - COALESCE(p_numcredit, 0)),
+            COALESCE(p_numdebit, 0), COALESCE(p_numcredit, 0), 'N', false,
+            p_gstruserid, NOW(),
+            v_cuserid, v_cuserdate, v_muserid, v_muserdate
+        );
 
     END IF;
 
