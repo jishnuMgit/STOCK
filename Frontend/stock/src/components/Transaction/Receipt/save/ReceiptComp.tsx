@@ -2786,7 +2786,10 @@ export const ReceiptActions = forwardRef<
             }}
             id="btnSearch"
           >
-            <span className={textClass}>Search</span>
+            <span className={textClass}>
+              <span className="underline decoration-2 underline-offset-1">S</span>
+              earch
+            </span>
           </button>
         </Link>
 
@@ -2816,7 +2819,10 @@ export const ReceiptActions = forwardRef<
           onClick={onPrint}
           id="btnPrint"
         >
-          <span className={textClass}>Print</span>
+          <span className={textClass}>
+            <span className="underline decoration-2 underline-offset-1">P</span>
+            rint
+          </span>
         </button>
 
         <button
@@ -2830,7 +2836,10 @@ export const ReceiptActions = forwardRef<
           onClick={onPost}
           id="btnPost"
         >
-          <span className={textClass}>Post</span>
+          <span className={textClass}>
+            Pos
+            <span className="underline decoration-2 underline-offset-1">t</span>
+          </span>
         </button>
 
         <button
@@ -2855,8 +2864,7 @@ export const ReceiptActions = forwardRef<
           id="btnClear"
         >
           <span className={textClass}>
-            <span className="underline decoration-2 underline-offset-1">C</span>
-            lear
+            Clear
           </span>
         </button>
       </div>
