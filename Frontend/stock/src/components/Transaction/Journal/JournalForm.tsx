@@ -266,8 +266,8 @@ const JournalForm: React.FC<JournalFormProps> = ({
             width="250px"
             menuWidth="310px"
             controlHeight={30}
-            borderColor="#99a1af"
-            hoverBorderColor="#20884e"
+            // borderColor="#99a1af"
+            // hoverBorderColor="#20884e"
             filterOption={filterOption}
             noOptionsMessage={() => "No Branch Found"}
             menuPortalTarget={menuPortalTarget}
@@ -359,8 +359,8 @@ const JournalForm: React.FC<JournalFormProps> = ({
             width="250px"
             menuWidth="310px"
             controlHeight={30}
-            borderColor="#99a1af"
-            hoverBorderColor="#20884e"
+            // borderColor="#99a1af"
+            // hoverBorderColor="#20884e"
             filterOption={filterOption}
             noOptionsMessage={() => "No Type Found"}
             menuPortalTarget={menuPortalTarget}
