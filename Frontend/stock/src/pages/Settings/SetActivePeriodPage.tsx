@@ -1,12 +1,12 @@
 import React, { useEffect, useState } from "react";
 import Header from "../../components/common/Header";
-import { toast } from "react-toastify";
 import { useEnterAsTab } from "../../hooks/useEnterAsTab";
-import { useAltShortcuts } from "../../hooks/useAltShortcuts";
 import { useCtrlShortcuts } from "../../hooks/useCtrlShortcuts";
 import { useButtonPermissions } from "../../hooks/useButtonPermissions";
 import { useGridCellFocus } from "../../hooks/useGridCellFocus";
 import { tryGetServerDate } from "../../utils/serverDate";
+import { useMessageModal } from "../../hooks/useMessageModal";
+import TransactionActions from "../../components/common/TransactionActions";
 
 // dbo.tblmenu fmenuid of the Set Active Period page
 const MENU_ID = "9103";
@@ -37,6 +37,8 @@ const dateInputClass =
 const SetActivePeriodPage: React.FC = () => {
   const handleEnterAsTab = useEnterAsTab();
   const perms = useButtonPermissions(MENU_ID);
+  // the messages (warnings, errors, saved ...) are the common message window, as on the Payment screen - not a toast
+  const { notify, dialog: messageDialog } = useMessageModal("Set Active Period");
   // the cell the cursor is in is outlined (a typed-in box has its text selected)
   const { cellFocusClass, selectOnFocus } = useGridCellFocus();
 
@@ -57,7 +59,7 @@ const SetActivePeriodPage: React.FC = () => {
         const PstrCoID = localStorage.getItem("PstrCoID");
 
         if (!PstrCoID) {
-          toast.error("getActivePeriodList: no PstrCoID in localStorage");
+          notify.error("getActivePeriodList: no PstrCoID in localStorage");
           return;
         }
 
@@ -70,7 +72,7 @@ const SetActivePeriodPage: React.FC = () => {
         const result = await response.json();
 
         if (!response.ok || !result.success) {
-          toast.error(`getActivePeriodList failed: ${result.message}`);
+          notify.error(`getActivePeriodList failed: ${result.message}`);
           return;
         }
 
@@ -97,7 +99,7 @@ const SetActivePeriodPage: React.FC = () => {
         }, 0);
       } catch (error) {
         console.error("loadActivePeriodPage error:", error);
-        toast.error(
+        notify.error(
           `Set Active Period load error: ${error instanceof Error ? error.message : String(error)}`,
         );
       }
@@ -133,7 +135,7 @@ const SetActivePeriodPage: React.FC = () => {
     if (saving) return;
 
     if (!perms.modify) {
-      toast.error("You do not have permission to Save.");
+      notify.error("You do not have permission to Save.");
       return;
     }
 
@@ -141,31 +143,31 @@ const SetActivePeriodPage: React.FC = () => {
     const PstrYear = localStorage.getItem("PstrYear");
 
     if (!PstrCoID || !PstrYear) {
-      toast.error("Company ID / Year not found. Please log in again.");
+      notify.error("Company ID / Year not found. Please log in again.");
       return;
     }
 
     if (rows.length === 0) {
-      toast.warning("There is no information for saving.");
+      notify.warning("There is no information for saving.");
       return;
     }
 
     for (const [index, row] of rows.entries()) {
       if (row.dtpFromDate === "") {
-        toast.warning("Please input 'From Date'");
+        notify.warning("Please input 'From Date'");
         document.getElementById(`dtpFromDate-${index}`)?.focus();
         return;
       }
 
       if (row.dtpToDate === "") {
-        toast.warning("Please input 'To Date'");
+        notify.warning("Please input 'To Date'");
         document.getElementById(`dtpToDate-${index}`)?.focus();
         return;
       }
 
       // yyyy-mm-dd text compares in date order
       if (row.dtpFromDate > row.dtpToDate) {
-        toast.warning("'From Date' should be less than or equal to 'To Date'");
+        notify.warning("'From Date' should be less than or equal to 'To Date'");
         document.getElementById(`dtpFromDate-${index}`)?.focus();
         return;
       }
@@ -200,7 +202,7 @@ const SetActivePeriodPage: React.FC = () => {
       const result = await response.json();
 
       if (!response.ok || !result.success) {
-        toast.error(result.message || "Not saved, try again.");
+        notify.error(result.message || "Not saved, try again.");
 
         // the backend names the box that failed - same name as the element id
         if (result.field) {
@@ -210,13 +212,13 @@ const SetActivePeriodPage: React.FC = () => {
         return;
       }
 
-      toast.success(result.message || "Set Active Period saved successfully");
+      notify.success(result.message || "Set Active Period saved successfully");
 
       // load the page again - the rows now carry what was saved
       setReloadKey((key) => key + 1);
     } catch (error) {
       console.error("saveActivePeriod error:", error);
-      toast.error("Cannot connect to Active Period API.");
+      notify.error("Cannot connect to Active Period API.");
     } finally {
       setSaving(false);
     }
@@ -231,12 +233,9 @@ const SetActivePeriodPage: React.FC = () => {
     setReloadKey((key) => key + 1);
   };
 
-  // Ctrl+S -> Save, Alt+C -> Clear (the underlined letter on its button)
+  // The key of the Payment screen: Ctrl+S Save
   useCtrlShortcuts({
     s: handleSave,
-  });
-  useAltShortcuts({
-    c: handleClear,
   });
 
   // The old form's behaviour: Enter on a BUTTON presses it. Enter anywhere
@@ -262,6 +261,7 @@ const SetActivePeriodPage: React.FC = () => {
       onKeyDown={handlePageKeyDown}
       className="flex min-h-screen w-full items-center justify-center bg-white"
     >
+      {messageDialog}
       <div className="w-full max-w-160 border border-slate-400 bg-white shadow-sm">
         <Header Name="Set Active Period" />
 
@@ -378,28 +378,19 @@ const SetActivePeriodPage: React.FC = () => {
               BUTTONS
           ==================================================== */}
 
-          <div className="mt-3.5 flex justify-center gap-3">
-            <button
-              id="btnSave"
-              name="btnSave"
-              type="button"
-              onClick={handleSave}
-              disabled={!perms.modify || saving}
-              className="btn-style disabled:cursor-not-allowed disabled:opacity-40"
-            >
-              Save
-            </button>
-
-            <button
-              id="btnClear"
-              name="btnClear"
-              type="button"
-              onClick={handleClear}
-              className="btn-style"
-            >
-              <span className="underline underline-offset-2">C</span>lear
-            </button>
-          </div>
+          <TransactionActions
+            className="mt-3.5 flex justify-center gap-3"
+            actions={[
+              {
+                id: "btnSave",
+                label: "Save",
+                underlineIndex: 0,
+                onClick: handleSave,
+                disabled: !perms.modify || saving,
+              },
+              { id: "btnClear", label: "Clear", onClick: handleClear },
+            ]}
+          />
         </div>
       </div>
     </div>

@@ -1,12 +1,12 @@
 import React, { useEffect, useState } from "react";
-import { toast } from "react-toastify";
 import { X } from "lucide-react";
 import { useEnterAsTab } from "../../../hooks/useEnterAsTab";
 import { useGridCellFocus } from "../../../hooks/useGridCellFocus";
 import { useInitialFocus } from "../../../hooks/useInitialFocus";
 import { useConfirmModal } from "../../../hooks/useConfirmModal";
-import { useDeleteToast } from "../../../hooks/useDeleteToast";
-import { useAltShortcuts } from "../../../hooks/useAltShortcuts";
+import { deleteSuccessMessage } from "../../../hooks/useDeleteToast";
+import { useMessageModal } from "../../../hooks/useMessageModal";
+import TransactionActions from "../../../components/common/TransactionActions";
 import { useCtrlShortcuts } from "../../../hooks/useCtrlShortcuts";
 import { useButtonPermissions } from "../../../hooks/useButtonPermissions";
 import { filterLabelOrValue } from "../../../components/BranchSelect/branchSelectParts";
@@ -73,7 +73,8 @@ const ItemPage: React.FC = () => {
   // the common themed question window (the same as on the other screens)
   const { confirm, dialog } = useConfirmModal();
   // the standard message of a delete that failed
-  const { notDeleted } = useDeleteToast("Item");
+  // the messages (warnings, errors, saved ...) are the common message window, as on the Payment screen - not a toast
+  const { notify, dialog: messageDialog } = useMessageModal("Item");
 
   /* =========================================================
      FORM STATE
@@ -177,7 +178,7 @@ const ItemPage: React.FC = () => {
         const PstrCoID = localStorage.getItem("PstrCoID");
 
         if (!PstrCoID) {
-          toast.error("getUnitList: no PstrCoID in localStorage");
+          notify.error("getUnitList: no PstrCoID in localStorage");
           return;
         }
 
@@ -193,7 +194,7 @@ const ItemPage: React.FC = () => {
 
         if (!result.success) {
           console.error("getUnitList failed:", result.message);
-          toast.error(`getUnitList failed: ${result.message}`);
+          notify.error(`getUnitList failed: ${result.message}`);
           return;
         }
 
@@ -207,7 +208,7 @@ const ItemPage: React.FC = () => {
         setUnitOptions(options);
       } catch (error) {
         console.error("getUnitList error:", error);
-        toast.error(`getUnitList error: ${error instanceof Error ? error.message : String(error)}`);
+        notify.error(`getUnitList error: ${error instanceof Error ? error.message : String(error)}`);
       }
     };
 
@@ -229,7 +230,7 @@ const ItemPage: React.FC = () => {
         const PstrCoID = localStorage.getItem("PstrCoID");
 
         if (!PstrCoID) {
-          toast.error("getItemGroupList: no PstrCoID in localStorage");
+          notify.error("getItemGroupList: no PstrCoID in localStorage");
           return;
         }
 
@@ -245,14 +246,14 @@ const ItemPage: React.FC = () => {
 
         if (!result.success) {
           console.error("getItemGroupList failed:", result.message);
-          toast.error(`getItemGroupList failed: ${result.message}`);
+          notify.error(`getItemGroupList failed: ${result.message}`);
           return;
         }
 
         setItemGroupList(result.data || []);
       } catch (error) {
         console.error("getItemGroupList error:", error);
-        toast.error(`getItemGroupList error: ${error instanceof Error ? error.message : String(error)}`);
+        notify.error(`getItemGroupList error: ${error instanceof Error ? error.message : String(error)}`);
       }
     };
 
@@ -290,7 +291,7 @@ const ItemPage: React.FC = () => {
         const PstrCoID = localStorage.getItem("PstrCoID");
 
         if (!PstrCoID) {
-          toast.error("getSupplierList: no PstrCoID in localStorage");
+          notify.error("getSupplierList: no PstrCoID in localStorage");
           return;
         }
 
@@ -306,14 +307,14 @@ const ItemPage: React.FC = () => {
 
         if (!result.success) {
           console.error("getSupplierList failed:", result.message);
-          toast.error(`getSupplierList failed: ${result.message}`);
+          notify.error(`getSupplierList failed: ${result.message}`);
           return;
         }
 
         setSupplierList(result.data || []);
       } catch (error) {
         console.error("getSupplierList error:", error);
-        toast.error(`getSupplierList error: ${error instanceof Error ? error.message : String(error)}`);
+        notify.error(`getSupplierList error: ${error instanceof Error ? error.message : String(error)}`);
       }
     };
 
@@ -349,7 +350,7 @@ const ItemPage: React.FC = () => {
         const PstrUserID = localStorage.getItem("PstrUserID");
 
         if (!PstrCoID || !PstrUserID) {
-          toast.error("getBranchList: no PstrCoID/PstrUserID in localStorage");
+          notify.error("getBranchList: no PstrCoID/PstrUserID in localStorage");
           return;
         }
 
@@ -365,7 +366,7 @@ const ItemPage: React.FC = () => {
 
         if (!result.success) {
           console.error("getBranchList failed:", result.message);
-          toast.error(`getBranchList failed: ${result.message}`);
+          notify.error(`getBranchList failed: ${result.message}`);
           return;
         }
 
@@ -379,7 +380,7 @@ const ItemPage: React.FC = () => {
         setBranchOptions(options);
       } catch (error) {
         console.error("getBranchList error:", error);
-        toast.error(`getBranchList error: ${error instanceof Error ? error.message : String(error)}`);
+        notify.error(`getBranchList error: ${error instanceof Error ? error.message : String(error)}`);
       }
     };
 
@@ -418,7 +419,7 @@ const ItemPage: React.FC = () => {
 
   const handleSave = async () => {
     if (!canSaveOrModify) {
-      toast.error(`You do not have permission to ${actionWord}.`);
+      notify.error(`You do not have permission to ${actionWord}.`);
       return;
     }
 
@@ -436,7 +437,7 @@ const ItemPage: React.FC = () => {
     const missing = requiredBoxes.find((box) => !box.value.trim());
 
     if (missing) {
-      toast.warning(missing.message);
+      notify.warning(missing.message);
       document.getElementById(missing.id)?.focus();
       return;
     }
@@ -444,7 +445,7 @@ const ItemPage: React.FC = () => {
     const validRows = rows.filter((row) => row.lkpBranch);
 
     if (validRows.length === 0) {
-      toast.warning("Please select at least one 'Branch'");
+      notify.warning("Please select at least one 'Branch'");
       document.getElementById(`lkpBranch_${rows[0]?.id ?? 1}`)?.focus();
       return;
     }
@@ -453,7 +454,7 @@ const ItemPage: React.FC = () => {
     const PstrUserID = localStorage.getItem("PstrUserID");
 
     if (!PstrCoID || !PstrUserID) {
-      toast.error("Company ID / User ID not found. Please log in again.");
+      notify.error("Company ID / User ID not found. Please log in again.");
       return;
     }
 
@@ -495,7 +496,7 @@ const ItemPage: React.FC = () => {
       const result = await response.json();
 
       if (!response.ok || !result.success) {
-        toast.error(
+        notify.error(
           result.message ||
           (hasSavedItem ? "Not modified, try again." : "Not saved, try again.")
         );
@@ -509,7 +510,7 @@ const ItemPage: React.FC = () => {
         return;
       }
 
-      toast.success(
+      notify.success(
         result.message ||
         (hasSavedItem ? "Item modified successfully." : "Item saved successfully.")
       );
@@ -518,7 +519,7 @@ const ItemPage: React.FC = () => {
       findItem(txtItemID, { silent: true });
     } catch (error) {
       console.error("saveItem error:", error);
-      toast.error("Cannot connect to Item API.");
+      notify.error("Cannot connect to Item API.");
     }
   };
 
@@ -540,7 +541,7 @@ const ItemPage: React.FC = () => {
 
     if (!itemId) {
       if (!silent) {
-        toast.warning("Item ID is required.");
+        notify.warning("Item ID is required.");
       }
       return;
     }
@@ -548,7 +549,7 @@ const ItemPage: React.FC = () => {
     const PstrCoID = localStorage.getItem("PstrCoID");
 
     if (!PstrCoID) {
-      toast.error("Company ID not found. Please log in again.");
+      notify.error("Company ID not found. Please log in again.");
       return;
     }
 
@@ -564,7 +565,7 @@ const ItemPage: React.FC = () => {
         setHaveTrans(false);
 
         if (!silent) {
-          toast.error(result.message || "Item not found.");
+          notify.error(result.message || "Item not found.");
         }
         return;
       }
@@ -626,11 +627,11 @@ const ItemPage: React.FC = () => {
       setRows([...foundRows, ...blankRows]);
 
       if (!silent) {
-        toast.success("Item loaded.");
+        notify.success("Item loaded.");
       }
     } catch (error) {
       console.error("getItem error:", error);
-      toast.error("Cannot connect to Item API.");
+      notify.error("Cannot connect to Item API.");
     }
   };
 
@@ -640,18 +641,20 @@ const ItemPage: React.FC = () => {
 
   const handleDelete = async () => {
     if (!perms.delete) {
-      toast.error("You do not have permission to Delete.");
+      notify.error("You do not have permission to Delete.");
       return;
     }
 
     if (!txtItemID) {
-      toast.warning("Item ID is required.");
+      notify.warning("Item ID is required.");
       return;
     }
 
     const shouldDelete = await confirm({
       title: "Item",
-      message: "Do you want to delete ?",
+      message: "Do you want to Delete?",
+      confirmLabel: "Delete",
+      cancelLabel: "Cancel",
     });
 
     if (!shouldDelete) {
@@ -663,7 +666,7 @@ const ItemPage: React.FC = () => {
     const PstrUserID = localStorage.getItem("PstrUserID");
 
     if (!PstrCoID || !PstrYear || !PstrUserID) {
-      toast.error("Company ID / Year / User ID not found. Please log in again.");
+      notify.error("Company ID / Year / User ID not found. Please log in again.");
       return;
     }
 
@@ -687,26 +690,27 @@ const ItemPage: React.FC = () => {
       const result = await response.json();
 
       if (!response.ok || !result.success) {
-        notDeleted(result.message);
+        notify.error(result.message || "Not deleted, try again");
         return;
       }
 
-      // (no message for a deleted item)
+      // the common message of a delete (hooks/useDeleteToast.ts, the same on every screen), then the page is emptied
+      notify.success(deleteSuccessMessage("Item"));
       handleClear();
     } catch (error) {
       console.error("deleteItem error:", error);
-      toast.error("Cannot connect to Item API.");
+      notify.error("Cannot connect to Item API.");
     }
   };
 
   const handleDeleteBranchRow = async (row: BranchRow) => {
     if (!perms.delete) {
-      toast.error("You do not have permission to Delete.");
+      notify.error("You do not have permission to Delete.");
       return;
     }
 
     if (!txtItemID) {
-      toast.warning("Item ID is required.");
+      notify.warning("Item ID is required.");
       return;
     }
 
@@ -716,7 +720,9 @@ const ItemPage: React.FC = () => {
 
     const shouldDelete = await confirm({
       title: "Item",
-      message: "Do you want to delete ?",
+      message: "Do you want to Delete?",
+      confirmLabel: "Delete",
+      cancelLabel: "Cancel",
     });
 
     if (!shouldDelete) {
@@ -728,7 +734,7 @@ const ItemPage: React.FC = () => {
     const PstrUserID = localStorage.getItem("PstrUserID");
 
     if (!PstrCoID || !PstrYear || !PstrUserID) {
-      toast.error("Company ID / Year / User ID not found. Please log in again.");
+      notify.error("Company ID / Year / User ID not found. Please log in again.");
       return;
     }
 
@@ -758,11 +764,12 @@ const ItemPage: React.FC = () => {
       const result = await response.json();
 
       if (!response.ok || !result.success) {
-        notDeleted(result.message);
+        notify.error(result.message || "Not deleted, try again");
         return;
       }
 
-      // (no message for a deleted item)
+      // the common message of a delete (hooks/useDeleteToast.ts, the same on every screen), then the row is emptied
+      notify.success(deleteSuccessMessage("Item"));
 
       updateRow(row.id, "lkpBranch", "");
       updateRow(row.id, "txtItemLocation", "");
@@ -770,7 +777,7 @@ const ItemPage: React.FC = () => {
       updateRow(row.id, "chkInactive", false);
     } catch (error) {
       console.error("deleteItemBranchRow error:", error);
-      toast.error("Cannot connect to Item API.");
+      notify.error("Cannot connect to Item API.");
     }
   };
 
@@ -812,17 +819,13 @@ const ItemPage: React.FC = () => {
 
   /* =========================================================
      KEYBOARD SHORTCUTS
-     Ctrl+S -> Save / Modify, Ctrl+D -> Delete, Alt+C -> Clear
-     (Clear matches the underlined letter on its button).
+     The keys of the Payment screen: Ctrl+S Save / Modify, Ctrl+F Find, Ctrl+D Delete.
   ========================================================= */
 
-  // Ctrl+S -> Save (new item) or Modify (existing item), Ctrl+D -> Delete, Alt+C -> Clear
   useCtrlShortcuts({
     s: handleSave,
+    f: handleFind,
     d: handleDelete,
-  });
-  useAltShortcuts({
-    c: handleClear,
   });
 
   /* =========================================================
@@ -1627,59 +1630,27 @@ const ItemPage: React.FC = () => {
               ACTION BUTTONS
           =================================================== */}
 
-              <div className="mt-3.5 flex justify-center gap-3">
-
-                {/* SAVE */}
-
-                <button
-                  type="button"
-                  className="btn-style disabled:cursor-not-allowed disabled:opacity-40"
-                  onClick={handleSave}
-                  disabled={!canSaveOrModify}
-                  id={hasSavedItem ? "Modifybtn" : "Savebtn"}
-                  name={hasSavedItem ? "Modifybtn" : "Savebtn"}
-                >
-                  {actionWord}
-                </button>
-
-                {/* FIND */}
-
-                <button
-                  type="button"
-                  className="btn-style"
-                  onClick={handleFind}
-                  id="Findbtn"
-                  name="Findbtn"
-                >
-                  <span className="underline underline-offset-2">S</span>earch
-                </button>
-
-                {/* DELETE */}
-
-                <button
-                  type="button"
-                  className="btn-style disabled:cursor-not-allowed disabled:opacity-40"
-                  onClick={handleDelete}
-                  disabled={!perms.delete}
-                  id="Deletebtn"
-                  name="Deletebtn"
-                >
-                  Delete
-                </button>
-
-                {/* CLEAR */}
-
-                <button
-                  type="button"
-                  className="btn-style"
-                  onClick={handleClear}
-                  id="Clearbtn"
-                  name="Clearbtn"
-                >
-                  <span className="underline underline-offset-2">C</span>lear
-                </button>
-
-              </div>
+              <TransactionActions
+                className="mt-3.5 flex justify-center gap-3"
+                actions={[
+                  {
+                    id: hasSavedItem ? "Modifybtn" : "Savebtn",
+                    label: actionWord,
+                    underlineIndex: 0,
+                    onClick: handleSave,
+                    disabled: !canSaveOrModify,
+                  },
+                  { id: "Findbtn", label: "Find", underlineIndex: 0, onClick: handleFind },
+                  {
+                    id: "Deletebtn",
+                    label: "Delete",
+                    underlineIndex: 0,
+                    onClick: handleDelete,
+                    disabled: !perms.delete,
+                  },
+                  { id: "Clearbtn", label: "Clear", onClick: handleClear },
+                ]}
+              />
 
             </div>
 
@@ -1692,6 +1663,7 @@ const ItemPage: React.FC = () => {
       {/* the "Do you want to delete ?" question - outside the root div: the page's
         Enter-as-Tab must not take the Enter of the Yes / No buttons */}
       {dialog}
+      {messageDialog}
     </>
   );
 };

@@ -1,16 +1,16 @@
 import React, { useEffect, useRef, useState } from "react";
 import Select from "react-select";
-import { toast } from "react-toastify";
 import { X } from "lucide-react";
 import {
   branchMenuStyles,
   filterLabelOrValue,
   makeNameIdMenuComponents,
 } from "../../components/BranchSelect/branchSelectParts";
-import { useAltShortcuts } from "../../hooks/useAltShortcuts";
 import { useCtrlShortcuts } from "../../hooks/useCtrlShortcuts";
 import { useConfirmModal } from "../../hooks/useConfirmModal";
-import { useDeleteToast } from "../../hooks/useDeleteToast";
+import { deleteSuccessMessage } from "../../hooks/useDeleteToast";
+import { useMessageModal } from "../../hooks/useMessageModal";
+import TransactionActions from "../../components/common/TransactionActions";
 import { useGridCellFocus } from "../../hooks/useGridCellFocus";
 import { tryGetServerDate } from "../../utils/serverDate";
 import Header from "../../components/common/Header";
@@ -152,7 +152,8 @@ const DocumentPage: React.FC = () => {
   const [saving, setSaving] = useState(false);
   // the common themed question window and the standard delete messages
   const { confirm, dialog } = useConfirmModal();
-  const { deleted, notDeleted } = useDeleteToast("Document");
+  // the messages (warnings, errors, saved ...) are the common message window, as on the Payment screen - not a toast
+  const { notify, dialog: messageDialog } = useMessageModal("Document");
   // the cell the cursor is in is outlined (a typed-in box has its text selected)
   const { cellFocusClass, selectOnFocus } = useGridCellFocus();
 
@@ -197,7 +198,7 @@ const DocumentPage: React.FC = () => {
         const PstrCoID = localStorage.getItem("PstrCoID");
 
         if (!PstrCoID) {
-          toast.error("getDocument: no PstrCoID in localStorage");
+          notify.error("getDocument: no PstrCoID in localStorage");
           return;
         }
 
@@ -215,7 +216,7 @@ const DocumentPage: React.FC = () => {
         if (requestNo !== loadRequest.current) return;
 
         if (!response.ok || !result.success) {
-          toast.error(result.message || "Failed to load the Documents");
+          notify.error(result.message || "Failed to load the Documents");
           return;
         }
 
@@ -282,7 +283,7 @@ const DocumentPage: React.FC = () => {
         if (requestNo !== loadRequest.current) return;
 
         console.error("getDocument error:", error);
-        toast.error("Failed to load the Documents");
+        notify.error("Failed to load the Documents");
       }
     };
 
@@ -351,7 +352,7 @@ const DocumentPage: React.FC = () => {
 
     // the old ValidateMe
     if (!lkpModule) {
-      toast.info("Please select 'Module'");
+      notify.info("Please select 'Module'");
       focusField("lkpModule");
       return;
     }
@@ -362,13 +363,13 @@ const DocumentPage: React.FC = () => {
       const index = rows.indexOf(row);
 
       if (!row.txtDocType.trim()) {
-        toast.info("Please enter the 'Document Type'");
+        notify.info("Please enter the 'Document Type'");
         focusField(`txtDocType-${index}`);
         return;
       }
 
       if (!row.txtDocName.trim()) {
-        toast.info(
+        notify.info(
           `Please enter the 'Document' name of '${row.txtDocType.trim()}'`,
         );
         focusField(`txtDocName-${index}`);
@@ -385,13 +386,13 @@ const DocumentPage: React.FC = () => {
       const nameKey = row.txtDocName.trim().toLowerCase();
 
       if (seenTypes.has(typeKey)) {
-        toast.info("'Document Type' already exists");
+        notify.info("'Document Type' already exists");
         focusField(`txtDocType-${index}`);
         return;
       }
 
       if (seenNames.has(nameKey)) {
-        toast.info("'Document Name' already exists");
+        notify.info("'Document Name' already exists");
         focusField(`txtDocName-${index}`);
         return;
       }
@@ -401,7 +402,7 @@ const DocumentPage: React.FC = () => {
     }
 
     if (!hasChanges) {
-      toast.info("There is no data to save");
+      notify.info("There is no data to save");
       return;
     }
 
@@ -435,17 +436,17 @@ const DocumentPage: React.FC = () => {
       const result = await response.json();
 
       if (!response.ok || !result.success) {
-        toast.error(result.message || "Not Saved,try again");
+        notify.error(result.message || "Not Saved,try again");
         focusField(result.field);
         return;
       }
 
-      toast.success(result.message);
+      notify.success(result.message);
 
       setReloadKey((previous) => previous + 1);
     } catch (error: unknown) {
       console.error("saveDocument error:", error);
-      toast.error("Not Saved,try again");
+      notify.error("Not Saved,try again");
     } finally {
       setSaving(false);
     }
@@ -472,7 +473,9 @@ const DocumentPage: React.FC = () => {
 
     const shouldDelete = await confirm({
       title: "Document",
-      message: "Do you want to delete ?",
+      message: "Do you want to Delete?",
+      confirmLabel: "Delete",
+      cancelLabel: "Cancel",
     });
 
     if (!shouldDelete) return;
@@ -497,18 +500,19 @@ const DocumentPage: React.FC = () => {
       const result = await response.json();
 
       if (!response.ok || !result.success) {
-        notDeleted(result.message);
+        notify.error(result.message || "Not deleted, try again");
         return;
       }
 
-      deleted();
+      // the common message of a delete (hooks/useDeleteToast.ts, the same on every screen)
+      notify.success(deleteSuccessMessage("Document"));
 
       setRows((previous) =>
         padRows(previous.filter((item) => item.key !== row.key)),
       );
     } catch (error: unknown) {
       console.error("deleteDocument error:", error);
-      notDeleted();
+      notify.error("Not deleted, try again");
     } finally {
       setSaving(false);
     }
@@ -533,12 +537,8 @@ const DocumentPage: React.FC = () => {
     setReloadKey((previous) => previous + 1);
   };
 
-  // Ctrl+S Save, Alt+F Find, Alt+C Clear
-  useCtrlShortcuts({ s: handleSave });
-  useAltShortcuts({
-    f: handleFind,
-    c: handleClear,
-  });
+  // The keys of the Payment screen: Ctrl+S Save, Ctrl+F Find
+  useCtrlShortcuts({ s: handleSave, f: handleFind });
 
   const search = txtFind.trim().toLowerCase();
 
@@ -772,45 +772,20 @@ const DocumentPage: React.FC = () => {
             </div>
 
             {/* Actions: one Save does it all (new rows and changes) */}
-            <div className="mt-5 flex justify-center gap-3">
-              <button
-                id="btnSave"
-                name="btnSave"
-                type="button"
-                onClick={handleSave}
-                disabled={saving}
-                title="Alt+S"
-                className="btn-style disabled:cursor-not-allowed disabled:opacity-60"
-              >
-                Save
-              </button>
-              <button
-                id="btnFind"
-                name="btnFind"
-                type="button"
-                onClick={handleFind}
-                title="Alt+F"
-                className="btn-style"
-              >
-                <u>F</u>ind
-              </button>
-              <button
-                id="btnClear"
-                name="btnClear"
-                type="button"
-                onClick={handleClear}
-                disabled={saving}
-                title="Alt+C"
-                className="btn-style disabled:cursor-not-allowed disabled:opacity-60"
-              >
-                <u>C</u>lear
-              </button>
-            </div>
+            <TransactionActions
+              className="mt-5 flex justify-center gap-3"
+              actions={[
+                { id: "btnSave", label: "Save", underlineIndex: 0, onClick: handleSave, disabled: saving },
+                { id: "btnFind", label: "Find", underlineIndex: 0, onClick: handleFind },
+                { id: "btnClear", label: "Clear", onClick: handleClear, disabled: saving },
+              ]}
+            />
           </section>
         </main>
       </div>
 
       {dialog}
+      {messageDialog}
     </div>
   );
 };

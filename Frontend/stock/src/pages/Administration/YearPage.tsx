@@ -1,17 +1,17 @@
 import React, { useEffect, useRef, useState } from "react";
 import Select from "react-select";
-import { toast } from "react-toastify";
 import { X } from "lucide-react";
 import {
   branchMenuStyles,
   filterLabelOrValue,
   makeNameIdMenuComponents,
 } from "../../components/BranchSelect/branchSelectParts";
-import { useAltShortcuts } from "../../hooks/useAltShortcuts";
 import { useCtrlShortcuts } from "../../hooks/useCtrlShortcuts";
 import { useAdvanceAfterSelect } from "../../hooks/useAdvanceAfterSelect";
 import { useConfirmModal } from "../../hooks/useConfirmModal";
-import { useDeleteToast } from "../../hooks/useDeleteToast";
+import { deleteSuccessMessage } from "../../hooks/useDeleteToast";
+import { useMessageModal } from "../../hooks/useMessageModal";
+import TransactionActions from "../../components/common/TransactionActions";
 import { useGridCellFocus } from "../../hooks/useGridCellFocus";
 import { tryGetServerDate } from "../../utils/serverDate";
 import Header from "../../components/common/Header";
@@ -145,7 +145,8 @@ const YearPage: React.FC = () => {
   const [saving, setSaving] = useState(false);
   // the common themed question window and the standard delete messages
   const { confirm, dialog } = useConfirmModal();
-  const { deleted, notDeleted } = useDeleteToast("Year");
+  // the messages (warnings, errors, saved ...) are the common message window, as on the Payment screen - not a toast
+  const { notify, dialog: messageDialog } = useMessageModal("Year");
   // the cell the cursor is in is outlined (a typed-in box has its text selected)
   const { cellFocusClass, selectOnFocus } = useGridCellFocus();
   const { advanceAfterPick, advanceOnEnter } = useAdvanceAfterSelect();
@@ -184,7 +185,7 @@ const YearPage: React.FC = () => {
         const PstrCoID = localStorage.getItem("PstrCoID");
 
         if (!PstrCoID) {
-          toast.error("getYear: no PstrCoID in localStorage");
+          notify.error("getYear: no PstrCoID in localStorage");
           return;
         }
 
@@ -198,7 +199,7 @@ const YearPage: React.FC = () => {
         if (requestNo !== loadRequest.current) return;
 
         if (!response.ok || !result.success) {
-          toast.error(result.message || "Failed to load the Years");
+          notify.error(result.message || "Failed to load the Years");
           return;
         }
 
@@ -244,7 +245,7 @@ const YearPage: React.FC = () => {
         if (requestNo !== loadRequest.current) return;
 
         console.error("getYear error:", error);
-        toast.error("Failed to load the Years");
+        notify.error("Failed to load the Years");
       }
     };
 
@@ -290,7 +291,7 @@ const YearPage: React.FC = () => {
 
     // the old ValidateGrid: the grid cannot be saved empty
     if (filled.length === 0) {
-      toast.info("There Is No Item For Saving");
+      notify.info("There Is No Item For Saving");
       return;
     }
 
@@ -298,19 +299,19 @@ const YearPage: React.FC = () => {
       const index = rows.indexOf(row);
 
       if (!row.lkpBranch) {
-        toast.info("Please select 'Branch'");
+        notify.info("Please select 'Branch'");
         focusField(`lkpBranch-${index}`);
         return;
       }
 
       if (!row.txtYear.trim()) {
-        toast.info("Please enter 'Year'");
+        notify.info("Please enter 'Year'");
         focusField(`txtYear-${index}`);
         return;
       }
 
       if (!/^\d{4}$/.test(row.txtYear.trim())) {
-        toast.info("The 'Year' must have 4 digits");
+        notify.info("The 'Year' must have 4 digits");
         focusField(`txtYear-${index}`);
         return;
       }
@@ -323,7 +324,7 @@ const YearPage: React.FC = () => {
       const key = `${row.lkpBranch}|${Number(row.txtYear)}`;
 
       if (seen.has(key)) {
-        toast.info(
+        notify.info(
           `The Year ${Number(row.txtYear)} is already entered for the Branch ${branchName(row.lkpBranch)}`,
         );
         focusField(`txtYear-${index}`);
@@ -340,7 +341,7 @@ const YearPage: React.FC = () => {
       seen.size === current.size &&
       [...seen].every((key) => current.has(key))
     ) {
-      toast.info("There is no data to save");
+      notify.info("There is no data to save");
       return;
     }
 
@@ -368,17 +369,17 @@ const YearPage: React.FC = () => {
       const result = await response.json();
 
       if (!response.ok || !result.success) {
-        toast.error(result.message || "Not Saved,try again");
+        notify.error(result.message || "Not Saved,try again");
         focusField(result.field);
         return;
       }
 
-      toast.success(result.message);
+      notify.success(result.message);
 
       setReloadKey((previous) => previous + 1);
     } catch (error: unknown) {
       console.error("saveYear error:", error);
-      toast.error("Not Saved,try again");
+      notify.error("Not Saved,try again");
     } finally {
       setSaving(false);
     }
@@ -406,7 +407,9 @@ const YearPage: React.FC = () => {
 
     const shouldDelete = await confirm({
       title: "Year",
-      message: "Do you want to delete ?",
+      message: "Do you want to Delete?",
+      confirmLabel: "Delete",
+      cancelLabel: "Cancel",
     });
 
     if (!shouldDelete) return;
@@ -429,12 +432,13 @@ const YearPage: React.FC = () => {
       const result = await response.json();
 
       if (!response.ok || !result.success) {
-        notDeleted(result.message);
+        notify.error(result.message || "Not deleted, try again");
         focusField(result.field);
         return;
       }
 
-      deleted();
+      // the common message of a delete (hooks/useDeleteToast.ts, the same on every screen)
+      notify.success(deleteSuccessMessage("Year"));
 
       // the server no longer has this year
       setSavedKeys((previous) =>
@@ -446,7 +450,7 @@ const YearPage: React.FC = () => {
       );
     } catch (error: unknown) {
       console.error("deleteYear error:", error);
-      notDeleted();
+      notify.error("Not deleted, try again");
     } finally {
       setSaving(false);
     }
@@ -460,11 +464,8 @@ const YearPage: React.FC = () => {
     setReloadKey((previous) => previous + 1);
   };
 
-  // Ctrl+S Save, Alt+C Clear
+  // The key of the Payment screen: Ctrl+S Save
   useCtrlShortcuts({ s: handleSave });
-  useAltShortcuts({
-    c: handleClear,
-  });
 
   return (
     <div className="flex min-h-full w-full items-start justify-center bg-white px-4 py-4">
@@ -591,35 +592,19 @@ const YearPage: React.FC = () => {
             </div>
 
             {/* Actions: one Save does it all (new rows, changes, deleted rows) */}
-            <div className="mt-5 flex justify-center gap-3">
-              <button
-                id="btnSave"
-                name="btnSave"
-                type="button"
-                onClick={handleSave}
-                disabled={saving}
-                title="Alt+S"
-                className="btn-style disabled:cursor-not-allowed disabled:opacity-60"
-              >
-                Save
-              </button>
-              <button
-                id="btnClear"
-                name="btnClear"
-                type="button"
-                onClick={handleClear}
-                disabled={saving}
-                title="Alt+C"
-                className="btn-style disabled:cursor-not-allowed disabled:opacity-60"
-              >
-                <u>C</u>lear
-              </button>
-            </div>
+            <TransactionActions
+              className="mt-5 flex justify-center gap-3"
+              actions={[
+                { id: "btnSave", label: "Save", underlineIndex: 0, onClick: handleSave, disabled: saving },
+                { id: "btnClear", label: "Clear", onClick: handleClear, disabled: saving },
+              ]}
+            />
           </section>
         </main>
       </div>
 
       {dialog}
+      {messageDialog}
     </div>
   );
 };

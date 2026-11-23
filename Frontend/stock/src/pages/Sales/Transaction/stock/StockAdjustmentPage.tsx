@@ -8,7 +8,6 @@ import Select, {
   type SingleValue,
   type StylesConfig,
 } from "react-select";
-import { toast } from "react-toastify";
 import { filterPairOption } from "../../../../components/PairSelect/pairSelectParts";
 import { accountDropdownStyles } from "../../../../components/Transaction/Receipt/save/ReactSelectStyles";
 import CommonTableSelect from "../../../../components/common/CommonTableSelect";
@@ -26,7 +25,9 @@ import {
   printStockAdjustmentReport,
   type PrintReport,
 } from "../../../../components/Transaction/StockAdjustment/StockAdjustmentPrintReport";
-import { useDeleteToast } from "../../../../hooks/useDeleteToast";
+import { deleteSuccessMessage } from "../../../../hooks/useDeleteToast";
+import { useMessageModal } from "../../../../hooks/useMessageModal";
+import TransactionActions from "../../../../components/common/TransactionActions";
 import { useButtonPermissions } from "../../../../hooks/useButtonPermissions";
 import { filterLabelOrValue } from "../../../../components/BranchSelect/branchSelectParts";
 import { SELECT_FONT_FAMILY } from "../../../../components/sharecomponents/selectComponents";
@@ -382,9 +383,8 @@ const StockAdjustmentPage: React.FC = () => {
   const { confirm, dialog: confirmDialog } = useConfirmModal();
   // the cell the cursor is in is outlined; a typed-in box has its text selected
   const { cellFocusClass, selectOnFocus } = useGridCellFocus();
-  // the standard messages of a delete (the same on every screen)
-  // only the failure message is used: a delete that worked shows none
-  const { notDeleted } = useDeleteToast(SCREEN_TITLE);
+  // the messages (warnings, errors, saved ...) are the common message window, as on the Payment screen - not a toast
+  const { notify, dialog: messageDialog } = useMessageModal(SCREEN_TITLE);
 
   // the branch list and the default branch have been loaded (the cursor can start)
   const [branchesLoaded, setBranchesLoaded] = useState(false);
@@ -466,7 +466,7 @@ const StockAdjustmentPage: React.FC = () => {
         const PstrCoID = localStorage.getItem("PstrCoID");
 
         if (!PstrCoID) {
-          toast.error("getBranchList: no PstrCoID in localStorage");
+          notify.error("getBranchList: no PstrCoID in localStorage");
           return;
         }
 
@@ -478,7 +478,7 @@ const StockAdjustmentPage: React.FC = () => {
         const result = await response.json();
 
         if (!response.ok || !result.success) {
-          toast.error(`getBranchList failed: ${result.message}`);
+          notify.error(`getBranchList failed: ${result.message}`);
           return;
         }
 
@@ -497,7 +497,7 @@ const StockAdjustmentPage: React.FC = () => {
         setLkpBranch(initial);
       } catch (error) {
         console.error("loadBranches (stock adjustment) error:", error);
-        toast.error(
+        notify.error(
           `Stock Adjustment load error: ${error instanceof Error ? error.message : String(error)}`,
         );
       } finally {
@@ -547,7 +547,7 @@ const StockAdjustmentPage: React.FC = () => {
       if (!response.ok || !result.success) {
         setTxtDocNo("");
         setTxtNextDocNo("");
-        toast.error(result.message || "The next Entry No. could not be made");
+        notify.error(result.message || "The next Entry No. could not be made");
         return;
       }
 
@@ -557,7 +557,7 @@ const StockAdjustmentPage: React.FC = () => {
       setChkStrictSerial(Boolean(result.chkStrictSerial));
     } catch (error) {
       console.error("getNextDocNo error:", error);
-      toast.error("Cannot connect to Stock Adjustment API.");
+      notify.error("Cannot connect to Stock Adjustment API.");
     }
   };
 
@@ -587,7 +587,7 @@ const StockAdjustmentPage: React.FC = () => {
       const result = await response.json();
 
       if (!response.ok || !result.success) {
-        toast.error(result.message || "Failed to load the Stock Adjustment");
+        notify.error(result.message || "Failed to load the Stock Adjustment");
         return;
       }
 
@@ -596,7 +596,7 @@ const StockAdjustmentPage: React.FC = () => {
         resetDocument();
 
         if (chkStrictSerial && docNo.trim() !== txtNextDocNo) {
-          toast.warning("Entry No. should be Strictly Serial.");
+          notify.warning("Entry No. should be Strictly Serial.");
         }
 
         return;
@@ -675,11 +675,11 @@ const StockAdjustmentPage: React.FC = () => {
       setTxtUserInfo(info);
 
       if (result.chkPosted) {
-        toast.info("This Stock Adjustment is posted: it is locked.");
+        notify.info("This Stock Adjustment is posted: it is locked.");
       }
     } catch (error) {
       console.error("getStockAdjustment error:", error);
-      toast.error(
+      notify.error(
         `Stock Adjustment load error: ${error instanceof Error ? error.message : String(error)}`,
       );
     }
@@ -715,7 +715,7 @@ const StockAdjustmentPage: React.FC = () => {
         const result = await response.json();
 
         if (!response.ok || !result.success) {
-          toast.error(`getItemList failed: ${result.message}`);
+          notify.error(`getItemList failed: ${result.message}`);
           return;
         }
 
@@ -738,7 +738,7 @@ const StockAdjustmentPage: React.FC = () => {
         await loadNextDocNo(lkpBranch.value);
       } catch (error) {
         console.error("loadBranch (stock adjustment) error:", error);
-        toast.error(
+        notify.error(
           `Stock Adjustment load error: ${error instanceof Error ? error.message : String(error)}`,
         );
       }
@@ -772,14 +772,14 @@ const StockAdjustmentPage: React.FC = () => {
       const result = await response.json();
 
       if (!response.ok || !result.success) {
-        toast.error(result.message || "Failed to load the stock of the item");
+        notify.error(result.message || "Failed to load the stock of the item");
         return null;
       }
 
       return { stock: Number(result.txtStock), unitCost: Number(result.txtUnitCost) };
     } catch (error) {
       console.error("getItemStock error:", error);
-      toast.error("Cannot connect to Stock Adjustment API.");
+      notify.error("Cannot connect to Stock Adjustment API.");
       return null;
     }
   };
@@ -868,7 +868,7 @@ const StockAdjustmentPage: React.FC = () => {
 
     // the old "Item already exists !": the row is cleared
     if (duplicate) {
-      toast.warning("Item already exists !");
+      notify.warning("Item already exists !");
       updateRow(rowIndex, "lkpItemID", null);
       return;
     }
@@ -932,7 +932,7 @@ const StockAdjustmentPage: React.FC = () => {
     }
 
     if (stock !== null && qty > stock) {
-      toast.warning("Out Of Stock");
+      notify.warning("Out Of Stock");
     }
   };
 
@@ -1066,12 +1066,12 @@ const StockAdjustmentPage: React.FC = () => {
     if (saving) return;
 
     if (chkPosted) {
-      toast.warning("This Stock Adjustment is already posted and cannot be modified.");
+      notify.warning("This Stock Adjustment is already posted and cannot be modified.");
       return;
     }
 
     if (!canSaveOrModify) {
-      toast.error(`You do not have permission to ${actionWord}.`);
+      notify.error(`You do not have permission to ${actionWord}.`);
       return;
     }
 
@@ -1079,24 +1079,24 @@ const StockAdjustmentPage: React.FC = () => {
     const PstrYear = localStorage.getItem("PstrYear");
 
     if (!PstrCoID || !PstrYear) {
-      toast.error("Company ID / Year not found. Please log in again.");
+      notify.error("Company ID / Year not found. Please log in again.");
       return;
     }
 
     if (!lkpBranch) {
-      toast.warning("Please select 'Branch'");
+      notify.warning("Please select 'Branch'");
       document.getElementById("lkpBranch")?.focus();
       return;
     }
 
     if (txtDocNo.trim() === "") {
-      toast.warning("Please enter 'Entry No'");
+      notify.warning("Please enter 'Entry No'");
       document.getElementById("txtDocNo")?.focus();
       return;
     }
 
     if (!dtpDate) {
-      toast.warning("Please enter 'Date'");
+      notify.warning("Please enter 'Date'");
       document.getElementById("dtpDate")?.focus();
       return;
     }
@@ -1107,7 +1107,7 @@ const StockAdjustmentPage: React.FC = () => {
       .filter(({ row }) => row.lkpItemID !== null);
 
     if (filledRows.length === 0) {
-      toast.warning("There is no information for saving.");
+      notify.warning("There is no information for saving.");
       document.getElementById("lkpItemID-0")?.focus();
       return;
     }
@@ -1118,7 +1118,7 @@ const StockAdjustmentPage: React.FC = () => {
 
       // the old ValidateGrid: either Qty. Out or Qty. In
       if (qtyIn !== 0 && qtyOut !== 0) {
-        toast.warning(
+        notify.warning(
           `Sl.# : ${position + 1} - Please input either 'Qty. Out' or 'Qty. In'`,
         );
         document.getElementById(`txtQtyOut-${index}`)?.focus();
@@ -1126,7 +1126,7 @@ const StockAdjustmentPage: React.FC = () => {
       }
 
       if (qtyIn === 0 && qtyOut === 0) {
-        toast.warning(`Sl.# : ${position + 1} - Please enter 'Qty. In' or 'Qty. Out'`);
+        notify.warning(`Sl.# : ${position + 1} - Please enter 'Qty. In' or 'Qty. Out'`);
         document.getElementById(`txtQtyIn-${index}`)?.focus();
         return;
       }
@@ -1165,7 +1165,7 @@ const StockAdjustmentPage: React.FC = () => {
       const result = await response.json();
 
       if (!response.ok || !result.success) {
-        toast.error(
+        notify.error(
           result.message ||
             (chkSaved ? "Not Modified,Try again" : "Not Saved,Try again"),
         );
@@ -1178,7 +1178,7 @@ const StockAdjustmentPage: React.FC = () => {
         return;
       }
 
-      toast.success(result.message || (chkSaved ? "Modified" : "Saved"));
+      notify.success(result.message || (chkSaved ? "Modified" : "Saved"));
 
       // as the old form: the page is emptied and the next Entry No. shown
       resetDocument();
@@ -1186,7 +1186,7 @@ const StockAdjustmentPage: React.FC = () => {
       await loadNextDocNo(lkpBranch.value);
     } catch (error) {
       console.error("saveStockAdjustment error:", error);
-      toast.error("Cannot connect to Stock Adjustment API.");
+      notify.error("Cannot connect to Stock Adjustment API.");
     } finally {
       setSaving(false);
     }
@@ -1204,17 +1204,17 @@ const StockAdjustmentPage: React.FC = () => {
     if (saving) return;
 
     if (!chkSaved) {
-      toast.warning("There is no Stock Adjustment to delete.");
+      notify.warning("There is no Stock Adjustment to delete.");
       return;
     }
 
     if (chkPosted) {
-      toast.warning("This Stock Adjustment is already posted and cannot be deleted.");
+      notify.warning("This Stock Adjustment is already posted and cannot be deleted.");
       return;
     }
 
     if (!perms.delete) {
-      toast.error("You do not have permission to Delete.");
+      notify.error("You do not have permission to Delete.");
       return;
     }
 
@@ -1222,19 +1222,22 @@ const StockAdjustmentPage: React.FC = () => {
     const PstrYear = localStorage.getItem("PstrYear");
 
     if (!PstrCoID || !PstrYear) {
-      toast.error("Company ID / Year not found. Please log in again.");
+      notify.error("Company ID / Year not found. Please log in again.");
       return;
     }
 
     if (!lkpBranch) {
-      toast.warning("Please select 'Branch'");
+      notify.warning("Please select 'Branch'");
       document.getElementById("lkpBranch")?.focus();
       return;
     }
 
+    // the question and the buttons of the Payment screen
     const shouldDelete = await confirm({
       title: SCREEN_TITLE,
-      message: "Do you want to delete ?",
+      message: "Do you want to Delete?",
+      confirmLabel: "Delete",
+      cancelLabel: "Cancel",
     });
 
     if (!shouldDelete) {
@@ -1259,7 +1262,7 @@ const StockAdjustmentPage: React.FC = () => {
       const result = await response.json();
 
       if (!response.ok || !result.success) {
-        notDeleted(result.message);
+        notify.error(result.message || "Stock Adjustment could not be deleted");
 
         if (result.field) {
           document.getElementById(result.field)?.focus();
@@ -1268,7 +1271,8 @@ const StockAdjustmentPage: React.FC = () => {
         return;
       }
 
-      // (no message for a deleted Stock Adjustment: the page is just emptied)
+      // the common message of a delete (hooks/useDeleteToast.ts, the same on every screen), then the page is emptied
+      notify.success(deleteSuccessMessage(SCREEN_TITLE));
 
       // as the old form: the page is emptied and the next Entry No. shown
       resetDocument();
@@ -1276,7 +1280,7 @@ const StockAdjustmentPage: React.FC = () => {
       await loadNextDocNo(lkpBranch.value);
     } catch (error) {
       console.error("deleteStockAdjustment error:", error);
-      toast.error("Cannot connect to Stock Adjustment API.");
+      notify.error("Cannot connect to Stock Adjustment API.");
     } finally {
       setSaving(false);
     }
@@ -1300,7 +1304,9 @@ const StockAdjustmentPage: React.FC = () => {
 
     const shouldRemove = await confirm({
       title: SCREEN_TITLE,
-      message: `Do you want to delete Line ${index + 1} ?`,
+      message: `Do you want to Delete Line ${index + 1}?`,
+      confirmLabel: "Delete",
+      cancelLabel: "Cancel",
     });
 
     if (!shouldRemove) return;
@@ -1327,11 +1333,12 @@ const StockAdjustmentPage: React.FC = () => {
         const result = await response.json();
 
         if (!response.ok || !result.success) {
-          notDeleted(result.message);
+          notify.error(result.message || "The line could not be deleted");
           return;
         }
 
-        // (no message for a deleted line: the line just leaves the grid)
+        // the common message of a delete (hooks/useDeleteToast.ts, the same on every screen), then the line leaves the grid
+        notify.success(deleteSuccessMessage(SCREEN_TITLE));
 
         // the last line took the whole adjustment with it: the page starts again
         if (result.chkDocumentDeleted) {
@@ -1340,7 +1347,7 @@ const StockAdjustmentPage: React.FC = () => {
         }
       } catch (error) {
         console.error("deleteStockAdjustmentLine error:", error);
-        toast.error("Cannot connect to Stock Adjustment API.");
+        notify.error("Cannot connect to Stock Adjustment API.");
         return;
       } finally {
         setSaving(false);
@@ -1394,29 +1401,29 @@ const StockAdjustmentPage: React.FC = () => {
     if (saving) return;
 
     if (!lkpBranch) {
-      toast.warning("Please select 'Branch'");
+      notify.warning("Please select 'Branch'");
       document.getElementById("lkpBranch")?.focus();
       return;
     }
 
     if (txtDocNo.trim() === "") {
-      toast.warning("Please enter 'Entry No'");
+      notify.warning("Please enter 'Entry No'");
       document.getElementById("txtDocNo")?.focus();
       return;
     }
 
     if (!chkSaved) {
-      toast.warning("Stock Adjustment not found");
+      notify.warning("Stock Adjustment not found");
       return;
     }
 
     if (chkPosted) {
-      toast.warning("This Stock Adjustment is already posted.");
+      notify.warning("This Stock Adjustment is already posted.");
       return;
     }
 
     if (!perms.post) {
-      toast.error("You do not have permission to Post.");
+      notify.error("You do not have permission to Post.");
       return;
     }
 
@@ -1424,7 +1431,7 @@ const StockAdjustmentPage: React.FC = () => {
     const PstrYear = localStorage.getItem("PstrYear");
 
     if (!PstrCoID || !PstrYear) {
-      toast.error("Company ID / Year not found. Please log in again.");
+      notify.error("Company ID / Year not found. Please log in again.");
       return;
     }
 
@@ -1459,7 +1466,7 @@ const StockAdjustmentPage: React.FC = () => {
       const result = await response.json();
 
       if (!response.ok || !result.success) {
-        toast.error(result.message || "Stock Adjustment Not Posted");
+        notify.error(result.message || "Stock Adjustment Not Posted");
 
         // the backend names the box that failed - same name as the element id
         if (result.field) {
@@ -1469,7 +1476,7 @@ const StockAdjustmentPage: React.FC = () => {
         return;
       }
 
-      toast.success(result.message || "Stock Adjustment Posted");
+      notify.success(result.message || "Stock Adjustment Posted");
 
       // as the old form: the page is emptied and the next Entry No. shown
       resetDocument();
@@ -1477,7 +1484,7 @@ const StockAdjustmentPage: React.FC = () => {
       await loadNextDocNo(lkpBranch.value);
     } catch (error) {
       console.error("postStockAdjustment error:", error);
-      toast.error("Cannot connect to Stock Adjustment API.");
+      notify.error("Cannot connect to Stock Adjustment API.");
     } finally {
       setSaving(false);
     }
@@ -1504,24 +1511,24 @@ const StockAdjustmentPage: React.FC = () => {
     if (saving || preview) return;
 
     if (!lkpBranch) {
-      toast.warning("Please select 'Branch'");
+      notify.warning("Please select 'Branch'");
       document.getElementById("lkpBranch")?.focus();
       return;
     }
 
     if (txtDocNo.trim() === "") {
-      toast.warning("Please enter 'Entry No'");
+      notify.warning("Please enter 'Entry No'");
       document.getElementById("txtDocNo")?.focus();
       return;
     }
 
     if (!chkSaved) {
-      toast.warning("Stock Adjustment not found");
+      notify.warning("Stock Adjustment not found");
       return;
     }
 
     if (!perms.print) {
-      toast.error("You do not have permission to Print.");
+      notify.error("You do not have permission to Print.");
       return;
     }
 
@@ -1538,7 +1545,7 @@ const StockAdjustmentPage: React.FC = () => {
       const result = await response.json();
 
       if (!response.ok || !result.success) {
-        toast.error(result.message || "The Stock Adjustment could not be printed.");
+        notify.error(result.message || "The Stock Adjustment could not be printed.");
         return;
       }
 
@@ -1552,7 +1559,7 @@ const StockAdjustmentPage: React.FC = () => {
       });
     } catch (error) {
       console.error("printStockAdjustment error:", error);
-      toast.error("Cannot connect to Stock Adjustment API.");
+      notify.error("Cannot connect to Stock Adjustment API.");
     } finally {
       setSaving(false);
     }
@@ -1583,7 +1590,7 @@ const StockAdjustmentPage: React.FC = () => {
             : `Could not create the Excel file (error ${response.status})`;
       }
 
-      toast.error(message);
+      notify.error(message);
       return null;
     }
 
@@ -1600,7 +1607,7 @@ const StockAdjustmentPage: React.FC = () => {
     if (saving) return;
 
     if (!lkpBranch) {
-      toast.warning("Please select 'Branch'");
+      notify.warning("Please select 'Branch'");
       document.getElementById("lkpBranch")?.focus();
       return;
     }
@@ -1609,7 +1616,7 @@ const StockAdjustmentPage: React.FC = () => {
     const PstrYear = localStorage.getItem("PstrYear");
 
     if (!PstrCoID || !PstrYear) {
-      toast.error("Company ID / Year not found. Please log in again.");
+      notify.error("Company ID / Year not found. Please log in again.");
       return;
     }
 
@@ -1622,7 +1629,7 @@ const StockAdjustmentPage: React.FC = () => {
       const result = await response.json();
 
       if (!response.ok || !result.success) {
-        toast.error(result.message || "Failed to load the Stock Adjustment list");
+        notify.error(result.message || "Failed to load the Stock Adjustment list");
         return;
       }
 
@@ -1631,7 +1638,7 @@ const StockAdjustmentPage: React.FC = () => {
       setChkFindOpen(true);
     } catch (error) {
       console.error("getFindList error:", error);
-      toast.error("Cannot connect to Stock Adjustment API.");
+      notify.error("Cannot connect to Stock Adjustment API.");
     }
   };
 
@@ -1670,41 +1677,16 @@ const StockAdjustmentPage: React.FC = () => {
     return () => window.removeEventListener("keydown", onKeyDown);
   }, [chkFindOpen]);
 
-  // Alt+E -> Search. Off while the Print Preview is open: it has its own Alt+P, Alt+D and Alt+C.
-  useAltShortcuts(preview ? {} : {
-    e: handleSearch,
-  });
-
-  // Ctrl+S -> Save (new) or Modify (saved), Ctrl+D -> Delete, Ctrl+P -> Print (the old forms' Ctrl+P).
-  // With the Print Preview open only Ctrl+P works: it prints the report that is shown (Save and Delete are off).
+  // The keys of the Payment screen: Ctrl+S Save (new) or Modify (saved), Ctrl+F Find, Ctrl+D Delete, Ctrl+P Print.
+  // With the Print Preview open only Ctrl+P works: it prints the report that is shown (Save, Find and Delete are off).
   useCtrlShortcuts(
     preview
       ? { p: () => printStockAdjustmentReport(preview.report) }
-      : { s: handleSave, d: handleDelete, p: handlePrint }
+      : { s: handleSave, f: handleSearch, d: handleDelete, p: handlePrint }
   );
 
-  // ----------------------------------------------------------
-  // ACTION BUTTONS
-  // ----------------------------------------------------------
-
-  const handleAction = (action: string) => {
-    if (action === "Clear") {
-      clearForm();
-      return;
-    }
-
-    if (action === "Save") {
-      handleSave();
-    } else if (action === "Search") {
-      handleSearch();
-    } else if (action === "Delete") {
-      handleDelete();
-    } else if (action === "Print") {
-      handlePrint();
-    } else if (action === "Post") {
-      handlePost();
-    }
-  };
+  // Post is Alt+T (the T of the button is underlined): Chrome keeps Ctrl+T for "new tab" and never gives it to the page.
+  useAltShortcuts(preview ? {} : { t: handlePost });
 
   // ==========================================================
   // JSX
@@ -2136,6 +2118,7 @@ const StockAdjustmentPage: React.FC = () => {
 
       {/* the "Do you want to delete ?" question */}
       {confirmDialog}
+      {messageDialog}
 
       {/* the Print Preview (after Print) */}
       {preview && (
@@ -2171,48 +2154,51 @@ const StockAdjustmentPage: React.FC = () => {
         </table>
       )}
 
-      {/* ACTION BUTTONS */}
-      <footer className="mt-[14px] flex shrink-0 flex-wrap items-center justify-center gap-3">
-        {["Save", "Search", "Delete", "Print", "Post", "Clear"].map((action) => {
-          const isSave = action === "Save";
-          const isSearch = action === "Search";
-          const label = isSave ? actionWord : action;
-
-          return (
-            <button
-              key={action}
-              id={isSave ? (chkSaved ? "btnModify" : "btnSave") : `btn${action}`}
-              name={isSave ? (chkSaved ? "btnModify" : "btnSave") : `btn${action}`}
-              type="button"
-              onClick={() => handleAction(action)}
-              disabled={
-                isSave
-                  ? !canSaveOrModify || saving || chkPosted
-                  : action === "Search"
-                    ? !lkpBranch || saving
-                    : action === "Delete"
-                      ? !chkSaved || chkPosted || !perms.delete || saving
-                      : action === "Print"
-                        ? !chkSaved || !perms.print || saving
-                        : action === "Post"
-                          ? !chkSaved || chkPosted || !perms.post || saving
-                          : false
-              }
-              className="btn-style disabled:cursor-not-allowed disabled:opacity-40"
-            >
-              {isSearch ? (
-                <>
-                  S
-                  <span className="underline underline-offset-2">e</span>
-                  arch
-                </>
-              ) : (
-                label
-              )}
-            </button>
-          );
-        })}
-      </footer>
+      {/* ACTION BUTTONS - the same buttons and keys as the Payment screen (Ctrl+S, Ctrl+F, Ctrl+D, Ctrl+P) */}
+      <TransactionActions
+        actions={[
+          {
+            id: chkSaved ? "btnModify" : "btnSave",
+            label: actionWord,
+            underlineIndex: 0,
+            onClick: handleSave,
+            disabled: !canSaveOrModify || saving || chkPosted,
+          },
+          {
+            id: "btnSearch",
+            label: "Find",
+            underlineIndex: 0,
+            onClick: handleSearch,
+            disabled: !lkpBranch || saving,
+          },
+          {
+            id: "btnDelete",
+            label: "Delete",
+            underlineIndex: 0,
+            onClick: handleDelete,
+            disabled: !chkSaved || chkPosted || !perms.delete || saving,
+          },
+          {
+            id: "btnPrint",
+            label: "Print",
+            underlineIndex: 0,
+            onClick: handlePrint,
+            disabled: !chkSaved || !perms.print || saving,
+          },
+          {
+            id: "btnPost",
+            label: "Post",
+            underlineIndex: 3,
+            onClick: handlePost,
+            disabled: !chkSaved || chkPosted || !perms.post || saving,
+          },
+          {
+            id: "btnClear",
+            label: "Clear",
+            onClick: clearForm,
+          },
+        ]}
+      />
 
       </div>
 

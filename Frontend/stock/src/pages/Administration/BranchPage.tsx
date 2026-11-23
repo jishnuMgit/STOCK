@@ -1,10 +1,10 @@
 import React, { useEffect, useRef, useState } from "react";
-import { toast } from "react-toastify";
 import { X } from "lucide-react";
-import { useAltShortcuts } from "../../hooks/useAltShortcuts";
 import { useCtrlShortcuts } from "../../hooks/useCtrlShortcuts";
 import { useConfirmModal } from "../../hooks/useConfirmModal";
-import { useDeleteToast } from "../../hooks/useDeleteToast";
+import { deleteSuccessMessage } from "../../hooks/useDeleteToast";
+import { useMessageModal } from "../../hooks/useMessageModal";
+import TransactionActions from "../../components/common/TransactionActions";
 import { useGridCellFocus } from "../../hooks/useGridCellFocus";
 import { tryGetServerDate } from "../../utils/serverDate";
 import Header from "../../components/common/Header";
@@ -92,7 +92,8 @@ const BranchPage: React.FC = () => {
   const [saving, setSaving] = useState(false);
   // the common themed question window and the standard delete messages
   const { confirm, dialog } = useConfirmModal();
-  const { notDeleted } = useDeleteToast("Branch");
+  // the messages (warnings, errors, saved ...) are the common message window, as on the Payment screen - not a toast
+  const { notify, dialog: messageDialog } = useMessageModal("Branch");
   // the cell the cursor is in is outlined (a typed-in box has its text selected)
   const { cellFocusClass, selectOnFocus } = useGridCellFocus();
 
@@ -126,7 +127,7 @@ const BranchPage: React.FC = () => {
         const PstrCoID = localStorage.getItem("PstrCoID");
 
         if (!PstrCoID) {
-          toast.error("getBranch: no PstrCoID in localStorage");
+          notify.error("getBranch: no PstrCoID in localStorage");
           return;
         }
 
@@ -140,7 +141,7 @@ const BranchPage: React.FC = () => {
         if (requestNo !== loadRequest.current) return;
 
         if (!response.ok || !result.success) {
-          toast.error(result.message || "Failed to load the Branches");
+          notify.error(result.message || "Failed to load the Branches");
           return;
         }
 
@@ -187,7 +188,7 @@ const BranchPage: React.FC = () => {
         if (requestNo !== loadRequest.current) return;
 
         console.error("getBranch error:", error);
-        toast.error("Failed to load the Branches");
+        notify.error("Failed to load the Branches");
       }
     };
 
@@ -249,13 +250,13 @@ const BranchPage: React.FC = () => {
       const index = rows.indexOf(row);
 
       if (!row.txtBrID.trim()) {
-        toast.info("Please enter the 'Branch ID'");
+        notify.info("Please enter the 'Branch ID'");
         focusField(`txtBrID-${index}`);
         return;
       }
 
       if (!row.txtBrName.trim()) {
-        toast.info(`Please enter the 'Branch' name of '${row.txtBrID.trim()}'`);
+        notify.info(`Please enter the 'Branch' name of '${row.txtBrID.trim()}'`);
         focusField(`txtBrName-${index}`);
         return;
       }
@@ -270,13 +271,13 @@ const BranchPage: React.FC = () => {
       const nameKey = row.txtBrName.trim().toLowerCase();
 
       if (seenIDs.has(idKey)) {
-        toast.info("'Branch ID' already exists");
+        notify.info("'Branch ID' already exists");
         focusField(`txtBrID-${index}`);
         return;
       }
 
       if (seenNames.has(nameKey)) {
-        toast.info("'Branch Name' already exists");
+        notify.info("'Branch Name' already exists");
         focusField(`txtBrName-${index}`);
         return;
       }
@@ -286,7 +287,7 @@ const BranchPage: React.FC = () => {
     }
 
     if (!hasChanges) {
-      toast.info("There is no data to save");
+      notify.info("There is no data to save");
       return;
     }
 
@@ -316,17 +317,17 @@ const BranchPage: React.FC = () => {
       const result = await response.json();
 
       if (!response.ok || !result.success) {
-        toast.error(result.message || "Not Saved,try again");
+        notify.error(result.message || "Not Saved,try again");
         focusField(result.field);
         return;
       }
 
-      toast.success(result.message);
+      notify.success(result.message);
 
       setReloadKey((previous) => previous + 1);
     } catch (error: unknown) {
       console.error("saveBranch error:", error);
-      toast.error("Not Saved,try again");
+      notify.error("Not Saved,try again");
     } finally {
       setSaving(false);
     }
@@ -350,7 +351,9 @@ const BranchPage: React.FC = () => {
 
     const shouldDelete = await confirm({
       title: "Branch",
-      message: "Do you want to delete ?",
+      message: "Do you want to Delete?",
+      confirmLabel: "Delete",
+      cancelLabel: "Cancel",
     });
 
     if (!shouldDelete) return;
@@ -374,18 +377,19 @@ const BranchPage: React.FC = () => {
       const result = await response.json();
 
       if (!response.ok || !result.success) {
-        notDeleted(result.message);
+        notify.error(result.message || "Not deleted, try again");
         return;
       }
 
-      // (no message for a deleted branch: the row just leaves the grid)
+      // the common message of a delete (hooks/useDeleteToast.ts, the same on every screen), then the row leaves the grid
+      notify.success(deleteSuccessMessage("Branch"));
 
       setRows((previous) =>
         padRows(previous.filter((item) => item.key !== row.key)),
       );
     } catch (error: unknown) {
       console.error("deleteBranch error:", error);
-      notDeleted();
+      notify.error("Not deleted, try again");
     } finally {
       setSaving(false);
     }
@@ -410,12 +414,8 @@ const BranchPage: React.FC = () => {
     setReloadKey((previous) => previous + 1);
   };
 
-  // Ctrl+S Save, Alt+F Find, Alt+C Clear
-  useCtrlShortcuts({ s: handleSave });
-  useAltShortcuts({
-    f: handleFind,
-    c: handleClear,
-  });
+  // The keys of the Payment screen: Ctrl+S Save, Ctrl+F Find
+  useCtrlShortcuts({ s: handleSave, f: handleFind });
 
   const search = txtFind.trim().toLowerCase();
 
@@ -614,45 +614,20 @@ const BranchPage: React.FC = () => {
             </div>
 
             {/* Actions: one Save does it all (new rows, changes, deleted rows) */}
-            <div className="mt-5 flex justify-center gap-3">
-              <button
-                id="btnSave"
-                name="btnSave"
-                type="button"
-                onClick={handleSave}
-                disabled={saving}
-                title="Alt+S"
-                className="btn-style disabled:cursor-not-allowed disabled:opacity-60"
-              >
-                Save
-              </button>
-              <button
-                id="btnFind"
-                name="btnFind"
-                type="button"
-                onClick={handleFind}
-                title="Alt+F"
-                className="btn-style"
-              >
-                <u>F</u>ind
-              </button>
-              <button
-                id="btnClear"
-                name="btnClear"
-                type="button"
-                onClick={handleClear}
-                disabled={saving}
-                title="Alt+C"
-                className="btn-style disabled:cursor-not-allowed disabled:opacity-60"
-              >
-                <u>C</u>lear
-              </button>
-            </div>
+            <TransactionActions
+              className="mt-5 flex justify-center gap-3"
+              actions={[
+                { id: "btnSave", label: "Save", underlineIndex: 0, onClick: handleSave, disabled: saving },
+                { id: "btnFind", label: "Find", underlineIndex: 0, onClick: handleFind },
+                { id: "btnClear", label: "Clear", onClick: handleClear, disabled: saving },
+              ]}
+            />
           </section>
         </main>
       </div>
 
       {dialog}
+      {messageDialog}
     </div>
   );
 };

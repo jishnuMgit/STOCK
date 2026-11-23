@@ -1,11 +1,11 @@
 import React, { useEffect, useState } from "react";
-import { toast } from "react-toastify";
 import { useEnterAsTab } from "../../../hooks/useEnterAsTab";
-import { useAltShortcuts } from "../../../hooks/useAltShortcuts";
 import { useCtrlShortcuts } from "../../../hooks/useCtrlShortcuts";
 import { useButtonPermissions } from "../../../hooks/useButtonPermissions";
 import { useConfirmModal } from "../../../hooks/useConfirmModal";
-import { useDeleteToast } from "../../../hooks/useDeleteToast";
+import { deleteSuccessMessage } from "../../../hooks/useDeleteToast";
+import { useMessageModal } from "../../../hooks/useMessageModal";
+import TransactionActions from "../../../components/common/TransactionActions";
 import { useGridCellFocus } from "../../../hooks/useGridCellFocus";
 import Header from "../../../components/common/Header";
 import { tryGetServerDate } from "../../../utils/serverDate";
@@ -48,7 +48,8 @@ const StaffPage: React.FC = () => {
   // the common themed question window (the same as on the other screens)
   const { confirm, dialog } = useConfirmModal();
   // the standard message of a delete that failed
-  const { notDeleted } = useDeleteToast("Staff");
+  // the messages (warnings, errors, saved ...) are the common message window, as on the Payment screen - not a toast
+  const { notify, dialog: messageDialog } = useMessageModal("Staff");
   // the cell the cursor is in is outlined (a typed-in box has its text selected)
   const { cellFocusClass, selectOnFocus } = useGridCellFocus();
 
@@ -83,7 +84,7 @@ const StaffPage: React.FC = () => {
         const PstrCoID = localStorage.getItem("PstrCoID");
 
         if (!PstrCoID) {
-          toast.error("getStaffList: no PstrCoID in localStorage");
+          notify.error("getStaffList: no PstrCoID in localStorage");
           return;
         }
 
@@ -99,7 +100,7 @@ const StaffPage: React.FC = () => {
 
         if (!result.success) {
           console.error("getStaffList failed:", result.message);
-          toast.error(`getStaffList failed: ${result.message}`);
+          notify.error(`getStaffList failed: ${result.message}`);
           return;
         }
 
@@ -137,7 +138,7 @@ const StaffPage: React.FC = () => {
         });
       } catch (error) {
         console.error("getStaffList error:", error);
-        toast.error(
+        notify.error(
           `getStaffList error: ${error instanceof Error ? error.message : String(error)}`,
         );
       }
@@ -253,9 +254,7 @@ const StaffPage: React.FC = () => {
     }
 
     if (!perms.modify) {
-      toast.warning("You don't have the permission to modify", {
-        toastId: "staff-modify-denied",
-      });
+      notify.warning("You don't have the permission to modify");
       return true;
     }
 
@@ -263,9 +262,8 @@ const StaffPage: React.FC = () => {
       column === "txtStaffID" &&
       usedStaff[row.txtOriginalStaffID] === true
     ) {
-      toast.warning(
+      notify.warning(
         `You can't Modify. Transactions already entered with this Staff '${row.txtOriginalStaffID}'`,
-        { toastId: "staff-modify-used" },
       );
       return true;
     }
@@ -310,11 +308,10 @@ const StaffPage: React.FC = () => {
     );
 
     if (alreadyThere) {
-      toast.warning(
+      notify.warning(
         column === "txtStaffID"
           ? "Staff ID already exists"
           : "Staff Name already exists",
-        { toastId: `staff-duplicate-${column}` },
       );
       updateRow(index, { [column]: original });
       focusCell(column, index);
@@ -423,7 +420,7 @@ const StaffPage: React.FC = () => {
     if (saving) return;
 
     if (!canSaveOrModify) {
-      toast.error(`You do not have permission to ${actionWord}.`);
+      notify.error(`You do not have permission to ${actionWord}.`);
       return;
     }
 
@@ -432,7 +429,7 @@ const StaffPage: React.FC = () => {
     const PstrUserID = localStorage.getItem("PstrUserID");
 
     if (!PstrCoID || !PstrYear || !PstrUserID) {
-      toast.error("Company ID / Year / User ID not found. Please log in again.");
+      notify.error("Company ID / Year / User ID not found. Please log in again.");
       return;
     }
 
@@ -445,7 +442,7 @@ const StaffPage: React.FC = () => {
       );
 
     if (filledRows.length === 0) {
-      toast.warning("There is no information for saving.");
+      notify.warning("There is no information for saving.");
       document.getElementById("txtStaffID-0")?.focus();
       return;
     }
@@ -457,13 +454,13 @@ const StaffPage: React.FC = () => {
 
     for (const { row, index } of filledRows) {
       if (row.txtStaffID.trim() === "") {
-        toast.warning("Please input 'Staff ID'");
+        notify.warning("Please input 'Staff ID'");
         document.getElementById(`txtStaffID-${index}`)?.focus();
         return;
       }
 
       if (row.txtStaffName.trim() === "") {
-        toast.warning("Please input 'Staff Name'");
+        notify.warning("Please input 'Staff Name'");
         document.getElementById(`txtStaffName-${index}`)?.focus();
         return;
       }
@@ -472,13 +469,13 @@ const StaffPage: React.FC = () => {
       const nameKey = row.txtStaffName.trim().toLowerCase();
 
       if (seenIds.has(idKey)) {
-        toast.warning("Staff ID already exists");
+        notify.warning("Staff ID already exists");
         document.getElementById(`txtStaffID-${index}`)?.focus();
         return;
       }
 
       if (seenNames.has(nameKey)) {
-        toast.warning("Staff Name already exists");
+        notify.warning("Staff Name already exists");
         document.getElementById(`txtStaffName-${index}`)?.focus();
         return;
       }
@@ -519,7 +516,7 @@ const StaffPage: React.FC = () => {
       const result = await response.json();
 
       if (!response.ok || !result.success) {
-        toast.error(result.message || "Not saved, try again.");
+        notify.error(result.message || "Not saved, try again.");
 
         // the backend names the box that failed - same name as the element id
         if (result.field) {
@@ -529,13 +526,13 @@ const StaffPage: React.FC = () => {
         return;
       }
 
-      toast.success(result.message || "Staff saved successfully");
+      notify.success(result.message || "Staff saved successfully");
 
       // load the staff again - they now carry their saved ids
       setReloadKey((key) => key + 1);
     } catch (error) {
       console.error("saveStaff error:", error);
-      toast.error("Cannot connect to Staff API.");
+      notify.error("Cannot connect to Staff API.");
     } finally {
       setSaving(false);
     }
@@ -564,14 +561,12 @@ const StaffPage: React.FC = () => {
     }
 
     if (!isAdminUser) {
-      toast.error("Only an Admin User can delete staff.", {
-        toastId: "staff-delete-admin-only",
-      });
+      notify.error("Only an Admin User can delete staff.");
       return;
     }
 
     if (!perms.delete) {
-      toast.error("You do not have permission to Delete.");
+      notify.error("You do not have permission to Delete.");
       return;
     }
 
@@ -580,7 +575,7 @@ const StaffPage: React.FC = () => {
     const PstrUserID = localStorage.getItem("PstrUserID");
 
     if (!PstrCoID || !PstrYear || !PstrUserID) {
-      toast.error("Company ID / Year / User ID not found. Please log in again.");
+      notify.error("Company ID / Year / User ID not found. Please log in again.");
       return;
     }
 
@@ -593,25 +588,27 @@ const StaffPage: React.FC = () => {
       const result = await response.json();
 
       if (!response.ok || !result.success) {
-        toast.error(result.message || "Could not check the staff member.");
+        notify.error(result.message || "Could not check the staff member.");
         return;
       }
 
       if (result.data === true) {
-        toast.info(
+        notify.info(
           `You can't delete. Transactions already entered with this Staff '${row.txtOriginalStaffID}'`,
         );
         return;
       }
     } catch (error) {
       console.error("haveStaffTrans error:", error);
-      toast.error("Cannot connect to Staff API.");
+      notify.error("Cannot connect to Staff API.");
       return;
     }
 
     const shouldDelete = await confirm({
       title: "Staff",
-      message: "Do you want to delete ?",
+      message: "Do you want to Delete?",
+      confirmLabel: "Delete",
+      cancelLabel: "Cancel",
     });
 
     if (!shouldDelete) {
@@ -636,18 +633,19 @@ const StaffPage: React.FC = () => {
       const result = await response.json();
 
       if (!response.ok || !result.success) {
-        notDeleted(result.message);
+        notify.error(result.message || "Not deleted, try again");
         return;
       }
 
-      // (no message for a deleted staff)
+      // the common message of a delete (hooks/useDeleteToast.ts, the same on every screen), then the row leaves the grid
+      notify.success(deleteSuccessMessage("Staff"));
 
       setRows((previousRows) =>
         previousRows.filter((_, rowIndex) => rowIndex !== index),
       );
     } catch (error) {
       console.error("deleteStaff error:", error);
-      toast.error("Cannot connect to Staff API.");
+      notify.error("Cannot connect to Staff API.");
     }
   };
 
@@ -660,16 +658,12 @@ const StaffPage: React.FC = () => {
     setReloadKey((key) => key + 1);
   };
 
-  // Ctrl+S -> Save / Modify, Ctrl+D -> Delete the row the cursor is on (same as the X),
-  // Alt+C -> Clear (the underlined letter on the button)
+  // The keys of the Payment screen: Ctrl+S Save / Modify, Ctrl+D Delete the row the cursor is on (same as the X)
   useCtrlShortcuts({
     s: handleSave,
     d: () => {
       handleDeleteRow(selectedRow);
     },
-  });
-  useAltShortcuts({
-    c: handleClear,
   });
 
   // Enter on a BUTTON presses it (the old form's behaviour: Enter on an empty
@@ -899,28 +893,19 @@ const StaffPage: React.FC = () => {
               BUTTONS
           ==================================================== */}
 
-            <div className="mt-[14px] flex justify-center gap-3">
-              <button
-                id="btnSave"
-                name="btnSave"
-                type="button"
-                onClick={handleSave}
-                disabled={!canSaveOrModify || saving}
-                className="btn-style disabled:cursor-not-allowed disabled:opacity-40"
-              >
-                {actionWord}
-              </button>
-
-              <button
-                id="btnClear"
-                name="btnClear"
-                type="button"
-                onClick={handleClear}
-                className="btn-style"
-              >
-                <span className="underline underline-offset-2">C</span>lear
-              </button>
-            </div>
+            <TransactionActions
+              className="mt-[14px] flex justify-center gap-3"
+              actions={[
+                {
+                  id: "btnSave",
+                  label: actionWord,
+                  underlineIndex: 0,
+                  onClick: handleSave,
+                  disabled: !canSaveOrModify || saving,
+                },
+                { id: "btnClear", label: "Clear", onClick: handleClear },
+              ]}
+            />
           </div>
         </div>
       </div>
@@ -928,6 +913,7 @@ const StaffPage: React.FC = () => {
       {/* the "Do you want to delete ?" question - outside the root div: the page's
         Enter handling must not take the Enter of the Yes / No buttons */}
       {dialog}
+      {messageDialog}
     </>
   );
 };

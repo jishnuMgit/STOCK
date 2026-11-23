@@ -3,13 +3,13 @@ import Header from "../../components/common/Header";
 import CommonTableSelect, {
   type TableSelectOption,
 } from "../../components/common/CommonTableSelect";
-import { toast } from "react-toastify";
 import { useEnterAsTab } from "../../hooks/useEnterAsTab";
-import { useAltShortcuts } from "../../hooks/useAltShortcuts";
 import { useCtrlShortcuts } from "../../hooks/useCtrlShortcuts";
 import { useGridCellFocus } from "../../hooks/useGridCellFocus";
 import { useButtonPermissions } from "../../hooks/useButtonPermissions";
 import { tryGetServerDate } from "../../utils/serverDate";
+import { useMessageModal } from "../../hooks/useMessageModal";
+import TransactionActions from "../../components/common/TransactionActions";
 import { filterLabelOrValue } from "../../components/BranchSelect/branchSelectParts";
 
 // dbo.tblmenu fmenuid of the Set Default Branch page
@@ -45,6 +45,8 @@ const BRANCH_COLUMNS = [
 const SetDefaultBranchPage: React.FC = () => {
   const handleEnterAsTab = useEnterAsTab();
   const perms = useButtonPermissions(MENU_ID);
+  // the messages (warnings, errors, saved ...) are the common message window, as on the Payment screen - not a toast
+  const { notify, dialog: messageDialog } = useMessageModal("Set Default Branch");
   // the cell the cursor is in is outlined
   const { cellFocusClass } = useGridCellFocus();
 
@@ -93,7 +95,7 @@ const SetDefaultBranchPage: React.FC = () => {
       const result = await response.json();
 
       if (!response.ok || !result.success) {
-        toast.error(`getBranchList failed: ${result.message}`);
+        notify.error(`getBranchList failed: ${result.message}`);
         return;
       }
 
@@ -108,7 +110,7 @@ const SetDefaultBranchPage: React.FC = () => {
       }));
     } catch (error) {
       console.error("getBranchList error:", error);
-      toast.error(
+      notify.error(
         `getBranchList error: ${error instanceof Error ? error.message : String(error)}`,
       );
     }
@@ -124,7 +126,7 @@ const SetDefaultBranchPage: React.FC = () => {
         const PstrCoID = localStorage.getItem("PstrCoID");
 
         if (!PstrCoID) {
-          toast.error("getUserList: no PstrCoID in localStorage");
+          notify.error("getUserList: no PstrCoID in localStorage");
           return;
         }
 
@@ -144,12 +146,12 @@ const SetDefaultBranchPage: React.FC = () => {
         const rowResult = await rowResponse.json();
 
         if (!userResponse.ok || !userResult.success) {
-          toast.error(`getUserList failed: ${userResult.message}`);
+          notify.error(`getUserList failed: ${userResult.message}`);
           return;
         }
 
         if (!rowResponse.ok || !rowResult.success) {
-          toast.error(`getDefaultBranchList failed: ${rowResult.message}`);
+          notify.error(`getDefaultBranchList failed: ${rowResult.message}`);
           return;
         }
 
@@ -213,7 +215,7 @@ const SetDefaultBranchPage: React.FC = () => {
         });
       } catch (error) {
         console.error("loadDefaultBranchPage error:", error);
-        toast.error(
+        notify.error(
           `Set Default Branch load error: ${error instanceof Error ? error.message : String(error)}`,
         );
       }
@@ -254,7 +256,7 @@ const SetDefaultBranchPage: React.FC = () => {
     if (saving) return;
 
     if (!canSaveOrModify) {
-      toast.error(`You do not have permission to ${actionWord}.`);
+      notify.error(`You do not have permission to ${actionWord}.`);
       return;
     }
 
@@ -262,12 +264,12 @@ const SetDefaultBranchPage: React.FC = () => {
     const PstrYear = localStorage.getItem("PstrYear");
 
     if (!PstrCoID || !PstrYear) {
-      toast.error("Company ID / Year not found. Please log in again.");
+      notify.error("Company ID / Year not found. Please log in again.");
       return;
     }
 
     if (rows.length === 0) {
-      toast.warning("There is no information for saving.");
+      notify.warning("There is no information for saving.");
       return;
     }
 
@@ -299,7 +301,7 @@ const SetDefaultBranchPage: React.FC = () => {
       const result = await response.json();
 
       if (!response.ok || !result.success) {
-        toast.error(result.message || "Not saved, try again.");
+        notify.error(result.message || "Not saved, try again.");
 
         // the backend names the box that failed - same name as the element id
         if (result.field) {
@@ -309,13 +311,13 @@ const SetDefaultBranchPage: React.FC = () => {
         return;
       }
 
-      toast.success(result.message || "Default branch saved successfully");
+      notify.success(result.message || "Default branch saved successfully");
 
       // load the page again - the rows now carry what was saved
       setReloadKey((key) => key + 1);
     } catch (error) {
       console.error("saveDefaultBranch error:", error);
-      toast.error("Cannot connect to Default Branch API.");
+      notify.error("Cannot connect to Default Branch API.");
     } finally {
       setSaving(false);
     }
@@ -330,12 +332,9 @@ const SetDefaultBranchPage: React.FC = () => {
     setReloadKey((key) => key + 1);
   };
 
-  // Ctrl+S -> Save, Alt+C -> Clear (the underlined letter on its button)
+  // The key of the Payment screen: Ctrl+S Save
   useCtrlShortcuts({
     s: handleSave,
-  });
-  useAltShortcuts({
-    c: handleClear,
   });
 
   // The old form's behaviour: Enter on a BUTTON presses it. Enter anywhere
@@ -361,6 +360,7 @@ const SetDefaultBranchPage: React.FC = () => {
       onKeyDown={handlePageKeyDown}
       className="flex min-h-screen w-full items-center justify-center bg-white"
     >
+      {messageDialog}
       <div className="w-full max-w-[640px] border border-slate-400 bg-white shadow-sm">
         <Header Name="Set Default Branch" />
 
@@ -513,28 +513,19 @@ const SetDefaultBranchPage: React.FC = () => {
               BUTTONS
           ==================================================== */}
 
-          <div className="mt-[14px] flex justify-center gap-3">
-            <button
-              id="btnSave"
-              name="btnSave"
-              type="button"
-              onClick={handleSave}
-              disabled={!canSaveOrModify || saving}
-              className="btn-style disabled:cursor-not-allowed disabled:opacity-40"
-            >
-              {actionWord}
-            </button>
-
-            <button
-              id="btnClear"
-              name="btnClear"
-              type="button"
-              onClick={handleClear}
-              className="btn-style"
-            >
-              <span className="underline underline-offset-2">C</span>lear
-            </button>
-          </div>
+          <TransactionActions
+            className="mt-[14px] flex justify-center gap-3"
+            actions={[
+              {
+                id: "btnSave",
+                label: actionWord,
+                underlineIndex: 0,
+                onClick: handleSave,
+                disabled: !canSaveOrModify || saving,
+              },
+              { id: "btnClear", label: "Clear", onClick: handleClear },
+            ]}
+          />
         </div>
       </div>
     </div>

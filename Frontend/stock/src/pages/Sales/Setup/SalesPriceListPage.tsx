@@ -1,5 +1,4 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
-import { toast } from "react-toastify";
 import SalesPriceListHeader from "../../../components/Setup/SalesPriceList/SalesPriceListHeader";
 import SalesPriceListTable from "../../../components/Setup/SalesPriceList/SalesPriceListTable";
 import SalesPriceListFooter from "../../../components/Setup/SalesPriceList/SalesPriceListFooter";
@@ -9,8 +8,8 @@ import {
   round2,
 } from "../../../components/Setup/SalesPriceList/SalesPriceListShared";
 import type { PairOption } from "../../../components/PairSelect/pairSelectParts";
-import { useAltShortcuts } from "../../../hooks/useAltShortcuts";
 import { useCtrlShortcuts } from "../../../hooks/useCtrlShortcuts";
+import { useMessageModal } from "../../../hooks/useMessageModal";
 import { useButtonPermissions } from "../../../hooks/useButtonPermissions";
 import Header from "../../../components/common/Header";
 import { tryGetServerDate } from "../../../utils/serverDate";
@@ -50,12 +49,10 @@ const focusField = (field?: string) => {
   element?.focus();
 };
 
-type SalesPriceListPageProps = {
-  onClose?: () => void;
-};
-
-const SalesPriceListPage: React.FC<SalesPriceListPageProps> = ({ onClose }) => {
+const SalesPriceListPage: React.FC = () => {
   const perms = useButtonPermissions(MENU_ID);
+  // the messages (warnings, errors, modified ...) are the common message window, as on the Payment screen - not a toast
+  const { notify, dialog: messageDialog } = useMessageModal("Sales Price List");
 
   const [branchOptions, setBranchOptions] = useState<Option[]>([]);
   const [lkpBranch, setLkpBranch] = useState<Option | null>(null);
@@ -92,7 +89,7 @@ const SalesPriceListPage: React.FC<SalesPriceListPageProps> = ({ onClose }) => {
         const PstrCoID = localStorage.getItem("PstrCoID");
 
         if (!PstrCoID) {
-          toast.error("getBranchList: no PstrCoID in localStorage");
+          notify.error("getBranchList: no PstrCoID in localStorage");
           return;
         }
 
@@ -104,7 +101,7 @@ const SalesPriceListPage: React.FC<SalesPriceListPageProps> = ({ onClose }) => {
         const result = await response.json();
 
         if (!response.ok || !result.success) {
-          toast.error(`getBranchList failed: ${result.message}`);
+          notify.error(`getBranchList failed: ${result.message}`);
           return;
         }
 
@@ -122,7 +119,7 @@ const SalesPriceListPage: React.FC<SalesPriceListPageProps> = ({ onClose }) => {
         );
       } catch (error: unknown) {
         console.error("getBranchList error:", error);
-        toast.error("Failed to load branch list");
+        notify.error("Failed to load branch list");
       }
     };
 
@@ -140,14 +137,14 @@ const SalesPriceListPage: React.FC<SalesPriceListPageProps> = ({ onClose }) => {
         const result = await response.json();
 
         if (!response.ok || !result.success) {
-          toast.error(`getItemGroupList failed: ${result.message}`);
+          notify.error(`getItemGroupList failed: ${result.message}`);
           return;
         }
 
         setItemGroups(result.data || []);
       } catch (error: unknown) {
         console.error("getItemGroupList error:", error);
-        toast.error("Failed to load item group list");
+        notify.error("Failed to load item group list");
       }
     };
 
@@ -177,7 +174,7 @@ const SalesPriceListPage: React.FC<SalesPriceListPageProps> = ({ onClose }) => {
         const PstrYear = localStorage.getItem("PstrYear");
 
         if (!PstrCoID || !PstrYear) {
-          toast.error("getSalesPriceList: no PstrCoID / PstrYear in localStorage");
+          notify.error("getSalesPriceList: no PstrCoID / PstrYear in localStorage");
           return;
         }
 
@@ -199,7 +196,7 @@ const SalesPriceListPage: React.FC<SalesPriceListPageProps> = ({ onClose }) => {
         if (requestNo !== gridRequest.current) return;
 
         if (!response.ok || !result.success) {
-          toast.error(`getSalesPriceList failed: ${result.message}`);
+          notify.error(`getSalesPriceList failed: ${result.message}`);
           setRows([]);
           return;
         }
@@ -229,7 +226,7 @@ const SalesPriceListPage: React.FC<SalesPriceListPageProps> = ({ onClose }) => {
         if (requestNo !== gridRequest.current) return;
 
         console.error("getSalesPriceList error:", error);
-        toast.error("Failed to load the Sales Price List");
+        notify.error("Failed to load the Sales Price List");
       }
     };
 
@@ -325,7 +322,7 @@ const SalesPriceListPage: React.FC<SalesPriceListPageProps> = ({ onClose }) => {
 
     // the old only told the user - it did not stop the price
     if (row && value !== row.txtUnitPrice && value < row.txtUnitCost) {
-      toast.info("'Unit Price' is less than 'Unit Cost'");
+      notify.info("'Unit Price' is less than 'Unit Cost'");
     }
 
     setRows((previous) =>
@@ -338,7 +335,7 @@ const SalesPriceListPage: React.FC<SalesPriceListPageProps> = ({ onClose }) => {
   };
 
   // ----------------------------------------------------------
-  // CANCEL / FIND / CLOSE
+  // CANCEL / FIND
   // ----------------------------------------------------------
 
   // the old ClearMe: the % and ticks back to their start, the grid loaded again
@@ -356,11 +353,6 @@ const SalesPriceListPage: React.FC<SalesPriceListPageProps> = ({ onClose }) => {
     setTxtFind("");
   };
 
-  const handleClose = () => {
-    if (onClose) onClose();
-    else window.history.back();
-  };
-
   // ----------------------------------------------------------
   // MODIFY (the old cmdSave_Click): the server checks everything again, and the
   // right to Modify
@@ -370,24 +362,24 @@ const SalesPriceListPage: React.FC<SalesPriceListPageProps> = ({ onClose }) => {
     if (saving || !perms.modify) return;
 
     if (!lkpBranch) {
-      toast.info("Please Select 'Branch'");
+      notify.info("Please Select 'Branch'");
       focusField("lkpBranch");
       return;
     }
 
     if (rdgItemGroup === 0 && lkpItemGroupID === "") {
-      toast.info("Please Select 'Item Group'");
+      notify.info("Please Select 'Item Group'");
       focusField("lkpItemGroupID");
       return;
     }
 
     if (rows.length === 0) {
-      toast.info("There is no data in the grid to modify");
+      notify.info("There is no data in the grid to modify");
       return;
     }
 
     if (changedRows.length === 0) {
-      toast.info("No Unit Price is changed");
+      notify.info("No Unit Price is changed");
       return;
     }
 
@@ -420,33 +412,29 @@ const SalesPriceListPage: React.FC<SalesPriceListPageProps> = ({ onClose }) => {
       const result = await response.json();
 
       if (!response.ok || !result.success) {
-        toast.error(result.message || "Not Modified,Try again");
+        notify.error(result.message || "Not Modified,Try again");
         focusField(result.field);
         return;
       }
 
-      toast.success("Sales Price List modified successfully");
+      notify.success("Sales Price List modified successfully");
 
       // the old ClearMe, then the grid again (with the new prices)
       handleCancel();
     } catch (error: unknown) {
       console.error("modifySalesPriceList error:", error);
-      toast.error("Not Modified,Try again");
+      notify.error("Not Modified,Try again");
     } finally {
       setSaving(false);
     }
   };
 
-  // Ctrl+S Modify (Save), Alt+F Find, Alt+C Cancel, Alt+O Close
-  useCtrlShortcuts({ s: handleModify });
-  useAltShortcuts({
-    f: handleFind,
-    c: handleCancel,
-    o: handleClose,
-  });
+  // The keys of the Payment screen: Ctrl+S Modify (Save), Ctrl+F Find
+  useCtrlShortcuts({ s: handleModify, f: handleFind });
 
   return (
     <div className="flex min-h-full w-full items-start justify-center bg-white px-4 py-4">
+      {messageDialog}
       <div className="min-h-fit w-250 min-w-250 max-w-full bg-white p-0">
         <main className="w-full overflow-hidden border border-[#d5dce2] bg-white">
           <Header Name="Sales Price List" />
@@ -488,7 +476,6 @@ const SalesPriceListPage: React.FC<SalesPriceListPageProps> = ({ onClose }) => {
                 onModify={handleModify}
                 onFind={handleFind}
                 onCancel={handleCancel}
-                onClose={handleClose}
               />
             </div>
           </section>

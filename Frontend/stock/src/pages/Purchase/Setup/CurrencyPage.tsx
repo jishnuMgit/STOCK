@@ -1,10 +1,11 @@
 import React, { useEffect, useState } from "react";
-import { toast } from "react-toastify";
 import { X } from "lucide-react";
 import { useEnterAsTab } from "../../../hooks/useEnterAsTab";
 import { useButtonPermissions } from "../../../hooks/useButtonPermissions";
 import { useConfirmModal } from "../../../hooks/useConfirmModal";
-import { useDeleteToast } from "../../../hooks/useDeleteToast";
+import { deleteSuccessMessage } from "../../../hooks/useDeleteToast";
+import { useMessageModal } from "../../../hooks/useMessageModal";
+import TransactionActions from "../../../components/common/TransactionActions";
 import { useGridCellFocus } from "../../../hooks/useGridCellFocus";
 import Header from "../../../components/common/Header";
 import { tryGetServerDate } from "../../../utils/serverDate";
@@ -65,7 +66,8 @@ console.log(onClose)
   // the common themed question window (the same as on the other screens)
   const { confirm, dialog } = useConfirmModal();
   // the standard message of a delete that failed
-  const { notDeleted } = useDeleteToast("Currency");
+  // the messages (warnings, errors, saved ...) are the common message window, as on the Payment screen - not a toast
+  const { notify, dialog: messageDialog } = useMessageModal("Currency");
   // the cell the cursor is in is outlined (a typed-in box has its text selected)
   const { cellFocusClass, selectOnFocus } = useGridCellFocus();
 
@@ -103,7 +105,7 @@ console.log(onClose)
         const data = await res.json();
 
         if (!res.ok || !data.success) {
-          toast.error(data.message || "Failed to load currencies");
+          notify.error(data.message || "Failed to load currencies");
           return;
         }
         if (cancelled) return;
@@ -128,7 +130,7 @@ console.log(onClose)
           setSelectedRow(firstEmptyRow);
         }, 0);
       } catch {
-        if (!cancelled) toast.error("Failed to load currencies");
+        if (!cancelled) notify.error("Failed to load currencies");
       }
     };
 
@@ -200,14 +202,14 @@ console.log(onClose)
       const data = await res.json();
 
       if (!res.ok || !data.success) {
-        toast.error(data.message || "Could not check the transactions");
+        notify.error(data.message || "Could not check the transactions");
         return true; // when in doubt, do not allow the change
       }
 
       setUsedIds((previous) => ({ ...previous, [id]: !!data.used }));
       return !!data.used;
     } catch {
-      toast.error("Could not check the transactions.");
+      notify.error("Could not check the transactions.");
       return true;
     }
   };
@@ -228,16 +230,13 @@ console.log(onClose)
     }
 
     if (!perms.modify) {
-      toast.warning("You don't have the permission to modify", {
-        toastId: "cur-modify-denied",
-      });
+      notify.warning("You don't have the permission to modify");
       return true;
     }
 
     if (usedIds[row.txtOriginalCurrency] === true) {
-      toast.warning(
+      notify.warning(
         "You can't Modify. Transactions already entered with this Currency",
-        { toastId: "cur-modify-used" },
       );
       return true;
     }
@@ -271,7 +270,7 @@ console.log(onClose)
     );
 
     if (alreadyThere) {
-      toast.warning("Currency already exists", { toastId: "cur-duplicate" });
+      notify.warning("Currency already exists");
       updateRow(index, { txtCurrency: original });
       focusCell(index);
     }
@@ -294,23 +293,22 @@ console.log(onClose)
 
     if (original !== null) {
       if (!perms.delete) {
-        toast.warning("You don't have the permission to delete", {
-          toastId: "cur-delete-denied",
-        });
+        notify.warning("You don't have the permission to delete");
         return;
       }
 
       if (await isUsed(original)) {
-        toast.warning(
+        notify.warning(
           "You can't delete. Transactions already entered with this Currency",
-          { toastId: "cur-delete-used" },
         );
         return;
       }
 
       const shouldDelete = await confirm({
         title: "Currency",
-        message: "Do you want to delete ?",
+        message: "Do you want to Delete?",
+        confirmLabel: "Delete",
+        cancelLabel: "Cancel",
       });
 
       if (!shouldDelete) return;
@@ -333,13 +331,14 @@ console.log(onClose)
         const data = await res.json();
 
         if (!res.ok || !data.success) {
-          notDeleted(data.message);
+          notify.error(data.message || "Not deleted, try again");
           return;
         }
 
-        // (no message for a deleted currency)
+        // the common message of a delete (hooks/useDeleteToast.ts, the same on every screen)
+        notify.success(deleteSuccessMessage("Currency"));
       } catch {
-        notDeleted();
+        notify.error("Not deleted, try again");
         return;
       }
     }
@@ -454,7 +453,7 @@ console.log(onClose)
       updated.length === 0 &&
       deletedIds.length === 0
     ) {
-      toast.info("Nothing to save", { toastId: "cur-nothing" });
+      notify.info("Nothing to save");
       return;
     }
 
@@ -480,15 +479,15 @@ console.log(onClose)
       const data = await res.json();
 
       if (!res.ok || !data.success) {
-        toast.error(data.message || "Not saved, try again");
+        notify.error(data.message || "Not saved, try again");
         return;
       }
 
-      toast.success("Currency saved successfully");
+      notify.success("Currency saved successfully");
        handleClear();
       reload();
     } catch {
-      toast.error("Not saved, try again");
+      notify.error("Not saved, try again");
     } finally {
       setSaving(false);
     }
@@ -527,8 +526,7 @@ console.log(onClose)
   // KEYBOARD SHORTCUTS (page wide)
   //  Ctrl+S  Save / Modify
   //  Ctrl+D  delete the selected row (also Ctrl+Delete; also when focus is not in a box)
-  //  Alt+F  Find
-  //  Alt+C  Clear
+  //  Ctrl+F  Find
   // No dependency array on purpose: the listener is re-attached after every
   // render, so it always sees the latest rows / permissions / handlers.
   // ============================================================
@@ -550,18 +548,10 @@ console.log(onClose)
         return;
       }
 
-      if (event.altKey && !event.ctrlKey && !event.metaKey) {
-        if (event.code === "KeyF") {
-          event.preventDefault();
-          openFind();
-          return;
-        }
-
-        if (event.code === "KeyC") {
-          event.preventDefault();
-          handleClear();
-          return;
-        }
+      if (event.ctrlKey && !event.altKey && !event.metaKey && event.code === "KeyF") {
+        event.preventDefault();
+        openFind();
+        return;
       }
 
       if (
@@ -704,41 +694,20 @@ console.log(onClose)
           </div>
 
           {/* BUTTONS */}
-          <div className="mt-3.5 flex justify-center gap-3">
-            <button
-              id="btnSave"
-              name="btnSave"
-              type="button"
-              onClick={handleSave}
-              disabled={!canSaveOrModify || saving}
-              title="Ctrl+S"
-              className="btn-style disabled:cursor-not-allowed disabled:opacity-40"
-            >
-              {actionWord}
-            </button>
-
-            <button
-              id="btnSearch"
-              name="btnSearch"
-              type="button"
-              // onClick={openFind}
-              title="Alt+F"
-              className="btn-style"
-            >
-              S<span className="underline underline-offset-2">e</span>arch
-            </button>
-
-            <button
-              id="btnClear"
-              name="btnClear"
-              type="button"
-              onClick={handleClear}
-              title="Alt+C"
-              className="btn-style"
-            >
-              <span className="underline underline-offset-2">C</span>lear
-            </button>
-          </div>
+          <TransactionActions
+            className="mt-3.5 flex justify-center gap-3"
+            actions={[
+              {
+                id: "btnSave",
+                label: actionWord,
+                underlineIndex: 0,
+                onClick: handleSave,
+                disabled: !canSaveOrModify || saving,
+              },
+              { id: "btnSearch", label: "Find", underlineIndex: 0, onClick: openFind },
+              { id: "btnClear", label: "Clear", onClick: handleClear },
+            ]}
+          />
         </div>
       </div>
 
@@ -807,6 +776,7 @@ console.log(onClose)
     {/* the "Do you want to delete ?" question - outside the root div: the page's
         Enter handling must not take the Enter of the Yes / No buttons */}
     {dialog}
+    {messageDialog}
     </>
   );
 };

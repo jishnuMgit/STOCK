@@ -3,10 +3,13 @@ import Select, {
   type StylesConfig,
   type SingleValue,
 } from "react-select";
-import { toast } from "react-toastify";
 import Header from "../../components/common/Header";
 import selectComponents from "../../components/common/selectComponents";
 import { useCtrlShortcuts } from "../../hooks/useCtrlShortcuts";
+import { useConfirmModal } from "../../hooks/useConfirmModal";
+import { deleteSuccessMessage } from "../../hooks/useDeleteToast";
+import { useMessageModal } from "../../hooks/useMessageModal";
+import TransactionActions from "../../components/common/TransactionActions";
 
 type Option = {
   value: string;
@@ -206,7 +209,7 @@ const CompanyPage: React.FC = () => {
         );
         const data = await res.json();
         if (!res.ok || !data.success) {
-          toast.error(data.message || "Failed to load year closing methods");
+          notify.error(data.message || "Failed to load year closing methods");
           return;
         }
         if (cancelled) return;
@@ -218,7 +221,7 @@ const CompanyPage: React.FC = () => {
           })),
         );
       } catch {
-        if (!cancelled) toast.error("Failed to load year closing methods");
+        if (!cancelled) notify.error("Failed to load year closing methods");
       }
     };
 
@@ -282,12 +285,12 @@ const CompanyPage: React.FC = () => {
 
   const handleSave = async () => {
     if (!txtCoID.trim()) {
-      toast.warning("Company ID is required");
+      notify.warning("Company ID is required");
       document.getElementById("txtCoID")?.focus();
       return;
     }
     if (!txtCoName.trim()) {
-      toast.warning("Company Name is required");
+      notify.warning("Company Name is required");
       document.getElementById("txtCoName")?.focus();
       return;
     }
@@ -312,14 +315,14 @@ const CompanyPage: React.FC = () => {
       });
       const data = await res.json();
       if (!res.ok || !data.success) {
-        toast.error(data.message || "Not saved, try again");
+        notify.error(data.message || "Not saved, try again");
         return;
       }
-      toast.success(data.message);
+      notify.success(data.message);
       handleClear();
       document.getElementById("txtCoID")?.focus();
     } catch {
-      toast.error("Not saved, try again");
+      notify.error("Not saved, try again");
     } finally {
       setSaving(false);
     }
@@ -358,28 +361,32 @@ const CompanyPage: React.FC = () => {
 
       const data = await res.json();
       if (!res.ok || !data.success) {
-        if (showErrors) toast.error(data.message || "Search failed");
+        if (showErrors) notify.error(data.message || "Search failed");
         return false;
       }
 
       fillForm(data.company);
       return true;
     } catch {
-      if (showErrors) toast.error("Search failed");
+      if (showErrors) notify.error("Search failed");
       return false;
     }
   };
+
+  // the common themed question window, and the messages as the common message window (as on the Payment screen - not a toast)
+  const { confirm, dialog } = useConfirmModal();
+  const { notify, dialog: messageDialog } = useMessageModal("Company");
 
   // Search button
   const handleSearch = async () => {
     const id = txtCoID.trim();
     if (!id) {
-      toast.warning("Enter a Company ID to search");
+      notify.warning("Enter a Company ID to search");
       document.getElementById("txtCoID")?.focus();
       return;
     }
     const found = await loadCompany(id, true);
-    if (!found) toast.info("Company not found", { toastId: "co-not-found" });
+    if (!found) notify.info("Company not found");
   };
 
   // Runs when the cursor leaves the Company ID box
@@ -406,10 +413,17 @@ const CompanyPage: React.FC = () => {
 
   const handleDelete = async () => {
     if (!originalCoID) {
-      toast.warning("Search for a company first");
+      notify.warning("Search for a company first");
       return;
     }
-    if (!window.confirm(`Delete company ${originalCoID}?`)) return;
+    // the question and the buttons of the Payment screen
+    const shouldDelete = await confirm({
+      title: "Company",
+      message: "Do you want to Delete?",
+      confirmLabel: "Delete",
+      cancelLabel: "Cancel",
+    });
+    if (!shouldDelete) return;
 
     try {
       const res = await fetch(`${API}/${encodeURIComponent(originalCoID)}`, {
@@ -417,26 +431,26 @@ const CompanyPage: React.FC = () => {
       });
       const data = await res.json();
       if (!res.ok || !data.success) {
-        toast.error(data.message || "Not deleted");
+        notify.error(data.message || "Not deleted");
         return;
       }
-      toast.success(data.message);
+      // the common message of a delete (hooks/useDeleteToast.ts, the same on every screen)
+      notify.success(deleteSuccessMessage("Company"));
       handleClear();
       document.getElementById("txtCoID")?.focus();
     } catch {
-      toast.error("Not deleted");
+      notify.error("Not deleted");
     }
   };
 
   // ============================================================
-  // ALT SHORTCUTS: S = Save, M = Modify, D = Delete, C = Clear, E = Search
+  // KEYS: the keys of the Payment screen - Ctrl+S Save / Modify, Ctrl+F Find, Ctrl+D Delete
   // ============================================================
 
   const actionsRef = useRef({
     save: () => { },
     modify: () => { },
     del: () => { },
-    clear: () => { },
     search: () => { },
   });
 
@@ -449,40 +463,17 @@ const CompanyPage: React.FC = () => {
         if (originalCoID && !saving) handleSave();
       },
       del: () => handleDelete(),
-      clear: () => {
-        handleClear();
-        document.getElementById("txtCoID")?.focus();
-      },
       search: () => handleSearch(),
     };
   });
 
-  useEffect(() => {
-    const onKeyDown = (e: KeyboardEvent) => {
-      if (!e.altKey || e.ctrlKey || e.metaKey) return;
-
-      const actions: Record<string, () => void> = {
-        KeyC: () => actionsRef.current.clear(),
-        KeyE: () => actionsRef.current.search(),
-      };
-
-      const action = actions[e.code];
-      if (!action) return;
-
-      e.preventDefault();
-      action();
-    };
-
-    window.addEventListener("keydown", onKeyDown);
-    return () => window.removeEventListener("keydown", onKeyDown);
-  }, []);
-
-  // Ctrl+S -> Save (a new company) or Modify (a saved one) - only one of the two runs - and Ctrl+D -> Delete
+  // Ctrl+S -> Save (a new company) or Modify (a saved one) - only one of the two runs -, Ctrl+F -> Find, Ctrl+D -> Delete
   useCtrlShortcuts({
     s: () => {
       actionsRef.current.save();
       actionsRef.current.modify();
     },
+    f: () => actionsRef.current.search(),
     d: () => actionsRef.current.del(),
   });
 
@@ -492,6 +483,8 @@ const CompanyPage: React.FC = () => {
 
   return (
     <div className="flex min-h-screen w-full items-center justify-center bg-white">
+      {dialog}
+      {messageDialog}
       <div className="w-[870px] overflow-hidden border border-slate-400 bg-white shadow-sm">
         <Header Name="Company" />
 
@@ -693,59 +686,22 @@ const CompanyPage: React.FC = () => {
             />
           </div>
 
-          <div className="mt-[14px] flex justify-center gap-3">
-            <button
-              id="btnSave"
-              type="button"
-              onClick={handleSave}
-              disabled={saving}
-              title={originalCoID ? "Alt+M" : "Alt+S"}
-              className="btn-style"
-            >
-              {originalCoID ? (
-                <>
-                  Modify
-                </>
-              ) : (
-                <>
-                  Save
-                </>
-              )}
-            </button>
-
-            <button
-              id="btnSearch"
-              type="button"
-              onClick={handleSearch}
-              title="Alt+E"
-              className="btn-style"
-            >
-              S
-              <span className="underline underline-offset-2">e</span>
-              arch
-            </button>
-
-            <button
-              id="btnDelete"
-              type="button"
-              onClick={handleDelete}
-              title="Alt+D"
-              className="btn-style"
-            >
-              Delete
-            </button>
-
-            <button
-              id="btnClear"
-              type="button"
-              onClick={handleClear}
-              title="Alt+C"
-              className="btn-style"
-            >
-              <span className="underline underline-offset-2">C</span>
-              lear
-            </button>
-          </div>
+          <TransactionActions
+            className="mt-[14px] flex justify-center gap-3"
+            actions={[
+              {
+                id: "btnSave",
+                // always "Save": there is no "Modify" wording on this screen (a saved company is updated by the same button)
+                label: "Save",
+                underlineIndex: 0,
+                onClick: handleSave,
+                disabled: saving,
+              },
+              { id: "btnSearch", label: "Find", underlineIndex: 0, onClick: handleSearch },
+              { id: "btnDelete", label: "Delete", underlineIndex: 0, onClick: handleDelete },
+              { id: "btnClear", label: "Clear", onClick: handleClear },
+            ]}
+          />
         </div>
       </div>
     </div>

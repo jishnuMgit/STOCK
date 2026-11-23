@@ -1,13 +1,13 @@
 import React, { useCallback, useEffect, useRef, useState } from "react";
 import Header from "../../../components/common/Header";
 import Select, { type SingleValue, type StylesConfig } from "react-select";
-import { toast } from "react-toastify";
 import { useEnterAsTab } from "../../../hooks/useEnterAsTab";
-import { useAltShortcuts } from "../../../hooks/useAltShortcuts";
 import { useCtrlShortcuts } from "../../../hooks/useCtrlShortcuts";
 import { useButtonPermissions } from "../../../hooks/useButtonPermissions";
 import { useConfirmModal } from "../../../hooks/useConfirmModal";
-import { useDeleteToast } from "../../../hooks/useDeleteToast";
+import { deleteSuccessMessage } from "../../../hooks/useDeleteToast";
+import { useMessageModal } from "../../../hooks/useMessageModal";
+import TransactionActions from "../../../components/common/TransactionActions";
 import { GRID_CELL_FOCUS_CLASS } from "../../../hooks/useGridCellFocus";
 import { useInitialFocus } from "../../../hooks/useInitialFocus";
 import selectComponents, {
@@ -590,7 +590,8 @@ const UserPermission: React.FC = () => {
   const handleEnterAsTab = useEnterAsTab();
   // the common themed question window and the standard delete messages
   const { confirm, dialog } = useConfirmModal();
-  const { notDeleted } = useDeleteToast("User Permission - Menu");
+  // the messages (warnings, errors, saved ...) are the common message window, as on the Payment screen - not a toast
+  const { notify, dialog: messageDialog } = useMessageModal("User Permission - Menu");
 
   // no user is selected when the page opens
   const [lkpUserID, setLkpUserID] = useState("");
@@ -617,7 +618,7 @@ const UserPermission: React.FC = () => {
 
     if (!PstrCoID) {
       setMenuTree([]);
-      toast.error("Company ID not found. Please log in again.");
+      notify.error("Company ID not found. Please log in again.");
       return;
     }
 
@@ -656,7 +657,7 @@ const UserPermission: React.FC = () => {
       console.error("Load permissions failed:", err);
       setMenuTree([]);
 
-      toast.error(
+      notify.error(
         err instanceof Error
           ? err.message
           : "Failed to load permissions."
@@ -800,12 +801,12 @@ const UserPermission: React.FC = () => {
 
   const handleSave = async () => {
     if (!perms.save) {
-      toast.error("You do not have permission to Save.");
+      notify.error("You do not have permission to Save.");
       return;
     }
 
     if (!lkpUserID.trim()) {
-      toast.warning("Please enter a user ID.");
+      notify.warning("Please enter a user ID.");
       return;
     }
 
@@ -814,7 +815,7 @@ const UserPermission: React.FC = () => {
     const PstrUserID = localStorage.getItem("PstrUserID");
 
     if (!PstrCoID || !PstrYear || !PstrUserID) {
-      toast.error("Company ID / Year / User ID not found. Please log in again.");
+      notify.error("Company ID / Year / User ID not found. Please log in again.");
       return;
     }
 
@@ -843,13 +844,13 @@ const UserPermission: React.FC = () => {
         );
       }
 
-      toast.success(
+      notify.success(
         result.message || "Permissions saved successfully."
       );
     } catch (err) {
       console.error("Save permissions failed:", err);
 
-      toast.error(
+      notify.error(
         err instanceof Error
           ? err.message
           : "Failed to save permissions."
@@ -866,12 +867,12 @@ const UserPermission: React.FC = () => {
 
   const handleDelete = async () => {
     if (!perms.delete) {
-      toast.error("You do not have permission to Delete.");
+      notify.error("You do not have permission to Delete.");
       return;
     }
 
     if (!lkpUserID.trim()) {
-      toast.warning("Please enter a user ID.");
+      notify.warning("Please enter a user ID.");
       return;
     }
 
@@ -880,13 +881,15 @@ const UserPermission: React.FC = () => {
     const PstrUserID = localStorage.getItem("PstrUserID");
 
     if (!PstrCoID || !PstrYear || !PstrUserID) {
-      toast.error("Company ID / Year / User ID not found. Please log in again.");
+      notify.error("Company ID / Year / User ID not found. Please log in again.");
       return;
     }
 
     const shouldDelete = await confirm({
       title: "User Permission - Menu",
-      message: "Do you want to delete ?",
+      message: "Do you want to Delete?",
+      confirmLabel: "Delete",
+      cancelLabel: "Cancel",
     });
 
     if (!shouldDelete) {
@@ -916,11 +919,12 @@ const UserPermission: React.FC = () => {
 
       setMenuTree((previous) => clearTree(previous));
 
-      // (no message after a delete: the tree just clears)
+      // the common message of a delete (hooks/useDeleteToast.ts, the same on every screen)
+      notify.success(deleteSuccessMessage("User Permission - Menu"));
     } catch (err) {
       console.error("Delete permissions failed:", err);
 
-      notDeleted(err instanceof Error ? err.message : undefined);
+      notify.error(err instanceof Error && err.message ? err.message : "Not deleted, try again");
     } finally {
       setSaving(false);
     }
@@ -936,16 +940,12 @@ const UserPermission: React.FC = () => {
 
   // ==========================================================
   // KEYBOARD SHORTCUTS
-  // Ctrl+S -> Save, Ctrl+D -> Delete, Alt+C -> Clear (Clear matches the
-  // underlined letter on its button).
+  // The keys of the Payment screen: Ctrl+S Save, Ctrl+D Delete.
   // ==========================================================
 
   useCtrlShortcuts({
     s: handleSave,
     d: handleDelete,
-  });
-  useAltShortcuts({
-    c: handleClear,
   });
 
   // The old form's behaviour: Enter on a BUTTON presses it (expand / collapse, Save,
@@ -1059,34 +1059,26 @@ const UserPermission: React.FC = () => {
         </section>
 
         {/* Action buttons */}
-        <footer className="mt-[14px] flex shrink-0 justify-center gap-3">
-          <button
-            type="button"
-            onClick={handleSave}
-            disabled={saving || loading || !perms.save}
-            className="btn-style disabled:cursor-not-allowed disabled:opacity-40"
-          >
-            Save
-          </button>
-
-          <button
-            type="button"
-            onClick={handleDelete}
-            disabled={saving || loading || !perms.delete}
-            className="btn-style disabled:cursor-not-allowed disabled:opacity-40"
-          >
-            Delete
-          </button>
-
-          <button
-            type="button"
-            onClick={handleClear}
-            disabled={saving || loading}
-            className="btn-style disabled:cursor-not-allowed disabled:opacity-40"
-          >
-            <span className="underline underline-offset-2">C</span>lear
-          </button>
-        </footer>
+        <TransactionActions
+          className="mt-[14px] flex shrink-0 justify-center gap-3"
+          actions={[
+            {
+              id: "btnSave",
+              label: "Save",
+              underlineIndex: 0,
+              onClick: handleSave,
+              disabled: saving || loading || !perms.save,
+            },
+            {
+              id: "btnDelete",
+              label: "Delete",
+              underlineIndex: 0,
+              onClick: handleDelete,
+              disabled: saving || loading || !perms.delete,
+            },
+            { id: "btnClear", label: "Clear", onClick: handleClear, disabled: saving || loading },
+          ]}
+        />
 
         </div>
       </main>
@@ -1095,6 +1087,7 @@ const UserPermission: React.FC = () => {
     {/* the "Do you want to delete ?" question - outside the root div so the page's
         Enter handling does not take the Enter of the Yes / No buttons */}
     {dialog}
+    {messageDialog}
     </>
   );
 };

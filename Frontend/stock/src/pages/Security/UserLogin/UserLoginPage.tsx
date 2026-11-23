@@ -1,14 +1,14 @@
 import React, { useEffect, useRef, useState } from "react";
 import Header from "../../../components/common/Header";
 import Select, { type SingleValue } from "react-select";
-import { toast } from "react-toastify";
 import { X } from "lucide-react";
 import { useEnterAsTab } from "../../../hooks/useEnterAsTab";
-import { useAltShortcuts } from "../../../hooks/useAltShortcuts";
 import { useCtrlShortcuts } from "../../../hooks/useCtrlShortcuts";
 import { useButtonPermissions } from "../../../hooks/useButtonPermissions";
 import { useConfirmModal } from "../../../hooks/useConfirmModal";
-import { useDeleteToast } from "../../../hooks/useDeleteToast";
+import { deleteSuccessMessage } from "../../../hooks/useDeleteToast";
+import { useMessageModal } from "../../../hooks/useMessageModal";
+import TransactionActions from "../../../components/common/TransactionActions";
 import selectComponents from "../../../components/sharecomponents/selectComponents";
 
 // ============================================================
@@ -47,8 +47,6 @@ const createEmptyUser = (): UserRow => ({
 // ============================================================
 // BUTTON CLASS
 // ============================================================
-
-const buttonClass = "btn-style";
 
 // ============================================================
 // SELECT STYLE
@@ -204,7 +202,8 @@ const UserLogin: React.FC = () => {
   const handleEnterAsTab = useEnterAsTab();
   // the common themed question window and the standard delete messages
   const { confirm, dialog } = useConfirmModal();
-  const { notDeleted } = useDeleteToast("User Login");
+  // the messages (warnings, errors, saved ...) are the common message window, as on the Payment screen - not a toast
+  const { notify, dialog: messageDialog } = useMessageModal("User Login");
 
   // ============================================================
   // WHAT EACH SAVED USER LOOKED LIKE WHEN LOADED
@@ -241,7 +240,7 @@ const UserLogin: React.FC = () => {
       const PstrUserID = localStorage.getItem("PstrUserID");
 
       if (!PstrCoID || !PstrUserID) {
-        toast.error("Company ID / User ID not found. Please log in again.");
+        notify.error("Company ID / User ID not found. Please log in again.");
         return;
       }
 
@@ -253,7 +252,7 @@ const UserLogin: React.FC = () => {
       const result = await response.json();
 
       if (!response.ok || !result.success) {
-        toast.error(result.message || "User logins could not be loaded.");
+        notify.error(result.message || "User logins could not be loaded.");
         return;
       }
 
@@ -281,7 +280,7 @@ const UserLogin: React.FC = () => {
       setUsers(rows);
     } catch (error) {
       console.error("getUserLoginList error:", error);
-      toast.error("Cannot connect to User Login API.");
+      notify.error("Cannot connect to User Login API.");
     }
   };
 
@@ -335,7 +334,7 @@ const UserLogin: React.FC = () => {
         }
       } catch (error) {
         console.error("user type / status list error:", error);
-        toast.error("Cannot connect to User Login API.");
+        notify.error("Cannot connect to User Login API.");
       }
 
       await loadUsers();
@@ -414,7 +413,7 @@ const UserLogin: React.FC = () => {
 
   const handleSave = async () => {
     if (!perms.save) {
-      toast.error("You do not have permission to Save.");
+      notify.error("You do not have permission to Save.");
       return;
     }
 
@@ -422,7 +421,7 @@ const UserLogin: React.FC = () => {
     const PstrUserID = localStorage.getItem("PstrUserID");
 
     if (!PstrCoID || !PstrUserID) {
-      toast.error("Company ID / User ID not found. Please log in again.");
+      notify.error("Company ID / User ID not found. Please log in again.");
       return;
     }
 
@@ -452,7 +451,7 @@ const UserLogin: React.FC = () => {
     });
 
     if (rows.length === 0) {
-      toast.info("There are no changes to save.");
+      notify.info("There are no changes to save.");
       return;
     }
 
@@ -470,7 +469,7 @@ const UserLogin: React.FC = () => {
       const result = await response.json();
 
       if (!response.ok || !result.success) {
-        toast.error(result.message || "User logins could not be saved.");
+        notify.error(result.message || "User logins could not be saved.");
 
         // the backend names the field that failed - same name as the element id
         if (result.field) {
@@ -480,12 +479,12 @@ const UserLogin: React.FC = () => {
         return;
       }
 
-      toast.success(result.message || "User logins saved successfully.");
+      notify.success(result.message || "User logins saved successfully.");
 
       await loadUsers();
     } catch (error) {
       console.error("saveUserLoginList error:", error);
-      toast.error("Cannot connect to User Login API.");
+      notify.error("Cannot connect to User Login API.");
     }
   };
 
@@ -508,13 +507,15 @@ const UserLogin: React.FC = () => {
     }
 
     if (!perms.delete) {
-      toast.error("You do not have permission to Delete.");
+      notify.error("You do not have permission to Delete.");
       return;
     }
 
     const shouldDelete = await confirm({
       title: "User Login",
-      message: "Do you want to delete ?",
+      message: "Do you want to Delete?",
+      confirmLabel: "Delete",
+      cancelLabel: "Cancel",
     });
 
     if (!shouldDelete) {
@@ -526,7 +527,7 @@ const UserLogin: React.FC = () => {
     const PstrUserID = localStorage.getItem("PstrUserID");
 
     if (!PstrCoID || !PstrYear || !PstrUserID) {
-      toast.error("Company ID / Year / User ID not found. Please log in again.");
+      notify.error("Company ID / Year / User ID not found. Please log in again.");
       return;
     }
 
@@ -549,7 +550,7 @@ const UserLogin: React.FC = () => {
       const result = await response.json();
 
       if (!response.ok || !result.success) {
-        notDeleted(result.message);
+        notify.error(result.message || "Not deleted, try again");
 
         if (result.field) {
           document.getElementById(result.field)?.focus();
@@ -558,10 +559,13 @@ const UserLogin: React.FC = () => {
         return;
       }
 
+      // the common message of a delete (hooks/useDeleteToast.ts, the same on every screen)
+      notify.success(deleteSuccessMessage("User Login"));
+
       await loadUsers();
     } catch (error) {
       console.error("deleteUserLoginRow error:", error);
-      notDeleted();
+      notify.error("Not deleted, try again");
     }
   };
 
@@ -575,15 +579,11 @@ const UserLogin: React.FC = () => {
 
   // ============================================================
   // KEYBOARD SHORTCUTS
-  // Ctrl+S -> Save, Alt+C -> Clear (Clear matches the underlined
-  // letter on its button).
+  // The key of the Payment screen: Ctrl+S Save.
   // ============================================================
 
   useCtrlShortcuts({
     s: handleSave,
-  });
-  useAltShortcuts({
-    c: handleClear,
   });
 
   // ============================================================
@@ -1000,33 +1000,19 @@ const UserLogin: React.FC = () => {
             ACTION BUTTONS
         ============================================================ */}
 
-        <div className="mt-[14px] flex justify-center gap-3">
-          {/* SAVE */}
-
-          <button
-            id="btnSave"
-            type="button"
-            onClick={handleSave}
-            disabled={!perms.save}
-            className={`${buttonClass} disabled:cursor-not-allowed disabled:opacity-40`}
-          >
-            Save
-          </button>
-
-          {/* CLEAR */}
-
-          <button
-            id="btnClear"
-            type="button"
-            onClick={handleClear}
-            className={buttonClass}
-          >
-            <span className="underline underline-offset-2">
-              C
-            </span>
-            lear
-          </button>
-        </div>
+        <TransactionActions
+          className="mt-[14px] flex justify-center gap-3"
+          actions={[
+            {
+              id: "btnSave",
+              label: "Save",
+              underlineIndex: 0,
+              onClick: handleSave,
+              disabled: !perms.save,
+            },
+            { id: "btnClear", label: "Clear", onClick: handleClear },
+          ]}
+        />
 
         </div>
       </div>
@@ -1036,6 +1022,7 @@ const UserLogin: React.FC = () => {
     {/* the "Do you want to delete ?" question - outside the root div so the page's
         Enter handling does not take the Enter of the Yes / No buttons */}
     {dialog}
+    {messageDialog}
     </>
   );
 };

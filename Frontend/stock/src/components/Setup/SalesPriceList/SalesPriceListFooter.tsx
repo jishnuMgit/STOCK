@@ -1,5 +1,7 @@
 import React from "react";
 
+import TransactionActions from "../../common/TransactionActions";
+
 type SalesPriceListFooterProps = {
   itemCount: number;
   // Modify needs the button right, a changed price, and no save under way
@@ -7,7 +9,6 @@ type SalesPriceListFooterProps = {
   onModify: () => void;
   onFind: () => void;
   onCancel: () => void;
-  onClose: () => void;
 };
 
 const SalesPriceListFooter: React.FC<SalesPriceListFooterProps> = ({
@@ -16,7 +17,6 @@ const SalesPriceListFooter: React.FC<SalesPriceListFooterProps> = ({
   onModify,
   onFind,
   onCancel,
-  onClose,
 }) => (
   <div>
     {/* Status bar under the grid */}
@@ -24,50 +24,15 @@ const SalesPriceListFooter: React.FC<SalesPriceListFooterProps> = ({
       <span>Items : {itemCount}</span>
     </div>
 
-    {/* Actions */}
-    <div className="mt-5 flex justify-center gap-3">
-      <button
-        id="btnModify"
-        name="btnModify"
-        type="button"
-        onClick={onModify}
-        disabled={!canModify}
-        title="Ctrl+S"
-        className="btn-style disabled:cursor-not-allowed disabled:opacity-60"
-      >
-        Modify
-      </button>
-      <button
-        id="btnFind"
-        name="btnFind"
-        type="button"
-        onClick={onFind}
-        title="Alt+F"
-        className="btn-style"
-      >
-        <u>F</u>ind
-      </button>
-      <button
-        id="btnCancel"
-        name="btnCancel"
-        type="button"
-        onClick={onCancel}
-        title="Alt+C"
-        className="btn-style"
-      >
-        <u>C</u>ancel
-      </button>
-      <button
-        id="btnClose"
-        name="btnClose"
-        type="button"
-        onClick={onClose}
-        title="Alt+O"
-        className="btn-style"
-      >
-        Cl<u>o</u>se
-      </button>
-    </div>
+    {/* Actions - the same buttons and keys as the Payment screen: Ctrl+S Modify, Ctrl+F Find */}
+    <TransactionActions
+      className="mt-5 flex flex-wrap items-center justify-center gap-3"
+      actions={[
+        { id: "btnModify", label: "Modify", underlineIndex: 0, onClick: onModify, disabled: !canModify },
+        { id: "btnFind", label: "Find", underlineIndex: 0, onClick: onFind },
+        { id: "btnCancel", label: "Cancel", onClick: onCancel },
+      ]}
+    />
   </div>
 );
 

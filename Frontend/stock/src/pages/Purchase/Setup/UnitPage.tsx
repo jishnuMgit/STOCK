@@ -1,12 +1,12 @@
 import React, { useEffect, useState } from "react";
-import { toast } from "react-toastify";
 import { X } from "lucide-react";
 import { useEnterAsTab } from "../../../hooks/useEnterAsTab";
-import { useAltShortcuts } from "../../../hooks/useAltShortcuts";
 import { useCtrlShortcuts } from "../../../hooks/useCtrlShortcuts";
 import { useButtonPermissions } from "../../../hooks/useButtonPermissions";
 import { useConfirmModal } from "../../../hooks/useConfirmModal";
-import { useDeleteToast } from "../../../hooks/useDeleteToast";
+import { deleteSuccessMessage } from "../../../hooks/useDeleteToast";
+import { useMessageModal } from "../../../hooks/useMessageModal";
+import TransactionActions from "../../../components/common/TransactionActions";
 import { useGridCellFocus } from "../../../hooks/useGridCellFocus";
 import Header from "../../../components/common/Header";
 import { tryGetServerDate } from "../../../utils/serverDate";
@@ -41,7 +41,8 @@ const UnitPage: React.FC = () => {
   // the common themed question window (the same as on the other screens)
   const { confirm, dialog } = useConfirmModal();
   // the standard message of a delete that failed
-  const { notDeleted } = useDeleteToast("Unit");
+  // the messages (warnings, errors, saved ...) are the common message window, as on the Payment screen - not a toast
+  const { notify, dialog: messageDialog } = useMessageModal("Unit");
   // the cell the cursor is in is outlined (a typed-in box has its text selected)
   const { cellFocusClass, selectOnFocus } = useGridCellFocus();
 
@@ -79,7 +80,7 @@ const UnitPage: React.FC = () => {
         const PstrCoID = localStorage.getItem("PstrCoID");
 
         if (!PstrCoID) {
-          toast.error("getUnitList: no PstrCoID in localStorage");
+          notify.error("getUnitList: no PstrCoID in localStorage");
           return;
         }
 
@@ -95,7 +96,7 @@ const UnitPage: React.FC = () => {
 
         if (!result.success) {
           console.error("getUnitList failed:", result.message);
-          toast.error(`getUnitList failed: ${result.message}`);
+          notify.error(`getUnitList failed: ${result.message}`);
           return;
         }
 
@@ -123,7 +124,7 @@ const UnitPage: React.FC = () => {
         });
       } catch (error) {
         console.error("getUnitList error:", error);
-        toast.error(
+        notify.error(
           `getUnitList error: ${error instanceof Error ? error.message : String(error)}`,
         );
       }
@@ -237,16 +238,13 @@ const UnitPage: React.FC = () => {
     }
 
     if (!perms.modify) {
-      toast.warning("You don't have the permission to modify", {
-        toastId: "unit-modify-denied",
-      });
+      notify.warning("You don't have the permission to modify");
       return true;
     }
 
     if (usedUnits[row.txtOriginalUnit] === true) {
-      toast.warning(
+      notify.warning(
         `You can't Modify. Transactions already entered with this Unit '${row.txtOriginalUnit}'`,
-        { toastId: "unit-modify-used" },
       );
       return true;
     }
@@ -280,7 +278,7 @@ const UnitPage: React.FC = () => {
     );
 
     if (alreadyThere) {
-      toast.warning("Unit already exists", { toastId: "unit-duplicate" });
+      notify.warning("Unit already exists");
       updateUnit(index, row.txtOriginalUnit ?? "");
       focusRow(index);
     }
@@ -392,7 +390,7 @@ const UnitPage: React.FC = () => {
     if (saving) return;
 
     if (!canSaveOrModify) {
-      toast.error(`You do not have permission to ${actionWord}.`);
+      notify.error(`You do not have permission to ${actionWord}.`);
       return;
     }
 
@@ -401,7 +399,7 @@ const UnitPage: React.FC = () => {
     const PstrUserID = localStorage.getItem("PstrUserID");
 
     if (!PstrCoID || !PstrYear || !PstrUserID) {
-      toast.error("Company ID / Year / User ID not found. Please log in again.");
+      notify.error("Company ID / Year / User ID not found. Please log in again.");
       return;
     }
 
@@ -412,7 +410,7 @@ const UnitPage: React.FC = () => {
 
     // a unit removed from the grid is something to save too
     if (filledRows.length === 0 && deletedRows.length === 0) {
-      toast.warning("There is no information for saving.");
+      notify.warning("There is no information for saving.");
       document.getElementById("txtUnit-0")?.focus();
       return;
     }
@@ -424,7 +422,7 @@ const UnitPage: React.FC = () => {
       const key = row.txtUnit.trim().toLowerCase();
 
       if (seen.has(key)) {
-        toast.warning("Unit already exists");
+        notify.warning("Unit already exists");
         document.getElementById(`txtUnit-${index}`)?.focus();
         return;
       }
@@ -462,7 +460,7 @@ const UnitPage: React.FC = () => {
       const result = await response.json();
 
       if (!response.ok || !result.success) {
-        toast.error(result.message || "Not saved, try again.");
+        notify.error(result.message || "Not saved, try again.");
 
         // the backend names the box that failed - same name as the element id
         if (result.field) {
@@ -472,13 +470,13 @@ const UnitPage: React.FC = () => {
         return;
       }
 
-      toast.success(result.message || "Unit saved successfully");
+      notify.success(result.message || "Unit saved successfully");
 
       // load the units again - they now carry their saved names
       setReloadKey((key) => key + 1);
     } catch (error) {
       console.error("saveUnit error:", error);
-      toast.error("Cannot connect to Unit API.");
+      notify.error("Cannot connect to Unit API.");
     } finally {
       setSaving(false);
     }
@@ -505,21 +503,19 @@ const UnitPage: React.FC = () => {
     }
 
     if (!isAdminUser) {
-      toast.error("Only an Admin User can delete units.", {
-        toastId: "unit-delete-admin-only",
-      });
+      notify.error("Only an Admin User can delete units.");
       return;
     }
 
     if (!perms.delete) {
-      toast.error("You do not have permission to Delete.");
+      notify.error("You do not have permission to Delete.");
       return;
     }
 
     const PstrCoID = localStorage.getItem("PstrCoID");
 
     if (!PstrCoID) {
-      toast.error("Company ID not found. Please log in again.");
+      notify.error("Company ID not found. Please log in again.");
       return;
     }
 
@@ -532,25 +528,27 @@ const UnitPage: React.FC = () => {
       const result = await response.json();
 
       if (!response.ok || !result.success) {
-        toast.error(result.message || "Could not check the unit.");
+        notify.error(result.message || "Could not check the unit.");
         return;
       }
 
       if (result.data === true) {
-        toast.info(
+        notify.info(
           `You can't delete. Transactions already entered with this Unit '${row.txtOriginalUnit}'`,
         );
         return;
       }
     } catch (error) {
       console.error("haveUnitTrans error:", error);
-      toast.error("Cannot connect to Unit API.");
+      notify.error("Cannot connect to Unit API.");
       return;
     }
 
     const shouldDelete = await confirm({
       title: "Unit",
-      message: "Do you want to delete ?",
+      message: "Do you want to Delete?",
+      confirmLabel: "Delete",
+      cancelLabel: "Cancel",
     });
 
     if (!shouldDelete) {
@@ -562,7 +560,7 @@ const UnitPage: React.FC = () => {
     const PstrUserID = localStorage.getItem("PstrUserID");
 
     if (!PstrYear || !PstrUserID) {
-      toast.error("Company ID / Year / User ID not found. Please log in again.");
+      notify.error("Company ID / Year / User ID not found. Please log in again.");
       return;
     }
 
@@ -583,18 +581,19 @@ const UnitPage: React.FC = () => {
       const result = await response.json();
 
       if (!response.ok || !result.success) {
-        notDeleted(result.message);
+        notify.error(result.message || "Not deleted, try again");
         return;
       }
 
-      // (no message for a deleted unit)
+      // the common message of a delete (hooks/useDeleteToast.ts, the same on every screen), then the row leaves the grid
+      notify.success(deleteSuccessMessage("Unit"));
 
       setRows((previousRows) =>
         previousRows.filter((_, rowIndex) => rowIndex !== index),
       );
     } catch (error) {
       console.error("deleteUnit error:", error);
-      toast.error("Cannot connect to Unit API.");
+      notify.error("Cannot connect to Unit API.");
     }
   };
 
@@ -608,16 +607,12 @@ const UnitPage: React.FC = () => {
     setReloadKey((key) => key + 1);
   };
 
-  // Ctrl+S -> Save / Modify, Ctrl+D -> Delete the row the cursor is on (same as the X),
-  // Alt+C -> Clear (the underlined letter on the button)
+  // The keys of the Payment screen: Ctrl+S Save / Modify, Ctrl+D Delete the row the cursor is on (same as the X)
   useCtrlShortcuts({
     s: handleSave,
     d: () => {
       handleDeleteRow(selectedRow);
     },
-  });
-  useAltShortcuts({
-    c: handleClear,
   });
 
   // Enter on a BUTTON presses it (the old form's behaviour: Enter on an empty
@@ -767,28 +762,19 @@ const UnitPage: React.FC = () => {
               BUTTONS
           ==================================================== */}
 
-            <div className="mt-[14px] flex justify-center gap-3">
-              <button
-                id="btnSave"
-                name="btnSave"
-                type="button"
-                onClick={handleSave}
-                disabled={!canSaveOrModify || saving}
-                className="btn-style disabled:cursor-not-allowed disabled:opacity-40"
-              >
-                {actionWord}
-              </button>
-
-              <button
-                id="btnClear"
-                name="btnClear"
-                type="button"
-                onClick={handleClear}
-                className="btn-style"
-              >
-                <span className="underline underline-offset-2">C</span>lear
-              </button>
-            </div>
+            <TransactionActions
+              className="mt-[14px] flex justify-center gap-3"
+              actions={[
+                {
+                  id: "btnSave",
+                  label: actionWord,
+                  underlineIndex: 0,
+                  onClick: handleSave,
+                  disabled: !canSaveOrModify || saving,
+                },
+                { id: "btnClear", label: "Clear", onClick: handleClear },
+              ]}
+            />
           </div>
         </div>
 
@@ -797,6 +783,7 @@ const UnitPage: React.FC = () => {
       {/* the "Do you want to delete ?" question - outside the root div: the page's
         Enter handling must not take the Enter of the Yes / No buttons */}
       {dialog}
+      {messageDialog}
     </>
   );
 };

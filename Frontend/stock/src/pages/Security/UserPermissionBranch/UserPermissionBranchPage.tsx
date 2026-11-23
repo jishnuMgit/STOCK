@@ -2,13 +2,13 @@ import { ChevronDown, ChevronRight } from "lucide-react";
 import React, { useEffect, useRef, useState } from "react";
 import Header from "../../../components/common/Header";
 import Select, { type SingleValue, type StylesConfig } from "react-select";
-import { toast } from "react-toastify";
 import { useEnterAsTab } from "../../../hooks/useEnterAsTab";
-import { useAltShortcuts } from "../../../hooks/useAltShortcuts";
 import { useCtrlShortcuts } from "../../../hooks/useCtrlShortcuts";
 import { useButtonPermissions } from "../../../hooks/useButtonPermissions";
 import { useConfirmModal } from "../../../hooks/useConfirmModal";
-import { useDeleteToast } from "../../../hooks/useDeleteToast";
+import { deleteSuccessMessage } from "../../../hooks/useDeleteToast";
+import { useMessageModal } from "../../../hooks/useMessageModal";
+import TransactionActions from "../../../components/common/TransactionActions";
 import { GRID_CELL_FOCUS_CLASS } from "../../../hooks/useGridCellFocus";
 import { useInitialFocus } from "../../../hooks/useInitialFocus";
 import selectComponents, {
@@ -54,8 +54,6 @@ interface ApiResponse {
 // ============================================================
 // BUTTON CLASS
 // ============================================================
-
-const buttonClass = "btn-style";
 
 // ============================================================
 // USER ID SELECT STYLE
@@ -218,7 +216,8 @@ const UserPermissionBranchPage: React.FC = () => {
   const handleEnterAsTab = useEnterAsTab();
   // the common themed question window and the standard delete messages
   const { confirm, dialog } = useConfirmModal();
-  const { deleted, notDeleted } = useDeleteToast("User Permission - Branch");
+  // the messages (warnings, errors, saved ...) are the common message window, as on the Payment screen - not a toast
+  const { notify, dialog: messageDialog } = useMessageModal("User Permission - Branch");
 
   const [lkpUserID, setLkpUserID] = useState<string>("");
   const [userIdOptions, setUserIdOptions] = useState<SelectOption[]>([]);
@@ -290,7 +289,7 @@ const UserPermissionBranchPage: React.FC = () => {
 
     if (!PstrCoID) {
       setPermissionData([]);
-      toast.error("Company ID not found. Please log in again.");
+      notify.error("Company ID not found. Please log in again.");
       return;
     }
 
@@ -321,7 +320,7 @@ const UserPermissionBranchPage: React.FC = () => {
       console.error("Load user-permission-branch failed:", err);
       setPermissionData([]);
 
-      toast.error(
+      notify.error(
         err instanceof Error ? err.message : "Failed to load permissions."
       );
     } finally {
@@ -417,12 +416,12 @@ const UserPermissionBranchPage: React.FC = () => {
 
   const handleSave = async () => {
     if (!perms.save) {
-      toast.error("You do not have permission to Save.");
+      notify.error("You do not have permission to Save.");
       return;
     }
 
     if (!lkpUserID.trim()) {
-      toast.warning("Please select a user ID.");
+      notify.warning("Please select a user ID.");
       return;
     }
 
@@ -431,7 +430,7 @@ const UserPermissionBranchPage: React.FC = () => {
     const PstrUserID = localStorage.getItem("PstrUserID");
 
     if (!PstrCoID || !PstrYear || !PstrUserID) {
-      toast.error("Company ID / Year / User ID not found. Please log in again.");
+      notify.error("Company ID / Year / User ID not found. Please log in again.");
       return;
     }
 
@@ -456,11 +455,11 @@ const UserPermissionBranchPage: React.FC = () => {
         throw new Error(result.message || "Failed to save permissions.");
       }
 
-      toast.success(result.message || "Permission saved successfully.");
+      notify.success(result.message || "Permission saved successfully.");
     } catch (err) {
       console.error("Save user-permission-branch failed:", err);
 
-      toast.error(
+      notify.error(
         err instanceof Error ? err.message : "Failed to save permissions."
       );
     } finally {
@@ -475,12 +474,12 @@ const UserPermissionBranchPage: React.FC = () => {
 
   const handleDelete = async () => {
     if (!perms.delete) {
-      toast.error("You do not have permission to Delete.");
+      notify.error("You do not have permission to Delete.");
       return;
     }
 
     if (!lkpUserID.trim()) {
-      toast.warning("Please select a user ID.");
+      notify.warning("Please select a user ID.");
       return;
     }
 
@@ -489,13 +488,15 @@ const UserPermissionBranchPage: React.FC = () => {
     const PstrUserID = localStorage.getItem("PstrUserID");
 
     if (!PstrCoID || !PstrYear || !PstrUserID) {
-      toast.error("Company ID / Year / User ID not found. Please log in again.");
+      notify.error("Company ID / Year / User ID not found. Please log in again.");
       return;
     }
 
     const shouldDelete = await confirm({
       title: "User Permission - Branch",
-      message: "Do you want to delete ?",
+      message: "Do you want to Delete?",
+      confirmLabel: "Delete",
+      cancelLabel: "Cancel",
     });
 
     if (!shouldDelete) {
@@ -523,11 +524,12 @@ const UserPermissionBranchPage: React.FC = () => {
 
       setPermissionData((previous) => clearTree(previous));
 
-      deleted();
+      // the common message of a delete (hooks/useDeleteToast.ts, the same on every screen)
+      notify.success(deleteSuccessMessage("User Permission - Branch"));
     } catch (err) {
       console.error("Delete user-permission-branch failed:", err);
 
-      notDeleted(err instanceof Error ? err.message : undefined);
+      notify.error(err instanceof Error && err.message ? err.message : "Not deleted, try again");
     } finally {
       setSaving(false);
     }
@@ -543,16 +545,12 @@ const UserPermissionBranchPage: React.FC = () => {
 
   // ==========================================================
   // KEYBOARD SHORTCUTS
-  // Ctrl+S -> Save, Ctrl+D -> Delete, Alt+C -> Clear (Clear matches
-  // the underlined letter on its button).
+  // The keys of the Payment screen: Ctrl+S Save, Ctrl+D Delete.
   // ==========================================================
 
   useCtrlShortcuts({
     s: handleSave,
     d: handleDelete,
-  });
-  useAltShortcuts({
-    c: handleClear,
   });
 
   // The old form's behaviour: Enter on a BUTTON presses it (expand / collapse, Save,
@@ -742,45 +740,26 @@ const UserPermissionBranchPage: React.FC = () => {
         </main>
 
         {/* ACTION BUTTONS */}
-        <footer className="mt-[14px] shrink-0">
-          <div className="flex flex-wrap items-center justify-center gap-3">
-            {/* SAVE */}
-            <button
-              id="btnSave"
-              name="btnSave"
-              type="button"
-              onClick={handleSave}
-              disabled={saving || loading || !perms.save}
-              className={`${buttonClass} disabled:cursor-not-allowed disabled:opacity-40`}
-            >
-              Save
-            </button>
-
-            {/* DELETE */}
-            <button
-              id="btnDelete"
-              name="btnDelete"
-              type="button"
-              onClick={handleDelete}
-              disabled={saving || loading || !perms.delete}
-              className={`${buttonClass} disabled:cursor-not-allowed disabled:opacity-40`}
-            >
-              Delete
-            </button>
-
-            {/* CLEAR */}
-            <button
-              id="btnClear"
-              name="btnClear"
-              type="button"
-              onClick={handleClear}
-              disabled={saving || loading}
-              className={buttonClass}
-            >
-              <span className="underline underline-offset-2">C</span>lear
-            </button>
-          </div>
-        </footer>
+        <TransactionActions
+          className="mt-[14px] flex shrink-0 flex-wrap items-center justify-center gap-3"
+          actions={[
+            {
+              id: "btnSave",
+              label: "Save",
+              underlineIndex: 0,
+              onClick: handleSave,
+              disabled: saving || loading || !perms.save,
+            },
+            {
+              id: "btnDelete",
+              label: "Delete",
+              underlineIndex: 0,
+              onClick: handleDelete,
+              disabled: saving || loading || !perms.delete,
+            },
+            { id: "btnClear", label: "Clear", onClick: handleClear, disabled: saving || loading },
+          ]}
+        />
 
         </div>
       </div>
@@ -789,6 +768,7 @@ const UserPermissionBranchPage: React.FC = () => {
     {/* the "Do you want to delete ?" question - outside the root div so the page's
         Enter handling does not take the Enter of the Yes / No buttons */}
     {dialog}
+    {messageDialog}
     </>
   );
 };
