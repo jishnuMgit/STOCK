@@ -1,5 +1,7 @@
 import React from "react";
 
+import TransactionActions from "../../common/TransactionActions";
+
 // ============================================================
 // INPUT STYLE
 // ============================================================
@@ -190,85 +192,47 @@ const BeginningBalanceFooter: React.FC<Props> = ({
           ACTION BUTTONS
       ====================================================== */}
 
-      <div
-        className="
-          absolute
-          bottom-[8px]
-          left-1/2
-          flex
-          -translate-x-1/2
-          gap-[15px]
-        "
-      >
-
-        {/* SAVE / MODIFY (one button: it says Modify once the branch has a balance) */}
-
-        <button
-          id={chkSaved ? "btnModify" : "btnSave"}
-          name={chkSaved ? "btnModify" : "btnSave"}
-          type="button"
-          onClick={onSave}
-          disabled={!canSaveOrModify || saving || chkPosted}
-          title="Ctrl+S"
-          className="btn-style disabled:cursor-not-allowed disabled:opacity-40"
-        >
-          {actionWord}
-        </button>
-
-        {/* DELETE */}
-
-        <button
-          id="btnDelete"
-          name="btnDelete"
-          type="button"
-          onClick={onDelete}
-          disabled={!chkSaved || chkPosted || !canDelete || saving}
-          title="Ctrl+D"
-          className="btn-style disabled:cursor-not-allowed disabled:opacity-40"
-        >
-          Delete
-        </button>
-
-        {/* PRINT (at any time: it needs a branch and a date, not a saved balance) */}
-
-        <button
-          id="btnPrint"
-          name="btnPrint"
-          type="button"
-          onClick={onPrint}
-          disabled={!canPrint || saving}
-          title="Ctrl+P"
-          className="btn-style disabled:cursor-not-allowed disabled:opacity-40"
-        >
-          Print
-        </button>
-
-        {/* POST (the balance is final after it: the page is locked) */}
-
-        <button
-          id="btnPost"
-          name="btnPost"
-          type="button"
-          onClick={onPost}
-          disabled={!chkSaved || chkPosted || !canPost || saving}
-          className="btn-style disabled:cursor-not-allowed disabled:opacity-40"
-        >
-          Post
-        </button>
-
-        {/* CLEAR */}
-
-        <button
-          id="btnClear"
-          name="btnClear"
-          type="button"
-          onClick={onClear}
-          disabled={saving}
-          className="btn-style disabled:cursor-not-allowed disabled:opacity-40"
-        >
-          Clear
-        </button>
-      </div>
+      <TransactionActions
+        className="absolute bottom-[8px] left-1/2 flex -translate-x-1/2 gap-[15px]"
+        actions={[
+          {
+            id: chkSaved ? "btnModify" : "btnSave",
+            label: actionWord,
+            underlineIndex: 0,
+            onClick: onSave,
+            disabled: !canSaveOrModify || saving || chkPosted,
+          },
+          {
+            id: "btnDelete",
+            label: "Delete",
+            underlineIndex: 0,
+            onClick: onDelete,
+            disabled: !chkSaved || chkPosted || !canDelete || saving,
+          },
+          // Print works at any time: it needs a branch and a date, not a saved balance
+          {
+            id: "btnPrint",
+            label: "Print",
+            underlineIndex: 0,
+            onClick: onPrint,
+            disabled: !canPrint || saving,
+          },
+          // Post: the balance is final after it, the page is locked
+          {
+            id: "btnPost",
+            label: "Post",
+            underlineIndex: 3,
+            onClick: onPost,
+            disabled: !chkSaved || chkPosted || !canPost || saving,
+          },
+          {
+            id: "btnClear",
+            label: "Clear",
+            onClick: onClear,
+            disabled: saving,
+          },
+        ]}
+      />
     </footer>
   );
 };

@@ -5,7 +5,6 @@ type StockDocumentPostFooterProps = {
   selectedCount: number;
   selectedTotal: number;
   onPost: () => void;
-  onClose: () => void;
   postDisabled?: boolean;
 };
 
@@ -13,7 +12,6 @@ const StockDocumentPostFooter: React.FC<StockDocumentPostFooterProps> = ({
   selectedCount,
   selectedTotal,
   onPost,
-  onClose,
   postDisabled = false,
 }) => (
   <div>
@@ -40,14 +38,6 @@ const StockDocumentPostFooter: React.FC<StockDocumentPostFooterProps> = ({
         className="btn-style disabled:cursor-not-allowed disabled:opacity-60"
       >
         <u>P</u>ost
-      </button>
-      <button
-        id="btnClose"
-        type="button"
-        onClick={onClose}
-        className="btn-style"
-      >
-        <u>C</u>lose
       </button>
     </div>
   </div>

@@ -1,12 +1,13 @@
 import React, { useEffect, useMemo, useState } from "react";
 import dayjs from "dayjs";
-import { toast } from "react-toastify";
 import StockDocumentPostHeader from "../../../../components/Transaction/StockDocumentPost/StockDocumentPostHeader";
 import StockDocumentPostTable from "../../../../components/Transaction/StockDocumentPost/StockDocumentPostTable";
 import StockDocumentPostFooter from "../../../../components/Transaction/StockDocumentPost/StockDocumentPostFooter";
 import { type DocRow,type Option } from "../../../../components/Transaction/StockDocumentPost/StockDocumentPostShared";
 import { useAltShortcuts } from "../../../../hooks/useAltShortcuts";
+import { useCtrlShortcuts } from "../../../../hooks/useCtrlShortcuts";
 import { useButtonPermissions } from "../../../../hooks/useButtonPermissions";
+import { useMessageModal } from "../../../../hooks/useMessageModal";
 import { useEnterAsTab } from "../../../../hooks/useEnterAsTab";
 import { useInitialFocus } from "../../../../hooks/useInitialFocus";
 import Header from "../../../../components/common/Header";
@@ -64,12 +65,10 @@ const fetchUnposted = async (query: URLSearchParams): Promise<UnpostedResult> =>
   };
 };
 
-type StockDocumentPostPageProps = {
-  onClose?: () => void;
-};
-
-const StockDocumentPostPage: React.FC<StockDocumentPostPageProps> = ({ onClose }) => {
+const StockDocumentPostPage: React.FC = () => {
   const perms = useButtonPermissions(MENU_ID);
+  // the messages (warnings, errors, posted ...) are the common message window, as on the Payment screen - not a toast
+  const { notify, dialog: messageDialog } = useMessageModal(SCREEN_TITLE);
   const enterAsTab = useEnterAsTab();
 
   // the boxes (names = the element ids and the server's keys)
@@ -119,7 +118,7 @@ const StockDocumentPostPage: React.FC<StockDocumentPostPageProps> = ({ onClose }
         const result = await response.json();
 
         if (!response.ok || !result.success) {
-          toast.error(result.message || "Failed to load the lookups");
+          notify.error(result.message || "Failed to load the lookups");
           return;
         }
 
@@ -150,7 +149,7 @@ const StockDocumentPostPage: React.FC<StockDocumentPostPageProps> = ({ onClose }
         );
         setLkpYear(years.find((y) => y.value === PstrYear) ?? years[0] ?? null);
       } catch {
-        toast.error(`Cannot connect to ${SCREEN_TITLE} API.`);
+        notify.error(`Cannot connect to ${SCREEN_TITLE} API.`);
       } finally {
         setLookupsLoaded(true);
       }
@@ -193,11 +192,11 @@ const StockDocumentPostPage: React.FC<StockDocumentPostPageProps> = ({ onClose }
           setRows([]);
           setSelectedIds(new Set());
           setActiveId(null);
-          toast.warning(result.message);
+          notify.warning(result.message);
         }
       })
       .catch(() => {
-        if (!cancelled) toast.error(`Cannot connect to ${SCREEN_TITLE} API.`);
+        if (!cancelled) notify.error(`Cannot connect to ${SCREEN_TITLE} API.`);
       });
 
     return () => {
@@ -228,32 +227,32 @@ const StockDocumentPostPage: React.FC<StockDocumentPostPageProps> = ({ onClose }
     if (posting) return;
 
     if (!perms.post) {
-      toast.error("You do not have permission to Post.");
+      notify.error("You do not have permission to Post.");
       return;
     }
 
     if (!lkpBranch) {
-      toast.warning("Please select a 'Branch'");
+      notify.warning("Please select a 'Branch'");
       return;
     }
 
     if (!lkpDocument) {
-      toast.warning("Please select a 'Document'");
+      notify.warning("Please select a 'Document'");
       return;
     }
 
     if (!lkpYear) {
-      toast.warning("Please select 'Year'");
+      notify.warning("Please select 'Year'");
       return;
     }
 
     if (!lkpMonth) {
-      toast.warning("Please select 'Month'");
+      notify.warning("Please select 'Month'");
       return;
     }
 
     if (lkpYear.value !== PstrYear) {
-      toast.warning("'Year' should be same as 'Login Year'");
+      notify.warning("'Year' should be same as 'Login Year'");
       return;
     }
 
@@ -262,7 +261,7 @@ const StockDocumentPostPage: React.FC<StockDocumentPostPageProps> = ({ onClose }
       .map((row) => ({ txtDocNo: row.txtDocNo }));
 
     if (documents.length === 0) {
-      toast.warning("Please select a Document to post");
+      notify.warning("Please select a Document to post");
       return;
     }
 
@@ -290,49 +289,48 @@ const StockDocumentPostPage: React.FC<StockDocumentPostPageProps> = ({ onClose }
       const result = await response.json();
 
       if (!response.ok || !result.success) {
-        toast.error(result.message || "The documents could not be posted");
+        notify.error(result.message || "The documents could not be posted");
         return;
       }
 
       // the post stopped at a document (its Purchase Invoice / Sales Invoice is not posted, or an
       // item has no unit cost): say which, and put the cursor on it
       if (result.txtStopMessage) {
-        toast.warning(result.txtStopMessage);
+        notify.warning(result.txtStopMessage);
         setActiveId(result.txtStopDocNo || null);
       }
 
       // the documents the database refused to post, and why
       if (result.txtErrorMessage) {
-        toast.error(<div style={{ whiteSpace: "pre-line" }}>{result.txtErrorMessage}</div>);
+        notify.error(<div style={{ whiteSpace: "pre-line" }}>{result.txtErrorMessage}</div>);
       }
 
       // green when something was posted, a warning when nothing was
       const notice = <div style={{ whiteSpace: "pre-line" }}>{result.message}</div>;
 
-      if (result.txtPostedCount > 0) toast.success(notice);
-      else toast.warning(notice);
+      if (result.txtPostedCount > 0) notify.success(notice);
+      else notify.warning(notice);
 
       setReloadKey((key) => key + 1);
     } catch {
-      toast.error(`Cannot connect to ${SCREEN_TITLE} API.`);
+      notify.error(`Cannot connect to ${SCREEN_TITLE} API.`);
     } finally {
       setPosting(false);
     }
   };
 
-  const handleClose = () => {
-    setSelectedIds(new Set());
-    onClose?.();
-  };
-
-  // the underlined letters of the buttons: Alt+P Post, Alt+C Close
-  useAltShortcuts({ p: () => void handlePost(), c: handleClose });
+  // Post: Ctrl+T (the old form's key) and Alt+P (the underlined letter of the button, which Chrome always lets through).
+  // Chrome keeps Ctrl+T for "new tab" and never hands it to the page, so Ctrl+T only reaches this page in a window that
+  // allows it (an installed app window, another browser ...).
+  useCtrlShortcuts({ t: () => void handlePost() });
+  useAltShortcuts({ p: () => void handlePost() });
 
   return (
     <div
       className="flex min-h-full w-full items-start justify-center bg-white px-4 py-4"
       onKeyDown={enterAsTab}
     >
+      {messageDialog}
       <div className="min-h-fit min-w-240 w-240 max-w-full bg-white p-0">
         <main className="w-full overflow-hidden border border-gray-400 bg-white">
           <Header Name="Stock Document Post" />
@@ -369,7 +367,6 @@ const StockDocumentPostPage: React.FC<StockDocumentPostPageProps> = ({ onClose }
                 selectedCount={selectedIds.size}
                 selectedTotal={selectedTotal}
                 onPost={() => void handlePost()}
-                onClose={handleClose}
                 postDisabled={selectedIds.size === 0 || !perms.post || posting}
               />
             </div>

@@ -7,14 +7,14 @@ import Select, {
   type StylesConfig,
 } from "react-select";
 import { X } from "lucide-react";
-import { toast } from "react-toastify";
-import { useAltShortcuts } from "../../hooks/useAltShortcuts";
 import { useCtrlShortcuts } from "../../hooks/useCtrlShortcuts";
 import { useConfirmModal } from "../../hooks/useConfirmModal";
 import { useEnterAsTab } from "../../hooks/useEnterAsTab";
 import { useButtonPermissions } from "../../hooks/useButtonPermissions";
 import { useGridCellFocus } from "../../hooks/useGridCellFocus";
 import { tryGetServerDate } from "../../utils/serverDate";
+import { useMessageModal } from "../../hooks/useMessageModal";
+import TransactionActions from "../../components/common/TransactionActions";
 import { usePairMenuHang } from "../../hooks/usePairMenuHang";
 import {
   filterLabelOrValue,
@@ -83,8 +83,6 @@ interface FormValues {
 // ============================================================
 // INITIAL FORM VALUES
 // ============================================================
-
-const buttonClass = "btn-style";
 
 const initialValues: FormValues = {
   lkpBranch: "",
@@ -245,6 +243,8 @@ const selectStyles: StylesConfig<SelectOption, false> = {
 const SetPostingAccountPage: React.FC = () => {
   const perms = useButtonPermissions(MENU_ID);
   const { confirm, dialog } = useConfirmModal();
+  // the messages (warnings, errors, saved ...) are the common message window, as on the Payment screen - not a toast
+  const { notify, dialog: messageDialog } = useMessageModal("Set Posting Account");
   const handleEnterAsTab = useEnterAsTab();
   // the box the cursor is in is outlined
   const { cellFocusClass } = useGridCellFocus();
@@ -285,7 +285,7 @@ const SetPostingAccountPage: React.FC = () => {
         const PstrUserID = localStorage.getItem("PstrUserID");
 
         if (!PstrCoID || !PstrUserID) {
-          toast.error("getBranchList: no PstrCoID/PstrUserID in localStorage");
+          notify.error("getBranchList: no PstrCoID/PstrUserID in localStorage");
           return;
         }
 
@@ -301,7 +301,7 @@ const SetPostingAccountPage: React.FC = () => {
 
         if (!result.success) {
           console.error("getBranchList failed:", result.message);
-          toast.error(`getBranchList failed: ${result.message}`);
+          notify.error(`getBranchList failed: ${result.message}`);
           return;
         }
 
@@ -315,7 +315,7 @@ const SetPostingAccountPage: React.FC = () => {
         );
       } catch (error) {
         console.error("getBranchList error:", error);
-        toast.error(
+        notify.error(
           `getBranchList error: ${error instanceof Error ? error.message : String(error)}`,
         );
       }
@@ -336,7 +336,7 @@ const SetPostingAccountPage: React.FC = () => {
         const PstrUserID = localStorage.getItem("PstrUserID");
 
         if (!PstrCoID || !PstrUserID) {
-          toast.error("getDefaultBranch: no PstrCoID/PstrUserID in localStorage");
+          notify.error("getDefaultBranch: no PstrCoID/PstrUserID in localStorage");
           return;
         }
 
@@ -352,7 +352,7 @@ const SetPostingAccountPage: React.FC = () => {
 
         if (!result.success) {
           console.error("getDefaultBranch failed:", result.message);
-          toast.error(`getDefaultBranch failed: ${result.message}`);
+          notify.error(`getDefaultBranch failed: ${result.message}`);
           return;
         }
 
@@ -362,7 +362,7 @@ const SetPostingAccountPage: React.FC = () => {
         }
       } catch (error) {
         console.error("getDefaultBranch error:", error);
-        toast.error(
+        notify.error(
           `getDefaultBranch error: ${error instanceof Error ? error.message : String(error)}`,
         );
       } finally {
@@ -386,7 +386,7 @@ const SetPostingAccountPage: React.FC = () => {
         const PstrCoID = localStorage.getItem("PstrCoID");
 
         if (!PstrCoID) {
-          toast.error("getAccountList: no PstrCoID in localStorage");
+          notify.error("getAccountList: no PstrCoID in localStorage");
           return;
         }
 
@@ -402,14 +402,14 @@ const SetPostingAccountPage: React.FC = () => {
 
         if (!result.success) {
           console.error("getAccountList failed:", result.message);
-          toast.error(`getAccountList failed: ${result.message}`);
+          notify.error(`getAccountList failed: ${result.message}`);
           return;
         }
 
         setAccountList(result.data || []);
       } catch (error) {
         console.error("getAccountList error:", error);
-        toast.error(
+        notify.error(
           `getAccountList error: ${error instanceof Error ? error.message : String(error)}`,
         );
       }
@@ -455,7 +455,7 @@ const SetPostingAccountPage: React.FC = () => {
         const PstrCoID = localStorage.getItem("PstrCoID");
 
         if (!PstrCoID) {
-          toast.error("getPostingAccount: no PstrCoID in localStorage");
+          notify.error("getPostingAccount: no PstrCoID in localStorage");
           return;
         }
 
@@ -471,7 +471,7 @@ const SetPostingAccountPage: React.FC = () => {
 
         if (!result.success) {
           console.error("getPostingAccount failed:", result.message);
-          toast.error(`getPostingAccount failed: ${result.message}`);
+          notify.error(`getPostingAccount failed: ${result.message}`);
           return;
         }
 
@@ -489,7 +489,7 @@ const SetPostingAccountPage: React.FC = () => {
         setLoadedBranch(values.lkpBranch);
       } catch (error) {
         console.error("getPostingAccount error:", error);
-        toast.error(
+        notify.error(
           `getPostingAccount error: ${error instanceof Error ? error.message : String(error)}`,
         );
       }
@@ -593,7 +593,9 @@ const SetPostingAccountPage: React.FC = () => {
     if (!selected && currentAccountId) {
       const shouldDelete = await confirm({
         title: "Set Posting Account",
-        message: "Do you want to delete ?",
+        message: "Do you want to Delete?",
+        confirmLabel: "Delete",
+        cancelLabel: "Cancel",
       });
 
       if (!shouldDelete) {
@@ -635,12 +637,12 @@ const SetPostingAccountPage: React.FC = () => {
 
   const handleSave = async () => {
     if (!canSaveOrModify) {
-      toast.error(`You do not have permission to ${actionWord}.`);
+      notify.error(`You do not have permission to ${actionWord}.`);
       return;
     }
 
     if (!values.lkpBranch) {
-      toast.warning("Please select a 'Branch'");
+      notify.warning("Please select a 'Branch'");
       document.getElementById("lkpBranch")?.focus();
       return;
     }
@@ -650,7 +652,7 @@ const SetPostingAccountPage: React.FC = () => {
     const PstrUserID = localStorage.getItem("PstrUserID");
 
     if (!PstrCoID || !PstrYear || !PstrUserID) {
-      toast.error("Company ID / Year / User ID not found. Please log in again.");
+      notify.error("Company ID / Year / User ID not found. Please log in again.");
       return;
     }
 
@@ -686,7 +688,7 @@ const SetPostingAccountPage: React.FC = () => {
       const result = await response.json();
 
       if (!response.ok || !result.success) {
-        toast.error(
+        notify.error(
           result.message || "Not saved, try again.",
         );
 
@@ -699,7 +701,7 @@ const SetPostingAccountPage: React.FC = () => {
         return;
       }
 
-      toast.success(
+      notify.success(
         result.message || "Set Posting Account saved successfully",
       );
 
@@ -708,16 +710,13 @@ const SetPostingAccountPage: React.FC = () => {
       setReloadKey((previous) => previous + 1);
     } catch (error) {
       console.error("savePostingAccount error:", error);
-      toast.error("Cannot connect to Posting Account API.");
+      notify.error("Cannot connect to Posting Account API.");
     }
   };
 
-  // Ctrl+S -> Save, Alt+C -> Clear (the underlined letter on its button)
+  // The key of the Payment screen: Ctrl+S Save
   useCtrlShortcuts({
     s: handleSave,
-  });
-  useAltShortcuts({
-    c: handleClear,
   });
 
 
@@ -1498,28 +1497,19 @@ const SetPostingAccountPage: React.FC = () => {
             </div>
 
             {/* BUTTONS */}
-            <div className="mt-[14px] flex justify-center gap-3">
-              <button
-                id="btnSave"
-                name="btnSave"
-                type="button"
-                onClick={handleSave}
-                disabled={!canSaveOrModify}
-                className={`${buttonClass} disabled:cursor-not-allowed disabled:opacity-40`}
-              >
-                {actionWord}
-              </button>
-
-              <button
-                id="btnClear"
-                name="btnClear"
-                type="button"
-                onClick={handleClear}
-                className={buttonClass}
-              >
-                <span className="underline underline-offset-2">C</span>lear
-              </button>
-            </div>
+            <TransactionActions
+              className="mt-[14px] flex justify-center gap-3"
+              actions={[
+                {
+                  id: "btnSave",
+                  label: actionWord,
+                  underlineIndex: 0,
+                  onClick: handleSave,
+                  disabled: !canSaveOrModify,
+                },
+                { id: "btnClear", label: "Clear", onClick: handleClear },
+              ]}
+            />
 
           </div>
       </div>
@@ -1528,6 +1518,7 @@ const SetPostingAccountPage: React.FC = () => {
     {/* the "Do you want to delete ?" question - outside the root div so the page's
         Enter handling does not take the Enter of the buttons */}
     {dialog}
+    {messageDialog}
     </>
   );
 };

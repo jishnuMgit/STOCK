@@ -1,5 +1,4 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { toast } from "react-toastify";
 
 import { tryGetServerDate } from "../../../../utils/serverDate";
 import { buildFileName } from "../../../../utils/fileName";
@@ -27,6 +26,9 @@ import {
 import { useCtrlShortcuts } from "../../../../hooks/useCtrlShortcuts";
 import { useButtonPermissions } from "../../../../hooks/useButtonPermissions";
 import { useConfirmModal } from "../../../../hooks/useConfirmModal";
+import { useMessageModal } from "../../../../hooks/useMessageModal";
+import { deleteSuccessMessage } from "../../../../hooks/useDeleteToast";
+import { useAltShortcuts } from "../../../../hooks/useAltShortcuts";
 import { useInitialFocus } from "../../../../hooks/useInitialFocus";
 
 // ============================================================
@@ -54,6 +56,8 @@ const BeginningBalance: React.FC = () => {
   const perms = useButtonPermissions(MENU_ID);
   // the common themed question window (the same as the Purchase Invoice screen)
   const { confirm, dialog: confirmDialog } = useConfirmModal();
+  // the messages (warnings, errors, saved ...) are the common message window, as on the Payment screen - not a toast
+  const { notify, dialog: messageDialog } = useMessageModal(SCREEN_TITLE);
 
   // the head accounts and the cost centers of the grid's boxes
   const { accountsByID, accountsByName, costCenters } =
@@ -118,7 +122,7 @@ const BeginningBalance: React.FC = () => {
         const PstrCoID = localStorage.getItem("PstrCoID");
 
         if (!PstrCoID) {
-          toast.error("getBeginningBalance: no PstrCoID in localStorage");
+          notify.error("getBeginningBalance: no PstrCoID in localStorage");
           return;
         }
 
@@ -138,7 +142,7 @@ const BeginningBalance: React.FC = () => {
         if (requestNo !== loadRequest.current) return;
 
         if (!response.ok || !result.success) {
-          toast.error(result.message || "Failed to load the Beginning Balance");
+          notify.error(result.message || "Failed to load the Beginning Balance");
           showNew();
           return;
         }
@@ -182,13 +186,13 @@ const BeginningBalance: React.FC = () => {
         setTxtUserInfo(info);
 
         if (result.chkPosted) {
-          toast.info("This Beginning Balance is posted: it is locked.");
+          notify.info("This Beginning Balance is posted: it is locked.");
         }
       } catch (error: unknown) {
         if (requestNo !== loadRequest.current) return;
 
         console.error("getBeginningBalance error:", error);
-        toast.error("Failed to load the Beginning Balance");
+        notify.error("Failed to load the Beginning Balance");
       }
     };
 
@@ -219,7 +223,7 @@ const BeginningBalance: React.FC = () => {
     if (saving || chkPosted) return;
 
     if (!canSaveOrModify) {
-      toast.error(
+      notify.error(
         `You do not have permission to ${chkSaved ? "Modify" : "Save"}.`,
       );
       return;
@@ -227,13 +231,13 @@ const BeginningBalance: React.FC = () => {
 
     // the old ValidateMe
     if (!lkpBranch) {
-      toast.info("Please select a 'Branch'");
+      notify.info("Please select a 'Branch'");
       focusField("lkpBranch");
       return;
     }
 
     if (!dtpDate) {
-      toast.info("Please select 'Date'");
+      notify.info("Please select 'Date'");
       focusField("dtpDate");
       return;
     }
@@ -244,7 +248,7 @@ const BeginningBalance: React.FC = () => {
       .filter(({ row }) => row.lkpAccountID !== "");
 
     if (filled.length === 0) {
-      toast.info("There is no information for saving.");
+      notify.info("There is no information for saving.");
       focusField("lkpAccountID-0");
       return;
     }
@@ -256,7 +260,7 @@ const BeginningBalance: React.FC = () => {
       const account = accountByCode.get(row.lkpAccountID);
 
       if (account?.chkHaveCC && !row.lkpCCID) {
-        toast.info(`Account ID : ${row.lkpAccountID} - 'Cost Center' is required`);
+        notify.info(`Account ID : ${row.lkpAccountID} - 'Cost Center' is required`);
         focusField(`lkpCCID-${index}`);
         return;
       }
@@ -265,13 +269,13 @@ const BeginningBalance: React.FC = () => {
       const credit = toAmount(row.txtCredit);
 
       if (debit !== 0 && credit !== 0) {
-        toast.info(`Account ID : ${row.lkpAccountID} - Please input either 'Debit' or 'Credit'`);
+        notify.info(`Account ID : ${row.lkpAccountID} - Please input either 'Debit' or 'Credit'`);
         focusField(`txtDebit-${index}`);
         return;
       }
 
       if (debit === 0 && credit === 0) {
-        toast.info(`Account ID : ${row.lkpAccountID} - Please input 'Debit' or 'Credit'`);
+        notify.info(`Account ID : ${row.lkpAccountID} - Please input 'Debit' or 'Credit'`);
         focusField(`txtDebit-${index}`);
         return;
       }
@@ -279,7 +283,7 @@ const BeginningBalance: React.FC = () => {
       const key = `${row.lkpAccountID}|${account?.chkHaveCC ? row.lkpCCID : ""}`;
 
       if (seen.has(key)) {
-        toast.info("Account already exists");
+        notify.info("Account already exists");
         focusField(`lkpAccountID-${index}`);
         return;
       }
@@ -289,7 +293,7 @@ const BeginningBalance: React.FC = () => {
 
     // the old form only warns about this and saves anyway
     if (difference !== 0) {
-      toast.info("'Total Credit' must be equal to 'Total Debit'");
+      notify.info("'Total Credit' must be equal to 'Total Debit'");
     }
 
     setSaving(true);
@@ -321,7 +325,7 @@ const BeginningBalance: React.FC = () => {
       const result = await response.json();
 
       if (!response.ok || !result.success) {
-        toast.error(
+        notify.error(
           result.message ||
             (chkSaved ? "Not modified, try again" : "Not saved, try again"),
         );
@@ -329,13 +333,13 @@ const BeginningBalance: React.FC = () => {
         return;
       }
 
-      toast.success(result.message);
+      notify.success(result.message);
 
       // the old form cleared and loaded the branch again
       setReloadKey((previous) => previous + 1);
     } catch (error: unknown) {
       console.error("saveBeginningBalance error:", error);
-      toast.error(chkSaved ? "Not modified, try again" : "Not saved, try again");
+      notify.error(chkSaved ? "Not modified, try again" : "Not saved, try again");
     } finally {
       setSaving(false);
     }
@@ -350,13 +354,16 @@ const BeginningBalance: React.FC = () => {
     if (saving || !chkSaved || chkPosted || !lkpBranch) return;
 
     if (!perms.delete) {
-      toast.error("You do not have permission to Delete.");
+      notify.error("You do not have permission to Delete.");
       return;
     }
 
+    // the question and the buttons of the Payment screen
     const shouldDelete = await confirm({
       title: SCREEN_TITLE,
-      message: "Do you want to delete ?",
+      message: "Do you want to Delete?",
+      confirmLabel: "Delete",
+      cancelLabel: "Cancel",
     });
 
     if (!shouldDelete) return;
@@ -378,14 +385,16 @@ const BeginningBalance: React.FC = () => {
       const result = await response.json();
 
       if (!response.ok || !result.success) {
-        toast.error(result.message || "Not deleted, try again");
+        notify.error(result.message || "Not deleted, try again");
         return;
       }
 
+      // the common message of a delete (hooks/useDeleteToast.ts, the same on every screen), then the branch is loaded again
+      notify.success(deleteSuccessMessage(SCREEN_TITLE));
       setReloadKey((previous) => previous + 1);
     } catch (error: unknown) {
       console.error("deleteBeginningBalance error:", error);
-      toast.error("Not deleted, try again");
+      notify.error("Not deleted, try again");
     } finally {
       setSaving(false);
     }
@@ -401,19 +410,19 @@ const BeginningBalance: React.FC = () => {
     if (saving || !chkSaved || chkPosted) return;
 
     if (!perms.post) {
-      toast.error("You do not have permission to Post.");
+      notify.error("You do not have permission to Post.");
       return;
     }
 
     // the old ValidateMe("T")
     if (!lkpBranch) {
-      toast.info("Please select a 'Branch'");
+      notify.info("Please select a 'Branch'");
       focusField("lkpBranch");
       return;
     }
 
     if (!dtpDate) {
-      toast.info("Please select 'Date'");
+      notify.info("Please select 'Date'");
       focusField("dtpDate");
       return;
     }
@@ -436,18 +445,18 @@ const BeginningBalance: React.FC = () => {
       const result = await response.json();
 
       if (!response.ok || !result.success) {
-        toast.error(result.message || "Not posted, try again");
+        notify.error(result.message || "Not posted, try again");
         focusField(result.field);
         return;
       }
 
-      toast.success(result.message);
+      notify.success(result.message);
 
       // the old form loaded the branch again: it is posted now, so it is locked
       setReloadKey((previous) => previous + 1);
     } catch (error: unknown) {
       console.error("postBeginningBalance error:", error);
-      toast.error("Not posted, try again");
+      notify.error("Not posted, try again");
     } finally {
       setSaving(false);
     }
@@ -470,19 +479,19 @@ const BeginningBalance: React.FC = () => {
     if (saving || preview) return;
 
     if (!perms.print) {
-      toast.error("You do not have permission to Print.");
+      notify.error("You do not have permission to Print.");
       return;
     }
 
     // the old ValidateMe("P")
     if (!lkpBranch) {
-      toast.info("Please select a 'Branch'");
+      notify.info("Please select a 'Branch'");
       focusField("lkpBranch");
       return;
     }
 
     if (!dtpDate) {
-      toast.info("Please select 'Date'");
+      notify.info("Please select 'Date'");
       focusField("dtpDate");
       return;
     }
@@ -500,7 +509,7 @@ const BeginningBalance: React.FC = () => {
       const result = await response.json();
 
       if (!response.ok || !result.success) {
-        toast.error(result.message || "The Beginning Balance could not be printed.");
+        notify.error(result.message || "The Beginning Balance could not be printed.");
         focusField(result.field);
         return;
       }
@@ -514,7 +523,7 @@ const BeginningBalance: React.FC = () => {
       });
     } catch (error: unknown) {
       console.error("printBeginningBalance error:", error);
-      toast.error("Cannot connect to Beginning Balance API.");
+      notify.error("Cannot connect to Beginning Balance API.");
     } finally {
       setSaving(false);
     }
@@ -545,7 +554,7 @@ const BeginningBalance: React.FC = () => {
             : `Could not create the Excel file (error ${response.status})`;
       }
 
-      toast.error(message);
+      notify.error(message);
       return null;
     }
 
@@ -570,7 +579,9 @@ const BeginningBalance: React.FC = () => {
 
     const shouldRemove = await confirm({
       title: SCREEN_TITLE,
-      message: "Do you want to delete ?",
+      message: "Do you want to Delete?",
+      confirmLabel: "Delete",
+      cancelLabel: "Cancel",
     });
 
     if (!shouldRemove) return;
@@ -581,13 +592,16 @@ const BeginningBalance: React.FC = () => {
     setTimeout(() => document.getElementById(`lkpAccountID-${index}`)?.focus(), 0);
   };
 
-  // Ctrl+S Save (nothing saved yet) or Modify (saved), Ctrl+D Delete, Ctrl+P Print (the old forms' Ctrl+P).
-  // With the Print Preview open only Ctrl+P works: it prints the report that is shown (Save and Delete are off).
+  // The keys of the Payment screen: Ctrl+S Save (nothing saved yet) or Modify (saved), Ctrl+D Delete, Ctrl+P Print.
+  // With the Print Preview open only Ctrl+P works: it prints the report that is shown (Save, Delete and Post are off).
   useCtrlShortcuts(
     preview
       ? { p: () => printBeginningBalanceReport(preview.report) }
       : { s: handleSave, d: handleDelete, p: handlePrint }
   );
+
+  // Post is Alt+T (the T of the button is underlined): Chrome keeps Ctrl+T for "new tab" and never gives it to the page.
+  useAltShortcuts(preview ? {} : { t: handlePost });
 
   return (
     <div className="flex min-h-full w-full items-start justify-center bg-[#eeeeee] pb-5">
@@ -636,6 +650,7 @@ const BeginningBalance: React.FC = () => {
 
       {/* the "Do you want to delete?" question */}
       {confirmDialog}
+      {messageDialog}
 
       {/* the Print Preview (after Print) */}
       {preview && (

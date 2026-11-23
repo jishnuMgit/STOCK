@@ -168,7 +168,7 @@ export const saveYear = async (
 
     return res.status(200).json({
       success: true,
-      message: buildAdministrationYearMessage(result.wasEmpty),
+      message: buildAdministrationYearMessage(),
       count: result.done.length,
     });
   } catch (error: unknown) {

@@ -8,10 +8,10 @@ import Select, {
 import dayjs from "dayjs";
 
 
-import { toast } from "react-toastify";
 import { useEnterAsTab } from "../../../hooks/useEnterAsTab";
-import { useAltShortcuts } from "../../../hooks/useAltShortcuts";
 import { useCtrlShortcuts } from "../../../hooks/useCtrlShortcuts";
+import { useMessageModal } from "../../../hooks/useMessageModal";
+import TransactionActions from "../../../components/common/TransactionActions";
 import { useButtonPermissions } from "../../../hooks/useButtonPermissions";
 import { useGridCellFocus } from "../../../hooks/useGridCellFocus";
 import { useAdvanceAfterSelect } from "../../../hooks/useAdvanceAfterSelect";
@@ -171,6 +171,8 @@ const MENU_ID = "9304";
 const UserAudit: React.FC = () => {
   const handleEnterAsTab = useEnterAsTab();
   const perms = useButtonPermissions(MENU_ID);
+  // the messages (warnings, errors, saved ...) are the common message window, as on the Payment screen - not a toast
+  const { notify, dialog: messageDialog } = useMessageModal("User Audit");
 
   // the box the cursor is in is outlined, and its text is selected
   const { cellFocusClass } = useGridCellFocus();
@@ -226,7 +228,7 @@ const UserAudit: React.FC = () => {
         const PstrCoID = localStorage.getItem("PstrCoID");
 
         if (!PstrCoID) {
-          toast.error("getUserList: no PstrCoID in localStorage");
+          notify.error("getUserList: no PstrCoID in localStorage");
           return;
         }
 
@@ -243,12 +245,12 @@ const UserAudit: React.FC = () => {
         const actionResult = await actionResponse.json();
 
         if (!userResponse.ok || !userResult.success) {
-          toast.error(`getUserList failed: ${userResult.message}`);
+          notify.error(`getUserList failed: ${userResult.message}`);
           return;
         }
 
         if (!actionResponse.ok || !actionResult.success) {
-          toast.error(`getActionList failed: ${actionResult.message}`);
+          notify.error(`getActionList failed: ${actionResult.message}`);
           return;
         }
 
@@ -269,7 +271,7 @@ const UserAudit: React.FC = () => {
         );
       } catch (error) {
         console.error("loadUserAuditLists error:", error);
-        toast.error(
+        notify.error(
           `User Audit load error: ${error instanceof Error ? error.message : String(error)}`,
         );
       } finally {
@@ -324,37 +326,37 @@ const UserAudit: React.FC = () => {
     if (printing || preview) return;
 
     if (!perms.print) {
-      toast.error("You do not have permission to Print.");
+      notify.error("You do not have permission to Print.");
       return;
     }
 
     if (lkpUserID === "") {
-      toast.warning("Please select 'User ID'");
+      notify.warning("Please select 'User ID'");
       focusField("lkpUserID");
       return;
     }
 
     if (lkpAction === "") {
-      toast.warning("Please select 'Action'");
+      notify.warning("Please select 'Action'");
       focusField("lkpAction");
       return;
     }
 
     if (dtpFromDate === "") {
-      toast.warning("Please input 'From Date'");
+      notify.warning("Please input 'From Date'");
       focusField("dtpFromDate");
       return;
     }
 
     if (dtpToDate === "") {
-      toast.warning("Please input 'To Date'");
+      notify.warning("Please input 'To Date'");
       focusField("dtpToDate");
       return;
     }
 
     // yyyy-mm-dd text compares in date order
     if (dtpFromDate > dtpToDate) {
-      toast.warning("'From Date' should be less than or equal to 'To Date'");
+      notify.warning("'From Date' should be less than or equal to 'To Date'");
       focusField("dtpFromDate");
       return;
     }
@@ -377,13 +379,13 @@ const UserAudit: React.FC = () => {
       const result = await response.json();
 
       if (!response.ok || !result.success) {
-        toast.error(result.message || "The user audit could not be loaded.");
+        notify.error(result.message || "The user audit could not be loaded.");
         focusField(result.field);
         return;
       }
 
       if (!result.data || result.data.length === 0) {
-        toast.info("No audit rows for this selection.");
+        notify.info("No audit rows for this selection.");
         return;
       }
 
@@ -405,7 +407,7 @@ const UserAudit: React.FC = () => {
       });
     } catch (error) {
       console.error("getUserAuditList error:", error);
-      toast.error("Cannot connect to User Audit API.");
+      notify.error("Cannot connect to User Audit API.");
     } finally {
       setPrinting(false);
     }
@@ -439,7 +441,7 @@ const UserAudit: React.FC = () => {
             : `Could not create the Excel file (error ${response.status})`;
       }
 
-      toast.error(message);
+      notify.error(message);
       return null;
     }
 
@@ -458,12 +460,6 @@ const UserAudit: React.FC = () => {
 
     window.setTimeout(() => document.getElementById("lkpUserID")?.focus(), 0);
   };
-
-  // Alt+C -> Clear (the underlined letter on its button). Off while the Print Preview is open:
-  // it has its own Alt+P, Alt+D and Alt+C.
-  useAltShortcuts(preview ? {} : {
-    c: handleClear,
-  });
 
   // Ctrl+P -> Print (the old forms' Ctrl+P). With the Print Preview open it prints the report that is shown.
   useCtrlShortcuts({
@@ -630,33 +626,25 @@ const UserAudit: React.FC = () => {
               BUTTONS
           ==================================================== */}
 
-          <div className="mt-[14px] flex justify-center gap-3">
-            {/* PRINT - opens the print page */}
-            <button
-              id="btnPrint"
-              name="btnPrint"
-              type="button"
-              onClick={handlePrint}
-              disabled={!perms.print || printing}
-              className="btn-style disabled:cursor-not-allowed disabled:opacity-40"
-            >
-              Print
-            </button>
-
-            {/* CLEAR */}
-            <button
-              id="btnClear"
-              name="btnClear"
-              type="button"
-              onClick={handleClear}
-              className="btn-style"
-            >
-              <u>C</u>lear
-            </button>
-          </div>
+          <TransactionActions
+            className="mt-[14px] flex justify-center gap-3"
+            actions={[
+              // PRINT - opens the print page (Ctrl+P, the key of the Payment screen)
+              {
+                id: "btnPrint",
+                label: "Print",
+                underlineIndex: 0,
+                onClick: handlePrint,
+                disabled: !perms.print || printing,
+              },
+              { id: "btnClear", label: "Clear", onClick: handleClear },
+            ]}
+          />
         </div>
       </div>
     </div>
+
+    {messageDialog}
 
     {/* the Print Preview (after Print) */}
     {preview && (

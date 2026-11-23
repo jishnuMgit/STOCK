@@ -42,14 +42,7 @@ export const buildAdministrationBranchMessage = (
     return "Branch deleted successfully";
   }
 
-  const added = saved.some((entry) => entry.mode === "S");
-  const modified = saved.some(
-    (entry) => entry.mode === "M" || entry.mode === "D"
-  );
-
-  if (added && modified) return "Branch saved and modified successfully";
-  if (modified) return "Branch modified successfully";
-
+  // always "saved" - there is no "modified" message on this screen
   return "Branch saved successfully";
 };
 

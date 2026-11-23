@@ -68,7 +68,7 @@ export const saveCompany = async (
 
     return res.status(200).json({
       success: true,
-      message: mode === "S" ? "Saved" : "Modified",
+      message: "Company saved successfully",
     });
   } catch (error: unknown) {
     if (error instanceof ApiError) {

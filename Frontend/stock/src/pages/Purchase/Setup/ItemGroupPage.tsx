@@ -1,11 +1,11 @@
 import React, { useEffect, useState } from "react";
-import { toast } from "react-toastify";
 import { useEnterAsTab } from "../../../hooks/useEnterAsTab";
-import { useAltShortcuts } from "../../../hooks/useAltShortcuts";
 import { useCtrlShortcuts } from "../../../hooks/useCtrlShortcuts";
 import { useButtonPermissions } from "../../../hooks/useButtonPermissions";
 import { useConfirmModal } from "../../../hooks/useConfirmModal";
-import { useDeleteToast } from "../../../hooks/useDeleteToast";
+import { deleteSuccessMessage } from "../../../hooks/useDeleteToast";
+import { useMessageModal } from "../../../hooks/useMessageModal";
+import TransactionActions from "../../../components/common/TransactionActions";
 import { useInitialFocus } from "../../../hooks/useInitialFocus";
 import CommonTableSelect from "../../../components/common/CommonTableSelect";
 import Header from "../../../components/common/Header";
@@ -50,7 +50,8 @@ const ItemGroupPage: React.FC = () => {
   // the common themed question window (the same as on the other screens)
   const { confirm, dialog } = useConfirmModal();
   // the standard message of a delete that failed
-  const { notDeleted } = useDeleteToast("Item Group");
+  // the messages (warnings, errors, saved ...) are the common message window, as on the Payment screen - not a toast
+  const { notify, dialog: messageDialog } = useMessageModal("Item Group");
   // where the cursor starts: the Item Group ID box
   useInitialFocus(true, "txtItemGroupID");
 
@@ -83,7 +84,7 @@ const ItemGroupPage: React.FC = () => {
         const PstrCoID = localStorage.getItem("PstrCoID");
 
         if (!PstrCoID) {
-          toast.error("getVATSlabList: no PstrCoID in localStorage");
+          notify.error("getVATSlabList: no PstrCoID in localStorage");
           return;
         }
 
@@ -99,7 +100,7 @@ const ItemGroupPage: React.FC = () => {
 
         if (!result.success) {
           console.error("getVATSlabList failed:", result.message);
-          toast.error(`getVATSlabList failed: ${result.message}`);
+          notify.error(`getVATSlabList failed: ${result.message}`);
           return;
         }
 
@@ -114,7 +115,7 @@ const ItemGroupPage: React.FC = () => {
         );
       } catch (error) {
         console.error("getVATSlabList error:", error);
-        toast.error(
+        notify.error(
           `getVATSlabList error: ${error instanceof Error ? error.message : String(error)}`,
         );
       }
@@ -133,7 +134,7 @@ const ItemGroupPage: React.FC = () => {
         const PstrCoID = localStorage.getItem("PstrCoID");
 
         if (!PstrCoID) {
-          toast.error("getItemGroupTypeList: no PstrCoID in localStorage");
+          notify.error("getItemGroupTypeList: no PstrCoID in localStorage");
           return;
         }
 
@@ -143,7 +144,7 @@ const ItemGroupPage: React.FC = () => {
         const result = await response.json();
 
         if (!response.ok || !result.success) {
-          toast.error(result.message || "Failed to load Stock / Non-stock");
+          notify.error(result.message || "Failed to load Stock / Non-stock");
           return;
         }
 
@@ -157,7 +158,7 @@ const ItemGroupPage: React.FC = () => {
         );
       } catch (error) {
         console.error("getItemGroupTypeList error:", error);
-        toast.error("Cannot connect to Item Group API.");
+        notify.error("Cannot connect to Item Group API.");
       }
     };
 
@@ -192,7 +193,7 @@ const ItemGroupPage: React.FC = () => {
     const PstrCoID = localStorage.getItem("PstrCoID");
 
     if (!PstrCoID) {
-      toast.error("Company ID not found. Please log in again.");
+      notify.error("Company ID not found. Please log in again.");
       return false;
     }
 
@@ -216,7 +217,7 @@ const ItemGroupPage: React.FC = () => {
       return true;
     } catch (error) {
       console.error("getItemGroup error:", error);
-      toast.error("Cannot connect to Item Group API.");
+      notify.error("Cannot connect to Item Group API.");
       return false;
     }
   };
@@ -231,7 +232,7 @@ const ItemGroupPage: React.FC = () => {
 
   const handleSearch = async () => {
     if (!txtItemGroupID.trim()) {
-      toast.warning("Enter an Item Group ID to search");
+      notify.warning("Enter an Item Group ID to search");
       document.getElementById("txtItemGroupID")?.focus();
       return;
     }
@@ -239,7 +240,7 @@ const ItemGroupPage: React.FC = () => {
     const found = await findItemGroup(txtItemGroupID);
 
     if (!found) {
-      toast.info("Item Group not found", { toastId: "ig-not-found" });
+      notify.info("Item Group not found");
     }
   };
 
@@ -256,7 +257,7 @@ const ItemGroupPage: React.FC = () => {
 
   const handleSave = async () => {
     if (!canSaveOrModify) {
-      toast.error(`You do not have permission to ${actionWord}.`);
+      notify.error(`You do not have permission to ${actionWord}.`);
       return;
     }
 
@@ -272,7 +273,7 @@ const ItemGroupPage: React.FC = () => {
     const missing = requiredBoxes.find((box) => !box.value.trim());
 
     if (missing) {
-      toast.warning(missing.message);
+      notify.warning(missing.message);
       document.getElementById(missing.id)?.focus();
       return;
     }
@@ -282,7 +283,7 @@ const ItemGroupPage: React.FC = () => {
     const PstrUserID = localStorage.getItem("PstrUserID");
 
     if (!PstrCoID || !PstrYear || !PstrUserID) {
-      toast.error("Company ID / Year / User ID not found. Please log in again.");
+      notify.error("Company ID / Year / User ID not found. Please log in again.");
       return;
     }
 
@@ -312,7 +313,7 @@ const ItemGroupPage: React.FC = () => {
       const result = await response.json();
 
       if (!response.ok || !result.success) {
-        toast.error(
+        notify.error(
           result.message ||
           (hasSavedItemGroup
             ? "Not modified, try again."
@@ -328,7 +329,7 @@ const ItemGroupPage: React.FC = () => {
         return;
       }
 
-      toast.success(
+      notify.success(
         result.message ||
         (hasSavedItemGroup
           ? "Item group modified successfully."
@@ -339,7 +340,7 @@ const ItemGroupPage: React.FC = () => {
       findItemGroup(txtItemGroupID);
     } catch (error) {
       console.error("saveItemGroup error:", error);
-      toast.error("Cannot connect to Item Group API.");
+      notify.error("Cannot connect to Item Group API.");
     }
   };
 
@@ -349,19 +350,21 @@ const ItemGroupPage: React.FC = () => {
 
   const handleDelete = async () => {
     if (!perms.delete) {
-      toast.error("You do not have permission to Delete.");
+      notify.error("You do not have permission to Delete.");
       return;
     }
 
     if (!txtItemGroupID.trim()) {
-      toast.warning("Please input 'Item Group ID'");
+      notify.warning("Please input 'Item Group ID'");
       document.getElementById("txtItemGroupID")?.focus();
       return;
     }
 
     const shouldDelete = await confirm({
       title: "Item Group",
-      message: "Do you want to delete ?",
+      message: "Do you want to Delete?",
+      confirmLabel: "Delete",
+      cancelLabel: "Cancel",
     });
 
     if (!shouldDelete) {
@@ -373,7 +376,7 @@ const ItemGroupPage: React.FC = () => {
     const PstrUserID = localStorage.getItem("PstrUserID");
 
     if (!PstrCoID || !PstrYear || !PstrUserID) {
-      toast.error("Company ID / Year / User ID not found. Please log in again.");
+      notify.error("Company ID / Year / User ID not found. Please log in again.");
       return;
     }
 
@@ -396,15 +399,16 @@ const ItemGroupPage: React.FC = () => {
       const result = await response.json();
 
       if (!response.ok || !result.success) {
-        notDeleted(result.message);
+        notify.error(result.message || "Not deleted, try again");
         return;
       }
 
-      // (no message for a deleted item group)
+      // the common message of a delete (hooks/useDeleteToast.ts, the same on every screen), then the page is emptied
+      notify.success(deleteSuccessMessage("Item Group"));
       handleClear();
     } catch (error) {
       console.error("deleteItemGroup error:", error);
-      toast.error("Cannot connect to Item Group API.");
+      notify.error("Cannot connect to Item Group API.");
     }
   };
 
@@ -421,15 +425,11 @@ const ItemGroupPage: React.FC = () => {
     setTxtVATPer("0.00");
   };
 
-  // Ctrl+S -> Save (new group) or Modify (existing group), Ctrl+D -> Delete,
-  // Alt+E -> Search, Alt+C -> Clear (the underlined letters on the buttons)
+  // The keys of the Payment screen: Ctrl+S Save / Modify, Ctrl+F Find, Ctrl+D Delete
   useCtrlShortcuts({
     s: handleSave,
+    f: handleSearch,
     d: handleDelete,
-  });
-  useAltShortcuts({
-    e: handleSearch,
-    c: handleClear,
   });
 
   return (
@@ -603,50 +603,27 @@ const ItemGroupPage: React.FC = () => {
               BUTTONS
           ================================================== */}
 
-            <div className="mt-[14px] flex justify-center gap-3">
-              <button
-                id={hasSavedItemGroup ? "btnModify" : "btnSave"}
-                name={hasSavedItemGroup ? "btnModify" : "btnSave"}
-                type="button"
-                onClick={handleSave}
-                disabled={!canSaveOrModify}
-                className="btn-style disabled:cursor-not-allowed disabled:opacity-40"
-              >
-                {actionWord}
-              </button>
-
-              <button
-                id="btnSearch"
-                name="btnSearch"
-                type="button"
-                onClick={handleSearch}
-                title="Alt+E"
-                className="btn-style"
-              >
-                S<span className="underline underline-offset-2">e</span>arch
-              </button>
-
-              <button
-                id="btnDelete"
-                name="btnDelete"
-                type="button"
-                onClick={handleDelete}
-                disabled={!perms.delete}
-                className="btn-style disabled:cursor-not-allowed disabled:opacity-40"
-              >
-                Delete
-              </button>
-
-              <button
-                id="btnClear"
-                name="btnClear"
-                type="button"
-                onClick={handleClear}
-                className="btn-style"
-              >
-                <span className="underline underline-offset-2">C</span>lear
-              </button>
-            </div>
+            <TransactionActions
+              className="mt-[14px] flex justify-center gap-3"
+              actions={[
+                {
+                  id: hasSavedItemGroup ? "btnModify" : "btnSave",
+                  label: actionWord,
+                  underlineIndex: 0,
+                  onClick: handleSave,
+                  disabled: !canSaveOrModify,
+                },
+                { id: "btnSearch", label: "Find", underlineIndex: 0, onClick: handleSearch },
+                {
+                  id: "btnDelete",
+                  label: "Delete",
+                  underlineIndex: 0,
+                  onClick: handleDelete,
+                  disabled: !perms.delete,
+                },
+                { id: "btnClear", label: "Clear", onClick: handleClear },
+              ]}
+            />
           </div>
         </div>
 
@@ -655,6 +632,7 @@ const ItemGroupPage: React.FC = () => {
       {/* the "Do you want to delete ?" question - outside the root div: the page's
         Enter-as-Tab must not take the Enter of the Yes / No buttons */}
       {dialog}
+      {messageDialog}
     </>
   );
 };

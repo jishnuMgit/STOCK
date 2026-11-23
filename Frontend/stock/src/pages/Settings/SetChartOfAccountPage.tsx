@@ -1,14 +1,15 @@
 import React, { useEffect, useMemo, useState } from "react";
 import Header from "../../components/common/Header";
-import { toast } from "react-toastify";
 import { X } from "lucide-react";
 import { useConfirmModal } from "../../hooks/useConfirmModal";
-import { useAltShortcuts } from "../../hooks/useAltShortcuts";
 import { useCtrlShortcuts } from "../../hooks/useCtrlShortcuts";
 import { useEnterAsTab } from "../../hooks/useEnterAsTab";
 import { useButtonPermissions } from "../../hooks/useButtonPermissions";
 import { useGridCellFocus } from "../../hooks/useGridCellFocus";
 import { tryGetServerDate } from "../../utils/serverDate";
+import { useMessageModal } from "../../hooks/useMessageModal";
+import { deleteSuccessMessage } from "../../hooks/useDeleteToast";
+import TransactionActions from "../../components/common/TransactionActions";
 import { useAdvanceAfterSelect } from "../../hooks/useAdvanceAfterSelect";
 import Select, {
   components,
@@ -295,6 +296,8 @@ const SetChartOfAccount: React.FC = () => {
 
   const perms = useButtonPermissions(MENU_ID);
   const { confirm, dialog } = useConfirmModal();
+  // the messages (warnings, errors, saved ...) are the common message window, as on the Payment screen - not a toast
+  const { notify, dialog: messageDialog } = useMessageModal("Set Chart Of Account");
   const handleEnterAsTab = useEnterAsTab();
   // the cell the cursor is in is outlined
   const { cellFocusClass } = useGridCellFocus();
@@ -317,7 +320,7 @@ const SetChartOfAccount: React.FC = () => {
         const PstrCoID = localStorage.getItem("PstrCoID");
 
         if (!PstrCoID) {
-          toast.error("getChartOfAccount: no PstrCoID in localStorage");
+          notify.error("getChartOfAccount: no PstrCoID in localStorage");
           return;
         }
 
@@ -332,7 +335,7 @@ const SetChartOfAccount: React.FC = () => {
         const result = await response.json();
 
         if (!result.success) {
-          toast.error(result.message || "Failed to load chart of account setting");
+          notify.error(result.message || "Failed to load chart of account setting");
           return;
         }
 
@@ -355,7 +358,7 @@ const SetChartOfAccount: React.FC = () => {
         );
       } catch (error) {
         console.error("getChartOfAccount error:", error);
-        toast.error("Failed to load chart of account setting");
+        notify.error("Failed to load chart of account setting");
       }
     };
 
@@ -373,7 +376,7 @@ const SetChartOfAccount: React.FC = () => {
         const PstrCoID = localStorage.getItem("PstrCoID");
 
         if (!PstrCoID) {
-          toast.error("getParameterList: no PstrCoID in localStorage");
+          notify.error("getParameterList: no PstrCoID in localStorage");
           return;
         }
 
@@ -388,14 +391,14 @@ const SetChartOfAccount: React.FC = () => {
         const result = await response.json();
 
         if (!result.success) {
-          toast.error(result.message || "Failed to load parameter list");
+          notify.error(result.message || "Failed to load parameter list");
           return;
         }
 
         setParameterList(result.data || []);
       } catch (error) {
         console.error("getParameterList error:", error);
-        toast.error("Failed to load parameter list");
+        notify.error("Failed to load parameter list");
       }
     };
 
@@ -413,7 +416,7 @@ const SetChartOfAccount: React.FC = () => {
         const PstrCoID = localStorage.getItem("PstrCoID");
 
         if (!PstrCoID) {
-          toast.error("getAccountList: no PstrCoID in localStorage");
+          notify.error("getAccountList: no PstrCoID in localStorage");
           return;
         }
 
@@ -428,14 +431,14 @@ const SetChartOfAccount: React.FC = () => {
         const result = await response.json();
 
         if (!result.success) {
-          toast.error(result.message || "Failed to load account list");
+          notify.error(result.message || "Failed to load account list");
           return;
         }
 
         setAccountList(result.data || []);
       } catch (error) {
         console.error("getAccountList error:", error);
-        toast.error("Failed to load account list");
+        notify.error("Failed to load account list");
       }
     };
 
@@ -609,7 +612,9 @@ const SetChartOfAccount: React.FC = () => {
 
     const shouldDelete = await confirm({
       title: "Set Chart Of Account",
-      message: "Do you want to delete ?",
+      message: "Do you want to Delete?",
+      confirmLabel: "Delete",
+      cancelLabel: "Cancel",
     });
 
     if (!shouldDelete) {
@@ -621,7 +626,7 @@ const SetChartOfAccount: React.FC = () => {
     const PstrUserID = localStorage.getItem("PstrUserID");
 
     if (!PstrCoID || !PstrYear || !PstrUserID) {
-      toast.error("Company ID / Year / User ID not found. Please log in again.");
+      notify.error("Company ID / Year / User ID not found. Please log in again.");
       return;
     }
 
@@ -645,14 +650,16 @@ const SetChartOfAccount: React.FC = () => {
       const result = await response.json();
 
       if (!response.ok || !result.success) {
-        toast.error(result.message || "Could not delete the account setting. Please try again.");
+        notify.error(result.message || "Could not delete the account setting. Please try again.");
         return;
       }
 
+      // the common message of a delete (hooks/useDeleteToast.ts, the same on every screen), then the row leaves the grid
+      notify.success(deleteSuccessMessage("Set Chart Of Account"));
       setRows((previous) => previous.filter((item) => item !== row));
     } catch (error) {
       console.error("deleteChartOfAccountRow error:", error);
-      toast.error("Cannot connect to Set Chart Of Account API.");
+      notify.error("Cannot connect to Set Chart Of Account API.");
     }
   };
 
@@ -675,7 +682,7 @@ const SetChartOfAccount: React.FC = () => {
     if (saving) return;
 
     if (!canSaveOrModify) {
-      toast.error(`You do not have permission to ${actionWord}.`);
+      notify.error(`You do not have permission to ${actionWord}.`);
       return;
     }
 
@@ -684,7 +691,7 @@ const SetChartOfAccount: React.FC = () => {
     const PstrUserID = localStorage.getItem("PstrUserID");
 
     if (!PstrCoID || !PstrYear || !PstrUserID) {
-      toast.error("Company ID / Year / User ID not found. Please log in again.");
+      notify.error("Company ID / Year / User ID not found. Please log in again.");
       return;
     }
 
@@ -699,7 +706,7 @@ const SetChartOfAccount: React.FC = () => {
 
     for (const { row, rowNo } of filledRows) {
       if (!row.lkpParameterType.trim() || !row.lkpAccountID.trim()) {
-        toast.error(`Row ${rowNo}: select both a Parameter and an Account.`);
+        notify.error(`Row ${rowNo}: select both a Parameter and an Account.`);
         document
           .getElementById(
             row.lkpParameterType.trim()
@@ -713,7 +720,7 @@ const SetChartOfAccount: React.FC = () => {
       const pair = `${row.lkpParameterType}|${row.lkpAccountID}`.toUpperCase();
 
       if (seen.has(pair)) {
-        toast.error(`Row ${rowNo}: Duplicate Entry !`);
+        notify.error(`Row ${rowNo}: Duplicate Entry !`);
         document.getElementById(`lkpAccountID-${rowNo - 1}`)?.focus();
         return;
       }
@@ -754,7 +761,7 @@ const SetChartOfAccount: React.FC = () => {
       const result = await response.json();
 
       if (!response.ok || !result.success) {
-        toast.error(
+        notify.error(
           result.message ||
             "Not saved, try again."
         );
@@ -768,7 +775,7 @@ const SetChartOfAccount: React.FC = () => {
         return;
       }
 
-      toast.success(
+      notify.success(
         result.message || "Set Chart Of Account saved successfully"
       );
 
@@ -776,7 +783,7 @@ const SetChartOfAccount: React.FC = () => {
       setReloadKey((key) => key + 1);
     } catch (error) {
       console.error("saveChartOfAccount error:", error);
-      toast.error("Cannot connect to Set Chart Of Account API.");
+      notify.error("Cannot connect to Set Chart Of Account API.");
     } finally {
       setSaving(false);
     }
@@ -790,12 +797,9 @@ const SetChartOfAccount: React.FC = () => {
     setReloadKey((key) => key + 1);
   };
 
-  // Ctrl+S -> Save, Alt+C -> Clear (the underlined letter on its button)
+  // The key of the Payment screen: Ctrl+S Save
   useCtrlShortcuts({
     s: handleSave,
-  });
-  useAltShortcuts({
-    c: handleClear,
   });
 
   // ==========================================================
@@ -1147,6 +1151,7 @@ const SetChartOfAccount: React.FC = () => {
                         focus:bg-transparent
                       "
                     />
+
                   </div>
                 </div>
               );
@@ -1158,34 +1163,26 @@ const SetChartOfAccount: React.FC = () => {
 
         {/* ACTION BUTTONS - stay at the bottom of the window, so Save is always visible without scrolling */}
 
-        <div className="sticky bottom-0 z-10 flex justify-center gap-3 bg-white pb-[12px] pt-[2px]">
-          <button
-            id="btnSave"
-            name="btnSave"
-            type="button"
-            onClick={handleSave}
-            disabled={!canSaveOrModify || saving}
-            className="btn-style disabled:cursor-not-allowed disabled:opacity-40"
-          >
-            {actionWord}
-          </button>
-
-          <button
-            id="btnClear"
-            name="btnClear"
-            type="button"
-            onClick={handleClear}
-            className="btn-style"
-          >
-            <span className="underline underline-offset-2">C</span>lear
-          </button>
-        </div>
+        <TransactionActions
+          className="sticky bottom-0 z-10 flex justify-center gap-3 bg-white pb-[12px] pt-[2px]"
+          actions={[
+            {
+              id: "btnSave",
+              label: actionWord,
+              underlineIndex: 0,
+              onClick: handleSave,
+              disabled: !canSaveOrModify || saving,
+            },
+            { id: "btnClear", label: "Clear", onClick: handleClear },
+          ]}
+        />
       </div>
     </div>
 
     {/* the "Do you want to delete ?" question - outside the root div so the page's
         Enter handling does not take the Enter of the buttons */}
     {dialog}
+    {messageDialog}
     </>
   );
 };

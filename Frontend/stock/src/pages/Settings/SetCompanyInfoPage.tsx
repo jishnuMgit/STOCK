@@ -1,14 +1,14 @@
 import { useEffect, useMemo, useState } from "react";
 import Header from "../../components/common/Header";
-import { toast } from "react-toastify";
 import Select from "react-select";
 import type { SelectOption } from "../../types/receiptypes";
 import { useEnterAsTab } from "../../hooks/useEnterAsTab";
-import { useAltShortcuts } from "../../hooks/useAltShortcuts";
 import { useCtrlShortcuts } from "../../hooks/useCtrlShortcuts";
 import { useButtonPermissions } from "../../hooks/useButtonPermissions";
 import { useGridCellFocus } from "../../hooks/useGridCellFocus";
 import { tryGetServerDate } from "../../utils/serverDate";
+import { useMessageModal } from "../../hooks/useMessageModal";
+import TransactionActions from "../../components/common/TransactionActions";
 import { useAdvanceAfterSelect } from "../../hooks/useAdvanceAfterSelect";
 import { useInitialFocus } from "../../hooks/useInitialFocus";
 import {
@@ -176,6 +176,8 @@ const MENU_ID = "9199";
 const SetCompanyInfo = () => {
   const handleEnterAsTab = useEnterAsTab();
   const perms = useButtonPermissions(MENU_ID);
+  // the messages (warnings, errors, saved ...) are the common message window, as on the Payment screen - not a toast
+  const { notify, dialog: messageDialog } = useMessageModal("Set Company Info");
   // the box the cursor is in is outlined, and its text is selected
   const { cellFocusClass, selectOnFocus } = useGridCellFocus();
   // after a Company pick (or Enter on a closed Company box) the cursor goes on
@@ -224,7 +226,7 @@ const SetCompanyInfo = () => {
         const PstrCoID = localStorage.getItem("PstrCoID");
 
         if (!PstrCoID) {
-          toast.error("Company ID not found. Please log in again.");
+          notify.error("Company ID not found. Please log in again.");
           return;
         }
 
@@ -322,7 +324,7 @@ const SetCompanyInfo = () => {
   // For now it only covers the fields marked with a red * in the form.
   const validateMe = (): boolean => {
     const fail = (message: string, fieldId: string): boolean => {
-      toast.warning(message);
+      notify.warning(message);
       document.getElementById(fieldId)?.focus();
       return false;
     };
@@ -350,7 +352,7 @@ const SetCompanyInfo = () => {
   // but it works with the MODIFY right (letter M of the menu's buttons).
   const handleSave = async () => {
     if (!perms.modify) {
-      toast.error("You do not have permission to Save.");
+      notify.error("You do not have permission to Save.");
       return;
     }
 
@@ -361,7 +363,7 @@ const SetCompanyInfo = () => {
     const PstrUserID = localStorage.getItem("PstrUserID");
 
     if (!PstrUserID) {
-      toast.error("User ID not found. Please log in again.");
+      notify.error("User ID not found. Please log in again.");
       return;
     }
 
@@ -386,7 +388,7 @@ const SetCompanyInfo = () => {
       const result = await response.json();
 
       if (!response.ok || !result.success) {
-        toast.error(result.message || "Not saved, try again");
+        notify.error(result.message || "Not saved, try again");
 
         // the backend validator names the field that failed - same name as
         // the element id, so the cursor goes straight into it
@@ -397,10 +399,10 @@ const SetCompanyInfo = () => {
         return;
       }
 
-      toast.success(result.message || "Set Company Info saved successfully");
+      notify.success(result.message || "Set Company Info saved successfully");
     } catch (error) {
       console.error("saveCompanyDetails error:", error);
-      toast.error("Cannot connect to Company Info API.");
+      notify.error("Cannot connect to Company Info API.");
     }
   };
 
@@ -417,8 +419,7 @@ const SetCompanyInfo = () => {
 
   /* =======================================================
      KEYBOARD SHORTCUTS
-     Ctrl+S -> Save, Alt+C -> Clear (Clear matches the
-     underlined letter on its button).
+     The key of the Payment screen: Ctrl+S Save.
   ======================================================= */
 
   // the cursor starts on the Company Name box
@@ -427,15 +428,13 @@ const SetCompanyInfo = () => {
   useCtrlShortcuts({
     s: handleSave,
   });
-  useAltShortcuts({
-    c: handleClear,
-  });
 
   return (
     <div
       onKeyDown={handleEnterAsTab}
       className="flex min-h-screen w-full items-center justify-center bg-white"
     >
+      {messageDialog}
       <div className="w-[870px] overflow-hidden border border-slate-400 bg-white shadow-sm">
 
         <Header Name="Set Company Info." />
@@ -627,36 +626,19 @@ const SetCompanyInfo = () => {
           </div>
 
           {/* ================= BUTTONS ================= */}
-          <div className="mt-[14px] flex justify-center gap-3">
-
-            <button
-              id="btnSave"
-              name="btnSave"
-              type="button"
-              onClick={handleSave}
-              disabled={!perms.modify}
-              className="
-                btn-style
-                disabled:cursor-not-allowed
-                disabled:opacity-40
-              "
-            >
-              Save
-            </button>
-
-            <button
-              id="btnClear"
-              name="btnClear"
-              type="button"
-              onClick={handleClear}
-              className="
-                btn-style
-              "
-            >
-              <span className="underline underline-offset-2">C</span>lear
-            </button>
-
-          </div>
+          <TransactionActions
+            className="mt-[14px] flex justify-center gap-3"
+            actions={[
+              {
+                id: "btnSave",
+                label: "Save",
+                underlineIndex: 0,
+                onClick: handleSave,
+                disabled: !perms.modify,
+              },
+              { id: "btnClear", label: "Clear", onClick: handleClear },
+            ]}
+          />
 
         </div>
       </div>

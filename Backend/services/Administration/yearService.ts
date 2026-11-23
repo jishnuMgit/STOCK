@@ -227,7 +227,5 @@ export async function deleteAdministrationYearService(data: {
   }
 }
 
-// the same words as the other screens: "... saved successfully" for the first
-// save (no open year before), "... modified successfully" afterwards
-export const buildAdministrationYearMessage = (wasEmpty: boolean): string =>
-  wasEmpty ? "Year saved successfully" : "Year modified successfully";
+// the message of a save: always "Year saved successfully" (there is no "modified" message on this screen)
+export const buildAdministrationYearMessage = (): string => "Year saved successfully";

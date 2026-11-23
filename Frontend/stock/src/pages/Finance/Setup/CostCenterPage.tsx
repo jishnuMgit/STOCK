@@ -1,12 +1,13 @@
 import React, { useEffect, useState } from "react";
-import { toast } from "react-toastify";
 import { X } from "lucide-react";
 import { useEnterAsTab } from "../../../hooks/useEnterAsTab";
 import { useButtonPermissions } from "../../../hooks/useButtonPermissions";
 import { useGridCellFocus } from "../../../hooks/useGridCellFocus";
 import { useCtrlShortcuts } from "../../../hooks/useCtrlShortcuts";
 import { useConfirmModal } from "../../../hooks/useConfirmModal";
-import { useDeleteToast } from "../../../hooks/useDeleteToast";
+import { deleteSuccessMessage } from "../../../hooks/useDeleteToast";
+import { useMessageModal } from "../../../hooks/useMessageModal";
+import TransactionActions from "../../../components/common/TransactionActions";
 import Header from "../../../components/common/Header";
 
 // ============================================================
@@ -71,7 +72,8 @@ const CostCenterPage: React.FC = () => {
   // the common themed question window (the same as on the other screens)
   const { confirm, dialog } = useConfirmModal();
   // the standard messages of a delete: "Cost Center deleted successfully"
-  const { deleted, notDeleted } = useDeleteToast("Cost Center");
+  // the messages (warnings, errors, saved ...) are the common message window, as on the Payment screen - not a toast
+  const { notify, dialog: messageDialog } = useMessageModal("Cost Center");
 
   const { coId, year, userId } = getAppSession();
 
@@ -110,7 +112,7 @@ const CostCenterPage: React.FC = () => {
         const data = await res.json();
 
         if (!res.ok || !data.success) {
-          toast.error(data.message || "Failed to load cost centers");
+          notify.error(data.message || "Failed to load cost centers");
           return;
         }
         if (cancelled) return;
@@ -150,7 +152,7 @@ const CostCenterPage: React.FC = () => {
           setSelectedRow(firstEmptyRow);
         }, 0);
       } catch {
-        if (!cancelled) toast.error("Failed to load cost centers");
+        if (!cancelled) notify.error("Failed to load cost centers");
       }
     };
 
@@ -230,14 +232,14 @@ const CostCenterPage: React.FC = () => {
       const data = await res.json();
 
       if (!res.ok || !data.success) {
-        toast.error(data.message || "Could not check the transactions");
+        notify.error(data.message || "Could not check the transactions");
         return true; // when in doubt, do not allow the change
       }
 
       setUsedIds((previous) => ({ ...previous, [id]: !!data.used }));
       return !!data.used;
     } catch {
-      toast.error("Could not check the transactions.");
+      notify.error("Could not check the transactions.");
       return true;
     }
   };
@@ -258,16 +260,13 @@ const CostCenterPage: React.FC = () => {
     }
 
     if (!perms.modify) {
-      toast.warning("You don't have the permission to modify", {
-        toastId: "cc-modify-denied",
-      });
+      notify.warning("You don't have the permission to modify");
       return true;
     }
 
     if (column === "txtCCID" && usedIds[row.txtOriginalCCID] === true) {
-      toast.warning(
+      notify.warning(
         "You can't Modify. Some transactions already entered with this 'Cost Center'",
-        { toastId: "cc-modify-used" },
       );
       return true;
     }
@@ -308,11 +307,10 @@ const CostCenterPage: React.FC = () => {
     );
 
     if (alreadyThere) {
-      toast.warning(
+      notify.warning(
         column === "txtCCID"
           ? "'Cost Center ID' already exists"
           : "'Cost Center Name' already exists",
-        { toastId: `cc-duplicate-${column}` },
       );
       updateRow(index, { [column]: original });
       focusCell(column, index);
@@ -338,23 +336,22 @@ const CostCenterPage: React.FC = () => {
 
     if (original !== null) {
       if (!perms.delete) {
-        toast.warning("You don't have the permission to delete", {
-          toastId: "cc-delete-denied",
-        });
+        notify.warning("You don't have the permission to delete");
         return;
       }
 
       if (await isUsed(original)) {
-        toast.warning(
+        notify.warning(
           "You can't delete. Some transactions already entered with this 'Cost Center'",
-          { toastId: "cc-delete-used" },
         );
         return;
       }
 
       const shouldDelete = await confirm({
         title: "Cost Center",
-        message: "Do you want to delete ?",
+        message: "Do you want to Delete?",
+        confirmLabel: "Delete",
+        cancelLabel: "Cancel",
       });
 
       if (!shouldDelete) return;
@@ -376,13 +373,14 @@ const CostCenterPage: React.FC = () => {
         const data = await res.json();
 
         if (!res.ok || !data.success) {
-          notDeleted(data.message);
+          notify.error(data.message || "Not deleted, try again");
           return;
         }
 
-        deleted();
+        // the common message of a delete (hooks/useDeleteToast.ts, the same on every screen)
+        notify.success(deleteSuccessMessage("Cost Center"));
       } catch {
-        notDeleted();
+        notify.error("Not deleted, try again");
         return;
       }
     }
@@ -496,7 +494,7 @@ const CostCenterPage: React.FC = () => {
       }
 
       if (id === "" || name === "") {
-        toast.warning("Cost Center ID and Cost Center Name are both required");
+        notify.warning("Cost Center ID and Cost Center Name are both required");
         focusCell(id === "" ? "txtCCID" : "txtCCName", i);
         return;
       }
@@ -529,7 +527,7 @@ const CostCenterPage: React.FC = () => {
       updated.length === 0 &&
       deletedIds.length === 0
     ) {
-      toast.info("Nothing to save", { toastId: "cc-nothing" });
+      notify.info("Nothing to save");
       return;
     }
 
@@ -550,14 +548,14 @@ const CostCenterPage: React.FC = () => {
       const data = await res.json();
 
       if (!res.ok || !data.success) {
-        toast.error(data.message || "Not saved, try again");
+        notify.error(data.message || "Not saved, try again");
         return;
       }
 
-      toast.success("Cost Center saved successfully");
+      notify.success("Cost Center saved successfully");
       handleClear();
     } catch {
-      toast.error("Not saved, try again");
+      notify.error("Not saved, try again");
     } finally {
       setSaving(false);
     }
@@ -598,7 +596,6 @@ const CostCenterPage: React.FC = () => {
   // KEYBOARD SHORTCUTS (page wide)
   //  Ctrl+S  Save / Modify
   //  Ctrl+D  delete the selected row (also Ctrl+Delete; also works when focus is not in a box)
-  //  Alt+C  Clear
   // The listener is added once; the ref always holds the latest handlers,
   // so it never uses old rows / permissions.
   // ============================================================
@@ -608,22 +605,6 @@ const CostCenterPage: React.FC = () => {
   // (and no ref is read or written during render).
   useEffect(() => {
     const onKeyDown = (event: KeyboardEvent) => {
-      // Alt + letter (event.code also works on Mac, where Option+S types "ß")
-      if (event.altKey && !event.ctrlKey && !event.metaKey) {
-        if (event.code === "KeyC") {
-          event.preventDefault();
-          handleClear();
-          return;
-        }
-
-        // Alt+F -> Find (turn on together with the Find code above)
-        // if (event.code === "KeyF") {
-        //   event.preventDefault();
-        //   openFind();
-        //   return;
-        // }
-      }
-
       // Ctrl + Delete when focus is NOT in a box (inside a box the cell
       // handler already does it, so skip it here to avoid deleting twice)
       if (
@@ -866,40 +847,21 @@ const CostCenterPage: React.FC = () => {
               BUTTONS
           ==================================================== */}
 
-            <div className="mt-[14px] flex justify-center gap-3">
-              <button
-                id="btnSave"
-                name="btnSave"
-                type="button"
-                onClick={handleSave}
-                disabled={!canSaveOrModify || saving}
-                title="Ctrl+S"
-                className="btn-style disabled:cursor-not-allowed disabled:opacity-40"
-              >
-                {actionWord}
-              </button>
-
-              <button
-                id="btnSearch"
-                name="btnSearch"
-                type="button"
-                title="Alt+F"
-                className="btn-style"
-              >
-                <span className="underline underline-offset-2">S</span>earch
-              </button>
-
-              <button
-                id="btnClear"
-                name="btnClear"
-                type="button"
-                onClick={handleClear}
-                title="Alt+C"
-                className="btn-style"
-              >
-                <span className="underline underline-offset-2">C</span>lear
-              </button>
-            </div>
+            <TransactionActions
+              className="mt-[14px] flex justify-center gap-3"
+              actions={[
+                {
+                  id: "btnSave",
+                  label: actionWord,
+                  underlineIndex: 0,
+                  onClick: handleSave,
+                  disabled: !canSaveOrModify || saving,
+                },
+                // Find is not switched on on this page yet (as before): the button does nothing
+                { id: "btnSearch", label: "Find", underlineIndex: 0, onClick: () => {} },
+                { id: "btnClear", label: "Clear", onClick: handleClear },
+              ]}
+            />
           </div>
         </div>
 
@@ -972,6 +934,7 @@ const CostCenterPage: React.FC = () => {
       {/* the "Do you want to delete ?" question - outside the root div: the page's
         Enter handling must not take the Enter of the Yes / No buttons */}
       {dialog}
+      {messageDialog}
     </>
   );
 };

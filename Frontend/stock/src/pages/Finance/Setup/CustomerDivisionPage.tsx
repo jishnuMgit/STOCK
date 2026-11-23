@@ -1,5 +1,4 @@
 import React, { useCallback, useEffect, useState } from "react";
-import { toast } from "react-toastify";
 import { X } from "lucide-react";
 
 import CustomLinkedPairSelect, {
@@ -9,7 +8,9 @@ import { FILTER_GAP } from "../../../components/common/ReportFilters";
 import Header from "../../../components/sharecomponents/Header";
 import { useButtonPermissions } from "../../../hooks/useButtonPermissions";
 import { useConfirmModal } from "../../../hooks/useConfirmModal";
-import { useDeleteToast } from "../../../hooks/useDeleteToast";
+import { deleteSuccessMessage } from "../../../hooks/useDeleteToast";
+import { useMessageModal } from "../../../hooks/useMessageModal";
+import TransactionActions from "../../../components/common/TransactionActions";
 import { useEnterAsTab } from "../../../hooks/useEnterAsTab";
 import { useGridCellFocus } from "../../../hooks/useGridCellFocus";
 import { useCtrlShortcuts } from "../../../hooks/useCtrlShortcuts";
@@ -103,17 +104,12 @@ const cellInputClass =
 const thClass =
   "h-[28px] border border-[#B7ECD0] bg-[#EEFBF4] pl-[2px] pr-2 font-semibold text-[#405066]";
 
-type CustomerDivisionPageProps = {
-  onClose?: () => void;
-};
-
-const CustomerDivisionPage: React.FC<CustomerDivisionPageProps> = ({
-  onClose,
-}) => {
+const CustomerDivisionPage: React.FC = () => {
   const handleEnterAsTab = useEnterAsTab();
   const perms = useButtonPermissions(MENU_ID);
   const { confirm, dialog } = useConfirmModal();
-  const { notDeleted } = useDeleteToast("Customer Division");
+  // the messages (warnings, errors, saved ...) are the common message window, as on the Payment screen - not a toast
+  const { notify, dialog: messageDialog } = useMessageModal("Customer Division");
   // the cell the cursor is in is outlined (a typed-in box has its text selected)
   const { cellFocusClass, selectOnFocus } = useGridCellFocus();
 
@@ -141,7 +137,7 @@ const CustomerDivisionPage: React.FC<CustomerDivisionPageProps> = ({
         const result = await response.json();
 
         if (!response.ok || !result.success) {
-          toast.error(result.message || "Failed to load the Customers");
+          notify.error(result.message || "Failed to load the Customers");
           return;
         }
 
@@ -156,7 +152,7 @@ const CustomerDivisionPage: React.FC<CustomerDivisionPageProps> = ({
         );
       } catch (error: unknown) {
         console.error("customerDivision lookups error:", error);
-        toast.error("Cannot connect to the Customer Division CUSTOMER_DIVISION_API.");
+        notify.error("Cannot connect to the Customer Division CUSTOMER_DIVISION_API.");
       }
     };
 
@@ -208,14 +204,14 @@ const CustomerDivisionPage: React.FC<CustomerDivisionPageProps> = ({
       const result = await response.json();
 
       if (!response.ok || !result.success) {
-        toast.error(result.message || "Failed to load the divisions");
+        notify.error(result.message || "Failed to load the divisions");
         return;
       }
 
       showDivisionRows(result.divisions || []);
     } catch (error: unknown) {
       console.error("customerDivision divisions error:", error);
-      toast.error("Cannot connect to the Customer Division CUSTOMER_DIVISION_API.");
+      notify.error("Cannot connect to the Customer Division CUSTOMER_DIVISION_API.");
     }
   }, []);
 
@@ -255,14 +251,14 @@ const CustomerDivisionPage: React.FC<CustomerDivisionPageProps> = ({
       const result = await response.json();
 
       if (!response.ok || !result.success) {
-        toast.error(result.message || "Could not check the transactions");
+        notify.error(result.message || "Could not check the transactions");
         return true; // when in doubt, do not allow the change
       }
 
       setUsedDivisionIDs((previous) => ({ ...previous, [id]: !!result.used }));
       return !!result.used;
     } catch {
-      toast.error("Could not check the transactions.");
+      notify.error("Could not check the transactions.");
       return true;
     }
   };
@@ -275,14 +271,13 @@ const CustomerDivisionPage: React.FC<CustomerDivisionPageProps> = ({
     if (row.txtOriginalDivisionID === null) return false;
 
     if (!perms.modify) {
-      toast.warning("You don't have the permission to modify", { toastId: "cd-modify-denied" });
+      notify.warning("You don't have the permission to modify");
       return true;
     }
 
     if (column === "txtDivisionID" && usedDivisionIDs[row.txtOriginalDivisionID] === true) {
-      toast.warning(
+      notify.warning(
         "You can't modify the 'Division ID'. Some transactions already entered with this 'Division'",
-        { toastId: "cd-modify-used" },
       );
       return true;
     }
@@ -297,7 +292,7 @@ const CustomerDivisionPage: React.FC<CustomerDivisionPageProps> = ({
     // a longer value (typed or pasted) is cut at the limit, with a message - not silently
     const limit = COLUMN_LIMITS[column];
     if (value.length > limit.max) {
-      toast.warning(limit.message, { toastId: `cd-length-${column}` });
+      notify.warning(limit.message);
       value = value.slice(0, limit.max);
     }
 
@@ -335,9 +330,8 @@ const CustomerDivisionPage: React.FC<CustomerDivisionPageProps> = ({
     );
 
     if (alreadyThere) {
-      toast.warning(
+      notify.warning(
         column === "txtDivisionID" ? "'Division ID' already exists" : "'Division Name' already exists",
-        { toastId: "cd-duplicate" },
       );
       setDivisionRows((previous) =>
         padDivisionRows(previous.map((r) => (r.key === key ? { ...r, [column]: original } : r))),
@@ -359,21 +353,22 @@ const CustomerDivisionPage: React.FC<CustomerDivisionPageProps> = ({
 
     if (original !== null) {
       if (!perms.delete) {
-        toast.warning("You don't have the permission to delete", { toastId: "cd-delete-denied" });
+        notify.warning("You don't have the permission to delete");
         return;
       }
 
       if (await haveDivisionTrans(original)) {
-        toast.warning(
+        notify.warning(
           "You can't delete. Some transactions already entered with this 'Division'",
-          { toastId: "cd-delete-used" },
         );
         return;
       }
 
       const shouldDelete = await confirm({
         title: "Customer Division",
-        message: "Do you want to delete ?",
+        message: "Do you want to Delete?",
+        confirmLabel: "Delete",
+        cancelLabel: "Cancel",
       });
       if (!shouldDelete) return;
 
@@ -386,13 +381,14 @@ const CustomerDivisionPage: React.FC<CustomerDivisionPageProps> = ({
         const result = await response.json();
 
         if (!response.ok || !result.success) {
-          notDeleted(result.message);
+          notify.error(result.message || "Not deleted, try again");
           return;
         }
 
-        // (no message for a deleted division: the row just leaves the grid)
+        // the common message of a delete (hooks/useDeleteToast.ts, the same on every screen), then the row leaves the grid
+        notify.success(deleteSuccessMessage("Customer Division"));
       } catch {
-        notDeleted();
+        notify.error("Not deleted, try again");
         return;
       }
     }
@@ -457,7 +453,7 @@ const CustomerDivisionPage: React.FC<CustomerDivisionPageProps> = ({
 
   const handleSave = async () => {
     if (!lkpCsAccountID) {
-      toast.warning("Please select 'Customer'");
+      notify.warning("Please select 'Customer'");
       document.getElementById("lkpCsAccountID")?.focus();
       return;
     }
@@ -480,7 +476,7 @@ const CustomerDivisionPage: React.FC<CustomerDivisionPageProps> = ({
 
       // the Arabic name is optional (as in the old form)
       if (id === "" || name === "") {
-        toast.warning("Division ID and Division Name are both required");
+        notify.warning("Division ID and Division Name are both required");
         focusCell(id === "" ? "txtDivisionID" : "txtDivisionName", i);
         return;
       }
@@ -489,7 +485,7 @@ const CustomerDivisionPage: React.FC<CustomerDivisionPageProps> = ({
         (column) => row[column].trim().length > COLUMN_LIMITS[column].max,
       );
       if (tooLong) {
-        toast.warning(COLUMN_LIMITS[tooLong].message);
+        notify.warning(COLUMN_LIMITS[tooLong].message);
         focusCell(tooLong, i);
         return;
       }
@@ -516,7 +512,7 @@ const CustomerDivisionPage: React.FC<CustomerDivisionPageProps> = ({
     }
 
     if (inserted.length === 0 && updated.length === 0) {
-      toast.info("Nothing to save", { toastId: "cd-nothing" });
+      notify.info("Nothing to save");
       return;
     }
 
@@ -533,14 +529,14 @@ const CustomerDivisionPage: React.FC<CustomerDivisionPageProps> = ({
       const result = await response.json();
 
       if (!response.ok || !result.success) {
-        toast.error(result.message || "Not saved, try again");
+        notify.error(result.message || "Not saved, try again");
         return;
       }
 
-      toast.success("Customer Division saved successfully");
+      notify.success("Customer Division saved successfully");
       await getCustomerDivisions(lkpCsAccountID);
     } catch {
-      toast.error("Not saved, try again");
+      notify.error("Not saved, try again");
     } finally {
       setIsSaving(false);
     }
@@ -548,39 +544,18 @@ const CustomerDivisionPage: React.FC<CustomerDivisionPageProps> = ({
 
   const handleCancel = () => selectCustomer(lkpCsAccountID);
 
-  const handleClose = () => {
-    selectCustomer(null);
-    onClose?.();
-  };
-
   // a row of the grid that can be deleted: filled
   const canDeleteDivisionRow = (row: DivisionRow) => !isEmptyDivisionRow(row);
 
   /* ---------------------------------------- KEYBOARD SHORTCUTS (page wide)
      Ctrl+S   Save / Modify
      Ctrl+D   delete the selected row
-     Alt+N   Cancel
-     Alt+C   Close
      Ctrl+Delete   delete the selected row (also when the cursor is not in a box; in a box the box does it)
      No dependency array on purpose: the listener is attached again after every render, so it always sees the latest
      rows / rights / handlers. */
 
   useEffect(() => {
     const onKeyDown = (event: KeyboardEvent) => {
-      if (event.altKey && !event.ctrlKey && !event.metaKey) {
-        if (event.code === "KeyN") {
-          event.preventDefault();
-          handleCancel();
-          return;
-        }
-
-        if (event.code === "KeyC") {
-          event.preventDefault();
-          handleClose();
-          return;
-        }
-      }
-
       if (
         event.ctrlKey &&
         event.key === "Delete" &&
@@ -770,39 +745,19 @@ const CustomerDivisionPage: React.FC<CustomerDivisionPageProps> = ({
               </div>
 
               {/* Actions */}
-              <div className="mt-5 flex justify-center gap-3">
-                <button
-                  id="btnSave"
-                  name="btnSave"
-                  type="button"
-                  onClick={() => void handleSave()}
-                  title="Ctrl+S"
-                  disabled={isSaving || !(perms.save || perms.modify)}
-                  className="btn-style disabled:cursor-not-allowed disabled:opacity-40"
-                >
-                  Save
-                </button>
-                <button
-                  id="btnCancel"
-                  name="btnCancel"
-                  type="button"
-                  onClick={handleCancel}
-                  title="Alt+N"
-                  className="btn-style"
-                >
-                  Ca<u>n</u>cel
-                </button>
-                <button
-                  id="btnClose"
-                  name="btnClose"
-                  type="button"
-                  onClick={handleClose}
-                  title="Alt+C"
-                  className="btn-style"
-                >
-                  <u>C</u>lose
-                </button>
-              </div>
+              <TransactionActions
+                className="mt-5 flex justify-center gap-3"
+                actions={[
+                  {
+                    id: "btnSave",
+                    label: "Save",
+                    underlineIndex: 0,
+                    onClick: () => void handleSave(),
+                    disabled: isSaving || !(perms.save || perms.modify),
+                  },
+                  { id: "btnCancel", label: "Cancel", onClick: handleCancel },
+                ]}
+              />
             </section>
           </main>
         </div>
@@ -811,6 +766,7 @@ const CustomerDivisionPage: React.FC<CustomerDivisionPageProps> = ({
       {/* the "Do you want to delete ?" question - outside the root div: the page's Enter handling must not take the Enter of
           the Yes / No buttons */}
       {dialog}
+      {messageDialog}
     </>
   );
 };

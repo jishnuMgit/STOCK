@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useRef, useState } from "react";
+import { useCallback, useMemo, useRef, useState, type ReactNode } from "react";
 import MessageModal, {
     type MessageType,
 } from "../components/common/MessageModal";
@@ -6,14 +6,14 @@ import MessageModal, {
 interface QueuedMessage {
     id: number;
     type: MessageType;
-    message: string;
+    message: ReactNode;
 }
 
 export const useMessageModal = (title?: string) => {
     const [queue, setQueue] = useState<QueuedMessage[]>([]);
     const idRef = useRef(0);
 
-    const push = useCallback((type: MessageType, message: string) => {
+    const push = useCallback((type: MessageType, message: ReactNode) => {
         idRef.current += 1;
         const id = idRef.current;
         setQueue((current) => [...current, { id, type, message }]);
@@ -24,10 +24,10 @@ export const useMessageModal = (title?: string) => {
     // same method names as react-toastify, and a stable reference
     const notify = useMemo(
         () => ({
-            success: (m: string) => push("success", m),
-            error: (m: string) => push("error", m),
-            warning: (m: string) => push("warning", m),
-            info: (m: string) => push("info", m),
+            success: (m: ReactNode) => push("success", m),
+            error: (m: ReactNode) => push("error", m),
+            warning: (m: ReactNode) => push("warning", m),
+            info: (m: ReactNode) => push("info", m),
         }),
         [push],
     );

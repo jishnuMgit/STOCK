@@ -285,13 +285,6 @@ export const buildAdministrationDocumentMessage = (
     return "Document deleted successfully";
   }
 
-  const added = saved.some((entry) => entry.mode === "S");
-  const modified = saved.some(
-    (entry) => entry.mode === "M" || entry.mode === "D"
-  );
-
-  if (added && modified) return "Document saved and modified successfully";
-  if (modified) return "Document modified successfully";
-
+  // always "saved" - there is no "modified" message on this screen
   return "Document saved successfully";
 };

@@ -5,17 +5,17 @@ import CommonTableSelect, {
   type TableSelectOption,
 } from "../../components/common/CommonTableSelect";
 import { filterLabelOrValue } from "../../components/BranchSelect/branchSelectParts";
-import { toast } from "react-toastify";
 import { X } from "lucide-react";
 import { useEnterAsTab } from "../../hooks/useEnterAsTab";
 import { useConfirmModal } from "../../hooks/useConfirmModal";
-import { useDeleteToast } from "../../hooks/useDeleteToast";
+import { deleteSuccessMessage } from "../../hooks/useDeleteToast";
 import { useGridCellFocus } from "../../hooks/useGridCellFocus";
 import { useAdvanceAfterSelect } from "../../hooks/useAdvanceAfterSelect";
-import { useAltShortcuts } from "../../hooks/useAltShortcuts";
 import { useCtrlShortcuts } from "../../hooks/useCtrlShortcuts";
 import { useButtonPermissions } from "../../hooks/useButtonPermissions";
 import { tryGetServerDate } from "../../utils/serverDate";
+import { useMessageModal } from "../../hooks/useMessageModal";
+import TransactionActions from "../../components/common/TransactionActions";
 
 
 // ============================================================
@@ -74,7 +74,8 @@ const SetDocumentNo: React.FC = () => {
   const handleEnterAsTab = useEnterAsTab();
   // the common themed question window and the standard delete messages
   const { confirm, dialog } = useConfirmModal();
-  const { notDeleted } = useDeleteToast("Set Document No.");
+  // the messages (warnings, errors, saved ...) are the common message window, as on the Payment screen - not a toast
+  const { notify, dialog: messageDialog } = useMessageModal("Set Document No.");
   // the cell the cursor is in is outlined (a typed-in box has its text selected)
   const { cellFocusClass, selectOnFocus } = useGridCellFocus();
   // after a dropdown pick (or Enter on a closed one) the cursor goes on in the row
@@ -109,7 +110,7 @@ const SetDocumentNo: React.FC = () => {
         const PstrCoID = localStorage.getItem("PstrCoID");
 
         if (!PstrCoID) {
-          toast.error("getYearList: no PstrCoID in localStorage");
+          notify.error("getYearList: no PstrCoID in localStorage");
           return;
         }
 
@@ -156,7 +157,7 @@ const SetDocumentNo: React.FC = () => {
         const PstrUserID = localStorage.getItem("PstrUserID");
 
         if (!PstrCoID || !PstrUserID) {
-          toast.error("getDefaultBranch: no PstrCoID/PstrUserID in localStorage");
+          notify.error("getDefaultBranch: no PstrCoID/PstrUserID in localStorage");
           return;
         }
 
@@ -172,7 +173,7 @@ const SetDocumentNo: React.FC = () => {
 
         if (!result.success) {
           console.error("getDefaultBranch failed:", result.message);
-          toast.error(`getDefaultBranch failed: ${result.message}`);
+          notify.error(`getDefaultBranch failed: ${result.message}`);
           return;
         }
 
@@ -181,7 +182,7 @@ const SetDocumentNo: React.FC = () => {
         }
       } catch (error) {
         console.error("getDefaultBranch error:", error);
-        toast.error(
+        notify.error(
           `getDefaultBranch error: ${error instanceof Error ? error.message : String(error)}`,
         );
       } finally {
@@ -203,7 +204,7 @@ const SetDocumentNo: React.FC = () => {
         const PstrUserID = localStorage.getItem("PstrUserID");
 
         if (!PstrCoID || !PstrUserID) {
-          toast.error("getBranchList: no PstrCoID/PstrUserID in localStorage");
+          notify.error("getBranchList: no PstrCoID/PstrUserID in localStorage");
           return;
         }
 
@@ -219,7 +220,7 @@ const SetDocumentNo: React.FC = () => {
 
         if (!result.success) {
           console.error("getBranchList failed:", result.message);
-          toast.error(`getBranchList failed: ${result.message}`);
+          notify.error(`getBranchList failed: ${result.message}`);
           return;
         }
 
@@ -233,7 +234,7 @@ const SetDocumentNo: React.FC = () => {
         setBranchOptions(options);
       } catch (error) {
         console.error("getBranchList error:", error);
-        toast.error(
+        notify.error(
           `getBranchList error: ${error instanceof Error ? error.message : String(error)}`,
         );
       }
@@ -252,7 +253,7 @@ const SetDocumentNo: React.FC = () => {
         const PstrCoID = localStorage.getItem("PstrCoID");
 
         if (!PstrCoID) {
-          toast.error("getModuleList: no PstrCoID in localStorage");
+          notify.error("getModuleList: no PstrCoID in localStorage");
           return;
         }
 
@@ -357,7 +358,7 @@ const SetDocumentNo: React.FC = () => {
         const PstrCoID = localStorage.getItem("PstrCoID");
 
         if (!PstrCoID) {
-          toast.error("getDocumentList: no PstrCoID in localStorage");
+          notify.error("getDocumentList: no PstrCoID in localStorage");
           return;
         }
 
@@ -478,24 +479,24 @@ const SetDocumentNo: React.FC = () => {
 
   const handleSave = async () => {
     if (!canSaveOrModify) {
-      toast.error(`You do not have permission to ${actionWord}.`);
+      notify.error(`You do not have permission to ${actionWord}.`);
       return;
     }
 
     if (!lkpYear) {
-      toast.warning("Please select 'Year'");
+      notify.warning("Please select 'Year'");
       document.getElementById("lkpYear")?.focus();
       return;
     }
 
     if (!lkpBranch) {
-      toast.warning("Please select 'Branch'");
+      notify.warning("Please select 'Branch'");
       document.getElementById("lkpBranch")?.focus();
       return;
     }
 
     if (!lkpModule) {
-      toast.warning("Please select 'Module'");
+      notify.warning("Please select 'Module'");
       document.getElementById("lkpModule")?.focus();
       return;
     }
@@ -506,7 +507,7 @@ const SetDocumentNo: React.FC = () => {
     );
 
     if (validRows.length === 0) {
-      toast.warning("There is no information for saving.");
+      notify.warning("There is no information for saving.");
       document.getElementById(`txtDocPrefix_${rows[0]?.id ?? 1}`)?.focus();
       return;
     }
@@ -515,7 +516,7 @@ const SetDocumentNo: React.FC = () => {
     const PstrUserID = localStorage.getItem("PstrUserID");
 
     if (!PstrCoID || !PstrUserID) {
-      toast.error("Company ID / User ID not found. Please log in again.");
+      notify.error("Company ID / User ID not found. Please log in again.");
       return;
     }
 
@@ -553,7 +554,7 @@ const SetDocumentNo: React.FC = () => {
       const result = await response.json();
 
       if (!response.ok || !result.success) {
-        toast.error(
+        notify.error(
           result.message ||
           "Not saved, try again.",
         );
@@ -567,7 +568,7 @@ const SetDocumentNo: React.FC = () => {
         return;
       }
 
-      toast.success(
+      notify.success(
         result.message || "Set Document No. saved successfully.",
       );
 
@@ -576,7 +577,7 @@ const SetDocumentNo: React.FC = () => {
       setReloadKey((previous) => previous + 1);
     } catch (error) {
       console.error("saveDocumentNo error:", error);
-      toast.error("Cannot connect to Document No API.");
+      notify.error("Cannot connect to Document No API.");
     }
   };
 
@@ -595,16 +596,11 @@ const SetDocumentNo: React.FC = () => {
 
   // ==========================================================
   // KEYBOARD SHORTCUTS
-  // Alt+S -> Save (nothing saved yet), Alt+M -> Modify (saved numbering),
-  // Alt+C -> Copy To Next Year (matches the underlined accelerator letters
-  // on the buttons).
+  // The key of the Payment screen: Ctrl+S Save (nothing saved yet) or Modify (saved numbering).
   // ==========================================================
 
   useCtrlShortcuts({
     s: () => handleSave(),
-  });
-  useAltShortcuts({
-    c: () => setCopyToNextYearbtn((previous) => !previous),
   });
 
   // ==========================================================
@@ -613,12 +609,12 @@ const SetDocumentNo: React.FC = () => {
 
   const handleDeleteRow = async (row: DocumentRow) => {
     if (!perms.delete) {
-      toast.error("You do not have permission to Delete.");
+      notify.error("You do not have permission to Delete.");
       return;
     }
 
     if (!lkpYear || !lkpBranch || !lkpModule) {
-      toast.warning("Year, Branch and Module are required.");
+      notify.warning("Year, Branch and Module are required.");
       return;
     }
 
@@ -632,7 +628,9 @@ const SetDocumentNo: React.FC = () => {
 
     const shouldDelete = await confirm({
       title: "Set Document No.",
-      message: "Do you want to delete ?",
+      message: "Do you want to Delete?",
+      confirmLabel: "Delete",
+      cancelLabel: "Cancel",
     });
 
     if (!shouldDelete) {
@@ -643,7 +641,7 @@ const SetDocumentNo: React.FC = () => {
     const PstrUserID = localStorage.getItem("PstrUserID");
 
     if (!PstrCoID || !PstrUserID) {
-      toast.error("Company ID / User ID not found. Please log in again.");
+      notify.error("Company ID / User ID not found. Please log in again.");
       return;
     }
 
@@ -670,9 +668,12 @@ const SetDocumentNo: React.FC = () => {
       const result = await response.json();
 
       if (!response.ok || !result.success) {
-        notDeleted(result.message);
+        notify.error(result.message || "Not deleted, try again");
         return;
       }
+
+      // the common message of a delete (hooks/useDeleteToast.ts, the same on every screen)
+      notify.success(deleteSuccessMessage("Set Document No."));
 
       setRows((previousRows) =>
         previousRows.map((r) =>
@@ -691,7 +692,7 @@ const SetDocumentNo: React.FC = () => {
       );
     } catch (error) {
       console.error("deleteDocumentNoRow error:", error);
-      notDeleted();
+      notify.error("Not deleted, try again");
     }
   };
 
@@ -1149,28 +1150,23 @@ const SetDocumentNo: React.FC = () => {
             BUTTONS
         ====================================================== */}
 
-            <div className="mt-[14px] flex justify-center gap-3">
-              <button
-                id="Save"
-                name="Save"
-                type="button"
-                onClick={handleSave}
-                disabled={!canSaveOrModify}
-                className="btn-style disabled:cursor-not-allowed disabled:opacity-40"
-              >
-                {actionWord}
-              </button>
-
-              <button
-                id="CopyToNextYearbtn"
-                name="CopyToNextYearbtn"
-                type="button"
-                onClick={() => setCopyToNextYearbtn(!CopyToNextYearbtn)}
-                className="btn-style"
-              >
-                <span className="underline underline-offset-2">C</span>opy To Next Year
-              </button>
-            </div>
+            <TransactionActions
+              className="mt-[14px] flex justify-center gap-3"
+              actions={[
+                {
+                  id: "Save",
+                  label: actionWord,
+                  underlineIndex: 0,
+                  onClick: handleSave,
+                  disabled: !canSaveOrModify,
+                },
+                {
+                  id: "CopyToNextYearbtn",
+                  label: "Copy To Next Year",
+                  onClick: () => setCopyToNextYearbtn(!CopyToNextYearbtn),
+                },
+              ]}
+            />
 
           </div>
         </div>
@@ -1180,6 +1176,7 @@ const SetDocumentNo: React.FC = () => {
       {/* the "Do you want to delete ?" question - outside the root div so the page's
         Enter handling does not take the Enter of the Yes / No buttons */}
       {dialog}
+      {messageDialog}
     </>
   );
 };

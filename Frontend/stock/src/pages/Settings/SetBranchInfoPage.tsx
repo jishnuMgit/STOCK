@@ -4,13 +4,13 @@ import Select, {
   type SingleValue,
   type StylesConfig,
 } from "react-select";
-import { toast } from "react-toastify";
 import { useEnterAsTab } from "../../hooks/useEnterAsTab";
-import { useAltShortcuts } from "../../hooks/useAltShortcuts";
 import { useCtrlShortcuts } from "../../hooks/useCtrlShortcuts";
 import { useButtonPermissions } from "../../hooks/useButtonPermissions";
 import { useGridCellFocus } from "../../hooks/useGridCellFocus";
 import { tryGetServerDate } from "../../utils/serverDate";
+import { useMessageModal } from "../../hooks/useMessageModal";
+import TransactionActions from "../../components/common/TransactionActions";
 import { useAdvanceAfterSelect } from "../../hooks/useAdvanceAfterSelect";
 import { useInitialFocus } from "../../hooks/useInitialFocus";
 import {
@@ -153,6 +153,8 @@ const MENU_ID = "9115";
 const SetBranchInfo: React.FC = () => {
   const handleEnterAsTab = useEnterAsTab();
   const perms = useButtonPermissions(MENU_ID);
+  // the messages (warnings, errors, saved ...) are the common message window, as on the Payment screen - not a toast
+  const { notify, dialog: messageDialog } = useMessageModal("Set Branch Info");
   // the box the cursor is in is outlined, and its text is selected
   const { cellFocusClass, selectOnFocus } = useGridCellFocus();
   // after a Branch pick (or Enter on a closed Branch box) the cursor goes on
@@ -231,7 +233,7 @@ const SetBranchInfo: React.FC = () => {
         const PstrUserID = localStorage.getItem("PstrUserID");
 
         if (!PstrCoID || !PstrUserID) {
-          toast.error("getBranchList: no PstrCoID/PstrUserID in localStorage");
+          notify.error("getBranchList: no PstrCoID/PstrUserID in localStorage");
           return;
         }
 
@@ -247,7 +249,7 @@ const SetBranchInfo: React.FC = () => {
 
         if (!result.success) {
           console.error("getBranchList failed:", result.message);
-          toast.error(`getBranchList failed: ${result.message}`);
+          notify.error(`getBranchList failed: ${result.message}`);
           return;
         }
 
@@ -261,7 +263,7 @@ const SetBranchInfo: React.FC = () => {
         setBranchOptions(options);
       } catch (error) {
         console.error("getBranchList error:", error);
-        toast.error(`getBranchList error: ${error instanceof Error ? error.message : String(error)}`);
+        notify.error(`getBranchList error: ${error instanceof Error ? error.message : String(error)}`);
       }
     };
 
@@ -280,7 +282,7 @@ const SetBranchInfo: React.FC = () => {
         const PstrUserID = localStorage.getItem("PstrUserID");
 
         if (!PstrCoID || !PstrUserID) {
-          toast.error("getDefaultBranch: no PstrCoID/PstrUserID in localStorage");
+          notify.error("getDefaultBranch: no PstrCoID/PstrUserID in localStorage");
           return;
         }
 
@@ -296,7 +298,7 @@ const SetBranchInfo: React.FC = () => {
 
         if (!result.success) {
           console.error("getDefaultBranch failed:", result.message);
-          toast.error(`getDefaultBranch failed: ${result.message}`);
+          notify.error(`getDefaultBranch failed: ${result.message}`);
           return;
         }
 
@@ -306,7 +308,7 @@ const SetBranchInfo: React.FC = () => {
         }
       } catch (error) {
         console.error("getDefaultBranch error:", error);
-        toast.error(`getDefaultBranch error: ${error instanceof Error ? error.message : String(error)}`);
+        notify.error(`getDefaultBranch error: ${error instanceof Error ? error.message : String(error)}`);
       } finally {
         setBranchDefaultLoaded(true);
       }
@@ -330,7 +332,7 @@ const SetBranchInfo: React.FC = () => {
         const PstrCoID = localStorage.getItem("PstrCoID");
 
         if (!PstrCoID) {
-          toast.error("getBranchInfo: no PstrCoID in localStorage");
+          notify.error("getBranchInfo: no PstrCoID in localStorage");
           return;
         }
 
@@ -341,7 +343,7 @@ const SetBranchInfo: React.FC = () => {
         const result = await response.json();
 
         if (!response.ok || !result.success) {
-          toast.error(result.message || "Branch info not found.");
+          notify.error(result.message || "Branch info not found.");
           return;
         }
 
@@ -379,17 +381,13 @@ const SetBranchInfo: React.FC = () => {
         setChkHo(!!data.chkHo);
       } catch (error) {
         console.error("getBranchInfo error:", error);
-        toast.error(`getBranchInfo error: ${error instanceof Error ? error.message : String(error)}`);
+        notify.error(`getBranchInfo error: ${error instanceof Error ? error.message : String(error)}`);
       }
     };
 
     loadBranchInfo();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [lkpBranch, reloadKey]);
-
-  const buttonClass = "btn-style";
-
-  const textClass = "";
 
   /* =========================================================
      FIELD WIDTHS
@@ -617,12 +615,12 @@ const SetBranchInfo: React.FC = () => {
   // but it works with the MODIFY right (letter M of the menu's buttons).
   const handleSave = async () => {
     if (!perms.modify) {
-      toast.error("You do not have permission to Save.");
+      notify.error("You do not have permission to Save.");
       return;
     }
 
     if (!lkpBranch) {
-      toast.warning("Branch is required.");
+      notify.warning("Branch is required.");
       return;
     }
 
@@ -630,7 +628,7 @@ const SetBranchInfo: React.FC = () => {
     const PstrUserID = localStorage.getItem("PstrUserID");
 
     if (!PstrCoID || !PstrUserID) {
-      toast.error("Company ID / User ID not found. Please log in again.");
+      notify.error("Company ID / User ID not found. Please log in again.");
       return;
     }
 
@@ -685,7 +683,7 @@ const SetBranchInfo: React.FC = () => {
       const result = await response.json();
 
       if (!response.ok || !result.success) {
-        toast.error(result.message || "Not saved, try again");
+        notify.error(result.message || "Not saved, try again");
 
         // the backend validator names the field that failed - same name as
         // the element id, so the cursor goes straight into it
@@ -696,10 +694,10 @@ const SetBranchInfo: React.FC = () => {
         return;
       }
 
-      toast.success(result.message || "Set Branch Info saved successfully");
+      notify.success(result.message || "Set Branch Info saved successfully");
     } catch (error) {
       console.error("saveBranchInfo error:", error);
-      toast.error("Cannot connect to Branch Info API.");
+      notify.error("Cannot connect to Branch Info API.");
     }
   };
 
@@ -766,8 +764,7 @@ const SetBranchInfo: React.FC = () => {
 
   /* =========================================================
      KEYBOARD SHORTCUTS
-     Ctrl+S -> Save, Alt+C -> Clear (Clear matches the
-     underlined letter on its button).
+     The key of the Payment screen: Ctrl+S Save.
   ========================================================= */
 
   // the cursor starts on the Branch box
@@ -775,9 +772,6 @@ const SetBranchInfo: React.FC = () => {
 
   useCtrlShortcuts({
     s: handleSave,
-  });
-  useAltShortcuts({
-    c: () => handleClear(true),
   });
 
   /* =========================================================
@@ -791,6 +785,7 @@ const SetBranchInfo: React.FC = () => {
   // (the blue line along the left edge while the page loads) - no ring on the page itself, the boxes show their own
   className="flex min-h-screen w-full items-center justify-center overflow-x-auto bg-white outline-none focus:outline-none"
 >
+      {messageDialog}
 
       {/* =====================================================
           MAIN CONTAINER
@@ -1233,35 +1228,19 @@ const SetBranchInfo: React.FC = () => {
             BUTTONS
         ==================================================== */}
 
-    <div className="mt-[14px] flex justify-center gap-3">
-  <button
-    id="btnSave"
-    name="btnSave"
-    type="button"
-    onClick={handleSave}
-    disabled={!perms.modify}
-    className={`${buttonClass} disabled:cursor-not-allowed disabled:opacity-40`}
-  >
-     <span className={textClass}>
-                Save
-              </span>
-  </button>
-
-  <button
-    id="btnClear"
-    name="btnClear"
-    type="button"
-    onClick={() => handleClear(true)}
-    className={buttonClass}
-  >
-    <span className={textClass}>
-                <span className="underline decoration-2 underline-offset-1">
-                  C
-                </span>
-                lear
-              </span>
-  </button>
-</div>
+    <TransactionActions
+      className="mt-[14px] flex justify-center gap-3"
+      actions={[
+        {
+          id: "btnSave",
+          label: "Save",
+          underlineIndex: 0,
+          onClick: handleSave,
+          disabled: !perms.modify,
+        },
+        { id: "btnClear", label: "Clear", onClick: () => handleClear(true) },
+      ]}
+    />
 
         </div>
       </div>
