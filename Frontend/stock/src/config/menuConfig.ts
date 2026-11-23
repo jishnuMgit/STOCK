@@ -158,6 +158,7 @@ Sales-REPORT
 
   mnuCustomer: "/Finance/Setup/CustomerPage",
   mnuCustomerDivision: "/Finance/Setup/CustomerDivision",
+  mnuSupplier: "/Finance/Setup/SupplierPage",
   mnuChartOfAccount: "/Finance/Setup/ChartOfAccountList",
   mnuCostCenter: "/Finance/Setup/CostCenter",
   "mnuCustomer/Supplier Country": "/Finance/Setup/CustomerSupplierCountry",
