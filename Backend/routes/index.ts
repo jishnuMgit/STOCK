@@ -45,7 +45,7 @@ import InactivateAccountRouter from "./Finance/Setup/InactivateAccountRouter.js"
 import CustomerSupplierCountryRouter from "./Finance/Setup/CustomerSupplierCountryRouter.js";
 import CustomerDivisionRouter from "./Finance/Setup/CustomerDivisionRouter.js";
 import CurrencyRouter from "./Purchase/Setup/CurrencyRouter.js";
-import supplierRouter from "./common/SupplierRouter.js";
+import SupplierRouter from "./Finance/Setup/Supplier/SupplierRoute.js";
 import RptCOARouter from "./Finance/Report/RptChartOfAccountRouter.js";
 import RptCustomerListRouter from "./Finance/Report/RptCustomerListRouter.js";
 import RptItemHistoryRouter from "./Purchase/Report/RptItemHistoryRouter.js";
@@ -122,7 +122,7 @@ router.use("/CostCenter", CostCenterRouter);
 router.use("/InactivateAccount", InactivateAccountRouter);
 router.use("/CustomerSupplierCountry", CustomerSupplierCountryRouter);
 router.use("/Currency", CurrencyRouter);
-router.use("/supplier", supplierRouter);
+router.use("/supplier", SupplierRouter);
 router.use("/RptChartOfAccount", RptCOARouter);
 router.use("/RptCustomerList", RptCustomerListRouter);
 router.use("/RptItemHistory", RptItemHistoryRouter);

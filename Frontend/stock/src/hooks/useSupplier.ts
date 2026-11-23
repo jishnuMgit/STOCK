@@ -44,7 +44,7 @@ interface SupplierListResponse {
 }
 
 const API_URL = import.meta.env.VITE_API_URL;
-const BASE = "/suppliers"; // confirm: matches app.use("/api/suppliers", ...) in the backend
+const BASE = "/supplier"; // confirm: matches app.use("/api/suppliers", ...) in the backend
 
 const mapSupplier = (r: SupplierApiRow): Supplier => ({
     lkpSupplierID: r.csAccountId ?? "",

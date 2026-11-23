@@ -108,6 +108,8 @@ import ZATCASubmission from "../pages/ZATCA/Transaction/ZATCASubmissionPage";
 import RptZatcaPdfA3Generation from "../pages/ZATCA/Transaction/RptZatcaPdfA3GenerationPage";
 import RptZatcaDocumentStatus from "../pages/ZATCA/Transaction/RptZatcaDocumentStatusPage";
 import SetZATCADocumentPath from "../pages/ZATCA/Setup/SetZATCADocumentPathPage";
+import SupplierList from "../pages/Finance/Setup/Supplier/SupplierList";
+import SupplierPage from "../pages/Finance/Setup/Supplier/SupplierPage";
 
 const Login = lazy(() => import("../pages/Auth/LoginPage"));
 const ReceiptPage = lazy(
@@ -223,6 +225,14 @@ const AppRoutes = () => {
           <Route
             path="/Finance/Setup/CustomerDivision"
             element={<CustomerDivisionPage />}
+          />
+          <Route
+            path="/Finance/Setup/SupplierPage"
+            element={<SupplierList />}
+          />
+          <Route
+            path="/Finance/Setup/Add/Supplier"
+            element={<SupplierPage />}
           />
           <Route
             path="/Finance/Setup/ChartOfAccountList"
