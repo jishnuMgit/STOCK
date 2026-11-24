@@ -46,6 +46,7 @@ import CustomerSupplierCountryRouter from "./Finance/Setup/CustomerSupplierCount
 import CustomerDivisionRouter from "./Finance/Setup/CustomerDivisionRouter.js";
 import CurrencyRouter from "./Purchase/Setup/CurrencyRouter.js";
 import SupplierRouter from "./Finance/Setup/Supplier/SupplierRoute.js";
+import SuppliersRouter from "./common/SupplierRouter.js";
 import RptCOARouter from "./Finance/Report/RptChartOfAccountRouter.js";
 import RptCustomerListRouter from "./Finance/Report/RptCustomerListRouter.js";
 import RptItemHistoryRouter from "./Purchase/Report/RptItemHistoryRouter.js";
@@ -123,6 +124,7 @@ router.use("/InactivateAccount", InactivateAccountRouter);
 router.use("/CustomerSupplierCountry", CustomerSupplierCountryRouter);
 router.use("/Currency", CurrencyRouter);
 router.use("/supplier", SupplierRouter);
+router.use("/suppliers", SuppliersRouter);
 router.use("/RptChartOfAccount", RptCOARouter);
 router.use("/RptCustomerList", RptCustomerListRouter);
 router.use("/RptItemHistory", RptItemHistoryRouter);
