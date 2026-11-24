@@ -5,7 +5,6 @@ import { useCtrlShortcuts } from "../../../../hooks/useCtrlShortcuts";
 import { useInitialFocus } from "../../../../hooks/useInitialFocus";
 import dayjs from "dayjs";
 import customParseFormat from "dayjs/plugin/customParseFormat";
-import { toast } from "react-toastify";
 import type { PairSelectOption } from "../../../../components/common/CustomLinkedPairSelect";
 import {
   BranchFilter,
@@ -22,6 +21,7 @@ import {
   printStockValuationReport,
   type PrintReport,
 } from "../../../../components/Purchase/Report/RptStockValuation/RptStockValuationPrintReport";
+import { useMessageModal } from "../../../../hooks/useMessageModal";
 dayjs.extend(customParseFormat);
 
 type Option = { value: string; label: string };
@@ -43,6 +43,7 @@ type RptStockValuationPageProps = {
 };
 
 const RptStockValuationPage: React.FC<RptStockValuationPageProps> = ({ onClose }) => {
+  const { notify, dialog: messageDialog } = useMessageModal();
   // Enter moves on like Tab; the box the cursor is in is outlined; after a pick from a list the
   // cursor goes on
   const handleEnterAsTab = useEnterAsTab();
@@ -74,7 +75,7 @@ const RptStockValuationPage: React.FC<RptStockValuationPageProps> = ({ onClose }
         const result = await response.json();
 
         if (!response.ok || !result.success) {
-          toast.error(result.message || "Failed to load the Branches");
+          notify.error(result.message || "Failed to load the Branches");
           return;
         }
 
@@ -94,7 +95,7 @@ const RptStockValuationPage: React.FC<RptStockValuationPageProps> = ({ onClose }
         setGroupRows(result.groups || []);
       } catch (error: unknown) {
         console.error("rptStockValuation lookups error:", error);
-        toast.error("Cannot connect to the Stock Valuation API.");
+        notify.error("Cannot connect to the Stock Valuation API.");
       }
     };
 
@@ -161,7 +162,7 @@ const RptStockValuationPage: React.FC<RptStockValuationPageProps> = ({ onClose }
     if (printing || preview) return;
 
     const warn = (message: string, id: string) => {
-      toast.warning(message);
+      notify.warning(message);
 
       // a box, or (Selected Branch) the first tick box of the list
       const element = document.getElementById(id);
@@ -199,7 +200,7 @@ const RptStockValuationPage: React.FC<RptStockValuationPageProps> = ({ onClose }
       const result = await response.json();
 
       if (!response.ok || !result.success) {
-        toast.warning(result.message || "The Stock Valuation report could not be printed.");
+        notify.warning(result.message || "The Stock Valuation report could not be printed.");
         if (result.field) document.getElementById(result.field)?.focus();
         return;
       }
@@ -207,7 +208,7 @@ const RptStockValuationPage: React.FC<RptStockValuationPageProps> = ({ onClose }
       setPreview({ report: result.report, fileBase: result.fileBase, params });
     } catch (error: unknown) {
       console.error("rptStockValuation print error:", error);
-      toast.error("Cannot connect to the Stock Valuation API.");
+      notify.error("Cannot connect to the Stock Valuation API.");
     } finally {
       setPrinting(false);
     }
@@ -235,7 +236,7 @@ const RptStockValuationPage: React.FC<RptStockValuationPageProps> = ({ onClose }
         message = `Could not create the Excel file (error ${response.status})`;
       }
 
-      toast.error(message);
+      notify.error(message);
       return null;
     }
 
@@ -286,6 +287,7 @@ const RptStockValuationPage: React.FC<RptStockValuationPageProps> = ({ onClose }
         )
       }
     >
+      {messageDialog}
       <BranchFilter
         withSelected
         mode={rdgBranch}

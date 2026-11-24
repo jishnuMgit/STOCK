@@ -1,10 +1,10 @@
 import React, { useEffect, useState } from "react";
-import { toast } from "react-toastify";
 import { useEnterAsTab } from "../../../hooks/useEnterAsTab";
 import { useButtonPermissions } from "../../../hooks/useButtonPermissions";
 import { useConfirmModal } from "../../../hooks/useConfirmModal";
 import { useDeleteToast } from "../../../hooks/useDeleteToast";
 import { useGridCellFocus } from "../../../hooks/useGridCellFocus";
+import { useMessageModal } from "../../../hooks/useMessageModal";
 import Header from "../../../components/common/Header";
 
 // ============================================================
@@ -74,8 +74,12 @@ const CustomerCountryPage: React.FC<CustomerCountryPageProps> = ({ onClose }) =>
   const perms = useButtonPermissions(MENU_ID);
   // the common themed question window (the same as on the other screens)
   const { confirm, dialog } = useConfirmModal();
+  const { notify, dialog: messageDialog } = useMessageModal("Customer/Supplier Country");
   // the standard messages of a delete: "Customer/Supplier Country deleted successfully"
-  const { deleted, notDeleted } = useDeleteToast("Customer/Supplier Country");
+  const { deleted, notDeleted } = useDeleteToast(
+    "Customer/Supplier Country",
+    notify,
+  );
   // the cell the cursor is in is outlined (a typed-in box has its text selected)
   const { cellFocusClass, selectOnFocus } = useGridCellFocus();
 
@@ -116,7 +120,7 @@ const CustomerCountryPage: React.FC<CustomerCountryPageProps> = ({ onClose }) =>
         const data = await res.json();
 
         if (!res.ok || !data.success) {
-          toast.error(data.message || "Failed to load countries");
+          notify.error(data.message || "Failed to load countries");
           return;
         }
         if (cancelled) return;
@@ -162,7 +166,7 @@ const CustomerCountryPage: React.FC<CustomerCountryPageProps> = ({ onClose }) =>
           setSelectedRow(firstEmptyRow);
         }, 0);
       } catch {
-        if (!cancelled) toast.error("Failed to load countries");
+        if (!cancelled) notify.error("Failed to load countries");
       }
     };
 
@@ -237,14 +241,14 @@ const CustomerCountryPage: React.FC<CustomerCountryPageProps> = ({ onClose }) =>
       const data = await res.json();
 
       if (!res.ok || !data.success) {
-        toast.error(data.message || "Could not check the transactions");
+        notify.error(data.message || "Could not check the transactions");
         return true; // when in doubt, do not allow the change
       }
 
       setUsedIds((previous) => ({ ...previous, [id]: !!data.used }));
       return !!data.used;
     } catch {
-      toast.error("Could not check the transactions.");
+      notify.error("Could not check the transactions.");
       return true;
     }
   };
@@ -265,16 +269,13 @@ const CustomerCountryPage: React.FC<CustomerCountryPageProps> = ({ onClose }) =>
     }
 
     if (!perms.modify) {
-      toast.warning("You don't have the permission to modify", {
-        toastId: "cn-modify-denied",
-      });
+      notify.warning("You don't have the permission to modify");
       return true;
     }
 
     if (column === "txtCountryID" && usedIds[row.txtOriginalCountryID] === true) {
-      toast.warning(
+      notify.warning(
         "You can't Modify. Transactions already entered with this 'Country'",
-        { toastId: "cn-modify-used" },
       );
       return true;
     }
@@ -308,7 +309,7 @@ const CustomerCountryPage: React.FC<CustomerCountryPageProps> = ({ onClose }) =>
     );
 
     if (alreadyThere) {
-      toast.warning("Country ID already exists", { toastId: "cn-duplicate" });
+      notify.warning("Country ID already exists");
       updateRow(index, { txtCountryID: original });
       focusCell("txtCountryID", index);
     }
@@ -331,16 +332,13 @@ const CustomerCountryPage: React.FC<CustomerCountryPageProps> = ({ onClose }) =>
 
     if (original !== null) {
       if (!perms.delete) {
-        toast.warning("You don't have the permission to delete", {
-          toastId: "cn-delete-denied",
-        });
+        notify.warning("You don't have the permission to delete");
         return;
       }
 
       if (await isUsed(original)) {
-        toast.warning(
+        notify.warning(
           "You can't delete. Some transactions already entered with this 'Country'",
-          { toastId: "cn-delete-used" },
         );
         return;
       }
@@ -500,7 +498,7 @@ const CustomerCountryPage: React.FC<CustomerCountryPageProps> = ({ onClose }) =>
 
       // the Arabic name is optional (as in the old form)
       if (id === "" || name === "") {
-        toast.warning("Country ID and Country name are both required");
+        notify.warning("Country ID and Country name are both required");
         focusCell(id === "" ? "txtCountryID" : "txtCountryName", i);
         return;
       }
@@ -535,7 +533,7 @@ const CustomerCountryPage: React.FC<CustomerCountryPageProps> = ({ onClose }) =>
       updated.length === 0 &&
       deletedIds.length === 0
     ) {
-      toast.info("Nothing to save", { toastId: "cn-nothing" });
+      notify.info("Nothing to save");
       return;
     }
 
@@ -556,14 +554,14 @@ const CustomerCountryPage: React.FC<CustomerCountryPageProps> = ({ onClose }) =>
       const data = await res.json();
 
       if (!res.ok || !data.success) {
-        toast.error(data.message || "Not saved, try again");
+        notify.error(data.message || "Not saved, try again");
         return;
       }
 
-      toast.success("Customer/Supplier Country saved successfully");
+      notify.success("Customer/Supplier Country saved successfully");
       handleClear();
     } catch {
-      toast.error("Not saved, try again");
+      notify.error("Not saved, try again");
     } finally {
       setSaving(false);
     }
@@ -684,6 +682,7 @@ const CustomerCountryPage: React.FC<CustomerCountryPageProps> = ({ onClose }) =>
 
   return (
     <>
+      {messageDialog}
       <div
         onKeyDown={handlePageKeyDown}
         className="flex min-h-screen w-full items-center justify-center bg-white"

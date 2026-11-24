@@ -1,5 +1,4 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
-import { toast } from "react-toastify";
 import dayjs from "dayjs";
 import customParseFormat from "dayjs/plugin/customParseFormat";
 import { previewPrintedLine } from "../../../../../components/common/printHtml";
@@ -22,6 +21,7 @@ import {
   ReportForm,
   ReportPrintRow,
 } from "../../../../../components/common/ReportFilters";
+import { useMessageModal } from "../../../../../hooks/useMessageModal";
 
 // Payables - laid out with the common template of the report forms (components/common/ReportFilters.tsx), like every other
 // report page. The Print Preview, the lookups and the request sent to the server are as they were.
@@ -77,6 +77,7 @@ type RptPayablesPageProps = {
 };
 
 const RptPayablesPage: React.FC<RptPayablesPageProps> = ({ onClose }) => {
+  const { notify, dialog: messageDialog } = useMessageModal();
   const [branchOptions, setBranchOptions] = useState<Option[]>([]);
 
   const [branchMode, setBranchMode] = useState("One Branch"); // rdgBranch
@@ -120,7 +121,7 @@ const RptPayablesPage: React.FC<RptPayablesPageProps> = ({ onClose }) => {
         const data = await res.json();
 
         if (!res.ok || !data.success) {
-          toast.error(data.message || "Failed to load the lookups");
+          notify.error(data.message || "Failed to load the lookups");
           return;
         }
         if (cancelled) return;
@@ -135,7 +136,7 @@ const RptPayablesPage: React.FC<RptPayablesPageProps> = ({ onClose }) => {
         setBranchOptions(branches);
         setBranch(branches[0] ?? null);
       } catch {
-        if (!cancelled) toast.error("Failed to load the lookups");
+        if (!cancelled) notify.error("Failed to load the lookups");
       }
     };
 
@@ -151,31 +152,29 @@ const RptPayablesPage: React.FC<RptPayablesPageProps> = ({ onClose }) => {
     const valid = (v: string) => !!v && dayjs(v, DATE_FORMAT, true).isValid();
 
     if (oneBranch && !branch) {
-      toast.warning("Please select a 'Branch'", { toastId: "rc-branch" });
+      notify.warning("Please select a 'Branch'");
       document.getElementById("lkpBranch")?.focus();
       return null;
     }
 
     if (isPeriod) {
       if (!valid(fromDate)) {
-        toast.warning("Please select 'From Date'", { toastId: "rc-from" });
+        notify.warning("Please select 'From Date'");
         document.getElementById("dtpFromDate")?.focus();
         return null;
       }
       if (!valid(toDate)) {
-        toast.warning("Please select 'To Date'", { toastId: "rc-to" });
+        notify.warning("Please select 'To Date'");
         document.getElementById("dtpToDate")?.focus();
         return null;
       }
       if (dayjs(fromDate, DATE_FORMAT).isAfter(dayjs(toDate, DATE_FORMAT))) {
-        toast.warning("'To Date' should be greater than 'From Date'", {
-          toastId: "rc-range",
-        });
+        notify.warning("'To Date' should be greater than 'From Date'");
         document.getElementById("dtpToDate")?.focus();
         return null;
       }
     } else if (!valid(fromDate)) {
-      toast.warning("Please Select 'As on Date'", { toastId: "rc-date" });
+      notify.warning("Please Select 'As on Date'");
       document.getElementById("dtpFromDate")?.focus();
       return null;
     }
@@ -217,7 +216,7 @@ const RptPayablesPage: React.FC<RptPayablesPageProps> = ({ onClose }) => {
             ? "Excel is not available: the /excel route was not found (404)"
             : `Could not create the Excel file (error ${res.status})`;
       }
-      toast.error(message);
+      notify.error(message);
       return null;
     }
 
@@ -244,13 +243,13 @@ const RptPayablesPage: React.FC<RptPayablesPageProps> = ({ onClose }) => {
       const data = await res.json();
 
       if (!res.ok || !data.success) {
-        toast.error(data.message || "Could not prepare the report");
+        notify.error(data.message || "Could not prepare the report");
         return;
       }
 
       setPreview({ report: data.report, fileBase: data.fileBase, request });
     } catch {
-      toast.error("Could not prepare the report");
+      notify.error("Could not prepare the report");
     } finally {
       setPrinting(false);
     }
@@ -262,7 +261,7 @@ const RptPayablesPage: React.FC<RptPayablesPageProps> = ({ onClose }) => {
     try {
       printPayablesReport(preview.report);
     } catch {
-      toast.error("Could not open the print view");
+      notify.error("Could not open the print view");
     }
   };
 
@@ -287,10 +286,10 @@ const RptPayablesPage: React.FC<RptPayablesPageProps> = ({ onClose }) => {
       const saved = await saveFile(blob, `${fileBase}.${kind}`, kind);
       if (saved) {
         setPreview(null); // cancelled "Save as": the preview stays
-        toast.success(asPdf ? "PDF file downloaded" : "Excel file downloaded");
+        notify.success(asPdf ? "PDF file downloaded" : "Excel file downloaded");
       }
     } catch {
-      toast.error(
+      notify.error(
         asPdf ? "Could not create the PDF file" : "Could not create the Excel file",
       );
     } finally {
@@ -420,6 +419,7 @@ const RptPayablesPage: React.FC<RptPayablesPageProps> = ({ onClose }) => {
         )
       }
     >
+      {messageDialog}
       <BranchFilter
         mode={branchMode}
         onModeChange={setBranchMode}

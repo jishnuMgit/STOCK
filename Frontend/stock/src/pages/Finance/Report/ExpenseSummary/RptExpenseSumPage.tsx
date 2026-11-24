@@ -1,5 +1,4 @@
 import React, { useEffect, useState } from "react";
-import { toast } from "react-toastify";
 import type { PairSelectOption } from "../../../../components/common/CustomLinkedPairSelect";
 import { useInitialFocus } from "../../../../hooks/useInitialFocus";
 import { useEnterAsTab } from "../../../../hooks/useEnterAsTab";
@@ -27,6 +26,7 @@ import {
 import { buildExpenseSumPdf } from "../../../../components/Finance/Report/RptExpenseSum/RptExpenseSumPdf";
 import dayjs from "dayjs";
 import customParseFormat from "dayjs/plugin/customParseFormat";
+import { useMessageModal } from "../../../../hooks/useMessageModal";
 
 // Expense Summary - laid out with the common template of the report forms (components/common/ReportFilters.tsx), like every
 // other report page. The Print Preview, the lookups and what is sent to the server are as they were.
@@ -58,6 +58,7 @@ type RptExpenseSumPageProps = {
 const RptExpenseSumPage: React.FC<RptExpenseSumPageProps> = ({
   onClose,
 }) => {
+  const { notify, dialog: messageDialog } = useMessageModal();
   const handleEnterAsTab = useEnterAsTab();
 
   const [rdgBranch, setRdgBranch] = useState("One Branch"); // rdgBranch
@@ -91,7 +92,7 @@ const RptExpenseSumPage: React.FC<RptExpenseSumPageProps> = ({
         const result = await response.json();
 
         if (!response.ok || !result.success) {
-          toast.error(result.message || "Failed to load the Branches");
+          notify.error(result.message || "Failed to load the Branches");
           return;
         }
 
@@ -119,7 +120,7 @@ const RptExpenseSumPage: React.FC<RptExpenseSumPageProps> = ({
         );
       } catch (error: unknown) {
         console.error("rptExpenseSum lookups error:", error);
-        toast.error("Cannot connect to the Expense Summary API.");
+        notify.error("Cannot connect to the Expense Summary API.");
       }
     };
 
@@ -189,7 +190,7 @@ const RptExpenseSumPage: React.FC<RptExpenseSumPageProps> = ({
     if (printing || preview) return;
 
     const warn = (message: string, id: string) => {
-      toast.warning(message);
+      notify.warning(message);
       document.getElementById(id)?.focus();
     };
 
@@ -244,7 +245,7 @@ const RptExpenseSumPage: React.FC<RptExpenseSumPageProps> = ({
       const result = await response.json();
 
       if (!response.ok || !result.success) {
-        toast.warning(result.message || "The Expense Summary report could not be printed.");
+        notify.warning(result.message || "The Expense Summary report could not be printed.");
         if (result.field) document.getElementById(result.field)?.focus();
         return;
       }
@@ -252,7 +253,7 @@ const RptExpenseSumPage: React.FC<RptExpenseSumPageProps> = ({
       setPreview({ report: result.report, fileBase: result.fileBase, params });
     } catch (error: unknown) {
       console.error("rptExpenseSum print error:", error);
-      toast.error("Cannot connect to the Expense Summary API.");
+      notify.error("Cannot connect to the Expense Summary API.");
     } finally {
       setPrinting(false);
     }
@@ -280,7 +281,7 @@ const RptExpenseSumPage: React.FC<RptExpenseSumPageProps> = ({
         message = `Could not create the Excel file (error ${response.status})`;
       }
 
-      toast.error(message);
+      notify.error(message);
       return null;
     }
 
@@ -333,6 +334,7 @@ const RptExpenseSumPage: React.FC<RptExpenseSumPageProps> = ({
         )
       }
     >
+      {messageDialog}
       <BranchFilter
         mode={rdgBranch}
         onModeChange={setRdgBranch}

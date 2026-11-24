@@ -15,8 +15,7 @@ import {
 import MatchingComponents from "../../../../components/Transaction/Match/MatchingComponents";
 import useMatching from "../../../../hooks/useMatching";
 import { apiFetch, getSession } from "../../../../utils/session";
-import { toast } from "react-toastify";
-
+import { useMessageModal } from "../../../../hooks/useMessageModal";
 interface CustomerAccount {
   fcsaccountid: string;
   fcsaccountname: string;
@@ -96,6 +95,7 @@ const mapDocsToRows = (docs: Record<string, any>[]): ReceiptRow[] => {
 /* ========================================================= */
 
 const MatchPage: React.FC = () => {
+  const { notify, dialog: messageDialog } = useMessageModal();
   const [branch, setBranch] = useState("");
   const [doctype, setDocType] = useState("");
   const [receiptNo, setReceiptNo] = useState("");
@@ -253,7 +253,7 @@ const MatchPage: React.FC = () => {
         console.error("Get documents to match error:", error);
         if (!cancelled) {
           setRows(createRows());
-          toast.error(
+          notify.error(
             error instanceof Error
               ? error.message
               : "Failed to load documents to match",
@@ -316,19 +316,19 @@ const MatchPage: React.FC = () => {
 
   const handleSave = useCallback(async () => {
     if (!selectedDoc) {
-      toast.error("Please select a 'Document No.'");
+      notify.error("Please select a 'Document No.'");
       return;
     }
 
     const matchedRows = rows.filter((r) => r.match && r.raw);
     if (matchedRows.length === 0) {
-      toast.error("No matched records to save");
+      notify.error("No matched records to save");
       return;
     }
 
     const efDate = dayjs(receiptDate, "DD-MM-YYYY", true);
     if (!efDate.isValid()) {
-      toast.error("Please select Match Date");
+      notify.error("Please select Match Date");
       return;
     }
 
@@ -375,10 +375,10 @@ const MatchPage: React.FC = () => {
         match,
       });
 
-      toast.success(result.message || "Match saved successfully");
+      notify.success(result.message || "Match saved successfully");
       clearForm();
     } catch (error) {
-      toast.error(
+      notify.error(
         error instanceof Error ? error.message : "Failed to save match",
       );
     }
@@ -401,6 +401,7 @@ const MatchPage: React.FC = () => {
 
   return (
     <div className="min-h-full w-full bg-slate-100 px-2 py-2 flex items-center justify-center">
+      {messageDialog}
       <div className="w-full max-w-287.5 min-w-0 border border-gray-400 bg-white">
         <MatchingComponents
           ref={matchingRef}

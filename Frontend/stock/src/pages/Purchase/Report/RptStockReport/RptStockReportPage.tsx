@@ -1,7 +1,6 @@
 import React, { useEffect, useMemo, useState } from "react";
 import dayjs from "dayjs";
 import customParseFormat from "dayjs/plugin/customParseFormat";
-import { toast } from "react-toastify";
 import { CustomRadio, RadioPanel } from "../../../../components/common/ReportFormParts";
 import { useEnterAsTab } from "../../../../hooks/useEnterAsTab";
 import { useAltShortcuts } from "../../../../hooks/useAltShortcuts";
@@ -24,6 +23,7 @@ import {
   ReportForm,
   ReportPrintRow,
 } from "../../../../components/common/ReportFilters";
+import { useMessageModal } from "../../../../hooks/useMessageModal";
 
 dayjs.extend(customParseFormat);
 
@@ -41,6 +41,7 @@ const postStatusOptions: Option[] = [
 ];
 
 const RptStockReportPage: React.FC = () => {
+  const { notify, dialog: messageDialog } = useMessageModal();
   // Enter moves on like Tab; the box the cursor is in is outlined; after a pick from a list the
   // cursor goes on
   const handleEnterAsTab = useEnterAsTab();
@@ -81,7 +82,7 @@ const RptStockReportPage: React.FC = () => {
         const result = await response.json();
 
         if (!response.ok || !result.success) {
-          toast.error(result.message || "Failed to load the Branches");
+          notify.error(result.message || "Failed to load the Branches");
           return;
         }
 
@@ -102,7 +103,7 @@ const RptStockReportPage: React.FC = () => {
         setItemRows(result.items || []);
       } catch (error: unknown) {
         console.error("rptStockReport branches error:", error);
-        toast.error("Cannot connect to the Stock report API.");
+        notify.error("Cannot connect to the Stock report API.");
       }
     };
 
@@ -218,7 +219,7 @@ const RptStockReportPage: React.FC = () => {
     if (printing || preview) return;
 
     const warn = (message: string, id: string) => {
-      toast.warning(message);
+      notify.warning(message);
       document.getElementById(id)?.focus();
     };
 
@@ -257,7 +258,7 @@ const RptStockReportPage: React.FC = () => {
       const result = await response.json();
 
       if (!response.ok || !result.success) {
-        toast.warning(result.message || "The Stock report could not be printed.");
+        notify.warning(result.message || "The Stock report could not be printed.");
         if (result.field) document.getElementById(result.field)?.focus();
         return;
       }
@@ -265,7 +266,7 @@ const RptStockReportPage: React.FC = () => {
       setPreview({ report: result.report, fileBase: result.fileBase, params });
     } catch (error: unknown) {
       console.error("rptStockReport print error:", error);
-      toast.error("Cannot connect to the Stock report API.");
+      notify.error("Cannot connect to the Stock report API.");
     } finally {
       setPrinting(false);
     }
@@ -293,7 +294,7 @@ const RptStockReportPage: React.FC = () => {
         message = `Could not create the Excel file (error ${response.status})`;
       }
 
-      toast.error(message);
+      notify.error(message);
       return null;
     }
 
@@ -337,6 +338,7 @@ const RptStockReportPage: React.FC = () => {
         )
       }
     >
+      {messageDialog}
       <BranchFilter
         mode={rdgBranch}
         onModeChange={(mode) => {

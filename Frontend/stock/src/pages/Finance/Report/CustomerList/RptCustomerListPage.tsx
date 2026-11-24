@@ -1,6 +1,5 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import Header from "../../../../components/common/Header";
-import { toast } from "react-toastify";
 import {
   buildHtml,
   printCustomerListReport,
@@ -9,6 +8,7 @@ import {
 import { previewPrintedLine } from "../../../../components/common/printHtml";
 import { buildCustomerListPdf } from "./downloadCustomerListPdf";
 import { saveFile } from "./saveFile";
+import { useMessageModal } from "../../../../hooks/useMessageModal";
 
 // ============================================================
 // TYPES
@@ -99,6 +99,7 @@ type RptCustomerListPageProps = {
 const RptCustomerListPage: React.FC<RptCustomerListPageProps> = ({
   onClose,
 }) => {
+  const { notify, dialog: messageDialog } = useMessageModal();
   const [accounts, setAccounts] = useState<TreeAccount[]>([]);
   const [loading, setLoading] = useState(true);
   const [printing, setPrinting] = useState(false);
@@ -130,7 +131,7 @@ const RptCustomerListPage: React.FC<RptCustomerListPageProps> = ({
         const data = await res.json();
 
         if (!res.ok || !data.success) {
-          toast.error(data.message || "Failed to load customers");
+          notify.error(data.message || "Failed to load customers");
           return;
         }
         if (cancelled) return;
@@ -138,7 +139,7 @@ const RptCustomerListPage: React.FC<RptCustomerListPageProps> = ({
         const list = data.accounts as TreeAccount[];
         setAccounts(list);
       } catch {
-        if (!cancelled) toast.error("Failed to load customers");
+        if (!cancelled) notify.error("Failed to load customers");
       } finally {
         if (!cancelled) setLoading(false);
       }
@@ -171,7 +172,7 @@ const RptCustomerListPage: React.FC<RptCustomerListPageProps> = ({
             ? "Excel is not available: the /excel route was not found (404)"
             : `Could not create the Excel file (error ${res.status})`;
       }
-      toast.error(message);
+      notify.error(message);
       return null;
     }
 
@@ -187,7 +188,7 @@ const RptCustomerListPage: React.FC<RptCustomerListPageProps> = ({
     if (printing || preview) return;
 
     if (accountIds.length === 0) {
-      toast.warning("No customers found", { toastId: "cust-none" });
+      notify.warning("No customers found");
       return;
     }
 
@@ -201,13 +202,13 @@ const RptCustomerListPage: React.FC<RptCustomerListPageProps> = ({
       const data = await res.json();
 
       if (!res.ok || !data.success) {
-        toast.error(data.message || "Could not prepare the report");
+        notify.error(data.message || "Could not prepare the report");
         return;
       }
 
       setPreview({ report: data.report, fileBase: data.fileBase, accountIds });
     } catch {
-      toast.error("Could not prepare the report");
+      notify.error("Could not prepare the report");
     } finally {
       setPrinting(false);
     }
@@ -219,7 +220,7 @@ const RptCustomerListPage: React.FC<RptCustomerListPageProps> = ({
     try {
       printCustomerListReport(preview.report);
     } catch {
-      toast.error("Could not open the print view");
+      notify.error("Could not open the print view");
     }
   };
 
@@ -246,11 +247,11 @@ const RptCustomerListPage: React.FC<RptCustomerListPageProps> = ({
       const saved = await saveFile(blob, `${fileBase}.${kind}`, kind);
       if (saved) {
       
-        toast.success(asPdf ? "PDF file downloaded" : "Excel file downloaded");
+        notify.success(asPdf ? "PDF file downloaded" : "Excel file downloaded");
           setPreview(null); // cancelled "Save as": the preview stays
       }
     } catch {
-      toast.error(
+      notify.error(
         asPdf ? "Could not create the PDF file" : "Could not create the Excel file",
       );
     } finally {
@@ -307,6 +308,7 @@ const RptCustomerListPage: React.FC<RptCustomerListPageProps> = ({
 
   return (
     <div className="flex min-h-full w-full items-start justify-center bg-white px-4 py-4">
+      {messageDialog}
       <div className="min-h-fit w-150 max-w-full bg-white p-0">
         <main className="w-full overflow-hidden border border-[#d5dce2] bg-white">
           <Header Name="Customer List" />

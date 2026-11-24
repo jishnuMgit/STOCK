@@ -1,7 +1,6 @@
 
 import React, { useEffect, useMemo, useState } from "react";
 import dayjs from "dayjs";
-import { toast } from "react-toastify";
 import customParseFormat from "dayjs/plugin/customParseFormat";
 
 import Header from "../../../components/common/Header";
@@ -19,6 +18,7 @@ import { DatePicker } from "@mui/x-date-pickers/DatePicker";
 import CustomLinkedPairSelect, {
   type PairSelectOption,
 } from "../../../components/common/CustomLinkedPairSelect";
+import { useMessageModal } from "../../../hooks/useMessageModal";
 
 dayjs.extend(customParseFormat);
 
@@ -346,6 +346,7 @@ const ActionButton: React.FC<{
 // ==================================================
 
 const ZATCASubmission: React.FC = () => {
+  const { notify, dialog: messageDialog } = useMessageModal();
 
   // DOCUMENT FILTER
 
@@ -455,7 +456,7 @@ const ZATCASubmission: React.FC = () => {
           (documentTypes.data ?? []).map((d) => ({ value: d.fpid, label: d.fpname, id: d.fpid })),
         );
       })
-      .catch((e: Error) => toast.error(e.message));
+      .catch((e: Error) => notify.error(e.message));
   }, []);
 
   // ==================================================
@@ -466,27 +467,27 @@ const ZATCASubmission: React.FC = () => {
 
     // same rules as ValidateMe
     if (documentMode === "One Document" && !documentType) {
-      return toast.error("Please input 'Document'");
+      return notify.error("Please input 'Document'");
     }
     if (
       documentMode === "One Document" &&
       (documentType?.value === "DN" || documentType?.value === "CN") &&
       branchMode !== "One Branch"
     ) {
-      return toast.error("Please select a 'Branch'");
+      return notify.error("Please select a 'Branch'");
     }
     if (branchMode === "One Branch" && !branch) {
-      return toast.error("Please select a 'Branch'");
+      return notify.error("Please select a 'Branch'");
     }
     if (customerMode === "One Customer" && !customerId) {
-      return toast.error("Please select 'Customer ID'");
+      return notify.error("Please select 'Customer ID'");
     }
 
     const byNo =
       documentFilter === "By Document No." && documentMode === "One Document";
 
     if (byNo && !documentNo.trim()) {
-      return toast.error("Please input 'From Invoice No.'");
+      return notify.error("Please input 'From Invoice No.'");
     }
 
     setBusy(true);
@@ -531,9 +532,9 @@ const ZATCASubmission: React.FC = () => {
       const filler = createRows().slice(mapped.length);
       setRows([...mapped, ...filler.map((f, i) => ({ ...f, id: mapped.length + i + 1 }))]);
 
-      if (!mapped.length) toast.info("No documents found");
+      if (!mapped.length) notify.info("No documents found");
     } catch (e) {
-      toast.error((e as Error).message);
+      notify.error((e as Error).message);
     } finally {
       setBusy(false);
     }
@@ -546,7 +547,7 @@ const ZATCASubmission: React.FC = () => {
   const handleSubmit = async () => {
     const selected = rows.filter((r) => r.selected && r.documentNo.trim() !== "");
     if (!selected.length) {
-      return toast.error("Please select at least one document");
+      return notify.error("Please select at least one document");
     }
 
     setBusy(true);
@@ -575,15 +576,15 @@ const ZATCASubmission: React.FC = () => {
         .map((x) => `${x.docNo}: ${x.message ?? x.status}`);
 
       if (data.rejected > 0) {
-        toast.error(message);
-        failed.forEach((f) => toast.error(f));
+        notify.error(message);
+        failed.forEach((f) => notify.error(f));
       } else {
-        toast.success(message);
+        notify.success(message);
       }
       // ClearMe() after submit, as the VB form does
       setRows(createRows());
     } catch (e) {
-      toast.error((e as Error).message);
+      notify.error((e as Error).message);
     } finally {
       setBusy(false);
     }
@@ -625,6 +626,7 @@ const ZATCASubmission: React.FC = () => {
 
   return (
     <div className="min-h-full w-full bg-white p-1 sm:p-2">
+      {messageDialog}
 
       <main className="mx-auto flex w-full max-w-292.5 min-w-292.5 flex-col overflow-hidden rounded-[3px] border border-[#91a7bb] bg-white shadow-sm">
 

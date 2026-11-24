@@ -1,7 +1,6 @@
 import React, { useEffect, useMemo, useState } from "react";
 import dayjs from "dayjs";
 import customParseFormat from "dayjs/plugin/customParseFormat";
-import { toast } from "react-toastify";
 import ReportPreview from "../../../../components/common/ReportPreview";
 import { buildItemPurchasePdf } from "../../../../components/Purchase/Report/RptItemPurchase/RptItemPurchasePdf";
 import {
@@ -21,6 +20,7 @@ import {
   ReportForm,
   ReportPrintRow,
 } from "../../../../components/common/ReportFilters";
+import { useMessageModal } from "../../../../hooks/useMessageModal";
 
 dayjs.extend(customParseFormat);
 
@@ -37,6 +37,7 @@ type RptItemPurchasePageProps = {
 const RptItemPurchasePage: React.FC<RptItemPurchasePageProps> = ({
   onClose,
 }) => {
+  const { notify, dialog: messageDialog } = useMessageModal();
   // Enter moves on like Tab; the box the cursor is in is outlined; after a pick from a list the cursor
   // goes on
   const handleEnterAsTab = useEnterAsTab();
@@ -63,7 +64,7 @@ const RptItemPurchasePage: React.FC<RptItemPurchasePageProps> = ({
         const result = await response.json();
 
         if (!response.ok || !result.success) {
-          toast.error(result.message || "Failed to load the Branches");
+          notify.error(result.message || "Failed to load the Branches");
           return;
         }
 
@@ -83,7 +84,7 @@ const RptItemPurchasePage: React.FC<RptItemPurchasePageProps> = ({
         setItemRows(result.items || []);
       } catch (error: unknown) {
         console.error("rptItemPurchase lookups error:", error);
-        toast.error("Cannot connect to the Item Purchase API.");
+        notify.error("Cannot connect to the Item Purchase API.");
       }
     };
 
@@ -161,7 +162,7 @@ const RptItemPurchasePage: React.FC<RptItemPurchasePageProps> = ({
     if (printing || preview) return;
 
     const warn = (message: string, id: string) => {
-      toast.warning(message);
+      notify.warning(message);
       document.getElementById(id)?.focus();
     };
 
@@ -200,7 +201,7 @@ const RptItemPurchasePage: React.FC<RptItemPurchasePageProps> = ({
       const result = await response.json();
 
       if (!response.ok || !result.success) {
-        toast.warning(result.message || "The Item Purchase report could not be printed.");
+        notify.warning(result.message || "The Item Purchase report could not be printed.");
         if (result.field) document.getElementById(result.field)?.focus();
         return;
       }
@@ -208,7 +209,7 @@ const RptItemPurchasePage: React.FC<RptItemPurchasePageProps> = ({
       setPreview({ report: result.report, fileBase: result.fileBase, params });
     } catch (error: unknown) {
       console.error("rptItemPurchase print error:", error);
-      toast.error("Cannot connect to the Item Purchase API.");
+      notify.error("Cannot connect to the Item Purchase API.");
     } finally {
       setPrinting(false);
     }
@@ -236,7 +237,7 @@ const RptItemPurchasePage: React.FC<RptItemPurchasePageProps> = ({
         message = `Could not create the Excel file (error ${response.status})`;
       }
 
-      toast.error(message);
+      notify.error(message);
       return null;
     }
 
@@ -289,6 +290,7 @@ const RptItemPurchasePage: React.FC<RptItemPurchasePageProps> = ({
         )
       }
     >
+      {messageDialog}
       <BranchFilter
         mode={rdgBranch}
         onModeChange={(mode) => {

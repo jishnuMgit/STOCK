@@ -1,5 +1,4 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
-import { toast } from "react-toastify";
 import { buildSalesPriceListPdf } from "./downloadSalesPriceListPdf";
 import { saveFile } from "./saveFile";
 import {
@@ -16,6 +15,7 @@ import {
   ReportPrintRow,
 } from "../../../../components/common/ReportFilters";
 import Header from "../../../../components/common/Header";
+import { useMessageModal } from "../../../../hooks/useMessageModal";
 
 type Option = { value: string; label: string };
 
@@ -61,6 +61,7 @@ type Request = {
 const RptSalesPriceListPage: React.FC<RptSalesPriceListPageProps> = ({
   onClose,
 }) => {
+  const { notify, dialog: messageDialog } = useMessageModal();
   const [branchOptions, setBranchOptions] = useState<BranchOption[]>([]);
   const [branch, setBranch] = useState<BranchOption | null>(null); // lkpBranch
   const [reportFile, setReportFile] = useState("Excel"); // rdgReportFile
@@ -124,7 +125,7 @@ const RptSalesPriceListPage: React.FC<RptSalesPriceListPageProps> = ({
         const data = await res.json();
 
         if (!res.ok || !data.success) {
-          toast.error(data.message || "Failed to load the lookups");
+          notify.error(data.message || "Failed to load the lookups");
           return;
         }
         if (cancelled) return;
@@ -158,7 +159,7 @@ const RptSalesPriceListPage: React.FC<RptSalesPriceListPageProps> = ({
           })),
         );
       } catch {
-        if (!cancelled) toast.error("Failed to load the lookups");
+        if (!cancelled) notify.error("Failed to load the lookups");
       }
     };
 
@@ -185,7 +186,7 @@ const RptSalesPriceListPage: React.FC<RptSalesPriceListPageProps> = ({
       } catch {
         /* keep the default message */
       }
-      toast.error(message);
+      notify.error(message);
       return null;
     }
 
@@ -195,7 +196,7 @@ const RptSalesPriceListPage: React.FC<RptSalesPriceListPageProps> = ({
   // VB ValidateMe: returns the request, or null after showing the message
   const buildRequest = (): Request | null => {
     const warn = (message: string, focusId: string) => {
-      toast.warning(message, { toastId: "pl-validate" });
+      notify.warning(message);
       document.getElementById(focusId)?.focus();
       return null;
     };
@@ -251,7 +252,7 @@ const RptSalesPriceListPage: React.FC<RptSalesPriceListPageProps> = ({
       const data = await res.json();
 
       if (!res.ok || !data.success) {
-        toast.error(data.message || "Could not prepare the report");
+        notify.error(data.message || "Could not prepare the report");
         return;
       }
 
@@ -261,7 +262,7 @@ const RptSalesPriceListPage: React.FC<RptSalesPriceListPageProps> = ({
         request,
       });
     } catch {
-      toast.error("Could not prepare the report");
+      notify.error("Could not prepare the report");
     } finally {
       setBusy(false);
     }
@@ -273,7 +274,7 @@ const RptSalesPriceListPage: React.FC<RptSalesPriceListPageProps> = ({
     try {
       printSalesPriceListReport(preview.report);
     } catch {
-      toast.error("Could not open the print view");
+      notify.error("Could not open the print view");
     }
   };
 
@@ -298,11 +299,11 @@ const RptSalesPriceListPage: React.FC<RptSalesPriceListPageProps> = ({
       const saved = await saveFile(blob, `${fileBase}.${kind}`, kind);
       if (saved) {
 
-        toast.success(asPdf ? "PDF file downloaded" : "Excel file downloaded");
+        notify.success(asPdf ? "PDF file downloaded" : "Excel file downloaded");
         setPreview(null); // cancelled "Save as": the preview stays
       }
     } catch {
-      toast.error(
+      notify.error(
         asPdf ? "Could not create the PDF file" : "Could not create the Excel file",
       );
     } finally {
@@ -429,6 +430,7 @@ const RptSalesPriceListPage: React.FC<RptSalesPriceListPageProps> = ({
         )
       }
     >
+      {messageDialog}
       <BranchOnlyFilter options={branchOptions} value={branch} onChange={setBranch} />
 
       <PairFilter

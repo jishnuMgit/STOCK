@@ -3,9 +3,6 @@ import React, {
   useRef,
   useState,
 } from "react";
-
-import { toast } from "react-toastify";
-
 import { filterLabelOrValue } from "../../BranchSelect/branchSelectParts";
 import CommonTableSelect from "../../common/CommonTableSelect";
 
@@ -23,6 +20,7 @@ import {
   AdapterDayjs,
 } from "@mui/x-date-pickers/AdapterDayjs";
 import Header from "../../common/Header";
+import { useMessageModal } from "../../../hooks/useMessageModal";
 
 // ============================================================
 // TYPES
@@ -65,6 +63,7 @@ const BeginningBalanceHeader: React.FC<Props> = ({
   disabled,
   onBranchesLoaded,
 }) => {
+  const { notify, dialog: messageDialog } = useMessageModal();
   // ==========================================================
   // BRANCH: the branches the user has a right to, the user's default one
   // selected (the same list the Beginning Stock screen loads)
@@ -80,7 +79,7 @@ const BeginningBalanceHeader: React.FC<Props> = ({
           localStorage.getItem("PstrCoID");
 
         if (!PstrCoID) {
-          toast.error(
+          notify.error(
             "getBranchList: no PstrCoID in localStorage",
           );
           return;
@@ -95,7 +94,7 @@ const BeginningBalanceHeader: React.FC<Props> = ({
         const result = await response.json();
 
         if (!response.ok || !result.success) {
-          toast.error(
+          notify.error(
             result.message ||
             "Failed to load the Branches",
           );
@@ -128,7 +127,7 @@ const BeginningBalanceHeader: React.FC<Props> = ({
           "getBranchList error:",
           error,
         );
-        toast.error(
+        notify.error(
           "Failed to load the Branches",
         );
       } finally {
@@ -184,6 +183,7 @@ const BeginningBalanceHeader: React.FC<Props> = ({
 
   return (
     <header className="w-full shrink-0">
+      {messageDialog}
 
       {/* ======================================================
           TITLE

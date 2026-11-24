@@ -1,11 +1,11 @@
 import React, { useState, useEffect, useCallback, useRef } from "react";
-import { toast } from "react-toastify";
 import { useAltShortcuts } from "../../../../hooks/useAltShortcuts";
 import { useButtonPermissions } from "../../../../hooks/useButtonPermissions";
 import { useEnterAsTab } from "../../../../hooks/useEnterAsTab";
 import { useGridCellFocus, selectOnFocus } from "../../../../hooks/useGridCellFocus";
 import { useInitialFocus } from "../../../../hooks/useInitialFocus";
 import Header from "../../../../components/common/Header";
+import { useMessageModal } from "../../../../hooks/useMessageModal";
 
 // dbo.tblmenu fmenuid of the Stock Document Re-Post page
 const MENU_ID = "020106";
@@ -32,6 +32,7 @@ const formatElapsed = (ms: number | null): string => {
 };
 
 const StockDocumentRePost: React.FC = () => {
+  const { notify, dialog: messageDialog } = useMessageModal();
   const perms = useButtonPermissions(MENU_ID);
   const enterAsTab = useEnterAsTab();
   const { cellFocusClass } = useGridCellFocus();
@@ -54,7 +55,7 @@ const StockDocumentRePost: React.FC = () => {
       const PstrYear = localStorage.getItem("PstrYear") ?? "";
 
       if (!/^\d{4}$/.test(PstrYear)) {
-        toast.error("getRange: no PstrYear in localStorage");
+        notify.error("getRange: no PstrYear in localStorage");
         return null;
       }
 
@@ -67,7 +68,7 @@ const StockDocumentRePost: React.FC = () => {
       const result = await response.json();
 
       if (!response.ok || !result.success) {
-        toast.warning(result.message || `${SCREEN_TITLE} range could not be loaded`);
+        notify.warning(result.message || `${SCREEN_TITLE} range could not be loaded`);
         return null;
       }
 
@@ -77,7 +78,7 @@ const StockDocumentRePost: React.FC = () => {
         count: Number(result.totalPostedCount ?? 0),
       };
     } catch {
-      toast.error(`Cannot connect to ${SCREEN_TITLE} API.`);
+      notify.error(`Cannot connect to ${SCREEN_TITLE} API.`);
       return null;
     }
   }, []);
@@ -152,12 +153,12 @@ const StockDocumentRePost: React.FC = () => {
     if (posting) return;
 
     if (!perms.post) {
-      toast.error("You do not have permission to Post.");
+      notify.error("You do not have permission to Post.");
       return;
     }
 
     const warn = (message: string) => {
-      toast.warning(message);
+      notify.warning(message);
       focusRePost();
     };
 
@@ -171,7 +172,7 @@ const StockDocumentRePost: React.FC = () => {
     const PstrYear = localStorage.getItem("PstrYear") ?? "";
 
     if (!/^\d{4}$/.test(PstrYear)) {
-      toast.error("rePost: no PstrYear in localStorage");
+      notify.error("rePost: no PstrYear in localStorage");
       return;
     }
 
@@ -191,7 +192,7 @@ const StockDocumentRePost: React.FC = () => {
       const result = await response.json();
 
       if (!response.ok || !result.success) {
-        toast.warning(result.message || `${SCREEN_TITLE} could not be done`);
+        notify.warning(result.message || `${SCREEN_TITLE} could not be done`);
         focusRePost();
         return;
       }
@@ -201,10 +202,10 @@ const StockDocumentRePost: React.FC = () => {
         timeFromServerRef.current = result.txtTimeTakenSec * 1000;
       }
 
-      toast.success(<div style={{ whiteSpace: "pre-line" }}>{result.message}</div>);
+      notify.success(<div style={{ whiteSpace: "pre-line" }}>{result.message}</div>);
       void loadRange();
     } catch {
-      toast.error(`Cannot connect to ${SCREEN_TITLE} API.`);
+      notify.error(`Cannot connect to ${SCREEN_TITLE} API.`);
     } finally {
       setElapsedMs(timeFromServerRef.current ?? Date.now() - startRef.current);
       setCurrentDoc("");
@@ -238,6 +239,7 @@ const StockDocumentRePost: React.FC = () => {
         pt-0
       "
     >
+      {messageDialog}
       {/* ======================================================
           MAIN CONTAINER
       ====================================================== */}

@@ -1,6 +1,5 @@
 
 import React, { useEffect, useMemo, useRef, useState } from "react";
-import { toast } from "react-toastify";
 import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
 import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
 import { DatePicker } from "@mui/x-date-pickers/DatePicker";
@@ -20,6 +19,7 @@ import Header from "../../../components/common/Header";
 import CommonTableSelect, {
   type TableSelectOption,
 } from "../../../components/common/CommonTableSelect";
+import { useMessageModal } from "../../../hooks/useMessageModal";
 
 dayjs.extend(customParseFormat);
 
@@ -247,6 +247,7 @@ const ActionButton: React.FC<{
 );
 
 const RptZatcaDocumentStatus: React.FC = () => {
+  const { notify, dialog: messageDialog } = useMessageModal();
   const [branchMode, setBranchMode] = useState("All Branch");
   const [branch, setBranch] = useState<TableSelectOption | null>(null);
 
@@ -280,7 +281,7 @@ const RptZatcaDocumentStatus: React.FC = () => {
           (data ?? []).map((b) => ({ value: b.fbrid, label: b.fbrname, id: b.fbrid })),
         ),
       )
-      .catch((e: Error) => toast.error(e.message));
+      .catch((e: Error) => notify.error(e.message));
   }, []);
 
   // ValidateMe_P (the server checks again) + one call for the report data
@@ -290,19 +291,19 @@ const RptZatcaDocumentStatus: React.FC = () => {
     body: Record<string, unknown>;
   } | null> => {
     if (branchMode === "One Branch" && !branch) {
-      toast.error("Please select 'Branch'");
+      notify.error("Please select 'Branch'");
       return null;
     }
     if (!fromDate) {
-      toast.error("Please select 'From Date'");
+      notify.error("Please select 'From Date'");
       return null;
     }
     if (!toDate) {
-      toast.error("Please select 'To Date'");
+      notify.error("Please select 'To Date'");
       return null;
     }
     if (dayjs(fromDate, DATE_FORMAT).isAfter(dayjs(toDate, DATE_FORMAT))) {
-      toast.error("'To Date' should be greater than or equal to 'From Date'");
+      notify.error("'To Date' should be greater than or equal to 'From Date'");
       return null;
     }
 
@@ -330,7 +331,7 @@ const RptZatcaDocumentStatus: React.FC = () => {
       const { fileBase, ...report } = data;
       return { data: report, fileBase, body };
     } catch (e) {
-      toast.error((e as Error).message);
+      notify.error((e as Error).message);
       return null;
     } finally {
       setBusy(false);
@@ -351,7 +352,7 @@ const RptZatcaDocumentStatus: React.FC = () => {
     try {
       printZatcaDocumentStatusReport(preview.data);
     } catch {
-      toast.error("Could not open the print view");
+      notify.error("Could not open the print view");
     }
   };
 
@@ -377,7 +378,7 @@ const RptZatcaDocumentStatus: React.FC = () => {
             ? "Excel is not available: the route was not found (404)"
             : `Could not create the Excel file (error ${res.status})`;
       }
-      toast.error(message);
+      notify.error(message);
       return null;
     }
 
@@ -403,11 +404,11 @@ const RptZatcaDocumentStatus: React.FC = () => {
       const kind = asPdf ? "pdf" : "xlsx";
       const saved = await saveFile(blob, `${fileBase}.${kind}`, kind);
       if (saved) {
-        toast.success(asPdf ? "PDF file downloaded" : "Excel file downloaded");
+        notify.success(asPdf ? "PDF file downloaded" : "Excel file downloaded");
         setPreview(null); // cancelled "Save as": the preview stays
       }
     } catch {
-      toast.error(asPdf ? "Could not create the PDF file" : "Could not create the Excel file");
+      notify.error(asPdf ? "Could not create the PDF file" : "Could not create the Excel file");
     } finally {
       downloading.current = false;
       setBusy(false);
@@ -458,6 +459,7 @@ const RptZatcaDocumentStatus: React.FC = () => {
 
   return (
     <div className="min-h-full w-full bg-white p-1 sm:p-2">
+      {messageDialog}
       <main className="mx-auto w-full max-w-165 overflow-hidden rounded-[3px] border border-[#91a7bb] bg-white shadow-sm">
 
         {/* Header */}

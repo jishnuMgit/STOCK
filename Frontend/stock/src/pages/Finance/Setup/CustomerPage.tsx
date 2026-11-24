@@ -5,8 +5,7 @@ import CustomerMiddle from "../../../components/Setup/CustomerPage/CustomerMiddl
 import CustomerFooter from "../../../components/Setup/CustomerPage/CustomerFooter";
 import { useCustomer, type CustomerDetail } from "../../../hooks/useCustomer";
 import { useConfirmModal } from "../../../hooks/useConfirmModal";
-import { toast } from "react-toastify";
-
+import { useMessageModal } from "../../../hooks/useMessageModal";
 interface CustomerPageProps {
   /** When set, the page opens for this existing customer. */
   customerId?: string;
@@ -48,6 +47,7 @@ const CustomerPage: React.FC<CustomerPageProps> = ({
   onClose,
   onSaved,
 }) => {
+  const { notify, dialog: messageDialog } = useMessageModal();
   const isEdit = !!customerId;
   const isDelete = isEdit && mode === "delete";
   const { confirm, dialog } = useConfirmModal();
@@ -250,7 +250,7 @@ const CustomerPage: React.FC<CustomerPageProps> = ({
       const match = accounts?.find((a) => a.accountId === detail.gAccountId);
       setLkpGAccountName(match?.accountName ?? "");
     } catch (err) {
-      toast.error(errMsg(err, "Failed to load customer"));
+      notify.error(errMsg(err, "Failed to load customer"));
       onClose?.();
     } finally {
       setLoadingRecord(false);
@@ -317,31 +317,31 @@ const CustomerPage: React.FC<CustomerPageProps> = ({
       PARENT_ACCOUNT_LEVEL,
     );
     if (nextId) setTxtCustomerID(nextId);
-    else toast.error("Failed to get next customer ID");
+    else notify.error("Failed to get next customer ID");
   };
 
   const handleSave = async () => {
     if (saving || isDelete) return;
 
     if (!txtCustomerID.trim()) {
-      toast.warning("Customer ID is required");
+      notify.warning("Customer ID is required");
       return;
     }
     if (!txtCustomerName.trim()) {
-      toast.warning("Customer Name is required");
+      notify.warning("Customer Name is required");
       return;
     }
     if (!lkpGAccountID) {
-      toast.warning("GL Account is required");
+      notify.warning("GL Account is required");
       return;
     }
     if (!chkCustomer && !chkSupplier) {
-      toast.warning("Select Customer, Supplier or both");
+      notify.warning("Select Customer, Supplier or both");
       return;
     }
 
     if (txtCustomerID.trim().length > 12) {
-      toast.warning("Customer ID cannot be longer than 12 characters");
+      notify.warning("Customer ID cannot be longer than 12 characters");
       return;
     }
 
@@ -362,7 +362,7 @@ const CustomerPage: React.FC<CustomerPageProps> = ({
 
       const missing = requiredFields.find(([, value]) => !value.trim());
       if (missing) {
-        toast.warning(`${missing[0]} is required`);
+        notify.warning(`${missing[0]} is required`);
         return;
       }
 
@@ -382,17 +382,17 @@ const CustomerPage: React.FC<CustomerPageProps> = ({
 
       for (const [label, value, max] of numericChecks) {
         if (value && !/^\d+$/.test(value)) {
-          toast.warning(`${label} must contain numbers only`);
+          notify.warning(`${label} must contain numbers only`);
           return;
         }
         if (value.length > max) {
-          toast.warning(`${label} cannot be longer than ${max} digits`);
+          notify.warning(`${label} cannot be longer than ${max} digits`);
           return;
         }
       }
 
       if (txtEMail && !/^\S+@\S+\.\S+$/.test(txtEMail)) {
-        toast.warning("Invalid e-mail");
+        notify.warning("Invalid e-mail");
         return;
       }
     }
@@ -451,7 +451,7 @@ const CustomerPage: React.FC<CustomerPageProps> = ({
       if (isEdit) await updateCustomer(customerId!, payload);
       else await saveCustomer(payload);
 
-      toast.success(
+      notify.success(
         isEdit
           ? "Customer updated successfully"
           : "Customer saved successfully",
@@ -459,7 +459,7 @@ const CustomerPage: React.FC<CustomerPageProps> = ({
       onSaved?.();
       onClose?.();
     } catch (err) {
-      toast.error(errMsg(err, "Failed to save customer"));
+      notify.error(errMsg(err, "Failed to save customer"));
     } finally {
       setSaving(false);
     }
@@ -473,7 +473,7 @@ const CustomerPage: React.FC<CustomerPageProps> = ({
     if (saving) return;
 
     if (!isEdit) {
-      toast.warning("Open an existing customer to delete it");
+      notify.warning("Open an existing customer to delete it");
       return;
     }
     const shouldDelete = await confirm({
@@ -487,11 +487,11 @@ const CustomerPage: React.FC<CustomerPageProps> = ({
     try {
       setSaving(true);
       await deleteCustomer(customerId!);
-      toast.success("Customer deleted successfully");
+      notify.success("Customer deleted successfully");
       onSaved?.();
       onClose?.();
     } catch (err) {
-      toast.error(errMsg(err, "Failed to delete customer"));
+      notify.error(errMsg(err, "Failed to delete customer"));
     } finally {
       setSaving(false);
     }
@@ -614,6 +614,7 @@ const CustomerPage: React.FC<CustomerPageProps> = ({
   if (loadingRecord) {
     return (
       <div className="w-full bg-white p-6 text-center text-[12px] text-slate-500">
+        {messageDialog}
         Loading customer...
       </div>
     );
@@ -621,6 +622,7 @@ const CustomerPage: React.FC<CustomerPageProps> = ({
 
   return (
     <>
+      {messageDialog}
       <div ref={formRef} onKeyDown={handleEnterAsTab} className="w-full bg-white">
       <CustomerHeader
         txtCustomerID={txtCustomerID}

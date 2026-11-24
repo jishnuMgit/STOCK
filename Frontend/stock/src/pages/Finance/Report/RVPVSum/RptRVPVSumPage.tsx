@@ -1,5 +1,4 @@
 import React, { useEffect, useMemo, useState } from "react";
-import { toast } from "react-toastify";
 import type { PairSelectOption } from "../../../../components/common/CustomLinkedPairSelect";
 import { useInitialFocus } from "../../../../hooks/useInitialFocus";
 import { useEnterAsTab } from "../../../../hooks/useEnterAsTab";
@@ -23,6 +22,7 @@ import {
 import { buildRVPVSumPdf } from "../../../../components/Finance/Report/RptRVPVSum/RptRVPVSumPdf";
 import dayjs from "dayjs";
 import customParseFormat from "dayjs/plugin/customParseFormat";
+import { useMessageModal } from "../../../../hooks/useMessageModal";
 
 dayjs.extend(customParseFormat);
 
@@ -46,6 +46,7 @@ type RptRVPVSumPageProps = {
 const RptRVPVSumPage: React.FC<RptRVPVSumPageProps> = ({
   onClose,
 }) => {
+  const { notify, dialog: messageDialog } = useMessageModal();
   const handleEnterAsTab = useEnterAsTab();
 
   const [rdgBranch, setRdgBranch] = useState("One Branch"); // rdgBranch
@@ -78,7 +79,7 @@ const RptRVPVSumPage: React.FC<RptRVPVSumPageProps> = ({
         const result = await response.json();
 
         if (!response.ok || !result.success) {
-          toast.error(result.message || "Failed to load the Branches");
+          notify.error(result.message || "Failed to load the Branches");
           return;
         }
 
@@ -108,7 +109,7 @@ const RptRVPVSumPage: React.FC<RptRVPVSumPageProps> = ({
         setAccountRows(result.accounts || []);
       } catch (error: unknown) {
         console.error("rptRVPVSum lookups error:", error);
-        toast.error("Cannot connect to the Receipt / Payment Summary API.");
+        notify.error("Cannot connect to the Receipt / Payment Summary API.");
       }
     };
 
@@ -175,7 +176,7 @@ const RptRVPVSumPage: React.FC<RptRVPVSumPageProps> = ({
     if (printing || preview) return;
 
     const warn = (message: string, id: string) => {
-      toast.warning(message);
+      notify.warning(message);
       document.getElementById(id)?.focus();
     };
 
@@ -227,7 +228,7 @@ const RptRVPVSumPage: React.FC<RptRVPVSumPageProps> = ({
       const result = await response.json();
 
       if (!response.ok || !result.success) {
-        toast.warning(result.message || "The Receipt / Payment Summary report could not be printed.");
+        notify.warning(result.message || "The Receipt / Payment Summary report could not be printed.");
         if (result.field) document.getElementById(result.field)?.focus();
         return;
       }
@@ -235,7 +236,7 @@ const RptRVPVSumPage: React.FC<RptRVPVSumPageProps> = ({
       setPreview({ report: result.report, fileBase: result.fileBase, params });
     } catch (error: unknown) {
       console.error("rptRVPVSum print error:", error);
-      toast.error("Cannot connect to the Receipt / Payment Summary API.");
+      notify.error("Cannot connect to the Receipt / Payment Summary API.");
     } finally {
       setPrinting(false);
     }
@@ -263,7 +264,7 @@ const RptRVPVSumPage: React.FC<RptRVPVSumPageProps> = ({
         message = `Could not create the Excel file (error ${response.status})`;
       }
 
-      toast.error(message);
+      notify.error(message);
       return null;
     }
 
@@ -313,6 +314,7 @@ const RptRVPVSumPage: React.FC<RptRVPVSumPageProps> = ({
         )
       }
     >
+      {messageDialog}
       <BranchFilter
         withSelected
         mode={rdgBranch}

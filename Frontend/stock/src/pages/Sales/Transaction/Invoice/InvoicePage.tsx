@@ -10,8 +10,8 @@ import {
   type InvoiceRow,
   type CustomerLookup,
 } from "../../../../hooks/useInvoice";
-import { toast } from "react-toastify";
 import { useConfirmModal } from "../../../../hooks/useConfirmModal";
+import { useMessageModal } from "../../../../hooks/useMessageModal";
 
 const ROW_COUNT = 10;
 const createRows = () => Array.from({ length: ROW_COUNT }, emptyRow);
@@ -40,6 +40,7 @@ const recalcRow = (row: InvoiceRow): InvoiceRow => {
 };
 
 const InvoicePage: React.FC = () => {
+  const { notify, dialog: messageDialog } = useMessageModal();
   const {
     fetchBranches,
     fetchDefaultBranch,
@@ -241,30 +242,30 @@ const InvoicePage: React.FC = () => {
 
   const handleSave = useCallback(async () => {
     if (!header.customerId) {
-      toast.warning("Please select a customer", { toastId: "inv-customer" });
+      notify.warning("Please select a customer");
       document.getElementById("lkpCustomerID")?.focus();
       return;
     }
 
     const entered = rows.filter(isEntered);
     if (entered.length === 0) {
-      toast.warning("Please enter at least one line", { toastId: "inv-lines" });
+      notify.warning("Please enter at least one line");
       document.getElementById("txtDescription-0")?.focus();
       return;
     }
 
     try {
       await saveInvoice({ mode, year: YEAR, header, rows: entered });
-      toast.success(mode === "S" ? "Saved" : "Modified");
+      notify.success(mode === "S" ? "Saved" : "Modified");
       handleClear();
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Not saved, try again");
+      notify.error(err instanceof Error ? err.message : "Not saved, try again");
     }
   }, [header, rows, mode, saveInvoice, handleClear]);
 
   const handleDelete = useCallback(async () => {
     if (mode !== "M") {
-      toast.warning("Load a saved invoice to delete it");
+      notify.warning("Load a saved invoice to delete it");
       return;
     }
     const ok = await confirm({
@@ -274,10 +275,10 @@ const InvoicePage: React.FC = () => {
     if (!ok) return;
     try {
       await deleteInvoice(YEAR, header.brId, header.docNo);
-      toast.success("Deleted");
+      notify.success("Deleted");
       handleClear();
     } catch (err) {
-      toast.error(
+      notify.error(
         err instanceof Error ? err.message : "Not deleted, try again",
       );
     }
@@ -285,6 +286,7 @@ const InvoicePage: React.FC = () => {
 
   return (
     <main className="mx-auto flex h-fit w-full max-w-275 flex-col overflow-hidden border border-slate-400 bg-white text-[12px] text-slate-800">
+      {messageDialog}
       <div className="flex h-7.5 w-full shrink-0 items-center border-b border-slate-300 bg-[#a5e0c3]">
         <h1 className="ml-3.75 text-[17px] font-semibold text-slate-700">
           Invoice

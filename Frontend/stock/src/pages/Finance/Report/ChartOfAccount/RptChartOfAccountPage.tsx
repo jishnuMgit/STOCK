@@ -1,6 +1,5 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import Header from "../../../../components/common/Header";
-import { toast } from "react-toastify";
 import {
   buildHtml,
   printChartOfAccountReport,
@@ -9,6 +8,7 @@ import {
 import { previewPrintedLine } from "../../../../components/common/printHtml";
 import { buildChartOfAccountPdf } from "./downloadChartOfAccountPdf";
 import { saveFile } from "./saveFile";
+import { useMessageModal } from "../../../../hooks/useMessageModal";
 
 // ============================================================
 // TYPES
@@ -195,6 +195,7 @@ type RptChartOfAccountPageProps = {
 const RptChartOfAccountPage: React.FC<RptChartOfAccountPageProps> = ({
   onClose,
 }) => {
+  const { notify, dialog: messageDialog } = useMessageModal();
   const [accounts, setAccounts] = useState<TreeAccount[]>([]);
   const [loading, setLoading] = useState(true);
   const [printing, setPrinting] = useState(false);
@@ -236,7 +237,7 @@ const RptChartOfAccountPage: React.FC<RptChartOfAccountPageProps> = ({
         const data = await res.json();
 
         if (!res.ok || !data.success) {
-          toast.error(data.message || "Failed to load chart of accounts");
+          notify.error(data.message || "Failed to load chart of accounts");
           return;
         }
         if (cancelled) return;
@@ -245,7 +246,7 @@ const RptChartOfAccountPage: React.FC<RptChartOfAccountPageProps> = ({
         setAccounts(list);
         resetSelection(list);
       } catch {
-        if (!cancelled) toast.error("Failed to load chart of accounts");
+        if (!cancelled) notify.error("Failed to load chart of accounts");
       } finally {
         if (!cancelled) setLoading(false);
       }
@@ -314,7 +315,7 @@ const RptChartOfAccountPage: React.FC<RptChartOfAccountPageProps> = ({
             ? "Excel is not available: the /excel route was not found (404)"
             : `Could not create the Excel file (error ${res.status})`;
       }
-      toast.error(message);
+      notify.error(message);
       return null;
     }
 
@@ -331,7 +332,7 @@ const RptChartOfAccountPage: React.FC<RptChartOfAccountPageProps> = ({
 
     const accountIds = [...checked];
     if (accountIds.length === 0) {
-      toast.warning("Select at least one account", { toastId: "coa-none" });
+      notify.warning("Select at least one account");
       return;
     }
 
@@ -345,13 +346,13 @@ const RptChartOfAccountPage: React.FC<RptChartOfAccountPageProps> = ({
       const data = await res.json();
 
       if (!res.ok || !data.success) {
-        toast.error(data.message || "Could not prepare the report");
+        notify.error(data.message || "Could not prepare the report");
         return;
       }
 
       setPreview({ report: data.report, fileBase: data.fileBase, accountIds });
     } catch {
-      toast.error("Could not prepare the report");
+      notify.error("Could not prepare the report");
     } finally {
       setPrinting(false);
     }
@@ -363,7 +364,7 @@ const RptChartOfAccountPage: React.FC<RptChartOfAccountPageProps> = ({
     try {
       printChartOfAccountReport(preview.report);
     } catch {
-      toast.error("Could not open the print view");
+      notify.error("Could not open the print view");
     }
   };
 
@@ -390,11 +391,11 @@ const RptChartOfAccountPage: React.FC<RptChartOfAccountPageProps> = ({
       const saved = await saveFile(blob, `${fileBase}.${kind}`, kind);
       if (saved) {
         
-        toast.success(asPdf ? "PDF file downloaded" : "Excel file downloaded");
+        notify.success(asPdf ? "PDF file downloaded" : "Excel file downloaded");
         setPreview(null); // cancelled "Save as": the preview stays
       }
     } catch {
-      toast.error(
+      notify.error(
         asPdf ? "Could not create the PDF file" : "Could not create the Excel file",
       );
     } finally {
@@ -526,6 +527,7 @@ const RptChartOfAccountPage: React.FC<RptChartOfAccountPageProps> = ({
 
   return (
     <div className="flex min-h-full w-full items-start justify-center bg-white px-4 py-4">
+      {messageDialog}
       <div className="min-h-fit w-150 max-w-full bg-white p-0">
         <main className="w-full overflow-hidden border border-[#d5dce2] bg-white">
           <Header Name="Chart Of Account" />

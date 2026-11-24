@@ -1,5 +1,4 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
-import { toast } from "react-toastify";
 import CustomLinkedPairSelect, {
   type PairSelectOption,
 } from "../../../components/common/CustomLinkedPairSelect";
@@ -7,6 +6,7 @@ import { FILTER_GAP } from "../../../components/common/ReportFilters";
 import { useAltShortcuts } from "../../../hooks/useAltShortcuts";
 import { useGridCellFocus } from "../../../hooks/useGridCellFocus";
 import Header from "../../../components/common/Header";
+import { useMessageModal } from "../../../hooks/useMessageModal";
 
 // ============================================================
 // ITEM ENQUIRY (the old frmItemEnquiry)
@@ -95,6 +95,7 @@ const GRID_COLUMNS = [
 ];
 
 const ItemEnquiryPage: React.FC = () => {
+  const { notify, dialog: messageDialog } = useMessageModal();
   // the cell the cursor is in is outlined (a box in it has its text selected, to copy)
   const { cellFocusClass, selectOnFocus } = useGridCellFocus();
 
@@ -163,7 +164,7 @@ const ItemEnquiryPage: React.FC = () => {
         const PstrCoID = localStorage.getItem("PstrCoID");
 
         if (!PstrCoID) {
-          toast.error("Company ID not found. Please log in again.");
+          notify.error("Company ID not found. Please log in again.");
           return;
         }
 
@@ -175,7 +176,7 @@ const ItemEnquiryPage: React.FC = () => {
         const result = await response.json();
 
         if (!response.ok || !result.success) {
-          toast.error(result.message || "Failed to load item list");
+          notify.error(result.message || "Failed to load item list");
           return;
         }
 
@@ -201,7 +202,7 @@ const ItemEnquiryPage: React.FC = () => {
         );
       } catch (error) {
         console.error("getItemList (item enquiry) error:", error);
-        toast.error("Cannot connect to Item Enquiry API.");
+        notify.error("Cannot connect to Item Enquiry API.");
       }
     };
 
@@ -228,7 +229,7 @@ const ItemEnquiryPage: React.FC = () => {
         const PstrYear = localStorage.getItem("PstrYear");
 
         if (!PstrCoID || !PstrYear) {
-          toast.error("Company ID / Year not found. Please log in again.");
+          notify.error("Company ID / Year not found. Please log in again.");
           return;
         }
 
@@ -242,7 +243,7 @@ const ItemEnquiryPage: React.FC = () => {
         if (ignore) return;
 
         if (!response.ok || !result.success) {
-          toast.error(result.message || "Failed to load the item");
+          notify.error(result.message || "Failed to load the item");
           goToGridRef.current = false;
           clearDetails();
           return;
@@ -269,7 +270,7 @@ const ItemEnquiryPage: React.FC = () => {
 
         console.error("getItemEnquiry error:", error);
         goToGridRef.current = false;
-        toast.error("Cannot connect to Item Enquiry API.");
+        notify.error("Cannot connect to Item Enquiry API.");
       }
     };
 
@@ -403,6 +404,7 @@ const ItemEnquiryPage: React.FC = () => {
 
   return (
     <div className="flex min-h-full w-full justify-center bg-gray-100 px-3 pb-5">
+      {messageDialog}
       <main className="mt-5 flex h-fit w-full max-w-225 flex-col overflow-hidden border border-gray-400 bg-white text-[12px] text-slate-700">
         {/* TITLE BAR */}
         <Header Name="Item Enquiry" />

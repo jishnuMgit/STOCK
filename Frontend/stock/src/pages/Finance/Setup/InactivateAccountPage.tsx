@@ -1,9 +1,9 @@
 import React, { useEffect, useRef, useState } from "react";
 import Select, { components, type MenuListProps } from "react-select";
-import { toast } from "react-toastify";
 import { useEnterAsTab } from "../../../hooks/useEnterAsTab";
 import { useButtonPermissions } from "../../../hooks/useButtonPermissions";
 import Header from "../../../components/common/Header";
+import { useMessageModal } from "../../../hooks/useMessageModal";
 
 // ============================================================
 // TYPES
@@ -206,6 +206,7 @@ type InactivateAccountPageProps = {
 const InactivateAccountPage: React.FC<InactivateAccountPageProps> = ({
   onClose,
 }) => {
+  const { notify, dialog: messageDialog } = useMessageModal();
   const handleEnterAsTab = useEnterAsTab();
   const perms = useButtonPermissions(MENU_ID);
 
@@ -242,14 +243,14 @@ const InactivateAccountPage: React.FC<InactivateAccountPageProps> = ({
         const data = await res.json();
 
         if (!res.ok || !data.success) {
-          toast.error(data.message || "Failed to load accounts");
+          notify.error(data.message || "Failed to load accounts");
           return;
         }
         if (cancelled) return;
 
         setAccounts(data.accounts as Account[]);
       } catch {
-        if (!cancelled) toast.error("Failed to load accounts");
+        if (!cancelled) notify.error("Failed to load accounts");
       }
     };
 
@@ -310,20 +311,18 @@ const InactivateAccountPage: React.FC<InactivateAccountPageProps> = ({
 
   const handleModify = async () => {
     if (!perms.modify) {
-      toast.warning("You don't have the permission to modify", {
-        toastId: "ia-modify-denied",
-      });
+      notify.warning("You don't have the permission to modify");
       return;
     }
 
     if (!accountId) {
-      toast.warning("Please select an 'Account'");
+      notify.warning("Please select an 'Account'");
       document.getElementById("lkpAccountID")?.focus();
       return;
     }
 
     if (!status) {
-      toast.warning("Please select a 'Status'");
+      notify.warning("Please select a 'Status'");
       document.getElementById("lkpStatus")?.focus();
       return;
     }
@@ -345,14 +344,14 @@ const InactivateAccountPage: React.FC<InactivateAccountPageProps> = ({
       const data = await res.json();
 
       if (!res.ok || !data.success) {
-        toast.error(data.message || "Not modified, try again");
+        notify.error(data.message || "Not modified, try again");
         return;
       }
 
-      toast.success("Modified");
+      notify.success("Modified");
       handleClear();
     } catch {
-      toast.error("Not modified, try again");
+      notify.error("Not modified, try again");
     } finally {
       setSaving(false);
     }
@@ -408,6 +407,7 @@ const InactivateAccountPage: React.FC<InactivateAccountPageProps> = ({
       onKeyDown={handlePageKeyDown}
       className="flex min-h-full w-full items-center justify-center bg-white px-4 py-4"
     >
+      {messageDialog}
       <div className="mx-auto min-h-full w-160 max-w-full bg-white p-0">
         <main className="w-full overflow-hidden border border-[#d5dce2] bg-white">
           <Header Name="Inactive Account" />
