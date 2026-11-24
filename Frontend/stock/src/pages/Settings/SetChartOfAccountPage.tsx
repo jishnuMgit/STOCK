@@ -604,7 +604,8 @@ const SetChartOfAccount: React.FC = () => {
   // unsaved edits.
   // ==========================================================
 
-  const handleDeleteRow = async (row: AccountSetting) => {
+  // lineNo = the number in the Line column (shown in the question)
+  const handleDeleteRow = async (row: AccountSetting, lineNo: number) => {
     if (row.txtOriginalSlNo === null || row.lkpOriginalParameterType === null) {
       setRows((previous) => previous.filter((item) => item !== row));
       return;
@@ -612,7 +613,7 @@ const SetChartOfAccount: React.FC = () => {
 
     const shouldDelete = await confirm({
       title: "Set Chart Of Account",
-      message: "Do you want to Delete?",
+      message: `Do you want to Delete Line ${lineNo}?`,
       confirmLabel: "Delete",
       cancelLabel: "Cancel",
     });
@@ -994,7 +995,7 @@ const SetChartOfAccount: React.FC = () => {
                         name="btnDeleteRow"
                         type="button"
                         tabIndex={-1}
-                        onClick={() => handleDeleteRow(rows[index])}
+                        onClick={() => handleDeleteRow(rows[index], index + 1)}
                         disabled={!perms.delete}
                         aria-label={`Delete row ${index + 1}`}
                         className="
