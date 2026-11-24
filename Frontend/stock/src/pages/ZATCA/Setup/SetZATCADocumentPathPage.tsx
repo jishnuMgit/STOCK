@@ -1,7 +1,6 @@
 import React, { useCallback, useEffect, useState } from "react";
 import { HiOutlineDotsHorizontal, HiOutlineFolder } from "react-icons/hi";
-import { toast } from "react-toastify";
-
+import { useMessageModal } from "../../../hooks/useMessageModal";
 // Router mount: app.use("/api/zatca-file-path", zatcaFilePathRouter)
 const API = import.meta.env.VITE_API_URL + "/zatca-file-path";
 
@@ -35,6 +34,7 @@ type SetZATCADocumentPathProps = {
 const DEFAULT_PATH = "C:\\";
 
 const SetZATCADocumentPath: React.FC<SetZATCADocumentPathProps> = () => {
+  const { notify, dialog: messageDialog } = useMessageModal();
   const [serverBackupPath, setServerBackupPath] = useState(DEFAULT_PATH);
   const [exists, setExists] = useState(false); // false => Save, true => Modify
   const [loading, setLoading] = useState(true);
@@ -63,7 +63,7 @@ const SetZATCADocumentPath: React.FC<SetZATCADocumentPathProps> = () => {
       setServerBackupPath(data.exists ? data.filePath : DEFAULT_PATH);
       setExists(data.exists);
     } catch (e) {
-      toast.error((e as Error).message);
+      notify.error((e as Error).message);
     } finally {
       setLoading(false);
     }
@@ -82,7 +82,7 @@ const SetZATCADocumentPath: React.FC<SetZATCADocumentPathProps> = () => {
           setExists(data.exists);
         }
       } catch (e) {
-        if (active) toast.error((e as Error).message);
+        if (active) notify.error((e as Error).message);
       } finally {
         if (active) setLoading(false);
       }
@@ -108,7 +108,7 @@ const SetZATCADocumentPath: React.FC<SetZATCADocumentPathProps> = () => {
       );
       setListing(data);
     } catch (e) {
-      toast.error((e as Error).message);
+      notify.error((e as Error).message);
     } finally {
       setPickerLoading(false);
     }
@@ -128,7 +128,7 @@ const SetZATCADocumentPath: React.FC<SetZATCADocumentPathProps> = () => {
 
   const handleModify = async () => {
     if (!serverBackupPath.trim()) {
-      toast.error("Please Select 'File Path'");
+      notify.error("Please Select 'File Path'");
       return;
     }
 
@@ -139,9 +139,9 @@ const SetZATCADocumentPath: React.FC<SetZATCADocumentPathProps> = () => {
         body: JSON.stringify({ filePath: serverBackupPath.trim() }),
       });
       setExists(true);
-      toast.success(message);
+      notify.success(message);
     } catch (e) {
-      toast.error((e as Error).message);
+      notify.error((e as Error).message);
     } finally {
       setLoading(false);
     }
@@ -193,6 +193,7 @@ const SetZATCADocumentPath: React.FC<SetZATCADocumentPathProps> = () => {
 
   return (
     <div className="flex min-h-full w-full items-start justify-center bg-white px-3 py-3 sm:px-4 sm:py-4">
+      {messageDialog}
       <div className=" max-w-160  bg-white">
         <main className="w-full border border-gray-400 bg-white">
           {/* Header */}

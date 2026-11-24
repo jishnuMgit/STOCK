@@ -5,7 +5,7 @@ const API_URL = import.meta.env.VITE_API_URL;
 const CASH_SUPPLIER_BASE = "/purchase-invoice/cash-supplier";
 
 // TODO: match the path where you mounted the supplier routes
-const SUPPLIER_LOOKUP_BASE = "/supplier";
+const SUPPLIER_LOOKUP_BASE = "/suppliers";
 
 const ITEM_BASE = "/item/items";
 

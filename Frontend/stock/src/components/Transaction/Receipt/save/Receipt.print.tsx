@@ -1,6 +1,5 @@
 import React, { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
-import { toast } from "react-toastify";
 import Header from "../../../common/Header";
 import logo from "./global-network.png";
 import { saveFile } from "../../../../pages/Finance/Report/ChartOfAccount/saveFile";
@@ -9,6 +8,7 @@ import type {
  ReceiptPrintData,
    ReceiptPrintRow,
 } from "../../../../types/receiptypes";
+import { useMessageModal } from "../../../../hooks/useMessageModal";
 
 const FIRST_PAGE_ROWS = 7;
 const NEXT_PAGE_ROWS = 13;
@@ -333,6 +333,7 @@ const ReceiptPrint: React.FC<ReceiptPrintProps> = ({
   fetchExcel,
   onClose,
 }) => {
+  const { notify, dialog: messageDialog } = useMessageModal();
   const pages = splitIntoPages(data.rows);
 
   const frameRef = useRef<HTMLIFrameElement>(null);
@@ -433,12 +434,12 @@ const ReceiptPrint: React.FC<ReceiptPrintProps> = ({
       const kind = isPdf ? "pdf" : "xlsx";
       const saved = await saveFile(blob, `${fileBase}.${kind}`, kind);
       if (saved) {
-        toast.success(isPdf ? "PDF file downloaded" : "Excel file downloaded");
+        notify.success(isPdf ? "PDF file downloaded" : "Excel file downloaded");
         onClose();
       }
     } catch (error) {
       console.error("Receipt download error:", error);
-      toast.error(
+      notify.error(
         fileFormat === "PDF"
           ? "Could not create the PDF file."
           : "Could not create the Excel file.",
@@ -463,6 +464,7 @@ const ReceiptPrint: React.FC<ReceiptPrintProps> = ({
         background: "rgba(0, 0, 0, 0.45)",
       }}
     >
+      {messageDialog}
       <div
         role="dialog"
         aria-modal="true"

@@ -1,6 +1,5 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import Header from "../../../../../components/common/Header";
-import { toast } from "react-toastify";
 import dayjs from "dayjs";
 import customParseFormat from "dayjs/plugin/customParseFormat";
 import { previewPrintedLine } from "../../../../../components/common/printHtml";
@@ -21,6 +20,7 @@ import {
   ReportForm,
   ReportPrintRow,
 } from "../../../../../components/common/ReportFilters";
+import { useMessageModal } from "../../../../../hooks/useMessageModal";
 
 // General Ledger - laid out with the common template of the report forms (components/common/ReportFilters.tsx), like every
 // other report page. The Print Preview, the lookups and the request sent to the server are as they were.
@@ -93,6 +93,7 @@ const TRANS_TYPE: Record<string, number> = {
 };
 
 const RptGLPage: React.FC<RptGLPageProps> = ({ onClose }) => {
+  const { notify, dialog: messageDialog } = useMessageModal();
   const [branchOptions, setBranchOptions] = useState<Option[]>([]);
   const [accountOptions, setAccountOptions] = useState<PairSelectOption[]>([]);
   const [ccOptions, setCcOptions] = useState<PairSelectOption[]>([ALL_CC_OPTION]);
@@ -144,7 +145,7 @@ const RptGLPage: React.FC<RptGLPageProps> = ({ onClose }) => {
         const data = await res.json();
 
         if (!res.ok || !data.success) {
-          toast.error(data.message || "Failed to load the lookups");
+          notify.error(data.message || "Failed to load the lookups");
           return;
         }
         if (cancelled) return;
@@ -176,7 +177,7 @@ const RptGLPage: React.FC<RptGLPageProps> = ({ onClose }) => {
           })),
         ]);
       } catch {
-        if (!cancelled) toast.error("Failed to load the lookups");
+        if (!cancelled) notify.error("Failed to load the lookups");
       }
     };
 
@@ -192,43 +193,41 @@ const RptGLPage: React.FC<RptGLPageProps> = ({ onClose }) => {
     const valid = (v: string) => !!v && dayjs(v, DATE_FORMAT, true).isValid();
 
     if (oneBranch && !branch) {
-      toast.warning("Please select a 'Branch'", { toastId: "gl-branch" });
+      notify.warning("Please select a 'Branch'");
       document.getElementById("lkpBranch")?.focus();
       return null;
     }
 
     if (accountMode === "One Account" && !accountId) {
-      toast.warning("Please select an 'Account ID'", { toastId: "gl-account" });
+      notify.warning("Please select an 'Account ID'");
       document.getElementById("lkpAccountID")?.focus();
       return null;
     }
     if (accountMode === "Range Account") {
       if (!fromAccount) {
-        toast.warning("Please select 'From Account ID'", { toastId: "gl-from-acc" });
+        notify.warning("Please select 'From Account ID'");
         document.getElementById("lkpFromAccount")?.focus();
         return null;
       }
       if (!toAccount) {
-        toast.warning("Please select 'To Account ID'", { toastId: "gl-to-acc" });
+        notify.warning("Please select 'To Account ID'");
         document.getElementById("lkpToAccount")?.focus();
         return null;
       }
     }
 
     if (!valid(fromDate)) {
-      toast.warning("Please select 'From Date'", { toastId: "gl-from" });
+      notify.warning("Please select 'From Date'");
       document.getElementById("dtpFromDate")?.focus();
       return null;
     }
     if (!valid(toDate)) {
-      toast.warning("Please select 'To Date'", { toastId: "gl-to" });
+      notify.warning("Please select 'To Date'");
       document.getElementById("dtpToDate")?.focus();
       return null;
     }
     if (dayjs(fromDate, DATE_FORMAT).isAfter(dayjs(toDate, DATE_FORMAT))) {
-      toast.warning("'To Date' should be greater than 'From Date'", {
-        toastId: "gl-range",
-      });
+      notify.warning("'To Date' should be greater than 'From Date'");
       document.getElementById("dtpToDate")?.focus();
       return null;
     }
@@ -275,7 +274,7 @@ const RptGLPage: React.FC<RptGLPageProps> = ({ onClose }) => {
             ? "Excel is not available: the /excel route was not found (404)"
             : `Could not create the Excel file (error ${res.status})`;
       }
-      toast.error(message);
+      notify.error(message);
       return null;
     }
 
@@ -302,13 +301,13 @@ const RptGLPage: React.FC<RptGLPageProps> = ({ onClose }) => {
       const data = await res.json();
 
       if (!res.ok || !data.success) {
-        toast.error(data.message || "Could not prepare the report");
+        notify.error(data.message || "Could not prepare the report");
         return;
       }
 
       setPreview({ report: data.report, fileBase: data.fileBase, request });
     } catch {
-      toast.error("Could not prepare the report");
+      notify.error("Could not prepare the report");
     } finally {
       setPrinting(false);
     }
@@ -320,7 +319,7 @@ const RptGLPage: React.FC<RptGLPageProps> = ({ onClose }) => {
     try {
       printGLReport(preview.report);
     } catch {
-      toast.error("Could not open the print view");
+      notify.error("Could not open the print view");
     }
   };
 
@@ -345,10 +344,10 @@ const RptGLPage: React.FC<RptGLPageProps> = ({ onClose }) => {
       const saved = await saveFile(blob, `${fileBase}.${kind}`, kind);
       if (saved) {
         setPreview(null); // cancelled "Save as": the preview stays
-        toast.success(asPdf ? "PDF file downloaded" : "Excel file downloaded");
+        notify.success(asPdf ? "PDF file downloaded" : "Excel file downloaded");
       }
     } catch {
-      toast.error(
+      notify.error(
         asPdf ? "Could not create the PDF file" : "Could not create the Excel file",
       );
     } finally {
@@ -486,6 +485,7 @@ const RptGLPage: React.FC<RptGLPageProps> = ({ onClose }) => {
         )
       }
     >
+      {messageDialog}
       <BranchFilter
         mode={branchMode}
         onModeChange={setBranchMode}

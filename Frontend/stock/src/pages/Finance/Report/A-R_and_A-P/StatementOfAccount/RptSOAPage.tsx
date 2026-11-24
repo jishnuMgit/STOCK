@@ -1,7 +1,6 @@
 import dayjs from "dayjs";
 import customParseFormat from "dayjs/plugin/customParseFormat";
 import React, { useEffect, useMemo, useRef, useState } from "react";
-import { toast } from "react-toastify";
 import {
   buildHtml,
   printSoaReport,
@@ -23,6 +22,7 @@ import {
   ReportForm,
   ReportPrintRow,
 } from "../../../../../components/common/ReportFilters";
+import { useMessageModal } from "../../../../../hooks/useMessageModal";
 
 // Statement Of Account - laid out with the common template of the report forms (components/common/ReportFilters.tsx), like
 // every other report page. The Print Preview, the lookups and the criteria sent to the server are as they were.
@@ -79,6 +79,7 @@ type RptSOAPageProps = {
 };
 
 const RptSOAPage: React.FC<RptSOAPageProps> = () => {
+  const { notify, dialog: messageDialog } = useMessageModal();
   // radios
   const [branchMode, setBranchMode] = useState<"One Branch" | "All Branches">("One Branch");
   const [reportType, setReportType] = useState<"Customer" | "Supplier">("Customer");
@@ -169,13 +170,13 @@ const RptSOAPage: React.FC<RptSOAPageProps> = () => {
         if (cancelled) return;
 
         if (!b.success) {
-          toast.error(b.message || "Could not load the branches");
+          notify.error(b.message || "Could not load the branches");
           return;
         }
         setBranchOptions(b.branches);
         setBranch(b.branches[0] ?? null);
       } catch {
-        if (!cancelled) toast.error("Could not load the branches");
+        if (!cancelled) notify.error("Could not load the branches");
       }
     };
 
@@ -197,13 +198,13 @@ const RptSOAPage: React.FC<RptSOAPageProps> = () => {
         if (cancelled) return;
 
         if (!a.success) {
-          toast.error(a.message || `Could not load the ${reportType.toLowerCase()}s`);
+          notify.error(a.message || `Could not load the ${reportType.toLowerCase()}s`);
           return;
         }
         setAccountIdOptions(a.ids);
         setAccountNameOptions(a.names);
       } catch {
-        if (!cancelled) toast.error(`Could not load the ${reportType.toLowerCase()}s`);
+        if (!cancelled) notify.error(`Could not load the ${reportType.toLowerCase()}s`);
       }
     };
 
@@ -229,14 +230,14 @@ const RptSOAPage: React.FC<RptSOAPageProps> = () => {
       const res = await apiFetch(`${API}/divisions/${encodeURIComponent(accountId)}`);
       const data = await res.json();
       if (!data.success) {
-        toast.error(data.message || "Could not load the divisions");
+        notify.error(data.message || "Could not load the divisions");
         return;
       }
       setDivisionIdOptions(data.ids);
       setDivisionNameOptions(data.names);
       if (data.ids.length > 0) setDivisionMode("One Division");
     } catch {
-      toast.error("Could not load the divisions");
+      notify.error("Could not load the divisions");
     }
   };
 
@@ -352,7 +353,7 @@ const RptSOAPage: React.FC<RptSOAPageProps> = () => {
             ? "Excel is not available: the /excel route was not found (404)"
             : `Could not create the Excel file (error ${res.status})`;
       }
-      toast.error(message);
+      notify.error(message);
       return null;
     }
 
@@ -369,7 +370,7 @@ const RptSOAPage: React.FC<RptSOAPageProps> = () => {
 
     const problem = validate();
     if (problem) {
-      toast.warning(problem, { toastId: "soa-validate" });
+      notify.warning(problem);
       return;
     }
 
@@ -384,13 +385,13 @@ const RptSOAPage: React.FC<RptSOAPageProps> = () => {
       const data = await res.json();
 
       if (!res.ok || !data.success) {
-        toast.error(data.message || "Could not prepare the report");
+        notify.error(data.message || "Could not prepare the report");
         return;
       }
 
       setPreview({ report: data.report, fileBase: data.fileBase, payload });
     } catch {
-      toast.error("Could not prepare the report");
+      notify.error("Could not prepare the report");
     } finally {
       setPrinting(false);
     }
@@ -402,7 +403,7 @@ const RptSOAPage: React.FC<RptSOAPageProps> = () => {
     try {
       printSoaReport(preview.report);
     } catch {
-      toast.error("Could not open the print view");
+      notify.error("Could not open the print view");
     }
   };
 
@@ -426,13 +427,13 @@ const RptSOAPage: React.FC<RptSOAPageProps> = () => {
       const saved = await saveFile(blob, `${fileBase}.${kind}`, kind);
       if (saved) {
        
-        toast.success(asPdf ? "PDF file downloaded" : "Excel file downloaded");
+        notify.success(asPdf ? "PDF file downloaded" : "Excel file downloaded");
          setPreview(null); // cancelled "Save as": the preview stays
       }
       
 // saved === false -> you cancelled, so no toast
     } catch {
-      toast.error(
+      notify.error(
         asPdf ? "Could not create the PDF file" : "Could not create the Excel file",
       );
     } finally {
@@ -531,6 +532,7 @@ const RptSOAPage: React.FC<RptSOAPageProps> = () => {
         )
       }
     >
+      {messageDialog}
       <BranchFilter
         mode={branchMode === "One Branch" ? "One Branch" : "All Branch"}
         onModeChange={(mode) => setBranchMode(mode === "One Branch" ? "One Branch" : "All Branches")}

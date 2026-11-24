@@ -1,6 +1,4 @@
 import React, { useCallback, useEffect, useRef, useState } from "react";
-import { toast } from "react-toastify";
-
 import {
   type MatchingComponentsRef,
   type SelectOption,
@@ -16,6 +14,7 @@ import {
   type PrintReport,
 } from "../../../../components/Transaction/MatchEnquiry/MatchEnquiryPrintReport";
 import { buildMatchEnquiryPdf } from "../../../../components/Transaction/MatchEnquiry/MatchEnquiryPdf";
+import { useMessageModal } from "../../../../hooks/useMessageModal";
 
 const API = `${import.meta.env.VITE_API_URL}/MatchEnquiry`;
 
@@ -23,6 +22,7 @@ const getErrorMessage = (error: unknown): string =>
   error instanceof Error ? error.message : "Something went wrong";
 
 const MatchEnquiryPage: React.FC = () => {
+  const { notify, dialog: messageDialog } = useMessageModal();
   /* ---------- HEADER STATE ---------- */
   const [lkpBranch, setLkpBranch] = useState("");
   const [lkpDocType, setLkpDocType] = useState("");
@@ -68,7 +68,7 @@ const MatchEnquiryPage: React.FC = () => {
       try {
         await getMatchEnquiry({ lkpBranch, lkpDocType, lkpDocNo });
       } catch (error) {
-        toast.error(getErrorMessage(error));
+        notify.error(getErrorMessage(error));
       }
     },
     [getMatchEnquiry],
@@ -103,7 +103,7 @@ const MatchEnquiryPage: React.FC = () => {
     if (printing || preview) return;
 
     if (!lkpBranch || !lkpDocTypeNo || rows.length === 0) {
-      toast.error("Please select a 'Document No.' to print");
+      notify.error("Please select a 'Document No.' to print");
       return;
     }
 
@@ -127,13 +127,13 @@ const MatchEnquiryPage: React.FC = () => {
       const result = await response.json().catch(() => null);
 
       if (!response.ok || !result?.success) {
-        toast.warning(result?.message || "The Match Enquiry report could not be printed.");
+        notify.warning(result?.message || "The Match Enquiry report could not be printed.");
         return;
       }
 
       setPreview({ report: result.report, fileBase: result.fileBase, params });
     } catch (error) {
-      toast.error(getErrorMessage(error));
+      notify.error(getErrorMessage(error));
     } finally {
       setPrinting(false);
     }
@@ -160,7 +160,7 @@ const MatchEnquiryPage: React.FC = () => {
         message = `Could not create the Excel file (error ${response.status})`;
       }
 
-      toast.error(message);
+      notify.error(message);
       return null;
     }
 
@@ -186,6 +186,7 @@ const MatchEnquiryPage: React.FC = () => {
 
   return (
     <div className="min-h-full w-full bg-slate-100 px-2 py-2 flex items-center justify-center">
+      {messageDialog}
       <div className="w-full max-w-287.5 min-w-0 border border-gray-400 bg-white">
         <MatchingComponents
           ref={matchingRef}

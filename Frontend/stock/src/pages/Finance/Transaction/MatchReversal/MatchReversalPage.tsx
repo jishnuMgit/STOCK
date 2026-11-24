@@ -9,8 +9,7 @@ import MatchingComponents from "../../../../components/Transaction/MatchReversal
 import ConfirmModal from "../../../../components/common/ConfirmModal";
 import useMatchReversal from "../../../../hooks/useMatchReversal";
 import { apiFetch, getSession } from "../../../../utils/session";
-import { toast } from "react-toastify";
-
+import { useMessageModal } from "../../../../hooks/useMessageModal";
 interface CustomerAccount {
   fcsaccountid: string;
   fcsaccountname: string;
@@ -25,6 +24,7 @@ const getErrorMessage = (error: unknown): string =>
   error instanceof Error ? error.message : "Something went wrong";
 
 const MatchReversalPage: React.FC = () => {
+  const { notify, dialog: messageDialog } = useMessageModal();
   /* ---------- HEADER STATE ---------- */
   const [branch, setBranch] = useState("");
   const [doctype, setDocType] = useState("");
@@ -130,7 +130,7 @@ const MatchReversalPage: React.FC = () => {
           divId: divisionId || undefined,
         });
       } catch (error) {
-        toast.error(getErrorMessage(error));
+        notify.error(getErrorMessage(error));
       }
     },
     [getMatchedTransactions, year, doctype, divisionId],
@@ -158,10 +158,10 @@ const MatchReversalPage: React.FC = () => {
   const handleUnmatch = useCallback(() => {
     if (saving) return;
 
-    if (!receiptNo) return toast.error("Please input 'Document No.'");
-    if (!branch) return toast.error("Please select 'Branch'");
+    if (!receiptNo) return notify.error("Please input 'Document No.'");
+    if (!branch) return notify.error("Please select 'Branch'");
     if (!rows.some((r) => r.select)) {
-      return toast.error("There is no Account selected for Un-Match");
+      return notify.error("There is no Account selected for Un-Match");
     }
 
     setConfirmOpen(true);
@@ -181,10 +181,10 @@ const MatchReversalPage: React.FC = () => {
         rows,
       });
 
-      toast.success(result?.message ?? "Accounts Un-Matched");
+      notify.success(result?.message ?? "Accounts Un-Matched");
       await loadMatchedLines(branch, receiptNo); // refresh grid
     } catch (error) {
-      toast.error(getErrorMessage(error));
+      notify.error(getErrorMessage(error));
     }
   }, [
     doctype,
@@ -220,6 +220,7 @@ const MatchReversalPage: React.FC = () => {
 
   return (
     <div className="min-h-full w-full bg-slate-100 px-2 py-2 flex items-center justify-center">
+      {messageDialog}
       <div className="w-full max-w-287.5 min-w-0 border border-gray-400 bg-white">
         <MatchingComponents
           ref={matchingRef}

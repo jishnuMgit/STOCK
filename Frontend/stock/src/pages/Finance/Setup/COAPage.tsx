@@ -5,10 +5,9 @@ import Select, {
   type SingleValue,
   type StylesConfig,
 } from "react-select";
-import { toast } from "react-toastify";
-
 import { useCoa } from "../../../hooks/useCoa";
 import Header from "../../../components/common/Header";
+import { useMessageModal } from "../../../hooks/useMessageModal";
 
 // ============================================================
 // TYPES
@@ -171,6 +170,7 @@ const COAPage: React.FC<COAPageProps> = ({
   onClose,
   onChanged,
 }) => {
+  const { notify, dialog: messageDialog } = useMessageModal();
   const {
     fetchAccount,
     fetchNextAccountId,
@@ -336,7 +336,7 @@ const COAPage: React.FC<COAPageProps> = ({
         );
         setFormData((previous) => ({ ...previous, txtAccountID: nextId }));
       } catch (err) {
-        toast.error(errorMessage(err, "Unable to Generate New Account ID"));
+        notify.error(errorMessage(err, "Unable to Generate New Account ID"));
       }
     }
 
@@ -362,7 +362,7 @@ const COAPage: React.FC<COAPageProps> = ({
           formData.txtAccountGroupLevel,
         );
       } catch (err) {
-        toast.error(errorMessage(err, "Unable to Generate New Account ID"));
+        notify.error(errorMessage(err, "Unable to Generate New Account ID"));
       }
     }
 
@@ -386,7 +386,7 @@ const COAPage: React.FC<COAPageProps> = ({
 
   const handleSave = async () => {
     if (!formData.txtAccountName.trim()) {
-      toast.warning(
+      notify.warning(
         isAdd
           ? "Please input an 'Account name'"
           : "Please input the 'Account Name'",
@@ -398,7 +398,7 @@ const COAPage: React.FC<COAPageProps> = ({
     if (
       isGphDisabled(formData.lkpAccountGroupOrHead, formData.txtAccountLevel)
     ) {
-      toast.warning(
+      notify.warning(
         formData.lkpAccountGroupOrHead === "G"
           ? "Group (G) is only allowed for Account Level below 4"
           : "Head (H) is only allowed for Account Level 4 and above",
@@ -426,7 +426,7 @@ const COAPage: React.FC<COAPageProps> = ({
           accountId: auto ? undefined : formData.txtAccountID.trim(),
         });
 
-        toast.success("Saved");
+        notify.success("Saved");
         await onChanged(formData.txtAccountGroupID);
 
         // ready for the next account under the same group (VB: ClearMe)
@@ -437,12 +437,12 @@ const COAPage: React.FC<COAPageProps> = ({
           accountId: formData.txtAccountID.trim(),
         });
 
-        toast.success("Modified");
+        notify.success("Modified");
         await onChanged();
         onClose();
       }
     } catch (err) {
-      toast.error(
+      notify.error(
         errorMessage(
           err,
           isAdd ? "Not Saved, try again" : "Not Modified, try again",
@@ -468,11 +468,11 @@ const COAPage: React.FC<COAPageProps> = ({
     try {
       setBusy(true);
       await deleteAccount(accountId);
-      toast.success("Deleted!");
+      notify.success("Deleted!");
       await onChanged();
       onClose();
     } catch (err) {
-      toast.error(errorMessage(err, "Not Deleted, try again"));
+      notify.error(errorMessage(err, "Not Deleted, try again"));
     } finally {
       setBusy(false);
     }
@@ -490,6 +490,7 @@ const COAPage: React.FC<COAPageProps> = ({
 
   return (
     <div className="flex min-h-fit items-start w-full justify-center bg-[#a3dfc0]">
+      {messageDialog}
       <div className="mt-0.5 w-full bg-white">
         {/* TITLE */}
         <Header Name="Chart Of Account" />

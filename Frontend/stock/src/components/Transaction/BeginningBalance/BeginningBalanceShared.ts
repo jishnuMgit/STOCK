@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { toast } from "react-toastify";
+import type { useMessageModal } from "../../../hooks/useMessageModal";
 
 import type { PairOption } from "../../PairSelect/pairSelectParts";
 
@@ -107,7 +107,9 @@ const toAccountOptions = (
     chkHaveCC: row.chkHaveCC === true,
   }));
 
-export function useBeginningBalanceLookups() {
+export function useBeginningBalanceLookups(
+  notify: ReturnType<typeof useMessageModal>["notify"],
+) {
   const [accountsByID, setAccountsByID] = useState<AccountOption[]>([]);
   const [accountsByName, setAccountsByName] = useState<AccountOption[]>([]);
   const [costCenters, setCostCenters] = useState<AccountOption[]>([]);
@@ -118,7 +120,7 @@ export function useBeginningBalanceLookups() {
         const PstrCoID = localStorage.getItem("PstrCoID");
 
         if (!PstrCoID) {
-          toast.error("getAccountList: no PstrCoID in localStorage");
+          notify.error("getAccountList: no PstrCoID in localStorage");
           return;
         }
 
@@ -130,7 +132,7 @@ export function useBeginningBalanceLookups() {
         const result = await response.json();
 
         if (!response.ok || !result.success) {
-          toast.error(result.message || "Failed to load the Accounts");
+          notify.error(result.message || "Failed to load the Accounts");
           return;
         }
 
@@ -149,12 +151,12 @@ export function useBeginningBalanceLookups() {
         );
       } catch (error: unknown) {
         console.error("getAccountList error:", error);
-        toast.error("Failed to load the Accounts");
+        notify.error("Failed to load the Accounts");
       }
     };
 
     loadAccounts();
-  }, []);
+  }, [notify]);
 
   return { accountsByID, accountsByName, costCenters };
 }

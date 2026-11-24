@@ -1,10 +1,14 @@
-import { useCallback } from "react";
-import { toast } from "react-toastify";
+import { useCallback, type ReactNode } from "react";
+
+type MessageNotifier = {
+  success: (message: ReactNode) => void;
+  error: (message: ReactNode) => void;
+};
 
 /* =========================================================
    THE MESSAGES OF A DELETE - the same on every screen
 
-     const { deleted, notDeleted } = useDeleteToast("Stock Transfer");
+     const { deleted, notDeleted } = useDeleteToast("Stock Transfer", notify);
 
      deleted();                       // "Stock Transfer deleted successfully"
      notDeleted(result.message);      // the server's reason, else "Not deleted, try again"
@@ -22,14 +26,17 @@ export const deleteSuccessMessage = (formName?: string) =>
 
 export const DELETE_FAILED_MESSAGE = "Not deleted, try again";
 
-export function useDeleteToast(formName?: string) {
+export function useDeleteToast(
+  formName: string | undefined,
+  notify: MessageNotifier,
+) {
   const deleted = useCallback(() => {
-    toast.success(deleteSuccessMessage(formName));
-  }, [formName]);
+    notify.success(deleteSuccessMessage(formName));
+  }, [formName, notify]);
 
   const notDeleted = useCallback((reason?: string) => {
-    toast.error(reason || DELETE_FAILED_MESSAGE);
-  }, []);
+    notify.error(reason || DELETE_FAILED_MESSAGE);
+  }, [notify]);
 
   return { deleted, notDeleted };
 }

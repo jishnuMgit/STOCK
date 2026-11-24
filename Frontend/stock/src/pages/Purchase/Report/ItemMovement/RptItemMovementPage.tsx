@@ -1,7 +1,6 @@
 import React, { useEffect, useMemo, useState } from "react";
 import dayjs from "dayjs";
 import customParseFormat from "dayjs/plugin/customParseFormat";
-import { toast } from "react-toastify";
 import { CustomRadio, RadioPanel } from "../../../../components/common/ReportFormParts";
 import ReportPreview from "../../../../components/common/ReportPreview";
 import { buildItemMovementPdf } from "../../../../components/Purchase/Report/RptItemMovement/RptItemMovementPdf";
@@ -24,6 +23,7 @@ import {
   ReportForm,
   ReportPrintRow,
 } from "../../../../components/common/ReportFilters";
+import { useMessageModal } from "../../../../hooks/useMessageModal";
 
 dayjs.extend(customParseFormat);
 
@@ -46,6 +46,7 @@ type RptItemMovementPageProps = {
 };
 
 const RptItemMovementPage: React.FC<RptItemMovementPageProps> = ({ onClose }) => {
+  const { notify, dialog: messageDialog } = useMessageModal();
   // Enter moves on like Tab; the box the cursor is in is outlined; after a pick from a list the cursor
   // goes on
   const handleEnterAsTab = useEnterAsTab();
@@ -72,7 +73,7 @@ const RptItemMovementPage: React.FC<RptItemMovementPageProps> = ({ onClose }) =>
         const result = await response.json();
 
         if (!response.ok || !result.success) {
-          toast.error(result.message || "Failed to load the Branches");
+          notify.error(result.message || "Failed to load the Branches");
           return;
         }
 
@@ -92,7 +93,7 @@ const RptItemMovementPage: React.FC<RptItemMovementPageProps> = ({ onClose }) =>
         setItemRows(result.items || []);
       } catch (error: unknown) {
         console.error("rptItemMovement lookups error:", error);
-        toast.error("Cannot connect to the Item Movement API.");
+        notify.error("Cannot connect to the Item Movement API.");
       }
     };
 
@@ -192,7 +193,7 @@ const RptItemMovementPage: React.FC<RptItemMovementPageProps> = ({ onClose }) =>
     if (printing || preview) return;
 
     const warn = (message: string, id: string) => {
-      toast.warning(message);
+      notify.warning(message);
       document.getElementById(id)?.focus();
     };
 
@@ -240,7 +241,7 @@ const RptItemMovementPage: React.FC<RptItemMovementPageProps> = ({ onClose }) =>
       const result = await response.json();
 
       if (!response.ok || !result.success) {
-        toast.warning(result.message || "The Item Movement report could not be printed.");
+        notify.warning(result.message || "The Item Movement report could not be printed.");
         if (result.field) document.getElementById(result.field)?.focus();
         return;
       }
@@ -248,7 +249,7 @@ const RptItemMovementPage: React.FC<RptItemMovementPageProps> = ({ onClose }) =>
       setPreview({ report: result.report, fileBase: result.fileBase, params });
     } catch (error: unknown) {
       console.error("rptItemMovement print error:", error);
-      toast.error("Cannot connect to the Item Movement API.");
+      notify.error("Cannot connect to the Item Movement API.");
     } finally {
       setPrinting(false);
     }
@@ -276,7 +277,7 @@ const RptItemMovementPage: React.FC<RptItemMovementPageProps> = ({ onClose }) =>
         message = `Could not create the Excel file (error ${response.status})`;
       }
 
-      toast.error(message);
+      notify.error(message);
       return null;
     }
 
@@ -331,6 +332,7 @@ const RptItemMovementPage: React.FC<RptItemMovementPageProps> = ({ onClose }) =>
         )
       }
     >
+      {messageDialog}
       <BranchFilter
         mode={rdgBranch}
         onModeChange={(mode) => {

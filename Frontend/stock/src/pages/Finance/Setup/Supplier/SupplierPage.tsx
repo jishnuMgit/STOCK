@@ -5,8 +5,7 @@ import SupplierMiddle from "../../../../components/Finance/Report/Setup/Supplier
 import SupplierFooter from "../../../../components/Finance/Report/Setup/Supplier/SupplierFooter";
 import { useSupplier, type SupplierDetail } from "../../../../hooks/useSupplier";
 import { useConfirmModal } from "../../../../hooks/useConfirmModal";
-import { toast } from "react-toastify";
-
+import { useMessageModal } from "../../../../hooks/useMessageModal";
 interface SupplierPageProps {
     /** When set, the page opens for this existing supplier. */
     supplierId?: string;
@@ -49,6 +48,7 @@ const SupplierPage: React.FC<SupplierPageProps> = ({
     onClose,
     onSaved,
 }) => {
+    const { notify, dialog: messageDialog } = useMessageModal();
     const isEdit = !!supplierId;
     const isDelete = isEdit && mode === "delete";
     const { confirm, dialog } = useConfirmModal();
@@ -250,7 +250,7 @@ const SupplierPage: React.FC<SupplierPageProps> = ({
             const match = accounts?.find((a) => a.accountId === detail.gAccountId);
             setLkpGAccountName(match?.accountName ?? "");
         } catch (err) {
-            toast.error(errMsg(err, "Failed to load supplier"));
+            notify.error(errMsg(err, "Failed to load supplier"));
             onClose?.();
         } finally {
             setLoadingRecord(false);
@@ -314,31 +314,31 @@ const SupplierPage: React.FC<SupplierPageProps> = ({
             PARENT_ACCOUNT_LEVEL,
         );
         if (nextId) setTxtSupplierID(nextId);
-        else toast.error("Failed to get next supplier ID");
+        else notify.error("Failed to get next supplier ID");
     };
 
     const handleSave = async () => {
         if (saving || isDelete) return;
 
         if (!txtSupplierID.trim()) {
-            toast.warning("Supplier ID is required");
+            notify.warning("Supplier ID is required");
             return;
         }
         if (!txtSupplierName.trim()) {
-            toast.warning("Supplier Name is required");
+            notify.warning("Supplier Name is required");
             return;
         }
         if (!lkpGAccountID) {
-            toast.warning("GL Account is required");
+            notify.warning("GL Account is required");
             return;
         }
         if (!chkCustomer && !chkSupplier) {
-            toast.warning("Select Customer, Supplier or both");
+            notify.warning("Select Customer, Supplier or both");
             return;
         }
 
         if (txtSupplierID.trim().length > 12) {
-            toast.warning("Supplier ID cannot be longer than 12 characters");
+            notify.warning("Supplier ID cannot be longer than 12 characters");
             return;
         }
 
@@ -358,7 +358,7 @@ const SupplierPage: React.FC<SupplierPageProps> = ({
 
             const missing = requiredFields.find(([, value]) => !value.trim());
             if (missing) {
-                toast.warning(`${missing[0]} is required`);
+                notify.warning(`${missing[0]} is required`);
                 return;
             }
 
@@ -388,7 +388,7 @@ const SupplierPage: React.FC<SupplierPageProps> = ({
             // }
 
             if (txtEMail && !/^\S+@\S+\.\S+$/.test(txtEMail)) {
-                toast.warning("Invalid e-mail");
+                notify.warning("Invalid e-mail");
                 return;
             }
         }
@@ -447,7 +447,7 @@ const SupplierPage: React.FC<SupplierPageProps> = ({
             if (isEdit) await updateSupplier(supplierId!, payload);
             else await saveSupplier(payload);
 
-            toast.success(
+            notify.success(
                 isEdit
                     ? "Supplier updated successfully"
                     : "Supplier saved successfully",
@@ -455,7 +455,7 @@ const SupplierPage: React.FC<SupplierPageProps> = ({
             onSaved?.();
             onClose?.();
         } catch (err) {
-            toast.error(errMsg(err, "Failed to save supplier"));
+            notify.error(errMsg(err, "Failed to save supplier"));
         } finally {
             setSaving(false);
         }
@@ -469,7 +469,7 @@ const SupplierPage: React.FC<SupplierPageProps> = ({
         if (saving) return;
 
         if (!isEdit) {
-            toast.warning("Open an existing supplier to delete it");
+            notify.warning("Open an existing supplier to delete it");
             return;
         }
         const shouldDelete = await confirm({
@@ -483,11 +483,11 @@ const SupplierPage: React.FC<SupplierPageProps> = ({
         try {
             setSaving(true);
             await deleteSupplier(supplierId!);
-            toast.success("Supplier deleted successfully");
+            notify.success("Supplier deleted successfully");
             onSaved?.();
             onClose?.();
         } catch (err) {
-            toast.error(errMsg(err, "Failed to delete supplier"));
+            notify.error(errMsg(err, "Failed to delete supplier"));
         } finally {
             setSaving(false);
         }
@@ -610,6 +610,7 @@ const SupplierPage: React.FC<SupplierPageProps> = ({
     if (loadingRecord) {
         return (
             <div className="w-full bg-white p-6 text-center text-[12px] text-slate-500">
+              {messageDialog}
                 Loading supplier...
             </div>
         );
@@ -617,6 +618,7 @@ const SupplierPage: React.FC<SupplierPageProps> = ({
 
     return (
         <>
+          {messageDialog}
             <div
                 ref={formRef}
                 onKeyDown={handleEnterAsTab}

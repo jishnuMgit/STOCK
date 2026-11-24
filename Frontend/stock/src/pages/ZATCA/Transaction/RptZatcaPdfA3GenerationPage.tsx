@@ -1,5 +1,4 @@
 import React, { useEffect, useMemo, useState } from "react";
-import { toast } from "react-toastify";
 import {
   LocalizationProvider,
 } from "@mui/x-date-pickers/LocalizationProvider";
@@ -15,6 +14,7 @@ import CommonTableSelect, {
 import CustomLinkedPairSelect, {
   type PairSelectOption,
 } from "../../../components/common/CustomLinkedPairSelect";
+import { useMessageModal } from "../../../hooks/useMessageModal";
 
 dayjs.extend(customParseFormat);
 
@@ -276,6 +276,7 @@ const money = (n: number): string =>
   n.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 
 const RptZatcaPdfA3Generation: React.FC = () => {
+  const { notify, dialog: messageDialog } = useMessageModal();
   const [documentMode, setDocumentMode] = useState("All Document");
   const [branchMode, setBranchMode] = useState("All Branch");
   const [customerMode, setCustomerMode] = useState("All Customer");
@@ -334,54 +335,54 @@ const RptZatcaPdfA3Generation: React.FC = () => {
         setCustomerIdList((d.customers ?? []).map(pair));
         setCustomerNameList((d.customersByName ?? []).map(pair));
       })
-      .catch((e: Error) => toast.error(e.message));
+      .catch((e: Error) => notify.error(e.message));
   }, []);
 
   // the body of Search and Export; the server checks again (ValidateMe)
   const buildBody = (): Record<string, unknown> | null => {
     if (oneDocument && !documentType) {
-      toast.error("Please input 'Document'");
+      notify.error("Please input 'Document'");
       return null;
     }
     if (oneBranch && !branch) {
-      toast.error("Please select a 'Branch'");
+      notify.error("Please select a 'Branch'");
       return null;
     }
 
     if (byInvoiceNo) {
       if (!fromInvoiceNo.trim()) {
-        toast.error("Please input 'From Invoice No.'");
+        notify.error("Please input 'From Invoice No.'");
         return null;
       }
     } else {
       if (!fromDate) {
-        toast.error("Please select 'Invoice From Date'");
+        notify.error("Please select 'Invoice From Date'");
         return null;
       }
       if (!toDate) {
-        toast.error("Please select 'Invoice To Date'");
+        notify.error("Please select 'Invoice To Date'");
         return null;
       }
       const parsedFromDate = dayjs(fromDate, DATE_FORMAT, true);
       const parsedToDate = dayjs(toDate, DATE_FORMAT, true);
       if (!parsedFromDate.isValid()) {
-        toast.error("Invalid 'Invoice From Date'");
+        notify.error("Invalid 'Invoice From Date'");
         return null;
       }
       if (!parsedToDate.isValid()) {
-        toast.error("Invalid 'Invoice To Date'");
+        notify.error("Invalid 'Invoice To Date'");
         return null;
       }
       if (parsedFromDate.isAfter(parsedToDate)) {
-        toast.error("'To Date' should be greater than or equal to 'From Date'");
+        notify.error("'To Date' should be greater than or equal to 'From Date'");
         return null;
       }
       if (parsedFromDate.year() !== parsedToDate.year()) {
-        toast.error("'From Date' & 'To Date' should be in same year");
+        notify.error("'From Date' & 'To Date' should be in same year");
         return null;
       }
       if (oneCustomer && !customer) {
-        toast.error("Please select 'Customer ID'");
+        notify.error("Please select 'Customer ID'");
         return null;
       }
     }
@@ -418,10 +419,10 @@ const RptZatcaPdfA3Generation: React.FC = () => {
         body: JSON.stringify(body),
       });
       setRows(data.rows);
-      if (data.rows.length === 0) toast.info("No documents found");
+      if (data.rows.length === 0) notify.info("No documents found");
     } catch (e) {
       setRows([]);
-      toast.error((e as Error).message);
+      notify.error((e as Error).message);
     } finally {
       setBusy(false);
     }
@@ -430,7 +431,7 @@ const RptZatcaPdfA3Generation: React.FC = () => {
   const handleExport = async () => {
     if (busy) return;
     if (rows.length === 0) {
-      toast.error("No documents to export");
+      notify.error("No documents to export");
       return;
     }
     const body = buildBody();
@@ -448,7 +449,7 @@ const RptZatcaPdfA3Generation: React.FC = () => {
       }>("/exportZATCAPDFA3", { method: "POST", body: JSON.stringify(body) });
 
       if (data.failed === 0) {
-        toast.success(`ZATCA PDF/A3 exported: ${data.exported} document(s)`);
+        notify.success(`ZATCA PDF/A3 exported: ${data.exported} document(s)`);
         setRows([]);
         return;
       }
@@ -459,11 +460,11 @@ const RptZatcaPdfA3Generation: React.FC = () => {
         .slice(0, 3)
         .map((r) => `${r.docNo}: ${r.message}`)
         .join(" | ");
-      toast.error(
+      notify.error(
         `${data.exported} exported, ${data.failed} failed. ${shown}${bad.length > 3 ? " ..." : ""}`,
       );
     } catch (e) {
-      toast.error((e as Error).message);
+      notify.error((e as Error).message);
     } finally {
       setBusy(false);
     }
@@ -489,6 +490,7 @@ const RptZatcaPdfA3Generation: React.FC = () => {
 
   return (
     <div className="min-h-full w-full bg-white p-1 sm:p-2">
+      {messageDialog}
       <main className="mx-auto w-full max-w-290 overflow-hidden rounded-[3px] border border-[#91a7bb] bg-white shadow-sm">
 
         {/* Window Header */}
