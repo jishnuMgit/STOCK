@@ -186,7 +186,14 @@ export async function saveChartOfAccountService(
       `SELECT ftype FROM dbo.fillfinsetup($1)`,
       [PstrCoID]
     );
-    const knownTypes = new Set(typeResult.rows.map((row) => row.ftype));
+    // The parameters of the master list (dbo.tblfinsetup) - and the ones this company's chart already uses: a chart that
+    // was saved with A/R, A/P or P/E (the system groups of the receivables, payables and purchase expenses) must stay
+    // editable even when the master list of the company does not carry them (it would otherwise refuse every change of
+    // such a row with "Unknown Parameter").
+    const knownTypes = new Set<string>([
+      ...typeResult.rows.map((row) => row.ftype as string),
+      ...existing.map((row) => row.lkpParameterType),
+    ]);
 
     const accountResult = await client.query(
       `SELECT faccountid, fgph FROM dbo.fillfinaccount($1)`,
