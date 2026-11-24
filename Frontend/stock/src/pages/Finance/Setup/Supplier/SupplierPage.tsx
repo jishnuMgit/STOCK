@@ -376,16 +376,16 @@ const SupplierPage: React.FC<SupplierPageProps> = ({
                 ["VAT No (AR)", txtVATNo_AR, 15],
             ];
 
-            for (const [label, value, max] of numericChecks) {
-                if (value && !/^\d+$/.test(value)) {
-                    toast.warning(`${label} must contain numbers only`);
-                    return;
-                }
-                if (value.length > max) {
-                    toast.warning(`${label} cannot be longer than ${max} digits`);
-                    return;
-                }
-            }
+            // for (const [label, value, max] of numericChecks) {
+            //     if (value && !/^\d+$/.test(value)) {
+            //         toast.warning(`${label} must contain numbers only`);
+            //         return;
+            //     }
+            //     if (value.length > max) {
+            //         toast.warning(`${label} cannot be longer than ${max} digits`);
+            //         return;
+            //     }
+            // }
 
             if (txtEMail && !/^\S+@\S+\.\S+$/.test(txtEMail)) {
                 toast.warning("Invalid e-mail");
