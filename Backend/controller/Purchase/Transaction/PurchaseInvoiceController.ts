@@ -582,7 +582,7 @@ export const savePurchaseInvoice = async (
 
     return res.status(200).json({
       success: true,
-      message: mode === "S" ? "Saved" : "Modified",
+      message: mode === "S" ? "Saved successfully" : "Modified successfully",
       data: { docNo },
     });
   } catch (error: unknown) {
@@ -628,7 +628,7 @@ export const deletePurchaseInvoice = async (
       strmenuname: "pagePI",
     });
 
-    return res.status(200).json({ success: true, message: "Deleted" });
+    return res.status(200).json({ success: true, message: "Deleted successfully" });
   } catch (error: unknown) {
     console.error("deletePurchaseInvoice error:", error);
     return res

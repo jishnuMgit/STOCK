@@ -738,7 +738,7 @@ export const saveSalesInvoice = async (ctx: Ctx, input: SaveInput) => {
     }
 
     return {
-      message: mode === "S" ? "Saved" : "Modified",
+      message: mode === "S" ? "Saved successfully" : "Modified successfully",
       data: {
         docNo,
         savingNo, // NEW (handy for the screen; remove if not needed)
@@ -784,7 +784,7 @@ export const deleteSalesInvoice = async (ctx: Ctx, q: Partial<DocKeyInput>) => {
     });
   });
 
-  return { message: "Deleted" };
+  return { message: "Deleted successfully" };
 };
 
 /* =========================================================
