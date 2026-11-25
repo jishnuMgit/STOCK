@@ -484,12 +484,12 @@ const PurchaseTable: React.FC<Props> = ({
 
             <thead>
               <tr className="h-[30px]">
-                <th className="sticky top-0 z-20 border border-[#dce5ef] bg-[#f1f6fc] p-0" />
+                <th className="sticky top-0 z-20 border border-[#dce5ef] bg-[#e6f6ee] p-0" />
 
                 {columns.map((column) => (
                   <th
                     key={column.name}
-                    className={`sticky top-0 z-20 h-[30px] whitespace-nowrap border border-[#dce5ef] bg-[#f1f6fc] pl-[2px] pr-1 py-0 align-middle font-semibold text-[#202a36] ${numericColumns.includes(column.name)
+                    className={`sticky top-0 z-20 h-[30px] whitespace-nowrap border border-[#dce5ef] bg-[#e6f6ee] pl-[2px] pr-1 py-0 align-middle font-semibold text-[#202a36] ${numericColumns.includes(column.name)
                         ? "text-right"
                         : "text-left"
                       }`}
@@ -498,7 +498,7 @@ const PurchaseTable: React.FC<Props> = ({
                   </th>
                 ))}
 
-                <th className="sticky top-0 z-20 border border-[#dce5ef] bg-[#f1f6fc] p-0" />
+                <th className="sticky top-0 z-20 border border-[#dce5ef] bg-[#e6f6ee] p-0" />
               </tr>
             </thead>
 
