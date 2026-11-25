@@ -384,7 +384,7 @@ const AssetDetails: React.FC<PartProps> = ({ form, set }) => (
   <div className={groupGrid}>
     {/* row 1 : Item ID | Item Name */}
     <Field
-      label="Item ID :"
+      label="Asset ID :"
       htmlFor="txtItemId"
       labelClassName={LL}
       className="lg:col-span-6"
@@ -399,7 +399,7 @@ const AssetDetails: React.FC<PartProps> = ({ form, set }) => (
       </div>
     </Field>
     <Field
-      label="Item Name :"
+      label="Asset Name :"
       htmlFor="txtItemName"
       labelClassName={LR}
       className="lg:col-span-6"
@@ -605,14 +605,14 @@ const DepreciationGroup: React.FC<
         <div className="w-35">
           <AppDatePicker
             id="dtpDeprStartDate"
-            label="Depreciation start date"
+            label="Depreciation tart date"
             value={form.deprStartDate}
             onChange={(v) => set("deprStartDate", v)}
           />
         </div>
       </Field>
       <Field
-        label="Depr. Calc. upto Date :"
+        label="Last Depreciation Date :"
         labelClassName={LR}
         className="lg:col-span-6"
       >
