@@ -657,7 +657,7 @@ const UserPermissionBranchPage: React.FC = () => {
                       {/* LEVEL 1: COMPANY */}
                       <tr className="h-7.25">
                         <td className="border-b border-[#b8f0d0] p-0">
-                          <div className={`flex h-7 items-center gap-2.25 pl-4 pr-2.5 ${GRID_CELL_FOCUS_CLASS}`}>
+                          <div className={`flex min-h-7 items-center gap-2.25 py-0.5 pl-4 pr-2.5 ${GRID_CELL_FOCUS_CLASS}`}>
                             <button
                               type="button"
                               aria-label={
@@ -692,7 +692,7 @@ const UserPermissionBranchPage: React.FC = () => {
 
                             <label
                               htmlFor={`chk${company.lkpCoID}`}
-                              className="flex-1 cursor-pointer text-[15px]"
+                              className="flex-1 cursor-pointer text-[15px] leading-tight"
                             >
                               {company.txtCoName}
                             </label>

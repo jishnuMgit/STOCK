@@ -44,6 +44,12 @@ interface CustomLinkedPairSelectProps {
   onMenuOpen?: () => void;
   onMenuClose?: () => void;
   noOptionsMessage?: () => string;
+  // the divider of the open list sits exactly on the edge of the box (the second column starts where the box ends) instead of
+  // one gap further: the list is as wide as before, the gap is the left space of the second column
+  dividerAtBoxEnd?: boolean;
+  // the same for the Name box's list only (Name | ID): its divider is on the right edge of the Name box, the ID column starting where
+  // the box ends; the ID box's list keeps its divider at the start of the Name box
+  nameDividerAtBoxEnd?: boolean;
   // the colours of the open list: "receipt" = the Receipt screen's list (grey header, thin grey lines, mint hover row)
   listLook?: "receipt";
 }
@@ -91,6 +97,8 @@ const CustomLinkedPairSelect: React.FC<CustomLinkedPairSelectProps> = ({
   onMenuClose,
   noOptionsMessage,
   listLook,
+  dividerAtBoxEnd = false,
+  nameDividerAtBoxEnd = false,
 }) => {
   const receipt = listLook === "receipt";
   const nameOptions = secondOptions ?? options;
@@ -100,6 +108,9 @@ const CustomLinkedPairSelect: React.FC<CustomLinkedPairSelectProps> = ({
   // fluid: the Name column is whatever the Name box is
   const normalColumns = fluid ? `${firstWidth}px ${gap}px minmax(0,1fr)` : `${firstWidth}px ${gap}px ${secondWidth}px`;
   const reverseColumns = fluid ? `minmax(0,1fr) ${gap}px ${firstWidth}px` : `${secondWidth}px ${gap}px ${firstWidth}px`;
+  // dividerAtBoxEnd: no separate gap column - the second column takes the gap, so its divider is on the edge of the box
+  const normalColumnsAtEnd = fluid ? `${firstWidth}px minmax(0,1fr)` : `${firstWidth}px ${gap + secondWidth}px`;
+  const reverseColumnsAtEnd = fluid ? `minmax(0,1fr) ${gap + firstWidth}px` : `${secondWidth}px ${gap + firstWidth}px`;
 
   // fluid: the width of the whole row, measured when the ID box opens its list (that list covers both boxes)
   const rowRef = useRef<HTMLDivElement>(null);
@@ -111,7 +122,16 @@ const CustomLinkedPairSelect: React.FC<CustomLinkedPairSelectProps> = ({
     nameOptions.find((option) => option.value === secondValue) ?? null;
 
   const createComponents = (reverse: boolean) => {
-    const gridColumns = reverse ? reverseColumns : normalColumns;
+    const atBoxEnd = dividerAtBoxEnd || (reverse && nameDividerAtBoxEnd);
+    const gridColumns = atBoxEnd
+      ? reverse
+        ? reverseColumnsAtEnd
+        : normalColumnsAtEnd
+      : reverse
+        ? reverseColumns
+        : normalColumns;
+    // the column of the second cell
+    const secondColumn = atBoxEnd ? 2 : 3;
     const firstColumnLabel = reverse ? secondHeader : firstHeader;
     const secondColumnLabel = reverse ? firstHeader : secondHeader;
 
@@ -131,7 +151,7 @@ const CustomLinkedPairSelect: React.FC<CustomLinkedPairSelectProps> = ({
             {/* Divider sits at the start of the second column (column 3) */}
             <span
               className={`min-w-0 truncate border-l pl-[5px] pr-[5px] py-1.75 ${receipt ? "border-[#EEEEEE]" : "border-[#E5E7EB]"}`}
-              style={{ gridColumn: 3 }}
+              style={{ gridColumn: secondColumn }}
             >
               {reverse ? props.data.firstLabel : props.data.secondLabel}
             </span>
@@ -159,7 +179,7 @@ const CustomLinkedPairSelect: React.FC<CustomLinkedPairSelectProps> = ({
             </span>
             <span
               className={`min-w-0 truncate border-l pl-[5px] pr-[5px] py-1.75 ${receipt ? "border-[#CCCCCC]" : "border-[#CBD5E1]"}`}
-              style={{ gridColumn: 3 }}
+              style={{ gridColumn: secondColumn }}
             >
               {secondColumnLabel}
             </span>

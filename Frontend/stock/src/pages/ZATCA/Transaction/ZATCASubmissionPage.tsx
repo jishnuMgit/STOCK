@@ -1,10 +1,16 @@
 
 import React, { useEffect, useMemo, useState } from "react";
 import dayjs from "dayjs";
-import { toast } from "react-toastify";
 import customParseFormat from "dayjs/plugin/customParseFormat";
 
 import Header from "../../../components/common/Header";
+import { useMessageModal } from "../../../hooks/useMessageModal";
+import { useCtrlShortcuts } from "../../../hooks/useCtrlShortcuts";
+import { useAltShortcuts } from "../../../hooks/useAltShortcuts";
+import { useEnterAsTab } from "../../../hooks/useEnterAsTab";
+import "../../../components/Transaction/Receipt/save/commanReceipt.css";
+import ActionButton from "../../../components/common/ActionButton";
+import TransactionActions from "../../../components/common/TransactionActions";
 
 import CommonTableSelect, {
   type TableSelectOption,
@@ -98,14 +104,19 @@ const DATE_FORMAT = "DD-MM-YYYY";
 
 const TODAY = dayjs().format(DATE_FORMAT);
 
+// the ID column of the lists is 65 px; a list is as wide as its box PLUS that column, so the ID column starts exactly
+// where the box ends (the divider sits on the edge of the box, as on the other pages)
+const LIST_ID_WIDTH = 65;
+const DOCUMENT_BOX_WIDTH = 220;
+
 const documentColumns = [
   { key: "label", label: "Document Type", width: "1fr" },
-  { key: "id", label: "ID", width: "65px", align: "right" as const },
+  { key: "id", label: "ID", width: `${LIST_ID_WIDTH}px`, align: "right" as const },
 ];
 
 const branchColumns = [
   { key: "label", label: "Branch", width: "1fr" },
-  { key: "id", label: "ID", width: "65px", align: "right" as const },
+  { key: "id", label: "ID", width: `${LIST_ID_WIDTH}px`, align: "right" as const },
 ];
 
 const createPairOptions = (
@@ -120,15 +131,13 @@ const createPairOptions = (
 
 // width of the customer pair, so the Branch box lines up with it
 const CUSTOMER_ID_WIDTH = 120;
-const CUSTOMER_NAME_WIDTH = 320;
-const PAIR_GAP = 10;
+const CUSTOMER_NAME_WIDTH = 240; // the box and its list end before the Search button, in the same row (the window is a fixed 1170 px)
+const PAIR_GAP = 5; // the 5 px between two boxes of a row, as on every report page (FILTER_GAP)
 const BRANCH_WIDTH = 224; // lkpBranch: 320px reduced by 30%
 
-// radio panels: rdgCustomer is 10% wider than rdgBranch; the Branch box is
-// pushed right by the difference so both lookups still start on the same line
-const RDG_BRANCH_WIDTH = 112;
-const RDG_CUSTOMER_WIDTH = Math.round(RDG_BRANCH_WIDTH * 1.1); // 123
-const BRANCH_OFFSET = RDG_CUSTOMER_WIDTH - RDG_BRANCH_WIDTH;
+// the four radio panels on the left (One Document, By Document No., One Branch, One Customer) have one width: the width the
+// longest text ("By Document Date") needs: w-41.25 = 165 px. The Branch and the Customer rows start 32 px further left (ml-22
+// instead of ml-30), so their boxes stay where they were.
 
 // ==================================================
 // INITIAL TABLE ROWS
@@ -322,30 +331,12 @@ const AppDatePicker: React.FC<{
 );
 
 // ==================================================
-// ACTION BUTTON
-// ==================================================
-
-const ActionButton: React.FC<{
-  children: React.ReactNode;
-  onClick: () => void;
-  className?: string;
-  disabled?: boolean;
-}> = ({ children, onClick, className = "", disabled = false }) => (
-  <button
-    type="button"
-    onClick={onClick}
-    disabled={disabled}
-    className={`min-w-20 btn-style ${disabled ? "opacity-50" : ""} ${className}`}
-  >
-    {children}
-  </button>
-);
-
-// ==================================================
 // MAIN COMPONENT
 // ==================================================
 
 const ZATCASubmission: React.FC = () => {
+  // the messages (warnings, errors, submitted ...) are the common message window, as on the Payment screen - not a toast
+  const { notify, dialog: messageDialog } = useMessageModal("ZATCA Submission");
 
   // DOCUMENT FILTER
 
@@ -422,6 +413,12 @@ const ZATCASubmission: React.FC = () => {
 
   const [rows, setRows] = useState<DocumentRow[]>(createRows);
 
+  // the row the cursor is on (the ▶ of the grid): it follows the focus, a click and the arrow keys
+  const [currentRow, setCurrentRow] = useState(0);
+
+  // Enter moves to the next field / the next row of the grid, as the Tab key does (the same on every screen)
+  const enterAsTab = useEnterAsTab();
+
   // ==================================================
   // LOAD LOOKUPS
   // ==================================================
@@ -455,7 +452,7 @@ const ZATCASubmission: React.FC = () => {
           (documentTypes.data ?? []).map((d) => ({ value: d.fpid, label: d.fpname, id: d.fpid })),
         );
       })
-      .catch((e: Error) => toast.error(e.message));
+      .catch((e: Error) => notify.error(e.message));
   }, []);
 
   // ==================================================
@@ -466,27 +463,27 @@ const ZATCASubmission: React.FC = () => {
 
     // same rules as ValidateMe
     if (documentMode === "One Document" && !documentType) {
-      return toast.error("Please input 'Document'");
+      return notify.error("Please input 'Document'");
     }
     if (
       documentMode === "One Document" &&
       (documentType?.value === "DN" || documentType?.value === "CN") &&
       branchMode !== "One Branch"
     ) {
-      return toast.error("Please select a 'Branch'");
+      return notify.error("Please select a 'Branch'");
     }
     if (branchMode === "One Branch" && !branch) {
-      return toast.error("Please select a 'Branch'");
+      return notify.error("Please select a 'Branch'");
     }
     if (customerMode === "One Customer" && !customerId) {
-      return toast.error("Please select 'Customer ID'");
+      return notify.error("Please select 'Customer ID'");
     }
 
     const byNo =
       documentFilter === "By Document No." && documentMode === "One Document";
 
     if (byNo && !documentNo.trim()) {
-      return toast.error("Please input 'From Invoice No.'");
+      return notify.error("Please input 'From Invoice No.'");
     }
 
     setBusy(true);
@@ -530,10 +527,11 @@ const ZATCASubmission: React.FC = () => {
       // keep the empty filler rows so the grid height stays stable
       const filler = createRows().slice(mapped.length);
       setRows([...mapped, ...filler.map((f, i) => ({ ...f, id: mapped.length + i + 1 }))]);
+      setCurrentRow(0);
 
-      if (!mapped.length) toast.info("No documents found");
+      if (!mapped.length) notify.info("No documents found");
     } catch (e) {
-      toast.error((e as Error).message);
+      notify.error((e as Error).message);
     } finally {
       setBusy(false);
     }
@@ -546,7 +544,7 @@ const ZATCASubmission: React.FC = () => {
   const handleSubmit = async () => {
     const selected = rows.filter((r) => r.selected && r.documentNo.trim() !== "");
     if (!selected.length) {
-      return toast.error("Please select at least one document");
+      return notify.error("Please select at least one document");
     }
 
     setBusy(true);
@@ -575,15 +573,15 @@ const ZATCASubmission: React.FC = () => {
         .map((x) => `${x.docNo}: ${x.message ?? x.status}`);
 
       if (data.rejected > 0) {
-        toast.error(message);
-        failed.forEach((f) => toast.error(f));
+        notify.error(<div style={{ whiteSpace: "pre-line" }}>{[message, ...failed].join("\n")}</div>);
       } else {
-        toast.success(message);
+        notify.success(message);
       }
       // ClearMe() after submit, as the VB form does
       setRows(createRows());
+      setCurrentRow(0);
     } catch (e) {
-      toast.error((e as Error).message);
+      notify.error((e as Error).message);
     } finally {
       setBusy(false);
     }
@@ -611,6 +609,7 @@ const ZATCASubmission: React.FC = () => {
     setToDate(TODAY);
 
     setRows(createRows());
+    setCurrentRow(0);
   };
 
 
@@ -618,21 +617,42 @@ const ZATCASubmission: React.FC = () => {
   // UI
   // ==================================================
 
+  // The keys: Ctrl+S Submit, Ctrl+F Search (they stop the browser's own "save page" and "find"), and the underlined
+  // letters of the buttons: Alt+S Search, Alt+U Submit
+  useCtrlShortcuts({
+    s: () => {
+      if (!busy) void handleSubmit();
+    },
+    f: () => {
+      if (!busy) void handleSearch();
+    },
+  });
+
+  useAltShortcuts({
+    s: () => {
+      if (!busy) void handleSearch();
+    },
+    u: () => {
+      if (!busy) void handleSubmit();
+    },
+  });
+
   const totalRecords = rows.filter((row) => row.documentNo.trim() !== "").length;
   const tickedRecords = rows.filter(
     (row) => row.selected && row.documentNo.trim() !== "",
   ).length;
 
   return (
-    <div className="min-h-full w-full bg-white p-1 sm:p-2">
+    <div className="min-h-full w-full bg-gray-100 px-3 pb-5">
+      {messageDialog}
 
-      <main className="mx-auto flex w-full max-w-292.5 min-w-292.5 flex-col overflow-hidden rounded-[3px] border border-[#91a7bb] bg-white shadow-sm">
+      <main className="mx-auto mt-5 flex w-full max-w-292.5 min-w-292.5 flex-col overflow-hidden border border-gray-400 bg-white">
 
         {/* WINDOW HEADER */}
 
         <Header Name="ZATCA Submission" />
 
-        <section className="relative flex flex-col px-3.5 pb-3 pt-3">
+        <section className="relative flex flex-col px-3.5 pb-3 pt-3" onKeyDown={enterAsTab}>
 
           {/* ==========================================
               TOP FILTER SECTION
@@ -642,7 +662,7 @@ const ZATCASubmission: React.FC = () => {
 
             {/* DOCUMENT MODE */}
 
-            <RadioPanel className="h-18.75">
+            <RadioPanel className="h-18.75 w-41.25">
 
               <CustomRadio
                 name="documentMode"
@@ -673,8 +693,9 @@ const ZATCASubmission: React.FC = () => {
                   value={documentType}
                   onChange={setDocumentType}
                   columns={documentColumns}
-                  width="220px"
-                  menuWidth="300px"
+                  listLook="receipt"
+                  width={`${DOCUMENT_BOX_WIDTH}px`}
+                  menuWidth={`${DOCUMENT_BOX_WIDTH + LIST_ID_WIDTH}px`}
                   placeholder=""
                 />
               )}
@@ -683,8 +704,8 @@ const ZATCASubmission: React.FC = () => {
 
             {/* BRANCH MODE */}
 
-            <div className="flex min-w-0 flex-nowrap items-center gap-2 lg:col-start-3 lg:row-start-1 lg:col-span-2 ml-30">
-              <RadioPanel className="h-18.75 w-[132px] shrink-0">
+            <div className="flex min-w-0 flex-nowrap items-center gap-2 lg:col-start-3 lg:row-start-1 lg:col-span-2 ml-22">
+              <RadioPanel className="h-18.75 w-41.25 shrink-0">
                 <CustomRadio
                   name="branchMode"
                   value="One Branch"
@@ -703,7 +724,7 @@ const ZATCASubmission: React.FC = () => {
               </RadioPanel>
 
               {branchMode === "One Branch" && (
-                <div className="min-w-0" style={{ width: BRANCH_WIDTH, marginLeft: BRANCH_OFFSET }}>
+                <div className="min-w-0" style={{ width: BRANCH_WIDTH }}>
                   <CommonTableSelect
                     inputId="lkpBranch"
                     options={branchOptions}
@@ -711,8 +732,9 @@ const ZATCASubmission: React.FC = () => {
                     onChange={setBranch}
                     columns={branchColumns}
                     width="100%"
-                    menuWidth={`300px`}
-                    placeholder="Select Branch"
+                    menuWidth={`${BRANCH_WIDTH + LIST_ID_WIDTH}px`}
+                    listLook="receipt"
+                    placeholder=""
                   />
                 </div>
               )}
@@ -720,8 +742,8 @@ const ZATCASubmission: React.FC = () => {
 
             {/* CUSTOMER MODE */}
 
-            <div className="flex min-w-0 flex-nowrap items-center gap-2 lg:col-start-3 lg:row-start-2 lg:col-span-2 ml-30">
-              <RadioPanel className="h-18.75 w-[133px] shrink-0">
+            <div className="flex min-w-0 flex-nowrap items-center gap-2 lg:col-start-3 lg:row-start-2 lg:col-span-2 ml-22">
+              <RadioPanel className="h-18.75 w-41.25 shrink-0">
 
                 <CustomRadio
                   name="customerMode"
@@ -755,6 +777,8 @@ const ZATCASubmission: React.FC = () => {
                     firstWidth={CUSTOMER_ID_WIDTH}
                     secondWidth={CUSTOMER_NAME_WIDTH}
                     gap={PAIR_GAP}
+                    listLook="receipt"
+                    nameDividerAtBoxEnd
                     headerFontSize="12px"
                     menuZIndex={99999}
                     menuPortalTarget={
@@ -812,7 +836,7 @@ const ZATCASubmission: React.FC = () => {
 
             {/* DOCUMENT NUMBER / DATE FILTER */}
 
-            <RadioPanel className="h-18.75">
+            <RadioPanel className="h-18.75 w-41.25">
 
               <CustomRadio
                 name="documentFilter"
@@ -871,17 +895,28 @@ const ZATCASubmission: React.FC = () => {
 
             </div>
 
-            {/* SEARCH BUTTON */}
-
-            <div className="flex items-start justify-end pt-1 lg:col-start-5 lg:row-start-2 absolute top-38 right-3">
+            {/* SEARCH BUTTON - in the row of the customers, at its right end (the last column of the filter grid) */}
+            <div className="flex items-center justify-end lg:col-start-5 lg:row-start-2">
 
               <ActionButton
+                id="btnSearch"
+                label="Search"
+                underlineIndex={0}
                 onClick={handleSearch}
                 disabled={busy}
-                className="w-24 "
-              >
-                Search
-              </ActionButton>
+                onKeyDown={(event) => {
+                  // the arrow keys go down to the buttons at the bottom (Submit, Clear), as Payment moves between its buttons
+                  if (event.key === "ArrowRight" || event.key === "ArrowDown") {
+                    event.preventDefault();
+                    event.stopPropagation();
+                    document.getElementById("btnSubmit")?.focus();
+                  } else if (event.key === "Enter") {
+                    event.preventDefault();
+                    event.stopPropagation();
+                    event.currentTarget.click();
+                  }
+                }}
+              />
 
             </div>
 
@@ -891,56 +926,40 @@ const ZATCASubmission: React.FC = () => {
               DOCUMENT TABLE
           ========================================== */}
 
-          <div className="mt-3 w-full overflow-hidden border border-[#B7ECD0] mt-10">
+          {/* the grid of the Payment screen: the shared .receipt-table classes (components/Transaction/Receipt/save/commanReceipt.css),
+              28 px header and rows, a full #b7ecd0 box on every cell. The side margin is the 12 px of the Payment screen. */}
+          <div className="receipt-table-wrapper mt-10">
 
             <div className="max-h-98.75 overflow-auto">
 
-              <table className="w-full min-w-262.5 table-fixed border-collapse">
+              <table className="receipt-table min-w-262.5">
 
-                <thead className="sticky top-0 z-10 bg-[#EEFBF4]">
+                <colgroup>
+                  <col style={{ width: "38px" }} />
+                  <col style={{ width: "34px" }} />
+                  <col style={{ width: "60px" }} />
+                  <col style={{ width: "130px" }} />
+                  <col style={{ width: "95px" }} />
+                  <col style={{ width: "140px" }} />
+                  <col style={{ width: "auto" }} />
+                  <col style={{ width: "115px" }} />
+                  <col style={{ width: "95px" }} />
+                  <col style={{ width: "115px" }} />
+                </colgroup>
 
-                  <tr className="h-6">
+                <thead>
 
-                    <th className="w-4 border-r border-b border-[#B7ECD0]" />
-
-                    <th className="w-[3%] border-r border-b border-[#B7ECD0]" />
-
-                    <th className="w-[4%] border-r border-b border-[#B7ECD0] px-1 text-left text-[12px] font-normal text-[#172b43]">
-                      Line
-                    </th>
-
-                    <th className="w-[4.5%] border-r border-b border-[#B7ECD0] px-1 text-left text-[12px] font-normal text-[#172b43]">
-                      Br. ID
-                    </th>
-
-                    <th className="w-[12%] border-r border-b border-[#B7ECD0] px-1 text-left text-[12px] font-normal text-[#172b43]">
-                      Document No.
-                    </th>
-
-                    <th className="w-[9%] border-r border-b border-[#B7ECD0] px-1 text-left text-[12px] font-normal text-[#172b43]">
-                      Document Date
-                    </th>
-
-                    <th className="w-[13%] border-r border-b border-[#B7ECD0] px-1 text-left text-[12px] font-normal text-[#172b43]">
-                      Document Issue Time
-                    </th>
-
-                    <th className="w-[23%] border-r border-b border-[#B7ECD0] px-1 text-left text-[12px] font-normal text-[#172b43]">
-                      Customer Name
-                    </th>
-
-                    <th className="w-[10.5%] border-r border-b border-[#B7ECD0] px-1 text-right text-[12px] font-normal text-[#172b43]">
-                      Inv. Amt. Excl. VAT
-                    </th>
-
-                    <th className="w-[9%] border-r border-b border-[#B7ECD0] px-1 text-right text-[12px] font-normal text-[#172b43]">
-                      VAT Amt.
-                    </th>
-
-                    <th className="w-[12%] border-b border-[#B7ECD0] px-1 text-right text-[12px] font-normal text-[#172b43]">
-                      Inv. Amt. Incl. VAT
-                    </th>
-
+                  <tr>
+                    <th>Line</th>
+                    <th aria-label="Select" />
+                    <th>Br. ID</th>
+                    <th>Document No.</th>
+                    <th>Document Date</th>
+                    <th>Document Issue Time</th>
+                    <th>Customer Name</th>
+                    <th className="text-right">Inv. Amt. Excl. VAT</th>
+                    <th className="text-right">VAT Amt.</th>
+                    <th className="text-right">Inv. Amt. Incl. VAT</th>
                   </tr>
 
                 </thead>
@@ -951,18 +970,35 @@ const ZATCASubmission: React.FC = () => {
 
                     <tr
                       key={row.id}
-                      className="h-6.5 bg-white"
+                      className={index === currentRow && row.documentNo ? "receipt-row-selected" : ""}
+                      onClick={() => {
+                        if (!row.documentNo) return;
+                        setCurrentRow(index);
+                        document.getElementById(`chkRow${index}`)?.focus();
+                      }}
                     >
 
-                      <td className="border-r border-b border-[#B7ECD0] bg-[#f5f6f8] text-center text-[10px]">
-                        {index === 0 ? "▶" : ""}
+                      <td className="serial-cell">
+                        {row.branchId ? index + 1 : ""}
                       </td>
 
-                      <td className="border-r border-b border-[#B7ECD0] text-center">
+                      <td className="text-center">
                         <input
+                          id={`chkRow${index}`}
                           type="checkbox"
                           checked={row.selected}
+                          disabled={!row.documentNo}
                           className="accent-green-600"
+                          onFocus={() => setCurrentRow(index)}
+                          onKeyDown={(event) => {
+                            // the arrow keys move the cursor from row to row (the empty rows are skipped); Space ticks / unticks
+                            if (event.key !== "ArrowDown" && event.key !== "ArrowUp") return;
+                            event.preventDefault();
+                            const step = event.key === "ArrowDown" ? 1 : -1;
+                            let next = index + step;
+                            while (next >= 0 && next < rows.length && !rows[next].documentNo) next += step;
+                            if (next >= 0 && next < rows.length) document.getElementById(`chkRow${next}`)?.focus();
+                          }}
                           onChange={(event) =>
                             setRows((currentRows) =>
                               currentRows.map((currentRow) =>
@@ -976,41 +1012,14 @@ const ZATCASubmission: React.FC = () => {
                         />
                       </td>
 
-                      <td className="border-r border-b border-[#B7ECD0] text-center text-[12px]">
-                        {row.branchId ? index + 1 : ""}
-                      </td>
-
-                      <td className="border-r border-b border-[#B7ECD0] text-[12px]">
-                        {row.branchId}
-                      </td>
-
-                      <td className="border-r border-b border-[#B7ECD0] text-[12px]">
-                        {row.documentNo}
-                      </td>
-
-                      <td className="border-r border-b border-[#B7ECD0] text-[12px]">
-                        {row.documentDate}
-                      </td>
-
-                      <td className="border-r border-b border-[#B7ECD0] text-[12px]">
-                        {row.issueTime}
-                      </td>
-
-                      <td className="border-r border-b border-[#B7ECD0] text-[12px]">
-                        {row.customerName}
-                      </td>
-
-                      <td className="border-r border-b border-[#B7ECD0] text-right text-[12px]">
-                        {row.invoiceAmountExclVat}
-                      </td>
-
-                      <td className="border-r border-b border-[#B7ECD0] text-right text-[12px]">
-                        {row.vatAmount}
-                      </td>
-
-                      <td className="border-b border-[#B7ECD0] text-right text-[12px]">
-                        {row.invoiceAmountInclVat}
-                      </td>
+                      <td className="px-1.5">{row.branchId}</td>
+                      <td className="px-1.5">{row.documentNo}</td>
+                      <td className="px-1.5">{row.documentDate}</td>
+                      <td className="px-1.5">{row.issueTime}</td>
+                      <td className="px-1.5">{row.customerName}</td>
+                      <td className="px-1.5 text-right">{row.invoiceAmountExclVat}</td>
+                      <td className="px-1.5 text-right">{row.vatAmount}</td>
+                      <td className="px-1.5 text-right">{row.invoiceAmountInclVat}</td>
 
                     </tr>
 
@@ -1041,26 +1050,13 @@ const ZATCASubmission: React.FC = () => {
               BOTTOM BUTTONS
           ========================================== */}
 
-          <div className="mt-3 flex justify-center gap-1">
-
-            <ActionButton
-              onClick={handleSubmit}
-              disabled={busy}
-              className="w-20"
-            >
-              Submit
-            </ActionButton>
-
-            <ActionButton
-              onClick={handleClear}
-              className="w-20"
-            >
-              Clear
-            </ActionButton>
-
-        
-
-          </div>
+          <TransactionActions
+            className="mt-3 flex justify-center gap-1"
+            actions={[
+              { id: "btnSubmit", label: "Submit", underlineIndex: 1, onClick: handleSubmit, disabled: busy },
+              { id: "btnClear", label: "Clear", onClick: handleClear },
+            ]}
+          />
 
         </section>
 

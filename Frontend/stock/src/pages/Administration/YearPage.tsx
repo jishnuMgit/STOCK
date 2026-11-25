@@ -534,7 +534,8 @@ const YearPage: React.FC = () => {
                             }}
                             {...cellSelectProps}
                             components={branchComponents}
-                            styles={yearMenuStyles}
+                            // the list is drawn in the page body: its layer must be above the sticky heading row of the grid
+                            styles={{ ...yearMenuStyles, menuPortal: (base) => ({ ...base, zIndex: 999999 }) }}
                             filterOption={filterLabelOrValue}
                             noOptionsMessage={() => "No Branch Found"}
                           />

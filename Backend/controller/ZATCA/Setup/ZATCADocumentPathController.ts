@@ -75,7 +75,7 @@ export const saveZATCAFilePath = async (
 
     return res.status(200).json({
       success: true,
-      message: mode === "S" ? "Saved" : "Modified",
+      message: "ZATCA document path saved successfully",
       data: { mode },
     });
   } catch (error: unknown) {

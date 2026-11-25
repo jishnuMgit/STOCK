@@ -425,7 +425,7 @@ const ItemGroupPage: React.FC = () => {
     setTxtVATPer("0.00");
   };
 
-  // The keys of the Payment screen: Ctrl+S Save / Modify, Ctrl+F Find, Ctrl+D Delete
+  // The keys of the Payment screen: Ctrl+S Save / Modify, Ctrl+F Search, Ctrl+D Delete
   useCtrlShortcuts({
     s: handleSave,
     f: handleSearch,
@@ -613,7 +613,7 @@ const ItemGroupPage: React.FC = () => {
                   onClick: handleSave,
                   disabled: !canSaveOrModify,
                 },
-                { id: "btnSearch", label: "Find", underlineIndex: 0, onClick: handleSearch },
+                { id: "btnSearch", label: "Search", underlineIndex: 0, onClick: handleSearch },
                 {
                   id: "btnDelete",
                   label: "Delete",
