@@ -251,6 +251,8 @@ export const ReceiptForm: React.FC<ReceiptFormProps> = ({
    */
   const keepCbAccountFocus = useRef(false);
 
+  const docNoAtFocusRef = useRef("");
+
   const [accountsLoading, setAccountsLoading] = useState(false);
 
   const [documentNoLoading, setDocumentNoLoading] = useState(false);
@@ -803,20 +805,22 @@ export const ReceiptForm: React.FC<ReceiptFormProps> = ({
                 setDocumentNo(event.target.value);
               }
             }}
+            onFocus={(e) => {
+              docNoAtFocusRef.current = e.target.value;
+            }}
             onBlur={(e) => {
-              if (
-                documentNoEditable &&
-                docnolen > 0 &&
-                e.target.value.length !== docnolen
-              ) {
-                notify.warning(`Receipt No. width must be ${docnolen}`);
+              if (!documentNoEditable || documentNoLoading) return;
 
+              const value = e.target.value;
+
+              if (docnolen > 0 && value.length !== docnolen) {
+                notify.warning(`Receipt No. width must be ${docnolen}`);
                 return;
               }
 
-              if (documentNoEditable) {
-                txtDocNo?.();
-              }
+              if (value === docNoAtFocusRef.current) return; // unchanged, no lookup
+              docNoAtFocusRef.current = value;
+              txtDocNo?.();
             }}
             onKeyDown={(event) => {
               if (documentNoEditable && event.key === "Enter") {

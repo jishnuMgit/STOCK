@@ -143,41 +143,41 @@ const nameSelectComponents = {
 /* menu rows show two columns; the control shows only its own label */
 const createFormatLabel =
   (variant: MenuVariant) =>
-  (option: Option, meta: FormatOptionLabelMeta<Option>) => {
-    if (meta.context !== "menu") return option.label;
+    (option: Option, meta: FormatOptionLabelMeta<Option>) => {
+      if (meta.context !== "menu") return option.label;
 
-    const layout = menuLayout[variant];
+      const layout = menuLayout[variant];
 
-    return (
-      <SingleSelectMenuColumns>
-        <div
-          style={{
-            minWidth: 0,
-            overflow: "hidden",
-            textOverflow: "ellipsis",
-            whiteSpace: "nowrap",
-            boxSizing: "border-box",
-            padding: MENU_CELL_PADDING,
-            borderRight: "1px solid #e3e8ef",
-          }}
-        >
-          {layout.first(option)}
-        </div>
-        <div
-          style={{
-            minWidth: 0,
-            overflow: "hidden",
-            textOverflow: "ellipsis",
-            whiteSpace: "nowrap",
-            boxSizing: "border-box",
-            padding: MENU_CELL_PADDING,
-          }}
-        >
-          {layout.second(option)}
-        </div>
-      </SingleSelectMenuColumns>
-    );
-  };
+      return (
+        <SingleSelectMenuColumns>
+          <div
+            style={{
+              minWidth: 0,
+              overflow: "hidden",
+              textOverflow: "ellipsis",
+              whiteSpace: "nowrap",
+              boxSizing: "border-box",
+              padding: MENU_CELL_PADDING,
+              borderRight: "1px solid #e3e8ef",
+            }}
+          >
+            {layout.first(option)}
+          </div>
+          <div
+            style={{
+              minWidth: 0,
+              overflow: "hidden",
+              textOverflow: "ellipsis",
+              whiteSpace: "nowrap",
+              boxSizing: "border-box",
+              padding: MENU_CELL_PADDING,
+            }}
+          >
+            {layout.second(option)}
+          </div>
+        </SingleSelectMenuColumns>
+      );
+    };
 
 const formatIdLabel = createFormatLabel("id");
 const formatNameLabel = createFormatLabel("name");
@@ -314,7 +314,7 @@ const textInputClass =
   "h-[20px] w-full min-w-0 border-0 bg-transparent px-1 text-[14px] outline-none focus:bg-blue-50";
 
 const thClass =
-  "sticky top-0 z-20 h-7.5 whitespace-nowrap border border-[#dce5ef] bg-[#f1f6fc] px-1 py-0 align-middle font-semibold text-[#202a36]";
+  "sticky top-0 z-20 h-7.5 whitespace-nowrap border border-[#dce5ef] bg-[#e6f6ee] px-1 py-0 align-middle font-semibold text-[#202a36]";
 
 const tdClass = "h-7.5 border border-[#dce5ef] p-0";
 
@@ -384,10 +384,10 @@ const SalesInvoiceTable: React.FC<SalesInvoiceTableProps> = ({
   const idValue = (itemId: string): Option | null =>
     itemId
       ? {
-          value: itemId,
-          label: itemId,
-          name: itemById.get(itemId)?.name ?? "",
-        }
+        value: itemId,
+        label: itemId,
+        name: itemById.get(itemId)?.name ?? "",
+      }
       : null;
 
   const nameValue = (itemId: string): Option | null => {
@@ -640,7 +640,7 @@ const SalesInvoiceTable: React.FC<SalesInvoiceTableProps> = ({
 
             <thead>
               <tr className="h-7.5">
-                <th className="sticky top-0 z-20 border border-[#dce5ef] bg-[#f1f6fc] p-0" />
+                <th className="sticky top-0 z-20 border border-[#dce5ef] bg-[#e6f6ee] p-0" />
                 <th className={`${thClass} text-left`}>Line</th>
                 <th className={`${thClass} text-left`}>Item ID</th>
                 <th className={`${thClass} text-left`}>Item Name</th>
@@ -650,7 +650,7 @@ const SalesInvoiceTable: React.FC<SalesInvoiceTableProps> = ({
                 <th className={`${thClass} text-right`}>U.Disc Amt.</th>
                 <th className={`${thClass} text-right`}>VAT Amt.</th>
                 <th className={`${thClass} text-right`}>Total Price</th>
-                <th className="sticky top-0 z-20 border border-[#dce5ef] bg-[#f1f6fc] p-0" />
+                <th className="sticky top-0 z-20 border border-[#dce5ef] bg-[#e6f6ee] p-0" />
               </tr>
             </thead>
 
