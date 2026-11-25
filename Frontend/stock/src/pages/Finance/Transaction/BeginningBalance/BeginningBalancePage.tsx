@@ -61,7 +61,7 @@ const BeginningBalance: React.FC = () => {
 
   // the head accounts and the cost centers of the grid's boxes
   const { accountsByID, accountsByName, costCenters } =
-    useBeginningBalanceLookups();
+    useBeginningBalanceLookups(notify);
 
   const [lkpBranch, setLkpBranch] = useState<Option | null>(null);
   // the branch list and the user's default branch have been loaded (the cursor can start)

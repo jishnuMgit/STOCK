@@ -1,5 +1,4 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
-import { toast } from "react-toastify";
 import dayjs from "dayjs";
 import customParseFormat from "dayjs/plugin/customParseFormat";
 import { buildItemHistoryPdf } from "./downloadItemHistoryPdf";
@@ -20,6 +19,7 @@ import {
 } from "../../../../components/common/ReportFilters";
 import { useEnterAsTab } from "../../../../hooks/useEnterAsTab";
 import Header from "../../../../components/common/Header";
+import { useMessageModal } from "../../../../hooks/useMessageModal";
 
 dayjs.extend(customParseFormat);
 
@@ -72,6 +72,7 @@ type RptItemHistoryPageProps = {
 };
 
 const RptItemHistoryPage: React.FC<RptItemHistoryPageProps> = ({ onClose }) => {
+  const { notify, dialog: messageDialog } = useMessageModal();
   const [branches, setBranches] = useState<Branch[]>([]);
   const [items, setItems] = useState<Item[]>([]);
   const [loading, setLoading] = useState(true);
@@ -156,7 +157,7 @@ const RptItemHistoryPage: React.FC<RptItemHistoryPageProps> = ({ onClose }) => {
         const data = await res.json();
 
         if (!res.ok || !data.success) {
-          toast.error(data.message || "Failed to load branches and items");
+          notify.error(data.message || "Failed to load branches and items");
           return;
         }
         if (cancelled) return;
@@ -176,7 +177,7 @@ const RptItemHistoryPage: React.FC<RptItemHistoryPageProps> = ({ onClose }) => {
             : null,
         );
       } catch {
-        if (!cancelled) toast.error("Failed to load branches and items");
+        if (!cancelled) notify.error("Failed to load branches and items");
       } finally {
         if (!cancelled) setLoading(false);
       }
@@ -195,19 +196,19 @@ const RptItemHistoryPage: React.FC<RptItemHistoryPageProps> = ({ onClose }) => {
     const oneBranch = branchMode === "One Branch";
 
     if (oneBranch && !branch) {
-      toast.warning("Please select 'Branch'", { toastId: "ih-branch" });
+      notify.warning("Please select 'Branch'");
       document.getElementById("lkpBranch")?.focus();
       return null;
     }
 
     if (!itemId) {
-      toast.warning("Please select an Item", { toastId: "ih-item" });
+      notify.warning("Please select an Item");
       document.getElementById("lkpItemID")?.focus();
       return null;
     }
 
     if (!asOnDate || !dayjs(asOnDate, DATE_FORMAT, true).isValid()) {
-      toast.warning("Please select Date", { toastId: "ih-date" });
+      notify.warning("Please select Date");
       document.getElementById("dtpAsOnDate")?.focus();
       return null;
     }
@@ -243,7 +244,7 @@ const RptItemHistoryPage: React.FC<RptItemHistoryPageProps> = ({ onClose }) => {
             ? "Excel is not available: the /excel route was not found (404)"
             : `Could not create the Excel file (error ${res.status})`;
       }
-      toast.error(message);
+      notify.error(message);
       return null;
     }
 
@@ -270,13 +271,13 @@ const RptItemHistoryPage: React.FC<RptItemHistoryPageProps> = ({ onClose }) => {
       const data = await res.json();
 
       if (!res.ok || !data.success) {
-        toast.error(data.message || "Could not prepare the report");
+        notify.error(data.message || "Could not prepare the report");
         return;
       }
 
       setPreview({ report: data.report, fileBase: data.fileBase, request });
     } catch {
-      toast.error("Could not prepare the report");
+      notify.error("Could not prepare the report");
     } finally {
       setPrinting(false);
     }
@@ -288,7 +289,7 @@ const RptItemHistoryPage: React.FC<RptItemHistoryPageProps> = ({ onClose }) => {
     try {
       printItemHistoryReport(preview.report);
     } catch {
-      toast.error("Could not open the print view");
+      notify.error("Could not open the print view");
     }
   };
 
@@ -313,11 +314,11 @@ const RptItemHistoryPage: React.FC<RptItemHistoryPageProps> = ({ onClose }) => {
       const saved = await saveFile(blob, `${fileBase}.${kind}`, kind);
       if (saved) {
        
-        toast.success(asPdf ? "PDF file downloaded" : "Excel file downloaded");
+        notify.success(asPdf ? "PDF file downloaded" : "Excel file downloaded");
          setPreview(null); // cancelled "Save as": the preview stays
       }
     } catch {
-      toast.error(
+      notify.error(
         asPdf ? "Could not create the PDF file" : "Could not create the Excel file",
       );
     } finally {
@@ -442,6 +443,7 @@ const RptItemHistoryPage: React.FC<RptItemHistoryPageProps> = ({ onClose }) => {
         )
       }
     >
+      {messageDialog}
       <BranchFilter
         mode={branchMode}
         onModeChange={setBranchMode}

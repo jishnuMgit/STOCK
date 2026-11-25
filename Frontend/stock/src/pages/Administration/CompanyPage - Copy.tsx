@@ -7,8 +7,7 @@ import Select, {
   type MenuListProps,
   type OptionProps,
 } from "react-select";
-import { toast } from "react-toastify";
-
+import { useMessageModal } from "../../hooks/useMessageModal";
 type Option = {
   value: string;
   label: string;
@@ -68,6 +67,7 @@ const AccountOption = (props: OptionProps<Option, false>) => (
 );
 
 const CompanyPage: React.FC = () => {
+  const { notify, dialog: messageDialog } = useMessageModal();
   // ============================================================
   // STATE
   // ============================================================
@@ -365,7 +365,7 @@ const CompanyPage: React.FC = () => {
         const res = await fetch(`${API}/purchase-groups`);
         const data = await res.json();
         if (!res.ok || !data.success) {
-          toast.error(data.message || "Failed to load purchase expense groups");
+          notify.error(data.message || "Failed to load purchase expense groups");
           return;
         }
         if (cancelled) return;
@@ -377,7 +377,7 @@ const CompanyPage: React.FC = () => {
           })),
         ]);
       } catch {
-        if (!cancelled) toast.error("Failed to load purchase expense groups");
+        if (!cancelled) notify.error("Failed to load purchase expense groups");
       }
     };
 
@@ -402,7 +402,7 @@ const CompanyPage: React.FC = () => {
         );
         const data = await res.json();
         if (!res.ok || !data.success) {
-          toast.error(data.message || "Failed to load year closing methods");
+          notify.error(data.message || "Failed to load year closing methods");
           return;
         }
         if (cancelled) return;
@@ -414,7 +414,7 @@ const CompanyPage: React.FC = () => {
           })),
         );
       } catch {
-        if (!cancelled) toast.error("Failed to load year closing methods");
+        if (!cancelled) notify.error("Failed to load year closing methods");
       }
     };
 
@@ -479,12 +479,12 @@ const CompanyPage: React.FC = () => {
 
   const handleSave = async () => {
     if (!txtCoID.trim()) {
-      toast.warning("Company ID is required");
+      notify.warning("Company ID is required");
       document.getElementById("txtCoID")?.focus();
       return;
     }
     if (!txtCoName.trim()) {
-      toast.warning("Company Name is required");
+      notify.warning("Company Name is required");
       document.getElementById("txtCoName")?.focus();
       return;
     }
@@ -510,14 +510,14 @@ const CompanyPage: React.FC = () => {
       });
       const data = await res.json();
       if (!res.ok || !data.success) {
-        toast.error(data.message || "Not saved, try again");
+        notify.error(data.message || "Not saved, try again");
         return;
       }
-      toast.success(data.message); // "Saved" or "Modified"
+      notify.success(data.message); // "Saved" or "Modified"
       handleClear();
       document.getElementById("txtCoID")?.focus();
     } catch {
-      toast.error("Not saved, try again");
+      notify.error("Not saved, try again");
     } finally {
       setSaving(false);
     }
@@ -566,14 +566,14 @@ const CompanyPage: React.FC = () => {
 
       const data = await res.json();
       if (!res.ok || !data.success) {
-        if (showErrors) toast.error(data.message || "Search failed");
+        if (showErrors) notify.error(data.message || "Search failed");
         return false;
       }
 
       fillForm(data.company);
       return true;
     } catch {
-      if (showErrors) toast.error("Search failed");
+      if (showErrors) notify.error("Search failed");
       return false;
     }
   };
@@ -582,12 +582,12 @@ const CompanyPage: React.FC = () => {
   const handleSearch = async () => {
     const id = txtCoID.trim();
     if (!id) {
-      toast.warning("Enter a Company ID to search");
+      notify.warning("Enter a Company ID to search");
       document.getElementById("txtCoID")?.focus();
       return;
     }
     const found = await loadCompany(id, true);
-    if (!found) toast.info("Company not found", { toastId: "co-not-found" });
+    if (!found) notify.info("Company not found");
   };
 
   // Runs when the cursor leaves the Company ID box
@@ -617,7 +617,7 @@ const CompanyPage: React.FC = () => {
 
   const handleDelete = async () => {
     if (!originalCoID) {
-      toast.warning("Search for a company first");
+      notify.warning("Search for a company first");
       return;
     }
     if (!window.confirm(`Delete company ${originalCoID}?`)) return;
@@ -628,14 +628,14 @@ const CompanyPage: React.FC = () => {
       });
       const data = await res.json();
       if (!res.ok || !data.success) {
-        toast.error(data.message || "Not deleted");
+        notify.error(data.message || "Not deleted");
         return;
       }
-      toast.success(data.message); // "Deleted"
+      notify.success(data.message); // "Deleted"
       handleClear();
       document.getElementById("txtCoID")?.focus();
     } catch {
-      toast.error("Not deleted");
+      notify.error("Not deleted");
     }
   };
 
@@ -701,6 +701,7 @@ const CompanyPage: React.FC = () => {
 
   return (
     <div className="flex min-h-screen w-full items-center justify-center bg-white">
+      {messageDialog}
       <div className="w-[870px] overflow-hidden border border-slate-400 bg-white shadow-sm">
 
         {/* =====================================================

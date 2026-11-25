@@ -1,6 +1,5 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import Header from "../../../../../components/common/Header";
-import { toast } from "react-toastify";
 import dayjs from "dayjs";
 import customParseFormat from "dayjs/plugin/customParseFormat";
 import { previewPrintedLine } from "../../../../../components/common/printHtml";
@@ -23,6 +22,7 @@ import {
   ReportForm,
   ReportPrintRow,
 } from "../../../../../components/common/ReportFilters";
+import { useMessageModal } from "../../../../../hooks/useMessageModal";
 
 // Trial Balance - laid out with the common template of the report forms (components/common/ReportFilters.tsx), like every
 // other report page. The Print Preview, the lookups and the request sent to the server are as they were.
@@ -72,6 +72,7 @@ const today = () => dayjs().format(DATE_FORMAT);
 const toServerDate = (value: string) => value.replace(/-/g, "/"); // DD-MM-YYYY -> DD/MM/YYYY
 
 const RptTBPage: React.FC = () => {
+  const { notify, dialog: messageDialog } = useMessageModal();
   // Enter moves on like Tab; after a pick from a list the cursor goes on (the common template's boxes do it)
   const handleEnterAsTab = useEnterAsTab();
 
@@ -127,7 +128,7 @@ const RptTBPage: React.FC = () => {
         const data = await res.json();
 
         if (!res.ok || !data.success) {
-          toast.error(data.message || "Failed to load the branches");
+          notify.error(data.message || "Failed to load the branches");
           return;
         }
         if (cancelled) return;
@@ -137,7 +138,7 @@ const RptTBPage: React.FC = () => {
         // the first branch is the default
         setBranch(list[0] ? { value: list[0].brId, label: list[0].brName } : null);
       } catch {
-        if (!cancelled) toast.error("Failed to load the branches");
+        if (!cancelled) notify.error("Failed to load the branches");
       } finally {
         if (!cancelled) setLoading(false);
       }
@@ -169,7 +170,7 @@ const RptTBPage: React.FC = () => {
     const oneBranch = branchMode === "One Branch";
 
     if (oneBranch && !branch) {
-      toast.warning("Please select a 'Branch'", { toastId: "tb-branch" });
+      notify.warning("Please select a 'Branch'");
       document.getElementById("lkpBranch")?.focus();
       return null;
     }
@@ -178,49 +179,45 @@ const RptTBPage: React.FC = () => {
     const to = dayjs(toDate, DATE_FORMAT, true);
 
     if (!fromDate || !from.isValid()) {
-      toast.warning("Please select 'From Date'", { toastId: "tb-from" });
+      notify.warning("Please select 'From Date'");
       document.getElementById("dtpFromDate")?.focus();
       return null;
     }
     if (!toDate || !to.isValid()) {
-      toast.warning("Please select 'To Date'", { toastId: "tb-to" });
+      notify.warning("Please select 'To Date'");
       document.getElementById("dtpToDate")?.focus();
       return null;
     }
     if (from.isAfter(to)) {
-      toast.warning("'To Date' should be greater than 'From Date'", {
-        toastId: "tb-range",
-      });
+      notify.warning("'To Date' should be greater than 'From Date'");
       document.getElementById("dtpToDate")?.focus();
       return null;
     }
 
     const level = Number(accountLevel);
     if (accountLevel.trim() === "" || !Number.isInteger(level)) {
-      toast.warning("Please input an 'Account Level'", { toastId: "tb-level" });
+      notify.warning("Please input an 'Account Level'");
       document.getElementById("txtAccountLevel")?.focus();
       return null;
     }
     if (level < 1 || level > 4) {
-      toast.warning("'Account Level' must be from 1 to 4", {
-        toastId: "tb-level",
-      });
+      notify.warning("'Account Level' must be from 1 to 4");
       document.getElementById("txtAccountLevel")?.focus();
       return null;
     }
 
     if (!postStatus) {
-      toast.warning("Please select 'Post Status'", { toastId: "tb-post" });
+      notify.warning("Please select 'Post Status'");
       document.getElementById("lkpPostStatus")?.focus();
       return null;
     }
     if (!printZeroBalance) {
-      toast.warning("Please select 'Print 0 Balance'", { toastId: "tb-zero" });
+      notify.warning("Please select 'Print 0 Balance'");
       document.getElementById("lkpPrint0Balance")?.focus();
       return null;
     }
     if (!printAccountGroup) {
-      toast.warning("Please select 'Print A/c Group'", { toastId: "tb-group" });
+      notify.warning("Please select 'Print A/c Group'");
       document.getElementById("lkpPrintACGroup")?.focus();
       return null;
     }
@@ -272,7 +269,7 @@ const RptTBPage: React.FC = () => {
       } catch {
         /* keep the default message */
       }
-      toast.error(message);
+      notify.error(message);
       return null;
     }
 
@@ -299,13 +296,13 @@ const RptTBPage: React.FC = () => {
       const data = await res.json();
 
       if (!res.ok || !data.success) {
-        toast.error(data.message || "Could not prepare the report");
+        notify.error(data.message || "Could not prepare the report");
         return;
       }
 
       setPreview({ report: data.report, request });
     } catch {
-      toast.error("Could not prepare the report");
+      notify.error("Could not prepare the report");
     } finally {
       setBusy(false);
     }
@@ -317,7 +314,7 @@ const RptTBPage: React.FC = () => {
     try {
       printTrialBalanceReport(preview.report);
     } catch {
-      toast.error("Could not open the print view");
+      notify.error("Could not open the print view");
     }
   };
 
@@ -346,11 +343,11 @@ const RptTBPage: React.FC = () => {
       );
       if (saved) {
         
-        toast.success(asPdf ? "PDF file downloaded" : "Excel file downloaded");
+        notify.success(asPdf ? "PDF file downloaded" : "Excel file downloaded");
         setPreview(null); // cancelled "Save as": the preview stays
       }
     } catch {
-      toast.error(
+      notify.error(
         asPdf ? "Could not create the PDF file" : "Could not create the Excel file",
       );
     } finally {
@@ -389,10 +386,10 @@ const RptTBPage: React.FC = () => {
       const blob = await fetchExcel(request);
       if (blob) {
         const saved = await saveFile(blob, makeFileName(request, "xlsx"), "xlsx");
-        if (saved) toast.success("Excel file downloaded");
+        if (saved) notify.success("Excel file downloaded");
       }
     } catch {
-      toast.error("Could not create the Excel file");
+      notify.error("Could not create the Excel file");
     } finally {
       setBusy(false);
     }
@@ -496,6 +493,7 @@ const RptTBPage: React.FC = () => {
         )
       }
     >
+      {messageDialog}
       <BranchFilter
         mode={branchMode === "One Branch" ? "One Branch" : "All Branch"}
         onModeChange={(mode) => setBranchMode(mode === "One Branch" ? "One Branch" : "All Branches")}

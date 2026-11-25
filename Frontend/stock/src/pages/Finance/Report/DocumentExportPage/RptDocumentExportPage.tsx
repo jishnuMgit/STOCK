@@ -7,8 +7,7 @@ import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
 import { DatePicker } from "@mui/x-date-pickers/DatePicker";
 import dayjs from "dayjs";
 import customParseFormat from "dayjs/plugin/customParseFormat";
-import { toast } from "react-toastify";
-
+import { useMessageModal } from "../../../../hooks/useMessageModal";
 dayjs.extend(customParseFormat);
 
 const DATE_FORMAT = "DD-MM-YYYY";
@@ -182,6 +181,7 @@ const AppDatePicker: React.FC<AppDatePickerProps> = ({
 );
 
 const RptDocumentExportPage: React.FC = () => {
+  const { notify, dialog: messageDialog } = useMessageModal();
   const [exportPath, setExportPath] = useState("");
   const [directoryHandle, setDirectoryHandle] =
     useState<DirectoryHandle | null>(null);
@@ -263,7 +263,7 @@ const RptDocumentExportPage: React.FC = () => {
   const handleExport = () => {
     if (!directoryHandle) {
       setMessage("Please select an export folder.");
-      toast.warning("Please select an export folder.")
+      notify.warning("Please select an export folder.")
       return;
     }
 
@@ -272,7 +272,7 @@ const RptDocumentExportPage: React.FC = () => {
         "Please select both From Date and To Date.",
 
       );
-      toast.warning("Please select both From Date and To Date.")
+      notify.warning("Please select both From Date and To Date.")
       return;
     }
 
@@ -281,7 +281,7 @@ const RptDocumentExportPage: React.FC = () => {
 
     if (!from.isValid() || !to.isValid()) {
       setMessage("Please select valid dates.");
-      toast.warning("Please select valid dates.")
+      notify.warning("Please select valid dates.")
       return;
     }
 
@@ -289,7 +289,7 @@ const RptDocumentExportPage: React.FC = () => {
       setMessage(
         "To Date cannot be earlier than From Date.",
       );
-      toast.warning( "To Date cannot be earlier than From Date.")
+      notify.warning( "To Date cannot be earlier than From Date.")
       return;
     }
 
@@ -306,11 +306,12 @@ const RptDocumentExportPage: React.FC = () => {
     setMessage(
       "Export settings validated successfully.",
     );
-    toast.success("Export settings validated successfully.")
+    notify.success("Export settings validated successfully.")
   };
 
   return (
     <div className="flex min-h-full w-full items-start justify-center bg-white px-3 py-3 sm:px-4 sm:py-4">
+      {messageDialog}
       <div className="w-full max-w-130 bg-white">
         <main className="w-full border border-gray-400 bg-white">
           <Header Name="Document Export" />

@@ -39,8 +39,6 @@ import {
 
 import "./commanReceipt.css";
 import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
-import { toast } from "react-toastify";
-
 dayjs.extend(customParseFormat);
 
 /* =========================================================
@@ -66,6 +64,7 @@ import CommonTableSelect, {
 import SingleSelect from "../../../common/SingleSelect";
 import Header from "../../../common/Header";
 import ActionButton from "../../../common/ActionButton";
+import { useMessageModal } from "../../../../hooks/useMessageModal";
 
 export type TableField =
   | "accountId"
@@ -204,6 +203,7 @@ export const ReceiptForm: React.FC<ReceiptFormProps> = ({
 
   focusReceiptNoAfterClear = 0,
 }) => {
+  const { notify, dialog: messageDialog } = useMessageModal();
   const [openSelect, setOpenSelect] = useState<
     "branch" | "type" | "cbAccount" | null
   >(null);
@@ -696,6 +696,7 @@ export const ReceiptForm: React.FC<ReceiptFormProps> = ({
 
   return (
     <div className="px-5 pt-3 mt-2 pb-2">
+      {messageDialog}
       {/* =====================================================
           FIRST ROW
       ===================================================== */}
@@ -808,7 +809,7 @@ export const ReceiptForm: React.FC<ReceiptFormProps> = ({
                 docnolen > 0 &&
                 e.target.value.length !== docnolen
               ) {
-                toast.warning(`Receipt No. width must be ${docnolen}`);
+                notify.warning(`Receipt No. width must be ${docnolen}`);
 
                 return;
               }

@@ -1,14 +1,13 @@
 import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { ChevronDown, ChevronRight, LogOut } from "lucide-react";
-import { toast } from "react-toastify";
-
 import "./TopNav.css";
 import { useLogout } from "../../hooks/useLogout";
 import { getMenuIcon, getMenuRoute } from "../../config/menuConfig";
 import { isNodeActive } from "../../utils/menuActive";
 import type { MenuNode } from "../../types/menu";
 import { clearStoredUser } from "../../utils/authStorage";
+import { useMessageModal } from "../../hooks/useMessageModal";
 
 const API_URL = import.meta.env.VITE_API_URL;
 
@@ -72,6 +71,7 @@ export default function TopNav({
   onSelectSection,
   onNavigateLeaf,
 }: TopNavProps) {
+  const { notify, dialog: messageDialog } = useMessageModal();
   const navigate = useNavigate();
   const { logout, loading: logoutLoading } = useLogout();
 
@@ -144,13 +144,13 @@ export default function TopNav({
     const success = await logout();
 
     if (!success) {
-      toast.error("Logout failed");
+      notify.error("Logout failed");
       return;
     }
 
     clearStoredUser();
     localStorage.removeItem("coShortName");
-    toast.success("Logged out successfully");
+    notify.success("Logged out successfully");
     navigate("/login", { replace: true });
   };
 
@@ -158,6 +158,7 @@ export default function TopNav({
 
   return (
     <header className="top-nav">
+      {messageDialog}
       <nav className="top-nav-menu" ref={navRef}>
         {loading && <span className="top-nav-status">Loading menu...</span>}
         {!loading && error && (

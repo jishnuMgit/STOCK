@@ -1,7 +1,6 @@
 import React, { useEffect, useMemo, useState } from "react";
 import dayjs from "dayjs";
 import customParseFormat from "dayjs/plugin/customParseFormat";
-import { toast } from "react-toastify";
 import ReportPreview from "../../../../components/common/ReportPreview";
 import { buildStockVerificationPdf } from "../../../../components/Purchase/Report/RptStockVerification/RptStockVerificationPdf";
 import {
@@ -22,6 +21,7 @@ import {
   ReportForm,
   ReportPrintRow,
 } from "../../../../components/common/ReportFilters";
+import { useMessageModal } from "../../../../hooks/useMessageModal";
 dayjs.extend(customParseFormat);
 
 type Option = { value: string; label: string };
@@ -43,6 +43,7 @@ type RptStockVerificationPageProps = {
 };
 
 const RptStockVerificationPage: React.FC<RptStockVerificationPageProps> = ({ onClose }) => {
+  const { notify, dialog: messageDialog } = useMessageModal();
   // Enter moves on like Tab; the box the cursor is in is outlined; after a pick from a list the cursor
   // goes on
   const handleEnterAsTab = useEnterAsTab();
@@ -71,7 +72,7 @@ const RptStockVerificationPage: React.FC<RptStockVerificationPageProps> = ({ onC
         const result = await response.json();
 
         if (!response.ok || !result.success) {
-          toast.error(result.message || "Failed to load the Branches");
+          notify.error(result.message || "Failed to load the Branches");
           return;
         }
 
@@ -91,7 +92,7 @@ const RptStockVerificationPage: React.FC<RptStockVerificationPageProps> = ({ onC
         setGroupRows(result.groups || []);
       } catch (error: unknown) {
         console.error("rptStockVerification lookups error:", error);
-        toast.error("Cannot connect to the Stock Verification API.");
+        notify.error("Cannot connect to the Stock Verification API.");
       }
     };
 
@@ -148,7 +149,7 @@ const RptStockVerificationPage: React.FC<RptStockVerificationPageProps> = ({ onC
     if (printing || preview) return;
 
     const warn = (message: string, id: string) => {
-      toast.warning(message);
+      notify.warning(message);
       document.getElementById(id)?.focus();
     };
 
@@ -179,7 +180,7 @@ const RptStockVerificationPage: React.FC<RptStockVerificationPageProps> = ({ onC
       const result = await response.json();
 
       if (!response.ok || !result.success) {
-        toast.warning(result.message || "The Stock Verification report could not be printed.");
+        notify.warning(result.message || "The Stock Verification report could not be printed.");
         if (result.field) document.getElementById(result.field)?.focus();
         return;
       }
@@ -187,7 +188,7 @@ const RptStockVerificationPage: React.FC<RptStockVerificationPageProps> = ({ onC
       setPreview({ report: result.report, fileBase: result.fileBase, params });
     } catch (error: unknown) {
       console.error("rptStockVerification print error:", error);
-      toast.error("Cannot connect to the Stock Verification API.");
+      notify.error("Cannot connect to the Stock Verification API.");
     } finally {
       setPrinting(false);
     }
@@ -215,7 +216,7 @@ const RptStockVerificationPage: React.FC<RptStockVerificationPageProps> = ({ onC
         message = `Could not create the Excel file (error ${response.status})`;
       }
 
-      toast.error(message);
+      notify.error(message);
       return null;
     }
 
@@ -265,6 +266,7 @@ const RptStockVerificationPage: React.FC<RptStockVerificationPageProps> = ({ onC
         )
       }
     >
+      {messageDialog}
       <BranchFilter
         mode={rdgBranch}
         onModeChange={setRdgBranch}

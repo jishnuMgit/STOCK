@@ -5,6 +5,7 @@ import "react-toastify/dist/ReactToastify.css";
 
 import NavShell from "./components/NavShell/NavShell";
 import AppRoutes from "./routes/AppRoutes";
+import MessageModalHost from "./components/common/MessageModalHost";
 import "./App.css";
 
 /* =========================================================
@@ -25,6 +26,7 @@ function AppLayout() {
         </NavShell>
       )}
 
+      <MessageModalHost />
       <ToastContainer
         position="top-right"
         autoClose={2000}

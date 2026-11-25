@@ -6,8 +6,6 @@ import React, {
   useRef,
   useState,
 } from "react";
-import { toast } from "react-toastify";
-
 import SalesInvoiceHeader from "../../../components/Transaction/SalesInvoice/SalesInvoiceHeader";
 import SalesInvoiceTable from "../../../components/Transaction/SalesInvoice/SalesInvoiceTable";
 import SalesInvoiceFooter from "../../../components/Transaction/SalesInvoice/SalesInvoiceFooter";
@@ -23,6 +21,7 @@ import useSalesInvoice, {
 } from "../../../hooks/useSalesInvoice";
 import { getSession } from "../../../utils/session";
 import BranchStockModal from "../../../components/Transaction/SalesInvoice/BrandStockModal";
+import { useMessageModal } from "../../../hooks/useMessageModal";
 
 // ============================================================
 // HELPERS
@@ -94,14 +93,18 @@ const sameInputs = (a: SalesRow, b: SalesRow) =>
   a.unitPrice === b.unitPrice &&
   a.itemDiscAmt === b.itemDiscAmt;
 
-const showError = (err: unknown, fallback: string) =>
-  toast.error(err instanceof Error ? err.message : fallback);
+const showError = (
+  notify: { error: (message: string) => void },
+  err: unknown,
+  fallback: string,
+) => notify.error(err instanceof Error ? err.message : fallback);
 
 // ============================================================
 // PAGE
 // ============================================================
 
 const SalesInvoice: React.FC = () => {
+  const { notify, dialog: messageDialog } = useMessageModal();
   const {
     branchOptions,
     branch,
@@ -159,7 +162,7 @@ const SalesInvoice: React.FC = () => {
 
   // errors raised inside the hook (e.g. loading an invoice)
   useEffect(() => {
-    if (error) toast.error(error, { toastId: error });
+    if (error) notify.error(error);
   }, [error]);
 
   // invoice types (R / C) from the server
@@ -209,7 +212,7 @@ const SalesInvoice: React.FC = () => {
         lastDocNo.current = docNo;
         setHeader((h) => ({ ...h, docNo }));
       } catch (err) {
-        showError(err, "Failed to get the next invoice no.");
+        showError(notify, err, "Failed to get the next invoice no.");
       }
     },
     [getNextDocNo],
@@ -226,7 +229,7 @@ const SalesInvoice: React.FC = () => {
       try {
         await getLookups(branchId);
       } catch (err) {
-        if (!cancelled) showError(err, "Failed to load lookups");
+        if (!cancelled) showError(notify, err, "Failed to load lookups");
       }
       if (!cancelled) await loadNextDocNo(branchId, fresh.date);
     })();
@@ -303,7 +306,7 @@ const SalesInvoice: React.FC = () => {
             : { ...cur, discPer: result.totals.discPer.toFixed(2) },
         );
       } catch (err) {
-        showError(err, "Failed to calculate totals");
+        showError(notify, err, "Failed to calculate totals");
       }
     },
     [calcTotals],
@@ -430,13 +433,13 @@ const SalesInvoice: React.FC = () => {
         originalSlNos,
         userDate: serverNow,
       });
-      toast.success(
+      notify.success(
         mode === "S" ? "Sales Invoice saved" : "Sales Invoice modified",
       );
       const fresh = resetForm(h.brId);
       await loadNextDocNo(fresh.brId, fresh.date);
     } catch (err) {
-      showError(err, "Not saved, try again");
+      showError(notify, err, "Not saved, try again");
       setBusy(false);
       return;
     }
@@ -472,11 +475,11 @@ const SalesInvoice: React.FC = () => {
     setBusy(true);
     try {
       await deleteInvoice(yearFor(h.date), h.brId, h.docNo);
-      toast.success("Deleted");
+      notify.success("Deleted");
       const fresh = resetForm(h.brId);
       await loadNextDocNo(fresh.brId, fresh.date);
     } catch (err) {
-      showError(err, "Not deleted, try again");
+      showError(notify, err, "Not deleted, try again");
     } finally {
       setBusy(false);
     }
@@ -491,9 +494,9 @@ const SalesInvoice: React.FC = () => {
       const serverNow = await getServerDate();
       await postInvoice(yearFor(h.date), h.brId, h.docNo, serverNow);
       await loadInvoice(h.brId, h.date, h.docNo);
-      toast.success("Sales Invoice posted");
+      notify.success("Sales Invoice posted");
     } catch (err) {
-      showError(err, "Not posted, try again");
+      showError(notify, err, "Not posted, try again");
     } finally {
       setBusy(false);
     }
@@ -502,7 +505,7 @@ const SalesInvoice: React.FC = () => {
   // VB: Stock button -> stock of the active row's item in every branch
   const handleStockClick = async () => {
     if (!activeItemId) {
-      toast.info("Select an item first");
+      notify.info("Select an item first");
       return;
     }
 
@@ -525,11 +528,11 @@ const SalesInvoice: React.FC = () => {
       setStockPopup((p) => ({ ...p, loading: false, ...r }));
     } catch (err) {
       setStockPopup((p) => ({ ...p, open: false, loading: false }));
-      showError(err, "Failed to load branch stock");
+      showError(notify, err, "Failed to load branch stock");
     }
   };
 
-  const handlePrint = () => toast.info("Print is not available yet");
+  const handlePrint = () => notify.info("Print is not available yet");
 
   // ==========================================================
   // FOOTER SUMS (VB grid footer)
@@ -547,6 +550,7 @@ const SalesInvoice: React.FC = () => {
 
   return (
     <div className="flex h-full w-full justify-center overflow-auto bg-gray-100">
+      {messageDialog}
       <main className="h-fit w-full min-w-300 max-w-300 border border-gray-400 mt-5 mb-5 bg-white text-[#202020]">
         <div className="flex w-full flex-col mb-2">
           {/* Header */}

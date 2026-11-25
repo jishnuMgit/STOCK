@@ -1,5 +1,4 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
-import { toast } from "react-toastify";
 import { buildItemListPdf } from "./downloadItemListPdf";
 import { saveFile } from "./saveFile";
 import {
@@ -18,6 +17,7 @@ import {
 } from "../../../../components/common/ReportFilters";
 import { useEnterAsTab } from "../../../../hooks/useEnterAsTab";
 import Header from "../../../../components/common/Header";
+import { useMessageModal } from "../../../../hooks/useMessageModal";
 
 type Option = { value: string; label: string };
 
@@ -65,6 +65,7 @@ type RptItemListPageProps = {
 };
 
 const RptItemListPage: React.FC<RptItemListPageProps> = ({ onClose }) => {
+  const { notify, dialog: messageDialog } = useMessageModal();
   const [branches, setBranches] = useState<Branch[]>([]);
   const [groupsById, setGroupsById] = useState<Group[]>([]);
   const [itemsById, setItemsById] = useState<Item[]>([]);
@@ -199,7 +200,7 @@ const RptItemListPage: React.FC<RptItemListPageProps> = ({ onClose }) => {
         const data = await res.json();
 
         if (!res.ok || !data.success) {
-          toast.error(data.message || "Failed to load the lookups");
+          notify.error(data.message || "Failed to load the lookups");
           return;
         }
         if (cancelled) return;
@@ -220,7 +221,7 @@ const RptItemListPage: React.FC<RptItemListPageProps> = ({ onClose }) => {
             : null,
         );
       } catch {
-        if (!cancelled) toast.error("Failed to load the lookups");
+        if (!cancelled) notify.error("Failed to load the lookups");
       } finally {
         if (!cancelled) setLoading(false);
       }
@@ -240,28 +241,28 @@ const RptItemListPage: React.FC<RptItemListPageProps> = ({ onClose }) => {
     const oneGroup = groupMode === "One Item Group";
 
     if (oneBranch && !branch) {
-      toast.warning("Please select 'Branch'", { toastId: "il-branch" });
+      notify.warning("Please select 'Branch'");
       document.getElementById("lkpBranch")?.focus();
       return null;
     }
     if (oneGroup && !groupId) {
-      toast.warning("Please select 'Item Group'", { toastId: "il-group" });
+      notify.warning("Please select 'Item Group'");
       document.getElementById("lkpItemGroupID")?.focus();
       return null;
     }
     if (itemMode === "One Item" && !itemId) {
-      toast.warning("Please select 'Item ID'", { toastId: "il-item" });
+      notify.warning("Please select 'Item ID'");
       document.getElementById("lkpItemID")?.focus();
       return null;
     }
     if (itemMode === "Range Item") {
       if (!fromItem) {
-        toast.warning("Please select 'Item ID From'", { toastId: "il-from" });
+        notify.warning("Please select 'Item ID From'");
         document.getElementById("lkpFromItem")?.focus();
         return null;
       }
       if (!toItem) {
-        toast.warning("Please select 'Item ID To'", { toastId: "il-to" });
+        notify.warning("Please select 'Item ID To'");
         document.getElementById("lkpToItem")?.focus();
         return null;
       }
@@ -302,7 +303,7 @@ const RptItemListPage: React.FC<RptItemListPageProps> = ({ onClose }) => {
             ? "Excel is not available: the /excel route was not found (404)"
             : `Could not create the Excel file (error ${res.status})`;
       }
-      toast.error(message);
+      notify.error(message);
       return null;
     }
 
@@ -329,13 +330,13 @@ const RptItemListPage: React.FC<RptItemListPageProps> = ({ onClose }) => {
       const data = await res.json();
 
       if (!res.ok || !data.success) {
-        toast.error(data.message || "Could not prepare the report");
+        notify.error(data.message || "Could not prepare the report");
         return;
       }
 
       setPreview({ report: data.report, fileBase: data.fileBase, request });
     } catch {
-      toast.error("Could not prepare the report");
+      notify.error("Could not prepare the report");
     } finally {
       setPrinting(false);
     }
@@ -347,7 +348,7 @@ const RptItemListPage: React.FC<RptItemListPageProps> = ({ onClose }) => {
     try {
       printItemListReport(preview.report);
     } catch {
-      toast.error("Could not open the print view");
+      notify.error("Could not open the print view");
     }
   };
 
@@ -372,11 +373,11 @@ const RptItemListPage: React.FC<RptItemListPageProps> = ({ onClose }) => {
       const saved = await saveFile(blob, `${fileBase}.${kind}`, kind);
       if (saved) {
 
-        toast.success(asPdf ? "PDF file downloaded" : "Excel file downloaded");
+        notify.success(asPdf ? "PDF file downloaded" : "Excel file downloaded");
         setPreview(null); // cancelled "Save as": the preview stays
       }
     } catch {
-      toast.error(
+      notify.error(
         asPdf ? "Could not create the PDF file" : "Could not create the Excel file",
       );
     } finally {
@@ -515,6 +516,7 @@ const RptItemListPage: React.FC<RptItemListPageProps> = ({ onClose }) => {
         )
       }
     >
+      {messageDialog}
       <BranchFilter
         mode={branchMode}
         onModeChange={setBranchMode}

@@ -11,8 +11,6 @@ import {
   type StylesConfig,
 } from "react-select";
 import dayjs from "dayjs";
-import { toast } from "react-toastify";
-
 import { handleKeyboardAction } from "../../../hooks/useMatchKeyboard";
 
 import type {
@@ -31,6 +29,7 @@ import type {
   MatchingComponentsRef,
 } from "./types";
 import CommonTableSelect, { type TableSelectOption } from "../../common/CommonTableSelect";
+import { useMessageModal } from "../../../hooks/useMessageModal";
 
 interface Props {
   lkpBranch: string;
@@ -234,6 +233,7 @@ const ResponsiveSelect = ({
 
 const MatchEnquiryComponents = forwardRef<MatchingComponentsRef, Props>(
   (props, ref) => {
+    const { notify, dialog: messageDialog } = useMessageModal();
     const {
       lkpBranch,
       setLkpBranch,
@@ -443,7 +443,7 @@ const MatchEnquiryComponents = forwardRef<MatchingComponentsRef, Props>(
           setDocumentNoOptions(options);
         } catch (error) {
           if (!cancelled) {
-            toast.error(
+            notify.error(
               error instanceof Error
                 ? error.message
                 : "Failed to load the document numbers",
@@ -609,6 +609,7 @@ const MatchEnquiryComponents = forwardRef<MatchingComponentsRef, Props>(
 
     return (
       <div className="w-full border border-[#9aa4ad] bg-white font-sans text-[13px] text-slate-700">
+        {messageDialog}
         <MatchEnquiryHeader
           lkpBranch={lkpBranch}
           setLkpBranch={setLkpBranch}

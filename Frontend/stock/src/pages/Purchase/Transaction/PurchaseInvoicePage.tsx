@@ -17,9 +17,9 @@ import {
   type Item,
   type SupplierLookup,
 } from "../../../hooks/Purchase/Transaction/usePurchaseInvoice";
-import { toast } from "react-toastify";
 import { useConfirmModal } from "../../../hooks/useConfirmModal";
 import Header from "../../../components/common/Header";
+import { useMessageModal } from "../../../hooks/useMessageModal";
 
 const ROW_COUNT = 11;
 const createRows = () => Array.from({ length: ROW_COUNT }, emptyRow);
@@ -47,6 +47,7 @@ const recalcRow = (row: PurchaseRow, rate: number): PurchaseRow => {
 };
 
 const PurchaseInvoicePage: React.FC = () => {
+  const { notify, dialog: messageDialog } = useMessageModal();
   const {
     fetchDefaultBranch,
     fetchNextDocNo,
@@ -376,7 +377,7 @@ const PurchaseInvoicePage: React.FC = () => {
   const handleRowDelete = useCallback(
     (index: number) => {
       if (posted) {
-        toast.warning("Posted Purchase Invoice cannot be modified");
+        notify.warning("Posted Purchase Invoice cannot be modified");
         return;
       }
       setRows((prev) => {
@@ -489,7 +490,7 @@ const PurchaseInvoicePage: React.FC = () => {
       );
       setRows(updated);
     } catch (err) {
-      toast.error(
+      notify.error(
         err instanceof Error ? err.message : "Failed to calculate unit cost",
       );
     }
@@ -497,13 +498,11 @@ const PurchaseInvoicePage: React.FC = () => {
 
   const handleSave = useCallback(async () => {
     if (posted) {
-      toast.warning("Posted Purchase Invoice cannot be modified");
+      notify.warning("Posted Purchase Invoice cannot be modified");
       return;
     }
     if (miscMode === "Yes" && !header.miscSupId) {
-      toast.warning("Please select a 'Misc. Sup.' or change it to 'No'", {
-        toastId: "misc-sup-warning", // prevents duplicate toasts
-      });
+      notify.warning("Please select a 'Misc. Sup.' or change it to 'No'");
       document.getElementById("lkpMiscSupID")?.focus();
       return;
     }
@@ -517,10 +516,10 @@ const PurchaseInvoicePage: React.FC = () => {
         originalSlNos,
         expenses: expenseRows,
       });
-      toast.success(mode === "S" ? "Saved" : "Modified");
+      notify.success(mode === "S" ? "Saved" : "Modified");
       handleClear();
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Not saved, try again");
+      notify.error(err instanceof Error ? err.message : "Not saved, try again");
     }
   }, [
     posted,
@@ -537,7 +536,7 @@ const PurchaseInvoicePage: React.FC = () => {
 
   const handleDelete = useCallback(async () => {
     if (posted) {
-      toast.warning("Posted Purchase Invoice cannot be deleted");
+      notify.warning("Posted Purchase Invoice cannot be deleted");
       return;
     }
     const ok = await confirm({
@@ -547,10 +546,10 @@ const PurchaseInvoicePage: React.FC = () => {
     if (!ok) return;
     try {
       await deleteInvoice(YEAR, header.brId, header.docNo);
-      toast.success("Deleted");
+      notify.success("Deleted");
       handleClear();
     } catch (err) {
-      toast.error(
+      notify.error(
         err instanceof Error ? err.message : "Not deleted, try again",
       );
     }
@@ -559,11 +558,11 @@ const PurchaseInvoicePage: React.FC = () => {
   /* Post: only an already-saved (loaded) invoice can be posted */
   const handlePost = useCallback(async () => {
     if (mode !== "M") {
-      toast.warning("Please save the invoice before posting");
+      notify.warning("Please save the invoice before posting");
       return;
     }
     if (posted) {
-      toast.warning("Purchase Invoice is already posted");
+      notify.warning("Purchase Invoice is already posted");
       return;
     }
     const ok = await confirm({
@@ -575,10 +574,10 @@ const PurchaseInvoicePage: React.FC = () => {
     try {
       setPosting(true);
       await postInvoice(YEAR, header.brId, header.docNo);
-      toast.success("Posted");
+      notify.success("Posted");
       handleClear();
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Not posted, try again");
+      notify.error(err instanceof Error ? err.message : "Not posted, try again");
     } finally {
       setPosting(false);
     }
@@ -594,6 +593,7 @@ const PurchaseInvoicePage: React.FC = () => {
 
   return (
     <main className="mx-auto mt-4 flex h-fit w-full max-w-275 flex-col overflow-hidden border border-slate-400 bg-white text-[12px] text-slate-800">
+      {messageDialog}
       <Header Name="Purchase Invoice" />
 
       <PurchaseForm

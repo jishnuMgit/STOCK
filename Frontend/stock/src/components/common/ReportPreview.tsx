@@ -1,9 +1,8 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
-import { toast } from "react-toastify";
-
 import { saveFile } from "../../pages/Finance/Report/ChartOfAccount/saveFile";
 import Header from "./Header";
 import { previewPrintedLine, printPdfBlob } from "./printHtml";
+import { useMessageModal } from "../../hooks/useMessageModal";
 
 // ============================================================
 // THE PRINT PREVIEW (the same window as the Chart Of Account report)
@@ -73,6 +72,7 @@ const ReportPreview: React.FC<Props> = ({
   onClose,
   showClose = true,
 }) => {
+  const { notify, dialog: messageDialog } = useMessageModal();
   const [rdgReportFile, setRdgReportFile] = useState<FileFormat>("Excel");
   const [busy, setBusy] = useState(false);
 
@@ -106,7 +106,7 @@ const ReportPreview: React.FC<Props> = ({
       try {
         onPrint();
       } catch {
-        toast.error("Could not open the print view");
+        notify.error("Could not open the print view");
       }
     } finally {
       downloading.current = false;
@@ -131,12 +131,12 @@ const ReportPreview: React.FC<Props> = ({
       const saved = await saveFile(blob, `${fileBase}.${kind}`, kind);
 
       if (saved) {
-        toast.success(asPdf ? "PDF file downloaded" : "Excel file downloaded");
+        notify.success(asPdf ? "PDF file downloaded" : "Excel file downloaded");
         onClose();
       }
       // a cancelled "Save as": the preview stays
     } catch {
-      toast.error(
+      notify.error(
         asPdf ? "Could not create the PDF file" : "Could not create the Excel file",
       );
     } finally {
@@ -176,6 +176,7 @@ const ReportPreview: React.FC<Props> = ({
 
   return (
     <div className="fixed inset-0 z-[99999] flex items-center justify-center bg-black/40 p-4">
+      {messageDialog}
       <div className="flex h-[90vh] w-full max-w-250 flex-col overflow-hidden border border-gray-400 bg-white shadow-xl">
         <Header Name="Print Preview" />
 

@@ -1,12 +1,11 @@
 import React, { useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
-import { toast } from "react-toastify";
-
 import TopNav from "../TopNav/TopNav"; 
 import SideNav from "../../pages/nav/SideNav";
 import { useMenuTree } from "../../hooks/useMenuTree";
 import { getMenuRoute } from "../../config/menuConfig";
 import type { MenuNode } from "../../types/menu";
+import { useMessageModal } from "../../hooks/useMessageModal";
 
 interface Section {
   parent: MenuNode; // main menu, e.g. Finance
@@ -14,6 +13,7 @@ interface Section {
 }
 
 export default function NavShell({ children }: { children: React.ReactNode }) {
+  const { notify, dialog: messageDialog } = useMessageModal();
   const navigate = useNavigate();
   const { pathname } = useLocation();
   const { menuTree, loading, error } = useMenuTree();
@@ -25,7 +25,7 @@ export default function NavShell({ children }: { children: React.ReactNode }) {
     const route = getMenuRoute(node);
 
     if (!route) {
-      toast.info(`"${node.fmenucaption}" isn't available yet`);
+      notify.info(`"${node.fmenucaption}" isn't available yet`);
       return false;
     }
 
@@ -35,6 +35,7 @@ export default function NavShell({ children }: { children: React.ReactNode }) {
 
   return (
     <div className="app-shell">
+      {messageDialog}
       <TopNav
         menuTree={menuTree}
         loading={loading}
