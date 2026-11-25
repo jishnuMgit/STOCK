@@ -697,7 +697,7 @@ const StaffPage: React.FC = () => {
         onKeyDown={handlePageKeyDown}
         className="flex min-h-screen w-full items-center justify-center bg-white"
       >
-        <div className="w-full max-w-[640px] border border-slate-400 bg-white shadow-sm">
+        <div className="w-full max-w-[700px] border border-slate-400 bg-white shadow-sm">
           {/* ====================================================
             TITLE
         ==================================================== */}
@@ -724,7 +724,7 @@ const StaffPage: React.FC = () => {
 
                   <thead>
                     <tr>
-                      <th className="sticky top-0 z-20 h-[34px] border border-[#bfe8d0] bg-[#edf9f2] p-0" />
+                      <th className="sticky top-0 z-20 h-[34px] border border-[#bfe8d0] bg-[#edf9f2] p-0" /> 
 
                       <th className={`${headerCellClass} text-left !pl-[2px]`}>ID</th>
                       <th className={`${headerCellClass} text-left !pl-[2px]`}>Staff</th>
