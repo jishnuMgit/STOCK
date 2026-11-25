@@ -377,7 +377,7 @@ const ItemRows: React.FC<{
   onItemChange: (id: string | null) => void;
 }> = ({ itemId, onItemChange }) => (
   <Field
-    label="Item :"
+    label="Asset :"
     labelClassName={LL}
     className="sm:col-span-2 lg:col-span-12"
   >
