@@ -186,19 +186,9 @@ export const saveStaff = async (
       });
     }
 
-    // removing a staff member: only an Admin User (type AU) may, whatever
-    // rights a Restricted User was given; the Delete right is checked too
-    // (the old CanDeleteGrid), and a staff member that is already used cannot go
-    // (the old HaveTrans)
+    // removing a staff member: any user who has the Delete right may (the old CanDeleteGrid), and a staff
+    // member that is already used cannot go (the old HaveTrans)
     if (deletedRows.length > 0) {
-      if (req.user.userType !== "AU") {
-        return res.status(403).json({
-          success: false,
-          message: "Only an Admin User can delete staff.",
-          field: "txtStaffID-0",
-        });
-      }
-
       if (!(await hasButtonRight(req.user, MENU_ID, "D"))) {
         return res.status(403).json({
           success: false,

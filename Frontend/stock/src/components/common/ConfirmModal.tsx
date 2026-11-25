@@ -134,7 +134,8 @@ const ConfirmModal: React.FC<ConfirmModalProps> = ({
             onClick={onCancel}
             className={`btn-style ${focusStyle}`}
           >
-            <HotLabel text={cancelLabel} />
+            {/* the Cancel button has no underlined letter (Esc cancels) */}
+            {cancelLabel}
           </button>
         </div>
       </div>

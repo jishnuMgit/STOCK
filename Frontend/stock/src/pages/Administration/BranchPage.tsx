@@ -414,7 +414,7 @@ const BranchPage: React.FC = () => {
     setReloadKey((previous) => previous + 1);
   };
 
-  // The keys of the Payment screen: Ctrl+S Save, Ctrl+F Find
+  // The keys of the Payment screen: Ctrl+S Save, Ctrl+F Search
   useCtrlShortcuts({ s: handleSave, f: handleFind });
 
   const search = txtFind.trim().toLowerCase();
@@ -618,7 +618,7 @@ const BranchPage: React.FC = () => {
               className="mt-5 flex justify-center gap-3"
               actions={[
                 { id: "btnSave", label: "Save", underlineIndex: 0, onClick: handleSave, disabled: saving },
-                { id: "btnFind", label: "Find", underlineIndex: 0, onClick: handleFind },
+                { id: "btnFind", label: "Search", underlineIndex: 0, onClick: handleFind },
                 { id: "btnClear", label: "Clear", onClick: handleClear, disabled: saving },
               ]}
             />

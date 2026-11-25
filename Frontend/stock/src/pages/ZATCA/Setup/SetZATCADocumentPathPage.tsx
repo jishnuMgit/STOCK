@@ -1,6 +1,10 @@
 import React, { useCallback, useEffect, useState } from "react";
 import { HiOutlineDotsHorizontal, HiOutlineFolder } from "react-icons/hi";
+import Header from "../../../components/common/Header";
 import { useMessageModal } from "../../../hooks/useMessageModal";
+import { useCtrlShortcuts } from "../../../hooks/useCtrlShortcuts";
+import TransactionActions from "../../../components/common/TransactionActions";
+
 // Router mount: app.use("/api/zatca-file-path", zatcaFilePathRouter)
 const API = import.meta.env.VITE_API_URL + "/zatca-file-path";
 
@@ -34,9 +38,9 @@ type SetZATCADocumentPathProps = {
 const DEFAULT_PATH = "C:\\";
 
 const SetZATCADocumentPath: React.FC<SetZATCADocumentPathProps> = () => {
-  const { notify, dialog: messageDialog } = useMessageModal();
+  // the messages (warnings, errors, saved ...) are the common message window, as on the Payment screen - not a toast
+  const { notify, dialog: messageDialog } = useMessageModal("Set ZATCA Document Path");
   const [serverBackupPath, setServerBackupPath] = useState(DEFAULT_PATH);
-  const [exists, setExists] = useState(false); // false => Save, true => Modify
   const [loading, setLoading] = useState(true);
   const [pickerOpen, setPickerOpen] = useState(false);
   const [listing, setListing] = useState<FolderListing | null>(null);
@@ -48,12 +52,6 @@ const SetZATCADocumentPath: React.FC<SetZATCADocumentPathProps> = () => {
     "outline-none focus:border-[#91a7b9] disabled:cursor-not-allowed " +
     "disabled:bg-[#f3f5f7] disabled:text-[#98a2b3]";
 
-  const buttonClass =
-    "btn-style inline-flex h-[34px] min-w-[90px] items-center " +
-    "justify-center rounded-[4px] border border-[#cfd7df] " +
-    "bg-white px-4 text-[14px] text-[#344054] shadow-sm " +
-    "hover:bg-[#f3f7f5] active:bg-[#e7eee9]";
-
   // page load + Cancel: the saved path of the company
   const loadData = useCallback(async () => {
     try {
@@ -61,7 +59,6 @@ const SetZATCADocumentPath: React.FC<SetZATCADocumentPathProps> = () => {
         "/getZATCAFilePath"
       );
       setServerBackupPath(data.exists ? data.filePath : DEFAULT_PATH);
-      setExists(data.exists);
     } catch (e) {
       notify.error((e as Error).message);
     } finally {
@@ -79,7 +76,6 @@ const SetZATCADocumentPath: React.FC<SetZATCADocumentPathProps> = () => {
         }>("/getZATCAFilePath");
         if (active) {
           setServerBackupPath(data.exists ? data.filePath : DEFAULT_PATH);
-          setExists(data.exists);
         }
       } catch (e) {
         if (active) notify.error((e as Error).message);
@@ -138,7 +134,6 @@ const SetZATCADocumentPath: React.FC<SetZATCADocumentPathProps> = () => {
         method: "POST",
         body: JSON.stringify({ filePath: serverBackupPath.trim() }),
       });
-      setExists(true);
       notify.success(message);
     } catch (e) {
       notify.error((e as Error).message);
@@ -147,6 +142,9 @@ const SetZATCADocumentPath: React.FC<SetZATCADocumentPathProps> = () => {
     }
   };
 
+
+  // Ctrl+S saves (the key of the Payment screen)
+  useCtrlShortcuts({ s: handleModify });
 
   const renderPathField = (
     id: string,
@@ -197,11 +195,7 @@ const SetZATCADocumentPath: React.FC<SetZATCADocumentPathProps> = () => {
       <div className=" max-w-160  bg-white">
         <main className="w-full border border-gray-400 bg-white">
           {/* Header */}
-          <header className="flex h-7.5 items-center bg-[#9fdfbc]">
-            <h1 className="ml-4 text-[17px]  font-semibold text-[#374151]">
-              Set ZATCA Document Path
-            </h1>
-          </header>
+          <Header Name="Set ZATCA Document Path" />
 
           {/* Form */}
           <section className="px-4 pb-5 pt-5 sm:px-6">
@@ -216,36 +210,14 @@ const SetZATCADocumentPath: React.FC<SetZATCADocumentPathProps> = () => {
             </div>
 
             {/* Actions */}
-            <div className="mt-5 flex justify-center gap-3">
-              <button
-                id="btnModify"
-                type="button"
-                onClick={handleModify}
-                disabled={loading}
-                className={buttonClass}
-              >
-                {exists ? (
-                  <>
-                    <u>M</u>odify
-                  </>
-                ) : (
-                  <>
-                    <u>S</u>ave
-                  </>
-                )}
-              </button>
-              <button
-                id="btnCancel"
-                type="button"
-                onClick={handleCancel}
-                disabled={loading}
-                className={buttonClass}
-              >
-                <u>C</u>lear
-              </button>
-
-
-            </div>
+            <TransactionActions
+              className="mt-5 flex justify-center gap-3"
+              actions={[
+                // always "Save": there is no "Modify" wording on the setup screens (a saved path is updated by the same button)
+                { id: "btnModify", label: "Save", underlineIndex: 0, onClick: handleModify, disabled: loading },
+                { id: "btnCancel", label: "Clear", onClick: handleCancel, disabled: loading },
+              ]}
+            />
           </section>
         </main>
       </div>
@@ -296,23 +268,18 @@ const SetZATCADocumentPath: React.FC<SetZATCADocumentPathProps> = () => {
                 )}
               </ul>
 
-              <div className="mt-4 flex justify-center gap-3">
-                <button
-                  type="button"
-                  onClick={handleSelectFolder}
-                  disabled={!listing?.current || pickerLoading}
-                  className={buttonClass}
-                >
-                  <u>S</u>elect
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setPickerOpen(false)}
-                  className={buttonClass}
-                >
-                  <u>C</u>lear
-                </button>
-              </div>
+              <TransactionActions
+                className="mt-4 flex justify-center gap-3"
+                actions={[
+                  {
+                    id: "btnSelectFolder",
+                    label: "Select",
+                    onClick: handleSelectFolder,
+                    disabled: !listing?.current || pickerLoading,
+                  },
+                  { id: "btnCloseFolder", label: "Clear", onClick: () => setPickerOpen(false) },
+                ]}
+              />
             </div>
           </div>
         </div>

@@ -537,7 +537,7 @@ const DocumentPage: React.FC = () => {
     setReloadKey((previous) => previous + 1);
   };
 
-  // The keys of the Payment screen: Ctrl+S Save, Ctrl+F Find
+  // The keys of the Payment screen: Ctrl+S Save, Ctrl+F Search
   useCtrlShortcuts({ s: handleSave, f: handleFind });
 
   const search = txtFind.trim().toLowerCase();
@@ -579,7 +579,8 @@ const DocumentPage: React.FC = () => {
                   placeholder=""
                   classNames={selectClassNames}
                   components={moduleComponents}
-                  styles={branchMenuStyles}
+                  // the list is drawn in the page body: its layer must be above the sticky heading row of the grid below
+                  styles={{ ...branchMenuStyles, menuPortal: (base) => ({ ...base, zIndex: 999999 }) }}
                   filterOption={filterLabelOrValue}
                   noOptionsMessage={() => "No Module Found"}
                   menuPosition="fixed"
@@ -776,7 +777,7 @@ const DocumentPage: React.FC = () => {
               className="mt-5 flex justify-center gap-3"
               actions={[
                 { id: "btnSave", label: "Save", underlineIndex: 0, onClick: handleSave, disabled: saving },
-                { id: "btnFind", label: "Find", underlineIndex: 0, onClick: handleFind },
+                { id: "btnFind", label: "Search", underlineIndex: 0, onClick: handleFind },
                 { id: "btnClear", label: "Clear", onClick: handleClear, disabled: saving },
               ]}
             />

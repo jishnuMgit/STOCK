@@ -526,7 +526,7 @@ console.log(onClose)
   // KEYBOARD SHORTCUTS (page wide)
   //  Ctrl+S  Save / Modify
   //  Ctrl+D  delete the selected row (also Ctrl+Delete; also when focus is not in a box)
-  //  Ctrl+F  Find
+  //  Ctrl+F  Search
   // No dependency array on purpose: the listener is re-attached after every
   // render, so it always sees the latest rows / permissions / handlers.
   // ============================================================
@@ -704,7 +704,7 @@ console.log(onClose)
                 onClick: handleSave,
                 disabled: !canSaveOrModify || saving,
               },
-              { id: "btnSearch", label: "Find", underlineIndex: 0, onClick: openFind },
+              { id: "btnSearch", label: "Search", underlineIndex: 0, onClick: openFind },
               { id: "btnClear", label: "Clear", onClick: handleClear },
             ]}
           />

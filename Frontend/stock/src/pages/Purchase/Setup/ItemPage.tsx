@@ -819,7 +819,7 @@ const ItemPage: React.FC = () => {
 
   /* =========================================================
      KEYBOARD SHORTCUTS
-     The keys of the Payment screen: Ctrl+S Save / Modify, Ctrl+F Find, Ctrl+D Delete.
+     The keys of the Payment screen: Ctrl+S Save / Modify, Ctrl+F Search, Ctrl+D Delete.
   ========================================================= */
 
   useCtrlShortcuts({
@@ -1640,7 +1640,7 @@ const ItemPage: React.FC = () => {
                     onClick: handleSave,
                     disabled: !canSaveOrModify,
                   },
-                  { id: "Findbtn", label: "Find", underlineIndex: 0, onClick: handleFind },
+                  { id: "Findbtn", label: "Search", underlineIndex: 0, onClick: handleFind },
                   {
                     id: "Deletebtn",
                     label: "Delete",
