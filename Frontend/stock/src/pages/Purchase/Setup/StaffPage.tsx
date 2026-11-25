@@ -697,7 +697,7 @@ const StaffPage: React.FC = () => {
         onKeyDown={handlePageKeyDown}
         className="flex min-h-screen w-full items-center justify-center bg-white"
       >
-        <div className="w-full max-w-[640px] border border-slate-400 bg-white shadow-sm">
+        <div className="w-full max-w-[700px] border border-slate-400 bg-white shadow-sm">
           {/* ====================================================
             TITLE
         ==================================================== */}
