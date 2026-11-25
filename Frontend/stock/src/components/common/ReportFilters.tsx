@@ -113,7 +113,9 @@ export const BranchFilter: React.FC<{
   allDisabled?: boolean;
   // something at the right end of the row, always shown (Customer Sales: "Order By Amount")
   aside?: React.ReactNode;
-}> = ({ mode, onModeChange, options, value, onChange, withSelected = false, selectedIds = [], onTick, allDisabled = false, aside }) => {
+  // the words in the empty Branch box: "Select Branch" unless the page gives others ("" = none)
+  placeholder?: string;
+}> = ({ mode, onModeChange, options, value, onChange, withSelected = false, selectedIds = [], onTick, allDisabled = false, aside, placeholder = "Select Branch" }) => {
   const { advanceAfterPick, advanceOnEnter } = useAdvanceAfterSelect();
 
   const content = (
@@ -131,7 +133,7 @@ export const BranchFilter: React.FC<{
             columns={BRANCH_COLUMNS}
             width="250px"
             menuWidth="320px"
-            placeholder="Select Branch"
+            placeholder={placeholder}
             filterOption={filterLabelOrValue}
             menuPortalTarget={typeof document !== "undefined" ? document.body : undefined}
             noOptionsMessage={() => "No Branch Found"}
@@ -695,8 +697,10 @@ export const ReportPrintRow: React.FC<{
   disabled?: boolean;
   // more buttons beside Print (Clear)
   children?: React.ReactNode;
-}> = ({ onPrint, disabled = false, children }) => (
-  <div className="grid grid-cols-[var(--filter-label,150px)_minmax(0,1fr)] gap-x-4">
+  // extra classes of the row, e.g. "w-full" so that a child with "ml-auto" goes to the right end of the row
+  className?: string;
+}> = ({ onPrint, disabled = false, children, className = "" }) => (
+  <div className={`grid grid-cols-[var(--filter-label,150px)_minmax(0,1fr)] gap-x-4 ${className}`}>
     <div />
     <div className="flex items-center gap-1">
       <button

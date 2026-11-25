@@ -53,11 +53,6 @@ const StaffPage: React.FC = () => {
   // the cell the cursor is in is outlined (a typed-in box has its text selected)
   const { cellFocusClass, selectOnFocus } = useGridCellFocus();
 
-  // Only Admin Users (userType "AU") may delete a saved staff member - the red X, the
-  // Alt+D key and the server all follow this, even for a Restricted User who was
-  // given the Delete right.
-  const isAdminUser = localStorage.getItem("userType") === "AU";
-
   const [rows, setRows] = useState<StaffRow[]>([]);
   const [selectedRow, setSelectedRow] = useState<number>(0);
   const [saving, setSaving] = useState(false);
@@ -539,7 +534,7 @@ const StaffPage: React.FC = () => {
   };
 
   // ============================================================
-  // DELETE ROW (the X or Alt+D - Admin Users only)
+  // DELETE ROW (the X or Ctrl+D - any user who has the Delete right)
   // A row typed and not saved just leaves the grid. A saved staff member goes from
   // the database at once, after the Delete right, the "used by transactions?" check
   // (the old HaveTrans) and the question.
@@ -557,11 +552,6 @@ const StaffPage: React.FC = () => {
       setRows((previousRows) =>
         previousRows.filter((_, rowIndex) => rowIndex !== index),
       );
-      return;
-    }
-
-    if (!isAdminUser) {
-      notify.error("Only an Admin User can delete staff.");
       return;
     }
 
@@ -864,7 +854,6 @@ const StaffPage: React.FC = () => {
                             {/* the slot is always there so the box does not move when the X shows */}
                             <span className="flex w-[28px] shrink-0 items-center justify-center">
                               {selectedRow === index &&
-                                isAdminUser &&
                                 (row.txtStaffID.trim() !== "" ||
                                   row.txtStaffName.trim() !== "") &&
                                 (row.txtOriginalStaffID === null || perms.delete) && (

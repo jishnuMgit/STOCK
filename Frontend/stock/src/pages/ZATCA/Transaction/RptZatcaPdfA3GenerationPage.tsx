@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import {
   LocalizationProvider,
 } from "@mui/x-date-pickers/LocalizationProvider";
@@ -8,13 +8,19 @@ import dayjs from "dayjs";
 import customParseFormat from "dayjs/plugin/customParseFormat";
 
 import Header from "../../../components/common/Header";
+import { useMessageModal } from "../../../hooks/useMessageModal";
+import { useCtrlShortcuts } from "../../../hooks/useCtrlShortcuts";
+import { useAltShortcuts } from "../../../hooks/useAltShortcuts";
+import { useEnterAsTab } from "../../../hooks/useEnterAsTab";
+import "../../../components/Transaction/Receipt/save/commanReceipt.css";
+import ActionButton from "../../../components/common/ActionButton";
+import TransactionActions from "../../../components/common/TransactionActions";
 import CommonTableSelect, {
   type TableSelectOption,
 } from "../../../components/common/CommonTableSelect";
 import CustomLinkedPairSelect, {
   type PairSelectOption,
 } from "../../../components/common/CustomLinkedPairSelect";
-import { useMessageModal } from "../../../hooks/useMessageModal";
 
 dayjs.extend(customParseFormat);
 
@@ -241,24 +247,8 @@ const AppDatePicker: React.FC<{
   </LocalizationProvider>
 );
 
-const ActionButton: React.FC<{
-  children: React.ReactNode;
-  onClick: () => void;
-  className?: string;
-  disabled?: boolean;
-}> = ({ children, onClick, className = "", disabled = false }) => (
-  <button
-    type="button"
-    onClick={onClick}
-    disabled={disabled}
-    className={`min-w-20 btn-style ${disabled ? "opacity-50" : ""} ${className}`}
-  >
-    {children}
-  </button>
-);
-
 const columns = [
-  { key: "slNo", label: "Line", width: "40px" },
+  { key: "slNo", label: "Line", width: "38px" },
   { key: "branchId", label: "Br. ID", width: "50px" },
   { key: "docType", label: "Doc. Type", width: "68px" },
   { key: "docNo", label: "Doc. No.", width: "100px" },
@@ -276,7 +266,8 @@ const money = (n: number): string =>
   n.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 
 const RptZatcaPdfA3Generation: React.FC = () => {
-  const { notify, dialog: messageDialog } = useMessageModal();
+  // the messages (warnings, errors, exported ...) are the common message window, as on the Payment screen - not a toast
+  const { notify, dialog: messageDialog } = useMessageModal("ZATCA PDF/A3 Generation");
   const [documentMode, setDocumentMode] = useState("All Document");
   const [branchMode, setBranchMode] = useState("All Branch");
   const [customerMode, setCustomerMode] = useState("All Customer");
@@ -309,6 +300,13 @@ const RptZatcaPdfA3Generation: React.FC = () => {
 
   const [rows, setRows] = useState<Row[]>([]);
   const [busy, setBusy] = useState(false);
+
+  // the row the cursor is on in the grid (it follows a click and the arrow keys)
+  const [currentRow, setCurrentRow] = useState(0);
+  const gridRef = useRef<HTMLDivElement | null>(null);
+
+  // Enter moves to the next field like the Tab key (the same on every screen)
+  const enterAsTab = useEnterAsTab();
 
   // the same rules as the VB form (rdgDocument / rdgBranch / rdgIDorDate / rdgCustomer):
   // All Document = all branches, by date, all customers; All Branch = by date;
@@ -419,6 +417,7 @@ const RptZatcaPdfA3Generation: React.FC = () => {
         body: JSON.stringify(body),
       });
       setRows(data.rows);
+      setCurrentRow(0);
       if (data.rows.length === 0) notify.info("No documents found");
     } catch (e) {
       setRows([]);
@@ -483,27 +482,46 @@ const RptZatcaPdfA3Generation: React.FC = () => {
     setFromDate(TODAY);
     setToDate(TODAY);
     setRows([]);
+    setCurrentRow(0);
   };
 
+  // The keys: Ctrl+F Search, Ctrl+S Export (they stop the browser's own "find" and "save page"), and the underlined
+  // letters of the buttons: Alt+S Search, Alt+E Export
+  useCtrlShortcuts({
+    f: () => {
+      if (!busy) void handleSearch();
+    },
+    s: () => {
+      if (!busy) void handleExport();
+    },
+  });
+  useAltShortcuts({
+    s: () => {
+      if (!busy) void handleSearch();
+    },
+    e: () => {
+      if (!busy) void handleExport();
+    },
+  });
 
   const emptyCount = Math.max(0, MIN_ROWS - rows.length);
 
   return (
-    <div className="min-h-full w-full bg-white p-1 sm:p-2">
+    <div className="min-h-full w-full bg-gray-100 px-3 pb-5">
       {messageDialog}
-      <main className="mx-auto w-full max-w-290 overflow-hidden rounded-[3px] border border-[#91a7bb] bg-white shadow-sm">
+      <main className="mx-auto mt-5 w-full max-w-290 overflow-hidden border border-gray-400 bg-white">
 
         {/* Window Header */}
         <Header Name="ZATCA PDF/A3 Generation" />
 
-        <section className="relative flex min-h-[650px] flex-col gap-3 px-3.5 pb-3 pt-3.5 sm:px-3.5">
+        <section className="relative flex min-h-[650px] flex-col gap-3 px-3.5 pb-3 pt-3.5 sm:px-3.5" onKeyDown={enterAsTab}>
 
           {/* Filter Section */}
           <div className="grid grid-cols-1 gap-x-3 gap-y-2 sm:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_auto]">
 
             {/* Document Selection */}
             <div className="flex items-start gap-2">
-              <RadioPanel className="w-35 min-h-18.75 shrink-0">
+              <RadioPanel className="w-41.25 min-h-18.75 shrink-0">
                 <CustomRadio
                   name="rdgDocument"
                   value="One Document"
@@ -522,16 +540,17 @@ const RptZatcaPdfA3Generation: React.FC = () => {
               </RadioPanel>
 
               {oneDocument && (
-                <div className="w-full max-w-55 min-w-0 pt-2.5">
+                <div className="w-55 min-w-0 pt-2.5">
                   <CommonTableSelect
                     inputId="zatca-document-type"
                     options={documentOptions}
                     value={documentType}
                     onChange={setDocumentType}
                     columns={documentColumns}
-                    width="100%"
-                    menuWidth="280px"
-                    placeholder="Select Document"
+                    width="220px"
+                    menuWidth="285px"
+                    listLook="receipt"
+                    placeholder=""
                     menuPortalTarget={
                       typeof document !== "undefined" ? document.body : undefined
                     }
@@ -542,7 +561,7 @@ const RptZatcaPdfA3Generation: React.FC = () => {
 
             {/* Branch Selection */}
             <div className="flex items-start sm:justify-start">
-              <RadioPanel className="w-35 min-h-18.75">
+              <RadioPanel className="w-41.25 min-h-18.75">
                 <CustomRadio
                   name="rdgBranch"
                   value="One Branch"
@@ -563,16 +582,17 @@ const RptZatcaPdfA3Generation: React.FC = () => {
               </RadioPanel>
 
               {oneBranch && (
-                <div className="w-full max-w-55 min-w-0 pt-2.5 ml-3">
+                <div className="w-55 min-w-0 pt-2.5 ml-3">
                   <CommonTableSelect
                     inputId="zatca-branch"
                     options={branchOptions}
                     value={branch}
                     onChange={setBranch}
                     columns={branchColumns}
-                    width="100%"
-                    menuWidth="270px"
-                    placeholder="Select Branch"
+                    width="220px"
+                    menuWidth="285px"
+                    listLook="receipt"
+                    placeholder=""
                     menuPortalTarget={
                       typeof document !== "undefined" ? document.body : undefined
                     }
@@ -583,7 +603,7 @@ const RptZatcaPdfA3Generation: React.FC = () => {
 
             {/* Invoice Filter */}
             <div className="flex justify-start sm:justify-end">
-              <RadioPanel className="w-44 min-h-18.75">
+              <RadioPanel className="w-41.25 min-h-18.75">
                 <CustomRadio
                   name="rdgInvoice"
                   value="By Invoice No."
@@ -653,9 +673,9 @@ const RptZatcaPdfA3Generation: React.FC = () => {
               )}
             </div>
 
-            {/* Customer Selection */}
-            <div className="flex items-start">
-              <RadioPanel className="w-35 min-h-18.75">
+            {/* Customer Selection (and Search at its right end) */}
+            <div className="flex items-start sm:col-span-2">
+              <RadioPanel className="w-41.25 min-h-18.75">
                 <CustomRadio
                   name="rdgCustomer"
                   value="One Customer"
@@ -686,60 +706,79 @@ const RptZatcaPdfA3Generation: React.FC = () => {
                     firstHeader="Customer ID"
                     secondHeader="Customer Name"
                     firstWidth={120}
-                    secondWidth={380}
-                    gap={10}
+                    secondWidth={240}
+                    gap={5}
+                    listLook="receipt"
+                    nameDividerAtBoxEnd
                     firstInputId="lkpcustomerId"
                     secondInputId="lkpcustomerName"
                     menuZIndex={99999}
-                    placeholder="Select"
+                    placeholder=""
                     menuPortalTarget={
                       typeof document !== "undefined" ? document.body : undefined
                     }
                   />
                 </div>
               )}
+
+              {/* Search - at the right end of the customer row, so the Customer pair has room */}
+              <div className="ml-auto flex items-center self-center pl-3">
+                <ActionButton
+                  id="btnSearch"
+                  label="Search"
+                  underlineIndex={0}
+                  onClick={handleSearch}
+                  disabled={busy}
+                  onKeyDown={(event) => {
+                    // the arrow keys go down to the buttons at the bottom, as Payment moves between its buttons
+                    if (event.key === "ArrowRight" || event.key === "ArrowDown") {
+                      event.preventDefault();
+                      event.stopPropagation();
+                      document.getElementById("btnExport")?.focus();
+                    } else if (event.key === "Enter") {
+                      event.preventDefault();
+                      event.stopPropagation();
+                      event.currentTarget.click();
+                    }
+                  }}
+                />
+              </div>
             </div>
 
-            {/* Search Button */}
-            <div className="flex items-center justify-end sm:col-start-3">
-              <ActionButton
-                onClick={handleSearch}
-                disabled={busy}
-                className="h-7.5 w-25 mt-13"
-              >
-                Search
-              </ActionButton>
-            </div>
           </div>
 
-          {/* Document Grid */}
-          <div className="min-h-0 w-full flex-1 overflow-hidden border border-[#B7C7D7] bg-white">
+          {/* Document Grid - the grid of the Payment screen: the shared .receipt-table classes
+              (components/Transaction/Receipt/save/commanReceipt.css), 28 px header and rows, a full #b7ecd0 box on every cell.
+              The side margin is the 12 px of the Payment screen. */}
+          <div className="receipt-table-wrapper min-h-0 flex-1">
 
-            <div className="h-full w-full overflow-auto">
-              <table className="w-full min-w-245 table-fixed border-collapse text-[12px] text-[#172b43]">
+            {/* the cursor enters the grid with Tab / Enter; the arrow keys move it from row to row */}
+            <div
+              ref={gridRef}
+              tabIndex={0}
+              className="h-full max-h-125 w-full overflow-auto outline-none"
+              onKeyDown={(event) => {
+                if (event.key !== "ArrowDown" && event.key !== "ArrowUp") return;
+                event.preventDefault();
+                event.stopPropagation();
+                const next = Math.min(Math.max(currentRow + (event.key === "ArrowDown" ? 1 : -1), 0), rows.length - 1);
+                setCurrentRow(next);
+                gridRef.current?.querySelector<HTMLElement>(`[data-row="${next}"]`)?.scrollIntoView({ block: "nearest" });
+              }}
+            >
+              <table className="receipt-table min-w-245">
 
                 <colgroup>
-                  <col style={{ width: "22px" }} />
                   {columns.map((column) => (
-                    <col
-                      key={column.key}
-                      style={{ width: column.width }}
-                    />
+                    <col key={column.key} style={{ width: column.key === "customerName" ? "auto" : column.width }} />
                   ))}
                 </colgroup>
 
                 {/* Table Header */}
                 <thead>
-                  <tr className="h-6 bg-[#f5f6f8]">
-                    <th className="border border-[#B7ECD0]"></th>
-
+                  <tr>
                     {columns.map((column) => (
-                      <th
-                        key={column.key}
-                        className={`border border-[#B7ECD0] px-1 font-semibold whitespace-nowrap ${
-                          "right" in column ? "text-right" : "text-left"
-                        }`}
-                      >
+                      <th key={column.key} className={"right" in column ? "text-right" : ""}>
                         {column.label}
                       </th>
                     ))}
@@ -749,20 +788,25 @@ const RptZatcaPdfA3Generation: React.FC = () => {
                 {/* Table Body */}
                 <tbody>
                   {rows.map((row, index) => (
-                    <tr key={`${row.branchId}-${row.docType}-${row.docNo}`} className="h-6 bg-white">
-                      {/* Row Indicator */}
-                      <td className="border border-[#B7ECD0] bg-[#f7f7f9] text-center text-[11px]">
-                        {index === 0 ? "›" : ""}
-                      </td>
-
+                    <tr
+                      key={`${row.branchId}-${row.docType}-${row.docNo}`}
+                      data-row={index}
+                      className={index === currentRow ? "receipt-row-selected" : ""}
+                      onClick={() => {
+                        setCurrentRow(index);
+                        gridRef.current?.focus();
+                      }}
+                    >
                       {columns.map((column) => {
                         const v = row[column.key];
                         return (
                           <td
                             key={column.key}
-                            className={`border border-[#B7ECD0] px-1 truncate ${
-                              "right" in column ? "text-right" : ""
-                            }`}
+                            className={
+                              column.key === "slNo"
+                                ? "serial-cell"
+                                : `px-1.5 truncate ${"right" in column ? "text-right" : ""}`
+                            }
                           >
                             {typeof v === "number" && "right" in column ? money(v) : v}
                           </td>
@@ -772,10 +816,9 @@ const RptZatcaPdfA3Generation: React.FC = () => {
                   ))}
 
                   {Array.from({ length: emptyCount }, (_, i) => (
-                    <tr key={`empty-${i}`} className="h-6 bg-white">
-                      <td className="border border-[#B7ECD0] bg-[#f7f7f9]"></td>
+                    <tr key={`empty-${i}`}>
                       {columns.map((column) => (
-                        <td key={column.key} className="border border-[#B7ECD0] px-1"></td>
+                        <td key={column.key} />
                       ))}
                     </tr>
                   ))}
@@ -785,24 +828,13 @@ const RptZatcaPdfA3Generation: React.FC = () => {
           </div>
 
           {/* Bottom Buttons */}
-          <div className="flex flex-wrap items-center justify-center gap-1 pb-1 pt-1">
-            <ActionButton
-              onClick={handleExport}
-              disabled={busy || rows.length === 0}
-              className="h-9 w-40"
-            >
-              Export PDF/A3
-            </ActionButton>
-
-            <ActionButton
-              onClick={handleCancel}
-              className="h-9 w-20"
-            >
-              Clear
-            </ActionButton>
-
-          
-          </div>
+          <TransactionActions
+            className="flex flex-wrap items-center justify-center gap-1 pb-1 pt-1"
+            actions={[
+              { id: "btnExport", label: "Export PDF/A3", underlineIndex: 0, onClick: handleExport, disabled: busy || rows.length === 0 },
+              { id: "btnClear", label: "Clear", onClick: handleCancel },
+            ]}
+          />
 
         </section>
       </main>

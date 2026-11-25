@@ -444,7 +444,7 @@ const CompanyPage: React.FC = () => {
   };
 
   // ============================================================
-  // KEYS: the keys of the Payment screen - Ctrl+S Save / Modify, Ctrl+F Find, Ctrl+D Delete
+  // KEYS: the keys of the Payment screen - Ctrl+S Save / Modify, Ctrl+F Search, Ctrl+D Delete
   // ============================================================
 
   const actionsRef = useRef({
@@ -467,7 +467,7 @@ const CompanyPage: React.FC = () => {
     };
   });
 
-  // Ctrl+S -> Save (a new company) or Modify (a saved one) - only one of the two runs -, Ctrl+F -> Find, Ctrl+D -> Delete
+  // Ctrl+S -> Save (a new company) or Modify (a saved one) - only one of the two runs -, Ctrl+F -> Search, Ctrl+D -> Delete
   useCtrlShortcuts({
     s: () => {
       actionsRef.current.save();
@@ -697,7 +697,7 @@ const CompanyPage: React.FC = () => {
                 onClick: handleSave,
                 disabled: saving,
               },
-              { id: "btnSearch", label: "Find", underlineIndex: 0, onClick: handleSearch },
+              { id: "btnSearch", label: "Search", underlineIndex: 0, onClick: handleSearch },
               { id: "btnDelete", label: "Delete", underlineIndex: 0, onClick: handleDelete },
               { id: "btnClear", label: "Clear", onClick: handleClear },
             ]}
