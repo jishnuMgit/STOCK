@@ -120,16 +120,20 @@ export const login = async (req: Request, res: Response): Promise<Response> => {
     ===================================================== */
 
     // An Admin User (type AU, ADMIN included) can enter every company; anyone
-    // else needs a row in tbluserpermission for it (dbo.hascoright).
+    // else needs a row for it in dbo.tbluserpermissionbranch - the table the
+    // User Permission - Branch page saves (nothing else is checked).
     let hasCompanyRight = true;
 
     if (user.fusertype !== "AU") {
       const companyRightResult = await pool.query(
-        `SELECT dbo.hascoright($1, $2) AS "hasCoRight"`,
+        `SELECT COUNT(*) AS "count"
+           FROM dbo.tbluserpermissionbranch
+          WHERE fcoid = $1
+            AND fuserid = $2`,
         [pstrCOID, PstrUserID],
       );
 
-      hasCompanyRight = companyRightResult.rows[0]?.hasCoRight > 0;
+      hasCompanyRight = Number(companyRightResult.rows[0]?.count) > 0;
     }
 
     if (!hasCompanyRight) {

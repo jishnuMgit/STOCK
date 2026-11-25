@@ -3,6 +3,7 @@ import Header from "../../../components/common/Header";
 import Select, { type SingleValue } from "react-select";
 import { X } from "lucide-react";
 import { useEnterAsTab } from "../../../hooks/useEnterAsTab";
+import { useGridCellFocus } from "../../../hooks/useGridCellFocus";
 import { useCtrlShortcuts } from "../../../hooks/useCtrlShortcuts";
 import { useButtonPermissions } from "../../../hooks/useButtonPermissions";
 import { useConfirmModal } from "../../../hooks/useConfirmModal";
@@ -195,6 +196,8 @@ const MENU_ID = "9301";
 
 const UserLogin: React.FC = () => {
   const perms = useButtonPermissions(MENU_ID);
+  // the cell the cursor is in is outlined (a typed-in box has its text selected), as on every grid
+  const { cellFocusClass, selectOnFocus } = useGridCellFocus();
   const [users, setUsers] = useState<UserRow[]>([]);
   const [userTypeOptions, setUserTypeOptions] = useState<SelectOption[]>([]);
   const [userStatusOptions, setUserStatusOptions] = useState<SelectOption[]>([]);
@@ -775,24 +778,20 @@ const UserLogin: React.FC = () => {
                   {/* USER ID */}
 
                   <td
-                    className="
-                      border-b
-                      border-r
-                      border-[#b7e8cf]
-                      pl-[2px]
-                      pr-2
-                    "
+                    className={`border-b border-r border-[#b7e8cf] pl-[2px] pr-2 ${cellFocusClass}`}
                   >
                     <div className="flex h-full items-center gap-1">
                       <input
                         id={`txtUserID-${index}`}
+                        onFocus={selectOnFocus}
                         type="text"
                         value={user.txtUserID}
                         onChange={(e) =>
                           handleChange(
                             index,
                             "txtUserID",
-                            e.target.value
+                            // a User ID is saved in capitals (the login form types capitals)
+                            e.target.value.toUpperCase()
                           )
                         }
                         maxLength={30}
@@ -806,16 +805,11 @@ const UserLogin: React.FC = () => {
                   {/* USER NAME */}
 
                   <td
-                    className="
-                      border-b
-                      border-r
-                      border-[#b7e8cf]
-                      pl-[2px]
-                      pr-2
-                    "
+                    className={`border-b border-r border-[#b7e8cf] pl-[2px] pr-2 ${cellFocusClass}`}
                   >
                     <input
                       id={`txtUserName-${index}`}
+                      onFocus={selectOnFocus}
                       type="text"
                       value={user.txtUserName}
                       onChange={(e) =>
@@ -833,16 +827,11 @@ const UserLogin: React.FC = () => {
                   {/* PASSWORD */}
 
                   <td
-                    className="
-                      border-b
-                      border-r
-                      border-[#b7e8cf]
-                      pl-[2px]
-                      pr-2
-                    "
+                    className={`border-b border-r border-[#b7e8cf] pl-[2px] pr-2 ${cellFocusClass}`}
                   >
                     <input
                       id={`txtPwd-${index}`}
+                      onFocus={selectOnFocus}
                       type="password"
                       value={user.txtPwd}
                       onChange={(e) =>
@@ -868,16 +857,11 @@ const UserLogin: React.FC = () => {
                   {/* CONFIRM PASSWORD */}
 
                   <td
-                    className="
-                      border-b
-                      border-r
-                      border-[#b7e8cf]
-                      pl-[2px]
-                      pr-2
-                    "
+                    className={`border-b border-r border-[#b7e8cf] pl-[2px] pr-2 ${cellFocusClass}`}
                   >
                     <input
                       id={`txtConfirmPwd-${index}`}
+                      onFocus={selectOnFocus}
                       type="password"
                       value={user.txtConfirmPwd}
                       onChange={(e) =>
@@ -903,14 +887,7 @@ const UserLogin: React.FC = () => {
                   {/* USER TYPE */}
 
                   <td
-                    className="
-                      border-b
-                      border-r
-                      border-[#b7e8cf]
-                      py-2
-                      pl-[2px]
-                      pr-2
-                    "
+                    className={`border-b border-r border-[#b7e8cf] py-2 pl-[2px] pr-2 ${cellFocusClass}`}
                   >
                     <Select
                       components={selectComponents}
@@ -935,13 +912,7 @@ const UserLogin: React.FC = () => {
                   {/* USER STATUS */}
 
                   <td
-                    className="
-                      border-b
-                      border-[#b7e8cf]
-                      py-2
-                      pl-[2px]
-                      pr-2
-                    "
+                    className={`border-b border-[#b7e8cf] py-2 pl-[2px] pr-2 ${cellFocusClass}`}
                   >
                     <div className="flex items-center gap-1">
                       <div className="min-w-0 flex-1">
