@@ -13,7 +13,6 @@ import { accountDropdownStyles } from "../../../../components/Transaction/Receip
 import CommonTableSelect from "../../../../components/common/CommonTableSelect";
 import { useScrollbarWidth } from "../../../../hooks/useScrollbarWidth";
 import { useAdvanceAfterSelect } from "../../../../hooks/useAdvanceAfterSelect";
-import { useAltShortcuts } from "../../../../hooks/useAltShortcuts";
 import { useCtrlShortcuts } from "../../../../hooks/useCtrlShortcuts";
 import { useConfirmModal } from "../../../../hooks/useConfirmModal";
 import { useGridCellFocus } from "../../../../hooks/useGridCellFocus";
@@ -1682,11 +1681,8 @@ const StockAdjustmentPage: React.FC = () => {
   useCtrlShortcuts(
     preview
       ? { p: () => printStockAdjustmentReport(preview.report) }
-      : { s: handleSave, f: handleSearch, d: handleDelete, p: handlePrint }
+      : { s: handleSave, f: handleSearch, d: handleDelete, p: handlePrint, o: handlePost }
   );
-
-  // Post is Alt+T (the T of the button is underlined): Chrome keeps Ctrl+T for "new tab" and never gives it to the page.
-  useAltShortcuts(preview ? {} : { t: handlePost });
 
   // ==========================================================
   // JSX
@@ -2188,7 +2184,7 @@ const StockAdjustmentPage: React.FC = () => {
                 {
                   id: "btnPost",
                   label: "Post",
-                  underlineIndex: 3,
+                  underlineIndex: 1,
                   onClick: handlePost,
                   disabled: !chkSaved || chkPosted || !perms.post || saving,
                 },

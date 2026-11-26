@@ -7,7 +7,6 @@ import customParseFormat from "dayjs/plugin/customParseFormat";
 import Header from "../../../components/common/Header";
 import TransactionActions from "../../../components/common/TransactionActions";
 import { useCtrlShortcuts } from "../../../hooks/useCtrlShortcuts";
-import { useAltShortcuts } from "../../../hooks/useAltShortcuts";
 import { useEnterAsTab } from "../../../hooks/useEnterAsTab";
 import "../../../components/Transaction/Receipt/save/commanReceipt.css";
 
@@ -462,9 +461,8 @@ const DepreciationBeginningBalancePage: React.FC = () => {
 
  
 
-  // The keys of the Payment / Receipt screens: Ctrl+S Save, Ctrl+P Print, Alt+T Post
-  useCtrlShortcuts({ s: handleSave, p: handlePrint });
-  useAltShortcuts({ t: handlePost });
+  // The keys of the Payment / Receipt screens: Ctrl+S Save, Ctrl+P Print, Ctrl+O Post
+  useCtrlShortcuts({ s: handleSave, p: handlePrint, o: handlePost });
 
   // ==================================================
   // UI
@@ -781,7 +779,7 @@ const DepreciationBeginningBalancePage: React.FC = () => {
           actions={[
             { id: "btnSave", label: "Save", underlineIndex: 0, onClick: handleSave },
             { id: "btnPrint", label: "Print", underlineIndex: 0, onClick: handlePrint },
-            { id: "btnPost", label: "Post", underlineIndex: 3, onClick: handlePost },
+            { id: "btnPost", label: "Post", underlineIndex: 1, onClick: handlePost },
             { id: "btnClear", label: "Clear", onClick: handleCancel },
           ]}
         />
