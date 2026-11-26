@@ -497,7 +497,7 @@ const SalesInvoiceFooter: React.FC<SalesInvoiceFooterProps> = ({
           ACTION BUTTONS
       ====================================================== */}
 
-      <div className="absolute bottom-[23px] left-[234px] flex gap-[11px]">
+      <div className="absolute bottom-[5px] left-[234px] flex gap-[11px]">
         <ActionButton
           id="btnSave"
           label={mode === "M" ? "Modify" : "Save"}

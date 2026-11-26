@@ -154,7 +154,7 @@ const PurchaseFooter: React.FC<Props> = ({
       {/* Action buttons */}
       <div
         id="purchase-footer-actions"
-        className="mt-[9px] mb-[5px] flex flex-wrap justify-center gap-[12px]"
+        className="mt-[9px] flex flex-wrap justify-center gap-[12px]"
       >
         <ActionButton
           id={isModify ? "btnModify" : "btnSave"}

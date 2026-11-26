@@ -1695,8 +1695,8 @@ const BeginningStockPage: React.FC = () => {
                       // the highlighted row follows the cursor (any box of the row), as on the Receipt screen
                       onFocus={() => setActiveRow(index)}
                       className={`h-7 text-[12px] ${activeRow === index
-                          ? "bg-[#f9fffc]"
-                          : "bg-white"
+                        ? "bg-[#f9fffc]"
+                        : "bg-white"
                         }`}
                     >
                       {/* ROW SELECTOR */}
@@ -2016,43 +2016,45 @@ const BeginningStockPage: React.FC = () => {
           )}
 
           {/* ACTION BUTTONS - the same buttons and keys as the Payment screen (Ctrl+S, Ctrl+D, Ctrl+P, Alt+T) */}
-          <TransactionActions
-            actions={[
-              {
-                id: chkSaved ? "btnModify" : "btnSave",
-                label: actionWord,
-                underlineIndex: 0,
-                onClick: handleSave,
-                disabled: !canSaveOrModify || saving || chkPosted,
-              },
-              {
-                id: "btnDelete",
-                label: "Delete",
-                underlineIndex: 0,
-                onClick: handleDelete,
-                disabled: !chkSaved || chkPosted || !perms.delete || saving,
-              },
-              {
-                id: "btnPrint",
-                label: "Print",
-                underlineIndex: 0,
-                onClick: handlePrint,
-                disabled: !chkSaved || !perms.print || saving,
-              },
-              {
-                id: "btnPost",
-                label: "Post",
-                underlineIndex: 3,
-                onClick: handlePost,
-                disabled: !chkSaved || chkPosted || !perms.post || saving,
-              },
-              {
-                id: "btnClear",
-                label: "Clear",
-                onClick: clearForm,
-              },
-            ]}
-          />
+          <div className="-mb-3">
+            <TransactionActions
+              actions={[
+                {
+                  id: chkSaved ? "btnModify" : "btnSave",
+                  label: actionWord,
+                  underlineIndex: 0,
+                  onClick: handleSave,
+                  disabled: !canSaveOrModify || saving || chkPosted,
+                },
+                {
+                  id: "btnDelete",
+                  label: "Delete",
+                  underlineIndex: 0,
+                  onClick: handleDelete,
+                  disabled: !chkSaved || chkPosted || !perms.delete || saving,
+                },
+                {
+                  id: "btnPrint",
+                  label: "Print",
+                  underlineIndex: 0,
+                  onClick: handlePrint,
+                  disabled: !chkSaved || !perms.print || saving,
+                },
+                {
+                  id: "btnPost",
+                  label: "Post",
+                  underlineIndex: 3,
+                  onClick: handlePost,
+                  disabled: !chkSaved || chkPosted || !perms.post || saving,
+                },
+                {
+                  id: "btnClear",
+                  label: "Clear",
+                  onClick: clearForm,
+                },
+              ]}
+            />
+          </div>
 
         </div>
       </main>

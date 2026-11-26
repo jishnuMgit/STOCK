@@ -714,7 +714,7 @@ const StaffPage: React.FC = () => {
 
                   <thead>
                     <tr>
-                      <th className="sticky top-0 z-20 h-[34px] border border-[#bfe8d0] bg-[#edf9f2] p-0" /> 
+                      <th className="sticky top-0 z-20 h-[34px] border border-[#bfe8d0] bg-[#edf9f2] p-0" />
 
                       <th className={`${headerCellClass} text-left !pl-[2px]`}>ID</th>
                       <th className={`${headerCellClass} text-left !pl-[2px]`}>Staff</th>
@@ -882,19 +882,21 @@ const StaffPage: React.FC = () => {
               BUTTONS
           ==================================================== */}
 
-            <TransactionActions
-              className="mt-[14px] flex justify-center gap-3"
-              actions={[
-                {
-                  id: "btnSave",
-                  label: actionWord,
-                  underlineIndex: 0,
-                  onClick: handleSave,
-                  disabled: !canSaveOrModify || saving,
-                },
-                { id: "btnClear", label: "Clear", onClick: handleClear },
-              ]}
-            />
+            <div className="-mb-3">
+              <TransactionActions
+                className="mt-[14px] flex justify-center gap-3"
+                actions={[
+                  {
+                    id: "btnSave",
+                    label: actionWord,
+                    underlineIndex: 0,
+                    onClick: handleSave,
+                    disabled: !canSaveOrModify || saving,
+                  },
+                  { id: "btnClear", label: "Clear", onClick: handleClear },
+                ]}
+              />
+            </div>
           </div>
         </div>
       </div>
