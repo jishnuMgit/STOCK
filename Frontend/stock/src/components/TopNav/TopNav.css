@@ -37,9 +37,9 @@
 .top-nav-info {
     display: flex;
     align-items: center;
-    justify-content: center; 
+    justify-content: flex-end; 
     gap: 6px;
-    height: 28px;
+    height: 24px;
     padding: 0 16px;
     font-size: 12px;
     font-weight: 600;
@@ -57,7 +57,7 @@
     display: flex;
     align-items: center;
     gap: 24px;
-    height: 48px;
+    height: 45px;
     padding: 0 16px;
 }
 
