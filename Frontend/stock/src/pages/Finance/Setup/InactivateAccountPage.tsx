@@ -3,6 +3,7 @@ import Select, { components, type MenuListProps } from "react-select";
 import { useEnterAsTab } from "../../../hooks/useEnterAsTab";
 import { useButtonPermissions } from "../../../hooks/useButtonPermissions";
 import Header from "../../../components/common/Header";
+import ActionButton from "../../../components/common/ActionButton";
 import { useMessageModal } from "../../../hooks/useMessageModal";
 
 // ============================================================
@@ -359,7 +360,7 @@ const InactivateAccountPage: React.FC<InactivateAccountPageProps> = ({
 
   // ============================================================
   // KEYBOARD SHORTCUTS (page wide)
-  //  Alt+M  Modify
+  //  Ctrl+M  Modify
   //  Alt+C  Close
   // No dependency array on purpose: the listener is re-attached after every
   // render, so it always sees the latest state / permissions / handlers.
@@ -367,13 +368,16 @@ const InactivateAccountPage: React.FC<InactivateAccountPageProps> = ({
 
   useEffect(() => {
     const onKeyDown = (event: KeyboardEvent) => {
-      if (event.altKey && !event.ctrlKey && !event.metaKey) {
+      if (event.ctrlKey && !event.altKey && !event.metaKey) {
         if (event.code === "KeyM") {
           event.preventDefault();
-          if (!saving) handleModify();
+          if (perms.modify && !saving) handleModify();
           return;
         }
 
+      }
+
+      if (event.altKey && !event.ctrlKey && !event.metaKey) {
         if (event.code === "KeyC") {
           event.preventDefault();
           handleClose();
@@ -501,19 +505,15 @@ const InactivateAccountPage: React.FC<InactivateAccountPageProps> = ({
             </div>
 
             {/* Actions */}
-            <div className="mt-6 flex justify-center gap-3">
-              <button
+            <div className="-mb-3 mt-5 flex justify-center gap-3">
+              <ActionButton
                 id="btnModify"
-                name="btnModify"
-                type="button"
+                label="Modify"
+                underlineIndex={0}
                 onClick={handleModify}
                 disabled={!perms.modify || saving}
-                title="Alt+M"
-                className="btn-style disabled:cursor-not-allowed disabled:opacity-40"
-              >
-                <u>M</u>odify
-              </button>
-
+                title="Ctrl+M"
+              />
             </div>
           </section>
         </main>

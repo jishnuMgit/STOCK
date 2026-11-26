@@ -603,27 +603,29 @@ const ItemGroupPage: React.FC = () => {
               BUTTONS
           ================================================== */}
 
-            <TransactionActions
-              className="mt-[14px] flex justify-center gap-3"
-              actions={[
-                {
-                  id: hasSavedItemGroup ? "btnModify" : "btnSave",
-                  label: actionWord,
-                  underlineIndex: 0,
-                  onClick: handleSave,
-                  disabled: !canSaveOrModify,
-                },
-                { id: "btnSearch", label: "Search", underlineIndex: 0, onClick: handleSearch },
-                {
-                  id: "btnDelete",
-                  label: "Delete",
-                  underlineIndex: 0,
-                  onClick: handleDelete,
-                  disabled: !perms.delete,
-                },
-                { id: "btnClear", label: "Clear", onClick: handleClear },
-              ]}
-            />
+            <div className="-mb-3">
+              <TransactionActions
+                className="mt-[14px] flex justify-center gap-3"
+                actions={[
+                  {
+                    id: hasSavedItemGroup ? "btnModify" : "btnSave",
+                    label: actionWord,
+                    underlineIndex: 0,
+                    onClick: handleSave,
+                    disabled: !canSaveOrModify,
+                  },
+                  { id: "btnSearch", label: "Search", underlineIndex: 0, onClick: handleSearch },
+                  {
+                    id: "btnDelete",
+                    label: "Delete",
+                    underlineIndex: 0,
+                    onClick: handleDelete,
+                    disabled: !perms.delete,
+                  },
+                  { id: "btnClear", label: "Clear", onClick: handleClear },
+                ]}
+              />
+            </div>
           </div>
         </div>
 

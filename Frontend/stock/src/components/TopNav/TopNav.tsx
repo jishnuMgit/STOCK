@@ -27,7 +27,6 @@ const firstValue = (row: CompanyRow, keys: string[]) => {
   return "";
 };
 
-// tries both mount paths, since the route may be /company or /companies
 const COMPANY_LIST_PATHS = ["/companies"];
 
 const loadCompanyShortName = async (coId: string): Promise<string> => {
@@ -159,77 +158,86 @@ export default function TopNav({
   return (
     <header className="top-nav">
       {messageDialog}
-      <nav className="top-nav-menu" ref={navRef}>
-        {loading && <span className="top-nav-status">Loading menu...</span>}
-        {!loading && error && (
-          <span className="top-nav-status top-nav-status-error">{error}</span>
-        )}
 
-        {!loading &&
-          !error &&
-          menuTree.map((node) => {
-            const hasChildren = node.children.length > 0;
-            const isOpen = openId === node.fmenuid;
-            const isActive = isNodeActive(node, activePath);
+      {/* row 1: company-year : user */}
+      <div className="top-nav-info">
+        <span>{(coShortName || coId) + (year ? `-${year}` : "")}</span>
+        <span className="top-nav-info-sep">:</span>
+        <span>{userId ?? "Administrator"}</span>
+      </div>
 
-            return (
-              <div className="top-nav-item" key={node.fmenuid}>
-                <button
-                  type="button"
-                  className={`top-nav-button ${isActive ? "top-nav-button-active" : ""
+      {/* row 2: menu + logout */}
+      <div className="top-nav-row">
+        <nav className="top-nav-menu" ref={navRef}>
+          {loading && <span className="top-nav-status">Loading menu...</span>}
+          {!loading && error && (
+            <span className="top-nav-status top-nav-status-error">
+              {error}
+            </span>
+          )}
+
+          {!loading &&
+            !error &&
+            menuTree.map((node) => {
+              const hasChildren = node.children.length > 0;
+              const isOpen = openId === node.fmenuid;
+              const isActive = isNodeActive(node, activePath);
+
+              return (
+                <div className="top-nav-item" key={node.fmenuid}>
+                  <button
+                    type="button"
+                    className={`top-nav-button ${
+                      isActive ? "top-nav-button-active" : ""
                     } ${isOpen ? "top-nav-button-open" : ""}`}
-                  onClick={() => handleTopClick(node)}
-                  aria-haspopup={hasChildren || undefined}
-                  aria-expanded={hasChildren ? isOpen : undefined}
-                >
-                  <span className="top-nav-icon">{getMenuIcon(node, 0)}</span>
-                  <span>{node.fmenucaption}</span>
-                  {hasChildren && <ChevronDown size={14} />}
-                </button>
+                    onClick={() => handleTopClick(node)}
+                    aria-haspopup={hasChildren || undefined}
+                    aria-expanded={hasChildren ? isOpen : undefined}
+                  >
+                    <span className="top-nav-icon">
+                      {getMenuIcon(node, 0)}
+                    </span>
+                    <span>{node.fmenucaption}</span>
+                    {/* {hasChildren && <ChevronDown size={14} />} */}
+                  </button>
 
-                {isOpen && (
-                  <div className="top-nav-dropdown" role="menu">
-                    {node.children.map((child) => {
-                      const childHasChildren = child.children.length > 0;
-                      const disabled =
-                        !childHasChildren && !getMenuRoute(child);
+                  {isOpen && (
+                    <div className="top-nav-dropdown" role="menu">
+                      {node.children.map((child) => {
+                        const childHasChildren = child.children.length > 0;
+                        const disabled =
+                          !childHasChildren && !getMenuRoute(child);
 
-                      return (
-                        <button
-                          type="button"
-                          role="menuitem"
-                          key={child.fmenuid}
-                          className={`top-nav-dropdown-item ${isNodeActive(child, activePath)
-                            ? "top-nav-dropdown-item-active"
-                            : ""
-                            } ${activeSectionId === child.fmenuid
-                              ? "top-nav-dropdown-item-selected"
-                              : ""
-                            } ${disabled ? "top-nav-dropdown-item-disabled" : ""}`}
-                          onClick={() => handleChildClick(node, child)}
-                        >
-                          <span>{child.fmenucaption}</span>
-                          {childHasChildren && <ChevronRight size={14} />}
-                        </button>
-                      );
-                    })}
-                  </div>
-                )}
-              </div>
-            );
-          })}
-      </nav>
+                        return (
+                          <button
+                            type="button"
+                            role="menuitem"
+                            key={child.fmenuid}
+                            className={`top-nav-dropdown-item ${
+                              isNodeActive(child, activePath)
+                                ? "top-nav-dropdown-item-active"
+                                : ""
+                            } ${
+                              activeSectionId === child.fmenuid
+                                ? "top-nav-dropdown-item-selected"
+                                : ""
+                            } ${
+                              disabled ? "top-nav-dropdown-item-disabled" : ""
+                            }`}
+                            onClick={() => handleChildClick(node, child)}
+                          >
+                            <span>{child.fmenucaption}</span>
+                            {childHasChildren && <ChevronRight size={14} />}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  )}
+                </div>
+              );
+            })}
+        </nav>
 
-      <div className="top-nav-user">
-        <div className="user-avatar">
-          {(userId ?? "AD").slice(0, 2).toUpperCase()}
-        </div>
-        <div className="user-info">
-          <div className="user-company">
-            {(coShortName || coId) + (year ? `-${year}` : "")}
-          </div>
-          <div className="user-name">{userId ?? "Administrator"}</div>
-        </div>
         <button
           type="button"
           className="logout-button"

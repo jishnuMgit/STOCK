@@ -762,19 +762,21 @@ const UnitPage: React.FC = () => {
               BUTTONS
           ==================================================== */}
 
-            <TransactionActions
-              className="mt-[14px] flex justify-center gap-3"
-              actions={[
-                {
-                  id: "btnSave",
-                  label: actionWord,
-                  underlineIndex: 0,
-                  onClick: handleSave,
-                  disabled: !canSaveOrModify || saving,
-                },
-                { id: "btnClear", label: "Clear", onClick: handleClear },
-              ]}
-            />
+            <div className="-mb-3">
+              <TransactionActions
+                className="mt-[14px] flex justify-center gap-3"
+                actions={[
+                  {
+                    id: "btnSave",
+                    label: actionWord,
+                    underlineIndex: 0,
+                    onClick: handleSave,
+                    disabled: !canSaveOrModify || saving,
+                  },
+                  { id: "btnClear", label: "Clear", onClick: handleClear },
+                ]}
+              />
+            </div>
           </div>
         </div>
 

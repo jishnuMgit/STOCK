@@ -1,5 +1,6 @@
-import React, { useMemo } from "react";
+import React, { useEffect, useMemo } from "react";
 import Select, { type StylesConfig } from "react-select";
+import ActionButton from "../../common/ActionButton";
 import type {
   ParamLookup,
   SalesHeader,
@@ -159,8 +160,6 @@ const inputClass =
 
 const readOnlyInputClass = `${inputClass} bg-[#f8fafc]`;
 
-const btnClass = "btn-style disabled:cursor-not-allowed disabled:opacity-50";
-
 const fmt = (v: number, d = 2) => v.toFixed(d);
 
 // ============================================================
@@ -218,6 +217,38 @@ const SalesInvoiceFooter: React.FC<SalesInvoiceFooterProps> = ({
       .filter(Boolean)
       .join("   |   ")
     : "";
+
+  useEffect(() => {
+    const handleGlobalKeyDown = (event: KeyboardEvent) => {
+      if (!(event.ctrlKey || event.metaKey)) return;
+
+      switch (event.key.toLowerCase()) {
+        case "s":
+          event.preventDefault();
+          event.stopPropagation();
+          if (!busy && !posted) onSave();
+          break;
+        case "d":
+          event.preventDefault();
+          event.stopPropagation();
+          if (!busy && !posted && mode === "M") onDelete();
+          break;
+        case "p":
+          event.preventDefault();
+          event.stopPropagation();
+          if (!busy && mode === "M") onPrint();
+          break;
+        case "t":
+          event.preventDefault();
+          event.stopPropagation();
+          if (!busy && !posted && mode === "M") onPost();
+          break;
+      }
+    };
+
+    window.addEventListener("keydown", handleGlobalKeyDown);
+    return () => window.removeEventListener("keydown", handleGlobalKeyDown);
+  }, [busy, mode, onDelete, onPost, onPrint, onSave, posted]);
 
   return (
     <footer
@@ -466,64 +497,46 @@ const SalesInvoiceFooter: React.FC<SalesInvoiceFooterProps> = ({
           ACTION BUTTONS
       ====================================================== */}
 
-      <div className="absolute bottom-[23px] left-[234px] flex gap-[11px]">
-        <button
+      <div className="absolute bottom-[5px] left-[234px] flex gap-[11px]">
+        <ActionButton
           id="btnSave"
-          type="button"
-          className={btnClass}
+          label={mode === "M" ? "Modify" : "Save"}
+          underlineIndex={0}
           disabled={busy || posted}
           onClick={onSave}
-        >
-          {mode === "M" ? (
-            <>
-              <u>M</u>odify
-            </>
-          ) : (
-            <>
-              <u>S</u>ave
-            </>
-          )}
-        </button>
+        />
 
-        <button
+        <ActionButton
           id="btnDelete"
-          type="button"
-          className={btnClass}
+          label="Delete"
+          underlineIndex={0}
           disabled={busy || posted || mode !== "M"}
           onClick={onDelete}
-        >
-          <u>D</u>elete
-        </button>
+        />
 
-        <button
+        <ActionButton
           id="btnPrint"
-          type="button"
-          className={btnClass}
+          label="Print"
+          underlineIndex={0}
           disabled={busy || mode !== "M"}
           onClick={onPrint}
-        >
-          <u>P</u>rint
-        </button>
+        />
 
-        <button
+        <ActionButton
           id="btnPost"
-          type="button"
-          className={btnClass}
+          label="Post"
+          underlineIndex={0}
           disabled={busy || posted || mode !== "M"}
           onClick={onPost}
-        >
-          <u>P</u>ost
-        </button>
+        />
 
-        <button
+        <ActionButton
           id="btnClear"
-          type="button"
-          className={btnClass}
+          label="Clear"
+          // underlineIndex={0}
           disabled={busy}
           onClick={onClear}
-        >
-          <u>C</u>lear
-        </button>
+        />
       </div>
 
       {/* ======================================================

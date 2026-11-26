@@ -1,4 +1,5 @@
-import React from "react";
+import React, { useEffect } from "react";
+import ActionButton from "../../common/ActionButton";
 
 interface MatchFooterProps {
   totalDebit: number;
@@ -24,6 +25,24 @@ const MatchEnquiryFooter: React.FC<MatchFooterProps> = ({
   handleActionKeyDown,
   executeAction,
 }) => {
+  useEffect(() => {
+    const handleGlobalKeyDown = (event: KeyboardEvent) => {
+      if (!(event.ctrlKey || event.metaKey) || event.key.toLowerCase() !== "p") {
+        return;
+      }
+
+      const printIndex = buttons.indexOf("Print");
+      if (printIndex === -1) return;
+
+      event.preventDefault();
+      event.stopPropagation();
+      executeAction(printIndex);
+    };
+
+    window.addEventListener("keydown", handleGlobalKeyDown);
+    return () => window.removeEventListener("keydown", handleGlobalKeyDown);
+  }, [buttons, executeAction]);
+
   return (
     <>
       {/* TOTALS */}
@@ -47,27 +66,20 @@ const MatchEnquiryFooter: React.FC<MatchFooterProps> = ({
       </div>
 
       {/* ACTION BUTTONS */}
-      <div className="flex items-center justify-center gap-3.25 pt-2.25 pb-6 flex-wrap px-2">
+      <div className="flex items-center justify-center gap-3.25 pt-2.25 pb-4 flex-wrap px-2">
         {buttons.map((label, index) => (
-          <button
+          <ActionButton
             key={label}
             id={label === "Print" ? "btnPrint" : "btnClear"}
             ref={(element) => {
               actionRefs.current[index] = element;
             }}
-            type="button"
-            className="btn-style"
+            label={label}
+            underlineIndex={0}
             onFocus={() => setActiveButton(index)}
             onKeyDown={handleActionKeyDown}
             onClick={() => executeAction(index)}
-          >
-            <span className="bg-linear-to-b from-[#145c34] via-[#20884e] to-[#8fd9ad] bg-clip-text font-medium text-transparent">
-              <span className="underline decoration-2 underline-offset-1">
-                {label.charAt(0)}
-              </span>
-              {label.slice(1)}
-            </span>
-          </button>
+          />
         ))}
       </div>
     </>
