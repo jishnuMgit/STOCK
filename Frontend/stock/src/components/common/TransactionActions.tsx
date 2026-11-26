@@ -5,10 +5,10 @@ import ActionButton from "./ActionButton";
 // THE ACTION BUTTONS OF A TRANSACTION SCREEN - the same buttons as the Payment screen (components/common/ActionButton.tsx:
 // the green text with the underlined letter), and the same keyboard:
 //
-//   Ctrl+S Save / Modify   Ctrl+F Find   Ctrl+D Delete   Ctrl+P Print   Alt+T Post
+//   Ctrl+S Save / Modify   Ctrl+F Find   Ctrl+D Delete   Ctrl+P Print   Ctrl+O Post
 //
-// (Payment uses Ctrl+T for Post, but Chrome keeps Ctrl+T for "new tab" and never gives it to the page, so Post is Alt+T.)
-// The underlined letter of each button is its letter in that list (Post has its T underlined). The keys are
+// Ctrl+O may be intercepted by the browser to open a file.
+// The underlined letter of each button is its letter in that list (Post has its O underlined). The keys are
 // handled by the page itself (hooks/useCtrlShortcuts.ts: Ctrl+P must print the open Print Preview, Save and Delete are
 // off while it is open ...); this part draws the buttons and moves between them with the arrow keys, as Payment does.
 

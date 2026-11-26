@@ -238,7 +238,7 @@ const SalesInvoiceFooter: React.FC<SalesInvoiceFooterProps> = ({
           event.stopPropagation();
           if (!busy && mode === "M") onPrint();
           break;
-        case "t":
+        case "o":
           event.preventDefault();
           event.stopPropagation();
           if (!busy && !posted && mode === "M") onPost();
@@ -525,7 +525,7 @@ const SalesInvoiceFooter: React.FC<SalesInvoiceFooterProps> = ({
         <ActionButton
           id="btnPost"
           label="Post"
-          underlineIndex={0}
+          underlineIndex={1}
           disabled={busy || posted || mode !== "M"}
           onClick={onPost}
         />

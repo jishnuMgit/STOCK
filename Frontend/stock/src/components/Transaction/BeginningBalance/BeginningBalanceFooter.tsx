@@ -221,7 +221,7 @@ const BeginningBalanceFooter: React.FC<Props> = ({
           {
             id: "btnPost",
             label: "Post",
-            underlineIndex: 3,
+            underlineIndex: 1,
             onClick: onPost,
             disabled: !chkSaved || chkPosted || !canPost || saving,
           },

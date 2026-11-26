@@ -34,7 +34,7 @@ const StockDocumentPostFooter: React.FC<StockDocumentPostFooterProps> = ({
       <ActionButton
         id="btnPost"
         label="Post"
-        underlineIndex={4}
+        underlineIndex={1}
         onClick={onPost}
         disabled={postDisabled}
       />

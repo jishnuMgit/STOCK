@@ -2707,7 +2707,7 @@ export const ReceiptActions = forwardRef<
             onPrint?.();
             break;
 
-          case "t":
+          case "o":
             event.preventDefault();
             event.stopPropagation();
             if (isPosted) return;
@@ -2793,7 +2793,7 @@ export const ReceiptActions = forwardRef<
           ref={postRef}
           id="btnPost"
           label="Post"
-          underlineIndex={3}
+          underlineIndex={1}
           disabled={isPosted}
           onFocus={() => handleFocus(4)}
           onKeyDown={handleKeyDown}
