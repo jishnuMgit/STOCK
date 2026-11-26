@@ -3,6 +3,7 @@ import { useEnterAsTab } from "../../../hooks/useEnterAsTab";
 import { useCtrlShortcuts } from "../../../hooks/useCtrlShortcuts";
 import { useButtonPermissions } from "../../../hooks/useButtonPermissions";
 import { useConfirmModal } from "../../../hooks/useConfirmModal";
+import { X } from "lucide-react";
 import { deleteSuccessMessage } from "../../../hooks/useDeleteToast";
 import { useMessageModal } from "../../../hooks/useMessageModal";
 import TransactionActions from "../../../components/common/TransactionActions";
@@ -863,9 +864,9 @@ const StaffPage: React.FC = () => {
                                     title="Delete row"
                                     onClick={() => handleDeleteRow(index)}
                                     aria-label={`Delete ${row.txtStaffName || row.txtStaffID}`}
-                                    className="text-[12px] leading-none text-gray-400 hover:text-red-600"
+                                    className="inline-flex h-[24px] w-[20px] shrink-0 items-center justify-center text-slate-400 hover:text-red-500"
                                   >
-                                    ✕
+                                    <X size={12} />
                                   </button>
                                 )}
                             </span>
