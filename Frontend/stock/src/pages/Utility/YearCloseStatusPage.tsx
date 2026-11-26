@@ -327,7 +327,7 @@ const YearCloseStatusPage: React.FC<YearCloseStatusPageProps> = ({
           {/* Header */}
           <Header Name="Year Close Status" />
 
-          <section className="px-3.5 pb-6 pt-3">
+          <section className="px-3 pb-3 pt-3">
             {/* Year */}
             <div className="flex items-center gap-3">
               <FieldLabel>Year :</FieldLabel>

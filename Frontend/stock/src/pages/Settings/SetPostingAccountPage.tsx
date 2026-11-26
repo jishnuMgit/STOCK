@@ -735,7 +735,7 @@ const SetPostingAccountPage: React.FC = () => {
           <Header Name="Set Posting Account" />
 
           {/* FORM BODY */}
-          <div className="p-[12px] m-[12px]">
+          <div className="p-3 ">
 
             {/* BRANCH */}
             <div className="mb-[8px] flex items-center gap-2">

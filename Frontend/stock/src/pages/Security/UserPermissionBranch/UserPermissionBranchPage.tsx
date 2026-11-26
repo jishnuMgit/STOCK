@@ -581,7 +581,7 @@ const UserPermissionBranchPage: React.FC = () => {
         <Header Name="User Permission - Branch" />
 
         {/* FORM */}
-        <div className="p-[12px] m-[12px]">
+        <div className="p-3">
 
         {/* USER SELECT */}
         <section className="mb-[8px] flex shrink-0 items-center gap-2">

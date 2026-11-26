@@ -75,7 +75,7 @@ const BackupPage: React.FC<BackupPageProps> = ({
         <main className="w-full overflow-hidden border border-[#d5dce2] bg-white">
           <Header Name="Backup" />
 
-          <section className="px-3.5 pb-6 pt-4">
+          <section className="px-3 pb-3 pt-3">
             <p className="m-0 text-center text-[13px] font-medium text-[#c0392b]">
               Backup Database &lsquo;{databaseName}&rsquo;
             </p>

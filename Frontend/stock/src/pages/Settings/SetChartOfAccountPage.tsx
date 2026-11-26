@@ -845,7 +845,7 @@ const SetChartOfAccount: React.FC = () => {
 
         {/* FORM */}
 
-        <div className="p-[12px] m-[12px]">
+        <div className="p-3">
 
         {/* TABLE */}
         {/* Do not add overflow-hidden here: dropdowns must remain visible. */}

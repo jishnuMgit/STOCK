@@ -829,7 +829,7 @@ const AssetPurchasePage: React.FC<AssetPurchasePageProps> = ({
         <main className="w-full overflow-hidden border border-gray-400 bg-white">
           <Header Name={title}/>
 
-          <section className="flex flex-col gap-3 px-3.5 pb-6 pt-3">
+          <section className="flex flex-col gap-3 px-3.5 pb-3 pt-3">
             <AssetDetails form={form} set={set} />
 
             <DepreciationGroup
