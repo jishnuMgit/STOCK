@@ -214,14 +214,14 @@ export const buildHtml = (r: PrintReport) => {
   .info .k { font-weight: bold; }
   .info .c { text-align: center; padding: 1px 0; }
   .info .v { text-align: right; }
-  th { border: 1px solid ${lineColor}; height: ${REPORT_STYLE.html.rowHeight}px; font-size: ${size.columnHead}pt;
+  th { border: ${REPORT_STYLE.html.lineWidth}px solid ${lineColor}; height: ${REPORT_STYLE.html.rowHeight}px; font-size: ${size.columnHead}pt;
        padding: 0 ${REPORT_STYLE.html.cellPaddingX}px; font-weight: normal; text-align: left; }
-  .grid td { border: 1px solid ${lineColor}; border-top: 0; padding: 2px ${REPORT_STYLE.html.cellPaddingX}px; font-size: ${size.body}pt;
+  .grid td { border: ${REPORT_STYLE.html.lineWidth}px solid ${lineColor}; border-top: 0; padding: 2px ${REPORT_STYLE.html.cellPaddingX}px; font-size: ${size.body}pt;
              vertical-align: middle; overflow-wrap: anywhere; }
   .r { text-align: right; }
   .tot td { font-weight: bold; }
   .age { margin-top: 12px; }
-  .age th, .age td { border: 1px solid ${lineColor}; padding: 3px ${REPORT_STYLE.html.cellPaddingX}px; text-align: right; }
+  .age th, .age td { border: ${REPORT_STYLE.html.lineWidth}px solid ${lineColor}; padding: 3px ${REPORT_STYLE.html.cellPaddingX}px; text-align: right; }
   .age td { font-size: ${size.body}pt; }
   .note { margin-top: 12px; font-size: ${size.small}pt; }
   .bank { margin-top: 8px; page-break-inside: avoid; }

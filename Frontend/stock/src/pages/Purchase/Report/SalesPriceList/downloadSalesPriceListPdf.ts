@@ -91,7 +91,7 @@ export const buildSalesPriceListPdf = async (report: PriceListReport): Promise<B
       fontSize: look.size.pdfBody,
       cellPadding: PDF_CELL_PADDING,
       lineColor: BORDER,
-      lineWidth: 0.2,
+      lineWidth: REPORT_STYLE.pdf.lineWidth,
       minCellHeight: REPORT_STYLE.pdf.minCellHeight,
       valign: "middle",
       overflow: "ellipsize",

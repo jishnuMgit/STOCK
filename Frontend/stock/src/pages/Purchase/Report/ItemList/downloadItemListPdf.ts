@@ -11,7 +11,7 @@ import { COLS, type PrintReport } from "./printItemListReport";
 
 import { REPORT_STYLE } from "../../../../components/common/reportStyle";
 type RGB = [number, number, number];
-const BORDER: RGB = [199, 209, 228]; // #c7d1e4
+const BORDER: RGB = [199, 209, 228]; // #c7d1e4 (REPORT_STYLE.lineColor)
 
 const TABLE_TOP = 38 + REPORT_STYLE.pdf.tableGap; // below company / heading / branch
 
@@ -96,7 +96,7 @@ export const buildItemListPdf = async (report: PrintReport): Promise<Blob> => {
       fontSize: look.size.pdfBody,
       cellPadding: PDF_CELL_PADDING,
       lineColor: BORDER,
-      lineWidth: 0.2,
+      lineWidth: REPORT_STYLE.pdf.lineWidth,
       minCellHeight: REPORT_STYLE.pdf.minCellHeight,
       valign: "middle",
       overflow: "linebreak",
