@@ -205,7 +205,7 @@ const GroupBox: React.FC<{ children: React.ReactNode; className?: string }> = ({
 );
 
 const groupGrid =
-  "grid grid-cols-1 items-center gap-x-6 gap-y-2.5 sm:grid-cols-2 lg:grid-cols-12";
+  "grid grid-cols-1 items-center gap-x-6 gap-y-2 sm:grid-cols-2 lg:grid-cols-12";
 
 /** label + controls on one line; pass a width class so columns line up */
 const Field: React.FC<{
@@ -218,7 +218,7 @@ const Field: React.FC<{
   <div className={`flex min-w-0 items-center gap-2 ${className}`}>
     <label
       htmlFor={htmlFor}
-      className={`shrink-0 whitespace-nowrap text-right text-[14px] text-[#405066] ${labelClassName}`}
+      className={`shrink-0 whitespace-nowrap pr-3 text-right text-[14px] text-[#405066] ${labelClassName}`}
     >
       {label}
     </label>
@@ -370,9 +370,10 @@ const AppDatePicker: React.FC<{
 );
 
 /* Label widths: left half uses LL, right half uses LR, so the boxes of every
-   row start at the same place. */
-const LL = "w-[120px]"; // Item ID, Qty, Purchase Date, Asset Supplier, Purchase JV No., Asset Account
-const LR = "w-[150px]"; // Item Name, Branch, Purchase Price, Supplier Ref., JV Date, ...
+   row start at the same place. Each label has the 12 px of space on its right (pr-3) plus the 8 px gap, so a label and its box are
+   20 px apart and the rows are 8 px apart, as on the Item page. */
+const LL = "w-[132px]"; // Item ID, Qty, Purchase Date, Asset Supplier, Purchase JV No., Asset Account
+const LR = "w-[162px]"; // Item Name, Branch, Purchase Price, Supplier Ref., JV Date, ...
 
 /* ---------------------------------------------------------------------
    3. PARTS
@@ -440,7 +441,7 @@ const AssetDetails: React.FC<PartProps> = ({ form, set }) => (
         onChange={(v) => set("branch", v)}
       />
     </Field>
-    <Field label="C.C ID :" labelClassName="w-[56px]" className="lg:col-span-2">
+    <Field label="C.C ID :" labelClassName="w-[68px]" className="lg:col-span-2">
       <Combo
         id="lkpCostCenter"
         options={costCenterOptions}

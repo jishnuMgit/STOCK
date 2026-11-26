@@ -5,6 +5,11 @@ import dayjs from "dayjs";
 import customParseFormat from "dayjs/plugin/customParseFormat";
 
 import Header from "../../../components/common/Header";
+import TransactionActions from "../../../components/common/TransactionActions";
+import { useCtrlShortcuts } from "../../../hooks/useCtrlShortcuts";
+import { useAltShortcuts } from "../../../hooks/useAltShortcuts";
+import { useEnterAsTab } from "../../../hooks/useEnterAsTab";
+import "../../../components/Transaction/Receipt/save/commanReceipt.css";
 
 import CommonTableSelect, {
   type TableSelectOption,
@@ -291,28 +296,6 @@ const AppDatePicker: React.FC<{
 );
 
 // ==================================================
-// ACTION BUTTON
-// ==================================================
-
-const ActionButton: React.FC<{
-  children: React.ReactNode;
-  onClick: () => void;
-  disabled?: boolean;
-  className?: string;
-}> = ({ children, onClick, disabled = false, className = "" }) => (
-  <button
-    type="button"
-    onClick={onClick}
-    disabled={disabled}
-    className={`h-9 min-w-20 btn-style whitespace-nowrap ${
-      disabled ? "cursor-not-allowed opacity-50" : ""
-    } ${className}`}
-  >
-    {children}
-  </button>
-);
-
-// ==================================================
 // MAIN COMPONENT
 // ==================================================
 
@@ -347,6 +330,9 @@ const DepreciationBeginningBalancePage: React.FC = () => {
   // Current row
 
   const [activeRow, setActiveRow] = useState(1);
+
+  // Enter moves to the next field like the Tab key (the same on every screen)
+  const enterAsTab = useEnterAsTab();
 
   // ==================================================
   // TABLE UPDATE
@@ -476,66 +462,68 @@ const DepreciationBeginningBalancePage: React.FC = () => {
 
  
 
+  // The keys of the Payment / Receipt screens: Ctrl+S Save, Ctrl+P Print, Alt+T Post
+  useCtrlShortcuts({ s: handleSave, p: handlePrint });
+  useAltShortcuts({ t: handlePost });
+
   // ==================================================
   // UI
   // ==================================================
 
   return (
-    <div className="min-h-full w-full bg-white p-1 sm:p-2">
-
-      <main className="mx-auto w-full max-w-270 overflow-hidden rounded-[3px] border border-[#91a7bb] bg-white shadow-sm">
+    // the frame of the Receipt screen: the grey page and the square window with the grey border
+    <div
+      onKeyDown={enterAsTab}
+      className="min-h-fit mt-3 bg-slate-100 px-5 py-2 flex flex-col justify-center items-center gap-2.5"
+    >
+      <div className="receipt-screen mx-auto lg:w-275 md:w-[55%] max-w-362.5 min-w-212.5 border border-gray-400 bg-white">
 
         <Header Name="Depreciation Beginning Balance" />
 
-        <section className="px-2.5 pb-3 pt-3">
+        {/* =====================================================
+            FORM - the spacing of the Receipt form: 20 px at the sides, 8 px between the rows, a 192 px label and
+            an 8 px gap
+        ===================================================== */}
 
-          {/* ========================================
-              TOP ACCOUNT SECTION
-          ======================================== */}
+        <div className="px-5 pt-3 mt-2 pb-2">
 
-          <div className="mx-auto grid max-w-212.5 grid-cols-1 gap-x-5 gap-y-1 sm:grid-cols-[1fr_1fr]">
+          {/* ASSET ACCOUNT */}
 
-            {/* ASSET ACCOUNT */}
+          <div className="mb-2 flex items-center gap-2 ml-4">
+            <label className="w-48 text-right text-[14px] whitespace-nowrap">
+              Asset Account :
+            </label>
 
-            <div className="grid grid-cols-[165px_minmax(0,1fr)] items-center gap-1 sm:col-span-2">
+            <CustomLinkedPairSelect
+              firstInputId="lkpAssetAccountId"
+              secondInputId="lkpAssetAccountName"
+              options={accountPairOptions}
+              firstValue={assetAccount?.value ?? null}
+              secondValue={assetAccount?.value ?? null}
+              firstHeader="Account ID"
+              secondHeader="Account Name"
+              firstWidth={120}
+              secondWidth={430}
+              gap={4}
+              listLook="receipt"
+              headerFontSize="12px"
+              menuZIndex={99999}
+              onChange={(option) => {
+                setAssetAccount(
+                  option
+                    ? { value: option.value, label: option.firstLabel }
+                    : null,
+                );
+              }}
+            />
+          </div>
 
-              <label className="text-right text-[14px] text-[#172b43]">
-                Asset Account :
-              </label>
+          {/* BRANCH and DATE (the date at the right end, as on Receipt) */}
 
-              <div className="flex min-w-0 gap-1">
-                <CustomLinkedPairSelect
-                  firstInputId="lkpAssetAccountId"
-                  secondInputId="lkpAssetAccountName"
-                  options={accountPairOptions}
-                  firstValue={assetAccount?.value ?? null}
-                  secondValue={assetAccount?.value ?? null}
-                  firstHeader="Account ID"
-                  secondHeader="Account Name"
-                  firstWidth={120}
-                  secondWidth={430}
-                  gap={4}
-                  headerFontSize="12px"
-                  onChange={(option) => {
-                    setAssetAccount(
-                      option
-                        ? {
-                            value: option.value,
-                            label: option.firstLabel,
-                          }
-                        : null,
-                    );
-                  }}
-                />
-              </div>
+          <div className="mb-2 flex items-center justify-between gap-8">
 
-            </div>
-
-            {/* BRANCH */}
-
-            <div className="grid grid-cols-[165px_minmax(0,1fr)] items-center gap-1">
-
-              <label className="text-right text-[14px] text-[#172b43]">
+            <div className="flex items-center gap-2 ml-4">
+              <label className="w-48 text-right text-[14px] whitespace-nowrap">
                 Branch :
               </label>
 
@@ -545,18 +533,20 @@ const DepreciationBeginningBalancePage: React.FC = () => {
                 value={branch}
                 onChange={setBranch}
                 columns={branchColumns}
+                listLook="receipt"
                 width="250px"
-                menuWidth="280px"
-                placeholder="Select Branch"
+                menuWidth="320px"
+                controlFontSize="14px"
+                headerFontSize="12px"
+                borderColor="#d7dee7"
+                hoverBorderColor="#9fdfbc"
+                menuZIndex={99999}
+                placeholder=""
               />
-
             </div>
 
-            {/* DATE */}
-
-            <div className="grid grid-cols-[140px_minmax(0,1fr)] items-center gap-1">
-
-              <label className="text-right text-[14px] text-[#172b43]">
+            <div className="flex items-center gap-2 -mr-2">
+              <label className="text-right text-[14px] whitespace-nowrap">
                 Date :
               </label>
 
@@ -567,340 +557,236 @@ const DepreciationBeginningBalancePage: React.FC = () => {
                   onChange={setDate}
                 />
               </div>
-
-            </div>
-
-            {/* ACCUMULATED DEPRECIATION ACCOUNT */}
-
-            <div className="grid grid-cols-[165px_minmax(0,1fr)] items-center gap-1 sm:col-span-2">
-
-              <label className="text-right whitespace-nowrap text-[14px] text-[#172b43] -ml-10">
-                Accumulated Depr. Account :
-              </label>
-
-              <CustomLinkedPairSelect
-                firstInputId="lkpAccumulatedAccountId"
-                secondInputId="lkpAccumulatedAccountName"
-                options={accountPairOptions}
-                firstValue={accumulatedAccount?.value ?? null}
-                secondValue={accumulatedAccount?.value ?? null}
-                firstHeader="Account ID"
-                secondHeader="Account Name"
-                firstWidth={120}
-                secondWidth={430}
-                gap={4}
-                headerFontSize="12px"
-                onChange={(option) => {
-                  setAccumulatedAccount(
-                    option
-                      ? {
-                          value: option.value,
-                          label: option.firstLabel,
-                        }
-                      : null,
-                  );
-                }}
-              />
-
-            </div>
-
-            {/* DEPRECIATION EXPENSE ACCOUNT */}
-
-            <div className="grid grid-cols-[165px_minmax(0,1fr)] items-center gap-1 sm:col-span-2">
-
-              <label className="text-right whitespace-nowrap text-[14px] text-[#172b43]">
-                Depr. Expense Account :
-              </label>
-
-              <CustomLinkedPairSelect
-                firstInputId="lkpExpenseAccountId"
-                secondInputId="lkpExpenseAccountName"
-                options={accountPairOptions}
-                firstValue={expenseAccount?.value ?? null}
-                secondValue={expenseAccount?.value ?? null}
-                firstHeader="Account ID"
-                secondHeader="Account Name"
-                firstWidth={120}
-                secondWidth={430}
-                gap={4}
-                headerFontSize="12px"
-                onChange={(option) => {
-                  setExpenseAccount(
-                    option
-                      ? {
-                          value: option.value,
-                          label: option.firstLabel,
-                        }
-                      : null,
-                  );
-                }}
-              />
-
             </div>
 
           </div>
 
-          {/* ========================================
-              BEGINNING BALANCE TABLE
-          ======================================== */}
+          {/* ACCUMULATED DEPRECIATION ACCOUNT */}
 
-          <div className="mt-2.5 w-full overflow-x-auto border border-[#B7ECD0]">
+          <div className="mb-2 flex items-center gap-2 ml-4">
+            <label className="w-48 text-right text-[14px] whitespace-nowrap">
+              Accumulated Depr. Account :
+            </label>
 
-            <table className="w-full min-w-212.5 table-fixed border-collapse">
+            <CustomLinkedPairSelect
+              firstInputId="lkpAccumulatedAccountId"
+              secondInputId="lkpAccumulatedAccountName"
+              options={accountPairOptions}
+              firstValue={accumulatedAccount?.value ?? null}
+              secondValue={accumulatedAccount?.value ?? null}
+              firstHeader="Account ID"
+              secondHeader="Account Name"
+              firstWidth={120}
+              secondWidth={430}
+              gap={4}
+              listLook="receipt"
+              headerFontSize="12px"
+              menuZIndex={99999}
+              onChange={(option) => {
+                setAccumulatedAccount(
+                  option
+                    ? { value: option.value, label: option.firstLabel }
+                    : null,
+                );
+              }}
+            />
+          </div>
 
-              <thead className="bg-[#f7f8fa]">
+          {/* DEPRECIATION EXPENSE ACCOUNT */}
 
-                <tr className="h-6">
+          <div className="flex items-center gap-2 ml-4">
+            <label className="w-48 text-right text-[14px] whitespace-nowrap">
+              Depr. Expense Account :
+            </label>
 
-                  <th className="w-4 border border-[#B7ECD0]" />
+            <CustomLinkedPairSelect
+              firstInputId="lkpExpenseAccountId"
+              secondInputId="lkpExpenseAccountName"
+              options={accountPairOptions}
+              firstValue={expenseAccount?.value ?? null}
+              secondValue={expenseAccount?.value ?? null}
+              firstHeader="Account ID"
+              secondHeader="Account Name"
+              firstWidth={120}
+              secondWidth={430}
+              gap={4}
+              listLook="receipt"
+              headerFontSize="12px"
+              menuZIndex={99999}
+              onChange={(option) => {
+                setExpenseAccount(
+                  option
+                    ? { value: option.value, label: option.firstLabel }
+                    : null,
+                );
+              }}
+            />
+          </div>
 
-                  <th className="w-[5%] border border-[#B7ECD0] text-center text-[12px] font-normal text-[#172b43]">
-                    Sl.No.
-                  </th>
+        </div>
 
-                  <th className="w-[15%] border border-[#B7ECD0] px-1 text-left text-[12px] font-normal text-[#172b43]">
-                    Item ID
-                  </th>
+        {/* =====================================================
+            TABLE - the grid of the Receipt screen (the shared .receipt-table classes, commanReceipt.css)
+        ===================================================== */}
 
-                  <th className="w-[44%] border border-[#B7ECD0] px-1 text-left text-[12px] font-normal text-[#172b43]">
-                    Item Name
-                  </th>
+        <div className="receipt-table-wrapper">
 
-                  <th className="w-[6%] border border-[#B7ECD0] text-center text-[12px] font-normal text-[#172b43]">
-                    CC. ID
-                  </th>
+          <table className="receipt-table">
 
-                  <th className="w-[13%] border border-[#B7ECD0] px-1 text-right text-[12px] font-normal text-[#172b43]">
-                    Pur. Price
-                  </th>
+            <colgroup>
+              <col style={{ width: "38px" }} />
+              <col style={{ width: "150px" }} />
+              <col style={{ width: "auto" }} />
+              <col style={{ width: "75px" }} />
+              <col style={{ width: "120px" }} />
+              <col style={{ width: "140px" }} />
+            </colgroup>
 
-                  <th className="w-[14%] border border-[#B7ECD0] px-1 text-right text-[12px] font-normal text-[#172b43]">
-                    Accu. Depr. Amt.
-                  </th>
+            <thead>
+              <tr>
+                <th>Line</th>
+                <th>Item ID</th>
+                <th>Item Name</th>
+                <th className="text-center">CC. ID</th>
+                <th className="text-right">Pur. Price</th>
+                <th className="text-right">Accu. Depr. Amt.</th>
+              </tr>
+            </thead>
 
-                </tr>
+            <tbody>
 
-              </thead>
+              {rows.map((row, index) => (
 
-              <tbody>
+                <tr
+                  key={row.id}
+                  onClick={() => setActiveRow(row.id)}
+                  className={activeRow === row.id ? "receipt-row-selected" : ""}
+                >
 
-                {rows.map((row, index) => (
+                  {/* SERIAL NUMBER */}
 
-                  <tr
-                    key={row.id}
-                    onClick={() => setActiveRow(row.id)}
-                    className="h-6.75 bg-[#fbfcfd]"
-                  >
+                  <td className="serial-cell">{index + 1}</td>
 
-                    {/* ROW INDICATOR */}
+                  {/* ITEM ID - REACT SELECT */}
 
-                    <td className="border-r border-b border-[#B7ECD0] bg-[#f5f6f8] text-center text-[10px] text-gray-600">
-                      {activeRow === row.id ? "▶" : ""}
-                    </td>
-
-                    {/* SERIAL NUMBER */}
-
-                    <td className="border-r border-b border-[#B7ECD0] text-center text-[12px] text-[#172b43]">
-                      {index + 1}
-                    </td>
-
-                    {/* ITEM ID - REACT SELECT */}
-
-                    <td className="border-r border-b border-[#B7ECD0] p-0">
-
-                      <Select<Option, false>
-                        inputId={`itemId-${row.id}`}
-                        options={itemOptions}
-                        components={selectComponents}
-                        value={row.itemId}
-                        onChange={(option) =>
-                          handleItemChange(row.id, option)
-                        }
-                        styles={tableSelectStyles}
-                        menuPortalTarget={
-                          typeof document !== "undefined"
-                            ? document.body
-                            : undefined
-                        }
-                        menuPosition="fixed"
-                        isClearable
-                        isSearchable
-                        placeholder=""
-                      />
-
-                    </td>
-
-                    {/* ITEM NAME - LINKED REACT SELECT */}
-
-                    <td className="border-r border-b border-[#B7ECD0] p-0">
-
-                      <Select<Option, false>
-                        inputId={`itemName-${row.id}`}
-                        options={itemNameOptions}
-                        components={selectComponents}
-                        value={row.itemName}
-                        onChange={(option) =>
-                          handleItemChange(row.id, option)
-                        }
-                        styles={tableSelectStyles}
-                        menuPortalTarget={
-                          typeof document !== "undefined"
-                            ? document.body
-                            : undefined
-                        }
-                        menuPosition="fixed"
-                        isClearable
-                        isSearchable
-                        placeholder=""
-                      />
-
-                    </td>
-
-                    {/* COST CENTER ID */}
-
-                    <td className="border-r border-b border-[#B7ECD0] p-0">
-
-                      <input
-                        type="text"
-                        value={row.ccId}
-                        onChange={(e) =>
-                          handleRowChange(
-                            row.id,
-                            "ccId",
-                            e.target.value,
-                          )
-                        }
-                        className="h-7.5 w-full bg-transparent px-1 text-center text-[12px] outline-none focus:bg-[#edf4ff]"
-                      />
-
-                    </td>
-
-                    {/* PURCHASE PRICE */}
-
-                    <td className="border-r border-b border-[#B7ECD0] p-0">
-
-                      <input
-                        type="number"
-                        value={row.purchasePrice}
-                        onChange={(e) =>
-                          handleRowChange(
-                            row.id,
-                            "purchasePrice",
-                            e.target.value,
-                          )
-                        }
-                        className="h-7.5 w-full bg-transparent px-1 text-right text-[12px] outline-none focus:bg-[#edf4ff]"
-                      />
-
-                    </td>
-
-                    {/* ACCUMULATED DEPRECIATION */}
-
-                    <td className="border-r border-b border-[#B7ECD0] p-0">
-
-                      <input
-                        type="number"
-                        value={row.accumulatedDepreciation}
-                        onChange={(e) =>
-                          handleRowChange(
-                            row.id,
-                            "accumulatedDepreciation",
-                            e.target.value,
-                          )
-                        }
-                        className="h-7.5 w-full bg-transparent px-1 text-right text-[12px] outline-none focus:bg-[#edf4ff]"
-                      />
-
-                    </td>
-
-                  </tr>
-
-                ))}
-
-                {/* NEW ROW */}
-
-                {/* <tr className="h-[26px] bg-[#fbfcfd]">
-
-                  <td className="border-r border-b border-[#B7ECD0] bg-[#f5f6f8] text-center text-[11px] text-gray-500">
-                    *
-                  </td>
-
-                  <td
-                    colSpan={6}
-                    className="border-b border-[#B7ECD0]"
-                  >
-                    <button
-                      type="button"
-                      onClick={handleAddRow}
-                      className="h-full w-full cursor-text"
-                      title="Add new row"
+                  <td>
+                    <Select<Option, false>
+                      inputId={`itemId-${row.id}`}
+                      options={itemOptions}
+                      components={selectComponents}
+                      value={row.itemId}
+                      onChange={(option) => handleItemChange(row.id, option)}
+                      onFocus={() => setActiveRow(row.id)}
+                      styles={tableSelectStyles}
+                      menuPortalTarget={
+                        typeof document !== "undefined" ? document.body : undefined
+                      }
+                      menuPosition="fixed"
+                      isClearable
+                      isSearchable
+                      placeholder=""
                     />
                   </td>
 
-                </tr> */}
+                  {/* ITEM NAME - LINKED REACT SELECT */}
 
-              </tbody>
+                  <td>
+                    <Select<Option, false>
+                      inputId={`itemName-${row.id}`}
+                      options={itemNameOptions}
+                      components={selectComponents}
+                      value={row.itemName}
+                      onChange={(option) => handleItemChange(row.id, option)}
+                      onFocus={() => setActiveRow(row.id)}
+                      styles={tableSelectStyles}
+                      menuPortalTarget={
+                        typeof document !== "undefined" ? document.body : undefined
+                      }
+                      menuPosition="fixed"
+                      isClearable
+                      isSearchable
+                      placeholder=""
+                    />
+                  </td>
 
-            </table>
+                  {/* COST CENTER ID */}
 
-            {/* TABLE FOOTER TOTAL */}
+                  <td>
+                    <input
+                      type="text"
+                      value={row.ccId}
+                      onFocus={() => setActiveRow(row.id)}
+                      onChange={(e) => handleRowChange(row.id, "ccId", e.target.value)}
+                      className="receipt-grid-input text-center"
+                    />
+                  </td>
 
-            <div className="grid h-7.75 grid-cols-[1fr_13%_14%] border-t border-[#B7ECD0] bg-[#eeeeF2]">
+                  {/* PURCHASE PRICE */}
 
-              <div />
+                  <td>
+                    <input
+                      type="number"
+                      value={row.purchasePrice}
+                      onFocus={() => setActiveRow(row.id)}
+                      onChange={(e) => handleRowChange(row.id, "purchasePrice", e.target.value)}
+                      className="receipt-grid-input text-right"
+                    />
+                  </td>
 
-              <div className="border border-[#B7ECD0] bg-white" />
+                  {/* ACCUMULATED DEPRECIATION */}
 
-              <div className="flex items-center justify-end border border-[#B7ECD0] bg-white px-1 text-[12px] text-[#172b43]">
-                {totalAccumulatedDepreciation.toFixed(2)}
-              </div>
+                  <td>
+                    <input
+                      type="number"
+                      value={row.accumulatedDepreciation}
+                      onFocus={() => setActiveRow(row.id)}
+                      onChange={(e) =>
+                        handleRowChange(row.id, "accumulatedDepreciation", e.target.value)
+                      }
+                      className="receipt-grid-input text-right"
+                    />
+                  </td>
 
-            </div>
+                </tr>
 
-          </div>
+              ))}
 
-          {/* ========================================
-              ACTION BUTTONS
-          ======================================== */}
+            </tbody>
 
-          <div className="mt-14 flex flex-wrap items-center justify-center gap-1">
+          </table>
 
-            <ActionButton
-              onClick={handleSave}
-              className="w-20"
-            >
-              Save
-            </ActionButton>
+        </div>
 
-            <ActionButton
-              onClick={handlePrint}
-              className="w-20"
-            >
-              Print
-            </ActionButton>
+        {/* =====================================================
+            TOTAL - below the grid, at the right end, as on Receipt
+        ===================================================== */}
 
-            <ActionButton
-              onClick={handlePost}
-              className="w-20"
-            >
-              Post
-            </ActionButton>
+        <div className="mt-2.5 mr-16.5 ml-auto flex w-55 items-center gap-2 text-[13px]">
+          <label className="whitespace-nowrap text-[14px]">Total :</label>
 
-            <ActionButton
-              onClick={handleCancel}
-              className="w-20"
-            >
-              Clear
-            </ActionButton>
+          <input
+            id="txtTotAccumulatedDepreciation"
+            value={totalAccumulatedDepreciation.toFixed(2)}
+            readOnly
+            className="ml-1 h-7.5 w-25 rounded border border-gray-300 px-2 text-right outline-none text-[#344054]"
+          />
+        </div>
 
-          
+        {/* =====================================================
+            BUTTONS - the buttons and the keys of the Payment / Receipt screens
+        ===================================================== */}
 
-          </div>
+        <TransactionActions
+          className="mt-4 mb-4 flex flex-wrap items-center justify-center gap-3"
+          actions={[
+            { id: "btnSave", label: "Save", underlineIndex: 0, onClick: handleSave },
+            { id: "btnPrint", label: "Print", underlineIndex: 0, onClick: handlePrint },
+            { id: "btnPost", label: "Post", underlineIndex: 3, onClick: handlePost },
+            { id: "btnClear", label: "Clear", onClick: handleCancel },
+          ]}
+        />
 
-        </section>
-
-      </main>
-
+      </div>
     </div>
   );
 };
