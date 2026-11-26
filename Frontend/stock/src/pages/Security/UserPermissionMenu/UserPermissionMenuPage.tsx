@@ -976,7 +976,7 @@ const UserPermission: React.FC = () => {
         <Header Name="User Permission - Menu" />
 
         {/* Form */}
-        <div className="p-[12px] m-[12px]">
+        <div className="p-3">
 
         {/* User ID */}
         <form

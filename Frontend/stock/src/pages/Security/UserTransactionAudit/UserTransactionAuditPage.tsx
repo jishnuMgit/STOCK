@@ -278,9 +278,7 @@ const UserTransactionAudit: React.FC = () => {
 
         <div
           className="
-            px-[20px]
-            pt-[18px]
-            pb-[15px]
+            p-3
           "
         >
           {/* ==================================================

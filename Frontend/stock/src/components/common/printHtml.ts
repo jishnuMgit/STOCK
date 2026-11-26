@@ -37,6 +37,29 @@ export const previewPrintedLine = (html: string): { css: string; line: string } 
   };
 };
 
+// The preview also shows "Page x of y" - a browser draws it (the page's @top-right margin box) only when it prints. This returns
+// the label for the preview: at the right end of the Branch line (the first td.sub / td.info / td.br of the page - where the PDF
+// and the printed page put it), in the font of the page's own margin box. The label starts as "Page 1 of 1"; the preview puts
+// the real number of pages in it (the class "preview-page"). A page without a "Page" margin box gets nothing.
+export const previewPageNumber = (html: string): { css: string; label: string; script: string } => {
+  const rule = /@top-right\s*\{\s*content:\s*"Page "[^;]*;\s*font:\s*([^;}]+);/.exec(html);
+  if (!rule) return { css: "", label: "", script: "" };
+
+  return {
+    css: `.preview-page{position:absolute;right:20px;top:0;visibility:hidden;font:${rule[1]};color:#000}`,
+    label: `<div class="preview-page">Page 1 of 1</div>`,
+    script:
+      `<script>(function(){var p=document.querySelector('.preview-page');var e=document.querySelector('td.sub,td.info,td.br');` +
+      `if(!p||!e)return;p.style.top=(e.getBoundingClientRect().top+window.scrollY)+'px';p.style.visibility='visible';})();</script>`,
+  };
+};
+
+// How many pages a PDF made by jsPDF has: every page object is "/Type /Page" (the page tree is "/Type /Pages")
+export const countPdfPages = async (blob: Blob): Promise<number> => {
+  const text = new TextDecoder("latin1").decode(await blob.arrayBuffer());
+  return (text.match(/\/Type\s*\/Page(?![s\w])/g) ?? []).length;
+};
+
 // A report in the app font (Inter) loads it itself, in its own CSS. The print dialog must not open before the font is
 // there, or the page would print in the fallback font: wait for the page to load, then for the font, but never longer than
 // a few seconds (offline: the fallback font prints).

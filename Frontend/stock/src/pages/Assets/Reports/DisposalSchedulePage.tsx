@@ -546,7 +546,10 @@ const DisposalSchedulePage: React.FC = () => {
                 />
               </RadioPanel>
 
-              <div className="flex items-center gap-1 pt-8.5 pl-6 -mt-1.5">
+             
+            </div>
+
+             <div className="flex w-full  items-center justify-center gap-1  pl-6 -mt-1.5">
                 <ActionButton
                   onClick={handlePrint}
                   className="h-9 w-20"
@@ -556,7 +559,6 @@ const DisposalSchedulePage: React.FC = () => {
 
               
               </div>
-            </div>
 
           </div>
         </section>

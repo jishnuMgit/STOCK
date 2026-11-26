@@ -669,11 +669,11 @@ const AssetItemList: React.FC = () => {
             {/* BUTTONS */}
             {/* -------------------------------------- */}
 
-            <div className="grid grid-cols-[125px_minmax(0,1fr)] gap-x-4">
+           
 
               <div />
 
-              <div className="flex items-center gap-1 pl-26">
+              <div className="flex items-center justify-center  w-full gap-1 ">
 
                 <ActionButton
                   onClick={handlePrint}
@@ -686,7 +686,7 @@ const AssetItemList: React.FC = () => {
 
               </div>
 
-            </div>
+           
 
           </div>
 

@@ -220,7 +220,7 @@ const readOnlyClass =
   "h-[30px] w-full min-w-0 rounded-[4px] border border-[#cfd7df] bg-[#eef1f4] px-2 text-[14px] text-[#24364d] outline-none";
 
 const groupGrid =
-  "grid grid-cols-1 items-center gap-x-6 gap-y-2.5 sm:grid-cols-2 lg:grid-cols-12";
+  "grid grid-cols-1 items-center gap-x-6 gap-y-2 sm:grid-cols-2 lg:grid-cols-12";
 
 /** label + controls on one line; pass a width class so columns line up */
 const Field: React.FC<{
@@ -233,7 +233,7 @@ const Field: React.FC<{
   <div className={`flex min-w-0 items-center gap-2 ${className}`}>
     <label
       htmlFor={htmlFor}
-      className={`shrink-0 whitespace-nowrap text-right text-[14px] text-[#405066] ${labelClassName}`}
+      className={`shrink-0 whitespace-nowrap pr-3 text-right text-[14px] text-[#405066] ${labelClassName}`}
     >
       {label}
     </label>
@@ -363,9 +363,10 @@ const AppDatePicker: React.FC<{
   </LocalizationProvider>
 );
 
-/* Label widths: left half LL, right half LR, so every row lines up */
-const LL = "w-[120px]"; // Item, Qty, Purchase Price, Asset Account, Depreciation %, ...
-const LR = "w-[135px]"; // Branch, Purchase Date, Depr. calc. upto date, ...
+/* Label widths: left half LL, right half LR, so every row lines up. Each label has 12 px of space on its right (pr-3) plus the 8 px
+   gap: a label and its box are 20 px apart and the rows 8 px apart, as on the Item page. */
+const LL = "w-[132px]"; // Item, Qty, Purchase Price, Asset Account, Depreciation %, ...
+const LR = "w-[147px]"; // Branch, Purchase Date, Depr. calc. upto date, ...
 
 /* ---------------------------------------------------------------------
    3. PARTS

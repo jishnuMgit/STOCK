@@ -845,7 +845,7 @@ const SetChartOfAccount: React.FC = () => {
 
         {/* FORM */}
 
-        <div className="p-[12px] m-[12px]">
+        <div className="p-3">
 
         {/* TABLE */}
         {/* Do not add overflow-hidden here: dropdowns must remain visible. */}
@@ -986,29 +986,6 @@ const SetChartOfAccount: React.FC = () => {
                       noOptionsMessage={() => "No results found"}
                     />
                     </div>
-
-                    {/* DELETE ROW (X) - inside the cell, after the dropdown arrow */}
-
-                    {index < rows.length && (
-                      <button
-                        id={`btnDeleteRow-${index}`}
-                        name="btnDeleteRow"
-                        type="button"
-                        tabIndex={-1}
-                        onClick={() => handleDeleteRow(rows[index], index + 1)}
-                        disabled={!perms.delete}
-                        aria-label={`Delete row ${index + 1}`}
-                        className="
-                          relative inline-flex h-full w-5 shrink-0
-                          items-center justify-center self-stretch rounded
-                          text-slate-400 hover:text-red-500
-                          disabled:cursor-not-allowed disabled:opacity-30
-                          disabled:hover:text-slate-400
-                        "
-                      >
-                        <X size={12} />
-                      </button>
-                    )}
                   </div>
 
                   {/* ACCOUNT ID SELECT */}
@@ -1136,7 +1113,7 @@ const SetChartOfAccount: React.FC = () => {
 
                   {/* GROUP / HEAD */}
 
-                  <div className="h-[34px] min-w-0">
+                  <div className="flex h-[34px] min-w-0 items-stretch">
                     <input
                       id={`txtGPH-${index}`}
                       name="txtGPH"
@@ -1145,7 +1122,7 @@ const SetChartOfAccount: React.FC = () => {
                       readOnly
                       tabIndex={-1}
                       className="
-                        h-full w-full min-w-0
+                        h-full min-w-0 flex-1
                         border-0 bg-transparent
                         pl-[2px] pr-[7px] text-[13px] text-slate-700
                         outline-none
@@ -1153,6 +1130,28 @@ const SetChartOfAccount: React.FC = () => {
                       "
                     />
 
+                    {/* DELETE ROW (X) - at the end of the row, after the G/P/H box */}
+
+                    {index < rows.length && (
+                      <button
+                        id={`btnDeleteRow-${index}`}
+                        name="btnDeleteRow"
+                        type="button"
+                        tabIndex={-1}
+                        onClick={() => handleDeleteRow(rows[index], index + 1)}
+                        disabled={!perms.delete}
+                        aria-label={`Delete row ${index + 1}`}
+                        className="
+                          relative inline-flex h-full w-5 shrink-0
+                          items-center justify-center self-stretch rounded
+                          text-slate-400 hover:text-red-500
+                          disabled:cursor-not-allowed disabled:opacity-30
+                          disabled:hover:text-slate-400
+                        "
+                      >
+                        <X size={12} />
+                      </button>
+                    )}
                   </div>
                 </div>
               );

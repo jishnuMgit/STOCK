@@ -162,7 +162,7 @@ console.log(message)
           <Header Name="Set Database Backup Path" />
 
           {/* Form */}
-          <section className="px-4 pb-5 pt-5 sm:px-6">
+          <section className="px-3 pb-3 pt-3 sm:px-3">
             <div className="grid grid-cols-[160px_minmax(0,1fr)] items-center gap-x-4 gap-y-3">
               {renderPathField(
                 "serverBackupPath",

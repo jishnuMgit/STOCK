@@ -1,7 +1,7 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import { saveFile } from "../../pages/Finance/Report/ChartOfAccount/saveFile";
 import Header from "./Header";
-import { previewPrintedLine, printPdfBlob } from "./printHtml";
+import { countPdfPages, previewPageNumber, previewPrintedLine, printPdfBlob } from "./printHtml";
 import { useMessageModal } from "../../hooks/useMessageModal";
 
 // ============================================================
@@ -84,13 +84,46 @@ const ReportPreview: React.FC<Props> = ({
   const previewHtml = useMemo(() => {
     // the user and the time at the bottom right (a browser draws the page margin box only when it prints)
     const printed = previewPrintedLine(html);
+    // "Page x of y" at the right end of the Branch line
+    const pageNo = previewPageNumber(html);
 
     return html
       .replace(
         "</head>",
-        `<style>body{padding-left:40px;padding-right:20px}${printed.css}</style></head>`,
+        `<style>body{padding-left:40px;padding-right:20px}${printed.css}${pageNo.css}</style></head>`,
       )
-      .replace("</body>", `${printed.line}</body>`);
+      .replace("</body>", `${printed.line}${pageNo.label}${pageNo.script}</body>`);
+  }, [html]);
+
+  // the real number of pages: the PDF of the report is made once (the same page as Print and Download) and its pages counted;
+  // until then the label says "Page 1 of 1"
+  const frameRef = useRef<HTMLIFrameElement | null>(null);
+  const pageCountRef = useRef(1);
+
+  const showPageCount = () => {
+    const label = frameRef.current?.contentDocument?.querySelector(".preview-page");
+    if (label) label.textContent = `Page 1 of ${pageCountRef.current}`;
+  };
+
+  useEffect(() => {
+    let active = true;
+
+    Promise.resolve()
+      .then(() => buildPdf())
+      .then(countPdfPages)
+      .then((pages) => {
+        if (!active || pages < 1) return;
+        pageCountRef.current = pages;
+        showPageCount();
+      })
+      .catch(() => {
+        /* the label stays "Page 1 of 1" */
+      });
+
+    return () => {
+      active = false;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [html]);
 
   // Print: the PDF of the report goes to the browser's print window - the same page as Download (the page number on
@@ -182,8 +215,10 @@ const ReportPreview: React.FC<Props> = ({
 
         <iframe
           id="frmPrintPreview"
+          ref={frameRef}
           title="Print Preview"
           srcDoc={previewHtml}
+          onLoad={showPageCount}
           className="min-h-0 flex-1 border-0 bg-white"
         />
 

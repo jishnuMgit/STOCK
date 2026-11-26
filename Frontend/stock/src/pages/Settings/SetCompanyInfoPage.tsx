@@ -440,7 +440,7 @@ const SetCompanyInfo = () => {
         <Header Name="Set Company Info." />
 
         {/* Form */}
-        <div className="p-[12px] m-[12px]">
+        <div className="p-3">
 
           {/* Company Name */}
           <div className="grid grid-cols-[195px_1fr] items-center mb-[8px]">

@@ -269,7 +269,7 @@ const SetActivePeriodPage: React.FC = () => {
             FORM
         ==================================================== */}
 
-        <div className="p-3 m-3">
+        <div className="p-3 ">
           {/* TABLE AREA */}
 
           <div className="h-76.25 overflow-hidden border border-[#bfe8d0]">
