@@ -26,20 +26,39 @@
 
 .top-nav {
     display: flex;
-    align-items: center;
-    gap: 24px;
-    height: 56px;
-    padding: 0 16px;
+    flex-direction: column;
     background: #fff;
     border-bottom: 1px solid #e2e8f0;
     position: relative;
     z-index: 30;
 }
 
-.top-nav-brand {
+/* row 1: company-year : user */
+.top-nav-info {
     display: flex;
     align-items: center;
-    gap: 10px;
+    justify-content: center; 
+    gap: 6px;
+    height: 28px;
+    padding: 0 16px;
+    font-size: 12px;
+    font-weight: 600;
+    color: #475569;
+    border-bottom: 1px solid #f1f5f9;
+    white-space: nowrap;
+}
+
+.top-nav-info-sep {
+    color: #94a3b8;
+}
+
+/* row 2: menu + logout */
+.top-nav-row {
+    display: flex;
+    align-items: center;
+    gap: 24px;
+    height: 48px;
+    padding: 0 16px;
 }
 
 .top-nav-menu {
@@ -131,17 +150,4 @@
 
 .top-nav-status-error {
     color: #dc2626;
-}
-
-.top-nav-user {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-}
-
-.user-company {
-    font-size: 11px;
-    font-weight: 600;
-    color: #475569;
-    line-height: 1.2;
 }
