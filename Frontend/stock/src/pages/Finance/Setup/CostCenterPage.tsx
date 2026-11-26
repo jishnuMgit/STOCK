@@ -847,21 +847,23 @@ const CostCenterPage: React.FC = () => {
               BUTTONS
           ==================================================== */}
 
-            <TransactionActions
-              className="mt-[14px] flex justify-center gap-3"
-              actions={[
-                {
-                  id: "btnSave",
-                  label: actionWord,
-                  underlineIndex: 0,
-                  onClick: handleSave,
-                  disabled: !canSaveOrModify || saving,
-                },
-                // Find is not switched on on this page yet (as before): the button does nothing
-                { id: "btnSearch", label: "Find", underlineIndex: 0, onClick: () => {} },
-                { id: "btnClear", label: "Clear", onClick: handleClear },
-              ]}
-            />
+            <div className="-mb-3">
+              <TransactionActions
+                className="mt-[14px] flex justify-center gap-3"
+                actions={[
+                  {
+                    id: "btnSave",
+                    label: actionWord,
+                    underlineIndex: 0,
+                    onClick: handleSave,
+                    disabled: !canSaveOrModify || saving,
+                  },
+                  // Find is not switched on on this page yet (as before): the button does nothing
+                  { id: "btnSearch", label: "Find", underlineIndex: 0, onClick: () => { } },
+                  { id: "btnClear", label: "Clear", onClick: handleClear },
+                ]}
+              />
+            </div>
           </div>
         </div>
 

@@ -5,6 +5,7 @@ interface ActionButtonProps {
     /** index of the letter to underline (shortcut letter). Omit for none */
     underlineIndex?: number;
     id?: string;
+    title?: string;
     onClick?: (event: React.MouseEvent<HTMLButtonElement>) => void;
     onFocus?: () => void;
     onKeyDown?: (event: React.KeyboardEvent<HTMLButtonElement>) => void;
@@ -21,6 +22,7 @@ const ActionButton = forwardRef<HTMLButtonElement, ActionButtonProps>(
             label,
             underlineIndex,
             id,
+            title,
             onClick,
             onFocus,
             onKeyDown,
@@ -38,6 +40,7 @@ const ActionButton = forwardRef<HTMLButtonElement, ActionButtonProps>(
             <button
                 ref={ref}
                 id={id}
+                title={title}
                 type={type}
                 disabled={disabled}
                 onClick={onClick}
