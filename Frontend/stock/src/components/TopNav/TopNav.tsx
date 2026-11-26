@@ -1,9 +1,9 @@
 import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { ChevronDown, ChevronRight, LogOut } from "lucide-react";
+import { ChevronRight, LogOut } from "lucide-react";
 import "./TopNav.css";
 import { useLogout } from "../../hooks/useLogout";
-import { getMenuIcon, getMenuRoute } from "../../config/menuConfig";
+import { getMenuRoute } from "../../config/menuConfig";
 import { isNodeActive } from "../../utils/menuActive";
 import type { MenuNode } from "../../types/menu";
 import { clearStoredUser } from "../../utils/authStorage";
@@ -15,7 +15,9 @@ type CompanyRow = Record<string, unknown>;
 
 // ADJUST these keys to match one object of the companies list
 const ID_KEYS = ["fCoID"];
-const SHORT_NAME_KEYS = ["fCoName_Short"];
+const LONG_NAME_KEYS = ["fCoName_QR"];
+
+const CACHE_KEY = "coLongName";
 
 const firstValue = (row: CompanyRow, keys: string[]) => {
   for (const key of keys) {
@@ -29,7 +31,7 @@ const firstValue = (row: CompanyRow, keys: string[]) => {
 
 const COMPANY_LIST_PATHS = ["/companies"];
 
-const loadCompanyShortName = async (coId: string): Promise<string> => {
+const loadCompanyLongName = async (coId: string): Promise<string> => {
   for (const path of COMPANY_LIST_PATHS) {
     try {
       const res = await fetch(`${API_URL}${path}`, {
@@ -43,7 +45,7 @@ const loadCompanyShortName = async (coId: string): Promise<string> => {
       const match = (result.companies as CompanyRow[]).find(
         (c) => firstValue(c, ID_KEYS) === coId,
       );
-      if (match) return firstValue(match, SHORT_NAME_KEYS);
+      if (match) return firstValue(match, LONG_NAME_KEYS);
     } catch {
       // try the next path
     }
@@ -79,20 +81,20 @@ export default function TopNav({
 
   const coId = localStorage.getItem("PstrCoID") ?? "";
   const year = localStorage.getItem("PstrYear") ?? "";
-  const [coShortName, setCoShortName] = useState(
-    localStorage.getItem("coShortName") ?? "",
+  const [coLongName, setCoLongName] = useState(
+    localStorage.getItem(CACHE_KEY) ?? "",
   );
 
-  /* load the company short name once (cached so it doesn't flicker) */
+  /* load the company long name once (cached so it doesn't flicker) */
   useEffect(() => {
     if (!coId) return;
     let cancelled = false;
 
     (async () => {
-      const name = await loadCompanyShortName(coId);
+      const name = await loadCompanyLongName(coId);
       if (!cancelled && name) {
-        setCoShortName(name);
-        localStorage.setItem("coShortName", name);
+        setCoLongName(name);
+        localStorage.setItem(CACHE_KEY, name);
       }
     })();
 
@@ -148,7 +150,7 @@ export default function TopNav({
     }
 
     clearStoredUser();
-    localStorage.removeItem("coShortName");
+    localStorage.removeItem(CACHE_KEY);
     notify.success("Logged out successfully");
     navigate("/login", { replace: true });
   };
@@ -161,9 +163,9 @@ export default function TopNav({
 
       {/* row 1: company-year : user */}
       <div className="top-nav-info">
-        <span>{(coShortName || coId) + (year ? `-${year}` : "")}</span>
+        <span>{(coLongName || coId) + (year ? `-${year}` : "")}</span>
         <span className="top-nav-info-sep">:</span>
-        <span>{userId ?? "Administrator"}</span>
+        <span className="text-red-600">{userId ?? "Administrator"}</span>
       </div>
 
       {/* row 2: menu + logout */}
@@ -187,18 +189,13 @@ export default function TopNav({
                 <div className="top-nav-item" key={node.fmenuid}>
                   <button
                     type="button"
-                    className={`top-nav-button ${
-                      isActive ? "top-nav-button-active" : ""
-                    } ${isOpen ? "top-nav-button-open" : ""}`}
+                    className={`top-nav-button ${isActive ? "top-nav-button-active" : ""
+                      } ${isOpen ? "top-nav-button-open" : ""}`}
                     onClick={() => handleTopClick(node)}
                     aria-haspopup={hasChildren || undefined}
                     aria-expanded={hasChildren ? isOpen : undefined}
                   >
-                    <span className="top-nav-icon">
-                      {getMenuIcon(node, 0)}
-                    </span>
                     <span>{node.fmenucaption}</span>
-                    {/* {hasChildren && <ChevronDown size={14} />} */}
                   </button>
 
                   {isOpen && (
@@ -213,17 +210,14 @@ export default function TopNav({
                             type="button"
                             role="menuitem"
                             key={child.fmenuid}
-                            className={`top-nav-dropdown-item ${
-                              isNodeActive(child, activePath)
+                            className={`top-nav-dropdown-item ${isNodeActive(child, activePath)
                                 ? "top-nav-dropdown-item-active"
                                 : ""
-                            } ${
-                              activeSectionId === child.fmenuid
+                              } ${activeSectionId === child.fmenuid
                                 ? "top-nav-dropdown-item-selected"
                                 : ""
-                            } ${
-                              disabled ? "top-nav-dropdown-item-disabled" : ""
-                            }`}
+                              } ${disabled ? "top-nav-dropdown-item-disabled" : ""
+                              }`}
                             onClick={() => handleChildClick(node, child)}
                           >
                             <span>{child.fmenucaption}</span>
