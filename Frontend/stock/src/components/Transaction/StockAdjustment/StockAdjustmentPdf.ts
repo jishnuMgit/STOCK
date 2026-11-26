@@ -84,10 +84,9 @@ export const buildStockAdjustmentPdf = async (report: PrintReport): Promise<Blob
     doc.setFontSize(look.size.pdfBody);
     const y = MARGIN.top + 23 + REPORT_STYLE.pdf.titleGap;
     doc.text(`Branch : ${report.txtBranchName}`, MARGIN.left, y);
-    doc.text(`Entry No. : ${report.txtDocNo}`, PAGE_W / 2, y, { align: "center" });
-    doc.text(`Date : ${formatDate(report.dtpDate)}`, PAGE_W - MARGIN.right, y, {
-      align: "right",
-    });
+    // the Date is not at the right end: the right end of this line is "Page x of y", as on the reports
+    doc.text(`Entry No. : ${report.txtDocNo}`, MARGIN.left + (PAGE_W - MARGIN.left - MARGIN.right) * 0.28, y);
+    doc.text(`Date : ${formatDate(report.dtpDate)}`, MARGIN.left + (PAGE_W - MARGIN.left - MARGIN.right) * 0.56, y);
 
     if (report.txtNote) {
       doc.text(`Note : ${report.txtNote}`, MARGIN.left, y + 6);

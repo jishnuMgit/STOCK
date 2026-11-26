@@ -95,7 +95,8 @@ export const buildHtml = (r: PrintReport) => {
   <thead>
     <tr><td colspan="8" class="co"   style="border:0">${esc(r.txtCoName)}</td></tr>
     <tr><td colspan="8" class="head" style="border:0">${esc(REPORT_HEADING)}</td></tr>
-    <tr><td colspan="8" class="info" style="border:0"><div>
+    <tr><td colspan="8" class="info" style="border:0"><div style="justify-content:flex-start;gap:48px">
+      <!-- the Date is not at the right end: the right end of this line is "Page x of y", as on the reports -->
       <span>Branch : <b>${esc(r.txtBranchName)}</b></span>
       <span>Entry No. : <b>${esc(r.txtDocNo)}</b></span>
       <span>Date : <b>${esc(formatDate(r.dtpDate))}</b></span>

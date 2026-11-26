@@ -77,10 +77,10 @@ export const buildBeginningStockPdf = async (report: PrintReport): Promise<Blob>
 
     doc.setFontSize(look.size.pdfBody);
     const y = MARGIN.top + 23 + REPORT_STYLE.pdf.titleGap;
-    doc.text(`Branch : ${report.txtBranchName}`, MARGIN.left, y);
-    doc.text(`Date : ${formatDate(report.dtpDate)}`, PAGE_W - MARGIN.right, y, {
-      align: "right",
-    });
+    const branchText = `Branch : ${report.txtBranchName}`;
+    doc.text(branchText, MARGIN.left, y);
+    // the Date follows the Branch (13 mm after it): the right end of this line is "Page x of y", as on the reports
+    doc.text(`Date : ${formatDate(report.dtpDate)}`, MARGIN.left + doc.getTextWidth(branchText) + 13, y);
   };
 
   autoTable(doc, {

@@ -79,11 +79,10 @@ export const buildStockTransferPdf = async (report: PrintReport): Promise<Blob> 
     doc.setFontSize(look.size.pdfBody);
     const y = MARGIN.top + 23 + REPORT_STYLE.pdf.titleGap;
     doc.text(`Branch : ${report.txtBranchName}`, MARGIN.left, y);
-    doc.text(`Transfer To : ${report.txtToBranchName}`, MARGIN.left + usable * 0.3, y);
-    doc.text(`Entry No. : ${report.txtDocNo}`, MARGIN.left + usable * 0.6, y);
-    doc.text(`Date : ${formatDate(report.dtpDate)}`, PAGE_W - MARGIN.right, y, {
-      align: "right",
-    });
+    doc.text(`Transfer To : ${report.txtToBranchName}`, MARGIN.left + usable * 0.22, y);
+    doc.text(`Entry No. : ${report.txtDocNo}`, MARGIN.left + usable * 0.5, y);
+    // the Date is not at the right end: the right end of this line is "Page x of y", as on the reports
+    doc.text(`Date : ${formatDate(report.dtpDate)}`, MARGIN.left + usable * 0.8, y);
 
     if (report.txtNote) {
       doc.text(`Note : ${report.txtNote}`, MARGIN.left, y + 6);
