@@ -373,7 +373,7 @@ const AppDatePicker: React.FC<{
    row start at the same place. Each label has the 12 px of space on its right (pr-3) plus the 8 px gap, so a label and its box are
    20 px apart and the rows are 8 px apart, as on the Item page. */
 const LL = "w-[132px]"; // Item ID, Qty, Purchase Date, Asset Supplier, Purchase JV No., Asset Account
-const LR = "w-[162px]"; // Item Name, Branch, Purchase Price, Supplier Ref., JV Date, ...
+const LR = "w-[206px]"; // Item Name, Branch, Purchase Price, Supplier Ref., JV Date, ...
 
 /* ---------------------------------------------------------------------
    3. PARTS
