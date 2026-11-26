@@ -2028,18 +2028,19 @@ const ReceiptPage: React.FC = () => {
         {/* =================================================
             ACTIONS
         ================================================= */}
-
-        <ReceiptActions
-          ref={actionsRef}
-          clearForm={clearForm}
-          onPrint={handlePrint}
-          onPost={() => void handlePost()}
-          onSave={isModifyMode ? handleModify : handleSave}
-          onDelete={handledelete}
-          saveLabel={isModifyMode ? "Modify" : "Save"}
-          isPosted={isPosted}
-          preventSearchNavigation
-        />
+        <div className="-mb-3">
+          <ReceiptActions
+            ref={actionsRef}
+            clearForm={clearForm}
+            onPrint={handlePrint}
+            onPost={() => void handlePost()}
+            onSave={isModifyMode ? handleModify : handleSave}
+            onDelete={handledelete}
+            saveLabel={isModifyMode ? "Modify" : "Save"}
+            isPosted={isPosted}
+            preventSearchNavigation
+          />
+        </div>
       </div>
 
       {isPrint && printData && (

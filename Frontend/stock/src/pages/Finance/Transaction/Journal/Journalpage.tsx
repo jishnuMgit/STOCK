@@ -755,11 +755,13 @@ const JournalPage: React.FC = () => {
           onNoteEnter={handleNoteEnter}
         />
 
-        <JournalActions
-          ref={actionsRef}
-          clearForm={clearForm}
-          onSave={handleSave}
-        />
+        <div className="-mb-3">
+          <JournalActions
+            ref={actionsRef}
+            clearForm={clearForm}
+            onSave={handleSave}
+          />
+        </div>
       </div>
       {messageDialog}
     </div>
