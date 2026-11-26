@@ -29,8 +29,9 @@ const FormField: React.FC<{
   label: string;
   children: React.ReactNode;
 }> = ({ label, children }) => (
-  <div className="grid grid-cols-[85px_140px] items-center gap-1">
-    <label className="text-right whitespace-nowrap text-[14px] text-[#172b43]">
+  // a label and its box are 20 px apart (12 px of space on the label's right + the 8 px gap), as on the Item page
+  <div className="grid grid-cols-[97px_140px] items-center gap-2">
+    <label className="pr-3 text-right whitespace-nowrap text-[14px] text-[#172b43]">
       {label} :
     </label>
     {children}
